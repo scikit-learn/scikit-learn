@@ -31,7 +31,7 @@ capture well the variance of the original features. See :ref:`decompositions`.
 Random projections
 -------------------
 
-The module: :mod:`random_projection` provides several tools for data
+The module: :mod:`~sklearn.random_projection` provides several tools for data
 reduction by random projections. See the relevant section of the
 documentation: :ref:`random_projection`.
 
@@ -55,6 +55,5 @@ similarly.
 
    Note that if features have very different scaling or statistical
    properties, :class:`cluster.FeatureAgglomeration` may not be able to
-   capture the links between related features. Using a 
+   capture the links between related features. Using a
    :class:`preprocessing.StandardScaler` can be useful in these settings.
-

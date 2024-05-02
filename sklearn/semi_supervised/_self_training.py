@@ -1,11 +1,14 @@
 import warnings
+from numbers import Integral, Real
 
 import numpy as np
 
-from ..base import MetaEstimatorMixin, clone, BaseEstimator
-from ..utils.validation import check_is_fitted
-from ..utils.metaestimators import available_if
+from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone
 from ..utils import safe_mask
+from ..utils._param_validation import HasMethods, Interval, StrOptions
+from ..utils.metadata_routing import _RoutingNotSupportedMixin
+from ..utils.metaestimators import available_if
+from ..utils.validation import check_is_fitted
 
 __all__ = ["SelfTrainingClassifier"]
 
@@ -15,18 +18,30 @@ __all__ = ["SelfTrainingClassifier"]
 
 
 def _estimator_has(attr):
-    """Check if `self.base_estimator_ `or `self.base_estimator_` has `attr`."""
-    return lambda self: (
-        hasattr(self.base_estimator_, attr)
-        if hasattr(self, "base_estimator_")
-        else hasattr(self.base_estimator, attr)
-    )
+    """Check if we can delegate a method to the underlying estimator.
+
+    First, we check the fitted `base_estimator_` if available, otherwise we check
+    the unfitted `base_estimator`. We raise the original `AttributeError` if
+    `attr` does not exist. This function is used together with `available_if`.
+    """
+
+    def check(self):
+        if hasattr(self, "base_estimator_"):
+            getattr(self.base_estimator_, attr)
+        else:
+            getattr(self.base_estimator, attr)
+
+        return True
+
+    return check
 
 
-class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
+class SelfTrainingClassifier(
+    _RoutingNotSupportedMixin, MetaEstimatorMixin, BaseEstimator
+):
     """Self-training classifier.
 
-    This class allows a given supervised classifier to function as a
+    This :term:`metaestimator` allows a given supervised classifier to function as a
     semi-supervised classifier, allowing it to learn from unlabeled data. It
     does this by iteratively predicting pseudo-labels for the unlabeled data
     and adding them to the training set.
@@ -142,6 +157,17 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
     _estimator_type = "classifier"
 
+    _parameter_constraints: dict = {
+        # We don't require `predic_proba` here to allow passing a meta-estimator
+        # that only exposes `predict_proba` after fitting.
+        "base_estimator": [HasMethods(["fit"])],
+        "threshold": [Interval(Real, 0.0, 1.0, closed="left")],
+        "criterion": [StrOptions({"threshold", "k_best"})],
+        "k_best": [Interval(Integral, 1, None, closed="left")],
+        "max_iter": [Interval(Integral, 0, None, closed="left"), None],
+        "verbose": ["verbose"],
+    }
+
     def __init__(
         self,
         base_estimator,
@@ -158,6 +184,10 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         self.max_iter = max_iter
         self.verbose = verbose
 
+    @_fit_context(
+        # SelfTrainingClassifier.base_estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y):
         """
         Fit self-training classifier using `X`, `y` as training data.
@@ -176,28 +206,13 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        # we need row slicing support for sparce matrices, but costly finiteness check
+        # we need row slicing support for sparse matrices, but costly finiteness check
         # can be delegated to the base estimator.
         X, y = self._validate_data(
             X, y, accept_sparse=["csr", "csc", "lil", "dok"], force_all_finite=False
         )
 
-        if self.base_estimator is None:
-            raise ValueError("base_estimator cannot be None!")
-
         self.base_estimator_ = clone(self.base_estimator)
-
-        if self.max_iter is not None and self.max_iter < 0:
-            raise ValueError(f"max_iter must be >= 0 or None, got {self.max_iter}")
-
-        if not (0 <= self.threshold < 1):
-            raise ValueError(f"threshold must be in [0,1), got {self.threshold}")
-
-        if self.criterion not in ["threshold", "k_best"]:
-            raise ValueError(
-                "criterion must be either 'threshold' "
-                f"or 'k_best', got {self.criterion}."
-            )
 
         if y.dtype.kind in ["U", "S"]:
             raise ValueError(
@@ -215,9 +230,11 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             self.k_best > X.shape[0] - np.sum(has_label)
         ):
             warnings.warn(
-                "k_best is larger than the amount of unlabeled "
-                "samples. All unlabeled samples will be labeled in "
-                "the first iteration",
+                (
+                    "k_best is larger than the amount of unlabeled "
+                    "samples. All unlabeled samples will be labeled in "
+                    "the first iteration"
+                ),
                 UserWarning,
             )
 

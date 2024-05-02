@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 =========================================================
 PCA example with Iris Data-set
@@ -14,12 +13,13 @@ information on this dataset.
 # Code source: Gaël Varoquaux
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
 
+# unused but required import for doing 3d projections with matplotlib < 3.2
+import mpl_toolkits.mplot3d  # noqa: F401
+import numpy as np
 
-from sklearn import decomposition
-from sklearn import datasets
+from sklearn import datasets, decomposition
 
 np.random.seed(5)
 
@@ -52,8 +52,8 @@ for name, label in [("Setosa", 0), ("Versicolour", 1), ("Virginica", 2)]:
 y = np.choose(y, [1, 2, 0]).astype(float)
 ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=y, cmap=plt.cm.nipy_spectral, edgecolor="k")
 
-ax.w_xaxis.set_ticklabels([])
-ax.w_yaxis.set_ticklabels([])
-ax.w_zaxis.set_ticklabels([])
+ax.xaxis.set_ticklabels([])
+ax.yaxis.set_ticklabels([])
+ax.zaxis.set_ticklabels([])
 
 plt.show()

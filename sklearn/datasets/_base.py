@@ -7,25 +7,27 @@ Base IO code for all datasets
 #               2010 Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 import csv
-import hashlib
 import gzip
-import shutil
-from collections import namedtuple
+import hashlib
 import os
+import shutil
+import time
+import warnings
+from collections import namedtuple
+from importlib import resources
+from numbers import Integral
 from os import environ, listdir, makedirs
 from os.path import expanduser, isdir, join, splitext
-from importlib import resources
 from pathlib import Path
-
-from ..preprocessing import scale
-from ..utils import Bunch
-from ..utils import check_random_state
-from ..utils import check_pandas_support
-from ..utils.deprecation import deprecated
+from urllib.error import URLError
+from urllib.request import urlretrieve
 
 import numpy as np
 
-from urllib.request import urlretrieve
+from ..preprocessing import scale
+from ..utils import Bunch, check_random_state
+from ..utils._optional_dependencies import check_pandas_support
+from ..utils._param_validation import Interval, StrOptions, validate_params
 
 DATA_MODULE = "sklearn.datasets.data"
 DESCR_MODULE = "sklearn.datasets.descr"
@@ -34,6 +36,12 @@ IMAGES_MODULE = "sklearn.datasets.images"
 RemoteFileMetadata = namedtuple("RemoteFileMetadata", ["filename", "url", "checksum"])
 
 
+@validate_params(
+    {
+        "data_home": [str, os.PathLike, None],
+    },
+    prefer_skip_nested_validation=True,
+)
 def get_data_home(data_home=None) -> str:
     """Return the path of the scikit-learn data directory.
 
@@ -51,14 +59,22 @@ def get_data_home(data_home=None) -> str:
 
     Parameters
     ----------
-    data_home : str, default=None
+    data_home : str or path-like, default=None
         The path to scikit-learn data directory. If `None`, the default path
-        is `~/sklearn_learn_data`.
+        is `~/scikit_learn_data`.
 
     Returns
     -------
     data_home: str
         The path to scikit-learn data directory.
+
+    Examples
+    --------
+    >>> import os
+    >>> from sklearn.datasets import get_data_home
+    >>> data_home_path = get_data_home()
+    >>> os.path.exists(data_home_path)
+    True
     """
     if data_home is None:
         data_home = environ.get("SCIKIT_LEARN_DATA", join("~", "scikit_learn_data"))
@@ -67,14 +83,25 @@ def get_data_home(data_home=None) -> str:
     return data_home
 
 
+@validate_params(
+    {
+        "data_home": [str, os.PathLike, None],
+    },
+    prefer_skip_nested_validation=True,
+)
 def clear_data_home(data_home=None):
     """Delete all the content of the data home cache.
 
     Parameters
     ----------
-    data_home : str, default=None
+    data_home : str or path-like, default=None
         The path to scikit-learn data directory. If `None`, the default path
-        is `~/sklearn_learn_data`.
+        is `~/scikit_learn_data`.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import clear_data_home
+    >>> clear_data_home()  # doctest: +SKIP
     """
     data_home = get_data_home(data_home)
     shutil.rmtree(data_home)
@@ -85,7 +112,7 @@ def _convert_data_dataframe(
 ):
     pd = check_pandas_support("{} with as_frame=True".format(caller_name))
     if not sparse_data:
-        data_df = pd.DataFrame(data, columns=feature_names)
+        data_df = pd.DataFrame(data, columns=feature_names, copy=False)
     else:
         data_df = pd.DataFrame.sparse.from_spmatrix(data, columns=feature_names)
 
@@ -98,6 +125,20 @@ def _convert_data_dataframe(
     return combined_df, X, y
 
 
+@validate_params(
+    {
+        "container_path": [str, os.PathLike],
+        "description": [str, None],
+        "categories": [list, None],
+        "load_content": ["boolean"],
+        "shuffle": ["boolean"],
+        "encoding": [str, None],
+        "decode_error": [StrOptions({"strict", "ignore", "replace"})],
+        "random_state": ["random_state"],
+        "allowed_extensions": [list, None],
+    },
+    prefer_skip_nested_validation=True,
+)
 def load_files(
     container_path,
     *,
@@ -134,7 +175,7 @@ def load_files(
     load the files in memory.
 
     To use text files in a scikit-learn classification or clustering algorithm,
-    you will need to use the :mod`~sklearn.feature_extraction.text` module to
+    you will need to use the :mod:`~sklearn.feature_extraction.text` module to
     build a feature extraction transformer that suits your problem.
 
     If you set load_content=True, you should also specify the encoding of the
@@ -209,6 +250,12 @@ def load_files(
             The full description of the dataset.
         filenames: ndarray
             The filenames holding the dataset.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_files
+    >>> container_path = "./"
+    >>> load_files(container_path)  # doctest: +SKIP
     """
 
     target = []
@@ -276,6 +323,7 @@ def load_csv_data(
     data_module=DATA_MODULE,
     descr_file_name=None,
     descr_module=DESCR_MODULE,
+    encoding="utf-8",
 ):
     """Loads `data_file_name` from `data_module with `importlib.resources`.
 
@@ -315,8 +363,14 @@ def load_csv_data(
     descr : str, optional
         Description of the dataset (the content of `descr_file_name`).
         Only returned if `descr_file_name` is not None.
+
+    encoding : str, optional
+        Text encoding of the CSV file.
+
+        .. versionadded:: 1.4
     """
-    with resources.open_text(data_module, data_file_name) as csv_file:
+    data_path = resources.files(data_module) / data_file_name
+    with data_path.open("r", encoding="utf-8") as csv_file:
         data_file = csv.reader(csv_file)
         temp = next(data_file)
         n_samples = int(temp[0])
@@ -346,7 +400,7 @@ def load_gzip_compressed_csv_data(
     encoding="utf-8",
     **kwargs,
 ):
-    """Loads gzip-compressed `data_file_name` from `data_module` with `importlib.resources`.
+    """Loads gzip-compressed with `importlib.resources`.
 
     1) Open resource file with `importlib.resources.open_binary`
     2) Decompress file obj with `gzip.open`
@@ -389,7 +443,8 @@ def load_gzip_compressed_csv_data(
         Description of the dataset (the content of `descr_file_name`).
         Only returned if `descr_file_name` is not None.
     """
-    with resources.open_binary(data_module, data_file_name) as compressed_file:
+    data_path = resources.files(data_module) / data_file_name
+    with data_path.open("rb") as compressed_file:
         compressed_file = gzip.open(compressed_file, mode="rt", encoding=encoding)
         data = np.loadtxt(compressed_file, **kwargs)
 
@@ -401,7 +456,7 @@ def load_gzip_compressed_csv_data(
         return data, descr
 
 
-def load_descr(descr_file_name, *, descr_module=DESCR_MODULE):
+def load_descr(descr_file_name, *, descr_module=DESCR_MODULE, encoding="utf-8"):
     """Load `descr_file_name` from `descr_module` with `importlib.resources`.
 
     Parameters
@@ -416,16 +471,28 @@ def load_descr(descr_file_name, *, descr_module=DESCR_MODULE):
         Module where `descr_file_name` lives. See also :func:`load_descr`.
         The default  is `'sklearn.datasets.descr'`.
 
+    encoding : str, default="utf-8"
+        Name of the encoding that `descr_file_name` will be decoded with.
+        The default is 'utf-8'.
+
+        .. versionadded:: 1.4
+
     Returns
     -------
     fdescr : str
         Content of `descr_file_name`.
     """
-    fdescr = resources.read_text(descr_module, descr_file_name)
+    path = resources.files(descr_module) / descr_file_name
+    return path.read_text(encoding=encoding)
 
-    return fdescr
 
-
+@validate_params(
+    {
+        "return_X_y": ["boolean"],
+        "as_frame": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def load_wine(*, return_X_y=False, as_frame=False):
     """Load and return the wine dataset (classification).
 
@@ -546,6 +613,10 @@ def load_wine(*, return_X_y=False, as_frame=False):
     )
 
 
+@validate_params(
+    {"return_X_y": ["boolean"], "as_frame": ["boolean"]},
+    prefer_skip_nested_validation=True,
+)
 def load_iris(*, return_X_y=False, as_frame=False):
     """Load and return the iris dataset (classification).
 
@@ -632,6 +703,9 @@ def load_iris(*, return_X_y=False, as_frame=False):
     array([0, 0, 1])
     >>> list(data.target_names)
     ['setosa', 'versicolor', 'virginica']
+
+    See :ref:`sphx_glr_auto_examples_datasets_plot_iris_dataset.py` for a more
+    detailed example of how to work with the iris dataset.
     """
     data_file_name = "iris.csv"
     data, target, target_names, fdescr = load_csv_data(
@@ -669,6 +743,10 @@ def load_iris(*, return_X_y=False, as_frame=False):
     )
 
 
+@validate_params(
+    {"return_X_y": ["boolean"], "as_frame": ["boolean"]},
+    prefer_skip_nested_validation=True,
+)
 def load_breast_cancer(*, return_X_y=False, as_frame=False):
     """Load and return the breast cancer wisconsin dataset (classification).
 
@@ -685,7 +763,7 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
 
     The copy of UCI ML Breast Cancer Wisconsin (Diagnostic) dataset is
     downloaded from:
-    https://goo.gl/U2Uwz2
+    https://archive.ics.uci.edu/dataset/17/breast+cancer+wisconsin+diagnostic
 
     Read more in the :ref:`User Guide <breast_cancer_dataset>`.
 
@@ -717,9 +795,9 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
         target : {ndarray, Series} of shape (569,)
             The classification target. If `as_frame=True`, `target` will be
             a pandas Series.
-        feature_names : list
+        feature_names : ndarray of shape (30,)
             The names of the dataset columns.
-        target_names : list
+        target_names : ndarray of shape (2,)
             The names of target classes.
         frame : DataFrame of shape (569, 31)
             Only present when `as_frame=True`. DataFrame with `data` and
@@ -818,6 +896,14 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
     )
 
 
+@validate_params(
+    {
+        "n_class": [Interval(Integral, 1, 10, closed="both")],
+        "return_X_y": ["boolean"],
+        "as_frame": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
     """Load and return the digits dataset (classification).
 
@@ -951,6 +1037,10 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
     )
 
 
+@validate_params(
+    {"return_X_y": ["boolean"], "as_frame": ["boolean"], "scaled": ["boolean"]},
+    prefer_skip_nested_validation=True,
+)
 def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
     """Load and return the diabetes dataset (regression).
 
@@ -1024,6 +1114,15 @@ def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
         representing the features and/or target of a given sample.
 
         .. versionadded:: 0.18
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_diabetes
+    >>> diabetes = load_diabetes()
+    >>> diabetes.target[:3]
+    array([151.,  75., 141.])
+    >>> diabetes.data.shape
+    (442, 10)
     """
     data_filename = "diabetes_data_raw.csv.gz"
     target_filename = "diabetes_target.csv.gz"
@@ -1062,6 +1161,13 @@ def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
     )
 
 
+@validate_params(
+    {
+        "return_X_y": ["boolean"],
+        "as_frame": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def load_linnerud(*, return_X_y=False, as_frame=False):
     """Load and return the physical exercise Linnerud dataset.
 
@@ -1128,17 +1234,29 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
         features in `X` and a target in `y` of a given sample.
 
         .. versionadded:: 0.18
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_linnerud
+    >>> linnerud = load_linnerud()
+    >>> linnerud.data.shape
+    (20, 3)
+    >>> linnerud.target.shape
+    (20, 3)
     """
     data_filename = "linnerud_exercise.csv"
     target_filename = "linnerud_physiological.csv"
 
+    data_module_path = resources.files(DATA_MODULE)
     # Read header and data
-    with resources.open_text(DATA_MODULE, data_filename) as f:
+    data_path = data_module_path / data_filename
+    with data_path.open("r", encoding="utf-8") as f:
         header_exercise = f.readline().split()
         f.seek(0)  # reset file obj
         data_exercise = np.loadtxt(f, skiprows=1)
 
-    with resources.open_text(DATA_MODULE, target_filename) as f:
+    target_path = data_module_path / target_filename
+    with target_path.open("r", encoding="utf-8") as f:
         header_physiological = f.readline().split()
         f.seek(0)  # reset file obj
         data_physiological = np.loadtxt(f, skiprows=1)
@@ -1166,193 +1284,6 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
         DESCR=fdescr,
         data_filename=data_filename,
         target_filename=target_filename,
-        data_module=DATA_MODULE,
-    )
-
-
-@deprecated(
-    r"""`load_boston` is deprecated in 1.0 and will be removed in 1.2.
-
-    The Boston housing prices dataset has an ethical problem. You can refer to
-    the documentation of this function for further details.
-
-    The scikit-learn maintainers therefore strongly discourage the use of this
-    dataset unless the purpose of the code is to study and educate about
-    ethical issues in data science and machine learning.
-
-    In this special case, you can fetch the dataset from the original
-    source::
-
-        import pandas as pd
-        import numpy as np
-
-        data_url = "http://lib.stat.cmu.edu/datasets/boston"
-        raw_df = pd.read_csv(data_url, sep="\s+", skiprows=22, header=None)
-        data = np.hstack([raw_df.values[::2, :], raw_df.values[1::2, :2]])
-        target = raw_df.values[1::2, 2]
-
-    Alternative datasets include the California housing dataset (i.e.
-    :func:`~sklearn.datasets.fetch_california_housing`) and the Ames housing
-    dataset. You can load the datasets as follows::
-
-        from sklearn.datasets import fetch_california_housing
-        housing = fetch_california_housing()
-
-    for the California housing dataset and::
-
-        from sklearn.datasets import fetch_openml
-        housing = fetch_openml(name="house_prices", as_frame=True)
-
-    for the Ames housing dataset."""
-)
-def load_boston(*, return_X_y=False):
-    r"""Load and return the Boston house-prices dataset (regression).
-
-    ==============   ==============
-    Samples total               506
-    Dimensionality               13
-    Features         real, positive
-    Targets           real 5. - 50.
-    ==============   ==============
-
-    Read more in the :ref:`User Guide <boston_dataset>`.
-
-    .. warning::
-        The Boston housing prices dataset has an ethical problem: as
-        investigated in [1]_, the authors of this dataset engineered a
-        non-invertible variable "B" assuming that racial self-segregation had a
-        positive impact on house prices [2]_. Furthermore the goal of the
-        research that led to the creation of this dataset was to study the
-        impact of air quality but it did not give adequate demonstration of the
-        validity of this assumption.
-
-        The scikit-learn maintainers therefore strongly discourage the use of
-        this dataset unless the purpose of the code is to study and educate
-        about ethical issues in data science and machine learning.
-
-        In this special case, you can fetch the dataset from the original
-        source::
-
-            import pandas as pd  # doctest: +SKIP
-            import numpy as np
-
-            data_url = "http://lib.stat.cmu.edu/datasets/boston"
-            raw_df = pd.read_csv(data_url, sep="\s+", skiprows=22, header=None)
-            data = np.hstack([raw_df.values[::2, :], raw_df.values[1::2, :2]])
-            target = raw_df.values[1::2, 2]
-
-        Alternative datasets include the California housing dataset [3]_
-        (i.e. :func:`~sklearn.datasets.fetch_california_housing`) and Ames
-        housing dataset [4]_. You can load the datasets as follows::
-
-            from sklearn.datasets import fetch_california_housing
-            housing = fetch_california_housing()
-
-        for the California housing dataset and::
-
-            from sklearn.datasets import fetch_openml
-            housing = fetch_openml(name="house_prices", as_frame=True)
-
-        for the Ames housing dataset.
-
-    Parameters
-    ----------
-    return_X_y : bool, default=False
-        If True, returns ``(data, target)`` instead of a Bunch object.
-        See below for more information about the `data` and `target` object.
-
-        .. versionadded:: 0.18
-
-    Returns
-    -------
-    data : :class:`~sklearn.utils.Bunch`
-        Dictionary-like object, with the following attributes.
-
-        data : ndarray of shape (506, 13)
-            The data matrix.
-        target : ndarray of shape (506,)
-            The regression target.
-        filename : str
-            The physical location of boston csv dataset.
-
-            .. versionadded:: 0.20
-
-        DESCR : str
-            The full description of the dataset.
-        feature_names : ndarray
-            The names of features
-
-    (data, target) : tuple if ``return_X_y`` is True
-        A tuple of two ndarrays. The first contains a 2D array of shape (506, 13)
-        with each row representing one sample and each column representing the features.
-        The second array of shape (506,) contains the target samples.
-
-        .. versionadded:: 0.18
-
-    Notes
-    -----
-        .. versionchanged:: 0.20
-            Fixed a wrong data point at [445, 0].
-
-    References
-    ----------
-    .. [1] `Racist data destruction? M Carlisle,
-            <https://medium.com/@docintangible/racist-data-destruction-113e3eff54a8>`_
-    .. [2] `Harrison Jr, David, and Daniel L. Rubinfeld.
-           "Hedonic housing prices and the demand for clean air."
-           Journal of environmental economics and management 5.1 (1978): 81-102.
-           <https://www.researchgate.net/publication/4974606_Hedonic_housing_prices_and_the_demand_for_clean_air>`_
-    .. [3] `California housing dataset
-            <https://scikit-learn.org/stable/datasets/real_world.html#california-housing-dataset>`_
-    .. [4] `Ames housing dataset
-            <https://www.openml.org/d/42165>`_
-
-    Examples
-    --------
-    >>> import warnings
-    >>> from sklearn.datasets import load_boston
-    >>> with warnings.catch_warnings():
-    ...     # You should probably not use this dataset.
-    ...     warnings.filterwarnings("ignore")
-    ...     X, y = load_boston(return_X_y=True)
-    >>> print(X.shape)
-    (506, 13)
-    """
-    # TODO: once the deprecation period is over, implement a module level
-    # `__getattr__` function in`sklearn.datasets` to raise an exception with
-    # an informative error message at import time instead of just removing
-    # load_boston. The goal is to avoid having beginners that copy-paste code
-    # from numerous books and tutorials that use this dataset loader get
-    # a confusing ImportError when trying to learn scikit-learn.
-    # See: https://www.python.org/dev/peps/pep-0562/
-
-    descr_text = load_descr("boston_house_prices.rst")
-
-    data_file_name = "boston_house_prices.csv"
-    with resources.open_text(DATA_MODULE, data_file_name) as f:
-        data_file = csv.reader(f)
-        temp = next(data_file)
-        n_samples = int(temp[0])
-        n_features = int(temp[1])
-        data = np.empty((n_samples, n_features))
-        target = np.empty((n_samples,))
-        temp = next(data_file)  # names of features
-        feature_names = np.array(temp)
-
-        for i, d in enumerate(data_file):
-            data[i] = np.asarray(d[:-1], dtype=np.float64)
-            target[i] = np.asarray(d[-1], dtype=np.float64)
-
-    if return_X_y:
-        return data, target
-
-    return Bunch(
-        data=data,
-        target=target,
-        # last column is target value
-        feature_names=feature_names[:-1],
-        DESCR=descr_text,
-        filename=data_file_name,
         data_module=DATA_MODULE,
     )
 
@@ -1403,17 +1334,29 @@ def load_sample_images():
     descr = load_descr("README.txt", descr_module=IMAGES_MODULE)
 
     filenames, images = [], []
-    for filename in sorted(resources.contents(IMAGES_MODULE)):
-        if filename.endswith(".jpg"):
-            filenames.append(filename)
-            with resources.open_binary(IMAGES_MODULE, filename) as image_file:
-                pil_image = Image.open(image_file)
-                image = np.asarray(pil_image)
-            images.append(image)
+
+    jpg_paths = sorted(
+        resource
+        for resource in resources.files(IMAGES_MODULE).iterdir()
+        if resource.is_file() and resource.match("*.jpg")
+    )
+
+    for path in jpg_paths:
+        filenames.append(str(path))
+        with path.open("rb") as image_file:
+            pil_image = Image.open(image_file)
+            image = np.asarray(pil_image)
+        images.append(image)
 
     return Bunch(images=images, filenames=filenames, DESCR=descr)
 
 
+@validate_params(
+    {
+        "image_name": [StrOptions({"china.jpg", "flower.jpg"})],
+    },
+    prefer_skip_nested_validation=True,
+)
 def load_sample_image(image_name):
     """Load the numpy array of a single sample image.
 
@@ -1485,7 +1428,7 @@ def _sha256(path):
     return sha256hash.hexdigest()
 
 
-def _fetch_remote(remote, dirname=None):
+def _fetch_remote(remote, dirname=None, n_retries=3, delay=1):
     """Helper function to download a remote dataset into path
 
     Fetch a dataset pointed by remote's url, save into path using remote's
@@ -1501,6 +1444,16 @@ def _fetch_remote(remote, dirname=None):
     dirname : str
         Directory to save the file to.
 
+    n_retries : int, default=3
+        Number of retries when HTTP errors are encountered.
+
+        .. versionadded:: 1.5
+
+    delay : int, default=1
+        Number of seconds between retries.
+
+        .. versionadded:: 1.5
+
     Returns
     -------
     file_path: str
@@ -1508,10 +1461,21 @@ def _fetch_remote(remote, dirname=None):
     """
 
     file_path = remote.filename if dirname is None else join(dirname, remote.filename)
-    urlretrieve(remote.url, file_path)
+    while True:
+        try:
+            urlretrieve(remote.url, file_path)
+            break
+        except (URLError, TimeoutError):
+            if n_retries == 0:
+                # If no more retries are left, re-raise the caught exception.
+                raise
+            warnings.warn(f"Retry downloading from url: {remote.url}")
+            n_retries -= 1
+            time.sleep(delay)
+
     checksum = _sha256(file_path)
     if remote.checksum != checksum:
-        raise IOError(
+        raise OSError(
             "{} has an SHA256 checksum ({}) "
             "differing from expected ({}), "
             "file may be corrupted.".format(file_path, checksum, remote.checksum)

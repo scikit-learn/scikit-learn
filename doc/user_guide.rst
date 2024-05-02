@@ -30,3 +30,13 @@ User Guide
    computing.rst
    model_persistence.rst
    common_pitfalls.rst
+   dispatching.rst
+
+Under Development
+-----------------
+
+.. toctree::
+   :numbered:
+   :maxdepth: 1
+
+   metadata_routing.rst

@@ -1,29 +1,32 @@
 import pickle
-
-import joblib
-import pytest
-import numpy as np
-import scipy.sparse as sp
 from unittest.mock import Mock
 
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import ignore_warnings
+import joblib
+import numpy as np
+import pytest
+import scipy.sparse as sp
 
-from sklearn import linear_model, datasets, metrics
+from sklearn import datasets, linear_model, metrics
 from sklearn.base import clone, is_classifier
-from sklearn.svm import OneClassSVM
-from sklearn.preprocessing import LabelEncoder, scale, MinMaxScaler
-from sklearn.preprocessing import StandardScaler
-from sklearn.kernel_approximation import Nystroem
-from sklearn.pipeline import make_pipeline
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
+from sklearn.kernel_approximation import Nystroem
 from sklearn.linear_model import _sgd_fast as sgd_fast
 from sklearn.linear_model import _stochastic_gradient
-from sklearn.model_selection import RandomizedSearchCV
+from sklearn.model_selection import (
+    RandomizedSearchCV,
+    ShuffleSplit,
+    StratifiedShuffleSplit,
+)
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import LabelEncoder, MinMaxScaler, StandardScaler, scale
+from sklearn.svm import OneClassSVM
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
+)
 
 
 def _update_kwargs(kwargs):
@@ -180,6 +183,7 @@ true_result5 = [0, 1, 1]
 ###############################################################################
 # Common Test Case to classification and regression
 
+
 # a simple implementation of ASGD to use for testing
 # uses squared loss to find the gradient
 def asgd(klass, X, y, eta, alpha, weight_init=None, intercept_init=0.0):
@@ -214,61 +218,6 @@ def asgd(klass, X, y, eta, alpha, weight_init=None, intercept_init=0.0):
         average_intercept /= i + 1.0
 
     return average_weights, average_intercept
-
-
-@pytest.mark.parametrize(
-    "klass",
-    [
-        SGDClassifier,
-        SparseSGDClassifier,
-        SGDRegressor,
-        SparseSGDRegressor,
-        SGDOneClassSVM,
-        SparseSGDOneClassSVM,
-    ],
-)
-@pytest.mark.parametrize("fit_method", ["fit", "partial_fit"])
-@pytest.mark.parametrize(
-    "params, err_msg",
-    [
-        ({"alpha": -0.1}, "alpha must be >= 0"),
-        ({"penalty": "foobar", "l1_ratio": 0.85}, "Penalty foobar is not supported"),
-        ({"loss": "foobar"}, "The loss foobar is not supported"),
-        ({"l1_ratio": 1.1}, r"l1_ratio must be in \[0, 1\]"),
-        ({"learning_rate": "<unknown>"}, "learning rate <unknown> is not supported"),
-        ({"nu": -0.5}, r"nu must be in \(0, 1]"),
-        ({"nu": 2}, r"nu must be in \(0, 1]"),
-        ({"alpha": 0, "learning_rate": "optimal"}, "alpha must be > 0"),
-        ({"eta0": 0, "learning_rate": "constant"}, "eta0 must be > 0"),
-        ({"max_iter": -1}, "max_iter must be > zero"),
-        ({"shuffle": "false"}, "shuffle must be either True or False"),
-        ({"early_stopping": "false"}, "early_stopping must be either True or False"),
-        (
-            {"validation_fraction": -0.1},
-            r"validation_fraction must be in range \(0, 1\)",
-        ),
-        ({"n_iter_no_change": 0}, "n_iter_no_change must be >= 1"),
-    ],
-    # Avoid long error messages in test names:
-    # https://github.com/scikit-learn/scikit-learn/issues/21362
-    ids=lambda x: x[:10].replace("]", "") if isinstance(x, str) else x,
-)
-def test_sgd_estimator_params_validation(klass, fit_method, params, err_msg):
-    """Validate parameters in the different SGD estimators."""
-    try:
-        sgd_estimator = klass(**params)
-    except TypeError as err:
-        if "unexpected keyword argument" in str(err):
-            # skip test if the parameter is not supported by the estimator
-            return
-        raise err
-
-    with pytest.raises(ValueError, match=err_msg):
-        if is_classifier(sgd_estimator) and fit_method == "partial_fit":
-            fit_params = {"classes": np.unique(Y)}
-        else:
-            fit_params = {}
-        getattr(sgd_estimator, fit_method)(X, Y, **fit_params)
 
 
 def _test_warm_start(klass, X, Y, lr):
@@ -411,7 +360,7 @@ def test_late_onset_averaging_reached(klass):
         shuffle=False,
     )
     clf2 = klass(
-        average=0,
+        average=False,
         learning_rate="constant",
         loss="squared_error",
         eta0=eta0,
@@ -670,7 +619,7 @@ def test_partial_fit_weight_class_balanced(klass):
         r"class_weight 'balanced' is not supported for "
         r"partial_fit\. In order to use 'balanced' weights, "
         r"use compute_class_weight\('balanced', classes=classes, y=y\). "
-        r"In place of y you can us a large enough sample "
+        r"In place of y you can use a large enough sample "
         r"of the full training set target to properly "
         r"estimate the class frequency distributions\. "
         r"Pass the resulting weights as the class_weight "
@@ -762,8 +711,6 @@ def test_set_coef_multiclass(klass):
     clf = klass().fit(X2, Y2, intercept_init=np.zeros((3,)))
 
 
-# TODO: Remove filterwarnings in v1.2.
-@pytest.mark.filterwarnings("ignore:.*squared_loss.*:FutureWarning")
 @pytest.mark.parametrize("klass", [SGDClassifier, SparseSGDClassifier])
 def test_sgd_predict_proba_method_access(klass):
     # Checks that SGDClassifier predict_proba and predict_log_proba methods
@@ -773,20 +720,29 @@ def test_sgd_predict_proba_method_access(klass):
     # details.
     for loss in linear_model.SGDClassifier.loss_functions:
         clf = SGDClassifier(loss=loss)
-        # TODO(1.3): Remove "log"
-        if loss in ("log_loss", "log", "modified_huber"):
+        if loss in ("log_loss", "modified_huber"):
             assert hasattr(clf, "predict_proba")
             assert hasattr(clf, "predict_log_proba")
         else:
-            message = "probability estimates are not available for loss={!r}".format(
+            inner_msg = "probability estimates are not available for loss={!r}".format(
                 loss
             )
             assert not hasattr(clf, "predict_proba")
             assert not hasattr(clf, "predict_log_proba")
-            with pytest.raises(AttributeError, match=message):
+            with pytest.raises(
+                AttributeError, match="has no attribute 'predict_proba'"
+            ) as exec_info:
                 clf.predict_proba
-            with pytest.raises(AttributeError, match=message):
+
+            assert isinstance(exec_info.value.__cause__, AttributeError)
+            assert inner_msg in str(exec_info.value.__cause__)
+
+            with pytest.raises(
+                AttributeError, match="has no attribute 'predict_log_proba'"
+            ) as exec_info:
                 clf.predict_log_proba
+            assert isinstance(exec_info.value.__cause__, AttributeError)
+            assert inner_msg in str(exec_info.value.__cause__)
 
 
 @pytest.mark.parametrize("klass", [SGDClassifier, SparseSGDClassifier])
@@ -810,10 +766,13 @@ def test_sgd_proba(klass):
         p = clf.predict_proba([[-1, -1]])
         assert p[0, 1] < 0.5
 
-        p = clf.predict_log_proba([[3, 2]])
-        assert p[0, 1] > p[0, 0]
-        p = clf.predict_log_proba([[-1, -1]])
-        assert p[0, 1] < p[0, 0]
+        # If predict_proba is 0, we get "RuntimeWarning: divide by zero encountered
+        # in log". We avoid it here.
+        with np.errstate(divide="ignore"):
+            p = clf.predict_log_proba([[3, 2]])
+            assert p[0, 1] > p[0, 0]
+            p = clf.predict_log_proba([[-1, -1]])
+            assert p[0, 1] < p[0, 0]
 
     # log loss multiclass probability estimates
     clf = klass(loss="log_loss", alpha=0.01, max_iter=10).fit(X2, Y2)
@@ -935,14 +894,6 @@ def test_equal_class_weight(klass):
 def test_wrong_class_weight_label(klass):
     # ValueError due to not existing class label.
     clf = klass(alpha=0.1, max_iter=1000, class_weight={0: 0.5})
-    with pytest.raises(ValueError):
-        clf.fit(X, Y)
-
-
-@pytest.mark.parametrize("klass", [SGDClassifier, SparseSGDClassifier])
-def test_wrong_class_weight_format(klass):
-    # ValueError due to wrong class_weight argument type.
-    clf = klass(alpha=0.1, max_iter=1000, class_weight=[0.5])
     with pytest.raises(ValueError):
         clf.fit(X, Y)
 
@@ -1459,6 +1410,7 @@ def test_loss_function_epsilon(klass):
 ###############################################################################
 # SGD One Class SVM Test Case
 
+
 # a simple implementation of ASGD to use for testing SGDOneClassSVM
 def asgd_oneclass(klass, X, eta, nu, coef_init=None, offset_init=0.0):
     if coef_init is None:
@@ -1594,7 +1546,12 @@ def test_late_onset_averaging_reached_oneclass(klass):
     )
     # 1 pass over the training set with no averaging
     clf2 = klass(
-        average=0, learning_rate="constant", eta0=eta0, nu=nu, max_iter=1, shuffle=False
+        average=False,
+        learning_rate="constant",
+        eta0=eta0,
+        nu=nu,
+        max_iter=1,
+        shuffle=False,
     )
 
     clf1.fit(X)
@@ -1741,7 +1698,7 @@ def test_ocsvm_vs_sgdocsvm():
         fit_intercept=True,
         max_iter=max_iter,
         random_state=random_state,
-        tol=-np.inf,
+        tol=None,
     )
     pipe_sgd = make_pipeline(transform, clf_sgd)
     pipe_sgd.fit(X_train)
@@ -2126,32 +2083,6 @@ def test_SGDClassifier_fit_for_all_backends(backend):
 
 
 @pytest.mark.parametrize(
-    "old_loss, new_loss, Estimator",
-    [
-        # TODO(1.2): Remove "squared_loss"
-        ("squared_loss", "squared_error", linear_model.SGDClassifier),
-        ("squared_loss", "squared_error", linear_model.SGDRegressor),
-        # TODO(1.3): Remove "log"
-        ("log", "log_loss", linear_model.SGDClassifier),
-    ],
-)
-def test_loss_deprecated(old_loss, new_loss, Estimator):
-
-    # Note: class BaseSGD calls self._validate_params() in __init__, therefore
-    # even instantiation of class raises FutureWarning for deprecated losses.
-    with pytest.warns(FutureWarning, match=f"The loss '{old_loss}' was deprecated"):
-        est1 = Estimator(loss=old_loss, random_state=0)
-        est1.fit(X, Y)
-
-    est2 = Estimator(loss=new_loss, random_state=0)
-    est2.fit(X, Y)
-    if hasattr(est1, "predict_proba"):
-        assert_allclose(est1.predict_proba(X), est2.predict_proba(X))
-    else:
-        assert_allclose(est1.predict(X), est2.predict(X))
-
-
-@pytest.mark.parametrize(
     "Estimator", [linear_model.SGDClassifier, linear_model.SGDRegressor]
 )
 def test_sgd_random_state(Estimator, global_random_seed):
@@ -2211,3 +2142,96 @@ def test_validation_mask_correctly_subsets(monkeypatch):
     X_val, y_val = mock.call_args[0][1:3]
     assert X_val.shape[0] == int(n_samples * validation_fraction)
     assert y_val.shape[0] == int(n_samples * validation_fraction)
+
+
+def test_sgd_error_on_zero_validation_weight():
+    # Test that SGDClassifier raises error when all the validation samples
+    # have zero sample_weight. Non-regression test for #17229.
+    X, Y = iris.data, iris.target
+    sample_weight = np.zeros_like(Y)
+    validation_fraction = 0.4
+
+    clf = linear_model.SGDClassifier(
+        early_stopping=True, validation_fraction=validation_fraction, random_state=0
+    )
+
+    error_message = (
+        "The sample weights for validation set are all zero, consider using a"
+        " different random state."
+    )
+    with pytest.raises(ValueError, match=error_message):
+        clf.fit(X, Y, sample_weight=sample_weight)
+
+
+@pytest.mark.parametrize("Estimator", [SGDClassifier, SGDRegressor])
+def test_sgd_verbose(Estimator):
+    """non-regression test for gh #25249"""
+    Estimator(verbose=1).fit(X, Y)
+
+
+@pytest.mark.parametrize(
+    "SGDEstimator",
+    [
+        SGDClassifier,
+        SparseSGDClassifier,
+        SGDRegressor,
+        SparseSGDRegressor,
+        SGDOneClassSVM,
+        SparseSGDOneClassSVM,
+    ],
+)
+@pytest.mark.parametrize("data_type", (np.float32, np.float64))
+def test_sgd_dtype_match(SGDEstimator, data_type):
+    _X = X.astype(data_type)
+    _Y = np.array(Y, dtype=data_type)
+    sgd_model = SGDEstimator()
+    sgd_model.fit(_X, _Y)
+    assert sgd_model.coef_.dtype == data_type
+
+
+@pytest.mark.parametrize(
+    "SGDEstimator",
+    [
+        SGDClassifier,
+        SparseSGDClassifier,
+        SGDRegressor,
+        SparseSGDRegressor,
+        SGDOneClassSVM,
+        SparseSGDOneClassSVM,
+    ],
+)
+def test_sgd_numerical_consistency(SGDEstimator):
+    X_64 = X.astype(dtype=np.float64)
+    Y_64 = np.array(Y, dtype=np.float64)
+
+    X_32 = X.astype(dtype=np.float32)
+    Y_32 = np.array(Y, dtype=np.float32)
+
+    sgd_64 = SGDEstimator(max_iter=20)
+    sgd_64.fit(X_64, Y_64)
+
+    sgd_32 = SGDEstimator(max_iter=20)
+    sgd_32.fit(X_32, Y_32)
+
+    assert_allclose(sgd_64.coef_, sgd_32.coef_)
+
+
+# TODO(1.6): remove
+@pytest.mark.parametrize("Estimator", [SGDClassifier, SGDOneClassSVM])
+def test_loss_attribute_deprecation(Estimator):
+    # Check that we raise the proper deprecation warning if accessing
+    # `loss_function_`.
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    est = Estimator().fit(X, y)
+
+    with pytest.warns(FutureWarning, match="`loss_function_` was deprecated"):
+        est.loss_function_
+
+
+# TODO(1.7): remove
+@pytest.mark.parametrize("Estimator", [SGDClassifier, SGDRegressor, SGDOneClassSVM])
+def test_passive_aggressive_deprecated_average(Estimator):
+    est = Estimator(average=0)
+    with pytest.warns(FutureWarning, match="average=0"):
+        est.fit(X, Y)

@@ -11,9 +11,10 @@ This scope allows the bot to create and edit its own issues. It is best to use a
 github account that does **not** have commit access to the public repo.
 """
 
-from pathlib import Path
-import sys
 import argparse
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
 
 import defusedxml.ElementTree as ET
 from github import Github
@@ -56,13 +57,16 @@ if args.junit_file is None and args.tests_passed is None:
 
 gh = Github(args.bot_github_token)
 issue_repo = gh.get_repo(args.issue_repo)
-title = f"⚠️ CI failed on {args.ci_name} ⚠️"
+dt_now = datetime.now(tz=timezone.utc)
+date_str = dt_now.strftime("%b %d, %Y")
+title_query = f"CI failed on {args.ci_name}"
+title = f"⚠️ {title_query} (last failure: {date_str}) ⚠️"
 
 
 def get_issue():
     login = gh.get_user().login
     issues = gh.search_issues(
-        f"repo:{args.issue_repo} {title} in:title state:open author:{login}"
+        f"repo:{args.issue_repo} {title_query} in:title state:open author:{login}"
     )
     first_page = issues.get_page(0)
     # Return issue if it exist
@@ -85,14 +89,14 @@ def create_or_update_issue(body=""):
 
     if issue is None:
         # Create new issue
-        header = f"**CI failed on {link}**"
+        header = f"**CI failed on {link}** ({date_str})"
         issue = issue_repo.create_issue(title=title, body=f"{header}\n{body}")
         print(f"Created issue in {args.issue_repo}#{issue.number}")
         sys.exit()
     else:
         # Update existing issue
-        header = f"**CI is still failing on {link}**"
-        issue.edit(body=f"{header}\n{body}")
+        header = f"**CI is still failing on {link}** ({date_str})"
+        issue.edit(title=title, body=f"{header}\n{body}")
         print(f"Commented on issue: {args.issue_repo}#{issue.number}")
         sys.exit()
 
@@ -101,11 +105,21 @@ def close_issue_if_opened():
     print("Test has no failures!")
     issue = get_issue()
     if issue is not None:
-        comment = (
-            f"## CI is no longer failing! ✅\n\n[Successful run]({args.link_to_ci_run})"
+        header_str = "## CI is no longer failing!"
+        comment_str = (
+            f"{header_str} ✅\n\n[Successful run]({args.link_to_ci_run}) on {date_str}"
         )
+
         print(f"Commented on issue #{issue.number}")
-        issue.create_comment(body=comment)
+        # New comment if "## CI is no longer failing!" comment does not exist
+        # If it does exist update the original comment which includes the new date
+        for comment in issue.get_comments():
+            if comment.body.startswith(header_str):
+                comment.edit(body=comment_str)
+                break
+        else:  # no break
+            issue.create_comment(body=comment_str)
+
         if args.auto_close.lower() == "true":
             print(f"Closing issue #{issue.number}")
             issue.edit(state="closed")

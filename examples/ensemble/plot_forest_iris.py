@@ -42,15 +42,15 @@ samples are built sequentially and so do not use multiple cores.
 
 """
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.colors import ListedColormap
 
 from sklearn.datasets import load_iris
 from sklearn.ensemble import (
-    RandomForestClassifier,
-    ExtraTreesClassifier,
     AdaBoostClassifier,
+    ExtraTreesClassifier,
+    RandomForestClassifier,
 )
 from sklearn.tree import DecisionTreeClassifier
 
@@ -71,7 +71,11 @@ models = [
     DecisionTreeClassifier(max_depth=None),
     RandomForestClassifier(n_estimators=n_estimators),
     ExtraTreesClassifier(n_estimators=n_estimators),
-    AdaBoostClassifier(DecisionTreeClassifier(max_depth=3), n_estimators=n_estimators),
+    AdaBoostClassifier(
+        DecisionTreeClassifier(max_depth=3),
+        n_estimators=n_estimators,
+        algorithm="SAMME",
+    ),
 ]
 
 for pair in ([0, 1], [0, 2], [2, 3]):

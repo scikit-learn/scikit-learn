@@ -1,27 +1,33 @@
-"""Truncated SVD for sparse matrices, aka latent semantic analysis (LSA).
-"""
+"""Truncated SVD for sparse matrices, aka latent semantic analysis (LSA)."""
 
 # Author: Lars Buitinck
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Michael Becker <mike@beckerfuffle.com>
 # License: 3-clause BSD.
 
-from numbers import Integral
+from numbers import Integral, Real
+
 import numpy as np
 import scipy.sparse as sp
 from scipy.sparse.linalg import svds
 
-from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
+from ..base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
 from ..utils import check_array, check_random_state
 from ..utils._arpack import _init_arpack_v0
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
 from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.validation import check_is_fitted, check_scalar
+from ..utils.validation import check_is_fitted
 
 __all__ = ["TruncatedSVD"]
 
 
-class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
+class TruncatedSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Dimensionality reduction using truncated SVD (aka LSA).
 
     This transformer performs linear dimensionality reduction by means of
@@ -67,7 +73,7 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
 
         .. versionadded:: 1.1
 
-    power_iteration_normalizer : {‘auto’, ‘QR’, ‘LU’, ‘none’}, default=’auto’
+    power_iteration_normalizer : {'auto', 'QR', 'LU', 'none'}, default='auto'
         Power iteration normalizer for randomized SVD solver.
         Not used by ARPACK. See :func:`~sklearn.utils.extmath.randomized_svd`
         for more details.
@@ -154,6 +160,16 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
     [35.2410...  4.5981...   4.5420...  4.4486...  4.3288...]
     """
 
+    _parameter_constraints: dict = {
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "algorithm": [StrOptions({"arpack", "randomized"})],
+        "n_iter": [Interval(Integral, 0, None, closed="left")],
+        "n_oversamples": [Interval(Integral, 1, None, closed="left")],
+        "power_iteration_normalizer": [StrOptions({"auto", "OR", "LU", "none"})],
+        "random_state": ["random_state"],
+        "tol": [Interval(Real, 0, None, closed="left")],
+    }
+
     def __init__(
         self,
         n_components=2,
@@ -192,6 +208,7 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
         self.fit_transform(X)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None):
         """Fit model to X and perform dimensionality reduction on X.
 
@@ -208,13 +225,6 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
         X_new : ndarray of shape (n_samples, n_components)
             Reduced version of X. This will always be a dense array.
         """
-        check_scalar(
-            self.n_oversamples,
-            "n_oversamples",
-            min_val=1,
-            target_type=Integral,
-        )
-
         X = self._validate_data(X, accept_sparse=["csr", "csc"], ensure_min_features=2)
         random_state = check_random_state(self.random_state)
 
@@ -224,18 +234,15 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
             # svds doesn't abide by scipy.linalg.svd/randomized_svd
             # conventions, so reverse its outputs.
             Sigma = Sigma[::-1]
-            U, VT = svd_flip(U[:, ::-1], VT[::-1])
+            # u_based_decision=False is needed to be consistent with PCA.
+            U, VT = svd_flip(U[:, ::-1], VT[::-1], u_based_decision=False)
 
         elif self.algorithm == "randomized":
-            k = self.n_components
-            n_features = X.shape[1]
-            check_scalar(
-                k,
-                "n_components",
-                target_type=Integral,
-                min_val=1,
-                max_val=n_features,
-            )
+            if self.n_components > X.shape[1]:
+                raise ValueError(
+                    f"n_components({self.n_components}) must be <="
+                    f" n_features({X.shape[1]})."
+                )
             U, Sigma, VT = randomized_svd(
                 X,
                 self.n_components,
@@ -243,9 +250,9 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
                 n_oversamples=self.n_oversamples,
                 power_iteration_normalizer=self.power_iteration_normalizer,
                 random_state=random_state,
+                flip_sign=False,
             )
-        else:
-            raise ValueError("unknown algorithm %r" % self.algorithm)
+            U, VT = svd_flip(U, VT, u_based_decision=False)
 
         self.components_ = VT
 

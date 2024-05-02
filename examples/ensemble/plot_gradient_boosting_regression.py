@@ -11,7 +11,10 @@ tackle a diabetes regression task. We will obtain the results from
 and 500 regression trees of depth 4.
 
 Note: For larger datasets (n_samples >= 10000), please refer to
-:class:`~sklearn.ensemble.HistGradientBoostingRegressor`.
+:class:`~sklearn.ensemble.HistGradientBoostingRegressor`. See
+:ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py` for an example
+showcasing some other advantages of
+:class:`~ensemble.HistGradientBoostingRegressor`.
 
 """
 
@@ -23,6 +26,7 @@ Note: For larger datasets (n_samples >= 10000), please refer to
 
 import matplotlib.pyplot as plt
 import numpy as np
+
 from sklearn import datasets, ensemble
 from sklearn.inspection import permutation_importance
 from sklearn.metrics import mean_squared_error
@@ -94,7 +98,7 @@ print("The mean squared error (MSE) on test set: {:.4f}".format(mse))
 
 test_score = np.zeros((params["n_estimators"],), dtype=np.float64)
 for i, y_pred in enumerate(reg.staged_predict(X_test)):
-    test_score[i] = reg.loss_(y_test, y_pred)
+    test_score[i] = mean_squared_error(y_test, y_pred)
 
 fig = plt.figure(figsize=(6, 6))
 plt.subplot(1, 1, 1)

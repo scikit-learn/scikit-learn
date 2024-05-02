@@ -4,6 +4,7 @@
 
 cimport cython
 from cython.parallel import prange
+from libc.string cimport memset
 
 import numpy as np
 
@@ -101,8 +102,10 @@ cdef class HistogramBuilder:
         self.n_threads = n_threads
 
     def compute_histograms_brute(
-            HistogramBuilder self,
-            const unsigned int [::1] sample_indices):  # IN
+        HistogramBuilder self,
+        const unsigned int [::1] sample_indices,       # IN
+        const unsigned int [:] allowed_features=None,  # IN
+    ):
         """Compute the histograms of the node by scanning through all the data.
 
         For a given feature, the complexity is O(n_samples)
@@ -112,6 +115,10 @@ cdef class HistogramBuilder:
         sample_indices : array of int, shape (n_samples_at_node,)
             The indices of the samples at the node to split.
 
+        allowed_features : None or ndarray, dtype=np.uint32
+            Indices of the features that are allowed by interaction constraints to be
+            split.
+
         Returns
         -------
         histograms : ndarray of HISTOGRAM_DTYPE, shape (n_features, n_bins)
@@ -120,11 +127,11 @@ cdef class HistogramBuilder:
         cdef:
             int n_samples
             int feature_idx
+            int f_idx
             int i
             # need local views to avoid python interactions
-            unsigned char hessians_are_constant = \
-                self.hessians_are_constant
-            int n_features = self.n_features
+            unsigned char hessians_are_constant = self.hessians_are_constant
+            int n_allowed_features = self.n_features
             G_H_DTYPE_C [::1] ordered_gradients = self.ordered_gradients
             G_H_DTYPE_C [::1] gradients = self.gradients
             G_H_DTYPE_C [::1] ordered_hessians = self.ordered_hessians
@@ -134,7 +141,11 @@ cdef class HistogramBuilder:
                 shape=(self.n_features, self.n_bins),
                 dtype=HISTOGRAM_DTYPE
             )
+            bint has_interaction_cst = allowed_features is not None
             int n_threads = self.n_threads
+
+        if has_interaction_cst:
+            n_allowed_features = allowed_features.shape[0]
 
         with nogil:
             n_samples = sample_indices.shape[0]
@@ -153,11 +164,18 @@ cdef class HistogramBuilder:
                         ordered_gradients[i] = gradients[sample_indices[i]]
                         ordered_hessians[i] = hessians[sample_indices[i]]
 
-            for feature_idx in prange(n_features, schedule='static',
-                                      num_threads=n_threads):
-                # Compute histogram of each feature
+            # Compute histogram of each feature
+            for f_idx in prange(
+                n_allowed_features, schedule='static', num_threads=n_threads
+            ):
+                if has_interaction_cst:
+                    feature_idx = allowed_features[f_idx]
+                else:
+                    feature_idx = f_idx
+
                 self._compute_histogram_brute_single_feature(
-                    feature_idx, sample_indices, histograms)
+                    feature_idx, sample_indices, histograms
+                )
 
         return histograms
 
@@ -165,7 +183,7 @@ cdef class HistogramBuilder:
             HistogramBuilder self,
             const int feature_idx,
             const unsigned int [::1] sample_indices,  # IN
-            hist_struct [:, ::1] histograms) nogil:  # OUT
+            hist_struct [:, ::1] histograms) noexcept nogil:  # OUT
         """Compute the histogram for a given feature."""
 
         cdef:
@@ -179,12 +197,9 @@ cdef class HistogramBuilder:
                 self.ordered_hessians[:n_samples]
             unsigned char hessians_are_constant = \
                 self.hessians_are_constant
-            unsigned int bin_idx = 0
-        
-        for bin_idx in range(self.n_bins):
-            histograms[feature_idx, bin_idx].sum_gradients = 0.
-            histograms[feature_idx, bin_idx].sum_hessians = 0.
-            histograms[feature_idx, bin_idx].count = 0
+
+        # Set histograms to zero.
+        memset(&histograms[feature_idx, 0], 0, self.n_bins * sizeof(hist_struct))
 
         if root_node:
             if hessians_are_constant:
@@ -206,9 +221,11 @@ cdef class HistogramBuilder:
                                  ordered_hessians, histograms)
 
     def compute_histograms_subtraction(
-            HistogramBuilder self,
-            hist_struct [:, ::1] parent_histograms,  # IN
-            hist_struct [:, ::1] sibling_histograms):  # IN
+        HistogramBuilder self,
+        hist_struct [:, ::1] parent_histograms,        # IN and OUT
+        hist_struct [:, ::1] sibling_histograms,       # IN
+        const unsigned int [:] allowed_features=None,  # IN
+    ):
         """Compute the histograms of the node using the subtraction trick.
 
         hist(parent) = hist(left_child) + hist(right_child)
@@ -225,31 +242,43 @@ cdef class HistogramBuilder:
         sibling_histograms : ndarray of HISTOGRAM_DTYPE, \
                 shape (n_features, n_bins)
             The histograms of the sibling.
+        allowed_features : None or ndarray, dtype=np.uint32
+            Indices of the features that are allowed by interaction constraints to be
+            split.
 
         Returns
         -------
         histograms : ndarray of HISTOGRAM_DTYPE, shape(n_features, n_bins)
             The computed histograms of the current node.
+            We repurpose parent_histograms for this and don't need to allocate new
+            memory.
         """
 
         cdef:
             int feature_idx
-            int n_features = self.n_features
-            hist_struct [:, ::1] histograms = np.empty(
-                shape=(self.n_features, self.n_bins),
-                dtype=HISTOGRAM_DTYPE
-            )
+            int f_idx
+            int n_allowed_features = self.n_features
+            bint has_interaction_cst = allowed_features is not None
             int n_threads = self.n_threads
 
-        for feature_idx in prange(n_features, schedule='static', nogil=True,
-                                  num_threads=n_threads):
-            # Compute histogram of each feature
-            _subtract_histograms(feature_idx,
-                                 self.n_bins,
-                                 parent_histograms,
-                                 sibling_histograms,
-                                 histograms)
-        return histograms
+        if has_interaction_cst:
+            n_allowed_features = allowed_features.shape[0]
+
+        # Compute histogram of each feature
+        for f_idx in prange(n_allowed_features, schedule='static', nogil=True,
+                            num_threads=n_threads):
+            if has_interaction_cst:
+                feature_idx = allowed_features[f_idx]
+            else:
+                feature_idx = f_idx
+
+            _subtract_histograms(
+                feature_idx,
+                self.n_bins,
+                parent_histograms,
+                sibling_histograms,
+            )
+        return parent_histograms
 
 
 cpdef void _build_histogram_naive(
@@ -258,7 +287,7 @@ cpdef void _build_histogram_naive(
         X_BINNED_DTYPE_C [:] binned_feature,  # IN
         G_H_DTYPE_C [:] ordered_gradients,  # IN
         G_H_DTYPE_C [:] ordered_hessians,  # IN
-        hist_struct [:, :] out) nogil:  # OUT
+        hist_struct [:, :] out) noexcept nogil:  # OUT
     """Build histogram in a naive way, without optimizing for cache hit.
 
     Used in tests to compare with the optimized version."""
@@ -279,25 +308,27 @@ cpdef void _build_histogram_naive(
 cpdef void _subtract_histograms(
         const int feature_idx,
         unsigned int n_bins,
-        hist_struct [:, ::1] hist_a,  # IN
+        hist_struct [:, ::1] hist_a,  # IN and OUT
         hist_struct [:, ::1] hist_b,  # IN
-        hist_struct [:, ::1] out) nogil:  # OUT
-    """compute (hist_a - hist_b) in out"""
+) noexcept nogil:  # OUT
+    """compute hist_a = hist_a - hist_b"""
+    # Note that subtraction of large sums of floating point numbers, as we have here,
+    # can exhibit catastrophic cancallation. This is in particular true for gradients
+    # as they can be positive and negative, while hessians are non-negative.
+    # Remember that gradients and hessians are originally computed in
+    # G_H_DTYPE_C = float32 precision. Therefore, if sum_gradients and sum_hessians are
+    # float64, we don't loose precision. But if we also used float32 for summation, we
+    # would need to take care of floating point errors.
+    #
+    # Note that we could protect for negative hessians by setting:
+    #     sum_hessians = max(0, sum_hessians)
+    # But as we use float64 for summing float32, that's veeeery unlikely.
     cdef:
         unsigned int i = 0
     for i in range(n_bins):
-        out[feature_idx, i].sum_gradients = (
-            hist_a[feature_idx, i].sum_gradients -
-            hist_b[feature_idx, i].sum_gradients
-        )
-        out[feature_idx, i].sum_hessians = (
-            hist_a[feature_idx, i].sum_hessians -
-            hist_b[feature_idx, i].sum_hessians
-        )
-        out[feature_idx, i].count = (
-            hist_a[feature_idx, i].count -
-            hist_b[feature_idx, i].count
-        )
+        hist_a[feature_idx, i].sum_gradients -= hist_b[feature_idx, i].sum_gradients
+        hist_a[feature_idx, i].sum_hessians -= hist_b[feature_idx, i].sum_hessians
+        hist_a[feature_idx, i].count -= hist_b[feature_idx, i].count
 
 
 cpdef void _build_histogram(
@@ -306,7 +337,7 @@ cpdef void _build_histogram(
         const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
         const G_H_DTYPE_C [::1] ordered_gradients,  # IN
         const G_H_DTYPE_C [::1] ordered_hessians,  # IN
-        hist_struct [:, ::1] out) nogil:  # OUT
+        hist_struct [:, ::1] out) noexcept nogil:  # OUT
     """Return histogram for a given feature."""
     cdef:
         unsigned int i = 0
@@ -352,7 +383,7 @@ cpdef void _build_histogram_no_hessian(
         const unsigned int [::1] sample_indices,  # IN
         const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
         const G_H_DTYPE_C [::1] ordered_gradients,  # IN
-        hist_struct [:, ::1] out) nogil:  # OUT
+        hist_struct [:, ::1] out) noexcept nogil:  # OUT
     """Return histogram for a given feature, not updating hessians.
 
     Used when the hessians of the loss are constant (typically LS loss).
@@ -396,7 +427,7 @@ cpdef void _build_histogram_root(
         const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
         const G_H_DTYPE_C [::1] all_gradients,  # IN
         const G_H_DTYPE_C [::1] all_hessians,  # IN
-        hist_struct [:, ::1] out) nogil:  # OUT
+        hist_struct [:, ::1] out) noexcept nogil:  # OUT
     """Compute histogram of the root node.
 
     Unlike other nodes, the root node has to find the split among *all* the
@@ -448,7 +479,7 @@ cpdef void _build_histogram_root_no_hessian(
         const int feature_idx,
         const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
         const G_H_DTYPE_C [::1] all_gradients,  # IN
-        hist_struct [:, ::1] out) nogil:  # OUT
+        hist_struct [:, ::1] out) noexcept nogil:  # OUT
     """Compute histogram of the root node, not updating hessians.
 
     Used when the hessians of the loss are constant (typically LS loss).

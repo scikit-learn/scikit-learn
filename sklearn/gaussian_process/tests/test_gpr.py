@@ -1,28 +1,34 @@
-"""Testing for Gaussian process regression """
+"""Testing for Gaussian process regression"""
 
 # Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # Modified by: Pete Green <p.l.green@liverpool.ac.uk>
 # License: BSD 3 clause
 
-import warnings
-import sys
 import re
-import numpy as np
+import sys
+import warnings
 
+import numpy as np
+import pytest
 from scipy.optimize import approx_fprime
 
-import pytest
-
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C, WhiteKernel
-from sklearn.gaussian_process.kernels import DotProduct, ExpSineSquared
-from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import (
+    RBF,
+    DotProduct,
+    ExpSineSquared,
+    WhiteKernel,
+)
+from sklearn.gaussian_process.kernels import (
+    ConstantKernel as C,
+)
+from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
 from sklearn.utils._testing import (
-    assert_array_less,
+    assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
-    assert_allclose,
+    assert_array_less,
 )
 
 
@@ -487,8 +493,7 @@ def test_warning_bounds():
 
         assert issubclass(record[0].category, ConvergenceWarning)
         assert (
-            record[0].message.args[0]
-            == "The optimal value found for "
+            record[0].message.args[0] == "The optimal value found for "
             "dimension 0 of parameter "
             "k1__noise_level is close to the "
             "specified upper bound 0.001. "
@@ -498,8 +503,7 @@ def test_warning_bounds():
 
         assert issubclass(record[1].category, ConvergenceWarning)
         assert (
-            record[1].message.args[0]
-            == "The optimal value found for "
+            record[1].message.args[0] == "The optimal value found for "
             "dimension 0 of parameter "
             "k2__length_scale is close to the "
             "specified lower bound 1000.0. "
@@ -519,8 +523,7 @@ def test_warning_bounds():
 
         assert issubclass(record[0].category, ConvergenceWarning)
         assert (
-            record[0].message.args[0]
-            == "The optimal value found for "
+            record[0].message.args[0] == "The optimal value found for "
             "dimension 0 of parameter "
             "length_scale is close to the "
             "specified lower bound 10.0. "
@@ -530,8 +533,7 @@ def test_warning_bounds():
 
         assert issubclass(record[1].category, ConvergenceWarning)
         assert (
-            record[1].message.args[0]
-            == "The optimal value found for "
+            record[1].message.args[0] == "The optimal value found for "
             "dimension 1 of parameter "
             "length_scale is close to the "
             "specified lower bound 10.0. "
@@ -641,8 +643,11 @@ def test_gpr_consistency_std_cov_non_invertible_kernel():
 @pytest.mark.parametrize(
     "params, TypeError, err_msg",
     [
-        ({"kernel": RBF(), "optimizer": "unknown"}, ValueError, "Unknown optimizer"),
-        ({"alpha": np.zeros(100)}, ValueError, "alpha must be a scalar or an array"),
+        (
+            {"alpha": np.zeros(100)},
+            ValueError,
+            "alpha must be a scalar or an array with same number of entries as y",
+        ),
         (
             {
                 "kernel": WhiteKernel(noise_level_bounds=(-np.inf, np.inf)),
@@ -764,3 +769,81 @@ def test_sample_y_shapes(normalize_y, n_targets):
 
     y_samples = model.sample_y(X_test, n_samples=n_samples_y_test)
     assert y_samples.shape == y_test_shape
+
+
+@pytest.mark.parametrize("n_targets", [None, 1, 2, 3])
+@pytest.mark.parametrize("n_samples", [1, 5])
+def test_sample_y_shape_with_prior(n_targets, n_samples):
+    """Check the output shape of `sample_y` is consistent before and after `fit`."""
+    rng = np.random.RandomState(1024)
+
+    X = rng.randn(10, 3)
+    y = rng.randn(10, n_targets if n_targets is not None else 1)
+
+    model = GaussianProcessRegressor(n_targets=n_targets)
+    shape_before_fit = model.sample_y(X, n_samples=n_samples).shape
+    model.fit(X, y)
+    shape_after_fit = model.sample_y(X, n_samples=n_samples).shape
+    assert shape_before_fit == shape_after_fit
+
+
+@pytest.mark.parametrize("n_targets", [None, 1, 2, 3])
+def test_predict_shape_with_prior(n_targets):
+    """Check the output shape of `predict` with prior distribution."""
+    rng = np.random.RandomState(1024)
+
+    n_sample = 10
+    X = rng.randn(n_sample, 3)
+    y = rng.randn(n_sample, n_targets if n_targets is not None else 1)
+
+    model = GaussianProcessRegressor(n_targets=n_targets)
+    mean_prior, cov_prior = model.predict(X, return_cov=True)
+    _, std_prior = model.predict(X, return_std=True)
+
+    model.fit(X, y)
+    mean_post, cov_post = model.predict(X, return_cov=True)
+    _, std_post = model.predict(X, return_std=True)
+
+    assert mean_prior.shape == mean_post.shape
+    assert cov_prior.shape == cov_post.shape
+    assert std_prior.shape == std_post.shape
+
+
+def test_n_targets_error():
+    """Check that an error is raised when the number of targets seen at fit is
+    inconsistent with n_targets.
+    """
+    rng = np.random.RandomState(0)
+    X = rng.randn(10, 3)
+    y = rng.randn(10, 2)
+
+    model = GaussianProcessRegressor(n_targets=1)
+    with pytest.raises(ValueError, match="The number of targets seen in `y`"):
+        model.fit(X, y)
+
+
+class CustomKernel(C):
+    """
+    A custom kernel that has a diag method that returns the first column of the
+    input matrix X. This is a helper for the test to check that the input
+    matrix X is not mutated.
+    """
+
+    def diag(self, X):
+        return X[:, 0]
+
+
+def test_gpr_predict_input_not_modified():
+    """
+    Check that the input X is not modified by the predict method of the
+    GaussianProcessRegressor when setting return_std=True.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/24340
+    """
+    gpr = GaussianProcessRegressor(kernel=CustomKernel()).fit(X, y)
+
+    X2_copy = np.copy(X2)
+    _, _ = gpr.predict(X2, return_std=True)
+
+    assert_allclose(X2, X2_copy)

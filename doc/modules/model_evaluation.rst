@@ -94,18 +94,16 @@ Scoring                                Function                                 
 'max_error'                            :func:`metrics.max_error`
 'neg_mean_absolute_error'              :func:`metrics.mean_absolute_error`
 'neg_mean_squared_error'               :func:`metrics.mean_squared_error`
-'neg_root_mean_squared_error'          :func:`metrics.mean_squared_error`
+'neg_root_mean_squared_error'          :func:`metrics.root_mean_squared_error`
 'neg_mean_squared_log_error'           :func:`metrics.mean_squared_log_error`
+'neg_root_mean_squared_log_error'      :func:`metrics.root_mean_squared_log_error`
 'neg_median_absolute_error'            :func:`metrics.median_absolute_error`
 'r2'                                   :func:`metrics.r2_score`
 'neg_mean_poisson_deviance'            :func:`metrics.mean_poisson_deviance`
 'neg_mean_gamma_deviance'              :func:`metrics.mean_gamma_deviance`
 'neg_mean_absolute_percentage_error'   :func:`metrics.mean_absolute_percentage_error`
-'d2_absolute_error_score'              :func:`metrics.d2_absolute_error_score`
-'d2_pinball_score'                     :func:`metrics.d2_pinball_score`
-'d2_tweedie_score'                     :func:`metrics.d2_tweedie_score`
+'d2_absolute_error_score' 	           :func:`metrics.d2_absolute_error_score`
 ====================================   ==============================================     ==================================
-
 
 Usage examples:
 
@@ -115,17 +113,11 @@ Usage examples:
     >>> clf = svm.SVC(random_state=0)
     >>> cross_val_score(clf, X, y, cv=5, scoring='recall_macro')
     array([0.96..., 0.96..., 0.96..., 0.93..., 1.        ])
-    >>> model = svm.SVC()
-    >>> cross_val_score(model, X, y, cv=5, scoring='wrong_choice')
-    Traceback (most recent call last):
-    ValueError: 'wrong_choice' is not a valid scoring value. Use
-    sklearn.metrics.get_scorer_names() to get valid options.
 
 .. note::
 
-    The values listed by the ``ValueError`` exception correspond to the
-    functions measuring prediction accuracy described in the following
-    sections. You can retrieve the names of all available scorers by calling
+    If a wrong scoring name is passed, an ``InvalidParameterError`` is raised.
+    You can retrieve the names of all available scorers by calling
     :func:`~sklearn.metrics.get_scorer_names`.
 
 .. currentmodule:: sklearn.metrics
@@ -135,27 +127,25 @@ Usage examples:
 Defining your scoring strategy from metric functions
 -----------------------------------------------------
 
-The module :mod:`sklearn.metrics` also exposes a set of simple functions
-measuring a prediction error given ground truth and prediction:
-
-- functions ending with ``_score`` return a value to
-  maximize, the higher the better.
-
-- functions ending with ``_error`` or ``_loss`` return a
-  value to minimize, the lower the better.  When converting
-  into a scorer object using :func:`make_scorer`, set
-  the ``greater_is_better`` parameter to ``False`` (``True`` by default; see the
-  parameter description below).
-
-Metrics available for various machine learning tasks are detailed in sections
-below.
-
-Many metrics are not given names to be used as ``scoring`` values,
+The following metrics functions are not implemented as named scorers,
 sometimes because they require additional parameters, such as
-:func:`fbeta_score`. In such cases, you need to generate an appropriate
-scoring object.  The simplest way to generate a callable object for scoring
-is by using :func:`make_scorer`. That function converts metrics
-into callables that can be used for model evaluation.
+:func:`fbeta_score`. They cannot be passed to the ``scoring``
+parameters; instead their callable needs to be passed to
+:func:`make_scorer` together with the value of the user-settable
+parameters.
+
+=====================================  =========  ==============================================
+Function                               Parameter  Example usage
+=====================================  =========  ==============================================
+**Classification**
+:func:`metrics.fbeta_score`            ``beta``   ``make_scorer(fbeta_score, beta=2)``
+
+**Regression**
+:func:`metrics.mean_tweedie_deviance`  ``power``  ``make_scorer(mean_tweedie_deviance, power=1.5)``
+:func:`metrics.mean_pinball_loss`      ``alpha``  ``make_scorer(mean_pinball_loss, alpha=0.95)``
+:func:`metrics.d2_tweedie_score`       ``power``  ``make_scorer(d2_tweedie_score, power=1.5)``
+:func:`metrics.d2_pinball_score`       ``alpha``  ``make_scorer(d2_pinball_score, alpha=0.95)``
+=====================================  =========  ==============================================
 
 One typical use case is to wrap an existing metric function from the library
 with non-default values for its parameters, such as the ``beta`` parameter for
@@ -167,6 +157,24 @@ the :func:`fbeta_score` function::
     >>> from sklearn.svm import LinearSVC
     >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]},
     ...                     scoring=ftwo_scorer, cv=5)
+
+The module :mod:`sklearn.metrics` also exposes a set of simple functions
+measuring a prediction error given ground truth and prediction:
+
+- functions ending with ``_score`` return a value to
+  maximize, the higher the better.
+
+- functions ending with ``_error``, ``_loss``, or ``_deviance`` return a
+  value to minimize, the lower the better.  When converting
+  into a scorer object using :func:`make_scorer`, set
+  the ``greater_is_better`` parameter to ``False`` (``True`` by default; see the
+  parameter description below).
+
+
+|details-start|
+**Custom scorer objects**
+|details-split|
+
 
 The second use case is to build a completely custom scorer object
 from a simple python function using :func:`make_scorer`, which can
@@ -180,9 +188,15 @@ take several parameters:
   of the python function is negated by the scorer object, conforming to
   the cross validation convention that scorers return higher values for better models.
 
-* for classification metrics only: whether the python function you provided requires continuous decision
-  certainties (``needs_threshold=True``).  The default value is
-  False.
+* for classification metrics only: whether the python function you provided requires
+  continuous decision certainties. If the scoring function only accepts probability
+  estimates (e.g. :func:`metrics.log_loss`) then one needs to set the parameter
+  `response_method`, thus in this case `response_method="predict_proba"`. Some scoring
+  function do not necessarily require probability estimates but rather non-thresholded
+  decision values (e.g. :func:`metrics.roc_auc_score`). In this case, one provides a
+  list such as `response_method=["decision_function", "predict_proba"]`. In this case,
+  the scorer will use the first available method, in the order given in the list,
+  to compute the scores.
 
 * any additional parameters, such as ``beta`` or ``labels`` in :func:`f1_score`.
 
@@ -208,13 +222,21 @@ Here is an example of building custom scorers, and of using the
     >>> score(clf, X, y)
     -0.69...
 
+|details-end|
 
 .. _diy_scoring:
 
 Implementing your own scoring object
 ------------------------------------
+
 You can generate even more flexible model scorers by constructing your own
 scoring object from scratch, without using the :func:`make_scorer` factory.
+
+
+|details-start|
+**How to build a scorer from scratch**
+|details-split|
+
 For a callable to be a scorer, it needs to meet the protocol specified by
 the following two rules:
 
@@ -227,6 +249,14 @@ the following two rules:
   ``estimator`` prediction quality on ``X``, with reference to ``y``.
   Again, by convention higher numbers are better, so if your scorer
   returns loss, that value should be negated.
+
+- Advanced: If it requires extra metadata to be passed to it, it should expose
+  a ``get_metadata_routing`` method returning the requested metadata. The user
+  should be able to set the requested metadata via a ``set_score_request``
+  method. Please see :ref:`User Guide <metadata_routing>` and :ref:`Developer
+  Guide <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>` for
+  more details.
+
 
 .. note:: **Using custom scorers in functions where n_jobs > 1**
 
@@ -246,6 +276,8 @@ the following two rules:
         ...  scoring=make_scorer(custom_scoring_function, greater_is_better=False),
         ...  cv=5,
         ...  n_jobs=-1) # doctest: +SKIP
+
+|details-end|
 
 .. _multimetric_scoring:
 
@@ -433,7 +465,7 @@ where :math:`1(x)` is the `indicator function
   >>> accuracy_score(y_true, y_pred)
   0.5
   >>> accuracy_score(y_true, y_pred, normalize=False)
-  2
+  2.0
 
 In the multilabel case with binary label indicators::
 
@@ -694,10 +726,6 @@ and inferred labels::
     for an example of classification report usage for
     hand-written digits.
 
-  * See :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
-    for an example of classification report usage for text
-    documents.
-
   * See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
     for an example of classification report usage for
     grid search with nested cross-validation.
@@ -711,17 +739,21 @@ The :func:`hamming_loss` computes the average Hamming loss or `Hamming
 distance <https://en.wikipedia.org/wiki/Hamming_distance>`_ between two sets
 of samples.
 
-If :math:`\hat{y}_j` is the predicted value for the :math:`j`-th label of
-a given sample, :math:`y_j` is the corresponding true value, and
-:math:`n_\text{labels}` is the number of classes or labels, then the
-Hamming loss :math:`L_{Hamming}` between two samples is defined as:
+If :math:`\hat{y}_{i,j}` is the predicted value for the :math:`j`-th label of a
+given sample :math:`i`, :math:`y_{i,j}` is the corresponding true value,
+:math:`n_\text{samples}` is the number of samples and :math:`n_\text{labels}`
+is the number of labels, then the Hamming loss :math:`L_{Hamming}` is defined
+as:
 
 .. math::
 
-   L_{Hamming}(y, \hat{y}) = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} 1(\hat{y}_j \not= y_j)
+   L_{Hamming}(y, \hat{y}) = \frac{1}{n_\text{samples} * n_\text{labels}} \sum_{i=0}^{n_\text{samples}-1} \sum_{j=0}^{n_\text{labels} - 1} 1(\hat{y}_{i,j} \not= y_{i,j})
 
 where :math:`1(x)` is the `indicator function
-<https://en.wikipedia.org/wiki/Indicator_function>`_. ::
+<https://en.wikipedia.org/wiki/Indicator_function>`_.
+
+The equation above does not hold true in the case of multiclass classification.
+Please refer to the note below for more information. ::
 
   >>> from sklearn.metrics import hamming_loss
   >>> y_pred = [1, 2, 3, 4]
@@ -801,10 +833,12 @@ score:
    recall_score
 
 Note that the :func:`precision_recall_curve` function is restricted to the
-binary case. The :func:`average_precision_score` function works only in
-binary classification and multilabel indicator format.
-The :func:`PredictionRecallDisplay.from_estimator` and
-:func:`PredictionRecallDisplay.from_predictions` functions will plot the
+binary case. The :func:`average_precision_score` function supports multiclass
+and multilabel formats by computing each class score in a One-vs-the-rest (OvR)
+fashion and averaging them or not depending of its ``average`` argument value.
+
+The :func:`PrecisionRecallDisplay.from_estimator` and
+:func:`PrecisionRecallDisplay.from_predictions` functions will plot the
 precision-recall curve as follows.
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_precision_recall_001.png
@@ -814,10 +848,6 @@ precision-recall curve as follows.
 
 .. topic:: Examples:
 
-  * See :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
-    for an example of :func:`f1_score` usage to classify  text
-    documents.
-
   * See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
     for an example of :func:`precision_score` and :func:`recall_score` usage
     to estimate parameters using grid search with nested cross-validation.
@@ -826,7 +856,6 @@ precision-recall curve as follows.
     for an example of :func:`precision_recall_curve` usage to evaluate
     classifier output quality.
 
-
 .. topic:: References:
 
   .. [Manning2008] C.D. Manning, P. Raghavan, H. Schütze, `Introduction to Information Retrieval
@@ -834,7 +863,7 @@ precision-recall curve as follows.
      2008.
   .. [Everingham2010] M. Everingham, L. Van Gool, C.K.I. Williams, J. Winn, A. Zisserman,
      `The Pascal Visual Object Classes (VOC) Challenge
-     <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.157.5766&rep=rep1&type=pdf>`_,
+     <https://citeseerx.ist.psu.edu/doc_view/pid/b6bebfd529b233f00cb854b7d8070319600cf59d>`_,
      IJCV 2010.
   .. [Davis2006] J. Davis, M. Goadrich, `The Relationship Between Precision-Recall and ROC Curves
      <https://www.biostat.wisc.edu/~page/rocpr.pdf>`_,
@@ -842,7 +871,6 @@ precision-recall curve as follows.
   .. [Flach2015] P.A. Flach, M. Kull, `Precision-Recall-Gain Curves: PR Analysis Done Right
      <https://papers.nips.cc/paper/5867-precision-recall-gain-curves-pr-analysis-done-right.pdf>`_,
      NIPS 2015.
-
 
 Binary classification
 ^^^^^^^^^^^^^^^^^^^^^
@@ -863,22 +891,36 @@ following table:
 |                   | Missing result      | Correct absence of result|
 +-------------------+---------------------+--------------------------+
 
-In this context, we can define the notions of precision, recall and F-measure:
+In this context, we can define the notions of precision and recall:
 
 .. math::
 
-   \text{precision} = \frac{tp}{tp + fp},
+   \text{precision} = \frac{\text{tp}}{\text{tp} + \text{fp}},
 
 .. math::
 
-   \text{recall} = \frac{tp}{tp + fn},
+   \text{recall} = \frac{\text{tp}}{\text{tp} + \text{fn}},
+
+(Sometimes recall is also called ''sensitivity'')
+
+F-measure is the weighted harmonic mean of precision and recall, with precision's
+contribution to the mean weighted by some parameter :math:`\beta`:
 
 .. math::
 
-   F_\beta = (1 + \beta^2) \frac{\text{precision} \times \text{recall}}{\beta^2 \text{precision} + \text{recall}}.
+   F_\beta = (1 + \beta^2) \frac{\text{precision} \times \text{recall}}{\beta^2 \text{precision} + \text{recall}}
 
-Sometimes recall is also called ''sensitivity''.
+To avoid division by zero when precision and recall are zero, Scikit-Learn calculates F-measure with this
+otherwise-equivalent formula:
 
+.. math::
+
+   F_\beta = \frac{(1 + \beta^2) \text{tp}}{(1 + \beta^2) \text{tp} + \text{fp} + \beta^2 \text{fn}}
+
+Note that this formula is still undefined when there are no true positives, false
+positives, or false negatives. By default, F-1 for a set of exclusively true negatives
+is calculated as 0, however this behavior can be changed using the `zero_division`
+parameter.
 Here are some small examples in binary classification::
 
   >>> from sklearn import metrics
@@ -923,13 +965,20 @@ In a multiclass and multilabel classification task, the notions of precision,
 recall, and F-measures can be applied to each label independently.
 There are a few ways to combine results across labels,
 specified by the ``average`` argument to the
-:func:`average_precision_score` (multilabel only), :func:`f1_score`,
+:func:`average_precision_score`, :func:`f1_score`,
 :func:`fbeta_score`, :func:`precision_recall_fscore_support`,
 :func:`precision_score` and :func:`recall_score` functions, as described
-:ref:`above <average>`. Note that if all labels are included, "micro"-averaging
-in a multiclass setting will produce precision, recall and :math:`F`
-that are all identical to accuracy. Also note that "weighted" averaging may
-produce an F-score that is not between precision and recall.
+:ref:`above <average>`.
+
+Note the following behaviors when averaging:
+
+* If all labels are included, "micro"-averaging in a multiclass setting will produce
+  precision, recall and :math:`F` that are all identical to accuracy.
+* "weighted" averaging may produce a F-score that is not between precision and recall.
+* "macro" averaging for F-measures is calculated as the arithmetic mean over
+  per-label/class F-measures, not the harmonic mean over the arithmetic precision and
+  recall means. Both calculations can be seen in the literature but are not equivalent,
+  see [OB2019]_ for details.
 
 To make this more explicit, consider the following notation:
 
@@ -990,6 +1039,11 @@ Similarly, labels not present in the data sample may be accounted for in macro-a
   >>> metrics.precision_score(y_true, y_pred, labels=[0, 1, 2, 3], average='macro')
   0.166...
 
+.. topic:: References:
+
+    .. [OB2019] :arxiv:`Opitz, J., & Burst, S. (2019). "Macro f1 and macro f1."
+       <1911.03347>`
+
 .. _jaccard_similarity_score:
 
 Jaccard similarity coefficient score
@@ -999,17 +1053,16 @@ The :func:`jaccard_score` function computes the average of `Jaccard similarity
 coefficients <https://en.wikipedia.org/wiki/Jaccard_index>`_, also called the
 Jaccard index, between pairs of label sets.
 
-The Jaccard similarity coefficient of the :math:`i`-th samples,
-with a ground truth label set :math:`y_i` and predicted label set
-:math:`\hat{y}_i`, is defined as
+The Jaccard similarity coefficient with a ground truth label set :math:`y` and
+predicted label set :math:`\hat{y}`, is defined as
 
 .. math::
 
-    J(y_i, \hat{y}_i) = \frac{|y_i \cap \hat{y}_i|}{|y_i \cup \hat{y}_i|}.
+    J(y, \hat{y}) = \frac{|y \cap \hat{y}|}{|y \cup \hat{y}|}.
 
-:func:`jaccard_score` works like :func:`precision_recall_fscore_support` as a
-naively set-wise measure applying natively to binary targets, and extended to
-apply to multilabel and multiclass through the use of `average` (see
+The :func:`jaccard_score` (like :func:`precision_recall_fscore_support`) applies
+natively to binary targets. By computing it set-wise it can be extended to apply
+to multilabel and multiclass through the use of `average` (see
 :ref:`above <average>`).
 
 In the binary case::
@@ -1060,29 +1113,35 @@ the model and the data using
 that considers only prediction errors. (Hinge
 loss is used in maximal margin classifiers such as support vector machines.)
 
-If the labels are encoded with +1 and -1,  :math:`y`: is the true
-value, and :math:`w` is the predicted decisions as output by
-``decision_function``, then the hinge loss is defined as:
+If the true label :math:`y_i` of a binary classification task is encoded as
+:math:`y_i=\left\{-1, +1\right\}` for every sample :math:`i`; and :math:`w_i`
+is the corresponding predicted decision (an array of shape (`n_samples`,) as
+output by the `decision_function` method), then the hinge loss is defined as:
 
 .. math::
 
-  L_\text{Hinge}(y, w) = \max\left\{1 - wy, 0\right\} = \left|1 - wy\right|_+
+  L_\text{Hinge}(y, w) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} \max\left\{1 - w_i y_i, 0\right\}
 
 If there are more than two labels, :func:`hinge_loss` uses a multiclass variant
 due to Crammer & Singer.
-`Here <http://jmlr.csail.mit.edu/papers/volume2/crammer01a/crammer01a.pdf>`_ is
+`Here <https://jmlr.csail.mit.edu/papers/volume2/crammer01a/crammer01a.pdf>`_ is
 the paper describing it.
 
-If :math:`y_w` is the predicted decision for true label and :math:`y_t` is the
-maximum of the predicted decisions for all other labels, where predicted
-decisions are output by decision function, then multiclass hinge loss is defined
-by:
+In this case the predicted decision is an array of shape (`n_samples`,
+`n_labels`). If :math:`w_{i, y_i}` is the predicted decision for the true label
+:math:`y_i` of the :math:`i`-th sample; and
+:math:`\hat{w}_{i, y_i} = \max\left\{w_{i, y_j}~|~y_j \ne y_i \right\}`
+is the maximum of the
+predicted decisions for all the other labels, then the multi-class hinge loss
+is defined by:
 
 .. math::
 
-  L_\text{Hinge}(y_w, y_t) = \max\left\{1 + y_t - y_w, 0\right\}
+  L_\text{Hinge}(y, w) = \frac{1}{n_\text{samples}}
+  \sum_{i=0}^{n_\text{samples}-1} \max\left\{1 + \hat{w}_{i, y_i}
+  - w_{i, y_i}, 0\right\}
 
-Here a small example demonstrating the use of the :func:`hinge_loss` function
+Here is a small example demonstrating the use of the :func:`hinge_loss` function
 with a svm classifier in a binary class problem::
 
   >>> from sklearn import svm
@@ -1350,10 +1409,10 @@ Quoting Wikipedia :
   positive rate), at various threshold settings. TPR is also known as
   sensitivity, and FPR is one minus the specificity or true negative rate."
 
-This function requires the true binary
-value and the target scores, which can either be probability estimates of the
-positive class, confidence values, or binary decisions.
-Here is a small example of how to use the :func:`roc_curve` function::
+This function requires the true binary value and the target scores, which can
+either be probability estimates of the positive class, confidence values, or
+binary decisions. Here is a small example of how to use the :func:`roc_curve`
+function::
 
     >>> import numpy as np
     >>> from sklearn.metrics import roc_curve
@@ -1365,24 +1424,28 @@ Here is a small example of how to use the :func:`roc_curve` function::
     >>> tpr
     array([0. , 0.5, 0.5, 1. , 1. ])
     >>> thresholds
-    array([1.8 , 0.8 , 0.4 , 0.35, 0.1 ])
+    array([ inf, 0.8 , 0.4 , 0.35, 0.1 ])
 
-This figure shows an example of such an ROC curve:
+Compared to metrics such as the subset accuracy, the Hamming loss, or the
+F1 score, ROC doesn't require optimizing a threshold for each label.
+
+The :func:`roc_auc_score` function, denoted by ROC-AUC or AUROC, computes the
+area under the ROC curve. By doing so, the curve information is summarized in
+one number.
+
+The following figure shows the ROC curve and ROC-AUC score for a classifier
+aimed to distinguish the virginica flower from the rest of the species in the
+:ref:`iris_dataset`:
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_roc_001.png
    :target: ../auto_examples/model_selection/plot_roc.html
    :scale: 75
    :align: center
 
-The :func:`roc_auc_score` function computes the area under the receiver
-operating characteristic (ROC) curve, which is also denoted by
-AUC or AUROC.  By computing the
-area under the roc curve, the curve information is summarized in one number.
+
+
 For more information see the `Wikipedia article on AUC
 <https://en.wikipedia.org/wiki/Receiver_operating_characteristic#Area_under_the_curve>`_.
-
-Compared to metrics such as the subset accuracy, the Hamming loss, or the
-F1 score, ROC doesn't require optimizing a threshold for each label.
 
 .. _roc_auc_binary:
 
@@ -1431,7 +1494,11 @@ correspond to the probability estimates that a sample belongs to a particular
 class. The OvO and OvR algorithms support weighting uniformly
 (``average='macro'``) and by prevalence (``average='weighted'``).
 
-**One-vs-one Algorithm**: Computes the average AUC of all possible pairwise
+|details-start|
+**One-vs-one Algorithm**
+|details-split|
+
+Computes the average AUC of all possible pairwise
 combinations of classes. [HT2001]_ defines a multiclass AUC metric weighted
 uniformly:
 
@@ -1460,21 +1527,32 @@ the keyword argument ``multiclass`` to ``'ovo'`` and ``average`` to
 ``'weighted'``. The ``'weighted'`` option returns a prevalence-weighted average
 as described in [FC2009]_.
 
-**One-vs-rest Algorithm**: Computes the AUC of each class against the rest
+|details-end|
+
+|details-start|
+**One-vs-rest Algorithm**
+|details-split|
+
+Computes the AUC of each class against the rest
 [PD2000]_. The algorithm is functionally the same as the multilabel case. To
 enable this algorithm set the keyword argument ``multiclass`` to ``'ovr'``.
-Like OvO, OvR supports two types of averaging: ``'macro'`` [F2006]_ and
-``'weighted'`` [F2001]_.
+Additionally to ``'macro'`` [F2006]_ and ``'weighted'`` [F2001]_ averaging, OvR
+supports ``'micro'`` averaging.
 
 In applications where a high false positive rate is not tolerable the parameter
 ``max_fpr`` of :func:`roc_auc_score` can be used to summarize the ROC curve up
 to the given limit.
 
+The following figure shows the micro-averaged ROC curve and its corresponding
+ROC-AUC score for a classifier aimed to distinguish the different species in
+the :ref:`iris_dataset`:
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_roc_002.png
    :target: ../auto_examples/model_selection/plot_roc.html
    :scale: 75
    :align: center
+
+|details-end|
 
 .. _roc_auc_multilabel:
 
@@ -1523,23 +1601,25 @@ And the decision values do not require such processing.
     .. [HT2001] Hand, D.J. and Till, R.J., (2001). `A simple generalisation
        of the area under the ROC curve for multiple class classification problems.
        <http://link.springer.com/article/10.1023/A:1010920819831>`_
-       Machine learning, 45(2), pp.171-186.
+       Machine learning, 45(2), pp. 171-186.
 
     .. [FC2009] Ferri, Cèsar & Hernandez-Orallo, Jose & Modroiu, R. (2009).
        `An Experimental Comparison of Performance Measures for Classification.
        <https://www.math.ucdavis.edu/~saito/data/roc/ferri-class-perf-metrics.pdf>`_
        Pattern Recognition Letters. 30. 27-38.
 
-    .. [PD2000] Provost, F., Domingos, P. (2000). Well-trained PETs: Improving
-       probability estimation trees (Section 6.2), CeDER Working Paper #IS-00-04,
-       Stern School of Business, New York University.
+    .. [PD2000] Provost, F., Domingos, P. (2000). `Well-trained PETs: Improving
+       probability estimation trees
+       <https://fosterprovost.com/publication/well-trained-pets-improving-probability-estimation-trees/>`_
+       (Section 6.2), CeDER Working Paper #IS-00-04, Stern School of Business,
+       New York University.
 
     .. [F2006] Fawcett, T., 2006. `An introduction to ROC analysis.
        <http://www.sciencedirect.com/science/article/pii/S016786550500303X>`_
        Pattern Recognition Letters, 27(8), pp. 861-874.
 
     .. [F2001] Fawcett, T., 2001. `Using rule sets to maximize
-       ROC performance <http://ieeexplore.ieee.org/document/989510/>`_
+       ROC performance <https://ieeexplore.ieee.org/document/989510/>`_
        In Data Mining, 2001.
        Proceedings IEEE International Conference, pp. 131-138.
 
@@ -1577,12 +1657,20 @@ same classification task:
    :scale: 75
    :align: center
 
-**Properties:**
+.. topic:: Examples:
+
+  * See :ref:`sphx_glr_auto_examples_model_selection_plot_det.py`
+    for an example comparison between receiver operating characteristic (ROC)
+    curves and Detection error tradeoff (DET) curves.
+
+|details-start|
+**Properties**
+|details-split|
 
 * DET curves form a linear curve in normal deviate scale if the detection
   scores are normally (or close-to normally) distributed.
-  It was shown by [Navratil2007]_ that the reverse it not necessarily true and
-  even more general distributions are able produce linear DET curves.
+  It was shown by [Navratil2007]_ that the reverse is not necessarily true and
+  even more general distributions are able to produce linear DET curves.
 
 * The normal deviate scale transformation spreads out the points such that a
   comparatively larger space of plot is occupied.
@@ -1593,7 +1681,11 @@ same classification task:
   of perfection for DET curves is the origin (in contrast to the top left
   corner for ROC curves).
 
-**Applications and limitations:**
+|details-end|
+
+|details-start|
+**Applications and limitations**
+|details-split|
 
 DET curves are intuitive to read and hence allow quick visual assessment of a
 classifier's performance.
@@ -1606,11 +1698,7 @@ Therefore for either automated evaluation or comparison to other
 classification tasks metrics like the derived area under ROC curve might be
 better suited.
 
-.. topic:: Examples:
-
-  * See :ref:`sphx_glr_auto_examples_model_selection_plot_det.py`
-    for an example comparison between receiver operating characteristic (ROC)
-    curves and Detection error tradeoff (DET) curves.
+|details-end|
 
 .. topic:: References:
 
@@ -1653,10 +1741,11 @@ then the 0-1 loss :math:`L_{0-1}` is defined as:
 
 .. math::
 
-   L_{0-1}(y_i, \hat{y}_i) = 1(\hat{y}_i \not= y_i)
+   L_{0-1}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} 1(\hat{y}_i \not= y_i)
 
 where :math:`1(x)` is the `indicator function
-<https://en.wikipedia.org/wiki/Indicator_function>`_.
+<https://en.wikipedia.org/wiki/Indicator_function>`_. The zero one
+loss can also be computed as :math:`zero-one loss = 1 - accuracy`.
 
 
   >>> from sklearn.metrics import zero_one_loss
@@ -1665,7 +1754,7 @@ where :math:`1(x)` is the `indicator function
   >>> zero_one_loss(y_true, y_pred)
   0.25
   >>> zero_one_loss(y_true, y_pred, normalize=False)
-  1
+  1.0
 
 In the multilabel case with binary label indicators, where the first label
 set [0,1] has an error::
@@ -1674,7 +1763,7 @@ set [0,1] has an error::
   0.5
 
   >>> zero_one_loss(np.array([[0, 1], [1, 1]]), np.ones((2, 2)),  normalize=False)
-  1
+  1.0
 
 .. topic:: Example:
 
@@ -1810,7 +1899,13 @@ counts ``tp`` (see `the wikipedia page
 <https://en.wikipedia.org/wiki/Likelihood_ratios_in_diagnostic_testing>`_ for
 the actual formulas).
 
-**Interpretation across varying prevalence:**
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_model_selection_plot_likelihood_ratios.py`
+
+|details-start|
+**Interpretation across varying prevalence**
+|details-split|
 
 Both class likelihood ratios are interpretable in terms of an odds ratio
 (pre-test and post-tests):
@@ -1845,7 +1940,11 @@ prediction:
 
    \text{post-test probability} = \frac{\text{post-test odds}}{1 + \text{post-test odds}}.
 
-**Mathematical divergences:**
+|details-end|
+
+|details-start|
+**Mathematical divergences**
+|details-split|
 
 The positive likelihood ratio is undefined when :math:`fp = 0`, which can be
 interpreted as the classifier perfectly identifying positive cases. If :math:`fp
@@ -1871,11 +1970,11 @@ averaging over cross-validation folds.
 For a worked-out demonstration of the :func:`class_likelihood_ratios` function,
 see the example below.
 
-.. topic:: Examples:
+|details-end|
 
-  * :ref:`sphx_glr_auto_examples_model_selection_plot_likelihood_ratios.py`
-
-.. topic:: References:
+|details-start|
+**References**
+|details-split|
 
   * `Wikipedia entry for Likelihood ratios in diagnostic testing
     <https://en.wikipedia.org/wiki/Likelihood_ratios_in_diagnostic_testing>`_
@@ -1885,6 +1984,7 @@ see the example below.
     values with disease prevalence.
     Statistics in medicine, 16(9), 981-991.
 
+|details-end|
 
 .. _multilabel_ranking_metrics:
 
@@ -2024,10 +2124,14 @@ Here is a small example of usage of this function::
     0.0
 
 
-.. topic:: References:
+|details-start|
+**References**
+|details-split|
 
   * Tsoumakas, G., Katakis, I., & Vlahavas, I. (2010). Mining multi-label data. In
     Data mining and knowledge discovery handbook (pp. 667-685). Springer US.
+
+|details-end|
 
 .. _ndcg:
 
@@ -2073,7 +2177,9 @@ DCG score is
 and the NDCG score is the DCG score divided by the DCG score obtained for
 :math:`y`.
 
-.. topic:: References:
+|details-start|
+**References**
+|details-split|
 
   * `Wikipedia entry for Discounted Cumulative Gain
     <https://en.wikipedia.org/wiki/Discounted_cumulative_gain>`_
@@ -2091,6 +2197,8 @@ and the NDCG score is the DCG score divided by the DCG score obtained for
     European conference on information retrieval (pp. 414-421). Springer,
     Berlin, Heidelberg.
 
+|details-end|
+
 .. _regression_metrics:
 
 Regression metrics
@@ -2106,13 +2214,13 @@ to handle the multioutput case: :func:`mean_squared_error`,
 and :func:`d2_absolute_error_score`.
 
 
-These functions have an ``multioutput`` keyword argument which specifies the
+These functions have a ``multioutput`` keyword argument which specifies the
 way the scores or losses for each individual target should be averaged. The
 default is ``'uniform_average'``, which specifies a uniformly weighted mean
 over outputs. If an ``ndarray`` of shape ``(n_outputs,)`` is passed, then its
 entries are interpreted as weights and an according weighted average is
-returned. If ``multioutput`` is ``'raw_values'`` is specified, then all
-unaltered individual scores or losses will be returned in an array of shape
+returned. If ``multioutput`` is ``'raw_values'``, then all unaltered
+individual scores or losses will be returned in an array of shape
 ``(n_outputs,)``.
 
 
@@ -2121,7 +2229,7 @@ value ``'variance_weighted'`` for the ``multioutput`` parameter. This option
 leads to a weighting of each individual score by the variance of the
 corresponding target variable. This setting quantifies the globally captured
 unscaled variance. If the target variables are of different scale, then this
-score puts more importance on well explaining the higher variance variables.
+score puts more importance on explaining the higher variance variables.
 ``multioutput='variance_weighted'`` is the default value for :func:`r2_score`
 for backward compatibility. This will be changed to ``uniform_average`` in the
 future.
@@ -2133,14 +2241,14 @@ R² score, the coefficient of determination
 
 The :func:`r2_score` function computes the `coefficient of
 determination <https://en.wikipedia.org/wiki/Coefficient_of_determination>`_,
-usually denoted as R².
+usually denoted as :math:`R^2`.
 
 It represents the proportion of variance (of y) that has been explained by the
 independent variables in the model. It provides an indication of goodness of
 fit and therefore a measure of how well unseen samples are likely to be
 predicted by the model, through the proportion of explained variance.
 
-As such variance is dataset dependent, R² may not be meaningfully comparable
+As such variance is dataset dependent, :math:`R^2` may not be meaningfully comparable
 across different datasets. Best possible score is 1.0 and it can be negative
 (because the model can be arbitrarily worse). A constant model that always
 predicts the expected (average) value of y, disregarding the input features,
@@ -2151,7 +2259,7 @@ the :ref:`explained_variance_score` are identical.
 
 If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample
 and :math:`y_i` is the corresponding true value for total :math:`n` samples,
-the estimated R² is defined as:
+the estimated :math:`R^2` is defined as:
 
 .. math::
 
@@ -2159,7 +2267,7 @@ the estimated R² is defined as:
 
 where :math:`\bar{y} = \frac{1}{n} \sum_{i=1}^{n} y_i` and :math:`\sum_{i=1}^{n} (y_i - \hat{y}_i)^2 = \sum_{i=1}^{n} \epsilon_i^2`.
 
-Note that :func:`r2_score` calculates unadjusted R² without correcting for
+Note that :func:`r2_score` calculates unadjusted :math:`R^2` without correcting for
 bias in sample variance of y.
 
 In the particular case where the true target is constant, the :math:`R^2` score is
@@ -2279,6 +2387,10 @@ function::
     for an example of mean squared error usage to
     evaluate gradient boosting regression.
 
+Taking the square root of the MSE, called the root mean squared error (RMSE), is another
+common metric that provides a measure in the same units as the target variable. RSME is
+available through the :func:`root_mean_squared_error` function.
+
 .. _mean_squared_log_error:
 
 Mean squared logarithmic error
@@ -2315,6 +2427,9 @@ function::
   >>> y_pred = [[0.5, 2], [1, 2.5], [8, 8]]
   >>> mean_squared_log_error(y_true, y_pred)
   0.044...
+
+The root mean squared logarithmic error (RMSLE) is available through the
+:func:`root_mean_squared_log_error` function.
 
 .. _mean_absolute_percentage_error:
 
@@ -2562,7 +2677,7 @@ performance of `quantile regression
 
   \text{pinball}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1}  \alpha \max(y_i - \hat{y}_i, 0) + (1 - \alpha) \max(\hat{y}_i - y_i, 0)
 
-The pinball loss is equivalent to :func:`mean_absolute_error` when the quantile
+The value of pinball loss is equivalent to half of :func:`mean_absolute_error` when the quantile
 parameter ``alpha`` is set to 0.5.
 
 
@@ -2611,7 +2726,7 @@ explained in the example linked below.
 .. topic:: Example:
 
   * See :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`
-    for an example of using a the pinball loss to evaluate and tune the
+    for an example of using the pinball loss to evaluate and tune the
     hyper-parameters of quantile regression models on data with non-symmetric
     noise and outliers.
 
@@ -2639,8 +2754,9 @@ model can be arbitrarily worse). A constant model that always predicts
 :math:`y_{\text{null}}`, disregarding the input features, would get a D² score
 of 0.0.
 
-D² Tweedie score
-^^^^^^^^^^^^^^^^
+|details-start|
+**D² Tweedie score**
+|details-split|
 
 The :func:`d2_tweedie_score` function implements the special case of D²
 where :math:`\text{dev}(y, \hat{y})` is the Tweedie deviance, see :ref:`mean_tweedie_deviance`.
@@ -2655,8 +2771,11 @@ A scorer object with a specific choice of ``power`` can be built by::
   >>> from sklearn.metrics import d2_tweedie_score, make_scorer
   >>> d2_tweedie_score_15 = make_scorer(d2_tweedie_score, power=1.5)
 
-D² pinball score
-^^^^^^^^^^^^^^^^^^^^^
+|details-end|
+
+|details-start|
+**D² pinball score**
+|details-split|
 
 The :func:`d2_pinball_score` function implements the special case
 of D² with the pinball loss, see :ref:`pinball_loss`, i.e.:
@@ -2676,8 +2795,11 @@ A scorer object with a specific choice of ``alpha`` can be built by::
   >>> from sklearn.metrics import d2_pinball_score, make_scorer
   >>> d2_pinball_score_08 = make_scorer(d2_pinball_score, alpha=0.8)
 
-D² absolute error score
-^^^^^^^^^^^^^^^^^^^^^^^
+|details-end|
+
+|details-start|
+**D² absolute error score**
+|details-split|
 
 The :func:`d2_absolute_error_score` function implements the special case of
 the :ref:`mean_absolute_error`:
@@ -2702,6 +2824,82 @@ Here are some usage examples of the :func:`d2_absolute_error_score` function::
   >>> d2_absolute_error_score(y_true, y_pred)
   0.0
 
+|details-end|
+
+.. _visualization_regression_evaluation:
+
+Visual evaluation of regression models
+--------------------------------------
+
+Among methods to assess the quality of regression models, scikit-learn provides
+the :class:`~sklearn.metrics.PredictionErrorDisplay` class. It allows to
+visually inspect the prediction errors of a model in two different manners.
+
+.. image:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_predict_001.png
+   :target: ../auto_examples/model_selection/plot_cv_predict.html
+   :scale: 75
+   :align: center
+
+The plot on the left shows the actual values vs predicted values. For a
+noise-free regression task aiming to predict the (conditional) expectation of
+`y`, a perfect regression model would display data points on the diagonal
+defined by predicted equal to actual values. The further away from this optimal
+line, the larger the error of the model. In a more realistic setting with
+irreducible noise, that is, when not all the variations of `y` can be explained
+by features in `X`, then the best model would lead to a cloud of points densely
+arranged around the diagonal.
+
+Note that the above only holds when the predicted values is the expected value
+of `y` given `X`. This is typically the case for regression models that
+minimize the mean squared error objective function or more generally the
+:ref:`mean Tweedie deviance <mean_tweedie_deviance>` for any value of its
+"power" parameter.
+
+When plotting the predictions of an estimator that predicts a quantile
+of `y` given `X`, e.g. :class:`~sklearn.linear_model.QuantileRegressor`
+or any other model minimizing the :ref:`pinball loss <pinball_loss>`, a
+fraction of the points are either expected to lie above or below the diagonal
+depending on the estimated quantile level.
+
+All in all, while intuitive to read, this plot does not really inform us on
+what to do to obtain a better model.
+
+The right-hand side plot shows the residuals (i.e. the difference between the
+actual and the predicted values) vs. the predicted values.
+
+This plot makes it easier to visualize if the residuals follow and
+`homoscedastic or heteroschedastic
+<https://en.wikipedia.org/wiki/Homoscedasticity_and_heteroscedasticity>`_
+distribution.
+
+In particular, if the true distribution of `y|X` is Poisson or Gamma
+distributed, it is expected that the variance of the residuals of the optimal
+model would grow with the predicted value of `E[y|X]` (either linearly for
+Poisson or quadratically for Gamma).
+
+When fitting a linear least squares regression model (see
+:class:`~sklearn.linear_model.LinearRegression` and
+:class:`~sklearn.linear_model.Ridge`), we can use this plot to check
+if some of the `model assumptions
+<https://en.wikipedia.org/wiki/Ordinary_least_squares#Assumptions>`_
+are met, in particular that the residuals should be uncorrelated, their
+expected value should be null and that their variance should be constant
+(homoschedasticity).
+
+If this is not the case, and in particular if the residuals plot show some
+banana-shaped structure, this is a hint that the model is likely mis-specified
+and that non-linear feature engineering or switching to a non-linear regression
+model might be useful.
+
+Refer to the example below to see a model evaluation that makes use of this
+display.
+
+.. topic:: Example:
+
+  * See :ref:`sphx_glr_auto_examples_compose_plot_transformed_target.py` for
+    an example on how to use :class:`~sklearn.metrics.PredictionErrorDisplay`
+    to visualize the prediction quality improvement of a regression model
+    obtained by transforming the target before learning.
 
 .. _clustering_metrics:
 

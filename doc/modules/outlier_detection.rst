@@ -170,7 +170,7 @@ but regular, observation outside the frontier.
 .. topic:: References:
 
     * `Estimating the support of a high-dimensional distribution
-      <http://www.recognition.mccme.ru/pub/papers/SVM/sch99estimating.pdf>`_
+      <https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-99-87.pdf>`_
       Schölkopf, Bernhard, et al. Neural computation 13.7 (2001): 1443-1471.
 
 .. topic:: Examples:
@@ -281,7 +281,7 @@ the maximum depth of each tree is set to :math:`\lceil \log_2(n) \rceil` where
 
 This algorithm is illustrated below.
 
-.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_isolation_forest_001.png
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_isolation_forest_003.png
    :target: ../auto_examples/ensemble/plot_isolation_forest.html
    :align: center
    :scale: 75%
@@ -332,7 +332,7 @@ lower density than their neighbors.
 
 In practice the local density is obtained from the k-nearest neighbors.
 The LOF score of an observation is equal to the ratio of the
-average local density of his k-nearest neighbors, and its own local density:
+average local density of its k-nearest neighbors, and its own local density:
 a normal instance is expected to have a local density similar to that of its
 neighbors, while abnormal data are expected to have much smaller local density.
 
@@ -382,7 +382,7 @@ This strategy is illustrated below.
 
    *  Breunig, Kriegel, Ng, and Sander (2000)
       `LOF: identifying density-based local outliers.
-      <http://www.dbs.ifi.lmu.de/Publikationen/Papers/LOF.pdf>`_
+      <https://www.dbs.ifi.lmu.de/Publikationen/Papers/LOF.pdf>`_
       Proc. ACM SIGMOD
 
 .. _novelty_with_lof:
@@ -411,7 +411,7 @@ Note that ``fit_predict`` is not available in this case to avoid inconsistencies
 
 Novelty detection with Local Outlier Factor is illustrated below.
 
-  .. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_lof_novelty_detection_001.png
-     :target: ../auto_examples/neighbors/plot_lof_novelty_detection.html
-     :align: center
-     :scale: 75%
+.. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_lof_novelty_detection_001.png
+    :target: ../auto_examples/neighbors/plot_lof_novelty_detection.html
+    :align: center
+    :scale: 75%

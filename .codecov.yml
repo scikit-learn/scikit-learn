@@ -28,4 +28,7 @@ codecov:
 ignore:
 - "sklearn/externals"
 - "sklearn/_build_utils"
+- "sklearn/__check_build"
+- "sklearn/_min_dependencies.py"
 - "**/setup.py"
+- "**/conftest.py"

@@ -55,8 +55,8 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 # ratio to evaluate the usefulness of this classifier as a disease diagnosis
 # tool:
 
-from sklearn.metrics import class_likelihood_ratios
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import class_likelihood_ratios
 
 estimator = LogisticRegression().fit(X_train, y_train)
 y_pred = estimator.predict(X_test)
@@ -166,10 +166,12 @@ extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
 # label `1` corresponds to the positive class "disease", whereas the label `0`
 # stands for "no-disease".
 
-import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.inspection import DecisionBoundaryDisplay
 from collections import defaultdict
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+from sklearn.inspection import DecisionBoundaryDisplay
 
 populations = defaultdict(list)
 common_params = {
@@ -197,7 +199,6 @@ neg_lr_base, neg_lr_base_std = lr_base["negative"].values
 fig, axs = plt.subplots(nrows=3, ncols=2, figsize=(15, 12))
 
 for ax, (n, weight) in zip(axs.ravel(), enumerate(weights)):
-
     X, y = make_classification(
         **common_params,
         weights=[weight, 1 - weight],
@@ -225,7 +226,7 @@ for ax, (n, weight) in zip(axs.ravel(), enumerate(weights)):
     disp.ax_.legend(*scatter.legend_elements())
 
 # %%
-# We define a function for bootstraping.
+# We define a function for bootstrapping.
 
 
 def scoring_on_bootstrap(estimator, X, y, rng, n_bootstrap=100):
@@ -242,7 +243,7 @@ def scoring_on_bootstrap(estimator, X, y, rng, n_bootstrap=100):
 
 
 # %%
-# We score the base model for each prevalence using bootstraping.
+# We score the base model for each prevalence using bootstrapping.
 
 results = defaultdict(list)
 n_bootstrap = 100
@@ -251,7 +252,6 @@ rng = np.random.default_rng(seed=0)
 for prevalence, X, y in zip(
     populations["prevalence"], populations["X"], populations["y"]
 ):
-
     results_for_prevalence = scoring_on_bootstrap(
         estimator, X, y, rng, n_bootstrap=n_bootstrap
     )

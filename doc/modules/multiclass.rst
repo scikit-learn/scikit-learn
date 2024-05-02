@@ -147,35 +147,35 @@ Target format
 Valid :term:`multiclass` representations for
 :func:`~sklearn.utils.multiclass.type_of_target` (`y`) are:
 
-  - 1d or column vector containing more than two discrete values. An
-    example of a vector ``y`` for 4 samples:
+- 1d or column vector containing more than two discrete values. An
+  example of a vector ``y`` for 4 samples:
 
-      >>> import numpy as np
-      >>> y = np.array(['apple', 'pear', 'apple', 'orange'])
-      >>> print(y)
-      ['apple' 'pear' 'apple' 'orange']
+    >>> import numpy as np
+    >>> y = np.array(['apple', 'pear', 'apple', 'orange'])
+    >>> print(y)
+    ['apple' 'pear' 'apple' 'orange']
 
-  - Dense or sparse :term:`binary` matrix of shape ``(n_samples, n_classes)``
-    with a single sample per row, where each column represents one class. An
-    example of both a dense and sparse :term:`binary` matrix ``y`` for 4
-    samples, where the columns, in order, are apple, orange, and pear:
+- Dense or sparse :term:`binary` matrix of shape ``(n_samples, n_classes)``
+  with a single sample per row, where each column represents one class. An
+  example of both a dense and sparse :term:`binary` matrix ``y`` for 4
+  samples, where the columns, in order, are apple, orange, and pear:
 
-      >>> import numpy as np
-      >>> from sklearn.preprocessing import LabelBinarizer
-      >>> y = np.array(['apple', 'pear', 'apple', 'orange'])
-      >>> y_dense = LabelBinarizer().fit_transform(y)
-      >>> print(y_dense)
-        [[1 0 0]
-         [0 0 1]
-         [1 0 0]
-         [0 1 0]]
-      >>> from scipy import sparse
-      >>> y_sparse = sparse.csr_matrix(y_dense)
-      >>> print(y_sparse)
-          (0, 0)	1
-          (1, 2)	1
-          (2, 0)	1
-          (3, 1)	1
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import LabelBinarizer
+    >>> y = np.array(['apple', 'pear', 'apple', 'orange'])
+    >>> y_dense = LabelBinarizer().fit_transform(y)
+    >>> print(y_dense)
+    [[1 0 0]
+     [0 0 1]
+     [1 0 0]
+     [0 1 0]]
+    >>> from scipy import sparse
+    >>> y_sparse = sparse.csr_matrix(y_dense)
+    >>> print(y_sparse)
+      (0, 0)	1
+      (1, 2)	1
+      (2, 0)	1
+      (3, 1)	1
 
 For more information about :class:`~sklearn.preprocessing.LabelBinarizer`,
 refer to :ref:`preprocessing_targets`.
@@ -311,8 +311,7 @@ Below is an example of multiclass learning using Output-Codes::
   >>> from sklearn.multiclass import OutputCodeClassifier
   >>> from sklearn.svm import LinearSVC
   >>> X, y = datasets.load_iris(return_X_y=True)
-  >>> clf = OutputCodeClassifier(LinearSVC(random_state=0),
-  ...                            code_size=2, random_state=0)
+  >>> clf = OutputCodeClassifier(LinearSVC(random_state=0), code_size=2, random_state=0)
   >>> clf.fit(X, y).predict(X)
   array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -464,7 +463,7 @@ Note that all classifiers handling multiclass-multioutput (also known as
 multitask classification) tasks, support the multilabel classification task
 as a special case. Multitask classification is similar to the multioutput
 classification task with different model formulations. For more information,
-see the relevant estimator documentat
+see the relevant estimator documentation.
 
 Below is an example of multiclass-multioutput classification:
 
@@ -528,6 +527,37 @@ For example, prediction of both wind speed and wind direction, in degrees,
 using data obtained at a certain location. Each sample would be data
 obtained at one location and both wind speed and direction would be
 output for each sample.
+
+The following regressors natively support multioutput regression:
+
+  - :class:`cross_decomposition.CCA`
+  - :class:`tree.DecisionTreeRegressor`
+  - :class:`dummy.DummyRegressor`
+  - :class:`linear_model.ElasticNet`
+  - :class:`tree.ExtraTreeRegressor`
+  - :class:`ensemble.ExtraTreesRegressor`
+  - :class:`gaussian_process.GaussianProcessRegressor`
+  - :class:`neighbors.KNeighborsRegressor`
+  - :class:`kernel_ridge.KernelRidge`
+  - :class:`linear_model.Lars`
+  - :class:`linear_model.Lasso`
+  - :class:`linear_model.LassoLars`
+  - :class:`linear_model.LinearRegression`
+  - :class:`multioutput.MultiOutputRegressor`
+  - :class:`linear_model.MultiTaskElasticNet`
+  - :class:`linear_model.MultiTaskElasticNetCV`
+  - :class:`linear_model.MultiTaskLasso`
+  - :class:`linear_model.MultiTaskLassoCV`
+  - :class:`linear_model.OrthogonalMatchingPursuit`
+  - :class:`cross_decomposition.PLSCanonical`
+  - :class:`cross_decomposition.PLSRegression`
+  - :class:`linear_model.RANSACRegressor`
+  - :class:`neighbors.RadiusNeighborsRegressor`
+  - :class:`ensemble.RandomForestRegressor`
+  - :class:`multioutput.RegressorChain`
+  - :class:`linear_model.Ridge`
+  - :class:`linear_model.RidgeCV`
+  - :class:`compose.TransformedTargetRegressor`
 
 Target format
 -------------
