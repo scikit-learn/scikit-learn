@@ -594,26 +594,16 @@ print(
 #
 # Let's now create a predictive model using a logistic regression without tuning the
 # decision threshold.
-#
-# .. note::
-#    By using :class:`~sklearn.linear_model.LogisticRegressionCV`, the hyperparameter
-#    search introduced a data split within the logistic regression itself. Therefore,
-#    a data leak is introduced since we scaled the entire training set before to pass
-#    it to the logistic regression model.
-#
-#    To alleviate the effect of the data leak that is a potential distribution shift
-#    due to the presence of outliers, we use a scaler based on robust statistics by
-#    using :class:`~sklearn.preprocessing.RobustScaler`.
-from sklearn.linear_model import LogisticRegressionCV
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import RobustScaler
+from sklearn.preprocessing import StandardScaler
 
-model = make_pipeline(
-    RobustScaler(quantile_range=(5, 95)),
-    LogisticRegressionCV(
-        random_state=42, Cs=np.logspace(-6, 6, 13), scoring="neg_log_loss"
-    ),
-).fit(data_train, target_train)
+logistic_regression = make_pipeline(StandardScaler(), LogisticRegression())
+param_grid = {"logisticregression__C": np.logspace(-6, 6, 13)}
+model = GridSearchCV(logistic_regression, param_grid, scoring="neg_log_loss").fit(
+    data_train, target_train
+)
 
 print(
     "Benefit/cost of our logistic regression: "
@@ -636,16 +626,10 @@ print(
 # Now the question is: is our model optimum for the type of decision that we want to do?
 # Up to now, we did not optimize the decision threshold. We use the
 # :class:`~sklearn.model_selection.TunedThresholdClassifierCV` to optimize the decision
-# given our business scorer. To avoid a nested cross-validation, we will use the `C`
-# parameter found in the previous logistic regression model while tuning.
-from sklearn.linear_model import LogisticRegression
-
-# Reuse the best parameter C found in the previous grid-search
-model = make_pipeline(
-    RobustScaler(quantile_range=(5, 95)), LogisticRegression(C=model[-1].C_[0])
-)
+# given our business scorer. To avoid a nested cross-validation, we will use the
+# best estimator found during the previous grid-search.
 tuned_model = TunedThresholdClassifierCV(
-    estimator=model,
+    estimator=model.best_estimator_,
     objective_metric=business_scorer,
     thresholds=100,
     n_jobs=2,
