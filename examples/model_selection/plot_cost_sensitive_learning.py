@@ -594,6 +594,16 @@ print(
 #
 # Let's now create a predictive model using a logistic regression without tuning the
 # decision threshold.
+#
+# .. note::
+#    By using :class:`~sklearn.linear_model.LogisticRegressionCV`, the hyperparameter
+#    search introduced a data split within the logistic regression itself. Therefore,
+#    a data leak is introduced since we scaled the entire training set before to pass
+#    it to the logistic regression model.
+#
+#    To alleviate the effect of the data leak that is a potential distribution shift
+#    due to the presence of outliers, we use a scaler based on robust statistics by
+#    using :class:`~sklearn.preprocessing.RobustScaler`.
 from sklearn.linear_model import LogisticRegressionCV
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import RobustScaler
@@ -626,7 +636,14 @@ print(
 # Now the question is: is our model optimum for the type of decision that we want to do?
 # Up to now, we did not optimize the decision threshold. We use the
 # :class:`~sklearn.model_selection.TunedThresholdClassifierCV` to optimize the decision
-# given our business scorer.
+# given our business scorer. To avoid a nested cross-validation, we will use the `C`
+# parameter found in the previous logistic regression model while tuning.
+from sklearn.linear_model import LogisticRegression
+
+# Reuse the best parameter C found in the previous grid-search
+model = make_pipeline(
+    RobustScaler(quantile_range=(5, 95)), LogisticRegression(C=model[-1].C_[0])
+)
 tuned_model = TunedThresholdClassifierCV(
     estimator=model,
     objective_metric=business_scorer,
