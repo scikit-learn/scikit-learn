@@ -31,10 +31,10 @@ data, target = diabetes.data, diabetes.target
 target.value_counts()
 
 # %%
-# We can see that we are dealing with a binary classification problem. Since the labels
-# are not encoded as 0 and 1, we will store which label we consider to be the negative
-# class and which one we consider to be the positive class: "tested_negative" will be
-# considered the negative class and "tested_positive" the positive class.
+# We can see that we are dealing with a binary classification problem. Since the
+# labels are not encoded as 0 and 1, we make it explicit that we consider the class
+# labeled "tested_negative" as the negative class (which is also the most frequent)
+# and the class labeled "tested_positive" the positive as the positive class:
 neg_label, pos_label = target.value_counts().index
 
 # %%

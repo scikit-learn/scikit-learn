@@ -71,7 +71,7 @@ def _threshold_scores_to_class_labels(y_score, threshold, classes, pos_label):
 
 
 class BaseThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
-    """Base class for classifiers that set a non-default decision threshold.
+    """Base class for binary classifiers that set a non-default decision threshold.
 
     In this base class, we define the following interface:
 
@@ -83,7 +83,7 @@ class BaseThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator
     Parameters
     ----------
     estimator : estimator instance
-        The classifier, fitted or not, for which we want to optimize
+        The binary classifier, fitted or not, for which we want to optimize
         the decision threshold used during `predict`.
 
     pos_label : int, float, bool or str, default=None
@@ -239,7 +239,7 @@ class BaseThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator
 
 
 class FixedThresholdClassifier(BaseThresholdClassifier):
-    """Classifier that manually sets the decision threshold.
+    """Binary classifier that manually sets the decision threshold.
 
     This classifier allows to change the default decision threshold used for
     converting posterior probability estimates (i.e. output of `predict_proba`) or
@@ -254,7 +254,7 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
     Parameters
     ----------
     estimator : estimator instance
-        The classifier, fitted or not, for which we want to optimize
+        The binary classifier, fitted or not, for which we want to optimize
         the decision threshold used during `predict`.
 
     threshold : {"auto"} or float, default="auto"
