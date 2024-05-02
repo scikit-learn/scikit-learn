@@ -18,8 +18,8 @@ from sklearn.base import (
     TransformerMixin,
     clone,
     is_classifier,
-    is_regressor,
     is_clusterer,
+    is_regressor,
 )
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
