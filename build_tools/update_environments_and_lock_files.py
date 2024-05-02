@@ -165,7 +165,7 @@ build_metadata_list = [
         "channel": "defaults",
         "conda_dependencies": remove_from(
             common_dependencies,
-            ["pandas", "cython", "threadpoolctl", "pip", "ninja", "meson-python"],
+            ["pandas", "threadpoolctl", "pip", "ninja", "meson-python"],
         )
         + ["ccache"],
         "package_constraints": {
@@ -175,10 +175,12 @@ build_metadata_list = [
             "scipy": "1.7",  # the min version has some low level crashes
             "matplotlib": "min",
             "cython": "min",
+            "joblib": "min",
+            "threadpoolctl": "min",
         },
-        # TODO: put cython and threadpoolctl back to conda dependencies when required
-        # version is available on the main channel
-        "pip_dependencies": ["cython", "threadpoolctl"],
+        # TODO: put pip dependencies back to conda dependencies when required
+        # version is available on the defaults channel.
+        "pip_dependencies": ["threadpoolctl"],
     },
     {
         "name": "pymin_conda_forge_openblas_ubuntu_2204",
