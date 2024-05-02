@@ -1043,34 +1043,34 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
             split_thresholds.max() for split_thresholds in cv_thresholds
         )
         if isinstance(self.thresholds, Integral):
-            decisiothresholds = np.linspace(
+            decision_thresholds = np.linspace(
                 min_threshold, max_threshold, num=self.thresholds
             )
         else:
-            decisiothresholds = np.asarray(self.thresholds)
+            decision_thresholds = np.asarray(self.thresholds)
 
         if not constrained_metric:  # find best score that is the highest value
             objective_scores = _mean_interpolated_score(
-                decisiothresholds, cv_thresholds, cv_scores
+                decision_thresholds, cv_thresholds, cv_scores
             )
             best_idx = objective_scores.argmax()
             self.best_score_ = objective_scores[best_idx]
-            self.best_threshold_ = decisiothresholds[best_idx]
+            self.best_threshold_ = decision_thresholds[best_idx]
             self.constrained_score_ = None
             if self.store_cv_results:
                 self.cv_results_ = {
-                    "thresholds": decisiothresholds,
+                    "thresholds": decision_thresholds,
                     "scores": objective_scores,
                 }
         else:
             if "tpr" in self.objective_metric:  # tpr/tnr
                 mean_tnr, mean_tpr = [
-                    _mean_interpolated_score(decisiothresholds, cv_thresholds, sc)
+                    _mean_interpolated_score(decision_thresholds, cv_thresholds, sc)
                     for sc in zip(*cv_scores)
                 ]
             else:  # precision/recall
                 mean_precision, mean_recall = [
-                    _mean_interpolated_score(decisiothresholds, cv_thresholds, sc)
+                    _mean_interpolated_score(decision_thresholds, cv_thresholds, sc)
                     for sc in zip(*cv_scores)
                 ]
 
@@ -1092,10 +1092,10 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
             best_idx = _get_best_idx(constrained_scores, maximized_scores)
             self.best_score_ = maximized_scores[best_idx]
             self.constrained_score_ = constrained_scores[best_idx]
-            self.best_threshold_ = decisiothresholds[best_idx]
+            self.best_threshold_ = decision_thresholds[best_idx]
             if self.store_cv_results:
                 self.cv_results_ = {
-                    "thresholds": decisiothresholds,
+                    "thresholds": decision_thresholds,
                     "constrained_scores": constrained_scores,
                     "maximized_scores": maximized_scores,
                 }
