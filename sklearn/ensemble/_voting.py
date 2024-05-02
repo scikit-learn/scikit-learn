@@ -687,7 +687,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
 
         Returns
         -------
-        self : object
+        self : Object
             Fitted estimator.
         """
         _raise_for_params(fit_params, self, "fit")
@@ -708,7 +708,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
 
         Returns
         -------
-        y : ndarray of shape (n_samples, n_features) for multi-output
+        y : Ndarray of shape (n_samples, n_features) for multi-output
             or (n_samples,) for single output
             The predicted values.
         """
