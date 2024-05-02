@@ -2231,7 +2231,7 @@ def test_ridge_store_cv_values_deprecated():
     """Check `store_cv_values` parameter deprecated."""
     X, y = make_regression(n_samples=6, random_state=42)
     ridge = RidgeCV(store_cv_values=True)
-    msg = "'store_cv_values' was renamed to 'store_cv_results'"
+    msg = "'store_cv_values' is deprecated"
     with pytest.warns(FutureWarning, match=msg):
         ridge.fit(X, y)
 

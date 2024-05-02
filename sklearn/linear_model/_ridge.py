@@ -2259,7 +2259,7 @@ class _BaseRidgeCV(LinearModel):
         "scoring": [StrOptions(set(get_scorer_names())), callable, None],
         "cv": ["cv_object"],
         "gcv_mode": [StrOptions({"auto", "svd", "eigen"}), None],
-        "store_cv_results": ["boolean", None],
+        "store_cv_results": ["boolean", Hidden(None)],
         "alpha_per_target": ["boolean"],
         "store_cv_values": ["boolean", Hidden(StrOptions({"deprecated"}))],
     }
