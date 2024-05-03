@@ -982,6 +982,7 @@ details.
    metrics.classification_report
    metrics.cohen_kappa_score
    metrics.confusion_matrix
+   metrics.d2_log_loss_score
    metrics.dcg_score
    metrics.det_curve
    metrics.f1_score
