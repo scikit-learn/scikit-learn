@@ -63,11 +63,14 @@ def test_info_gain_negative(csr_container):
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_expected_value_info_gain(csr_container):
+@pytest.mark.parametrize("aggregate", ["max", "mean", "sum"])
+def test_expected_value_info_gain(csr_container, aggregate):
     # Check calculation of an expected value of IG
 
     # two instances, three features, two classes
     X, y = [[1, 5, 9], [9, 5, 1]], [0, 1]
+
+    # aggregate = "max"
 
     # Counts:
     # f1: 10
@@ -113,9 +116,13 @@ def test_expected_value_info_gain(csr_container):
 
     # Expected global max score for f1: max (0.25614, 0.25614)
 
+    comparing_value = 0.25614
+    if aggregate == "sum":
+        comparing_value *= len(X)
+
     Xsp = csr_container(X, dtype=float)
-    scores, probs = info_gain(Xsp, y)
-    assert_almost_equal(scores[0], 0.25614, decimal=5)
+    scores, probs = info_gain(Xsp, y, aggregate=aggregate)
+    assert_almost_equal(scores[0], comparing_value, decimal=5)
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
