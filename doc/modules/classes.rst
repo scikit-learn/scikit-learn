@@ -1248,6 +1248,17 @@ Hyper-parameter optimizers
    model_selection.RandomizedSearchCV
    model_selection.HalvingRandomSearchCV
 
+Post-fit model tuning
+---------------------
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   model_selection.FixedThresholdClassifier
+   model_selection.TunedThresholdClassifierCV
 
 Model validation
 ----------------
