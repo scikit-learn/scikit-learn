@@ -1,5 +1,4 @@
 from collections.abc import MutableMapping
-from inspect import signature
 from numbers import Integral, Real
 
 import numpy as np
@@ -83,11 +82,6 @@ class BaseThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator
         The binary classifier, fitted or not, for which we want to optimize
         the decision threshold used during `predict`.
 
-    pos_label : int, float, bool or str, default=None
-        The label of the positive class. Used to process the output of the
-        `response_method` method. When `pos_label=None`, if `y_true` is in `{-1, 1}` or
-        `{0, 1}`, `pos_label` is set to 1, otherwise an error will be raised.
-
     response_method : {"auto", "decision_function", "predict_proba"}, default="auto"
         Methods by the classifier `estimator` corresponding to the
         decision function for which we want to find a threshold. It can be:
@@ -105,13 +99,11 @@ class BaseThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator
             HasMethods(["fit", "predict_proba"]),
             HasMethods(["fit", "decision_function"]),
         ],
-        "pos_label": [Real, str, "boolean", None],
         "response_method": [StrOptions({"auto", "predict_proba", "decision_function"})],
     }
 
-    def __init__(self, estimator, *, pos_label=None, response_method="auto"):
+    def __init__(self, estimator, *, response_method="auto"):
         self.estimator = estimator
-        self.pos_label = pos_label
         self.response_method = response_method
 
     @_fit_context(
@@ -326,6 +318,7 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
     _parameter_constraints: dict = {
         **BaseThresholdClassifier._parameter_constraints,
         "threshold": [StrOptions({"auto"}), Real],
+        "pos_label": [Real, str, "boolean", None],
     }
 
     def __init__(
@@ -336,9 +329,8 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
         pos_label=None,
         response_method="auto",
     ):
-        super().__init__(
-            estimator=estimator, pos_label=pos_label, response_method=response_method
-        )
+        super().__init__(estimator=estimator, response_method=response_method)
+        self.pos_label = pos_label
         self.threshold = threshold
 
     def _fit(self, X, y, **params):
@@ -451,32 +443,14 @@ class _CurveScorer(_BaseScorer):
         self._thresholds = thresholds
 
     @classmethod
-    def from_scorer(cls, scorer, response_method, thresholds, pos_label):
+    def from_scorer(cls, scorer, response_method, thresholds):
         """Create a continuous scorer from a normal scorer."""
-        # add `pos_label` if requested by the scorer function
-        scorer_kwargs = {**scorer._kwargs}
-        signature_scoring_func = signature(scorer._score_func)
-        if (
-            "pos_label" in signature_scoring_func.parameters
-            and "pos_label" not in scorer_kwargs
-        ):
-            if pos_label is None:
-                # Since the provided `pos_label` is the default, we need to
-                # use the default value of the scoring function that can be either
-                # `None` or `1`.
-                scorer_kwargs["pos_label"] = signature_scoring_func.parameters[
-                    "pos_label"
-                ].default
-            else:
-                scorer_kwargs["pos_label"] = pos_label
-        # transform a binary metric into a curve metric for all possible decision
-        # thresholds
         instance = cls(
             score_func=scorer._score_func,
             sign=scorer._sign,
             response_method=response_method,
             thresholds=thresholds,
-            kwargs=scorer_kwargs,
+            kwargs=scorer._kwargs,
         )
         # transfer the metadata request
         instance._metadata_request = scorer._get_metadata_request()
@@ -665,11 +639,6 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
           (see model evaluation documentation);
         * a scorer callable object created with :func:`~sklearn.metrics.make_scorer`;
 
-    pos_label : int, float, bool or str, default=None
-        The label of the positive class. Used to process the output of the
-        `response_method` method. When `pos_label=None`, if `y_true` is in `{-1, 1}` or
-        `{0, 1}`, `pos_label` is set to 1, otherwise an error will be raised.
-
     response_method : {"auto", "decision_function", "predict_proba"}, default="auto"
         Methods by the classifier `estimator` corresponding to the
         decision function for which we want to find a threshold. It can be:
@@ -831,7 +800,6 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         estimator,
         *,
         scoring="balanced_accuracy",
-        pos_label=None,
         response_method="auto",
         thresholds=100,
         cv=None,
@@ -840,9 +808,7 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         random_state=None,
         store_cv_results=False,
     ):
-        super().__init__(
-            estimator=estimator, response_method=response_method, pos_label=pos_label
-        )
+        super().__init__(estimator=estimator, response_method=response_method)
         self.scoring = scoring
         self.thresholds = thresholds
         self.cv = cv
@@ -1026,13 +992,9 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         return router
 
     def _get_curve_scorer(self):
-        """Get the curve scorer based on the objective metric used.
-
-        Here, we reuse the conventional "scorer API" via `make_scorer` or
-        `_CurveScorer`.
-        """
+        """Get the curve scorer based on the objective metric used."""
         scoring = check_scoring(self.estimator, scoring=self.scoring)
         curve_scorer = _CurveScorer.from_scorer(
-            scoring, self._response_method, self.thresholds, self.pos_label
+            scoring, self._response_method, self.thresholds
         )
         return curve_scorer

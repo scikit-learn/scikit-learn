@@ -272,7 +272,6 @@ from sklearn.model_selection import TunedThresholdClassifierCV
 
 tuned_model = TunedThresholdClassifierCV(
     estimator=model,
-    pos_label=pos_label,
     scoring=scoring["cost_gain"],
     store_cv_results=True,  # necessary to inspect all results
 )
@@ -405,6 +404,7 @@ print(f"Business defined metric: {scoring['cost_gain'](tuned_model, X_test, y_te
 model.fit(X_train, y_train)
 tuned_model.set_params(cv="prefit", refit=False).fit(X_train, y_train)
 print(f"{tuned_model.best_threshold_=:0.2f}")
+
 
 # %%
 # Then, we evaluate our model with the same approach as before:

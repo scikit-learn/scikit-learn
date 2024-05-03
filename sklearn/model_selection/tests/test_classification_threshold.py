@@ -17,7 +17,6 @@ from sklearn.metrics import (
     f1_score,
     fbeta_score,
     make_scorer,
-    precision_score,
     recall_score,
 )
 from sklearn.model_selection import (
@@ -429,7 +428,6 @@ def test_tuned_threshold_classifier_with_string_targets(response_method, metric)
     model = TunedThresholdClassifierCV(
         estimator=make_pipeline(StandardScaler(), LogisticRegression()),
         scoring=metric,
-        pos_label="cancer",
         response_method=response_method,
         thresholds=100,
     ).fit(X, y)
@@ -534,41 +532,6 @@ def test_tuned_threshold_classifier_cv_zeros_sample_weights_equivalence():
     y_pred_with_weights = model_with_weights.predict_proba(X)
     y_pred_without_weights = model_without_weights.predict_proba(X)
     assert_allclose(y_pred_with_weights, y_pred_without_weights)
-
-
-@pytest.mark.parametrize(
-    "metric_type",
-    ["string", "scorer_without_pos_label", "scorer_with_pos_label"],
-)
-@pytest.mark.parametrize("pos_label", [0, 1])
-def test_tuned_threshold_classifier_pos_label_single_metric(pos_label, metric_type):
-    """Check that `pos_label` is dispatched correctly when getting a scorer linked to
-    a known metric. By default, the scorer in scikit-learn only have a default value
-    for `pos_label` which is 1.
-    """
-    X, y = make_classification(n_samples=100, weights=[0.6, 0.4], random_state=42)
-
-    # prefit the estimator to avoid variability due to the cross-validation
-    estimator = LogisticRegression().fit(X, y)
-
-    if metric_type == "string":
-        scoring = "precision"
-    elif metric_type == "scorer_without_pos_label":
-        scoring = make_scorer(precision_score)
-    else:  # metric_type == "scorer_with_pos_label"
-        scoring = make_scorer(precision_score, pos_label=pos_label)
-
-    model = TunedThresholdClassifierCV(
-        estimator,
-        scoring=scoring,
-        cv="prefit",
-        refit=False,
-        pos_label=pos_label,
-        thresholds=500,
-    ).fit(X, y)
-
-    precision = precision_score(y, model.predict(X), pos_label=pos_label)
-    assert precision == pytest.approx(model.best_score_, abs=1e-3)
 
 
 def test_tuned_threshold_classifier_thresholds_array():
