@@ -285,6 +285,11 @@ Changelog
   pre-sorting the data before finding the thresholds for binning.
   :pr:`28102` by :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |Fix| Fixes a bug in :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` when `monotonic_cst` is specified
+  for non-categorical features.
+  :pr:`28925` by :user:`Xiao Yuan <yuanx749>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
