@@ -14,14 +14,11 @@ from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     balanced_accuracy_score,
-    confusion_matrix,
     f1_score,
     fbeta_score,
     make_scorer,
-    precision_recall_curve,
     precision_score,
     recall_score,
-    roc_curve,
 )
 from sklearn.model_selection import (
     FixedThresholdClassifier,
@@ -135,44 +132,20 @@ def test_curve_scorer_pos_label(global_random_seed):
     assert scores_pos_label_1.max() == pytest.approx(1.0)
 
 
-@pytest.mark.parametrize(
-    "curve_scorer, score_method",
-    [
-        (
-            _CurveScorer(
-                score_func=balanced_accuracy_score,
-                sign=1,
-                response_method="predict_proba",
-                thresholds=10,
-                kwargs={},
-            ),
-            "balanced_accuracy",
-        ),
-        (
-            make_scorer(roc_curve, response_method="predict_proba"),
-            "max_tnr_at_tpr_constraint",
-        ),
-        (
-            make_scorer(roc_curve, response_method="predict_proba"),
-            "max_tpr_at_tnr_constraint",
-        ),
-        (
-            make_scorer(precision_recall_curve, response_method="predict_proba"),
-            "max_precision_at_recall_constraint",
-        ),
-        (
-            make_scorer(precision_recall_curve, response_method="predict_proba"),
-            "max_recall_at_precision_constraint",
-        ),
-    ],
-)
-def test_fit_and_score_over_thresholds_curve_scorers(curve_scorer, score_method):
+def test_fit_and_score_over_thresholds_curve_scorers():
     """Check that `_fit_and_score_over_thresholds` returns thresholds in ascending order
     for the different accepted curve scorers."""
     X, y = make_classification(n_samples=100, random_state=0)
     train_idx, val_idx = np.arange(50), np.arange(50, 100)
     classifier = LogisticRegression()
 
+    curve_scorer = _CurveScorer(
+        score_func=balanced_accuracy_score,
+        sign=1,
+        response_method="predict_proba",
+        thresholds=10,
+        kwargs={},
+    )
     thresholds, scores = _fit_and_score_over_thresholds(
         classifier,
         X,
@@ -185,48 +158,11 @@ def test_fit_and_score_over_thresholds_curve_scorers(curve_scorer, score_method)
     )
 
     assert np.all(thresholds[:-1] <= thresholds[1:])
-
-    if score_method.startswith("max_"):
-        assert isinstance(scores, tuple) and len(scores) == 2
-        for sc in scores:
-            assert np.logical_and(sc >= 0, sc <= 1).all()
-    else:
-        assert isinstance(scores, np.ndarray)
-        assert np.logical_and(scores >= 0, scores <= 1).all()
+    assert isinstance(scores, np.ndarray)
+    assert np.logical_and(scores >= 0, scores <= 1).all()
 
 
-@pytest.mark.parametrize(
-    "curve_scorer, expected_score",
-    [
-        (
-            _CurveScorer(
-                score_func=balanced_accuracy_score,
-                sign=1,
-                response_method="predict_proba",
-                thresholds=2,
-                kwargs={},
-            ),
-            [0.5, 1.0],
-        ),
-        (
-            make_scorer(roc_curve, response_method="predict_proba"),
-            [[0.0, 1.0], [1.0, 1.0]],
-        ),
-        (
-            make_scorer(roc_curve, response_method="predict_proba"),
-            [[0.0, 1.0], [1.0, 1.0]],
-        ),
-        (
-            make_scorer(precision_recall_curve, response_method="predict_proba"),
-            [[0.5, 1.0], [1.0, 1.0]],
-        ),
-        (
-            make_scorer(precision_recall_curve, response_method="predict_proba"),
-            [[0.5, 1.0], [1.0, 1.0]],
-        ),
-    ],
-)
-def test_fit_and_score_over_thresholds_prefit(curve_scorer, expected_score):
+def test_fit_and_score_over_thresholds_prefit():
     """Check the behaviour with a prefit classifier."""
     X, y = make_classification(n_samples=100, random_state=0)
 
@@ -237,6 +173,13 @@ def test_fit_and_score_over_thresholds_prefit(curve_scorer, expected_score):
     # we get perfect predictions and thus match the expected score
     assert classifier.score(X[val_idx], y[val_idx]) == pytest.approx(1.0)
 
+    curve_scorer = _CurveScorer(
+        score_func=balanced_accuracy_score,
+        sign=1,
+        response_method="predict_proba",
+        thresholds=2,
+        kwargs={},
+    )
     thresholds, scores = _fit_and_score_over_thresholds(
         classifier,
         X,
@@ -248,27 +191,11 @@ def test_fit_and_score_over_thresholds_prefit(curve_scorer, expected_score):
         score_params={},
     )
     assert np.all(thresholds[:-1] <= thresholds[1:])
-    assert_allclose(scores, expected_score)
+    assert_allclose(scores, [0.5, 1.0])
 
 
 @pytest.mark.usefixtures("enable_slep006")
-@pytest.mark.parametrize(
-    "curve_scorer",
-    [
-        _CurveScorer(
-            score_func=balanced_accuracy_score,
-            sign=1,
-            response_method="predict_proba",
-            thresholds=10,
-            kwargs={},
-        ),
-        make_scorer(roc_curve, response_method="predict_proba"),
-        make_scorer(roc_curve, response_method="predict_proba"),
-        make_scorer(precision_recall_curve, response_method="predict_proba"),
-        make_scorer(precision_recall_curve, response_method="predict_proba"),
-    ],
-)
-def test_fit_and_score_over_thresholds_sample_weight(curve_scorer):
+def test_fit_and_score_over_thresholds_sample_weight():
     """Check that we dispatch the sample-weight to fit and score the classifier."""
     X, y = load_iris(return_X_y=True)
     X, y = X[:100], y[:100]  # only 2 classes
@@ -282,6 +209,13 @@ def test_fit_and_score_over_thresholds_sample_weight(curve_scorer):
     classifier = LogisticRegression()
     train_repeated_idx = np.arange(X_repeated.shape[0])
     val_repeated_idx = np.arange(X_repeated.shape[0])
+    curve_scorer = _CurveScorer(
+        score_func=balanced_accuracy_score,
+        sign=1,
+        response_method="predict_proba",
+        thresholds=10,
+        kwargs={},
+    )
     thresholds_repeated, scores_repeated = _fit_and_score_over_thresholds(
         classifier,
         X_repeated,
@@ -310,24 +244,8 @@ def test_fit_and_score_over_thresholds_sample_weight(curve_scorer):
 
 
 @pytest.mark.usefixtures("enable_slep006")
-@pytest.mark.parametrize(
-    "curve_scorer",
-    [
-        _CurveScorer(
-            score_func=balanced_accuracy_score,
-            sign=1,
-            response_method="predict_proba",
-            thresholds=10,
-            kwargs={},
-        ),
-        make_scorer(roc_curve, response_method="predict_proba"),
-        make_scorer(roc_curve, response_method="predict_proba"),
-        make_scorer(precision_recall_curve, response_method="predict_proba"),
-        make_scorer(precision_recall_curve, response_method="predict_proba"),
-    ],
-)
 @pytest.mark.parametrize("fit_params_type", ["list", "array"])
-def test_fit_and_score_over_thresholds_fit_params(curve_scorer, fit_params_type):
+def test_fit_and_score_over_thresholds_fit_params(fit_params_type):
     """Check that we pass `fit_params` to the classifier when calling `fit`."""
     X, y = make_classification(n_samples=100, random_state=0)
     fit_params = {
@@ -339,6 +257,13 @@ def test_fit_and_score_over_thresholds_fit_params(curve_scorer, fit_params_type)
     classifier.set_fit_request(a=True, b=True)
     train_idx, val_idx = np.arange(50), np.arange(50, 100)
 
+    curve_scorer = _CurveScorer(
+        score_func=balanced_accuracy_score,
+        sign=1,
+        response_method="predict_proba",
+        thresholds=10,
+        kwargs={},
+    )
     _fit_and_score_over_thresholds(
         classifier,
         X,
@@ -459,24 +384,6 @@ def test_tuned_threshold_classifier_without_constraint_value(response_method):
     assert model.cv_results_["scores"].shape == (thresholds,)
 
 
-def test_tuned_threshold_classifier_limit_metric_tradeoff():
-    """Check that max TPR lead to opposite prediction of max TNR when constraint is
-    set to 0.0.
-    """
-    X, y = load_breast_cancer(return_X_y=True)
-    estimator = make_pipeline(StandardScaler(), LogisticRegression())
-    model = TunedThresholdClassifierCV(
-        estimator=estimator,
-        objective_metric="max_tpr_at_tnr_constraint",
-        constraint_value=0,
-    )
-    y_pred_1 = model.fit(X, y).predict(X)
-    model.set_params(objective_metric="max_tnr_at_tpr_constraint")
-    y_pred_2 = (~model.fit(X, y).predict(X).astype(bool)).astype(int)
-    # check that we have opposite predictions with a slight tolerance
-    assert np.mean(y_pred_1 == y_pred_2) > 0.99
-
-
 def test_tuned_threshold_classifier_metric_with_parameter():
     """Check that we can pass a metric with a parameter in addition check that
     `f_beta` with `beta=1` is equivalent to `f1` and different from `f_beta` with
@@ -504,10 +411,6 @@ def test_tuned_threshold_classifier_metric_with_parameter():
 @pytest.mark.parametrize(
     "metric",
     [
-        "max_tnr_at_tpr_constraint",
-        "max_tpr_at_tnr_constraint",
-        "max_precision_at_recall_constraint",
-        "max_recall_at_precision_constraint",
         make_scorer(balanced_accuracy_score),
         make_scorer(f1_score, pos_label="cancer"),
     ],
@@ -526,7 +429,6 @@ def test_tuned_threshold_classifier_with_string_targets(response_method, metric)
     model = TunedThresholdClassifierCV(
         estimator=make_pipeline(StandardScaler(), LogisticRegression()),
         objective_metric=metric,
-        constraint_value=0.9,
         pos_label="cancer",
         response_method=response_method,
         thresholds=100,
@@ -589,18 +491,8 @@ def test_tuned_threshold_classifier_refit(with_sample_weight, global_random_seed
 
 
 @pytest.mark.usefixtures("enable_slep006")
-@pytest.mark.parametrize(
-    "objective_metric",
-    [
-        "max_tnr_at_tpr_constraint",
-        "max_tpr_at_tnr_constraint",
-        "max_precision_at_recall_constraint",
-        "max_recall_at_precision_constraint",
-        "balanced_accuracy",
-    ],
-)
 @pytest.mark.parametrize("fit_params_type", ["list", "array"])
-def test_tuned_threshold_classifier_fit_params(objective_metric, fit_params_type):
+def test_tuned_threshold_classifier_fit_params(fit_params_type):
     """Check that we pass `fit_params` to the classifier when calling `fit`."""
     X, y = make_classification(n_samples=100, random_state=0)
     fit_params = {
@@ -610,68 +502,8 @@ def test_tuned_threshold_classifier_fit_params(objective_metric, fit_params_type
 
     classifier = CheckingClassifier(expected_fit_params=["a", "b"], random_state=0)
     classifier.set_fit_request(a=True, b=True)
-    model = TunedThresholdClassifierCV(
-        classifier, objective_metric=objective_metric, constraint_value=0.5
-    )
+    model = TunedThresholdClassifierCV(classifier)
     model.fit(X, y, **fit_params)
-
-
-@pytest.mark.parametrize(
-    "objective_metric, constraint_value",
-    [
-        ("max_tnr_at_tpr_constraint", 0.5),
-        ("max_tpr_at_tnr_constraint", 0.5),
-        ("max_precision_at_recall_constraint", 0.5),
-        ("max_recall_at_precision_constraint", 0.5),
-    ],
-)
-@pytest.mark.parametrize(
-    "response_method", ["auto", "decision_function", "predict_proba"]
-)
-def test_tuned_threshold_classifier_response_method_curve_scorer_with_constraint_metric(
-    objective_metric, constraint_value, response_method, global_random_seed
-):
-    """Check that we use the proper curve scorer and forwarding the requested
-    response method for TNR/TPR and precision/recall metrics.
-    """
-    X, y = make_classification(n_samples=100, random_state=global_random_seed)
-    classifier = LogisticRegression()
-
-    thresholds = 100
-    model = TunedThresholdClassifierCV(
-        classifier,
-        objective_metric=objective_metric,
-        constraint_value=constraint_value,
-        response_method=response_method,
-        thresholds=thresholds,
-        store_cv_results=True,
-    )
-    model.fit(X, y)
-    assert model.cv_results_["thresholds"].shape == (thresholds,)
-    assert model.cv_results_["constrained_scores"].shape == (thresholds,)
-    assert model.cv_results_["maximized_scores"].shape == (thresholds,)
-
-    if response_method in ("auto", "predict_proba"):
-        # "auto" will fall back in priority on `predict_proba` if `estimator`
-        # supports it. We expect the decision threshold to be in [0, 1]
-        if objective_metric in (
-            "max_tnr_at_tpr_constraint",
-            "max_precision_at_recall_constraint",
-        ):
-            assert 0.5 <= model.best_threshold_ <= 1
-        else:  # "max_tpr_at_tnr_constraint" or "max_recall_at_precision_constraint"
-            assert 0 <= model.best_threshold_ <= 0.5
-    else:  # "decision_function"
-        # We expect the decision function to be centered in 0.0 and to be larger than
-        # -1 and 1. We therefore check that the threshold is positive in one case and
-        # negative in the other.
-        if objective_metric in (
-            "max_tnr_at_tpr_constraint",
-            "max_precision_at_recall_constraint",
-        ):
-            assert 0 < model.best_threshold_ < 20
-        else:  # "max_tpr_at_tnr_constraint" or "max_recall_at_precision_constraint"
-            assert -20 < model.best_threshold_ < 0
 
 
 @pytest.mark.usefixtures("enable_slep006")
@@ -702,84 +534,6 @@ def test_tuned_threshold_classifier_cv_zeros_sample_weights_equivalence():
     y_pred_with_weights = model_with_weights.predict_proba(X)
     y_pred_without_weights = model_without_weights.predict_proba(X)
     assert_allclose(y_pred_with_weights, y_pred_without_weights)
-
-
-@pytest.mark.parametrize(
-    "objective_metric",
-    ["max_precision_at_recall_constraint", "max_recall_at_precision_constraint"],
-)
-@pytest.mark.parametrize("pos_label", [0, 1])
-def test_tuned_threshold_classifier_pos_label_precision_recall(
-    objective_metric, pos_label
-):
-    """Check that `pos_label` is dispatched correctly by checking the precision and
-    recall score found during the optimization and the one found at `predict` time."""
-    X, y = make_classification(n_samples=5_000, weights=[0.6, 0.4], random_state=42)
-
-    # prefit the estimator to avoid variability due to the cross-validation
-    estimator = LogisticRegression().fit(X, y)
-
-    constraint_value = 0.7
-    model = TunedThresholdClassifierCV(
-        estimator,
-        objective_metric=objective_metric,
-        constraint_value=constraint_value,
-        cv="prefit",
-        refit=False,
-        pos_label=pos_label,
-    ).fit(X, y)
-
-    precision = precision_score(y, model.predict(X), pos_label=pos_label)
-    recall = recall_score(y, model.predict(X), pos_label=pos_label)
-
-    # due to internal interpolation, the scores will vary slightly
-    if objective_metric == "max_precision_at_recall_constraint":
-        assert precision == pytest.approx(model.best_score_, abs=1e-3)
-        assert recall == pytest.approx(model.constrained_score_, abs=1e-3)
-    else:
-        assert recall == pytest.approx(model.best_score_, abs=1e-3)
-        assert precision == pytest.approx(model.constrained_score_, abs=1e-3)
-
-
-@pytest.mark.parametrize(
-    "objective_metric", ["max_tnr_at_tpr_constraint", "max_tpr_at_tnr_constraint"]
-)
-@pytest.mark.parametrize("pos_label", [0, 1])
-def test_tuned_threshold_classifier_pos_label_tnr_tpr(objective_metric, pos_label):
-    """Check that `pos_label` is dispatched correctly by checking the TNR and TPR
-    score found during the optimization and the one found at `predict` time."""
-    X, y = make_classification(n_samples=5_000, weights=[0.6, 0.4], random_state=42)
-
-    # prefit the estimator to avoid variability due to the cross-validation
-    estimator = LogisticRegression().fit(X, y)
-
-    constraint_value = 0.7
-    model = TunedThresholdClassifierCV(
-        estimator,
-        objective_metric=objective_metric,
-        constraint_value=constraint_value,
-        cv="prefit",
-        refit=False,
-        pos_label=pos_label,
-    ).fit(X, y)
-
-    def tnr_tpr_score(y_true, y_pred, pos_label=pos_label):
-        cm = confusion_matrix(y_true, y_pred)
-        if pos_label == 0:
-            cm = cm[::-1, ::-1]
-        tn, fp, fn, tp = cm.ravel()
-        tnr = tn / (tn + fp)
-        tpr = tp / (tp + fn)
-        return tnr, tpr
-
-    tnr, tpr = tnr_tpr_score(y, model.predict(X), pos_label=pos_label)
-    # due to internal interpolation, the scores will vary slightly
-    if objective_metric == "max_tnr_at_tpr_constraint":
-        assert tnr == pytest.approx(model.best_score_, abs=0.05)
-        assert tpr == pytest.approx(model.constrained_score_, abs=0.05)
-    else:
-        assert tpr == pytest.approx(model.best_score_, abs=0.05)
-        assert tnr == pytest.approx(model.constrained_score_, abs=0.05)
 
 
 @pytest.mark.parametrize(
@@ -832,31 +586,13 @@ def test_tuned_threshold_classifier_thresholds_array():
     assert_allclose(tuned_model.cv_results_["thresholds"], thresholds)
 
 
-@pytest.mark.parametrize(
-    "params",
-    [
-        {"objective_metric": "balanced_accuracy"},
-        {"objective_metric": "max_tpr_at_tnr_constraint", "constraint_value": 0.5},
-        {"objective_metric": "max_tnr_at_tpr_constraint", "constraint_value": 0.5},
-        {
-            "objective_metric": "max_precision_at_recall_constraint",
-            "constraint_value": 0.5,
-        },
-        {
-            "objective_metric": "max_recall_at_precision_constraint",
-            "constraint_value": 0.5,
-        },
-    ],
-)
 @pytest.mark.parametrize("store_cv_results", [True, False])
-def test_tuned_threshold_classifier_store_cv_results(params, store_cv_results):
+def test_tuned_threshold_classifier_store_cv_results(store_cv_results):
     """Check that if `cv_results_` exists depending on `store_cv_results`."""
     X, y = make_classification(random_state=0)
     estimator = LogisticRegression()
     tuned_model = TunedThresholdClassifierCV(
-        estimator,
-        store_cv_results=store_cv_results,
-        **params,
+        estimator, store_cv_results=store_cv_results
     ).fit(X, y)
     if store_cv_results:
         assert hasattr(tuned_model, "cv_results_")
@@ -890,27 +626,6 @@ def test_tuned_threshold_classifier_cv_float():
     cloned_estimator = clone(estimator).fit(X, y)
 
     assert_allclose(tuned_model.estimator_.coef_, cloned_estimator.coef_)
-
-
-@pytest.mark.parametrize(
-    "objective_metric",
-    [
-        "max_tpr_at_tnr_constraint",
-        "max_tnr_at_tpr_constraint",
-        "max_precision_at_recall_constraint",
-        "max_recall_at_precision_constraint",
-    ],
-)
-def test_tuned_threshold_classifier_error_missing_constraint(objective_metric):
-    """Check that we raise an informative error when using a objective metric requesting
-    a constraint but no `constraint_value` is provided."""
-    X, y = make_classification(random_state=0)
-    estimator = LogisticRegression()
-    tuned_model = TunedThresholdClassifierCV(
-        estimator, objective_metric=objective_metric
-    )
-    with pytest.raises(ValueError, match="`constraint_value` must be provided"):
-        tuned_model.fit(X, y)
 
 
 def test_tuned_threshold_classifier_error_constant_predictor():

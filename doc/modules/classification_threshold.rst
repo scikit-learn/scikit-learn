@@ -117,23 +117,6 @@ a meaningful metric for their use case.
         >>> model.best_score_
         0.86...
 
-A second strategy aims to maximize one metric while imposing constraints on another
-metric. There are four pre-defined options that can be provided to `objective_metric`
-parameter, two use the Receiver Operating Characteristic (ROC) statistics and two use
-the Precision-Recall statistics.
-
-- `"max_tpr_at_tnr_constraint"`: maximizes the True Positive Rate (TPR) such that the
-  True Negative Rate (TNR) is the closest to a given value.
-- `"max_tnr_at_tpr_constraint"`: maximizes the TNR such that the TPR is the closest to
-  a given value.
-- `"max_precision_at_recall_constraint"`: maximizes the precision such that the recall
-  is the closest to a given value.
-- `"max_recall_at_precision_constraint"`: maximizes the recall such that the precision
-  is the closest to a given value.
-
-For these options, the `constraint_value` parameter needs to be defined. In addition,
-you can use the `pos_label` parameter to indicate the label of the class of interest.
-
 Important notes regarding the internal cross-validation
 -------------------------------------------------------
 

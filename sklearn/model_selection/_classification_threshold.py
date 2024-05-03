@@ -15,9 +15,6 @@ from ..exceptions import NotFittedError
 from ..metrics import (
     check_scoring,
     get_scorer_names,
-    make_scorer,
-    precision_recall_curve,
-    roc_curve,
 )
 from ..metrics._scorer import _BaseScorer
 from ..utils import _safe_indexing
@@ -611,31 +608,9 @@ def _fit_and_score_over_thresholds(
     else:  # prefit estimator, only a validation set is provided
         X_val, y_val, score_params_val = X, y, score_params
 
-    if curve_scorer is roc_curve or (
-        isinstance(curve_scorer, _BaseScorer) and curve_scorer._score_func is roc_curve
-    ):
-        fpr, tpr, potential_thresholds = curve_scorer(
-            classifier, X_val, y_val, **score_params_val
-        )
-        # For fpr=0/tpr=0, the threshold is set to `np.inf`. We need to remove it.
-        fpr, tpr, potential_thresholds = fpr[1:], tpr[1:], potential_thresholds[1:]
-        # thresholds are in decreasing order
-        return potential_thresholds[::-1], ((1 - fpr)[::-1], tpr[::-1])
-    elif curve_scorer is precision_recall_curve or (
-        isinstance(curve_scorer, _BaseScorer)
-        and curve_scorer._score_func is precision_recall_curve
-    ):
-        precision, recall, potential_thresholds = curve_scorer(
-            classifier, X_val, y_val, **score_params_val
-        )
-        # thresholds are in increasing order
-        # the last element of the precision and recall is not associated with any
-        # threshold and should be discarded
-        return potential_thresholds, (precision[:-1], recall[:-1])
-    else:
-        scores, potential_thresholds = curve_scorer(
-            classifier, X_val, y_val, **score_params_val
-        )
+    scores, potential_thresholds = curve_scorer(
+        classifier, X_val, y_val, **score_params_val
+    )
     return potential_thresholds, scores
 
 
@@ -686,37 +661,17 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         The classifier, fitted or not, for which we want to optimize
         the decision threshold used during `predict`.
 
-    objective_metric : {"max_tpr_at_tnr_constraint", "max_tnr_at_tpr_constraint", \
-            "max_precision_at_recall_constraint, "max_recall_at_precision_constraint"} \
-            , str, dict or callable, default="balanced_accuracy"
+    objective_metric : str, dict or callable, default="balanced_accuracy"
         The objective metric to be optimized. Can be one of:
 
         * a string associated to a scoring function for binary classification
           (see model evaluation documentation);
         * a scorer callable object created with :func:`~sklearn.metrics.make_scorer`;
-        * `"max_tnr_at_tpr_constraint"`: find the decision threshold for a true
-          positive ratio (TPR) of `constraint_value`;
-        * `"max_tpr_at_tnr_constraint"`: find the decision threshold for a true
-          negative ratio (TNR) of `constraint_value`.
-        * `"max_precision_at_recall_constraint"`: find the decision threshold for a
-          recall of `constraint_value`;
-        * `"max_recall_at_precision_constraint"`: find the decision threshold for a
-          precision of `constraint_value`.
-
-    constraint_value : float, default=None
-        The value associated with the `objective_metric` metric for which we
-        want to find the decision threshold when `objective_metric` is either
-        `"max_tnr_at_tpr_constraint"`, `"max_tpr_at_tnr_constraint"`,
-        `"max_precision_at_recall_constraint"`, or
-        `"max_recall_at_precision_constraint"`.
 
     pos_label : int, float, bool or str, default=None
-        The label of the positive class. Used when `objective_metric` is
-        `"max_tnr_at_tpr_constraint"`"`, `"max_tpr_at_tnr_constraint"`, or a dictionary.
-        When `pos_label=None`, if `y_true` is in `{-1, 1}` or `{0, 1}`,
-        `pos_label` is set to 1, otherwise an error will be raised. When using a
-        scorer, `pos_label` can be passed as a keyword argument to
-        :func:`~sklearn.metrics.make_scorer`.
+        The label of the positive class. Used to process the output of the
+        `response_method` method. When `pos_label=None`, if `y_true` is in `{-1, 1}` or
+        `{0, 1}`, `pos_label` is set to 1, otherwise an error will be raised.
 
     response_method : {"auto", "decision_function", "predict_proba"}, default="auto"
         Methods by the classifier `estimator` corresponding to the
@@ -790,24 +745,10 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
     best_score_ : float or None
         The optimal score of the objective metric, evaluated at `best_threshold_`.
 
-    constrained_score_ : float or None
-        When `objective_metric` is one of `"max_tpr_at_tnr_constraint"`,
-        `"max_tnr_at_tpr_constraint"`, `"max_precision_at_recall_constraint"`,
-        `"max_recall_at_precision_constraint"`, it will corresponds to the score of the
-        metric which is constrained. It should be close to `constraint_value`. If
-        `objective_metric` is not one of the above, `constrained_score_` is None.
-
     cv_results_ : dict or None
         A dictionary containing the scores and thresholds computed during the
-        cross-validation process. Only exist if `store_cv_results=True`.
-        The keys are different depending on the `objective_metric` used:
-
-        * when `objective_metric` is one of `"max_tpr_at_tnr_constraint"`,
-          `"max_tnr_at_tpr_constraint"`, `"max_precision_at_recall_constraint"`,
-          `"max_recall_at_precision_constraint"`, the keys are `"thresholds"`,
-          `"constrained_scores"`, and `"maximized_scores"`;
-        * otherwise, for score computing a single values, the keys are `"thresholds"`
-          and `"scores"`.
+        cross-validation process. Only exist if `store_cv_results=True`. The
+        keys are `"thresholds"` and `"scores"`.
 
     classes_ : ndarray of shape (n_classes,)
         The class labels.
@@ -851,43 +792,31 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
     weighted avg       0.93      0.93      0.92       250
     <BLANKLINE>
     >>> classifier_tuned = TunedThresholdClassifierCV(
-    ...     classifier, objective_metric="max_precision_at_recall_constraint",
-    ...     constraint_value=0.7,
+    ...     classifier, objective_metric="balanced_accuracy"
     ... ).fit(X_train, y_train)
     >>> print(
-    ...     f"Cut-off point found at {classifier_tuned.best_threshold_:.3f} for a "
-    ...     f"recall of {classifier_tuned.constrained_score_:.3f} and a precision of "
-    ...     f"{classifier_tuned.best_score_:.3f}."
+    ...     f"Cut-off point found at {classifier_tuned.best_threshold_:.3f}"
     ... )
-    Cut-off point found at 0.3... for a recall of 0.7... and a precision of 0.7...
+    Cut-off point found at 0.342
     >>> print(classification_report(y_test, classifier_tuned.predict(X_test)))
                   precision    recall  f1-score   support
     <BLANKLINE>
-               0       0.96      0.96      0.96       224
-               1       0.68      0.65      0.67        26
+               0       0.96      0.95      0.96       224
+               1       0.61      0.65      0.63        26
     <BLANKLINE>
-        accuracy                           0.93       250
-       macro avg       0.82      0.81      0.81       250
-    weighted avg       0.93      0.93      0.93       250
+        accuracy                           0.92       250
+       macro avg       0.78      0.80      0.79       250
+    weighted avg       0.92      0.92      0.92       250
     <BLANKLINE>
     """
 
     _parameter_constraints: dict = {
         **BaseThresholdClassifier._parameter_constraints,
         "objective_metric": [
-            StrOptions(
-                set(get_scorer_names())
-                | {
-                    "max_tnr_at_tpr_constraint",
-                    "max_tpr_at_tnr_constraint",
-                    "max_precision_at_recall_constraint",
-                    "max_recall_at_precision_constraint",
-                }
-            ),
+            StrOptions(set(get_scorer_names())),
             callable,
             MutableMapping,
         ],
-        "constraint_value": [Real, None],
         "thresholds": [Interval(Integral, 1, None, closed="left"), "array-like"],
         "cv": [
             "cv_object",
@@ -905,7 +834,6 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         estimator,
         *,
         objective_metric="balanced_accuracy",
-        constraint_value=None,
         pos_label=None,
         response_method="auto",
         thresholds=100,
@@ -919,7 +847,6 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
             estimator=estimator, response_method=response_method, pos_label=pos_label
         )
         self.objective_metric = objective_metric
-        self.constraint_value = constraint_value
         self.thresholds = thresholds
         self.cv = cv
         self.refit = refit
@@ -965,23 +892,6 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
             cv = check_cv(self.cv, y=y, classifier=True)
             if self.refit is False and cv.get_n_splits() > 1:
                 raise ValueError("When cv has several folds, refit cannot be False.")
-
-        if isinstance(self.objective_metric, str) and self.objective_metric in {
-            "max_tpr_at_tnr_constraint",
-            "max_tnr_at_tpr_constraint",
-            "max_precision_at_recall_constraint",
-            "max_recall_at_precision_constraint",
-        }:
-            if self.constraint_value is None:
-                raise ValueError(
-                    "When `objective_metric` is 'max_tpr_at_tnr_constraint', "
-                    "'max_tnr_at_tpr_constraint', 'max_precision_at_recall_constraint',"
-                    " or 'max_recall_at_precision_constraint', `constraint_value` must "
-                    "be provided. Got None instead."
-                )
-            constrained_metric = True
-        else:
-            constrained_metric = False
 
         routed_params = process_routing(self, "fit", **params)
         self._curve_scorer = self._get_curve_scorer()
@@ -1049,56 +959,17 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         else:
             decision_thresholds = np.asarray(self.thresholds)
 
-        if not constrained_metric:  # find best score that is the highest value
-            objective_scores = _mean_interpolated_score(
-                decision_thresholds, cv_thresholds, cv_scores
-            )
-            best_idx = objective_scores.argmax()
-            self.best_score_ = objective_scores[best_idx]
-            self.best_threshold_ = decision_thresholds[best_idx]
-            self.constrained_score_ = None
-            if self.store_cv_results:
-                self.cv_results_ = {
-                    "thresholds": decision_thresholds,
-                    "scores": objective_scores,
-                }
-        else:
-            if "tpr" in self.objective_metric:  # tpr/tnr
-                mean_tnr, mean_tpr = [
-                    _mean_interpolated_score(decision_thresholds, cv_thresholds, sc)
-                    for sc in zip(*cv_scores)
-                ]
-            else:  # precision/recall
-                mean_precision, mean_recall = [
-                    _mean_interpolated_score(decision_thresholds, cv_thresholds, sc)
-                    for sc in zip(*cv_scores)
-                ]
-
-            def _get_best_idx(constrained_score, maximized_score):
-                """Find the index of the best score constrained by another score."""
-                mask = constrained_score >= self.constraint_value
-                mask_idx = maximized_score[mask].argmax()
-                return np.flatnonzero(mask)[mask_idx]
-
-            if self.objective_metric == "max_tpr_at_tnr_constraint":
-                constrained_scores, maximized_scores = mean_tnr, mean_tpr
-            elif self.objective_metric == "max_tnr_at_tpr_constraint":
-                constrained_scores, maximized_scores = mean_tpr, mean_tnr
-            elif self.objective_metric == "max_precision_at_recall_constraint":
-                constrained_scores, maximized_scores = mean_recall, mean_precision
-            else:  # max_recall_at_precision_constraint
-                constrained_scores, maximized_scores = mean_precision, mean_recall
-
-            best_idx = _get_best_idx(constrained_scores, maximized_scores)
-            self.best_score_ = maximized_scores[best_idx]
-            self.constrained_score_ = constrained_scores[best_idx]
-            self.best_threshold_ = decision_thresholds[best_idx]
-            if self.store_cv_results:
-                self.cv_results_ = {
-                    "thresholds": decision_thresholds,
-                    "constrained_scores": constrained_scores,
-                    "maximized_scores": maximized_scores,
-                }
+        objective_scores = _mean_interpolated_score(
+            decision_thresholds, cv_thresholds, cv_scores
+        )
+        best_idx = objective_scores.argmax()
+        self.best_score_ = objective_scores[best_idx]
+        self.best_threshold_ = decision_thresholds[best_idx]
+        if self.store_cv_results:
+            self.cv_results_ = {
+                "thresholds": decision_thresholds,
+                "scores": objective_scores,
+            }
 
         return self
 
@@ -1161,29 +1032,10 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         """Get the curve scorer based on the objective metric used.
 
         Here, we reuse the conventional "scorer API" via `make_scorer` or
-        `_CurveScorer`. Note that the use here is unconventional because `make_scorer`
-        or the "scorer API" is expected to return a single score value when calling
-        `scorer(estimator, X, y)`. Here the score function used are both returning
-        scores and thresholds representing a curve.
+        `_CurveScorer`.
         """
-        if self.objective_metric in {
-            "max_tnr_at_tpr_constraint",
-            "max_tpr_at_tnr_constraint",
-            "max_precision_at_recall_constraint",
-            "max_recall_at_precision_constraint",
-        }:
-            if "tpr" in self.objective_metric:  # tpr/tnr
-                score_curve_func = roc_curve
-            else:  # precision/recall
-                score_curve_func = precision_recall_curve
-            curve_scorer = make_scorer(
-                score_curve_func,
-                response_method=self._response_method,
-                pos_label=self.pos_label,
-            )
-        else:
-            scoring = check_scoring(self.estimator, scoring=self.objective_metric)
-            curve_scorer = _CurveScorer.from_scorer(
-                scoring, self._response_method, self.thresholds, self.pos_label
-            )
+        scoring = check_scoring(self.estimator, scoring=self.objective_metric)
+        curve_scorer = _CurveScorer.from_scorer(
+            scoring, self._response_method, self.thresholds, self.pos_label
+        )
         return curve_scorer
