@@ -77,6 +77,7 @@ Scoring                                Function                                 
 'roc_auc_ovo'                          :func:`metrics.roc_auc_score`
 'roc_auc_ovr_weighted'                 :func:`metrics.roc_auc_score`
 'roc_auc_ovo_weighted'                 :func:`metrics.roc_auc_score`
+'d2_log_loss_score'                    :func:`d2_log_loss_score`
 
 **Clustering**
 'adjusted_mutual_info_score'           :func:`metrics.adjusted_mutual_info_score`
@@ -377,6 +378,7 @@ Some also work in the multilabel case:
    recall_score
    roc_auc_score
    zero_one_loss
+   d2_log_loss_score
 
 And some work with binary and multilabel (but not multiclass) problems:
 
@@ -1986,6 +1988,51 @@ see the example below.
 
 |details-end|
 
+.. _d2_log_loss_score:
+
+D2 log loss score
+-----------------------
+
+The :func:`d2_log_loss_score` function implements the special case
+of D² with the log loss, see :ref:`log_loss`, i.e.:
+
+.. math::
+
+  \text{dev}(y, \hat{y}) = \text{log_loss}(y, \hat{y}).
+
+The :math:`y_{\text{null}}` for the :func:`log_loss` is the per-class
+proportion.
+
+Here are some usage examples of the :func:`d2_log_loss_score` function::
+
+  >>> from sklearn.metrics import d2_log_loss_score
+  >>> y_true = [1, 1, 2, 3]
+  >>> y_pred = [
+  ...    [0.5, 0.25, 0.25],
+  ...    [0.5, 0.25, 0.25],
+  ...    [0.5, 0.25, 0.25],
+  ...    [0.5, 0.25, 0.25],
+  ... ]
+  >>> d2_log_loss_score(y_true, y_pred)
+  0.0
+  >>> y_true = [1, 2, 3]
+  >>> y_pred = [
+  ...     [0.98, 0.01, 0.01],
+  ...     [0.01, 0.98, 0.01],
+  ...     [0.01, 0.01, 0.98],
+  ... ]
+  >>> d2_log_loss_score(y_true, y_pred)
+  0.981...
+  >>> y_true = [1, 2, 3]
+  >>> y_pred = [
+  ...     [0.1, 0.6, 0.3],
+  ...     [0.1, 0.6, 0.3],
+  ...     [0.4, 0.5, 0.1],
+  ... ]
+  >>> d2_log_loss_score(y_true, y_pred)
+  -0.552...
+
+
 .. _multilabel_ranking_metrics:
 
 Multilabel ranking metrics
@@ -2823,51 +2870,6 @@ Here are some usage examples of the :func:`d2_absolute_error_score` function::
   >>> y_pred = [2, 2, 2]
   >>> d2_absolute_error_score(y_true, y_pred)
   0.0
-
-|details-end|
-
-|details-start|
-**D² log loss score**
-|details-split|
-
-The :func:`d2_log_loss_score` function implements the special case
-of D² with the log loss, see :ref:`log_loss`, i.e.:
-
-.. math::
-
-  \text{dev}(y, \hat{y}) = \text{log_loss}(y, \hat{y}).
-
-The :math:`y_{\text{null}}` for the :func:`log_loss` is the per-class
-proportion.
-
-Here are some usage examples of the :func:`d2_log_loss_score` function::
-
-  >>> from sklearn.metrics import d2_log_loss_score
-  >>> y_true = [1, 1, 2, 3]
-  >>> y_pred = [
-  ...    [0.5, 0.25, 0.25],
-  ...    [0.5, 0.25, 0.25],
-  ...    [0.5, 0.25, 0.25],
-  ...    [0.5, 0.25, 0.25],
-  ... ]
-  >>> d2_log_loss_score(y_true, y_pred)
-  0.0
-  >>> y_true = [1, 2, 3]
-  >>> y_pred = [
-  ...     [0.98, 0.01, 0.01],
-  ...     [0.01, 0.98, 0.01],
-  ...     [0.01, 0.01, 0.98],
-  ... ]
-  >>> d2_log_loss_score(y_true, y_pred)
-  0.981...
-  >>> y_true = [1, 2, 3]
-  >>> y_pred = [
-  ...     [0.1, 0.6, 0.3],
-  ...     [0.1, 0.6, 0.3],
-  ...     [0.4, 0.5, 0.1],
-  ... ]
-  >>> d2_log_loss_score(y_true, y_pred)
-  -0.552...
 
 |details-end|
 
