@@ -1991,7 +1991,7 @@ see the example below.
 .. _d2_log_loss_score:
 
 D2 log loss score
------------------------
+-----------------
 
 The :func:`d2_log_loss_score` function implements the special case
 of D² with the log loss, see :ref:`log_loss`, i.e.:
