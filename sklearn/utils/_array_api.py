@@ -942,6 +942,7 @@ def _in1d(ar1, ar2, xp, assume_unique=False, invert=False):
         ar2 = xp.unique_values(ar2)
 
     ar = xp.concat((ar1, ar2))
+    device_ = device(ar)
     # We need this to be a stable sort.
     order = ar.argsort(stable=True)
     sar = ar[order]
@@ -949,8 +950,8 @@ def _in1d(ar1, ar2, xp, assume_unique=False, invert=False):
         bool_ar = sar[1:] != sar[:-1]
     else:
         bool_ar = sar[1:] == sar[:-1]
-    flag = xp.concat((bool_ar, xp.asarray([invert])))
-    ret = xp.empty(ar.shape, dtype=xp.bool)
+    flag = xp.concat((bool_ar, xp.asarray([invert], device=device_)))
+    ret = xp.empty(ar.shape, dtype=xp.bool, device=device_)
     ret[order] = flag
 
     if assume_unique:

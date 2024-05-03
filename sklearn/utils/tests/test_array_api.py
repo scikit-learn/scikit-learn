@@ -540,4 +540,4 @@ def test_isin(
             invert=invert,
         )
 
-    assert_array_equal(result, expected)
+    assert_array_equal(_convert_to_numpy(result, xp=xp), expected)
