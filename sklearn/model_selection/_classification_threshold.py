@@ -590,13 +590,13 @@ def _fit_and_score_over_thresholds(
 
     Returns
     -------
-    potential_thresholds : ndarray of shape (thresholds,)
-        The decision thresholds used to compute the scores. They are returned in
-        ascending order.
-
     scores : ndarray of shape (thresholds,) or tuple of such arrays
         The scores computed for each decision threshold. When TPR/TNR or precision/
         recall are computed, `scores` is a tuple of two arrays.
+
+    potential_thresholds : ndarray of shape (thresholds,)
+        The decision thresholds used to compute the scores. They are returned in
+        ascending order.
     """
 
     if train_idx is not None:
@@ -608,10 +608,7 @@ def _fit_and_score_over_thresholds(
     else:  # prefit estimator, only a validation set is provided
         X_val, y_val, score_params_val = X, y, score_params
 
-    scores, potential_thresholds = curve_scorer(
-        classifier, X_val, y_val, **score_params_val
-    )
-    return potential_thresholds, scores
+    return curve_scorer(classifier, X_val, y_val, **score_params_val)
 
 
 def _mean_interpolated_score(target_thresholds, cv_thresholds, cv_scores):
@@ -661,7 +658,7 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         The classifier, fitted or not, for which we want to optimize
         the decision threshold used during `predict`.
 
-    objective_metric : str, dict or callable, default="balanced_accuracy"
+    objective_metric : str or callable, default="balanced_accuracy"
         The objective metric to be optimized. Can be one of:
 
         * a string associated to a scoring function for binary classification
@@ -923,7 +920,7 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
 
             self.estimator_.fit(X_train, y_train, **fit_params_train)
 
-        cv_thresholds, cv_scores = zip(
+        cv_scores, cv_thresholds = zip(
             *Parallel(n_jobs=self.n_jobs)(
                 delayed(_fit_and_score_over_thresholds)(
                     clone(classifier) if cv != "prefit" else classifier,

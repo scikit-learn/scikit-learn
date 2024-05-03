@@ -146,7 +146,7 @@ def test_fit_and_score_over_thresholds_curve_scorers():
         thresholds=10,
         kwargs={},
     )
-    thresholds, scores = _fit_and_score_over_thresholds(
+    scores, thresholds = _fit_and_score_over_thresholds(
         classifier,
         X,
         y,
@@ -180,7 +180,7 @@ def test_fit_and_score_over_thresholds_prefit():
         thresholds=2,
         kwargs={},
     )
-    thresholds, scores = _fit_and_score_over_thresholds(
+    scores, thresholds = _fit_and_score_over_thresholds(
         classifier,
         X,
         y,
@@ -216,7 +216,7 @@ def test_fit_and_score_over_thresholds_sample_weight():
         thresholds=10,
         kwargs={},
     )
-    thresholds_repeated, scores_repeated = _fit_and_score_over_thresholds(
+    scores_repeated, thresholds_repeated = _fit_and_score_over_thresholds(
         classifier,
         X_repeated,
         y_repeated,
@@ -228,7 +228,7 @@ def test_fit_and_score_over_thresholds_sample_weight():
     )
 
     train_idx, val_idx = np.arange(X.shape[0]), np.arange(X.shape[0])
-    thresholds, scores = _fit_and_score_over_thresholds(
+    scores, thresholds = _fit_and_score_over_thresholds(
         classifier.set_fit_request(sample_weight=True),
         X,
         y,
