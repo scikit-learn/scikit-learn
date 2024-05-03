@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from scipy.sparse import issparse
 
-from sklearn import datasets
+from sklearn import config_context, datasets
 from sklearn.preprocessing._label import (
     LabelBinarizer,
     LabelEncoder,
@@ -11,11 +11,15 @@ from sklearn.preprocessing._label import (
     _inverse_binarize_thresholding,
     label_binarize,
 )
-from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
-from sklearn.utils._testing import assert_array_equal, ignore_warnings
-from sklearn.utils.estimator_checks import (
-    _get_check_estimator_ids,
-    check_array_api_input_and_values,
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    get_namespace,
+    yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._testing import (
+    _array_api_for_tests,
+    assert_array_equal,
+    ignore_warnings,
 )
 from sklearn.utils.fixes import (
     COO_CONTAINERS,
@@ -708,17 +712,30 @@ def test_label_encoders_do_not_have_set_output(encoder):
     "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize(
-    "check",
-    [check_array_api_input_and_values],
-    ids=_get_check_estimator_ids,
+    "y",
+    [
+        np.array([2, 1, 3, 1, 3]),
+        np.array([1, 1, 4, 5, -1, 0]),
+        np.array([3, 5, 9, 5, 9, 3]),
+    ],
 )
-@pytest.mark.parametrize(
-    "estimator",
-    [LabelEncoder()],
-    ids=_get_check_estimator_ids,
-)
-def test_label_encoder_array_api_compliance(
-    estimator, check, array_namespace, device, dtype
-):
-    name = estimator.__class__.__name__
-    check(name, estimator, array_namespace, device=device, dtype_name=dtype)
+def test_label_encoder_array_api_compliance(y, array_namespace, device, dtype):
+    xp = _array_api_for_tests(array_namespace, device)
+    xp_y = xp.asarray(y, device=device)
+    xp_label = LabelEncoder()
+    with config_context(array_api_dispatch=True):
+        xp_label_fit = xp_label.fit(xp_y)
+        xp_transformed = xp_label_fit.transform(xp_y)
+        xp_inv_transformed = xp_label_fit.inverse_transform(xp_transformed)
+        np_label = LabelEncoder()
+        np_label_fit = np_label.fit(y)
+        np_transformed = np_label_fit.transform(y)
+        assert get_namespace(xp_transformed)[0].__name__ == xp.__name__
+        assert get_namespace(xp_inv_transformed)[0].__name__ == xp.__name__
+        assert_array_equal(_convert_to_numpy(xp_transformed, xp), np_transformed)
+        assert_array_equal(_convert_to_numpy(xp_inv_transformed, xp), y)
+
+        xp_transformed = xp_label.fit_transform(xp_y)
+        np_transformed = np_label.fit_transform(y)
+        assert get_namespace(xp_transformed)[0].__name__ == xp.__name__
+        assert_array_equal(_convert_to_numpy(xp_transformed, xp), np_transformed)

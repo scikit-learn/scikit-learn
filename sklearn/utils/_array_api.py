@@ -923,15 +923,16 @@ def _in1d(ar1, ar2, xp, assume_unique=False, invert=False):
     present in numpy:
     https://github.com/numpy/numpy/blob/v1.26.0/numpy/lib/arraysetops.py#L524-L758
     """
+    xp, _ = get_namespace(ar1, ar2, xp=xp)
 
     # This code is run to make the code significantly faster
     if ar2.shape[0] < 10 * ar1.shape[0] ** 0.145:
         if invert:
-            mask = xp.ones(ar1.shape[0], dtype=xp.bool)
+            mask = xp.ones(ar1.shape[0], dtype=xp.bool, device=device(ar1))
             for a in ar2:
                 mask &= ar1 != a
         else:
-            mask = xp.zeros(ar1.shape[0], dtype=xp.bool)
+            mask = xp.zeros(ar1.shape[0], dtype=xp.bool, device=device(ar1))
             for a in ar2:
                 mask |= ar1 == a
         return mask
