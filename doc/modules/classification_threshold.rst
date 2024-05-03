@@ -94,7 +94,7 @@ a meaningful metric for their use case.
 .. note::
 
     It is important to notice that these metrics come with default parameters, notably
-    the label of the class of interested (i.e. `pos_label`). Thus, if this label is not
+    the label of the class of interest (i.e. `pos_label`). Thus, if this label is not
     the right one for your application, you need to define a scorer and pass the right
     `pos_label` (and additional parameters) using the
     :func:`~sklearn.metrics.make_scorer`. Refer to :ref:`scoring` to get
