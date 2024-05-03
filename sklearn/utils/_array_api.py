@@ -944,17 +944,17 @@ def _in1d(ar1, ar2, xp, assume_unique=False, invert=False):
     ar = xp.concat((ar1, ar2))
     device_ = device(ar)
     # We need this to be a stable sort.
-    order = ar.argsort(stable=True)
-    sar = ar[order]
+    order = xp.argsort(ar, stable=True)
+    reverse_order = xp.argsort(order, stable=True)
+    sar = xp.take(ar, order)
     if invert:
         bool_ar = sar[1:] != sar[:-1]
     else:
         bool_ar = sar[1:] == sar[:-1]
     flag = xp.concat((bool_ar, xp.asarray([invert], device=device_)))
-    ret = xp.empty(ar.shape, dtype=xp.bool, device=device_)
-    ret[order] = flag
+    ret = xp.take(flag, reverse_order)
 
     if assume_unique:
-        return ret[: len(ar1)]
+        return ret[: ar1.shape[0]]
     else:
-        return ret[rev_idx]
+        return xp.take(ret, rev_idx)
