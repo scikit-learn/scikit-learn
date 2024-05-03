@@ -1988,10 +1988,32 @@ see the example below.
 
 |details-end|
 
-.. _d2_log_loss_score:
+.. _d2_score_classification:
 
-D2 log loss score
------------------
+D² score for classification
+---------------------------
+
+The D² score computes the fraction of deviance explained.
+It is a generalization of R², where the squared error is generalized and replaced
+by a classification deviance of choice :math:`\text{dev}(y, \hat{y})`
+(e.g., Log loss). D² is a form of a *skill score*.
+It is calculated as
+
+.. math::
+
+  D^2(y, \hat{y}) = 1 - \frac{\text{dev}(y, \hat{y})}{\text{dev}(y, y_{\text{null}})} \,.
+
+Where :math:`y_{\text{null}}` is the optimal prediction of an intercept-only model
+(e.g., the per-class proportion of `y_true` in the case of the Log loss).
+
+Like R², the best possible score is 1.0 and it can be negative (because the
+model can be arbitrarily worse). A constant model that always predicts
+:math:`y_{\text{null}}`, disregarding the input features, would get a D² score
+of 0.0.
+
+|details-start|
+**D2 log loss score**
+|details-split|
 
 The :func:`d2_log_loss_score` function implements the special case
 of D² with the log loss, see :ref:`log_loss`, i.e.:
@@ -1999,9 +2021,6 @@ of D² with the log loss, see :ref:`log_loss`, i.e.:
 .. math::
 
   \text{dev}(y, \hat{y}) = \text{log_loss}(y, \hat{y}).
-
-The :math:`y_{\text{null}}` for the :func:`log_loss` is the per-class
-proportion.
 
 Here are some usage examples of the :func:`d2_log_loss_score` function::
 
@@ -2032,6 +2051,7 @@ Here are some usage examples of the :func:`d2_log_loss_score` function::
   >>> d2_log_loss_score(y_true, y_pred)
   -0.552...
 
+|details-end|
 
 .. _multilabel_ranking_metrics:
 
