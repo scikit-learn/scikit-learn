@@ -897,19 +897,7 @@ def check_array_api_input(
     X_xp = xp.asarray(X, device=device)
     y_xp = xp.asarray(y, device=device)
 
-    X_types = est._get_tags().get("X_types", [""])
-    if "labels" in X_types[0]:
-        fit_args = (y,)
-        xp_fit_args = (y_xp,)
-        method_arg = (y,)
-        xp_method_arg = (y_xp,)
-    else:
-        fit_args = (X, y)
-        xp_fit_args = (X_xp, y_xp)
-        method_arg = (X,)
-        xp_method_arg = (X_xp,)
-
-    est.fit(*fit_args)
+    est.fit(X, y)
 
     array_attributes = {
         key: value for key, value in vars(est).items() if isinstance(value, np.ndarray)
@@ -917,7 +905,7 @@ def check_array_api_input(
 
     est_xp = clone(est)
     with config_context(array_api_dispatch=True):
-        est_xp.fit(*xp_fit_args)
+        est_xp.fit(X_xp, y_xp)
         input_ns = get_namespace(X_xp)[0].__name__
 
     # Fitted attributes which are arrays must have the same
@@ -972,9 +960,9 @@ def check_array_api_input(
                 assert abs(result - result_xp) < _atol_for_type(X.dtype)
             continue
         else:
-            result = method(*method_arg)
+            result = method(X)
             with config_context(array_api_dispatch=True):
-                result_xp = getattr(est_xp, method_name)(*xp_method_arg)
+                result_xp = getattr(est_xp, method_name)(X_xp)
 
         with config_context(array_api_dispatch=True):
             result_ns = get_namespace(result_xp)[0].__name__
