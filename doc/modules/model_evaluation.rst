@@ -77,7 +77,7 @@ Scoring                                Function                                 
 'roc_auc_ovo'                          :func:`metrics.roc_auc_score`
 'roc_auc_ovr_weighted'                 :func:`metrics.roc_auc_score`
 'roc_auc_ovo_weighted'                 :func:`metrics.roc_auc_score`
-'d2_log_loss_score'                    :func:`d2_log_loss_score`
+'d2_log_loss_score'                    :func:`metrics.d2_log_loss_score`
 
 **Clustering**
 'adjusted_mutual_info_score'           :func:`metrics.adjusted_mutual_info_score`
