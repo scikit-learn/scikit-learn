@@ -112,9 +112,7 @@ cv_results_vanilla_model[cv_scores].aggregate(["mean", "std"]).T
 # cross-validation strategy as previously.
 from sklearn.model_selection import TunedThresholdClassifierCV
 
-tuned_model = TunedThresholdClassifierCV(
-    estimator=model, objective_metric="balanced_accuracy"
-)
+tuned_model = TunedThresholdClassifierCV(estimator=model, scoring="balanced_accuracy")
 cv_results_tuned_model = pd.DataFrame(
     cross_validate(
         tuned_model,

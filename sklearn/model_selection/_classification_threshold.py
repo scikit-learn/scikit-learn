@@ -131,7 +131,7 @@ class BaseThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator
 
         **params : dict
             Parameters to pass to the `fit` method of the underlying
-            classifier and to the `objective_metric` scorer.
+            classifier.
 
         Returns
         -------
@@ -354,7 +354,7 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
 
         **params : dict
             Parameters to pass to the `fit` method of the underlying
-            classifier and to the `objective_metric` scorer.
+            classifier.
 
         Returns
         -------
@@ -658,7 +658,7 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         The classifier, fitted or not, for which we want to optimize
         the decision threshold used during `predict`.
 
-    objective_metric : str or callable, default="balanced_accuracy"
+    scoring : str or callable, default="balanced_accuracy"
         The objective metric to be optimized. Can be one of:
 
         * a string associated to a scoring function for binary classification
@@ -789,7 +789,7 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
     weighted avg       0.93      0.93      0.92       250
     <BLANKLINE>
     >>> classifier_tuned = TunedThresholdClassifierCV(
-    ...     classifier, objective_metric="balanced_accuracy"
+    ...     classifier, scoring="balanced_accuracy"
     ... ).fit(X_train, y_train)
     >>> print(
     ...     f"Cut-off point found at {classifier_tuned.best_threshold_:.3f}"
@@ -809,7 +809,7 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
 
     _parameter_constraints: dict = {
         **BaseThresholdClassifier._parameter_constraints,
-        "objective_metric": [
+        "scoring": [
             StrOptions(set(get_scorer_names())),
             callable,
             MutableMapping,
@@ -830,7 +830,7 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         self,
         estimator,
         *,
-        objective_metric="balanced_accuracy",
+        scoring="balanced_accuracy",
         pos_label=None,
         response_method="auto",
         thresholds=100,
@@ -843,7 +843,7 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         super().__init__(
             estimator=estimator, response_method=response_method, pos_label=pos_label
         )
-        self.objective_metric = objective_metric
+        self.scoring = scoring
         self.thresholds = thresholds
         self.cv = cv
         self.refit = refit
@@ -864,7 +864,7 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
 
         **params : dict
             Parameters to pass to the `fit` method of the underlying
-            classifier and to the `objective_metric` scorer.
+            classifier and to the `scoring` scorer.
 
         Returns
         -------
@@ -1031,7 +1031,7 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         Here, we reuse the conventional "scorer API" via `make_scorer` or
         `_CurveScorer`.
         """
-        scoring = check_scoring(self.estimator, scoring=self.objective_metric)
+        scoring = check_scoring(self.estimator, scoring=self.scoring)
         curve_scorer = _CurveScorer.from_scorer(
             scoring, self._response_method, self.thresholds, self.pos_label
         )

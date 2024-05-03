@@ -372,7 +372,7 @@ def test_tuned_threshold_classifier_without_constraint_value(response_method):
     thresholds = 100
     model = TunedThresholdClassifierCV(
         estimator=lr,
-        objective_metric="balanced_accuracy",
+        scoring="balanced_accuracy",
         response_method=response_method,
         thresholds=thresholds,
         store_cv_results=True,
@@ -392,13 +392,13 @@ def test_tuned_threshold_classifier_metric_with_parameter():
     X, y = load_breast_cancer(return_X_y=True)
     lr = make_pipeline(StandardScaler(), LogisticRegression()).fit(X, y)
     model_fbeta_1 = TunedThresholdClassifierCV(
-        estimator=lr, objective_metric=make_scorer(fbeta_score, beta=1)
+        estimator=lr, scoring=make_scorer(fbeta_score, beta=1)
     ).fit(X, y)
     model_fbeta_2 = TunedThresholdClassifierCV(
-        estimator=lr, objective_metric=make_scorer(fbeta_score, beta=2)
+        estimator=lr, scoring=make_scorer(fbeta_score, beta=2)
     ).fit(X, y)
     model_f1 = TunedThresholdClassifierCV(
-        estimator=lr, objective_metric=make_scorer(f1_score)
+        estimator=lr, scoring=make_scorer(f1_score)
     ).fit(X, y)
 
     assert model_fbeta_1.best_threshold_ == pytest.approx(model_f1.best_threshold_)
@@ -428,7 +428,7 @@ def test_tuned_threshold_classifier_with_string_targets(response_method, metric)
     y = classes[y]
     model = TunedThresholdClassifierCV(
         estimator=make_pipeline(StandardScaler(), LogisticRegression()),
-        objective_metric=metric,
+        scoring=metric,
         pos_label="cancer",
         response_method=response_method,
         thresholds=100,
@@ -552,15 +552,15 @@ def test_tuned_threshold_classifier_pos_label_single_metric(pos_label, metric_ty
     estimator = LogisticRegression().fit(X, y)
 
     if metric_type == "string":
-        objective_metric = "precision"
+        scoring = "precision"
     elif metric_type == "scorer_without_pos_label":
-        objective_metric = make_scorer(precision_score)
+        scoring = make_scorer(precision_score)
     else:  # metric_type == "scorer_with_pos_label"
-        objective_metric = make_scorer(precision_score, pos_label=pos_label)
+        scoring = make_scorer(precision_score, pos_label=pos_label)
 
     model = TunedThresholdClassifierCV(
         estimator,
-        objective_metric=objective_metric,
+        scoring=scoring,
         cv="prefit",
         refit=False,
         pos_label=pos_label,

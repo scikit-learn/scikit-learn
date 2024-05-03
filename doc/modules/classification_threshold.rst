@@ -84,7 +84,7 @@ Options to tune the decision threshold
 --------------------------------------
 
 The decision threshold can be tuned through different strategies controlled by the
-parameter `objective_metric`.
+parameter `scoring`.
 
 One way to tune the threshold is by maximizing a pre-defined scikit-learn metric. These
 metrics can be found by calling the function :func:`~sklearn.metrics.get_scorer_names`.
@@ -110,7 +110,7 @@ a meaningful metric for their use case.
         >>> pos_label = 0
         >>> scorer = make_scorer(f1_score, pos_label=pos_label)
         >>> base_model = LogisticRegression()
-        >>> model = TunedThresholdClassifierCV(base_model, objective_metric=scorer)
+        >>> model = TunedThresholdClassifierCV(base_model, scoring=scorer)
         >>> scorer(model.fit(X, y), X, y)
         0.88...
         >>> # compare it with the internal score found by cross-validation

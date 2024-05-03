@@ -256,7 +256,7 @@ print(f"Business defined metric: {scoring['cost_gain'](model, X_test, y_test)}")
 # implement by hand, but the
 # :class:`~sklearn.model_selection.TunedThresholdClassifierCV` class is here to help us.
 # It automatically computes the cost-gain for all possible cut-off points and optimizes
-# for the `objective_metric`.
+# for the `scoring`.
 #
 # .. _cost_sensitive_learning_example:
 #
@@ -273,7 +273,7 @@ from sklearn.model_selection import TunedThresholdClassifierCV
 tuned_model = TunedThresholdClassifierCV(
     estimator=model,
     pos_label=pos_label,
-    objective_metric=scoring["cost_gain"],
+    scoring=scoring["cost_gain"],
     store_cv_results=True,  # necessary to inspect all results
 )
 tuned_model.fit(X_train, y_train)
@@ -630,7 +630,7 @@ print(
 # best estimator found during the previous grid-search.
 tuned_model = TunedThresholdClassifierCV(
     estimator=model.best_estimator_,
-    objective_metric=business_scorer,
+    scoring=business_scorer,
     thresholds=100,
     n_jobs=2,
 )
