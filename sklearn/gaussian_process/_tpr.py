@@ -27,6 +27,11 @@ class TProcessRegressor(GaussianProcessRegressor):
         covariance function is used to construct the shape parameter of the
         inverse-gamma prior over the multivariate normal's covariance matrix.
 
+    v : float, default=2
+        The starting degrees of freedom of the multivariate T distribution. As
+        observations are added, the degrees of freedom will increase. This
+        value orriginates as the degrees of freedom of the inverse gamma prior.
+
     alpha : float or ndarray of shape (n_samples,), default=1e-10
         Value added to the diagonal of the kernel matrix during fitting.
         This can prevent a potential numerical issue during fitting, by
@@ -151,6 +156,7 @@ class TProcessRegressor(GaussianProcessRegressor):
     def __init__(
             self,
             kernel=None,
+            v=2,
             *,
             alpha=1e-10,
             optimizer="fmin_l_bfgs_b",
@@ -170,6 +176,7 @@ class TProcessRegressor(GaussianProcessRegressor):
             n_targets=n_targets,
             random_state=random_state
         )
+        self.v = v
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
