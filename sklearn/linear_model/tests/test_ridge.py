@@ -920,15 +920,15 @@ def test_ridge_gcv_sample_weights(
     X_gcv = X_container(X)
     gcv_ridge = RidgeCV(
         alphas=alphas,
-        store_cv_values=True,
+        store_cv_results=True,
         gcv_mode=gcv_mode,
         fit_intercept=fit_intercept,
     )
     gcv_ridge.fit(X_gcv, y, sample_weight=sample_weight)
     if len(y_shape) == 2:
-        gcv_errors = gcv_ridge.cv_values_[:, :, alphas.index(kfold.alpha_)]
+        gcv_errors = gcv_ridge.cv_results_[:, :, alphas.index(kfold.alpha_)]
     else:
-        gcv_errors = gcv_ridge.cv_values_[:, alphas.index(kfold.alpha_)]
+        gcv_errors = gcv_ridge.cv_results_[:, alphas.index(kfold.alpha_)]
 
     assert kfold.alpha_ == pytest.approx(gcv_ridge.alpha_)
     assert_allclose(gcv_errors, kfold_errors, rtol=1e-3)
@@ -1034,15 +1034,15 @@ def _test_ridge_cv(sparse_container):
 @pytest.mark.parametrize(
     "ridge, make_dataset",
     [
-        (RidgeCV(store_cv_values=False), make_regression),
-        (RidgeClassifierCV(store_cv_values=False), make_classification),
+        (RidgeCV(store_cv_results=False), make_regression),
+        (RidgeClassifierCV(store_cv_results=False), make_classification),
     ],
 )
-def test_ridge_gcv_cv_values_not_stored(ridge, make_dataset):
-    # Check that `cv_values_` is not stored when store_cv_values is False
+def test_ridge_gcv_cv_results_not_stored(ridge, make_dataset):
+    # Check that `cv_results_` is not stored when store_cv_results is False
     X, y = make_dataset(n_samples=6, random_state=42)
     ridge.fit(X, y)
-    assert not hasattr(ridge, "cv_values_")
+    assert not hasattr(ridge, "cv_results_")
 
 
 @pytest.mark.parametrize(
@@ -1053,7 +1053,7 @@ def test_ridge_gcv_cv_values_not_stored(ridge, make_dataset):
 def test_ridge_best_score(ridge, make_dataset, cv):
     # check that the best_score_ is store
     X, y = make_dataset(n_samples=6, random_state=42)
-    ridge.set_params(store_cv_values=False, cv=cv)
+    ridge.set_params(store_cv_results=False, cv=cv)
     ridge.fit(X, y)
     assert hasattr(ridge, "best_score_")
     assert isinstance(ridge.best_score_, float)
@@ -1090,27 +1090,27 @@ def test_ridge_cv_individual_penalties():
         Ridge(alpha=ridge_cv.alpha_).fit(X, y).coef_, ridge_cv.coef_
     )
 
-    # Test shape of alpha_ and cv_values_
-    ridge_cv = RidgeCV(alphas=alphas, alpha_per_target=True, store_cv_values=True).fit(
+    # Test shape of alpha_ and cv_results_
+    ridge_cv = RidgeCV(alphas=alphas, alpha_per_target=True, store_cv_results=True).fit(
         X, y
     )
     assert ridge_cv.alpha_.shape == (n_targets,)
     assert ridge_cv.best_score_.shape == (n_targets,)
-    assert ridge_cv.cv_values_.shape == (n_samples, len(alphas), n_targets)
+    assert ridge_cv.cv_results_.shape == (n_samples, len(alphas), n_targets)
 
     # Test edge case of there being only one alpha value
-    ridge_cv = RidgeCV(alphas=1, alpha_per_target=True, store_cv_values=True).fit(X, y)
+    ridge_cv = RidgeCV(alphas=1, alpha_per_target=True, store_cv_results=True).fit(X, y)
     assert ridge_cv.alpha_.shape == (n_targets,)
     assert ridge_cv.best_score_.shape == (n_targets,)
-    assert ridge_cv.cv_values_.shape == (n_samples, n_targets, 1)
+    assert ridge_cv.cv_results_.shape == (n_samples, n_targets, 1)
 
     # Test edge case of there being only one target
-    ridge_cv = RidgeCV(alphas=alphas, alpha_per_target=True, store_cv_values=True).fit(
+    ridge_cv = RidgeCV(alphas=alphas, alpha_per_target=True, store_cv_results=True).fit(
         X, y[:, 0]
     )
     assert np.isscalar(ridge_cv.alpha_)
     assert np.isscalar(ridge_cv.best_score_)
-    assert ridge_cv.cv_values_.shape == (n_samples, len(alphas))
+    assert ridge_cv.cv_results_.shape == (n_samples, len(alphas))
 
     # Try with a custom scoring function
     ridge_cv = RidgeCV(alphas=alphas, alpha_per_target=True, scoring="r2").fit(X, y)
@@ -1444,7 +1444,7 @@ def test_class_weights_cv():
 @pytest.mark.parametrize(
     "scoring", [None, "neg_mean_squared_error", _mean_squared_error_callable]
 )
-def test_ridgecv_store_cv_values(scoring):
+def test_ridgecv_store_cv_results(scoring):
     rng = np.random.RandomState(42)
 
     n_samples = 8
@@ -1455,26 +1455,26 @@ def test_ridgecv_store_cv_values(scoring):
 
     scoring_ = make_scorer(scoring) if callable(scoring) else scoring
 
-    r = RidgeCV(alphas=alphas, cv=None, store_cv_values=True, scoring=scoring_)
+    r = RidgeCV(alphas=alphas, cv=None, store_cv_results=True, scoring=scoring_)
 
     # with len(y.shape) == 1
     y = rng.randn(n_samples)
     r.fit(x, y)
-    assert r.cv_values_.shape == (n_samples, n_alphas)
+    assert r.cv_results_.shape == (n_samples, n_alphas)
 
     # with len(y.shape) == 2
     n_targets = 3
     y = rng.randn(n_samples, n_targets)
     r.fit(x, y)
-    assert r.cv_values_.shape == (n_samples, n_targets, n_alphas)
+    assert r.cv_results_.shape == (n_samples, n_targets, n_alphas)
 
-    r = RidgeCV(cv=3, store_cv_values=True, scoring=scoring)
-    with pytest.raises(ValueError, match="cv!=None and store_cv_values"):
+    r = RidgeCV(cv=3, store_cv_results=True, scoring=scoring)
+    with pytest.raises(ValueError, match="cv!=None and store_cv_results"):
         r.fit(x, y)
 
 
 @pytest.mark.parametrize("scoring", [None, "accuracy", _accuracy_callable])
-def test_ridge_classifier_cv_store_cv_values(scoring):
+def test_ridge_classifier_cv_store_cv_results(scoring):
     x = np.array([[-1.0, -1.0], [-1.0, 0], [-0.8, -1.0], [1.0, 1.0], [1.0, 0.0]])
     y = np.array([1, 1, 1, -1, -1])
 
@@ -1485,13 +1485,13 @@ def test_ridge_classifier_cv_store_cv_values(scoring):
     scoring_ = make_scorer(scoring) if callable(scoring) else scoring
 
     r = RidgeClassifierCV(
-        alphas=alphas, cv=None, store_cv_values=True, scoring=scoring_
+        alphas=alphas, cv=None, store_cv_results=True, scoring=scoring_
     )
 
     # with len(y.shape) == 1
     n_targets = 1
     r.fit(x, y)
-    assert r.cv_values_.shape == (n_samples, n_targets, n_alphas)
+    assert r.cv_results_.shape == (n_samples, n_targets, n_alphas)
 
     # with len(y.shape) == 2
     y = np.array(
@@ -1499,7 +1499,7 @@ def test_ridge_classifier_cv_store_cv_values(scoring):
     ).transpose()
     n_targets = y.shape[1]
     r.fit(x, y)
-    assert r.cv_values_.shape == (n_samples, n_targets, n_alphas)
+    assert r.cv_results_.shape == (n_samples, n_targets, n_alphas)
 
 
 @pytest.mark.parametrize("Estimator", [RidgeCV, RidgeClassifierCV])
@@ -2224,6 +2224,32 @@ def test_ridge_sample_weight_consistency(
     assert_allclose(reg1.coef_, reg2.coef_)
     if fit_intercept:
         assert_allclose(reg1.intercept_, reg2.intercept_)
+
+
+# TODO(1.7): Remove
+def test_ridge_store_cv_values_deprecated():
+    """Check `store_cv_values` parameter deprecated."""
+    X, y = make_regression(n_samples=6, random_state=42)
+    ridge = RidgeCV(store_cv_values=True)
+    msg = "'store_cv_values' is deprecated"
+    with pytest.warns(FutureWarning, match=msg):
+        ridge.fit(X, y)
+
+    # Error when both set
+    ridge = RidgeCV(store_cv_results=True, store_cv_values=True)
+    msg = "Both 'store_cv_values' and 'store_cv_results' were"
+    with pytest.raises(ValueError, match=msg):
+        ridge.fit(X, y)
+
+
+def test_ridge_cv_values_deprecated():
+    """Check `cv_values_` deprecated."""
+    X, y = make_regression(n_samples=6, random_state=42)
+    ridge = RidgeCV(store_cv_results=True)
+    msg = "Attribute `cv_values_` is deprecated"
+    with pytest.warns(FutureWarning, match=msg):
+        ridge.fit(X, y)
+        ridge.cv_values_
 
 
 # Metadata Routing Tests

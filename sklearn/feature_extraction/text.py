@@ -603,6 +603,10 @@ class HashingVectorizer(
     For an efficiency comparison of the different feature extractors, see
     :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
 
+    For an example of document clustering and comparison with
+    :class:`~sklearn.feature_extraction.text.TfidfVectorizer`, see
+    :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`.
+
     Read more in the :ref:`User Guide <text_feature_extraction>`.
 
     Parameters
@@ -1727,6 +1731,10 @@ class TfidfVectorizer(CountVectorizer):
 
     For an efficiency comparison of the different feature extractors, see
     :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
+
+    For an example of document clustering and comparison with
+    :class:`~sklearn.feature_extraction.text.HashingVectorizer`, see
+    :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`.
 
     Read more in the :ref:`User Guide <text_feature_extraction>`.
 

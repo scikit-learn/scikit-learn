@@ -702,6 +702,9 @@ Single linkage can also perform well on non-globular data.
   * :ref:`sphx_glr_auto_examples_cluster_plot_digits_linkage.py`: exploration of
     the different linkage strategies in a real dataset.
 
+  * :ref:`sphx_glr_auto_examples_cluster_plot_linkage_comparison.py`: exploration of
+    the different linkage strategies in toy datasets.
+
 
 Visualization of cluster hierarchy
 ----------------------------------
@@ -713,6 +716,10 @@ of the data, though more so in the case of small sample sizes.
 .. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_dendrogram_001.png
     :target: ../auto_examples/cluster/plot_agglomerative_dendrogram.html
     :scale: 42
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_dendrogram.py`
 
 
 Adding connectivity constraints
@@ -1042,7 +1049,7 @@ scales by building an alternative representation of the clustering problem.
 .. topic:: Examples:
 
     * :ref:`sphx_glr_auto_examples_cluster_plot_hdbscan.py`
-  
+
 Mutual Reachability Graph
 -------------------------
 
