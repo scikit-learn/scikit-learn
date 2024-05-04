@@ -86,7 +86,7 @@ A few examples require scikit-image >= |Scikit-ImageMinVersion|, a few examples
 require pandas >= |PandasMinVersion|, some examples require seaborn >=
 |SeabornMinVersion| and plotly >= |PlotlyMinVersion|.
 
-User installation
+User Installation
 ~~~~~~~~~~~~~~~~~
 
 If you already have a working installation of NumPy and SciPy,
@@ -116,14 +116,14 @@ community goals are to be helpful, welcoming, and effective. The
 has detailed information about contributing code, documentation, tests, and
 more. We've included some basic information in this README.
 
-Important links
+Important Links
 ~~~~~~~~~~~~~~~
 
 - Official source code repo: https://github.com/scikit-learn/scikit-learn
 - Download releases: https://pypi.org/project/scikit-learn/
 - Issue tracker: https://github.com/scikit-learn/scikit-learn/issues
 
-Source code
+Source Code
 ~~~~~~~~~~~
 
 You can check the latest sources with the command::
