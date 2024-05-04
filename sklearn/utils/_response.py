@@ -243,7 +243,9 @@ def _get_response_values(
     return y_pred, pos_label
 
 
-def _get_response_values_binary(estimator, X, response_method, pos_label=None):
+def _get_response_values_binary(
+    estimator, X, response_method, pos_label=None, return_response_method_used=False
+):
     """Compute the response values of a binary classifier.
 
     Parameters
@@ -266,6 +268,12 @@ def _get_response_values_binary(estimator, X, response_method, pos_label=None):
         the metrics. By default, `estimators.classes_[1]` is
         considered as the positive class.
 
+    return_response_method_used : bool, default=False
+        Whether to return the response method used to compute the response
+        values.
+
+        .. versionadded:: 1.5
+
     Returns
     -------
     y_pred : ndarray of shape (n_samples,)
@@ -275,6 +283,12 @@ def _get_response_values_binary(estimator, X, response_method, pos_label=None):
     pos_label : int, float, bool or str
         The class considered as the positive class when computing
         the metrics.
+
+    response_method_used : str
+        The response method used to compute the response values. Only returned
+        if `return_response_method_used` is `True`.
+
+        .. versionadded:: 1.5
     """
     classification_error = "Expected 'estimator' to be a binary classifier."
 
@@ -296,4 +310,5 @@ def _get_response_values_binary(estimator, X, response_method, pos_label=None):
         X,
         response_method,
         pos_label=pos_label,
+        return_response_method_used=return_response_method_used,
     )

@@ -220,10 +220,9 @@ def sag_solver(
 
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> y = np.array([1, 1, 2, 2])
-    >>> clf = linear_model.LogisticRegression(
-    ...     solver='sag', multi_class='multinomial')
+    >>> clf = linear_model.LogisticRegression(solver='sag')
     >>> clf.fit(X, y)
-    LogisticRegression(multi_class='multinomial', solver='sag')
+    LogisticRegression(solver='sag')
 
     References
     ----------

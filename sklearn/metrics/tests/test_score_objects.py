@@ -926,7 +926,7 @@ def test_multiclass_roc_proba_scorer(scorer_name, metric):
     X, y = make_classification(
         n_classes=3, n_informative=3, n_samples=20, random_state=0
     )
-    lr = LogisticRegression(multi_class="multinomial").fit(X, y)
+    lr = LogisticRegression().fit(X, y)
     y_proba = lr.predict_proba(X)
     expected_score = metric(y, y_proba)
 
@@ -943,7 +943,7 @@ def test_multiclass_roc_proba_scorer_label():
     X, y = make_classification(
         n_classes=3, n_informative=3, n_samples=20, random_state=0
     )
-    lr = LogisticRegression(multi_class="multinomial").fit(X, y)
+    lr = LogisticRegression().fit(X, y)
     y_proba = lr.predict_proba(X)
 
     y_binary = y == 0
