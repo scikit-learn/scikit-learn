@@ -27,9 +27,9 @@ from sklearn.datasets import (
     fetch_species_distributions,
 )
 from sklearn.tests import random_seed
-from sklearn.utils import _IS_32BIT
 from sklearn.utils._testing import get_pytest_filterwarning_lines
 from sklearn.utils.fixes import (
+    _IS_32BIT,
     np_base_version,
     parse_version,
     sp_version,
