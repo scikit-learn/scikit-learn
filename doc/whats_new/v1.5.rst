@@ -43,6 +43,9 @@ Security
 Changed models
 --------------
 
+- |Efficiency| The `clustering.MeanShift` class has now improved computational speed as it properly converges for constant data.
+  :pr:`28951` by :user:`Akihiro Kuno <akikuno>`.
+
 - |Efficiency| The subsampling in :class:`preprocessing.QuantileTransformer` is now
   more efficient for dense arrays but the fitted quantiles and the results of
   `transform` may be slightly different than before (keeping the same statistical
