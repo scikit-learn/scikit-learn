@@ -169,7 +169,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
         return xp.take(self.classes_, y, axis=0)
 
     def _more_tags(self):
-        return {"X_types": ["1dlabels"]}
+        return {"X_types": ["1dlabels"], "array_api_support": True}
 
 
 class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
