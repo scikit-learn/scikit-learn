@@ -4381,6 +4381,11 @@ def check_param_validation(name, estimator_orig):
             )
 
             with raises(InvalidParameterError, match=match, err_msg=err_msg):
+                try:
+                    _safe_tags(estimator, key="X_types")
+                except Exception:
+                    is_classifier(estimator)
+                    _safe_tags(estimator, key="X_types")
                 if any(
                     isinstance(X_type, str) and X_type.endswith("labels")
                     for X_type in _safe_tags(estimator, key="X_types")

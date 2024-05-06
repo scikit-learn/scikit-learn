@@ -322,7 +322,10 @@ class Pipeline(_BaseComposition):
 
     @property
     def _estimator_type(self):
-        return self.steps[-1][1]._estimator_type
+        try:
+            return self.steps[-1][1]._estimator_type
+        except Exception:
+            return None
 
     @property
     def named_steps(self):
