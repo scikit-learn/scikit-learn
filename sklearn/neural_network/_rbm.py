@@ -1,5 +1,4 @@
-"""Restricted Boltzmann Machine
-"""
+"""Restricted Boltzmann Machine"""
 
 # Authors: Yann N. Dauphin <dauphiya@iro.umontreal.ca>
 #          Vlad Niculae

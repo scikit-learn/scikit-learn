@@ -1001,6 +1001,7 @@ table.docutils {
   margin-bottom: 1rem;
   line-height: 1rem;
   max-width: 100%;
+  display: block;
   overflow-x: auto;
 }
 
@@ -1317,6 +1318,10 @@ div.sk-sponsor-div-box, div.sk-testimonial-div-box {
   div.sk-sponsor-div-box, div.sk-testimonial-div-box {
     width: 50%;
   }
+}
+
+div.sk-sponsor-div-box table.sk-sponsor-table {
+  display: table;
 }
 
 table.sk-sponsor-table tr, table.sk-sponsor-table tr:nth-child(odd) {

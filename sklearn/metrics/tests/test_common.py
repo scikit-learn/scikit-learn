@@ -55,6 +55,7 @@ from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import shuffle
 from sklearn.utils._array_api import (
     _atol_for_type,
+    _convert_to_numpy,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -636,7 +637,10 @@ def test_sample_order_invariance_multilabel_and_multioutput():
     # Generate some data
     y_true = random_state.randint(0, 2, size=(20, 25))
     y_pred = random_state.randint(0, 2, size=(20, 25))
-    y_score = random_state.normal(size=y_true.shape)
+    y_score = random_state.uniform(size=y_true.shape)
+
+    # Some metrics (e.g. log_loss) require y_score to be probabilities (sum to 1)
+    y_score /= y_score.sum(axis=1, keepdims=True)
 
     y_true_shuffle, y_pred_shuffle, y_score_shuffle = shuffle(
         y_true, y_pred, y_score, random_state=0
@@ -1565,7 +1569,10 @@ def test_multilabel_sample_weight_invariance(name):
     )
     y_true = np.vstack([ya, yb])
     y_pred = np.vstack([ya, ya])
-    y_score = random_state.randint(1, 4, size=y_true.shape)
+    y_score = random_state.uniform(size=y_true.shape)
+
+    # Some metrics (e.g. log_loss) require y_score to be probabilities (sum to 1)
+    y_score /= y_score.sum(axis=1, keepdims=True)
 
     metric = ALL_METRICS[name]
     if name in THRESHOLDED_METRICS:
@@ -1628,7 +1635,10 @@ def test_thresholded_multilabel_multioutput_permutations_invariance(name):
     random_state = check_random_state(0)
     n_samples, n_classes = 20, 4
     y_true = random_state.randint(0, 2, size=(n_samples, n_classes))
-    y_score = random_state.normal(size=y_true.shape)
+    y_score = random_state.uniform(size=y_true.shape)
+
+    # Some metrics (e.g. log_loss) require y_score to be probabilities (sum to 1)
+    y_score /= y_score.sum(axis=1, keepdims=True)
 
     # Makes sure all samples have at least one label. This works around errors
     # when running metrics where average="sample"
@@ -1749,7 +1759,7 @@ def check_array_api_metric(
         metric_xp = metric(y_true_xp, y_pred_xp, sample_weight=sample_weight)
 
         assert_allclose(
-            metric_xp,
+            _convert_to_numpy(xp.asarray(metric_xp), xp),
             metric_np,
             atol=_atol_for_type(dtype_name),
         )
@@ -1813,6 +1823,33 @@ def check_array_api_multiclass_classification_metric(
     )
 
 
+def check_array_api_regression_metric(metric, array_namespace, device, dtype_name):
+    y_true_np = np.array([[1, 3], [1, 2]], dtype=dtype_name)
+    y_pred_np = np.array([[1, 4], [1, 1]], dtype=dtype_name)
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        y_true_np=y_true_np,
+        y_pred_np=y_pred_np,
+        sample_weight=None,
+    )
+
+    sample_weight = np.array([0.1, 2.0], dtype=dtype_name)
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        y_true_np=y_true_np,
+        y_pred_np=y_pred_np,
+        sample_weight=sample_weight,
+    )
+
+
 array_api_metric_checkers = {
     accuracy_score: [
         check_array_api_binary_classification_metric,
@@ -1822,6 +1859,7 @@ array_api_metric_checkers = {
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
     ],
+    r2_score: [check_array_api_regression_metric],
 }
 
 
