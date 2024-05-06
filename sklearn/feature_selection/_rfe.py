@@ -226,6 +226,9 @@ class RFE(_RoutingNotSupportedMixin, SelectorMixin, MetaEstimatorMixin, BaseEsti
         self.importance_getter = importance_getter
         self.verbose = verbose
 
+    def __dir__(self):
+        return [attr for attr in super().__dir__() if hasattr(self, attr)]
+
     @property
     def _estimator_type(self):
         return self.estimator._estimator_type

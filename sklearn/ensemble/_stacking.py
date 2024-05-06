@@ -597,6 +597,9 @@ class StackingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, _BaseStacki
             verbose=verbose,
         )
 
+    def __dir__(self):
+        return [attr for attr in super().__dir__() if hasattr(self, attr)]
+
     def _validate_final_estimator(self):
         self._clone_final_estimator(default=LogisticRegression())
         if not is_classifier(self.final_estimator_):

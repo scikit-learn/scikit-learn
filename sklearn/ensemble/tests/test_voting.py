@@ -78,9 +78,9 @@ def test_predictproba_hardvoting():
     assert isinstance(exec_info.value.__cause__, AttributeError)
     assert inner_msg in str(exec_info.value.__cause__)
 
-    assert not hasattr(eclf, "predict_proba")
+    assert not hasattr(eclf, "predict_proba") and "predict_proba" not in dir(eclf)
     eclf.fit(X_scaled, y)
-    assert not hasattr(eclf, "predict_proba")
+    assert not hasattr(eclf, "predict_proba") and "predict_proba" not in dir(eclf)
 
 
 def test_notfitted():

@@ -816,25 +816,29 @@ def test_pipeline_ducktyping():
     pipeline.inverse_transform
 
     pipeline = make_pipeline(Transf())
-    assert not hasattr(pipeline, "predict")
+    assert not hasattr(pipeline, "predict") and "predict" not in dir(pipeline)
     pipeline.transform
     pipeline.inverse_transform
 
     pipeline = make_pipeline("passthrough")
     assert pipeline.steps[0] == ("passthrough", "passthrough")
-    assert not hasattr(pipeline, "predict")
+    assert not hasattr(pipeline, "predict") and "predict" not in dir(pipeline)
     pipeline.transform
     pipeline.inverse_transform
 
     pipeline = make_pipeline(Transf(), NoInvTransf())
-    assert not hasattr(pipeline, "predict")
+    assert not hasattr(pipeline, "predict") and "predict" not in dir(pipeline)
     pipeline.transform
-    assert not hasattr(pipeline, "inverse_transform")
+    assert not hasattr(
+        pipeline, "inverse_transform"
+    ) and "inverse_transform" not in dir(pipeline)
 
     pipeline = make_pipeline(NoInvTransf(), Transf())
-    assert not hasattr(pipeline, "predict")
+    assert not hasattr(pipeline, "predict") and "predict" not in dir(pipeline)
     pipeline.transform
-    assert not hasattr(pipeline, "inverse_transform")
+    assert not hasattr(
+        pipeline, "inverse_transform"
+    ) and "inverse_transform" not in dir(pipeline)
 
 
 def test_make_pipeline():

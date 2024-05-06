@@ -733,6 +733,9 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
             random_state=random_state,
         )
 
+    def __dir__(self):
+        return [attr for attr in super().__dir__() if hasattr(self, attr)]
+
     def _validate_targets(self, y):
         y_ = column_or_1d(y, warn=True)
         check_classification_targets(y)

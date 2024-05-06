@@ -202,4 +202,4 @@ def test_mock_estimator_on_off_prediction(iris, response_methods):
             assert hasattr(estimator, response)
             assert getattr(estimator, response)(X) == response
         else:
-            assert not hasattr(estimator, response)
+            assert not hasattr(estimator, response) and response not in dir(estimator)

@@ -310,7 +310,9 @@ def test_base_estimator_meta_estimator():
         cv=2,
     )
 
-    assert not hasattr(base_estimator, "predict_proba")
+    assert not hasattr(base_estimator, "predict_proba") and "predict_proba" not in dir(
+        base_estimator
+    )
     clf = SelfTrainingClassifier(base_estimator=base_estimator)
     with pytest.raises(AttributeError):
         clf.fit(X_train, y_train_missing_labels)
@@ -336,6 +338,10 @@ def test_self_training_estimator_attribute_error():
     # `DecisionTreeClassifier` does not implement 'decision_function' and
     # should raise an AttributeError
     self_training = SelfTrainingClassifier(base_estimator=DecisionTreeClassifier())
+
+    assert "decision_function" not in dir(
+        self_training.fit(X_train, y_train_missing_labels)
+    )
 
     outer_msg = "This 'SelfTrainingClassifier' has no attribute 'decision_function'"
     inner_msg = "'DecisionTreeClassifier' object has no attribute 'decision_function'"

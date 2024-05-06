@@ -1118,9 +1118,9 @@ def test_hasattr_predict_proba():
     assert hasattr(G, "predict_proba")
 
     G = svm.SVC(probability=False)
-    assert not hasattr(G, "predict_proba")
+    assert not hasattr(G, "predict_proba") and "predict_proba" not in dir(G)
     G.fit(iris.data, iris.target)
-    assert not hasattr(G, "predict_proba")
+    assert not hasattr(G, "predict_proba") and "predict_proba" not in dir(G)
 
     # Switching to `probability=True` after fitting should make
     # predict_proba available, but calling it must not work:

@@ -321,6 +321,9 @@ class OneVsRestClassifier(
         self.n_jobs = n_jobs
         self.verbose = verbose
 
+    def __dir__(self):
+        return [attr for attr in super().__dir__() if hasattr(self, attr)]
+
     @_fit_context(
         # OneVsRestClassifier.estimator is not validated yet
         prefer_skip_nested_validation=False
@@ -752,6 +755,9 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         self.estimator = estimator
         self.n_jobs = n_jobs
 
+    def __dir__(self):
+        return [attr for attr in super().__dir__() if hasattr(self, attr)]
+
     @_fit_context(
         # OneVsOneClassifier.estimator is not validated yet
         prefer_skip_nested_validation=False
@@ -1140,6 +1146,9 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         self.code_size = code_size
         self.random_state = random_state
         self.n_jobs = n_jobs
+
+    def __dir__(self):
+        return [attr for attr in super().__dir__() if hasattr(self, attr)]
 
     @_fit_context(
         # OutputCodeClassifier.estimator is not validated yet

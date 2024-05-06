@@ -170,6 +170,9 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         self.kw_args = kw_args
         self.inv_kw_args = inv_kw_args
 
+    def __dir__(self):
+        return [attr for attr in super().__dir__() if hasattr(self, attr)]
+
     def _check_input(self, X, *, reset):
         if self.validate:
             return self._validate_data(X, accept_sparse=self.accept_sparse, reset=reset)

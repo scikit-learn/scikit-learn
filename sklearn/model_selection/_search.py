@@ -433,6 +433,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     def _estimator_type(self):
         return self.estimator._estimator_type
 
+    def __dir__(self):
+        return [attr for attr in super().__dir__() if hasattr(self, attr)]
+
     def _more_tags(self):
         # allows cross-validation to see 'precomputed' metrics
         return {

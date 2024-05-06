@@ -393,6 +393,9 @@ class _MockEstimatorOnOffPrediction(BaseEstimator):
     def __init__(self, response_methods=None):
         self.response_methods = response_methods
 
+    def __dir__(self):
+        return [attr for attr in super().__dir__() if hasattr(self, attr)]
+
     def fit(self, X, y):
         self.classes_ = np.unique(y)
         return self
