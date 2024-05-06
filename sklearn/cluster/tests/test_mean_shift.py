@@ -25,6 +25,19 @@ X, _ = make_blobs(
 )
 
 
+def test_convergence_of_1d_constant_data():
+    # Test convergence using 1D constant data
+    x = np.concatenate([np.zeros(10), np.ones(10)])
+    n_iter = MeanShift().fit(x.reshape(-1,1)).n_iter_
+    assert n_iter < 300
+
+def test_convergence_of_2d_constant_data():
+    # Test convergence using 2D constant data
+    x = np.concatenate([np.zeros((10, 10)), np.ones((10, 10))])
+    n_iter = MeanShift().fit(x).n_iter_
+    assert n_iter < 300
+
+
 def test_estimate_bandwidth():
     # Test estimate_bandwidth
     bandwidth = estimate_bandwidth(X, n_samples=200)
