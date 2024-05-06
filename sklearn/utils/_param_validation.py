@@ -139,6 +139,8 @@ def make_constraint(constraint):
         return constraint
     if isinstance(constraint, str) and constraint == "nan":
         return _NanConstraint()
+    if isinstance(constraint, (list, tuple, set, dict)):
+        return _Multimetric()
     raise ValueError(f"Unknown constraint type: {constraint}")
 
 
@@ -743,6 +745,18 @@ class _CVObjects(_Constraint):
             f"{', '.join([str(c) for c in self._constraints[:-1]])} or"
             f" {self._constraints[-1]}"
         )
+
+
+class _Multimetric(_Constraint):
+    """Constraint representing multimeric scorers"""
+
+    def is_satisfied_by(self, val):
+        from ..metrics._scorer import _MultimetricScorer
+
+        return isinstance(val, _MultimetricScorer)
+
+    def __str__(self):
+        return "a multimetric scorer"
 
 
 class Hidden:
