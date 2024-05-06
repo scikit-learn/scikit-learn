@@ -1,6 +1,6 @@
 [project]
 name = "scikit-learn"
-version = "1.5.dev0"
+version = "1.5.0rc1"
 description = "A set of python modules for machine learning and data mining"
 readme = "README.rst"
 maintainers = [
@@ -95,7 +95,7 @@ build-backend = "mesonpy"
 requires = [
     "meson-python>=0.15.0",
     "Cython>=3.0.10",
-    "numpy>=1.25",
+    "numpy>=2.0.0rc1",
     "scipy>=1.6.0",
 ]
 
