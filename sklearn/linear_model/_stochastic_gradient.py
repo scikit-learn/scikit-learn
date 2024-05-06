@@ -140,7 +140,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
 
     def __dir__(self):
         with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            warnings.filterwarnings("ignore", category=FutureWarning)
             return [attr for attr in super().__dir__() if hasattr(self, attr)]
 
     @abstractmethod
