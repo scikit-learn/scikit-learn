@@ -349,7 +349,7 @@ agreement.
 
    <div class="sk-sponsor-div-box">
 
-.. image:: images/Tidelift-logo-on-light.png
+.. image:: images/Tidelift-logo-on-light.svg
    :width: 100pt
    :align: center
    :target: https://tidelift.com/
