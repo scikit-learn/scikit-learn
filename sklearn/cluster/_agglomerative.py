@@ -846,6 +846,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         .. versionadded:: 0.20
             Added the 'single' option
 
+        For examples comparing different `linkage` criteria, see
+        :ref:`sphx_glr_auto_examples_cluster_plot_linkage_comparison.py`.
+
     distance_threshold : float, default=None
         The linkage distance threshold at or above which clusters will not be
         merged. If not ``None``, ``n_clusters`` must be ``None`` and
@@ -859,6 +862,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         a computational and memory overhead.
 
         .. versionadded:: 0.24
+
+        For an example of dendrogram visualization, see
+        :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_dendrogram.py`.
 
     Attributes
     ----------
