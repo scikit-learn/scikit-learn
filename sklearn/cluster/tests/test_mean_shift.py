@@ -27,9 +27,11 @@ X, _ = make_blobs(
 
 def test_convergence_of_1d_constant_data():
     # Test convergence using 1D constant data
-    x = np.concatenate([np.zeros(10), np.ones(10)])
-    n_iter = MeanShift().fit(x.reshape(-1,1)).n_iter_
-    assert n_iter < 300
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/28926
+    model = MeanShift()
+    n_iter = model.fit(np.ones(10).reshape(-1, 1)).n_iter_
+    assert n_iter < model.max_iter
 
 
 def test_convergence_of_2d_constant_data():
