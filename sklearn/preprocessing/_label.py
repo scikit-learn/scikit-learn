@@ -17,7 +17,7 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import column_or_1d
-from ..utils._array_api import _setdiff1d, get_namespace
+from ..utils._array_api import _setdiff1d, device, get_namespace
 from ..utils._encode import _encode, _unique
 from ..utils._param_validation import Interval, validate_params
 from ..utils.multiclass import type_of_target, unique_labels
@@ -158,7 +158,11 @@ class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
         if _num_samples(y) == 0:
             return xp.asarray([])
 
-        diff = _setdiff1d(ar1=y, ar2=xp.arange(self.classes_.shape[0]), xp=xp)
+        diff = _setdiff1d(
+            ar1=y,
+            ar2=xp.arange(self.classes_.shape[0], device=device(y)),
+            xp=xp,
+        )
         if diff.shape[0]:
             raise ValueError("y contains previously unseen labels: %s" % str(diff))
         y = xp.asarray(y)

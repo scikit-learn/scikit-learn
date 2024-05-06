@@ -7,6 +7,7 @@ import numpy as np
 from ._array_api import (
     _is_numpy_namespace,
     _isin,
+    _searchsorted,
     _setdiff1d,
     device,
     get_namespace,
@@ -74,7 +75,7 @@ def _unique_np(values, return_inverse=False, return_counts=False):
     # np.unique will have duplicate missing values at the end of `uniques`
     # here we clip the nans and remove it from uniques
     if uniques.size and is_scalar_nan(uniques[-1]):
-        nan_idx = xp.searchsorted(uniques, xp.nan)
+        nan_idx = _searchsorted(xp, uniques, xp.nan)
         uniques = uniques[: nan_idx + 1]
         if return_inverse:
             inverse[inverse > nan_idx] = nan_idx
@@ -247,7 +248,7 @@ def _encode(values, *, uniques, check_unknown=True):
             diff = _check_unknown(values, uniques)
             if diff:
                 raise ValueError(f"y contains previously unseen labels: {str(diff)}")
-        return xp.searchsorted(uniques, values)
+        return _searchsorted(xp, uniques, values)
 
 
 def _check_unknown(values, known_values, return_mask=False):

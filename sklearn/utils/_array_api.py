@@ -302,19 +302,6 @@ class _ArrayAPIWrapper:
     def isdtype(self, dtype, kind):
         return isdtype(dtype, kind, xp=self._namespace)
 
-    def searchsorted(self, a, v, *, side="left", sorter=None):
-        # Temporary workaround needed as long as searchsorted is not widely
-        # adopted by implementers of the Array API spec. This is a quite
-        # recent addition to the spec:
-        # https://data-apis.org/array-api/latest/API_specification/generated/array_api.searchsorted.html # noqa
-        if hasattr(self._namespace, "searchsorted"):
-            return self._namespace.searchsorted(a, v, side=side, sorter=sorter)
-
-        a = _convert_to_numpy(a, xp=self._namespace)
-        v = _convert_to_numpy(v, xp=self._namespace)
-        indices = numpy.searchsorted(a, v, side=side, sorter=sorter)
-        return self._namespace.asarray(indices, device=device(a))
-
 
 def _check_device_cpu(device):  # noqa
     if device not in {"cpu", None}:
@@ -854,6 +841,20 @@ def indexing_dtype(xp):
     # TODO: once sufficiently adopted, we might want to instead rely on the
     # newer inspection API: https://github.com/data-apis/array-api/issues/640
     return xp.asarray(0).dtype
+
+
+def _searchsorted(xp, a, v, *, side="left", sorter=None):
+    # Temporary workaround needed as long as searchsorted is not widely
+    # adopted by implementers of the Array API spec. This is a quite
+    # recent addition to the spec:
+    # https://data-apis.org/array-api/latest/API_specification/generated/array_api.searchsorted.html # noqa
+    if hasattr(xp, "searchsorted"):
+        return xp.searchsorted(a, v, side=side, sorter=sorter)
+
+    a_np = _convert_to_numpy(a, xp=xp)
+    v_np = _convert_to_numpy(v, xp=xp)
+    indices = numpy.searchsorted(a_np, v_np, side=side, sorter=sorter)
+    return xp.asarray(indices, device=device(a))
 
 
 def _setdiff1d(ar1, ar2, xp, assume_unique=False):
