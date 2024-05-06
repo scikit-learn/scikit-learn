@@ -138,6 +138,11 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         self.max_iter = max_iter
         self.tol = tol
 
+    def __dir__(self):
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            return [attr for attr in super().__dir__() if hasattr(self, attr)]
+
     @abstractmethod
     def fit(self, X, y):
         """Fit model."""
