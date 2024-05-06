@@ -2230,9 +2230,6 @@ leads to a weighting of each individual score by the variance of the
 corresponding target variable. This setting quantifies the globally captured
 unscaled variance. If the target variables are of different scale, then this
 score puts more importance on explaining the higher variance variables.
-``multioutput='variance_weighted'`` is the default value for :func:`r2_score`
-for backward compatibility. This will be changed to ``uniform_average`` in the
-future.
 
 .. _r2_score:
 
