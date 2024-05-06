@@ -7,24 +7,31 @@
 """Recursive feature elimination for feature ranking"""
 
 import warnings
+from collections import defaultdict
 from numbers import Integral
 
 import numpy as np
 from joblib import effective_n_jobs
 
-from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone, is_classifier
-from ..metrics import check_scoring
-from ..model_selection import check_cv
-from ..model_selection._validation import _score
-from ..utils._param_validation import HasMethods, Interval, RealNotInt
-from ..utils.metadata_routing import (
+from sklearn.base import (
+    BaseEstimator,
+    MetaEstimatorMixin,
+    _fit_context,
+    clone,
+    is_classifier,
+)
+from sklearn.feature_selection._base import SelectorMixin, _get_feature_importances
+from sklearn.metrics import check_scoring
+from sklearn.model_selection import check_cv
+from sklearn.model_selection._validation import _score
+from sklearn.utils._param_validation import HasMethods, Interval, RealNotInt
+from sklearn.utils.metadata_routing import (
     _raise_for_unsupported_routing,
     _RoutingNotSupportedMixin,
 )
-from ..utils.metaestimators import _safe_split, available_if
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import check_is_fitted
-from ._base import SelectorMixin, _get_feature_importances
+from sklearn.utils.metaestimators import _safe_split, available_if
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import check_is_fitted
 
 
 def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
@@ -667,7 +674,7 @@ class RFECV(RFE):
         **RFE._parameter_constraints,
         "min_features_to_select": [Interval(Integral, 0, None, closed="neither")],
         "cv": ["cv_object"],
-        "scoring": [None, str, callable],
+        "scoring": [None, str, callable, list, tuple, dict, set],
         "n_jobs": [None, Integral],
     }
     _parameter_constraints.pop("n_features_to_select")
@@ -781,36 +788,86 @@ class RFECV(RFE):
         scores, step_n_features = zip(*scores_features)
 
         step_n_features_rev = np.array(step_n_features[0])[::-1]
-        scores = np.array(scores)
 
-        # Reverse order such that lowest number of features is selected in case of tie.
-        scores_sum_rev = np.sum(scores, axis=0)[::-1]
-        n_features_to_select = step_n_features_rev[np.argmax(scores_sum_rev)]
+        if isinstance(self.scoring, (list, tuple, set, dict)):
 
-        # Re-execute an elimination with best_k over the whole set
-        rfe = RFE(
-            estimator=self.estimator,
-            n_features_to_select=n_features_to_select,
-            step=self.step,
-            importance_getter=self.importance_getter,
-            verbose=self.verbose,
-        )
+            multi_scores = {score_name: [] for score_name in scores[0][0]}
+            for score in scores:
+                buffer = defaultdict(list)
+                for multi_score in score:
+                    for score_name, score_value in multi_score.items():
+                        buffer[score_name].append(score_value)
+                for score_name, score_values in buffer.items():
+                    multi_scores[score_name].append(score_values)
 
-        rfe.fit(X, y)
+            multi_scores = {
+                score_name: np.array(score_values)
+                for score_name, score_values in multi_scores.items()
+            }
 
-        # Set final attributes
-        self.support_ = rfe.support_
-        self.n_features_ = rfe.n_features_
-        self.ranking_ = rfe.ranking_
-        self.estimator_ = clone(self.estimator)
-        self.estimator_.fit(self._transform(X), y)
+            n_features_to_select = {score_name: 0 for score_name in multi_scores}
 
-        # reverse to stay consistent with before
-        scores_rev = scores[:, ::-1]
-        self.cv_results_ = {
-            "mean_test_score": np.mean(scores_rev, axis=0),
-            "std_test_score": np.std(scores_rev, axis=0),
-            **{f"split{i}_test_score": scores_rev[i] for i in range(scores.shape[0])},
-            "n_features": step_n_features_rev,
-        }
+            for score_name, score_values in multi_scores.items():
+                score_values_sum_rev = np.sum(score_values, axis=0)[::-1]
+                n_features_to_select[score_name] = step_n_features_rev[
+                    np.argmax(score_values_sum_rev)
+                ]
+
+            for score_name in multi_scores:
+                multi_scores[score_name] = multi_scores[score_name][:, ::-1]
+
+            self.cv_results_ = {"n_features": step_n_features_rev}
+            for score_name, scores in multi_scores.items():
+                self.cv_results_[f"mean_test_{score_name}"] = np.mean(scores, axis=0)
+                self.cv_results_[f"std_test_{score_name}"] = np.std(scores, axis=0)
+                self.cv_results_.update(
+                    {
+                        f"split{i}_test_{score_name}": scores[i]
+                        for i in range(scores.shape[0])
+                    }
+                )
+                self.cv_results_[f"rank_test_{score_name}"] = (
+                    np.argsort(self.cv_results_[f"mean_test_{score_name}"])[::-1] + 1
+                )
+
+        else:
+
+            scores = np.array(scores)
+
+            # Reverse order such that lowest
+            # number of features is selected in case of tie.
+            scores_sum_rev = np.sum(scores, axis=0)[::-1]
+            n_features_to_select = step_n_features_rev[np.argmax(scores_sum_rev)]
+
+            # Re-execute an elimination with best_k over the whole set
+            rfe = RFE(
+                estimator=self.estimator,
+                n_features_to_select=n_features_to_select,
+                step=self.step,
+                importance_getter=self.importance_getter,
+                verbose=self.verbose,
+            )
+
+            rfe.fit(X, y)
+
+            # Set final attributes
+            self.support_ = rfe.support_
+            self.n_features_ = rfe.n_features_
+            self.ranking_ = rfe.ranking_
+            self.estimator_ = clone(self.estimator)
+            self.estimator_.fit(self._transform(X), y)
+
+            # reverse to stay consistent with before
+            scores_rev = scores[:, ::-1]
+
+            self.cv_results_ = {
+                "mean_test_score": np.mean(scores_rev, axis=0),
+                "std_test_score": np.std(scores_rev, axis=0),
+                **{
+                    f"split{i}_test_score": scores_rev[i]
+                    for i in range(scores.shape[0])
+                },
+                "n_features": step_n_features_rev,
+            }
+
         return self
