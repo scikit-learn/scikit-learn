@@ -693,19 +693,18 @@ RouterMappingPair = namedtuple("RouterMappingPair", ["mapping", "router"])
 
 # A namedtuple storing a single method route. A collection of these namedtuples
 # is stored in a MetadataRouter.
-MethodPair = namedtuple("MethodPair", ["callee", "caller"])
+MethodPair = namedtuple("MethodPair", ["caller", "callee"])
 
 
 class MethodMapping:
-    """Stores the mapping between callee and caller methods for a router.
+    """Stores the mapping between caller and callee methods for a router.
 
     This class is primarily used in a ``get_metadata_routing()`` of a router
     object when defining the mapping between a sub-object (a sub-estimator or a
-    scorer) to the router's methods. It stores a collection of ``Route``
-    namedtuples.
+    scorer) to the router's methods. It stores a collection of namedtuples.
 
     Iterating through an instance of this class will yield named
-    ``MethodPair(callee, caller)`` tuples.
+    ``MethodPair(caller, callee)`` tuples.
 
     .. versionadded:: 1.3
     """
@@ -716,33 +715,34 @@ class MethodMapping:
     def __iter__(self):
         return iter(self._routes)
 
-    def add(self, *, callee, caller):
+    def add(self, *, caller, callee):
         """Add a method mapping.
 
         Parameters
         ----------
-        callee : str
-            Child object's method name. This method is called in ``caller``.
 
         caller : str
             Parent estimator's method name in which the ``callee`` is called.
+
+        callee : str
+            Child object's method name. This method is called in ``caller``.
 
         Returns
         -------
         self : MethodMapping
             Returns self.
         """
-        if callee not in METHODS:
-            raise ValueError(
-                f"Given callee:{callee} is not a valid method. Valid methods are:"
-                f" {METHODS}"
-            )
         if caller not in METHODS:
             raise ValueError(
                 f"Given caller:{caller} is not a valid method. Valid methods are:"
                 f" {METHODS}"
             )
-        self._routes.append(MethodPair(callee=callee, caller=caller))
+        if callee not in METHODS:
+            raise ValueError(
+                f"Given callee:{callee} is not a valid method. Valid methods are:"
+                f" {METHODS}"
+            )
+        self._routes.append(MethodPair(caller=caller, callee=callee))
         return self
 
     def _serialize(self):
@@ -755,37 +755,8 @@ class MethodMapping:
         """
         result = list()
         for route in self._routes:
-            result.append({"callee": route.callee, "caller": route.caller})
+            result.append({"caller": route.caller, "callee": route.callee})
         return result
-
-    @classmethod
-    def from_str(cls, route):
-        """Construct an instance from a string.
-
-        Parameters
-        ----------
-        route : str
-            A string representing the mapping, it can be:
-
-              - `"one-to-one"`: a one to one mapping for all methods.
-              - `"method"`: the name of a single method, such as ``fit``,
-                ``transform``, ``score``, etc.
-
-        Returns
-        -------
-        obj : MethodMapping
-            A :class:`~sklearn.utils.metadata_routing.MethodMapping` instance
-            constructed from the given string.
-        """
-        routing = cls()
-        if route == "one-to-one":
-            for method in METHODS:
-                routing.add(callee=method, caller=method)
-        elif route in METHODS:
-            routing.add(callee=route, caller=route)
-        else:
-            raise ValueError("route should be 'one-to-one' or a single method!")
-        return routing
 
     def __repr__(self):
         return str(self._serialize())
@@ -868,10 +839,8 @@ class MetadataRouter:
 
         Parameters
         ----------
-        method_mapping : MethodMapping or str
-            The mapping between the child and the parent's methods. If str, the
-            output of :func:`~sklearn.utils.metadata_routing.MethodMapping.from_str`
-            is used.
+        method_mapping : MethodMapping
+            The mapping between the child and the parent's methods.
 
         **objs : dict
             A dictionary of objects from which metadata is extracted by calling
@@ -882,10 +851,7 @@ class MetadataRouter:
         self : MetadataRouter
             Returns `self`.
         """
-        if isinstance(method_mapping, str):
-            method_mapping = MethodMapping.from_str(method_mapping)
-        else:
-            method_mapping = deepcopy(method_mapping)
+        method_mapping = deepcopy(method_mapping)
 
         for name, obj in objs.items():
             self._route_mappings[name] = RouterMappingPair(
@@ -916,7 +882,7 @@ class MetadataRouter:
             res = res | self._self_request.consumes(method=method, params=params)
 
         for _, route_mapping in self._route_mappings.items():
-            for callee, caller in route_mapping.mapping:
+            for caller, callee in route_mapping.mapping:
                 if caller == method:
                     res = res | route_mapping.router.consumes(
                         method=callee, params=params
@@ -959,7 +925,7 @@ class MetadataRouter:
             )
 
         for name, route_mapping in self._route_mappings.items():
-            for callee, caller in route_mapping.mapping:
+            for caller, callee in route_mapping.mapping:
                 if caller == method:
                     res = res.union(
                         route_mapping.router._get_param_names(
@@ -1065,7 +1031,7 @@ class MetadataRouter:
             router, mapping = route_mapping.router, route_mapping.mapping
 
             res[name] = Bunch()
-            for _callee, _caller in mapping:
+            for _caller, _callee in mapping:
                 if _caller == caller:
                     res[name][_callee] = router._route_params(
                         params=params,
@@ -1127,12 +1093,11 @@ class MetadataRouter:
 
     def __iter__(self):
         if self._self_request:
-            yield (
-                "$self_request",
-                RouterMappingPair(
-                    mapping=MethodMapping.from_str("one-to-one"),
-                    router=self._self_request,
-                ),
+            method_mapping = MethodMapping()
+            for method in METHODS:
+                method_mapping.add(caller=method, callee=method)
+            yield "$self_request", RouterMappingPair(
+                mapping=method_mapping, router=self._self_request
             )
         for name, route_mapping in self._route_mappings.items():
             yield (name, route_mapping)
