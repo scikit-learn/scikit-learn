@@ -3358,8 +3358,7 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
 )
 def d2_brier_score(y_true, y_proba, *, sample_weight=None, pos_label=None):
     """
-    :math:`D^2` score function, fraction of brier score explained. This is
-    also known as the Brier Skill Score (BSS).
+    :math:`D^2` score function, fraction of brier score explained.
 
     Best possible score is 1.0 and it can be negative (because the model can
     be arbitrarily worse). A model that always uses the proportion of the
