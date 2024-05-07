@@ -63,8 +63,8 @@ can provide additional strategies beyond what is built-in:
   - :class:`semi_supervised.LabelSpreading`
   - :class:`discriminant_analysis.LinearDiscriminantAnalysis`
   - :class:`svm.LinearSVC` (setting multi_class="crammer_singer")
-  - :class:`linear_model.LogisticRegression` (setting multi_class="multinomial")
-  - :class:`linear_model.LogisticRegressionCV` (setting multi_class="multinomial")
+  - :class:`linear_model.LogisticRegression` (with most solvers)
+  - :class:`linear_model.LogisticRegressionCV` (with most solvers)
   - :class:`neural_network.MLPClassifier`
   - :class:`neighbors.NearestCentroid`
   - :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`
@@ -86,8 +86,8 @@ can provide additional strategies beyond what is built-in:
   - :class:`ensemble.GradientBoostingClassifier`
   - :class:`gaussian_process.GaussianProcessClassifier` (setting multi_class = "one_vs_rest")
   - :class:`svm.LinearSVC` (setting multi_class="ovr")
-  - :class:`linear_model.LogisticRegression` (setting multi_class="ovr")
-  - :class:`linear_model.LogisticRegressionCV` (setting multi_class="ovr")
+  - :class:`linear_model.LogisticRegression` (most solvers)
+  - :class:`linear_model.LogisticRegressionCV` (most solvers)
   - :class:`linear_model.SGDClassifier`
   - :class:`linear_model.Perceptron`
   - :class:`linear_model.PassiveAggressiveClassifier`
@@ -201,7 +201,7 @@ Below is an example of multiclass learning using OvR::
   >>> from sklearn.multiclass import OneVsRestClassifier
   >>> from sklearn.svm import LinearSVC
   >>> X, y = datasets.load_iris(return_X_y=True)
-  >>> OneVsRestClassifier(LinearSVC(dual="auto", random_state=0)).fit(X, y).predict(X)
+  >>> OneVsRestClassifier(LinearSVC(random_state=0)).fit(X, y).predict(X)
   array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -253,7 +253,7 @@ Below is an example of multiclass learning using OvO::
   >>> from sklearn.multiclass import OneVsOneClassifier
   >>> from sklearn.svm import LinearSVC
   >>> X, y = datasets.load_iris(return_X_y=True)
-  >>> OneVsOneClassifier(LinearSVC(dual="auto", random_state=0)).fit(X, y).predict(X)
+  >>> OneVsOneClassifier(LinearSVC(random_state=0)).fit(X, y).predict(X)
   array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -311,8 +311,7 @@ Below is an example of multiclass learning using Output-Codes::
   >>> from sklearn.multiclass import OutputCodeClassifier
   >>> from sklearn.svm import LinearSVC
   >>> X, y = datasets.load_iris(return_X_y=True)
-  >>> clf = OutputCodeClassifier(LinearSVC(dual="auto", random_state=0),
-  ...                            code_size=2, random_state=0)
+  >>> clf = OutputCodeClassifier(LinearSVC(random_state=0), code_size=2, random_state=0)
   >>> clf.fit(X, y).predict(X)
   array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
