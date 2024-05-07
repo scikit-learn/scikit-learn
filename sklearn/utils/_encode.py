@@ -198,6 +198,20 @@ def _unique_python(values, *, return_inverse, return_counts):
     return ret[0] if len(ret) == 1 else ret
 
 
+def _is_array_of_numeric_dtype(arr, xp, is_array_api_compliant):
+    if is_array_api_compliant and not _is_numpy_namespace(xp=xp):
+        try:
+            dtype = arr.dtype
+            dtype_kind = dtype.kind if hasattr(dtype, "kind") else dtype
+            numeric_dtype = xp.isdtype(dtype=dtype, kind=dtype_kind)
+        except ValueError:
+            numeric_dtype = False
+    else:
+        numeric_dtype = arr.dtype.kind not in "OUS"
+
+    return numeric_dtype
+
+
 def _encode(values, *, uniques, check_unknown=True):
     """Helper function to encode values into [0, n_uniques - 1].
 
@@ -228,15 +242,9 @@ def _encode(values, *, uniques, check_unknown=True):
         Encoded values
     """
     xp, is_array_api_compliant = get_namespace(values, uniques)
-    if is_array_api_compliant and not _is_numpy_namespace(xp=xp):
-        try:
-            dtype = values.dtype
-            dtype_kind = dtype.kind if hasattr(dtype, "kind") else dtype
-            numeric_dtype = xp.isdtype(dtype=dtype, kind=dtype_kind)
-        except ValueError:
-            numeric_dtype = False
-    else:
-        numeric_dtype = values.dtype.kind not in "OUS"
+    numeric_dtype = _is_array_of_numeric_dtype(
+        arr=values, xp=xp, is_array_api_compliant=is_array_api_compliant
+    )
 
     if not numeric_dtype:
         try:
@@ -278,15 +286,9 @@ def _check_unknown(values, known_values, return_mask=False):
     """
     xp, is_array_api_compliant = get_namespace(values, known_values)
     valid_mask = None
-    if is_array_api_compliant and not _is_numpy_namespace(xp=xp):
-        try:
-            dtype = values.dtype
-            dtype_kind = dtype.kind if hasattr(dtype, "kind") else dtype
-            numeric_dtype = xp.isdtype(dtype=dtype, kind=dtype_kind)
-        except ValueError:
-            numeric_dtype = False
-    else:
-        numeric_dtype = values.dtype.kind not in "OUS"
+    numeric_dtype = _is_array_of_numeric_dtype(
+        arr=values, xp=xp, is_array_api_compliant=is_array_api_compliant
+    )
 
     if not numeric_dtype:
         values_set = set(values)

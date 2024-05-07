@@ -947,15 +947,15 @@ def _in1d(ar1, ar2, xp, assume_unique=False, invert=False):
     # We need this to be a stable sort.
     order = xp.argsort(ar, stable=True)
     reverse_order = xp.argsort(order, stable=True)
-    sar = xp.take(ar, order)
+    sar = xp.take(ar, order, axis=0)
     if invert:
         bool_ar = sar[1:] != sar[:-1]
     else:
         bool_ar = sar[1:] == sar[:-1]
     flag = xp.concat((bool_ar, xp.asarray([invert], device=device_)))
-    ret = xp.take(flag, reverse_order)
+    ret = xp.take(flag, reverse_order, axis=0)
 
     if assume_unique:
         return ret[: ar1.shape[0]]
     else:
-        return xp.take(ret, rev_idx)
+        return xp.take(ret, rev_idx, axis=0)
