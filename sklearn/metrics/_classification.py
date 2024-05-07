@@ -3249,16 +3249,7 @@ def brier_score_loss(
     if y_proba.min() < 0:
         raise ValueError("y_proba contains values less than 0.")
 
-    try:
-        pos_label = _check_pos_label_consistency(pos_label, y_true)
-    except ValueError:
-        classes = np.unique(y_true)
-        if classes.dtype.kind not in ("O", "U", "S"):
-            # for backward compatibility, if classes are not string then
-            # `pos_label` will correspond to the greater label
-            pos_label = classes[-1]
-        else:
-            raise
+    pos_label = _get_positive_label_for_brier_score(y_true, pos_label)
     y_true = np.array(y_true == pos_label, int)
     return np.average((y_true - y_proba) ** 2, weights=sample_weight)
 
@@ -3354,3 +3345,99 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
     )
 
     return 1 - (numerator / denominator)
+
+
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_proba": ["array-like", Hidden(None)],
+        "sample_weight": ["array-like", None],
+        "pos_label": [Real, str, "boolean", None],
+    },
+    prefer_skip_nested_validation=True,
+)
+def d2_brier_score(y_true, y_proba, *, sample_weight=None, pos_label=None):
+    """
+    :math:`D^2` score function, fraction of brier score explained. This is
+    also known as the Brier Skill Score (BSS).
+
+    Best possible score is 1.0 and it can be negative (because the model can
+    be arbitrarily worse). A model that always uses the proportion of the
+    positive class of `y_true` as a constant prediction, disregarding the
+    input features, gets a D^2 score of 0.0.
+
+    Read more in the :ref:`User Guide <d2_score_classification>`.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,)
+        True targets.
+
+    y_proba : array-like of shape (n_samples,)
+        Probabilities of the positive class.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    pos_label : int, float, bool or str, default=None
+        Label of the positive class. `pos_label` will be inferred in the
+        following manner:
+
+        * if `y_true` in {-1, 1} or {0, 1}, `pos_label` defaults to 1;
+        * else if `y_true` contains string, an error will be raised and
+          `pos_label` should be explicitly specified;
+        * otherwise, `pos_label` defaults to the greater label,
+          i.e. `np.unique(y_true)[-1]`.
+
+    Returns
+    -------
+    d2 : float
+        The D^2 score.
+
+    References
+    ----------
+    .. [1] `Wikipedia entry for the Brier score
+            <https://en.wikipedia.org/wiki/Brier_score>`_.
+    """
+    if _num_samples(y_proba) < 2:
+        msg = "D^2 score is not well-defined with less than two samples."
+        warnings.warn(msg, UndefinedMetricWarning)
+        return float("nan")
+
+    # brier score of the fitted model
+    brier_score = brier_score_loss(
+        y_true=y_true,
+        y_proba=y_proba,
+        sample_weight=sample_weight,
+        pos_label=pos_label,
+    )
+
+    # brier score of the reference or baseline model
+    y_true = column_or_1d(y_true)
+    positive_label = _get_positive_label_for_brier_score(y_true, pos_label)
+    weights = _check_sample_weight(sample_weight, y_true)
+    positive_prob = np.sum((y_true == positive_label) * weights) / np.sum(weights)
+    y_proba_ref = np.full(y_true.shape, positive_prob)
+    brier_score_ref = brier_score_loss(
+        y_true=y_true,
+        y_proba=y_proba_ref,
+        sample_weight=sample_weight,
+        pos_label=pos_label,
+    )
+
+    return 1 - brier_score / brier_score_ref
+
+
+def _get_positive_label_for_brier_score(y_true, pos_label=None):
+    try:
+        pos_label = _check_pos_label_consistency(pos_label, y_true)
+    except ValueError:
+        classes = np.unique(y_true)
+        if classes.dtype.kind not in ("O", "U", "S"):
+            # for backward compatibility, if classes are not string then
+            # `pos_label` will correspond to the greater label
+            pos_label = classes[-1]
+        else:
+            raise
+
+    return pos_label

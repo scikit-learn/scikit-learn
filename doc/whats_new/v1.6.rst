@@ -36,6 +36,12 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123455 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Feature| :func:`metrics.d2_brier_score` has been added which calculates
+  the D^2 for the brier score. :pr:`` by :user:`Omar Salman <OmarManzoor>`.
+
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:
 

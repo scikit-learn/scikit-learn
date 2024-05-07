@@ -78,6 +78,7 @@ Scoring                                Function                                 
 'roc_auc_ovr_weighted'                 :func:`metrics.roc_auc_score`
 'roc_auc_ovo_weighted'                 :func:`metrics.roc_auc_score`
 'd2_log_loss_score'                    :func:`metrics.d2_log_loss_score`
+'d2_brier_score'                       :func:`metrics.d2_brier_score`
 
 **Clustering**
 'adjusted_mutual_info_score'           :func:`metrics.adjusted_mutual_info_score`
@@ -346,6 +347,7 @@ Some of these are restricted to the binary classification case:
    roc_curve
    class_likelihood_ratios
    det_curve
+   d2_brier_score
 
 
 Others also work in the multiclass case:
@@ -1996,7 +1998,7 @@ D² score for classification
 The D² score computes the fraction of deviance explained.
 It is a generalization of R², where the squared error is generalized and replaced
 by a classification deviance of choice :math:`\text{dev}(y, \hat{y})`
-(e.g., Log loss). D² is a form of a *skill score*.
+(e.g., Log loss, Brier score,). D² is a form of a *skill score*.
 It is calculated as
 
 .. math::
@@ -2004,7 +2006,8 @@ It is calculated as
   D^2(y, \hat{y}) = 1 - \frac{\text{dev}(y, \hat{y})}{\text{dev}(y, y_{\text{null}})} \,.
 
 Where :math:`y_{\text{null}}` is the optimal prediction of an intercept-only model
-(e.g., the per-class proportion of `y_true` in the case of the Log loss).
+(e.g., the per-class proportion of `y_true` in the case of the Log loss, the
+proportion of the positive class of `y_true` in the case of the Brier score).
 
 Like R², the best possible score is 1.0 and it can be negative (because the
 model can be arbitrarily worse). A constant model that always predicts
@@ -2050,6 +2053,37 @@ Here are some usage examples of the :func:`d2_log_loss_score` function::
   ... ]
   >>> d2_log_loss_score(y_true, y_pred)
   -0.552...
+
+|details-end|
+
+|details-start|
+**D2 brier score**
+|details-split|
+
+The :func:`d2_brier_score` function implements the special case
+of D² with the Brier score, see :ref:`brier_score_loss`, i.e.:
+
+.. math::
+
+  \text{dev}(y, \hat{y}) = \text{brier_score_loss}(y, \hat{y}).
+
+This is also referred to as the Brier Skill Score (BSS).
+
+Here are some usage examples of the :func:`d2_brier_score` function::
+
+  >>> from sklearn.metrics import d2_brier_score
+  >>> y_true = [0, 1, 1, 0]
+  >>> y_pred = [0.5, 0.5, 0.5, 0.5]
+  >>> d2_brier_score(y_true, y_pred)
+  0.0
+  >>> y_true = [0, 1, 1, 0]
+  >>> y_pred = [0.15, 0.9, 0.85, 0.25]
+  >>> d2_brier_score(y_true, y_pred)
+  0.882...
+  >>> y_true = [0, 1, 1, 0]
+  >>> y_pred = [0.95, 0.15, 0.25, 0.85]
+  >>> d2_brier_score(y_true, y_pred)
+  -1.910...
 
 |details-end|
 
