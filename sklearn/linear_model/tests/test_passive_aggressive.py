@@ -266,3 +266,13 @@ def test_regressor_undefined_methods():
     reg = PassiveAggressiveRegressor(max_iter=100)
     with pytest.raises(AttributeError):
         reg.transform(X)
+
+
+# TODO(1.7): remove
+@pytest.mark.parametrize(
+    "Estimator", [PassiveAggressiveClassifier, PassiveAggressiveRegressor]
+)
+def test_passive_aggressive_deprecated_average(Estimator):
+    est = Estimator(average=0)
+    with pytest.warns(FutureWarning, match="average=0"):
+        est.fit(X, y)

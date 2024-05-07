@@ -20,7 +20,7 @@ Multi-layer Perceptron
 ======================
 
 **Multi-layer Perceptron (MLP)** is a supervised learning algorithm that learns
-a function :math:`f(\cdot): R^m \rightarrow R^o` by training on a dataset,
+a function :math:`f: R^m \rightarrow R^o` by training on a dataset,
 where :math:`m` is the number of dimensions for input and :math:`o` is the
 number of dimensions for output. Given a set of features :math:`X = {x_1, x_2, ..., x_m}`
 and a target :math:`y`, it can learn a non-linear function approximator for either
@@ -49,6 +49,10 @@ The module contains the public attributes ``coefs_`` and ``intercepts_``.
 :math:`i+1`. ``intercepts_`` is a list of bias vectors, where the vector
 at index :math:`i` represents the bias values added to layer :math:`i+1`.
 
+|details-start|
+**Advantages and disadvantages of Multi-layer Perceptron**
+|details-split|
+
 The advantages of Multi-layer Perceptron are:
 
 + Capability to learn non-linear models.
@@ -71,6 +75,7 @@ The disadvantages of Multi-layer Perceptron (MLP) include:
 Please see :ref:`Tips on Practical Use <mlp_tips>` section that addresses
 some of these disadvantages.
 
+|details-end|
 
 Classification
 ==============
@@ -146,7 +151,8 @@ See the examples below and the docstring of
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_training_curves.py`
- * :ref:`sphx_glr_auto_examples_neural_networks_plot_mnist_filters.py`
+ * See :ref:`sphx_glr_auto_examples_neural_networks_plot_mnist_filters.py` for
+   visualized representation of trained weights.
 
 Regression
 ==========
@@ -228,9 +234,9 @@ of iterations. Since backpropagation has a high time complexity, it is advisable
 to start with smaller number of hidden neurons and few hidden layers for
 training.
 
-
+|details-start|
 Mathematical formulation
-========================
+|details-split|
 
 Given a set of training examples :math:`(x_1, y_1), (x_2, y_2), \ldots, (x_n, y_n)`
 where :math:`x_i \in \mathbf{R}^n` and :math:`y_i \in \{0, 1\}`, a one hidden
@@ -304,7 +310,7 @@ with a value larger than 0.
 The algorithm stops when it reaches a preset maximum number of iterations; or
 when the improvement in loss is below a certain, small number.
 
-
+|details-end|
 
 .. _mlp_tips:
 
@@ -355,7 +361,9 @@ or want to do additional monitoring, using ``warm_start=True`` and
     ...     # additional monitoring / inspection
     MLPClassifier(...
 
-.. topic:: References:
+|details-start|
+**References**
+|details-split|
 
     * `"Learning representations by back-propagating errors."
       <https://www.iro.umontreal.ca/~pift6266/A06/refs/backprop_old.pdf>`_
@@ -373,3 +381,5 @@ or want to do additional monitoring, using ``warm_start=True`` and
     *  :arxiv:`"Adam: A method for stochastic optimization."
        <1412.6980>`
        Kingma, Diederik, and Jimmy Ba (2014)
+
+|details-end|

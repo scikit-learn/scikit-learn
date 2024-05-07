@@ -15,7 +15,9 @@ from sklearn.base import (
     BaseEstimator,
     clone,
 )
+from sklearn.exceptions import UnsetMetadataPassedError
 from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import Pipeline
 from sklearn.tests.metadata_routing_common import (
     ConsumingClassifier,
     ConsumingRegressor,
@@ -68,7 +70,13 @@ def enable_slep006():
 
 
 class SimplePipeline(BaseEstimator):
-    """A very simple pipeline, assuming the last step is always a predictor."""
+    """A very simple pipeline, assuming the last step is always a predictor.
+
+    Parameters
+    ----------
+    steps : iterable of objects
+        An iterable of transformers with the last step being a predictor.
+    """
 
     def __init__(self, steps):
         self.steps = steps
@@ -106,11 +114,16 @@ class SimplePipeline(BaseEstimator):
             router.add(
                 **{f"step_{i}": step},
                 method_mapping=MethodMapping()
-                .add(callee="fit", caller="fit")
-                .add(callee="transform", caller="fit")
-                .add(callee="transform", caller="predict"),
+                .add(caller="fit", callee="fit")
+                .add(caller="fit", callee="transform")
+                .add(caller="predict", callee="transform"),
             )
-        router.add(predictor=self.steps[-1], method_mapping="one-to-one")
+        router.add(
+            predictor=self.steps[-1],
+            method_mapping=MethodMapping()
+            .add(caller="fit", callee="fit")
+            .add(caller="predict", callee="predict"),
+        )
         return router
 
 
@@ -142,7 +155,10 @@ def test_assert_request_is_empty():
     assert_request_is_empty(
         MetadataRouter(owner="test")
         .add_self_request(WeightedMetaRegressor(estimator=None))
-        .add(method_mapping="fit", estimator=ConsumingRegressor())
+        .add(
+            estimator=ConsumingRegressor(),
+            method_mapping=MethodMapping().add(caller="fit", callee="fit"),
+        )
     )
 
 
@@ -226,6 +242,29 @@ def test_default_requests():
     assert_request_is_empty(est_request)
 
 
+def test_default_request_override():
+    """Test that default requests are correctly overridden regardless of the ASCII order
+    of the class names, hence testing small and capital letter class name starts.
+    Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/28430
+    """
+
+    class Base(BaseEstimator):
+        __metadata_request__split = {"groups": True}
+
+    class class_1(Base):
+        __metadata_request__split = {"groups": "sample_domain"}
+
+    class Class_1(Base):
+        __metadata_request__split = {"groups": "sample_domain"}
+
+    assert_request_equal(
+        class_1()._get_metadata_request(), {"split": {"groups": "sample_domain"}}
+    )
+    assert_request_equal(
+        Class_1()._get_metadata_request(), {"split": {"groups": "sample_domain"}}
+    )
+
+
 def test_process_routing_invalid_method():
     with pytest.raises(TypeError, match="Can only route and process input"):
         process_routing(ConsumingClassifier(), "invalid_method", groups=my_groups)
@@ -272,7 +311,7 @@ def test_simple_metadata_routing():
     clf = WeightedMetaClassifier(estimator=ConsumingClassifier())
     err_message = (
         "[sample_weight] are passed but are not explicitly set as requested or"
-        " not for ConsumingClassifier.fit"
+        " not requested for ConsumingClassifier.fit"
     )
     with pytest.raises(ValueError, match=re.escape(err_message)):
         clf.fit(X, y, sample_weight=my_weights)
@@ -646,17 +685,17 @@ def test_estimator_warnings():
             MetadataRequest(owner="test"),
             "{}",
         ),
-        (MethodMapping.from_str("score"), "[{'callee': 'score', 'caller': 'score'}]"),
         (
             MetadataRouter(owner="test").add(
-                method_mapping="predict", estimator=ConsumingRegressor()
+                estimator=ConsumingRegressor(),
+                method_mapping=MethodMapping().add(caller="predict", callee="predict"),
             ),
             (
-                "{'estimator': {'mapping': [{'callee': 'predict', 'caller':"
+                "{'estimator': {'mapping': [{'caller': 'predict', 'callee':"
                 " 'predict'}], 'router': {'fit': {'sample_weight': None, 'metadata':"
                 " None}, 'partial_fit': {'sample_weight': None, 'metadata': None},"
                 " 'predict': {'sample_weight': None, 'metadata': None}, 'score':"
-                " {'sample_weight': None}}}}"
+                " {'sample_weight': None, 'metadata': None}}}}"
             ),
         ),
     ],
@@ -671,23 +710,16 @@ def test_string_representations(obj, string):
         (
             MethodMapping(),
             "add",
-            {"callee": "invalid", "caller": "fit"},
+            {"caller": "fit", "callee": "invalid"},
             ValueError,
             "Given callee",
         ),
         (
             MethodMapping(),
             "add",
-            {"callee": "fit", "caller": "invalid"},
+            {"caller": "invalid", "callee": "fit"},
             ValueError,
             "Given caller",
-        ),
-        (
-            MethodMapping,
-            "from_str",
-            {"route": "invalid"},
-            ValueError,
-            "route should be 'one-to-one' or a single method!",
         ),
         (
             MetadataRouter(owner="test"),
@@ -718,16 +750,17 @@ def test_methodmapping():
     )
 
     mm_list = list(mm)
-    assert mm_list[0] == ("transform", "fit")
+    assert mm_list[0] == ("fit", "transform")
     assert mm_list[1] == ("fit", "fit")
 
-    mm = MethodMapping.from_str("one-to-one")
+    mm = MethodMapping()
     for method in METHODS:
+        mm.add(caller=method, callee=method)
         assert MethodPair(method, method) in mm._routes
     assert len(mm._routes) == len(METHODS)
 
-    mm = MethodMapping.from_str("score")
-    assert repr(mm) == "[{'callee': 'score', 'caller': 'score'}]"
+    mm = MethodMapping().add(caller="score", callee="score")
+    assert repr(mm) == "[{'caller': 'score', 'callee': 'score'}]"
 
 
 def test_metadatarouter_add_self_request():
@@ -762,28 +795,30 @@ def test_metadatarouter_add_self_request():
 def test_metadata_routing_add():
     # adding one with a string `method_mapping`
     router = MetadataRouter(owner="test").add(
-        method_mapping="fit",
         est=ConsumingRegressor().set_fit_request(sample_weight="weights"),
+        method_mapping=MethodMapping().add(caller="fit", callee="fit"),
     )
     assert (
         str(router)
-        == "{'est': {'mapping': [{'callee': 'fit', 'caller': 'fit'}], 'router': {'fit':"
+        == "{'est': {'mapping': [{'caller': 'fit', 'callee': 'fit'}], 'router': {'fit':"
         " {'sample_weight': 'weights', 'metadata': None}, 'partial_fit':"
         " {'sample_weight': None, 'metadata': None}, 'predict': {'sample_weight':"
-        " None, 'metadata': None}, 'score': {'sample_weight': None}}}}"
+        " None, 'metadata': None}, 'score': {'sample_weight': None, 'metadata':"
+        " None}}}}"
     )
 
     # adding one with an instance of MethodMapping
     router = MetadataRouter(owner="test").add(
-        method_mapping=MethodMapping().add(callee="score", caller="fit"),
+        method_mapping=MethodMapping().add(caller="fit", callee="score"),
         est=ConsumingRegressor().set_score_request(sample_weight=True),
     )
     assert (
         str(router)
-        == "{'est': {'mapping': [{'callee': 'score', 'caller': 'fit'}], 'router':"
+        == "{'est': {'mapping': [{'caller': 'fit', 'callee': 'score'}], 'router':"
         " {'fit': {'sample_weight': None, 'metadata': None}, 'partial_fit':"
         " {'sample_weight': None, 'metadata': None}, 'predict': {'sample_weight':"
-        " None, 'metadata': None}, 'score': {'sample_weight': True}}}}"
+        " None, 'metadata': None}, 'score': {'sample_weight': True, 'metadata':"
+        " None}}}}"
     )
 
 
@@ -796,17 +831,17 @@ def test_metadata_routing_get_param_names():
             )
         )
         .add(
-            method_mapping="fit",
             trs=ConsumingTransformer().set_fit_request(
                 sample_weight="transform_weights"
             ),
+            method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
     )
 
     assert (
         str(router)
         == "{'$self_request': {'fit': {'sample_weight': 'self_weights'}, 'score':"
-        " {'sample_weight': None}}, 'trs': {'mapping': [{'callee': 'fit', 'caller':"
+        " {'sample_weight': None}}, 'trs': {'mapping': [{'caller': 'fit', 'callee':"
         " 'fit'}], 'router': {'fit': {'sample_weight': 'transform_weights',"
         " 'metadata': None}, 'transform': {'sample_weight': None, 'metadata': None},"
         " 'inverse_transform': {'sample_weight': None, 'metadata': None}}}}"
@@ -1006,3 +1041,71 @@ def test_no_metadata_always_works():
         NotImplementedError, match="Estimator has not implemented metadata routing yet."
     ):
         MetaRegressor(estimator=Estimator()).fit(X, y, metadata=my_groups)
+
+
+def test_unsetmetadatapassederror_correct():
+    """Test that UnsetMetadataPassedError raises the correct error message when
+    set_{method}_request is not set in nested cases."""
+    weighted_meta = WeightedMetaClassifier(estimator=ConsumingClassifier())
+    pipe = SimplePipeline([weighted_meta])
+    msg = re.escape(
+        "[metadata] are passed but are not explicitly set as requested or not requested"
+        " for ConsumingClassifier.fit, which is used within WeightedMetaClassifier.fit."
+        " Call `ConsumingClassifier.set_fit_request({metadata}=True/False)` for each"
+        " metadata you want to request/ignore."
+    )
+
+    with pytest.raises(UnsetMetadataPassedError, match=msg):
+        pipe.fit(X, y, metadata="blah")
+
+
+def test_unsetmetadatapassederror_correct_for_composite_methods():
+    """Test that UnsetMetadataPassedError raises the correct error message when
+    composite metadata request methods are not set in nested cases."""
+    consuming_transformer = ConsumingTransformer()
+    pipe = Pipeline([("consuming_transformer", consuming_transformer)])
+
+    msg = re.escape(
+        "[metadata] are passed but are not explicitly set as requested or not requested"
+        " for ConsumingTransformer.fit_transform, which is used within"
+        " Pipeline.fit_transform. Call"
+        " `ConsumingTransformer.set_fit_request({metadata}=True/False)"
+        ".set_transform_request({metadata}=True/False)`"
+        " for each metadata you want to request/ignore."
+    )
+    with pytest.raises(UnsetMetadataPassedError, match=msg):
+        pipe.fit_transform(X, y, metadata="blah")
+
+
+def test_unbound_set_methods_work():
+    """Tests that if the set_{method}_request is unbound, it still works.
+
+    Also test that passing positional arguments to the set_{method}_request fails
+    with the right TypeError message.
+
+    Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/28632
+    """
+
+    class A(BaseEstimator):
+        def fit(self, X, y, sample_weight=None):
+            return self
+
+    error_message = re.escape(
+        "set_fit_request() takes 0 positional argument but 1 were given"
+    )
+
+    # Test positional arguments error before making the descriptor method unbound.
+    with pytest.raises(TypeError, match=error_message):
+        A().set_fit_request(True)
+
+    # This somehow makes the descriptor method unbound, which results in the `instance`
+    # argument being None, and instead `self` being passed as a positional argument
+    # to the descriptor method.
+    A.set_fit_request = A.set_fit_request
+
+    # This should pass as usual
+    A().set_fit_request(sample_weight=True)
+
+    # Test positional arguments error after making the descriptor method unbound.
+    with pytest.raises(TypeError, match=error_message):
+        A().set_fit_request(True)

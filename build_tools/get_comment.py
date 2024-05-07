@@ -88,8 +88,7 @@ def get_message(log_file, repo, pr_number, sha, run_id, details, versions):
             "https://scikit-learn.org/dev/developers/contributing.html"
             "#how-to-contribute)) and push the changes. If you already have done "
             "that, please send an empty commit with `git commit --allow-empty` "
-            "and push the changes to trigger the CI.\n\n"
-            + sub_text
+            "and push the changes to trigger the CI.\n\n" + sub_text
         )
 
     message = ""
@@ -117,10 +116,10 @@ def get_message(log_file, repo, pr_number, sha, run_id, details, versions):
         end="Problems detected by ruff",
         title="`ruff`",
         message=(
-            "`ruff` detected issues. Please run `ruff --fix --show-source .` "
-            "locally, fix the remaining issues, and push the changes. "
-            "Here you can see the detected issues. Note that the installed "
-            f"`ruff` version is `ruff={versions['ruff']}`."
+            "`ruff` detected issues. Please run "
+            "`ruff check --fix --output-format=full .` locally, fix the remaining "
+            "issues, and push the changes. Here you can see the detected issues. Note "
+            f"that the installed `ruff` version is `ruff={versions['ruff']}`."
         ),
         details=details,
     )

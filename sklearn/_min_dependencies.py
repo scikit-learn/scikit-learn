@@ -1,4 +1,5 @@
 """All minimum dependencies for scikit-learn."""
+
 import argparse
 from collections import defaultdict
 
@@ -6,9 +7,9 @@ from collections import defaultdict
 NUMPY_MIN_VERSION = "1.19.5"
 SCIPY_MIN_VERSION = "1.6.0"
 JOBLIB_MIN_VERSION = "1.2.0"
-THREADPOOLCTL_MIN_VERSION = "2.0.0"
+THREADPOOLCTL_MIN_VERSION = "3.1.0"
 PYTEST_MIN_VERSION = "7.1.2"
-CYTHON_MIN_VERSION = "3.0.8"
+CYTHON_MIN_VERSION = "3.0.10"
 
 
 # 'build' and 'install' is included to have structured metadata for CI.
@@ -20,6 +21,7 @@ dependent_packages = {
     "joblib": (JOBLIB_MIN_VERSION, "install"),
     "threadpoolctl": (THREADPOOLCTL_MIN_VERSION, "install"),
     "cython": (CYTHON_MIN_VERSION, "build"),
+    "meson-python": ("0.15.0", "build"),
     "matplotlib": ("3.3.4", "benchmark, docs, examples, tests"),
     "scikit-image": ("0.17.2", "docs, examples, tests"),
     "pandas": ("1.1.5", "benchmark, docs, examples, tests"),
@@ -27,11 +29,11 @@ dependent_packages = {
     "memory_profiler": ("0.57.0", "benchmark, docs"),
     "pytest": (PYTEST_MIN_VERSION, "tests"),
     "pytest-cov": ("2.9.0", "tests"),
-    "ruff": ("0.0.272", "tests"),
-    "black": ("23.3.0", "tests"),
-    "mypy": ("1.3", "tests"),
+    "ruff": ("0.2.1", "tests"),
+    "black": ("24.3.0", "tests"),
+    "mypy": ("1.9", "tests"),
     "pyamg": ("4.0.0", "tests"),
-    "polars": ("0.19.12", "tests"),
+    "polars": ("0.19.12", "docs, tests"),
     "pyarrow": ("12.0.0", "tests"),
     "sphinx": ("6.0.0", "docs"),
     "sphinx-copybutton": ("0.5.2", "docs"),
@@ -44,7 +46,7 @@ dependent_packages = {
     "plotly": ("5.14.0", "docs, examples"),
     # XXX: Pin conda-lock to the latest released version (needs manual update
     # from time to time)
-    "conda-lock": ("2.4.2", "maintenance"),
+    "conda-lock": ("2.5.6", "maintenance"),
 }
 
 

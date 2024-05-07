@@ -1030,7 +1030,7 @@ def _score(estimator, X_test, y_test, scorer, score_params, error_score="raise")
     {
         "estimator": [HasMethods(["fit", "predict"])],
         "X": ["array-like", "sparse matrix"],
-        "y": ["array-like", None],
+        "y": ["array-like", "sparse matrix", None],
         "groups": ["array-like", None],
         "cv": ["cv_object"],
         "n_jobs": [Integral, None],
@@ -1087,7 +1087,7 @@ def cross_val_predict(
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         The data to fit. Can be, for example a list, or an array at least 2d.
 
-    y : array-like of shape (n_samples,) or (n_samples, n_outputs), \
+    y : {array-like, sparse matrix} of shape (n_samples,) or (n_samples, n_outputs), \
             default=None
         The target variable to try to predict in the case of
         supervised learning.

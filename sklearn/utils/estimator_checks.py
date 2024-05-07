@@ -9,7 +9,7 @@ import warnings
 from contextlib import nullcontext
 from copy import deepcopy
 from functools import partial, wraps
-from inspect import signature
+from inspect import isfunction, signature
 from numbers import Integral, Real
 
 import joblib
@@ -62,9 +62,8 @@ from ..utils._param_validation import (
     generate_invalid_param_val,
     make_constraint,
 )
-from ..utils.fixes import parse_version, sp_version
-from ..utils.validation import check_is_fitted
-from . import IS_PYPY, is_scalar_nan, shuffle
+from . import shuffle
+from ._missing import is_scalar_nan
 from ._param_validation import Interval
 from ._tags import (
     _DEFAULT_TAGS,
@@ -85,7 +84,8 @@ from ._testing import (
     raises,
     set_random_state,
 )
-from .validation import _num_samples, has_fit_parameter
+from .fixes import _IS_PYPY, SPARSE_ARRAY_PRESENT, parse_version, sp_version
+from .validation import _num_samples, check_is_fitted, has_fit_parameter
 
 REGRESSION_DATASET = None
 CROSS_DECOMPOSITION = ["PLSCanonical", "PLSRegression", "CCA", "PLSSVD"]
@@ -134,7 +134,8 @@ def _yield_checks(estimator):
     if hasattr(estimator, "sparsify"):
         yield check_sparsify_coefficients
 
-    yield check_estimator_sparse_data
+    yield check_estimator_sparse_array
+    yield check_estimator_sparse_matrix
 
     # Test that estimators can be pickled, and once pickled
     # give the same answer as before.
@@ -404,13 +405,11 @@ def _get_check_estimator_ids(obj):
     --------
     check_estimator
     """
-    if callable(obj):
-        if not isinstance(obj, partial):
-            return obj.__name__
-
+    if isfunction(obj):
+        return obj.__name__
+    if isinstance(obj, partial):
         if not obj.keywords:
             return obj.func.__name__
-
         kwstring = ",".join(["{}={}".format(k, v) for k, v in obj.keywords.items()])
         return "{}({})".format(obj.func.__name__, kwstring)
     if hasattr(obj, "get_params"):
@@ -809,7 +808,7 @@ class _NotAnArray:
     def __init__(self, data):
         self.data = np.asarray(data)
 
-    def __array__(self, dtype=None):
+    def __array__(self, dtype=None, copy=None):
         return self.data
 
     def __array_function__(self, func, types, args, kwargs):
@@ -836,17 +835,17 @@ def _is_pairwise_metric(estimator):
     return bool(metric == "precomputed")
 
 
-def _generate_sparse_matrix(X_csr):
-    """Generate sparse matrices with {32,64}bit indices of diverse format.
+def _generate_sparse_data(X_csr):
+    """Generate sparse matrices or arrays with {32,64}bit indices of diverse format.
 
     Parameters
     ----------
-    X_csr: CSR Matrix
-        Input matrix in CSR format.
+    X_csr: scipy.sparse.csr_matrix or scipy.sparse.csr_array
+        Input in CSR format.
 
     Returns
     -------
-    out: iter(Matrices)
+    out: iter(Matrices) or iter(Arrays)
         In format['dok', 'lil', 'dia', 'bsr', 'csr', 'csc', 'coo',
         'coo_64', 'csc_64', 'csr_64']
     """
@@ -1029,19 +1028,18 @@ def check_array_api_input_and_values(
     )
 
 
-def check_estimator_sparse_data(name, estimator_orig):
+def _check_estimator_sparse_container(name, estimator_orig, sparse_type):
     rng = np.random.RandomState(0)
     X = rng.uniform(size=(40, 3))
     X[X < 0.8] = 0
     X = _enforce_estimator_tags_X(estimator_orig, X)
-    X_csr = sparse.csr_matrix(X)
     y = (4 * rng.uniform(size=40)).astype(int)
     # catch deprecation warnings
     with ignore_warnings(category=FutureWarning):
         estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
     tags = _safe_tags(estimator_orig)
-    for matrix_format, X in _generate_sparse_matrix(X_csr):
+    for matrix_format, X in _generate_sparse_data(sparse_type(X)):
         # catch deprecation warnings
         with ignore_warnings(category=FutureWarning):
             estimator = clone(estimator_orig)
@@ -1052,13 +1050,14 @@ def check_estimator_sparse_data(name, estimator_orig):
             err_msg = (
                 f"Estimator {name} doesn't seem to support {matrix_format} "
                 "matrix, and is not failing gracefully, e.g. by using "
-                "check_array(X, accept_large_sparse=False)"
+                "check_array(X, accept_large_sparse=False)."
             )
         else:
             err_msg = (
                 f"Estimator {name} doesn't seem to fail gracefully on sparse "
                 "data: error message should state explicitly that sparse "
-                "input is not supported if this is not the case."
+                "input is not supported if this is not the case, e.g. by using "
+                "check_array(X, accept_sparse=False)."
             )
         with raises(
             (TypeError, ValueError),
@@ -1081,6 +1080,15 @@ def check_estimator_sparse_data(name, estimator_orig):
                 else:
                     expected_probs_shape = (X.shape[0], 4)
                 assert probs.shape == expected_probs_shape
+
+
+def check_estimator_sparse_matrix(name, estimator_orig):
+    _check_estimator_sparse_container(name, estimator_orig, sparse.csr_matrix)
+
+
+def check_estimator_sparse_array(name, estimator_orig):
+    if SPARSE_ARRAY_PRESENT:
+        _check_estimator_sparse_container(name, estimator_orig, sparse.csr_array)
 
 
 @ignore_warnings(category=FutureWarning)
@@ -1450,8 +1458,7 @@ def check_dont_overwrite_parameters(name, estimator_orig):
         " the fit method."
         " Estimators are only allowed to add private attributes"
         " either started with _ or ended"
-        " with _ but %s added"
-        % ", ".join(attrs_added_by_fit)
+        " with _ but %s added" % ", ".join(attrs_added_by_fit)
     )
 
     # check that fit doesn't change any public attribute
@@ -1466,8 +1473,7 @@ def check_dont_overwrite_parameters(name, estimator_orig):
         " the fit method. Estimators are only allowed"
         " to change attributes started"
         " or ended with _, but"
-        " %s changed"
-        % ", ".join(attrs_changed_by_fit)
+        " %s changed" % ", ".join(attrs_changed_by_fit)
     )
 
 
@@ -2916,8 +2922,7 @@ def check_supervised_y_2d(name, estimator_orig):
         assert len(w) > 0, msg
         assert (
             "DataConversionWarning('A column-vector y"
-            " was passed when a 1d array was expected"
-            in msg
+            " was passed when a 1d array was expected" in msg
         )
     assert_allclose(y_pred.ravel(), y_pred_2d.ravel())
 
@@ -3285,7 +3290,7 @@ def check_no_attributes_set_in_init(name, estimator_orig):
         return
 
     init_params = _get_args(type(estimator).__init__)
-    if IS_PYPY:
+    if _IS_PYPY:
         # __init__ signature has additional objects in PyPy
         for key in ["obj"]:
             if key in init_params:
@@ -3992,8 +3997,8 @@ def check_n_features_in_after_fitting(name, estimator_orig):
     if "warm_start" in estimator.get_params():
         estimator.set_params(warm_start=False)
 
-    n_samples = 150
-    X = rng.normal(size=(n_samples, 8))
+    n_samples = 10
+    X = rng.normal(size=(n_samples, 4))
     X = _enforce_estimator_tags_X(estimator, X)
 
     if is_regressor(estimator):

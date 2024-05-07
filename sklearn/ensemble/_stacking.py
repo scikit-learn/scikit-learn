@@ -201,6 +201,14 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         names, all_estimators = self._validate_estimators()
         self._validate_final_estimator()
 
+        # FIXME: when adding support for metadata routing in Stacking*.
+        # This is a hotfix to make StackingClassifier and StackingRegressor
+        # pass the tests despite not supporting metadata routing but sharing
+        # the same base class with VotingClassifier and VotingRegressor.
+        fit_params = dict()
+        if sample_weight is not None:
+            fit_params["sample_weight"] = sample_weight
+
         stack_method = [self.stack_method] * len(all_estimators)
 
         if self.cv == "prefit":
@@ -214,7 +222,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
             # base estimators will be used in transform, predict, and
             # predict_proba. They are exposed publicly.
             self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-                delayed(_fit_single_estimator)(clone(est), X, y, sample_weight)
+                delayed(_fit_single_estimator)(clone(est), X, y, fit_params)
                 for est in all_estimators
                 if est != "drop"
             )
@@ -253,9 +261,6 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
             if hasattr(cv, "random_state") and cv.random_state is None:
                 cv.random_state = np.random.RandomState()
 
-            fit_params = (
-                {"sample_weight": sample_weight} if sample_weight is not None else None
-            )
             predictions = Parallel(n_jobs=self.n_jobs)(
                 delayed(cross_val_predict)(
                     clone(est),
@@ -280,9 +285,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         ]
 
         X_meta = self._concatenate_predictions(X, predictions)
-        _fit_single_estimator(
-            self.final_estimator_, X_meta, y, sample_weight=sample_weight
-        )
+        _fit_single_estimator(self.final_estimator_, X_meta, y, fit_params=fit_params)
 
         return self
 
@@ -553,7 +556,7 @@ class StackingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, _BaseStacki
     >>> estimators = [
     ...     ('rf', RandomForestClassifier(n_estimators=10, random_state=42)),
     ...     ('svr', make_pipeline(StandardScaler(),
-    ...                           LinearSVC(dual="auto", random_state=42)))
+    ...                           LinearSVC(random_state=42)))
     ... ]
     >>> clf = StackingClassifier(
     ...     estimators=estimators, final_estimator=LogisticRegression()
@@ -897,7 +900,7 @@ class StackingRegressor(_RoutingNotSupportedMixin, RegressorMixin, _BaseStacking
     >>> X, y = load_diabetes(return_X_y=True)
     >>> estimators = [
     ...     ('lr', RidgeCV()),
-    ...     ('svr', LinearSVR(dual="auto", random_state=42))
+    ...     ('svr', LinearSVR(random_state=42))
     ... ]
     >>> reg = StackingRegressor(
     ...     estimators=estimators,

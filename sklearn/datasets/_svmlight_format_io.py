@@ -23,10 +23,11 @@ import numpy as np
 import scipy.sparse as sp
 
 from .. import __version__
-from ..utils import IS_PYPY, check_array
+from ..utils import check_array
 from ..utils._param_validation import HasMethods, Interval, StrOptions, validate_params
+from ..utils.fixes import _IS_PYPY
 
-if not IS_PYPY:
+if not _IS_PYPY:
     from ._svmlight_format_fast import (
         _dump_svmlight_file,
         _load_svmlight_file,
@@ -176,7 +177,7 @@ def load_svmlight_file(
     To use joblib.Memory to cache the svmlight file::
 
         from joblib import Memory
-        from .datasets import load_svmlight_file
+        from sklearn.datasets import load_svmlight_file
         mem = Memory("./mycache")
 
         @mem.cache
@@ -359,6 +360,23 @@ def load_svmlight_files(
     matrix X_test, it is essential that X_train and X_test have the same
     number of features (X_train.shape[1] == X_test.shape[1]). This may not
     be the case if you load the files individually with load_svmlight_file.
+
+    Examples
+    --------
+    To use joblib.Memory to cache the svmlight file::
+
+        from joblib import Memory
+        from sklearn.datasets import load_svmlight_file
+        mem = Memory("./mycache")
+
+        @mem.cache
+        def get_data():
+            data_train, target_train, data_test, target_test = load_svmlight_files(
+                ["svmlight_file_train", "svmlight_file_test"]
+            )
+            return data_train, target_train, data_test, target_test
+
+        X_train, y_train, X_test, y_test = get_data()
     """
     if (offset != 0 or length > 0) and zero_based == "auto":
         # disable heuristic search to avoid getting inconsistent results on

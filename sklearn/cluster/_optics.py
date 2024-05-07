@@ -21,7 +21,8 @@ from ..exceptions import DataConversionWarning
 from ..metrics import pairwise_distances
 from ..metrics.pairwise import _VALID_METRICS, PAIRWISE_BOOLEAN_FUNCTIONS
 from ..neighbors import NearestNeighbors
-from ..utils import gen_batches, get_chunk_n_rows
+from ..utils import gen_batches
+from ..utils._chunking import get_chunk_n_rows
 from ..utils._param_validation import (
     HasMethods,
     Interval,
@@ -333,6 +334,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
 
         X = self._validate_data(X, dtype=dtype, accept_sparse="csr")
         if self.metric == "precomputed" and issparse(X):
+            X = X.copy()  # copy to avoid in-place modification
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", SparseEfficiencyWarning)
                 # Set each diagonal to an explicit value so each point is its
