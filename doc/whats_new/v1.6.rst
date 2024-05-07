@@ -40,7 +40,7 @@ Changelog
 ......................
 
 - |Feature| :func:`metrics.d2_brier_score` has been added which calculates
-  the D^2 for the brier score. :pr:`` by :user:`Omar Salman <OmarManzoor>`.
+  the D^2 for the brier score. :pr:`28971` by :user:`Omar Salman <OmarManzoor>`.
 
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:
