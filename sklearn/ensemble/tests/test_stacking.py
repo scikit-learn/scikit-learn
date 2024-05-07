@@ -883,18 +883,16 @@ def test_stacking_regressor_singleoutput_but_2d():
     )
 
     reg.fit(X_train, y_train)
-    # predict
     y_pred = reg.predict(X_train)
     # NOTE: In this case the estimator can predict almost exactly the target
+    # when the target is 2D but with a single output, the predictions are 1D
+    # because of column_or_1d
     assert_allclose(
         y_pred,
-        # NOTE: when the target is 2D but with a single output,
-        #       the predictions are 1D because of column_or_1d
         y_train.flatten(),
         rtol=acceptable_relative_tolerance,
         atol=acceptable_aboslute_tolerance,
     )
-    # transform
     X_trans = reg.transform(X_train)
     # NOTE: The result of transform is the horizontal stack of the predictions
     assert_allclose(
@@ -906,7 +904,7 @@ def test_stacking_regressor_singleoutput_but_2d():
 
 
 def test_stacking_regressor_multioutput():
-    """Check that a stacking regressor with multioutput works"""
+    """Check that a stacking regressor works with multioutput"""
     cv = 2
     acceptable_relative_tolerance = 1e-10
     acceptable_aboslute_tolerance = 1e-10
@@ -927,7 +925,6 @@ def test_stacking_regressor_multioutput():
     )
 
     reg.fit(X_train, y_train)
-    # predict
     y_pred = reg.predict(X_train)
     # NOTE: In this case the estimator can predict almost exactly the target
     assert_allclose(
@@ -936,7 +933,6 @@ def test_stacking_regressor_multioutput():
         rtol=acceptable_relative_tolerance,
         atol=acceptable_aboslute_tolerance,
     )
-    # transform
     X_trans = reg.transform(X_train)
     # NOTE: The result of transform is the horizontal stack of the predictions
     assert_allclose(
@@ -948,7 +944,7 @@ def test_stacking_regressor_multioutput():
 
 
 def test_stacking_regressor_multioutput_with_passthrough():
-    """Check that a stacking regressor with multioutput works"""
+    """Check that a stacking regressor works with multioutput"""
     cv = 2
     acceptable_relative_tolerance = 1e-10
     acceptable_aboslute_tolerance = 1e-10
@@ -969,7 +965,6 @@ def test_stacking_regressor_multioutput_with_passthrough():
     )
 
     reg.fit(X_train, y_train)
-    # predict
     y_pred = reg.predict(X_train)
     # NOTE: In this case, the estimator can predict almost exactly the target
     assert_allclose(
@@ -978,7 +973,6 @@ def test_stacking_regressor_multioutput_with_passthrough():
         rtol=acceptable_relative_tolerance,
         atol=acceptable_aboslute_tolerance,
     )
-    # transform
     X_trans = reg.transform(X_train)
     # NOTE: X_trans should be the horizontal stack of the predictions and X_train
     assert_allclose(
