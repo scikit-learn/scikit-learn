@@ -22,6 +22,22 @@ Version 1.6.0
 
 **In Development**
 
+Support for Array API
+---------------------
+
+Additional estimators and functions have been updated to include support for all
+`Array API <https://data-apis.org/array-api/latest/>`_ compliant inputs.
+
+See :ref:`array_api` for more details.
+
+**Functions:**
+
+**Classes:**
+
+- :class:`preprocessing.LabelEncoder` now supports the Array API
+  `Array API <https://data-apis.org/array-api/latest/>`_. See :ref:`array_api`
+  for more details. :pr:`27381` by :user:`Omar Salman <OmarManzoor>`.
+
 Changelog
 ---------
 
