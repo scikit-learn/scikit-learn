@@ -143,12 +143,12 @@ class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
 
         Parameters
         ----------
-        y : ndarray of shape (n_samples,)
+        y : array-like of shape (n_samples,)
             Target values.
 
         Returns
         -------
-        y : ndarray of shape (n_samples,)
+        y : array-like of shape (n_samples,)
             Original encoding.
         """
         check_is_fitted(self)
