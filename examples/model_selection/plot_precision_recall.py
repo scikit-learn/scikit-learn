@@ -8,7 +8,8 @@ Example of Precision-Recall metric to evaluate classifier output quality.
 Precision-Recall is a useful measure of success of prediction when the
 classes are very imbalanced. In information retrieval, precision is a
 measure of result relevancy, while recall is a measure of how many of the
-relevant results are returned. Relevant results here mean samples
+relevant results are returned. 'Relevancy' here refers to items that are
+postively labeled, true positives and false negatives.
 
 Precision (:math:`P`) is defined as the number of true positives (:math:`T_p`)
 over the number of true positives plus the number of false positives
@@ -28,12 +29,12 @@ The precision-recall curve shows the tradeoff between precision and
 recall for different thresholds. A high area under the curve represents
 both high recall and high precision, where high precision relates to low
 false positives in returned results, and high recall relates to a low false negatives
-in relevant results. High scores for both show that the classifier is returning accurate
-results (high precision), as well as returning a majority of all relevant
+in relevant results. High scores for both show that the classifier is returning
+accurate results (high precision), as well as returning a majority of all relevant
 results (high recall).
 
 A system with high recall but low precision returns most of the relevant items, but
-the proportion of returned results incorrectly labeled is high. A
+the proportion of returned results that are incorrectly labeled is high. A
 system with high precision but low recall is just the opposite, returning very
 few of the relevant items, but most of its predicted labels are correct when compared
 to the actual labels. An ideal system with high precision and high recall will
