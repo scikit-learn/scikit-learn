@@ -34,7 +34,6 @@ import numpy as np
 from scipy.special import xlogy
 
 from ..exceptions import UndefinedMetricWarning
-from ..utils import _array_api
 from ..utils._array_api import (
     _average,
     _find_matching_floating_dtype,
@@ -1301,7 +1300,7 @@ def _mean_tweedie_deviance(y_true, y_pred, sample_weight, power):
             - y_true * xp.pow(y_pred, 1 - p) / (1 - p)
             + xp.pow(y_pred, 2 - p) / (2 - p)
         )
-    return float(_array_api._average(dev, weights=sample_weight))
+    return float(_average(dev, weights=sample_weight))
 
 
 @validate_params(
