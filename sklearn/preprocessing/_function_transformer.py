@@ -194,7 +194,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
         if not all(np.issubdtype(d, np.number) for d in dtypes):
             raise ValueError(
-                "'check_inverse' is only supported when all the elements in `X` is"
+                "'check_inverse' is only supported when all the elements in `X` are"
                 " numerical."
             )
 

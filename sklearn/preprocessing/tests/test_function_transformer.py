@@ -209,7 +209,7 @@ def test_function_transformer_raise_error_with_mixed_dtype(X_type):
         func=func, inverse_func=inverse_func, validate=False, check_inverse=True
     )
 
-    msg = "'check_inverse' is only supported when all the elements in `X` is numerical."
+    msg = "'check_inverse' is only supported when all the elements in `X` are numerical."
     with pytest.raises(ValueError, match=msg):
         transformer.fit(data)
 
@@ -239,7 +239,7 @@ def test_function_transformer_with_dataframe_and_check_inverse_True():
     )
 
     df_mixed = pd.DataFrame({"a": [1, 2, 3], "b": ["a", "b", "c"]})
-    msg = "'check_inverse' is only supported when all the elements in `X` is numerical."
+    msg = "'check_inverse' is only supported when all the elements in `X` are numerical."
     with pytest.raises(ValueError, match=msg):
         transformer.fit(df_mixed)
 
