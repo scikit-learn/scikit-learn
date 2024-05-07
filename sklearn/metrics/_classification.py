@@ -3278,9 +3278,9 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
 
     Best possible score is 1.0 and it can be negative (because the model can be
     arbitrarily worse). A model that always uses the empirical mean of `y_true` as
-    constant prediction, disregarding the input features, gets a D^2 score of 0.0.
+    a constant prediction, disregarding the input features, gets a D^2 score of 0.0.
 
-    Read more in the :ref:`User Guide <d2_score>`.
+    Read more in the :ref:`User Guide <d2_score_classification>`.
 
     .. versionadded:: 1.5
 
