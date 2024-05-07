@@ -61,7 +61,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
     ignore_warnings,
 )
-from sklearn.utils.metadata_routing import MetadataRouter
+from sklearn.utils.metadata_routing import MetadataRouter, MethodMapping
 
 REGRESSION_SCORERS = [
     "d2_absolute_error_score",
@@ -926,7 +926,7 @@ def test_multiclass_roc_proba_scorer(scorer_name, metric):
     X, y = make_classification(
         n_classes=3, n_informative=3, n_samples=20, random_state=0
     )
-    lr = LogisticRegression(multi_class="multinomial").fit(X, y)
+    lr = LogisticRegression().fit(X, y)
     y_proba = lr.predict_proba(X)
     expected_score = metric(y, y_proba)
 
@@ -943,7 +943,7 @@ def test_multiclass_roc_proba_scorer_label():
     X, y = make_classification(
         n_classes=3, n_informative=3, n_samples=20, random_state=0
     )
-    lr = LogisticRegression(multi_class="multinomial").fit(X, y)
+    lr = LogisticRegression().fit(X, y)
     y_proba = lr.predict_proba(X)
 
     y_binary = y == 0
@@ -1233,7 +1233,8 @@ def test_scorer_metadata_request(name):
     # make sure putting the scorer in a router doesn't request anything by
     # default
     router = MetadataRouter(owner="test").add(
-        method_mapping="score", scorer=get_scorer(name)
+        scorer=get_scorer(name),
+        method_mapping=MethodMapping().add(caller="score", callee="score"),
     )
     # make sure `sample_weight` is refused if passed.
     with pytest.raises(TypeError, match="got unexpected argument"):
@@ -1244,7 +1245,8 @@ def test_scorer_metadata_request(name):
 
     # make sure putting weighted_scorer in a router requests sample_weight
     router = MetadataRouter(owner="test").add(
-        scorer=weighted_scorer, method_mapping="score"
+        scorer=weighted_scorer,
+        method_mapping=MethodMapping().add(caller="score", callee="score"),
     )
     router.validate_metadata(params={"sample_weight": 1}, method="score")
     routed_params = router.route_params(params={"sample_weight": 1}, caller="score")
