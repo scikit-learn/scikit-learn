@@ -530,6 +530,7 @@ The class :class:`ElasticNetCV` can be used to set the parameters
 
   * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
   * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_coordinate_descent_path.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_elastic_net_precomputed_gram_matrix_with_weighted_samples.py`
 
 |details-start|
 **References**
@@ -1047,24 +1048,24 @@ Solvers
 The solvers implemented in the class :class:`LogisticRegression`
 are "lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag" and "saga":
 
-The following table summarizes the penalties supported by each solver:
+The following table summarizes the penalties and multinomial multiclass supported by each solver:
 
 +------------------------------+-----------------+-------------+-----------------+-----------------------+-----------+------------+
 |                              |                       **Solvers**                                                                |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
 | **Penalties**                | **'lbfgs'** | **'liblinear'** | **'newton-cg'** | **'newton-cholesky'** | **'sag'** | **'saga'** |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| Multinomial + L2 penalty     |     yes     |       no        |       yes       |     no                |    yes    |    yes     |
+| L2 penalty                   |     yes     |       no        |       yes       |     no                |    yes    |    yes     |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| OVR + L2 penalty             |     yes     |       yes       |       yes       |     yes               |    yes    |    yes     |
+| L1 penalty                   |     no      |       yes       |       no        |     no                |    no     |    yes     |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| Multinomial + L1 penalty     |     no      |       no        |       no        |     no                |    no     |    yes     |
-+------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| OVR + L1 penalty             |     no      |       yes       |       no        |     no                |    no     |    yes     |
-+------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| Elastic-Net                  |     no      |       no        |       no        |     no                |    no     |    yes     |
+| Elastic-Net (L1 + L2)        |     no      |       no        |       no        |     no                |    no     |    yes     |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
 | No penalty ('none')          |     yes     |       no        |       yes       |     yes               |    yes    |    yes     |
++------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
+| **Multiclass support**       |                                                                                                  |
++------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
+| multinomial multiclass       |     yes     |       no        |       yes       |     no                |    yes    |    yes     |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
 | **Behaviors**                |                                                                                                  |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
