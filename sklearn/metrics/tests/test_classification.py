@@ -3052,7 +3052,8 @@ def test_d2_log_loss_score():
 
 
 def test_d2_log_loss_score_raises():
-    """Test that d2_log_loss raises error on invalid input."""
+    """Test that d2_log_loss_score raises the appropriate errors on
+    invalid inputs."""
     y_true = [0, 1, 2]
     y_pred = [[0.2, 0.8], [0.5, 0.5], [0.4, 0.6]]
     err = "contain different number of classes"

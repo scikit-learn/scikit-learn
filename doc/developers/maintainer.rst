@@ -105,14 +105,13 @@ in the description of the Pull Request to track progress.
 This PR will be used to push commits related to the release as explained in
 :ref:`making_a_release`.
 
-You can also create a second PR from main and targeting main to increment
-the ``__version__`` variable in `sklearn/__init__.py` to increment the dev
-version. This means while we're in the release candidate period, the latest
-stable is two versions behind the main branch, instead of one. In this PR
-targeting main you should also include a new file for the matching version
-under the ``doc/whats_new/`` folder so PRs that target the next version can
-contribute their changelog entries to this file in parallel to the release
-process.
+You can also create a second PR from main and targeting main to increment the
+``__version__`` variable in `sklearn/__init__.py` and in `pyproject.toml` to increment
+the dev version. This means while we're in the release candidate period, the latest
+stable is two versions behind the main branch, instead of one. In this PR targeting
+main you should also include a new file for the matching version under the
+``doc/whats_new/`` folder so PRs that target the next version can contribute their
+changelog entries to this file in parallel to the release process.
 
 Minor version release (also known as bug-fix release)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -212,8 +211,8 @@ Making a release
      the old entries (two years or three releases are typically good
      enough) and to update the on-going development entry.
 
-2. On the branch for releasing, update the version number in
-   ``sklearn/__init__.py``, the ``__version__``.
+2. On the branch for releasing, update the version number in ``sklearn/__init__.py``,
+   the ``__version__`` variable, and in `pyproject.toml`.
 
    For major releases, please add a 0 at the end: `0.99.0` instead of `0.99`.
 
