@@ -5,7 +5,6 @@ from typing import NamedTuple
 import numpy as np
 
 from ._array_api import (
-    _is_numpy_namespace,
     _isin,
     _searchsorted,
     _setdiff1d,
@@ -198,20 +197,6 @@ def _unique_python(values, *, return_inverse, return_counts):
     return ret[0] if len(ret) == 1 else ret
 
 
-def _is_array_of_numeric_dtype(arr, xp, is_array_api_compliant):
-    if is_array_api_compliant and not _is_numpy_namespace(xp=xp):
-        try:
-            dtype = arr.dtype
-            dtype_kind = dtype.kind if hasattr(dtype, "kind") else dtype
-            numeric_dtype = xp.isdtype(dtype=dtype, kind=dtype_kind)
-        except ValueError:
-            numeric_dtype = False
-    else:
-        numeric_dtype = arr.dtype.kind not in "OUS"
-
-    return numeric_dtype
-
-
 def _encode(values, *, uniques, check_unknown=True):
     """Helper function to encode values into [0, n_uniques - 1].
 
@@ -241,12 +226,8 @@ def _encode(values, *, uniques, check_unknown=True):
     encoded : ndarray
         Encoded values
     """
-    xp, is_array_api_compliant = get_namespace(values, uniques)
-    numeric_dtype = _is_array_of_numeric_dtype(
-        arr=values, xp=xp, is_array_api_compliant=is_array_api_compliant
-    )
-
-    if not numeric_dtype:
+    xp, _ = get_namespace(values, uniques)
+    if not xp.isdtype(values.dtype, "numeric"):
         try:
             return _map_to_integer(values, uniques)
         except KeyError as e:
@@ -284,13 +265,10 @@ def _check_unknown(values, known_values, return_mask=False):
         Additionally returned if ``return_mask=True``.
 
     """
-    xp, is_array_api_compliant = get_namespace(values, known_values)
+    xp, _ = get_namespace(values, known_values)
     valid_mask = None
-    numeric_dtype = _is_array_of_numeric_dtype(
-        arr=values, xp=xp, is_array_api_compliant=is_array_api_compliant
-    )
 
-    if not numeric_dtype:
+    if not xp.isdtype(values.dtype, "numeric"):
         values_set = set(values)
         values_set, missing_in_values = _extract_missing(values_set)
 
