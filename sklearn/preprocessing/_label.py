@@ -87,7 +87,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
 
         Parameters
         ----------
-        y : array-like of shape (n_samples,)
+        y : array of shape (n_samples,)
             Target values.
 
         Returns
@@ -104,12 +104,12 @@ class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
 
         Parameters
         ----------
-        y : array-like of shape (n_samples,)
+        y : array of shape (n_samples,)
             Target values.
 
         Returns
         -------
-        y : array-like of shape (n_samples,)
+        y : array of shape (n_samples,)
             Encoded labels.
         """
         y = column_or_1d(y, warn=True)
@@ -121,12 +121,12 @@ class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
 
         Parameters
         ----------
-        y : array-like of shape (n_samples,)
+        y : array of shape (n_samples,)
             Target values.
 
         Returns
         -------
-        y : array-like of shape (n_samples,)
+        y : array of shape (n_samples,)
             Labels as normalized encodings.
         """
         check_is_fitted(self)
@@ -143,12 +143,12 @@ class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
 
         Parameters
         ----------
-        y : array-like of shape (n_samples,)
+        y : array of shape (n_samples,)
             Target values.
 
         Returns
         -------
-        y : array-like of shape (n_samples,)
+        y : array of shape (n_samples,)
             Original encoding.
         """
         check_is_fitted(self)
