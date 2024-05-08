@@ -44,9 +44,10 @@ from numpy.testing import (
 )
 
 import sklearn
-from sklearn.utils import _IS_32BIT, IS_PYPY
 from sklearn.utils._array_api import _check_array_api_dispatch
 from sklearn.utils.fixes import (
+    _IS_32BIT,
+    _IS_PYPY,
     VisibleDeprecationWarning,
     _in_unstable_openblas_configuration,
     parse_version,
@@ -369,7 +370,7 @@ try:
     import pytest
 
     skip_if_32bit = pytest.mark.skipif(_IS_32BIT, reason="skipped on 32bit platforms")
-    fails_if_pypy = pytest.mark.xfail(IS_PYPY, reason="not compatible with PyPy")
+    fails_if_pypy = pytest.mark.xfail(_IS_PYPY, reason="not compatible with PyPy")
     fails_if_unstable_openblas = pytest.mark.xfail(
         _in_unstable_openblas_configuration(),
         reason="OpenBLAS is unstable for this configuration",
@@ -1054,13 +1055,7 @@ class MinimalTransformer:
 
 def _array_api_for_tests(array_namespace, device):
     try:
-        if array_namespace == "numpy.array_api":
-            # FIXME: once it is not experimental anymore
-            with ignore_warnings(category=UserWarning):
-                # UserWarning: numpy.array_api submodule is still experimental.
-                array_mod = importlib.import_module(array_namespace)
-        else:
-            array_mod = importlib.import_module(array_namespace)
+        array_mod = importlib.import_module(array_namespace)
     except ModuleNotFoundError:
         raise SkipTest(
             f"{array_namespace} is not installed: not checking array_api input"

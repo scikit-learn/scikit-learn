@@ -78,8 +78,8 @@ def all_estimators(type_filter=None):
         RegressorMixin,
         TransformerMixin,
     )
-    from . import IS_PYPY
     from ._testing import ignore_warnings
+    from .fixes import _IS_PYPY
 
     def is_abstract(c):
         if not (hasattr(c, "__abstractmethods__")):
@@ -108,7 +108,7 @@ def all_estimators(type_filter=None):
 
             # TODO: Remove when FeatureHasher is implemented in PYPY
             # Skips FeatureHasher for PYPY
-            if IS_PYPY and "feature_extraction" in module_name:
+            if _IS_PYPY and "feature_extraction" in module_name:
                 classes = [
                     (name, est_cls)
                     for name, est_cls in classes
