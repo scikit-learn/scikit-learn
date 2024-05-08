@@ -53,7 +53,6 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.svm import LinearSVC
 from sklearn.tests.metadata_routing_common import (
-    assert_request_equal,
     assert_request_is_empty,
 )
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
@@ -62,7 +61,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
     ignore_warnings,
 )
-from sklearn.utils.metadata_routing import MetadataRouter
+from sklearn.utils.metadata_routing import MetadataRouter, MethodMapping
 
 REGRESSION_SCORERS = [
     "d2_absolute_error_score",
@@ -927,7 +926,7 @@ def test_multiclass_roc_proba_scorer(scorer_name, metric):
     X, y = make_classification(
         n_classes=3, n_informative=3, n_samples=20, random_state=0
     )
-    lr = LogisticRegression(multi_class="multinomial").fit(X, y)
+    lr = LogisticRegression().fit(X, y)
     y_proba = lr.predict_proba(X)
     expected_score = metric(y, y_proba)
 
@@ -944,7 +943,7 @@ def test_multiclass_roc_proba_scorer_label():
     X, y = make_classification(
         n_classes=3, n_informative=3, n_samples=20, random_state=0
     )
-    lr = LogisticRegression(multi_class="multinomial").fit(X, y)
+    lr = LogisticRegression().fit(X, y)
     y_proba = lr.predict_proba(X)
 
     y_binary = y == 0
@@ -1234,7 +1233,8 @@ def test_scorer_metadata_request(name):
     # make sure putting the scorer in a router doesn't request anything by
     # default
     router = MetadataRouter(owner="test").add(
-        method_mapping="score", scorer=get_scorer(name)
+        scorer=get_scorer(name),
+        method_mapping=MethodMapping().add(caller="score", callee="score"),
     )
     # make sure `sample_weight` is refused if passed.
     with pytest.raises(TypeError, match="got unexpected argument"):
@@ -1245,7 +1245,8 @@ def test_scorer_metadata_request(name):
 
     # make sure putting weighted_scorer in a router requests sample_weight
     router = MetadataRouter(owner="test").add(
-        scorer=weighted_scorer, method_mapping="score"
+        scorer=weighted_scorer,
+        method_mapping=MethodMapping().add(caller="score", callee="score"),
     )
     router.validate_metadata(params={"sample_weight": 1}, method="score")
     routed_params = router.route_params(params={"sample_weight": 1}, caller="score")
@@ -1276,22 +1277,38 @@ def test_metadata_kwarg_conflict():
 
 
 @pytest.mark.usefixtures("enable_slep006")
-def test_PassthroughScorer_metadata_request():
-    """Test that _PassthroughScorer properly routes metadata.
+def test_PassthroughScorer_set_score_request():
+    """Test that _PassthroughScorer.set_score_request adds the correct metadata request
+    on itself and doesn't change its estimator's routing."""
+    est = LogisticRegression().set_score_request(sample_weight="estimator_weights")
+    # make a `_PassthroughScorer` with `check_scoring`:
+    scorer = check_scoring(est, None)
+    assert (
+        scorer.get_metadata_routing().score.requests["sample_weight"]
+        == "estimator_weights"
+    )
 
-    _PassthroughScorer should behave like a consumer, mirroring whatever is the
-    underlying score method.
-    """
-    scorer = _PassthroughScorer(
-        estimator=LinearSVC()
-        .set_score_request(sample_weight="alias")
-        .set_fit_request(sample_weight=True)
+    scorer.set_score_request(sample_weight="scorer_weights")
+    assert (
+        scorer.get_metadata_routing().score.requests["sample_weight"]
+        == "scorer_weights"
     )
-    # Test that _PassthroughScorer doesn't change estimator's routing.
-    assert_request_equal(
-        scorer.get_metadata_routing(),
-        {"fit": {"sample_weight": True}, "score": {"sample_weight": "alias"}},
+
+    # making sure changing the passthrough object doesn't affect the estimator.
+    assert (
+        est.get_metadata_routing().score.requests["sample_weight"]
+        == "estimator_weights"
     )
+
+
+def test_PassthroughScorer_set_score_request_raises_without_routing_enabled():
+    """Test that _PassthroughScorer.set_score_request raises if metadata routing is
+    disabled."""
+    scorer = check_scoring(LogisticRegression(), None)
+    msg = "This method is only available when metadata routing is enabled."
+
+    with pytest.raises(RuntimeError, match=msg):
+        scorer.set_score_request(sample_weight="my_weights")
 
 
 @pytest.mark.usefixtures("enable_slep006")

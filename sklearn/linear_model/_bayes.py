@@ -31,6 +31,9 @@ class BayesianRidge(RegressorMixin, LinearModel):
     lambda (precision of the weights) and alpha (precision of the noise).
 
     Read more in the :ref:`User Guide <bayesian_regression>`.
+    For an intuitive visualization of how the sinusoid is approximated by
+    a polynomial using different pairs of initial values, see
+    :ref:`sphx_glr_auto_examples_linear_model_plot_bayesian_ridge_curvefit.py`.
 
     Parameters
     ----------
