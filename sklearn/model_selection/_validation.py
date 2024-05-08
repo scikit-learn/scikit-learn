@@ -58,21 +58,22 @@ __all__ = [
 ]
 
 
-def _check_params_groups_deprecation(fit_params, params, groups):
+def _check_params_groups_deprecation(fit_params, params, groups, version):
     """A helper function to check deprecations on `groups` and `fit_params`.
 
-    To be removed when set_config(enable_metadata_routing=False) is not possible.
+    # TODO(SLEP6): To be removed when set_config(enable_metadata_routing=False) is not
+    # possible.
     """
     if params is not None and fit_params is not None:
         raise ValueError(
             "`params` and `fit_params` cannot both be provided. Pass parameters "
             "via `params`. `fit_params` is deprecated and will be removed in "
-            "version 1.6."
+            f"version {version}."
         )
     elif fit_params is not None:
         warnings.warn(
             (
-                "`fit_params` is deprecated and will be removed in version 1.6. "
+                "`fit_params` is deprecated and will be removed in version {version}. "
                 "Pass parameters via `params` instead."
             ),
             FutureWarning,
@@ -346,7 +347,7 @@ def cross_validate(
     >>> print(scores['train_r2'])
     [0.28009951 0.3908844  0.22784907]
     """
-    params = _check_params_groups_deprecation(fit_params, params, groups)
+    params = _check_params_groups_deprecation(fit_params, params, groups, "1.6")
 
     X, y = indexable(X, y)
 
@@ -1204,7 +1205,7 @@ def cross_val_predict(
     >>> lasso = linear_model.Lasso()
     >>> y_pred = cross_val_predict(lasso, X, y, cv=3)
     """
-    params = _check_params_groups_deprecation(fit_params, params, groups)
+    params = _check_params_groups_deprecation(fit_params, params, groups, "1.6")
     X, y = indexable(X, y)
 
     if _routing_enabled():
@@ -1919,28 +1920,13 @@ def learning_curve(
     The average train accuracy is 1.00
     The average test accuracy is 0.93
     """
-    if fit_params:
-        warnings.warn(
-            (
-                "`fit_params` is deprecated and will be removed in version 1.8. "
-                "Pass parameters via `params` instead."
-            ),
-            FutureWarning,
-        )
-
     if exploit_incremental_learning and not hasattr(estimator, "partial_fit"):
         raise ValueError(
             "An estimator must support the partial_fit interface "
             "to exploit incremental learning"
         )
 
-    if groups is not None and _routing_enabled():
-        raise ValueError(
-            "`groups` can only be passed if metadata routing is not enabled via"
-            " `sklearn.set_config(enable_metadata_routing=True)`. When routing is"
-            " enabled, pass `groups` alongside other metadata via the `params` argument"
-            " instead."
-        )
+    params = _check_params_groups_deprecation(fit_params, params, groups, "1.8")
 
     X, y, groups = indexable(X, y, groups)
 

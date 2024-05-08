@@ -2485,18 +2485,18 @@ def test_cross_validate_return_indices(global_random_seed):
 # ===========================================================
 
 
-# TODO(1.6): remove this test in 1.6
-def test_cross_validate_fit_param_deprecation():
+# TODO(1.6): remove `cross_validate` and `cross_val_predict` from this test in 1.6 and
+# `learning_curve` in 1.8
+@pytest.mark.parametrize("func", [cross_validate, cross_val_predict, learning_curve])
+def test_fit_param_deprecation(func):
     """Check that we warn about deprecating `fit_params`."""
     with pytest.warns(FutureWarning, match="`fit_params` is deprecated"):
-        cross_validate(estimator=ConsumingClassifier(), X=X, y=y, cv=2, fit_params={})
+        func(estimator=ConsumingClassifier(), X=X, y=y, cv=2, fit_params={})
 
     with pytest.raises(
         ValueError, match="`params` and `fit_params` cannot both be provided"
     ):
-        cross_validate(
-            estimator=ConsumingClassifier(), X=X, y=y, fit_params={}, params={}
-        )
+        func(estimator=ConsumingClassifier(), X=X, y=y, fit_params={}, params={})
 
 
 @pytest.mark.usefixtures("enable_slep006")
