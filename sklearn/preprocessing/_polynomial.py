@@ -1057,10 +1057,9 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     nanmin_x = np.nanmin(x)
                     if np.isnan(nanmin_x):
                         # The column is all np.nan valued. Replace it by an a constant
-                        # column with an arbitrary non-nan value inside Constant columns
-                        # will always be encoded with the minimum value within the
-                        # feature space (spl.t[degree]).
-                        x[:] = spl.t[degree]
+                        # column with an arbitrary non-nan value inside: the minimum
+                        # value within the whole feature space:
+                        x[:] = np.nanmin(X)
                     else:
                         x[nan_indicator[:, i]] = np.nanmin(x)
                     XBS_sparse = BSpline.design_matrix(

@@ -511,14 +511,17 @@ def test_spline_transformer_raises_with_sample_weight_and_missing_values():
     sp_version < parse_version("1.8.0"),
     reason="The option `sparse_output` is available as of scipy 1.8.0",
 )
-@pytest.mark.parametrize("knots", ["uniform", "quantile"])
 @pytest.mark.parametrize(
     "extrapolation", ["error", "constant", "linear", "continue", "periodic"]
 )
 @pytest.mark.parametrize("sparse_output", [False, True])
-def test_spline_transformer_handles_missing_values(knots, extrapolation, sparse_output):
-    """Test that SplineTransformer handles missing values correctly."""
+def test_spline_transformer_handles_missing_values(extrapolation, sparse_output):
+    """Test that SplineTransformer handles missing values correctly.
+    We only test for knots="uniform", since for "quantile" the metrics are calculated
+    differently with nans present and a different result is thus expected.
+    """
     X_nan = np.array([[1, 1], [2, 2], [3, 3], [np.nan, 5], [4, 4]])
+    X_nan_full_column = np.array([[np.nan, np.nan], [np.nan, 1]])
     X = np.array([[1, 1], [2, 2], [3, 3], [4, 5], [4, 4]])
 
     # check correct error message for handle_missing="error"
@@ -527,19 +530,15 @@ def test_spline_transformer_handles_missing_values(knots, extrapolation, sparse_
         spline = SplineTransformer(
             degree=2,
             n_knots=3,
-            knots=knots,
             handle_missing="error",
             extrapolation=extrapolation,
         )
         spline.fit_transform(X_nan)
 
-    # check correct results for handle_missing="zeros", remark: check only
-    # for knots="uniform", since for "quantile" the metrics are calculated
-    # differently with nan present and a different result is thus expected
+    # check correct results for handle_missing="zeros"
     spline = SplineTransformer(
         degree=2,
         n_knots=3,
-        knots="uniform",
         handle_missing="zeros",
         extrapolation=extrapolation,
         sparse_output=sparse_output,
@@ -565,19 +564,20 @@ def test_spline_transformer_handles_missing_values(knots, extrapolation, sparse_
         X_transformed_same_shape, X_transformed_different_shapes
     )
 
-    # Check that nan values are always encoded as zeros, even in columns where
-    # no missing values were observed at training time.
-    all_missing_row_encoded = spline.transform([[np.nan, np.nan]])
-    if sparse_output:
-        all_missing_row_encoded = all_missing_row_encoded.toarray()
-    assert_allclose(all_missing_row_encoded, 0)
+    # check that if X has a feature of all nans SplineTransformer works as usual
+    spline.transform(X_nan_full_column)
 
-    # prepare mask for nan values
+    # check that the masked nan-values are 0s
     nan_mask = _get_mask(X_nan, np.nan)
     encoded_nan_mask = np.repeat(nan_mask, spline.bsplines_[0].c.shape[1], axis=1)
-
-    # check that the masked values are 0s
     assert (X_nan_transform[encoded_nan_mask] == 0).all()
+
+    # check that nan values are always encoded as zeros, even in columns where
+    # no missing values were observed at training time.
+    all_missing_column_encoded = spline.transform(X_nan_full_column)
+    nan_mask = _get_mask(X_nan_full_column, np.nan)
+    encoded_nan_mask_2 = np.repeat(nan_mask, spline.bsplines_[0].c.shape[1], axis=1)
+    assert (all_missing_column_encoded[encoded_nan_mask_2] == 0).all()
 
     # check that additional nan values don't change the calculation of the other splines
     # note: this assertion only holds as long as no np.nan value constructs the min or
