@@ -491,10 +491,6 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
-- |Enhancement| :class:`preprocessing.SplineTransformer` can now handle missing
-  values with the parameter `handle_missing`. :pr:`28043` by :user:`Stefanie
-  Senger <StefanieSenger>`.
-
 - |Enhancement| :class:`preprocessing.QuantileTransformer` and
   :func:`preprocessing.quantile_transform` now supports disabling
   subsampling explicitly.

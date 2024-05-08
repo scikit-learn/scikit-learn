@@ -38,7 +38,7 @@ See :ref:`array_api` for more details.
 
 **Classes:**
 
-- 
+-
 
 Changelog
 ---------
@@ -53,6 +53,13 @@ Changelog
     Entries should end with:
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123455 is the *pull request* number, not the issue number.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Enhancement| :class:`preprocessing.SplineTransformer` can now handle missing
+  values with the parameter `handle_missing`. :pr:`28043` by :user:`Stefanie
+  Senger <StefanieSenger>`.
 
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:
