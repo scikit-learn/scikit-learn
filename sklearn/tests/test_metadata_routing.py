@@ -114,11 +114,16 @@ class SimplePipeline(BaseEstimator):
             router.add(
                 **{f"step_{i}": step},
                 method_mapping=MethodMapping()
-                .add(callee="fit", caller="fit")
-                .add(callee="transform", caller="fit")
-                .add(callee="transform", caller="predict"),
+                .add(caller="fit", callee="fit")
+                .add(caller="fit", callee="transform")
+                .add(caller="predict", callee="transform"),
             )
-        router.add(predictor=self.steps[-1], method_mapping="one-to-one")
+        router.add(
+            predictor=self.steps[-1],
+            method_mapping=MethodMapping()
+            .add(caller="fit", callee="fit")
+            .add(caller="predict", callee="predict"),
+        )
         return router
 
 
@@ -150,7 +155,10 @@ def test_assert_request_is_empty():
     assert_request_is_empty(
         MetadataRouter(owner="test")
         .add_self_request(WeightedMetaRegressor(estimator=None))
-        .add(method_mapping="fit", estimator=ConsumingRegressor())
+        .add(
+            estimator=ConsumingRegressor(),
+            method_mapping=MethodMapping().add(caller="fit", callee="fit"),
+        )
     )
 
 
@@ -677,13 +685,13 @@ def test_estimator_warnings():
             MetadataRequest(owner="test"),
             "{}",
         ),
-        (MethodMapping.from_str("score"), "[{'callee': 'score', 'caller': 'score'}]"),
         (
             MetadataRouter(owner="test").add(
-                method_mapping="predict", estimator=ConsumingRegressor()
+                estimator=ConsumingRegressor(),
+                method_mapping=MethodMapping().add(caller="predict", callee="predict"),
             ),
             (
-                "{'estimator': {'mapping': [{'callee': 'predict', 'caller':"
+                "{'estimator': {'mapping': [{'caller': 'predict', 'callee':"
                 " 'predict'}], 'router': {'fit': {'sample_weight': None, 'metadata':"
                 " None}, 'partial_fit': {'sample_weight': None, 'metadata': None},"
                 " 'predict': {'sample_weight': None, 'metadata': None}, 'score':"
@@ -702,23 +710,16 @@ def test_string_representations(obj, string):
         (
             MethodMapping(),
             "add",
-            {"callee": "invalid", "caller": "fit"},
+            {"caller": "fit", "callee": "invalid"},
             ValueError,
             "Given callee",
         ),
         (
             MethodMapping(),
             "add",
-            {"callee": "fit", "caller": "invalid"},
+            {"caller": "invalid", "callee": "fit"},
             ValueError,
             "Given caller",
-        ),
-        (
-            MethodMapping,
-            "from_str",
-            {"route": "invalid"},
-            ValueError,
-            "route should be 'one-to-one' or a single method!",
         ),
         (
             MetadataRouter(owner="test"),
@@ -749,16 +750,17 @@ def test_methodmapping():
     )
 
     mm_list = list(mm)
-    assert mm_list[0] == ("transform", "fit")
+    assert mm_list[0] == ("fit", "transform")
     assert mm_list[1] == ("fit", "fit")
 
-    mm = MethodMapping.from_str("one-to-one")
+    mm = MethodMapping()
     for method in METHODS:
+        mm.add(caller=method, callee=method)
         assert MethodPair(method, method) in mm._routes
     assert len(mm._routes) == len(METHODS)
 
-    mm = MethodMapping.from_str("score")
-    assert repr(mm) == "[{'callee': 'score', 'caller': 'score'}]"
+    mm = MethodMapping().add(caller="score", callee="score")
+    assert repr(mm) == "[{'caller': 'score', 'callee': 'score'}]"
 
 
 def test_metadatarouter_add_self_request():
@@ -793,12 +795,12 @@ def test_metadatarouter_add_self_request():
 def test_metadata_routing_add():
     # adding one with a string `method_mapping`
     router = MetadataRouter(owner="test").add(
-        method_mapping="fit",
         est=ConsumingRegressor().set_fit_request(sample_weight="weights"),
+        method_mapping=MethodMapping().add(caller="fit", callee="fit"),
     )
     assert (
         str(router)
-        == "{'est': {'mapping': [{'callee': 'fit', 'caller': 'fit'}], 'router': {'fit':"
+        == "{'est': {'mapping': [{'caller': 'fit', 'callee': 'fit'}], 'router': {'fit':"
         " {'sample_weight': 'weights', 'metadata': None}, 'partial_fit':"
         " {'sample_weight': None, 'metadata': None}, 'predict': {'sample_weight':"
         " None, 'metadata': None}, 'score': {'sample_weight': None, 'metadata':"
@@ -807,12 +809,12 @@ def test_metadata_routing_add():
 
     # adding one with an instance of MethodMapping
     router = MetadataRouter(owner="test").add(
-        method_mapping=MethodMapping().add(callee="score", caller="fit"),
+        method_mapping=MethodMapping().add(caller="fit", callee="score"),
         est=ConsumingRegressor().set_score_request(sample_weight=True),
     )
     assert (
         str(router)
-        == "{'est': {'mapping': [{'callee': 'score', 'caller': 'fit'}], 'router':"
+        == "{'est': {'mapping': [{'caller': 'fit', 'callee': 'score'}], 'router':"
         " {'fit': {'sample_weight': None, 'metadata': None}, 'partial_fit':"
         " {'sample_weight': None, 'metadata': None}, 'predict': {'sample_weight':"
         " None, 'metadata': None}, 'score': {'sample_weight': True, 'metadata':"
@@ -829,17 +831,17 @@ def test_metadata_routing_get_param_names():
             )
         )
         .add(
-            method_mapping="fit",
             trs=ConsumingTransformer().set_fit_request(
                 sample_weight="transform_weights"
             ),
+            method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
     )
 
     assert (
         str(router)
         == "{'$self_request': {'fit': {'sample_weight': 'self_weights'}, 'score':"
-        " {'sample_weight': None}}, 'trs': {'mapping': [{'callee': 'fit', 'caller':"
+        " {'sample_weight': None}}, 'trs': {'mapping': [{'caller': 'fit', 'callee':"
         " 'fit'}], 'router': {'fit': {'sample_weight': 'transform_weights',"
         " 'metadata': None}, 'transform': {'sample_weight': None, 'metadata': None},"
         " 'inverse_transform': {'sample_weight': None, 'metadata': None}}}}"

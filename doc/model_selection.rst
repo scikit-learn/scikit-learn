@@ -14,5 +14,6 @@ Model selection and evaluation
 
     modules/cross_validation
     modules/grid_search
+    modules/classification_threshold
     modules/model_evaluation
     modules/learning_curve
