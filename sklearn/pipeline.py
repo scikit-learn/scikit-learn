@@ -35,6 +35,7 @@ from .utils.metadata_routing import (
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
+    get_routing_for_object,
     process_routing,
 )
 from .utils.metaestimators import _BaseComposition, available_if
@@ -394,35 +395,66 @@ class Pipeline(_BaseComposition):
                 fit_params_steps[step]["fit_predict"][param] = pval
             return fit_params_steps
 
-    def _get_step_params(self, *, step_idx, params):
+    def _get_step_params(self, *, step_idx, step_params, all_params):
         """Get params (metadata) for step `name`.
 
         This transforms the metadata up to this step if required, which is
         indicated by the `transform_input` parameter.
 
-        If a param in `params` is included in the `transform_input` list, it
+        If a param in `step_params` is included in the `transform_input` list, it
         will be transformed.
-        """
-        if self.transform_input is None or params is None or step_idx == 0:
-            return params
 
-        step_params = dict()
-        transformed = dict()  # used to transform each param once
-        for method, method_params in params.items():
-            step_params[method] = Bunch()
+        `all_params` are the metadata passed by the user. Used to call `transform`
+        on the pipeline itself.
+        """
+        if (
+            self.transform_input is None
+            or not all_params
+            or not step_params
+            or step_idx == 0
+        ):
+            # we only need to process step_params if transform_input is set
+            # and metadata is given by the user.
+            return step_params
+
+        sub_pipeline = self[:step_idx]
+        sub_metadata_routing = get_routing_for_object(sub_pipeline)
+        # here we get the metadata required by sub_pipeline.transform
+        transform_params = {
+            key: value
+            for key, value in all_params.items()
+            if key
+            in sub_metadata_routing.consumes(
+                method="transform", params=all_params.keys()
+            )
+        }
+        transformed_params = dict()
+        transformed_cache = dict()  # used to transform each param once
+        for method, method_params in step_params.items():
+            transformed_params[method] = Bunch()
             for param_name, param_value in method_params.items():
                 if param_name in self.transform_input:
                     # transform the parameter
-                    if param_name not in transformed:
-                        transformed[param_name] = self[:step_idx].transform(param_value)
-                    step_params[method][param_name] = transformed[param_name]
+                    if param_name not in transformed_cache:
+                        transformed_cache[param_name] = sub_pipeline.transform(
+                            param_value, **transform_params
+                        )
+                    transformed_params[method][param_name] = transformed_cache[
+                        param_name
+                    ]
                 else:
-                    step_params[method][param_name] = param_value
-        return step_params
+                    transformed_params[method][param_name] = param_value
+        return transformed_params
 
     # Estimator interface
 
-    def _fit(self, X, y=None, routed_params=None):
+    def _fit(self, X, y=None, routed_params=None, raw_params=None):
+        """Fit the pipeline except the last step.
+
+        routed_params is the output of `process_routing`
+        raw_params is the parameters passed by the user, used when `transform_input`
+            is set by the user, to transform metadata using a sub-pipeline.
+        """
         # shallow copy of steps - this should really be steps_
         self.steps = list(self.steps)
         self._validate_steps()
@@ -446,7 +478,9 @@ class Pipeline(_BaseComposition):
                 cloned_transformer = clone(transformer)
             # Fit or load from cache the current transformer
             step_params = self._get_step_params(
-                step_idx=step_idx, params=routed_params[name]
+                step_idx=step_idx,
+                step_params=routed_params[name],
+                all_params=raw_params,
             )
 
             X, fitted_transformer = fit_transform_one_cached(
@@ -519,11 +553,13 @@ class Pipeline(_BaseComposition):
             )
 
         routed_params = self._check_method_params(method="fit", props=params)
-        Xt = self._fit(X, y, routed_params)
+        Xt = self._fit(X, y, routed_params, raw_params=params)
         with _print_elapsed_time("Pipeline", self._log_message(len(self.steps) - 1)):
             if self._final_estimator != "passthrough":
                 last_step_params = self._get_step_params(
-                    step_idx=len(self) - 1, params=routed_params[self.steps[-1][0]]
+                    step_idx=len(self) - 1,
+                    step_params=routed_params[self.steps[-1][0]],
+                    all_params=params,
                 )
                 self._final_estimator.fit(Xt, y, **last_step_params["fit"])
 
@@ -592,7 +628,9 @@ class Pipeline(_BaseComposition):
             if last_step == "passthrough":
                 return Xt
             last_step_params = self._get_step_params(
-                step_idx=len(self) - 1, params=routed_params[self.steps[-1][0]]
+                step_idx=len(self) - 1,
+                step_params=routed_params[self.steps[-1][0]],
+                all_params=params,
             )
             if hasattr(last_step, "fit_transform"):
                 return last_step.fit_transform(

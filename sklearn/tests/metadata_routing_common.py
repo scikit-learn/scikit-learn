@@ -35,13 +35,15 @@ def record_metadata(obj, method, record_default=True, **kwargs):
     """
     if not hasattr(obj, "_records"):
         obj._records = {}
+    if method not in obj._records:
+        obj._records[method] = []
     if not record_default:
         kwargs = {
             key: val
             for key, val in kwargs.items()
             if not isinstance(val, str) or (val != "default")
         }
-    obj._records[method] = kwargs
+    obj._records[method].append(kwargs)
 
 
 def check_recorded_metadata(obj, method, split_params=tuple(), **kwargs):
@@ -59,21 +61,24 @@ def check_recorded_metadata(obj, method, split_params=tuple(), **kwargs):
     **kwargs : dict
         passed metadata
     """
-    records = getattr(obj, "_records", dict()).get(method, dict())
-    assert set(kwargs.keys()) == set(
-        records.keys()
-    ), f"Expected {kwargs.keys()} vs {records.keys()}"
-    for key, value in kwargs.items():
-        recorded_value = records[key]
-        # The following condition is used to check for any specified parameters
-        # being a subset of the original values
-        if key in split_params and recorded_value is not None:
-            assert np.isin(recorded_value, value).all()
-        else:
-            if isinstance(recorded_value, np.ndarray):
-                assert_array_equal(recorded_value, value)
+    all_records = getattr(obj, "_records", dict()).get(method, dict())
+    for record in all_records:
+        assert set(kwargs.keys()) == set(
+            record.keys()
+        ), f"Expected {kwargs.keys()} vs {record.keys()}"
+        for key, value in kwargs.items():
+            recorded_value = record[key]
+            # The following condition is used to check for any specified parameters
+            # being a subset of the original values
+            if key in split_params and recorded_value is not None:
+                assert np.isin(recorded_value, value).all()
             else:
-                assert recorded_value is value, f"Expected {recorded_value} vs {value}"
+                if isinstance(recorded_value, np.ndarray):
+                    assert_array_equal(recorded_value, value)
+                else:
+                    assert (
+                        recorded_value is value
+                    ), f"Expected {recorded_value} vs {value}. Method: {method}"
 
 
 record_metadata_not_default = partial(record_metadata, record_default=False)
@@ -306,7 +311,7 @@ class ConsumingTransformer(TransformerMixin, BaseEstimator):
     def __init__(self, registry=None):
         self.registry = registry
 
-    def fit(self, X, y=None, sample_weight=None, metadata=None):
+    def fit(self, X, y=None, sample_weight="default", metadata="default"):
         if self.registry is not None:
             self.registry.append(self)
 
@@ -315,18 +320,18 @@ class ConsumingTransformer(TransformerMixin, BaseEstimator):
         )
         return self
 
-    def transform(self, X, sample_weight=None, metadata=None):
-        record_metadata(
+    def transform(self, X, sample_weight="default", metadata="default"):
+        record_metadata_not_default(
             self, "transform", sample_weight=sample_weight, metadata=metadata
         )
-        return X
+        return X + 1
 
-    def fit_transform(self, X, y, sample_weight=None, metadata=None):
+    def fit_transform(self, X, y, sample_weight="default", metadata="default"):
         # implementing ``fit_transform`` is necessary since
         # ``TransformerMixin.fit_transform`` doesn't route any metadata to
         # ``transform``, while here we want ``transform`` to receive
         # ``sample_weight`` and ``metadata``.
-        record_metadata(
+        record_metadata_not_default(
             self, "fit_transform", sample_weight=sample_weight, metadata=metadata
         )
         return self.fit(X, y, sample_weight=sample_weight, metadata=metadata).transform(
@@ -334,10 +339,10 @@ class ConsumingTransformer(TransformerMixin, BaseEstimator):
         )
 
     def inverse_transform(self, X, sample_weight=None, metadata=None):
-        record_metadata(
+        record_metadata_not_default(
             self, "inverse_transform", sample_weight=sample_weight, metadata=metadata
         )
-        return X
+        return X - 1
 
 
 class ConsumingNoFitTransformTransformer(BaseEstimator):

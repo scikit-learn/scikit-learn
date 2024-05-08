@@ -335,7 +335,8 @@ def test_pipeline_raise_set_params_error():
     # expected error message
     error_msg = re.escape(
         "Invalid parameter 'fake' for estimator Pipeline(steps=[('cls',"
-        " LinearRegression())]). Valid parameters are: ['memory', 'steps', 'verbose']."
+        " LinearRegression())]). Valid parameters are: ['memory', 'steps',"
+        " 'transform_input', 'verbose']."
     )
     with pytest.raises(ValueError, match=error_msg):
         pipe.set_params(fake="nope")
@@ -760,6 +761,7 @@ def test_set_pipeline_step_passthrough(passthrough):
         "memory": None,
         "m2__mult": 2,
         "last__mult": 5,
+        "transform_input": None,
         "verbose": False,
     }
 
@@ -1817,44 +1819,82 @@ def test_pipeline_inverse_transform_Xt_deprecation():
 # =====================
 
 
-class IncTransformer(BaseEstimator, TransformerMixin):
-    """Transformer that increments the input by 1."""
-
-    def __init__(self, expected_fit_param=None, metadata_expected=True):
-        self.expected_fit_param = expected_fit_param
-        self.metadata_expected = metadata_expected
-
-    def fit(self, X, y=None, expected_fit_param=None):
-        if self.metadata_expected:
-            assert_array_equal(expected_fit_param, self.expected_fit_param)
-        return self
-
-    def transform(self, X):
-        return X + 1
-
-
 @pytest.mark.usefixtures("enable_slep006")
-def test_transform_input_pipeline():
+@pytest.mark.parametrize("method", ["fit", "fit_transform"])
+def test_transform_input_pipeline(method):
     """Test that with transform_input, data is correctly transformed for each step."""
+
+    def get_transformer(registry, sample_weight, metadata):
+        """Get a transformer with requests set."""
+        return (
+            ConsumingTransformer(registry=registry)
+            .set_fit_request(sample_weight=sample_weight, metadata=metadata)
+            .set_transform_request(sample_weight=sample_weight, metadata=metadata)
+        )
+
+    def get_pipeline():
+        """Get a pipeline and corresponding registries.
+
+        The pipeline has 4 steps, with different request values set to test different
+        cases. One is aliased.
+        """
+        registry_1, registry_2, registry_3, registry_4 = (
+            _Registry(),
+            _Registry(),
+            _Registry(),
+            _Registry(),
+        )
+        pipe = make_pipeline(
+            get_transformer(registry_1, sample_weight=True, metadata=True),
+            get_transformer(registry_2, sample_weight=False, metadata=False),
+            get_transformer(registry_3, sample_weight=True, metadata=True),
+            get_transformer(registry_4, sample_weight="other_weights", metadata=True),
+            transform_input=["sample_weight"],
+        )
+        return pipe, registry_1, registry_2, registry_3, registry_4
+
+    def check_metadata(registry, methods, **metadata):
+        """Check that the right metadata was recorded for the given methods."""
+        assert registry
+        for estimator in registry:
+            for method in methods:
+                check_recorded_metadata(
+                    estimator,
+                    method=method,
+                    **metadata,
+                )
+
     X = np.array([[1, 2], [3, 4]])
     y = np.array([0, 1])
-    expected_fit_param = np.array([[1, 2]])
-    pipe = make_pipeline(
-        IncTransformer(expected_fit_param=expected_fit_param).set_fit_request(
-            expected_fit_param=True
-        ),
-        IncTransformer().set_fit_request(expected_fit_param=False),
-        IncTransformer(expected_fit_param=expected_fit_param + 2).set_fit_request(
-            expected_fit_param=True
-        ),
-        IncTransformer(expected_fit_param=expected_fit_param + 3).set_fit_request(
-            expected_fit_param=True
-        ),
-        transform_input=["expected_fit_param"],
+    sample_weight = np.array([[1, 2]])
+    other_weights = np.array([[30, 40]])
+    metadata = np.array([[100, 200]])
+
+    pipe, registry_1, registry_2, registry_3, registry_4 = get_pipeline()
+    pipe.fit(
+        X,
+        y,
+        sample_weight=sample_weight,
+        other_weights=other_weights,
+        metadata=metadata,
     )
 
-    pipe.fit(X, y, expected_fit_param=expected_fit_param)
-    pipe.fit_transform(X, y, expected_fit_param=expected_fit_param)
+    check_metadata(
+        registry_1, ["fit", "transform"], sample_weight=sample_weight, metadata=metadata
+    )
+    check_metadata(registry_2, ["fit", "transform"])
+    check_metadata(
+        registry_3,
+        ["fit", "transform"],
+        sample_weight=sample_weight + 2,
+        metadata=metadata,
+    )
+    check_metadata(
+        registry_4,
+        method.split("_"),  # ["fit", "transform"] if "fit_transform", ["fit"] otherwise
+        sample_weight=other_weights + 3,
+        metadata=metadata,
+    )
 
 
 def test_transform_input_no_slep6():
