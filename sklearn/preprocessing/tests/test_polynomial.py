@@ -1,3 +1,4 @@
+import re
 import sys
 
 import numpy as np
@@ -23,7 +24,6 @@ from sklearn.utils._mask import _get_mask
 from sklearn.utils._testing import (
     assert_allclose_dense_sparse,
     assert_array_almost_equal,
-    raises,
 )
 from sklearn.utils.fixes import (
     CSC_CONTAINERS,
@@ -503,7 +503,7 @@ def test_spline_transformer_raises_with_sample_weight_and_missing_values():
     spline = SplineTransformer(knots="quantile", handle_missing="zeros")
 
     msg = "Passing `sample_weight` to SplineTransformer when there are"
-    with raises(NotImplementedError, match=msg):
+    with pytest.raises(NotImplementedError, match=msg):
         spline.fit(X_nan, sample_weight=sample_weight)
 
 
@@ -522,8 +522,8 @@ def test_spline_transformer_handles_missing_values(knots, extrapolation, sparse_
     X = np.array([[1, 1], [2, 2], [3, 3], [4, 5], [4, 4]])
 
     # check correct error message for handle_missing="error"
-    msg = "SplineTransformer object has `handle_missing='error'` set by default and `X`"
-    with raises(ValueError, match=msg):
+    msg = "X contains missing values (np.nan) and SplineTransformer is configured with"
+    with pytest.raises(ValueError, match=re.escape(msg)):
         spline = SplineTransformer(
             degree=2,
             n_knots=3,
@@ -571,12 +571,13 @@ def test_spline_transformer_handles_missing_values(knots, extrapolation, sparse_
     if sparse_output:
         all_missing_row_encoded = all_missing_row_encoded.toarray()
     assert_allclose(all_missing_row_encoded, 0)
+
     # prepare mask for nan values
-    mask = _get_mask(X_nan, np.nan)
-    extended_mask = np.repeat(mask, spline.bsplines_[0].c.shape[1], axis=1)
+    nan_mask = _get_mask(X_nan, np.nan)
+    encoded_nan_mask = np.repeat(nan_mask, spline.bsplines_[0].c.shape[1], axis=1)
 
     # check that the masked values are 0s
-    assert (X_nan_transform[extended_mask] == 0).all()
+    assert (X_nan_transform[encoded_nan_mask] == 0).all()
 
     # check that additional nan values don't change the calculation of the other splines
     # note: this assertion only holds as long as no np.nan value constructs the min or
@@ -585,7 +586,7 @@ def test_spline_transformer_handles_missing_values(knots, extrapolation, sparse_
     # SplineTransformer fit on the whole range)
     X_transform = spline.fit_transform(X)
     assert_allclose_dense_sparse(
-        X_transform[~extended_mask], X_nan_transform[~extended_mask]
+        X_transform[~encoded_nan_mask], X_nan_transform[~encoded_nan_mask]
     )
 
 

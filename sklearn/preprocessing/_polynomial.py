@@ -866,8 +866,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             if np.isnan(X).any():
                 raise ValueError(
                     "X contains missing values (np.nan) and SplineTransformer is "
-                    "configured with handle_missing='error'. Set "
-                    "handle_missing='zeros' to encode missing values as splines with "
+                    "configured with `handle_missing='error'`. Set "
+                    "`handle_missing='zeros'` to encode missing values as splines with "
                     "value `0` or ensure no missing values in `X`."
                 )
 
@@ -1056,10 +1056,11 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
                     nanmin_x = np.nanmin(x)
                     if np.isnan(nanmin_x):
-                        # The column is all np.nan valued. Replace it by an
-                        # a constant column with an arbitrary non-nan value.
-                        # Constant columns will always be zero-encoded.
-                        x[:] = 0
+                        # The column is all np.nan valued. Replace it by an a constant
+                        # column with an arbitrary non-nan value inside Constant columns
+                        # will always be encoded with the minimum value within the
+                        # feature space (spl.t[degree]).
+                        x[:] = spl.t[degree]
                     else:
                         x[nan_indicator[:, i]] = np.nanmin(x)
                     XBS_sparse = BSpline.design_matrix(
@@ -1070,6 +1071,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                         # See the construction of coef in fit. We need to add the last
                         # degree spline basis function to the first degree ones and
                         # then drop the last ones.
+                        # Note: See comment about SparseEfficiencyWarning below.
                         XBS_sparse = XBS_sparse.tolil()
                         XBS_sparse[:, :degree] += XBS_sparse[:, -degree:]
                         XBS_sparse = XBS_sparse[:, :-degree]
