@@ -2518,14 +2518,14 @@ def test_groups_with_routing_validation(func):
 
 @pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
-    "cv_method", [cross_validate, cross_val_score, cross_val_predict]
+    "func", [cross_validate, cross_val_score, cross_val_predict, learning_curve]
 )
-def test_cv_funcs_passed_unrequested_metadata(cv_method):
+def test_passed_unrequested_metadata(func):
     """Check that we raise an error when passing metadata that is not
     requested."""
     err_msg = re.escape("but are not explicitly set as requested or not requested")
     with pytest.raises(ValueError, match=err_msg):
-        cv_method(
+        func(
             estimator=ConsumingClassifier(),
             X=X,
             y=y,
@@ -2534,26 +2534,10 @@ def test_cv_funcs_passed_unrequested_metadata(cv_method):
 
 
 @pytest.mark.usefixtures("enable_slep006")
-def test_learning_curve_passed_unrequested_metadata():
-    """Check that we raise an error when passing metadata that is not
-    requested."""
-    iris = load_iris()
-    X, y = iris.data, iris.target
-    err_msg = re.escape("but are not explicitly set as requested or not requested")
-    with pytest.raises(ValueError, match=err_msg):
-        learning_curve(
-            estimator=ConsumingClassifier(),
-            X=X,
-            y=y,
-            fit_params=dict(metadata=[]),
-        )
-
-
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
-    "cv_method", [cross_validate, cross_val_score, cross_val_predict]
+    "func", [cross_validate, cross_val_score, cross_val_predict, learning_curve]
 )
-def test_cross_validate_routing(cv_method):
+def test_cross_validate_learning_curve_routing(func):
     """Check that the respective cv method is properly dispatching the metadata
     to the consumer."""
     scorer_registry = _Registry()
@@ -2568,6 +2552,7 @@ def test_cross_validate_routing(cv_method):
     estimator = ConsumingClassifier(registry=estimator_registry).set_fit_request(
         sample_weight="fit_sample_weight", metadata="fit_metadata"
     )
+
     n_samples = _num_samples(X)
     rng = np.random.RandomState(0)
     score_weights = rng.rand(n_samples)
@@ -2579,8 +2564,9 @@ def test_cross_validate_routing(cv_method):
 
     extra_params = {
         cross_validate: dict(scoring=dict(my_scorer=scorer, accuracy="accuracy")),
-        # cross_val_score doesn't support multiple scorers
+        # cross_val_score and learning_curve don't support multiple scorers:
         cross_val_score: dict(scoring=scorer),
+        learning_curve: dict(scoring=scorer),
         # cross_val_predict doesn't need a scorer
         cross_val_predict: dict(),
     }
@@ -2592,22 +2578,22 @@ def test_cross_validate_routing(cv_method):
         fit_metadata=fit_metadata,
     )
 
-    if cv_method is not cross_val_predict:
+    if func is not cross_val_predict:
         params.update(
             score_weights=score_weights,
             score_metadata=score_metadata,
         )
 
-    cv_method(
+    func(
         estimator,
         X=X,
         y=y,
         cv=splitter,
-        **extra_params[cv_method],
+        **extra_params[func],
         params=params,
     )
 
-    if cv_method is not cross_val_predict:
+    if func is not cross_val_predict:
         # cross_val_predict doesn't need a scorer
         assert len(scorer_registry)
     for _scorer in scorer_registry:
@@ -2638,81 +2624,36 @@ def test_cross_validate_routing(cv_method):
             metadata=fit_metadata,
         )
 
-
-@pytest.mark.parametrize("exploit_incremental_learning", [True, False])
-@pytest.mark.usefixtures("enable_slep006")
-def test_learning_curve_routing(exploit_incremental_learning):
-    """Check that learning_curve is properly routing the metadata to the consumer."""
-    iris = load_iris()
-    X, y = iris.data, iris.target
+    # learning_curve uses an internal function for partial fitting the estimator when
+    # exploit_incremental_learning=True
 
     estimator_registry = _Registry()
-    estimator = ConsumingClassifier(registry=estimator_registry).set_fit_request(
-        sample_weight="fit_weight", metadata="fit_metadata"
+    estimator = ConsumingClassifier(
+        registry=estimator_registry
+    ).set_partial_fit_request(
+        sample_weight="fit_sample_weight", metadata="fit_metadata"
     )
 
-    splitter_registry = _Registry()
-    splitter = ConsumingSplitter(registry=splitter_registry).set_split_request(
-        groups="split_groups", metadata="split_metadata"
-    )
-
-    scorer_registry = _Registry()
-    scorer = ConsumingScorer(registry=scorer_registry).set_score_request(
-        sample_weight="score_weights", metadata="score_metadata"
-    )
-
-    # define weights
-    fit_weight = score_weights = np.ones(X.shape[0])
-    fit_metadata = score_metadata = split_metadata = "other data"
-    split_groups = np.random.RandomState(0).randint(0, 3, X.shape[0])
-
-    learning_curve(
-        estimator=estimator,
-        X=X,
-        y=y,
-        cv=splitter,
-        exploit_incremental_learning=exploit_incremental_learning,
-        scoring=scorer,
-        fit_params=dict(
-            fit_weight=fit_weight,
-            fit_metadata=fit_metadata,
-            score_weights=score_weights,
-            score_metadata=score_metadata,
-            split_metadata=split_metadata,
-            split_groups=split_groups,
-        ),
-    )
-
-    method = "partial_fit" if exploit_incremental_learning is True else "fit"
-
-    assert len(estimator_registry)
-    for _estimator in estimator_registry:
-        check_recorded_metadata(
-            obj=_estimator,
-            method=method,
-            split_params=("sample_weight"),
-            sample_weight=fit_weight,
-            metadata=fit_metadata,
+    if func is learning_curve:
+        func(
+            estimator,
+            X=X,
+            y=y,
+            cv=splitter,
+            exploit_incremental_learning=True,
+            **extra_params[func],
+            params=params,
         )
 
-    assert len(splitter_registry)
-    for _spitter in splitter_registry:
-        check_recorded_metadata(
-            obj=_spitter,
-            method="split",
-            metadata=split_metadata,
-            groups=split_groups,
-        )
-
-    assert len(scorer_registry)
-    for _scorer in scorer_registry:
-        check_recorded_metadata(
-            obj=_scorer,
-            method="score",
-            split_params=("sample_weight"),
-            sample_weight=score_weights,
-            metadata=score_metadata,
-        )
+        assert len(estimator_registry)
+        for _estimator in estimator_registry:
+            check_recorded_metadata(
+                obj=_estimator,
+                method="partial_fit",
+                split_params=("sample_weight", "metadata"),
+                sample_weight=fit_sample_weight,
+                metadata=fit_metadata,
+            )
 
 
 # End of metadata routing tests

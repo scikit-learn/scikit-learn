@@ -1944,7 +1944,8 @@ def learning_curve(
 
     X, y, groups = indexable(X, y, groups)
 
-    params = fit_params
+    if fit_params:
+        params = fit_params
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
 
@@ -1957,7 +1958,9 @@ def learning_curve(
                 estimator=estimator,
                 # TODO(SLEP6): also pass metadata to the predict method for
                 # scoring?
-                method_mapping=MethodMapping().add(caller="fit", callee="fit"),
+                method_mapping=MethodMapping()
+                .add(caller="fit", callee="fit")
+                .add(caller="fit", callee="partial_fit"),
             )
             .add(
                 splitter=cv,
@@ -1979,7 +1982,7 @@ def learning_curve(
             unrequested_params = sorted(e.unrequested_params)
             raise UnsetMetadataPassedError(
                 message=(
-                    f"{unrequested_params} are passed to learning_curve but are not"
+                    f"{unrequested_params} are passed to `learning_curve` but are not"
                     " explicitly set as requested or not requested for learning_curve's"
                     f" estimator: {estimator.__class__.__name__}. Call"
                     " `.set_fit_request({{metadata}}=True)` on the estimator for"
@@ -1995,7 +1998,7 @@ def learning_curve(
 
     else:
         routed_params = Bunch()
-        routed_params.estimator = Bunch(fit=params)
+        routed_params.estimator = Bunch(fit=params, partial_fit=params)
         routed_params.splitter = Bunch(split={"groups": groups})
         routed_params.scorer = Bunch(score={})
 
@@ -2031,7 +2034,7 @@ def learning_curve(
                 scorer,
                 return_times,
                 error_score=error_score,
-                fit_params=routed_params.estimator.fit,
+                fit_params=routed_params.estimator.partial_fit,
                 score_params=routed_params.scorer.score,
             )
             for train, test in cv_iter
