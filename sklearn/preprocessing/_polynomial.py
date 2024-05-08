@@ -865,8 +865,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         if self.handle_missing == "error":
             if np.isnan(X).any():
                 raise ValueError(
-                    "SplineTransformer object has `handle_missing='error'` set by "
-                    "default and `X` contains missing values (np.nan). Set "
+                    "X contains missing values (np.nan) and SplineTransformer is "
+                    "configured with handle_missing='error'. Set "
                     "handle_missing='zeros' to encode missing values as splines with "
                     "value `0` or ensure no missing values in `X`."
                 )
@@ -1054,7 +1054,14 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     # right away, since BSpline.design_matrix() would raise on the nans
                     # when X is sparse:
 
-                    x[nan_indicator[:, i]] = np.nanmin(x)
+                    nanmin_x = np.nanmin(x)
+                    if np.isnan(nanmin_x):
+                        # The column is all np.nan valued. Replace it by an
+                        # a constant column with an arbitrary non-nan value.
+                        # Constant columns will always be zero-encoded.
+                        x[:] = 0
+                    else:
+                        x[nan_indicator[:, i]] = np.nanmin(x)
                     XBS_sparse = BSpline.design_matrix(
                         x, spl.t, spl.k, **kwargs_extrapolate
                     )
@@ -1118,10 +1125,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     and np.any(
                         np.isnan(XBS[:, (i * n_splines) : ((i + 1) * n_splines)])
                     )
-                    # to distinguish original np.nan values from the ones
-                    # created by any element in X < xmin (=spl.t[degree]) or >
-                    # xmax (=spl.t[-degree - 1])
-                    and np.any((X < spl.t[degree]) | (X > spl.t[-degree - 1]))
                 ):
                     raise ValueError(
                         "X contains values beyond the limits of the knots."

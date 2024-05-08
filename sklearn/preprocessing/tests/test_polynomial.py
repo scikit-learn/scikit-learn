@@ -565,6 +565,12 @@ def test_spline_transformer_handles_missing_values(knots, extrapolation, sparse_
         X_transformed_same_shape, X_transformed_different_shapes
     )
 
+    # Check that nan values are always encoded as zeros, even in columns where
+    # no missing values were observed at training time.
+    all_missing_row_encoded = spline.transform([[np.nan, np.nan]])
+    if sparse_output:
+        all_missing_row_encoded = all_missing_row_encoded.toarray()
+    assert_allclose(all_missing_row_encoded, 0)
     # prepare mask for nan values
     mask = _get_mask(X_nan, np.nan)
     extended_mask = np.repeat(mask, spline.bsplines_[0].c.shape[1], axis=1)
