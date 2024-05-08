@@ -1535,7 +1535,7 @@ def test_learning_curve_with_shuffle():
     )
 
 
-def test_learning_curve_fit_params():
+def test_learning_curve_params():
     X = np.arange(100).reshape(10, 10)
     y = np.array([0] * 5 + [1] * 5)
     clf = CheckingClassifier(expected_sample_weight=True)
@@ -1547,14 +1547,14 @@ def test_learning_curve_fit_params():
     err_msg = r"sample_weight.shape == \(1,\), expected \(2,\)!"
     with pytest.raises(ValueError, match=err_msg):
         learning_curve(
-            clf, X, y, error_score="raise", fit_params={"sample_weight": np.ones(1)}
+            clf, X, y, error_score="raise", params={"sample_weight": np.ones(1)}
         )
     learning_curve(
-        clf, X, y, error_score="raise", fit_params={"sample_weight": np.ones(10)}
+        clf, X, y, error_score="raise", params={"sample_weight": np.ones(10)}
     )
 
 
-def test_learning_curve_incremental_learning_fit_params():
+def test_learning_curve_incremental_learning_params():
     X, y = make_classification(
         n_samples=30,
         n_features=1,
@@ -1587,7 +1587,7 @@ def test_learning_curve_incremental_learning_fit_params():
             exploit_incremental_learning=True,
             train_sizes=np.linspace(0.1, 1.0, 10),
             error_score="raise",
-            fit_params={"sample_weight": np.ones(3)},
+            params={"sample_weight": np.ones(3)},
         )
 
     learning_curve(
@@ -1598,7 +1598,7 @@ def test_learning_curve_incremental_learning_fit_params():
         exploit_incremental_learning=True,
         train_sizes=np.linspace(0.1, 1.0, 10),
         error_score="raise",
-        fit_params={"sample_weight": np.ones(2)},
+        params={"sample_weight": np.ones(2)},
     )
 
 
