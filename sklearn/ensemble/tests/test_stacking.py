@@ -942,10 +942,9 @@ def test_get_metadata_routing_without_fit(Estimator, Child):
         (StackingRegressor, ConsumingRegressor),
     ],
 )
-@pytest.mark.parametrize("prop", ["sample_weight", "metadata"])
-def test_metadata_routing_for_stacking_estimators(Estimator, Child, prop):
+@pytest.mark.parametrize("prop, prop_value", [("sample_weight", np.ones(X_iris.shape[0])), ("metadata", "a")])
+def test_metadata_routing_for_stacking_estimators(Estimator, Child, prop, prop_value):
     """Test that metadata is routed correctly for Stacking*."""
-    sample_weight, metadata = np.ones(X_iris.shape[0]), "a"
 
     est = Estimator(
         [
