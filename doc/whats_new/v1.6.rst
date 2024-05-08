@@ -1,0 +1,60 @@
+.. include:: _contributors.rst
+
+.. currentmodule:: sklearn
+
+.. _release_notes_1_6:
+
+===========
+Version 1.6
+===========
+
+..
+  -- UNCOMMENT WHEN 1.6.0 IS RELEASED --
+  For a short description of the main highlights of the release, please refer to
+  :ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_6_0.py`.
+
+.. include:: changelog_legend.inc
+
+.. _changes_1_6:
+
+Version 1.6.0
+=============
+
+**In Development**
+
+Support for Array API
+---------------------
+
+Additional estimators and functions have been updated to include support for all
+`Array API <https://data-apis.org/array-api/latest/>`_ compliant inputs.
+
+See :ref:`array_api` for more details.
+
+**Functions:**
+
+- :func:`sklearn.metrics.mean_tweedie_deviance` now supports Array API compatible
+  inputs.
+  :pr:`28106` by :user:`Thomas Li <lithomas1>`
+
+**Classes:**
+
+- 
+
+Changelog
+---------
+
+..
+    Entries should be grouped by module (in alphabetic order) and prefixed with
+    one of the labels: |MajorFeature|, |Feature|, |Efficiency|, |Enhancement|,
+    |Fix| or |API| (see whats_new.rst for descriptions).
+    Entries should be ordered by those labels (e.g. |Fix| after |Efficiency|).
+    Changes not specific to a module should be listed under *Multiple Modules*
+    or *Miscellaneous*.
+    Entries should end with:
+    :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
+    where 123455 is the *pull request* number, not the issue number.
+
+Thanks to everyone who has contributed to the maintenance and improvement of
+the project since version 1.5, including:
+
+TODO: update at the time of the release.
