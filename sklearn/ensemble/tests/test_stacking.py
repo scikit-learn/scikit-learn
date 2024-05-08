@@ -942,7 +942,9 @@ def test_get_metadata_routing_without_fit(Estimator, Child):
         (StackingRegressor, ConsumingRegressor),
     ],
 )
-@pytest.mark.parametrize("prop, prop_value", [("sample_weight", np.ones(X_iris.shape[0])), ("metadata", "a")])
+@pytest.mark.parametrize(
+    "prop, prop_value", [("sample_weight", np.ones(X_iris.shape[0])), ("metadata", "a")]
+)
 def test_metadata_routing_for_stacking_estimators(Estimator, Child, prop, prop_value):
     """Test that metadata is routed correctly for Stacking*."""
 
@@ -960,34 +962,24 @@ def test_metadata_routing_for_stacking_estimators(Estimator, Child, prop, prop_v
         final_estimator=Child(registry=_Registry()).set_predict_request(**{prop: True}),
     )
 
-    est.fit(
-        X_iris, y_iris, **{prop: sample_weight if prop == "sample_weight" else metadata}
-    )
-    est.fit_transform(
-        X_iris, y_iris, **{prop: sample_weight if prop == "sample_weight" else metadata}
-    )
+    est.fit(X_iris, y_iris, **{prop: prop_value})
+    est.fit_transform(X_iris, y_iris, **{prop: prop_value})
 
-    est.predict(
-        X_iris, **{prop: sample_weight if prop == "sample_weight" else metadata}
-    )
+    est.predict(X_iris, **{prop: prop_value})
 
-    if prop == "sample_weight":
-        kwargs = {prop: sample_weight}
-    else:
-        kwargs = {prop: metadata}
     for estimator in est.estimators:
         # access sub-estimator in (name, est) with estimator[1]:
         registry = estimator[1].registry
         assert len(registry)
         for sub_est in registry:
             check_recorded_metadata(
-                obj=sub_est, method="fit", split_params=(prop), **kwargs
+                obj=sub_est, method="fit", split_params=(prop), **{prop: prop_value}
             )
     # access final_estimator:
     registry = est.final_estimator_.registry
     assert len(registry)
     check_recorded_metadata(
-        obj=registry[-1], method="predict", split_params=(prop), **kwargs
+        obj=registry[-1], method="predict", split_params=(prop), **{prop: prop_value}
     )
 
 
