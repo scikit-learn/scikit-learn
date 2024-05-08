@@ -944,7 +944,7 @@ def test_get_metadata_routing_without_fit(Estimator, Child):
 )
 @pytest.mark.parametrize("prop", ["sample_weight", "metadata"])
 def test_metadata_routing_for_stacking_estimators(Estimator, Child, prop):
-    """Test that metadata is routed correctly for Voting*."""
+    """Test that metadata is routed correctly for Stacking*."""
     sample_weight, metadata = np.ones(X_iris.shape[0]), "a"
 
     est = Estimator(

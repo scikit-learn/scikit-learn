@@ -189,7 +189,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
 
         **fit_params : dict
             Dict of metadata, potentially containing sample_weight as a
-            key-value pair. If sample_weight is not existing, then samples are
+            key-value pair. If sample_weight is not present, then samples are
             equally weighted. Note that sample_weight is supported only if all
             underlying estimators support sample weights.
 
