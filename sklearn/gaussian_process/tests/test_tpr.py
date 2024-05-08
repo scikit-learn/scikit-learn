@@ -56,6 +56,19 @@ non_fixed_kernels = [kernel for kernel in kernels if kernel != fixed_kernel]
 
 
 @pytest.mark.parametrize("kernel", kernels)
+def test_tpr_prediction(kernel):
+    if sys.maxsize <= 2**32:
+        pytest.xfail("This test may fail on 32 bit Python")
+
+    # Test the interpolating property for different kernels.
+    tpr = GaussianProcessRegressor(kernel=kernel)
+    y_pred, y_cov = tpr.predict(X, return_cov=True)
+
+    assert_almost_equal(y_pred, y)
+    assert_almost_equal(np.diag(y_cov), 0.0)
+
+'''
+@pytest.mark.parametrize("kernel", kernels)
 def test_gpr_interpolation(kernel):
     if sys.maxsize <= 2**32:
         pytest.xfail("This test may fail on 32 bit Python")
@@ -67,7 +80,6 @@ def test_gpr_interpolation(kernel):
     assert_almost_equal(y_pred, y)
     assert_almost_equal(np.diag(y_cov), 0.0)
 
-'''
 def test_gpr_interpolation_structured():
     # Test the interpolating property for different kernels.
     kernel = MiniSeqKernel(baseline_similarity_bounds="fixed")
