@@ -3395,7 +3395,7 @@ def d2_brier_score(y_true, y_proba, *, sample_weight=None, pos_label=None):
 
     References
     ----------
-    .. [1] `Wikipedia entry for the Brier score
+    .. [1] `Wikipedia entry for the Brier Skill Score (BSS)
             <https://en.wikipedia.org/wiki/Brier_score>`_.
     """
     if _num_samples(y_proba) < 2:
