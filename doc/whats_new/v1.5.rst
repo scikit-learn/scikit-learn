@@ -530,6 +530,11 @@ Changelog
   `axis=0` and supports indexing polars Series.
   :pr:`28521` by :user:`Yao Xiao <Charlie-XIAO>`.
 
+- |API| :func:`utils.estimator_checks.check_estimator_sparse_data` was split into two
+  functions: :func:`utils.estimator_checks.check_estimator_sparse_matrix` and
+  :func:`utils.estimator_checks.check_estimator_sparse_array`.
+  :pr:`27576` by :user:`Stefanie Senger <StefanieSenger>`.
+
 .. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
