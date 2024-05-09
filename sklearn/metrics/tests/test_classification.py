@@ -34,6 +34,7 @@ from sklearn.metrics import (
     precision_score,
     recall_score,
     zero_one_loss,
+    tau_score,
 )
 from sklearn.metrics._classification import _check_targets, d2_log_loss_score
 from sklearn.model_selection import cross_val_score
@@ -3093,3 +3094,46 @@ def test_d2_log_loss_score_raises():
     err = "The labels array needs to contain at least two"
     with pytest.raises(ValueError, match=err):
         d2_log_loss_score(y_true, y_pred, labels=labels)
+
+import numpy as np
+from numpy.testing import assert_almost_equal
+import pytest
+from sklearn.metrics import confusion_matrix, tau_score
+
+def test_tau_score_perfect_prediction():
+    y_true = [0, 1, 0, 1]
+    y_pred = [0, 1, 0, 1]
+    expected_score = 1.0  # Perfect score
+    assert_almost_equal(tau_score(y_true, y_pred), expected_score)
+
+def test_tau_score_imperfect_prediction():
+    y_true = [0, 1, 0, 1]
+    y_pred = [1, 1, 0, 0]
+    # Calculate expected score based on manual computation
+    cm = confusion_matrix(y_true, y_pred)
+    tn, fp, fn, tp = cm.ravel()
+    n = tn + fp
+    p = tp + fn
+    model_point = np.array([tn / n, tp / p])
+    perfect_point = np.array([1, 1])
+    dist_from_perfect = np.linalg.norm(model_point - perfect_point)
+    expected_score = 1 - dist_from_perfect / np.sqrt(2)
+    assert_almost_equal(tau_score(y_true, y_pred), expected_score)
+
+def test_tau_score_non_normalized():
+    y_true = [0, 1, 1, 0, 1]
+    y_pred = [1, 0, 1, 0, 1]
+    # Calculate expected score without normalization
+    cm = confusion_matrix(y_true, y_pred)
+    tn, fp, fn, tp = cm.ravel()
+    model_point = np.array([tn, tp])
+    perfect_point = np.array([len(y_true) - tp - fn, tp + fn])  # Max possible TN, TP
+    dist_from_perfect = np.linalg.norm(model_point - perfect_point)
+    expected_score = dist_from_perfect
+    assert_almost_equal(tau_score(y_true, y_pred, normalize=False), expected_score)
+
+def test_tau_score_input_validation():
+    y_true = [0, 1, 0, 1]
+    y_pred = [0, 1]  # Incorrect length
+    with pytest.raises(ValueError):
+        tau_score(y_true, y_pred)

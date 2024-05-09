@@ -25,6 +25,7 @@ from ._classification import (
     precision_score,
     recall_score,
     zero_one_loss,
+    tau_score,
 )
 from ._dist_metrics import DistanceMetric
 from ._plot.confusion_matrix import ConfusionMatrixDisplay
