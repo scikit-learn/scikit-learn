@@ -29,6 +29,9 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <nearest_centroid_classifier>`.
 
+    For sample usage of NearestCentroid, refer to
+    :ref:`sphx_glr_auto_examples_neighbors_plot_nearest_centroid.py`
+
     Parameters
     ----------
     metric : {"euclidean", "manhattan"}, default="euclidean"
