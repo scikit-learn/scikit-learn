@@ -15,7 +15,7 @@ from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
 from .base import BaseEstimator, RegressorMixin, TransformerMixin, _fit_context
 from .utils import check_array, check_consistent_length
 from .utils._param_validation import Interval, StrOptions, validate_params
-from .utils.fixes import parse_version, sp_version
+from .utils.fixes import parse_version, sp_base_version
 from .utils.validation import _check_sample_weight, check_is_fitted
 
 __all__ = ["check_increasing", "isotonic_regression", "IsotonicRegression"]
@@ -153,7 +153,7 @@ def isotonic_regression(
            7.33..., 7.33..., 7.33..., 7.33..., 7.33...])
     """
     y = check_array(y, ensure_2d=False, input_name="y", dtype=[np.float64, np.float32])
-    if sp_version >= parse_version("1.12.0"):
+    if sp_base_version >= parse_version("1.12.0"):
         res = optimize.isotonic_regression(
             y=y, weights=sample_weight, increasing=increasing
         )
