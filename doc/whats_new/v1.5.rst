@@ -43,7 +43,7 @@ Security
 Changed models
 --------------
 
-- |Efficiency| The `clustering.MeanShift` class has now improved computational speed as it properly converges for constant data.
+- |Fix| The :class:`cluster.MeanShift` class now properly converges for constant data.
   :pr:`28951` by :user:`Akihiro Kuno <akikuno>`.
 
 - |Efficiency| The subsampling in :class:`preprocessing.QuantileTransformer` is now
