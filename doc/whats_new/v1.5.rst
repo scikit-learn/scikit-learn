@@ -43,9 +43,6 @@ Security
 Changed models
 --------------
 
-- |Fix| The :class:`cluster.MeanShift` class now properly converges for constant data.
-  :pr:`28951` by :user:`Akihiro Kuno <akikuno>`.
-
 - |Efficiency| The subsampling in :class:`preprocessing.QuantileTransformer` is now
   more efficient for dense arrays but the fitted quantiles and the results of
   `transform` may be slightly different than before (keeping the same statistical
@@ -177,6 +174,9 @@ Changelog
 
 :mod:`sklearn.cluster`
 ......................
+
+- |Fix| The :class:`cluster.MeanShift` class now properly converges for constant data.
+  :pr:`28951` by :user:`Akihiro Kuno <akikuno>`.
 
 - |FIX| Create copy of precomputed sparse matrix within the `fit` method of
   :class:`~cluster.OPTICS` to avoid in-place modification of the sparse matrix.
