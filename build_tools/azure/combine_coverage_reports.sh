@@ -12,6 +12,7 @@ activate_environment
 pushd $TEST_DIR
 coverage combine --append
 coverage xml
+coverage report  # for debugging purposes
 popd
 
 # Copy the combined coverage file to the root of the repository:
