@@ -227,7 +227,13 @@ def test_isotonic_regression_with_ties_in_differently_sized_groups():
 
 def test_isotonic_regression_reversed():
     y = np.array([10, 9, 10, 7, 6, 6.1, 5])
+    y_result = np.array([10, 9.5, 9.5, 7, 6.05, 6.05, 5])
+
+    y_iso = isotonic_regression(y, increasing=False)
+    assert_allclose(y_iso, y_result)
+
     y_ = IsotonicRegression(increasing=False).fit_transform(np.arange(len(y)), y)
+    assert_allclose(y_, y_result)
     assert_array_equal(np.ones(y_[:-1].shape), ((y_[:-1] - y_[1:]) >= 0))
 
 
