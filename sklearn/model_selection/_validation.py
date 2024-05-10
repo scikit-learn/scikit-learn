@@ -1930,9 +1930,6 @@ def learning_curve(
 
     X, y, groups = indexable(X, y, groups)
 
-    if fit_params:
-        params = fit_params
-
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
 
     scorer = check_scoring(estimator, scoring=scoring)
