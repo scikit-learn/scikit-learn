@@ -121,7 +121,7 @@ def test_expected_value_info_gain(csr_container, aggregate):
         comparing_value *= len(X)
 
     Xsp = csr_container(X, dtype=float)
-    scores, _ = info_gain(Xsp, y, aggregate=aggregate)
+    scores = info_gain(Xsp, y, aggregate=aggregate)
     assert_almost_equal(scores[0], comparing_value, decimal=5)
 
 
@@ -158,7 +158,7 @@ def test_expected_value_info_gain_ratio(csr_container):
     # Expected global max score for f1: max (0.01823, 0.01823)
 
     Xsp = csr_container(X, dtype=float)
-    scores, _ = info_gain_ratio(Xsp, y)
+    scores = info_gain_ratio(Xsp, y)
     assert_almost_equal(scores[0], 0.01823, decimal=5)
 
 
@@ -173,6 +173,6 @@ def test_info_gain_and_ratio_with_neutral_entropy(csr_container, aggregate):
 
     # assert that scores are equal
     assert_almost_equal(
-        info_gain(Xsp, y, aggregate=aggregate)[0],
-        info_gain_ratio(Xsp, y, aggregate=aggregate)[0],
+        info_gain(Xsp, y, aggregate=aggregate),
+        info_gain_ratio(Xsp, y, aggregate=aggregate),
     )

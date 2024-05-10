@@ -330,7 +330,7 @@ def _info_gain(X, y, aggregate, ratio=False):
     else:
         scores = scores.max(axis=0)
 
-    return np.asarray(scores).reshape(-1), []
+    return np.asarray(scores).reshape(-1)
 
 
 def _get_fc_counts(X, y):
