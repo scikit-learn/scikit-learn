@@ -254,7 +254,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             HasMethods(["fit", "decision_function"]),
             None,
         ],
-        "method": [StrOptions({"isotonic", "sigmoid"})],
+        "method": [StrOptions({"isotonic", "sigmoid", "temperature"})],
         "cv": ["cv_object", StrOptions({"prefit"})],
         "n_jobs": [Integral, None],
         "ensemble": ["boolean"],
@@ -665,9 +665,10 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
             calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
             calibrators.append(calibrator)
 
-    elif method == 'Temperature_scaling':
+    elif method == 'temperature':
         calibrator = _TemperatureScaling()
-        calibrator.fit(predictions, Y, sample_weight)
+        calibrator.fit(predictions, Y)
+        calibrators.append(calibrator)
 
     pipeline = _CalibratedClassifier(clf, calibrators, method=method, classes=classes)
     return pipeline
@@ -760,7 +761,7 @@ class _CalibratedClassifier:
                 )
 
         # Temperature Scaling method
-        elif self.method == 'temperature_scaling':
+        elif self.method == 'temperature':
 
             assert len(self.calibrators) == 1, 'Temperature scaling should consists of one calibrator.'
 
@@ -1057,9 +1058,25 @@ class _TemperatureScaling():
             y
             ):
 
-        self.T_: float = _temperature_scaling(X, y, self._initial_temperature)
+        self.T_: float = _temperature_scaling(np.log(X), y, self._initial_temperature)
 
         return self
+
+    def predict(self, X):
+        """Predict new data by temperature-scaled softmax.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_classes)
+            Data to predict from.
+
+        Returns
+        -------
+        X_ : ndarray of shape (n_samples,)
+            The predicted data.
+        """
+
+        return _softmax_T(np.log(X), self.T_)
 
 
 @validate_params(
