@@ -121,7 +121,7 @@ def test_expected_value_info_gain(csr_container, aggregate):
         comparing_value *= len(X)
 
     Xsp = csr_container(X, dtype=float)
-    scores, probs = info_gain(Xsp, y, aggregate=aggregate)
+    scores, _ = info_gain(Xsp, y, aggregate=aggregate)
     assert_almost_equal(scores[0], comparing_value, decimal=5)
 
 
@@ -158,5 +158,21 @@ def test_expected_value_info_gain_ratio(csr_container):
     # Expected global max score for f1: max (0.01823, 0.01823)
 
     Xsp = csr_container(X, dtype=float)
-    scores, probs = info_gain_ratio(Xsp, y)
+    scores, _ = info_gain_ratio(Xsp, y)
     assert_almost_equal(scores[0], 0.01823, decimal=5)
+
+
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+@pytest.mark.parametrize("aggregate", ["max", "mean", "sum"])
+def test_info_gain_and_ratio_with_neutral_entropy(csr_container, aggregate):
+    # test that `info_gain()` and `info_gain_ratio()` have the same scores if classes
+    # are equally distributed
+
+    X, y = [[1, 5, 9], [9, 5, 1]], [0, 1]
+    Xsp = csr_container(X, dtype=float)
+
+    # assert that scores are equal
+    assert_almost_equal(
+        info_gain(Xsp, y, aggregate=aggregate)[0],
+        info_gain_ratio(Xsp, y, aggregate=aggregate)[0],
+    )
