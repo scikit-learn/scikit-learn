@@ -955,10 +955,11 @@ for name, metric in [
             None,
         ],
         "allow_none": ["boolean"],
+        "raise_exc": ["boolean"],
     },
     prefer_skip_nested_validation=True,
 )
-def check_scoring(estimator=None, scoring=None, *, allow_none=False):
+def check_scoring(estimator=None, scoring=None, *, allow_none=False, raise_exc=True):
     """Determine scorer from user options.
 
     A TypeError will be thrown if the estimator cannot be scored.
@@ -969,7 +970,7 @@ def check_scoring(estimator=None, scoring=None, *, allow_none=False):
         The object to use to fit the data. If `None`, then this function may error
         depending on `allow_none`.
 
-    scoring : str, callable, list, tuple, or dict, default=None
+    scoring : str, callable, list, tuple, set, or dict, default=None
         Scorer to use. If `scoring` represents a single score, one can use:
 
         - a single string (see :ref:`scoring_parameter`);
@@ -985,8 +986,20 @@ def check_scoring(estimator=None, scoring=None, *, allow_none=False):
         If None, the provided estimator object's `score` method is used.
 
     allow_none : bool, default=False
-        If no scoring is specified and the estimator has no score function, we
-        can either return None or raise an exception.
+        Whether to return None or raise an error if no `scoring` is specified and the
+        estimator has no `score` method.
+
+    raise_exc : bool, default=True
+        Whether to raise an exception if a subset of the scorers in multimetric scoring
+        fails or return an error code.
+
+        - If set to `True` raises the failing scorer's exception.
+
+        - If set to `False` a formatted string of the exception details is passed as
+          result of the failing scorer(s).
+
+        This applies if `scoring` is list, tuple, set, or dict. Ignored if `scoring` is
+        a str or a callable.
 
     Returns
     -------
@@ -1026,7 +1039,7 @@ def check_scoring(estimator=None, scoring=None, *, allow_none=False):
         return get_scorer(scoring)
     if isinstance(scoring, (list, tuple, set, dict)):
         scorers = _check_multimetric_scoring(estimator, scoring=scoring)
-        return _MultimetricScorer(scorers=scorers)
+        return _MultimetricScorer(scorers=scorers, raise_exc=raise_exc)
     if scoring is None:
         if hasattr(estimator, "score"):
             return _PassthroughScorer(estimator)
