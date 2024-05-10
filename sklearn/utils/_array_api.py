@@ -427,6 +427,9 @@ class _NumPyAPIWrapper:
     def isdtype(self, dtype, kind):
         return isdtype(dtype, kind, xp=self)
 
+    def pow(self, x1, x2):
+        return numpy.power(x1, x2)
+
 
 _NUMPY_API_WRAPPER_INSTANCE = _NumPyAPIWrapper()
 

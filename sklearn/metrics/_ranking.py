@@ -1672,7 +1672,7 @@ def dcg_score(
     --------
     >>> import numpy as np
     >>> from sklearn.metrics import dcg_score
-    >>> # we have groud-truth relevance of some answers to a query:
+    >>> # we have ground-truth relevance of some answers to a query:
     >>> true_relevance = np.asarray([[10, 0, 0, 1, 5]])
     >>> # we predict scores for the answers
     >>> scores = np.asarray([[.1, .2, .3, 4, 70]])
@@ -1832,7 +1832,7 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     --------
     >>> import numpy as np
     >>> from sklearn.metrics import ndcg_score
-    >>> # we have groud-truth relevance of some answers to a query:
+    >>> # we have ground-truth relevance of some answers to a query:
     >>> true_relevance = np.asarray([[10, 0, 0, 1, 5]])
     >>> # we predict some scores (relevance) for the answers
     >>> scores = np.asarray([[.1, .2, .3, 4, 70]])

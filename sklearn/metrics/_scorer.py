@@ -32,6 +32,7 @@ from ..utils._response import _get_response_values
 from ..utils.metadata_routing import (
     MetadataRequest,
     MetadataRouter,
+    MethodMapping,
     _MetadataRequester,
     _raise_for_params,
     _routing_enabled,
@@ -188,11 +189,31 @@ class _MultimetricScorer:
             routing information.
         """
         return MetadataRouter(owner=self.__class__.__name__).add(
-            **self._scorers, method_mapping="score"
+            **self._scorers,
+            method_mapping=MethodMapping().add(caller="score", callee="score"),
         )
 
 
 class _BaseScorer(_MetadataRequester):
+    """Base scorer that is used as `scorer(estimator, X, y_true)`.
+
+    Parameters
+    ----------
+    score_func : callable
+        The score function to use. It will be called as
+        `score_func(y_true, y_pred, **kwargs)`.
+
+    sign : int
+        Either 1 or -1 to returns the score with `sign * score_func(estimator, X, y)`.
+        Thus, `sign` defined if higher scores are better or worse.
+
+    kwargs : dict
+        Additional parameters to pass to the score function.
+
+    response_method : str
+        The method to call on the estimator to get the response values.
+    """
+
     def __init__(self, score_func, sign, kwargs, response_method="predict"):
         self._score_func = score_func
         self._sign = sign
