@@ -89,11 +89,9 @@ _ = plt.title(
 #
 # As a first step, we will divide the data and the target to estimate. The data
 # being a date, we will convert it into a numeric.
-X = (
-    co2_data.select(pl.col("date").dt.year() + pl.col("date").dt.month() / 12)
-    .to_numpy()
-    .reshape(-1, 1)
-)
+X = co2_data.select(
+    pl.col("date").dt.year() + pl.col("date").dt.month() / 12
+).to_numpy()
 y = co2_data["co2"].to_numpy()
 
 # %%
