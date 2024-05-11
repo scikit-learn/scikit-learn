@@ -206,7 +206,7 @@ class SequentialFeatureSelector(
         self : object
             Returns the instance itself.
         """
-        tags = self._get_tags()
+        tags = self.__sklearn_tags__()
         X = self._validate_data(
             X,
             accept_sparse="csc",
@@ -295,7 +295,8 @@ class SequentialFeatureSelector(
         check_is_fitted(self)
         return self.support_
 
-    def _more_tags(self):
-        return {
+    def __sklearn_tags__(self):
+        more_tags = {
             "allow_nan": _safe_tags(self.estimator, key="allow_nan"),
         }
+        return {**super().__sklearn_tags__(), **more_tags}

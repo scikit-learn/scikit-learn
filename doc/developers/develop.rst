@@ -526,7 +526,7 @@ Estimator Tags
 Scikit-learn introduced estimator tags in version 0.21. These are annotations
 of estimators that allow programmatic inspection of their capabilities, such as
 sparse matrix support, supported output types and supported methods. The
-estimator tags are a dictionary returned by the method ``_get_tags()``. These
+estimator tags are a dictionary returned by the method ``__sklearn_tags__()``. These
 tags are used in the common checks run by the
 :func:`~sklearn.utils.estimator_checks.check_estimator` function and the
 :func:`~sklearn.utils.estimator_checks.parametrize_with_checks` decorator.
@@ -642,22 +642,19 @@ X_types (default=['2darray'])
 
 It is unlikely that the default values for each tag will suit the needs of your
 specific estimator. Additional tags can be created or default tags can be
-overridden by defining a `_more_tags()` method which returns a dict with the
+overridden by defining a `__sklearn_tags__()` method which returns a dict with the
 desired overridden tags or new tags. For example::
 
     class MyMultiOutputEstimator(BaseEstimator):
 
-        def _more_tags(self):
-            return {'multioutput_only': True,
-                    'non_deterministic': True}
+        def __sklearn_tags__(self):
+            more_tags = {'multioutput_only': True,
+                         'non_deterministic': True}
+            return {**super().__sklearn_tags__(), **more_tags}
 
-Any tag that is not in `_more_tags()` will just fall-back to the default values
-documented above.
-
-Even if it is not recommended, it is possible to override the method
-`_get_tags()`. Note however that **all tags must be present in the dict**. If
-any of the keys documented above is not present in the output of `_get_tags()`,
-an error will occur.
+`__sklearn_tags__()` should return all tags in the dictionary. Note however that
+**all tags must be present in the dict**. If any of the keys documented above is
+not present in the output of `__sklearn_tags__()`, an error will occur.
 
 In addition to the tags, estimators also need to declare any non-optional
 parameters to ``__init__`` in the ``_required_parameters`` class attribute,

@@ -17,6 +17,7 @@ from ..metrics import check_scoring
 from ..model_selection import check_cv
 from ..model_selection._validation import _score
 from ..utils._param_validation import HasMethods, Interval, RealNotInt
+from ..utils._tags import _safe_tags
 from ..utils.metadata_routing import (
     _raise_for_unsupported_routing,
     _RoutingNotSupportedMixin,
@@ -468,18 +469,19 @@ class RFE(_RoutingNotSupportedMixin, SelectorMixin, MetaEstimatorMixin, BaseEsti
         check_is_fitted(self)
         return self.estimator_.predict_log_proba(self.transform(X))
 
-    def _more_tags(self):
-        tags = {
+    def __sklearn_tags__(self):
+        more_tags = {
             "poor_score": True,
             "requires_y": True,
             "allow_nan": True,
         }
-
         # Adjust allow_nan if estimator explicitly defines `allow_nan`.
-        if hasattr(self.estimator, "_get_tags"):
-            tags["allow_nan"] = self.estimator._get_tags()["allow_nan"]
+        if hasattr(self.estimator, "__sklearn_tags__") or hasattr(
+            self.estimator, "_get_tags"
+        ):
+            more_tags["allow_nan"] = _safe_tags(self.estimator, "allow_nan")
 
-        return tags
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 class RFECV(RFE):

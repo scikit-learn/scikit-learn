@@ -441,8 +441,8 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
 
         return self
 
-    def _more_tags(self):
-        return {
+    def __sklearn_tags__(self):
+        more_tags = {
             "_xfail_checks": {
                 "check_methods_subset_invariance": (
                     "fails for the decision_function method"
@@ -453,3 +453,4 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
             },
             "preserves_dtype": [np.float64, np.float32],
         }
+        return {**super().__sklearn_tags__(), **more_tags}

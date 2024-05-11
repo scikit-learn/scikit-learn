@@ -1689,8 +1689,9 @@ class LarsCV(Lars):
             fit_path=True,
         )
 
-    def _more_tags(self):
-        return {"multioutput": False}
+    def __sklearn_tags__(self):
+        more_tags = {"multioutput": False}
+        return {**super().__sklearn_tags__(), **more_tags}
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, **params):
@@ -2211,8 +2212,9 @@ class LassoLarsIC(LassoLars):
         self.fit_path = True
         self.noise_variance = noise_variance
 
-    def _more_tags(self):
-        return {"multioutput": False}
+    def __sklearn_tags__(self):
+        more_tags = {"multioutput": False}
+        return {**super().__sklearn_tags__(), **more_tags}
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, copy_X=None):

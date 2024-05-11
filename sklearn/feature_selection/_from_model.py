@@ -518,5 +518,6 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         )
         return router
 
-    def _more_tags(self):
-        return {"allow_nan": _safe_tags(self.estimator, key="allow_nan")}
+    def __sklearn_tags__(self):
+        more_tags = {"allow_nan": _safe_tags(self.estimator, key="allow_nan")}
+        return {**super().__sklearn_tags__(), **more_tags}

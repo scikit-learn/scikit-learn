@@ -291,7 +291,7 @@ class _BaseHeterogeneousEnsemble(
         """
         return super()._get_params("estimators", deep=deep)
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
         try:
             allow_nan = all(
                 _safe_tags(est[1])["allow_nan"] if est[1] != "drop" else True
@@ -302,4 +302,5 @@ class _BaseHeterogeneousEnsemble(
             # fail. In this case, we assume that `allow_nan` is False but the parameter
             # validation will raise an error during `fit`.
             allow_nan = False
-        return {"preserves_dtype": [], "allow_nan": allow_nan}
+        more_tags = {"preserves_dtype": [], "allow_nan": allow_nan}
+        return {**super().__sklearn_tags__(), **more_tags}

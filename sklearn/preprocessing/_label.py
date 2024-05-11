@@ -161,8 +161,9 @@ class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
         y = np.asarray(y)
         return self.classes_[y]
 
-    def _more_tags(self):
-        return {"X_types": ["1dlabels"]}
+    def __sklearn_tags__(self):
+        more_tags = {"X_types": ["1dlabels"]}
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
@@ -413,8 +414,9 @@ class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
 
         return y_inv
 
-    def _more_tags(self):
-        return {"X_types": ["1dlabels"]}
+    def __sklearn_tags__(self):
+        more_tags = {"X_types": ["1dlabels"]}
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 @validate_params(
@@ -947,5 +949,6 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys
                 )
             return [tuple(self.classes_.compress(indicators)) for indicators in yt]
 
-    def _more_tags(self):
-        return {"X_types": ["2dlabels"]}
+    def __sklearn_tags__(self):
+        more_tags = {"X_types": ["2dlabels"]}
+        return {**super().__sklearn_tags__(), **more_tags}

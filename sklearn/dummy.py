@@ -420,8 +420,8 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         else:
             return [np.log(p) for p in proba]
 
-    def _more_tags(self):
-        return {
+    def __sklearn_tags__(self):
+        more_tags = {
             "poor_score": True,
             "no_validation": True,
             "_xfail_checks": {
@@ -429,6 +429,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
                 "check_methods_sample_order_invariance": "fails for the predict method",
             },
         }
+        return {**super().__sklearn_tags__(), **more_tags}
 
     def score(self, X, y, sample_weight=None):
         """Return the mean accuracy on the given test data and labels.
@@ -663,8 +664,9 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         return (y, y_std) if return_std else y
 
-    def _more_tags(self):
-        return {"poor_score": True, "no_validation": True}
+    def __sklearn_tags__(self):
+        more_tags = {"poor_score": True, "no_validation": True}
+        return {**super().__sklearn_tags__(), **more_tags}
 
     def score(self, X, y, sample_weight=None):
         """Return the coefficient of determination R^2 of the prediction.
