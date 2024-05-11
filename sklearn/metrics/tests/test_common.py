@@ -1824,6 +1824,35 @@ def check_array_api_multiclass_classification_metric(
 
 
 def check_array_api_regression_metric(metric, array_namespace, device, dtype_name):
+    y_true_np = np.array([2, 0, 1, 4], dtype=dtype_name)
+    y_pred_np = np.array([0.5, 0.5, 2, 2], dtype=dtype_name)
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        y_true_np=y_true_np,
+        y_pred_np=y_pred_np,
+        sample_weight=None,
+    )
+
+    sample_weight = np.array([0.1, 2.0, 1.5, 0.5], dtype=dtype_name)
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        y_true_np=y_true_np,
+        y_pred_np=y_pred_np,
+        sample_weight=sample_weight,
+    )
+
+
+def check_array_api_regression_metric_multioutput(
+    metric, array_namespace, device, dtype_name
+):
     y_true_np = np.array([[1, 3], [1, 2]], dtype=dtype_name)
     y_pred_np = np.array([[1, 4], [1, 1]], dtype=dtype_name)
 
@@ -1859,7 +1888,11 @@ array_api_metric_checkers = {
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
     ],
-    r2_score: [check_array_api_regression_metric],
+    mean_tweedie_deviance: [check_array_api_regression_metric],
+    r2_score: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
 }
 
 
