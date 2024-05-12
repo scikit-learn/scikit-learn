@@ -1262,7 +1262,7 @@ final number of estimators is equal to ``n``.
   >>> clf.fit(X, y)  # fit `estimators_` will be the same as the classifier above
 
 Note that this differs from the usual behavior of :term:`random_state` in that it does
-*not* result in the same results across different calls.
+*not* result in the same result across different calls.
 
 .. _bagging:
 
