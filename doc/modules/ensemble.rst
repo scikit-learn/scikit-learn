@@ -1232,6 +1232,25 @@ estimation.
    representations of feature space, also these approaches focus also on
    dimensionality reduction.
 
+.. _tree_ensemble_warm_start:
+
+Fitting additional trees
+------------------------
+
+RandomForest, Extra-Trees and :class:`RandomTreesEmbedding` estimators all support
+``warm_start=True`` which allows you to add more trees to an already fitted model.
+
+::
+
+  >>> from sklearn.datasets import make_classification
+  >>> from sklearn.ensemble import RandomForestClassifier
+
+  >>> X, y = make_classification(n_samples=100, random_state=1)
+  >>> clf = RandomForestClassifier(n_estimators=10)
+  >>> clf = clf.fit(X, y)  # fit with 10 trees
+  >>> _ = clf.set_params(n_estimators=20, warm_start=True) # set warm_start and increase num of estimators
+  >>> _ = clf.fit(X, y) # fit additional 10 trees
+
 .. _bagging:
 
 Bagging meta-estimator
