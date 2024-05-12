@@ -614,7 +614,8 @@ fitted model.
   >>> est = GradientBoostingRegressor(
   ...     n_estimators=100, learning_rate=0.1, max_depth=1, random_state=0,
   ...     loss='squared_error'
-  ... ).fit(X_train, y_train)
+  ... )
+  >>> est = est.fit(X_train, y_train)  # fit with 100 trees
   >>> mean_squared_error(y_test, est.predict(X_test))
   5.00...
   >>> _ = est.set_params(n_estimators=200, warm_start=True)  # set warm_start and increase num of trees
