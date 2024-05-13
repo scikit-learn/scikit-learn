@@ -595,6 +595,10 @@ def test_standard_scaler_partial_fit_numerical_stability(sparse_container):
     scaler_incr = StandardScaler(with_mean=False)
 
     for chunk in X:
+        if chunk.ndim == 1:
+            # Sparse arrays can be 1D (in scipy 1.14 and later) while old
+            # sparse matrix instances are always 2D.
+            chunk = chunk.reshape(1, -1)
         scaler_incr = scaler_incr.partial_fit(chunk)
 
     # Regardless of magnitude, they must not differ more than of 6 digits
