@@ -229,20 +229,28 @@ def test_label_binarizer_sparse_errors(csr_container):
     "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize(
-    "y", [np.array([1, 0, 2]), np.array([1, 0, 0]), np.array([[0, 1, 1], [1, 0, 1]])]
+    "y",
+    [
+        np.array([1, 0, 2]),
+        np.array([0, 0, 0]),
+        np.array([1, 0, 0]),
+        np.array([[0, 1, 1], [1, 0, 1]]),
+    ],
 )
 def test_label_binarizer_array_api(y, array_namespace, device, dtype_name):
     xp = _array_api_for_tests(array_namespace, device)
     xp_y = xp.asarray(y, device=device)
     xp_lb = LabelBinarizer(sparse_output=False)
     with config_context(array_api_dispatch=True):
-        xp_transformed = xp_lb.fit_transform(xp_y)
-        xp_inv_transformed = xp_lb.inverse_transform(xp_transformed)
+        xp_fit_transformed = xp_lb.fit_transform(xp_y)
+        xp_transformed = xp_lb.transform(xp_y)
+        xp_inv_transformed = xp_lb.inverse_transform(xp_fit_transformed)
         np_lb = LabelBinarizer(sparse_output=False)
         np_transformed = np_lb.fit_transform(y)
+        assert get_namespace(xp_fit_transformed)[0].__name__ == xp.__name__
         assert get_namespace(xp_transformed)[0].__name__ == xp.__name__
         assert get_namespace(xp_inv_transformed)[0].__name__ == xp.__name__
-        assert_array_equal(_convert_to_numpy(xp_transformed, xp), np_transformed)
+        assert_array_equal(_convert_to_numpy(xp_fit_transformed, xp), np_transformed)
         assert_array_equal(_convert_to_numpy(xp_inv_transformed, xp), y)
 
 
