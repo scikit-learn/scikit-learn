@@ -193,7 +193,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
             equally weighted. Note that sample_weight is supported only if all
             underlying estimators support sample weights.
 
-            .. versionadded:: 1.5
+            .. versionadded:: 1.6
 
         Returns
         -------
@@ -406,7 +406,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         Please check :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
 
-        .. versionadded:: 1.5
+        .. versionadded:: 1.6
 
         Returns
         -------
@@ -699,7 +699,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         **fit_params : dict
             Parameters to pass to the underlying estimators.
 
-            .. versionadded:: 1.5
+            .. versionadded:: 1.6
 
                 Only available if `enable_metadata_routing=True`, which can be
                 set by using ``sklearn.set_config(enable_metadata_routing=True)``.
@@ -755,7 +755,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
               the `predict` method of the `final_estimator`. See :ref:`Metadata
               Routing User Guide <metadata_routing>` for more details.
 
-            .. versionchanged:: 1.5
+            .. versionchanged:: 1.6
                 `**predict_params` can be routed via metadata routing API.
 
         Returns
@@ -1047,7 +1047,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         **fit_params : dict
             Parameters to pass to the underlying estimators.
 
-            .. versionadded:: 1.5
+            .. versionadded:: 1.6
 
                 Only available if `enable_metadata_routing=True`, which can be
                 set by using ``sklearn.set_config(enable_metadata_routing=True)``.
@@ -1105,7 +1105,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         **fit_params : dict
             Parameters to pass to the underlying estimators.
 
-            .. versionadded:: 1.5
+            .. versionadded:: 1.6
 
                 Only available if `enable_metadata_routing=True`, which can be
                 set by using ``sklearn.set_config(enable_metadata_routing=True)``.
@@ -1146,7 +1146,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
               the `predict` method of the `final_estimator`. See :ref:`Metadata
               Routing User Guide <metadata_routing>` for more details.
 
-            .. versionchanged:: 1.5
+            .. versionchanged:: 1.6
                 `**predict_params` can be routed via metadata routing API.
 
         Returns
