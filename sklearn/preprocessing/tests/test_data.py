@@ -730,7 +730,7 @@ def test_scaler_array_api_compliance(
     ids=_get_check_estimator_ids,
 )
 @pytest.mark.parametrize("sample_weight", [True, None])
-def test_standard_scaler_api_compliance(
+def test_standard_scaler_array_api_compliance(
     check, sample_weight, array_namespace, device, dtype_name
 ):
     estimator = StandardScaler()

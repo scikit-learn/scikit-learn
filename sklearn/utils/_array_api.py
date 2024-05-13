@@ -7,7 +7,6 @@ import itertools
 import math
 import os
 from functools import wraps
-from typing import Any, Tuple
 
 import numpy
 import scipy
@@ -323,7 +322,7 @@ def _isdtype_single(dtype, kind, *, xp):
         return dtype == kind
 
 
-def supported_float_dtypes(xp, *, device=None):
+def supported_float_dtypes(xp, device=None):
     """Supported floating point types for the namespace/device pair.
 
     Parameters
@@ -337,7 +336,7 @@ def supported_float_dtypes(xp, *, device=None):
 
     Returns
     -------
-    tuple[data-types, ...]
+    supported_dtypes : tuple
         Tuple of real floating data types supported by the provided array namespace,
         ordered from the highest precision to lowest.
 
@@ -370,7 +369,7 @@ def supported_float_dtypes(xp, *, device=None):
     return dtypes
 
 
-def max_precision_float_dtype(xp, *, device=None):
+def max_precision_float_dtype(xp, device=None):
     """Get the maximum precision real-floating type for the namespace and device.
 
     Parameters
@@ -395,7 +394,7 @@ def max_precision_float_dtype(xp, *, device=None):
     return supported_float_dtypes(xp, device=device)[0]
 
 
-def default_precision_float_dtype(xp, *, device=None):
+def default_precision_float_dtype(xp, device=None):
     """Get the default precision real-floating type for the namespace/device pair.
 
     Parameters
@@ -630,9 +629,7 @@ def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
     return filtered_arrays
 
 
-def get_namespace(
-    *arrays, remove_none=True, remove_types=(str,), xp=None
-) -> Tuple[Any, bool]:
+def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     """Get namespace of arrays.
 
     Introspect `arrays` arguments and return their common Array API compatible
@@ -727,7 +724,7 @@ def get_namespace(
 
 def get_namespace_and_device(
         *array_list, remove_none=True, remove_types=(str,), xp=None
-) -> Tuple[Any, bool, Any]:
+):
     """Combination into one single function of `get_namespace` and `device`.
 
     Parameters
