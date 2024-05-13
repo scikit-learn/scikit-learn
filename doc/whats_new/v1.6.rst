@@ -40,7 +40,6 @@ See :ref:`array_api` for more details.
 
 -
 
-
 Metadata Routing
 ----------------
 
