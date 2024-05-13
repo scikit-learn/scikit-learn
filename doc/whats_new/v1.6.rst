@@ -38,7 +38,19 @@ See :ref:`array_api` for more details.
 
 **Classes:**
 
-- 
+-
+
+Metadata Routing
+----------------
+
+The following models now support metadata routing in one or more of their
+methods. Refer to the :ref:`Metadata Routing User Guide <metadata_routing>` for
+more details.
+
+- |Feature| :class:`ensemble.StackingClassifier` and
+  :class:`ensemble.StackingRegressor` now support metadata routing and pass
+  ``**fit_params`` to the underlying estimators via their `fit` methods.
+  :pr:`28701` by :user:`Stefanie Senger <StefanieSenger>`.
 
 Changelog
 ---------
