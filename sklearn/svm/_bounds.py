@@ -1,4 +1,5 @@
 """Determination of parameter bounds"""
+
 # Author: Paolo Losi
 # License: BSD 3 clause
 

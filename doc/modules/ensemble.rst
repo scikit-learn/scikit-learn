@@ -115,11 +115,54 @@ The size of the trees can be controlled through the ``max_leaf_nodes``,
 ``max_depth``, and ``min_samples_leaf`` parameters.
 
 The number of bins used to bin the data is controlled with the ``max_bins``
-parameter. Using less bins acts as a form of regularization. It is
-generally recommended to use as many bins as possible (256), which is the default.
+parameter. Using less bins acts as a form of regularization. It is generally
+recommended to use as many bins as possible (255), which is the default.
 
-The ``l2_regularization`` parameter is a regularizer on the loss function and
-corresponds to :math:`\lambda` in equation (2) of [XGBoost]_.
+The ``l2_regularization`` parameter acts as a regularizer for the loss function,
+and corresponds to :math:`\lambda` in the following expression (see equation (2)
+in [XGBoost]_):
+
+.. math::
+
+    \mathcal{L}(\phi) =  \sum_i l(\hat{y}_i, y_i) + \frac12 \sum_k \lambda ||w_k||^2
+
+|details-start|
+**Details on l2 regularization**:
+|details-split|
+
+It is important to notice that the loss term :math:`l(\hat{y}_i, y_i)` describes
+only half of the actual loss function except for the pinball loss and absolute
+error.
+
+The index :math:`k` refers to the k-th tree in the ensemble of trees. In the
+case of regression and binary classification, gradient boosting models grow one
+tree per iteration, then :math:`k` runs up to `max_iter`. In the case of
+multiclass classification problems, the maximal value of the index :math:`k` is
+`n_classes` :math:`\times` `max_iter`.
+
+If :math:`T_k` denotes the number of leaves in the k-th tree, then :math:`w_k`
+is a vector of length :math:`T_k`, which contains the leaf values of the form `w
+= -sum_gradient / (sum_hessian + l2_regularization)` (see equation (5) in
+[XGBoost]_).
+
+The leaf values :math:`w_k` are derived by dividing the sum of the gradients of
+the loss function by the combined sum of hessians. Adding the regularization to
+the denominator penalizes the leaves with small hessians (flat regions),
+resulting in smaller updates. Those :math:`w_k` values contribute then to the
+model's prediction for a given input that ends up in the corresponding leaf. The
+final prediction is the sum of the base prediction and the contributions from
+each tree. The result of that sum is then transformed by the inverse link
+function depending on the choice of the loss function (see
+:ref:`gradient_boosting_formulation`).
+
+Notice that the original paper [XGBoost]_ introduces a term :math:`\gamma\sum_k
+T_k` that penalizes the number of leaves (making it a smooth version of
+`max_leaf_nodes`) not presented here as it is not implemented in scikit-learn;
+whereas :math:`\lambda` penalizes the magnitude of the individual tree
+predictions before being rescaled by the learning rate, see
+:ref:`gradient_boosting_shrinkage`.
+
+|details-end|
 
 Note that **early-stopping is enabled by default if the number of samples is
 larger than 10,000**. The early-stopping behaviour is controlled via the
@@ -560,7 +603,22 @@ fitted model.
 
 ::
 
-  >>> _ = est.set_params(n_estimators=200, warm_start=True)  # set warm_start and new nr of trees
+  >>> import numpy as np
+  >>> from sklearn.metrics import mean_squared_error
+  >>> from sklearn.datasets import make_friedman1
+  >>> from sklearn.ensemble import GradientBoostingRegressor
+
+  >>> X, y = make_friedman1(n_samples=1200, random_state=0, noise=1.0)
+  >>> X_train, X_test = X[:200], X[200:]
+  >>> y_train, y_test = y[:200], y[200:]
+  >>> est = GradientBoostingRegressor(
+  ...     n_estimators=100, learning_rate=0.1, max_depth=1, random_state=0,
+  ...     loss='squared_error'
+  ... )
+  >>> est = est.fit(X_train, y_train)  # fit with 100 trees
+  >>> mean_squared_error(y_test, est.predict(X_test))
+  5.00...
+  >>> _ = est.set_params(n_estimators=200, warm_start=True)  # set warm_start and increase num of trees
   >>> _ = est.fit(X_train, y_train) # fit additional 100 trees to est
   >>> mean_squared_error(y_test, est.predict(X_test))
   3.84...
@@ -593,6 +651,8 @@ training error.
 The parameter ``max_leaf_nodes`` corresponds to the variable ``J`` in the
 chapter on gradient boosting in [Friedman2001]_ and is related to the parameter
 ``interaction.depth`` in R's gbm package where ``max_leaf_nodes == interaction.depth + 1`` .
+
+.. _gradient_boosting_formulation:
 
 Mathematical formulation
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1536,8 +1596,8 @@ availability, tested in the order of preference: `predict_proba`,
 `decision_function` and `predict`.
 
 A :class:`StackingRegressor` and :class:`StackingClassifier` can be used as
-any other regressor or classifier, exposing a `predict`, `predict_proba`, and
-`decision_function` methods, e.g.::
+any other regressor or classifier, exposing a `predict`, `predict_proba`, or
+`decision_function` method, e.g.::
 
    >>> y_pred = reg.predict(X_test)
    >>> from sklearn.metrics import r2_score

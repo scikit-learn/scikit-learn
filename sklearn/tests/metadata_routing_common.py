@@ -19,6 +19,7 @@ from sklearn.utils._metadata_requests import (
 )
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
+    MethodMapping,
     process_routing,
 )
 from sklearn.utils.multiclass import _check_partial_fit_first_call
@@ -256,16 +257,13 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         record_metadata_not_default(
             self, "predict", sample_weight=sample_weight, metadata=metadata
         )
-        return np.zeros(shape=(len(X),))
+        return np.zeros(shape=(len(X),), dtype="int8")
 
     def predict_proba(self, X, sample_weight="default", metadata="default"):
-        pass  # pragma: no cover
-
-        # uncomment when needed
-        # record_metadata_not_default(
-        #     self, "predict_proba", sample_weight=sample_weight, metadata=metadata
-        # )
-        # return np.asarray([[0.0, 1.0]] * len(X))
+        record_metadata_not_default(
+            self, "predict_proba", sample_weight=sample_weight, metadata=metadata
+        )
+        return np.asarray([[0.0, 1.0]] * len(X))
 
     def predict_log_proba(self, X, sample_weight="default", metadata="default"):
         pass  # pragma: no cover
@@ -418,7 +416,8 @@ class MetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
 
     def get_metadata_routing(self):
         router = MetadataRouter(owner=self.__class__.__name__).add(
-            estimator=self.estimator, method_mapping="one-to-one"
+            estimator=self.estimator,
+            method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
         return router
 
@@ -447,7 +446,12 @@ class WeightedMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
         router = (
             MetadataRouter(owner=self.__class__.__name__)
             .add_self_request(self)
-            .add(estimator=self.estimator, method_mapping="one-to-one")
+            .add(
+                estimator=self.estimator,
+                method_mapping=MethodMapping()
+                .add(caller="fit", callee="fit")
+                .add(caller="predict", callee="predict"),
+            )
         )
         return router
 
@@ -472,7 +476,10 @@ class WeightedMetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator)
         router = (
             MetadataRouter(owner=self.__class__.__name__)
             .add_self_request(self)
-            .add(estimator=self.estimator, method_mapping="fit")
+            .add(
+                estimator=self.estimator,
+                method_mapping=MethodMapping().add(caller="fit", callee="fit"),
+            )
         )
         return router
 
@@ -494,5 +501,8 @@ class MetaTransformer(MetaEstimatorMixin, TransformerMixin, BaseEstimator):
 
     def get_metadata_routing(self):
         return MetadataRouter(owner=self.__class__.__name__).add(
-            transformer=self.transformer, method_mapping="one-to-one"
+            transformer=self.transformer,
+            method_mapping=MethodMapping()
+            .add(caller="fit", callee="fit")
+            .add(caller="transform", callee="transform"),
         )

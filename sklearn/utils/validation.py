@@ -973,6 +973,13 @@ def check_array(
             estimator_name=estimator_name,
             input_name=input_name,
         )
+        if ensure_2d and array.ndim < 2:
+            raise ValueError(
+                f"Expected 2D input, got input with shape {array.shape}.\n"
+                "Reshape your data either using array.reshape(-1, 1) if "
+                "your data has a single feature or array.reshape(1, -1) "
+                "if it contains a single sample."
+            )
     else:
         # If np.array(..) gives ComplexWarning, then we convert the warning
         # to an error. This is needed because specifying a non complex
@@ -1303,7 +1310,7 @@ def _check_y(y, multi_output=False, y_numeric=False, estimator=None):
         y = column_or_1d(y, warn=True)
         _assert_all_finite(y, input_name="y", estimator_name=estimator_name)
         _ensure_no_complex_data(y)
-    if y_numeric and y.dtype.kind == "O":
+    if y_numeric and hasattr(y.dtype, "kind") and y.dtype.kind == "O":
         y = y.astype(np.float64)
 
     return y

@@ -355,3 +355,19 @@ point.
 
 Then use pytest to run only the tests of the module you are interested in
 debugging.
+
+.. _meson_build_backend:
+
+The Meson Build Backend
+=======================
+
+Since scikit-learn 1.5.0 we use meson-python as the build tool. Meson is
+a new tool for scikit-learn and the PyData ecosystem. It is used by several
+other packages that have written good guides about what it is and how it works.
+
+- `pandas setup doc
+  <https://pandas.pydata.org/docs/development/contributing_environment.html#step-3-build-and-install-pandas>`_:
+  pandas has a similar setup as ours (no spin or dev.py)
+- `scipy Meson doc
+  <https://scipy.github.io/devdocs/building/understanding_meson.html>`_ gives
+  more background about how Meson works behind the scenes

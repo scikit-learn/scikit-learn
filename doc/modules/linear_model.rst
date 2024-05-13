@@ -530,6 +530,7 @@ The class :class:`ElasticNetCV` can be used to set the parameters
 
   * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
   * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_coordinate_descent_path.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_elastic_net_precomputed_gram_matrix_with_weighted_samples.py`
 
 |details-start|
 **References**
@@ -948,13 +949,16 @@ following cost function:
 .. math::
     :name: regularized-logistic-loss
 
-    \min_{w} C \sum_{i=1}^n s_i \left(-y_i \log(\hat{p}(X_i)) - (1 - y_i) \log(1 - \hat{p}(X_i))\right) + r(w),
+    \min_{w} \frac{1}{S}\sum_{i=1}^n s_i
+    \left(-y_i \log(\hat{p}(X_i)) - (1 - y_i) \log(1 - \hat{p}(X_i))\right)
+    + \frac{r(w)}{S C}\,,
 
 where :math:`{s_i}` corresponds to the weights assigned by the user to a
 specific training sample (the vector :math:`s` is formed by element-wise
-multiplication of the class weights and sample weights).
+multiplication of the class weights and sample weights),
+and the sum :math:`S = \sum_{i=1}^n s_i`.
 
-We currently provide four choices for the regularization term  :math:`r(w)`  via
+We currently provide four choices for the regularization term  :math:`r(w)` via
 the `penalty` argument:
 
 +----------------+-------------------------------------------------+
@@ -1010,10 +1014,17 @@ a matrix of coefficients :math:`W` where each row vector :math:`W_k` corresponds
 
 The objective for the optimization becomes
 
-.. math:: \min_W -C \sum_{i=1}^n \sum_{k=0}^{K-1} [y_i = k] \log(\hat{p}_k(X_i)) + r(W).
+.. math::
+  \min_W -\frac{1}{S}\sum_{i=1}^n \sum_{k=0}^{K-1} s_{ik} [y_i = k] \log(\hat{p}_k(X_i))
+  + \frac{r(W)}{S C}\,.
 
 Where :math:`[P]` represents the Iverson bracket which evaluates to :math:`0`
-if :math:`P` is false, otherwise it evaluates to :math:`1`. We currently provide four choices
+if :math:`P` is false, otherwise it evaluates to :math:`1`.
+
+Again, :math:`s_{ik}` are the weights assigned by the user (multiplication of sample
+weights and class weights) with their sum :math:`S = \sum_{i=1}^n \sum_{k=0}^{K-1} s_{ik}`.
+
+We currently provide four choices
 for the regularization term :math:`r(W)` via the `penalty` argument, where :math:`m`
 is the number of features:
 
@@ -1037,24 +1048,24 @@ Solvers
 The solvers implemented in the class :class:`LogisticRegression`
 are "lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag" and "saga":
 
-The following table summarizes the penalties supported by each solver:
+The following table summarizes the penalties and multinomial multiclass supported by each solver:
 
 +------------------------------+-----------------+-------------+-----------------+-----------------------+-----------+------------+
 |                              |                       **Solvers**                                                                |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
 | **Penalties**                | **'lbfgs'** | **'liblinear'** | **'newton-cg'** | **'newton-cholesky'** | **'sag'** | **'saga'** |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| Multinomial + L2 penalty     |     yes     |       no        |       yes       |     no                |    yes    |    yes     |
+| L2 penalty                   |     yes     |       no        |       yes       |     no                |    yes    |    yes     |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| OVR + L2 penalty             |     yes     |       yes       |       yes       |     yes               |    yes    |    yes     |
+| L1 penalty                   |     no      |       yes       |       no        |     no                |    no     |    yes     |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| Multinomial + L1 penalty     |     no      |       no        |       no        |     no                |    no     |    yes     |
-+------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| OVR + L1 penalty             |     no      |       yes       |       no        |     no                |    no     |    yes     |
-+------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| Elastic-Net                  |     no      |       no        |       no        |     no                |    no     |    yes     |
+| Elastic-Net (L1 + L2)        |     no      |       no        |       no        |     no                |    no     |    yes     |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
 | No penalty ('none')          |     yes     |       no        |       yes       |     yes               |    yes    |    yes     |
++------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
+| **Multiclass support**       |                                                                                                  |
++------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
+| multinomial multiclass       |     yes     |       no        |       yes       |     no                |    yes    |    yes     |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
 | **Behaviors**                |                                                                                                  |
 +------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
