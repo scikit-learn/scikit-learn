@@ -315,10 +315,6 @@ Changelog
   at each step.
   :pr:`28670` by :user:`Miguel Silva <miguelcsilva>`.
 
-- |Feature| :func:`~feature_selection.info_gain` and
-  :func:`~feature_selection.info_gain_ratio` can now be used for
-  univariate feature selection. :pr:`28905` by :user:`Viktor Pekar <vpekar>`.
-
 :mod:`sklearn.impute`
 .....................
 

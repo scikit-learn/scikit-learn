@@ -38,7 +38,7 @@ See :ref:`array_api` for more details.
 
 **Classes:**
 
-- 
+-
 
 Changelog
 ---------
@@ -53,6 +53,13 @@ Changelog
     Entries should end with:
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123455 is the *pull request* number, not the issue number.
+
+:mod:`sklearn.feature_selection`
+................................
+
+- |Feature| :func:`~feature_selection.info_gain` and
+  :func:`~feature_selection.info_gain_ratio` can now be used for
+  univariate feature selection. :pr:`28905` by :user:`Viktor Pekar <vpekar>`.
 
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:
