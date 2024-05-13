@@ -1002,9 +1002,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         n_splines = self.bsplines_[0].c.shape[1]
         degree = self.degree
 
-        # get indicator for nan values
-        nan_indicator = _get_mask(X, np.nan)
-
         # TODO: Remove this condition, once scipy 1.10 is the minimum version.
         #       Only scipy >= 1.10 supports design_matrix(.., extrapolate=..).
         #       The default (implicit in scipy < 1.10) is extrapolate=False.
@@ -1032,6 +1029,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
         for i in range(n_features):
             spl = self.bsplines_[i]
+            # get indicator for nan values:
+            nan_indicator = _get_mask(X[:, i], np.nan)
 
             if self.extrapolation in ("continue", "error", "periodic"):
 
@@ -1056,12 +1055,12 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
                     nanmin_x = np.nanmin(x)
                     if np.isnan(nanmin_x):
-                        # The column is all np.nan valued. Replace it by an a constant
+                        # The column is all np.nan valued. Replace it by a constant
                         # column with an arbitrary non-nan value inside: the minimum
                         # value within the whole feature space:
                         x[:] = np.nanmin(X)
                     else:
-                        x[nan_indicator[:, i]] = np.nanmin(x)
+                        x[nan_indicator] = np.nanmin(x)
                     XBS_sparse = BSpline.design_matrix(
                         x, spl.t, spl.k, **kwargs_extrapolate
                     )
@@ -1077,15 +1076,20 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
                     # replace any indicated values with 0:
                     extended_nan_indicator = np.repeat(
-                        nan_indicator[:, [i]], n_splines, axis=1
-                    )
+                        nan_indicator,
+                        n_splines,
+                    ).reshape(x.shape[0], n_splines)
                     XBS_sparse[extended_nan_indicator] = 0
 
                 else:
                     XBS[:, (i * n_splines) : ((i + 1) * n_splines)] = spl(x)
                     # replace any indicated values with 0:
-                    extended_nan_indicator = np.repeat(nan_indicator, n_splines, axis=1)
-                    XBS[extended_nan_indicator] = 0
+                    extended_nan_indicator = np.repeat(
+                        nan_indicator, n_splines
+                    ).reshape(x.shape[0], n_splines)
+                    XBS[:, n_splines * i : n_splines * (i + 1)][
+                        extended_nan_indicator
+                    ] = 0
                     # adjust format of XBS to sparse, for scipy versions < 1.10.0:
                     # TODO: Remove once scipy 1.10 is the minimum version:
                     if self.sparse_output:
