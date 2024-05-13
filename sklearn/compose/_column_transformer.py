@@ -9,6 +9,7 @@ different columns.
 import warnings
 from collections import Counter, UserList
 from itertools import chain
+from functools import partial
 from numbers import Integral, Real
 
 import numpy as np
@@ -132,10 +133,11 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         If True, the time elapsed while fitting each transformer will be
         printed as it is completed.
 
-    verbose_feature_names_out : bool, default=True
+    verbose_feature_names_out : bool | str | Callable[[str, str], str], default=True
         If True, :meth:`ColumnTransformer.get_feature_names_out` will prefix
         all feature names with the name of the transformer that generated that
-        feature.
+        feature. It is equivalent to setting
+        `verbose_feature_names_out="{transformer_name}__{feature_name}"`.
         If False, :meth:`ColumnTransformer.get_feature_names_out` will not
         prefix any feature names and will error if feature names are not
         unique.
@@ -144,11 +146,14 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         first argument of the callable is the transformer name and the
         second argument is the feature name. The returned string will be the
         new feature name.
+        If str, it must be a string ready for formatting. The given string will
+        be formatted using two field names: transformer_name and feature_name.
+        See str.format method from the standard library for more info.
 
         .. versionadded:: 1.0
 
         .. versionchanged:: 1.X
-            `verbose_feature_names_out` can be a callable.
+            `verbose_feature_names_out` can be a callable or a string to be formatted.
 
 
     force_int_remainder_cols : bool, default=True
@@ -291,7 +296,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         "n_jobs": [Integral, None],
         "transformer_weights": [dict, None],
         "verbose": ["verbose"],
-        "verbose_feature_names_out": ["boolean"],
+        "verbose_feature_names_out": ["boolean", str, callable],
         "force_int_remainder_cols": ["boolean"],
     }
 
@@ -666,6 +671,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         feature_names_out_callable = None
         if callable(self.verbose_feature_names_out):
             feature_names_out_callable = self.verbose_feature_names_out
+        elif isinstance(self.verbose_feature_names_out, str):
+            feature_names_out_callable = partial(
+                _feature_names_out, str_format=self.verbose_feature_names_out
+            )
         elif self.verbose_feature_names_out is True:
             feature_names_out_callable = _feature_names_out
 
@@ -1667,5 +1676,11 @@ def _with_dtype_warning_enabled_set_to(warning_enabled, transformers):
     return result
 
 
-def _feature_names_out(transformer_name: str, feature_name: str) -> str:
-    return f"{transformer_name}__{feature_name}"
+def _feature_names_out(
+    transformer_name: str, feature_name: str, str_format: str | None = None
+) -> str:
+    if str_format is None:
+        str_format = "{transformer_name}__{feature_name}"
+    return str_format.format(
+        transformer_name=transformer_name, feature_name=feature_name
+    )
