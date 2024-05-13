@@ -1102,8 +1102,11 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 if use_sparse:
                     mask_inv = ~mask
                     x = X[:, i].copy()
-                    # Set some arbitrary values that will be reassigned later:
-                    x[mask_inv] = spl.t[self.degree]
+                    # Set to some arbitrary value within the range of values
+                    # observed on the training set before calling
+                    # BSpline.design_matrix. Those transformed will be 
+                    # reassigned later when handling extrapolation.
+                    x[mask_inv] = xmin
                     XBS_sparse = BSpline.design_matrix(x, spl.t, spl.k)
                     # Note: Without converting to lil_matrix we would get:
                     # scipy.sparse._base.SparseEfficiencyWarning: Changing the sparsity
