@@ -347,6 +347,32 @@ and is part of the scikit-learn consortium at Inria.
    </div>
    </div>
 
+...........
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`Tidelift <https://tidelift.com/>`_ supports the project via their service
+agreement.
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/Tidelift-logo-on-light.svg
+   :width: 100pt
+   :align: center
+   :target: https://tidelift.com/
+
+.. raw:: html
+
+   </div>
+   </div>
+
 Past Sponsors
 .............
 

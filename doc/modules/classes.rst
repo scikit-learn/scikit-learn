@@ -984,6 +984,7 @@ details.
    metrics.classification_report
    metrics.cohen_kappa_score
    metrics.confusion_matrix
+   metrics.d2_log_loss_score
    metrics.dcg_score
    metrics.det_curve
    metrics.f1_score
@@ -1250,6 +1251,17 @@ Hyper-parameter optimizers
    model_selection.RandomizedSearchCV
    model_selection.HalvingRandomSearchCV
 
+Post-fit model tuning
+---------------------
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   model_selection.FixedThresholdClassifier
+   model_selection.TunedThresholdClassifierCV
 
 Model validation
 ----------------

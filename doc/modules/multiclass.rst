@@ -63,8 +63,8 @@ can provide additional strategies beyond what is built-in:
   - :class:`semi_supervised.LabelSpreading`
   - :class:`discriminant_analysis.LinearDiscriminantAnalysis`
   - :class:`svm.LinearSVC` (setting multi_class="crammer_singer")
-  - :class:`linear_model.LogisticRegression` (setting multi_class="multinomial")
-  - :class:`linear_model.LogisticRegressionCV` (setting multi_class="multinomial")
+  - :class:`linear_model.LogisticRegression` (with most solvers)
+  - :class:`linear_model.LogisticRegressionCV` (with most solvers)
   - :class:`neural_network.MLPClassifier`
   - :class:`neighbors.NearestCentroid`
   - :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`
@@ -86,8 +86,8 @@ can provide additional strategies beyond what is built-in:
   - :class:`ensemble.GradientBoostingClassifier`
   - :class:`gaussian_process.GaussianProcessClassifier` (setting multi_class = "one_vs_rest")
   - :class:`svm.LinearSVC` (setting multi_class="ovr")
-  - :class:`linear_model.LogisticRegression` (setting multi_class="ovr")
-  - :class:`linear_model.LogisticRegressionCV` (setting multi_class="ovr")
+  - :class:`linear_model.LogisticRegression` (most solvers)
+  - :class:`linear_model.LogisticRegressionCV` (most solvers)
   - :class:`linear_model.SGDClassifier`
   - :class:`linear_model.Perceptron`
   - :class:`linear_model.PassiveAggressiveClassifier`
