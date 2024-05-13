@@ -506,11 +506,11 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
            [0],
            [1]])
     """
-        # label_binarize supports Array API compatibility for convenience when
-        # LabelBinarizer is used as a sub-component of an classifier that does.
-        # However label_binarize internally uses a NumPy copy of the data because
-        # all the operations are meant to construct the backing NumPy arrays of a
-        # scipy.sparse CSR datastructure even when sparse_output=False.
+    # label_binarize supports Array API compatibility for convenience when
+    # LabelBinarizer is used as a sub-component of an classifier that does.
+    # However label_binarize internally uses a NumPy copy of the data because
+    # all the operations are meant to construct the backing NumPy arrays of a
+    # scipy.sparse CSR datastructure even when sparse_output=False.
     y_xp, y_is_array_api = get_namespace(y)
     if y_is_array_api:
         device_ = device(y)
