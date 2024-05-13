@@ -290,7 +290,7 @@ def chi2(X, y):
     return _chisquare(observed, expected)
 
 
-def get_entropy(prob):
+def _get_entropy(prob):
     t = np.log2(prob)
     t[~np.isfinite(t)] = 0
     return np.multiply(-prob, t)
@@ -320,7 +320,7 @@ def _info_gain(X, y, aggregate, ratio=False):
     if ratio:
         # normalize IG scores to obtain GR
         with np.errstate(invalid="ignore", divide="ignore"):
-            scores = scores / (get_entropy(c_prob) + get_entropy(1 - c_prob))
+            scores = scores / (_get_entropy(c_prob) + _get_entropy(1 - c_prob))
 
     # the feature score is averaged over classes
     if aggregate == "mean":
@@ -404,7 +404,7 @@ def info_gain(X, y, aggregate="max"):
     References
     ----------
     .. [1] J.R. Quinlan. 1993. C4.5: Programs for Machine Learning. San Mateo, CA:
-        Morgan Kaufmann.
+           Morgan Kaufmann.
 
     .. [2] Y. Yang and J.O. Pedersen. 1997. `A comparative study on feature selection in
            text
