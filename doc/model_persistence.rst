@@ -117,7 +117,7 @@ custom converter for third party or custom estimators, but the documentation to
 do that is sparse and it might be challenging to do so.
 
 |details-start|
-**Using skops**
+**Using ONNX**
 |details-split|
 
 To convert the model to `ONNX` format, you need to give the converter some
