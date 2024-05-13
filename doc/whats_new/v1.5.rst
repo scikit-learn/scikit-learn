@@ -95,12 +95,16 @@ See :ref:`array_api` for more details.
 Support for building with Meson
 -------------------------------
 
-Meson is now supported as a build backend, see :ref:`Building from source
-<install_bleeding_edge>` for more details.
+From scikit-learn 1.5 onwards, Meson is the main supported way to build
+scikit-learn, see :ref:`Building from source <install_bleeding_edge>` for more
+details.
 
-:pr:`28040` by :user:`Loïc Estève <lesteve>`
+Unless we discover a major blocker, we intend to keep testing setuptools
+support until v1.6 and officially remove setuptools support when scikit-learn
+1.6 is released.
 
-TODO Fill more details before the 1.5 release, when the Meson story has settled down.
+Meson support for building scikit-learn was added in :pr:`28040` by :user:`Loïc
+Estève <lesteve>`
 
 Metadata Routing
 ----------------
