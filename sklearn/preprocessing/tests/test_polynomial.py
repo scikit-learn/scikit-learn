@@ -564,7 +564,8 @@ def test_spline_transformer_handles_missing_values(extrapolation, sparse_output)
         X_transformed_same_shape, X_transformed_different_shapes
     )
 
-    # check that if X has a feature of all nans SplineTransformer works as usual
+    # Check that if X has a feature of all nans SplineTransformer encodes them all
+    # as zeros as it would do for non-nan constant columns.
     spline.transform(X_nan_full_column)
 
     # check that the masked nan-values are 0s
