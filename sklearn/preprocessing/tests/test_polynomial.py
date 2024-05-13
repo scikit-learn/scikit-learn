@@ -521,10 +521,9 @@ def test_spline_transformer_handles_missing_values(extrapolation, sparse_output)
     differently with nans present and a different result is thus expected.
     """
     X_nan = np.array([[1, 1], [2, 2], [3, 3], [np.nan, 5], [4, 4]])
-    X_nan_full_column = np.array([[np.nan, np.nan], [np.nan, 1]])
     X = np.array([[1, 1], [2, 2], [3, 3], [4, 5], [4, 4]])
 
-    # check correct error message for handle_missing="error"
+    # Check correct error message for handle_missing="error":
     msg = "X contains missing values (np.nan) and SplineTransformer is configured with"
     with pytest.raises(ValueError, match=re.escape(msg)):
         spline = SplineTransformer(
@@ -535,7 +534,7 @@ def test_spline_transformer_handles_missing_values(extrapolation, sparse_output)
         )
         spline.fit_transform(X_nan)
 
-    # check correct results for handle_missing="zeros"
+    # Check correct results for handle_missing="zeros":
     spline = SplineTransformer(
         degree=2,
         n_knots=3,
@@ -544,19 +543,19 @@ def test_spline_transformer_handles_missing_values(extrapolation, sparse_output)
         sparse_output=sparse_output,
     )
 
-    # check for generic invariants
+    # Check for generic invariants:
     X_nan_transform = spline.fit_transform(X_nan)
     if sparse.issparse(X_nan_transform):
         X_nan_transform = X_nan_transform.toarray()
     assert (X_nan_transform >= 0).all()
     assert (X_nan_transform <= 1).all()
 
-    # check `fit_transform` does the same as `fit` and `then` transform
+    # Check `fit_transform` does the same as `fit` and `then` transform:
     X_nan_transform = spline.fit_transform(X_nan)
     X_nan_fit_then_transformed = spline.fit(X_nan).transform(X_nan)
     assert_allclose_dense_sparse(X_nan_transform, X_nan_fit_then_transformed)
 
-    # check that transform works as expected when the passed data has not the same
+    # Check that transform works as expected when the passed data has not the same
     # shape as the training set array:
     X_transformed_same_shape = spline.fit_transform(X_nan)[::2]
     X_transformed_different_shapes = spline.fit(X_nan).transform(X_nan[::2])
@@ -564,31 +563,57 @@ def test_spline_transformer_handles_missing_values(extrapolation, sparse_output)
         X_transformed_same_shape, X_transformed_different_shapes
     )
 
-    # Check that if X has a feature of all nans SplineTransformer encodes them all
-    # as zeros as it would do for non-nan constant columns.
-    spline.transform(X_nan_full_column)
-
-    # check that the masked nan-values are 0s
+    # Check that the masked nan-values are 0s:
     nan_mask = _get_mask(X_nan, np.nan)
     encoded_nan_mask = np.repeat(nan_mask, spline.bsplines_[0].c.shape[1], axis=1)
     assert (X_nan_transform[encoded_nan_mask] == 0).all()
 
-    # check that nan values are always encoded as zeros, even in columns where
-    # no missing values were observed at training time.
-    all_missing_column_encoded = spline.transform(X_nan_full_column)
-    nan_mask = _get_mask(X_nan_full_column, np.nan)
-    encoded_nan_mask_2 = np.repeat(nan_mask, spline.bsplines_[0].c.shape[1], axis=1)
-    assert (all_missing_column_encoded[encoded_nan_mask_2] == 0).all()
-
-    # check that additional nan values don't change the calculation of the other splines
-    # note: this assertion only holds as long as no np.nan value constructs the min or
-    # max value of the data space (in this case, SplineTransformer's stats would be
-    # calculated based on the other values and thus differ from another
-    # SplineTransformer fit on the whole range)
+    # Check that additional nan values don't change the calculation of the other
+    # splines. Note: this assertion only holds as long as no np.nan value constructs the
+    # min or max value of the data space (in this case, SplineTransformer's stats would
+    # be calculated based on the other values and thus differ from another
+    # SplineTransformer fit on the whole range).
     X_transform = spline.fit_transform(X)
     assert_allclose_dense_sparse(
         X_transform[~encoded_nan_mask], X_nan_transform[~encoded_nan_mask]
     )
+
+
+@pytest.mark.skipif(
+    sp_version < parse_version("1.8.0"),
+    reason="The option `sparse_output` is available as of scipy 1.8.0",
+)
+@pytest.mark.parametrize(
+    "extrapolation", ["error", "constant", "linear", "continue", "periodic"]
+)
+@pytest.mark.parametrize("sparse_output", [False, True])
+def test_spline_transformer_handles_all_nans(extrapolation, sparse_output):
+    """Test that SplineTransformer reliably encodes missing values to zeros also if
+    whole features are all nans."""
+
+    X = np.array([[1, 1], [2, 2], [3, 3], [4, 5], [4, 4]])
+    X_nan_full_column = np.array([[np.nan, np.nan], [np.nan, 1]])
+
+    spline = SplineTransformer(
+        degree=2,
+        n_knots=3,
+        handle_missing="zeros",
+        extrapolation=extrapolation,
+        sparse_output=sparse_output,
+    )
+
+    # Note that for sparse_output=True, we can only transform, but not fit a
+    # SplineTransformer on whole columns of nans, because spl.t would be calculated as
+    # an array of nans and thus BSpline.design_matrix() would raise:
+    if sparse_output:
+        spline.fit(X)
+    else:
+        spline.fit(X_nan_full_column)
+
+    all_missing_column_encoded = spline.transform(X_nan_full_column)
+    nan_mask = _get_mask(X_nan_full_column, np.nan)
+    encoded_nan_mask = np.repeat(nan_mask, spline.bsplines_[0].c.shape[1], axis=1)
+    assert (all_missing_column_encoded[encoded_nan_mask] == 0).all()
 
 
 @pytest.mark.parametrize(

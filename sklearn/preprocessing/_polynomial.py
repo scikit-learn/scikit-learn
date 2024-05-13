@@ -1029,7 +1029,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
         for i in range(n_features):
             spl = self.bsplines_[i]
-            # get indicator for nan values:
+            # Get indicator for nan values:
             nan_indicator = _get_mask(X[:, i], np.nan)
 
             if self.extrapolation in ("continue", "error", "periodic"):
@@ -1048,8 +1048,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     x = X[:, i]
 
                 if use_sparse:
-                    x = x.copy()  # copy to avoid inplace operation
-                    # we leave the nan values out of bsplining and make them into 0s
+                    x = x.copy()  # Copy to avoid inplace operation.
+                    # We exclude the nan values from bsplining and make them into 0s
                     # right away, since BSpline.design_matrix() would raise on the nans
                     # when X is sparse:
 
@@ -1074,7 +1074,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                         XBS_sparse[:, :degree] += XBS_sparse[:, -degree:]
                         XBS_sparse = XBS_sparse[:, :-degree]
 
-                    # replace any indicated values with 0:
+                    # Replace any indicated values with 0:
                     extended_nan_indicator = np.repeat(
                         nan_indicator,
                         n_splines,
@@ -1083,14 +1083,14 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
                 else:
                     XBS[:, (i * n_splines) : ((i + 1) * n_splines)] = spl(x)
-                    # replace any indicated values with 0:
+                    # Replace any indicated values with 0:
                     extended_nan_indicator = np.repeat(
                         nan_indicator, n_splines
                     ).reshape(x.shape[0], n_splines)
                     XBS[:, n_splines * i : n_splines * (i + 1)][
                         extended_nan_indicator
                     ] = 0
-                    # adjust format of XBS to sparse, for scipy versions < 1.10.0:
+                    # Adjust format of XBS to sparse, for scipy versions < 1.10.0:
                     # TODO: Remove once scipy 1.10 is the minimum version:
                     if self.sparse_output:
                         XBS = sparse.csr_matrix(XBS)
@@ -1099,29 +1099,31 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 xmin, xmax = spl.t[degree], spl.t[-degree - 1]
                 # spline values at boundaries
                 f_min, f_max = spl(xmin), spl(xmax)
-                # values outside of the feature space during `fit` and nan values get
+                # Values outside of the feature space during `fit` and nan values get
                 # masked out:
-                mask = (xmin <= X[:, i]) & (X[:, i] <= xmax)
+                inside_range_mask = (xmin <= X[:, i]) & (X[:, i] <= xmax)
 
                 if use_sparse:
-                    mask_inv = ~mask
+                    outside_range_mask = ~inside_range_mask
                     x = X[:, i].copy()
                     # Set to some arbitrary value within the range of values
                     # observed on the training set before calling
                     # BSpline.design_matrix. Those transformed will be
                     # reassigned later when handling extrapolation.
-                    x[mask_inv] = xmin
+                    x[outside_range_mask] = xmin
                     XBS_sparse = BSpline.design_matrix(x, spl.t, spl.k)
                     # Note: Without converting to lil_matrix we would get:
                     # scipy.sparse._base.SparseEfficiencyWarning: Changing the sparsity
                     # structure of a csr_matrix is expensive. lil_matrix is more
                     # efficient.
-                    if np.any(mask_inv):
+                    if np.any(outside_range_mask):
                         XBS_sparse = XBS_sparse.tolil()
-                        XBS_sparse[mask_inv, :] = 0
+                        XBS_sparse[outside_range_mask, :] = 0
 
                 else:
-                    XBS[mask, (i * n_splines) : ((i + 1) * n_splines)] = spl(X[mask, i])
+                    XBS[inside_range_mask, (i * n_splines) : ((i + 1) * n_splines)] = (
+                        spl(X[inside_range_mask, i])
+                    )
 
             # Note for extrapolation:
             # 'continue' is already returned as is by scipy BSplines
@@ -1143,27 +1145,27 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 # Only the first degree and last degree number of splines
                 # have non-zero values at the boundaries.
 
-                mask = X[:, i] < xmin
-                if np.any(mask):
+                below_xmin_mask = X[:, i] < xmin
+                if np.any(below_xmin_mask):
                     if use_sparse:
                         # Note: See comment about SparseEfficiencyWarning above.
                         XBS_sparse = XBS_sparse.tolil()
-                        XBS_sparse[mask, :degree] = f_min[:degree]
+                        XBS_sparse[below_xmin_mask, :degree] = f_min[:degree]
 
-                    else:
-                        XBS[mask, (i * n_splines) : (i * n_splines + degree)] = f_min[
-                            :degree
-                        ]
-
-                mask = X[:, i] > xmax
-                if np.any(mask):
-                    if use_sparse:
-                        # Note: See comment about SparseEfficiencyWarning above.
-                        XBS_sparse = XBS_sparse.tolil()
-                        XBS_sparse[mask, -degree:] = f_max[-degree:]
                     else:
                         XBS[
-                            mask,
+                            below_xmin_mask, (i * n_splines) : (i * n_splines + degree)
+                        ] = f_min[:degree]
+
+                above_xmax_mask = X[:, i] > xmax
+                if np.any(above_xmax_mask):
+                    if use_sparse:
+                        # Note: See comment about SparseEfficiencyWarning above.
+                        XBS_sparse = XBS_sparse.tolil()
+                        XBS_sparse[above_xmax_mask, -degree:] = f_max[-degree:]
+                    else:
+                        XBS[
+                            above_xmax_mask,
                             ((i + 1) * n_splines - degree) : ((i + 1) * n_splines),
                         ] = f_max[-degree:]
 
