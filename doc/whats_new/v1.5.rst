@@ -99,9 +99,9 @@ From scikit-learn 1.5 onwards, Meson is the main supported way to build
 scikit-learn, see :ref:`Building from source <install_bleeding_edge>` for more
 details.
 
-Unless we discover a major blocker, we intend to keep testing setuptools
-support until v1.6 and officially remove setuptools support when scikit-learn
-1.6 is released.
+Unless we discover a major blocker, scikit-learn 1.5 releases will support
+building scikit-learn with setuptools and scikit-learn 1.6 will drop setuptools
+support.
 
 Meson support for building scikit-learn was added in :pr:`28040` by :user:`Loïc
 Estève <lesteve>`
