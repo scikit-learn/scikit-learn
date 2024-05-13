@@ -14,8 +14,6 @@ from sklearn.ensemble import (
     AdaBoostRegressor,
     BaggingClassifier,
     BaggingRegressor,
-    StackingClassifier,
-    StackingRegressor,
 )
 from sklearn.exceptions import UnsetMetadataPassedError
 from sklearn.experimental import (
@@ -408,8 +406,6 @@ UNSUPPORTED_ESTIMATORS = [
     RFECV(ConsumingClassifier()),
     SelfTrainingClassifier(ConsumingClassifier()),
     SequentialFeatureSelector(ConsumingClassifier()),
-    StackingClassifier(ConsumingClassifier()),
-    StackingRegressor(ConsumingRegressor()),
     TransformedTargetRegressor(),
 ]
 
