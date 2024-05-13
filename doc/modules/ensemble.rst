@@ -603,7 +603,22 @@ fitted model.
 
 ::
 
-  >>> _ = est.set_params(n_estimators=200, warm_start=True)  # set warm_start and new nr of trees
+  >>> import numpy as np
+  >>> from sklearn.metrics import mean_squared_error
+  >>> from sklearn.datasets import make_friedman1
+  >>> from sklearn.ensemble import GradientBoostingRegressor
+
+  >>> X, y = make_friedman1(n_samples=1200, random_state=0, noise=1.0)
+  >>> X_train, X_test = X[:200], X[200:]
+  >>> y_train, y_test = y[:200], y[200:]
+  >>> est = GradientBoostingRegressor(
+  ...     n_estimators=100, learning_rate=0.1, max_depth=1, random_state=0,
+  ...     loss='squared_error'
+  ... )
+  >>> est = est.fit(X_train, y_train)  # fit with 100 trees
+  >>> mean_squared_error(y_test, est.predict(X_test))
+  5.00...
+  >>> _ = est.set_params(n_estimators=200, warm_start=True)  # set warm_start and increase num of trees
   >>> _ = est.fit(X_train, y_train) # fit additional 100 trees to est
   >>> mean_squared_error(y_test, est.predict(X_test))
   3.84...
@@ -1581,8 +1596,8 @@ availability, tested in the order of preference: `predict_proba`,
 `decision_function` and `predict`.
 
 A :class:`StackingRegressor` and :class:`StackingClassifier` can be used as
-any other regressor or classifier, exposing a `predict`, `predict_proba`, and
-`decision_function` methods, e.g.::
+any other regressor or classifier, exposing a `predict`, `predict_proba`, or
+`decision_function` method, e.g.::
 
    >>> y_pred = reg.predict(X_test)
    >>> from sklearn.metrics import r2_score
