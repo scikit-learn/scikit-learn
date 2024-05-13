@@ -68,7 +68,7 @@ Changes impacting many modules
   :pr:`28756` by :user:`Will Dean <wd60622>`.
 
 - |Fix| Raise `ValueError` with an informative error message when passing 1D
-  sparse arrays to methods that expect 1D sparse inputs.
+  sparse arrays to methods that expect 2D sparse inputs.
   :pr:`28988` by :user:`Olivier Grisel <ogrisel>`.
 
 Support for Array API
