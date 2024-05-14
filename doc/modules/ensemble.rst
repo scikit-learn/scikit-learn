@@ -1248,8 +1248,13 @@ RandomForest, Extra-Trees and :class:`RandomTreesEmbedding` estimators all suppo
   >>> X, y = make_classification(n_samples=100, random_state=1)
   >>> clf = RandomForestClassifier(n_estimators=10)
   >>> clf = clf.fit(X, y)  # fit with 10 trees
-  >>> _ = clf.set_params(n_estimators=20, warm_start=True) # set warm_start and increase num of estimators
+  >>> len(clf.estimators_)
+  10
+  >>> # set warm_start and increase num of estimators
+  >>> _ = clf.set_params(n_estimators=20, warm_start=True)
   >>> _ = clf.fit(X, y) # fit additional 10 trees
+  >>> len(clf.estimators_)
+  20
 
 When ``random_state`` is also set, the internal random state is also preserved
 between ``fit`` calls. This means that training a model once with ``n`` estimators is
