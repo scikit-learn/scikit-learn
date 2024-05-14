@@ -244,7 +244,6 @@ def check_paired_arrays(X, Y):
         If Y was None, safe_Y will be a pointer to X.
     """
     X, Y = check_pairwise_arrays(X, Y)
-
     if X.shape != Y.shape:
         raise ValueError(
             "X and Y should be of same shape. They were respectively %r and %r long."
@@ -1676,6 +1675,7 @@ def cosine_similarity(X, Y=None, dense_output=True):
     # to avoid recursive import
 
     X, Y = check_pairwise_arrays(X, Y)
+
     X_normalized = normalize(X, copy=True)
     if X is Y:
         Y_normalized = X_normalized
