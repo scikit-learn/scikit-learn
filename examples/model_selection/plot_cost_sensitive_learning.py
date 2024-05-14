@@ -502,7 +502,7 @@ _ = ax.set_xlabel("Amount (€)")
 # gain and loss related to refusals (of fraudulent and legitimate transactions) are not
 # trivial to define. Here, we define that a refusal of a legitimate transaction is
 # estimated to a loss of 5€ while the refusal of a fraudulent transaction is estimated
-# to a gain of 50€ dollars and the amount of the transaction. Therefore, we define the
+# to a gain of 50€ and the amount of the transaction. Therefore, we define the
 # following function to compute the total benefit of a given decision:
 
 
