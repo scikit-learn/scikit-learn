@@ -25,6 +25,11 @@ from ..utils import (
     gen_batches,
     gen_even_slices,
 )
+from ..utils._array_api import (
+    _find_matching_floating_dtype,
+    _is_numpy_namespace,
+    get_namespace,
+)
 from ..utils._chunking import get_chunk_n_rows
 from ..utils._mask import _get_mask
 from ..utils._missing import is_scalar_nan
@@ -148,13 +153,17 @@ def check_pairwise_arrays(
     Returns
     -------
     safe_X : {array-like, sparse matrix} of shape (n_samples_X, n_features)
-        An array equal to X, guaranteed to be a numpy array.
+        An array equal to X, guaranteed to be an array.
 
     safe_Y : {array-like, sparse matrix} of shape (n_samples_Y, n_features)
-        An array equal to Y if Y was not None, guaranteed to be a numpy array.
+        An array equal to Y if Y was not None, guaranteed to be an array.
         If Y was None, safe_Y will be a pointer to X.
     """
-    X, Y, dtype_float = _return_float_dtype(X, Y)
+    xp, _ = get_namespace(X, Y)
+    if any([issparse(X), issparse(Y)]) or _is_numpy_namespace(xp):
+        X, Y, dtype_float = _return_float_dtype(X, Y)
+    else:
+        dtype_float = _find_matching_floating_dtype(X, Y, xp=xp)
 
     estimator = "check_pairwise_arrays"
     if dtype == "infer_float":
@@ -235,6 +244,7 @@ def check_paired_arrays(X, Y):
         If Y was None, safe_Y will be a pointer to X.
     """
     X, Y = check_pairwise_arrays(X, Y)
+
     if X.shape != Y.shape:
         raise ValueError(
             "X and Y should be of same shape. They were respectively %r and %r long."
@@ -1666,7 +1676,6 @@ def cosine_similarity(X, Y=None, dense_output=True):
     # to avoid recursive import
 
     X, Y = check_pairwise_arrays(X, Y)
-
     X_normalized = normalize(X, copy=True)
     if X is Y:
         Y_normalized = X_normalized
