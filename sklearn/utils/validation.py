@@ -725,6 +725,7 @@ def check_array(
     accept_large_sparse=True,
     dtype="numeric",
     order=None,
+    writeable=None,
     copy=False,
     force_all_finite=True,
     ensure_2d=True,
@@ -771,6 +772,13 @@ def check_array(
         about the memory layout of the output array; otherwise (copy=True)
         the memory layout of the returned array is kept as close as possible
         to the original array.
+
+    writeable : True or None, default=None
+        Whether the returned array will be writeable. If True, the returned array is
+        guaranteed to be writeable, which may require a copy. If None, the writeability
+        of the input array is preserved.
+
+        .. versionadded:: 1.6
 
     copy : bool, default=False
         Whether a forced copy will be triggered. If copy=False, a copy might
@@ -1087,17 +1095,11 @@ def check_array(
                 % (n_features, array.shape, ensure_min_features, context)
             )
 
-    # With an input pandas dataframe or series, we know we can always make the
-    # resulting array writeable:
-    # - if copy=True, we have already made a copy so it is fine to make the
-    #   array writeable
-    # - if copy=False, the caller is telling us explicitly that we can do
-    #   in-place modifications
-    # See https://pandas.pydata.org/docs/dev/user_guide/copy_on_write.html#read-only-numpy-arrays
-    # for more details about pandas copy-on-write mechanism, that is enabled by
-    # default in pandas 3.0.0.dev.
-    if _is_pandas_df_or_series(array_orig) and hasattr(array, "flags"):
-        array.flags.writeable = True
+    if writeable and not array.flags.writeable:
+        try:
+            array.setflags(write=True)
+        except Exception:
+            array = array.copy()
 
     return array
 
@@ -1132,6 +1134,7 @@ def check_X_y(
     accept_large_sparse=True,
     dtype="numeric",
     order=None,
+    writeable=None,
     copy=False,
     force_all_finite=True,
     ensure_2d=True,
@@ -1182,6 +1185,13 @@ def check_X_y(
     order : {'F', 'C'}, default=None
         Whether an array will be forced to be fortran or c-style. If
         `None`, then the input data's order is preserved when possible.
+
+    writeable : True or None, default=None
+        Whether the returned array will be writeable. If True, the returned array is
+        guaranteed to be writeable, which may require a copy. If None, the writeability
+        of the input array is preserved.
+
+        .. versionadded:: 1.6
 
     copy : bool, default=False
         Whether a forced copy will be triggered. If copy=False, a copy might
@@ -1269,6 +1279,7 @@ def check_X_y(
         accept_large_sparse=accept_large_sparse,
         dtype=dtype,
         order=order,
+        writeable=writeable,
         copy=copy,
         force_all_finite=force_all_finite,
         ensure_2d=ensure_2d,
