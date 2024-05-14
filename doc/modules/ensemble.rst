@@ -1264,7 +1264,7 @@ final number of estimators is equal to ``n``.
 ::
 
   >>> clf = RandomForestClassifier(n_estimators=20)  # set `n_estimators` to 10 + 10
-  >>> clf.fit(X, y)  # fit `estimators_` will be the same as the classifier above
+  >>> _ = clf.fit(X, y)  # fit `estimators_` will be the same as the classifier above
 
 Note that this differs from the usual behavior of :term:`random_state` in that it does
 *not* result in the same result across different calls.
