@@ -213,7 +213,7 @@ persist and load your scikit-learn model, and they all follow the same API::
     with open("filename.pkl", "wb") as f:
         dump(clf, f, protocol=5)
 
-Using `protocol=5` is recommended to reduces memory usage and make it faster to
+Using `protocol=5` is recommended to reduce memory usage and make it faster to
 store and load any large NumPy array stored as a fitted attribute in the model.
 You can alternatively pass `protocol=pickle.HIGHEST_PROTOCOL` which is
 equivalent to `protocol=5` in Python 3.8 and later (at the time of writing).
@@ -363,7 +363,7 @@ each approach can be summarized as follows:
   with custom Python components such as a
   :class:`sklearn.preprocessing.FunctionTransformer` that wraps a function
   defined in the training script itself or more generally outside of any
-  importable Python package. Note that there  `cloudpickle`_ offers no forward
+  importable Python package. Note that `cloudpickle`_ offers no forward
   compatibility guarantees and you might need the same version of
   `cloudpickle`_ to load the persisted model along with the same version of all
   the libraries used to define the model. As the other pickle-based persistence
