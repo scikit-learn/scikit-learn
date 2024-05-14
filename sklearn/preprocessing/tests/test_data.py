@@ -9,7 +9,7 @@ import numpy.linalg as la
 import pytest
 from scipy import sparse, stats
 
-from sklearn import datasets
+from sklearn import config_context, datasets
 from sklearn.base import clone
 from sklearn.exceptions import NotFittedError
 from sklearn.metrics.pairwise import linear_kernel
@@ -38,6 +38,7 @@ from sklearn.preprocessing._data import BOUNDS_THRESHOLD, _handle_zeros_in_scale
 from sklearn.svm import SVR
 from sklearn.utils import gen_batches, shuffle
 from sklearn.utils._array_api import (
+    _convert_to_numpy,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._test_common.instance_generator import _get_check_estimator_ids
@@ -45,6 +46,7 @@ from sklearn.utils.estimator_checks import (
     _array_api_for_tests,
 )
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     _convert_container,
     assert_allclose,
     assert_allclose_dense_sparse,
@@ -116,10 +118,13 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
             scaler.fit(X, y, sample_weight=sample_weight_notOK)
 
 
-@pytest.mark.parametrize(
-    ["Xw", "X", "sample_weight"],
-    [
-        ([[1, 2, 3], [4, 5, 6]], [[1, 2, 3], [1, 2, 3], [4, 5, 6]], [2.0, 1.0]),
+def _yield_xw_x_sampleweight():
+    yield from (
+        (
+            [[1, 2, 3], [4, 5, 6]],
+            [[1, 2, 3], [1, 2, 3], [4, 5, 6]],
+            [2.0, 1.0],
+        ),
         (
             [[1, 0, 1], [0, 0, 1]],
             [[1, 0, 1], [0, 0, 1], [0, 0, 1], [0, 0, 1]],
@@ -135,8 +140,10 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
             ],
             np.array([1, 3]),
         ),
-    ],
-)
+    )
+
+
+@pytest.mark.parametrize(["Xw", "X", "sample_weight"], _yield_xw_x_sampleweight())
 @pytest.mark.parametrize("array_constructor", ["array", "sparse_csr", "sparse_csc"])
 def test_standard_scaler_sample_weight(Xw, X, sample_weight, array_constructor):
     with_mean = not array_constructor.startswith("sparse")
@@ -158,6 +165,66 @@ def test_standard_scaler_sample_weight(Xw, X, sample_weight, array_constructor):
     assert_almost_equal(scaler.mean_, scaler_w.mean_)
     assert_almost_equal(scaler.var_, scaler_w.var_)
     assert_almost_equal(scaler.transform(X_test), scaler_w.transform(X_test))
+
+
+@pytest.mark.parametrize(["Xw", "X", "sample_weight"], _yield_xw_x_sampleweight())
+@pytest.mark.parametrize(
+    "namespace, dev, dtype", yield_namespace_device_dtype_combinations()
+)
+def test_standard_scaler_sample_weight_array_api(
+    Xw, X, sample_weight, namespace, dev, dtype
+):
+    # N.B. The sample statistics for Xw w/ sample_weight should match
+    #      the statistics of X w/ uniform sample_weight.
+    xp = _array_api_for_tests(namespace, dev)
+
+    X = np.array(X).astype(dtype, copy=False)
+    y = np.ones(X.shape[0])
+    Xw = np.array(Xw).astype(dtype, copy=False)
+    yw = np.ones(Xw.shape[0])
+    X_test = np.array([[1.5, 2.5, 3.5], [3.5, 4.5, 5.5]]).astype(dtype, copy=False)
+
+    scaler = StandardScaler()
+    scaler.fit(X, y)
+
+    scaler_w = StandardScaler()
+    scaler_w.fit(Xw, yw, sample_weight=sample_weight)
+
+    # Test array-api support and correctness.
+    X_xp = xp.asarray(X, device=dev)
+    y_xp = xp.asarray(y, device=dev)
+    Xw_xp = xp.asarray(Xw, device=dev)
+    yw_xp = xp.asarray(yw, device=dev)
+    X_test_xp = xp.asarray(X_test, device=dev)
+    sample_weight_xp = xp.asarray(sample_weight, device=dev)
+
+    scaler_w_xp = StandardScaler()
+    with config_context(array_api_dispatch=True):
+        scaler_w_xp.fit(Xw_xp, yw_xp, sample_weight=sample_weight_xp)
+        w_mean = _convert_to_numpy(scaler_w_xp.mean_, xp=xp)
+        w_var = _convert_to_numpy(scaler_w_xp.var_, xp=xp)
+
+    assert_almost_equal(scaler_w.mean_, w_mean)
+    assert_almost_equal(scaler_w.var_, w_var)
+
+    # unweighted, but with repeated samples
+    scaler_xp = StandardScaler()
+    with config_context(array_api_dispatch=True):
+        scaler_xp.fit(X_xp, y_xp)
+        uw_mean = _convert_to_numpy(scaler_xp.mean_, xp=xp)
+        uw_var = _convert_to_numpy(scaler_xp.var_, xp=xp)
+
+    assert_almost_equal(scaler.mean_, uw_mean)
+    assert_almost_equal(scaler.var_, uw_var)
+
+    # Check that both array-api outputs match.
+    assert_almost_equal(uw_mean, w_mean)
+    assert_almost_equal(uw_var, w_var)
+    with config_context(array_api_dispatch=True):
+        assert_almost_equal(
+            _convert_to_numpy(scaler_xp.transform(X_test_xp), xp=xp),
+            _convert_to_numpy(scaler_w_xp.transform(X_test_xp), xp=xp),
+        )
 
 
 def test_standard_scaler_1d():
