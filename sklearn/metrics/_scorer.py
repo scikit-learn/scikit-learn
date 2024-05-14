@@ -982,7 +982,7 @@ def check_scoring(estimator=None, scoring=None, *, allow_none=False, raise_exc=T
         - a callable returning a dictionary where the keys are the metric
           names and the values are the metric scorers;
         - a dictionary with metric names as keys and callables a values. The callables
-        need to have the signature `callable(estimator, X, y)`.
+          need to have the signature `callable(estimator, X, y)`.
 
         If None, the provided estimator object's `score` method is used.
 
@@ -992,7 +992,7 @@ def check_scoring(estimator=None, scoring=None, *, allow_none=False, raise_exc=T
 
     raise_exc : bool, default=True
         Whether to raise an exception if a subset of the scorers in multimetric scoring
-        fails or to return an error code as a str for the failing scorer(s).
+        fails or to return an error code.
 
         - If set to `True` raises the failing scorer's exception.
 
