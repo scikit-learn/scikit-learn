@@ -1096,16 +1096,10 @@ def check_array(
             )
 
     if writeable:
-        if sp.issparse(array) and not array.data.flags.writeable:
+        array_data = array.data if sp.issparse(array) else array
+        if not array_data.flags.writeable:
             try:
-                array.data.setflags(write=True)
-                array.indptr.setflags(write=True)
-                array.indices.setflags(write=True)
-            except Exception:
-                array = array.copy()
-        elif not sp.issparse(array) and not array.flags.writeable:
-            try:
-                array.setflags(write=True)
+                array_data.setflags(write=True)
             except Exception:
                 array = array.copy()
 
