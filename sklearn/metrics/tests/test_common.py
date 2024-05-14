@@ -51,6 +51,7 @@ from sklearn.metrics import (
     zero_one_loss,
 )
 from sklearn.metrics._base import _average_binary_score
+from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import shuffle
 from sklearn.utils._array_api import (
@@ -1765,6 +1766,31 @@ def check_array_api_metric(
         )
 
 
+def check_array_api_metric_pairwise(metric, array_namespace, device, dtype_name):
+    xp = _array_api_for_tests(array_namespace, device)
+
+    X_np = np.array([[2, 0, 1, 4]], dtype=dtype_name)
+    Y_np = np.array([[0.5, 0.5, 2, 2]], dtype=dtype_name)
+
+    X_xp = xp.asarray(X_np, device=device)
+    Y_xp = xp.asarray(Y_np, device=device)
+
+    metric_kwargs = {}
+    if metric == cosine_similarity:
+        metric_kwargs["dense_output"] = True
+
+    metric_np = metric(X_np, Y_np, **metric_kwargs)
+
+    with config_context(array_api_dispatch=True):
+        metric_xp = metric(X_xp, Y_xp, **metric_kwargs)
+
+        assert_allclose(
+            _convert_to_numpy(xp.asarray(metric_xp), xp),
+            metric_np,
+            atol=_atol_for_type(dtype_name),
+        )
+
+
 def check_array_api_binary_classification_metric(
     metric, array_namespace, device, dtype_name
 ):
@@ -1893,6 +1919,7 @@ array_api_metric_checkers = {
         check_array_api_regression_metric,
         check_array_api_regression_metric_multioutput,
     ],
+    cosine_similarity: [check_array_api_metric_pairwise],
 }
 
 
