@@ -981,7 +981,8 @@ def check_scoring(estimator=None, scoring=None, *, allow_none=False, raise_exc=T
         - a list, tuple or set of unique strings;
         - a callable returning a dictionary where the keys are the metric
           names and the values are the metric scorers;
-        - a dictionary with metric names as keys and callables a values.
+        - a dictionary with metric names as keys and callables a values. The callables
+        need to have the signature `callable(estimator, X, y)`.
 
         If None, the provided estimator object's `score` method is used.
 
