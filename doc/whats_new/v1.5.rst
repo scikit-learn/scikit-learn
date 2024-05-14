@@ -67,6 +67,10 @@ Changes impacting many modules
   :class:`pipeline.Pipeline` and :class:`preprocessing.KBinsDiscretizer`.
   :pr:`28756` by :user:`Will Dean <wd60622>`.
 
+- |Fix| Raise `ValueError` with an informative error message when passing 1D
+  sparse arrays to methods that expect 2D sparse inputs.
+  :pr:`28988` by :user:`Olivier Grisel <ogrisel>`.
+
 Support for Array API
 ---------------------
 
@@ -91,12 +95,16 @@ See :ref:`array_api` for more details.
 Support for building with Meson
 -------------------------------
 
-Meson is now supported as a build backend, see :ref:`Building from source
-<install_bleeding_edge>` for more details.
+From scikit-learn 1.5 onwards, Meson is the main supported way to build
+scikit-learn, see :ref:`Building from source <install_bleeding_edge>` for more
+details.
 
-:pr:`28040` by :user:`Loïc Estève <lesteve>`
+Unless we discover a major blocker, setuptools support will be dropped in
+scikit-learn 1.6. The 1.5.x releases will support building scikit-learn with
+setuptools.
 
-TODO Fill more details before the 1.5 release, when the Meson story has settled down.
+Meson support for building scikit-learn was added in :pr:`28040` by :user:`Loïc
+Estève <lesteve>`
 
 Metadata Routing
 ----------------
