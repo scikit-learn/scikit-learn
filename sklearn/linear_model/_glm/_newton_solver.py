@@ -1,9 +1,8 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 """
 Newton solver for Generalized Linear Models
 """
-
-# Author: Christian Lorentzen <lorentzen.ch@gmail.com>
-# License: BSD 3 clause
 
 import warnings
 from abc import ABC, abstractmethod
