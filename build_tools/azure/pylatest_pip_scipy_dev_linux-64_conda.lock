@@ -20,12 +20,12 @@ https://repo.anaconda.com/pkgs/main/linux-64/xz-5.4.6-h5eee18b_1.conda#1562802f8
 https://repo.anaconda.com/pkgs/main/linux-64/zlib-1.2.13-h5eee18b_1.conda#92e42d8310108b0a440fb2e60b2b2a25
 https://repo.anaconda.com/pkgs/main/linux-64/ccache-3.7.9-hfe4627d_0.conda#bef6fc681c273bb7bd0c67d1a591365e
 https://repo.anaconda.com/pkgs/main/linux-64/readline-8.2-h5eee18b_0.conda#be42180685cce6e6b0329201d9f48efb
-https://repo.anaconda.com/pkgs/main/linux-64/tk-8.6.12-h1ccaba5_0.conda#fa10ff4aa631fa4aa090a6234d7770b9
+https://repo.anaconda.com/pkgs/main/linux-64/tk-8.6.14-h39e8969_0.conda#78dbc5e3c69143ebc037fc5d5b22e597
 https://repo.anaconda.com/pkgs/main/linux-64/sqlite-3.45.3-h5eee18b_0.conda#acf93d6aceb74d6110e20b44cc45939e
-https://repo.anaconda.com/pkgs/main/linux-64/python-3.12.3-h996f2a0_0.conda#77af2bd351a8311d1e780bcfa7819bb8
-https://repo.anaconda.com/pkgs/main/linux-64/setuptools-68.2.2-py312h06a4308_0.conda#83ba634cde4f30d9e0b88e4ac9716ca4
+https://repo.anaconda.com/pkgs/main/linux-64/python-3.12.3-h996f2a0_1.conda#0e22ed7e6df024e4f7467e75c8575301
+https://repo.anaconda.com/pkgs/main/linux-64/setuptools-69.5.1-py312h06a4308_0.conda#ce85d9a864a73e0b12d31a97733c9fca
 https://repo.anaconda.com/pkgs/main/linux-64/wheel-0.43.0-py312h06a4308_0.conda#18d5f3b68a175c72576876db4afc9e9e
-https://repo.anaconda.com/pkgs/main/linux-64/pip-23.3.1-py312h06a4308_0.conda#e1d44bca4a257e84af33503233491107
+https://repo.anaconda.com/pkgs/main/linux-64/pip-24.0-py312h06a4308_0.conda#6d9697bb8b9f3212be10b3b8e01a12b9
 # pip alabaster @ https://files.pythonhosted.org/packages/32/34/d4e1c02d3bee589efb5dfa17f88ea08bdb3e3eac12bc475462aec52ed223/alabaster-0.7.16-py3-none-any.whl#sha256=b46733c07dce03ae4e150330b975c75737fa60f0a7c591b6c8bf4928a28e2c92
 # pip babel @ https://files.pythonhosted.org/packages/27/45/377f7e32a5c93d94cd56542349b34efab5ca3f9e2fd5a68c5e93169aa32d/Babel-2.15.0-py3-none-any.whl#sha256=08706bdad8d0a3413266ab61bd6c34d0c28d6e1e7badf40a2cebe67644e2e1fb
 # pip certifi @ https://files.pythonhosted.org/packages/ba/06/a07f096c664aeb9f01624f858c3add0a4e913d6c96257acb4fce61e7de14/certifi-2024.2.2-py3-none-any.whl#sha256=dc383c07b76109f368f6106eee2b593b04a011ea4d55f652c6ca24a754d1cdd1
