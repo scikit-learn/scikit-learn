@@ -212,17 +212,23 @@ default-ignore = false
 
 [tool.spin]
 package = "sklearn"  # name of your package
-commands = [
-  "spin.cmds.meson.build",
-  "spin.cmds.meson.test",
+# commands = [
+#   "spin.cmds.meson.test",
+#   "spin.cmds.pip.install",
+# ]
+
+[tool.spin.commands]
+"Build" = [
   "spin.cmds.pip.install",
+  "spin.cmds.meson.test",
+  "spin.cmds.build.sdist",
 ]
-# [tool.spin.commands]
-# "Build" = [
-#   "spin.cmds.meson.build",
-#   "spin.cmds.meson.test"
-# ]
-# "Environments" = [
-#   "spin.cmds.meson.ipython",
-#   "spin.cmds.meson.run"
-# ]
+"Documentation" = [
+  "spin.cmds.meson.docs"
+]
+"Environments" = [
+  "spin.cmds.meson.shell",
+  "spin.cmds.meson.ipython",
+  "spin.cmds.meson.python",
+  "spin.cmds.meson.run"
+]
