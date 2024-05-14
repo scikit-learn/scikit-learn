@@ -1095,11 +1095,19 @@ def check_array(
                 % (n_features, array.shape, ensure_min_features, context)
             )
 
-    if writeable and not array.flags.writeable:
-        try:
-            array.setflags(write=True)
-        except Exception:
-            array = array.copy()
+    if writeable:
+        if sp.issparse(array) and not array.data.flags.writeable:
+            try:
+                array.data.setflags(write=True)
+                array.indptr.setflags(write=True)
+                array.indices.setflags(write=True)
+            except Exception:
+                array = array.copy()
+        elif not sp.issparse(array) and not array.flags.writeable:
+            try:
+                array.setflags(write=True)
+            except Exception:
+                array = array.copy()
 
     return array
 
