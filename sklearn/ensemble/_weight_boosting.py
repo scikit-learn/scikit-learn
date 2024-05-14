@@ -1081,7 +1081,7 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
     >>> regr.score(X, y)
     0.9771...
 
-    For a detailed example of utilizing AdaBoostRegressor to fit a
+    For a detailed example of utilizing :class:`~sklearn.ensemble.AdaBoostRegressor` to fit a
     sequence of decision trees as weak learners, please refer to
     :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_regression.py`.
     """
