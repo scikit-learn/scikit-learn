@@ -978,7 +978,7 @@ def check_scoring(estimator=None, scoring=None, *, allow_none=False, raise_exc=T
 
         If `scoring` represents multiple scores, one can use:
 
-        - a list or tuple of unique strings;
+        - a list, tuple or set of unique strings;
         - a callable returning a dictionary where the keys are the metric
           names and the values are the metric scorers;
         - a dictionary with metric names as keys and callables a values.
