@@ -1247,6 +1247,43 @@ estimation.
    representations of feature space, also these approaches focus also on
    dimensionality reduction.
 
+.. _tree_ensemble_warm_start:
+
+Fitting additional trees
+------------------------
+
+RandomForest, Extra-Trees and :class:`RandomTreesEmbedding` estimators all support
+``warm_start=True`` which allows you to add more trees to an already fitted model.
+
+::
+
+  >>> from sklearn.datasets import make_classification
+  >>> from sklearn.ensemble import RandomForestClassifier
+
+  >>> X, y = make_classification(n_samples=100, random_state=1)
+  >>> clf = RandomForestClassifier(n_estimators=10)
+  >>> clf = clf.fit(X, y)  # fit with 10 trees
+  >>> len(clf.estimators_)
+  10
+  >>> # set warm_start and increase num of estimators
+  >>> _ = clf.set_params(n_estimators=20, warm_start=True)
+  >>> _ = clf.fit(X, y) # fit additional 10 trees
+  >>> len(clf.estimators_)
+  20
+
+When ``random_state`` is also set, the internal random state is also preserved
+between ``fit`` calls. This means that training a model once with ``n`` estimators is
+the same as building the model iteratively via multiple ``fit`` calls, where the
+final number of estimators is equal to ``n``.
+
+::
+
+  >>> clf = RandomForestClassifier(n_estimators=20)  # set `n_estimators` to 10 + 10
+  >>> _ = clf.fit(X, y)  # fit `estimators_` will be the same as `clf` above
+
+Note that this differs from the usual behavior of :term:`random_state` in that it does
+*not* result in the same result across different calls.
+
 .. _bagging:
 
 Bagging meta-estimator
