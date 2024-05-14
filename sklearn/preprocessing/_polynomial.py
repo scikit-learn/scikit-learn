@@ -1090,10 +1090,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     XBS[:, n_splines * i : n_splines * (i + 1)][
                         extended_nan_indicator
                     ] = 0
-                    # Adjust format of XBS to sparse, for scipy versions < 1.10.0:
-                    # TODO: Remove once scipy 1.10 is the minimum version:
-                    if self.sparse_output:
-                        XBS = sparse.csr_matrix(XBS)
 
             else:  # extrapolation in ("constant", "linear")
                 xmin, xmax = spl.t[degree], spl.t[-degree - 1]
@@ -1233,6 +1229,10 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     " transformer to produce fewer than 2^31 output features"
                 )
             XBS = sparse.hstack(output_list, format="csr")
+        elif self.sparse_output:
+            # Adjust format of XBS to sparse, for scipy versions < 1.10.0:
+            # TODO: Remove once scipy 1.10 is the minimum version:
+            XBS = sparse.csr_matrix(XBS)
 
         if self.include_bias:
             return XBS
