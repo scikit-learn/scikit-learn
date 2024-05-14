@@ -1758,9 +1758,6 @@ def check_array_api_metric(
     with config_context(array_api_dispatch=True):
         metric_xp = metric(y_true_xp, y_pred_xp, sample_weight=sample_weight)
 
-        if not isinstance(metric_xp, float):
-            metric_xp = _convert_to_numpy(metric_xp, xp)
-
         assert_allclose(
             _convert_to_numpy(xp.asarray(metric_xp), xp),
             metric_np,
