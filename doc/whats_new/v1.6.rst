@@ -35,6 +35,7 @@ See :ref:`array_api` for more details.
 - :func:`sklearn.metrics.mean_tweedie_deviance` now supports Array API compatible
   inputs.
   :pr:`28106` by :user:`Thomas Li <lithomas1>`
+- :func:`sklearn.metrics.mean_absolute_error` :pr:`27736` by :user:`Edoardo Abati <EdAbati>`.
 
 **Classes:**
 

@@ -189,7 +189,7 @@ def mean_absolute_error(
 
     Returns
     -------
-    loss : float or ndarray of floats
+    loss : float or array of floats
         If multioutput is 'raw_values', then mean absolute error is returned
         for each output separately.
         If multioutput is 'uniform_average' or an ndarray of weights, then the
@@ -213,11 +213,19 @@ def mean_absolute_error(
     >>> mean_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.85...
     """
-    y_type, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput
+    input_arrays = [y_true, y_pred, sample_weight, multioutput]
+    xp, _ = get_namespace(*input_arrays)
+
+    dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
+
+    _, y_true, y_pred, multioutput = _check_reg_targets(
+        y_true, y_pred, multioutput, dtype=dtype, xp=xp
     )
     check_consistent_length(y_true, y_pred, sample_weight)
-    output_errors = np.average(np.abs(y_pred - y_true), weights=sample_weight, axis=0)
+
+    output_errors = _average(
+        xp.abs(y_pred - y_true), weights=sample_weight, axis=0, xp=xp
+    )
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
             return output_errors
@@ -225,7 +233,15 @@ def mean_absolute_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    # Average across the outputs (if needed).
+    mean_absolute_error = _average(output_errors, weights=multioutput)
+
+    # Since `y_pred.ndim <= 2` and `y_true.ndim <= 2`, the second call to _average
+    # should always return a scalar array that we convert to a Python float to
+    # consistently return the same eager evaluated value, irrespective of the
+    # Array API implementation.
+    assert mean_absolute_error.shape == ()
+    return float(mean_absolute_error)
 
 
 @validate_params(

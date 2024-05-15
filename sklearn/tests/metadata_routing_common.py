@@ -194,7 +194,10 @@ class NonConsumingClassifier(ClassifierMixin, BaseEstimator):
         return self.predict(X)
 
     def predict(self, X):
-        return np.ones(len(X))
+        y_pred = np.empty(shape=(len(X),))
+        y_pred[: len(X) // 2] = 0
+        y_pred[len(X) // 2 :] = 1
+        return y_pred
 
 
 class NonConsumingRegressor(RegressorMixin, BaseEstimator):
@@ -257,13 +260,19 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         record_metadata_not_default(
             self, "predict", sample_weight=sample_weight, metadata=metadata
         )
-        return np.zeros(shape=(len(X),), dtype="int8")
+        y_score = np.empty(shape=(len(X),), dtype="int8")
+        y_score[len(X) // 2 :] = 0
+        y_score[: len(X) // 2] = 1
+        return y_score
 
     def predict_proba(self, X, sample_weight="default", metadata="default"):
         record_metadata_not_default(
             self, "predict_proba", sample_weight=sample_weight, metadata=metadata
         )
-        return np.asarray([[0.0, 1.0]] * len(X))
+        y_proba = np.empty(shape=(len(X), 2))
+        y_proba[: len(X) // 2, :] = np.asarray([1.0, 0.0])
+        y_proba[len(X) // 2 :, :] = np.asarray([0.0, 1.0])
+        return y_proba
 
     def predict_log_proba(self, X, sample_weight="default", metadata="default"):
         pass  # pragma: no cover
@@ -278,7 +287,10 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         record_metadata_not_default(
             self, "predict_proba", sample_weight=sample_weight, metadata=metadata
         )
-        return np.zeros(shape=(len(X),))
+        y_score = np.empty(shape=(len(X),))
+        y_score[len(X) // 2 :] = 0
+        y_score[: len(X) // 2] = 1
+        return y_score
 
     # uncomment when needed
     # def score(self, X, y, sample_weight="default", metadata="default"):
