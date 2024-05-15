@@ -1882,6 +1882,13 @@ def check_array_api_regression_metric_multioutput(
     )
 
 
+def check_array_api_multioutput_regression_metric(
+    metric, array_namespace, device, dtype_name
+):
+    metric = partial(metric, multioutput="raw_values")
+    check_array_api_regression_metric(metric, array_namespace, device, dtype_name)
+
+
 def check_array_api_metric_pairwise(metric, array_namespace, device, dtype_name):
 
     X_np = np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=dtype_name)
@@ -1911,6 +1918,10 @@ array_api_metric_checkers = {
         check_array_api_regression_metric_multioutput,
     ],
     cosine_similarity: [check_array_api_metric_pairwise],
+    mean_absolute_error: [
+        check_array_api_regression_metric,
+        check_array_api_multioutput_regression_metric,
+    ],
 }
 
 
