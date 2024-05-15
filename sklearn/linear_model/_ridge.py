@@ -19,7 +19,7 @@ import numpy as np
 from scipy import linalg, optimize, sparse
 from scipy.sparse import linalg as sp_linalg
 
-from ..base import MultiOutputMixin, RegressorMixin, _fit_context, is_classifier
+from ..base import RegressorMixin, _fit_context, is_classifier
 from ..exceptions import ConvergenceWarning
 from ..metrics import check_scoring, get_scorer_names
 from ..model_selection import GridSearchCV
@@ -52,7 +52,13 @@ from ..utils.metadata_routing import (
 )
 from ..utils.sparsefuncs import mean_variance_axis
 from ..utils.validation import _check_sample_weight, check_is_fitted
-from ._base import LinearClassifierMixin, LinearModel, _preprocess_data, _rescale_data
+from ._base import (
+    LinearClassifierMixin,
+    LinearModel,
+    MultiOutputLinearModel,
+    _preprocess_data,
+    _rescale_data,
+)
 from ._sag import sag_solver
 
 
@@ -873,7 +879,7 @@ def resolve_solver_for_numpy(positive, return_intercept, is_sparse):
     return "sparse_cg"
 
 
-class _BaseRidge(LinearModel, metaclass=ABCMeta):
+class _BaseRidge(MultiOutputLinearModel, metaclass=ABCMeta):
     _parameter_constraints: dict = {
         "alpha": [Interval(Real, 0, None, closed="left"), np.ndarray],
         "fit_intercept": ["boolean"],
@@ -1013,7 +1019,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         return self
 
 
-class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
+class Ridge(RegressorMixin, _BaseRidge):
     """Linear least squares with l2 regularization.
 
     Minimizes the objective function::
@@ -2252,7 +2258,7 @@ class _RidgeGCV(LinearModel):
         return _score
 
 
-class _BaseRidgeCV(LinearModel):
+class _BaseRidgeCV(MultiOutputLinearModel):
     _parameter_constraints: dict = {
         "alphas": ["array-like", Interval(Real, 0, None, closed="neither")],
         "fit_intercept": ["boolean"],
@@ -2482,7 +2488,7 @@ class _BaseRidgeCV(LinearModel):
         return self.cv_results_
 
 
-class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
+class RidgeCV(RegressorMixin, _BaseRidgeCV):
     """Ridge regression with built-in cross-validation.
 
     See glossary entry for :term:`cross-validation estimator`.

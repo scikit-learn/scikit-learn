@@ -18,7 +18,7 @@ import numpy as np
 from scipy import interpolate, linalg
 from scipy.linalg.lapack import get_lapack_funcs
 
-from ..base import MultiOutputMixin, RegressorMixin, _fit_context
+from ..base import RegressorMixin, _fit_context
 from ..exceptions import ConvergenceWarning
 from ..model_selection import check_cv
 
@@ -38,7 +38,7 @@ from ..utils._metadata_requests import (
 )
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.parallel import Parallel, delayed
-from ._base import LinearModel, LinearRegression, _preprocess_data
+from ._base import MultiOutputLinearModel, LinearRegression, _preprocess_data
 
 SOLVE_TRIANGULAR_ARGS = {"check_finite": False}
 
@@ -919,7 +919,7 @@ def _lars_path_solver(
 # Estimator classes
 
 
-class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
+class Lars(RegressorMixin, MultiOutputLinearModel):
     """Least Angle Regression model a.k.a. LAR.
 
     Read more in the :ref:`User Guide <least_angle_regression>`.

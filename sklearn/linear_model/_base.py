@@ -330,6 +330,26 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
         return {"requires_y": True}
 
 
+class MultiOutputLinearModel(MultiOutputMixin, LinearModel):
+    # Modify docstring of LinearModel.predict to include the possibility
+    # of having a return value with shape (n_samples, n_targets)
+    def predict(self, X):
+        """
+        Predict using the linear model.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape (n_samples, n_features)
+            Samples.
+
+        Returns
+        -------
+        C : array, shape (n_samples,) or (n_samples, n_targets)
+            Returns predicted values.
+        """
+        return super().predict(X)
+
+
 # XXX Should this derive from LinearModel? It should be a mixin, not an ABC.
 # Maybe the n_features checking can be moved to LinearModel.
 class LinearClassifierMixin(ClassifierMixin):
@@ -462,7 +482,7 @@ class SparseCoefMixin:
         return self
 
 
-class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
+class LinearRegression(RegressorMixin, MultiOutputLinearModel):
     """
     Ordinary least squares Linear Regression.
 
