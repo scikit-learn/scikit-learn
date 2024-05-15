@@ -601,7 +601,7 @@ from sklearn.preprocessing import StandardScaler
 
 logistic_regression = make_pipeline(StandardScaler(), LogisticRegression())
 param_grid = {"logisticregression__C": np.logspace(-6, 6, 13)}
-model = GridSearchCV(logistic_regression, param_grid, scoring="neg_log_loss").fit(
+model = GridSearchCV(logistic_regression, param_grid, scoring=business_scorer).fit(
     data_train, target_train
 )
 
@@ -618,7 +618,9 @@ print(
 # By observing the balanced accuracy, we see that our predictive model is learning
 # some associations between the features and the target. The business metric also shows
 # that our model is beating the baseline in terms of profit and it would be already
-# beneficial to use it instead of ignoring the fraud detection problem.
+# beneficial to use it instead of ignoring the fraud detection problem. Note that we
+# directly search for models optimizing our business score by passing it as ``scoring``
+# parameter to the :class:`~sklearn.model_selection.GridSearchCV`.
 #
 # Tuning the decision threshold
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
