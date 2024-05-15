@@ -483,10 +483,9 @@ class AdaBoostClassifier(
     as weaklearners, please refer to
     :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_multiclass.py`.
 
-    A detailed example of using AdaBoost to fit a non-linear seperable
-    classification dataset composed of two Guassian Quantiles Clusters
-    and plot decision boundary and decision scores, please refer to
-    :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_twoclass.py`
+    For a detailed example of using AdaBoost to fit a non-linearly seperable
+    classification dataset composed of two Gaussian quantiles clusters, please
+    refer to :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_twoclass.py`.
     """
 
     # TODO(1.6): Modify _parameter_constraints for "algorithm" to only check
