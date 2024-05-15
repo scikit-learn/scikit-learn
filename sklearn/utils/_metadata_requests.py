@@ -999,7 +999,7 @@ class MetadataRouter:
     def route_params(self, *, caller, params):
         """Return the input parameters requested by child objects.
 
-        The output of this method is a `Bunch`, which includes the metadata for all
+        The output of this method is a :class:`~sklearn.utils.Bunch`, which includes the metadata for all
         methods of each child object that is used in the router's `caller` method.
 
         If the router is also a consumer, it also checks for warnings of
