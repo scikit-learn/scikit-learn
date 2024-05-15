@@ -153,10 +153,10 @@ def check_pairwise_arrays(
     Returns
     -------
     safe_X : {array-like, sparse matrix} of shape (n_samples_X, n_features)
-        An array equal to X, guaranteed to be an array.
+        An array equal to X, guaranteed to be a numpy array.
 
     safe_Y : {array-like, sparse matrix} of shape (n_samples_Y, n_features)
-        An array equal to Y if Y was not None, guaranteed to be an array.
+        An array equal to Y if Y was not None, guaranteed to be a numpy array.
         If Y was None, safe_Y will be a pointer to X.
     """
     xp, _ = get_namespace(X, Y)
