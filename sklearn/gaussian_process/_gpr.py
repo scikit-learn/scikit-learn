@@ -34,9 +34,9 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
        * allows prediction without prior fitting (based on the GP prior)
        * provides an additional method `sample_y(X)`, which evaluates samples
          drawn from the GPR (prior or posterior) at given inputs
-       * exposes a method `log_marginal_likelihood(theta)`, which can be used
-         externally for other ways of selecting hyperparameters, e.g., via
-         Markov chain Monte Carlo.
+       * exposes a method `log_marginal_likelihood(log(theta))`, which can be
+         used externally for other ways of selecting hyperparameters ``theta``,
+         e.g., via Markov chain Monte Carlo.
 
     To learn the difference between a point-estimate approach vs. a more
     Bayesian modelling approach, refer to the example entitled
@@ -538,9 +538,9 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         Parameters
         ----------
         theta : array-like of shape (n_kernel_params,) default=None
-            Kernel hyperparameters for which the log-marginal likelihood is
-            evaluated. If None, the precomputed log_marginal_likelihood
-            of ``self.kernel_.theta`` is returned.
+            Log-transformed kernel hyperparameters for which the log-marginal
+            likelihood is evaluated. If None, the precomputed
+            log_marginal_likelihood of ``self.kernel_.theta`` is returned.
 
         eval_gradient : bool, default=False
             If True, the gradient of the log-marginal likelihood with respect

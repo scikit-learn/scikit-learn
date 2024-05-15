@@ -84,9 +84,15 @@ the API of standard scikit-learn estimators, :class:`GaussianProcessRegressor`:
 * provides an additional method ``sample_y(X)``, which evaluates samples
   drawn from the GPR (prior or posterior) at given inputs
 
-* exposes a method ``log_marginal_likelihood(theta)``, which can be used
-  externally for other ways of selecting hyperparameters, e.g., via
+* exposes a method ``log_marginal_likelihood(log(theta))``, which can be used
+  externally for other ways of selecting hyperparameters ``theta``, e.g., via
   Markov chain Monte Carlo.
+
+  .. note:: This method expects ``log(theta)`` as argument and the internal
+     optimizer calls ``log_marginal_likelihood(log(theta))`` automatically. If
+     you call ``GaussianProcessRegressor.log_marginal_likelihood()``, then make
+     sure to pass in ``log(theta)``.
+
 
 .. topic:: Examples
 
