@@ -1216,7 +1216,9 @@ def _test_tolerance(sparse_container):
     assert score >= score2
 
 
-def check_array_api_attributes(name, estimator, array_namespace, device, dtype_name):
+def check_array_api_attributes(
+    name, estimator, array_namespace, device, dtype_name, rtol=None
+):
     xp = _array_api_for_tests(array_namespace, device)
 
     X_iris_np = X_iris.astype(dtype_name)
@@ -1239,6 +1241,7 @@ def check_array_api_attributes(name, estimator, array_namespace, device, dtype_n
             _convert_to_numpy(coef_xp, xp=xp),
             coef_np,
             atol=_atol_for_type(dtype_name),
+            rtol=rtol,
         )
         intercept_xp = estimator_xp.intercept_
         assert intercept_xp.shape == ()
@@ -1248,6 +1251,7 @@ def check_array_api_attributes(name, estimator, array_namespace, device, dtype_n
             _convert_to_numpy(intercept_xp, xp=xp),
             intercept_np,
             atol=_atol_for_type(dtype_name),
+            rtol=rtol,
         )
 
 
@@ -1261,14 +1265,19 @@ def check_array_api_attributes(name, estimator, array_namespace, device, dtype_n
 )
 @pytest.mark.parametrize(
     "estimator",
-    [Ridge(solver="svd")],
+    [Ridge(solver="svd"), RidgeCV()],
     ids=_get_check_estimator_ids,
 )
 def test_ridge_array_api_compliance(
     estimator, check, array_namespace, device, dtype_name
 ):
     name = estimator.__class__.__name__
-    check(name, estimator, array_namespace, device=device, dtype_name=dtype_name)
+    rtol = {}
+    if "CV" in name and dtype_name == "float32" and check is check_array_api_attributes:
+        rtol = {"rtol": 0.01}
+    check(
+        name, estimator, array_namespace, device=device, dtype_name=dtype_name, **rtol
+    )
 
 
 @pytest.mark.parametrize(
