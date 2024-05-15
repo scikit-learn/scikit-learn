@@ -808,7 +808,7 @@ def test_standard_scaler_array_api_compliance(
         array_namespace,
         device=device,
         dtype_name=dtype_name,
-        sample_weight=sample_weight,
+        check_sample_weight=sample_weight,
     )
 
 

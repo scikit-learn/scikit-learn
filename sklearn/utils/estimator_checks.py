@@ -1044,7 +1044,7 @@ def check_array_api_input(
     device=None,
     dtype_name="float64",
     check_values=False,
-    sample_weight=False,
+    check_sample_weight=False,
 ):
     """Check that the estimator can work consistently with the Array API
 
@@ -1070,7 +1070,7 @@ def check_array_api_input(
     y_xp = xp.asarray(y, device=device)
     fit_kwargs = {}
     fit_kwargs_xp = {}
-    if sample_weight:
+    if check_sample_weight:
         fit_kwargs["sample_weight"] = np.ones(X.shape[0], dtype=X.dtype)
         fit_kwargs_xp["sample_weight"] = xp.asarray(
             fit_kwargs["sample_weight"], device=device
@@ -1230,7 +1230,7 @@ def check_array_api_input_and_values(
     array_namespace,
     device=None,
     dtype_name="float64",
-    sample_weight=False,
+    check_sample_weight=False,
 ):
     return check_array_api_input(
         name,
@@ -1239,7 +1239,7 @@ def check_array_api_input_and_values(
         device=device,
         dtype_name=dtype_name,
         check_values=True,
-        sample_weight=sample_weight,
+        check_sample_weight=check_sample_weight,
     )
 
 

@@ -2189,7 +2189,7 @@ def _check_sample_weight(
         sample_weight = xp.full(n_samples, sample_weight, dtype=dtype, device=X_device)
     else:
         if dtype is None:
-            dtype = supported_float_dtypes(xp)
+            dtype = supported_float_dtypes(xp, device=X_device)
         sample_weight = check_array(
             sample_weight,
             accept_sparse=False,
