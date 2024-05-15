@@ -51,6 +51,11 @@ more details.
   `fit` method of its estimator and for its underlying CV splitter and scorer.
   :pr:`28975` by :user:`Stefanie Senger <StefanieSenger>`.
 
+- |Feature| :class:`ensemble.StackingClassifier` and
+  :class:`ensemble.StackingRegressor` now support metadata routing and pass
+  ``**fit_params`` to the underlying estimators via their `fit` methods.
+  :pr:`28701` by :user:`Stefanie Senger <StefanieSenger>`.
+
 Changelog
 ---------
 
