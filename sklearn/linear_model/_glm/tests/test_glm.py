@@ -1,7 +1,5 @@
-# Authors: Christian Lorentzen <lorentzen.ch@gmail.com>
-#
-# License: BSD 3 clause
-
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 import itertools
 import warnings
 from functools import partial
