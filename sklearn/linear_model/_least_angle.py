@@ -38,7 +38,7 @@ from ..utils._metadata_requests import (
 )
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.parallel import Parallel, delayed
-from ._base import MultiOutputLinearModel, LinearRegression, _preprocess_data
+from ._base import LinearRegression, MultiOutputLinearModel, _preprocess_data
 
 SOLVE_TRIANGULAR_ARGS = {"check_finite": False}
 
