@@ -2624,8 +2624,16 @@ def test_cross_validate_learning_curve_routing(func):
             metadata=fit_metadata,
         )
 
-    # learning_curve uses an internal function for partial fitting the estimator when
-    # exploit_incremental_learning=True
+
+@pytest.mark.usefixtures("enable_slep006")
+def test_learning_curve_exploit_incremental_learning_routing():
+    """Test that learning_curve routes metadata to the estimator correctly while
+    partial_fitting it with `exploit_incremental_learning=True`."""
+
+    n_samples = _num_samples(X)
+    rng = np.random.RandomState(0)
+    fit_sample_weight = rng.rand(n_samples)
+    fit_metadata = rng.rand(n_samples)
 
     estimator_registry = _Registry()
     estimator = ConsumingClassifier(
@@ -2634,26 +2642,24 @@ def test_cross_validate_learning_curve_routing(func):
         sample_weight="fit_sample_weight", metadata="fit_metadata"
     )
 
-    if func is learning_curve:
-        func(
-            estimator,
-            X=X,
-            y=y,
-            cv=splitter,
-            exploit_incremental_learning=True,
-            **extra_params[func],
-            params=params,
-        )
+    learning_curve(
+        estimator,
+        X=X,
+        y=y,
+        cv=ConsumingSplitter(),
+        exploit_incremental_learning=True,
+        params=dict(fit_sample_weight=fit_sample_weight, fit_metadata=fit_metadata),
+    )
 
-        assert len(estimator_registry)
-        for _estimator in estimator_registry:
-            check_recorded_metadata(
-                obj=_estimator,
-                method="partial_fit",
-                split_params=("sample_weight", "metadata"),
-                sample_weight=fit_sample_weight,
-                metadata=fit_metadata,
-            )
+    assert len(estimator_registry)
+    for _estimator in estimator_registry:
+        check_recorded_metadata(
+            obj=_estimator,
+            method="partial_fit",
+            split_params=("sample_weight", "metadata"),
+            sample_weight=fit_sample_weight,
+            metadata=fit_metadata,
+        )
 
 
 # End of metadata routing tests
