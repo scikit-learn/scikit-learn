@@ -44,9 +44,12 @@ where biclusters have higher average values than the other rows and
 columns:
 
 .. figure:: ../auto_examples/bicluster/images/sphx_glr_plot_spectral_coclustering_003.png
-   :target: ../auto_examples/bicluster/images/sphx_glr_plot_spectral_coclustering_003.png
+   :target: ../auto_examples/bicluster/plot_spectral_coclustering.html
    :align: center
    :scale: 50
+   :alt: 
+      The graph is a square heat map, 5x5, with axes from 0 to 250.  The darkest 5 
+      squares of heat map run diagonally from top left to bottom right.
 
    An example of biclusters formed by partitioning rows and columns.
 
@@ -56,9 +59,12 @@ structure where the variance of the values within each bicluster is
 small:
 
 .. figure:: ../auto_examples/bicluster/images/sphx_glr_plot_spectral_biclustering_003.png
-   :target: ../auto_examples/bicluster/images/sphx_glr_plot_spectral_biclustering_003.png
+   :target: ../auto_examples/bicluster/plot_spectral_biclustering.html
    :align: center
    :scale: 50
+   :alt: 
+      The graph is a square heat map, 5x5, with axes from 0 to 250. The variance of 
+      the values within each bicluster is small, causing a checkerboard effect.
 
    An example of checkerboard biclusters.
 
