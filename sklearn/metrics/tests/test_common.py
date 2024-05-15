@@ -1879,6 +1879,13 @@ def check_array_api_regression_metric_multioutput(
     )
 
 
+def check_array_api_multioutput_regression_metric(
+    metric, array_namespace, device, dtype_name
+):
+    metric = partial(metric, multioutput="raw_values")
+    check_array_api_regression_metric(metric, array_namespace, device, dtype_name)
+
+
 array_api_metric_checkers = {
     accuracy_score: [
         check_array_api_binary_classification_metric,
@@ -1892,6 +1899,10 @@ array_api_metric_checkers = {
     r2_score: [
         check_array_api_regression_metric,
         check_array_api_regression_metric_multioutput,
+    ],
+    mean_absolute_error: [
+        check_array_api_regression_metric,
+        check_array_api_multioutput_regression_metric,
     ],
 }
 
