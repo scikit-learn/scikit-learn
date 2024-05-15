@@ -2094,11 +2094,7 @@ class _RidgeGCV(LinearModel):
         -------
         self : object
         """
-        if sample_weight is None:
-            input_arrays = (X, y)
-        else:
-            input_arrays = (X, y, sample_weight)
-        xp, is_array_api = get_namespace(*input_arrays)
+        xp, is_array_api = get_namespace(X, y, sample_weight)
         device_kwargs = {"device": device(X)} if is_array_api else {}
         if sparse.issparse(X):
             dtype = np.float64
