@@ -22,13 +22,27 @@ Governance
 The decision making process and governance structure of scikit-learn is laid
 out in the :ref:`governance document <governance>`.
 
-Authors
--------
+.. The "author" anchors below is there to ensure that old html links (in
+   the form of "about.html#author" still work)
 
-The following people are currently core contributors to scikit-learn's development
-and maintenance:
+.. _authors:
 
-.. include:: authors.rst
+The people behind scikit-learn
+-------------------------------
+
+Scikit-learn is a community project, developed by a large group of
+people, all across the world. A few teams, listed below, have central
+roles, however a more complete list of contributors can be found `on
+github
+<https://github.com/scikit-learn/scikit-learn/graphs/contributors>`__.
+
+Maintainers Team
+................
+
+The following people are currently maintainers, in charge of
+consolidating scikit-learn's development and maintenance:
+
+.. include:: maintainers.rst
 
 Please do not email the authors directly to ask for assistance or report issues.
 Instead, please see `What's the best way to ask questions about scikit-learn
@@ -40,14 +54,14 @@ in the FAQ.
    :ref:`How you can contribute to the project <contributing>`
 
 Documentation Team
-------------------
+..................
 
 The following people help with documenting the project:
 
 .. include:: documentation_team.rst
 
 Contributor Experience Team
----------------------------
+...........................
 
 The following people are active contributors who also help with
 :ref:`triaging issues <bug_triaging>`, PRs, and general
@@ -56,7 +70,7 @@ maintenance:
 .. include:: contributor_experience_team.rst
 
 Communication Team
-------------------
+..................
 
 The following people help with :ref:`communication around scikit-learn
 <communication_team>`.
@@ -70,7 +84,7 @@ Emeritus Core Developers
 The following people have been active contributors in the past, but are no
 longer active in the project:
 
-.. include:: authors_emeritus.rst
+.. include:: maintainers_emeritus.rst
 
 Emeritus Communication Team
 ---------------------------
@@ -327,6 +341,32 @@ and is part of the scikit-learn consortium at Inria.
    :width: 100pt
    :align: center
    :target: https://labs.quansight.org
+
+.. raw:: html
+
+   </div>
+   </div>
+
+...........
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`Tidelift <https://tidelift.com/>`_ supports the project via their service
+agreement.
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/Tidelift-logo-on-light.svg
+   :width: 100pt
+   :align: center
+   :target: https://tidelift.com/
 
 .. raw:: html
 

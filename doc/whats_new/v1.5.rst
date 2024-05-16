@@ -56,6 +56,21 @@ Changed models
   signs across all `PCA` solvers, including the new
   `svd_solver="covariance_eigh"` option introduced in this release.
 
+Changes impacting many modules
+------------------------------
+
+- |API| The name of the input of the `inverse_transform` method of estimators has been
+  standardized to `X`. As a consequence, `Xt` is deprecated and will be removed in
+  version 1.7 in the following estimators: :class:`cluster.FeatureAgglomeration`,
+  :class:`decomposition.MiniBatchNMF`, :class:`decomposition.NMF`,
+  :class:`model_selection.GridSearchCV`, :class:`model_selection.RandomizedSearchCV`,
+  :class:`pipeline.Pipeline` and :class:`preprocessing.KBinsDiscretizer`.
+  :pr:`28756` by :user:`Will Dean <wd60622>`.
+
+- |Fix| Raise `ValueError` with an informative error message when passing 1D
+  sparse arrays to methods that expect 2D sparse inputs.
+  :pr:`28988` by :user:`Olivier Grisel <ogrisel>`.
+
 Support for Array API
 ---------------------
 
@@ -86,12 +101,16 @@ See :ref:`array_api` for more details.
 Support for building with Meson
 -------------------------------
 
-Meson is now supported as a build backend, see :ref:`Building from source
-<install_bleeding_edge>` for more details.
+From scikit-learn 1.5 onwards, Meson is the main supported way to build
+scikit-learn, see :ref:`Building from source <install_bleeding_edge>` for more
+details.
 
-:pr:`28040` by :user:`Loïc Estève <lesteve>`
+Unless we discover a major blocker, setuptools support will be dropped in
+scikit-learn 1.6. The 1.5.x releases will support building scikit-learn with
+setuptools.
 
-TODO Fill more details before the 1.5 release, when the Meson story has settled down.
+Meson support for building scikit-learn was added in :pr:`28040` by :user:`Loïc
+Estève <lesteve>`
 
 Metadata Routing
 ----------------
@@ -207,7 +226,12 @@ Changelog
   :class:`cross_decomposition.CCA`,
   and :class:`cross_decomposition.PLSSVD`.
   `Y` will be removed in version 1.7.
-  :pr:`28604` by :user:`David Leon <davidleon123>`
+  :pr:`28604` by :user:`David Leon <davidleon123>`.
+
+- |Fix| The `coef_` fitted attribute of :class:`cross_decomposition.PLSRegression`
+  now takes into account both the scale of `X` and `Y` when `scale=True`. Note that
+  the previous predicted values were not affected by this bug.
+  :pr:`28612` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.datasets`
 .......................
@@ -274,6 +298,11 @@ Changelog
   :class:`ensemble.HistGradientBoostingRegressor` are now a tiny bit faster by
   pre-sorting the data before finding the thresholds for binning.
   :pr:`28102` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+- |Fix| Fixes a bug in :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` when `monotonic_cst` is specified
+  for non-categorical features.
+  :pr:`28925` by :user:`Xiao Yuan <yuanx749>`.
 
 :mod:`sklearn.feature_extraction`
 .................................
@@ -347,6 +376,18 @@ Changelog
   :class:`linear_model.SGDOneClassSVM`. Pass `average=False` instead.
   :pr:`28582` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |API| Parameter `multi_class` was deprecated in
+  :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV`. `multi_class` will be removed in 1.7,
+  and internally, for 3 and more classes, it will always use multinomial.
+  If you still want to use the one-vs-rest scheme, you can use
+  `OneVsRestClassifier(LogisticRegression(..))`.
+  :pr:`28703` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+- |API| `store_cv_values` and `cv_values_` are deprecated in favor of
+  `store_cv_results` and `cv_results_` in `RidgeCV` and `RidgeClassifierCV`.
+  :pr:`28915` by :user:`Lucy Liu <lucyleeow>`.
+
 :mod:`sklearn.manifold`
 .......................
 
@@ -396,6 +437,10 @@ Changelog
   is deprecated and will raise an error in v1.7.
   :pr:`18555` by :user:`Kaushik Amar Das <cozek>`.
 
+- |Feature| :func:`metrics.d2_log_loss_score` has been added which
+  calculates the D^2 score for the log loss.
+  :pr:`28351` by :user:`Omar Salman <OmarManzoor>`.
+
 :mod:`sklearn.mixture`
 ......................
 
@@ -406,6 +451,13 @@ Changelog
 
 :mod:`sklearn.model_selection`
 ..............................
+
+- |MajorFeature| :class:`model_selection.TunedThresholdClassifierCV` finds
+  the decision threshold of a binary classifier that maximizes a
+  classification metric through cross-validation.
+  :class:`model_selection.FixedThresholdClassifier` is an alternative when one wants
+  to use a fixed decision threshold without any tuning scheme.
+  :pr:`26120` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Enhancement| :term:`CV splitters <CV splitter>` that ignores the group parameter now
   raises a warning when groups are passed in to :term:`split`. :pr:`28210` by
@@ -488,6 +540,11 @@ Changelog
 - |Fix| :func:`~utils._safe_indexing` now works correctly for polars DataFrame when
   `axis=0` and supports indexing polars Series.
   :pr:`28521` by :user:`Yao Xiao <Charlie-XIAO>`.
+
+- |API| :func:`utils.estimator_checks.check_estimator_sparse_data` was split into two
+  functions: :func:`utils.estimator_checks.check_estimator_sparse_matrix` and
+  :func:`utils.estimator_checks.check_estimator_sparse_array`.
+  :pr:`27576` by :user:`Stefanie Senger <StefanieSenger>`.
 
 .. rubric:: Code and documentation contributors
 
