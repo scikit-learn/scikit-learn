@@ -2157,7 +2157,9 @@ def binarize(X, *, threshold=0.0, copy=True):
         X.eliminate_zeros()
     else:
         xp, is_array_api_compliant = get_namespace(X)
-        if is_array_api_compliant and X.dtype.kind in "ui":
+        if is_array_api_compliant and xp.isdtype(
+            X.dtype, ("signed integer", "unsigned integer")
+        ):
             threshold = xp.astype(xp.asarray(threshold), int)
         cond = X > threshold
         not_cond = xp.logical_not(cond)
