@@ -13,10 +13,10 @@ ten thousands (see
 
 The top usability features of HGBT models are:
 
-1. Several available loss function for mean and quantile regression tasks, see
+1. Several available loss functions for mean and quantile regression tasks, see
    :ref:`Quantile loss <quantile_support_hgbdt>`.
-2. :ref:`categorical_support_gbdt` (see
-   :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`).
+2. :ref:`categorical_support_gbdt`, see
+   :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`.
 3. Early stopping.
 4. :ref:`nan_support_hgbt`, which avoids the need for an imputer.
 5. :ref:`monotonic_cst_gbdt`.
@@ -38,7 +38,7 @@ setting.
 # set every five minutes. Electricity transfers to/from the neighboring state of
 # Victoria were done to alleviate fluctuations.
 #
-# The dataset (originally named ELEC2) contains 45,312 instances dated from 7
+# The dataset, originally named ELEC2, contains 45,312 instances dated from 7
 # May 1996 to 5 December 1998. Each sample of the dataset refers to a period of
 # 30 minutes, i.e. there are 48 instances for each time period of one day. Each
 # sample on the dataset has 7 columns:
@@ -48,7 +48,7 @@ setting.
 #   - nswprice/nswdemand: electricity price/demand of New South Wales;
 #   - vicprice/vicdemand: electricity price/demand of Victoria.
 #
-# It is originally a classification task, but here we use it for the regression
+# Originally, it is a classification task, but here we use it for the regression
 # task to predict the scheduled electricity transfer between states.
 
 from sklearn.datasets import fetch_openml
@@ -86,7 +86,7 @@ ax.set(
 _ = ax.legend(handles, ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"])
 
 # %%
-# Notice energy transfer increases systematically during weekends.
+# Notice that energy transfer increases systematically during weekends.
 #
 # Effect of number of trees and early stopping
 # ============================================
@@ -95,7 +95,7 @@ _ = ax.legend(handles, ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"])
 # daily electricity transfer using the whole dataset. Then we visualize its
 # predictions depending on the `max_iter` parameter. Here we don't try to
 # evaluate the performance of the model and its capacity to generalize but
-# rather its capacity to learn from the training data.
+# rather its capability to learn from the training data.
 
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.model_selection import train_test_split
@@ -144,22 +144,24 @@ _ = ax.legend()
 # With just a few iterations, HGBT models can achieve convergence (see
 # :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`),
 # meaning that adding more trees does not improve the model anymore. In the
-# figure above, 5 iterations are not enough to be able to predict. With 50
+# figure above, 5 iterations are not enough to get good predictions. With 50
 # iterations, we are already able to do a good job.
 #
-# Instead of relying on `max_iter` alone to determine when to stop, the HGBT
-# implementation in scikit-learn supports early stopping. With it, the model
+# Setting `max_iter` too high might degrade the prediction quality and cost a lot of
+# avoidable computing resources. Therefore, the HGBT implementation in scikit-learn
+# provides an automatic **early stopping** strategy. With it, the model
 # uses a fraction of the training data as internal validation set
 # (`validation_fraction`) and stops training if the validation score does not
 # improve (or degrades) after `n_iter_no_change` iterations up to a certain
-# `tol`.
+# tolerance (`tol`).
 #
 # Notice that there is a trade-off between `learning_rate` and `max_iter`:
 # Generally, smaller learning rates are preferable but require more iterations
 # to converge to the minimum loss, while larger learning rates converge faster
 # (less iterations/trees needed) but at the cost of a larger minimum loss.
 #
-# Indeed, a good practice is to tune the learning rate along with any other
+# Because of this high correlation between the learning rate the number of iterations,
+# a good practice is to tune the learning rate along with all (important) other
 # hyperparameters, fit the HBGT on the training set with a large enough value
 # for `max_iter` and determine the best `max_iter` via early stopping and some
 # explicit `validation_fraction`.
@@ -204,9 +206,9 @@ hgbt = HistGradientBoostingRegressor(**common_params)
 # HGBT models have native support of missing values. During training, the tree
 # grower decides where samples with missing values should go (left or right
 # child) at each split, based on the potential gain. When predicting, these
-# samples are sent to either child accordingly. If a feature had no missing
-# values during training, samples with missing values for that feature are sent
-# to the child with the most samples.
+# samples are sent to the learnt child accordingly. If a feature had no missing
+# values during training, then for prediction, samples with missing values for that
+# feature are sent to the child with the most samples (as seen during fit).
 #
 # The present example shows how HGBT regressions deal with values missing
 # completely at random (MCAR), i.e. the missingness does not depend on the
@@ -313,10 +315,10 @@ _ = ax.legend(loc="lower right")
 # model. One can still improve the quality of such estimations by:
 #
 # - collecting more data-points;
-# - better tuning of the model hyperparameters (see
-#   :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`);
-# - engineering more predictive features from the same data (see
-#   :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`).
+# - better tuning of the model hyperparameters, see
+#   :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`;
+# - engineering more predictive features from the same data, see
+#   :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`.
 #
 # Monotonic constraints
 # =====================
@@ -342,7 +344,8 @@ _ = ax.legend(loc="lower right")
 # - 0: no constraint
 # - -1: monotonic decrease
 #
-# Else, one can pass an array-like encoding the above convention by position.
+# Alternatively, one can pass an array-like object encoding the above convention by
+# position.
 
 from sklearn.inspection import PartialDependenceDisplay
 
@@ -394,8 +397,9 @@ PartialDependenceDisplay.from_estimator(
 _ = plt.legend()
 
 # %%
-# Observe that `nswdemand` seems already monotonic without constraint. This is a
-# good example to show that the model is "overconstraining".
+# Observe that `nswdemand` and `vicdemand` seem already monotonic without constraint.
+# This is a good example to show that the model with monotonicity constraints is
+# "overconstraining".
 #
 # Additionally, we can verify that the predictive quality of the model is not
 # significantly degraded by introducing the monotonic constraints. For such

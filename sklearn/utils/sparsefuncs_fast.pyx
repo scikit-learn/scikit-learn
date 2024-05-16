@@ -14,21 +14,14 @@ work with sparse matrices and arrays written in Cython.
 from libc.math cimport fabs, sqrt, isnan
 from libc.stdint cimport intptr_t
 
-cimport numpy as cnp
 import numpy as np
 from cython cimport floating
-from ..utils._typedefs cimport float64_t, int32_t, intp_t, uint64_t
-
-cnp.import_array()
+from ..utils._typedefs cimport float64_t, int32_t, int64_t, intp_t, uint64_t
 
 
-# This `integral` fused type is defined to be used over `cython.integral`
-# to only generate implementations for `int{32,64}_t`.
-# TODO: use `{int,float}{32,64}_t` when cython#5230 is resolved:
-# https://github.com/cython/cython/issues/5230
 ctypedef fused integral:
-    int  # int32_t
-    long long  # int64_t
+    int32_t
+    int64_t
 
 
 def csr_row_norms(X):

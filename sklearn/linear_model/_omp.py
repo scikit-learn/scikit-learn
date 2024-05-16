@@ -1,5 +1,4 @@
-"""Orthogonal matching pursuit algorithms
-"""
+"""Orthogonal matching pursuit algorithms"""
 
 # Author: Vlad Niculae
 #
@@ -1117,6 +1116,6 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
 
         router = MetadataRouter(owner=self.__class__.__name__).add(
             splitter=self.cv,
-            method_mapping=MethodMapping().add(callee="split", caller="fit"),
+            method_mapping=MethodMapping().add(caller="fit", callee="split"),
         )
         return router
