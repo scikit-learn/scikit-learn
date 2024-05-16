@@ -10,6 +10,7 @@ from tempfile import NamedTemporaryFile
 import numpy as np
 import pytest
 import scipy.sparse as sp
+import sparse as pydata_sparse
 from pytest import importorskip
 
 import sklearn
@@ -2124,3 +2125,13 @@ def test__is_polars_df():
             self.schema = ["a", "b"]
 
     assert not _is_polars_df(LooksLikePolars())
+
+
+def test_pydata_sparse_dispatch():
+    arr = np.array([[-2, 0], [2, 2], [-1, 1], [2, 3]])
+
+    sp_graph = pydata_sparse.COO.from_numpy(arr)
+    neigh = sklearn.cluster.KMeans(n_clusters=2)
+    labels = neigh.fit_predict(sp_graph)
+
+    assert_array_equal(labels, [1, 0, 1, 0])
