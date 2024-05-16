@@ -1744,14 +1744,14 @@ def test_metrics_pos_label_error_str(metric, y_pred_threshold, dtype_y_str):
 
 
 def check_array_api_metric(
-    metric, array_namespace, device, dtype_name, x_np, y_np, **metric_kwargs
+    metric, array_namespace, device, dtype_name, a_np, b_np, **metric_kwargs
 ):
     xp = _array_api_for_tests(array_namespace, device)
 
-    x_xp = xp.asarray(x_np, device=device)
-    y_xp = xp.asarray(y_np, device=device)
+    a_xp = xp.asarray(a_np, device=device)
+    b_xp = xp.asarray(b_np, device=device)
 
-    metric_np = metric(x_np, y_np, **metric_kwargs)
+    metric_np = metric(a_np, b_np, **metric_kwargs)
 
     if metric_kwargs.get("sample_weight") is not None:
         metric_kwargs["sample_weight"] = xp.asarray(
@@ -1759,7 +1759,7 @@ def check_array_api_metric(
         )
 
     with config_context(array_api_dispatch=True):
-        metric_xp = metric(x_xp, y_xp, **metric_kwargs)
+        metric_xp = metric(a_xp, b_xp, **metric_kwargs)
 
         assert_allclose(
             _convert_to_numpy(xp.asarray(metric_xp), xp),
@@ -1779,8 +1779,8 @@ def check_array_api_binary_classification_metric(
         array_namespace,
         device,
         dtype_name,
-        x_np=y_true_np,
-        y_np=y_pred_np,
+        a_np=y_true_np,
+        b_np=y_pred_np,
         sample_weight=None,
     )
 
@@ -1791,8 +1791,8 @@ def check_array_api_binary_classification_metric(
         array_namespace,
         device,
         dtype_name,
-        x_np=y_true_np,
-        y_np=y_pred_np,
+        a_np=y_true_np,
+        b_np=y_pred_np,
         sample_weight=sample_weight,
     )
 
@@ -1808,8 +1808,8 @@ def check_array_api_multiclass_classification_metric(
         array_namespace,
         device,
         dtype_name,
-        x_np=y_true_np,
-        y_np=y_pred_np,
+        a_np=y_true_np,
+        b_np=y_pred_np,
         sample_weight=None,
     )
 
@@ -1820,8 +1820,8 @@ def check_array_api_multiclass_classification_metric(
         array_namespace,
         device,
         dtype_name,
-        x_np=y_true_np,
-        y_np=y_pred_np,
+        a_np=y_true_np,
+        b_np=y_pred_np,
         sample_weight=sample_weight,
     )
 
@@ -1835,8 +1835,8 @@ def check_array_api_regression_metric(metric, array_namespace, device, dtype_nam
         array_namespace,
         device,
         dtype_name,
-        x_np=y_true_np,
-        y_np=y_pred_np,
+        a_np=y_true_np,
+        b_np=y_pred_np,
         sample_weight=None,
     )
 
@@ -1847,8 +1847,8 @@ def check_array_api_regression_metric(metric, array_namespace, device, dtype_nam
         array_namespace,
         device,
         dtype_name,
-        x_np=y_true_np,
-        y_np=y_pred_np,
+        a_np=y_true_np,
+        b_np=y_pred_np,
         sample_weight=sample_weight,
     )
 
@@ -1864,8 +1864,8 @@ def check_array_api_regression_metric_multioutput(
         array_namespace,
         device,
         dtype_name,
-        x_np=y_true_np,
-        y_np=y_pred_np,
+        a_np=y_true_np,
+        b_np=y_pred_np,
         sample_weight=None,
     )
 
@@ -1876,8 +1876,8 @@ def check_array_api_regression_metric_multioutput(
         array_namespace,
         device,
         dtype_name,
-        x_np=y_true_np,
-        y_np=y_pred_np,
+        a_np=y_true_np,
+        b_np=y_pred_np,
         sample_weight=sample_weight,
     )
 
@@ -1899,7 +1899,7 @@ def check_array_api_metric_pairwise(metric, array_namespace, device, dtype_name)
         metric_kwargs["dense_output"] = True
 
     check_array_api_metric(
-        metric, array_namespace, device, dtype_name, x_np=X_np, y_np=Y_np
+        metric, array_namespace, device, dtype_name, a_np=X_np, b_np=Y_np
     )
 
 
