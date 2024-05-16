@@ -489,6 +489,7 @@ def randomized_svd(
 
     Examples
     --------
+    * :ref:`sphx_glr_auto_examples_applications_wikipedia_principal_eigenvector.py`
     >>> import numpy as np
     >>> from sklearn.utils.extmath import randomized_svd
     >>> a = np.array([[1, 2, 3, 5],
