@@ -722,20 +722,25 @@ def test_label_encoders_do_not_have_set_output(encoder):
 def test_label_encoder_array_api_compliance(y, array_namespace, device, dtype):
     xp = _array_api_for_tests(array_namespace, device)
     xp_y = xp.asarray(y, device=device)
-    xp_label = LabelEncoder()
     with config_context(array_api_dispatch=True):
-        xp_label_fit = xp_label.fit(xp_y)
-        xp_transformed = xp_label_fit.transform(xp_y)
-        xp_inv_transformed = xp_label_fit.inverse_transform(xp_transformed)
+        xp_label = LabelEncoder()
+        xp_label = xp_label.fit(xp_y)
+        xp_transformed = xp_label.transform(xp_y)
+        xp_inv_transformed = xp_label.inverse_transform(xp_transformed)
         np_label = LabelEncoder()
         np_label_fit = np_label.fit(y)
         np_transformed = np_label_fit.transform(y)
         assert get_namespace(xp_transformed)[0].__name__ == xp.__name__
         assert get_namespace(xp_inv_transformed)[0].__name__ == xp.__name__
+        assert get_namespace(xp_label.classes_)[0].__name__ == xp.__name__
         assert_array_equal(_convert_to_numpy(xp_transformed, xp), np_transformed)
         assert_array_equal(_convert_to_numpy(xp_inv_transformed, xp), y)
+        assert_array_equal(_convert_to_numpy(xp_label.classes_, xp), np_label.classes_)
 
+        xp_label = LabelEncoder()
         xp_transformed = xp_label.fit_transform(xp_y)
         np_transformed = np_label.fit_transform(y)
         assert get_namespace(xp_transformed)[0].__name__ == xp.__name__
+        assert get_namespace(xp_label.classes_)[0].__name__ == xp.__name__
         assert_array_equal(_convert_to_numpy(xp_transformed, xp), np_transformed)
+        assert_array_equal(_convert_to_numpy(xp_label.classes_, xp), np_label.classes_)

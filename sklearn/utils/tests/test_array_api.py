@@ -2,7 +2,6 @@ import re
 from functools import partial
 
 import numpy
-import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 
@@ -522,7 +521,7 @@ def test_isin(
     xp = _array_api_for_tests(array_namespace, device)
     r = element_size // 2
     element = 2 * numpy.arange(element_size).reshape((r, 2)).astype(int_dtype)
-    test_elements = numpy.array(np.arange(14), dtype=int_dtype)
+    test_elements = numpy.array(numpy.arange(14), dtype=int_dtype)
     element_xp = xp.asarray(element, device=device)
     test_elements_xp = xp.asarray(test_elements, device=device)
     expected = numpy.isin(
