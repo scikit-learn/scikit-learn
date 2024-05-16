@@ -724,12 +724,12 @@ def test_label_encoder_array_api_compliance(y, array_namespace, device, dtype):
     xp_y = xp.asarray(y, device=device)
     with config_context(array_api_dispatch=True):
         xp_label = LabelEncoder()
+        np_label = LabelEncoder()
         xp_label = xp_label.fit(xp_y)
         xp_transformed = xp_label.transform(xp_y)
         xp_inv_transformed = xp_label.inverse_transform(xp_transformed)
-        np_label = LabelEncoder()
-        np_label_fit = np_label.fit(y)
-        np_transformed = np_label_fit.transform(y)
+        np_label = np_label.fit(y)
+        np_transformed = np_label.transform(y)
         assert get_namespace(xp_transformed)[0].__name__ == xp.__name__
         assert get_namespace(xp_inv_transformed)[0].__name__ == xp.__name__
         assert get_namespace(xp_label.classes_)[0].__name__ == xp.__name__
@@ -738,6 +738,7 @@ def test_label_encoder_array_api_compliance(y, array_namespace, device, dtype):
         assert_array_equal(_convert_to_numpy(xp_label.classes_, xp), np_label.classes_)
 
         xp_label = LabelEncoder()
+        np_label = LabelEncoder()
         xp_transformed = xp_label.fit_transform(xp_y)
         np_transformed = np_label.fit_transform(y)
         assert get_namespace(xp_transformed)[0].__name__ == xp.__name__
