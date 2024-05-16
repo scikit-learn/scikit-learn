@@ -226,9 +226,3 @@ package = "sklearn"  # name of your package
 "Documentation" = [
   "spin.cmds.meson.docs"
 ]
-"Environments" = [
-  "spin.cmds.meson.shell",
-  "spin.cmds.meson.ipython",
-  "spin.cmds.meson.python",
-  "spin.cmds.meson.run"
-]
