@@ -13,8 +13,8 @@ def test_weighted_percentile():
     y[50] = 1
     sw = np.ones(102, dtype=np.float64)
     sw[-1] = 0.0
-    score = _weighted_percentile(y, sw, 50)
-    assert approx(score) == 1
+    value = _weighted_percentile(y, sw, 50)
+    assert approx(value) == 1
 
 
 def test_weighted_percentile_equal():
@@ -22,8 +22,8 @@ def test_weighted_percentile_equal():
     y.fill(0.0)
     sw = np.ones(102, dtype=np.float64)
     sw[-1] = 0.0
-    score = _weighted_percentile(y, sw, 50)
-    assert score == 0
+    value = _weighted_percentile(y, sw, 50)
+    assert value == 0
 
 
 def test_weighted_percentile_zero_weight():
@@ -31,21 +31,21 @@ def test_weighted_percentile_zero_weight():
     y.fill(1.0)
     sw = np.ones(102, dtype=np.float64)
     sw.fill(0.0)
-    score = _weighted_percentile(y, sw, 50)
-    assert approx(score) == 1.0
+    value = _weighted_percentile(y, sw, 50)
+    assert approx(value) == 1.0
 
 
 def test_weighted_percentile_zero_weight_zero_percentile():
     y = np.array([0, 1, 2, 3, 4, 5])
     sw = np.array([0, 0, 1, 1, 1, 0])
-    score = _weighted_percentile(y, sw, 0)
-    assert approx(score) == 2
+    value = _weighted_percentile(y, sw, 0)
+    assert approx(value) == 2
 
-    score = _weighted_percentile(y, sw, 50)
-    assert approx(score) == 3
+    value = _weighted_percentile(y, sw, 50)
+    assert approx(value) == 3
 
-    score = _weighted_percentile(y, sw, 100)
-    assert approx(score) == 4
+    value = _weighted_percentile(y, sw, 100)
+    assert approx(value) == 4
 
 
 def test_weighted_median_equal_weights():
