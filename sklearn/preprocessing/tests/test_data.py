@@ -1996,9 +1996,9 @@ def test_binarizer(constructor):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, _", yield_namespace_device_dtype_combinations()
 )
-def test_binarizer_array_api_int(array_namespace, device, dtype_name):
+def test_binarizer_array_api_int(array_namespace, device, _):
     xp = _array_api_for_tests(array_namespace, device)
     with config_context(array_api_dispatch=True):
         X = xp.reshape(xp.asarray([0, 1, 2, 3, 4]), (-1, 1))
