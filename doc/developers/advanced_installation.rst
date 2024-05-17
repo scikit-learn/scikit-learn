@@ -64,33 +64,42 @@ feature, code or documentation improvement).
 
    If you installed Python with conda, we recommend to create a dedicated
    `conda environment`_ with all the build dependencies of scikit-learn
-   (namely NumPy_, SciPy_, and Cython_):
+   (namely NumPy_, SciPy_, Cython_, meson-python_ and Ninja_):
 
    .. prompt:: bash $
 
-     conda create -n sklearn-env -c conda-forge python=3.9 numpy scipy cython
+     conda create -n sklearn-env -c conda-forge python=3.9 numpy scipy cython meson-python ninja
+
+   It is not always necessary but it is safer to open a new prompt before
+   activating the newly created conda environment.
+
+   .. prompt:: bash $
+
      conda activate sklearn-env
 
-#. **Alternative to conda:** If you run Linux or similar, you can instead use
-   your system's Python provided it is recent enough (3.8 or higher
-   at the time of writing). In this case, we recommend to create a dedicated
-   virtualenv_ and install the scikit-learn build dependencies with pip:
+#. **Alternative to conda:** You can use alternative installations of Python
+   provided they are recent enough (3.9 or higher at the time of writing).
+   Here is an example on how to create a build environment for a Linux system's
+   Python. Build dependencies are installed with `pip` in a dedicated virtualenv_
+   to avoid disrupting other Python programs installed on the system:
 
    .. prompt:: bash $
 
      python3 -m venv sklearn-env
      source sklearn-env/bin/activate
-     pip install wheel numpy scipy cython
+     pip install wheel numpy scipy cython meson-python ninja
 
 #. Install a compiler with OpenMP_ support for your platform. See instructions
    for :ref:`compiler_windows`, :ref:`compiler_macos`, :ref:`compiler_linux`
    and :ref:`compiler_freebsd`.
 
-#. Build the project with pip in :ref:`editable_mode`:
+#. Build the project with pip:
 
    .. prompt:: bash $
 
-     pip install -v --no-use-pep517 --no-build-isolation -e .
+     pip install --editable . \
+        --verbose --no-build-isolation \
+        --config-settings editable-verbose=true
 
 #. Check that the installed scikit-learn has a version number ending with
    `.dev0`:
@@ -104,14 +113,14 @@ feature, code or documentation improvement).
 
 .. note::
 
-    You will have to run the ``pip install -v --no-use-pep517 --no-build-isolation -e .``
-    command every time the source code of a Cython file is updated
-    (ending in `.pyx` or `.pxd`). This can happen when you edit them or when you
-    use certain git commands such as `git pull`. Use the ``--no-build-isolation`` flag
-    to avoid compiling the whole project each time, only the files you have
-    modified. Include the ``--no-use-pep517`` flag because the ``--no-build-isolation``
-    option might not work otherwise (this is due to a bug which will be fixed in the
-    future).
+    `--config-settings editable-verbose=true` is optional but recommended
+    to avoid surprises when you import `sklearn`. `meson-python` implements
+    editable installs by rebuilding `sklearn` when executing `import sklearn`.
+    With the recommended setting you will see a message when this happens,
+    rather than potentially waiting without feed-back and wondering
+    what is taking so long. Bonus: this means you only have to run the `pip
+    install` command once, `sklearn` will automatically be rebuilt when
+    importing `sklearn`.
 
 Dependencies
 ------------
@@ -175,26 +184,6 @@ If you want to build a stable version, you can ``git checkout <VERSION>``
 to get the code for that particular version, or download an zip archive of
 the version from github.
 
-.. _editable_mode:
-
-Editable mode
--------------
-
-If you run the development version, it is cumbersome to reinstall the package
-each time you update the sources. Therefore it is recommended that you install
-in with the ``pip install -v --no-use-pep517 --no-build-isolation -e .`` command,
-which allows you to edit the code in-place. This builds the extension in place and
-creates a link to the development directory (see `the pip docs
-<https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs>`_).
-
-As the doc above explains, this is fundamentally similar to using the command
-``python setup.py develop``. (see `the setuptool docs
-<https://setuptools.pypa.io/en/latest/userguide/development_mode.html>`_).
-It is however preferred to use pip.
-
-On Unix-like systems, you can equivalently type ``make in`` from the top-level
-folder. Have a look at the ``Makefile`` for additional utilities.
-
 .. _platform_specific_instructions:
 
 Platform-specific instructions
@@ -243,11 +232,13 @@ Please be aware that the path above might be different from user to user. The
 aim is to point to the "vcvarsall.bat" file that will set the necessary
 environment variables in the current command prompt.
 
-Finally, build scikit-learn from this command prompt:
+Finally, build scikit-learn with this command prompt:
 
 .. prompt:: bash $
 
-    pip install -v --no-use-pep517 --no-build-isolation -e .
+    pip install --editable . \
+        --verbose --no-build-isolation \
+        --config-settings editable-verbose=true
 
 .. _compiler_macos:
 
@@ -286,10 +277,18 @@ scikit-learn from source:
 .. prompt:: bash $
 
     conda create -n sklearn-dev -c conda-forge python numpy scipy cython \
-        joblib threadpoolctl pytest compilers llvm-openmp
+        joblib threadpoolctl pytest compilers llvm-openmp meson-python ninja
+
+It is not always necessary but it is safer to open a new prompt before
+activating the newly created conda environment.
+
+.. prompt:: bash $
+
     conda activate sklearn-dev
     make clean
-    pip install -v --no-use-pep517 --no-build-isolation -e .
+    pip install --editable . \
+        --verbose --no-build-isolation \
+        --config-settings editable-verbose=true
 
 .. note::
 
@@ -306,12 +305,6 @@ forge using the following command:
     conda list
 
 which should include ``compilers`` and ``llvm-openmp``.
-
-.. note::
-
-   If you installed these packages after creating and activating a new conda
-   environment, you will need to first deactivate and then reactivate the
-   environment for these changes to take effect.
 
 The compilers meta-package will automatically set custom environment
 variables:
@@ -369,7 +362,9 @@ Finally, build scikit-learn in verbose mode (to check for the presence of the
 .. prompt:: bash $
 
     make clean
-    pip install -v --no-use-pep517 --no-build-isolation -e .
+    pip install --editable . \
+        --verbose --no-build-isolation \
+        --config-settings editable-verbose=true
 
 .. _compiler_linux:
 
@@ -395,7 +390,9 @@ then proceed as usual:
 .. prompt:: bash $
 
     pip3 install cython
-    pip3 install --verbose --editable .
+    pip3 install --editable . \
+        --verbose --no-build-isolation \
+        --config-settings editable-verbose=true
 
 Cython and the pre-compiled wheels for the runtime dependencies (numpy, scipy
 and joblib) should automatically be installed in
@@ -427,9 +424,17 @@ in the user folder using conda:
 .. prompt:: bash $
 
     conda create -n sklearn-dev -c conda-forge python numpy scipy cython \
-        joblib threadpoolctl pytest compilers
+        joblib threadpoolctl pytest compilers meson-python ninja
+
+It is not always necessary but it is safer to open a new prompt before
+activating the newly created conda environment.
+
+.. prompt:: bash $
+
     conda activate sklearn-dev
-    pip install -v --no-use-pep517 --no-build-isolation -e .
+    pip install --editable . \
+        --verbose --no-build-isolation \
+        --config-settings editable-verbose=true
 
 .. _compiler_freebsd:
 
@@ -458,13 +463,17 @@ Finally, build the package using the standard command:
 
 .. prompt:: bash $
 
-    pip install -v --no-use-pep517 --no-build-isolation -e .
+    pip install --editable . \
+        --verbose --no-build-isolation \
+        --config-settings editable-verbose=true
 
 For the upcoming FreeBSD 12.1 and 11.3 versions, OpenMP will be included in
 the base system and these steps will not be necessary.
 
 .. _OpenMP: https://en.wikipedia.org/wiki/OpenMP
 .. _Cython: https://cython.org
+.. _meson-python: https://mesonbuild.com/meson-python
+.. _Ninja: https://ninja-build.org/
 .. _NumPy: https://numpy.org
 .. _SciPy: https://www.scipy.org
 .. _Homebrew: https://brew.sh
@@ -479,7 +488,9 @@ The following command will build scikit-learn using your default C/C++ compiler.
 
 .. prompt:: bash $
 
-    pip install --verbose --editable .
+    pip install --editable . \
+        --verbose --no-build-isolation \
+        --config-settings editable-verbose=true
 
 If you want to build scikit-learn with another compiler handled by ``setuptools``,
 use the following command:
@@ -510,17 +521,3 @@ When setting these environment variables, it is advised to first check their
 
 In addition, since Scikit-learn uses OpenMP, you need to include the appropriate OpenMP
 flag of your compiler into the ``CFLAGS`` and ``CPPFLAGS`` environment variables.
-
-Parallel builds
-===============
-
-It is possible to build scikit-learn compiled extensions in parallel by setting
-and environment variable as follows before calling the ``pip install`` or
-``python setup.py build_ext`` commands::
-
-    export SKLEARN_BUILD_PARALLEL=3
-    pip install -v --no-use-pep517 --no-build-isolation -e .
-
-On a machine with 2 CPU cores, it can be beneficial to use a parallelism level
-of 3 to overlap IO bound tasks (reading and writing files on disk) with CPU
-bound tasks (actually compiling).

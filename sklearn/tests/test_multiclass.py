@@ -57,7 +57,7 @@ n_classes = 3
 
 
 def test_ovr_exceptions():
-    ovr = OneVsRestClassifier(LinearSVC(dual="auto", random_state=0))
+    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
 
     # test predicting without fitting
     with pytest.raises(NotFittedError):
@@ -86,11 +86,11 @@ def test_check_classification_targets():
 
 def test_ovr_fit_predict():
     # A classifier which implements decision_function.
-    ovr = OneVsRestClassifier(LinearSVC(dual="auto", random_state=0))
+    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
     pred = ovr.fit(iris.data, iris.target).predict(iris.data)
     assert len(ovr.estimators_) == n_classes
 
-    clf = LinearSVC(dual="auto", random_state=0)
+    clf = LinearSVC(random_state=0)
     pred2 = clf.fit(iris.data, iris.target).predict(iris.data)
     assert np.mean(iris.target == pred) == np.mean(iris.target == pred2)
 
@@ -258,7 +258,7 @@ def test_ovr_multiclass():
 
     for base_clf in (
         MultinomialNB(),
-        LinearSVC(dual="auto", random_state=0),
+        LinearSVC(random_state=0),
         LinearRegression(),
         Ridge(),
         ElasticNet(),
@@ -303,7 +303,7 @@ def test_ovr_binary():
         assert y_pred == 1
 
     for base_clf in (
-        LinearSVC(dual="auto", random_state=0),
+        LinearSVC(random_state=0),
         LinearRegression(),
         Ridge(),
         ElasticNet(),
@@ -321,7 +321,7 @@ def test_ovr_multilabel():
 
     for base_clf in (
         MultinomialNB(),
-        LinearSVC(dual="auto", random_state=0),
+        LinearSVC(random_state=0),
         LinearRegression(),
         Ridge(),
         ElasticNet(),
@@ -459,7 +459,7 @@ def test_ovr_single_label_decision_function():
 
 
 def test_ovr_gridsearch():
-    ovr = OneVsRestClassifier(LinearSVC(dual="auto", random_state=0))
+    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
     Cs = [0.1, 0.5, 0.8]
     cv = GridSearchCV(ovr, {"estimator__C": Cs})
     cv.fit(iris.data, iris.target)
@@ -480,7 +480,7 @@ def test_ovr_pipeline():
 
 
 def test_ovo_exceptions():
-    ovo = OneVsOneClassifier(LinearSVC(dual="auto", random_state=0))
+    ovo = OneVsOneClassifier(LinearSVC(random_state=0))
     with pytest.raises(NotFittedError):
         ovo.predict([])
 
@@ -488,7 +488,7 @@ def test_ovo_exceptions():
 def test_ovo_fit_on_list():
     # Test that OneVsOne fitting works with a list of targets and yields the
     # same output as predict from an array
-    ovo = OneVsOneClassifier(LinearSVC(dual="auto", random_state=0))
+    ovo = OneVsOneClassifier(LinearSVC(random_state=0))
     prediction_from_array = ovo.fit(iris.data, iris.target).predict(iris.data)
     iris_data_list = [list(a) for a in iris.data]
     prediction_from_list = ovo.fit(iris_data_list, list(iris.target)).predict(
@@ -499,7 +499,7 @@ def test_ovo_fit_on_list():
 
 def test_ovo_fit_predict():
     # A classifier which implements decision_function.
-    ovo = OneVsOneClassifier(LinearSVC(dual="auto", random_state=0))
+    ovo = OneVsOneClassifier(LinearSVC(random_state=0))
     ovo.fit(iris.data, iris.target).predict(iris.data)
     assert len(ovo.estimators_) == n_classes * (n_classes - 1) / 2
 
@@ -565,7 +565,7 @@ def test_ovo_partial_fit_predict():
 def test_ovo_decision_function():
     n_samples = iris.data.shape[0]
 
-    ovo_clf = OneVsOneClassifier(LinearSVC(dual="auto", random_state=0))
+    ovo_clf = OneVsOneClassifier(LinearSVC(random_state=0))
     # first binary
     ovo_clf.fit(iris.data, iris.target == 0)
     decisions = ovo_clf.decision_function(iris.data)
@@ -610,7 +610,7 @@ def test_ovo_decision_function():
 
 
 def test_ovo_gridsearch():
-    ovo = OneVsOneClassifier(LinearSVC(dual="auto", random_state=0))
+    ovo = OneVsOneClassifier(LinearSVC(random_state=0))
     Cs = [0.1, 0.5, 0.8]
     cv = GridSearchCV(ovo, {"estimator__C": Cs})
     cv.fit(iris.data, iris.target)
@@ -660,7 +660,7 @@ def test_ovo_string_y():
     X = np.eye(4)
     y = np.array(["a", "b", "c", "d"])
 
-    ovo = OneVsOneClassifier(LinearSVC(dual="auto"))
+    ovo = OneVsOneClassifier(LinearSVC())
     ovo.fit(X, y)
     assert_array_equal(y, ovo.predict(X))
 
@@ -670,7 +670,7 @@ def test_ovo_one_class():
     X = np.eye(4)
     y = np.array(["a"] * 4)
 
-    ovo = OneVsOneClassifier(LinearSVC(dual="auto"))
+    ovo = OneVsOneClassifier(LinearSVC())
     msg = "when only one class"
     with pytest.raises(ValueError, match=msg):
         ovo.fit(X, y)
@@ -681,23 +681,21 @@ def test_ovo_float_y():
     X = iris.data
     y = iris.data[:, 0]
 
-    ovo = OneVsOneClassifier(LinearSVC(dual="auto"))
+    ovo = OneVsOneClassifier(LinearSVC())
     msg = "Unknown label type"
     with pytest.raises(ValueError, match=msg):
         ovo.fit(X, y)
 
 
 def test_ecoc_exceptions():
-    ecoc = OutputCodeClassifier(LinearSVC(dual="auto", random_state=0))
+    ecoc = OutputCodeClassifier(LinearSVC(random_state=0))
     with pytest.raises(NotFittedError):
         ecoc.predict([])
 
 
 def test_ecoc_fit_predict():
     # A classifier which implements decision_function.
-    ecoc = OutputCodeClassifier(
-        LinearSVC(dual="auto", random_state=0), code_size=2, random_state=0
-    )
+    ecoc = OutputCodeClassifier(LinearSVC(random_state=0), code_size=2, random_state=0)
     ecoc.fit(iris.data, iris.target).predict(iris.data)
     assert len(ecoc.estimators_) == n_classes * 2
 
@@ -708,7 +706,7 @@ def test_ecoc_fit_predict():
 
 
 def test_ecoc_gridsearch():
-    ecoc = OutputCodeClassifier(LinearSVC(dual="auto", random_state=0), random_state=0)
+    ecoc = OutputCodeClassifier(LinearSVC(random_state=0), random_state=0)
     Cs = [0.1, 0.5, 0.8]
     cv = GridSearchCV(ecoc, {"estimator__C": Cs})
     cv.fit(iris.data, iris.target)
@@ -721,7 +719,7 @@ def test_ecoc_float_y():
     X = iris.data
     y = iris.data[:, 0]
 
-    ovo = OutputCodeClassifier(LinearSVC(dual="auto"))
+    ovo = OutputCodeClassifier(LinearSVC())
     msg = "Unknown label type"
     with pytest.raises(ValueError, match=msg):
         ovo.fit(X, y)
@@ -741,15 +739,15 @@ def test_ecoc_delegate_sparse_base_estimator(csc_container):
     )
     ecoc = OutputCodeClassifier(base_estimator, random_state=0)
 
-    with pytest.raises(TypeError, match="A sparse matrix was passed"):
+    with pytest.raises(TypeError, match="Sparse data was passed"):
         ecoc.fit(X_sp, y)
 
     ecoc.fit(X, y)
-    with pytest.raises(TypeError, match="A sparse matrix was passed"):
+    with pytest.raises(TypeError, match="Sparse data was passed"):
         ecoc.predict(X_sp)
 
     # smoke test to check when sparse input should be supported
-    ecoc = OutputCodeClassifier(LinearSVC(dual="auto", random_state=0))
+    ecoc = OutputCodeClassifier(LinearSVC(random_state=0))
     ecoc.fit(X_sp, y).predict(X_sp)
     assert len(ecoc.estimators_) == 4
 
@@ -926,3 +924,25 @@ def test_ovo_consistent_binary_classification():
     ovo.fit(X, y)
 
     assert_array_equal(clf.predict(X), ovo.predict(X))
+
+
+def test_multiclass_estimator_attribute_error():
+    """Check that we raise the proper AttributeError when the final estimator
+    does not implement the `partial_fit` method, which is decorated with
+    `available_if`.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/28108
+    """
+    iris = datasets.load_iris()
+
+    # LogisticRegression does not implement 'partial_fit' and should raise an
+    # AttributeError
+    clf = OneVsRestClassifier(estimator=LogisticRegression(random_state=42))
+
+    outer_msg = "This 'OneVsRestClassifier' has no attribute 'partial_fit'"
+    inner_msg = "'LogisticRegression' object has no attribute 'partial_fit'"
+    with pytest.raises(AttributeError, match=outer_msg) as exec_info:
+        clf.partial_fit(iris.data, iris.target)
+    assert isinstance(exec_info.value.__cause__, AttributeError)
+    assert inner_msg in str(exec_info.value.__cause__)

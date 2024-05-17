@@ -190,7 +190,7 @@ matrix.
 The shrunk Ledoit and Wolf estimator of covariance may not always be the
 best choice. For example if the distribution of the data
 is normally distributed, the
-Oracle Shrinkage Approximating estimator :class:`sklearn.covariance.OAS`
+Oracle Approximating Shrinkage estimator :class:`sklearn.covariance.OAS`
 yields a smaller Mean Squared Error than the one given by Ledoit and Wolf's
 formula used with shrinkage="auto". In LDA, the data are assumed to be gaussian
 conditionally to the class. If these assumptions hold, using LDA with

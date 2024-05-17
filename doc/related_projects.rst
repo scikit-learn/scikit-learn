@@ -228,6 +228,14 @@ Note scikit-learn own modern gradient boosting estimators
 - `Flower <https://flower.dev/>`_ A friendly federated learning framework with a
   unified approach that can federate any workload, any ML framework, and any programming language.
 
+**Privacy Preserving Machine Learning**
+
+- `Concrete ML <https://github.com/zama-ai/concrete-ml/>`_ A privacy preserving
+  ML framework built on top of `Concrete
+  <https://github.com/zama-ai/concrete>`_, with bindings to traditional ML
+  frameworks, thanks to fully homomorphic encryption. APIs of so-called
+  Concrete ML built-in models are very close to scikit-learn APIs.
+
 **Broad scope**
 
 - `mlxtend <https://github.com/rasbt/mlxtend>`_ Includes a number of additional

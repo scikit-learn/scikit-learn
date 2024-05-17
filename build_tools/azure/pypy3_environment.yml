@@ -9,12 +9,14 @@ dependencies:
   - numpy
   - blas[build=openblas]
   - scipy
-  - cython<3.0.0
+  - cython
   - joblib
   - threadpoolctl
   - matplotlib
   - pyamg
-  - pytest
-  - pytest-xdist=2.5.0
-  - setuptools
+  - pytest<8
+  - pytest-xdist
+  - pip
+  - ninja
+  - meson-python
   - ccache

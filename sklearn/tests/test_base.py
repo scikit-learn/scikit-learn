@@ -425,7 +425,7 @@ def test_pickle_version_warning_is_not_raised_with_matching_version():
     iris = datasets.load_iris()
     tree = DecisionTreeClassifier().fit(iris.data, iris.target)
     tree_pickle = pickle.dumps(tree)
-    assert b"version" in tree_pickle
+    assert b"_sklearn_version" in tree_pickle
     tree_restored = assert_no_warnings(pickle.loads, tree_pickle)
 
     # test that we can predict with the restored decision tree classifier
@@ -478,7 +478,7 @@ def test_pickle_version_warning_is_issued_when_no_version_info_in_pickle():
     tree = TreeNoVersion().fit(iris.data, iris.target)
 
     tree_pickle_noversion = pickle.dumps(tree)
-    assert b"version" not in tree_pickle_noversion
+    assert b"_sklearn_version" not in tree_pickle_noversion
     message = pickle_error_message.format(
         estimator="TreeNoVersion",
         old_version="pre-0.18",
@@ -834,7 +834,7 @@ def test_estimator_getstate_using_slots_error_message():
     [
         ("dataframe", "1.5.0"),
         ("pyarrow", "12.0.0"),
-        ("polars", "0.18.2"),
+        ("polars", "0.19.12"),
     ],
 )
 def test_dataframe_protocol(constructor_name, minversion):

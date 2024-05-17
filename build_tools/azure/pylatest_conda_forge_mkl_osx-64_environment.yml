@@ -14,10 +14,12 @@ dependencies:
   - matplotlib
   - pandas
   - pyamg
-  - pytest
-  - pytest-xdist=2.5.0
+  - pytest<8
+  - pytest-xdist
   - pillow
-  - setuptools
+  - pip
+  - ninja
+  - meson-python
   - pytest-cov
   - coverage
   - ccache

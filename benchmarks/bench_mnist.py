@@ -60,7 +60,7 @@ def load_data(dtype=np.float32, order="F"):
     ######################################################################
     # Load dataset
     print("Loading dataset...")
-    data = fetch_openml("mnist_784", as_frame=True, parser="pandas")
+    data = fetch_openml("mnist_784", as_frame=True)
     X = check_array(data["data"], dtype=dtype, order=order)
     y = data["target"]
 
@@ -84,10 +84,10 @@ ESTIMATORS = {
     "ExtraTrees": ExtraTreesClassifier(),
     "RandomForest": RandomForestClassifier(),
     "Nystroem-SVM": make_pipeline(
-        Nystroem(gamma=0.015, n_components=1000), LinearSVC(C=100, dual="auto")
+        Nystroem(gamma=0.015, n_components=1000), LinearSVC(C=100)
     ),
     "SampledRBF-SVM": make_pipeline(
-        RBFSampler(gamma=0.015, n_components=1000), LinearSVC(C=100, dual="auto")
+        RBFSampler(gamma=0.015, n_components=1000), LinearSVC(C=100)
     ),
     "LogisticRegression-SAG": LogisticRegression(solver="sag", tol=1e-1, C=1e4),
     "LogisticRegression-SAGA": LogisticRegression(solver="saga", tol=1e-1, C=1e4),

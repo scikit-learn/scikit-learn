@@ -1,6 +1,7 @@
 """
 Testing for the tree module (sklearn.tree).
 """
+
 import copy
 import copyreg
 import io
@@ -14,11 +15,13 @@ import pytest
 from joblib.numpy_pickle import NumpyPickler
 from numpy.testing import assert_allclose
 
-from sklearn import datasets, tree
+from sklearn import clone, datasets, tree
 from sklearn.dummy import DummyRegressor
 from sklearn.exceptions import NotFittedError
+from sklearn.impute import SimpleImputer
 from sklearn.metrics import accuracy_score, mean_poisson_deviance, mean_squared_error
 from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
 from sklearn.random_projection import _sparse_random_matrix
 from sklearn.tree import (
     DecisionTreeClassifier,
@@ -41,7 +44,7 @@ from sklearn.tree._tree import (
     _check_value_ndarray,
 )
 from sklearn.tree._tree import Tree as CythonTree
-from sklearn.utils import _IS_32BIT, compute_sample_weight
+from sklearn.utils import compute_sample_weight
 from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
@@ -51,7 +54,12 @@ from sklearn.utils._testing import (
     skip_if_32bit,
 )
 from sklearn.utils.estimator_checks import check_sample_weights_invariance
-from sklearn.utils.fixes import COO_CONTAINERS, CSC_CONTAINERS, CSR_CONTAINERS
+from sklearn.utils.fixes import (
+    _IS_32BIT,
+    COO_CONTAINERS,
+    CSC_CONTAINERS,
+    CSR_CONTAINERS,
+)
 from sklearn.utils.validation import check_random_state
 
 CLF_CRITERIONS = ("gini", "log_loss")
@@ -804,10 +812,10 @@ def test_min_weight_fraction_leaf_with_min_samples_leaf_on_sparse_input(
     )
 
 
-def test_min_impurity_decrease():
+def test_min_impurity_decrease(global_random_seed):
     # test if min_impurity_decrease ensure that a split is made only if
     # if the impurity decrease is at least that value
-    X, y = datasets.make_classification(n_samples=10000, random_state=42)
+    X, y = datasets.make_classification(n_samples=100, random_state=global_random_seed)
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
     # by setting max_leaf_nodes
@@ -2083,7 +2091,7 @@ def test_different_endianness_pickle():
     score = clf.score(X, y)
 
     def reduce_ndarray(arr):
-        return arr.byteswap().newbyteorder().__reduce__()
+        return arr.byteswap().view(arr.dtype.newbyteorder()).__reduce__()
 
     def get_pickle_non_native_endianness():
         f = io.BytesIO()
@@ -2110,7 +2118,7 @@ def test_different_endianness_joblib_pickle():
     class NonNativeEndiannessNumpyPickler(NumpyPickler):
         def save(self, obj):
             if isinstance(obj, np.ndarray):
-                obj = obj.byteswap().newbyteorder()
+                obj = obj.byteswap().view(obj.dtype.newbyteorder())
             super().save(obj)
 
     def get_joblib_pickle_non_native_endianness():
@@ -2509,44 +2517,53 @@ def test_missing_values_poisson():
     assert (y_pred >= 0.0).all()
 
 
+def make_friedman1_classification(*args, **kwargs):
+    X, y = datasets.make_friedman1(*args, **kwargs)
+    y = y > 14
+    return X, y
+
+
 @pytest.mark.parametrize(
-    "make_data, Tree",
+    "make_data,Tree",
     [
-        (datasets.make_regression, DecisionTreeRegressor),
-        (datasets.make_classification, DecisionTreeClassifier),
+        (datasets.make_friedman1, DecisionTreeRegressor),
+        (make_friedman1_classification, DecisionTreeClassifier),
     ],
 )
 @pytest.mark.parametrize("sample_weight_train", [None, "ones"])
-def test_missing_values_is_resilience(make_data, Tree, sample_weight_train):
-    """Check that trees can deal with missing values and have decent performance."""
-
-    rng = np.random.RandomState(0)
-    n_samples, n_features = 1000, 50
-    X, y = make_data(n_samples=n_samples, n_features=n_features, random_state=rng)
-
-    # Create dataset with missing values
-    X_missing = X.copy()
-    X_missing[rng.choice([False, True], size=X.shape, p=[0.9, 0.1])] = np.nan
-    X_missing_train, X_missing_test, y_train, y_test = train_test_split(
-        X_missing, y, random_state=0
+def test_missing_values_is_resilience(
+    make_data, Tree, sample_weight_train, global_random_seed
+):
+    """Check that trees can deal with missing values have decent performance."""
+    n_samples, n_features = 5_000, 10
+    X, y = make_data(
+        n_samples=n_samples, n_features=n_features, random_state=global_random_seed
     )
 
+    X_missing = X.copy()
+    rng = np.random.RandomState(global_random_seed)
+    X_missing[rng.choice([False, True], size=X.shape, p=[0.9, 0.1])] = np.nan
+    X_missing_train, X_missing_test, y_train, y_test = train_test_split(
+        X_missing, y, random_state=global_random_seed
+    )
     if sample_weight_train == "ones":
-        sample_weight_train = np.ones(X_missing_train.shape[0])
+        sample_weight = np.ones(X_missing_train.shape[0])
+    else:
+        sample_weight = None
 
-    # Train tree with missing values
-    tree_with_missing = Tree(random_state=rng)
-    tree_with_missing.fit(X_missing_train, y_train, sample_weight=sample_weight_train)
-    score_with_missing = tree_with_missing.score(X_missing_test, y_test)
+    native_tree = Tree(max_depth=10, random_state=global_random_seed)
+    native_tree.fit(X_missing_train, y_train, sample_weight=sample_weight)
+    score_native_tree = native_tree.score(X_missing_test, y_test)
 
-    # Train tree without missing values
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    tree = Tree(random_state=rng)
-    tree.fit(X_train, y_train, sample_weight=sample_weight_train)
-    score_without_missing = tree.score(X_test, y_test)
+    tree_with_imputer = make_pipeline(
+        SimpleImputer(), Tree(max_depth=10, random_state=global_random_seed)
+    )
+    tree_with_imputer.fit(X_missing_train, y_train)
+    score_tree_with_imputer = tree_with_imputer.score(X_missing_test, y_test)
 
-    # Score is still 90 percent of the tree's score that had no missing values
-    assert score_with_missing >= 0.9 * score_without_missing
+    assert (
+        score_native_tree > score_tree_with_imputer
+    ), f"{score_native_tree=} should be strictly greater than {score_tree_with_imputer}"
 
 
 def test_missing_value_is_predictive():
@@ -2601,3 +2618,105 @@ def test_sample_weight_non_uniform(make_data, Tree):
     tree_samples_removed.fit(X[1::2, :], y[1::2])
 
     assert_allclose(tree_samples_removed.predict(X), tree_with_sw.predict(X))
+
+
+def test_deterministic_pickle():
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/27268
+    # Uninitialised memory would lead to the two pickle strings being different.
+    tree1 = DecisionTreeClassifier(random_state=0).fit(iris.data, iris.target)
+    tree2 = DecisionTreeClassifier(random_state=0).fit(iris.data, iris.target)
+
+    pickle1 = pickle.dumps(tree1)
+    pickle2 = pickle.dumps(tree2)
+
+    assert pickle1 == pickle2
+
+
+@pytest.mark.parametrize(
+    "X",
+    [
+        # missing values will go left for greedy splits
+        np.array([np.nan, 2, np.nan, 4, 5, 6]),
+        np.array([np.nan, np.nan, 3, 4, 5, 6]),
+        # missing values will go right for greedy splits
+        np.array([1, 2, 3, 4, np.nan, np.nan]),
+        np.array([1, 2, 3, np.nan, 6, np.nan]),
+    ],
+)
+@pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
+def test_regression_tree_missing_values_toy(X, criterion):
+    """Check that we properly handle missing values in regression trees using a toy
+    dataset.
+
+    The regression targeted by this test was that we were not reinitializing the
+    criterion when it comes to the number of missing values. Therefore, the value
+    of the critetion (i.e. MSE) was completely wrong.
+
+    This test check that the MSE is null when there is a single sample in the leaf.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/28254
+    https://github.com/scikit-learn/scikit-learn/issues/28316
+    """
+    X = X.reshape(-1, 1)
+    y = np.arange(6)
+
+    tree = DecisionTreeRegressor(criterion=criterion, random_state=0).fit(X, y)
+    tree_ref = clone(tree).fit(y.reshape(-1, 1), y)
+    assert all(tree.tree_.impurity >= 0)  # MSE should always be positive
+    # Check the impurity match after the first split
+    assert_allclose(tree.tree_.impurity[:2], tree_ref.tree_.impurity[:2])
+
+    # Find the leaves with a single sample where the MSE should be 0
+    leaves_idx = np.flatnonzero(
+        (tree.tree_.children_left == -1) & (tree.tree_.n_node_samples == 1)
+    )
+    assert_allclose(tree.tree_.impurity[leaves_idx], 0.0)
+
+
+def test_classification_tree_missing_values_toy():
+    """Check that we properly handle missing values in clasification trees using a toy
+    dataset.
+
+    The test is more involved because we use a case where we detected a regression
+    in a random forest. We therefore define the seed and bootstrap indices to detect
+    one of the non-frequent regression.
+
+    Here, we check that the impurity is null or positive in the leaves.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/28254
+    """
+    X, y = datasets.load_iris(return_X_y=True)
+
+    rng = np.random.RandomState(42)
+    X_missing = X.copy()
+    mask = rng.binomial(
+        n=np.ones(shape=(1, 4), dtype=np.int32), p=X[:, [2]] / 8
+    ).astype(bool)
+    X_missing[mask] = np.nan
+    X_train, _, y_train, _ = train_test_split(X_missing, y, random_state=13)
+
+    # fmt: off
+    # no black reformatting for this specific array
+    indices = np.array([
+        2, 81, 39, 97, 91, 38, 46, 31, 101, 13, 89, 82, 100, 42, 69, 27, 81, 16, 73, 74,
+        51, 47, 107, 17, 75, 110, 20, 15, 104, 57, 26, 15, 75, 79, 35, 77, 90, 51, 46,
+        13, 94, 91, 23, 8, 93, 93, 73, 77, 12, 13, 74, 109, 110, 24, 10, 23, 104, 27,
+        92, 52, 20, 109, 8, 8, 28, 27, 35, 12, 12, 7, 43, 0, 30, 31, 78, 12, 24, 105,
+        50, 0, 73, 12, 102, 105, 13, 31, 1, 69, 11, 32, 75, 90, 106, 94, 60, 56, 35, 17,
+        62, 85, 81, 39, 80, 16, 63, 6, 80, 84, 3, 3, 76, 78
+    ], dtype=np.int32)
+    # fmt: on
+
+    tree = DecisionTreeClassifier(
+        max_depth=3, max_features="sqrt", random_state=1857819720
+    )
+    tree.fit(X_train[indices], y_train[indices])
+    assert all(tree.tree_.impurity >= 0)
+
+    leaves_idx = np.flatnonzero(
+        (tree.tree_.children_left == -1) & (tree.tree_.n_node_samples == 1)
+    )
+    assert_allclose(tree.tree_.impurity[leaves_idx], 0.0)

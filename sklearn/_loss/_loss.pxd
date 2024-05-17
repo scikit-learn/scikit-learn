@@ -1,5 +1,3 @@
-# cython: language_level=3
-
 # Fused types for input like y_true, raw_prediction, sample_weights.
 ctypedef fused floating_in:
     double

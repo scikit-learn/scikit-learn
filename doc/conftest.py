@@ -9,9 +9,8 @@ from _pytest.doctest import DoctestItem
 from sklearn.datasets import get_data_home
 from sklearn.datasets._base import _pkl_filepath
 from sklearn.datasets._twenty_newsgroups import CACHE_NAME
-from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import SkipTest, check_skip_network
-from sklearn.utils.fixes import np_base_version, parse_version
+from sklearn.utils.fixes import _IS_PYPY, np_base_version, parse_version
 
 
 def setup_labeled_faces():
@@ -35,7 +34,7 @@ def setup_twenty_newsgroups():
 
 
 def setup_working_with_text_data():
-    if IS_PYPY and os.environ.get("CI", None):
+    if _IS_PYPY and os.environ.get("CI", None):
         raise SkipTest("Skipping too slow test with PyPy on CI")
     check_skip_network()
     cache_path = _pkl_filepath(get_data_home(), CACHE_NAME)
@@ -145,13 +144,6 @@ def pytest_runtest_setup(item):
         setup_preprocessing()
     elif fname.endswith("statistical_inference/unsupervised_learning.rst"):
         setup_unsupervised_learning()
-    elif fname.endswith("metadata_routing.rst"):
-        # TODO: remove this once implemented
-        # Skip metarouting because is it is not fully implemented yet
-        raise SkipTest(
-            "Skipping doctest for metadata_routing.rst because it "
-            "is not fully implemented yet"
-        )
 
     rst_files_requiring_matplotlib = [
         "modules/partial_dependence.rst",

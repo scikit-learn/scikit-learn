@@ -115,8 +115,8 @@ def test_additive_chi2_sampler(csr_container):
     X_sp_trans = transform.fit_transform(csr_container(X))
     Y_sp_trans = transform.transform(csr_container(Y))
 
-    assert_array_equal(X_trans, X_sp_trans.A)
-    assert_array_equal(Y_trans, Y_sp_trans.A)
+    assert_array_equal(X_trans, X_sp_trans.toarray())
+    assert_array_equal(Y_trans, Y_sp_trans.toarray())
 
     # test error is raised on negative input
     Y_neg = Y.copy()
@@ -141,20 +141,7 @@ def test_additive_chi2_sampler_sample_steps(method, sample_steps):
         sample_interval=sample_interval,
     )
     getattr(transformer, method)(X)
-    transformer.sample_interval == sample_interval
-
-
-# TODO(1.5): remove
-def test_additive_chi2_sampler_future_warnings():
-    """Check that we raise a FutureWarning when accessing to `sample_interval_`."""
-    transformer = AdditiveChi2Sampler()
-    transformer.fit(X)
-    msg = re.escape(
-        "The ``sample_interval_`` attribute was deprecated in version 1.3 and "
-        "will be removed 1.5."
-    )
-    with pytest.warns(FutureWarning, match=msg):
-        assert transformer.sample_interval_ is not None
+    assert transformer.sample_interval == sample_interval
 
 
 @pytest.mark.parametrize("method", ["fit", "fit_transform", "transform"])

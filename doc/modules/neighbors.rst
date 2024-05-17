@@ -59,12 +59,12 @@ The choice of neighbors search algorithm is controlled through the keyword
 from the training data.  For a discussion of the strengths and weaknesses
 of each option, see `Nearest Neighbor Algorithms`_.
 
-    .. warning::
+.. warning::
 
-        Regarding the Nearest Neighbors algorithms, if two
-        neighbors :math:`k+1` and :math:`k` have identical distances
-        but different labels, the result will depend on the ordering of the
-        training data.
+    Regarding the Nearest Neighbors algorithms, if two
+    neighbors :math:`k+1` and :math:`k` have identical distances
+    but different labels, the result will depend on the ordering of the
+    training data.
 
 Finding the Nearest Neighbors
 -----------------------------
@@ -136,7 +136,7 @@ have the same interface; we'll show an example of using the KD Tree here:
 Refer to the :class:`KDTree` and :class:`BallTree` class documentation
 for more information on the options available for nearest neighbors searches,
 including specification of query strategies, distance metrics, etc. For a list
-of valid metrics use :meth:`KDTree.valid_metrics` and :meth:`BallTree.valid_metrics`:
+of valid metrics use `KDTree.valid_metrics` and `BallTree.valid_metrics`:
 
     >>> from sklearn.neighbors import KDTree, BallTree
     >>> KDTree.valid_metrics
@@ -304,13 +304,15 @@ In scikit-learn, KD tree neighbors searches are specified using the
 keyword ``algorithm = 'kd_tree'``, and are computed using the class
 :class:`KDTree`.
 
-
-.. topic:: References:
+|details-start|
+**References**
+|details-split|
 
    * `"Multidimensional binary search trees used for associative searching"
      <https://dl.acm.org/citation.cfm?doid=361002.361007>`_,
      Bentley, J.L., Communications of the ACM (1975)
 
+|details-end|
 
 .. _ball_tree:
 
@@ -343,15 +345,21 @@ neighbors searches are specified using the keyword ``algorithm = 'ball_tree'``,
 and are computed using the class :class:`BallTree`.
 Alternatively, the user can work with the :class:`BallTree` class directly.
 
-.. topic:: References:
+|details-start|
+**References**
+|details-split|
 
    * `"Five Balltree Construction Algorithms"
      <https://citeseerx.ist.psu.edu/doc_view/pid/17ac002939f8e950ffb32ec4dc8e86bdd8cb5ff1>`_,
      Omohundro, S.M., International Computer Science Institute
      Technical Report (1989)
 
-Choice of Nearest Neighbors Algorithm
--------------------------------------
+|details-end|
+
+|details-start|
+**Choice of Nearest Neighbors Algorithm**
+|details-split|
+
 The optimal algorithm for a given dataset is a complicated choice, and
 depends on a number of factors:
 
@@ -436,8 +444,12 @@ based on the following assumptions:
 * when :math:`D > 15`, the intrinsic dimensionality of the data is generally
   too high for tree-based methods
 
-Effect of ``leaf_size``
------------------------
+|details-end|
+
+|details-start|
+**Effect of ``leaf_size``**
+|details-split|
+
 As noted above, for small sample sizes a brute force search can be more
 efficient than a tree-based query.  This fact is accounted for in the ball
 tree and KD tree by internally switching to brute force searches within
@@ -464,9 +476,11 @@ leaf nodes.  The level of this switch can be specified with the parameter
   the size of the training set.
 
 ``leaf_size`` is not referenced for brute force queries.
+|details-end|
 
-Valid Metrics for Nearest Neighbor Algorithms
----------------------------------------------
+|details-start|
+**Valid Metrics for Nearest Neighbor Algorithms**
+|details-split|
 
 For a list of available metrics, see the documentation of the
 :class:`~sklearn.metrics.DistanceMetric` class and the metrics listed in
@@ -480,6 +494,7 @@ A list of valid metrics for any of the above algorithms can be obtained by using
     >>> print(sorted(KDTree.valid_metrics))
     ['chebyshev', 'cityblock', 'euclidean', 'infinity', 'l1', 'l2', 'manhattan', 'minkowski', 'p']
 
+|details-end|
 
 .. _nearest_centroid_classifier:
 
@@ -791,9 +806,9 @@ space:
   p_{i j} = \frac{\exp(-||L x_i - L x_j||^2)}{\sum\limits_{k \ne
             i} {\exp{-(||L x_i - L x_k||^2)}}} , \quad p_{i i} = 0
 
-
-Mahalanobis distance
-^^^^^^^^^^^^^^^^^^^^
+|details-start|
+**Mahalanobis distance**
+|details-split|
 
 NCA can be seen as learning a (squared) Mahalanobis distance metric:
 
@@ -804,6 +819,7 @@ NCA can be seen as learning a (squared) Mahalanobis distance metric:
 where :math:`M = L^T L` is a symmetric positive semi-definite matrix of size
 ``(n_features, n_features)``.
 
+|details-end|
 
 Implementation
 --------------
@@ -844,3 +860,5 @@ added space complexity in the operation.
 
     `Wikipedia entry on Neighborhood Components Analysis
     <https://en.wikipedia.org/wiki/Neighbourhood_components_analysis>`_
+
+|details-end|

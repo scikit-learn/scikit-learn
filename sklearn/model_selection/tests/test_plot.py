@@ -526,29 +526,6 @@ def test_curve_display_plot_kwargs(pyplot, data, CurveDisplay, specific_params):
     assert display.errorbar_[0].lines[0].get_color() == "red"
 
 
-# TODO(1.5): to be removed
-def test_learning_curve_display_deprecate_log_scale(data, pyplot):
-    """Check that we warn for the deprecated parameter `log_scale`."""
-    X, y = data
-    estimator = DecisionTreeClassifier(random_state=0)
-
-    with pytest.warns(FutureWarning, match="`log_scale` parameter is deprecated"):
-        display = LearningCurveDisplay.from_estimator(
-            estimator, X, y, train_sizes=[0.3, 0.6, 0.9], log_scale=True
-        )
-
-    assert display.ax_.get_xscale() == "log"
-    assert display.ax_.get_yscale() == "linear"
-
-    with pytest.warns(FutureWarning, match="`log_scale` parameter is deprecated"):
-        display = LearningCurveDisplay.from_estimator(
-            estimator, X, y, train_sizes=[0.3, 0.6, 0.9], log_scale=False
-        )
-
-    assert display.ax_.get_xscale() == "linear"
-    assert display.ax_.get_yscale() == "linear"
-
-
 @pytest.mark.parametrize(
     "param_range, xscale",
     [([5, 10, 15], "linear"), ([-50, 5, 50, 500], "symlog"), ([5, 50, 500], "log")],
@@ -570,3 +547,26 @@ def test_validation_curve_xscale_from_param_range_provided_as_a_list(
     )
 
     assert display.ax_.get_xscale() == xscale
+
+
+@pytest.mark.parametrize(
+    "Display, params",
+    [
+        (LearningCurveDisplay, {}),
+        (ValidationCurveDisplay, {"param_name": "max_depth", "param_range": [1, 3, 5]}),
+    ],
+)
+def test_subclassing_displays(pyplot, data, Display, params):
+    """Check that named constructors return the correct type when subclassed.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/pull/27675
+    """
+    X, y = data
+    estimator = DecisionTreeClassifier(random_state=0)
+
+    class SubclassOfDisplay(Display):
+        pass
+
+    display = SubclassOfDisplay.from_estimator(estimator, X, y, **params)
+    assert isinstance(display, SubclassOfDisplay)

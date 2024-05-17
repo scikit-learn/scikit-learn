@@ -22,6 +22,7 @@ from sklearn.utils._testing import (
     skip_if_32bit,
 )
 from sklearn.utils.extmath import (
+    _approximate_mode,
     _deterministic_vector_sign_flip,
     _incremental_mean_and_var,
     _randomized_eigsh,
@@ -58,20 +59,6 @@ def test_density(sparse_container):
     X[5, 3] = 0
 
     assert density(sparse_container(X)) == density(X)
-
-
-# TODO(1.4): Remove test
-def test_density_deprecated_kwargs():
-    """Check that future warning is raised when user enters keyword arguments."""
-    test_array = np.array([[1, 2, 3], [4, 5, 6]])
-    with pytest.warns(
-        FutureWarning,
-        match=(
-            "Additional keyword arguments are deprecated in version 1.2 and will be"
-            " removed in version 1.4."
-        ),
-    ):
-        density(test_array, a=1)
 
 
 def test_uniform_weights():
@@ -687,16 +674,20 @@ def test_cartesian_mix_types(arrays, output_dtype):
     assert output.dtype == output_dtype
 
 
+# TODO(1.6): remove this test
 def test_logistic_sigmoid():
     # Check correctness and robustness of logistic sigmoid implementation
     def naive_log_logistic(x):
         return np.log(expit(x))
 
     x = np.linspace(-2, 2, 50)
-    assert_array_almost_equal(log_logistic(x), naive_log_logistic(x))
+    warn_msg = "`log_logistic` is deprecated and will be removed"
+    with pytest.warns(FutureWarning, match=warn_msg):
+        assert_array_almost_equal(log_logistic(x), naive_log_logistic(x))
 
     extreme_x = np.array([-100.0, 100.0])
-    assert_array_almost_equal(log_logistic(extreme_x), [-100, 0])
+    with pytest.warns(FutureWarning, match=warn_msg):
+        assert_array_almost_equal(log_logistic(extreme_x), [-100, 0])
 
 
 @pytest.fixture()
@@ -712,9 +703,7 @@ def test_incremental_weighted_mean_and_variance_simple(rng, dtype):
     mean, var, _ = _incremental_mean_and_var(X, 0, 0, 0, sample_weight=sample_weight)
 
     expected_mean = np.average(X, weights=sample_weight, axis=0)
-    expected_var = (
-        np.average(X**2, weights=sample_weight, axis=0) - expected_mean**2
-    )
+    expected_var = np.average(X**2, weights=sample_weight, axis=0) - expected_mean**2
     assert_almost_equal(mean, expected_mean)
     assert_almost_equal(var, expected_var)
 
@@ -1072,3 +1061,20 @@ def test_safe_sparse_dot_dense_output(dense_output):
     if dense_output:
         expected = expected.toarray()
     assert_allclose_dense_sparse(actual, expected)
+
+
+def test_approximate_mode():
+    """Make sure sklearn.utils.extmath._approximate_mode returns valid
+    results for cases where "class_counts * n_draws" is enough
+    to overflow 32-bit signed integer.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/20774
+    """
+    X = np.array([99000, 1000], dtype=np.int32)
+    ret = _approximate_mode(class_counts=X, n_draws=25000, rng=0)
+
+    # Draws 25% of the total population, so in this case a fair draw means:
+    # 25% * 99.000 = 24.750
+    # 25% *  1.000 =    250
+    assert_array_equal(ret, [24750, 250])

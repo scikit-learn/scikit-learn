@@ -37,7 +37,7 @@ from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 
-X, y = fetch_openml(data_id=41082, as_frame=False, return_X_y=True, parser="pandas")
+X, y = fetch_openml(data_id=41082, as_frame=False, return_X_y=True)
 X = MinMaxScaler().fit_transform(X)
 
 # %%

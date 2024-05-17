@@ -166,7 +166,8 @@ purpose.
     Scikit-learn 0.22 supported Python 3.5-3.8.
     Scikit-learn 0.23 - 0.24 require Python 3.6 or newer.
     Scikit-learn 1.0 supported Python 3.7-3.10.
-    Scikit-learn 1.1 and later requires Python 3.8 or newer.
+    Scikit-learn 1.1, 1.2 and 1.3 support Python 3.8-3.12
+    Scikit-learn 1.4 requires Python 3.9 or newer.
 
 
 .. _install_by_distribution:
@@ -216,8 +217,8 @@ Debian/Ubuntu
 The Debian/Ubuntu package is split in three different packages called
 ``python3-sklearn`` (python modules), ``python3-sklearn-lib`` (low-level
 implementations and bindings), ``python3-sklearn-doc`` (documentation).
-Only the Python 3 version is available in the Debian Buster (the more recent
-Debian distribution).
+Note that scikit-learn requires Python 3, hence the need to use the `python3-`
+suffixed package names.
 Packages can be installed using ``apt-get``:
 
 .. prompt:: bash $
@@ -229,7 +230,7 @@ Fedora
 ------
 
 The Fedora package is called ``python3-scikit-learn`` for the python 3 version,
-the only one available in Fedora30.
+the only one available in Fedora.
 It can be installed using ``dnf``:
 
 .. prompt:: bash $
@@ -287,7 +288,7 @@ C++ library and are optimized for the x86_64 architecture, and are
 optimized for multi-core Intel CPUs.
 
 Note that those solvers are not enabled by default, please refer to the
-`scikit-learn-intelex <https://intel.github.io/scikit-learn-intelex/what-is-patching.html>`_
+`scikit-learn-intelex <https://intel.github.io/scikit-learn-intelex/latest/what-is-patching.html>`_
 documentation for more details on usage scenarios. Direct export example:
 
 .. prompt:: python >>>

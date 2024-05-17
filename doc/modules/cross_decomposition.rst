@@ -92,9 +92,9 @@ Step *a)* may be performed in two ways: either by computing the whole SVD of
 values, or by directly computing the singular vectors using the power method (cf section 11.3 in [1]_),
 which corresponds to the `'nipals'` option of the `algorithm` parameter.
 
-
-Transforming data
-^^^^^^^^^^^^^^^^^
+|details-start|
+**Transforming data**
+|details-split|
 
 To transform :math:`X` into :math:`\bar{X}`, we need to find a projection
 matrix :math:`P` such that :math:`\bar{X} = XP`. We know that for the
@@ -106,9 +106,11 @@ training data, :math:`\Xi = XP`, and :math:`X = \Xi \Gamma^T`. Setting
 
 Similarly, :math:`Y` can be transformed using the rotation matrix
 :math:`V(\Delta^T V)^{-1}`, accessed via the `y_rotations_` attribute.
+|details-end|
 
-Predicting the targets Y
-^^^^^^^^^^^^^^^^^^^^^^^^
+|details-start|
+**Predicting the targets Y**
+|details-split|
 
 To predict the targets of some data :math:`X`, we are looking for a
 coefficient matrix :math:`\beta \in R^{d \times t}` such that :math:`Y =
@@ -124,6 +126,8 @@ P \Delta^T`, and as a result the coefficient matrix :math:`\beta = \alpha P
 \Delta^T`.
 
 :math:`\beta` can be accessed through the `coef_` attribute.
+
+|details-end|
 
 PLSSVD
 ------
@@ -180,13 +184,16 @@ Since :class:`CCA` involves the inversion of :math:`X_k^TX_k` and
 :math:`Y_k^TY_k`, this estimator can be unstable if the number of features or
 targets is greater than the number of samples.
 
-
-.. topic:: Reference:
+|details-start|
+**Reference**
+|details-split|
 
    .. [1] `A survey of Partial Least Squares (PLS) methods, with emphasis on
       the two-block case
       <https://stat.uw.edu/sites/default/files/files/reports/2000/tr371.pdf>`_
       JA Wegelin
+
+|details-end|
 
 .. topic:: Examples:
 

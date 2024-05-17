@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-from scipy import sparse
 
 from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.impute import IterativeImputer, KNNImputer, SimpleImputer
@@ -9,6 +8,7 @@ from sklearn.utils._testing import (
     assert_allclose_dense_sparse,
     assert_array_equal,
 )
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 
 def imputers():
@@ -69,8 +69,9 @@ def test_imputers_add_indicator(marker, imputer):
 @pytest.mark.parametrize(
     "imputer", sparse_imputers(), ids=lambda x: x.__class__.__name__
 )
-def test_imputers_add_indicator_sparse(imputer, marker):
-    X = sparse.csr_matrix(
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_imputers_add_indicator_sparse(imputer, marker, csr_container):
+    X = csr_container(
         [
             [marker, 1, 5, marker, 1],
             [2, marker, 1, marker, 2],
@@ -78,7 +79,7 @@ def test_imputers_add_indicator_sparse(imputer, marker):
             [1, 2, 9, marker, 4],
         ]
     )
-    X_true_indicator = sparse.csr_matrix(
+    X_true_indicator = csr_container(
         [
             [1.0, 0.0, 0.0, 1.0],
             [0.0, 1.0, 0.0, 1.0],

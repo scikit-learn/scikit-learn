@@ -1,5 +1,4 @@
-"""Restricted Boltzmann Machine
-"""
+"""Restricted Boltzmann Machine"""
 
 # Authors: Yann N. Dauphin <dauphiya@iro.umontreal.ca>
 #          Vlad Niculae
@@ -22,7 +21,7 @@ from ..base import (
 )
 from ..utils import check_random_state, gen_even_slices
 from ..utils._param_validation import Interval
-from ..utils.extmath import log_logistic, safe_sparse_dot
+from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted
 
 
@@ -127,6 +126,9 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
     >>> model = BernoulliRBM(n_components=2)
     >>> model.fit(X)
     BernoulliRBM(n_components=2)
+
+    For a more detailed example usage, see
+    :ref:`sphx_glr_auto_examples_neural_networks_plot_rbm_logistic_classification.py`.
     """
 
     _parameter_constraints: dict = {
@@ -380,7 +382,8 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
 
         fe = self._free_energy(v)
         fe_ = self._free_energy(v_)
-        return v.shape[1] * log_logistic(fe_ - fe)
+        # log(expit(x)) = log(1 / (1 + exp(-x)) = -np.logaddexp(0, -x)
+        return -v.shape[1] * np.logaddexp(0, -(fe_ - fe))
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
