@@ -4,10 +4,10 @@ Post-tuning the decision threshold for cost-sensitive learning
 ==============================================================
 
 Once a classifier is trained, the output of the :term:`predict` method outputs class
-label predictions corresponding to a thresholding of either the :term:`decision
-function` or the :term:`predict_proba` output. For a binary classifier, the default
-threshold is defined as a posterior probability estimate of 0.5 or a decision score of
-0.0.
+label predictions corresponding to a thresholding of either the
+:term:`decision_function` or the :term:`predict_proba` output. For a binary classifier,
+the default threshold is defined as a posterior probability estimate of 0.5 or a
+decision score of 0.0.
 
 However, this default strategy is most likely not optimal for the task at hand.
 Here, we use the "Statlog" German credit dataset [1]_ to illustrate a use case.
