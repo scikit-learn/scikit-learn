@@ -27,7 +27,7 @@ or with conda::
 # All binary classifiers of scikit-learn use a fixed decision threshold of 0.5 to
 # convert probability estimates (i.e. outputs of `predict_proba`) into class
 # predictions. However it is often not the desired threshold for a given problem.
-# :class:`model_selection.FixedThresholdClassifier` allows to wrap any binary
+# :class:`~model_selection.FixedThresholdClassifier` allows to wrap any binary
 # classifier and set a custom decision threshold.
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
@@ -52,7 +52,7 @@ print("confusion matrix:\n", confusion_matrix(y, wrapped_classifier.predict(X)))
 # TunedThresholdClassifierCV: Tuning the decision threshold of a binary classifier
 # --------------------------------------------------------------------------------
 # The decision threshold of a binary classifier can be tuned to optimize a given
-# metric, using :class:`model_selection.TunedThresholdClassifierCV`.
+# metric, using :class:`~model_selection.TunedThresholdClassifierCV`.
 from sklearn.metrics import balanced_accuracy_score
 
 # Due to the class imbalance, the balanced accuracy is not optimal for the default
@@ -72,7 +72,7 @@ print("new threshold:", tuned_classifier.best_threshold_)
 print("balanced accuracy:", balanced_accuracy_score(y, tuned_classifier.predict(X)))
 
 # %%
-# :class:`model_selection.TunedThresholdClassifierCV` also benefits from the
+# :class:`~model_selection.TunedThresholdClassifierCV` also benefits from the
 # metadata routing support allowing to optimze complex business metrics, detailed
 # in :ref:`Post-tuning the decision threshold for cost-sensitive learning
 # <sphx_glr_auto_examples_model_selection_plot_cost_sensitive_learning.py>`.
@@ -80,7 +80,7 @@ print("balanced accuracy:", balanced_accuracy_score(y, tuned_classifier.predict(
 # %%
 # Performance improvements in PCA
 # -------------------------------
-# :class:`decomposition.PCA` has a new solver, "covariance_eigh", which is faster
+# :class:`~decomposition.PCA` has a new solver, "covariance_eigh", which is faster
 # and more memory efficient than the other solvers for datasets with a large number
 # of samples and a small number of features.
 from sklearn.datasets import make_low_rank_matrix
@@ -108,7 +108,7 @@ pca = PCA(n_components=10, svd_solver="auto").fit(X)
 # %%
 # ColumnTransformer is subscriptable
 # ----------------------------------
-# The transformers of a :class:`compose.ColumnTransformer` can now be directly
+# The transformers of a :class:`~compose.ColumnTransformer` can now be directly
 # accessed using indexing by name.
 import numpy as np
 from sklearn.compose import ColumnTransformer
@@ -127,7 +127,7 @@ print(column_transformer["one_hot"])
 # %%
 # Custom imputation strategies for the SimpleImputer
 # --------------------------------------------------
-# :class:`impute.SimpleImputer` now supports custom strategies for imputation,
+# :class:`~impute.SimpleImputer` now supports custom strategies for imputation,
 # using a callable that computes a scalar value from the non missing values of
 # a column vector.
 from sklearn.impute import SimpleImputer
@@ -156,7 +156,7 @@ imputer.fit_transform(X)
 # %%
 # Pairwise distances with non-numeric arrays
 # ------------------------------------------
-# :func:`metrics.pairwise_distances` can now compute distances between
+# :func:`~metrics.pairwise_distances` can now compute distances between
 # non-numeric arrays using a callable metric.
 from sklearn.metrics import pairwise_distances
 
