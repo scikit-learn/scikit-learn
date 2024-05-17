@@ -1779,7 +1779,7 @@ def learning_curve(
             via ``sklearn.set_config(enable_metadata_routing=True)``. When routing
             is enabled, pass ``groups`` alongside other metadata via the ``params``
             argument instead. E.g.:
-            ``cross_validate(..., params={'groups': groups})``.
+            ``learning_curve(..., params={'groups': groups})``.
 
     train_sizes : array-like of shape (n_ticks,), \
             default=np.linspace(0.1, 1.0, 5)

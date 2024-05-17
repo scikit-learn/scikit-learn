@@ -2537,7 +2537,7 @@ def test_passed_unrequested_metadata(func):
 @pytest.mark.parametrize(
     "func", [cross_validate, cross_val_score, cross_val_predict, learning_curve]
 )
-def test_cross_validate_learning_curve_routing(func):
+def test_validation_functions_routing(func):
     """Check that the respective cv method is properly dispatching the metadata
     to the consumer."""
     scorer_registry = _Registry()
