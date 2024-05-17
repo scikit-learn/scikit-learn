@@ -34,11 +34,27 @@ See :ref:`array_api` for more details.
 
 - :func:`sklearn.metrics.mean_tweedie_deviance` now supports Array API compatible
   inputs.
-  :pr:`28106` by :user:`Thomas Li <lithomas1>`
+  :pr:`28106` by :user:`Thomas Li <lithomas1>`;
+- :func:`sklearn.metrics.mean_absolute_error` :pr:`27736` by :user:`Edoardo Abati <EdAbati>`;
+- :func:`sklearn.metrics.pairwise.cosine_similarity` :pr:`29014` by :user:`Edoardo Abati <EdAbati>`.
+
 
 **Classes:**
 
--
+- :class:`preprocessing.LabelEncoder` now supports Array API compatible inputs.
+  :pr:`27381` by :user:`Omar Salman <OmarManzoor>`.
+
+Metadata Routing
+----------------
+
+The following models now support metadata routing in one or more of their
+methods. Refer to the :ref:`Metadata Routing User Guide <metadata_routing>` for
+more details.
+
+- |Feature| :class:`ensemble.StackingClassifier` and
+  :class:`ensemble.StackingRegressor` now support metadata routing and pass
+  ``**fit_params`` to the underlying estimators via their `fit` methods.
+  :pr:`28701` by :user:`Stefanie Senger <StefanieSenger>`.
 
 Changelog
 ---------
