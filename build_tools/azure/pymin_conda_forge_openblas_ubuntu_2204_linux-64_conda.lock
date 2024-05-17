@@ -71,7 +71,7 @@ https://conda.anaconda.org/conda-forge/linux-64/libpng-1.6.43-h2797004_0.conda#0
 https://conda.anaconda.org/conda-forge/linux-64/libsqlite-3.45.3-h2797004_0.conda#b3316cbe90249da4f8e84cd66e1cc55b
 https://conda.anaconda.org/conda-forge/linux-64/libvorbis-1.3.7-h9c3ff4c_0.tar.bz2#309dec04b70a3cc0f1e84a4013683bc0
 https://conda.anaconda.org/conda-forge/linux-64/libxcb-1.15-h0b41bf4_0.conda#33277193f5b92bad9fdd230eb700929c
-https://conda.anaconda.org/conda-forge/linux-64/libxml2-2.12.6-h232c23b_2.conda#9a3a42df8a95f65334dfc7b80da1195d
+https://conda.anaconda.org/conda-forge/linux-64/libxml2-2.12.7-hc051c1a_0.conda#5d801a4906adc712d480afc362623b59
 https://conda.anaconda.org/conda-forge/linux-64/mysql-common-8.3.0-hf1915f5_4.conda#784a4df6676c581ca624fbe460703a6d
 https://conda.anaconda.org/conda-forge/linux-64/pcre2-10.43-hcad00b1_0.conda#8292dea9e022d9610a11fce5e0896ed8
 https://conda.anaconda.org/conda-forge/linux-64/readline-8.2-h8228510_1.conda#47d31b792659ce70f470b5c82fdfb7a4
@@ -175,7 +175,7 @@ https://conda.anaconda.org/conda-forge/noarch/python-dateutil-2.9.0-pyhd8ed1ab_0
 https://conda.anaconda.org/conda-forge/linux-64/sip-6.7.12-py39h3d6467e_0.conda#e667a3ab0df62c54e60e1843d2e6defb
 https://conda.anaconda.org/conda-forge/noarch/urllib3-2.2.1-pyhd8ed1ab_0.conda#08807a87fa7af10754d46f63b368e016
 https://conda.anaconda.org/conda-forge/linux-64/gstreamer-1.24.3-haf2f30d_0.conda#f3df87cc9ef0b5113bff55aefcbcafd5
-https://conda.anaconda.org/conda-forge/linux-64/harfbuzz-8.4.0-h3d44ed6_0.conda#27f46291a6aaa3c2a4f798ebd35a7ddb
+https://conda.anaconda.org/conda-forge/linux-64/harfbuzz-8.5.0-hfac3d4d_0.conda#f5126317dd0ce0ba26945e411ecc6960
 https://conda.anaconda.org/conda-forge/noarch/importlib-resources-6.4.0-pyhd8ed1ab_0.conda#dcbadab7a68738a028e195ab68ab2d2e
 https://conda.anaconda.org/conda-forge/linux-64/liblapacke-3.9.0-22_linux64_openblas.conda#1fd156abd41a4992835952f6f4d951d0
 https://conda.anaconda.org/conda-forge/linux-64/libsystemd0-255-h3516f8a_1.conda#3366af27f0b593544a6cd453c7932ac5

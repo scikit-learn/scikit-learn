@@ -13,6 +13,7 @@ ctypedef fused real_numeric:
     short
     int
     long
+    long long
     float
     double
 
