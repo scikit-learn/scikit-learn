@@ -57,7 +57,7 @@ from sklearn.metrics import balanced_accuracy_score
 
 # Due to the class imbalance, the balanced accuracy is not optimal for the default
 # threshold. The classifier tends to over predict the majority class.
-print("balanced accuracy:", balanced_accuracy_score(y, classifier.predict(X)))
+print(f"balanced accuracy: {balanced_accuracy_score(y, classifier.predict(X)):.2f}")
 
 # %%
 # Tuning the threshold to optimize the balanced accuracy gives a smaller threshold
@@ -68,8 +68,10 @@ tuned_classifier = TunedThresholdClassifierCV(
     classifier, cv=5, scoring="balanced_accuracy"
 ).fit(X, y)
 
-print("new threshold:", tuned_classifier.best_threshold_)
-print("balanced accuracy:", balanced_accuracy_score(y, tuned_classifier.predict(X)))
+print("new threshold: {tuned_classifier.best_threshold_:.4f}")
+print(
+    "balanced accuracy: {balanced_accuracy_score(y, tuned_classifier.predict(X)):.2f}"
+)
 
 # %%
 # :class:`~model_selection.TunedThresholdClassifierCV` also benefits from the
@@ -92,7 +94,7 @@ X = make_low_rank_matrix(
 
 pca = PCA(n_components=10).fit(X)
 
-print("explained variance:", pca.explained_variance_ratio_.sum())
+print(f"explained variance: {pca.explained_variance_ratio_.sum():.2f}")
 
 # %%
 # The "full" solver has also been improved to use less memory and allows to
