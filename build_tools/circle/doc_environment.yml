@@ -14,10 +14,12 @@ dependencies:
   - matplotlib
   - pandas
   - pyamg
-  - pytest
+  - pytest<8
   - pytest-xdist
   - pillow
-  - setuptools
+  - pip
+  - ninja
+  - meson-python
   - scikit-image
   - seaborn
   - memory_profiler

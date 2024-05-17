@@ -5,8 +5,11 @@ from ...preprocessing import LabelEncoder
 from ...utils import _safe_indexing
 from ...utils._optional_dependencies import check_matplotlib_support
 from ...utils._response import _get_response_values
+from ...utils._set_output import _get_adapter_from_container
 from ...utils.validation import (
     _is_arraylike_not_scalar,
+    _is_pandas_df,
+    _is_polars_df,
     _num_features,
     check_is_fitted,
 )
@@ -345,13 +348,15 @@ class DecisionBoundaryDisplay:
             np.linspace(x0_min, x0_max, grid_resolution),
             np.linspace(x1_min, x1_max, grid_resolution),
         )
-        if hasattr(X, "iloc"):
-            # we need to preserve the feature names and therefore get an empty dataframe
-            X_grid = X.iloc[[], :].copy()
-            X_grid.iloc[:, 0] = xx0.ravel()
-            X_grid.iloc[:, 1] = xx1.ravel()
-        else:
-            X_grid = np.c_[xx0.ravel(), xx1.ravel()]
+
+        X_grid = np.c_[xx0.ravel(), xx1.ravel()]
+        if _is_pandas_df(X) or _is_polars_df(X):
+            adapter = _get_adapter_from_container(X)
+            X_grid = adapter.create_container(
+                X_grid,
+                X_grid,
+                columns=X.columns,
+            )
 
         prediction_method = _check_boundary_response_method(
             estimator, response_method, class_of_interest

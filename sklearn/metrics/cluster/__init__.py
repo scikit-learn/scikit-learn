@@ -4,6 +4,7 @@
 - Unsupervised evaluation does use ground truths and measures the "quality" of the
   model itself.
 """
+
 from ._bicluster import consensus_score
 from ._supervised import (
     adjusted_mutual_info_score,

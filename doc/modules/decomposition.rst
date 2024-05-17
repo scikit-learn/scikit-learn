@@ -291,6 +291,7 @@ prediction (kernel dependency estimation). :class:`KernelPCA` supports both
 .. rubric:: Examples
 
 * :ref:`sphx_glr_auto_examples_decomposition_plot_kernel_pca.py`
+* :ref:`sphx_glr_auto_examples_applications_plot_digits_denoising.py`
 
 .. rubric:: References
 

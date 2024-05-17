@@ -22,13 +22,27 @@ Governance
 The decision making process and governance structure of scikit-learn is laid
 out in the :ref:`governance document <governance>`.
 
-Authors
-.......
+.. The "author" anchors below is there to ensure that old html links (in
+   the form of "about.html#author" still work)
 
-The following people are currently core contributors to scikit-learn's development
-and maintenance:
+.. _authors:
 
-.. include:: authors.rst
+The people behind scikit-learn
+------------------------------
+
+Scikit-learn is a community project, developed by a large group of
+people, all across the world. A few teams, listed below, have central
+roles, however a more complete list of contributors can be found `on
+github
+<https://github.com/scikit-learn/scikit-learn/graphs/contributors>`__.
+
+Maintainers Team
+................
+
+The following people are currently maintainers, in charge of
+consolidating scikit-learn's development and maintenance:
+
+.. include:: maintainers.rst
 
 .. note::
 
@@ -71,7 +85,7 @@ Emeritus Core Developers
 The following people have been active contributors in the past, but are no
 longer active in the project:
 
-.. include:: authors_emeritus.rst
+.. include:: maintainers_emeritus.rst
 
 Emeritus Communication Team
 ...........................
@@ -278,6 +292,32 @@ The project would like to thank the following funders.
 
 ...........
 
+
+...........
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`Tidelift <https://tidelift.com/>`_ supports the project via their service
+agreement.
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/Tidelift-logo-on-light.svg
+   :width: 100pt
+   :align: center
+   :target: https://tidelift.com/
+
+.. raw:: html
+
+   </div>
+   </div>
 
 Past Sponsors
 .............
