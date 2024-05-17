@@ -70,12 +70,16 @@ def _weighted_percentile(array, sample_weight, percentile=50):
     percentile = array[percentile_in_sorted, col_index]
 
     # percentiles that point to nan values are redirected to the next lower value:
-    while (
-        bool(np.isnan(percentile).any())
-        and int(percentile_idx[np.isnan(percentile)]) < 0
-    ):
+    while bool(np.isnan(percentile).any()):
         percentile_idx[np.isnan(percentile)] -= 1
-        percentile_in_sorted = sorted_idx[percentile_idx, col_index]
+        try:
+            percentile_in_sorted = sorted_idx[percentile_idx, col_index]
+        except IndexError:
+            raise ValueError(
+                "One feature contains too many NaN values. This error should "
+                "actually either raise within the API, or there needs to be some "
+                "validation here before to make sure it cannot happen."
+            )
         percentile = array[percentile_in_sorted, col_index]
 
     return percentile[0] if n_dim == 1 else percentile

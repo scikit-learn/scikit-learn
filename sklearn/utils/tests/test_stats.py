@@ -96,3 +96,17 @@ def test_weighted_percentile_2d():
         _weighted_percentile(x_2d[:, i], w_2d[:, i]) for i in range(x_2d.shape[1])
     ]
     assert_allclose(w_median, p_axis_0)
+
+
+def test_weighted_percentile_nan():
+    """Test that np.nan is not returned as a value."""
+    rng = np.random.RandomState(1)
+    array = np.sort(5 * rng.rand(100, 3), axis=0)
+    array[np.random.rand(*array.shape) < 0.8] = np.nan
+    weights = np.random.randint(1, 6, size=(100, 3))
+
+    percentiles = 100 * np.linspace(start=0, stop=1, num=5, dtype=np.float64)
+    values = np.array(
+        [_weighted_percentile(array, weights, percentile) for percentile in percentiles]
+    )
+    assert not np.isnan(values).any()
