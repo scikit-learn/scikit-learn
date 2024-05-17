@@ -35,7 +35,7 @@ dependent_packages = {
     "pyamg": ("4.0.0", "tests"),
     "polars": ("0.20.23", "docs, tests"),
     "pyarrow": ("12.0.0", "tests"),
-    "sphinx": ("7.3.0", "docs"),
+    "sphinx": ("7.0.0", "docs"),
     "sphinx-copybutton": ("0.5.2", "docs"),
     "sphinx-gallery": ("0.15.0", "docs"),
     "numpydoc": ("1.2.0", "docs, tests"),

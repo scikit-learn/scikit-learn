@@ -24,7 +24,7 @@ dependencies:
   - seaborn
   - memory_profiler
   - compilers
-  - sphinx=6.0.0  # min
+  - sphinx=7.0.0  # min
   - sphinx-gallery=0.15.0  # min
   - sphinx-copybutton=0.5.2  # min
   - numpydoc=1.2.0  # min
