@@ -7,7 +7,7 @@ Release Highlights for scikit-learn 1.5
 .. currentmodule:: sklearn
 
 We are pleased to announce the release of scikit-learn 1.5! Many bug fixes
-and improvements were added, as well as some new key features. We detail
+and improvements were added, as well as some key new features. We detail
 below a few of the major features of this release. **For an exhaustive list of
 all the changes**, please refer to the :ref:`release notes <release_notes_1_5>`.
 
