@@ -119,7 +119,7 @@ def test_h_statistic_equivalence_array_dataframe(n_max, sample_weight):
 
     N = 200
     X, y = make_regression(n_samples=N, n_features=4, random_state=0)
-    X_df = pd.DataFrame(X)
+    X_df = pd.DataFrame(X, columns=list("abcd"))
     w = np.ones(N) if sample_weight == "ones" else None
 
     # Numpy
