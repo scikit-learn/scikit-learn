@@ -174,7 +174,6 @@ exclude_patterns = [
     "_build",
     "templates",
     "includes",
-    "themes",
     "**/sg_execution_times.rst",
 ]
 
@@ -242,9 +241,7 @@ html_theme_options = {
     # to be displayed, one adds "version-switcher" somewhere in the page layout. See
     # https://pydata-sphinx-theme.readthedocs.io/en/stable/user_guide/version-dropdown.html
     "switcher": {
-        # TODO: change to https://scikit-learn.org/dev/versions.json before merging the
-        # new_web_theme branch into main
-        "json_url": "https://scikit-learn.org/_pst_preview/versions.json",
+        "json_url": "https://scikit-learn.org/dev/versions.json",
         "version_match": release,
     },
     # check_switcher may be set to False if docbuild pipeline fails. See
@@ -286,7 +283,6 @@ html_theme_options = {
 
 # Add any paths that contain custom themes here, relative to this directory.
 # html_theme_path = ["themes"]
-
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
