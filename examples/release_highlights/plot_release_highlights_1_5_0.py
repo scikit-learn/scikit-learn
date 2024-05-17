@@ -74,7 +74,7 @@ print("balanced accuracy:", balanced_accuracy_score(y, tuned_classifier.predict(
 # %%
 # :class:`model_selection.TunedThresholdClassifierCV` also benefits from the
 # metadata routing support allowing to optimze complex business metrics, detailed
-# in :ref:`Post-tuning the decision threshold for cost-sensitive learning`
+# in :ref:`Post-tuning the decision threshold for cost-sensitive learning
 # <sphx_glr_auto_examples_model_selection_plot_cost_sensitive_learning.py>`.
 
 # %%
@@ -106,8 +106,10 @@ X = random(10000, 100, format="csr", random_state=0)
 pca = PCA(n_components=10, svd_solver="auto").fit(X)
 
 # %%
-# :class:`compose.ColumnTransformer` is now subscriptable, allowing to access
-# transformers by name.
+# ColumnTransformer is subscriptable
+# ----------------------------------
+# The transformers of a :class:`compose.ColumnTransformer` can now be directly
+# accessed using indexing by name.
 import numpy as np
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
@@ -123,6 +125,8 @@ print(column_transformer["std_scaler"])
 print(column_transformer["one_hot"])
 
 # %%
+# Custom imputation strategies for the SimpleImputer
+# --------------------------------------------------
 # :class:`impute.SimpleImputer` now supports custom strategies for imputation,
 # using a callable that computes a scalar value from the non missing values of
 # a column vector.
@@ -150,6 +154,8 @@ imputer = SimpleImputer(strategy=smallest_abs)
 imputer.fit_transform(X)
 
 # %%
+# Pairwise distances with non-numeric arrays
+# ------------------------------------------
 # :func:`metrics.pairwise_distances` can now compute distances between
 # non-numeric arrays using a callable metric.
 from sklearn.metrics import pairwise_distances
