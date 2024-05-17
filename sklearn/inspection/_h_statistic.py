@@ -34,6 +34,7 @@ def _calculate_pd_brute_fast(
     X_stacked = _safe_indexing(X, np.tile(np.arange(n), n_grid), axis=0)
     grid_stacked = _safe_indexing(grid, np.repeat(np.arange(n_grid), n), axis=0)
 
+    # TODO: remove via https://github.com/scikit-learn/scikit-learn/issues/28931
     if hasattr(X, "iloc"):  # pandas<2 does not allow "values" to have repeated indices
         grid_stacked = grid_stacked.reset_index(drop=True)
 
@@ -183,7 +184,7 @@ def h_statistic(
 
         h_squared_pairwise : ndarray of shape (n_pairs, output_dim)
             Pairwise H-squared statistic. Useful to see which feature pair has
-            strongest relative interation (relative with respect to joint effect).
+            strongest relative interaction (relative with respect to joint effect).
             Calculated as numerator_pairwise / denominator_pairwise.
 
         numerator_pairwise : ndarray of shape (n_pairs, output_dim)
