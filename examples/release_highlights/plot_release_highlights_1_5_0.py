@@ -162,8 +162,8 @@ imputer.fit_transform(X)
 # non-numeric arrays using a callable metric.
 from sklearn.metrics import pairwise_distances
 
-X = np.array(["cat", "dog"])
-Y = np.array(["cat", "fox"])
+X = ["cat", "dog"]
+Y = ["cat", "fox"]
 
 
 def levenshtein_distance(x, y):
