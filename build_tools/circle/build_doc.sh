@@ -191,7 +191,7 @@ export OMP_NUM_THREADS=1
 if [[ "$CIRCLE_BRANCH" =~ ^(main|new_web_theme)$ && -z "$CI_PULL_REQUEST" ]]
 then
     # List available documentation versions if on main
-    python build_tools/circle/list_versions.py --json doc/versions.json --rst doc/versions.rst
+    python build_tools/circle/list_versions.py --json doc/js/versions.json --rst doc/versions.rst
 fi
 
 
