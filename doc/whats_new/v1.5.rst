@@ -183,6 +183,9 @@ Changelog
 :mod:`sklearn.cluster`
 ......................
 
+- |Fix| The :class:`cluster.MeanShift` class now properly converges for constant data.
+  :pr:`28951` by :user:`Akihiro Kuno <akikuno>`.
+
 - |FIX| Create copy of precomputed sparse matrix within the `fit` method of
   :class:`~cluster.OPTICS` to avoid in-place modification of the sparse matrix.
   :pr:`28491` by :user:`Thanh Lam Dang <lamdang2k>`.
