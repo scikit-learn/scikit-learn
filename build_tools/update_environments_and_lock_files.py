@@ -308,6 +308,7 @@ build_metadata_list = [
             "polars",
             "pooch",
             "sphinx-remove-toctrees",
+            "sphinx-design",
             "pydata-sphinx-theme",
         ],
         "pip_dependencies": [
@@ -330,6 +331,8 @@ build_metadata_list = [
             "sphinxext-opengraph": "min",
             "plotly": "min",
             "polars": "min",
+            "pooch": "min",
+            "sphinx-design": "min",
             "sphinxcontrib-sass": "min",
             "sphinx-remove-toctrees": "min",
             "pydata-sphinx-theme": "min",
@@ -441,7 +444,7 @@ def execute_command(command_list):
     )
 
     out, err = proc.communicate()
-    out, err = out.decode(), err.decode()
+    out, err = out.decode(errors="replace"), err.decode(errors="replace")
 
     if proc.returncode != 0:
         command_str = " ".join(command_list)
