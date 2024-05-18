@@ -410,3 +410,12 @@ Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:
 
 TODO: update at the time of the release.
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Enhancement| The `solver="newton-cholesky"` in
+  :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` is extended to support the full
+  multinomial loss in a multiclass setting.
+  :pr:`28840` by :user:`Christian Lorentzen <lorentzenchr>`.
