@@ -314,15 +314,15 @@ html_static_path = ["images", "css", "js"]
 # A better solution would be to follow the merge of:
 # https://github.com/pydata/pydata-sphinx-theme/pull/1682
 html_sidebars = {
-    "install.html": [],
-    "getting_started.html": [],
-    "glossary.html": [],
-    "faq.html": [],
-    "support.html": [],
-    "related_projects.html": [],
-    "roadmap.html": [],
-    "governance.html": [],
-    "about.html": [],
+    "install": [],
+    "getting_started": [],
+    "glossary": [],
+    "faq": [],
+    "support": [],
+    "related_projects": [],
+    "roadmap": [],
+    "governance": [],
+    "about": [],
 }
 
 # Additional templates that should be rendered to pages, maps page names to
