@@ -84,7 +84,7 @@ Changelog
 - |Fix| :func:`metrics.balanced_accuracy_score` does not ignore `nan` due to
   a division by zero when `y_pred` contains label not present in `y_true`.
   It is thus equal to the average recall per class in this case also.
-  :pr:`28038` by :user:`Tenga Cortal <TengaCortal>`.s
+  :pr:`28038` by :user:`Tenga Cortal <TengaCortal>`.
 
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:
