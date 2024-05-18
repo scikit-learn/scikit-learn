@@ -229,7 +229,7 @@ Complexity
 Suppose there are :math:`n` training samples, :math:`m` features, :math:`k`
 hidden layers, each containing :math:`h` neurons - for simplicity, and :math:`o`
 output neurons.  The time complexity of backpropagation is
-:math:`O(n\cdot m \cdot h^k \cdot o \cdot i)`, where :math:`i` is the number
+:math:`O(i \cdot n \cdot (m \cdot h + (k - 1) \cdot h \cdot h + h \cdot o))`, where :math:`i` is the number
 of iterations. Since backpropagation has a high time complexity, it is advisable
 to start with smaller number of hidden neurons and few hidden layers for
 training.
