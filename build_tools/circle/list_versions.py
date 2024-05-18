@@ -135,8 +135,11 @@ for i, name in enumerate(
         )
     rst_content.append(out)
 
+rst_content = "\n".join(rst_content) + "\n"
 with open(args.rst, "w", encoding="utf-8") as f:
-    f.write("\n".join(rst_content) + "\n")
+    f.write(rst_content)
+print(f"Written to {args.rst}:\n{rst_content}")
 
 with open(args.json, "w", encoding="utf-8") as f:
     json.dump(json_content, f, indent=2)
+print(f"Written to {args.json}:\n{json_content}")

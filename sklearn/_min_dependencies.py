@@ -45,7 +45,8 @@ dependent_packages = {
     "sphinxext-opengraph": ("0.4.2", "docs"),
     "plotly": ("5.14.0", "docs, examples"),
     "sphinxcontrib-sass": ("0.3.4", "docs"),
-    "sphinx-remove-toctrees": ("0.0.3", "docs"),
+    "sphinx-remove-toctrees": ("1.0.0.post1", "docs"),
+    "sphinx-design": ("0.5.0", "docs"),
     "pydata-sphinx-theme": ("0.15.2", "docs"),
     # XXX: Pin conda-lock to the latest released version (needs manual update
     # from time to time)
