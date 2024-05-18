@@ -36,6 +36,13 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123455 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Enhancement| Added `warn` option to `handle_unknown` parameter in
+  :class:`preprocessing.OneHotEncoder`.
+  :pr:`28637` by :user:`Gleb Levitski <glevv>`.
+
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:
 
