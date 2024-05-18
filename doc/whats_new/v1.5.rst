@@ -411,6 +411,9 @@ Changelog
   :class:`~calibration.CalibrationDisplay`.
   :pr:`28051` by :user:`Pierre de Fréminville <pidefrem>`.
 
+- |Feature| :func:`sklearn.metrics.check_scoring` now returns a multi-metric scorer
+  when `scoring` as a `dict`, `set`, `tuple`, or `list`. :pr:`28360` by `Thomas Fan`_.
+
 - |Fix|:class:`metrics.classification_report` now shows only accuracy and not
   micro-average when input is a subset of labels.
   :pr:`28399` by :user:`Vineet Joshi <vjoshi253>`.
