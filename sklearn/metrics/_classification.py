@@ -2454,12 +2454,9 @@ def balanced_accuracy_score(
     C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
     with np.errstate(divide="ignore", invalid="ignore"):
         per_class = np.diag(C) / C.sum(axis=1)
-    if np.any(np.isnan(per_class)) or np.any(C.sum(axis=1) == 0):
+    if np.any(np.isnan(per_class)):
         if zero_division == "warn":
-            warnings.warn(
-                "y_pred contains classes not in y_true or "
-                "some classes have no true samples."
-            )
+            warnings.warn("y_pred contains classes not in y_true")
             per_class = np.nan_to_num(per_class, nan=0.0)
         else:
             per_class = np.nan_to_num(per_class, nan=zero_division)

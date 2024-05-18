@@ -2765,7 +2765,7 @@ def test_brier_score_loss():
 
 
 def test_balanced_accuracy_score_unseen():
-    msg = "y_pred contains classes not in y_true or some classes have no true samples."
+    msg = "y_pred contains classes not in y_true"
     with pytest.warns(UserWarning, match=msg):
         balanced_accuracy_score([0, 0, 0], [0, 0, 1])
 
@@ -2791,26 +2791,36 @@ def test_balanced_accuracy_score(y_true, y_pred):
 
 
 @pytest.mark.parametrize(
-    "y_true, y_pred, zero_division_value",
-    [
-        (np.array([1, 1, 1, 1]), np.array([2, 2, 2, 2]), 1),
-    ],
+    "zero_division, expected_score", [("warn", 0.25), (0.0, 0.25), (1.0, 0.75)]
 )
-def test_balanced_accuracy_score_zero_division(y_true, y_pred, zero_division_value):
-    C = confusion_matrix(y_true, y_pred, sample_weight=None)
-    with np.errstate(divide="ignore", invalid="ignore"):
-        per_class = np.diag(C) / C.sum(axis=1)
+def test_balanced_accuracy_score_zero_division(zero_division, expected_score):
+    """Check the behaviour of `zero_division` for balanced_accuracy_score.
 
-    nan_mask = np.isnan(per_class)
-    expected_per_class = per_class
-    expected_per_class[nan_mask] = zero_division_value
-    expected_score = np.mean(expected_per_class)
-    with ignore_warnings():
-        # Warnings are tested in test_balanced_accuracy_score_unseen
-        balanced = balanced_accuracy_score(
-            y_true, y_pred, zero_division=zero_division_value
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/26892
+    """
+    y_true, y_pred = [0, 0, 0, 0], [0, 0, 1, 1]
+    if zero_division == "warn":
+        with pytest.warns(UserWarning, match="y_pred contains classes not in y_true"):
+            balanced_accuracy = balanced_accuracy_score(
+                y_true, y_pred, zero_division=zero_division
+            )
+    else:
+        with warnings.catch_warnings(record=True):
+            warnings.simplefilter("error")
+            balanced_accuracy = balanced_accuracy_score(
+                y_true, y_pred, zero_division=zero_division
+            )
+    assert balanced_accuracy == pytest.approx(expected_score)
+
+    # check the consistency with the averaged recall score per-class
+    with warnings.catch_warnings(record=True):
+        # Silence the warning if it should be raised. This behaviour is specifically
+        # tested in some `recall_score` tests.
+        avg_recall = recall_score(
+            y_true, y_pred, average="macro", zero_division=zero_division
         )
-    assert balanced == expected_score
+    assert balanced_accuracy == pytest.approx(avg_recall)
 
 
 @pytest.mark.parametrize(

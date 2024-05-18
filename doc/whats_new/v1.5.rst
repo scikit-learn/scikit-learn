@@ -62,6 +62,11 @@ Changelog
   to make balanced accuracy consistent with macro-average recall.
   :pr:`28038` by :user:`Tenga Cortal <TengaCortal>`.
 
+- |Fix| :func:`metrics.balanced_accuracy_score` does not ignore `nan` due to
+  a division by zero when `y_pred` contains label not present in `y_true`.
+  It is thus equal to the average recall per class in this case also.
+  :pr:`28038` by :user:`Tenga Cortal <TengaCortal>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
