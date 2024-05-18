@@ -566,6 +566,9 @@ class OneHotEncoder(_BaseEncoder):
             `'infrequent_if_exist'` was added to automatically handle unknown
             categories and infrequent categories.
 
+        .. versionadded:: 1.6
+           The option `"warn"` was added in 1.6.
+
     min_frequency : int or float, default=None
         Specifies the minimum frequency below which a category will be
         considered infrequent.
@@ -1023,8 +1026,7 @@ class OneHotEncoder(_BaseEncoder):
 
         # validation of X happens in _check_X called by _transform
         if self.handle_unknown == "warn":
-            warn_on_unknown = True
-            handle_unknown = "infrequent_if_exist"
+            warn_on_unknown, handle_unknown = True, "infrequent_if_exist"
         else:
             warn_on_unknown = self.drop is not None and self.handle_unknown in {
                 "ignore",
@@ -1148,7 +1150,7 @@ class OneHotEncoder(_BaseEncoder):
             labels = np.asarray(sub.argmax(axis=1)).flatten()
             X_tr[:, i] = cats_wo_dropped[labels]
 
-            if self.handle_unknown in ("ignore") or (
+            if self.handle_unknown == "ignore" or (
                 self.handle_unknown in ("infrequent_if_exist", "warn")
                 and infrequent_indices[i] is None
             ):
