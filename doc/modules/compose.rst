@@ -242,7 +242,7 @@ object::
       >>> svm1 = SVC()
       >>> pipe = Pipeline([('reduce_dim', pca1), ('clf', svm1)])
       >>> pipe.fit(X_digits, y_digits)
-      Pipeline(steps=[('reduce_dim', PCA()), ('clf', SVC())])
+      Pipeline(steps=[('reduce_dim', PCA(n_components=10)), ('clf', SVC())])
       >>> # The pca instance can be inspected directly
       >>> pca1.components_.shape
       (10, 64)
