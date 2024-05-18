@@ -310,7 +310,18 @@ html_static_path = ["images", "css", "js"]
 # html_last_updated_fmt = '%b %d, %Y'
 
 # Custom sidebar templates, maps document names to template names.
-# html_sidebars = {}
+# workaround for removing the left sidebar on pages without TOC
+html_sidebars = {
+    "install.html": [],
+    "getting_started.html": [],
+    "glossary.html": [],
+    "faq.html": [],
+    "support.html": [],
+    "related_projects.html": [],
+    "roadmap.html": [],
+    "governance.html": [],
+    "about.html": [],
+}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
