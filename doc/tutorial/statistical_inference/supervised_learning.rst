@@ -503,13 +503,6 @@ Sigmoid kernel
    :target: ../../auto_examples/svm/plot_svm_kernels.html
 
 
-
-.. topic:: **Interactive example**
-
-   See the :ref:`SVM GUI <sphx_glr_auto_examples_applications_svm_gui.py>` to download
-   ``svm_gui.py``; add data points of both classes with right and left button,
-   fit the model and change parameters and data.
-
 .. topic:: **Exercise**
    :class: green
 
