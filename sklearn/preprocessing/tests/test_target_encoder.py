@@ -586,8 +586,6 @@ def test_invariance_of_encoding_under_label_permutation(smooth, global_random_se
     assert_allclose(X_test_encoded, X_test_permuted_encoded)
 
 
-# TODO(1.5) remove warning filter when kbd's subsample default is changed
-@pytest.mark.filterwarnings("ignore:In version 1.5 onwards, subsample=200_000")
 @pytest.mark.parametrize("smooth", [0.0, "auto"])
 def test_target_encoding_for_linear_regression(smooth, global_random_seed):
     # Check some expected statistical properties when fitting a linear
@@ -701,3 +699,16 @@ def test_target_encoding_for_linear_regression(smooth, global_random_seed):
     # cardinality yet non-informative feature instead of the lower
     # cardinality yet informative feature:
     assert abs(coef[0]) < abs(coef[2])
+
+
+def test_pandas_copy_on_write():
+    """
+    Test target-encoder cython code when y is read-only.
+
+    The numpy array underlying df["y"] is read-only when copy-on-write is enabled.
+    Non-regression test for gh-27879.
+    """
+    pd = pytest.importorskip("pandas", minversion="2.0")
+    with pd.option_context("mode.copy_on_write", True):
+        df = pd.DataFrame({"x": ["a", "b", "b"], "y": [4.0, 5.0, 6.0]})
+        TargetEncoder(target_type="continuous").fit(df[["x"]], df["y"])

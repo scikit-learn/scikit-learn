@@ -5,9 +5,9 @@ from functools import partial
 
 import numpy as np
 import pytest
-import threadpoolctl
 from scipy.spatial.distance import cdist
 
+from sklearn import _threadpool_controller
 from sklearn.metrics import euclidean_distances, pairwise_distances
 from sklearn.metrics._pairwise_distances_reduction import (
     ArgKmin,
@@ -695,10 +695,13 @@ def test_pairwise_distances_reduction_is_usable_for(csr_container):
         X, Y_csr, metric="sqeuclidean"
     )
 
-    assert BaseDistancesReductionDispatcher.is_usable_for(
+    # FIXME: the current Cython implementation is too slow for a large number of
+    # features. We temporarily disable it to fallback on SciPy's implementation.
+    # See: https://github.com/scikit-learn/scikit-learn/issues/28191
+    assert not BaseDistancesReductionDispatcher.is_usable_for(
         X_csr, Y_csr, metric="sqeuclidean"
     )
-    assert BaseDistancesReductionDispatcher.is_usable_for(
+    assert not BaseDistancesReductionDispatcher.is_usable_for(
         X_csr, Y_csr, metric="euclidean"
     )
 
@@ -1197,7 +1200,7 @@ def test_n_threads_agnosticism(
         **compute_parameters,
     )
 
-    with threadpoolctl.threadpool_limits(limits=1, user_api="openmp"):
+    with _threadpool_controller.limit(limits=1, user_api="openmp"):
         dist, indices = Dispatcher.compute(
             X,
             Y,

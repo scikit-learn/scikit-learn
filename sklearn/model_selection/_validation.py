@@ -58,21 +58,22 @@ __all__ = [
 ]
 
 
-def _check_params_groups_deprecation(fit_params, params, groups):
+def _check_params_groups_deprecation(fit_params, params, groups, version):
     """A helper function to check deprecations on `groups` and `fit_params`.
 
-    To be removed when set_config(enable_metadata_routing=False) is not possible.
+    # TODO(SLEP6): To be removed when set_config(enable_metadata_routing=False) is not
+    # possible.
     """
     if params is not None and fit_params is not None:
         raise ValueError(
             "`params` and `fit_params` cannot both be provided. Pass parameters "
             "via `params`. `fit_params` is deprecated and will be removed in "
-            "version 1.6."
+            f"version {version}."
         )
     elif fit_params is not None:
         warnings.warn(
             (
-                "`fit_params` is deprecated and will be removed in version 1.6. "
+                "`fit_params` is deprecated and will be removed in version {version}. "
                 "Pass parameters via `params` instead."
             ),
             FutureWarning,
@@ -346,7 +347,7 @@ def cross_validate(
     >>> print(scores['train_r2'])
     [0.28009951 0.3908844  0.22784907]
     """
-    params = _check_params_groups_deprecation(fit_params, params, groups)
+    params = _check_params_groups_deprecation(fit_params, params, groups, "1.6")
 
     X, y = indexable(X, y)
 
@@ -358,18 +359,11 @@ def cross_validate(
         scorers = check_scoring(estimator, scoring)
     else:
         scorers = _check_multimetric_scoring(estimator, scoring)
+        scorers = _MultimetricScorer(
+            scorers=scorers, raise_exc=(error_score == "raise")
+        )
 
     if _routing_enabled():
-        # `cross_validate` will create a `_MultiMetricScorer` if `scoring` is a
-        # dict at a later stage. We need the same object for the purpose of
-        # routing. However, creating it here and passing it around would create
-        # a much larger diff since the dict is used in many places.
-        if isinstance(scorers, dict):
-            _scorer = _MultimetricScorer(
-                scorers=scorers, raise_exc=(error_score == "raise")
-            )
-        else:
-            _scorer = scorers
         # For estimators, a MetadataRouter is created in get_metadata_routing
         # methods. For these router methods, we create the router to use
         # `process_routing` on it.
@@ -386,7 +380,7 @@ def cross_validate(
                 method_mapping=MethodMapping().add(caller="fit", callee="fit"),
             )
             .add(
-                scorer=_scorer,
+                scorer=scorers,
                 method_mapping=MethodMapping().add(caller="fit", callee="score"),
             )
         )
@@ -609,10 +603,8 @@ def cross_val_score(
             ``cross_val_score(..., params={'groups': groups})``.
 
     scoring : str or callable, default=None
-        A str (see model evaluation documentation) or
-        a scorer callable object / function with signature
-        ``scorer(estimator, X, y)`` which should return only
-        a single value.
+        A str (see :ref:`scoring_parameter`) or a scorer callable object / function with
+        signature ``scorer(estimator, X, y)`` which should return only a single value.
 
         Similar to :func:`cross_validate`
         but only a single metric is permitted.
@@ -901,8 +893,8 @@ def _fit_and_score(
         if error_score == "raise":
             raise
         elif isinstance(error_score, numbers.Number):
-            if isinstance(scorer, dict):
-                test_scores = {name: error_score for name in scorer}
+            if isinstance(scorer, _MultimetricScorer):
+                test_scores = {name: error_score for name in scorer._scorers}
                 if return_train_score:
                     train_scores = test_scores.copy()
             else:
@@ -966,13 +958,9 @@ def _fit_and_score(
 def _score(estimator, X_test, y_test, scorer, score_params, error_score="raise"):
     """Compute the score(s) of an estimator on a given test set.
 
-    Will return a dict of floats if `scorer` is a dict, otherwise a single
+    Will return a dict of floats if `scorer` is a _MultiMetricScorer, otherwise a single
     float is returned.
     """
-    if isinstance(scorer, dict):
-        # will cache method calls if needed. scorer() returns a dict
-        scorer = _MultimetricScorer(scorers=scorer, raise_exc=(error_score == "raise"))
-
     score_params = {} if score_params is None else score_params
 
     try:
@@ -1041,7 +1029,7 @@ def _score(estimator, X_test, y_test, scorer, score_params, error_score="raise")
     {
         "estimator": [HasMethods(["fit", "predict"])],
         "X": ["array-like", "sparse matrix"],
-        "y": ["array-like", None],
+        "y": ["array-like", "sparse matrix", None],
         "groups": ["array-like", None],
         "cv": ["cv_object"],
         "n_jobs": [Integral, None],
@@ -1098,7 +1086,7 @@ def cross_val_predict(
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         The data to fit. Can be, for example a list, or an array at least 2d.
 
-    y : array-like of shape (n_samples,) or (n_samples, n_outputs), \
+    y : {array-like, sparse matrix} of shape (n_samples,) or (n_samples, n_outputs), \
             default=None
         The target variable to try to predict in the case of
         supervised learning.
@@ -1217,7 +1205,7 @@ def cross_val_predict(
     >>> lasso = linear_model.Lasso()
     >>> y_pred = cross_val_predict(lasso, X, y, cv=3)
     """
-    params = _check_params_groups_deprecation(fit_params, params, groups)
+    params = _check_params_groups_deprecation(fit_params, params, groups, "1.6")
     X, y = indexable(X, y)
 
     if _routing_enabled():
@@ -1729,6 +1717,7 @@ def _shuffle(y, groups, random_state):
         "error_score": [StrOptions({"raise"}), Real],
         "return_times": ["boolean"],
         "fit_params": [dict, None],
+        "params": [dict, None],
     },
     prefer_skip_nested_validation=False,  # estimator is not validated yet
 )
@@ -1750,6 +1739,7 @@ def learning_curve(
     error_score=np.nan,
     return_times=False,
     fit_params=None,
+    params=None,
 ):
     """Learning curve.
 
@@ -1784,6 +1774,13 @@ def learning_curve(
         train/test set. Only used in conjunction with a "Group" :term:`cv`
         instance (e.g., :class:`GroupKFold`).
 
+        .. versionchanged:: 1.6
+            ``groups`` can only be passed if metadata routing is not enabled
+            via ``sklearn.set_config(enable_metadata_routing=True)``. When routing
+            is enabled, pass ``groups`` alongside other metadata via the ``params``
+            argument instead. E.g.:
+            ``learning_curve(..., params={'groups': groups})``.
+
     train_sizes : array-like of shape (n_ticks,), \
             default=np.linspace(0.1, 1.0, 5)
         Relative or absolute numbers of training examples that will be used to
@@ -1791,7 +1788,7 @@ def learning_curve(
         fraction of the maximum size of the training set (that is determined
         by the selected validation method), i.e. it has to be within (0, 1].
         Otherwise it is interpreted as absolute sizes of the training sets.
-        Note that for classification the number of samples usually have to
+        Note that for classification the number of samples usually has to
         be big enough to contain at least one sample from each class.
 
     cv : int, cross-validation generator or an iterable, default=None
@@ -1815,9 +1812,8 @@ def learning_curve(
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
     scoring : str or callable, default=None
-        A str (see model evaluation documentation) or
-        a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
+        A str (see :ref:`scoring_parameter`) or a scorer callable object / function with
+        signature ``scorer(estimator, X, y)``.
 
     exploit_incremental_learning : bool, default=False
         If the estimator supports incremental learning, this will be
@@ -1860,7 +1856,22 @@ def learning_curve(
     fit_params : dict, default=None
         Parameters to pass to the fit method of the estimator.
 
-        .. versionadded:: 0.24
+        .. deprecated:: 1.6
+            This parameter is deprecated and will be removed in version 1.6. Use
+            ``params`` instead.
+
+    params : dict, default=None
+        Parameters to pass to the `fit` method of the estimator and to the scorer.
+
+            - If `enable_metadata_routing=False` (default):
+              Parameters directly passed to the `fit` method of the estimator.
+
+            - If `enable_metadata_routing=True`:
+              Parameters safely routed to the `fit` method of the estimator.
+              See :ref:`Metadata Routing User Guide <metadata_routing>` for more
+              details.
+
+            .. versionadded:: 1.6
 
     Returns
     -------
@@ -1914,13 +1925,68 @@ def learning_curve(
             "An estimator must support the partial_fit interface "
             "to exploit incremental learning"
         )
+
+    params = _check_params_groups_deprecation(fit_params, params, groups, "1.8")
+
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
-    # Store it as list as we will be iterating over the list multiple times
-    cv_iter = list(cv.split(X, y, groups))
 
     scorer = check_scoring(estimator, scoring=scoring)
+
+    if _routing_enabled():
+        router = (
+            MetadataRouter(owner="learning_curve")
+            .add(
+                estimator=estimator,
+                # TODO(SLEP6): also pass metadata to the predict method for
+                # scoring?
+                method_mapping=MethodMapping()
+                .add(caller="fit", callee="fit")
+                .add(caller="fit", callee="partial_fit"),
+            )
+            .add(
+                splitter=cv,
+                method_mapping=MethodMapping().add(caller="fit", callee="split"),
+            )
+            .add(
+                scorer=scorer,
+                method_mapping=MethodMapping().add(caller="fit", callee="score"),
+            )
+        )
+
+        try:
+            routed_params = process_routing(router, "fit", **params)
+        except UnsetMetadataPassedError as e:
+            # The default exception would mention `fit` since in the above
+            # `process_routing` code, we pass `fit` as the caller. However,
+            # the user is not calling `fit` directly, so we change the message
+            # to make it more suitable for this case.
+            unrequested_params = sorted(e.unrequested_params)
+            raise UnsetMetadataPassedError(
+                message=(
+                    f"{unrequested_params} are passed to `learning_curve` but are not"
+                    " explicitly set as requested or not requested for learning_curve's"
+                    f" estimator: {estimator.__class__.__name__}. Call"
+                    " `.set_fit_request({{metadata}}=True)` on the estimator for"
+                    f" each metadata in {unrequested_params} that you"
+                    " want to use and `metadata=False` for not using it. See the"
+                    " Metadata Routing User guide"
+                    " <https://scikit-learn.org/stable/metadata_routing.html> for more"
+                    " information."
+                ),
+                unrequested_params=e.unrequested_params,
+                routed_params=e.routed_params,
+            )
+
+    else:
+        routed_params = Bunch()
+        routed_params.estimator = Bunch(fit=params, partial_fit=params)
+        routed_params.splitter = Bunch(split={"groups": groups})
+        routed_params.scorer = Bunch(score={})
+
+    # Store cv as list as we will be iterating over the list multiple times
+    cv_iter = list(cv.split(X, y, **routed_params.splitter.split))
 
     n_max_training_samples = len(cv_iter[0][0])
     # Because the lengths of folds can be significantly different, it is
@@ -1951,7 +2017,8 @@ def learning_curve(
                 scorer,
                 return_times,
                 error_score=error_score,
-                fit_params=fit_params,
+                fit_params=routed_params.estimator.partial_fit,
+                score_params=routed_params.scorer.score,
             )
             for train, test in cv_iter
         )
@@ -1972,9 +2039,8 @@ def learning_curve(
                 test=test,
                 verbose=verbose,
                 parameters=None,
-                fit_params=fit_params,
-                # TODO(SLEP6): support score params here
-                score_params=None,
+                fit_params=routed_params.estimator.fit,
+                score_params=routed_params.scorer.score,
                 return_train_score=True,
                 error_score=error_score,
                 return_times=return_times,
@@ -2080,6 +2146,7 @@ def _incremental_fit_estimator(
     return_times,
     error_score,
     fit_params,
+    score_params,
 ):
     """Train estimator on training subsets incrementally and compute scores."""
     train_scores, test_scores, fit_times, score_times = [], [], [], []
@@ -2090,6 +2157,9 @@ def _incremental_fit_estimator(
         partial_fit_func = partial(estimator.partial_fit, **fit_params)
     else:
         partial_fit_func = partial(estimator.partial_fit, classes=classes, **fit_params)
+    score_params = score_params if score_params is not None else {}
+    score_params_train = _check_method_params(X, params=score_params, indices=train)
+    score_params_test = _check_method_params(X, params=score_params, indices=test)
 
     for n_train_samples, partial_train in partitions:
         train_subset = train[:n_train_samples]
@@ -2106,14 +2176,13 @@ def _incremental_fit_estimator(
 
         start_score = time.time()
 
-        # TODO(SLEP6): support score params in the following two calls
         test_scores.append(
             _score(
                 estimator,
                 X_test,
                 y_test,
                 scorer,
-                score_params=None,
+                score_params=score_params_test,
                 error_score=error_score,
             )
         )
@@ -2123,7 +2192,7 @@ def _incremental_fit_estimator(
                 X_train,
                 y_train,
                 scorer,
-                score_params=None,
+                score_params=score_params_train,
                 error_score=error_score,
             )
         )
@@ -2231,9 +2300,8 @@ def validation_curve(
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
     scoring : str or callable, default=None
-        A str (see model evaluation documentation) or
-        a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
+        A str (see :ref:`scoring_parameter`) or a scorer callable object / function with
+        signature ``scorer(estimator, X, y)``.
 
     n_jobs : int, default=None
         Number of jobs to run in parallel. Training the estimator and computing

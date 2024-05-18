@@ -2,6 +2,17 @@
 
 .. currentmodule:: sklearn
 
+============
+Version 0.20
+============
+
+.. warning::
+
+    Version 0.20 is the last version of scikit-learn to support Python 2.7 and Python 3.4.
+    Scikit-learn 0.21 will require Python 3.5 or higher.
+
+.. include:: changelog_legend.inc
+
 .. _changes_0_20_4:
 
 Version 0.20.4
@@ -479,11 +490,6 @@ the Scikit-learn library, and improvements to the documentation and examples.
 Thanks to our contributors!
 
 This release is dedicated to the memory of Raghav Rajagopalan.
-
-.. warning::
-
-    Version 0.20 is the last version of scikit-learn to support Python 2.7 and Python 3.4.
-    Scikit-learn 0.21 will require Python 3.5 or higher.
 
 Highlights
 ----------

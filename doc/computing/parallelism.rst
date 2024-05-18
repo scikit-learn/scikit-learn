@@ -317,11 +317,28 @@ Users looking for the best performance might want to tune this variable using
 powers of 2 so as to get the best parallelism behavior for their hardware,
 especially with respect to their caches' sizes.
 
-`SKLEARN_DOC_BUILD_WARNINGS_AS_ERRORS`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`SKLEARN_WARNINGS_AS_ERRORS`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This environment variable issue errors instead of warnings when building the
-documentation. It ensures that we don't introduce new warnings in the example
-gallery. By default, the warnings are treated as errors (e.g. `"true"`). This
-is different from `SPHINXOPTS="-W"` that catch syntax warnings from the rst
-generation.
+This environment variable is used to turn warnings into errors in tests and
+documentation build.
+
+Some CI (Continuous Integration) builds set `SKLEARN_WARNINGS_AS_ERRORS=1`, for
+example to make sure that we catch deprecation warnings from our dependencies
+and that we adapt our code.
+
+To locally run with the same "warnings as errors" setting as in these CI builds
+you can set `SKLEARN_WARNINGS_AS_ERRORS=1`.
+
+By default, warnings are not turned into errors. This is the case if
+`SKLEARN_WARNINGS_AS_ERRORS` is unset, or `SKLEARN_WARNINGS_AS_ERRORS=0`.
+
+This environment variable use specific warning filters to ignore some warnings,
+since sometimes warnings originate from third-party libraries and there is not
+much we can do about it. You can see the warning filters in the
+`_get_warnings_filters_info_list` function in `sklearn/utils/_testing.py`.
+
+Note that for documentation build, `SKLEARN_WARNING_AS_ERRORS=1` is checking
+that the documentation build, in particular running examples, does not produce
+any warnings. This is different from the `-W` `sphinx-build` argument that
+catches syntax warnings in the rst files.

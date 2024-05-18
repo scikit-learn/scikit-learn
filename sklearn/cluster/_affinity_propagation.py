@@ -53,7 +53,7 @@ def _affinity_propagation(
             "All samples have mutually equal similarities. "
             "Returning arbitrary cluster center(s)."
         )
-        if preference.flat[0] >= S.flat[n_samples - 1]:
+        if preference.flat[0] > S.flat[n_samples - 1]:
             return (
                 (np.arange(n_samples), np.arange(n_samples), 0)
                 if return_n_iter
@@ -523,7 +523,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             preference = np.median(self.affinity_matrix_)
         else:
             preference = self.preference
-        preference = np.array(preference, copy=False)
+        preference = np.asarray(preference)
 
         random_state = check_random_state(self.random_state)
 
