@@ -257,7 +257,7 @@ how to set up your git repository:
 
    .. prompt:: bash $
 
-        pip install pytest pytest-cov ruff mypy numpydoc black==23.3.0
+        pip install pytest pytest-cov ruff mypy numpydoc black==24.3.0
 
 .. _upstream:
 
@@ -333,18 +333,6 @@ The next steps now describe the process of modifying code and submitting a PR:
     instructions to create a pull request from your fork. This will send an
     email to the committers. You may want to consider sending an email to the
     mailing list for more visibility.
-
-.. note::
-
-    If you are modifying a Cython module, you have to re-compile after
-    modifications and before testing them:
-
-    .. prompt:: bash $
-
-        pip install -v --no-use-pep517 --no-build-isolation -e .
-
-    Use the ``--no-build-isolation`` flag to avoid compiling the whole project
-    each time, only the files you have modified.
 
 It is often helpful to keep your local feature branch synchronized with the
 latest changes of the main scikit-learn repository:

@@ -1,6 +1,7 @@
 """
 This module contains the TreePredictor class which is used for prediction.
 """
+
 # Author: Nicolas Hug
 
 import numpy as np
