@@ -175,14 +175,16 @@ def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
     graph : ndarray or a sparse matrix class
         The computed adjacency matrix.
 
-    Notes
-    -----
-    For scikit-learn versions 0.14.1 and prior, return_as=np.ndarray was
-    handled by returning a dense np.matrix instance.  Going forward, np.ndarray
-    returns an np.ndarray, as expected.
-
-    For compatibility, user code relying on this method should wrap its
-    calls in ``np.asarray`` to avoid type issues.
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.feature_extraction.image import img_to_graph
+    >>> img = np.array([[0, 0], [0, 1]])
+    >>> img_to_graph(img, return_as=np.ndarray)
+    array([[0, 0, 0, 0],
+           [0, 0, 0, 1],
+           [0, 0, 0, 1],
+           [0, 1, 1, 1]])
     """
     img = np.atleast_3d(img)
     n_x, n_y, n_z = img.shape
@@ -229,14 +231,17 @@ def grid_to_graph(
     graph : np.ndarray or a sparse matrix class
         The computed adjacency matrix.
 
-    Notes
-    -----
-    For scikit-learn versions 0.14.1 and prior, return_as=np.ndarray was
-    handled by returning a dense np.matrix instance.  Going forward, np.ndarray
-    returns an np.ndarray, as expected.
-
-    For compatibility, user code relying on this method should wrap its
-    calls in ``np.asarray`` to avoid type issues.
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.feature_extraction.image import grid_to_graph
+    >>> shape_img = (4, 4, 1)
+    >>> mask = np.zeros(shape=shape_img, dtype=bool)
+    >>> mask[[1, 2], [1, 2], :] = True
+    >>> graph = grid_to_graph(*shape_img, mask=mask)
+    >>> print(graph)
+      (0, 0)    1
+      (1, 1)    1
     """
     return _to_graph(n_x, n_y, n_z, mask=mask, return_as=return_as, dtype=dtype)
 
@@ -481,6 +486,23 @@ def reconstruct_from_patches_2d(patches, image_size):
     -------
     image : ndarray of shape image_size
         The reconstructed image.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_sample_image
+    >>> from sklearn.feature_extraction import image
+    >>> one_image = load_sample_image("china.jpg")
+    >>> print('Image shape: {}'.format(one_image.shape))
+    Image shape: (427, 640, 3)
+    >>> image_patches = image.extract_patches_2d(image=one_image, patch_size=(10, 10))
+    >>> print('Patches shape: {}'.format(image_patches.shape))
+    Patches shape: (263758, 10, 10, 3)
+    >>> image_reconstructed = image.reconstruct_from_patches_2d(
+    ...     patches=image_patches,
+    ...     image_size=one_image.shape
+    ... )
+    >>> print(f"Reconstructed shape: {image_reconstructed.shape}")
+    Reconstructed shape: (427, 640, 3)
     """
     i_h, i_w = image_size[:2]
     p_h, p_w = patches.shape[1:3]

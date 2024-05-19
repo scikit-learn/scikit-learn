@@ -39,6 +39,7 @@ For an example of using this dataset, see
 
 import logging
 from io import BytesIO
+from numbers import Integral, Real
 from os import PathLike, makedirs, remove
 from os.path import exists
 
@@ -46,7 +47,7 @@ import joblib
 import numpy as np
 
 from ..utils import Bunch
-from ..utils._param_validation import validate_params
+from ..utils._param_validation import Interval, validate_params
 from . import get_data_home
 from ._base import RemoteFileMetadata, _fetch_remote, _pkl_filepath
 
@@ -103,7 +104,7 @@ def _load_csv(F):
     """
     names = F.readline().decode("ascii").strip().split(",")
 
-    rec = np.loadtxt(F, skiprows=0, delimiter=",", dtype="a22,f4,f4")
+    rec = np.loadtxt(F, skiprows=0, delimiter=",", dtype="S22,f4,f4")
     rec.dtype.names = names
     return rec
 
@@ -136,13 +137,24 @@ def construct_grids(batch):
 
 
 @validate_params(
-    {"data_home": [str, PathLike, None], "download_if_missing": ["boolean"]},
+    {
+        "data_home": [str, PathLike, None],
+        "download_if_missing": ["boolean"],
+        "n_retries": [Interval(Integral, 1, None, closed="left")],
+        "delay": [Interval(Real, 0.0, None, closed="neither")],
+    },
     prefer_skip_nested_validation=True,
 )
-def fetch_species_distributions(*, data_home=None, download_if_missing=True):
+def fetch_species_distributions(
+    *,
+    data_home=None,
+    download_if_missing=True,
+    n_retries=3,
+    delay=1.0,
+):
     """Loader for species distribution dataset from Phillips et. al. (2006).
 
-    Read more in the :ref:`User Guide <datasets>`.
+    Read more in the :ref:`User Guide <species_distribution_dataset>`.
 
     Parameters
     ----------
@@ -153,6 +165,16 @@ def fetch_species_distributions(*, data_home=None, download_if_missing=True):
     download_if_missing : bool, default=True
         If False, raise an OSError if the data is not locally available
         instead of trying to download the data from the source site.
+
+    n_retries : int, default=3
+        Number of retries when HTTP errors are encountered.
+
+        .. versionadded:: 1.5
+
+    delay : float, default=1.0
+        Number of seconds between retries.
+
+        .. versionadded:: 1.5
 
     Returns
     -------
@@ -207,6 +229,18 @@ def fetch_species_distributions(*, data_home=None, download_if_missing=True):
       <http://rob.schapire.net/papers/ecolmod.pdf>`_
       S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
       190:231-259, 2006.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import fetch_species_distributions
+    >>> species = fetch_species_distributions()
+    >>> species.train[:5]
+    array([(b'microryzomys_minutus', -64.7   , -17.85  ),
+           (b'microryzomys_minutus', -67.8333, -16.3333),
+           (b'microryzomys_minutus', -67.8833, -16.3   ),
+           (b'microryzomys_minutus', -67.8   , -16.2667),
+           (b'microryzomys_minutus', -67.9833, -15.9   )],
+          dtype=[('species', 'S22'), ('dd long', '<f4'), ('dd lat', '<f4')])
     """
     data_home = get_data_home(data_home)
     if not exists(data_home):
@@ -230,7 +264,9 @@ def fetch_species_distributions(*, data_home=None, download_if_missing=True):
         if not download_if_missing:
             raise OSError("Data not found and `download_if_missing` is False")
         logger.info("Downloading species data from %s to %s" % (SAMPLES.url, data_home))
-        samples_path = _fetch_remote(SAMPLES, dirname=data_home)
+        samples_path = _fetch_remote(
+            SAMPLES, dirname=data_home, n_retries=n_retries, delay=delay
+        )
         with np.load(samples_path) as X:  # samples.zip is a valid npz
             for f in X.files:
                 fhandle = BytesIO(X[f])
@@ -243,7 +279,9 @@ def fetch_species_distributions(*, data_home=None, download_if_missing=True):
         logger.info(
             "Downloading coverage data from %s to %s" % (COVERAGES.url, data_home)
         )
-        coverages_path = _fetch_remote(COVERAGES, dirname=data_home)
+        coverages_path = _fetch_remote(
+            COVERAGES, dirname=data_home, n_retries=n_retries, delay=delay
+        )
         with np.load(coverages_path) as X:  # coverages.zip is a valid npz
             coverages = []
             for f in X.files:

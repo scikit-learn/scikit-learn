@@ -2,6 +2,17 @@
 
 .. currentmodule:: sklearn
 
+.. _release_notes_1_1:
+
+===========
+Version 1.1
+===========
+
+For a short description of the main highlights of the release, please refer to
+:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_1_0.py`.
+
+.. include:: changelog_legend.inc
+
 .. _changes_1_1_3:
 
 Version 1.1.3
@@ -207,11 +218,6 @@ Version 1.1.0
 =============
 
 **May 2022**
-
-For a short description of the main highlights of the release, please refer to
-:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_1_0.py`.
-
-.. include:: changelog_legend.inc
 
 Minimal dependencies
 --------------------
@@ -1336,8 +1342,7 @@ Changelog
   removed in version 1.3. Use :func:`utils.metaestimators.available_if` instead.
   :pr:`22830` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-Code and Documentation Contributors
------------------------------------
+.. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.0, including:

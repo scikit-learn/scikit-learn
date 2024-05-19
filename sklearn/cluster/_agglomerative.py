@@ -7,6 +7,7 @@ Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
           Gael Varoquaux
 License: BSD 3 clause
 """
+
 import warnings
 from heapq import heapify, heappop, heappush, heappushpop
 from numbers import Integral, Real
@@ -809,7 +810,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
 
-    connectivity : array-like or callable, default=None
+    connectivity : array-like, sparse matrix, or callable, default=None
         Connectivity matrix. Defines for each sample the neighboring
         samples following a given structure of the data.
         This can be a connectivity matrix itself or a callable that transforms
@@ -845,6 +846,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         .. versionadded:: 0.20
             Added the 'single' option
 
+        For examples comparing different `linkage` criteria, see
+        :ref:`sphx_glr_auto_examples_cluster_plot_linkage_comparison.py`.
+
     distance_threshold : float, default=None
         The linkage distance threshold at or above which clusters will not be
         merged. If not ``None``, ``n_clusters`` must be ``None`` and
@@ -858,6 +862,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         a computational and memory overhead.
 
         .. versionadded:: 0.24
+
+        For an example of dendrogram visualization, see
+        :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_dendrogram.py`.
 
     Attributes
     ----------
@@ -929,7 +936,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
             Hidden(None),
         ],
         "memory": [str, HasMethods("cache"), None],
-        "connectivity": ["array-like", callable, None],
+        "connectivity": ["array-like", "sparse matrix", callable, None],
         "compute_full_tree": [StrOptions({"auto"}), "boolean"],
         "linkage": [StrOptions(set(_TREE_BUILDERS.keys()))],
         "distance_threshold": [Interval(Real, 0, None, closed="left"), None],
@@ -1151,7 +1158,7 @@ class FeatureAgglomeration(
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
 
-    connectivity : array-like or callable, default=None
+    connectivity : array-like, sparse matrix, or callable, default=None
         Connectivity matrix. Defines for each feature the neighboring
         features following a given structure of the data.
         This can be a connectivity matrix itself or a callable that transforms
@@ -1275,7 +1282,7 @@ class FeatureAgglomeration(
             Hidden(None),
         ],
         "memory": [str, HasMethods("cache"), None],
-        "connectivity": ["array-like", callable, None],
+        "connectivity": ["array-like", "sparse matrix", callable, None],
         "compute_full_tree": [StrOptions({"auto"}), "boolean"],
         "linkage": [StrOptions(set(_TREE_BUILDERS.keys()))],
         "pooling_func": [callable],

@@ -1,4 +1,5 @@
 """Base and mixin classes for nearest neighbors."""
+
 # Authors: Jake Vanderplas <vanderplas@astro.washington.edu>
 #          Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
@@ -26,7 +27,6 @@ from ..metrics._pairwise_distances_reduction import (
 )
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import (
-    _to_object_array,
     check_array,
     gen_even_slices,
 )
@@ -34,7 +34,7 @@ from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.fixes import parse_version, sp_base_version
 from ..utils.multiclass import check_classification_targets
 from ..utils.parallel import Parallel, delayed
-from ..utils.validation import check_is_fitted, check_non_negative
+from ..utils.validation import _to_object_array, check_is_fitted, check_non_negative
 from ._ball_tree import BallTree
 from ._kd_tree import KDTree
 
@@ -445,8 +445,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 raise ValueError(
                     "kd_tree does not support callable metric '%s'"
                     "Function call overhead will result"
-                    "in very poor performance."
-                    % self.metric
+                    "in very poor performance." % self.metric
                 )
         elif self.metric not in VALID_METRICS[alg_check] and not isinstance(
             self.metric, DistanceMetric
@@ -899,8 +898,7 @@ class KNeighborsMixin:
             if issparse(X):
                 raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
-                    "or set algorithm='brute'"
-                    % self._fit_method
+                    "or set algorithm='brute'" % self._fit_method
                 )
             chunked_results = Parallel(n_jobs, prefer="threads")(
                 delayed(_tree_query_parallel_helper)(
@@ -1254,8 +1252,7 @@ class RadiusNeighborsMixin:
             if issparse(X):
                 raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
-                    "or set algorithm='brute'"
-                    % self._fit_method
+                    "or set algorithm='brute'" % self._fit_method
                 )
 
             n_jobs = effective_n_jobs(self.n_jobs)

@@ -2,6 +2,17 @@
 
 .. currentmodule:: sklearn
 
+.. _release_notes_1_2:
+
+===========
+Version 1.2
+===========
+
+For a short description of the main highlights of the release, please refer to
+:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_2_0.py`.
+
+.. include:: changelog_legend.inc
+
 .. _changes_1_2_2:
 
 Version 1.2.2
@@ -269,11 +280,6 @@ Version 1.2.0
 =============
 
 **December 2022**
-
-For a short description of the main highlights of the release, please refer to
-:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_2_0.py`.
-
-.. include:: changelog_legend.inc
 
 Changed models
 --------------
@@ -804,8 +810,8 @@ Changelog
   :pr:`24354` by :user:`Safiuddin Khaja <Safikh>` and :user:`gsiisg <gsiisg>`.
 
 - |Fix| Allows `csr_matrix` as input for parameter: `y_true` of
-   the :func:`metrics.label_ranking_average_precision_score` metric.
-   :pr:`23442` by :user:`Sean Atukorala <ShehanAT>`
+  the :func:`metrics.label_ranking_average_precision_score` metric.
+  :pr:`23442` by :user:`Sean Atukorala <ShehanAT>`
 
 - |Fix| :func:`metrics.ndcg_score` will now trigger a warning when the `y_true`
   value contains a negative value. Users may still use negative values, but the
@@ -992,8 +998,7 @@ Changelog
   and will be removed in 1.4.
   :pr:`24523` by :user:`Mia Bajic <clytaemnestra>`.
 
-Code and Documentation Contributors
------------------------------------
+.. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.1, including:
