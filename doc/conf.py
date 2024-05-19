@@ -310,7 +310,20 @@ html_static_path = ["images", "css", "js"]
 # html_last_updated_fmt = '%b %d, %Y'
 
 # Custom sidebar templates, maps document names to template names.
-# html_sidebars = {}
+# Workaround for removing the left sidebar on pages without TOC
+# A better solution would be to follow the merge of:
+# https://github.com/pydata/pydata-sphinx-theme/pull/1682
+html_sidebars = {
+    "install": [],
+    "getting_started": [],
+    "glossary": [],
+    "faq": [],
+    "support": [],
+    "related_projects": [],
+    "roadmap": [],
+    "governance": [],
+    "about": [],
+}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
