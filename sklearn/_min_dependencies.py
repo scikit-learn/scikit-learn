@@ -33,7 +33,7 @@ dependent_packages = {
     "black": ("24.3.0", "tests"),
     "mypy": ("1.9", "tests"),
     "pyamg": ("4.0.0", "tests"),
-    "polars": ("0.19.12", "docs, tests"),
+    "polars": ("0.20.23", "docs, tests"),
     "pyarrow": ("12.0.0", "tests"),
     "sphinx": ("6.0.0", "docs"),
     "sphinx-copybutton": ("0.5.2", "docs"),
