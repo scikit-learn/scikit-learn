@@ -110,9 +110,8 @@ properties of these support vectors can be found in attributes
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane.py`,
-* :ref:`sphx_glr_auto_examples_svm_plot_svm_nonlinear.py`
-* :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`,
+* :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane.py`
+* :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`
 
 .. _svm_multi_class:
 
@@ -515,7 +514,6 @@ is advised to use :class:`~sklearn.model_selection.GridSearchCV` with
 .. rubric:: Examples
 
 * :ref:`sphx_glr_auto_examples_svm_plot_rbf_parameters.py`
-* :ref:`sphx_glr_auto_examples_svm_plot_svm_nonlinear.py`
 * :ref:`sphx_glr_auto_examples_svm_plot_svm_scale_c.py`
 
 Custom Kernels

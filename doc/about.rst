@@ -292,32 +292,20 @@ The project would like to thank the following funders.
 
 ...........
 
+.. div:: sk-text-image-grid-small
+
+  .. div:: text-box
+
+    `Tidelift <https://tidelift.com/>`_ supports the project via their service
+    agreement.
+
+  .. div:: image-box
+
+    .. image:: images/Tidelift-logo-on-light.svg
+      :target: https://tidelift.com/
 
 ...........
 
-.. raw:: html
-
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
-
-`Tidelift <https://tidelift.com/>`_ supports the project via their service
-agreement.
-
-.. raw:: html
-
-   </div>
-
-   <div class="sk-sponsor-div-box">
-
-.. image:: images/Tidelift-logo-on-light.svg
-   :width: 100pt
-   :align: center
-   :target: https://tidelift.com/
-
-.. raw:: html
-
-   </div>
-   </div>
 
 Past Sponsors
 .............

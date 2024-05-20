@@ -26,7 +26,7 @@ GENERATED_DOC_DIR=$(readlink -f $GENERATED_DOC_DIR)
 if [ "$CIRCLE_BRANCH" = "main" ]
 then
     dir=dev
-# TODO: remove this branch once new_web_theme is merged into main
+# TODO(new_web_theme): remove this branch once new_web_theme is merged into main
 elif [ "$CIRCLE_BRANCH" = "new_web_theme" ]
 then
     dir=_pst_preview

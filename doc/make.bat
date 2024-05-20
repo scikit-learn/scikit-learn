@@ -32,21 +32,27 @@ if "%1" == "clean" (
 	if exist %BUILDDIR%\ (
 		for /d %%i in (%BUILDDIR%\*) do rmdir /q /s "%%i"
 		del /q /s %BUILDDIR%\*
+		echo. Removed %BUILDDIR%\*
 	)
 	if exist auto_examples\ (
 		rmdir /q /s auto_examples
+		echo. Removed auto_examples\
 	)
 	if exist generated\ (
 		for /d %%i in (generated\*) do rmdir /q /s "%%i"
 		del /q /s generated\*
+		echo. Removed generated\*
 	)
 	if exist modules\generated\ (
 		rmdir /q /s modules\generated
+		echo. Removed modules\generated\
 	)
 	if exist css\styles\ (
 		rmdir /q /s css\styles
+		echo. Removed css\styles\
 	)
 	for %%i in (api\*.rst) do del /q "%%i"
+	echo. Removed api\*.rst
 	goto end
 )
 

@@ -174,7 +174,6 @@ exclude_patterns = [
     "_build",
     "templates",
     "includes",
-    "themes",
     "**/sg_execution_times.rst",
 ]
 
@@ -242,8 +241,8 @@ html_theme_options = {
     # the `js/` static directory; it will then be copied to the `_static` directory in
     # the built documentation
     "switcher": {
-        # TODO: change to https://scikit-learn.org/dev/_static/versions.json before
-        # merging the new_web_theme branch into main
+        # TODO(new_web_theme): change to https://scikit-learn.org/dev/_static/versions.json
+        # before merging the new_web_theme branch into main
         "json_url": "https://scikit-learn.org/_pst_preview/_static/versions.json",
         "version_match": release,
     },
@@ -286,7 +285,6 @@ html_theme_options = {
 
 # Add any paths that contain custom themes here, relative to this directory.
 # html_theme_path = ["themes"]
-
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".

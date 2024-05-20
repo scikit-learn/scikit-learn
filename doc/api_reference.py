@@ -717,6 +717,7 @@ API_REFERENCE = {
                     "classification_report",
                     "cohen_kappa_score",
                     "confusion_matrix",
+                    "d2_log_loss_score",
                     "dcg_score",
                     "det_curve",
                     "f1_score",
@@ -897,6 +898,13 @@ API_REFERENCE = {
                     "ParameterGrid",
                     "ParameterSampler",
                     "RandomizedSearchCV",
+                ],
+            },
+            {
+                "title": "Post-fit model tuning",
+                "autosummary": [
+                    "FixedThresholdClassifier",
+                    "TunedThresholdClassifierCV",
                 ],
             },
             {

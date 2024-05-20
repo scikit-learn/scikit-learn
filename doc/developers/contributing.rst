@@ -891,7 +891,9 @@ Building the documentation requires installing some additional packages:
 
     pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas \
                 polars scikit-image packaging seaborn sphinx-prompt \
-                sphinxext-opengraph sphinx-copybutton plotly pooch
+                sphinxext-opengraph sphinx-copybutton plotly pooch \
+                pydata-sphinx-theme sphinxcontrib-sass sphinx-design \
+                sphinx-remove-toctrees
 
 To build the documentation, you need to be in the ``doc`` folder:
 
@@ -933,7 +935,8 @@ To build the PDF manual, run:
 
     make latexpdf
 
-.. warning:: **Sphinx version**
+.. admonition:: Sphinx version
+   :class: warning
 
    While we do our best to have the documentation build under as many
    versions of Sphinx as possible, the different versions tend to
