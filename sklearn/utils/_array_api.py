@@ -985,5 +985,9 @@ def _bincount(xp, array, weights=None, minlength=None):
         return xp.bincount(array, weights=weights, minlength=minlength)
 
     array_np = _convert_to_numpy(array, xp=xp)
-    bin_out = numpy.bincount(array_np, weights=weights, minlength=minlength)
+    if weights is not None:
+        weights_np = _convert_to_numpy(weights, xp=xp)
+    else:
+        weights_np = None
+    bin_out = numpy.bincount(array_np, weights=weights_np, minlength=minlength)
     return xp.asarray(bin_out, device=device(array))
