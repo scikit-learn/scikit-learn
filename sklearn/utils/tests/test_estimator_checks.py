@@ -529,15 +529,15 @@ def test_check_array_api_input():
     except ModuleNotFoundError:
         raise SkipTest("array_api_compat is required to run this test")
     try:
-        importlib.import_module("numpy.array_api")
+        importlib.import_module("array_api_strict")
     except ModuleNotFoundError:  # pragma: nocover
-        raise SkipTest("numpy.array_api is required to run this test")
+        raise SkipTest("array-api-strict is required to run this test")
 
     with raises(AssertionError, match="Not equal to tolerance"):
         check_array_api_input(
             "BrokenArrayAPI",
             BrokenArrayAPI(),
-            array_namespace="numpy.array_api",
+            array_namespace="array_api_strict",
             check_values=True,
         )
 

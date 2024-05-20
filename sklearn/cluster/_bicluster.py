@@ -1,4 +1,5 @@
 """Spectral biclustering algorithms."""
+
 # Authors : Kemal Eren
 # License: BSD 3 clause
 
