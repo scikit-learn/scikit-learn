@@ -488,7 +488,7 @@ def indexable(*iterables):
 
     Checks consistent length, passes through None, and ensures that everything
     can be indexed by converting sparse matrices to csr and converting
-    non-interable objects to arrays.
+    non-iterable objects to arrays.
 
     Parameters
     ----------

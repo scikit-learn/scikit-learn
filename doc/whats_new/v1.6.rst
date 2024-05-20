@@ -51,6 +51,10 @@ The following models now support metadata routing in one or more of their
 methods. Refer to the :ref:`Metadata Routing User Guide <metadata_routing>` for
 more details.
 
+- |Feature| :func:`model_selection.learning_curve` now supports metadata routing for the
+  `fit` method of its estimator and for its underlying CV splitter and scorer.
+  :pr:`28975` by :user:`Stefanie Senger <StefanieSenger>`.
+
 - |Feature| :class:`ensemble.StackingClassifier` and
   :class:`ensemble.StackingRegressor` now support metadata routing and pass
   ``**fit_params`` to the underlying estimators via their `fit` methods.
