@@ -24,11 +24,11 @@ or with conda::
 # %%
 # FixedThresholdClassifier: Setting the decision threshold of a binary classifier
 # -------------------------------------------------------------------------------
-# All binary classifiers of scikit-learn use a fixed decision threshold of 0.5 to
-# convert probability estimates (i.e. output of `predict_proba`) into class
-# predictions. However, 0.5 is almost never the desired threshold for a given problem.
-# :class:`~model_selection.FixedThresholdClassifier` allows to wrap any binary
-# classifier and set a custom decision threshold.
+# All binary classifiers of scikit-learn use a fixed decision threshold of 0.5
+# to convert probability estimates (i.e. output of `predict_proba`) into class
+# predictions. However, 0.5 may not always be the optimal threshold for a given
+# problem. :class:`~model_selection.FixedThresholdClassifier` allows wrapping
+# any binary classifier and setting a custom decision threshold.
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import confusion_matrix
@@ -36,7 +36,7 @@ from sklearn.metrics import confusion_matrix
 X, y = make_classification(n_samples=1_000, weights=[0.9, 0.1], random_state=0)
 classifier = LogisticRegression(random_state=0).fit(X, y)
 
-print("confusion matrix:\n", confusion_matrix(y, classifier.predict(X)))
+print("Confusion matrix:\n", confusion_matrix(y, classifier.predict(X)))
 
 # %%
 # Lowering the threshold, i.e. allowing more samples to be classified as the positive
@@ -46,18 +46,20 @@ from sklearn.model_selection import FixedThresholdClassifier
 
 wrapped_classifier = FixedThresholdClassifier(classifier, threshold=0.1).fit(X, y)
 
-print("confusion matrix:\n", confusion_matrix(y, wrapped_classifier.predict(X)))
+print("Confusion matrix:\n", confusion_matrix(y, wrapped_classifier.predict(X)))
 
 # %%
 # TunedThresholdClassifierCV: Tuning the decision threshold of a binary classifier
 # --------------------------------------------------------------------------------
-# The decision threshold of a binary classifier can be tuned to optimize a given
-# metric, using :class:`~model_selection.TunedThresholdClassifierCV`.
+# The decision threshold of a binary classifier can be tuned to optimize a
+# given metric, using :class:`~model_selection.TunedThresholdClassifierCV`.
+#
+# Due to the class imbalance in this dataset, the model with the default
+# decision threshold at 0.5 has a suboptimal balanced accuracy: this classifier
+# tends to over predict the majority class.
 from sklearn.metrics import balanced_accuracy_score
 
-# Due to the class imbalance, the balanced accuracy is not optimal for the default
-# threshold. The classifier tends to over predict the majority class.
-print(f"balanced accuracy: {balanced_accuracy_score(y, classifier.predict(X)):.2f}")
+print(f"Balanced accuracy: {balanced_accuracy_score(y, classifier.predict(X)):.2f}")
 
 # %%
 # Tuning the threshold to optimize the balanced accuracy gives a smaller threshold
@@ -68,24 +70,33 @@ tuned_classifier = TunedThresholdClassifierCV(
     classifier, cv=5, scoring="balanced_accuracy"
 ).fit(X, y)
 
-print(f"new threshold: {tuned_classifier.best_threshold_:.4f}")
+print(f"Tuned decision threshold: {tuned_classifier.best_threshold_:.4f}")
 print(
-    f"balanced accuracy: {balanced_accuracy_score(y, tuned_classifier.predict(X)):.2f}"
+    f"Balanced accuracy: {balanced_accuracy_score(y, tuned_classifier.predict(X)):.2f}"
 )
 
 # %%
-# :class:`~model_selection.TunedThresholdClassifierCV` also benefits from the
+# Note however, that the balanced accuracy is not necessarily the most
+# meaningful model selection metric for a given application. It often makes
+# sense to optimize the decision threshold directly for a business metric of
+# interest. **Custom business metrics can be defined by assigning different costs
+# to false positives and false negatives or different gains to true positives
+# and true negatives.** Furthermore, those costs and gains can depend on ancilary
+# metadata specific to each individual data point such as the amount of a
+# transaction in a fraud detection system.
+#
+# :class:`~model_selection.TunedThresholdClassifierCV` benefits from the
 # metadata routing support (:ref:`Metadata Routing User Guide<metadata_routing>`)
-# allowing to optimze complex business metrics, detailed
+# allowing to optimze complex business metrics as detailed
 # in :ref:`Post-tuning the decision threshold for cost-sensitive learning
 # <sphx_glr_auto_examples_model_selection_plot_cost_sensitive_learning.py>`.
 
 # %%
 # Performance improvements in PCA
 # -------------------------------
-# :class:`~decomposition.PCA` has a new solver, "covariance_eigh", which is faster
-# and more memory efficient than the other solvers for datasets with a large number
-# of samples and a small number of features.
+# :class:`~decomposition.PCA` has a new solver, `"covariance_eigh"`, which is
+# up to 15 times faster and more memory efficient than the other solvers for
+# datasets with many data points and few features.
 from sklearn.datasets import make_low_rank_matrix
 from sklearn.decomposition import PCA
 
@@ -93,20 +104,28 @@ X = make_low_rank_matrix(
     n_samples=10_000, n_features=100, tail_strength=0.1, random_state=0
 )
 
-pca = PCA(n_components=10).fit(X)
+pca = PCA(n_components=10, svd_solver="covariance_eigh").fit(X)
+print(f"Explained variance: {pca.explained_variance_ratio_.sum():.2f}")
 
-print(f"explained variance: {pca.explained_variance_ratio_.sum():.2f}")
 
 # %%
-# The "full" solver has also been improved to use less memory and allows to
-# transform faster. The "auto" option for the solver takes advantage of the
-# new solver and is now able to select an appropriate solver for sparse
-# datasets.
+# The new solver also accepts sparse input data:
 from scipy.sparse import random
 
-X = random(10000, 100, format="csr", random_state=0)
+X = random(10_000, 100, format="csr", random_state=0)
 
-pca = PCA(n_components=10, svd_solver="auto").fit(X)
+pca = PCA(n_components=10, svd_solver="covariance_eigh").fit(X)
+print(f"Explained variance: {pca.explained_variance_ratio_.sum():.2f}")
+
+# %%
+# The `"full"` solver has also been improved to use less memory and allows
+# faster transformation. The default `svd_solver="auto"`` option takes
+# advantage of the new solver and is now able to select an appropriate solver
+# for sparse datasets.
+#
+# Similarly to most other PCA solvers, the new `"covariance_eigh"` solver can leverage
+# GPU computation if the input data is passed as a PyTorch or CuPy array by
+# enabling the experimental support for :ref:`Array API <array_api>`.
 
 # %%
 # ColumnTransformer is subscriptable
