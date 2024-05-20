@@ -303,8 +303,8 @@ def test_is_regressor(estimator, expected_result):
     [
         (KMeans(), True),
         (GridSearchCV(KMeans(), {"n_clusters": [3, 8]}), True),
-        (Pipeline([("kmeans", KMeans())]), True),
-        (Pipeline([("kmeans_cv", GridSearchCV(KMeans(), {"n_clusters": [3, 8]}))]), True),
+        (Pipeline([("km", KMeans())]), True),
+        (Pipeline([("km_cv", GridSearchCV(KMeans(), {"n_clusters": [3, 8]}))]), True),
 
         (SVC(), False),
         (GridSearchCV(SVC(), {"C": [0.1, 1]}), False),
