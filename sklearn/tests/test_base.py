@@ -262,54 +262,58 @@ def test_get_params():
         test.set_params(a__a=2)
 
 
-def test_is_classifier():
-    # classifier cases
-    svc = SVC()
-    assert is_classifier(svc)
-    assert is_classifier(GridSearchCV(svc, {"C": [0.1, 1]}))
-    assert is_classifier(Pipeline([("svc", svc)]))
-    assert is_classifier(Pipeline([("svc_cv", GridSearchCV(svc, {"C": [0.1, 1]}))]))
+@pytest.mark.parametrize(
+    "estimator, expected_result",
+    [
+        (SVC(), True),
+        (GridSearchCV(SVC(), {"C": [0.1, 1]}), True),
+        (Pipeline([("svc", SVC())]), True),
+        (Pipeline([("svc_cv", GridSearchCV(SVC(), {"C": [0.1, 1]}))]), True),
 
-    # non-classifier cases
-    svr = SVR()
-    assert not is_classifier(svr)
-    assert not is_classifier(GridSearchCV(svr, {"C": [0.1, 1]}))
-    assert not is_classifier(Pipeline([("svr", svr)]))
-    assert not is_classifier(Pipeline([("svr_cv", GridSearchCV(svr, {"C": [0.1, 1]}))]))
-
-
-def test_is_regressor():
-    # regressor cases
-    svr = SVR()
-    assert is_regressor(svr)
-    assert is_regressor(GridSearchCV(svr, {"C": [0.1, 1]}))
-    assert is_regressor(Pipeline([("svr", svr)]))
-    assert is_regressor(Pipeline([("svr_cv", GridSearchCV(svr, {"C": [0.1, 1]}))]))
-
-    # non-regressor cases
-    svc = SVC()
-    assert not is_regressor(svc)
-    assert not is_regressor(GridSearchCV(svc, {"C": [0.1, 1]}))
-    assert not is_regressor(Pipeline([("svc", svc)]))
-    assert not is_regressor(Pipeline([("svc_cv", GridSearchCV(svc, {"C": [0.1, 1]}))]))
+        (SVR(), False),
+        (GridSearchCV(SVR(), {"C": [0.1, 1]}), False),
+        (Pipeline([("svr", SVR())]), False),
+        (Pipeline([("svr_cv", GridSearchCV(SVR(), {"C": [0.1, 1]}))]), False),
+    ]
+)
+def test_is_classifier(estimator, expected_result):
+    assert is_classifier(estimator) == expected_result
 
 
-def test_is_clusterer():
-    # clusterer cases
-    kmeans = KMeans()
-    assert is_clusterer(kmeans)
-    assert is_clusterer(GridSearchCV(kmeans, {"n_clusters": [3, 8]}))
-    assert is_clusterer(Pipeline([("kmeans", kmeans)]))
-    assert is_clusterer(
-        Pipeline([("kmeans_cv", GridSearchCV(kmeans, {"n_clusters": [3, 8]}))])
-    )
+@pytest.mark.parametrize(
+    "estimator, expected_result",
+    [
+        (SVR(), True),
+        (GridSearchCV(SVR(), {"C": [0.1, 1]}), True),
+        (Pipeline([("svr", SVR())]), True),
+        (Pipeline([("svr_cv", GridSearchCV(SVR(), {"C": [0.1, 1]}))]), True),
 
-    # non-clusterer cases
-    svc = SVC()
-    assert not is_clusterer(svc)
-    assert not is_clusterer(GridSearchCV(svc, {"C": [0.1, 1]}))
-    assert not is_clusterer(Pipeline([("svc", svc)]))
-    assert not is_clusterer(Pipeline([("svc_cv", GridSearchCV(svc, {"C": [0.1, 1]}))]))
+        (SVC(), False),
+        (GridSearchCV(SVC(), {"C": [0.1, 1]}), False),
+        (Pipeline([("svc", SVC())]), False),
+        (Pipeline([("svc_cv", GridSearchCV(SVC(), {"C": [0.1, 1]}))]), False),
+    ]
+)
+def test_is_regressor(estimator, expected_result):
+    assert is_regressor(estimator) == expected_result
+
+
+@pytest.mark.parametrize(
+    "estimator, expected_result",
+    [
+        (KMeans(), True),
+        (GridSearchCV(KMeans(), {"n_clusters": [3, 8]}), True),
+        (Pipeline([("kmeans", KMeans())]), True),
+        (Pipeline([("kmeans_cv", GridSearchCV(KMeans(), {"n_clusters": [3, 8]}))]), True),
+
+        (SVC(), False),
+        (GridSearchCV(SVC(), {"C": [0.1, 1]}), False),
+        (Pipeline([("svc", SVC())]), False),
+        (Pipeline([("svc_cv", GridSearchCV(SVC(), {"C": [0.1, 1]}))]), False),
+    ]
+)
+def test_is_clusterer(estimator, expected_result):
+    assert is_clusterer(estimator) == expected_result
 
 
 def test_set_params():
