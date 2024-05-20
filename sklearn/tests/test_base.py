@@ -269,12 +269,11 @@ def test_get_params():
         (GridSearchCV(SVC(), {"C": [0.1, 1]}), True),
         (Pipeline([("svc", SVC())]), True),
         (Pipeline([("svc_cv", GridSearchCV(SVC(), {"C": [0.1, 1]}))]), True),
-
         (SVR(), False),
         (GridSearchCV(SVR(), {"C": [0.1, 1]}), False),
         (Pipeline([("svr", SVR())]), False),
         (Pipeline([("svr_cv", GridSearchCV(SVR(), {"C": [0.1, 1]}))]), False),
-    ]
+    ],
 )
 def test_is_classifier(estimator, expected_result):
     assert is_classifier(estimator) == expected_result
@@ -287,12 +286,11 @@ def test_is_classifier(estimator, expected_result):
         (GridSearchCV(SVR(), {"C": [0.1, 1]}), True),
         (Pipeline([("svr", SVR())]), True),
         (Pipeline([("svr_cv", GridSearchCV(SVR(), {"C": [0.1, 1]}))]), True),
-
         (SVC(), False),
         (GridSearchCV(SVC(), {"C": [0.1, 1]}), False),
         (Pipeline([("svc", SVC())]), False),
         (Pipeline([("svc_cv", GridSearchCV(SVC(), {"C": [0.1, 1]}))]), False),
-    ]
+    ],
 )
 def test_is_regressor(estimator, expected_result):
     assert is_regressor(estimator) == expected_result
@@ -305,12 +303,11 @@ def test_is_regressor(estimator, expected_result):
         (GridSearchCV(KMeans(), {"n_clusters": [3, 8]}), True),
         (Pipeline([("km", KMeans())]), True),
         (Pipeline([("km_cv", GridSearchCV(KMeans(), {"n_clusters": [3, 8]}))]), True),
-
         (SVC(), False),
         (GridSearchCV(SVC(), {"C": [0.1, 1]}), False),
         (Pipeline([("svc", SVC())]), False),
         (Pipeline([("svc_cv", GridSearchCV(SVC(), {"C": [0.1, 1]}))]), False),
-    ]
+    ],
 )
 def test_is_clusterer(estimator, expected_result):
     assert is_clusterer(estimator) == expected_result
