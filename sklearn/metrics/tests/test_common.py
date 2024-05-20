@@ -1896,10 +1896,26 @@ def check_array_api_metric_pairwise(metric, array_namespace, device, dtype_name)
 
     metric_kwargs = {}
     if "dense_output" in signature(metric).parameters:
+        metric_kwargs["dense_output"] = False
+        check_array_api_metric(
+            metric,
+            array_namespace,
+            device,
+            dtype_name,
+            a_np=X_np,
+            b_np=Y_np,
+            **metric_kwargs,
+        )
         metric_kwargs["dense_output"] = True
 
     check_array_api_metric(
-        metric, array_namespace, device, dtype_name, a_np=X_np, b_np=Y_np
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=X_np,
+        b_np=Y_np,
+        **metric_kwargs,
     )
 
 
