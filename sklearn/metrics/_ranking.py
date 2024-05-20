@@ -383,7 +383,8 @@ def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
         warnings.warn(
             (
                 "Only one class present in y_true. ROC AUC score "
-                "is not defined in that case."
+                "is not defined in that case. The score is set to "
+                "0.0."
             ),
             UndefinedMetricWarning,
         )

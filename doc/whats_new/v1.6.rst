@@ -74,6 +74,13 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123455 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| :func:`metrics.roc_auc_score` will now correctly return 0.0 and
+  warn user if only one class is present in the labels.
+  :pr:`27412` by :user:`Gleb Levitski <glevv>`.
+
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:
 
