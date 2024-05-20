@@ -25,7 +25,7 @@ or with conda::
 # FixedThresholdClassifier: Setting the decision threshold of a binary classifier
 # -------------------------------------------------------------------------------
 # All binary classifiers of scikit-learn use a fixed decision threshold of 0.5 to
-# convert probability estimates (i.e. outputs of `predict_proba`) into class
+# convert probability estimates (i.e. output of `predict_proba`) into class
 # predictions. However it is often not the desired threshold for a given problem.
 # :class:`~model_selection.FixedThresholdClassifier` allows to wrap any binary
 # classifier and set a custom decision threshold.
