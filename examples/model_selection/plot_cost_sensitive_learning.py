@@ -489,7 +489,7 @@ amount_fraud = data["Amount"][fraud]
 _, ax = plt.subplots()
 ax.hist(amount_fraud, bins=100)
 ax.set_title("Amount of fraud transaction")
-_ = ax.set_xlabel("Amount ($)")
+_ = ax.set_xlabel("Amount (€)")
 
 # %%
 # Addressing the problem with a business metric
@@ -501,8 +501,8 @@ _ = ax.set_xlabel("Amount ($)")
 # transaction result in a loss of the amount of the transaction. As stated in [2]_, the
 # gain and loss related to refusals (of fraudulent and legitimate transactions) are not
 # trivial to define. Here, we define that a refusal of a legitimate transaction is
-# estimated to a loss of $5 while the refusal of a fraudulent transaction is estimated
-# to a gain of $50 dollars and the amount of the transaction. Therefore, we define the
+# estimated to a loss of 5€ while the refusal of a fraudulent transaction is estimated
+# to a gain of 50€ and the amount of the transaction. Therefore, we define the
 # following function to compute the total benefit of a given decision:
 
 
@@ -557,22 +557,22 @@ easy_going_classifier.fit(data_train, target_train)
 benefit_cost = business_scorer(
     easy_going_classifier, data_test, target_test, amount=amount_test
 )
-print(f"Benefit/cost of our easy-going classifier: ${benefit_cost:,.2f}")
+print(f"Benefit/cost of our easy-going classifier: {benefit_cost:,.2f}€")
 
 # %%
 # A classifier that predict all transactions as legitimate would create a profit of
-# around $220,000. We make the same evaluation for a classifier that predicts all
+# around 220,000.€ We make the same evaluation for a classifier that predicts all
 # transactions as fraudulent.
 intolerant_classifier = DummyClassifier(strategy="constant", constant=1)
 intolerant_classifier.fit(data_train, target_train)
 benefit_cost = business_scorer(
     intolerant_classifier, data_test, target_test, amount=amount_test
 )
-print(f"Benefit/cost of our intolerant classifier: ${benefit_cost:,.2f}")
+print(f"Benefit/cost of our intolerant classifier: {benefit_cost:,.2f}€")
 
 # %%
-# Such a classifier create a loss of around $670,000. A predictive model should allow
-# us to make a profit larger than $220,000. It is interesting to compare this business
+# Such a classifier create a loss of around 670,000.€ A predictive model should allow
+# us to make a profit larger than 220,000.€ It is interesting to compare this business
 # metric with another "standard" statistical metric such as the balanced accuracy.
 from sklearn.metrics import get_scorer
 
@@ -607,7 +607,7 @@ model = GridSearchCV(logistic_regression, param_grid, scoring="neg_log_loss").fi
 
 print(
     "Benefit/cost of our logistic regression: "
-    f"${business_scorer(model, data_test, target_test, amount=amount_test):,.2f}"
+    f"{business_scorer(model, data_test, target_test, amount=amount_test):,.2f}€"
 )
 print(
     "Balanced accuracy of our logistic regression: "
@@ -645,7 +645,7 @@ tuned_model.fit(data_train, target_train, amount=amount_train)
 # %%
 print(
     "Benefit/cost of our logistic regression: "
-    f"${business_scorer(tuned_model, data_test, target_test, amount=amount_test):,.2f}"
+    f"{business_scorer(tuned_model, data_test, target_test, amount=amount_test):,.2f}€"
 )
 print(
     "Balanced accuracy of our logistic regression: "
@@ -691,7 +691,7 @@ model_fixed_threshold = FixedThresholdClassifier(
 business_score = business_scorer(
     model_fixed_threshold, data_test, target_test, amount=amount_test
 )
-print(f"Benefit/cost of our logistic regression: ${business_score:,.2f}")
+print(f"Benefit/cost of our logistic regression: {business_score:,.2f}€")
 print(
     "Balanced accuracy of our logistic regression: "
     f"{balanced_accuracy_scorer(model_fixed_threshold, data_test, target_test):.3f}"
