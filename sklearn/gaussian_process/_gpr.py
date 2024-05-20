@@ -530,9 +530,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             y_samples = np.hstack(y_samples)
         return y_samples
 
-    def log_marginal_likelihood(
-        self, theta=None, eval_gradient=False, clone_kernel=True
-    ):
+    def log_marginal_likelihood(self, theta=None, eval_gradient=False, clone_kernel=True):
         """Return log-marginal likelihood of theta for training data.
 
         Parameters

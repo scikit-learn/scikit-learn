@@ -11,6 +11,7 @@ from operator import itemgetter
 import numpy as np
 import scipy.optimize
 from scipy.linalg import cho_solve, cholesky, solve_triangular
+from scipy.special import gamma as gam
 
 from ..base import BaseEstimator, MultiOutputMixin, RegressorMixin, _fit_context, clone
 from ..preprocessing._data import _handle_zeros_in_scale
@@ -149,7 +150,7 @@ class TProcessRegressor(GaussianProcessRegressor):
 
     References
     ----------
-    TODO
+    TODO: References
 
     Examples
     --------
@@ -192,6 +193,13 @@ class TProcessRegressor(GaussianProcessRegressor):
         self.m_dis = 0  # Mahalanobis Distance
         self.v0 = v  # Starting degrees of freedom
         self.v = self.v0
+        self.n = 0
+        self.log_likelihood_dims_const = -1
+
+        ### Constants that are used throughout functions ###
+        self.c1 = gam(self.v0 / 2)
+        self.c2 = np.log(self.v0 * np.pi)
+        self.c_fit1 = self.v/2
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
@@ -210,10 +218,13 @@ class TProcessRegressor(GaussianProcessRegressor):
         self : object
             GaussianProcessRegressor class instance.
         """
-        self.v = self.v0 + len(y)  # TODO see if this can be simplified
+        self.n = sum(y.shape)
+        self.v = self.v0 + self.n
+        self.c_fit1 = self.v / 2
+        self.log_likelihood_dims_const = gam(self.c_fit1) - self.c1 - self.n / 2 * self.c2
         super().fit(X, y)
 
-    def predict(self, X, return_std=False, return_cov=False):
+    def predict(self, X, return_std=False, return_cov=False, return_tShape=False, return_tShapeMatrix=False):
         """Predict using the T process regression model.
 
         We can also predict based on an unfitted model by using the TP prior.
@@ -234,10 +245,18 @@ class TProcessRegressor(GaussianProcessRegressor):
             If True, the covariance of the joint predictive distribution at
             the query points is returned along with the mean.
 
+        return_tShape : bool, default=False
+            If True, the shape parameter of the predictive t distribution at
+            the query points is returned along with the mean.
+
+        return_tShapeMatrix : bool, default=False
+            If True, the shape parameter of the joint predictive t distribution
+            the query points is returned along with the mean.
+
         Returns
         -------
         y_mean : ndarray of shape (n_samples,) or (n_samples, n_targets)
-            Mean of predictive distribution a query points.
+            Mean of predictive distribution at query points.
 
         y_std : ndarray of shape (n_samples,) or (n_samples, n_targets), optional
             Standard deviation of predictive distribution at query points.
@@ -245,16 +264,31 @@ class TProcessRegressor(GaussianProcessRegressor):
 
         y_cov : ndarray of shape (n_samples, n_samples) or \
                 (n_samples, n_samples, n_targets), optional
-            Covariance of joint predictive distribution a query points.
+            Covariance of joint predictive distribution at query points.
+            Only returned when `return_cov` is True.
+
+        y_tShape : ndarray of shape (n_samples, n_samples) or \
+                (n_samples, n_samples, n_targets), optional
+            Shape of joint predictive t distribution at query points.
             Only returned when `return_cov` is True.
         """
-
-        # BIG TODO
+        if [return_std, return_cov, return_tShape, return_tShapeMatrix].count(True) != 1:
+            raise RuntimeError(
+                "At most one of return_std, return_cov, return_tShape or return_tShapeMatrix can be requested."
+            )
 
         # Spread may be either std or cov
-        y_mean, y_spread = super().predict(X, return_std, return_cov)
-        y_spread = y_spread * (self.m_dis + self.v0) / self.v
+        if not any([return_std, return_cov, return_tShape, return_tShapeMatrix]):
+            return super().predict(X, return_std, return_cov)
+        else:
+            y_mean, y_spread = super().predict(X, return_std, return_cov)
+            if return_tShape or return_tShapeMatrix:
+                y_spread = y_spread * (self.m_dis + self.v0) / self.v
+            elif return_std or return_cov:
+                y_spread = y_spread * (self.m_dis + self.v0) / (self.v - 2)
+
         return y_mean, y_spread
+
 
     def log_marginal_likelihood(
         self, theta=None, eval_gradient=False, clone_kernel=True
@@ -321,6 +355,11 @@ class TProcessRegressor(GaussianProcessRegressor):
         # Mahalanobis Distance used for T-Process Scaling Factor
         self.m_dis = np.einsum("ik,ik->k", y_train, alpha)
 
+        log_likelihood_dims = self.log_likelihood_dims_const
+        log_likelihood_dims -= self.c_fit1 * np.log(1 + self.m_dis/self.v0)
+        log_likelihood_dims -= np.log(np.diag(L)).sum()
+        log_likelihood = log_likelihood_dims.sum(axis=-1)
+
         # Alg 2.1, page 19, line 7
         # -0.5 . y^T . alpha - sum(log(diag(L))) - n_samples / 2 log(2*pi)
         # y is originally thought to be a (1, n_samples) row vector. However,
@@ -331,11 +370,11 @@ class TProcessRegressor(GaussianProcessRegressor):
         #     log_likelihood_dims[output_idx] = (
         #         y_train[:, [output_idx]] @ alpha[:, [output_idx]]
         #     )
-        log_likelihood_dims = -0.5 * np.einsum("ik,ik->k", y_train, alpha)
+        '''log_likelihood_dims = -0.5 * np.einsum("ik,ik->k", y_train, alpha)
         log_likelihood_dims -= np.log(np.diag(L)).sum()
         log_likelihood_dims -= K.shape[0] / 2 * np.log(2 * np.pi)
         # the log likehood is sum-up across the outputs
-        log_likelihood = log_likelihood_dims.sum(axis=-1)
+        log_likelihood = log_likelihood_dims.sum(axis=-1)'''
 
         if eval_gradient:
             # Eq. 5.9, p. 114, and footnote 5 in p. 114
@@ -348,6 +387,7 @@ class TProcessRegressor(GaussianProcessRegressor):
             #     output_alpha = alpha[:, [output_idx]]
             #     inner_term[..., output_idx] = output_alpha @ output_alpha.T
             inner_term = np.einsum("ik,jk->ijk", alpha, alpha)
+            inner_term = self.v / (self.v0 + self.m_dis) * inner_term
             # compute K^-1 of shape (n_samples, n_samples)
             K_inv = cho_solve(
                 (L, GPR_CHOLESKY_LOWER), np.eye(K.shape[0]), check_finite=False

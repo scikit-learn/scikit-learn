@@ -38,12 +38,15 @@ def m_test():
     kernel = 1.0 * RBF(length_scale=1e-1, length_scale_bounds=(1e-2, 1e3)) + WhiteKernel(
         noise_level=1e-2, noise_level_bounds=(1e-10, 1e1)
     )
-    gpr = GaussianProcessRegressor(kernel=kernel, alpha=0.0, optimizer=None)
-    tpr = TProcessRegressor(kernel=kernel, v=5, alpha=0.0, optimizer=None)
-    plotSPR2(gpr)
+    gpr = GaussianProcessRegressor(kernel=kernel, alpha=0.0001)  #, optimizer=None)
+    tpr = TProcessRegressor(kernel=kernel, v=5, alpha=0.0001)  #, optimizer=None)
+    # plotSPR2(gpr)
+    plotSPR2(tpr)
 
 
+# TODO: Does this to do register?
 def plotSPR1(spr: GaussianProcessRegressor):
+    # TODO: Does this under register?
     ### Plotting Space ###
     X = np.linspace(0, 5, num=100).reshape(-1, 1)
     y = target_generator(X, add_noise=False)
@@ -115,16 +118,5 @@ def plotSPR2(spr: GaussianProcessRegressor):
     plt.show()
 
 
-
-
-
-
 if __name__ == '__main__':
     m_test()
-
-
-
-
-
-
-
