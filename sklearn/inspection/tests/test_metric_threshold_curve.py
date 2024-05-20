@@ -1,9 +1,7 @@
-import pytest
-import numpy as np
-
 from functools import partial
 
-from numpy.testing import assert_allclose
+import numpy as np
+import pytest
 
 from sklearn.datasets import make_classification
 from sklearn.ensemble import RandomForestClassifier
@@ -15,6 +13,7 @@ from sklearn.metrics import (
     precision_score,
     recall_score,
 )
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils.validation import check_random_state
 
 
