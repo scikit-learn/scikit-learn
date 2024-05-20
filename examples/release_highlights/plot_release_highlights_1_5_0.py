@@ -8,7 +8,7 @@ Release Highlights for scikit-learn 1.5
 
 We are pleased to announce the release of scikit-learn 1.5! Many bug fixes
 and improvements were added, as well as some key new features. Below we
-detail a few of the major features of this release. **For an exhaustive list of
+detail the highlights of this release. **For an exhaustive list of
 all the changes**, please refer to the :ref:`release notes <release_notes_1_5>`.
 
 To install the latest version (with pip)::
@@ -26,7 +26,7 @@ or with conda::
 # -------------------------------------------------------------------------------
 # All binary classifiers of scikit-learn use a fixed decision threshold of 0.5 to
 # convert probability estimates (i.e. output of `predict_proba`) into class
-# predictions. However it is often not the desired threshold for a given problem.
+# predictions. However, 0.5 is almost never the desired threshold for a given problem.
 # :class:`~model_selection.FixedThresholdClassifier` allows to wrap any binary
 # classifier and set a custom decision threshold.
 from sklearn.datasets import make_classification
@@ -39,9 +39,9 @@ classifier = LogisticRegression(random_state=0).fit(X, y)
 print("confusion matrix:\n", confusion_matrix(y, classifier.predict(X)))
 
 # %%
-# Moving the threshold towards the negative class, i.e. allowing more samples to be
-# classified as the positive class, increases the number of true positives at the
-# cost of more false positives.
+# Lowering the threshold, i.e. allowing more samples to be classified as the positive
+# class, increases the number of true positives at the cost of more false positives
+# (as is well known from the concavity of the ROC curve).
 from sklearn.model_selection import FixedThresholdClassifier
 
 wrapped_classifier = FixedThresholdClassifier(classifier, threshold=0.1).fit(X, y)
@@ -68,14 +68,15 @@ tuned_classifier = TunedThresholdClassifierCV(
     classifier, cv=5, scoring="balanced_accuracy"
 ).fit(X, y)
 
-print("new threshold: {tuned_classifier.best_threshold_:.4f}")
+print(f"new threshold: {tuned_classifier.best_threshold_:.4f}")
 print(
-    "balanced accuracy: {balanced_accuracy_score(y, tuned_classifier.predict(X)):.2f}"
+    f"balanced accuracy: {balanced_accuracy_score(y, tuned_classifier.predict(X)):.2f}"
 )
 
 # %%
 # :class:`~model_selection.TunedThresholdClassifierCV` also benefits from the
-# metadata routing support allowing to optimze complex business metrics, detailed
+# metadata routing support (:ref:`Metadata Routing User Guide<metadata_routing>`)
+# allowing to optimze complex business metrics, detailed
 # in :ref:`Post-tuning the decision threshold for cost-sensitive learning
 # <sphx_glr_auto_examples_model_selection_plot_cost_sensitive_learning.py>`.
 
