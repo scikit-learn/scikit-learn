@@ -56,7 +56,7 @@ https://conda.anaconda.org/conda-forge/noarch/iniconfig-2.0.0-pyhd8ed1ab_0.conda
 https://conda.anaconda.org/conda-forge/win-64/kiwisolver-1.4.5-py39h1f6ef14_1.conda#4fc5bd0a7b535252028c647cc27d6c87
 https://conda.anaconda.org/conda-forge/win-64/libclang13-18.1.5-default_hf64faad_0.conda#8a662434c6be1f40e2d5d2506d05a41d
 https://conda.anaconda.org/conda-forge/win-64/libglib-2.80.2-h0df6a38_0.conda#ef9ae80bb2a15aee7a30180c057678ea
-https://conda.anaconda.org/conda-forge/win-64/libhwloc-2.10.0-default_h2fffb23_1000.conda#ee944f0d41d9e2048f9d7492c1623ca3
+https://conda.anaconda.org/conda-forge/win-64/libhwloc-2.10.0-default_h8125262_1001.conda#e761885eb4c181074d172220d46319a0
 https://conda.anaconda.org/conda-forge/win-64/libintl-devel-0.22.5-h5728263_2.conda#a2ad82fae23975e4ccbfab2847d31d48
 https://conda.anaconda.org/conda-forge/win-64/libtiff-4.6.0-hddb2be6_3.conda#6d1828c9039929e2f185c5fa9d133018
 https://conda.anaconda.org/conda-forge/noarch/munkres-1.1.4-pyh9f0ad1d_0.tar.bz2#2ba8498c1018c1e9c61eb99b973dfe19
@@ -90,7 +90,7 @@ https://conda.anaconda.org/conda-forge/noarch/pyproject-metadata-0.8.0-pyhd8ed1a
 https://conda.anaconda.org/conda-forge/noarch/pytest-7.4.4-pyhd8ed1ab_0.conda#a9d145de8c5f064b5fa68fb34725d9f4
 https://conda.anaconda.org/conda-forge/noarch/python-dateutil-2.9.0-pyhd8ed1ab_0.conda#2cf4264fffb9e6eff6031c5b6884d61c
 https://conda.anaconda.org/conda-forge/win-64/sip-6.7.12-py39h99910a6_0.conda#0cc5774390ada632ed7975203057c91c
-https://conda.anaconda.org/conda-forge/win-64/tbb-2021.12.0-h91493d7_0.conda#21745fdd12f01b41178596143cbecffd
+https://conda.anaconda.org/conda-forge/win-64/tbb-2021.12.0-hc790b64_1.conda#e98333643abc739ebea1bac97a479828
 https://conda.anaconda.org/conda-forge/win-64/fonttools-4.51.0-py39ha55989b_0.conda#5d19302bab29e347116b743e793aa7d6
 https://conda.anaconda.org/conda-forge/win-64/glib-2.80.2-h0df6a38_0.conda#a728ca6f04c33ecb0f39eeda5fbd0e23
 https://conda.anaconda.org/conda-forge/noarch/importlib-resources-6.4.0-pyhd8ed1ab_0.conda#dcbadab7a68738a028e195ab68ab2d2e
@@ -114,5 +114,5 @@ https://conda.anaconda.org/conda-forge/win-64/contourpy-1.2.1-py39h1f6ef14_0.con
 https://conda.anaconda.org/conda-forge/win-64/pyqt-5.15.9-py39hb77abff_5.conda#5ed899124a51958336371ff01482b8fd
 https://conda.anaconda.org/conda-forge/win-64/scipy-1.13.0-py39h1a10956_1.conda#5624ccefd670072fc86b2cd4ffdc6c44
 https://conda.anaconda.org/conda-forge/win-64/blas-2.122-mkl.conda#aee642435696de144ddf91dc02101cf8
-https://conda.anaconda.org/conda-forge/win-64/matplotlib-base-3.8.4-py39hf19769e_0.conda#7836c3dc5814f6d55a7392657c576e88
-https://conda.anaconda.org/conda-forge/win-64/matplotlib-3.8.4-py39hcbf5309_0.conda#cc66c372d5eb745665da06ce56b7d72b
+https://conda.anaconda.org/conda-forge/win-64/matplotlib-base-3.8.4-py39he1095e7_2.conda#5c813b5da86f186d8026b6de6429c212
+https://conda.anaconda.org/conda-forge/win-64/matplotlib-3.8.4-py39hcbf5309_2.conda#1ecee90b529cb69ec4e95add23323110
