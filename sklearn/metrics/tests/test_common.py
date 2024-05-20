@@ -1803,33 +1803,35 @@ def check_array_api_multiclass_classification_metric(
     y_true_np = np.array([0, 1, 2, 3])
     y_pred_np = np.array([0, 1, 0, 2])
 
-    metric_kwargs = {}
+    metric_kwargs_combinations = [{}]
     if "average" in signature(metric).parameters:
-        metric_kwargs["average"] = "macro"
+        average_options = ("micro", "macro", "weighted")
+        metric_kwargs_combinations = [{"average": option} for option in average_options]
 
-    check_array_api_metric(
-        metric,
-        array_namespace,
-        device,
-        dtype_name,
-        a_np=y_true_np,
-        b_np=y_pred_np,
-        sample_weight=None,
-        **metric_kwargs,
-    )
+    for metric_kwargs in metric_kwargs_combinations:
+        check_array_api_metric(
+            metric,
+            array_namespace,
+            device,
+            dtype_name,
+            a_np=y_true_np,
+            b_np=y_pred_np,
+            sample_weight=None,
+            **metric_kwargs,
+        )
 
-    sample_weight = np.array([0.0, 0.1, 2.0, 1.0], dtype=dtype_name)
+        sample_weight = np.array([0.0, 0.1, 2.0, 1.0], dtype=dtype_name)
 
-    check_array_api_metric(
-        metric,
-        array_namespace,
-        device,
-        dtype_name,
-        a_np=y_true_np,
-        b_np=y_pred_np,
-        sample_weight=sample_weight,
-        **metric_kwargs,
-    )
+        check_array_api_metric(
+            metric,
+            array_namespace,
+            device,
+            dtype_name,
+            a_np=y_true_np,
+            b_np=y_pred_np,
+            sample_weight=sample_weight,
+            **metric_kwargs,
+        )
 
 
 def check_array_api_regression_metric(metric, array_namespace, device, dtype_name):
