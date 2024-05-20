@@ -41,6 +41,7 @@ from ..utils import (
 from ..utils._array_api import (
     _average,
     _bincount,
+    _find_matching_floating_dtype,
     _searchsorted,
     _setdiff1d,
     _union1d,
@@ -1507,10 +1508,11 @@ def _prf_divide(
     an appropriate warning.
     """
     xp, _ = get_namespace(numerator, denominator)
+    dtype_float = _find_matching_floating_dtype(numerator, denominator, xp=xp)
     mask = denominator == 0
-    denominator = xp.asarray(denominator, copy=True, dtype=xp.float32)
+    denominator = xp.asarray(denominator, copy=True, dtype=dtype_float)
     denominator[mask] = 1  # avoid infs/nans
-    result = xp.asarray(numerator, dtype=xp.float32) / denominator
+    result = xp.asarray(numerator, dtype=dtype_float) / denominator
 
     if not xp.any(mask):
         return result
@@ -1848,9 +1850,9 @@ def precision_recall_fscore_support(
 
     if average is not None:
         assert average != "binary" or precision.shape[0] == 1
-        precision = _nanaverage(precision, weights=weights)
-        recall = _nanaverage(recall, weights=weights)
-        f_score = _nanaverage(f_score, weights=weights)
+        precision = float(_nanaverage(precision, weights=weights))
+        recall = float(_nanaverage(recall, weights=weights))
+        f_score = float(_nanaverage(f_score, weights=weights))
         true_sum = None  # return no support
 
     return precision, recall, f_score, true_sum
