@@ -25,7 +25,7 @@ At this stage, this support is **considered experimental** and must be enabled
 explicitly as explained in the following.
 
 .. note::
-    Currently, only `cupy.array_api`, `numpy.array_api`, `cupy`, and `PyTorch`
+    Currently, only `cupy.array_api`, `array-api-strict`, `cupy`, and `PyTorch`
     are known to work with scikit-learn's estimators.
 
 Example usage
@@ -95,6 +95,7 @@ Estimators
 
 - :class:`decomposition.PCA` (with `svd_solver="full"`,
   `svd_solver="randomized"` and `power_iteration_normalizer="QR"`)
+- :class:`linear_model.Ridge` (with `solver="svd"`)
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` (with `solver="svd"`)
 - :class:`preprocessing.KernelCenterer`
 - :class:`preprocessing.MaxAbsScaler`
@@ -105,6 +106,9 @@ Metrics
 -------
 
 - :func:`sklearn.metrics.accuracy_score`
+- :func:`sklearn.metrics.mean_absolute_error`
+- :func:`sklearn.metrics.mean_tweedie_deviance`
+- :func:`sklearn.metrics.pairwise.cosine_similarity``
 - :func:`sklearn.metrics.r2_score`
 - :func:`sklearn.metrics.zero_one_loss`
 

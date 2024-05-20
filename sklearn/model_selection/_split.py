@@ -30,6 +30,11 @@ from ..utils import (
     indexable,
     metadata_routing,
 )
+from ..utils._array_api import (
+    _convert_to_numpy,
+    ensure_common_namespace_device,
+    get_namespace,
+)
 from ..utils._param_validation import Interval, RealNotInt, validate_params
 from ..utils.extmath import _approximate_mode
 from ..utils.metadata_routing import _MetadataRequester
@@ -2294,6 +2299,12 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             default_test_size=self._default_test_size,
         )
 
+        # Convert to numpy as not all operations are supported by the Array API.
+        # `y` is probably never a very large array, which means that converting it
+        # should be cheap
+        xp, _ = get_namespace(y)
+        y = _convert_to_numpy(y, xp=xp)
+
         if y.ndim == 2:
             # for multi-label y, map each distinct row to a string repr
             # using join because str(row) uses an ellipsis if len(row) > 1000
@@ -2658,7 +2669,7 @@ def check_cv(cv=5, y=None, *, classifier=False):
 
     Parameters
     ----------
-    cv : int, cross-validation generator or an iterable, default=None
+    cv : int, cross-validation generator, iterable or None, default=5
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
         - None, to use the default 5-fold cross validation,
@@ -2859,6 +2870,8 @@ def train_test_split(
         cv = CVClass(test_size=n_test, train_size=n_train, random_state=random_state)
 
         train, test = next(cv.split(X=arrays[0], y=stratify))
+
+    train, test = ensure_common_namespace_device(arrays[0], train, test)
 
     return list(
         chain.from_iterable(
