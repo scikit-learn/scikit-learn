@@ -68,6 +68,7 @@ Functions
    base.clone
    base.is_classifier
    base.is_regressor
+   base.is_clusterer
 
 .. _calibration_ref:
 
