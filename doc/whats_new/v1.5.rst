@@ -80,8 +80,8 @@ See :ref:`array_api` for more details.
 **Functions:**
 
 - :func:`sklearn.metrics.r2_score` now supports Array API compliant inputs.
-  :pr:`27904` by :user:`Eric Lindgren <elindgren>`, `Franck Charras <fcharras>`,
-  `Olivier Grisel <ogrisel>` and `Tim Head <betatim>`.
+  :pr:`27904` by :user:`Eric Lindgren <elindgren>`, :user:`Franck Charras <fcharras>`,
+  :user:`Olivier Grisel <ogrisel>` and :user:`Tim Head <betatim>`.
 
 **Classes:**
 
@@ -383,7 +383,8 @@ Changelog
   :pr:`28703` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |API| `store_cv_values` and `cv_values_` are deprecated in favor of
-  `store_cv_results` and `cv_results_` in `RidgeCV` and `RidgeClassifierCV`.
+  `store_cv_results` and `cv_results_` in `~linear_model.RidgeCV` and
+  `~linear_model.RidgeClassifierCV`.
   :pr:`28915` by :user:`Lucy Liu <lucyleeow>`.
 
 :mod:`sklearn.manifold`
@@ -410,7 +411,7 @@ Changelog
   :pr:`28351` by :user:`Omar Salman <OmarManzoor>`.
 
 - |Efficiency| Improve efficiency of functions :func:`~metrics.brier_score_loss`,
-  :func:`~metrics.calibration_curve`, :func:`~metrics.det_curve`,
+  :func:`~calibration.calibration_curve`, :func:`~metrics.det_curve`,
   :func:`~metrics.precision_recall_curve`,
   :func:`~metrics.roc_curve` when `pos_label` argument is specified.
   Also improve efficiency of methods `from_estimator`
@@ -472,7 +473,7 @@ Changelog
   returns masked arrays of the appropriate NumPy dtype, as opposed to always returning
   dtype ``object``. :pr:`28352` by :user:`Marco Gorelli<MarcoGorelli>`.
 
-- |Fix| :func:`sklearn.model_selection.train_test_score` works with Array API inputs.
+- |Fix| :func:`model_selection.train_test_split` works with Array API inputs.
   Previously indexing was not handled correctly leading to exceptions when using strict
   implementations of the Array API like CuPY.
   :pr:`28407` by :user:`Tim Head <betatim>`.
@@ -534,8 +535,8 @@ Changelog
   `joblib.register_parallel_backend` instead.
   :pr:`28847` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |API| Raise informative warning message in :func:`type_of_target` when
-  represented as bytes. For classifiers and classification metrics, labels encoded
+- |API| Raise informative warning message in :func:`~utils.multiclass.type_of_target`
+  when represented as bytes. For classifiers and classification metrics, labels encoded
   as bytes is deprecated and will raise an error in v1.7.
   :pr:`18555` by :user:`Kaushik Amar Das <cozek>`.
 
