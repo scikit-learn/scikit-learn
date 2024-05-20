@@ -738,12 +738,16 @@ def _nanmean(X, axis=None, xp=None):
         return xp.asarray(numpy.nanmean(X, axis=axis))
     else:
         mask = xp.isnan(X)
-        X = xp.mean(xp.where(mask, xp.asarray(-xp.inf, device=device(X)), X), axis=axis)
-        # Replace Infs from all NaN slices with NaN again
-        mask = xp.all(mask, axis=axis)
-        if xp.any(mask):
-            X = xp.where(mask, xp.asarray(xp.nan), X)
-        return X
+        total = xp.sum(xp.where(mask, xp.asarray(0.0, device=device(X)), X), axis=axis)
+        count = xp.sum(
+            xp.where(
+                mask,
+                xp.asarray(0.0, device=device(X)),
+                xp.asarray(1.0, device=device(X)),
+            ),
+            axis=axis,
+        )
+        return total / count
 
 
 def _asarray_with_order(

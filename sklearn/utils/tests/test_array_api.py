@@ -17,6 +17,7 @@ from sklearn.utils._array_api import (
     _is_numpy_namespace,
     _isin,
     _nanmax,
+    _nanmean,
     _nanmin,
     _NumPyAPIWrapper,
     _ravel,
@@ -338,6 +339,19 @@ def test_device_inspection():
             [[1, 2, 3], [numpy.nan, numpy.nan, numpy.nan], [4, 5, 6.0]],
             partial(_nanmax, axis=1),
             [3.0, numpy.nan, 6.0],
+        ),
+        ([1, 2, numpy.nan], _nanmean, 1.5),
+        ([1, -2, -numpy.nan], _nanmean, -0.5),
+        ([-numpy.inf, -numpy.inf], _nanmean, -numpy.inf),
+        (
+            [[1, 2, 3], [numpy.nan, numpy.nan, numpy.nan], [4, 5, 6.0]],
+            partial(_nanmean, axis=0),
+            [2.5, 3.5, 4.5],
+        ),
+        (
+            [[1, 2, 3], [numpy.nan, numpy.nan, numpy.nan], [4, 5, 6.0]],
+            partial(_nanmean, axis=1),
+            [2.0, numpy.nan, 5.0],
         ),
     ],
 )
