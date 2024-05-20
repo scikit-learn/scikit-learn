@@ -95,8 +95,8 @@ print(
 # Performance improvements in PCA
 # -------------------------------
 # :class:`~decomposition.PCA` has a new solver, `"covariance_eigh"`, which is
-# up to 15 times faster and more memory efficient than the other solvers for
-# datasets with many data points and few features.
+# up to an order of magnitude faster and more memory efficient than the other
+# solvers for datasets with many data points and few features.
 from sklearn.datasets import make_low_rank_matrix
 from sklearn.decomposition import PCA
 
