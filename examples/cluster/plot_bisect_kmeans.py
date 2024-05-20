@@ -13,6 +13,7 @@ dividing line cutting the overall data cloud in two for BisectingKMeans, which i
 present for regular K-Means.
 
 """
+
 import matplotlib.pyplot as plt
 
 from sklearn.cluster import BisectingKMeans, KMeans

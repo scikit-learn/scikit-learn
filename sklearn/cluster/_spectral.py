@@ -793,7 +793,8 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
     def _more_tags(self):
         return {
-            "pairwise": self.affinity in [
+            "pairwise": self.affinity
+            in [
                 "precomputed",
                 "precomputed_nearest_neighbors",
             ]
