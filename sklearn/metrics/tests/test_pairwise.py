@@ -222,23 +222,6 @@ def test_pairwise_distances_for_sparse_data(
         pairwise_distances(X, Y_sparse, metric="minkowski")
 
 
-# TODO(1.4): Remove test when `sum_over_features` parameter is removed
-@pytest.mark.parametrize("sum_over_features", [True, False])
-def test_manhattan_distances_deprecated_sum_over_features(sum_over_features):
-    # Check that future warning is raised when user
-    # enters `sum_over_features` argument.
-    X = [[1, 2], [3, 4]]
-    Y = [[1, 2], [0, 3]]
-    with pytest.warns(
-        FutureWarning,
-        match=(
-            "`sum_over_features` is deprecated in version 1.2 and will be"
-            " removed in version 1.4."
-        ),
-    ):
-        manhattan_distances(X, Y, sum_over_features=sum_over_features)
-
-
 @pytest.mark.parametrize("metric", PAIRWISE_BOOLEAN_FUNCTIONS)
 def test_pairwise_boolean_distance(metric):
     # test that we convert to boolean arrays for boolean distances
@@ -1623,6 +1606,54 @@ def test_numeric_pairwise_distances_datatypes(metric, global_dtype, y_is_x):
     dist = pairwise_distances(X, Y, metric=metric, **params)
 
     assert_allclose(dist, expected_dist)
+
+
+@pytest.mark.parametrize(
+    "X,Y,expected_distance",
+    [
+        (
+            ["a", "ab", "abc"],
+            None,
+            [[0.0, 1.0, 2.0], [1.0, 0.0, 1.0], [2.0, 1.0, 0.0]],
+        ),
+        (
+            ["a", "ab", "abc"],
+            ["a", "ab"],
+            [[0.0, 1.0], [1.0, 0.0], [2.0, 1.0]],
+        ),
+    ],
+)
+def test_pairwise_dist_custom_metric_for_string(X, Y, expected_distance):
+    """Check pairwise_distances with lists of strings as input."""
+
+    def dummy_string_similarity(x, y):
+        return np.abs(len(x) - len(y))
+
+    actual_distance = pairwise_distances(X=X, Y=Y, metric=dummy_string_similarity)
+    assert_allclose(actual_distance, expected_distance)
+
+
+def test_pairwise_dist_custom_metric_for_bool():
+    """Check that pairwise_distances does not convert boolean input to float
+    when using a custom metric.
+    """
+
+    def dummy_bool_dist(v1, v2):
+        # dummy distance func using `&` and thus relying on the input data being boolean
+        return 1 - (v1 & v2).sum() / (v1 | v2).sum()
+
+    X = np.array([[1, 0, 0, 0], [1, 0, 1, 0], [1, 1, 1, 1]], dtype=bool)
+
+    expected_distance = np.array(
+        [
+            [0.0, 0.5, 0.75],
+            [0.5, 0.0, 0.5],
+            [0.75, 0.5, 0.0],
+        ]
+    )
+
+    actual_distance = pairwise_distances(X=X, metric=dummy_bool_dist)
+    assert_allclose(actual_distance, expected_distance)
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)

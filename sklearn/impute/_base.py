@@ -6,14 +6,15 @@ import numbers
 import warnings
 from collections import Counter
 from functools import partial
+from typing import Callable
 
 import numpy as np
 import numpy.ma as ma
 from scipy import sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils import _is_pandas_na, is_scalar_nan
 from ..utils._mask import _get_mask
+from ..utils._missing import is_pandas_na, is_scalar_nan
 from ..utils._param_validation import MissingValues, StrOptions
 from ..utils.fixes import _mode
 from ..utils.sparsefuncs import _get_median
@@ -21,7 +22,7 @@ from ..utils.validation import FLOAT_DTYPES, _check_feature_names_in, check_is_f
 
 
 def _check_inputs_dtype(X, missing_values):
-    if _is_pandas_na(missing_values):
+    if is_pandas_na(missing_values):
         # Allow using `pd.NA` as missing values to impute numerical arrays.
         return
     if X.dtype.kind in ("f", "i", "u") and not isinstance(missing_values, numbers.Real):
@@ -163,7 +164,7 @@ class SimpleImputer(_BaseImputer):
         nullable integer dtypes with missing values, `missing_values`
         can be set to either `np.nan` or `pd.NA`.
 
-    strategy : str, default='mean'
+    strategy : str or Callable, default='mean'
         The imputation strategy.
 
         - If "mean", then replace missing values using the mean along
@@ -175,9 +176,15 @@ class SimpleImputer(_BaseImputer):
           If there is more than one such value, only the smallest is returned.
         - If "constant", then replace missing values with fill_value. Can be
           used with strings or numeric data.
+        - If an instance of Callable, then replace missing values using the
+          scalar statistic returned by running the callable over a dense 1d
+          array containing non-missing values of each column.
 
         .. versionadded:: 0.20
            strategy="constant" for fixed value imputation.
+
+        .. versionadded:: 1.5
+           strategy=callable for custom value imputation.
 
     fill_value : str or numerical value, default=None
         When strategy == "constant", `fill_value` is used to replace all
@@ -270,7 +277,10 @@ class SimpleImputer(_BaseImputer):
 
     _parameter_constraints: dict = {
         **_BaseImputer._parameter_constraints,
-        "strategy": [StrOptions({"mean", "median", "most_frequent", "constant"})],
+        "strategy": [
+            StrOptions({"mean", "median", "most_frequent", "constant"}),
+            callable,
+        ],
         "fill_value": "no_validation",  # any object is valid
         "copy": ["boolean"],
     }
@@ -313,7 +323,7 @@ class SimpleImputer(_BaseImputer):
             # Use object dtype if fitted on object dtypes
             dtype = self._fit_dtype
 
-        if _is_pandas_na(self.missing_values) or is_scalar_nan(self.missing_values):
+        if is_pandas_na(self.missing_values) or is_scalar_nan(self.missing_values):
             force_all_finite = "allow-nan"
         else:
             force_all_finite = True
@@ -353,6 +363,40 @@ class SimpleImputer(_BaseImputer):
                 "with an object dtype.".format(X.dtype)
             )
 
+        if sp.issparse(X) and self.missing_values == 0:
+            # missing_values = 0 not allowed with sparse data as it would
+            # force densification
+            raise ValueError(
+                "Imputation not possible when missing_values "
+                "== 0 and input is sparse. Provide a dense "
+                "array instead."
+            )
+
+        if self.strategy == "constant":
+            if in_fit and self.fill_value is not None:
+                fill_value_dtype = type(self.fill_value)
+                err_msg = (
+                    f"fill_value={self.fill_value!r} (of type {fill_value_dtype!r}) "
+                    f"cannot be cast to the input data that is {X.dtype!r}. Make sure "
+                    "that both dtypes are of the same kind."
+                )
+            elif not in_fit:
+                fill_value_dtype = self.statistics_.dtype
+                err_msg = (
+                    f"The dtype of the filling value (i.e. {fill_value_dtype!r}) "
+                    f"cannot be cast to the input data that is {X.dtype!r}. Make sure "
+                    "that the dtypes of the input data is of the same kind between "
+                    "fit and transform."
+                )
+            else:
+                # By default, fill_value=None, and the replacement is always
+                # compatible with the input data
+                fill_value_dtype = X.dtype
+
+            # Make sure we can safely cast fill_value dtype to the input data dtype
+            if not np.can_cast(fill_value_dtype, X.dtype, casting="same_kind"):
+                raise ValueError(err_msg)
+
         return X
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -385,32 +429,10 @@ class SimpleImputer(_BaseImputer):
         else:
             fill_value = self.fill_value
 
-        # fill_value should be numerical in case of numerical input
-        if (
-            self.strategy == "constant"
-            and X.dtype.kind in ("i", "u", "f")
-            and not isinstance(fill_value, numbers.Real)
-        ):
-            raise ValueError(
-                "'fill_value'={0} is invalid. Expected a "
-                "numerical value when imputing numerical "
-                "data".format(fill_value)
-            )
-
         if sp.issparse(X):
-            # missing_values = 0 not allowed with sparse data as it would
-            # force densification
-            if self.missing_values == 0:
-                raise ValueError(
-                    "Imputation not possible when missing_values "
-                    "== 0 and input is sparse. Provide a dense "
-                    "array instead."
-                )
-            else:
-                self.statistics_ = self._sparse_fit(
-                    X, self.strategy, self.missing_values, fill_value
-                )
-
+            self.statistics_ = self._sparse_fit(
+                X, self.strategy, self.missing_values, fill_value
+            )
         else:
             self.statistics_ = self._dense_fit(
                 X, self.strategy, self.missing_values, fill_value
@@ -455,6 +477,9 @@ class SimpleImputer(_BaseImputer):
 
                     elif strategy == "most_frequent":
                         statistics[i] = _most_frequent(column, 0, n_zeros)
+
+                    elif isinstance(strategy, Callable):
+                        statistics[i] = self.strategy(column)
 
         super()._fit_indicator(missing_mask)
 
@@ -517,6 +542,13 @@ class SimpleImputer(_BaseImputer):
             # for constant strategy, self.statistcs_ is used to store
             # fill_value in each column
             return np.full(X.shape[1], fill_value, dtype=X.dtype)
+
+        # Custom
+        elif isinstance(strategy, Callable):
+            statistics = np.empty(masked_X.shape[1])
+            for i in range(masked_X.shape[1]):
+                statistics[i] = self.strategy(masked_X[:, i].compressed())
+            return statistics
 
     def transform(self, X):
         """Impute all missing values in `X`.
@@ -669,9 +701,8 @@ class SimpleImputer(_BaseImputer):
 
     def _more_tags(self):
         return {
-            "allow_nan": _is_pandas_na(self.missing_values) or is_scalar_nan(
-                self.missing_values
-            )
+            "allow_nan": is_pandas_na(self.missing_values)
+            or is_scalar_nan(self.missing_values)
         }
 
     def get_feature_names_out(self, input_features=None):

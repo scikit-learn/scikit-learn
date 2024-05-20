@@ -814,3 +814,45 @@ def test_precomputed_dists(global_dtype, csr_container):
 
     assert_allclose(clust1.reachability_, clust2.reachability_)
     assert_array_equal(clust1.labels_, clust2.labels_)
+
+
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_optics_input_not_modified_precomputed_sparse_nodiag(csr_container):
+    """Check that we don't modify in-place the pre-computed sparse matrix.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/27508
+    """
+    X = np.random.RandomState(0).rand(6, 6)
+    # Add zeros on the diagonal that will be implicit when creating
+    # the sparse matrix. If `X` is modified in-place, the zeros from
+    # the diagonal will be made explicit.
+    np.fill_diagonal(X, 0)
+    X = csr_container(X)
+    assert all(row != col for row, col in zip(*X.nonzero()))
+    X_copy = X.copy()
+    OPTICS(metric="precomputed").fit(X)
+    # Make sure that we did not modify `X` in-place even by creating
+    # explicit 0s values.
+    assert X.nnz == X_copy.nnz
+    assert_array_equal(X.toarray(), X_copy.toarray())
+
+
+def test_optics_predecessor_correction_ordering():
+    """Check that cluster correction using predecessor is working as expected.
+
+    In the following example, the predecessor correction was not working properly
+    since it was not using the right indices.
+
+    This non-regression test check that reordering the data does not change the results.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/26324
+    """
+    X_1 = np.array([1, 2, 3, 1, 8, 8, 7, 100]).reshape(-1, 1)
+    reorder = [0, 1, 2, 4, 5, 6, 7, 3]
+    X_2 = X_1[reorder]
+
+    optics_1 = OPTICS(min_samples=3, metric="euclidean").fit(X_1)
+    optics_2 = OPTICS(min_samples=3, metric="euclidean").fit(X_2)
+
+    assert_array_equal(optics_1.labels_[reorder], optics_2.labels_)

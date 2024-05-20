@@ -37,10 +37,11 @@ over the number of true positives plus the number of false negatives
 
 :math:`R = \\frac{T_p}{T_p + F_n}`
 
-These quantities are also related to the (:math:`F_1`) score, which is defined
-as the harmonic mean of precision and recall.
+These quantities are also related to the :math:`F_1` score, which is the
+harmonic mean of precision and recall. Thus, we can compute the :math:`F_1`
+using the following formula:
 
-:math:`F1 = 2\\frac{P \\times R}{P+R}`
+:math:`F_1 = \\frac{2T_p}{2T_p + F_p + F_n}`
 
 Note that the precision may not decrease with recall. The
 definition of precision (:math:`\\frac{T_p}{T_p + F_p}`) shows that lowering
@@ -124,9 +125,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import LinearSVC
 
-classifier = make_pipeline(
-    StandardScaler(), LinearSVC(random_state=random_state, dual="auto")
-)
+classifier = make_pipeline(StandardScaler(), LinearSVC(random_state=random_state))
 classifier.fit(X_train, y_train)
 
 # %%
@@ -190,7 +189,7 @@ X_train, X_test, Y_train, Y_test = train_test_split(
 from sklearn.multiclass import OneVsRestClassifier
 
 classifier = OneVsRestClassifier(
-    make_pipeline(StandardScaler(), LinearSVC(random_state=random_state, dual="auto"))
+    make_pipeline(StandardScaler(), LinearSVC(random_state=random_state))
 )
 classifier.fit(X_train, Y_train)
 y_score = classifier.decision_function(X_test)

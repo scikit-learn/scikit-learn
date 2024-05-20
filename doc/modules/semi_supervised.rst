@@ -121,11 +121,11 @@ Label propagation models have two built-in kernel methods. Choice of kernel
 effects both scalability and performance of the algorithms. The following are
 available:
 
-  * rbf (:math:`\exp(-\gamma |x-y|^2), \gamma > 0`). :math:`\gamma` is
-    specified by keyword gamma.
+* rbf (:math:`\exp(-\gamma |x-y|^2), \gamma > 0`). :math:`\gamma` is
+  specified by keyword gamma.
 
-  * knn (:math:`1[x' \in kNN(x)]`). :math:`k` is specified by keyword
-    n_neighbors.
+* knn (:math:`1[x' \in kNN(x)]`). :math:`k` is specified by keyword
+  n_neighbors.
 
 The RBF kernel will produce a fully connected graph which is represented in memory
 by a dense matrix. This matrix may be very large and combined with the cost of

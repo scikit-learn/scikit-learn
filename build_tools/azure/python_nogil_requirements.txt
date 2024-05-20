@@ -6,13 +6,15 @@
 # the latest cython will be picked up from PyPI, rather than the one from the
 # python-nogil index
 matplotlib
-# 2023-07-15 contourpy 1.1 needs meson which needs a recent pybind version
-# which is not available for python/nogil ...
-contourpy<1.1
 numpy
 scipy
 cython
 joblib
 threadpoolctl
-pytest
+# TODO: somehow pytest 8 does not seem to work with meson editable
+# install. Exit code is 5, i.e. no test collected
+# This would be fixed by https://github.com/mesonbuild/meson-python/pull/569
+pytest<8
 pytest-xdist
+meson-python
+ninja

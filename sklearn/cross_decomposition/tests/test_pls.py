@@ -552,7 +552,7 @@ def test_pls_constant_y():
 
     pls = PLSRegression()
 
-    msg = "Y residual is constant at iteration"
+    msg = "y residual is constant at iteration"
     with pytest.warns(UserWarning, match=msg):
         pls.fit(x, y)
 
@@ -589,8 +589,6 @@ def test_pls_prediction(PLSEstimator, scale):
 
     y_mean = Y.mean(axis=0)
     X_trans = X - X.mean(axis=0)
-    if scale:
-        X_trans /= X.std(axis=0, ddof=1)
 
     assert_allclose(pls.intercept_, y_mean)
     assert_allclose(Y_pred, X_trans @ pls.coef_.T + pls.intercept_)
@@ -644,3 +642,98 @@ def test_pls_regression_fit_1d_y():
     y_pred = vr.fit(X, y).predict(X)
     assert y_pred.shape == expected.shape
     assert_allclose(y_pred, expected)
+
+
+def test_pls_regression_scaling_coef():
+    """Check that when using `scale=True`, the coefficients are using the std. dev. from
+    both `X` and `Y`.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/27964
+    """
+    # handcrafted data where we can predict Y from X with an additional scaling factor
+    rng = np.random.RandomState(0)
+    coef = rng.uniform(size=(3, 5))
+    X = rng.normal(scale=10, size=(30, 5))  # add a std of 10
+    Y = X @ coef.T
+
+    # we need to make sure that the dimension of the latent space is large enough to
+    # perfectly predict `Y` from `X` (no information loss)
+    pls = PLSRegression(n_components=5, scale=True).fit(X, Y)
+    assert_allclose(pls.coef_, coef)
+
+    # we therefore should be able to predict `Y` from `X`
+    assert_allclose(pls.predict(X), Y)
+
+
+# TODO(1.7): Remove
+@pytest.mark.parametrize("Klass", [PLSRegression, CCA, PLSSVD, PLSCanonical])
+def test_pls_fit_warning_on_deprecated_Y_argument(Klass):
+    # Test warning message is shown when using Y instead of y
+
+    d = load_linnerud()
+    X = d.data
+    Y = d.target
+    y = d.target
+
+    msg = "`Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead."
+    with pytest.warns(FutureWarning, match=msg):
+        Klass().fit(X=X, Y=Y)
+
+    err_msg1 = "Cannot use both `y` and `Y`. Use only `y` as `Y` is deprecated."
+    with (
+        pytest.warns(FutureWarning, match=msg),
+        pytest.raises(ValueError, match=err_msg1),
+    ):
+        Klass().fit(X, y, Y)
+
+    err_msg2 = "y is required."
+    with pytest.raises(ValueError, match=err_msg2):
+        Klass().fit(X)
+
+
+# TODO(1.7): Remove
+@pytest.mark.parametrize("Klass", [PLSRegression, CCA, PLSSVD, PLSCanonical])
+def test_pls_transform_warning_on_deprecated_Y_argument(Klass):
+    # Test warning message is shown when using Y instead of y
+
+    d = load_linnerud()
+    X = d.data
+    Y = d.target
+    y = d.target
+
+    plsr = Klass().fit(X, y)
+    msg = "`Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead."
+    with pytest.warns(FutureWarning, match=msg):
+        plsr.transform(X=X, Y=Y)
+
+    err_msg1 = "Cannot use both `y` and `Y`. Use only `y` as `Y` is deprecated."
+    with (
+        pytest.warns(FutureWarning, match=msg),
+        pytest.raises(ValueError, match=err_msg1),
+    ):
+        plsr.transform(X, y, Y)
+
+
+# TODO(1.7): Remove
+@pytest.mark.parametrize("Klass", [PLSRegression, CCA, PLSCanonical])
+def test_pls_inverse_transform_warning_on_deprecated_Y_argument(Klass):
+    # Test warning message is shown when using Y instead of y
+
+    d = load_linnerud()
+    X = d.data
+    y = d.target
+
+    plsr = Klass().fit(X, y)
+    X_transformed, y_transformed = plsr.transform(X, y)
+
+    msg = "`Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead."
+    with pytest.warns(FutureWarning, match=msg):
+        plsr.inverse_transform(X=X_transformed, Y=y_transformed)
+
+    err_msg1 = "Cannot use both `y` and `Y`. Use only `y` as `Y` is deprecated."
+    with (
+        pytest.warns(FutureWarning, match=msg),
+        pytest.raises(ValueError, match=err_msg1),
+    ):
+        plsr.inverse_transform(X=X_transformed, y=y_transformed, Y=y_transformed)

@@ -5,18 +5,18 @@ repos:
     -   id: check-yaml
     -   id: end-of-file-fixer
     -   id: trailing-whitespace
--   repo: https://github.com/psf/black
-    rev: 23.3.0
-    hooks:
-    -   id: black
 -   repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
-    rev: v0.0.272
+    rev: v0.2.1
     hooks:
     -   id: ruff
-        args: ["--fix", "--show-source"]
+        args: ["--fix", "--output-format=full"]
+-   repo: https://github.com/psf/black
+    rev: 24.3.0
+    hooks:
+    -   id: black
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.3.0
+    rev: v1.9.0
     hooks:
      -  id: mypy
         files: sklearn/
