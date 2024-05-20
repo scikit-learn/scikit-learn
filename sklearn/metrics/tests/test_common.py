@@ -1803,6 +1803,10 @@ def check_array_api_multiclass_classification_metric(
     y_true_np = np.array([0, 1, 2, 3])
     y_pred_np = np.array([0, 1, 0, 2])
 
+    metric_kwargs = {}
+    if "average" in signature(metric).parameters:
+        metric_kwargs["average"] = "macro"
+
     check_array_api_metric(
         metric,
         array_namespace,
@@ -1811,6 +1815,7 @@ def check_array_api_multiclass_classification_metric(
         a_np=y_true_np,
         b_np=y_pred_np,
         sample_weight=None,
+        **metric_kwargs,
     )
 
     sample_weight = np.array([0.0, 0.1, 2.0, 1.0], dtype=dtype_name)
@@ -1823,6 +1828,7 @@ def check_array_api_multiclass_classification_metric(
         a_np=y_true_np,
         b_np=y_pred_np,
         sample_weight=sample_weight,
+        **metric_kwargs,
     )
 
 
@@ -1905,6 +1911,10 @@ def check_array_api_metric_pairwise(metric, array_namespace, device, dtype_name)
 
 array_api_metric_checkers = {
     accuracy_score: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+    ],
+    f1_score: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
     ],

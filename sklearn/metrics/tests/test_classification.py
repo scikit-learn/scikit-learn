@@ -157,7 +157,9 @@ def test_classification_report_dictionary_output():
     for key in expected_report:
         if key == "accuracy":
             assert isinstance(report[key], float)
-            assert report[key] == expected_report[key]
+            # Because of supporting float32 precision for some devices this
+            # can't be completely equal now
+            assert_almost_equal(report[key], expected_report[key])
         else:
             assert report[key].keys() == expected_report[key].keys()
             for metric in expected_report[key]:

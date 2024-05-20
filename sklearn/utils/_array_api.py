@@ -730,6 +730,22 @@ def _nanmax(X, axis=None, xp=None):
         return X
 
 
+def _nanmean(X, axis=None, xp=None):
+    # TODO: refactor once nan-aware reductions are standardized:
+    # https://github.com/data-apis/array-api/issues/621
+    xp, _ = get_namespace(X, xp=xp)
+    if _is_numpy_namespace(xp):
+        return xp.asarray(numpy.nanmean(X, axis=axis))
+    else:
+        mask = xp.isnan(X)
+        X = xp.mean(xp.where(mask, xp.asarray(-xp.inf, device=device(X)), X), axis=axis)
+        # Replace Infs from all NaN slices with NaN again
+        mask = xp.all(mask, axis=axis)
+        if xp.any(mask):
+            X = xp.where(mask, xp.asarray(xp.nan), X)
+        return X
+
+
 def _asarray_with_order(
     array, dtype=None, order=None, copy=None, *, xp=None, device=None
 ):
@@ -962,3 +978,12 @@ def _in1d(ar1, ar2, xp, assume_unique=False, invert=False):
         return ret[: ar1.shape[0]]
     else:
         return xp.take(ret, rev_idx, axis=0)
+
+
+def _bincount(xp, array, weights=None, minlength=None):
+    if hasattr(xp, "bincount"):
+        return xp.bincount(array, weights=weights, minlength=minlength)
+
+    array_np = _convert_to_numpy(array, xp=xp)
+    bin_out = numpy.bincount(array_np, weights=weights, minlength=minlength)
+    return xp.asarray(bin_out, device=device(array))
