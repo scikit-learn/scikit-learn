@@ -241,9 +241,7 @@ html_theme_options = {
     # the `js/` static directory; it will then be copied to the `_static` directory in
     # the built documentation
     "switcher": {
-        # TODO(new_web_theme): change to https://scikit-learn.org/dev/_static/versions.json
-        # before merging the new_web_theme branch into main
-        "json_url": "https://scikit-learn.org/_pst_preview/_static/versions.json",
+        "json_url": "https://scikit-learn.org/dev/_static/versions.json",
         "version_match": release,
     },
     # check_switcher may be set to False if docbuild pipeline fails. See
