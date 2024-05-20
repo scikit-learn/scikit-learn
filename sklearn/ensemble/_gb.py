@@ -65,16 +65,23 @@ _LOSSES.update(
 
 def _safe_divide(numerator, denominator):
     """Prevents overflow and division by zero."""
-    try:
+    # This is used for classifiers where the denominator might become zero exatly.
+    # For instance for log loss, HalfBinomialLoss, if proba=0 or proba=1 exactly, then
+    # denominator = hessian = 0, and we should set the node value in the line search to
+    # zero as there is no improvement of the loss possible.
+    # For numerical safety, we do this already for extremely tiny values.
+    if abs(denominator) < 1e-150:
+        return 0.0
+    else:
+        # Cast to Python float to trigger Python errors, e.g. ZeroDivisionError,
+        # without relying on `np.errstate` that is not supported by Pyodide.
+        result = float(numerator) / float(denominator)
         # Cast to Python float to trigger a ZeroDivisionError without relying
         # on `np.errstate` that is not supported by Pyodide.
         result = float(numerator) / float(denominator)
         if math.isinf(result):
             warnings.warn("overflow encountered in _safe_divide", RuntimeWarning)
         return result
-    except ZeroDivisionError:
-        warnings.warn("divide by zero encountered in _safe_divide", RuntimeWarning)
-        return 0.0
 
 
 def _init_raw_predictions(X, estimator, loss, use_predict_proba):
@@ -733,8 +740,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                         if (
                             "pass parameters to specific steps of "
                             "your pipeline using the "
-                            "stepname__parameter"
-                            in str(e)
+                            "stepname__parameter" in str(e)
                         ):  # pipeline
                             raise ValueError(msg) from e
                         else:  # regular estimator whose input checking failed
@@ -1035,10 +1041,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         Parameters
         ----------
-        grid : ndarray of shape (n_samples, n_target_features)
+        grid : ndarray of shape (n_samples, n_target_features), dtype=np.float32
             The grid points on which the partial dependence should be
             evaluated.
-        target_features : ndarray of shape (n_target_features,)
+        target_features : ndarray of shape (n_target_features,), dtype=np.intp
             The set of target features for which the partial dependence
             should be evaluated.
 
@@ -1052,8 +1058,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             warnings.warn(
                 "Using recursion method with a non-constant init predictor "
                 "will lead to incorrect partial dependence values. "
-                "Got init=%s."
-                % self.init,
+                "Got init=%s." % self.init,
                 UserWarning,
             )
         grid = np.asarray(grid, dtype=DTYPE, order="C")
@@ -1061,6 +1066,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         averaged_predictions = np.zeros(
             (n_trees_per_stage, grid.shape[0]), dtype=np.float64, order="C"
         )
+        target_features = np.asarray(target_features, dtype=np.intp, order="C")
+
         for stage in range(n_estimators):
             for k in range(n_trees_per_stage):
                 tree = self.estimators_[stage, k].tree_

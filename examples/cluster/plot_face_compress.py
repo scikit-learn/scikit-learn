@@ -81,7 +81,6 @@ encoder = KBinsDiscretizer(
     encode="ordinal",
     strategy="uniform",
     random_state=0,
-    subsample=200_000,
 )
 compressed_raccoon_uniform = encoder.fit_transform(raccoon_face.reshape(-1, 1)).reshape(
     raccoon_face.shape
@@ -130,7 +129,6 @@ encoder = KBinsDiscretizer(
     encode="ordinal",
     strategy="kmeans",
     random_state=0,
-    subsample=200_000,
 )
 compressed_raccoon_kmeans = encoder.fit_transform(raccoon_face.reshape(-1, 1)).reshape(
     raccoon_face.shape

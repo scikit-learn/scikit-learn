@@ -30,7 +30,7 @@ from ..utils.validation import (
 
 
 class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
-    """Kernel Principal component analysis (KPCA) [1]_.
+    """Kernel Principal Component Analysis (KPCA) [1]_.
 
     Non-linear dimensionality reduction through the use of kernels (see
     :ref:`metrics`).
@@ -40,6 +40,13 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
     truncated SVD, depending on the shape of the input data and the number of
     components to extract. It can also use a randomized truncated SVD by the
     method proposed in [3]_, see `eigen_solver`.
+
+    For a usage example and comparison between
+    Principal Components Analysis (PCA) and its kernelized version (KPCA), see
+    :ref:`sphx_glr_auto_examples_decomposition_plot_kernel_pca.py`.
+
+    For a usage example in denoising images using KPCA, see
+    :ref:`sphx_glr_auto_examples_applications_plot_digits_denoising.py`.
 
     Read more in the :ref:`User Guide <kernel_PCA>`.
 
@@ -363,9 +370,7 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         )
 
         # flip eigenvectors' sign to enforce deterministic output
-        self.eigenvectors_, _ = svd_flip(
-            self.eigenvectors_, np.zeros_like(self.eigenvectors_).T
-        )
+        self.eigenvectors_, _ = svd_flip(u=self.eigenvectors_, v=None)
 
         # sort eigenvectors in descending order
         indices = self.eigenvalues_.argsort()[::-1]

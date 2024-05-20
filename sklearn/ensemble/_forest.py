@@ -792,7 +792,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             The OOB associated predictions.
         """
         y_pred = tree.predict_proba(X, check_input=False)
-        y_pred = np.array(y_pred, copy=False)
+        y_pred = np.asarray(y_pred)
         if y_pred.ndim == 2:
             # binary and multiclass
             y_pred = y_pred[..., np.newaxis]
@@ -855,8 +855,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
                     raise ValueError(
                         "Valid presets for class_weight include "
                         '"balanced" and "balanced_subsample".'
-                        'Given "%s".'
-                        % self.class_weight
+                        'Given "%s".' % self.class_weight
                     )
                 if self.warm_start:
                     warn(
@@ -1135,10 +1134,10 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
 
         Parameters
         ----------
-        grid : ndarray of shape (n_samples, n_target_features)
+        grid : ndarray of shape (n_samples, n_target_features), dtype=DTYPE
             The grid points on which the partial dependence should be
             evaluated.
-        target_features : ndarray of shape (n_target_features)
+        target_features : ndarray of shape (n_target_features), dtype=np.intp
             The set of target features for which the partial dependence
             should be evaluated.
 
@@ -1148,6 +1147,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             The value of the partial dependence function on each grid point.
         """
         grid = np.asarray(grid, dtype=DTYPE, order="C")
+        target_features = np.asarray(target_features, dtype=np.intp, order="C")
         averaged_predictions = np.zeros(
             shape=grid.shape[0], dtype=np.float64, order="C"
         )
@@ -1308,7 +1308,7 @@ class RandomForestClassifier(ForestClassifier):
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`Glossary <warm_start>` and
-        :ref:`gradient_boosting_warm_start` for details.
+        :ref:`tree_ensemble_warm_start` for details.
 
     class_weight : {"balanced", "balanced_subsample"}, dict or list of dicts, \
             default=None
@@ -1710,7 +1710,7 @@ class RandomForestRegressor(ForestRegressor):
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`Glossary <warm_start>` and
-        :ref:`gradient_boosting_warm_start` for details.
+        :ref:`tree_ensemble_warm_start` for details.
 
     ccp_alpha : non-negative float, default=0.0
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
@@ -2049,7 +2049,7 @@ class ExtraTreesClassifier(ForestClassifier):
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`Glossary <warm_start>` and
-        :ref:`gradient_boosting_warm_start` for details.
+        :ref:`tree_ensemble_warm_start` for details.
 
     class_weight : {"balanced", "balanced_subsample"}, dict or list of dicts, \
             default=None
@@ -2434,7 +2434,7 @@ class ExtraTreesRegressor(ForestRegressor):
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`Glossary <warm_start>` and
-        :ref:`gradient_boosting_warm_start` for details.
+        :ref:`tree_ensemble_warm_start` for details.
 
     ccp_alpha : non-negative float, default=0.0
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
@@ -2727,7 +2727,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`Glossary <warm_start>` and
-        :ref:`gradient_boosting_warm_start` for details.
+        :ref:`tree_ensemble_warm_start` for details.
 
     Attributes
     ----------

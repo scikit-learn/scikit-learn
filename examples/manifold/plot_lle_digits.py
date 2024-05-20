@@ -145,7 +145,7 @@ embeddings = {
     ),
     "t-SNE embedding": TSNE(
         n_components=2,
-        n_iter=500,
+        max_iter=500,
         n_iter_without_progress=150,
         n_jobs=2,
         random_state=0,

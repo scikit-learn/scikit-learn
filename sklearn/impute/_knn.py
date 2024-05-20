@@ -10,8 +10,8 @@ from ..base import _fit_context
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import _NAN_METRICS
 from ..neighbors._base import _get_weights
-from ..utils import is_scalar_nan
 from ..utils._mask import _get_mask
+from ..utils._missing import is_scalar_nan
 from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils.validation import FLOAT_DTYPES, _check_feature_names_in, check_is_fitted
 from ._base import _BaseImputer

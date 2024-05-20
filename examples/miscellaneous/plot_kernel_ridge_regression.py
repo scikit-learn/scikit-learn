@@ -17,6 +17,7 @@ consists of a sinusoidal target function and strong noise added to every fifth
 datapoint.
 
 """
+
 # %%
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # License: BSD 3 clause

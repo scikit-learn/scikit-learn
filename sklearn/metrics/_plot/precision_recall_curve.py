@@ -486,7 +486,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         class_count = Counter(y_true)
         prevalence_pos_label = class_count[pos_label] / sum(class_count.values())
 
-        viz = PrecisionRecallDisplay(
+        viz = cls(
             precision=precision,
             recall=recall,
             average_precision=average_precision,

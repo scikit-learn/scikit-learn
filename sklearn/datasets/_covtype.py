@@ -17,6 +17,7 @@ Courtesy of Jock A. Blackard and Colorado State University.
 import logging
 import os
 from gzip import GzipFile
+from numbers import Integral, Real
 from os.path import exists, join
 from tempfile import TemporaryDirectory
 
@@ -24,7 +25,7 @@ import joblib
 import numpy as np
 
 from ..utils import Bunch, check_random_state
-from ..utils._param_validation import validate_params
+from ..utils._param_validation import Interval, validate_params
 from . import get_data_home
 from ._base import (
     RemoteFileMetadata,
@@ -71,6 +72,8 @@ TARGET_NAMES = ["Cover_Type"]
         "shuffle": ["boolean"],
         "return_X_y": ["boolean"],
         "as_frame": ["boolean"],
+        "n_retries": [Interval(Integral, 1, None, closed="left")],
+        "delay": [Interval(Real, 0.0, None, closed="neither")],
     },
     prefer_skip_nested_validation=True,
 )
@@ -82,6 +85,8 @@ def fetch_covtype(
     shuffle=False,
     return_X_y=False,
     as_frame=False,
+    n_retries=3,
+    delay=1.0,
 ):
     """Load the covertype dataset (classification).
 
@@ -129,6 +134,16 @@ def fetch_covtype(
 
         .. versionadded:: 0.24
 
+    n_retries : int, default=3
+        Number of retries when HTTP errors are encountered.
+
+        .. versionadded:: 1.5
+
+    delay : float, default=1.0
+        Number of seconds between retries.
+
+        .. versionadded:: 1.5
+
     Returns
     -------
     dataset : :class:`~sklearn.utils.Bunch`
@@ -156,6 +171,18 @@ def fetch_covtype(
         ndarray of shape (n_samples,) containing the target samples.
 
         .. versionadded:: 0.20
+
+    Examples
+    --------
+    >>> from sklearn.datasets import fetch_covtype
+    >>> cov_type = fetch_covtype()
+    >>> cov_type.data.shape
+    (581012, 54)
+    >>> cov_type.target.shape
+    (581012,)
+    >>> # Let's check the 4 first feature names
+    >>> cov_type.feature_names[:4]
+    ['Elevation', 'Aspect', 'Slope', 'Horizontal_Distance_To_Hydrology']
     """
     data_home = get_data_home(data_home=data_home)
     covtype_dir = join(data_home, "covertype")
@@ -171,7 +198,9 @@ def fetch_covtype(
         # os.rename to atomically move the data files to their target location.
         with TemporaryDirectory(dir=covtype_dir) as temp_dir:
             logger.info(f"Downloading {ARCHIVE.url}")
-            archive_path = _fetch_remote(ARCHIVE, dirname=temp_dir)
+            archive_path = _fetch_remote(
+                ARCHIVE, dirname=temp_dir, n_retries=n_retries, delay=delay
+            )
             Xy = np.genfromtxt(GzipFile(filename=archive_path), delimiter=",")
 
             X = Xy[:, :-1]

@@ -3,6 +3,7 @@
 Benchmarks of sklearn SAGA vs lightning SAGA vs Liblinear. Shows the gain
 in using multinomial logistic regression in term of learning time.
 """
+
 import json
 import os
 import time
@@ -19,6 +20,7 @@ from sklearn.datasets import (
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import log_loss
 from sklearn.model_selection import train_test_split
+from sklearn.multiclass import OneVsRestClassifier
 from sklearn.preprocessing import LabelBinarizer, LabelEncoder
 from sklearn.utils.extmath import safe_sparse_dot, softmax
 from sklearn.utils.parallel import Parallel, delayed
@@ -94,7 +96,6 @@ def fit_single(
         else:
             lr = LogisticRegression(
                 solver=solver,
-                multi_class=multi_class,
                 C=C,
                 penalty=penalty,
                 fit_intercept=False,
@@ -102,6 +103,8 @@ def fit_single(
                 max_iter=this_max_iter,
                 random_state=42,
             )
+            if multi_class == "ovr":
+                lr = OneVsRestClassifier(lr)
 
         # Makes cpu cache even for all fit calls
         X_train.max()
@@ -117,10 +120,12 @@ def fit_single(
             except NotImplementedError:
                 # Lightning predict_proba is not implemented for n_classes > 2
                 y_pred = _predict_proba(lr, X)
+            if isinstance(lr, OneVsRestClassifier):
+                coef = np.concatenate([est.coef_ for est in lr.estimators_])
+            else:
+                coef = lr.coef_
             score = log_loss(y, y_pred, normalize=False) / n_samples
-            score += 0.5 * alpha * np.sum(lr.coef_**2) + beta * np.sum(
-                np.abs(lr.coef_)
-            )
+            score += 0.5 * alpha * np.sum(coef**2) + beta * np.sum(np.abs(coef))
             scores.append(score)
         train_score, test_score = tuple(scores)
 
@@ -134,6 +139,7 @@ def fit_single(
 
 
 def _predict_proba(lr, X):
+    """Predict proba for lightning for n_classes >=3."""
     pred = safe_sparse_dot(X, lr.coef_.T)
     if hasattr(lr, "intercept_"):
         pred += lr.intercept_
