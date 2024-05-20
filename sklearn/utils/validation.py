@@ -961,6 +961,9 @@ def check_array(
                             "numeric type."
                         )
 
+    if _is_pydata_spmatrix(array):
+        array = array.to_scipy_sparse()
+
     if sp.issparse(array):
         _ensure_no_complex_data(array)
         array = _ensure_sparse_format(
@@ -2515,3 +2518,11 @@ def _to_object_array(sequence):
     out = np.empty(len(sequence), dtype=object)
     out[:] = sequence
     return out
+
+
+def _is_pydata_spmatrix(m) -> bool:
+    """
+    Check whether object is pydata/sparse matrix, avoiding importing the module.
+    """
+    base_cls = getattr(sys.modules.get("sparse"), "SparseArray", None)
+    return base_cls is not None and isinstance(m, base_cls)
