@@ -81,7 +81,7 @@ print(
 # sense to optimize the decision threshold directly for a business metric of
 # interest. **Custom business metrics can be defined by assigning different costs
 # to false positives and false negatives or different gains to true positives
-# and true negatives.** Furthermore, those costs and gains can depend on ancilary
+# and true negatives.** Furthermore, those costs and gains can depend on auxiliary
 # metadata specific to each individual data point such as the amount of a
 # transaction in a fraud detection system.
 #
