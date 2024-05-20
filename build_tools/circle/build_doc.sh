@@ -148,8 +148,6 @@ else
     make_args=html
 fi
 
-make_args="SPHINXOPTS=-T $make_args"  # show full traceback on exception
-
 # Installing required system packages to support the rendering of math
 # notation in the HTML documentation and to optimize the image files
 sudo -E apt-get -yq update --allow-releaseinfo-change

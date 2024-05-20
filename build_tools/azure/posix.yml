@@ -22,7 +22,6 @@ jobs:
     PYTEST_XDIST_VERSION: 'latest'
     COVERAGE: 'true'
     CREATE_ISSUE_ON_TRACKER: 'true'
-    SHOW_SHORT_SUMMARY: 'false'
   strategy:
     matrix:
       ${{ insert }}: ${{ parameters.matrix }}
@@ -107,5 +106,6 @@ jobs:
       condition: and(succeeded(), eq(variables['COVERAGE'], 'true'),
                      eq(variables['SELECTED_TESTS'], ''))
       displayName: 'Upload To Codecov'
+      retryCountOnTaskFailure: 5
       env:
         CODECOV_TOKEN: $(CODECOV_TOKEN)

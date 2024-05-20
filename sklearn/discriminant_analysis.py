@@ -10,23 +10,27 @@ Linear Discriminant Analysis and Quadratic Discriminant Analysis
 # License: BSD 3-Clause
 
 import warnings
+from numbers import Integral, Real
+
 import numpy as np
 import scipy.linalg
 from scipy import linalg
-from numbers import Real, Integral
 
-from .base import BaseEstimator, TransformerMixin, ClassifierMixin
-from .base import ClassNamePrefixFeaturesOutMixin
+from .base import (
+    BaseEstimator,
+    ClassifierMixin,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
+from .covariance import empirical_covariance, ledoit_wolf, shrunk_covariance
 from .linear_model._base import LinearClassifierMixin
-from .covariance import ledoit_wolf, empirical_covariance, shrunk_covariance
-from .utils.multiclass import unique_labels
-from .utils.validation import check_is_fitted
-from .utils._array_api import get_namespace, _expit, device, size
-from .utils.multiclass import check_classification_targets
-from .utils.extmath import softmax
-from .utils._param_validation import StrOptions, Interval, HasMethods
 from .preprocessing import StandardScaler
-
+from .utils._array_api import _expit, device, get_namespace, size
+from .utils._param_validation import HasMethods, Interval, StrOptions
+from .utils.extmath import softmax
+from .utils.multiclass import check_classification_targets, unique_labels
+from .utils.validation import check_is_fitted
 
 __all__ = ["LinearDiscriminantAnalysis", "QuadraticDiscriminantAnalysis"]
 
@@ -189,7 +193,11 @@ class LinearDiscriminantAnalysis(
     `transform` method.
 
     .. versionadded:: 0.17
-       *LinearDiscriminantAnalysis*.
+
+    For a comparison between
+    :class:`~sklearn.discriminant_analysis.LinearDiscriminantAnalysis`
+    and :class:`~sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`, see
+    :ref:`sphx_glr_auto_examples_classification_plot_lda_qda.py`.
 
     Read more in the :ref:`User Guide <lda_qda>`.
 
@@ -218,6 +226,9 @@ class LinearDiscriminantAnalysis(
         This should be left to None if `covariance_estimator` is used.
         Note that shrinkage works only with 'lsqr' and 'eigen' solvers.
 
+        For a usage example, see
+        :ref:`sphx_glr_auto_examples_classification_plot_lda.py`.
+
     priors : array-like of shape (n_classes,), default=None
         The class prior probabilities. By default, the class proportions are
         inferred from the training data.
@@ -227,6 +238,9 @@ class LinearDiscriminantAnalysis(
         dimensionality reduction. If None, will be set to
         min(n_classes - 1, n_features). This parameter only affects the
         `transform` method.
+
+        For a usage example, see
+        :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_lda.py`.
 
     store_covariance : bool, default=False
         If True, explicitly compute the weighted within-class covariance
@@ -546,6 +560,10 @@ class LinearDiscriminantAnalysis(
         self.coef_ = coef @ self.scalings_.T
         self.intercept_ -= self.xbar_ @ self.coef_.T
 
+    @_fit_context(
+        # LinearDiscriminantAnalysis.covariance_estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y):
         """Fit the Linear Discriminant Analysis model.
 
@@ -568,8 +586,6 @@ class LinearDiscriminantAnalysis(
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         xp, _ = get_namespace(X)
 
         X, y = self._validate_data(
@@ -691,7 +707,7 @@ class LinearDiscriminantAnalysis(
         xp, is_array_api_compliant = get_namespace(X)
         decision = self.decision_function(X)
         if size(self.classes_) == 2:
-            proba = _expit(decision)
+            proba = _expit(decision, xp)
             return xp.stack([1 - proba, proba], axis=1)
         else:
             return softmax(decision)
@@ -745,6 +761,9 @@ class LinearDiscriminantAnalysis(
         # Only override for the doc
         return super().decision_function(X)
 
+    def _more_tags(self):
+        return {"array_api_support": True}
+
 
 class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     """Quadratic Discriminant Analysis.
@@ -756,7 +775,11 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     The model fits a Gaussian density to each class.
 
     .. versionadded:: 0.17
-       *QuadraticDiscriminantAnalysis*
+
+    For a comparison between
+    :class:`~sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`
+    and :class:`~sklearn.discriminant_analysis.LinearDiscriminantAnalysis`, see
+    :ref:`sphx_glr_auto_examples_classification_plot_lda_qda.py`.
 
     Read more in the :ref:`User Guide <lda_qda>`.
 
@@ -862,6 +885,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         self.store_covariance = store_covariance
         self.tol = tol
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit the model according to the given training data and parameters.
 
@@ -886,7 +910,6 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
         X, y = self._validate_data(X, y)
         check_classification_targets(y)
         self.classes_, y = np.unique(y, return_inverse=True)

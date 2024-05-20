@@ -89,3 +89,4 @@ Display Objects
    metrics.PredictionErrorDisplay
    metrics.RocCurveDisplay
    model_selection.LearningCurveDisplay
+   model_selection.ValidationCurveDisplay

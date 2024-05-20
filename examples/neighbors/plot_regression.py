@@ -18,8 +18,9 @@ target using both barycenter and constant weights.
 # %%
 # Generate sample data
 # --------------------
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn import neighbors
 
 np.random.seed(0)

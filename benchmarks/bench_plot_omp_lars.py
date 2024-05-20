@@ -3,14 +3,15 @@ regression (:ref:`least_angle_regression`)
 
 The input data is mostly low rank but is a fat infinite tail.
 """
+
 import gc
 import sys
 from time import time
 
 import numpy as np
 
-from sklearn.linear_model import lars_path, lars_path_gram, orthogonal_mp
 from sklearn.datasets import make_sparse_coded_signal
+from sklearn.linear_model import lars_path, lars_path_gram, orthogonal_mp
 
 
 def compute_bench(samples_range, features_range):

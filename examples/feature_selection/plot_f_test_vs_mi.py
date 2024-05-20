@@ -9,7 +9,7 @@ and mutual information.
 We consider 3 features x_1, x_2, x_3 distributed uniformly over [0, 1], the
 target depends on them as follows:
 
-y = x_1 + sin(6 * pi * x_2) + 0.1 * N(0, 1), that is the third features is
+y = x_1 + sin(6 * pi * x_2) + 0.1 * N(0, 1), that is the third feature is
 completely irrelevant.
 
 The code below plots the dependency of y against individual x_i and normalized
@@ -19,12 +19,13 @@ As F-test captures only linear dependency, it rates x_1 as the most
 discriminative feature. On the other hand, mutual information can capture any
 kind of dependency between variables and it rates x_2 as the most
 discriminative feature, which probably agrees better with our intuitive
-perception for this example. Both methods correctly marks x_3 as irrelevant.
+perception for this example. Both methods correctly mark x_3 as irrelevant.
 
 """
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn.feature_selection import f_regression, mutual_info_regression
 
 np.random.seed(0)

@@ -5,31 +5,38 @@ estimator.
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD 3 clause
 # Copyright: INRIA
-import warnings
 import operator
 import sys
 import time
-
+import warnings
 from numbers import Integral, Real
+
 import numpy as np
 from scipy import linalg
 
-from . import empirical_covariance, EmpiricalCovariance, log_likelihood
-
+from ..base import _fit_context
 from ..exceptions import ConvergenceWarning
-from ..utils.validation import (
-    _is_arraylike_not_scalar,
-    check_random_state,
-    check_scalar,
-)
-from ..utils.parallel import delayed, Parallel
-from ..utils._param_validation import Interval, StrOptions
-from ..utils._param_validation import validate_params
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
 from ..linear_model import _cd_fast as cd_fast  # type: ignore
 from ..linear_model import lars_path_gram
 from ..model_selection import check_cv, cross_val_score
+from ..utils import Bunch
+from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    _raise_for_params,
+    _routing_enabled,
+    process_routing,
+)
+from ..utils.parallel import Parallel, delayed
+from ..utils.validation import (
+    _is_arraylike_not_scalar,
+    check_random_state,
+    check_scalar,
+)
+from . import EmpiricalCovariance, empirical_covariance, log_likelihood
 
 
 # Helper functions to compute the objective and dual objective functions
@@ -215,16 +222,15 @@ def alpha_max(emp_cov):
 @validate_params(
     {
         "emp_cov": ["array-like"],
-        "cov_init": ["array-like", None],
         "return_costs": ["boolean"],
         "return_n_iter": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=False,
 )
 def graphical_lasso(
     emp_cov,
     alpha,
     *,
-    cov_init=None,
     mode="cd",
     tol=1e-4,
     enet_tol=1e-4,
@@ -250,14 +256,6 @@ def graphical_lasso(
         The regularization parameter: the higher alpha, the more
         regularization, the sparser the inverse covariance.
         Range is (0, inf].
-
-    cov_init : array of shape (n_features, n_features), default=None
-        The initial guess for the covariance. If None, then the empirical
-        covariance is used.
-
-        .. deprecated:: 1.3
-           `cov_init` is deprecated in 1.3 and will be removed in 1.5.
-           It currently has no effect.
 
     mode : {'cd', 'lars'}, default='cd'
         The Lasso solver to use: coordinate descent or LARS. Use LARS for
@@ -323,17 +321,22 @@ def graphical_lasso(
 
     One possible difference with the `glasso` R package is that the
     diagonal coefficients are not penalized.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.datasets import make_sparse_spd_matrix
+    >>> from sklearn.covariance import empirical_covariance, graphical_lasso
+    >>> true_cov = make_sparse_spd_matrix(n_dim=3,random_state=42)
+    >>> rng = np.random.RandomState(42)
+    >>> X = rng.multivariate_normal(mean=np.zeros(3), cov=true_cov, size=3)
+    >>> emp_cov = empirical_covariance(X, assume_centered=True)
+    >>> emp_cov, _ = graphical_lasso(emp_cov, alpha=0.05)
+    >>> emp_cov
+    array([[ 1.68...,  0.21..., -0.20...],
+           [ 0.21...,  0.22..., -0.08...],
+           [-0.20..., -0.08...,  0.23...]])
     """
-
-    if cov_init is not None:
-        warnings.warn(
-            (
-                "The cov_init parameter is deprecated in 1.3 and will be removed in "
-                "1.5. It does not have any effect."
-            ),
-            FutureWarning,
-        )
-
     model = GraphicalLasso(
         alpha=alpha,
         mode=mode,
@@ -532,6 +535,7 @@ class GraphicalLasso(BaseGraphicalLasso):
         self.alpha = alpha
         self.covariance = covariance
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the GraphicalLasso model to X.
 
@@ -548,7 +552,6 @@ class GraphicalLasso(BaseGraphicalLasso):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         # Covariance does not make sense for a single feature
         X = self._validate_data(X, ensure_min_features=2, ensure_min_samples=2)
 
@@ -737,7 +740,7 @@ class GraphicalLassoCV(BaseGraphicalLasso):
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
-        For integer/None inputs :class:`KFold` is used.
+        For integer/None inputs :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -925,7 +928,8 @@ class GraphicalLassoCV(BaseGraphicalLasso):
         self.cv = cv
         self.n_jobs = n_jobs
 
-    def fit(self, X, y=None):
+    @_fit_context(prefer_skip_nested_validation=True)
+    def fit(self, X, y=None, **params):
         """Fit the GraphicalLasso covariance model to X.
 
         Parameters
@@ -936,13 +940,25 @@ class GraphicalLassoCV(BaseGraphicalLasso):
         y : Ignored
             Not used, present for API consistency by convention.
 
+        **params : dict, default=None
+            Parameters to be passed to the CV splitter and the
+            cross_val_score function.
+
+            .. versionadded:: 1.5
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
+
         Returns
         -------
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         # Covariance does not make sense for a single feature
+        _raise_for_params(params, self, "fit")
+
         X = self._validate_data(X, ensure_min_features=2)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
@@ -975,6 +991,11 @@ class GraphicalLassoCV(BaseGraphicalLasso):
             alpha_0 = 1e-2 * alpha_1
             alphas = np.logspace(np.log10(alpha_0), np.log10(alpha_1), n_alphas)[::-1]
 
+        if _routing_enabled():
+            routed_params = process_routing(self, "fit", **params)
+        else:
+            routed_params = Bunch(splitter=Bunch(split={}))
+
         t0 = time.time()
         for i in range(n_refinements):
             with warnings.catch_warnings():
@@ -999,7 +1020,7 @@ class GraphicalLassoCV(BaseGraphicalLasso):
                         verbose=inner_verbose,
                         eps=self.eps,
                     )
-                    for train, test in cv.split(X, y)
+                    for train, test in cv.split(X, y, **routed_params.splitter.split)
                 )
 
             # Little danse to transform the list in what we need
@@ -1065,6 +1086,7 @@ class GraphicalLassoCV(BaseGraphicalLasso):
                 cv=cv,
                 n_jobs=self.n_jobs,
                 verbose=inner_verbose,
+                params=params,
             )
         )
         grid_scores = np.array(grid_scores)
@@ -1092,3 +1114,23 @@ class GraphicalLassoCV(BaseGraphicalLasso):
             eps=self.eps,
         )
         return self
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.5
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self.__class__.__name__).add(
+            splitter=check_cv(self.cv),
+            method_mapping=MethodMapping().add(callee="split", caller="fit"),
+        )
+        return router

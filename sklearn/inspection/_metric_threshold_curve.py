@@ -6,19 +6,17 @@ threshold-dependent metrics when changing the threshold.
 # Authors: ########
 # License: BSD 3 clause
 
-from numbers import Real, Integral
+from numbers import Integral, Real
 
 import numpy as np
 
-from ..utils import assert_all_finite
-from ..utils import check_consistent_length
+from ..utils import assert_all_finite, check_consistent_length, column_or_1d
+from ..utils._param_validation import Interval, validate_params
+from ..utils.multiclass import type_of_target
 from ..utils.validation import (
     _check_pos_label_consistency,
     _check_sample_weight,
 )
-from ..utils import column_or_1d
-from ..utils.multiclass import type_of_target
-from ..utils._param_validation import validate_params, Interval
 
 
 @validate_params(
@@ -33,7 +31,8 @@ from ..utils._param_validation import validate_params, Interval
         ],
         "pos_label": [Real, str, "boolean", None],
         "sample_weight": ["array-like", None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def metric_threshold_curve(
     y_true,

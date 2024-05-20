@@ -1,12 +1,10 @@
 """Embed vcomp140.dll and msvcp140.dll."""
 
-
 import os
 import os.path as op
 import shutil
 import sys
 import textwrap
-
 
 TARGET_FOLDER = op.join("sklearn", ".libs")
 DISTRIBUTOR_INIT = op.join("sklearn", "_distributor_init.py")

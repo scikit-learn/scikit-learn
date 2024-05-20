@@ -38,6 +38,7 @@ svc = SVC(kernel="rbf", gamma=0.001)
 # a cross-validation procedure.
 import matplotlib.pyplot as plt
 import numpy as np
+
 from sklearn.model_selection import LearningCurveDisplay, ShuffleSplit
 
 fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(10, 6), sharey=True)

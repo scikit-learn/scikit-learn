@@ -1,6 +1,7 @@
 """
 Module contains classes for invertible (and differentiable) link functions.
 """
+
 # Author: Christian Lorentzen <lorentzen.ch@gmail.com>
 
 from abc import ABC, abstractmethod
@@ -9,6 +10,7 @@ from dataclasses import dataclass
 import numpy as np
 from scipy.special import expit, logit
 from scipy.stats import gmean
+
 from ..utils.extmath import softmax
 
 

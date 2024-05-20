@@ -23,13 +23,13 @@ model with their true labels.
 # Authors: Clay Woolam <clay@woolam.org>
 # License: BSD
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from scipy import stats
 
 from sklearn import datasets
-from sklearn.semi_supervised import LabelSpreading
 from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.semi_supervised import LabelSpreading
 
 digits = datasets.load_digits()
 rng = np.random.RandomState(0)
@@ -79,7 +79,7 @@ for i in range(max_iterations):
     # select up to 5 digit examples that the classifier is most uncertain about
     uncertainty_index = np.argsort(pred_entropies)[::-1]
     uncertainty_index = uncertainty_index[
-        np.in1d(uncertainty_index, unlabeled_indices)
+        np.isin(uncertainty_index, unlabeled_indices)
     ][:5]
 
     # keep track of indices that we get labels for
