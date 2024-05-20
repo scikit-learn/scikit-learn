@@ -361,6 +361,14 @@ def test_check_array():
     with pytest.raises(ValueError, match="Expected 2D array, got scalar array instead"):
         check_array(10, ensure_2d=True)
 
+    # ensure_2d=True with 1d sparse array
+    if hasattr(sp, "csr_array"):
+        sparse_row = next(iter(sp.csr_array(X)))
+        if sparse_row.ndim == 1:
+            # In scipy 1.14 and later, sparse row is 1D while it was 2D before.
+            with pytest.raises(ValueError, match="Expected 2D input, got"):
+                check_array(sparse_row, accept_sparse=True, ensure_2d=True)
+
     # don't allow ndim > 3
     X_ndim = np.arange(8).reshape(2, 2, 2)
     with pytest.raises(ValueError):

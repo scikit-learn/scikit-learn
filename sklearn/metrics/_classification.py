@@ -967,8 +967,8 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
        accuracy of prediction algorithms for classification: an overview.
        <10.1093/bioinformatics/16.5.412>`
 
-    .. [2] `Wikipedia entry for the Matthews Correlation Coefficient
-       <https://en.wikipedia.org/wiki/Matthews_correlation_coefficient>`_.
+    .. [2] `Wikipedia entry for the Matthews Correlation Coefficient (phi coefficient)
+       <https://en.wikipedia.org/wiki/Phi_coefficient>`_.
 
     .. [3] `Gorodkin, (2004). Comparing two K-category assignments by a
         K-category correlation coefficient
@@ -3277,10 +3277,10 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
     :math:`D^2` score function, fraction of log loss explained.
 
     Best possible score is 1.0 and it can be negative (because the model can be
-    arbitrarily worse). A model that always uses the empirical mean of `y_true` as
-    constant prediction, disregarding the input features, gets a D^2 score of 0.0.
+    arbitrarily worse). A model that always predicts the per-class proportions
+    of `y_true`, disregarding the input features, gets a D^2 score of 0.0.
 
-    Read more in the :ref:`User Guide <d2_score>`.
+    Read more in the :ref:`User Guide <d2_score_classification>`.
 
     .. versionadded:: 1.5
 
