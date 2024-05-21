@@ -60,7 +60,8 @@ def test_graphviz_toy():
     )
     contents2 = (
         "digraph Tree {\n"
-        "node [shape=box] ;\n"
+        'node [shape=box, fontname="helvetica"] ;\n'
+        'edge [fontname="helvetica"] ;\n'
         '0 [label="feature0 <= 0.0\\ngini = 0.5\\nsamples = 6\\n'
         'value = [3, 3]"] ;\n'
         '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [3, 0]"] ;\n'
@@ -80,7 +81,8 @@ def test_graphviz_toy():
     )
     contents2 = (
         "digraph Tree {\n"
-        "node [shape=box] ;\n"
+        'node [shape=box, fontname="helvetica"] ;\n'
+        'edge [fontname="helvetica"] ;\n'
         '0 [label="feature\\"0\\" <= 0.0\\n'
         "gini = 0.5\\nsamples = 6\\n"
         'value = [3, 3]"] ;\n'
@@ -99,8 +101,9 @@ def test_graphviz_toy():
     contents1 = export_graphviz(clf, class_names=["yes", "no"], out_file=None)
     contents2 = (
         "digraph Tree {\n"
-        "node [shape=box] ;\n"
-        '0 [label="X[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n'
+        'node [shape=box, fontname="helvetica"] ;\n'
+        'edge [fontname="helvetica"] ;\n'
+        '0 [label="x[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n'
         'value = [3, 3]\\nclass = yes"] ;\n'
         '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [3, 0]\\n'
         'class = yes"] ;\n'
@@ -119,8 +122,9 @@ def test_graphviz_toy():
     contents1 = export_graphviz(clf, class_names=['"yes"', '"no"'], out_file=None)
     contents2 = (
         "digraph Tree {\n"
-        "node [shape=box] ;\n"
-        '0 [label="X[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n'
+        'node [shape=box, fontname="helvetica"] ;\n'
+        'edge [fontname="helvetica"] ;\n'
+        '0 [label="x[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n'
         'value = [3, 3]\\nclass = \\"yes\\""] ;\n'
         '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [3, 0]\\n'
         'class = \\"yes\\""] ;\n'
