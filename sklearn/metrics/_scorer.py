@@ -994,13 +994,14 @@ def check_scoring(estimator=None, scoring=None, *, allow_none=False, raise_exc=T
         Whether to raise an exception if a subset of the scorers in multimetric scoring
         fails or to return an error code.
 
-        - If set to `True` raises the failing scorer's exception.
-
-        - If set to `False` a formatted string of the exception details is passed as
+        - If set to `True`, raises the failing scorer's exception.
+        - If set to `False`, a formatted string of the exception details is passed as
           result of the failing scorer(s).
 
         This applies if `scoring` is list, tuple, set, or dict. Ignored if `scoring` is
         a str or a callable.
+        
+        .. versionadded:: 1.6
 
     Returns
     -------
