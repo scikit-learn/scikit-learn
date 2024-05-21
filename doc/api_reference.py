@@ -122,6 +122,7 @@ API_REFERENCE = {
                     "clone",
                     "is_classifier",
                     "is_regressor",
+                    "is_clusterer",
                 ],
             }
         ],
