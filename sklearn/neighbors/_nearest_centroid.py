@@ -95,7 +95,7 @@ class NearestCentroid(
 
         .. versionadded:: 1.6
 
-    class_priors_ : ndarray of shape (n_classes,)
+    class_prior_ : ndarray of shape (n_classes,)
         The class prior probabilities.
 
         .. versionadded:: 1.6
@@ -190,20 +190,20 @@ class NearestCentroid(
 
         if self.priors == "empirical":  # estimate priors from sample
             _, class_counts = np.unique(y, return_inverse=True)  # non-negative ints
-            self.class_priors_ = np.bincount(class_counts) / float(len(y))
+            self.class_prior_ = np.bincount(class_counts) / float(len(y))
         elif self.priors == "uniform":
-            self.class_priors_ = np.asarray([1 / n_classes] * n_classes)
+            self.class_prior_ = np.asarray([1 / n_classes] * n_classes)
         else:
-            self.class_priors_ = np.asarray(self.priors)
+            self.class_prior_ = np.asarray(self.priors)
 
-        if (self.class_priors_ < 0).any():
+        if (self.class_prior_ < 0).any():
             raise ValueError("priors must be non-negative")
-        if not np.isclose(self.class_priors_.sum(), 1.0):
+        if not np.isclose(self.class_prior_.sum(), 1.0):
             warnings.warn(
                 "The priors do not sum to 1. Normalizing such that it sums to one.",
                 UserWarning,
             )
-            self.class_priors_ = self.class_priors_ / self.class_priors_.sum()
+            self.class_prior_ = self.class_prior_ / self.class_prior_.sum()
 
         # Mask mapping each class to its members.
         self.centroids_ = np.empty((n_classes, n_features), dtype=np.float64)
@@ -282,7 +282,7 @@ class NearestCentroid(
             The predicted classes.
         """
         check_is_fitted(self)
-        if np.isclose(self.class_priors_, 1 / len(self.classes_)).all():
+        if np.isclose(self.class_prior_, 1 / len(self.classes_)).all():
             # `_validate_data` is called here since we are not calling `super()`
             X = self._validate_data(X, accept_sparse="csr", reset=False)
             return self.classes_[
@@ -313,7 +313,7 @@ class NearestCentroid(
             ).ravel()
             distances **= 2
             discriminant_score[:, class_idx] = np.squeeze(
-                -distances + 2.0 * np.log(self.class_priors_[class_idx])
+                -distances + 2.0 * np.log(self.class_prior_[class_idx])
             )
 
         return discriminant_score
