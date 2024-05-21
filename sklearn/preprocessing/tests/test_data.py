@@ -2010,9 +2010,12 @@ def test_binarizer(constructor):
 )
 def test_binarizer_array_api_int(array_namespace, device, _):
     xp = _array_api_for_tests(array_namespace, device)
+    X_np = np.reshape(np.asarray([0, 1, 2, 3, 4]), (-1, 1))
+    binarized_np = Binarizer(threshold=2.5).fit_transform(X_np)
     with config_context(array_api_dispatch=True):
-        X = xp.reshape(xp.asarray([0, 1, 2, 3, 4]), (-1, 1))
-        Binarizer().fit_transform(X)
+        X_xp = xp.asarray(X_np)
+        binarized_xp = Binarizer(threshold=2.5).fit_transform(X_xp)
+    assert all(np.asarray(binarized_xp) == binarized_np)
 
 
 def test_center_kernel():
