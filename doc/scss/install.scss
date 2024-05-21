@@ -1,0 +1,33 @@
+/**
+ * Styling for the installation page, including overriding some default styling of
+ * sphinx-design. This style sheet should be included only for the install page.
+ *
+ * This file is compiled into styles/install.css by sphinxcontrib.sass, see:
+ * https://sass-lang.com/guide/
+ */
+
+.install-instructions .sd-tab-set {
+  .sd-tab-content {
+    box-shadow: 0 -0.0625rem var(--pst-color-border);
+    padding: 0.5rem 0 0 0;
+
+    > p:first-child {
+      margin-top: 1.25rem !important;
+    }
+  }
+
+  > label.sd-tab-label {
+    border-top: none !important;
+    padding: 0 0 0.1rem 0;
+    margin: 0;
+    text-align: center;
+
+    &.tab-6 {
+      width: 50% !important;
+    }
+
+    &.tab-4 {
+      width: calc(100% / 3) !important;
+    }
+  }
+}
