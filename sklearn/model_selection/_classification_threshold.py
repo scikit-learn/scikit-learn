@@ -329,7 +329,7 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
         **BaseThresholdClassifier._parameter_constraints,
         "threshold": [StrOptions({"auto"}), Real],
         "pos_label": [Real, str, "boolean", None],
-        "refit": ["boolean"],
+        "prefit": ["boolean"],
     }
 
     def __init__(
