@@ -2026,17 +2026,9 @@ Here are some usage examples of the :func:`d2_brier_score` function::
 
   >>> from sklearn.metrics import d2_brier_score
   >>> y_true = [0, 1, 1, 0]
-  >>> y_pred = [0.5, 0.5, 0.5, 0.5]
-  >>> d2_brier_score(y_true, y_pred)
-  0.0
-  >>> y_true = [0, 1, 1, 0]
   >>> y_pred = [0.15, 0.9, 0.85, 0.25]
   >>> d2_brier_score(y_true, y_pred)
   0.882...
-  >>> y_true = [0, 1, 1, 0]
-  >>> y_pred = [0.95, 0.15, 0.25, 0.85]
-  >>> d2_brier_score(y_true, y_pred)
-  -1.910...
 
 |details-end|
 

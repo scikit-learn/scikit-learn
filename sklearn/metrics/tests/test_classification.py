@@ -3111,8 +3111,8 @@ def test_d2_brier_score():
     d2_score = d2_brier_score(y_true=y_true, y_proba=y_proba)
     brier_score_model = brier_score_loss(y_true=y_true, y_proba=y_proba)
     brier_score_ref = brier_score_loss(y_true=y_true, y_proba=y_proba_ref)
-    d2_score_true = 1 - brier_score_model / brier_score_ref
-    assert pytest.approx(d2_score) == d2_score_true
+    d2_score_expected = 1 - brier_score_model / brier_score_ref
+    assert pytest.approx(d2_score) == d2_score_expected
 
     # check that a model which gives a constant prediction equal to the
     # proportion of the positive class should get a d2 score of 0
