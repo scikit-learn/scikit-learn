@@ -41,6 +41,7 @@ from sklearn.preprocessing._data import BOUNDS_THRESHOLD, _handle_zeros_in_scale
 from sklearn.svm import SVR
 from sklearn.utils import gen_batches, shuffle
 from sklearn.utils._array_api import (
+    _convert_to_numpy,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -2011,11 +2012,11 @@ def test_binarizer(constructor):
 def test_binarizer_array_api_int(array_namespace, device, _):
     xp = _array_api_for_tests(array_namespace, device)
     X_np = np.reshape(np.asarray([0, 1, 2, 3, 4]), (-1, 1))
+    X_xp = xp.asarray(X_np, device=device)
     binarized_np = Binarizer(threshold=2.5).fit_transform(X_np)
     with config_context(array_api_dispatch=True):
-        X_xp = xp.asarray(X_np)
         binarized_xp = Binarizer(threshold=2.5).fit_transform(X_xp)
-    assert all(np.asarray(binarized_xp) == binarized_np)
+        assert_array_equal(_convert_to_numpy(binarized_xp, xp), binarized_np)
 
 
 def test_center_kernel():
