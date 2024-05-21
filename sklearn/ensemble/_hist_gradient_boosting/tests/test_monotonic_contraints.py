@@ -217,7 +217,7 @@ def test_predictions(global_random_seed, use_feature_names):
     n_samples = 1000
     f_0 = rng.rand(n_samples)  # positive correlation with y
     f_1 = rng.rand(n_samples)  # negative correlation with y
-    
+
     # extra categorical features, no correlation with y,
     # to check the correctness of monotonicity constraint remapping, see issue #28898
     f_a = rng.randint(low=0, high=9, size=n_samples)
