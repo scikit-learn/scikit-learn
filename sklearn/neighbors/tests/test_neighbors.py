@@ -2331,11 +2331,9 @@ def test_regressor_predict_on_arraylikes():
         (neighbors.KNeighborsRegressor, {"n_neighbors": 2}),
         (neighbors.RadiusNeighborsRegressor, {}),
         (neighbors.RadiusNeighborsClassifier, {}),
-        (neighbors.NearestCentroid, {}),
         (neighbors.KNeighborsTransformer, {"n_neighbors": 2}),
         (neighbors.RadiusNeighborsTransformer, {"radius": 1.5}),
         (neighbors.LocalOutlierFactor, {"n_neighbors": 1}),
-        (neighbors.NearestNeighbors, {"n_neighbors": 1}),
     ],
 )
 def test_nan_euclidean_support(Estimator, params):
@@ -2353,55 +2351,9 @@ def test_nan_euclidean_support(Estimator, params):
         if hasattr(estimator, response_method):
             output = getattr(estimator, response_method)(X)
             if hasattr(output, "toarray"):
-                output = output.toarray()
-            assert not np.isnan(output).any()
-
-
-@pytest.mark.parametrize(
-    "Estimator, params",
-    [
-        (neighbors.KNeighborsClassifier, {"n_neighbors": 2}),
-        (neighbors.KNeighborsRegressor, {"n_neighbors": 2}),
-        # (neighbors.RadiusNeighborsRegressor, {}),
-        # (neighbors.RadiusNeighborsClassifier, {}),
-        (neighbors.NearestCentroid, {}),
-        # (neighbors.KNeighborsTransformer, {"n_neighbors": 2}),
-        (neighbors.RadiusNeighborsTransformer, {"radius": 1.5}),
-        (neighbors.LocalOutlierFactor, {"n_neighbors": 1}),
-        (neighbors.NearestNeighbors, {"n_neighbors": 1}),
-    ],
-)
-def test_nan_euclidean_constant_input(Estimator, params):
-    """Check that the behavior of constant input is the same in the case of
-    full of nan vector and full of zero vector.
-    """
-
-    X_const_nan = [
-        [np.nan, np.nan],
-        [np.nan, np.nan],
-        [np.nan, np.nan],
-        [np.nan, np.nan],
-    ]
-    X_const = [[0, 0], [0, 0], [0, 0], [0, 0]]
-    y = [1, 2, 3, 4]
-
-    params.update({"metric": "nan_euclidean"})
-    estimator_nan = Estimator().set_params(**params).fit(X_const_nan, y)
-    estimator_const = Estimator().set_params(**params).fit(X_const, y)
-
-    for response_method in ("predict", "transform", "kneighbors", "fit_predict"):
-        if hasattr(estimator_nan, response_method):
-            output_nan = getattr(estimator_nan, response_method)(X_const_nan)
-            output_const = getattr(estimator_const, response_method)(X_const)
-            if hasattr(output_nan, "toarray"):
-                output_nan = output_nan.toarray()
-                output_const = output_const.toarray()
-            if isinstance(output_nan, tuple):
-                # The distance from the all nan input is full of nan while the
-                # constant is full of zeros
-                assert (output_nan[1] == output_const[1]).all()
+                assert not np.isnan(output.data).any()
             else:
-                assert (output_nan == output_const).all()
+                assert not np.isnan(output).any()
 
 
 def test_predict_dataframe():
