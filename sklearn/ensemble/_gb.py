@@ -2033,7 +2033,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     >>> reg.score(X_test, y_test)
     0.4...
 
-    For a detailed example of utilizing :class:`~sklearn.ensemble.GradientBooestingRegressor`
+    For a detailed example of utilizing
+    :class:`~sklearn.ensemble.GradientBooestingRegressor`
     to fit an ensemble of weak predictive models, please refer to
     :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regression.py`.
     """
