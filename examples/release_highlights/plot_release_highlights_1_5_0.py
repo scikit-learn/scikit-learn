@@ -30,13 +30,16 @@ or with conda::
 # problem. :class:`~model_selection.FixedThresholdClassifier` allows wrapping any
 # binary classifier and setting a custom decision threshold.
 from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import ConfusionMatrixDisplay
 
-X, y = make_classification(n_samples=1_000, weights=[0.9, 0.1], random_state=0)
-classifier = LogisticRegression(random_state=0).fit(X, y)
 
-print("Confusion matrix:\n", confusion_matrix(y, classifier.predict(X)))
+X, y = make_classification(n_samples=10_000, weights=[0.9, 0.1], random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+
+classifier_05 = LogisticRegression(C=1e6, random_state=0).fit(X_train, y_train)
+_ = ConfusionMatrixDisplay.from_estimator(classifier_05, X_test, y_test).plot()
 
 # %%
 # Lowering the threshold, i.e. allowing more samples to be classified as the positive
@@ -44,9 +47,9 @@ print("Confusion matrix:\n", confusion_matrix(y, classifier.predict(X)))
 # (as is well known from the concavity of the ROC curve).
 from sklearn.model_selection import FixedThresholdClassifier
 
-wrapped_classifier = FixedThresholdClassifier(classifier, threshold=0.1).fit(X, y)
-
-print("Confusion matrix:\n", confusion_matrix(y, wrapped_classifier.predict(X)))
+classifier_01 = FixedThresholdClassifier(classifier_05, threshold=0.1)
+classifier_01.fit(X_train, y_train)
+_ = ConfusionMatrixDisplay.from_estimator(classifier_01, X_test, y_test).plot()
 
 # %%
 # TunedThresholdClassifierCV: Tuning the decision threshold of a binary classifier
@@ -54,41 +57,66 @@ print("Confusion matrix:\n", confusion_matrix(y, wrapped_classifier.predict(X)))
 # The decision threshold of a binary classifier can be tuned to optimize a
 # given metric, using :class:`~model_selection.TunedThresholdClassifierCV`.
 #
-# Due to the class imbalance in this dataset, the model with the default
-# decision threshold at 0.5 has a suboptimal balanced accuracy: this classifier
-# tends to over predict the majority class.
-from sklearn.metrics import balanced_accuracy_score
+# It is particularly useful to find the best decision threshold when the model
+# is meant to be deployed in a specific application context where we can assign
+# different gains or costs for true positives, true negatives, false positives,
+# and false negatives.
+#
+# Let's illustrate this by considering an arbitrary case where:
+#
+# - each true positive gains 1 unit of profit, e.g. euro, year of life in good
+#   health, etc.;
+# - true negatives gain or cost nothing;
+# - each false negative costs 2;
+# - each false positive costs 0.1.
+#
+# Our metric quantifies the average profit per sample, which is defined by the
+# following Python function:
+from sklearn.metrics import confusion_matrix
 
-print(f"Balanced accuracy: {balanced_accuracy_score(y, classifier.predict(X)):.2f}")
+
+def custom_score(y_observed, y_pred):
+    tn, fp, fn, tp = confusion_matrix(y_observed, y_pred, normalize="all").ravel()
+    return tp - 2 * fn - 0.1 * fp
+
+
+print("Untuned decision threshold: 0.5")
+print(f"Custom score: {custom_score(y_test, classifier_05.predict(X_test)):.2f}")
 
 # %%
-# Tuning the threshold to optimize the balanced accuracy gives a smaller threshold
-# that allows more samples to be classified as the positive class.
+# It is interesting to observe that the average gain per prediction is negative
+# which means that this decision system is making a loss on average.
+#
+# Tuning the threshold to optimize this custom metric gives a smaller threshold
+# that allows more samples to be classified as the positive class. As a result,
+# the average gain per prediction improves.
 from sklearn.model_selection import TunedThresholdClassifierCV
+from sklearn.metrics import make_scorer
 
+custom_scorer = make_scorer(
+    custom_score, response_method="predict", greater_is_better=True
+)
 tuned_classifier = TunedThresholdClassifierCV(
-    classifier, cv=5, scoring="balanced_accuracy"
+    classifier_05, cv=5, scoring=custom_scorer
 ).fit(X, y)
 
-print(f"Tuned decision threshold: {tuned_classifier.best_threshold_:.4f}")
-print(
-    f"Balanced accuracy: {balanced_accuracy_score(y, tuned_classifier.predict(X)):.2f}"
-)
+print(f"Tuned decision threshold: {tuned_classifier.best_threshold_:.3f}")
+print(f"Custom score: {custom_score(y_test, tuned_classifier.predict(X_test)):.2f}")
 
 # %%
-# Note however, that the balanced accuracy is not necessarily the most
-# meaningful model selection metric for a given application. It often makes
-# sense to optimize the decision threshold directly for a business metric of
-# interest. **Custom business metrics can be defined by assigning different costs
-# to false positives and false negatives or different gains to true positives
-# and true negatives.** Furthermore, those costs and gains can depend on auxiliary
-# metadata specific to each individual data point such as the amount of a
-# transaction in a fraud detection system.
+# We observe that tuning the decision threshold can turn a machine
+# learning-based system that makes a loss on average into a beneficial one.
 #
-# :class:`~model_selection.TunedThresholdClassifierCV` benefits from the
-# metadata routing support (:ref:`Metadata Routing User Guide<metadata_routing>`)
-# allowing to optimze complex business metrics as detailed
-# in :ref:`Post-tuning the decision threshold for cost-sensitive learning
+# In practice, defining a meaningful application-specific metric might involve
+# making those costs for bad predictions and gains for good predictions depend on
+# auxiliary metadata specific to each individual data point such as the amount
+# of a transaction in a fraud detection system.
+#
+# To achieve this, :class:`~model_selection.TunedThresholdClassifierCV`
+# leverages metadata routing support (:ref:`Metadata Routing User
+# Guide<metadata_routing>`) allowing to optimize complex business metrics as
+# detailed in :ref:`Post-tuning the decision threshold for cost-sensitive
+# learning
 # <sphx_glr_auto_examples_model_selection_plot_cost_sensitive_learning.py>`.
 
 # %%
