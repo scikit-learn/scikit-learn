@@ -1,3 +1,5 @@
+"""Dummy estimators that implement simple rules of thumb."""
+
 # Author: Mathieu Blondel <mathieu@mblondel.org>
 #         Arnaud Joly <a.joly@ulg.ac.be>
 #         Maheshakya Wijewardena <maheshakya.10@cse.mrt.ac.lk>
@@ -9,17 +11,25 @@ from numbers import Integral, Real
 import numpy as np
 import scipy.sparse as sp
 
-from .base import BaseEstimator, ClassifierMixin, RegressorMixin
-from .base import MultiOutputMixin
+from .base import (
+    BaseEstimator,
+    ClassifierMixin,
+    MultiOutputMixin,
+    RegressorMixin,
+    _fit_context,
+)
 from .utils import check_random_state
-from .utils._param_validation import StrOptions, Interval
-from .utils.validation import _num_samples
-from .utils.validation import check_array
-from .utils.validation import check_consistent_length
-from .utils.validation import check_is_fitted, _check_sample_weight
+from .utils._param_validation import Interval, StrOptions
+from .utils.multiclass import class_distribution
 from .utils.random import _random_choice_csc
 from .utils.stats import _weighted_percentile
-from .utils.multiclass import class_distribution
+from .utils.validation import (
+    _check_sample_weight,
+    _num_samples,
+    check_array,
+    check_consistent_length,
+    check_is_fitted,
+)
 
 
 class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
@@ -102,6 +112,13 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         Frequency of each class observed in `y`. For multioutput classification
         problems, this is computed independently for each output.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X` has
+        feature names that are all strings.
+
     n_outputs_ : int
         Number of outputs.
 
@@ -142,6 +159,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         self.random_state = random_state
         self.constant = constant
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit the baseline classifier.
 
@@ -161,17 +179,19 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
+        self._validate_data(X, cast_to_ndarray=False)
 
         self._strategy = self.strategy
 
         if self._strategy == "uniform" and sp.issparse(y):
             y = y.toarray()
             warnings.warn(
-                "A local copy of the target data has been converted "
-                "to a numpy array. Predicting on sparse target data "
-                "with the uniform strategy would not save memory "
-                "and would be slower.",
+                (
+                    "A local copy of the target data has been converted "
+                    "to a numpy array. Predicting on sparse target data "
+                    "with the uniform strategy would not save memory "
+                    "and would be slower."
+                ),
                 UserWarning,
             )
 
@@ -218,7 +238,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
                         "The constant target value must be present in "
                         "the training data. You provided constant={}. "
                         "Possible values are: {}.".format(
-                            self.constant, list(self.classes_[k])
+                            self.constant, self.classes_[k].tolist()
                         )
                     )
                     raise ValueError(err_msg)
@@ -435,7 +455,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         Returns
         -------
         score : float
-            Mean accuracy of self.predict(X) wrt. y.
+            Mean accuracy of self.predict(X) w.r.t. y.
         """
         if X is None:
             X = np.zeros(shape=(len(y), 1))
@@ -479,6 +499,13 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         Mean or median or quantile of the training targets or constant value
         given by the user.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X` has
+        feature names that are all strings.
+
     n_outputs_ : int
         Number of outputs.
 
@@ -516,6 +543,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self.constant = constant
         self.quantile = quantile
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit the random regressor.
 
@@ -535,7 +563,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
+        self._validate_data(X, cast_to_ndarray=False)
 
         y = check_array(y, ensure_2d=False, input_name="y")
         if len(y) == 0:
@@ -667,7 +695,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         Returns
         -------
         score : float
-            R^2 of `self.predict(X)` wrt. y.
+            R^2 of `self.predict(X)` w.r.t. y.
         """
         if X is None:
             X = np.zeros(shape=(len(y), 1))

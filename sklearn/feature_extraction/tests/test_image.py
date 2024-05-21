@@ -3,30 +3,18 @@
 # License: BSD 3 clause
 
 import numpy as np
+import pytest
 from scipy import ndimage
 from scipy.sparse.csgraph import connected_components
-import pytest
 
-from sklearn.utils.fixes import sp_version, parse_version
 from sklearn.feature_extraction.image import (
-    img_to_graph,
-    grid_to_graph,
-    extract_patches_2d,
-    reconstruct_from_patches_2d,
     PatchExtractor,
     _extract_patches,
+    extract_patches_2d,
+    grid_to_graph,
+    img_to_graph,
+    reconstruct_from_patches_2d,
 )
-
-
-@pytest.fixture(scope="module")
-def raccoon_face():
-    if sp_version.release >= parse_version("1.10").release:
-        pytest.importorskip("pooch")
-        from scipy.datasets import face
-    else:
-        from scipy.misc import face
-
-    return face(gray=True)
 
 
 def test_img_to_graph():
@@ -93,8 +81,8 @@ def test_grid_to_graph():
     assert A.dtype == np.float64
 
 
-def test_connect_regions(raccoon_face):
-    face = raccoon_face.copy()
+def test_connect_regions(raccoon_face_fxt):
+    face = raccoon_face_fxt
     # subsample by 4 to reduce run time
     face = face[::4, ::4]
     for thr in (50, 150):
@@ -103,8 +91,8 @@ def test_connect_regions(raccoon_face):
         assert ndimage.label(mask)[1] == connected_components(graph)[0]
 
 
-def test_connect_regions_with_grid(raccoon_face):
-    face = raccoon_face.copy()
+def test_connect_regions_with_grid(raccoon_face_fxt):
+    face = raccoon_face_fxt
 
     # subsample by 4 to reduce run time
     face = face[::4, ::4]
@@ -118,15 +106,9 @@ def test_connect_regions_with_grid(raccoon_face):
     assert ndimage.label(mask)[1] == connected_components(graph)[0]
 
 
-def _downsampled_face():
-    if sp_version.release >= parse_version("1.10").release:
-        pytest.importorskip("pooch")
-        from scipy.datasets import face as raccoon_face
-    else:
-        from scipy.misc import face as raccoon_face
-
-    face = raccoon_face(gray=True)
-    face = face.astype(np.float32)
+@pytest.fixture
+def downsampled_face(raccoon_face_fxt):
+    face = raccoon_face_fxt
     face = face[::2, ::2] + face[1::2, ::2] + face[::2, 1::2] + face[1::2, 1::2]
     face = face[::2, ::2] + face[1::2, ::2] + face[::2, 1::2] + face[1::2, 1::2]
     face = face.astype(np.float32)
@@ -134,8 +116,9 @@ def _downsampled_face():
     return face
 
 
-def _orange_face(face=None):
-    face = _downsampled_face() if face is None else face
+@pytest.fixture
+def orange_face(downsampled_face):
+    face = downsampled_face
     face_color = np.zeros(face.shape + (3,))
     face_color[:, :, 0] = 256 - face
     face_color[:, :, 1] = 256 - face / 2
@@ -143,8 +126,7 @@ def _orange_face(face=None):
     return face_color
 
 
-def _make_images(face=None):
-    face = _downsampled_face() if face is None else face
+def _make_images(face):
     # make a collection of faces
     images = np.zeros((3,) + face.shape)
     images[0] = face
@@ -153,12 +135,12 @@ def _make_images(face=None):
     return images
 
 
-downsampled_face = _downsampled_face()
-orange_face = _orange_face(downsampled_face)
-face_collection = _make_images(downsampled_face)
+@pytest.fixture
+def downsampled_face_collection(downsampled_face):
+    return _make_images(downsampled_face)
 
 
-def test_extract_patches_all():
+def test_extract_patches_all(downsampled_face):
     face = downsampled_face
     i_h, i_w = face.shape
     p_h, p_w = 16, 16
@@ -167,7 +149,7 @@ def test_extract_patches_all():
     assert patches.shape == (expected_n_patches, p_h, p_w)
 
 
-def test_extract_patches_all_color():
+def test_extract_patches_all_color(orange_face):
     face = orange_face
     i_h, i_w = face.shape[:2]
     p_h, p_w = 16, 16
@@ -176,7 +158,7 @@ def test_extract_patches_all_color():
     assert patches.shape == (expected_n_patches, p_h, p_w, 3)
 
 
-def test_extract_patches_all_rect():
+def test_extract_patches_all_rect(downsampled_face):
     face = downsampled_face
     face = face[:, 32:97]
     i_h, i_w = face.shape
@@ -187,7 +169,7 @@ def test_extract_patches_all_rect():
     assert patches.shape == (expected_n_patches, p_h, p_w)
 
 
-def test_extract_patches_max_patches():
+def test_extract_patches_max_patches(downsampled_face):
     face = downsampled_face
     i_h, i_w = face.shape
     p_h, p_w = 16, 16
@@ -205,7 +187,7 @@ def test_extract_patches_max_patches():
         extract_patches_2d(face, (p_h, p_w), max_patches=-1.0)
 
 
-def test_extract_patch_same_size_image():
+def test_extract_patch_same_size_image(downsampled_face):
     face = downsampled_face
     # Request patches of the same size as image
     # Should return just the single patch a.k.a. the image
@@ -213,7 +195,7 @@ def test_extract_patch_same_size_image():
     assert patches.shape[0] == 1
 
 
-def test_extract_patches_less_than_max_patches():
+def test_extract_patches_less_than_max_patches(downsampled_face):
     face = downsampled_face
     i_h, i_w = face.shape
     p_h, p_w = 3 * i_h // 4, 3 * i_w // 4
@@ -224,7 +206,7 @@ def test_extract_patches_less_than_max_patches():
     assert patches.shape == (expected_n_patches, p_h, p_w)
 
 
-def test_reconstruct_patches_perfect():
+def test_reconstruct_patches_perfect(downsampled_face):
     face = downsampled_face
     p_h, p_w = 16, 16
 
@@ -233,7 +215,7 @@ def test_reconstruct_patches_perfect():
     np.testing.assert_array_almost_equal(face, face_reconstructed)
 
 
-def test_reconstruct_patches_perfect_color():
+def test_reconstruct_patches_perfect_color(orange_face):
     face = orange_face
     p_h, p_w = 16, 16
 
@@ -242,14 +224,14 @@ def test_reconstruct_patches_perfect_color():
     np.testing.assert_array_almost_equal(face, face_reconstructed)
 
 
-def test_patch_extractor_fit():
-    faces = face_collection
+def test_patch_extractor_fit(downsampled_face_collection):
+    faces = downsampled_face_collection
     extr = PatchExtractor(patch_size=(8, 8), max_patches=100, random_state=0)
     assert extr == extr.fit(faces)
 
 
-def test_patch_extractor_max_patches():
-    faces = face_collection
+def test_patch_extractor_max_patches(downsampled_face_collection):
+    faces = downsampled_face_collection
     i_h, i_w = faces.shape[1:3]
     p_h, p_w = 8, 8
 
@@ -272,15 +254,15 @@ def test_patch_extractor_max_patches():
     assert patches.shape == (expected_n_patches, p_h, p_w)
 
 
-def test_patch_extractor_max_patches_default():
-    faces = face_collection
+def test_patch_extractor_max_patches_default(downsampled_face_collection):
+    faces = downsampled_face_collection
     extr = PatchExtractor(max_patches=100, random_state=0)
     patches = extr.transform(faces)
     assert patches.shape == (len(faces) * 100, 19, 25)
 
 
-def test_patch_extractor_all_patches():
-    faces = face_collection
+def test_patch_extractor_all_patches(downsampled_face_collection):
+    faces = downsampled_face_collection
     i_h, i_w = faces.shape[1:3]
     p_h, p_w = 8, 8
     expected_n_patches = len(faces) * (i_h - p_h + 1) * (i_w - p_w + 1)
@@ -289,7 +271,7 @@ def test_patch_extractor_all_patches():
     assert patches.shape == (expected_n_patches, p_h, p_w)
 
 
-def test_patch_extractor_color():
+def test_patch_extractor_color(orange_face):
     faces = _make_images(orange_face)
     i_h, i_w = faces.shape[1:3]
     p_h, p_w = 8, 8
@@ -300,7 +282,6 @@ def test_patch_extractor_color():
 
 
 def test_extract_patches_strided():
-
     image_shapes_1D = [(10,), (10,), (11,), (10,)]
     patch_sizes_1D = [(1,), (2,), (3,), (8,)]
     patch_steps_1D = [(1,), (1,), (4,), (2,)]
@@ -347,7 +328,7 @@ def test_extract_patches_strided():
         ).all()
 
 
-def test_extract_patches_square():
+def test_extract_patches_square(downsampled_face):
     # test same patch size for all dimensions
     face = downsampled_face
     i_h, i_w = face.shape
@@ -364,3 +345,12 @@ def test_width_patch():
         extract_patches_2d(x, (4, 1))
     with pytest.raises(ValueError):
         extract_patches_2d(x, (1, 4))
+
+
+def test_patch_extractor_wrong_input(orange_face):
+    """Check that an informative error is raised if the patch_size is not valid."""
+    faces = _make_images(orange_face)
+    err_msg = "patch_size must be a tuple of two integers"
+    extractor = PatchExtractor(patch_size=(8, 8, 8))
+    with pytest.raises(ValueError, match=err_msg):
+        extractor.transform(faces)

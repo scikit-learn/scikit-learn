@@ -1,12 +1,10 @@
-from cython cimport floating
-
-cimport numpy as cnp
 import numpy as np
 
-cnp.import_array()
 
+from cython cimport floating
 from libc.math cimport exp, fabs, log
-from numpy.math cimport EULER
+
+from ..utils._typedefs cimport float64_t, intp_t
 
 
 def mean_change(const floating[:] arr_1, const floating[:] arr_2):
@@ -15,8 +13,8 @@ def mean_change(const floating[:] arr_1, const floating[:] arr_2):
     Equivalent to np.abs(arr_1 - arr2).mean().
     """
 
-    cdef cnp.float64_t total, diff
-    cdef cnp.npy_intp i, size
+    cdef float64_t total, diff
+    cdef intp_t i, size
 
     size = arr_1.shape[0]
     total = 0.0
@@ -42,7 +40,7 @@ def _dirichlet_expectation_1d(
     """
 
     cdef floating dt, psi_total, total
-    cdef cnp.npy_intp i, size
+    cdef intp_t i, size
 
     size = doc_topic.shape[0]
 
@@ -68,7 +66,7 @@ def _dirichlet_expectation_2d(const floating[:, :] arr):
     """
     cdef floating row_total, psi_row_total
     cdef floating[:, :] d_exp
-    cdef cnp.npy_intp i, j, n_rows, n_cols
+    cdef intp_t i, j, n_rows, n_cols
 
     n_rows = arr.shape[0]
     n_cols = arr.shape[1]
@@ -90,7 +88,8 @@ def _dirichlet_expectation_2d(const floating[:, :] arr):
 #
 # After: J. Bernardo (1976). Algorithm AS 103: Psi (Digamma) Function.
 # https://www.uv.es/~bernardo/1976AppStatist.pdf
-cdef floating psi(floating x) nogil:
+cdef floating psi(floating x) noexcept nogil:
+    cdef double EULER = 0.577215664901532860606512090082402431
     if x <= 1e-6:
         # psi(x) = -EULER - 1/x + O(x)
         return -EULER - 1. / x

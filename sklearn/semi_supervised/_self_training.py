@@ -3,11 +3,12 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from ..base import MetaEstimatorMixin, clone, BaseEstimator
-from ..utils._param_validation import HasMethods, Interval, StrOptions
-from ..utils.validation import check_is_fitted
-from ..utils.metaestimators import available_if
+from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone
 from ..utils import safe_mask
+from ..utils._param_validation import HasMethods, Interval, StrOptions
+from ..utils.metadata_routing import _RoutingNotSupportedMixin
+from ..utils.metaestimators import available_if
+from ..utils.validation import check_is_fitted
 
 __all__ = ["SelfTrainingClassifier"]
 
@@ -17,15 +18,27 @@ __all__ = ["SelfTrainingClassifier"]
 
 
 def _estimator_has(attr):
-    """Check if `self.base_estimator_ `or `self.base_estimator_` has `attr`."""
-    return lambda self: (
-        hasattr(self.base_estimator_, attr)
-        if hasattr(self, "base_estimator_")
-        else hasattr(self.base_estimator, attr)
-    )
+    """Check if we can delegate a method to the underlying estimator.
+
+    First, we check the fitted `base_estimator_` if available, otherwise we check
+    the unfitted `base_estimator`. We raise the original `AttributeError` if
+    `attr` does not exist. This function is used together with `available_if`.
+    """
+
+    def check(self):
+        if hasattr(self, "base_estimator_"):
+            getattr(self.base_estimator_, attr)
+        else:
+            getattr(self.base_estimator, attr)
+
+        return True
+
+    return check
 
 
-class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
+class SelfTrainingClassifier(
+    _RoutingNotSupportedMixin, MetaEstimatorMixin, BaseEstimator
+):
     """Self-training classifier.
 
     This :term:`metaestimator` allows a given supervised classifier to function as a
@@ -171,6 +184,10 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         self.max_iter = max_iter
         self.verbose = verbose
 
+    @_fit_context(
+        # SelfTrainingClassifier.base_estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y):
         """
         Fit self-training classifier using `X`, `y` as training data.
@@ -189,9 +206,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
-        # we need row slicing support for sparce matrices, but costly finiteness check
+        # we need row slicing support for sparse matrices, but costly finiteness check
         # can be delegated to the base estimator.
         X, y = self._validate_data(
             X, y, accept_sparse=["csr", "csc", "lil", "dok"], force_all_finite=False
@@ -215,9 +230,11 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             self.k_best > X.shape[0] - np.sum(has_label)
         ):
             warnings.warn(
-                "k_best is larger than the amount of unlabeled "
-                "samples. All unlabeled samples will be labeled in "
-                "the first iteration",
+                (
+                    "k_best is larger than the amount of unlabeled "
+                    "samples. All unlabeled samples will be labeled in "
+                    "the first iteration"
+                ),
                 UserWarning,
             )
 

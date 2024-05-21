@@ -33,19 +33,17 @@ of the latent structured data of the Wikipedia content.
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
-from bz2 import BZ2File
 import os
+from bz2 import BZ2File
 from datetime import datetime
 from pprint import pprint
 from time import time
+from urllib.request import urlopen
 
 import numpy as np
-
 from scipy import sparse
 
 from sklearn.decomposition import randomized_svd
-from urllib.request import urlopen
-
 
 # %%
 # Download data, if not already on disk

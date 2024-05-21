@@ -4,23 +4,42 @@
 #
 #    pip-compile --output-file=build_tools/azure/debian_atlas_32bit_lock.txt build_tools/azure/debian_atlas_32bit_requirements.txt
 #
-attrs==22.2.0
+attrs==23.2.0
     # via pytest
-cython==0.29.33
+coverage==7.5.1
+    # via pytest-cov
+cython==3.0.10
     # via -r build_tools/azure/debian_atlas_32bit_requirements.txt
-joblib==1.1.1
+iniconfig==2.0.0
+    # via pytest
+joblib==1.2.0
     # via -r build_tools/azure/debian_atlas_32bit_requirements.txt
-more-itertools==9.0.0
-    # via pytest
-packaging==23.0
-    # via pytest
-pluggy==0.13.1
+meson==1.4.0
+    # via meson-python
+meson-python==0.16.0
+    # via -r build_tools/azure/debian_atlas_32bit_requirements.txt
+ninja==1.11.1.1
+    # via -r build_tools/azure/debian_atlas_32bit_requirements.txt
+packaging==24.0
+    # via
+    #   meson-python
+    #   pyproject-metadata
+    #   pytest
+pluggy==1.5.0
     # via pytest
 py==1.11.0
     # via pytest
-pytest==5.3.1
+pyproject-metadata==0.8.0
+    # via meson-python
+pytest==7.1.2
+    # via
+    #   -r build_tools/azure/debian_atlas_32bit_requirements.txt
+    #   pytest-cov
+pytest-cov==2.9.0
     # via -r build_tools/azure/debian_atlas_32bit_requirements.txt
-threadpoolctl==2.2.0
+threadpoolctl==3.1.0
     # via -r build_tools/azure/debian_atlas_32bit_requirements.txt
-wcwidth==0.2.6
-    # via pytest
+tomli==2.0.1
+    # via
+    #   meson-python
+    #   pytest

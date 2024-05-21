@@ -4,23 +4,19 @@
 import copy
 
 import numpy as np
-from scipy.special import gammaln
 import pytest
+from scipy.special import gammaln
 
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_equal
-
-from sklearn.metrics.cluster import adjusted_rand_score
-
-from sklearn.mixture._bayesian_mixture import _log_dirichlet_norm
-from sklearn.mixture._bayesian_mixture import _log_wishart_norm
-
-from sklearn.mixture import BayesianGaussianMixture
-
-from sklearn.mixture.tests.test_gaussian_mixture import RandomData
 from sklearn.exceptions import ConvergenceWarning, NotFittedError
-from sklearn.utils._testing import ignore_warnings
-
+from sklearn.metrics.cluster import adjusted_rand_score
+from sklearn.mixture import BayesianGaussianMixture
+from sklearn.mixture._bayesian_mixture import _log_dirichlet_norm, _log_wishart_norm
+from sklearn.mixture.tests.test_gaussian_mixture import RandomData
+from sklearn.utils._testing import (
+    assert_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
+)
 
 COVARIANCE_TYPE = ["full", "tied", "diag", "spherical"]
 PRIOR_TYPE = ["dirichlet_process", "dirichlet_distribution"]
@@ -58,7 +54,7 @@ def test_log_wishart_norm():
                 ),
                 0,
             )
-        )
+        ).item()
     predected_norm = _log_wishart_norm(
         degrees_of_freedom, log_det_precisions_chol, n_features
     )
@@ -244,7 +240,7 @@ def test_monotonic_likelihood():
                 random_state=rng,
                 tol=1e-3,
             )
-            current_lower_bound = -np.infty
+            current_lower_bound = -np.inf
             # Do one training iteration at a time so we can make sure that the
             # training log likelihood increases after each iteration.
             for _ in range(600):

@@ -1,9 +1,8 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 """
 Newton solver for Generalized Linear Models
 """
-
-# Author: Christian Lorentzen <lorentzen.ch@gmail.com>
-# License: BSD 3 clause
 
 import warnings
 from abc import ABC, abstractmethod
@@ -88,7 +87,7 @@ class NewtonSolver(ABC):
         Newton step.
 
     gradient : ndarray of shape coef.shape
-        Gradient of the loss wrt. the coefficients.
+        Gradient of the loss w.r.t. the coefficients.
 
     gradient_old : ndarray of shape coef.shape
         Gradient of previous iteration.
@@ -230,7 +229,7 @@ class NewtonSolver(ABC):
         is_verbose = self.verbose >= 2
         if is_verbose:
             print("  Backtracking Line Search")
-            print(f"    eps=10 * finfo.eps={eps}")
+            print(f"    eps=16 * finfo.eps={eps}")
 
         for i in range(21):  # until and including t = beta**20 ~ 1e-6
             self.coef = self.coef_old + t * self.coef_newton
@@ -285,9 +284,11 @@ class NewtonSolver(ABC):
             t *= beta
         else:
             warnings.warn(
-                f"Line search of Newton solver {self.__class__.__name__} at iteration "
-                f"#{self.iteration} did no converge after 21 line search refinement "
-                "iterations. It will now resort to lbfgs instead.",
+                (
+                    f"Line search of Newton solver {self.__class__.__name__} at"
+                    f" iteration #{self.iteration} did no converge after 21 line search"
+                    " refinement iterations. It will now resort to lbfgs instead."
+                ),
                 ConvergenceWarning,
             )
             if self.verbose:
@@ -373,6 +374,7 @@ class NewtonSolver(ABC):
 
         self.iteration = 1
         self.converged = False
+        self.use_fallback_lbfgs_solve = False
 
         while self.iteration <= self.max_iter and not self.converged:
             if self.verbose:
@@ -418,8 +420,10 @@ class NewtonSolver(ABC):
                 self.fallback_lbfgs_solve(X=X, y=y, sample_weight=sample_weight)
             else:
                 warnings.warn(
-                    f"Newton solver did not converge after {self.iteration - 1} "
-                    "iterations.",
+                    (
+                        f"Newton solver did not converge after {self.iteration - 1} "
+                        "iterations."
+                    ),
                     ConvergenceWarning,
                 )
 
@@ -459,9 +463,11 @@ class NewtonCholeskySolver(NewtonSolver):
     def inner_solve(self, X, y, sample_weight):
         if self.hessian_warning:
             warnings.warn(
-                f"The inner solver of {self.__class__.__name__} detected a "
-                "pointwise hessian with many negative values at iteration "
-                f"#{self.iteration}. It will now resort to lbfgs instead.",
+                (
+                    f"The inner solver of {self.__class__.__name__} detected a "
+                    "pointwise hessian with many negative values at iteration "
+                    f"#{self.iteration}. It will now resort to lbfgs instead."
+                ),
                 ConvergenceWarning,
             )
             if self.verbose:
@@ -495,8 +501,7 @@ class NewtonCholeskySolver(NewtonSolver):
                 "Further options are to use another solver or to avoid such situation "
                 "in the first place. Possible remedies are removing collinear features"
                 " of X or increasing the penalization strengths.\n"
-                "The original Linear Algebra message was:\n"
-                + str(e),
+                "The original Linear Algebra message was:\n" + str(e),
                 scipy.linalg.LinAlgWarning,
             )
             # Possible causes:

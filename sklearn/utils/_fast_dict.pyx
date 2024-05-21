@@ -12,18 +12,8 @@ from libcpp.map cimport map as cpp_map
 
 import numpy as np
 
-# Import the C-level symbols of numpy
-cimport numpy as cnp
+from ._typedefs cimport float64_t, intp_t
 
-# Numpy must be initialized. When using numpy from C or Cython you must
-# _always_ do that, or you will have segfaults
-cnp.import_array()
-
-#DTYPE = np.float64
-#ctypedef cnp.float64_t DTYPE_t
-
-#ITYPE = np.intp
-#ctypedef cnp.intp_t ITYPE_t
 
 ###############################################################################
 # An object to be used in Python
@@ -35,8 +25,11 @@ cnp.import_array()
 
 cdef class IntFloatDict:
 
-    def __init__(self, cnp.ndarray[ITYPE_t, ndim=1] keys,
-                       cnp.ndarray[DTYPE_t, ndim=1] values):
+    def __init__(
+        self,
+        intp_t[:] keys,
+        float64_t[:] values,
+    ):
         cdef int i
         cdef int size = values.size
         # Should check that sizes for keys and values are equal, and
@@ -48,7 +41,7 @@ cdef class IntFloatDict:
         return self.my_map.size()
 
     def __getitem__(self, int key):
-        cdef cpp_map[ITYPE_t, DTYPE_t].iterator it = self.my_map.find(key)
+        cdef cpp_map[intp_t, float64_t].iterator it = self.my_map.find(key)
         if it == self.my_map.end():
             # The key is not in the dict
             raise KeyError('%i' % key)
@@ -59,21 +52,21 @@ cdef class IntFloatDict:
 
     # Cython 0.20 generates buggy code below. Commenting this out for now
     # and relying on the to_arrays method
-    #def __iter__(self):
-    #    cdef cpp_map[ITYPE_t, DTYPE_t].iterator it = self.my_map.begin()
-    #    cdef cpp_map[ITYPE_t, DTYPE_t].iterator end = self.my_map.end()
-    #    while it != end:
-    #        yield deref(it).first, deref(it).second
-    #        inc(it)
+    # def __iter__(self):
+    #     cdef cpp_map[intp_t, float64_t].iterator it = self.my_map.begin()
+    #     cdef cpp_map[intp_t, float64_t].iterator end = self.my_map.end()
+    #     while it != end:
+    #         yield deref(it).first, deref(it).second
+    #         inc(it)
 
     def __iter__(self):
         cdef int size = self.my_map.size()
-        cdef ITYPE_t [:] keys = np.empty(size, dtype=np.intp)
-        cdef DTYPE_t [:] values = np.empty(size, dtype=np.float64)
+        cdef intp_t [:] keys = np.empty(size, dtype=np.intp)
+        cdef float64_t [:] values = np.empty(size, dtype=np.float64)
         self._to_arrays(keys, values)
         cdef int idx
-        cdef ITYPE_t key
-        cdef DTYPE_t value
+        cdef intp_t key
+        cdef float64_t value
         for idx in range(size):
             key = keys[idx]
             value = values[idx]
@@ -91,17 +84,15 @@ cdef class IntFloatDict:
                 The values of the data points
         """
         cdef int size = self.my_map.size()
-        cdef cnp.ndarray[ITYPE_t, ndim=1] keys = np.empty(size,
-                                                         dtype=np.intp)
-        cdef cnp.ndarray[DTYPE_t, ndim=1] values = np.empty(size,
-                                                           dtype=np.float64)
+        keys = np.empty(size, dtype=np.intp)
+        values = np.empty(size, dtype=np.float64)
         self._to_arrays(keys, values)
         return keys, values
 
-    cdef _to_arrays(self, ITYPE_t [:] keys, DTYPE_t [:] values):
+    cdef _to_arrays(self, intp_t [:] keys, float64_t [:] values):
         # Internal version of to_arrays that takes already-initialized arrays
-        cdef cpp_map[ITYPE_t, DTYPE_t].iterator it = self.my_map.begin()
-        cdef cpp_map[ITYPE_t, DTYPE_t].iterator end = self.my_map.end()
+        cdef cpp_map[intp_t, float64_t].iterator it = self.my_map.begin()
+        cdef cpp_map[intp_t, float64_t].iterator end = self.my_map.end()
         cdef int index = 0
         while it != end:
             keys[index] = deref(it).first
@@ -110,8 +101,8 @@ cdef class IntFloatDict:
             index += 1
 
     def update(self, IntFloatDict other):
-        cdef cpp_map[ITYPE_t, DTYPE_t].iterator it = other.my_map.begin()
-        cdef cpp_map[ITYPE_t, DTYPE_t].iterator end = other.my_map.end()
+        cdef cpp_map[intp_t, float64_t].iterator it = other.my_map.begin()
+        cdef cpp_map[intp_t, float64_t].iterator end = other.my_map.end()
         while it != end:
             self.my_map[deref(it).first] = deref(it).second
             inc(it)
@@ -122,9 +113,9 @@ cdef class IntFloatDict:
         out_obj.my_map = self.my_map
         return out_obj
 
-    def append(self, ITYPE_t key, DTYPE_t value):
+    def append(self, intp_t key, float64_t value):
         # Construct our arguments
-        cdef pair[ITYPE_t, DTYPE_t] args
+        cdef pair[intp_t, float64_t] args
         args.first = key
         args.second = value
         self.my_map.insert(args)
@@ -134,10 +125,10 @@ cdef class IntFloatDict:
 # operation on dict
 
 def argmin(IntFloatDict d):
-    cdef cpp_map[ITYPE_t, DTYPE_t].iterator it = d.my_map.begin()
-    cdef cpp_map[ITYPE_t, DTYPE_t].iterator end = d.my_map.end()
-    cdef ITYPE_t min_key = -1
-    cdef DTYPE_t min_value = np.inf
+    cdef cpp_map[intp_t, float64_t].iterator it = d.my_map.begin()
+    cdef cpp_map[intp_t, float64_t].iterator end = d.my_map.end()
+    cdef intp_t min_key = -1
+    cdef float64_t min_value = np.inf
     while it != end:
         if deref(it).second < min_value:
             min_value = deref(it).second

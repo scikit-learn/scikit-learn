@@ -24,6 +24,7 @@ that are linked tend to fluctuate in relation to each other during a day.
 # `alphavantage.co <https://www.alphavantage.co/>`_.
 
 import sys
+
 import numpy as np
 import pandas as pd
 
@@ -229,7 +230,6 @@ ax.add_collection(lc)
 # Add a label to each node. The challenge here is that we want to
 # position the labels to avoid overlap with other labels
 for index, (name, label, (x, y)) in enumerate(zip(names, labels, embedding.T)):
-
     dx = x - embedding[0]
     dx[index] = 1
     dy = y - embedding[1]
@@ -263,12 +263,12 @@ for index, (name, label, (x, y)) in enumerate(zip(names, labels, embedding.T)):
     )
 
 plt.xlim(
-    embedding[0].min() - 0.15 * embedding[0].ptp(),
-    embedding[0].max() + 0.10 * embedding[0].ptp(),
+    embedding[0].min() - 0.15 * np.ptp(embedding[0]),
+    embedding[0].max() + 0.10 * np.ptp(embedding[0]),
 )
 plt.ylim(
-    embedding[1].min() - 0.03 * embedding[1].ptp(),
-    embedding[1].max() + 0.03 * embedding[1].ptp(),
+    embedding[1].min() - 0.03 * np.ptp(embedding[1]),
+    embedding[1].max() + 0.03 * np.ptp(embedding[1]),
 )
 
 plt.show()

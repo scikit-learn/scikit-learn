@@ -1,38 +1,47 @@
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.sparse import csr_matrix
 import pytest
+from scipy.sparse import csr_matrix
 
-from sklearn.base import BaseEstimator
+from sklearn._config import config_context, get_config
+from sklearn.base import BaseEstimator, _fit_context
 from sklearn.model_selection import LeaveOneOut
 from sklearn.utils import deprecated
-from sklearn.utils._param_validation import Hidden
-from sklearn.utils._param_validation import Interval
-from sklearn.utils._param_validation import Options
-from sklearn.utils._param_validation import StrOptions
-from sklearn.utils._param_validation import _ArrayLikes
-from sklearn.utils._param_validation import _Booleans
-from sklearn.utils._param_validation import _Callables
-from sklearn.utils._param_validation import _CVObjects
-from sklearn.utils._param_validation import _InstancesOf
-from sklearn.utils._param_validation import _MissingValues
-from sklearn.utils._param_validation import _PandasNAConstraint
-from sklearn.utils._param_validation import _IterablesNotString
-from sklearn.utils._param_validation import _NoneConstraint
-from sklearn.utils._param_validation import _RandomStates
-from sklearn.utils._param_validation import _SparseMatrices
-from sklearn.utils._param_validation import _VerboseHelper
-from sklearn.utils._param_validation import HasMethods
-from sklearn.utils._param_validation import make_constraint
-from sklearn.utils._param_validation import generate_invalid_param_val
-from sklearn.utils._param_validation import generate_valid_param
-from sklearn.utils._param_validation import validate_params
-from sklearn.utils._param_validation import InvalidParameterError
+from sklearn.utils._param_validation import (
+    HasMethods,
+    Hidden,
+    Interval,
+    InvalidParameterError,
+    MissingValues,
+    Options,
+    RealNotInt,
+    StrOptions,
+    _ArrayLikes,
+    _Booleans,
+    _Callables,
+    _CVObjects,
+    _InstancesOf,
+    _IterablesNotString,
+    _NanConstraint,
+    _NoneConstraint,
+    _PandasNAConstraint,
+    _RandomStates,
+    _SparseMatrices,
+    _VerboseHelper,
+    generate_invalid_param_val,
+    generate_valid_param,
+    make_constraint,
+    validate_params,
+)
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 
 # Some helpers for the tests
-@validate_params({"a": [Real], "b": [Real], "c": [Real], "d": [Real]})
+@validate_params(
+    {"a": [Real], "b": [Real], "c": [Real], "d": [Real]},
+    prefer_skip_nested_validation=True,
+)
 def _func(a, b=0, *args, c, d=0, **kwargs):
     """A function to test the validation of functions."""
 
@@ -40,12 +49,12 @@ def _func(a, b=0, *args, c, d=0, **kwargs):
 class _Class:
     """A class to test the _InstancesOf constraint and the validation of methods."""
 
-    @validate_params({"a": [Real]})
+    @validate_params({"a": [Real]}, prefer_skip_nested_validation=True)
     def _method(self, a):
         """A validated method"""
 
     @deprecated()
-    @validate_params({"a": [Real]})
+    @validate_params({"a": [Real]}, prefer_skip_nested_validation=True)
     def _deprecated_method(self, a):
         """A deprecated validated method"""
 
@@ -58,24 +67,50 @@ class _Estimator(BaseEstimator):
     def __init__(self, a):
         self.a = a
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X=None, y=None):
-        self._validate_params()
+        pass
 
 
 @pytest.mark.parametrize("interval_type", [Integral, Real])
 def test_interval_range(interval_type):
     """Check the range of values depending on closed."""
     interval = Interval(interval_type, -2, 2, closed="left")
-    assert -2 in interval and 2 not in interval
+    assert -2 in interval
+    assert 2 not in interval
 
     interval = Interval(interval_type, -2, 2, closed="right")
-    assert -2 not in interval and 2 in interval
+    assert -2 not in interval
+    assert 2 in interval
 
     interval = Interval(interval_type, -2, 2, closed="both")
-    assert -2 in interval and 2 in interval
+    assert -2 in interval
+    assert 2 in interval
 
     interval = Interval(interval_type, -2, 2, closed="neither")
-    assert -2 not in interval and 2 not in interval
+    assert -2 not in interval
+    assert 2 not in interval
+
+
+@pytest.mark.parametrize("interval_type", [Integral, Real])
+def test_interval_large_integers(interval_type):
+    """Check that Interval constraint work with large integers.
+
+    non-regression test for #26648.
+    """
+    interval = Interval(interval_type, 0, 2, closed="neither")
+    assert 2**65 not in interval
+    assert 2**128 not in interval
+    assert float(2**65) not in interval
+    assert float(2**128) not in interval
+
+    interval = Interval(interval_type, 0, 2**128, closed="neither")
+    assert 2**65 in interval
+    assert 2**128 not in interval
+    assert float(2**65) in interval
+    assert float(2**128) not in interval
+
+    assert 2**1024 not in interval
 
 
 def test_interval_inf_in_bounds():
@@ -201,7 +236,8 @@ def test_hasmethods():
         Interval(Real, 0, None, closed="left"),
         Interval(Real, None, None, closed="neither"),
         StrOptions({"a", "b", "c"}),
-        _MissingValues(),
+        MissingValues(),
+        MissingValues(numeric_only=True),
         _VerboseHelper(),
         HasMethods("fit"),
         _IterablesNotString(),
@@ -219,75 +255,75 @@ def test_generate_invalid_param_val(constraint):
     [
         (
             Interval(Integral, None, 3, closed="right"),
-            Interval(Real, -5, 5, closed="both"),
+            Interval(RealNotInt, -5, 5, closed="both"),
         ),
         (
             Interval(Integral, None, 3, closed="right"),
-            Interval(Real, -5, 5, closed="neither"),
+            Interval(RealNotInt, -5, 5, closed="neither"),
         ),
         (
             Interval(Integral, None, 3, closed="right"),
-            Interval(Real, 4, 5, closed="both"),
+            Interval(RealNotInt, 4, 5, closed="both"),
         ),
         (
             Interval(Integral, None, 3, closed="right"),
-            Interval(Real, 5, None, closed="left"),
+            Interval(RealNotInt, 5, None, closed="left"),
         ),
         (
             Interval(Integral, None, 3, closed="right"),
-            Interval(Real, 4, None, closed="neither"),
+            Interval(RealNotInt, 4, None, closed="neither"),
         ),
         (
             Interval(Integral, 3, None, closed="left"),
-            Interval(Real, -5, 5, closed="both"),
+            Interval(RealNotInt, -5, 5, closed="both"),
         ),
         (
             Interval(Integral, 3, None, closed="left"),
-            Interval(Real, -5, 5, closed="neither"),
+            Interval(RealNotInt, -5, 5, closed="neither"),
         ),
         (
             Interval(Integral, 3, None, closed="left"),
-            Interval(Real, 1, 2, closed="both"),
+            Interval(RealNotInt, 1, 2, closed="both"),
         ),
         (
             Interval(Integral, 3, None, closed="left"),
-            Interval(Real, None, -5, closed="left"),
+            Interval(RealNotInt, None, -5, closed="left"),
         ),
         (
             Interval(Integral, 3, None, closed="left"),
-            Interval(Real, None, -4, closed="neither"),
+            Interval(RealNotInt, None, -4, closed="neither"),
         ),
         (
             Interval(Integral, -5, 5, closed="both"),
-            Interval(Real, None, 1, closed="right"),
+            Interval(RealNotInt, None, 1, closed="right"),
         ),
         (
             Interval(Integral, -5, 5, closed="both"),
-            Interval(Real, 1, None, closed="left"),
+            Interval(RealNotInt, 1, None, closed="left"),
         ),
         (
             Interval(Integral, -5, 5, closed="both"),
-            Interval(Real, -10, -4, closed="neither"),
+            Interval(RealNotInt, -10, -4, closed="neither"),
         ),
         (
             Interval(Integral, -5, 5, closed="both"),
-            Interval(Real, -10, -4, closed="right"),
+            Interval(RealNotInt, -10, -4, closed="right"),
         ),
         (
             Interval(Integral, -5, 5, closed="neither"),
-            Interval(Real, 6, 10, closed="neither"),
+            Interval(RealNotInt, 6, 10, closed="neither"),
         ),
         (
             Interval(Integral, -5, 5, closed="neither"),
-            Interval(Real, 6, 10, closed="left"),
+            Interval(RealNotInt, 6, 10, closed="left"),
         ),
         (
             Interval(Integral, 2, None, closed="left"),
-            Interval(Real, 0, 1, closed="both"),
+            Interval(RealNotInt, 0, 1, closed="both"),
         ),
         (
             Interval(Integral, 1, None, closed="left"),
-            Interval(Real, 0, 1, closed="both"),
+            Interval(RealNotInt, 0, 1, closed="both"),
         ),
     ],
 )
@@ -295,42 +331,34 @@ def test_generate_invalid_param_val_2_intervals(integer_interval, real_interval)
     """Check that the value generated for an interval constraint does not satisfy any of
     the interval constraints.
     """
-    bad_value = generate_invalid_param_val(
-        real_interval, constraints=[real_interval, integer_interval]
-    )
+    bad_value = generate_invalid_param_val(constraint=real_interval)
     assert not real_interval.is_satisfied_by(bad_value)
     assert not integer_interval.is_satisfied_by(bad_value)
 
-    bad_value = generate_invalid_param_val(
-        integer_interval, constraints=[real_interval, integer_interval]
-    )
+    bad_value = generate_invalid_param_val(constraint=integer_interval)
     assert not real_interval.is_satisfied_by(bad_value)
     assert not integer_interval.is_satisfied_by(bad_value)
 
 
 @pytest.mark.parametrize(
-    "constraints",
+    "constraint",
     [
-        [_ArrayLikes()],
-        [_InstancesOf(list)],
-        [_Callables()],
-        [_NoneConstraint()],
-        [_RandomStates()],
-        [_SparseMatrices()],
-        [_Booleans()],
-        [Interval(Real, None, None, closed="both")],
-        [
-            Interval(Integral, 0, None, closed="left"),
-            Interval(Real, None, 0, closed="neither"),
-        ],
+        _ArrayLikes(),
+        _InstancesOf(list),
+        _Callables(),
+        _NoneConstraint(),
+        _RandomStates(),
+        _SparseMatrices(),
+        _Booleans(),
+        Interval(Integral, None, None, closed="neither"),
     ],
 )
-def test_generate_invalid_param_val_all_valid(constraints):
+def test_generate_invalid_param_val_all_valid(constraint):
     """Check that the function raises NotImplementedError when there's no invalid value
     for the constraint.
     """
     with pytest.raises(NotImplementedError):
-        generate_invalid_param_val(constraints[0], constraints=constraints)
+        generate_invalid_param_val(constraint)
 
 
 @pytest.mark.parametrize(
@@ -344,7 +372,8 @@ def test_generate_invalid_param_val_all_valid(constraints):
         _SparseMatrices(),
         _Booleans(),
         _VerboseHelper(),
-        _MissingValues(),
+        MissingValues(),
+        MissingValues(numeric_only=True),
         StrOptions({"a", "b", "c"}),
         Options(Integral, {1, 2, 3}),
         Interval(Integral, None, None, closed="neither"),
@@ -377,6 +406,10 @@ def test_generate_valid_param(constraint):
         ("array-like", [[1, 2], [3, 4]]),
         ("array-like", np.array([[1, 2], [3, 4]])),
         ("sparse matrix", csr_matrix([[1, 2], [3, 4]])),
+        *[
+            ("sparse matrix", container([[1, 2], [3, 4]]))
+            for container in CSR_CONTAINERS
+        ],
         ("random_state", 0),
         ("random_state", np.random.RandomState(0)),
         ("random_state", None),
@@ -385,12 +418,14 @@ def test_generate_valid_param(constraint):
         (Real, 0.5),
         ("boolean", False),
         ("verbose", 1),
-        ("missing_values", -1),
-        ("missing_values", -1.0),
-        ("missing_values", None),
-        ("missing_values", float("nan")),
-        ("missing_values", np.nan),
-        ("missing_values", "missing"),
+        ("nan", np.nan),
+        (MissingValues(), -1),
+        (MissingValues(), -1.0),
+        (MissingValues(), 2**1028),
+        (MissingValues(), None),
+        (MissingValues(), float("nan")),
+        (MissingValues(), np.nan),
+        (MissingValues(), "missing"),
         (HasMethods("fit"), _Estimator(a=0)),
         ("cv_object", 5),
     ],
@@ -415,13 +450,14 @@ def test_is_satisfied_by(constraint_declaration, value):
         (int, _InstancesOf),
         ("boolean", _Booleans),
         ("verbose", _VerboseHelper),
-        ("missing_values", _MissingValues),
+        (MissingValues(numeric_only=True), MissingValues),
         (HasMethods("fit"), HasMethods),
         ("cv_object", _CVObjects),
+        ("nan", _NanConstraint),
     ],
 )
 def test_make_constraint(constraint_declaration, expected_constraint_class):
-    """Check that make_constraint dispaches to the appropriate constraint class"""
+    """Check that make_constraint dispatches to the appropriate constraint class"""
     constraint = make_constraint(constraint_declaration)
     assert constraint.__class__ is expected_constraint_class
 
@@ -471,7 +507,7 @@ def test_validate_params_missing_params():
     constraints
     """
 
-    @validate_params({"a": [int]})
+    @validate_params({"a": [int]}, prefer_skip_nested_validation=True)
     def func(a, b):
         pass
 
@@ -485,7 +521,7 @@ def test_decorate_validated_function():
     with pytest.warns(FutureWarning, match="Function _func is deprecated"):
         decorated_function(1, 2, c=3)
 
-    # outer decorator does not interfer with validation
+    # outer decorator does not interfere with validation
     with pytest.warns(FutureWarning, match="Function _func is deprecated"):
         with pytest.raises(
             InvalidParameterError, match=r"The 'c' parameter of _func must be"
@@ -529,7 +565,9 @@ def test_stroptions_deprecated_subset():
 def test_hidden_constraint():
     """Check that internal constraints are not exposed in the error message."""
 
-    @validate_params({"param": [Hidden(list), dict]})
+    @validate_params(
+        {"param": [Hidden(list), dict]}, prefer_skip_nested_validation=True
+    )
     def f(param):
         pass
 
@@ -551,7 +589,10 @@ def test_hidden_constraint():
 def test_hidden_stroptions():
     """Check that we can have 2 StrOptions constraints, one being hidden."""
 
-    @validate_params({"param": [StrOptions({"auto"}), Hidden(StrOptions({"warn"}))]})
+    @validate_params(
+        {"param": [StrOptions({"auto"}), Hidden(StrOptions({"warn"}))]},
+        prefer_skip_nested_validation=True,
+    )
     def f(param):
         pass
 
@@ -583,7 +624,7 @@ def test_boolean_constraint_deprecated_int():
     validation when using an int for a parameter accepting a boolean.
     """
 
-    @validate_params({"param": ["boolean"]})
+    @validate_params({"param": ["boolean"]}, prefer_skip_nested_validation=True)
     def f(param):
         pass
 
@@ -591,17 +632,14 @@ def test_boolean_constraint_deprecated_int():
     f(True)
     f(np.bool_(False))
 
-    # an int is also valid but deprecated
-    with pytest.warns(
-        FutureWarning, match="Passing an int for a boolean parameter is deprecated"
-    ):
-        f(1)
-
 
 def test_no_validation():
     """Check that validation can be skipped for a parameter."""
 
-    @validate_params({"param1": [int, None], "param2": "no_validation"})
+    @validate_params(
+        {"param1": [int, None], "param2": "no_validation"},
+        prefer_skip_nested_validation=True,
+    )
     def f(param1=None, param2=None):
         pass
 
@@ -662,3 +700,86 @@ def test_third_party_estimator():
     # does not raise, even though "b" is not in the constraints dict and "a" is not
     # a parameter of the estimator.
     ThirdPartyEstimator(b=0).fit()
+
+
+def test_interval_real_not_int():
+    """Check for the type RealNotInt in the Interval constraint."""
+    constraint = Interval(RealNotInt, 0, 1, closed="both")
+    assert constraint.is_satisfied_by(1.0)
+    assert not constraint.is_satisfied_by(1)
+
+
+def test_real_not_int():
+    """Check for the RealNotInt type."""
+    assert isinstance(1.0, RealNotInt)
+    assert not isinstance(1, RealNotInt)
+    assert isinstance(np.float64(1), RealNotInt)
+    assert not isinstance(np.int64(1), RealNotInt)
+
+
+def test_skip_param_validation():
+    """Check that param validation can be skipped using config_context."""
+
+    @validate_params({"a": [int]}, prefer_skip_nested_validation=True)
+    def f(a):
+        pass
+
+    with pytest.raises(InvalidParameterError, match="The 'a' parameter"):
+        f(a="1")
+
+    # does not raise
+    with config_context(skip_parameter_validation=True):
+        f(a="1")
+
+
+@pytest.mark.parametrize("prefer_skip_nested_validation", [True, False])
+def test_skip_nested_validation(prefer_skip_nested_validation):
+    """Check that nested validation can be skipped."""
+
+    @validate_params({"a": [int]}, prefer_skip_nested_validation=True)
+    def f(a):
+        pass
+
+    @validate_params(
+        {"b": [int]},
+        prefer_skip_nested_validation=prefer_skip_nested_validation,
+    )
+    def g(b):
+        # calls f with a bad parameter type
+        return f(a="invalid_param_value")
+
+    # Validation for g is never skipped.
+    with pytest.raises(InvalidParameterError, match="The 'b' parameter"):
+        g(b="invalid_param_value")
+
+    if prefer_skip_nested_validation:
+        g(b=1)  # does not raise because inner f is not validated
+    else:
+        with pytest.raises(InvalidParameterError, match="The 'a' parameter"):
+            g(b=1)
+
+
+@pytest.mark.parametrize(
+    "skip_parameter_validation, prefer_skip_nested_validation, expected_skipped",
+    [
+        (True, True, True),
+        (True, False, True),
+        (False, True, True),
+        (False, False, False),
+    ],
+)
+def test_skip_nested_validation_and_config_context(
+    skip_parameter_validation, prefer_skip_nested_validation, expected_skipped
+):
+    """Check interaction between global skip and local skip."""
+
+    @validate_params(
+        {"a": [int]}, prefer_skip_nested_validation=prefer_skip_nested_validation
+    )
+    def g(a):
+        return get_config()["skip_parameter_validation"]
+
+    with config_context(skip_parameter_validation=skip_parameter_validation):
+        actual_skipped = g(1)
+
+    assert actual_skipped == expected_skipped

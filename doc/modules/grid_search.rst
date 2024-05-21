@@ -72,35 +72,35 @@ evaluated and the best combination is retained.
 
 .. currentmodule:: sklearn.model_selection
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py` for an example of
-      Grid Search computation on the digits dataset.
+- See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py` for an example of
+  Grid Search computation on the digits dataset.
 
-    - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py` for an example
-      of Grid Search coupling parameters from a text documents feature
-      extractor (n-gram count vectorizer and TF-IDF transformer) with a
-      classifier (here a linear SVM trained with SGD with either elastic
-      net or L2 penalty) using a :class:`pipeline.Pipeline` instance.
+- See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py` for an example
+  of Grid Search coupling parameters from a text documents feature
+  extractor (n-gram count vectorizer and TF-IDF transformer) with a
+  classifier (here a linear SVM trained with SGD with either elastic
+  net or L2 penalty) using a :class:`~sklearn.pipeline.Pipeline` instance.
 
-    - See :ref:`sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py`
-      for an example of Grid Search within a cross validation loop on the iris
-      dataset. This is the best practice for evaluating the performance of a
-      model with grid search.
+- See :ref:`sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py`
+  for an example of Grid Search within a cross validation loop on the iris
+  dataset. This is the best practice for evaluating the performance of a
+  model with grid search.
 
-    - See :ref:`sphx_glr_auto_examples_model_selection_plot_multi_metric_evaluation.py`
-      for an example of :class:`GridSearchCV` being used to evaluate multiple
-      metrics simultaneously.
+- See :ref:`sphx_glr_auto_examples_model_selection_plot_multi_metric_evaluation.py`
+  for an example of :class:`GridSearchCV` being used to evaluate multiple
+  metrics simultaneously.
 
-    - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`
-      for an example of using ``refit=callable`` interface in
-      :class:`GridSearchCV`. The example shows how this interface adds certain
-      amount of flexibility in identifying the "best" estimator. This interface
-      can also be used in multiple metrics evaluation.
+- See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`
+  for an example of using ``refit=callable`` interface in
+  :class:`GridSearchCV`. The example shows how this interface adds certain
+  amount of flexibility in identifying the "best" estimator. This interface
+  can also be used in multiple metrics evaluation.
 
-    - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`
-      for an example of how to do a statistical comparison on the outputs of
-      :class:`GridSearchCV`.
+- See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`
+  for an example of how to do a statistical comparison on the outputs of
+  :class:`GridSearchCV`.
 
 .. _randomized_parameter_search:
 
@@ -128,32 +128,29 @@ discrete choices (which will be sampled uniformly) can be specified::
 
 This example uses the ``scipy.stats`` module, which contains many useful
 distributions for sampling parameters, such as ``expon``, ``gamma``,
-``uniform`` or ``randint``.
+``uniform``, ``loguniform`` or ``randint``.
 
 In principle, any function can be passed that provides a ``rvs`` (random
 variate sample) method to sample a value. A call to the ``rvs`` function should
 provide independent random samples from possible parameter values on
 consecutive calls.
 
-    .. warning::
+.. warning::
 
-        The distributions in ``scipy.stats`` prior to version scipy 0.16
-        do not allow specifying a random state. Instead, they use the global
-        numpy random state, that can be seeded via ``np.random.seed`` or set
-        using ``np.random.set_state``. However, beginning scikit-learn 0.18,
-        the :mod:`sklearn.model_selection` module sets the random state provided
-        by the user if scipy >= 0.16 is also available.
+    The distributions in ``scipy.stats`` prior to version scipy 0.16
+    do not allow specifying a random state. Instead, they use the global
+    numpy random state, that can be seeded via ``np.random.seed`` or set
+    using ``np.random.set_state``. However, beginning scikit-learn 0.18,
+    the :mod:`sklearn.model_selection` module sets the random state provided
+    by the user if scipy >= 0.16 is also available.
 
 For continuous parameters, such as ``C`` above, it is important to specify
 a continuous distribution to take full advantage of the randomization. This way,
 increasing ``n_iter`` will always lead to a finer search.
 
-A continuous log-uniform random variable is available through
-:class:`~sklearn.utils.fixes.loguniform`. This is a continuous version of
-log-spaced parameters. For example to specify ``C`` above, ``loguniform(1,
-100)`` can be used instead of ``[1, 10, 100]`` or ``np.logspace(0, 2,
-num=1000)``. This is an alias to `scipy.stats.loguniform
-<https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.loguniform.html>`_.
+A continuous log-uniform random variable is the continuous version of
+a log-spaced parameter. For example to specify the equivalent of ``C`` from above,
+``loguniform(1, 100)`` can be used instead of ``[1, 10, 100]``.
 
 Mirroring the example above in grid search, we can specify a continuous random
 variable that is log-uniformly distributed between ``1e0`` and ``1e3``::
@@ -164,16 +161,16 @@ variable that is log-uniformly distributed between ``1e0`` and ``1e3``::
    'kernel': ['rbf'],
    'class_weight':['balanced', None]}
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_model_selection_plot_randomized_search.py` compares the usage and efficiency
-      of randomized search and grid search.
+* :ref:`sphx_glr_auto_examples_model_selection_plot_randomized_search.py` compares the usage and efficiency
+  of randomized search and grid search.
 
-.. topic:: References:
+.. rubric:: References
 
-    * Bergstra, J. and Bengio, Y.,
-      Random search for hyper-parameter optimization,
-      The Journal of Machine Learning Research (2012)
+* Bergstra, J. and Bengio, Y.,
+  Random search for hyper-parameter optimization,
+  The Journal of Machine Learning Research (2012)
 
 .. _successive_halving_user_guide:
 
@@ -225,10 +222,10 @@ need to explicitly import ``enable_halving_search_cv``::
   >>> from sklearn.model_selection import HalvingGridSearchCV
   >>> from sklearn.model_selection import HalvingRandomSearchCV
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_model_selection_plot_successive_halving_heatmap.py`
-    * :ref:`sphx_glr_auto_examples_model_selection_plot_successive_halving_iterations.py`
+* :ref:`sphx_glr_auto_examples_model_selection_plot_successive_halving_heatmap.py`
+* :ref:`sphx_glr_auto_examples_model_selection_plot_successive_halving_iterations.py`
 
 Choosing ``min_resources`` and the number of candidates
 -------------------------------------------------------
@@ -433,7 +430,7 @@ ways:
   :class:`HalvingGridSearchCV`;
 - by setting `n_candidates='exhaust'`.
 
-Both options are mutally exclusive: using `min_resources='exhaust'` requires
+Both options are mutually exclusive: using `min_resources='exhaust'` requires
 knowing the number of candidates, and symmetrically `n_candidates='exhaust'`
 requires knowing `min_resources`.
 
@@ -531,15 +528,16 @@ In the example above, the best parameter combination is ``{'criterion':
 since it has reached the last iteration (3) with the highest score:
 0.96.
 
-.. topic:: References:
+.. rubric:: References
 
-    .. [1] K. Jamieson, A. Talwalkar,
-       `Non-stochastic Best Arm Identification and Hyperparameter
-       Optimization <http://proceedings.mlr.press/v51/jamieson16.html>`_, in
-       proc. of Machine Learning Research, 2016.
-    .. [2] L. Li, K. Jamieson, G. DeSalvo, A. Rostamizadeh, A. Talwalkar,
-       :arxiv:`Hyperband: A Novel Bandit-Based Approach to Hyperparameter Optimization
-       <1603.06560>`, in Machine Learning Research 18, 2018.
+.. [1] K. Jamieson, A. Talwalkar,
+   `Non-stochastic Best Arm Identification and Hyperparameter
+   Optimization <http://proceedings.mlr.press/v51/jamieson16.html>`_, in
+   proc. of Machine Learning Research, 2016.
+
+.. [2] L. Li, K. Jamieson, G. DeSalvo, A. Rostamizadeh, A. Talwalkar,
+   :arxiv:`Hyperband: A Novel Bandit-Based Approach to Hyperparameter Optimization
+   <1603.06560>`, in Machine Learning Research 18, 2018.
 
 .. _grid_search_tips:
 
@@ -615,7 +613,7 @@ Here, ``<estimator>`` is the parameter name of the nested estimator,
 in this case ``estimator``.
 If the meta-estimator is constructed as a collection of estimators as in
 `pipeline.Pipeline`, then ``<estimator>`` refers to the name of the estimator,
-see :ref:`pipeline_nested_parameters`.  In practice, there can be several
+see :ref:`pipeline_nested_parameters`. In practice, there can be several
 levels of nesting::
 
   >>> from sklearn.pipeline import Pipeline
@@ -660,8 +658,8 @@ Robustness to failure
 Some parameter settings may result in a failure to ``fit`` one or more folds
 of the data.  By default, this will cause the entire search to fail, even if
 some parameter settings could be fully evaluated. Setting ``error_score=0``
-(or `=np.NaN`) will make the procedure robust to such failure, issuing a
-warning and setting the score for that fold to 0 (or `NaN`), but completing
+(or `=np.nan`) will make the procedure robust to such failure, issuing a
+warning and setting the score for that fold to 0 (or `nan`), but completing
 the search.
 
 .. _alternative_cv:
