@@ -1,5 +1,4 @@
-"""Stochastic optimization methods for MLP
-"""
+"""Stochastic optimization methods for MLP"""
 
 # Authors: Jiyuan Qian <jq401@nyu.edu>
 # License: BSD 3 clause

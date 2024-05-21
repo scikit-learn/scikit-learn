@@ -188,12 +188,12 @@ def contingency_matrix(
     prefer_skip_nested_validation=True,
 )
 def pair_confusion_matrix(labels_true, labels_pred):
-    """Pair confusion matrix arising from two clusterings [1]_.
+    """Pair confusion matrix arising from two clusterings.
 
     The pair confusion matrix :math:`C` computes a 2 by 2 similarity matrix
     between two clusterings by considering all pairs of samples and counting
     pairs that are assigned into the same or into different clusters under
-    the true and predicted clusterings.
+    the true and predicted clusterings [1]_.
 
     Considering a pair of samples that is clustered together a positive pair,
     then as in binary classification the count of true negatives is
@@ -494,7 +494,7 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
         Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
-        Gluster labels to evaluate.
+        Cluster labels to evaluate.
 
     beta : float, default=1.0
         Ratio of weight attributed to ``homogeneity`` vs ``completeness``.
@@ -518,6 +518,13 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
     homogeneity_score : Homogeneity metric of cluster labeling.
     completeness_score : Completeness metric of cluster labeling.
     v_measure_score : V-Measure (NMI with arithmetic mean option).
+
+    Examples
+    --------
+    >>> from sklearn.metrics import homogeneity_completeness_v_measure
+    >>> y_true, y_pred = [0, 0, 1, 1, 2, 2], [0, 0, 1, 2, 2, 2]
+    >>> homogeneity_completeness_v_measure(y_true, y_pred)
+    (0.71..., 0.77..., 0.73...)
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
 
@@ -867,6 +874,14 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     Notes
     -----
     The logarithm used is the natural logarithm (base-e).
+
+    Examples
+    --------
+    >>> from sklearn.metrics import mutual_info_score
+    >>> labels_true = [0, 1, 1, 0, 1, 0]
+    >>> labels_pred = [0, 1, 0, 0, 1, 1]
+    >>> mutual_info_score(labels_true, labels_pred)
+    0.056...
     """
     if contingency is None:
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)

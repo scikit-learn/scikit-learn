@@ -1,3 +1,5 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 """
 ======================================
 Tweedie regression on insurance claims
@@ -37,11 +39,6 @@ helper functions for loading the data and visualizing results.
     <https://doi.org/10.2139/ssrn.3164764>`_
 """
 
-# Authors: Christian Lorentzen <lorentzen.ch@gmail.com>
-#          Roman Yurchak <rth.yurchak@gmail.com>
-#          Olivier Grisel <olivier.grisel@ensta.org>
-# License: BSD 3 clause
-
 # %%
 
 from functools import partial
@@ -79,7 +76,7 @@ def load_mtpl2(n_samples=None):
     df_sev = df_sev.groupby("IDpol").sum()
 
     df = df_freq.join(df_sev, how="left")
-    df["ClaimAmount"].fillna(0, inplace=True)
+    df["ClaimAmount"] = df["ClaimAmount"].fillna(0)
 
     # unquote string fields
     for column_name in df.columns[df.dtypes.values == object]:
@@ -222,15 +219,16 @@ from sklearn.preprocessing import (
 
 df = load_mtpl2()
 
-# Note: filter out claims with zero amount, as the severity model
-# requires strictly positive target values.
-df.loc[(df["ClaimAmount"] == 0) & (df["ClaimNb"] >= 1), "ClaimNb"] = 0
 
 # Correct for unreasonable observations (that might be data error)
 # and a few exceptionally large claim amounts
 df["ClaimNb"] = df["ClaimNb"].clip(upper=4)
 df["Exposure"] = df["Exposure"].clip(upper=1)
 df["ClaimAmount"] = df["ClaimAmount"].clip(upper=200000)
+# If the claim amount is 0, then we do not count it as a claim. The loss function
+# used by the severity model needs strictly positive claim amounts. This way
+# frequency and severity are more consistent with each other.
+df.loc[(df["ClaimAmount"] == 0) & (df["ClaimNb"] >= 1), "ClaimNb"] = 0
 
 log_scale_transformer = make_pipeline(
     FunctionTransformer(func=np.log), StandardScaler()
@@ -240,7 +238,7 @@ column_trans = ColumnTransformer(
     [
         (
             "binned_numeric",
-            KBinsDiscretizer(n_bins=10, subsample=int(2e5), random_state=0),
+            KBinsDiscretizer(n_bins=10, random_state=0),
             ["VehAge", "DrivAge"],
         ),
         (

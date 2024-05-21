@@ -14,10 +14,12 @@ dependencies:
   - matplotlib
   - pandas
   - pyamg
-  - pytest
-  - pytest-xdist=2.5.0
+  - pytest<8
+  - pytest-xdist
   - pillow
-  - setuptools
+  - pip
+  - ninja
+  - meson-python
   - scikit-image
   - seaborn
   - memory_profiler
@@ -28,9 +30,14 @@ dependencies:
   - numpydoc
   - sphinx-prompt
   - plotly
+  - polars
   - pooch
   - sphinxext-opengraph
+  - sphinx-remove-toctrees
+  - sphinx-design
+  - pydata-sphinx-theme
   - pip
   - pip:
     - jupyterlite-sphinx
     - jupyterlite-pyodide-kernel
+    - sphinxcontrib-sass

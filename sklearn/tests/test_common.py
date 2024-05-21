@@ -14,11 +14,13 @@ import warnings
 from functools import partial
 from inspect import isgenerator, signature
 from itertools import chain, product
+from pathlib import Path
 
 import numpy as np
 import pytest
 
 import sklearn
+from sklearn.base import BaseEstimator
 from sklearn.cluster import (
     OPTICS,
     AffinityPropagation,
@@ -60,7 +62,7 @@ from sklearn.preprocessing import (
     StandardScaler,
 )
 from sklearn.semi_supervised import LabelPropagation, LabelSpreading
-from sklearn.utils import _IS_WASM, IS_PYPY, all_estimators
+from sklearn.utils import all_estimators
 from sklearn.utils._tags import _DEFAULT_TAGS, _safe_tags
 from sklearn.utils._testing import (
     SkipTest,
@@ -86,6 +88,7 @@ from sklearn.utils.estimator_checks import (
     check_transformer_get_feature_names_out_pandas,
     parametrize_with_checks,
 )
+from sklearn.utils.fixes import _IS_PYPY, _IS_WASM
 
 
 def test_all_estimator_no_base_class():
@@ -99,6 +102,16 @@ def test_all_estimator_no_base_class():
 
 def _sample_func(x, y=1):
     pass
+
+
+class CallableEstimator(BaseEstimator):
+    """Dummy development stub for an estimator.
+
+    This is to make sure a callable estimator passes common tests.
+    """
+
+    def __call__(self):
+        pass  # pragma: nocover
 
 
 @pytest.mark.parametrize(
@@ -120,6 +133,7 @@ def _sample_func(x, y=1):
                 "solver='newton-cg',warm_start=True)"
             ),
         ),
+        (CallableEstimator(), "CallableEstimator()"),
     ],
 )
 def test_get_check_estimator_ids(val, expected):
@@ -159,22 +173,18 @@ def test_check_estimator_generate_only():
     assert isgenerator(all_instance_gen_checks)
 
 
-def test_configure():
-    # Smoke test `python setup.py config` command run at the root of the
+def test_setup_py_check():
+    # Smoke test `python setup.py check` command run at the root of the
     # scikit-learn source tree.
-    # This test requires Cython which is not necessarily there when running
-    # the tests of an installed version of scikit-learn or when scikit-learn
-    # is installed in editable mode by pip build isolation enabled.
-    pytest.importorskip("Cython")
     cwd = os.getcwd()
-    setup_path = os.path.abspath(os.path.join(sklearn.__path__[0], ".."))
+    setup_path = Path(sklearn.__file__).parent.parent
     setup_filename = os.path.join(setup_path, "setup.py")
     if not os.path.exists(setup_filename):
         pytest.skip("setup.py not available")
     try:
         os.chdir(setup_path)
         old_argv = sys.argv
-        sys.argv = ["setup.py", "config"]
+        sys.argv = ["setup.py", "check"]
 
         with warnings.catch_warnings():
             # The configuration spits out warnings when not finding
@@ -211,10 +221,11 @@ def test_class_weight_balanced_linear_classifiers(name, Classifier):
 @pytest.mark.xfail(_IS_WASM, reason="importlib not supported for Pyodide packages")
 @ignore_warnings
 def test_import_all_consistency():
+    sklearn_path = [os.path.dirname(sklearn.__file__)]
     # Smoke test to check that any name in a __all__ list is actually defined
     # in the namespace of the module or package.
     pkgs = pkgutil.walk_packages(
-        path=sklearn.__path__, prefix="sklearn.", onerror=lambda _: None
+        path=sklearn_path, prefix="sklearn.", onerror=lambda _: None
     )
     submods = [modname for _, modname, _ in pkgs]
     for modname in submods + ["sklearn"]:
@@ -223,7 +234,7 @@ def test_import_all_consistency():
         # Avoid test suite depending on setuptools
         if "sklearn._build_utils" in modname:
             continue
-        if IS_PYPY and (
+        if _IS_PYPY and (
             "_svmlight_format_io" in modname
             or "feature_extraction._hashing_fast" in modname
         ):
@@ -236,32 +247,43 @@ def test_import_all_consistency():
 
 
 def test_root_import_all_completeness():
+    sklearn_path = [os.path.dirname(sklearn.__file__)]
     EXCEPTIONS = ("utils", "tests", "base", "setup", "conftest")
     for _, modname, _ in pkgutil.walk_packages(
-        path=sklearn.__path__, onerror=lambda _: None
+        path=sklearn_path, onerror=lambda _: None
     ):
         if "." in modname or modname.startswith("_") or modname in EXCEPTIONS:
             continue
         assert modname in sklearn.__all__
 
 
+@pytest.mark.skipif(
+    sklearn._BUILT_WITH_MESON,
+    reason=(
+        "This test fails with Meson editable installs see"
+        " https://github.com/mesonbuild/meson-python/issues/557 for more details"
+    ),
+)
 def test_all_tests_are_importable():
     # Ensure that for each contentful subpackage, there is a test directory
     # within it that is also a subpackage (i.e. a directory with __init__.py)
 
-    HAS_TESTS_EXCEPTIONS = re.compile(r"""(?x)
+    HAS_TESTS_EXCEPTIONS = re.compile(
+        r"""(?x)
                                       \.externals(\.|$)|
                                       \.tests(\.|$)|
                                       \._
-                                      """)
+                                      """
+    )
     resource_modules = {
         "sklearn.datasets.data",
         "sklearn.datasets.descr",
         "sklearn.datasets.images",
     }
+    sklearn_path = [os.path.dirname(sklearn.__file__)]
     lookup = {
         name: ispkg
-        for _, name, ispkg in pkgutil.walk_packages(sklearn.__path__, prefix="sklearn.")
+        for _, name, ispkg in pkgutil.walk_packages(sklearn_path, prefix="sklearn.")
     }
     missing_tests = [
         name

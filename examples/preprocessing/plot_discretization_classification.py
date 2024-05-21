@@ -68,7 +68,7 @@ classifiers = [
         {"logisticregression__C": np.logspace(-1, 1, 3)},
     ),
     (
-        make_pipeline(StandardScaler(), LinearSVC(random_state=0, dual="auto")),
+        make_pipeline(StandardScaler(), LinearSVC(random_state=0)),
         {"linearsvc__C": np.logspace(-1, 1, 3)},
     ),
     (
@@ -86,7 +86,7 @@ classifiers = [
         make_pipeline(
             StandardScaler(),
             KBinsDiscretizer(encode="onehot", random_state=0),
-            LinearSVC(random_state=0, dual="auto"),
+            LinearSVC(random_state=0),
         ),
         {
             "kbinsdiscretizer__n_bins": np.arange(5, 8),
