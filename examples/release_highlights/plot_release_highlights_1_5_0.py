@@ -49,7 +49,7 @@ from sklearn.model_selection import FixedThresholdClassifier
 
 classifier_01 = FixedThresholdClassifier(classifier_05, threshold=0.1)
 classifier_01.fit(X_train, y_train)
-_ = ConfusionMatrixDisplay.from_estimator(classifier_01, X_test, y_test).plot()
+_ = ConfusionMatrixDisplay.from_estimator(classifier_01, X_test, y_test)
 
 # %%
 # TunedThresholdClassifierCV: Tuning the decision threshold of a binary classifier
