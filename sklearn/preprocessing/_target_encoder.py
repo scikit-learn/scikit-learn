@@ -7,6 +7,7 @@ from ..utils._param_validation import Interval, StrOptions
 from ..utils.multiclass import type_of_target
 from ..utils.validation import (
     _check_feature_names_in,
+    _check_sample_weight,
     _check_y,
     check_consistent_length,
     check_is_fitted,
@@ -209,7 +210,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self.random_state = random_state
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit the :class:`TargetEncoder` to X and y.
 
         Parameters
@@ -220,16 +221,19 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         y : array-like of shape (n_samples,)
             The target data used to encode the categories.
 
+        sample_weight : ndarray of shape (n_samples,)
+            Contains weight values to be associated with each sample.
+
         Returns
         -------
         self : object
             Fitted encoder.
         """
-        self._fit_encodings_all(X, y)
+        self._fit_encodings_all(X, y, sample_weight)
         return self
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit_transform(self, X, y):
+    def fit_transform(self, X, y, sample_weight=None):
         """Fit :class:`TargetEncoder` and transform X with the target encoding.
 
         .. note::
@@ -244,6 +248,9 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         y : array-like of shape (n_samples,)
             The target data used to encode the categories.
+        
+        sample_weight : ndarray of shape (n_samples,)
+            Contains weight values to be associated with each sample.
 
         Returns
         -------
@@ -253,11 +260,14 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         """
         from ..model_selection import KFold, StratifiedKFold  # avoid circular import
 
-        X_ordinal, X_known_mask, y_encoded, n_categories = self._fit_encodings_all(X, y)
+        X_ordinal, X_known_mask, y_encoded, n_categories = self._fit_encodings_all(
+            X, y, sample_weight
+        )
 
         # The cv splitter is voluntarily restricted to *KFold to enforce non
         # overlapping validation folds, otherwise the fit_transform output will
         # not be well-specified.
+
         if self.target_type_ == "continuous":
             cv = KFold(self.cv, shuffle=self.shuffle, random_state=self.random_state)
         else:
@@ -276,14 +286,19 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         for train_idx, test_idx in cv.split(X, y):
             X_train, y_train = X_ordinal[train_idx, :], y_encoded[train_idx]
-            y_train_mean = np.mean(y_train, axis=0)
-
+            if sample_weight is not None:
+                sample_weight_train = sample_weight[train_idx]
+                y_train_mean = np.average(y_train, weights=sample_weight_train, axis=0)
+            else:
+                sample_weight_train = None
+                y_train_mean = np.mean(y_train, axis=0)
             if self.target_type_ == "multiclass":
                 encodings = self._fit_encoding_multiclass(
                     X_train,
                     y_train,
                     n_categories,
                     y_train_mean,
+                    sample_weight_train,
                 )
             else:
                 encodings = self._fit_encoding_binary_or_continuous(
@@ -291,6 +306,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                     y_train,
                     n_categories,
                     y_train_mean,
+                    sample_weight_train,
                 )
             self._transform_X_ordinal(
                 X_out,
@@ -344,7 +360,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         )
         return X_out
 
-    def _fit_encodings_all(self, X, y):
+    def _fit_encodings_all(self, X, y, sample_weight=None):
         """Fit a target encoding with all the data."""
         # avoid circular import
         from ..preprocessing import (
@@ -353,6 +369,8 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         )
 
         check_consistent_length(X, y)
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X)
         self._fit(X, handle_unknown="ignore", force_all_finite="allow-nan")
 
         if self.target_type == "auto":
@@ -380,7 +398,10 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         else:  # continuous
             y = _check_y(y, y_numeric=True, estimator=self)
 
-        self.target_mean_ = np.mean(y, axis=0)
+        if sample_weight is not None:
+            self.target_mean_ = np.average(y, weights=sample_weight, axis=0)
+        else:
+            self.target_mean_ = np.mean(y, axis=0)
 
         X_ordinal, X_known_mask = self._transform(
             X, handle_unknown="ignore", force_all_finite="allow-nan"
@@ -396,6 +417,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 y,
                 n_categories,
                 self.target_mean_,
+                sample_weight,
             )
         else:
             encodings = self._fit_encoding_binary_or_continuous(
@@ -403,20 +425,35 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 y,
                 n_categories,
                 self.target_mean_,
+                sample_weight,
             )
         self.encodings_ = encodings
 
         return X_ordinal, X_known_mask, y, n_categories
 
     def _fit_encoding_binary_or_continuous(
-        self, X_ordinal, y, n_categories, target_mean
+        self, X_ordinal, y, n_categories, target_mean, sample_weight=None
     ):
         """Learn target encodings."""
+        if sample_weight is None:
+            sample_weight = np.ones_like(y, dtype=np.float64)
+            # TODO: This isn't very efficient, maybe we should be able to pass None to _fit_encoding_fast
+
+        y = y.astype(
+            np.float64
+        )  # TODO: This shouldnt be necessary, find where y is being casted to int prior to this
         if self.smooth == "auto":
-            y_variance = np.var(y)
+            if sample_weight is None:
+                y_variance = np.var(y)
+            else:
+                y_variance = np.sum(sample_weight * (y - target_mean) ** 2) / (
+                    np.sum(sample_weight)
+                )
+
             encodings = _fit_encoding_fast_auto_smooth(
                 X_ordinal,
                 y,
+                sample_weight,
                 n_categories,
                 target_mean,
                 y_variance,
@@ -425,13 +462,16 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             encodings = _fit_encoding_fast(
                 X_ordinal,
                 y,
+                sample_weight,
                 n_categories,
                 self.smooth,
                 target_mean,
             )
         return encodings
 
-    def _fit_encoding_multiclass(self, X_ordinal, y, n_categories, target_mean):
+    def _fit_encoding_multiclass(
+        self, X_ordinal, y, n_categories, target_mean, sample_weight=None
+    ):
         """Learn multiclass encodings.
 
         Learn encodings for each class (c) then reorder encodings such that
@@ -452,6 +492,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 y_class,
                 n_categories,
                 target_mean[i],
+                sample_weight,
             )
             encodings.extend(encoding)
 
