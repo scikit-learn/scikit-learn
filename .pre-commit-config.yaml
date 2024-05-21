@@ -27,3 +27,10 @@ repos:
     # TODO: add the double-quote-cython-strings hook when it's usability has improved:
     # possibility to pass a directory and use it as a check instead of auto-formatter.
     -   id: cython-lint
+-   repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v2.7.1
+    hooks:
+    -   id: prettier
+        files: ^doc/scss/|^doc/js/scripts/
+        exclude: ^doc/js/scripts/vendor/
+        types_or: ["scss", "javascript"]
