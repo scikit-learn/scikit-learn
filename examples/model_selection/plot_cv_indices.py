@@ -12,9 +12,14 @@ for comparison.
 
 """
 
+import warnings
+
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Patch
+
+# Removing warnings from examples
+warnings.filterwarnings("ignore")
 
 from sklearn.model_selection import (
     GroupKFold,
