@@ -1,3 +1,5 @@
+"""Tools for model selection, such as cross validation and hyper-parameter tuning."""
+
 import typing
 
 from ._classification_threshold import (

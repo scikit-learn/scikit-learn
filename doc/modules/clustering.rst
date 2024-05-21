@@ -241,13 +241,13 @@ K-means can be used for vector quantization. This is achieved using the
 performing vector quantization on an image refer to
 :ref:`sphx_glr_auto_examples_cluster_plot_color_quantization.py`.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_cluster_iris.py`: Example usage of
-   :class:`KMeans` using the iris dataset
+* :ref:`sphx_glr_auto_examples_cluster_plot_cluster_iris.py`: Example usage of
+  :class:`KMeans` using the iris dataset
 
- * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`: Document clustering
-   using :class:`KMeans` and :class:`MiniBatchKMeans` based on sparse data
+* :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`: Document clustering
+  using :class:`KMeans` and :class:`MiniBatchKMeans` based on sparse data
 
 Low-level parallelism
 ---------------------
@@ -257,24 +257,20 @@ chunks of data (256 samples) are processed in parallel, which in addition
 yields a low memory footprint. For more details on how to control the number of
 threads, please refer to our :ref:`parallelism` notes.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_assumptions.py`: Demonstrating
-    when k-means performs intuitively and when it does not
-  * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py`: Clustering
-    handwritten digits
+* :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_assumptions.py`: Demonstrating when
+  k-means performs intuitively and when it does not
+* :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py`: Clustering handwritten digits
 
+.. dropdown:: References
 
-|details-start|
-**References**
-|details-split|
+  * `"k-means++: The advantages of careful seeding"
+    <http://ilpubs.stanford.edu:8090/778/1/2006-13.pdf>`_
+    Arthur, David, and Sergei Vassilvitskii,
+    *Proceedings of the eighteenth annual ACM-SIAM symposium on Discrete
+    algorithms*, Society for Industrial and Applied Mathematics (2007)
 
-* `"k-means++: The advantages of careful seeding"
-  <http://ilpubs.stanford.edu:8090/778/1/2006-13.pdf>`_ Arthur, David, and
-  Sergei Vassilvitskii, *Proceedings of the eighteenth annual ACM-SIAM symposium
-  on Discrete algorithms*, Society for Industrial and Applied Mathematics (2007)
-
-|details-end|
 
 .. _mini_batch_kmeans:
 
@@ -310,24 +306,22 @@ small, as shown in the example and cited reference.
    :scale: 100
 
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_mini_batch_kmeans.py`: Comparison of
-   :class:`KMeans` and :class:`MiniBatchKMeans`
+* :ref:`sphx_glr_auto_examples_cluster_plot_mini_batch_kmeans.py`: Comparison of
+  :class:`KMeans` and :class:`MiniBatchKMeans`
 
- * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`: Document clustering
-   using :class:`KMeans` and :class:`MiniBatchKMeans` based on sparse data
+* :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`: Document clustering
+  using :class:`KMeans` and :class:`MiniBatchKMeans` based on sparse data
 
-|details-start|
-**References**
-|details-split|
+* :ref:`sphx_glr_auto_examples_cluster_plot_dict_face_patches.py`
 
-* `"Web Scale K-Means clustering"
-  <https://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf>`_
-  D. Sculley, *Proceedings of the 19th international conference on World
-  wide web* (2010)
+.. dropdown:: References
 
-|details-end|
+  * `"Web Scale K-Means clustering"
+    <https://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf>`_
+    D. Sculley, *Proceedings of the 19th international conference on World
+    wide web* (2010)
 
 .. _affinity_propagation:
 
@@ -364,55 +358,50 @@ convergence. Further, the memory complexity is of the order
 sparse similarity matrix is used. This makes Affinity Propagation most
 appropriate for small to medium sized datasets.
 
-|details-start|
-**Algorithm description**
-|details-split|
+.. dropdown:: Algorithm description
 
-The messages sent between points belong to one of two categories. The first is
-the responsibility :math:`r(i, k)`, which is the accumulated evidence that
-sample :math:`k` should be the exemplar for sample :math:`i`. The second is the
-availability :math:`a(i, k)` which is the accumulated evidence that sample
-:math:`i` should choose sample :math:`k` to be its exemplar, and considers the
-values for all other samples that :math:`k` should be an exemplar. In this way,
-exemplars are chosen by samples if they are (1) similar enough to many samples
-and (2) chosen by many samples to be representative of themselves.
+  The messages sent between points belong to one of two categories. The first is
+  the responsibility :math:`r(i, k)`, which is the accumulated evidence that
+  sample :math:`k` should be the exemplar for sample :math:`i`. The second is the
+  availability :math:`a(i, k)` which is the accumulated evidence that sample
+  :math:`i` should choose sample :math:`k` to be its exemplar, and considers the
+  values for all other samples that :math:`k` should be an exemplar. In this way,
+  exemplars are chosen by samples if they are (1) similar enough to many samples
+  and (2) chosen by many samples to be representative of themselves.
 
-More formally, the responsibility of a sample :math:`k` to be the exemplar of
-sample :math:`i` is given by:
+  More formally, the responsibility of a sample :math:`k` to be the exemplar of
+  sample :math:`i` is given by:
 
-.. math::
+  .. math::
 
-    r(i, k) \leftarrow s(i, k) - max [ a(i, k') + s(i, k') \forall k' \neq k ]
+      r(i, k) \leftarrow s(i, k) - max [ a(i, k') + s(i, k') \forall k' \neq k ]
 
-Where :math:`s(i, k)` is the similarity between samples :math:`i` and :math:`k`.
-The availability of sample :math:`k` to be the exemplar of sample :math:`i` is
-given by:
+  Where :math:`s(i, k)` is the similarity between samples :math:`i` and :math:`k`.
+  The availability of sample :math:`k` to be the exemplar of sample :math:`i` is
+  given by:
 
-.. math::
+  .. math::
 
-    a(i, k) \leftarrow min [0, r(k, k) + \sum_{i'~s.t.~i' \notin \{i, k\}}{r(i',
-    k)}]
+      a(i, k) \leftarrow min [0, r(k, k) + \sum_{i'~s.t.~i' \notin \{i, k\}}{r(i',
+      k)}]
 
-To begin with, all values for :math:`r` and :math:`a` are set to zero, and the
-calculation of each iterates until convergence. As discussed above, in order to
-avoid numerical oscillations when updating the messages, the damping factor
-:math:`\lambda` is introduced to iteration process:
+  To begin with, all values for :math:`r` and :math:`a` are set to zero, and the
+  calculation of each iterates until convergence. As discussed above, in order to
+  avoid numerical oscillations when updating the messages, the damping factor
+  :math:`\lambda` is introduced to iteration process:
 
-.. math:: r_{t+1}(i, k) = \lambda\cdot r_{t}(i, k) + (1-\lambda)\cdot r_{t+1}(i, k)
-.. math:: a_{t+1}(i, k) = \lambda\cdot a_{t}(i, k) + (1-\lambda)\cdot a_{t+1}(i, k)
+  .. math:: r_{t+1}(i, k) = \lambda\cdot r_{t}(i, k) + (1-\lambda)\cdot r_{t+1}(i, k)
+  .. math:: a_{t+1}(i, k) = \lambda\cdot a_{t}(i, k) + (1-\lambda)\cdot a_{t+1}(i, k)
 
-where :math:`t` indicates the iteration times.
-
-|details-end|
+  where :math:`t` indicates the iteration times.
 
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_cluster_plot_affinity_propagation.py`: Affinity
-    Propagation on a synthetic 2D datasets with 3 classes.
-
-  * :ref:`sphx_glr_auto_examples_applications_plot_stock_market.py` Affinity
-    Propagation on Financial time series to find groups of companies
+* :ref:`sphx_glr_auto_examples_cluster_plot_affinity_propagation.py`: Affinity
+  Propagation on a synthetic 2D datasets with 3 classes
+* :ref:`sphx_glr_auto_examples_applications_plot_stock_market.py` Affinity Propagation
+  on financial time series to find groups of companies
 
 
 .. _mean_shift:
@@ -425,43 +414,40 @@ for centroids to be the mean of the points within a given region. These
 candidates are then filtered in a post-processing stage to eliminate
 near-duplicates to form the final set of centroids.
 
-|details-start|
-**Mathematical details**
-|details-split|
+.. dropdown:: Mathematical details
 
-The position of centroid candidates is iteratively adjusted using a technique
-called hill climbing, which finds local maxima of the estimated probability
-density. Given a candidate centroid :math:`x` for iteration :math:`t`, the
-candidate is updated according to the following equation:
+  The position of centroid candidates is iteratively adjusted using a technique
+  called hill climbing, which finds local maxima of the estimated probability
+  density. Given a candidate centroid :math:`x` for iteration :math:`t`, the
+  candidate is updated according to the following equation:
 
-.. math::
+  .. math::
 
-    x^{t+1} = x^t + m(x^t)
+      x^{t+1} = x^t + m(x^t)
 
-Where :math:`m` is the *mean shift* vector that is computed for each centroid
-that points towards a region of the maximum increase in the density of points.
-To compute :math:`m` we define :math:`N(x)` as the neighborhood of samples
-within a given distance around :math:`x`. Then :math:`m` is computed using the
-following equation, effectively updating a centroid to be the mean of the
-samples within its neighborhood:
+  Where :math:`m` is the *mean shift* vector that is computed for each centroid
+  that points towards a region of the maximum increase in the density of points.
+  To compute :math:`m` we define :math:`N(x)` as the neighborhood of samples
+  within a given distance around :math:`x`. Then :math:`m` is computed using the
+  following equation, effectively updating a centroid to be the mean of the
+  samples within its neighborhood:
 
-.. math::
+  .. math::
 
-    m(x) = \frac{1}{|N(x)|} \sum_{x_j \in N(x)}x_j - x
+      m(x) = \frac{1}{|N(x)|} \sum_{x_j \in N(x)}x_j - x
 
-In general, the equation for :math:`m` depends on a kernel used for density
-estimation. The generic formula is:
+  In general, the equation for :math:`m` depends on a kernel used for density
+  estimation. The generic formula is:
 
-.. math::
+  .. math::
 
-    m(x) = \frac{\sum_{x_j \in N(x)}K(x_j - x)x_j}{\sum_{x_j \in N(x)}K(x_j -
-    x)} - x
+      m(x) = \frac{\sum_{x_j \in N(x)}K(x_j - x)x_j}{\sum_{x_j \in N(x)}K(x_j -
+      x)} - x
 
-In our implementation, :math:`K(x)` is equal to 1 if :math:`x` is small enough
-and is equal to 0 otherwise. Effectively :math:`K(y - x)` indicates whether
-:math:`y` is in the neighborhood of :math:`x`.
+  In our implementation, :math:`K(x)` is equal to 1 if :math:`x` is small enough
+  and is equal to 0 otherwise. Effectively :math:`K(y - x)` indicates whether
+  :math:`y` is in the neighborhood of :math:`x`.
 
-|details-end|
 
 The algorithm automatically sets the number of clusters, instead of relying on a
 parameter ``bandwidth``, which dictates the size of the region to search through.
@@ -483,21 +469,17 @@ given sample.
    :scale: 50
 
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_cluster_plot_mean_shift.py`: Mean Shift
-    clustering on a synthetic 2D datasets with 3 classes.
+* :ref:`sphx_glr_auto_examples_cluster_plot_mean_shift.py`: Mean Shift clustering
+  on a synthetic 2D datasets with 3 classes.
 
+.. dropdown:: References
 
-|details-start|
-**References**
-|details-split|
+  * :doi:`"Mean shift: A robust approach toward feature space analysis"
+    <10.1109/34.1000236>` D. Comaniciu and P. Meer, *IEEE Transactions on Pattern
+    Analysis and Machine Intelligence* (2002)
 
-* :doi:`"Mean shift: A robust approach toward feature space analysis"
-  <10.1109/34.1000236>` D. Comaniciu and P. Meer, *IEEE Transactions on Pattern
-  Analysis and Machine Intelligence* (2002)
-
-|details-end|
 
 .. _spectral_clustering:
 
@@ -547,13 +529,13 @@ computed using a function of a gradient of the image.
 
     See the examples for such an application.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_cluster_plot_segmentation_toy.py`: Segmenting
-    objects from a noisy background using spectral clustering.
+* :ref:`sphx_glr_auto_examples_cluster_plot_segmentation_toy.py`: Segmenting objects
+  from a noisy background using spectral clustering.
+* :ref:`sphx_glr_auto_examples_cluster_plot_coin_segmentation.py`: Spectral clustering
+  to split the image of coins in regions.
 
-  * :ref:`sphx_glr_auto_examples_cluster_plot_coin_segmentation.py`: Spectral
-    clustering to split the image of coins in regions.
 
 .. |coin_kmeans| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_001.png
   :target: ../auto_examples/cluster/plot_coin_segmentation.html
@@ -588,18 +570,15 @@ below.
 |coin_kmeans|                          |coin_discretize|                  |coin_cluster_qr|
 ================================  ================================  ================================
 
-|details-start|
-**References**
-|details-split|
+.. dropdown:: References
 
-* `"Multiclass spectral clustering"
-  <https://people.eecs.berkeley.edu/~jordan/courses/281B-spring04/readings/yu-shi.pdf>`_
-  Stella X. Yu, Jianbo Shi, 2003
+  * `"Multiclass spectral clustering"
+    <https://people.eecs.berkeley.edu/~jordan/courses/281B-spring04/readings/yu-shi.pdf>`_
+    Stella X. Yu, Jianbo Shi, 2003
 
-* :doi:`"Simple, direct, and efficient multi-way spectral clustering"<10.1093/imaiai/iay008>`
-  Anil Damle, Victor Minden, Lexing Ying, 2019
+  * :doi:`"Simple, direct, and efficient multi-way spectral clustering"<10.1093/imaiai/iay008>`
+    Anil Damle, Victor Minden, Lexing Ying, 2019
 
-|details-end|
 
 .. _spectral_clustering_graph:
 
@@ -615,28 +594,25 @@ graph, and SpectralClustering is initialized with `affinity='precomputed'`::
     ...                         assign_labels='discretize')
     >>> sc.fit_predict(adjacency_matrix)  # doctest: +SKIP
 
-|details-start|
-**References**
-|details-split|
+.. dropdown:: References
 
-* :doi:`"A Tutorial on Spectral Clustering" <10.1007/s11222-007-9033-z>` Ulrike
-  von Luxburg, 2007
+  * :doi:`"A Tutorial on Spectral Clustering" <10.1007/s11222-007-9033-z>` Ulrike
+    von Luxburg, 2007
 
-* :doi:`"Normalized cuts and image segmentation" <10.1109/34.868688>` Jianbo
-  Shi, Jitendra Malik, 2000
+  * :doi:`"Normalized cuts and image segmentation" <10.1109/34.868688>` Jianbo
+    Shi, Jitendra Malik, 2000
 
-* `"A Random Walks View of Spectral Segmentation"
-  <https://citeseerx.ist.psu.edu/doc_view/pid/84a86a69315e994cfd1e0c7debb86d62d7bd1f44>`_
-  Marina Meila, Jianbo Shi, 2001
+  * `"A Random Walks View of Spectral Segmentation"
+    <https://citeseerx.ist.psu.edu/doc_view/pid/84a86a69315e994cfd1e0c7debb86d62d7bd1f44>`_
+    Marina Meila, Jianbo Shi, 2001
 
-* `"On Spectral Clustering: Analysis and an algorithm"
-  <https://citeseerx.ist.psu.edu/doc_view/pid/796c5d6336fc52aa84db575fb821c78918b65f58>`_
-  Andrew Y. Ng, Michael I. Jordan, Yair Weiss, 2001
+  * `"On Spectral Clustering: Analysis and an algorithm"
+    <https://citeseerx.ist.psu.edu/doc_view/pid/796c5d6336fc52aa84db575fb821c78918b65f58>`_
+    Andrew Y. Ng, Michael I. Jordan, Yair Weiss, 2001
 
-* :arxiv:`"Preconditioned Spectral Clustering for Stochastic Block Partition
-  Streaming Graph Challenge" <1708.07481>` David Zhuzhunashvili, Andrew Knyazev
+  * :arxiv:`"Preconditioned Spectral Clustering for Stochastic Block Partition
+    Streaming Graph Challenge" <1708.07481>` David Zhuzhunashvili, Andrew Knyazev
 
-|details-end|
 
 .. _hierarchical_clustering:
 
@@ -697,10 +673,10 @@ while not robust to noisy data, can be computed very efficiently and can
 therefore be useful to provide hierarchical clustering of larger datasets.
 Single linkage can also perform well on non-globular data.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_cluster_plot_digits_linkage.py`: exploration of
-    the different linkage strategies in a real dataset.
+* :ref:`sphx_glr_auto_examples_cluster_plot_digits_linkage.py`: exploration of the
+  different linkage strategies in a real dataset.
 
   * :ref:`sphx_glr_auto_examples_cluster_plot_linkage_comparison.py`: exploration of
     the different linkage strategies in toy datasets.
@@ -717,9 +693,9 @@ of the data, though more so in the case of small sample sizes.
     :target: ../auto_examples/cluster/plot_agglomerative_dendrogram.html
     :scale: 42
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_dendrogram.py`
+* :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_dendrogram.py`
 
 
 Adding connectivity constraints
@@ -788,20 +764,20 @@ enable only merging of neighboring pixels on an image, as in the
     :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
     :scale: 38
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_cluster_plot_coin_ward_segmentation.py`: Ward
-    clustering to split the image of coins in regions.
+* :ref:`sphx_glr_auto_examples_cluster_plot_coin_ward_segmentation.py`: Ward
+  clustering to split the image of coins in regions.
 
-  * :ref:`sphx_glr_auto_examples_cluster_plot_ward_structured_vs_unstructured.py`: Example
-    of Ward algorithm on a swiss-roll, comparison of structured approaches
-    versus unstructured approaches.
+* :ref:`sphx_glr_auto_examples_cluster_plot_ward_structured_vs_unstructured.py`: Example
+  of Ward algorithm on a swiss-roll, comparison of structured approaches
+  versus unstructured approaches.
 
-  * :ref:`sphx_glr_auto_examples_cluster_plot_feature_agglomeration_vs_univariate_selection.py`: Example
-    of dimensionality reduction with feature agglomeration based on Ward
-    hierarchical clustering.
+* :ref:`sphx_glr_auto_examples_cluster_plot_feature_agglomeration_vs_univariate_selection.py`: Example
+  of dimensionality reduction with feature agglomeration based on Ward
+  hierarchical clustering.
 
-  * :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`
+* :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`
 
 
 Varying the metric
@@ -835,9 +811,9 @@ each class.
     :target: ../auto_examples/cluster/plot_agglomerative_clustering_metrics.html
     :scale: 32
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering_metrics.py`
+* :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering_metrics.py`
 
 
 Bisecting K-Means
@@ -881,26 +857,23 @@ Difference between Bisecting K-Means and regular K-Means can be seen on example
 While the regular K-Means algorithm tends to create non-related clusters,
 clusters from Bisecting K-Means are well ordered and create quite a visible hierarchy.
 
-|details-start|
-**References**
-|details-split|
+.. dropdown:: References
 
-* `"A Comparison of Document Clustering Techniques"
-  <http://www.philippe-fournier-viger.com/spmf/bisectingkmeans.pdf>`_ Michael
-  Steinbach, George Karypis and Vipin Kumar, Department of Computer Science and
-  Egineering, University of Minnesota (June 2000)
-* `"Performance Analysis of K-Means and Bisecting K-Means Algorithms in Weblog
-  Data"
-  <https://ijeter.everscience.org/Manuscripts/Volume-4/Issue-8/Vol-4-issue-8-M-23.pdf>`_
-  K.Abirami and Dr.P.Mayilvahanan, International Journal of Emerging
-  Technologies in Engineering Research (IJETER) Volume 4, Issue 8, (August 2016)
-* `"Bisecting K-means Algorithm Based on K-valued Self-determining and
-  Clustering Center Optimization"
-  <http://www.jcomputers.us/vol13/jcp1306-01.pdf>`_ Jian Di, Xinyue Gou School
-  of Control and Computer Engineering,North China Electric Power University,
-  Baoding, Hebei, China (August 2017)
+  * `"A Comparison of Document Clustering Techniques"
+    <http://www.philippe-fournier-viger.com/spmf/bisectingkmeans.pdf>`_ Michael
+    Steinbach, George Karypis and Vipin Kumar, Department of Computer Science and
+    Egineering, University of Minnesota (June 2000)
+  * `"Performance Analysis of K-Means and Bisecting K-Means Algorithms in Weblog
+    Data"
+    <https://ijeter.everscience.org/Manuscripts/Volume-4/Issue-8/Vol-4-issue-8-M-23.pdf>`_
+    K.Abirami and Dr.P.Mayilvahanan, International Journal of Emerging
+    Technologies in Engineering Research (IJETER) Volume 4, Issue 8, (August 2016)
+  * `"Bisecting K-means Algorithm Based on K-valued Self-determining and
+    Clustering Center Optimization"
+    <http://www.jcomputers.us/vol13/jcp1306-01.pdf>`_ Jian Di, Xinyue Gou School
+    of Control and Computer Engineering,North China Electric Power University,
+    Baoding, Hebei, China (August 2017)
 
-|details-end|
 
 .. _dbscan:
 
@@ -954,79 +927,68 @@ samples that are still part of a cluster. Moreover, the outliers are indicated
 by black points below.
 
 .. |dbscan_results| image:: ../auto_examples/cluster/images/sphx_glr_plot_dbscan_002.png
-        :target: ../auto_examples/cluster/plot_dbscan.html
-        :scale: 50
+    :target: ../auto_examples/cluster/plot_dbscan.html
+    :scale: 50
 
 .. centered:: |dbscan_results|
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_cluster_plot_dbscan.py`
+* :ref:`sphx_glr_auto_examples_cluster_plot_dbscan.py`
 
-|details-start|
-**Implementation**
-|details-split|
+.. dropdown:: Implementation
 
-The DBSCAN algorithm is deterministic, always generating the same clusters when
-given the same data in the same order.  However, the results can differ when
-data is provided in a different order. First, even though the core samples will
-always be assigned to the same clusters, the labels of those clusters will
-depend on the order in which those samples are encountered in the data. Second
-and more importantly, the clusters to which non-core samples are assigned can
-differ depending on the data order.  This would happen when a non-core sample
-has a distance lower than ``eps`` to two core samples in different clusters. By
-the triangular inequality, those two core samples must be more distant than
-``eps`` from each other, or they would be in the same cluster. The non-core
-sample is assigned to whichever cluster is generated first in a pass through the
-data, and so the results will depend on the data ordering.
+  The DBSCAN algorithm is deterministic, always generating the same clusters when
+  given the same data in the same order.  However, the results can differ when
+  data is provided in a different order. First, even though the core samples will
+  always be assigned to the same clusters, the labels of those clusters will
+  depend on the order in which those samples are encountered in the data. Second
+  and more importantly, the clusters to which non-core samples are assigned can
+  differ depending on the data order.  This would happen when a non-core sample
+  has a distance lower than ``eps`` to two core samples in different clusters. By
+  the triangular inequality, those two core samples must be more distant than
+  ``eps`` from each other, or they would be in the same cluster. The non-core
+  sample is assigned to whichever cluster is generated first in a pass through the
+  data, and so the results will depend on the data ordering.
 
-The current implementation uses ball trees and kd-trees to determine the
-neighborhood of points, which avoids calculating the full distance matrix (as
-was done in scikit-learn versions before 0.14). The possibility to use custom
-metrics is retained; for details, see :class:`NearestNeighbors`.
+  The current implementation uses ball trees and kd-trees to determine the
+  neighborhood of points, which avoids calculating the full distance matrix (as
+  was done in scikit-learn versions before 0.14). The possibility to use custom
+  metrics is retained; for details, see :class:`NearestNeighbors`.
 
-|details-end|
+.. dropdown:: Memory consumption for large sample sizes
 
-|details-start|
-**Memory consumption for large sample sizes**
-|details-split|
+  This implementation is by default not memory efficient because it constructs a
+  full pairwise similarity matrix in the case where kd-trees or ball-trees cannot
+  be used (e.g., with sparse matrices). This matrix will consume :math:`n^2`
+  floats. A couple of mechanisms for getting around this are:
 
-This implementation is by default not memory efficient because it constructs a
-full pairwise similarity matrix in the case where kd-trees or ball-trees cannot
-be used (e.g., with sparse matrices). This matrix will consume :math:`n^2`
-floats. A couple of mechanisms for getting around this are:
+  - Use :ref:`OPTICS <optics>` clustering in conjunction with the `extract_dbscan`
+    method. OPTICS clustering also calculates the full pairwise matrix, but only
+    keeps one row in memory at a time (memory complexity n).
 
-- Use :ref:`OPTICS <optics>` clustering in conjunction with the `extract_dbscan`
-  method. OPTICS clustering also calculates the full pairwise matrix, but only
-  keeps one row in memory at a time (memory complexity n).
+  - A sparse radius neighborhood graph (where missing entries are presumed to be
+    out of eps) can be precomputed in a memory-efficient way and dbscan can be run
+    over this with ``metric='precomputed'``.  See
+    :meth:`sklearn.neighbors.NearestNeighbors.radius_neighbors_graph`.
 
-- A sparse radius neighborhood graph (where missing entries are presumed to be
-  out of eps) can be precomputed in a memory-efficient way and dbscan can be run
-  over this with ``metric='precomputed'``.  See
-  :meth:`sklearn.neighbors.NearestNeighbors.radius_neighbors_graph`.
+  - The dataset can be compressed, either by removing exact duplicates if these
+    occur in your data, or by using BIRCH. Then you only have a relatively small
+    number of representatives for a large number of points. You can then provide a
+    ``sample_weight`` when fitting DBSCAN.
 
-- The dataset can be compressed, either by removing exact duplicates if these
-  occur in your data, or by using BIRCH. Then you only have a relatively small
-  number of representatives for a large number of points. You can then provide a
-  ``sample_weight`` when fitting DBSCAN.
-
-|details-end|
-
-|details-start|
-**References**
-|details-split|
+.. dropdown:: References
 
 * `A Density-Based Algorithm for Discovering Clusters in Large Spatial
   Databases with Noise <https://www.aaai.org/Papers/KDD/1996/KDD96-037.pdf>`_
   Ester, M., H. P. Kriegel, J. Sander, and X. Xu, In Proceedings of the 2nd
   International Conference on Knowledge Discovery and Data Mining, Portland, OR,
-  AAAI Press, pp. 226–231. 1996
+  AAAI Press, pp. 226-231. 1996
 
 * :doi:`DBSCAN revisited, revisited: why and how you should (still) use DBSCAN.
   <10.1145/3068335>` Schubert, E., Sander, J., Ester, M., Kriegel, H. P., & Xu,
   X. (2017). In ACM Transactions on Database Systems (TODS), 42(3), 19.
 
-|details-end|
 
 .. _hdbscan:
 
@@ -1046,9 +1008,9 @@ scales by building an alternative representation of the clustering problem.
   This implementation is adapted from the original implementation of HDBSCAN,
   `scikit-learn-contrib/hdbscan <https://github.com/scikit-learn-contrib/hdbscan>`_ based on [LJ2017]_.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_cluster_plot_hdbscan.py`
+* :ref:`sphx_glr_auto_examples_cluster_plot_hdbscan.py`
 
 Mutual Reachability Graph
 -------------------------
@@ -1109,11 +1071,11 @@ it relies solely on the choice of `min_samples`, which tends to be a more robust
 hyperparameter.
 
 .. |hdbscan_ground_truth| image:: ../auto_examples/cluster/images/sphx_glr_plot_hdbscan_005.png
-        :target: ../auto_examples/cluster/plot_hdbscan.html
-        :scale: 75
+    :target: ../auto_examples/cluster/plot_hdbscan.html
+    :scale: 75
 .. |hdbscan_results| image:: ../auto_examples/cluster/images/sphx_glr_plot_hdbscan_007.png
-        :target: ../auto_examples/cluster/plot_hdbscan.html
-        :scale: 75
+    :target: ../auto_examples/cluster/plot_hdbscan.html
+    :scale: 75
 
 .. centered:: |hdbscan_ground_truth|
 .. centered:: |hdbscan_results|
@@ -1124,19 +1086,19 @@ than `minimum_cluster_size` many samples are considered noise. In practice, one
 can set `minimum_cluster_size = min_samples` to couple the parameters and
 simplify the hyperparameter space.
 
-.. topic:: References:
+.. rubric:: References
 
- .. [CM2013] Campello, R.J.G.B., Moulavi, D., Sander, J. (2013). Density-Based
-   Clustering Based on Hierarchical Density Estimates. In: Pei, J., Tseng, V.S.,
-   Cao, L., Motoda, H., Xu, G. (eds) Advances in Knowledge Discovery and Data
-   Mining. PAKDD 2013. Lecture Notes in Computer Science(), vol 7819. Springer,
-   Berlin, Heidelberg. :doi:`Density-Based Clustering Based on Hierarchical
-   Density Estimates <10.1007/978-3-642-37456-2_14>`
+.. [CM2013] Campello, R.J.G.B., Moulavi, D., Sander, J. (2013). Density-Based
+  Clustering Based on Hierarchical Density Estimates. In: Pei, J., Tseng, V.S.,
+  Cao, L., Motoda, H., Xu, G. (eds) Advances in Knowledge Discovery and Data
+  Mining. PAKDD 2013. Lecture Notes in Computer Science(), vol 7819. Springer,
+  Berlin, Heidelberg. :doi:`Density-Based Clustering Based on Hierarchical
+  Density Estimates <10.1007/978-3-642-37456-2_14>`
 
- .. [LJ2017] L. McInnes and J. Healy, (2017). Accelerated Hierarchical Density
-   Based Clustering. In: IEEE International Conference on Data Mining Workshops
-   (ICDMW), 2017, pp. 33-42. :doi:`Accelerated Hierarchical Density Based
-   Clustering <10.1109/ICDMW.2017.12>`
+.. [LJ2017] L. McInnes and J. Healy, (2017). Accelerated Hierarchical Density
+  Based Clustering. In: IEEE International Conference on Data Mining Workshops
+  (ICDMW), 2017, pp. 33-42. :doi:`Accelerated Hierarchical Density Based
+  Clustering <10.1109/ICDMW.2017.12>`
 
 .. _optics:
 
@@ -1182,58 +1144,48 @@ the linear segment clusters of the reachability plot. Note that the blue and
 red clusters are adjacent in the reachability plot, and can be hierarchically
 represented as children of a larger parent cluster.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_cluster_plot_optics.py`
+* :ref:`sphx_glr_auto_examples_cluster_plot_optics.py`
 
 
-|details-start|
-**Comparison with DBSCAN**
-|details-split|
+.. dropdown:: Comparison with DBSCAN
 
-The results from OPTICS ``cluster_optics_dbscan`` method and DBSCAN are very
-similar, but not always identical; specifically, labeling of periphery and noise
-points. This is in part because the first samples of each dense area processed
-by OPTICS have a large reachability value while being close to other points in
-their area, and will thus sometimes be marked as noise rather than periphery.
-This affects adjacent points when they are considered as candidates for being
-marked as either periphery or noise.
+  The results from OPTICS ``cluster_optics_dbscan`` method and DBSCAN are very
+  similar, but not always identical; specifically, labeling of periphery and noise
+  points. This is in part because the first samples of each dense area processed
+  by OPTICS have a large reachability value while being close to other points in
+  their area, and will thus sometimes be marked as noise rather than periphery.
+  This affects adjacent points when they are considered as candidates for being
+  marked as either periphery or noise.
 
-Note that for any single value of ``eps``, DBSCAN will tend to have a shorter
-run time than OPTICS; however, for repeated runs at varying ``eps`` values, a
-single run of OPTICS may require less cumulative runtime than DBSCAN. It is also
-important to note that OPTICS' output is close to DBSCAN's only if ``eps`` and
-``max_eps`` are close.
+  Note that for any single value of ``eps``, DBSCAN will tend to have a shorter
+  run time than OPTICS; however, for repeated runs at varying ``eps`` values, a
+  single run of OPTICS may require less cumulative runtime than DBSCAN. It is also
+  important to note that OPTICS' output is close to DBSCAN's only if ``eps`` and
+  ``max_eps`` are close.
 
-|details-end|
+.. dropdown:: Computational Complexity
 
-|details-start|
-**Computational Complexity**
-|details-split|
+  Spatial indexing trees are used to avoid calculating the full distance matrix,
+  and allow for efficient memory usage on large sets of samples. Different
+  distance metrics can be supplied via the ``metric`` keyword.
 
-Spatial indexing trees are used to avoid calculating the full distance matrix,
-and allow for efficient memory usage on large sets of samples. Different
-distance metrics can be supplied via the ``metric`` keyword.
+  For large datasets, similar (but not identical) results can be obtained via
+  :class:`HDBSCAN`. The HDBSCAN implementation is multithreaded, and has better
+  algorithmic runtime complexity than OPTICS, at the cost of worse memory scaling.
+  For extremely large datasets that exhaust system memory using HDBSCAN, OPTICS
+  will maintain :math:`n` (as opposed to :math:`n^2`) memory scaling; however,
+  tuning of the ``max_eps`` parameter will likely need to be used to give a
+  solution in a reasonable amount of wall time.
 
-For large datasets, similar (but not identical) results can be obtained via
-:class:`HDBSCAN`. The HDBSCAN implementation is multithreaded, and has better
-algorithmic runtime complexity than OPTICS, at the cost of worse memory scaling.
-For extremely large datasets that exhaust system memory using HDBSCAN, OPTICS
-will maintain :math:`n` (as opposed to :math:`n^2`) memory scaling; however,
-tuning of the ``max_eps`` parameter will likely need to be used to give a
-solution in a reasonable amount of wall time.
 
-|details-end|
+.. dropdown:: References
 
-|details-start|
-**References**
-|details-split|
+  * "OPTICS: ordering points to identify the clustering structure." Ankerst,
+    Mihael, Markus M. Breunig, Hans-Peter Kriegel, and Jörg Sander. In ACM Sigmod
+    Record, vol. 28, no. 2, pp. 49-60. ACM, 1999.
 
-* "OPTICS: ordering points to identify the clustering structure." Ankerst,
-  Mihael, Markus M. Breunig, Hans-Peter Kriegel, and Jörg Sander. In ACM Sigmod
-  Record, vol. 28, no. 2, pp. 49-60. ACM, 1999.
-
-|details-end|
 
 .. _birch:
 
@@ -1269,75 +1221,60 @@ If ``n_clusters`` is set to None, the subclusters from the leaves are directly
 read off, otherwise a global clustering step labels these subclusters into global
 clusters (labels) and the samples are mapped to the global label of the nearest subcluster.
 
-|details-start|
-**Algorithm description**
-|details-split|
+.. dropdown:: Algorithm description
 
-- A new sample is inserted into the root of the CF Tree which is a CF Node. It
-  is then merged with the subcluster of the root, that has the smallest radius
-  after merging, constrained by the threshold and branching factor conditions.
-  If the subcluster has any child node, then this is done repeatedly till it
-  reaches a leaf. After finding the nearest subcluster in the leaf, the
-  properties of this subcluster and the parent subclusters are recursively
-  updated.
+  - A new sample is inserted into the root of the CF Tree which is a CF Node. It
+    is then merged with the subcluster of the root, that has the smallest radius
+    after merging, constrained by the threshold and branching factor conditions.
+    If the subcluster has any child node, then this is done repeatedly till it
+    reaches a leaf. After finding the nearest subcluster in the leaf, the
+    properties of this subcluster and the parent subclusters are recursively
+    updated.
 
-- If the radius of the subcluster obtained by merging the new sample and the
-  nearest subcluster is greater than the square of the threshold and if the
-  number of subclusters is greater than the branching factor, then a space is
-  temporarily allocated to this new sample. The two farthest subclusters are
-  taken and the subclusters are divided into two groups on the basis of the
-  distance between these subclusters.
+  - If the radius of the subcluster obtained by merging the new sample and the
+    nearest subcluster is greater than the square of the threshold and if the
+    number of subclusters is greater than the branching factor, then a space is
+    temporarily allocated to this new sample. The two farthest subclusters are
+    taken and the subclusters are divided into two groups on the basis of the
+    distance between these subclusters.
 
-- If this split node has a parent subcluster and there is room for a new
-  subcluster, then the parent is split into two. If there is no room, then this
-  node is again split into two and the process is continued recursively, till it
-  reaches the root.
+  - If this split node has a parent subcluster and there is room for a new
+    subcluster, then the parent is split into two. If there is no room, then this
+    node is again split into two and the process is continued recursively, till it
+    reaches the root.
 
-|details-end|
+.. dropdown:: BIRCH or MiniBatchKMeans?
 
-|details-start|
-**BIRCH or MiniBatchKMeans?**
-|details-split|
+  - BIRCH does not scale very well to high dimensional data. As a rule of thumb if
+    ``n_features`` is greater than twenty, it is generally better to use MiniBatchKMeans.
+  - If the number of instances of data needs to be reduced, or if one wants a
+    large number of subclusters either as a preprocessing step or otherwise,
+    BIRCH is more useful than MiniBatchKMeans.
 
-- BIRCH does not scale very well to high dimensional data. As a rule of thumb if
-  ``n_features`` is greater than twenty, it is generally better to use MiniBatchKMeans.
-- If the number of instances of data needs to be reduced, or if one wants a
-  large number of subclusters either as a preprocessing step or otherwise,
-  BIRCH is more useful than MiniBatchKMeans.
-
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_birch_vs_minibatchkmeans_001.png
+  .. image:: ../auto_examples/cluster/images/sphx_glr_plot_birch_vs_minibatchkmeans_001.png
     :target: ../auto_examples/cluster/plot_birch_vs_minibatchkmeans.html
 
-|details-end|
+.. dropdown:: How to use partial_fit?
 
-|details-start|
-**How to use partial_fit?**
-|details-split|
+  To avoid the computation of global clustering, for every call of ``partial_fit``
+  the user is advised:
 
-To avoid the computation of global clustering, for every call of ``partial_fit``
-the user is advised
+  1. To set ``n_clusters=None`` initially.
+  2. Train all data by multiple calls to partial_fit.
+  3. Set ``n_clusters`` to a required value using
+     ``brc.set_params(n_clusters=n_clusters)``.
+  4. Call ``partial_fit`` finally with no arguments, i.e. ``brc.partial_fit()``
+     which performs the global clustering.
 
-1. To set ``n_clusters=None`` initially
-2. Train all data by multiple calls to partial_fit.
-3. Set ``n_clusters`` to a required value using
-   ``brc.set_params(n_clusters=n_clusters)``.
-4. Call ``partial_fit`` finally with no arguments, i.e. ``brc.partial_fit()``
-   which performs the global clustering.
+.. dropdown:: References
 
-|details-end|
+  * Tian Zhang, Raghu Ramakrishnan, Maron Livny BIRCH: An efficient data
+    clustering method for large databases.
+    https://www.cs.sfu.ca/CourseCentral/459/han/papers/zhang96.pdf
 
-|details-start|
-**References**
-|details-split|
+  * Roberto Perdisci JBirch - Java implementation of BIRCH clustering algorithm
+    https://code.google.com/archive/p/jbirch
 
-* Tian Zhang, Raghu Ramakrishnan, Maron Livny BIRCH: An efficient data
-  clustering method for large databases.
-  https://www.cs.sfu.ca/CourseCentral/459/han/papers/zhang96.pdf
-
-* Roberto Perdisci JBirch - Java implementation of BIRCH clustering algorithm
-  https://code.google.com/archive/p/jbirch
-
-|details-end|
 
 
 .. _clustering_evaluation:
@@ -1460,64 +1397,53 @@ will not necessarily be close to zero.::
     ground truth clustering resulting in a high proportion of pair labels that
     agree, which leads subsequently to a high score.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`:
-    Analysis of the impact of the dataset size on the value of clustering measures
-    for random assignments.
+* :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`:
+  Analysis of the impact of the dataset size on the value of
+  clustering measures for random assignments.
 
+.. dropdown:: Mathematical formulation
 
-|details-start|
-**Mathematical formulation**
-|details-split|
+  If C is a ground truth class assignment and K the clustering, let us define
+  :math:`a` and :math:`b` as:
 
-If C is a ground truth class assignment and K the clustering, let us define
-:math:`a` and :math:`b` as:
+  - :math:`a`, the number of pairs of elements that are in the same set in C and
+    in the same set in K
 
-- :math:`a`, the number of pairs of elements that are in the same set in C and
-  in the same set in K
+  - :math:`b`, the number of pairs of elements that are in different sets in C and
+    in different sets in K
 
-- :math:`b`, the number of pairs of elements that are in different sets in C and
-  in different sets in K
+  The unadjusted Rand index is then given by:
 
-The unadjusted Rand index is then given by:
+  .. math:: \text{RI} = \frac{a + b}{C_2^{n_{samples}}}
 
-.. math:: \text{RI} = \frac{a + b}{C_2^{n_{samples}}}
+  where :math:`C_2^{n_{samples}}` is the total number of possible pairs in the
+  dataset. It does not matter if the calculation is performed on ordered pairs or
+  unordered pairs as long as the calculation is performed consistently.
 
-where :math:`C_2^{n_{samples}}` is the total number of possible pairs in the
-dataset. It does not matter if the calculation is performed on ordered pairs or
-unordered pairs as long as the calculation is performed consistently.
+  However, the Rand index does not guarantee that random label assignments will
+  get a value close to zero (esp. if the number of clusters is in the same order
+  of magnitude as the number of samples).
 
-However, the Rand index does not guarantee that random label assignments will
-get a value close to zero (esp. if the number of clusters is in the same order
-of magnitude as the number of samples).
+  To counter this effect we can discount the expected RI :math:`E[\text{RI}]` of
+  random labelings by defining the adjusted Rand index as follows:
 
-To counter this effect we can discount the expected RI :math:`E[\text{RI}]` of
-random labelings by defining the adjusted Rand index as follows:
+  .. math:: \text{ARI} = \frac{\text{RI} - E[\text{RI}]}{\max(\text{RI}) - E[\text{RI}]}
 
-.. math:: \text{ARI} = \frac{\text{RI} - E[\text{RI}]}{\max(\text{RI}) - E[\text{RI}]}
+.. dropdown:: References
 
-|details-end|
+  * `Comparing Partitions
+    <https://link.springer.com/article/10.1007%2FBF01908075>`_ L. Hubert and P.
+    Arabie, Journal of Classification 1985
 
-|details-start|
-**References**
-|details-split|
+  * `Properties of the Hubert-Arabie adjusted Rand index
+    <https://psycnet.apa.org/record/2004-17801-007>`_ D. Steinley, Psychological
+    Methods 2004
 
-* `Comparing Partitions
-  <https://link.springer.com/article/10.1007%2FBF01908075>`_ L. Hubert and P.
-  Arabie, Journal of Classification 1985
+  * `Wikipedia entry for the Rand index
+    <https://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index>`_
 
-* `Properties of the Hubert-Arabie adjusted Rand index
-  <https://psycnet.apa.org/record/2004-17801-007>`_ D. Steinley, Psychological
-  Methods 2004
-
-* `Wikipedia entry for the Rand index
-  <https://en.wikipedia.org/wiki/Rand_index>`_
-
-* `Wikipedia entry for the adjusted Rand index
-  <https://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index>`_
-
-|details-end|
 
 .. _mutual_info_score:
 
@@ -1598,80 +1524,77 @@ Bad (e.g. independent labelings) have non-positive scores::
 
   - NMI and MI are not adjusted against chance.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`: Analysis
-    of the impact of the dataset size on the value of clustering measures for
-    random assignments. This example also includes the Adjusted Rand Index.
+* :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`: Analysis
+  of the impact of the dataset size on the value of clustering measures for random
+  assignments. This example also includes the Adjusted Rand Index.
 
+.. dropdown:: Mathematical formulation
 
-|details-start|
-**Mathematical formulation**
-|details-split|
+  Assume two label assignments (of the same N objects), :math:`U` and :math:`V`.
+  Their entropy is the amount of uncertainty for a partition set, defined by:
 
-Assume two label assignments (of the same N objects), :math:`U` and :math:`V`.
-Their entropy is the amount of uncertainty for a partition set, defined by:
+  .. math:: H(U) = - \sum_{i=1}^{|U|}P(i)\log(P(i))
 
-.. math:: H(U) = - \sum_{i=1}^{|U|}P(i)\log(P(i))
+  where :math:`P(i) = |U_i| / N` is the probability that an object picked at
+  random from :math:`U` falls into class :math:`U_i`. Likewise for :math:`V`:
 
-where :math:`P(i) = |U_i| / N` is the probability that an object picked at
-random from :math:`U` falls into class :math:`U_i`. Likewise for :math:`V`:
+  .. math:: H(V) = - \sum_{j=1}^{|V|}P'(j)\log(P'(j))
 
-.. math:: H(V) = - \sum_{j=1}^{|V|}P'(j)\log(P'(j))
+  With :math:`P'(j) = |V_j| / N`. The mutual information (MI) between :math:`U`
+  and :math:`V` is calculated by:
 
-With :math:`P'(j) = |V_j| / N`. The mutual information (MI) between :math:`U`
-and :math:`V` is calculated by:
+  .. math:: \text{MI}(U, V) = \sum_{i=1}^{|U|}\sum_{j=1}^{|V|}P(i, j)\log\left(\frac{P(i,j)}{P(i)P'(j)}\right)
 
-.. math:: \text{MI}(U, V) = \sum_{i=1}^{|U|}\sum_{j=1}^{|V|}P(i, j)\log\left(\frac{P(i,j)}{P(i)P'(j)}\right)
+  where :math:`P(i, j) = |U_i \cap V_j| / N` is the probability that an object
+  picked at random falls into both classes :math:`U_i` and :math:`V_j`.
 
-where :math:`P(i, j) = |U_i \cap V_j| / N` is the probability that an object
-picked at random falls into both classes :math:`U_i` and :math:`V_j`.
+  It also can be expressed in set cardinality formulation:
 
-It also can be expressed in set cardinality formulation:
+  .. math:: \text{MI}(U, V) = \sum_{i=1}^{|U|} \sum_{j=1}^{|V|} \frac{|U_i \cap V_j|}{N}\log\left(\frac{N|U_i \cap V_j|}{|U_i||V_j|}\right)
 
-.. math:: \text{MI}(U, V) = \sum_{i=1}^{|U|} \sum_{j=1}^{|V|} \frac{|U_i \cap V_j|}{N}\log\left(\frac{N|U_i \cap V_j|}{|U_i||V_j|}\right)
+  The normalized mutual information is defined as
 
-The normalized mutual information is defined as
+  .. math:: \text{NMI}(U, V) = \frac{\text{MI}(U, V)}{\text{mean}(H(U), H(V))}
 
-.. math:: \text{NMI}(U, V) = \frac{\text{MI}(U, V)}{\text{mean}(H(U), H(V))}
+  This value of the mutual information and also the normalized variant is not
+  adjusted for chance and will tend to increase as the number of different labels
+  (clusters) increases, regardless of the actual amount of "mutual information"
+  between the label assignments.
 
-This value of the mutual information and also the normalized variant is not
-adjusted for chance and will tend to increase as the number of different labels
-(clusters) increases, regardless of the actual amount of "mutual information"
-between the label assignments.
+  The expected value for the mutual information can be calculated using the
+  following equation [VEB2009]_. In this equation, :math:`a_i = |U_i|` (the number
+  of elements in :math:`U_i`) and :math:`b_j = |V_j|` (the number of elements in
+  :math:`V_j`).
 
-The expected value for the mutual information can be calculated using the
-following equation [VEB2009]_. In this equation, :math:`a_i = |U_i|` (the number
-of elements in :math:`U_i`) and :math:`b_j = |V_j|` (the number of elements in
-:math:`V_j`).
+  .. math:: E[\text{MI}(U,V)]=\sum_{i=1}^{|U|} \sum_{j=1}^{|V|} \sum_{n_{ij}=(a_i+b_j-N)^+
+    }^{\min(a_i, b_j)} \frac{n_{ij}}{N}\log \left( \frac{ N.n_{ij}}{a_i b_j}\right)
+    \frac{a_i!b_j!(N-a_i)!(N-b_j)!}{N!n_{ij}!(a_i-n_{ij})!(b_j-n_{ij})!
+    (N-a_i-b_j+n_{ij})!}
 
-.. math:: E[\text{MI}(U,V)]=\sum_{i=1}^{|U|} \sum_{j=1}^{|V|} \sum_{n_{ij}=(a_i+b_j-N)^+
-  }^{\min(a_i, b_j)} \frac{n_{ij}}{N}\log \left( \frac{ N.n_{ij}}{a_i b_j}\right)
-  \frac{a_i!b_j!(N-a_i)!(N-b_j)!}{N!n_{ij}!(a_i-n_{ij})!(b_j-n_{ij})!
-  (N-a_i-b_j+n_{ij})!}
+  Using the expected value, the adjusted mutual information can then be calculated
+  using a similar form to that of the adjusted Rand index:
 
-Using the expected value, the adjusted mutual information can then be calculated
-using a similar form to that of the adjusted Rand index:
+  .. math:: \text{AMI} = \frac{\text{MI} - E[\text{MI}]}{\text{mean}(H(U), H(V)) - E[\text{MI}]}
 
-.. math:: \text{AMI} = \frac{\text{MI} - E[\text{MI}]}{\text{mean}(H(U), H(V)) - E[\text{MI}]}
+  For normalized mutual information and adjusted mutual information, the
+  normalizing value is typically some *generalized* mean of the entropies of each
+  clustering. Various generalized means exist, and no firm rules exist for
+  preferring one over the others.  The decision is largely a field-by-field basis;
+  for instance, in community detection, the arithmetic mean is most common. Each
+  normalizing method provides "qualitatively similar behaviours" [YAT2016]_. In
+  our implementation, this is controlled by the ``average_method`` parameter.
 
-For normalized mutual information and adjusted mutual information, the
-normalizing value is typically some *generalized* mean of the entropies of each
-clustering. Various generalized means exist, and no firm rules exist for
-preferring one over the others.  The decision is largely a field-by-field basis;
-for instance, in community detection, the arithmetic mean is most common. Each
-normalizing method provides "qualitatively similar behaviours" [YAT2016]_. In
-our implementation, this is controlled by the ``average_method`` parameter.
+  Vinh et al. (2010) named variants of NMI and AMI by their averaging method
+  [VEB2010]_. Their 'sqrt' and 'sum' averages are the geometric and arithmetic
+  means; we use these more broadly common names.
 
-Vinh et al. (2010) named variants of NMI and AMI by their averaging method
-[VEB2010]_. Their 'sqrt' and 'sum' averages are the geometric and arithmetic
-means; we use these more broadly common names.
+  .. rubric:: References
 
-.. topic:: References:
-
-  * Strehl, Alexander, and Joydeep Ghosh (2002). "Cluster ensembles – a
+  * Strehl, Alexander, and Joydeep Ghosh (2002). "Cluster ensembles - a
     knowledge reuse framework for combining multiple partitions". Journal of
-    Machine Learning Research 3: 583–617. `doi:10.1162/153244303321897735
+    Machine Learning Research 3: 583-617. `doi:10.1162/153244303321897735
     <http://strehl.com/download/strehl-jmlr02.pdf>`_.
 
   * `Wikipedia entry for the (normalized) Mutual Information
@@ -1696,7 +1619,6 @@ means; we use these more broadly common names.
     Reports 6: 30750. `doi:10.1038/srep30750
     <https://www.nature.com/articles/srep30750>`_.
 
-|details-end|
 
 .. _homogeneity_completeness:
 
@@ -1814,57 +1736,53 @@ homogeneous but not complete::
     almost never available in practice or requires manual assignment by human
     annotators (as in the supervised learning setting).
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`: Analysis
-    of the impact of the dataset size on the value of clustering measures for
-    random assignments.
+* :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`: Analysis
+  of the impact of the dataset size on the value of clustering measures for
+  random assignments.
 
+.. dropdown:: Mathematical formulation
 
-|details-start|
-**Mathematical formulation**
-|details-split|
+  Homogeneity and completeness scores are formally given by:
 
-Homogeneity and completeness scores are formally given by:
+  .. math:: h = 1 - \frac{H(C|K)}{H(C)}
 
-.. math:: h = 1 - \frac{H(C|K)}{H(C)}
+  .. math:: c = 1 - \frac{H(K|C)}{H(K)}
 
-.. math:: c = 1 - \frac{H(K|C)}{H(K)}
+  where :math:`H(C|K)` is the **conditional entropy of the classes given the
+  cluster assignments** and is given by:
 
-where :math:`H(C|K)` is the **conditional entropy of the classes given the
-cluster assignments** and is given by:
+  .. math:: H(C|K) = - \sum_{c=1}^{|C|} \sum_{k=1}^{|K|} \frac{n_{c,k}}{n}
+            \cdot \log\left(\frac{n_{c,k}}{n_k}\right)
 
-.. math:: H(C|K) = - \sum_{c=1}^{|C|} \sum_{k=1}^{|K|} \frac{n_{c,k}}{n}
-          \cdot \log\left(\frac{n_{c,k}}{n_k}\right)
+  and :math:`H(C)` is the **entropy of the classes** and is given by:
 
-and :math:`H(C)` is the **entropy of the classes** and is given by:
+  .. math:: H(C) = - \sum_{c=1}^{|C|} \frac{n_c}{n} \cdot \log\left(\frac{n_c}{n}\right)
 
-.. math:: H(C) = - \sum_{c=1}^{|C|} \frac{n_c}{n} \cdot \log\left(\frac{n_c}{n}\right)
+  with :math:`n` the total number of samples, :math:`n_c` and :math:`n_k` the
+  number of samples respectively belonging to class :math:`c` and cluster
+  :math:`k`, and finally :math:`n_{c,k}` the number of samples from class
+  :math:`c` assigned to cluster :math:`k`.
 
-with :math:`n` the total number of samples, :math:`n_c` and :math:`n_k` the
-number of samples respectively belonging to class :math:`c` and cluster
-:math:`k`, and finally :math:`n_{c,k}` the number of samples from class
-:math:`c` assigned to cluster :math:`k`.
+  The **conditional entropy of clusters given class** :math:`H(K|C)` and the
+  **entropy of clusters** :math:`H(K)` are defined in a symmetric manner.
 
-The **conditional entropy of clusters given class** :math:`H(K|C)` and the
-**entropy of clusters** :math:`H(K)` are defined in a symmetric manner.
+  Rosenberg and Hirschberg further define **V-measure** as the **harmonic mean of
+  homogeneity and completeness**:
 
-Rosenberg and Hirschberg further define **V-measure** as the **harmonic mean of
-homogeneity and completeness**:
+  .. math:: v = 2 \cdot \frac{h \cdot c}{h + c}
 
-.. math:: v = 2 \cdot \frac{h \cdot c}{h + c}
+.. rubric:: References
 
-|details-end|
+* `V-Measure: A conditional entropy-based external cluster evaluation measure
+  <https://aclweb.org/anthology/D/D07/D07-1043.pdf>`_ Andrew Rosenberg and Julia
+  Hirschberg, 2007
 
-.. topic:: References:
+.. [B2011] `Identification and Characterization of Events in Social Media
+  <http://www.cs.columbia.edu/~hila/hila-thesis-distributed.pdf>`_, Hila
+  Becker, PhD Thesis.
 
- * `V-Measure: A conditional entropy-based external cluster evaluation measure
-   <https://aclweb.org/anthology/D/D07/D07-1043.pdf>`_ Andrew Rosenberg and Julia
-   Hirschberg, 2007
-
- .. [B2011] `Identification and Characterization of Events in Social Media
-   <http://www.cs.columbia.edu/~hila/hila-thesis-distributed.pdf>`_, Hila
-   Becker, PhD Thesis.
 
 .. _fowlkes_mallows_scores:
 
@@ -1941,19 +1859,15 @@ Bad (e.g. independent labelings) have zero scores::
     manual assignment by human annotators (as in the supervised learning
     setting).
 
-|details-start|
-**References**
-|details-split|
+.. dropdown:: References
 
-* E. B. Fowkles and C. L. Mallows, 1983. "A method for comparing two
-  hierarchical clusterings". Journal of the American Statistical
-  Association.
-  https://www.tandfonline.com/doi/abs/10.1080/01621459.1983.10478008
+  * E. B. Fowkles and C. L. Mallows, 1983. "A method for comparing two
+    hierarchical clusterings". Journal of the American Statistical Association.
+    https://www.tandfonline.com/doi/abs/10.1080/01621459.1983.10478008
 
-* `Wikipedia entry for the Fowlkes-Mallows Index
-  <https://en.wikipedia.org/wiki/Fowlkes-Mallows_index>`_
+  * `Wikipedia entry for the Fowlkes-Mallows Index
+    <https://en.wikipedia.org/wiki/Fowlkes-Mallows_index>`_
 
-|details-end|
 
 .. _silhouette_coefficient:
 
@@ -1997,7 +1911,6 @@ cluster analysis.
   >>> metrics.silhouette_score(X, labels, metric='euclidean')
   0.55...
 
-
 .. topic:: Advantages:
 
   - The score is bounded between -1 for incorrect clustering and +1 for highly
@@ -2012,23 +1925,18 @@ cluster analysis.
     other concepts of clusters, such as density based clusters like those
     obtained through DBSCAN.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py` : In
-    this example the silhouette analysis is used to choose an optimal value for
-    n_clusters.
+* :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py` : In
+  this example the silhouette analysis is used to choose an optimal value for
+  n_clusters.
 
+.. dropdown:: References
 
-|details-start|
-**References**
-|details-split|
+  * Peter J. Rousseeuw (1987). :doi:`"Silhouettes: a Graphical Aid to the
+    Interpretation and Validation of Cluster Analysis"<10.1016/0377-0427(87)90125-7>`.
+    Computational and Applied Mathematics 20: 53-65.
 
-* Peter J. Rousseeuw (1987). :doi:`"Silhouettes: a Graphical Aid to the
-  Interpretation and Validation of Cluster
-  Analysis"<10.1016/0377-0427(87)90125-7>` . Computational and Applied
-  Mathematics 20: 53–65.
-
-|details-end|
 
 .. _calinski_harabasz_index:
 
@@ -2074,42 +1982,35 @@ cluster analysis:
     other concepts of clusters, such as density based clusters like those
     obtained through DBSCAN.
 
-|details-start|
-**Mathematical formulation**
-|details-split|
+.. dropdown:: Mathematical formulation
 
-For a set of data :math:`E` of size :math:`n_E` which has been clustered into
-:math:`k` clusters, the Calinski-Harabasz score :math:`s` is defined as the
-ratio of the between-clusters dispersion mean and the within-cluster
-dispersion:
+  For a set of data :math:`E` of size :math:`n_E` which has been clustered into
+  :math:`k` clusters, the Calinski-Harabasz score :math:`s` is defined as the
+  ratio of the between-clusters dispersion mean and the within-cluster
+  dispersion:
 
-.. math::
-  s = \frac{\mathrm{tr}(B_k)}{\mathrm{tr}(W_k)} \times \frac{n_E - k}{k - 1}
+  .. math::
+    s = \frac{\mathrm{tr}(B_k)}{\mathrm{tr}(W_k)} \times \frac{n_E - k}{k - 1}
 
-where :math:`\mathrm{tr}(B_k)` is trace of the between group dispersion matrix
-and :math:`\mathrm{tr}(W_k)` is the trace of the within-cluster dispersion
-matrix defined by:
+  where :math:`\mathrm{tr}(B_k)` is trace of the between group dispersion matrix
+  and :math:`\mathrm{tr}(W_k)` is the trace of the within-cluster dispersion
+  matrix defined by:
 
-.. math:: W_k = \sum_{q=1}^k \sum_{x \in C_q} (x - c_q) (x - c_q)^T
+  .. math:: W_k = \sum_{q=1}^k \sum_{x \in C_q} (x - c_q) (x - c_q)^T
 
-.. math:: B_k = \sum_{q=1}^k n_q (c_q - c_E) (c_q - c_E)^T
+  .. math:: B_k = \sum_{q=1}^k n_q (c_q - c_E) (c_q - c_E)^T
 
-with :math:`C_q` the set of points in cluster :math:`q`, :math:`c_q` the
-center of cluster :math:`q`, :math:`c_E` the center of :math:`E`, and
-:math:`n_q` the number of points in cluster :math:`q`.
+  with :math:`C_q` the set of points in cluster :math:`q`, :math:`c_q` the
+  center of cluster :math:`q`, :math:`c_E` the center of :math:`E`, and
+  :math:`n_q` the number of points in cluster :math:`q`.
 
-|details-end|
+.. dropdown:: References
 
-|details-start|
-**References**
-|details-split|
+  * Caliński, T., & Harabasz, J. (1974). `"A Dendrite Method for Cluster Analysis"
+    <https://www.researchgate.net/publication/233096619_A_Dendrite_Method_for_Cluster_Analysis>`_.
+    :doi:`Communications in Statistics-theory and Methods 3: 1-27
+    <10.1080/03610927408827101>`.
 
-* Caliński, T., & Harabasz, J. (1974). `"A Dendrite Method for Cluster Analysis"
-  <https://www.researchgate.net/publication/233096619_A_Dendrite_Method_for_Cluster_Analysis>`_.
-  :doi:`Communications in Statistics-theory and Methods 3: 1-27
-  <10.1080/03610927408827101>`.
-
-|details-end|
 
 .. _davies-bouldin_index:
 
@@ -2156,49 +2057,41 @@ cluster analysis as follows:
   - The usage of centroid distance limits the distance metric to Euclidean
     space.
 
+.. dropdown:: Mathematical formulation
 
-|details-start|
-**Mathematical formulation**
-|details-split|
+  The index is defined as the average similarity between each cluster :math:`C_i`
+  for :math:`i=1, ..., k` and its most similar one :math:`C_j`. In the context of
+  this index, similarity is defined as a measure :math:`R_{ij}` that trades off:
 
-The index is defined as the average similarity between each cluster :math:`C_i`
-for :math:`i=1, ..., k` and its most similar one :math:`C_j`. In the context of
-this index, similarity is defined as a measure :math:`R_{ij}` that trades off:
+  - :math:`s_i`, the average distance between each point of cluster :math:`i` and
+    the centroid of that cluster -- also know as cluster diameter.
+  - :math:`d_{ij}`, the distance between cluster centroids :math:`i` and
+    :math:`j`.
 
-- :math:`s_i`, the average distance between each point of cluster :math:`i` and
-  the centroid of that cluster -- also know as cluster diameter.
-- :math:`d_{ij}`, the distance between cluster centroids :math:`i` and
-  :math:`j`.
+  A simple choice to construct :math:`R_{ij}` so that it is nonnegative and
+  symmetric is:
 
-A simple choice to construct :math:`R_{ij}` so that it is nonnegative and
-symmetric is:
+  .. math::
+    R_{ij} = \frac{s_i + s_j}{d_{ij}}
 
-.. math::
-  R_{ij} = \frac{s_i + s_j}{d_{ij}}
+  Then the Davies-Bouldin index is defined as:
 
-Then the Davies-Bouldin index is defined as:
+  .. math::
+    DB = \frac{1}{k} \sum_{i=1}^k \max_{i \neq j} R_{ij}
 
-.. math::
-  DB = \frac{1}{k} \sum_{i=1}^k \max_{i \neq j} R_{ij}
+.. dropdown:: References
 
-|details-end|
+  * Davies, David L.; Bouldin, Donald W. (1979). :doi:`"A Cluster Separation
+    Measure" <10.1109/TPAMI.1979.4766909>` IEEE Transactions on Pattern Analysis
+    and Machine Intelligence. PAMI-1 (2): 224-227.
 
-|details-start|
-**References**
-|details-split|
+  * Halkidi, Maria; Batistakis, Yannis; Vazirgiannis, Michalis (2001). :doi:`"On
+    Clustering Validation Techniques" <10.1023/A:1012801612483>` Journal of
+    Intelligent Information Systems, 17(2-3), 107-145.
 
-* Davies, David L.; Bouldin, Donald W. (1979). :doi:`"A Cluster Separation
-  Measure" <10.1109/TPAMI.1979.4766909>` IEEE Transactions on Pattern Analysis
-  and Machine Intelligence. PAMI-1 (2): 224-227.
+  * `Wikipedia entry for Davies-Bouldin index
+    <https://en.wikipedia.org/wiki/Davies-Bouldin_index>`_.
 
-* Halkidi, Maria; Batistakis, Yannis; Vazirgiannis, Michalis (2001). :doi:`"On
-  Clustering Validation Techniques" <10.1023/A:1012801612483>` Journal of
-  Intelligent Information Systems, 17(2-3), 107-145.
-
-* `Wikipedia entry for Davies-Bouldin index
-  <https://en.wikipedia.org/wiki/Davies–Bouldin_index>`_.
-
-|details-end|
 
 .. _contingency_matrix:
 
@@ -2248,15 +2141,11 @@ of classes.
   - It doesn't give a single metric to use as an objective for clustering
     optimisation.
 
+.. dropdown:: References
 
-|details-start|
-**References**
-|details-split|
+  * `Wikipedia entry for contingency matrix
+    <https://en.wikipedia.org/wiki/Contingency_table>`_
 
-* `Wikipedia entry for contingency matrix
-  <https://en.wikipedia.org/wiki/Contingency_table>`_
-
-|details-end|
 
 .. _pair_confusion_matrix:
 
@@ -2334,11 +2223,7 @@ diagonal entries::
    array([[ 0,  0],
           [12,  0]])
 
-|details-start|
-**References**
-|details-split|
+.. dropdown:: References
 
- * :doi:`"Comparing Partitions" <10.1007/BF01908075>` L. Hubert and P. Arabie,
-   Journal of Classification 1985
-
-|details-end|
+  * :doi:`"Comparing Partitions" <10.1007/BF01908075>` L. Hubert and P. Arabie,
+    Journal of Classification 1985
