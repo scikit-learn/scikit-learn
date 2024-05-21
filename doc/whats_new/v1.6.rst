@@ -43,6 +43,8 @@ See :ref:`array_api` for more details.
 
 - :class:`preprocessing.LabelEncoder` now supports Array API compatible inputs.
   :pr:`27381` by :user:`Omar Salman <OmarManzoor>`.
+- :class:`preprocessing.Binarizer` now supports Array API compliant inputs.
+  :pr:`27588` by :user:`Yaroslav Korobko <Tialo>`
 
 Metadata Routing
 ----------------
