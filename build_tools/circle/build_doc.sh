@@ -190,16 +190,12 @@ export OMP_NUM_THREADS=1
 if [[ "$CIRCLE_BRANCH" =~ ^main$ && -z "$CI_PULL_REQUEST" ]]
 then
     # List available documentation versions if on main
-    python build_tools/circle/list_versions.py > doc/versions.rst
+    python build_tools/circle/list_versions.py --json doc/js/versions.json --rst doc/versions.rst
 fi
 
 
 # The pipefail is requested to propagate exit code
 set -o pipefail && cd doc && make $make_args 2>&1 | tee ~/log.txt
-
-# Insert the version warning for deployment
-find _build/html/stable -name "*.html" | xargs sed -i '/<\/body>/ i \
-\    <script src="https://scikit-learn.org/versionwarning.js"></script>'
 
 cd -
 set +o pipefail
@@ -244,7 +240,7 @@ then
     (
     echo '<html><body><ul>'
     echo "$affected" | sed 's|.*|<li><a href="&">&</a> [<a href="https://scikit-learn.org/dev/&">dev</a>, <a href="https://scikit-learn.org/stable/&">stable</a>]</li>|'
-    echo '</ul><p>General: <a href="index.html">Home</a> | <a href="modules/classes.html">API Reference</a> | <a href="auto_examples/index.html">Examples</a></p>'
+    echo '</ul><p>General: <a href="index.html">Home</a> | <a href="api/index.html">API Reference</a> | <a href="auto_examples/index.html">Examples</a></p>'
     echo '<strong>Sphinx Warnings in affected files</strong><ul>'
     echo "$warnings" | sed 's/\/home\/circleci\/project\//<li>/g'
     echo '</ul></body></html>'

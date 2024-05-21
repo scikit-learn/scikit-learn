@@ -70,10 +70,10 @@ link to it from your website, or simply star to say "I use it":
 
 .. raw:: html
 
-   <a class="github-button" href="https://github.com/scikit-learn/scikit-learn"
-   data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star
-   scikit-learn/scikit-learn on GitHub">Star</a>
-   <script async defer src="https://buttons.github.io/buttons.js"></script>
+  <a class="github-button" href="https://github.com/scikit-learn/scikit-learn"
+  data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star
+  scikit-learn/scikit-learn on GitHub">Star</a>
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
 
 In case a contribution/issue involves changes to the API principles
 or changes to dependencies or supported versions, it must be backed by a
@@ -82,31 +82,27 @@ or changes to dependencies or supported versions, it must be backed by a
 using the `SLEP template <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep_template.html>`_
 and follows the decision-making process outlined in :ref:`governance`.
 
-|details-start|
-**Contributing to related projects**
-|details-split|
+.. dropdown:: Contributing to related projects
 
-   Scikit-learn thrives in an ecosystem of several related projects, which also
-   may have relevant issues to work on, including smaller projects such as:
+  Scikit-learn thrives in an ecosystem of several related projects, which also
+  may have relevant issues to work on, including smaller projects such as:
 
-   * `scikit-learn-contrib <https://github.com/search?q=org%3Ascikit-learn-contrib+is%3Aissue+is%3Aopen+sort%3Aupdated-desc&type=Issues>`__
-   * `joblib <https://github.com/joblib/joblib/issues>`__
-   * `sphinx-gallery <https://github.com/sphinx-gallery/sphinx-gallery/issues>`__
-   * `numpydoc <https://github.com/numpy/numpydoc/issues>`__
-   * `liac-arff <https://github.com/renatopp/liac-arff/issues>`__
+  * `scikit-learn-contrib <https://github.com/search?q=org%3Ascikit-learn-contrib+is%3Aissue+is%3Aopen+sort%3Aupdated-desc&type=Issues>`__
+  * `joblib <https://github.com/joblib/joblib/issues>`__
+  * `sphinx-gallery <https://github.com/sphinx-gallery/sphinx-gallery/issues>`__
+  * `numpydoc <https://github.com/numpy/numpydoc/issues>`__
+  * `liac-arff <https://github.com/renatopp/liac-arff/issues>`__
 
-   and larger projects:
+  and larger projects:
 
-   * `numpy <https://github.com/numpy/numpy/issues>`__
-   * `scipy <https://github.com/scipy/scipy/issues>`__
-   * `matplotlib <https://github.com/matplotlib/matplotlib/issues>`__
-   * and so on.
+  * `numpy <https://github.com/numpy/numpy/issues>`__
+  * `scipy <https://github.com/scipy/scipy/issues>`__
+  * `matplotlib <https://github.com/matplotlib/matplotlib/issues>`__
+  * and so on.
 
-   Look for issues marked "help wanted" or similar.
-   Helping these projects may help Scikit-learn too.
-   See also :ref:`related_projects`.
-
-|details-end|
+  Look for issues marked "help wanted" or similar.
+  Helping these projects may help Scikit-learn too.
+  See also :ref:`related_projects`.
 
 Submitting a bug report or a feature request
 ============================================
@@ -674,219 +670,200 @@ We are glad to accept any sort of documentation:
   useful information (e.g., the :ref:`contributing` guide) and live in
   `doc/ <https://github.com/scikit-learn/scikit-learn/tree/main/doc>`_.
 
-|details-start|
-**Guidelines for writing docstrings**
-|details-split|
-
-* When documenting the parameters and attributes, here is a list of some
-  well-formatted examples::
-
-    n_clusters : int, default=3
-        The number of clusters detected by the algorithm.
-
-    some_param : {'hello', 'goodbye'}, bool or int, default=True
-        The parameter description goes here, which can be either a string
-        literal (either `hello` or `goodbye`), a bool, or an int. The default
-        value is True.
 
-    array_parameter : {array-like, sparse matrix} of shape (n_samples, n_features) or (n_samples,)
-        This parameter accepts data in either of the mentioned forms, with one
-        of the mentioned shapes. The default value is
-        `np.ones(shape=(n_samples,))`.
+.. dropdown:: Guidelines for writing docstrings
 
-    list_param : list of int
+  * When documenting the parameters and attributes, here is a list of some
+    well-formatted examples::
 
-    typed_ndarray : ndarray of shape (n_samples,), dtype=np.int32
+      n_clusters : int, default=3
+          The number of clusters detected by the algorithm.
 
-    sample_weight : array-like of shape (n_samples,), default=None
+      some_param : {'hello', 'goodbye'}, bool or int, default=True
+          The parameter description goes here, which can be either a string
+          literal (either `hello` or `goodbye`), a bool, or an int. The default
+          value is True.
 
-    multioutput_array : ndarray of shape (n_samples, n_classes) or list of such arrays
+      array_parameter : {array-like, sparse matrix} of shape (n_samples, n_features) or (n_samples,)
+          This parameter accepts data in either of the mentioned forms, with one
+          of the mentioned shapes. The default value is
+          `np.ones(shape=(n_samples,))`.
 
-  In general have the following in mind:
+      list_param : list of int
 
-  * Use Python basic types. (``bool`` instead of ``boolean``)
-  * Use parenthesis for defining shapes: ``array-like of shape (n_samples,)``
-    or ``array-like of shape (n_samples, n_features)``
-  * For strings with multiple options, use brackets: ``input: {'log',
-    'squared', 'multinomial'}``
-  * 1D or 2D data can be a subset of ``{array-like, ndarray, sparse matrix,
-    dataframe}``. Note that ``array-like`` can also be a ``list``, while
-    ``ndarray`` is explicitly only a ``numpy.ndarray``.
-  * Specify ``dataframe`` when "frame-like" features are being used, such as
-    the column names.
-  * When specifying the data type of a list, use ``of`` as a delimiter: ``list
-    of int``. When the parameter supports arrays giving details about the
-    shape and/or data type and a list of such arrays, you can use one of
-    ``array-like of shape (n_samples,) or list of such arrays``.
-  * When specifying the dtype of an ndarray, use e.g. ``dtype=np.int32`` after
-    defining the shape: ``ndarray of shape (n_samples,), dtype=np.int32``. You
-    can specify multiple dtype as a set: ``array-like of shape (n_samples,),
-    dtype={np.float64, np.float32}``. If one wants to mention arbitrary
-    precision, use `integral` and `floating` rather than the Python dtype
-    `int` and `float`. When both `int` and `floating` are supported, there is
-    no need to specify the dtype.
-  * When the default is ``None``, ``None`` only needs to be specified at the
-    end with ``default=None``. Be sure to include in the docstring, what it
-    means for the parameter or attribute to be ``None``.
+      typed_ndarray : ndarray of shape (n_samples,), dtype=np.int32
 
-* Add "See Also" in docstrings for related classes/functions.
+      sample_weight : array-like of shape (n_samples,), default=None
 
-* "See Also" in docstrings should be one line per reference, with a colon and an
-  explanation, for example::
+      multioutput_array : ndarray of shape (n_samples, n_classes) or list of such arrays
 
-    See Also
-    --------
-    SelectKBest : Select features based on the k highest scores.
-    SelectFpr : Select features based on a false positive rate test.
+    In general have the following in mind:
 
-* Add one or two snippets of code in "Example" section to show how it can be used.
+    * Use Python basic types. (``bool`` instead of ``boolean``)
+    * Use parenthesis for defining shapes: ``array-like of shape (n_samples,)``
+      or ``array-like of shape (n_samples, n_features)``
+    * For strings with multiple options, use brackets: ``input: {'log',
+      'squared', 'multinomial'}``
+    * 1D or 2D data can be a subset of ``{array-like, ndarray, sparse matrix,
+      dataframe}``. Note that ``array-like`` can also be a ``list``, while
+      ``ndarray`` is explicitly only a ``numpy.ndarray``.
+    * Specify ``dataframe`` when "frame-like" features are being used, such as
+      the column names.
+    * When specifying the data type of a list, use ``of`` as a delimiter: ``list
+      of int``. When the parameter supports arrays giving details about the
+      shape and/or data type and a list of such arrays, you can use one of
+      ``array-like of shape (n_samples,) or list of such arrays``.
+    * When specifying the dtype of an ndarray, use e.g. ``dtype=np.int32`` after
+      defining the shape: ``ndarray of shape (n_samples,), dtype=np.int32``. You
+      can specify multiple dtype as a set: ``array-like of shape (n_samples,),
+      dtype={np.float64, np.float32}``. If one wants to mention arbitrary
+      precision, use `integral` and `floating` rather than the Python dtype
+      `int` and `float`. When both `int` and `floating` are supported, there is
+      no need to specify the dtype.
+    * When the default is ``None``, ``None`` only needs to be specified at the
+      end with ``default=None``. Be sure to include in the docstring, what it
+      means for the parameter or attribute to be ``None``.
 
-|details-end|
+  * Add "See Also" in docstrings for related classes/functions.
 
-|details-start|
-**Guidelines for writing the user guide and other reStructuredText documents**
-|details-split|
+  * "See Also" in docstrings should be one line per reference, with a colon and an
+    explanation, for example::
 
-It is important to keep a good compromise between mathematical and algorithmic
-details, and give intuition to the reader on what the algorithm does.
+      See Also
+      --------
+      SelectKBest : Select features based on the k highest scores.
+      SelectFpr : Select features based on a false positive rate test.
 
-* Begin with a concise, hand-waving explanation of what the algorithm/code does on
-  the data.
+  * Add one or two snippets of code in "Example" section to show how it can be used.
 
-* Highlight the usefulness of the feature and its recommended application.
-  Consider including the algorithm's complexity
-  (:math:`O\left(g\left(n\right)\right)`) if available, as "rules of thumb" can
-  be very machine-dependent. Only if those complexities are not available, then
-  rules of thumb may be provided instead.
 
-* Incorporate a relevant figure (generated from an example) to provide intuitions.
+.. dropdown:: Guidelines for writing the user guide and other reStructuredText documents
 
-* Include one or two short code examples to demonstrate the feature's usage.
+  It is important to keep a good compromise between mathematical and algorithmic
+  details, and give intuition to the reader on what the algorithm does.
 
-* Introduce any necessary mathematical equations, followed by references. By
-  deferring the mathematical aspects, the documentation becomes more accessible
-  to users primarily interested in understanding the feature's practical
-  implications rather than its underlying mechanics.
+  * Begin with a concise, hand-waving explanation of what the algorithm/code does on
+    the data.
 
-* When editing reStructuredText (``.rst``) files, try to keep line length under
-  88 characters when possible (exceptions include links and tables).
+  * Highlight the usefulness of the feature and its recommended application.
+    Consider including the algorithm's complexity
+    (:math:`O\left(g\left(n\right)\right)`) if available, as "rules of thumb" can
+    be very machine-dependent. Only if those complexities are not available, then
+    rules of thumb may be provided instead.
 
-* In scikit-learn reStructuredText files both single and double backticks
-  surrounding text will render as inline literal (often used for code, e.g.,
-  `list`). This is due to specific configurations we have set. Single
-  backticks should be used nowadays.
+  * Incorporate a relevant figure (generated from an example) to provide intuitions.
 
-* Too much information makes it difficult for users to access the content they
-  are interested in. Use dropdowns to factorize it by using the following
-  syntax::
+  * Include one or two short code examples to demonstrate the feature's usage.
 
-    |details-start|
-    **Dropdown title**
-    |details-split|
+  * Introduce any necessary mathematical equations, followed by references. By
+    deferring the mathematical aspects, the documentation becomes more accessible
+    to users primarily interested in understanding the feature's practical
+    implications rather than its underlying mechanics.
 
-    Dropdown content.
+  * When editing reStructuredText (``.rst``) files, try to keep line length under
+    88 characters when possible (exceptions include links and tables).
 
-    |details-end|
+  * In scikit-learn reStructuredText files both single and double backticks
+    surrounding text will render as inline literal (often used for code, e.g.,
+    `list`). This is due to specific configurations we have set. Single
+    backticks should be used nowadays.
 
-  The snippet above will result in the following dropdown:
+  * Too much information makes it difficult for users to access the content they
+    are interested in. Use dropdowns to factorize it by using the following syntax::
 
-  |details-start|
-  **Dropdown title**
-  |details-split|
+      .. dropdown:: Dropdown title
 
-  Dropdown content.
+        Dropdown content.
 
-  |details-end|
+    The snippet above will result in the following dropdown:
 
-* Information that can be hidden by default using dropdowns is:
+    .. dropdown:: Dropdown title
 
-  * low hierarchy sections such as `References`, `Properties`, etc. (see for
-    instance the subsections in :ref:`det_curve`);
+      Dropdown content.
 
-  * in-depth mathematical details;
+  * Information that can be hidden by default using dropdowns is:
 
-  * narrative that is use-case specific;
+    * low hierarchy sections such as `References`, `Properties`, etc. (see for
+      instance the subsections in :ref:`det_curve`);
 
-  * in general, narrative that may only interest users that want to go beyond
-    the pragmatics of a given tool.
+    * in-depth mathematical details;
 
-* Do not use dropdowns for the low level section `Examples`, as it should stay
-  visible to all users. Make sure that the `Examples` section comes right after
-  the main discussion with the least possible folded section in-between.
+    * narrative that is use-case specific;
 
-* Be aware that dropdowns break cross-references. If that makes sense, hide the
-  reference along with the text mentioning it. Else, do not use dropdown.
+    * in general, narrative that may only interest users that want to go beyond
+      the pragmatics of a given tool.
 
-|details-end|
+  * Do not use dropdowns for the low level section `Examples`, as it should stay
+    visible to all users. Make sure that the `Examples` section comes right after
+    the main discussion with the least possible folded section in-between.
 
+  * Be aware that dropdowns break cross-references. If that makes sense, hide the
+    reference along with the text mentioning it. Else, do not use dropdown.
 
-|details-start|
-**Guidelines for writing references**
-|details-split|
 
-* When bibliographic references are available with `arxiv <https://arxiv.org/>`_
-  or `Digital Object Identifier <https://www.doi.org/>`_ identification numbers,
-  use the sphinx directives `:arxiv:` or `:doi:`. For example, see references in
-  :ref:`Spectral Clustering Graphs <spectral_clustering_graph>`.
+.. dropdown:: Guidelines for writing references
 
-* For "References" in docstrings, see the Silhouette Coefficient
-  (:func:`sklearn.metrics.silhouette_score`).
+  * When bibliographic references are available with `arxiv <https://arxiv.org/>`_
+    or `Digital Object Identifier <https://www.doi.org/>`_ identification numbers,
+    use the sphinx directives `:arxiv:` or `:doi:`. For example, see references in
+    :ref:`Spectral Clustering Graphs <spectral_clustering_graph>`.
 
-* To cross-reference to other pages in the scikit-learn documentation use the
-  reStructuredText cross-referencing syntax:
+  * For "References" in docstrings, see the Silhouette Coefficient
+    (:func:`sklearn.metrics.silhouette_score`).
 
-  * Section - to link to an arbitrary section in the documentation, use
-    reference labels (see `Sphinx docs
-    <https://www.sphinx-doc.org/en/master/usage/restructuredtext/roles.html#ref-role>`_).
-    For example:
+  * To cross-reference to other pages in the scikit-learn documentation use the
+    reStructuredText cross-referencing syntax:
 
-    .. code-block:: rst
+    * Section - to link to an arbitrary section in the documentation, use
+      reference labels (see `Sphinx docs
+      <https://www.sphinx-doc.org/en/master/usage/restructuredtext/roles.html#ref-role>`_).
+      For example:
 
-        .. _my-section:
+      .. code-block:: rst
 
-        My section
-        ----------
+          .. _my-section:
 
-        This is the text of the section.
+          My section
+          ----------
 
-        To refer to itself use :ref:`my-section`.
+          This is the text of the section.
 
-    You should not modify existing sphinx reference labels as this would break
-    existing cross references and external links pointing to specific sections
-    in the scikit-learn documentation.
+          To refer to itself use :ref:`my-section`.
 
-  * Glossary - linking to a term in the :ref:`glossary`:
+      You should not modify existing sphinx reference labels as this would break
+      existing cross references and external links pointing to specific sections
+      in the scikit-learn documentation.
 
-    .. code-block:: rst
+    * Glossary - linking to a term in the :ref:`glossary`:
 
-        :term:`cross_validation`
+      .. code-block:: rst
 
-  * Function - to link to the documentation of a function, use the full import
-    path to the function:
+          :term:`cross_validation`
 
-    .. code-block:: rst
+    * Function - to link to the documentation of a function, use the full import
+      path to the function:
 
-        :func:`~sklearn.model_selection.cross_val_score`
+      .. code-block:: rst
 
-    However, if there is a `.. currentmodule::` directive above you in the document,
-    you will only need to use the path to the function succeeding the current
-    module specified. For example:
+          :func:`~sklearn.model_selection.cross_val_score`
 
-    .. code-block:: rst
+      However, if there is a `.. currentmodule::` directive above you in the document,
+      you will only need to use the path to the function succeeding the current
+      module specified. For example:
 
-        .. currentmodule:: sklearn.model_selection
+      .. code-block:: rst
 
-        :func:`cross_val_score`
+          .. currentmodule:: sklearn.model_selection
 
-  * Class - to link to documentation of a class, use the full import path to the
-    class, unless there is a 'currentmodule' directive in the document above
-    (see above):
+          :func:`cross_val_score`
 
-    .. code-block:: rst
+    * Class - to link to documentation of a class, use the full import path to the
+      class, unless there is a 'currentmodule' directive in the document above
+      (see above):
 
-        :class:`~sklearn.preprocessing.StandardScaler`
+      .. code-block:: rst
 
-|details-end|
+          :class:`~sklearn.preprocessing.StandardScaler`
 
 You can edit the documentation using any text editor, and then generate the
 HTML output by following :ref:`building_documentation`. The resulting HTML files
@@ -914,7 +891,9 @@ Building the documentation requires installing some additional packages:
 
     pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas \
                 polars scikit-image packaging seaborn sphinx-prompt \
-                sphinxext-opengraph sphinx-copybutton plotly pooch
+                sphinxext-opengraph sphinx-copybutton plotly pooch \
+                pydata-sphinx-theme sphinxcontrib-sass sphinx-design \
+                sphinx-remove-toctrees
 
 To build the documentation, you need to be in the ``doc`` folder:
 
@@ -956,7 +935,8 @@ To build the PDF manual, run:
 
     make latexpdf
 
-.. warning:: **Sphinx version**
+.. admonition:: Sphinx version
+   :class: warning
 
    While we do our best to have the documentation build under as many
    versions of Sphinx as possible, the different versions tend to
@@ -997,45 +977,37 @@ subpackages. For a more detailed `pytest` workflow, please refer to the
 
 We expect code coverage of new features to be at least around 90%.
 
-|details-start|
-**Writing matplotlib related tests**
-|details-split|
+.. dropdown:: Writing matplotlib related tests
 
-Test fixtures ensure that a set of tests will be executing with the appropriate
-initialization and cleanup. The scikit-learn test suite implements a fixture
-which can be used with ``matplotlib``.
+  Test fixtures ensure that a set of tests will be executing with the appropriate
+  initialization and cleanup. The scikit-learn test suite implements a fixture
+  which can be used with ``matplotlib``.
 
-``pyplot``
-    The ``pyplot`` fixture should be used when a test function is dealing with
-    ``matplotlib``. ``matplotlib`` is a soft dependency and is not required.
-    This fixture is in charge of skipping the tests if ``matplotlib`` is not
-    installed. In addition, figures created during the tests will be
-    automatically closed once the test function has been executed.
+  ``pyplot``
+      The ``pyplot`` fixture should be used when a test function is dealing with
+      ``matplotlib``. ``matplotlib`` is a soft dependency and is not required.
+      This fixture is in charge of skipping the tests if ``matplotlib`` is not
+      installed. In addition, figures created during the tests will be
+      automatically closed once the test function has been executed.
 
-To use this fixture in a test function, one needs to pass it as an
-argument::
+  To use this fixture in a test function, one needs to pass it as an
+  argument::
 
-    def test_requiring_mpl_fixture(pyplot):
-        # you can now safely use matplotlib
+      def test_requiring_mpl_fixture(pyplot):
+          # you can now safely use matplotlib
 
-|details-end|
+.. dropdown:: Workflow to improve test coverage
 
-|details-start|
-**Workflow to improve test coverage**
-|details-split|
+  To test code coverage, you need to install the `coverage
+  <https://pypi.org/project/coverage/>`_ package in addition to pytest.
 
-To test code coverage, you need to install the `coverage
-<https://pypi.org/project/coverage/>`_ package in addition to pytest.
+  1. Run 'make test-coverage'. The output lists for each file the line
+      numbers that are not tested.
 
-1. Run 'make test-coverage'. The output lists for each file the line
-    numbers that are not tested.
+  2. Find a low hanging fruit, looking at which lines are not tested,
+      write or adapt a test specifically for these lines.
 
-2. Find a low hanging fruit, looking at which lines are not tested,
-    write or adapt a test specifically for these lines.
-
-3. Loop.
-
-|details-end|
+  3. Loop.
 
 .. _monitoring_performances:
 
@@ -1365,95 +1337,87 @@ up this process by providing your feedback.
   retraction. Regarding docs: typos, grammar issues and disambiguations are
   better addressed immediately.
 
-|details-start|
-**Important aspects to be covered in any code review**
-|details-split|
+.. dropdown:: Important aspects to be covered in any code review
 
-Here are a few important aspects that need to be covered in any code review,
-from high-level questions to a more detailed check-list.
+  Here are a few important aspects that need to be covered in any code review,
+  from high-level questions to a more detailed check-list.
 
-- Do we want this in the library? Is it likely to be used? Do you, as
-  a scikit-learn user, like the change and intend to use it? Is it in
-  the scope of scikit-learn? Will the cost of maintaining a new
-  feature be worth its benefits?
+  - Do we want this in the library? Is it likely to be used? Do you, as
+    a scikit-learn user, like the change and intend to use it? Is it in
+    the scope of scikit-learn? Will the cost of maintaining a new
+    feature be worth its benefits?
 
-- Is the code consistent with the API of scikit-learn? Are public
-  functions/classes/parameters well named and intuitively designed?
+  - Is the code consistent with the API of scikit-learn? Are public
+    functions/classes/parameters well named and intuitively designed?
 
-- Are all public functions/classes and their parameters, return types, and
-  stored attributes named according to scikit-learn conventions and documented clearly?
+  - Are all public functions/classes and their parameters, return types, and
+    stored attributes named according to scikit-learn conventions and documented clearly?
 
-- Is any new functionality described in the user-guide and illustrated with examples?
+  - Is any new functionality described in the user-guide and illustrated with examples?
 
-- Is every public function/class tested? Are a reasonable set of
-  parameters, their values, value types, and combinations tested? Do
-  the tests validate that the code is correct, i.e. doing what the
-  documentation says it does? If the change is a bug-fix, is a
-  non-regression test included? Look at `this
-  <https://jeffknupp.com/blog/2013/12/09/improve-your-python-understanding-unit-testing>`__
-  to get started with testing in Python.
+  - Is every public function/class tested? Are a reasonable set of
+    parameters, their values, value types, and combinations tested? Do
+    the tests validate that the code is correct, i.e. doing what the
+    documentation says it does? If the change is a bug-fix, is a
+    non-regression test included? Look at `this
+    <https://jeffknupp.com/blog/2013/12/09/improve-your-python-understanding-unit-testing>`__
+    to get started with testing in Python.
 
-- Do the tests pass in the continuous integration build? If
-  appropriate, help the contributor understand why tests failed.
+  - Do the tests pass in the continuous integration build? If
+    appropriate, help the contributor understand why tests failed.
 
-- Do the tests cover every line of code (see the coverage report in the build
-  log)? If not, are the lines missing coverage good exceptions?
+  - Do the tests cover every line of code (see the coverage report in the build
+    log)? If not, are the lines missing coverage good exceptions?
 
-- Is the code easy to read and low on redundancy? Should variable names be
-  improved for clarity or consistency? Should comments be added? Should comments
-  be removed as unhelpful or extraneous?
+  - Is the code easy to read and low on redundancy? Should variable names be
+    improved for clarity or consistency? Should comments be added? Should comments
+    be removed as unhelpful or extraneous?
 
-- Could the code easily be rewritten to run much more efficiently for
-  relevant settings?
+  - Could the code easily be rewritten to run much more efficiently for
+    relevant settings?
 
-- Is the code backwards compatible with previous versions? (or is a
-  deprecation cycle necessary?)
+  - Is the code backwards compatible with previous versions? (or is a
+    deprecation cycle necessary?)
 
-- Will the new code add any dependencies on other libraries? (this is
-  unlikely to be accepted)
+  - Will the new code add any dependencies on other libraries? (this is
+    unlikely to be accepted)
 
-- Does the documentation render properly (see the
-  :ref:`contribute_documentation` section for more details), and are the plots
-  instructive?
+  - Does the documentation render properly (see the
+    :ref:`contribute_documentation` section for more details), and are the plots
+    instructive?
 
-:ref:`saved_replies` includes some frequent comments that reviewers may make.
-
-|details-end|
+  :ref:`saved_replies` includes some frequent comments that reviewers may make.
 
 .. _communication:
 
-|details-start|
-**Communication Guidelines**
-|details-split|
+.. dropdown:: Communication Guidelines
 
-Reviewing open pull requests (PRs) helps move the project forward. It is a
-great way to get familiar with the codebase and should motivate the
-contributor to keep involved in the project. [1]_
+  Reviewing open pull requests (PRs) helps move the project forward. It is a
+  great way to get familiar with the codebase and should motivate the
+  contributor to keep involved in the project. [1]_
 
-- Every PR, good or bad, is an act of generosity. Opening with a positive
-  comment will help the author feel rewarded, and your subsequent remarks may
-  be heard more clearly. You may feel good also.
-- Begin if possible with the large issues, so the author knows they've been
-  understood. Resist the temptation to immediately go line by line, or to open
-  with small pervasive issues.
-- Do not let perfect be the enemy of the good. If you find yourself making
-  many small suggestions that don't fall into the :ref:`code_review`, consider
-  the following approaches:
+  - Every PR, good or bad, is an act of generosity. Opening with a positive
+    comment will help the author feel rewarded, and your subsequent remarks may
+    be heard more clearly. You may feel good also.
+  - Begin if possible with the large issues, so the author knows they've been
+    understood. Resist the temptation to immediately go line by line, or to open
+    with small pervasive issues.
+  - Do not let perfect be the enemy of the good. If you find yourself making
+    many small suggestions that don't fall into the :ref:`code_review`, consider
+    the following approaches:
 
-  - refrain from submitting these;
-  - prefix them as "Nit" so that the contributor knows it's OK not to address;
-  - follow up in a subsequent PR, out of courtesy, you may want to let the
-    original contributor know.
+    - refrain from submitting these;
+    - prefix them as "Nit" so that the contributor knows it's OK not to address;
+    - follow up in a subsequent PR, out of courtesy, you may want to let the
+      original contributor know.
 
-- Do not rush, take the time to make your comments clear and justify your
-  suggestions.
-- You are the face of the project. Bad days occur to everyone, in that
-  occasion you deserve a break: try to take your time and stay offline.
+  - Do not rush, take the time to make your comments clear and justify your
+    suggestions.
+  - You are the face of the project. Bad days occur to everyone, in that
+    occasion you deserve a break: try to take your time and stay offline.
 
-.. [1] Adapted from the numpy `communication guidelines
-       <https://numpy.org/devdocs/dev/reviewer_guidelines.html#communication-guidelines>`_.
-
-|details-end|
+  .. [1] Adapted from the numpy `communication guidelines
+        <https://numpy.org/devdocs/dev/reviewer_guidelines.html#communication-guidelines>`_.
 
 Reading the existing code base
 ==============================

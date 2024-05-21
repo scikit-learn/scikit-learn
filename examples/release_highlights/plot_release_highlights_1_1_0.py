@@ -24,8 +24,8 @@ or with conda::
 # %%
 # .. _quantile_support_hgbdt:
 #
-# Quantile loss in :class:`ensemble.HistGradientBoostingRegressor`
-# ----------------------------------------------------------------
+# Quantile loss in :class:`~ensemble.HistGradientBoostingRegressor`
+# -----------------------------------------------------------------
 # :class:`~ensemble.HistGradientBoostingRegressor` can model quantiles with
 # `loss="quantile"` and the new parameter `quantile`.
 from sklearn.ensemble import HistGradientBoostingRegressor
