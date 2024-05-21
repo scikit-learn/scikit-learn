@@ -1024,16 +1024,13 @@ def check_scoring(estimator=None, scoring=None, *, allow_none=False, raise_exc=T
     >>> y *= -1
     >>> clf = DecisionTreeClassifier().fit(X, y)
     >>> scoring = {
-    >>>     "accuracy": make_scorer(accuracy_score),
-    >>>     "mean_squared_log_error": make_scorer(mean_squared_log_error),
-    >>> }
+    ...     "accuracy": make_scorer(accuracy_score),
+    ...     "mean_squared_log_error": make_scorer(mean_squared_log_error),
+    ... }
     >>> scoring_call = check_scoring(estimator=clf, scoring=scoring, raise_exc=False)
     >>> scores = scoring_call(clf, X, y)
     >>> scores
-    {'accuracy': 1.0,
-    'mean_squared_log_error': 'Traceback (most recent call last): ... raise \
-    ValueError(ValueError: Mean Squared Logarithmic Error cannot be used when targets \
-    contain negative values.'} # doctest: +SKIP
+    {'accuracy': 1.0, 'mean_squared_log_error': 'Traceback ...'}
     """
     if isinstance(scoring, str):
         return get_scorer(scoring)
