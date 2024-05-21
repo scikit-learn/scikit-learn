@@ -15,7 +15,6 @@ import re
 import sys
 import warnings
 from datetime import datetime
-from io import StringIO
 from pathlib import Path
 
 from sklearn.externals._packaging.version import parse
@@ -25,8 +24,10 @@ from sklearn.utils._testing import turn_warnings_into_errors
 # directory, add these directories to sys.path here. If the directory
 # is relative to the documentation root, use os.path.abspath to make it
 # absolute, like shown here.
+sys.path.insert(0, os.path.abspath("."))
 sys.path.insert(0, os.path.abspath("sphinxext"))
 
+import jinja2
 import sphinx_gallery
 from github_link import make_linkcode_resolve
 from sphinx_gallery.notebook import add_code_cell, add_markdown_cell
@@ -56,14 +57,21 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.imgconverter",
     "sphinx_gallery.gen_gallery",
-    "sphinx_issues",
-    "add_toctree_functions",
     "sphinx-prompt",
     "sphinx_copybutton",
     "sphinxext.opengraph",
-    "doi_role",
-    "allow_nan_estimators",
     "matplotlib.sphinxext.plot_directive",
+    "sphinxcontrib.sass",
+    "sphinx_remove_toctrees",
+    "sphinx_design",
+    # See sphinxext/
+    "allow_nan_estimators",
+    "autoshortsummary",
+    "doi_role",
+    "dropdown_anchors",
+    "move_gallery_links",
+    "override_pst_pagetoc",
+    "sphinx_issues",
 ]
 
 # Specify how to identify the prompt when copying code snippets
@@ -96,8 +104,12 @@ plot_include_source = True
 plot_html_show_formats = False
 plot_html_show_source_link = False
 
-# this is needed for some reason...
-# see https://github.com/numpy/numpydoc/issues/69
+# We do not need the table of class members because `sphinxext/override_pst_pagetoc.py`
+# will show them in the secondary sidebar
+numpydoc_show_class_members = False
+numpydoc_show_inherited_class_members = False
+
+# We want in-page toc of class members instead of a separate page for each entry
 numpydoc_class_members_toctree = False
 
 
@@ -111,8 +123,6 @@ else:
     extensions.append("sphinx.ext.mathjax")
     mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"
 
-autodoc_default_options = {"members": True, "inherited-members": True}
-
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["templates"]
 
@@ -123,10 +133,10 @@ autosummary_generate = True
 source_suffix = ".rst"
 
 # The encoding of source files.
-# source_encoding = 'utf-8'
+source_encoding = "utf-8"
 
 # The main toctree document.
-root_doc = "contents"
+root_doc = "index"
 
 # General information about the project.
 project = "scikit-learn"
@@ -160,7 +170,12 @@ else:
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ["_build", "templates", "includes", "themes"]
+exclude_patterns = [
+    "_build",
+    "templates",
+    "includes",
+    "**/sg_execution_times.rst",
+]
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -177,9 +192,6 @@ add_function_parentheses = False
 # output. They are ignored by default.
 # show_authors = False
 
-# The name of the Pygments (syntax highlighting) style to use.
-pygments_style = "sphinx"
-
 # A list of ignored prefixes for module index sorting.
 # modindex_common_prefix = []
 
@@ -188,21 +200,89 @@ pygments_style = "sphinx"
 
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
 # Sphinx are currently 'default' and 'sphinxdoc'.
-html_theme = "scikit-learn-modern"
+html_theme = "pydata_sphinx_theme"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 html_theme_options = {
-    "legacy_google_analytics": True,
-    "analytics": True,
-    "mathjax_path": mathjax_path,
-    "link_to_live_contributing_page": not parsed_version.is_devrelease,
+    # -- General configuration ------------------------------------------------
+    "sidebar_includehidden": True,
+    "use_edit_page_button": True,
+    "external_links": [],
+    "icon_links_label": "Icon Links",
+    "icon_links": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/scikit-learn/scikit-learn",
+            "icon": "fa-brands fa-square-github",
+            "type": "fontawesome",
+        },
+    ],
+    "analytics": {
+        "plausible_analytics_domain": "scikit-learn.org",
+        "plausible_analytics_url": "https://views.scientific-python.org/js/script.js",
+    },
+    # If "prev-next" is included in article_footer_items, then setting show_prev_next
+    # to True would repeat prev and next links. See
+    # https://github.com/pydata/pydata-sphinx-theme/blob/b731dc230bc26a3d1d1bb039c56c977a9b3d25d8/src/pydata_sphinx_theme/theme/pydata_sphinx_theme/layout.html#L118-L129
+    "show_prev_next": False,
+    "search_bar_text": "Search the docs ...",
+    "navigation_with_keys": False,
+    "collapse_navigation": False,
+    "navigation_depth": 2,
+    "show_nav_level": 1,
+    "show_toc_level": 1,
+    "navbar_align": "left",
+    "header_links_before_dropdown": 5,
+    "header_dropdown_text": "More",
+    # The switcher requires a JSON file with the list of documentation versions, which
+    # is generated by the script `build_tools/circle/list_versions.py` and placed under
+    # the `js/` static directory; it will then be copied to the `_static` directory in
+    # the built documentation
+    "switcher": {
+        "json_url": "https://scikit-learn.org/dev/_static/versions.json",
+        "version_match": release,
+    },
+    # check_switcher may be set to False if docbuild pipeline fails. See
+    # https://pydata-sphinx-theme.readthedocs.io/en/stable/user_guide/version-dropdown.html#configure-switcher-json-url
+    "check_switcher": True,
+    "pygment_light_style": "tango",
+    "pygment_dark_style": "monokai",
+    "logo": {
+        "alt_text": "scikit-learn homepage",
+        "image_relative": "logos/scikit-learn-logo-small.png",
+        "image_light": "logos/scikit-learn-logo-small.png",
+        "image_dark": "logos/scikit-learn-logo-small.png",
+    },
+    "surface_warnings": True,
+    # -- Template placement in theme layouts ----------------------------------
+    "navbar_start": ["navbar-logo"],
+    # Note that the alignment of navbar_center is controlled by navbar_align
+    "navbar_center": ["navbar-nav"],
+    "navbar_end": ["theme-switcher", "navbar-icon-links", "version-switcher"],
+    # navbar_persistent is persistent right (even when on mobiles)
+    "navbar_persistent": ["search-button"],
+    "article_header_start": ["breadcrumbs"],
+    "article_header_end": [],
+    "article_footer_items": ["prev-next"],
+    "content_footer_items": [],
+    # Use html_sidebars that map page patterns to list of sidebar templates
+    "primary_sidebar_end": [],
+    "footer_start": ["copyright"],
+    "footer_center": [],
+    "footer_end": [],
+    # When specified as a dictionary, the keys should follow glob-style patterns, as in
+    # https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-exclude_patterns
+    # In particular, "**" specifies the default for all pages
+    # Use :html_theme.sidebar_secondary.remove: for file-wide removal
+    "secondary_sidebar_items": {"**": ["page-toc", "sourcelink"]},
+    "show_version_warning_banner": True,
+    "announcement": None,
 }
 
 # Add any paths that contain custom themes here, relative to this directory.
-html_theme_path = ["themes"]
-
+# html_theme_path = ["themes"]
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
@@ -210,10 +290,6 @@ html_theme_path = ["themes"]
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 html_short_title = "scikit-learn"
-
-# The name of an image file (relative to this directory) to place at the top
-# of the sidebar.
-html_logo = "logos/scikit-learn-logo-small.png"
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -223,18 +299,76 @@ html_favicon = "logos/favicon.ico"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ["images"]
+html_static_path = ["images", "css", "js"]
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
 # html_last_updated_fmt = '%b %d, %Y'
 
 # Custom sidebar templates, maps document names to template names.
-# html_sidebars = {}
+# Workaround for removing the left sidebar on pages without TOC
+# A better solution would be to follow the merge of:
+# https://github.com/pydata/pydata-sphinx-theme/pull/1682
+html_sidebars = {
+    "install": [],
+    "getting_started": [],
+    "glossary": [],
+    "faq": [],
+    "support": [],
+    "related_projects": [],
+    "roadmap": [],
+    "governance": [],
+    "about": [],
+}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
 html_additional_pages = {"index": "index.html"}
+
+# Additional files to copy
+# html_extra_path = []
+
+# Additional JS files
+html_js_files = [
+    "scripts/dropdown.js",
+    "scripts/version-switcher.js",
+]
+
+# Compile scss files into css files using sphinxcontrib-sass
+sass_src_dir, sass_out_dir = "scss", "css/styles"
+sass_targets = {
+    f"{file.stem}.scss": f"{file.stem}.css"
+    for file in Path(sass_src_dir).glob("*.scss")
+}
+
+# Additional CSS files, should be subset of the values of `sass_targets`
+html_css_files = ["styles/colors.css", "styles/custom.css"]
+
+
+def add_js_css_files(app, pagename, templatename, context, doctree):
+    """Load additional JS and CSS files only for certain pages.
+
+    Note that `html_js_files` and `html_css_files` are included in all pages and
+    should be used for the ones that are used by multiple pages. All page-specific
+    JS and CSS files should be added here instead.
+    """
+    if pagename == "api/index":
+        # External: jQuery and DataTables
+        app.add_js_file("https://code.jquery.com/jquery-3.7.0.js")
+        app.add_js_file("https://cdn.datatables.net/2.0.0/js/dataTables.min.js")
+        app.add_css_file(
+            "https://cdn.datatables.net/2.0.0/css/dataTables.dataTables.min.css"
+        )
+        # Internal: API search intialization and styling
+        app.add_js_file("scripts/api-search.js")
+        app.add_css_file("styles/api-search.css")
+    elif pagename == "index":
+        app.add_css_file("styles/index.css")
+    elif pagename == "install":
+        app.add_css_file("styles/install.css")
+    elif pagename.startswith("modules/generated/"):
+        app.add_css_file("styles/api.css")
+
 
 # If false, no module index is generated.
 html_domain_indices = False
@@ -285,6 +419,9 @@ html_context["release_highlights_version"] = highlight_version
 # redirects dictionary maps from old links to new links
 redirects = {
     "documentation": "index",
+    "contents": "index",
+    "preface": "index",
+    "modules/classes": "api/index",
     "auto_examples/feature_selection/plot_permutation_test_for_classification": (
         "auto_examples/model_selection/plot_permutation_tests_for_classification"
     ),
@@ -301,6 +438,7 @@ redirects = {
     "auto_examples/decomposition/plot_beta_divergence": (
         "auto_examples/applications/plot_topics_extraction_with_nmf_lda"
     ),
+    "auto_examples/svm/plot_svm_nonlinear": "auto_examples/svm/plot_svm_kernels",
     "auto_examples/ensemble/plot_adaboost_hastie_10_2": (
         "auto_examples/ensemble/plot_adaboost_multiclass"
     ),
@@ -315,31 +453,12 @@ html_context["redirects"] = redirects
 for old_link in redirects:
     html_additional_pages[old_link] = "redirects.html"
 
+# See https://github.com/scikit-learn/scikit-learn/pull/22550
+html_context["is_devrelease"] = parsed_version.is_devrelease
+
 # Not showing the search summary makes the search page load faster.
 html_show_search_summary = True
 
-
-# The "summary-anchor" IDs will be overwritten via JavaScript to be unique.
-# See `doc/theme/scikit-learn-modern/static/js/details-permalink.js`.
-rst_prolog = """
-.. |details-start| raw:: html
-
-    <details id="summary-anchor">
-    <summary class="btn btn-light">
-
-.. |details-split| raw:: html
-
-    <span class="tooltiptext">Click for more details</span>
-    <a class="headerlink" href="#summary-anchor" title="Permalink to this heading">¶</a>
-    </summary>
-    <div class="card">
-
-.. |details-end| raw:: html
-
-    </div>
-    </details>
-
-"""
 
 # -- Options for LaTeX output ------------------------------------------------
 latex_elements = {
@@ -527,14 +646,16 @@ def reset_sklearn_config(gallery_conf, fname):
     sklearn.set_config(**default_global_config)
 
 
+sg_examples_dir = "../examples"
+sg_gallery_dir = "auto_examples"
 sphinx_gallery_conf = {
     "doc_module": "sklearn",
     "backreferences_dir": os.path.join("modules", "generated"),
     "show_memory": False,
     "reference_url": {"sklearn": None},
-    "examples_dirs": ["../examples"],
-    "gallery_dirs": ["auto_examples"],
-    "subsection_order": SubSectionTitleOrder("../examples"),
+    "examples_dirs": [sg_examples_dir],
+    "gallery_dirs": [sg_gallery_dir],
+    "subsection_order": SubSectionTitleOrder(sg_examples_dir),
     "within_subsection_order": SKExampleTitleSortKey,
     "binder": {
         "org": "scikit-learn",
@@ -548,13 +669,33 @@ sphinx_gallery_conf = {
     "inspect_global_variables": False,
     "remove_config_comments": True,
     "plot_gallery": "True",
-    "recommender": {"enable": True, "n_examples": 5, "min_df": 12},
+    "recommender": {"enable": True, "n_examples": 4, "min_df": 12},
     "reset_modules": ("matplotlib", "seaborn", reset_sklearn_config),
 }
 if with_jupyterlite:
     sphinx_gallery_conf["jupyterlite"] = {
         "notebook_modification_function": notebook_modification_function
     }
+
+# Secondary sidebar configuration for pages generated by sphinx-gallery
+
+# For the index page of the gallery and each nested section, we hide the secondary
+# sidebar by specifying an empty list (no components), because there is no meaningful
+# in-page toc for these pages, and they are generated so "sourcelink" is not useful
+# either.
+
+# For each example page we keep default ["page-toc", "sourcelink"] specified by the
+# "**" key. "page-toc" is wanted for these pages. "sourcelink" is also necessary since
+# otherwise the secondary sidebar will degenerate when "page-toc" is empty, and the
+# script `sphinxext/move_gallery_links.py` will fail (it assumes the existence of the
+# secondary sidebar). The script will remove "sourcelink" in the end.
+
+html_theme_options["secondary_sidebar_items"][f"{sg_gallery_dir}/index"] = []
+for sub_sg_dir in (Path(".") / sg_examples_dir).iterdir():
+    if sub_sg_dir.is_dir():
+        html_theme_options["secondary_sidebar_items"][
+            f"{sg_gallery_dir}/{sub_sg_dir.name}/index"
+        ] = []
 
 
 # The following dictionary contains the information used to create the
@@ -605,73 +746,6 @@ def filter_search_index(app, exception):
         f.write(searchindex_text)
 
 
-def generate_min_dependency_table(app):
-    """Generate min dependency table for docs."""
-    from sklearn._min_dependencies import dependent_packages
-
-    # get length of header
-    package_header_len = max(len(package) for package in dependent_packages) + 4
-    version_header_len = len("Minimum Version") + 4
-    tags_header_len = max(len(tags) for _, tags in dependent_packages.values()) + 4
-
-    output = StringIO()
-    output.write(
-        " ".join(
-            ["=" * package_header_len, "=" * version_header_len, "=" * tags_header_len]
-        )
-    )
-    output.write("\n")
-    dependency_title = "Dependency"
-    version_title = "Minimum Version"
-    tags_title = "Purpose"
-
-    output.write(
-        f"{dependency_title:<{package_header_len}} "
-        f"{version_title:<{version_header_len}} "
-        f"{tags_title}\n"
-    )
-
-    output.write(
-        " ".join(
-            ["=" * package_header_len, "=" * version_header_len, "=" * tags_header_len]
-        )
-    )
-    output.write("\n")
-
-    for package, (version, tags) in dependent_packages.items():
-        output.write(
-            f"{package:<{package_header_len}} {version:<{version_header_len}} {tags}\n"
-        )
-
-    output.write(
-        " ".join(
-            ["=" * package_header_len, "=" * version_header_len, "=" * tags_header_len]
-        )
-    )
-    output.write("\n")
-    output = output.getvalue()
-
-    with (Path(".") / "min_dependency_table.rst").open("w") as f:
-        f.write(output)
-
-
-def generate_min_dependency_substitutions(app):
-    """Generate min dependency substitutions for docs."""
-    from sklearn._min_dependencies import dependent_packages
-
-    output = StringIO()
-
-    for package, (version, _) in dependent_packages.items():
-        package = package.capitalize()
-        output.write(f".. |{package}MinVersion| replace:: {version}")
-        output.write("\n")
-
-    output = output.getvalue()
-
-    with (Path(".") / "min_dependency_substitutions.rst").open("w") as f:
-        f.write(output)
-
-
 # Config for sphinx_issues
 
 # we use the issues path for PRs since the issues URL will forward
@@ -687,10 +761,11 @@ def setup(app):
     # do not run the examples when using linkcheck by using a small priority
     # (default priority is 500 and sphinx-gallery using builder-inited event too)
     app.connect("builder-inited", disable_plot_gallery_for_linkcheck, priority=50)
-    app.connect("builder-inited", generate_min_dependency_table)
-    app.connect("builder-inited", generate_min_dependency_substitutions)
 
-    # to hide/show the prompt in code examples:
+    # triggered just before the HTML for an individual page is created
+    app.connect("html-page-context", add_js_css_files)
+
+    # to hide/show the prompt in code examples
     app.connect("build-finished", make_carousel_thumbs)
     app.connect("build-finished", filter_search_index)
 
@@ -795,6 +870,10 @@ linkcheck_ignore = [
     "consistently-create-same-random-numpy-array/5837352#comment6712034_5837352",
 ]
 
+# Config for sphinx-remove-toctrees
+
+remove_from_toctrees = ["metadata_routing.rst"]
+
 # Use a browser-like user agent to avoid some "403 Client Error: Forbidden for
 # url" errors. This is taken from the variable navigator.userAgent inside a
 # browser console.
@@ -812,3 +891,78 @@ else:
     linkcheck_request_headers = {
         "https://github.com/": {"Authorization": f"token {github_token}"},
     }
+
+
+# -- Convert .rst.template files to .rst ---------------------------------------
+
+from api_reference import API_REFERENCE, DEPRECATED_API_REFERENCE
+
+from sklearn._min_dependencies import dependent_packages
+
+# If development build, link to local page in the top navbar; otherwise link to the
+# development version; see https://github.com/scikit-learn/scikit-learn/pull/22550
+if parsed_version.is_devrelease:
+    development_link = "developers/index"
+else:
+    development_link = "https://scikit-learn.org/dev/developers/index.html"
+
+# Define the templates and target files for conversion
+# Each entry is in the format (template name, file name, kwargs for rendering)
+rst_templates = [
+    ("index", "index", {"development_link": development_link}),
+    (
+        "min_dependency_table",
+        "min_dependency_table",
+        {"dependent_packages": dependent_packages},
+    ),
+    (
+        "min_dependency_substitutions",
+        "min_dependency_substitutions",
+        {"dependent_packages": dependent_packages},
+    ),
+    (
+        "api/index",
+        "api/index",
+        {
+            "API_REFERENCE": sorted(API_REFERENCE.items(), key=lambda x: x[0]),
+            "DEPRECATED_API_REFERENCE": sorted(
+                DEPRECATED_API_REFERENCE.items(), key=lambda x: x[0], reverse=True
+            ),
+        },
+    ),
+]
+
+# Convert each module API reference page
+for module in API_REFERENCE:
+    rst_templates.append(
+        (
+            "api/module",
+            f"api/{module}",
+            {"module": module, "module_info": API_REFERENCE[module]},
+        )
+    )
+
+# Convert the deprecated API reference page (if there exists any)
+if DEPRECATED_API_REFERENCE:
+    rst_templates.append(
+        (
+            "api/deprecated",
+            "api/deprecated",
+            {
+                "DEPRECATED_API_REFERENCE": sorted(
+                    DEPRECATED_API_REFERENCE.items(), key=lambda x: x[0], reverse=True
+                )
+            },
+        )
+    )
+
+for rst_template_name, rst_target_name, kwargs in rst_templates:
+    # Read the corresponding template file into jinja2
+    with (Path(".") / f"{rst_template_name}.rst.template").open(
+        "r", encoding="utf-8"
+    ) as f:
+        t = jinja2.Template(f.read())
+
+    # Render the template and write to the target
+    with (Path(".") / f"{rst_target_name}.rst").open("w", encoding="utf-8") as f:
+        f.write(t.render(**kwargs))

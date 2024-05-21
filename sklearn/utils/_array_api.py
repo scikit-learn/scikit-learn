@@ -406,6 +406,11 @@ class _NumPyAPIWrapper:
     def unique_values(self, x):
         return numpy.unique(x)
 
+    def unique_all(self, x):
+        return numpy.unique(
+            x, return_index=True, return_inverse=True, return_counts=True
+        )
+
     def concat(self, arrays, *, axis=None):
         return numpy.concatenate(arrays, axis=axis)
 
@@ -839,3 +844,121 @@ def indexing_dtype(xp):
     # TODO: once sufficiently adopted, we might want to instead rely on the
     # newer inspection API: https://github.com/data-apis/array-api/issues/640
     return xp.asarray(0).dtype
+
+
+def _searchsorted(xp, a, v, *, side="left", sorter=None):
+    # Temporary workaround needed as long as searchsorted is not widely
+    # adopted by implementers of the Array API spec. This is a quite
+    # recent addition to the spec:
+    # https://data-apis.org/array-api/latest/API_specification/generated/array_api.searchsorted.html # noqa
+    if hasattr(xp, "searchsorted"):
+        return xp.searchsorted(a, v, side=side, sorter=sorter)
+
+    a_np = _convert_to_numpy(a, xp=xp)
+    v_np = _convert_to_numpy(v, xp=xp)
+    indices = numpy.searchsorted(a_np, v_np, side=side, sorter=sorter)
+    return xp.asarray(indices, device=device(a))
+
+
+def _setdiff1d(ar1, ar2, xp, assume_unique=False):
+    """Find the set difference of two arrays.
+
+    Return the unique values in `ar1` that are not in `ar2`.
+    """
+    if _is_numpy_namespace(xp):
+        return xp.asarray(
+            numpy.setdiff1d(
+                ar1=ar1,
+                ar2=ar2,
+                assume_unique=assume_unique,
+            )
+        )
+
+    if assume_unique:
+        ar1 = xp.reshape(ar1, (-1,))
+    else:
+        ar1 = xp.unique_values(ar1)
+        ar2 = xp.unique_values(ar2)
+    return ar1[_in1d(ar1=ar1, ar2=ar2, xp=xp, assume_unique=True, invert=True)]
+
+
+def _isin(element, test_elements, xp, assume_unique=False, invert=False):
+    """Calculates ``element in test_elements``, broadcasting over `element`
+    only.
+
+    Returns a boolean array of the same shape as `element` that is True
+    where an element of `element` is in `test_elements` and False otherwise.
+    """
+    if _is_numpy_namespace(xp):
+        return xp.asarray(
+            numpy.isin(
+                element=element,
+                test_elements=test_elements,
+                assume_unique=assume_unique,
+                invert=invert,
+            )
+        )
+
+    original_element_shape = element.shape
+    element = xp.reshape(element, (-1,))
+    test_elements = xp.reshape(test_elements, (-1,))
+    return xp.reshape(
+        _in1d(
+            ar1=element,
+            ar2=test_elements,
+            xp=xp,
+            assume_unique=assume_unique,
+            invert=invert,
+        ),
+        original_element_shape,
+    )
+
+
+# Note: This is a helper for the functions `_isin` and
+# `_setdiff1d`. It is not meant to be called directly.
+def _in1d(ar1, ar2, xp, assume_unique=False, invert=False):
+    """Checks whether each element of an array is also present in a
+    second array.
+
+    Returns a boolean array the same length as `ar1` that is True
+    where an element of `ar1` is in `ar2` and False otherwise.
+
+    This function has been adapted using the original implementation
+    present in numpy:
+    https://github.com/numpy/numpy/blob/v1.26.0/numpy/lib/arraysetops.py#L524-L758
+    """
+    xp, _ = get_namespace(ar1, ar2, xp=xp)
+
+    # This code is run to make the code significantly faster
+    if ar2.shape[0] < 10 * ar1.shape[0] ** 0.145:
+        if invert:
+            mask = xp.ones(ar1.shape[0], dtype=xp.bool, device=device(ar1))
+            for a in ar2:
+                mask &= ar1 != a
+        else:
+            mask = xp.zeros(ar1.shape[0], dtype=xp.bool, device=device(ar1))
+            for a in ar2:
+                mask |= ar1 == a
+        return mask
+
+    if not assume_unique:
+        ar1, rev_idx = xp.unique_inverse(ar1)
+        ar2 = xp.unique_values(ar2)
+
+    ar = xp.concat((ar1, ar2))
+    device_ = device(ar)
+    # We need this to be a stable sort.
+    order = xp.argsort(ar, stable=True)
+    reverse_order = xp.argsort(order, stable=True)
+    sar = xp.take(ar, order, axis=0)
+    if invert:
+        bool_ar = sar[1:] != sar[:-1]
+    else:
+        bool_ar = sar[1:] == sar[:-1]
+    flag = xp.concat((bool_ar, xp.asarray([invert], device=device_)))
+    ret = xp.take(flag, reverse_order, axis=0)
+
+    if assume_unique:
+        return ret[: ar1.shape[0]]
+    else:
+        return xp.take(ret, rev_idx, axis=0)

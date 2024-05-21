@@ -1,4 +1,4 @@
-"""Calibration of predicted probabilities."""
+"""Methods for calibrating predicted probabilities."""
 
 # Author: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 #         Balazs Kegl <balazs.kegl@gmail.com>

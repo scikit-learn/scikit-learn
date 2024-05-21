@@ -307,8 +307,14 @@ build_metadata_list = [
             "plotly",
             "polars",
             "pooch",
+            "sphinx-remove-toctrees",
+            "sphinx-design",
+            "pydata-sphinx-theme",
         ],
-        "pip_dependencies": ["sphinxext-opengraph"],
+        "pip_dependencies": [
+            "sphinxext-opengraph",
+            "sphinxcontrib-sass",
+        ],
         "package_constraints": {
             "python": "3.9",
             "numpy": "min",
@@ -325,6 +331,11 @@ build_metadata_list = [
             "sphinxext-opengraph": "min",
             "plotly": "min",
             "polars": "min",
+            "pooch": "min",
+            "sphinx-design": "min",
+            "sphinxcontrib-sass": "min",
+            "sphinx-remove-toctrees": "min",
+            "pydata-sphinx-theme": "min",
         },
     },
     {
@@ -349,8 +360,15 @@ build_metadata_list = [
             "polars",
             "pooch",
             "sphinxext-opengraph",
+            "sphinx-remove-toctrees",
+            "sphinx-design",
+            "pydata-sphinx-theme",
         ],
-        "pip_dependencies": ["jupyterlite-sphinx", "jupyterlite-pyodide-kernel"],
+        "pip_dependencies": [
+            "jupyterlite-sphinx",
+            "jupyterlite-pyodide-kernel",
+            "sphinxcontrib-sass",
+        ],
         "package_constraints": {
             "python": "3.9",
         },
@@ -426,7 +444,7 @@ def execute_command(command_list):
     )
 
     out, err = proc.communicate()
-    out, err = out.decode(), err.decode()
+    out, err = out.decode(errors="replace"), err.decode(errors="replace")
 
     if proc.returncode != 0:
         command_str = " ".join(command_list)
