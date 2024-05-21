@@ -714,7 +714,7 @@ def test_standard_check_array_of_inverse_transform():
     ],
     ids=_get_check_estimator_ids,
 )
-def test_scaler_array_api_compliance(
+def test_preprocessing_array_api_compliance(
     estimator, check, array_namespace, device, dtype_name
 ):
     name = estimator.__class__.__name__
