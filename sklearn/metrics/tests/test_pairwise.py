@@ -1629,10 +1629,10 @@ def test_nan_euclidean_constant_input_argmin():
     X_nan = [[np.nan, np.nan], [np.nan, np.nan], [np.nan, np.nan]]
     argmin_nan = pairwise_distances_argmin(X_nan, X_nan, metric="nan_euclidean")
 
-    X_const = [[np.nan, np.nan], [np.nan, np.nan], [np.nan, np.nan]]
+    X_const = [[0, 0], [0, 0], [0, 0]]
     argmin_const = pairwise_distances_argmin(X_const, X_const, metric="nan_euclidean")
 
-    assert (argmin_nan == argmin_const).all()
+    assert_allclose(argmin_nan, argmin_const)
 
 
 @pytest.mark.parametrize(
