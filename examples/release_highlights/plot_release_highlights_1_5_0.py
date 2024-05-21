@@ -26,9 +26,9 @@ or with conda::
 # -------------------------------------------------------------------------------
 # All binary classifiers of scikit-learn use a fixed decision threshold of 0.5
 # to convert probability estimates (i.e. output of `predict_proba`) into class
-# predictions. However, 0.5 may not always be the optimal threshold for a given
-# problem. :class:`~model_selection.FixedThresholdClassifier` allows wrapping
-# any binary classifier and setting a custom decision threshold.
+# predictions. However, 0.5 is almost never the desired threshold for a given
+# problem. :class:`~model_selection.FixedThresholdClassifier` allows wrapping any
+# binary classifier and setting a custom decision threshold.
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import confusion_matrix
