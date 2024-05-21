@@ -967,8 +967,8 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
        accuracy of prediction algorithms for classification: an overview.
        <10.1093/bioinformatics/16.5.412>`
 
-    .. [2] `Wikipedia entry for the Matthews Correlation Coefficient
-       <https://en.wikipedia.org/wiki/Matthews_correlation_coefficient>`_.
+    .. [2] `Wikipedia entry for the Matthews Correlation Coefficient (phi coefficient)
+       <https://en.wikipedia.org/wiki/Phi_coefficient>`_.
 
     .. [3] `Gorodkin, (2004). Comparing two K-category assignments by a
         K-category correlation coefficient
