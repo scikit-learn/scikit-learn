@@ -1,8 +1,4 @@
-"""
-The :mod:`sklearn.datasets` module includes utilities to load datasets,
-including methods to load and fetch popular reference datasets. It also
-features some artificial data generators.
-"""
+"""Utilities to load popular datasets and artificial data generators."""
 
 import textwrap
 
