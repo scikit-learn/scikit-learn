@@ -1266,6 +1266,8 @@ API_REFERENCE = {
                 "description": _get_submodule("sklearn.utils", "discovery"),
                 "autosummary": [
                     "discovery.all_displays",
+                    "discovery.all_estimators",
+                    "discovery.all_functions",
                 ],
             },
             {
@@ -1282,6 +1284,8 @@ API_REFERENCE = {
                 "autosummary": [
                     "parallel.Parallel",
                     "parallel.delayed",
+                    "parallel_backend",
+                    "register_parallel_backend",
                 ],
             },
         ],
@@ -1324,13 +1328,4 @@ DEPRECATED_API_REFERENCE = {
 }
 """
 
-DEPRECATED_API_REFERENCE = {
-    "1.6": [
-        "utils.parallel_backend",
-        "utils.register_parallel_backend",
-    ],
-    "1.7": [
-        "utils.discovery.all_estimators",
-        "utils.discovery.all_functions",
-    ],
-}  # type: ignore
+DEPRECATED_API_REFERENCE = {}  # type: ignore
