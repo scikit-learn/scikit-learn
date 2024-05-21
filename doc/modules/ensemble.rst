@@ -103,7 +103,8 @@ Available losses for **regression** are:
 - 'squared_error', which is the default loss;
 - 'absolute_error', which is less sensitive to outliers than the squared error;
 - 'poisson', which is well suited to model counts and frequencies;
-- 'quantile' that allows for estimating prediction intervals.
+- 'quantile', which allows for estimating a conditional quantile that can later
+  be used to predict confidence intervals.
 
 For **classification**, 'log_loss' is the only option. For binary classification
 it uses the binary log loss, also known as binomial deviance or binary
