@@ -39,7 +39,7 @@ X, y = make_classification(n_samples=10_000, weights=[0.9, 0.1], random_state=0)
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
 classifier_05 = LogisticRegression(C=1e6, random_state=0).fit(X_train, y_train)
-_ = ConfusionMatrixDisplay.from_estimator(classifier_05, X_test, y_test).plot()
+_ = ConfusionMatrixDisplay.from_estimator(classifier_05, X_test, y_test)
 
 # %%
 # Lowering the threshold, i.e. allowing more samples to be classified as the positive
