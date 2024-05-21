@@ -979,8 +979,8 @@ def check_scoring(estimator=None, scoring=None, *, allow_none=False, raise_exc=T
         If `scoring` represents multiple scores, one can use:
 
         - a list, tuple or set of unique strings;
-        - a callable returning a dictionary where the keys are the metric
-          names and the values are the metric scorers;
+        - a callable returning a dictionary where the keys are the metric names and the
+          values are the metric scorers;
         - a dictionary with metric names as keys and callables a values. The callables
           need to have the signature `callable(estimator, X, y)`.
 
@@ -1000,14 +1000,13 @@ def check_scoring(estimator=None, scoring=None, *, allow_none=False, raise_exc=T
 
         This applies if `scoring` is list, tuple, set, or dict. Ignored if `scoring` is
         a str or a callable.
-        
+
         .. versionadded:: 1.6
 
     Returns
     -------
     scoring : callable
-        A scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
+        A scorer callable object / function with signature ``scorer(estimator, X, y)``.
 
     Examples
     --------
@@ -1019,6 +1018,22 @@ def check_scoring(estimator=None, scoring=None, *, allow_none=False, raise_exc=T
     >>> scorer = check_scoring(classifier, scoring='accuracy')
     >>> scorer(classifier, X, y)
     0.96...
+
+    >>> from sklearn.metrics import make_scorer, accuracy_score, mean_squared_log_error
+    >>> X, y = load_iris(return_X_y=True)
+    >>> y *= -1
+    >>> clf = DecisionTreeClassifier().fit(X, y)
+    >>> scoring = {
+    >>>     "accuracy": make_scorer(accuracy_score),
+    >>>     "mean_squared_log_error": make_scorer(mean_squared_log_error),
+    >>> }
+    >>> scoring_call = check_scoring(estimator=clf, scoring=scoring, raise_exc=False)
+    >>> scores = scoring_call(clf, X, y)
+    >>> scores
+    {'accuracy': 1.0,
+    'mean_squared_log_error': 'Traceback (most recent call last): ... raise \
+    ValueError(ValueError: Mean Squared Logarithmic Error cannot be used when targets \
+    contain negative values.'} # doctest: +SKIP
     """
     if isinstance(scoring, str):
         return get_scorer(scoring)
