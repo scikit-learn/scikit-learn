@@ -74,6 +74,13 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123455 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.tree`
+...................
+
+- |Fix| Escape double quotes for labels and feature names when exporting trees to
+  Graphviz format.
+  :pr:`17575` by :user:`Santiago M. Mola <smola>`.
+
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:
 

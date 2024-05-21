@@ -400,8 +400,8 @@ class _BaseTreeExporter:
 
         return node_string + characters[5]
 
-    def str_escape(self, str):
-        return str
+    def str_escape(self, string):
+        return string
 
 
 class _DOTTreeExporter(_BaseTreeExporter):
@@ -577,9 +577,9 @@ class _DOTTreeExporter(_BaseTreeExporter):
                 # Add edge to parent
                 self.out_file.write("%d -> %d ;\n" % (parent, node_id))
 
-    def str_escape(self, str):
+    def str_escape(self, string):
         # override default escaping for graphviz
-        return str.replace('"', r"\"")
+        return string.replace('"', r"\"")
 
 
 class _MPLTreeExporter(_BaseTreeExporter):
