@@ -244,7 +244,7 @@ def test_warn_non_normalized_priors():
     ):
         clf.fit(X, y)
 
-    assert_allclose(clf.class_priors_, np.asarray(priors) / np.asarray(priors).sum())
+    assert_allclose(clf.class_prior_, np.asarray(priors) / np.asarray(priors).sum())
 
 
 @pytest.mark.parametrize(
