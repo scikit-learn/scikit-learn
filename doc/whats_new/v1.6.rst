@@ -80,7 +80,7 @@ Changelog
 - |Enhancement| add the parameter `prefit` to
   :class:`model_selection.FixedThresholdClassifier` allowing to use a pre-fitted
   estimator without re-fitting it.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`29067` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:
