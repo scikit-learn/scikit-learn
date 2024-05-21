@@ -991,8 +991,8 @@ def check_scoring(estimator=None, scoring=None, *, allow_none=False, raise_exc=T
         estimator has no `score` method.
 
     raise_exc : bool, default=True
-        Whether to raise an exception if a subset of the scorers in multimetric scoring
-        fails or to return an error code.
+        Whether to raise an exception (if a subset of the scorers in multimetric scoring
+        fails) or to return an error code.
 
         - If set to `True`, raises the failing scorer's exception.
         - If set to `False`, a formatted string of the exception details is passed as
