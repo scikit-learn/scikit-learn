@@ -120,8 +120,6 @@ def test_predict_proba(n_classes):
     assert 0 <= probabilities.all() <= 1
 
 
-# TODO(1.5): Remove filterwarnings when support for some metrics is removed
-@pytest.mark.filterwarnings("ignore:Support for distance metrics:FutureWarning:sklearn")
 def test_iris():
     # Check consistency on dataset iris.
     for metric in ("euclidean", "manhattan"):

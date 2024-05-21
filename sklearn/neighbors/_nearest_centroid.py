@@ -64,7 +64,7 @@ class NearestCentroid(
         The class prior probabilities. By default, the class proportions are
         inferred from the training data.
 
-        .. versionadded:: 1.4
+        .. versionadded:: 1.6
 
     Attributes
     ----------
@@ -88,17 +88,17 @@ class NearestCentroid(
     deviations_ : ndarray of shape (n_classes, n_features)
         Deviation of each class using soft thresholding.
 
-        .. versionadded:: 1.4
+        .. versionadded:: 1.6
 
     within_class_std_dev_ : ndarray of shape (n_features,)
         Within-class standard deviation with unshrunked centroids.
 
-        .. versionadded:: 1.4
+        .. versionadded:: 1.6
 
     class_priors_ : ndarray of shape (n_classes,)
         The class prior probabilities.
 
-        .. versionadded:: 1.4
+        .. versionadded:: 1.6
 
     See Also
     --------
@@ -184,7 +184,7 @@ class NearestCentroid(
         n_classes = classes.size
         if n_classes < 2:
             raise ValueError(
-                "The number of classes has to be greater than one;got %d class"
+                "The number of classes has to be greater than one; got %d class"
                 % (n_classes)
             )
 
