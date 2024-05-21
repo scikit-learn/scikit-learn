@@ -281,6 +281,9 @@ def fetch_lfw_people(
     Features            real, between 0 and 255
     =================   =======================
 
+    For a usage example of this dataset, see
+    :ref:`sphx_glr_auto_examples_applications_plot_face_recognition.py`.
+
     Read more in the :ref:`User Guide <labeled_faces_in_the_wild_dataset>`.
 
     Parameters

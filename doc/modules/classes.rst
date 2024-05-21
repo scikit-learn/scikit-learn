@@ -578,8 +578,6 @@ From text
    :template: function.rst
 
    feature_selection.chi2
-   feature_selection.info_gain
-   feature_selection.info_gain_ratio
    feature_selection.f_classif
    feature_selection.f_regression
    feature_selection.r_regression
