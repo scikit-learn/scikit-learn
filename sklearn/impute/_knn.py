@@ -279,7 +279,7 @@ class KNNImputer(_BaseImputer):
         X_indicator = super()._transform_indicator(mask)
 
         # Removes columns where the training data is all nan
-        if not np.any(mask):
+        if not np.any(mask[:, valid_mask]):
             # No missing values in X
             if self.keep_empty_features:
                 Xc = X
