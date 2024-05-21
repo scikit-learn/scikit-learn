@@ -84,6 +84,8 @@ Changelog
   now work with `metric="nan_euclidean"`, supporting `nan` inputs.
   :pr:`25330` by :user:`Carlo Lemos <vitaliset>`.
 
+.. rubric:: Code and documentation contributors
+
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:
 
