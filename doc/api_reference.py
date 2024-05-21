@@ -121,8 +121,8 @@ API_REFERENCE = {
                     "TransformerMixin",
                     "clone",
                     "is_classifier",
-                    "is_regressor",
                     "is_clusterer",
+                    "is_regressor",
                 ],
             }
         ],
