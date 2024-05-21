@@ -1,4 +1,4 @@
-"""Base classes for all estimators."""
+"""Base classes for all estimators and various utility functions."""
 
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD 3 clause
@@ -1353,9 +1353,8 @@ class _UnstableArchMixin:
 
     def _more_tags(self):
         return {
-            "non_deterministic": _IS_32BIT or platform.machine().startswith(
-                ("ppc", "powerpc")
-            )
+            "non_deterministic": _IS_32BIT
+            or platform.machine().startswith(("ppc", "powerpc"))
         }
 
 
