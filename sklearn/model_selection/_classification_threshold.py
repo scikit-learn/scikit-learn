@@ -1,5 +1,6 @@
 from collections.abc import MutableMapping
 from numbers import Integral, Real
+from warnings import warn
 
 import numpy as np
 
@@ -931,6 +932,17 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         best_idx = objective_scores.argmax()
         self.best_score_ = objective_scores[best_idx]
         self.best_threshold_ = decision_thresholds[best_idx]
+        if (
+            objective_scores.max() - objective_scores.min()
+            <= np.finfo(objective_scores.dtype).eps
+        ):
+            warn(
+                f"The objective metric {self.scoring!r} is constant at "
+                f"{self.best_score_} across all thresholds. Please instead pass a "
+                "metric that varies with the decision threshold, otherwise the "
+                "threshold will be set to a meaningless value.",
+                UserWarning,
+            )
         if self.store_cv_results:
             self.cv_results_ = {
                 "thresholds": decision_thresholds,
@@ -996,8 +1008,15 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
 
     def _get_curve_scorer(self):
         """Get the curve scorer based on the objective metric used."""
-        scoring = check_scoring(self.estimator, scoring=self.scoring)
+        scorer = check_scoring(self.estimator, scoring=self.scoring)
+        if scorer._response_method != "predict":
+            raise ValueError(
+                f"{self.__class__.__name__} expects a scoring metric that evaluates "
+                f"the thresholded predictions of a binary classifier, got: "
+                f"{self.scoring!r} which expects unthreshold predictions computed by "
+                f"the {scorer._response_method!r} method(s) of the classifier."
+            )
         curve_scorer = _CurveScorer.from_scorer(
-            scoring, self._get_response_method(), self.thresholds
+            scorer, self._get_response_method(), self.thresholds
         )
         return curve_scorer

@@ -1,3 +1,5 @@
+import re
+
 import numpy as np
 import pytest
 
@@ -682,3 +684,50 @@ def test_fixed_threshold_classifier_metadata_routing():
     classifier_default_threshold = FixedThresholdClassifier(estimator=clone(classifier))
     classifier_default_threshold.fit(X, y, sample_weight=sample_weight)
     assert_allclose(classifier_default_threshold.estimator_.coef_, classifier.coef_)
+
+
+@pytest.mark.parametrize(
+    "scoring_name", ["roc_auc", "average_precision", "neg_log_loss"]
+)
+def test_error_on_unthresholded_classification_metrics(scoring_name):
+    X, y = make_classification(random_state=0)
+    estimator = LogisticRegression()
+    if scoring_name in ("roc_auc", "average_precision"):
+        expected_method_names = "('decision_function', 'predict_proba')"
+    else:
+        expected_method_names = "'predict_proba'"
+
+    err_msg = re.escape(
+        "TunedThresholdClassifierCV expects a scoring metric that evaluates the "
+        f"thresholded predictions of a binary classifier, got: '{scoring_name}' "
+        "which expects unthreshold predictions computed by the "
+        f"{expected_method_names} method(s) of the classifier."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        TunedThresholdClassifierCV(estimator, scoring=scoring_name).fit(X, y)
+
+
+def test_warn_on_constant_scores():
+    X, y = make_classification(random_state=0)
+    estimator = LogisticRegression()
+
+    def constant_score_func(y_true, y_pred):
+        return 1.0
+
+    scorer = make_scorer(constant_score_func, response_method="predict")
+
+    warn_msg = re.escape(
+        "The objective metric make_scorer(constant_score_func, "
+        "response_method='predict') is constant at 1.0 across all thresholds. Please "
+        "instead pass a metric that varies with the decision threshold, otherwise "
+        "the threshold will be set to a meaningless value."
+    )
+    with pytest.warns(UserWarning, match=warn_msg):
+        tuned_clf = TunedThresholdClassifierCV(
+            estimator, scoring=scorer, store_cv_results=True
+        ).fit(X, y)
+        assert_allclose(tuned_clf.cv_results_["scores"], np.ones(shape=100))
+        # The threshold is set to the smallest predict proba observed in CV
+        # because it is the first threshold in the sorted thresholds array but
+        # it has the same score as the other thresholds.
+        assert tuned_clf.best_threshold_ < 1e-3
