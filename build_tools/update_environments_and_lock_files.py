@@ -137,7 +137,7 @@ build_metadata_list = [
         "platform": "osx-64",
         "channel": "defaults",
         "conda_dependencies": remove_from(
-            common_dependencies, ["cython", "threadpoolctl"]
+            common_dependencies, ["cython", "threadpoolctl", "meson-python"]
         )
         + ["ccache"],
         "package_constraints": {
@@ -147,9 +147,9 @@ build_metadata_list = [
             # channel.
             "scipy": "<1.12",
         },
-        # TODO: put cython and threadpoolctl back to conda dependencies when required
-        # version is available on the main channel
-        "pip_dependencies": ["cython", "threadpoolctl"],
+        # TODO: put cython, threadpoolctl and meson-python back to conda
+        # dependencies when required version is available on the main channel
+        "pip_dependencies": ["cython", "threadpoolctl", "meson-python"],
     },
     {
         "name": "pymin_conda_defaults_openblas",
