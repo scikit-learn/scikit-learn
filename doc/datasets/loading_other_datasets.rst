@@ -1,7 +1,3 @@
-.. Places parent toc into the sidebar
-
-:parenttoc: True
-
 .. _loading_other_datasets:
 
 Loading other datasets
@@ -37,9 +33,9 @@ and pipelines on 2D data.
   if you plan to use ``matplotlib.pyplpt.imshow``, don't forget to scale to the range
   0 - 1 as done in the following example.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_cluster_plot_color_quantization.py`
+* :ref:`sphx_glr_auto_examples_cluster_plot_color_quantization.py`
 
 .. _libsvm_loader:
 
@@ -72,11 +68,10 @@ features::
   ...     "/path/to/test_dataset.txt", n_features=X_train.shape[1])
   ...                                                         # doctest: +SKIP
 
-.. topic:: Related links:
+.. rubric:: Related links
 
- _`Public datasets in svmlight / libsvm format`: https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets
-
- _`Faster API-compatible implementation`: https://github.com/mblondel/svmlight-loader
+- `Public datasets in svmlight / libsvm format`: https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets
+- `Faster API-compatible implementation`: https://github.com/mblondel/svmlight-loader
 
 ..
     For doctests:
@@ -219,11 +214,11 @@ identifies the dataset::
   '969'
 
 
-.. topic:: References:
+.. rubric:: References
 
- * :arxiv:`Vanschoren, van Rijn, Bischl and Torgo. "OpenML: networked science in
-   machine learning" ACM SIGKDD Explorations Newsletter, 15(2), 49-60, 2014.
-   <1407.7722>`
+* :arxiv:`Vanschoren, van Rijn, Bischl and Torgo. "OpenML: networked science in
+  machine learning" ACM SIGKDD Explorations Newsletter, 15(2), 49-60, 2014.
+  <1407.7722>`
 
 .. _openml_parser:
 
