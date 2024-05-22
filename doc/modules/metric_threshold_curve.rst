@@ -6,6 +6,10 @@ Metric threshold curve
 
 .. currentmodule:: sklearn.inspection
 
+TODO: It makes much more sense to move this to
+`doc\modules\classification_threshold.rst`. Let's finish the code before
+that. :)
+
 Metric threshold curve is a model inspection technique that can be used
 for any :term:`fitted` binary classification :term:`estimator`. The metric
 threshold curve is defined to be how the threshold-dependent metric behaves

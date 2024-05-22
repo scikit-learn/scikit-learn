@@ -1,6 +1,5 @@
 """The :mod:`sklearn.inspection` module includes tools for model inspection."""
 
-from ._metric_threshold_curve import metric_threshold_curve
 from ._partial_dependence import partial_dependence
 from ._permutation_importance import permutation_importance
 from ._plot.decision_boundary import DecisionBoundaryDisplay
@@ -11,5 +10,4 @@ __all__ = [
     "permutation_importance",
     "PartialDependenceDisplay",
     "DecisionBoundaryDisplay",
-    "metric_threshold_curve",
 ]

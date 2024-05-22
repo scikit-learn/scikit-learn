@@ -23,25 +23,23 @@ from ..utils.validation import (
     {
         "y_true": ["array-like"],
         "y_score": ["array-like"],
-        "score_func": [callable],
-        "threshold_grid": [
+        "scoring": [callable],
+        "thresholds": [
             Interval(Integral, 3, None, closed="left"),
             "array-like",
             None,
         ],
-        "pos_label": [Real, str, "boolean", None],
-        "sample_weight": ["array-like", None],
+        "scoring_kwargs": [dict, None],
     },
     prefer_skip_nested_validation=True,
 )
-def metric_threshold_curve(
+def decision_threshold_curve(
     y_true,
     y_score,
-    score_func,
+    scoring,
     *,
-    threshold_grid=101,
-    pos_label=None,
-    sample_weight=None,
+    thresholds=101,
+    scoring_kwargs={},
 ):
     """Compute the threshold-dependent metric of interest per threshold.
 
@@ -59,21 +57,17 @@ def metric_threshold_curve(
     y_score : array-like of shape (n_samples,), default=None
         Estimated probabilities or output of a decision function.
 
-    score_func : callable
-        Threshold dependent score function (or loss function) with signature
-        `score_func(y, y_pred, sample_weight, **kwargs)`.
+    scoring : callable
+        Threshold-dependent score function (or loss function) with signature
+        `scoring(y, y_pred, **scoring_kwargs)`.
 
-    threshold_grid : array-like, int or None, default=101
+    thresholds : array-like or int, default=101
         Values of threhsold for each score calculation. If int then
-        `threshold_grid` percentiles of `y_score` are selected. If `None` then
-        all possible thresholds are selected. If int is lower then
-        `len(set(y_score))` then all possible thresholds are selected.
+        `thresholds` percentiles of `y_score` are selected. If int is lower
+        then `len(set(y_score))` then all possible thresholds are selected.
 
-    pos_label : int, float, bool or str, default=None
-        The label of the positive class.
-
-    sample_weight : array-like of shape (n_samples,), default=None
-        Sample weights.
+    scoring_kwargs : dict, default=None
+        Keyword arguments to pass to specified `scoring` function.
 
     Returns
     -------
@@ -94,11 +88,10 @@ def metric_threshold_curve(
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.metrics import accuracy_score
-    >>> from sklearn.inspection import metric_threshold_curve
+    >>> from sklearn.metrics import accuracy_score, decision_threshold_curve
     >>> y_true = np.array([0, 0, 1, 1])
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> accuracy_values, thresholds = metric_threshold_curve(
+    >>> accuracy_values, thresholds = decision_threshold_curve(
     ...     y_true, y_scores, accuracy_score)
     >>> thresholds
     array([0.1 , 0.35, 0.4 , 0.8 ])
@@ -107,16 +100,23 @@ def metric_threshold_curve(
     """
     # Check to make sure y_true is valid.
     y_type = type_of_target(y_true, input_name="y_true")
+    pos_label = scoring_kwargs.get("pos_label")
     if not (y_type == "binary" or (y_type == "multiclass" and pos_label is not None)):
+        if y_type == "multiclass":
+            raise ValueError(
+                "In a multiclass scenario, you must pass a `pos_label` to `scoring_kwargs`."
+            )
         raise ValueError("{0} format is not supported".format(y_type))
 
-    check_consistent_length(y_true, y_score, sample_weight)
+    sample_weight = scoring_kwargs.get("sample_weight")
+    check_consistent_length( y_true, y_score, sample_weight)
     y_true = column_or_1d(y_true)
     y_score = column_or_1d(y_score)
     assert_all_finite(y_true)
     assert_all_finite(y_score)
 
     # Filter out zero-weighted samples, as they should not impact the result.
+
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
         sample_weight = _check_sample_weight(sample_weight, y_true)
@@ -124,7 +124,7 @@ def metric_threshold_curve(
         y_true = y_true[nonzero_weight_mask]
         y_score = y_score[nonzero_weight_mask]
         sample_weight = sample_weight[nonzero_weight_mask]
-
+    
     pos_label = _check_pos_label_consistency(pos_label, y_true)
 
     # Make y_true a boolean vector.
@@ -136,14 +136,12 @@ def metric_threshold_curve(
     y_true = y_true[desc_score_indices]
     if sample_weight is not None:
         sample_weight = sample_weight[desc_score_indices]
-
+    
+    if "sample_weight" in scoring_kwargs:
+        scoring_kwargs["sample_weight"] = sample_weight
+    
     # Logic to see if we need to use all possible thresholds (distinct values).
-    all_thresholds = False
-    if threshold_grid is None:
-        all_thresholds = True
-    elif isinstance(threshold_grid, int):
-        if len(set(y_score)) < threshold_grid:
-            all_thresholds = True
+    all_thresholds = isinstance(thresholds, int) and len(set(y_score)) < thresholds
 
     if all_thresholds:
         # y_score typically has many tied values. Here we extract
@@ -152,25 +150,25 @@ def metric_threshold_curve(
         distinct_value_indices = np.where(np.diff(y_score))[0]
         threshold_idxs = np.r_[distinct_value_indices, y_true.size - 1]
         thresholds = y_score[threshold_idxs[::-1]]
-    elif isinstance(threshold_grid, int):
+    elif isinstance(thresholds, int):
         # It takes representative score points to calculate the metric
         # with these thresholds.
         thresholds = np.percentile(
-            list(set(y_score)), np.linspace(0, 100, threshold_grid)
+            list(set(y_score)), np.linspace(0, 100, thresholds)
         )
     else:
-        # If threshold_grid is an array then run some checks and sort
+        # If thresholds is an array then run some checks and sort
         # it for consistency.
-        threshold_grid = column_or_1d(threshold_grid)
-        assert_all_finite(threshold_grid)
-        thresholds = np.sort(threshold_grid)
+        thresholds = column_or_1d(thresholds)
+        assert_all_finite(thresholds)
+        thresholds = np.sort(thresholds)
 
     # For each threshold calculates the metric.
     metric_values = []
     for threshold in thresholds:
         preds_threshold = (y_score > threshold).astype(int)
         metric_values.append(
-            score_func(y_true, preds_threshold, sample_weight=sample_weight)
+            scoring(y_true, preds_threshold, **scoring_kwargs)
         )
     # TODO: should we multithread the metric calculations?
 
