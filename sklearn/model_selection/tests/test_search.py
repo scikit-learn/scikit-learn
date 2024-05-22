@@ -2641,3 +2641,35 @@ def test_score_rejects_params_with_no_routing_enabled(SearchCV, param_search):
 
 # End of Metadata Routing Tests
 # =============================
+
+
+def test_cv_results_dtype_issue_29074():
+    """Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/29074"""
+
+    class MetaEstimator(BaseEstimator, ClassifierMixin):
+        def __init__(self, base_clf, parameter=None):
+            self.base_clf = base_clf
+            self.parameter = parameter
+
+        def fit(self, X, y=None):
+            self.base_clf.fit(X, y)
+            return self
+
+        def predict(self, X):
+            return self.base_clf.predict(X)
+
+        def score(self, X, y):
+            return self.base_clf.score(X, y)
+
+    param_grid = {
+        "parameter": [None, {"option": "A"}, {"option": "B"}],
+    }
+    grid_search = GridSearchCV(
+        estimator=MetaEstimator(LogisticRegression()),
+        param_grid=param_grid,
+        cv=3,
+    )
+
+    X, y = make_blobs(random_state=0)
+    grid_search.fit(X, y)
+    assert grid_search.cv_results_["param_parameter"].dtype == object
