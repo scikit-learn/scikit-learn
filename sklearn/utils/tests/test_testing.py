@@ -808,7 +808,9 @@ def test_convert_container(
         elif hasattr(container_converted, "dtypes"):
             converted_dtype = container_converted.dtypes[0]
         else:
-            assert False, f"{type(container_converted).__name__} has no dtype"  # noqa
+            assert (
+                False
+            ), f"{type(container_converted).__name__} has no dtype"  # pragma: no cover
         assert (
             converted_dtype == target_dtype
         ), f"Expected {target_dtype}, got {converted_dtype}"
