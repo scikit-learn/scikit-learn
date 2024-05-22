@@ -971,6 +971,41 @@ def test_convert_container_df_to_df(
         assert df_to.column_names == target_column_names
 
 
+@pytest.mark.parametrize("constructor_lib_from", ["pandas", "polars"])
+@pytest.mark.parametrize("constructor_lib_to", ["pandas", "polars"])
+@pytest.mark.parametrize(
+    "dtype, polars_dtype",
+    [
+        (np.int32, lambda: pytest.importorskip("polars").Int32),
+        (np.float64, lambda: pytest.importorskip("polars").Float64),
+    ],
+)
+def test_convert_container_series_to_series(
+    constructor_lib_from, constructor_lib_to, dtype, polars_dtype
+):
+    """Check that we can convert a Series to another Series."""
+    lib_to = pytest.importorskip(constructor_lib_to)
+
+    ser_from = _convert_container(
+        [1, 2, 3, 4],
+        "series",
+        constructor_lib=constructor_lib_from,
+    )
+
+    target_dtype = dtype
+    if constructor_lib_to == "polars":
+        target_dtype = polars_dtype()
+
+    ser_to = _convert_container(
+        ser_from,
+        "series",
+        constructor_lib=constructor_lib_to,
+        dtype=target_dtype,
+    )
+    assert isinstance(ser_to, lib_to.Series)
+    assert ser_to.dtype == target_dtype
+
+
 def test_raises():
     # Tests for the raises context manager
 
