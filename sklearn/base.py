@@ -1423,6 +1423,8 @@ def is_regressor(estimator):
 def is_clusterer(estimator):
     """Return True if the given estimator is (probably) a clusterer.
 
+    .. versionadded:: 1.6
+
     Parameters
     ----------
     estimator : object
