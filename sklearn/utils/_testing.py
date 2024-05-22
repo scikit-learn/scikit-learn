@@ -986,12 +986,12 @@ def _convert_container_to_dataframe(
                 )
             if dtype is not None or column_names is not None:
                 new_schema = container.schema
-                for i, field in enumerate(container.schema):
-                    if dtype is not None:
+                if dtype is not None:
+                    for i, field in enumerate(container.schema):
                         new_schema = new_schema.set(i, field.with_type(dtype))
-                    if column_names is not None:
-                        new_schema = new_schema.set(i, field.with_name(column_names[i]))
-                container = container.cast(new_schema)
+                    container = container.cast(new_schema)
+                if column_names is not None:
+                    container = container.rename_columns(column_names)
         else:
             if column_names is None:
                 column_names = [f"col{i}" for i in range(container.shape[1])]

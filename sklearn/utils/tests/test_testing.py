@@ -906,6 +906,71 @@ def test_convert_container_sparse_to_sparse(
     assert X_converted.format == sparse_format
 
 
+@pytest.mark.parametrize("constructor_lib_from", ["pandas", "polars", "pyarrow"])
+@pytest.mark.parametrize("constructor_lib_to", ["pandas", "polars", "pyarrow"])
+@pytest.mark.parametrize("column_names", [None, ["C", "D"]])
+@pytest.mark.parametrize(
+    "dtype, polars_dtype, pyarrow_dtype",
+    [
+        (
+            np.int32,
+            lambda: pytest.importorskip("polars").Int32,
+            lambda: pytest.importorskip("pyarrow").int32(),
+        ),
+        (
+            np.float64,
+            lambda: pytest.importorskip("polars").Float64,
+            lambda: pytest.importorskip("pyarrow").float64(),
+        ),
+    ],
+)
+def test_convert_container_df_to_df(
+    constructor_lib_from,
+    constructor_lib_to,
+    column_names,
+    dtype,
+    polars_dtype,
+    pyarrow_dtype,
+):
+    """Check that we can convert a DataFrame to another DataFrame."""
+    lib_to = pytest.importorskip(constructor_lib_to)
+
+    column_names_from = ["A", "B"]
+    df_from = _convert_container(
+        [[1, 2], [3, 4]],
+        "dataframe",
+        constructor_lib=constructor_lib_from,
+        column_names=column_names_from,
+    )
+
+    target_dtype = dtype
+    if constructor_lib_to == "polars":
+        target_dtype = polars_dtype()
+    elif constructor_lib_to == "pyarrow":
+        target_dtype = pyarrow_dtype()
+
+    df_to = _convert_container(
+        df_from,
+        "dataframe",
+        column_names=column_names,
+        constructor_lib=constructor_lib_to,
+        dtype=target_dtype,
+    )
+    target_column_names = column_names_from if column_names is None else column_names
+    if constructor_lib_to == "pandas":
+        assert isinstance(df_to, lib_to.DataFrame)
+        assert df_to.dtypes.iloc[0] == target_dtype
+        assert df_to.columns.to_list() == target_column_names
+    elif constructor_lib_to == "polars":
+        assert isinstance(df_to, lib_to.DataFrame)
+        assert df_to.dtypes[0] == target_dtype
+        assert df_to.columns == target_column_names
+    elif constructor_lib_to == "pyarrow":
+        assert isinstance(df_to, lib_to.Table)
+        assert df_to.schema[0].type == target_dtype
+        assert df_to.column_names == target_column_names
+
+
 def test_raises():
     # Tests for the raises context manager
 
