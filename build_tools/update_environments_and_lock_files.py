@@ -82,12 +82,7 @@ common_dependencies = common_dependencies_without_coverage + [
 
 docstring_test_dependencies = ["sphinx", "numpydoc"]
 
-default_package_constraints = {
-    # TODO: somehow pytest 8 does not seem to work with meson editable
-    # install. Exit code is 5, i.e. no test collected
-    # This would be fixed by https://github.com/mesonbuild/meson-python/pull/569
-    "pytest": "<8",
-}
+default_package_constraints = {}
 
 
 def remove_from(alist, to_remove):
