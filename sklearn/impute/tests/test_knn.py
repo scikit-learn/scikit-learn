@@ -239,7 +239,9 @@ def test_knn_imputer_one_n_neighbors(na):
 def test_knn_imputer_all_samples_are_neighbors(na):
     X = np.array([[0, 0], [na, 2], [4, 3], [5, na], [7, 7], [na, 8], [14, 13]])
 
-    X_imputed = np.array([[0, 0], [6, 2], [4, 3], [5, 5.5], [7, 7], [6, 8], [14, 13]])
+    X_imputed = np.array(
+        [[0, 0], [6.25, 2], [4, 3], [5, 5.75], [7, 7], [6.25, 8], [14, 13]]
+    )
 
     n_neighbors = X.shape[0] - 1
     imputer = KNNImputer(n_neighbors=n_neighbors, missing_values=na)
@@ -503,6 +505,19 @@ def test_knn_imputer_not_enough_valid_distances(na, weights):
     X2 = np.array([[4, na]])
     X2_imputed = np.array([[4, 6]])
     assert_allclose(knn.transform(X2), X2_imputed)
+
+
+@pytest.mark.parametrize("na", [-1, np.nan])
+@pytest.mark.parametrize("weights", ["uniform", "distance"])
+def test_knn_imputer_nan_distance(na, weights):
+    # Samples with nan distance should excluded from mean computation
+    X_train = np.array([[1, 1], [na, 2]])
+    X_test = np.array([[0, na]])
+    X_test_expected = np.array([[0, 1]])
+
+    knn = KNNImputer(missing_values=na, n_neighbors=2, weights=weights)
+    knn.fit(X_train)
+    assert_allclose(knn.transform(X_test), X_test_expected)
 
 
 @pytest.mark.parametrize("na", [-1, np.nan])
