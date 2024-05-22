@@ -2647,22 +2647,34 @@ def test_cv_results_dtype_issue_29074():
     """Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/29074"""
 
     class MetaEstimator(BaseEstimator, ClassifierMixin):
-        def __init__(self, base_clf, parameter=None):
+        def __init__(
+            self,
+            base_clf,
+            parameter1=None,
+            parameter2=None,
+            parameter3=None,
+            parameter4=None,
+        ):
             self.base_clf = base_clf
-            self.parameter = parameter
+            self.parameter1 = parameter1
+            self.parameter2 = parameter2
+            self.parameter3 = parameter3
+            self.parameter4 = parameter4
 
         def fit(self, X, y=None):
             self.base_clf.fit(X, y)
             return self
 
-        def predict(self, X):
-            return self.base_clf.predict(X)
-
         def score(self, X, y):
             return self.base_clf.score(X, y)
 
+    # Values of param_grid are such that np.result_type gives slightly
+    # different errors, in particular ValueError and TypeError
     param_grid = {
-        "parameter": [None, {"option": "A"}, {"option": "B"}],
+        "parameter1": [None, {"option": "A"}, {"option": "B"}],
+        "parameter2": [None, [1, 2]],
+        "parameter3": [{"a": 1}],
+        "parameter4": ["str1", "str2"],
     }
     grid_search = GridSearchCV(
         estimator=MetaEstimator(LogisticRegression()),
@@ -2672,4 +2684,5 @@ def test_cv_results_dtype_issue_29074():
 
     X, y = make_blobs(random_state=0)
     grid_search.fit(X, y)
-    assert grid_search.cv_results_["param_parameter"].dtype == object
+    for param in param_grid:
+        assert grid_search.cv_results_[f"param_{param}"].dtype == object
