@@ -715,16 +715,22 @@ def test_create_memmap_backed_data(monkeypatch):
     ],
 )
 @pytest.mark.parametrize(
-    "dtype, superdtype",
+    "dtype, superdtype, polars_dtype",
     [
-        (np.int32, np.integer),
-        (np.int64, np.integer),
-        (np.float32, np.floating),
-        (np.float64, np.floating),
+        (np.int32, np.integer, lambda: pytest.importorskip("polars").Int32),
+        (np.int64, np.integer, lambda: pytest.importorskip("polars").Int64),
+        (np.float32, np.floating, lambda: pytest.importorskip("polars").Float32),
+        (np.float64, np.floating, lambda: pytest.importorskip("polars").Float64),
     ],
 )
 def test_convert_container(
-    constructor_kwargs, expected_output_type, input_type, input_shape, dtype, superdtype
+    constructor_kwargs,
+    expected_output_type,
+    input_type,
+    input_shape,
+    dtype,
+    superdtype,
+    polars_dtype,
 ):
     """
     Check that we convert the container to the right type of array with the
@@ -737,6 +743,10 @@ def test_convert_container(
 
     container = np.arange(12).reshape(input_shape)
 
+    target_dtype = dtype
+    if constructor_kwargs.get("constructor_lib") == "polars":
+        target_dtype = polars_dtype()
+
     # Certain constructor types require specific-dimensional input containers
     # None stands for no constraint
     desired_dimension = None
@@ -748,7 +758,7 @@ def test_convert_container(
     if desired_dimension is None or desired_dimension == len(input_shape):
         container_converted = _convert_container(
             input_type(container.tolist()),
-            dtype=dtype,
+            dtype=target_dtype,
             **constructor_kwargs,
         )
     else:  # dimension mismatch
@@ -759,7 +769,7 @@ def test_convert_container(
         with pytest.raises(ValueError, match=re.escape(msg)):
             _convert_container(
                 input_type(container.tolist()),
-                dtype=dtype,
+                dtype=target_dtype,
                 **constructor_kwargs,
             )
         return
@@ -799,20 +809,9 @@ def test_convert_container(
             converted_dtype = container_converted.dtypes[0]
         else:
             assert False, f"{type(container_converted).__name__} has no dtype"  # noqa
-
-        if constructor_kwargs.get("constructor_lib") == "polars":
-            # Polars has its own data types so we have to map from numpy to polars
-            import polars as pl  # polars is already imported if we reach this point
-
-            dtype_mapping = {
-                np.int32: pl.Int32,
-                np.int64: pl.Int64,
-                np.float32: pl.Float32,
-                np.float64: pl.Float64,
-            }
-            assert converted_dtype == dtype_mapping[dtype]
-        else:
-            assert converted_dtype == dtype
+        assert (
+            converted_dtype == target_dtype
+        ), f"Expected {target_dtype}, got {converted_dtype}"
 
 
 def test_convert_container_slice():

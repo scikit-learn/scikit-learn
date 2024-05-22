@@ -189,10 +189,9 @@ def test_function_transformer_raise_error_with_mixed_dtype(X_type):
     """Check that `FunctionTransformer.check_inverse` raises error on mixed dtype."""
     mapping = {"one": 1, "two": 2, "three": 3, 5: "five", 6: "six"}
     inverse_mapping = {value: key for key, value in mapping.items()}
-    dtype = "object"
 
-    data = ["one", "two", "three", "one", "one", 5, 6]
-    data = _convert_container(data, X_type, column_names=["value"], dtype=dtype)
+    data = np.array(["one", "two", "three", "one", "one", 5, 6], dtype=object)
+    data = _convert_container(data, X_type, column_names=["value"])
 
     def func(X):
         return np.array([mapping[X[i]] for i in range(X.size)], dtype=object)
@@ -202,7 +201,7 @@ def test_function_transformer_raise_error_with_mixed_dtype(X_type):
             [inverse_mapping[x] for x in X],
             X_type,
             column_names=["value"],
-            dtype=dtype,
+            dtype=object,
         )
 
     transformer = FunctionTransformer(
