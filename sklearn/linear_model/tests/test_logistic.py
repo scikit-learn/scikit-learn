@@ -1139,6 +1139,8 @@ def test_logreg_predict_proba_multinomial():
     assert clf_wrong_loss > clf_multi_loss
 
 
+# TODO(1.7): remove filterwarnings after the deprecation of multi_class
+@pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize("max_iter", np.arange(1, 5))
 @pytest.mark.parametrize("multi_class", ["ovr", "multinomial"])
 @pytest.mark.parametrize(
@@ -1176,13 +1178,9 @@ def test_max_iter(max_iter, multi_class, solver, message):
         solver=solver,
     )
     with pytest.warns(ConvergenceWarning, match=message):
-        # TODO(1.7): remove filterwarnings after the deprecation of multi_class
-        warnings.filterwarnings(
-            "ignore",
-            category=FutureWarning,
-            message="'multi_class' was deprecated in version 1.5",
-        )
         lr.fit(X, y_bin)
+
+    assert lr.n_iter_[0] == max_iter
 
 
 # TODO(1.7): remove filterwarnings after the deprecation of multi_class
