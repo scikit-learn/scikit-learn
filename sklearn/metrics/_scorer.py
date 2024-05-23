@@ -32,6 +32,7 @@ from ..utils._response import _get_response_values
 from ..utils.metadata_routing import (
     MetadataRequest,
     MetadataRouter,
+    MethodMapping,
     _MetadataRequester,
     _raise_for_params,
     _routing_enabled,
@@ -45,6 +46,7 @@ from . import (
     balanced_accuracy_score,
     brier_score_loss,
     class_likelihood_ratios,
+    d2_absolute_error_score,
     explained_variance_score,
     f1_score,
     jaccard_score,
@@ -147,6 +149,10 @@ class _MultimetricScorer:
                     scores[name] = format_exc()
         return scores
 
+    def __repr__(self):
+        scorers = ", ".join([f'"{s}"' for s in self._scorers])
+        return f"MultiMetricScorer({scorers})"
+
     def _use_cache(self, estimator):
         """Return True if using a cache is beneficial, thus when a response method will
         be called several time.
@@ -183,11 +189,31 @@ class _MultimetricScorer:
             routing information.
         """
         return MetadataRouter(owner=self.__class__.__name__).add(
-            **self._scorers, method_mapping="score"
+            **self._scorers,
+            method_mapping=MethodMapping().add(caller="score", callee="score"),
         )
 
 
 class _BaseScorer(_MetadataRequester):
+    """Base scorer that is used as `scorer(estimator, X, y_true)`.
+
+    Parameters
+    ----------
+    score_func : callable
+        The score function to use. It will be called as
+        `score_func(y_true, y_pred, **kwargs)`.
+
+    sign : int
+        Either 1 or -1 to returns the score with `sign * score_func(estimator, X, y)`.
+        Thus, `sign` defined if higher scores are better or worse.
+
+    kwargs : dict
+        Additional parameters to pass to the score function.
+
+    response_method : str
+        The method to call on the estimator to get the response values.
+    """
+
     def __init__(self, score_func, sign, kwargs, response_method="predict"):
         self._score_func = score_func
         self._sign = sign
@@ -406,13 +432,30 @@ def get_scorer(scoring):
     return scorer
 
 
-class _PassthroughScorer:
+class _PassthroughScorer(_MetadataRequester):
+    # Passes scoring of estimator's `score` method back to estimator if scoring
+    # is `None`.
+
     def __init__(self, estimator):
         self._estimator = estimator
+
+        requests = MetadataRequest(owner=self.__class__.__name__)
+        try:
+            requests.score = copy.deepcopy(estimator._metadata_request.score)
+        except AttributeError:
+            try:
+                requests.score = copy.deepcopy(estimator._get_default_requests().score)
+            except AttributeError:
+                pass
+
+        self._metadata_request = requests
 
     def __call__(self, estimator, *args, **kwargs):
         """Method that wraps estimator.score"""
         return estimator.score(*args, **kwargs)
+
+    def __repr__(self):
+        return f"{self._estimator.__class__}.score"
 
     def get_metadata_routing(self):
         """Get requested data properties.
@@ -428,13 +471,32 @@ class _PassthroughScorer:
             A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        # This scorer doesn't do any validation or routing, it only exposes the
-        # requests of the given estimator. This object behaves as a consumer
-        # rather than a router. Ideally it only exposes the score requests to
-        # the parent object; however, that requires computing the routing for
-        # meta-estimators, which would be more time consuming than simply
-        # returning the child object's requests.
-        return get_routing_for_object(self._estimator)
+        return get_routing_for_object(self._metadata_request)
+
+    def set_score_request(self, **kwargs):
+        """Set requested parameters by the scorer.
+
+        Please see :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.5
+
+        Parameters
+        ----------
+        kwargs : dict
+            Arguments should be of the form ``param_name=alias``, and `alias`
+            can be one of ``{True, False, None, str}``.
+        """
+        if not _routing_enabled():
+            raise RuntimeError(
+                "This method is only available when metadata routing is enabled."
+                " You can enable it using"
+                " sklearn.set_config(enable_metadata_routing=True)."
+            )
+
+        for param, alias in kwargs.items():
+            self._metadata_request.score.add_request(param=param, alias=alias)
+        return self
 
 
 def _check_multimetric_scoring(estimator, scoring):
@@ -723,6 +785,7 @@ neg_mean_poisson_deviance_scorer = make_scorer(
 neg_mean_gamma_deviance_scorer = make_scorer(
     mean_gamma_deviance, greater_is_better=False
 )
+d2_absolute_error_scorer = make_scorer(d2_absolute_error_score)
 
 # Standard Classification Scores
 accuracy_scorer = make_scorer(accuracy_score)
@@ -815,6 +878,7 @@ _SCORERS = dict(
     neg_root_mean_squared_log_error=neg_root_mean_squared_log_error_scorer,
     neg_mean_poisson_deviance=neg_mean_poisson_deviance_scorer,
     neg_mean_gamma_deviance=neg_mean_gamma_deviance_scorer,
+    d2_absolute_error_score=d2_absolute_error_scorer,
     accuracy=accuracy_scorer,
     top_k_accuracy=top_k_accuracy_scorer,
     roc_auc=roc_auc_scorer,
@@ -880,26 +944,44 @@ for name, metric in [
 
 @validate_params(
     {
-        "estimator": [HasMethods("fit")],
-        "scoring": [StrOptions(set(get_scorer_names())), callable, None],
+        "estimator": [HasMethods("fit"), None],
+        "scoring": [
+            StrOptions(set(get_scorer_names())),
+            callable,
+            list,
+            set,
+            tuple,
+            dict,
+            None,
+        ],
         "allow_none": ["boolean"],
     },
     prefer_skip_nested_validation=True,
 )
-def check_scoring(estimator, scoring=None, *, allow_none=False):
+def check_scoring(estimator=None, scoring=None, *, allow_none=False):
     """Determine scorer from user options.
 
     A TypeError will be thrown if the estimator cannot be scored.
 
     Parameters
     ----------
-    estimator : estimator object implementing 'fit'
-        The object to use to fit the data.
+    estimator : estimator object implementing 'fit' or None, default=None
+        The object to use to fit the data. If `None`, then this function may error
+        depending on `allow_none`.
 
-    scoring : str or callable, default=None
-        A string (see model evaluation documentation) or
-        a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
+    scoring : str, callable, list, tuple, or dict, default=None
+        Scorer to use. If `scoring` represents a single score, one can use:
+
+        - a single string (see :ref:`scoring_parameter`);
+        - a callable (see :ref:`scoring`) that returns a single value.
+
+        If `scoring` represents multiple scores, one can use:
+
+        - a list or tuple of unique strings;
+        - a callable returning a dictionary where the keys are the metric
+          names and the values are the metric scorers;
+        - a dictionary with metric names as keys and callables a values.
+
         If None, the provided estimator object's `score` method is used.
 
     allow_none : bool, default=False
@@ -942,6 +1024,9 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
                 "to a scorer." % scoring
             )
         return get_scorer(scoring)
+    if isinstance(scoring, (list, tuple, set, dict)):
+        scorers = _check_multimetric_scoring(estimator, scoring=scoring)
+        return _MultimetricScorer(scorers=scorers)
     if scoring is None:
         if hasattr(estimator, "score"):
             return _PassthroughScorer(estimator)

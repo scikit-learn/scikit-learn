@@ -73,7 +73,7 @@ def test_gradient_descent_stops():
             ObjectiveSmallGradient(),
             np.zeros(1),
             0,
-            n_iter=100,
+            max_iter=100,
             n_iter_without_progress=100,
             momentum=0.0,
             learning_rate=0.0,
@@ -97,7 +97,7 @@ def test_gradient_descent_stops():
             flat_function,
             np.zeros(1),
             0,
-            n_iter=100,
+            max_iter=100,
             n_iter_without_progress=10,
             momentum=0.0,
             learning_rate=0.0,
@@ -121,7 +121,7 @@ def test_gradient_descent_stops():
             ObjectiveSmallGradient(),
             np.zeros(1),
             0,
-            n_iter=11,
+            max_iter=11,
             n_iter_without_progress=100,
             momentum=0.0,
             learning_rate=0.0,
@@ -308,7 +308,7 @@ def test_preserve_trustworthiness_approximately(method, init):
         init=init,
         random_state=0,
         method=method,
-        n_iter=700,
+        max_iter=700,
         learning_rate="auto",
     )
     X_embedded = tsne.fit_transform(X)
@@ -321,13 +321,13 @@ def test_optimization_minimizes_kl_divergence():
     random_state = check_random_state(0)
     X, _ = make_blobs(n_features=3, random_state=random_state)
     kl_divergences = []
-    for n_iter in [250, 300, 350]:
+    for max_iter in [250, 300, 350]:
         tsne = TSNE(
             n_components=2,
             init="random",
             perplexity=10,
             learning_rate=100.0,
-            n_iter=n_iter,
+            max_iter=max_iter,
             random_state=0,
         )
         tsne.fit_transform(X)
@@ -353,7 +353,7 @@ def test_fit_transform_csr_matrix(method, csr_container):
         learning_rate=100.0,
         random_state=0,
         method=method,
-        n_iter=750,
+        max_iter=750,
     )
     X_embedded = tsne.fit_transform(X_csr)
     assert_allclose(trustworthiness(X_csr, X_embedded, n_neighbors=1), 1.0, rtol=1.1e-1)
@@ -373,7 +373,7 @@ def test_preserve_trustworthiness_approximately_with_precomputed_distances():
             metric="precomputed",
             random_state=i,
             verbose=0,
-            n_iter=500,
+            max_iter=500,
             init="random",
         )
         X_embedded = tsne.fit_transform(D)
@@ -533,7 +533,7 @@ def test_early_exaggeration_used():
             random_state=0,
             method=method,
             early_exaggeration=1.0,
-            n_iter=250,
+            max_iter=250,
         )
         X_embedded1 = tsne.fit_transform(X)
         tsne = TSNE(
@@ -544,21 +544,21 @@ def test_early_exaggeration_used():
             random_state=0,
             method=method,
             early_exaggeration=10.0,
-            n_iter=250,
+            max_iter=250,
         )
         X_embedded2 = tsne.fit_transform(X)
 
         assert not np.allclose(X_embedded1, X_embedded2)
 
 
-def test_n_iter_used():
-    # check that the ``n_iter`` parameter has an effect
+def test_max_iter_used():
+    # check that the ``max_iter`` parameter has an effect
     random_state = check_random_state(0)
     n_components = 2
     methods = ["exact", "barnes_hut"]
     X = random_state.randn(25, n_components).astype(np.float32)
     for method in methods:
-        for n_iter in [251, 500]:
+        for max_iter in [251, 500]:
             tsne = TSNE(
                 n_components=n_components,
                 perplexity=1,
@@ -567,11 +567,11 @@ def test_n_iter_used():
                 random_state=0,
                 method=method,
                 early_exaggeration=1.0,
-                n_iter=n_iter,
+                max_iter=max_iter,
             )
             tsne.fit_transform(X)
 
-            assert tsne.n_iter_ == n_iter - 1
+            assert tsne.n_iter_ == max_iter - 1
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
@@ -732,7 +732,7 @@ def test_64bit(method, dt):
         random_state=0,
         method=method,
         verbose=0,
-        n_iter=300,
+        max_iter=300,
         init="random",
     )
     X_embedded = tsne.fit_transform(X)
@@ -746,7 +746,7 @@ def test_64bit(method, dt):
 @pytest.mark.parametrize("method", ["barnes_hut", "exact"])
 def test_kl_divergence_not_nan(method):
     # Ensure kl_divergence_ is computed at last iteration
-    # even though n_iter % n_iter_check != 0, i.e. 1003 % 50 != 0
+    # even though max_iter % n_iter_check != 0, i.e. 1003 % 50 != 0
     random_state = check_random_state(0)
 
     X = random_state.randn(50, 2)
@@ -757,7 +757,7 @@ def test_kl_divergence_not_nan(method):
         random_state=0,
         method=method,
         verbose=0,
-        n_iter=503,
+        max_iter=503,
         init="random",
     )
     tsne.fit_transform(X)
@@ -819,11 +819,11 @@ def test_n_iter_without_progress():
             learning_rate=1e8,
             random_state=0,
             method=method,
-            n_iter=351,
+            max_iter=351,
             init="random",
         )
         tsne._N_ITER_CHECK = 1
-        tsne._EXPLORATION_N_ITER = 0
+        tsne._EXPLORATION_MAX_ITER = 0
 
         old_stdout = sys.stdout
         sys.stdout = StringIO()
@@ -886,7 +886,11 @@ def test_accessible_kl_divergence():
     random_state = check_random_state(0)
     X = random_state.randn(50, 2)
     tsne = TSNE(
-        n_iter_without_progress=2, verbose=2, random_state=0, method="exact", n_iter=500
+        n_iter_without_progress=2,
+        verbose=2,
+        random_state=0,
+        method="exact",
+        max_iter=500,
     )
 
     old_stdout = sys.stdout
@@ -923,14 +927,14 @@ def test_uniform_grid(method):
     enough.
     """
     seeds = range(3)
-    n_iter = 500
+    max_iter = 500
     for seed in seeds:
         tsne = TSNE(
             n_components=2,
             init="random",
             random_state=seed,
             perplexity=50,
-            n_iter=n_iter,
+            max_iter=max_iter,
             method=method,
             learning_rate="auto",
         )
@@ -971,7 +975,7 @@ def test_bh_match_exact():
     n_features = 10
     X = random_state.randn(30, n_features).astype(np.float32)
     X_embeddeds = {}
-    n_iter = {}
+    max_iter = {}
     for method in ["exact", "barnes_hut"]:
         tsne = TSNE(
             n_components=2,
@@ -979,16 +983,16 @@ def test_bh_match_exact():
             learning_rate=1.0,
             init="random",
             random_state=0,
-            n_iter=251,
+            max_iter=251,
             perplexity=29.5,
             angle=0,
         )
         # Kill the early_exaggeration
-        tsne._EXPLORATION_N_ITER = 0
+        tsne._EXPLORATION_MAX_ITER = 0
         X_embeddeds[method] = tsne.fit_transform(X)
-        n_iter[method] = tsne.n_iter_
+        max_iter[method] = tsne.n_iter_
 
-    assert n_iter["exact"] == n_iter["barnes_hut"]
+    assert max_iter["exact"] == max_iter["barnes_hut"]
     assert_allclose(X_embeddeds["exact"], X_embeddeds["barnes_hut"], rtol=1e-4)
 
 
@@ -1077,7 +1081,7 @@ def test_tsne_with_different_distance_metrics(metric, dist_func, method):
         method=method,
         n_components=n_components_embedding,
         random_state=0,
-        n_iter=300,
+        max_iter=300,
         init="random",
         learning_rate="auto",
     ).fit_transform(X)
@@ -1086,7 +1090,7 @@ def test_tsne_with_different_distance_metrics(metric, dist_func, method):
         method=method,
         n_components=n_components_embedding,
         random_state=0,
-        n_iter=300,
+        max_iter=300,
         init="random",
         learning_rate="auto",
     ).fit_transform(dist_func(X))
@@ -1130,7 +1134,7 @@ def test_tsne_with_mahalanobis_distance():
     X = random_state.randn(n_samples, n_features)
     default_params = {
         "perplexity": 40,
-        "n_iter": 250,
+        "max_iter": 250,
         "learning_rate": "auto",
         "init": "random",
         "n_components": 3,
@@ -1179,3 +1183,25 @@ def test_tsne_works_with_pandas_output():
     with config_context(transform_output="pandas"):
         arr = np.arange(35 * 4).reshape(35, 4)
         TSNE(n_components=2).fit_transform(arr)
+
+
+# TODO(1.7): remove
+def test_tnse_n_iter_deprecated():
+    """Check `n_iter` parameter deprecated."""
+    random_state = check_random_state(0)
+    X = random_state.randn(40, 100)
+    tsne = TSNE(n_iter=250)
+    msg = "'n_iter' was renamed to 'max_iter'"
+    with pytest.warns(FutureWarning, match=msg):
+        tsne.fit_transform(X)
+
+
+# TODO(1.7): remove
+def test_tnse_n_iter_max_iter_both_set():
+    """Check error raised when `n_iter` and `max_iter` both set."""
+    random_state = check_random_state(0)
+    X = random_state.randn(40, 100)
+    tsne = TSNE(n_iter=250, max_iter=500)
+    msg = "Both 'n_iter' and 'max_iter' attributes were set"
+    with pytest.raises(ValueError, match=msg):
+        tsne.fit_transform(X)

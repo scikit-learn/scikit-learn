@@ -22,8 +22,10 @@ or with conda::
 """
 
 # %%
-# Quantile loss in :class:`ensemble.HistGradientBoostingRegressor`
-# ----------------------------------------------------------------
+# .. _quantile_support_hgbdt:
+#
+# Quantile loss in :class:`~ensemble.HistGradientBoostingRegressor`
+# -----------------------------------------------------------------
 # :class:`~ensemble.HistGradientBoostingRegressor` can model quantiles with
 # `loss="quantile"` and the new parameter `quantile`.
 from sklearn.ensemble import HistGradientBoostingRegressor
@@ -51,6 +53,9 @@ for quantile, hist in hist_quantiles.items():
     ax.plot(X_1d, hist.predict(X), label=quantile)
 _ = ax.legend(loc="lower left")
 
+# %%
+# For a usecase example, see
+# :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py`
 
 # %%
 # `get_feature_names_out` Available in all Transformers

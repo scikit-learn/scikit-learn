@@ -38,12 +38,26 @@ from ..utils import (
     check_consistent_length,
     column_or_1d,
 )
-from ..utils._array_api import _union1d, _weighted_sum, get_namespace
-from ..utils._param_validation import Interval, Options, StrOptions, validate_params
+from ..utils._array_api import (
+    _average,
+    _union1d,
+    get_namespace,
+)
+from ..utils._param_validation import (
+    Hidden,
+    Interval,
+    Options,
+    StrOptions,
+    validate_params,
+)
 from ..utils.extmath import _nanaverage
 from ..utils.multiclass import type_of_target, unique_labels
 from ..utils.sparsefuncs import count_nonzero
-from ..utils.validation import _check_pos_label_consistency, _num_samples
+from ..utils.validation import (
+    _check_pos_label_consistency,
+    _check_sample_weight,
+    _num_samples,
+)
 
 
 def _check_zero_division(zero_division):
@@ -169,7 +183,7 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
 
     Returns
     -------
-    score : float
+    score : float or int
         If ``normalize == True``, return the fraction of correctly
         classified samples (float), else returns the number of correctly
         classified samples (int).
@@ -186,11 +200,6 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
         two sets of samples.
     zero_one_loss : Compute the Zero-one classification loss. By default, the
         function will return the percentage of imperfectly predicted subsets.
-
-    Notes
-    -----
-    In binary classification, this function is equal to the `jaccard_score`
-    function.
 
     Examples
     --------
@@ -218,7 +227,7 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     else:
         score = y_true == y_pred
 
-    return _weighted_sum(score, sample_weight, normalize)
+    return float(_average(score, weights=sample_weight, normalize=normalize))
 
 
 @validate_params(
@@ -578,8 +587,7 @@ def multilabel_confusion_matrix(
                 raise ValueError(
                     "All labels must be in [0, n labels) for "
                     "multilabel targets. "
-                    "Got %d < 0"
-                    % np.min(labels)
+                    "Got %d < 0" % np.min(labels)
                 )
 
         if n_labels is not None:
@@ -959,8 +967,8 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
        accuracy of prediction algorithms for classification: an overview.
        <10.1093/bioinformatics/16.5.412>`
 
-    .. [2] `Wikipedia entry for the Matthews Correlation Coefficient
-       <https://en.wikipedia.org/wiki/Matthews_correlation_coefficient>`_.
+    .. [2] `Wikipedia entry for the Matthews Correlation Coefficient (phi coefficient)
+       <https://en.wikipedia.org/wiki/Phi_coefficient>`_.
 
     .. [3] `Gorodkin, (2004). Comparing two K-category assignments by a
         K-category correlation coefficient
@@ -2612,7 +2620,7 @@ def classification_report(
 
     # labelled micro average
     micro_is_accuracy = (y_type == "multiclass" or y_type == "binary") and (
-        not labels_given or (set(labels) == set(unique_labels(y_true, y_pred)))
+        not labels_given or (set(labels) >= set(unique_labels(y_true, y_pred)))
     )
 
     if target_names is not None and len(labels) != len(target_names):
@@ -2803,7 +2811,7 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
         return n_differences / (y_true.shape[0] * y_true.shape[1] * weight_average)
 
     elif y_type in ["binary", "multiclass"]:
-        return _weighted_sum(y_true != y_pred, sample_weight, normalize=True)
+        return float(_average(y_true != y_pred, weights=sample_weight, normalize=True))
     else:
         raise ValueError("{0} is not supported".format(y_type))
 
@@ -2812,16 +2820,13 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
     {
         "y_true": ["array-like"],
         "y_pred": ["array-like"],
-        "eps": [StrOptions({"auto"}), Interval(Real, 0, 1, closed="both")],
         "normalize": ["boolean"],
         "sample_weight": ["array-like", None],
         "labels": ["array-like", None],
     },
     prefer_skip_nested_validation=True,
 )
-def log_loss(
-    y_true, y_pred, *, eps="auto", normalize=True, sample_weight=None, labels=None
-):
+def log_loss(y_true, y_pred, *, normalize=True, sample_weight=None, labels=None):
     r"""Log loss, aka logistic loss or cross-entropy loss.
 
     This is the loss function used in (multinomial) logistic regression
@@ -2851,19 +2856,8 @@ def log_loss(
         ordered alphabetically, as done by
         :class:`~sklearn.preprocessing.LabelBinarizer`.
 
-    eps : float or "auto", default="auto"
-        Log loss is undefined for p=0 or p=1, so probabilities are
-        clipped to `max(eps, min(1 - eps, p))`. The default will depend on the
-        data type of `y_pred` and is set to `np.finfo(y_pred.dtype).eps`.
-
-        .. versionadded:: 1.2
-
-        .. versionchanged:: 1.2
-           The default value changed from `1e-15` to `"auto"` that is
-           equivalent to `np.finfo(y_pred.dtype).eps`.
-
-        .. deprecated:: 1.3
-           `eps` is deprecated in 1.3 and will be removed in 1.5.
+        `y_pred` values are clipped to `[eps, 1-eps]` where `eps` is the machine
+        precision for `y_pred`'s dtype.
 
     normalize : bool, default=True
         If true, return the mean loss per sample.
@@ -2903,18 +2897,6 @@ def log_loss(
     y_pred = check_array(
         y_pred, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
     )
-    if eps == "auto":
-        eps = np.finfo(y_pred.dtype).eps
-    else:
-        # TODO: Remove user defined eps in 1.5
-        warnings.warn(
-            (
-                "Setting the eps parameter is deprecated and will "
-                "be removed in 1.5. Instead eps will always have"
-                "a default value of `np.finfo(y_pred.dtype).eps`."
-            ),
-            FutureWarning,
-        )
 
     check_consistent_length(y_pred, y_true, sample_weight)
     lb = LabelBinarizer()
@@ -2945,15 +2927,25 @@ def log_loss(
             1 - transformed_labels, transformed_labels, axis=1
         )
 
-    # Clipping
-    y_pred = np.clip(y_pred, eps, 1 - eps)
-
     # If y_pred is of single dimension, assume y_true to be binary
     # and then check.
     if y_pred.ndim == 1:
         y_pred = y_pred[:, np.newaxis]
     if y_pred.shape[1] == 1:
         y_pred = np.append(1 - y_pred, y_pred, axis=1)
+
+    eps = np.finfo(y_pred.dtype).eps
+
+    # Make sure y_pred is normalized
+    y_pred_sum = y_pred.sum(axis=1)
+    if not np.allclose(y_pred_sum, 1, rtol=np.sqrt(eps)):
+        warnings.warn(
+            "The y_pred values do not sum to one. Make sure to pass probabilities.",
+            UserWarning,
+        )
+
+    # Clipping
+    y_pred = np.clip(y_pred, eps, 1 - eps)
 
     # Check if dimensions are consistent.
     transformed_labels = check_array(transformed_labels)
@@ -2975,20 +2967,9 @@ def log_loss(
                 "labels: {0}".format(lb.classes_)
             )
 
-    # Renormalize
-    y_pred_sum = y_pred.sum(axis=1)
-    if not np.isclose(y_pred_sum, 1, rtol=1e-15, atol=5 * eps).all():
-        warnings.warn(
-            (
-                "The y_pred values do not sum to one. Starting from 1.5 this"
-                "will result in an error."
-            ),
-            UserWarning,
-        )
-    y_pred = y_pred / y_pred_sum[:, np.newaxis]
     loss = -xlogy(transformed_labels, y_pred).sum(axis=1)
 
-    return _weighted_sum(loss, sample_weight, normalize)
+    return float(_average(loss, weights=sample_weight, normalize=normalize))
 
 
 @validate_params(
@@ -3057,9 +3038,9 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     >>> from sklearn.metrics import hinge_loss
     >>> X = [[0], [1]]
     >>> y = [-1, 1]
-    >>> est = svm.LinearSVC(dual="auto", random_state=0)
+    >>> est = svm.LinearSVC(random_state=0)
     >>> est.fit(X, y)
-    LinearSVC(dual='auto', random_state=0)
+    LinearSVC(random_state=0)
     >>> pred_decision = est.decision_function([[-2], [3], [0.5]])
     >>> pred_decision
     array([-2.18...,  2.36...,  0.09...])
@@ -3072,9 +3053,9 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     >>> X = np.array([[0], [1], [2], [3]])
     >>> Y = np.array([0, 1, 2, 3])
     >>> labels = np.array([0, 1, 2, 3])
-    >>> est = svm.LinearSVC(dual="auto")
+    >>> est = svm.LinearSVC()
     >>> est.fit(X, Y)
-    LinearSVC(dual='auto')
+    LinearSVC()
     >>> pred_decision = est.decision_function([[-1], [2], [3]])
     >>> y_true = [0, 2, 3]
     >>> hinge_loss(y_true, pred_decision, labels=labels)
@@ -3146,13 +3127,16 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
 @validate_params(
     {
         "y_true": ["array-like"],
-        "y_prob": ["array-like"],
+        "y_proba": ["array-like", Hidden(None)],
         "sample_weight": ["array-like", None],
         "pos_label": [Real, str, "boolean", None],
+        "y_prob": ["array-like", Hidden(StrOptions({"deprecated"}))],
     },
     prefer_skip_nested_validation=True,
 )
-def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
+def brier_score_loss(
+    y_true, y_proba=None, *, sample_weight=None, pos_label=None, y_prob="deprecated"
+):
     """Compute the Brier score loss.
 
     The smaller the Brier score loss, the better, hence the naming with "loss".
@@ -3180,7 +3164,7 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     y_true : array-like of shape (n_samples,)
         True targets.
 
-    y_prob : array-like of shape (n_samples,)
+    y_proba : array-like of shape (n_samples,)
         Probabilities of the positive class.
 
     sample_weight : array-like of shape (n_samples,), default=None
@@ -3195,6 +3179,13 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
           `pos_label` should be explicitly specified;
         * otherwise, `pos_label` defaults to the greater label,
           i.e. `np.unique(y_true)[-1]`.
+
+    y_prob : array-like of shape (n_samples,)
+        Probabilities of the positive class.
+
+        .. deprecated:: 1.5
+            `y_prob` is deprecated and will be removed in 1.7. Use
+            `y_proba` instead.
 
     Returns
     -------
@@ -3222,11 +3213,29 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     >>> brier_score_loss(y_true, np.array(y_prob) > 0.5)
     0.0
     """
+    # TODO(1.7): remove in 1.7 and reset y_proba to be required
+    # Note: validate params will raise an error if y_prob is not array-like,
+    # or "deprecated"
+    if y_proba is not None and not isinstance(y_prob, str):
+        raise ValueError(
+            "`y_prob` and `y_proba` cannot be both specified. Please use `y_proba` only"
+            " as `y_prob` is deprecated in v1.5 and will be removed in v1.7."
+        )
+    if y_proba is None:
+        warnings.warn(
+            (
+                "y_prob was deprecated in version 1.5 and will be removed in 1.7."
+                "Please use ``y_proba`` instead."
+            ),
+            FutureWarning,
+        )
+        y_proba = y_prob
+
     y_true = column_or_1d(y_true)
-    y_prob = column_or_1d(y_prob)
+    y_proba = column_or_1d(y_proba)
     assert_all_finite(y_true)
-    assert_all_finite(y_prob)
-    check_consistent_length(y_true, y_prob, sample_weight)
+    assert_all_finite(y_proba)
+    check_consistent_length(y_true, y_proba, sample_weight)
 
     y_type = type_of_target(y_true, input_name="y_true")
     if y_type != "binary":
@@ -3235,10 +3244,10 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
             f"is {y_type}."
         )
 
-    if y_prob.max() > 1:
-        raise ValueError("y_prob contains values greater than 1.")
-    if y_prob.min() < 0:
-        raise ValueError("y_prob contains values less than 0.")
+    if y_proba.max() > 1:
+        raise ValueError("y_proba contains values greater than 1.")
+    if y_proba.min() < 0:
+        raise ValueError("y_proba contains values less than 0.")
 
     try:
         pos_label = _check_pos_label_consistency(pos_label, y_true)
@@ -3251,4 +3260,97 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
         else:
             raise
     y_true = np.array(y_true == pos_label, int)
-    return np.average((y_true - y_prob) ** 2, weights=sample_weight)
+    return np.average((y_true - y_proba) ** 2, weights=sample_weight)
+
+
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "labels": ["array-like", None],
+    },
+    prefer_skip_nested_validation=True,
+)
+def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
+    """
+    :math:`D^2` score function, fraction of log loss explained.
+
+    Best possible score is 1.0 and it can be negative (because the model can be
+    arbitrarily worse). A model that always predicts the per-class proportions
+    of `y_true`, disregarding the input features, gets a D^2 score of 0.0.
+
+    Read more in the :ref:`User Guide <d2_score_classification>`.
+
+    .. versionadded:: 1.5
+
+    Parameters
+    ----------
+    y_true : array-like or label indicator matrix
+        The actuals labels for the n_samples samples.
+
+    y_pred : array-like of shape (n_samples, n_classes) or (n_samples,)
+        Predicted probabilities, as returned by a classifier's
+        predict_proba method. If ``y_pred.shape = (n_samples,)``
+        the probabilities provided are assumed to be that of the
+        positive class. The labels in ``y_pred`` are assumed to be
+        ordered alphabetically, as done by
+        :class:`~sklearn.preprocessing.LabelBinarizer`.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    labels : array-like, default=None
+        If not provided, labels will be inferred from y_true. If ``labels``
+        is ``None`` and ``y_pred`` has shape (n_samples,) the labels are
+        assumed to be binary and are inferred from ``y_true``.
+
+    Returns
+    -------
+    d2 : float or ndarray of floats
+        The D^2 score.
+
+    Notes
+    -----
+    This is not a symmetric function.
+
+    Like R^2, D^2 score may be negative (it need not actually be the square of
+    a quantity D).
+
+    This metric is not well-defined for a single sample and will return a NaN
+    value if n_samples is less than two.
+    """
+    y_pred = check_array(y_pred, ensure_2d=False, dtype="numeric")
+    check_consistent_length(y_pred, y_true, sample_weight)
+    if _num_samples(y_pred) < 2:
+        msg = "D^2 score is not well-defined with less than two samples."
+        warnings.warn(msg, UndefinedMetricWarning)
+        return float("nan")
+
+    # log loss of the fitted model
+    numerator = log_loss(
+        y_true=y_true,
+        y_pred=y_pred,
+        normalize=False,
+        sample_weight=sample_weight,
+        labels=labels,
+    )
+
+    # Proportion of labels in the dataset
+    weights = _check_sample_weight(sample_weight, y_true)
+
+    _, y_value_indices = np.unique(y_true, return_inverse=True)
+    counts = np.bincount(y_value_indices, weights=weights)
+    y_prob = counts / weights.sum()
+    y_pred_null = np.tile(y_prob, (len(y_true), 1))
+
+    # log loss of the null model
+    denominator = log_loss(
+        y_true=y_true,
+        y_pred=y_pred_null,
+        normalize=False,
+        sample_weight=sample_weight,
+        labels=labels,
+    )
+
+    return 1 - (numerator / denominator)

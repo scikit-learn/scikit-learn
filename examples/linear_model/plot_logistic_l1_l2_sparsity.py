@@ -61,15 +61,13 @@ for i, (C, axes_row) in enumerate(zip((1, 0.1, 0.01), axes)):
     sparsity_l2_LR = np.mean(coef_l2_LR == 0) * 100
     sparsity_en_LR = np.mean(coef_en_LR == 0) * 100
 
-    print("C=%.2f" % C)
-    print("{:<40} {:.2f}%".format("Sparsity with L1 penalty:", sparsity_l1_LR))
-    print("{:<40} {:.2f}%".format("Sparsity with Elastic-Net penalty:", sparsity_en_LR))
-    print("{:<40} {:.2f}%".format("Sparsity with L2 penalty:", sparsity_l2_LR))
-    print("{:<40} {:.2f}".format("Score with L1 penalty:", clf_l1_LR.score(X, y)))
-    print(
-        "{:<40} {:.2f}".format("Score with Elastic-Net penalty:", clf_en_LR.score(X, y))
-    )
-    print("{:<40} {:.2f}".format("Score with L2 penalty:", clf_l2_LR.score(X, y)))
+    print(f"C={C:.2f}")
+    print(f"{'Sparsity with L1 penalty:':<40} {sparsity_l1_LR:.2f}%")
+    print(f"{'Sparsity with Elastic-Net penalty:':<40} {sparsity_en_LR:.2f}%")
+    print(f"{'Sparsity with L2 penalty:':<40} {sparsity_l2_LR:.2f}%")
+    print(f"{'Score with L1 penalty:':<40} {clf_l1_LR.score(X, y):.2f}")
+    print(f"{'Score with Elastic-Net penalty:':<40} {clf_en_LR.score(X, y):.2f}")
+    print(f"{'Score with L2 penalty:':<40} {clf_l2_LR.score(X, y):.2f}")
 
     if i == 0:
         axes_row[0].set_title("L1 penalty")
@@ -87,6 +85,6 @@ for i, (C, axes_row) in enumerate(zip((1, 0.1, 0.01), axes)):
         ax.set_xticks(())
         ax.set_yticks(())
 
-    axes_row[0].set_ylabel("C = %s" % C)
+    axes_row[0].set_ylabel(f"C = {C}")
 
 plt.show()
