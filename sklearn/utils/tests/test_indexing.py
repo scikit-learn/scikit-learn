@@ -376,38 +376,72 @@ def test_safe_indexing_list_axis_1_unsupported(indices):
         _safe_indexing(X, indices, axis=1)
 
 
-@pytest.mark.parametrize("array_type", ["array", "sparse", "dataframe"])
-def test_safe_assign(array_type):
+@pytest.mark.parametrize(
+    "array_type", ["array", "sparse_csr", "sparse_csr_array", "pandas", "polars"]
+)
+@pytest.mark.parametrize(
+    "column_indexer", [None, 2, [0, 2], [True, False, True, False, False]]
+)
+@pytest.mark.parametrize(
+    "row_indexer", [None, 2, [0, 2], [True, False, True, False, False]]
+)
+def test_safe_assign(array_type, column_indexer, row_indexer):
     """Check that `_safe_assign` works as expected."""
     rng = np.random.RandomState(0)
-    X_array = rng.randn(10, 5)
+    size = 5
+    select_size = 2  # size after indexing if integer or boolean indexer
+    X_array = rng.randn(size, size)
 
-    row_indexer = [1, 2]
-    values = rng.randn(len(row_indexer), X_array.shape[1])
+    if np.isscalar(row_indexer) and np.isscalar(column_indexer):
+        values = rng.randn()
+    elif np.isscalar(row_indexer):
+        values = rng.randn(size if column_indexer is None else select_size)
+    elif np.isscalar(column_indexer):
+        values = rng.randn(size if row_indexer is None else select_size)
+    else:
+        values = rng.randn(
+            size if row_indexer is None else select_size,
+            size if column_indexer is None else select_size,
+        )
+
     X = _convert_container(X_array, array_type)
-    _safe_assign(X, values, row_indexer=row_indexer)
+    X = _safe_assign(X, values, row_indexer=row_indexer, column_indexer=column_indexer)
 
-    assigned_portion = _safe_indexing(X, row_indexer, axis=0)
-    assert_allclose_dense_sparse(
-        assigned_portion, _convert_container(values, array_type)
-    )
-
-    column_indexer = [1, 2]
-    values = rng.randn(X_array.shape[0], len(column_indexer))
-    X = _convert_container(X_array, array_type)
-    _safe_assign(X, values, column_indexer=column_indexer)
-
-    assigned_portion = _safe_indexing(X, column_indexer, axis=1)
-    assert_allclose_dense_sparse(
-        assigned_portion, _convert_container(values, array_type)
-    )
-
-    row_indexer, column_indexer = None, None
-    values = rng.randn(*X.shape)
-    X = _convert_container(X_array, array_type)
-    _safe_assign(X, values, column_indexer=column_indexer)
-
-    assert_allclose_dense_sparse(X, _convert_container(values, array_type))
+    if np.isscalar(values):
+        if array_type == "pandas":
+            assert X.iloc[row_indexer, column_indexer] == values
+        else:
+            assert X[row_indexer, column_indexer] == values
+    elif values.ndim == 1:
+        if np.isscalar(row_indexer):
+            if "sparse" in array_type:
+                assigned_portion = _safe_indexing(X, [row_indexer])
+                assigned_portion = _safe_indexing(
+                    assigned_portion, column_indexer, axis=1
+                )
+                assert_array_equal(assigned_portion.toarray().ravel(), values)
+            else:
+                assigned_portion = _safe_indexing(X, row_indexer)
+                assigned_portion = _safe_indexing(assigned_portion, column_indexer)
+                assert_array_equal(assigned_portion, values)
+        else:  # np.isscalar(column_indexer)
+            assigned_portion = _safe_indexing(X, row_indexer)
+            if "sparse" in array_type:
+                assigned_portion = _safe_indexing(
+                    assigned_portion, [column_indexer], axis=1
+                )
+                assert_array_equal(assigned_portion.toarray().ravel(), values)
+            else:
+                assigned_portion = _safe_indexing(
+                    assigned_portion, column_indexer, axis=1
+                )
+                assert_array_equal(assigned_portion, values)
+    else:  # values.ndim == 2
+        assigned_portion = _safe_indexing(X, row_indexer, axis=0)
+        assigned_portion = _safe_indexing(assigned_portion, column_indexer, axis=1)
+        assert_allclose_dense_sparse(
+            assigned_portion, _convert_container(values, array_type)
+        )
 
 
 @pytest.mark.parametrize(

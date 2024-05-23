@@ -457,7 +457,7 @@ class IterativeImputer(_BaseImputer):
             )
 
         # update the feature
-        _safe_assign(
+        X_filled = _safe_assign(
             X_filled,
             imputed_values,
             row_indexer=missing_row_mask,

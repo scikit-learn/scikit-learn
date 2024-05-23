@@ -8,6 +8,7 @@ from ..ensemble._bagging import _generate_indices
 from ..metrics import check_scoring, get_scorer_names
 from ..model_selection._validation import _aggregate_score_dicts
 from ..utils import Bunch, _safe_indexing, check_array, check_random_state
+from ..utils._indexing import _safe_assign
 from ..utils._param_validation import (
     HasMethods,
     Integral,
@@ -68,14 +69,11 @@ def _calculate_permutation_scores(
     shuffling_idx = np.arange(X_permuted.shape[0])
     for _ in range(n_repeats):
         random_state.shuffle(shuffling_idx)
-        if adapter is not None:
-            col = _safe_indexing(
-                _safe_indexing(X_permuted, col_idx, axis=1),
-                shuffling_idx,
-            )
-            adapter.set_column(X_permuted, col_idx, col)
-        else:
-            X_permuted[:, col_idx] = X_permuted[shuffling_idx, col_idx]
+        col = _safe_indexing(
+            _safe_indexing(X_permuted, col_idx, axis=1),
+            shuffling_idx,
+        )
+        X_permuted = _safe_assign(X_permuted, col, column_indexer=col_idx)
         scores.append(_weights_scorer(scorer, estimator, X_permuted, y, sample_weight))
 
     if isinstance(scores[0], dict):

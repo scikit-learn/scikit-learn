@@ -4,7 +4,10 @@ import numpy as np
 
 from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils._param_validation import StrOptions
-from ..utils._set_output import _get_adapter_from_container, _get_output_config
+from ..utils._set_output import (
+    _get_adapter_from_container,
+    _get_output_config,
+)
 from ..utils.metaestimators import available_if
 from ..utils.validation import (
     _allclose_dense_sparse,

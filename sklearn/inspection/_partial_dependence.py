@@ -292,7 +292,7 @@ def _partial_dependence_brute(
     X_eval = X.copy()
     for new_values in grid:
         for i, variable in enumerate(features):
-            _safe_assign(X_eval, new_values[i], column_indexer=variable)
+            X_eval = _safe_assign(X_eval, new_values[i], column_indexer=variable)
 
         try:
             # Note: predictions is of shape
