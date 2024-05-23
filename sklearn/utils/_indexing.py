@@ -387,16 +387,16 @@ def _safe_assign_polars(X, values, row_indexer, column_indexer):
 
     if np.isscalar(values):
 
-        def expr_per_col(col):
+        def get_expr(vals, col):
             expr = pl
             for row_ind in row_indices:
                 expr = expr.when(index=row_ind).then(values)
             return expr.otherwise(pl.col(col)).alias(col)
 
-        expressions = (expr_per_col(col) for col in column_indices)
+        expressions = (get_expr(None, col) for col in column_indices)
     else:
 
-        def expr_per_vals_col(vals, col):
+        def get_expr(vals, col):
             expr = pl
             # TODO: `strict=True` when minimum supported Python version is 3.10
             for val, row_ind in zip(vals, row_indices):
@@ -405,7 +405,7 @@ def _safe_assign_polars(X, values, row_indexer, column_indexer):
 
         # TODO: `strict=True` when minimum supported Python version is 3.10
         expressions = (
-            expr_per_vals_col(vals, col)
+            get_expr(vals, col)
             for vals, col in zip(np.atleast_2d(values).T, column_indices)
         )
 
