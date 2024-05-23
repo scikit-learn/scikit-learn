@@ -523,12 +523,19 @@ class IsolationForest(OutlierMixin, BaseBagging):
         return scores
 
     def _more_tags(self):
+        allow_nan = isinstance(
+            self.estimator, ExtraTreeRegressor
+        ) and self.estimator.splitter in {
+            "best",
+            "random",
+        }
         return {
             "_xfail_checks": {
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
                 ),
-            }
+            },
+            "allow_nan": allow_nan,
         }
 
 
