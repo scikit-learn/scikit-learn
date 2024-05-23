@@ -24,7 +24,7 @@ foreach name: name_list
   )
   py.extension_module(
     name,
-    [pyx, neighbors_cython_tree, utils_cython_tree],
+    [pyx, neighbors_cython_tree, utils_cython_tree, metrics_cython_tree],
     dependencies: [np_dep],
     cython_args: cython_args,
     subdir: 'sklearn/neighbors',

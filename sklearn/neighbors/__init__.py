@@ -1,7 +1,4 @@
-"""
-The :mod:`sklearn.neighbors` module implements the k-nearest neighbors
-algorithm.
-"""
+"""The k-nearest neighbors algorithms."""
 
 from ._ball_tree import BallTree
 from ._base import VALID_METRICS, VALID_METRICS_SPARSE, sort_graph_by_row_values

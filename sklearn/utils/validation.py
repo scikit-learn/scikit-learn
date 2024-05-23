@@ -1,7 +1,4 @@
-"""
-The :mod:`sklearn.utils.validation` module includes functions to validate
-input and parameters within scikit-learn estimators.
-"""
+"""Functions to validate input and parameters within scikit-learn estimators."""
 
 # Authors: Olivier Grisel
 #          Gael Varoquaux
@@ -488,7 +485,7 @@ def indexable(*iterables):
 
     Checks consistent length, passes through None, and ensures that everything
     can be indexed by converting sparse matrices to csr and converting
-    non-interable objects to arrays.
+    non-iterable objects to arrays.
 
     Parameters
     ----------
@@ -973,6 +970,13 @@ def check_array(
             estimator_name=estimator_name,
             input_name=input_name,
         )
+        if ensure_2d and array.ndim < 2:
+            raise ValueError(
+                f"Expected 2D input, got input with shape {array.shape}.\n"
+                "Reshape your data either using array.reshape(-1, 1) if "
+                "your data has a single feature or array.reshape(1, -1) "
+                "if it contains a single sample."
+            )
     else:
         # If np.array(..) gives ComplexWarning, then we convert the warning
         # to an error. This is needed because specifying a non complex
