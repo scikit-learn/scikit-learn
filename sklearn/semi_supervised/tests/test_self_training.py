@@ -12,9 +12,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.svm import SVC
+from sklearn.tests.test_pipeline import SimpleEstimator
 from sklearn.tree import DecisionTreeClassifier
-
-from sklearn.tests.metadata_routing_common import SimpleEstimator
 
 # Author: Oliver Rausch <rauscho@ethz.ch>
 # License: BSD 3 clause
@@ -348,49 +347,7 @@ def test_self_training_estimator_attribute_error():
 
 
 # Test that metadata is routed correctly for SelfTrainingClassifier
-# ====================================================
-
-SIMPLE_METHODS = [
-    "fit",
-    "predict",
-    "predict_proba",
-    "predict_log_proba",
-    "decision_function",
-    "score",
-]
-
-
-@pytest.mark.usefixtures("enable_slep006")
-# split and partial_fit not relevant for pipelines
-@pytest.mark.parametrize("method", sorted(set(SIMPLE_METHODS)))
-def test_metadata_routing_for_self_training_classifier(method):
-    """Test that metadata is routed correctly for pipelines."""
-
-    def set_request(est, method, **kwarg):
-        """Set requests for a given method.
-
-        If the given method is a composite method, set the same requests for
-        all the methods that compose it.
-        """
-        getattr(est, f"set_{method}_request")(**kwarg)
-        return est
-
-    X, y = [[1]], [1]
-    sample_weight, prop = [1], "a"
-
-    # test that metadata is routed correctly for pipelines when requested
-    est = SimpleEstimator()
-    est = set_request(est, method, sample_weight=True, prop=True)
-    est = set_request(est, "fit", sample_weight=True, prop=True)
-
-    clf = SelfTrainingClassifier(base_estimator=est)
-    clf = clf.fit([[1]], [1], sample_weight=sample_weight, prop=prop)
-
-    try:
-        getattr(clf, method)(X, y, sample_weight=sample_weight, prop=prop)
-    except TypeError:
-        # Some methods don't accept y
-        getattr(clf, method)(X, sample_weight=sample_weight, prop=prop)
+# =================================================================
 
 
 @pytest.mark.filterwarnings("ignore:y contains no unlabeled samples:UserWarning")

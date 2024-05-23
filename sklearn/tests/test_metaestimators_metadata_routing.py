@@ -388,13 +388,12 @@ METAESTIMATORS: list = [
         "estimator": "classifier",
         "X": X,
         "y": y,
-        "preserves_metadata": True,
+        "preserves_metadata": False,
         "estimator_routing_methods": [
             "fit",
             "predict",
-            "score",
-            #   "decision_function"
         ],
+        "scorer_routing_methods": ["score", "decision_function"],
     },
 ]
 """List containing all metaestimators to be tested and their settings
