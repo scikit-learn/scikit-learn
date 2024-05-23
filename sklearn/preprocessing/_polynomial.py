@@ -1052,7 +1052,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     # input data when doing inplace operations.
                     x = x.copy()
                     # We replace the nan values in the input column by some
-                    # arbitrary, in-range, numerical value since 
+                    # arbitrary, in-range, numerical value since
                     # BSpline.design_matrix() would otherwise raise on any nan
                     # value in its input. The spline encoded values in
                     # the output of that function that correspond to missing
