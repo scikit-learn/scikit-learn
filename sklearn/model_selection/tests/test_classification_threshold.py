@@ -728,5 +728,5 @@ def test_warn_on_constant_scores():
         tuned_clf = TunedThresholdClassifierCV(
             estimator, scoring=scorer, store_cv_results=True
         ).fit(X, y)
-        assert_allclose(tuned_clf.cv_results_["scores"], np.ones(shape=100))
-        assert tuned_clf.best_threshold_ == pytest.approx(0.5)
+    assert_allclose(tuned_clf.cv_results_["scores"], np.ones(shape=100))
+    assert tuned_clf.best_threshold_ == pytest.approx(0.5)

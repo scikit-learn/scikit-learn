@@ -940,7 +940,7 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
                 f"The objective metric {self.scoring!r} is constant at "
                 f"{self.best_score_} across all thresholds. Falling back "
                 "to the default 0.5 threshold. Please instead pass a scoring "
-                "metric that varies with the decision threshold to tune it.",
+                "metric that varies with the decision threshold.",
                 UserWarning,
             )
             self.best_threshold_ = 0.5
