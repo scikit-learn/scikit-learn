@@ -720,16 +720,13 @@ def test_warn_on_constant_scores():
 
     warn_msg = re.escape(
         "The objective metric make_scorer(constant_score_func, "
-        "response_method='predict') is constant at 1.0 across all thresholds. Please "
-        "instead pass a metric that varies with the decision threshold, otherwise "
-        "the threshold will be set to a meaningless value."
+        "response_method='predict') is constant at 1.0 across all thresholds. Falling "
+        "back to the default 0.5 threshold. Please instead pass a scoring metric that "
+        "varies with the decision threshold to tune it."
     )
     with pytest.warns(UserWarning, match=warn_msg):
         tuned_clf = TunedThresholdClassifierCV(
             estimator, scoring=scorer, store_cv_results=True
         ).fit(X, y)
         assert_allclose(tuned_clf.cv_results_["scores"], np.ones(shape=100))
-        # The threshold is set to the smallest predict proba observed in CV
-        # because it is the first threshold in the sorted thresholds array but
-        # it has the same score as the other thresholds.
-        assert tuned_clf.best_threshold_ < 1e-3
+        assert tuned_clf.best_threshold_ == pytest.approx(0.5)

@@ -938,11 +938,13 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         ):
             warn(
                 f"The objective metric {self.scoring!r} is constant at "
-                f"{self.best_score_} across all thresholds. Please instead pass a "
-                "metric that varies with the decision threshold, otherwise the "
-                "threshold will be set to a meaningless value.",
+                f"{self.best_score_} across all thresholds. Falling back "
+                "to the default 0.5 threshold. Please instead pass a scoring "
+                "metric that varies with the decision threshold to tune it.",
                 UserWarning,
             )
+            self.best_threshold_ = 0.5
+
         if self.store_cv_results:
             self.cv_results_ = {
                 "thresholds": decision_thresholds,
