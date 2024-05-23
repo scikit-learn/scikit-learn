@@ -701,7 +701,7 @@ def test_error_on_unthresholded_classification_metrics(scoring_name):
     err_msg = re.escape(
         "TunedThresholdClassifierCV expects a scoring metric that evaluates the "
         f"thresholded predictions of a binary classifier, got: '{scoring_name}' "
-        "which expects unthreshold predictions computed by the "
+        "which expects unthresholded predictions computed by the "
         f"{expected_method_names} method(s) of the classifier."
     )
     with pytest.raises(ValueError, match=err_msg):

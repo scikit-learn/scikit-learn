@@ -1015,7 +1015,7 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
             raise ValueError(
                 f"{self.__class__.__name__} expects a scoring metric that evaluates "
                 f"the thresholded predictions of a binary classifier, got: "
-                f"{self.scoring!r} which expects unthreshold predictions computed by "
+                f"{self.scoring!r} which expects unthresholded predictions computed by "
                 f"the {scorer._response_method!r} method(s) of the classifier."
             )
         curve_scorer = _CurveScorer.from_scorer(
