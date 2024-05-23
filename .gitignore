@@ -15,9 +15,13 @@ dist/
 MANIFEST
 doc/sg_execution_times.rst
 doc/_build/
+doc/api/*.rst
 doc/auto_examples/
+doc/css/*
+!doc/css/.gitkeep
 doc/modules/generated/
 doc/datasets/generated/
+doc/index.rst
 doc/min_dependency_table.rst
 doc/min_dependency_substitutions.rst
 *.pdf

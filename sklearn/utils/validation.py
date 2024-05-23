@@ -1,7 +1,4 @@
-"""
-The :mod:`sklearn.utils.validation` module includes functions to validate
-input and parameters within scikit-learn estimators.
-"""
+"""Functions to validate input and parameters within scikit-learn estimators."""
 
 # Authors: Olivier Grisel
 #          Gael Varoquaux
@@ -488,7 +485,7 @@ def indexable(*iterables):
 
     Checks consistent length, passes through None, and ensures that everything
     can be indexed by converting sparse matrices to csr and converting
-    non-interable objects to arrays.
+    non-iterable objects to arrays.
 
     Parameters
     ----------
