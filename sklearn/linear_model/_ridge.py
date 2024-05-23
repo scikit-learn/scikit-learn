@@ -1749,12 +1749,12 @@ class _RidgeGCV(LinearModel):
     @staticmethod
     def _decomp_diag(v_prime, Q):
         # compute diagonal of the matrix: dot(Q, dot(diag(v_prime), Q^T))
-        xp, _ = get_namespace(Q)
+        xp, _ = get_namespace(v_prime, Q)
         return xp.sum(v_prime * Q**2, axis=1)
 
     @staticmethod
     def _diag_dot(D, B):
-        xp, _ = get_namespace(B)
+        xp, _ = get_namespace(D, B)
         # compute dot(diag(D), B)
         if len(B.shape) > 1:
             # handle case where B is > 1-d

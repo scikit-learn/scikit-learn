@@ -6,6 +6,7 @@ from functools import wraps
 
 import numpy
 import scipy.special as special
+from scipy import sparse
 
 from .._config import get_config
 from .fixes import parse_version
@@ -542,6 +543,9 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
         *arrays, remove_none=remove_none, remove_types=remove_types
     )
 
+    if any(map(sparse.issparse, arrays)):
+        return _NUMPY_API_WRAPPER_INSTANCE, False
+
     _check_array_api_dispatch(array_api_dispatch)
 
     # array-api-compat is a required dependency of scikit-learn only when
@@ -550,15 +554,10 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     # message in case it is missing.
     import array_api_compat
 
-    try:
-        namespace, is_array_api_compliant = (
-            array_api_compat.get_namespace(*arrays),
-            True,
-        )
-    except TypeError as e:
-        if "is not a supported array type" in repr(e):
-            return _NUMPY_API_WRAPPER_INSTANCE, False
-        raise
+    namespace, is_array_api_compliant = (
+        array_api_compat.get_namespace(*arrays),
+        True,
+    )
 
     # These namespaces need additional wrapping to smooth out small differences
     # between implementations
