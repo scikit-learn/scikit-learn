@@ -369,6 +369,7 @@ class _SetOutputMixin:
         method_to_key = {
             "transform": "transform",
             "fit_transform": "transform",
+            "inverse_transform": "transform",
         }
         cls._sklearn_auto_wrap_output_keys = set()
 
