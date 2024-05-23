@@ -81,6 +81,14 @@ Changelog
   whether a given estimator is of category clusterer.
   :pr:`28936` by :user:`Christian Veenhuis <ChVeen>`.
 
+:mod:`sklearn.ensemble`
+.......................
+
+- |Efficiency| Small runtime improvement of fitting
+  :class:`ensemble.HistGradientBoostingClassifier` and :class:`ensemble.HistGradientBoostingRegressor`
+  by parallelizing the initial search for bin thresholds
+  :pr:`28064` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:
 
