@@ -385,7 +385,9 @@ def test_safe_indexing_list_axis_1_unsupported(indices):
 @pytest.mark.parametrize(
     "row_indexer", [None, 2, [0, 2], [True, False, True, False, False]]
 )
-def test_safe_assign(array_type, column_indexer, row_indexer):
+# Whether the value to assign is a scalar to be broadcasted or an array
+@pytest.mark.parametrize("scalar_value", [True, False])
+def test_safe_assign(array_type, column_indexer, row_indexer, scalar_value):
     """Check that `_safe_assign` works as expected."""
     rng = np.random.RandomState(0)
     size = 5
@@ -394,53 +396,67 @@ def test_safe_assign(array_type, column_indexer, row_indexer):
 
     if np.isscalar(row_indexer) and np.isscalar(column_indexer):
         values = rng.randn()
-    elif np.isscalar(row_indexer):
-        values = rng.randn(size if column_indexer is None else select_size)
-    elif np.isscalar(column_indexer):
-        values = rng.randn(size if row_indexer is None else select_size)
+        target_values = values
+    elif np.isscalar(row_indexer) or np.isscalar(column_indexer):
+        if np.isscalar(row_indexer):
+            target_size = size if column_indexer is None else select_size
+        else:
+            target_size = size if row_indexer is None else select_size
+        if scalar_value:
+            values = rng.randn()
+            target_values = np.full(target_size, values)
+        else:
+            values = rng.randn(target_size)
+            target_values = values
     else:
-        values = rng.randn(
+        target_shape = (
             size if row_indexer is None else select_size,
             size if column_indexer is None else select_size,
         )
+        if scalar_value:
+            values = rng.randn()
+            target_values = np.full(target_shape, values)
+        else:
+            values = rng.randn(*target_shape)
+            target_values = values
 
     X = _convert_container(X_array, array_type)
     X = _safe_assign(X, values, row_indexer=row_indexer, column_indexer=column_indexer)
 
-    if np.isscalar(values):
+    if np.isscalar(row_indexer) and np.isscalar(column_indexer):
         if array_type == "pandas":
-            assert X.iloc[row_indexer, column_indexer] == values
+            assert X.iloc[row_indexer, column_indexer] == target_values
         else:
-            assert X[row_indexer, column_indexer] == values
-    elif values.ndim == 1:
+            assert X[row_indexer, column_indexer] == target_values
+    elif np.isscalar(row_indexer) or np.isscalar(column_indexer):
         if np.isscalar(row_indexer):
             if "sparse" in array_type:
                 assigned_portion = _safe_indexing(X, [row_indexer])
                 assigned_portion = _safe_indexing(
                     assigned_portion, column_indexer, axis=1
                 )
-                assert_array_equal(assigned_portion.toarray().ravel(), values)
+                assert_array_equal(assigned_portion.toarray().ravel(), target_values)
             else:
                 assigned_portion = _safe_indexing(X, row_indexer)
                 assigned_portion = _safe_indexing(assigned_portion, column_indexer)
-                assert_array_equal(assigned_portion, values)
+                assert_array_equal(assigned_portion, target_values)
         else:  # np.isscalar(column_indexer)
             assigned_portion = _safe_indexing(X, row_indexer)
             if "sparse" in array_type:
                 assigned_portion = _safe_indexing(
                     assigned_portion, [column_indexer], axis=1
                 )
-                assert_array_equal(assigned_portion.toarray().ravel(), values)
+                assert_array_equal(assigned_portion.toarray().ravel(), target_values)
             else:
                 assigned_portion = _safe_indexing(
                     assigned_portion, column_indexer, axis=1
                 )
-                assert_array_equal(assigned_portion, values)
-    else:  # values.ndim == 2
+                assert_array_equal(assigned_portion, target_values)
+    else:  # none of the indexers are scalars
         assigned_portion = _safe_indexing(X, row_indexer, axis=0)
         assigned_portion = _safe_indexing(assigned_portion, column_indexer, axis=1)
         assert_allclose_dense_sparse(
-            assigned_portion, _convert_container(values, array_type)
+            assigned_portion, _convert_container(target_values, array_type)
         )
 
 
