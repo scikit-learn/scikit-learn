@@ -708,6 +708,7 @@ def test_error_on_unthresholded_classification_metrics(scoring_name):
 
 
 def test_warn_on_constant_scores():
+    """Check that a warning is raised when the score is constant."""
     X, y = make_classification(random_state=0)
     estimator = LogisticRegression()
 
