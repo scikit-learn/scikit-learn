@@ -1090,7 +1090,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             param_list = list(param_result.values())
             try:
                 arr_dtype = np.result_type(*param_list)
-            except TypeError:
+            except (TypeError, ValueError):
                 arr_dtype = object
             if len(param_list) == n_candidates and arr_dtype != object:
                 # Exclude `object` else the numpy constructor might infer a list of
