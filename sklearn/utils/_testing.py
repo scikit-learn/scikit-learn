@@ -969,10 +969,10 @@ def _convert_container_to_dataframe(
 
         # Deal with categorical feature names
         if categorical_feature_names is not None:
-            for col_name in categorical_feature_names:
-                container = container.with_columns(
-                    pl.col(col_name).cast(pl.Categorical)
-                )
+            container = container.with_columns(
+                pl.col(col_name).cast(pl.Categorical)
+                for col_name in categorical_feature_names
+            )
         return container
 
     if constructor_lib == "pyarrow":
