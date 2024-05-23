@@ -631,21 +631,22 @@ def test_set_output_transform_configured(estimator, check_func):
     "estimator", _tested_estimators(), ids=_get_check_estimator_ids
 )
 def test_check_inplace_ensure_writeable(estimator):
+    name = estimator.__class__.__name__
+
     if hasattr(estimator, "copy"):
         estimator.set_params(copy=False)
     elif hasattr(estimator, "copy_X"):
         estimator.set_params(copy_X=False)
     else:
-        raise SkipTest("Estimator doesn't require writeable input.")
+        raise SkipTest(f"{name} doesn't require writeable input.")
 
     _set_checking_parameters(estimator)
 
     # The following estimators can work inplace only with certain settings
-    if estimator.__class__.__name__ == "HDBSCAN":
-        estimator.set_params(metric="precomputed")
-        estimator.set_params(algorithm="brute")
+    if name == "HDBSCAN":
+        estimator.set_params(metric="precomputed", algorithm="brute")
 
-    if estimator.__class__.__name__ == "PCA":
+    if name == "PCA":
         estimator.set_params(svd_solver="full")
 
-    check_inplace_ensure_writeable(estimator.__class__.__name__, estimator)
+    check_inplace_ensure_writeable(name, estimator)
