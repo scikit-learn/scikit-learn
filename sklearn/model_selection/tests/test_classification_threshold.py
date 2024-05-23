@@ -697,7 +697,7 @@ def test_fixed_threshold_classifier_metadata_routing():
 def test_error_on_unthresholded_classification_metrics(
     scoring_name, expected_method_names
 ):
-    """Check that an error is raised with metrics meant for unthresholded predictions."""
+    """Check error raised with metrics meant for unthresholded predictions."""
     X, y = make_classification(random_state=0)
     estimator = LogisticRegression()
     err_msg = re.escape(
