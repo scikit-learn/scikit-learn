@@ -690,6 +690,7 @@ def test_fixed_threshold_classifier_metadata_routing():
     "scoring_name", ["roc_auc", "average_precision", "neg_log_loss"]
 )
 def test_error_on_unthresholded_classification_metrics(scoring_name):
+    """Check that we raise an error if optimizing untresholded metrics."""
     X, y = make_classification(random_state=0)
     estimator = LogisticRegression()
     if scoring_name in ("roc_auc", "average_precision"):
