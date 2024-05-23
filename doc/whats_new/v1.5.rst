@@ -87,7 +87,6 @@ See :ref:`array_api` for more details.
 
 **Classes:**
 
-<<<<<<< HEAD
 **Libraries:**
 
 - ``dask.array`` is now experimentally supported as an array API backend.
