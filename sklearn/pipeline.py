@@ -1,7 +1,4 @@
-"""
-The :mod:`sklearn.pipeline` module implements utilities to build a composite
-estimator, as a chain of transforms and estimators.
-"""
+"""Utilities to build a composite estimator as a chain of transforms and estimators."""
 
 # Author: Edouard Duchesnay
 #         Gael Varoquaux
@@ -19,7 +16,7 @@ from scipy import sparse
 from .base import TransformerMixin, _fit_context, clone
 from .exceptions import NotFittedError
 from .preprocessing import FunctionTransformer
-from .utils import Bunch
+from .utils import Bunch, _safe_indexing
 from .utils._estimator_html_repr import _VisualBlock
 from .utils._metadata_requests import METHODS
 from .utils._param_validation import HasMethods, Hidden
@@ -29,6 +26,7 @@ from .utils._set_output import (
 )
 from .utils._tags import _safe_tags
 from .utils._user_interface import _print_elapsed_time
+from .utils.deprecation import _deprecate_Xt_in_inverse_transform
 from .utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -178,7 +176,7 @@ class Pipeline(_BaseComposition):
 
         Parameters
         ----------
-        transform : {"default", "pandas"}, default=None
+        transform : {"default", "pandas", "polars"}, default=None
             Configure output of `transform` and `fit_transform`.
 
             - `"default"`: Default output format of a transformer
@@ -909,18 +907,27 @@ class Pipeline(_BaseComposition):
         return all(hasattr(t, "inverse_transform") for _, _, t in self._iter())
 
     @available_if(_can_inverse_transform)
-    def inverse_transform(self, Xt, **params):
+    def inverse_transform(self, X=None, *, Xt=None, **params):
         """Apply `inverse_transform` for each step in a reverse order.
 
         All estimators in the pipeline must support `inverse_transform`.
 
         Parameters
         ----------
+        X : array-like of shape (n_samples, n_transformed_features)
+            Data samples, where ``n_samples`` is the number of samples and
+            ``n_features`` is the number of features. Must fulfill
+            input requirements of last step of pipeline's
+            ``inverse_transform`` method.
+
         Xt : array-like of shape (n_samples, n_transformed_features)
             Data samples, where ``n_samples`` is the number of samples and
             ``n_features`` is the number of features. Must fulfill
             input requirements of last step of pipeline's
             ``inverse_transform`` method.
+
+            .. deprecated:: 1.5
+                `Xt` was deprecated in 1.5 and will be removed in 1.7. Use `X` instead.
 
         **params : dict of str -> object
             Parameters requested and accepted by steps. Each step must have
@@ -940,15 +947,15 @@ class Pipeline(_BaseComposition):
         """
         _raise_for_params(params, self, "inverse_transform")
 
+        X = _deprecate_Xt_in_inverse_transform(X, Xt)
+
         # we don't have to branch here, since params is only non-empty if
         # enable_metadata_routing=True.
         routed_params = process_routing(self, "inverse_transform", **params)
         reverse_iter = reversed(list(self._iter()))
         for _, name, transform in reverse_iter:
-            Xt = transform.inverse_transform(
-                Xt, **routed_params[name].inverse_transform
-            )
-        return Xt
+            X = transform.inverse_transform(X, **routed_params[name].inverse_transform)
+        return X
 
     @available_if(_final_estimator_has("score"))
     def score(self, X, y=None, sample_weight=None, **params):
@@ -1258,7 +1265,7 @@ def make_pipeline(*steps, memory=None, verbose=False):
     return Pipeline(_name_estimators(steps), memory=memory, verbose=verbose)
 
 
-def _transform_one(transformer, X, y, weight, params):
+def _transform_one(transformer, X, y, weight, columns=None, params=None):
     """Call transform and apply weight to output.
 
     Parameters
@@ -1275,11 +1282,17 @@ def _transform_one(transformer, X, y, weight, params):
     weight : float
         Weight to be applied to the output of the transformation.
 
+    columns : str, array-like of str, int, array-like of int, array-like of bool, slice
+        Columns to select before transforming.
+
     params : dict
         Parameters to be passed to the transformer's ``transform`` method.
 
         This should be of the form ``process_routing()["step_name"]``.
     """
+    if columns is not None:
+        X = _safe_indexing(X, columns, axis=1)
+
     res = transformer.transform(X, **params.transform)
     # if we have a weight for this transformer, multiply output
     if weight is None:
@@ -1288,7 +1301,14 @@ def _transform_one(transformer, X, y, weight, params):
 
 
 def _fit_transform_one(
-    transformer, X, y, weight, message_clsname="", message=None, params=None
+    transformer,
+    X,
+    y,
+    weight,
+    columns=None,
+    message_clsname="",
+    message=None,
+    params=None,
 ):
     """
     Fits ``transformer`` to ``X`` and ``y``. The transformed result is returned
@@ -1297,6 +1317,9 @@ def _fit_transform_one(
 
     ``params`` needs to be of the form ``process_routing()["step_name"]``.
     """
+    if columns is not None:
+        X = _safe_indexing(X, columns, axis=1)
+
     params = params or {}
     with _print_elapsed_time(message_clsname, message):
         if hasattr(transformer, "fit_transform"):
@@ -1412,12 +1435,12 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     ...                       ("svd", TruncatedSVD(n_components=2))])
     >>> X = [[0., 1., 3], [2., 2., 5]]
     >>> union.fit_transform(X)
-    array([[ 1.5       ,  3.0...,  0.8...],
-           [-1.5       ,  5.7..., -0.4...]])
+    array([[-1.5       ,  3.0..., -0.8...],
+           [ 1.5       ,  5.7...,  0.4...]])
     >>> # An estimator's parameter can be set using '__' syntax
     >>> union.set_params(svd__n_components=1).fit_transform(X)
-    array([[ 1.5       ,  3.0...],
-           [-1.5       ,  5.7...]])
+    array([[-1.5       ,  3.0...],
+           [ 1.5       ,  5.7...]])
 
     For a more detailed example of usage, see
     :ref:`sphx_glr_auto_examples_compose_plot_feature_union.py`.
@@ -1447,11 +1470,12 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         Parameters
         ----------
-        transform : {"default", "pandas"}, default=None
+        transform : {"default", "pandas", "polars"}, default=None
             Configure output of `transform` and `fit_transform`.
 
             - `"default"`: Default output format of a transformer
             - `"pandas"`: DataFrame output
+            - `"polars"`: Polars output
             - `None`: Transform configuration is unchanged
 
         Returns
@@ -1792,7 +1816,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                 routed_params[name] = Bunch(transform={})
 
         Xs = Parallel(n_jobs=self.n_jobs)(
-            delayed(_transform_one)(trans, X, None, weight, routed_params[name])
+            delayed(_transform_one)(trans, X, None, weight, params=routed_params[name])
             for name, trans, weight in self._iter()
         )
         if not Xs:

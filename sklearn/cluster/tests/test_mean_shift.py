@@ -25,6 +25,15 @@ X, _ = make_blobs(
 )
 
 
+def test_convergence_of_1d_constant_data():
+    # Test convergence using 1D constant data
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/28926
+    model = MeanShift()
+    n_iter = model.fit(np.ones(10).reshape(-1, 1)).n_iter_
+    assert n_iter < model.max_iter
+
+
 def test_estimate_bandwidth():
     # Test estimate_bandwidth
     bandwidth = estimate_bandwidth(X, n_samples=200)
