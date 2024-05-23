@@ -51,6 +51,7 @@ from sklearn.metrics import (
     zero_one_loss,
 )
 from sklearn.metrics._base import _average_binary_score
+from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import shuffle
 from sklearn.utils._array_api import (
@@ -637,7 +638,10 @@ def test_sample_order_invariance_multilabel_and_multioutput():
     # Generate some data
     y_true = random_state.randint(0, 2, size=(20, 25))
     y_pred = random_state.randint(0, 2, size=(20, 25))
-    y_score = random_state.normal(size=y_true.shape)
+    y_score = random_state.uniform(size=y_true.shape)
+
+    # Some metrics (e.g. log_loss) require y_score to be probabilities (sum to 1)
+    y_score /= y_score.sum(axis=1, keepdims=True)
 
     y_true_shuffle, y_pred_shuffle, y_score_shuffle = shuffle(
         y_true, y_pred, y_score, random_state=0
@@ -1566,7 +1570,10 @@ def test_multilabel_sample_weight_invariance(name):
     )
     y_true = np.vstack([ya, yb])
     y_pred = np.vstack([ya, ya])
-    y_score = random_state.randint(1, 4, size=y_true.shape)
+    y_score = random_state.uniform(size=y_true.shape)
+
+    # Some metrics (e.g. log_loss) require y_score to be probabilities (sum to 1)
+    y_score /= y_score.sum(axis=1, keepdims=True)
 
     metric = ALL_METRICS[name]
     if name in THRESHOLDED_METRICS:
@@ -1629,7 +1636,10 @@ def test_thresholded_multilabel_multioutput_permutations_invariance(name):
     random_state = check_random_state(0)
     n_samples, n_classes = 20, 4
     y_true = random_state.randint(0, 2, size=(n_samples, n_classes))
-    y_score = random_state.normal(size=y_true.shape)
+    y_score = random_state.uniform(size=y_true.shape)
+
+    # Some metrics (e.g. log_loss) require y_score to be probabilities (sum to 1)
+    y_score /= y_score.sum(axis=1, keepdims=True)
 
     # Makes sure all samples have at least one label. This works around errors
     # when running metrics where average="sample"
@@ -1734,20 +1744,22 @@ def test_metrics_pos_label_error_str(metric, y_pred_threshold, dtype_y_str):
 
 
 def check_array_api_metric(
-    metric, array_namespace, device, dtype_name, y_true_np, y_pred_np, sample_weight
+    metric, array_namespace, device, dtype_name, a_np, b_np, **metric_kwargs
 ):
     xp = _array_api_for_tests(array_namespace, device)
 
-    y_true_xp = xp.asarray(y_true_np, device=device)
-    y_pred_xp = xp.asarray(y_pred_np, device=device)
+    a_xp = xp.asarray(a_np, device=device)
+    b_xp = xp.asarray(b_np, device=device)
 
-    metric_np = metric(y_true_np, y_pred_np, sample_weight=sample_weight)
+    metric_np = metric(a_np, b_np, **metric_kwargs)
 
-    if sample_weight is not None:
-        sample_weight = xp.asarray(sample_weight, device=device)
+    if metric_kwargs.get("sample_weight") is not None:
+        metric_kwargs["sample_weight"] = xp.asarray(
+            metric_kwargs["sample_weight"], device=device
+        )
 
     with config_context(array_api_dispatch=True):
-        metric_xp = metric(y_true_xp, y_pred_xp, sample_weight=sample_weight)
+        metric_xp = metric(a_xp, b_xp, **metric_kwargs)
 
         assert_allclose(
             _convert_to_numpy(xp.asarray(metric_xp), xp),
@@ -1767,8 +1779,8 @@ def check_array_api_binary_classification_metric(
         array_namespace,
         device,
         dtype_name,
-        y_true_np=y_true_np,
-        y_pred_np=y_pred_np,
+        a_np=y_true_np,
+        b_np=y_pred_np,
         sample_weight=None,
     )
 
@@ -1779,8 +1791,8 @@ def check_array_api_binary_classification_metric(
         array_namespace,
         device,
         dtype_name,
-        y_true_np=y_true_np,
-        y_pred_np=y_pred_np,
+        a_np=y_true_np,
+        b_np=y_pred_np,
         sample_weight=sample_weight,
     )
 
@@ -1796,8 +1808,8 @@ def check_array_api_multiclass_classification_metric(
         array_namespace,
         device,
         dtype_name,
-        y_true_np=y_true_np,
-        y_pred_np=y_pred_np,
+        a_np=y_true_np,
+        b_np=y_pred_np,
         sample_weight=None,
     )
 
@@ -1808,13 +1820,42 @@ def check_array_api_multiclass_classification_metric(
         array_namespace,
         device,
         dtype_name,
-        y_true_np=y_true_np,
-        y_pred_np=y_pred_np,
+        a_np=y_true_np,
+        b_np=y_pred_np,
         sample_weight=sample_weight,
     )
 
 
 def check_array_api_regression_metric(metric, array_namespace, device, dtype_name):
+    y_true_np = np.array([2, 0, 1, 4], dtype=dtype_name)
+    y_pred_np = np.array([0.5, 0.5, 2, 2], dtype=dtype_name)
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=y_true_np,
+        b_np=y_pred_np,
+        sample_weight=None,
+    )
+
+    sample_weight = np.array([0.1, 2.0, 1.5, 0.5], dtype=dtype_name)
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=y_true_np,
+        b_np=y_pred_np,
+        sample_weight=sample_weight,
+    )
+
+
+def check_array_api_regression_metric_multioutput(
+    metric, array_namespace, device, dtype_name
+):
     y_true_np = np.array([[1, 3], [1, 2]], dtype=dtype_name)
     y_pred_np = np.array([[1, 4], [1, 1]], dtype=dtype_name)
 
@@ -1823,8 +1864,8 @@ def check_array_api_regression_metric(metric, array_namespace, device, dtype_nam
         array_namespace,
         device,
         dtype_name,
-        y_true_np=y_true_np,
-        y_pred_np=y_pred_np,
+        a_np=y_true_np,
+        b_np=y_pred_np,
         sample_weight=None,
     )
 
@@ -1835,9 +1876,46 @@ def check_array_api_regression_metric(metric, array_namespace, device, dtype_nam
         array_namespace,
         device,
         dtype_name,
-        y_true_np=y_true_np,
-        y_pred_np=y_pred_np,
+        a_np=y_true_np,
+        b_np=y_pred_np,
         sample_weight=sample_weight,
+    )
+
+
+def check_array_api_multioutput_regression_metric(
+    metric, array_namespace, device, dtype_name
+):
+    metric = partial(metric, multioutput="raw_values")
+    check_array_api_regression_metric(metric, array_namespace, device, dtype_name)
+
+
+def check_array_api_metric_pairwise(metric, array_namespace, device, dtype_name):
+
+    X_np = np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=dtype_name)
+    Y_np = np.array([[0.2, 0.3, 0.4], [0.5, 0.6, 0.7]], dtype=dtype_name)
+
+    metric_kwargs = {}
+    if "dense_output" in signature(metric).parameters:
+        metric_kwargs["dense_output"] = False
+        check_array_api_metric(
+            metric,
+            array_namespace,
+            device,
+            dtype_name,
+            a_np=X_np,
+            b_np=Y_np,
+            **metric_kwargs,
+        )
+        metric_kwargs["dense_output"] = True
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=X_np,
+        b_np=Y_np,
+        **metric_kwargs,
     )
 
 
@@ -1850,7 +1928,16 @@ array_api_metric_checkers = {
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
     ],
-    r2_score: [check_array_api_regression_metric],
+    mean_tweedie_deviance: [check_array_api_regression_metric],
+    r2_score: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
+    cosine_similarity: [check_array_api_metric_pairwise],
+    mean_absolute_error: [
+        check_array_api_regression_metric,
+        check_array_api_multioutput_regression_metric,
+    ],
 }
 
 

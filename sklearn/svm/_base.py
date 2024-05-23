@@ -297,8 +297,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             warnings.warn(
                 "Solver terminated early (max_iter=%i)."
                 "  Consider pre-processing your data with"
-                " StandardScaler or MinMaxScaler."
-                % self.max_iter,
+                " StandardScaler or MinMaxScaler." % self.max_iter,
                 ConvergenceWarning,
             )
 
@@ -1174,8 +1173,7 @@ def _fit_liblinear(
             raise ValueError(
                 "This solver needs samples of at least 2 classes"
                 " in the data, but the data contains only one"
-                " class: %r"
-                % classes_[0]
+                " class: %r" % classes_[0]
             )
 
         class_weight_ = compute_class_weight(class_weight, classes=classes_, y=y)

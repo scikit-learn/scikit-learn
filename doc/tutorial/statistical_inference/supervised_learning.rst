@@ -426,9 +426,9 @@ the separating line (less regularization).
 
    **Regularized SVM (default)**
 
-.. topic:: Example:
+.. rubric:: Examples
 
- - :ref:`sphx_glr_auto_examples_svm_plot_iris_svc.py`
+- :ref:`sphx_glr_auto_examples_svm_plot_iris_svc.py`
 
 
 SVMs can be used in regression --:class:`SVR` (Support Vector Regression)--, or in
@@ -502,13 +502,6 @@ Sigmoid kernel
 .. image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_005.png
    :target: ../../auto_examples/svm/plot_svm_kernels.html
 
-
-
-.. topic:: **Interactive example**
-
-   See the :ref:`SVM GUI <sphx_glr_auto_examples_applications_svm_gui.py>` to download
-   ``svm_gui.py``; add data points of both classes with right and left button,
-   fit the model and change parameters and data.
 
 .. topic:: **Exercise**
    :class: green

@@ -65,8 +65,8 @@ The compressed size is about 656 MB.
 .. _rcv1 homepage: http://jmlr.csail.mit.edu/papers/volume5/lewis04a/
 
 
-.. topic:: References
+.. rubric:: References
 
-    .. [1] Lewis, D. D., Yang, Y., Rose, T. G., & Li, F. (2004).
-           RCV1: A new benchmark collection for text categorization research.
-           The Journal of Machine Learning Research, 5, 361-397.
+.. [1] Lewis, D. D., Yang, Y., Rose, T. G., & Li, F. (2004).
+       RCV1: A new benchmark collection for text categorization research.
+       The Journal of Machine Learning Research, 5, 361-397.

@@ -1,7 +1,5 @@
-# Authors: Christian Lorentzen <lorentzen.ch@gmail.com>
-#
-# License: BSD 3 clause
-
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 import itertools
 import warnings
 from functools import partial
@@ -1107,6 +1105,5 @@ def test_newton_solver_verbosity(capsys, verbose):
     if verbose >= 1:
         assert (
             "The inner solver detected a pointwise Hessian with many negative values"
-            " and resorts to lbfgs instead."
-            in captured.out
+            " and resorts to lbfgs instead." in captured.out
         )
