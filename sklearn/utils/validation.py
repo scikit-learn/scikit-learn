@@ -1102,9 +1102,23 @@ def check_array(
     if writeable:
         array_data = array.data if sp.issparse(array) else array
         if not array_data.flags.writeable:
-            try:
-                array_data.setflags(write=True)
-            except Exception:
+            # This situation can only happen when copy=False, the array is read-only and
+            # a writeable output is requested. This is an ambiguous setting so we chose
+            # to always (except for one specific setting, see below) make a copy to
+            # ensure that the output is writeable, even if avoidable, to not overwrite
+            # the user's data by surprise.
+
+            if _is_pandas_df_or_series(array_orig):
+                try:
+                    # In pandas >= 3, np.asarray(df), called earlier in check_array,
+                    # returns a read-only intermediate array. It can be made writeable
+                    # safely without copy because if the original DataFrame was backed
+                    # by a read-only array, trying to change the flag would raise an
+                    # error, in which case we make a copy.
+                    array_data.flags.writeable = True
+                except ValueError:
+                    array = array.copy()
+            else:
                 array = array.copy()
 
     return array
