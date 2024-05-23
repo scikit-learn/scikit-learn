@@ -687,17 +687,19 @@ def test_fixed_threshold_classifier_metadata_routing():
 
 
 @pytest.mark.parametrize(
-    "scoring_name", ["roc_auc", "average_precision", "neg_log_loss"]
+    "scoring_name, expected_method_names",
+    [
+        ("roc_auc", "('decision_function', 'predict_proba')"),
+        ("average_precision", "('decision_function', 'predict_proba')"),
+        ("neg_log_loss", "'predict_proba'"),
+    ],
 )
-def test_error_on_unthresholded_classification_metrics(scoring_name):
+def test_error_on_unthresholded_classification_metrics(
+    scoring_name, expected_method_names
+):
     """Check that we raise an error if optimizing untresholded metrics."""
     X, y = make_classification(random_state=0)
     estimator = LogisticRegression()
-    if scoring_name in ("roc_auc", "average_precision"):
-        expected_method_names = "('decision_function', 'predict_proba')"
-    else:
-        expected_method_names = "'predict_proba'"
-
     err_msg = re.escape(
         "TunedThresholdClassifierCV expects a scoring metric that evaluates the "
         f"thresholded predictions of a binary classifier, got: '{scoring_name}' "
@@ -722,7 +724,7 @@ def test_warn_on_constant_scores():
         "The objective metric make_scorer(constant_score_func, "
         "response_method='predict') is constant at 1.0 across all thresholds. Falling "
         "back to the default 0.5 threshold. Please instead pass a scoring metric that "
-        "varies with the decision threshold to tune it."
+        "varies with the decision threshold."
     )
     with pytest.warns(UserWarning, match=warn_msg):
         tuned_clf = TunedThresholdClassifierCV(
