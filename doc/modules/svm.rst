@@ -108,11 +108,10 @@ properties of these support vectors can be found in attributes
     >>> clf.n_support_
     array([1, 1]...)
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane.py`,
- * :ref:`sphx_glr_auto_examples_svm_plot_svm_nonlinear.py`
- * :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`,
+* :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane.py`
+* :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`
 
 .. _svm_multi_class:
 
@@ -154,65 +153,61 @@ multi-class strategy, thus training `n_classes` models.
 See :ref:`svm_mathematical_formulation` for a complete description of
 the decision function.
 
-|details-start|
-**Details on multi-class strategies**
-|details-split|
+.. dropdown:: Details on multi-class strategies
 
-Note that the :class:`LinearSVC` also implements an alternative multi-class
-strategy, the so-called multi-class SVM formulated by Crammer and Singer
-[#8]_, by using the option ``multi_class='crammer_singer'``. In practice,
-one-vs-rest classification is usually preferred, since the results are mostly
-similar, but the runtime is significantly less.
+  Note that the :class:`LinearSVC` also implements an alternative multi-class
+  strategy, the so-called multi-class SVM formulated by Crammer and Singer
+  [#8]_, by using the option ``multi_class='crammer_singer'``. In practice,
+  one-vs-rest classification is usually preferred, since the results are mostly
+  similar, but the runtime is significantly less.
 
-For "one-vs-rest" :class:`LinearSVC` the attributes ``coef_`` and ``intercept_``
-have the shape ``(n_classes, n_features)`` and ``(n_classes,)`` respectively.
-Each row of the coefficients corresponds to one of the ``n_classes``
-"one-vs-rest" classifiers and similar for the intercepts, in the
-order of the "one" class.
+  For "one-vs-rest" :class:`LinearSVC` the attributes ``coef_`` and ``intercept_``
+  have the shape ``(n_classes, n_features)`` and ``(n_classes,)`` respectively.
+  Each row of the coefficients corresponds to one of the ``n_classes``
+  "one-vs-rest" classifiers and similar for the intercepts, in the
+  order of the "one" class.
 
-In the case of "one-vs-one" :class:`SVC` and :class:`NuSVC`, the layout of
-the attributes is a little more involved. In the case of a linear
-kernel, the attributes ``coef_`` and ``intercept_`` have the shape
-``(n_classes * (n_classes - 1) / 2, n_features)`` and ``(n_classes *
-(n_classes - 1) / 2)`` respectively. This is similar to the layout for
-:class:`LinearSVC` described above, with each row now corresponding
-to a binary classifier. The order for classes
-0 to n is "0 vs 1", "0 vs 2" , ... "0 vs n", "1 vs 2", "1 vs 3", "1 vs n", . .
-. "n-1 vs n".
+  In the case of "one-vs-one" :class:`SVC` and :class:`NuSVC`, the layout of
+  the attributes is a little more involved. In the case of a linear
+  kernel, the attributes ``coef_`` and ``intercept_`` have the shape
+  ``(n_classes * (n_classes - 1) / 2, n_features)`` and ``(n_classes *
+  (n_classes - 1) / 2)`` respectively. This is similar to the layout for
+  :class:`LinearSVC` described above, with each row now corresponding
+  to a binary classifier. The order for classes
+  0 to n is "0 vs 1", "0 vs 2" , ... "0 vs n", "1 vs 2", "1 vs 3", "1 vs n", . .
+  . "n-1 vs n".
 
-The shape of ``dual_coef_`` is ``(n_classes-1, n_SV)`` with
-a somewhat hard to grasp layout.
-The columns correspond to the support vectors involved in any
-of the ``n_classes * (n_classes - 1) / 2`` "one-vs-one" classifiers.
-Each support vector ``v`` has a dual coefficient in each of the
-``n_classes - 1`` classifiers comparing the class of ``v`` against another class.
-Note that some, but not all, of these dual coefficients, may be zero.
-The ``n_classes - 1`` entries in each column are these dual coefficients,
-ordered by the opposing class.
+  The shape of ``dual_coef_`` is ``(n_classes-1, n_SV)`` with
+  a somewhat hard to grasp layout.
+  The columns correspond to the support vectors involved in any
+  of the ``n_classes * (n_classes - 1) / 2`` "one-vs-one" classifiers.
+  Each support vector ``v`` has a dual coefficient in each of the
+  ``n_classes - 1`` classifiers comparing the class of ``v`` against another class.
+  Note that some, but not all, of these dual coefficients, may be zero.
+  The ``n_classes - 1`` entries in each column are these dual coefficients,
+  ordered by the opposing class.
 
-This might be clearer with an example: consider a three class problem with
-class 0 having three support vectors
-:math:`v^{0}_0, v^{1}_0, v^{2}_0` and class 1 and 2 having two support vectors
-:math:`v^{0}_1, v^{1}_1` and :math:`v^{0}_2, v^{1}_2` respectively.  For each
-support vector :math:`v^{j}_i`, there are two dual coefficients.  Let's call
-the coefficient of support vector :math:`v^{j}_i` in the classifier between
-classes :math:`i` and :math:`k` :math:`\alpha^{j}_{i,k}`.
-Then ``dual_coef_`` looks like this:
+  This might be clearer with an example: consider a three class problem with
+  class 0 having three support vectors
+  :math:`v^{0}_0, v^{1}_0, v^{2}_0` and class 1 and 2 having two support vectors
+  :math:`v^{0}_1, v^{1}_1` and :math:`v^{0}_2, v^{1}_2` respectively.  For each
+  support vector :math:`v^{j}_i`, there are two dual coefficients.  Let's call
+  the coefficient of support vector :math:`v^{j}_i` in the classifier between
+  classes :math:`i` and :math:`k` :math:`\alpha^{j}_{i,k}`.
+  Then ``dual_coef_`` looks like this:
 
-+------------------------+------------------------+------------------------+------------------------+------------------------+------------------------+------------------------+
-|:math:`\alpha^{0}_{0,1}`|:math:`\alpha^{1}_{0,1}`|:math:`\alpha^{2}_{0,1}`|:math:`\alpha^{0}_{1,0}`|:math:`\alpha^{1}_{1,0}`|:math:`\alpha^{0}_{2,0}`|:math:`\alpha^{1}_{2,0}`|
-+------------------------+------------------------+------------------------+------------------------+------------------------+------------------------+------------------------+
-|:math:`\alpha^{0}_{0,2}`|:math:`\alpha^{1}_{0,2}`|:math:`\alpha^{2}_{0,2}`|:math:`\alpha^{0}_{1,2}`|:math:`\alpha^{1}_{1,2}`|:math:`\alpha^{0}_{2,1}`|:math:`\alpha^{1}_{2,1}`|
-+------------------------+------------------------+------------------------+------------------------+------------------------+------------------------+------------------------+
-|Coefficients                                                              |Coefficients                                     |Coefficients                                     |
-|for SVs of class 0                                                        |for SVs of class 1                               |for SVs of class 2                               |
-+--------------------------------------------------------------------------+-------------------------------------------------+-------------------------------------------------+
+  +------------------------+------------------------+------------------------+------------------------+------------------------+------------------------+------------------------+
+  |:math:`\alpha^{0}_{0,1}`|:math:`\alpha^{1}_{0,1}`|:math:`\alpha^{2}_{0,1}`|:math:`\alpha^{0}_{1,0}`|:math:`\alpha^{1}_{1,0}`|:math:`\alpha^{0}_{2,0}`|:math:`\alpha^{1}_{2,0}`|
+  +------------------------+------------------------+------------------------+------------------------+------------------------+------------------------+------------------------+
+  |:math:`\alpha^{0}_{0,2}`|:math:`\alpha^{1}_{0,2}`|:math:`\alpha^{2}_{0,2}`|:math:`\alpha^{0}_{1,2}`|:math:`\alpha^{1}_{1,2}`|:math:`\alpha^{0}_{2,1}`|:math:`\alpha^{1}_{2,1}`|
+  +------------------------+------------------------+------------------------+------------------------+------------------------+------------------------+------------------------+
+  |Coefficients                                                              |Coefficients                                     |Coefficients                                     |
+  |for SVs of class 0                                                        |for SVs of class 1                               |for SVs of class 2                               |
+  +--------------------------------------------------------------------------+-------------------------------------------------+-------------------------------------------------+
 
-|details-end|
+.. rubric:: Examples
 
-.. topic:: Examples:
-
- * :ref:`sphx_glr_auto_examples_svm_plot_iris_svc.py`,
+* :ref:`sphx_glr_auto_examples_svm_plot_iris_svc.py`
 
 .. _scores_probabilities:
 
@@ -295,10 +290,10 @@ to the sample weights:
    :align: center
    :scale: 75
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane_unbalanced.py`
- * :ref:`sphx_glr_auto_examples_svm_plot_weighted_samples.py`,
+* :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane_unbalanced.py`
+* :ref:`sphx_glr_auto_examples_svm_plot_weighted_samples.py`
 
 
 .. _svm_regression:
@@ -343,9 +338,9 @@ floating point values instead of integer values::
     array([1.5])
 
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_svm_plot_svm_regression.py`
+* :ref:`sphx_glr_auto_examples_svm_plot_svm_regression.py`
 
 .. _svm_outlier_detection:
 
@@ -516,11 +511,10 @@ Proper choice of ``C`` and ``gamma`` is critical to the SVM's performance.  One
 is advised to use :class:`~sklearn.model_selection.GridSearchCV` with
 ``C`` and ``gamma`` spaced exponentially far apart to choose good values.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_svm_plot_rbf_parameters.py`
- * :ref:`sphx_glr_auto_examples_svm_plot_svm_nonlinear.py`
- * :ref:`sphx_glr_auto_examples_svm_plot_svm_scale_c.py`
+* :ref:`sphx_glr_auto_examples_svm_plot_rbf_parameters.py`
+* :ref:`sphx_glr_auto_examples_svm_plot_svm_scale_c.py`
 
 Custom Kernels
 --------------
@@ -539,60 +533,52 @@ classifiers, except that:
   use of ``fit()`` and ``predict()`` you will have unexpected results.
 
 
-|details-start|
-**Using Python functions as kernels**
-|details-split|
+.. dropdown:: Using Python functions as kernels
 
-You can use your own defined kernels by passing a function to the
-``kernel`` parameter.
+  You can use your own defined kernels by passing a function to the
+  ``kernel`` parameter.
 
-Your kernel must take as arguments two matrices of shape
-``(n_samples_1, n_features)``, ``(n_samples_2, n_features)``
-and return a kernel matrix of shape ``(n_samples_1, n_samples_2)``.
+  Your kernel must take as arguments two matrices of shape
+  ``(n_samples_1, n_features)``, ``(n_samples_2, n_features)``
+  and return a kernel matrix of shape ``(n_samples_1, n_samples_2)``.
 
-The following code defines a linear kernel and creates a classifier
-instance that will use that kernel::
+  The following code defines a linear kernel and creates a classifier
+  instance that will use that kernel::
 
-    >>> import numpy as np
-    >>> from sklearn import svm
-    >>> def my_kernel(X, Y):
-    ...     return np.dot(X, Y.T)
-    ...
-    >>> clf = svm.SVC(kernel=my_kernel)
-
-|details-end|
+      >>> import numpy as np
+      >>> from sklearn import svm
+      >>> def my_kernel(X, Y):
+      ...     return np.dot(X, Y.T)
+      ...
+      >>> clf = svm.SVC(kernel=my_kernel)
 
 
-|details-start|
-**Using the Gram matrix**
-|details-split|
+.. dropdown:: Using the Gram matrix
 
-You can pass pre-computed kernels by using the ``kernel='precomputed'``
-option. You should then pass Gram matrix instead of X to the `fit` and
-`predict` methods. The kernel values between *all* training vectors and the
-test vectors must be provided:
+  You can pass pre-computed kernels by using the ``kernel='precomputed'``
+  option. You should then pass Gram matrix instead of X to the `fit` and
+  `predict` methods. The kernel values between *all* training vectors and the
+  test vectors must be provided:
 
-    >>> import numpy as np
-    >>> from sklearn.datasets import make_classification
-    >>> from sklearn.model_selection import train_test_split
-    >>> from sklearn import svm
-    >>> X, y = make_classification(n_samples=10, random_state=0)
-    >>> X_train , X_test , y_train, y_test = train_test_split(X, y, random_state=0)
-    >>> clf = svm.SVC(kernel='precomputed')
-    >>> # linear kernel computation
-    >>> gram_train = np.dot(X_train, X_train.T)
-    >>> clf.fit(gram_train, y_train)
-    SVC(kernel='precomputed')
-    >>> # predict on training examples
-    >>> gram_test = np.dot(X_test, X_train.T)
-    >>> clf.predict(gram_test)
-    array([0, 1, 0])
+      >>> import numpy as np
+      >>> from sklearn.datasets import make_classification
+      >>> from sklearn.model_selection import train_test_split
+      >>> from sklearn import svm
+      >>> X, y = make_classification(n_samples=10, random_state=0)
+      >>> X_train , X_test , y_train, y_test = train_test_split(X, y, random_state=0)
+      >>> clf = svm.SVC(kernel='precomputed')
+      >>> # linear kernel computation
+      >>> gram_train = np.dot(X_train, X_train.T)
+      >>> clf.fit(gram_train, y_train)
+      SVC(kernel='precomputed')
+      >>> # predict on training examples
+      >>> gram_test = np.dot(X_test, X_train.T)
+      >>> clf.predict(gram_test)
+      array([0, 1, 0])
 
-|details-end|
+.. rubric:: Examples
 
-.. topic:: Examples:
-
- * :ref:`sphx_glr_auto_examples_svm_plot_custom_kernel.py`.
+* :ref:`sphx_glr_auto_examples_svm_plot_custom_kernel.py`
 
 .. _svm_mathematical_formulation:
 
@@ -689,43 +675,35 @@ term :math:`b`
     estimator used is :class:`~sklearn.linear_model.Ridge` regression,
     the relation between them is given as :math:`C = \frac{1}{alpha}`.
 
-|details-start|
-**LinearSVC**
-|details-split|
+.. dropdown:: LinearSVC
 
-The primal problem can be equivalently formulated as
+  The primal problem can be equivalently formulated as
 
-.. math::
+  .. math::
 
-    \min_ {w, b} \frac{1}{2} w^T w + C \sum_{i=1}^{n}\max(0, 1 - y_i (w^T \phi(x_i) + b)),
+      \min_ {w, b} \frac{1}{2} w^T w + C \sum_{i=1}^{n}\max(0, 1 - y_i (w^T \phi(x_i) + b)),
 
-where we make use of the `hinge loss
-<https://en.wikipedia.org/wiki/Hinge_loss>`_. This is the form that is
-directly optimized by :class:`LinearSVC`, but unlike the dual form, this one
-does not involve inner products between samples, so the famous kernel trick
-cannot be applied. This is why only the linear kernel is supported by
-:class:`LinearSVC` (:math:`\phi` is the identity function).
-
-|details-end|
+  where we make use of the `hinge loss
+  <https://en.wikipedia.org/wiki/Hinge_loss>`_. This is the form that is
+  directly optimized by :class:`LinearSVC`, but unlike the dual form, this one
+  does not involve inner products between samples, so the famous kernel trick
+  cannot be applied. This is why only the linear kernel is supported by
+  :class:`LinearSVC` (:math:`\phi` is the identity function).
 
 .. _nu_svc:
 
-|details-start|
-**NuSVC**
-|details-split|
+.. dropdown:: NuSVC
 
-The :math:`\nu`-SVC formulation [#7]_ is a reparameterization of the
-:math:`C`-SVC and therefore mathematically equivalent.
+  The :math:`\nu`-SVC formulation [#7]_ is a reparameterization of the
+  :math:`C`-SVC and therefore mathematically equivalent.
 
-We introduce a new parameter :math:`\nu` (instead of :math:`C`) which
-controls the number of support vectors and *margin errors*:
-:math:`\nu \in (0, 1]` is an upper bound on the fraction of margin errors and
-a lower bound of the fraction of support vectors. A margin error corresponds
-to a sample that lies on the wrong side of its margin boundary: it is either
-misclassified, or it is correctly classified but does not lie beyond the
-margin.
-
-|details-end|
+  We introduce a new parameter :math:`\nu` (instead of :math:`C`) which
+  controls the number of support vectors and *margin errors*:
+  :math:`\nu \in (0, 1]` is an upper bound on the fraction of margin errors and
+  a lower bound of the fraction of support vectors. A margin error corresponds
+  to a sample that lies on the wrong side of its margin boundary: it is either
+  misclassified, or it is correctly classified but does not lie beyond the
+  margin.
 
 SVR
 ---
@@ -774,21 +752,17 @@ which holds the difference :math:`\alpha_i - \alpha_i^*`, ``support_vectors_`` w
 holds the support vectors, and ``intercept_`` which holds the independent
 term :math:`b`
 
-|details-start|
-**LinearSVR**
-|details-split|
+.. dropdown:: LinearSVR
 
-The primal problem can be equivalently formulated as
+  The primal problem can be equivalently formulated as
 
-.. math::
+  .. math::
 
-    \min_ {w, b} \frac{1}{2} w^T w + C \sum_{i=1}^{n}\max(0, |y_i - (w^T \phi(x_i) + b)| - \varepsilon),
+      \min_ {w, b} \frac{1}{2} w^T w + C \sum_{i=1}^{n}\max(0, |y_i - (w^T \phi(x_i) + b)| - \varepsilon),
 
-where we make use of the epsilon-insensitive loss, i.e. errors of less than
-:math:`\varepsilon` are ignored. This is the form that is directly optimized
-by :class:`LinearSVR`.
-
-|details-end|
+  where we make use of the epsilon-insensitive loss, i.e. errors of less than
+  :math:`\varepsilon` are ignored. This is the form that is directly optimized
+  by :class:`LinearSVR`.
 
 .. _svm_implementation_details:
 
@@ -804,38 +778,37 @@ used, please refer to their respective papers.
 .. _`libsvm`: https://www.csie.ntu.edu.tw/~cjlin/libsvm/
 .. _`liblinear`: https://www.csie.ntu.edu.tw/~cjlin/liblinear/
 
-.. topic:: References:
+.. rubric:: References
 
-   .. [#1] Platt `"Probabilistic outputs for SVMs and comparisons to
-      regularized likelihood methods"
-      <https://www.cs.colorado.edu/~mozer/Teaching/syllabi/6622/papers/Platt1999.pdf>`_.
+.. [#1] Platt `"Probabilistic outputs for SVMs and comparisons to
+  regularized likelihood methods"
+  <https://www.cs.colorado.edu/~mozer/Teaching/syllabi/6622/papers/Platt1999.pdf>`_.
 
-   .. [#2] Wu, Lin and Weng, `"Probability estimates for multi-class
-      classification by pairwise coupling"
-      <https://www.csie.ntu.edu.tw/~cjlin/papers/svmprob/svmprob.pdf>`_, JMLR
-      5:975-1005, 2004.
+.. [#2] Wu, Lin and Weng, `"Probability estimates for multi-class
+  classification by pairwise coupling"
+  <https://www.csie.ntu.edu.tw/~cjlin/papers/svmprob/svmprob.pdf>`_,
+  JMLR 5:975-1005, 2004.
 
-   .. [#3] Fan, Rong-En, et al.,
-      `"LIBLINEAR: A library for large linear classification."
-      <https://www.csie.ntu.edu.tw/~cjlin/papers/liblinear.pdf>`_,
-      Journal of machine learning research 9.Aug (2008): 1871-1874.
+.. [#3] Fan, Rong-En, et al.,
+  `"LIBLINEAR: A library for large linear classification."
+  <https://www.csie.ntu.edu.tw/~cjlin/papers/liblinear.pdf>`_,
+  Journal of machine learning research 9.Aug (2008): 1871-1874.
 
-   .. [#4] Chang and Lin, `LIBSVM: A Library for Support Vector Machines
-      <https://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_.
+.. [#4] Chang and Lin, `LIBSVM: A Library for Support Vector Machines
+  <https://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_.
 
-   .. [#5] Bishop, `Pattern recognition and machine learning
-      <https://www.microsoft.com/en-us/research/uploads/prod/2006/01/Bishop-Pattern-Recognition-and-Machine-Learning-2006.pdf>`_,
-      chapter 7 Sparse Kernel Machines
+.. [#5] Bishop, `Pattern recognition and machine learning
+  <https://www.microsoft.com/en-us/research/uploads/prod/2006/01/Bishop-Pattern-Recognition-and-Machine-Learning-2006.pdf>`_,
+  chapter 7 Sparse Kernel Machines
 
-   .. [#6] :doi:`"A Tutorial on Support Vector Regression"
-      <10.1023/B:STCO.0000035301.49549.88>`
-      Alex J. Smola, Bernhard Schölkopf - Statistics and Computing archive
-      Volume 14 Issue 3, August 2004, p. 199-222.
+.. [#6] :doi:`"A Tutorial on Support Vector Regression"
+  <10.1023/B:STCO.0000035301.49549.88>`
+  Alex J. Smola, Bernhard Schölkopf - Statistics and Computing archive
+  Volume 14 Issue 3, August 2004, p. 199-222.
 
-   .. [#7] Schölkopf et. al `New Support Vector Algorithms
-      <https://www.stat.purdue.edu/~yuzhu/stat598m3/Papers/NewSVM.pdf>`_
+.. [#7] Schölkopf et. al `New Support Vector Algorithms
+  <https://www.stat.purdue.edu/~yuzhu/stat598m3/Papers/NewSVM.pdf>`_
 
-   .. [#8] Crammer and Singer `On the Algorithmic Implementation ofMulticlass
-      Kernel-based Vector Machines
-      <http://jmlr.csail.mit.edu/papers/volume2/crammer01a/crammer01a.pdf>`_,
-      JMLR 2001.
+.. [#8] Crammer and Singer `On the Algorithmic Implementation ofMulticlass
+  Kernel-based Vector Machines
+  <http://jmlr.csail.mit.edu/papers/volume2/crammer01a/crammer01a.pdf>`_, JMLR 2001.

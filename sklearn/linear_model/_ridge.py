@@ -31,6 +31,7 @@ from ..utils import (
     check_scalar,
     column_or_1d,
     compute_sample_weight,
+    deprecated,
 )
 from ..utils._array_api import (
     _is_numpy_namespace,
@@ -39,7 +40,7 @@ from ..utils._array_api import (
     get_namespace,
     get_namespace_and_device,
 )
-from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.fixes import _sparse_linalg_cg
 from ..utils.metadata_routing import (
@@ -1731,7 +1732,7 @@ class _RidgeGCV(LinearModel):
         scoring=None,
         copy_X=True,
         gcv_mode=None,
-        store_cv_values=False,
+        store_cv_results=False,
         is_clf=False,
         alpha_per_target=False,
     ):
@@ -1740,7 +1741,7 @@ class _RidgeGCV(LinearModel):
         self.scoring = scoring
         self.copy_X = copy_X
         self.gcv_mode = gcv_mode
-        self.store_cv_values = store_cv_values
+        self.store_cv_results = store_cv_results
         self.is_clf = is_clf
         self.alpha_per_target = alpha_per_target
 
@@ -2135,8 +2136,8 @@ class _RidgeGCV(LinearModel):
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
         n_alphas = 1 if np.ndim(self.alphas) == 0 else len(self.alphas)
 
-        if self.store_cv_values:
-            self.cv_values_ = np.empty((n_samples * n_y, n_alphas), dtype=X.dtype)
+        if self.store_cv_results:
+            self.cv_results_ = np.empty((n_samples * n_y, n_alphas), dtype=X.dtype)
 
         best_coef, best_score, best_alpha = None, None, None
 
@@ -2145,12 +2146,12 @@ class _RidgeGCV(LinearModel):
             if scorer is None:
                 squared_errors = (c / G_inverse_diag) ** 2
                 alpha_score = self._score_without_scorer(squared_errors=squared_errors)
-                if self.store_cv_values:
-                    self.cv_values_[:, i] = squared_errors.ravel()
+                if self.store_cv_results:
+                    self.cv_results_[:, i] = squared_errors.ravel()
             else:
                 predictions = y - (c / G_inverse_diag)
-                if self.store_cv_values:
-                    self.cv_values_[:, i] = predictions.ravel()
+                if self.store_cv_results:
+                    self.cv_results_[:, i] = predictions.ravel()
 
                 score_params = score_params or {}
                 alpha_score = self._score(
@@ -2193,12 +2194,12 @@ class _RidgeGCV(LinearModel):
             X_offset += X_mean * X_scale
         self._set_intercept(X_offset, y_offset, X_scale)
 
-        if self.store_cv_values:
+        if self.store_cv_results:
             if len(y.shape) == 1:
-                cv_values_shape = n_samples, n_alphas
+                cv_results_shape = n_samples, n_alphas
             else:
-                cv_values_shape = n_samples, n_y, n_alphas
-            self.cv_values_ = self.cv_values_.reshape(cv_values_shape)
+                cv_results_shape = n_samples, n_y, n_alphas
+            self.cv_results_ = self.cv_results_.reshape(cv_results_shape)
 
         return self
 
@@ -2258,8 +2259,9 @@ class _BaseRidgeCV(LinearModel):
         "scoring": [StrOptions(set(get_scorer_names())), callable, None],
         "cv": ["cv_object"],
         "gcv_mode": [StrOptions({"auto", "svd", "eigen"}), None],
-        "store_cv_values": ["boolean"],
+        "store_cv_results": ["boolean", Hidden(None)],
         "alpha_per_target": ["boolean"],
+        "store_cv_values": ["boolean", Hidden(StrOptions({"deprecated"}))],
     }
 
     def __init__(
@@ -2270,16 +2272,18 @@ class _BaseRidgeCV(LinearModel):
         scoring=None,
         cv=None,
         gcv_mode=None,
-        store_cv_values=False,
+        store_cv_results=None,
         alpha_per_target=False,
+        store_cv_values="deprecated",
     ):
         self.alphas = alphas
         self.fit_intercept = fit_intercept
         self.scoring = scoring
         self.cv = cv
         self.gcv_mode = gcv_mode
-        self.store_cv_values = store_cv_values
+        self.store_cv_results = store_cv_results
         self.alpha_per_target = alpha_per_target
+        self.store_cv_values = store_cv_values
 
     def fit(self, X, y, sample_weight=None, **params):
         """Fit Ridge regression model with cv.
@@ -2322,6 +2326,28 @@ class _BaseRidgeCV(LinearModel):
         """
         _raise_for_params(params, self, "fit")
         cv = self.cv
+
+        # TODO(1.7): Remove in 1.7
+        # Also change `store_cv_results` default back to False
+        if self.store_cv_values != "deprecated":
+            if self.store_cv_results is not None:
+                raise ValueError(
+                    "Both 'store_cv_values' and 'store_cv_results' were set. "
+                    "'store_cv_values' is deprecated in version 1.5 and will be "
+                    "removed in 1.7. To avoid this error, only set 'store_cv_results'."
+                )
+            warnings.warn(
+                (
+                    "'store_cv_values' is deprecated in version 1.5 and will be "
+                    "removed in 1.7. Use 'store_cv_results' instead."
+                ),
+                FutureWarning,
+            )
+            self._store_cv_results = self.store_cv_values
+        elif self.store_cv_results is None:
+            self._store_cv_results = False
+        else:
+            self._store_cv_results = self.store_cv_results
 
         # `_RidgeGCV` does not work for alpha = 0
         if cv is None:
@@ -2368,7 +2394,7 @@ class _BaseRidgeCV(LinearModel):
                 fit_intercept=self.fit_intercept,
                 scoring=self.scoring,
                 gcv_mode=self.gcv_mode,
-                store_cv_values=self.store_cv_values,
+                store_cv_results=self._store_cv_results,
                 is_clf=is_classifier(self),
                 alpha_per_target=self.alpha_per_target,
             )
@@ -2380,11 +2406,11 @@ class _BaseRidgeCV(LinearModel):
             )
             self.alpha_ = estimator.alpha_
             self.best_score_ = estimator.best_score_
-            if self.store_cv_values:
-                self.cv_values_ = estimator.cv_values_
+            if self._store_cv_results:
+                self.cv_results_ = estimator.cv_results_
         else:
-            if self.store_cv_values:
-                raise ValueError("cv!=None and store_cv_values=True are incompatible")
+            if self._store_cv_results:
+                raise ValueError("cv!=None and store_cv_results=True are incompatible")
             if self.alpha_per_target:
                 raise ValueError("cv!=None and alpha_per_target=True are incompatible")
 
@@ -2444,6 +2470,16 @@ class _BaseRidgeCV(LinearModel):
 
     def _get_scorer(self):
         return check_scoring(self, scoring=self.scoring, allow_none=True)
+
+    # TODO(1.7): Remove
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "Attribute `cv_values_` is deprecated in version 1.5 and will be removed "
+        "in 1.7. Use `cv_results_` instead."
+    )
+    @property
+    def cv_values_(self):
+        return self.cv_results_
 
 
 class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
@@ -2506,11 +2542,14 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         The 'auto' mode is the default and is intended to pick the cheaper
         option of the two depending on the shape of the training data.
 
-    store_cv_values : bool, default=False
+    store_cv_results : bool, default=False
         Flag indicating if the cross-validation values corresponding to
         each alpha should be stored in the ``cv_values_`` attribute (see
         below). This flag is only compatible with ``cv=None`` (i.e. using
         Leave-One-Out Cross-Validation).
+
+        .. versionchanged:: 1.5
+            Parameter name changed from `store_cv_values` to `store_cv_results`.
 
     alpha_per_target : bool, default=False
         Flag indicating whether to optimize the alpha value (picked from the
@@ -2521,15 +2560,28 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
 
         .. versionadded:: 0.24
 
+    store_cv_values : bool
+        Flag indicating if the cross-validation values corresponding to
+        each alpha should be stored in the ``cv_values_`` attribute (see
+        below). This flag is only compatible with ``cv=None`` (i.e. using
+        Leave-One-Out Cross-Validation).
+
+        .. deprecated:: 1.5
+            `store_cv_values` is deprecated in version 1.5 in favor of
+            `store_cv_results` and will be removed in version 1.7.
+
     Attributes
     ----------
-    cv_values_ : ndarray of shape (n_samples, n_alphas) or \
+    cv_results_ : ndarray of shape (n_samples, n_alphas) or \
             shape (n_samples, n_targets, n_alphas), optional
         Cross-validation values for each alpha (only available if
-        ``store_cv_values=True`` and ``cv=None``). After ``fit()`` has been
+        ``store_cv_results=True`` and ``cv=None``). After ``fit()`` has been
         called, this attribute will contain the mean squared errors if
         `scoring is None` otherwise it will contain standardized per point
         prediction values.
+
+        .. versionchanged:: 1.5
+            `cv_values_` changed to `cv_results_`.
 
     coef_ : ndarray of shape (n_features) or (n_targets, n_features)
         Weight vector(s).
@@ -2670,19 +2722,35 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         weights inversely proportional to class frequencies in the input data
         as ``n_samples / (n_classes * np.bincount(y))``.
 
-    store_cv_values : bool, default=False
+    store_cv_results : bool, default=False
+        Flag indicating if the cross-validation results corresponding to
+        each alpha should be stored in the ``cv_results_`` attribute (see
+        below). This flag is only compatible with ``cv=None`` (i.e. using
+        Leave-One-Out Cross-Validation).
+
+        .. versionchanged:: 1.5
+            Parameter name changed from `store_cv_values` to `store_cv_results`.
+
+    store_cv_values : bool
         Flag indicating if the cross-validation values corresponding to
         each alpha should be stored in the ``cv_values_`` attribute (see
         below). This flag is only compatible with ``cv=None`` (i.e. using
         Leave-One-Out Cross-Validation).
 
+        .. deprecated:: 1.5
+            `store_cv_values` is deprecated in version 1.5 in favor of
+            `store_cv_results` and will be removed in version 1.7.
+
     Attributes
     ----------
-    cv_values_ : ndarray of shape (n_samples, n_targets, n_alphas), optional
-        Cross-validation values for each alpha (only if ``store_cv_values=True`` and
+    cv_results_ : ndarray of shape (n_samples, n_targets, n_alphas), optional
+        Cross-validation results for each alpha (only if ``store_cv_results=True`` and
         ``cv=None``). After ``fit()`` has been called, this attribute will
         contain the mean squared errors if `scoring is None` otherwise it
         will contain standardized per point prediction values.
+
+        .. versionchanged:: 1.5
+            `cv_values_` changed to `cv_results_`.
 
     coef_ : ndarray of shape (1, n_features) or (n_targets, n_features)
         Coefficient of the features in the decision function.
@@ -2752,13 +2820,15 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         scoring=None,
         cv=None,
         class_weight=None,
-        store_cv_values=False,
+        store_cv_results=None,
+        store_cv_values="deprecated",
     ):
         super().__init__(
             alphas=alphas,
             fit_intercept=fit_intercept,
             scoring=scoring,
             cv=cv,
+            store_cv_results=store_cv_results,
             store_cv_values=store_cv_values,
         )
         self.class_weight = class_weight

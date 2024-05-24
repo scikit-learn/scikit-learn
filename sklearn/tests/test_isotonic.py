@@ -227,7 +227,13 @@ def test_isotonic_regression_with_ties_in_differently_sized_groups():
 
 def test_isotonic_regression_reversed():
     y = np.array([10, 9, 10, 7, 6, 6.1, 5])
+    y_result = np.array([10, 9.5, 9.5, 7, 6.05, 6.05, 5])
+
+    y_iso = isotonic_regression(y, increasing=False)
+    assert_allclose(y_iso, y_result)
+
     y_ = IsotonicRegression(increasing=False).fit_transform(np.arange(len(y)), y)
+    assert_allclose(y_, y_result)
     assert_array_equal(np.ones(y_[:-1].shape), ((y_[:-1] - y_[1:]) >= 0))
 
 
@@ -502,25 +508,25 @@ def test_isotonic_copy_before_fit():
     copy.copy(ir)
 
 
-def test_isotonic_dtype():
+@pytest.mark.parametrize("dtype", [np.int32, np.int64, np.float32, np.float64])
+def test_isotonic_dtype(dtype):
     y = [2, 1, 4, 3, 5]
     weights = np.array([0.9, 0.9, 0.9, 0.9, 0.9], dtype=np.float64)
     reg = IsotonicRegression()
 
-    for dtype in (np.int32, np.int64, np.float32, np.float64):
-        for sample_weight in (None, weights.astype(np.float32), weights):
-            y_np = np.array(y, dtype=dtype)
-            expected_dtype = check_array(
-                y_np, dtype=[np.float64, np.float32], ensure_2d=False
-            ).dtype
+    for sample_weight in (None, weights.astype(np.float32), weights):
+        y_np = np.array(y, dtype=dtype)
+        expected_dtype = check_array(
+            y_np, dtype=[np.float64, np.float32], ensure_2d=False
+        ).dtype
 
-            res = isotonic_regression(y_np, sample_weight=sample_weight)
-            assert res.dtype == expected_dtype
+        res = isotonic_regression(y_np, sample_weight=sample_weight)
+        assert res.dtype == expected_dtype
 
-            X = np.arange(len(y)).astype(dtype)
-            reg.fit(X, y_np, sample_weight=sample_weight)
-            res = reg.predict(X)
-            assert res.dtype == expected_dtype
+        X = np.arange(len(y)).astype(dtype)
+        reg.fit(X, y_np, sample_weight=sample_weight)
+        res = reg.predict(X)
+        assert res.dtype == expected_dtype
 
 
 @pytest.mark.parametrize("y_dtype", [np.int32, np.int64, np.float32, np.float64])
