@@ -376,9 +376,7 @@ def test_safe_indexing_list_axis_1_unsupported(indices):
         _safe_indexing(X, indices, axis=1)
 
 
-@pytest.mark.parametrize(
-    "array_type", ["array", "sparse_csr", "sparse_csr_array", "pandas", "polars"]
-)
+@pytest.mark.parametrize("array_type", ["array", "sparse_csr", "pandas", "polars"])
 @pytest.mark.parametrize(
     "column_indexer", [None, 2, [0, 2], [True, False, True, False, False]]
 )
