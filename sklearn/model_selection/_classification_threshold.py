@@ -932,6 +932,14 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         best_idx = objective_scores.argmax()
         self.best_score_ = objective_scores[best_idx]
         self.best_threshold_ = decision_thresholds[best_idx]
+
+        if self.best_threshold_ == min_threshold:
+            trivial_kind = "positive"
+        elif self.best_threshold_ == max_threshold:
+            trivial_kind = "negative"
+        else:
+            trivial_kind = None
+
         if (
             objective_scores.max() - objective_scores.min()
             <= np.finfo(objective_scores.dtype).eps
@@ -944,6 +952,14 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
                 UserWarning,
             )
             self.best_threshold_ = 0.5
+        elif trivial_kind is not None:
+            warn(
+                f"Tuning the decision threshold on {self.scoring} "
+                "leads to a trivial classifier that classifies all samples as "
+                f"the {trivial_kind} class. Consider revising the scoring parameter "
+                "to include a trade-off between false positives and false negatives.",
+                UserWarning,
+            )
 
         if self.store_cv_results:
             self.cv_results_ = {
