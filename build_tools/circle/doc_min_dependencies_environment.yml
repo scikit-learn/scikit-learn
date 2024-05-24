@@ -14,7 +14,7 @@ dependencies:
   - matplotlib=3.3.4  # min
   - pandas=1.1.5  # min
   - pyamg
-  - pytest<8
+  - pytest
   - pytest-xdist
   - pillow
   - pip
