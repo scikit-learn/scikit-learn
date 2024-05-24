@@ -642,4 +642,7 @@ def test_check_inplace_ensure_writeable(estimator):
     if name == "PCA":
         estimator.set_params(svd_solver="full")
 
+    if name == "KernelPCA":
+        estimator.set_params(kernel="precomputed")
+
     check_inplace_ensure_writeable(name, estimator)

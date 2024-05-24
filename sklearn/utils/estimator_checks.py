@@ -4733,6 +4733,9 @@ def check_global_set_output_transform_polars(name, transformer_orig):
 def check_inplace_ensure_writeable(name, estimator_orig):
     """Check that estimators able to do inplace operations can work on read-only
     input data even if a copy is not explicitly requested by the user.
+
+    Make sure that a copy is made and consequently that the input array and its
+    writeability are not modified by the estimator.
     """
     rng = np.random.RandomState(0)
 
@@ -4758,10 +4761,19 @@ def check_inplace_ensure_writeable(name, estimator_orig):
         y = rng.randint(low=0, high=2, size=n_samples)
     y = _enforce_estimator_tags_y(estimator, y)
 
+    X_copy = X.copy()
+
     # Make X read-only
     X.setflags(write=False)
 
     estimator.fit(X, y)
 
     if hasattr(estimator, "transform"):
-        estimator.transform(X)
+        Xt = estimator.transform(X)
+
+        if hasattr(estimator, "inverse_transform"):
+            Xt.flags.writeable = False
+            estimator.inverse_transform(Xt)
+
+    assert not X.flags.writeable
+    assert_allclose(X, X_copy)

@@ -620,7 +620,12 @@ class ARDRegression(RegressorMixin, LinearModel):
             Fitted estimator.
         """
         X, y = self._validate_data(
-            X, y, dtype=[np.float64, np.float32], y_numeric=True, ensure_min_samples=2
+            X,
+            y,
+            dtype=[np.float64, np.float32],
+            writeable=True,
+            y_numeric=True,
+            ensure_min_samples=2,
         )
         dtype = X.dtype
 
