@@ -668,9 +668,10 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
             )
             if "fit" not in method_name:
                 # fit before calling method
+                print(method_mapping)
                 set_requests(
                     estimator,
-                    method_mapping=metaestimator.get("method_mapping", {}),
+                    method_mapping=method_mapping,
                     methods=["fit"],
                     metadata_name=key,
                 )
@@ -760,7 +761,7 @@ def test_metadata_is_routed_correctly_to_scorer(metaestimator):
         method = getattr(instance, method_name)
         method_kwargs = {"sample_weight": sample_weight}
         if "fit" not in method_name:
-            instance.fit(X, y)
+            instance.fit(X, y, **method_kwargs)
         method(X, y, **method_kwargs)
 
         assert registry
