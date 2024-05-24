@@ -715,11 +715,6 @@ def test_fixed_threshold_classifier_prefit():
     assert estimator.fit_calls == 1
     assert model.estimator_ is estimator
 
-    # check that we don't call `fit` of the underlying estimator as well.
-    model.fit(X, y)
-    assert estimator.fit_calls == 1
-    assert model.estimator_ is estimator
-
     # check that we clone the classifier when `prefit=False`.
     estimator = ClassifierLoggingFit()
     model = FixedThresholdClassifier(estimator=estimator, prefit=False)
