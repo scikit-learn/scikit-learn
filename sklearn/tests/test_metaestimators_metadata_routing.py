@@ -392,8 +392,12 @@ METAESTIMATORS: list = [
         "estimator_routing_methods": [
             "fit",
             "predict",
+            "predict_proba",
+            "predict_log_proba",
+            "decision_function",
+            "score",
         ],
-        "scorer_routing_methods": ["score", "decision_function"],
+        "method_mapping": {"fit": ["fit", "score"]},
     },
 ]
 """List containing all metaestimators to be tested and their settings
@@ -648,6 +652,8 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
                     # `fit` and `partial_fit` accept y, others don't.
                     method(X, y, **method_kwargs)
                 except TypeError:
+                    if "score" == method_name:
+                        method(X, y, **method_kwargs)
                     method(X, **method_kwargs)
 
 
