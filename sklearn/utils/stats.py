@@ -70,7 +70,9 @@ def _weighted_percentile(array, sample_weight, percentile=50):
     percentile = array[percentile_in_sorted, col_index]
 
     # percentiles that point to nan values are redirected to the next lower value:
-    while bool(np.isnan(percentile).any()):
+    while bool(np.isnan(percentile).any()) and (
+        percentile_idx[np.isnan(percentile)].all() > 0
+    ):
         percentile_idx[np.isnan(percentile)] = np.maximum(
             percentile_idx[np.isnan(percentile)] - 1, 0
         )
