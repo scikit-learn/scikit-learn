@@ -641,7 +641,18 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
 
         * a string associated to a scoring function for binary classification
           (see model evaluation documentation);
-        * a scorer callable object created with :func:`~sklearn.metrics.make_scorer`;
+        * a scorer callable object created with :func:`~sklearn.metrics.make_scorer`.
+
+        Note that scoring objective should introduce a trade-off between false
+        negatives and false positives, otherwise the tuned threshold would be
+        trivial and the resulting classifier would be equivalent to constantly
+        classifiying one of the two possible classes. This would be the case
+        when passing scoring="precision" or scoring="recall" for instance.
+        Furthermore, the scoring objective should evaluate thresholded
+        classifier predictions: as a result, metrics such as ROC AUC, Average
+        Precision, log loss or the Brier score are not valid scoring metrics
+        since they are all designed to evaluate unthresholded class-membership
+        confidence scores.
 
     response_method : {"auto", "decision_function", "predict_proba"}, default="auto"
         Methods by the classifier `estimator` corresponding to the
