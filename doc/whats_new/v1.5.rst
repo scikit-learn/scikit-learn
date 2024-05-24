@@ -32,9 +32,8 @@ Changelog
 
 - |Fix| Fix :class:`model_selection.TunedThresholdClassifierCV` to raise
   `ValueError` when passed a `scoring` argument intended for unthresholded
-  predictions. It now also raises a warning if constant score values are
-  obtained for all possible threshold values. The 0.5 threshold is used as a
-  fallback in that case.
+  predictions. It now also raises warnings for different choice of `scoring`
+  that lead to degenerate choice of thresholds.
   :pr:`29082` by :user:`Olivier Grisel <ogrisel>`.
 
 .. _changes_1_5:
