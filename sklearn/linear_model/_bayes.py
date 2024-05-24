@@ -235,7 +235,9 @@ class BayesianRidge(RegressorMixin, LinearModel):
         self : object
             Returns the instance itself.
         """
-        X, y = self._validate_data(X, y, dtype=[np.float64, np.float32], y_numeric=True)
+        X, y = self._validate_data(
+            X, y, dtype=[np.float64, np.float32], writeable=True, y_numeric=True
+        )
         dtype = X.dtype
 
         if sample_weight is not None:

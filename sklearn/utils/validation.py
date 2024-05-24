@@ -1117,9 +1117,9 @@ def check_array(
                     # error, in which case we make a copy.
                     array_data.flags.writeable = True
                 except ValueError:
-                    array = array.copy()
+                    array = array.copy(order="K")
             else:
-                array = array.copy()
+                array = array.copy(order="K")
 
     return array
 

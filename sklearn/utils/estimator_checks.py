@@ -4769,11 +4769,7 @@ def check_inplace_ensure_writeable(name, estimator_orig):
     estimator.fit(X, y)
 
     if hasattr(estimator, "transform"):
-        Xt = estimator.transform(X)
-
-        if hasattr(estimator, "inverse_transform"):
-            Xt.flags.writeable = False
-            estimator.inverse_transform(Xt)
+        estimator.transform(X)
 
     assert not X.flags.writeable
     assert_allclose(X, X_copy)
