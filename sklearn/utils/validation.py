@@ -1100,7 +1100,11 @@ def check_array(
     # See https://pandas.pydata.org/docs/dev/user_guide/copy_on_write.html#read-only-numpy-arrays
     # for more details about pandas copy-on-write mechanism, that is enabled by
     # default in pandas 3.0.0.dev.
-    if _is_pandas_df_or_series(array_orig) and hasattr(array, "flags"):
+    if (
+        _is_pandas_df_or_series(array_orig)
+        and hasattr(array, "flags")
+        and not array.flags.writeable
+    ):
         array.flags.writeable = True
 
     return array
