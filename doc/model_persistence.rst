@@ -1,7 +1,3 @@
-.. Places parent toc into the sidebar
-
-:parenttoc: True
-
 .. _model_persistence:
 
 =================
@@ -118,30 +114,25 @@ scikit-learn and does not support most third party estimators. One can write a
 custom converter for third party or custom estimators, but the documentation to
 do that is sparse and it might be challenging to do so.
 
-|details-start|
-**Using ONNX**
-|details-split|
+.. dropdown:: Using ONNX
 
-To convert the model to `ONNX` format, you need to give the converter some
-information about the input as well, about which you can read more `here
-<http://onnx.ai/sklearn-onnx/index.html>`__::
+  To convert the model to `ONNX` format, you need to give the converter some
+  information about the input as well, about which you can read more `here
+  <http://onnx.ai/sklearn-onnx/index.html>`__::
 
-    from skl2onnx import to_onnx
-    onx = to_onnx(clf, X[:1].astype(numpy.float32), target_opset=12)
-    with open("filename.onnx", "wb") as f:
-        f.write(onx.SerializeToString())
+      from skl2onnx import to_onnx
+      onx = to_onnx(clf, X[:1].astype(numpy.float32), target_opset=12)
+      with open("filename.onnx", "wb") as f:
+          f.write(onx.SerializeToString())
 
-You can load the model in Python and use the `ONNX` runtime to get
-predictions::
+  You can load the model in Python and use the `ONNX` runtime to get
+  predictions::
 
-    from onnxruntime import InferenceSession
-    with open("filename.onnx", "rb") as f:
-        onx = f.read()
-    sess = InferenceSession(onx, providers=["CPUExecutionProvider"])
-    pred_ort = sess.run(None, {"X": X_test.astype(numpy.float32)})[0]
-
-
-|details-end|
+      from onnxruntime import InferenceSession
+      with open("filename.onnx", "rb") as f:
+          onx = f.read()
+      sess = InferenceSession(onx, providers=["CPUExecutionProvider"])
+      pred_ort = sess.run(None, {"X": X_test.astype(numpy.float32)})[0]
 
 .. _skops_persistence:
 
@@ -154,33 +145,30 @@ Therefore it provides a more secure format than :mod:`pickle`, :mod:`joblib`,
 and `cloudpickle`_.
 
 
-|details-start|
-**Using skops**
-|details-split|
+.. dropdown:: Using skops
 
-The API is very similar to :mod:`pickle`, and you can persist your models as
-explained in the `documentation
-<https://skops.readthedocs.io/en/stable/persistence.html>`__ using
-:func:`skops.io.dump` and :func:`skops.io.dumps`::
+  The API is very similar to :mod:`pickle`, and you can persist your models as
+  explained in the `documentation
+  <https://skops.readthedocs.io/en/stable/persistence.html>`__ using
+  :func:`skops.io.dump` and :func:`skops.io.dumps`::
 
-    import skops.io as sio
-    obj = sio.dump(clf, "filename.skops")
+      import skops.io as sio
+      obj = sio.dump(clf, "filename.skops")
 
-And you can load them back using :func:`skops.io.load` and
-:func:`skops.io.loads`. However, you need to specify the types which are
-trusted by you. You can get existing unknown types in a dumped object / file
-using :func:`skops.io.get_untrusted_types`, and after checking its contents,
-pass it to the load function::
+  And you can load them back using :func:`skops.io.load` and
+  :func:`skops.io.loads`. However, you need to specify the types which are
+  trusted by you. You can get existing unknown types in a dumped object / file
+  using :func:`skops.io.get_untrusted_types`, and after checking its contents,
+  pass it to the load function::
 
-    unknown_types = sio.get_untrusted_types(file="filename.skops")
-    # investigate the contents of unknown_types, and only load if you trust
-    # everything you see.
-    clf = sio.load("filename.skops", trusted=unknown_types)
+      unknown_types = sio.get_untrusted_types(file="filename.skops")
+      # investigate the contents of unknown_types, and only load if you trust
+      # everything you see.
+      clf = sio.load("filename.skops", trusted=unknown_types)
 
-Please report issues and feature requests related to this format on the `skops
-issue tracker <https://github.com/skops-dev/skops/issues>`__.
+  Please report issues and feature requests related to this format on the `skops
+  issue tracker <https://github.com/skops-dev/skops/issues>`__.
 
-|details-end|
 
 .. _pickle_persistence:
 
@@ -201,31 +189,27 @@ come with slight variations:
   :class:`~sklearn.preprocessing.FunctionTransformer` and using a custom
   function to transform the data.
 
-|details-start|
-**Using** ``pickle``, ``joblib``, **or** ``cloudpickle``
-|details-split|
+.. dropdown:: Using `pickle`, `joblib`, or `cloudpickle`
 
-Depending on your use-case, you can choose one of these three methods to
-persist and load your scikit-learn model, and they all follow the same API::
+  Depending on your use-case, you can choose one of these three methods to
+  persist and load your scikit-learn model, and they all follow the same API::
 
-    # Here you can replace pickle with joblib or cloudpickle
-    from pickle import dump
-    with open("filename.pkl", "wb") as f:
-        dump(clf, f, protocol=5)
+      # Here you can replace pickle with joblib or cloudpickle
+      from pickle import dump
+      with open("filename.pkl", "wb") as f:
+          dump(clf, f, protocol=5)
 
-Using `protocol=5` is recommended to reduce memory usage and make it faster to
-store and load any large NumPy array stored as a fitted attribute in the model.
-You can alternatively pass `protocol=pickle.HIGHEST_PROTOCOL` which is
-equivalent to `protocol=5` in Python 3.8 and later (at the time of writing).
+  Using `protocol=5` is recommended to reduce memory usage and make it faster to
+  store and load any large NumPy array stored as a fitted attribute in the model.
+  You can alternatively pass `protocol=pickle.HIGHEST_PROTOCOL` which is
+  equivalent to `protocol=5` in Python 3.8 and later (at the time of writing).
 
-And later when needed, you can load the same object from the persisted file::
+  And later when needed, you can load the same object from the persisted file::
 
-    # Here you can replace pickle with joblib or cloudpickle
-    from pickle import load
-    with open("filename.pkl", "rb") as f:
-        clf = load(f)
-
-|details-end|
+      # Here you can replace pickle with joblib or cloudpickle
+      from pickle import load
+      with open("filename.pkl", "rb") as f:
+          clf = load(f)
 
 .. _persistence_limitations:
 
@@ -296,25 +280,21 @@ recipe (e.g. a Python script) and training set information, and metadata about
 all the dependencies to be able to automatically reconstruct the same training
 environment for the updated software.
 
-|details-start|
-**InconsistentVersionWarning**
-|details-split|
+.. dropdown:: InconsistentVersionWarning
 
-When an estimator is loaded with a scikit-learn version that is inconsistent
-with the version the estimator was pickled with, a
-:class:`~sklearn.exceptions.InconsistentVersionWarning` is raised. This warning
-can be caught to obtain the original version the estimator was pickled with::
+  When an estimator is loaded with a scikit-learn version that is inconsistent
+  with the version the estimator was pickled with, a
+  :class:`~sklearn.exceptions.InconsistentVersionWarning` is raised. This warning
+  can be caught to obtain the original version the estimator was pickled with::
 
-  from sklearn.exceptions import InconsistentVersionWarning
-  warnings.simplefilter("error", InconsistentVersionWarning)
+    from sklearn.exceptions import InconsistentVersionWarning
+    warnings.simplefilter("error", InconsistentVersionWarning)
 
-  try:
-      with open("model_from_prevision_version.pickle", "rb") as f:
-          est = pickle.load(f)
-  except InconsistentVersionWarning as w:
-      print(w.original_sklearn_version)
-
-|details-end|
+    try:
+        with open("model_from_prevision_version.pickle", "rb") as f:
+            est = pickle.load(f)
+    except InconsistentVersionWarning as w:
+        print(w.original_sklearn_version)
 
 
 Serving the model artifact

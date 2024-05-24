@@ -30,10 +30,10 @@ from ..utils.validation import (
 
 
 class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
-    """Kernel Principal Component Analysis (KPCA) [1]_.
+    """Kernel Principal component analysis (KPCA).
 
-    Non-linear dimensionality reduction through the use of kernels (see
-    :ref:`metrics`).
+    Non-linear dimensionality reduction through the use of kernels [1]_, see also
+    :ref:`metrics`.
 
     It uses the :func:`scipy.linalg.eigh` LAPACK implementation of the full SVD
     or the :func:`scipy.sparse.linalg.eigsh` ARPACK implementation of the
