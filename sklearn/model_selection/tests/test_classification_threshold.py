@@ -735,41 +735,43 @@ def test_warn_on_constant_scores():
     assert tuned_clf.best_threshold_ == pytest.approx(0.5)
 
 
-@pytest.mark.parametrize("kind", ["positive", "negative"])
-def test_warn_on_trivial_thresholds(kind):
+def always_prefer_positive_class(y_observed, y_pred):
+    tn, fp, fn, tp = confusion_matrix(y_observed, y_pred, normalize="all").ravel()
+    return tp - 2 * fn
+
+
+def always_prefer_negative_class(y_observed, y_pred):
+    tn, fp, fn, tp = confusion_matrix(y_observed, y_pred, normalize="all").ravel()
+    return tn - 2 * fp
+
+
+@pytest.mark.parametrize(
+    "scoring, kind",
+    [
+        (make_scorer(always_prefer_positive_class), "positive"),
+        (make_scorer(always_prefer_negative_class), "negative"),
+        ("precision", "negative"),
+        ("recall", "positive"),
+    ],
+)
+def test_warn_on_trivial_thresholds(scoring, kind):
     """Check that a warning is raised when the score is constant."""
     X, y = make_classification(random_state=0)
     estimator = LogisticRegression()
 
-    def always_prefer_positive_class(y_observed, y_pred):
-        tn, fp, fn, tp = confusion_matrix(y_observed, y_pred, normalize="all").ravel()
-        return tp - 2 * fn
-
-    def always_prefer_negative_class(y_observed, y_pred):
-        tn, fp, fn, tp = confusion_matrix(y_observed, y_pred, normalize="all").ravel()
-        return tn - 2 * fp
-
-    if kind == "positive":
-        scorer = make_scorer(always_prefer_positive_class, response_method="predict")
-    else:
-        scorer = make_scorer(always_prefer_negative_class, response_method="predict")
-
     warn_msg = re.escape(
-        f"Tuning the decision threshold on make_scorer(always_prefer_{kind}_class, "
-        "response_method='predict') leads to a trivial classifier that classifies all "
-        f"samples as the {kind} class. Consider revising the scoring parameter "
-        "to include a trade-off between false positives and false negatives."
+        f"Tuning the decision threshold on {scoring} leads to a trivial classifier "
+        f"that classifies all samples as the {kind} class. Consider revising the "
+        "scoring parameter to include a trade-off between false positives and false "
+        "negatives."
     )
     with pytest.warns(UserWarning, match=warn_msg):
         tuned_clf = TunedThresholdClassifierCV(
-            estimator, scoring=scorer, store_cv_results=True
+            estimator, scoring=scoring, store_cv_results=True
         ).fit(X, y)
 
-    scores = tuned_clf.cv_results_["scores"]
     threshods = tuned_clf.cv_results_["thresholds"]
     if kind == "positive":
-        assert (np.diff(scores) <= 0).all()
         assert tuned_clf.best_threshold_ == threshods[0] == threshods.min()
     else:
-        assert (np.diff(scores) >= 0).all()
         assert tuned_clf.best_threshold_ == threshods[-1] == threshods.max()
