@@ -1011,6 +1011,9 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
     def _get_curve_scorer(self):
         """Get the curve scorer based on the objective metric used."""
         scorer = check_scoring(self.estimator, scoring=self.scoring)
+        # XXX: at the time of writing, there is no very explicit way to check
+        # if a scorer expects thresholded binary classification predictions.
+        # TODO: updates this condition when a better way is available.
         if scorer._response_method != "predict":
             raise ValueError(
                 f"{self.__class__.__name__} expects a scoring metric that evaluates "
