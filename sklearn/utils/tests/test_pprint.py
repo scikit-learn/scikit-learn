@@ -346,6 +346,14 @@ RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estima
     assert rfe.__repr__() == expected
 
 
+def test_depth(print_changed_only_false):
+    pp = _EstimatorPrettyPrinter(depth=1)
+
+    rfe = RFE(RFE(RFE(RFE(RFE(LogisticRegression())))))
+    expected = "RFE(estimator=RFE(...), n_features_to_select=None, step=1, verbose=0)"
+    assert pp.pformat(rfe) == expected
+
+
 def test_gridsearch(print_changed_only_false):
     # render a gridsearch
     param_grid = [
