@@ -639,7 +639,7 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         The objective metric to be optimized. Can be one of:
 
         * a string associated to a scoring function for binary classification
-          (see model evaluation documentation);
+          (see :ref:`scoring_parameter`);
         * a scorer callable object created with :func:`~sklearn.metrics.make_scorer`;
 
     response_method : {"auto", "decision_function", "predict_proba"}, default="auto"
