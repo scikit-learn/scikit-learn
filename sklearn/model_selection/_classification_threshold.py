@@ -650,9 +650,9 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         when passing scoring="precision" or scoring="recall" for instance.
         Furthermore, the scoring objective should evaluate thresholded
         classifier predictions: as a result, metrics such as ROC AUC, Average
-        Precision, log loss or the Brier score are not valid scoring metrics
-        since they are all designed to evaluate unthresholded class-membership
-        confidence scores.
+        Precision, log loss or the Brier score are not valid scoring metrics in
+        this context since they are all designed to evaluate unthresholded
+        class-membership confidence scores.
 
     response_method : {"auto", "decision_function", "predict_proba"}, default="auto"
         Methods by the classifier `estimator` corresponding to the
