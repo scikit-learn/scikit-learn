@@ -30,6 +30,12 @@ Changelog
   grids that have heterogeneous parameter values.
   :pr:`29078` by :user:`Loïc Estève <lesteve>`
 
+:mod:`sklearn.utils`
+....................
+
+- |Fix| Fix a regression in :func:`utils.validation.check_array` that may caused it to
+  raise an unexpected error about writeability on pandas dataframes.
+  :pr:`19103` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 .. _changes_1_5:
 
