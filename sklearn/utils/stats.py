@@ -41,8 +41,8 @@ def _weighted_percentile(array, sample_weight, percentile=50):
     sorted_weights = np.take_along_axis(sample_weight, sorted_idx, axis=0)
 
     # Find index of median prediction for each sample
-    # nan_mask = np.isnan(array) #???
-    # weight_cdf[nan_mask] = 0 #???
+    nan_mask = np.isnan(array)
+    sorted_weights[nan_mask] = 0
     weight_cdf = stable_cumsum(sorted_weights, axis=0)
     adjusted_percentile = percentile / 100 * weight_cdf[-1]
 
