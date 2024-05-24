@@ -3,14 +3,24 @@
 from numbers import Real
 
 from ..base import _fit_context
+from ..utils import deprecated
 from ..utils._param_validation import Interval, StrOptions
 from ._stochastic_gradient import DEFAULT_EPSILON, BaseSGDClassifier, BaseSGDRegressor
 
 
+# TODO(1.8): Remove
+@deprecated(  # type: ignore
+    "this deprecated in version 1.6 and will be removed in 1.8."
+    "Use `SGDClassifier` instead."
+)
 class PassiveAggressiveClassifier(BaseSGDClassifier):
     """Passive Aggressive Classifier.
 
     Read more in the :ref:`User Guide <passive_aggressive>`.
+
+    .. deprecated:: 1.6
+        The whole class `PassiveAggressiveClassifier` was deprecated in version 1.6
+        and will be removed in 1.8. Use `SGDClassifier` instead.
 
     Parameters
     ----------
@@ -313,10 +323,19 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         )
 
 
+# TODO(1.8): Remove
+@deprecated(  # type: ignore
+    "this deprecated in version 1.6 and will be removed in 1.8."
+    "Use `SGDRegressor` instead."
+)
 class PassiveAggressiveRegressor(BaseSGDRegressor):
     """Passive Aggressive Regressor.
 
     Read more in the :ref:`User Guide <passive_aggressive>`.
+
+    .. deprecated:: 1.6
+        The whole class `PassiveAggressiveRegressor` was deprecated in version 1.6
+        and will be removed in 1.8. Use `SGDRegressor` instead.
 
     Parameters
     ----------
