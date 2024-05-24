@@ -272,9 +272,9 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
           error.
 
     prefit : bool, default=False
-        Whether a prefit model is expected to be passed into the constructor directly or
+        Whether a pre-fitted model is expected to be passed into the constructor directly or
         not. If `True`, `estimator` must be a fitted estimator. If `False`, `estimator`
-        is fitted and updated by calling `fit`, respectively.
+        is fitted and updated by calling `fit`.
 
         .. versionadded:: 1.6
 

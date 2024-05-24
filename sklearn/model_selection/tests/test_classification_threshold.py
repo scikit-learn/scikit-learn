@@ -696,7 +696,7 @@ class ClassifierLoggingFit(ClassifierMixin, BaseEstimator):
         return self
 
     def predict_proba(self, X):
-        return np.ones((X.shape[0], 2), np.float64)
+        return np.ones((X.shape[0], 2), np.float64)  # pragma: nocover
 
 
 def test_fixed_threshold_classifier_prefit():
