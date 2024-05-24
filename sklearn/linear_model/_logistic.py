@@ -636,7 +636,7 @@ def _log_reg_scoring_path(
         values are chosen in a logarithmic scale between 1e-4 and 1e4.
 
     scoring : callable
-        A string (see model evaluation documentation) or
+        A string (see :ref:`scoring_parameter`) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``. For a list of scoring functions
         that can be used, look at :mod:`sklearn.metrics`.
@@ -1521,7 +1521,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            solver.
 
     scoring : str or callable, default=None
-        A string (see model evaluation documentation) or
+        A string (see :ref:`scoring_parameter`) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``. For a list of scoring functions
         that can be used, look at :mod:`sklearn.metrics`. The
