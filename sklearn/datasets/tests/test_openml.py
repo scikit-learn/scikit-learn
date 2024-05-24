@@ -1,9 +1,11 @@
 """Test the openml loader."""
+
 import gzip
 import json
 import os
 import re
 from functools import partial
+from importlib import resources
 from io import BytesIO
 from urllib.error import HTTPError
 
@@ -20,14 +22,14 @@ from sklearn.datasets._openml import (
     _open_openml_url,
     _retry_with_clean_cache,
 )
-from sklearn.utils import Bunch, check_pandas_support
+from sklearn.utils import Bunch
+from sklearn.utils._optional_dependencies import check_pandas_support
 from sklearn.utils._testing import (
     SkipTest,
     assert_allclose,
     assert_array_equal,
     fails_if_pypy,
 )
-from sklearn.utils.fixes import _open_binary
 
 OPENML_TEST_DATA_MODULE = "sklearn.datasets.tests.data.openml"
 # if True, urlopen will be monkey patched to only use local files
@@ -107,8 +109,9 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
         assert url.startswith(expected_prefix)
 
         data_file_name = _file_name(url, suffix)
+        data_file_path = resources.files(data_module) / data_file_name
 
-        with _open_binary(data_module, data_file_name) as f:
+        with data_file_path.open("rb") as f:
             if has_gzip_header and gzip_response:
                 fp = BytesIO(f.read())
                 return _MockHTTPResponse(fp, True)
@@ -145,18 +148,19 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
         assert url.startswith(url_prefix_data_list)
 
         data_file_name = _file_name(url, ".json")
+        data_file_path = resources.files(data_module) / data_file_name
 
         # load the file itself, to simulate a http error
-        with _open_binary(data_module, data_file_name) as f:
+        with data_file_path.open("rb") as f:
             decompressed_f = read_fn(f, "rb")
             decoded_s = decompressed_f.read().decode("utf-8")
             json_data = json.loads(decoded_s)
         if "error" in json_data:
             raise HTTPError(
-                url=None, code=412, msg="Simulated mock error", hdrs=None, fp=None
+                url=None, code=412, msg="Simulated mock error", hdrs=None, fp=BytesIO()
             )
 
-        with _open_binary(data_module, data_file_name) as f:
+        with data_file_path.open("rb") as f:
             if has_gzip_header:
                 fp = BytesIO(f.read())
                 return _MockHTTPResponse(fp, True)
@@ -974,8 +978,6 @@ def test_fetch_openml_types_inference(
 # Test some more specific behaviour
 
 
-# TODO(1.4): remove this filterwarning decorator
-@pytest.mark.filterwarnings("ignore:The default value of `parser` will change")
 @pytest.mark.parametrize(
     "params, err_msg",
     [
@@ -1002,6 +1004,7 @@ def test_fetch_openml_validation_parameter(monkeypatch, params, err_msg):
         {"as_frame": True, "parser": "auto"},
         {"as_frame": "auto", "parser": "auto"},
         {"as_frame": False, "parser": "pandas"},
+        {"as_frame": False, "parser": "auto"},
     ],
 )
 def test_fetch_openml_requires_pandas_error(monkeypatch, params):
@@ -1018,27 +1021,7 @@ def test_fetch_openml_requires_pandas_error(monkeypatch, params):
         raise SkipTest("This test requires pandas to not be installed.")
 
 
-# TODO(1.4): move this parameter option in`test_fetch_openml_requires_pandas_error`
-def test_fetch_openml_requires_pandas_in_future(monkeypatch):
-    """Check that we raise a warning that pandas will be required in the future."""
-    params = {"as_frame": False, "parser": "auto"}
-    data_id = 1119
-    try:
-        check_pandas_support("test_fetch_openml_requires_pandas")
-    except ImportError:
-        _monkey_patch_webbased_functions(monkeypatch, data_id, True)
-        warn_msg = (
-            "From version 1.4, `parser='auto'` with `as_frame=False` will use pandas"
-        )
-        with pytest.warns(FutureWarning, match=warn_msg):
-            fetch_openml(data_id=data_id, **params)
-    else:
-        raise SkipTest("This test requires pandas to not be installed.")
-
-
 @pytest.mark.filterwarnings("ignore:Version 1 of dataset Australian is inactive")
-# TODO(1.4): remove this filterwarning decorator for `parser`
-@pytest.mark.filterwarnings("ignore:The default value of `parser` will change")
 @pytest.mark.parametrize(
     "params, err_msg",
     [
@@ -1088,7 +1071,7 @@ def test_fetch_openml_auto_mode(monkeypatch, data_id, data_type):
     pd = pytest.importorskip("pandas")
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
-    data = fetch_openml(data_id=data_id, as_frame="auto", parser="auto", cache=False)
+    data = fetch_openml(data_id=data_id, as_frame="auto", cache=False)
     klass = pd.DataFrame if data_type == "dataframe" else scipy.sparse.csr_matrix
     assert isinstance(data.data, klass)
 
@@ -1124,10 +1107,14 @@ def test_fetch_openml_iris_warn_multiple_version(monkeypatch, gzip_response):
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
 
-    msg = (
+    msg = re.escape(
         "Multiple active versions of the dataset matching the name"
         " iris exist. Versions may be fundamentally different, "
-        "returning version 1."
+        "returning version 1. Available versions:\n"
+        "- version 1, status: active\n"
+        "  url: https://www.openml.org/search?type=data&id=61\n"
+        "- version 3, status: active\n"
+        "  url: https://www.openml.org/search?type=data&id=969\n"
     )
     with pytest.warns(UserWarning, match=msg):
         fetch_openml(
@@ -1457,7 +1444,7 @@ def test_retry_with_clean_cache_http_error(tmpdir):
     @_retry_with_clean_cache(openml_path, cache_directory)
     def _load_data():
         raise HTTPError(
-            url=None, code=412, msg="Simulated mock error", hdrs=None, fp=None
+            url=None, code=412, msg="Simulated mock error", hdrs=None, fp=BytesIO()
         )
 
     error_msg = "Simulated mock error"
@@ -1471,8 +1458,7 @@ def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
         raise ValueError(
             "This mechanism intends to test correct cache"
             "handling. As such, urlopen should never be "
-            "accessed. URL: %s"
-            % request.get_full_url()
+            "accessed. URL: %s" % request.get_full_url()
         )
 
     data_id = 61
@@ -1524,8 +1510,9 @@ def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir, pars
     # create a temporary modified arff file
     original_data_module = OPENML_TEST_DATA_MODULE + "." + f"id_{data_id}"
     original_data_file_name = "data-v1-dl-1666876.arff.gz"
+    original_data_path = resources.files(original_data_module) / original_data_file_name
     corrupt_copy_path = tmpdir / "test_invalid_checksum.arff"
-    with _open_binary(original_data_module, original_data_file_name) as orig_file:
+    with original_data_path.open("rb") as orig_file:
         orig_gzip = gzip.open(orig_file, "rb")
         data = bytearray(orig_gzip.read())
         data[len(data) - 1] = 37
@@ -1560,7 +1547,9 @@ def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir, pars
 
 def test_open_openml_url_retry_on_network_error(monkeypatch):
     def _mock_urlopen_network_error(request, *args, **kwargs):
-        raise HTTPError("", 404, "Simulated network error", None, None)
+        raise HTTPError(
+            url=None, code=404, msg="Simulated network error", hdrs=None, fp=BytesIO()
+        )
 
     monkeypatch.setattr(
         sklearn.datasets._openml, "urlopen", _mock_urlopen_network_error
@@ -1667,18 +1656,3 @@ def test_fetch_openml_quotechar_escapechar(monkeypatch):
     adult_pandas = fetch_openml(parser="pandas", **common_params)
     adult_liac_arff = fetch_openml(parser="liac-arff", **common_params)
     pd.testing.assert_frame_equal(adult_pandas.frame, adult_liac_arff.frame)
-
-
-###############################################################################
-# Deprecation-changed parameters
-
-
-# TODO(1.4): remove this test
-def test_fetch_openml_deprecation_parser(monkeypatch):
-    """Check that we raise a deprecation warning for parser parameter."""
-    pytest.importorskip("pandas")
-    data_id = 61
-    _monkey_patch_webbased_functions(monkeypatch, data_id=data_id, gzip_response=False)
-
-    with pytest.warns(FutureWarning, match="The default value of `parser` will change"):
-        sklearn.datasets.fetch_openml(data_id=data_id)

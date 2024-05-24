@@ -9,7 +9,7 @@ Plot the class probabilities of the first sample in a toy dataset predicted by
 three different classifiers and averaged by the
 :class:`~ensemble.VotingClassifier`.
 
-First, three examplary classifiers are initialized
+First, three exemplary classifiers are initialized
 (:class:`~linear_model.LogisticRegression`, :class:`~naive_bayes.GaussianNB`,
 and :class:`~ensemble.RandomForestClassifier`) and used to initialize a
 soft-voting :class:`~ensemble.VotingClassifier` with weights `[1, 1, 5]`, which

@@ -8,7 +8,6 @@ import re
 
 import numpy as np
 import pytest
-import scipy.sparse as sp
 from scipy.special import logsumexp
 
 from sklearn._loss.loss import HalfMultinomialLoss
@@ -19,6 +18,7 @@ from sklearn.linear_model._base import make_dataset
 from sklearn.linear_model._linear_loss import LinearModelLoss
 from sklearn.linear_model._sag import get_auto_step_size
 from sklearn.linear_model._sag_fast import _multinomial_grad_loss_all_samples
+from sklearn.multiclass import OneVsRestClassifier
 from sklearn.preprocessing import LabelBinarizer, LabelEncoder
 from sklearn.utils import check_random_state, compute_class_weight
 from sklearn.utils._testing import (
@@ -27,6 +27,7 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
 )
 from sklearn.utils.extmath import row_norms
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 iris = load_iris()
 
@@ -272,7 +273,6 @@ def test_classifier_matching():
             C=1.0 / alpha / n_samples,
             max_iter=n_iter,
             random_state=10,
-            multi_class="ovr",
         )
         clf.fit(X, y)
 
@@ -356,7 +356,8 @@ def test_regressor_matching():
 
 
 @pytest.mark.filterwarnings("ignore:The max_iter was reached")
-def test_sag_pobj_matches_logistic_regression():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_sag_pobj_matches_logistic_regression(csr_container):
     """tests if the sag pobj matches log reg"""
     n_samples = 100
     alpha = 1.0
@@ -370,7 +371,6 @@ def test_sag_pobj_matches_logistic_regression():
         C=1.0 / alpha / n_samples,
         max_iter=max_iter,
         random_state=10,
-        multi_class="ovr",
     )
     clf2 = clone(clf1)
     clf3 = LogisticRegression(
@@ -379,11 +379,10 @@ def test_sag_pobj_matches_logistic_regression():
         C=1.0 / alpha / n_samples,
         max_iter=max_iter,
         random_state=10,
-        multi_class="ovr",
     )
 
     clf1.fit(X, y)
-    clf2.fit(sp.csr_matrix(X), y)
+    clf2.fit(csr_container(X), y)
     clf3.fit(X, y)
 
     pobj1 = get_pobj(clf1.coef_, alpha, X, y, log_loss)
@@ -396,7 +395,8 @@ def test_sag_pobj_matches_logistic_regression():
 
 
 @pytest.mark.filterwarnings("ignore:The max_iter was reached")
-def test_sag_pobj_matches_ridge_regression():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_sag_pobj_matches_ridge_regression(csr_container):
     """tests if the sag pobj matches ridge reg"""
     n_samples = 100
     n_features = 10
@@ -427,7 +427,7 @@ def test_sag_pobj_matches_ridge_regression():
     )
 
     clf1.fit(X, y)
-    clf2.fit(sp.csr_matrix(X), y)
+    clf2.fit(csr_container(X), y)
     clf3.fit(X, y)
 
     pobj1 = get_pobj(clf1.coef_, alpha, X, y, squared_loss)
@@ -440,7 +440,8 @@ def test_sag_pobj_matches_ridge_regression():
 
 
 @pytest.mark.filterwarnings("ignore:The max_iter was reached")
-def test_sag_regressor_computed_correctly():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_sag_regressor_computed_correctly(csr_container):
     """tests if the sag regressor is computed correctly"""
     alpha = 0.1
     n_features = 10
@@ -465,7 +466,7 @@ def test_sag_regressor_computed_correctly():
     clf2 = clone(clf1)
 
     clf1.fit(X, y)
-    clf2.fit(sp.csr_matrix(X), y)
+    clf2.fit(csr_container(X), y)
 
     spweights1, spintercept1 = sag_sparse(
         X,
@@ -551,7 +552,8 @@ def test_get_auto_step_size():
 
 
 @pytest.mark.parametrize("seed", range(3))  # locally tested with 1000 seeds
-def test_sag_regressor(seed):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_sag_regressor(seed, csr_container):
     """tests if the sag regressor performs well"""
     xmin, xmax = -5, 5
     n_samples = 300
@@ -573,7 +575,7 @@ def test_sag_regressor(seed):
     )
     clf2 = clone(clf1)
     clf1.fit(X, y)
-    clf2.fit(sp.csr_matrix(X), y)
+    clf2.fit(csr_container(X), y)
     score1 = clf1.score(X, y)
     score2 = clf2.score(X, y)
     assert score1 > 0.98
@@ -585,7 +587,7 @@ def test_sag_regressor(seed):
     clf1 = Ridge(tol=tol, solver="sag", max_iter=max_iter, alpha=alpha * n_samples)
     clf2 = clone(clf1)
     clf1.fit(X, y)
-    clf2.fit(sp.csr_matrix(X), y)
+    clf2.fit(csr_container(X), y)
     score1 = clf1.score(X, y)
     score2 = clf2.score(X, y)
     assert score1 > 0.45
@@ -593,7 +595,8 @@ def test_sag_regressor(seed):
 
 
 @pytest.mark.filterwarnings("ignore:The max_iter was reached")
-def test_sag_classifier_computed_correctly():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_sag_classifier_computed_correctly(csr_container):
     """tests if the binary classifier is computed correctly"""
     alpha = 0.1
     n_samples = 50
@@ -614,12 +617,11 @@ def test_sag_classifier_computed_correctly():
         tol=tol,
         random_state=77,
         fit_intercept=fit_intercept,
-        multi_class="ovr",
     )
     clf2 = clone(clf1)
 
     clf1.fit(X, y)
-    clf2.fit(sp.csr_matrix(X), y)
+    clf2.fit(csr_container(X), y)
 
     spweights, spintercept = sag_sparse(
         X,
@@ -649,30 +651,32 @@ def test_sag_classifier_computed_correctly():
 
 
 @pytest.mark.filterwarnings("ignore:The max_iter was reached")
-def test_sag_multiclass_computed_correctly():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_sag_multiclass_computed_correctly(csr_container):
     """tests if the multiclass classifier is computed correctly"""
     alpha = 0.1
     n_samples = 20
-    tol = 0.00001
-    max_iter = 40
+    tol = 1e-5
+    max_iter = 70
     fit_intercept = True
     X, y = make_blobs(n_samples=n_samples, centers=3, random_state=0, cluster_std=0.1)
     step_size = get_step_size(X, alpha, fit_intercept, classification=True)
     classes = np.unique(y)
 
-    clf1 = LogisticRegression(
-        solver="sag",
-        C=1.0 / alpha / n_samples,
-        max_iter=max_iter,
-        tol=tol,
-        random_state=77,
-        fit_intercept=fit_intercept,
-        multi_class="ovr",
+    clf1 = OneVsRestClassifier(
+        LogisticRegression(
+            solver="sag",
+            C=1.0 / alpha / n_samples,
+            max_iter=max_iter,
+            tol=tol,
+            random_state=77,
+            fit_intercept=fit_intercept,
+        )
     )
     clf2 = clone(clf1)
 
     clf1.fit(X, y)
-    clf2.fit(sp.csr_matrix(X), y)
+    clf2.fit(csr_container(X), y)
 
     coef1 = []
     intercept1 = []
@@ -713,14 +717,16 @@ def test_sag_multiclass_computed_correctly():
     intercept2 = np.array(intercept2)
 
     for i, cl in enumerate(classes):
-        assert_array_almost_equal(clf1.coef_[i].ravel(), coef1[i].ravel(), decimal=2)
-        assert_almost_equal(clf1.intercept_[i], intercept1[i], decimal=1)
+        assert_allclose(clf1.estimators_[i].coef_.ravel(), coef1[i], rtol=1e-2)
+        assert_allclose(clf1.estimators_[i].intercept_, intercept1[i], rtol=1e-1)
 
-        assert_array_almost_equal(clf2.coef_[i].ravel(), coef2[i].ravel(), decimal=2)
-        assert_almost_equal(clf2.intercept_[i], intercept2[i], decimal=1)
+        assert_allclose(clf2.estimators_[i].coef_.ravel(), coef2[i], rtol=1e-2)
+        # Note the very crude accuracy, i.e. high rtol.
+        assert_allclose(clf2.estimators_[i].intercept_, intercept2[i], rtol=5e-1)
 
 
-def test_classifier_results():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_classifier_results(csr_container):
     """tests if classifier results match target"""
     alpha = 0.1
     n_features = 20
@@ -742,7 +748,7 @@ def test_classifier_results():
     clf2 = clone(clf1)
 
     clf1.fit(X, y)
-    clf2.fit(sp.csr_matrix(X), y)
+    clf2.fit(csr_container(X), y)
     pred1 = clf1.predict(X)
     pred2 = clf2.predict(X)
     assert_almost_equal(pred1, y, decimal=12)
@@ -750,7 +756,8 @@ def test_classifier_results():
 
 
 @pytest.mark.filterwarnings("ignore:The max_iter was reached")
-def test_binary_classifier_class_weight():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_binary_classifier_class_weight(csr_container):
     """tests binary classifier with classweights for each class"""
     alpha = 0.1
     n_samples = 50
@@ -772,13 +779,12 @@ def test_binary_classifier_class_weight():
         tol=tol,
         random_state=77,
         fit_intercept=fit_intercept,
-        multi_class="ovr",
         class_weight=class_weight,
     )
     clf2 = clone(clf1)
 
     clf1.fit(X, y)
-    clf2.fit(sp.csr_matrix(X), y)
+    clf2.fit(csr_container(X), y)
 
     le = LabelEncoder()
     class_weight_ = compute_class_weight(class_weight, classes=np.unique(y), y=y)
@@ -810,82 +816,6 @@ def test_binary_classifier_class_weight():
 
     assert_array_almost_equal(clf2.coef_.ravel(), spweights2.ravel(), decimal=2)
     assert_almost_equal(clf2.intercept_, spintercept2, decimal=1)
-
-
-@pytest.mark.filterwarnings("ignore:The max_iter was reached")
-def test_multiclass_classifier_class_weight():
-    """tests multiclass with classweights for each class"""
-    alpha = 0.1
-    n_samples = 20
-    tol = 0.00001
-    max_iter = 50
-    class_weight = {0: 0.45, 1: 0.55, 2: 0.75}
-    fit_intercept = True
-    X, y = make_blobs(n_samples=n_samples, centers=3, random_state=0, cluster_std=0.1)
-    step_size = get_step_size(X, alpha, fit_intercept, classification=True)
-    classes = np.unique(y)
-
-    clf1 = LogisticRegression(
-        solver="sag",
-        C=1.0 / alpha / n_samples,
-        max_iter=max_iter,
-        tol=tol,
-        random_state=77,
-        fit_intercept=fit_intercept,
-        multi_class="ovr",
-        class_weight=class_weight,
-    )
-    clf2 = clone(clf1)
-    clf1.fit(X, y)
-    clf2.fit(sp.csr_matrix(X), y)
-
-    le = LabelEncoder()
-    class_weight_ = compute_class_weight(class_weight, classes=np.unique(y), y=y)
-    sample_weight = class_weight_[le.fit_transform(y)]
-
-    coef1 = []
-    intercept1 = []
-    coef2 = []
-    intercept2 = []
-    for cl in classes:
-        y_encoded = np.ones(n_samples)
-        y_encoded[y != cl] = -1
-
-        spweights1, spintercept1 = sag_sparse(
-            X,
-            y_encoded,
-            step_size,
-            alpha,
-            n_iter=max_iter,
-            dloss=log_dloss,
-            sample_weight=sample_weight,
-        )
-        spweights2, spintercept2 = sag_sparse(
-            X,
-            y_encoded,
-            step_size,
-            alpha,
-            n_iter=max_iter,
-            dloss=log_dloss,
-            sample_weight=sample_weight,
-            sparse=True,
-        )
-        coef1.append(spweights1)
-        intercept1.append(spintercept1)
-        coef2.append(spweights2)
-        intercept2.append(spintercept2)
-
-    coef1 = np.vstack(coef1)
-    intercept1 = np.array(intercept1)
-    coef2 = np.vstack(coef2)
-    intercept2 = np.array(intercept2)
-
-    for i, cl in enumerate(classes):
-        assert_array_almost_equal(clf1.coef_[i].ravel(), coef1[i].ravel(), decimal=2)
-        assert_almost_equal(clf1.intercept_[i], intercept1[i], decimal=1)
-
-        assert_array_almost_equal(clf2.coef_[i].ravel(), coef2[i].ravel(), decimal=2)
-        assert_almost_equal(clf2.intercept_[i], intercept2[i], decimal=1)
 
 
 def test_classifier_single_class():
@@ -926,8 +856,7 @@ def test_multinomial_loss():
     rng = check_random_state(42)
     weights = rng.randn(n_features, n_classes)
     intercept = rng.randn(n_classes)
-    sample_weights = rng.randn(n_samples)
-    np.abs(sample_weights, sample_weights)
+    sample_weights = np.abs(rng.randn(n_samples))
 
     # compute loss and gradient like in multinomial SAG
     dataset, _ = make_dataset(X, y, sample_weights, random_state=42)
@@ -944,6 +873,9 @@ def test_multinomial_loss():
         weights_intercept, X, y, l2_reg_strength=0.0, sample_weight=sample_weights
     )
     grad_2 = grad_2[:, :-1].T
+    # convert to same convention, i.e. LinearModelLoss uses average(loss, weight=sw)
+    loss_2 *= np.sum(sample_weights)
+    grad_2 *= np.sum(sample_weights)
 
     # comparison
     assert_array_almost_equal(grad_1, grad_2)
@@ -978,6 +910,9 @@ def test_multinomial_loss_ground_truth():
         weights_intercept, X, y, l2_reg_strength=0.0, sample_weight=sample_weights
     )
     grad_2 = grad_2[:, :-1].T
+    # convert to same convention, i.e. LinearModelLoss uses average(loss, weight=sw)
+    loss_2 *= np.sum(sample_weights)
+    grad_2 *= np.sum(sample_weights)
 
     assert_almost_equal(loss_1, loss_2)
     assert_array_almost_equal(grad_1, grad_2)

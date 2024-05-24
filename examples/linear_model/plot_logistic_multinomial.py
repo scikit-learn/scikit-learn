@@ -18,6 +18,7 @@ import numpy as np
 from sklearn.datasets import make_blobs
 from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.linear_model import LogisticRegression
+from sklearn.multiclass import OneVsRestClassifier
 
 # make 3-class dataset for classification
 centers = [[-5, 0], [0, 1.5], [5, -1]]
@@ -26,9 +27,10 @@ transformation = [[0.4, 0.2], [-0.4, 1.2]]
 X = np.dot(X, transformation)
 
 for multi_class in ("multinomial", "ovr"):
-    clf = LogisticRegression(
-        solver="sag", max_iter=100, random_state=42, multi_class=multi_class
-    ).fit(X, y)
+    clf = LogisticRegression(solver="sag", max_iter=100, random_state=42)
+    if multi_class == "ovr":
+        clf = OneVsRestClassifier(clf)
+    clf.fit(X, y)
 
     # print the training scores
     print("training score : %.3f (%s)" % (clf.score(X, y), multi_class))
@@ -51,8 +53,12 @@ for multi_class in ("multinomial", "ovr"):
     # Plot the three one-against-all classifiers
     xmin, xmax = plt.xlim()
     ymin, ymax = plt.ylim()
-    coef = clf.coef_
-    intercept = clf.intercept_
+    if multi_class == "ovr":
+        coef = np.concatenate([est.coef_ for est in clf.estimators_])
+        intercept = np.concatenate([est.intercept_ for est in clf.estimators_])
+    else:
+        coef = clf.coef_
+        intercept = clf.intercept_
 
     def plot_hyperplane(c, color):
         def line(x0):

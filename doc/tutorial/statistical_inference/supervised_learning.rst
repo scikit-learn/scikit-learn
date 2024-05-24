@@ -157,10 +157,10 @@ of the model as small as possible.
 
 Linear models: :math:`y = X\beta + \epsilon`
 
- * :math:`X`: data
- * :math:`y`: target variable
- * :math:`\beta`: Coefficients
- * :math:`\epsilon`: Observation noise
+* :math:`X`: data
+* :math:`y`: target variable
+* :math:`\beta`: Coefficients
+* :math:`\epsilon`: Observation noise
 
 .. image:: /auto_examples/linear_model/images/sphx_glr_plot_ols_001.png
    :target: ../../auto_examples/linear_model/plot_ols.html
@@ -426,9 +426,9 @@ the separating line (less regularization).
 
    **Regularized SVM (default)**
 
-.. topic:: Example:
+.. rubric:: Examples
 
- - :ref:`sphx_glr_auto_examples_svm_plot_iris_svc.py`
+- :ref:`sphx_glr_auto_examples_svm_plot_iris_svc.py`
 
 
 SVMs can be used in regression --:class:`SVR` (Support Vector Regression)--, or in
@@ -465,7 +465,7 @@ Linear kernel
 
     >>> svc = svm.SVC(kernel='linear')
 
-.. image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_001.png
+.. image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_002.png
    :target: ../../auto_examples/svm/plot_svm_kernels.html
 
 Polynomial kernel
@@ -477,7 +477,7 @@ Polynomial kernel
     ...               degree=3)
     >>> # degree: polynomial degree
 
-.. image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_002.png
+.. image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_003.png
    :target: ../../auto_examples/svm/plot_svm_kernels.html
 
 RBF kernel (Radial Basis Function)
@@ -489,16 +489,19 @@ RBF kernel (Radial Basis Function)
     >>> # gamma: inverse of size of
     >>> # radial kernel
 
-.. image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_003.png
+.. image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_004.png
    :target: ../../auto_examples/svm/plot_svm_kernels.html
 
+Sigmoid kernel
+^^^^^^^^^^^^^^
 
+::
 
-.. topic:: **Interactive example**
+    >>> svc = svm.SVC(kernel='sigmoid')
 
-   See the :ref:`SVM GUI <sphx_glr_auto_examples_applications_svm_gui.py>` to download
-   ``svm_gui.py``; add data points of both classes with right and left button,
-   fit the model and change parameters and data.
+.. image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_005.png
+   :target: ../../auto_examples/svm/plot_svm_kernels.html
+
 
 .. topic:: **Exercise**
    :class: green

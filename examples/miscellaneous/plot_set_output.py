@@ -68,9 +68,7 @@ clf[-1].feature_names_in_
 # :class:`compose.ColumnTransformer` and heterogeneous data.
 from sklearn.datasets import fetch_openml
 
-X, y = fetch_openml(
-    "titanic", version=1, as_frame=True, return_X_y=True, parser="pandas"
-)
+X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True)
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y)
 
 # %%

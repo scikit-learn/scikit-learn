@@ -29,10 +29,10 @@ Discriminant Analysis can only learn linear boundaries, while Quadratic
 Discriminant Analysis can learn quadratic boundaries and is therefore more
 flexible.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    :ref:`sphx_glr_auto_examples_classification_plot_lda_qda.py`: Comparison of LDA and QDA
-    on synthetic data.
+* :ref:`sphx_glr_auto_examples_classification_plot_lda_qda.py`: Comparison of LDA and
+  QDA on synthetic data.
 
 Dimensionality reduction using Linear Discriminant Analysis
 ===========================================================
@@ -49,10 +49,10 @@ This is implemented in the `transform` method. The desired dimensionality can
 be set using the ``n_components`` parameter. This parameter has no influence
 on the `fit` and `predict` methods.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_lda.py`: Comparison of LDA and PCA
-    for dimensionality reduction of the Iris dataset
+* :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_lda.py`: Comparison of LDA and
+  PCA for dimensionality reduction of the Iris dataset
 
 .. _lda_qda_math:
 
@@ -190,11 +190,11 @@ matrix.
 The shrunk Ledoit and Wolf estimator of covariance may not always be the
 best choice. For example if the distribution of the data
 is normally distributed, the
-Oracle Shrinkage Approximating estimator :class:`sklearn.covariance.OAS`
+Oracle Approximating Shrinkage estimator :class:`sklearn.covariance.OAS`
 yields a smaller Mean Squared Error than the one given by Ledoit and Wolf's
 formula used with shrinkage="auto". In LDA, the data are assumed to be gaussian
 conditionally to the class. If these assumptions hold, using LDA with
-the OAS estimator of covariance will yield a better classification 
+the OAS estimator of covariance will yield a better classification
 accuracy than if Ledoit and Wolf or the empirical covariance estimator is used.
 
 The covariance estimator can be chosen using with the ``covariance_estimator``
@@ -210,10 +210,10 @@ class. A covariance estimator should have a :term:`fit` method and a
 
 .. centered:: |shrinkage|
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    :ref:`sphx_glr_auto_examples_classification_plot_lda.py`: Comparison of LDA classifiers
-    with Empirical, Ledoit Wolf and OAS covariance estimator.
+* :ref:`sphx_glr_auto_examples_classification_plot_lda.py`: Comparison of LDA classifiers
+  with Empirical, Ledoit Wolf and OAS covariance estimator.
 
 Estimation algorithms
 =====================
@@ -253,13 +253,13 @@ transform, and it supports shrinkage. However, the 'eigen' solver needs to
 compute the covariance matrix, so it might not be suitable for situations with
 a high number of features.
 
-.. topic:: References:
+.. rubric:: References
 
-   .. [1] "The Elements of Statistical Learning", Hastie T., Tibshirani R.,
-      Friedman J., Section 4.3, p.106-119, 2008.
+.. [1] "The Elements of Statistical Learning", Hastie T., Tibshirani R.,
+    Friedman J., Section 4.3, p.106-119, 2008.
 
-   .. [2] Ledoit O, Wolf M. Honey, I Shrunk the Sample Covariance Matrix.
-      The Journal of Portfolio Management 30(4), 110-119, 2004.
+.. [2] Ledoit O, Wolf M. Honey, I Shrunk the Sample Covariance Matrix.
+    The Journal of Portfolio Management 30(4), 110-119, 2004.
 
-   .. [3] R. O. Duda, P. E. Hart, D. G. Stork. Pattern Classification
-      (Second Edition), section 2.6.2.
+.. [3] R. O. Duda, P. E. Hart, D. G. Stork. Pattern Classification
+    (Second Edition), section 2.6.2.

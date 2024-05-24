@@ -1,9 +1,9 @@
-"""Module :mod:`sklearn.kernel_ridge` implements kernel ridge regression."""
+"""Kernel ridge regression."""
 
 # Authors: Mathieu Blondel <mathieu@mblondel.org>
 #          Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # License: BSD 3 clause
-from numbers import Integral, Real
+from numbers import Real
 
 import numpy as np
 
@@ -69,7 +69,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         the kernel; see the documentation for sklearn.metrics.pairwise.
         Ignored by other kernels.
 
-    degree : int, default=3
+    degree : float, default=3
         Degree of the polynomial kernel. Ignored by other kernels.
 
     coef0 : float, default=1
@@ -138,7 +138,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
             callable,
         ],
         "gamma": [Interval(Real, 0, None, closed="left"), None],
-        "degree": [Interval(Integral, 0, None, closed="left")],
+        "degree": [Interval(Real, 0, None, closed="left")],
         "coef0": [Interval(Real, None, None, closed="neither")],
         "kernel_params": [dict, None],
     }

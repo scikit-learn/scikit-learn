@@ -78,7 +78,7 @@ for i, method in enumerate(methods):
     t0 = time()
     trans_data = (
         manifold.LocallyLinearEmbedding(
-            n_neighbors=n_neighbors, n_components=2, method=method
+            n_neighbors=n_neighbors, n_components=2, method=method, random_state=42
         )
         .fit_transform(sphere_data)
         .T
@@ -112,7 +112,7 @@ plt.axis("tight")
 
 # Perform Multi-dimensional scaling.
 t0 = time()
-mds = manifold.MDS(2, max_iter=100, n_init=1, normalized_stress="auto")
+mds = manifold.MDS(2, max_iter=100, n_init=1, random_state=42)
 trans_data = mds.fit_transform(sphere_data).T
 t1 = time()
 print("MDS: %.2g sec" % (t1 - t0))
@@ -126,7 +126,9 @@ plt.axis("tight")
 
 # Perform Spectral Embedding.
 t0 = time()
-se = manifold.SpectralEmbedding(n_components=2, n_neighbors=n_neighbors)
+se = manifold.SpectralEmbedding(
+    n_components=2, n_neighbors=n_neighbors, random_state=42
+)
 trans_data = se.fit_transform(sphere_data).T
 t1 = time()
 print("Spectral Embedding: %.2g sec" % (t1 - t0))

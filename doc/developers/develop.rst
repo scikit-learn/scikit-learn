@@ -54,8 +54,8 @@ multiple interfaces):
 
 :Transformer:
 
-    For filtering or modifying the data, in a supervised or unsupervised
-    way, implements::
+    For modifying the data in a supervised or unsupervised way (e.g. by adding, changing,
+    or removing columns, but not by adding or removing rows). Implements::
 
       new_data = transformer.transform(data)
 
@@ -282,12 +282,16 @@ the correct interface more easily.
     in the scikit-learn-contrib
     `project template <https://github.com/scikit-learn-contrib/project-template/blob/master/skltemplate/_template.py>`__.
 
+    It is particularly important to notice that mixins should be "on the left" while
+    the ``BaseEstimator`` should be "on the right" in the inheritance list for proper
+    MRO.
+
       >>> import numpy as np
       >>> from sklearn.base import BaseEstimator, ClassifierMixin
       >>> from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
       >>> from sklearn.utils.multiclass import unique_labels
       >>> from sklearn.metrics import euclidean_distances
-      >>> class TemplateClassifier(BaseEstimator, ClassifierMixin):
+      >>> class TemplateClassifier(ClassifierMixin, BaseEstimator):
       ...
       ...     def __init__(self, demo_param='demo'):
       ...         self.demo_param = demo_param
@@ -349,7 +353,7 @@ The parameter `deep` will control whether or not the parameters of the
     subestimator__intercept_scaling -> 1
     subestimator__l1_ratio -> None
     subestimator__max_iter -> 100
-    subestimator__multi_class -> auto
+    subestimator__multi_class -> deprecated
     subestimator__n_jobs -> None
     subestimator__penalty -> l2
     subestimator__random_state -> None
@@ -722,6 +726,40 @@ method taking no input and returning a boolean. If this method exists,
 
 See :ref:`sphx_glr_auto_examples_developing_estimators_sklearn_is_fitted.py`
 for an example on how to use the API.
+
+Developer API for HTML representation
+=====================================
+
+.. warning::
+
+    The HTML representation API is experimental and the API is subject to change.
+
+Estimators inheriting from :class:`~sklearn.base.BaseEstimator` display
+a HTML representation of themselves in interactive programming
+environments such as Jupyter notebooks. For instance, we can display this HTML
+diagram::
+
+    from sklearn.base import BaseEstimator
+
+    BaseEstimator()
+
+The raw HTML representation is obtained by invoking the function
+:func:`~sklearn.utils.estimator_html_repr` on an estimator instance.
+
+To customize the URL linking to an estimator's documentation (i.e. when clicking on the
+"?" icon), override the `_doc_link_module` and `_doc_link_template` attributes. In
+addition, you can provide a `_doc_link_url_param_generator` method. Set
+`_doc_link_module` to the name of the (top level) module that contains your estimator.
+If the value does not match the top level module name, the HTML representation will not
+contain a link to the documentation. For scikit-learn estimators this is set to
+`"sklearn"`.
+
+The `_doc_link_template` is used to construct the final URL. By default, it can contain
+two variables: `estimator_module` (the full name of the module containing the estimator)
+and `estimator_name` (the class name of the estimator). If you need more variables you
+should implement the `_doc_link_url_param_generator` method which should return a
+dictionary of the variables and their values. This dictionary will be used to render the
+`_doc_link_template`.
 
 .. _coding-guidelines:
 
