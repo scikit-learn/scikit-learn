@@ -27,7 +27,7 @@ from joblib import logger
 from ..base import clone, is_classifier
 from ..exceptions import FitFailedWarning, UnsetMetadataPassedError
 from ..metrics import check_scoring, get_scorer_names
-from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
+from ..metrics._scorer import _MultimetricScorer
 from ..preprocessing import LabelEncoder
 from ..utils import Bunch, _safe_indexing, check_random_state, indexable
 from ..utils._param_validation import (
@@ -353,15 +353,9 @@ def cross_validate(
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
 
-    if callable(scoring):
-        scorers = scoring
-    elif scoring is None or isinstance(scoring, str):
-        scorers = check_scoring(estimator, scoring)
-    else:
-        scorers = _check_multimetric_scoring(estimator, scoring)
-        scorers = _MultimetricScorer(
-            scorers=scorers, raise_exc=(error_score == "raise")
-        )
+    scorers = check_scoring(
+        estimator, scoring=scoring, raise_exc=(error_score == "raise")
+    )
 
     if _routing_enabled():
         # For estimators, a MetadataRouter is created in get_metadata_routing

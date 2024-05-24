@@ -972,7 +972,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             first_test_score = all_out[0]["test_scores"]
             self.multimetric_ = isinstance(first_test_score, dict)
 
-            # check refit_metric now for a callabe scorer that is multimetric
+            # check refit_metric now for a callable scorer that is multimetric
             if callable(self.scoring) and self.multimetric_:
                 self._check_refit_for_multimetric(first_test_score)
                 refit_metric = self.refit
