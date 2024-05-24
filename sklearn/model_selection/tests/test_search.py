@@ -250,11 +250,11 @@ def test_grid_search_pipeline_steps():
 
 
 @pytest.mark.parametrize(
-    "array_namepsace, device, dtype", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
-def test_array_api_SearchCV(SearchCV, array_namepsace, device, dtype):
-    xp, device, dtype = _array_api_for_tests(array_namepsace, device, dtype)
+def test_array_api_SearchCV(SearchCV, array_namespace, device, dtype):
+    xp = _array_api_for_tests(array_namespace, device)
 
     X = np.arange(100).reshape((10, 10))
     X_np = X.astype(dtype)
