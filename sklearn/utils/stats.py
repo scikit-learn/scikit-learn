@@ -42,7 +42,7 @@ def _weighted_percentile(array, sample_weight, percentile=50):
 
     # Find index of median prediction for each sample
     # nan_mask = np.isnan(array) #???
-    # weight_cdf[nan_mask] = 0 #
+    # weight_cdf[nan_mask] = 0 #???
     weight_cdf = stable_cumsum(sorted_weights, axis=0)
     adjusted_percentile = percentile / 100 * weight_cdf[-1]
 
@@ -71,15 +71,10 @@ def _weighted_percentile(array, sample_weight, percentile=50):
 
     # percentiles that point to nan values are redirected to the next lower value:
     while bool(np.isnan(percentile).any()):
-        percentile_idx[np.isnan(percentile)] -= 1
-        try:
-            percentile_in_sorted = sorted_idx[percentile_idx, col_index]
-        except IndexError:
-            raise ValueError(
-                "One feature contains too many NaN values. This error should "
-                "actually either raise within the API, or there needs to be some "
-                "validation here before to make sure it cannot happen."
-            )
+        percentile_idx[np.isnan(percentile)] = np.maximum(
+            percentile_idx[np.isnan(percentile)] - 1, 0
+        )
+        percentile_in_sorted = sorted_idx[percentile_idx, col_index]
         percentile = array[percentile_in_sorted, col_index]
 
     return percentile[0] if n_dim == 1 else percentile
