@@ -248,7 +248,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         y : array-like of shape (n_samples,)
             The target data used to encode the categories.
-        
+
         sample_weight : ndarray of shape (n_samples,)
             Contains weight values to be associated with each sample.
 
@@ -437,11 +437,9 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         """Learn target encodings."""
         if sample_weight is None:
             sample_weight = np.ones_like(y, dtype=np.float64)
-            # TODO: This isn't very efficient, maybe we should be able to pass None to _fit_encoding_fast
-
-        y = y.astype(
-            np.float64
-        )  # TODO: This shouldnt be necessary, find where y is being casted to int prior to this
+        # TODO: This shouldnt be necessary,
+        # find where y is being casted to int prior to this
+        y = y.astype(np.float64)
         if self.smooth == "auto":
             if sample_weight is None:
                 y_variance = np.var(y)

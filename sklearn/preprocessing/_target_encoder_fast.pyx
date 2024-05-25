@@ -17,7 +17,6 @@ ctypedef fused Y_DTYPE:
     float32_t
 
 
-
 def _fit_encoding_fast(
     INT_DTYPE[:, ::1] X_int,
     const Y_DTYPE[:] y,
