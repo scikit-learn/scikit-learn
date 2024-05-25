@@ -94,7 +94,7 @@ def _spatial_median(X, max_iter=300, tol=1.0e-3):
 
     max_iter : int, default=300
         Maximum number of iterations.
- 
+
     tol : float, default=1.e-3
         Stop the algorithm if spatial_median has converged.
 
