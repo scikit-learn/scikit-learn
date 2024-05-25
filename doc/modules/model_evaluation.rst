@@ -1276,8 +1276,7 @@ When there are more than two labels, the value of the MCC will no longer range
 between -1 and +1. Instead the minimum value will be somewhere between -1 and 0
 depending on the number and distribution of ground true labels. The maximum
 value is always +1.
-For additional information, see [WikipediaMCC2021]_ [Matthews1975]_ [Jurman2012]_
-[Chicco2020]_.
+For additional information, see [WikipediaMCC2021]_.
 
 Here is a small example illustrating the usage of the :func:`matthews_corrcoef`
 function:
@@ -1294,22 +1293,6 @@ function:
      Wikipedia, The Free Encyclopedia. April 21, 2021, 12:21 CEST.
      Available at: https://en.wikipedia.org/wiki/Matthews_correlation_coefficient.
      Accessed April 21, 2021.
-
-  .. [Matthews1975] B. W. Matthews,
-     `Comparison of the predicted and observed secondary structure of T4 phage lysozyme
-     <https://doi.org/10.1016/0005-2795(75)90109-9>`_,
-     Biochimica et Biophysica Acta (BBA) - Protein Structure, 1975.
-
-  .. [Jurman2012] G. Jurman, S. Riccadonna, C. Furlanello,
-     `A Comparison of MCC and CEN Error Measures in MultiClass Prediction
-     <https://doi.org/10.1371/journal.pone.0041882>`_,
-     PLoS One, 2012.
-
-  .. [Chicco2020] D. Chicco, G. Jurman,
-     `The advantages of the Matthews correlation coefficient (MCC) over F1 score and
-     accuracy in binary classification evaluation
-     <https://doi.org/10.1186/s12864-019-6413-7>`_,
-     BMC Genomics, 2020.
 
 .. _multilabel_confusion_matrix:
 
