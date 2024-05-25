@@ -2,9 +2,6 @@
 External Resources, Videos and Talks
 ===========================================
 
-For written tutorials, see the :ref:`Tutorial section <tutorial_menu>` of
-the documentation.
-
 New to Scientific Python?
 ==========================
 For those that are still new to the scientific Python ecosystem, we highly

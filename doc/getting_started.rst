@@ -229,6 +229,3 @@ provide. You can also find an exhaustive list of the public API in the
 
 You can also look at our numerous :ref:`examples <general_examples>` that
 illustrate the use of ``scikit-learn`` in many different contexts.
-
-The :ref:`tutorials <tutorial_menu>` also contain additional learning
-resources.
