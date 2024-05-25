@@ -35,7 +35,7 @@ and drag to pan around. You can also download the chart:
     }
   </style>
 
-  <script src="../../_static/scripts/vendor/svg-pan-zoom.min.js"></script>
+  <script src="js/scripts/vendor/svg-pan-zoom.min.js"></script>
   <script>
     document.addEventListener("DOMContentLoaded", function () {
       const beforePan = function (oldPan, newPan) {
@@ -68,7 +68,7 @@ and drag to pan around. You can also download the chart:
   <div id="sk-ml-map">
 
 .. raw:: html
-  :file: ../../images/ml_map.svg
+  :file: images/ml_map.svg
 
 .. raw:: html
 
