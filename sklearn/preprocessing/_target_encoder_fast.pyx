@@ -15,12 +15,17 @@ ctypedef fused Y_DTYPE:
     int32_t
     float64_t
     float32_t
+ctypedef fused W_DTYPE:
+    int64_t
+    int32_t
+    float64_t
+    float32_t
 
 
 def _fit_encoding_fast(
     INT_DTYPE[:, ::1] X_int,
     const Y_DTYPE[:] y,
-    const Y_DTYPE[:] sample_weight,
+    const W_DTYPE[:] sample_weight,
     int64_t[::1] n_categories,
     double smooth,
     double y_mean,
@@ -81,7 +86,7 @@ def _fit_encoding_fast(
 def _fit_encoding_fast_auto_smooth(
     INT_DTYPE[:, ::1] X_int,
     const Y_DTYPE[:] y,
-    const Y_DTYPE[:] sample_weight,
+    const W_DTYPE[:] sample_weight,
     int64_t[::1] n_categories,
     double y_mean,
     double y_variance,

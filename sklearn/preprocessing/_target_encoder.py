@@ -436,10 +436,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     ):
         """Learn target encodings."""
         if sample_weight is None:
-            sample_weight = np.ones_like(y, dtype=np.float64)
-        # TODO: This shouldnt be necessary,
-        # find where y is being casted to int prior to this
-        y = y.astype(np.float64)
+            sample_weight = np.ones_like(y)
         if self.smooth == "auto":
             if sample_weight is None:
                 y_variance = np.var(y)
