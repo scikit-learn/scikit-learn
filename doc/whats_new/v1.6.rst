@@ -80,13 +80,6 @@ Changelog
 - |Enhancement| Added a function :func:`base.is_clusterer` which determines
   whether a given estimator is of category clusterer.
   :pr:`28936` by :user:`Christian Veenhuis <ChVeen>`.
-  
-:mod:`sklearn.metrics`
-......................
-
-- |Enhancement| :func:`sklearn.metrics.check_scoring` now accepts `raise_exc` to specify
-  whether to raise an exception if a subset of the scorers in multimetric scoring fails
-  or to return an error code. :pr:`28992` by :user:`Stefanie Senger <StefanieSenger>`.
 
 :mod:`sklearn.linear_model`
 ...................
@@ -95,6 +88,13 @@ Changelog
   and will be removed in 1.8. Equivalent estimators are available with `SGDClassifier`
   and `SGDRegressor`.
   :pr:`29097` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Enhancement| :func:`sklearn.metrics.check_scoring` now accepts `raise_exc` to specify
+  whether to raise an exception if a subset of the scorers in multimetric scoring fails
+  or to return an error code. :pr:`28992` by :user:`Stefanie Senger <StefanieSenger>`.
 
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:
