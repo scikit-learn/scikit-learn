@@ -304,6 +304,7 @@ class _ArrayAPIWrapper:
 
 
 def _check_device_cpu(device):  # noqa
+    device = getattr(device, 'type', device)
     if device not in {"cpu", None}:
         raise ValueError(f"Unsupported device for NumPy: {device!r}")
 
