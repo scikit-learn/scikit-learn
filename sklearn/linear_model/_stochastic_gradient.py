@@ -535,6 +535,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         *,
         penalty="l2",
         alpha=0.0001,
+        C=1.0,
         l1_ratio=0.15,
         fit_intercept=True,
         max_iter=1000,
@@ -558,6 +559,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             loss=loss,
             penalty=penalty,
             alpha=alpha,
+            C=C,
             l1_ratio=l1_ratio,
             fit_intercept=fit_intercept,
             max_iter=max_iter,
@@ -894,7 +896,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             X,
             y,
             alpha=self.alpha,
-            C=1.0,
+            C=self.C,
             loss=self.loss,
             learning_rate=self.learning_rate,
             max_iter=1,
@@ -939,7 +941,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             X,
             y,
             alpha=self.alpha,
-            C=1.0,
+            C=self.C,
             loss=self.loss,
             learning_rate=self.learning_rate,
             coef_init=coef_init,
@@ -1005,6 +1007,9 @@ class SGDClassifier(BaseSGDClassifier):
         value, the stronger the regularization. Also used to compute the
         learning rate when `learning_rate` is set to 'optimal'.
         Values must be in the range `[0.0, inf)`.
+
+    C : float, default=1.0
+        Maximum step size (regularization). Defaults to 1.0.
 
     l1_ratio : float, default=0.15
         The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
@@ -1230,6 +1235,7 @@ class SGDClassifier(BaseSGDClassifier):
         *,
         penalty="l2",
         alpha=0.0001,
+        C=1.0,
         l1_ratio=0.15,
         fit_intercept=True,
         max_iter=1000,
@@ -1253,6 +1259,7 @@ class SGDClassifier(BaseSGDClassifier):
             loss=loss,
             penalty=penalty,
             alpha=alpha,
+            C=C,
             l1_ratio=l1_ratio,
             fit_intercept=fit_intercept,
             max_iter=max_iter,
@@ -1420,6 +1427,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         *,
         penalty="l2",
         alpha=0.0001,
+        C=1.0,
         l1_ratio=0.15,
         fit_intercept=True,
         max_iter=1000,
@@ -1441,6 +1449,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             loss=loss,
             penalty=penalty,
             alpha=alpha,
+            C=C,
             l1_ratio=l1_ratio,
             fit_intercept=fit_intercept,
             max_iter=max_iter,
@@ -1552,7 +1561,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             X,
             y,
             self.alpha,
-            C=1.0,
+            C=self.C,
             loss=self.loss,
             learning_rate=self.learning_rate,
             max_iter=1,
@@ -1833,6 +1842,8 @@ class SGDRegressor(BaseSGDRegressor):
         value, the stronger the regularization. Also used to compute the
         learning rate when `learning_rate` is set to 'optimal'.
         Values must be in the range `[0.0, inf)`.
+    C : float, default=1.0
+        Maximum step size (regularization). Defaults to 1.0.
 
     l1_ratio : float, default=0.15
         The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
