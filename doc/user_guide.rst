@@ -20,6 +20,7 @@ User Guide
    common_pitfalls.rst
    dispatching.rst
    machine_learning_map.rst
+   presentations.rst
 
 Under Development
 -----------------
