@@ -94,7 +94,7 @@ def _spatial_median(X, max_iter=300, tol=1.0e-3):
 
     max_iter : int, default=300
         Maximum number of iterations.
-
+ 
     tol : float, default=1.e-3
         Stop the algorithm if spatial_median has converged.
 
@@ -228,6 +228,10 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
+        .. deprecated:: 1.6
+            `copy_X` was deprecated in 1.6 and will be removed in 1.8.
+            Use `X` instead.
+
     max_subpopulation : int, default=1e4
         Instead of computing with a set of cardinality 'n choose k', where n is
         the number of samples and k is the number of subsamples (at least
@@ -324,7 +328,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
 
     _parameter_constraints: dict = {
         "fit_intercept": ["boolean"],
-        "copy_X": ["boolean"],
+        "copy_X": ["deprecated"],
         # target_type should be Integral but can accept Real for backward compatibility
         "max_subpopulation": [Interval(Real, 1, None, closed="left")],
         "n_subsamples": [None, Integral],
