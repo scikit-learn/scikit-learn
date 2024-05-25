@@ -81,6 +81,14 @@ Changelog
   whether a given estimator is of category clusterer.
   :pr:`28936` by :user:`Christian Veenhuis <ChVeen>`.
 
+:mod:`sklearn.linear_model`
+...................
+
+- |API| `PassiveAggressiveClassifier` and `PassiveAggressiveRegressor` are deprecated
+  and will be removed in 1.8. Equivalent estimators are available with `SGDClassifier`
+  and `SGDRegressor`.
+  :pr:`29097` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:
 
