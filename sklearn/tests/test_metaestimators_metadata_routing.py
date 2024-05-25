@@ -14,8 +14,6 @@ from sklearn.ensemble import (
     AdaBoostRegressor,
     BaggingClassifier,
     BaggingRegressor,
-    StackingClassifier,
-    StackingRegressor,
 )
 from sklearn.exceptions import UnsetMetadataPassedError
 from sklearn.experimental import (
@@ -43,10 +41,12 @@ from sklearn.linear_model import (
     RidgeCV,
 )
 from sklearn.model_selection import (
+    FixedThresholdClassifier,
     GridSearchCV,
     HalvingGridSearchCV,
     HalvingRandomSearchCV,
     RandomizedSearchCV,
+    TunedThresholdClassifierCV,
 )
 from sklearn.multiclass import (
     OneVsOneClassifier,
@@ -77,6 +77,7 @@ rng = np.random.RandomState(42)
 N, M = 100, 4
 X = rng.rand(N, M)
 y = rng.randint(0, 3, size=N)
+y_binary = (y >= 1).astype(int)
 classes = np.unique(y)
 y_multi = rng.randint(0, 3, size=(N, 3))
 classes_multi = [np.unique(y_multi[:, i]) for i in range(y_multi.shape[1])]
@@ -199,6 +200,24 @@ METAESTIMATORS: list = [
         "scorer_routing_methods": ["fit", "score"],
         "cv_name": "cv",
         "cv_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": FixedThresholdClassifier,
+        "estimator_name": "estimator",
+        "estimator": "classifier",
+        "X": X,
+        "y": y_binary,
+        "estimator_routing_methods": ["fit"],
+        "preserves_metadata": "subset",
+    },
+    {
+        "metaestimator": TunedThresholdClassifierCV,
+        "estimator_name": "estimator",
+        "estimator": "classifier",
+        "X": X,
+        "y": y_binary,
+        "estimator_routing_methods": ["fit"],
+        "preserves_metadata": "subset",
     },
     {
         "metaestimator": OneVsRestClassifier,
@@ -408,8 +427,6 @@ UNSUPPORTED_ESTIMATORS = [
     RFECV(ConsumingClassifier()),
     SelfTrainingClassifier(ConsumingClassifier()),
     SequentialFeatureSelector(ConsumingClassifier()),
-    StackingClassifier(ConsumingClassifier()),
-    StackingRegressor(ConsumingRegressor()),
     TransformedTargetRegressor(),
 ]
 

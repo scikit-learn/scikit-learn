@@ -1,6 +1,5 @@
-Maintainer / core-developer information
-========================================
-
+Maintainer/Core-Developer Information
+======================================
 
 Releasing
 ---------
