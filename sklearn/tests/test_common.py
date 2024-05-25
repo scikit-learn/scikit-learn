@@ -20,6 +20,7 @@ import numpy as np
 import pytest
 
 import sklearn
+from sklearn.base import BaseEstimator
 from sklearn.cluster import (
     OPTICS,
     AffinityPropagation,
@@ -103,6 +104,16 @@ def _sample_func(x, y=1):
     pass
 
 
+class CallableEstimator(BaseEstimator):
+    """Dummy development stub for an estimator.
+
+    This is to make sure a callable estimator passes common tests.
+    """
+
+    def __call__(self):
+        pass  # pragma: nocover
+
+
 @pytest.mark.parametrize(
     "val, expected",
     [
@@ -122,6 +133,7 @@ def _sample_func(x, y=1):
                 "solver='newton-cg',warm_start=True)"
             ),
         ),
+        (CallableEstimator(), "CallableEstimator()"),
     ],
 )
 def test_get_check_estimator_ids(val, expected):
@@ -245,13 +257,6 @@ def test_root_import_all_completeness():
         assert modname in sklearn.__all__
 
 
-@pytest.mark.skipif(
-    sklearn._BUILT_WITH_MESON,
-    reason=(
-        "This test fails with Meson editable installs see"
-        " https://github.com/mesonbuild/meson-python/issues/557 for more details"
-    ),
-)
 def test_all_tests_are_importable():
     # Ensure that for each contentful subpackage, there is a test directory
     # within it that is also a subpackage (i.e. a directory with __init__.py)

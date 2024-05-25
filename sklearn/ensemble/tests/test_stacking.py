@@ -3,6 +3,7 @@
 # Authors: Guillaume Lemaitre <g.lemaitre58@gmail.com>
 # License: BSD 3 clause
 
+import re
 from unittest.mock import Mock
 
 import numpy as np
@@ -38,6 +39,12 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import scale
 from sklearn.svm import SVC, LinearSVC, LinearSVR
+from sklearn.tests.metadata_routing_common import (
+    ConsumingClassifier,
+    ConsumingRegressor,
+    _Registry,
+    check_recorded_metadata,
+)
 from sklearn.utils._mocking import CheckingClassifier
 from sklearn.utils._testing import (
     assert_allclose,
@@ -888,3 +895,116 @@ def test_stacking_final_estimator_attribute_error():
         clf.fit(X, y).decision_function(X)
     assert isinstance(exec_info.value.__cause__, AttributeError)
     assert inner_msg in str(exec_info.value.__cause__)
+
+
+# Metadata Routing Tests
+# ======================
+
+
+@pytest.mark.parametrize(
+    "Estimator, Child",
+    [
+        (StackingClassifier, ConsumingClassifier),
+        (StackingRegressor, ConsumingRegressor),
+    ],
+)
+def test_routing_passed_metadata_not_supported(Estimator, Child):
+    """Test that the right error message is raised when metadata is passed while
+    not supported when `enable_metadata_routing=False`."""
+
+    with pytest.raises(
+        ValueError, match="is only supported if enable_metadata_routing=True"
+    ):
+        Estimator(["clf", Child()]).fit(
+            X_iris, y_iris, sample_weight=[1, 1, 1, 1, 1], metadata="a"
+        )
+
+
+@pytest.mark.usefixtures("enable_slep006")
+@pytest.mark.parametrize(
+    "Estimator, Child",
+    [
+        (StackingClassifier, ConsumingClassifier),
+        (StackingRegressor, ConsumingRegressor),
+    ],
+)
+def test_get_metadata_routing_without_fit(Estimator, Child):
+    # Test that metadata_routing() doesn't raise when called before fit.
+    est = Estimator([("sub_est", Child())])
+    est.get_metadata_routing()
+
+
+@pytest.mark.usefixtures("enable_slep006")
+@pytest.mark.parametrize(
+    "Estimator, Child",
+    [
+        (StackingClassifier, ConsumingClassifier),
+        (StackingRegressor, ConsumingRegressor),
+    ],
+)
+@pytest.mark.parametrize(
+    "prop, prop_value", [("sample_weight", np.ones(X_iris.shape[0])), ("metadata", "a")]
+)
+def test_metadata_routing_for_stacking_estimators(Estimator, Child, prop, prop_value):
+    """Test that metadata is routed correctly for Stacking*."""
+
+    est = Estimator(
+        [
+            (
+                "sub_est1",
+                Child(registry=_Registry()).set_fit_request(**{prop: True}),
+            ),
+            (
+                "sub_est2",
+                Child(registry=_Registry()).set_fit_request(**{prop: True}),
+            ),
+        ],
+        final_estimator=Child(registry=_Registry()).set_predict_request(**{prop: True}),
+    )
+
+    est.fit(X_iris, y_iris, **{prop: prop_value})
+    est.fit_transform(X_iris, y_iris, **{prop: prop_value})
+
+    est.predict(X_iris, **{prop: prop_value})
+
+    for estimator in est.estimators:
+        # access sub-estimator in (name, est) with estimator[1]:
+        registry = estimator[1].registry
+        assert len(registry)
+        for sub_est in registry:
+            check_recorded_metadata(
+                obj=sub_est, method="fit", split_params=(prop), **{prop: prop_value}
+            )
+    # access final_estimator:
+    registry = est.final_estimator_.registry
+    assert len(registry)
+    check_recorded_metadata(
+        obj=registry[-1], method="predict", split_params=(prop), **{prop: prop_value}
+    )
+
+
+@pytest.mark.usefixtures("enable_slep006")
+@pytest.mark.parametrize(
+    "Estimator, Child",
+    [
+        (StackingClassifier, ConsumingClassifier),
+        (StackingRegressor, ConsumingRegressor),
+    ],
+)
+def test_metadata_routing_error_for_stacking_estimators(Estimator, Child):
+    """Test that the right error is raised when metadata is not requested."""
+    sample_weight, metadata = np.ones(X_iris.shape[0]), "a"
+
+    est = Estimator([("sub_est", Child())])
+
+    error_message = (
+        "[sample_weight, metadata] are passed but are not explicitly set as requested"
+        f" or not requested for {Child.__name__}.fit"
+    )
+
+    with pytest.raises(ValueError, match=re.escape(error_message)):
+        est.fit(X_iris, y_iris, sample_weight=sample_weight, metadata=metadata)
+
+
+# End of Metadata Routing Tests
+# =============================

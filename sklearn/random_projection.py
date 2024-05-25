@@ -1,11 +1,11 @@
-"""Random Projection transformers.
+"""Random projection transformers.
 
-Random Projections are a simple and computationally efficient way to
+Random projections are a simple and computationally efficient way to
 reduce the dimensionality of the data by trading a controlled amount
 of accuracy (as additional variance) for faster processing times and
 smaller model sizes.
 
-The dimensions and distribution of Random Projections matrices are
+The dimensions and distribution of random projections matrices are
 controlled so as to preserve the pairwise distances between any two
 samples of the dataset.
 
@@ -20,7 +20,6 @@ The main theoretical result behind the efficiency of random projection is the
   much lower dimension in such a way that distances between the points are
   nearly preserved. The map used for the embedding is at least Lipschitz,
   and can even be taken to be an orthogonal projection.
-
 """
 
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>,

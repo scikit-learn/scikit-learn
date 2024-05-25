@@ -1,0 +1,94 @@
+.. include:: _contributors.rst
+
+.. currentmodule:: sklearn
+
+.. _release_notes_1_6:
+
+===========
+Version 1.6
+===========
+
+..
+  -- UNCOMMENT WHEN 1.6.0 IS RELEASED --
+  For a short description of the main highlights of the release, please refer to
+  :ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_6_0.py`.
+
+.. include:: changelog_legend.inc
+
+.. _changes_1_6:
+
+Version 1.6.0
+=============
+
+**In Development**
+
+Support for Array API
+---------------------
+
+Additional estimators and functions have been updated to include support for all
+`Array API <https://data-apis.org/array-api/latest/>`_ compliant inputs.
+
+See :ref:`array_api` for more details.
+
+**Functions:**
+
+- :func:`sklearn.metrics.mean_tweedie_deviance` now supports Array API compatible
+  inputs.
+  :pr:`28106` by :user:`Thomas Li <lithomas1>`;
+- :func:`sklearn.metrics.mean_absolute_error` :pr:`27736` by :user:`Edoardo Abati <EdAbati>`;
+- :func:`sklearn.metrics.pairwise.cosine_similarity` :pr:`29014` by :user:`Edoardo Abati <EdAbati>`.
+
+
+**Classes:**
+
+- :class:`preprocessing.LabelEncoder` now supports Array API compatible inputs.
+  :pr:`27381` by :user:`Omar Salman <OmarManzoor>`.
+
+Metadata Routing
+----------------
+
+The following models now support metadata routing in one or more of their
+methods. Refer to the :ref:`Metadata Routing User Guide <metadata_routing>` for
+more details.
+
+- |Feature| :func:`model_selection.learning_curve` now supports metadata routing for the
+  `fit` method of its estimator and for its underlying CV splitter and scorer.
+  :pr:`28975` by :user:`Stefanie Senger <StefanieSenger>`.
+
+- |Feature| :class:`ensemble.StackingClassifier` and
+  :class:`ensemble.StackingRegressor` now support metadata routing and pass
+  ``**fit_params`` to the underlying estimators via their `fit` methods.
+  :pr:`28701` by :user:`Stefanie Senger <StefanieSenger>`.
+
+Changelog
+---------
+
+..
+    Entries should be grouped by module (in alphabetic order) and prefixed with
+    one of the labels: |MajorFeature|, |Feature|, |Efficiency|, |Enhancement|,
+    |Fix| or |API| (see whats_new.rst for descriptions).
+    Entries should be ordered by those labels (e.g. |Fix| after |Efficiency|).
+    Changes not specific to a module should be listed under *Multiple Modules*
+    or *Miscellaneous*.
+    Entries should end with:
+    :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
+    where 123455 is the *pull request* number, not the issue number.
+
+:mod:`sklearn.base`
+...................
+
+- |Enhancement| Added a function :func:`base.is_clusterer` which determines
+  whether a given estimator is of category clusterer.
+  :pr:`28936` by :user:`Christian Veenhuis <ChVeen>`.
+  
+:mod:`sklearn.metrics`
+......................
+
+- |Enhancement| :func:`sklearn.metrics.check_scoring` now accepts `raise_exc` to specify
+  whether to raise an exception if a subset of the scorers in multimetric scoring fails
+  or to return an error code. :pr:`28992` by :user:`Stefanie Senger <StefanieSenger>`.
+
+Thanks to everyone who has contributed to the maintenance and improvement of
+the project since version 1.5, including:
+
+TODO: update at the time of the release.
