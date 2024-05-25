@@ -64,9 +64,9 @@ other project contributor. Retired core contributors will be listed on the proje
 website as emeritus member to acknowledging the period during which they were active as
 core contributor.
 
-The Council reserves the right to eject current members of the core contributors, if
-they are deemed to be actively harmful to the project's well-being, and attempts at
-communication and conflict resolution have failed.
+The core contributors reserve the right to eject current members of the core
+contributors, if they are deemed to be actively harmful to the project's well-being,
+and attempts at communication and conflict resolution have failed.
 
 The list of members of the core contributors, active and emeritus is public on the
 scikit-learn website.
