@@ -20,7 +20,18 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
     .. deprecated:: 1.6
         The whole class `PassiveAggressiveClassifier` was deprecated in version 1.6
-        and will be removed in 1.8. Use `SGDClassifier` instead.
+        and will be removed in 1.8. Instead use::
+
+            SGDClassifier(
+                penalty=None,
+                alpha=1.0,
+                C=1.0,
+                eta0=1.0,
+                learning_rate="pa1",
+                loss="hinge",
+            )
+
+        With `loss="squared_hinge"`, one would set learning_rate="pa2".
 
     Parameters
     ----------
@@ -335,7 +346,20 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
 
     .. deprecated:: 1.6
         The whole class `PassiveAggressiveRegressor` was deprecated in version 1.6
-        and will be removed in 1.8. Use `SGDRegressor` instead.
+        and will be removed in 1.8. Instead use::
+
+            SGDRegressor(
+                penalty=None,
+                alpha=1.0,
+                C=1.0
+                eta0=1.0,
+                l1_ratio=0,
+                learning_rate="pa1",
+                loss="epsilon_insensitive",
+            )
+
+        With `loss="squared_epsilon_insensitive"`, one would set learning_rate="pa2".
+        Use `SGDRegressor` instead.
 
     Parameters
     ----------
@@ -503,6 +527,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         average=False,
     ):
         super().__init__(
+            loss=loss,
             penalty=None,
             l1_ratio=0,
             epsilon=epsilon,
@@ -520,7 +545,6 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
             average=average,
         )
         self.C = C
-        self.loss = loss
 
     @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y):
