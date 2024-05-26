@@ -1861,6 +1861,7 @@ def test_transform_input_pipeline(method):
                 check_recorded_metadata(
                     estimator,
                     method=method,
+                    parent=method,
                     **metadata,
                 )
 
@@ -1925,38 +1926,47 @@ class SimpleEstimator(BaseEstimator):
     def fit_transform(self, X, y, sample_weight=None, prop=None):
         assert sample_weight is not None
         assert prop is not None
+        return X + 1
 
     def fit_predict(self, X, y, sample_weight=None, prop=None):
         assert sample_weight is not None
         assert prop is not None
+        return np.ones(len(X))
 
     def predict(self, X, sample_weight=None, prop=None):
         assert sample_weight is not None
         assert prop is not None
+        return np.ones(len(X))
 
     def predict_proba(self, X, sample_weight=None, prop=None):
         assert sample_weight is not None
         assert prop is not None
+        return np.ones(len(X))
 
     def predict_log_proba(self, X, sample_weight=None, prop=None):
         assert sample_weight is not None
         assert prop is not None
+        return np.zeros(len(X))
 
     def decision_function(self, X, sample_weight=None, prop=None):
         assert sample_weight is not None
         assert prop is not None
+        return np.ones(len(X))
 
     def score(self, X, y, sample_weight=None, prop=None):
         assert sample_weight is not None
         assert prop is not None
+        return 1
 
     def transform(self, X, sample_weight=None, prop=None):
         assert sample_weight is not None
         assert prop is not None
+        return X + 1
 
     def inverse_transform(self, X, sample_weight=None, prop=None):
         assert sample_weight is not None
         assert prop is not None
+        return X - 1
 
 
 @pytest.mark.usefixtures("enable_slep006")
@@ -1980,7 +1990,7 @@ def test_metadata_routing_for_pipeline(method):
             getattr(est, f"set_{method}_request")(**kwarg)
         return est
 
-    X, y = [[1]], [1]
+    X, y = np.array([[1]]), np.array([1])
     sample_weight, prop, metadata = [1], "a", "b"
 
     # test that metadata is routed correctly for pipelines when requested
@@ -1996,10 +2006,10 @@ def test_metadata_routing_for_pipeline(method):
     pipeline = Pipeline([("trs", trs), ("estimator", est)])
 
     if "fit" not in method:
-        pipeline = pipeline.fit(
-            [[1]], [1], sample_weight=sample_weight, prop=prop, metadata=metadata
-        )
+        pipeline = pipeline.fit(X, y, sample_weight=sample_weight, prop=prop)
 
+    if method == "inverse_transform":
+        print("ha")
     try:
         getattr(pipeline, method)(
             X, y, sample_weight=sample_weight, prop=prop, metadata=metadata
@@ -2013,10 +2023,18 @@ def test_metadata_routing_for_pipeline(method):
     # Make sure the transformer has received the metadata
     # For the transformer, always only `fit` and `transform` are called.
     check_recorded_metadata(
-        obj=trs, method="fit", sample_weight=sample_weight, metadata=metadata
+        obj=trs,
+        method="fit",
+        parent="fit",
+        sample_weight=sample_weight,
+        metadata=metadata,
     )
     check_recorded_metadata(
-        obj=trs, method="transform", sample_weight=sample_weight, metadata=metadata
+        obj=trs,
+        method="transform",
+        parent="transform",
+        sample_weight=sample_weight,
+        metadata=metadata,
     )
 
 
@@ -2171,6 +2189,7 @@ def test_feature_union_metadata_routing(transformer):
             check_recorded_metadata(
                 obj=sub_trans,
                 method="fit",
+                parent="fit",
                 **kwargs,
             )
 
