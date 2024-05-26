@@ -47,10 +47,6 @@ def _encode_target(X_ordinal, y_numeric, n_categories, smooth, sample_weight=Non
 
                 n_i = np.sum(weights_subset)
 
-                if n_i == 0:
-                    cur_encodings[c] = y_mean
-                    continue
-
                 y_subset_mean = np.average(y_subset, weights=weights_subset, axis=0)
 
                 y_subset_variance = np.sum(
@@ -69,10 +65,6 @@ def _encode_target(X_ordinal, y_numeric, n_categories, smooth, sample_weight=Non
 
             m = y_subset_variance / y_variance
             lambda_ = n_i / (n_i + m)
-
-            # ni = y_variance * counts[cat_idx]
-            #  m = sum_of_squared_diffs[cat_idx] /
-            #           counts[cat_idx])
 
             cur_encodings[c] = lambda_ * y_subset_mean + (1 - lambda_) * y_mean
         return cur_encodings

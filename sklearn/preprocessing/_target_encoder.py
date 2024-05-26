@@ -435,8 +435,6 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self, X_ordinal, y, n_categories, target_mean, sample_weight=None
     ):
         """Learn target encodings."""
-        if sample_weight is None:
-            sample_weight = np.ones_like(y)
         if self.smooth == "auto":
             if sample_weight is None:
                 y_variance = np.var(y)
@@ -444,6 +442,11 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 y_variance = np.sum(sample_weight * (y - target_mean) ** 2) / (
                     np.sum(sample_weight)
                 )
+
+            # Maybe leave `sample_weight` as None so as to make
+            # _target_encoder_fast.pyx more efficient
+            if sample_weight is None:
+                sample_weight = np.ones_like(y)
 
             encodings = _fit_encoding_fast_auto_smooth(
                 X_ordinal,
@@ -454,6 +457,11 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 y_variance,
             )
         else:
+            # Maybe leave `sample_weight` as None so as to make
+            # _target_encoder_fast.pyx more efficient
+            if sample_weight is None:
+                sample_weight = np.ones_like(y)
+
             encodings = _fit_encoding_fast(
                 X_ordinal,
                 y,
