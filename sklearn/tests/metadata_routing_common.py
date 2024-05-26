@@ -1,3 +1,4 @@
+import inspect
 from functools import partial
 
 import numpy as np
@@ -25,7 +26,7 @@ from sklearn.utils.metadata_routing import (
 from sklearn.utils.multiclass import _check_partial_fit_first_call
 
 
-def record_metadata(obj, method, record_default=True, **kwargs):
+def record_metadata(obj, record_default=True, **kwargs):
     """Utility function to store passed metadata to a method.
 
     If record_default is False, kwargs whose values are "default" are skipped.
@@ -33,20 +34,25 @@ def record_metadata(obj, method, record_default=True, **kwargs):
     are skipped.
 
     """
+    stack = inspect.stack()
+    method = stack[1].function
+    parent = stack[2].function
     if not hasattr(obj, "_records"):
         obj._records = {}
     if method not in obj._records:
-        obj._records[method] = []
+        obj._records[method] = {}
+    if parent not in obj._records[method]:
+        obj._records[method][parent] = []
     if not record_default:
         kwargs = {
             key: val
             for key, val in kwargs.items()
             if not isinstance(val, str) or (val != "default")
         }
-    obj._records[method].append(kwargs)
+    obj._records[method][parent].append(kwargs)
 
 
-def check_recorded_metadata(obj, method, split_params=tuple(), **kwargs):
+def check_recorded_metadata(obj, method, parent, split_params=tuple(), **kwargs):
     """Check whether the expected metadata is passed to the object's method.
 
     Parameters
@@ -55,13 +61,17 @@ def check_recorded_metadata(obj, method, split_params=tuple(), **kwargs):
         sub-estimator to check routed params for
     method : str
         sub-estimator's method where metadata is routed to
+    parent : str
+        the parent method which should have called `method` or caller
     split_params : tuple, default=empty
         specifies any parameters which are to be checked as being a subset
         of the original values
     **kwargs : dict
         passed metadata
     """
-    all_records = getattr(obj, "_records", dict()).get(method, dict())
+    all_records = (
+        getattr(obj, "_records", dict()).get(method, dict()).get(parent, list())
+    )
     for record in all_records:
         assert set(kwargs.keys()) == set(
             record.keys()
@@ -156,7 +166,7 @@ class ConsumingRegressor(RegressorMixin, BaseEstimator):
             self.registry.append(self)
 
         record_metadata_not_default(
-            self, "partial_fit", sample_weight=sample_weight, metadata=metadata
+            self, sample_weight=sample_weight, metadata=metadata
         )
         return self
 
@@ -165,19 +175,19 @@ class ConsumingRegressor(RegressorMixin, BaseEstimator):
             self.registry.append(self)
 
         record_metadata_not_default(
-            self, "fit", sample_weight=sample_weight, metadata=metadata
+            self, sample_weight=sample_weight, metadata=metadata
         )
         return self
 
     def predict(self, X, y=None, sample_weight="default", metadata="default"):
         record_metadata_not_default(
-            self, "predict", sample_weight=sample_weight, metadata=metadata
+            self, sample_weight=sample_weight, metadata=metadata
         )
         return np.zeros(shape=(len(X),))
 
     def score(self, X, y, sample_weight="default", metadata="default"):
         record_metadata_not_default(
-            self, "score", sample_weight=sample_weight, metadata=metadata
+            self, sample_weight=sample_weight, metadata=metadata
         )
         return 1
 
@@ -245,7 +255,7 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
             self.registry.append(self)
 
         record_metadata_not_default(
-            self, "partial_fit", sample_weight=sample_weight, metadata=metadata
+            self, sample_weight=sample_weight, metadata=metadata
         )
         _check_partial_fit_first_call(self, classes)
         return self
@@ -255,7 +265,7 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
             self.registry.append(self)
 
         record_metadata_not_default(
-            self, "fit", sample_weight=sample_weight, metadata=metadata
+            self, sample_weight=sample_weight, metadata=metadata
         )
 
         self.classes_ = np.unique(y)
@@ -263,7 +273,7 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
 
     def predict(self, X, sample_weight="default", metadata="default"):
         record_metadata_not_default(
-            self, "predict", sample_weight=sample_weight, metadata=metadata
+            self, sample_weight=sample_weight, metadata=metadata
         )
         y_score = np.empty(shape=(len(X),), dtype="int8")
         y_score[len(X) // 2 :] = 0
@@ -272,7 +282,7 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
 
     def predict_proba(self, X, sample_weight="default", metadata="default"):
         record_metadata_not_default(
-            self, "predict_proba", sample_weight=sample_weight, metadata=metadata
+            self, sample_weight=sample_weight, metadata=metadata
         )
         y_proba = np.empty(shape=(len(X), 2))
         y_proba[: len(X) // 2, :] = np.asarray([1.0, 0.0])
@@ -284,13 +294,13 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
 
         # uncomment when needed
         # record_metadata_not_default(
-        #     self, "predict_log_proba", sample_weight=sample_weight, metadata=metadata
+        #     self, sample_weight=sample_weight, metadata=metadata
         # )
         # return np.zeros(shape=(len(X), 2))
 
     def decision_function(self, X, sample_weight="default", metadata="default"):
         record_metadata_not_default(
-            self, "predict_proba", sample_weight=sample_weight, metadata=metadata
+            self, sample_weight=sample_weight, metadata=metadata
         )
         y_score = np.empty(shape=(len(X),))
         y_score[len(X) // 2 :] = 0
@@ -300,7 +310,7 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
     # uncomment when needed
     # def score(self, X, y, sample_weight="default", metadata="default"):
     # record_metadata_not_default(
-    #    self, "score", sample_weight=sample_weight, metadata=metadata
+    #    self, sample_weight=sample_weight, metadata=metadata
     # )
     # return 1
 
@@ -325,13 +335,13 @@ class ConsumingTransformer(TransformerMixin, BaseEstimator):
             self.registry.append(self)
 
         record_metadata_not_default(
-            self, "fit", sample_weight=sample_weight, metadata=metadata
+            self, sample_weight=sample_weight, metadata=metadata
         )
         return self
 
     def transform(self, X, sample_weight="default", metadata="default"):
         record_metadata_not_default(
-            self, "transform", sample_weight=sample_weight, metadata=metadata
+            self, sample_weight=sample_weight, metadata=metadata
         )
         return X + 1
 
@@ -341,7 +351,7 @@ class ConsumingTransformer(TransformerMixin, BaseEstimator):
         # ``transform``, while here we want ``transform`` to receive
         # ``sample_weight`` and ``metadata``.
         record_metadata_not_default(
-            self, "fit_transform", sample_weight=sample_weight, metadata=metadata
+            self, sample_weight=sample_weight, metadata=metadata
         )
         return self.fit(X, y, sample_weight=sample_weight, metadata=metadata).transform(
             X, sample_weight=sample_weight, metadata=metadata
@@ -349,7 +359,7 @@ class ConsumingTransformer(TransformerMixin, BaseEstimator):
 
     def inverse_transform(self, X, sample_weight=None, metadata=None):
         record_metadata_not_default(
-            self, "inverse_transform", sample_weight=sample_weight, metadata=metadata
+            self, sample_weight=sample_weight, metadata=metadata
         )
         return X - 1
 
@@ -366,14 +376,12 @@ class ConsumingNoFitTransformTransformer(BaseEstimator):
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata(self, "fit", sample_weight=sample_weight, metadata=metadata)
+        record_metadata(self, sample_weight=sample_weight, metadata=metadata)
 
         return self
 
     def transform(self, X, sample_weight=None, metadata=None):
-        record_metadata(
-            self, "transform", sample_weight=sample_weight, metadata=metadata
-        )
+        record_metadata(self, sample_weight=sample_weight, metadata=metadata)
         return X
 
 
@@ -388,7 +396,7 @@ class ConsumingScorer(_Scorer):
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata_not_default(self, "score", **kwargs)
+        record_metadata_not_default(self, **kwargs)
 
         sample_weight = kwargs.get("sample_weight", None)
         return super()._score(method_caller, clf, X, y, sample_weight=sample_weight)
@@ -402,7 +410,7 @@ class ConsumingSplitter(GroupsConsumerMixin, BaseCrossValidator):
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata_not_default(self, "split", groups=groups, metadata=metadata)
+        record_metadata_not_default(self, groups=groups, metadata=metadata)
 
         split_index = len(X) // 2
         train_indices = list(range(0, split_index))
@@ -450,7 +458,7 @@ class WeightedMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata(self, "fit", sample_weight=sample_weight)
+        record_metadata(self, sample_weight=sample_weight)
         params = process_routing(self, "fit", sample_weight=sample_weight, **fit_params)
         self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
         return self
@@ -484,7 +492,7 @@ class WeightedMetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator)
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata(self, "fit", sample_weight=sample_weight)
+        record_metadata(self, sample_weight=sample_weight)
         params = process_routing(self, "fit", sample_weight=sample_weight, **kwargs)
         self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
         return self

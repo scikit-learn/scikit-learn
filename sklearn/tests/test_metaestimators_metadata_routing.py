@@ -685,14 +685,7 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
             )
             if "fit" not in method_name:
                 # fit before calling method
-                print(method_mapping)
-                set_requests(
-                    estimator,
-                    method_mapping=method_mapping,
-                    methods=["fit"],
-                    metadata_name=key,
-                )
-                instance.fit(X, y, **method_kwargs, **extra_method_args)
+                instance.fit(X, y)
             try:
                 # `fit` and `partial_fit` accept y, others don't.
                 method(X, y, **method_kwargs, **extra_method_args)
@@ -702,17 +695,17 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
             # sanity check that registry is not empty, or else the test passes
             # trivially
             assert registry
-            if preserves_metadata is True:
-                for estimator in registry:
-                    check_recorded_metadata(estimator, method_name, **method_kwargs)
-            elif preserves_metadata == "subset":
-                for estimator in registry:
-                    check_recorded_metadata(
-                        estimator,
-                        method_name,
-                        split_params=method_kwargs.keys(),
-                        **method_kwargs,
-                    )
+            split_params = (
+                method_kwargs.keys() if preserves_metadata == "subset" else ()
+            )
+            for estimator in registry:
+                check_recorded_metadata(
+                    estimator,
+                    method=method_name,
+                    parent=method_name,
+                    split_params=split_params,
+                    **method_kwargs,
+                )
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
@@ -786,6 +779,7 @@ def test_metadata_is_routed_correctly_to_scorer(metaestimator):
             check_recorded_metadata(
                 obj=_scorer,
                 method="score",
+                parent=method_name,
                 split_params=("sample_weight",),
                 **method_kwargs,
             )
@@ -820,4 +814,6 @@ def test_metadata_is_routed_correctly_to_splitter(metaestimator):
         method(X_, y_, **method_kwargs)
         assert registry
         for _splitter in registry:
-            check_recorded_metadata(obj=_splitter, method="split", **method_kwargs)
+            check_recorded_metadata(
+                obj=_splitter, method="split", parent=method_name, **method_kwargs
+            )
