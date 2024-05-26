@@ -90,7 +90,7 @@ Changelog
 
 - |Feature| Added a new clustering metric PBM index, implemented in
   :func:`pbm_index_score`, for which higher values indicate a better clustering.
-  :pr:`29111` by :user:`Henrique Caroço <HenriqueProj>` and :user:`Luís Calado <LC1243>`.
+  :pr:`29113` by :user:`Henrique Caroço <HenriqueProj>` and :user:`Luís Calado <LC1243>`.
 
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:
