@@ -727,10 +727,10 @@ def test_sgd_predict_proba_method_access(klass):
             inner_msg = "probability estimates are not available for loss={!r}".format(
                 loss
             )
-            assert not hasattr(clf, "predict_proba") and "predict_proba" not in dir(clf)
-            assert not hasattr(
-                clf, "predict_log_proba"
-            ) and "predict_log_proba" not in dir(clf)
+            assert not hasattr(clf, "predict_proba")
+            assert "predict_proba" not in dir(clf)
+            assert not hasattr(clf, "predict_log_proba")
+            assert "predict_log_proba" not in dir(clf)
             with pytest.raises(
                 AttributeError, match="has no attribute 'predict_proba'"
             ) as exec_info:
@@ -755,8 +755,10 @@ def test_sgd_proba(klass):
     # We cannot use the factory here, because it defines predict_proba
     # anyway.
     clf = SGDClassifier(loss="hinge", alpha=0.01, max_iter=10, tol=None).fit(X, Y)
-    assert not hasattr(clf, "predict_proba") and "predict_proba" not in dir(clf)
-    assert not hasattr(clf, "predict_log_proba") and "predict_log_proba" not in dir(clf)
+    assert not hasattr(clf, "predict_proba")
+    assert "predict_proba" not in dir(clf)
+    assert not hasattr(clf, "predict_log_proba")
+    assert "predict_log_proba" not in dir(clf)
 
     # log and modified_huber losses can output probability estimates
     # binary case

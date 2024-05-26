@@ -149,9 +149,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         self.n_iter_no_change = n_iter_no_change
         self.max_fun = max_fun
 
-    def __dir__(self):
-        return [attr for attr in super().__dir__() if hasattr(self, attr)]
-
     def _unpack(self, packed_parameters):
         """Extract the coefficients and intercepts from packed_parameters."""
         for i in range(self.n_layers_ - 1):
@@ -757,7 +754,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         if self.solver not in _STOCHASTIC_SOLVERS:
             raise AttributeError(
                 "partial_fit is only available for stochastic"
-                " optimizers. %s is not stochastic." % self.solver
+                " optimizers. %s is not stochastic."
+                % self.solver
             )
         return True
 

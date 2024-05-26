@@ -447,9 +447,8 @@ def test_error():
     # Test support of decision_function
     X, y = iris.data, iris.target
     base = DecisionTreeClassifier()
-    assert not hasattr(
-        BaggingClassifier(base).fit(X, y), "decision_function"
-    ) and "decision_function" not in dir(BaggingClassifier(base).fit(X, y))
+    assert not hasattr(BaggingClassifier(base).fit(X, y), "decision_function")
+    assert "decision_function" not in dir(BaggingClassifier(base).fit(X, y))
 
 
 def test_parallel_classification():

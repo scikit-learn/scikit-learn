@@ -839,9 +839,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             verbose=verbose,
         )
 
-    def __dir__(self):
-        return [attr for attr in super().__dir__() if hasattr(self, attr)]
-
     def _get_estimator(self):
         """Resolve which estimator to return (default is DecisionTreeClassifier)"""
         if self.estimator is None:

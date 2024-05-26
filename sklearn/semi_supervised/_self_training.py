@@ -184,9 +184,6 @@ class SelfTrainingClassifier(
         self.max_iter = max_iter
         self.verbose = verbose
 
-    def __dir__(self):
-        return [attr for attr in super().__dir__() if hasattr(self, attr)]
-
     @_fit_context(
         # SelfTrainingClassifier.base_estimator is not validated yet
         prefer_skip_nested_validation=False

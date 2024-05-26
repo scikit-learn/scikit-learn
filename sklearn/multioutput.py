@@ -409,9 +409,6 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     def __init__(self, estimator, *, n_jobs=None):
         super().__init__(estimator, n_jobs=n_jobs)
 
-    def __dir__(self):
-        return [attr for attr in super().__dir__() if hasattr(self, attr)]
-
     @_available_if_estimator_has("partial_fit")
     def partial_fit(self, X, y, sample_weight=None, **partial_fit_params):
         """Incrementally fit the model to data, for each output variable.
@@ -514,9 +511,6 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     array([[1, 1, 1],
            [1, 0, 1]])
     """
-
-    def __dir__(self):
-        return [attr for attr in super().__dir__() if hasattr(self, attr)]
 
     def __init__(self, estimator, *, n_jobs=None):
         super().__init__(estimator, n_jobs=n_jobs)
@@ -1003,9 +997,6 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
             verbose=verbose,
         )
         self.chain_method = chain_method
-
-    def __dir__(self):
-        return [attr for attr in super().__dir__() if hasattr(self, attr)]
 
     @_fit_context(
         # ClassifierChain.base_estimator is not validated yet

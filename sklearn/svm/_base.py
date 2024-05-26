@@ -297,7 +297,8 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             warnings.warn(
                 "Solver terminated early (max_iter=%i)."
                 "  Consider pre-processing your data with"
-                " StandardScaler or MinMaxScaler." % self.max_iter,
+                " StandardScaler or MinMaxScaler."
+                % self.max_iter,
                 ConvergenceWarning,
             )
 
@@ -732,9 +733,6 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
             max_iter=max_iter,
             random_state=random_state,
         )
-
-    def __dir__(self):
-        return [attr for attr in super().__dir__() if hasattr(self, attr)]
 
     def _validate_targets(self, y):
         y_ = column_or_1d(y, warn=True)
@@ -1176,7 +1174,8 @@ def _fit_liblinear(
             raise ValueError(
                 "This solver needs samples of at least 2 classes"
                 " in the data, but the data contains only one"
-                " class: %r" % classes_[0]
+                " class: %r"
+                % classes_[0]
             )
 
         class_weight_ = compute_class_weight(class_weight, classes=classes_, y=y)

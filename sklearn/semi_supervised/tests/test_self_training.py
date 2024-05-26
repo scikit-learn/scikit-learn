@@ -310,9 +310,8 @@ def test_base_estimator_meta_estimator():
         cv=2,
     )
 
-    assert not hasattr(base_estimator, "predict_proba") and "predict_proba" not in dir(
-        base_estimator
-    )
+    assert not hasattr(base_estimator, "predict_proba")
+    assert "predict_proba" not in dir(base_estimator)
     clf = SelfTrainingClassifier(base_estimator=base_estimator)
     with pytest.raises(AttributeError):
         clf.fit(X_train, y_train_missing_labels)

@@ -499,9 +499,8 @@ def test_partial_fit_errors():
         MLPClassifier(solver="sgd").partial_fit(X, y, classes=[2])
 
     # lbfgs doesn't support partial_fit
-    assert not hasattr(
-        MLPClassifier(solver="lbfgs"), "partial_fit"
-    ) and "parital_fit" not in dir(MLPClassifier(solver="lbfgs"))
+    assert not hasattr(MLPClassifier(solver="lbfgs"), "partial_fit")
+    assert "parital_fit" not in dir(MLPClassifier(solver="lbfgs"))
 
 
 def test_nonfinite_params():
@@ -734,7 +733,8 @@ def test_warm_start():
         message = (
             "warm_start can only be used where `y` has the same "
             "classes as in the previous call to fit."
-            " Previously got [0 1 2], `y` has %s" % np.unique(y_i)
+            " Previously got [0 1 2], `y` has %s"
+            % np.unique(y_i)
         )
         with pytest.raises(ValueError, match=re.escape(message)):
             clf.fit(X, y_i)

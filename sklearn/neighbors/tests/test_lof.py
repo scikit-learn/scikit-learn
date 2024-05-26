@@ -212,15 +212,19 @@ def test_hasattr_prediction():
     assert hasattr(clf, "predict")
     assert hasattr(clf, "decision_function")
     assert hasattr(clf, "score_samples")
-    assert not hasattr(clf, "fit_predict") and "fit_predict" not in dir(clf)
+    assert not hasattr(clf, "fit_predict")
+    assert "fit_predict" not in dir(clf)
 
     # when novelty=False
     clf = neighbors.LocalOutlierFactor(novelty=False)
     clf.fit(X)
     assert hasattr(clf, "fit_predict")
-    assert not hasattr(clf, "predict") and "predict" not in dir(clf)
-    assert not hasattr(clf, "decision_function") and "decision_function" not in dir(clf)
-    assert not hasattr(clf, "score_samples") and "score_samples" not in dir(clf)
+    assert not hasattr(clf, "predict")
+    assert "predict" not in dir(clf)
+    assert not hasattr(clf, "decision_function")
+    assert "decision_function" not in dir(clf)
+    assert not hasattr(clf, "score_samples")
+    assert "score_samples" not in dir(clf)
 
 
 @parametrize_with_checks([neighbors.LocalOutlierFactor(novelty=True)])

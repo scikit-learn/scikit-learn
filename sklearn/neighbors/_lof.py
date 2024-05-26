@@ -218,9 +218,6 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         self.contamination = contamination
         self.novelty = novelty
 
-    def __dir__(self):
-        return [attr for attr in super().__dir__() if hasattr(self, attr)]
-
     def _check_novelty_fit_predict(self):
         if self.novelty:
             msg = (

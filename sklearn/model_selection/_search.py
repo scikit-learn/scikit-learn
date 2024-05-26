@@ -433,9 +433,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     def _estimator_type(self):
         return self.estimator._estimator_type
 
-    def __dir__(self):
-        return [attr for attr in super().__dir__() if hasattr(self, attr)]
-
     def _more_tags(self):
         # allows cross-validation to see 'precomputed' metrics
         return {
@@ -489,7 +486,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         if self.scorer_ is None:
             raise ValueError(
                 "No score function explicitly defined, "
-                "and the estimator doesn't provide one %s" % self.best_estimator_
+                "and the estimator doesn't provide one %s"
+                % self.best_estimator_
             )
         if isinstance(self.scorer_, dict):
             if self.multimetric_:

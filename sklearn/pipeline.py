@@ -172,9 +172,6 @@ class Pipeline(_BaseComposition):
         self.memory = memory
         self.verbose = verbose
 
-    def __dir__(self):
-        return [attr for attr in super().__dir__() if hasattr(self, attr)]
-
     def set_output(self, *, transform=None):
         """Set the output container when `"transform"` and `"fit_transform"` are called.
 

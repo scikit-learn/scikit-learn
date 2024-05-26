@@ -138,11 +138,6 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         self.max_iter = max_iter
         self.tol = tol
 
-    def __dir__(self):
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=FutureWarning)
-            return [attr for attr in super().__dir__() if hasattr(self, attr)]
-
     @abstractmethod
     def fit(self, X, y):
         """Fit model."""
@@ -1363,7 +1358,8 @@ class SGDClassifier(BaseSGDClassifier):
             raise NotImplementedError(
                 "predict_(log_)proba only supported when"
                 " loss='log_loss' or loss='modified_huber' "
-                "(%r given)" % self.loss
+                "(%r given)"
+                % self.loss
             )
 
     @available_if(_check_proba)
