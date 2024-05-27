@@ -82,7 +82,7 @@ Changelog
   :pr:`28936` by :user:`Christian Veenhuis <ChVeen>`.
 
 :mod:`sklearn.linear`
-...................
+.....................
 
 - |API| Deprecates `copy_X` in :class:`linear.TheilSenRegressor` as the parameter has
   no effect. `copy_X` will be removed in 1.8.
