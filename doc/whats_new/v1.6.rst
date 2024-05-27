@@ -88,6 +88,12 @@ Changelog
   whether to raise an exception if a subset of the scorers in multimetric scoring fails
   or to return an error code. :pr:`28992` by :user:`Stefanie Senger <StefanieSenger>`.
 
+:mod:`sklearn.preprocessing`
+...........................
+
+- |Feature| :class:`preprocessing.Target_encoder` now supports the `sample_weight`
+  parameter in the `fit` and `fit_transform` methods. :pr:`29110`
+  by :user: `Duarte São José <DuarteSJ>` and `Miguel Parece <MiguelParece>`.
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:
 
