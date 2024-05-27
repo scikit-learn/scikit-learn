@@ -520,9 +520,10 @@ def multilabel_confusion_matrix(
             [1, 2]]])
     """
     xp, _ = get_namespace(y_true, y_pred)
+    device_ = device(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if sample_weight is not None:
-        sample_weight = column_or_1d(sample_weight)
+        sample_weight = xp.asarray(column_or_1d(sample_weight), device=device_)
     check_consistent_length(y_true, y_pred, sample_weight)
 
     if y_type not in ("binary", "multiclass", "multilabel-indicator"):
@@ -533,7 +534,7 @@ def multilabel_confusion_matrix(
         labels = present_labels
         n_labels = None
     else:
-        labels = xp.asarray(labels, device=device(y_true, y_pred))
+        labels = xp.asarray(labels, device=device_)
         n_labels = labels.shape[0]
         labels = xp.concat(
             [labels, _setdiff1d(present_labels, labels, assume_unique=True, xp=xp)],
@@ -555,10 +556,9 @@ def multilabel_confusion_matrix(
 
         # labels are now from 0 to len(labels) - 1 -> use bincount
         tp = y_true == y_pred
-        tp_indices = xp.nonzero(tp)[0]
-        tp_bins = xp.reshape(xp.take(y_true, tp_indices, axis=0), (-1,))
+        tp_bins = y_true[tp]
         if sample_weight is not None:
-            tp_bins_weights = xp.take(xp.asarray(sample_weight), tp_indices, axis=0)
+            tp_bins_weights = sample_weight[tp]
         else:
             tp_bins_weights = None
 
@@ -584,23 +584,23 @@ def multilabel_confusion_matrix(
         true_sum = xp.take(true_sum, indices, axis=0)
         pred_sum = xp.take(pred_sum, indices, axis=0)
 
-    else:
+    else:  # y_true is a 2D sparse matrix of one-hot multi-label indicators
         sum_axis = 1 if samplewise else 0
 
         # All labels are index integers for multilabel.
         # Select labels:
         if not np.array_equal(labels, present_labels):
-            if xp.max(labels) > xp.max(present_labels):
+            if np.max(labels) > np.max(present_labels):
                 raise ValueError(
                     "All labels must be in [0, n labels) for "
                     "multilabel targets. "
-                    "Got %d > %d" % (xp.max(labels), xp.max(present_labels))
+                    "Got %d > %d" % (np.max(labels), np.max(present_labels))
                 )
-            if xp.min(labels) < 0:
+            if np.min(labels) < 0:
                 raise ValueError(
                     "All labels must be in [0, n labels) for "
                     "multilabel targets. "
-                    "Got %d < 0" % xp.min(labels)
+                    "Got %d < 0" % np.min(labels)
                 )
 
         if n_labels is not None:
@@ -620,7 +620,6 @@ def multilabel_confusion_matrix(
     tp = tp_sum
 
     if sample_weight is not None and samplewise:
-        sample_weight = xp.asarray(sample_weight)
         tp = xp.asarray(tp)
         fp = xp.asarray(fp)
         fn = xp.asarray(fn)
