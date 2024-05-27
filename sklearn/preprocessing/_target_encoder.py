@@ -283,15 +283,11 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             )
         else:
             X_out = np.empty_like(X_ordinal, dtype=np.float64)
-
+        sample_weight = _check_sample_weight(sample_weight, X)
         for train_idx, test_idx in cv.split(X, y):
             X_train, y_train = X_ordinal[train_idx, :], y_encoded[train_idx]
-            if sample_weight is not None:
-                sample_weight_train = sample_weight[train_idx]
-                y_train_mean = np.average(y_train, weights=sample_weight_train, axis=0)
-            else:
-                sample_weight_train = None
-                y_train_mean = np.mean(y_train, axis=0)
+            sample_weight_train = sample_weight[train_idx]
+            y_train_mean = np.average(y_train, weights=sample_weight_train, axis=0)
             if self.target_type_ == "multiclass":
                 encodings = self._fit_encoding_multiclass(
                     X_train,
@@ -369,8 +365,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         )
 
         check_consistent_length(X, y)
-        if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X)
+        sample_weight = _check_sample_weight(sample_weight, X)
         self._fit(X, handle_unknown="ignore", force_all_finite="allow-nan")
 
         if self.target_type == "auto":
@@ -398,10 +393,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         else:  # continuous
             y = _check_y(y, y_numeric=True, estimator=self)
 
-        if sample_weight is not None:
-            self.target_mean_ = np.average(y, weights=sample_weight, axis=0)
-        else:
-            self.target_mean_ = np.mean(y, axis=0)
+        self.target_mean_ = np.average(y, weights=sample_weight, axis=0)
 
         X_ordinal, X_known_mask = self._transform(
             X, handle_unknown="ignore", force_all_finite="allow-nan"
@@ -432,21 +424,13 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         return X_ordinal, X_known_mask, y, n_categories
 
     def _fit_encoding_binary_or_continuous(
-        self, X_ordinal, y, n_categories, target_mean, sample_weight=None
+        self, X_ordinal, y, n_categories, target_mean, sample_weight
     ):
         """Learn target encodings."""
         if self.smooth == "auto":
-            if sample_weight is None:
-                y_variance = np.var(y)
-            else:
-                y_variance = np.sum(sample_weight * (y - target_mean) ** 2) / (
-                    np.sum(sample_weight)
-                )
-
-            # Maybe leave `sample_weight` as None so as to make
-            # _target_encoder_fast.pyx more efficient
-            if sample_weight is None:
-                sample_weight = np.ones_like(y)
+            y_variance = np.sum(sample_weight * (y - target_mean) ** 2) / (
+                np.sum(sample_weight)
+            )
 
             encodings = _fit_encoding_fast_auto_smooth(
                 X_ordinal,
@@ -457,10 +441,6 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 y_variance,
             )
         else:
-            # Maybe leave `sample_weight` as None so as to make
-            # _target_encoder_fast.pyx more efficient
-            if sample_weight is None:
-                sample_weight = np.ones_like(y)
 
             encodings = _fit_encoding_fast(
                 X_ordinal,
@@ -473,7 +453,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         return encodings
 
     def _fit_encoding_multiclass(
-        self, X_ordinal, y, n_categories, target_mean, sample_weight=None
+        self, X_ordinal, y, n_categories, target_mean, sample_weight
     ):
         """Learn multiclass encodings.
 
