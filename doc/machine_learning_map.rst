@@ -35,7 +35,7 @@ and drag to pan around. You can also download the chart:
     }
   </style>
 
-  <script src="js/scripts/vendor/svg-pan-zoom.min.js"></script>
+  <script src="_static/scripts/vendor/svg-pan-zoom.min.js"></script>
   <script>
     document.addEventListener("DOMContentLoaded", function () {
       const beforePan = function (oldPan, newPan) {
