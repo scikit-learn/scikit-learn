@@ -20,7 +20,7 @@ from scipy.special import binom
 from ..base import RegressorMixin, _fit_context
 from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state
-from ..utils._param_validation import Interval
+from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils.parallel import Parallel, delayed
 from ._base import LinearModel
 
@@ -225,7 +225,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations.
 
-    copy_X : bool, default=True
+    copy_X : bool, default='deprecated'
         If True, X will be copied; else, it may be overwritten.
 
         .. deprecated:: 1.6
@@ -328,7 +328,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
 
     _parameter_constraints: dict = {
         "fit_intercept": ["boolean"],
-        "copy_X": ["deprecated"],
+        "copy_X": ["boolean", Hidden(StrOptions({"deprecated"}))],
         # target_type should be Integral but can accept Real for backward compatibility
         "max_subpopulation": [Interval(Real, 1, None, closed="left")],
         "n_subsamples": [None, Integral],
@@ -343,7 +343,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         self,
         *,
         fit_intercept=True,
-        copy_X=True,
+        copy_X="deprecated",
         max_subpopulation=1e4,
         n_subsamples=None,
         max_iter=300,
@@ -415,6 +415,13 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         self : returns an instance of self.
             Fitted `TheilSenRegressor` estimator.
         """
+        if self.copy_X != "deprecated":
+            warnings.warn(
+                "The parameter copy_X is deprecated as of version 1.6 and "
+                "will be removed in 1.8.",
+                FutureWarning,
+            )
+
         random_state = check_random_state(self.random_state)
         X, y = self._validate_data(X, y, y_numeric=True)
         n_samples, n_features = X.shape

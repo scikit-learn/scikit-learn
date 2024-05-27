@@ -84,9 +84,9 @@ Changelog
 :mod:`sklearn.linear`
 ...................
 
-- |API| Deprecates `copy_X` in :class:`TheilSenRegressor` as the argument
-  is not used.
-  :pr:`` by :user:`Adam Li <adam2392>`.
+- |API| Deprecates `copy_X` in :class:`linear.TheilSenRegressor` as the parameter has
+  no effect. `copy_X` will be removed in 1.8.
+  :pr:`29105` by :user:`Adam Li <adam2392>`.
   
 :mod:`sklearn.metrics`
 ......................
