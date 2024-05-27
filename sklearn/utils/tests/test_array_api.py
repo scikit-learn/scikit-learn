@@ -544,7 +544,7 @@ def test_isin(
 
 
 def test_get_namespace_and_device():
-    # a library with custom Device objects
+    # Use torch as a library with custom Device objects:
     torch = pytest.importorskip("torch")
     xp_torch = pytest.importorskip("array_api_compat.torch")
     some_torch_tensor = torch.arange(3, device="cpu")
