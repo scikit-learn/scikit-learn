@@ -745,7 +745,7 @@ class StratifiedKFold(_BaseKFold):
 
     def _make_test_folds(self, X, y=None):
         rng = check_random_state(self.random_state)
-        # XXX: as of now, cross-validation splitter only operate in NumPy-land
+        # XXX: as of now, cross-validation splitters only operate in NumPy-land
         # without attempting to leverage array API namespace features. However
         # they might be fed by array API inputs, e.g. in CV-enabled estimators so
         # we need the following explicit conversion:
