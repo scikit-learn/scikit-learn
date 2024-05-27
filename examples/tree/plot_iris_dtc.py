@@ -66,7 +66,6 @@ for pairidx, pair in enumerate([[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]])
             X[idx, 1],
             c=color,
             label=iris.target_names[i],
-            cmap=plt.cm.RdYlBu,
             edgecolor="black",
             s=15,
         )
