@@ -53,7 +53,7 @@ new data. You don't need to re-train the estimator::
   >>> clf.predict([[4, 5, 6], [14, 15, 16]])  # predict classes of new data
   array([0, 1])
 
-You can check :ref:<ml_map> on how to choose the right model for your use case.
+You can check :ref:`ml_map` on how to choose the right model for your use case.
 
 Transformers and pre-processors
 -------------------------------
