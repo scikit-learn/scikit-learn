@@ -9,7 +9,7 @@ dependencies:
   - pip
   - pip:
     - threadpoolctl
-    - pytest<8
+    - pytest
     - pytest-xdist
     - pip
     - ninja

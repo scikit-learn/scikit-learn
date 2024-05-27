@@ -11,6 +11,11 @@
 # needed for the cimport to work
 _pairwise_distances_reduction_cython_tree = [
   fs.copyfile('__init__.py'),
+  # We are in a sub-module of metrics, so we always need to have
+  # sklearn/metrics/__init__.py copied to the build directory to avoid the
+  # error:
+  # relative cimport beyond main package is not allowed
+  metrics_cython_tree
 ]
 
 _classmode_pxd = fs.copyfile('_classmode.pxd')
@@ -30,7 +35,7 @@ _datasets_pair_pyx = custom_target(
 _datasets_pair = py.extension_module(
   '_datasets_pair',
   [_datasets_pair_pxd, _datasets_pair_pyx,
-    _pairwise_distances_reduction_cython_tree, utils_cython_tree],
+   _pairwise_distances_reduction_cython_tree, utils_cython_tree],
   dependencies: [np_dep, openmp_dep],
   override_options: ['cython_language=cpp'],
   cython_args: cython_args,

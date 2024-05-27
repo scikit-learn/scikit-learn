@@ -1557,6 +1557,34 @@ def test_multimetric_scorer_repr():
     assert str(multi_metric_scorer) == 'MultiMetricScorer("accuracy", "r2")'
 
 
+def test_check_scoring_multimetric_raise_exc():
+    """Test that check_scoring returns error code for a subset of scorers in
+    multimetric scoring if raise_exc=False and raises otherwise."""
+
+    def raising_scorer(estimator, X, y):
+        raise ValueError("That doesn't work.")
+
+    X, y = make_classification(n_samples=150, n_features=10, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    clf = LogisticRegression().fit(X_train, y_train)
+
+    # "raising_scorer" is raising ValueError and should return an string representation
+    # of the error of the last scorer:
+    scoring = {
+        "accuracy": make_scorer(accuracy_score),
+        "raising_scorer": raising_scorer,
+    }
+    scoring_call = check_scoring(estimator=clf, scoring=scoring, raise_exc=False)
+    scores = scoring_call(clf, X_test, y_test)
+    assert "That doesn't work." in scores["raising_scorer"]
+
+    # should raise an error
+    scoring_call = check_scoring(estimator=clf, scoring=scoring, raise_exc=True)
+    err_msg = "That doesn't work."
+    with pytest.raises(ValueError, match=err_msg):
+        scores = scoring_call(clf, X_test, y_test)
+
+
 @pytest.mark.parametrize("enable_metadata_routing", [True, False])
 def test_metadata_routing_multimetric_metadata_routing(enable_metadata_routing):
     """Test multimetric scorer works with and without metadata routing enabled when
