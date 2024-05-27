@@ -1,0 +1,52 @@
+/**
+ * This is the styling for API reference pages, currently under `modules/generated`.
+ * Note that it should be applied *ONLY* to API reference pages, as the selectors are
+ * designed based on how `autodoc` and `autosummary` generate the stuff.
+ */
+
+// Make the admonitions more compact
+div.versionadded,
+div.versionchanged,
+div.deprecated {
+  margin: 1rem auto;
+
+  > p {
+    margin: 0.3rem auto;
+  }
+}
+
+// Make docstrings more compact
+dd {
+  p:not(table *) {
+    margin-bottom: 0.5rem !important;
+  }
+
+  ul {
+    margin-bottom: 0.5rem !important;
+    padding-left: 2rem !important;
+  }
+}
+
+// The first method is too close the the docstring above
+dl.py.method:first-of-type {
+  margin-top: 2rem;
+}
+
+// https://github.com/pydata/pydata-sphinx-theme/blob/8cf45f835bfdafc5f3821014a18f3b7e0fc2d44b/src/pydata_sphinx_theme/assets/styles/content/_api.scss
+dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple) {
+  margin-bottom: 1.5rem;
+
+  dd {
+    margin-left: 1.2rem;
+  }
+
+  // "Parameters", "Returns", etc. in the docstring
+  dt.field-odd,
+  dt.field-even {
+    margin: 0.5rem 0;
+
+    + dd > dl {
+      margin-bottom: 0.5rem;
+    }
+  }
+}

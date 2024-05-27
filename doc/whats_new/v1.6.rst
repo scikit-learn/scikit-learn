@@ -74,6 +74,20 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123455 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.base`
+...................
+
+- |Enhancement| Added a function :func:`base.is_clusterer` which determines
+  whether a given estimator is of category clusterer.
+  :pr:`28936` by :user:`Christian Veenhuis <ChVeen>`.
+  
+:mod:`sklearn.metrics`
+......................
+
+- |Enhancement| :func:`sklearn.metrics.check_scoring` now accepts `raise_exc` to specify
+  whether to raise an exception if a subset of the scorers in multimetric scoring fails
+  or to return an error code. :pr:`28992` by :user:`Stefanie Senger <StefanieSenger>`.
+
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:
 
