@@ -1102,8 +1102,6 @@ def _incremental_mean_and_var(
     # old = stats until now
     # new = the current increment
     # updated = the aggregated stats
-    if not hasattr(X, "dtype"):
-        X = np.asarray(X)
     xp, _, X_device = get_namespace_and_device(X)
     max_float_dtype = max_precision_float_dtype(xp, device=X_device)
     # Promoting int -> float is not guaranteed by the array-api, so we cast manually.

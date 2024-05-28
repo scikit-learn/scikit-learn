@@ -2174,9 +2174,6 @@ def _check_sample_weight(
         Validated sample weight. It is guaranteed to be "C" contiguous.
     """
     n_samples = _num_samples(X)
-
-    if isinstance(X, (list, tuple)):
-        X = np.asarray(X)  # Coerce X to a numpy array if it's a list.
     xp, _, X_device = get_namespace_and_device(X)
 
     if dtype is not None and not xp.isdtype(dtype, "real floating"):
