@@ -37,6 +37,10 @@ def _weighted_percentile(array, sample_weight, percentile=50):
     # When sample_weight 1D, repeat for each array.shape[1]
     if array.shape != sample_weight.shape and array.shape[0] == sample_weight.shape[0]:
         sample_weight = np.tile(sample_weight, (array.shape[1], 1)).T
+
+    #### adrins advice: make maskedarray or input array where isnan(array) and
+    # sample_weight==0 here and make follow up code column wise on it
+
     sorted_idx = np.argsort(array, axis=0)
     sorted_weights = np.take_along_axis(sample_weight, sorted_idx, axis=0)
 
@@ -51,13 +55,23 @@ def _weighted_percentile(array, sample_weight, percentile=50):
     adjusted_percentile[mask] = np.nextafter(
         adjusted_percentile[mask], adjusted_percentile[mask] + 1
     )
+    # Ignore leading 0s in `weight_cdf` in order to determine
+    # `adjusted_percentile` correctly:
+    masked_weight_cdf = np.ma.array(weight_cdf, mask=(weight_cdf == 0))
 
     percentile_idx = np.array(
         [
-            np.searchsorted(weight_cdf[:, i], adjusted_percentile[i])
-            for i in range(weight_cdf.shape[1])
+            np.searchsorted(
+                masked_weight_cdf[:, i].compressed(),
+                adjusted_percentile[
+                    i
+                ],  ################### if masked_weight_cdf[:, i] was
+                #################masked_weight_cdf[:, 0], then the test would pass
+            )
+            for i in range(masked_weight_cdf.shape[1])
         ]
     )
+
     percentile_idx = np.array(percentile_idx)
     # In rare cases, percentile_idx equals to sorted_idx.shape[0]
     max_idx = sorted_idx.shape[0] - 1
@@ -69,9 +83,10 @@ def _weighted_percentile(array, sample_weight, percentile=50):
     percentile_in_sorted = sorted_idx[percentile_idx, col_index]
     percentile = array[percentile_in_sorted, col_index]
 
-    # percentiles that point to nan values are redirected to the next lower value:
+    # percentiles that point to nan values are redirected to the next lower
+    # value unless we have reached the lowest index (0) in `sortex_idx`:
     while bool(np.isnan(percentile).any()) and (
-        percentile_idx[np.isnan(percentile)].all() > 0
+        (percentile_idx[np.isnan(percentile)] > 0).all()
     ):
         percentile_idx[np.isnan(percentile)] = np.maximum(
             percentile_idx[np.isnan(percentile)] - 1, 0

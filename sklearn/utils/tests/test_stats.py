@@ -99,14 +99,40 @@ def test_weighted_percentile_2d():
 
 
 def test_weighted_percentile_nan():
-    """Test that np.nan is not returned as a value."""
-    rng = np.random.RandomState(1)
-    array = np.sort(5 * rng.rand(100, 3), axis=0)
-    array[np.random.rand(*array.shape) < 0.8] = np.nan
-    weights = np.random.randint(1, 6, size=(100, 3))
+    from numpy.testing import assert_array_equal
 
-    percentiles = 100 * np.linspace(start=0, stop=1, num=5, dtype=np.float64)
-    values = np.array(
-        [_weighted_percentile(array, weights, percentile) for percentile in percentiles]
+    """Test that calling _weighted_percentile on an array with nan values returns
+    the same results as calling _weighted_percentile on a filtered version of the
+    data."""
+    rng = np.random.RandomState(1)
+    array = np.sort(5 * rng.rand(10, 100), axis=0)
+
+    nan_array = array.copy()
+    nan_array[rng.rand(*nan_array.shape) < 0.5] = np.nan
+    nan_mask = np.isnan(nan_array)
+
+    weights_same_shape = rng.randint(1, 6, size=(10, 100))
+    weights_same_shape = np.ones((10, 100))  ######################### debug only
+
+    # Calculate the weighted percentile on the array with nans:
+    values_nan = _weighted_percentile(nan_array, weights_same_shape, 30)
+
+    # Calculate the weighted percentile on the filtered array:
+    filtered_values = [array[~nan_mask[:, col], col] for col in range(array.shape[1])]
+    filtered_weights = [
+        weights_same_shape[~nan_mask[:, col], col] for col in range(array.shape[1])
+    ]
+
+    values_filtered = np.array(
+        [
+            _weighted_percentile(filtered_values[col], filtered_weights[col], 30)
+            for col in range(array.shape[1])
+        ]
     )
-    assert not np.isnan(values).any()
+
+    assert_array_equal(values_filtered, values_nan)
+
+    # ToDo:
+    # Test with weights that have a different shape than the data.
+    # weights_different_shape = rng.randint(1, 6, size=(10,))
+    # ...
