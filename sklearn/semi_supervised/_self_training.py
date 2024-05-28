@@ -541,7 +541,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             force_all_finite=False,
             reset=False,
         )
-        return self.base_estimator_.score(X, y, **routed_params.base_estimator.score)
+        return self.base_estimator_.score(X, y, **routed_params.base_estimator["score"])
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.

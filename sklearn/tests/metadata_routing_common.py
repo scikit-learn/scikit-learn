@@ -285,13 +285,10 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         return y_proba
 
     def predict_log_proba(self, X, sample_weight="default", metadata="default"):
-        pass  # pragma: no cover
-
-        # uncomment when needed
-        # record_metadata_not_default(
-        #     self, "predict_log_proba", sample_weight=sample_weight, metadata=metadata
-        # )
-        # return np.zeros(shape=(len(X), 2))
+        record_metadata_not_default(
+            self, "predict_log_proba", sample_weight=sample_weight, metadata=metadata
+        )
+        return np.zeros(shape=(len(X), 2))
 
     def decision_function(self, X, sample_weight="default", metadata="default"):
         record_metadata_not_default(
@@ -302,12 +299,11 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         y_score[: len(X) // 2] = 1
         return y_score
 
-    # uncomment when needed
-    # def score(self, X, y, sample_weight="default", metadata="default"):
-    # record_metadata_not_default(
-    #    self, "score", sample_weight=sample_weight, metadata=metadata
-    # )
-    # return 1
+    def score(self, X, y, sample_weight="default", metadata="default"):
+        record_metadata_not_default(
+            self, "score", sample_weight=sample_weight, metadata=metadata
+        )
+        return 1
 
 
 class ConsumingTransformer(TransformerMixin, BaseEstimator):
