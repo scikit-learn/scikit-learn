@@ -11,9 +11,9 @@ data and different problems.
 
 The flowchart below is designed to give users a bit of a rough guide on how to approach
 problems with regard to which estimators to try on your data. Click on any estimator in
-the chart below to see its documentation. Use scroll wheel to zoom in and out, and click
-and drag to pan around. You can also download the chart:
-:download:`ml_map.svg <../../images/ml_map.svg>`.
+the chart below to see its documentation. The 😭 emoji stands for "not working". Use
+scroll wheel to zoom in and out, and click and drag to pan around. You can also download
+the chart: :download:`ml_map.svg <../../images/ml_map.svg>`.
 
 .. raw:: html
 
