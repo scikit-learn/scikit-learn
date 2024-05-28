@@ -330,7 +330,7 @@ def supported_float_dtypes(xp, device=None):
     xp : module
         Array namespace to inspect.
 
-    device : str, default=None
+    device : str or device instance from xp, default=None
         Device to use for dtype selection. If ``None``, then a default device
         is assumed.
 
@@ -357,7 +357,10 @@ def supported_float_dtypes(xp, device=None):
     """
     # TODO: Update to use `__array_namespace__info__()` from array-api v2023.12
     #       when/if that becomes more widespread.
-    if xp.__name__ in {"array_api_compat.torch", "torch"} and device == "mps":
+    if (
+        xp.__name__ in {"array_api_compat.torch", "torch"}
+        and getattr(device, "type", device) == "mps"
+    ):
         # N.B. Yanked from pull/27232
         dtypes = (xp.float32,)
     else:
@@ -753,6 +756,7 @@ def get_namespace_and_device(
         Always False when array_api_dispatch=False.
     device : device
         `device` object (see the "Device Support" section of the array API spec).
+        Will be `None` if the array-api dispatch is disabled.
     """
     array_list = _remove_non_arrays(
         *array_list,
