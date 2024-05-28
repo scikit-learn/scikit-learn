@@ -39,6 +39,7 @@ from ..utils._array_api import (
     device,
     get_namespace,
     get_namespace_and_device,
+    max_precision_float_dtype,
 )
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.extmath import row_norms, safe_sparse_dot
@@ -2096,10 +2097,8 @@ class _RidgeGCV(LinearModel):
         """
         xp, is_array_api = get_namespace(X, y, sample_weight)
         device_kwargs = {"device": device(X)} if is_array_api else {}
-        if sparse.issparse(X):
-            dtype = np.float64
-        else:
-            dtype = [xp.float64, xp.float32]
+        original_dtype = X.dtype
+        dtype = max_precision_float_dtype(xp, **device_kwargs)
         X, y = self._validate_data(
             X,
             y,
@@ -2156,7 +2155,7 @@ class _RidgeGCV(LinearModel):
 
         if self.store_cv_results:
             self.cv_results_ = xp.empty(
-                (n_samples * n_y, n_alphas), dtype=X.dtype, **device_kwargs
+                (n_samples * n_y, n_alphas), dtype=original_dtype, **device_kwargs
             )
 
         best_coef, best_score, best_alpha = None, None, None
@@ -2226,6 +2225,10 @@ class _RidgeGCV(LinearModel):
                 cv_results_shape = n_samples, n_y, n_alphas
             self.cv_results_ = xp.reshape(self.cv_results_, shape=cv_results_shape)
 
+        if type(self.intercept_) is not float:  # noqa: E721
+            self.intercept_ = xp.astype(self.intercept_, original_dtype, copy=False)
+        self.dual_coef_ = xp.astype(self.dual_coef_, original_dtype, copy=False)
+        self.coef_ = xp.astype(self.coef_, original_dtype, copy=False)
         return self
 
     def _get_scorer(self):
