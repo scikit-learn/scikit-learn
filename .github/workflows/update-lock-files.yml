@@ -25,9 +25,6 @@ jobs:
           - name: cirrus-arm
             update_script_args: "--select-tag arm"
             additional_commit_message: "[cirrus arm]"
-          - name: pypy
-            update_script_args: "--select-tag pypy"
-            additional_commit_message: "[pypy]"
 
     steps:
       - uses: actions/checkout@v4
