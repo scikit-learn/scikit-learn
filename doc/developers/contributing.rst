@@ -139,10 +139,9 @@ follow these guidelines! This will make it a lot easier to provide you with good
 feedback:
 
 - The ideal bug report contains a :ref:`short reproducible code snippet
-  <minimal_reproducer>`, this way anyone can try to reproduce the bug easily (see `this
-  <https://stackoverflow.com/help/mcve>`_ for more details). If your snippet is longer
-  than around 50 lines, please link to a `Gist <https://gist.github.com>`_ or a GitHub
-  repo.
+  <minimal_reproducer>`, this way anyone can try to reproduce the bug easily. If your
+  snippet is longer than around 50 lines, please link to a `Gist
+  <https://gist.github.com>`_ or a GitHub repo.
 
 - If not feasible to include a reproducible snippet, please be specific about
   what **estimators and/or functions are involved and the shape of the data**.
@@ -1204,9 +1203,9 @@ function::
     def zero_one(y_true, y_pred, normalize=False):
         return zero_one_loss(y_true, y_pred, normalize)
 
-One also needs to move ``zero_one`` from ``API_REFERENCE`` to ``DEPRECATED_API_REFERENCE``
-and add ``zero_one_loss`` to ``API_REFERENCE`` in the ``doc/api_reference.rst`` file to
-reflect the changes in :ref:`api_ref`.
+One also needs to move ``zero_one`` from ``API_REFERENCE`` to
+``DEPRECATED_API_REFERENCE`` and add ``zero_one_loss`` to ``API_REFERENCE`` in the
+``doc/api_reference.py`` file to reflect the changes in :ref:`api_ref`.
 
 .. rubric:: Deprecating an attribute or a method
 
