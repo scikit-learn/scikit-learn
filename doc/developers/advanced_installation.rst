@@ -58,9 +58,9 @@ feature, code or documentation improvement).
    If you plan on submitting a pull-request, you should clone from your fork
    instead.
 
-#. Install a recent version of Python (3.9 is recommended at the time of writing)
-   for instance using Miniforge3_. Miniforge provides a conda-based distribution
-   of Python and the most popular scientific libraries.
+#. Install a recent version of Python (3.9 or later at the time of writing) for
+   instance using Miniforge3_. Miniforge provides a conda-based distribution of
+   Python and the most popular scientific libraries.
 
    If you installed Python with conda, we recommend to create a dedicated
    `conda environment`_ with all the build dependencies of scikit-learn
@@ -68,7 +68,7 @@ feature, code or documentation improvement).
 
    .. prompt:: bash $
 
-     conda create -n sklearn-env -c conda-forge python=3.9 numpy scipy cython meson-python ninja
+     conda create -n sklearn-env -c conda-forge python numpy scipy cython meson-python ninja
 
    It is not always necessary but it is safer to open a new prompt before
    activating the newly created conda environment.

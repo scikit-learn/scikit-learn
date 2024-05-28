@@ -106,6 +106,14 @@ class BaseThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator
         self.estimator = estimator
         self.response_method = response_method
 
+    def _get_response_method(self):
+        """Define the response method."""
+        if self.response_method == "auto":
+            response_method = ["predict_proba", "decision_function"]
+        else:
+            response_method = self.response_method
+        return response_method
+
     @_fit_context(
         # *ThresholdClassifier*.estimator is not validated yet
         prefer_skip_nested_validation=False
@@ -139,11 +147,6 @@ class BaseThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator
             raise ValueError(
                 f"Only binary classification is supported. Unknown label type: {y_type}"
             )
-
-        if self.response_method == "auto":
-            self._response_method = ["predict_proba", "decision_function"]
-        else:
-            self._response_method = self.response_method
 
         self._fit(X, y, **params)
 
@@ -374,7 +377,7 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
         y_score, _, response_method_used = _get_response_values_binary(
             self.estimator_,
             X,
-            self._response_method,
+            self._get_response_method(),
             pos_label=self.pos_label,
             return_response_method_used=True,
         )
@@ -636,7 +639,7 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         The objective metric to be optimized. Can be one of:
 
         * a string associated to a scoring function for binary classification
-          (see model evaluation documentation);
+          (see :ref:`scoring_parameter`);
         * a scorer callable object created with :func:`~sklearn.metrics.make_scorer`;
 
     response_method : {"auto", "decision_function", "predict_proba"}, default="auto"
@@ -954,7 +957,7 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         y_score, _ = _get_response_values_binary(
             self.estimator_,
             X,
-            self._response_method,
+            self._get_response_method(),
             pos_label=pos_label,
         )
 
@@ -995,6 +998,6 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         """Get the curve scorer based on the objective metric used."""
         scoring = check_scoring(self.estimator, scoring=self.scoring)
         curve_scorer = _CurveScorer.from_scorer(
-            scoring, self._response_method, self.thresholds
+            scoring, self._get_response_method(), self.thresholds
         )
         return curve_scorer

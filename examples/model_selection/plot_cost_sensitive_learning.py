@@ -4,10 +4,10 @@ Post-tuning the decision threshold for cost-sensitive learning
 ==============================================================
 
 Once a classifier is trained, the output of the :term:`predict` method outputs class
-label predictions corresponding to a thresholding of either the :term:`decision
-function` or the :term:`predict_proba` output. For a binary classifier, the default
-threshold is defined as a posterior probability estimate of 0.5 or a decision score of
-0.0.
+label predictions corresponding to a thresholding of either the
+:term:`decision_function` or the :term:`predict_proba` output. For a binary classifier,
+the default threshold is defined as a posterior probability estimate of 0.5 or a
+decision score of 0.0.
 
 However, this default strategy is most likely not optimal for the task at hand.
 Here, we use the "Statlog" German credit dataset [1]_ to illustrate a use case.
@@ -23,16 +23,16 @@ cost.
 In the second part of the example, we further extend this approach by
 considering the problem of fraud detection in credit card transactions: in this
 case, the business metric depends on the amount of each individual transaction.
-.. topic:: References
 
-    .. [1] "Statlog (German Credit Data) Data Set", UCI Machine Learning Repository,
-       `Link
-       <https://archive.ics.uci.edu/ml/datasets/Statlog+%28German+Credit+Data%29>`_.
+.. rubric :: References
 
-    .. [2] `Charles Elkan, "The Foundations of Cost-Sensitive Learning",
-       International joint conference on artificial intelligence.
-       Vol. 17. No. 1. Lawrence Erlbaum Associates Ltd, 2001.
-       <https://cseweb.ucsd.edu/~elkan/rescale.pdf>`_
+.. [1] "Statlog (German Credit Data) Data Set", UCI Machine Learning Repository,
+    `Link <https://archive.ics.uci.edu/ml/datasets/Statlog+%28German+Credit+Data%29>`_.
+
+.. [2] `Charles Elkan, "The Foundations of Cost-Sensitive Learning",
+    International joint conference on artificial intelligence.
+    Vol. 17. No. 1. Lawrence Erlbaum Associates Ltd, 2001.
+    <https://cseweb.ucsd.edu/~elkan/rescale.pdf>`_
 """
 
 # %%

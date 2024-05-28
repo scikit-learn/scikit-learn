@@ -1,3 +1,5 @@
+"""Metrics for pairwise distances and affinity of sets of samples."""
+
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Robert Layton <robertlayton@gmail.com>
@@ -24,6 +26,11 @@ from ..utils import (
     check_array,
     gen_batches,
     gen_even_slices,
+)
+from ..utils._array_api import (
+    _find_matching_floating_dtype,
+    _is_numpy_namespace,
+    get_namespace,
 )
 from ..utils._chunking import get_chunk_n_rows
 from ..utils._mask import _get_mask
@@ -154,7 +161,11 @@ def check_pairwise_arrays(
         An array equal to Y if Y was not None, guaranteed to be a numpy array.
         If Y was None, safe_Y will be a pointer to X.
     """
-    X, Y, dtype_float = _return_float_dtype(X, Y)
+    xp, _ = get_namespace(X, Y)
+    if any([issparse(X), issparse(Y)]) or _is_numpy_namespace(xp):
+        X, Y, dtype_float = _return_float_dtype(X, Y)
+    else:
+        dtype_float = _find_matching_floating_dtype(X, Y, xp=xp)
 
     estimator = "check_pairwise_arrays"
     if dtype == "infer_float":
