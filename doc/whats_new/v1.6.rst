@@ -60,6 +60,14 @@ more details.
   ``**fit_params`` to the underlying estimators via their `fit` methods.
   :pr:`28701` by :user:`Stefanie Senger <StefanieSenger>`.
 
+Dropping official support for PyPy
+----------------------------------
+
+Due to limited maintainer resources and small number of users, official PyPy
+support has been dropped. Some parts of scikit-learn may still work but PyPy is
+not tested anymore in the scikit-learn Continuous Integration.
+:pr:`29128` by :user:`Loïc Estève <lesteve>`.
+
 Changelog
 ---------
 
@@ -80,7 +88,7 @@ Changelog
 - |Enhancement| Added a function :func:`base.is_clusterer` which determines
   whether a given estimator is of category clusterer.
   :pr:`28936` by :user:`Christian Veenhuis <ChVeen>`.
-  
+
 :mod:`sklearn.metrics`
 ......................
 

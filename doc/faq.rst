@@ -64,7 +64,8 @@ Do you support PyPy?
 
 Due to limited maintainer resources and small number of users, using
 scikit-learn with `PyPy <https://pypy.org/>`_ (an alternative Python
-implementation with a built-in just-in-time compiler) not officially supported.
+implementation with a built-in just-in-time compiler) is not officially
+supported.
 
 How can I obtain permission to use the images in scikit-learn for my work?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
