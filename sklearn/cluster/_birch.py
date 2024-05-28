@@ -21,7 +21,7 @@ from ..base import (
 from ..exceptions import ConvergenceWarning
 from ..metrics import pairwise_distances_argmin
 from ..metrics.pairwise import euclidean_distances
-from ..utils._param_validation import Interval
+from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils.extmath import row_norms
 from ..utils.validation import check_is_fitted
 from . import AgglomerativeClustering
@@ -409,6 +409,10 @@ class Birch(
         Whether or not to make a copy of the given data. If set to False,
         the initial data will be overwritten.
 
+        .. deprecated:: 1.6
+            `copy` was deprecated in 1.6 and will be removed in 1.8. It has no effect
+            and a copy is always made.
+
     Attributes
     ----------
     root_ : _CFNode
@@ -485,7 +489,7 @@ class Birch(
         "branching_factor": [Interval(Integral, 1, None, closed="neither")],
         "n_clusters": [None, ClusterMixin, Interval(Integral, 1, None, closed="left")],
         "compute_labels": ["boolean"],
-        "copy": ["boolean"],
+        "copy": ["boolean", Hidden(StrOptions({"deprecated"}))],
     }
 
     def __init__(
@@ -495,7 +499,7 @@ class Birch(
         branching_factor=50,
         n_clusters=3,
         compute_labels=True,
-        copy=True,
+        copy="deprecated",
     ):
         self.threshold = threshold
         self.branching_factor = branching_factor
@@ -521,6 +525,12 @@ class Birch(
         self
             Fitted estimator.
         """
+        if self.copy != "deprecated":
+            warnings.warn(
+                "`copy` was deprecated in 1.6 and will be removed in 1.8. Simply "
+                "remove this parameter as it has no effect.",
+                FutureWarning,
+            )
         return self._fit(X, partial=False)
 
     def _fit(self, X, partial):
@@ -530,7 +540,6 @@ class Birch(
         X = self._validate_data(
             X,
             accept_sparse="csr",
-            copy=self.copy,
             reset=first_call,
             dtype=[np.float64, np.float32],
         )
