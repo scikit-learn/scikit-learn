@@ -411,7 +411,7 @@ class Birch(
 
         .. deprecated:: 1.6
             `copy` was deprecated in 1.6 and will be removed in 1.8. It has no effect
-            and a copy is always made.
+            as a copy is always made.
 
     Attributes
     ----------
@@ -527,8 +527,9 @@ class Birch(
         """
         if self.copy != "deprecated":
             warnings.warn(
-                "`copy` was deprecated in 1.6 and will be removed in 1.8. Simply "
-                "remove this parameter as it has no effect.",
+                "`copy` was deprecated in 1.6 and will be removed in 1.8 since it "
+                "has no effect internally. Simply leave this parameter to its default "
+                "value to avoid this warning.",
                 FutureWarning,
             )
         return self._fit(X, partial=False)

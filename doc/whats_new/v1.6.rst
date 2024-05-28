@@ -85,7 +85,7 @@ Changelog
 ......................
 
 - |API| The `copy` parameter of :class:`cluster.Birch` was deprecated in 1.6 and will be
-  removed in 1.8. It has no effect and a copy is always made.
+  removed in 1.8. It has no effect as a copy is always made.
   :pr:`29124` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 :mod:`sklearn.metrics`
