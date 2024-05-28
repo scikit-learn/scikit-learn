@@ -294,7 +294,7 @@ def test_less_samples_than_features():
     assert_array_almost_equal(y_pred, y, 12)
 
 
-# TODO: remove in v1.8
+# TODO(1.8): Remove
 def test_copy_X_deprecated():
     X, y, w, c = gen_toy_problem_1d()
     theil_sen = TheilSenRegressor(copy_X=True, random_state=0)

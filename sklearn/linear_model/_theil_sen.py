@@ -225,7 +225,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations.
 
-    copy_X : bool, default='deprecated'
+    copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
         .. deprecated:: 1.6
