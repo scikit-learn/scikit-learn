@@ -230,7 +230,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
 
         .. deprecated:: 1.6
             `copy_X` was deprecated in 1.6 and will be removed in 1.8.
-            Use `X` instead.
+            It has no effect as a copy is always made.
 
     max_subpopulation : int, default=1e4
         Instead of computing with a set of cardinality 'n choose k', where n is
