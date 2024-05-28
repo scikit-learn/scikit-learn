@@ -417,8 +417,9 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         """
         if self.copy_X != "deprecated":
             warnings.warn(
-                "The parameter copy_X is deprecated as of version 1.6 and "
-                "will be removed in 1.8.",
+                "`copy_X` was deprecated in 1.6 and will be removed in 1.8 since it "
+                "has no effect internally. Simply leave this parameter to its default "
+                "value to avoid this warning.",
                 FutureWarning,
             )
 
