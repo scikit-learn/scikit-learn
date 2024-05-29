@@ -23,6 +23,9 @@ jobs:
       - name: quo vadis conda?
         run: |
           ls -hals /opt/miniconda
+      - name: Fix conda directory permissions
+        run: |
+          chown -R 1001:100 /opt/miniconda
       - name: Install dependencies
         run: |
           # defines the get_dep and show_installed_libraries functions
@@ -30,8 +33,8 @@ jobs:
           # mamba solver is already installed and configured
           #conda install -n base conda conda-libmamba-solver -y
           #conda config --set solver libmamba
-          sudo conda install -c conda-forge "$(get_dep conda-lock min)" -y
-          sudo conda-lock install --name sklearn build_tools/azure/pylatest_conda_forge_mkl_linux-64_conda.lock
+          conda install -c conda-forge "$(get_dep conda-lock min)" -y
+          conda-lock install --name sklearn build_tools/azure/pylatest_conda_forge_mkl_linux-64_conda.lock
 
       - name: look around
         run: |
