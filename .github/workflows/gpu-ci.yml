@@ -20,13 +20,9 @@ jobs:
       - name: show env
         run: |
           env
-      - name: conda?
+      - name: quo vadis conda?
         run: |
-          which conda
-      - name: directory
-        run: |
-          pwd
-          ls
+          ls -hals /opt/miniconda
       - name: Install dependencies
         run: |
           # defines the get_dep and show_installed_libraries functions
