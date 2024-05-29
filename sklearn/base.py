@@ -194,8 +194,8 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
     """
 
     def __dir__(self):
-        """Filters conditional methods that should be hidden based
-        on the `available_if` decorator from SciKit Learn."""
+        # Filters conditional methods that should be hidden based
+        # on the `available_if` decorator
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=FutureWarning)
             return [attr for attr in super().__dir__() if hasattr(self, attr)]
