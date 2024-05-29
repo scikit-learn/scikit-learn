@@ -1,3 +1,4 @@
+name: Array API CI
 on:
   workflow_dispatch:
 
