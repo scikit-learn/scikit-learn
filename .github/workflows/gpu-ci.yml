@@ -31,8 +31,9 @@ jobs:
         run: |
           # defines the get_dep and show_installed_libraries functions
           source build_tools/shared.sh
-          conda install -n base conda conda-libmamba-solver -y
-          conda config --set solver libmamba
+          # mamba solver is already installed and configured
+          #conda install -n base conda conda-libmamba-solver -y
+          #conda config --set solver libmamba
           conda install -c conda-forge "$(get_dep conda-lock min)" -y
           conda-lock install --name sklearn build_tools/azure/pylatest_conda_forge_mkl_linux-64_conda.lock
 
