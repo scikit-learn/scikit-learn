@@ -91,6 +91,31 @@ def remove_from(alist, to_remove):
 
 build_metadata_list = [
     {
+        "name": "pylatest_conda_forge_mkl_array-api_linux-64",
+        "type": "conda",
+        "tag": "main-ci",
+        "folder": "build_tools/github",
+        "platform": "linux-64",
+        "channel": ["conda-forge", "pytorch", "nvidia"],
+        "conda_dependencies": common_dependencies
+        + [
+            "ccache",
+            # Make sure pytorch comes from the pytorch channel and not conda-forge
+            "pytorch::pytorch",
+            "pytorch-cuda",
+            "polars",
+            "pyarrow",
+            "cupy",
+            "array-api-compat",
+            "array-api-strict",
+        ],
+        "package_constraints": {
+            "blas": "[build=mkl]",
+            "pytorch::pytorch": "2.3.0",
+            "pytorch-cuda": "12.1",
+        },
+    },
+    {
         "name": "pylatest_conda_forge_mkl_linux-64",
         "type": "conda",
         "tag": "main-ci",
@@ -491,7 +516,9 @@ def get_conda_environment_content(build_metadata):
 # following script to centralize the configuration for CI builds:
 # build_tools/update_environments_and_lock_files.py
 channels:
-  - {{ build_metadata['channel'] }}
+  {% for channel in build_metadata['channel'] %}
+  - {{ channel }}
+  {% endfor %}
 dependencies:
   {% for conda_dep in build_metadata['conda_dependencies'] %}
   - {{ conda_dep | get_package_with_constraint(build_metadata) }}
@@ -739,6 +766,10 @@ def main(select_build, skip_build, select_tag, verbose, very_verbose):
     filtered_conda_build_metadata_list = [
         each for each in filtered_build_metadata_list if each["type"] == "conda"
     ]
+    for each in filtered_build_metadata_list:
+        if isinstance(each["channel"], str):
+            each["channel"] = [each["channel"]]
+
     if filtered_conda_build_metadata_list:
         logger.info("# Writing conda environments")
         write_all_conda_environments(filtered_conda_build_metadata_list)

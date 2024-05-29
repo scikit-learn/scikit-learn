@@ -23,30 +23,21 @@ jobs:
           bash Miniforge3-$(uname)-$(uname -m).sh -b -p "${HOME}/conda"
           source "${HOME}/conda/etc/profile.d/conda.sh"
           rm Miniforge3-$(uname)-$(uname -m).sh
-      - name: show env
-        run: |
-          source "${HOME}/conda/etc/profile.d/conda.sh"
-          env
-          echo =======================
-          which conda
-          echo --------------------
-          conda env list
       - name: Install dependencies
         run: |
           source "${HOME}/conda/etc/profile.d/conda.sh"
-          which conda
           # defines the get_dep and show_installed_libraries functions
           source build_tools/shared.sh
-          # mamba solver is already installed and configured
-          #conda install -n base conda conda-libmamba-solver -y
-          #conda config --set solver libmamba
           conda activate base
           conda install -c conda-forge "$(get_dep conda-lock min)" -y
-          conda-lock install --name sklearn build_tools/azure/pylatest_conda_forge_mkl_linux-64_conda.lock
-
-      - name: look around
+          conda-lock install --name sklearn build_tools/github/pylatest_conda_forge_mkl_array-api_linux-64_conda.lock
+      - name: Install scikit-learn
         run: |
           source "${HOME}/conda/etc/profile.d/conda.sh"
           conda activate sklearn
-          python --version
-          nvidia-smi
+          pip install --verbose --no-build-isolation --config-settings editable-verbose=true --editable .
+      - name: Run array API tests
+        run: |
+          source "${HOME}/conda/etc/profile.d/conda.sh"
+          conda activate sklearn
+          pytest -k 'array_api'
