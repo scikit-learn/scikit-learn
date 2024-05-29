@@ -22,13 +22,13 @@ jobs:
           curl -L -O "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"
           bash Miniforge3-$(uname)-$(uname -m).sh -b -p "${HOME}/conda"
           source "${HOME}/conda/etc/profile.d/conda.sh"
-          # Add mamba support
-          source "${HOME}/conda/etc/profile.d/mamba.sh"
           rm Miniforge3-$(uname)-$(uname -m).sh
       - name: show env
         run: |
           source "${HOME}/conda/etc/profile.d/conda.sh"
           env
+          echo =======================
+          which conda
       - name: Install dependencies
         run: |
           source "${HOME}/conda/etc/profile.d/conda.sh"
