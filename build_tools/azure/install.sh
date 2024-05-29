@@ -142,7 +142,9 @@ scikit_learn_install() {
         fi
         # Use the pre-installed build dependencies and build directly in the
         # current environment.
-        pip install --verbose --no-build-isolation --editable . $ADDITIONAL_PIP_OPTIONS
+        pip install --verbose --no-build-isolation --editable . \
+            --check-build-dependencies \
+            $ADDITIONAL_PIP_OPTIONS
     fi
 
     ccache -s || echo "ccache not installed, skipping ccache statistics"

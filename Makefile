@@ -24,7 +24,7 @@ inplace:
 	$(PYTHON) setup.py build_ext -i
 
 dev-meson:
-	pip install --verbose --no-build-isolation --editable . --config-settings editable-verbose=true
+	pip install --verbose --no-build-isolation --editable . --check-build-dependencies --config-settings editable-verbose=true
 
 clean-meson:
 	pip uninstall -y scikit-learn
