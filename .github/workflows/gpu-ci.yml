@@ -29,6 +29,8 @@ jobs:
           env
           echo =======================
           which conda
+          echo --------------------
+          conda env list
       - name: Install dependencies
         run: |
           source "${HOME}/conda/etc/profile.d/conda.sh"
