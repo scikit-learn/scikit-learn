@@ -296,7 +296,7 @@ def test_less_samples_than_features():
 
 # TODO(1.8): Remove
 def test_copy_X_deprecated():
-    X, y, w, c = gen_toy_problem_1d()
+    X, y, _, _ = gen_toy_problem_1d()
     theil_sen = TheilSenRegressor(copy_X=True, random_state=0)
     with pytest.warns(FutureWarning, match="`copy_X` was deprecated"):
         theil_sen.fit(X, y)
