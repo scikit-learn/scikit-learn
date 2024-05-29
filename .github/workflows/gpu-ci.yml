@@ -46,6 +46,7 @@ jobs:
 
       - name: look around
         run: |
+          source "${HOME}/conda/etc/profile.d/conda.sh"
           conda activate sklearn
           python --version
           nvidia-smi
