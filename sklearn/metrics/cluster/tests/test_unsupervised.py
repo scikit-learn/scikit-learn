@@ -10,6 +10,7 @@ from sklearn.metrics import pairwise_distances
 from sklearn.metrics.cluster import (
     calinski_harabasz_score,
     davies_bouldin_score,
+    pbm_index_score,
     silhouette_samples,
     silhouette_score,
 )
@@ -411,3 +412,52 @@ def test_silhouette_score_integer_precomputed():
         silhouette_score(
             [[1, 1, 2], [1, 0, 1], [2, 1, 0]], [0, 0, 1], metric="precomputed"
         )
+
+
+def test_pbm_index_score():
+    assert_raises_on_only_one_label(pbm_index_score)
+    assert_raises_on_all_points_same_cluster(pbm_index_score)
+
+    # Catch Error when all samples are equal,
+    # and when all points match coordinates with a cluster.
+    err_msg = r"All points have the same coordinates."
+    with pytest.raises(ValueError, match=err_msg):
+        pbm_index_score([[0, 6]] * 9, [0] * 4 + [1] * 5)
+
+    err_msg = r"All points match coordinates with a cluster."
+    with pytest.raises(ValueError, match=err_msg):
+        pbm_index_score([[1, 2]] * 8 + [[3, 4]] * 2, [0] * 8 + [1] * 2)
+
+    # General case (with non numpy arrays)
+    X = (
+        [[0, 0], [0, 2]] * 5
+        + [[1, 1], [1, 3]] * 5
+        + [[1, 0], [2, 1]] * 5
+        + [[-1, -1], [1, -1]] * 5
+    )
+    labels = [0] * 10 + [1] * 10 + [2] * 10 + [3] * 10
+
+    # Compare result with the formula (approximated)
+    assert pbm_index_score(X, labels) == pytest.approx(
+        (1 / 4 * (40 * np.sqrt(3.05)) / (30 + 5 * np.sqrt(2)) * np.sqrt(10)), abs=0.001
+    )
+
+
+def test_pbm_index_score2():
+    """Check that PBM index provides a higher score for a better number of clusters"""
+    assert_raises_on_only_one_label(pbm_index_score)
+    assert_raises_on_all_points_same_cluster(pbm_index_score)
+
+    # Data where the clustering is better with 3 clusters than with 4
+    X = (
+        [[1, 1], [3, 1], [1, 2]] * 5
+        + [[4, 3], [5, 4], [3, 3]] * 5
+        + [[9, 10], [8, 8]] * 5
+    )
+
+    # Apply pbm_index_score with 3 and 4 clusters, respectively
+    labels3 = [0] * 15 + [1] * 15 + [2] * 10
+
+    labels4 = [0] * 10 + [1] * 10 + [2] * 10 + [3] * 10
+
+    assert pbm_index_score(X, labels3) > pbm_index_score(X, labels4)

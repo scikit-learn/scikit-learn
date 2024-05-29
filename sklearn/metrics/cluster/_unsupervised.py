@@ -464,3 +464,110 @@ def davies_bouldin_score(X, labels):
     combined_intra_dists = intra_dists[:, None] + intra_dists
     scores = np.max(combined_intra_dists / centroid_distances, axis=1)
     return np.mean(scores)
+
+
+@validate_params(
+    {
+        "X": ["array-like"],
+        "labels": ["array-like"],
+    },
+    prefer_skip_nested_validation=True,
+)
+def pbm_index_score(X, labels):
+    """Compute the PBM index score.
+
+    The PBM index score is calculated using the distances between the points
+    and their barycenter, and the max distance between the centroids themselves.
+
+    The minimum score is zero, with higher values indicating better clustering.
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        A list of ``n_features``-dimensional data points. Each row corresponds
+        to a single data point.
+
+    labels : array-like of shape (n_samples,)
+        Predicted labels for each sample.
+
+    Returns
+    -------
+    score: float
+        The resulting PBM index score.
+
+    References
+    ----------
+    .. [1] Pakhira, Malay K.; Bandyopadhyay, Sanghamitra; Maulik, Ujjwal (2002).
+       `"Validity index for crisp and fuzzy clusters"
+       <https://doi.org/10.1016/j.patcog.2003.06.005>`__.
+       Pattern Recognition
+       Volume 37 (3): 487-501
+
+    Examples
+    --------
+    >>> from sklearn.metrics import pbm_index_score
+    >>> X = [[2, 2], [1, 1], [0, 0]]
+    >>> labels = [0, 1, 1]
+    >>> pbm_index_score(X, labels)
+    4.49...
+    """
+    # When all points have the same coordinates,
+    # the intra-cluster distances are 0 (creates a division by 0 error)
+    if len(np.unique(X, axis=0)) == 1:
+        raise ValueError("All points have the same coordinates.")
+
+    X, labels = check_X_y(X, labels)
+    le = LabelEncoder()
+    labels = le.fit_transform(labels)
+    n_samples, _ = X.shape
+    n_labels = len(le.classes_)
+
+    check_number_of_labels(n_labels, n_samples)
+
+    # Calculate the intra-cluster distances
+    intra_dists = np.zeros(n_labels)
+    centroids = np.zeros((n_labels, len(X[0])), dtype=float)
+    for k in range(n_labels):
+        cluster_k = _safe_indexing(X, labels == k)
+        centroid = cluster_k.mean(axis=0)
+        centroids[k] = centroid
+        intra_dists[k] = np.sum(pairwise_distances(cluster_k, [centroid]))
+
+    # Sum of the distances from each element in the cluster
+    # to the cluster centroid, for all clusters. (EW)
+    EW = np.sum(intra_dists)
+
+    # All points match coordinates with a cluster, which makes
+    # the intra-cluster distances 0 (creates a division by 0 error)
+    if EW == 0:
+        raise ValueError("All points match coordinates with a cluster.")
+
+    barycenter = X.mean(axis=0)
+
+    # Sum of the distances of all the points to the
+    # barycenter G of the entire data set (ET)
+    ET = np.sqrt(((X - barycenter) ** 2).sum(axis=1)).sum()
+
+    # Matrix of distances between centroids (DK)
+
+    # Save a list to iterate through all possible cluster pairs
+    all_cluster_pairs = np.array(
+        [(i, j) for i in range(n_labels) for j in range(0, i + 1)]
+    )
+
+    intercentroid_distances = np.zeros((n_labels, n_labels))
+
+    for centroid_1, centroid_2 in all_cluster_pairs:
+        intercentroid_distances[centroid_1, centroid_2] = np.linalg.norm(
+            centroids[centroid_1] - centroids[centroid_2]
+        )
+
+    intercentroid_distances += intercentroid_distances.T
+
+    # The centroid's distance to himself is set as -1 so that it's never used
+    intercentroid_distances[np.eye(len(intercentroid_distances)) > 0] = -1
+
+    # Maximum separation between a pair of clusters
+    DK = intercentroid_distances.max().max()
+
+    return ((1 / n_labels) * (ET / EW) * DK) ** 2

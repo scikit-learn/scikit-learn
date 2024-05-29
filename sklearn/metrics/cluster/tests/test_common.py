@@ -14,6 +14,7 @@ from sklearn.metrics.cluster import (
     homogeneity_score,
     mutual_info_score,
     normalized_mutual_info_score,
+    pbm_index_score,
     rand_score,
     silhouette_score,
     v_measure_score,
@@ -49,6 +50,7 @@ UNSUPERVISED_METRICS = {
     "silhouette_manhattan": partial(silhouette_score, metric="manhattan"),
     "calinski_harabasz_score": calinski_harabasz_score,
     "davies_bouldin_score": davies_bouldin_score,
+    "pbm_index_score": pbm_index_score,
 }
 
 # Lists of metrics with common properties
