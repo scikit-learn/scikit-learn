@@ -104,15 +104,18 @@ def test_weighted_percentile_nan():
     """Test that calling _weighted_percentile on an array with nan values returns
     the same results as calling _weighted_percentile on a filtered version of the
     data."""
-    rng = np.random.RandomState(1)
-    array = np.sort(5 * rng.rand(10, 100), axis=0)
+    # Set print options to avoid scientific notation and limit decimal places to three
+    np.set_printoptions(formatter={"float": "{:0.3f}".format})
+    ################# debug only or keep for facilitating later debugging?
+
+    rng = np.random.RandomState(42)
+    array = rng.rand(10, 100)
 
     nan_array = array.copy()
     nan_array[rng.rand(*nan_array.shape) < 0.5] = np.nan
     nan_mask = np.isnan(nan_array)
 
     weights_same_shape = rng.randint(1, 6, size=(10, 100))
-    weights_same_shape = np.ones((10, 100))  ######################### debug only
 
     # Calculate the weighted percentile on the array with nans:
     values_nan = _weighted_percentile(nan_array, weights_same_shape, 30)
