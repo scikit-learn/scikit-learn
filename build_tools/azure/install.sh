@@ -140,11 +140,15 @@ scikit_learn_install() {
            # toolchain
            ADDITIONAL_PIP_OPTIONS='-Csetup-args=--vsenv'
         fi
+        # TODO Always add --check-build-dependencies when all CI builds have
+        # pip >= 22.1.1. At the time of writing, two CI builds (debian32_atlas and
+        # ubuntu_atlas) have an older pip
+        if pip install --help | grep check-build-dependencies; then
+            ADDITIONAL_PIP_OPTIONS="$ADDITIONAL_PIP_OPTIONS --check-build-dependencies"
+        fi
         # Use the pre-installed build dependencies and build directly in the
         # current environment.
-        pip install --verbose --no-build-isolation --editable . \
-            --check-build-dependencies \
-            $ADDITIONAL_PIP_OPTIONS
+        pip install --verbose --no-build-isolation --editable . $ADDITIONAL_PIP_OPTIONS
     fi
 
     ccache -s || echo "ccache not installed, skipping ccache statistics"
