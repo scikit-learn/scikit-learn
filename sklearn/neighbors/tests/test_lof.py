@@ -366,7 +366,8 @@ def test_lof_duplicate_samples():
     Check that LocalOutlierFactor raises a warning when duplicate values
     in the training data are causing innacurate results.
 
-    Test for: https://github.com/scikit-learn/scikit-learn/issues/27839
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/27839
     """
 
     rng = np.random.default_rng(0)
