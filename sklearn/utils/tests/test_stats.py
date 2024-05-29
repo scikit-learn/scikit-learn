@@ -98,7 +98,7 @@ def test_weighted_percentile_2d():
     assert_allclose(w_median, p_axis_0)
 
 
-def test_weighted_percentile_nan():
+def test_weighted_percentile_nan_filtered():
     """Test that calling _weighted_percentile on an array with nan values returns
     the same results as calling _weighted_percentile on a filtered version of the data.
     We test both with sample_weight of the same shape as the data and for
@@ -114,10 +114,10 @@ def test_weighted_percentile_nan():
     sample_weights = [rng.randint(1, 6, size=(10, 100)), rng.randint(1, 6, size=(10,))]
 
     for sample_weight in sample_weights:
-        # Calculate the weighted percentile on the array with nans:
+        # Find the weighted percentile on the array with nans:
         values_nan = _weighted_percentile(nan_array, sample_weight, 30)
 
-        # Calculate the weighted percentile on the filtered array:
+        # Find the weighted percentile on the filtered array:
         filtered_values = [
             array[~nan_mask[:, col], col] for col in range(array.shape[1])
         ]
@@ -137,3 +137,30 @@ def test_weighted_percentile_nan():
         )
 
         assert_array_equal(values_filtered, values_nan)
+
+
+def test_weighted_percentile_nan_redirected():
+    """Test that _weighted_percentile redirects percentiles, that are nans to the next
+    lower value if there is one. Since the function sorts the indices to nan values to
+    the end of every column using np.argsort(), we have to set the percentile rather
+    high in order to test this."""
+
+    array = np.array(
+        [
+            [np.nan, 5],
+            [np.nan, 1],
+            [np.nan, np.nan],
+            [np.nan, np.nan],
+            [np.nan, 2],
+            [np.nan, np.nan],
+        ]
+    )
+    weights = np.array([[1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1]])
+    percentile = 90
+
+    values = _weighted_percentile(array, weights, percentile)
+
+    # The percentile of the second column should be `5` even though there are many nan
+    # values present; the percentile of the first column can only be nan, since there
+    # are no other possible values:
+    assert np.array_equal(values, np.array([np.nan, 5]), equal_nan=True)
