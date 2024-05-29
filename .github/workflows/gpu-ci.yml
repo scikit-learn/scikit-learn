@@ -17,9 +17,18 @@ jobs:
           python-version: '3.12'
       - name: Checkout code
         uses: actions/checkout@v2
+      - name: show env
+        run: |
+          env
+      - name: conda?
+        run: |
+          which conda
+      - name: directory
+        run: |
+          pwd
+          ls
       - name: Install dependencies
         run: |
-          source $CONDA/bin/activate
           # defines the get_dep and show_installed_libraries functions
           source build_tools/shared.sh
           conda install -n base conda conda-libmamba-solver -y
@@ -29,6 +38,6 @@ jobs:
 
       - name: look around
         run: |
-          source activate sklearn
+          conda activate sklearn
           python --version
           nvidia-smi
