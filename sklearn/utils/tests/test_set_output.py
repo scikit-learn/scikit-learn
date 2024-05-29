@@ -454,7 +454,7 @@ def test_check_library_installed(monkeypatch):
 
 
 def test_get_adapter_from_container():
-    """Check the behavior fo `_get_adapter_from_container`."""
+    """Check the behavior of `_get_adapter_from_container`."""
     pd = pytest.importorskip("pandas")
     X = pd.DataFrame({"a": [1, 2, 3], "b": [10, 20, 100]})
     adapter = _get_adapter_from_container(X)

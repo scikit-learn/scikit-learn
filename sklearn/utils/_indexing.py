@@ -13,6 +13,8 @@ from .extmath import _approximate_mode
 from .validation import (
     _is_arraylike_not_scalar,
     _is_pandas_df,
+    _is_pandas_df_or_series,
+    _is_polars_df,
     _is_polars_df_or_series,
     _use_interchange_protocol,
     check_array,
@@ -174,7 +176,7 @@ def _determine_key_type(key, accept_slice=True):
 
 
 def _safe_indexing(X, indices, *, axis=0):
-    """Return rows, items or columns of X using indices.
+    """Return rows, items or columns of `X` using indices.
 
     .. warning::
 
@@ -184,7 +186,7 @@ def _safe_indexing(X, indices, *, axis=0):
 
     Parameters
     ----------
-    X : array-like, sparse-matrix, list, pandas.DataFrame, pandas.Series
+    X : array-like, sparse matrix, dataframe, series
         Data from which to sample rows, items or columns. `list` are only
         supported when `axis=0`.
     indices : bool, int, str, slice, array-like
@@ -270,40 +272,144 @@ def _safe_indexing(X, indices, *, axis=0):
 
 
 def _safe_assign(X, values, *, row_indexer=None, column_indexer=None):
-    """Safe assignment to a numpy array, sparse matrix, or pandas dataframe.
+    """Safe assignment to a 2-dimensional `X` by indices.
+
+    This returns the updated `X` after assigning `values`. However, there is no
+    guarantee whether `X` will be modified in-place.
 
     Parameters
     ----------
-    X : {ndarray, sparse-matrix, dataframe}
+    X : ndarray, sparse matrix, dataframe
         Array to be modified. It is expected to be 2-dimensional.
 
-    values : ndarray
+    values : scalar or array-like
         The values to be assigned to `X`.
 
-    row_indexer : array-like, dtype={int, bool}, default=None
+        - If both `row_indexer` and `column_indexer` are scalars, it should be scalar.
+        - If one of `row_indexer` or `column_indexer` is scalar, it should be
+          1-dimensional with the corresponding shape or scalar that will be broadcasted.
+        - Otherwise, it should be 2-dimensional with the corresponding shape or scalar
+          that will be broadcasted.
+
+    row_indexer : scalar or array-like, dtype={int, bool}, default=None
         A 1-dimensional array to select the rows of interest. If `None`, all
         rows are selected.
 
-    column_indexer : array-like, dtype={int, bool}, default=None
+    column_indexer : scalar or array-like, dtype={int, bool}, default=None
         A 1-dimensional array to select the columns of interest. If `None`, all
         columns are selected.
     """
-    row_indexer = slice(None, None, None) if row_indexer is None else row_indexer
-    column_indexer = (
-        slice(None, None, None) if column_indexer is None else column_indexer
-    )
+    if len(X.shape) != 2:
+        raise ValueError(
+            f"Only 2D containers are supported; got shape {X.shape} instead."
+        )
 
-    if hasattr(X, "iloc"):  # pandas dataframe
-        with warnings.catch_warnings():
-            # pandas >= 1.5 raises a warning when using iloc to set values in a column
-            # that does not have the same type as the column being set. It happens
-            # for instance when setting a categorical column with a string.
-            # In the future the behavior won't change and the warning should disappear.
-            # TODO(1.3): check if the warning is still raised or remove the filter.
-            warnings.simplefilter("ignore", FutureWarning)
-            X.iloc[row_indexer, column_indexer] = values
-    else:  # numpy array or sparse matrix
+    if _is_pandas_df(X):
+        return _safe_assign_pandas(X, values, row_indexer, column_indexer)
+    elif _is_polars_df(X):
+        return _safe_assign_polars(X, values, row_indexer, column_indexer)
+    else:  # numpy array or sparse container
+        return _safe_assign_array(X, values, row_indexer, column_indexer)
+
+
+def _safe_assign_array(X, values, row_indexer, column_indexer):
+    """Helper for `_safe_assign` when `X` is numpy array or sparse container."""
+    if np.isscalar(column_indexer) and np.isscalar(row_indexer):
         X[row_indexer, column_indexer] = values
+        return X
+
+    if np.isscalar(column_indexer):
+        column_indexer = [column_indexer]
+        if not np.isscalar(values):
+            values = np.asarray(values)[:, None]
+    elif np.isscalar(row_indexer):
+        row_indexer = [row_indexer]
+        if not np.isscalar(values):
+            values = np.asarray(values)[None, :]
+
+    if row_indexer is None and column_indexer is None:
+        X[:, :] = values
+    elif row_indexer is None:  # `column_indexer` is not None
+        X[:, column_indexer] = values
+    elif column_indexer is None:  # `row_indexer` is not None
+        X[row_indexer, :] = values
+    else:  # both `row_indexer` and `column_indexer` are not None
+        X[np.ix_(row_indexer, column_indexer)] = values
+    return X
+
+
+def _safe_assign_pandas(X, values, row_indexer, column_indexer):
+    """Helper for `_safe_assign` when `X` is pandas dataframe."""
+    row_indexer = slice(None) if row_indexer is None else row_indexer
+    column_indexer = slice(None) if column_indexer is None else column_indexer
+
+    # pandas may match index when using `iloc` to set values on certain platforms;
+    # we want to avoid this behavior and behave as if `values` is just an array
+    if _is_pandas_df_or_series(values):
+        values = values.values
+
+    with warnings.catch_warnings():
+        # pandas >= 1.5 raises a warning when using iloc to set values in a column
+        # that does not have the same type as the column being set. It happens
+        # for instance when setting a categorical column with a string.
+        # In the future the behavior won't change and the warning should disappear.
+        # TODO(1.3): check if the warning is still raised or remove the filter.
+        warnings.simplefilter("ignore", FutureWarning)
+        X.iloc[row_indexer, column_indexer] = values
+    return X
+
+
+def _safe_assign_polars(X, values, row_indexer, column_indexer):
+    """Helper for `_safe_assign` when `X` is polars dataframe."""
+    pl = sys.modules["polars"]
+    row_indices = np.arange(X.shape[0])[
+        slice(None) if row_indexer is None else row_indexer
+    ]
+
+    if np.isscalar(column_indexer):
+        if row_indexer is None and isinstance(values, pl.Series):
+            # Assigning a categorical series to a column of a dataframe does not
+            # work with the normal assignment method below; in fact with the current
+            # implementation it does not work except for the case of setting a whole
+            # column which is this special case
+            X.replace_column(column_indexer, values)
+        elif np.isscalar(row_indexer):
+            X[int(row_indices), column_indexer] = values
+        else:
+            X[row_indices, column_indexer] = values
+        return X
+
+    row_indices = np.atleast_1d(row_indices)
+    column_indexer = (
+        slice(None) if column_indexer is None else np.atleast_1d(column_indexer)
+    )
+    column_indices = np.asarray(X.columns)[column_indexer]
+
+    if np.isscalar(values):
+
+        def get_expr(vals, col):
+            expr = pl
+            for row_ind in row_indices:
+                expr = expr.when(index=row_ind).then(values)
+            return expr.otherwise(pl.col(col)).alias(col)
+
+        expressions = (get_expr(None, col) for col in column_indices)
+    else:
+
+        def get_expr(vals, col):
+            expr = pl
+            # TODO: `strict=True` when minimum supported Python version is 3.10
+            for val, row_ind in zip(vals, row_indices):
+                expr = expr.when(index=row_ind).then(val)
+            return expr.otherwise(pl.col(col)).alias(col)
+
+        # TODO: `strict=True` when minimum supported Python version is 3.10
+        expressions = (
+            get_expr(vals, col)
+            for vals, col in zip(np.atleast_2d(values).T, column_indices)
+        )
+
+    return X.with_columns(X.with_row_index().select(expressions))
 
 
 def _get_column_indices_for_bool_or_int(key, n_columns):

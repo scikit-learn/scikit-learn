@@ -106,6 +106,20 @@ class ContainerAdapterProtocol(Protocol):
             Stacked containers.
         """
 
+    def copy(self, X):
+        """Create a copy of the container.
+
+        Parameters
+        ----------
+        X : container
+            Container to copy.
+
+        Returns
+        -------
+        X_copy : container
+            Copy of the container.
+        """
+
 
 class PandasAdapter:
     container_lib = "pandas"
@@ -148,6 +162,9 @@ class PandasAdapter:
         pd = check_library_installed("pandas")
         return pd.concat(Xs, axis=1)
 
+    def copy(self, X):
+        return X.copy()
+
 
 class PolarsAdapter:
     container_lib = "polars"
@@ -179,6 +196,9 @@ class PolarsAdapter:
         pl = check_library_installed("polars")
         return pl.concat(Xs, how="horizontal")
 
+    def copy(self, X):
+        return X.clone()
+
 
 class ContainerAdaptersManager:
     def __init__(self):
@@ -198,11 +218,7 @@ ADAPTERS_MANAGER.register(PolarsAdapter())
 
 
 def _get_adapter_from_container(container):
-    """Get the adapter that knows how to handle such container.
-
-    See :class:`sklearn.utils._set_output.ContainerAdapterProtocol` for more
-    details.
-    """
+    """Get the adapter that knows how to handle such container."""
     module_name = container.__class__.__module__.split(".")[0]
     try:
         return ADAPTERS_MANAGER.adapters[module_name]
