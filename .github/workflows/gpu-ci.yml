@@ -30,8 +30,8 @@ jobs:
           # mamba solver is already installed and configured
           #conda install -n base conda conda-libmamba-solver -y
           #conda config --set solver libmamba
-          conda install -c conda-forge "$(get_dep conda-lock min)" -y
-          conda-lock install --name sklearn build_tools/azure/pylatest_conda_forge_mkl_linux-64_conda.lock
+          sudo conda install -c conda-forge "$(get_dep conda-lock min)" -y
+          sudo conda-lock install --name sklearn build_tools/azure/pylatest_conda_forge_mkl_linux-64_conda.lock
 
       - name: look around
         run: |
