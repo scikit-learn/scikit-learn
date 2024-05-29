@@ -17,17 +17,21 @@ jobs:
           python-version: '3.12'
       - name: Checkout code
         uses: actions/checkout@v2
+      - name: Install miniforge
+        run: |
+          curl -L -O "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"
+          bash Miniforge3-$(uname)-$(uname -m).sh -b -p "${HOME}/conda"
+          source "${HOME}/conda/etc/profile.d/conda.sh"
+          # Add mamba support
+          source "${HOME}/conda/etc/profile.d/mamba.sh"
+          rm Miniforge3-$(uname)-$(uname -m).sh
       - name: show env
         run: |
+          source "${HOME}/conda/etc/profile.d/conda.sh"
           env
-      - name: quo vadis conda?
-        run: |
-          ls -hals /opt/miniconda
-      - name: Fix conda directory permissions
-        run: |
-          chown -R 1001:100 /opt/miniconda
       - name: Install dependencies
         run: |
+          source "${HOME}/conda/etc/profile.d/conda.sh"
           # defines the get_dep and show_installed_libraries functions
           source build_tools/shared.sh
           # mamba solver is already installed and configured
