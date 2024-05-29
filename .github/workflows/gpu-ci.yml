@@ -1,6 +1,11 @@
 name: Array API CI
 on:
   workflow_dispatch:
+  # Temporary addition to execute workflow on pull requests, but only those
+  # that modify this file
+  pull_request:
+    paths:
+      - ".github/workflows/gpu-ci.yml"
 
 jobs:
   tests:
