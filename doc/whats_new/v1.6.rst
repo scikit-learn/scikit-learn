@@ -80,6 +80,13 @@ Changelog
 - |Enhancement| Added a function :func:`base.is_clusterer` which determines
   whether a given estimator is of category clusterer.
   :pr:`28936` by :user:`Christian Veenhuis <ChVeen>`.
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |API| Deprecates `copy_X` in :class:`linear_model.TheilSenRegressor` as the parameter
+  has no effect. `copy_X` will be removed in 1.8.
+  :pr:`29105` by :user:`Adam Li <adam2392>`.
   
 :mod:`sklearn.metrics`
 ......................
