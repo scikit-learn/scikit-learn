@@ -895,7 +895,7 @@ additional packages:
                 polars scikit-image packaging seaborn sphinx-prompt \
                 sphinxext-opengraph sphinx-copybutton plotly pooch \
                 pydata-sphinx-theme sphinxcontrib-sass sphinx-design \
-                sphinx-remove-toctrees
+                sphinx-remove-toctrees sphinx_docsearch
 
 To build the documentation, you need to be in the ``doc`` folder:
 
