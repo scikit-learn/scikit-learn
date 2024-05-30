@@ -247,8 +247,8 @@ html_theme_options = {
     # check_switcher may be set to False if docbuild pipeline fails. See
     # https://pydata-sphinx-theme.readthedocs.io/en/stable/user_guide/version-dropdown.html#configure-switcher-json-url
     "check_switcher": True,
-    "pygment_light_style": "tango",
-    "pygment_dark_style": "monokai",
+    "pygments_light_style": "tango",
+    "pygments_dark_style": "monokai",
     "logo": {
         "alt_text": "scikit-learn homepage",
         "image_relative": "logos/scikit-learn-logo-small.png",
