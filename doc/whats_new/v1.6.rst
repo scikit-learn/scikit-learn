@@ -87,7 +87,7 @@ Changelog
 - |API| Deprecates `copy_X` in :class:`linear_model.TheilSenRegressor` as the parameter
   has no effect. `copy_X` will be removed in 1.8.
   :pr:`29105` by :user:`Adam Li <adam2392>`.
-  
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -102,6 +102,13 @@ Changelog
   :class:`model_selection.FixedThresholdClassifier` allowing the use of a pre-fitted
   estimator without re-fitting it.
   :pr:`29067` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| :class:`neighbors.LocalOutlierFactor` raises a warning in the `fit` method
+  when duplicate values in the training data lead to inaccurate outlier detection.
+  :pr:`28773` by :user:`Henrique Caroço <HenriqueProj>`.
 
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:
