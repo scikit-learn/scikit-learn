@@ -519,11 +519,14 @@ def mean_squared_error(
                 y_true, y_pred, sample_weight=sample_weight, multioutput=multioutput
             )
 
+    xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
+    dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
+
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput
+        y_true, y_pred, multioutput, dtype=dtype, xp=xp
     )
     check_consistent_length(y_true, y_pred, sample_weight)
-    output_errors = np.average((y_true - y_pred) ** 2, axis=0, weights=sample_weight)
+    output_errors = _average((y_true - y_pred) ** 2, axis=0, weights=sample_weight)
 
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
@@ -532,7 +535,10 @@ def mean_squared_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    # See comment from mean_absolute error
+    mean_squared_error = _average(output_errors, weights=multioutput)
+    assert mean_squared_error.shape == ()
+    return float(mean_squared_error)
 
 
 @validate_params(
