@@ -98,8 +98,8 @@ Changelog
 :mod:`sklearn.neighbors`
 ........................
 
-- |Fix| Added a warning in :class:`_lof.LocalOutlierFactor`'s `fit` method, which is
-  raised when duplicate values in the training data lead to inaccurate outlier detection.
+- |Fix| :class:`neighbors.LocalOutlierFactor` raises a warning in the `fit` method
+   when duplicate values in the training data lead to inaccurate outlier detection.
   :pr:`28773` by :user:`Henrique Caroço <HenriqueProj>`.
 
 Thanks to everyone who has contributed to the maintenance and improvement of
