@@ -1,6 +1,9 @@
-name: Array API CI
+name: Array API
 on:
   workflow_dispatch:
+    inputs:
+      pr_id:
+
   # Temporary addition to execute workflow on pull requests, but only those
   # that modify this file
   pull_request:
@@ -15,8 +18,16 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.12'
-      - name: Checkout code
+      # change this to checkout a particular PR if a PR number is provided as input
+      - name: Checkout main repository
         uses: actions/checkout@v2
+      - name: Checkout a particular Pull Request
+        if: inputs.pr_id
+        env:
+          PR_ID: ${{ inputs.pr_id }}
+        run: |
+          echo "Checking out" ${{ env.PR_ID }}
+          gh pr checkout ${{ env.PR_ID }}
       - name: Install miniforge
         run: |
           curl -L -O "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"
