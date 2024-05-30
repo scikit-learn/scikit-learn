@@ -56,7 +56,12 @@ from sklearn.metrics.pairwise import (
     sigmoid_kernel,
 )
 from sklearn.preprocessing import normalize
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     assert_allclose,
     assert_almost_equal,
     assert_array_equal,
@@ -1288,6 +1293,22 @@ def test_chi_square_kernel():
     # different n_features in X and Y
     with pytest.raises(ValueError):
         chi2_kernel([[0, 1]], [[0.2, 0.2, 0.6]])
+
+
+@pytest.mark.parametrize(
+    "array_namespace, deivce, _", yield_namespace_device_dtype_combinations()
+)
+def test_additive_chi2_kernel_array_api(array_namespace, deivce, _):
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((5, 4))
+    Y = rng.random_sample((10, 4))
+    K_add = additive_chi2_kernel(X, Y)
+    with config_context(array_api_dispatch=True):
+        xp = _array_api_for_tests(array_namespace, deivce)
+        X_xp = xp.asarray(X)
+        Y_xp = xp.asarray(Y)
+        K_xp = additive_chi2_kernel(X_xp, Y_xp)
+        assert_allclose(_convert_to_numpy(K_xp, xp), K_add)
 
 
 @pytest.mark.parametrize(
