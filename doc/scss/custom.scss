@@ -190,3 +190,29 @@ div.sk-text-image-grid-small {
 div.sk-text-image-grid-large {
   @include sk-text-image-grid(100px);
 }
+
+/* Customized Algolia Search Bar Style */
+
+.DocSearch-Container {
+  z-index: 1050;
+}
+
+.search-button__wrapper.show .search-button__overlay,
+.search-button__wrapper.show .search-button__search-container {
+  display: none;
+}
+
+.DocSearch-Hits mark {
+  padding: 0;
+}
+
+kbd:not(.compound) {
+  padding: 0rem 0rem;
+}
+
+kbd.DocSearch-Commands-Key {
+  border: 0;
+  box-shadow: var(--docsearch-key-shadow);
+  margin: 1px 5px 1px 0px;
+  padding: inherit;
+}
