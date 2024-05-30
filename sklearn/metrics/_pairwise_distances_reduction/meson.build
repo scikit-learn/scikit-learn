@@ -31,7 +31,9 @@ _datasets_pair_pyx = custom_target(
   output: '_datasets_pair.pyx',
   input: '_datasets_pair.pyx.tp',
   command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
-  # TODO comment work-around
+  # TODO in principle this should go in py.exension_module below. This is
+  # temporary work-around for dependency issue with .pyx.tp files. For more
+  # details, see https://github.com/mesonbuild/meson/issues/13212
   depends: [_pairwise_distances_reduction_cython_tree, utils_cython_tree],
 )
 _datasets_pair = py.extension_module(
@@ -55,7 +57,9 @@ _base_pyx = custom_target(
   output: '_base.pyx',
   input: '_base.pyx.tp',
   command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
-  # TODO comment work-around
+  # TODO in principle this should go in py.exension_module below. This is
+  # temporary work-around for dependency issue with .pyx.tp files. For more
+  # details, see https://github.com/mesonbuild/meson/issues/13212
   depends: [_base_pxd, _pairwise_distances_reduction_cython_tree,
             _datasets_pair_pxd, utils_cython_tree],
 )
@@ -80,7 +84,9 @@ _middle_term_computer_pyx = custom_target(
   output: '_middle_term_computer.pyx',
   input: '_middle_term_computer.pyx.tp',
   command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
-  # TODO comment work-around
+  # TODO in principle this should go in py.exension_module below. This is
+  # temporary work-around for dependency issue with .pyx.tp files. For more
+  # details, see https://github.com/mesonbuild/meson/issues/13212
   depends: [_middle_term_computer_pxd,
             _pairwise_distances_reduction_cython_tree,
             utils_cython_tree],
@@ -106,7 +112,9 @@ _argkmin_pyx = custom_target(
     output: '_argkmin.pyx',
     input: '_argkmin.pyx.tp',
     command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
-    # TODO comment work-around
+    # TODO in principle this should go in py.exension_module below. This is
+    # temporary work-around for dependency issue with .pyx.tp files. For more
+    # details, see https://github.com/mesonbuild/meson/issues/13212
     depends: [_argkmin_pxd,
               _pairwise_distances_reduction_cython_tree,
               _datasets_pair_pxd, _base_pxd, _middle_term_computer_pxd],
@@ -132,7 +140,9 @@ _radius_neighbors_pyx = custom_target(
     output: '_radius_neighbors.pyx',
     input: '_radius_neighbors.pyx.tp',
     command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
-    # TODO comment work-around
+    # TODO in principle this should go in py.exension_module below. This is
+    # temporary work-around for dependency issue with .pyx.tp files. For more
+    # details, see https://github.com/mesonbuild/meson/issues/13212
     depends: [_radius_neighbors_pxd,
               _datasets_pair_pxd, _base_pxd, _middle_term_computer_pxd,
               _pairwise_distances_reduction_cython_tree, utils_cython_tree],
@@ -152,7 +162,9 @@ _argkmin_classmode_pyx = custom_target(
   output: '_argkmin_classmode.pyx',
   input: '_argkmin_classmode.pyx.tp',
   command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
-  # TODO comment work-around
+  # TODO in principle this should go in py.exension_module below. This is
+  # temporary work-around for dependency issue with .pyx.tp files. For more
+  # details, see https://github.com/mesonbuild/meson/issues/13212
   depends: [_classmode_pxd,
             _argkmin_pxd, _pairwise_distances_reduction_cython_tree,
             _datasets_pair_pxd, _base_pxd, _middle_term_computer_pxd, utils_cython_tree],
@@ -176,7 +188,9 @@ _radius_neighbors_classmode_pyx = custom_target(
   output: '_radius_neighbors_classmode.pyx',
   input: '_radius_neighbors_classmode.pyx.tp',
   command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
-  # TODO comment work-around
+  # TODO in principle this should go in py.exension_module below. This is
+  # temporary work-around for dependency issue with .pyx.tp files. For more
+  # details, see https://github.com/mesonbuild/meson/issues/13212
   depends: [_classmode_pxd,
             _middle_term_computer_pxd, _radius_neighbors_pxd,
             _pairwise_distances_reduction_cython_tree,

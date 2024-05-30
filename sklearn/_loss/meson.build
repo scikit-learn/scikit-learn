@@ -8,7 +8,9 @@ _loss_pyx = custom_target(
   output: '_loss.pyx',
   input: '_loss.pyx.tp',
   command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
-  # TODO comment work-around
+  # TODO in principle this should go in py.exension_module below. This is
+  # temporary work-around for dependency issue with .pyx.tp files. For more
+  # details, see https://github.com/mesonbuild/meson/issues/13212
   depends: _loss_cython_tree,
 )
 

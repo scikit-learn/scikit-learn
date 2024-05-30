@@ -63,7 +63,9 @@ foreach name: util_extension_names
     output: name + '.pyx',
     input: name + '.pyx.tp',
     command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
-    # TODO comment work-around
+    # TODO in principle this should go in py.exension_module below. This is
+    # temporary work-around for dependency issue with .pyx.tp files. For more
+    # details, see https://github.com/mesonbuild/meson/issues/13212
     depends: [pxd, utils_cython_tree],
   )
   py.extension_module(
