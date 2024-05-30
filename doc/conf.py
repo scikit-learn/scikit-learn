@@ -72,7 +72,7 @@ extensions = [
     "move_gallery_links",
     "override_pst_pagetoc",
     "sphinx_issues",
-    "spinx_docsearch",
+    "sphinx_docsearch",
 ]
 
 # Specify how to identify the prompt when copying code snippets
