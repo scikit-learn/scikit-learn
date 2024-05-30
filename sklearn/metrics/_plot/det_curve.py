@@ -1,3 +1,4 @@
+import numpy as np
 import scipy as sp
 
 from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
@@ -299,6 +300,13 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         line_kwargs = {} if name is None else {"label": name}
         line_kwargs.update(**kwargs)
+
+        # avoid inf from sp.stats.norm.ppf
+        eps = 1e-6
+        self.fpr = np.where(self.fpr == 0, self.fpr + eps, self.fpr)
+        self.fpr = np.where(self.fpr == 1, self.fpr - eps, self.fpr)
+        self.fnr = np.where(self.fnr == 0, self.fnr + eps, self.fnr)
+        self.fnr = np.where(self.fnr == 1, self.fnr - eps, self.fnr)
 
         (self.line_,) = self.ax_.plot(
             sp.stats.norm.ppf(self.fpr),
