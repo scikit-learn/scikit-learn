@@ -483,7 +483,7 @@ def mean_squared_error(
 
     Returns
     -------
-    loss : float or ndarray of floats
+    loss : float or array of floats
         A non-negative floating point value (the best value is 0.0), or an
         array of floating point values, one for each individual target.
 
