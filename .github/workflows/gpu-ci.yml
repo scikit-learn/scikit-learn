@@ -4,8 +4,9 @@ on:
     inputs:
       pr_id:
 
-  # Temporary addition to execute workflow on pull requests, but only those
+  # XXX Temporary addition to execute workflow on pull requests, but only those
   # that modify this file
+  # Remove before merging
   pull_request:
     paths:
       - ".github/workflows/gpu-ci.yml"
@@ -53,6 +54,10 @@ jobs:
           conda install -c conda-forge "$(get_dep conda-lock min)" -y
           conda-lock install --name sklearn build_tools/github/pylatest_conda_forge_mkl_array-api_linux-64_conda.lock
       - name: Install scikit-learn
+        env:
+          # Set parallelism to 5 to overlap IO bound tasks with CPU bound tasks on GPU CI
+          # workers with 4 cores when building the compiled extensions of scikit-learn.
+          SKLEARN_BUILD_PARALLEL: 5
         run: |
           source "${HOME}/conda/etc/profile.d/conda.sh"
           conda activate sklearn
