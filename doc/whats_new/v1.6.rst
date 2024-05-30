@@ -88,6 +88,13 @@ Changelog
   removed in 1.8. It has no effect as a copy is always made.
   :pr:`29124` by :user:`Yao Xiao <Charlie-XIAO>`.
 
+:mod:`sklearn.linear_model`
+...........................
+
+- |API| Deprecates `copy_X` in :class:`linear_model.TheilSenRegressor` as the parameter
+  has no effect. `copy_X` will be removed in 1.8.
+  :pr:`29105` by :user:`Adam Li <adam2392>`.
+
 :mod:`sklearn.metrics`
 ......................
 
