@@ -8,11 +8,13 @@ _loss_pyx = custom_target(
   output: '_loss.pyx',
   input: '_loss.pyx.tp',
   command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
+  # TODO comment work-around
+  depends: _loss_cython_tree,
 )
 
 py.extension_module(
   '_loss',
-  [_loss_pyx, _loss_cython_tree],
+  _loss_pyx,
   cython_args: cython_args,
   install: true,
   subdir: 'sklearn/_loss',

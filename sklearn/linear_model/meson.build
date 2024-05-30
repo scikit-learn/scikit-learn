@@ -19,11 +19,13 @@ foreach name: name_list
     name + '_pyx',
     output: name + '.pyx',
     input: name + '.pyx.tp',
-    command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@']
+    command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
+    # TODO comment work-around
+    depends: [linear_model_cython_tree, utils_cython_tree],
   )
   py.extension_module(
     name,
-    [pyx, linear_model_cython_tree, utils_cython_tree],
+    pyx,
     cython_args: cython_args,
     subdir: 'sklearn/linear_model',
     install: true

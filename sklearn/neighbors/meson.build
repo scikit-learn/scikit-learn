@@ -20,11 +20,13 @@ foreach name: name_list
     name + '_pyx',
     output: name + '.pyx',
     input: name + '.pyx.tp',
-    command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@']
+    command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
+    # TODO comment work-around
+    depends: [neighbors_cython_tree, utils_cython_tree, metrics_cython_tree],
   )
   py.extension_module(
     name,
-    [pyx, neighbors_cython_tree, utils_cython_tree, metrics_cython_tree],
+    pyx,
     dependencies: [np_dep],
     cython_args: cython_args,
     subdir: 'sklearn/neighbors',

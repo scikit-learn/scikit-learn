@@ -62,11 +62,13 @@ foreach name: util_extension_names
     name + '_pyx',
     output: name + '.pyx',
     input: name + '.pyx.tp',
-    command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@']
+    command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
+    # TODO comment work-around
+    depends: [pxd, utils_cython_tree],
   )
   py.extension_module(
     name,
-    [pxd, pyx, utils_cython_tree],
+    pyx,
     cython_args: cython_args,
     subdir: 'sklearn/utils',
     install: true
