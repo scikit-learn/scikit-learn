@@ -72,6 +72,7 @@ extensions = [
     "move_gallery_links",
     "override_pst_pagetoc",
     "sphinx_issues",
+    "spinx_docsearch",
 ]
 
 # Specify how to identify the prompt when copying code snippets
@@ -971,4 +972,3 @@ for rst_template_name, rst_target_name, kwargs in rst_templates:
 docsearch_app_id = os.getenv("DOCSEARCH_APP_ID")
 docsearch_api_key = os.getenv("DOCSEARCH_API_KEY")
 docsearch_index_name = "scikit-learn"
-# docsearch_container = "#algolia-docsearch"
