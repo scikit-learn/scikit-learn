@@ -966,3 +966,9 @@ for rst_template_name, rst_target_name, kwargs in rst_templates:
     # Render the template and write to the target
     with (Path(".") / f"{rst_target_name}.rst").open("w", encoding="utf-8") as f:
         f.write(t.render(**kwargs))
+
+# Algolia docsearch setting
+docsearch_app_id = os.getenv("DOCSEARCH_APP_ID")
+docsearch_api_key = os.getenv("DOCSEARCH_API_KEY")
+docsearch_index_name = "scikit-learn"
+# docsearch_container = "#algolia-docsearch"

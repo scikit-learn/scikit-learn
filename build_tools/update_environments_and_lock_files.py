@@ -309,6 +309,7 @@ build_metadata_list = [
         "pip_dependencies": [
             "sphinxext-opengraph",
             "sphinxcontrib-sass",
+            "sphinx_docsearch",
         ],
         "package_constraints": {
             "python": "3.9",
@@ -331,6 +332,7 @@ build_metadata_list = [
             "sphinxcontrib-sass": "min",
             "sphinx-remove-toctrees": "min",
             "pydata-sphinx-theme": "min",
+            "sphinx_docsearch": "min",
         },
     },
     {
@@ -363,6 +365,7 @@ build_metadata_list = [
             "jupyterlite-sphinx",
             "jupyterlite-pyodide-kernel",
             "sphinxcontrib-sass",
+            "sphinx_docsearch",
         ],
         "package_constraints": {
             "python": "3.9",
