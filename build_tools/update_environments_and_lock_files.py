@@ -113,6 +113,7 @@ build_metadata_list = [
             "blas": "[build=mkl]",
             "pytorch::pytorch": "2.3.0",
             "pytorch-cuda": "12.1",
+            "cupy": "13.1.0",
         },
     },
     {

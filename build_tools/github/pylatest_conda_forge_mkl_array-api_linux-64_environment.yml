@@ -29,6 +29,6 @@ dependencies:
   - pytorch-cuda=12.1
   - polars
   - pyarrow
-  - cupy
+  - cupy=13.1.0
   - array-api-compat
   - array-api-strict
