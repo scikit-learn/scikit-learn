@@ -34,7 +34,7 @@ jobs:
         env:
           cache-name: cache-conda-env
         with:
-          path: ${HOME}/conda
+          path: ~/conda
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('build_tools/github/pylatest_conda_forge_mkl_array-api_linux-64_conda.lock') }}
       - name: Install miniforge
         if: ${{ steps.cache-conda.outputs.cache-hit != 'true' }}
