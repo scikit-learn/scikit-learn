@@ -23,6 +23,7 @@ from numbers import Real
 import numpy as np
 from scipy import sparse as sp
 
+from ...utils._array_api import get_namespace
 from ...utils._param_validation import Interval, StrOptions, validate_params
 from ...utils.multiclass import type_of_target
 from ...utils.validation import check_array, check_consistent_length
@@ -1282,9 +1283,10 @@ def entropy(labels):
     -----
     The logarithm used is the natural logarithm (base-e).
     """
-    labels = np.asarray(labels)
-    if labels.shape[0] == 0:
-        return 0.0
+    xp, is_array_api_compliant = get_namespace(labels, remove_types=(list,))
+    labels_len = labels.shape[0] if is_array_api_compliant else len(labels)
+    if labels_len == 0:
+        return 1.0
 
     pi = np.unique(labels, return_counts=True)[1]
     pi = pi.astype(np.float64)
