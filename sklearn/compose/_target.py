@@ -325,6 +325,10 @@ class TransformedTargetRegressor(
                 Parameters safely routed to the `predict` method of the
                 underlying regressor.
 
+                .. versionchanged:: 1.6
+                    See :ref:`Metadata Routing User Guide <metadata_routing>`
+                    for more details.
+
         Returns
         -------
         y_hat : ndarray of shape (n_samples,)
