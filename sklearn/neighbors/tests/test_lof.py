@@ -364,7 +364,7 @@ def test_lof_dtype_equivalence(algorithm, novelty, contamination):
 def test_lof_duplicate_samples():
     """
     Check that LocalOutlierFactor raises a warning when duplicate values
-    in the training data are causing innacurate results.
+    in the training data are cause inaccurate results.
 
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/27839
