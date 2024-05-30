@@ -1283,7 +1283,7 @@ def entropy(labels):
     -----
     The logarithm used is the natural logarithm (base-e).
     """
-    xp, is_array_api_compliant = get_namespace(labels)
+    _, is_array_api_compliant = get_namespace(labels)
     labels_len = labels.shape[0] if is_array_api_compliant else len(labels)
     if labels_len == 0:
         return 1.0
