@@ -28,13 +28,23 @@ jobs:
         run: |
           echo "Checking out" ${{ env.PR_ID }}
           gh pr checkout ${{ env.PR_ID }}
+      - name: Cache conda environment
+        id: cache-conda
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-conda-env
+        with:
+          path: ${HOME}/conda
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('build_tools/github/pylatest_conda_forge_mkl_array-api_linux-64_conda.lock') }}
       - name: Install miniforge
+        if: ${{ steps.cache-conda.outputs.cache-hit != 'true' }}
         run: |
           curl -L -O "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"
           bash Miniforge3-$(uname)-$(uname -m).sh -b -p "${HOME}/conda"
           source "${HOME}/conda/etc/profile.d/conda.sh"
           rm Miniforge3-$(uname)-$(uname -m).sh
       - name: Install dependencies
+        if: ${{ steps.cache-conda.outputs.cache-hit != 'true' }}
         run: |
           source "${HOME}/conda/etc/profile.d/conda.sh"
           # defines the get_dep and show_installed_libraries functions
