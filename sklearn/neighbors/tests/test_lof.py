@@ -372,7 +372,6 @@ def test_lof_duplicate_samples():
 
     rng = np.random.default_rng(0)
 
-    # 100 times the number of elements of the example shown in the issue
     x = rng.permutation(
         np.hstack(
             [
