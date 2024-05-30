@@ -322,7 +322,9 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
         referred to as false rejection or miss rate.
 
     thresholds : ndarray of shape (n_thresholds,)
-        Decreasing score values.
+        Decreasing thresholds on the decision function used to compute FPR and
+        FNR. An arbritrary threshold at infinity is added for the case `tp=0`
+        and `fp=0`.
 
     See Also
     --------
@@ -351,6 +353,12 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
     fps, tps, thresholds = _binary_clf_curve(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
     )
+
+    # Add a threshold at inf where the clf always predicts the negative class
+    # i.e. tps = fps = 0
+    tps = np.r_[0, tps]
+    fps = np.r_[0, fps]
+    thresholds = np.r_[np.inf, thresholds]
 
     if len(np.unique(y_true)) != 2:
         raise ValueError(
