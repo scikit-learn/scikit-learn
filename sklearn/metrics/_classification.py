@@ -3356,13 +3356,15 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
     return 1 - (numerator / denominator)
 
 import numpy as np
+from sklearn.metrics import confusion_matrix
 from sklearn.utils.validation import check_consistent_length
 
 def tau_score(y_true, y_pred, *, normalize=True):
     """
     Compute the Tau score as a measure of classification accuracy based on a geometric approach.
-    This function uses the approach from the Tau class which considers distances from the model's
-    performance to a perfect and a random-guess model's performance in a normalized 2D performance space.
+    This function considers distances from the model's performance to a perfect and a random-guess
+    model's performance in a normalized performance space. It works for both binary and multi-class
+    classification.
 
     Parameters:
     ----------
@@ -3380,23 +3382,31 @@ def tau_score(y_true, y_pred, *, normalize=True):
     """
     check_consistent_length(y_true, y_pred)
     cm = confusion_matrix(y_true, y_pred)
-    tn, fp, fn, tp = cm.ravel()
-    
-    # Total positives and negatives
-    p = tp + fn
-    n = tn + fp
+    n_classes = cm.shape[0]
+
+    # Calculate true positive rates (TPR) and true negative rates (TNR)
+    TP = np.diag(cm)
+    FP = cm.sum(axis=0) - TP
+    FN = cm.sum(axis=1) - TP
+    TN = cm.sum() - (FP + FN + TP)
+
+    # Total positives and negatives per class
+    P = TP + FN
+    N = TN + FP
 
     # Calculate model points based on normalization choice
-    model_point = np.array([tn / n, tp / p]) if normalize else np.array([tn, tp])
-    
+    TPR = TP / P
+    TNR = TN / N
+    model_point = np.stack((TNR, TPR), axis=-1) if normalize else np.stack((TN, TP), axis=-1)
+
     # Define perfect point and random point
-    perfect_point = np.array([1, 1]) if normalize else np.array([n, p])
-    random_point = np.array([0.5, 0.5]) if normalize else np.array([n/2, p/2])
+    perfect_point = np.ones_like(model_point)
+    random_point = np.full(model_point.shape, 0.5)
 
     # Compute distances from the model point to perfect and random points
-    dist_from_perfect = np.linalg.norm(model_point - perfect_point)
-    dist_from_random = np.linalg.norm(model_point - random_point)
-    
+    dist_from_perfect = np.linalg.norm(model_point - perfect_point, axis=1).mean()
+    dist_from_random = np.linalg.norm(model_point - random_point, axis=1).mean()
+
     # If normalized, adjust the tau score accordingly, else use direct distance
     if normalize:
         tau = 1 - dist_from_perfect / np.sqrt(2)
