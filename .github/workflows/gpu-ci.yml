@@ -3,6 +3,8 @@ on:
   workflow_dispatch:
     inputs:
       pr_id:
+        description: Test the contents of this Pull Request
+        required: true
 
   # XXX Temporary addition to execute workflow on pull requests, but only those
   # that modify this file
@@ -10,6 +12,8 @@ on:
   pull_request:
     paths:
       - ".github/workflows/gpu-ci.yml"
+
+permissions: read-all
 
 jobs:
   tests:
@@ -26,6 +30,7 @@ jobs:
         if: inputs.pr_id
         env:
           PR_ID: ${{ inputs.pr_id }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           echo "Checking out" ${{ env.PR_ID }}
           gh pr checkout ${{ env.PR_ID }}
