@@ -7,8 +7,8 @@ Friedman and Popescu's H-Statistic
 
 .. currentmodule:: sklearn.inspection
 
-What is the difference between a white box model and a black box model?
-It is the many and complicated interaction effects of the latter.
+What is the difference between a white box model (think linear model) and a black box model (e.g. boosted trees)?
+One main difference is the many and complicated interaction effects of the latter.
 
 Such interaction effects can be visualized by two-dimensional or stratified
 partial dependence plots (PDP). But how to figure out between *which feature pairs*
@@ -27,7 +27,7 @@ the bike sharing dataset, with a
    :align: center
    :scale: 70
 
-The statistics have been compured for the five most important features.
+The statistics have been computed for the five most important features.
 
 Mathematical definition
 =======================
@@ -86,7 +86,7 @@ Remarks
 1. Partial dependence functions and :math:`F` are centered to mean 0.
 2. Partial dependence functions and :math:`F` are evaluated over the data distribution.
    This is different to partial dependence plots, where one uses a fixed grid.
-3. Weighted versions follow by replacing all arithmetic means by corresponding weighted means.
+3. Weighted versions follow by replacing all arithmetic means by corresponding weighted averages.
 4. Multi-output prediction (e.g., probabilistic classification) is handled component-wise.
 5. Due to undesired extrapolation of partial dependence functions, values above 1 may occur.
 
