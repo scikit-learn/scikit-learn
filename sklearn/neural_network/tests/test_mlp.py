@@ -17,16 +17,14 @@ import pytest
 from sklearn.datasets import (
     load_digits,
     load_iris,
-    make_blobs,
     make_multilabel_classification,
     make_regression,
 )
-from sklearn import clone
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier, MLPRegressor
-from sklearn.preprocessing import LabelBinarizer, MinMaxScaler, scale
+from sklearn.preprocessing import LabelBinarizer, MinMaxScaler, StandardScaler, scale
 from sklearn.utils._testing import (
     assert_allclose,
     assert_almost_equal,
