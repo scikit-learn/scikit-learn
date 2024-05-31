@@ -603,7 +603,7 @@ H = h_statistic(hgbdt_model, X=X_train, features=features, random_state=0)
 print(f"done in {time() - tic:.3f}s")
 
 fig, axes = plt.subplots(1, 2, figsize=(8, 4))
-bar_labels = [str(pair) for pair in H["feature_pairs"]]
+bar_labels = np.array([str(pair) for pair in H["feature_pairs"]])
 stats = (H["h_squared_pairwise"], np.sqrt(H["numerator_pairwise"]))
 
 for ax, stat, name in zip(axes, stats, ("$H^2$", "Unnormalized $H$")):
