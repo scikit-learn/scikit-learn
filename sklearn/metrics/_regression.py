@@ -535,7 +535,7 @@ def mean_squared_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    # See comment from mean_absolute error
+    # See comment in mean_absolute_error
     mean_squared_error = _average(output_errors, weights=multioutput)
     assert mean_squared_error.shape == ()
     return float(mean_squared_error)
