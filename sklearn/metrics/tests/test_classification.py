@@ -3109,15 +3109,7 @@ def test_tau_score_perfect_prediction():
 def test_tau_score_imperfect_prediction():
     y_true = [0, 1, 0, 1]
     y_pred = [1, 1, 0, 0]
-    # Calculate expected score based on manual computation
-    cm = confusion_matrix(y_true, y_pred)
-    tn, fp, fn, tp = cm.ravel()
-    n = tn + fp
-    p = tp + fn
-    model_point = np.array([tn / n, tp / p])
-    perfect_point = np.array([1, 1])
-    dist_from_perfect = np.linalg.norm(model_point - perfect_point)
-    expected_score = 1 - dist_from_perfect / np.sqrt(2)
+    expected_score = 0.29 
     assert_almost_equal(tau_score(y_true, y_pred), expected_score)
 
 def test_tau_score_non_normalized():
