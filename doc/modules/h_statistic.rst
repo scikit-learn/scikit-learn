@@ -83,8 +83,8 @@ and
 Remarks
 =======
 
-1. Partial dependence functions and :math:`F` are centered to mean 0.
-2. Partial dependence functions and :math:`F` are evaluated over the data distribution.
+1. Partial dependence functions are centered to mean 0.
+2. Partial dependence functions are evaluated over the data distribution.
    This is different to partial dependence plots, where one uses a fixed grid.
 3. Weighted versions follow by replacing all arithmetic means by corresponding weighted averages.
 4. Multi-output prediction (e.g., probabilistic classification) is handled component-wise.
