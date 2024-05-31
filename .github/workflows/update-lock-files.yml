@@ -28,6 +28,8 @@ jobs:
           - name: pypy
             update_script_args: "--select-tag pypy"
             additional_commit_message: "[pypy]"
+          - name: array API
+            update_scrupt_args: "--select-tag gpu"
 
     steps:
       - uses: actions/checkout@v4
