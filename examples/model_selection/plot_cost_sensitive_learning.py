@@ -571,9 +571,9 @@ print(f"Benefit of the 'always reject' policy: {benefit:,.2f}€")
 
 
 # %%
-# Such a classifier creates a loss of around 670,000€. This is expected since
-# the vast majority of the transactions are legitimate the model would refuse
-# them at a non-trivial cost, leading to a catastrophic decision making.
+# Such a policy would entail a catastrophic loss: around 670,000€. This is
+# expected since the vast majority of the transactions are legitimate and the
+# policy would refuse them at a non-trivial cost.
 #
 # A predictive model that adapts the accept/reject decisions on a per
 # transaction basis should ideally allow us to make a profit larger than the
@@ -581,7 +581,7 @@ print(f"Benefit of the 'always reject' policy: {benefit:,.2f}€")
 #
 # We start with a logistic regression model with the default decision threshold
 # at 0.5. Here we tune the hyperparameter `C` of the logistic regression with a
-# proper scoring rule (the log loss) to ensure that the model's soft
+# proper scoring rule (the log loss) to ensure that the model's probabilistic
 # predictions returned by its `predict_proba` method are as accurate as
 # possible, irrespectively of the choice of the value of the decision
 # threshold.
