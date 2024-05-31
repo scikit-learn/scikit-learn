@@ -547,7 +547,7 @@ data_train, data_test, target_train, target_test, amount_train, amount_test = (
 )
 
 # %%
-# We first evaluate some baseline policies to server as reference. Recall that
+# We first evaluate some baseline policies to serve as reference. Recall that
 # class "0" is the legitimate class and class "1" is the fraudulent class.
 from sklearn.dummy import DummyClassifier
 
@@ -560,7 +560,7 @@ print(f"Benefit of the 'always accept' policy: {benefit:,.2f}€")
 
 # %%
 # A policy that considers all transactions as legitimate would create a profit of
-# around 220,000.€ We make the same evaluation for a classifier that predicts all
+# around 220,000€. We make the same evaluation for a classifier that predicts all
 # transactions as fraudulent.
 always_reject_policy = DummyClassifier(strategy="constant", constant=1)
 always_reject_policy.fit(data_train, target_train)
@@ -571,13 +571,13 @@ print(f"Benefit of the 'always reject' policy: {benefit:,.2f}€")
 
 
 # %%
-# Such a classifier creates a loss of around 670,000.€. This is expected since
+# Such a classifier creates a loss of around 670,000€. This is expected since
 # the vast majority of the transactions are legitimate the model would refuse
 # them at a non-trivial cost, leading to a catastrophic decision making.
 #
 # A predictive model that adapts the accept/reject decisions on a per
 # transaction basis should ideally allow us to make a profit larger than the
-# 220,000.€ of the best of our constant baseline policies.
+# 220,000€ of the best of our constant baseline policies.
 #
 # We start with a logistic regression model with the default decision threshold
 # at 0.5. Here we tune the hyperparameter `C` of the logistic regression with a
@@ -605,8 +605,8 @@ print(
 
 # %%
 # The business metric shows that our predictive model with a default decision
-# threshold is already beating the baseline in terms of profit and it would be
-# already beneficial to use it to accept or reject transactions instead
+# threshold is already winning over the baseline in terms of profit and it would be
+# already beneficial to use it to accept or reject transactions instead of
 # accepting all transactions.
 #
 # Tuning the decision threshold
@@ -643,7 +643,7 @@ print(
 
 # %%
 # We observe that tuning the decision threshold increases the expected profit
-# of deploying our model as estimated by the business metric. It is therefore
+# when deploying our model - as indicated by the business metric. It is therefore
 # valuable, whenever possible, to optimize the decision threshold with respect
 # to the business metric.
 #
@@ -675,10 +675,10 @@ print(f"Benefit of logistic regression with a tuned threshold:  {business_score:
 
 # %%
 # We observe that we obtained the exact same results but the fitting process
-# was much faster since we did not perform any search.
+# was much faster since we did not perform any hyper-parameter search.
 #
-# Finally, the estimate of the business metric itself can be unreliable, in
-# particular when the number of data points in the minority class is so small.
+# Finally, the estimate of the (average) business metric itself can be unreliable, in
+# particular when the number of data points in the minority class is very small.
 # Any business impact estimated by cross-validation of a business metric on
 # historical data (offline evaluation) should ideally be confirmed by A/B testing
 # on live data (online evaluation). Note however that A/B testing models is
