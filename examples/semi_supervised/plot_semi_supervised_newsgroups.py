@@ -11,7 +11,6 @@ loader or setting them to `None` to get all 20 of them.
 
 """
 
-
 import numpy as np
 
 from sklearn.datasets import fetch_20newsgroups

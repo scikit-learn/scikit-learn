@@ -1,6 +1,6 @@
-"""
-The :mod:`sklearn.naive_bayes` module implements Naive Bayes algorithms. These
-are supervised learning methods based on applying Bayes' theorem with strong
+"""Naive Bayes algorithms.
+
+These are supervised learning methods based on applying Bayes' theorem with strong
 (naive) feature independence assumptions.
 """
 

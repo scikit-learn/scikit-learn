@@ -18,13 +18,16 @@ from sklearn.base import (
     TransformerMixin,
     clone,
     is_classifier,
+    is_clusterer,
+    is_regressor,
 )
+from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.exceptions import InconsistentVersionWarning
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.svm import SVC
+from sklearn.svm import SVC, SVR
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._set_output import _get_output_config
@@ -259,12 +262,55 @@ def test_get_params():
         test.set_params(a__a=2)
 
 
-def test_is_classifier():
-    svc = SVC()
-    assert is_classifier(svc)
-    assert is_classifier(GridSearchCV(svc, {"C": [0.1, 1]}))
-    assert is_classifier(Pipeline([("svc", svc)]))
-    assert is_classifier(Pipeline([("svc_cv", GridSearchCV(svc, {"C": [0.1, 1]}))]))
+@pytest.mark.parametrize(
+    "estimator, expected_result",
+    [
+        (SVC(), True),
+        (GridSearchCV(SVC(), {"C": [0.1, 1]}), True),
+        (Pipeline([("svc", SVC())]), True),
+        (Pipeline([("svc_cv", GridSearchCV(SVC(), {"C": [0.1, 1]}))]), True),
+        (SVR(), False),
+        (GridSearchCV(SVR(), {"C": [0.1, 1]}), False),
+        (Pipeline([("svr", SVR())]), False),
+        (Pipeline([("svr_cv", GridSearchCV(SVR(), {"C": [0.1, 1]}))]), False),
+    ],
+)
+def test_is_classifier(estimator, expected_result):
+    assert is_classifier(estimator) == expected_result
+
+
+@pytest.mark.parametrize(
+    "estimator, expected_result",
+    [
+        (SVR(), True),
+        (GridSearchCV(SVR(), {"C": [0.1, 1]}), True),
+        (Pipeline([("svr", SVR())]), True),
+        (Pipeline([("svr_cv", GridSearchCV(SVR(), {"C": [0.1, 1]}))]), True),
+        (SVC(), False),
+        (GridSearchCV(SVC(), {"C": [0.1, 1]}), False),
+        (Pipeline([("svc", SVC())]), False),
+        (Pipeline([("svc_cv", GridSearchCV(SVC(), {"C": [0.1, 1]}))]), False),
+    ],
+)
+def test_is_regressor(estimator, expected_result):
+    assert is_regressor(estimator) == expected_result
+
+
+@pytest.mark.parametrize(
+    "estimator, expected_result",
+    [
+        (KMeans(), True),
+        (GridSearchCV(KMeans(), {"n_clusters": [3, 8]}), True),
+        (Pipeline([("km", KMeans())]), True),
+        (Pipeline([("km_cv", GridSearchCV(KMeans(), {"n_clusters": [3, 8]}))]), True),
+        (SVC(), False),
+        (GridSearchCV(SVC(), {"C": [0.1, 1]}), False),
+        (Pipeline([("svc", SVC())]), False),
+        (Pipeline([("svc_cv", GridSearchCV(SVC(), {"C": [0.1, 1]}))]), False),
+    ],
+)
+def test_is_clusterer(estimator, expected_result):
+    assert is_clusterer(estimator) == expected_result
 
 
 def test_set_params():
@@ -834,7 +880,7 @@ def test_estimator_getstate_using_slots_error_message():
     [
         ("dataframe", "1.5.0"),
         ("pyarrow", "12.0.0"),
-        ("polars", "0.19.12"),
+        ("polars", "0.20.23"),
     ],
 )
 def test_dataframe_protocol(constructor_name, minversion):

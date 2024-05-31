@@ -3,6 +3,7 @@
 import pickle
 import re
 import sys
+import warnings
 from collections.abc import Iterable, Sized
 from functools import partial
 from io import StringIO
@@ -13,6 +14,7 @@ import numpy as np
 import pytest
 from scipy.stats import bernoulli, expon, uniform
 
+from sklearn import config_context
 from sklearn.base import BaseEstimator, ClassifierMixin, is_classifier
 from sklearn.cluster import KMeans
 from sklearn.datasets import (
@@ -20,6 +22,7 @@ from sklearn.datasets import (
     make_classification,
     make_multilabel_classification,
 )
+from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.exceptions import FitFailedWarning
 from sklearn.experimental import enable_halving_search_cv  # noqa
@@ -27,6 +30,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import (
     LinearRegression,
+    LogisticRegression,
     Ridge,
     SGDClassifier,
 )
@@ -60,6 +64,7 @@ from sklearn.model_selection.tests.common import OneTimeSplitter
 from sklearn.naive_bayes import ComplementNB
 from sklearn.neighbors import KernelDensity, KNeighborsClassifier, LocalOutlierFactor
 from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC, LinearSVC
 from sklearn.tests.metadata_routing_common import (
     ConsumingScorer,
@@ -259,10 +264,10 @@ def test_SearchCV_with_fit_params(SearchCV):
 @ignore_warnings
 def test_grid_search_no_score():
     # Test grid-search on classifier that has no score function.
-    clf = LinearSVC(dual="auto", random_state=0)
+    clf = LinearSVC(random_state=0)
     X, y = make_blobs(random_state=0, centers=2)
     Cs = [0.1, 1, 10]
-    clf_no_score = LinearSVCNoScore(dual="auto", random_state=0)
+    clf_no_score = LinearSVCNoScore(random_state=0)
     grid_search = GridSearchCV(clf, {"C": Cs}, scoring="accuracy")
     grid_search.fit(X, y)
 
@@ -283,13 +288,13 @@ def test_grid_search_no_score():
 
 def test_grid_search_score_method():
     X, y = make_classification(n_samples=100, n_classes=2, flip_y=0.2, random_state=0)
-    clf = LinearSVC(dual="auto", random_state=0)
+    clf = LinearSVC(random_state=0)
     grid = {"C": [0.1]}
 
     search_no_scoring = GridSearchCV(clf, grid, scoring=None).fit(X, y)
     search_accuracy = GridSearchCV(clf, grid, scoring="accuracy").fit(X, y)
     search_no_score_method_auc = GridSearchCV(
-        LinearSVCNoScore(dual="auto"), grid, scoring="roc_auc"
+        LinearSVCNoScore(), grid, scoring="roc_auc"
     ).fit(X, y)
     search_auc = GridSearchCV(clf, grid, scoring="roc_auc").fit(X, y)
 
@@ -317,7 +322,7 @@ def test_grid_search_groups():
     X, y = make_classification(n_samples=15, n_classes=2, random_state=0)
     groups = rng.randint(0, 3, 15)
 
-    clf = LinearSVC(dual="auto", random_state=0)
+    clf = LinearSVC(random_state=0)
     grid = {"C": [1]}
 
     group_cvs = [
@@ -346,7 +351,7 @@ def test_classes__property():
     y = np.array([0] * 5 + [1] * 5)
     Cs = [0.1, 1, 10]
 
-    grid_search = GridSearchCV(LinearSVC(dual="auto", random_state=0), {"C": Cs})
+    grid_search = GridSearchCV(LinearSVC(random_state=0), {"C": Cs})
     grid_search.fit(X, y)
     assert_array_equal(grid_search.best_estimator_.classes_, grid_search.classes_)
 
@@ -356,13 +361,11 @@ def test_classes__property():
     assert not hasattr(grid_search, "classes_")
 
     # Test that the grid searcher has no classes_ attribute before it's fit
-    grid_search = GridSearchCV(LinearSVC(dual="auto", random_state=0), {"C": Cs})
+    grid_search = GridSearchCV(LinearSVC(random_state=0), {"C": Cs})
     assert not hasattr(grid_search, "classes_")
 
     # Test that the grid searcher has no classes_ attribute without a refit
-    grid_search = GridSearchCV(
-        LinearSVC(dual="auto", random_state=0), {"C": Cs}, refit=False
-    )
+    grid_search = GridSearchCV(LinearSVC(random_state=0), {"C": Cs}, refit=False)
     grid_search.fit(X, y)
     assert not hasattr(grid_search, "classes_")
 
@@ -426,7 +429,7 @@ def test_grid_search_error():
     # Test that grid search will capture errors on data with different length
     X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
 
-    clf = LinearSVC(dual="auto")
+    clf = LinearSVC()
     cv = GridSearchCV(clf, {"C": [0.1, 1.0]})
     with pytest.raises(ValueError):
         cv.fit(X_[:180], y_)
@@ -500,14 +503,14 @@ def test_grid_search_sparse(csr_container):
     # Test that grid search works with both dense and sparse matrices
     X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
 
-    clf = LinearSVC(dual="auto")
+    clf = LinearSVC()
     cv = GridSearchCV(clf, {"C": [0.1, 1.0]})
     cv.fit(X_[:180], y_[:180])
     y_pred = cv.predict(X_[180:])
     C = cv.best_estimator_.C
 
     X_ = csr_container(X_)
-    clf = LinearSVC(dual="auto")
+    clf = LinearSVC()
     cv = GridSearchCV(clf, {"C": [0.1, 1.0]})
     cv.fit(X_[:180].tocoo(), y_[:180])
     y_pred2 = cv.predict(X_[180:])
@@ -521,14 +524,14 @@ def test_grid_search_sparse(csr_container):
 def test_grid_search_sparse_scoring(csr_container):
     X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
 
-    clf = LinearSVC(dual="auto")
+    clf = LinearSVC()
     cv = GridSearchCV(clf, {"C": [0.1, 1.0]}, scoring="f1")
     cv.fit(X_[:180], y_[:180])
     y_pred = cv.predict(X_[180:])
     C = cv.best_estimator_.C
 
     X_ = csr_container(X_)
-    clf = LinearSVC(dual="auto")
+    clf = LinearSVC()
     cv = GridSearchCV(clf, {"C": [0.1, 1.0]}, scoring="f1")
     cv.fit(X_[:180], y_[:180])
     y_pred2 = cv.predict(X_[180:])
@@ -638,7 +641,7 @@ def test_refit_callable():
         # clf.cv_results_.
         X, y = make_classification(n_samples=100, n_features=4, random_state=42)
         clf = GridSearchCV(
-            LinearSVC(dual="auto", random_state=42),
+            LinearSVC(random_state=42),
             {"C": [0.01, 0.1, 1]},
             scoring="precision",
             refit=True,
@@ -655,7 +658,7 @@ def test_refit_callable():
 
     X, y = make_classification(n_samples=100, n_features=4, random_state=42)
     clf = GridSearchCV(
-        LinearSVC(dual="auto", random_state=42),
+        LinearSVC(random_state=42),
         {"C": [0.01, 0.1, 1]},
         scoring="precision",
         refit=refit_callable,
@@ -682,7 +685,7 @@ def test_refit_callable_invalid_type():
     X, y = make_classification(n_samples=100, n_features=4, random_state=42)
 
     clf = GridSearchCV(
-        LinearSVC(dual="auto", random_state=42),
+        LinearSVC(random_state=42),
         {"C": [0.1, 1]},
         scoring="precision",
         refit=refit_callable_invalid_type,
@@ -708,7 +711,7 @@ def test_refit_callable_out_bound(out_bound_value, search_cv):
     X, y = make_classification(n_samples=100, n_features=4, random_state=42)
 
     clf = search_cv(
-        LinearSVC(dual="auto", random_state=42),
+        LinearSVC(random_state=42),
         {"C": [0.1, 1]},
         scoring="precision",
         refit=refit_callable_out_bound,
@@ -734,7 +737,7 @@ def test_refit_callable_multi_metric():
     X, y = make_classification(n_samples=100, n_features=4, random_state=42)
     scoring = {"Accuracy": make_scorer(accuracy_score), "prec": "precision"}
     clf = GridSearchCV(
-        LinearSVC(dual="auto", random_state=42),
+        LinearSVC(random_state=42),
         {"C": [0.01, 0.1, 1]},
         scoring=scoring,
         refit=refit_callable,
@@ -1407,7 +1410,7 @@ def test_search_cv_results_none_param():
 
 @ignore_warnings()
 def test_search_cv_timing():
-    svc = LinearSVC(dual="auto", random_state=0)
+    svc = LinearSVC(random_state=0)
 
     X = [
         [
@@ -1449,7 +1452,7 @@ def test_search_cv_timing():
 def test_grid_search_correct_score_results():
     # test that correct scores are used
     n_splits = 3
-    clf = LinearSVC(dual="auto", random_state=0)
+    clf = LinearSVC(random_state=0)
     X, y = make_blobs(random_state=0, centers=2)
     Cs = [0.1, 1, 10]
     for score in ["f1", "roc_auc"]:
@@ -1788,7 +1791,7 @@ def test_stochastic_gradient_loss_param():
 def test_search_train_scores_set_to_false():
     X = np.arange(6).reshape(6, -1)
     y = [0, 0, 0, 1, 1, 1]
-    clf = LinearSVC(dual="auto", random_state=0)
+    clf = LinearSVC(random_state=0)
 
     gs = GridSearchCV(clf, param_grid={"C": [0.1, 0.2]}, cv=3)
     gs.fit(X, y)
@@ -1801,7 +1804,7 @@ def test_grid_search_cv_splits_consistency():
     X, y = make_classification(n_samples=n_samples, random_state=0)
 
     gs = GridSearchCV(
-        LinearSVC(dual="auto", random_state=0),
+        LinearSVC(random_state=0),
         param_grid={"C": [0.1, 0.2, 0.3]},
         cv=OneTimeSplitter(n_splits=n_splits, n_samples=n_samples),
         return_train_score=True,
@@ -1809,7 +1812,7 @@ def test_grid_search_cv_splits_consistency():
     gs.fit(X, y)
 
     gs2 = GridSearchCV(
-        LinearSVC(dual="auto", random_state=0),
+        LinearSVC(random_state=0),
         param_grid={"C": [0.1, 0.2, 0.3]},
         cv=KFold(n_splits=n_splits),
         return_train_score=True,
@@ -1822,7 +1825,7 @@ def test_grid_search_cv_splits_consistency():
         GeneratorType,
     )
     gs3 = GridSearchCV(
-        LinearSVC(dual="auto", random_state=0),
+        LinearSVC(random_state=0),
         param_grid={"C": [0.1, 0.2, 0.3]},
         cv=KFold(n_splits=n_splits, shuffle=True, random_state=0).split(X, y),
         return_train_score=True,
@@ -1830,7 +1833,7 @@ def test_grid_search_cv_splits_consistency():
     gs3.fit(X, y)
 
     gs4 = GridSearchCV(
-        LinearSVC(dual="auto", random_state=0),
+        LinearSVC(random_state=0),
         param_grid={"C": [0.1, 0.2, 0.3]},
         cv=KFold(n_splits=n_splits, shuffle=True, random_state=0),
         return_train_score=True,
@@ -1866,7 +1869,7 @@ def test_grid_search_cv_splits_consistency():
 
     # Check consistency of folds across the parameters
     gs = GridSearchCV(
-        LinearSVC(dual="auto", random_state=0),
+        LinearSVC(random_state=0),
         param_grid={"C": [0.1, 0.1, 0.2, 0.2]},
         cv=KFold(n_splits=n_splits, shuffle=True),
         return_train_score=True,
@@ -2090,7 +2093,7 @@ def test_callable_multimetric_confusion_matrix():
         return {"tn": cm[0, 0], "fp": cm[0, 1], "fn": cm[1, 0], "tp": cm[1, 1]}
 
     X, y = make_classification(n_samples=40, n_features=4, random_state=42)
-    est = LinearSVC(dual="auto", random_state=42)
+    est = LinearSVC(random_state=42)
     search = GridSearchCV(est, {"C": [0.1, 1]}, scoring=custom_scorer, refit="fp")
 
     search.fit(X, y)
@@ -2114,7 +2117,7 @@ def test_callable_multimetric_same_as_list_of_strings():
         }
 
     X, y = make_classification(n_samples=40, n_features=4, random_state=42)
-    est = LinearSVC(dual="auto", random_state=42)
+    est = LinearSVC(random_state=42)
     search_callable = GridSearchCV(
         est, {"C": [0.1, 1]}, scoring=custom_scorer, refit="recall"
     )
@@ -2137,7 +2140,7 @@ def test_callable_single_metric_same_as_single_string():
         return recall_score(y, y_pred)
 
     X, y = make_classification(n_samples=40, n_features=4, random_state=42)
-    est = LinearSVC(dual="auto", random_state=42)
+    est = LinearSVC(random_state=42)
     search_callable = GridSearchCV(
         est, {"C": [0.1, 1]}, scoring=custom_scorer, refit=True
     )
@@ -2165,7 +2168,7 @@ def test_callable_multimetric_error_on_invalid_key():
 
     X, y = make_classification(n_samples=40, n_features=4, random_state=42)
     clf = GridSearchCV(
-        LinearSVC(dual="auto", random_state=42),
+        LinearSVC(random_state=42),
         {"C": [0.1, 1]},
         scoring=bad_scorer,
         refit="good_name",
@@ -2447,7 +2450,7 @@ def test_search_cv_verbose_3(capsys, return_train_score):
     """Check that search cv with verbose>2 shows the score for single
     metrics. non-regression test for #19658."""
     X, y = make_classification(n_samples=100, n_classes=2, flip_y=0.2, random_state=0)
-    clf = LinearSVC(dual="auto", random_state=0)
+    clf = LinearSVC(random_state=0)
     grid = {"C": [0.1]}
 
     GridSearchCV(
@@ -2478,7 +2481,7 @@ def test_search_estimator_param(SearchCV, param_search):
     # test that SearchCV object doesn't change the object given in the parameter grid
     X, y = make_classification(random_state=42)
 
-    params = {"clf": [LinearSVC(dual="auto")], "clf__C": [0.01]}
+    params = {"clf": [LinearSVC()], "clf__C": [0.01]}
     orig_C = params["clf"][0].C
 
     pipe = Pipeline([("trs", MinimalTransformer()), ("clf", None)])
@@ -2523,6 +2526,56 @@ def test_search_with_2d_array():
     np.testing.assert_array_equal(result.data, expected_data)
 
 
+def test_search_html_repr():
+    """Test different HTML representations for GridSearchCV."""
+    X, y = make_classification(random_state=42)
+
+    pipeline = Pipeline([("scale", StandardScaler()), ("clf", DummyClassifier())])
+    param_grid = {"clf": [DummyClassifier(), LogisticRegression()]}
+
+    # Unfitted shows the original pipeline
+    search_cv = GridSearchCV(pipeline, param_grid=param_grid, refit=False)
+    with config_context(display="diagram"):
+        repr_html = search_cv._repr_html_()
+        assert "<pre>DummyClassifier()</pre>" in repr_html
+
+    # Fitted with `refit=False` shows the original pipeline
+    search_cv.fit(X, y)
+    with config_context(display="diagram"):
+        repr_html = search_cv._repr_html_()
+        assert "<pre>DummyClassifier()</pre>" in repr_html
+
+    # Fitted with `refit=True` shows the best estimator
+    search_cv = GridSearchCV(pipeline, param_grid=param_grid, refit=True)
+    search_cv.fit(X, y)
+    with config_context(display="diagram"):
+        repr_html = search_cv._repr_html_()
+        assert "<pre>DummyClassifier()</pre>" not in repr_html
+        assert "<pre>LogisticRegression()</pre>" in repr_html
+
+
+# TODO(1.7): remove this test
+@pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
+def test_inverse_transform_Xt_deprecation(SearchCV):
+    clf = MockClassifier()
+    search = SearchCV(clf, {"foo_param": [1, 2, 3]}, cv=3, verbose=3)
+
+    X2 = search.fit(X, y).transform(X)
+
+    with pytest.raises(TypeError, match="Missing required positional argument"):
+        search.inverse_transform()
+
+    with pytest.raises(TypeError, match="Cannot use both X and Xt. Use X only"):
+        search.inverse_transform(X=X2, Xt=X2)
+
+    with warnings.catch_warnings(record=True):
+        warnings.simplefilter("error")
+        search.inverse_transform(X2)
+
+    with pytest.warns(FutureWarning, match="Xt was renamed X in version 1.5"):
+        search.inverse_transform(Xt=X2)
+
+
 # Metadata Routing Tests
 # ======================
 
@@ -2543,7 +2596,7 @@ def test_multi_metric_search_forwards_metadata(SearchCV, param_search):
     score_weights = rng.rand(n_samples)
     score_metadata = rng.rand(n_samples)
 
-    est = LinearSVC(dual="auto")
+    est = LinearSVC()
     param_grid_search = {param_search: {"C": [1]}}
 
     scorer_registry = _Registry()
@@ -2577,7 +2630,7 @@ def test_score_rejects_params_with_no_routing_enabled(SearchCV, param_search):
     """*SearchCV should reject **params when metadata routing is not enabled
     since this is added only when routing is enabled."""
     X, y = make_classification(random_state=42)
-    est = LinearSVC(dual="auto")
+    est = LinearSVC()
     param_grid_search = {param_search: {"C": [1]}}
 
     gs = SearchCV(est, cv=2, **param_grid_search).fit(X, y)
@@ -2588,3 +2641,48 @@ def test_score_rejects_params_with_no_routing_enabled(SearchCV, param_search):
 
 # End of Metadata Routing Tests
 # =============================
+
+
+def test_cv_results_dtype_issue_29074():
+    """Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/29074"""
+
+    class MetaEstimator(BaseEstimator, ClassifierMixin):
+        def __init__(
+            self,
+            base_clf,
+            parameter1=None,
+            parameter2=None,
+            parameter3=None,
+            parameter4=None,
+        ):
+            self.base_clf = base_clf
+            self.parameter1 = parameter1
+            self.parameter2 = parameter2
+            self.parameter3 = parameter3
+            self.parameter4 = parameter4
+
+        def fit(self, X, y=None):
+            self.base_clf.fit(X, y)
+            return self
+
+        def score(self, X, y):
+            return self.base_clf.score(X, y)
+
+    # Values of param_grid are such that np.result_type gives slightly
+    # different errors, in particular ValueError and TypeError
+    param_grid = {
+        "parameter1": [None, {"option": "A"}, {"option": "B"}],
+        "parameter2": [None, [1, 2]],
+        "parameter3": [{"a": 1}],
+        "parameter4": ["str1", "str2"],
+    }
+    grid_search = GridSearchCV(
+        estimator=MetaEstimator(LogisticRegression()),
+        param_grid=param_grid,
+        cv=3,
+    )
+
+    X, y = make_blobs(random_state=0)
+    grid_search.fit(X, y)
+    for param in param_grid:
+        assert grid_search.cv_results_[f"param_{param}"].dtype == object
