@@ -81,6 +81,13 @@ Changelog
   whether a given estimator is of category clusterer.
   :pr:`28936` by :user:`Christian Veenhuis <ChVeen>`.
 
+:mod:`sklearn.inspection`
+...........................
+
+- |MajorFeature| Added function :func:`inspection.h_statistic` to
+  calculate Friedman and Popescu's H-Statistic of pairwise interaction strength.
+  :pr:`28375` by :user:`Michael Mayer <mayer79>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
