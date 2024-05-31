@@ -37,7 +37,7 @@ def _calculate_pd_brute_fast(
     # TODO: remove via https://github.com/scikit-learn/scikit-learn/issues/28931
     if hasattr(X, "iloc"):  # pandas<2 does not allow "values" to have repeated indices
         grid_stacked = grid_stacked.reset_index(drop=True)
-
+        X_stacked = X_stacked.reset_index(drop=True)
     _safe_assign(X_stacked, values=grid_stacked, column_indexer=feature_indices)
 
     preds = pred_fun(X_stacked)
