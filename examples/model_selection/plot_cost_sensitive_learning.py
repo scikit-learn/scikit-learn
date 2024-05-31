@@ -685,6 +685,10 @@ print(f"Benefit of logistic regression with a tuned threshold:  {business_score:
 # beyond the scope of the scikit-learn library itself.
 
 # %%
+# Fixed Elkan-optimal threshold
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+#
+# Under the assumption that the probabilistic classifier is well-calibrated.
 
 
 # %%
@@ -760,6 +764,10 @@ print(
 
 
 # %%
+# Variable Elkan-optimal threshold - predict-time optimization
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+#
+# Also under the assumption that the probabilistic classifier is well-calibrated.
 
 
 class VariableThresholdClassifier:
