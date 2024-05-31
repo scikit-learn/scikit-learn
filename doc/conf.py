@@ -456,9 +456,6 @@ for old_link in redirects:
 # See https://github.com/scikit-learn/scikit-learn/pull/22550
 html_context["is_devrelease"] = parsed_version.is_devrelease
 
-# Not showing the search summary makes the search page load faster.
-html_show_search_summary = True
-
 
 # -- Options for LaTeX output ------------------------------------------------
 latex_elements = {
