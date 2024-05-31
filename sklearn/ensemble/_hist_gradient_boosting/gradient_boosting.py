@@ -583,6 +583,17 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         self._validate_parameters()
         monotonic_cst = _check_monotonic_cst(self, self.monotonic_cst)
+        # _preprocess_X places the categorical features at the beginning,
+        # change the order of monotonic_cst accordingly
+        if self.is_categorical_ is not None:
+            monotonic_cst_remapped = np.concatenate(
+                (
+                    monotonic_cst[self.is_categorical_],
+                    monotonic_cst[~self.is_categorical_],
+                )
+            )
+        else:
+            monotonic_cst_remapped = monotonic_cst
 
         # used for validation in predict
         n_samples, self._n_features = X.shape
@@ -895,7 +906,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     n_bins_non_missing=self._bin_mapper.n_bins_non_missing_,
                     has_missing_values=has_missing_values,
                     is_categorical=self._is_categorical_remapped,
-                    monotonic_cst=monotonic_cst,
+                    monotonic_cst=monotonic_cst_remapped,
                     interaction_cst=interaction_cst,
                     max_leaf_nodes=self.max_leaf_nodes,
                     max_depth=self.max_depth,

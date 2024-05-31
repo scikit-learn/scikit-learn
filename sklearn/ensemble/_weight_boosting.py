@@ -482,6 +482,10 @@ class AdaBoostClassifier(
     For a detailed example of using AdaBoost to fit a sequence of DecisionTrees
     as weaklearners, please refer to
     :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_multiclass.py`.
+
+    For a detailed example of using AdaBoost to fit a non-linearly seperable
+    classification dataset composed of two Gaussian quantiles clusters, please
+    refer to :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_twoclass.py`.
     """
 
     # TODO(1.6): Modify _parameter_constraints for "algorithm" to only check
@@ -1076,6 +1080,10 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
     array([4.7972...])
     >>> regr.score(X, y)
     0.9771...
+
+    For a detailed example of utilizing :class:`~sklearn.ensemble.AdaBoostRegressor`
+    to fit a sequence of decision trees as weak learners, please refer to
+    :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_regression.py`.
     """
 
     _parameter_constraints: dict = {

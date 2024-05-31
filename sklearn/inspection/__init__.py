@@ -1,4 +1,4 @@
-"""The :mod:`sklearn.inspection` module includes tools for model inspection."""
+"""Tools for model inspection."""
 
 from ._h_statistic import h_statistic
 from ._partial_dependence import partial_dependence
