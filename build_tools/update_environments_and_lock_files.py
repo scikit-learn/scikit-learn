@@ -93,7 +93,7 @@ build_metadata_list = [
     {
         "name": "pylatest_conda_forge_mkl_array-api_linux-64",
         "type": "conda",
-        "tag": "main-ci",
+        "tag": "gpu",
         "folder": "build_tools/github",
         "platform": "linux-64",
         "channel": ["conda-forge", "pytorch", "nvidia"],
