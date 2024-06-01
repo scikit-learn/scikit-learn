@@ -147,8 +147,9 @@ also possible to manually set the decision threshold using the class
 to refit the model when calling `fit`, you can set the parameter `prefit=True`.
 
 .. note::
-  Given a calibrated classifier and a dataset is representative and large enough,
-  the optimal decision threshold is theoretically defined as in Eq. (2) of [E2001]_.
+  Given a calibrated classifier, the optimal decision threshold is theoretically defined
+  as in Eq. (2) of [E2001]_ if the metric to optimize can be expressed as a weighted
+  sum of the entries of the confusion matrix.
 
   In this case, using :class:`~sklearn.model_selection.FixedThresholdClassifier` is
   therefore advantageous in terms of computational cost.

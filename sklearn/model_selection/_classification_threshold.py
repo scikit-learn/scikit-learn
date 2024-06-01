@@ -303,8 +303,9 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
 
     Notes
     -----
-    Given a calibrated classifier and our dataset is representative and large enough,
-    the optimal threshold is theoretically defined as in Eq. (2) of Elkan paper [1]_.
+    Given a calibrated classifier, the optimal threshold is theoretically defined as in
+    Eq. (2) of Elkan paper [1]_ if the metric to optimize can be expressed as a
+    weighted sum of the entries of the confusion matrix.
 
     References
     ----------
