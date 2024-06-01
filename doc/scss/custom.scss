@@ -196,8 +196,8 @@ div.sk-text-image-grid-large {
 :root {
   --docsearch-modal-width: 768px;
   --docsearch-modal-height: 700px;
-  --docsearch-searchbox-shadow: inset 0 0 0 2px var(--pst-color-accent);
-  --docsearch-highlight-color: var(--pst-color-accent);
+  --docsearch-searchbox-shadow: inset 0 0 0 2px var(--pst-color-primary);
+  --docsearch-highlight-color: var(--pst-color-primary);
 }
 
 .DocSearch-Modal {
@@ -210,7 +210,7 @@ div.sk-text-image-grid-large {
 
 .DocSearch-MagnifierLabel,
 .DocSearch-Reset {
-  color: var(--pst-color-accent);
+  color: var(--pst-color-primary);
 }
 
 .DocSearch-Input {
@@ -220,7 +220,7 @@ div.sk-text-image-grid-large {
 
 .DocSearch-Hit-source {
   background: var(--pst-color-background);
-  color: var(--pst-color-accent);
+  color: var(--pst-color-primary);
   font-size: var(--pst-sidebar-font-size);
 }
 
