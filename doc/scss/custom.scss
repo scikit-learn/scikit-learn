@@ -214,7 +214,6 @@ div.sk-text-image-grid-large {
 }
 
 .DocSearch-Input {
-  background-color: var(--pst-color-background);
   color: var(--pst-color-text-base);
   font-size: var(--pst-font-size-icon);
 }
@@ -225,11 +224,15 @@ div.sk-text-image-grid-large {
   font-size: var(--pst-sidebar-font-size);
 }
 
+.DocSearch-Hit-title {
+  font-size: var(--pst-sidebar-font-size);
+}
+
 .DocSearch-Footer {
   background: var(--pst-color-background);
   box-shadow: 0 0 0 0;
 }
 
 .DocSearch-Commands {
-  @apply hidden;
+  display: none;
 }
