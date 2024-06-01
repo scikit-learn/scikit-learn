@@ -193,7 +193,43 @@ div.sk-text-image-grid-large {
 
 /* Style of the docsearch modal window */
 
-// Hide the button explaining the navigation
+:root {
+  --docsearch-modal-width: 768px;
+  --docsearch-modal-height: 700px;
+  --docsearch-searchbox-shadow: inset 0 0 0 2px var(--pst-color-accent);
+  --docsearch-highlight-color: var(--pst-color-accent);
+}
+
+.DocSearch-Modal {
+  background: var(--pst-color-background);
+}
+
+.DocSearch-Form {
+  background: var(--pst-color-background);
+}
+
+.DocSearch-MagnifierLabel,
+.DocSearch-Reset {
+  color: var(--pst-color-accent);
+}
+
+.DocSearch-Input {
+  background-color: var(--pst-color-background);
+  color: var(--pst-color-text-base);
+  font-size: var(--pst-font-size-icon);
+}
+
+.DocSearch-Hit-source {
+  background: var(--pst-color-background);
+  color: var(--pst-color-accent);
+  font-size: var(--pst-sidebar-font-size);
+}
+
+.DocSearch-Footer {
+  background: var(--pst-color-background);
+  box-shadow: 0 0 0 0;
+}
+
 .DocSearch-Commands {
   @apply hidden;
 }
