@@ -193,6 +193,9 @@ div.sk-text-image-grid-large {
 
 /* Style of the docsearch modal window */
 
+// In the following, we mainly reuse the background color and font-color from the
+// pydata-sphinx-theme. We also adjust slightly the font-size to be wider and in line
+// with the sidebar design.
 :root {
   --docsearch-modal-width: 768px;
   --docsearch-modal-height: 700px;
@@ -228,11 +231,13 @@ div.sk-text-image-grid-large {
   font-size: var(--pst-sidebar-font-size);
 }
 
+// Remove contrast of footer since only Algolia logo is displayed
 .DocSearch-Footer {
   background: var(--pst-color-background);
   box-shadow: 0 0 0 0;
 }
 
+// Hide the navigation instructions
 .DocSearch-Commands {
   display: none;
 }
