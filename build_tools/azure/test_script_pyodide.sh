@@ -7,5 +7,6 @@ set -e
 # (2023-09-27) there is an issue with scipy.linalg in a Pyodide venv, see
 # https://github.com/pyodide/pyodide/issues/3865 for more details.
 # node build_tools/azure/pytest-pyodide.js --pyargs sklearn --durations 20 --showlocals
+source .pyodide-venv/bin/activate
 pip install pytest
 pytest --pyargs sklearn --durations 20 --showlocals
