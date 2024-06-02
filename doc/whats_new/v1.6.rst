@@ -110,6 +110,13 @@ Changelog
   when duplicate values in the training data lead to inaccurate outlier detection.
   :pr:`28773` by :user:`Henrique Caroço <HenriqueProj>`.
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Enhancement| The HTML representation of :class:`preprocessing.FunctionTransformer`
+  will show the function name in the label.
+  :pr:`29158` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:
 
