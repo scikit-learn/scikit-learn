@@ -261,12 +261,12 @@ html_theme_options = {
     },
     "surface_warnings": True,
     # -- Template placement in theme layouts ----------------------------------
-    "navbar_start": ["navbar-logo"],
+    "navbar_start": ["navbar-logo", "searchbox"],
     # Note that the alignment of navbar_center is controlled by navbar_align
     "navbar_center": ["navbar-nav"],
     "navbar_end": ["theme-switcher", "navbar-icon-links", "version-switcher"],
     # navbar_persistent is persistent right (even when on mobiles)
-    "navbar_persistent": ["search-button"],
+    "navbar_persistent": [],
     "article_header_start": ["breadcrumbs"],
     "article_header_end": [],
     "article_footer_items": ["prev-next"],
@@ -770,7 +770,8 @@ def setup(app):
     app.connect("build-finished", make_carousel_thumbs)
     app.connect("build-finished", filter_search_index)
 
-    # Renable built-in search disable by sphinx-docsearch
+    # Renable built-in search disabled by sphinx-docsearch since it is used by the
+    # recommender system of sphinx-gallery
     StandaloneHTMLBuilder.search = True
     DirectoryHTMLBuilder.search = True
 
