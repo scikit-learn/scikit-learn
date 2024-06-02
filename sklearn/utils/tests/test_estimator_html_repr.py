@@ -38,6 +38,10 @@ from sklearn.utils._estimator_html_repr import (
 from sklearn.utils.fixes import parse_version
 
 
+def dummy_function(x, y):
+    return x + y
+
+
 @pytest.mark.parametrize("checked", [True, False])
 def test_write_label_html(checked):
     # Test checking logic and labeling
@@ -524,31 +528,25 @@ def test_non_utf8_locale(set_non_utf8_locale):
     _get_css_style()
 
 
-def test_function_transformer_show_caption():
+@pytest.mark.parametrize(
+    "func, expected_name",
+    [
+        (lambda x: x + 1, html.escape("<lambda>")),
+        (dummy_function, "dummy_function"),
+        (partial(dummy_function, y=1), "dummy_function"),
+        (np.vectorize(partial(dummy_function, y=1)), re.escape("vectorize(...)")),
+    ],
+)
+def test_function_transformer_show_caption(func, expected_name):
     # Test that function name is shown as the name and "FunctionTransformer" is shown
     # in the caption
-
-    def function_one(x, y):
-        return x + y
-
-    ft1 = FunctionTransformer(lambda x: x + 1)
-    ft2 = FunctionTransformer(function_one)
-    ft3 = FunctionTransformer(partial(function_one, y=1))
-    ft4 = FunctionTransformer(np.vectorize(partial(function_one, y=1)))
-    pipe = make_pipeline(ft1, ft2, ft3, ft4)
-    html_output = estimator_html_repr(pipe)
+    ft = FunctionTransformer(func)
+    html_output = estimator_html_repr(ft)
 
     p = (
         r'<label for="sk-estimator-id-[0-9]*" class="sk-toggleable__label fitted '
-        r'sk-toggleable__label-arrow"><div><div>{name}</div>'
+        rf'sk-toggleable__label-arrow"><div><div>{expected_name}</div>'
         r'<div class="caption">FunctionTransformer</div></div>'
     )
-
-    for name in [
-        html.escape("<lambda>"),
-        "function_one",
-        re.escape("partial(function_one)"),
-        re.escape("vectorize(...)"),
-    ]:
-        re_compiled = re.compile(p.format(name=name))
-        assert re_compiled.search(html_output)
+    re_compiled = re.compile(p)
+    assert re_compiled.search(html_output)

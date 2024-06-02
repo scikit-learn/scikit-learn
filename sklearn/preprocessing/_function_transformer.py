@@ -422,7 +422,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         if hasattr(self.func, "__name__"):
             return self.func.__name__
         if isinstance(self.func, partial):
-            return f"partial({self.func.func.__name__})"
+            return self.func.func.__name__
         return f"{self.func.__class__.__name__}(...)"
 
     def _sk_visual_block_(self):
