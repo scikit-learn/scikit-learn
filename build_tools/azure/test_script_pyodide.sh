@@ -10,6 +10,7 @@ set -ex
 source .pyodide-venv/bin/activate
 which pip
 pip install pytest
+df -h
 cd /tmp
 which pytest
 python -c 'import sklearn; print(sklearn.__file__)'
