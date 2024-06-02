@@ -39,7 +39,7 @@ from sklearn.utils.fixes import parse_version
 
 
 def dummy_function(x, y):
-    return x + y
+    return x + y  # pragma: nocover
 
 
 @pytest.mark.parametrize("checked", [True, False])

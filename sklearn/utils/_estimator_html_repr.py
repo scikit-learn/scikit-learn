@@ -161,12 +161,11 @@ def _write_label_html(
         est_id = _ESTIMATOR_ID_COUNTER.get_id()
 
         if doc_link:
+            doc_label = "<span>Online documentation</span>"
             if doc_link_label is not None:
                 doc_label = f"<span>Documentation for {doc_link_label}</span>"
             elif name is not None:
                 doc_label = f"<span>Documentation for {name}</span>"
-            else:
-                doc_label = "<span>Online documentation</span>"
             doc_link = (
                 f'<a class="sk-estimator-doc-link {is_fitted_css_class}"'
                 f' rel="noreferrer" target="_blank" href="{doc_link}">?{doc_label}</a>'
