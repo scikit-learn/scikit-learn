@@ -2,9 +2,11 @@ import html
 import locale
 import re
 from contextlib import closing
+from functools import partial
 from io import StringIO
 from unittest.mock import patch
 
+import numpy as np
 import pytest
 
 from sklearn import config_context
@@ -23,7 +25,7 @@ from sklearn.model_selection import RandomizedSearchCV
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import FeatureUnion, Pipeline, make_pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.preprocessing import FunctionTransformer, OneHotEncoder, StandardScaler
 from sklearn.svm import LinearSVC, LinearSVR
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._estimator_html_repr import (
@@ -48,8 +50,8 @@ def test_write_label_html(checked):
 
         p = (
             r'<label for="sk-estimator-id-[0-9]*"'
-            r' class="sk-toggleable__label (fitted)? sk-toggleable__label-arrow ">'
-            r"LogisticRegression"
+            r' class="sk-toggleable__label (fitted)? sk-toggleable__label-arrow">'
+            r"<div><div>LogisticRegression</div></div>"
         )
         re_compiled = re.compile(p)
         assert re_compiled.search(html_label)
@@ -189,7 +191,7 @@ def test_estimator_html_repr_pipeline():
     # low level estimators do not show changes
     with config_context(print_changed_only=True):
         assert html.escape(str(num_trans["pass"])) in html_output
-        assert "passthrough</label>" in html_output
+        assert "<div><div>passthrough</div></div></label>" in html_output
         assert html.escape(str(num_trans["imputer"])) in html_output
 
         for _, _, cols in preprocess.transformers:
@@ -246,8 +248,8 @@ def test_stacking_regressor(final_estimator):
     assert html.escape(str(reg.estimators[0][0])) in html_output
     p = (
         r'<label for="sk-estimator-id-[0-9]*"'
-        r' class="sk-toggleable__label (fitted)? sk-toggleable__label-arrow ">'
-        r"&nbsp;LinearSVR"
+        r' class="sk-toggleable__label (fitted)? sk-toggleable__label-arrow">'
+        r"<div><div>LinearSVR</div></div>"
     )
     re_compiled = re.compile(p)
     assert re_compiled.search(html_output)
@@ -255,8 +257,8 @@ def test_stacking_regressor(final_estimator):
     if final_estimator is None:
         p = (
             r'<label for="sk-estimator-id-[0-9]*"'
-            r' class="sk-toggleable__label (fitted)? sk-toggleable__label-arrow ">'
-            r"&nbsp;RidgeCV"
+            r' class="sk-toggleable__label (fitted)? sk-toggleable__label-arrow">'
+            r"<div><div>RidgeCV</div></div>"
         )
         re_compiled = re.compile(p)
         assert re_compiled.search(html_output)
@@ -272,7 +274,10 @@ def test_birch_duck_typing_meta():
     # inner estimators do not show changes
     with config_context(print_changed_only=True):
         assert f"<pre>{html.escape(str(birch.n_clusters))}" in html_output
-        assert "AgglomerativeClustering</label>" in html_output
+
+        p = r"<div><div>AgglomerativeClustering</div></div><div>.+</div></label>"
+        re_compiled = re.compile(p)
+        assert re_compiled.search(html_output)
 
     # outer estimator contains all changes
     assert f"<pre>{html.escape(str(birch))}" in html_output
@@ -289,7 +294,8 @@ def test_ovo_classifier_duck_typing_meta():
         # regex to match the start of the tag
         p = (
             r'<label for="sk-estimator-id-[0-9]*" '
-            r'class="sk-toggleable__label  sk-toggleable__label-arrow ">&nbsp;LinearSVC'
+            r'class="sk-toggleable__label  sk-toggleable__label-arrow">'
+            r"<div><div>LinearSVC</div></div>"
         )
         re_compiled = re.compile(p)
         assert re_compiled.search(html_output)
@@ -308,7 +314,7 @@ def test_duck_typing_nested_estimator():
         param_distributions=param_distributions,
     )
     html_output = estimator_html_repr(kernel_ridge_tuned)
-    assert "estimator: KernelRidge</label>" in html_output
+    assert "<div><div>estimator: KernelRidge</div></div></label>" in html_output
 
 
 @pytest.mark.parametrize("print_changed_only", [True, False])
@@ -338,8 +344,8 @@ def test_show_arrow_pipeline():
 
     html_output = estimator_html_repr(pipe)
     assert (
-        'class="sk-toggleable__label  sk-toggleable__label-arrow ">&nbsp;&nbsp;Pipeline'
-        in html_output
+        'class="sk-toggleable__label  sk-toggleable__label-arrow">'
+        "<div><div>Pipeline</div></div>" in html_output
     )
 
 
@@ -516,3 +522,33 @@ def test_non_utf8_locale(set_non_utf8_locale):
     Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/27725
     """
     _get_css_style()
+
+
+def test_function_transformer_show_caption():
+    # Test that function name is shown as the name and "FunctionTransformer" is shown
+    # in the caption
+
+    def function_one(x, y):
+        return x + y
+
+    ft1 = FunctionTransformer(lambda x: x + 1)
+    ft2 = FunctionTransformer(function_one)
+    ft3 = FunctionTransformer(partial(function_one, y=1))
+    ft4 = FunctionTransformer(np.vectorize(partial(function_one, y=1)))
+    pipe = make_pipeline(ft1, ft2, ft3, ft4)
+    html_output = estimator_html_repr(pipe)
+
+    p = (
+        r'<label for="sk-estimator-id-[0-9]*" class="sk-toggleable__label fitted '
+        r'sk-toggleable__label-arrow"><div><div>{name}</div>'
+        r'<div class="caption">FunctionTransformer</div></div>'
+    )
+
+    for name in [
+        html.escape("<lambda>"),
+        "function_one",
+        re.escape("partial(function_one)"),
+        re.escape("vectorize(...)"),
+    ]:
+        re_compiled = re.compile(p.format(name=name))
+        assert re_compiled.search(html_output)
