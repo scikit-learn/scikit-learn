@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -ex
 
 # We are using a pytest js wrapper script to run tests inside Pyodide. Maybe
 # one day we can use a Pyodide venv instead but at the time of writing
@@ -8,5 +8,9 @@ set -e
 # https://github.com/pyodide/pyodide/issues/3865 for more details.
 # node build_tools/azure/pytest-pyodide.js --pyargs sklearn --durations 20 --showlocals
 source .pyodide-venv/bin/activate
+which pip
 pip install pytest
+cd /tmp
+which pytest
+python -c 'import sklearn; print(sklearn.__file__)'
 pytest --pyargs sklearn --durations 20 --showlocals
