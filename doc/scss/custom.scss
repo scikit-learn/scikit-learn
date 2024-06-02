@@ -214,17 +214,21 @@ div.sk-text-image-grid-large {
   }
 }
 
-.DocSearch-Modal {
-  background: var(--pst-color-background);
-  margin-top: 10vh;
+@media screen and (min-width: 768.1px) {
+  .DocSearch-Modal {
+    margin-top: 10vh;
+  }
 }
 
-.DocSearch-Form {
+.DocSearch-Modal,
+.DocSearch-Form,
+.DocSearch-Hit-source {
   background: var(--pst-color-background);
 }
 
 .DocSearch-MagnifierLabel,
-.DocSearch-Reset {
+.DocSearch-Reset,
+.DocSearch-Hit-Source {
   color: var(--pst-color-primary);
 }
 
@@ -237,18 +241,7 @@ div.sk-text-image-grid-large {
   vertical-align: unset;
 }
 
-.DocSearch-Hit-source {
-  background: var(--pst-color-background);
-  color: var(--pst-color-primary);
-  font-size: var(--pst-sidebar-font-size);
-}
-
+.DocSearch-Hit-source,
 .DocSearch-Hit-title {
   font-size: var(--pst-sidebar-font-size);
-}
-
-// Remove contrast of footer since only Algolia logo is displayed
-.DocSearch-Footer {
-  background: var(--pst-color-background);
-  box-shadow: 0 0 0 0;
 }
