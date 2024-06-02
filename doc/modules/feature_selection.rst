@@ -333,7 +333,7 @@ the actual learning. The recommended way to do this in scikit-learn is
 to use a :class:`~pipeline.Pipeline`::
 
   clf = Pipeline([
-    ('feature_selection', SelectFromModel(LinearSVC(penalty="l1"))),
+    ('feature_selection', SelectFromModel(LinearSVC(penalty="l1", dual=False))),
     ('classification', RandomForestClassifier())
   ])
   clf.fit(X, y)
