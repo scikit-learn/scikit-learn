@@ -28,6 +28,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           echo "Checking out" ${{ env.PR_ID }}
+          echo "hello-world"
           gh pr checkout ${{ env.PR_ID }}
       - name: Cache conda environment
         id: cache-conda
