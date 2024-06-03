@@ -36,7 +36,7 @@ also download the chart: :download:`ml_map.svg <images/ml_map.svg>`.
     }
   </style>
 
-  <script src="js/scripts/vendor/svg-pan-zoom.min.js"></script>
+  <script src="_static/scripts/vendor/svg-pan-zoom.min.js"></script>
   <script>
     document.addEventListener("DOMContentLoaded", function () {
       const beforePan = function (oldPan, newPan) {
