@@ -104,7 +104,7 @@ Metrics
 - :func:`sklearn.metrics.accuracy_score`
 - :func:`sklearn.metrics.mean_absolute_error`
 - :func:`sklearn.metrics.mean_tweedie_deviance`
-- :func:`sklearn.metrics.pairwise.cosine_similarity``
+- :func:`sklearn.metrics.pairwise.cosine_similarity`
 - :func:`sklearn.metrics.r2_score`
 - :func:`sklearn.metrics.zero_one_loss`
 

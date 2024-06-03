@@ -121,6 +121,7 @@ API_REFERENCE = {
                     "TransformerMixin",
                     "clone",
                     "is_classifier",
+                    "is_clusterer",
                     "is_regressor",
                 ],
             }
@@ -1286,8 +1287,6 @@ API_REFERENCE = {
                 "autosummary": [
                     "parallel.Parallel",
                     "parallel.delayed",
-                    "parallel_backend",
-                    "register_parallel_backend",
                 ],
             },
         ],
@@ -1330,4 +1329,9 @@ DEPRECATED_API_REFERENCE = {
 }
 """
 
-DEPRECATED_API_REFERENCE = {}  # type: ignore
+DEPRECATED_API_REFERENCE = {
+    "1.7": [
+        "utils.parallel_backend",
+        "utils.register_parallel_backend",
+    ]
+}  # type: ignore
