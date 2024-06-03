@@ -651,17 +651,9 @@ We are glad to accept any sort of documentation:
 * **User guide:** These provide more detailed information about the algorithms
   implemented in scikit-learn and generally live in the root
   `doc/ <https://github.com/scikit-learn/scikit-learn/tree/main/doc>`_ directory
-<<<<<<< HEAD
   and
   `doc/modules/ <https://github.com/scikit-learn/scikit-learn/tree/main/doc/modules>`_.
-* **examples** - these provide full code examples that may demonstrate the use
-=======
-  and `doc/modules/ <https://github.com/scikit-learn/scikit-learn/tree/main/doc/modules>`_.
-* **Tutorials:** These introduce various statistical learning and machine learning
-  concepts and are located in
-  `doc/tutorial <https://github.com/scikit-learn/scikit-learn/tree/main/doc/tutorial>`_.
 * **Examples:** These provide full code examples that may demonstrate the use
->>>>>>> upstream/main
   of scikit-learn modules, compare different algorithms or discuss their
   interpretation, etc. Examples live in
   `examples/ <https://github.com/scikit-learn/scikit-learn/tree/main/examples>`_.
