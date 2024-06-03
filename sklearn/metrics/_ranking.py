@@ -280,7 +280,7 @@ def average_precision_score(
     prefer_skip_nested_validation=True,
 )
 def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
-    """Compute error rates for different probability thresholds.
+    """Compute Detection Error Tradeoff (DET) for different probability thresholds.
 
     .. note::
        This metric is used for evaluation of ranking and error tradeoffs of
