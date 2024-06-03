@@ -6,6 +6,8 @@ on:
         description: Test the contents of this Pull Request
         required: true
 
+  pull_request:
+
 permissions: read-all
 
 jobs:
