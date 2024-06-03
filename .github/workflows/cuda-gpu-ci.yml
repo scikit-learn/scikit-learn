@@ -6,13 +6,6 @@ on:
         description: Test the contents of this Pull Request
         required: true
 
-  # XXX Temporary addition to execute workflow on pull requests, but only those
-  # that modify this file
-  # Remove before merging
-  pull_request:
-    paths:
-      - ".github/workflows/gpu-ci.yml"
-
 permissions: read-all
 
 jobs:
