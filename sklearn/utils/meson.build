@@ -62,11 +62,15 @@ foreach name: util_extension_names
     name + '_pyx',
     output: name + '.pyx',
     input: name + '.pyx.tp',
-    command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@']
+    command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
+    # TODO in principle this should go in py.exension_module below. This is
+    # temporary work-around for dependency issue with .pyx.tp files. For more
+    # details, see https://github.com/mesonbuild/meson/issues/13212
+    depends: [pxd, utils_cython_tree],
   )
   py.extension_module(
     name,
-    [pxd, pyx, utils_cython_tree],
+    pyx,
     cython_args: cython_args,
     subdir: 'sklearn/utils',
     install: true
