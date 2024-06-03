@@ -1,4 +1,4 @@
-name: Array API
+name: CUDA GPU
 on:
   workflow_dispatch:
     inputs:
