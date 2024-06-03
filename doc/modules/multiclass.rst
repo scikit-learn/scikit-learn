@@ -222,9 +222,9 @@ in which cell [i, j] indicates the presence of label j in sample i.
     :scale: 75%
 
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multilabel.py`
+* :ref:`sphx_glr_auto_examples_miscellaneous_plot_multilabel.py`
 
 .. _ovo_classification:
 
@@ -263,10 +263,10 @@ Below is an example of multiclass learning using OvO::
          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
 
 
-.. topic:: References:
+.. rubric:: References
 
-    * "Pattern Recognition and Machine Learning. Springer",
-      Christopher M. Bishop, page 183, (First Edition)
+* "Pattern Recognition and Machine Learning. Springer",
+  Christopher M. Bishop, page 183, (First Edition)
 
 .. _ecoc:
 
@@ -321,21 +321,16 @@ Below is an example of multiclass learning using Output-Codes::
          2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 1, 1, 2, 2, 2,
          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
 
-.. topic:: References:
+.. rubric:: References
 
-    * "Solving multiclass learning problems via error-correcting output codes",
-      Dietterich T., Bakiri G.,
-      Journal of Artificial Intelligence Research 2,
-      1995.
+* "Solving multiclass learning problems via error-correcting output codes",
+  Dietterich T., Bakiri G., Journal of Artificial Intelligence Research 2, 1995.
 
-    .. [3] "The error coding method and PICTs",
-        James G., Hastie T.,
-        Journal of Computational and Graphical statistics 7,
-        1998.
+.. [3] "The error coding method and PICTs", James G., Hastie T.,
+  Journal of Computational and Graphical statistics 7, 1998.
 
-    * "The Elements of Statistical Learning",
-      Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
-      2008.
+* "The Elements of Statistical Learning",
+  Hastie T., Tibshirani R., Friedman J., page 606 (second-edition), 2008.
 
 .. _multilabel_classification:
 
@@ -432,10 +427,10 @@ one does not know the optimal ordering of the models in the chain so
 typically many randomly ordered chains are fit and their predictions are
 averaged together.
 
-.. topic:: References:
+.. rubric:: References
 
-    Jesse Read, Bernhard Pfahringer, Geoff Holmes, Eibe Frank,
-        "Classifier Chains for Multi-label Classification", 2009.
+* Jesse Read, Bernhard Pfahringer, Geoff Holmes, Eibe Frank,
+  "Classifier Chains for Multi-label Classification", 2009.
 
 .. _multiclass_multioutput_classification:
 

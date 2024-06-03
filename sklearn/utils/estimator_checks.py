@@ -1,7 +1,4 @@
-"""
-The :mod:`sklearn.utils.estimator_checks` module includes various utilities to
-check the compatibility of estimators with the scikit-learn API.
-"""
+"""Various utilities to check the compatibility of estimators with scikit-learn API."""
 
 import pickle
 import re
@@ -84,7 +81,7 @@ from ._testing import (
     raises,
     set_random_state,
 )
-from .fixes import _IS_PYPY, SPARSE_ARRAY_PRESENT, parse_version, sp_version
+from .fixes import SPARSE_ARRAY_PRESENT, parse_version, sp_version
 from .validation import _num_samples, check_is_fitted, has_fit_parameter
 
 REGRESSION_DATASET = None
@@ -3290,11 +3287,6 @@ def check_no_attributes_set_in_init(name, estimator_orig):
         return
 
     init_params = _get_args(type(estimator).__init__)
-    if _IS_PYPY:
-        # __init__ signature has additional objects in PyPy
-        for key in ["obj"]:
-            if key in init_params:
-                init_params.remove(key)
     parents_init_params = [
         param
         for params_parent in (_get_args(parent) for parent in type(estimator).__mro__)
