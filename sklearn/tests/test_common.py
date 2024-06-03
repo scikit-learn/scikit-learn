@@ -88,7 +88,7 @@ from sklearn.utils.estimator_checks import (
     check_transformer_get_feature_names_out_pandas,
     parametrize_with_checks,
 )
-from sklearn.utils.fixes import _IS_PYPY, _IS_WASM
+from sklearn.utils.fixes import _IS_WASM
 
 
 def test_all_estimator_no_base_class():
@@ -233,11 +233,6 @@ def test_import_all_consistency():
             continue
         # Avoid test suite depending on setuptools
         if "sklearn._build_utils" in modname:
-            continue
-        if _IS_PYPY and (
-            "_svmlight_format_io" in modname
-            or "feature_extraction._hashing_fast" in modname
-        ):
             continue
         package = __import__(modname, fromlist="dummy")
         for name in getattr(package, "__all__", ()):
