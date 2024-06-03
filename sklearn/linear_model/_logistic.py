@@ -1403,7 +1403,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         the softmax function is used to find the predicted probability of
         each class.
         Else use a one-vs-rest approach, i.e. calculate the probability
-        of each class assuming it to be positive using the logistic function.
+        of each class assuming it to be positive using the logistic function
         and normalize these values across all the classes.
 
         Parameters
