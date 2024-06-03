@@ -87,7 +87,8 @@ These objects take as input a scoring function that returns univariate scores
 and p-values (or only scores for :class:`SelectKBest` and
 :class:`SelectPercentile`):
 
-* For regression: :func:`r_regression`, :func:`f_regression`, :func:`mutual_info_regression`
+* For regression: :func:`r_regression`, :func:`f_regression`,
+  :func:`mutual_info_regression`.
 
  * For classification: :func:`chi2`, :func:`info_gain`, :func:`info_gain_ratio`,
    :func:`f_classif`, :func:`mutual_info_classif`

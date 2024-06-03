@@ -11,6 +11,7 @@ from numbers import Integral, Real
 import numpy as np
 from scipy import special, stats
 from scipy.sparse import issparse
+from scipy.special import entr, rel_entr
 
 from ..base import BaseEstimator, _fit_context
 from ..preprocessing import LabelBinarizer
@@ -290,39 +291,37 @@ def chi2(X, y):
     return _chisquare(observed, expected)
 
 
-def _get_entropy(prob):
-    t = np.log2(prob)
-    t[~np.isfinite(t)] = 0
-    return np.multiply(-prob, t)
-
-
 def _info_gain(X, y, aggregate, ratio=False):
 
-    def _a_log_a_div_b(a, b):
-        with np.errstate(invalid="ignore", divide="ignore"):
-            t = np.log2(a / b)
-        t[~np.isfinite(t)] = 0
-        return np.multiply(a, t)
+    feature_count, class_count, class_by_feature_count, total = (
+        _get_feature_and_class_counts(X, y)
+    )
 
-    f_count, c_count, fc_count, total = _get_fc_counts(X, y)
+    feature_prob = feature_count / feature_count.sum()
+    class_prob = class_count / class_count.sum()
+    class_by_feature_prob = class_by_feature_count / total
 
-    f_prob = f_count / f_count.sum()
-    c_prob = c_count / c_count.sum()
-    fc_prob = fc_count / total
-
-    c_f = _a_log_a_div_b(fc_prob, c_prob * f_prob)
-    nc_nf = _a_log_a_div_b(1 - f_prob - c_prob + fc_prob, (1 - c_prob) * (1 - f_prob))
-    c_nf = _a_log_a_div_b((c_count - fc_count) / total, c_prob * (1 - f_prob))
-    nc_f = _a_log_a_div_b((f_count - fc_count) / total, (1 - c_prob) * f_prob)
+    # are the following 4 lines written only for the binary case?
+    c_f = rel_entr(class_by_feature_prob, class_prob * feature_prob) / np.log(2)
+    nc_nf = rel_entr(
+        1 - feature_prob - class_prob + class_by_feature_prob,
+        (1 - class_prob) * (1 - feature_prob),
+    ) / np.log(2)
+    c_nf = rel_entr(
+        (class_count - class_by_feature_count) / total, class_prob * (1 - feature_prob)
+    ) / np.log(2)
+    nc_f = rel_entr(
+        (feature_count - class_by_feature_count) / total,
+        (1 - class_prob) * feature_prob,
+    ) / np.log(2)
 
     scores = c_f + nc_nf + c_nf + nc_f
 
     if ratio:
-        # normalize IG scores to obtain GR
+        # Normalize information_gain scores to obtain the ratio:
         with np.errstate(invalid="ignore", divide="ignore"):
-            scores = scores / (_get_entropy(c_prob) + _get_entropy(1 - c_prob))
+            scores = scores * np.log(2) / ((entr(class_prob)) + (entr(1 - class_prob)))
 
-    # the feature score is averaged over classes
     if aggregate == "mean":
         scores = scores.mean(axis=0)
     elif aggregate == "sum":
@@ -333,15 +332,15 @@ def _info_gain(X, y, aggregate, ratio=False):
     return np.asarray(scores).reshape(-1)
 
 
-def _get_fc_counts(X, y):
-    """Count feature, class, joint and total frequencies
+def _get_feature_and_class_counts(X, y):
+    """Count feature, class, joint and total frequencies.
 
     Returns
     -------
-    f_count : array, shape = (n_features,)
-    c_count : array, shape = (n_classes,)
-    fc_count : array, shape = (n_features, n_classes)
-    total: int
+    f_count : array of shape (n_features,)
+    c_count : array of shape (n_classes,)
+    fc_count : array of shape (n_features, n_classes)
+    total : int
     """
     X = check_array(X, accept_sparse=["csc"])
     if np.any((X.data if issparse(X) else X) < 0):
@@ -351,19 +350,32 @@ def _get_fc_counts(X, y):
     if Y.shape[1] == 1:
         Y = np.append(1 - Y, Y, axis=1)
 
-    f_count = X.sum(axis=0).reshape(1, -1)
-    c_count = safe_sparse_dot(Y.T, X.sum(axis=1)).reshape(-1, 1)
-    fc_count = safe_sparse_dot(Y.T, X)  # n_classes * n_features
-    total = fc_count.sum(axis=0).reshape(1, -1).sum()
+    feature_count = X.sum(axis=0).reshape(1, -1)
+    class_count = safe_sparse_dot(Y.T, X.sum(axis=1)).reshape(-1, 1)
+    class_by_feature_count = safe_sparse_dot(Y.T, X)  # shape(n_classes, n_features)
+    total = class_by_feature_count.sum(axis=0).reshape(1, -1).sum()
 
-    return f_count, c_count, fc_count, total
+    return feature_count, class_count, class_by_feature_count, total
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like"],  # maybe type_of_target(y) -> "binary" (check)
+        "aggregate": [StrOptions({"max", "mean", "sum"})],
+    },
+    prefer_skip_nested_validation=True,
+)
 def info_gain(X, y, aggregate="max"):
     """Compute an Information Gain score for each feature in the data.
 
     The score can be used to weight features by informativeness or select the most
     informative features for training and evaluating a classifier.
+
+    X must contain only **non-negative features** such as booleans or counts and the
+    data needs to be interpretable as a frequency table (e.g., word counts in document
+    classification created by a
+    :class:`~sklearn.feature_extraction.text.CountVectorizer`).
 
     Information Gain [1] measures the number of bits of information obtained about the
     presence or absence of a class by knowing the presence or absence of the feature. IG
@@ -407,14 +419,22 @@ def info_gain(X, y, aggregate="max"):
            Morgan Kaufmann.
 
     .. [2] Y. Yang and J.O. Pedersen. 1997. `A comparative study on feature selection in
-           text
-           categorization. Proceedings of ICML'97, pp. 412-420.
+           text categorization. Proceedings of ICML'97, pp. 412-420.
            <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.32.9956>`_
 
     .. [3] F. Sebastiani. 2002. `Machine Learning in Automatic Text Categorization. ACM
-           Computing
-           Surveys (CSUR).
+           Computing Surveys (CSUR).
            <http://nmis.isti.cnr.it/sebastiani/Publications/ACMCS02.pdf>`_
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.feature_selection import info_gain
+    >>> # Create frequency table (X) and binary classes (y):
+    >>> X = np.array([[1, 1, 3], [0, 2, 3]])
+    >>> y = np.array([1, 0])
+    >>> info_gain(X, y)
+    array([0.10803155, 0.03485155, 0.        ])
     """
 
     return _info_gain(X, y, aggregate)
