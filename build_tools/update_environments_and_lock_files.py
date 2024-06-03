@@ -91,9 +91,9 @@ def remove_from(alist, to_remove):
 
 build_metadata_list = [
     {
-        "name": "pylatest_conda_forge_mkl_array-api_linux-64",
+        "name": "pylatest_conda_forge_cuda_array-api_linux-64",
         "type": "conda",
-        "tag": "gpu",
+        "tag": "cuda",
         "folder": "build_tools/github",
         "platform": "linux-64",
         "channel": ["conda-forge", "pytorch", "nvidia"],
@@ -109,12 +109,6 @@ build_metadata_list = [
             "array-api-compat",
             "array-api-strict",
         ],
-        "package_constraints": {
-            "blas": "[build=mkl]",
-            "pytorch::pytorch": "2.3.0",
-            "pytorch-cuda": "12.1",
-            "cupy": "13.1.0",
-        },
     },
     {
         "name": "pylatest_conda_forge_mkl_linux-64",
