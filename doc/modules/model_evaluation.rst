@@ -1280,9 +1280,9 @@ function:
 
 .. topic:: References:
 
-  .. [WikipediaMCC2021] Wikipedia contributors. Detection error tradeoff.
+  .. [WikipediaMCC2021] Wikipedia contributors. Phi coefficient.
      Wikipedia, The Free Encyclopedia. April 21, 2021, 12:21 CEST.
-     Available at: https://en.wikipedia.org/wiki/Matthews_correlation_coefficient.
+     Available at: https://en.wikipedia.org/wiki/Phi_coefficient
      Accessed April 21, 2021.
 
 .. _multilabel_confusion_matrix:
