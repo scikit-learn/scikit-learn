@@ -34,7 +34,7 @@ _datasets_pair_pyx = custom_target(
   # TODO in principle this should go in py.exension_module below. This is
   # temporary work-around for dependency issue with .pyx.tp files. For more
   # details, see https://github.com/mesonbuild/meson/issues/13212
-  depends: [_pairwise_distances_reduction_cython_tree, utils_cython_tree],
+  depends: [_datasets_pair_pxd, _pairwise_distances_reduction_cython_tree, utils_cython_tree],
 )
 _datasets_pair = py.extension_module(
   '_datasets_pair',
