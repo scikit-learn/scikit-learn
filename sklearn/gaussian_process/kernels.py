@@ -1,7 +1,4 @@
-"""
-The :mod:`sklearn.gaussian_process.kernels` module implements a set of kernels that
-can be combined by operators and used in Gaussian processes.
-"""
+"""A set of kernels that can be combined by operators and used in Gaussian processes."""
 
 # Kernels for Gaussian process regression and classification.
 #
@@ -1750,9 +1747,7 @@ class Matern(RBF):
 
             # We need to recompute the pairwise dimension-wise distances
             if self.anisotropic:
-                D = (X[:, np.newaxis, :] - X[np.newaxis, :, :]) ** 2 / (
-                    length_scale**2
-                )
+                D = (X[:, np.newaxis, :] - X[np.newaxis, :, :]) ** 2 / (length_scale**2)
             else:
                 D = squareform(dists**2)[:, :, np.newaxis]
 

@@ -9,7 +9,6 @@ from _pytest.doctest import DoctestItem
 from sklearn.datasets import get_data_home
 from sklearn.datasets._base import _pkl_filepath
 from sklearn.datasets._twenty_newsgroups import CACHE_NAME
-from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import SkipTest, check_skip_network
 from sklearn.utils.fixes import np_base_version, parse_version
 
@@ -35,8 +34,6 @@ def setup_twenty_newsgroups():
 
 
 def setup_working_with_text_data():
-    if IS_PYPY and os.environ.get("CI", None):
-        raise SkipTest("Skipping too slow test with PyPy on CI")
     check_skip_network()
     cache_path = _pkl_filepath(get_data_home(), CACHE_NAME)
     if not exists(cache_path):

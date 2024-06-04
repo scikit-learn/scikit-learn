@@ -1,5 +1,4 @@
-"""Orthogonal matching pursuit algorithms
-"""
+"""Orthogonal matching pursuit algorithms"""
 
 # Author: Vlad Niculae
 #
@@ -651,8 +650,9 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     Parameters
     ----------
     n_nonzero_coefs : int, default=None
-        Desired number of non-zero entries in the solution. If None (by
-        default) this value is set to 10% of n_features.
+        Desired number of non-zero entries in the solution. Ignored if `tol` is set.
+        When `None` and `tol` is also `None`, this value is either set to 10% of
+        `n_features` or 1, whichever is greater.
 
     tol : float, default=None
         Maximum squared norm of the residual. If not None, overrides n_nonzero_coefs.
@@ -679,9 +679,9 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     n_iter_ : int or array-like
         Number of active features across every target.
 
-    n_nonzero_coefs_ : int
-        The number of non-zero coefficients in the solution. If
-        `n_nonzero_coefs` is None and `tol` is None this value is either set
+    n_nonzero_coefs_ : int or None
+        The number of non-zero coefficients in the solution or `None` when `tol` is
+        set. If `n_nonzero_coefs` is None and `tol` is None this value is either set
         to 10% of `n_features` or 1, whichever is greater.
 
     n_features_in_ : int
@@ -783,6 +783,8 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
             # default for n_nonzero_coefs is 0.1 * n_features
             # but at least one.
             self.n_nonzero_coefs_ = max(int(0.1 * n_features), 1)
+        elif self.tol is not None:
+            self.n_nonzero_coefs_ = None
         else:
             self.n_nonzero_coefs_ = self.n_nonzero_coefs
 
@@ -1114,6 +1116,6 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
 
         router = MetadataRouter(owner=self.__class__.__name__).add(
             splitter=self.cv,
-            method_mapping=MethodMapping().add(callee="split", caller="fit"),
+            method_mapping=MethodMapping().add(caller="fit", callee="split"),
         )
         return router

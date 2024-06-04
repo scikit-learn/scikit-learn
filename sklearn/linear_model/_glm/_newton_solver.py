@@ -1,9 +1,8 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 """
 Newton solver for Generalized Linear Models
 """
-
-# Author: Christian Lorentzen <lorentzen.ch@gmail.com>
-# License: BSD 3 clause
 
 import warnings
 from abc import ABC, abstractmethod
@@ -230,7 +229,7 @@ class NewtonSolver(ABC):
         is_verbose = self.verbose >= 2
         if is_verbose:
             print("  Backtracking Line Search")
-            print(f"    eps=10 * finfo.eps={eps}")
+            print(f"    eps=16 * finfo.eps={eps}")
 
         for i in range(21):  # until and including t = beta**20 ~ 1e-6
             self.coef = self.coef_old + t * self.coef_newton
@@ -502,8 +501,7 @@ class NewtonCholeskySolver(NewtonSolver):
                 "Further options are to use another solver or to avoid such situation "
                 "in the first place. Possible remedies are removing collinear features"
                 " of X or increasing the penalization strengths.\n"
-                "The original Linear Algebra message was:\n"
-                + str(e),
+                "The original Linear Algebra message was:\n" + str(e),
                 scipy.linalg.LinAlgWarning,
             )
             # Possible causes:
