@@ -8,7 +8,7 @@ channels:
 dependencies:
   - python
   - numpy
-  - blas[build=mkl]
+  - blas
   - scipy
   - cython
   - joblib
@@ -25,10 +25,10 @@ dependencies:
   - pytest-cov
   - coverage
   - ccache
-  - pytorch::pytorch=2.3.0
-  - pytorch-cuda=12.1
+  - pytorch::pytorch
+  - pytorch-cuda
   - polars
   - pyarrow
-  - cupy=13.1.0
+  - cupy
   - array-api-compat
   - array-api-strict

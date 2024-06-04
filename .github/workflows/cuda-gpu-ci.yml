@@ -36,7 +36,7 @@ jobs:
           cache-name: cache-conda-env-0
         with:
           path: ~/conda
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('build_tools/github/pylatest_conda_forge_cuda_array-api_linux-64.lock') }}
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('build_tools/github/pylatest_conda_forge_cuda_array-api_linux-64_conda.lock') }}
       - name: Install miniforge
         if: ${{ steps.cache-conda.outputs.cache-hit != 'true' }}
         run: |
@@ -53,7 +53,7 @@ jobs:
           conda activate base
           # XXX switch once https://github.com/scikit-learn/scikit-learn/pull/29176 is merged
           conda install -c conda-forge "$(get_dep conda-lock min)" -y
-          conda-lock install --name sklearn build_tools/github/pylatest_conda_forge_cuda_array-api_linux-64.lock
+          conda-lock install --name sklearn build_tools/github/pylatest_conda_forge_cuda_array-api_linux-64_conda.lock
       - name: Install scikit-learn
         run: |
           source "${HOME}/conda/etc/profile.d/conda.sh"
