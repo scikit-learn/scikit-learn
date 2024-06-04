@@ -3,7 +3,7 @@ import re
 import numpy as np
 import pytest
 
-from sklearn.base import clone
+from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.datasets import (
     load_breast_cancer,
     load_iris,
@@ -775,3 +775,43 @@ def test_warn_on_trivial_thresholds(scoring, kind):
         assert tuned_clf.best_threshold_ == threshods[0] == threshods.min()
     else:
         assert tuned_clf.best_threshold_ == threshods[-1] == threshods.max()
+
+
+class ClassifierLoggingFit(ClassifierMixin, BaseEstimator):
+    """Classifier that logs the number of `fit` calls."""
+
+    def __init__(self, fit_calls=0):
+        self.fit_calls = fit_calls
+
+    def fit(self, X, y, **fit_params):
+        self.fit_calls += 1
+        self.is_fitted_ = True
+        return self
+
+    def predict_proba(self, X):
+        return np.ones((X.shape[0], 2), np.float64)  # pragma: nocover
+
+
+def test_fixed_threshold_classifier_prefit():
+    """Check the behaviour of the `FixedThresholdClassifier` with the `prefit`
+    parameter."""
+    X, y = make_classification(random_state=0)
+
+    estimator = ClassifierLoggingFit()
+    model = FixedThresholdClassifier(estimator=estimator, prefit=True)
+    with pytest.raises(NotFittedError):
+        model.fit(X, y)
+
+    # check that we don't clone the classifier when `prefit=True`.
+    estimator.fit(X, y)
+    model.fit(X, y)
+    assert estimator.fit_calls == 1
+    assert model.estimator_ is estimator
+
+    # check that we clone the classifier when `prefit=False`.
+    estimator = ClassifierLoggingFit()
+    model = FixedThresholdClassifier(estimator=estimator, prefit=False)
+    model.fit(X, y)
+    assert estimator.fit_calls == 0
+    assert model.estimator_.fit_calls == 1
+    assert model.estimator_ is not estimator
