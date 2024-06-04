@@ -160,7 +160,7 @@ if [[ `type -t deactivate` ]]; then
 fi
 
 # Install Miniforge
-MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge-pypy3-Linux-x86_64.sh"
+MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh"
 curl -L --retry 10 $MINIFORGE_URL -o miniconda.sh
 MINIFORGE_PATH=$HOME/miniforge3
 bash ./miniconda.sh -b -p $MINIFORGE_PATH
