@@ -96,7 +96,7 @@ build_metadata_list = [
         "tag": "cuda",
         "folder": "build_tools/github",
         "platform": "linux-64",
-        "channel": ["conda-forge", "pytorch", "nvidia"],
+        "channels": ["conda-forge", "pytorch", "nvidia"],
         "conda_dependencies": common_dependencies
         + [
             "ccache",
@@ -116,7 +116,7 @@ build_metadata_list = [
         "tag": "main-ci",
         "folder": "build_tools/azure",
         "platform": "linux-64",
-        "channel": "conda-forge",
+        "channels": ["conda-forge"],
         "conda_dependencies": common_dependencies
         + [
             "ccache",
@@ -138,7 +138,7 @@ build_metadata_list = [
         "tag": "main-ci",
         "folder": "build_tools/azure",
         "platform": "osx-64",
-        "channel": "conda-forge",
+        "channels": ["conda-forge"],
         "conda_dependencies": common_dependencies
         + [
             "ccache",
@@ -155,7 +155,7 @@ build_metadata_list = [
         "tag": "main-ci",
         "folder": "build_tools/azure",
         "platform": "osx-64",
-        "channel": "defaults",
+        "channels": ["defaults"],
         "conda_dependencies": remove_from(
             common_dependencies, ["cython", "threadpoolctl", "meson-python"]
         )
@@ -177,7 +177,7 @@ build_metadata_list = [
         "tag": "main-ci",
         "folder": "build_tools/azure",
         "platform": "linux-64",
-        "channel": "defaults",
+        "channels": ["defaults"],
         "conda_dependencies": remove_from(
             common_dependencies,
             ["pandas", "threadpoolctl", "pip", "ninja", "meson-python"],
@@ -203,7 +203,7 @@ build_metadata_list = [
         "tag": "main-ci",
         "folder": "build_tools/azure",
         "platform": "linux-64",
-        "channel": "conda-forge",
+        "channels": ["conda-forge"],
         "conda_dependencies": (
             common_dependencies_without_coverage
             + docstring_test_dependencies
@@ -220,7 +220,7 @@ build_metadata_list = [
         "tag": "main-ci",
         "folder": "build_tools/azure",
         "platform": "linux-64",
-        "channel": "defaults",
+        "channels": ["defaults"],
         "conda_dependencies": ["python", "ccache"],
         "pip_dependencies": (
             remove_from(common_dependencies, ["python", "blas", "pip"])
@@ -237,7 +237,7 @@ build_metadata_list = [
         "tag": "scipy-dev",
         "folder": "build_tools/azure",
         "platform": "linux-64",
-        "channel": "defaults",
+        "channels": ["defaults"],
         "conda_dependencies": ["python", "ccache"],
         "pip_dependencies": (
             remove_from(
@@ -271,7 +271,7 @@ build_metadata_list = [
         "tag": "main-ci",
         "folder": "build_tools/azure",
         "platform": "win-64",
-        "channel": "conda-forge",
+        "channels": ["conda-forge"],
         "conda_dependencies": remove_from(common_dependencies, ["pandas", "pyamg"])
         + [
             "wheel",
@@ -288,7 +288,7 @@ build_metadata_list = [
         "tag": "main-ci",
         "folder": "build_tools/circle",
         "platform": "linux-64",
-        "channel": "conda-forge",
+        "channels": ["conda-forge"],
         "conda_dependencies": common_dependencies_without_coverage
         + [
             "scikit-image",
@@ -340,7 +340,7 @@ build_metadata_list = [
         "tag": "main-ci",
         "folder": "build_tools/circle",
         "platform": "linux-64",
-        "channel": "conda-forge",
+        "channels": ["conda-forge"],
         "conda_dependencies": common_dependencies_without_coverage
         + [
             "scikit-image",
@@ -375,7 +375,7 @@ build_metadata_list = [
         "tag": "arm",
         "folder": "build_tools/cirrus",
         "platform": "linux-aarch64",
-        "channel": "conda-forge",
+        "channels": ["conda-forge"],
         "conda_dependencies": remove_from(
             common_dependencies_without_coverage, ["pandas", "pyamg"]
         )
@@ -492,7 +492,7 @@ def get_conda_environment_content(build_metadata):
 # following script to centralize the configuration for CI builds:
 # build_tools/update_environments_and_lock_files.py
 channels:
-  {% for channel in build_metadata['channel'] %}
+  {% for channel in build_metadata['channels'] %}
   - {{ channel }}
   {% endfor %}
 dependencies:
@@ -742,9 +742,6 @@ def main(select_build, skip_build, select_tag, verbose, very_verbose):
     filtered_conda_build_metadata_list = [
         each for each in filtered_build_metadata_list if each["type"] == "conda"
     ]
-    for each in filtered_build_metadata_list:
-        if isinstance(each["channel"], str):
-            each["channel"] = [each["channel"]]
 
     if filtered_conda_build_metadata_list:
         logger.info("# Writing conda environments")
