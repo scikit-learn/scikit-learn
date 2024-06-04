@@ -34,7 +34,7 @@ Changelog
 ....................
 
 - |Fix| Fix a regression in :func:`utils.validation.check_array` that may have caused
-   it to raise an unexpected error about writeability on pandas dataframes.
+  it to raise an unexpected error about writeability on pandas dataframes.
   :pr:`19103` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 .. _changes_1_5:
