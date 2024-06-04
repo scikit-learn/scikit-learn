@@ -1101,7 +1101,8 @@ def check_array(
 
     if writeable:
         array_data = array.data if sp.issparse(array) else array
-        if not array_data.flags.writeable:
+        copy_params = {"order": "K"} if not sp.issparse(array) else {}
+        if hasattr(array_data, "flags") and not array_data.flags.writeable:
             # This situation can only happen when copy=False, the array is read-only and
             # a writeable output is requested. This is an ambiguous setting so we chose
             # to always (except for one specific setting, see below) make a copy to
@@ -1117,9 +1118,9 @@ def check_array(
                     # error, in which case we make a copy.
                     array_data.flags.writeable = True
                 except ValueError:
-                    array = array.copy(order="K")
+                    array = array.copy(**copy_params)
             else:
-                array = array.copy(order="K")
+                array = array.copy(**copy_params)
 
     return array
 
