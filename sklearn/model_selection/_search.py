@@ -10,7 +10,6 @@ parameters of an estimator.
 #         Raghav RV <rvraghav93@gmail.com>
 # License: BSD 3 clause
 
-import functools
 import numbers
 import operator
 import time
@@ -1094,13 +1093,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             except (TypeError, ValueError):
                 arr_dtype = np.dtype(object)
             else:
-                if (
-                    functools.reduce(
-                        lambda x, y: np.promote_types(x, y),
-                        (np.min_scalar_type(x) for x in param_list),
-                    )
-                    == object
-                ):
+                if any(np.min_scalar_type(x) == object for x in param_list):
                     # `np.result_type` might get thrown off by `.dtype` properties
                     # (which some estimators have).
                     # If finding the result dtype this way would give object,
