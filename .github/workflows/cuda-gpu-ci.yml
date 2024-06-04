@@ -31,10 +31,12 @@ jobs:
         id: cache-conda
         uses: actions/cache@v3
         env:
-          cache-name: cache-conda-env
+          # If you modify either of the "Install miniforge" or "Install dependencies" steps
+          # below, bump the counter in `cache-name` to invalidate the cache
+          cache-name: cache-conda-env-0
         with:
           path: ~/conda
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('build_tools/github/pylatest_conda_forge_mkl_array-api_linux-64_conda.lock') }}
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('build_tools/github/pylatest_conda_forge_cuda_array-api_linux-64.lock') }}
       - name: Install miniforge
         if: ${{ steps.cache-conda.outputs.cache-hit != 'true' }}
         run: |
@@ -50,7 +52,7 @@ jobs:
           source build_tools/shared.sh
           conda activate base
           conda install -c conda-forge "$(get_dep conda-lock min)" -y
-          conda-lock install --name sklearn build_tools/github/pylatest_conda_forge_mkl_array-api_linux-64_conda.lock
+          conda-lock install --name sklearn build_tools/github/pylatest_conda_forge_cuda_array-api_linux-64.lock
       - name: Install scikit-learn
         run: |
           source "${HOME}/conda/etc/profile.d/conda.sh"
