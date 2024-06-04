@@ -34,6 +34,7 @@ from ..utils import (
     deprecated,
 )
 from ..utils._array_api import (
+    _convert_to_numpy,
     _is_numpy_namespace,
     _ravel,
     device,
@@ -1295,9 +1296,18 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
             multi_output=True,
             y_numeric=False,
         )
-
+        X_xp, X_is_array_api = get_namespace(X)
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
+        y_xp, y_is_array_api = get_namespace(y)
+        if y_is_array_api:
+            y = _convert_to_numpy(y, y_xp)
         Y = self._label_binarizer.fit_transform(y)
+        if X_is_array_api:
+            Y = X_xp.asarray(Y)
+        if y_is_array_api:
+            self.classes_ = y_xp.asarray(self._label_binarizer.classes_)
+        else:
+            self.classes_ = self._label_binarizer.classes_
         if not self._label_binarizer.y_type_.startswith("multilabel"):
             y = column_or_1d(y, warn=True)
 
@@ -1328,13 +1338,11 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
             # is 1 to use the inverse transform of the label binarizer fitted
             # during fit.
             scores = 2 * (self.decision_function(X) > 0) - 1
+            xp, is_array_api = get_namespace(scores)
+            if is_array_api:
+                scores = _convert_to_numpy(scores)
             return self._label_binarizer.inverse_transform(scores)
         return super().predict(X)
-
-    @property
-    def classes_(self):
-        """Classes labels."""
-        return self._label_binarizer.classes_
 
     def _more_tags(self):
         return {"multilabel": True}
