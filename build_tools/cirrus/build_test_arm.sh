@@ -22,7 +22,7 @@ setup_ccache() {
     ccache -M 0
 }
 
-# Install Miniconda
+# Install Miniforge
 MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-aarch64.sh"
 curl -L --retry 10 $MINIFORGE_URL -o miniconda.sh
 MINIFORGE_PATH=$HOME/miniforge3
