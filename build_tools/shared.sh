@@ -42,7 +42,7 @@ create_conda_environment_from_lock_file() {
     # install them directly, provided the lock-file does not contain pip solved
     # packages. For more details, see
     # https://conda.github.io/conda-lock/output/#explicit-lockfile
-    lock_file_has_pip_packages=$(grep files.pythonhosted.org $LOCK_FILE && echo "true" || echo "false")
+    lock_file_has_pip_packages=$(grep -q files.pythonhosted.org $LOCK_FILE && echo "true" || echo "false")
     if [[ "$lock_file_has_pip_packages" == "false" ]]; then
         eval "$conda_or_mamba" create --name $ENV_NAME --file $LOCK_FILE
     else
