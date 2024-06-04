@@ -11,7 +11,6 @@ from itertools import chain, product
 from types import GeneratorType
 
 import numpy as np
-import pandas as pd
 import pytest
 from scipy.stats import bernoulli, expon, uniform
 
@@ -2689,6 +2688,7 @@ def test_cv_results_dtype_issue_29074():
 
 
 def test_search_with_estimators():
+    pd = pytest.importorskip("pandas")
     df = pd.DataFrame(
         {
             "numeric_1": [1, 2, 3, 4, 5],
