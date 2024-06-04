@@ -76,7 +76,7 @@ Loading an example dataset
 
 `scikit-learn` comes with a few standard datasets, for instance the
 `iris <https://en.wikipedia.org/wiki/Iris_flower_data_set>`_ and `digits
-<https://archive.ics.uci.edu/ml/datasets/Pen-Based+Recognition+of+Handwritten+Digits>`_
+<https://archive.ics.uci.edu/dataset/81/pen+based+recognition+of+handwritten+digits>`_
 datasets for classification and the `diabetes dataset
 <https://www4.stat.ncsu.edu/~boos/var.select/diabetes.html>`_ for regression.
 
