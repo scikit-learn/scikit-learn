@@ -29,30 +29,12 @@ jobs:
       - name: Cache conda environment
         id: cache-conda
         uses: actions/cache@v3
-        env:
-          # If you modify either of the "Install miniforge" or "Install dependencies" steps
-          # below, bump the counter in `cache-name` to invalidate the cache
-          cache-name: cache-conda-env-0
         with:
           path: ~/conda
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('build_tools/github/pylatest_conda_forge_cuda_array-api_linux-64_conda.lock') }}
+          key: ${{ runner.os }}-build-${{ hashFiles('build_tools/github/create_gpu_environment.sh') }}-${{ hashFiles('build_tools/github/pylatest_conda_forge_cuda_array-api_linux-64_conda.lock') }}
       - name: Install miniforge
         if: ${{ steps.cache-conda.outputs.cache-hit != 'true' }}
-        run: |
-          curl -L -O "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"
-          bash Miniforge3-$(uname)-$(uname -m).sh -b -p "${HOME}/conda"
-          source "${HOME}/conda/etc/profile.d/conda.sh"
-          rm Miniforge3-$(uname)-$(uname -m).sh
-      - name: Install dependencies
-        if: ${{ steps.cache-conda.outputs.cache-hit != 'true' }}
-        run: |
-          source "${HOME}/conda/etc/profile.d/conda.sh"
-          # defines the get_dep and show_installed_libraries functions
-          source build_tools/shared.sh
-          conda activate base
-          # XXX switch once https://github.com/scikit-learn/scikit-learn/pull/29176 is merged
-          conda install -c conda-forge "$(get_dep conda-lock min)" -y
-          conda-lock install --name sklearn build_tools/github/pylatest_conda_forge_cuda_array-api_linux-64_conda.lock
+        run: bash build_tools/github/create_gpu_environment.sh
       - name: Install scikit-learn
         run: |
           source "${HOME}/conda/etc/profile.d/conda.sh"
