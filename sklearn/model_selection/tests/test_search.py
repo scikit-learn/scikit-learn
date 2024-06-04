@@ -2719,7 +2719,7 @@ def test_search_with_estimators():
         DeprecationWarning,
         match=(
             "in the future the `.dtype` attribute of a given datatype object must be "
-            "a valid dtype instance",
+            "a valid dtype instance"
         ),
     ):
         grid_search.fit(X, y)
