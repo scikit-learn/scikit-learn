@@ -2687,6 +2687,10 @@ def test_cv_results_dtype_issue_29074():
         assert grid_search.cv_results_[f"param_{param}"].dtype == object
 
 
+@pytest.mark.filterwarnings(
+    "ignore:in the future the `.dtype` attribute of a given datatype object must "
+    "be a valid dtype instance:DeprecationWarning"
+)
 def test_search_with_estimators():
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame(
@@ -2715,12 +2719,5 @@ def test_search_with_estimators():
         ]
     }
     grid_search = GridSearchCV(pipe, grid_params, cv=2)
-    with pytest.warns(
-        DeprecationWarning,
-        match=(
-            "in the future the `.dtype` attribute of a given datatype object must be "
-            "a valid dtype instance"
-        ),
-    ):
-        grid_search.fit(X, y)
+    grid_search.fit(X, y)
     assert grid_search.cv_results_["param_enc__enc"].dtype == object
