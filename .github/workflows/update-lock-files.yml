@@ -6,6 +6,10 @@ on:
   schedule:
     - cron: '0 5 * * 1'
 
+# XXX Set the right permissions, per step??
+# Can we set read only at the global level here and then elevate to write for some steps?
+#permissions: read-all
+
 jobs:
   update_lock_files:
     if: github.repository == 'scikit-learn/scikit-learn'
@@ -57,6 +61,12 @@ jobs:
 
             ### Note
             If the CI tasks fail, create a new branch based on this PR and add the required fixes to that branch.
+
+      # The CUDA workflow needs to be triggered explicitly as it uses an expensive runner
+      - name: Trigger additional tests
+        if: steps.cpr.outputs.pull-request-number != '' && matrix.name == 'array API'
+        run: |
+          gh workflow run .github/workflows/cuda-gpu-ci.yml -f pr_id=${{steps.cpr.outputs.pull-request-number}}
 
       - name: Check Pull Request
         if: steps.cpr.outputs.pull-request-number != ''
