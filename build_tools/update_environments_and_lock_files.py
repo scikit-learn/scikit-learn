@@ -246,25 +246,6 @@ build_metadata_list = [
         ),
     },
     {
-        "name": "pypy3",
-        "type": "conda",
-        "tag": "pypy",
-        "folder": "build_tools/azure",
-        "platform": "linux-64",
-        "channel": "conda-forge",
-        "conda_dependencies": (
-            ["pypy", "python"]
-            + remove_from(
-                common_dependencies_without_coverage, ["python", "pandas", "pillow"]
-            )
-            + ["ccache"]
-        ),
-        "package_constraints": {
-            "blas": "[build=openblas]",
-            "python": "3.9",
-        },
-    },
-    {
         "name": "pymin_conda_forge_mkl",
         "type": "conda",
         "tag": "main-ci",

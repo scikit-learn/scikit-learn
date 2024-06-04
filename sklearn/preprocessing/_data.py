@@ -2385,10 +2385,6 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
            [ -5., -14.,  19.]])
     """
 
-    def __init__(self):
-        # Needed for backported inspect.signature compatibility with PyPy
-        pass
-
     def fit(self, K, y=None):
         """Fit KernelCenterer.
 
