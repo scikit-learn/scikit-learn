@@ -1040,7 +1040,13 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         # XXX: at the time of writing, there is no very explicit way to check
         # if a scorer expects thresholded binary classification predictions.
         # TODO: update this condition when a better way is available.
-        if scorer._response_method != "predict":
+        scorer_response_methods = getattr(scorer, "_response_method", "predict")
+        if isinstance(scorer_response_methods, str):
+            scorer_response_methods = {scorer_response_methods}
+        else:
+            scorer_response_methods = set(scorer_response_methods)
+
+        if scorer_response_methods.issubset({"predict_proba", "decision_function"}):
             raise ValueError(
                 f"{self.__class__.__name__} expects a scoring metric that evaluates "
                 f"the thresholded predictions of a binary classifier, got: "
