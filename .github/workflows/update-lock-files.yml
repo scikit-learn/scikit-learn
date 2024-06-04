@@ -26,7 +26,7 @@ jobs:
             update_script_args: "--select-tag arm"
             additional_commit_message: "[cirrus arm]"
           - name: array API
-            update_scrupt_args: "--select-tag gpu"
+            update_script_args: "--select-tag gpu"
 
     steps:
       - uses: actions/checkout@v4
