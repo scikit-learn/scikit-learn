@@ -10,7 +10,8 @@ permissions: read-all
 
 jobs:
   tests:
-    runs-on: GPU
+    runs-on:
+      group: cuda-gpu-runner-group
     name: Run Array API unit tests
     steps:
       - uses: actions/setup-python@v4
