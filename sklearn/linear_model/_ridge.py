@@ -2165,9 +2165,14 @@ class _RidgeGCV(LinearModel):
         scorer = self._get_scorer()
 
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
-        alphas = xp.asarray(self.alphas, dtype=X.dtype, **device_kwargs)
-        alphas = xp.reshape(alphas, shape=(-1,))
-        n_alphas = alphas.shape[0]
+        if (
+            isinstance(self.alphas, numbers.Number)
+            or getattr(self.alphas, "ndim", None) == 0
+        ):
+            alphas = [float(self.alphas)]
+        else:
+            alphas = list(map(float, self.alphas))
+        n_alphas = len(alphas)
 
         if self.store_cv_results:
             self.cv_results_ = xp.empty(
