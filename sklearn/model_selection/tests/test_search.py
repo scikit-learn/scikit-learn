@@ -2688,12 +2688,19 @@ def test_cv_results_dtype_issue_29074():
         assert grid_search.cv_results_[f"param_{param}"].dtype == object
 
 
-def test_search_with_estimators_():
-    df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": ["a", "b", "c"]})
-    X = df.drop("b", axis=1)
-    y = df["a"]
+def test_search_with_estimators():
+    df = pd.DataFrame(
+        {
+            "numeric_1": [1, 2, 3, 4, 5],
+            "object_1": ["a", "a", "a", "a", "a"],
+            "target": [1.0, 4.1, 2.0, 3.0, 1.0],
+        }
+    )
+    X = df.drop("target", axis=1)
+    y = df["target"]
     enc = ColumnTransformer(
-        [("enc", OneHotEncoder(), ["c"])],
+        [("enc", OneHotEncoder(sparse_output=False), ["object_1"])],
+        remainder="passthrough",
     )
     pipe = Pipeline(
         [
@@ -2703,10 +2710,17 @@ def test_search_with_estimators_():
     )
     grid_params = {
         "enc__enc": [
-            OneHotEncoder(),
+            OneHotEncoder(sparse_output=False),
             OrdinalEncoder(),
         ]
     }
     grid_search = GridSearchCV(pipe, grid_params, cv=2)
-    grid_search.fit(X, y)
+    with pytest.warns(
+        DeprecationWarning,
+        match=(
+            "in the future the `.dtype` attribute of a given datatype object must be "
+            "a valid dtype instance",
+        ),
+    ):
+        grid_search.fit(X, y)
     assert grid_search.cv_results_["param_enc__enc"].dtype == object
