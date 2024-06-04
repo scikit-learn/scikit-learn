@@ -1089,11 +1089,15 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         for key, param_result in param_results.items():
             param_list = list(param_result.values())
             try:
-                arr_dtype = np.array(param_list).dtype
+                arr_dtype = np.result_type(*param_list)
             except (TypeError, ValueError):
                 arr_dtype = np.dtype(object)
-            if arr_dtype.kind == "U":
-                arr_dtype = object
+            else:
+                if np.array(param_list).dtype == object:
+                    # `np.result_type` might get thrown off by `.dtype` properties
+                    # (which some estimators have), so we check against the `dtype`
+                    # resulting from constructing an array.
+                    arr_dtype = object
             if len(param_list) == n_candidates and arr_dtype != object:
                 # Exclude `object` else the numpy constructor might infer a list of
                 # tuples to be a 2d array.

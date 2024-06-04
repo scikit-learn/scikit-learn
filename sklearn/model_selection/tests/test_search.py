@@ -2521,7 +2521,8 @@ def test_search_with_2d_array():
     data_target = [0, 0, 1, 0, 1]
     random_search.fit(data_train, data_target)
     result = random_search.cv_results_["param_vect__ngram_range"]
-    expected_data = np.array([[1, 2], [1, 2], [1, 1]])
+    expected_data = np.empty(3, dtype=object)
+    expected_data[:] = [(1, 2), (1, 2), (1, 1)]
     np.testing.assert_array_equal(result.data, expected_data)
 
 
