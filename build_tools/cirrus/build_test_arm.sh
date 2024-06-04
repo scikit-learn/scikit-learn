@@ -32,8 +32,7 @@ export PATH=$MAMBAFORGE_PATH/bin:$PATH
 mamba init --all --verbose
 mamba update --yes mamba
 mamba update --yes conda
-mamba install "$(get_dep conda-lock min)" -y
-conda-lock install --name $CONDA_ENV_NAME $LOCK_FILE
+mamba create --name $CONDA_ENV_NAME --file --$LOCK_FILE
 source activate $CONDA_ENV_NAME
 
 setup_ccache

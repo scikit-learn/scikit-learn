@@ -169,10 +169,7 @@ export PATH="/usr/lib/ccache:$MAMBAFORGE_PATH/bin:$PATH"
 ccache -M 512M
 export CCACHE_COMPRESS=1
 
-# pin conda-lock to latest released version (needs manual update from time to time)
-mamba install "$(get_dep conda-lock min)" -y
-
-conda-lock install --log-level DEBUG --name $CONDA_ENV_NAME $LOCK_FILE
+conda create --name $CONDA_ENV_NAME --file $LOCK_FILE
 source activate $CONDA_ENV_NAME
 
 show_installed_libraries
