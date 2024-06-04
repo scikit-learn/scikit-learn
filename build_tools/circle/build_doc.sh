@@ -169,7 +169,7 @@ export PATH="/usr/lib/ccache:$MAMBAFORGE_PATH/bin:$PATH"
 ccache -M 512M
 export CCACHE_COMPRESS=1
 
-conda create --name $CONDA_ENV_NAME --file $LOCK_FILE
+create_conda_environment_from_lock_file $CONDA_ENV_NAME $LOCK_FILE
 source activate $CONDA_ENV_NAME
 
 show_installed_libraries

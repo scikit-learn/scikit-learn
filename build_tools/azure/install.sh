@@ -53,7 +53,7 @@ check_packages_dev_version() {
 
 python_environment_install_and_activate() {
     if [[ "$DISTRIB" == "conda"* ]]; then
-        conda create --name $VIRTUALENV --file $LOCK_FILE
+        create_conda_environment_from_lock_file $VIRTUALENV $LOCK_FILE
         source activate $VIRTUALENV
 
     elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then

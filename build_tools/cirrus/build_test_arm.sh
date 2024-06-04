@@ -32,7 +32,7 @@ export PATH=$MAMBAFORGE_PATH/bin:$PATH
 mamba init --all --verbose
 mamba update --yes mamba
 mamba update --yes conda
-mamba create --name $CONDA_ENV_NAME --file --$LOCK_FILE
+create_conda_environment_from_lock_file $ENV_NAME $LOCK_FILE
 source activate $CONDA_ENV_NAME
 
 setup_ccache
