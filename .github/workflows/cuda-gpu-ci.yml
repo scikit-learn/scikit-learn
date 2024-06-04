@@ -17,7 +17,6 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.12'
-      # change this to checkout a particular PR if a PR number is provided as input
       - name: Checkout main repository
         uses: actions/checkout@v2
       - name: Checkout a particular Pull Request
@@ -26,7 +25,6 @@ jobs:
           PR_ID: ${{ inputs.pr_id }}
           GH_TOKEN: ${{ github.token }}
         run: |
-          echo "Checking out" ${{ env.PR_ID }}
           gh pr checkout ${{ env.PR_ID }}
       - name: Cache conda environment
         id: cache-conda

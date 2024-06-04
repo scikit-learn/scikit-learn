@@ -65,6 +65,8 @@ jobs:
       # The CUDA workflow needs to be triggered explicitly as it uses an expensive runner
       - name: Trigger additional tests
         if: steps.cpr.outputs.pull-request-number != '' && matrix.name == 'array API'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           gh workflow run .github/workflows/cuda-gpu-ci.yml -f pr_id=${{steps.cpr.outputs.pull-request-number}}
 
