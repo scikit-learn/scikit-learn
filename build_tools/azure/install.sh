@@ -38,13 +38,7 @@ pre_python_environment_install() {
         apt-get install -y python3-dev python3-numpy python3-scipy \
                 python3-matplotlib libatlas3-base libatlas-base-dev \
                 python3-virtualenv python3-pandas ccache git
-
-    elif [[ "$DISTRIB" == "conda-pypy3" ]]; then
-        # need compilers
-        apt-get -yq update
-        apt-get -yq install build-essential
     fi
-
 }
 
 check_packages_dev_version() {
@@ -139,6 +133,12 @@ scikit_learn_install() {
            # otherwise Meson detects a MINGW64 platform and use MINGW64
            # toolchain
            ADDITIONAL_PIP_OPTIONS='-Csetup-args=--vsenv'
+        fi
+        # TODO Always add --check-build-dependencies when all CI builds have
+        # pip >= 22.1.1. At the time of writing, two CI builds (debian32_atlas and
+        # ubuntu_atlas) have an older pip
+        if pip install --help | grep check-build-dependencies; then
+            ADDITIONAL_PIP_OPTIONS="$ADDITIONAL_PIP_OPTIONS --check-build-dependencies"
         fi
         # Use the pre-installed build dependencies and build directly in the
         # current environment.

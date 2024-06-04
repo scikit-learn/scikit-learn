@@ -519,7 +519,6 @@ Commit Message Marker  Action Taken by CI
 [lint skip]            Azure pipeline skips linting
 [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc.) development builds
 [nogil]                Build & test with the nogil experimental branches of CPython, Cython, NumPy, SciPy, ...
-[pypy]                 Build & test with PyPy
 [pyodide]              Build & test with Pyodide
 [azure parallel]       Run Azure CI jobs in parallel
 [cirrus arm]           Run Cirrus CI ARM test
