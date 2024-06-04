@@ -11,12 +11,14 @@ from itertools import chain, product
 from types import GeneratorType
 
 import numpy as np
+import pandas as pd
 import pytest
 from scipy.stats import bernoulli, expon, uniform
 
 from sklearn import config_context
 from sklearn.base import BaseEstimator, ClassifierMixin, is_classifier
 from sklearn.cluster import KMeans
+from sklearn.compose import ColumnTransformer
 from sklearn.datasets import (
     make_blobs,
     make_classification,
@@ -64,7 +66,7 @@ from sklearn.model_selection.tests.common import OneTimeSplitter
 from sklearn.naive_bayes import ComplementNB
 from sklearn.neighbors import KernelDensity, KNeighborsClassifier, LocalOutlierFactor
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler
 from sklearn.svm import SVC, LinearSVC
 from sklearn.tests.metadata_routing_common import (
     ConsumingScorer,
@@ -1403,9 +1405,7 @@ def test_search_cv_results_none_param():
             est_parameters,
             cv=cv,
         ).fit(X, y)
-        assert_array_equal(
-            grid_search.cv_results_["param_random_state"], [0, float("nan")]
-        )
+        assert_array_equal(grid_search.cv_results_["param_random_state"], [0, None])
 
 
 @ignore_warnings()
@@ -2521,8 +2521,7 @@ def test_search_with_2d_array():
     data_target = [0, 0, 1, 0, 1]
     random_search.fit(data_train, data_target)
     result = random_search.cv_results_["param_vect__ngram_range"]
-    expected_data = np.empty(3, dtype=object)
-    expected_data[:] = [(1, 2), (1, 2), (1, 1)]
+    expected_data = np.array([[1, 2], [1, 2], [1, 1]])
     np.testing.assert_array_equal(result.data, expected_data)
 
 
@@ -2686,3 +2685,27 @@ def test_cv_results_dtype_issue_29074():
     grid_search.fit(X, y)
     for param in param_grid:
         assert grid_search.cv_results_[f"param_{param}"].dtype == object
+
+
+def test_search_with_estimators_():
+    df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": ["a", "b", "c"]})
+    X = df.drop("b", axis=1)
+    y = df["a"]
+    enc = ColumnTransformer(
+        [("enc", OneHotEncoder(), ["c"])],
+    )
+    pipe = Pipeline(
+        [
+            ("enc", enc),
+            ("regressor", LinearRegression()),
+        ]
+    )
+    grid_params = {
+        "enc__enc": [
+            OneHotEncoder(),
+            OrdinalEncoder(),
+        ]
+    }
+    grid_search = GridSearchCV(pipe, grid_params, cv=2)
+    grid_search.fit(X, y)
+    assert grid_search.cv_results_["param_enc__enc"].dtype == object
