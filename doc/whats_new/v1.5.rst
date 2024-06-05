@@ -38,6 +38,11 @@ Changelog
   grids that have heterogeneous parameter values.
   :pr:`29078` by :user:`Loïc Estève <lesteve>`.
 
+- |Fix| Fix :class:`model_selection.TunedThresholdClassifierCV` to raise
+  `ValueError` when passed a `scoring` argument intended for unthresholded
+  predictions. It now also raises warnings for different choice of `scoring`
+  that lead to degenerate choice of thresholds.
+  :pr:`29082` by :user:`Olivier Grisel <ogrisel>`.
 
 .. _changes_1_5:
 

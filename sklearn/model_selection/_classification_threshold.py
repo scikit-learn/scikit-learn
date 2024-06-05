@@ -1,5 +1,6 @@
 from collections.abc import MutableMapping
 from numbers import Integral, Real
+from warnings import warn
 
 import numpy as np
 
@@ -656,7 +657,17 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
 
         * a string associated to a scoring function for binary classification
           (see :ref:`scoring_parameter`);
-        * a scorer callable object created with :func:`~sklearn.metrics.make_scorer`;
+        * a scorer callable object created with :func:`~sklearn.metrics.make_scorer`.
+
+        Note that scoring objective should introduce a trade-off between false
+        negatives and false positives, otherwise the tuned threshold would be
+        trivial and the resulting classifier would be equivalent to constantly
+        classifiying one of the two possible classes. This would be the case
+        when passing scoring="precision" or scoring="recall" for instance.
+        Furthermore, the scoring objective should evaluate thresholded
+        classifier predictions: as a result, metrics such as ROC AUC, Average
+        Precision, log loss or the Brier score are not valid scoring metrics in
+        this context.
 
     response_method : {"auto", "decision_function", "predict_proba"}, default="auto"
         Methods by the classifier `estimator` corresponding to the
@@ -947,6 +958,35 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         best_idx = objective_scores.argmax()
         self.best_score_ = objective_scores[best_idx]
         self.best_threshold_ = decision_thresholds[best_idx]
+
+        if self.best_threshold_ == min_threshold:
+            trivial_kind = "positive"
+        elif self.best_threshold_ == max_threshold:
+            trivial_kind = "negative"
+        else:
+            trivial_kind = None
+
+        if (
+            objective_scores.max() - objective_scores.min()
+            <= np.finfo(objective_scores.dtype).eps
+        ):
+            warn(
+                f"The objective metric {self.scoring!r} is constant at "
+                f"{self.best_score_} across all thresholds. Falling back "
+                "to the default 0.5 threshold. Please instead pass a scoring "
+                "metric that varies with the decision threshold.",
+                UserWarning,
+            )
+            self.best_threshold_ = 0.5
+        elif trivial_kind is not None:
+            warn(
+                f"Tuning the decision threshold on {self.scoring} "
+                "leads to a trivial classifier that classifies all samples as "
+                f"the {trivial_kind} class. Consider revising the scoring parameter "
+                "to include a trade-off between false positives and false negatives.",
+                UserWarning,
+            )
+
         if self.store_cv_results:
             self.cv_results_ = {
                 "thresholds": decision_thresholds,
@@ -1012,8 +1052,24 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
 
     def _get_curve_scorer(self):
         """Get the curve scorer based on the objective metric used."""
-        scoring = check_scoring(self.estimator, scoring=self.scoring)
+        scorer = check_scoring(self.estimator, scoring=self.scoring)
+        # XXX: at the time of writing, there is no very explicit way to check
+        # if a scorer expects thresholded binary classification predictions.
+        # TODO: update this condition when a better way is available.
+        scorer_response_methods = getattr(scorer, "_response_method", "predict")
+        if isinstance(scorer_response_methods, str):
+            scorer_response_methods = {scorer_response_methods}
+        else:
+            scorer_response_methods = set(scorer_response_methods)
+
+        if scorer_response_methods.issubset({"predict_proba", "decision_function"}):
+            raise ValueError(
+                f"{self.__class__.__name__} expects a scoring metric that evaluates "
+                f"the thresholded predictions of a binary classifier, got: "
+                f"{self.scoring!r} which expects unthresholded predictions computed by "
+                f"the {scorer._response_method!r} method(s) of the classifier."
+            )
         curve_scorer = _CurveScorer.from_scorer(
-            scoring, self._get_response_method(), self.thresholds
+            scorer, self._get_response_method(), self.thresholds
         )
         return curve_scorer
