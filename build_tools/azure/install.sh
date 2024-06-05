@@ -38,6 +38,15 @@ pre_python_environment_install() {
         apt-get install -y python3-dev python3-numpy python3-scipy \
                 python3-matplotlib libatlas3-base libatlas-base-dev \
                 python3-virtualenv python3-pandas ccache git
+
+    elif [[ "$DISTRIB" == "pip-free-threaded" ]]; then
+        apt-get -yq update
+        apt-get install -yq ccache
+        apt-get install software-properties-common -y
+        add-apt-repository --yes ppa:deadsnakes/nightly
+        apt-get update -y
+        apt-get install -y --no-install-recommends python3.13-dev python3.13-venv python3.13-nogil
+
     fi
 }
 
@@ -95,14 +104,6 @@ python_environment_install_and_activate() {
         pip install https://github.com/joblib/joblib/archive/master.zip
         echo "Installing pillow from latest sources"
         pip install https://github.com/python-pillow/Pillow/archive/main.zip
-
-    elif [[ "$DISTRIB" == "pip-free-threaded" ]]; then
-        apt-get -yq update
-        apt-get install -yq ccache
-        apt-get install software-properties-common -y
-        add-apt-repository --yes ppa:deadsnakes/nightly
-        apt-get update -y
-        apt-get install -y --no-install-recommends python3.13-dev python3.13-venv python3.13-nogil
     fi
 }
 
