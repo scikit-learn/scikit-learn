@@ -1319,9 +1319,9 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         )
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         y_xp, y_is_array_api = get_namespace(y)
-        if y_is_array_api:
-            y = _convert_to_numpy(y, y_xp)
-        Y = self._label_binarizer.fit_transform(y)
+        Y = self._label_binarizer.fit_transform(
+            _convert_to_numpy(y, y_xp) if y_is_array_api else y
+        )
         if X_is_array_api:
             Y = X_xp.asarray(Y)
         if y_is_array_api and y_xp.isdtype(y.dtype, "numeric"):
@@ -2288,18 +2288,19 @@ class _RidgeGCV(LinearModel):
         """Performs scoring with the specified scorer using the
         predictions and the true y values.
         """
+        xp, _ = get_namespace(y)
         if self.is_clf:
-            identity_estimator = _IdentityClassifier(classes=np.arange(n_y))
+            identity_estimator = _IdentityClassifier(classes=xp.arange(n_y))
             _score = scorer(
                 identity_estimator,
                 predictions,
-                y.argmax(axis=1),
+                xp.argmax(y, axis=1),
                 **score_params,
             )
         else:
             identity_estimator = _IdentityRegressor()
             if self.alpha_per_target:
-                _score = np.array(
+                _score = xp.array(
                     [
                         scorer(
                             identity_estimator,
@@ -2313,8 +2314,8 @@ class _RidgeGCV(LinearModel):
             else:
                 _score = scorer(
                     identity_estimator,
-                    predictions.ravel(),
-                    y.ravel(),
+                    xp.reshape(predictions, shape=(-1,)),
+                    xp.reshape(y, shape=(-1,)),
                     **score_params,
                 )
 
