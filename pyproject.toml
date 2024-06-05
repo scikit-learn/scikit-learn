@@ -114,7 +114,6 @@ exclude = '''
   | \.vscode
   | build
   | dist
-  | doc/tutorial
   | doc/_build
   | doc/auto_examples
   | sklearn/externals
@@ -133,7 +132,6 @@ exclude=[
     "sklearn/externals",
     "doc/_build",
     "doc/auto_examples",
-    "doc/tutorial",
     "build",
     "asv_benchmarks/env",
     "asv_benchmarks/html",
