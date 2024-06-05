@@ -29,7 +29,7 @@ jobs:
           - name: cirrus-arm
             update_script_args: "--select-tag arm"
             additional_commit_message: "[cirrus arm]"
-          - name: array API
+          - name: array-api
             update_script_args: "--select-tag cuda"
 
     steps:
@@ -64,7 +64,7 @@ jobs:
 
       # The CUDA workflow needs to be triggered explicitly as it uses an expensive runner
       - name: Trigger additional tests
-        if: steps.cpr.outputs.pull-request-number != '' && matrix.name == 'array API'
+        if: steps.cpr.outputs.pull-request-number != '' && matrix.name == 'array-api'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
