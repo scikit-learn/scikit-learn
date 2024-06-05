@@ -40,13 +40,12 @@ pre_python_environment_install() {
                 python3-virtualenv python3-pandas ccache git
 
     elif [[ "$DISTRIB" == "pip-free-threaded" ]]; then
-        apt-get -yq update
-        apt-get install -yq ccache
-        apt-get install software-properties-common -y
-        add-apt-repository --yes ppa:deadsnakes/nightly
-        apt-get update -y
-        apt-get install -y --no-install-recommends python3.13-dev python3.13-venv python3.13-nogil
-
+        sudo apt-get -yq update
+        sudo apt-get install -yq ccache
+        sudo apt-get install software-properties-common -y
+        sudo add-apt-repository --yes ppa:deadsnakes/nightly
+        sudo apt-get update -y
+        sudo apt-get install -y --no-install-recommends python3.13-dev python3.13-venv python3.13-nogil
     fi
 }
 
