@@ -85,7 +85,7 @@ jobs:
       )
     matrix:
       pylatest_pip_free_threaded:
-        DOCKER_CONTAINER: ''
+        PYTHON_GIL: '0'
         DISTRIB: 'pip-free-threaded'
         # TODO free-threaded probably use pip lock-file
         LOCK_FILE: './build_tools/azure/python_free_threaded_lock.txt'

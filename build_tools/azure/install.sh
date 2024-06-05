@@ -86,7 +86,7 @@ python_environment_install_and_activate() {
         # TODO need development Cython for now
         pip install git+https://github.com/cython/cython
         # Install all the other dependencies
-        pip install joblib threadpoolctl pytest meson-python
+        pip install joblib threadpoolctl pytest meson-python pytest-xdist
     fi
 
     if [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
