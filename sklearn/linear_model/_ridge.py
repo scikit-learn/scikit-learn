@@ -2187,9 +2187,13 @@ class _RidgeGCV(LinearModel):
         scorer = self._get_scorer()
 
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
-        # alphas is checked and converted to numpy in BaseRidgeCV
-        assert isinstance(self.alphas, np.ndarray)
-        alphas = np.atleast_1d(self.alphas)
+        if (
+            isinstance(self.alphas, numbers.Number)
+            or getattr(self.alphas, "ndim", None) == 0
+        ):
+            alphas = [float(self.alphas)]
+        else:
+            alphas = list(map(float, self.alphas))
         n_alphas = len(alphas)
 
         if self.store_cv_results:
