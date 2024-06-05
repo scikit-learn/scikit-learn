@@ -45,7 +45,7 @@ pre_python_environment_install() {
         sudo apt-get install software-properties-common -y
         sudo add-apt-repository --yes ppa:deadsnakes/nightly
         sudo apt-get update -y
-        sudo apt-get install -y --no-install-recommends python3.13-dev python3.13-venv python3.13-nogil meson ninja-build
+        sudo apt-get install -y --no-install-recommends python3.13-dev python3.13-venv python3.13-nogil
     fi
 }
 
@@ -77,16 +77,22 @@ python_environment_install_and_activate() {
     elif [[ "$DISTRIB" == "pip-free-threaded" ]]; then
         python3.13t -m venv $VIRTUALENV
         source $VIRTUALENV/bin/activate
-        # TODO free-threaded use a lock-file, for now done by hand
+        pip install -r "${LOCK_FILE}"
         # TODO for now need pip 24.1b1 to find free-threaded wheels
         pip install -U --pre pip
+        # TODO When there are CPython 3.13 free-threaded wheels for numpy and
+        # scipy move this to
+        # build_tools/azure/cpython_free_threaded_requirements.txt. For now we
+        # install them from scientific-python-nightly-wheels
         dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
         dev_packages="numpy scipy"
         pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url $dev_packages
-        # TODO need development Cython for now
+        # TODO Move cython to
+        # build_tools/azure/cpython_free_threaded_requirements.txt where there
+        # is a CPython 3.13 free-threaded wheel
+        # For now, we need the development version of Cython which has CPython
+        # 3.13 free-threaded fixes so we install it from source
         pip install git+https://github.com/cython/cython
-        # Install all the other dependencies
-        pip install joblib threadpoolctl pytest meson-python pytest-xdist setuptools
     fi
 
     if [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
