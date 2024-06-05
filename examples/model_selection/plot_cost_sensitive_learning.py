@@ -694,15 +694,21 @@ print(f"Benefit of logistic regression with a tuned threshold:  {business_score:
 # %%
 def elkan_optimal_threshold(amount):
     # Cost matrix (negative of gain matrix)
-    c00 = -0.02 * amount
-    c01 = amount
-    c10 = 5
-    c11 = -50
-    optimal_threshold = (c01 - c00) / (c01 - c00 + c10 - c11)
+    c00 = -0.02 * amount  # Accepting a legitimate transaction
+    c01 = amount  # Accepting a fraudulent transaction
+    c10 = 5  # Refusing a legitimate transaction
+    c11 = -50  # Refusing a fraudulent transaction
+    optimal_threshold = (c10 - c00) / (c10 - c00 + c01 - c11)
     return optimal_threshold
 
 
 elkan_optimal_threshold(amount_test).mean()
+
+# %%
+elkan_optimal_threshold(amount_test[amount_test > 100]).mean()
+
+# %%
+elkan_optimal_threshold(amount_test[amount_test <= 100]).mean()
 
 # %%
 _ = plt.hist(elkan_optimal_threshold(amount_test), bins=30)
@@ -710,7 +716,9 @@ _ = plt.hist(elkan_optimal_threshold(amount_test), bins=30)
 import matplotlib.pyplot as plt
 
 x = np.linspace(amount_test.min(), amount_test.max(), 1000)
-_ = plt.plot(x, elkan_optimal_threshold(x))
+plt.plot(x, elkan_optimal_threshold(x))
+plt.xlabel("Amount (€)")
+_ = plt.ylabel("Optimal threshold")
 
 # %%
 fixed_elkan_model = FixedThresholdClassifier(
@@ -785,11 +793,11 @@ class VariableThresholdClassifier:
 
 
 business_score = business_metric(
+    target_test,
     VariableThresholdClassifier(
         model.best_estimator_,
         variable_threshold=elkan_optimal_threshold,
     ).predict(data_test, amount=amount_test),
-    target_test,
     amount=amount_test,
 )
 print(
@@ -799,11 +807,11 @@ print(
 
 # %%
 business_score = business_metric(
+    target_test,
     VariableThresholdClassifier(
         calibrated_estimator,
         variable_threshold=elkan_optimal_threshold,
     ).predict(data_test, amount=amount_test),
-    target_test,
     amount=amount_test,
 )
 print(
@@ -818,3 +826,5 @@ business_score = business_metric(
     amount=amount_test,
 )
 print(f"Benefit of oracle decisions (not reachable):  {business_score:,.2f}€")
+
+# %%
