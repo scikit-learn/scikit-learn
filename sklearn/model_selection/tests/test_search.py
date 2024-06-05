@@ -2688,6 +2688,7 @@ def test_cv_results_dtype_issue_29074():
 
 
 def test_search_with_estimators_issue_29157():
+    """Check cv_results_ for estimators with a `dtype` parameter, e.g. OneHotEncoder."""
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame(
         {

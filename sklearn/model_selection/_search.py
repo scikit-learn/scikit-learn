@@ -1095,6 +1095,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                         message="in the future the `.dtype` attribute",
                         category=DeprecationWarning,
                     )
+                    # Warning raised by NumPy 1.20+
                     arr_dtype = np.result_type(*param_list)
             except (TypeError, ValueError):
                 arr_dtype = np.dtype(object)
