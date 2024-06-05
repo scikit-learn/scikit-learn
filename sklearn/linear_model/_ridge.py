@@ -1333,7 +1333,10 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
 
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
         if self.class_weight:
-            sample_weight = sample_weight * compute_sample_weight(self.class_weight, y)
+            reweighting = compute_sample_weight(self.class_weight, y)
+            if X_is_array_api:
+                reweighting = X_xp.asarray(reweighting)
+            sample_weight = sample_weight * reweighting
         return X, y, sample_weight, Y
 
     def predict(self, X):
