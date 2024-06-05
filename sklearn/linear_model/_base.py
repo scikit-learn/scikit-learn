@@ -359,7 +359,9 @@ class LinearClassifierMixin(ClassifierMixin):
             this class would be predicted.
         """
         check_is_fitted(self)
-        xp, _ = get_namespace(X)
+        # X must be in the same namespace as self.coef_; self.intercept_ is
+        # either a python float or in the same namespace as self.coef_
+        xp, _ = get_namespace(X, self.coef_)
 
         X = self._validate_data(X, accept_sparse="csr", reset=False)
         scores = safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
