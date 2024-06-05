@@ -448,6 +448,7 @@ redirects = {
     "auto_examples/exercises/plot_cv_digits.py": (
         "auto_examples/model_selection/plot_nested_cross_validation_iris.py"
     ),
+    "tutorial/machine_learning_map/index.html": "machine_learning_map/index.html",
 }
 html_context["redirects"] = redirects
 for old_link in redirects:

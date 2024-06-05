@@ -13,7 +13,6 @@
    auto_examples/index
    Community <https://blog.scikit-learn.org/>
    getting_started
-   Tutorials <tutorial/index>
    whats_new
    Glossary <glossary>
    Development <{{ development_link }}>

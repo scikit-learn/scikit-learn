@@ -2,8 +2,8 @@
 # platform: linux-aarch64
 # input_hash: 2d8c526ab7c0c2f0ca509bfec3f035e5bd33b8096f194f0747f167c8aff66383
 @EXPLICIT
-https://conda.anaconda.org/conda-forge/linux-aarch64/ca-certificates-2024.2.2-hcefe29a_0.conda#57c226edb90c4e973b9b7503537dd339
-https://conda.anaconda.org/conda-forge/linux-aarch64/ld_impl_linux-aarch64-2.40-h9fc2d93_1.conda#8a90b17a5d12ba55b7d90534f38579d0
+https://conda.anaconda.org/conda-forge/linux-aarch64/ca-certificates-2024.6.2-hcefe29a_0.conda#3ef6b1a30375f8a973a593698e317191
+https://conda.anaconda.org/conda-forge/linux-aarch64/ld_impl_linux-aarch64-2.40-h9fc2d93_2.conda#4db8582be880caa8946573950c3e0e8b
 https://conda.anaconda.org/conda-forge/linux-aarch64/libstdcxx-ng-13.2.0-h3f4de04_7.conda#2a54872c7fab2db99b0074212d8efe64
 https://conda.anaconda.org/conda-forge/linux-aarch64/python_abi-3.9-4_cp39.conda#c191905a08694e4a5cb1238e90233878
 https://conda.anaconda.org/conda-forge/noarch/tzdata-2024a-h0c530f3_0.conda#161081fc7cec0bfda0d86d7cb595f8d8
@@ -20,7 +20,7 @@ https://conda.anaconda.org/conda-forge/linux-aarch64/libnsl-2.0.1-h31becfc_0.con
 https://conda.anaconda.org/conda-forge/linux-aarch64/libuuid-2.38.1-hb4cce97_0.conda#000e30b09db0b7c775b21695dff30969
 https://conda.anaconda.org/conda-forge/linux-aarch64/libwebp-base-1.4.0-h31becfc_0.conda#5fd7ab3e5f382c70607fbac6335e6e19
 https://conda.anaconda.org/conda-forge/linux-aarch64/libxcrypt-4.4.36-h31becfc_1.conda#b4df5d7d4b63579d081fd3a4cf99740e
-https://conda.anaconda.org/conda-forge/linux-aarch64/libzlib-1.2.13-h31becfc_5.conda#b213aa87eea9491ef7b129179322e955
+https://conda.anaconda.org/conda-forge/linux-aarch64/libzlib-1.3.1-h68df207_1.conda#b13fb82f88902e34dd0638cd7d378c21
 https://conda.anaconda.org/conda-forge/linux-aarch64/ncurses-6.5-h0425590_0.conda#38362af7bfac0efef69675acee564458
 https://conda.anaconda.org/conda-forge/linux-aarch64/ninja-1.12.1-h70be974_0.conda#216635cea46498d8045c7cf0f03eaf72
 https://conda.anaconda.org/conda-forge/linux-aarch64/openssl-3.3.0-h68df207_3.conda#f2dec4814ac9649cd3d3e474cd0b9a58
@@ -70,7 +70,7 @@ https://conda.anaconda.org/conda-forge/linux-aarch64/tornado-6.4-py39h7cc1d5f_0.
 https://conda.anaconda.org/conda-forge/linux-aarch64/unicodedata2-15.1.0-py39h898b7ef_0.conda#8c072c9329aeea97a46005625267a851
 https://conda.anaconda.org/conda-forge/noarch/wheel-0.43.0-pyhd8ed1ab_1.conda#0b5293a157c2b5cd513dd1b03d8d3aae
 https://conda.anaconda.org/conda-forge/noarch/zipp-3.17.0-pyhd8ed1ab_0.conda#2e4d6bc0b14e10f895fc6791a7d9b26a
-https://conda.anaconda.org/conda-forge/linux-aarch64/fonttools-4.52.1-py39he257ee7_0.conda#06188260ef5320c7d6eb4f1467224bb0
+https://conda.anaconda.org/conda-forge/linux-aarch64/fonttools-4.53.0-py39he257ee7_0.conda#de1dc44f6b1a4393b37f4264d8e31e2a
 https://conda.anaconda.org/conda-forge/noarch/importlib_resources-6.4.0-pyhd8ed1ab_0.conda#c5d3907ad8bd7bf557521a1833cf7e6d
 https://conda.anaconda.org/conda-forge/noarch/joblib-1.4.2-pyhd8ed1ab_0.conda#25df261d4523d9f9783bcdb7208d872f
 https://conda.anaconda.org/conda-forge/linux-aarch64/libcblas-3.9.0-22_linuxaarch64_openblas.conda#fbe7fe553f2cc78a0311e009b26f180d
@@ -79,7 +79,7 @@ https://conda.anaconda.org/conda-forge/noarch/meson-1.4.0-pyhd8ed1ab_0.conda#52a
 https://conda.anaconda.org/conda-forge/linux-aarch64/pillow-10.3.0-py39h71661b1_0.conda#dae548b7b537d7ef796d1d4c38a55319
 https://conda.anaconda.org/conda-forge/noarch/pip-24.0-pyhd8ed1ab_0.conda#f586ac1e56c8638b64f9c8122a7b8a67
 https://conda.anaconda.org/conda-forge/noarch/pyproject-metadata-0.8.0-pyhd8ed1ab_0.conda#573fe09d7bd0cd4bcc210d8369b5ca47
-https://conda.anaconda.org/conda-forge/noarch/pytest-8.2.1-pyhd8ed1ab_0.conda#e4418e8bdbaa8eea28e047531e6763c8
+https://conda.anaconda.org/conda-forge/noarch/pytest-8.2.2-pyhd8ed1ab_0.conda#0f3f49c22c7ef3a1195fa61dad3c43be
 https://conda.anaconda.org/conda-forge/noarch/python-dateutil-2.9.0-pyhd8ed1ab_0.conda#2cf4264fffb9e6eff6031c5b6884d61c
 https://conda.anaconda.org/conda-forge/noarch/importlib-resources-6.4.0-pyhd8ed1ab_0.conda#dcbadab7a68738a028e195ab68ab2d2e
 https://conda.anaconda.org/conda-forge/linux-aarch64/liblapacke-3.9.0-22_linuxaarch64_openblas.conda#5acf669e0be669f30f4b813d2ecda7b8
