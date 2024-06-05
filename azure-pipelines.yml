@@ -63,17 +63,11 @@ jobs:
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
 
 - template: build_tools/azure/posix.yml
-  # CPython 3.13 free-threaded build. Currently this uses CPyton 3.13
-  # free-threaded build from deadsnakes PPA together with Numpy and Scipy
-  # free-threaded development wheels.
-  # TODO Use released Numpy and Scipy versions when they are available
-  # TODO Use CPython 3.13 when it is released (planned in October 2024)
+  # CPython 3.13 free-threaded build
   parameters:
     name: Linux_free_threaded
     vmImage: ubuntu-22.04
-    # TODO free-threading temporary optimization for quicker iteration
-    dependsOn: [git_commit]
-    # dependsOn: [git_commit, linting]
+    dependsOn: [git_commit, linting]
     condition: |
       and(
         succeeded(),

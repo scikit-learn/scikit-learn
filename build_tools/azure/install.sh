@@ -39,13 +39,16 @@ pre_python_environment_install() {
                 python3-matplotlib libatlas3-base libatlas-base-dev \
                 python3-virtualenv python3-pandas ccache git
 
+    # TODO for now we use CPython 3.13 from Ubuntu deadsnakes PPA. When CPython
+    # 3.13 is released (scheduled October 2024) we can use something more
+    # similar to other conda+pip based builds
     elif [[ "$DISTRIB" == "pip-free-threaded" ]]; then
         sudo apt-get -yq update
         sudo apt-get install -yq ccache
-        sudo apt-get install software-properties-common -y
+        sudo apt-get install -yq software-properties-common
         sudo add-apt-repository --yes ppa:deadsnakes/nightly
-        sudo apt-get update -y
-        sudo apt-get install -y --no-install-recommends python3.13-dev python3.13-venv python3.13-nogil
+        sudo apt-get update -yq
+        sudo apt-get install -yq --no-install-recommends python3.13-dev python3.13-venv python3.13-nogil
     fi
 }
 
@@ -88,7 +91,7 @@ python_environment_install_and_activate() {
         dev_packages="numpy scipy"
         pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url $dev_packages
         # TODO Move cython to
-        # build_tools/azure/cpython_free_threaded_requirements.txt where there
+        # build_tools/azure/cpython_free_threaded_requirements.txt when there
         # is a CPython 3.13 free-threaded wheel
         # For now, we need the development version of Cython which has CPython
         # 3.13 free-threaded fixes so we install it from source
