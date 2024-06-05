@@ -65,6 +65,11 @@ python_environment_install_and_activate() {
         python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
         source $VIRTUALENV/bin/activate
         pip install -r "${LOCK_FILE}"
+
+    elif [[ "$DISTRIB" == "pip-nogil" ]]; then
+        python -m venv $VIRTUALENV
+        source $VIRTUALENV/bin/activate
+        pip install -r "${LOCK_FILE}"
     fi
 
     if [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
@@ -81,6 +86,11 @@ python_environment_install_and_activate() {
         pip install https://github.com/joblib/joblib/archive/master.zip
         echo "Installing pillow from latest sources"
         pip install https://github.com/python-pillow/Pillow/archive/main.zip
+
+    elif [[ "$DISTRIB" == "pip-nogil" ]]; then
+        apt-get -yq update
+        apt-get install -yq ccache
+
     fi
 }
 
