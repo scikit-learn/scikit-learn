@@ -2229,8 +2229,8 @@ class _RidgeGCV(LinearModel):
                 # initialize
                 if self.alpha_per_target and n_y > 1:
                     best_coef = c
-                    best_score = np.atleast_1d(alpha_score)
-                    best_alpha = np.full(n_y, alpha)
+                    best_score = xp.reshape(alpha_score, shape=(-1,))
+                    best_alpha = xp.full(n_y, alpha)
                 else:
                     best_coef = c
                     best_score = alpha_score
@@ -2239,7 +2239,7 @@ class _RidgeGCV(LinearModel):
                 # update
                 if self.alpha_per_target and n_y > 1:
                     to_update = alpha_score > best_score
-                    best_coef[:, to_update] = c[:, to_update]
+                    best_coef.T[to_update] = c.T[to_update]
                     best_score[to_update] = alpha_score[to_update]
                     best_alpha[to_update] = alpha
                 elif alpha_score > best_score:
