@@ -2687,7 +2687,7 @@ def test_cv_results_dtype_issue_29074():
         assert grid_search.cv_results_[f"param_{param}"].dtype == object
 
 
-def test_search_with_estimators():
+def test_search_with_estimators_issue_29157():
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame(
         {
