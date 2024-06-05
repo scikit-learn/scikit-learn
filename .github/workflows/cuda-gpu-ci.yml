@@ -22,6 +22,7 @@ jobs:
       - run: |
           git fetch origin +refs/pull/${{ inputs.pr_id }}/head:pr-${{ inputs.pr_id }}
           git checkout pr-${{ inputs.pr_id }}
+          git merge main
       - name: Cache conda environment
         id: cache-conda
         uses: actions/cache@v3
