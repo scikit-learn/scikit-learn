@@ -18,7 +18,9 @@ jobs:
         with:
           python-version: '3.12'
       - name: Checkout main repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+        with:
+          ref: pull/${{ inputs.pr_id }}/head
       - name: Checkout a particular Pull Request
         if: inputs.pr_id
         env:
