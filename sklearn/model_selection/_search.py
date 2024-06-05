@@ -1089,7 +1089,13 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         for key, param_result in param_results.items():
             param_list = list(param_result.values())
             try:
-                arr_dtype = np.result_type(*param_list)
+                with warnings.catch_warnings():
+                    warnings.filterwarnings(
+                        "ignore",
+                        message="in the future the `.dtype` attribute",
+                        category=DeprecationWarning,
+                    )
+                    arr_dtype = np.result_type(*param_list)
             except (TypeError, ValueError):
                 arr_dtype = np.dtype(object)
             else:
