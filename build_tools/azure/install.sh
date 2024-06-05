@@ -66,10 +66,19 @@ python_environment_install_and_activate() {
         source $VIRTUALENV/bin/activate
         pip install -r "${LOCK_FILE}"
 
-    elif [[ "$DISTRIB" == "pip-nogil" ]]; then
-        python -m venv $VIRTUALENV
+    elif [[ "$DISTRIB" == "pip-free-threaded" ]]; then
+        python3.13t -m venv $VIRTUALENV
         source $VIRTUALENV/bin/activate
-        pip install -r "${LOCK_FILE}"
+        # TODO free-threaded use a lock-file, for now done by hand
+        # TODO for now need pip 24.1b1 to find free-threaded wheels
+        pip install -U --pre pip
+        dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
+        dev_packages="numpy scipy"
+        pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url $dev_packages
+        # TODO need development Cython for now
+        pip install git+https://github.com/cython/cython
+        # Install all the other dependencies
+        pip install joblib threadpoolctl pytest meson-python
     fi
 
     if [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
@@ -87,10 +96,13 @@ python_environment_install_and_activate() {
         echo "Installing pillow from latest sources"
         pip install https://github.com/python-pillow/Pillow/archive/main.zip
 
-    elif [[ "$DISTRIB" == "pip-nogil" ]]; then
+    elif [[ "$DISTRIB" == "pip-free-threaded" ]]; then
         apt-get -yq update
         apt-get install -yq ccache
-
+        apt-get install software-properties-common -y
+        add-apt-repository --yes ppa:deadsnakes/nightly
+        apt-get update -y
+        apt-get install -y --no-install-recommends python3.13-dev python3.13-venv python3.13-nogil
     fi
 }
 
