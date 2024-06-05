@@ -1015,6 +1015,25 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         return self
 
 
+def _to_same_namespace(X, *rest):
+    """Implement the 'y follows X' rule."""
+    xp, is_array_api = get_namespace(X)
+    if not is_array_api:
+        return (X, *rest)
+
+    def to_xp(a):
+        """Convert namespace if needed -- workaround for the fact that
+        asarray(copy=False) not implemented yet by all backends.
+        """
+        if a is None:
+            return None
+        if get_namespace(a)[0] is xp:
+            return a
+        return xp.asarray(a)
+
+    return (X, *map(to_xp, rest))
+
+
 class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     """Linear least squares with l2 regularization.
 
@@ -1289,6 +1308,8 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
             The binarized version of `y`.
         """
         accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), solver)
+        X_xp, X_is_array_api = get_namespace(X)
+        X, sample_weight = _to_same_namespace(X, sample_weight)
         X, y = self._validate_data(
             X,
             y,
@@ -1296,7 +1317,6 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
             multi_output=True,
             y_numeric=False,
         )
-        X_xp, X_is_array_api = get_namespace(X)
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         y_xp, y_is_array_api = get_namespace(y)
         if y_is_array_api:
@@ -1304,8 +1324,8 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         Y = self._label_binarizer.fit_transform(y)
         if X_is_array_api:
             Y = X_xp.asarray(Y)
-        if y_is_array_api:
-            self.classes_ = y_xp.asarray(self._label_binarizer.classes_)
+        if y_is_array_api and y_xp.isdtype(y.dtype, "numeric"):
+            self.classes_ = X_xp.asarray(self._label_binarizer.classes_)
         else:
             self.classes_ = self._label_binarizer.classes_
         if not self._label_binarizer.y_type_.startswith("multilabel"):
@@ -2103,11 +2123,10 @@ class _RidgeGCV(LinearModel):
         -------
         self : object
         """
-        xp, is_array_api = get_namespace(X, y, sample_weight)
+        xp, is_array_api = get_namespace(X)
+        X, y, sample_weight = _to_same_namespace(X, y, sample_weight)
         device_kwargs = {"device": device(X)} if is_array_api else {}
-        if is_array_api:
-            original_dtype = X.dtype
-        elif hasattr(getattr(X, "dtype", None), "kind"):
+        if is_array_api or hasattr(getattr(X, "dtype", None), "kind"):
             original_dtype = X.dtype
         else:
             # for X that does not have a simple dtype (eg pandas dataframe) the
@@ -2165,13 +2184,9 @@ class _RidgeGCV(LinearModel):
         scorer = self._get_scorer()
 
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
-        if (
-            isinstance(self.alphas, numbers.Number)
-            or getattr(self.alphas, "ndim", None) == 0
-        ):
-            alphas = [float(self.alphas)]
-        else:
-            alphas = list(map(float, self.alphas))
+        # alphas is checked and converted to numpy in BaseRidgeCV
+        assert isinstance(self.alphas, np.ndarray)
+        alphas = np.atleast_1d(self.alphas)
         n_alphas = len(alphas)
 
         if self.store_cv_results:
