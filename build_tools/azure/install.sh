@@ -45,7 +45,7 @@ pre_python_environment_install() {
         sudo apt-get install software-properties-common -y
         sudo add-apt-repository --yes ppa:deadsnakes/nightly
         sudo apt-get update -y
-        sudo apt-get install -y --no-install-recommends python3.13-dev python3.13-venv python3.13-nogil
+        sudo apt-get install -y --no-install-recommends python3.13-dev python3.13-venv python3.13-nogil meson ninja-build
     fi
 }
 

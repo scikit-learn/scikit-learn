@@ -71,7 +71,9 @@ jobs:
   parameters:
     name: Linux_free_threaded
     vmImage: ubuntu-22.04
-    dependsOn: [git_commit, linting]
+    # TODO free-threading temporary optimization for quicker iteration
+    dependsOn: [git_commit]
+    # dependsOn: [git_commit, linting]
     condition: |
       and(
         succeeded(),
