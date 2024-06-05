@@ -355,9 +355,7 @@ class TransformedTargetRegressor(
         return pred_trans
 
     def _more_tags(self):
-        regressor = self.regressor
-        if regressor is None:
-            regressor = LinearRegression()
+        regressor = self._get_regressor()
 
         return {
             "poor_score": True,
