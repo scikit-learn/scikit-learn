@@ -315,14 +315,6 @@ Changelog
   have the `n_features_in_` and `feature_names_in_` attributes after `fit`.
   :pr:`27937` by :user:`Marco vd Boom <tvdboom>`.
 
-:mod:`sklearn.discriminant_analysis`
-....................................
-
-- |Fix| :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`
-  will now cause `LinAlgWarning` in case of collinear variables. These errors
-  can be silenced using the `reg_param` attribute.
-  :pr:`19731` by :user:`Alihan Zihna <azihna>`.
-
 :mod:`sklearn.ensemble`
 .......................
 
