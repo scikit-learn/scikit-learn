@@ -1015,25 +1015,25 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         return self
 
 
-def _to_same_namespace(X, *rest):
-    """Implement the 'y follows X' rule."""
+def _make_converter(X):
     xp, is_array_api = get_namespace(X)
     if not is_array_api:
-        return (X, *rest)
 
-    device_ = device(X)
+        def convert(array):
+            return array
 
-    def to_xp(a):
-        """Convert namespace if needed -- workaround for the fact that
-        asarray(copy=False) not implemented yet by all backends.
-        """
-        if a is None:
-            return None
-        if get_namespace(a)[0] is xp and device(a) == device_:
-            return a
-        return xp.asarray(a, device=device_)
+        return convert
+    else:
+        device_ = device(X)
 
-    return (X, *map(to_xp, rest))
+        def convert(array):
+            if array is None:
+                return None
+            if get_namespace(array)[0] is xp and device(array) == device_:
+                return array
+            return xp.asarray(array, device=device_)
+
+        return convert
 
 
 class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
@@ -1310,8 +1310,8 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
             The binarized version of `y`.
         """
         accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), solver)
-        X_xp, X_is_array_api = get_namespace(X)
-        X, sample_weight = _to_same_namespace(X, sample_weight)
+        follow_X = _make_converter(X)
+        sample_weight = follow_X(sample_weight)
         X, y = self._validate_data(
             X,
             y,
@@ -1324,10 +1324,9 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         Y = self._label_binarizer.fit_transform(
             _convert_to_numpy(y, y_xp) if y_is_array_api else y
         )
-        if X_is_array_api:
-            Y = X_xp.asarray(Y)
+        Y = follow_X(Y)
         if y_is_array_api and y_xp.isdtype(y.dtype, "numeric"):
-            self.classes_ = X_xp.asarray(self._label_binarizer.classes_)
+            self.classes_ = follow_X(self._label_binarizer.classes_)
         else:
             self.classes_ = self._label_binarizer.classes_
         if not self._label_binarizer.y_type_.startswith("multilabel"):
@@ -1336,8 +1335,7 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
         if self.class_weight:
             reweighting = compute_sample_weight(self.class_weight, y)
-            if X_is_array_api:
-                reweighting = X_xp.asarray(reweighting)
+            reweighting = follow_X(reweighting)
             sample_weight = sample_weight * reweighting
         return X, y, sample_weight, Y
 
@@ -2129,7 +2127,8 @@ class _RidgeGCV(LinearModel):
         self : object
         """
         xp, is_array_api = get_namespace(X)
-        X, y, sample_weight = _to_same_namespace(X, y, sample_weight)
+        follow_X = _make_converter(X)
+        y, sample_weight = follow_X(y), follow_X(sample_weight)
         device_kwargs = {"device": device(X)} if is_array_api else {}
         if is_array_api or hasattr(getattr(X, "dtype", None), "kind"):
             original_dtype = X.dtype
@@ -2232,7 +2231,7 @@ class _RidgeGCV(LinearModel):
                 if self.alpha_per_target and n_y > 1:
                     best_coef = c
                     best_score = xp.reshape(alpha_score, shape=(-1,))
-                    best_alpha = xp.full(n_y, alpha)
+                    best_alpha = xp.full(n_y, alpha, **device_kwargs)
                 else:
                     best_coef = c
                     best_score = alpha_score
@@ -2294,9 +2293,12 @@ class _RidgeGCV(LinearModel):
         """Performs scoring with the specified scorer using the
         predictions and the true y values.
         """
-        xp, _ = get_namespace(y)
+        xp, is_array_api = get_namespace(y)
+        device_kwargs = {"device": device(y)} if is_array_api else {}
         if self.is_clf:
-            identity_estimator = _IdentityClassifier(classes=xp.arange(n_y))
+            identity_estimator = _IdentityClassifier(
+                classes=xp.arange(n_y, **device_kwargs)
+            )
             _score = scorer(
                 identity_estimator,
                 predictions,
@@ -2315,7 +2317,8 @@ class _RidgeGCV(LinearModel):
                             **score_params,
                         )
                         for j in range(n_y)
-                    ]
+                    ],
+                    **device_kwargs,
                 )
             else:
                 _score = scorer(
