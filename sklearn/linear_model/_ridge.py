@@ -2061,10 +2061,10 @@ class _RidgeGCV(LinearModel):
         )
 
     def _svd_decompose_design_matrix(self, X, y, sqrt_sw):
-        xp, is_array_api = get_namespace(X)
-        device_kwargs = {"device": device(X)} if is_array_api else {}
+        xp, _ = get_namespace(X)
+        device_ = device(X)
         # X already centered
-        X_mean = xp.zeros(X.shape[1], dtype=X.dtype, **device_kwargs)
+        X_mean = xp.zeros(X.shape[1], dtype=X.dtype, device=device_)
         if self.fit_intercept:
             # to emulate fit_intercept=True situation, add a column
             # containing the square roots of the sample weights
@@ -2129,7 +2129,7 @@ class _RidgeGCV(LinearModel):
         xp, is_array_api = get_namespace(X)
         follow_X = _make_converter(X)
         y, sample_weight = follow_X(y), follow_X(sample_weight)
-        device_kwargs = {"device": device(X)} if is_array_api else {}
+        device_ = device(X)
         if is_array_api or hasattr(getattr(X, "dtype", None), "kind"):
             original_dtype = X.dtype
         else:
@@ -2137,7 +2137,7 @@ class _RidgeGCV(LinearModel):
             # attributes will be stored in the dtype chosen by validate_data, ie
             # np.float64
             original_dtype = None
-        dtype = max_precision_float_dtype(xp, **device_kwargs)
+        dtype = max_precision_float_dtype(xp, device=device_)
         X, y = self._validate_data(
             X,
             y,
@@ -2181,7 +2181,7 @@ class _RidgeGCV(LinearModel):
         if sample_weight is not None:
             X, y, sqrt_sw = _rescale_data(X, y, sample_weight)
         else:
-            sqrt_sw = xp.ones(n_samples, dtype=X.dtype, **device_kwargs)
+            sqrt_sw = xp.ones(n_samples, dtype=X.dtype, device=device_)
 
         X_mean, *decomposition = decompose(X, y, sqrt_sw)
 
@@ -2199,7 +2199,7 @@ class _RidgeGCV(LinearModel):
 
         if self.store_cv_results:
             self.cv_results_ = xp.empty(
-                (n_samples * n_y, n_alphas), dtype=original_dtype, **device_kwargs
+                (n_samples * n_y, n_alphas), dtype=original_dtype, device=device_
             )
 
         best_coef, best_score, best_alpha = None, None, None
@@ -2231,7 +2231,7 @@ class _RidgeGCV(LinearModel):
                 if self.alpha_per_target and n_y > 1:
                     best_coef = c
                     best_score = xp.reshape(alpha_score, shape=(-1,))
-                    best_alpha = xp.full(n_y, alpha, **device_kwargs)
+                    best_alpha = xp.full(n_y, alpha, device=device_)
                 else:
                     best_coef = c
                     best_score = alpha_score
@@ -2293,11 +2293,11 @@ class _RidgeGCV(LinearModel):
         """Performs scoring with the specified scorer using the
         predictions and the true y values.
         """
-        xp, is_array_api = get_namespace(y)
-        device_kwargs = {"device": device(y)} if is_array_api else {}
+        xp, _ = get_namespace(y)
+        device_ = device(y)
         if self.is_clf:
             identity_estimator = _IdentityClassifier(
-                classes=xp.arange(n_y, **device_kwargs)
+                classes=xp.arange(n_y, device=device_)
             )
             _score = scorer(
                 identity_estimator,
@@ -2318,7 +2318,7 @@ class _RidgeGCV(LinearModel):
                         )
                         for j in range(n_y)
                     ],
-                    **device_kwargs,
+                    device=device_,
                 )
             else:
                 _score = scorer(
