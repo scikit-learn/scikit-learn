@@ -990,6 +990,8 @@ def _in1d(ar1, ar2, xp, assume_unique=False, invert=False):
 
 
 def _bincount(xp, array, weights=None, minlength=None):
+    # TODO: update if bincount is ever adopted in a future version of the standard:
+    # https://github.com/data-apis/array-api/issues/812
     if hasattr(xp, "bincount"):
         return xp.bincount(array, weights=weights, minlength=minlength)
 
