@@ -33,7 +33,6 @@ classifiers=[
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: Implementation :: CPython",
-  "Programming Language :: Python :: Implementation :: PyPy",
 ]
 
 [project.urls]
@@ -65,7 +64,7 @@ docs = [
     "polars>=0.20.23",
     "sphinx-design>=0.5.0",
     "sphinxcontrib-sass>=0.3.4",
-    "pydata-sphinx-theme>=0.15.2",
+    "pydata-sphinx-theme>=0.15.3",
     "sphinx-remove-toctrees>=1.0.0.post1",
 ]
 examples = [
@@ -115,7 +114,6 @@ exclude = '''
   | \.vscode
   | build
   | dist
-  | doc/tutorial
   | doc/_build
   | doc/auto_examples
   | sklearn/externals
@@ -134,7 +132,6 @@ exclude=[
     "sklearn/externals",
     "doc/_build",
     "doc/auto_examples",
-    "doc/tutorial",
     "build",
     "asv_benchmarks/env",
     "asv_benchmarks/html",
