@@ -40,6 +40,7 @@ from ..utils._array_api import (
     device,
     get_namespace,
     get_namespace_and_device,
+    make_converter,
     max_precision_float_dtype,
 )
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
@@ -1015,27 +1016,6 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         return self
 
 
-def _make_converter(X):
-    xp, is_array_api = get_namespace(X)
-    if not is_array_api:
-
-        def convert(array):
-            return array
-
-        return convert
-    else:
-        device_ = device(X)
-
-        def convert(array):
-            if array is None:
-                return None
-            if get_namespace(array)[0] is xp and device(array) == device_:
-                return array
-            return xp.asarray(array, device=device_)
-
-        return convert
-
-
 class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     """Linear least squares with l2 regularization.
 
@@ -1310,7 +1290,7 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
             The binarized version of `y`.
         """
         accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), solver)
-        follow_X = _make_converter(X)
+        follow_X = make_converter(X)
         sample_weight = follow_X(sample_weight)
         X, y = self._validate_data(
             X,
@@ -2127,7 +2107,7 @@ class _RidgeGCV(LinearModel):
         self : object
         """
         xp, is_array_api = get_namespace(X)
-        follow_X = _make_converter(X)
+        follow_X = make_converter(X)
         y, sample_weight = follow_X(y), follow_X(sample_weight)
         device_ = device(X)
         if is_array_api or hasattr(getattr(X, "dtype", None), "kind"):
@@ -2308,7 +2288,7 @@ class _RidgeGCV(LinearModel):
         else:
             identity_estimator = _IdentityRegressor()
             if self.alpha_per_target:
-                _score = xp.array(
+                _score = xp.asarray(
                     [
                         scorer(
                             identity_estimator,

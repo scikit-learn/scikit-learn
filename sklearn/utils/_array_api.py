@@ -2,6 +2,7 @@
 
 import itertools
 import math
+import numbers
 from functools import wraps
 
 import numpy
@@ -646,6 +647,33 @@ def get_namespace_and_device(*array_list, remove_none=True, remove_types=(str,))
         )
     else:
         return xp, False, None
+
+
+def make_converter(X):
+    """Helper to implement the 'y follows X' rule.
+
+    Returns a function that converts an array to the namespace and device of X.
+
+    When X is not an array api array, the converter does nothing.
+    """
+    xp, is_array_api = get_namespace(X)
+    if not is_array_api:
+
+        def convert(data):
+            return data
+
+        return convert
+    else:
+        device_ = device(X)
+
+        def convert(data):
+            if data is None or isinstance(data, numbers.Number):
+                return data
+            if get_namespace(data)[0] is xp and device(data) == device_:
+                return data
+            return xp.asarray(data, device=device_)
+
+        return convert
 
 
 def _expit(X, xp=None):
