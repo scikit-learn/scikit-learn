@@ -1,7 +1,4 @@
-"""
-The :mod:`sklearn.utils.estimator_checks` module includes various utilities to
-check the compatibility of estimators with the scikit-learn API.
-"""
+"""Various utilities to check the compatibility of estimators with scikit-learn API."""
 
 import pickle
 import re
@@ -9,7 +6,7 @@ import warnings
 from contextlib import nullcontext
 from copy import deepcopy
 from functools import partial, wraps
-from inspect import signature
+from inspect import isfunction, signature
 from numbers import Integral, Real
 
 import joblib
@@ -84,7 +81,7 @@ from ._testing import (
     raises,
     set_random_state,
 )
-from .fixes import _IS_PYPY, SPARSE_ARRAY_PRESENT, parse_version, sp_version
+from .fixes import SPARSE_ARRAY_PRESENT, parse_version, sp_version
 from .validation import _num_samples, check_is_fitted, has_fit_parameter
 
 REGRESSION_DATASET = None
@@ -405,13 +402,11 @@ def _get_check_estimator_ids(obj):
     --------
     check_estimator
     """
-    if callable(obj):
-        if not isinstance(obj, partial):
-            return obj.__name__
-
+    if isfunction(obj):
+        return obj.__name__
+    if isinstance(obj, partial):
         if not obj.keywords:
             return obj.func.__name__
-
         kwstring = ",".join(["{}={}".format(k, v) for k, v in obj.keywords.items()])
         return "{}({})".format(obj.func.__name__, kwstring)
     if hasattr(obj, "get_params"):
@@ -810,7 +805,7 @@ class _NotAnArray:
     def __init__(self, data):
         self.data = np.asarray(data)
 
-    def __array__(self, dtype=None):
+    def __array__(self, dtype=None, copy=None):
         return self.data
 
     def __array_function__(self, func, types, args, kwargs):
@@ -3292,11 +3287,6 @@ def check_no_attributes_set_in_init(name, estimator_orig):
         return
 
     init_params = _get_args(type(estimator).__init__)
-    if _IS_PYPY:
-        # __init__ signature has additional objects in PyPy
-        for key in ["obj"]:
-            if key in init_params:
-                init_params.remove(key)
     parents_init_params = [
         param
         for params_parent in (_get_args(parent) for parent in type(estimator).__mro__)

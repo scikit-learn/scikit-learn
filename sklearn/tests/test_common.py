@@ -21,6 +21,7 @@ import pytest
 from scipy.linalg import LinAlgWarning
 
 import sklearn
+from sklearn.base import BaseEstimator
 from sklearn.cluster import (
     OPTICS,
     AffinityPropagation,
@@ -88,7 +89,7 @@ from sklearn.utils.estimator_checks import (
     check_transformer_get_feature_names_out_pandas,
     parametrize_with_checks,
 )
-from sklearn.utils.fixes import _IS_PYPY, _IS_WASM
+from sklearn.utils.fixes import _IS_WASM
 
 
 def test_all_estimator_no_base_class():
@@ -102,6 +103,16 @@ def test_all_estimator_no_base_class():
 
 def _sample_func(x, y=1):
     pass
+
+
+class CallableEstimator(BaseEstimator):
+    """Dummy development stub for an estimator.
+
+    This is to make sure a callable estimator passes common tests.
+    """
+
+    def __call__(self):
+        pass  # pragma: nocover
 
 
 @pytest.mark.parametrize(
@@ -123,6 +134,7 @@ def _sample_func(x, y=1):
                 "solver='newton-cg',warm_start=True)"
             ),
         ),
+        (CallableEstimator(), "CallableEstimator()"),
     ],
 )
 def test_get_check_estimator_ids(val, expected):
@@ -225,11 +237,6 @@ def test_import_all_consistency():
         # Avoid test suite depending on setuptools
         if "sklearn._build_utils" in modname:
             continue
-        if _IS_PYPY and (
-            "_svmlight_format_io" in modname
-            or "feature_extraction._hashing_fast" in modname
-        ):
-            continue
         package = __import__(modname, fromlist="dummy")
         for name in getattr(package, "__all__", ()):
             assert hasattr(package, name), "Module '{0}' has no attribute '{1}'".format(
@@ -248,13 +255,6 @@ def test_root_import_all_completeness():
         assert modname in sklearn.__all__
 
 
-@pytest.mark.skipif(
-    sklearn._BUILT_WITH_MESON,
-    reason=(
-        "This test fails with Meson editable installs see"
-        " https://github.com/mesonbuild/meson-python/issues/557 for more details"
-    ),
-)
 def test_all_tests_are_importable():
     # Ensure that for each contentful subpackage, there is a test directory
     # within it that is also a subpackage (i.e. a directory with __init__.py)

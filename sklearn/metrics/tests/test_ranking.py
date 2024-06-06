@@ -875,7 +875,7 @@ def test_binary_clf_curve_implicit_pos_label(curve_func):
         np.testing.assert_allclose(int_curve_part, float_curve_part)
 
 
-# TODO(1.5): Update test to check for error when bytes support is removed.
+# TODO(1.7): Update test to check for error when bytes support is removed.
 @ignore_warnings(category=FutureWarning)
 @pytest.mark.parametrize("curve_func", [precision_recall_curve, roc_curve])
 @pytest.mark.parametrize("labels_type", ["list", "array"])

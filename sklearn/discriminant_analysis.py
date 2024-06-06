@@ -1,6 +1,4 @@
-"""
-Linear Discriminant Analysis and Quadratic Discriminant Analysis
-"""
+"""Linear and quadratic discriminant analysis."""
 
 # Authors: Clemens Brunner
 #          Martin Billinger

@@ -36,6 +36,7 @@ from ..utils import Bunch, check_random_state
 from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._param_validation import HasMethods, Interval, StrOptions
 from ..utils._tags import _safe_tags
+from ..utils.deprecation import _deprecate_Xt_in_inverse_transform
 from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -637,7 +638,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         return self.best_estimator_.transform(X)
 
     @available_if(_estimator_has("inverse_transform"))
-    def inverse_transform(self, Xt):
+    def inverse_transform(self, X=None, Xt=None):
         """Call inverse_transform on the estimator with the best found params.
 
         Only available if the underlying estimator implements
@@ -645,9 +646,16 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
+        X : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
         Xt : indexable, length n_samples
             Must fulfill the input assumptions of the
             underlying estimator.
+
+            .. deprecated:: 1.5
+                `Xt` was deprecated in 1.5 and will be removed in 1.7. Use `X` instead.
 
         Returns
         -------
@@ -655,8 +663,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Result of the `inverse_transform` function for `Xt` based on the
             estimator with the best found parameters.
         """
+        X = _deprecate_Xt_in_inverse_transform(X, Xt)
         check_is_fitted(self)
-        return self.best_estimator_.inverse_transform(Xt)
+        return self.best_estimator_.inverse_transform(X)
 
     @property
     def n_features_in_(self):
@@ -963,7 +972,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             first_test_score = all_out[0]["test_scores"]
             self.multimetric_ = isinstance(first_test_score, dict)
 
-            # check refit_metric now for a callabe scorer that is multimetric
+            # check refit_metric now for a callable scorer that is multimetric
             if callable(self.scoring) and self.multimetric_:
                 self._check_refit_for_multimetric(first_test_score)
                 refit_metric = self.refit
@@ -1080,9 +1089,24 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         for key, param_result in param_results.items():
             param_list = list(param_result.values())
             try:
-                arr_dtype = np.result_type(*param_list)
-            except TypeError:
-                arr_dtype = object
+                with warnings.catch_warnings():
+                    warnings.filterwarnings(
+                        "ignore",
+                        message="in the future the `.dtype` attribute",
+                        category=DeprecationWarning,
+                    )
+                    # Warning raised by NumPy 1.20+
+                    arr_dtype = np.result_type(*param_list)
+            except (TypeError, ValueError):
+                arr_dtype = np.dtype(object)
+            else:
+                if any(np.min_scalar_type(x) == object for x in param_list):
+                    # `np.result_type` might get thrown off by `.dtype` properties
+                    # (which some estimators have).
+                    # If finding the result dtype this way would give object,
+                    # then we use object.
+                    # https://github.com/scikit-learn/scikit-learn/issues/29157
+                    arr_dtype = np.dtype(object)
             if len(param_list) == n_candidates and arr_dtype != object:
                 # Exclude `object` else the numpy constructor might infer a list of
                 # tuples to be a 2d array.

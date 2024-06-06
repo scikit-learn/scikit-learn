@@ -1,9 +1,3 @@
-.. Places parent toc into the sidebar
-
-:parenttoc: True
-
-.. include:: includes/big_toc_css.rst
-
 .. _model_selection:
 
 Model selection and evaluation
@@ -14,5 +8,6 @@ Model selection and evaluation
 
     modules/cross_validation
     modules/grid_search
+    modules/classification_threshold
     modules/model_evaluation
     modules/learning_curve

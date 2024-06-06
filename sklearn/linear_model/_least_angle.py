@@ -79,14 +79,14 @@ def lars_path(
     return_n_iter=False,
     positive=False,
 ):
-    """Compute Least Angle Regression or Lasso path using the LARS algorithm [1].
+    """Compute Least Angle Regression or Lasso path using the LARS algorithm.
 
     The optimization objective for the case method='lasso' is::
 
     (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
     in the case of method='lar', the objective function is only known in
-    the form of an implicit equation (see discussion in [1]).
+    the form of an implicit equation (see discussion in [1]_).
 
     Read more in the :ref:`User Guide <least_angle_regression>`.
 
@@ -268,14 +268,14 @@ def lars_path_gram(
     return_n_iter=False,
     positive=False,
 ):
-    """The lars_path in the sufficient stats mode [1].
+    """The lars_path in the sufficient stats mode.
 
     The optimization objective for the case method='lasso' is::
 
     (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
     in the case of method='lar', the objective function is only known in
-    the form of an implicit equation (see discussion in [1])
+    the form of an implicit equation (see discussion in [1]_).
 
     Read more in the :ref:`User Guide <least_angle_regression>`.
 
@@ -1821,7 +1821,7 @@ class LarsCV(Lars):
         """
         router = MetadataRouter(owner=self.__class__.__name__).add(
             splitter=check_cv(self.cv),
-            method_mapping=MethodMapping().add(callee="split", caller="fit"),
+            method_mapping=MethodMapping().add(caller="fit", callee="split"),
         )
         return router
 
