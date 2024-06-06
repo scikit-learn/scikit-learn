@@ -1267,6 +1267,7 @@ When there are more than two labels, the value of the MCC will no longer range
 between -1 and +1. Instead the minimum value will be somewhere between -1 and 0
 depending on the number and distribution of ground true labels. The maximum
 value is always +1.
+For additional information, see [WikipediaMCC2021]_.
 
 Here is a small example illustrating the usage of the :func:`matthews_corrcoef`
 function:
@@ -1276,6 +1277,13 @@ function:
     >>> y_pred = [+1, -1, +1, +1]
     >>> matthews_corrcoef(y_true, y_pred)
     -0.33...
+
+.. topic:: References:
+
+  .. [WikipediaMCC2021] Wikipedia contributors. Phi coefficient.
+     Wikipedia, The Free Encyclopedia. April 21, 2021, 12:21 CEST.
+     Available at: https://en.wikipedia.org/wiki/Phi_coefficient
+     Accessed April 21, 2021.
 
 .. _multilabel_confusion_matrix:
 

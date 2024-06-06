@@ -17,6 +17,7 @@ from scipy.stats import bernoulli, expon, uniform
 from sklearn import config_context
 from sklearn.base import BaseEstimator, ClassifierMixin, is_classifier
 from sklearn.cluster import KMeans
+from sklearn.compose import ColumnTransformer
 from sklearn.datasets import (
     make_blobs,
     make_classification,
@@ -64,7 +65,7 @@ from sklearn.model_selection.tests.common import OneTimeSplitter
 from sklearn.naive_bayes import ComplementNB
 from sklearn.neighbors import KernelDensity, KNeighborsClassifier, LocalOutlierFactor
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler
 from sklearn.svm import SVC, LinearSVC
 from sklearn.tests.metadata_routing_common import (
     ConsumingScorer,
@@ -1403,9 +1404,7 @@ def test_search_cv_results_none_param():
             est_parameters,
             cv=cv,
         ).fit(X, y)
-        assert_array_equal(
-            grid_search.cv_results_["param_random_state"], [0, float("nan")]
-        )
+        assert_array_equal(grid_search.cv_results_["param_random_state"], [0, None])
 
 
 @ignore_warnings()
@@ -2686,3 +2685,36 @@ def test_cv_results_dtype_issue_29074():
     grid_search.fit(X, y)
     for param in param_grid:
         assert grid_search.cv_results_[f"param_{param}"].dtype == object
+
+
+def test_search_with_estimators_issue_29157():
+    """Check cv_results_ for estimators with a `dtype` parameter, e.g. OneHotEncoder."""
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame(
+        {
+            "numeric_1": [1, 2, 3, 4, 5],
+            "object_1": ["a", "a", "a", "a", "a"],
+            "target": [1.0, 4.1, 2.0, 3.0, 1.0],
+        }
+    )
+    X = df.drop("target", axis=1)
+    y = df["target"]
+    enc = ColumnTransformer(
+        [("enc", OneHotEncoder(sparse_output=False), ["object_1"])],
+        remainder="passthrough",
+    )
+    pipe = Pipeline(
+        [
+            ("enc", enc),
+            ("regressor", LinearRegression()),
+        ]
+    )
+    grid_params = {
+        "enc__enc": [
+            OneHotEncoder(sparse_output=False),
+            OrdinalEncoder(),
+        ]
+    }
+    grid_search = GridSearchCV(pipe, grid_params, cv=2)
+    grid_search.fit(X, y)
+    assert grid_search.cv_results_["param_enc__enc"].dtype == object
