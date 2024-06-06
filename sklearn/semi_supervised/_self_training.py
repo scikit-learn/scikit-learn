@@ -563,7 +563,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             method_mapping=(
                 MethodMapping()
                 .add(callee="fit", caller="fit")
-                .add(callee="fit", caller="score")
+                .add(callee="score", caller="fit")
                 .add(callee="predict", caller="predict")
                 .add(callee="predict_proba", caller="predict_proba")
                 .add(callee="decision_function", caller="decision_function")
