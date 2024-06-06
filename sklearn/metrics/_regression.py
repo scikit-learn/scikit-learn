@@ -1598,8 +1598,10 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     >>> d2_tweedie_score(y_true, y_true, power=2)
     1.0
     """
+    xp, _ = get_namespace(y_true, y_pred)
+
     y_type, y_true, y_pred, _ = _check_reg_targets(
-        y_true, y_pred, None, dtype=[np.float64, np.float32]
+        y_true, y_pred, None, dtype=[xp.float64, xp.float32], xp=xp
     )
     if y_type == "continuous-multioutput":
         raise ValueError("Multioutput not supported in d2_tweedie_score")
@@ -1609,12 +1611,12 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
         warnings.warn(msg, UndefinedMetricWarning)
         return float("nan")
 
-    y_true, y_pred = np.squeeze(y_true), np.squeeze(y_pred)
+    y_true, y_pred = xp.squeeze(y_true, axis=1), xp.squeeze(y_pred, axis=1)
     numerator = mean_tweedie_deviance(
         y_true, y_pred, sample_weight=sample_weight, power=power
     )
 
-    y_avg = np.average(y_true, weights=sample_weight)
+    y_avg = _average(y_true, weights=sample_weight, xp=xp)
     denominator = _mean_tweedie_deviance(
         y_true, y_avg, sample_weight=sample_weight, power=power
     )
