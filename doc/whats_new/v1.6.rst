@@ -88,6 +88,14 @@ Changelog
   whether a given estimator is of category clusterer.
   :pr:`28936` by :user:`Christian Veenhuis <ChVeen>`.
 
+:mod:`sklearn.discriminant_analysis`
+....................................
+
+- |Fix| :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`
+  will now cause `LinAlgWarning` in case of collinear variables. These errors
+  can be silenced using the `reg_param` attribute.
+  :pr:`19731` by :user:`Alihan Zihna <azihna>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
