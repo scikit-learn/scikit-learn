@@ -208,7 +208,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         **params : dict
             Parameters to pass to the underlying estimators.
 
-            .. versionadded:: 1.5
+            .. versionadded:: 1.6
                 Only available if `enable_metadata_routing=True`,
                 which can be set by using
                 ``sklearn.set_config(enable_metadata_routing=True)``.
@@ -336,7 +336,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         **params : dict of str -> object
             Parameters to pass to the underlying estimator's predict method.
 
-            .. versionadded:: 1.5
+            .. versionadded:: 1.6
                 Only available if `enable_metadata_routing=True`,
                 which can be set by using
                 ``sklearn.set_config(enable_metadata_routing=True)``.
@@ -378,7 +378,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         **params : dict of str -> object
             Parameters to pass to the underlying estimator's predict_proba method.
 
-            .. versionadded:: 1.5
+            .. versionadded:: 1.6
                 Only available if `enable_metadata_routing=True`,
                 which can be set by using
                 ``sklearn.set_config(enable_metadata_routing=True)``.
@@ -422,7 +422,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         **params : dict of str -> object
             Parameters to pass to the underlying estimator's decision_function method.
 
-            .. versionadded:: 1.5
+            .. versionadded:: 1.6
                 Only available if `enable_metadata_routing=True`,
                 which can be set by using
                 ``sklearn.set_config(enable_metadata_routing=True)``.
@@ -466,7 +466,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         **params : dict of str -> object
             Parameters to pass to the underlying estimator's predict_log_proba method.
 
-            .. versionadded:: 1.5
+            .. versionadded:: 1.6
                 Only available if `enable_metadata_routing=True`,
                 which can be set by using
                 ``sklearn.set_config(enable_metadata_routing=True)``.
@@ -513,7 +513,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         **params : dict of str -> object
             Parameters requested and accepted by base estimator's score function.
 
-            .. versionadded:: 1.5
+            .. versionadded:: 1.6
                 Only available if `enable_metadata_routing=True`,
                 which can be set by using
                 ``sklearn.set_config(enable_metadata_routing=True)``.
@@ -549,7 +549,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         Please check :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
 
-        .. versionadded:: 1.5
+        .. versionadded:: 1.6
 
         Returns
         -------
