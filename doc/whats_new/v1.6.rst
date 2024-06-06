@@ -32,12 +32,12 @@ See :ref:`array_api` for more details.
 
 **Functions:**
 
-- :func:`sklearn.metrics.mean_tweedie_deviance` now supports Array API compatible
+- :func:`sklearn.metrics.mean_absolute_error` now supports Array API compatible
   inputs.
-  :pr:`28106` by :user:`Thomas Li <lithomas1>`;
-- :func:`sklearn.metrics.mean_absolute_error` :pr:`27736` by :user:`Edoardo Abati <EdAbati>`;
-- :func:`sklearn.metrics.pairwise.cosine_similarity` :pr:`29014` by :user:`Edoardo Abati <EdAbati>`;
-- :func:`sklearn.metrics.mean_squared_error` :pr:`29142` by :user:`Yaroslav Korobko <Tialo>`.
+  :pr:`27736` by :user:`Edoardo Abati <EdAbati>`;
+- :func:`sklearn.metrics.mean_squared_error` :pr:`29142` by :user:`Yaroslav Korobko <Tialo>`;
+- :func:`sklearn.metrics.mean_tweedie_deviance` :pr:`28106` by :user:`Thomas Li <lithomas1>`;
+- :func:`sklearn.metrics.pairwise.cosine_similarity` :pr:`29014` by :user:`Edoardo Abati <EdAbati>`.
 
 
 **Classes:**
