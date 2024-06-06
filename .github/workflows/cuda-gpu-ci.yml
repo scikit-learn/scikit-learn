@@ -19,8 +19,9 @@ jobs:
           python-version: '3.12'
       - name: Checkout main repository
         uses: actions/checkout@v4
-        with:
-          ref: pull/${{ inputs.pr_id }}/head
+      - run: |
+          git fetch origin +refs/pull/${{ inputs.pr_id }}/head:pr-${{ inputs.pr_id }}
+          git checkout pr-${{ inputs.pr_id }}
       - name: Cache conda environment
         id: cache-conda
         uses: actions/cache@v3
