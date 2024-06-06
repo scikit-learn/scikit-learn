@@ -266,13 +266,13 @@ def test_entropy():
 )
 def test_entropy_array_api(array_namespace, device, dtype_name):
     xp = _array_api_for_tests(array_namespace, device)
-    labels1 = xp.asarray([0, 0, 42.0])
-    labels2 = xp.asarray([])
-    labels3 = xp.asarray([1, 1, 1, 1])
+    float_labels = xp.asarray([0, 0, 42.0], device=device)
+    empty_int32_labels = xp.asarray([], dtype=xp.int32, device=device)
+    int_labels = xp.asarray([1, 1, 1, 1], device=device)
     with config_context(array_api_dispatch=True):
-        assert_almost_equal(entropy(labels1), 0.6365141, 5)
-        assert entropy(labels2) == 1
-        assert entropy(labels3) == 0
+        assert_almost_equal(entropy(float_labels), 0.6365141, 5)
+        assert entropy(empty_int32_labels) == 1
+        assert entropy(int_labels) == 0
 
 
 def test_contingency_matrix():

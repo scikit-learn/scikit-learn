@@ -1283,19 +1283,18 @@ def entropy(labels):
     -----
     The logarithm used is the natural logarithm (base-e).
     """
-    _, is_array_api_compliant = get_namespace(labels)
+    xp, is_array_api_compliant = get_namespace(labels)
     labels_len = labels.shape[0] if is_array_api_compliant else len(labels)
     if labels_len == 0:
         return 1.0
 
-    pi = np.unique(labels, return_counts=True)[1]
-    pi = pi.astype(np.float64)
+    pi = xp.astype(xp.unique_counts(labels)[1], xp.float64)
 
     # single cluster => zero entropy
     if pi.size == 1:
         return 0.0
 
-    pi_sum = np.sum(pi)
+    pi_sum = xp.sum(pi)
     # log(a / b) should be calculated as log(a) - log(b) for
     # possible loss of precision
-    return -np.sum((pi / pi_sum) * (np.log(pi) - log(pi_sum)))
+    return -xp.sum((pi / pi_sum) * (xp.log(pi) - log(pi_sum)))
