@@ -2516,13 +2516,25 @@ def test_column_transformer_column_renaming(dataframe_lib):
 
     df = lib.DataFrame({"x1": [1, 2, 3], "x2": [10, 20, 30], "x3": [100, 200, 300]})
 
+    # We simulate a transformer that for some reason will return no columns.
+    # We need different function for polars and pandas to achieve this behaviour.
+    if dataframe_lib == "polars":
+
+        def _no_column_selector(X):
+            return X[:, []]
+
+    else:  # pandas
+
+        def _no_column_selector(X):
+            return X.loc[:, []]
+
     transformer = ColumnTransformer(
         transformers=[
             ("A", "passthrough", ["x1", "x2", "x3"]),
             ("B", FunctionTransformer(), ["x1", "x2"]),
             ("C", StandardScaler(), ["x1", "x3"]),
             # special case of empty transformer
-            ("D", FunctionTransformer(lambda x: x[[]]), ["x1", "x2", "x3"]),
+            ("D", FunctionTransformer(_no_column_selector), ["x1", "x2", "x3"]),
         ],
         verbose_feature_names_out=True,
     ).set_output(transform=dataframe_lib)
@@ -2546,13 +2558,25 @@ def test_column_transformer_error_with_duplicated_columns(dataframe_lib):
 
     df = lib.DataFrame({"x1": [1, 2, 3], "x2": [10, 20, 30], "x3": [100, 200, 300]})
 
+    # We simulate a transformer that for some reason will return no columns.
+    # We need different function for polars and pandas to achieve this behaviour.
+    if dataframe_lib == "polars":
+
+        def _no_column_selector(X):
+            return X[:, []]
+
+    else:  # pandas
+
+        def _no_column_selector(X):
+            return X.loc[:, []]
+
     transformer = ColumnTransformer(
         transformers=[
             ("A", "passthrough", ["x1", "x2", "x3"]),
             ("B", FunctionTransformer(), ["x1", "x2"]),
             ("C", StandardScaler(), ["x1", "x3"]),
             # special case of empty transformer
-            ("D", FunctionTransformer(lambda x: x[[]]), ["x1", "x2", "x3"]),
+            ("D", FunctionTransformer(_no_column_selector), ["x1", "x2", "x3"]),
         ],
         verbose_feature_names_out=False,
     ).set_output(transform=dataframe_lib)
