@@ -247,8 +247,8 @@ html_theme_options = {
     # check_switcher may be set to False if docbuild pipeline fails. See
     # https://pydata-sphinx-theme.readthedocs.io/en/stable/user_guide/version-dropdown.html#configure-switcher-json-url
     "check_switcher": True,
-    "pygment_light_style": "tango",
-    "pygment_dark_style": "monokai",
+    "pygments_light_style": "tango",
+    "pygments_dark_style": "monokai",
     "logo": {
         "alt_text": "scikit-learn homepage",
         "image_relative": "logos/scikit-learn-logo-small.png",
@@ -448,6 +448,7 @@ redirects = {
     "auto_examples/exercises/plot_cv_digits.py": (
         "auto_examples/model_selection/plot_nested_cross_validation_iris.py"
     ),
+    "tutorial/machine_learning_map/index.html": "machine_learning_map/index.html",
 }
 html_context["redirects"] = redirects
 for old_link in redirects:
@@ -455,9 +456,6 @@ for old_link in redirects:
 
 # See https://github.com/scikit-learn/scikit-learn/pull/22550
 html_context["is_devrelease"] = parsed_version.is_devrelease
-
-# Not showing the search summary makes the search page load faster.
-html_show_search_summary = True
 
 
 # -- Options for LaTeX output ------------------------------------------------

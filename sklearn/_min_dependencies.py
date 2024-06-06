@@ -21,7 +21,7 @@ dependent_packages = {
     "joblib": (JOBLIB_MIN_VERSION, "install"),
     "threadpoolctl": (THREADPOOLCTL_MIN_VERSION, "install"),
     "cython": (CYTHON_MIN_VERSION, "build"),
-    "meson-python": ("0.15.0", "build"),
+    "meson-python": ("0.16.0", "build"),
     "matplotlib": ("3.3.4", "benchmark, docs, examples, tests"),
     "scikit-image": ("0.17.2", "docs, examples, tests"),
     "pandas": ("1.1.5", "benchmark, docs, examples, tests"),
@@ -47,7 +47,7 @@ dependent_packages = {
     "sphinxcontrib-sass": ("0.3.4", "docs"),
     "sphinx-remove-toctrees": ("1.0.0.post1", "docs"),
     "sphinx-design": ("0.5.0", "docs"),
-    "pydata-sphinx-theme": ("0.15.2", "docs"),
+    "pydata-sphinx-theme": ("0.15.3", "docs"),
     # XXX: Pin conda-lock to the latest released version (needs manual update
     # from time to time)
     "conda-lock": ("2.5.6", "maintenance"),
