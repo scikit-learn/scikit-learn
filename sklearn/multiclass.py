@@ -1,11 +1,8 @@
-"""
-Multiclass classification strategies
-====================================
+"""Multiclass learning algorithms.
 
-This module implements multiclass learning algorithms:
-    - one-vs-the-rest / one-vs-all
-    - one-vs-one
-    - error correcting output codes
+- one-vs-the-rest / one-vs-all
+- one-vs-one
+- error correcting output codes
 
 The estimators provided in this module are meta-estimators: they require a base
 estimator to be provided in their constructor. For example, it is possible to
@@ -619,8 +616,8 @@ class OneVsRestClassifier(
             .add(
                 estimator=self.estimator,
                 method_mapping=MethodMapping()
-                .add(callee="fit", caller="fit")
-                .add(callee="partial_fit", caller="partial_fit"),
+                .add(caller="fit", callee="fit")
+                .add(caller="partial_fit", callee="partial_fit"),
             )
         )
         return router
@@ -738,7 +735,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     >>> X_train, X_test, y_train, y_test = train_test_split(
     ...     X, y, test_size=0.33, shuffle=True, random_state=0)
     >>> clf = OneVsOneClassifier(
-    ...     LinearSVC(dual="auto", random_state=0)).fit(X_train, y_train)
+    ...     LinearSVC(random_state=0)).fit(X_train, y_train)
     >>> clf.predict(X_test[:10])
     array([2, 1, 0, 2, 0, 2, 0, 1, 1, 1])
     """
@@ -1018,8 +1015,8 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             .add(
                 estimator=self.estimator,
                 method_mapping=MethodMapping()
-                .add(callee="fit", caller="fit")
-                .add(callee="partial_fit", caller="partial_fit"),
+                .add(caller="fit", callee="fit")
+                .add(caller="partial_fit", callee="partial_fit"),
             )
         )
         return router
@@ -1264,6 +1261,6 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         router = MetadataRouter(owner=self.__class__.__name__).add(
             estimator=self.estimator,
-            method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+            method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
         return router

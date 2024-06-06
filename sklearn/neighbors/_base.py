@@ -1,4 +1,5 @@
 """Base and mixin classes for nearest neighbors."""
+
 # Authors: Jake Vanderplas <vanderplas@astro.washington.edu>
 #          Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
@@ -444,8 +445,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 raise ValueError(
                     "kd_tree does not support callable metric '%s'"
                     "Function call overhead will result"
-                    "in very poor performance."
-                    % self.metric
+                    "in very poor performance." % self.metric
                 )
         elif self.metric not in VALID_METRICS[alg_check] and not isinstance(
             self.metric, DistanceMetric
@@ -695,15 +695,6 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         return {"pairwise": self.metric == "precomputed"}
 
 
-def _tree_query_parallel_helper(tree, *args, **kwargs):
-    """Helper for the Parallel calls in KNeighborsMixin.kneighbors.
-
-    The Cython method tree.query is not directly picklable by cloudpickle
-    under PyPy.
-    """
-    return tree.query(*args, **kwargs)
-
-
 class KNeighborsMixin:
     """Mixin for k-neighbors searches."""
 
@@ -898,13 +889,10 @@ class KNeighborsMixin:
             if issparse(X):
                 raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
-                    "or set algorithm='brute'"
-                    % self._fit_method
+                    "or set algorithm='brute'" % self._fit_method
                 )
             chunked_results = Parallel(n_jobs, prefer="threads")(
-                delayed(_tree_query_parallel_helper)(
-                    self._tree, X[s], n_neighbors, return_distance
-                )
+                delayed(self._tree.query)(X[s], n_neighbors, return_distance)
                 for s in gen_even_slices(X.shape[0], n_jobs)
             )
         else:
@@ -1029,15 +1017,6 @@ class KNeighborsMixin:
         )
 
         return kneighbors_graph
-
-
-def _tree_query_radius_parallel_helper(tree, *args, **kwargs):
-    """Helper for the Parallel calls in RadiusNeighborsMixin.radius_neighbors.
-
-    The Cython method tree.query_radius is not directly picklable by
-    cloudpickle under PyPy.
-    """
-    return tree.query_radius(*args, **kwargs)
 
 
 class RadiusNeighborsMixin:
@@ -1253,16 +1232,13 @@ class RadiusNeighborsMixin:
             if issparse(X):
                 raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
-                    "or set algorithm='brute'"
-                    % self._fit_method
+                    "or set algorithm='brute'" % self._fit_method
                 )
 
             n_jobs = effective_n_jobs(self.n_jobs)
-            delayed_query = delayed(_tree_query_radius_parallel_helper)
+            delayed_query = delayed(self._tree.query_radius)
             chunked_results = Parallel(n_jobs, prefer="threads")(
-                delayed_query(
-                    self._tree, X[s], radius, return_distance, sort_results=sort_results
-                )
+                delayed_query(X[s], radius, return_distance, sort_results=sort_results)
                 for s in gen_even_slices(X.shape[0], n_jobs)
             )
             if return_distance:

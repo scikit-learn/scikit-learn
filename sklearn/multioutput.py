@@ -1,5 +1,4 @@
-"""
-This module implements multioutput regression and classification.
+"""Multioutput regression and classification.
 
 The estimators provided in this module are meta-estimators: they require
 a base estimator to be provided in their constructor. The meta-estimator
@@ -334,8 +333,8 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         router = MetadataRouter(owner=self.__class__.__name__).add(
             estimator=self.estimator,
             method_mapping=MethodMapping()
-            .add(callee="partial_fit", caller="partial_fit")
-            .add(callee="fit", caller="fit"),
+            .add(caller="partial_fit", callee="partial_fit")
+            .add(caller="fit", callee="fit"),
         )
         return router
 
@@ -1096,7 +1095,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         """
         router = MetadataRouter(owner=self.__class__.__name__).add(
             estimator=self.base_estimator,
-            method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+            method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
         return router
 
@@ -1191,7 +1190,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
     --------
     >>> from sklearn.multioutput import RegressorChain
     >>> from sklearn.linear_model import LogisticRegression
-    >>> logreg = LogisticRegression(solver='lbfgs',multi_class='multinomial')
+    >>> logreg = LogisticRegression(solver='lbfgs')
     >>> X, Y = [[1, 0], [0, 1], [1, 1]], [[0, 2], [1, 1], [2, 0]]
     >>> chain = RegressorChain(base_estimator=logreg, order=[0, 1]).fit(X, Y)
     >>> chain.predict(X)
@@ -1245,7 +1244,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         """
         router = MetadataRouter(owner=self.__class__.__name__).add(
             estimator=self.base_estimator,
-            method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+            method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
         return router
 

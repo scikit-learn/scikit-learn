@@ -637,17 +637,6 @@ class Birch(
         else:
             return self._fit(X, partial=True)
 
-    def _check_fit(self, X):
-        check_is_fitted(self)
-
-        if (
-            hasattr(self, "subcluster_centers_")
-            and X.shape[1] != self.subcluster_centers_.shape[1]
-        ):
-            raise ValueError(
-                "Training data and predicted data do not have same number of features."
-            )
-
     def predict(self, X):
         """
         Predict data using the ``centroids_`` of subclusters.
