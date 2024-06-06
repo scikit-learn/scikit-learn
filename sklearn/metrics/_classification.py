@@ -3356,6 +3356,7 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
     return 1 - (numerator / denominator)
 
 import numpy as np
+from numpy.testing import assert_almost_equal
 from sklearn.utils.validation import check_consistent_length
 
 def tau_score(y_true, y_pred, *, normalize=True):
@@ -3380,6 +3381,15 @@ def tau_score(y_true, y_pred, *, normalize=True):
         The Tau score, where higher values represent better performance.
     """
     check_consistent_length(y_true, y_pred)
+    if not isinstance(normalize, bool):
+        raise ValueError("normalize must be a boolean.")
+
+    if len(y_true) == 0 or len(y_pred) == 0:
+        raise ValueError("Input arrays must not be empty.")
+
+    if any(isinstance(x, str) for x in np.concatenate((y_true, y_pred))):
+        raise ValueError("Input arrays must contain numeric values only.")
+    
     cm = confusion_matrix(y_true, y_pred)
     n_classes = cm.shape[0]
 
