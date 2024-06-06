@@ -59,12 +59,7 @@ check_packages_dev_version() {
 
 python_environment_install_and_activate() {
     if [[ "$DISTRIB" == "conda"* ]]; then
-        # Install/update conda with the libmamba solver because the legacy
-        # solver can be slow at installing a specific version of conda-lock.
-        conda install -n base conda conda-libmamba-solver -y
-        conda config --set solver libmamba
-        conda install -c conda-forge "$(get_dep conda-lock min)" -y
-        conda-lock install --name $VIRTUALENV $LOCK_FILE
+        create_conda_environment_from_lock_file $VIRTUALENV $LOCK_FILE
         source activate $VIRTUALENV
 
     elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
