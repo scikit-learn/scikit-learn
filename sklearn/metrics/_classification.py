@@ -1803,9 +1803,9 @@ def precision_recall_fscore_support(
 
     xp, _ = get_namespace(y_true, y_pred)
     if average == "micro":
-        tp_sum = xp.asarray([xp.sum(tp_sum)])
-        pred_sum = xp.asarray([xp.sum(pred_sum)])
-        true_sum = xp.asarray([xp.sum(true_sum)])
+        tp_sum = xp.reshape(xp.sum(tp_sum), shape=(1,))
+        pred_sum = xp.reshape(xp.sum(pred_sum), shape=(1,))
+        true_sum = xp.reshape(xp.sum(true_sum), shape=(1,))
 
     # Finally, we have all our sufficient statistics. Divide! #
     beta2 = beta**2
