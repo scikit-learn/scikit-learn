@@ -96,6 +96,13 @@ Changelog
   can be silenced using the `reg_param` attribute.
   :pr:`19731` by :user:`Alihan Zihna <azihna>`.
 
+:mod:`sklearn.impute`
+.....................
+
+- |Fix| :class:`impute.KNNImputer` excludes samples with nan distances when
+  computing the mean value for uniform weights.
+  :pr:`29135` by :user:`Xuefeng Xu <xuefeng-xu>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
