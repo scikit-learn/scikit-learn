@@ -13,8 +13,8 @@ this project as part of his thesis.
 In 2010 Fabian Pedregosa, Gael Varoquaux, Alexandre Gramfort and Vincent
 Michel of INRIA took leadership of the project and made the first public
 release, February the 1st 2010. Since then, several releases have appeared
-following a ~ 3-month cycle, and a thriving international community has
-been leading the development.
+following an approximately 3-month cycle, and a thriving international
+community has been leading the development.
 
 Governance
 ----------
@@ -28,7 +28,7 @@ out in the :ref:`governance document <governance>`.
 .. _authors:
 
 The people behind scikit-learn
--------------------------------
+------------------------------
 
 Scikit-learn is a community project, developed by a large group of
 people, all across the world. A few teams, listed below, have central
@@ -44,14 +44,16 @@ consolidating scikit-learn's development and maintenance:
 
 .. include:: maintainers.rst
 
-Please do not email the authors directly to ask for assistance or report issues.
-Instead, please see `What's the best way to ask questions about scikit-learn
-<https://scikit-learn.org/stable/faq.html#what-s-the-best-way-to-get-help-on-scikit-learn-usage>`_
-in the FAQ.
+.. note::
+
+  Please do not email the authors directly to ask for assistance or report issues.
+  Instead, please see `What's the best way to ask questions about scikit-learn
+  <https://scikit-learn.org/stable/faq.html#what-s-the-best-way-to-get-help-on-scikit-learn-usage>`_
+  in the FAQ.
 
 .. seealso::
 
-   :ref:`How you can contribute to the project <contributing>`
+  How you can :ref:`contribute to the project <contributing>`.
 
 Documentation Team
 ..................
@@ -77,9 +79,8 @@ The following people help with :ref:`communication around scikit-learn
 
 .. include:: communication_team.rst
 
-
 Emeritus Core Developers
-------------------------
+........................
 
 The following people have been active contributors in the past, but are no
 longer active in the project:
@@ -87,7 +88,7 @@ longer active in the project:
 .. include:: maintainers_emeritus.rst
 
 Emeritus Communication Team
----------------------------
+...........................
 
 The following people have been active in the communication team in the
 past, but no longer have communication responsibilities:
@@ -95,7 +96,7 @@ past, but no longer have communication responsibilities:
 .. include:: communication_team_emeritus.rst
 
 Emeritus Contributor Experience Team
-------------------------------------
+....................................
 
 The following people have been active in the contributor experience team in the
 past:
@@ -157,488 +158,305 @@ High quality PNG and SVG logos are available in the `doc/logos/
 source directory.
 
 .. image:: images/scikit-learn-logo-notext.png
-   :align: center
+  :align: center
 
 Funding
 -------
-Scikit-Learn is a community driven project, however institutional and private
+
+Scikit-learn is a community driven project, however institutional and private
 grants help to assure its sustainability.
 
 The project would like to thank the following funders.
 
 ...................................
 
+.. div:: sk-text-image-grid-small
 
-.. raw:: html
+  .. div:: text-box
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+    `:probabl. <https://probabl.ai>`_ funds Adrin Jalali, Arturo Amor, François Goupil,
+    Guillaume Lemaitre, Jérémie du Boisberranger, Olivier Grisel, and Stefanie Senger.
 
-`:probabl. <https://probabl.ai>`_ funds Adrin Jalali, Arturo Amor,
-François Goupil, Guillaume Lemaitre, Jérémie du Boisberranger, Olivier Grisel, and
-Stefanie Senger.
+  .. div:: image-box
 
-.. raw:: html
-
-   </div>
-
-   <div class="sk-sponsor-div-box">
-
-.. image:: images/probabl.png
-   :width: 75pt
-   :align: center
-   :target: https://probabl.ai
-
-.. raw:: html
-
-   </div>
-   </div>
+    .. image:: images/probabl.png
+      :target: https://probabl.ai
 
 ..........
-
-.. raw:: html
-
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
-
-The `Members <https://scikit-learn.fondation-inria.fr/en/home/#sponsors>`_ of
-the `Scikit-Learn Consortium at Inria Foundation
-<https://scikit-learn.fondation-inria.fr/en/home/>`_ help at maintaining and
-improving the project through their financial support.
-
-.. raw:: html
-
-   </div>
 
 .. |chanel| image:: images/chanel.png
-   :width: 55pt
-   :target: https://www.chanel.com
+  :target: https://www.chanel.com
 
 .. |axa| image:: images/axa.png
-   :width: 40pt
-   :target: https://www.axa.fr/
+  :target: https://www.axa.fr/
 
 .. |bnp| image:: images/bnp.png
-   :width: 120pt
-   :target: https://www.bnpparibascardif.com/
+  :target: https://www.bnpparibascardif.com/
 
 .. |dataiku| image:: images/dataiku.png
-   :width: 55pt
-   :target: https://www.dataiku.com/
+  :target: https://www.dataiku.com/
 
 .. |hf| image:: images/huggingface_logo-noborder.png
-   :width: 55pt
-   :target: https://huggingface.co
+  :target: https://huggingface.co
 
 .. |nvidia| image:: images/nvidia.png
-   :width: 55pt
-   :target: https://www.nvidia.com
+  :target: https://www.nvidia.com
 
 .. |inria| image:: images/inria-logo.jpg
-   :width: 75pt
-   :target: https://www.inria.fr
-
+  :target: https://www.inria.fr
 
 .. raw:: html
 
-   <div class="sk-sponsor-div-box">
+  <style>
+    table.image-subtable tr {
+      border-color: transparent;
+    }
 
-.. table::
-   :class: sk-sponsor-table
+    table.image-subtable td {
+      width: 50%;
+      vertical-align: middle;
+      text-align: center;
+    }
 
-   +----------+-----------+
-   |       |chanel|       |
-   +----------+-----------+
-   |                      |
-   +----------+-----------+
-   |  |axa|   |    |bnp|  |
-   +----------+-----------+
-   |                      |
-   +----------+-----------+
-   | |nvidia| |    |hf|   |
-   +----------+-----------+
-   |                      |
-   +----------+-----------+
-   |       |dataiku|      |
-   +----------+-----------+
-   |                      |
-   +----------+-----------+
-   |        |inria|       |
-   +----------+-----------+
+    table.image-subtable td img {
+      max-height: 40px !important;
+      max-width: 90% !important;
+    }
+  </style>
 
-.. raw:: html
+.. div:: sk-text-image-grid-small
 
-   </div>
-   </div>
+  .. div:: text-box
+
+    The `Members <https://scikit-learn.fondation-inria.fr/en/home/#sponsors>`_ of
+    the `Scikit-learn Consortium at Inria Foundation
+    <https://scikit-learn.fondation-inria.fr/en/home/>`_ help at maintaining and
+    improving the project through their financial support.
+
+  .. div:: image-box
+
+    .. table::
+      :class: image-subtable
+
+      +----------+-----------+
+      |       |chanel|       |
+      +----------+-----------+
+      |  |axa|   |    |bnp|  |
+      +----------+-----------+
+      | |nvidia| |    |hf|   |
+      +----------+-----------+
+      |       |dataiku|      |
+      +----------+-----------+
+      |        |inria|       |
+      +----------+-----------+
 
 ..........
 
-.. raw:: html
+.. div:: sk-text-image-grid-small
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+  .. div:: text-box
 
-`NVidia <https://nvidia.com>`_ funds Tim Head since 2022
-and is part of the scikit-learn consortium at Inria.
+    `NVidia <https://nvidia.com>`_ funds Tim Head since 2022
+    and is part of the scikit-learn consortium at Inria.
 
-.. raw:: html
+  .. div:: image-box
 
-   </div>
-
-   <div class="sk-sponsor-div-box">
-
-.. image:: images/nvidia.png
-   :width: 55pt
-   :align: center
-   :target: https://nvidia.com
-
-.. raw:: html
-
-   </div>
-   </div>
+    .. image:: images/nvidia.png
+      :target: https://nvidia.com
 
 ..........
 
-.. raw:: html
+.. div:: sk-text-image-grid-small
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+  .. div:: text-box
 
-`Microsoft <https://microsoft.com/>`_ funds Andreas Müller since 2020.
+    `Microsoft <https://microsoft.com/>`_ funds Andreas Müller since 2020.
 
-.. raw:: html
+  .. div:: image-box
 
-   </div>
-
-   <div class="sk-sponsor-div-box">
-
-.. image:: images/microsoft.png
-   :width: 100pt
-   :align: center
-   :target: https://www.microsoft.com/
-
-.. raw:: html
-
-   </div>
-   </div>
+    .. image:: images/microsoft.png
+      :target: https://microsoft.com
 
 ...........
 
-.. raw:: html
+.. div:: sk-text-image-grid-small
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+  .. div:: text-box
 
-`Quansight Labs <https://labs.quansight.org>`_ funds Lucy Liu since 2022.
+    `Quansight Labs <https://labs.quansight.org>`_ funds Lucy Liu since 2022.
 
-.. raw:: html
+  .. div:: image-box
 
-   </div>
-
-   <div class="sk-sponsor-div-box">
-
-.. image:: images/quansight-labs.png
-   :width: 100pt
-   :align: center
-   :target: https://labs.quansight.org
-
-.. raw:: html
-
-   </div>
-   </div>
+    .. image:: images/quansight-labs.png
+      :target: https://labs.quansight.org
 
 ...........
 
-.. raw:: html
+.. div:: sk-text-image-grid-small
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+  .. div:: text-box
 
-`Tidelift <https://tidelift.com/>`_ supports the project via their service
-agreement.
+    `Tidelift <https://tidelift.com/>`_ supports the project via their service
+    agreement.
 
-.. raw:: html
+  .. div:: image-box
 
-   </div>
+    .. image:: images/Tidelift-logo-on-light.svg
+      :target: https://tidelift.com/
 
-   <div class="sk-sponsor-div-box">
+...........
 
-.. image:: images/Tidelift-logo-on-light.svg
-   :width: 100pt
-   :align: center
-   :target: https://tidelift.com/
-
-.. raw:: html
-
-   </div>
-   </div>
 
 Past Sponsors
 .............
 
-.. raw:: html
+.. div:: sk-text-image-grid-small
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+  .. div:: text-box
 
-`Quansight Labs <https://labs.quansight.org>`_ funded Meekail Zain in 2022 and 2023 and,
-funded Thomas J. Fan from 2021 to 2023.
+    `Quansight Labs <https://labs.quansight.org>`_ funded Meekail Zain in 2022 and 2023,
+    and funded Thomas J. Fan from 2021 to 2023.
 
-.. raw:: html
+  .. div:: image-box
 
-   </div>
-
-   <div class="sk-sponsor-div-box">
-
-.. image:: images/quansight-labs.png
-   :width: 100pt
-   :align: center
-   :target: https://labs.quansight.org
-
-.. raw:: html
-
-   </div>
-   </div>
+    .. image:: images/quansight-labs.png
+      :target: https://labs.quansight.org
 
 ...........
 
-.. raw:: html
+.. div:: sk-text-image-grid-small
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+  .. div:: text-box
 
-`Columbia University <https://columbia.edu/>`_ funded Andreas Müller
-(2016-2020).
+    `Columbia University <https://columbia.edu/>`_ funded Andreas Müller
+    (2016-2020).
 
-.. raw:: html
+  .. div:: image-box
 
-   </div>
-
-   <div class="sk-sponsor-div-box">
-
-.. image:: images/columbia.png
-   :width: 50pt
-   :align: center
-   :target: https://www.columbia.edu/
-
-.. raw:: html
-
-   </div>
-   </div>
+    .. image:: images/columbia.png
+      :target: https://columbia.edu
 
 ........
 
-.. raw:: html
+.. div:: sk-text-image-grid-small
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+  .. div:: text-box
 
-`The University of Sydney <https://sydney.edu.au/>`_ funded Joel Nothman
-(2017-2021).
+    `The University of Sydney <https://sydney.edu.au/>`_ funded Joel Nothman
+    (2017-2021).
 
-.. raw:: html
+  .. div:: image-box
 
-   </div>
-
-   <div class="sk-sponsor-div-box">
-
-.. image:: images/sydney-primary.jpeg
-   :width: 100pt
-   :align: center
-   :target: https://sydney.edu.au/
-
-.. raw:: html
-
-   </div>
-   </div>
+    .. image:: images/sydney-primary.jpeg
+      :target: https://sydney.edu.au/
 
 ...........
 
-.. raw:: html
+.. div:: sk-text-image-grid-small
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+  .. div:: text-box
 
-Andreas Müller received a grant to improve scikit-learn from the
-`Alfred P. Sloan Foundation <https://sloan.org>`_ .
-This grant supported the position of Nicolas Hug and Thomas J. Fan.
+    Andreas Müller received a grant to improve scikit-learn from the
+    `Alfred P. Sloan Foundation <https://sloan.org>`_ .
+    This grant supported the position of Nicolas Hug and Thomas J. Fan.
 
-.. raw:: html
+  .. div:: image-box
 
-   </div>
-
-   <div class="sk-sponsor-div-box">
-
-.. image:: images/sloan_banner.png
-   :width: 100pt
-   :align: center
-   :target: https://sloan.org/
-
-.. raw:: html
-
-   </div>
-   </div>
+    .. image:: images/sloan_banner.png
+      :target: https://sloan.org/
 
 .............
 
-.. raw:: html
+.. div:: sk-text-image-grid-small
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+  .. div:: text-box
 
-`INRIA <https://www.inria.fr>`_ actively supports this project. It has
-provided funding for Fabian Pedregosa (2010-2012), Jaques Grobler
-(2012-2013) and Olivier Grisel (2013-2017) to work on this project
-full-time. It also hosts coding sprints and other events.
+    `INRIA <https://www.inria.fr>`_ actively supports this project. It has
+    provided funding for Fabian Pedregosa (2010-2012), Jaques Grobler
+    (2012-2013) and Olivier Grisel (2013-2017) to work on this project
+    full-time. It also hosts coding sprints and other events.
 
-.. raw:: html
+  .. div:: image-box
 
-   </div>
-
-   <div class="sk-sponsor-div-box">
-
-.. image:: images/inria-logo.jpg
-   :width: 100pt
-   :align: center
-   :target: https://www.inria.fr
-
-.. raw:: html
-
-   </div>
-   </div>
+    .. image:: images/inria-logo.jpg
+      :target: https://www.inria.fr
 
 .....................
 
-.. raw:: html
+.. div:: sk-text-image-grid-small
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+  .. div:: text-box
 
-`Paris-Saclay Center for Data Science
-<http://www.datascience-paris-saclay.fr/>`_
-funded one year for a developer to work on the project full-time
-(2014-2015), 50% of the time of Guillaume Lemaitre (2016-2017) and 50% of the
-time of Joris van den Bossche (2017-2018).
+    `Paris-Saclay Center for Data Science <http://www.datascience-paris-saclay.fr/>`_
+    funded one year for a developer to work on the project full-time (2014-2015), 50%
+    of the time of Guillaume Lemaitre (2016-2017) and 50% of the time of Joris van den
+    Bossche (2017-2018).
 
-.. raw:: html
+  .. div:: image-box
 
-   </div>
-   <div class="sk-sponsor-div-box">
-
-.. image:: images/cds-logo.png
-   :width: 100pt
-   :align: center
-   :target: http://www.datascience-paris-saclay.fr/
-
-.. raw:: html
-
-   </div>
-   </div>
+    .. image:: images/cds-logo.png
+      :target: http://www.datascience-paris-saclay.fr/
 
 ..........................
 
-.. raw:: html
+.. div:: sk-text-image-grid-small
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+  .. div:: text-box
 
-`NYU Moore-Sloan Data Science Environment <https://cds.nyu.edu/mooresloan/>`_
-funded Andreas Mueller (2014-2016) to work on this project. The Moore-Sloan
-Data Science Environment also funds several students to work on the project
-part-time.
+    `NYU Moore-Sloan Data Science Environment <https://cds.nyu.edu/mooresloan/>`_
+    funded Andreas Mueller (2014-2016) to work on this project. The Moore-Sloan
+    Data Science Environment also funds several students to work on the project
+    part-time.
 
-.. raw:: html
+  .. div:: image-box
 
-   </div>
-   <div class="sk-sponsor-div-box">
-
-.. image:: images/nyu_short_color.png
-   :width: 100pt
-   :align: center
-   :target: https://cds.nyu.edu/mooresloan/
-
-.. raw:: html
-
-   </div>
-   </div>
+    .. image:: images/nyu_short_color.png
+      :target: https://cds.nyu.edu/mooresloan/
 
 ........................
 
-.. raw:: html
+.. div:: sk-text-image-grid-small
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+  .. div:: text-box
 
-`Télécom Paristech <https://www.telecom-paristech.fr/>`_ funded Manoj Kumar
-(2014), Tom Dupré la Tour (2015), Raghav RV (2015-2017), Thierry Guillemot
-(2016-2017) and Albert Thomas (2017) to work on scikit-learn.
+    `Télécom Paristech <https://www.telecom-paristech.fr/>`_ funded Manoj Kumar
+    (2014), Tom Dupré la Tour (2015), Raghav RV (2015-2017), Thierry Guillemot
+    (2016-2017) and Albert Thomas (2017) to work on scikit-learn.
 
-.. raw:: html
+  .. div:: image-box
 
-   </div>
-   <div class="sk-sponsor-div-box">
-
-.. image:: images/telecom.png
-   :width: 50pt
-   :align: center
-   :target: https://www.telecom-paristech.fr/
-
-.. raw:: html
-
-   </div>
-   </div>
+    .. image:: images/telecom.png
+      :target: https://www.telecom-paristech.fr/
 
 .....................
 
-.. raw:: html
+.. div:: sk-text-image-grid-small
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+  .. div:: text-box
 
-`The Labex DigiCosme <https://digicosme.lri.fr>`_ funded Nicolas Goix
-(2015-2016), Tom Dupré la Tour (2015-2016 and 2017-2018), Mathurin Massias
-(2018-2019) to work part time on scikit-learn during their PhDs. It also
-funded a scikit-learn coding sprint in 2015.
+    `The Labex DigiCosme <https://digicosme.lri.fr>`_ funded Nicolas Goix
+    (2015-2016), Tom Dupré la Tour (2015-2016 and 2017-2018), Mathurin Massias
+    (2018-2019) to work part time on scikit-learn during their PhDs. It also
+    funded a scikit-learn coding sprint in 2015.
 
-.. raw:: html
+  .. div:: image-box
 
-   </div>
-   <div class="sk-sponsor-div-box">
-
-.. image:: images/digicosme.png
-   :width: 100pt
-   :align: center
-   :target: https://digicosme.lri.fr
-
-.. raw:: html
-
-   </div>
-   </div>
+    .. image:: images/digicosme.png
+      :target: https://digicosme.lri.fr
 
 .....................
 
-.. raw:: html
+.. div:: sk-text-image-grid-small
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+  .. div:: text-box
 
-`The Chan-Zuckerberg Initiative <https://chanzuckerberg.com/>`_ funded Nicolas
-Hug to work full-time on scikit-learn in 2020.
+    `The Chan-Zuckerberg Initiative <https://chanzuckerberg.com/>`_ funded Nicolas
+    Hug to work full-time on scikit-learn in 2020.
 
-.. raw:: html
+  .. div:: image-box
 
-   </div>
-   <div class="sk-sponsor-div-box">
-
-.. image:: images/czi_logo.svg
-   :width: 100pt
-   :align: center
-   :target: https://chanzuckerberg.com
-
-.. raw:: html
-
-   </div>
-   </div>
+    .. image:: images/czi_logo.svg
+      :target: https://chanzuckerberg.com
 
 ......................
 
@@ -649,9 +467,9 @@ program.
 
 - 2007 - David Cournapeau
 - 2011 - `Vlad Niculae`_
-- 2012 - `Vlad Niculae`_, Immanuel Bayer.
+- 2012 - `Vlad Niculae`_, Immanuel Bayer
 - 2013 - Kemal Eren, Nicolas Trésegnie
-- 2014 - Hamzeh Alsalhi, Issam Laradji, Maheshakya Wijewardena, Manoj Kumar.
+- 2014 - Hamzeh Alsalhi, Issam Laradji, Maheshakya Wijewardena, Manoj Kumar
 - 2015 - `Raghav RV <https://github.com/raghavrv>`_, Wei Xue
 - 2016 - `Nelson Liu <http://nelsonliu.me>`_, `YenChen Lin <https://yenchenlin.me/>`_
 
@@ -670,86 +488,112 @@ The following organizations funded the scikit-learn consortium at Inria in
 the past:
 
 .. |msn| image:: images/microsoft.png
-   :width: 100pt
-   :target: https://www.microsoft.com/
+  :target: https://www.microsoft.com/
 
 .. |bcg| image:: images/bcg.png
-   :width: 100pt
-   :target: https://www.bcg.com/beyond-consulting/bcg-gamma/default.aspx
+  :target: https://www.bcg.com/beyond-consulting/bcg-gamma/default.aspx
 
 .. |fujitsu| image:: images/fujitsu.png
-   :width: 100pt
-   :target: https://www.fujitsu.com/global/
+  :target: https://www.fujitsu.com/global/
 
 .. |aphp| image:: images/logo_APHP_text.png
-   :width: 150pt
-   :target: https://aphp.fr/
+  :target: https://aphp.fr/
 
+.. raw:: html
 
-|bcg| |msn| |fujitsu| |aphp|
+  <style>
+    div.image-subgrid img {
+      max-height: 50px;
+      max-width: 90%;
+    }
+  </style>
+
+.. grid:: 2 2 4 4
+  :class-row: image-subgrid
+  :gutter: 1
+
+  .. grid-item::
+    :class: sd-text-center
+    :child-align: center
+
+    |msn|
+
+  .. grid-item::
+    :class: sd-text-center
+    :child-align: center
+
+    |bcg|
+
+  .. grid-item::
+    :class: sd-text-center
+    :child-align: center
+
+    |fujitsu|
+
+  .. grid-item::
+    :class: sd-text-center
+    :child-align: center
+
+    |aphp|
 
 
 Sprints
 -------
 
-The International 2019 Paris sprint was kindly hosted by `AXA <https://www.axa.fr/>`_.
-Also some participants could attend thanks to the support of the `Alfred P.
-Sloan Foundation <https://sloan.org>`_, the `Python Software
-Foundation <https://www.python.org/psf/>`_ (PSF) and the `DATAIA Institute
-<https://dataia.eu/en>`_.
+- The International 2019 Paris sprint was kindly hosted by `AXA <https://www.axa.fr/>`_.
+  Also some participants could attend thanks to the support of the `Alfred P.
+  Sloan Foundation <https://sloan.org>`_, the `Python Software
+  Foundation <https://www.python.org/psf/>`_ (PSF) and the `DATAIA Institute
+  <https://dataia.eu/en>`_.
 
-.....................
+- The 2013 International Paris Sprint was made possible thanks to the support of
+  `Télécom Paristech <https://www.telecom-paristech.fr/>`_, `tinyclues
+  <https://www.tinyclues.com/>`_, the `French Python Association
+  <https://www.afpy.org/>`_ and the `Fonds de la Recherche Scientifique
+  <https://www.frs-fnrs.be>`_.
 
-The 2013 International Paris Sprint was made possible thanks to the support of
-`Télécom Paristech <https://www.telecom-paristech.fr/>`_, `tinyclues
-<https://www.tinyclues.com/>`_, the `French Python Association
-<https://www.afpy.org/>`_ and the `Fonds de la Recherche Scientifique
-<https://www.frs-fnrs.be>`_.
+- The 2011 International Granada sprint was made possible thanks to the support
+  of the `PSF <https://www.python.org/psf/>`_ and `tinyclues
+  <https://www.tinyclues.com/>`_.
 
-..............
-
-The 2011 International Granada sprint was made possible thanks to the support
-of the `PSF <https://www.python.org/psf/>`_ and `tinyclues
-<https://www.tinyclues.com/>`_.
 
 Donating to the project
-.......................
+-----------------------
 
 If you are interested in donating to the project or to one of our code-sprints,
 please donate via the `NumFOCUS Donations Page
 <https://numfocus.org/donate-to-scikit-learn>`_.
 
-.. raw :: html
+.. raw:: html
 
-   <div style="text-align: center;">
-   <a class="btn btn-warning btn-big sk-donate-btn mb-1" href="https://numfocus.org/donate-to-scikit-learn">Help us, <strong>donate!</strong></a>
-   </div>
-   </br>
+  <p class="text-center">
+    <a class="btn sk-btn-orange mb-1" href="https://numfocus.org/donate-to-scikit-learn">
+      Help us, <strong>donate!</strong>
+    </a>
+  </p>
 
-All donations will be handled by `NumFOCUS
-<https://numfocus.org/>`_, a non-profit-organization which is
-managed by a board of `Scipy community members
-<https://numfocus.org/board.html>`_. NumFOCUS's mission is to foster
-scientific computing software, in particular in Python. As a fiscal home
-of scikit-learn, it ensures that money is available when needed to keep
-the project funded and available while in compliance with tax regulations.
+All donations will be handled by `NumFOCUS <https://numfocus.org/>`_, a non-profit
+organization which is managed by a board of `Scipy community members
+<https://numfocus.org/board.html>`_. NumFOCUS's mission is to foster scientific
+computing software, in particular in Python. As a fiscal home of scikit-learn, it
+ensures that money is available when needed to keep the project funded and available
+while in compliance with tax regulations.
 
-The received donations for the scikit-learn project mostly will go towards
-covering travel-expenses for code sprints, as well as towards the organization
-budget of the project [#f1]_.
-
+The received donations for the scikit-learn project mostly will go towards covering
+travel-expenses for code sprints, as well as towards the organization budget of the
+project [#f1]_.
 
 .. rubric:: Notes
 
 .. [#f1] Regarding the organization budget, in particular, we might use some of
-         the donated funds to pay for other project expenses such as DNS,
-         hosting or continuous integration services.
+  the donated funds to pay for other project expenses such as DNS,
+  hosting or continuous integration services.
+
 
 Infrastructure support
 ----------------------
 
-- We would also like to thank `Microsoft Azure
-  <https://azure.microsoft.com/en-us/>`_, `Cirrus Cl <https://cirrus-ci.org>`_,
-  `CircleCl <https://circleci.com/>`_ for free CPU time on their Continuous
-  Integration servers, and `Anaconda Inc. <https://www.anaconda.com>`_ for the
-  storage they provide for our staging and nightly builds.
+We would also like to thank `Microsoft Azure <https://azure.microsoft.com/en-us/>`_,
+`Cirrus Cl <https://cirrus-ci.org>`_, `CircleCl <https://circleci.com/>`_ for free CPU
+time on their Continuous Integration servers, and `Anaconda Inc. <https://www.anaconda.com>`_
+for the storage they provide for our staging and nightly builds.

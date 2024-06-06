@@ -1,9 +1,8 @@
-"""
-The :mod:`sklearn.covariance` module includes methods and algorithms to
-robustly estimate the covariance of features given a set of points. The
-precision matrix defined as the inverse of the covariance is also estimated.
-Covariance estimation is closely related to the theory of Gaussian Graphical
-Models.
+"""Methods and algorithms to robustly estimate covariance.
+
+They estimate the covariance of features at given sets of points, as well as the
+precision matrix defined as the inverse of the covariance. Covariance estimation is
+closely related to the theory of Gaussian graphical models.
 """
 
 from ._elliptic_envelope import EllipticEnvelope
