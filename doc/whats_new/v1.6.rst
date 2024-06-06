@@ -89,6 +89,13 @@ Changelog
   whether a given estimator is of category clusterer.
   :pr:`28936` by :user:`Christian Veenhuis <ChVeen>`.
 
+:mod:`sklearn.impute`
+.....................
+
+- |Fix| :class:`impute.KNNImputer` excludes samples with nan distances when
+  computing the mean value for uniform weights.
+  :pr:`29135` by :user:`Xuefeng Xu <xuefeng-xu>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
