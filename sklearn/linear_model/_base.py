@@ -393,7 +393,7 @@ class LinearClassifierMixin(ClassifierMixin):
             indices = xp.argmax(scores, axis=1)
 
         classes_xp, _ = get_namespace(self.classes_)
-        if classes_xp is xp:
+        if classes_xp == xp:
             return xp.take(self.classes_, indices, axis=0)
 
         return np.take(

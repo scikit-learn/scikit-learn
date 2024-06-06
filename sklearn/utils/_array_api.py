@@ -361,6 +361,8 @@ class _ArrayAPIWrapper:
         return getattr(self._namespace, name)
 
     def __eq__(self, other):
+        if not isinstance(other, _ArrayAPIWrapper):
+            return False
         return self._namespace == other._namespace
 
     def isdtype(self, dtype, kind):
@@ -670,7 +672,7 @@ def make_converter(X):
             if data is None or isinstance(data, (numbers.Number, str)):
                 return data
             data_xp, data_is_array_api, data_device = get_namespace_and_device(data)
-            if data_xp is xp and data_device == device_:
+            if data_xp == xp and data_device == device_:
                 return data
             if not data_is_array_api:
                 return xp.asarray(data, device=device_)
