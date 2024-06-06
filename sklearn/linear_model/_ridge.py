@@ -2041,8 +2041,7 @@ class _RidgeGCV(LinearModel):
         )
 
     def _svd_decompose_design_matrix(self, X, y, sqrt_sw):
-        xp, _ = get_namespace(X)
-        device_ = device(X)
+        xp, _, device_ = get_namespace_and_device(X)
         # X already centered
         X_mean = xp.zeros(X.shape[1], dtype=X.dtype, device=device_)
         if self.fit_intercept:
@@ -2106,10 +2105,9 @@ class _RidgeGCV(LinearModel):
         -------
         self : object
         """
-        xp, is_array_api = get_namespace(X)
+        xp, is_array_api, device_ = get_namespace_and_device(X)
         follow_X = make_converter(X)
         y, sample_weight = follow_X(y), follow_X(sample_weight)
-        device_ = device(X)
         if is_array_api or hasattr(getattr(X, "dtype", None), "kind"):
             original_dtype = X.dtype
         else:
@@ -2273,8 +2271,7 @@ class _RidgeGCV(LinearModel):
         """Performs scoring with the specified scorer using the
         predictions and the true y values.
         """
-        xp, _ = get_namespace(y)
-        device_ = device(y)
+        xp, _, device_ = get_namespace_and_device(y)
         if self.is_clf:
             identity_estimator = _IdentityClassifier(
                 classes=xp.arange(n_y, device=device_)
