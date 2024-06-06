@@ -266,7 +266,7 @@ def test_entropy():
 )
 def test_entropy_array_api(array_namespace, device, dtype_name):
     xp = _array_api_for_tests(array_namespace, device)
-    float_labels = xp.asarray([0, 0, 42.0], device=device)
+    float_labels = xp.asarray(np.asarray([0, 0, 42.0], dtype=dtype_name), device=device)
     empty_int32_labels = xp.asarray([], dtype=xp.int32, device=device)
     int_labels = xp.asarray([1, 1, 1, 1], device=device)
     with config_context(array_api_dispatch=True):
