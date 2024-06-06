@@ -4,7 +4,6 @@ import warnings
 import numpy as np
 import pytest
 from scipy import stats
-from scipy.sparse import csr_matrix
 
 from sklearn import datasets, svm
 from sklearn.datasets import make_multilabel_classification
@@ -30,12 +29,15 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import label_binarize
 from sklearn.random_projection import _sparse_random_matrix
 from sklearn.utils._testing import (
+    _convert_container,
     assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
+    ignore_warnings,
 )
 from sklearn.utils.extmath import softmax
+from sklearn.utils.fixes import CSR_CONTAINERS
 from sklearn.utils.validation import (
     check_array,
     check_consistent_length,
@@ -864,17 +866,6 @@ def test_binary_clf_curve_implicit_pos_label(curve_func):
     with pytest.raises(ValueError, match=msg):
         curve_func(np.array(["a", "b"], dtype=object), [0.0, 1.0])
 
-    # The error message is slightly different for bytes-encoded
-    # class labels, but otherwise the behavior is the same:
-    msg = (
-        "y_true takes value in {b'a', b'b'} and pos_label is "
-        "not specified: either make y_true take "
-        "value in {0, 1} or {-1, 1} or pass pos_label "
-        "explicitly."
-    )
-    with pytest.raises(ValueError, match=msg):
-        curve_func(np.array([b"a", b"b"], dtype="<S1"), [0.0, 1.0])
-
     # Check that it is possible to use floating point class labels
     # that are interpreted similarly to integer class labels:
     y_pred = [0.0, 1.0, 0.2, 0.42]
@@ -882,6 +873,23 @@ def test_binary_clf_curve_implicit_pos_label(curve_func):
     float_curve = curve_func([0.0, 1.0, 1.0, 0.0], y_pred)
     for int_curve_part, float_curve_part in zip(int_curve, float_curve):
         np.testing.assert_allclose(int_curve_part, float_curve_part)
+
+
+# TODO(1.7): Update test to check for error when bytes support is removed.
+@ignore_warnings(category=FutureWarning)
+@pytest.mark.parametrize("curve_func", [precision_recall_curve, roc_curve])
+@pytest.mark.parametrize("labels_type", ["list", "array"])
+def test_binary_clf_curve_implicit_bytes_pos_label(curve_func, labels_type):
+    # Check that using bytes class labels raises an informative
+    # error for any supported string dtype:
+    labels = _convert_container([b"a", b"b"], labels_type)
+    msg = (
+        "y_true takes value in {b'a', b'b'} and pos_label is not "
+        "specified: either make y_true take value in {0, 1} or "
+        "{-1, 1} or pass pos_label explicitly."
+    )
+    with pytest.raises(ValueError, match=msg):
+        curve_func(labels, [0.0, 1.0])
 
 
 @pytest.mark.parametrize("curve_func", CURVE_FUNCS)
@@ -1762,10 +1770,12 @@ def test_label_ranking_loss():
         (0 + 2 / 2 + 1 / 2) / 3.0,
     )
 
-    # Sparse csr matrices
+
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_label_ranking_loss_sparse(csr_container):
     assert_almost_equal(
         label_ranking_loss(
-            csr_matrix(np.array([[0, 1, 0], [1, 1, 0]])), [[0.1, 10, -3], [3, 1, 3]]
+            csr_container(np.array([[0, 1, 0], [1, 1, 0]])), [[0.1, 10, -3], [3, 1, 3]]
         ),
         (0 + 2 / 2) / 2.0,
     )
@@ -1845,16 +1855,13 @@ def test_ndcg_ignore_ties_with_k():
     )
 
 
-# TODO(1.4): Replace warning w/ ValueError
-def test_ndcg_negative_ndarray_warn():
+def test_ndcg_negative_ndarray_error():
+    """Check `ndcg_score` exception when `y_true` contains negative values."""
     y_true = np.array([[-0.89, -0.53, -0.47, 0.39, 0.56]])
     y_score = np.array([[0.07, 0.31, 0.75, 0.33, 0.27]])
-    expected_message = (
-        "ndcg_score should not be used on negative y_true values. ndcg_score will raise"
-        " a ValueError on negative y_true values starting from version 1.4."
-    )
-    with pytest.warns(FutureWarning, match=expected_message):
-        assert ndcg_score(y_true, y_score) == pytest.approx(396.0329)
+    expected_message = "ndcg_score should not be used on negative y_true values"
+    with pytest.raises(ValueError, match=expected_message):
+        ndcg_score(y_true, y_score)
 
 
 def test_ndcg_invariant():
@@ -2193,10 +2200,13 @@ def test_top_k_accuracy_score_error(y_true, y_score, labels, msg):
         top_k_accuracy_score(y_true, y_score, k=2, labels=labels)
 
 
-def test_label_ranking_avg_precision_score_should_allow_csr_matrix_for_y_true_input():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_label_ranking_avg_precision_score_should_allow_csr_matrix_for_y_true_input(
+    csr_container,
+):
     # Test that label_ranking_avg_precision_score accept sparse y_true.
     # Non-regression test for #22575
-    y_true = csr_matrix([[1, 0, 0], [0, 0, 1]])
+    y_true = csr_container([[1, 0, 0], [0, 0, 1]])
     y_score = np.array([[0.5, 0.9, 0.6], [0, 0, 1]])
     result = label_ranking_average_precision_score(y_true, y_score)
     assert result == pytest.approx(2 / 3)
@@ -2240,3 +2250,25 @@ def test_roc_curve_with_probablity_estimates(global_random_seed):
     y_score = rng.rand(10)
     _, _, thresholds = roc_curve(y_true, y_score)
     assert np.isinf(thresholds[0])
+
+
+# TODO(1.7): remove
+def test_precision_recall_curve_deprecation_warning():
+    """Check the message for future deprecation."""
+    # Check precision_recall_curve function
+    y_true, _, y_score = make_prediction(binary=True)
+
+    warn_msg = "probas_pred was deprecated in version 1.5"
+    with pytest.warns(FutureWarning, match=warn_msg):
+        precision_recall_curve(
+            y_true,
+            probas_pred=y_score,
+        )
+
+    error_msg = "`probas_pred` and `y_score` cannot be both specified"
+    with pytest.raises(ValueError, match=error_msg):
+        precision_recall_curve(
+            y_true,
+            probas_pred=y_score,
+            y_score=y_score,
+        )

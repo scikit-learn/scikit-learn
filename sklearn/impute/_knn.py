@@ -10,8 +10,8 @@ from ..base import _fit_context
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import _NAN_METRICS
 from ..neighbors._base import _get_weights
-from ..utils import is_scalar_nan
 from ..utils._mask import _get_mask
+from ..utils._missing import is_scalar_nan
 from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils.validation import FLOAT_DTYPES, _check_feature_names_in, check_is_fitted
 from ._base import _BaseImputer
@@ -105,10 +105,11 @@ class KNNImputer(_BaseImputer):
 
     References
     ----------
-    * Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown, Trevor
+    * `Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown, Trevor
       Hastie, Robert Tibshirani, David Botstein and Russ B. Altman, Missing
       value estimation methods for DNA microarrays, BIOINFORMATICS Vol. 17
       no. 6, 2001 Pages 520-525.
+      <https://academic.oup.com/bioinformatics/article/17/6/520/272365>`_
 
     Examples
     --------
@@ -194,6 +195,9 @@ class KNNImputer(_BaseImputer):
         # fill nans with zeros
         if weight_matrix is not None:
             weight_matrix[np.isnan(weight_matrix)] = 0.0
+        else:
+            weight_matrix = np.ones_like(donors_dist)
+            weight_matrix[np.isnan(donors_dist)] = 0.0
 
         # Retrieve donor values and calculate kNN average
         donors = fit_X_col.take(donors_idx)

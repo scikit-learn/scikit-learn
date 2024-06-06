@@ -79,19 +79,21 @@ parameter takes a list of indices, names of the categorical features or a boolea
 mask. The graphical representation of partial dependence for categorical features is
 a bar plot or a 2D heatmap.
 
-For multi-class classification, you need to set the class label for which
-the PDPs should be created via the ``target`` argument::
+.. dropdown:: PDPs for multi-class classification
 
-    >>> from sklearn.datasets import load_iris
-    >>> iris = load_iris()
-    >>> mc_clf = GradientBoostingClassifier(n_estimators=10,
-    ...     max_depth=1).fit(iris.data, iris.target)
-    >>> features = [3, 2, (3, 2)]
-    >>> PartialDependenceDisplay.from_estimator(mc_clf, X, features, target=0)
-    <...>
+    For multi-class classification, you need to set the class label for which
+    the PDPs should be created via the ``target`` argument::
 
-The same parameter ``target`` is used to specify the target in multi-output
-regression settings.
+        >>> from sklearn.datasets import load_iris
+        >>> iris = load_iris()
+        >>> mc_clf = GradientBoostingClassifier(n_estimators=10,
+        ...     max_depth=1).fit(iris.data, iris.target)
+        >>> features = [3, 2, (3, 2)]
+        >>> PartialDependenceDisplay.from_estimator(mc_clf, X, features, target=0)
+        <...>
+
+    The same parameter ``target`` is used to specify the target in multi-output
+    regression settings.
 
 If you need the raw values of the partial dependence function rather than
 the plots, you can use the
@@ -102,7 +104,7 @@ the plots, you can use the
     >>> results = partial_dependence(clf, X, [0])
     >>> results["average"]
     array([[ 2.466...,  2.466..., ...
-    >>> results["values"]
+    >>> results["grid_values"]
     [array([-1.624..., -1.592..., ...
 
 The values at which the partial dependence should be evaluated are directly
@@ -260,9 +262,9 @@ estimators that support it, and 'brute' is used for the rest.
     interpreting PDPs is that the features should be independent.
 
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
+* :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
 
 .. rubric:: Footnotes
 
@@ -270,21 +272,20 @@ estimators that support it, and 'brute' is used for the rest.
    class (the positive class for binary classification), or the decision
    function.
 
-.. topic:: References
+.. rubric:: References
 
-    .. [H2009] T. Hastie, R. Tibshirani and J. Friedman,
-               `The Elements of Statistical Learning
-               <https://web.stanford.edu/~hastie/ElemStatLearn//>`_,
-               Second Edition, Section 10.13.2, Springer, 2009.
+.. [H2009] T. Hastie, R. Tibshirani and J. Friedman,
+    `The Elements of Statistical Learning
+    <https://web.stanford.edu/~hastie/ElemStatLearn//>`_,
+    Second Edition, Section 10.13.2, Springer, 2009.
 
-    .. [M2019] C. Molnar,
-               `Interpretable Machine Learning
-               <https://christophm.github.io/interpretable-ml-book/>`_,
-               Section 5.1, 2019.
+.. [M2019] C. Molnar,
+    `Interpretable Machine Learning
+    <https://christophm.github.io/interpretable-ml-book/>`_,
+    Section 5.1, 2019.
 
-    .. [G2015] :arxiv:`A. Goldstein, A. Kapelner, J. Bleich, and E. Pitkin,
-               "Peeking Inside the Black Box: Visualizing Statistical
-               Learning With Plots of Individual Conditional Expectation"
-               Journal of Computational and Graphical Statistics,
-               24(1): 44-65, Springer, 2015.
-               <1309.6392>`
+.. [G2015] :arxiv:`A. Goldstein, A. Kapelner, J. Bleich, and E. Pitkin,
+    "Peeking Inside the Black Box: Visualizing Statistical
+    Learning With Plots of Individual Conditional Expectation"
+    Journal of Computational and Graphical Statistics,
+    24(1): 44-65, Springer, 2015. <1309.6392>`

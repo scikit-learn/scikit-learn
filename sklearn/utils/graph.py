@@ -1,9 +1,4 @@
-"""
-Graph utilities and algorithms
-
-Graphs are represented with their adjacency matrices, preferably using
-sparse matrices.
-"""
+"""Graph utilities and algorithms."""
 
 # Authors: Aric Hagberg <hagberg@lanl.gov>
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>

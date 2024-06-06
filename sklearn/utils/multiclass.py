@@ -1,11 +1,9 @@
+"""Utilities to handle multiclass/multioutput target in classifiers."""
+
 # Author: Arnaud Joly, Joel Nothman, Hamzeh Alsalhi
 #
 # License: BSD 3 clause
-"""
-Multi-class / multi-label utility function
-==========================================
 
-"""
 import warnings
 from collections.abc import Sequence
 from itertools import chain
@@ -27,7 +25,8 @@ def _unique_multiclass(y):
 
 
 def _unique_indicator(y):
-    return np.arange(
+    xp, _ = get_namespace(y)
+    return xp.arange(
         check_array(y, input_name="y", accept_sparse=["csr", "csc", "coo"]).shape[1]
     )
 
@@ -118,7 +117,10 @@ def unique_labels(*ys):
 
 
 def _is_integral_float(y):
-    return y.dtype.kind == "f" and np.all(y.astype(int) == y)
+    xp, is_array_api_compliant = get_namespace(y)
+    return xp.isdtype(y.dtype, "real floating") and bool(
+        xp.all(xp.astype((xp.astype(y, xp.int64)), y.dtype) == y)
+    )
 
 
 def is_multilabel(y):
@@ -188,8 +190,9 @@ def is_multilabel(y):
     else:
         labels = xp.unique_values(y)
 
-        return len(labels) < 3 and (
-            y.dtype.kind in "biu" or _is_integral_float(labels)  # bool, int, uint
+        return labels.shape[0] < 3 and (
+            xp.isdtype(y.dtype, ("bool", "signed integer", "unsigned integer"))
+            or _is_integral_float(labels)
         )
 
 
@@ -337,12 +340,24 @@ def type_of_target(y, input_name=""):
                 # see NEP 34
                 y = check_array(y, dtype=object, **check_y_kwargs)
 
-    # The old sequence of sequences format
     try:
+        # TODO(1.7): Change to ValueError when byte labels is deprecated.
+        # labels in bytes format
+        first_row_or_val = y[[0], :] if issparse(y) else y[0]
+        if isinstance(first_row_or_val, bytes):
+            warnings.warn(
+                (
+                    "Support for labels represented as bytes is deprecated in v1.5 and"
+                    " will error in v1.7. Convert the labels to a string or integer"
+                    " format."
+                ),
+                FutureWarning,
+            )
+        # The old sequence of sequences format
         if (
-            not hasattr(y[0], "__array__")
-            and isinstance(y[0], Sequence)
-            and not isinstance(y[0], str)
+            not hasattr(first_row_or_val, "__array__")
+            and isinstance(first_row_or_val, Sequence)
+            and not isinstance(first_row_or_val, str)
         ):
             raise ValueError(
                 "You appear to be using a legacy multi-label data"
@@ -384,8 +399,9 @@ def type_of_target(y, input_name=""):
             return "continuous" + suffix
 
     # Check multiclass
-    first_row = y[0] if not issparse(y) else y.getrow(0).data
-    if xp.unique_values(y).shape[0] > 2 or (y.ndim == 2 and len(first_row) > 1):
+    if issparse(first_row_or_val):
+        first_row_or_val = first_row_or_val.data
+    if xp.unique_values(y).shape[0] > 2 or (y.ndim == 2 and len(first_row_or_val) > 1):
         # [1, 2, 3] or [[1., 2., 3]] or [[1, 2]]
         return "multiclass" + suffix
     else:

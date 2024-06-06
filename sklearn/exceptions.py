@@ -1,7 +1,4 @@
-"""
-The :mod:`sklearn.exceptions` module includes all custom warnings and error
-classes used across scikit-learn.
-"""
+"""Custom warnings and errors used across scikit-learn."""
 
 __all__ = [
     "NotFittedError",
@@ -19,7 +16,7 @@ __all__ = [
 
 class UnsetMetadataPassedError(ValueError):
     """Exception class to raise if a metadata is passed which is not explicitly \
-        requested.
+        requested (metadata=True) or not requested (metadata=False).
 
     .. versionadded:: 1.3
 

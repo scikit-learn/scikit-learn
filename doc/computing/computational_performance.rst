@@ -1,7 +1,3 @@
-.. Places parent toc into the sidebar
-
-:parenttoc: True
-
 .. _computational_performance:
 
 .. currentmodule:: sklearn
@@ -39,10 +35,11 @@ machine learning toolkit is the latency at which predictions can be made in a
 production environment.
 
 The main factors that influence the prediction latency are
-  1. Number of features
-  2. Input data representation and sparsity
-  3. Model complexity
-  4. Feature extraction
+
+1. Number of features
+2. Input data representation and sparsity
+3. Model complexity
+4. Feature extraction
 
 A last major parameter is also the possibility to do predictions in bulk or
 one-at-a-time mode.
@@ -224,9 +221,9 @@ files, tokenizing the text and hashing it into a common vector space) is
 taking 100 to 500 times more time than the actual prediction code, depending on
 the chosen model.
 
- .. |prediction_time| image::  ../auto_examples/applications/images/sphx_glr_plot_out_of_core_classification_004.png
-    :target: ../auto_examples/applications/plot_out_of_core_classification.html
-    :scale: 80
+.. |prediction_time| image::  ../auto_examples/applications/images/sphx_glr_plot_out_of_core_classification_004.png
+  :target: ../auto_examples/applications/plot_out_of_core_classification.html
+  :scale: 80
 
 .. centered:: |prediction_time|
 
@@ -283,10 +280,11 @@ scikit-learn install with the following command::
     python -c "import sklearn; sklearn.show_versions()"
 
 Optimized BLAS / LAPACK implementations include:
- - Atlas (need hardware specific tuning by rebuilding on the target machine)
- - OpenBLAS
- - MKL
- - Apple Accelerate and vecLib frameworks (OSX only)
+
+- Atlas (need hardware specific tuning by rebuilding on the target machine)
+- OpenBLAS
+- MKL
+- Apple Accelerate and vecLib frameworks (OSX only)
 
 More information can be found on the `NumPy install page <https://numpy.org/install/>`_
 and in this
@@ -364,5 +362,5 @@ sufficient to not generate the relevant features, leaving their columns empty.
 Links
 ......
 
-  - :ref:`scikit-learn developer performance documentation <performance-howto>`
-  - `Scipy sparse matrix formats documentation <https://docs.scipy.org/doc/scipy/reference/sparse.html>`_
+- :ref:`scikit-learn developer performance documentation <performance-howto>`
+- `Scipy sparse matrix formats documentation <https://docs.scipy.org/doc/scipy/reference/sparse.html>`_

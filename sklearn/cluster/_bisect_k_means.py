@@ -1,4 +1,5 @@
 """Bisecting K-means clustering."""
+
 # Author: Michal Krawczyk <mkrwczyk.1@gmail.com>
 
 import warnings
@@ -8,7 +9,7 @@ import scipy.sparse as sp
 
 from ..base import _fit_context
 from ..utils._openmp_helpers import _openmp_effective_n_threads
-from ..utils._param_validation import StrOptions
+from ..utils._param_validation import Integral, Interval, StrOptions
 from ..utils.extmath import row_norms
 from ..utils.validation import _check_sample_weight, check_is_fitted, check_random_state
 from ._k_means_common import _inertia_dense, _inertia_sparse
@@ -207,6 +208,7 @@ class BisectingKMeans(_BaseKMeans):
     _parameter_constraints: dict = {
         **_BaseKMeans._parameter_constraints,
         "init": [StrOptions({"k-means++", "random"}), callable],
+        "n_init": [Interval(Integral, 1, None, closed="left")],
         "copy_x": ["boolean"],
         "algorithm": [StrOptions({"lloyd", "elkan"})],
         "bisecting_strategy": [StrOptions({"biggest_inertia", "largest_cluster"})],

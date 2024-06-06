@@ -1,3 +1,5 @@
+"""Dummy estimators that implement simple rules of thumb."""
+
 # Author: Mathieu Blondel <mathieu@mblondel.org>
 #         Arnaud Joly <a.joly@ulg.ac.be>
 #         Maheshakya Wijewardena <maheshakya.10@cse.mrt.ac.lk>
@@ -110,6 +112,13 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         Frequency of each class observed in `y`. For multioutput classification
         problems, this is computed independently for each output.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X` has
+        feature names that are all strings.
+
     n_outputs_ : int
         Number of outputs.
 
@@ -170,6 +179,8 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
+        self._validate_data(X, cast_to_ndarray=False)
+
         self._strategy = self.strategy
 
         if self._strategy == "uniform" and sp.issparse(y):
@@ -488,6 +499,13 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         Mean or median or quantile of the training targets or constant value
         given by the user.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X` has
+        feature names that are all strings.
+
     n_outputs_ : int
         Number of outputs.
 
@@ -545,6 +563,8 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
+        self._validate_data(X, cast_to_ndarray=False)
+
         y = check_array(y, ensure_2d=False, input_name="y")
         if len(y) == 0:
             raise ValueError("y must not be empty.")

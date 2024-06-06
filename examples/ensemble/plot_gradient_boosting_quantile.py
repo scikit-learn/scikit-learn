@@ -4,7 +4,9 @@ Prediction Intervals for Gradient Boosting Regression
 =====================================================
 
 This example shows how quantile regression can be used to create prediction
-intervals.
+intervals. See :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py`
+for an example showcasing some other features of
+:class:`~ensemble.HistGradientBoostingRegressor`.
 
 """
 
@@ -189,6 +191,8 @@ pd.DataFrame(results).set_index("model").style.apply(highlight_min)
 # side of the previous plot. The conditional median estimator is biased
 # (underestimation for this asymmetric noise) but is also naturally robust to
 # outliers and overfits less.
+#
+# .. _calibration-section:
 #
 # Calibration of the confidence interval
 # --------------------------------------

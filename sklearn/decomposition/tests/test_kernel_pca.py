@@ -3,7 +3,8 @@ import warnings
 import numpy as np
 import pytest
 
-from sklearn.datasets import make_blobs, make_circles
+import sklearn
+from sklearn.datasets import load_iris, make_blobs, make_circles
 from sklearn.decomposition import PCA, KernelPCA
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import Perceptron
@@ -551,3 +552,15 @@ def test_kernel_pca_inverse_correct_gamma():
     X2_recon = kpca2.inverse_transform(kpca1.transform(X))
 
     assert_allclose(X1_recon, X2_recon)
+
+
+def test_kernel_pca_pandas_output():
+    """Check that KernelPCA works with pandas output when the solver is arpack.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/27579
+    """
+    pytest.importorskip("pandas")
+    X, _ = load_iris(as_frame=True, return_X_y=True)
+    with sklearn.config_context(transform_output="pandas"):
+        KernelPCA(n_components=2, eigen_solver="arpack").fit_transform(X)

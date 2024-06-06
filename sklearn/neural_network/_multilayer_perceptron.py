@@ -1,5 +1,4 @@
-"""Multi-layer Perceptron
-"""
+"""Multi-layer Perceptron"""
 
 # Authors: Issam H. Laradji <issam.laradji@gmail.com>
 #          Andreas Mueller
@@ -701,7 +700,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             # restore best weights
             self.coefs_ = self._best_coefs
             self.intercepts_ = self._best_intercepts
-            self.validation_scores_ = self.validation_scores_
 
     def _update_no_improvement_count(self, early_stopping, X_val, y_val):
         if early_stopping:
@@ -756,8 +754,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         if self.solver not in _STOCHASTIC_SOLVERS:
             raise AttributeError(
                 "partial_fit is only available for stochastic"
-                " optimizers. %s is not stochastic."
-                % self.solver
+                " optimizers. %s is not stochastic." % self.solver
             )
         return True
 
@@ -801,6 +798,9 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         - 'adam' refers to a stochastic gradient-based optimizer proposed
           by Kingma, Diederik, and Jimmy Ba
 
+        For a comparison between Adam optimizer and SGD, see
+        :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_training_curves.py`.
+
         Note: The default solver 'adam' works pretty well on relatively
         large datasets (with thousands of training samples or more) in terms of
         both training time and validation score.
@@ -810,6 +810,9 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     alpha : float, default=0.0001
         Strength of the L2 regularization term. The L2 regularization term
         is divided by the sample size when added to the loss.
+
+        For an example usage and visualization of varying regularization, see
+        :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_alpha.py`.
 
     batch_size : int, default='auto'
         Size of minibatches for stochastic optimizers.
@@ -887,7 +890,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         Whether to use early stopping to terminate training when validation
         score is not improving. If set to true, it will automatically set
         aside 10% of training data as validation and terminate training when
-        validation score is not improving by at least tol for
+        validation score is not improving by at least ``tol`` for
         ``n_iter_no_change`` consecutive epochs. The split is stratified,
         except in a multilabel setting.
         If early stopping is False, then the training stops when the training
@@ -1293,6 +1296,9 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
         - 'adam' refers to a stochastic gradient-based optimizer proposed by
           Kingma, Diederik, and Jimmy Ba
+
+        For a comparison between Adam optimizer and SGD, see
+        :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_training_curves.py`.
 
         Note: The default solver 'adam' works pretty well on relatively
         large datasets (with thousands of training samples or more) in terms of
