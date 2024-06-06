@@ -1950,6 +1950,10 @@ array_api_metric_checkers = {
         check_array_api_regression_metric,
         check_array_api_multioutput_regression_metric,
     ],
+    mean_squared_error: [
+        check_array_api_regression_metric,
+        check_array_api_multioutput_regression_metric,
+    ],
 }
 
 
