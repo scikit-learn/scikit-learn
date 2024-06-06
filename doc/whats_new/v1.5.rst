@@ -188,7 +188,6 @@ more details.
   param (`None`) route metadata.
   :pr:`28712` by :user:`Stefanie Senger <StefanieSenger>`.
 
-
 Changelog
 ---------
 
