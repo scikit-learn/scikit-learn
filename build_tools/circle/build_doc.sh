@@ -159,21 +159,20 @@ if [[ `type -t deactivate` ]]; then
   deactivate
 fi
 
-MAMBAFORGE_PATH=$HOME/mambaforge
-# Install dependencies with mamba
-wget -q https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-x86_64.sh \
-    -O mambaforge.sh
-chmod +x mambaforge.sh && ./mambaforge.sh -b -p $MAMBAFORGE_PATH
-export PATH="/usr/lib/ccache:$MAMBAFORGE_PATH/bin:$PATH"
+# Install Miniforge
+MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh"
+curl -L --retry 10 $MINIFORGE_URL -o miniconda.sh
+MINIFORGE_PATH=$HOME/miniforge3
+bash ./miniconda.sh -b -p $MINIFORGE_PATH
+source $MINIFORGE_PATH/etc/profile.d/conda.sh
+conda activate
 
+export PATH="/usr/lib/ccache:$PATH"
 ccache -M 512M
 export CCACHE_COMPRESS=1
 
-# pin conda-lock to latest released version (needs manual update from time to time)
-mamba install "$(get_dep conda-lock min)" -y
-
-conda-lock install --log-level DEBUG --name $CONDA_ENV_NAME $LOCK_FILE
-source activate $CONDA_ENV_NAME
+create_conda_environment_from_lock_file $CONDA_ENV_NAME $LOCK_FILE
+conda activate $CONDA_ENV_NAME
 
 show_installed_libraries
 
