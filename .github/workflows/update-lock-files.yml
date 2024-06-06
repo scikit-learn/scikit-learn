@@ -33,7 +33,7 @@ jobs:
             update_script_args: "--select-tag cuda"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
       - name: Generate lock files
         run: |
           source build_tools/shared.sh
@@ -46,7 +46,7 @@ jobs:
 
       - name: Create Pull Request
         id: cpr
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@153407881ec5c347639a548ade7d8ad1d6740e38 # v5.0.2
         with:
           token: ${{ secrets.BOT_GITHUB_TOKEN }}
           push-to-fork: scikit-learn-bot/scikit-learn

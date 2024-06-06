@@ -14,17 +14,17 @@ jobs:
       group: cuda-gpu-runner-group
     name: Run Array API unit tests
     steps:
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@b64ffcaf5b410884ad320a9cfac8866006a109aa # v4.8.0
         with:
           python-version: '3.12'
       - name: Checkout main repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
       - run: |
           git fetch origin +refs/pull/${{ inputs.pr_id }}/head:pr-${{ inputs.pr_id }}
           git checkout pr-${{ inputs.pr_id }}
       - name: Cache conda environment
         id: cache-conda
-        uses: actions/cache@v3
+        uses: actions/cache@e12d46a63a90f2fae62d114769bbf2a179198b5c # v3.3.3
         with:
           path: ~/conda
           key: ${{ runner.os }}-build-${{ hashFiles('build_tools/github/create_gpu_environment.sh') }}-${{ hashFiles('build_tools/github/pylatest_conda_forge_cuda_array-api_linux-64_conda.lock') }}
