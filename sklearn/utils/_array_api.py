@@ -744,14 +744,7 @@ def _nanmean(X, axis=None, xp=None):
     else:
         mask = xp.isnan(X)
         total = xp.sum(xp.where(mask, xp.asarray(0.0, device=device(X)), X), axis=axis)
-        count = xp.sum(
-            xp.where(
-                mask,
-                xp.asarray(0.0, device=device(X)),
-                xp.asarray(1.0, device=device(X)),
-            ),
-            axis=axis,
-        )
+        count = xp.sum(xp.astype(xp.logical_not(mask), X.dtype), axis=axis)
         return total / count
 
 
