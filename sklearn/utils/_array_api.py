@@ -667,11 +667,20 @@ def make_converter(X):
         device_ = device(X)
 
         def convert(data):
-            if data is None or isinstance(data, numbers.Number):
+            if data is None or isinstance(data, (numbers.Number, str)):
                 return data
-            if get_namespace(data)[0] is xp and device(data) == device_:
+            data_xp, data_is_array_api, data_device = get_namespace_and_device(data)
+            if data_xp is xp and data_device == device_:
                 return data
-            return xp.asarray(data, device=device_)
+            if not data_is_array_api:
+                return xp.asarray(data, device=device_)
+            try:
+                return xp.asarray(data, device=device_)
+            except Exception:
+                # direct conversion to a different library may fail in which
+                # case we try converting to numpy first
+                data = _convert_to_numpy(data, data_xp)
+                return xp.asarray(data, device=device_)
 
         return convert
 
