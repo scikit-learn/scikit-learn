@@ -1021,15 +1021,17 @@ def _to_same_namespace(X, *rest):
     if not is_array_api:
         return (X, *rest)
 
+    device_ = device(X)
+
     def to_xp(a):
         """Convert namespace if needed -- workaround for the fact that
         asarray(copy=False) not implemented yet by all backends.
         """
         if a is None:
             return None
-        if get_namespace(a)[0] is xp:
+        if get_namespace(a)[0] is xp and device(a) == device_:
             return a
-        return xp.asarray(a)
+        return xp.asarray(a, device=device_)
 
     return (X, *map(to_xp, rest))
 
