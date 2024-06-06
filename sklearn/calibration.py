@@ -1284,7 +1284,6 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> disp = CalibrationDisplay.from_estimator(clf, X_test, y_test)
         >>> plt.show()
 
-
         For another example of usage, see:
         :ref:`sphx_glr_auto_examples_calibration_plot_compare_calibration.py`.
         """
