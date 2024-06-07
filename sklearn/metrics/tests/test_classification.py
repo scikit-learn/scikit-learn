@@ -810,6 +810,7 @@ def test_matthews_corrcoef_nan():
         partial(fbeta_score, beta=1),
         precision_score,
         recall_score,
+        cohen_kappa_score,
     ],
 )
 def test_zero_division_nan_no_warning(metric, y_true, y_pred, zero_division):
@@ -818,7 +819,9 @@ def test_zero_division_nan_no_warning(metric, y_true, y_pred, zero_division):
     """
     with warnings.catch_warnings():
         warnings.simplefilter("error")
-        result = metric(y_true, y_pred, zero_division=zero_division)
+        # Ignore warnings related to wrong shape of confusion_matrix:
+        with ignore_warnings(category=UserWarning):
+            result = metric(y_true, y_pred, zero_division=zero_division)
 
     if np.isnan(zero_division):
         assert np.isnan(result)
@@ -834,6 +837,7 @@ def test_zero_division_nan_no_warning(metric, y_true, y_pred, zero_division):
         partial(fbeta_score, beta=1),
         precision_score,
         recall_score,
+        cohen_kappa_score,
     ],
 )
 def test_zero_division_nan_warning(metric, y_true, y_pred):
