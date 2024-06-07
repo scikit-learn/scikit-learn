@@ -1,0 +1,303 @@
+[case testU8BasicOps]
+from typing import Any, Tuple
+
+from mypy_extensions import u8, i16, i32, i64
+from typing_extensions import Final
+
+from testutil import assertRaises
+
+ERROR: Final = 239
+
+def test_box_and_unbox() -> None:
+    for i in range(0, 256):
+        o: Any = i
+        x: u8 = o
+        o2: Any = x
+        assert o == o2
+        assert x == i
+    with assertRaises(OverflowError, "int too large or small to convert to u8"):
+        o = 256
+        x2: u8 = o
+    with assertRaises(OverflowError, "int too large or small to convert to u8"):
+        o = -1
+        x3: u8 = o
+
+def div_by_7(x: u8) -> u8:
+    return x // 7
+
+def div(x: u8, y: u8) -> u8:
+    return x // y
+
+def test_divide_by_constant() -> None:
+    for i in range(0, 256):
+        assert div_by_7(i) == i // 7
+
+def test_divide_by_variable() -> None:
+    for x in range(0, 256):
+        for y in range(0, 256):
+            if y != 0:
+                assert div(x, y) == x // y
+            else:
+                with assertRaises(ZeroDivisionError, "integer division or modulo by zero"):
+                    div(x, y)
+
+def mod_by_7(x: u8) -> u8:
+    return x % 7
+
+def mod(x: u8, y: u8) -> u8:
+    return x % y
+
+def test_mod_by_constant() -> None:
+    for i in range(0, 256):
+        assert mod_by_7(i) == i % 7
+
+def test_mod_by_variable() -> None:
+    for x in range(0, 256):
+        for y in range(0, 256):
+            if y != 0:
+                assert mod(x, y) == x % y
+            else:
+                with assertRaises(ZeroDivisionError, "integer division or modulo by zero"):
+                    mod(x, y)
+
+def test_simple_arithmetic_ops() -> None:
+    zero: u8 = int()
+    one: u8 = zero + 1
+    two: u8 = one + 1
+    neg_one: u8 = -one
+    assert neg_one == 255
+    assert one + one == 2
+    assert one + two == 3
+    assert one + neg_one == 0
+    assert one - one == 0
+    assert one - two == 255
+    assert one * one == 1
+    assert one * two == 2
+    assert two * two == 4
+    assert two * neg_one == 254
+    assert neg_one * one == 255
+    assert neg_one * neg_one == 1
+    assert two * 0 == 0
+    assert 0 * two == 0
+    assert -one == 255
+    assert -two == 254
+    assert -neg_one == 1
+    assert -zero == 0
+
+def test_bitwise_ops() -> None:
+    x: u8 = 184 + int()
+    y: u8 = 79 + int()
+    z: u8 = 113 + int()
+    zero: u8 = int()
+    one: u8 = zero + 1
+    two: u8 = zero + 2
+    neg_one: u8 = -one
+
+    assert x & y == 8
+    assert x & z == 48
+    assert z & z == z
+    assert x & zero == 0
+
+    assert x | y == 255
+    assert x | z == 249
+    assert z | z == z
+    assert x | 0 == x
+
+    assert x ^ y == 247
+    assert x ^ z == 201
+    assert z ^ z == 0
+    assert z ^ 0 == z
+
+    assert x << one == 112
+    assert x << two == 224
+    assert z << two == 196
+    assert z << 0 == z
+
+    assert x >> one == 92
+    assert x >> two == 46
+    assert z >> two == 28
+    assert z >> 0 == z
+
+    for i in range(256):
+        t: u8 = i
+        assert ~t == (~(i + int()) & 0xff)
+
+def eq(x: u8, y: u8) -> bool:
+    return x == y
+
+def test_eq() -> None:
+    assert eq(int(), int())
+    assert eq(5 + int(), 5 + int())
+    assert not eq(int(), 1 + int())
+    assert not eq(5 + int(), 6 + int())
+
+def test_comparisons() -> None:
+    one: u8 = 1 + int()
+    one2: u8 = 1 + int()
+    two: u8 = 2 + int()
+    assert one < two
+    assert not (one < one2)
+    assert not (two < one)
+    assert two > one
+    assert not (one > one2)
+    assert not (one > two)
+    assert one <= two
+    assert one <= one2
+    assert not (two <= one)
+    assert two >= one
+    assert one >= one2
+    assert not (one >= two)
+    assert one == one2
+    assert not (one == two)
+    assert one != two
+    assert not (one != one2)
+
+def test_mixed_comparisons() -> None:
+    u8_3: u8 = int() + 3
+    int_5 = int() + 5
+    assert u8_3 < int_5
+    assert int_5 > u8_3
+    b = u8_3 > int_5
+    assert not b
+
+    int_largest = int() + 255
+    assert int_largest > u8_3
+    int_smallest = int()
+    assert u8_3 > int_smallest
+
+    int_too_big = int() + 256
+    int_too_small = int() -1
+    with assertRaises(OverflowError):
+        assert u8_3 < int_too_big
+    with assertRaises(OverflowError):
+        assert int_too_big < u8_3
+    with assertRaises(OverflowError):
+        assert u8_3 > int_too_small
+    with assertRaises(OverflowError):
+        assert int_too_small < u8_3
+
+def test_mixed_arithmetic_and_bitwise_ops() -> None:
+    u8_3: u8 = int() + 3
+    int_5 = int() + 5
+    assert u8_3 + int_5 == 8
+    assert int_5 - u8_3 == 2
+    assert u8_3 << int_5 == 96
+    assert int_5 << u8_3  == 40
+    assert u8_3 ^ int_5 == 6
+    assert int_5 | u8_3  == 7
+
+    int_largest = int() + 255
+    assert int_largest - u8_3 == 252
+    int_smallest = int()
+    assert int_smallest + u8_3 == 3
+
+    int_too_big = int() + 256
+    int_too_small = int() - 1
+    with assertRaises(OverflowError):
+        assert u8_3 & int_too_big
+    with assertRaises(OverflowError):
+        assert int_too_small & u8_3
+
+def test_coerce_to_and_from_int() -> None:
+    for n in range(0, 256):
+        x: u8 = n
+        m: int = x
+        assert m == n
+
+def test_explicit_conversion_to_u8() -> None:
+    x = u8(5)
+    assert x == 5
+    y = int() + ERROR
+    x = u8(y)
+    assert x == ERROR
+    n64: i64 = 233
+    x = u8(n64)
+    assert x == 233
+    n32: i32 = 234
+    x = u8(n32)
+    assert x == 234
+    z = u8(x)
+    assert z == 234
+    n16: i16 = 231
+    x = u8(n16)
+    assert x == 231
+
+def test_explicit_conversion_overflow() -> None:
+    max_u8 = int() + 255
+    x = u8(max_u8)
+    assert x == 255
+    assert int(x) == max_u8
+
+    min_u8 = int()
+    y = u8(min_u8)
+    assert y == 0
+    assert int(y) == min_u8
+
+    too_big = int() + 256
+    with assertRaises(OverflowError):
+        x = u8(too_big)
+
+    too_small = int() - 1
+    with assertRaises(OverflowError):
+        x = u8(too_small)
+
+def test_u8_from_large_small_literal() -> None:
+    x = u8(255) # XXX u8(2**15 - 1)
+    assert x == 255
+    x = u8(0)
+    assert x == 0
+
+def test_u8_truncate_from_i64() -> None:
+    large = i64(2**32 + 256 + 157 + int())
+    x = u8(large)
+    assert x == 157
+    small = i64(-2**32 - 256 - 157 + int())
+    x = u8(small)
+    assert x == 256 - 157
+    large2 = i64(2**8 + int())
+    x = u8(large2)
+    assert x == 0
+    small2 = i64(-2**8 - 1 - int())
+    x = u8(small2)
+    assert x == 255
+
+def test_u8_truncate_from_i32() -> None:
+    large = i32(2**16 + 2**8 + 5 + int())
+    assert u8(large) == 5
+    small = i32(-2**16 - 2**8 - 1 + int())
+    assert u8(small) == 255
+
+def from_float(x: float) -> u8:
+    return u8(x)
+
+def test_explicit_conversion_from_float() -> None:
+    assert from_float(0.0) == 0
+    assert from_float(1.456) == 1
+    assert from_float(234.567) == 234
+    assert from_float(255) == 255
+    assert from_float(0) == 0
+    assert from_float(-0.999) == 0
+    # The error message could be better, but this is acceptable
+    with assertRaises(OverflowError, "int too large or small to convert to u8"):
+        assert from_float(float(256))
+    with assertRaises(OverflowError, "int too large or small to convert to u8"):
+        # One ulp below the lowest valid i64 value
+        from_float(float(-1.0))
+
+def test_tuple_u8() -> None:
+    a: u8 = 1
+    b: u8 = 2
+    t = (a, b)
+    a, b = t
+    assert a == 1
+    assert b == 2
+    x: Any = t
+    tt: Tuple[u8, u8] = x
+    assert tt == (1, 2)
+
+def test_convert_u8_to_native_int() -> None:
+    for i in range(256):
+        x: u8 = i
+        assert i16(x) == i
+        assert i32(x) == i
+        assert i64(x) == i

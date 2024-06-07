@@ -1,0 +1,386 @@
+[case testTupleGet]
+from typing import Tuple
+
+def f(x: Tuple[Tuple[int, bool], bool]) -> int:
+    return x[0][0]
+[out]
+def f(x):
+    x :: tuple[tuple[int, bool], bool]
+    r0 :: tuple[int, bool]
+    r1 :: int
+L0:
+    r0 = x[0]
+    r1 = r0[0]
+    return r1
+
+[case testTupleNew]
+from typing import Tuple
+
+def f() -> int:
+    t = (True, 1)
+    return t[1]
+[out]
+def f():
+    r0, t :: tuple[bool, int]
+    r1 :: int
+L0:
+    r0 = (1, 2)
+    t = r0
+    r1 = t[1]
+    return r1
+
+[case testTupleLen]
+from typing import Tuple
+def f(x: Tuple[bool, bool, int]) -> int:
+    return len(x)
+[out]
+def f(x):
+    x :: tuple[bool, bool, int]
+L0:
+    return 6
+
+[case testSequenceTuple]
+from typing import List
+def f(x: List[bool]) -> bool:
+    return tuple(x)[1]
+[out]
+def f(x):
+    x :: list
+    r0 :: tuple
+    r1 :: object
+    r2 :: bool
+L0:
+    r0 = PyList_AsTuple(x)
+    r1 = CPySequenceTuple_GetItem(r0, 2)
+    r2 = unbox(bool, r1)
+    return r2
+
+[case testSequenceTupleLen]
+from typing import Tuple
+def f(x: Tuple[int, ...]) -> int:
+  return len(x)
+[out]
+def f(x):
+    x :: tuple
+    r0 :: native_int
+    r1 :: short_int
+L0:
+    r0 = var_object_size x
+    r1 = r0 << 1
+    return r1
+
+[case testSequenceTupleForced]
+from typing import Tuple
+def f() -> int:
+    t = (1, 2) # type: Tuple[int, ...]
+    return t[1]
+[out]
+def f():
+    r0 :: tuple[int, int]
+    r1 :: object
+    t :: tuple
+    r2 :: object
+    r3 :: int
+L0:
+    r0 = (2, 4)
+    r1 = box(tuple[int, int], r0)
+    t = r1
+    r2 = CPySequenceTuple_GetItem(t, 2)
+    r3 = unbox(int, r2)
+    return r3
+
+[case testTupleDisplay]
+from typing import Sequence, Tuple
+def f(x: Sequence[int], y: Sequence[int]) -> Tuple[int, ...]:
+    return (1, 2, *x, *y, 3)
+[out]
+def f(x, y):
+    x, y :: object
+    r0 :: list
+    r1, r2 :: object
+    r3 :: ptr
+    r4, r5, r6 :: object
+    r7 :: i32
+    r8 :: bit
+    r9 :: tuple
+L0:
+    r0 = PyList_New(2)
+    r1 = object 1
+    r2 = object 2
+    r3 = list_items r0
+    buf_init_item r3, 0, r1
+    buf_init_item r3, 1, r2
+    keep_alive r0
+    r4 = CPyList_Extend(r0, x)
+    r5 = CPyList_Extend(r0, y)
+    r6 = object 3
+    r7 = PyList_Append(r0, r6)
+    r8 = r7 >= 0 :: signed
+    r9 = PyList_AsTuple(r0)
+    return r9
+
+[case testTupleFor]
+from typing import Tuple, List
+def f(xs: Tuple[str, ...]) -> None:
+    for x in xs:
+        pass
+[out]
+def f(xs):
+    xs :: tuple
+    r0 :: short_int
+    r1 :: native_int
+    r2 :: short_int
+    r3 :: bit
+    r4 :: object
+    r5, x :: str
+    r6 :: short_int
+L0:
+    r0 = 0
+L1:
+    r1 = var_object_size xs
+    r2 = r1 << 1
+    r3 = int_lt r0, r2
+    if r3 goto L2 else goto L4 :: bool
+L2:
+    r4 = CPySequenceTuple_GetItem(xs, r0)
+    r5 = cast(str, r4)
+    x = r5
+L3:
+    r6 = r0 + 2
+    r0 = r6
+    goto L1
+L4:
+    return 1
+
+[case testNamedTupleAttribute]
+from typing import NamedTuple
+
+NT = NamedTuple('NT', [('x', int), ('y', int)])
+
+def f(nt: NT, b: bool) -> int:
+    if b:
+        return nt.x
+    return nt.y
+[out]
+def f(nt, b):
+    nt :: tuple
+    b :: bool
+    r0 :: object
+    r1 :: int
+    r2 :: object
+    r3 :: int
+L0:
+    if b goto L1 else goto L2 :: bool
+L1:
+    r0 = CPySequenceTuple_GetItem(nt, 0)
+    r1 = unbox(int, r0)
+    return r1
+L2:
+    r2 = CPySequenceTuple_GetItem(nt, 2)
+    r3 = unbox(int, r2)
+    return r3
+
+
+[case testTupleOperatorIn]
+def f(i: int) -> bool:
+    return i in [1, 2, 3]
+[out]
+def f(i):
+    i :: int
+    r0 :: bit
+    r1 :: bool
+    r2 :: bit
+    r3 :: bool
+    r4 :: bit
+L0:
+    r0 = int_eq i, 2
+    if r0 goto L1 else goto L2 :: bool
+L1:
+    r1 = r0
+    goto L3
+L2:
+    r2 = int_eq i, 4
+    r1 = r2
+L3:
+    if r1 goto L4 else goto L5 :: bool
+L4:
+    r3 = r1
+    goto L6
+L5:
+    r4 = int_eq i, 6
+    r3 = r4
+L6:
+    return r3
+
+[case testTupleBuiltFromList]
+def f(val: int) -> bool:
+    return val % 2 == 0
+
+def test() -> None:
+    source = [1, 2, 3]
+    a = tuple(f(x) for x in source)
+[out]
+def f(val):
+    val, r0 :: int
+    r1 :: bit
+L0:
+    r0 = CPyTagged_Remainder(val, 4)
+    r1 = int_eq r0, 0
+    return r1
+def test():
+    r0 :: list
+    r1, r2, r3 :: object
+    r4 :: ptr
+    source :: list
+    r5 :: native_int
+    r6 :: tuple
+    r7 :: short_int
+    r8 :: native_int
+    r9 :: short_int
+    r10 :: bit
+    r11 :: object
+    r12, x :: int
+    r13 :: bool
+    r14 :: object
+    r15 :: bit
+    r16 :: short_int
+    a :: tuple
+L0:
+    r0 = PyList_New(3)
+    r1 = object 1
+    r2 = object 2
+    r3 = object 3
+    r4 = list_items r0
+    buf_init_item r4, 0, r1
+    buf_init_item r4, 1, r2
+    buf_init_item r4, 2, r3
+    keep_alive r0
+    source = r0
+    r5 = var_object_size source
+    r6 = PyTuple_New(r5)
+    r7 = 0
+L1:
+    r8 = var_object_size source
+    r9 = r8 << 1
+    r10 = int_lt r7, r9
+    if r10 goto L2 else goto L4 :: bool
+L2:
+    r11 = CPyList_GetItemUnsafe(source, r7)
+    r12 = unbox(int, r11)
+    x = r12
+    r13 = f(x)
+    r14 = box(bool, r13)
+    r15 = CPySequenceTuple_SetItemUnsafe(r6, r7, r14)
+L3:
+    r16 = r7 + 2
+    r7 = r16
+    goto L1
+L4:
+    a = r6
+    return 1
+
+[case testTupleBuiltFromStr]
+def f2(val: str) -> str:
+    return val + "f2"
+
+def test() -> None:
+    source = "abc"
+    a = tuple(f2(x) for x in source)
+[out]
+def f2(val):
+    val, r0, r1 :: str
+L0:
+    r0 = 'f2'
+    r1 = PyUnicode_Concat(val, r0)
+    return r1
+def test():
+    r0, source :: str
+    r1 :: native_int
+    r2 :: bit
+    r3 :: tuple
+    r4 :: short_int
+    r5 :: native_int
+    r6 :: bit
+    r7 :: short_int
+    r8 :: bit
+    r9, x, r10 :: str
+    r11 :: bit
+    r12 :: short_int
+    a :: tuple
+L0:
+    r0 = 'abc'
+    source = r0
+    r1 = CPyStr_Size_size_t(source)
+    r2 = r1 >= 0 :: signed
+    r3 = PyTuple_New(r1)
+    r4 = 0
+L1:
+    r5 = CPyStr_Size_size_t(source)
+    r6 = r5 >= 0 :: signed
+    r7 = r5 << 1
+    r8 = int_lt r4, r7
+    if r8 goto L2 else goto L4 :: bool
+L2:
+    r9 = CPyStr_GetItem(source, r4)
+    x = r9
+    r10 = f2(x)
+    r11 = CPySequenceTuple_SetItemUnsafe(r3, r4, r10)
+L3:
+    r12 = r4 + 2
+    r4 = r12
+    goto L1
+L4:
+    a = r3
+    return 1
+
+[case testTupleBuiltFromVariableLengthTuple]
+from typing import Tuple
+
+def f(val: bool) -> bool:
+    return not val
+
+def test(source: Tuple[bool, ...]) -> None:
+    a = tuple(f(x) for x in source)
+[out]
+def f(val):
+    val, r0 :: bool
+L0:
+    r0 = val ^ 1
+    return r0
+def test(source):
+    source :: tuple
+    r0 :: native_int
+    r1 :: tuple
+    r2 :: short_int
+    r3 :: native_int
+    r4 :: short_int
+    r5 :: bit
+    r6 :: object
+    r7, x, r8 :: bool
+    r9 :: object
+    r10 :: bit
+    r11 :: short_int
+    a :: tuple
+L0:
+    r0 = var_object_size source
+    r1 = PyTuple_New(r0)
+    r2 = 0
+L1:
+    r3 = var_object_size source
+    r4 = r3 << 1
+    r5 = int_lt r2, r4
+    if r5 goto L2 else goto L4 :: bool
+L2:
+    r6 = CPySequenceTuple_GetItem(source, r2)
+    r7 = unbox(bool, r6)
+    x = r7
+    r8 = f(x)
+    r9 = box(bool, r8)
+    r10 = CPySequenceTuple_SetItemUnsafe(r1, r2, r9)
+L3:
+    r11 = r2 + 2
+    r2 = r11
+    goto L1
+L4:
+    a = r1
+    return 1

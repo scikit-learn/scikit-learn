@@ -1,0 +1,806 @@
+[case testNewSet]
+from typing import Set
+def f() -> Set[int]:
+    return {1, 2, 3}
+[out]
+def f():
+    r0 :: set
+    r1 :: object
+    r2 :: i32
+    r3 :: bit
+    r4 :: object
+    r5 :: i32
+    r6 :: bit
+    r7 :: object
+    r8 :: i32
+    r9 :: bit
+L0:
+    r0 = PySet_New(0)
+    r1 = object 1
+    r2 = PySet_Add(r0, r1)
+    r3 = r2 >= 0 :: signed
+    r4 = object 2
+    r5 = PySet_Add(r0, r4)
+    r6 = r5 >= 0 :: signed
+    r7 = object 3
+    r8 = PySet_Add(r0, r7)
+    r9 = r8 >= 0 :: signed
+    return r0
+
+[case testNewEmptySet]
+from typing import Set
+def f() -> Set[int]:
+    return set()
+[out]
+def f():
+    r0 :: set
+L0:
+    r0 = PySet_New(0)
+    return r0
+
+[case testNewSetFromIterable]
+from typing import Set, List
+def f(l: List[T]) -> Set[T]:
+    return set(l)
+[out]
+def f(l):
+    l :: list
+    r0 :: set
+L0:
+    r0 = PySet_New(l)
+    return r0
+
+[case testNewSetFromIterable2]
+def f(x: int) -> int:
+    return x
+
+def test1() -> None:
+    tmp_list = [1, 3, 5]
+    a = set(f(x) for x in tmp_list)
+
+def test2() -> None:
+    tmp_tuple = (1, 3, 5)
+    b = set(f(x) for x in tmp_tuple)
+
+def test3() -> None:
+    tmp_dict = {1: '1', 3: '3', 5: '5'}
+    c = set(f(x) for x in tmp_dict)
+
+def test4() -> None:
+    d = set(f(x) for x in range(1, 6, 2))
+
+def test5() -> None:
+    e = set((f(x) for x in range(1, 6, 2)))
+[out]
+def f(x):
+    x :: int
+L0:
+    return x
+def test1():
+    r0 :: list
+    r1, r2, r3 :: object
+    r4 :: ptr
+    tmp_list :: list
+    r5 :: set
+    r6 :: short_int
+    r7 :: native_int
+    r8 :: short_int
+    r9 :: bit
+    r10 :: object
+    r11, x, r12 :: int
+    r13 :: object
+    r14 :: i32
+    r15 :: bit
+    r16 :: short_int
+    a :: set
+L0:
+    r0 = PyList_New(3)
+    r1 = object 1
+    r2 = object 3
+    r3 = object 5
+    r4 = list_items r0
+    buf_init_item r4, 0, r1
+    buf_init_item r4, 1, r2
+    buf_init_item r4, 2, r3
+    keep_alive r0
+    tmp_list = r0
+    r5 = PySet_New(0)
+    r6 = 0
+L1:
+    r7 = var_object_size tmp_list
+    r8 = r7 << 1
+    r9 = int_lt r6, r8
+    if r9 goto L2 else goto L4 :: bool
+L2:
+    r10 = CPyList_GetItemUnsafe(tmp_list, r6)
+    r11 = unbox(int, r10)
+    x = r11
+    r12 = f(x)
+    r13 = box(int, r12)
+    r14 = PySet_Add(r5, r13)
+    r15 = r14 >= 0 :: signed
+L3:
+    r16 = r6 + 2
+    r6 = r16
+    goto L1
+L4:
+    a = r5
+    return 1
+def test2():
+    r0, tmp_tuple :: tuple[int, int, int]
+    r1 :: set
+    r2, r3, r4 :: object
+    r5, x, r6 :: int
+    r7 :: object
+    r8 :: i32
+    r9, r10 :: bit
+    b :: set
+L0:
+    r0 = (2, 6, 10)
+    tmp_tuple = r0
+    r1 = PySet_New(0)
+    r2 = box(tuple[int, int, int], tmp_tuple)
+    r3 = PyObject_GetIter(r2)
+L1:
+    r4 = PyIter_Next(r3)
+    if is_error(r4) goto L4 else goto L2
+L2:
+    r5 = unbox(int, r4)
+    x = r5
+    r6 = f(x)
+    r7 = box(int, r6)
+    r8 = PySet_Add(r1, r7)
+    r9 = r8 >= 0 :: signed
+L3:
+    goto L1
+L4:
+    r10 = CPy_NoErrOccured()
+L5:
+    b = r1
+    return 1
+def test3():
+    r0, r1, r2 :: str
+    r3, r4, r5 :: object
+    r6, tmp_dict :: dict
+    r7 :: set
+    r8 :: short_int
+    r9 :: native_int
+    r10 :: short_int
+    r11 :: object
+    r12 :: tuple[bool, short_int, object]
+    r13 :: short_int
+    r14 :: bool
+    r15 :: object
+    r16, x, r17 :: int
+    r18 :: object
+    r19 :: i32
+    r20, r21, r22 :: bit
+    c :: set
+L0:
+    r0 = '1'
+    r1 = '3'
+    r2 = '5'
+    r3 = object 1
+    r4 = object 3
+    r5 = object 5
+    r6 = CPyDict_Build(3, r3, r0, r4, r1, r5, r2)
+    tmp_dict = r6
+    r7 = PySet_New(0)
+    r8 = 0
+    r9 = PyDict_Size(tmp_dict)
+    r10 = r9 << 1
+    r11 = CPyDict_GetKeysIter(tmp_dict)
+L1:
+    r12 = CPyDict_NextKey(r11, r8)
+    r13 = r12[1]
+    r8 = r13
+    r14 = r12[0]
+    if r14 goto L2 else goto L4 :: bool
+L2:
+    r15 = r12[2]
+    r16 = unbox(int, r15)
+    x = r16
+    r17 = f(x)
+    r18 = box(int, r17)
+    r19 = PySet_Add(r7, r18)
+    r20 = r19 >= 0 :: signed
+L3:
+    r21 = CPyDict_CheckSize(tmp_dict, r10)
+    goto L1
+L4:
+    r22 = CPy_NoErrOccured()
+L5:
+    c = r7
+    return 1
+def test4():
+    r0 :: set
+    r1 :: short_int
+    x :: int
+    r2 :: bit
+    r3 :: int
+    r4 :: object
+    r5 :: i32
+    r6 :: bit
+    r7 :: short_int
+    d :: set
+L0:
+    r0 = PySet_New(0)
+    r1 = 2
+    x = r1
+L1:
+    r2 = int_lt r1, 12
+    if r2 goto L2 else goto L4 :: bool
+L2:
+    r3 = f(x)
+    r4 = box(int, r3)
+    r5 = PySet_Add(r0, r4)
+    r6 = r5 >= 0 :: signed
+L3:
+    r7 = r1 + 4
+    r1 = r7
+    x = r7
+    goto L1
+L4:
+    d = r0
+    return 1
+def test5():
+    r0 :: set
+    r1 :: short_int
+    x :: int
+    r2 :: bit
+    r3 :: int
+    r4 :: object
+    r5 :: i32
+    r6 :: bit
+    r7 :: short_int
+    e :: set
+L0:
+    r0 = PySet_New(0)
+    r1 = 2
+    x = r1
+L1:
+    r2 = int_lt r1, 12
+    if r2 goto L2 else goto L4 :: bool
+L2:
+    r3 = f(x)
+    r4 = box(int, r3)
+    r5 = PySet_Add(r0, r4)
+    r6 = r5 >= 0 :: signed
+L3:
+    r7 = r1 + 4
+    r1 = r7
+    x = r7
+    goto L1
+L4:
+    e = r0
+    return 1
+
+[case testNewSetFromIterable3]
+def f1(x: int) -> int:
+    return x
+
+def f2(x: int) -> int:
+    return x * 10
+
+def f3(x: int) -> int:
+    return x + 1
+
+def test() -> None:
+    tmp_list = [1, 2, 3, 4, 5]
+    a = set(f3(x) for x in (f2(y) for y in (f1(z) for z in tmp_list if z < 4)))
+[out]
+def f1(x):
+    x :: int
+L0:
+    return x
+def f2(x):
+    x, r0 :: int
+L0:
+    r0 = CPyTagged_Multiply(x, 20)
+    return r0
+def f3(x):
+    x, r0 :: int
+L0:
+    r0 = CPyTagged_Add(x, 2)
+    return r0
+def test():
+    r0 :: list
+    r1, r2, r3, r4, r5 :: object
+    r6 :: ptr
+    tmp_list :: list
+    r7 :: set
+    r8, r9 :: list
+    r10 :: short_int
+    r11 :: native_int
+    r12 :: short_int
+    r13 :: bit
+    r14 :: object
+    r15, z :: int
+    r16 :: bit
+    r17 :: int
+    r18 :: object
+    r19 :: i32
+    r20 :: bit
+    r21 :: short_int
+    r22, r23, r24 :: object
+    r25, y, r26 :: int
+    r27 :: object
+    r28 :: i32
+    r29, r30 :: bit
+    r31, r32, r33 :: object
+    r34, x, r35 :: int
+    r36 :: object
+    r37 :: i32
+    r38, r39 :: bit
+    a :: set
+L0:
+    r0 = PyList_New(5)
+    r1 = object 1
+    r2 = object 2
+    r3 = object 3
+    r4 = object 4
+    r5 = object 5
+    r6 = list_items r0
+    buf_init_item r6, 0, r1
+    buf_init_item r6, 1, r2
+    buf_init_item r6, 2, r3
+    buf_init_item r6, 3, r4
+    buf_init_item r6, 4, r5
+    keep_alive r0
+    tmp_list = r0
+    r7 = PySet_New(0)
+    r8 = PyList_New(0)
+    r9 = PyList_New(0)
+    r10 = 0
+L1:
+    r11 = var_object_size tmp_list
+    r12 = r11 << 1
+    r13 = int_lt r10, r12
+    if r13 goto L2 else goto L6 :: bool
+L2:
+    r14 = CPyList_GetItemUnsafe(tmp_list, r10)
+    r15 = unbox(int, r14)
+    z = r15
+    r16 = int_lt z, 8
+    if r16 goto L4 else goto L3 :: bool
+L3:
+    goto L5
+L4:
+    r17 = f1(z)
+    r18 = box(int, r17)
+    r19 = PyList_Append(r9, r18)
+    r20 = r19 >= 0 :: signed
+L5:
+    r21 = r10 + 2
+    r10 = r21
+    goto L1
+L6:
+    r22 = PyObject_GetIter(r9)
+    r23 = PyObject_GetIter(r22)
+L7:
+    r24 = PyIter_Next(r23)
+    if is_error(r24) goto L10 else goto L8
+L8:
+    r25 = unbox(int, r24)
+    y = r25
+    r26 = f2(y)
+    r27 = box(int, r26)
+    r28 = PyList_Append(r8, r27)
+    r29 = r28 >= 0 :: signed
+L9:
+    goto L7
+L10:
+    r30 = CPy_NoErrOccured()
+L11:
+    r31 = PyObject_GetIter(r8)
+    r32 = PyObject_GetIter(r31)
+L12:
+    r33 = PyIter_Next(r32)
+    if is_error(r33) goto L15 else goto L13
+L13:
+    r34 = unbox(int, r33)
+    x = r34
+    r35 = f3(x)
+    r36 = box(int, r35)
+    r37 = PySet_Add(r7, r36)
+    r38 = r37 >= 0 :: signed
+L14:
+    goto L12
+L15:
+    r39 = CPy_NoErrOccured()
+L16:
+    a = r7
+    return 1
+
+[case testSetSize]
+from typing import Set
+def f() -> int:
+    return len({1, 2, 3})
+[out]
+def f():
+    r0 :: set
+    r1 :: object
+    r2 :: i32
+    r3 :: bit
+    r4 :: object
+    r5 :: i32
+    r6 :: bit
+    r7 :: object
+    r8 :: i32
+    r9 :: bit
+    r10 :: ptr
+    r11 :: native_int
+    r12 :: short_int
+L0:
+    r0 = PySet_New(0)
+    r1 = object 1
+    r2 = PySet_Add(r0, r1)
+    r3 = r2 >= 0 :: signed
+    r4 = object 2
+    r5 = PySet_Add(r0, r4)
+    r6 = r5 >= 0 :: signed
+    r7 = object 3
+    r8 = PySet_Add(r0, r7)
+    r9 = r8 >= 0 :: signed
+    r10 = get_element_ptr r0 used :: PySetObject
+    r11 = load_mem r10 :: native_int*
+    keep_alive r0
+    r12 = r11 << 1
+    return r12
+
+[case testSetContains]
+from typing import Set
+def f() -> bool:
+    x = {3, 4}
+    return (5 in x)
+[out]
+def f():
+    r0 :: set
+    r1 :: object
+    r2 :: i32
+    r3 :: bit
+    r4 :: object
+    r5 :: i32
+    r6 :: bit
+    x :: set
+    r7 :: object
+    r8 :: i32
+    r9 :: bit
+    r10 :: bool
+L0:
+    r0 = PySet_New(0)
+    r1 = object 3
+    r2 = PySet_Add(r0, r1)
+    r3 = r2 >= 0 :: signed
+    r4 = object 4
+    r5 = PySet_Add(r0, r4)
+    r6 = r5 >= 0 :: signed
+    x = r0
+    r7 = object 5
+    r8 = PySet_Contains(x, r7)
+    r9 = r8 >= 0 :: signed
+    r10 = truncate r8: i32 to builtins.bool
+    return r10
+
+[case testSetRemove]
+from typing import Set
+def f() -> Set[int]:
+    x = set()  # type: Set[int]
+    x.remove(1)
+    return x
+[out]
+def f():
+    r0, x :: set
+    r1 :: object
+    r2 :: bit
+L0:
+    r0 = PySet_New(0)
+    x = r0
+    r1 = object 1
+    r2 = CPySet_Remove(x, r1)
+    return x
+
+[case testSetDiscard]
+from typing import Set
+def f() -> Set[int]:
+    x = set()  # type: Set[int]
+    x.discard(1)
+    return x
+[out]
+def f():
+    r0, x :: set
+    r1 :: object
+    r2 :: i32
+    r3 :: bit
+L0:
+    r0 = PySet_New(0)
+    x = r0
+    r1 = object 1
+    r2 = PySet_Discard(x, r1)
+    r3 = r2 >= 0 :: signed
+    return x
+
+[case testSetAdd]
+from typing import Set
+def f() -> Set[int]:
+    x = set()  # type: Set[int]
+    x.add(1)
+    return x
+[out]
+def f():
+    r0, x :: set
+    r1 :: object
+    r2 :: i32
+    r3 :: bit
+L0:
+    r0 = PySet_New(0)
+    x = r0
+    r1 = object 1
+    r2 = PySet_Add(x, r1)
+    r3 = r2 >= 0 :: signed
+    return x
+
+[case testSetClear]
+from typing import Set
+def f() -> Set[int]:
+    x = set()  # type: Set[int]
+    x.clear()
+    return x
+[out]
+def f():
+    r0, x :: set
+    r1 :: i32
+    r2 :: bit
+L0:
+    r0 = PySet_New(0)
+    x = r0
+    r1 = PySet_Clear(x)
+    r2 = r1 >= 0 :: signed
+    return x
+
+[case testSetPop]
+from typing import Set
+def f(s : Set[int]) -> int:
+    return s.pop()
+[out]
+def f(s):
+    s :: set
+    r0 :: object
+    r1 :: int
+L0:
+    r0 = PySet_Pop(s)
+    r1 = unbox(int, r0)
+    return r1
+
+[case testSetUpdate]
+from typing import Set, List
+def update(s: Set[int], x: List[int]) -> None:
+    s.update(x)
+[out]
+def update(s, x):
+    s :: set
+    x :: list
+    r0 :: i32
+    r1 :: bit
+L0:
+    r0 = _PySet_Update(s, x)
+    r1 = r0 >= 0 :: signed
+    return 1
+
+[case testSetDisplay]
+from typing import Set
+def f(x: Set[int], y: Set[int]) -> Set[int]:
+    return {1, 2, *x, *y, 3}
+[out]
+def f(x, y):
+    x, y, r0 :: set
+    r1 :: object
+    r2 :: i32
+    r3 :: bit
+    r4 :: object
+    r5 :: i32
+    r6 :: bit
+    r7 :: i32
+    r8 :: bit
+    r9 :: i32
+    r10 :: bit
+    r11 :: object
+    r12 :: i32
+    r13 :: bit
+L0:
+    r0 = PySet_New(0)
+    r1 = object 1
+    r2 = PySet_Add(r0, r1)
+    r3 = r2 >= 0 :: signed
+    r4 = object 2
+    r5 = PySet_Add(r0, r4)
+    r6 = r5 >= 0 :: signed
+    r7 = _PySet_Update(r0, x)
+    r8 = r7 >= 0 :: signed
+    r9 = _PySet_Update(r0, y)
+    r10 = r9 >= 0 :: signed
+    r11 = object 3
+    r12 = PySet_Add(r0, r11)
+    r13 = r12 >= 0 :: signed
+    return r0
+
+[case testOperatorInSetLiteral]
+from typing_extensions import Final
+
+CONST: Final = "daylily"
+non_const = 10
+
+def precomputed(i: object) -> bool:
+    return i in {1, 2.0, 1 +2, 4j, "foo", b"bar", CONST, (None, (27,)), (), False}
+def not_precomputed_non_final_name(i: int) -> bool:
+    return i in {non_const}
+def not_precomputed_nested_set(i: int) -> bool:
+    return i in {frozenset({1}), 2}
+[out]
+def precomputed(i):
+    i :: object
+    r0 :: set
+    r1 :: i32
+    r2 :: bit
+    r3 :: bool
+L0:
+    r0 = frozenset({(), (None, (27,)), 1, 2.0, 3, 4j, False, b'bar', 'daylily', 'foo'})
+    r1 = PySet_Contains(r0, i)
+    r2 = r1 >= 0 :: signed
+    r3 = truncate r1: i32 to builtins.bool
+    return r3
+def not_precomputed_non_final_name(i):
+    i :: int
+    r0 :: dict
+    r1 :: str
+    r2 :: object
+    r3 :: int
+    r4 :: set
+    r5 :: object
+    r6 :: i32
+    r7 :: bit
+    r8 :: object
+    r9 :: i32
+    r10 :: bit
+    r11 :: bool
+L0:
+    r0 = __main__.globals :: static
+    r1 = 'non_const'
+    r2 = CPyDict_GetItem(r0, r1)
+    r3 = unbox(int, r2)
+    r4 = PySet_New(0)
+    r5 = box(int, r3)
+    r6 = PySet_Add(r4, r5)
+    r7 = r6 >= 0 :: signed
+    r8 = box(int, i)
+    r9 = PySet_Contains(r4, r8)
+    r10 = r9 >= 0 :: signed
+    r11 = truncate r9: i32 to builtins.bool
+    return r11
+def not_precomputed_nested_set(i):
+    i :: int
+    r0 :: set
+    r1 :: object
+    r2 :: i32
+    r3 :: bit
+    r4 :: object
+    r5 :: set
+    r6 :: i32
+    r7 :: bit
+    r8 :: object
+    r9 :: i32
+    r10 :: bit
+    r11 :: object
+    r12 :: i32
+    r13 :: bit
+    r14 :: bool
+L0:
+    r0 = PySet_New(0)
+    r1 = object 1
+    r2 = PySet_Add(r0, r1)
+    r3 = r2 >= 0 :: signed
+    r4 = PyFrozenSet_New(r0)
+    r5 = PySet_New(0)
+    r6 = PySet_Add(r5, r4)
+    r7 = r6 >= 0 :: signed
+    r8 = object 2
+    r9 = PySet_Add(r5, r8)
+    r10 = r9 >= 0 :: signed
+    r11 = box(int, i)
+    r12 = PySet_Contains(r5, r11)
+    r13 = r12 >= 0 :: signed
+    r14 = truncate r12: i32 to builtins.bool
+    return r14
+
+[case testForSetLiteral]
+from typing_extensions import Final
+
+CONST: Final = 10
+non_const = 20
+
+def precomputed() -> None:
+    for _ in {"None", "True", "False"}:
+        pass
+
+def precomputed2() -> None:
+    for _ in {None, False, 1, 2.0, "4", b"5", (6,), 7j, CONST, CONST + 1}:
+        pass
+
+def not_precomputed() -> None:
+    for not_optimized in {non_const}:
+        pass
+
+[out]
+def precomputed():
+    r0 :: set
+    r1, r2 :: object
+    r3 :: str
+    _ :: object
+    r4 :: bit
+L0:
+    r0 = frozenset({'False', 'None', 'True'})
+    r1 = PyObject_GetIter(r0)
+L1:
+    r2 = PyIter_Next(r1)
+    if is_error(r2) goto L4 else goto L2
+L2:
+    r3 = cast(str, r2)
+    _ = r3
+L3:
+    goto L1
+L4:
+    r4 = CPy_NoErrOccured()
+L5:
+    return 1
+def precomputed2():
+    r0 :: set
+    r1, r2, _ :: object
+    r3 :: bit
+L0:
+    r0 = frozenset({(6,), 1, 10, 11, 2.0, '4', 7j, False, None, b'5'})
+    r1 = PyObject_GetIter(r0)
+L1:
+    r2 = PyIter_Next(r1)
+    if is_error(r2) goto L4 else goto L2
+L2:
+    _ = r2
+L3:
+    goto L1
+L4:
+    r3 = CPy_NoErrOccured()
+L5:
+    return 1
+def not_precomputed():
+    r0 :: dict
+    r1 :: str
+    r2 :: object
+    r3 :: int
+    r4 :: set
+    r5 :: object
+    r6 :: i32
+    r7 :: bit
+    r8, r9 :: object
+    r10, not_optimized :: int
+    r11 :: bit
+L0:
+    r0 = __main__.globals :: static
+    r1 = 'non_const'
+    r2 = CPyDict_GetItem(r0, r1)
+    r3 = unbox(int, r2)
+    r4 = PySet_New(0)
+    r5 = box(int, r3)
+    r6 = PySet_Add(r4, r5)
+    r7 = r6 >= 0 :: signed
+    r8 = PyObject_GetIter(r4)
+L1:
+    r9 = PyIter_Next(r8)
+    if is_error(r9) goto L4 else goto L2
+L2:
+    r10 = unbox(int, r9)
+    not_optimized = r10
+L3:
+    goto L1
+L4:
+    r11 = CPy_NoErrOccured()
+L5:
+    return 1

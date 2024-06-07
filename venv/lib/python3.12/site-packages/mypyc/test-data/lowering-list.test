@@ -1,0 +1,33 @@
+[case testLowerListDisplay]
+def f() -> None:
+    a = [4, 6, 7]
+[out]
+def f():
+    r0 :: list
+    r1, r2, r3 :: object
+    r4, r5, r6, r7 :: ptr
+    a :: list
+    r8 :: None
+L0:
+    r0 = PyList_New(3)
+    if is_error(r0) goto L2 (error at f:2) else goto L1
+L1:
+    r1 = object 4
+    r2 = object 6
+    r3 = object 7
+    r4 = get_element_ptr r0 ob_item :: PyListObject
+    r5 = load_mem r4 :: ptr*
+    inc_ref r1
+    set_mem r5, r1 :: builtins.object*
+    inc_ref r2
+    r6 = r5 + WORD_SIZE*1
+    set_mem r6, r2 :: builtins.object*
+    inc_ref r3
+    r7 = r5 + WORD_SIZE*2
+    set_mem r7, r3 :: builtins.object*
+    a = r0
+    dec_ref a
+    return 1
+L2:
+    r8 = <error> :: None
+    return r8

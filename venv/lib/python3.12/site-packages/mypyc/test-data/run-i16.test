@@ -1,0 +1,338 @@
+[case testI16BasicOps]
+from typing import Any, Tuple
+
+from mypy_extensions import i16, i32, i64
+
+from testutil import assertRaises
+
+def test_box_and_unbox() -> None:
+    values = (list(range(-2**15, -2**15 + 100)) +
+              list(range(-1000, 1000)) +
+              list(range(2**15 - 100, 2**15)))
+    for i in values:
+        o: Any = i
+        x: i16 = o
+        o2: Any = x
+        assert o == o2
+        assert x == i
+    with assertRaises(OverflowError, "int too large to convert to i16"):
+        o = 2**15
+        x2: i16 = o
+    with assertRaises(OverflowError, "int too large to convert to i16"):
+        o = -2**15 - 1
+        x3: i16 = o
+
+def div_by_7(x: i16) -> i16:
+    return x // 7
+def div_by_neg_7(x: i16) -> i16:
+    return x // -7
+
+def div(x: i16, y: i16) -> i16:
+    return x // y
+
+def test_divide_by_constant() -> None:
+    for i in range(-1000, 1000):
+        assert div_by_7(i) == i // 7
+    for i in range(-2**15, -2**15 + 1000):
+        assert div_by_7(i) == i // 7
+    for i in range(2**15 - 1000, 2**15):
+        assert div_by_7(i) == i // 7
+
+def test_divide_by_negative_constant() -> None:
+    for i in range(-1000, 1000):
+        assert div_by_neg_7(i) == i // -7
+    for i in range(-2**15, -2**15 + 1000):
+        assert div_by_neg_7(i) == i // -7
+    for i in range(2**15 - 1000, 2**15):
+        assert div_by_neg_7(i) == i // -7
+
+def test_divide_by_variable() -> None:
+    values = (list(range(-50, 50)) +
+              list(range(-2**15, -2**15 + 10)) +
+              list(range(2**15 - 10, 2**15)))
+    for x in values:
+        for y in values:
+            if y != 0:
+                if x // y == 2**15:
+                    with assertRaises(OverflowError, "integer division overflow"):
+                        div(x, y)
+                else:
+                    assert div(x, y) == x // y
+            else:
+                with assertRaises(ZeroDivisionError, "integer division or modulo by zero"):
+                    div(x, y)
+
+def mod_by_7(x: i16) -> i16:
+    return x % 7
+
+def mod_by_neg_7(x: i16) -> i16:
+    return x // -7
+
+def mod(x: i16, y: i16) -> i16:
+    return x % y
+
+def test_mod_by_constant() -> None:
+    for i in range(-1000, 1000):
+        assert mod_by_7(i) == i % 7
+    for i in range(-2**15, -2**15 + 1000):
+        assert mod_by_7(i) == i % 7
+    for i in range(2**15 - 1000, 2**15):
+        assert mod_by_7(i) == i % 7
+
+def test_mod_by_negative_constant() -> None:
+    for i in range(-1000, 1000):
+        assert mod_by_neg_7(i) == i // -7
+    for i in range(-2**15, -2**15 + 1000):
+        assert mod_by_neg_7(i) == i // -7
+    for i in range(2**15 - 1000, 2**15):
+        assert mod_by_neg_7(i) == i // -7
+
+def test_mod_by_variable() -> None:
+    values = (list(range(-50, 50)) +
+              list(range(-2**15, -2**15 + 10)) +
+              list(range(2**15 - 10, 2**15)))
+    for x in values:
+        for y in values:
+            if y != 0:
+                assert mod(x, y) == x % y
+            else:
+                with assertRaises(ZeroDivisionError, "integer division or modulo by zero"):
+                    mod(x, y)
+
+def test_simple_arithmetic_ops() -> None:
+    zero: i16 = int()
+    one: i16 = zero + 1
+    two: i16 = one + 1
+    neg_one: i16 = -one
+    assert one + one == 2
+    assert one + two == 3
+    assert one + neg_one == 0
+    assert one - one == 0
+    assert one - two == -1
+    assert one * one == 1
+    assert one * two == 2
+    assert two * two == 4
+    assert two * neg_one == -2
+    assert neg_one * one == -1
+    assert neg_one * neg_one == 1
+    assert two * 0 == 0
+    assert 0 * two == 0
+    assert -one == -1
+    assert -two == -2
+    assert -neg_one == 1
+    assert -zero == 0
+
+def test_bitwise_ops() -> None:
+    x: i16 = 13855 + int()
+    y: i16 = 367 + int()
+    z: i16 = -11091 + int()
+    zero: i16 = int()
+    one: i16 = zero + 1
+    two: i16 = zero + 2
+    neg_one: i16 = -one
+
+    assert x & y == 15
+    assert x & z == 5133
+    assert z & z == z
+    assert x & zero == 0
+
+    assert x | y == 14207
+    assert x | z == -2369
+    assert z | z == z
+    assert x | 0 == x
+
+    assert x ^ y == 14192
+    assert x ^ z == -7502
+    assert z ^ z == 0
+    assert z ^ 0 == z
+
+    assert x << one == 27710
+    assert x << two == -10116
+    assert z << two == 21172
+    assert z << 0 == z
+
+    assert x >> one == 6927
+    assert x >> two == 3463
+    assert z >> two == -2773
+    assert z >> 0 == z
+
+    assert ~x == -13856
+    assert ~z == 11090
+    assert ~zero == -1
+    assert ~neg_one == 0
+
+def eq(x: i16, y: i16) -> bool:
+    return x == y
+
+def test_eq() -> None:
+    assert eq(int(), int())
+    assert eq(5 + int(), 5 + int())
+    assert eq(-5 + int(), -5 + int())
+    assert not eq(int(), 1 + int())
+    assert not eq(5 + int(), 6 + int())
+    assert not eq(-5 + int(), -6 + int())
+    assert not eq(-5 + int(), 5 + int())
+
+def test_comparisons() -> None:
+    one: i16 = 1 + int()
+    one2: i16 = 1 + int()
+    two: i16 = 2 + int()
+    assert one < two
+    assert not (one < one2)
+    assert not (two < one)
+    assert two > one
+    assert not (one > one2)
+    assert not (one > two)
+    assert one <= two
+    assert one <= one2
+    assert not (two <= one)
+    assert two >= one
+    assert one >= one2
+    assert not (one >= two)
+    assert one == one2
+    assert not (one == two)
+    assert one != two
+    assert not (one != one2)
+
+def test_mixed_comparisons() -> None:
+    i16_3: i16 = int() + 3
+    int_5 = int() + 5
+    assert i16_3 < int_5
+    assert int_5 > i16_3
+    b = i16_3 > int_5
+    assert not b
+
+    int_largest = int() + (1 << 15) - 1
+    assert int_largest > i16_3
+    int_smallest = int() - (1 << 15)
+    assert i16_3 > int_smallest
+
+    int_too_big = int() + (1 << 15)
+    int_too_small = int() - (1 << 15) - 1
+    with assertRaises(OverflowError):
+        assert i16_3 < int_too_big
+    with assertRaises(OverflowError):
+        assert int_too_big < i16_3
+    with assertRaises(OverflowError):
+        assert i16_3 > int_too_small
+    with assertRaises(OverflowError):
+        assert int_too_small < i16_3
+
+def test_mixed_arithmetic_and_bitwise_ops() -> None:
+    i16_3: i16 = int() + 3
+    int_5 = int() + 5
+    assert i16_3 + int_5 == 8
+    assert int_5 - i16_3 == 2
+    assert i16_3 << int_5 == 96
+    assert int_5 << i16_3  == 40
+    assert i16_3 ^ int_5 == 6
+    assert int_5 | i16_3  == 7
+
+    int_largest = int() + (1 << 15) - 1
+    assert int_largest - i16_3 == 32764
+    int_smallest = int() - (1 << 15)
+    assert int_smallest + i16_3 == -32765
+
+    int_too_big = int() + (1 << 15)
+    int_too_small = int() - (1 << 15) - 1
+    with assertRaises(OverflowError):
+        assert i16_3 & int_too_big
+    with assertRaises(OverflowError):
+        assert int_too_small & i16_3
+
+def test_coerce_to_and_from_int() -> None:
+    for shift in range(0, 16):
+        for sign in 1, -1:
+            for delta in range(-5, 5):
+                n = sign * (1 << shift) + delta
+                if -(1 << 15) <= n < (1 << 15):
+                    x: i16 = n
+                    m: int = x
+                    assert m == n
+
+def test_explicit_conversion_to_i16() -> None:
+    x = i16(5)
+    assert x == 5
+    y = int() - 113
+    x = i16(y)
+    assert x == -113
+    n64: i64 = 1733
+    x = i16(n64)
+    assert x == 1733
+    n32: i32 = -1733
+    x = i16(n32)
+    assert x == -1733
+    z = i16(x)
+    assert z == -1733
+
+def test_explicit_conversion_overflow() -> None:
+    max_i16 = int() + 2**15 - 1
+    x = i16(max_i16)
+    assert x == 2**15 - 1
+    assert int(x) == max_i16
+
+    min_i16 = int() - 2**15
+    y = i16(min_i16)
+    assert y == -2**15
+    assert int(y) == min_i16
+
+    too_big = int() + 2**15
+    with assertRaises(OverflowError):
+        x = i16(too_big)
+
+    too_small = int() - 2**15 - 1
+    with assertRaises(OverflowError):
+        x = i16(too_small)
+
+def test_i16_from_large_small_literal() -> None:
+    x = i16(2**15 - 1)
+    assert x == 2**15 - 1
+    x = i16(-2**15)
+    assert x == -2**15
+
+def test_i16_truncate_from_i64() -> None:
+    large = i64(2**32 + 65536 + 157 + int())
+    x = i16(large)
+    assert x == 157
+    small = i64(-2**32 - 65536 - 157 + int())
+    x = i16(small)
+    assert x == -157
+    large2 = i64(2**15 + int())
+    x = i16(large2)
+    assert x == -2**15
+    small2 = i64(-2**15 - 1 - int())
+    x = i16(small2)
+    assert x == 2**15 - 1
+
+def test_i16_truncate_from_i32() -> None:
+    large = i32(2**16 + 2**30 + 5 + int())
+    assert i16(large) == 5
+    small = i32(-2**16 - 2**30 - 1 + int())
+    assert i16(small) == -1
+
+def from_float(x: float) -> i16:
+    return i16(x)
+
+def test_explicit_conversion_from_float() -> None:
+    assert from_float(0.0) == 0
+    assert from_float(1.456) == 1
+    assert from_float(-1234.567) == -1234
+    assert from_float(2**15 - 1) == 2**15 - 1
+    assert from_float(-2**15) == -2**15
+    # The error message could be better, but this is acceptable
+    with assertRaises(OverflowError, "int too large to convert to i16"):
+        assert from_float(float(2**15))
+    with assertRaises(OverflowError, "int too large to convert to i16"):
+        # One ulp below the lowest valid i64 value
+        from_float(float(-2**15 - 1))
+
+def test_tuple_i16() -> None:
+    a: i16 = 1
+    b: i16 = 2
+    t = (a, b)
+    a, b = t
+    assert a == 1
+    assert b == 2
+    x: Any = t
+    tt: Tuple[i16, i16] = x
+    assert tt == (1, 2)

@@ -1486,10 +1486,11 @@ def _fetch_remote(remote, dirname=None, n_retries=3, delay=1):
                 raise e
 
             # Warn the user and retry after a delay
-            warnings.warn(f"Retrying download from {remote.url}... {n_retries} attempts left.")
+            warnings.warn(
+                f"Retrying download from {remote.url}... {n_retries} attempts left."
+            )
             time.sleep(delay)
             n_retries -= 1
 
     # Raise an error if the file could not be downloaded after multiple attempts
     raise ConnectionError(f"Failed to download {remote.url} after multiple attempts.")
-

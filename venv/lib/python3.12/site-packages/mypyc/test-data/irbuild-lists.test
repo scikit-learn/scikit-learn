@@ -1,0 +1,513 @@
+[case testListGet]
+from typing import List
+def f(x: List[int]) -> int:
+    return x[0]
+[out]
+def f(x):
+    x :: list
+    r0 :: object
+    r1 :: int
+L0:
+    r0 = CPyList_GetItemShort(x, 0)
+    r1 = unbox(int, r0)
+    return r1
+
+[case testListOfListGet]
+from typing import List
+def f(x: List[List[int]]) -> List[int]:
+    return x[0]
+[out]
+def f(x):
+    x :: list
+    r0 :: object
+    r1 :: list
+L0:
+    r0 = CPyList_GetItemShort(x, 0)
+    r1 = cast(list, r0)
+    return r1
+
+[case testListOfListGet2]
+from typing import List
+def f(x: List[List[int]]) -> int:
+    return x[0][1]
+[out]
+def f(x):
+    x :: list
+    r0 :: object
+    r1 :: list
+    r2 :: object
+    r3 :: int
+L0:
+    r0 = CPyList_GetItemShortBorrow(x, 0)
+    r1 = borrow cast(list, r0)
+    r2 = CPyList_GetItemShort(r1, 2)
+    r3 = unbox(int, r2)
+    keep_alive x, r0
+    return r3
+
+[case testListSet]
+from typing import List
+def f(x: List[int]) -> None:
+    x[0] = 1
+[out]
+def f(x):
+    x :: list
+    r0 :: object
+    r1 :: bit
+L0:
+    r0 = object 1
+    r1 = CPyList_SetItem(x, 0, r0)
+    return 1
+
+[case testNewListEmpty]
+from typing import List
+def f() -> None:
+    x = []  # type: List[int]
+[out]
+def f():
+    r0, x :: list
+L0:
+    r0 = PyList_New(0)
+    x = r0
+    return 1
+
+[case testNewListEmptyViaFunc]
+from typing import List
+def f() -> None:
+    x: List[int] = list()
+
+[out]
+def f():
+    r0, x :: list
+L0:
+    r0 = PyList_New(0)
+    x = r0
+    return 1
+
+[case testNewListEmptyViaAlias]
+from typing import List
+
+ListAlias = list
+
+def f() -> None:
+    x: List[int] = ListAlias()
+
+[out]
+def f():
+    r0, x :: list
+L0:
+    r0 = PyList_New(0)
+    x = r0
+    return 1
+
+[case testNewListTwoItems]
+from typing import List
+def f() -> None:
+    x: List[int] = [1, 2]
+[out]
+def f():
+    r0 :: list
+    r1, r2 :: object
+    r3 :: ptr
+    x :: list
+L0:
+    r0 = PyList_New(2)
+    r1 = object 1
+    r2 = object 2
+    r3 = list_items r0
+    buf_init_item r3, 0, r1
+    buf_init_item r3, 1, r2
+    keep_alive r0
+    x = r0
+    return 1
+
+[case testNewListTenItems]
+from typing import List
+def f() -> None:
+    x: List[str] = ['a', 'b', 'c', 'd', 'e',
+                    'f', 'g', 'h', 'i', 'j']
+[out]
+def f():
+    r0, r1, r2, r3, r4, r5, r6, r7, r8, r9 :: str
+    r10, x :: list
+L0:
+    r0 = 'a'
+    r1 = 'b'
+    r2 = 'c'
+    r3 = 'd'
+    r4 = 'e'
+    r5 = 'f'
+    r6 = 'g'
+    r7 = 'h'
+    r8 = 'i'
+    r9 = 'j'
+    r10 = CPyList_Build(10, r0, r1, r2, r3, r4, r5, r6, r7, r8, r9)
+    x = r10
+    return 1
+
+[case testListMultiply]
+from typing import List
+def f(a: List[int]) -> None:
+    b = a * 2
+    b = 3 * [4]
+[out]
+def f(a):
+    a, r0, b, r1 :: list
+    r2 :: object
+    r3 :: ptr
+    r4 :: list
+L0:
+    r0 = CPySequence_Multiply(a, 4)
+    b = r0
+    r1 = PyList_New(1)
+    r2 = object 4
+    r3 = list_items r1
+    buf_init_item r3, 0, r2
+    keep_alive r1
+    r4 = CPySequence_RMultiply(6, r1)
+    b = r4
+    return 1
+
+[case testListLen]
+from typing import List
+def f(a: List[int]) -> int:
+    return len(a)
+[out]
+def f(a):
+    a :: list
+    r0 :: native_int
+    r1 :: short_int
+L0:
+    r0 = var_object_size a
+    r1 = r0 << 1
+    return r1
+
+[case testListAppend]
+from typing import List
+def f(a: List[int], x: int) -> None:
+    a.append(x)
+[out]
+def f(a, x):
+    a :: list
+    x :: int
+    r0 :: object
+    r1 :: i32
+    r2 :: bit
+L0:
+    r0 = box(int, x)
+    r1 = PyList_Append(a, r0)
+    r2 = r1 >= 0 :: signed
+    return 1
+
+[case testIndexLvalue]
+from typing import List
+def increment(l: List[int]) -> List[int]:
+    for i in range(len(l)):
+        l[i] += 1
+    return l
+[out]
+def increment(l):
+    l :: list
+    r0 :: native_int
+    r1, r2 :: short_int
+    i :: int
+    r3 :: bit
+    r4, r5, r6 :: object
+    r7 :: bit
+    r8 :: short_int
+L0:
+    r0 = var_object_size l
+    r1 = r0 << 1
+    r2 = 0
+    i = r2
+L1:
+    r3 = int_lt r2, r1
+    if r3 goto L2 else goto L4 :: bool
+L2:
+    r4 = CPyList_GetItem(l, i)
+    r5 = object 1
+    r6 = PyNumber_InPlaceAdd(r4, r5)
+    r7 = CPyList_SetItem(l, i, r6)
+L3:
+    r8 = r2 + 2
+    r2 = r8
+    i = r8
+    goto L1
+L4:
+    return l
+
+[case testListDisplay]
+from typing import List
+def f(x: List[int], y: List[int]) -> List[int]:
+    return [1, 2, *x, *y, 3]
+[out]
+def f(x, y):
+    x, y, r0 :: list
+    r1, r2 :: object
+    r3 :: ptr
+    r4, r5, r6 :: object
+    r7 :: i32
+    r8 :: bit
+L0:
+    r0 = PyList_New(2)
+    r1 = object 1
+    r2 = object 2
+    r3 = list_items r0
+    buf_init_item r3, 0, r1
+    buf_init_item r3, 1, r2
+    keep_alive r0
+    r4 = CPyList_Extend(r0, x)
+    r5 = CPyList_Extend(r0, y)
+    r6 = object 3
+    r7 = PyList_Append(r0, r6)
+    r8 = r7 >= 0 :: signed
+    return r0
+
+[case testListIn]
+from typing import List
+def f(x: List[int], y: int) -> bool:
+    return y in x
+[out]
+def f(x, y):
+    x :: list
+    y :: int
+    r0 :: object
+    r1 :: i32
+    r2 :: bit
+    r3 :: bool
+L0:
+    r0 = box(int, y)
+    r1 = PySequence_Contains(x, r0)
+    r2 = r1 >= 0 :: signed
+    r3 = truncate r1: i32 to builtins.bool
+    return r3
+
+[case testListInsert]
+from typing import List
+def f(x: List[int], y: int) -> None:
+    x.insert(0, y)
+[out]
+def f(x, y):
+    x :: list
+    y :: int
+    r0 :: object
+    r1 :: i32
+    r2 :: bit
+L0:
+    r0 = box(int, y)
+    r1 = CPyList_Insert(x, 0, r0)
+    r2 = r1 >= 0 :: signed
+    return 1
+
+[case testListBuiltFromGenerator]
+from typing import List
+def f(source: List[int]) -> None:
+    a = list(x + 1 for x in source)
+    b = [x + 1 for x in source]
+[out]
+def f(source):
+    source :: list
+    r0 :: native_int
+    r1 :: list
+    r2 :: short_int
+    r3 :: native_int
+    r4 :: short_int
+    r5 :: bit
+    r6 :: object
+    r7, x, r8 :: int
+    r9 :: object
+    r10 :: bit
+    r11 :: short_int
+    a :: list
+    r12 :: native_int
+    r13 :: list
+    r14 :: short_int
+    r15 :: native_int
+    r16 :: short_int
+    r17 :: bit
+    r18 :: object
+    r19, x_2, r20 :: int
+    r21 :: object
+    r22 :: bit
+    r23 :: short_int
+    b :: list
+L0:
+    r0 = var_object_size source
+    r1 = PyList_New(r0)
+    r2 = 0
+L1:
+    r3 = var_object_size source
+    r4 = r3 << 1
+    r5 = int_lt r2, r4
+    if r5 goto L2 else goto L4 :: bool
+L2:
+    r6 = CPyList_GetItemUnsafe(source, r2)
+    r7 = unbox(int, r6)
+    x = r7
+    r8 = CPyTagged_Add(x, 2)
+    r9 = box(int, r8)
+    r10 = CPyList_SetItemUnsafe(r1, r2, r9)
+L3:
+    r11 = r2 + 2
+    r2 = r11
+    goto L1
+L4:
+    a = r1
+    r12 = var_object_size source
+    r13 = PyList_New(r12)
+    r14 = 0
+L5:
+    r15 = var_object_size source
+    r16 = r15 << 1
+    r17 = int_lt r14, r16
+    if r17 goto L6 else goto L8 :: bool
+L6:
+    r18 = CPyList_GetItemUnsafe(source, r14)
+    r19 = unbox(int, r18)
+    x_2 = r19
+    r20 = CPyTagged_Add(x_2, 2)
+    r21 = box(int, r20)
+    r22 = CPyList_SetItemUnsafe(r13, r14, r21)
+L7:
+    r23 = r14 + 2
+    r14 = r23
+    goto L5
+L8:
+    b = r13
+    return 1
+
+[case testGeneratorNext]
+from typing import List, Optional
+
+def test(x: List[int]) -> None:
+    res = next((i for i in x), None)
+[out]
+def test(x):
+    x :: list
+    r0 :: short_int
+    r1 :: native_int
+    r2 :: short_int
+    r3 :: bit
+    r4 :: object
+    r5, i :: int
+    r6 :: object
+    r7 :: union[int, None]
+    r8 :: short_int
+    r9 :: object
+    res :: union[int, None]
+L0:
+    r0 = 0
+L1:
+    r1 = var_object_size x
+    r2 = r1 << 1
+    r3 = int_lt r0, r2
+    if r3 goto L2 else goto L4 :: bool
+L2:
+    r4 = CPyList_GetItemUnsafe(x, r0)
+    r5 = unbox(int, r4)
+    i = r5
+    r6 = box(int, i)
+    r7 = r6
+    goto L5
+L3:
+    r8 = r0 + 2
+    r0 = r8
+    goto L1
+L4:
+    r9 = box(None, 1)
+    r7 = r9
+L5:
+    res = r7
+    return 1
+
+[case testSimplifyListUnion]
+from typing import List, Union, Optional
+
+def narrow(a: Union[List[str], List[bytes], int]) -> int:
+    if isinstance(a, list):
+        return len(a)
+    return a
+def loop(a: Union[List[str], List[bytes]]) -> None:
+    for x in a:
+         pass
+def nested_union(a: Union[List[str], List[Optional[str]]]) -> None:
+    for x in a:
+        pass
+[out]
+def narrow(a):
+    a :: union[list, int]
+    r0 :: object
+    r1 :: i32
+    r2 :: bit
+    r3 :: bool
+    r4 :: list
+    r5 :: native_int
+    r6 :: short_int
+    r7 :: int
+L0:
+    r0 = load_address PyList_Type
+    r1 = PyObject_IsInstance(a, r0)
+    r2 = r1 >= 0 :: signed
+    r3 = truncate r1: i32 to builtins.bool
+    if r3 goto L1 else goto L2 :: bool
+L1:
+    r4 = borrow cast(list, a)
+    r5 = var_object_size r4
+    r6 = r5 << 1
+    keep_alive a
+    return r6
+L2:
+    r7 = unbox(int, a)
+    return r7
+def loop(a):
+    a :: list
+    r0 :: short_int
+    r1 :: native_int
+    r2 :: short_int
+    r3 :: bit
+    r4 :: object
+    r5, x :: union[str, bytes]
+    r6 :: short_int
+L0:
+    r0 = 0
+L1:
+    r1 = var_object_size a
+    r2 = r1 << 1
+    r3 = int_lt r0, r2
+    if r3 goto L2 else goto L4 :: bool
+L2:
+    r4 = CPyList_GetItemUnsafe(a, r0)
+    r5 = cast(union[str, bytes], r4)
+    x = r5
+L3:
+    r6 = r0 + 2
+    r0 = r6
+    goto L1
+L4:
+    return 1
+def nested_union(a):
+    a :: list
+    r0 :: short_int
+    r1 :: native_int
+    r2 :: short_int
+    r3 :: bit
+    r4 :: object
+    r5, x :: union[str, None]
+    r6 :: short_int
+L0:
+    r0 = 0
+L1:
+    r1 = var_object_size a
+    r2 = r1 << 1
+    r3 = int_lt r0, r2
+    if r3 goto L2 else goto L4 :: bool
+L2:
+    r4 = CPyList_GetItemUnsafe(a, r0)
+    r5 = cast(union[str, None], r4)
+    x = r5
+L3:
+    r6 = r0 + 2
+    r0 = r6
+    goto L1
+L4:
+    return 1

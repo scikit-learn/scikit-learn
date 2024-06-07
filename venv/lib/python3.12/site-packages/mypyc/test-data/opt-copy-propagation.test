@@ -1,0 +1,400 @@
+-- Test cases for copy propagation optimization.  This also tests IR transforms in general,
+-- as copy propagation was the first IR transform that was implemented.
+
+[case testCopyPropagationSimple]
+def g() -> int:
+    return 1
+
+def f() -> int:
+    y = g()
+    return y
+[out]
+def g():
+L0:
+    return 2
+def f():
+    r0 :: int
+L0:
+    r0 = g()
+    return r0
+
+[case testCopyPropagationChain]
+def f(x: int) -> int:
+    y = x
+    z = y
+    return z
+[out]
+def f(x):
+    x :: int
+L0:
+    return x
+
+[case testCopyPropagationChainPartial]
+def f(x: int) -> int:
+    y = x
+    z = y
+    x = 2
+    return z
+[out]
+def f(x):
+    x, y :: int
+L0:
+    y = x
+    x = 4
+    return y
+
+[case testCopyPropagationChainBad]
+def f(x: int) -> int:
+    y = x
+    z = y
+    y = 2
+    return z
+[out]
+def f(x):
+    x, y, z :: int
+L0:
+    y = x
+    z = y
+    y = 4
+    return z
+
+[case testCopyPropagationMutatedSource1]
+def f(x: int) -> int:
+    y = x
+    x = 1
+    return y
+[out]
+def f(x):
+    x, y :: int
+L0:
+    y = x
+    x = 2
+    return y
+
+[case testCopyPropagationMutatedSource2]
+def f() -> int:
+    z = 1
+    y = z
+    z = 2
+    return y
+[out]
+def f():
+    z, y :: int
+L0:
+    z = 2
+    y = z
+    z = 4
+    return y
+
+[case testCopyPropagationTooComplex]
+def f(b: bool, x: int) -> int:
+    if b:
+        y = x
+        return y
+    else:
+        y = 1
+        return y
+[out]
+def f(b, x):
+    b :: bool
+    x, y :: int
+L0:
+    if b goto L1 else goto L2 :: bool
+L1:
+    y = x
+    return y
+L2:
+    y = 2
+    return y
+
+[case testCopyPropagationArg]
+def f(x: int) -> int:
+    x = 2
+    return x
+[out]
+def f(x):
+    x :: int
+L0:
+    x = 4
+    return x
+
+[case testCopyPropagationPartiallyDefined1]
+def f(b: bool) -> int:
+    if b:
+        x = 1
+    y = x
+    return y
+[out]
+def f(b):
+    b :: bool
+    r0, x :: int
+    r1 :: bool
+    y :: int
+L0:
+    r0 = <error> :: int
+    x = r0
+    if b goto L1 else goto L2 :: bool
+L1:
+    x = 2
+L2:
+    if is_error(x) goto L3 else goto L4
+L3:
+    r1 = raise UnboundLocalError('local variable "x" referenced before assignment')
+    unreachable
+L4:
+    y = x
+    return y
+
+-- The remaining test cases test basic IRTransform functionality and are not
+-- all needed for testing copy propagation as such.
+
+[case testIRTransformBranch]
+from mypy_extensions import i64
+
+def f(x: bool) -> int:
+    y = x
+    if y:
+        return 1
+    else:
+        return 2
+[out]
+def f(x):
+    x :: bool
+L0:
+    if x goto L1 else goto L2 :: bool
+L1:
+    return 2
+L2:
+    return 4
+
+[case testIRTransformAssignment]
+def f(b: bool, x: int) -> int:
+    y = x
+    if b:
+        return y
+    else:
+        return 1
+[out]
+def f(b, x):
+    b :: bool
+    x :: int
+L0:
+    if b goto L1 else goto L2 :: bool
+L1:
+    return x
+L2:
+    return 2
+
+[case testIRTransformRegisterOps1]
+from __future__ import annotations
+from typing import cast
+
+class C:
+    a: int
+
+    def m(self, x: int) -> None: pass
+
+def get_attr(x: C) -> int:
+    y = x
+    return y.a
+
+def set_attr(x: C) -> None:
+    y = x
+    y.a = 1
+
+def tuple_get(x: tuple[int, int]) -> int:
+    y = x
+    return y[0]
+
+def tuple_set(x: int, xx: int) -> tuple[int, int]:
+    y = x
+    z = xx
+    return y, z
+
+def call(x: int) -> int:
+    y = x
+    return call(y)
+
+def method_call(c: C, x: int) -> None:
+    y = x
+    c.m(y)
+
+def cast_op(x: object) -> str:
+    y = x
+    return cast(str, y)
+
+def box(x: int) -> object:
+    y = x
+    return y
+
+def unbox(x: object) -> int:
+    y = x
+    return cast(int, y)
+
+def call_c(x: list[str]) -> None:
+    y = x
+    y.append("x")
+
+def keep_alive(x: C) -> int:
+    y = x
+    return y.a + 1
+[out]
+def C.m(self, x):
+    self :: __main__.C
+    x :: int
+L0:
+    return 1
+def get_attr(x):
+    x :: __main__.C
+    r0 :: int
+L0:
+    r0 = x.a
+    return r0
+def set_attr(x):
+    x :: __main__.C
+    r0 :: bool
+L0:
+    x.a = 2; r0 = is_error
+    return 1
+def tuple_get(x):
+    x :: tuple[int, int]
+    r0 :: int
+L0:
+    r0 = x[0]
+    return r0
+def tuple_set(x, xx):
+    x, xx :: int
+    r0 :: tuple[int, int]
+L0:
+    r0 = (x, xx)
+    return r0
+def call(x):
+    x, r0 :: int
+L0:
+    r0 = call(x)
+    return r0
+def method_call(c, x):
+    c :: __main__.C
+    x :: int
+    r0 :: None
+L0:
+    r0 = c.m(x)
+    return 1
+def cast_op(x):
+    x :: object
+    r0 :: str
+L0:
+    r0 = cast(str, x)
+    return r0
+def box(x):
+    x :: int
+    r0 :: object
+L0:
+    r0 = box(int, x)
+    return r0
+def unbox(x):
+    x :: object
+    r0 :: int
+L0:
+    r0 = unbox(int, x)
+    return r0
+def call_c(x):
+    x :: list
+    r0 :: str
+    r1 :: i32
+    r2 :: bit
+L0:
+    r0 = 'x'
+    r1 = PyList_Append(x, r0)
+    r2 = r1 >= 0 :: signed
+    return 1
+def keep_alive(x):
+    x :: __main__.C
+    r0, r1 :: int
+L0:
+    r0 = borrow x.a
+    r1 = CPyTagged_Add(r0, 2)
+    keep_alive x
+    return r1
+
+[case testIRTransformRegisterOps2]
+from mypy_extensions import i32, i64
+
+def truncate(x: i64) -> i32:
+    y = x
+    return i32(y)
+
+def extend(x: i32) -> i64:
+    y = x
+    return i64(y)
+
+def int_op(x: i64, xx: i64) -> i64:
+    y = x
+    z = xx
+    return y + z
+
+def comparison_op(x: i64, xx: i64) -> bool:
+    y = x
+    z = xx
+    return y == z
+
+def float_op(x: float, xx: float) -> float:
+    y = x
+    z = xx
+    return y + z
+
+def float_neg(x: float) -> float:
+    y = x
+    return -y
+
+def float_comparison_op(x: float, xx: float) -> bool:
+    y = x
+    z = xx
+    return y == z
+[out]
+def truncate(x):
+    x :: i64
+    r0 :: i32
+L0:
+    r0 = truncate x: i64 to i32
+    return r0
+def extend(x):
+    x :: i32
+    r0 :: i64
+L0:
+    r0 = extend signed x: i32 to i64
+    return r0
+def int_op(x, xx):
+    x, xx, r0 :: i64
+L0:
+    r0 = x + xx
+    return r0
+def comparison_op(x, xx):
+    x, xx :: i64
+    r0 :: bit
+L0:
+    r0 = x == xx
+    return r0
+def float_op(x, xx):
+    x, xx, r0 :: float
+L0:
+    r0 = x + xx
+    return r0
+def float_neg(x):
+    x, r0 :: float
+L0:
+    r0 = -x
+    return r0
+def float_comparison_op(x, xx):
+    x, xx :: float
+    r0 :: bit
+L0:
+    r0 = x == xx
+    return r0
+
+-- Note that transforms of these ops aren't tested here:
+-- * LoadMem
+-- * SetMem
+-- * GetElementPtr
+-- * LoadAddress
+-- * Unborrow

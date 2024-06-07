@@ -1,0 +1,48 @@
+Metadata-Version: 2.1
+Name: mypy
+Version: 1.10.0
+Summary: Optional static typing for Python
+Home-page: https://www.mypy-lang.org/
+Author: Jukka Lehtosalo
+Author-email: jukka.lehtosalo@iki.fi
+License: MIT
+Project-URL: Documentation, https://mypy.readthedocs.io/en/stable/index.html
+Project-URL: Repository, https://github.com/python/mypy
+Project-URL: Changelog, https://github.com/python/mypy/blob/master/CHANGELOG.md
+Project-URL: Issues, https://github.com/python/mypy/issues
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Software Development
+Classifier: Typing :: Typed
+Requires-Python: >=3.8
+License-File: LICENSE
+Requires-Dist: typing-extensions >=4.1.0
+Requires-Dist: mypy-extensions >=1.0.0
+Requires-Dist: tomli >=1.1.0 ; python_version < "3.11"
+Provides-Extra: dmypy
+Requires-Dist: psutil >=4.0 ; extra == 'dmypy'
+Provides-Extra: install-types
+Requires-Dist: pip ; extra == 'install-types'
+Provides-Extra: mypyc
+Requires-Dist: setuptools >=50 ; extra == 'mypyc'
+Provides-Extra: python2
+Provides-Extra: reports
+Requires-Dist: lxml ; extra == 'reports'
+
+Mypy -- Optional Static Typing for Python
+=========================================
+
+Add type annotations to your Python programs, and use mypy to type
+check them.  Mypy is essentially a Python linter on steroids, and it
+can catch many programming errors by analyzing your program, without
+actually having to run it.  Mypy has a powerful type system with
+features such as type inference, gradual typing, generics and union
+types.

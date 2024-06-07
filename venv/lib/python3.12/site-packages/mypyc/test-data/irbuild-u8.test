@@ -1,0 +1,543 @@
+# Test cases for u8 native ints. Focus on things that are different from i64; no need to
+# duplicate all i64 test cases here.
+
+[case testU8BinaryOp]
+from mypy_extensions import u8
+
+def add_op(x: u8, y: u8) -> u8:
+    x = y + x
+    y = x + 5
+    y += x
+    y += 7
+    x = 5 + y
+    return x
+def compare(x: u8, y: u8) -> None:
+    a = x == y
+    b = x == 5
+    c = x < y
+    d = x < 5
+    e = 5 == x
+    f = 5 < x
+[out]
+def add_op(x, y):
+    x, y, r0, r1, r2, r3, r4 :: u8
+L0:
+    r0 = y + x
+    x = r0
+    r1 = x + 5
+    y = r1
+    r2 = y + x
+    y = r2
+    r3 = y + 7
+    y = r3
+    r4 = 5 + y
+    x = r4
+    return x
+def compare(x, y):
+    x, y :: u8
+    r0 :: bit
+    a :: bool
+    r1 :: bit
+    b :: bool
+    r2 :: bit
+    c :: bool
+    r3 :: bit
+    d :: bool
+    r4 :: bit
+    e :: bool
+    r5 :: bit
+    f :: bool
+L0:
+    r0 = x == y
+    a = r0
+    r1 = x == 5
+    b = r1
+    r2 = x < y :: unsigned
+    c = r2
+    r3 = x < 5 :: unsigned
+    d = r3
+    r4 = 5 == x
+    e = r4
+    r5 = 5 < x :: unsigned
+    f = r5
+    return 1
+
+[case testU8UnaryOp]
+from mypy_extensions import u8
+
+def unary(x: u8) -> u8:
+    y = -x
+    x = ~y
+    y = +x
+    return y
+[out]
+def unary(x):
+    x, r0, y, r1 :: u8
+L0:
+    r0 = 0 - x
+    y = r0
+    r1 = y ^ 255
+    x = r1
+    y = x
+    return y
+
+[case testU8DivisionByConstant]
+from mypy_extensions import u8
+
+def div_by_constant(x: u8) -> u8:
+    x = x // 5
+    x //= 17
+    return x
+[out]
+def div_by_constant(x):
+    x, r0, r1 :: u8
+L0:
+    r0 = x / 5
+    x = r0
+    r1 = x / 17
+    x = r1
+    return x
+
+[case testU8ModByConstant]
+from mypy_extensions import u8
+
+def mod_by_constant(x: u8) -> u8:
+    x = x % 5
+    x %= 17
+    return x
+[out]
+def mod_by_constant(x):
+    x, r0, r1 :: u8
+L0:
+    r0 = x % 5
+    x = r0
+    r1 = x % 17
+    x = r1
+    return x
+
+[case testU8DivModByVariable]
+from mypy_extensions import u8
+
+def divmod(x: u8, y: u8) -> u8:
+    a = x // y
+    return a % y
+[out]
+def divmod(x, y):
+    x, y :: u8
+    r0 :: bit
+    r1 :: bool
+    r2, a :: u8
+    r3 :: bit
+    r4 :: bool
+    r5 :: u8
+L0:
+    r0 = y == 0
+    if r0 goto L1 else goto L2 :: bool
+L1:
+    r1 = raise ZeroDivisionError('integer division or modulo by zero')
+    unreachable
+L2:
+    r2 = x / y
+    a = r2
+    r3 = y == 0
+    if r3 goto L3 else goto L4 :: bool
+L3:
+    r4 = raise ZeroDivisionError('integer division or modulo by zero')
+    unreachable
+L4:
+    r5 = a % y
+    return r5
+
+[case testU8BinaryOperationWithOutOfRangeOperand]
+from mypy_extensions import u8
+
+def out_of_range(x: u8) -> None:
+    x + (-1)
+    (-2) + x
+    x * 256
+    -1 < x
+    x > -5
+    x == 1000
+    x + 255  # OK
+    255 + x   # OK
+[out]
+main:4: error: Value -1 is out of range for "u8"
+main:5: error: Value -2 is out of range for "u8"
+main:6: error: Value 256 is out of range for "u8"
+main:7: error: Value -1 is out of range for "u8"
+main:8: error: Value -5 is out of range for "u8"
+main:9: error: Value 1000 is out of range for "u8"
+
+[case testU8DetectMoreOutOfRangeLiterals]
+from mypy_extensions import u8
+
+def out_of_range() -> None:
+    a: u8 = 256
+    b: u8 = -1
+    f(256)
+    # The following are ok
+    c: u8 = 0
+    d: u8 = 255
+    f(0)
+    f(255)
+
+def f(x: u8) -> None: pass
+[out]
+main:4: error: Value 256 is out of range for "u8"
+main:5: error: Value -1 is out of range for "u8"
+main:6: error: Value 256 is out of range for "u8"
+
+[case testU8BoxAndUnbox]
+from typing import Any
+from mypy_extensions import u8
+
+def f(x: Any) -> Any:
+    y: u8 = x
+    return y
+[out]
+def f(x):
+    x :: object
+    r0, y :: u8
+    r1 :: object
+L0:
+    r0 = unbox(u8, x)
+    y = r0
+    r1 = box(u8, y)
+    return r1
+
+[case testU8MixedCompare1]
+from mypy_extensions import u8
+def f(x: int, y: u8) -> bool:
+    return x == y
+[out]
+def f(x, y):
+    x :: int
+    y :: u8
+    r0 :: native_int
+    r1, r2, r3 :: bit
+    r4 :: native_int
+    r5, r6 :: u8
+    r7 :: bit
+L0:
+    r0 = x & 1
+    r1 = r0 == 0
+    if r1 goto L1 else goto L4 :: bool
+L1:
+    r2 = x < 512 :: signed
+    if r2 goto L2 else goto L4 :: bool
+L2:
+    r3 = x >= 0 :: signed
+    if r3 goto L3 else goto L4 :: bool
+L3:
+    r4 = x >> 1
+    r5 = truncate r4: native_int to u8
+    r6 = r5
+    goto L5
+L4:
+    CPyUInt8_Overflow()
+    unreachable
+L5:
+    r7 = r6 == y
+    return r7
+
+[case testU8MixedCompare2]
+from mypy_extensions import u8
+def f(x: u8, y: int) -> bool:
+    return x == y
+[out]
+def f(x, y):
+    x :: u8
+    y :: int
+    r0 :: native_int
+    r1, r2, r3 :: bit
+    r4 :: native_int
+    r5, r6 :: u8
+    r7 :: bit
+L0:
+    r0 = y & 1
+    r1 = r0 == 0
+    if r1 goto L1 else goto L4 :: bool
+L1:
+    r2 = y < 512 :: signed
+    if r2 goto L2 else goto L4 :: bool
+L2:
+    r3 = y >= 0 :: signed
+    if r3 goto L3 else goto L4 :: bool
+L3:
+    r4 = y >> 1
+    r5 = truncate r4: native_int to u8
+    r6 = r5
+    goto L5
+L4:
+    CPyUInt8_Overflow()
+    unreachable
+L5:
+    r7 = x == r6
+    return r7
+
+[case testU8ConvertToInt]
+from mypy_extensions import u8
+
+def u8_to_int(a: u8) -> int:
+    return a
+[out]
+def u8_to_int(a):
+    a :: u8
+    r0 :: native_int
+    r1 :: int
+L0:
+    r0 = extend a: u8 to native_int
+    r1 = r0 << 1
+    return r1
+
+[case testU8OperatorAssignmentMixed]
+from mypy_extensions import u8
+
+def f(a: u8) -> None:
+    x = 0
+    x += a
+[out]
+def f(a):
+    a :: u8
+    x :: int
+    r0 :: native_int
+    r1, r2, r3 :: bit
+    r4 :: native_int
+    r5, r6, r7 :: u8
+    r8 :: native_int
+    r9 :: int
+L0:
+    x = 0
+    r0 = x & 1
+    r1 = r0 == 0
+    if r1 goto L1 else goto L4 :: bool
+L1:
+    r2 = x < 512 :: signed
+    if r2 goto L2 else goto L4 :: bool
+L2:
+    r3 = x >= 0 :: signed
+    if r3 goto L3 else goto L4 :: bool
+L3:
+    r4 = x >> 1
+    r5 = truncate r4: native_int to u8
+    r6 = r5
+    goto L5
+L4:
+    CPyUInt8_Overflow()
+    unreachable
+L5:
+    r7 = r6 + a
+    r8 = extend r7: u8 to native_int
+    r9 = r8 << 1
+    x = r9
+    return 1
+
+[case testU8InitializeFromLiteral]
+from mypy_extensions import u8, i64
+
+def f() -> None:
+    x: u8 = 0
+    y: u8 = 255
+    z: u8 = 5 + 7
+[out]
+def f():
+    x, y, z :: u8
+L0:
+    x = 0
+    y = 255
+    z = 12
+    return 1
+
+[case testU8ExplicitConversionFromNativeInt]
+from mypy_extensions import i64, i32, i16, u8
+
+def from_u8(x: u8) -> u8:
+    return u8(x)
+
+def from_i16(x: i16) -> u8:
+    return u8(x)
+
+def from_i32(x: i32) -> u8:
+    return u8(x)
+
+def from_i64(x: i64) -> u8:
+    return u8(x)
+[out]
+def from_u8(x):
+    x :: u8
+L0:
+    return x
+def from_i16(x):
+    x :: i16
+    r0 :: u8
+L0:
+    r0 = truncate x: i16 to u8
+    return r0
+def from_i32(x):
+    x :: i32
+    r0 :: u8
+L0:
+    r0 = truncate x: i32 to u8
+    return r0
+def from_i64(x):
+    x :: i64
+    r0 :: u8
+L0:
+    r0 = truncate x: i64 to u8
+    return r0
+
+[case testU8ExplicitConversionToNativeInt]
+from mypy_extensions import i64, i32, i16, u8
+
+def to_i16(x: u8) -> i16:
+    return i16(x)
+
+def to_i32(x: u8) -> i32:
+    return i32(x)
+
+def to_i64(x: u8) -> i64:
+    return i64(x)
+[out]
+def to_i16(x):
+    x :: u8
+    r0 :: i16
+L0:
+    r0 = extend x: u8 to i16
+    return r0
+def to_i32(x):
+    x :: u8
+    r0 :: i32
+L0:
+    r0 = extend x: u8 to i32
+    return r0
+def to_i64(x):
+    x :: u8
+    r0 :: i64
+L0:
+    r0 = extend x: u8 to i64
+    return r0
+
+[case testU8ExplicitConversionFromInt]
+from mypy_extensions import u8
+
+def f(x: int) -> u8:
+    return u8(x)
+[out]
+def f(x):
+    x :: int
+    r0 :: native_int
+    r1, r2, r3 :: bit
+    r4 :: native_int
+    r5, r6 :: u8
+L0:
+    r0 = x & 1
+    r1 = r0 == 0
+    if r1 goto L1 else goto L4 :: bool
+L1:
+    r2 = x < 512 :: signed
+    if r2 goto L2 else goto L4 :: bool
+L2:
+    r3 = x >= 0 :: signed
+    if r3 goto L3 else goto L4 :: bool
+L3:
+    r4 = x >> 1
+    r5 = truncate r4: native_int to u8
+    r6 = r5
+    goto L5
+L4:
+    CPyUInt8_Overflow()
+    unreachable
+L5:
+    return r6
+
+[case testU8ExplicitConversionFromLiteral]
+from mypy_extensions import u8
+
+def f() -> None:
+    x = u8(0)
+    y = u8(11)
+    z = u8(-3)  # Truncate
+    zz = u8(258)  # Truncate
+    a = u8(255)
+[out]
+def f():
+    x, y, z, zz, a :: u8
+L0:
+    x = 0
+    y = 11
+    z = 253
+    zz = 2
+    a = 255
+    return 1
+
+[case testU8ExplicitConversionFromVariousTypes]
+from mypy_extensions import u8
+
+def bool_to_u8(b: bool) -> u8:
+    return u8(b)
+
+def str_to_u8(s: str) -> u8:
+    return u8(s)
+
+class C:
+    def __int__(self) -> u8:
+        return 5
+
+def instance_to_u8(c: C) -> u8:
+    return u8(c)
+
+def float_to_u8(x: float) -> u8:
+    return u8(x)
+[out]
+def bool_to_u8(b):
+    b :: bool
+    r0 :: u8
+L0:
+    r0 = extend b: builtins.bool to u8
+    return r0
+def str_to_u8(s):
+    s :: str
+    r0 :: object
+    r1 :: u8
+L0:
+    r0 = CPyLong_FromStr(s)
+    r1 = unbox(u8, r0)
+    return r1
+def C.__int__(self):
+    self :: __main__.C
+L0:
+    return 5
+def instance_to_u8(c):
+    c :: __main__.C
+    r0 :: u8
+L0:
+    r0 = c.__int__()
+    return r0
+def float_to_u8(x):
+    x :: float
+    r0 :: int
+    r1 :: native_int
+    r2, r3, r4 :: bit
+    r5 :: native_int
+    r6, r7 :: u8
+L0:
+    r0 = CPyTagged_FromFloat(x)
+    r1 = r0 & 1
+    r2 = r1 == 0
+    if r2 goto L1 else goto L4 :: bool
+L1:
+    r3 = r0 < 512 :: signed
+    if r3 goto L2 else goto L4 :: bool
+L2:
+    r4 = r0 >= 0 :: signed
+    if r4 goto L3 else goto L4 :: bool
+L3:
+    r5 = r0 >> 1
+    r6 = truncate r5: native_int to u8
+    r7 = r6
+    goto L5
+L4:
+    CPyUInt8_Overflow()
+    unreachable
+L5:
+    return r7
