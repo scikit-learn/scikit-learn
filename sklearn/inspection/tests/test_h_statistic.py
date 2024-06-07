@@ -2,7 +2,9 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 
-from sklearn.base import RegressorMixin, clone
+import sklearn
+from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin, clone
+from sklearn.cluster import KMeans
 from sklearn.datasets import make_classification, make_regression
 from sklearn.ensemble import (
     HistGradientBoostingRegressor,
@@ -21,6 +23,8 @@ class Deterministic(RegressorMixin):
         self.is_fitted_ = True
 
     def fit(self, *args, **kwargs):
+        # Simulate that something happens during fit()
+        self.coef_ = 0
         return self
 
     def predict(self, X):
@@ -216,3 +220,73 @@ def test_h_statistic_does_not_change_pandas_input(n_max, sample_weight):
     _ = h_statistic(model, X_df, sample_weight=w, n_max=n_max, random_state=1)
 
     pd.testing.assert_frame_equal(X_df, X_df_orig)
+
+
+# Slightly modified from test_partial_dependence.py
+@pytest.mark.parametrize(
+    "Estimator",
+    (
+        sklearn.tree.DecisionTreeClassifier,
+        sklearn.ensemble.RandomForestClassifier,
+    ),
+)
+def test_multiclass_multioutput(Estimator):
+    # Make sure error is raised for multiclass-multioutput classifiers
+
+    # make multiclass-multioutput dataset
+    X, y = make_classification(n_classes=3, n_clusters_per_class=1, random_state=0)
+    y = np.array([y, y]).T
+
+    est = Estimator()
+    est.fit(X, y)
+
+    with pytest.raises(
+        ValueError, match="Multiclass-multioutput estimators are not supported"
+    ):
+        h_statistic(est, X, [0, 1])
+
+
+class RegressorWithoutPredict(RegressorMixin, BaseEstimator):
+    def fit(self, X, y):
+        # Simulate that something happens during fit()
+        self.coef_ = 0
+        return self
+
+    def predict_proba(self, X):
+        return np.zeros(X.shape[0])
+
+
+class ClassifierWithoutPredictProba(ClassifierMixin, BaseEstimator):
+    def fit(self, X, y):
+        # Simulate that we have some classes
+        self.classes_ = [0, 1]
+        return self
+
+    def predict(self, X):
+        return np.zeros(X.shape[0])
+
+
+@pytest.mark.parametrize(
+    "estimator, err_msg",
+    [
+        (
+            RegressorWithoutPredict(),
+            "The regressor has no predict method",
+        ),
+        (
+            ClassifierWithoutPredictProba(),
+            "The classifier has no predict_proba method",
+        ),
+        (
+            KMeans(n_clusters=2, random_state=0, n_init="auto"),
+            "'estimator' must be a regressor or classifier",
+        ),
+    ],
+)
+def test_h_statistic_error(estimator, err_msg):
+    y = np.array([0, 0, 1, 1])
+    X = np.zeros((len(y), 2))
+    estimator.fit(X, y)
+
+    with pytest.raises(ValueError, match=err_msg):
+        h_statistic(estimator, X)

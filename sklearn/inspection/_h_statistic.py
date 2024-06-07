@@ -236,16 +236,16 @@ def h_statistic(
     if is_regressor(estimator):
         pred_fun = getattr(estimator, "predict", None)
         if pred_fun is None:
-            raise ValueError("The regressor has no predict() method.")
+            raise ValueError("The regressor has no predict method")
     elif is_classifier(estimator):
         if isinstance(estimator.classes_[0], np.ndarray):
             raise ValueError("Multiclass-multioutput estimators are not supported")
         reduce_binary = len(estimator.classes_) == 2
         pred_fun = getattr(estimator, "predict_proba", None)
         if pred_fun is None:
-            raise ValueError("The classifier has no predict_proba() method.")
+            raise ValueError("The classifier has no predict_proba method")
     else:
-        raise ValueError("'estimator' must be a regressor or classifier.")
+        raise ValueError("'estimator' must be a regressor or classifier")
 
     # Use check_array only on lists and other non-array-likes / sparse. Do not
     # convert DataFrame into a NumPy array.
