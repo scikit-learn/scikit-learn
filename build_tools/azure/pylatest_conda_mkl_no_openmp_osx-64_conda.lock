@@ -80,7 +80,7 @@ https://repo.anaconda.com/pkgs/main/osx-64/scipy-1.11.4-py312h81688c2_0.conda#7d
 https://repo.anaconda.com/pkgs/main/osx-64/pandas-2.2.1-py312he282a81_0.conda#021b70a1e40efb75b89eb8ebdb347132
 https://repo.anaconda.com/pkgs/main/osx-64/pyamg-4.2.3-py312h44cbcf4_0.conda#3bdc7be74087b3a5a83c520a74e1e8eb
 # pip cython @ https://files.pythonhosted.org/packages/d5/6d/06c08d75adb98cdf72af18801e193d22580cc86ca553610f430f18ea26b3/Cython-3.0.10-cp312-cp312-macosx_10_9_x86_64.whl#sha256=8f2864ab5fcd27a346f0b50f901ebeb8f60b25a60a575ccfd982e7f3e9674914
-# pip meson @ https://files.pythonhosted.org/packages/33/75/b1a37fa7b2dbca8c0dbb04d5cdd7e2720c8ef6febe41b4a74866350e041c/meson-1.4.0-py3-none-any.whl#sha256=476a458d51fcfa322a6bdc64da5138997c542d08e6b2e49b9fa68c46fd7c4475
+# pip meson @ https://files.pythonhosted.org/packages/44/b2/d4433391a7c5e94a39b50ca7295a8ceba736e7c72c455752a60122f52453/meson-1.4.1-py3-none-any.whl#sha256=d5acc3abae2dad3c70ddcbd10acac92b78b144d34d43f40f5b8ac31dfd8a826a
 # pip threadpoolctl @ https://files.pythonhosted.org/packages/4b/2c/ffbf7a134b9ab11a67b0cf0726453cedd9c5043a4fe7a35d1cefa9a1bcfb/threadpoolctl-3.5.0-py3-none-any.whl#sha256=56c1e26c150397e58c4926da8eeee87533b1e32bef131bd4bf6a2f45f3185467
 # pip pyproject-metadata @ https://files.pythonhosted.org/packages/aa/5f/bb5970d3d04173b46c9037109f7f05fc8904ff5be073ee49bb6ff00301bc/pyproject_metadata-0.8.0-py3-none-any.whl#sha256=ad858d448e1d3a1fb408ac5bac9ea7743e7a8bbb472f2693aaa334d2db42f526
 # pip meson-python @ https://files.pythonhosted.org/packages/91/c0/104cb6244c83fe6bc3886f144cc433db0c0c78efac5dc00e409a5a08c87d/meson_python-0.16.0-py3-none-any.whl#sha256=842dc9f5dc29e55fc769ff1b6fe328412fe6c870220fc321060a1d2d395e69e8

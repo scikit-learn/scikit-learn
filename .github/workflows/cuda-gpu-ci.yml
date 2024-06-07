@@ -18,14 +18,11 @@ jobs:
         with:
           python-version: '3.12'
       - name: Checkout main repository
-        uses: actions/checkout@v2
-      - name: Checkout a particular Pull Request
-        if: inputs.pr_id
-        env:
-          PR_ID: ${{ inputs.pr_id }}
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh pr checkout ${{ env.PR_ID }}
+        uses: actions/checkout@v4
+      - run: |
+          git fetch origin +refs/pull/${{ inputs.pr_id }}/head:pr-${{ inputs.pr_id }}
+          git checkout pr-${{ inputs.pr_id }}
+          echo "Checked out commit $(git rev-parse HEAD)"
       - name: Cache conda environment
         id: cache-conda
         uses: actions/cache@v3
