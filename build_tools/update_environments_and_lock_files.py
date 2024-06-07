@@ -256,7 +256,8 @@ build_metadata_list = [
         "channel": "conda-forge",
         "conda_dependencies": remove_from(
             common_dependencies, ["pandas", "rich", "pyamg"]
-        ) + [
+        )
+        + [
             "wheel",
             "pip",
         ],
