@@ -1297,4 +1297,6 @@ def entropy(labels):
     pi_sum = xp.sum(pi)
     # log(a / b) should be calculated as log(a) - log(b) for
     # possible loss of precision
-    return -xp.sum((pi / pi_sum) * (xp.log(pi) - log(pi_sum)))
+    # Always convert the result as a Python scalar (on CPU) instead of a device
+    # specific scalar array.
+    return float(-xp.sum((pi / pi_sum) * (xp.log(pi) - log(pi_sum))))
