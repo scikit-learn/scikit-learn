@@ -729,6 +729,7 @@ def cohen_kappa_score(
         else:
             w_mat = (w_mat - w_mat.T) ** 2
 
+    # Handle `zero_division` for an upcoming invalid divide:
     if np.sum(w_mat * expected) == 0:
         if zero_division == "warn":
             msg = (
