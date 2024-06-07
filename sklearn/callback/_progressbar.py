@@ -5,16 +5,23 @@ from multiprocessing import Manager
 from threading import Thread
 
 from ..utils._optional_dependencies import check_rich_support
-from . import BaseCallback
 
 
-class ProgressBar(BaseCallback):
-    """Callback that displays progress bars for each iterative steps of an estimator."""
+class ProgressBar:
+    """Callback that displays progress bars for each iterative steps of an estimator.
 
-    auto_propagate = True
+    Parameters
+    ----------
+    max_estimator_depth : int, default=1
+        The maximum number of nested levels of estimators to display progress bars for.
+        By default, only the progress bars of the outermost estimator are displayed.
+        If set to None, all levels are displayed.
+    """
 
-    def __init__(self):
+    def __init__(self, max_estimator_depth=1):
         check_rich_support("Progressbar")
+
+        self.max_estimator_depth = max_estimator_depth
 
     def on_fit_begin(self, estimator, *, data):
         self._queue = Manager().Queue()

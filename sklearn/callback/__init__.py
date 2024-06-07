@@ -6,14 +6,17 @@ callbacks for scikit-learn estimators.
 # License: BSD 3 clause
 # Authors: the scikit-learn developers
 
-from ._base import BaseCallback
+from ._base import AutoPropagatedProtocol, CallbackProtocol
 from ._callback_context import CallbackContext
+from ._mixin import CallbackSupportMixin
 from ._progressbar import ProgressBar
 from ._task_tree import TaskNode
 
 __all__ = [
-    "BaseCallback",
+    "AutoPropagatedProtocol",
+    "CallbackProtocol",
     "CallbackContext",
+    "CallbackSupportMixin",
     "TaskNode",
     "ProgressBar",
 ]

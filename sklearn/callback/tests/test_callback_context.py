@@ -21,10 +21,10 @@ from sklearn.callback.tests._utils import (
     ],
 )
 def test_set_callbacks(callbacks):
-    """Sanity check for the `_set_callbacks` method."""
+    """Sanity check for the `set_callbacks` method."""
     estimator = Estimator()
 
-    set_callbacks_return = estimator._set_callbacks(callbacks)
+    set_callbacks_return = estimator.set_callbacks(callbacks)
     assert hasattr(estimator, "_skl_callbacks")
 
     expected_callbacks = [callbacks] if not isinstance(callbacks, list) else callbacks
@@ -35,34 +35,37 @@ def test_set_callbacks(callbacks):
 
 @pytest.mark.parametrize("callbacks", [None, NotValidCallback()])
 def test_set_callbacks_error(callbacks):
-    """Check the error message when not passing a valid callback to `_set_callbacks`."""
+    """Check the error message when not passing a valid callback to `set_callbacks`."""
     estimator = Estimator()
 
-    with pytest.raises(TypeError, match="callbacks must be subclasses of BaseCallback"):
-        estimator._set_callbacks(callbacks)
+    with pytest.raises(
+        TypeError, match="callbacks must follow the CallbackProtocol protocol."
+    ):
+        estimator.set_callbacks(callbacks)
 
 
 def test_init_callback_context():
-    """Sanity check for the `_init_callback_context` method."""
+    """Sanity check for the `init_callback_context` method."""
     estimator = Estimator()
-    callback_ctx = estimator._init_callback_context()
+    callback_ctx = estimator.init_callback_context()
 
-    assert hasattr(estimator, "_callback_fit_context")
-    assert hasattr(callback_ctx, "callbacks")
+    assert hasattr(estimator, "_callback_fit_ctx")
+    assert hasattr(callback_ctx, "_callbacks")
 
 
 def test_propagate_callbacks():
-    """Sanity check for the `_propagate_callbacks` method."""
+    """Sanity check for the `propagate_callbacks` method."""
     not_propagated_callback = TestingCallback()
     propagated_callback = TestingAutoPropagatedCallback()
 
     estimator = Estimator()
     metaestimator = MetaEstimator(estimator)
-    metaestimator._set_callbacks([not_propagated_callback, propagated_callback])
+    metaestimator.set_callbacks([not_propagated_callback, propagated_callback])
 
-    metaestimator._propagate_callbacks(estimator, parent_node=None)
+    callback_ctx = metaestimator.init_callback_context()
+    callback_ctx.propagate_callbacks(estimator)
 
-    assert hasattr(estimator, "_parent_node")
+    assert hasattr(estimator, "_parent_callback_ctx")
     assert not_propagated_callback not in estimator._skl_callbacks
     assert propagated_callback in estimator._skl_callbacks
 
@@ -71,7 +74,11 @@ def test_propagate_callback_no_callback():
     """Check that no callback is propagated if there's no callback."""
     estimator = Estimator()
     metaestimator = MetaEstimator(estimator)
-    metaestimator._propagate_callbacks(estimator, parent_node=None)
+
+    callback_ctx = metaestimator.init_callback_context()
+    assert len(callback_ctx._callbacks) == 0
+
+    callback_ctx.propagate_callbacks(estimator)
 
     assert not hasattr(metaestimator, "_skl_callbacks")
     assert not hasattr(estimator, "_skl_callbacks")
@@ -82,35 +89,11 @@ def test_auto_propagated_callbacks():
     sub-estimator of a meta-estimator.
     """
     estimator = Estimator()
-    estimator._set_callbacks(TestingAutoPropagatedCallback())
-
+    estimator.set_callbacks(TestingAutoPropagatedCallback())
     meta_estimator = MetaEstimator(estimator=estimator)
 
     match = (
-        r"sub-estimators .*of a meta-estimator .*can't have auto-propagated callbacks"
+        r"sub-estimator .*of a meta-estimator .*can't have auto-propagated callbacks"
     )
     with pytest.raises(TypeError, match=match):
         meta_estimator.fit(X=None, y=None)
-
-
-def test_eval_callbacks_on_fit_begin():
-    """Check that `_eval_callbacks_on_fit_begin` creates the computation tree."""
-    estimator = Estimator()._set_callbacks(TestingCallback())
-    assert not hasattr(estimator, "_computation_tree")
-
-    tree_structure = [
-        {"stage": "fit", "n_children": 10},
-        {"stage": "iter", "n_children": None},
-    ]
-    estimator._eval_callbacks_on_fit_begin(tree_structure=tree_structure, data={})
-    assert hasattr(estimator, "_computation_tree")
-
-
-def test_no_callback_early_stop():
-    """Check that `eval_callbacks_on_fit_iter_end` doesn't trigger early stopping
-    when there's no callback.
-    """
-    estimator = Estimator()
-    estimator.fit(X=None, y=None)
-
-    assert estimator.n_iter_ == estimator.max_iter

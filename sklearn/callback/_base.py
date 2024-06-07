@@ -1,13 +1,13 @@
 # License: BSD 3 clause
 # Authors: the scikit-learn developers
 
-from abc import ABC, abstractmethod
+from typing import Protocol, runtime_checkable
 
 
-class BaseCallback(ABC):
-    """Abstract class for the callbacks"""
+@runtime_checkable
+class CallbackProtocol(Protocol):
+    """Protocol for the callbacks"""
 
-    @abstractmethod
     def on_fit_begin(self, estimator, *, data):
         """Method called at the beginning of the fit method of the estimator.
 
@@ -22,7 +22,6 @@ class BaseCallback(ABC):
             and "sample_weight_val".
         """
 
-    @abstractmethod
     def on_fit_iter_end(self, estimator, task_node, **kwargs):
         """Method called at the end of each task of the estimator.
 
@@ -69,7 +68,6 @@ class BaseCallback(ABC):
             Whether or not to stop the current level of iterations at this node.
         """
 
-    @abstractmethod
     def on_fit_end(self, estimator, task_node):
         """Method called at the end of the fit method of the estimator.
 
@@ -84,14 +82,16 @@ class BaseCallback(ABC):
             if the estimator is a sub-estimator of a meta-estimator.
         """
 
-    @property
-    def auto_propagate(self):
-        """Whether or not this callback should be propagated to sub-estimators.
 
-        An auto-propagated callback (from a meta-estimator to its sub-estimators) must
-        be set on the meta-estimator. Its `on_fit_begin` and `on_fit_end` methods will
-        only be called at the beginning and end of the fit method of the meta-estimator,
-        while its `on_fit_iter_end` method will be called at each computation node of
-        the meta-estimator and its sub-estimators.
+@runtime_checkable
+class AutoPropagatedProtocol(Protocol):
+    """Protocol for the auto-propagated callbacks"""
+
+    @property
+    def max_estimator_depth(self):
+        """The maximum number of nested estimators at which the callback should be
+        propagated.
+
+        If set to None, the callback is propagated to sub-estimators at all nesting
+        levels.
         """
-        return False

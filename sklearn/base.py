@@ -15,7 +15,6 @@ import numpy as np
 
 from . import __version__
 from ._config import config_context, get_config
-from .callback import BaseCallback, CallbackContext
 from .exceptions import InconsistentVersionWarning
 from .utils._estimator_html_repr import _HTMLDocumentationLinkMixin, estimator_html_repr
 from .utils._metadata_requests import _MetadataRequester, _routing_enabled
@@ -673,57 +672,6 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
             self.get_params(deep=False),
             caller_name=self.__class__.__name__,
         )
-
-    def _set_callbacks(self, callbacks):
-        """Set callbacks for the estimator.
-
-        Parameters
-        ----------
-        callbacks : callback or list of callbacks
-            the callbacks to set.
-
-        Returns
-        -------
-        self : estimator instance
-            The estimator instance itself.
-        """
-        if not isinstance(callbacks, list):
-            callbacks = [callbacks]
-
-        if not all(isinstance(callback, BaseCallback) for callback in callbacks):
-            raise TypeError("callbacks must be subclasses of BaseCallback.")
-
-        self._skl_callbacks = callbacks
-
-        return self
-
-    def _init_callback_context(self, task_name="fit"):
-        """Initialize the callback context for the estimator.
-
-        Parameters
-        ----------
-        task_name : str, default='fit'
-            The name of the root task.
-
-        Returns
-        -------
-        callback_fit_ctx : CallbackContext
-            The callback context for the estimator.
-        """
-        # We don't initialize the callback context during _set_callbacks but in fit
-        # because in the future we might want to have callbacks in predict/transform
-        # which would require their own context.
-
-        self._callback_fit_ctx = CallbackContext(
-            callbacks=getattr(self, "_skl_callbacks", []),
-            estimator_name=self.__class__.__name__,
-            task_name=task_name,
-            parent_estimator_task_node=getattr(
-                self, "_parent_estimator_task_node", None
-            ),
-        )
-
-        return self._callback_fit_ctx
 
     @property
     def _repr_html_(self):
@@ -1570,7 +1518,8 @@ def _fit_context(*, prefer_skip_nested_validation):
                 try:
                     return fit_method(estimator, *args, **kwargs)
                 finally:
-                    estimator._callback_fit_ctx.eval_on_fit_end(estimator=estimator)
+                    if hasattr(estimator, "_callback_fit_ctx"):
+                        estimator._callback_fit_ctx.eval_on_fit_end(estimator=estimator)
 
         return wrapper
 

@@ -4,11 +4,11 @@
 import time
 
 from sklearn.base import BaseEstimator, _fit_context, clone
-from sklearn.callback import BaseCallback
+from sklearn.callback import CallbackSupportMixin
 from sklearn.utils.parallel import Parallel, delayed
 
 
-class TestingCallback(BaseCallback):
+class TestingCallback:
     def on_fit_begin(self, estimator, *, data):
         pass
 
@@ -20,23 +20,20 @@ class TestingCallback(BaseCallback):
 
 
 class TestingAutoPropagatedCallback(TestingCallback):
-    auto_propagate = True
+    max_estimator_depth = None
 
 
 class NotValidCallback:
-    """Unvalid callback since it does not inherit from `BaseCallback`."""
+    """Unvalid callback since it's missing a method from the protocol.'"""
 
     def on_fit_begin(self, estimator, *, data):
-        pass  # pragma: no cover
-
-    def on_fit_end(self):
         pass  # pragma: no cover
 
     def on_fit_iter_end(self, estimator, node, **kwargs):
         pass  # pragma: no cover
 
 
-class Estimator(BaseEstimator):
+class Estimator(CallbackSupportMixin, BaseEstimator):
     _parameter_constraints: dict = {}
 
     def __init__(self, max_iter=20, computation_intensity=0.001):
@@ -45,7 +42,7 @@ class Estimator(BaseEstimator):
 
     @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X=None, y=None):
-        callback_ctx = self._init_callback_context().eval_on_fit_begin(
+        callback_ctx = self.init_callback_context().eval_on_fit_begin(
             estimator=self, data={"X_train": X, "y_train": y}
         )
 
@@ -65,7 +62,7 @@ class Estimator(BaseEstimator):
         return self
 
 
-class WhileEstimator(BaseEstimator):
+class WhileEstimator(CallbackSupportMixin, BaseEstimator):
     _parameter_constraints: dict = {}
 
     def __init__(self, computation_intensity=0.001):
@@ -73,7 +70,7 @@ class WhileEstimator(BaseEstimator):
 
     @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X=None, y=None):
-        callback_ctx = self._init_callback_context().eval_on_fit_begin(
+        callback_ctx = self.init_callback_context().eval_on_fit_begin(
             estimator=self, data={"X_train": X, "y_train": y}
         )
 
@@ -97,7 +94,7 @@ class WhileEstimator(BaseEstimator):
         return self
 
 
-class MetaEstimator(BaseEstimator):
+class MetaEstimator(CallbackSupportMixin, BaseEstimator):
     _parameter_constraints: dict = {}
 
     def __init__(
@@ -111,7 +108,7 @@ class MetaEstimator(BaseEstimator):
 
     @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X=None, y=None):
-        callback_ctx = self._init_callback_context().eval_on_fit_begin(
+        callback_ctx = self.init_callback_context().eval_on_fit_begin(
             estimator=self, data={"X_train": X, "y_train": y}
         )
 
