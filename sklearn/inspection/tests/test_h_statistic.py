@@ -222,6 +222,41 @@ def test_h_statistic_does_not_change_pandas_input(n_max, sample_weight):
     pd.testing.assert_frame_equal(X_df, X_df_orig)
 
 
+def test_h_statistic_works_with_mixed_type_pandas_data():
+    pd = pytest.importorskip("pandas")
+
+    from sklearn.compose import ColumnTransformer
+    from sklearn.pipeline import Pipeline
+    from sklearn.preprocessing import OrdinalEncoder
+
+    y = np.array([0, 1, 2, 3])
+    X = np.array([y, y]).T
+    X_mixed = pd.DataFrame({"x1": y, "x2": list("abcd")})
+
+    # Model on homogeneous numpy array
+    model = RandomForestRegressor(random_state=0).fit(X, y)
+
+    # Identical model on mixed-type pandas df
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ("keep", "passthrough", ["x1"]),
+            ("ordinal", OrdinalEncoder(), ["x2"]),
+        ]
+    )
+    model_mixed = Pipeline(
+        steps=[
+            ("prep", preprocessor),
+            ("rf", RandomForestRegressor(random_state=0)),
+        ]
+    )
+    model_mixed.fit(X_mixed, y)
+
+    assert_allclose(
+        h_statistic(model, X).h_squared_pairwise,
+        h_statistic(model_mixed, X_mixed).h_squared_pairwise,
+    )
+
+
 # Slightly modified from test_partial_dependence.py
 @pytest.mark.parametrize(
     "Estimator",
