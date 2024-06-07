@@ -11,12 +11,12 @@ class TaskNode:
         The name of the task this node represents.
 
     task_id : int
-        The index of this node among its siblings. None means this is the root.
-        An identifier for this task that distinguishes it from its siblings.
+        An identifier for this task that distinguishes it from its siblings. Usually
+        the index of this node among its siblings.
 
     max_tasks : int or None
-        The maximum number of its siblings. 0 means it's a leaf.
-        None means the maximum number of siblings is not known in advance.
+        The maximum number of its siblings. None means the maximum number of siblings
+        is not known in advance.
 
     estimator_name : str
         The name of the estimator this task node belongs to.
@@ -38,11 +38,11 @@ class TaskNode:
         means the maximum number of subtasks is not known in advance.
 
     prev_estimator_name : str or None
-        The estimator name of the node this node was merged with. None if was not
+        The estimator name of the node this node was merged with. None if it was not
         merged with another node.
 
     prev_task_name : str
-        The task name of the node this node was merged with. None if was not
+        The task name of the node this node was merged with. None if it was not
         merged with another node.
     """
 
