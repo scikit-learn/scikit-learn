@@ -12,6 +12,6 @@ source "${HOME}/conda/etc/profile.d/conda.sh"
 source build_tools/shared.sh
 conda activate base
 
-# XXX switch once https://github.com/scikit-learn/scikit-learn/pull/29176 is merged
-conda install -c conda-forge "$(get_dep conda-lock min)" -y
-conda-lock install --name sklearn build_tools/github/pylatest_conda_forge_cuda_array-api_linux-64_conda.lock
+CONDA_ENV_NAME=sklearn
+LOCK_FILE=build_tools/github/pylatest_conda_forge_cuda_array-api_linux-64_conda.lock
+create_conda_environment_from_lock_file $CONDA_ENV_NAME $LOCK_FILE

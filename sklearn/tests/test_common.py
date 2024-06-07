@@ -18,6 +18,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from scipy.linalg import LinAlgWarning
 
 import sklearn
 from sklearn.base import BaseEstimator
@@ -163,7 +164,9 @@ def _generate_pipeline():
 @parametrize_with_checks(list(chain(_tested_estimators(), _generate_pipeline())))
 def test_estimators(estimator, check, request):
     # Common tests for estimator instances
-    with ignore_warnings(category=(FutureWarning, ConvergenceWarning, UserWarning)):
+    with ignore_warnings(
+        category=(FutureWarning, ConvergenceWarning, UserWarning, LinAlgWarning)
+    ):
         _set_checking_parameters(estimator)
         check(estimator)
 

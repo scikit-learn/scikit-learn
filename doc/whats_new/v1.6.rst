@@ -32,10 +32,9 @@ See :ref:`array_api` for more details.
 
 **Functions:**
 
-- :func:`sklearn.metrics.mean_tweedie_deviance` now supports Array API compatible
-  inputs.
-  :pr:`28106` by :user:`Thomas Li <lithomas1>`;
 - :func:`sklearn.metrics.mean_absolute_error` :pr:`27736` by :user:`Edoardo Abati <EdAbati>`;
+- :func:`sklearn.metrics.mean_squared_error` :pr:`29142` by :user:`Yaroslav Korobko <Tialo>`;
+- :func:`sklearn.metrics.mean_tweedie_deviance` :pr:`28106` by :user:`Thomas Li <lithomas1>`;
 - :func:`sklearn.metrics.pairwise.cosine_similarity` :pr:`29014` by :user:`Edoardo Abati <EdAbati>`.
 
 
@@ -94,6 +93,21 @@ Changelog
 - |Enhancement| Added a function :func:`base.is_clusterer` which determines
   whether a given estimator is of category clusterer.
   :pr:`28936` by :user:`Christian Veenhuis <ChVeen>`.
+
+:mod:`sklearn.discriminant_analysis`
+....................................
+
+- |Fix| :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`
+  will now cause `LinAlgWarning` in case of collinear variables. These errors
+  can be silenced using the `reg_param` attribute.
+  :pr:`19731` by :user:`Alihan Zihna <azihna>`.
+
+:mod:`sklearn.impute`
+.....................
+
+- |Fix| :class:`impute.KNNImputer` excludes samples with nan distances when
+  computing the mean value for uniform weights.
+  :pr:`29135` by :user:`Xuefeng Xu <xuefeng-xu>`.
 
 :mod:`sklearn.linear_model`
 ...........................
