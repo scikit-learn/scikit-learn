@@ -1283,10 +1283,6 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         LogisticRegression(random_state=0)
         >>> disp = CalibrationDisplay.from_estimator(clf, X_test, y_test)
         >>> plt.show()
-        ...  # adding text after doctest causing errors in pipeline tests.
-
-        For another example of usage, see:
-        :ref:`sphx_glr_auto_examples_calibration_plot_compare_calibration.py`.
         """
         y_prob, pos_label, name = cls._validate_and_get_response_values(
             estimator,
