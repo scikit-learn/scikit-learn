@@ -154,10 +154,16 @@ def _check_targets(y_true, y_pred):
         "y_pred": ["array-like", "sparse matrix"],
         "normalize": ["boolean"],
         "sample_weight": ["array-like", None],
+        "zero_division": [
+            Options(Real, {0, 1}),
+            StrOptions({"warn"}),
+        ],
     },
     prefer_skip_nested_validation=True,
 )
-def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
+def accuracy_score(
+    y_true, y_pred, *, normalize=True, sample_weight=None, zero_division="warn"
+):
     """Accuracy classification score.
 
     In multilabel classification, this function computes subset accuracy:
@@ -180,6 +186,12 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
+
+    zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
+        Sets the value to return when there is a zero division.
+
+        Notes:
+        - If set to "warn", this acts like 0, but a warning is also raised.
 
     Returns
     -------
@@ -217,6 +229,16 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     >>> accuracy_score(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
     0.5
     """
+
+    # Check y_true and y_pred is empty
+    len_y_true = len(y_true)
+    len_y_pred = len(y_pred)
+
+    if len_y_true == 0 and len_y_pred == 0:
+        score = _check_zero_division(zero_division)
+        if zero_division == "warn":
+            _warn_prf(None, "Predcited", "Accuracy is", 0)
+        return score
 
     # Compute accuracy for each possible representation
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
