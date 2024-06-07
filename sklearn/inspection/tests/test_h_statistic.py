@@ -5,6 +5,7 @@ from numpy.testing import assert_allclose
 import sklearn
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin, clone
 from sklearn.cluster import KMeans
+from sklearn.compose import ColumnTransformer
 from sklearn.datasets import make_classification, make_regression
 from sklearn.ensemble import (
     HistGradientBoostingRegressor,
@@ -13,6 +14,8 @@ from sklearn.ensemble import (
 )
 from sklearn.inspection import h_statistic
 from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OrdinalEncoder
 
 
 class Deterministic(RegressorMixin):
@@ -223,11 +226,8 @@ def test_h_statistic_does_not_change_pandas_input(n_max, sample_weight):
 
 
 def test_h_statistic_works_with_mixed_type_pandas_data():
+    """Mixed-type input should work even when np.unique() fails."""
     pd = pytest.importorskip("pandas")
-
-    from sklearn.compose import ColumnTransformer
-    from sklearn.pipeline import Pipeline
-    from sklearn.preprocessing import OrdinalEncoder
 
     y = np.array([0, 1, 2, 3])
     X = np.array([y, y]).T
@@ -257,7 +257,6 @@ def test_h_statistic_works_with_mixed_type_pandas_data():
     )
 
 
-# Slightly modified from test_partial_dependence.py
 @pytest.mark.parametrize(
     "Estimator",
     (
@@ -266,7 +265,10 @@ def test_h_statistic_works_with_mixed_type_pandas_data():
     ),
 )
 def test_multiclass_multioutput(Estimator):
-    # Make sure error is raised for multiclass-multioutput classifiers
+    """Make sure error is raised for multiclass-multioutput classifiers
+
+    Slightly modified from test_partial_dependence.py
+    """
 
     # make multiclass-multioutput dataset
     X, y = make_classification(n_classes=3, n_clusters_per_class=1, random_state=0)
