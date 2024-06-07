@@ -265,15 +265,13 @@ def test_h_statistic_works_with_mixed_type_pandas_data():
         sklearn.ensemble.RandomForestClassifier,
     ),
 )
-def test_multiclass_multioutput(Estimator):
+def test_h_statistic_raises_for_multioutput(Estimator):
     # Make sure error is raised for multiclass-multioutput classifiers
 
     # make multiclass-multioutput dataset
     X, y = make_classification(n_classes=3, n_clusters_per_class=1, random_state=0)
     y = np.array([y, y]).T
-
-    est = Estimator()
-    est.fit(X, y)
+    est = Estimator().fit(X, y)
 
     with pytest.raises(
         ValueError, match="Multiclass-multioutput estimators are not supported"
@@ -288,7 +286,7 @@ class RegressorWithoutPredict(RegressorMixin, BaseEstimator):
         return self
 
     def predict_proba(self, X):
-        return np.zeros(X.shape[0])
+        return np.zeros(X.shape[0])  # pragma: no cover
 
 
 class ClassifierWithoutPredictProba(ClassifierMixin, BaseEstimator):
@@ -298,7 +296,7 @@ class ClassifierWithoutPredictProba(ClassifierMixin, BaseEstimator):
         return self
 
     def predict(self, X):
-        return np.zeros(X.shape[0])
+        return np.zeros(X.shape[0])  # pragma: no cover
 
 
 @pytest.mark.parametrize(
