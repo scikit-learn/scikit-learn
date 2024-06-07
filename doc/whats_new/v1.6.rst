@@ -32,18 +32,25 @@ See :ref:`array_api` for more details.
 
 **Functions:**
 
-- :func:`sklearn.metrics.mean_tweedie_deviance` now supports Array API compatible
-  inputs.
-  :pr:`28106` by :user:`Thomas Li <lithomas1>`;
+- :func:`sklearn.metrics.d2_tweedie_score` :pr:`29207` by :user:`Emily Chen <EmilyXinyi>`;
 - :func:`sklearn.metrics.mean_absolute_error` :pr:`27736` by :user:`Edoardo Abati <EdAbati>`;
+- :func:`sklearn.metrics.mean_squared_error` :pr:`29142` by :user:`Yaroslav Korobko <Tialo>`;
+- :func:`sklearn.metrics.mean_tweedie_deviance` :pr:`28106` by :user:`Thomas Li <lithomas1>`;
+- :func:`sklearn.metrics.pairwise.additive_chi2_kernel` :pr:`29144` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.metrics.pairwise.cosine_similarity` :pr:`29014` by :user:`Edoardo Abati <EdAbati>`;
-- :func:`sklearn.metrics.pairwise.additive_chi2_kernel` :pr:`29144` by :user:`Yaroslav Korobko <Tialo>`.
+- :func:`sklearn.metrics.pairwise.paired_cosine_distances` :pr:`29112` by :user:`Edoardo Abati <EdAbati>`.
 
 
 **Classes:**
 
 - :class:`preprocessing.LabelEncoder` now supports Array API compatible inputs.
   :pr:`27381` by :user:`Omar Salman <OmarManzoor>`.
+- :class:`model_selection.GridSearchCV`,
+  :class:`model_selection.RandomizedSearchCV`,
+  :class:`model_selection.HalvingGridSearchCV` and
+  :class:`model_selection.HalvingRandomSearchCV` now support Array API
+  compatible inputs when their base estimators do. :pr:`27096` by :user:`Tim
+  Head <betatim>` and :user:`Olivier Grisel <ogrisel>`.
 
 Metadata Routing
 ----------------
@@ -60,6 +67,14 @@ more details.
   :class:`ensemble.StackingRegressor` now support metadata routing and pass
   ``**fit_params`` to the underlying estimators via their `fit` methods.
   :pr:`28701` by :user:`Stefanie Senger <StefanieSenger>`.
+
+Dropping official support for PyPy
+----------------------------------
+
+Due to limited maintainer resources and small number of users, official PyPy
+support has been dropped. Some parts of scikit-learn may still work but PyPy is
+not tested anymore in the scikit-learn Continuous Integration.
+:pr:`29128` by :user:`Loïc Estève <lesteve>`.
 
 Changelog
 ---------
@@ -81,6 +96,21 @@ Changelog
 - |Enhancement| Added a function :func:`base.is_clusterer` which determines
   whether a given estimator is of category clusterer.
   :pr:`28936` by :user:`Christian Veenhuis <ChVeen>`.
+
+:mod:`sklearn.discriminant_analysis`
+....................................
+
+- |Fix| :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`
+  will now cause `LinAlgWarning` in case of collinear variables. These errors
+  can be silenced using the `reg_param` attribute.
+  :pr:`19731` by :user:`Alihan Zihna <azihna>`.
+
+:mod:`sklearn.impute`
+.....................
+
+- |Fix| :class:`impute.KNNImputer` excludes samples with nan distances when
+  computing the mean value for uniform weights.
+  :pr:`29135` by :user:`Xuefeng Xu <xuefeng-xu>`.
 
 :mod:`sklearn.linear_model`
 ...........................

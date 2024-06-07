@@ -483,7 +483,7 @@ def mean_squared_error(
 
     Returns
     -------
-    loss : float or ndarray of floats
+    loss : float or array of floats
         A non-negative floating point value (the best value is 0.0), or an
         array of floating point values, one for each individual target.
 
@@ -519,11 +519,14 @@ def mean_squared_error(
                 y_true, y_pred, sample_weight=sample_weight, multioutput=multioutput
             )
 
+    xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
+    dtype = _find_matching_floating_dtype(y_true, y_pred, xp=xp)
+
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput
+        y_true, y_pred, multioutput, dtype=dtype, xp=xp
     )
     check_consistent_length(y_true, y_pred, sample_weight)
-    output_errors = np.average((y_true - y_pred) ** 2, axis=0, weights=sample_weight)
+    output_errors = _average((y_true - y_pred) ** 2, axis=0, weights=sample_weight)
 
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
@@ -532,7 +535,10 @@ def mean_squared_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    # See comment in mean_absolute_error
+    mean_squared_error = _average(output_errors, weights=multioutput)
+    assert mean_squared_error.shape == ()
+    return float(mean_squared_error)
 
 
 @validate_params(
@@ -1592,8 +1598,10 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     >>> d2_tweedie_score(y_true, y_true, power=2)
     1.0
     """
+    xp, _ = get_namespace(y_true, y_pred)
+
     y_type, y_true, y_pred, _ = _check_reg_targets(
-        y_true, y_pred, None, dtype=[np.float64, np.float32]
+        y_true, y_pred, None, dtype=[xp.float64, xp.float32], xp=xp
     )
     if y_type == "continuous-multioutput":
         raise ValueError("Multioutput not supported in d2_tweedie_score")
@@ -1603,12 +1611,12 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
         warnings.warn(msg, UndefinedMetricWarning)
         return float("nan")
 
-    y_true, y_pred = np.squeeze(y_true), np.squeeze(y_pred)
+    y_true, y_pred = xp.squeeze(y_true, axis=1), xp.squeeze(y_pred, axis=1)
     numerator = mean_tweedie_deviance(
         y_true, y_pred, sample_weight=sample_weight, power=power
     )
 
-    y_avg = np.average(y_true, weights=sample_weight)
+    y_avg = _average(y_true, weights=sample_weight, xp=xp)
     denominator = _mean_tweedie_deviance(
         y_true, y_avg, sample_weight=sample_weight, power=power
     )
