@@ -22,6 +22,7 @@ from sklearn.datasets import (
     make_classification,
     make_multilabel_classification,
 )
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.exceptions import FitFailedWarning
@@ -72,6 +73,7 @@ from sklearn.tests.metadata_routing_common import (
     check_recorded_metadata,
 )
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
 from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 from sklearn.utils._testing import (
     MinimalClassifier,
@@ -81,7 +83,7 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
-    ignore_warnings,
+    ignore_warnings, _array_api_for_tests,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS
 from sklearn.utils.validation import _num_samples
@@ -2686,3 +2688,28 @@ def test_cv_results_dtype_issue_29074():
     grid_search.fit(X, y)
     for param in param_grid:
         assert grid_search.cv_results_[f"param_{param}"].dtype == object
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
+def test_array_api_search_cv_classifier(SearchCV, array_namespace, device, dtype):
+    xp = _array_api_for_tests(array_namespace, device)
+
+    X = np.arange(100).reshape((10, 10))
+    X_np = X.astype(dtype)
+    X_xp = xp.asarray(X_np, device=device)
+
+    # y should always be an integer, no matter what `dtype` is
+    y_np = np.array([0] * 5 + [1] * 5)
+    y_xp = xp.asarray(y_np, device=device)
+
+    with config_context(array_api_dispatch=True):
+        searcher = SearchCV(
+            LinearDiscriminantAnalysis(),
+            {"tol": [1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7]},
+            cv=2,
+        )
+        searcher.fit(X_xp, y_xp)
+        searcher.score(X_xp, y_xp)
