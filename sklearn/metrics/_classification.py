@@ -3356,67 +3356,42 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
     return 1 - (numerator / denominator)
 
 import numpy as np
-from numpy.testing import assert_almost_equal
 from sklearn.utils.validation import check_consistent_length
 
 def tau_score(y_true, y_pred, *, normalize=True):
-    """
-    Compute the Tau score as a measure of classification accuracy based on a geometric approach.
-    This function considers distances from the model's performance to a perfect and a random-guess
-    model's performance in a normalized performance space. It works for both binary and multi-class
-    classification.
-
-    Parameters:
-    ----------
-    y_true : array-like of shape (n_samples,) or sparse matrix
-        True labels.
-    y_pred : array-like of shape (n_samples,) or sparse matrix
-        Predicted labels.
-    normalize : bool, default=True
-        If True, normalizes the Tau score to the range [0, 1].
-
-    Returns:
-    -------
-    score : float
-        The Tau score, where higher values represent better performance.
-    """
     check_consistent_length(y_true, y_pred)
+    
     if not isinstance(normalize, bool):
         raise ValueError("normalize must be a boolean.")
-
     if len(y_true) == 0 or len(y_pred) == 0:
         raise ValueError("Input arrays must not be empty.")
-
     if any(isinstance(x, str) for x in np.concatenate((y_true, y_pred))):
         raise ValueError("Input arrays must contain numeric values only.")
     
     cm = confusion_matrix(y_true, y_pred)
     n_classes = cm.shape[0]
 
-    if normalize:
-        # Normalize the confusion matrix to get probabilities
-        cm_normalized = cm / cm.sum(axis=1, keepdims=True)
-    else:
-        cm_normalized = cm
+    # Handle the potential division by zero in normalization
+    sums = np.sum(cm, axis=1)
+    with np.errstate(divide='ignore', invalid='ignore'):
+        model_point = np.diag(cm) / sums
+        model_point[sums == 0] = 0  # Handle rows in CM where the sum is zero
 
-    # Extract model points: Diagonal elements (true positives normalized or not)
-    model_point = np.diag(cm_normalized)
-
-    # Define perfect point (all true positives are correctly identified)
     perfect_point = np.ones(n_classes)
-
-    # Define random point (equal probability to guess any class)
     random_point = np.full(n_classes, 1 / n_classes)
 
-    # Compute distances from the model point to perfect and random points
+    # Compute distances
     dist_from_perfect = np.linalg.norm(model_point - perfect_point)
     dist_from_random = np.linalg.norm(model_point - random_point)
 
-    # Calculate the normalized Tau score
+    # Check for the case where there are no true positives across all classes
     if normalize:
-        dist_upper_bound = np.sqrt(n_classes)  # Calculate the upper bound for normalization
-        tau = 1 - dist_from_perfect / dist_upper_bound
+        if n_classes > 0:
+            max_dist = np.sqrt(n_classes)
+            tau = 1 - dist_from_perfect / max_dist
+        else:
+            tau = 0.0
     else:
-        tau = dist_from_perfect  # Return the direct distance as score
+        tau = dist_from_perfect
 
     return tau
