@@ -1944,7 +1944,7 @@ array_api_metric_checkers = {
     ],
     d2_tweedie_score: [
         check_array_api_regression_metric,
-    ]
+    ],
 }
 
 
