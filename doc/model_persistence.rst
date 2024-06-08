@@ -23,23 +23,27 @@ Model persistence
        * Contents can be partly validated without loading
      - * Not as fast as `pickle` based formats
        * Supports less types than `pickle` based formats
+       * Requires the same environment as the training environment
    * - :mod:`pickle`
      - * Native to Python
        * Can serialize most Python objects
        * Efficient memory usage with `protocol=5`
      - * Loading can execute arbitrary code
        * No memory mapping
+       * Requires the same environment as the training environment
    * - :mod:`joblib`
      - * Efficient memory usage with memory mapping
        * Easy shortcuts for compression and decompression
      - * Pickle based format
        * Loading can execute arbitrary code
+       * Requires the same environment as the training environment
    * - `cloudpickle`_
      - * Serialize custom Python code
        * Comparable loading efficiency as :mod:`pickle`
      - * Pickle based format
        * Loading can execute arbitrary code
        * No forward compatibility guarantees
+       * Requires the same environment as the training environment
 
 After training a scikit-learn model, it is desirable to have a way to persist
 the model for future use without having to retrain. Based on your use-case,
