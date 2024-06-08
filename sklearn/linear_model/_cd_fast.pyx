@@ -749,7 +749,7 @@ def enet_coordinate_descent_multi_task(
     bint random=0
 ):
     """Cython version of the coordinate descent algorithm
-        for Elastic-Net mult-task regression
+        for Elastic-Net multi-task regression
 
         We minimize
 
@@ -947,7 +947,7 @@ def enet_coordinate_descent_multi_task(
                     + 0.5 * l2_reg * (1 + const ** 2) * (w_norm ** 2)
                 )
 
-                if gap < tol:
+                if gap <= tol:
                     # return if we reached desired tolerance
                     break
         else:

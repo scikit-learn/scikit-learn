@@ -23,7 +23,6 @@ import sklearn
 
 from ..externals._packaging.version import parse as parse_version
 
-_IS_PYPY = platform.python_implementation() == "PyPy"
 _IS_32BIT = 8 * struct.calcsize("P") == 32
 _IS_WASM = platform.machine() in ["wasm32", "wasm64"]
 

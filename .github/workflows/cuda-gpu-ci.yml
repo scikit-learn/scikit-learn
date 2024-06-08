@@ -1,0 +1,44 @@
+name: CUDA GPU
+on:
+  workflow_dispatch:
+    inputs:
+      pr_id:
+        description: Test the contents of this Pull Request
+        required: true
+
+permissions: read-all
+
+jobs:
+  tests:
+    runs-on:
+      group: cuda-gpu-runner-group
+    name: Run Array API unit tests
+    steps:
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      - name: Checkout main repository
+        uses: actions/checkout@v4
+      - run: |
+          git fetch origin +refs/pull/${{ inputs.pr_id }}/head:pr-${{ inputs.pr_id }}
+          git checkout pr-${{ inputs.pr_id }}
+          echo "Checked out commit $(git rev-parse HEAD)"
+      - name: Cache conda environment
+        id: cache-conda
+        uses: actions/cache@v3
+        with:
+          path: ~/conda
+          key: ${{ runner.os }}-build-${{ hashFiles('build_tools/github/create_gpu_environment.sh') }}-${{ hashFiles('build_tools/github/pylatest_conda_forge_cuda_array-api_linux-64_conda.lock') }}
+      - name: Install miniforge
+        if: ${{ steps.cache-conda.outputs.cache-hit != 'true' }}
+        run: bash build_tools/github/create_gpu_environment.sh
+      - name: Install scikit-learn
+        run: |
+          source "${HOME}/conda/etc/profile.d/conda.sh"
+          conda activate sklearn
+          pip install --verbose --no-build-isolation --config-settings editable-verbose=true --editable .
+      - name: Run array API tests
+        run: |
+          source "${HOME}/conda/etc/profile.d/conda.sh"
+          conda activate sklearn
+          pytest -k 'array_api'
