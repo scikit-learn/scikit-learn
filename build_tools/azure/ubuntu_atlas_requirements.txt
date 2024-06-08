@@ -4,7 +4,7 @@
 cython==3.0.10  # min
 joblib==1.2.0  # min
 threadpoolctl==3.1.0  # min
-pytest<8
+pytest
 pytest-xdist
 ninja
 meson-python

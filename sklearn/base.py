@@ -1,4 +1,4 @@
-"""Base classes for all estimators."""
+"""Base classes for all estimators and various utility functions."""
 
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD 3 clause
@@ -1374,12 +1374,16 @@ def is_classifier(estimator):
     Examples
     --------
     >>> from sklearn.base import is_classifier
+    >>> from sklearn.cluster import KMeans
     >>> from sklearn.svm import SVC, SVR
     >>> classifier = SVC()
     >>> regressor = SVR()
+    >>> kmeans = KMeans()
     >>> is_classifier(classifier)
     True
     >>> is_classifier(regressor)
+    False
+    >>> is_classifier(kmeans)
     False
     """
     return getattr(estimator, "_estimator_type", None) == "classifier"
@@ -1401,15 +1405,52 @@ def is_regressor(estimator):
     Examples
     --------
     >>> from sklearn.base import is_regressor
+    >>> from sklearn.cluster import KMeans
     >>> from sklearn.svm import SVC, SVR
     >>> classifier = SVC()
     >>> regressor = SVR()
+    >>> kmeans = KMeans()
     >>> is_regressor(classifier)
     False
     >>> is_regressor(regressor)
     True
+    >>> is_regressor(kmeans)
+    False
     """
     return getattr(estimator, "_estimator_type", None) == "regressor"
+
+
+def is_clusterer(estimator):
+    """Return True if the given estimator is (probably) a clusterer.
+
+    .. versionadded:: 1.6
+
+    Parameters
+    ----------
+    estimator : object
+        Estimator object to test.
+
+    Returns
+    -------
+    out : bool
+        True if estimator is a clusterer and False otherwise.
+
+    Examples
+    --------
+    >>> from sklearn.base import is_clusterer
+    >>> from sklearn.cluster import KMeans
+    >>> from sklearn.svm import SVC, SVR
+    >>> classifier = SVC()
+    >>> regressor = SVR()
+    >>> kmeans = KMeans()
+    >>> is_clusterer(classifier)
+    False
+    >>> is_clusterer(regressor)
+    False
+    >>> is_clusterer(kmeans)
+    True
+    """
+    return getattr(estimator, "_estimator_type", None) == "clusterer"
 
 
 def is_outlier_detector(estimator):
