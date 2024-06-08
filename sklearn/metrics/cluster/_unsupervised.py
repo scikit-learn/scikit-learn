@@ -639,8 +639,8 @@ def dbcv_score(
         ) / max(min_density_sep, density_sparseness[encoding_index])
 
         if verbose:
-            print("Minimum density separation: " + str(min_density_sep))
-            print("Density sparseness: " + str(density_sparseness[encoding_index]))
+            print(f"Minimum density separation: {min_density_sep:.3f}")
+            print(f"Density sparseness: {density_sparseness[encoding_index]:.3f}")
 
         cluster_size = np.sum(labels == encoding_index)
         result += (cluster_size / n_samples) * labels_to_scores[
