@@ -37,7 +37,7 @@ def test_binary_clf_curve_multiclass_error():
     rng = check_random_state(404)
     y_true = rng.randint(0, 3, size=10)
     y_pred = rng.rand(10)
-    msg = "you must pass a `pos_label` to `scoring_kwargs`."
+    msg = "In a multiclass scenario, you must pass "
     with pytest.raises(ValueError, match=msg):
         decision_threshold_curve(y_true, y_pred, accuracy_score)
 
@@ -95,6 +95,19 @@ def test_len_of_threshold_when_passing_int():
     _, thresholds = decision_threshold_curve(y, y_score, accuracy_score, thresholds=13)
 
     assert len(thresholds) == 13
+
+
+@pytest.mark.parametrize(
+    "metric, scoring_kwargs",
+    [
+        (f1_score, None),
+        (f1_score, {}),
+        (fbeta_score, {"beta": 4}),
+    ],
+)
+def test_scoring_kwargs(metric, scoring_kwargs):
+    y_true = np.array([0] * 50 + [1] * 50)
+    decision_threshold_curve(y_true, y_true, metric, scoring_kwargs=scoring_kwargs)
 
 
 def test_passing_the_grid():

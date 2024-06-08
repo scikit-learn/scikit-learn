@@ -38,8 +38,8 @@ def decision_threshold_curve(
     y_score,
     scoring,
     *,
-    thresholds=101,
-    scoring_kwargs={},
+    thresholds=100,
+    scoring_kwargs=None,
 ):
     """Compute the threshold-dependent metric of interest per threshold.
 
@@ -98,6 +98,9 @@ def decision_threshold_curve(
     >>> accuracy_values
     array([0.75, 0.5 , 0.75, 0.5 ])
     """
+    if scoring_kwargs is None:
+        scoring_kwargs = {}
+
     # Check to make sure y_true is valid.
     y_type = type_of_target(y_true, input_name="y_true")
     pos_label = scoring_kwargs.get("pos_label")
