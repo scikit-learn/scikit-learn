@@ -92,7 +92,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     :ref:`sphx_glr_auto_examples_calibration_plot_calibration_curve.py`.
     :ref:`sphx_glr_auto_examples_calibration_plot_calibration_multiclass.py`.
 
-
     Read more in the :ref:`User Guide <calibration>`.
 
     Parameters
@@ -1283,6 +1282,10 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         LogisticRegression(random_state=0)
         >>> disp = CalibrationDisplay.from_estimator(clf, X_test, y_test)
         >>> plt.show()
+        <...>
+
+        For another example of usage, see:
+        :ref:`sphx_glr_auto_examples_calibration_plot_compare_calibration.py`.
         """
         y_prob, pos_label, name = cls._validate_and_get_response_values(
             estimator,
