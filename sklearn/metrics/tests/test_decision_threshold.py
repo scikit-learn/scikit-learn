@@ -5,9 +5,9 @@ import pytest
 
 from sklearn.datasets import make_classification
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import decision_threshold_curve
 from sklearn.metrics import (
     accuracy_score,
+    decision_threshold_curve,
     f1_score,
     fbeta_score,
     precision_score,
@@ -92,9 +92,7 @@ def test_zero_sample_weight_equals_excluding(metric):
 def test_len_of_threshold_when_passing_int():
     y = [0] * 500 + [1] * 500
     y_score = list(range(1000))
-    _, thresholds = decision_threshold_curve(
-        y, y_score, accuracy_score, thresholds=13
-    )
+    _, thresholds = decision_threshold_curve(y, y_score, accuracy_score, thresholds=13)
 
     assert len(thresholds) == 13
 

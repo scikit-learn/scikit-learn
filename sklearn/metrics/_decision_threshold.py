@@ -6,7 +6,7 @@ threshold-dependent metrics when changing the threshold.
 # Authors: ########
 # License: BSD 3 clause
 
-from numbers import Integral, Real
+from numbers import Integral
 
 import numpy as np
 
@@ -104,12 +104,13 @@ def decision_threshold_curve(
     if not (y_type == "binary" or (y_type == "multiclass" and pos_label is not None)):
         if y_type == "multiclass":
             raise ValueError(
-                "In a multiclass scenario, you must pass a `pos_label` to `scoring_kwargs`."
+                "In a multiclass scenario, you must pass a `pos_label` \
+                to `scoring_kwargs`."
             )
         raise ValueError("{0} format is not supported".format(y_type))
 
     sample_weight = scoring_kwargs.get("sample_weight")
-    check_consistent_length( y_true, y_score, sample_weight)
+    check_consistent_length(y_true, y_score, sample_weight)
     y_true = column_or_1d(y_true)
     y_score = column_or_1d(y_score)
     assert_all_finite(y_true)
@@ -124,7 +125,7 @@ def decision_threshold_curve(
         y_true = y_true[nonzero_weight_mask]
         y_score = y_score[nonzero_weight_mask]
         sample_weight = sample_weight[nonzero_weight_mask]
-    
+
     pos_label = _check_pos_label_consistency(pos_label, y_true)
 
     # Make y_true a boolean vector.
@@ -136,10 +137,10 @@ def decision_threshold_curve(
     y_true = y_true[desc_score_indices]
     if sample_weight is not None:
         sample_weight = sample_weight[desc_score_indices]
-    
+
     if "sample_weight" in scoring_kwargs:
         scoring_kwargs["sample_weight"] = sample_weight
-    
+
     # Logic to see if we need to use all possible thresholds (distinct values).
     all_thresholds = isinstance(thresholds, int) and len(set(y_score)) < thresholds
 
@@ -153,9 +154,7 @@ def decision_threshold_curve(
     elif isinstance(thresholds, int):
         # It takes representative score points to calculate the metric
         # with these thresholds.
-        thresholds = np.percentile(
-            list(set(y_score)), np.linspace(0, 100, thresholds)
-        )
+        thresholds = np.percentile(list(set(y_score)), np.linspace(0, 100, thresholds))
     else:
         # If thresholds is an array then run some checks and sort
         # it for consistency.
@@ -167,9 +166,7 @@ def decision_threshold_curve(
     metric_values = []
     for threshold in thresholds:
         preds_threshold = (y_score > threshold).astype(int)
-        metric_values.append(
-            scoring(y_true, preds_threshold, **scoring_kwargs)
-        )
+        metric_values.append(scoring(y_true, preds_threshold, **scoring_kwargs))
     # TODO: should we multithread the metric calculations?
 
     return np.array(metric_values), thresholds
