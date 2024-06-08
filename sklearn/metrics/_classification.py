@@ -231,8 +231,8 @@ def accuracy_score(
     """
 
     # Check y_true and y_pred is empty
-    len_y_true = len(y_true)
-    len_y_pred = len(y_pred)
+    len_y_true = _num_samples(y_true)
+    len_y_pred = _num_samples(y_pred)
 
     if len_y_true == 0 and len_y_pred == 0:
         score = _check_zero_division(zero_division)
