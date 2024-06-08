@@ -4,6 +4,43 @@
 Model persistence
 =================
 
+.. list-table:: Summary of model persistence methods
+   :widths: 25 50 50
+   :header-rows: 1
+
+   * - Persistence method
+     - Pros
+     - Risks / Cons
+   * - :ref:`ONNX <onnx_persistence>`
+     - * Serve models without a Python environment
+       * Serving and training environments independent of one another
+       * Most secure option
+     - * Not all scikit-learn models are supported
+       * Custom estimators are hard to add
+       * Original Python object is lost and cannot be reconstructed
+   * - :ref:`skops_persistence`
+     - * Pickle free and more secure
+       * Contents can be partly validated without loading
+     - * Not as fast as `pickle` based formats
+       * Supports less types than `pickle` based formats
+   * - :mod:`pickle`
+     - * Native to Python
+       * Can serialize most Python objects
+       * Efficient memory usage with `protocol=5`
+     - * Loading can execute arbitrary code
+       * No memory mapping
+   * - :mod:`joblib`
+     - * Efficient memory usage with memory mapping
+       * Easy shortcuts for compression and decompression
+     - * Pickle based format
+       * Loading can execute arbitrary code
+   * - `cloudpickle`_
+     - * Serialize custom Python code
+       * Comparable loading efficiency as :mod:`pickle`
+     - * Pickle based format
+       * Loading can execute arbitrary code
+       * No forward compatibility guarantees
+
 After training a scikit-learn model, it is desirable to have a way to persist
 the model for future use without having to retrain. Based on your use-case,
 there are a few different ways to persist a scikit-learn model, and here we
