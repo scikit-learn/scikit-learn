@@ -212,9 +212,6 @@ Changelog
   in favor of `y_proba`. `y_prob` will be removed in version 1.7.
   :pr:`28092` by :user:`Adam Li <adam2392>`.
 
-- |Feature| :func:`metrics.cluster.dbcv_score`
-  :pr:`28244` by :user:`Luis Goerler <luis261>`.
-
 :mod:`sklearn.model_selection`
 ..............................
 
