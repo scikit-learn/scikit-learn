@@ -1281,8 +1281,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> clf.fit(X_train, y_train)
         LogisticRegression(random_state=0)
         >>> disp = CalibrationDisplay.from_estimator(clf, X_test, y_test)
-        >>> plt.show()
-        <...>
+        >>> plt.show() # doctest: +SKIP
 
         For another example of usage, see:
         :ref:`sphx_glr_auto_examples_calibration_plot_compare_calibration.py`.
