@@ -454,6 +454,8 @@ def test_dbcv_score_basic_input(density_sample):
 def test_dbcv_score_zero_distance():
     dbcv_score([[0, 1] for _ in range(100)], [i % 2 for i in range(100)])
 
+def test_dbcv_score_tiny_cluster():
+    dbcv_score(np.random.rand(5, 2), np.array([-1, 1, 1, 0, 0]))
 
 def test_dbcv_score_verbose(density_sample):
     with patch("builtins.print") as mocked_print:
