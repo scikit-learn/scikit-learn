@@ -3319,7 +3319,7 @@ def check_interaction_of_class_and_sample_weight_excluding_samples(
     # check_interaction_of_class_and_sample_weight_excluding_class.
     rng = np.random.RandomState(42)
     err_msg = (
-        f"For {name}, while using class weight, setting some sample's weight "
+        f"For {name}, while using class weight, setting some samples' weights "
         "to zero is not equivalent to excluding those samples from training."
     )
 
