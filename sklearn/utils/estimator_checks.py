@@ -176,7 +176,7 @@ def _yield_classifier_checks(classifier):
         yield check_estimators_unfitted
     if "class_weight" in classifier.get_params().keys():
         yield check_class_weight_classifiers
-        if has_fit_parameter(classifier, "sample_weight") and not tags["pairwise"]:
+        if has_fit_parameter(classifier, "sample_weight"):
             yield check_interaction_of_class_and_sample_weight_excluding_samples
             if not tags["binary_only"]:
                 yield check_interaction_of_class_and_sample_weight_excluding_class
@@ -3292,19 +3292,30 @@ def check_interaction_of_class_and_sample_weight_excluding_class(name, estimator
 
         # Checking if the output is the same for multiple outputs
         for method in ["predict", "predict_proba", "decision_function", "transform"]:
+            err_msg_complement = (
+                f" The error occurred using the method {method} with n_classes "
+                f"equal to {n_classes}."
+            )
+
             if hasattr(estimator_orig, method):
                 pred_cw = getattr(estimator_cw, method)(X)
 
                 pred_sw = getattr(estimator_sw, method)(X)
-                assert_allclose_dense_sparse(pred_cw, pred_sw, err_msg=err_msg_sw)
+                assert_allclose_dense_sparse(
+                    pred_cw, pred_sw, err_msg=err_msg_sw + err_msg_complement
+                )
 
                 pred_exclude = getattr(estimator_exclude, method)(X)
                 if method in ["predict_proba", "decision_function"]:
-                    pred_cw = pred_cw[:, list(range(1, n_classes))]
+                    # Excluding the first class (class 0)
+                    pred_cw = pred_cw[:, 1:]
                     if method == "decision_function" and n_classes == 3:
+                        # With `n_classes` equal to 3 and one class excluded, we're in
+                        # a binary setting. Decision function outputs one class, so
+                        # excluding one column for the array comparison.
                         pred_cw = pred_cw[:, 1]
                 assert_allclose_dense_sparse(
-                    pred_cw, pred_exclude, err_msg=err_msg_exclude
+                    pred_cw, pred_exclude, err_msg=err_msg_exclude + err_msg_complement
                 )
 
 
@@ -3355,10 +3366,16 @@ def check_interaction_of_class_and_sample_weight_excluding_samples(
 
         # Checking if the output is the same for multiple outputs
         for method in ["predict", "predict_proba", "decision_function", "transform"]:
+            err_msg_complement = (
+                f" The error occurred using the method {method} with n_classes "
+                f"equal to {n_classes}."
+            )
             if hasattr(estimator_orig, method):
                 pred_sw = getattr(estimator_sw, method)(X)
                 pred_exclude = getattr(estimator_exclude, method)(X)
-                assert_allclose_dense_sparse(pred_sw, pred_exclude, err_msg=err_msg)
+                assert_allclose_dense_sparse(
+                    pred_sw, pred_exclude, err_msg=err_msg + err_msg_complement
+                )
 
 
 @ignore_warnings(category=FutureWarning)
