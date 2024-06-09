@@ -74,6 +74,6 @@ plt.show()
 # :func:`~sklearn.model_selection.cross_val_predict`
 # when the different CV folds vary by size and distributions.
 #
-# In is recommended to compute per-fold performance metrics using:
+# It is recommended to compute per-fold performance metrics using:
 # :func:`~sklearn.model_selection.cross_val_score` or
 # :func:`~sklearn.model_selection.cross_validate` instead.

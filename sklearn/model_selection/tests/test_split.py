@@ -1,4 +1,5 @@
 """Test the split module"""
+
 import re
 import warnings
 from itertools import combinations, combinations_with_replacement, permutations
@@ -6,14 +7,10 @@ from itertools import combinations, combinations_with_replacement, permutations
 import numpy as np
 import pytest
 from scipy import stats
-from scipy.sparse import (
-    coo_matrix,
-    csc_matrix,
-    csr_matrix,
-    isspmatrix_csr,
-)
+from scipy.sparse import issparse
 from scipy.special import comb
 
+from sklearn import config_context
 from sklearn.datasets import load_digits, make_classification
 from sklearn.dummy import DummyClassifier
 from sklearn.model_selection import (
@@ -43,7 +40,15 @@ from sklearn.model_selection._split import (
     _yields_constant_splits,
 )
 from sklearn.svm import SVC
-from sklearn.tests.test_metadata_routing import assert_request_is_empty
+from sklearn.tests.metadata_routing_common import assert_request_is_empty
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    get_namespace,
+    yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._array_api import (
+    device as array_api_device,
+)
 from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._testing import (
     assert_allclose,
@@ -51,6 +56,10 @@ from sklearn.utils._testing import (
     assert_array_equal,
     ignore_warnings,
 )
+from sklearn.utils.estimator_checks import (
+    _array_api_for_tests,
+)
+from sklearn.utils.fixes import COO_CONTAINERS, CSC_CONTAINERS, CSR_CONTAINERS
 from sklearn.utils.validation import _num_samples
 
 NO_GROUP_SPLITTERS = [
@@ -73,12 +82,12 @@ GROUP_SPLITTERS = [
     LeaveOneGroupOut(),
     GroupShuffleSplit(),
 ]
+GROUP_SPLITTER_NAMES = set(splitter.__class__.__name__ for splitter in GROUP_SPLITTERS)
 
 ALL_SPLITTERS = NO_GROUP_SPLITTERS + GROUP_SPLITTERS  # type: ignore
 
 X = np.ones(10)
 y = np.arange(10) // 2
-P_sparse = coo_matrix(np.eye(5))
 test_groups = (
     np.array([1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3]),
     np.array([0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]),
@@ -88,6 +97,17 @@ test_groups = (
     ["1", "1", "1", "1", "2", "2", "2", "3", "3", "3", "3", "3"],
 )
 digits = load_digits()
+
+pytestmark = pytest.mark.filterwarnings(
+    "error:The groups parameter:UserWarning:sklearn.*"
+)
+
+
+def _split(splitter, X, y, groups):
+    if splitter.__class__.__name__ in GROUP_SPLITTER_NAMES:
+        return splitter.split(X, y, groups=groups)
+    else:
+        return splitter.split(X, y)
 
 
 @ignore_warnings
@@ -203,10 +223,10 @@ def test_2d_y():
         PredefinedSplit(test_fold=groups),
     ]
     for splitter in splitters:
-        list(splitter.split(X, y, groups))
-        list(splitter.split(X, y_2d, groups))
+        list(_split(splitter, X, y, groups=groups))
+        list(_split(splitter, X, y_2d, groups=groups))
         try:
-            list(splitter.split(X, y_multilabel, groups))
+            list(_split(splitter, X, y_multilabel, groups=groups))
         except ValueError as e:
             allowed_target_types = ("binary", "multiclass")
             msg = "Supported target types are: {}. Got 'multilabel".format(
@@ -420,7 +440,7 @@ def test_stratified_kfold_ratios(k, shuffle, kfold):
     test_sizes = []
     random_state = None if not shuffle else 0
     skf = kfold(k, random_state=random_state, shuffle=shuffle)
-    for train, test in skf.split(X, y, groups=groups):
+    for train, test in _split(skf, X, y, groups=groups):
         assert_allclose(np.bincount(y[train]) / len(train), distr, atol=0.02)
         assert_allclose(np.bincount(y[test]) / len(test), distr, atol=0.02)
         test_sizes.append(len(test))
@@ -446,9 +466,12 @@ def test_stratified_kfold_label_invariance(k, shuffle, kfold):
         random_state = None if not shuffle else 0
         return [
             (list(train), list(test))
-            for train, test in kfold(
-                k, random_state=random_state, shuffle=shuffle
-            ).split(X, y, groups=groups)
+            for train, test in _split(
+                kfold(k, random_state=random_state, shuffle=shuffle),
+                X,
+                y,
+                groups=groups,
+            )
         ]
 
     splits_base = get_splits(y)
@@ -481,7 +504,7 @@ def test_stratifiedkfold_balance(kfold):
     for shuffle in (True, False):
         cv = kfold(3, shuffle=shuffle)
         for i in range(11, 17):
-            skf = cv.split(X[:i], y[:i], groups[:i])
+            skf = _split(cv, X[:i], y[:i], groups[:i])
             sizes = [len(test) for _, test in skf]
 
             assert (np.max(sizes) - np.min(sizes)) <= 1
@@ -525,7 +548,7 @@ def test_shuffle_kfold_stratifiedkfold_reproducibility(kfold):
     kf = kfold(3, shuffle=True, random_state=0)
 
     np.testing.assert_equal(
-        list(kf.split(X, y, groups_1)), list(kf.split(X, y, groups_1))
+        list(_split(kf, X, y, groups_1)), list(_split(kf, X, y, groups_1))
     )
 
     # Check that when the shuffle is True, multiple split calls often
@@ -534,7 +557,7 @@ def test_shuffle_kfold_stratifiedkfold_reproducibility(kfold):
     kf = kfold(3, shuffle=True, random_state=np.random.RandomState(0))
     for data in zip((X, X2), (y, y2), (groups_1, groups_2)):
         # Test if the two splits are different cv
-        for (_, test_a), (_, test_b) in zip(kf.split(*data), kf.split(*data)):
+        for (_, test_a), (_, test_b) in zip(_split(kf, *data), _split(kf, *data)):
             # cv.split(...) returns an array of tuples, each tuple
             # consisting of an array with train indices and test indices
             # Ensure that the splits for data are not same
@@ -818,7 +841,7 @@ def test_stratified_shuffle_split_iter():
             assert len(train) + len(test) == y.size
             assert len(train) == train_size
             assert len(test) == test_size
-            assert_array_equal(np.lib.arraysetops.intersect1d(train, test), [])
+            assert_array_equal(np.intersect1d(train, test), [])
 
 
 def test_stratified_shuffle_split_even():
@@ -975,8 +998,8 @@ def test_group_shuffle_split():
             # First test: no train group is in the test set and vice versa
             l_train_unique = np.unique(l[train])
             l_test_unique = np.unique(l[test])
-            assert not np.any(np.in1d(l[train], l_test_unique))
-            assert not np.any(np.in1d(l[test], l_train_unique))
+            assert not np.any(np.isin(l[train], l_test_unique))
+            assert not np.any(np.isin(l[test], l_train_unique))
 
             # Second test: train and test add up to all the data
             assert l[train].size + l[test].size == l.size
@@ -1259,9 +1282,76 @@ def test_train_test_split_default_test_size(train_size, exp_train, exp_test):
     assert len(X_test) == exp_test
 
 
-def test_train_test_split():
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize(
+    "shuffle,stratify",
+    (
+        (True, None),
+        (True, np.hstack((np.ones(6), np.zeros(4)))),
+        # stratification only works with shuffling
+        (False, None),
+    ),
+)
+def test_array_api_train_test_split(
+    shuffle, stratify, array_namespace, device, dtype_name
+):
+    xp = _array_api_for_tests(array_namespace, device)
+
     X = np.arange(100).reshape((10, 10))
-    X_s = coo_matrix(X)
+    y = np.arange(10)
+
+    X_np = X.astype(dtype_name)
+    X_xp = xp.asarray(X_np, device=device)
+
+    y_np = y.astype(dtype_name)
+    y_xp = xp.asarray(y_np, device=device)
+
+    X_train_np, X_test_np, y_train_np, y_test_np = train_test_split(
+        X_np, y, random_state=0, shuffle=shuffle, stratify=stratify
+    )
+    with config_context(array_api_dispatch=True):
+        if stratify is not None:
+            stratify_xp = xp.asarray(stratify)
+        else:
+            stratify_xp = stratify
+        X_train_xp, X_test_xp, y_train_xp, y_test_xp = train_test_split(
+            X_xp, y_xp, shuffle=shuffle, stratify=stratify_xp, random_state=0
+        )
+
+        # Check that namespace is preserved, has to happen with
+        # array_api_dispatch enabled.
+        assert get_namespace(X_train_xp)[0] == get_namespace(X_xp)[0]
+        assert get_namespace(X_test_xp)[0] == get_namespace(X_xp)[0]
+        assert get_namespace(y_train_xp)[0] == get_namespace(y_xp)[0]
+        assert get_namespace(y_test_xp)[0] == get_namespace(y_xp)[0]
+
+    # Check device and dtype is preserved on output
+    assert array_api_device(X_train_xp) == array_api_device(X_xp)
+    assert array_api_device(y_train_xp) == array_api_device(y_xp)
+    assert array_api_device(X_test_xp) == array_api_device(X_xp)
+    assert array_api_device(y_test_xp) == array_api_device(y_xp)
+
+    assert X_train_xp.dtype == X_xp.dtype
+    assert y_train_xp.dtype == y_xp.dtype
+    assert X_test_xp.dtype == X_xp.dtype
+    assert y_test_xp.dtype == y_xp.dtype
+
+    assert_allclose(
+        _convert_to_numpy(X_train_xp, xp=xp),
+        X_train_np,
+    )
+    assert_allclose(
+        _convert_to_numpy(X_test_xp, xp=xp),
+        X_test_np,
+    )
+
+
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+def test_train_test_split(coo_container):
+    X = np.arange(100).reshape((10, 10))
+    X_s = coo_container(X)
     y = np.arange(10)
 
     # simple test
@@ -1347,16 +1437,17 @@ def test_train_test_split_pandas():
         assert isinstance(X_test, InputFeatureType)
 
 
-def test_train_test_split_sparse():
+@pytest.mark.parametrize(
+    "sparse_container", COO_CONTAINERS + CSC_CONTAINERS + CSR_CONTAINERS
+)
+def test_train_test_split_sparse(sparse_container):
     # check that train_test_split converts scipy sparse matrices
     # to csr, as stated in the documentation
     X = np.arange(100).reshape((10, 10))
-    sparse_types = [csr_matrix, csc_matrix, coo_matrix]
-    for InputFeatureType in sparse_types:
-        X_s = InputFeatureType(X)
-        X_train, X_test = train_test_split(X_s)
-        assert isspmatrix_csr(X_train)
-        assert isspmatrix_csr(X_test)
+    X_s = sparse_container(X)
+    X_train, X_test = train_test_split(X_s)
+    assert issparse(X_train) and X_train.format == "csr"
+    assert issparse(X_test) and X_test.format == "csr"
 
 
 def test_train_test_split_mock_pandas():
@@ -1783,6 +1874,7 @@ def test_time_series_gap():
         next(splits)
 
 
+@ignore_warnings
 def test_nested_cv():
     # Test if nested cross validation works with different combinations of cv
     rng = np.random.RandomState(0)
@@ -1808,7 +1900,7 @@ def test_nested_cv():
             error_score="raise",
         )
         cross_val_score(
-            gs, X=X, y=y, groups=groups, cv=outer_cv, fit_params={"groups": groups}
+            gs, X=X, y=y, groups=groups, cv=outer_cv, params={"groups": groups}
         )
 
 
@@ -1838,7 +1930,7 @@ def test_shuffle_split_empty_trainset(CVSplitter):
             "the resulting train set will be empty"
         ),
     ):
-        next(cv.split(X, y, groups=[1]))
+        next(_split(cv, X, y, groups=[1]))
 
 
 def test_train_test_split_empty_trainset():
@@ -1878,7 +1970,7 @@ def test_leave_p_out_empty_trainset():
     with pytest.raises(
         ValueError, match="p=2 must be strictly less than the number of samples=2"
     ):
-        next(cv.split(X, y, groups=[1, 2]))
+        next(cv.split(X, y))
 
 
 @pytest.mark.parametrize("Klass", (KFold, StratifiedKFold, StratifiedGroupKFold))
@@ -1948,3 +2040,17 @@ def test_splitter_set_split_request(cv):
         assert hasattr(cv, "set_split_request")
     elif cv in NO_GROUP_SPLITTERS:
         assert not hasattr(cv, "set_split_request")
+
+
+@pytest.mark.parametrize("cv", NO_GROUP_SPLITTERS, ids=str)
+def test_no_group_splitters_warns_with_groups(cv):
+    msg = f"The groups parameter is ignored by {cv.__class__.__name__}"
+
+    n_samples = 30
+    rng = np.random.RandomState(1)
+    X = rng.randint(0, 3, size=(n_samples, 2))
+    y = rng.randint(0, 3, size=(n_samples,))
+    groups = rng.randint(0, 3, size=(n_samples,))
+
+    with pytest.warns(UserWarning, match=msg):
+        cv.split(X, y, groups=groups)

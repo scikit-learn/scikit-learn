@@ -20,7 +20,6 @@ high-dimensional categorical embedding of the data.
 
 """
 
-
 # Author: Tim Head <betatim@gmail.com>
 #
 # License: BSD 3 clause
@@ -145,7 +144,7 @@ import matplotlib.pyplot as plt
 
 from sklearn.metrics import RocCurveDisplay
 
-fig, ax = plt.subplots()
+_, ax = plt.subplots()
 
 models = [
     ("RT embedding -> LR", rt_model),
@@ -163,7 +162,7 @@ for name, pipeline in models:
 _ = ax.set_title("ROC curve")
 
 # %%
-fig, ax = plt.subplots()
+_, ax = plt.subplots()
 for name, pipeline in models:
     model_displays[name].plot(ax=ax)
 

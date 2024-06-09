@@ -77,7 +77,10 @@ from sklearn.preprocessing import KBinsDiscretizer
 
 n_bins = 8
 encoder = KBinsDiscretizer(
-    n_bins=n_bins, encode="ordinal", strategy="uniform", random_state=0
+    n_bins=n_bins,
+    encode="ordinal",
+    strategy="uniform",
+    random_state=0,
 )
 compressed_raccoon_uniform = encoder.fit_transform(raccoon_face.reshape(-1, 1)).reshape(
     raccoon_face.shape
@@ -122,7 +125,10 @@ for center in bin_center:
 # find a more optimal mapping.
 
 encoder = KBinsDiscretizer(
-    n_bins=n_bins, encode="ordinal", strategy="kmeans", random_state=0
+    n_bins=n_bins,
+    encode="ordinal",
+    strategy="kmeans",
+    random_state=0,
 )
 compressed_raccoon_kmeans = encoder.fit_transform(raccoon_face.reshape(-1, 1)).reshape(
     raccoon_face.shape

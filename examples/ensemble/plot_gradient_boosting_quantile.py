@@ -4,7 +4,9 @@ Prediction Intervals for Gradient Boosting Regression
 =====================================================
 
 This example shows how quantile regression can be used to create prediction
-intervals.
+intervals. See :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py`
+for an example showcasing some other features of
+:class:`~ensemble.HistGradientBoostingRegressor`.
 
 """
 
@@ -128,8 +130,8 @@ plt.show()
 # Analysis of the error metrics
 # -----------------------------
 #
-# Measure the models with :func:`mean_squared_error` and
-# :func:`mean_pinball_loss` metrics on the training dataset.
+# Measure the models with :func:`~sklearn.metrics.mean_squared_error` and
+# :func:`~sklearn.metrics.mean_pinball_loss` metrics on the training dataset.
 import pandas as pd
 
 
@@ -156,7 +158,7 @@ pd.DataFrame(results).set_index("model").style.apply(highlight_min)
 # training converged.
 #
 # Note that because the target distribution is asymmetric, the expected
-# conditional mean and conditional median are signficiantly different and
+# conditional mean and conditional median are significantly different and
 # therefore one could not use the squared error model get a good estimation of
 # the conditional median nor the converse.
 #
@@ -190,11 +192,13 @@ pd.DataFrame(results).set_index("model").style.apply(highlight_min)
 # (underestimation for this asymmetric noise) but is also naturally robust to
 # outliers and overfits less.
 #
+# .. _calibration-section:
+#
 # Calibration of the confidence interval
 # --------------------------------------
 #
 # We can also evaluate the ability of the two extreme quantile estimators at
-# producing a well-calibrated conditational 90%-confidence interval.
+# producing a well-calibrated conditional 90%-confidence interval.
 #
 # To do this we can compute the fraction of observations that fall between the
 # predictions:

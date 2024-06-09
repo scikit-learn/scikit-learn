@@ -76,9 +76,9 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         between those vectors. This works for Scipy's metrics, but is less
         efficient than passing the metric name as a string.
 
-    p : int, default=2
+    p : float, default=2
         Parameter for the Minkowski metric from
-        :func:`sklearn.metrics.pairwise.pairwise_distances`. When p = 1, this
+        :func:`sklearn.metrics.pairwise_distances`. When p = 1, this
         is equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
@@ -317,6 +317,14 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
                 self.negative_outlier_factor_, 100.0 * self.contamination
             )
 
+        # Verify if negative_outlier_factor_ values are within acceptable range.
+        # Novelty must also be false to detect outliers
+        if np.min(self.negative_outlier_factor_) < -1e7 and not self.novelty:
+            warnings.warn(
+                "Duplicate values are leading to incorrect results. "
+                "Increase the number of neighbors for more accurate results."
+            )
+
         return self
 
     def _check_novelty_predict(self):
@@ -373,9 +381,9 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         check_is_fitted(self)
 
         if X is not None:
-            X = check_array(X, accept_sparse="csr")
-            is_inlier = np.ones(X.shape[0], dtype=int)
-            is_inlier[self.decision_function(X) < 0] = -1
+            shifted_opposite_lof_scores = self.decision_function(X)
+            is_inlier = np.ones(shifted_opposite_lof_scores.shape[0], dtype=int)
+            is_inlier[shifted_opposite_lof_scores < 0] = -1
         else:
             is_inlier = np.ones(self.n_samples_fit_, dtype=int)
             is_inlier[self.negative_outlier_factor_ < self.offset_] = -1

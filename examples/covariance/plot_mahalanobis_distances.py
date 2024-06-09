@@ -50,15 +50,15 @@ observation ranking and clustering.
 
     See also :ref:`sphx_glr_auto_examples_covariance_plot_robust_vs_empirical_covariance.py`
 
-.. topic:: References:
+.. rubric:: References
 
-    .. [1] P. J. Rousseeuw. `Least median of squares regression
-        <http://web.ipac.caltech.edu/staff/fmasci/home/astro_refs/LeastMedianOfSquares.pdf>`_. J. Am
-        Stat Ass, 79:871, 1984.
-    .. [2] Wilson, E. B., & Hilferty, M. M. (1931). `The distribution of chi-square.
-        <https://water.usgs.gov/osw/bulletin17b/Wilson_Hilferty_1931.pdf>`_
-        Proceedings of the National Academy of Sciences of the United States
-        of America, 17, 684-688.
+.. [1] P. J. Rousseeuw. `Least median of squares regression
+    <http://web.ipac.caltech.edu/staff/fmasci/home/astro_refs/LeastMedianOfSquares.pdf>`_. J. Am
+    Stat Ass, 79:871, 1984.
+.. [2] Wilson, E. B., & Hilferty, M. M. (1931). `The distribution of chi-square.
+    <https://water.usgs.gov/osw/bulletin17b/Wilson_Hilferty_1931.pdf>`_
+    Proceedings of the National Academy of Sciences of the United States
+    of America, 17, 684-688.
 
 """  # noqa: E501
 
@@ -122,6 +122,7 @@ print(
 # MCD based Mahalanobis distances fit the inlier black points much better,
 # whereas the MLE based distances are more influenced by the outlier
 # red points.
+import matplotlib.lines as mlines
 
 fig, ax = plt.subplots(figsize=(10, 5))
 # Plot data set
@@ -154,8 +155,8 @@ robust_contour = ax.contour(
 # Add legend
 ax.legend(
     [
-        emp_cov_contour.collections[1],
-        robust_contour.collections[1],
+        mlines.Line2D([], [], color="tab:blue", linestyle="dashed"),
+        mlines.Line2D([], [], color="tab:orange", linestyle="dotted"),
         inlier_plot,
         outlier_plot,
     ],

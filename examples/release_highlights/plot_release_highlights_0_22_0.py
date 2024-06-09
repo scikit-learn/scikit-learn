@@ -8,7 +8,7 @@ Release Highlights for scikit-learn 0.22
 We are pleased to announce the release of scikit-learn 0.22, which comes
 with many bug fixes and new features! We detail below a few of the major
 features of this release. For an exhaustive list of all the changes, please
-refer to the :ref:`release notes <changes_0_22>`.
+refer to the :ref:`release notes <release_notes_0_22>`.
 
 To install the latest version (with pip)::
 
@@ -27,11 +27,11 @@ or with conda::
 # A new plotting API is available for creating visualizations. This new API
 # allows for quickly adjusting the visuals of a plot without involving any
 # recomputation. It is also possible to add different plots to the same
-# figure. The following example illustrates :class:`~metrics.plot_roc_curve`,
+# figure. The following example illustrates `plot_roc_curve`,
 # but other plots utilities are supported like
-# :class:`~inspection.plot_partial_dependence`,
-# :class:`~metrics.plot_precision_recall_curve`, and
-# :class:`~metrics.plot_confusion_matrix`. Read more about this new API in the
+# `plot_partial_dependence`,
+# `plot_precision_recall_curve`, and
+# `plot_confusion_matrix`. Read more about this new API in the
 # :ref:`User Guide <visualizations>`.
 
 import matplotlib.pyplot as plt
@@ -89,7 +89,7 @@ from sklearn.svm import LinearSVC
 X, y = load_iris(return_X_y=True)
 estimators = [
     ("rf", RandomForestClassifier(n_estimators=10, random_state=42)),
-    ("svr", make_pipeline(StandardScaler(), LinearSVC(random_state=42))),
+    ("svr", make_pipeline(StandardScaler(), LinearSVC(dual="auto", random_state=42))),
 ]
 clf = StackingClassifier(estimators=estimators, final_estimator=LogisticRegression())
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=42)
@@ -187,7 +187,7 @@ with TemporaryDirectory(prefix="sklearn_cache_") as tmpdir:
 # close if the features that neither is missing are close.
 # By default, a euclidean distance metric
 # that supports missing values,
-# :func:`~metrics.nan_euclidean_distances`, is used to find the nearest
+# :func:`~sklearn.metrics.pairwise.nan_euclidean_distances`, is used to find the nearest
 # neighbors.
 #
 # Read more in the :ref:`User Guide <knnimpute>`.
@@ -260,7 +260,7 @@ def test_sklearn_compatible_estimator(estimator, check):
 # %%
 # ROC AUC now supports multiclass classification
 # ----------------------------------------------
-# The :func:`roc_auc_score` function can also be used in multi-class
+# The :func:`~sklearn.metrics.roc_auc_score` function can also be used in multi-class
 # classification. Two averaging strategies are currently supported: the
 # one-vs-one algorithm computes the average of the pairwise ROC AUC scores, and
 # the one-vs-rest algorithm computes the average of the ROC AUC scores for each

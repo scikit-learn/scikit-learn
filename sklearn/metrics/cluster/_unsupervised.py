@@ -14,6 +14,7 @@ from scipy.sparse import issparse
 
 from ...preprocessing import LabelEncoder
 from ...utils import _safe_indexing, check_random_state, check_X_y
+from ...utils._array_api import _atol_for_type
 from ...utils._param_validation import (
     Interval,
     StrOptions,
@@ -84,8 +85,7 @@ def silhouette_score(
     metric : str or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
-        allowed by :func:`metrics.pairwise.pairwise_distances
-        <sklearn.metrics.pairwise.pairwise_distances>`. If ``X`` is
+        allowed by :func:`~sklearn.metrics.pairwise_distances`. If ``X`` is
         the distance array itself, use ``metric="precomputed"``.
 
     sample_size : int, default=None
@@ -119,6 +119,16 @@ def silhouette_score(
 
     .. [2] `Wikipedia entry on the Silhouette Coefficient
            <https://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_blobs
+    >>> from sklearn.cluster import KMeans
+    >>> from sklearn.metrics import silhouette_score
+    >>> X, y = make_blobs(random_state=42)
+    >>> kmeans = KMeans(n_clusters=2, random_state=42)
+    >>> silhouette_score(X, kmeans.fit_predict(X))
+    0.49...
     """
     if sample_size is not None:
         X, labels = check_X_y(X, labels, accept_sparse=["csc", "csr"])
@@ -230,7 +240,7 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
     metric : str or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
-        allowed by :func:`sklearn.metrics.pairwise.pairwise_distances`.
+        allowed by :func:`~sklearn.metrics.pairwise_distances`.
         If ``X`` is the distance array itself, use "precomputed" as the metric.
         Precomputed distance matrices must have 0 along the diagonal.
 
@@ -254,6 +264,17 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
 
     .. [2] `Wikipedia entry on the Silhouette Coefficient
        <https://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
+
+    Examples
+    --------
+    >>> from sklearn.metrics import silhouette_samples
+    >>> from sklearn.datasets import make_blobs
+    >>> from sklearn.cluster import KMeans
+    >>> X, y = make_blobs(n_samples=50, random_state=42)
+    >>> kmeans = KMeans(n_clusters=3, random_state=42)
+    >>> labels = kmeans.fit_predict(X)
+    >>> silhouette_samples(X, labels)
+    array([...])
     """
     X, labels = check_X_y(X, labels, accept_sparse=["csr"])
 
@@ -264,7 +285,8 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
             "elements on the diagonal. Use np.fill_diagonal(X, 0)."
         )
         if X.dtype.kind == "f":
-            atol = np.finfo(X.dtype).eps * 100
+            atol = _atol_for_type(X.dtype)
+
             if np.any(np.abs(X.diagonal()) > atol):
                 raise error_msg
         elif np.any(X.diagonal() != 0):  # integral dtype
@@ -332,6 +354,16 @@ def calinski_harabasz_score(X, labels):
     .. [1] `T. Calinski and J. Harabasz, 1974. "A dendrite method for cluster
        analysis". Communications in Statistics
        <https://www.tandfonline.com/doi/abs/10.1080/03610927408827101>`_
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_blobs
+    >>> from sklearn.cluster import KMeans
+    >>> from sklearn.metrics import calinski_harabasz_score
+    >>> X, _ = make_blobs(random_state=0)
+    >>> kmeans = KMeans(n_clusters=3, random_state=0,).fit(X)
+    >>> calinski_harabasz_score(X, kmeans.labels_)
+    114.8...
     """
     X, labels = check_X_y(X, labels)
     le = LabelEncoder()
@@ -399,6 +431,14 @@ def davies_bouldin_score(X, labels):
        <https://ieeexplore.ieee.org/document/4766909>`__.
        IEEE Transactions on Pattern Analysis and Machine Intelligence.
        PAMI-1 (2): 224-227
+
+    Examples
+    --------
+    >>> from sklearn.metrics import davies_bouldin_score
+    >>> X = [[0, 1], [1, 1], [3, 4]]
+    >>> labels = [0, 0, 1]
+    >>> davies_bouldin_score(X, labels)
+    0.12...
     """
     X, labels = check_X_y(X, labels)
     le = LabelEncoder()

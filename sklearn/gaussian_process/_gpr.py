@@ -38,6 +38,10 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
          externally for other ways of selecting hyperparameters, e.g., via
          Markov chain Monte Carlo.
 
+    To learn the difference between a point-estimate approach vs. a more
+    Bayesian modelling approach, refer to the example entitled
+    :ref:`sphx_glr_auto_examples_gaussian_process_plot_compare_gpr_krr.py`.
+
     Read more in the :ref:`User Guide <gaussian_process>`.
 
     .. versionadded:: 0.18
@@ -380,7 +384,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         Returns
         -------
         y_mean : ndarray of shape (n_samples,) or (n_samples, n_targets)
-            Mean of predictive distribution a query points.
+            Mean of predictive distribution at query points.
 
         y_std : ndarray of shape (n_samples,) or (n_samples, n_targets), optional
             Standard deviation of predictive distribution at query points.
@@ -388,7 +392,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         y_cov : ndarray of shape (n_samples, n_samples) or \
                 (n_samples, n_samples, n_targets), optional
-            Covariance of joint predictive distribution a query points.
+            Covariance of joint predictive distribution at query points.
             Only returned when `return_cov` is True.
         """
         if return_std and return_cov:
@@ -452,9 +456,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 y_cov = self.kernel_(X) - V.T @ V
 
                 # undo normalisation
-                y_cov = np.outer(y_cov, self._y_train_std**2).reshape(
-                    *y_cov.shape, -1
-                )
+                y_cov = np.outer(y_cov, self._y_train_std**2).reshape(*y_cov.shape, -1)
                 # if y_cov has shape (n_samples, n_samples, 1), reshape to
                 # (n_samples, n_samples)
                 if y_cov.shape[2] == 1:
@@ -479,9 +481,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     y_var[y_var_negative] = 0.0
 
                 # undo normalisation
-                y_var = np.outer(y_var, self._y_train_std**2).reshape(
-                    *y_var.shape, -1
-                )
+                y_var = np.outer(y_var, self._y_train_std**2).reshape(*y_var.shape, -1)
 
                 # if y_var has shape (n_samples, 1), reshape to (n_samples,)
                 if y_var.shape[1] == 1:

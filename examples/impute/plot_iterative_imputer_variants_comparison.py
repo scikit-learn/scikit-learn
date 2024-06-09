@@ -13,8 +13,8 @@ In this example we compare some estimators for the purpose of missing feature
 imputation with :class:`~impute.IterativeImputer`:
 
 * :class:`~linear_model.BayesianRidge`: regularized linear regression
-* :class:`~tree.RandomForestRegressor`: Forests of randomized trees regression
-* :func:`~pipeline.make_pipeline`(:class:`~kernel_approximation.Nystroem`,
+* :class:`~ensemble.RandomForestRegressor`: Forests of randomized trees regression
+* :func:`~pipeline.make_pipeline` (:class:`~kernel_approximation.Nystroem`,
   :class:`~linear_model.Ridge`): a pipeline with the expansion of a degree 2
   polynomial kernel and regularized linear regression
 * :class:`~neighbors.KNeighborsRegressor`: comparable to other KNN

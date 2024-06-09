@@ -1,6 +1,7 @@
 """
 Utilities useful during the build.
 """
+
 # author: Andy Mueller, Gael Varoquaux
 # license: BSD
 
@@ -75,12 +76,14 @@ def cythonize_extensions(extension):
         "initializedcheck": False,
         "nonecheck": False,
         "cdivision": True,
+        "profile": False,
     }
 
     return cythonize(
         extension,
         nthreads=n_jobs,
         compiler_directives=compiler_directives,
+        annotate=False,
     )
 
 

@@ -63,7 +63,6 @@ for name, penalty in (("unreg", 1), ("reg", 0.05)):
         facecolors="none",
         zorder=10,
         edgecolors="k",
-        cmap=plt.get_cmap("RdBu"),
     )
     plt.scatter(
         X[:, 0], X[:, 1], c=Y, zorder=10, cmap=plt.get_cmap("RdBu"), edgecolors="k"

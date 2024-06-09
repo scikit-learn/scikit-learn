@@ -29,7 +29,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-X, y = fetch_openml(data_id=1464, return_X_y=True, parser="pandas")
+X, y = fetch_openml(data_id=1464, return_X_y=True)
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y)
 
 clf = make_pipeline(StandardScaler(), LogisticRegression(random_state=0))
@@ -39,7 +39,7 @@ clf.fit(X_train, y_train)
 # Create :class:`ConfusionMatrixDisplay`
 ##############################################################################
 # With the fitted model, we compute the predictions of the model on the test
-# dataset. These predictions are used to compute the confustion matrix which
+# dataset. These predictions are used to compute the confusion matrix which
 # is plotted with the :class:`ConfusionMatrixDisplay`
 from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
 

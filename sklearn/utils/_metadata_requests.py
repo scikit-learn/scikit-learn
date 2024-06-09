@@ -80,7 +80,7 @@ need to override, but it works for simple consumers as is.
 import inspect
 from collections import namedtuple
 from copy import deepcopy
-from typing import Optional, Union
+from typing import TYPE_CHECKING, Optional, Union
 from warnings import warn
 
 from .. import get_config
@@ -89,6 +89,9 @@ from ._bunch import Bunch
 
 # Only the following methods are supported in the routing mechanism. Adding new
 # methods at the moment involves monkeypatching this list.
+# Note that if this list is changed or monkeypatched, the corresponding method
+# needs to be added under a TYPE_CHECKING condition like the one done here in
+# _MetadataRequester
 SIMPLE_METHODS = [
     "fit",
     "partial_fit",
@@ -127,6 +130,88 @@ def _routing_enabled():
     return get_config().get("enable_metadata_routing", False)
 
 
+def _raise_for_params(params, owner, method):
+    """Raise an error if metadata routing is not enabled and params are passed.
+
+    .. versionadded:: 1.4
+
+    Parameters
+    ----------
+    params : dict
+        The metadata passed to a method.
+
+    owner : object
+        The object to which the method belongs.
+
+    method : str
+        The name of the method, e.g. "fit".
+
+    Raises
+    ------
+    ValueError
+        If metadata routing is not enabled and params are passed.
+    """
+    caller = (
+        f"{owner.__class__.__name__}.{method}" if method else owner.__class__.__name__
+    )
+    if not _routing_enabled() and params:
+        raise ValueError(
+            f"Passing extra keyword arguments to {caller} is only supported if"
+            " enable_metadata_routing=True, which you can set using"
+            " `sklearn.set_config`. See the User Guide"
+            " <https://scikit-learn.org/stable/metadata_routing.html> for more"
+            f" details. Extra parameters passed are: {set(params)}"
+        )
+
+
+def _raise_for_unsupported_routing(obj, method, **kwargs):
+    """Raise when metadata routing is enabled and metadata is passed.
+
+    This is used in meta-estimators which have not implemented metadata routing
+    to prevent silent bugs. There is no need to use this function if the
+    meta-estimator is not accepting any metadata, especially in `fit`, since
+    if a meta-estimator accepts any metadata, they would do that in `fit` as
+    well.
+
+    Parameters
+    ----------
+    obj : estimator
+        The estimator for which we're raising the error.
+
+    method : str
+        The method where the error is raised.
+
+    **kwargs : dict
+        The metadata passed to the method.
+    """
+    kwargs = {key: value for key, value in kwargs.items() if value is not None}
+    if _routing_enabled() and kwargs:
+        cls_name = obj.__class__.__name__
+        raise NotImplementedError(
+            f"{cls_name}.{method} cannot accept given metadata ({set(kwargs.keys())})"
+            f" since metadata routing is not yet implemented for {cls_name}."
+        )
+
+
+class _RoutingNotSupportedMixin:
+    """A mixin to be used to remove the default `get_metadata_routing`.
+
+    This is used in meta-estimators where metadata routing is not yet
+    implemented.
+
+    This also makes it clear in our rendered documentation that this method
+    cannot be used.
+    """
+
+    def get_metadata_routing(self):
+        """Raise `NotImplementedError`.
+
+        This estimator does not support metadata routing yet."""
+        raise NotImplementedError(
+            f"{self.__class__.__name__} has not implemented metadata routing yet."
+        )
+
+
 # Request values
 # ==============
 # Each request value needs to be one of the following values, or an alias.
@@ -151,6 +236,9 @@ VALID_REQUEST_VALUES = [False, True, None, UNUSED, WARN]
 
 def request_is_alias(item):
     """Check if an item is a valid alias.
+
+    Values in ``VALID_REQUEST_VALUES`` are not considered aliases in this
+    context. Only a string which is a valid identifier is.
 
     Parameters
     ----------
@@ -247,8 +335,9 @@ class MethodMetadataRequest:
         """
         if not request_is_alias(alias) and not request_is_valid(alias):
             raise ValueError(
-                "alias should be either a valid identifier or one of "
-                "{None, True, False}."
+                f"The alias you're setting for `{param}` should be either a "
+                "valid identifier or one of {None, True, False}, but given "
+                f"value is: `{alias}`"
             )
 
         if alias == param:
@@ -310,11 +399,13 @@ class MethodMetadataRequest:
             warn(
                 f"Support for {param} has recently been added to this class. "
                 "To maintain backward compatibility, it is ignored now. "
-                "You can set the request value to False to silence this "
-                "warning, or to True to consume and use the metadata."
+                f"Using `set_{self.method}_request({param}={{True, False}})` "
+                "on this method of the class, you can set the request value "
+                "to False to silence this warning, or to True to consume and "
+                "use the metadata."
             )
 
-    def _route_params(self, params):
+    def _route_params(self, params, parent, caller):
         """Prepare the given parameters to be passed to the method.
 
         The output of this method can be used directly as the input to the
@@ -325,10 +416,16 @@ class MethodMetadataRequest:
         params : dict
             A dictionary of provided metadata.
 
+        parent : object
+            Parent class object, that routes the metadata.
+
+        caller : str
+            Method from the parent class object, where the metadata is routed from.
+
         Returns
         -------
         params : Bunch
-            A :class:`~utils.Bunch` of {prop: value} which can be given to the
+            A :class:`~sklearn.utils.Bunch` of {prop: value} which can be given to the
             corresponding method.
         """
         self._check_warnings(params=params)
@@ -345,15 +442,51 @@ class MethodMetadataRequest:
             elif alias in args:
                 res[prop] = args[alias]
         if unrequested:
+            if self.method in COMPOSITE_METHODS:
+                callee_methods = COMPOSITE_METHODS[self.method]
+            else:
+                callee_methods = [self.method]
+            set_requests_on = "".join(
+                [
+                    f".set_{method}_request({{metadata}}=True/False)"
+                    for method in callee_methods
+                ]
+            )
+            message = (
+                f"[{', '.join([key for key in unrequested])}] are passed but are not"
+                " explicitly set as requested or not requested for"
+                f" {self.owner}.{self.method}, which is used within"
+                f" {parent}.{caller}. Call `{self.owner}"
+                + set_requests_on
+                + "` for each metadata you want to request/ignore."
+            )
             raise UnsetMetadataPassedError(
-                message=(
-                    f"[{', '.join([key for key in unrequested])}] are passed but are"
-                    " not explicitly set as requested or not for"
-                    f" {self.owner}.{self.method}"
-                ),
+                message=message,
                 unrequested_params=unrequested,
                 routed_params=res,
             )
+        return res
+
+    def _consumes(self, params):
+        """Check whether the given parameters are consumed by this method.
+
+        Parameters
+        ----------
+        params : iterable of str
+            An iterable of parameters to check.
+
+        Returns
+        -------
+        consumed : set of str
+            A set of parameters which are consumed by this method.
+        """
+        params = set(params)
+        res = set()
+        for prop, alias in self._requests.items():
+            if alias is True and prop in params:
+                res.add(prop)
+            elif isinstance(alias, str) and alias in params:
+                res.add(alias)
         return res
 
     def _serialize(self):
@@ -376,7 +509,7 @@ class MethodMetadataRequest:
 class MetadataRequest:
     """Contains the metadata request info of a consumer.
 
-    Instances of :class:`MethodMetadataRequest` are used in this class for each
+    Instances of `MethodMetadataRequest` are used in this class for each
     available method under `metadatarequest.{method}`.
 
     Consumer-only classes such as simple estimators return a serialized
@@ -403,6 +536,26 @@ class MetadataRequest:
                 method,
                 MethodMetadataRequest(owner=owner, method=method),
             )
+
+    def consumes(self, method, params):
+        """Check whether the given parameters are consumed by the given method.
+
+        .. versionadded:: 1.4
+
+        Parameters
+        ----------
+        method : str
+            The name of the method to check.
+
+        params : iterable of str
+            An iterable of parameters to check.
+
+        Returns
+        -------
+        consumed : set of str
+            A set of parameters which are consumed by the given method.
+        """
+        return getattr(self, method)._consumes(params=params)
 
     def __getattr__(self, name):
         # Called when the default attribute access fails with an AttributeError
@@ -460,7 +613,7 @@ class MetadataRequest:
         """
         return getattr(self, method)._get_param_names(return_alias=return_alias)
 
-    def _route_params(self, *, method, params):
+    def _route_params(self, *, params, method, parent, caller):
         """Prepare the given parameters to be passed to the method.
 
         The output of this method can be used directly as the input to the
@@ -468,20 +621,28 @@ class MetadataRequest:
 
         Parameters
         ----------
+        params : dict
+            A dictionary of provided metadata.
+
         method : str
             The name of the method for which the parameters are requested and
             routed.
 
-        params : dict
-            A dictionary of provided metadata.
+        parent : object
+            Parent class object, that routes the metadata.
+
+        caller : str
+            Method from the parent class object, where the metadata is routed from.
 
         Returns
         -------
         params : Bunch
-            A :class:`~utils.Bunch` of {prop: value} which can be given to the
+            A :class:`~sklearn.utils.Bunch` of {prop: value} which can be given to the
             corresponding method.
         """
-        return getattr(self, method)._route_params(params=params)
+        return getattr(self, method)._route_params(
+            params=params, parent=parent, caller=caller
+        )
 
     def _check_warnings(self, *, method, params):
         """Check whether metadata is passed which is marked as WARN.
@@ -532,19 +693,18 @@ RouterMappingPair = namedtuple("RouterMappingPair", ["mapping", "router"])
 
 # A namedtuple storing a single method route. A collection of these namedtuples
 # is stored in a MetadataRouter.
-MethodPair = namedtuple("MethodPair", ["callee", "caller"])
+MethodPair = namedtuple("MethodPair", ["caller", "callee"])
 
 
 class MethodMapping:
-    """Stores the mapping between callee and caller methods for a router.
+    """Stores the mapping between caller and callee methods for a router.
 
     This class is primarily used in a ``get_metadata_routing()`` of a router
     object when defining the mapping between a sub-object (a sub-estimator or a
-    scorer) to the router's methods. It stores a collection of ``Route``
-    namedtuples.
+    scorer) to the router's methods. It stores a collection of namedtuples.
 
     Iterating through an instance of this class will yield named
-    ``MethodPair(callee, caller)`` tuples.
+    ``MethodPair(caller, callee)`` tuples.
 
     .. versionadded:: 1.3
     """
@@ -555,33 +715,34 @@ class MethodMapping:
     def __iter__(self):
         return iter(self._routes)
 
-    def add(self, *, callee, caller):
+    def add(self, *, caller, callee):
         """Add a method mapping.
 
         Parameters
         ----------
-        callee : str
-            Child object's method name. This method is called in ``caller``.
 
         caller : str
             Parent estimator's method name in which the ``callee`` is called.
+
+        callee : str
+            Child object's method name. This method is called in ``caller``.
 
         Returns
         -------
         self : MethodMapping
             Returns self.
         """
-        if callee not in METHODS:
-            raise ValueError(
-                f"Given callee:{callee} is not a valid method. Valid methods are:"
-                f" {METHODS}"
-            )
         if caller not in METHODS:
             raise ValueError(
                 f"Given caller:{caller} is not a valid method. Valid methods are:"
                 f" {METHODS}"
             )
-        self._routes.append(MethodPair(callee=callee, caller=caller))
+        if callee not in METHODS:
+            raise ValueError(
+                f"Given callee:{callee} is not a valid method. Valid methods are:"
+                f" {METHODS}"
+            )
+        self._routes.append(MethodPair(caller=caller, callee=callee))
         return self
 
     def _serialize(self):
@@ -594,37 +755,8 @@ class MethodMapping:
         """
         result = list()
         for route in self._routes:
-            result.append({"callee": route.callee, "caller": route.caller})
+            result.append({"caller": route.caller, "callee": route.callee})
         return result
-
-    @classmethod
-    def from_str(cls, route):
-        """Construct an instance from a string.
-
-        Parameters
-        ----------
-        route : str
-            A string representing the mapping, it can be:
-
-              - `"one-to-one"`: a one to one mapping for all methods.
-              - `"method"`: the name of a single method, such as ``fit``,
-                ``transform``, ``score``, etc.
-
-        Returns
-        -------
-        obj : MethodMapping
-            A :class:`~utils.metadata_requests.MethodMapping` instance
-            constructed from the given string.
-        """
-        routing = cls()
-        if route == "one-to-one":
-            for method in METHODS:
-                routing.add(callee=method, caller=method)
-        elif route in METHODS:
-            routing.add(callee=route, caller=route)
-        else:
-            raise ValueError("route should be 'one-to-one' or a single method!")
-        return routing
 
     def __repr__(self):
         return str(self._serialize())
@@ -639,10 +771,10 @@ class MetadataRouter:
     This class is used by router objects to store and handle metadata routing.
     Routing information is stored as a dictionary of the form ``{"object_name":
     RouteMappingPair(method_mapping, routing_info)}``, where ``method_mapping``
-    is an instance of :class:`~utils.metadata_requests.MethodMapping` and
+    is an instance of :class:`~sklearn.utils.metadata_routing.MethodMapping` and
     ``routing_info`` is either a
-    :class:`~utils.metadata_requests.MetadataRequest` or a
-    :class:`~utils.metadata_requests.MetadataRouter` instance.
+    :class:`~sklearn.utils.metadata_routing.MetadataRequest` or a
+    :class:`~sklearn.utils.metadata_routing.MetadataRouter` instance.
 
     .. versionadded:: 1.3
 
@@ -654,14 +786,15 @@ class MetadataRouter:
 
     # this is here for us to use this attribute's value instead of doing
     # `isinstance`` in our checks, so that we avoid issues when people vendor
-    # this file instad of using it directly from scikit-learn.
+    # this file instead of using it directly from scikit-learn.
     _type = "metadata_router"
 
     def __init__(self, owner):
         self._route_mappings = dict()
-        # `_self` is used if the router is also a consumer. _self, (added using
-        # `add_self_request()`) is treated differently from the other objects
-        # which are stored in _route_mappings.
+        # `_self_request` is used if the router is also a consumer.
+        # _self_request, (added using `add_self_request()`) is treated
+        # differently from the other objects which are stored in
+        # _route_mappings.
         self._self_request = None
         self.owner = owner
 
@@ -671,7 +804,7 @@ class MetadataRouter:
         This method is used if the router is also a consumer, and hence the
         router itself needs to be included in the routing. The passed object
         can be an estimator or a
-        :class:``~utils.metadata_requests.MetadataRequest``.
+        :class:`~sklearn.utils.metadata_routing.MetadataRequest`.
 
         A router should add itself using this method instead of `add` since it
         should be treated differently than the other objects to which metadata
@@ -706,30 +839,56 @@ class MetadataRouter:
 
         Parameters
         ----------
-        method_mapping : MethodMapping or str
-            The mapping between the child and the parent's methods. If str, the
-            output of :func:`~utils.metadata_requests.MethodMapping.from_str`
-            is used.
+        method_mapping : MethodMapping
+            The mapping between the child and the parent's methods.
 
         **objs : dict
             A dictionary of objects from which metadata is extracted by calling
-            :func:`~utils.metadata_requests.get_routing_for_object` on them.
+            :func:`~sklearn.utils.metadata_routing.get_routing_for_object` on them.
 
         Returns
         -------
         self : MetadataRouter
             Returns `self`.
         """
-        if isinstance(method_mapping, str):
-            method_mapping = MethodMapping.from_str(method_mapping)
-        else:
-            method_mapping = deepcopy(method_mapping)
+        method_mapping = deepcopy(method_mapping)
 
         for name, obj in objs.items():
             self._route_mappings[name] = RouterMappingPair(
                 mapping=method_mapping, router=get_routing_for_object(obj)
             )
         return self
+
+    def consumes(self, method, params):
+        """Check whether the given parameters are consumed by the given method.
+
+        .. versionadded:: 1.4
+
+        Parameters
+        ----------
+        method : str
+            The name of the method to check.
+
+        params : iterable of str
+            An iterable of parameters to check.
+
+        Returns
+        -------
+        consumed : set of str
+            A set of parameters which are consumed by the given method.
+        """
+        res = set()
+        if self._self_request:
+            res = res | self._self_request.consumes(method=method, params=params)
+
+        for _, route_mapping in self._route_mappings.items():
+            for caller, callee in route_mapping.mapping:
+                if caller == method:
+                    res = res | route_mapping.router.consumes(
+                        method=callee, params=params
+                    )
+
+        return res
 
     def _get_param_names(self, *, method, return_alias, ignore_self_request):
         """Get names of all metadata that can be consumed or routed by specified \
@@ -766,7 +925,7 @@ class MetadataRouter:
             )
 
         for name, route_mapping in self._route_mappings.items():
-            for callee, caller in route_mapping.mapping:
+            for caller, callee in route_mapping.mapping:
                 if caller == method:
                     res = res.union(
                         route_mapping.router._get_param_names(
@@ -775,7 +934,7 @@ class MetadataRouter:
                     )
         return res
 
-    def _route_params(self, *, params, method):
+    def _route_params(self, *, params, method, parent, caller):
         """Prepare the given parameters to be passed to the method.
 
         This is used when a router is used as a child object of another router.
@@ -787,22 +946,35 @@ class MetadataRouter:
 
         Parameters
         ----------
+        params : dict
+            A dictionary of provided metadata.
+
         method : str
             The name of the method for which the parameters are requested and
             routed.
 
-        params : dict
-            A dictionary of provided metadata.
+        parent : object
+            Parent class object, that routes the metadata.
+
+        caller : str
+            Method from the parent class object, where the metadata is routed from.
 
         Returns
         -------
         params : Bunch
-            A :class:`~utils.Bunch` of {prop: value} which can be given to the
+            A :class:`~sklearn.utils.Bunch` of {prop: value} which can be given to the
             corresponding method.
         """
         res = Bunch()
         if self._self_request:
-            res.update(self._self_request._route_params(params=params, method=method))
+            res.update(
+                self._self_request._route_params(
+                    params=params,
+                    method=method,
+                    parent=parent,
+                    caller=caller,
+                )
+            )
 
         param_names = self._get_param_names(
             method=method, return_alias=True, ignore_self_request=True
@@ -827,9 +999,9 @@ class MetadataRouter:
     def route_params(self, *, caller, params):
         """Return the input parameters requested by child objects.
 
-        The output of this method is a bunch, which includes the inputs for all
-        methods of each child object that are used in the router's `caller`
-        method.
+        The output of this method is a :class:`~sklearn.utils.Bunch`, which includes the
+        metadata for all methods of each child object that is used in the router's
+        `caller` method.
 
         If the router is also a consumer, it also checks for warnings of
         `self`'s/consumer's requested metadata.
@@ -847,8 +1019,8 @@ class MetadataRouter:
         Returns
         -------
         params : Bunch
-            A :class:`~utils.Bunch` of the form
-            ``{"object_name": {"method_name": {prop: value}}}`` which can be
+            A :class:`~sklearn.utils.Bunch` of the form
+            ``{"object_name": {"method_name": {params: value}}}`` which can be
             used to pass the required metadata to corresponding methods or
             corresponding child objects.
         """
@@ -860,17 +1032,20 @@ class MetadataRouter:
             router, mapping = route_mapping.router, route_mapping.mapping
 
             res[name] = Bunch()
-            for _callee, _caller in mapping:
+            for _caller, _callee in mapping:
                 if _caller == caller:
                     res[name][_callee] = router._route_params(
-                        params=params, method=_callee
+                        params=params,
+                        method=_callee,
+                        parent=self.owner,
+                        caller=caller,
                     )
         return res
 
     def validate_metadata(self, *, method, params):
         """Validate given metadata for a method.
 
-        This raises a ``ValueError`` if some of the passed metadata are not
+        This raises a ``TypeError`` if some of the passed metadata are not
         understood by child objects.
 
         Parameters
@@ -895,8 +1070,8 @@ class MetadataRouter:
         extra_keys = set(params.keys()) - param_names - self_params
         if extra_keys:
             raise TypeError(
-                f"{method} got unexpected argument(s) {extra_keys}, which are "
-                "not requested metadata in any object."
+                f"{self.owner}.{method} got unexpected argument(s) {extra_keys}, which"
+                " are not routed to any object."
             )
 
     def _serialize(self):
@@ -919,8 +1094,11 @@ class MetadataRouter:
 
     def __iter__(self):
         if self._self_request:
+            method_mapping = MethodMapping()
+            for method in METHODS:
+                method_mapping.add(caller=method, callee=method)
             yield "$self_request", RouterMappingPair(
-                mapping=MethodMapping.from_str("one-to-one"), router=self._self_request
+                mapping=method_mapping, router=self._self_request
             )
         for name, route_mapping in self._route_mappings.items():
             yield (name, route_mapping)
@@ -936,8 +1114,8 @@ def get_routing_for_object(obj=None):
     """Get a ``Metadata{Router, Request}`` instance from the given object.
 
     This function returns a
-    :class:`~utils.metadata_request.MetadataRouter` or a
-    :class:`~utils.metadata_request.MetadataRequest` from the given input.
+    :class:`~sklearn.utils.metadata_routing.MetadataRouter` or a
+    :class:`~sklearn.utils.metadata_routing.MetadataRequest` from the given input.
 
     This function always returns a copy or an instance constructed from the
     input, such that changing the output of this function will not change the
@@ -948,13 +1126,13 @@ def get_routing_for_object(obj=None):
     Parameters
     ----------
     obj : object
-        - If the object is already a
-            :class:`~utils.metadata_requests.MetadataRequest` or a
-            :class:`~utils.metadata_requests.MetadataRouter`, return a copy
-            of that.
         - If the object provides a `get_metadata_routing` method, return a copy
             of the output of that method.
-        - Returns an empty :class:`~utils.metadata_requests.MetadataRequest`
+        - If the object is already a
+            :class:`~sklearn.utils.metadata_routing.MetadataRequest` or a
+            :class:`~sklearn.utils.metadata_routing.MetadataRouter`, return a copy
+            of that.
+        - Returns an empty :class:`~sklearn.utils.metadata_routing.MetadataRequest`
             otherwise.
 
     Returns
@@ -1012,7 +1190,7 @@ this given alias instead of the original name.
         .. note::
             This method is only relevant if this estimator is used as a
             sub-estimator of a meta-estimator, e.g. used inside a
-            :class:`pipeline.Pipeline`. Otherwise it has no effect.
+            :class:`~sklearn.pipeline.Pipeline`. Otherwise it has no effect.
 
         Parameters
         ----------
@@ -1069,7 +1247,7 @@ class RequestMethod:
 
     def __get__(self, instance, owner):
         # we would want to have a method which accepts only the expected args
-        def func(**kw):
+        def func(*args, **kw):
             """Updates the request for provided parameters
 
             This docstring is overwritten below.
@@ -1084,19 +1262,36 @@ class RequestMethod:
 
             if self.validate_keys and (set(kw) - set(self.keys)):
                 raise TypeError(
-                    f"Unexpected args: {set(kw) - set(self.keys)}. Accepted arguments"
-                    f" are: {set(self.keys)}"
+                    f"Unexpected args: {set(kw) - set(self.keys)} in {self.name}. "
+                    f"Accepted arguments are: {set(self.keys)}"
                 )
 
-            requests = instance._get_metadata_request()
+            # This makes it possible to use the decorated method as an unbound method,
+            # for instance when monkeypatching.
+            # https://github.com/scikit-learn/scikit-learn/issues/28632
+            if instance is None:
+                _instance = args[0]
+                args = args[1:]
+            else:
+                _instance = instance
+
+            # Replicating python's behavior when positional args are given other than
+            # `self`, and `self` is only allowed if this method is unbound.
+            if args:
+                raise TypeError(
+                    f"set_{self.name}_request() takes 0 positional argument but"
+                    f" {len(args)} were given"
+                )
+
+            requests = _instance._get_metadata_request()
             method_metadata_request = getattr(requests, self.name)
 
             for prop, alias in kw.items():
                 if alias is not UNCHANGED:
                     method_metadata_request.add_request(param=prop, alias=alias)
-            instance._metadata_request = requests
+            _instance._metadata_request = requests
 
-            return instance
+            return _instance
 
         # Now we set the relevant attributes of the function so that it seems
         # like a normal method to the end user, with known expected arguments.
@@ -1138,6 +1333,27 @@ class _MetadataRequester:
 
     .. versionadded:: 1.3
     """
+
+    if TYPE_CHECKING:  # pragma: no cover
+        # This code is never run in runtime, but it's here for type checking.
+        # Type checkers fail to understand that the `set_{method}_request`
+        # methods are dynamically generated, and they complain that they are
+        # not defined. We define them here to make type checkers happy.
+        # During type checking analyzers assume this to be True.
+        # The following list of defined methods mirrors the list of methods
+        # in SIMPLE_METHODS.
+        # fmt: off
+        def set_fit_request(self, **kwargs): pass
+        def set_partial_fit_request(self, **kwargs): pass
+        def set_predict_request(self, **kwargs): pass
+        def set_predict_proba_request(self, **kwargs): pass
+        def set_predict_log_proba_request(self, **kwargs): pass
+        def set_decision_function_request(self, **kwargs): pass
+        def set_score_request(self, **kwargs): pass
+        def set_split_request(self, **kwargs): pass
+        def set_transform_request(self, **kwargs): pass
+        def set_inverse_transform_request(self, **kwargs): pass
+        # fmt: on
 
     def __init_subclass__(cls, **kwargs):
         """Set the ``set_{method}_request`` methods.
@@ -1182,8 +1398,8 @@ class _MetadataRequester:
         """Build the `MethodMetadataRequest` for a method using its signature.
 
         This method takes all arguments from the method signature and uses
-        ``None`` as their default request value, except ``X``, ``y``,
-        ``*args``, and ``**kwargs``.
+        ``None`` as their default request value, except ``X``, ``y``, ``Y``,
+        ``Xt``, ``yt``, ``*args``, and ``**kwargs``.
 
         Parameters
         ----------
@@ -1219,7 +1435,7 @@ class _MetadataRequester:
     def _get_default_requests(cls):
         """Collect default request values.
 
-        This method combines the information present in ``metadata_request__*``
+        This method combines the information present in ``__metadata_request__*``
         class attributes, as well as determining request keys from method
         signatures.
         """
@@ -1241,23 +1457,21 @@ class _MetadataRequester:
         # ``vars`` doesn't report the parent class attributes. We go through
         # the reverse of the MRO so that child classes have precedence over
         # their parents.
-        defaults = dict()
+        substr = "__metadata_request__"
         for base_class in reversed(inspect.getmro(cls)):
-            base_defaults = {
-                attr: value
-                for attr, value in vars(base_class).items()
-                if "__metadata_request__" in attr
-            }
-            defaults.update(base_defaults)
-        defaults = dict(sorted(defaults.items()))
-
-        for attr, value in defaults.items():
-            # we don't check for attr.startswith() since python prefixes attrs
-            # starting with __ with the `_ClassName`.
-            substr = "__metadata_request__"
-            method = attr[attr.index(substr) + len(substr) :]
-            for prop, alias in value.items():
-                getattr(requests, method).add_request(param=prop, alias=alias)
+            for attr, value in vars(base_class).items():
+                if substr not in attr:
+                    continue
+                # we don't check for attr.startswith() since python prefixes attrs
+                # starting with __ with the `_ClassName`.
+                method = attr[attr.index(substr) + len(substr) :]
+                for prop, alias in value.items():
+                    # Here we add request values specified via those class attributes
+                    # to the `MetadataRequest` object. Adding a request which already
+                    # exists will override the previous one. Since we go through the
+                    # MRO in reverse order, the one specified by the lowest most classes
+                    # in the inheritance tree are the ones which take effect.
+                    getattr(requests, method).add_request(param=prop, alias=alias)
 
         return requests
 
@@ -1270,7 +1484,7 @@ class _MetadataRequester:
         Returns
         -------
         request : MetadataRequest
-            A :class:`~.utils.metadata_requests.MetadataRequest` instance.
+            A :class:`~sklearn.utils.metadata_routing.MetadataRequest` instance.
         """
         if hasattr(self, "_metadata_request"):
             requests = get_routing_for_object(self._metadata_request)
@@ -1288,7 +1502,7 @@ class _MetadataRequester:
         Returns
         -------
         routing : MetadataRequest
-            A :class:`~utils.metadata_routing.MetadataRequest` encapsulating
+            A :class:`~sklearn.utils.metadata_routing.MetadataRequest` encapsulating
             routing information.
         """
         return self._get_metadata_request()
@@ -1300,64 +1514,79 @@ class _MetadataRequester:
 # given metadata. This is to minimize the boilerplate required in routers.
 
 
-def process_routing(obj, method, other_params, **kwargs):
+# Here the first two arguments are positional only which makes everything
+# passed as keyword argument a metadata. The first two args also have an `_`
+# prefix to reduce the chances of name collisions with the passed metadata, and
+# since they're positional only, users will never type those underscores.
+def process_routing(_obj, _method, /, **kwargs):
     """Validate and route input parameters.
 
     This function is used inside a router's method, e.g. :term:`fit`,
     to validate the metadata and handle the routing.
 
-    Assuming this signature: ``fit(self, X, y, sample_weight=None, **fit_params)``,
+    Assuming this signature of a router's fit method:
+    ``fit(self, X, y, sample_weight=None, **fit_params)``,
     a call to this function would be:
-    ``process_routing(self, fit_params, sample_weight=sample_weight)``.
+    ``process_routing(self, "fit", sample_weight=sample_weight, **fit_params)``.
+
+    Note that if routing is not enabled and ``kwargs`` is empty, then it
+    returns an empty routing where ``process_routing(...).ANYTHING.ANY_METHOD``
+    is always an empty dictionary.
 
     .. versionadded:: 1.3
 
     Parameters
     ----------
-    obj : object
+    _obj : object
         An object implementing ``get_metadata_routing``. Typically a
         meta-estimator.
 
-    method : str
+    _method : str
         The name of the router's method in which this function is called.
 
-    other_params : dict
-        A dictionary of extra parameters passed to the router's method,
-        e.g. ``**fit_params`` passed to a meta-estimator's :term:`fit`.
-
     **kwargs : dict
-        Parameters explicitly accepted and included in the router's method
-        signature.
+        Metadata to be routed.
 
     Returns
     -------
     routed_params : Bunch
         A :class:`~utils.Bunch` of the form ``{"object_name": {"method_name":
-        {prop: value}}}`` which can be used to pass the required metadata to
+        {params: value}}}`` which can be used to pass the required metadata to
+        A :class:`~sklearn.utils.Bunch` of the form ``{"object_name": {"method_name":
+        {params: value}}}`` which can be used to pass the required metadata to
         corresponding methods or corresponding child objects. The object names
         are those defined in `obj.get_metadata_routing()`.
     """
-    if not hasattr(obj, "get_metadata_routing"):
+    if not kwargs:
+        # If routing is not enabled and kwargs are empty, then we don't have to
+        # try doing any routing, we can simply return a structure which returns
+        # an empty dict on routed_params.ANYTHING.ANY_METHOD.
+        class EmptyRequest:
+            def get(self, name, default=None):
+                return Bunch(**{method: dict() for method in METHODS})
+
+            def __getitem__(self, name):
+                return Bunch(**{method: dict() for method in METHODS})
+
+            def __getattr__(self, name):
+                return Bunch(**{method: dict() for method in METHODS})
+
+        return EmptyRequest()
+
+    if not (hasattr(_obj, "get_metadata_routing") or isinstance(_obj, MetadataRouter)):
         raise AttributeError(
-            f"This {repr(obj.__class__.__name__)} has not implemented the routing"
-            " method `get_metadata_routing`."
+            f"The given object ({repr(_obj.__class__.__name__)}) needs to either"
+            " implement the routing method `get_metadata_routing` or be a"
+            " `MetadataRouter` instance."
         )
-    if method not in METHODS:
+    if _method not in METHODS:
         raise TypeError(
             f"Can only route and process input on these methods: {METHODS}, "
-            f"while the passed method is: {method}."
+            f"while the passed method is: {_method}."
         )
 
-    # We take the extra params (**fit_params) which is passed as `other_params`
-    # and add the explicitly passed parameters (passed as **kwargs) to it. This
-    # is equivalent to a code such as this in a router:
-    # if sample_weight is not None:
-    #     fit_params["sample_weight"] = sample_weight
-    all_params = other_params if other_params is not None else dict()
-    all_params.update(kwargs)
-
-    request_routing = get_routing_for_object(obj)
-    request_routing.validate_metadata(params=all_params, method=method)
-    routed_params = request_routing.route_params(params=all_params, caller=method)
+    request_routing = get_routing_for_object(_obj)
+    request_routing.validate_metadata(params=kwargs, method=_method)
+    routed_params = request_routing.route_params(params=kwargs, caller=_method)
 
     return routed_params

@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from joblib import parallel_backend
 from numpy.testing import assert_allclose
 
 from sklearn.compose import ColumnTransformer
@@ -22,13 +23,15 @@ from sklearn.metrics import (
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import KBinsDiscretizer, OneHotEncoder, StandardScaler, scale
-from sklearn.utils import parallel_backend
 from sklearn.utils._testing import _convert_container
 
 
 @pytest.mark.parametrize("n_jobs", [1, 2])
 @pytest.mark.parametrize("max_samples", [0.5, 1.0])
-def test_permutation_importance_correlated_feature_regression(n_jobs, max_samples):
+@pytest.mark.parametrize("sample_weight", [None, "ones"])
+def test_permutation_importance_correlated_feature_regression(
+    n_jobs, max_samples, sample_weight
+):
     # Make sure that feature highly correlated to the target have a higher
     # importance
     rng = np.random.RandomState(42)
@@ -39,6 +42,7 @@ def test_permutation_importance_correlated_feature_regression(n_jobs, max_sample
 
     X = np.hstack([X, y_with_little_noise])
 
+    weights = np.ones_like(y) if sample_weight == "ones" else sample_weight
     clf = RandomForestRegressor(n_estimators=10, random_state=42)
     clf.fit(X, y)
 
@@ -46,6 +50,7 @@ def test_permutation_importance_correlated_feature_regression(n_jobs, max_sample
         clf,
         X,
         y,
+        sample_weight=weights,
         n_repeats=n_repeats,
         random_state=rng,
         n_jobs=n_jobs,
@@ -432,9 +437,7 @@ def test_permutation_importance_sample_weight():
     # the second half of the samples approaches to infinity, the ratio of
     # the two features importance should equal to 2 on expectation (when using
     # mean absolutes error as the loss function).
-    w = np.hstack(
-        [np.repeat(10.0**10, n_half_samples), np.repeat(1.0, n_half_samples)]
-    )
+    w = np.hstack([np.repeat(10.0**10, n_half_samples), np.repeat(1.0, n_half_samples)])
     lr.fit(x, y, w)
     pi = permutation_importance(
         lr,

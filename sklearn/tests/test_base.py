@@ -12,13 +12,22 @@ from numpy.testing import assert_allclose
 
 import sklearn
 from sklearn import config_context, datasets
-from sklearn.base import BaseEstimator, TransformerMixin, clone, is_classifier
+from sklearn.base import (
+    BaseEstimator,
+    OutlierMixin,
+    TransformerMixin,
+    clone,
+    is_classifier,
+    is_clusterer,
+    is_regressor,
+)
+from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.exceptions import InconsistentVersionWarning
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.svm import SVC
+from sklearn.svm import SVC, SVR
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._set_output import _get_output_config
@@ -184,6 +193,13 @@ def test_clone_nan():
     assert clf.empty is clf2.empty
 
 
+def test_clone_dict():
+    # test that clone creates a clone of a dict
+    orig = {"a": MyEstimator()}
+    cloned = clone(orig)
+    assert orig["a"] is not cloned["a"]
+
+
 def test_clone_sparse_matrices():
     sparse_matrix_classes = [
         cls
@@ -246,12 +262,55 @@ def test_get_params():
         test.set_params(a__a=2)
 
 
-def test_is_classifier():
-    svc = SVC()
-    assert is_classifier(svc)
-    assert is_classifier(GridSearchCV(svc, {"C": [0.1, 1]}))
-    assert is_classifier(Pipeline([("svc", svc)]))
-    assert is_classifier(Pipeline([("svc_cv", GridSearchCV(svc, {"C": [0.1, 1]}))]))
+@pytest.mark.parametrize(
+    "estimator, expected_result",
+    [
+        (SVC(), True),
+        (GridSearchCV(SVC(), {"C": [0.1, 1]}), True),
+        (Pipeline([("svc", SVC())]), True),
+        (Pipeline([("svc_cv", GridSearchCV(SVC(), {"C": [0.1, 1]}))]), True),
+        (SVR(), False),
+        (GridSearchCV(SVR(), {"C": [0.1, 1]}), False),
+        (Pipeline([("svr", SVR())]), False),
+        (Pipeline([("svr_cv", GridSearchCV(SVR(), {"C": [0.1, 1]}))]), False),
+    ],
+)
+def test_is_classifier(estimator, expected_result):
+    assert is_classifier(estimator) == expected_result
+
+
+@pytest.mark.parametrize(
+    "estimator, expected_result",
+    [
+        (SVR(), True),
+        (GridSearchCV(SVR(), {"C": [0.1, 1]}), True),
+        (Pipeline([("svr", SVR())]), True),
+        (Pipeline([("svr_cv", GridSearchCV(SVR(), {"C": [0.1, 1]}))]), True),
+        (SVC(), False),
+        (GridSearchCV(SVC(), {"C": [0.1, 1]}), False),
+        (Pipeline([("svc", SVC())]), False),
+        (Pipeline([("svc_cv", GridSearchCV(SVC(), {"C": [0.1, 1]}))]), False),
+    ],
+)
+def test_is_regressor(estimator, expected_result):
+    assert is_regressor(estimator) == expected_result
+
+
+@pytest.mark.parametrize(
+    "estimator, expected_result",
+    [
+        (KMeans(), True),
+        (GridSearchCV(KMeans(), {"n_clusters": [3, 8]}), True),
+        (Pipeline([("km", KMeans())]), True),
+        (Pipeline([("km_cv", GridSearchCV(KMeans(), {"n_clusters": [3, 8]}))]), True),
+        (SVC(), False),
+        (GridSearchCV(SVC(), {"C": [0.1, 1]}), False),
+        (Pipeline([("svc", SVC())]), False),
+        (Pipeline([("svc_cv", GridSearchCV(SVC(), {"C": [0.1, 1]}))]), False),
+    ],
+)
+def test_is_clusterer(estimator, expected_result):
+    assert is_clusterer(estimator) == expected_result
 
 
 def test_set_params():
@@ -412,7 +471,7 @@ def test_pickle_version_warning_is_not_raised_with_matching_version():
     iris = datasets.load_iris()
     tree = DecisionTreeClassifier().fit(iris.data, iris.target)
     tree_pickle = pickle.dumps(tree)
-    assert b"version" in tree_pickle
+    assert b"_sklearn_version" in tree_pickle
     tree_restored = assert_no_warnings(pickle.loads, tree_pickle)
 
     # test that we can predict with the restored decision tree classifier
@@ -465,7 +524,7 @@ def test_pickle_version_warning_is_issued_when_no_version_info_in_pickle():
     tree = TreeNoVersion().fit(iris.data, iris.target)
 
     tree_pickle_noversion = pickle.dumps(tree)
-    assert b"version" not in tree_pickle_noversion
+    assert b"_sklearn_version" not in tree_pickle_noversion
     message = pickle_error_message.format(
         estimator="TreeNoVersion",
         old_version="pre-0.18",
@@ -821,7 +880,7 @@ def test_estimator_getstate_using_slots_error_message():
     [
         ("dataframe", "1.5.0"),
         ("pyarrow", "12.0.0"),
-        ("polars", "0.18.2"),
+        ("polars", "0.20.23"),
     ],
 )
 def test_dataframe_protocol(constructor_name, minversion):
@@ -854,3 +913,55 @@ def test_dataframe_protocol(constructor_name, minversion):
     df_bad = _convert_container(data, constructor_name, columns_name=bad_names)
     with pytest.raises(ValueError, match="The feature names should match"):
         no_op.transform(df_bad)
+
+
+@pytest.mark.usefixtures("enable_slep006")
+def test_transformer_fit_transform_with_metadata_in_transform():
+    """Test that having a transformer with metadata for transform raises a
+    warning when calling fit_transform."""
+
+    class CustomTransformer(BaseEstimator, TransformerMixin):
+        def fit(self, X, y=None, prop=None):
+            return self
+
+        def transform(self, X, prop=None):
+            return X
+
+    # passing the metadata to `fit_transform` should raise a warning since it
+    # could potentially be consumed by `transform`
+    with pytest.warns(UserWarning, match="`transform` method which consumes metadata"):
+        CustomTransformer().set_transform_request(prop=True).fit_transform(
+            [[1]], [1], prop=1
+        )
+
+    # not passing a metadata which can potentially be consumed by `transform` should
+    # not raise a warning
+    with warnings.catch_warnings(record=True) as record:
+        CustomTransformer().set_transform_request(prop=True).fit_transform([[1]], [1])
+        assert len(record) == 0
+
+
+@pytest.mark.usefixtures("enable_slep006")
+def test_outlier_mixin_fit_predict_with_metadata_in_predict():
+    """Test that having an OutlierMixin with metadata for predict raises a
+    warning when calling fit_predict."""
+
+    class CustomOutlierDetector(BaseEstimator, OutlierMixin):
+        def fit(self, X, y=None, prop=None):
+            return self
+
+        def predict(self, X, prop=None):
+            return X
+
+    # passing the metadata to `fit_predict` should raise a warning since it
+    # could potentially be consumed by `predict`
+    with pytest.warns(UserWarning, match="`predict` method which consumes metadata"):
+        CustomOutlierDetector().set_predict_request(prop=True).fit_predict(
+            [[1]], [1], prop=1
+        )
+
+    # not passing a metadata which can potentially be consumed by `predict` should
+    # not raise a warning
+    with warnings.catch_warnings(record=True) as record:
+        CustomOutlierDetector().set_predict_request(prop=True).fit_predict([[1]], [1])
+        assert len(record) == 0

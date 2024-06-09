@@ -15,9 +15,14 @@ from warnings import warn
 
 import numpy as np
 
-from ..utils import (
-    Bunch,
-    check_pandas_support,  # noqa
+from ..utils import Bunch
+from ..utils._optional_dependencies import check_pandas_support  # noqa
+from ..utils._param_validation import (
+    Integral,
+    Interval,
+    Real,
+    StrOptions,
+    validate_params,
 )
 from . import get_data_home
 from ._arff_parser import load_arff_from_gzip_file
@@ -300,12 +305,19 @@ def _get_data_info_by_name(
         )
         res = json_data["data"]["dataset"]
         if len(res) > 1:
-            warn(
+            first_version = version = res[0]["version"]
+            warning_msg = (
                 "Multiple active versions of the dataset matching the name"
-                " {name} exist. Versions may be fundamentally different, "
-                "returning version"
-                " {version}.".format(name=name, version=res[0]["version"])
+                f" {name} exist. Versions may be fundamentally different, "
+                f"returning version {first_version}. "
+                "Available versions:\n"
             )
+            for r in res:
+                warning_msg += f"- version {r['version']}, status: {r['status']}\n"
+                warning_msg += (
+                    f"  url: https://www.openml.org/search?type=data&id={r['did']}\n"
+                )
+            warn(warning_msg)
         return res[0]
 
     # an integer version has been provided
@@ -736,19 +748,38 @@ def _valid_data_column_names(features_list, target_columns):
     return valid_data_column_names
 
 
+@validate_params(
+    {
+        "name": [str, None],
+        "version": [Interval(Integral, 1, None, closed="left"), StrOptions({"active"})],
+        "data_id": [Interval(Integral, 1, None, closed="left"), None],
+        "data_home": [str, os.PathLike, None],
+        "target_column": [str, list, None],
+        "cache": [bool],
+        "return_X_y": [bool],
+        "as_frame": [bool, StrOptions({"auto"})],
+        "n_retries": [Interval(Integral, 1, None, closed="left")],
+        "delay": [Interval(Real, 0.0, None, closed="neither")],
+        "parser": [
+            StrOptions({"auto", "pandas", "liac-arff"}),
+        ],
+        "read_csv_kwargs": [dict, None],
+    },
+    prefer_skip_nested_validation=True,
+)
 def fetch_openml(
     name: Optional[str] = None,
     *,
     version: Union[str, int] = "active",
     data_id: Optional[int] = None,
-    data_home: Optional[str] = None,
+    data_home: Optional[Union[str, os.PathLike]] = None,
     target_column: Optional[Union[str, List]] = "default-target",
     cache: bool = True,
     return_X_y: bool = False,
     as_frame: Union[str, bool] = "auto",
     n_retries: int = 3,
     delay: float = 1.0,
-    parser: Optional[str] = "warn",
+    parser: str = "auto",
     read_csv_kwargs: Optional[Dict] = None,
 ):
     """Fetch dataset from openml by name or dataset id.
@@ -787,7 +818,7 @@ def fetch_openml(
         dataset. If data_id is not given, name (and potential version) are
         used to obtain a dataset.
 
-    data_home : str, default=None
+    data_home : str or path-like, default=None
         Specify another download and cache folder for the data sets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
@@ -835,28 +866,25 @@ def fetch_openml(
     delay : float, default=1.0
         Number of seconds between retries.
 
-    parser : {"auto", "pandas", "liac-arff"}, default="liac-arff"
+    parser : {"auto", "pandas", "liac-arff"}, default="auto"
         Parser used to load the ARFF file. Two parsers are implemented:
 
         - `"pandas"`: this is the most efficient parser. However, it requires
           pandas to be installed and can only open dense datasets.
         - `"liac-arff"`: this is a pure Python ARFF parser that is much less
-          memory- and CPU-efficient. It deals with sparse ARFF dataset.
+          memory- and CPU-efficient. It deals with sparse ARFF datasets.
 
-        If `"auto"` (future default), the parser is chosen automatically such that
-        `"liac-arff"` is selected for sparse ARFF datasets, otherwise
-        `"pandas"` is selected.
+        If `"auto"`, the parser is chosen automatically such that `"liac-arff"`
+        is selected for sparse ARFF datasets, otherwise `"pandas"` is selected.
 
         .. versionadded:: 1.2
         .. versionchanged:: 1.4
-           The default value of `parser` will change from `"liac-arff"` to
-           `"auto"` in 1.4. You can set `parser="auto"` to silence this
-           warning. Therefore, an `ImportError` will be raised from 1.4 if
-           the dataset is dense and pandas is not installed.
+           The default value of `parser` changes from `"liac-arff"` to
+           `"auto"`.
 
     read_csv_kwargs : dict, default=None
         Keyword arguments passed to :func:`pandas.read_csv` when loading the data
-        from a ARFF file and using the pandas parser. It can allows to
+        from a ARFF file and using the pandas parser. It can allow to
         overwrite some default parameters.
 
         .. versionadded:: 1.3
@@ -929,6 +957,34 @@ def fetch_openml(
     returns ordinally encoded data where the categories are provided in the
     attribute `categories` of the `Bunch` instance. Instead, `"pandas"` returns
     a NumPy array were the categories are not encoded.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import fetch_openml
+    >>> adult = fetch_openml("adult", version=2)  # doctest: +SKIP
+    >>> adult.frame.info()  # doctest: +SKIP
+    <class 'pandas.core.frame.DataFrame'>
+    RangeIndex: 48842 entries, 0 to 48841
+    Data columns (total 15 columns):
+     #   Column          Non-Null Count  Dtype
+    ---  ------          --------------  -----
+     0   age             48842 non-null  int64
+     1   workclass       46043 non-null  category
+     2   fnlwgt          48842 non-null  int64
+     3   education       48842 non-null  category
+     4   education-num   48842 non-null  int64
+     5   marital-status  48842 non-null  category
+     6   occupation      46033 non-null  category
+     7   relationship    48842 non-null  category
+     8   race            48842 non-null  category
+     9   sex             48842 non-null  category
+     10  capital-gain    48842 non-null  int64
+     11  capital-loss    48842 non-null  int64
+     12  hours-per-week  48842 non-null  int64
+     13  native-country  47985 non-null  category
+     14  class           48842 non-null  category
+    dtypes: category(9), int64(6)
+    memory usage: 2.7 MB
     """
     if cache is False:
         # no caching will be applied
@@ -988,34 +1044,6 @@ def fetch_openml(
             "unusable. Warning: {}".format(data_description["warning"])
         )
 
-    # TODO(1.4): remove "warn" from the valid parser
-    valid_parsers = ("auto", "pandas", "liac-arff", "warn")
-    if parser not in valid_parsers:
-        raise ValueError(
-            f"`parser` must be one of {', '.join(repr(p) for p in valid_parsers)}. Got"
-            f" {parser!r} instead."
-        )
-
-    if parser == "warn":
-        # TODO(1.4): remove this warning
-        parser = "liac-arff"
-        warn(
-            (
-                "The default value of `parser` will change from `'liac-arff'` to"
-                " `'auto'` in 1.4. You can set `parser='auto'` to silence this warning."
-                " Therefore, an `ImportError` will be raised from 1.4 if the dataset is"
-                " dense and pandas is not installed. Note that the pandas parser may"
-                " return different data types. See the Notes Section in fetch_openml's"
-                " API doc for details."
-            ),
-            FutureWarning,
-        )
-
-    if as_frame not in ("auto", True, False):
-        raise ValueError(
-            f"`as_frame` must be one of 'auto', True, or False. Got {as_frame} instead."
-        )
-
     return_sparse = data_description["format"].lower() == "sparse_arff"
     as_frame = not return_sparse if as_frame == "auto" else as_frame
     if parser == "auto":
@@ -1023,7 +1051,7 @@ def fetch_openml(
     else:
         parser_ = parser
 
-    if as_frame or parser_ == "pandas":
+    if parser_ == "pandas":
         try:
             check_pandas_support("`fetch_openml`")
         except ImportError as exc:
@@ -1033,26 +1061,12 @@ def fetch_openml(
                     "Alternatively, explicitly set `as_frame=False` and "
                     "`parser='liac-arff'`."
                 )
-                raise ImportError(err_msg) from exc
             else:
                 err_msg = (
-                    f"Using `parser={parser_!r}` requires pandas to be installed. "
-                    "Alternatively, explicitly set `parser='liac-arff'`."
+                    f"Using `parser={parser!r}` wit dense data requires pandas to be "
+                    "installed. Alternatively, explicitly set `parser='liac-arff'`."
                 )
-                if parser == "auto":
-                    # TODO(1.4): In version 1.4, we will raise an error instead of
-                    # a warning.
-                    warn(
-                        (
-                            "From version 1.4, `parser='auto'` with `as_frame=False` "
-                            "will use pandas. Either install pandas or set explicitly "
-                            "`parser='liac-arff'` to preserve the current behavior."
-                        ),
-                        FutureWarning,
-                    )
-                    parser_ = "liac-arff"
-                else:
-                    raise ImportError(err_msg) from exc
+            raise ImportError(err_msg) from exc
 
     if return_sparse:
         if as_frame:
@@ -1093,14 +1107,9 @@ def fetch_openml(
         target_columns = [target_column]
     elif target_column is None:
         target_columns = []
-    elif isinstance(target_column, list):
-        target_columns = target_column
     else:
-        raise TypeError(
-            "Did not recognize type of target_column"
-            "Should be str, list or None. Got: "
-            "{}".format(type(target_column))
-        )
+        # target_column already is of type list
+        target_columns = target_column
     data_columns = _valid_data_column_names(features_list, target_columns)
 
     shape: Optional[Tuple[int, int]]
