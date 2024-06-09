@@ -397,19 +397,37 @@ class _NumPyAPIWrapper:
         else:
             return numpy.asarray(x, dtype=dtype)
 
-    def unique_inverse(self, x):
-        return numpy.unique(x, return_inverse=True)
+    def unique_inverse(self, x, *, sample_weight=None):
+        if sample_weight is None:
+            return numpy.unique(x, return_inverse=True)
+        else:
+            return _unique_groupby_sum(x, sample_weight, return_inverse=True)
 
-    def unique_counts(self, x):
-        return numpy.unique(x, return_counts=True)
+    def unique_counts(self, x, *, sample_weight=None):
+        if sample_weight is None:
+            return numpy.unique(x, return_counts=True)
+        else:
+            return _unique_groupby_sum(x, sample_weight, return_counts=True)
 
-    def unique_values(self, x):
-        return numpy.unique(x)
+    def unique_values(self, x, *, sample_weight=None):
+        if sample_weight is None:
+            return numpy.unique(x)
+        else:
+            return _unique_groupby_sum(x, sample_weight)
 
-    def unique_all(self, x):
-        return numpy.unique(
-            x, return_index=True, return_inverse=True, return_counts=True
-        )
+    def unique_all(self, x, *, sample_weight=None):
+        if sample_weight is None:
+            return numpy.unique(
+                x, return_index=True, return_inverse=True, return_counts=True
+            )
+        else:
+            return _unique_groupby_sum(
+                x,
+                sample_weight,
+                return_index=True,
+                return_inverse=True,
+                return_counts=True,
+            )
 
     def concat(self, arrays, *, axis=None):
         return numpy.concatenate(arrays, axis=axis)
@@ -967,3 +985,43 @@ def _in1d(ar1, ar2, xp, assume_unique=False, invert=False):
         return ret[: ar1.shape[0]]
     else:
         return xp.take(ret, rev_idx, axis=0)
+
+
+def _unique_groupby_sum(
+    arr,
+    sample_weight,
+    return_index=False,
+    return_inverse=False,
+    return_counts=False,
+):
+    """This functions behaves like numpy.unique but it counts the values of `arr`
+    taking into acount `sample_weight`."""
+    if sample_weight is None:
+        sample_weight = numpy.ones(len(arr))
+    # TODO ohe_sw: sample_weight = _check_sample_weight(sample_weight, arr)
+    # gave me circular import. What should I do?
+
+    sorted_indices = numpy.argsort(arr)
+    sorted_arr = arr[sorted_indices]
+    sorted_sample_weight = sample_weight[sorted_indices]
+
+    unique_elements, unique_indices = numpy.unique(sorted_arr, return_index=True)
+    _, unique_inverse = numpy.unique(arr, return_inverse=True)
+
+    unique_indices = numpy.append(unique_indices, len(arr))
+    subarrays = numpy.split(sorted_sample_weight, unique_indices[1:])
+    group_sums = numpy.array(
+        [numpy.sum(subarray.astype(float)) for subarray in subarrays[:-1]]
+    )
+
+    results = [unique_elements]
+    if return_index:
+        results.append(unique_indices)
+    if return_inverse:
+        results.append(unique_inverse)
+    if return_counts:
+        results.append(group_sums)
+
+    if len(results) > 1:
+        return tuple(results)
+    return results[0]

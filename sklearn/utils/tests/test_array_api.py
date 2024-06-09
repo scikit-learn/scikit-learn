@@ -20,6 +20,7 @@ from sklearn.utils._array_api import (
     _nanmin,
     _NumPyAPIWrapper,
     _ravel,
+    _unique_groupby_sum,
     device,
     get_namespace,
     get_namespace_and_device,
@@ -566,3 +567,27 @@ def test_get_namespace_and_device():
         assert namespace is xp_torch
         assert is_array_api
         assert device == some_torch_tensor.device
+
+
+@pytest.mark.parametrize(
+    "arr, sample_weight, expected_unique, expected_sum",
+    [
+        (
+            numpy.array([1] * 3 + [2] * 2 + [3]),
+            numpy.array([0, 1, 2, 3, 4, 5]),
+            [1, 2, 3],
+            [3, 7, 5],
+        ),
+        (
+            numpy.array([3] + [2] * 2 + [1] * 3),
+            numpy.array([5, 3, 4, 2, 1, 0]),
+            [1, 2, 3],
+            [3, 7, 5],
+        ),
+    ],
+)
+def test_unique_groupby_sum(arr, sample_weight, expected_unique, expected_sum):
+    # TODO ohe_sw: Do more parametrize scenarios
+    unique, groupby_sum = _unique_groupby_sum(arr, sample_weight, return_counts=True)
+    assert_array_equal(groupby_sum, expected_sum)
+    assert_array_equal(unique, expected_unique)

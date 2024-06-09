@@ -4,13 +4,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
 
-from sklearn.utils._encode import (
-    _check_unknown,
-    _encode,
-    _get_counts,
-    _unique,
-    _unique_groupby_sum,
-)
+from sklearn.utils._encode import _check_unknown, _encode, _get_counts, _unique
 
 
 @pytest.mark.parametrize(
@@ -278,27 +272,3 @@ def test_check_unknown_with_both_missing_values():
 def test_get_counts(values, uniques, expected_counts):
     counts = _get_counts(values, uniques)
     assert_array_equal(counts, expected_counts)
-
-
-@pytest.mark.parametrize(
-    "arr, sample_weight, expected_unique, expected_sum",
-    [
-        (
-            np.array([1] * 3 + [2] * 2 + [3]),
-            np.array([0, 1, 2, 3, 4, 5]),
-            [1, 2, 3],
-            [3, 7, 5],
-        ),
-        (
-            np.array([3] + [2] * 2 + [1] * 3),
-            np.array([5, 3, 4, 2, 1, 0]),
-            [1, 2, 3],
-            [3, 7, 5],
-        ),
-    ],
-)
-def test_unique_groupby_sum(arr, sample_weight, expected_unique, expected_sum):
-    # TODO ohe_sw: Do more parametrize scenarios
-    unique, groupby_sum = _unique_groupby_sum(arr, sample_weight, return_counts=True)
-    assert_array_equal(groupby_sum, expected_sum)
-    assert_array_equal(unique, expected_unique)
