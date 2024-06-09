@@ -4,10 +4,12 @@ A comparison of different methods in GLM
 Data comes from a random square matrix.
 
 """
-from datetime import datetime
-import numpy as np
-from sklearn import linear_model
 
+from datetime import datetime
+
+import numpy as np
+
+from sklearn import linear_model
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt

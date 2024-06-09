@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 =========================================================
 The Digit Dataset
@@ -10,7 +9,7 @@ In order to utilize an 8x8 figure like this, we'd have to
 first transform it into a feature vector with length 64.
 
 See `here
-<https://archive.ics.uci.edu/ml/datasets/Pen-Based+Recognition+of+Handwritten+Digits>`_
+<https://archive.ics.uci.edu/dataset/81/pen+based+recognition+of+handwritten+digits>`_
 for more information about this dataset.
 
 """
@@ -19,9 +18,9 @@ for more information about this dataset.
 # Modified for documentation by Jaques Grobler
 # License: BSD 3 clause
 
-from sklearn import datasets
-
 import matplotlib.pyplot as plt
+
+from sklearn import datasets
 
 # Load the digits dataset
 digits = datasets.load_digits()

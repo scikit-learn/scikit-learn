@@ -6,18 +6,24 @@ import warnings
 
 import numpy as np
 
-from ..base import BaseEstimator, RegressorMixin, clone
-from ..utils.validation import check_is_fitted
-from ..utils._tags import _safe_tags
-from ..utils import check_array, _safe_indexing
-from ..utils._param_validation import HasMethods
-from ..preprocessing import FunctionTransformer
+from ..base import BaseEstimator, RegressorMixin, _fit_context, clone
 from ..exceptions import NotFittedError
+from ..preprocessing import FunctionTransformer
+from ..utils import _safe_indexing, check_array
+from ..utils._param_validation import HasMethods
+from ..utils._tags import _safe_tags
+from ..utils.metadata_routing import (
+    _raise_for_unsupported_routing,
+    _RoutingNotSupportedMixin,
+)
+from ..utils.validation import check_is_fitted
 
 __all__ = ["TransformedTargetRegressor"]
 
 
-class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
+class TransformedTargetRegressor(
+    _RoutingNotSupportedMixin, RegressorMixin, BaseEstimator
+):
     """Meta-estimator to regress on a transformed target.
 
     Useful for applying a non-linear transformation to the target `y` in
@@ -63,15 +69,16 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
     func : function, default=None
         Function to apply to `y` before passing to :meth:`fit`. Cannot be set
-        at the same time as `transformer`. The function needs to return a
-        2-dimensional array. If `func is None`, the function used will be the
-        identity function.
+        at the same time as `transformer`. If `func is None`, the function used will be
+        the identity function. If `func` is set, `inverse_func` also needs to be
+        provided. The function needs to return a 2-dimensional array.
 
     inverse_func : function, default=None
         Function to apply to the prediction of the regressor. Cannot be set at
-        the same time as `transformer`. The function needs to return a
-        2-dimensional array. The inverse function is used to return
-        predictions to the same space of the original training labels.
+        the same time as `transformer`. The inverse function is used to return
+        predictions to the same space of the original training labels. If
+        `inverse_func` is set, `func` also needs to be provided. The inverse
+        function needs to return a 2-dimensional array.
 
     check_inverse : bool, default=True
         Whether to check that `transform` followed by `inverse_transform`
@@ -108,9 +115,6 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     to be used by scikit-learn transformers. At the time of prediction, the
     output will be reshaped to a have the same number of dimensions as `y`.
 
-    See :ref:`examples/compose/plot_transformed_target.py
-    <sphx_glr_auto_examples_compose_plot_transformed_target.py>`.
-
     Examples
     --------
     >>> import numpy as np
@@ -126,6 +130,9 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     1.0
     >>> tt.regressor_.coef_
     array([2.])
+
+    For a more detailed example use case refer to
+    :ref:`sphx_glr_auto_examples_compose_plot_transformed_target.py`.
     """
 
     _parameter_constraints: dict = {
@@ -167,9 +174,18 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         elif self.transformer is not None:
             self.transformer_ = clone(self.transformer)
         else:
-            if self.func is not None and self.inverse_func is None:
+            if (self.func is not None and self.inverse_func is None) or (
+                self.func is None and self.inverse_func is not None
+            ):
+                lacking_param, existing_param = (
+                    ("func", "inverse_func")
+                    if self.func is None
+                    else ("inverse_func", "func")
+                )
                 raise ValueError(
-                    "When 'func' is provided, 'inverse_func' must also be provided"
+                    f"When '{existing_param}' is provided, '{lacking_param}' must also"
+                    f" be provided. If {lacking_param} is supposed to be the default,"
+                    " you need to explicitly pass it the identity function."
                 )
             self.transformer_ = FunctionTransformer(
                 func=self.func,
@@ -197,6 +213,10 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
                     UserWarning,
                 )
 
+    @_fit_context(
+        # TransformedTargetRegressor.regressor/transformer are not validated yet.
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, **fit_params):
         """Fit the model according to the given training data.
 
@@ -218,7 +238,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
+        _raise_for_unsupported_routing(self, "fit", **fit_params)
         if y is None:
             raise ValueError(
                 f"This {self.__class__.__name__} estimator "

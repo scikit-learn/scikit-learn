@@ -140,11 +140,11 @@ from collections import defaultdict
 import pandas as pd
 
 from sklearn.metrics import (
+    brier_score_loss,
+    f1_score,
+    log_loss,
     precision_score,
     recall_score,
-    f1_score,
-    brier_score_loss,
-    log_loss,
     roc_auc_score,
 )
 

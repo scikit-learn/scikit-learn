@@ -60,18 +60,18 @@ until all samples have labels or no new samples are selected in that iteration.
    When using the self-training classifier, the
    :ref:`calibration <calibration>` of the classifier is important.
 
-.. topic:: Examples
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_semi_supervised_plot_self_training_varying_threshold.py`
-  * :ref:`sphx_glr_auto_examples_semi_supervised_plot_semi_supervised_versus_svm_iris.py`
+* :ref:`sphx_glr_auto_examples_semi_supervised_plot_self_training_varying_threshold.py`
+* :ref:`sphx_glr_auto_examples_semi_supervised_plot_semi_supervised_versus_svm_iris.py`
 
-.. topic:: References
+.. rubric:: References
 
-    .. [1] :doi:`"Unsupervised word sense disambiguation rivaling supervised methods"
-       <10.3115/981658.981684>`
-       David Yarowsky, Proceedings of the 33rd annual meeting on Association for
-       Computational Linguistics (ACL '95). Association for Computational Linguistics,
-       Stroudsburg, PA, USA, 189-196.
+.. [1] :doi:`"Unsupervised word sense disambiguation rivaling supervised methods"
+    <10.3115/981658.981684>`
+    David Yarowsky, Proceedings of the 33rd annual meeting on Association for
+    Computational Linguistics (ACL '95). Association for Computational Linguistics,
+    Stroudsburg, PA, USA, 189-196.
 
 .. _label_propagation:
 
@@ -121,11 +121,11 @@ Label propagation models have two built-in kernel methods. Choice of kernel
 effects both scalability and performance of the algorithms. The following are
 available:
 
-  * rbf (:math:`\exp(-\gamma |x-y|^2), \gamma > 0`). :math:`\gamma` is
-    specified by keyword gamma.
+* rbf (:math:`\exp(-\gamma |x-y|^2), \gamma > 0`). :math:`\gamma` is
+  specified by keyword gamma.
 
-  * knn (:math:`1[x' \in kNN(x)]`). :math:`k` is specified by keyword
-    n_neighbors.
+* knn (:math:`1[x' \in kNN(x)]`). :math:`k` is specified by keyword
+  n_neighbors.
 
 The RBF kernel will produce a fully connected graph which is represented in memory
 by a dense matrix. This matrix may be very large and combined with the cost of
@@ -134,18 +134,18 @@ algorithm can lead to prohibitively long running times. On the other hand,
 the KNN kernel will produce a much more memory-friendly sparse matrix
 which can drastically reduce running times.
 
-.. topic:: Examples
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_semi_supervised_plot_semi_supervised_versus_svm_iris.py`
-  * :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_structure.py`
-  * :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_digits.py`
-  * :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_digits_active_learning.py`
+* :ref:`sphx_glr_auto_examples_semi_supervised_plot_semi_supervised_versus_svm_iris.py`
+* :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_structure.py`
+* :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_digits.py`
+* :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_digits_active_learning.py`
 
-.. topic:: References
+.. rubric:: References
 
-    [2] Yoshua Bengio, Olivier Delalleau, Nicolas Le Roux. In Semi-Supervised
-    Learning (2006), pp. 193-216
+[2] Yoshua Bengio, Olivier Delalleau, Nicolas Le Roux. In Semi-Supervised
+Learning (2006), pp. 193-216
 
-    [3] Olivier Delalleau, Yoshua Bengio, Nicolas Le Roux. Efficient
-    Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
-    https://www.gatsby.ucl.ac.uk/aistats/fullpapers/204.pdf
+[3] Olivier Delalleau, Yoshua Bengio, Nicolas Le Roux. Efficient
+Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
+https://www.gatsby.ucl.ac.uk/aistats/fullpapers/204.pdf

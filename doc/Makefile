@@ -2,7 +2,7 @@
 #
 
 # You can set these variables from the command line.
-SPHINXOPTS    =
+SPHINXOPTS    = -T
 SPHINXBUILD  ?= sphinx-build
 PAPER         =
 BUILDDIR      = _build
@@ -14,7 +14,7 @@ endif
 ifeq ($(CI), true)
     # On CircleCI using -j2 does not seem to speed up the html-noplot build
     SPHINX_NUMJOBS_NOPLOT_DEFAULT=1
-else ($(shell uname), Darwin)
+else ifeq ($(shell uname), Darwin)
     # Avoid stalling issues on MacOS
     SPHINX_NUMJOBS_NOPLOT_DEFAULT=1
 else
@@ -24,7 +24,7 @@ endif
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
-ALLSPHINXOPTS   = -T -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS)\
+ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS)\
     $(EXAMPLES_PATTERN_OPTS) .
 
 
@@ -47,9 +47,17 @@ help:
 
 clean:
 	-rm -rf $(BUILDDIR)/*
+	@echo "Removed $(BUILDDIR)/*"
 	-rm -rf auto_examples/
+	@echo "Removed auto_examples/"
 	-rm -rf generated/*
+	@echo "Removed generated/"
 	-rm -rf modules/generated/
+	@echo "Removed modules/generated/"
+	-rm -rf css/styles/
+	@echo "Removed css/styles/"
+	-rm -rf api/*.rst
+	@echo "Removed api/*.rst"
 
 # Default to SPHINX_NUMJOBS=1 for full documentation build. Using
 # SPHINX_NUMJOBS!=1 may actually slow down the build, or cause weird issues in

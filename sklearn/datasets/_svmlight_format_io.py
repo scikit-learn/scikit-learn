@@ -15,33 +15,20 @@ libsvm command line programs.
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
-from contextlib import closing
-import io
 import os.path
+from contextlib import closing
+from numbers import Integral
 
 import numpy as np
 import scipy.sparse as sp
-from numbers import Integral
 
 from .. import __version__
-
-from ..utils import check_array, IS_PYPY
-from ..utils._param_validation import validate_params, HasMethods, Interval, StrOptions
-
-if not IS_PYPY:
-    from ._svmlight_format_fast import (
-        _load_svmlight_file,
-        _dump_svmlight_file,
-    )
-else:
-
-    def _load_svmlight_file(*args, **kwargs):
-        raise NotImplementedError(
-            "load_svmlight_file is currently not "
-            "compatible with PyPy (see "
-            "https://github.com/scikit-learn/scikit-learn/issues/11543 "
-            "for the status updates)."
-        )
+from ..utils import check_array
+from ..utils._param_validation import HasMethods, Interval, StrOptions, validate_params
+from ._svmlight_format_fast import (
+    _dump_svmlight_file,
+    _load_svmlight_file,
+)
 
 
 @validate_params(
@@ -59,7 +46,8 @@ else:
         "query_id": ["boolean"],
         "offset": [Interval(Integral, 0, None, closed="left")],
         "length": [Integral],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def load_svmlight_file(
     f,
@@ -177,7 +165,7 @@ def load_svmlight_file(
     To use joblib.Memory to cache the svmlight file::
 
         from joblib import Memory
-        from .datasets import load_svmlight_file
+        from sklearn.datasets import load_svmlight_file
         mem = Memory("./mycache")
 
         @mem.cache
@@ -203,7 +191,7 @@ def load_svmlight_file(
 
 def _gen_open(f):
     if isinstance(f, int):  # file descriptor
-        return io.open(f, "rb", closefd=False)
+        return open(f, "rb", closefd=False)
     elif isinstance(f, os.PathLike):
         f = os.fspath(f)
     elif not isinstance(f, str):
@@ -261,7 +249,8 @@ def _open_and_load(f, dtype, multilabel, zero_based, query_id, offset=0, length=
         "query_id": ["boolean"],
         "offset": [Interval(Integral, 0, None, closed="left")],
         "length": [Integral],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def load_svmlight_files(
     files,
@@ -359,6 +348,23 @@ def load_svmlight_files(
     matrix X_test, it is essential that X_train and X_test have the same
     number of features (X_train.shape[1] == X_test.shape[1]). This may not
     be the case if you load the files individually with load_svmlight_file.
+
+    Examples
+    --------
+    To use joblib.Memory to cache the svmlight file::
+
+        from joblib import Memory
+        from sklearn.datasets import load_svmlight_file
+        mem = Memory("./mycache")
+
+        @mem.cache
+        def get_data():
+            data_train, target_train, data_test, target_test = load_svmlight_files(
+                ["svmlight_file_train", "svmlight_file_test"]
+            )
+            return data_train, target_train, data_test, target_test
+
+        X_train, y_train, X_test, y_test = get_data()
     """
     if (offset != 0 or length > 0) and zero_based == "auto":
         # disable heuristic search to avoid getting inconsistent results on
@@ -450,7 +456,8 @@ def _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id):
         "comment": [str, bytes, None],
         "query_id": ["array-like", None],
         "multilabel": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def dump_svmlight_file(
     X,
@@ -508,6 +515,13 @@ def dump_svmlight_file(
 
         .. versionadded:: 0.17
            parameter `multilabel` to support multilabel datasets.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import dump_svmlight_file, make_classification
+    >>> X, y = make_classification(random_state=0)
+    >>> output_file = "my_dataset.svmlight"
+    >>> dump_svmlight_file(X, y, output_file)  # doctest: +SKIP
     """
     if comment is not None:
         # Convert comment string to list of lines in UTF-8.

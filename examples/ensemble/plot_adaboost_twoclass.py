@@ -21,14 +21,13 @@ with a decision score above some value.
 #
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from sklearn.ensemble import AdaBoostClassifier
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.datasets import make_gaussian_quantiles
+from sklearn.ensemble import AdaBoostClassifier
 from sklearn.inspection import DecisionBoundaryDisplay
-
+from sklearn.tree import DecisionTreeClassifier
 
 # Construct dataset
 X1, y1 = make_gaussian_quantiles(
@@ -75,7 +74,6 @@ for i, n, c in zip(range(2), class_names, plot_colors):
         X[idx, 0],
         X[idx, 1],
         c=c,
-        cmap=plt.cm.Paired,
         s=20,
         edgecolor="k",
         label="Class %s" % n,

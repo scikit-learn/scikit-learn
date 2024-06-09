@@ -1,5 +1,4 @@
-"""Truncated SVD for sparse matrices, aka latent semantic analysis (LSA).
-"""
+"""Truncated SVD for sparse matrices, aka latent semantic analysis (LSA)."""
 
 # Author: Lars Buitinck
 #         Olivier Grisel <olivier.grisel@ensta.org>
@@ -7,17 +6,23 @@
 # License: 3-clause BSD.
 
 from numbers import Integral, Real
+
 import numpy as np
 import scipy.sparse as sp
 from scipy.sparse.linalg import svds
 
-from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
+from ..base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
 from ..utils import check_array, check_random_state
 from ..utils._arpack import _init_arpack_v0
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
 from ..utils.sparsefuncs import mean_variance_axis
 from ..utils.validation import check_is_fitted
-from ..utils._param_validation import Interval, StrOptions
 
 __all__ = ["TruncatedSVD"]
 
@@ -200,10 +205,10 @@ class TruncatedSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
         self : object
             Returns the transformer object.
         """
-        # param validation is done in fit_transform
         self.fit_transform(X)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None):
         """Fit model to X and perform dimensionality reduction on X.
 
@@ -220,7 +225,6 @@ class TruncatedSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
         X_new : ndarray of shape (n_samples, n_components)
             Reduced version of X. This will always be a dense array.
         """
-        self._validate_params()
         X = self._validate_data(X, accept_sparse=["csr", "csc"], ensure_min_features=2)
         random_state = check_random_state(self.random_state)
 
@@ -230,7 +234,8 @@ class TruncatedSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
             # svds doesn't abide by scipy.linalg.svd/randomized_svd
             # conventions, so reverse its outputs.
             Sigma = Sigma[::-1]
-            U, VT = svd_flip(U[:, ::-1], VT[::-1])
+            # u_based_decision=False is needed to be consistent with PCA.
+            U, VT = svd_flip(U[:, ::-1], VT[::-1], u_based_decision=False)
 
         elif self.algorithm == "randomized":
             if self.n_components > X.shape[1]:
@@ -245,7 +250,9 @@ class TruncatedSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
                 n_oversamples=self.n_oversamples,
                 power_iteration_normalizer=self.power_iteration_normalizer,
                 random_state=random_state,
+                flip_sign=False,
             )
+            U, VT = svd_flip(U, VT, u_based_decision=False)
 
         self.components_ = VT
 

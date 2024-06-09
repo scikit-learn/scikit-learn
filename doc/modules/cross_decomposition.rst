@@ -92,38 +92,35 @@ Step *a)* may be performed in two ways: either by computing the whole SVD of
 values, or by directly computing the singular vectors using the power method (cf section 11.3 in [1]_),
 which corresponds to the `'nipals'` option of the `algorithm` parameter.
 
+.. dropdown:: Transforming data
 
-Transforming data
-^^^^^^^^^^^^^^^^^
+  To transform :math:`X` into :math:`\bar{X}`, we need to find a projection
+  matrix :math:`P` such that :math:`\bar{X} = XP`. We know that for the
+  training data, :math:`\Xi = XP`, and :math:`X = \Xi \Gamma^T`. Setting
+  :math:`P = U(\Gamma^T U)^{-1}` where :math:`U` is the matrix with the
+  :math:`u_k` in the columns, we have :math:`XP = X U(\Gamma^T U)^{-1} = \Xi
+  (\Gamma^T U) (\Gamma^T U)^{-1} = \Xi` as desired. The rotation matrix
+  :math:`P` can be accessed from the `x_rotations_` attribute.
 
-To transform :math:`X` into :math:`\bar{X}`, we need to find a projection
-matrix :math:`P` such that :math:`\bar{X} = XP`. We know that for the
-training data, :math:`\Xi = XP`, and :math:`X = \Xi \Gamma^T`. Setting
-:math:`P = U(\Gamma^T U)^{-1}` where :math:`U` is the matrix with the
-:math:`u_k` in the columns, we have :math:`XP = X U(\Gamma^T U)^{-1} = \Xi
-(\Gamma^T U) (\Gamma^T U)^{-1} = \Xi` as desired. The rotation matrix
-:math:`P` can be accessed from the `x_rotations_` attribute.
+  Similarly, :math:`Y` can be transformed using the rotation matrix
+  :math:`V(\Delta^T V)^{-1}`, accessed via the `y_rotations_` attribute.
 
-Similarly, :math:`Y` can be transformed using the rotation matrix
-:math:`V(\Delta^T V)^{-1}`, accessed via the `y_rotations_` attribute.
+.. dropdown:: Predicting the targets `Y`
 
-Predicting the targets Y
-^^^^^^^^^^^^^^^^^^^^^^^^
+  To predict the targets of some data :math:`X`, we are looking for a
+  coefficient matrix :math:`\beta \in R^{d \times t}` such that :math:`Y =
+  X\beta`.
 
-To predict the targets of some data :math:`X`, we are looking for a
-coefficient matrix :math:`\beta \in R^{d \times t}` such that :math:`Y =
-X\beta`.
+  The idea is to try to predict the transformed targets :math:`\Omega` as a
+  function of the transformed samples :math:`\Xi`, by computing :math:`\alpha
+  \in \mathbb{R}` such that :math:`\Omega = \alpha \Xi`.
 
-The idea is to try to predict the transformed targets :math:`\Omega` as a
-function of the transformed samples :math:`\Xi`, by computing :math:`\alpha
-\in \mathbb{R}` such that :math:`\Omega = \alpha \Xi`.
+  Then, we have :math:`Y = \Omega \Delta^T = \alpha \Xi \Delta^T`, and since
+  :math:`\Xi` is the transformed training data we have that :math:`Y = X \alpha
+  P \Delta^T`, and as a result the coefficient matrix :math:`\beta = \alpha P
+  \Delta^T`.
 
-Then, we have :math:`Y = \Omega \Delta^T = \alpha \Xi \Delta^T`, and since
-:math:`\Xi` is the transformed training data we have that :math:`Y = X \alpha
-P \Delta^T`, and as a result the coefficient matrix :math:`\beta = \alpha P
-\Delta^T`.
-
-:math:`\beta` can be accessed through the `coef_` attribute.
+  :math:`\beta` can be accessed through the `coef_` attribute.
 
 PLSSVD
 ------
@@ -180,15 +177,13 @@ Since :class:`CCA` involves the inversion of :math:`X_k^TX_k` and
 :math:`Y_k^TY_k`, this estimator can be unstable if the number of features or
 targets is greater than the number of samples.
 
+.. rubric:: References
 
-.. topic:: Reference:
+.. [1] `A survey of Partial Least Squares (PLS) methods, with emphasis on the two-block
+  case <https://stat.uw.edu/sites/default/files/files/reports/2000/tr371.pdf>`_,
+  JA Wegelin
 
-   .. [1] `A survey of Partial Least Squares (PLS) methods, with emphasis on
-      the two-block case
-      <https://stat.uw.edu/sites/default/files/files/reports/2000/tr371.pdf>`_
-      JA Wegelin
+.. rubric:: Examples
 
-.. topic:: Examples:
-
-    * :ref:`sphx_glr_auto_examples_cross_decomposition_plot_compare_cross_decomposition.py`
-    * :ref:`sphx_glr_auto_examples_cross_decomposition_plot_pcr_vs_pls.py`
+* :ref:`sphx_glr_auto_examples_cross_decomposition_plot_compare_cross_decomposition.py`
+* :ref:`sphx_glr_auto_examples_cross_decomposition_plot_pcr_vs_pls.py`

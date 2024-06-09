@@ -22,6 +22,7 @@ propagate correctly around the circle.
 # Here, all labels but two are tagged as unknown.
 
 import numpy as np
+
 from sklearn.datasets import make_circles
 
 n_samples = 200

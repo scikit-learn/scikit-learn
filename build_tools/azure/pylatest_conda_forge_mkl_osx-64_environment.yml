@@ -15,8 +15,11 @@ dependencies:
   - pandas
   - pyamg
   - pytest
-  - pytest-xdist=2.5.0
+  - pytest-xdist
   - pillow
+  - pip
+  - ninja
+  - meson-python
   - pytest-cov
   - coverage
   - ccache

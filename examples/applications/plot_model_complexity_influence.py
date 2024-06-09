@@ -42,16 +42,16 @@ Hamming Loss).
 # License: BSD 3 clause
 
 import time
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn import datasets
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error
-from sklearn.svm import NuSVR
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.linear_model import SGDClassifier
-from sklearn.metrics import hamming_loss
+from sklearn.metrics import hamming_loss, mean_squared_error
+from sklearn.model_selection import train_test_split
+from sklearn.svm import NuSVR
 
 # Initialize random generator
 np.random.seed(0)
