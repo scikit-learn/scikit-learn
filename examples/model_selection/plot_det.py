@@ -123,7 +123,10 @@ plt.show()
 # Chance level of the ROC and DET curves
 # --------------------------------------
 #
-# To understand the chance level of the curves above, we recall the following
+# Chance level is in general not easy to define, as it depends on what is the
+# model considered as representative of pure chance. In this case, it is a
+# :class:`~sklearn.dummy.DummyClassifier` with the default "prior" strategy. To
+# understand the chance level of the curves above, we recall the following
 # mathematical definitions:
 #
 # :math:`\text{FPR} = \frac{\text{FP}}{\text{FP} + \text{TN}}`

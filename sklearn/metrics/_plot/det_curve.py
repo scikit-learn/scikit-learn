@@ -301,7 +301,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         line_kwargs = {} if name is None else {"label": name}
         line_kwargs.update(**kwargs)
 
-        # avoid inf from sp.stats.norm.ppf
+        # avoid inf from sp.stats.norm.ppf for matplotlib to handle it
         eps = np.finfo(self.fpr.dtype).eps
         self.fpr = self.fpr.clip(eps, 1 - eps)
         self.fnr = self.fnr.clip(eps, 1 - eps)
