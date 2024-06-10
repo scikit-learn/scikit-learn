@@ -156,6 +156,7 @@ def _check_targets(y_true, y_pred):
         "sample_weight": ["array-like", None],
         "zero_division": [
             Options(Real, {0, 1}),
+            "nan",
             StrOptions({"warn"}),
         ],
     },
@@ -191,7 +192,8 @@ def accuracy_score(
         Sets the value to return when there is a zero division.
 
         Notes:
-        - If set to "warn", this acts like 0, but a warning is also raised.
+        - If set to "warn", this behaves like a 0.0 input, but a warning is also 
+        raised.
 
     Returns
     -------
@@ -237,7 +239,7 @@ def accuracy_score(
     if len_y_true == 0 and len_y_pred == 0:
         score = _check_zero_division(zero_division)
         if zero_division == "warn":
-            _warn_prf(None, "Predcited", "Accuracy is", 0)
+             _warn_prf(None, "predicted", "`accuracy_score` is", 0)
         return score
 
     # Compute accuracy for each possible representation
