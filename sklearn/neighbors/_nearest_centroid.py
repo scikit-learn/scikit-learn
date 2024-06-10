@@ -95,6 +95,9 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
     NearestCentroid()
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
+
+    For a more detailed example see:
+    :ref:`sphx_glr_auto_examples_neighbors_plot_nearest_centroid.py`
     """
 
     _parameter_constraints: dict = {
