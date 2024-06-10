@@ -580,6 +580,12 @@ def dbcv_score(
     """
 
     X, labels = check_X_y(X, labels)
+    if strict_cluster_size_validation:
+        for label, count in Counter(labels).items():
+            if count > 1 or str(label) == "-1":
+                continue
+
+            raise ValueError("DBCV is not defined for clusters of size 1")
 
     le = LabelEncoder()
     labels = le.fit_transform(labels)
@@ -587,12 +593,6 @@ def dbcv_score(
         i for i in range(len(le.classes_)) if str(le.classes_[i]) != "-1"
     ]
     check_number_of_labels(len(encoding_cluster_indices), len(labels))
-    if strict_cluster_size_validation:
-        for label, count in Counter(le.classes_).items():
-            if count > 1 or str(label) == "-1":
-                continue
-
-            raise ValueError("DBCV is not defined for clusters of size 1")
     n_labels = len(le.classes_)
 
     core_distances = {}
