@@ -590,10 +590,8 @@ def dbcv_score(
         for label, count in Counter(le.classes_).items():
             if count > 1 or str(label) == "-1":
                 continue
-    
-            raise ValueError(
-                "DBCV is not defined for clusters of size 1"
-            )
+
+            raise ValueError("DBCV is not defined for clusters of size 1")
     n_labels = len(le.classes_)
 
     core_distances = {}
