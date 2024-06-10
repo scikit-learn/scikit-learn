@@ -462,7 +462,7 @@ def test_dbcv_score_tiny_cluster():
         dbcv_score(
             np.random.rand(3, 2),
             np.array([1, 1, 0]),
-            strict_cluster_size_validation=True
+            strict_cluster_size_validation=True,
         )
 
 
