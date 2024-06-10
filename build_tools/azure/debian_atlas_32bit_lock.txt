@@ -20,7 +20,7 @@ meson-python==0.16.0
     # via -r build_tools/azure/debian_atlas_32bit_requirements.txt
 ninja==1.11.1.1
     # via -r build_tools/azure/debian_atlas_32bit_requirements.txt
-packaging==24.0
+packaging==24.1
     # via
     #   meson-python
     #   pyproject-metadata
