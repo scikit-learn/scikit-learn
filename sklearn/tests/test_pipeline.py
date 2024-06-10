@@ -1912,8 +1912,6 @@ def test_metadata_routing_for_pipeline(method):
     if "fit" not in method:
         pipeline = pipeline.fit(X, y, sample_weight=sample_weight, prop=prop)
 
-    if method == "inverse_transform":
-        print("ha")
     try:
         getattr(pipeline, method)(
             X, y, sample_weight=sample_weight, prop=prop, metadata=metadata
