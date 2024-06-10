@@ -62,9 +62,11 @@ from ..utils.validation import (
 
 def _check_zero_division(zero_division):
     if isinstance(zero_division, str) and zero_division == "warn":
-        return np.float64(0.0)
+        return np.float64(0.0)  # question to reviewers: could this be np.float16(0.0)?
     elif isinstance(zero_division, (int, float)) and zero_division in [0, 1]:
-        return np.float64(zero_division)
+        return np.float64(
+            zero_division
+        )  # question to reviewers: could this be np.float16(zero_division)?
     else:  # np.isnan(zero_division)
         return np.nan
 
@@ -679,10 +681,8 @@ def cohen_kappa_score(
 
     zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
         Sets the return value when there is a zero division, e.g. when
-        `y1=y2={np.ones, np.zeros}`.
-
-        - If set to "warn", this acts like a 0.0 input, but a warning is also raised.
-        - If set to `np.nan`, such values will be excluded from the average.
+        `y1=y2={np.ones, np.zeros}`. If set to "warn", returns 0.0 input, but a
+        warning is also raised.
 
         .. versionadded:: 1.6
 
@@ -729,12 +729,12 @@ def cohen_kappa_score(
             w_mat = (w_mat - w_mat.T) ** 2
 
     # Handle `zero_division` case if either "RuntimeWarning: invalid value encountered
-    # in scalar divide" or np.isfinite(k) == False:
+    # in scalar divide" would be raised or np.isfinite(k) == False:
     if np.sum(w_mat * expected) == 0:
         if zero_division == "warn":
             msg = (
-                "`cohen_kappa_score()` is ill-defined and being set to 0.0. Use "
-                "`zero_division` to control this behaviour."
+                "`cohen_kappa_score()` is ill-defined and is set to 0.0. Use the "
+                "`zero_division` param to control this behavior."
             )
             warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
         return _check_zero_division(zero_division)
@@ -1551,7 +1551,7 @@ def _warn_prf(average, modifier, msg_start, result_size):
         axis0, axis1 = axis1, axis0
     msg = (
         "{0} ill-defined and being set to 0.0 {{0}} "
-        "no {1} {2}s. Use `zero_division` parameter to control"
+        "no {1} {2}s. Use the `zero_division` parameter to control"
         " this behavior.".format(msg_start, modifier, axis0)
     )
     if result_size == 1:
