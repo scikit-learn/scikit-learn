@@ -34,6 +34,13 @@ import numpy as np
 from scipy.special import xlogy
 
 from ..exceptions import UndefinedMetricWarning
+from ..utils._array_api import (
+    _average,
+    _find_matching_floating_dtype,
+    get_namespace,
+    get_namespace_and_device,
+    size,
+)
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import (
@@ -65,7 +72,7 @@ __ALL__ = [
 ]
 
 
-def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
+def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric", xp=None):
     """Check that y_true and y_pred belong to the same regression task.
 
     Parameters
@@ -99,15 +106,17 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
         just the corresponding argument if ``multioutput`` is a
         correct keyword.
     """
+    xp, _ = get_namespace(y_true, y_pred, multioutput, xp=xp)
+
     check_consistent_length(y_true, y_pred)
     y_true = check_array(y_true, ensure_2d=False, dtype=dtype)
     y_pred = check_array(y_pred, ensure_2d=False, dtype=dtype)
 
     if y_true.ndim == 1:
-        y_true = y_true.reshape((-1, 1))
+        y_true = xp.reshape(y_true, (-1, 1))
 
     if y_pred.ndim == 1:
-        y_pred = y_pred.reshape((-1, 1))
+        y_pred = xp.reshape(y_pred, (-1, 1))
 
     if y_true.shape[1] != y_pred.shape[1]:
         raise ValueError(
@@ -180,7 +189,7 @@ def mean_absolute_error(
 
     Returns
     -------
-    loss : float or ndarray of floats
+    loss : float or array of floats
         If multioutput is 'raw_values', then mean absolute error is returned
         for each output separately.
         If multioutput is 'uniform_average' or an ndarray of weights, then the
@@ -204,11 +213,19 @@ def mean_absolute_error(
     >>> mean_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.85...
     """
-    y_type, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput
+    input_arrays = [y_true, y_pred, sample_weight, multioutput]
+    xp, _ = get_namespace(*input_arrays)
+
+    dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
+
+    _, y_true, y_pred, multioutput = _check_reg_targets(
+        y_true, y_pred, multioutput, dtype=dtype, xp=xp
     )
     check_consistent_length(y_true, y_pred, sample_weight)
-    output_errors = np.average(np.abs(y_pred - y_true), weights=sample_weight, axis=0)
+
+    output_errors = _average(
+        xp.abs(y_pred - y_true), weights=sample_weight, axis=0, xp=xp
+    )
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
             return output_errors
@@ -216,7 +233,15 @@ def mean_absolute_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    # Average across the outputs (if needed).
+    mean_absolute_error = _average(output_errors, weights=multioutput)
+
+    # Since `y_pred.ndim <= 2` and `y_true.ndim <= 2`, the second call to _average
+    # should always return a scalar array that we convert to a Python float to
+    # consistently return the same eager evaluated value, irrespective of the
+    # Array API implementation.
+    assert mean_absolute_error.shape == ()
+    return float(mean_absolute_error)
 
 
 @validate_params(
@@ -458,7 +483,7 @@ def mean_squared_error(
 
     Returns
     -------
-    loss : float or ndarray of floats
+    loss : float or array of floats
         A non-negative floating point value (the best value is 0.0), or an
         array of floating point values, one for each individual target.
 
@@ -494,11 +519,14 @@ def mean_squared_error(
                 y_true, y_pred, sample_weight=sample_weight, multioutput=multioutput
             )
 
+    xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
+    dtype = _find_matching_floating_dtype(y_true, y_pred, xp=xp)
+
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput
+        y_true, y_pred, multioutput, dtype=dtype, xp=xp
     )
     check_consistent_length(y_true, y_pred, sample_weight)
-    output_errors = np.average((y_true - y_pred) ** 2, axis=0, weights=sample_weight)
+    output_errors = _average((y_true - y_pred) ** 2, axis=0, weights=sample_weight)
 
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
@@ -507,7 +535,10 @@ def mean_squared_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    # See comment in mean_absolute_error
+    mean_squared_error = _average(output_errors, weights=multioutput)
+    assert mean_squared_error.shape == ()
+    return float(mean_squared_error)
 
 
 @validate_params(
@@ -855,9 +886,10 @@ def median_absolute_error(
 
 
 def _assemble_r2_explained_variance(
-    numerator, denominator, n_outputs, multioutput, force_finite
+    numerator, denominator, n_outputs, multioutput, force_finite, xp, device
 ):
     """Common part used by explained variance score and :math:`R^2` score."""
+    dtype = numerator.dtype
 
     nonzero_denominator = denominator != 0
 
@@ -868,12 +900,14 @@ def _assemble_r2_explained_variance(
         nonzero_numerator = numerator != 0
         # Default = Zero Numerator = perfect predictions. Set to 1.0
         # (note: even if denominator is zero, thus avoiding NaN scores)
-        output_scores = np.ones([n_outputs])
+        output_scores = xp.ones([n_outputs], device=device, dtype=dtype)
         # Non-zero Numerator and Non-zero Denominator: use the formula
         valid_score = nonzero_denominator & nonzero_numerator
+
         output_scores[valid_score] = 1 - (
             numerator[valid_score] / denominator[valid_score]
         )
+
         # Non-zero Numerator and Zero Denominator:
         # arbitrary set to 0.0 to avoid -inf scores
         output_scores[nonzero_numerator & ~nonzero_denominator] = 0.0
@@ -887,7 +921,7 @@ def _assemble_r2_explained_variance(
             avg_weights = None
         elif multioutput == "variance_weighted":
             avg_weights = denominator
-            if not np.any(nonzero_denominator):
+            if not xp.any(nonzero_denominator):
                 # All weights are zero, np.average would raise a ZeroDiv error.
                 # This only happens when all y are constant (or 1-element long)
                 # Since weights are all equal, fall back to uniform weights.
@@ -895,7 +929,10 @@ def _assemble_r2_explained_variance(
     else:
         avg_weights = multioutput
 
-    return np.average(output_scores, weights=avg_weights)
+    result = _average(output_scores, weights=avg_weights)
+    if size(result) == 1:
+        return float(result)
+    return result
 
 
 @validate_params(
@@ -1033,6 +1070,9 @@ def explained_variance_score(
         n_outputs=y_true.shape[1],
         multioutput=multioutput,
         force_finite=force_finite,
+        xp=get_namespace(y_true)[0],
+        # TODO: update once Array API support is added to explained_variance_score.
+        device=None,
     )
 
 
@@ -1177,8 +1217,14 @@ def r2_score(
     >>> r2_score(y_true, y_pred, force_finite=False)
     -inf
     """
-    y_type, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput
+    xp, _, device_ = get_namespace_and_device(
+        y_true, y_pred, sample_weight, multioutput
+    )
+
+    dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
+
+    _, y_true, y_pred, multioutput = _check_reg_targets(
+        y_true, y_pred, multioutput, dtype=dtype, xp=xp
     )
     check_consistent_length(y_true, y_pred, sample_weight)
 
@@ -1188,15 +1234,16 @@ def r2_score(
         return float("nan")
 
     if sample_weight is not None:
-        sample_weight = column_or_1d(sample_weight)
-        weight = sample_weight[:, np.newaxis]
+        sample_weight = column_or_1d(sample_weight, dtype=dtype)
+        weight = sample_weight[:, None]
     else:
         weight = 1.0
 
-    numerator = (weight * (y_true - y_pred) ** 2).sum(axis=0, dtype=np.float64)
-    denominator = (
-        weight * (y_true - np.average(y_true, axis=0, weights=sample_weight)) ** 2
-    ).sum(axis=0, dtype=np.float64)
+    numerator = xp.sum(weight * (y_true - y_pred) ** 2, axis=0)
+    denominator = xp.sum(
+        weight * (y_true - _average(y_true, axis=0, weights=sample_weight, xp=xp)) ** 2,
+        axis=0,
+    )
 
     return _assemble_r2_explained_variance(
         numerator=numerator,
@@ -1204,6 +1251,8 @@ def r2_score(
         n_outputs=y_true.shape[1],
         multioutput=multioutput,
         force_finite=force_finite,
+        xp=xp,
+        device=device_,
     )
 
 
@@ -1249,13 +1298,14 @@ def max_error(y_true, y_pred):
 
 def _mean_tweedie_deviance(y_true, y_pred, sample_weight, power):
     """Mean Tweedie deviance regression loss."""
+    xp, _ = get_namespace(y_true, y_pred)
     p = power
     if p < 0:
         # 'Extreme stable', y any real number, y_pred > 0
         dev = 2 * (
-            np.power(np.maximum(y_true, 0), 2 - p) / ((1 - p) * (2 - p))
-            - y_true * np.power(y_pred, 1 - p) / (1 - p)
-            + np.power(y_pred, 2 - p) / (2 - p)
+            xp.pow(xp.where(y_true > 0, y_true, 0), 2 - p) / ((1 - p) * (2 - p))
+            - y_true * xp.pow(y_pred, 1 - p) / (1 - p)
+            + xp.pow(y_pred, 2 - p) / (2 - p)
         )
     elif p == 0:
         # Normal distribution, y and y_pred any real number
@@ -1265,15 +1315,14 @@ def _mean_tweedie_deviance(y_true, y_pred, sample_weight, power):
         dev = 2 * (xlogy(y_true, y_true / y_pred) - y_true + y_pred)
     elif p == 2:
         # Gamma distribution
-        dev = 2 * (np.log(y_pred / y_true) + y_true / y_pred - 1)
+        dev = 2 * (xp.log(y_pred / y_true) + y_true / y_pred - 1)
     else:
         dev = 2 * (
-            np.power(y_true, 2 - p) / ((1 - p) * (2 - p))
-            - y_true * np.power(y_pred, 1 - p) / (1 - p)
-            + np.power(y_pred, 2 - p) / (2 - p)
+            xp.pow(y_true, 2 - p) / ((1 - p) * (2 - p))
+            - y_true * xp.pow(y_pred, 1 - p) / (1 - p)
+            + xp.pow(y_pred, 2 - p) / (2 - p)
         )
-
-    return np.average(dev, weights=sample_weight)
+    return float(_average(dev, weights=sample_weight))
 
 
 @validate_params(
@@ -1336,8 +1385,9 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
     >>> mean_tweedie_deviance(y_true, y_pred, power=1)
     1.4260...
     """
+    xp, _ = get_namespace(y_true, y_pred)
     y_type, y_true, y_pred, _ = _check_reg_targets(
-        y_true, y_pred, None, dtype=[np.float64, np.float32]
+        y_true, y_pred, None, dtype=[xp.float64, xp.float32]
     )
     if y_type == "continuous-multioutput":
         raise ValueError("Multioutput not supported in mean_tweedie_deviance")
@@ -1548,8 +1598,10 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     >>> d2_tweedie_score(y_true, y_true, power=2)
     1.0
     """
+    xp, _ = get_namespace(y_true, y_pred)
+
     y_type, y_true, y_pred, _ = _check_reg_targets(
-        y_true, y_pred, None, dtype=[np.float64, np.float32]
+        y_true, y_pred, None, dtype=[xp.float64, xp.float32], xp=xp
     )
     if y_type == "continuous-multioutput":
         raise ValueError("Multioutput not supported in d2_tweedie_score")
@@ -1559,12 +1611,12 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
         warnings.warn(msg, UndefinedMetricWarning)
         return float("nan")
 
-    y_true, y_pred = np.squeeze(y_true), np.squeeze(y_pred)
+    y_true, y_pred = xp.squeeze(y_true, axis=1), xp.squeeze(y_pred, axis=1)
     numerator = mean_tweedie_deviance(
         y_true, y_pred, sample_weight=sample_weight, power=power
     )
 
-    y_avg = np.average(y_true, weights=sample_weight)
+    y_avg = _average(y_true, weights=sample_weight, xp=xp)
     denominator = _mean_tweedie_deviance(
         y_true, y_avg, sample_weight=sample_weight, power=power
     )

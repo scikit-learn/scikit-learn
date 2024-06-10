@@ -1,5 +1,6 @@
 """Checks that dist/* contains the number of wheels built from the
 .github/workflows/wheels.yml config."""
+
 import sys
 from pathlib import Path
 

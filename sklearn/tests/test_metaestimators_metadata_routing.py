@@ -14,8 +14,6 @@ from sklearn.ensemble import (
     AdaBoostRegressor,
     BaggingClassifier,
     BaggingRegressor,
-    StackingClassifier,
-    StackingRegressor,
 )
 from sklearn.exceptions import UnsetMetadataPassedError
 from sklearn.experimental import (
@@ -43,10 +41,12 @@ from sklearn.linear_model import (
     RidgeCV,
 )
 from sklearn.model_selection import (
+    FixedThresholdClassifier,
     GridSearchCV,
     HalvingGridSearchCV,
     HalvingRandomSearchCV,
     RandomizedSearchCV,
+    TunedThresholdClassifierCV,
 )
 from sklearn.multiclass import (
     OneVsOneClassifier,
@@ -59,7 +59,6 @@ from sklearn.multioutput import (
     MultiOutputRegressor,
     RegressorChain,
 )
-from sklearn.pipeline import FeatureUnion
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.tests.metadata_routing_common import (
     ConsumingClassifier,
@@ -78,6 +77,7 @@ rng = np.random.RandomState(42)
 N, M = 100, 4
 X = rng.rand(N, M)
 y = rng.randint(0, 3, size=N)
+y_binary = (y >= 1).astype(int)
 classes = np.unique(y)
 y_multi = rng.randint(0, 3, size=(N, 3))
 classes_multi = [np.unique(y_multi[:, i]) for i in range(y_multi.shape[1])]
@@ -200,6 +200,24 @@ METAESTIMATORS: list = [
         "scorer_routing_methods": ["fit", "score"],
         "cv_name": "cv",
         "cv_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": FixedThresholdClassifier,
+        "estimator_name": "estimator",
+        "estimator": "classifier",
+        "X": X,
+        "y": y_binary,
+        "estimator_routing_methods": ["fit"],
+        "preserves_metadata": "subset",
+    },
+    {
+        "metaestimator": TunedThresholdClassifierCV,
+        "estimator_name": "estimator",
+        "estimator": "classifier",
+        "X": X,
+        "y": y_binary,
+        "estimator_routing_methods": ["fit"],
+        "preserves_metadata": "subset",
     },
     {
         "metaestimator": OneVsRestClassifier,
@@ -325,12 +343,51 @@ METAESTIMATORS: list = [
         "preserves_metadata": False,
         "estimator_routing_methods": ["fit"],
     },
+    {
+        "metaestimator": RidgeCV,
+        "X": X,
+        "y": y,
+        "scorer_name": "scoring",
+        "scorer_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": RidgeClassifierCV,
+        "X": X,
+        "y": y,
+        "scorer_name": "scoring",
+        "scorer_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": RidgeCV,
+        "X": X,
+        "y": y,
+        "scorer_name": "scoring",
+        "scorer_routing_methods": ["fit"],
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": RidgeClassifierCV,
+        "X": X,
+        "y": y,
+        "scorer_name": "scoring",
+        "scorer_routing_methods": ["fit"],
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": GraphicalLassoCV,
+        "X": X,
+        "y": y,
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+    },
 ]
 """List containing all metaestimators to be tested and their settings
 
 The keys are as follows:
 
-- metaestimator: The metaestmator to be tested
+- metaestimator: The metaestimator to be tested
 - estimator_name: The name of the argument for the sub-estimator
 - estimator: The sub-estimator type, either "regressor" or "classifier"
 - init_args: The arguments to be passed to the metaestimator's constructor
@@ -366,16 +423,10 @@ METAESTIMATOR_IDS = [str(row["metaestimator"].__name__) for row in METAESTIMATOR
 UNSUPPORTED_ESTIMATORS = [
     AdaBoostClassifier(),
     AdaBoostRegressor(),
-    FeatureUnion([]),
-    GraphicalLassoCV(),
     RFE(ConsumingClassifier()),
     RFECV(ConsumingClassifier()),
-    RidgeCV(),
-    RidgeClassifierCV(),
     SelfTrainingClassifier(ConsumingClassifier()),
     SequentialFeatureSelector(ConsumingClassifier()),
-    StackingClassifier(ConsumingClassifier()),
-    StackingRegressor(ConsumingRegressor()),
     TransformedTargetRegressor(),
 ]
 
@@ -556,7 +607,7 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
             instance = cls(**kwargs)
             msg = (
                 f"[{key}] are passed but are not explicitly set as requested or not"
-                f" for {estimator.__class__.__name__}.{method_name}"
+                f" requested for {estimator.__class__.__name__}.{method_name}"
             )
             with pytest.raises(UnsetMetadataPassedError, match=re.escape(msg)):
                 method = getattr(instance, method_name)

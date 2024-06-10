@@ -281,6 +281,9 @@ def fetch_lfw_people(
     Features            real, between 0 and 255
     =================   =======================
 
+    For a usage example of this dataset, see
+    :ref:`sphx_glr_auto_examples_applications_plot_face_recognition.py`.
+
     Read more in the :ref:`User Guide <labeled_faces_in_the_wild_dataset>`.
 
     Parameters
@@ -361,6 +364,22 @@ def fetch_lfw_people(
         ndarray of shape (n_samples,) containing the target samples.
 
         .. versionadded:: 0.20
+
+    Examples
+    --------
+    >>> from sklearn.datasets import fetch_lfw_people
+    >>> lfw_people = fetch_lfw_people()
+    >>> lfw_people.data.shape
+    (13233, 2914)
+    >>> lfw_people.target.shape
+    (13233,)
+    >>> for name in lfw_people.target_names[:5]:
+    ...    print(name)
+    AJ Cook
+    AJ Lamas
+    Aaron Eckhart
+    Aaron Guiel
+    Aaron Patterson
     """
     lfw_home, data_folder_path = _check_fetch_lfw(
         data_home=data_home,
@@ -570,6 +589,19 @@ def fetch_lfw_pairs(
             0 corresponds to "Different person", 1 corresponds to "same person".
         DESCR : str
             Description of the Labeled Faces in the Wild (LFW) dataset.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import fetch_lfw_pairs
+    >>> lfw_pairs_train = fetch_lfw_pairs(subset='train')
+    >>> list(lfw_pairs_train.target_names)
+    ['Different persons', 'Same person']
+    >>> lfw_pairs_train.pairs.shape
+    (2200, 2, 62, 47)
+    >>> lfw_pairs_train.data.shape
+    (2200, 5828)
+    >>> lfw_pairs_train.target.shape
+    (2200,)
     """
     lfw_home, data_folder_path = _check_fetch_lfw(
         data_home=data_home,

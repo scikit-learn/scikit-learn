@@ -188,12 +188,12 @@ def contingency_matrix(
     prefer_skip_nested_validation=True,
 )
 def pair_confusion_matrix(labels_true, labels_pred):
-    """Pair confusion matrix arising from two clusterings [1]_.
+    """Pair confusion matrix arising from two clusterings.
 
     The pair confusion matrix :math:`C` computes a 2 by 2 similarity matrix
     between two clusterings by considering all pairs of samples and counting
     pairs that are assigned into the same or into different clusters under
-    the true and predicted clusterings.
+    the true and predicted clusterings [1]_.
 
     Considering a pair of samples that is clustered together a positive pair,
     then as in binary classification the count of true negatives is
@@ -494,7 +494,7 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
         Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
-        Gluster labels to evaluate.
+        Cluster labels to evaluate.
 
     beta : float, default=1.0
         Ratio of weight attributed to ``homogeneity`` vs ``completeness``.
