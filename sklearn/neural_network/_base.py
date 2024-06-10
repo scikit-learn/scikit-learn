@@ -172,12 +172,9 @@ def squared_loss(y_true, y_pred, sample_weight=None):
     loss : float
         The degree to which the samples are correctly predicted.
     """
-
-    temp = (y_true - y_pred) ** 2
-    if sample_weight is None:
-        sample_weight = 1.0
-
-    return (temp.T * sample_weight).mean() / 2
+    return (
+        0.5 * np.average((y_true - y_pred) ** 2, weights=sample_weight, axis=0).mean()
+    )
 
 
 def log_loss(y_true, y_prob, sample_weight=None):
@@ -210,10 +207,7 @@ def log_loss(y_true, y_prob, sample_weight=None):
 
     temp = xlogy(y_true, y_prob)
 
-    if sample_weight is None:
-        sample_weight = 1.0
-
-    return -(temp.T * sample_weight).sum() / y_prob.shape[0]
+    return -np.average(temp, weights=sample_weight, axis=0).sum()
 
 
 def binary_log_loss(y_true, y_prob, sample_weight=None):
@@ -244,10 +238,7 @@ def binary_log_loss(y_true, y_prob, sample_weight=None):
 
     temp = xlogy(y_true, y_prob) + xlogy(1 - y_true, 1 - y_prob)
 
-    if sample_weight is None:
-        sample_weight = 1.0
-
-    return -(temp.T * sample_weight).sum() / y_prob.shape[0]
+    return -np.average(temp, weights=sample_weight, axis=0).sum()
 
 
 LOSS_FUNCTIONS = {

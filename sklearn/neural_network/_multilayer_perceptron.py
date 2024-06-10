@@ -31,12 +31,6 @@ from ..utils import (
 )
 from ..utils._param_validation import Interval, Options, StrOptions
 from ..utils.extmath import safe_sparse_dot
-from ..exceptions import ConvergenceWarning
-from ..utils.extmath import safe_sparse_dot
-from ..utils.validation import check_is_fitted, _check_sample_weight
-from ..utils.multiclass import _check_partial_fit_first_call, unique_labels
-from ..utils.multiclass import type_of_target
-from ..utils.optimize import _check_optimize_result
 from ..utils.metaestimators import available_if
 from ..utils.multiclass import (
     _check_partial_fit_first_call,
@@ -44,7 +38,11 @@ from ..utils.multiclass import (
     unique_labels,
 )
 from ..utils.optimize import _check_optimize_result
+<<<<<<< HEAD
 from ..utils.validation import check_is_fitted, validate_data
+=======
+from ..utils.validation import _check_sample_weight, check_is_fitted
+>>>>>>> ecdf8a6a4 (fix: fix sample weight support for neural networks)
 from ._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
 from ._stochastic_optimizers import AdamOptimizer, SGDOptimizer
 
@@ -284,6 +282,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             The ith element contains the amount of change used to update the
             intercept parameters of the ith layer in an iteration.
 
+        sample_weigth : ndarray of shape (n_samples,)
+            Sample weights.
+
         Returns
         -------
         loss : float
@@ -329,7 +330,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             intercept parameters of the ith layer in an iteration.
 
         sample_weight : array-like of shape (n_samples,)
-            The sample weights.
+            Sample weights.
 
         Returns
         -------
@@ -362,6 +363,10 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         # sigmoid and binary cross entropy, softmax and categorical cross
         # entropy, and identity with squared loss
         deltas[last] = activations[-1] - y
+        if sample_weight is not None:
+            if len(sample_weight.shape) == 1:
+                sample_weight = np.expand_dims(sample_weight, axis=1)
+            deltas[last] *= sample_weight
 
         # Compute gradient for the last layer
         self._compute_loss_grad(
@@ -462,14 +467,10 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         # Handle sample_weight
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-            nonzero_mask = sample_weight != 0
-            if sum(nonzero_mask) == 0:
+            if sum(sample_weight != 0) == 0:
                 raise ValueError("sample_weight must not be all zeros")
-            X = X[nonzero_mask]
-            y = y[nonzero_mask]
-            sample_weight = sample_weight[nonzero_mask]
 
-        n_samples, n_features = X.shape
+        _, n_features = X.shape
 
         # Ensure y is 2D
         if y.ndim == 1:
@@ -687,22 +688,12 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
                 accumulated_loss = 0.0
                 for batch_slice in gen_batches(n_samples, batch_size):
-                    if self.shuffle:
-                        X_batch = _safe_indexing(X, sample_idx[batch_slice])
-                        y_batch = y[sample_idx[batch_slice]]
-                        sample_weight_batch = (
-                            None
-                            if sample_weight is None
-                            else sample_weight[sample_idx[batch_slice]]
-                        )
-                    else:
-                        X_batch = X[batch_slice]
-                        y_batch = y[batch_slice]
-                        sample_weight_batch = (
-                            None
-                            if sample_weight is None
-                            else sample_weight[batch_slice]
-                        )
+                    batch_idx = sample_idx[batch_slice] if self.shuffle else batch_slice
+                    X_batch = _safe_indexing(X, batch_idx)
+                    y_batch = y[batch_idx]
+                    sw_batch = (
+                        None if sample_weight is None else sample_weight[batch_idx]
+                    )
 
                     activations[0] = X_batch
                     batch_loss, coef_grads, intercept_grads = self._backprop(
@@ -712,7 +703,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                         deltas,
                         coef_grads,
                         intercept_grads,
-                        sample_weight_batch,
+                        sw_batch,
                     )
                     accumulated_loss += batch_loss * (
                         batch_slice.stop - batch_slice.start
@@ -829,7 +820,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             regression).
 
         sample_weight : array-like of shape (n_samples,)
-            The sample weights.
+            Sample weights.
 
         Returns
         -------
@@ -866,6 +857,16 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
     def _validate_input(self, X, y, incremental, reset, sample_weight):
         raise NotImplementedError("Subclass must implement _validate_input().")
+    
+    def _more_tags(self):
+        return {
+            "_xfail_checks": {
+                "check_sample_weights_invariance": (
+                    "zero sample_weight is not equivalent to removing samples \
+                        for neural networks"
+                ),
+            },
+        }
 
 
 class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
