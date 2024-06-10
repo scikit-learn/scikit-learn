@@ -11,9 +11,10 @@ data and different problems.
 
 The flowchart below is designed to give users a bit of a rough guide on how to approach
 problems with regard to which estimators to try on your data. Click on any estimator in
-the chart below to see its documentation. Use scroll wheel to zoom in and out, and click
-and drag to pan around. You can also download the chart:
-:download:`ml_map.svg <../../images/ml_map.svg>`.
+the chart below to see its documentation. The 😭 emoji is to be read as "if this
+estimator does not achieve the desired outcome, then follow the arrow and try the next
+one". Use scroll wheel to zoom in and out, and click and drag to pan around. You can
+also download the chart: :download:`ml_map.svg <images/ml_map.svg>`.
 
 .. raw:: html
 
@@ -35,7 +36,7 @@ and drag to pan around. You can also download the chart:
     }
   </style>
 
-  <script src="../../_static/scripts/vendor/svg-pan-zoom.min.js"></script>
+  <script src="_static/scripts/vendor/svg-pan-zoom.min.js"></script>
   <script>
     document.addEventListener("DOMContentLoaded", function () {
       const beforePan = function (oldPan, newPan) {
@@ -68,7 +69,7 @@ and drag to pan around. You can also download the chart:
   <div id="sk-ml-map">
 
 .. raw:: html
-  :file: ../../images/ml_map.svg
+  :file: images/ml_map.svg
 
 .. raw:: html
 

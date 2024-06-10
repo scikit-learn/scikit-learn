@@ -39,12 +39,17 @@ pre_python_environment_install() {
                 python3-matplotlib libatlas3-base libatlas-base-dev \
                 python3-virtualenv python3-pandas ccache git
 
-    elif [[ "$DISTRIB" == "conda-pypy3" ]]; then
-        # need compilers
-        apt-get -yq update
-        apt-get -yq install build-essential
+    # TODO for now we use CPython 3.13 from Ubuntu deadsnakes PPA. When CPython
+    # 3.13 is released (scheduled October 2024) we can use something more
+    # similar to other conda+pip based builds
+    elif [[ "$DISTRIB" == "pip-free-threaded" ]]; then
+        sudo apt-get -yq update
+        sudo apt-get install -yq ccache
+        sudo apt-get install -yq software-properties-common
+        sudo add-apt-repository --yes ppa:deadsnakes/nightly
+        sudo apt-get update -yq
+        sudo apt-get install -yq --no-install-recommends python3.13-dev python3.13-venv python3.13-nogil
     fi
-
 }
 
 check_packages_dev_version() {
@@ -59,12 +64,7 @@ check_packages_dev_version() {
 
 python_environment_install_and_activate() {
     if [[ "$DISTRIB" == "conda"* ]]; then
-        # Install/update conda with the libmamba solver because the legacy
-        # solver can be slow at installing a specific version of conda-lock.
-        conda install -n base conda conda-libmamba-solver -y
-        conda config --set solver libmamba
-        conda install -c conda-forge "$(get_dep conda-lock min)" -y
-        conda-lock install --name $VIRTUALENV $LOCK_FILE
+        create_conda_environment_from_lock_file $VIRTUALENV $LOCK_FILE
         source activate $VIRTUALENV
 
     elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
@@ -72,10 +72,25 @@ python_environment_install_and_activate() {
         source $VIRTUALENV/bin/activate
         pip install -r "${LOCK_FILE}"
 
-    elif [[ "$DISTRIB" == "pip-nogil" ]]; then
-        python -m venv $VIRTUALENV
+    elif [[ "$DISTRIB" == "pip-free-threaded" ]]; then
+        python3.13t -m venv $VIRTUALENV
         source $VIRTUALENV/bin/activate
         pip install -r "${LOCK_FILE}"
+        # TODO for now need pip 24.1b1 to find free-threaded wheels
+        pip install -U --pre pip
+        # TODO When there are CPython 3.13 free-threaded wheels for numpy and
+        # scipy move this to
+        # build_tools/azure/cpython_free_threaded_requirements.txt. For now we
+        # install them from scientific-python-nightly-wheels
+        dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
+        dev_packages="numpy scipy"
+        pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url $dev_packages
+        # TODO Move cython to
+        # build_tools/azure/cpython_free_threaded_requirements.txt when there
+        # is a CPython 3.13 free-threaded wheel
+        # For now, we need the development version of Cython which has CPython
+        # 3.13 free-threaded fixes so we install it from source
+        pip install git+https://github.com/cython/cython
     fi
 
     if [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
@@ -92,11 +107,6 @@ python_environment_install_and_activate() {
         pip install https://github.com/joblib/joblib/archive/master.zip
         echo "Installing pillow from latest sources"
         pip install https://github.com/python-pillow/Pillow/archive/main.zip
-
-    elif [[ "$DISTRIB" == "pip-nogil" ]]; then
-        apt-get -yq update
-        apt-get install -yq ccache
-
     fi
 }
 
@@ -139,6 +149,12 @@ scikit_learn_install() {
            # otherwise Meson detects a MINGW64 platform and use MINGW64
            # toolchain
            ADDITIONAL_PIP_OPTIONS='-Csetup-args=--vsenv'
+        fi
+        # TODO Always add --check-build-dependencies when all CI builds have
+        # pip >= 22.1.1. At the time of writing, two CI builds (debian32_atlas and
+        # ubuntu_atlas) have an older pip
+        if pip install --help | grep check-build-dependencies; then
+            ADDITIONAL_PIP_OPTIONS="$ADDITIONAL_PIP_OPTIONS --check-build-dependencies"
         fi
         # Use the pre-installed build dependencies and build directly in the
         # current environment.

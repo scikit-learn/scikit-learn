@@ -62,13 +62,10 @@ Apart from scikit-learn, another popular one is `scikit-image <https://scikit-im
 Do you support PyPy?
 ^^^^^^^^^^^^^^^^^^^^
 
-scikit-learn is regularly tested and maintained to work with
-`PyPy <https://pypy.org/>`_ (an alternative Python implementation with
-a built-in just-in-time compiler).
-
-Note however that this support is still considered experimental and specific
-components might behave slightly differently. Please refer to the test
-suite of the specific module of interest for more details.
+Due to limited maintainer resources and small number of users, using
+scikit-learn with `PyPy <https://pypy.org/>`_ (an alternative Python
+implementation with a built-in just-in-time compiler) is not officially
+supported.
 
 How can I obtain permission to use the images in scikit-learn for my work?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
