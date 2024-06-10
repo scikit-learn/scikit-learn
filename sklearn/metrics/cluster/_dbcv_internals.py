@@ -137,7 +137,12 @@ def internal_minimum_spanning_tree(mr_distances):
         )
         candidates = candidates[candidates != row[1]]
         if len(candidates) == 0:
-            raise ValueError()
+            raise ValueError(
+                "Detected invalid MST: the node which was attached "
+                f"in the MST growth sequence at step {index} "
+                "doesn't match the expected criteria\nHINT: "
+                "likely caused by a broken MST linkage core implementation!"
+            )
         row[0] = candidates[0]
 
     vertices = np.arange(mr_distances.shape[0])[
