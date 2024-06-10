@@ -14,9 +14,11 @@ jobs:
       group: cuda-gpu-runner-group
     name: Run Array API unit tests
     steps:
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          # XXX: The 3.12.4 release of Python on GitHub Actions is corrupted:
+          # https://github.com/actions/setup-python/issues/886
+          python-version: '3.12.3'
       - name: Checkout main repository
         uses: actions/checkout@v4
       - run: |
