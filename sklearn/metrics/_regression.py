@@ -1391,7 +1391,7 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
         pass
     elif 1 <= power < 2:
         # Poisson and compound Poisson distribution, y >= 0, y_pred > 0
-        if (y_true < 0).any() or (y_pred <= 0).any():
+        if xp.any(y_true < 0) or xp.any(y_pred <= 0):
             raise ValueError(message + "non-negative y and strictly positive y_pred.")
     elif power >= 2:
         # Gamma and Extreme stable distribution, y and y_pred > 0
