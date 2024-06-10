@@ -151,16 +151,16 @@ def internal_minimum_spanning_tree(mr_distances):
         row[0] = candidates[0]
 
     # mark internal nodes via converting the occurence count to bool
-    vertices = np.arange(mr_distances.shape[0])[
+    internal_node_flags = np.arange(mr_distances.shape[0])[
         np.bincount(min_span_tree.T[:2].flatten().astype(np.intp)) > 1
     ]
-    if not len(vertices):
-        vertices = [0]
+    if not len(internal_node_flags):
+        internal_node_flags = [0]
     # A little "fancy" we select from the flattened array reshape back
     # (Fortran format to get indexing right) and take the product to do an and
     # then convert back to boolean type.
     edge_selection = np.prod(
-        np.in1d(min_span_tree.T[:2], vertices).reshape(
+        np.in1d(min_span_tree.T[:2], internal_node_flags).reshape(
             (min_span_tree.shape[0], 2), order="F"
         ),
         axis=1,
@@ -180,7 +180,7 @@ def internal_minimum_spanning_tree(mr_distances):
         # do nothing and return all the edges in the MST.
         edges = min_span_tree.copy()
 
-    return vertices, edges
+    return internal_node_flags, edges
 
 
 def distances_between_points(
