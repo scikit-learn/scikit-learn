@@ -29,7 +29,6 @@ Model persistence
        * Can serialize most Python objects
        * Efficient memory usage with `protocol=5`
      - * Loading can execute arbitrary code
-       * No memory mapping
        * Requires the same environment as the training environment
    * - :mod:`joblib`
      - * Efficient memory usage
