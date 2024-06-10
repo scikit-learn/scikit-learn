@@ -6,6 +6,7 @@
 # License: BSD 3 clause
 
 
+from collections import Counter
 import functools
 from numbers import Integral
 
@@ -581,6 +582,13 @@ def dbcv_score(
         i for i in range(len(le.classes_)) if str(le.classes_[i]) != "-1"
     ]
     check_number_of_labels(len(encoding_cluster_indices), len(labels))
+    for label, count in Counter(le.classes_).items():
+        if count > 1 or str(label) == "-1":
+            continue
+
+        raise ValueError(
+            "DBCV is not defined for clusters of size 1"
+        )
     n_labels = len(le.classes_)
 
     core_distances = {}
