@@ -214,20 +214,22 @@ def test_classification_report_zero_division_warning(zero_division):
         else:
             assert not record
 
+
 def test_accuracy_score_zero_division_warning():
-    y_true, y_pred = np.array([]),np.array([])
+    y_true, y_pred = np.array([]), np.array([])
     msg = (
-            "`accuracy_score` is ill-defined and being set to 0.0"
-            " in labels with no predicted samples."
-            " Use `zero_division` parameter to control this behavior."
-        )
+        "`accuracy_score` is ill-defined and being set to 0.0"
+        " in labels with no predicted samples."
+        " Use `zero_division` parameter to control this behavior."
+    )
     with pytest.warns(UndefinedMetricWarning, match=msg):
         score = accuracy_score(y_true=y_true, y_pred=y_pred, zero_division="warn")
         assert score == pytest.approx(0.0)
 
+
 @pytest.mark.parametrize("zero_division, expected_score", [(0, 0.0), (1, 1.0)])
-def test_accuracy_score_zero_division_warning_set_value(zero_division,expected_score):
-    y_true, y_pred = np.array([]),np.array([])
+def test_accuracy_score_zero_division_warning_set_value(zero_division, expected_score):
+    y_true, y_pred = np.array([]), np.array([])
     with warnings.catch_warnings():
         warnings.simplefilter("error", UndefinedMetricWarning)
         score = accuracy_score(
