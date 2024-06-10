@@ -1551,7 +1551,7 @@ def _warn_prf(average, modifier, msg_start, result_size):
         axis0, axis1 = axis1, axis0
     msg = (
         "{0} ill-defined and being set to 0.0 {{0}} "
-        "no {1} {2}s. Use the `zero_division` parameter to control"
+        "no {1} {2}s. Use `zero_division` parameter to control"
         " this behavior.".format(msg_start, modifier, axis0)
     )
     if result_size == 1:
