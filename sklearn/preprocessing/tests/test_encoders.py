@@ -2336,7 +2336,7 @@ def test_ordinal_encoder_missing_appears_infrequent():
                 ["airplane", 4],
             ],
             np.array([2, 2.5, 0.5, 0.1, 0, 0]),
-            (6, 5),
+            (6, 4),  # columns: car, bike, 3, infrequent (1)
         ),
         (
             [["car"], ["car"], ["bike"], ["bike"], ["boat"], ["airplane"]],
@@ -2352,9 +2352,9 @@ def test_ordinal_encoder_missing_appears_infrequent():
 def test_one_hot_encoder_sample_weight_min_frequency(
     X, sample_weight, expected_shape, min_frequency
 ):
-    ohe = OneHotEncoder(min_frequency=2)
+    ohe = OneHotEncoder(min_frequency=2, handle_unknown="infrequent_if_exist")
     X_trans = ohe.fit_transform(X, sample_weight=sample_weight)
-    assert X_trans.shape == expected_shape
+    assert_allclose(X_trans.shape, expected_shape)
 
 
 @pytest.mark.parametrize(
@@ -2380,9 +2380,9 @@ def test_one_hot_encoder_sample_weight_min_frequency(
     ],
 )
 def test_one_hot_encoder_sample_weight_max_categories(X, sample_weight, expected_shape):
-    ohe = OneHotEncoder(max_categories=2)
+    ohe = OneHotEncoder(max_categories=2, handle_unknown="ignore")
     X_trans = ohe.fit_transform(X, sample_weight=sample_weight)
-    assert X_trans.shape == expected_shape
+    assert_allclose(X_trans.shape, expected_shape)
 
 
 @pytest.mark.parametrize(

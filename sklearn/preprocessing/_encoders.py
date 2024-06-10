@@ -16,7 +16,11 @@ from ..utils._mask import _get_mask
 from ..utils._missing import is_scalar_nan
 from ..utils._param_validation import Interval, RealNotInt, StrOptions
 from ..utils._set_output import _get_output_config
-from ..utils.validation import _check_feature_names_in, check_is_fitted
+from ..utils.validation import (
+    _check_feature_names_in,
+    _check_sample_weight,
+    check_is_fitted,
+)
 
 __all__ = ["OneHotEncoder", "OrdinalEncoder"]
 
@@ -82,6 +86,11 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         )
         self.n_features_in_ = n_features
         if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X)
+            # Filtering rows with sample_weight equals zero so we don't get extra dummy
+            # columns.
+            X_list = [Xi[sample_weight != 0] for Xi in X_list]
+            sample_weight = sample_weight[sample_weight != 0]
             n_samples = np.sum(sample_weight)
 
         if self.categories != "auto":

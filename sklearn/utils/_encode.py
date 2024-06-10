@@ -12,6 +12,7 @@ from ._array_api import (
     get_namespace,
 )
 from ._missing import is_scalar_nan
+from .validation import _check_sample_weight
 
 
 def _unique(values, *, sample_weight=None, return_inverse=False, return_counts=False):
@@ -61,21 +62,69 @@ def _unique(values, *, sample_weight=None, return_inverse=False, return_counts=F
     )
 
 
+def _xp_unique_groupby_sum(
+    xp,
+    arr,
+    sample_weight,
+    return_index=False,
+    return_inverse=False,
+    return_counts=False,
+):
+    """This functions behaves like xp.unique_all but it counts the values of `arr`
+    taking into acount `sample_weight`."""
+    sample_weight = _check_sample_weight(sample_weight, arr)
+
+    sorted_indices = xp.argsort(arr)
+    sorted_arr = arr[sorted_indices]
+    sorted_sample_weight = sample_weight[sorted_indices]
+
+    unique_elements, unique_indices, _, _ = xp.unique_all(sorted_arr)
+    _, unique_inverse = xp.unique_inverse(arr)
+
+    # TODO ohe_sw: Update to xp-logic. This functions are not in the API.
+    unique_indices = np.append(unique_indices, len(arr))
+    subarrays = np.split(sorted_sample_weight, unique_indices[1:])
+    group_sums = np.array(
+        [np.sum(subarray.astype(float)) for subarray in subarrays[:-1]]
+    )
+
+    results = [unique_elements]
+    if return_index:
+        results.append(unique_indices)
+    if return_inverse:
+        results.append(unique_inverse)
+    if return_counts:
+        results.append(group_sums)
+
+    if len(results) > 1:
+        return tuple(results)
+    return results[0]
+
+
 def _unique_np(values, return_inverse=False, return_counts=False, sample_weight=None):
     """Helper function to find unique values for numpy arrays that correctly
     accounts for nans. See `_unique` documentation for details."""
     xp, _ = get_namespace(values)
 
     inverse, counts = None, None
-
-    if return_inverse and return_counts:
-        uniques, _, inverse, counts = xp.unique_all(values, sample_weight=sample_weight)
-    elif return_inverse:
-        uniques, inverse = xp.unique_inverse(values, sample_weight=sample_weight)
-    elif return_counts:
-        uniques, counts = xp.unique_counts(values, sample_weight=sample_weight)
+    if sample_weight is None:
+        if return_inverse and return_counts:
+            uniques, _, inverse, counts = xp.unique_all(values)
+        elif return_inverse:
+            uniques, inverse = xp.unique_inverse(values)
+        elif return_counts:
+            uniques, counts = xp.unique_counts(values)
+        else:
+            uniques = xp.unique_values(values)
     else:
-        uniques = xp.unique_values(values, sample_weight=sample_weight)
+        uniques, _, inverse, counts = _xp_unique_groupby_sum(
+            xp,
+            values,
+            sample_weight,
+            return_index=True,
+            return_inverse=True,
+            return_counts=True,
+        )
 
     # np.unique will have duplicate missing values at the end of `uniques`
     # here we clip the nans and remove it from uniques
