@@ -62,7 +62,7 @@ def check_recorded_metadata(obj, method, parent, split_params=tuple(), **kwargs)
     method : str
         sub-estimator's method where metadata is routed to
     parent : str
-        the parent method which should have called `method` or caller
+        the parent method which should have called `method`, or the 'caller'
     split_params : tuple, default=empty
         specifies any parameters which are to be checked as being a subset
         of the original values
