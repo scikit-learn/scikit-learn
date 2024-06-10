@@ -12,5 +12,6 @@ pytest
 pytest-xdist
 ninja
 meson-python
-# For some reason some of our tests require setuptools
+# For some reason some of our tests require setuptools.
+# TODO: update those tests to remove the dependency.
 setuptools
