@@ -26,7 +26,7 @@ https://conda.anaconda.org/conda-forge/osx-64/libbrotlienc-1.1.0-h0dc2134_1.cond
 https://conda.anaconda.org/conda-forge/osx-64/libcxx-17.0.6-h88467a6_0.conda#0fe355aecb8d24b8bc07c763209adbd9
 https://conda.anaconda.org/conda-forge/osx-64/libxcb-1.15-hb7f2c08_0.conda#5513f57e0238c87c12dffedbcc9c1a4a
 https://conda.anaconda.org/conda-forge/osx-64/libzlib-1.3.1-h87427d6_1.conda#b7575b5aa92108dcc9aaab0f05f2dbce
-https://conda.anaconda.org/conda-forge/osx-64/llvm-openmp-18.1.6-h15ab845_0.conda#065f974bc7afcef3f94df56394e16154
+https://conda.anaconda.org/conda-forge/osx-64/llvm-openmp-18.1.7-h15ab845_0.conda#57440310d92e93efd808c75fec50f94d
 https://conda.anaconda.org/conda-forge/osx-64/openssl-3.3.1-h87427d6_0.conda#1bdad93ae01353340f194c5d879745db
 https://conda.anaconda.org/conda-forge/osx-64/readline-8.2-h9e318b2_1.conda#f17f77f2acf4d344734bda76829ce14e
 https://conda.anaconda.org/conda-forge/osx-64/brotli-bin-1.1.0-h0dc2134_1.conda#ece565c215adcc47fc1db4e651ee094b
@@ -78,7 +78,7 @@ https://conda.anaconda.org/conda-forge/osx-64/tbb-2021.12.0-h3c5361c_1.conda#e23
 https://conda.anaconda.org/conda-forge/noarch/threadpoolctl-3.5.0-pyhc1e730c_0.conda#df68d78237980a159bd7149f33c0e8fd
 https://conda.anaconda.org/conda-forge/noarch/toml-0.10.2-pyhd8ed1ab_0.tar.bz2#f832c45a477c78bebd107098db465095
 https://conda.anaconda.org/conda-forge/noarch/tomli-2.0.1-pyhd8ed1ab_0.tar.bz2#5844808ffab9ebdb694585b50ba02a96
-https://conda.anaconda.org/conda-forge/osx-64/tornado-6.4-py312h41838bb_0.conda#2d2d1fde5800d45cb56218583156d23d
+https://conda.anaconda.org/conda-forge/osx-64/tornado-6.4.1-py312hbd25219_0.conda#5a40db69b327c71511248f8186965bd3
 https://conda.anaconda.org/conda-forge/noarch/wheel-0.43.0-pyhd8ed1ab_1.conda#0b5293a157c2b5cd513dd1b03d8d3aae
 https://conda.anaconda.org/conda-forge/osx-64/ccache-4.9.1-h41adc32_0.conda#45aaf96b67840bd98a928de8679098fa
 https://conda.anaconda.org/conda-forge/osx-64/cctools_osx-64-986-ha1c5b94_0.conda#a8951de2506df5649f5a3295fdfd9f2c
@@ -114,15 +114,15 @@ https://conda.anaconda.org/conda-forge/osx-64/contourpy-1.2.1-py312h9230928_0.co
 https://conda.anaconda.org/conda-forge/osx-64/pandas-2.2.2-py312h1171441_1.conda#240737937f1f046b0e03ecc11ac4ec98
 https://conda.anaconda.org/conda-forge/osx-64/scipy-1.13.1-py312hb9702fa_0.conda#46cb49e67c33f8340a09e49e69adf195
 https://conda.anaconda.org/conda-forge/osx-64/blas-2.120-mkl.conda#b041a7677a412f3d925d8208936cb1e2
-https://conda.anaconda.org/conda-forge/osx-64/clang_impl_osx-64-16.0.6-h8787910_15.conda#4604a48f32935cd5d6e6a48e818b7eb0
+https://conda.anaconda.org/conda-forge/osx-64/clang_impl_osx-64-16.0.6-h8787910_16.conda#c50c939d1bf9785561220b2cfbb98cb9
 https://conda.anaconda.org/conda-forge/osx-64/matplotlib-base-3.8.4-py312hb6d62fa_2.conda#6c5cf505d118f4b58961191fd5e0d030
 https://conda.anaconda.org/conda-forge/osx-64/pyamg-5.1.0-py312h44e70fa_1.conda#ffbfe3b3d5e9675541ee516badfb7729
-https://conda.anaconda.org/conda-forge/osx-64/clang_osx-64-16.0.6-hb91bd55_15.conda#dc667dff0fefcb19ab8318e9518011f3
+https://conda.anaconda.org/conda-forge/osx-64/clang_osx-64-16.0.6-hb91bd55_16.conda#b5dacba087761db21ba9eb69b2c1718b
 https://conda.anaconda.org/conda-forge/osx-64/matplotlib-3.8.4-py312hb401068_2.conda#456c057a3e2dcac3d02f4b9d25e277f5
 https://conda.anaconda.org/conda-forge/osx-64/c-compiler-1.7.0-h282daa2_1.conda#d27411cb82bc1b76b9f487da6ae97f1d
-https://conda.anaconda.org/conda-forge/osx-64/clangxx_impl_osx-64-16.0.6-h6d92fbe_15.conda#0e9dfa5ea554d23a3ad1f373470f84a2
+https://conda.anaconda.org/conda-forge/osx-64/clangxx_impl_osx-64-16.0.6-h6d92fbe_16.conda#55fb2d5cbc9ec490347b1f797536fba8
 https://conda.anaconda.org/conda-forge/osx-64/gfortran_osx-64-12.3.0-h18f7dce_1.conda#436af2384c47aedb94af78a128e174f1
-https://conda.anaconda.org/conda-forge/osx-64/clangxx_osx-64-16.0.6-hb91bd55_15.conda#3d3b8b7b99770601759ef8bc23264df2
+https://conda.anaconda.org/conda-forge/osx-64/clangxx_osx-64-16.0.6-hb91bd55_16.conda#5879c43528a2601d04d64c5f9fdf3033
 https://conda.anaconda.org/conda-forge/osx-64/gfortran-12.3.0-h2c809b3_1.conda#c48adbaa8944234b80ef287c37e329b0
 https://conda.anaconda.org/conda-forge/osx-64/cxx-compiler-1.7.0-h7728843_1.conda#e04cb15a20553b973dd068c2dc81d682
 https://conda.anaconda.org/conda-forge/osx-64/fortran-compiler-1.7.0-h6c2ab21_1.conda#48319058089f492d5059e04494b81ed9
