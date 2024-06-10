@@ -457,7 +457,9 @@ def test_dbcv_score_zero_distance():
 
 def test_dbcv_score_tiny_cluster():
     dbcv_score(np.random.rand(5, 2), np.array([-1, 1, 1, 0, 0]))
-    dbcv_score(np.random.rand(3, 2), np.array([1, 1, 0]))
+    expected_msg = "DBCV is not defined for clusters of size 1"
+    with pytest.raises(ValueError, match=expected_msg):
+        dbcv_score(np.random.rand(3, 2), np.array([1, 1, 0]))
 
 
 def test_dbcv_score_verbose(density_sample):
