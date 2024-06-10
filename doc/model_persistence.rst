@@ -40,7 +40,7 @@ Model persistence
        * Requires the same environment as the training environment
    * - `cloudpickle`_
      - * Can serialize non-packaged, custom Python code
-       * Comparable loading efficiency as :mod:`pickle`
+       * Comparable loading efficiency as :mod:`pickle` with `protocol=5`
      - * Pickle based format
        * Loading can execute arbitrary code
        * No forward compatibility guarantees
