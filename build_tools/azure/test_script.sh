@@ -61,13 +61,6 @@ if [[ -n "$SELECTED_TESTS" ]]; then
 fi
 
 TEST_CMD="$TEST_CMD --pyargs sklearn"
-if [[ "$DISTRIB" == "conda-pypy3" ]]; then
-    # Run only common tests for PyPy. Running the full test suite uses too
-    # much memory and causes the test to time out sometimes. See
-    # https://github.com/scikit-learn/scikit-learn/issues/27662 for more
-    # details.
-    TEST_CMD="$TEST_CMD.tests.test_common"
-fi
 
 set -x
 eval "$TEST_CMD"

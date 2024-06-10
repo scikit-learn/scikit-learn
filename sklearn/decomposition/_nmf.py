@@ -1140,9 +1140,9 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
     """Base class for NMF and MiniBatchNMF."""
 
     # This prevents ``set_split_inverse_transform`` to be generated for the
-    # non-standard ``W`` arg on ``inverse_transform``.
-    # TODO: remove when W is removed in v1.5 for inverse_transform
-    __metadata_request__inverse_transform = {"W": metadata_routing.UNUSED}
+    # non-standard ``Xt`` arg on ``inverse_transform``.
+    # TODO(1.7): remove when Xt is removed in v1.7 for inverse_transform
+    __metadata_request__inverse_transform = {"Xt": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         "n_components": [

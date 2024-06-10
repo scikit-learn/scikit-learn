@@ -42,11 +42,12 @@ setting.
 # May 1996 to 5 December 1998. Each sample of the dataset refers to a period of
 # 30 minutes, i.e. there are 48 instances for each time period of one day. Each
 # sample on the dataset has 7 columns:
-#   - date: between 7 May 1996 to 5 December 1998. Normalized between 0 and 1;
-#   - day: day of week (1-7);
-#   - period: half hour intervals over 24 hours. Normalized between 0 and 1;
-#   - nswprice/nswdemand: electricity price/demand of New South Wales;
-#   - vicprice/vicdemand: electricity price/demand of Victoria.
+#
+# - date: between 7 May 1996 to 5 December 1998. Normalized between 0 and 1;
+# - day: day of week (1-7);
+# - period: half hour intervals over 24 hours. Normalized between 0 and 1;
+# - nswprice/nswdemand: electricity price/demand of New South Wales;
+# - vicprice/vicdemand: electricity price/demand of Victoria.
 #
 # Originally, it is a classification task, but here we use it for the regression
 # task to predict the scheduled electricity transfer between states.
