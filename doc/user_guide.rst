@@ -19,6 +19,8 @@ User Guide
    model_persistence.rst
    common_pitfalls.rst
    dispatching.rst
+   machine_learning_map.rst
+   presentations.rst
 
 Under Development
 -----------------

@@ -195,6 +195,9 @@ class KNNImputer(_BaseImputer):
         # fill nans with zeros
         if weight_matrix is not None:
             weight_matrix[np.isnan(weight_matrix)] = 0.0
+        else:
+            weight_matrix = np.ones_like(donors_dist)
+            weight_matrix[np.isnan(donors_dist)] = 0.0
 
         # Retrieve donor values and calculate kNN average
         donors = fit_X_col.take(donors_idx)
