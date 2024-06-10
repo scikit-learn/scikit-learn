@@ -6,8 +6,8 @@
 # License: BSD 3 clause
 
 
-from collections import Counter
 import functools
+from collections import Counter
 from numbers import Integral
 
 import numpy as np
@@ -490,6 +490,7 @@ def dbcv_score(
     metric="euclidean",
     d=None,
     per_cluster_scores=False,
+    strict_cluster_size_validation=False,
     mst_raw_dist=False,
     verbose=False,
     **kwd_args,
@@ -538,6 +539,9 @@ def dbcv_score(
         Defaults to False with the function returning a single float
         value for the whole clustering.
 
+    strict_cluster_size_validation : optional, bool (default False)
+        If True, fail fast on cluster sizes for which DBCV is undefined.
+
     mst_raw_dist : optional, bool (default False)
         If True, the MST's are constructed solely via 'raw' distances
         (depending on the given metric, e.g. euclidean distances)
@@ -582,13 +586,14 @@ def dbcv_score(
         i for i in range(len(le.classes_)) if str(le.classes_[i]) != "-1"
     ]
     check_number_of_labels(len(encoding_cluster_indices), len(labels))
-    for label, count in Counter(le.classes_).items():
-        if count > 1 or str(label) == "-1":
-            continue
-
-        raise ValueError(
-            "DBCV is not defined for clusters of size 1"
-        )
+    if strict_cluster_size_validation:
+        for label, count in Counter(le.classes_).items():
+            if count > 1 or str(label) == "-1":
+                continue
+    
+            raise ValueError(
+                "DBCV is not defined for clusters of size 1"
+            )
     n_labels = len(le.classes_)
 
     core_distances = {}
