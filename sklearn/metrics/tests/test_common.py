@@ -51,7 +51,7 @@ from sklearn.metrics import (
     zero_one_loss,
 )
 from sklearn.metrics._base import _average_binary_score
-from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.metrics.pairwise import cosine_similarity, paired_cosine_distances
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import shuffle
 from sklearn.utils._array_api import (
@@ -1938,6 +1938,14 @@ array_api_metric_checkers = {
         check_array_api_regression_metric,
         check_array_api_multioutput_regression_metric,
     ],
+    mean_squared_error: [
+        check_array_api_regression_metric,
+        check_array_api_multioutput_regression_metric,
+    ],
+    d2_tweedie_score: [
+        check_array_api_regression_metric,
+    ],
+    paired_cosine_distances: [check_array_api_metric_pairwise],
 }
 
 

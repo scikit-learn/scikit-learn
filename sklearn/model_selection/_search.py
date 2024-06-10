@@ -440,6 +440,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             "_xfail_checks": {
                 "check_supervised_y_2d": "DataConversionWarning not caught"
             },
+            "array_api_support": _safe_tags(self.estimator, "array_api_support"),
         }
 
     def score(self, X, y=None, **params):
@@ -1089,9 +1090,24 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         for key, param_result in param_results.items():
             param_list = list(param_result.values())
             try:
-                arr_dtype = np.result_type(*param_list)
+                with warnings.catch_warnings():
+                    warnings.filterwarnings(
+                        "ignore",
+                        message="in the future the `.dtype` attribute",
+                        category=DeprecationWarning,
+                    )
+                    # Warning raised by NumPy 1.20+
+                    arr_dtype = np.result_type(*param_list)
             except (TypeError, ValueError):
-                arr_dtype = object
+                arr_dtype = np.dtype(object)
+            else:
+                if any(np.min_scalar_type(x) == object for x in param_list):
+                    # `np.result_type` might get thrown off by `.dtype` properties
+                    # (which some estimators have).
+                    # If finding the result dtype this way would give object,
+                    # then we use object.
+                    # https://github.com/scikit-learn/scikit-learn/issues/29157
+                    arr_dtype = np.dtype(object)
             if len(param_list) == n_candidates and arr_dtype != object:
                 # Exclude `object` else the numpy constructor might infer a list of
                 # tuples to be a 2d array.

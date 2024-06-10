@@ -5,17 +5,13 @@
 PYTHON ?= python
 CYTHON ?= cython
 PYTEST ?= pytest
-CTAGS ?= ctags
 
 # skip doctests on 32bit python
 BITS := $(shell python -c 'import struct; print(8 * struct.calcsize("P"))')
 
 all: clean inplace test
 
-clean-ctags:
-	rm -f tags
-
-clean: clean-ctags
+clean:
 	$(PYTHON) setup.py clean
 	rm -rf dist
 
@@ -24,7 +20,7 @@ inplace:
 	$(PYTHON) setup.py build_ext -i
 
 dev-meson:
-	pip install --verbose --no-build-isolation --editable . --config-settings editable-verbose=true
+	pip install --verbose --no-build-isolation --editable . --check-build-dependencies --config-settings editable-verbose=true
 
 clean-meson:
 	pip uninstall -y scikit-learn
@@ -49,22 +45,11 @@ test-coverage-parallel:
 
 test: test-code test-sphinxext test-doc
 
-trailing-spaces:
-	find sklearn -name "*.py" -exec perl -pi -e 's/[ \t]*$$//' {} \;
-
 cython:
 	python setup.py build_src
-
-ctags:
-	# make tags for symbol based navigation in emacs and vim
-	# Install with: sudo apt-get install exuberant-ctags
-	$(CTAGS) --python-kinds=-i -R sklearn
 
 doc: inplace
 	$(MAKE) -C doc html
 
 doc-noplot: inplace
 	$(MAKE) -C doc html-noplot
-
-code-analysis:
-	build_tools/linting.sh

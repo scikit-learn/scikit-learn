@@ -1,5 +1,6 @@
 """Various utilities to help with development."""
 
+import platform
 import warnings
 from collections.abc import Sequence
 
@@ -89,9 +90,7 @@ def __getattr__(name):
             "IS_PYPY is deprecated and will be removed in 1.7.",
             FutureWarning,
         )
-        from .fixes import _IS_PYPY
-
-        return _IS_PYPY
+        return platform.python_implementation() == "PyPy"
     raise AttributeError(f"module {__name__} has no attribute {name}")
 
 
