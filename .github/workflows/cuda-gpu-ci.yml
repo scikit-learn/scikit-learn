@@ -27,7 +27,7 @@ jobs:
           echo "Checked out commit $(git rev-parse HEAD)"
       - name: Cache conda environment
         id: cache-conda
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/conda
           key: ${{ runner.os }}-build-${{ hashFiles('build_tools/github/create_gpu_environment.sh') }}-${{ hashFiles('build_tools/github/pylatest_conda_forge_cuda_array-api_linux-64_conda.lock') }}
