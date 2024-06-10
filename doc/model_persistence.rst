@@ -39,7 +39,7 @@ Model persistence
        * Loading can execute arbitrary code
        * Requires the same environment as the training environment
    * - `cloudpickle`_
-     - * Serialize custom Python code
+     - * Can serialize non-packaged, custom Python code
        * Comparable loading efficiency as :mod:`pickle`
      - * Pickle based format
        * Loading can execute arbitrary code
