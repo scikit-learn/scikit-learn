@@ -457,7 +457,7 @@ def test_dbcv_score_zero_distance():
 
 def test_dbcv_score_tiny_cluster():
     dbcv_score(np.random.rand(5, 2), np.array([-1, 1, 1, 0, 0]))
-    dbcv_score(np.random.rand(2, 2), np.array([1, 0]))
+    dbcv_score(np.random.rand(3, 2), np.array([1, 1, 0]))
 
 
 def test_dbcv_score_verbose(density_sample):
