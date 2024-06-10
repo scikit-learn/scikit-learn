@@ -460,7 +460,8 @@ def test_dbcv_score_tiny_cluster():
     expected_msg = "DBCV is not defined for clusters of size 1"
     with pytest.raises(ValueError, match=expected_msg):
         dbcv_score(
-            np.random.rand(3, 2), np.array([1, 1, 0]),
+            np.random.rand(3, 2),
+            np.array([1, 1, 0]),
             strict_cluster_size_validation=True
         )
 
