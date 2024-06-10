@@ -108,7 +108,7 @@ def internal_minimum_spanning_tree(mr_distances):
     mr_distances : array (cluster_size, cluster_size)
         The pairwise mutual reachability distances, inferred to be the edge
         weights of a complete graph. Since MSTs are computed per cluster
-        this is the all-points-mutual-reacability for points within a single
+        this is the all-points-mutual-reachability for points within a single
         cluster.
 
     Returns
