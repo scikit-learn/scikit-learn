@@ -479,7 +479,7 @@ def davies_bouldin_score(X, labels):
         "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
         "d": [None, int],
         "per_cluster_scores": ["boolean"],
-        "strict_cluster_size_validation": ["boolean"],        
+        "strict_cluster_size_validation": ["boolean"],
         "mst_raw_dist": ["boolean"],
         "verbose": ["boolean"],
     },
