@@ -32,7 +32,8 @@ Model persistence
        * No memory mapping
        * Requires the same environment as the training environment
    * - :mod:`joblib`
-     - * Efficient memory usage with memory mapping
+     - * Efficient memory usage
+     - * Supports memory mapping
        * Easy shortcuts for compression and decompression
      - * Pickle based format
        * Loading can execute arbitrary code
