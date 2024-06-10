@@ -347,7 +347,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         loss_func_name = self.loss
         if loss_func_name == "log_loss" and self.out_activation_ == "logistic":
             loss_func_name = "binary_log_loss"
-        loss = LOSS_FUNCTIONS[loss_func_name](y, activations[-1], sample_weight)
+        loss = LOSS_FUNCTIONS[loss_func_name](
+            y, activations[-1], sample_weight=sample_weight
+        )
         # Add L2 regularization term to loss
         values = 0
         for s in self.coefs_:
@@ -1311,7 +1313,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             Note that y doesn't need to contain all labels in `classes`.
 
         sample_weight : array-like of shape (n_samples,)
-            The sample weights.
+            Sample weights.
 
         Returns
         -------
@@ -1771,7 +1773,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
             The target values.
 
         sample_weight : array-like of shape (n_samples,)
-            The sample weights.
+            Sample weights.
 
         Returns
         -------
