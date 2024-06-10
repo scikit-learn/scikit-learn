@@ -94,8 +94,8 @@ ax_det.set_title("Detection Error Tradeoff (DET) curves")
 ax_roc.grid(linestyle="--")
 ax_det.grid(linestyle="--")
 
-for idx, (name, clf) in enumerate(classifiers.items()):
-    (color, linestyle) = ("black", "--") if idx == 2 else (None, None)
+for name, clf in classifiers.items():
+    (color, linestyle) = ("black", "--") if name == "Chance level" else (None, None)
     clf.fit(X_train, y_train)
     RocCurveDisplay.from_estimator(
         clf, X_test, y_test, ax=ax_roc, name=name, color=color, linestyle=linestyle

@@ -302,11 +302,9 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         line_kwargs.update(**kwargs)
 
         # avoid inf from sp.stats.norm.ppf
-        eps = 1e-8
-        self.fpr = np.where(self.fpr == 0, self.fpr + eps, self.fpr)
-        self.fpr = np.where(self.fpr == 1, self.fpr - eps, self.fpr)
-        self.fnr = np.where(self.fnr == 0, self.fnr + eps, self.fnr)
-        self.fnr = np.where(self.fnr == 1, self.fnr - eps, self.fnr)
+        eps = np.finfo(self.fpr.dtype).eps
+        self.fpr = self.fpr.clip(eps, 1 - eps)
+        self.fnr = self.fnr.clip(eps, 1 - eps)
 
         (self.line_,) = self.ax_.plot(
             sp.stats.norm.ppf(self.fpr),
