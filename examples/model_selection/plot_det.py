@@ -125,8 +125,11 @@ plt.show()
 #
 # Chance level is in general not easy to define, as it depends on what is the
 # model considered as representative of pure chance. In this case, it is a
-# :class:`~sklearn.dummy.DummyClassifier` with the default "prior" strategy. To
-# understand the chance level of the curves above, we recall the following
+# :class:`~sklearn.dummy.DummyClassifier` with the default "prior" strategy.
+# This is a non-informative classifier with a constant prediction for any
+# value of the input features in `X`.
+#
+# To understand the chance level of the curves above, we recall the following
 # mathematical definitions:
 #
 # :math:`\text{FPR} = \frac{\text{FP}}{\text{FP} + \text{TN}}`
