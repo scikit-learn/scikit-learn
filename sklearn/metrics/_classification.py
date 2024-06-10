@@ -631,8 +631,7 @@ def multilabel_confusion_matrix(
         "sample_weight": ["array-like", None],
         "zero_division": [
             StrOptions({"warn"}),
-            Options(int, {0, 1}),
-            Options(float, {np.nan}),
+            Options(Real, {0.0, 1.0, np.nan}),
         ],
     },
     prefer_skip_nested_validation=True,
@@ -682,7 +681,7 @@ def cohen_kappa_score(
         Sets the return value when there is a zero division, e.g. when
         `y1=y2={np.ones, np.zeros}`.
 
-        - If set to "warn", this acts like 0.0, but a warning is also raised.
+        - If set to "warn", this acts like a 0.0 input, but a warning is also raised.
         - If set to `np.nan`, such values will be excluded from the average.
 
         .. versionadded:: 1.6
@@ -729,7 +728,8 @@ def cohen_kappa_score(
         else:
             w_mat = (w_mat - w_mat.T) ** 2
 
-    # Handle `zero_division` for an upcoming invalid divide:
+    # Handle `zero_division` case if either "RuntimeWarning: invalid value encountered
+    # in scalar divide" or np.isfinite(k) == False:
     if np.sum(w_mat * expected) == 0:
         if zero_division == "warn":
             msg = (
