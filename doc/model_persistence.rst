@@ -16,7 +16,7 @@ Model persistence
        * Serving and training environments independent of one another
        * Most secure option
      - * Not all scikit-learn models are supported
-       * Custom estimators are hard to add
+       * Custom estimators require more work to support
        * Original Python object is lost and cannot be reconstructed
    * - :ref:`skops_persistence`
      - * Pickle free and more secure
