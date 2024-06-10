@@ -27,7 +27,7 @@ from sklearn.utils.multiclass import _check_partial_fit_first_call
 
 
 def record_metadata(obj, record_default=True, **kwargs):
-    """Utility function to store passed metadata to a method.
+    """Utility function to store passed metadata to a method of obj.
 
     If record_default is False, kwargs whose values are "default" are skipped.
     This is so that checks on keyword arguments whose default was not changed
