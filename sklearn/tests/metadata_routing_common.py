@@ -60,7 +60,7 @@ def check_recorded_metadata(obj, method, parent, split_params=tuple(), **kwargs)
     obj : estimator object
         sub-estimator to check routed params for
     method : str
-        sub-estimator's method where metadata is routed to
+        sub-estimator's method where metadata is routed to, or the 'callee'
     parent : str
         the parent method which should have called `method`, or the 'caller'
     split_params : tuple, default=empty
