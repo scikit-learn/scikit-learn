@@ -19,7 +19,7 @@ Model persistence
        * Custom estimators require more work to support
        * Original Python object is lost and cannot be reconstructed
    * - :ref:`skops_persistence`
-     - * Pickle free and more secure
+     - * More secure than `pickle` based formats
        * Contents can be partly validated without loading
      - * Not as fast as `pickle` based formats
        * Supports less types than `pickle` based formats
