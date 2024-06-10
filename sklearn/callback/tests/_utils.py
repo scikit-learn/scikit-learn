@@ -9,13 +9,13 @@ from sklearn.utils.parallel import Parallel, delayed
 
 
 class TestingCallback:
-    def on_fit_begin(self, estimator, *, data):
+    def _on_fit_begin(self, estimator, *, data):
         pass
 
-    def on_fit_end(self):
+    def _on_fit_end(self):
         pass
 
-    def on_fit_iter_end(self, estimator, node, **kwargs):
+    def _on_fit_iter_end(self, estimator, node, **kwargs):
         pass
 
 
@@ -26,10 +26,10 @@ class TestingAutoPropagatedCallback(TestingCallback):
 class NotValidCallback:
     """Unvalid callback since it's missing a method from the protocol.'"""
 
-    def on_fit_begin(self, estimator, *, data):
+    def _on_fit_begin(self, estimator, *, data):
         pass  # pragma: no cover
 
-    def on_fit_iter_end(self, estimator, node, **kwargs):
+    def _on_fit_iter_end(self, estimator, node, **kwargs):
         pass  # pragma: no cover
 
 

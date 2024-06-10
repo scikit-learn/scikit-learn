@@ -118,7 +118,18 @@ class CallbackContext:
         )
 
     def eval_on_fit_begin(self, estimator, *, data):
-        """Evaluate the on_fit_begin method of the callbacks."""
+        """Evaluate the _on_fit_begin method of the callbacks.
+
+        Parameters
+        ----------
+        estimator : estimator instance
+            The estimator calling this callback hook.
+
+        data : dict
+            Dictionary containing the training and validation data. The possible
+            keys are "X_train", "y_train", "sample_weight_train", "X_val", "y_val"
+            and "sample_weight_val".
+        """
         for callback in self._callbacks:
             # Only call the on_fit_begin method of callbacks that are not
             # propagated from a meta-estimator.
@@ -126,19 +137,64 @@ class CallbackContext:
                 isinstance(callback, AutoPropagatedProtocol)
                 and self._task_node.parent is not None
             ):
-                callback.on_fit_begin(estimator, data=data)
+                callback._on_fit_begin(estimator, data=data)
 
         return self
 
     def eval_on_fit_iter_end(self, estimator, **kwargs):
-        """Evaluate the on_fit_iter_end method of the callbacks."""
+        """Evaluate the _on_fit_iter_end method of the callbacks.
+
+        Parameters
+        ----------
+        estimator : estimator instance
+            The estimator calling this callback hook.
+
+        **kwargs : dict
+            arguments passed to the callback. Possible keys are
+
+            - data: dict
+                Dictionary containing the training and validation data. The keys are
+                "X_train", "y_train", "sample_weight_train", "X_val", "y_val",
+                "sample_weight_val". The values are the corresponding data. If a key is
+                missing, the corresponding value is None.
+
+            - stopping_criterion: float
+                Usually iterations stop when `stopping_criterion <= tol`.
+                This is only provided at the innermost level of iterations.
+
+            - tol: float
+                Tolerance for the stopping criterion.
+                This is only provided at the innermost level of iterations.
+
+            - from_reconstruction_attributes: estimator instance
+                A ready to predict, transform, etc ... estimator as if the fit stopped
+                at this node. Usually it's a copy of the caller estimator with the
+                necessary attributes set but it can sometimes be an instance of another
+                class (e.g. LogisticRegressionCV -> LogisticRegression)
+
+            - fit_state: dict
+                Model specific quantities updated during fit. This is not meant to be
+                used by generic callbacks but by a callback designed for a specific
+                estimator instead.
+
+        Returns
+        -------
+        stop : bool
+            Whether or not to stop the current level of iterations at this task node.
+        """
         return any(
-            callback.on_fit_iter_end(estimator, self._task_node, **kwargs)
+            callback._on_fit_iter_end(estimator, self._task_node, **kwargs)
             for callback in self._callbacks
         )
 
     def eval_on_fit_end(self, estimator):
-        """Evaluate the on_fit_end method of the callbacks."""
+        """Evaluate the _on_fit_end method of the callbacks.
+
+        Parameters
+        ----------
+        estimator : estimator instance
+            The estimator calling this callback hook.
+        """
         for callback in self._callbacks:
             # Only call the on_fit_end method of callbacks that are not
             # propagated from a meta-estimator.
@@ -146,10 +202,16 @@ class CallbackContext:
                 isinstance(callback, AutoPropagatedProtocol)
                 and self._task_node.parent is not None
             ):
-                callback.on_fit_end(estimator, task_node=self._task_node)
+                callback._on_fit_end(estimator, task_node=self._task_node)
 
     def propagate_callbacks(self, sub_estimator):
-        """Propagate the callbacks to a sub-estimator."""
+        """Propagate the callbacks to a sub-estimator.
+
+        Parameters
+        ----------
+        sub_estimator : estimator instance
+            The estimator to which the callbacks should be propagated.
+        """
         bad_callbacks = [
             callback.__class__.__name__
             for callback in getattr(sub_estimator, "_skl_callbacks", [])

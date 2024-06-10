@@ -8,13 +8,13 @@ from typing import Protocol, runtime_checkable
 class CallbackProtocol(Protocol):
     """Protocol for the callbacks"""
 
-    def on_fit_begin(self, estimator, *, data):
+    def _on_fit_begin(self, estimator, *, data):
         """Method called at the beginning of the fit method of the estimator.
 
         Parameters
         ----------
         estimator : estimator instance
-            The estimator the callback is registered on.
+            The estimator calling this callback hook.
 
         data : dict
             Dictionary containing the training and validation data. The possible
@@ -22,14 +22,14 @@ class CallbackProtocol(Protocol):
             and "sample_weight_val".
         """
 
-    def on_fit_iter_end(self, estimator, task_node, **kwargs):
+    def _on_fit_iter_end(self, estimator, task_node, **kwargs):
         """Method called at the end of each task of the estimator.
 
         Parameters
         ----------
         estimator : estimator instance
-            The caller estimator. It might differ from the estimator passed to the
-            `on_fit_begin` method for auto-propagated callbacks.
+            The estimator calling this callback hook. It might differ from the estimator
+            passed to the `on_fit_begin` method for auto-propagated callbacks.
 
         task_node : TaskNode instance
             The caller task node.
@@ -64,17 +64,17 @@ class CallbackProtocol(Protocol):
 
         Returns
         -------
-        stop : bool or None
-            Whether or not to stop the current level of iterations at this node.
+        stop : bool
+            Whether or not to stop the current level of iterations at this task node.
         """
 
-    def on_fit_end(self, estimator, task_node):
+    def _on_fit_end(self, estimator, task_node):
         """Method called at the end of the fit method of the estimator.
 
         Parameters
         ----------
         estimator : estimator instance
-            The estimator the callback is registered on.
+            The estimator calling this callback hook.
 
         task_node : TaskNode instance
             The task node corresponding to the whole `fit` task. This is usually the
