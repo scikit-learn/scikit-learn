@@ -62,11 +62,9 @@ from ..utils.validation import (
 
 def _check_zero_division(zero_division):
     if isinstance(zero_division, str) and zero_division == "warn":
-        return np.float64(0.0)  # question to reviewers: could this be np.float16(0.0)?
+        return np.float64(0.0)
     elif isinstance(zero_division, (int, float)) and zero_division in [0, 1]:
-        return np.float64(
-            zero_division
-        )  # question to reviewers: could this be np.float16(zero_division)?
+        return np.float64(zero_division)
     else:  # np.isnan(zero_division)
         return np.nan
 
@@ -715,7 +713,15 @@ def cohen_kappa_score(
     n_classes = confusion.shape[0]
     sum0 = np.sum(confusion, axis=0)
     sum1 = np.sum(confusion, axis=1)
-    expected = np.outer(sum0, sum1) / np.sum(sum0)
+
+    numerator = np.outer(sum0, sum1)
+    denominator = np.sum(sum0)
+    expected = _metric_handle_division(
+        numerator, denominator, "cohen_kappa_score()", zero_division
+    )
+
+    if np.isclose(denominator, 0):
+        return _check_zero_division(zero_division)
 
     if weights is None:
         w_mat = np.ones([n_classes, n_classes], dtype=int)
@@ -728,18 +734,26 @@ def cohen_kappa_score(
         else:
             w_mat = (w_mat - w_mat.T) ** 2
 
+    numerator = np.sum(w_mat * confusion)
     denominator = np.sum(w_mat * expected)
+    score = _metric_handle_division(
+        numerator, denominator, "cohen_kappa_score()", zero_division
+    )
+
+    if np.isclose(denominator, 0):
+        return _check_zero_division(zero_division)
+    else:
+        return 1 - score
+
+
+def _metric_handle_division(numerator, denominator, metric, zero_division):
     if np.isclose(denominator, 0):
         if zero_division == "warn":
-            msg = (
-                "`cohen_kappa_score()` is ill-defined and is set to 0.0. Use the "
-                "`zero_division` param to control this behavior."
-            )
+            msg = f"{metric} is ill-defined and set to 0.0. Use the `zero_division` "
+            "param to control this behavior."
             warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
         return _check_zero_division(zero_division)
-
-    k = np.sum(w_mat * confusion) / denominator
-    return 1 - k
+    return numerator / denominator
 
 
 @validate_params(
