@@ -259,9 +259,9 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
         .. versionadded:: 0.20
 
-    le_ : :class:`~sklearn.preprocessing.LabelEncoder`
-        Transformer used to encode the labels during fit and decode during
-        prediction.
+    le_ : :class:`~sklearn.preprocessing.LabelEncoder`, or list
+        Transformer, or list of transformers used to encode the labels
+        during fit and decode during prediction.
 
     classes_ : ndarray of shape (n_classes,)
         The classes labels.
@@ -398,25 +398,26 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         """
         _raise_for_params(fit_params, self, "fit")
         y_type = type_of_target(y, input_name="y")
-        if y_type in ("unknown", "continuous"):
+        if y_type in ("binary", "multiclass"):
+            self.le_ = LabelEncoder().fit(y)
+            self.classes_ = self.le_.classes_
+            transformed_y = self.le_.transform(y)
+        elif y_type == "multilabel-indicator":
+            self.le_ = [LabelEncoder().fit(yk) for yk in y.T]
+            self.classes_ = [le.classes_ for le in self.le_]
+            transformed_y = np.array(
+                [
+                    self.le_[target_idx].transform(target)
+                    for target_idx, target in enumerate(y.T)
+                ]
+            ).T
+        else:
             # raise a specific ValueError for non-classification tasks
             raise ValueError(
                 f"Unknown label type: {y_type}. Maybe you are trying to fit a "
                 "classifier, which expects discrete classes on a "
                 "regression target with continuous values."
             )
-        elif y_type not in ("binary", "multiclass"):
-            # raise a NotImplementedError for backward compatibility for non-supported
-            # classification tasks
-            raise NotImplementedError(
-                f"{self.__class__.__name__} only supports binary or multiclass "
-                "classification. Multilabel and multi-output classification are not "
-                "supported."
-            )
-
-        self.le_ = LabelEncoder().fit(y)
-        self.classes_ = self.le_.classes_
-        transformed_y = self.le_.transform(y)
 
         if sample_weight is not None:
             fit_params["sample_weight"] = sample_weight
@@ -448,7 +449,18 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
                 arr=predictions,
             )
 
-        maj = self.le_.inverse_transform(maj)
+        if isinstance(self.le_, list):
+            print(maj.shape)
+            print(predictions.shape)
+            # Handle the multilabel-indicator case
+            maj = np.array(
+                [
+                    self.le_[target_idx].inverse_transform(target)
+                    for target_idx, target in enumerate(maj)
+                ]
+            ).T
+        else:
+            maj = self.le_.inverse_transform(maj)
 
         return maj
 
@@ -506,14 +518,53 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         """
         check_is_fitted(self)
 
-        if self.voting == "soft":
-            probas = self._collect_probas(X)
-            if not self.flatten_transform:
-                return probas
-            return np.hstack(probas)
+        # if self.voting == "soft":
+        #     probas = self._collect_probas(X)
+        #     if not self.flatten_transform:
+        #         return probas
+        #     return np.hstack(probas)
 
+        # else:
+        #     print(X.shape)
+        #     return self._predict(X)
+        
+        if self.voting == "soft":
+            predictions = self._collect_probas(X)
+            if self.flatten_transform:
+                predictions = np.hstack(predictions)
         else:
-            return self._predict(X)
+            predictions = self._predict(X)
+        
+        probas_labels = []
+        for est_idx, preds in enumerate(predictions):
+            # if isinstance(preds, list):
+            #     # `preds` is here a list of `n_targets` 2D ndarrays of
+            #     # `n_classes` columns. The k-th column contains the
+            #     # probabilities of the samples belonging the k-th class.
+            #     #
+            #     # Since those probabilities must sum to one for each sample,
+            #     # we can work with probabilities of `n_classes - 1` classes.
+            #     # Hence we drop the first column.
+            #     for pred in preds:
+            #         X_meta.append(pred[:, 1:])
+            if preds.ndim == 1:
+                # Some estimator return a 1D array for predictions
+                # which must be 2-dimensional arrays.
+                probas_labels.append(preds.reshape(-1, 1))
+            elif (len(self.classes_) == 2):
+                # Remove the first column when using probabilities in
+                # binary classification because both features `preds` are perfectly
+                # collinear.
+                probas_labels.append(preds[:, 1:])
+            else:
+                probas_labels.append(preds)
+
+        # self._n_feature_outs = [pred.shape[1] for pred in X_meta]
+        # if self.passthrough:
+        #     X_meta.append(X)
+        #     if sparse.issparse(X):
+        #         return sparse.hstack(X_meta, format=X.format)
+        return np.hstack(probas_labels)
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.

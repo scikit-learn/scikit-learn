@@ -112,9 +112,8 @@ Changelog
 :mod:`sklearn.ensemble`
 ....................................
 
-- |Enhancement| :class:`ensemble.VotingClassifier`
-  now supports multi-label and multi-output data.
-  :pr:`19731` by :user:`Adam Li <adam2392>`.
+- |Enhancement| :class:`ensemble.VotingClassifier` now supports multi-label and multi-output data.
+  :pr:`29238` by :user:`Adam Li <adam2392>`.
 
 :mod:`sklearn.impute`
 .....................

@@ -19,6 +19,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
 from sklearn.multiclass import OneVsRestClassifier
+from sklearn.neural_network import MLPClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
@@ -45,6 +46,9 @@ X_scaled = StandardScaler().fit_transform(X)
 
 X_r, y_r = datasets.load_diabetes(return_X_y=True)
 
+X_multilabel, y_multilabel = make_multilabel_classification(
+    n_classes=3, random_state=42
+)
 
 @pytest.mark.parametrize(
     "params, err_msg",
@@ -259,21 +263,6 @@ def test_predict_proba_on_toy_problem():
 
     assert isinstance(exec_info.value.__cause__, AttributeError)
     assert inner_msg in str(exec_info.value.__cause__)
-
-
-def test_multilabel():
-    """Check if error is raised for multilabel classification."""
-    X, y = make_multilabel_classification(
-        n_classes=2, n_labels=1, allow_unlabeled=False, random_state=123
-    )
-    clf = OneVsRestClassifier(SVC(kernel="linear"))
-
-    eclf = VotingClassifier(estimators=[("ovr", clf)], voting="hard")
-
-    try:
-        eclf.fit(X, y)
-    except NotImplementedError:
-        return
 
 
 def test_gridsearch():
@@ -798,6 +787,16 @@ def test_multioutput_string():
         assert log_proba[1].shape == (4, 4)
 
 
+def test_multilabel():
+    """Check if error is raised for multilabel classification."""
+    X, y = make_multilabel_classification(
+        n_classes=2, n_labels=1, allow_unlabeled=False, random_state=123
+    )
+    clf = OneVsRestClassifier(SVC(kernel="linear"))
+
+    eclf = VotingClassifier(estimators=[("ovr", clf)], voting="hard")
+    eclf.fit(X, y)
+
 
 @pytest.mark.parametrize(
     "estimator",
@@ -807,10 +806,10 @@ def test_multioutput_string():
         # output a list of 2D array containing the probability of each class
         # for each output
         RandomForestClassifier(random_state=42),
-    ],
-    ids=["MLPClassifier", "RandomForestClassifier"],
+    ]
 )
-def test_voting_classifier_multilabel_predict_proba(estimator):
+@pytest.mark.parametrize("voting", ["soft", "hard"])
+def test_voting_classifier_multilabel_predict_proba(estimator, voting):
     """Check the behaviour for the multilabel classification case and the
     `predict_proba` stacking method.
 
@@ -823,19 +822,21 @@ def test_voting_classifier_multilabel_predict_proba(estimator):
     n_outputs = 3
 
     estimators = [("est", estimator)]
-    stacker = StackingClassifier(
+    voter = VotingClassifier(
         estimators=estimators,
-        final_estimator=KNeighborsClassifier(),
-        stack_method="predict_proba",
+        voting=voting,
     ).fit(X_train, y_train)
 
-    X_trans = stacker.transform(X_test)
-    assert X_trans.shape == (X_test.shape[0], n_outputs)
-    # we should not have any collinear classes and thus nothing should sum to 1
-    assert not any(np.isclose(X_trans.sum(axis=1), 1.0))
+    X_trans = voter.transform(X_test)
+    print(X_trans)
+    assert X_trans.shape == (X_test.shape[0], n_outputs), f'{X_trans.shape} != {(X_test.shape[0], n_outputs)}'
+    
+    if voting == 'soft':
+        # we should not have any collinear classes and thus nothing should sum to 1
+        assert not any(np.isclose(X_trans.sum(axis=1), 1.0)), X_trans.sum(axis=1)
 
-    y_pred = stacker.predict(X_test)
-    assert y_pred.shape == y_test.shape
+    y_pred = voter.predict(X_test)
+    assert y_pred.shape == y_test.shape, f'{y_pred.shape} != {y_test.shape}'
 
 
 
