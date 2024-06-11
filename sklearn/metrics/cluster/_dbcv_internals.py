@@ -127,6 +127,7 @@ def internal_minimum_spanning_tree(mr_distances):
     2014. Density-Based Clustering Validation. In SDM (pp. 839-847).
     """
     from ...cluster._hierarchical_fast import mst_linkage_core
+
     min_span_tree = mst_linkage_core(mr_distances, None, precomputed=True)
     # mark internal nodes via converting the occurence count to bool
     internal_node_flags = np.arange(mr_distances.shape[0])[
