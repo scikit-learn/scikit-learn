@@ -127,29 +127,7 @@ def internal_minimum_spanning_tree(mr_distances):
     2014. Density-Based Clustering Validation. In SDM (pp. 839-847).
     """
     from ...cluster._hierarchical_fast import mst_linkage_core
-
-    single_linkage_data = mst_linkage_core(mr_distances, None, precomputed=True)
-    min_span_tree = single_linkage_data.copy()
-    for index, row in enumerate(min_span_tree[1:], 1):
-        # extract all indices of points with a distance
-        # from the next (according to the MST's growth sequence) node
-        # that matches the upcoming distance (edge weight)
-        candidates = np.where(np.isclose(mr_distances[int(row[1])], row[2]))[0]
-        # exclude any nodes which aren't yet included in the MST at this step
-        candidates = np.intersect1d(
-            candidates, single_linkage_data[:index, :2].astype(int)
-        )
-        # exclude the upcoming node itself
-        candidates = candidates[candidates != row[1]]
-        if len(candidates) == 0:
-            raise ValueError(
-                "Detected invalid MST: the node which was attached "
-                f"in the MST growth sequence at step {index} "
-                "doesn't match the expected criteria\nHINT: "
-                "likely caused by a broken MST linkage core implementation!"
-            )
-        row[0] = candidates[0]
-
+    min_span_tree = mst_linkage_core(mr_distances, None, precomputed=True)
     # mark internal nodes via converting the occurence count to bool
     internal_node_flags = np.arange(mr_distances.shape[0])[
         np.bincount(min_span_tree.T[:2].flatten().astype(np.intp)) > 1
