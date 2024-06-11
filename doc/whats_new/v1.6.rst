@@ -104,8 +104,9 @@ Changelog
   or to return an error code. :pr:`28992` by :user:`Stefanie Senger <StefanieSenger>`.
 
 - |Enhancement| Adds `zero_division` to :func:`cohen_kappa_score`. When there is a zero
-  division, the metric is undefined and this value is returned. :pr:`29210` by
-  :user:`Marc Torrellas Socastro <marctorsoc>`.
+  division, the metric is undefined and this value is returned.
+  :pr:`29210` by :user:`Marc Torrellas Socastro <marctorsoc>` and
+  :user:`Stefanie Senger <StefanieSenger>`.
 
 :mod:`sklearn.model_selection`
 ..............................
