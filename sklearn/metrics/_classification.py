@@ -2615,8 +2615,6 @@ def classification_report(
 
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
 
-    classification_report_values = {"accuracy", "weighted avg", "macro avg", "weighted avg"}
-
     if labels is None:
         labels = unique_labels(y_true, y_pred)
         labels_given = False
