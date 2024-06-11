@@ -2534,7 +2534,7 @@ def classification_report(
 
         .. versionadded:: 0.20
 
-    rename_label: bool, default=False
+    rename_label : bool, default=False
         if True, rename label's name and add ``class`` before that.
 
     zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
