@@ -728,9 +728,8 @@ def cohen_kappa_score(
         else:
             w_mat = (w_mat - w_mat.T) ** 2
 
-    # Handle `zero_division` case if either "RuntimeWarning: invalid value encountered
-    # in scalar divide" would be raised or np.isfinite(k) == False:
-    if np.sum(w_mat * expected) == 0:
+    denominator = np.sum(w_mat * expected)
+    if np.isclose(denominator, 0):
         if zero_division == "warn":
             msg = (
                 "`cohen_kappa_score()` is ill-defined and is set to 0.0. Use the "
@@ -739,7 +738,7 @@ def cohen_kappa_score(
             warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
         return _check_zero_division(zero_division)
 
-    k = np.sum(w_mat * confusion) / np.sum(w_mat * expected)
+    k = np.sum(w_mat * confusion) / denominator
     return 1 - k
 
 
