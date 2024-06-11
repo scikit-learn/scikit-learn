@@ -1,4 +1,5 @@
 import inspect
+from collections import defaultdict
 from functools import partial
 
 import numpy as np
@@ -35,8 +36,8 @@ def record_metadata(obj, record_default=True, **kwargs):
 
     """
     stack = inspect.stack()
-    method = stack[1].function
-    parent = stack[2].function
+    callee = stack[1].function
+    caller = stack[2].function
     if not hasattr(obj, "_records"):
         obj._records = defaultdict(lambda: defaultdict(list))
     if not record_default:
@@ -45,7 +46,7 @@ def record_metadata(obj, record_default=True, **kwargs):
             for key, val in kwargs.items()
             if not isinstance(val, str) or (val != "default")
         }
-    obj._records[method][parent].append(kwargs)
+    obj._records[callee][caller].append(kwargs)
 
 
 def check_recorded_metadata(obj, method, parent, split_params=tuple(), **kwargs):
@@ -56,9 +57,11 @@ def check_recorded_metadata(obj, method, parent, split_params=tuple(), **kwargs)
     obj : estimator object
         sub-estimator to check routed params for
     method : str
-        sub-estimator's method where metadata is routed to, or the 'callee'
+        sub-estimator's method where metadata is routed to, or otherwise in
+        the context of metadata routing referred to as 'callee'
     parent : str
-        the parent method which should have called `method`, or the 'caller'
+        the parent method which should have called `method`, or otherwise in
+        the context of metadata routing referred to as 'caller'
     split_params : tuple, default=empty
         specifies any parameters which are to be checked as being a subset
         of the original values
@@ -69,6 +72,8 @@ def check_recorded_metadata(obj, method, parent, split_params=tuple(), **kwargs)
         getattr(obj, "_records", dict()).get(method, dict()).get(parent, list())
     )
     for record in all_records:
+        # first check that the names of the metadata passed are the same as
+        # expected. The names are stored as keys in `record`.
         assert set(kwargs.keys()) == set(
             record.keys()
         ), f"Expected {kwargs.keys()} vs {record.keys()}"
