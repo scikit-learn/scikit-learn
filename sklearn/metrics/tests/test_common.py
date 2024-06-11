@@ -1852,7 +1852,10 @@ def check_array_api_regression_metric(metric, array_namespace, device, dtype_nam
         sample_weight=sample_weight,
     )
 
-def check_array_api_regression_metric_gamma(metric, array_namespace, device, dtype_name):
+
+def check_array_api_regression_metric_gamma(
+    metric, array_namespace, device, dtype_name
+):
     y_true_np = np.array([2, 0.1, 1, 4], dtype=dtype_name)
     y_pred_np = np.array([0.5, 0.5, 2, 2], dtype=dtype_name)
 
@@ -1877,6 +1880,7 @@ def check_array_api_regression_metric_gamma(metric, array_namespace, device, dty
         b_np=y_pred_np,
         sample_weight=sample_weight,
     )
+
 
 def check_array_api_regression_metric_multioutput(
     metric, array_namespace, device, dtype_name
