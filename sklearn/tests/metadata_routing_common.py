@@ -38,11 +38,7 @@ def record_metadata(obj, record_default=True, **kwargs):
     method = stack[1].function
     parent = stack[2].function
     if not hasattr(obj, "_records"):
-        obj._records = {}
-    if method not in obj._records:
-        obj._records[method] = {}
-    if parent not in obj._records[method]:
-        obj._records[method][parent] = []
+        obj._records = defaultdict(lambda: defaultdict(list))
     if not record_default:
         kwargs = {
             key: val
