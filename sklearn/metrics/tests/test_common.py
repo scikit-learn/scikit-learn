@@ -1852,6 +1852,31 @@ def check_array_api_regression_metric(metric, array_namespace, device, dtype_nam
         sample_weight=sample_weight,
     )
 
+def check_array_api_regression_metric_gamma(metric, array_namespace, device, dtype_name):
+    y_true_np = np.array([2, 0.1, 1, 4], dtype=dtype_name)
+    y_pred_np = np.array([0.5, 0.5, 2, 2], dtype=dtype_name)
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=y_true_np,
+        b_np=y_pred_np,
+        sample_weight=None,
+    )
+
+    sample_weight = np.array([0.1, 2.0, 1.5, 0.5], dtype=dtype_name)
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=y_true_np,
+        b_np=y_pred_np,
+        sample_weight=sample_weight,
+    )
 
 def check_array_api_regression_metric_multioutput(
     metric, array_namespace, device, dtype_name
@@ -1946,6 +1971,7 @@ array_api_metric_checkers = {
         check_array_api_regression_metric,
     ],
     paired_cosine_distances: [check_array_api_metric_pairwise],
+    mean_gamma_deviance: [check_array_api_regression_metric_gamma],
 }
 
 
