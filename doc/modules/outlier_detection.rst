@@ -235,7 +235,7 @@ This strategy is illustrated below.
 
 .. figure:: ../auto_examples/covariance/images/sphx_glr_plot_mahalanobis_distances_001.png
    :target: ../auto_examples/covariance/plot_mahalanobis_distances.html
-   :align: center 
+   :align: center
    :scale: 75%
 
 .. rubric:: Examples
