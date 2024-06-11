@@ -235,7 +235,7 @@ This strategy is illustrated below.
 
 .. figure:: ../auto_examples/covariance/images/sphx_glr_plot_mahalanobis_distances_001.png
    :target: ../auto_examples/covariance/plot_mahalanobis_distances.html
-   :align: center
+   :align: centeran illustraion 
    :scale: 75%
 
 .. rubric:: Examples
@@ -245,6 +245,9 @@ This strategy is illustrated below.
   (:class:`covariance.EmpiricalCovariance`) or a robust estimate
   (:class:`covariance.MinCovDet`) of location and covariance to
   assess the degree of outlyingness of an observation.
+
+* See :ref:`sphx_glr_auto_examples_applications_plot_plot_outlier_detection_wine.py` for an example of robust covariance estimation
+on a real data set.
 
 .. rubric:: References
 
