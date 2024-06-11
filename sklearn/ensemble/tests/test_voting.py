@@ -691,6 +691,154 @@ def test_get_features_names_out_classifier_error():
         voting.get_feature_names_out()
 
 
+def test_multioutput_classifier():
+    # Check voting classifiers on multi-output problems.
+    X_train = [
+        [-2, -1],
+        [-1, -1],
+        [-1, -2],
+        [1, 1],
+        [1, 2],
+        [2, 1],
+        [-2, 1],
+        [-1, 1],
+        [-1, 2],
+        [2, -1],
+        [1, -1],
+        [1, -2],
+    ]
+    y_train = [
+        [-1, 0],
+        [-1, 0],
+        [-1, 0],
+        [1, 1],
+        [1, 1],
+        [1, 1],
+        [-1, 2],
+        [-1, 2],
+        [-1, 2],
+        [1, 3],
+        [1, 3],
+        [1, 3],
+    ]
+    X_test = [[-1, -1], [1, 1], [-1, 1], [1, -1]]
+    y_test = [[-1, 0], [1, 1], [-1, 2], [1, 3]]
+
+    voting = VotingClassifier(
+        estimators=[
+            ("lr", LogisticRegression(random_state=0)),
+            ("tree", DecisionTreeClassifier(random_state=0)),
+        ],
+        voting="soft",
+        flatten_transform=False,
+    )
+    voting.fit(X_train, y_train)
+    y_pred = voting.predict(X_test)
+    assert_array_almost_equal(y_pred, y_test)
+
+    with np.errstate(divide="ignore"):
+        proba = voting.predict_proba(X_test)
+        assert len(proba) == 2
+        assert proba[0].shape == (4, 2)
+        assert proba[1].shape == (4, 4)
+
+
+def test_multioutput_string():
+    # Check estimators on multi-output problems with string outputs.
+
+    X_train = [
+        [-2, -1],
+        [-1, -1],
+        [-1, -2],
+        [1, 1],
+        [1, 2],
+        [2, 1],
+        [-2, 1],
+        [-1, 1],
+        [-1, 2],
+        [2, -1],
+        [1, -1],
+        [1, -2],
+    ]
+    y_train = [
+        ["red", "blue"],
+        ["red", "blue"],
+        ["red", "blue"],
+        ["green", "green"],
+        ["green", "green"],
+        ["green", "green"],
+        ["red", "purple"],
+        ["red", "purple"],
+        ["red", "purple"],
+        ["green", "yellow"],
+        ["green", "yellow"],
+        ["green", "yellow"],
+    ]
+    X_test = [[-1, -1], [1, 1], [-1, 1], [1, -1]]
+    y_test = [
+        ["red", "blue"],
+        ["green", "green"],
+        ["red", "purple"],
+        ["green", "yellow"],
+    ]
+
+    est = FOREST_ESTIMATORS[name](random_state=0, bootstrap=False)
+    y_pred = est.fit(X_train, y_train).predict(X_test)
+    assert_array_equal(y_pred, y_test)
+
+    with np.errstate(divide="ignore"):
+        proba = est.predict_proba(X_test)
+        assert len(proba) == 2
+        assert proba[0].shape == (4, 2)
+        assert proba[1].shape == (4, 4)
+
+        log_proba = est.predict_log_proba(X_test)
+        assert len(log_proba) == 2
+        assert log_proba[0].shape == (4, 2)
+        assert log_proba[1].shape == (4, 4)
+
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [
+        # output a 2D array of the probability of the positive class for each output
+        MLPClassifier(random_state=42),
+        # output a list of 2D array containing the probability of each class
+        # for each output
+        RandomForestClassifier(random_state=42),
+    ],
+    ids=["MLPClassifier", "RandomForestClassifier"],
+)
+def test_voting_classifier_multilabel_predict_proba(estimator):
+    """Check the behaviour for the multilabel classification case and the
+    `predict_proba` stacking method.
+
+    Estimators are not consistent with the output arrays and we need to ensure that
+    we handle all cases.
+    """
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_multilabel, y_multilabel, stratify=y_multilabel, random_state=42
+    )
+    n_outputs = 3
+
+    estimators = [("est", estimator)]
+    stacker = StackingClassifier(
+        estimators=estimators,
+        final_estimator=KNeighborsClassifier(),
+        stack_method="predict_proba",
+    ).fit(X_train, y_train)
+
+    X_trans = stacker.transform(X_test)
+    assert X_trans.shape == (X_test.shape[0], n_outputs)
+    # we should not have any collinear classes and thus nothing should sum to 1
+    assert not any(np.isclose(X_trans.sum(axis=1), 1.0))
+
+    y_pred = stacker.predict(X_test)
+    assert y_pred.shape == y_test.shape
+
+
+
 # Metadata Routing Tests
 # ======================
 

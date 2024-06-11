@@ -109,6 +109,13 @@ Changelog
   can be silenced using the `reg_param` attribute.
   :pr:`19731` by :user:`Alihan Zihna <azihna>`.
 
+:mod:`sklearn.ensemble`
+....................................
+
+- |Enhancement| :class:`ensemble.VotingClassifier`
+  now supports multi-label and multi-output data.
+  :pr:`19731` by :user:`Adam Li <adam2392>`.
+
 :mod:`sklearn.impute`
 .....................
 
