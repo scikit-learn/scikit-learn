@@ -290,6 +290,10 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
 
     .. versionadded:: 0.24
 
+    .. versionchanged:: 1.6
+       An arbritrary threshold at infinity is added to represent a classifier
+       that always predicts the negative class, i.e. `fpr=0` and `fnr=1`.
+
     Parameters
     ----------
     y_true : ndarray of shape (n_samples,)
@@ -335,12 +339,6 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
     DetCurveDisplay : DET curve visualization.
     roc_curve : Compute Receiver operating characteristic (ROC) curve.
     precision_recall_curve : Compute precision-recall curve.
-
-    Notes
-    -----
-    .. versionchanged:: 1.6
-      An arbritrary threshold at infinity is added to represent a classifier
-      that always predicts the negative class, i.e. `fpr=0` and `fnr=1`.
 
     Examples
     --------
