@@ -2615,6 +2615,8 @@ def classification_report(
 
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
 
+    classification_report_values = {"accuracy", "weighted avg", "macro avg", "weighted avg"}
+
     if labels is None:
         labels = unique_labels(y_true, y_pred)
         labels_given = False
@@ -2626,9 +2628,8 @@ def classification_report(
         if target_names is None:
             target_names = np.array(["class " + label for label in labels])
         else:
-            target_names = np.array(["class " + target_name for target_name in target_names])
+            target_names = np.array(["class " + tn for tn in target_names])
 
-    
     # labelled micro average
     micro_is_accuracy = (y_type == "multiclass" or y_type == "binary") and (
         not labels_given or (set(labels) >= set(unique_labels(y_true, y_pred)))
