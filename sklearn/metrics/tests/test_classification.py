@@ -103,6 +103,7 @@ def make_prediction(dataset=None, binary=False):
 ###############################################################################
 # Tests
 
+
 def test_classification_report_rename_output():
     iris = datasets.load_iris()
     y_true, y_pred, _ = make_prediction(dataset=iris, binary=False)
