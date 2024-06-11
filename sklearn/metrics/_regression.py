@@ -1411,7 +1411,7 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
             raise ValueError(message + "non-negative y and strictly positive y_pred.")
     elif power >= 2:
         # Gamma and Extreme stable distribution, y and y_pred > 0
-        if (y_true <= 0).any() or (y_pred <= 0).any():
+        if xp.any(y_true <= 0) or xp.any(y_pred <= 0):
             raise ValueError(message + "strictly positive y and y_pred.")
     else:  # pragma: nocover
         # Unreachable statement
