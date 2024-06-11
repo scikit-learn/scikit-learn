@@ -67,6 +67,11 @@ more details.
   ``**fit_params`` to the underlying estimators via their `fit` methods.
   :pr:`28701` by :user:`Stefanie Senger <StefanieSenger>`.
 
+- |Feature| :class:`compose.TransformedTargetRegressor` now supports metadata
+  routing in its `fit` and `predict` methods and routes the corresponding
+  params to the underlying regressor.
+  :pr:`29136` by :user:`Omar Salman <OmarManzoor>`.
+
 Dropping official support for PyPy
 ----------------------------------
 

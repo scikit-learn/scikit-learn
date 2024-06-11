@@ -382,6 +382,14 @@ METAESTIMATORS: list = [
         "cv_name": "cv",
         "cv_routing_methods": ["fit"],
     },
+    {
+        "metaestimator": TransformedTargetRegressor,
+        "estimator": "regressor",
+        "estimator_name": "regressor",
+        "X": X,
+        "y": y,
+        "estimator_routing_methods": ["fit", "predict"],
+    },
 ]
 """List containing all metaestimators to be tested and their settings
 
@@ -427,7 +435,6 @@ UNSUPPORTED_ESTIMATORS = [
     RFECV(ConsumingClassifier()),
     SelfTrainingClassifier(ConsumingClassifier()),
     SequentialFeatureSelector(ConsumingClassifier()),
-    TransformedTargetRegressor(),
 ]
 
 
