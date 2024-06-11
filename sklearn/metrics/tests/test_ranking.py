@@ -24,7 +24,16 @@ from sklearn.metrics import (
     roc_curve,
     top_k_accuracy_score,
 )
-from sklearn.metrics._ranking import _dcg_sample_scores, _ndcg_sample_scores
+from sklearn.metrics._ranking import (
+    _binary_clf_curve,
+    _dcg_sample_scores,
+    _macro_averaged_precision_recall_curve,
+    _max_score_1d,
+    _micro_averaged_precision_recall_curve,
+    _multiclass_clf_curve,
+    _ndcg_sample_scores,
+    _weighted_averaged_precision_recall_curve,
+)
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import label_binarize
 from sklearn.random_projection import _sparse_random_matrix
@@ -841,16 +850,6 @@ def test_auc_score_non_binary_class():
 
 
 @pytest.mark.parametrize("curve_func", CURVE_FUNCS)
-def test_binary_clf_curve_multiclass_error(curve_func):
-    rng = check_random_state(404)
-    y_true = rng.randint(0, 3, size=10)
-    y_pred = rng.rand(10)
-    msg = "multiclass format is not supported"
-    with pytest.raises(ValueError, match=msg):
-        curve_func(y_true, y_pred)
-
-
-@pytest.mark.parametrize("curve_func", CURVE_FUNCS)
 def test_binary_clf_curve_implicit_pos_label(curve_func):
     # Check that using string class labels raises an informative
     # error for any supported string dtype:
@@ -903,6 +902,242 @@ def test_binary_clf_curve_zero_sample_weight(curve_func):
 
     for arr_1, arr_2 in zip(result_1, result_2):
         assert_allclose(arr_1, arr_2)
+
+
+def test_max_score_1d():
+    y = _max_score_1d([0, 1, 2])
+    assert_allclose(y, [0, 1, 2])
+
+    y = _max_score_1d([[0, 1], [2, 1]])
+    assert_allclose(y, [1, 2])
+
+    with pytest.raises(ValueError, match="y_score must have 1 or 2 dimensions."):
+        _max_score_1d([[[1]]])
+
+
+@pytest.mark.parametrize("labels", [None, ["a", "b", "c"]])
+@pytest.mark.parametrize("sample_weight", [None, [1, 1, 1, 1]])
+@pytest.mark.parametrize("onehot_labels", [False, True])
+def test_multiclass_clf_curve(labels, sample_weight, onehot_labels):
+    y_true = ["a", "b", "c", "c"]
+    if onehot_labels:
+        y_true = label_binarize(y_true, classes=["a", "b", "c"])
+    y_score = [
+        [1.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0],
+        [0.0, 0.0, 1.0],
+        [0.9, 0.0, 0.0],
+    ]
+    fps, tps, ps, thresholds = _multiclass_clf_curve(
+        y_true, y_score, labels=labels, sample_weight=sample_weight
+    )
+
+    assert len(thresholds) == 2
+    assert_allclose(ps, [1, 1, 2])
+
+    # For the highest threshold (1.0), tps is 1 for all classes
+    assert_almost_equal(thresholds[0], 1.0)
+    assert_allclose(tps[0, :], [1, 1, 1])
+    assert_allclose(fps[0, :], [0, 0, 0])
+
+    # For the lowest threshold (0.9), tps is 1 for all classes
+    # We get one false positive for class 0
+    assert_almost_equal(thresholds[1], 0.9)
+    assert_allclose(tps[1, :], [1, 1, 1])
+    assert_allclose(fps[1, :], [1, 0, 0])
+
+    # Check that fps[-1, :] contains the total number of negatives
+    assert_allclose(fps[-1, :], [1, 0, 0])
+
+
+def test_multiclass_clf_curve_binary():
+    """
+    Label binarize responds with 1-d array in the binary case, which could
+    break the _multiclass_clf_curve function.
+    """
+    y_true = [0, 1]
+    y_score = [
+        [1.0, 0.0],
+        [0.0, 1.0],
+    ]
+    fps, tps, ps, thresholds = _multiclass_clf_curve(y_true, y_score)
+    assert_allclose(thresholds, [1])
+    assert_allclose(ps, [1, 1])  # Class counts
+    assert_allclose(fps, [[0, 0]])  # No false positives
+    assert_allclose(tps, [[1, 1]])  # All true positives
+
+
+def test_multiclass_clf_curve_raises():
+    # Check number of labels match
+    y_true = [0]
+    y_score = [[0.1, 0.2, 0.7]]
+    labels = [0, 1]
+    with pytest.raises(
+        ValueError,
+        match=(
+            "Number of observed or provided labels does not equal the "
+            "number of columns in 'y_score'"
+        ),
+    ):
+        _multiclass_clf_curve(y_true, y_score, labels=labels)
+
+    # Check y_true is one-hot
+    y_true = [[1, 1], [0, 0]]
+    y_score = [[0.3, 0.7], [0.5, 0.5]]
+    with pytest.raises(
+        ValueError, match="y_true should be 1-d or one hot encoded 2-d matrix"
+    ):
+        _multiclass_clf_curve(y_true, y_score)
+
+
+@pytest.mark.parametrize("labels", [None, ["a", "b", "c"]])
+@pytest.mark.parametrize("onehot_labels", [False, True])
+def test_multiclass_clf_curve_weights(labels, onehot_labels):
+    y_true = ["a", "b", "c", "c"]
+    if onehot_labels:
+        y_true = label_binarize(y_true, classes=["a", "b", "c"])
+    weights = [1.5, 1.0, 1.0, 0.5]
+    y_score = [
+        [1.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0],
+        [0.0, 0.0, 1.0],
+        [0.9, 0.0, 0.0],
+    ]
+    fps, tps, ps, thresholds = _multiclass_clf_curve(
+        y_true, y_score, labels=labels, sample_weight=weights
+    )
+
+    assert len(thresholds) == 2
+    assert_allclose(ps, [1.5, 1.0, 1.5])
+
+    # For the highest threshold (1.0):
+    assert_almost_equal(thresholds[0], 1.0)
+    assert_allclose(tps[0, :], [1.5, 1.0, 1.0])
+    assert_allclose(fps[0, :], [0, 0, 0])
+
+    # For the lowest threshold (0.9):
+    assert_almost_equal(thresholds[1], 0.9)
+    assert_allclose(tps[1, :], [1.5, 1, 1])
+    assert_allclose(fps[1, :], [0.5, 0, 0])
+
+
+def test_clf_curve_overlap(global_random_seed):
+    """
+    Checks that the binary and multiclass clf_curve functions give
+    the same results for compatible problems
+    """
+    np.random.seed(global_random_seed)
+
+    labels = [0, 1, 2]
+    n_samples = 256
+    n_classes = len(labels)
+    weights = np.random.rand(n_samples)
+
+    y_true = np.random.choice(labels, size=n_samples)
+    for i in range(n_classes):
+        y_score = np.zeros((n_samples, n_classes))
+        y_score[:, i] = np.random.rand(n_samples) + 1e-6
+
+        fps, tps, thresholds = _binary_clf_curve(
+            y_true, y_score[:, i], pos_label=i, sample_weight=weights
+        )
+        fps_, tps_, _, thresholds_ = _multiclass_clf_curve(
+            y_true, y_score, sample_weight=weights
+        )
+
+        assert_allclose(fps, fps_[:, i])
+        assert_allclose(tps, tps_[:, i])
+        assert_allclose(thresholds, thresholds_)
+
+
+def test_micro_average_no_positives():
+    tps = [[0, 0, 0], [0, 0, 0]]
+    fps = [[0, 0, 0], [0, 0, 0]]
+    pos_instances = [0, 0, 0]
+    with pytest.raises(ValueError, match="No positive instances provided"):
+        _micro_averaged_precision_recall_curve(tps, fps, pos_instances)
+
+
+def test_micro_averaged_pr_curve_helper():
+    """This tests the helper function _micro_averaged_precision_recall_curve
+    that accepts already calculated true positives, false positives and
+    positive instances counts.
+    """
+
+    # Two examples to make sure the precisions and recalls between
+    # rows are not mixed up.
+    tps = [[0, 0, 0], [1, 2, 3]]  # No true positives  # In total, 6 true positives
+    fps = [
+        [0, 0, 0],  # None predicted at all => Recall 0, Precision 1
+        [4, 5, 6],  # In total, 15 false positives, 21 predicted positives
+    ]
+    pos_instances = [7, 8, 9]  # In total, 24 positive instances
+    precisions, recalls = _micro_averaged_precision_recall_curve(
+        tps, fps, pos_instances
+    )
+    assert_allclose(precisions, [1, 6 / 21])
+    assert_allclose(recalls, [0, 6 / 24])
+
+
+def test_macro_averaged_pr_curve_helper():
+    tps = [[0, 0, 0], [1, 2, 3]]  # No true positives  # In total, 6 true positives
+    fps = [
+        [0, 0, 0],  # None predicted at all => Recall 0, Precision 1
+        [4, 5, 6],  # In total, 15 false positives, 21 predicted positives
+    ]
+    pos_instances = [7, 8, 9]  # In total, 24 positive instances
+    precisions, recalls = _macro_averaged_precision_recall_curve(
+        tps, fps, pos_instances
+    )
+    assert_allclose(
+        precisions,
+        [
+            # No predictions := 1.0 precision
+            1,
+            # Average of individual precisions
+            np.mean([1 / (1 + 4), 2 / (2 + 5), 3 / (3 + 6)]),
+        ],
+    )
+    assert_allclose(
+        recalls,
+        [
+            # No true positives := 0.0 recall
+            0,
+            # Average of individual recalls
+            np.mean([1 / 7, 2 / 8, 3 / 9]),
+        ],
+    )
+
+
+def test_weighted_average_pr_curve_helper():
+    tps = [[0, 0, 0], [1, 2, 3]]  # No true positives  # In total, 6 true positives
+    fps = [
+        [0, 0, 0],  # None predicted at all => Recall 0, Precision 1
+        [4, 5, 6],  # In total, 15 false positives, 21 predicted positives
+    ]
+    pos_instances = np.array([7, 8, 9])  # In total, 24 positive instances
+    precisions, recalls = _weighted_averaged_precision_recall_curve(
+        tps, fps, pos_instances
+    )
+    weights = pos_instances / pos_instances.sum()
+    assert_allclose(
+        precisions,
+        [
+            # No predictions := 1.0 precision
+            1,
+            # Average of individual precisions
+            np.dot([1 / (1 + 4), 2 / (2 + 5), 3 / (3 + 6)], weights),
+        ],
+    )
+    assert_allclose(
+        recalls,
+        [
+            # No true positives := 0.0 recall
+            0,
+            # Average of individual recalls
+            np.dot([1 / 7, 2 / 8, 3 / 9], weights),
+        ],
+    )
 
 
 @pytest.mark.parametrize("drop", [True, False])
@@ -1155,6 +1390,48 @@ def test_precision_recall_curve_drop_intermediate():
         y_true, y_score, drop_intermediate=True
     )
     assert_allclose(thresholds, [0.0, 0.1, 0.2, 0.3])
+
+
+@pytest.mark.parametrize("drop_intermediate", [True, False])
+@pytest.mark.parametrize("sample_weight", [None, [1, 1, 1, 1, 1, 1]])
+@pytest.mark.parametrize("average", ["micro", "macro", "weighted"])
+def test_multiclass_precision_recall(drop_intermediate, sample_weight, average):
+    y_true = [0, 0, 1, 1, 2, 2]
+    y_score = [
+        [0.1, 0.0, 0.0],
+        [0.2, 0.0, 0.0],
+        [0.0, 0.3, 0.0],
+        [0.0, 0.4, 0.0],
+        [0.0, 0.0, 0.5],
+        [0.0, 0.0, 0.6],
+    ]
+    n_samples = len(y_true)
+    n_thresholds = n_samples
+
+    precision, recall, thresholds = precision_recall_curve(
+        y_true,
+        y_score,
+        drop_intermediate=drop_intermediate,
+        sample_weight=sample_weight,
+        average=average,
+    )
+    assert len(precision) == len(recall) == n_thresholds + 1
+    assert len(thresholds) == n_thresholds
+
+    assert_allclose(precision, [1.0] * (n_thresholds + 1))
+    assert recall[-1] == 0
+    if average == "micro":
+        assert_allclose(recall, np.linspace(1.0, 0.0, n_thresholds + 1))
+
+
+def test_multiclass_precision_recall_unsupported_target_type():
+    y_true = [0.1, 0.2, 0.3]
+    y_score = [
+        [0.1, 0.0, 0.0],
+    ]
+    err_msg = "Cannot determine if this is a binary or multiclass problem"
+    with pytest.raises(ValueError, match=err_msg):
+        precision_recall_curve(y_true, y_score)
 
 
 def test_average_precision_constant_values():

@@ -16,6 +16,7 @@ the lower the better.
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Noel Dawe <noel@dawe.me>
 #          Michal Karbownik <michakarbownik@gmail.com>
+#          Isac Arnekvist <isac.arnekvist@gmail.com>
 # License: BSD 3 clause
 
 
@@ -824,12 +825,9 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
 
     # Filter out zero-weighted samples, as they should not impact the result
     if sample_weight is not None:
-        sample_weight = column_or_1d(sample_weight)
-        sample_weight = _check_sample_weight(sample_weight, y_true)
-        nonzero_weight_mask = sample_weight != 0
-        y_true = y_true[nonzero_weight_mask]
-        y_score = y_score[nonzero_weight_mask]
-        sample_weight = sample_weight[nonzero_weight_mask]
+        y_true, y_score, sample_weight = _clean_zero_weight_samples(
+            y_true, y_score, sample_weight
+        )
 
     pos_label = _check_pos_label_consistency(pos_label, y_true)
 
@@ -862,11 +860,297 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     return fps, tps, y_score[threshold_idxs]
 
 
+def _max_score_1d(y_score):
+    """Return the maximum predicted score for each sample."""
+    y_score = np.array(y_score)
+    if y_score.ndim == 1:
+        return y_score
+    elif y_score.ndim == 2:
+        return np.max(y_score, axis=1)
+    else:
+        raise ValueError("y_score must have 1 or 2 dimensions.")
+
+
+def _clean_zero_weight_samples(y_true, y_score, sample_weight):
+    """Filter out zero-weighted samples"""
+    sample_weight = column_or_1d(sample_weight)
+    sample_weight = _check_sample_weight(sample_weight, y_true)
+    nonzero_weight_mask = sample_weight != 0
+    y_true = y_true[nonzero_weight_mask]
+    y_score = y_score[nonzero_weight_mask]
+    sample_weight = sample_weight[nonzero_weight_mask]
+
+    return y_true, y_score, sample_weight
+
+
+def _is_label_indicator_matrix(y):
+    is_2d = y.ndim == 2
+    is_binary = (y == 0).sum() + (y == 1).sum() == y.size
+    is_prob = np.allclose(y.sum(axis=1), 1)
+    return is_2d and is_binary and is_prob
+
+
+def _micro_averaged_precision_recall_curve(tps, fps, pos_instances):
+    """Calculates the micro-averaged precision-recall curve.
+
+    Parameters
+    ----------
+    tps : ndarray, shape (n_thresholds, n_classes)
+        True positives counts, potentially weighted.
+
+    fps : ndarray, shape (n_thresholds, n_classes)
+        False positives counts, potentially weighted.
+
+    pos_instances : ndarray, shape (n_classes,)
+        Number of positive instances for each class, potentially weighted.
+        Raises a ValueError if there are no positive instances.
+
+    Returns:
+    --------
+    precision : ndarray, shape (n_thresholds,)
+        Precision values, defined as the total number of true positives divided
+        by the total number of predicted positives. Defined as 1 if there are no
+        predicted positives.
+
+    recall : ndarray, shape (n_thresholds,)
+        Recall values, defined as the total number of true positives divided
+        by the total number of positive instances.
+    """
+    tps = check_array(tps, ensure_2d=True, dtype=float)
+    fps = check_array(fps, ensure_2d=True, dtype=float)
+    pos_instances = check_array(pos_instances, ensure_2d=False, dtype=float)
+
+    predicted_positives = tps + fps
+    num_positives = pos_instances.sum()
+
+    if num_positives == 0:
+        raise ValueError("No positive instances provided")
+
+    # Sum over the classes, keep the threshold dimension (0)
+    precision = np.ones(tps.shape[0])
+    np.divide(
+        tps.sum(axis=1),
+        predicted_positives.sum(axis=1),
+        out=precision,
+        where=predicted_positives.sum(axis=1) != 0,
+    )
+    recall = tps.sum(axis=1) / num_positives
+    return precision, recall
+
+
+def _macro_averaged_precision_recall_curve(tps, fps, pos_instances):
+    """Calculates the macro-averaged precision-recall curve.
+
+    Parameters
+    ----------
+    tps : ndarray, shape (n_thresholds, n_classes)
+        True positives counts, potentially weighted.
+
+    fps : ndarray, shape (n_thresholds, n_classes)
+        False positives counts, potentially weighted.
+
+    pos_instances : ndarray, shape (n_classes,)
+        Number of positive instances for each class, potentially weighted.
+
+    Returns:
+    --------
+    precision : ndarray, shape (n_thresholds,)
+        Precision values, defined as the average of the precision values for
+        each class. Precision for any class with no positive instance is defined
+        as 1.
+
+    recall : ndarray, shape (n_thresholds,)
+        Recall values, defined as the average of the recall values for each
+        class. Recall for any class with no positive instance is defined as 1.
+    """
+    tps = check_array(tps, ensure_2d=True, dtype=float)
+    fps = check_array(fps, ensure_2d=True, dtype=float)
+    pos_instances = check_array(pos_instances, ensure_2d=False, dtype=float)
+
+    predicted_positives = tps + fps
+
+    # Sum over the classes, keep the threshold dimension (0)
+    precision = np.ones_like(tps)
+    np.divide(
+        tps,
+        predicted_positives,
+        out=precision,
+        where=predicted_positives != 0,
+    )
+
+    recall = np.ones_like(tps)
+    np.divide(tps, pos_instances, out=recall, where=pos_instances != 0)
+
+    return precision.mean(axis=1), recall.mean(axis=1)
+
+
+def _weighted_averaged_precision_recall_curve(tps, fps, pos_instances):
+    """Calculates the weighted-averaged precision-recall curve.
+
+    Parameters
+    ----------
+    tps : ndarray, shape (n_thresholds, n_classes)
+        True positives counts, potentially weighted.
+
+    fps : ndarray, shape (n_thresholds, n_classes)
+        False positives counts, potentially weighted.
+
+    pos_instances : ndarray, shape (n_classes,)
+        Number of positive instances for each class, potentially weighted.
+
+    Returns:
+    --------
+    precision : ndarray, shape (n_thresholds,)
+        Precision values, defined as the weighted average of the precisions for
+        each class, where the weights are the normalized number of positive
+        instances for each class.
+
+    recall : ndarray, shape (n_thresholds,)
+        Recall values, defined as the weighted average of the recalls for each
+        class, where the weights are the normalized number of positive instances
+        for each class.
+    """
+    tps = check_array(tps, ensure_2d=True, dtype=float)
+    fps = check_array(fps, ensure_2d=True, dtype=float)
+    pos_instances = check_array(pos_instances, ensure_2d=False, dtype=float)
+
+    # First, calculate precision and recall for each class
+    precisions = np.ones_like(tps)
+    np.divide(tps, tps + fps, out=precisions, where=(tps + fps) != 0)
+
+    recalls = np.ones_like(tps)
+    np.divide(tps, pos_instances, out=recalls, where=pos_instances != 0)
+
+    weights = (pos_instances / pos_instances.sum()).reshape(1, -1)
+
+    return (precisions * weights).sum(axis=1), (recalls * weights).sum(axis=1)
+
+
+def _multiclass_clf_curve(y_true, y_score, labels=None, sample_weight=None):
+    """Calculate true and false positives for each one-vs-rest classification
+    and threshold.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,) or (n_samples, n_classes)
+        True labels (1-d) or one-hot-encoded labels (2-d).
+
+    y_score : array-like of shape (n_samples, n_classes)
+        Target scores as matrix of scores for all classes.
+        Columns are assumed to represent the classes in sorted order as
+        they appear in `y_true`, or `labels` if provided.
+
+    labels : array-like of shape (n_classes,), default=None
+        A list of classes to include in the report. If None, all classes
+        in y_true are used, in the order of sorted unique values.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    Returns
+    -------
+    fps : ndarray of shape (n_thresholds, n_classes)
+        A count of false positives, at index i, j being the number of negative
+        samples assigned a score >= thresholds[i] for class j.
+
+    tps : ndarray of shape (n_thresholds, n_classes)
+        An increasing count of true positives, at index i, j being the number
+        of positive samples assigned a score >= thresholds[i] for class j.
+
+    pos_instances : ndarray of shape (n_classes,)
+        Number of positive instances for each class.
+
+    thresholds : ndarray of shape (n_thresholds,)
+        Decreasing score values.
+    """
+    check_consistent_length(y_true, y_score, sample_weight)
+
+    y_true = check_array(y_true, ensure_2d=False, dtype=None)
+    y_score = check_array(y_score, ensure_2d=True)
+
+    if labels is None:  # Infer labels from y_true
+        if y_true.ndim == 2:
+            labels = np.arange(y_true.shape[1])
+        else:  # y_true.ndim == 1:
+            labels = np.sort(np.unique(y_true)).tolist()
+
+    if len(labels) != y_score.shape[1]:
+        raise ValueError(
+            "Number of observed or provided labels does not equal the "
+            "number of columns in 'y_score'"
+        )
+
+    if sample_weight is not None:
+        y_true, y_score, sample_weight = _clean_zero_weight_samples(
+            y_true, y_score, sample_weight
+        )
+
+    y_type = type_of_target(y_true)
+    if y_type in {"binary", "multiclass"} and y_true.ndim == 1:
+        y_true = label_binarize(y_true, classes=labels)
+    else:
+        if not _is_label_indicator_matrix(y_true):
+            raise ValueError("y_true should be 1-d or one hot encoded 2-d matrix")
+
+    # Special case if we are actually sent a binary case, in which case
+    # `label_binarize` return a 2-d array with a single column
+    if y_true.shape[1] == 1:
+        y_true = np.concatenate([1 - y_true, y_true], axis=1)
+
+    # sort scores and corresponding truth values
+    max_scores = _max_score_1d(y_score)
+    desc_score_indices = np.argsort(max_scores, kind="mergesort")[::-1]
+
+    y_true = y_true[desc_score_indices]
+    y_score = y_score[desc_score_indices]
+    max_scores = max_scores[desc_score_indices]
+
+    if sample_weight is not None:
+        weight = sample_weight[desc_score_indices]
+    else:
+        weight = np.ones(y_true.shape[0])
+
+    # Remove tied values from y_score
+    distinct_value_indices = np.where(np.diff(max_scores))[0]
+    threshold_idxs = np.r_[distinct_value_indices, y_true.shape[0] - 1]
+
+    y_pred = np.argmax(y_score, axis=1)  # Prediction indices
+    y_true_idxs = np.argmax(y_true, axis=1)  # Label indices
+
+    tps = np.zeros((threshold_idxs.size, len(labels)))
+    fps = np.zeros((threshold_idxs.size, len(labels)))
+    pos_instances = (y_true * weight.reshape(-1, 1)).sum(axis=0)
+
+    # Calculate true positives and false positives for each class
+    for pos_label_idx in range(len(labels)):
+        # For the case of a true positive, the following is required:
+        # 1) The label equals the current class considered (pos_label_idx)
+        # 2) The label equals the maximum prediction
+        true_positive = (y_true_idxs == pos_label_idx) & (y_true_idxs == y_pred)
+
+        # accumulate the true positives with decreasing threshold
+        tps[:, pos_label_idx] = stable_cumsum(true_positive * weight)[threshold_idxs]
+
+        # For the case of a false positive, the following is required:
+        # 1) The maximum prediction equals the current class considered
+        # 2) The label does not equal the current class considered
+        false_positive = (y_pred == pos_label_idx) & (y_true_idxs != pos_label_idx)
+
+        fps[:, pos_label_idx] = stable_cumsum(false_positive * weight)[threshold_idxs]
+
+    return fps, tps, pos_instances, max_scores[threshold_idxs]
+
+
 @validate_params(
     {
         "y_true": ["array-like"],
         "y_score": ["array-like", Hidden(None)],
         "pos_label": [Real, str, "boolean", None],
+        "average": [
+            StrOptions({"micro", "macro", "weighted"}),
+            None,
+        ],
+        "labels": ["array-like", None],
         "sample_weight": ["array-like", None],
         "drop_intermediate": ["boolean"],
         "probas_pred": [
@@ -881,13 +1165,13 @@ def precision_recall_curve(
     y_score=None,
     *,
     pos_label=None,
+    average="macro",
+    labels=None,
     sample_weight=None,
     drop_intermediate=False,
     probas_pred="deprecated",
 ):
     """Compute precision-recall pairs for different probability thresholds.
-
-    Note: this implementation is restricted to the binary classification task.
 
     The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
     true positives and ``fp`` the number of false positives. The precision is
@@ -910,18 +1194,39 @@ def precision_recall_curve(
     Parameters
     ----------
     y_true : array-like of shape (n_samples,)
-        True binary labels. If labels are not either {-1, 1} or {0, 1}, then
-        pos_label should be explicitly given.
+        True labels. For binary classification, labels should be either {-1, 1}
+        or {0, 1}, or pos_label should be explicitly given.
 
-    y_score : array-like of shape (n_samples,)
-        Target scores, can either be probability estimates of the positive
-        class, or non-thresholded measure of decisions (as returned by
-        `decision_function` on some classifiers).
+    y_score : array-like of shape (n_samples,) or (n_samples, n_classes)
+        Target scores that are either probability estimates or non-thresholded
+        measure of decisions (as returned by `decision_function` on some
+        classifiers). For binary classification, y_score is assumed to be 1-d and
+        contain the score of the positive class. For multiclass classification,
+        y_score must be a 2D array with shape (n_samples, n_classes).
 
     pos_label : int, float, bool or str, default=None
         The label of the positive class.
         When ``pos_label=None``, if y_true is in {-1, 1} or {0, 1},
         ``pos_label`` is set to 1, otherwise an error will be raised.
+        Ignored if multiclass.
+
+    average : {'micro', 'macro', 'weighted'}, default='macro'
+        How to compute precisions and recall for the multiclass setting.
+
+        ``'micro'``:
+            Calculate metrics globally by counting the total number of true
+            positives and false positives across all classes.
+        ``'macro'``:
+            Calculate metrics for each class, and find their unweighted
+            mean. This does not take label imbalance into account.
+        ``'weighted'``:
+            Calculate metrics for each label, and find their average weighted
+            by support (the number of true instances for each label).
+
+    labels : array-like of shape (n_classes,), default=None
+        Only used for multiclass targets. List of labels that index the
+        classes in ``y_score``. If ``None`` and multiclass, the labels
+        will be inferred from ``y_true`` in sorted order.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -999,9 +1304,29 @@ def precision_recall_curve(
         )
         y_score = probas_pred
 
-    fps, tps, thresholds = _binary_clf_curve(
-        y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
-    )
+    # Let's find out here if this is multiclass or not
+    y_type = type_of_target(y_true)
+
+    # For the binary case, the minimum requirements are:
+    # - y_true is binary or pos_label is explicitly given
+    is_binary = y_type == "binary" or (y_type == "multiclass" and pos_label is not None)
+
+    # For the multiclass case, these are the minimum indicators:
+    # - y_true is multiclass
+    # - pos_label is None
+    is_multiclass = y_type == "multiclass" and pos_label is None
+
+    if is_binary:
+        fps, tps, thresholds = _binary_clf_curve(
+            y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
+        )
+        pos_instances = None
+    elif is_multiclass:
+        fps, tps, pos_instances, thresholds = _multiclass_clf_curve(
+            y_true, y_score, sample_weight=sample_weight, labels=labels
+        )
+    else:
+        raise ValueError("Cannot determine if this is a binary or multiclass problem")
 
     if drop_intermediate and len(fps) > 2:
         # Drop thresholds corresponding to points where true positives (tps)
@@ -1009,31 +1334,49 @@ def precision_recall_curve(
         # only the first and last point for each tps value. All points
         # with the same tps value have the same recall and thus x coordinate.
         # They appear as a vertical line on the plot.
+        if is_binary:
+            diff_head = np.diff(tps[:-1])
+            diff_tail = np.diff(tps[1:])
+        elif is_multiclass:
+            diff_head = np.diff(tps[:-1], axis=0).sum(axis=1)
+            diff_tail = np.diff(tps[1:], axis=0).sum(axis=1)
         optimal_idxs = np.where(
-            np.concatenate(
-                [[True], np.logical_or(np.diff(tps[:-1]), np.diff(tps[1:])), [True]]
-            )
+            np.concatenate([[True], np.logical_or(diff_head, diff_tail), [True]])
         )[0]
         fps = fps[optimal_idxs]
         tps = tps[optimal_idxs]
         thresholds = thresholds[optimal_idxs]
 
-    ps = tps + fps
-    # Initialize the result array with zeros to make sure that precision[ps == 0]
-    # does not contain uninitialized values.
-    precision = np.zeros_like(tps)
-    np.divide(tps, ps, out=precision, where=(ps != 0))
+    if is_binary:
+        ps = tps + fps
+        # Initialize the result array with zeros to make sure that
+        # precision[ps == 0] does not contain uninitialized values.
+        precision = np.zeros_like(tps)
+        np.divide(tps, ps, out=precision, where=(ps != 0))
 
-    # When no positive label in y_true, recall is set to 1 for all thresholds
-    # tps[-1] == 0 <=> y_true == all negative labels
-    if tps[-1] == 0:
-        warnings.warn(
-            "No positive class found in y_true, "
-            "recall is set to one for all thresholds."
-        )
-        recall = np.ones_like(tps)
-    else:
-        recall = tps / tps[-1]
+        # When no positive label in y_true, recall is set to 1 for all
+        # thresholds tps[-1] == 0 <=> y_true == all negative labels
+        if tps[-1] == 0:
+            warnings.warn(
+                "No positive class found in y_true, "
+                "recall is set to one for all thresholds."
+            )
+            recall = np.ones_like(tps)
+        else:
+            recall = tps / tps[-1]
+    else:  # is_multiclass
+        if average == "micro":
+            precision, recall = _micro_averaged_precision_recall_curve(
+                tps, fps, pos_instances
+            )
+        elif average == "macro":
+            precision, recall = _macro_averaged_precision_recall_curve(
+                tps, fps, pos_instances
+            )
+        else:  # average == "weighted"
+            precision, recall = _weighted_averaged_precision_recall_curve(
+                tps, fps, pos_instances
+            )
 
     # reverse the outputs so recall is decreasing
     sl = slice(None, None, -1)
