@@ -155,8 +155,7 @@ def _check_targets(y_true, y_pred):
         "normalize": ["boolean"],
         "sample_weight": ["array-like", None],
         "zero_division": [
-            Options(Real, {0, 1}),
-            "nan",
+            Options(Real, {0, 1, np.nan}),
             StrOptions({"warn"}),
         ],
     },
