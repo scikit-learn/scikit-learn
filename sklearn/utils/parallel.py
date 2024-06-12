@@ -3,13 +3,12 @@ usage.
 """
 
 import functools
+import sys
 import warnings
 from functools import update_wrapper
 
 import joblib
 from threadpoolctl import ThreadpoolController
-
-import sklearn
 
 from .._config import config_context, get_config
 
@@ -138,10 +137,11 @@ def _get_threadpool_controller():
     It can be used to locally limit the number of threads without looping through all
     shared libraries every time.
     """
-    if not hasattr(sklearn, "_threadpool_controller"):
-        sklearn._threadpool_controller = ThreadpoolController()
+    module = sys.modules["sklearn.utils.parallel"]
+    if not hasattr(module, "_threadpool_controller"):
+        module._threadpool_controller = ThreadpoolController()
 
-    return sklearn._threadpool_controller
+    return module._threadpool_controller
 
 
 def _threadpool_controller_decorator(limits=1, user_api="blas"):
