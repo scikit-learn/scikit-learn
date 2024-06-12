@@ -20,6 +20,13 @@ Version 1.5.1
 
 **TODO**
 
+Changes impacting many modules
+------------------------------
+
+- |Fix| Fixed a regression in the validation of the input data of all estimators where
+  an unexpected error was raised when passing a DataFrame backed by a read-only buffer.
+  :pr:`29018` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 Changelog
 ---------
 
@@ -42,6 +49,14 @@ Changelog
   grids that have estimators as parameter values.
   :pr:`29179` by :user:`Marco Gorelli<MarcoGorelli>`.
 
+:mod:`sklearn.utils`
+....................
+
+- |API| :func:`utils.validation.check_array` has a new parameter, `writeable`, to
+  control the writeability of the output array. If set to True, the output array will
+  be guaranteed to be writeable and a copy will be made if the input array is read-only.
+  If left to None, no guarantee is made about the writeability of the output array.
+  :pr:`29018` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 .. _changes_1_5:
 

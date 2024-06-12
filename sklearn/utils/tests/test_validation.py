@@ -2,7 +2,6 @@
 
 import numbers
 import re
-import tempfile
 import warnings
 from itertools import product
 from operator import itemgetter
@@ -47,6 +46,7 @@ from sklearn.utils._testing import (
     assert_allclose_dense_sparse,
     assert_array_equal,
     assert_no_warnings,
+    create_memmap_backed_data,
     ignore_warnings,
     skip_if_array_api_compat_not_configured,
 )
@@ -2155,21 +2155,17 @@ def test_check_array_writeable_mmap():
     """
     X = np.random.uniform(size=(10, 10))
 
-    with tempfile.NamedTemporaryFile() as f:
-        mmap = np.memmap(f.name, dtype="float64", mode="w+", shape=(10, 10))
-        mmap[:] = X[:]
+    mmap = create_memmap_backed_data(X, mmap_mode="w+")
+    out = check_array(mmap, copy=False, writeable=True)
+    # mmap is already writeable, no copy is needed
+    assert np.may_share_memory(out, mmap)
+    assert out.flags.writeable
 
-        out = check_array(mmap, copy=False, writeable=True)
-        # mmap is already writeable, no copy is needed
-        assert np.may_share_memory(out, mmap)
-        assert out.flags.writeable
-
-        mmap = np.memmap(f.name, dtype="float64", mode="r", shape=(10, 10))
-
-        out = check_array(mmap, copy=False, writeable=True)
-        # mmap is read-only, a copy is made
-        assert not np.may_share_memory(out, mmap)
-        assert out.flags.writeable
+    mmap = create_memmap_backed_data(X, mmap_mode="r")
+    out = check_array(mmap, copy=False, writeable=True)
+    # mmap is read-only, a copy is made
+    assert not np.may_share_memory(out, mmap)
+    assert out.flags.writeable
 
 
 def test_check_array_writeable_df():
