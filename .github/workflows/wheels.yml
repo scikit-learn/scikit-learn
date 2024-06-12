@@ -32,7 +32,7 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
@@ -117,7 +117,7 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -175,8 +175,9 @@ jobs:
         run: bash build_tools/wheels/build_wheels.sh
 
       - name: Store artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
+          name: cibw-wheels-cp${{ matrix.python }}-${{ matrix.platform_id }}
           path: wheelhouse/*.whl
 
   update-tracker:
@@ -197,7 +198,7 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -215,8 +216,9 @@ jobs:
           SKLEARN_SKIP_NETWORK_TESTS: 1
 
       - name: Store artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
+          name: cibw-sdist
           path: dist/*.tar.gz
 
   # Upload the wheels and the source distribution
@@ -230,12 +232,14 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
+          pattern: cibw-*
           path: dist
+          merge-multiple: true
 
       - name: Setup Python
         uses: actions/setup-python@v5
