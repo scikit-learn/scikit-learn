@@ -270,7 +270,7 @@ def test_entropy_array_api(array_namespace, device, dtype_name):
     empty_int32_labels = xp.asarray([], dtype=xp.int32, device=device)
     int_labels = xp.asarray([1, 1, 1, 1], device=device)
     with config_context(array_api_dispatch=True):
-        assert_almost_equal(entropy(float_labels), 0.6365141, 5)
+        assert entropy(float_labels) == pytest.approx(0.6365141, abs=1e-5)
         assert entropy(empty_int32_labels) == 1
         assert entropy(int_labels) == 0
 
