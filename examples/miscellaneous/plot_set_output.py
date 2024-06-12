@@ -64,6 +64,12 @@ clf.fit(X_train, y_train)
 clf[-1].feature_names_in_
 
 # %%
+# As a side note, if one uses the method `set_params`, the transformer will be 
+# replaced by a new one which does not have `set_output` set:
+clf.set_params(standardscaler=StandardScaler())
+clf["standardscaler"].fit_transform(X_train)[:5]
+
+# %%
 # Next we load the titanic dataset to demonstrate `set_output` with
 # :class:`compose.ColumnTransformer` and heterogeneous data.
 from sklearn.datasets import fetch_openml
