@@ -518,7 +518,7 @@ Commit Message Marker  Action Taken by CI
 [cd build cirrus]      CD is run only for Cirrus CI
 [lint skip]            Azure pipeline skips linting
 [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc.) development builds
-[nogil]                Build & test with the nogil experimental branches of CPython, Cython, NumPy, SciPy, ...
+[free-threaded]        Build & test with CPython 3.13 free-threaded
 [pyodide]              Build & test with Pyodide
 [azure parallel]       Run Azure CI jobs in parallel
 [cirrus arm]           Run Cirrus CI ARM test
@@ -650,10 +650,8 @@ We are glad to accept any sort of documentation:
 * **User guide:** These provide more detailed information about the algorithms
   implemented in scikit-learn and generally live in the root
   `doc/ <https://github.com/scikit-learn/scikit-learn/tree/main/doc>`_ directory
-  and `doc/modules/ <https://github.com/scikit-learn/scikit-learn/tree/main/doc/modules>`_.
-* **Tutorials:** These introduce various statistical learning and machine learning
-  concepts and are located in
-  `doc/tutorial <https://github.com/scikit-learn/scikit-learn/tree/main/doc/tutorial>`_.
+  and
+  `doc/modules/ <https://github.com/scikit-learn/scikit-learn/tree/main/doc/modules>`_.
 * **Examples:** These provide full code examples that may demonstrate the use
   of scikit-learn modules, compare different algorithms or discuss their
   interpretation, etc. Examples live in

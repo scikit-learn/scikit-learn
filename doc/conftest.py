@@ -126,10 +126,6 @@ def pytest_runtest_setup(item):
         setup_rcv1()
     elif fname.endswith("datasets/twenty_newsgroups.rst") or is_index:
         setup_twenty_newsgroups()
-    elif (
-        fname.endswith("tutorial/text_analytics/working_with_text_data.rst") or is_index
-    ):
-        setup_working_with_text_data()
     elif fname.endswith("modules/compose.rst") or is_index:
         setup_compose()
     elif fname.endswith("datasets/loading_other_datasets.rst"):
@@ -146,8 +142,6 @@ def pytest_runtest_setup(item):
     rst_files_requiring_matplotlib = [
         "modules/partial_dependence.rst",
         "modules/tree.rst",
-        "tutorial/statistical_inference/settings.rst",
-        "tutorial/statistical_inference/supervised_learning.rst",
     ]
     for each in rst_files_requiring_matplotlib:
         if fname.endswith(each):

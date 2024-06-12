@@ -30,6 +30,7 @@ from ..metrics import check_scoring, get_scorer_names
 from ..metrics._scorer import _MultimetricScorer
 from ..preprocessing import LabelEncoder
 from ..utils import Bunch, _safe_indexing, check_random_state, indexable
+from ..utils._array_api import device, get_namespace
 from ..utils._param_validation import (
     HasMethods,
     Integral,
@@ -830,6 +831,13 @@ def _fit_and_score(
         fit_error : str or None
             Traceback str if the fit failed, None if the fit succeeded.
     """
+    xp, _ = get_namespace(X)
+    X_device = device(X)
+
+    # Make sure that we can fancy index X even if train and test are provided
+    # as NumPy arrays by NumPy only cross-validation splitters.
+    train, test = xp.asarray(train, device=X_device), xp.asarray(test, device=X_device)
+
     if not isinstance(error_score, numbers.Number) and error_score != "raise":
         raise ValueError(
             "error_score must be the string 'raise' or a numeric value. "
