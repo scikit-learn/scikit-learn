@@ -599,7 +599,7 @@ def dbcv_score(
     mst_nodes = {}
     mst_edges = {}
 
-    density_sep = np.inf * np.ones((n_labels, n_labels), dtype=np.float64)
+    density_sep = np.full((n_labels, n_labels), np.inf, dtype=np.float64)
     labels_to_scores = {}
 
     for encoding_index in encoding_cluster_indices:
