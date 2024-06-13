@@ -3,7 +3,6 @@ usage.
 """
 
 import functools
-import sys
 import warnings
 from functools import update_wrapper
 
@@ -11,6 +10,12 @@ import joblib
 from threadpoolctl import ThreadpoolController
 
 from .._config import config_context, get_config
+
+# Global threadpool controller instance that can be used to locally limit the number of
+# threads without looping through all shared libraries every time.
+# It should not be accessed directly and _get_threadpool_controller should be used
+# instead.
+_threadpool_controller = None
 
 
 def _with_config(delayed_func, config):
@@ -132,16 +137,13 @@ class _FuncWrapper:
 
 
 def _get_threadpool_controller():
-    """Return the global threadpool controller instance.
+    """Return the global threadpool controller instance."""
+    global _threadpool_controller
 
-    It can be used to locally limit the number of threads without looping through all
-    shared libraries every time.
-    """
-    module = sys.modules["sklearn.utils.parallel"]
-    if not hasattr(module, "_threadpool_controller"):
-        module._threadpool_controller = ThreadpoolController()
+    if _threadpool_controller is None:
+        _threadpool_controller = ThreadpoolController()
 
-    return module._threadpool_controller
+    return _threadpool_controller
 
 
 def _threadpool_controller_decorator(limits=1, user_api="blas"):
