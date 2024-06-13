@@ -515,10 +515,9 @@ def dbcv_score(
 
     Parameters
     ----------
-    X : array (n_samples, n_features) or (n_samples, n_samples)
-        The input data of the clustering. This can be the data, or, if
-        metric is set to `precomputed` the pairwise distance matrix used
-        for the clustering.
+    X : array-like (n_samples, n_samples) if metric == "precomputed", or \
+        (n_samples, n_features) otherwise
+        An array of pairwise distances between samples, or a feature array.
 
     labels : array (n_samples)
         The label array output by the clustering, providing an integral
@@ -553,8 +552,8 @@ def dbcv_score(
 
     verbose : optional, bool (default False)
         If True additional, informational messages are ommitted via stdout.
-        They specifically relate to the subcomponents which the mutual reachability
-        distances emerge from.
+        They specifically relate to the subcomponents from which the mutual
+        reachability distances emerge.
 
     **kwd_args :
         Extra arguments to pass to the distance computation for other
