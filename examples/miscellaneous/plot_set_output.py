@@ -64,10 +64,19 @@ clf.fit(X_train, y_train)
 clf[-1].feature_names_in_
 
 # %%
-# As a side note, if one uses the method `set_params`, the transformer will be
-# replaced by a new one which does not have `set_output` set:
+# .. note:: If one uses the method `set_params`, the transformer will be
+#    replaced by a new one which does not have `set_output` set:
 clf.set_params(standardscaler=StandardScaler())
-clf["standardscaler"].fit_transform(X_train)[:5]
+clf.fit(X_train, y_train)
+clf[-1].feature_names_in_
+
+# %%
+# To keep the intended behavior, use `set_output` on the new transformer
+# beforehand
+scaler = StandardScaler().set_output(transform='pandas')
+clf.set_params(standardscaler=scaler)
+clf.fit(X_train, y_train)
+clf[-1].feature_names_in_
 
 # %%
 # Next we load the titanic dataset to demonstrate `set_output` with
