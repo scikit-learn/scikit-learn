@@ -291,7 +291,7 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
     .. versionadded:: 0.24
 
     .. versionchanged:: 1.6
-       An arbritrary threshold at infinity is added to represent a classifier
+       An arbitrary threshold at infinity is added to represent a classifier
        that always predicts the negative class, i.e. `fpr=0` and `fnr=1`.
 
     Parameters
@@ -327,8 +327,8 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
 
     thresholds : ndarray of shape (n_thresholds,)
         Decreasing thresholds on the decision function (either `predict_proba`
-        or `decision_function`) used to compute FPR and FNR. An arbritrary
-        threshold at infinity is added for the case `tp=0` and `fp=0`.
+        or `decision_function`) used to compute FPR and FNR. An arbitrary
+        threshold at infinity is added for the case `fpr=0` and `fnr=0`.
 
     See Also
     --------
