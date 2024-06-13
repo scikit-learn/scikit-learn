@@ -19,9 +19,8 @@ import scipy
 import scipy.sparse.linalg
 import scipy.stats
 
-import sklearn
-
 from ..externals._packaging.version import parse as parse_version
+from .parallel import _get_threadpool_controller
 
 _IS_PYPY = platform.python_implementation() == "PyPy"
 _IS_32BIT = 8 * struct.calcsize("P") == 32
@@ -391,7 +390,7 @@ def _in_unstable_openblas_configuration():
     import numpy  # noqa
     import scipy  # noqa
 
-    modules_info = sklearn._threadpool_controller.info()
+    modules_info = _get_threadpool_controller().info()
 
     open_blas_used = any(info["internal_api"] == "openblas" for info in modules_info)
     if not open_blas_used:
