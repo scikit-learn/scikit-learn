@@ -2,7 +2,7 @@
 Smoke Test the check_build module
 """
 
-# Author: G Varoquaux
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import pytest

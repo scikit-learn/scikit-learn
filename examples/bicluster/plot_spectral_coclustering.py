@@ -15,7 +15,7 @@ the biclusters.
 
 """
 
-# Author: Kemal Eren <kemal@kemaleren.com>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np

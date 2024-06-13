@@ -10,7 +10,7 @@ The coefficients can be forced to be positive.
 
 """
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 from itertools import cycle
