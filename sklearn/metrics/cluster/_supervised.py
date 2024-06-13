@@ -143,12 +143,18 @@ def contingency_matrix(
            [0, 1, 1],
            [1, 0, 1]])
     """
-
     if eps is not None and sparse:
         raise ValueError("Cannot set 'eps' when sparse=True")
 
-    classes, class_idx = np.unique(labels_true, return_inverse=True)
-    clusters, cluster_idx = np.unique(labels_pred, return_inverse=True)
+    xp, is_array_api_compliant, device = get_namespace_and_device(
+        labels_pred, labels_true
+    )
+
+    if sparse and is_array_api_compliant:
+        raise ValueError("Cannot use sparse=True while using array api dispatch")
+
+    classes, class_idx = xp.unique_inverse(labels_true)
+    clusters, cluster_idx = xp.unique_inverse(labels_pred)
     n_classes = classes.shape[0]
     n_clusters = clusters.shape[0]
     # Using coo_matrix to accelerate simple histogram calculation,
@@ -163,7 +169,7 @@ def contingency_matrix(
         contingency = contingency.tocsr()
         contingency.sum_duplicates()
     else:
-        contingency = contingency.toarray()
+        contingency = xp.asarray(contingency.toarray(), device=device)
         if eps is not None:
             # don't use += as contingency is integer
             contingency = contingency + eps
