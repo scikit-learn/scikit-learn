@@ -65,7 +65,7 @@ clf[-1].feature_names_in_
 
 # %%
 # .. note:: If one uses the method `set_params`, the transformer will be
-#    replaced by a new one which does not have `set_output` set:
+#    replaced by a new one with the default output format.
 clf.set_params(standardscaler=StandardScaler())
 clf.fit(X_train, y_train)
 clf[-1].feature_names_in_
