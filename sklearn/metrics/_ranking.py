@@ -1128,9 +1128,8 @@ def roc_curve(
     are reversed upon returning them to ensure they correspond to both ``fpr``
     and ``tpr``, which are sorted in reversed order during their calculation.
 
-    An arbitrary threshold is added for the case `tpr=0` and `fpr=0` to
-    ensure that the curve starts at `(0, 0)`. This threshold corresponds to the
-    `np.inf`.
+    An arbritrary threshold at infinity is added to represent a classifier
+    that always predicts the negative class, i.e. `fpr=0` and `tpr=0`.
 
     References
     ----------
