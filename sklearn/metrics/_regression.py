@@ -25,7 +25,7 @@ the lower the better.
 #          Sylvain Marie <sylvain.marie@se.com>
 #          Ohad Michel <ohadmich@gmail.com>
 #          Alejandro Martin Gil <almagil98@gmail.com>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Real
@@ -1290,10 +1290,11 @@ def max_error(y_true, y_pred):
     >>> max_error(y_true, y_pred)
     1
     """
+    xp, _ = get_namespace(y_true, y_pred)
     y_type, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred, None)
     if y_type == "continuous-multioutput":
         raise ValueError("Multioutput not supported in max_error")
-    return np.max(np.abs(y_true - y_pred))
+    return xp.max(xp.abs(y_true - y_pred))
 
 
 def _mean_tweedie_deviance(y_true, y_pred, sample_weight, power):

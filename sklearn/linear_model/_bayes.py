@@ -3,7 +3,7 @@ Various bayesian regression
 """
 
 # Authors: V. Michel, F. Pedregosa, A. Gramfort
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 from math import log
 from numbers import Integral, Real

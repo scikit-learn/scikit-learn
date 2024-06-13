@@ -39,7 +39,7 @@ is held out with the validation stopping criterion.
 
 # Authors: Tom Dupre la Tour
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import sys
 import time

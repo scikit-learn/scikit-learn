@@ -1,7 +1,7 @@
 # Authors: Manoj Kumar <manojkumarsivaraj334@gmail.com>
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 #          Joel Nothman <joel.nothman@gmail.com>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from math import sqrt

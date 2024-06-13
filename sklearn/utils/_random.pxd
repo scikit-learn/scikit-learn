@@ -1,6 +1,6 @@
 # Authors: Arnaud Joly
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 from ._typedefs cimport uint32_t
 

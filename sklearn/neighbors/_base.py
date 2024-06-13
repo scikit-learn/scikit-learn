@@ -6,7 +6,7 @@
 #          Sparseness support by Lars Buitinck
 #          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
 #
-# License: BSD 3 clause (C) INRIA, University of Amsterdam
+# SPDX-License-Identifier: BSD-3-Clause
 import itertools
 import numbers
 import warnings

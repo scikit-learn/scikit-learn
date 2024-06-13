@@ -11,7 +11,7 @@ The coefficients can be forced to be positive.
 """
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 from itertools import cycle
 

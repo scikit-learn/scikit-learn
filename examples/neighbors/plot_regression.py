@@ -12,7 +12,7 @@ target using both barycenter and constant weights.
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #
-# License: BSD 3 clause (C) INRIA
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 # %%

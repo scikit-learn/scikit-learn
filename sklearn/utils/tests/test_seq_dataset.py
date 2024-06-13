@@ -1,7 +1,7 @@
 # Author: Tom Dupre la Tour
 #         Joan Massich <mailsik@gmail.com>
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 from itertools import product
 

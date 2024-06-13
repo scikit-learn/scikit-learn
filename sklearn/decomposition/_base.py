@@ -6,7 +6,7 @@
 #         Denis A. Engemann <denis-alexander.engemann@inria.fr>
 #         Kyle Kastner <kastnerkyle@gmail.com>
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 from abc import ABCMeta, abstractmethod
 

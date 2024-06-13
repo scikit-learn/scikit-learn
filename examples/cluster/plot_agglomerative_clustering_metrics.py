@@ -35,7 +35,7 @@ thus the clustering puts them in the same cluster.
 """
 
 # Author: Gael Varoquaux
-# License: BSD 3-Clause or CC-0
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.patheffects as PathEffects
 import matplotlib.pyplot as plt

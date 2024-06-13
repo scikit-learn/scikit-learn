@@ -28,7 +28,7 @@ case.
 # Author: Mathieu Blondel <mathieu@mblondel.org>
 # Author: Hamzeh Alsalhi <93hamsal@gmail.com>
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import array
 import itertools

@@ -1,4 +1,4 @@
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 """Helper to load LossFunction from sgd_fast.pyx to sag_fast.pyx"""
 
 cdef class LossFunction:

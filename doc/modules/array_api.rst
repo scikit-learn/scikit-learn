@@ -114,6 +114,7 @@ Metrics
 
 - :func:`sklearn.metrics.accuracy_score`
 - :func:`sklearn.metrics.d2_tweedie_score`
+- :func:`sklearn.metrics.max_error`
 - :func:`sklearn.metrics.mean_absolute_error`
 - :func:`sklearn.metrics.mean_gamma_deviance`
 - :func:`sklearn.metrics.mean_squared_error`

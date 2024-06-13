@@ -43,7 +43,7 @@ of the results_.
 # Author:  Raghav RV <rvraghav93@gmail.com>
 #          Guillaume Lemaitre <g.lemaitre58@gmail.com>
 #          Thomas Unterthiner
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib as mpl
 import numpy as np

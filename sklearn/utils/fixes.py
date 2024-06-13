@@ -9,7 +9,7 @@ at which the fix is no longer needed.
 #          Fabian Pedregosa <fpedregosa@acm.org>
 #          Lars Buitinck
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import platform
 import struct

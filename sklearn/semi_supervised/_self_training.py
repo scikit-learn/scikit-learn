@@ -14,7 +14,7 @@ __all__ = ["SelfTrainingClassifier"]
 
 # Authors: Oliver Rausch   <rauscho@ethz.ch>
 #          Patrice Becker  <beckerp@ethz.ch>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 def _estimator_has(attr):

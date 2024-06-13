@@ -3,7 +3,7 @@ Smoke Test the check_build module
 """
 
 # Author: G Varoquaux
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import pytest
 

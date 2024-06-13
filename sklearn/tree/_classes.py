@@ -12,7 +12,7 @@ randomized trees. Single and multi-output problems are both handled.
 #          Fares Hedayati <fares.hedayati@gmail.com>
 #          Nelson Liu <nelson@nelsonliu.me>
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import copy
 import numbers

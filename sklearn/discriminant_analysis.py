@@ -5,7 +5,7 @@
 #          Matthieu Perrot
 #          Mathieu Blondel
 
-# License: BSD 3-Clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Integral, Real
