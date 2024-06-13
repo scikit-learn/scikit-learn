@@ -117,6 +117,7 @@ Metrics
 - :func:`sklearn.metrics.d2_tweedie_score`
 - :func:`sklearn.metrics.max_error`
 - :func:`sklearn.metrics.mean_absolute_error`
+- :func:`sklearn.metrics.mean_poisson_deviance`
 - :func:`sklearn.metrics.mean_gamma_deviance`
 - :func:`sklearn.metrics.mean_poisson_deviance` (requires `enabling array API
 support for SciPy <https://docs.scipy.org/doc/scipy/dev/api-dev/array_api.html#using-array-api-standard-support>`_)
