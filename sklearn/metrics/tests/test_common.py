@@ -1827,7 +1827,7 @@ def check_array_api_multiclass_classification_metric(
 
 
 def check_array_api_regression_metric(metric, array_namespace, device, dtype_name):
-    y_true_np = np.array([2.0, 0.0, 1.0, 4.0], dtype=dtype_name)
+    y_true_np = np.array([2.0, 0.1, 1.0, 4.0], dtype=dtype_name)
     y_pred_np = np.array([0.5, 0.5, 2, 2], dtype=dtype_name)
 
     metric_kwargs = {}
@@ -1955,6 +1955,7 @@ array_api_metric_checkers = {
         check_array_api_regression_metric,
     ],
     paired_cosine_distances: [check_array_api_metric_pairwise],
+    mean_gamma_deviance: [check_array_api_regression_metric],
     max_error: [check_array_api_regression_metric],
 }
 
