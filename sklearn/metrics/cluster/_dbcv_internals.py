@@ -133,7 +133,7 @@ def internal_minimum_spanning_tree(mr_distances):
     internal_node_flags = np.arange(mr_distances.shape[0])[
         np.bincount(min_span_tree.T[:2].flatten().astype(np.intp)) > 1
     ]
-    if not len(internal_node_flags):
+    if len(internal_node_flags) == 0:
         internal_node_flags = [0]
     # A little "fancy" we select from the flattened array reshape back
     # (Fortran format to get indexing right) and take the product to do an and
