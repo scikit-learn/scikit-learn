@@ -26,7 +26,7 @@ the best model.
 
 # Author: Alexandre Gramfort
 #         Guillaume Lemaitre
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # We will use the diabetes dataset.

@@ -17,7 +17,7 @@ experiments:
 
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
 #         Arturo Amor <david-arturo.amor-quiroz@inria.fr>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Defining the list of metrics to evaluate

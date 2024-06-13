@@ -18,7 +18,7 @@ models: :ref:`Logistic_regression`, :ref:`gaussian_naive_bayes`,
 
 # %%
 # Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-# License: BSD 3 clause.
+# SPDX-License-Identifier: BSD-3-Clause
 #
 # Dataset
 # -------

@@ -29,7 +29,7 @@ up the data anywhere.
 
 # Author: Andreas Müller
 #         Hanmin Qin <qinhanmin2005@sina.com>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np

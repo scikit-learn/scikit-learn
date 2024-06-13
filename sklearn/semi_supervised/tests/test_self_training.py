@@ -15,7 +15,7 @@ from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 
 # Author: Oliver Rausch <rauscho@ethz.ch>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 # load the iris dataset and randomly permute it
 iris = load_iris()

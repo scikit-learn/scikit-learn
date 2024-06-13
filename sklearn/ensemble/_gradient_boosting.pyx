@@ -1,6 +1,6 @@
 # Author: Peter Prettenhofer
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 from libc.stdlib cimport free
 from libc.string cimport memset

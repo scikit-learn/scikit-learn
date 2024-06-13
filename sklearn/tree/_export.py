@@ -10,7 +10,7 @@ This module defines export functions for decision trees.
 #          Trevor Stephens <trev.stephens@gmail.com>
 #          Li Li <aiki.nogard@gmail.com>
 #          Giuseppe Vettigli <vettigli@gmail.com>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 from collections.abc import Iterable
 from io import StringIO
 from numbers import Integral

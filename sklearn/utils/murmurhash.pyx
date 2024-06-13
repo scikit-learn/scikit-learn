@@ -12,7 +12,7 @@ and can be found here:
 """
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 from ..utils._typedefs cimport int32_t, uint32_t
 
