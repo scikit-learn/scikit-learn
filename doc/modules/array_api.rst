@@ -114,6 +114,7 @@ Metrics
 
 - :func:`sklearn.metrics.cluster.entropy`
 - :func:`sklearn.metrics.accuracy_score`
+- :func:`sklearn.metrics.cluster.contingency_matrix`
 - :func:`sklearn.metrics.d2_tweedie_score`
 - :func:`sklearn.metrics.max_error`
 - :func:`sklearn.metrics.mean_absolute_error`
