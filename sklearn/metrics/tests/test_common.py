@@ -73,6 +73,7 @@ from sklearn.utils._testing import (
     ignore_warnings,
 )
 from sklearn.utils.fixes import COO_CONTAINERS, parse_version, sp_version
+from sklearn.utils.fixes import COO_CONTAINERS, parse_version, sp_version
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import _num_samples, check_random_state
 
