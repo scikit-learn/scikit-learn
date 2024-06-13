@@ -18,7 +18,6 @@ from numbers import Integral, Real
 import numpy as np
 import scipy.sparse as sp
 
-from .. import _threadpool_controller
 from ..base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
@@ -32,6 +31,10 @@ from ..utils import check_array, check_random_state
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import row_norms, stable_cumsum
+from ..utils.parallel import (
+    _get_threadpool_controller,
+    _threadpool_controller_decorator,
+)
 from ..utils.sparsefuncs import mean_variance_axis
 from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils.validation import (
@@ -624,7 +627,7 @@ def _kmeans_single_elkan(
 
 # Threadpoolctl context to limit the number of threads in second level of
 # nested parallelism (i.e. BLAS) to avoid oversubscription.
-@_threadpool_controller.wrap(limits=1, user_api="blas")
+@_threadpool_controller_decorator(limits=1, user_api="blas")
 def _kmeans_single_lloyd(
     X,
     sample_weight,
@@ -827,7 +830,7 @@ def _labels_inertia(X, sample_weight, centers, n_threads=1, return_inertia=True)
 
 
 # Same as _labels_inertia but in a threadpool_limits context.
-_labels_inertia_threadpool_limit = _threadpool_controller.wrap(
+_labels_inertia_threadpool_limit = _threadpool_controller_decorator(
     limits=1, user_api="blas"
 )(_labels_inertia)
 
@@ -922,7 +925,7 @@ class _BaseKMeans(
 
         n_active_threads = int(np.ceil(n_samples / CHUNK_SIZE))
         if n_active_threads < self._n_threads:
-            modules = _threadpool_controller.info()
+            modules = _get_threadpool_controller().info()
             has_vcomp = "vcomp" in [module["prefix"] for module in modules]
             has_mkl = ("mkl", "intel") in [
                 (module["internal_api"], module.get("threading_layer", None))
@@ -2144,7 +2147,7 @@ class MiniBatchKMeans(_BaseKMeans):
 
         n_steps = (self.max_iter * n_samples) // self._batch_size
 
-        with _threadpool_controller.limit(limits=1, user_api="blas"):
+        with _get_threadpool_controller().limit(limits=1, user_api="blas"):
             # Perform the iterative optimization until convergence
             for i in range(n_steps):
                 # Sample a minibatch from the full dataset
@@ -2270,7 +2273,7 @@ class MiniBatchKMeans(_BaseKMeans):
             # Initialize number of samples seen since last reassignment
             self._n_since_last_reassign = 0
 
-        with _threadpool_controller.limit(limits=1, user_api="blas"):
+        with _get_threadpool_controller().limit(limits=1, user_api="blas"):
             _mini_batch_step(
                 X,
                 sample_weight=sample_weight,
