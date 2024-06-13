@@ -251,7 +251,7 @@ def distances_between_points(
         return stacked_distances.max(axis=-1), core_distances
 
 
-def all_points_core_distance(distance_matrix, d=2.0):
+def all_points_core_distance(distance_matrix, d=2):
     """
     Compute the all-points-core-distance for all the points of a cluster.
 
@@ -281,7 +281,7 @@ def all_points_core_distance(distance_matrix, d=2.0):
     result /= distance_matrix.shape[0] - 1
 
     if result.sum() == 0:
-        result = np.zeros(len(distance_matrix))
+        result = np.zeros(distance_matrix.shape[0])
     else:
         result **= -1.0 / d
 
