@@ -13,6 +13,10 @@ jobs:
     runs-on:
       group: cuda-gpu-runner-group
     name: Run Array API unit tests
+    permissions:
+      pull-requests: write
+      issues: write
+      statuses: write
     steps:
       - uses: actions/setup-python@v5
         with:
@@ -25,6 +29,10 @@ jobs:
           git fetch origin +refs/pull/${{ inputs.pr_id }}/head:pr-${{ inputs.pr_id }}
           git checkout pr-${{ inputs.pr_id }}
           echo "Checked out commit $(git rev-parse HEAD)"
+      - name: Store commit SHA
+        id: commit-sha
+        run: |
+          echo SHA=$(git rev-parse HEAD) >> "$GITHUB_OUTPUT"
       - name: Cache conda environment
         id: cache-conda
         uses: actions/cache@v4
@@ -40,7 +48,21 @@ jobs:
           conda activate sklearn
           pip install --verbose --no-build-isolation --config-settings editable-verbose=true --editable .
       - name: Run array API tests
+        id: tests
         run: |
           source "${HOME}/conda/etc/profile.d/conda.sh"
           conda activate sklearn
           pytest -k 'array_api'
+      - name: Create or update PR comment and status
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ inputs.pr_id }}
+          RUN_ID: ${{ github.run_id }}
+          BRANCH_SHA: ${{ steps.commit-sha.outputs.SHA }}
+          WORKFLOW_STATUS: ${{ steps.tests.outcome }}
+        run: |
+          source "${HOME}/conda/etc/profile.d/conda.sh"
+          conda activate sklearn
+          python -m pip install requests
+          python ./build_tools/cuda_ci_status.py
