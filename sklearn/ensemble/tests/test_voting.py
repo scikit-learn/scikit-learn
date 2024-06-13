@@ -797,6 +797,39 @@ def test_multilabel():
     eclf = VotingClassifier(estimators=[("ovr", clf)], voting="hard")
     eclf.fit(X, y)
 
+@pytest.mark.parametrize(
+    "estimator",
+    [
+        # output a list of 2D array containing the probability of each class
+        # for each output
+        RandomForestClassifier(random_state=42),
+    ]
+)
+@pytest.mark.parametrize("voting", ["soft", "hard"])
+def test_voting_classifier_multilabel_predict_proba(estimator, voting):
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_multilabel, y_multilabel, stratify=y_multilabel, random_state=42
+    )
+    n_outputs = 3
+
+    estimators = [("est", estimator)]
+    voter = VotingClassifier(
+        estimators=estimators,
+        voting=voting,
+    ).fit(X_train, y_train)
+    
+    if voting == 'hard':
+        inner_msg = "predict_proba is not available when voting='hard'"
+        outer_msg = "'VotingClassifier' has no attribute 'predict_proba'"
+        with pytest.raises(AttributeError, match=outer_msg) as exec_info:
+            y_proba = voter.predict_proba(X_test)
+        assert isinstance(exec_info.value.__cause__, AttributeError)
+        assert inner_msg in str(exec_info.value.__cause__)
+    else:
+        y_proba = voter.predict_proba(X_test)
+        assert len(y_proba) == n_outputs
+        assert all(y_pred_proba.shape == (y_test.shape[0],) for y_pred_proba in y_proba)
+
 
 @pytest.mark.parametrize(
     "estimator",
@@ -809,7 +842,7 @@ def test_multilabel():
     ]
 )
 @pytest.mark.parametrize("voting", ["soft", "hard"])
-def test_voting_classifier_multilabel_predict_proba(estimator, voting):
+def test_voting_classifier_multilabel_transform(estimator, voting):
     """Check the behaviour for the multilabel classification case and the
     `predict_proba` stacking method.
 
@@ -826,15 +859,38 @@ def test_voting_classifier_multilabel_predict_proba(estimator, voting):
         estimators=estimators,
         voting=voting,
     ).fit(X_train, y_train)
-
+    
     X_trans = voter.transform(X_test)
-    print(X_trans)
     assert X_trans.shape == (X_test.shape[0], n_outputs), f'{X_trans.shape} != {(X_test.shape[0], n_outputs)}'
     
     if voting == 'soft':
         # we should not have any collinear classes and thus nothing should sum to 1
         assert not any(np.isclose(X_trans.sum(axis=1), 1.0)), X_trans.sum(axis=1)
 
+
+@pytest.mark.parametrize(
+    "estimator",
+    [
+        # output a 2D array of the probability of the positive class for each output
+        MLPClassifier(random_state=42),
+        # output a list of 2D array containing the probability of each class
+        # for each output
+        RandomForestClassifier(random_state=42),
+    ]
+)
+@pytest.mark.parametrize("voting", ["soft", "hard"])
+def test_voting_classifier_multilabel_predict(estimator, voting):
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_multilabel, y_multilabel, stratify=y_multilabel, random_state=42
+    )
+    n_outputs = 3
+
+    estimators = [("est", estimator)]
+    voter = VotingClassifier(
+        estimators=estimators,
+        voting=voting,
+    ).fit(X_train, y_train)
+    
     y_pred = voter.predict(X_test)
     assert y_pred.shape == y_test.shape, f'{y_pred.shape} != {y_test.shape}'
 

@@ -77,8 +77,14 @@ class _BaseVoting(MultiOutputMixin, TransformerMixin, _BaseHeterogeneousEnsemble
         return [w for est, w in zip(self.estimators, self.weights) if est[1] != "drop"]
 
     def _predict(self, X):
-        """Collect results from clf.predict calls."""
-        return np.asarray([est.predict(X) for est in self.estimators_]).T
+        """Collect results from clf.predict calls.
+        
+        Output is array of predictions of shape (n_estimators, n_samples, n_outputs)
+        """
+        predictions = np.zeros((len(self.estimators_), X.shape[0], len(self.classes_)), dtype=np.int64)
+        for idx, est in enumerate(self.estimators_):
+            predictions[idx, ...] = est.predict(X)
+        return predictions
 
     @abstractmethod
     def fit(self, X, y, **fit_params):
@@ -440,23 +446,22 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         check_is_fitted(self)
         if self.voting == "soft":
             maj = np.argmax(self.predict_proba(X), axis=1)
-
+            print('soft')
         else:  # 'hard' voting
             predictions = self._predict(X)
             maj = np.apply_along_axis(
                 lambda x: np.argmax(np.bincount(x, weights=self._weights_not_none)),
-                axis=1,
+                axis=0,
                 arr=predictions,
             )
+            print('hard')
 
         if isinstance(self.le_, list):
-            print(maj.shape)
-            print(predictions.shape)
             # Handle the multilabel-indicator case
             maj = np.array(
                 [
                     self.le_[target_idx].inverse_transform(target)
-                    for target_idx, target in enumerate(maj)
+                    for target_idx, target in enumerate(maj.T)
                 ]
             ).T
         else:
@@ -465,8 +470,17 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         return maj
 
     def _collect_probas(self, X):
-        """Collect results from clf.predict calls."""
-        return np.asarray([clf.predict_proba(X) for clf in self.estimators_])
+        """Collect results from clf.predict calls.
+        
+        Output is array-like of shape (n_estimators, n_samples, n_outputs)
+        """
+        probas = np.zeros((len(self.estimators_), X.shape[0], len(self.classes_), 2), dtype=np.float64)
+        for idx, clf in enumerate(self.estimators_):
+            print(probas.shape)
+            print(len(clf.predict_proba(X)))
+            print([x.shape for x in clf.predict_proba(X)])
+            probas[idx, ...] = clf.predict_proba(X)
+        return probas
 
     def _check_voting(self):
         if self.voting == "hard":
@@ -486,13 +500,18 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
         Returns
         -------
-        avg : array-like of shape (n_samples, n_classes)
+        avg : array-like of shape (n_samples, n_classes) or \
+            list of ndarray of shape (n_output,)
             Weighted average probability for each class per sample.
         """
         check_is_fitted(self)
+        print(self._collect_probas(X).shape)
         avg = np.average(
             self._collect_probas(X), axis=0, weights=self._weights_not_none
         )
+        if isinstance(self.le_, list):
+            # Handle the multilabel-indicator cases
+            y_pred = np.array([preds[:, 0] for preds in y_pred]).T
         return avg
 
     def transform(self, X):
@@ -534,6 +553,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
                 predictions = np.hstack(predictions)
         else:
             predictions = self._predict(X)
+        
+        print(predictions.shape)
         
         probas_labels = []
         for est_idx, preds in enumerate(predictions):
