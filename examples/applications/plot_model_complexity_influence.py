@@ -39,7 +39,7 @@ Hamming Loss).
 # Authors: Eustache Diemert <eustache@diemert.fr>
 #          Maria Telenczuk <https://github.com/maikia>
 #          Guillaume Lemaitre <g.lemaitre58@gmail.com>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import time
 

@@ -2,7 +2,7 @@
 
 # Authors: V. Michel, B. Thirion, G. Varoquaux, A. Gramfort, E. Duchesnay.
 #          L. Buitinck, A. Joly
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 import warnings

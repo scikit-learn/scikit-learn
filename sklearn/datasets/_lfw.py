@@ -7,7 +7,7 @@ over the internet, all details are available on the official website:
 """
 
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import logging
 from numbers import Integral, Real

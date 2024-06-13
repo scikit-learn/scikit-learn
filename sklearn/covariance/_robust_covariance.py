@@ -7,7 +7,7 @@ Here are implemented estimators that are resistant to outliers.
 
 # Author: Virgile Fritsch <virgile.fritsch@inria.fr>
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Integral, Real

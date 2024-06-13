@@ -3,7 +3,7 @@
 # Authors: Issam H. Laradji <issam.laradji@gmail.com>
 #          Andreas Mueller
 #          Jiyuan Qian
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from abc import ABCMeta, abstractmethod

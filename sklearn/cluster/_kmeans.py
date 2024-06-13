@@ -9,7 +9,7 @@
 #          Olivier Grisel <olivier.grisel@ensta.org>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Robert Layton <robertlayton@gmail.com>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from abc import ABC, abstractmethod

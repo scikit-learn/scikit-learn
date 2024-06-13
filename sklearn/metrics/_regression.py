@@ -25,7 +25,7 @@ the lower the better.
 #          Sylvain Marie <sylvain.marie@se.com>
 #          Ohad Michel <ohadmich@gmail.com>
 #          Alejandro Martin Gil <almagil98@gmail.com>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Real

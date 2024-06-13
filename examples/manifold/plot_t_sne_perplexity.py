@@ -25,7 +25,7 @@ those effects.
 """
 
 # Author: Narine Kokhlikyan <narine@slice.com>
-# License: BSD
+# SPDX-License-Identifier: BSD-3-Clause
 
 from time import time
 

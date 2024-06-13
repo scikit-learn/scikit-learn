@@ -2,7 +2,7 @@
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Denis Engemann <denis-alexander.engemann@inria.fr>
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 import numpy as np
 import pytest
 from scipy import linalg, sparse

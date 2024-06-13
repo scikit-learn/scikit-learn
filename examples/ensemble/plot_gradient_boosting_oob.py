@@ -24,7 +24,7 @@ but is computationally more demanding.
 
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np

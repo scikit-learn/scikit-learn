@@ -9,7 +9,7 @@
 #          Fares Hedayati <fares.hedayati@gmail.com>
 #          Jacob Schreiber <jmschreiber91@gmail.com>
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 from cython cimport final
 from libc.math cimport isnan

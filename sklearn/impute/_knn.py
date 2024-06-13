@@ -1,6 +1,6 @@
 # Authors: Ashim Bhattarai <ashimb9@gmail.com>
 #          Thomas J Fan <thomasjpfan@gmail.com>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Integral
 

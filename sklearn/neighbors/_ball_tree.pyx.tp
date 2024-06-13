@@ -12,7 +12,7 @@ implementation_specific_values = [
 ]
 
 # Author: Jake Vanderplas <vanderplas@astro.washington.edu>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 }}
 

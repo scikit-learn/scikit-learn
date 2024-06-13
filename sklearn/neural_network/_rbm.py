@@ -4,7 +4,7 @@
 #          Vlad Niculae
 #          Gabriel Synnaeve
 #          Lars Buitinck
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import time
 from numbers import Integral, Real

@@ -2,7 +2,7 @@
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Maria Telenczuk <https://github.com/maikia>
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 
