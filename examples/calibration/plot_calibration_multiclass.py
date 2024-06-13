@@ -28,7 +28,7 @@ class of an instance (red: class 1, green: class 2, blue: class 3).
 # the classifier but not calibrate the predicted probabilities.
 
 # Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-# License: BSD Style.
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 

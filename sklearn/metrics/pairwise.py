@@ -7,7 +7,7 @@
 #          Philippe Gervais <philippe.gervais@inria.fr>
 #          Lars Buitinck
 #          Joel Nothman <joel.nothman@gmail.com>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import itertools
 import warnings

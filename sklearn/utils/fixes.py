@@ -9,7 +9,7 @@ at which the fix is no longer needed.
 #          Fabian Pedregosa <fpedregosa@acm.org>
 #          Lars Buitinck
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import platform
 import struct
@@ -19,9 +19,8 @@ import scipy
 import scipy.sparse.linalg
 import scipy.stats
 
-import sklearn
-
 from ..externals._packaging.version import parse as parse_version
+from .parallel import _get_threadpool_controller
 
 _IS_32BIT = 8 * struct.calcsize("P") == 32
 _IS_WASM = platform.machine() in ["wasm32", "wasm64"]
@@ -390,7 +389,7 @@ def _in_unstable_openblas_configuration():
     import numpy  # noqa
     import scipy  # noqa
 
-    modules_info = sklearn._threadpool_controller.info()
+    modules_info = _get_threadpool_controller().info()
 
     open_blas_used = any(info["internal_api"] == "openblas" for info in modules_info)
     if not open_blas_used:

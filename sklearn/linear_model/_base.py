@@ -12,7 +12,7 @@ Generalized Linear Models.
 #         Maryan Morel <maryan.morel@polytechnique.edu>
 #         Giorgio Patrini <giorgio.patrini@anu.edu.au>
 #         Maria Telenczuk <https://github.com/maikia>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numbers
 import warnings

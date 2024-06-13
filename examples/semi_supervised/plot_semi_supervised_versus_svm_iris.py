@@ -16,7 +16,7 @@ identical to training the SVC on 100% of the data.
 
 # Authors: Clay Woolam   <clay@woolam.org>
 #          Oliver Rausch <rauscho@ethz.ch>
-# License: BSD
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np

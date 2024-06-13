@@ -14,7 +14,7 @@ function approaches that of the ridge.
 """
 
 # Authors: Manoj Kumar mks542@nyu.edu
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np

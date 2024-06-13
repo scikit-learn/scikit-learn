@@ -29,7 +29,7 @@ by verifying the presence of the `_is_fitted` attribute.
 
 # Author: Kushan <kushansharma1@gmail.com>
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_is_fitted
