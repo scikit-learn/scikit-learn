@@ -6,7 +6,6 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 from scipy.sparse import issparse
-from scipy.spatial.distance import cdist
 
 from sklearn import datasets
 from sklearn.metrics import pairwise_distances
@@ -420,7 +419,7 @@ def test_dbcv_score_precomputed_missing_d_valerr(density_sample):
     msg = "If metric is precomputed a d value must be provided!"
     with pytest.raises(ValueError, match=msg):
         dbcv_score(
-            cdist(density_sample[0], density_sample[0], "euclidean"),
+            pairwise_distances(density_sample[0]),
             density_sample[1],
             metric="precomputed",
         )
@@ -481,7 +480,7 @@ def test_dbcv_score_precomputed_input(density_sample):
     # score should at least be non-negative if labeled by ground-truth
     assert (
         dbcv_score(
-            cdist(density_sample[0], density_sample[0], "euclidean"),
+            pairwise_distances(density_sample[0]),
             density_sample[1],
             metric="precomputed",
             d=2,
