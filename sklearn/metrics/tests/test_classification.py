@@ -819,9 +819,7 @@ def test_zero_division_nan_no_warning(metric, y_true, y_pred, zero_division):
     """
     with warnings.catch_warnings():
         warnings.simplefilter("error")
-        # Ignore warnings related to wrong shape of confusion_matrix:
-        with ignore_warnings(category=UserWarning):
-            result = metric(y_true, y_pred, zero_division=zero_division)
+        result = metric(y_true, y_pred, zero_division=zero_division)
 
     if np.isnan(zero_division):
         assert np.isnan(result)
