@@ -360,9 +360,9 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
 
     # Add a threshold at inf where the clf always predicts the negative class
     # i.e. tps = fps = 0
-    tps = np.r_[0, tps]
-    fps = np.r_[0, fps]
-    thresholds = np.r_[np.inf, thresholds]
+    tps = np.concatenate(([0], tps))
+    fps = np.concatenate(([0], fps))
+    thresholds = np.concatenate(([np.inf], thresholds))
 
     if len(np.unique(y_true)) != 2:
         raise ValueError(
