@@ -73,7 +73,7 @@ clf[-1].feature_names_in_
 # %%
 # To keep the intended behavior, use `set_output` on the new transformer
 # beforehand
-scaler = StandardScaler().set_output(transform='pandas')
+scaler = StandardScaler().set_output(transform="pandas")
 clf.set_params(standardscaler=scaler)
 clf.fit(X_train, y_train)
 clf[-1].feature_names_in_
