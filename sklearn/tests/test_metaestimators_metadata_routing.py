@@ -24,7 +24,6 @@ from sklearn.feature_selection import (
     RFE,
     RFECV,
     SelectFromModel,
-    SequentialFeatureSelector,
 )
 from sklearn.impute import IterativeImputer
 from sklearn.linear_model import (
@@ -434,7 +433,6 @@ UNSUPPORTED_ESTIMATORS = [
     RFE(ConsumingClassifier()),
     RFECV(ConsumingClassifier()),
     SelfTrainingClassifier(ConsumingClassifier()),
-    SequentialFeatureSelector(ConsumingClassifier()),
 ]
 
 

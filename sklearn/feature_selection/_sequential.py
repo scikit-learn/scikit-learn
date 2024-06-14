@@ -9,6 +9,7 @@ import numpy as np
 from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone, is_classifier
 from ..metrics import get_scorer_names
 from ..model_selection import check_cv, cross_val_score
+from ..utils._metadata_requests import _raise_for_params
 from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
 from ..utils._tags import _safe_tags
 from ..utils.metadata_routing import _RoutingNotSupportedMixin
@@ -188,7 +189,7 @@ class SequentialFeatureSelector(
         # SequentialFeatureSelector.estimator is not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, **params):
         """Learn the features to select from X.
 
         Parameters
@@ -201,11 +202,15 @@ class SequentialFeatureSelector(
             Target values. This parameter may be ignored for
             unsupervised learning.
 
+        **params : dict, default=None
+            Parameters to be passed to the cross_val_score function.
+
         Returns
         -------
         self : object
             Returns the instance itself.
         """
+        _raise_for_params(params, self, "fit")
         tags = self._get_tags()
         X = self._validate_data(
             X,
@@ -250,7 +255,7 @@ class SequentialFeatureSelector(
         is_auto_select = self.tol is not None and self.n_features_to_select == "auto"
         for _ in range(n_iterations):
             new_feature_idx, new_score = self._get_best_new_feature_score(
-                cloned_estimator, X, y, cv, current_mask
+                cloned_estimator, X, y, cv, current_mask, **params
             )
             if is_auto_select and ((new_score - old_score) < self.tol):
                 break
@@ -266,7 +271,7 @@ class SequentialFeatureSelector(
 
         return self
 
-    def _get_best_new_feature_score(self, estimator, X, y, cv, current_mask):
+    def _get_best_new_feature_score(self, estimator, X, y, cv, current_mask, **params):
         # Return the best new feature and its score to add to the current_mask,
         # i.e. return the best new feature and its score to add (resp. remove)
         # when doing forward selection (resp. backward selection).
@@ -287,6 +292,7 @@ class SequentialFeatureSelector(
                 cv=cv,
                 scoring=self.scoring,
                 n_jobs=self.n_jobs,
+                params=params,
             ).mean()
         new_feature_idx = max(scores, key=lambda feature_idx: scores[feature_idx])
         return new_feature_idx, scores[new_feature_idx]
