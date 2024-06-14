@@ -5,7 +5,7 @@ import numpy as np
 from ..pairwise import pairwise_distances
 
 
-def density_separation(
+def _density_separation(
     X,
     labels,
     cluster_id1,
@@ -99,7 +99,7 @@ def density_separation(
         return mr_dist_matrix.min()
 
 
-def internal_minimum_spanning_tree(mr_distances):
+def _internal_minimum_spanning_tree(mr_distances):
     """
     Compute the 'internal' minimum spanning tree given a matrix of mutual
     reachability distances. Given a minimum spanning tree the 'internal'
@@ -170,7 +170,7 @@ def internal_minimum_spanning_tree(mr_distances):
     return internal_node_flags, edges
 
 
-def distances_between_points(
+def _distances_between_points(
     X,
     labels,
     cluster_id,
@@ -244,7 +244,7 @@ def distances_between_points(
         return distance_matrix, None
 
     else:
-        core_distances = all_points_core_distance(distance_matrix.copy(), d=d)
+        core_distances = _all_points_core_distance(distance_matrix.copy(), d=d)
         core_dist_matrix = np.tile(core_distances, (core_distances.shape[0], 1))
         stacked_distances = np.dstack(
             [distance_matrix, core_dist_matrix, core_dist_matrix.T]
@@ -253,13 +253,13 @@ def distances_between_points(
         if print_max_raw_to_coredist_ratio:
             print(
                 "Max raw distance to coredistance ratio: "
-                + str(max_ratio(stacked_distances))
+                + str(_max_ratio(stacked_distances))
             )
 
         return stacked_distances.max(axis=-1), core_distances
 
 
-def all_points_core_distance(distance_matrix, d=2):
+def _all_points_core_distance(distance_matrix, d=2):
     """
     Compute the all-points-core-distance for all the points of a cluster.
 
@@ -296,7 +296,7 @@ def all_points_core_distance(distance_matrix, d=2):
     return result
 
 
-def max_ratio(stacked_distances):
+def _max_ratio(stacked_distances):
     raw_dist, core_dist, _ = np.moveaxis(stacked_distances, -1, 0)
     ratios = np.where(raw_dist != 0, core_dist / raw_dist, 0)
     return ratios.max()
