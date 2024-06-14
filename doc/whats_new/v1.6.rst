@@ -85,7 +85,7 @@ more details.
 
 - |Feature| :func:`model_selection.permutation_test_score` now supports metadata routing
   for the `fit` method of its estimator and for its underlying CV splitter and scorer.
-  :pr:`28975` by :user:`Adam Li <adam2392>`.
+  :pr:`29266` by :user:`Adam Li <adam2392>`.
 
 Dropping official support for PyPy
 ----------------------------------
