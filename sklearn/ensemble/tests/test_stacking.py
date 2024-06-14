@@ -1,7 +1,7 @@
 """Test the stacking classifier and regressor."""
 
 # Authors: Guillaume Lemaitre <g.lemaitre58@gmail.com>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import re
 from unittest.mock import Mock

@@ -64,7 +64,7 @@ the problem is completely unsupervised so model selection can be a challenge.
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Albert Thomas <albert.thomas@telecom-paristech.fr>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import time
 

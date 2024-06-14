@@ -23,7 +23,7 @@ regularization on the assumed training points' covariance matrix.
 #         Jake Vanderplas <vanderplas@astro.washington.edu>
 #         Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 #         Guillaume Lemaitre <g.lemaitre58@gmail.com>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Dataset generation

@@ -7,7 +7,7 @@ Independent Component Analysis, by  Hyvarinen et al.
 
 # Authors: Pierre Lafaye de Micheaux, Stefan van der Walt, Gael Varoquaux,
 #          Bertrand Thirion, Alexandre Gramfort, Denis A. Engemann
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Integral, Real

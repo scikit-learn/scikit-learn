@@ -20,7 +20,7 @@ incremental approaches.
 """
 
 # Authors: Kyle Kastner
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np

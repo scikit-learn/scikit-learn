@@ -2,7 +2,7 @@
 #         Lars Buitinck
 #         Paolo Toccaceli
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 from cython cimport floating
 from cython.parallel cimport prange

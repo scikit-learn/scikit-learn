@@ -12,7 +12,7 @@ We use a GridSearchCV to set the dimensionality of the PCA
 
 # Code source: Gaël Varoquaux
 # Modified for documentation by Jaques Grobler
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np

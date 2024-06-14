@@ -28,7 +28,7 @@ separating the objects one from the other, and not from the background.
 
 # Authors:  Emmanuelle Gouillart <emmanuelle.gouillart@normalesup.org>
 #           Gael Varoquaux <gael.varoquaux@normalesup.org>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Generate the data

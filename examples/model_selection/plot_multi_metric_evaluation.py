@@ -17,7 +17,7 @@ correspond to the scorer (key) that is set to the ``refit`` attribute.
 """
 
 # Author: Raghav RV <rvraghav93@gmail.com>
-# License: BSD
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 from matplotlib import pyplot as plt
