@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 
 from ..pairwise import pairwise_distances
@@ -157,6 +159,12 @@ def internal_minimum_spanning_tree(mr_distances):
         # If there are no internal edges then we want to take the
         # max over all the edges that exist in the MST, so we simply
         # do nothing and return all the edges in the MST.
+        msg = (
+            "Fell back on unspecified, implementation specific behavior "
+            "by skipping edge selection: the minimum spanning tree "
+            "has no internal edges"
+        )
+        warnings.warn(msg, UserWarning)
         edges = min_span_tree.copy()
 
     return internal_node_flags, edges
