@@ -764,21 +764,27 @@ def test_metadata_is_routed_correctly_to_scorer(metaestimator):
 
     cls = metaestimator["metaestimator"]
     routing_methods = metaestimator["scorer_routing_methods"]
+    method_mapping = metaestimator.get("method_mapping", {})
 
     for method_name in routing_methods:
         kwargs, (estimator, _), (scorer, registry), (cv, _) = get_init_args(
             metaestimator, sub_estimator_consumes=True
         )
-        if estimator:
-            estimator.set_fit_request(sample_weight=True, metadata=True)
         scorer.set_score_request(sample_weight=True)
         if cv:
             cv.set_split_request(groups=True, metadata=True)
+        if estimator is not None:
+            set_requests(
+                estimator,
+                method_mapping=method_mapping,
+                methods=[method_name],
+                metadata_name="sample_weight",
+            )
         instance = cls(**kwargs)
         method = getattr(instance, method_name)
         method_kwargs = {"sample_weight": sample_weight}
         if "fit" not in method_name:
-            instance.fit(X, y, **method_kwargs)
+            instance.fit(X, y)
         method(X, y, **method_kwargs)
 
         assert registry
