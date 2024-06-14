@@ -6,7 +6,7 @@ different columns.
 
 # Author: Andreas Mueller
 #         Joris Van den Bossche
-# License: BSD
+# SPDX-License-Identifier: BSD-3-Clause
 import warnings
 from collections import Counter, UserList
 from itertools import chain

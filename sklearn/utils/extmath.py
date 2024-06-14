@@ -8,7 +8,7 @@
 #          Stefan van der Walt
 #          Kyle Kastner
 #          Giorgio Patrini
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from functools import partial

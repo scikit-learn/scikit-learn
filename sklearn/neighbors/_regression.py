@@ -7,7 +7,7 @@
 #          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
 #          Empty radius support by Andreas Bjerre-Nielsen
 #
-# License: BSD 3 clause (C) INRIA, University of Amsterdam,
+# SPDX-License-Identifier: BSD-3-Clause
 #                           University of Copenhagen
 
 import warnings

@@ -2,7 +2,7 @@
 
 # Authors: Andreas Mueller
 #          Manoj Kumar
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 from scipy import sparse
