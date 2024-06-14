@@ -155,7 +155,7 @@ def test_weighted_percentile_nan_redirected():
             [np.nan, np.nan],
         ]
     )
-    weights = np.array([[1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1]])
+    weights = np.ones_like(array)
     percentile = 90
 
     values = _weighted_percentile(array, weights, percentile)
