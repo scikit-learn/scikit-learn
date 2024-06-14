@@ -5,7 +5,7 @@
 #          Nelson Liu <nelson@nelsonliu.me>
 #
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 from libc.stdlib cimport free
 from libc.stdlib cimport realloc

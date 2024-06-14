@@ -11,7 +11,7 @@ This module contains:
 #          Ramil Nugmanov <stsouko@live.ru>
 #          Mohamed Ali Jamaoui <m.ali.jamaoui@gmail.com>
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 from abc import abstractmethod
 from numbers import Integral

@@ -6,7 +6,7 @@ The dataset page is available at
 """
 
 # Author: Tom Dupre la Tour
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import logging
 from gzip import GzipFile

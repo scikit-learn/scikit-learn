@@ -6,7 +6,7 @@
 #          Lars Buitinck
 #          Giorgio Patrini
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 from libc.math cimport fabs, sqrt, isnan
 from libc.stdint cimport intptr_t

@@ -5,7 +5,7 @@
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 #          Jacob Schreiber <jmschreiber91@gmail.com>
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 # See _splitter.pyx for details.
 from ._criterion cimport Criterion

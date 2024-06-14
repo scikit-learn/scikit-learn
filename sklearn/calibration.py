@@ -5,7 +5,7 @@
 #         Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 #         Mathieu Blondel <mathieu@mblondel.org>
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from inspect import signature

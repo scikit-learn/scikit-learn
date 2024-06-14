@@ -1,6 +1,6 @@
 # Author: Arnaud Joly
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 """
 Random utility function
 =======================

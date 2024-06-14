@@ -4,7 +4,7 @@ Generate samples of synthetic data sets.
 
 # Authors: B. Thirion, G. Varoquaux, A. Gramfort, V. Michel, O. Grisel,
 #          G. Louppe, J. Nothman
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import array
 import numbers

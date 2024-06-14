@@ -28,7 +28,7 @@ Brier score.
 # Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 # Balazs Kegl <balazs.kegl@gmail.com>
 # Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-# License: BSD Style.
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Generate synthetic dataset

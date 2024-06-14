@@ -11,7 +11,7 @@ web page of Sam Roweis:
 """
 
 # Copyright (c) 2011 David Warde-Farley <wardefar at iro dot umontreal dot ca>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Integral, Real
 from os import PathLike, makedirs, remove

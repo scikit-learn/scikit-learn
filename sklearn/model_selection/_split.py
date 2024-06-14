@@ -9,7 +9,7 @@ functions to split the data based on a preset strategy.
 #         Raghav RV <rvraghav93@gmail.com>
 #         Leandro Hermida <hermidal@cs.umd.edu>
 #         Rodion Martynov <marrodion@gmail.com>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numbers
 import warnings

@@ -23,6 +23,12 @@ Version 1.5.1
 Changelog
 ---------
 
+Changes impacting many modules
+------------------------------
+
+- |Fix| Fixed a regression causing a dead-lock at import time in some settings.
+  :pr:`29235` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.metrics`
 ......................
 

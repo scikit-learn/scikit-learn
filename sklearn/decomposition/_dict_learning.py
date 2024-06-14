@@ -1,7 +1,7 @@
 """Dictionary learning."""
 
 # Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import itertools
 import sys

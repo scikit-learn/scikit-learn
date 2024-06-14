@@ -24,7 +24,7 @@ error stabilizes.
 #         Gilles Louppe <g.louppe@gmail.com>
 #         Andreas Mueller <amueller@ais.uni-bonn.de>
 #
-# License: BSD 3 Clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 from collections import OrderedDict
 
