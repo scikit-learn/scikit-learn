@@ -112,6 +112,7 @@ base estimator also does:
 Metrics
 -------
 
+- :func:`sklearn.metrics.cluster.entropy`
 - :func:`sklearn.metrics.accuracy_score`
 - :func:`sklearn.metrics.d2_tweedie_score`
 - :func:`sklearn.metrics.max_error`

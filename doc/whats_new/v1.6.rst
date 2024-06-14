@@ -32,6 +32,7 @@ See :ref:`array_api` for more details.
 
 **Functions:**
 
+- :func:`sklearn.metrics.cluster.entropy` :pr:`29141` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.metrics.d2_tweedie_score` :pr:`29207` by :user:`Emily Chen <EmilyXinyi>`;
 - :func:`sklearn.metrics.max_error` :pr:`29212` by :user:`Edoardo Abati <EdAbati>`;
 - :func:`sklearn.metrics.mean_absolute_error` :pr:`27736` by :user:`Edoardo Abati <EdAbati>`;
