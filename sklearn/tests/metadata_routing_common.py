@@ -317,7 +317,7 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
 
     def score(self, X, y, sample_weight="default", metadata="default"):
         record_metadata_not_default(
-        self, sample_weight=sample_weight, metadata=metadata
+            self, sample_weight=sample_weight, metadata=metadata
         )
         return 1
 
