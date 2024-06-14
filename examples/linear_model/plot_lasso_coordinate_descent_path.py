@@ -16,7 +16,6 @@ The coefficients can be forced to be positive.
 from itertools import cycle
 
 import matplotlib.pyplot as plt
-import numpy as np
 
 from sklearn import datasets
 from sklearn.linear_model import enet_path, lasso_path
