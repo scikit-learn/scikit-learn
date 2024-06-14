@@ -408,7 +408,7 @@ def test_multioutput_regression():
 def test_multioutput_regression_losses():
     # Test that multi-output regression works as expected across all loss functions
     X, y = make_regression(n_samples=200, n_targets=5)
-    for loss in ["squared_error", "absolute_error", "logcosh_loss"]:
+    for loss in ["squared_error", "absolute_error", "logcosh"]:
         mlp = MLPRegressor(
             hidden_layer_sizes=50,
             max_iter=200,
