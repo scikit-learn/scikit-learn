@@ -54,9 +54,9 @@ from sklearn.metrics._base import _average_binary_score
 from sklearn.metrics.pairwise import (
     additive_chi2_kernel,
     chi2_kernel,
+    cosine_distances,
     cosine_similarity,
     paired_cosine_distances,
-    cosine_distances,
 )
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import shuffle
