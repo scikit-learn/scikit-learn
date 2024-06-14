@@ -1180,10 +1180,12 @@ class TimeSeriesSplit(_BaseKFold):
 
     Notes
     -----
-    The training set has size ``i * (n_samples // n_splits) +
-    n_samples % n_splits`` in the ``i`` th split, with a test set
-    of size ``n_samples//(n_splits + 1)`` by default, where
-    ``n_samples`` is the number of samples.
+    The training set has size ``i * n_samples // (n_splits + 1)
+    + n_samples % (n_splits + 1)`` in the ``i`` th split,
+    with a test set of size ``n_samples//(n_splits + 1)`` by default,
+    where ``n_samples`` is the number of samples. Note that this
+    formula is valid when ``test_size`` and ``max_train_size`` are
+    set to their default values.
     """
 
     def __init__(self, n_splits=5, *, max_train_size=None, test_size=None, gap=0):
