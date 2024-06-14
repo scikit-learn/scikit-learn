@@ -205,6 +205,14 @@ class SequentialFeatureSelector(
         **params : dict, default=None
             Parameters to be passed to the cross_val_score function.
 
+            .. versionadded:: 1.6
+
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
+
         Returns
         -------
         self : object
