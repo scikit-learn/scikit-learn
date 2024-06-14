@@ -652,7 +652,7 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
                 set_requests(
                     estimator,
                     method_mapping=metaestimator.get("method_mapping", {}),
-                    methods=['fit'],
+                    methods=["fit"],
                     metadata_name=key,
                     value=None,
                 )
