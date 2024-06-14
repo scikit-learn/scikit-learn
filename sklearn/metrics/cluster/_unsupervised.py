@@ -640,7 +640,6 @@ def dbcv_score(
             )
             density_sep[j, encoding_index] = density_sep[encoding_index, j]
 
-    n_samples = float(X.shape[0])
     result = 0
 
     for encoding_index in encoding_cluster_indices:
@@ -654,7 +653,7 @@ def dbcv_score(
             print(f"Density sparseness: {density_sparseness[encoding_index]:.3f}")
 
         cluster_size = np.sum(labels == encoding_index)
-        result += (cluster_size / n_samples) * labels_to_scores[
+        result += (cluster_size / float(X.shape[0])) * labels_to_scores[
             le.classes_[encoding_index]
         ]
 
