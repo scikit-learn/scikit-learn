@@ -73,7 +73,17 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             StrOptions({"auto"}),
             Interval(Integral, 1, None, closed="left"),
         ],
-        "loss": [StrOptions({"squared_error", "absolute_error", "logcosh"})],
+        "loss": [
+            StrOptions(
+                {
+                    "squared_error",
+                    "log_loss",
+                    "binary_log_loss",
+                    "absolute_error",
+                    "logcosh",
+                }
+            )
+        ],
         "learning_rate": [StrOptions({"constant", "invscaling", "adaptive"})],
         "learning_rate_init": [Interval(Real, 0, None, closed="neither")],
         "power_t": [Interval(Real, 0, None, closed="left")],
@@ -808,6 +818,16 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         For small datasets, however, 'lbfgs' can converge faster and perform
         better.
 
+    loss : {'log_loss', 'binary_log_loss'}, default='log_loss'
+        The function to measure the error of the predictions. Supported losses are:
+
+        - 'log_loss' log transform of the likelihood function
+        logistic loss or cross-entropy loss.
+
+        - 'binary_log_loss', used automatically when activation == "logistic"
+
+        .. versionadded:: 1.6.0
+
     alpha : float, default=0.0001
         Strength of the L2 regularization term. The L2 regularization term
         is divided by the sample size when added to the loss.
@@ -1045,6 +1065,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         activation="relu",
         *,
         solver="adam",
+        loss="log_loss",
         alpha=0.0001,
         batch_size="auto",
         learning_rate="constant",
@@ -1076,7 +1097,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             learning_rate_init=learning_rate_init,
             power_t=power_t,
             max_iter=max_iter,
-            loss="log_loss",
+            loss=loss,
             shuffle=shuffle,
             random_state=random_state,
             tol=tol,
@@ -1554,9 +1575,9 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         activation="relu",
         *,
         solver="adam",
+        loss="squared_error",
         alpha=0.0001,
         batch_size="auto",
-        loss="squared_error",
         learning_rate="constant",
         learning_rate_init=0.001,
         power_t=0.5,
