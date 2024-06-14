@@ -30,7 +30,7 @@ around 0.7.
 """
 
 # Authors: Oliver Rausch <rauscho@ethz.ch>
-# License: BSD
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np

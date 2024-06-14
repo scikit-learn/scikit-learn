@@ -3,7 +3,7 @@
 # Authors: Mathieu Blondel <mathieu@mblondel.org>
 #          Lars Buitinck
 #          Olivier Grisel <olivier.grisel@ensta.org>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import array
 from cpython cimport array

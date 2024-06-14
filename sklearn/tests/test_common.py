@@ -4,7 +4,7 @@ General tests for all estimators in sklearn.
 
 # Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
 #          Gael Varoquaux gael.varoquaux@normalesup.org
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import os
 import pkgutil
@@ -18,8 +18,10 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from scipy.linalg import LinAlgWarning
 
 import sklearn
+from sklearn.base import BaseEstimator
 from sklearn.cluster import (
     OPTICS,
     AffinityPropagation,
@@ -61,7 +63,7 @@ from sklearn.preprocessing import (
     StandardScaler,
 )
 from sklearn.semi_supervised import LabelPropagation, LabelSpreading
-from sklearn.utils import _IS_WASM, IS_PYPY, all_estimators
+from sklearn.utils import all_estimators
 from sklearn.utils._tags import _DEFAULT_TAGS, _safe_tags
 from sklearn.utils._testing import (
     SkipTest,
@@ -87,6 +89,7 @@ from sklearn.utils.estimator_checks import (
     check_transformer_get_feature_names_out_pandas,
     parametrize_with_checks,
 )
+from sklearn.utils.fixes import _IS_WASM
 
 
 def test_all_estimator_no_base_class():
@@ -100,6 +103,16 @@ def test_all_estimator_no_base_class():
 
 def _sample_func(x, y=1):
     pass
+
+
+class CallableEstimator(BaseEstimator):
+    """Dummy development stub for an estimator.
+
+    This is to make sure a callable estimator passes common tests.
+    """
+
+    def __call__(self):
+        pass  # pragma: nocover
 
 
 @pytest.mark.parametrize(
@@ -121,6 +134,7 @@ def _sample_func(x, y=1):
                 "solver='newton-cg',warm_start=True)"
             ),
         ),
+        (CallableEstimator(), "CallableEstimator()"),
     ],
 )
 def test_get_check_estimator_ids(val, expected):
@@ -150,7 +164,9 @@ def _generate_pipeline():
 @parametrize_with_checks(list(chain(_tested_estimators(), _generate_pipeline())))
 def test_estimators(estimator, check, request):
     # Common tests for estimator instances
-    with ignore_warnings(category=(FutureWarning, ConvergenceWarning, UserWarning)):
+    with ignore_warnings(
+        category=(FutureWarning, ConvergenceWarning, UserWarning, LinAlgWarning)
+    ):
         _set_checking_parameters(estimator)
         check(estimator)
 
@@ -160,13 +176,9 @@ def test_check_estimator_generate_only():
     assert isgenerator(all_instance_gen_checks)
 
 
-def test_configure():
-    # Smoke test `python setup.py config` command run at the root of the
+def test_setup_py_check():
+    # Smoke test `python setup.py check` command run at the root of the
     # scikit-learn source tree.
-    # This test requires Cython which is not necessarily there when running
-    # the tests of an installed version of scikit-learn or when scikit-learn
-    # is installed in editable mode by pip build isolation enabled.
-    pytest.importorskip("Cython")
     cwd = os.getcwd()
     setup_path = Path(sklearn.__file__).parent.parent
     setup_filename = os.path.join(setup_path, "setup.py")
@@ -175,7 +187,7 @@ def test_configure():
     try:
         os.chdir(setup_path)
         old_argv = sys.argv
-        sys.argv = ["setup.py", "config"]
+        sys.argv = ["setup.py", "check"]
 
         with warnings.catch_warnings():
             # The configuration spits out warnings when not finding
@@ -225,11 +237,6 @@ def test_import_all_consistency():
         # Avoid test suite depending on setuptools
         if "sklearn._build_utils" in modname:
             continue
-        if IS_PYPY and (
-            "_svmlight_format_io" in modname
-            or "feature_extraction._hashing_fast" in modname
-        ):
-            continue
         package = __import__(modname, fromlist="dummy")
         for name in getattr(package, "__all__", ()):
             assert hasattr(package, name), "Module '{0}' has no attribute '{1}'".format(
@@ -248,22 +255,17 @@ def test_root_import_all_completeness():
         assert modname in sklearn.__all__
 
 
-@pytest.mark.skipif(
-    sklearn._BUILT_WITH_MESON,
-    reason=(
-        "This test fails with Meson editable installs see"
-        " https://github.com/mesonbuild/meson-python/issues/557 for more details"
-    ),
-)
 def test_all_tests_are_importable():
     # Ensure that for each contentful subpackage, there is a test directory
     # within it that is also a subpackage (i.e. a directory with __init__.py)
 
-    HAS_TESTS_EXCEPTIONS = re.compile(r"""(?x)
+    HAS_TESTS_EXCEPTIONS = re.compile(
+        r"""(?x)
                                       \.externals(\.|$)|
                                       \.tests(\.|$)|
                                       \._
-                                      """)
+                                      """
+    )
     resource_modules = {
         "sklearn.datasets.data",
         "sklearn.datasets.descr",
@@ -328,7 +330,9 @@ def _generate_search_cv_instances():
         extra_params = (
             {"min_resources": "smallest"} if "min_resources" in init_params else {}
         )
-        search_cv = SearchCV(Estimator(), param_grid, cv=2, **extra_params)
+        search_cv = SearchCV(
+            Estimator(), param_grid, cv=2, error_score="raise", **extra_params
+        )
         set_random_state(search_cv)
         yield search_cv
 

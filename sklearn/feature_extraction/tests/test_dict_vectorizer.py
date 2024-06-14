@@ -1,6 +1,6 @@
 # Authors: Lars Buitinck
 #          Dan Blanchard <dblanchard@ets.org>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 from random import Random
 

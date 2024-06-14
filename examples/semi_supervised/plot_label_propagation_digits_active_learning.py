@@ -21,7 +21,7 @@ model with their true labels.
 """
 
 # Authors: Clay Woolam <clay@woolam.org>
-# License: BSD
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np

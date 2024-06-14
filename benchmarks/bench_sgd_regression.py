@@ -1,5 +1,5 @@
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import gc
 from time import time

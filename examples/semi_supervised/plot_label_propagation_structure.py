@@ -13,7 +13,7 @@ propagate correctly around the circle.
 
 # Authors: Clay Woolam <clay@woolam.org>
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
-# License: BSD
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # We generate a dataset with two concentric circles. In addition, a label

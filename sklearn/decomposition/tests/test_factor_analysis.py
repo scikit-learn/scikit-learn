@@ -1,6 +1,6 @@
 # Author: Christian Osendorfer <osendorf@gmail.com>
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# License: BSD3
+# SPDX-License-Identifier: BSD-3-Clause
 
 from itertools import combinations
 

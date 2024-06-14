@@ -60,6 +60,8 @@ if [[ -n "$SELECTED_TESTS" ]]; then
     export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"
 fi
 
+TEST_CMD="$TEST_CMD --pyargs sklearn"
+
 set -x
-eval "$TEST_CMD --maxfail=10 --pyargs sklearn"
+eval "$TEST_CMD"
 set +x
