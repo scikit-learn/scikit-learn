@@ -2601,6 +2601,7 @@ def test_validation_functions_routing(func):
         check_recorded_metadata(
             obj=_scorer,
             method="score",
+            parent=func.__name__,
             split_params=("sample_weight", "metadata"),
             sample_weight=score_weights,
             metadata=score_metadata,
@@ -2611,6 +2612,7 @@ def test_validation_functions_routing(func):
         check_recorded_metadata(
             obj=_splitter,
             method="split",
+            parent=func.__name__,
             groups=split_groups,
             metadata=split_metadata,
         )
@@ -2620,6 +2622,7 @@ def test_validation_functions_routing(func):
         check_recorded_metadata(
             obj=_estimator,
             method="fit",
+            parent=func.__name__,
             split_params=("sample_weight", "metadata"),
             sample_weight=fit_sample_weight,
             metadata=fit_metadata,
@@ -2657,6 +2660,7 @@ def test_learning_curve_exploit_incremental_learning_routing():
         check_recorded_metadata(
             obj=_estimator,
             method="partial_fit",
+            parent="learning_curve",
             split_params=("sample_weight", "metadata"),
             sample_weight=fit_sample_weight,
             metadata=fit_metadata,
