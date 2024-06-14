@@ -643,7 +643,6 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
                         metadata_name=key,
                     )
                     instance.fit(X, y, **method_kwargs)
-
                 # making sure the requests are unset, in case they were set as a
                 # side effect of setting them for fit. For instance, if method
                 # mapping for fit is: `"fit": ["fit", "score"]`, that would mean
