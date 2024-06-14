@@ -292,7 +292,8 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
 
     .. versionchanged:: 1.6
        An arbitrary threshold at infinity is added to represent a classifier
-       that always predicts the negative class, i.e. `fpr=0` and `fnr=1`.
+       that always predicts the negative class, i.e. `fpr=0` and `fnr=1`, unless
+       `fpr=0` is already reached at a finite threshold.
 
     Parameters
     ----------
@@ -358,7 +359,7 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
     )
 
-    # Add a threshold at inf where the clf always predicts the negative class
+    # add a threshold at inf where the clf always predicts the negative class
     # i.e. tps = fps = 0
     tps = np.concatenate(([0], tps))
     fps = np.concatenate(([0], fps))
@@ -374,7 +375,7 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
     p_count = tps[-1]
     n_count = fps[-1]
 
-    # start with false positives zero
+    # start with false positives zero, which may be at a finite threshold
     first_ind = (
         fps.searchsorted(fps[0], side="right") - 1
         if fps.searchsorted(fps[0], side="right") > 0
