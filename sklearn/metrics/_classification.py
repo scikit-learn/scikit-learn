@@ -710,9 +710,9 @@ def cohen_kappa_score(
 
     zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
         Sets the return value when there is a zero division. This is the case when both
-        labelings `y1` and `y2` both exclusively contain the 0 class (e. g. `[0, 0, 0, 0]`)
-        (or if both are empty). If set to "warn", returns `0.0`, but a warning is also
-        raised.
+        labelings `y1` and `y2` both exclusively contain the 0 class (e. g.
+        `[0, 0, 0, 0]`) (or if both are empty). If set to "warn", returns `0.0`, but a
+        warning is also raised.
 
         .. versionadded:: 1.6
 
