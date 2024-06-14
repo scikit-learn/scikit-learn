@@ -622,7 +622,7 @@ def multilabel_confusion_matrix(
     return np.array([tn, fp, fn, tp]).T.reshape(-1, 2, 2)
 
 
-def _metric_handle_division(numerator, denominator, metric, zero_division):
+def _metric_handle_division(*, numerator, denominator, metric, zero_division):
     """Helper to handle zero-division.
 
     Parameters
@@ -710,7 +710,7 @@ def cohen_kappa_score(
 
     zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
         Sets the return value when there is a zero division. This is the case when both
-        labelings `y1` and `y2` both exclusively contain the 0 class (e. g. `[0,0,0,0]`)
+        labelings `y1` and `y2` both exclusively contain the 0 class (e. g. `[0, 0, 0, 0]`)
         (or if both are empty). If set to "warn", returns `0.0`, but a warning is also
         raised.
 
@@ -749,7 +749,10 @@ def cohen_kappa_score(
     numerator = np.outer(sum0, sum1)
     denominator = np.sum(sum0)
     expected, is_zero_division = _metric_handle_division(
-        numerator, denominator, "cohen_kappa_score()", zero_division
+        numerator=numerator,
+        denominator=denominator,
+        metric="cohen_kappa_score()",
+        zero_division=zero_division,
     )
 
     if is_zero_division:
@@ -769,7 +772,10 @@ def cohen_kappa_score(
     numerator = np.sum(w_mat * confusion)
     denominator = np.sum(w_mat * expected)
     score, is_zero_division = _metric_handle_division(
-        numerator, denominator, "cohen_kappa_score()", zero_division
+        numerator=numerator,
+        denominator=denominator,
+        metric="cohen_kappa_score()",
+        zero_division=zero_division,
     )
 
     if is_zero_division:
