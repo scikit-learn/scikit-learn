@@ -13,6 +13,7 @@ from joblib import effective_n_jobs
 from scipy.sparse import csr_matrix, issparse
 from scipy.spatial import distance
 
+from sklearn.utils import _array_api
 from .. import config_context
 from ..exceptions import DataConversionWarning
 from ..preprocessing import normalize
@@ -1120,15 +1121,27 @@ def cosine_distances(X, Y=None):
     array([[1.     , 1.     ],
            [0.42..., 0.18...]])
     """
+    xp, _ = get_namespace(X, Y)
+
     # 1.0 - cosine_similarity(X, Y) without copy
     S = cosine_similarity(X, Y)
     S *= -1
     S += 1
-    np.clip(S, 0, 2, out=S)
+    S = _array_api._clip(X, S, 0, 2, xp)
     if X is Y or Y is None:
         # Ensure that distances between vectors and themselves are set to 0.0.
         # This may not be the case due to floating point rounding errors.
-        np.fill_diagonal(S, 0.0)
+        S = _fill_diagonal(S, 0.0, xp)
+    return S
+
+
+def _fill_diagonal(S, val, xp):
+    S = xp.asarray(S)
+    shape = S.shape
+    diagonal_length = min(shape)
+    indices = xp.arange(diagonal_length)
+    S[tuple(indices for _ in shape)] = val
+
     return S
 
 
