@@ -5,7 +5,7 @@
 #         Virgile Fritsch
 #         Alexandre Gramfort
 #         Lars Buitinck
-# License: BSD
+# SPDX-License-Identifier: BSD-3-Clause
 
 from collections import Counter, defaultdict
 from itertools import chain, islice

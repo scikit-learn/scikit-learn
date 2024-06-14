@@ -5,7 +5,7 @@
 #          Eric Martin <eric@ericmart.in>
 #          Giorgio Patrini <giorgio.patrini@anu.edu.au>
 #          Eric Chang <ericchang2017@u.northwestern.edu>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 import warnings

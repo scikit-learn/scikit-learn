@@ -6,7 +6,7 @@ DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 #         Joel Nothman <joel.nothman@gmail.com>
 #         Lars Buitinck
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Integral, Real

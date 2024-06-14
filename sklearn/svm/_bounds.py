@@ -1,7 +1,7 @@
 """Determination of parameter bounds"""
 
 # Author: Paolo Losi
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Real
 

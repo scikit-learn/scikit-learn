@@ -4,7 +4,7 @@
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Olivier Grisel
 #          Vlad Niculae
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 from itertools import product
 from numbers import Integral, Number, Real

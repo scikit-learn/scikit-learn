@@ -8,7 +8,7 @@ parameters of an estimator.
 #         Andreas Mueller <amueller@ais.uni-bonn.de>
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Raghav RV <rvraghav93@gmail.com>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numbers
 import operator
@@ -440,6 +440,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             "_xfail_checks": {
                 "check_supervised_y_2d": "DataConversionWarning not caught"
             },
+            "array_api_support": _safe_tags(self.estimator, "array_api_support"),
         }
 
     def score(self, X, y=None, **params):

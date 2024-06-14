@@ -31,7 +31,7 @@ of the latent structured data of the Wikipedia content.
 """
 
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import os
 from bz2 import BZ2File

@@ -17,7 +17,7 @@ At the end, the top 10 most uncertain predictions will be shown.
 """
 
 # Authors: Clay Woolam <clay@woolam.org>
-# License: BSD
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Data generation

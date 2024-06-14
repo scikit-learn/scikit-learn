@@ -2100,13 +2100,14 @@ def test_fit_and_score_failing():
     failing_clf = FailingClassifier(FailingClassifier.FAILING_PARAMETER)
     # dummy X data
     X = np.arange(1, 10)
+    train, test = np.arange(0, 5), np.arange(5, 9)
     fit_and_score_args = dict(
         estimator=failing_clf,
         X=X,
         y=None,
         scorer=dict(),
-        train=None,
-        test=None,
+        train=train,
+        test=test,
         verbose=0,
         parameters=None,
         fit_params=None,

@@ -6,7 +6,7 @@ Testing for the forest module (sklearn.ensemble.forest).
 #          Brian Holt,
 #          Andreas Mueller,
 #          Arnaud Joly
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import itertools
 import math

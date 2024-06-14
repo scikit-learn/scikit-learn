@@ -27,7 +27,7 @@ by Thomas P. Minka is also compared.
 
 # Authors: Alexandre Gramfort
 #          Denis A. Engemann
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Create the data

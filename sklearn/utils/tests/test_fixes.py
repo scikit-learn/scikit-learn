@@ -1,7 +1,7 @@
 # Authors: Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Justin Vincent
 #          Lars Buitinck
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 import pytest
