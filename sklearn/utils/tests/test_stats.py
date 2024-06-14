@@ -107,18 +107,18 @@ def test_weighted_percentile_nan_filtered():
     rng = np.random.RandomState(42)
     array = rng.rand(10, 100)
 
-    nan_array = array.copy()
-    nan_array[rng.rand(*nan_array.shape) < 0.5] = np.nan
-    nan_mask = np.isnan(nan_array)
+    array_with_nans = array.copy()
+    array_with_nans[rng.rand(*array_with_nans.shape) < 0.5] = np.nan
+    nan_mask = np.isnan(array_with_nans)
 
     sample_weights = [rng.randint(1, 6, size=(10, 100)), rng.randint(1, 6, size=(10,))]
 
     for sample_weight in sample_weights:
         # Find the weighted percentile on the array with nans:
-        values_nan = _weighted_percentile(nan_array, sample_weight, 30)
+        results = _weighted_percentile(array_with_nans, sample_weight, 30)
 
         # Find the weighted percentile on the filtered array:
-        filtered_values = [
+        filtered_array = [
             array[~nan_mask[:, col], col] for col in range(array.shape[1])
         ]
         if sample_weight.ndim == 1:
@@ -129,14 +129,14 @@ def test_weighted_percentile_nan_filtered():
             sample_weight[~nan_mask[:, col], col] for col in range(array.shape[1])
         ]
 
-        values_filtered = np.array(
+        expected_results = np.array(
             [
-                _weighted_percentile(filtered_values[col], filtered_weights[col], 30)
+                _weighted_percentile(filtered_array[col], filtered_weights[col], 30)
                 for col in range(array.shape[1])
             ]
         )
 
-        assert_array_equal(values_filtered, values_nan)
+        assert_array_equal(expected_results, results)
 
 
 def test_weighted_percentile_nan_redirected():
