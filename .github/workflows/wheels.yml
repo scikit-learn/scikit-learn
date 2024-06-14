@@ -90,6 +90,7 @@ jobs:
             python: 313t
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
+            # TODO: remove next line when Python 3.13 is released
             prerelease_pythons: True
             free_threaded_support: True
 
