@@ -1,7 +1,7 @@
 """Base class for ensemble-based estimators."""
 
 # Authors: Gilles Louppe
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 from abc import ABCMeta, abstractmethod
 from typing import List

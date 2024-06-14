@@ -23,7 +23,7 @@ There are three options to assign labels:
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 #         Brian Cheung
 #         Andrew Knyazev <Andrew.Knyazev@ucdenver.edu>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import time
 

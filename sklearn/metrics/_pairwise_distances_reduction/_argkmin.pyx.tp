@@ -14,7 +14,7 @@ from numbers import Integral
 from scipy.sparse import issparse
 from ...utils import check_array, check_scalar
 from ...utils.fixes import _in_unstable_openblas_configuration
-from ... import _threadpool_controller
+from ...utils.parallel import _get_threadpool_controller
 
 {{for name_suffix in ['64', '32']}}
 
@@ -58,7 +58,7 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
         """
         # Limit the number of threads in second level of nested parallelism for BLAS
         # to avoid threads over-subscription (in DOT or GEMM for instance).
-        with _threadpool_controller.limit(limits=1, user_api='blas'):
+        with _get_threadpool_controller().limit(limits=1, user_api='blas'):
           if metric in ("euclidean", "sqeuclidean"):
               # Specialized implementation of ArgKmin for the Euclidean distance
               # for the dense-dense and sparse-sparse cases.

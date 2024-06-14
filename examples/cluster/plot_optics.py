@@ -19,7 +19,7 @@ thresholds in DBSCAN.
 
 # Authors: Shane Grigsby <refuge@rocktalus.com>
 #          Adrin Jalali <adrin.jalali@gmail.com>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt

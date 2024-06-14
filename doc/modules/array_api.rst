@@ -115,9 +115,12 @@ Metrics
 - :func:`sklearn.metrics.cluster.entropy`
 - :func:`sklearn.metrics.accuracy_score`
 - :func:`sklearn.metrics.d2_tweedie_score`
+- :func:`sklearn.metrics.max_error`
 - :func:`sklearn.metrics.mean_absolute_error`
+- :func:`sklearn.metrics.mean_gamma_deviance`
 - :func:`sklearn.metrics.mean_squared_error`
 - :func:`sklearn.metrics.mean_tweedie_deviance`
+- :func:`sklearn.metrics.pairwise.additive_chi2_kernel`
 - :func:`sklearn.metrics.pairwise.cosine_similarity`
 - :func:`sklearn.metrics.pairwise.paired_cosine_distances`
 - :func:`sklearn.metrics.r2_score`

@@ -8,7 +8,7 @@ functions to validate the model.
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Raghav RV <rvraghav93@gmail.com>
 #         Michal Karbownik <michakarbownik@gmail.com>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 import numbers

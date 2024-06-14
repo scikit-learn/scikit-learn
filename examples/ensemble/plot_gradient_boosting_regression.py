@@ -22,7 +22,7 @@ showcasing some other advantages of
 #         Maria Telenczuk <https://github.com/maikia>
 #         Katrina Ni <https://github.com/nilichen>
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np

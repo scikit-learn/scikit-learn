@@ -7,7 +7,7 @@
 #         Michael Eickenberg <michael.eickenberg@inria.fr>
 #         Giorgio Patrini <giorgio.patrini@anu.edu.au>
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 from math import log, sqrt
 from numbers import Integral, Real

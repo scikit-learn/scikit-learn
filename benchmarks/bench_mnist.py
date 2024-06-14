@@ -28,7 +28,7 @@ Example of output :
 
 # Author: Issam H. Laradji
 #         Arnaud Joly <arnaud.v.joly@gmail.com>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import argparse
 import os

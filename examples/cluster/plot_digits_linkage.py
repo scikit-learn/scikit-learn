@@ -28,7 +28,7 @@ random resampling of the dataset.
 """
 
 # Authors: Gael Varoquaux
-# License: BSD 3 clause (C) INRIA 2014
+# SPDX-License-Identifier: BSD-3-Clause
 
 from time import time
 

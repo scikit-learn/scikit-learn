@@ -13,7 +13,7 @@ better.
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Arya McCarthy <arya@jhu.edu>
 #          Uwe F Mayer <uwe_f_mayer@yahoo.com>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 import warnings

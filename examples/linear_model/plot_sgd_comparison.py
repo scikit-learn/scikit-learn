@@ -7,7 +7,7 @@ on the hand-written digits dataset.
 """
 
 # Author: Rob Zinkov <rob at zinkov dot com>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np

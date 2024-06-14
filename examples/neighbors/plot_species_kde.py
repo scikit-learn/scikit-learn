@@ -38,7 +38,7 @@ References
 
 # Author: Jake Vanderplas <jakevdp@cs.washington.edu>
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np
