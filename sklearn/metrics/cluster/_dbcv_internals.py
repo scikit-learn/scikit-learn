@@ -132,16 +132,16 @@ def _internal_minimum_spanning_tree(mr_distances):
 
     min_span_tree = mst_linkage_core(mr_distances, None, precomputed=True)
     # mark internal nodes via converting the occurence count to bool
-    internal_node_flags = np.arange(mr_distances.shape[0])[
+    internal_node_indices = np.arange(mr_distances.shape[0])[
         np.bincount(min_span_tree.T[:2].flatten().astype(np.intp)) > 1
     ]
-    if len(internal_node_flags) == 0:
-        internal_node_flags = [0]
+    if len(internal_node_indices) == 0:
+        internal_node_indices = [0]
     # A little "fancy" we select from the flattened array reshape back
     # (Fortran format to get indexing right) and take the product to do an and
     # then convert back to boolean type.
     edge_selection = np.prod(
-        np.in1d(min_span_tree.T[:2], internal_node_flags).reshape(
+        np.in1d(min_span_tree.T[:2], internal_node_indices).reshape(
             (min_span_tree.shape[0], 2), order="F"
         ),
         axis=1,
@@ -167,7 +167,7 @@ def _internal_minimum_spanning_tree(mr_distances):
         warnings.warn(msg, UserWarning)
         edges = min_span_tree.copy()
 
-    return internal_node_flags, edges
+    return internal_node_indices, edges
 
 
 def _distances_between_points(
