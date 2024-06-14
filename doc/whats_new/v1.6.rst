@@ -75,6 +75,11 @@ more details.
   params to the underlying regressor.
   :pr:`29136` by :user:`Omar Salman <OmarManzoor>`.
 
+- |Feature| :class:`feature_selection.SequentialFeatureSelector` now supports
+  metadata routing in its `fit` method and passes the corresponding params to
+  the :func:`model_selection.cross_val_score` function.
+  :pr:`29260` by :user:`Omar Salman <OmarManzoor>`.
+
 Dropping official support for PyPy
 ----------------------------------
 
