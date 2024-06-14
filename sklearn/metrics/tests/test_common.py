@@ -1833,8 +1833,8 @@ def check_array_api_multiclass_classification_metric(
 def check_array_api_multilabel_classification_metric(
     metric, array_namespace, device, dtype_name
 ):
-    y_true_np = np.array([[1, 1], [0, 1], [0, 0]])
-    y_pred_np = np.ones((3, 2))
+    y_true_np = np.array([[1, 1], [0, 1], [0, 0]], dtype=dtype_name)
+    y_pred_np = np.array([[1, 1], [1, 1], [1, 1]], dtype=dtype_name)
 
     check_array_api_metric(
         metric,
