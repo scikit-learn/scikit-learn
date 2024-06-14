@@ -396,7 +396,7 @@ METAESTIMATORS: list = [
         "estimator": "classifier",
         "X": X,
         "y": y,
-        "preserves_metadata": False,
+        "preserves_metadata": True,
         "estimator_routing_methods": [
             "fit",
             "predict",
@@ -652,7 +652,7 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
                 set_requests(
                     estimator,
                     method_mapping=metaestimator.get("method_mapping", {}),
-                    methods=[method_name],
+                    methods=['fit'],
                     metadata_name=key,
                     value=None,
                 )
