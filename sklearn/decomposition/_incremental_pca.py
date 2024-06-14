@@ -229,7 +229,7 @@ class IncrementalPCA(_BasePCA):
             accept_sparse=["csr", "csc", "lil"],
             copy=self.copy,
             dtype=[np.float64, np.float32],
-            writeable=True,
+            force_writeable=True,
         )
         n_samples, n_features = X.shape
 
@@ -282,7 +282,7 @@ class IncrementalPCA(_BasePCA):
                 X,
                 copy=self.copy,
                 dtype=[np.float64, np.float32],
-                writeable=True,
+                force_writeable=True,
                 reset=first_pass,
             )
         n_samples, n_features = X.shape

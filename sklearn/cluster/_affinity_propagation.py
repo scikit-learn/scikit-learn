@@ -504,7 +504,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             Returns the instance itself.
         """
         if self.affinity == "precomputed":
-            X = self._validate_data(X, copy=self.copy, writeable=True)
+            X = self._validate_data(X, copy=self.copy, force_writeable=True)
             self.affinity_matrix_ = X
         else:  # self.affinity == "euclidean"
             X = self._validate_data(X, accept_sparse="csr")

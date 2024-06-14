@@ -770,7 +770,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 X,
                 accept_sparse=["csr", "lil"],
                 dtype=np.float64,
-                writeable=True,
+                force_writeable=True,
             )
         else:
             # Only non-sparse, precomputed distance matrices are handled here
@@ -779,7 +779,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             # Perform data validation after removing infinite values (numpy.inf)
             # from the given distance matrix.
             X = self._validate_data(
-                X, force_all_finite=False, dtype=np.float64, writeable=True
+                X, force_all_finite=False, dtype=np.float64, force_writeable=True
             )
             if np.isnan(X).any():
                 # TODO: Support np.nan in Cython implementation for precomputed

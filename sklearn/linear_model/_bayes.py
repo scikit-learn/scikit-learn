@@ -236,7 +236,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
             Returns the instance itself.
         """
         X, y = self._validate_data(
-            X, y, dtype=[np.float64, np.float32], writeable=True, y_numeric=True
+            X, y, dtype=[np.float64, np.float32], force_writeable=True, y_numeric=True
         )
         dtype = X.dtype
 
@@ -625,7 +625,7 @@ class ARDRegression(RegressorMixin, LinearModel):
             X,
             y,
             dtype=[np.float64, np.float32],
-            writeable=True,
+            force_writeable=True,
             y_numeric=True,
             ensure_min_samples=2,
         )

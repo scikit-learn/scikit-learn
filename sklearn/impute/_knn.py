@@ -270,7 +270,7 @@ class KNNImputer(_BaseImputer):
             X,
             accept_sparse=False,
             dtype=FLOAT_DTYPES,
-            writeable=True,
+            force_writeable=True,
             force_all_finite=force_all_finite,
             copy=self.copy,
             reset=False,

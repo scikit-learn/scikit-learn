@@ -612,7 +612,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             accept_sparse=accept_sparse,
             y_numeric=True,
             multi_output=True,
-            writeable=True,
+            force_writeable=True,
         )
 
         has_sw = sample_weight is not None
