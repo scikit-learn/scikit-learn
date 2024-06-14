@@ -4,7 +4,7 @@
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Hamzeh Alsalhi <ha258@cornell.edu>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import array
 import itertools

@@ -4,7 +4,7 @@ General tests for all estimators in sklearn.
 
 # Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
 #          Gael Varoquaux gael.varoquaux@normalesup.org
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import os
 import pkgutil
@@ -330,7 +330,9 @@ def _generate_search_cv_instances():
         extra_params = (
             {"min_resources": "smallest"} if "min_resources" in init_params else {}
         )
-        search_cv = SearchCV(Estimator(), param_grid, cv=2, **extra_params)
+        search_cv = SearchCV(
+            Estimator(), param_grid, cv=2, error_score="raise", **extra_params
+        )
         set_random_state(search_cv)
         yield search_cv
 

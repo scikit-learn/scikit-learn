@@ -518,7 +518,7 @@ Commit Message Marker  Action Taken by CI
 [cd build cirrus]      CD is run only for Cirrus CI
 [lint skip]            Azure pipeline skips linting
 [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc.) development builds
-[nogil]                Build & test with the nogil experimental branches of CPython, Cython, NumPy, SciPy, ...
+[free-threaded]        Build & test with CPython 3.13 free-threaded
 [pyodide]              Build & test with Pyodide
 [azure parallel]       Run Azure CI jobs in parallel
 [cirrus arm]           Run Cirrus CI ARM test

@@ -3,7 +3,7 @@
 # Author: Jake Vanderplas <vanderplas@astro.washington.edu>
 #         Tom Dupre la Tour
 #
-# License: BSD 3 clause (C) INRIA, University of Amsterdam
+# SPDX-License-Identifier: BSD-3-Clause
 import itertools
 
 from ..base import ClassNamePrefixFeaturesOutMixin, TransformerMixin, _fit_context

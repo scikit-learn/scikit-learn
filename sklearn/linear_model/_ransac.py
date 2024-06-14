@@ -1,6 +1,6 @@
 # Author: Johannes Schönberger
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Integral, Real

@@ -15,7 +15,7 @@ Please note that we do the same in the proposed `nmslib` wrapper.
 """
 
 # Author: Tom Dupre la Tour
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # First we try to import the packages and warn the user in case they are

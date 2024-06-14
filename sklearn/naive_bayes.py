@@ -12,7 +12,7 @@ These are supervised learning methods based on applying Bayes' theorem with stro
 #         Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 #         (parts based on earlier work by Mathieu Blondel)
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real

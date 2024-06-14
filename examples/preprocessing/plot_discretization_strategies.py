@@ -17,7 +17,7 @@ The plot shows the regions where the discretized encoding is constant.
 """
 
 # Author: Tom Dupré la Tour
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np

@@ -18,7 +18,7 @@ The module structure is the following:
 
 # Authors: Peter Prettenhofer, Scott White, Gilles Louppe, Emanuele Olivetti,
 #          Arnaud Joly, Jacob Schreiber
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import math
 import warnings

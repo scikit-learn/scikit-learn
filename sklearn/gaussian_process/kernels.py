@@ -16,7 +16,7 @@
 
 
 # Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 # Note: this module is strongly inspired by the kernel module of the george
 #       package.

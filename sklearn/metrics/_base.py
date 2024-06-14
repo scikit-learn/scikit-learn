@@ -11,7 +11,7 @@ Common code for all metrics.
 #          Lars Buitinck
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Noel Dawe <noel@dawe.me>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 from itertools import combinations
 

@@ -28,7 +28,7 @@ example showcasing some other features of HGBT models.
 """
 
 # Author:  Arturo Amor <david-arturo.amor-quiroz@inria.fr>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Load dataset

@@ -2,7 +2,7 @@
 
 # Author: Mathieu Blondel <mathieu@mblondel.org>
 #         Sylvain Marie <sylvain.marie@schneider-electric.com>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Integral, Real
 

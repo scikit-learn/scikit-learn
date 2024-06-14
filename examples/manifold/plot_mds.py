@@ -11,7 +11,7 @@ shifted to avoid overlapping.
 """
 
 # Author: Nelle Varoquaux <nelle.varoquaux@gmail.com>
-# License: BSD
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 from matplotlib import pyplot as plt

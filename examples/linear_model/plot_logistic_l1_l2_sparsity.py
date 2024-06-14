@@ -18,7 +18,7 @@ The visualization shows coefficients of the models for varying C.
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np
