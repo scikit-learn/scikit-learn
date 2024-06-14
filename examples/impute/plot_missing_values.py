@@ -29,7 +29,7 @@ missing values imputed using different techniques.
 """
 
 # Authors: Maria Telenczuk  <https://github.com/maikia>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Download the data and make missing values sets

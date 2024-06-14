@@ -7,7 +7,7 @@ Generalized Linear Model for a complete discussion.
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Gael Varoquaux
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import sys
 import warnings

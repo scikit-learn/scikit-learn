@@ -15,7 +15,7 @@ refer to the :ref:`User Guide <gp_kernels>`.
 
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 #          Guillaume Lemaitre <g.lemaitre58@gmail.com>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Helper function

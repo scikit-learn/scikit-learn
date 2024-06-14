@@ -9,7 +9,7 @@
 #          Denis Engemann
 #          Giorgio Patrini
 #          Thierry Guillemot
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 import atexit
 import contextlib
 import functools

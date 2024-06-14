@@ -27,7 +27,7 @@ model.
 
 # Author: Pedro Morales <part.morales@gmail.com>
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 import numpy as np

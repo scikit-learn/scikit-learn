@@ -23,7 +23,7 @@ uncompressed the train set is 52 MB and the test set is 34 MB.
 """
 
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import codecs
 import logging

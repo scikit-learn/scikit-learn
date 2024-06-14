@@ -21,7 +21,7 @@ The module structure is the following:
 #          Hamzeh Alsalhi <ha258@cornell.edu>
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from abc import ABCMeta, abstractmethod

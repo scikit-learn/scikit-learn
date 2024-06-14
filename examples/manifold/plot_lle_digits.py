@@ -12,7 +12,7 @@ We illustrate various embedding techniques on the digits dataset.
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Gael Varoquaux
 #          Guillaume Lemaitre <g.lemaitre58@gmail.com>
-# License: BSD 3 clause (C) INRIA 2011
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 # %%
