@@ -1306,6 +1306,19 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         For small datasets, however, 'lbfgs' can converge faster and perform
         better.
 
+    loss : {'squared_error', 'absolute_error', 'logcosh'}, default='squared_error'
+        The function to measure the error of the predictions. Supported losses are:
+
+        - 'squared_error' for the mean squared error, which minimizes the L2 loss.
+
+        - 'absolute_error' for the mean absolute error, which minimizes the L1 loss.
+
+        - 'logcosh' for the log cosh loss, which computes the logarithm of the
+        hyperbolic cosine of the prediction error and is more robust to
+        outliers than squared_error.
+
+        .. versionadded:: 1.6.0
+
     alpha : float, default=0.0001
         Strength of the L2 regularization term. The L2 regularization term
         is divided by the sample size when added to the loss.
@@ -1542,6 +1555,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         solver="adam",
         alpha=0.0001,
         batch_size="auto",
+        loss="squared_error",
         learning_rate="constant",
         learning_rate_init=0.001,
         power_t=0.5,
@@ -1571,7 +1585,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
             learning_rate_init=learning_rate_init,
             power_t=power_t,
             max_iter=max_iter,
-            loss="squared_error",
+            loss=loss,
             shuffle=shuffle,
             random_state=random_state,
             tol=tol,

@@ -405,6 +405,20 @@ def test_multioutput_regression():
     assert mlp.score(X, y) > 0.9
 
 
+def test_multioutput_regression_losses():
+    # Test that multi-output regression works as expected across all loss functions
+    X, y = make_regression(n_samples=200, n_targets=5)
+    for loss in ["squared_error", "absolute_error", "logcosh_loss"]:
+        mlp = MLPRegressor(
+            hidden_layer_sizes=50,
+            max_iter=200,
+            random_state=1,
+            loss=loss,
+        )
+        mlp.fit(X, y)
+        assert mlp.score(X, y) > 0.9
+
+
 def test_partial_fit_classes_error():
     # Tests that passing different classes to partial_fit raises an error
     X = [[3, 2]]
