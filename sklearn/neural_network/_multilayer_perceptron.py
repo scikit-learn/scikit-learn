@@ -73,6 +73,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             StrOptions({"auto"}),
             Interval(Integral, 1, None, closed="left"),
         ],
+        "loss": [StrOptions({"squared_error", "absolute_error", "logcosh"})],
         "learning_rate": [StrOptions({"constant", "invscaling", "adaptive"})],
         "learning_rate_init": [Interval(Real, 0, None, closed="neither")],
         "power_t": [Interval(Real, 0, None, closed="left")],
