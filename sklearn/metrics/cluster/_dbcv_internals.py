@@ -291,4 +291,4 @@ def all_points_core_distance(distance_matrix, d=2):
 def max_ratio(stacked_distances):
     raw_dist, core_dist, _ = np.moveaxis(stacked_distances, -1, 0)
     ratios = np.where(raw_dist != 0, core_dist / raw_dist, 0)
-    return ratios.max() 
+    return ratios.max()
