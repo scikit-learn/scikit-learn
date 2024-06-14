@@ -30,6 +30,7 @@ from ..utils import (
 from ..utils._array_api import (
     _find_matching_floating_dtype,
     _is_numpy_namespace,
+    device,
     get_namespace,
 )
 from ..utils._chunking import get_chunk_n_rows
@@ -1763,12 +1764,13 @@ def additive_chi2_kernel(X, Y=None):
         return result
     else:
         dtype = _find_matching_floating_dtype(X, Y, xp=xp)
+        device_ = device(X, Y)
         xb = X[:, None, :]
         yb = Y[None, :, :]
         nom = -((xb - yb) ** 2)
         denom = xb + yb
-        nom = xp.where(denom == 0, xp.asarray(0, dtype=dtype), nom)
-        denom = xp.where(denom == 0, xp.asarray(1, dtype=dtype), denom)
+        nom = xp.where(denom == 0, xp.asarray(0, dtype=dtype, device=device_), nom)
+        denom = xp.where(denom == 0, xp.asarray(1, dtype=dtype, device=device_), denom)
         return xp.sum(nom / denom, axis=2)
 
 
