@@ -20,6 +20,7 @@ from scipy.sparse import csr_matrix, issparse
 from scipy.spatial import distance
 
 from sklearn.utils import _array_api
+
 from .. import config_context
 from ..exceptions import DataConversionWarning
 from ..preprocessing import normalize
