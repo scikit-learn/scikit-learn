@@ -1,4 +1,3 @@
-import itertools
 import warnings
 from unittest.mock import patch
 
@@ -401,12 +400,13 @@ def test_davies_bouldin_score():
 
 @pytest.fixture
 def density_sample():
-    # start off with two non-spherical clusters
     points, labels = datasets.make_moons()
     bounds = np.array([np.max(points, axis=0), np.min(points, axis=0)]).transpose()
-    # add one point labelled as noise in each "corner"
-    points = np.append(points, list(itertools.product(*bounds)), axis=0)
-    labels = np.append(labels, [-1 for _ in range(4)])
+    noise = [
+        [np.random.uniform(*bounds), np.random.uniform(*bounds)] for _ in range(10)
+    ]
+    points = np.append(points, noise, axis=0)
+    labels = np.append(labels, [-1 for _ in range(10)])
     return points, labels
 
 
