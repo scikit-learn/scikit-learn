@@ -30,7 +30,7 @@ identify the directions of largest non-Gaussianity (lower right).
 """
 
 # Authors: Alexandre Gramfort, Gael Varoquaux
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Generate sample data

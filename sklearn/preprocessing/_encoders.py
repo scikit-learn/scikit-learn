@@ -1,6 +1,6 @@
 # Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
 #          Joris Van den Bossche <jorisvandenbossche@gmail.com>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numbers
 import warnings

@@ -20,7 +20,7 @@ the lower the better.
 #          Bernardo Stein <bernardovstein@gmail.com>
 #          Shangwu Yao <shangwuyao@gmail.com>
 #          Michal Karbownik <michakarbownik@gmail.com>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 import warnings

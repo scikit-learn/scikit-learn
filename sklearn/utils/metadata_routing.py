@@ -4,7 +4,7 @@
 # import issue.
 #
 # Author: Adrin Jalali <adrin.jalali@gmail.com>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 from ._metadata_requests import WARN, UNUSED, UNCHANGED  # noqa
 from ._metadata_requests import get_routing_for_object  # noqa

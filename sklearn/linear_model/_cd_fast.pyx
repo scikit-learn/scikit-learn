@@ -4,7 +4,7 @@
 #         Alexis Mignon <alexis.mignon@gmail.com>
 #         Manoj Kumar <manojkumarsivaraj334@gmail.com>
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 from libc.math cimport fabs
 import numpy as np

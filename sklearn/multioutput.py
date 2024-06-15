@@ -11,7 +11,7 @@ extends single output estimators to multioutput estimators.
 # Author: Michael Williamson
 # Author: James Ashton Nichols <james.ashton.nichols@gmail.com>
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 from abc import ABCMeta, abstractmethod

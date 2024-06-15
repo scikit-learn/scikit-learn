@@ -2,7 +2,7 @@
 #          Vincent Michel <vincent.michel@inria.fr>
 #          Gilles Louppe <g.louppe@gmail.com>
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 """Recursive feature elimination for feature ranking"""
 

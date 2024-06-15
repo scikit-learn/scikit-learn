@@ -13,7 +13,7 @@ libsvm command line programs.
 # Authors: Mathieu Blondel <mathieu@mblondel.org>
 #          Lars Buitinck
 #          Olivier Grisel <olivier.grisel@ensta.org>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import os.path
 from contextlib import closing

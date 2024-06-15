@@ -1,6 +1,6 @@
 # Authors: Robert Layton <robertlayton@gmail.com>
 #           Corey Lynch <coreylynch9@gmail.com>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 from libc.math cimport exp, lgamma
 

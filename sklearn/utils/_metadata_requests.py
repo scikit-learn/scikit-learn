@@ -75,7 +75,7 @@ need to override, but it works for simple consumers as is.
 """
 
 # Author: Adrin Jalali <adrin.jalali@gmail.com>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import inspect
 from collections import namedtuple

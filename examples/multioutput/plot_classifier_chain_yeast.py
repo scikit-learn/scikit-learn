@@ -21,7 +21,7 @@ greater than that of the set independent base models.
 """
 
 # Author: Adam Kleczewski
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Loading a dataset

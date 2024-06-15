@@ -2,7 +2,7 @@
 
 # Author: Arnaud Joly, Joel Nothman, Hamzeh Alsalhi
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from collections.abc import Sequence
