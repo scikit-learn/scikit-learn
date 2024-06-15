@@ -70,8 +70,9 @@ def _density_separation(
 
     References
     ----------
-    Moulavi, D., Jaskowiak, P.A., Campello, R.J., Zimek, A. and Sander, J.,
+    .. [1] `Moulavi, D., Jaskowiak, P.A., Campello, R.J., Zimek, A. and Sander, J.,
     2014. Density-Based Clustering Validation. In SDM (pp. 839-847).
+    <https://www.dbs.ifi.lmu.de/~zimek/publications/SDM2014/DBCV.pdf>`_
     """
     if metric == "precomputed":
         sub_select = X[labels == cluster_id1, :][:, labels == cluster_id2]
@@ -125,8 +126,9 @@ def _internal_minimum_spanning_tree(mr_distances):
 
     References
     ----------
-    Moulavi, D., Jaskowiak, P.A., Campello, R.J., Zimek, A. and Sander, J.,
+    .. [1] `Moulavi, D., Jaskowiak, P.A., Campello, R.J., Zimek, A. and Sander, J.,
     2014. Density-Based Clustering Validation. In SDM (pp. 839-847).
+    <https://www.dbs.ifi.lmu.de/~zimek/publications/SDM2014/DBCV.pdf>`_
     """
     from ...cluster._hierarchical_fast import mst_linkage_core
 
@@ -228,8 +230,9 @@ def _distances_between_points(
 
     References
     ----------
-    Moulavi, D., Jaskowiak, P.A., Campello, R.J., Zimek, A. and Sander, J.,
+    .. [1] `Moulavi, D., Jaskowiak, P.A., Campello, R.J., Zimek, A. and Sander, J.,
     2014. Density-Based Clustering Validation. In SDM (pp. 839-847).
+    <https://www.dbs.ifi.lmu.de/~zimek/publications/SDM2014/DBCV.pdf>`_
     """
     if metric == "precomputed":
         if d is None:
@@ -240,7 +243,7 @@ def _distances_between_points(
         distance_matrix = pairwise_distances(subset_X, metric=metric, **kwd_args)
         if d is not None:
             msg = (
-                "The \"d\" value you provided is being ignored. "                
+                "The \"d\" value you provided is being ignored. "
                 "It's only required for precomputed distances"
             )
             warnings.warn(msg, UserWarning)
@@ -285,8 +288,9 @@ def _all_points_core_distance(distance_matrix, d=2):
 
     References
     ----------
-    Moulavi, D., Jaskowiak, P.A., Campello, R.J., Zimek, A. and Sander, J.,
+    .. [1] `Moulavi, D., Jaskowiak, P.A., Campello, R.J., Zimek, A. and Sander, J.,
     2014. Density-Based Clustering Validation. In SDM (pp. 839-847).
+    <https://www.dbs.ifi.lmu.de/~zimek/publications/SDM2014/DBCV.pdf>`_
     """
     distance_matrix[distance_matrix != 0] = (
         1.0 / distance_matrix[distance_matrix != 0]
