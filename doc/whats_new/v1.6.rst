@@ -142,7 +142,7 @@ Changelog
   :pr:`29067` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.metrics`
-..............................
+......................
 
 - |Enhancement| :func:`sklearn.metrics.accuracy_score` now includes a `zero_division`
   parameter to raise a warning when  `y_true` and `y_pred` are empty.

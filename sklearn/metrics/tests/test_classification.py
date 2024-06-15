@@ -215,29 +215,6 @@ def test_classification_report_zero_division_warning(zero_division):
             assert not record
 
 
-def test_accuracy_score_zero_division_warning():
-    y_true, y_pred = np.array([]), np.array([])
-    msg = (
-        "accuracy_score is ill-defined and being set to 0.0"
-        " in labels with no predicted samples."
-        " Use `zero_division` parameter to control this behavior."
-    )
-    with pytest.warns(UndefinedMetricWarning, match=msg):
-        score = accuracy_score(y_true=y_true, y_pred=y_pred, zero_division="warn")
-        assert score == pytest.approx(0.0)
-
-
-@pytest.mark.parametrize("zero_division, expected_score", [(0, 0.0), (1, 1.0)])
-def test_accuracy_score_zero_division_warning_set_value(zero_division, expected_score):
-    y_true, y_pred = np.array([]), np.array([])
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", UndefinedMetricWarning)
-        score = accuracy_score(
-            y_true=y_true, y_pred=y_pred, zero_division=zero_division
-        )
-    assert score == pytest.approx(expected_score)
-
-
 @pytest.mark.parametrize(
     "labels, show_micro_avg", [([0], True), ([0, 1], False), ([0, 1, 2], False)]
 )
@@ -833,12 +810,16 @@ def test_matthews_corrcoef_nan():
         partial(fbeta_score, beta=1),
         precision_score,
         recall_score,
+        accuracy_score,
     ],
 )
 def test_zero_division_nan_no_warning(metric, y_true, y_pred, zero_division):
     """Check the behaviour of `zero_division` when setting to 0, 1 or np.nan.
     No warnings should be raised.
     """
+    if metric == accuracy_score and (y_true, y_pred) != ([], []):
+        pytest.skip("Skipping accuracy_score for non-empty input pairs")
+
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         result = metric(y_true, y_pred, zero_division=zero_division)
@@ -857,12 +838,15 @@ def test_zero_division_nan_no_warning(metric, y_true, y_pred, zero_division):
         partial(fbeta_score, beta=1),
         precision_score,
         recall_score,
+        accuracy_score,
     ],
 )
 def test_zero_division_nan_warning(metric, y_true, y_pred):
     """Check the behaviour of `zero_division` when setting to "warn".
     A `UndefinedMetricWarning` should be raised.
     """
+    if metric == accuracy_score and (y_true, y_pred) != ([], []):
+        pytest.skip("Skipping accuracy_score for non-empty input pairs")
     with pytest.warns(UndefinedMetricWarning):
         result = metric(y_true, y_pred, zero_division="warn")
     assert result == 0.0

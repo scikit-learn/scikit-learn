@@ -155,7 +155,7 @@ def _check_targets(y_true, y_pred):
         "normalize": ["boolean"],
         "sample_weight": ["array-like", None],
         "zero_division": [
-            Options(Real, {0, 1, np.nan}),
+            Options(Real, {0.0, 1.0, np.nan}),
             StrOptions({"warn"}),
         ],
     },
@@ -188,11 +188,10 @@ def accuracy_score(
         Sample weights.
 
     zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
-        Sets the value to return when there is a zero division.
-
-        Notes:
-        - If set to "warn", this behaves like a 0.0 input, but a warning is also
-        raised.
+        Sets the value to return when there is a zero division,
+        e.g. when `y_true` and `y_pred` are empty.
+        If set to "warn", returns 0.0 input, but a warning is also raised.
+        versionadded:: 1.6
 
     Returns
     -------
@@ -231,19 +230,22 @@ def accuracy_score(
     0.5
     """
 
-    # Check y_true and y_pred is empty
-    len_y_true = _num_samples(y_true)
-    len_y_pred = _num_samples(y_pred)
-
-    if len_y_true == 0 and len_y_pred == 0:
-        score = _check_zero_division(zero_division)
-        if zero_division == "warn":
-            _warn_prf(None, "predicted", "accuracy_score is", 0)
-        return score
-
     # Compute accuracy for each possible representation
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
+
+    # Check y_true and y_pred is empty
+    len_y_true = _num_samples(y_true)
+
+    if len_y_true == 0:  # empty vectors
+        if zero_division == "warn":
+            msg = (
+                "accuracy() is ill-defined and set to 0.0. Use the `zero_division`"
+                "param to control this behavior."
+            )
+            warnings.warn(msg, UndefinedMetricWarning)
+        return _check_zero_division(zero_division)
+
     if y_type.startswith("multilabel"):
         differing_labels = count_nonzero(y_true - y_pred, axis=1)
         score = differing_labels == 0
