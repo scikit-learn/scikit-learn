@@ -403,7 +403,8 @@ def density_sample():
     points, labels = datasets.make_moons()
     bounds = np.array([np.max(points, axis=0), np.min(points, axis=0)]).transpose()
     noise = [
-        [np.random.uniform(*bounds), np.random.uniform(*bounds)] for _ in range(10)
+        [np.random.uniform(*bounds[0]), np.random.uniform(*bounds[1])]
+        for _ in range(10)
     ]
     points = np.append(points, noise, axis=0)
     labels = np.append(labels, [-1 for _ in range(10)])
