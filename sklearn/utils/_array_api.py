@@ -435,6 +435,9 @@ class _NumPyAPIWrapper:
     def pow(self, x1, x2):
         return numpy.power(x1, x2)
 
+    def cumulative_sum(self, x, axis=None, dtype=None):
+        return numpy.cumsum(x, axis=axis, dtype=dtype)
+
 
 _NUMPY_API_WRAPPER_INSTANCE = _NumPyAPIWrapper()
 

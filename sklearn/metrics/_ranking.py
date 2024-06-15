@@ -35,6 +35,7 @@ from ..utils import (
     check_consistent_length,
     column_or_1d,
 )
+from ..utils._array_api import _average, _is_numpy_namespace, get_namespace
 from ..utils._encode import _encode, _unique
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.extmath import stable_cumsum
@@ -1508,7 +1509,10 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_base=2, ignore_ties=False):
         Cumulative Gain (the DCG obtained for a perfect ranking), in order to
         have a score between 0 and 1.
     """
-    discount = 1 / (np.log(np.arange(y_true.shape[1]) + 2) / np.log(log_base))
+    xp, _ = get_namespace(y_true, y_score)
+    discount = 1 / (
+        xp.log(xp.arange(y_true.shape[1]) + 2) / xp.log(xp.asarray(log_base))
+    )
     if k is not None:
         discount[k:] = 0
     if ignore_ties:
@@ -1516,7 +1520,7 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_base=2, ignore_ties=False):
         ranked = y_true[np.arange(ranking.shape[0])[:, np.newaxis], ranking]
         cumulative_gains = discount.dot(ranked.T)
     else:
-        discount_cumsum = np.cumsum(discount)
+        discount_cumsum = xp.cumulative_sum(discount)
         cumulative_gains = [
             _tie_averaged_dcg(y_t, y_s, discount_cumsum)
             for y_t, y_s in zip(y_true, y_score)
@@ -1562,15 +1566,28 @@ def _tie_averaged_dcg(y_true, y_score, discount_cumsum):
     European conference on information retrieval (pp. 414-421). Springer,
     Berlin, Heidelberg.
     """
-    _, inv, counts = np.unique(-y_score, return_inverse=True, return_counts=True)
-    ranked = np.zeros(len(counts))
-    np.add.at(ranked, inv, y_true)
-    ranked /= counts
-    groups = np.cumsum(counts) - 1
-    discount_sums = np.empty(len(counts))
-    discount_sums[0] = discount_cumsum[groups[0]]
-    discount_sums[1:] = np.diff(discount_cumsum[groups])
-    return (ranked * discount_sums).sum()
+    xp, _ = get_namespace(y_true, y_score)
+    if _is_numpy_namespace(xp):
+        _, inv, counts = np.unique(-y_score, return_inverse=True, return_counts=True)
+        ranked = np.zeros(len(counts))
+        np.add.at(ranked, inv, y_true)
+        ranked /= counts
+        groups = np.cumsum(counts) - 1
+        discount_sums = np.empty(len(counts))
+        discount_sums[0] = discount_cumsum[groups[0]]
+        discount_sums[1:] = np.diff(discount_cumsum[groups])
+        return (ranked * discount_sums).sum()
+    else:
+        _, counts = xp.unique_counts(-y_score)
+        _, inv = xp.unique_inverse(-y_score)
+        ranked = xp.zeros(len(counts))
+        xp.add.at(ranked, inv, y_true)
+        ranked /= counts
+        groups = xp.cumulative_sum(counts) - 1
+        discount_sums = xp.empty(len(counts))
+        discount_sums[0] = discount_cumsum[groups[0]]
+        discount_sums[1:] = xp.diff(discount_cumsum[groups])
+        return xp.sum(ranked * discount_sums)
 
 
 def _check_dcg_target_type(y_true):
@@ -1694,15 +1711,17 @@ def dcg_score(
     ...           scores, k=1, ignore_ties=True)
     5.0
     """
+    xp, _ = get_namespace(y_true, y_score)
     y_true = check_array(y_true, ensure_2d=False)
     y_score = check_array(y_score, ensure_2d=False)
     check_consistent_length(y_true, y_score, sample_weight)
     _check_dcg_target_type(y_true)
-    return np.average(
+    return _average(
         _dcg_sample_scores(
             y_true, y_score, k=k, log_base=log_base, ignore_ties=ignore_ties
         ),
         weights=sample_weight,
+        xp=xp,
     )
 
 
