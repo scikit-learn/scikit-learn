@@ -243,7 +243,7 @@ def _distances_between_points(
         distance_matrix = pairwise_distances(subset_X, metric=metric, **kwd_args)
         if d is not None:
             msg = (
-                "The \"d\" value you provided is being ignored. "
+                'The "d" value you provided is being ignored. '
                 "It's only required for precomputed distances"
             )
             warnings.warn(msg, UserWarning)
