@@ -1838,7 +1838,7 @@ def chi2_kernel(X, Y=None, gamma=1.0):
     K = additive_chi2_kernel(X, Y)
     K *= gamma
     if _is_numpy_namespace(xp):
-        return xp.exp(K, out=K)
+        return np.exp(K, out=K)
     return xp.exp(K)
 
 
