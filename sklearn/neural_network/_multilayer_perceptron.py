@@ -822,7 +822,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         The function to measure the error of the predictions. Supported losses are:
 
         - 'log_loss' log transform of the likelihood function
-        logistic loss or cross-entropy loss.
+          logistic loss or cross-entropy loss.
 
         - 'binary_log_loss', used automatically when activation == "logistic"
 
@@ -1336,8 +1336,8 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         - 'absolute_error' for the mean absolute error, which minimizes the L1 loss.
 
         - 'logcosh' for the log cosh loss, which computes the logarithm of the
-        hyperbolic cosine of the prediction error and is more robust to
-        outliers than squared_error.
+          hyperbolic cosine of the prediction error and is more robust to
+          outliers than squared_error.
 
         .. versionadded:: 1.6.0
 
