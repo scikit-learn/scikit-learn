@@ -4,7 +4,7 @@
 #         Brian Cheung
 #         Wei LI <kuantkid@gmail.com>
 #         Andrew Knyazev <Andrew.Knyazev@ucdenver.edu>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Integral, Real
@@ -793,7 +793,8 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
     def _more_tags(self):
         return {
-            "pairwise": self.affinity in [
+            "pairwise": self.affinity
+            in [
                 "precomputed",
                 "precomputed_nearest_neighbors",
             ]

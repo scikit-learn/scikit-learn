@@ -24,7 +24,7 @@ dtypes = [('64', 'double', 1e-9),
 #         Lars Buitinck
 #         Danny Sullivan <dsullivan7@hotmail.com>
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 cimport cython
 from libc.limits cimport INT_MAX

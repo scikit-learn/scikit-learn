@@ -2,7 +2,7 @@
 
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 #         Wei LI <kuantkid@gmail.com>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 import warnings
@@ -650,7 +650,8 @@ class SpectralEmbedding(BaseEstimator):
 
     def _more_tags(self):
         return {
-            "pairwise": self.affinity in [
+            "pairwise": self.affinity
+            in [
                 "precomputed",
                 "precomputed_nearest_neighbors",
             ]

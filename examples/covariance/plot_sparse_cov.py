@@ -51,7 +51,7 @@ iteratively refined in the neighborhood of the maximum.
 """
 
 # author: Gael Varoquaux <gael.varoquaux@inria.fr>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 # Copyright: INRIA
 
 # %%

@@ -1,7 +1,4 @@
-"""
-The :mod:`sklearn.utils.sparsefuncs_fast` module includes a collection of utilities to
-work with sparse matrices and arrays written in Cython.
-"""
+"""Utilities to work with sparse matrices and arrays written in Cython."""
 
 # Authors: Mathieu Blondel
 #          Olivier Grisel
@@ -9,7 +6,7 @@ work with sparse matrices and arrays written in Cython.
 #          Lars Buitinck
 #          Giorgio Patrini
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 from libc.math cimport fabs, sqrt, isnan
 from libc.stdint cimport intptr_t

@@ -40,7 +40,7 @@ infinite) dimensional feature spaces.
 #         Jake Vanderplas
 #         Christian Lorentzen
 #         Malte Londschien
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np
