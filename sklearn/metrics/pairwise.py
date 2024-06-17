@@ -22,10 +22,10 @@ from ..utils import (
     gen_even_slices,
 )
 from ..utils._array_api import (
+    _clip,
     _find_matching_floating_dtype,
     _is_numpy_namespace,
     get_namespace,
-    _clip,
 )
 from ..utils._chunking import get_chunk_n_rows
 from ..utils._mask import _get_mask
@@ -1139,8 +1139,7 @@ def _fill_diagonal_2d(S, val, xp):
     assert S.ndim == 2, "_fill_diagonal_2d supports 2D arrays only"
     n, m = S.shape
     S_flat = xp.reshape(S, (-1,))
-    S_flat[::m + 1] = val
-
+    S_flat[:: m + 1] = val
 
 
 # Paired distances
