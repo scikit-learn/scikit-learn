@@ -1,6 +1,4 @@
-# Author: Alexander Fabisch  -- <afabisch@informatik.uni-bremen.de>
-# Author: Christopher Moody <chrisemoody@gmail.com>
-# Author: Nick Travers <nickt@squareup.com>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 # This is the exact and Barnes-Hut t-SNE implementation. There are other

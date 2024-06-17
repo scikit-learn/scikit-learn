@@ -23,7 +23,7 @@ The One-Class SVM does not assume any parametric form of the data distribution
 and can therefore model the complex shape of the data much better.
 """
 
-# Author: Virgile Fritsch <virgile.fritsch@inria.fr>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 # %%

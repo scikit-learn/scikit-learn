@@ -34,8 +34,7 @@ This is not easily possible for the case of the kernelized SVM.
 # ---------------------------------------------------
 
 
-# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
-#         Andreas Mueller <amueller@ais.uni-bonn.de>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 # Standard scientific Python imports
