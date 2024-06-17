@@ -1848,7 +1848,12 @@ def precision_recall_fscore_support(
         "y_pred": ["array-like", "sparse matrix"],
         "labels": ["array-like", None],
         "sample_weight": ["array-like", None],
-        "raise_warning": ["boolean"],
+        "raise_warning": ["boolean", Hidden(StrOptions({"deprecated"}))],
+        "zero_division": [
+            Hidden(StrOptions({"warn"})),
+            Hidden(StrOptions({"default"})),
+            Options(Real, {0.0, 1.0, np.nan}),
+        ],
     },
     prefer_skip_nested_validation=True,
 )
@@ -1858,7 +1863,8 @@ def class_likelihood_ratios(
     *,
     labels=None,
     sample_weight=None,
-    raise_warning=True,
+    raise_warning="deprecated",
+    zero_division="default",
 ):
     """Compute binary classification positive and negative likelihood ratios.
 
@@ -1918,6 +1924,21 @@ def class_likelihood_ratios(
         zero division. Even if the error is not raised, the function will return
         nan in such cases.
 
+        .. deprecated:: 1.6
+            `raise_warning` was deprecated in version 1.6 and will be removed in 1.8.
+            To define the return values in case of a division by zero, use
+            `zero_division` instead.
+
+    zero_division : str or dict, default="warn"
+        Sets the return values for LR+ and LR- when there is a zero division. Can take
+        the values {"LR+": 0.0, "LR-": 1.0}, {"LR+": np.inf, "LR-": 1.0},
+        {"LR+": np.nan, "LR-": np.nan}, or "warn". Only the metric affected by a zero
+        division is replaced by the here defined value; the other value is calculated
+        as usual. If set to "warn", returns np.nan for the affected scoring, but a
+        warning is also raised.
+
+        .. versionadded:: 1.6
+
     Returns
     -------
     (positive_likelihood_ratio, negative_likelihood_ratio) : tuple
@@ -1959,7 +1980,13 @@ def class_likelihood_ratios(
     >>> class_likelihood_ratios(y_true, y_pred, labels=["non-cat", "cat"])
     (1.5, 0.75)
     """
-
+    # TODO(1.8): When `raise_warning` is removed, the default return value with
+    # zero_division="warn" does not need to be "np.nan" anymore and should be the lowest
+    # score for each metric respectively (1 for LR+ and 0 for LR-) to match the other
+    # places where zero_division is implemented. Also the Warns section in the docstring
+    # needs be be re-written and the hidden option for zero_division ("default") be
+    # removed and the default set to "warn" to match the other places where
+    # zero_division is implemented.
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type != "binary":
         raise ValueError(
@@ -1974,48 +2001,59 @@ def class_likelihood_ratios(
         labels=labels,
     )
 
-    # Case when `y_test` contains a single class and `y_test == y_pred`.
-    # This may happen when cross-validating imbalanced data and should
-    # not be interpreted as a perfect score.
-    if cm.shape == (1, 1):
-        msg = "samples of only one class were seen during testing "
+    tn, fp, fn, tp = cm.ravel()
+    support_pos = tp + fn
+    support_neg = tn + fp
+    pos_num = tp * support_neg
+    pos_denom = fp * support_pos
+    neg_num = fn * support_neg
+    neg_denom = tn * support_pos
+
+    if raise_warning != "deprecated":
+        if zero_division != "default":
+            raise ValueError(
+                "`zero_division` and `raise_warning` cannot both be set. "
+                "User either one to controll the return values in case "
+                "of a division by zero."
+            )
+
+        warnings.warn(
+            "`raise_warning` was deprecated in version 1.6 and will be "
+            "removed in 1.8. To define the return values in case of a "
+            "division by zero, use `zero_division` instead.",
+            FutureWarning,
+        )
+
+        if raise_warning:
+            zero_division = "warn"
+
+        else:  # raise_warning == False
+            zero_division = {"LR+": np.nan, "LR-": np.nan}
+
+    # If zero division warn and set scores to nan, else divide
+    if support_pos == 0:
+        msg = "no samples of the positive class were present in the testing set "
         if raise_warning:
             warnings.warn(msg, UserWarning, stacklevel=2)
         positive_likelihood_ratio = np.nan
         negative_likelihood_ratio = np.nan
+    if fp == 0:
+        if tp == 0:
+            msg = "no samples predicted for the positive class"
+        else:
+            msg = "positive_likelihood_ratio ill-defined and being set to nan "
+        if raise_warning:
+            warnings.warn(msg, UserWarning, stacklevel=2)
+        positive_likelihood_ratio = np.nan
     else:
-        tn, fp, fn, tp = cm.ravel()
-        support_pos = tp + fn
-        support_neg = tn + fp
-        pos_num = tp * support_neg
-        pos_denom = fp * support_pos
-        neg_num = fn * support_neg
-        neg_denom = tn * support_pos
-
-        # If zero division warn and set scores to nan, else divide
-        if support_pos == 0:
-            msg = "no samples of the positive class were present in the testing set "
-            if raise_warning:
-                warnings.warn(msg, UserWarning, stacklevel=2)
-            positive_likelihood_ratio = np.nan
-            negative_likelihood_ratio = np.nan
-        if fp == 0:
-            if tp == 0:
-                msg = "no samples predicted for the positive class"
-            else:
-                msg = "positive_likelihood_ratio ill-defined and being set to nan "
-            if raise_warning:
-                warnings.warn(msg, UserWarning, stacklevel=2)
-            positive_likelihood_ratio = np.nan
-        else:
-            positive_likelihood_ratio = pos_num / pos_denom
-        if tn == 0:
-            msg = "negative_likelihood_ratio ill-defined and being set to nan "
-            if raise_warning:
-                warnings.warn(msg, UserWarning, stacklevel=2)
-            negative_likelihood_ratio = np.nan
-        else:
-            negative_likelihood_ratio = neg_num / neg_denom
+        positive_likelihood_ratio = pos_num / pos_denom
+    if tn == 0:
+        msg = "negative_likelihood_ratio ill-defined and being set to nan "
+        if raise_warning:
+            warnings.warn(msg, UserWarning, stacklevel=2)
+        negative_likelihood_ratio = np.nan
+    else:
+        negative_likelihood_ratio = neg_num / neg_denom
 
     return positive_likelihood_ratio, negative_likelihood_ratio
 

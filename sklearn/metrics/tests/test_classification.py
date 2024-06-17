@@ -668,14 +668,6 @@ def test_confusion_matrix_single_label():
 @pytest.mark.parametrize(
     "params, warn_msg",
     [
-        # When y_test contains one class only and y_test==y_pred, LR+ is undefined
-        (
-            {
-                "y_true": np.array([0, 0, 0, 0, 0, 0]),
-                "y_pred": np.array([0, 0, 0, 0, 0, 0]),
-            },
-            "samples of only one class were seen during testing",
-        ),
         # When `fp == 0` and `tp != 0`, LR+ is undefined
         (
             {
@@ -763,6 +755,31 @@ def test_likelihood_ratios():
     pos, neg = class_likelihood_ratios(y_true, y_pred, sample_weight=sample_weight)
     assert_allclose(pos, 24 / 9)
     assert_allclose(neg, 12 / 27)
+
+
+@pytest.mark.parametrize("raise_warning", [True, False])
+def test_likelihood_ratios_raise_warning_deprecation(raise_warning):
+    """Test that class_likelihood_ratios raises a FutureWarning when raise_warning param
+    is set."""
+    y_true = np.array([1, 0])
+    y_pred = np.array([1, 0])
+
+    msg = "`raise_warning` was deprecated in version 1.6 and will be removed in 1.8."
+    with pytest.warns(FutureWarning, match=msg):
+        class_likelihood_ratios(y_true, y_pred, raise_warning=raise_warning)
+
+
+def test_likelihood_ratios_raises_raise_warning_and_zero_division():
+    """Test that class_likelihood_ratios raises an Error if `raise_warning` and
+    `zero_division` params are both set."""
+    y_true = np.array([1, 0])
+    y_pred = np.array([1, 0])
+
+    msg = "`zero_division` and `raise_warning` cannot both be set."
+    with pytest.raises(ValueError, match=msg):
+        class_likelihood_ratios(
+            y_true, y_pred, raise_warning=True, zero_division="warn"
+        )
 
 
 def test_cohen_kappa():
