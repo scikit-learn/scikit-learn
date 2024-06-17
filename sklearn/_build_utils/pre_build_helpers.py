@@ -7,11 +7,11 @@ import sys
 import tempfile
 import textwrap
 
-from setuptools.command.build_ext import customize_compiler, new_compiler
-
 
 def compile_test_program(code, extra_preargs=None, extra_postargs=None):
     """Check that some C code can be compiled and run"""
+    from setuptools.command.build_ext import customize_compiler, new_compiler
+
     ccompiler = new_compiler()
     customize_compiler(ccompiler)
 
