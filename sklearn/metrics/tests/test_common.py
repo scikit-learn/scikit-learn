@@ -1831,7 +1831,6 @@ def check_array_api_multiclass_classification_metric(
 
 
 def check_array_api_regression_metric(metric, array_namespace, device, dtype_name):
-    func_name = metric.func.__name__ if isinstance(metric, partial) else metric.__name__
     y_true_np = np.array([2.0, 0.1, 1.0, 4.0], dtype=dtype_name)
     y_pred_np = np.array([0.5, 0.5, 2, 2], dtype=dtype_name)
 
@@ -1855,8 +1854,6 @@ def check_array_api_regression_metric(metric, array_namespace, device, dtype_nam
         metric_kwargs["sample_weight"] = np.array(
             [0.1, 2.0, 1.5, 0.5], dtype=dtype_name
         )
-    if func_name == "mean_tweedie_deviance":
-        metric_kwargs["power"] = -0.5
 
         check_array_api_metric(
             metric,
@@ -1945,6 +1942,7 @@ array_api_metric_checkers = {
         check_array_api_multiclass_classification_metric,
     ],
     mean_tweedie_deviance: [check_array_api_regression_metric],
+    partial(mean_tweedie_deviance, power=-0.5): [check_array_api_regression_metric],
     r2_score: [
         check_array_api_regression_metric,
         check_array_api_regression_metric_multioutput,
