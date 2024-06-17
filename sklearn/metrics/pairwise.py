@@ -1131,7 +1131,7 @@ def cosine_distances(X, Y=None):
     if X is Y or Y is None:
         # Ensure that distances between vectors and themselves are set to 0.0.
         # This may not be the case due to floating point rounding errors.
-        S = _fill_diagonal_2d(S, 0.0, xp)
+        _fill_diagonal_2d(S, 0.0, xp)
     return S
 
 
