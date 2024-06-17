@@ -1676,20 +1676,78 @@ def permutation_test_score(
     scorer = check_scoring(estimator, scoring=scoring)
     random_state = check_random_state(random_state)
 
+    if _routing_enabled():
+        router = (
+            MetadataRouter(owner="permutation_test_score")
+            .add(
+                estimator=estimator,
+                # TODO(SLEP6): also pass metadata to the predict method for
+                # scoring?
+                method_mapping=MethodMapping().add(caller="fit", callee="fit"),
+            )
+            .add(
+                splitter=cv,
+                method_mapping=MethodMapping().add(caller="fit", callee="split"),
+            )
+            .add(
+                scorer=scorer,
+                method_mapping=MethodMapping().add(caller="fit", callee="score"),
+            )
+        )
+
+        try:
+            routed_params = process_routing(router, "fit", **params)
+        except UnsetMetadataPassedError as e:
+            # The default exception would mention `fit` since in the above
+            # `process_routing` code, we pass `fit` as the caller. However,
+            # the user is not calling `fit` directly, so we change the message
+            # to make it more suitable for this case.
+            unrequested_params = sorted(e.unrequested_params)
+            raise UnsetMetadataPassedError(
+                message=(
+                    f"{unrequested_params} are passed to `permutation_test_score`"
+                    " but are not explicitly set as requested or not requested"
+                    " for permutation_test_score's"
+                    f" estimator: {estimator.__class__.__name__}. Call"
+                    " `.set_fit_request({{metadata}}=True)` on the estimator for"
+                    f" each metadata in {unrequested_params} that you"
+                    " want to use and `metadata=False` for not using it. See the"
+                    " Metadata Routing User guide"
+                    " <https://scikit-learn.org/stable/metadata_routing.html> for more"
+                    " information."
+                ),
+                unrequested_params=e.unrequested_params,
+                routed_params=e.routed_params,
+            )
+
+    else:
+        routed_params = Bunch()
+        routed_params.estimator = Bunch(fit=params)
+        routed_params.splitter = Bunch(split={"groups": groups})
+        routed_params.scorer = Bunch(score={})
+
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     score = _permutation_test_score(
-        clone(estimator), X, y, groups, cv, scorer, fit_params=fit_params
+        clone(estimator),
+        X,
+        y,
+        cv,
+        scorer,
+        split_params=routed_params.splitter.split,
+        fit_params=routed_params.estimator.fit,
+        score_params=routed_params.scorer.score,
     )
     permutation_scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
         delayed(_permutation_test_score)(
             clone(estimator),
             X,
             _shuffle(y, groups, random_state),
-            groups,
             cv,
             scorer,
-            fit_params=fit_params,
+            split_params=routed_params.splitter.split,
+            fit_params=routed_params.estimator.fit,
+            score_params=routed_params.scorer.score,
         )
         for _ in range(n_permutations)
     )
@@ -1698,17 +1756,22 @@ def permutation_test_score(
     return score, permutation_scores, pvalue
 
 
-def _permutation_test_score(estimator, X, y, groups, cv, scorer, fit_params):
+def _permutation_test_score(
+    estimator, X, y, cv, scorer, split_params, fit_params, score_params
+):
     """Auxiliary function for permutation_test_score"""
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
+    score_params = score_params if score_params is not None else {}
+
     avg_score = []
-    for train, test in cv.split(X, y, groups):
+    for train, test in cv.split(X, y, **split_params):
         X_train, y_train = _safe_split(estimator, X, y, train)
         X_test, y_test = _safe_split(estimator, X, y, test, train)
-        fit_params = _check_method_params(X, params=fit_params, indices=train)
-        estimator.fit(X_train, y_train, **fit_params)
-        avg_score.append(scorer(estimator, X_test, y_test))
+        fit_params_train = _check_method_params(X, params=fit_params, indices=train)
+        score_params_test = _check_method_params(X, params=score_params, indices=test)
+        estimator.fit(X_train, y_train, **fit_params_train)
+        avg_score.append(scorer(estimator, X_test, y_test, **score_params_test))
     return np.mean(avg_score)
 
 
