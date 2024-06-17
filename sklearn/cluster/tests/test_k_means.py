@@ -438,22 +438,29 @@ def test_minibatch_sensible_reassign(global_random_seed):
         n_clusters=20, batch_size=10, random_state=global_random_seed, init="random"
     ).fit(zeroed_X)
     # there should not be too many exact zero cluster centers
-    assert km.cluster_centers_.any(axis=1).sum() > 10
+    num_non_zero_clusters = km.cluster_centers_.any(axis=1).sum()
+    if num_non_zero_clusters <= 10:
+        raise ValueError(
+            f"Number of non-zero clusters is too small {num_non_zero_clusters=}"
+        )
 
     # do the same with batch-size > X.shape[0] (regression test)
     km = MiniBatchKMeans(
         n_clusters=20, batch_size=200, random_state=global_random_seed, init="random"
     ).fit(zeroed_X)
     # there should not be too many exact zero cluster centers
-    assert km.cluster_centers_.any(axis=1).sum() > 10
+    num_non_zero_clusters = km.cluster_centers_.any(axis=1).sum()
+    if num_non_zero_clusters <= 10:
+        raise ValueError(
+            f"Number of non-zero clusters is too small {num_non_zero_clusters=}"
+        )
 
     # do the same with partial_fit API
     km = MiniBatchKMeans(n_clusters=20, random_state=global_random_seed, init="random")
     for i in range(100):
         km.partial_fit(zeroed_X)
-
+    # there should not be too many exact zero cluster centers
     num_non_zero_clusters = km.cluster_centers_.any(axis=1).sum()
-    # Error with info
     if num_non_zero_clusters <= 10:
         raise ValueError(
             f"Number of non-zero clusters is too small {num_non_zero_clusters=}"
