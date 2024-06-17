@@ -1763,10 +1763,10 @@ def check_array_api_metric(
         )
 
     multioutput = metric_kwargs.get("multioutput")
-    if isinstance(multioutput, np.ndarray):
-        metric_kwargs["multioutput"] = xp.asarray(
-            metric_kwargs["multioutput"], device=device
-        )
+    if multioutput is not None:
+        if isinstance(multioutput, np.ndarray):
+            multioutput = xp.asarray(multioutput, device=device)
+        metric_kwargs["multioutput"] = multioutput
 
     with config_context(array_api_dispatch=True):
         metric_xp = metric(a_xp, b_xp, **metric_kwargs)
@@ -1910,14 +1910,14 @@ def check_array_api_regression_metric_multioutput(
         multioutput=np.array([0.1, 0.3, 0.7], dtype=dtype_name),
     )
 
-    metric_multioutput = partial(metric, multioutput="raw_values")
     check_array_api_metric(
-        metric_multioutput,
+        metric,
         array_namespace,
         device,
         dtype_name,
         a_np=y_true_np,
         b_np=y_pred_np,
+        multioutput="raw_values",
     )
 
 
