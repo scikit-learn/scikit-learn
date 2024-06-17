@@ -10,7 +10,7 @@ web page of Sam Roweis:
     https://cs.nyu.edu/~roweis/
 """
 
-# Copyright (c) 2011 David Warde-Farley <wardefar at iro dot umontreal dot ca>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Integral, Real
