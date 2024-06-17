@@ -2614,6 +2614,7 @@ def test_multi_metric_search_forwards_metadata(SearchCV, param_search):
         check_recorded_metadata(
             obj=_scorer,
             method="score",
+            parent="_score",
             split_params=("sample_weight", "metadata"),
             sample_weight=score_weights,
             metadata=score_metadata,
