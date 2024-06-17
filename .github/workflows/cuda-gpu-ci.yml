@@ -19,12 +19,26 @@ jobs:
           # XXX: The 3.12.4 release of Python on GitHub Actions is corrupted:
           # https://github.com/actions/setup-python/issues/886
           python-version: '3.12.3'
-      - name: Checkout main repository
-        uses: actions/checkout@v4
-      - run: |
-          git fetch origin +refs/pull/${{ inputs.pr_id }}/head:pr-${{ inputs.pr_id }}
-          git checkout pr-${{ inputs.pr_id }}
-          echo "Checked out commit $(git rev-parse HEAD)"
+      - name: Get PR Info
+        id: pr
+        env:
+          PR_NUMBER: ${{ inputs.pr_id }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          REPO_UPDATE_AT: ${{ github.event.repository.updated_at }}
+        run: |
+          pr="$(gh api -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /repos/${GH_REPO}/pulls/${PR_NUMBER})"
+          head_sha="$(echo "$pr" | jq -r .head.sha)"
+          updated_at="$(echo "$pr" | jq -r .updated_at)"
+
+          # Check that the PR was not updated since the start of the workflow
+          # to protect against timed commit attacks.
+          if [[ $(date -d $updated_at) > $(date -d $REPO_UPDATE_AT) ]]; exit 1; fi
+
+          echo "head_sha=$head_sha" >> $GITHUB_OUTPUT
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.pr.outputs.head_sha }}
       - name: Cache conda environment
         id: cache-conda
         uses: actions/cache@v4
