@@ -33,10 +33,10 @@ def _density_separation(
         The label array output by the clustering, providing an integral
         cluster label to each data point, with -1 for noise points.
 
-    cluster_id1 : integer
+    cluster_id1 : int
         The first cluster label to compute separation between.
 
-    cluster_id2 : integer
+    cluster_id2 : int
         The second cluster label to compute separation between.
 
     internal_nodes1 : array
@@ -200,7 +200,7 @@ def _distances_between_points(
         The label array output by the clustering, providing an integral
         cluster label to each data point, with -1 for noise points.
 
-    cluster_id : integer
+    cluster_id : int
         The cluster label for which to compute the distances
 
     metric : string
@@ -209,7 +209,7 @@ def _distances_between_points(
         set to `precomputed` then X is assumed to be the precomputed
         distance matrix between samples.
 
-    d : integer (or None)
+    d : int (or None)
         The number of features (dimension) of the dataset. This need only
         be set in the case of metric being set to `precomputed`, where
         the ambient dimension of the data is unknown to the function.
@@ -277,7 +277,7 @@ def _all_points_core_distance(distance_matrix, d=2):
     distance_matrix : array (cluster_size, cluster_size)
         The pairwise distance matrix between points in the cluster.
 
-    d : integer
+    d : int
         The dimension of the data set, which is used in the computation
         of the all-point-core-distance as per the paper.
 
