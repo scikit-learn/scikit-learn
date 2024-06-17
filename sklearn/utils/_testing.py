@@ -1,6 +1,5 @@
 """Testing utilities."""
 
-# Copyright (c) 2011, 2012
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 import atexit
