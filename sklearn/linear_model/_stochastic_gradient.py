@@ -1,6 +1,4 @@
-# Authors: Peter Prettenhofer <peter.prettenhofer@gmail.com> (main author)
-#          Mathieu Blondel (partial_fit support)
-#
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 """Classification, regression and One-Class SVM using Stochastic Gradient
 Descent (SGD).

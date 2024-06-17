@@ -1,7 +1,6 @@
 """Orthogonal matching pursuit algorithms"""
 
-# Author: Vlad Niculae
-#
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings

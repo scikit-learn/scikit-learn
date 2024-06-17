@@ -1,7 +1,6 @@
 """Testing for Gaussian process regression"""
 
-# Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-# Modified by: Pete Green <p.l.green@liverpool.ac.uk>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import re
