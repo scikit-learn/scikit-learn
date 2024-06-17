@@ -1,7 +1,7 @@
 """Spectral biclustering algorithms."""
 
 # Authors : Kemal Eren
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 from abc import ABCMeta, abstractmethod
 from numbers import Integral

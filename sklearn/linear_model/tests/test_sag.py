@@ -1,7 +1,7 @@
 # Authors: Danny Sullivan <dbsullivan23@gmail.com>
 #          Tom Dupre la Tour <tom.dupre-la-tour@m4x.org>
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import math
 import re

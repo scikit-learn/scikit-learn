@@ -5,7 +5,7 @@
 #          Eric Martin <eric@ericmart.in>
 #          Giorgio Patrini <giorgio.patrini@anu.edu.au>
 #          Eric Chang <ericchang2017@u.northwestern.edu>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 import warnings
@@ -2371,10 +2371,6 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
            [  0.,  14., -14.],
            [ -5., -14.,  19.]])
     """
-
-    def __init__(self):
-        # Needed for backported inspect.signature compatibility with PyPy
-        pass
 
     def fit(self, K, y=None):
         """Fit KernelCenterer.

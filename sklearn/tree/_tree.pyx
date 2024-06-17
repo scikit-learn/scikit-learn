@@ -10,7 +10,7 @@
 #          Jacob Schreiber <jmschreiber91@gmail.com>
 #          Nelson Liu <nelson@nelsonliu.me>
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 from cpython cimport Py_INCREF, PyObject, PyTypeObject
 
@@ -22,6 +22,7 @@ from libc.math cimport isnan
 from libcpp.vector cimport vector
 from libcpp.algorithm cimport pop_heap
 from libcpp.algorithm cimport push_heap
+from libcpp.stack cimport stack
 from libcpp cimport bool
 
 import struct
@@ -42,15 +43,6 @@ cdef extern from "numpy/arrayobject.h":
                                 cnp.npy_intp* strides,
                                 void* data, int flags, object obj)
     int PyArray_SetBaseObject(cnp.ndarray arr, PyObject* obj)
-
-cdef extern from "<stack>" namespace "std" nogil:
-    cdef cppclass stack[T]:
-        ctypedef T value_type
-        stack() except +
-        bint empty()
-        void pop()
-        void push(T&) except +  # Raise c++ exception for bad_alloc -> MemoryError
-        T& top()
 
 # =============================================================================
 # Types and constants

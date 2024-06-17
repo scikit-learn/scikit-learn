@@ -2,7 +2,7 @@
 
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Integral
 from operator import itemgetter

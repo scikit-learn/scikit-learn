@@ -13,7 +13,7 @@ stationary kernels often obtain better results.
 
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np

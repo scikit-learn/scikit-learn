@@ -18,7 +18,7 @@ decision boundary.
 """
 
 # Author: Issam H. Laradji
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 from matplotlib import pyplot as plt

@@ -36,7 +36,7 @@ it then works on a random subset.
 """
 
 # Author: Florian Wilhelm -- <florian.wilhelm@gmail.com>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import time
 
