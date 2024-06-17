@@ -20,9 +20,7 @@ the clusters form a nice parcellation of the swiss roll.
 
 """
 
-# Authors : Vincent Michel, 2010
-#           Alexandre Gramfort, 2010
-#           Gael Varoquaux, 2010
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import time as time
