@@ -53,7 +53,7 @@ def _density_separation(
         The all-points-core_distances of all points in the cluster
         specified by cluster_id2.
 
-    metric : string
+    metric : str
         The metric used to compute distances for the clustering (and
         to be re-used in computing distances for mr distance). If
         set to `precomputed` then X is assumed to be the precomputed
@@ -203,7 +203,7 @@ def _distances_between_points(
     cluster_id : int
         The cluster label for which to compute the distances
 
-    metric : string
+    metric : str
         The metric used to compute distances for the clustering (and
         to be re-used in computing distances for mr distance). If
         set to `precomputed` then X is assumed to be the precomputed
