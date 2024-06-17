@@ -25,8 +25,7 @@ by Thomas P. Minka is also compared.
 
 """
 
-# Authors: Alexandre Gramfort
-#          Denis A. Engemann
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 # %%

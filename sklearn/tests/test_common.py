@@ -2,8 +2,7 @@
 General tests for all estimators in sklearn.
 """
 
-# Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
-#          Gael Varoquaux gael.varoquaux@normalesup.org
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import os
