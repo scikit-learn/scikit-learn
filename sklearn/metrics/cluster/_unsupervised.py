@@ -523,26 +523,26 @@ def dbcv_score(
         The label array output by the clustering, providing an integral
         cluster label to each data point, with -1 for noise points.
 
-    metric : optional, str (default 'euclidean')
+    metric : str or callable, default='euclidean'
         The metric used to compute distances for the clustering (and
         to be re-used in computing distances for mr distance). If
         set to `precomputed` then X is assumed to be the precomputed
         distance matrix between samples.
 
-    d : optional, int (or None) (default None)
+    d : int or None, default=None
         The number of features (dimension) of the dataset. This need only
         be set in the case of metric being set to `precomputed`, where
         the ambient dimension of the data is unknown to the function.
 
-    per_cluster_scores : optional, bool (default False)
+    per_cluster_scores : bool, default=False
         Whether to return the validity index for individual clusters.
         Defaults to False with the function returning a single float
         value for the whole clustering.
 
-    strict_cluster_size_validation : optional, bool (default False)
+    strict_cluster_size_validation : bool, default=False
         If True, fail fast on cluster sizes for which DBCV is undefined.
 
-    mst_raw_dist : optional, bool (default False)
+    mst_raw_dist : bool, default=False
         If True, the MST's are constructed solely via 'raw' distances
         (depending on the given metric, e.g. euclidean distances)
         instead of using mutual reachability distances.
@@ -550,7 +550,7 @@ def dbcv_score(
         This is advantageous specifically in the case of elongated clusters
         that lie in close proximity to each other <citation needed>.
 
-    verbose : optional, bool (default False)
+    verbose : bool, default=False
         If True additional, informational messages are ommitted via stdout.
         They specifically relate to the subcomponents from which the mutual
         reachability distances emerge.
