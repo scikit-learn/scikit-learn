@@ -2,7 +2,6 @@
 
 import re
 import sys
-import warnings
 from io import StringIO
 
 import numpy as np
@@ -452,11 +451,13 @@ def test_minibatch_sensible_reassign(global_random_seed):
     km = MiniBatchKMeans(n_clusters=20, random_state=global_random_seed, init="random")
     for i in range(100):
         km.partial_fit(zeroed_X)
-    # there should not be too many exact zero cluster centers
+
     num_non_zero_clusters = km.cluster_centers_.any(axis=1).sum()
-    warnings.warn("f{num_non_zero_clusters=}", category=RuntimeWarning)
-    # Assert with info
-    assert num_non_zero_clusters > 10, f"{num_non_zero_clusters=}"
+    # Error with info
+    if num_non_zero_clusters <= 10:
+        raise ValueError(
+            f"Number of non-zero clusters is too small {num_non_zero_clusters=}"
+        )
 
 
 @pytest.mark.parametrize(
