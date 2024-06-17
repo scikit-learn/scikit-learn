@@ -428,6 +428,7 @@ def test_minibatch_sensible_reassign(global_random_seed):
     # check that identical initial clusters are reassigned
     # also a regression test for when there are more desired reassignments than
     # samples.
+    global_random_seed = 34
     zeroed_X, true_labels = make_blobs(
         n_samples=100, centers=5, random_state=global_random_seed
     )
@@ -451,7 +452,8 @@ def test_minibatch_sensible_reassign(global_random_seed):
     for i in range(100):
         km.partial_fit(zeroed_X)
     # there should not be too many exact zero cluster centers
-    assert km.cluster_centers_.any(axis=1).sum() > 10
+    num_non_zero_clusters = km.cluster_centers_.any(axis=1).sum()
+    assert num_non_zero_clusters > 10, f"{num_non_zero_clusters=}"
 
 
 @pytest.mark.parametrize(
