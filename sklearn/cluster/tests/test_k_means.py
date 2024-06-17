@@ -453,6 +453,7 @@ def test_minibatch_sensible_reassign(global_random_seed):
         km.partial_fit(zeroed_X)
     # there should not be too many exact zero cluster centers
     num_non_zero_clusters = km.cluster_centers_.any(axis=1).sum()
+    # Assert with info
     assert num_non_zero_clusters > 10, f"{num_non_zero_clusters=}"
 
 
