@@ -1852,7 +1852,10 @@ def precision_recall_fscore_support(
         "zero_division": [
             Hidden(StrOptions({"warn"})),
             Hidden(StrOptions({"default"})),
-            Options(Real, {0.0, 1.0, np.nan}),
+            dict,  # this needs to be further defined, but Options only takes unmutable
+            # input, no dicts:
+            # Options(dict, {{"LR+": 1.0, "LR-": 0.0}, {"LR+": np.inf, "LR-": 1.0},
+            # {"LR+": np.nan, "LR-": np.nan}}),
         ],
     },
     prefer_skip_nested_validation=True,
@@ -1931,11 +1934,12 @@ def class_likelihood_ratios(
 
     zero_division : str or dict, default="warn"
         Sets the return values for LR+ and LR- when there is a zero division. Can take
-        the values {"LR+": 0.0, "LR-": 1.0}, {"LR+": np.inf, "LR-": 1.0},
-        {"LR+": np.nan, "LR-": np.nan}, or "warn". Only the metric affected by a zero
-        division is replaced by the here defined value; the other value is calculated
-        as usual. If set to "warn", returns np.nan for the affected scoring, but a
-        warning is also raised.
+        the values {"LR+": 1.0, "LR-": 0.0} (for expressing the worst scores),
+        {"LR+": np.inf, "LR-": 1.0} (for expressing the best scores),
+        {"LR+": np.nan, "LR-": np.nan} (for undefined scores), or "warn". Only the
+        metric affected by a zero division is replaced by the set value; the other value
+        is calculated as usual. If set to "warn", returns np.nan for the affected
+        scoring metric, but a warning is also raised.
 
         .. versionadded:: 1.6
 
@@ -1994,21 +1998,6 @@ def class_likelihood_ratios(
             f"problems, got targets of type: {y_type}"
         )
 
-    cm = confusion_matrix(
-        y_true,
-        y_pred,
-        sample_weight=sample_weight,
-        labels=labels,
-    )
-
-    tn, fp, fn, tp = cm.ravel()
-    support_pos = tp + fn
-    support_neg = tn + fp
-    pos_num = tp * support_neg
-    pos_denom = fp * support_pos
-    neg_num = fn * support_neg
-    neg_denom = tn * support_pos
-
     if raise_warning != "deprecated":
         if zero_division != "default":
             raise ValueError(
@@ -2030,6 +2019,24 @@ def class_likelihood_ratios(
         else:  # raise_warning == False
             zero_division = {"LR+": np.nan, "LR-": np.nan}
 
+    if zero_division == "default":
+        zero_division = "warn"
+
+    cm = confusion_matrix(
+        y_true,
+        y_pred,
+        sample_weight=sample_weight,
+        labels=labels,
+    )
+
+    tn, fp, fn, tp = cm.ravel()
+    support_pos = tp + fn
+    support_neg = tn + fp
+    pos_num = tp * support_neg
+    pos_denom = fp * support_pos
+    neg_num = fn * support_neg
+    neg_denom = tn * support_pos
+
     # If zero division warn and set scores to nan, else divide
     if support_pos == 0:
         msg = "no samples of the positive class were present in the testing set "
@@ -2037,6 +2044,7 @@ def class_likelihood_ratios(
             warnings.warn(msg, UserWarning, stacklevel=2)
         positive_likelihood_ratio = np.nan
         negative_likelihood_ratio = np.nan
+
     if fp == 0:
         if tp == 0:
             msg = "no samples predicted for the positive class"
@@ -2047,11 +2055,23 @@ def class_likelihood_ratios(
         positive_likelihood_ratio = np.nan
     else:
         positive_likelihood_ratio = pos_num / pos_denom
+
     if tn == 0:
-        msg = "negative_likelihood_ratio ill-defined and being set to nan "
-        if raise_warning:
-            warnings.warn(msg, UserWarning, stacklevel=2)
-        negative_likelihood_ratio = np.nan
+        if zero_division == "warn":
+            msg = (
+                "`negative_likelihood_ratio` is ill-defined and set to np.nan. Use the "
+            )
+            "`zero_division` param to control this behavior."
+            warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
+            # ToDo(1.8): Currently, negative_likelihood_ratio is returned as np.nan, to
+            # keep `raise_warning`'s behaviour. Set to 0.0 in 1.8.
+            negative_likelihood_ratio = np.nan
+        elif isinstance(
+            zero_division.get("LR-", None), (int, float)
+        ) and zero_division.get("LR-", None) in [0, 1]:
+            negative_likelihood_ratio = np.float64(zero_division["LR-"])
+        else:  # np.isnan(zero_division["LR-"])
+            negative_likelihood_ratio = np.nan
     else:
         negative_likelihood_ratio = neg_num / neg_denom
 

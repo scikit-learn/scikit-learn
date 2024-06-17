@@ -690,7 +690,7 @@ def test_confusion_matrix_single_label():
                 "y_true": np.array([1, 1, 1, 0, 0, 0]),
                 "y_pred": np.array([0, 0, 0, 1, 1, 1]),
             },
-            "negative_likelihood_ratio ill-defined and being set to nan",
+            "`negative_likelihood_ratio` is ill-defined and set to np.nan.",
         ),
         # When `tp + fn == 0` both ratios are undefined
         (
@@ -769,8 +769,8 @@ def test_likelihood_ratios_raise_warning_deprecation(raise_warning):
         class_likelihood_ratios(y_true, y_pred, raise_warning=raise_warning)
 
 
-def test_likelihood_ratios_raises_raise_warning_and_zero_division():
-    """Test that class_likelihood_ratios raises an Error if `raise_warning` and
+def test_likelihood_ratios_raises_when_raise_warning_and_zero_division():
+    """Test that class_likelihood_ratios raises a ValueError if `raise_warning` and
     `zero_division` params are both set."""
     y_true = np.array([1, 0])
     y_pred = np.array([1, 0])
@@ -780,6 +780,44 @@ def test_likelihood_ratios_raises_raise_warning_and_zero_division():
         class_likelihood_ratios(
             y_true, y_pred, raise_warning=True, zero_division="warn"
         )
+
+
+def test_likelihood_ratios_zero_division_warn():
+    """Test that the correct warning is raised if zero_division is set to 'warn'."""
+    y_true = np.array([1, 0])
+    y_pred = np.array([1, 1])
+
+    msg = "`negative_likelihood_ratio` is ill-defined and set to np.nan. Use the "
+    "`zero_division` param to control this behavior."
+    with pytest.warns(UndefinedMetricWarning, match=msg):
+        class_likelihood_ratios(y_true, y_pred, zero_division="warn")
+
+
+@pytest.mark.parametrize(
+    "zero_division, expected",
+    [
+        ("warn", np.nan),
+        ({"LR+": 1.0, "LR-": 0.0}, 0.0),
+        ({"LR+": np.inf, "LR-": 1.0}, 1.0),
+        ({"LR+": np.nan, "LR-": np.nan}, np.nan),
+    ],
+)
+def test_likelihood_ratios_zero_division(zero_division, expected):
+    """Test that the `zero_division` param returns the right value for the
+    negative_likelihood_ratio as defined by the user."""
+    # this data causes tn=0 (0 true negatives) in the confusion_matrix and a division
+    # by zero that affects the negative_likelihood_ratio:
+    y_true = np.array([1, 0, 0])
+    y_pred = np.array([1, 1, 1])
+
+    _, negative_likelihood_ratio = class_likelihood_ratios(
+        y_true, y_pred, zero_division=zero_division
+    )
+
+    if np.isnan(expected):
+        assert np.isnan(negative_likelihood_ratio)
+    else:
+        assert negative_likelihood_ratio == expected
 
 
 def test_cohen_kappa():
