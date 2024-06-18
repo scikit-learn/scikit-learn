@@ -1,5 +1,8 @@
 """Fast Gradient Boosting decision trees for classification and regression."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Author: Nicolas Hug
 
 import itertools

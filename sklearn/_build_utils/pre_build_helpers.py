@@ -1,5 +1,8 @@
 """Helpers to check build environment before actual build of scikit-learn"""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import glob
 import os
 import subprocess

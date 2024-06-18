@@ -1,3 +1,5 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 from collections import Counter
 
 from ...utils._plotting import _BinaryClassifierCurveDisplayMixin

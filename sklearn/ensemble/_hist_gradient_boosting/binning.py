@@ -6,6 +6,9 @@ Bin thresholds are computed with the quantiles so that each bin contains
 approximately the same number of samples.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Author: Nicolas Hug
 
 import numpy as np

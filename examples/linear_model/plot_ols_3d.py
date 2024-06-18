@@ -9,6 +9,9 @@ has a strong coefficient on the full model, it does not
 give us much regarding `y` when compared to just feature 1.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Code source: Gaël Varoquaux
 # Modified for documentation by Jaques Grobler
 # SPDX-License-Identifier: BSD-3-Clause

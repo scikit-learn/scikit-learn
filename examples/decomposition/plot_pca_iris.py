@@ -10,6 +10,9 @@ information on this dataset.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Code source: Gaël Varoquaux
 # SPDX-License-Identifier: BSD-3-Clause
 

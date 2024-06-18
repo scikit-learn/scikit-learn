@@ -19,6 +19,9 @@ non-linear relationship between `X` and `y`.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Author: Arturo Amor <david-arturo.amor-quiroz@inria.fr>
 
 # %%

@@ -2,6 +2,9 @@
 Logistic Regression
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 #         Fabian Pedregosa <f@bianp.net>
 #         Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>

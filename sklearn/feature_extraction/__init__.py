@@ -1,5 +1,8 @@
 """Feature extraction from raw data."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from . import text
 from ._dict_vectorizer import DictVectorizer
 from ._hash import FeatureHasher

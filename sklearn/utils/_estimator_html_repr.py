@@ -1,3 +1,5 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 import html
 import itertools
 from contextlib import closing

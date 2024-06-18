@@ -8,6 +8,9 @@ This implementation is modified from Matthew D. Hoffman's onlineldavb code
 Link: https://github.com/blei-lab/onlineldavb
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Author: Chyi-Kwei Yau
 # Author: Matthew D. Hoffman (original onlineldavb implementation)
 from numbers import Integral, Real

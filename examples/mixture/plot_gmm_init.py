@@ -33,6 +33,9 @@ more iterations to converge. Here *k-means++* does a good job of both low
 time to initialize and low number of GaussianMixture iterations to converge.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Author: Gordon Walsh <gordon.p.walsh@gmail.com>
 # Data generation code from Jake Vanderplas <vanderplas@astro.washington.edu>
 

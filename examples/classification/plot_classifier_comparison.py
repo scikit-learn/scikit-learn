@@ -19,6 +19,9 @@ set.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Code source: Gaël Varoquaux
 #              Andreas Müller
 # Modified for documentation by Jaques Grobler

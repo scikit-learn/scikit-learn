@@ -20,6 +20,9 @@ fitting of a transformer is costly.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Authors: Robert McGibbon
 #          Joel Nothman
 #          Guillaume Lemaitre

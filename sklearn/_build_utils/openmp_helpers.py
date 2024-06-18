@@ -1,5 +1,8 @@
 """Helpers for OpenMP support during the build."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # This code is adapted for a large part from the astropy openmp helpers, which
 # can be found at: https://github.com/astropy/extension-helpers/blob/master/extension_helpers/_openmp_helpers.py  # noqa
 

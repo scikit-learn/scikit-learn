@@ -1,5 +1,8 @@
 """All minimum dependencies for scikit-learn."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import argparse
 from collections import defaultdict
 

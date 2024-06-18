@@ -2,6 +2,9 @@
 Multi-dimensional Scaling (MDS).
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # author: Nelle Varoquaux <nelle.varoquaux@gmail.com>
 # SPDX-License-Identifier: BSD-3-Clause
 

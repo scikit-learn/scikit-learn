@@ -3,6 +3,9 @@ Kernel Density Estimation
 -------------------------
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Author: Jake Vanderplas <jakevdp@cs.washington.edu>
 import itertools
 from numbers import Integral, Real

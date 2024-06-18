@@ -1,3 +1,5 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 #! /usr/bin/env python
 #
 # Authors: The scikit-learn developers

@@ -1,3 +1,5 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 import importlib
 from functools import wraps
 from typing import Protocol, runtime_checkable

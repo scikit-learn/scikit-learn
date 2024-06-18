@@ -2,6 +2,9 @@
 Utilities useful during the build.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # author: Andy Mueller, Gael Varoquaux
 # license: BSD
 

@@ -10,6 +10,9 @@ We use a GridSearchCV to set the dimensionality of the PCA
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Code source: Gaël Varoquaux
 # Modified for documentation by Jaques Grobler
 # SPDX-License-Identifier: BSD-3-Clause
