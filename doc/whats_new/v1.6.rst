@@ -32,13 +32,16 @@ See :ref:`array_api` for more details.
 
 **Functions:**
 
+- :func:`sklearn.metrics.cluster.entropy` :pr:`29141` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.metrics.d2_tweedie_score` :pr:`29207` by :user:`Emily Chen <EmilyXinyi>`;
+- :func:`sklearn.metrics.max_error` :pr:`29212` by :user:`Edoardo Abati <EdAbati>`;
 - :func:`sklearn.metrics.mean_absolute_error` :pr:`27736` by :user:`Edoardo Abati <EdAbati>`;
+- :func:`sklearn.metrics.mean_gamma_deviance` :pr:`29239` by :usser:`Emily Chen <EmilyXinyi>`;
 - :func:`sklearn.metrics.mean_squared_error` :pr:`29142` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.metrics.mean_tweedie_deviance` :pr:`28106` by :user:`Thomas Li <lithomas1>`;
-- :func:`sklearn.metrics.pairwise.cosine_similarity` :pr:`29014` by :user:`Edoardo Abati <EdAbati>`.
+- :func:`sklearn.metrics.pairwise.additive_chi2_kernel` :pr:`29144` by :user:`Yaroslav Korobko <Tialo>`;
+- :func:`sklearn.metrics.pairwise.cosine_similarity` :pr:`29014` by :user:`Edoardo Abati <EdAbati>`;
 - :func:`sklearn.metrics.pairwise.paired_cosine_distances` :pr:`29112` by :user:`Edoardo Abati <EdAbati>`.
-
 
 **Classes:**
 
@@ -129,6 +132,11 @@ Changelog
 - |Enhancement| :func:`sklearn.metrics.check_scoring` now accepts `raise_exc` to specify
   whether to raise an exception if a subset of the scorers in multimetric scoring fails
   or to return an error code. :pr:`28992` by :user:`Stefanie Senger <StefanieSenger>`.
+
+- |Enhancement| Adds `zero_division` to :func:`cohen_kappa_score`. When there is a
+  division by zero, the metric is undefined and this value is returned.
+  :pr:`29210` by :user:`Marc Torrellas Socastro <marctorsoc>` and
+  :user:`Stefanie Senger <StefanieSenger>`.
 
 :mod:`sklearn.model_selection`
 ..............................

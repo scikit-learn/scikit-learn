@@ -1,13 +1,7 @@
 """Metrics for pairwise distances and affinity of sets of samples."""
 
-# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#          Robert Layton <robertlayton@gmail.com>
-#          Andreas Mueller <amueller@ais.uni-bonn.de>
-#          Philippe Gervais <philippe.gervais@inria.fr>
-#          Lars Buitinck
-#          Joel Nothman <joel.nothman@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import itertools
 import warnings
@@ -1718,7 +1712,7 @@ def additive_chi2_kernel(X, Y=None):
 
     Returns
     -------
-    kernel : ndarray of shape (n_samples_X, n_samples_Y)
+    kernel : array-like of shape (n_samples_X, n_samples_Y)
         The kernel matrix.
 
     See Also
@@ -1750,15 +1744,26 @@ def additive_chi2_kernel(X, Y=None):
     array([[-1., -2.],
            [-2., -1.]])
     """
+    xp, _ = get_namespace(X, Y)
     X, Y = check_pairwise_arrays(X, Y, accept_sparse=False)
-    if (X < 0).any():
+    if xp.any(X < 0):
         raise ValueError("X contains negative values.")
-    if Y is not X and (Y < 0).any():
+    if Y is not X and xp.any(Y < 0):
         raise ValueError("Y contains negative values.")
 
-    result = np.zeros((X.shape[0], Y.shape[0]), dtype=X.dtype)
-    _chi2_kernel_fast(X, Y, result)
-    return result
+    if _is_numpy_namespace(xp):
+        result = np.zeros((X.shape[0], Y.shape[0]), dtype=X.dtype)
+        _chi2_kernel_fast(X, Y, result)
+        return result
+    else:
+        dtype = _find_matching_floating_dtype(X, Y, xp=xp)
+        xb = X[:, None, :]
+        yb = Y[None, :, :]
+        nom = -((xb - yb) ** 2)
+        denom = xb + yb
+        nom = xp.where(denom == 0, xp.asarray(0, dtype=dtype), nom)
+        denom = xp.where(denom == 0, xp.asarray(1, dtype=dtype), denom)
+        return xp.sum(nom / denom, axis=2)
 
 
 @validate_params(

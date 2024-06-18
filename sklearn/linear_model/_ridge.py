@@ -2,11 +2,8 @@
 Ridge regression
 """
 
-# Author: Mathieu Blondel <mathieu@mblondel.org>
-#         Reuben Fletcher-Costin <reuben.fletchercostin@gmail.com>
-#         Fabian Pedregosa <fabian@fseoane.net>
-#         Michael Eickenberg <michael.eickenberg@nsup.org>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 import numbers

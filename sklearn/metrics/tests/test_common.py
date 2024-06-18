@@ -51,7 +51,11 @@ from sklearn.metrics import (
     zero_one_loss,
 )
 from sklearn.metrics._base import _average_binary_score
-from sklearn.metrics.pairwise import cosine_similarity, paired_cosine_distances
+from sklearn.metrics.pairwise import (
+    additive_chi2_kernel,
+    cosine_similarity,
+    paired_cosine_distances,
+)
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import shuffle
 from sklearn.utils._array_api import (
@@ -1827,20 +1831,14 @@ def check_array_api_multiclass_classification_metric(
 
 
 def check_array_api_regression_metric(metric, array_namespace, device, dtype_name):
-    y_true_np = np.array([2, 0, 1, 4], dtype=dtype_name)
+    y_true_np = np.array([2.0, 0.1, 1.0, 4.0], dtype=dtype_name)
     y_pred_np = np.array([0.5, 0.5, 2, 2], dtype=dtype_name)
 
-    check_array_api_metric(
-        metric,
-        array_namespace,
-        device,
-        dtype_name,
-        a_np=y_true_np,
-        b_np=y_pred_np,
-        sample_weight=None,
-    )
+    metric_kwargs = {}
+    metric_params = signature(metric).parameters
 
-    sample_weight = np.array([0.1, 2.0, 1.5, 0.5], dtype=dtype_name)
+    if "sample_weight" in metric_params:
+        metric_kwargs["sample_weight"] = None
 
     check_array_api_metric(
         metric,
@@ -1849,8 +1847,23 @@ def check_array_api_regression_metric(metric, array_namespace, device, dtype_nam
         dtype_name,
         a_np=y_true_np,
         b_np=y_pred_np,
-        sample_weight=sample_weight,
+        **metric_kwargs,
     )
+
+    if "sample_weight" in metric_params:
+        metric_kwargs["sample_weight"] = np.array(
+            [0.1, 2.0, 1.5, 0.5], dtype=dtype_name
+        )
+
+        check_array_api_metric(
+            metric,
+            array_namespace,
+            device,
+            dtype_name,
+            a_np=y_true_np,
+            b_np=y_pred_np,
+            **metric_kwargs,
+        )
 
 
 def check_array_api_regression_metric_multioutput(
@@ -1946,6 +1959,9 @@ array_api_metric_checkers = {
         check_array_api_regression_metric,
     ],
     paired_cosine_distances: [check_array_api_metric_pairwise],
+    additive_chi2_kernel: [check_array_api_metric_pairwise],
+    mean_gamma_deviance: [check_array_api_regression_metric],
+    max_error: [check_array_api_regression_metric],
 }
 
 
