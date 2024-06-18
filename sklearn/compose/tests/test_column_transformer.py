@@ -2640,7 +2640,7 @@ def test_metadata_routing_for_column_transformer(method):
     )
 
     if method == "transform":
-        trs.fit(X, y)
+        trs.fit(X, y, sample_weight=sample_weight, metadata=metadata)
         trs.transform(X, sample_weight=sample_weight, metadata=metadata)
     else:
         getattr(trs, method)(X, y, sample_weight=sample_weight, metadata=metadata)
@@ -2648,7 +2648,11 @@ def test_metadata_routing_for_column_transformer(method):
     assert len(registry)
     for _trs in registry:
         check_recorded_metadata(
-            obj=_trs, method=method, sample_weight=sample_weight, metadata=metadata
+            obj=_trs,
+            method=method,
+            parent=method,
+            sample_weight=sample_weight,
+            metadata=metadata,
         )
 
 
