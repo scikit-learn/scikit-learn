@@ -152,6 +152,7 @@ ignore=[
     # do not use variables named 'l', 'O', or 'I'
     "E741",
     # ignore assigned but unused variables
+    # this comes up with preview=true
     "F841",
 ]
 
