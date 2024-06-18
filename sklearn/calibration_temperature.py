@@ -63,7 +63,7 @@ from .utils.validation import (
 )
 
 
-class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
+class CalibratedClassifierCV_test(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
     """Probability calibration with isotonic regression or logistic regression.
 
     This class uses cross-validation to both estimate the parameters of a
@@ -944,35 +944,33 @@ def _row_max_normalization(data: np.ndarray) -> np.ndarray:
     return data - row_max
 
 
-def _softmax_T(predictions: np.ndarray,
+def _softmax_t(predictions: np.ndarray,
                temperature: float,
                ) -> np.ndarray:
     """Softmax function scaled by the inverse temperature
     """
 
-    softmax_T_output: np.ndarray = predictions
-    softmax_T_output = _row_max_normalization(softmax_T_output)
-    softmax_T_output /= temperature
-    softmax_T_output = softmax(softmax_T_output,
-                               axis=1
-                               )
-    softmax_T_output = softmax_T_output.astype(dtype=predictions.dtype)
+    softmax_t_output: np.ndarray = predictions
+    softmax_t_output = _row_max_normalization(softmax_t_output)
+    softmax_t_output /= temperature
+    softmax_t_output = softmax(softmax_t_output, axis=1)
+    softmax_t_output = softmax_t_output.astype(dtype=predictions.dtype)
 
-    return softmax_T_output
+    return softmax_t_output
 
 
-def _exp_T(predictions: np.ndarray,
+def _exp_t(predictions: np.ndarray,
            temperature: float
            ) -> np.ndarray:
     """Scale by inverse temperature, and then apply the nature exponential function
     """
 
-    exp_T_output: np.ndarray = predictions
-    exp_T_output = _row_max_normalization(exp_T_output)
-    exp_T_output /= temperature
-    exp_T_output = np.exp(exp_T_output)
+    exp_t_output: np.ndarray = predictions
+    exp_t_output = _row_max_normalization(exp_t_output)
+    exp_t_output /= temperature
+    exp_t_output = np.exp(exp_t_output)
 
-    return exp_T_output
+    return exp_t_output
 
 
 def _temperature_scaling(predictions: np.ndarray,
@@ -987,43 +985,38 @@ def _temperature_scaling(predictions: np.ndarray,
            with respect to Temperature
         """
 
-        # Losses
-        losses: np.ndarray = _softmax_T(predictions,
-                                        temperature
-                                        )
+        # Initiate the Losses
+        losses: np.ndarray = _softmax_t(predictions, temperature)
+        class_indices: np.ndarray = np.argmax(labels, axis=1)
 
         # Select the probability of the correct class
-        losses = losses[np.arange(losses.shape[0]),
-        labels
-        ]
+        losses = losses[np.arange(losses.shape[0]), class_indices]
 
         losses = np.log(losses)
 
-        # Derivates with respect to Temperature
-        exp_T: np.ndarray = _exp_T(predictions, temperature)
-        exp_T_sum = exp_T.sum(axis=1)
+        # Derivatives with respect to Temperature
+        exp_t: np.ndarray = _exp_t(predictions, temperature)
+        exp_t_sum = exp_t.sum(axis=1)
 
         term_1: np.ndarray = _row_max_normalization(predictions)
         term_1 /= temperature ** 2
-        term_1 = - term_1[np.arange(term_1.shape[0]),
-        labels
-        ]
-        term_1 *= exp_T_sum
+        term_1 = - term_1[np.arange(term_1.shape[0]), class_indices]
+        term_1 *= exp_t_sum
 
         term_2: np.ndarray = _row_max_normalization(predictions)
         term_2 /= temperature ** 2
         term_2 = _row_max_normalization(term_2)
-        term_2 *= exp_T
+        term_2 *= exp_t
         term_2 = term_2.sum(axis=1)
 
-        dL_dts: np.ndarray = (term_1 + term_2) / exp_T_sum
+        dL_dts: np.ndarray = (term_1 + term_2) / exp_t_sum
 
         # print(f"{-losses.sum() = },  {-dL_dts.sum() = }")
 
         return -losses.sum(), -dL_dts.sum()
 
     temperature_minimizer: minimize = minimize(negative_log_likelihood,
-                                               initial_temperature,
+                                               np.array([initial_temperature]),
                                                method="L-BFGS-B",
                                                bounds=[(1, None)],
                                                jac=True,
@@ -1076,7 +1069,7 @@ class _TemperatureScaling():
             The predicted data.
         """
 
-        return _softmax_T(np.log(X), self.T_)
+        return _softmax_t(np.log(X), self.T_)
 
 
 @validate_params(
