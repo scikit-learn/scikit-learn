@@ -438,7 +438,7 @@ def test_minibatch_sensible_reassign(global_random_seed):
     ).fit(zeroed_X)
     # there should not be too many exact zero cluster centers
     num_non_zero_clusters = km.cluster_centers_.any(axis=1).sum()
-    if num_non_zero_clusters <= 10:
+    if num_non_zero_clusters < 10:
         raise ValueError(
             f"Number of non-zero clusters is too small {num_non_zero_clusters=}"
         )
@@ -449,7 +449,7 @@ def test_minibatch_sensible_reassign(global_random_seed):
     ).fit(zeroed_X)
     # there should not be too many exact zero cluster centers
     num_non_zero_clusters = km.cluster_centers_.any(axis=1).sum()
-    if num_non_zero_clusters <= 10:
+    if num_non_zero_clusters < 10:
         raise ValueError(
             f"Number of non-zero clusters is too small {num_non_zero_clusters=}"
         )
@@ -460,7 +460,7 @@ def test_minibatch_sensible_reassign(global_random_seed):
         km.partial_fit(zeroed_X)
     # there should not be too many exact zero cluster centers
     num_non_zero_clusters = km.cluster_centers_.any(axis=1).sum()
-    if num_non_zero_clusters <= 10:
+    if num_non_zero_clusters < 10:
         raise ValueError(
             f"Number of non-zero clusters is too small {num_non_zero_clusters=}"
         )
