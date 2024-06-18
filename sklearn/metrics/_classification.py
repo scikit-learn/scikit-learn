@@ -223,12 +223,10 @@ def accuracy_score(
     check_consistent_length(y_true, y_pred, sample_weight)
 
     # Check y_true and y_pred is empty
-    len_y_true = _num_samples(y_true)
-
-    if len_y_true == 0:  # empty vectors
+    if len(y_true) == 0:  # empty vectors
         if zero_division == "warn":
             msg = (
-                "accuracy() is ill-defined and set to 0.0. Use the `zero_division`"
+                "accuracy() is ill-defined and set to 0.0. Use the `zero_division` "
                 "param to control this behavior."
             )
             warnings.warn(msg, UndefinedMetricWarning)
