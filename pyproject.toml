@@ -140,8 +140,10 @@ exclude=[
 ]
 
 [tool.ruff.lint]
+# This enables us to use CPY001: copyright header check
+preview = true
 # all rules can be found here: https://beta.ruff.rs/docs/rules/
-select = ["E", "F", "W", "I"]
+select = ["E", "F", "W", "I", "CPY001"]
 ignore=[
     # space before : (needed for how black formats slicing)
     "E203",
@@ -151,11 +153,21 @@ ignore=[
     "E741",
 ]
 
+[tool.ruff.lint.flake8-copyright]
+notice-rgx = "\\#\\ Authors:\\ The\\ scikit\\-learn\\ developers\\\n\\#\\ SPDX\\-License\\-Identifier:\\ BSD\\-3\\-Clause"
+
 [tool.ruff.lint.per-file-ignores]
 # It's fine not to put the import at the top of the file in the examples
 # folder.
 "examples/*"=["E402"]
 "doc/conf.py"=["E402"]
+"**/tests/*"=["CPY001"]
+"asv_benchmarks/*"=["CPY001"]
+"benchmarks/*"=["CPY001"]
+"doc/*"=["CPY001"]
+"build_tools/*"=["CPY001"]
+"maint_tools/*"=["CPY001"]
+".github/*"=["CPY001"]
 
 
 [tool.cython-lint]
