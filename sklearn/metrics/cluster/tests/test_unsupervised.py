@@ -433,7 +433,7 @@ def test_dbcv_score_irrelevant_d_warning(density_sample):
     )
     with warnings.catch_warnings(record=True) as record:
         dbcv_score(*density_sample, d=2)
-        assert len(record == 1)
+        assert len(record) == 1
         assert record[0].message == expected_msg
 
 
