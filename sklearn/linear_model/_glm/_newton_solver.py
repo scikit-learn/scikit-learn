@@ -253,7 +253,7 @@ class NewtonSolver(ABC):
             check = loss_improvement <= t * armijo_term
             if is_verbose:
                 print(
-                    f"    line search iteration={i+1}, step size={t}\n"
+                    f"    line search iteration={i + 1}, step size={t}\n"
                     f"      check loss improvement <= armijo term: {loss_improvement} "
                     f"<= {t * armijo_term} {check}"
                 )

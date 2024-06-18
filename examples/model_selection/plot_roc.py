@@ -151,9 +151,9 @@ _ = display.ax_.set(
 #
 # We can briefly demo the effect of :func:`numpy.ravel`:
 
-print(f"y_score:\n{y_score[0:2,:]}")
+print(f"y_score:\n{y_score[0:2, :]}")
 print()
-print(f"y_score.ravel():\n{y_score[0:2,:].ravel()}")
+print(f"y_score.ravel():\n{y_score[0:2, :].ravel()}")
 
 # %%
 # In a multi-class classification setup with highly imbalanced classes,
