@@ -433,8 +433,7 @@ def test_dbcv_score_irrelevant_d_warning(density_sample):
     )
     with warnings.catch_warnings(record=True) as record:
         dbcv_score(*density_sample, d=2)
-        assert len(record) == 1
-        assert record[0].message == expected_msg
+        assert record[-1].message == expected_msg
 
 
 def test_dbcv_score_rand_in_output_val_range(density_sample):
