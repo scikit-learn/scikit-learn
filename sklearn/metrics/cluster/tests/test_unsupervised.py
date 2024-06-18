@@ -431,9 +431,8 @@ def test_dbcv_score_irrelevant_d_warning(density_sample):
         'The "d" value you provided is being ignored. '
         "It's only required for precomputed distances"
     )
-    with warnings.catch_warnings(record=True) as record:
+    with pytest.warns(UserWarning, match=expected_msg):
         dbcv_score(*density_sample, d=2)
-        assert record[-1].message == expected_msg
 
 
 def test_dbcv_score_rand_in_output_val_range(density_sample):
