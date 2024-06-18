@@ -588,9 +588,7 @@ def dbcv_score(
 
     le = LabelEncoder()
     labels = le.fit_transform(labels)
-    cluster_ids = [
-        i for i in range(len(le.classes_)) if str(le.classes_[i]) != "-1"
-    ]
+    cluster_ids = [i for i in range(len(le.classes_)) if str(le.classes_[i]) != "-1"]
     check_number_of_labels(len(cluster_ids), len(labels))
     n_labels = len(le.classes_)
 
@@ -614,16 +612,14 @@ def dbcv_score(
             **kwd_args,
         )
 
-        mst_nodes[cluster_id], mst_edges[cluster_id] = (
-            _internal_minimum_spanning_tree(distances_for_mst)
+        mst_nodes[cluster_id], mst_edges[cluster_id] = _internal_minimum_spanning_tree(
+            distances_for_mst
         )
         density_sparseness[cluster_id] = mst_edges[cluster_id].T[2].max()
 
     for cluster_id in cluster_ids:
         internal_nodes_i = mst_nodes[cluster_id]
-        for j in cluster_ids[
-            cluster_ids.index(cluster_id) + 1 :
-        ]:
+        for j in cluster_ids[cluster_ids.index(cluster_id) + 1 :]:
             internal_nodes_j = mst_nodes[j]
             density_sep[cluster_id, j] = _density_separation(
                 X,
