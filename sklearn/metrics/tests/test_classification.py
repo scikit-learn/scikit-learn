@@ -674,7 +674,7 @@ def test_confusion_matrix_single_label():
                 "y_true": np.array([1, 1, 1, 0, 0, 0]),
                 "y_pred": np.array([1, 1, 1, 0, 0, 0]),
             },
-            "`positive_likelihood_ratio` ill-defined and set to np.nan.",
+            "`positive_likelihood_ratio` is ill-defined and set to np.nan.",
         ),
         # When `fp == 0` and `tp == 0`, LR+ is undefined
         (
@@ -701,7 +701,7 @@ def test_confusion_matrix_single_label():
                 "y_true": np.array([0, 0, 0, 0, 0, 0]),
                 "y_pred": np.array([1, 1, 1, 0, 0, 0]),
             },
-            "no samples of the positive class were present in the testing set",
+            "No samples of the positive class were present in `y_true`.",
         ),
     ],
 )

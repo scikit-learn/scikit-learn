@@ -2037,11 +2037,13 @@ def class_likelihood_ratios(
     neg_num = fn * support_neg
     neg_denom = tn * support_pos
 
-    # If zero division warn and set scores to nan, else divide
     if support_pos == 0:
-        msg = "no samples of the positive class were present in the testing set "
-        if raise_warning:
-            warnings.warn(msg, UserWarning, stacklevel=2)
+        msg = (
+            "No samples of the positive class were present in `y_true`. "
+            "`positive_likelihood_ratio` and `negative_likelihood_ratio` are both set "
+            "to np.nan."
+        )
+        warnings.warn(msg, UserWarning, stacklevel=2)
         positive_likelihood_ratio = np.nan
         negative_likelihood_ratio = np.nan
 
@@ -2053,7 +2055,7 @@ def class_likelihood_ratios(
                     "`positive_likelihood_ratio` is "
                 )
             else:
-                msg_beginning = "`positive_likelihood_ratio` ill-defined and "
+                msg_beginning = "`positive_likelihood_ratio` is ill-defined and "
             msg_end = "set to np.nan. Use the `zero_division` param to control this "
             "behavior."
             warnings.warn(msg_beginning + msg_end, UndefinedMetricWarning, stacklevel=2)
