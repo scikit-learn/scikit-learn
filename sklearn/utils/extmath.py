@@ -1,7 +1,4 @@
-"""
-The :mod:`sklearn.utils.extmath` module includes utilities to perform
-optimal mathematical operations in scikit-learn that are not available in SciPy.
-"""
+"""Utilities to perform optimal mathematical operations in scikit-learn."""
 
 # Authors: Gael Varoquaux
 #          Alexandre Gramfort
@@ -11,7 +8,7 @@ optimal mathematical operations in scikit-learn that are not available in SciPy.
 #          Stefan van der Walt
 #          Kyle Kastner
 #          Giorgio Patrini
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from functools import partial

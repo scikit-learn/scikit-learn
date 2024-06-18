@@ -1,5 +1,5 @@
 # Authors: William Mill (bill@billmill.org)
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 

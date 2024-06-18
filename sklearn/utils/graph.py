@@ -1,11 +1,9 @@
-"""
-The :mod:`sklearn.utils.graph` module includes graph utilities and algorithms.
-"""
+"""Graph utilities and algorithms."""
 
 # Authors: Aric Hagberg <hagberg@lanl.gov>
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Jake Vanderplas <vanderplas@astro.washington.edu>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 from scipy import sparse

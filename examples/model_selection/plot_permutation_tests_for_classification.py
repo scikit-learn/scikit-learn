@@ -11,7 +11,7 @@ significance of a cross-validated score using permutations.
 
 # Authors:  Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #           Lucy Liu
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Dataset
@@ -128,10 +128,10 @@ plt.show()
 # Finally, note that this test has been shown to produce low p-values even
 # if there is only weak structure in the data [1]_.
 #
-# .. topic:: References:
+# .. rubric:: References
 #
-#   .. [1] Ojala and Garriga. `Permutation Tests for Studying Classifier
-#          Performance
-#          <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_. The
-#          Journal of Machine Learning Research (2010) vol. 11
+# .. [1] Ojala and Garriga. `Permutation Tests for Studying Classifier
+#        Performance
+#        <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_. The
+#        Journal of Machine Learning Research (2010) vol. 11
 #

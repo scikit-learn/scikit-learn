@@ -2,7 +2,7 @@
 
 # Author: Fabian Pedregosa -- <fabian.pedregosa@inria.fr>
 #         Jake Vanderplas  -- <vanderplas@astro.washington.edu>
-# License: BSD 3 clause (C) INRIA 2011
+# SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Integral, Real
 

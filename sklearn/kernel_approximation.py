@@ -1,12 +1,8 @@
-"""
-The :mod:`sklearn.kernel_approximation` module implements several
-approximate kernel feature maps based on Fourier transforms and Count Sketches.
-"""
+"""Approximate kernel feature maps based on Fourier transforms and count sketches."""
 
 # Author: Andreas Mueller <amueller@ais.uni-bonn.de>
 #         Daniel Lopez-Sanchez (TensorSketch) <lope@usal.es>
-
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Integral, Real

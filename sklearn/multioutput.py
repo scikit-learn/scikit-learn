@@ -1,5 +1,4 @@
-"""
-This module implements multioutput regression and classification.
+"""Multioutput regression and classification.
 
 The estimators provided in this module are meta-estimators: they require
 a base estimator to be provided in their constructor. The meta-estimator
@@ -12,7 +11,7 @@ extends single output estimators to multioutput estimators.
 # Author: Michael Williamson
 # Author: James Ashton Nichols <james.ashton.nichols@gmail.com>
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 from abc import ABCMeta, abstractmethod

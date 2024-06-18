@@ -18,7 +18,7 @@ The module structure is the following:
 
 # Authors: Peter Prettenhofer, Scott White, Gilles Louppe, Emanuele Olivetti,
 #          Arnaud Joly, Jacob Schreiber
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import math
 import warnings
@@ -2032,6 +2032,11 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     array([-61...])
     >>> reg.score(X_test, y_test)
     0.4...
+
+    For a detailed example of utilizing
+    :class:`~sklearn.ensemble.GradientBoostingRegressor`
+    to fit an ensemble of weak predictive models, please refer to
+    :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regression.py`.
     """
 
     _parameter_constraints: dict = {

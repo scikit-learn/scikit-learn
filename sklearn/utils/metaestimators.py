@@ -1,10 +1,8 @@
-"""
-The :mod:`sklearn.utils.metaestimators` module includes utilities for meta-estimators.
-"""
+"""Utilities for meta-estimators."""
 
 # Author: Joel Nothman
 #         Andreas Mueller
-# License: BSD
+# SPDX-License-Identifier: BSD-3-Clause
 from abc import ABCMeta, abstractmethod
 from contextlib import suppress
 from typing import Any, List

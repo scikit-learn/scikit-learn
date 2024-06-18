@@ -1,7 +1,4 @@
-"""
-The :mod:`sklearn.ensemble` module includes ensemble-based methods for
-classification, regression and anomaly detection.
-"""
+"""Ensemble-based methods for classification, regression and anomaly detection."""
 
 from ._bagging import BaggingClassifier, BaggingRegressor
 from ._base import BaseEnsemble

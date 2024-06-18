@@ -15,18 +15,21 @@ from sklearn.utils._array_api import (
     _convert_to_numpy,
     _estimator_with_converted_arrays,
     _is_numpy_namespace,
+    _isin,
     _nanmax,
     _nanmin,
     _NumPyAPIWrapper,
     _ravel,
     device,
     get_namespace,
+    get_namespace_and_device,
     indexing_dtype,
     supported_float_dtypes,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
     _array_api_for_tests,
+    assert_array_equal,
     skip_if_array_api_compat_not_configured,
 )
 from sklearn.utils.fixes import _IS_32BIT
@@ -504,3 +507,62 @@ def test_indexing_dtype(namespace, _device, _dtype):
         assert indexing_dtype(xp) == xp.int32
     else:
         assert indexing_dtype(xp) == xp.int64
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, _", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize("invert", [True, False])
+@pytest.mark.parametrize("assume_unique", [True, False])
+@pytest.mark.parametrize("element_size", [6, 10, 14])
+@pytest.mark.parametrize("int_dtype", ["int16", "int32", "int64", "uint8"])
+def test_isin(
+    array_namespace, device, _, invert, assume_unique, element_size, int_dtype
+):
+    xp = _array_api_for_tests(array_namespace, device)
+    r = element_size // 2
+    element = 2 * numpy.arange(element_size).reshape((r, 2)).astype(int_dtype)
+    test_elements = numpy.array(numpy.arange(14), dtype=int_dtype)
+    element_xp = xp.asarray(element, device=device)
+    test_elements_xp = xp.asarray(test_elements, device=device)
+    expected = numpy.isin(
+        element=element,
+        test_elements=test_elements,
+        assume_unique=assume_unique,
+        invert=invert,
+    )
+    with config_context(array_api_dispatch=True):
+        result = _isin(
+            element=element_xp,
+            test_elements=test_elements_xp,
+            xp=xp,
+            assume_unique=assume_unique,
+            invert=invert,
+        )
+
+    assert_array_equal(_convert_to_numpy(result, xp=xp), expected)
+
+
+def test_get_namespace_and_device():
+    # Use torch as a library with custom Device objects:
+    torch = pytest.importorskip("torch")
+    xp_torch = pytest.importorskip("array_api_compat.torch")
+    some_torch_tensor = torch.arange(3, device="cpu")
+    some_numpy_array = numpy.arange(3)
+
+    # When dispatch is disabled, get_namespace_and_device should return the
+    # default NumPy wrapper namespace and no device. Our code will handle such
+    # inputs via the usual __array__ interface without attempting to dispatch
+    # via the array API.
+    namespace, is_array_api, device = get_namespace_and_device(some_torch_tensor)
+    assert namespace is get_namespace(some_numpy_array)[0]
+    assert not is_array_api
+    assert device is None
+
+    # Otherwise, expose the torch namespace and device via array API compat
+    # wrapper.
+    with config_context(array_api_dispatch=True):
+        namespace, is_array_api, device = get_namespace_and_device(some_torch_tensor)
+        assert namespace is xp_torch
+        assert is_array_api
+        assert device == some_torch_tensor.device

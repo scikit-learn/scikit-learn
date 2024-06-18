@@ -25,7 +25,7 @@ which is well known to have this percolation instability.
 """
 
 # Authors: Gael Varoquaux, Nelle Varoquaux
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import time
 

@@ -12,7 +12,7 @@ dependencies:
   - joblib=1.2.0  # min
   - matplotlib=3.3.4  # min
   - pyamg
-  - pytest<8
+  - pytest
   - pytest-xdist
   - pillow
   - pytest-cov

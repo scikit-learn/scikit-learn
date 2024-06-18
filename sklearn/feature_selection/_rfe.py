@@ -2,7 +2,7 @@
 #          Vincent Michel <vincent.michel@inria.fr>
 #          Gilles Louppe <g.louppe@gmail.com>
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 """Recursive feature elimination for feature ranking"""
 
@@ -539,7 +539,7 @@ class RFECV(RFE):
             ``cv`` default value of None changed from 3-fold to 5-fold.
 
     scoring : str, callable or None, default=None
-        A string (see model evaluation documentation) or
+        A string (see :ref:`scoring_parameter`) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 

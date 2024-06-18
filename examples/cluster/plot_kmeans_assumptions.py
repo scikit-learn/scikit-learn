@@ -10,7 +10,7 @@ unintuitive and possibly undesirable clusters.
 
 # Author: Phil Roth <mr.phil.roth@gmail.com>
 #         Arturo Amor <david-arturo.amor-quiroz@inria.fr>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Data generation

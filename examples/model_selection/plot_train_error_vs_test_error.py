@@ -13,7 +13,7 @@ measured using the explained variance a.k.a. R^2.
 """
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Generate sample data

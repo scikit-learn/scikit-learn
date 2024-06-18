@@ -8,19 +8,53 @@
 Version 1.5
 ===========
 
-..
-  -- UNCOMMENT WHEN 1.5.0 IS RELEASED --
-  For a short description of the main highlights of the release, please refer to
-  :ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_5_0.py`.
+For a short description of the main highlights of the release, please refer to
+:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_5_0.py`.
 
 .. include:: changelog_legend.inc
+
+.. _changes_1_5_1:
+
+Version 1.5.1
+=============
+
+**TODO**
+
+Changelog
+---------
+
+Changes impacting many modules
+------------------------------
+
+- |Fix| Fixed a regression causing a dead-lock at import time in some settings.
+  :pr:`29235` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fix a regression in :func:`metrics.r2_score`. Passing torch CPU tensors
+  with array API dispatched disabled would complain about non-CPU devices
+  instead of implicitly converting those inputs as regular NumPy arrays.
+  :pr:`29119` by :user:`Olivier Grisel`.
+
+:mod:`sklearn.model_selection`
+..............................
+
+- |Fix| Fix a regression in :class:`model_selection.GridSearchCV` for parameter
+  grids that have heterogeneous parameter values.
+  :pr:`29078` by :user:`Loïc Estève <lesteve>`.
+
+- |Fix| Fix a regression in :class:`model_selection.GridSearchCV` for parameter
+  grids that have estimators as parameter values.
+  :pr:`29179` by :user:`Marco Gorelli<MarcoGorelli>`.
+
 
 .. _changes_1_5:
 
 Version 1.5.0
 =============
 
-**In Development**
+**May 2024**
 
 Security
 --------
@@ -59,6 +93,10 @@ Changed models
 Changes impacting many modules
 ------------------------------
 
+- |Fix| Raise `ValueError` with an informative error message when passing 1D
+  sparse arrays to methods that expect 2D sparse inputs.
+  :pr:`28988` by :user:`Olivier Grisel <ogrisel>`.
+
 - |API| The name of the input of the `inverse_transform` method of estimators has been
   standardized to `X`. As a consequence, `Xt` is deprecated and will be removed in
   version 1.7 in the following estimators: :class:`cluster.FeatureAgglomeration`,
@@ -66,10 +104,6 @@ Changes impacting many modules
   :class:`model_selection.GridSearchCV`, :class:`model_selection.RandomizedSearchCV`,
   :class:`pipeline.Pipeline` and :class:`preprocessing.KBinsDiscretizer`.
   :pr:`28756` by :user:`Will Dean <wd60622>`.
-
-- |Fix| Raise `ValueError` with an informative error message when passing 1D
-  sparse arrays to methods that expect 2D sparse inputs.
-  :pr:`28988` by :user:`Olivier Grisel <ogrisel>`.
 
 Support for Array API
 ---------------------
@@ -82,8 +116,8 @@ See :ref:`array_api` for more details.
 **Functions:**
 
 - :func:`sklearn.metrics.r2_score` now supports Array API compliant inputs.
-  :pr:`27904` by :user:`Eric Lindgren <elindgren>`, `Franck Charras <fcharras>`,
-  `Olivier Grisel <ogrisel>` and `Tim Head <betatim>`.
+  :pr:`27904` by :user:`Eric Lindgren <elindgren>`, :user:`Franck Charras <fcharras>`,
+  :user:`Olivier Grisel <ogrisel>` and :user:`Tim Head <betatim>`.
 
 **Classes:**
 
@@ -103,8 +137,8 @@ Unless we discover a major blocker, setuptools support will be dropped in
 scikit-learn 1.6. The 1.5.x releases will support building scikit-learn with
 setuptools.
 
-Meson support for building scikit-learn was added in :pr:`28040` by :user:`Loïc
-Estève <lesteve>`
+Meson support for building scikit-learn was added in :pr:`28040` by
+:user:`Loïc Estève <lesteve>`
 
 Metadata Routing
 ----------------
@@ -120,7 +154,8 @@ more details.
   now support metadata routing. The fit methods now
   accept ``**fit_params`` which are passed to the underlying estimators
   via their `fit` methods.
-  :pr:`28432` by :user:`Adam Li <adam2392>` and :user:`Benjamin Bossan <BenjaminBossan>`.
+  :pr:`28432` by :user:`Adam Li <adam2392>` and
+  :user:`Benjamin Bossan <BenjaminBossan>`.
 
 - |Feature| :class:`linear_model.RidgeCV` and
   :class:`linear_model.RidgeClassifierCV` now support metadata routing in
@@ -144,8 +179,8 @@ more details.
 
 - |Feature| :class:`pipeline.FeatureUnion` now supports metadata routing in its
   ``fit`` and ``fit_transform`` methods and route metadata to the underlying
-  transformers' ``fit`` and ``fit_transform``. :pr:`28205` by :user:`Stefanie
-  Senger <StefanieSenger>`.
+  transformers' ``fit`` and ``fit_transform``.
+  :pr:`28205` by :user:`Stefanie Senger <StefanieSenger>`.
 
 - |Fix| Fix an issue when resolving default routing requests set via class
   attributes.
@@ -156,8 +191,8 @@ more details.
   :pr:`28651` by `Adrin Jalali`_.
 
 - |FIX| Prevent a `RecursionError` when estimators with the default `scoring`
-  param (`None`) route metadata. :pr:`28712` by :user:`Stefanie Senger
-  <StefanieSenger>`.
+  param (`None`) route metadata.
+  :pr:`28712` by :user:`Stefanie Senger <StefanieSenger>`.
 
 Changelog
 ---------
@@ -182,6 +217,9 @@ Changelog
 
 :mod:`sklearn.cluster`
 ......................
+
+- |Fix| The :class:`cluster.MeanShift` class now properly converges for constant data.
+  :pr:`28951` by :user:`Akihiro Kuno <akikuno>`.
 
 - |FIX| Create copy of precomputed sparse matrix within the `fit` method of
   :class:`~cluster.OPTICS` to avoid in-place modification of the sparse matrix.
@@ -214,18 +252,19 @@ Changelog
 :mod:`sklearn.cross_decomposition`
 ..................................
 
-- |API| Deprecates `Y` in favor of `y` in the methods fit, transform and inverse_transform of:
+- |Fix| The `coef_` fitted attribute of :class:`cross_decomposition.PLSRegression`
+  now takes into account both the scale of `X` and `Y` when `scale=True`. Note that
+  the previous predicted values were not affected by this bug.
+  :pr:`28612` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |API| Deprecates `Y` in favor of `y` in the methods fit, transform and
+  inverse_transform of:
   :class:`cross_decomposition.PLSRegression`.
   :class:`cross_decomposition.PLSCanonical`,
   :class:`cross_decomposition.CCA`,
   and :class:`cross_decomposition.PLSSVD`.
   `Y` will be removed in version 1.7.
   :pr:`28604` by :user:`David Leon <davidleon123>`.
-
-- |Fix| The `coef_` fitted attribute of :class:`cross_decomposition.PLSRegression`
-  now takes into account both the scale of `X` and `Y` when `scale=True`. Note that
-  the previous predicted values were not affected by this bug.
-  :pr:`28612` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.datasets`
 .......................
@@ -242,7 +281,8 @@ Changelog
   :func:`datasets.fetch_rcv1`,
   and :func:`datasets.fetch_species_distributions`.
   By default, the functions will retry up to 3 times in case of network failures.
-  :pr:`28160` by :user:`Zhehao Liu <MaxwellLZH>` and :user:`Filip Karlo Došilović <fkdosilovic>`.
+  :pr:`28160` by :user:`Zhehao Liu <MaxwellLZH>` and
+  :user:`Filip Karlo Došilović <fkdosilovic>`.
 
 :mod:`sklearn.decomposition`
 ............................
@@ -347,13 +387,8 @@ Changelog
 
 - |Fix| :class:`linear_model.ElasticNet`, :class:`linear_model.ElasticNetCV`,
   :class:`linear_model.Lasso` and :class:`linear_model.LassoCV` now explicitly don't
-  accept large sparse data formats. :pr:`27576` by :user:`Stefanie Senger
-  <StefanieSenger>`.
-
-- |API| :class:`linear_model.RidgeCV` and :class:`linear_model.RidgeClassifierCV`
-  will now allow `alpha=0` when `cv != None`, which is consistent with
-  :class:`linear_model.Ridge` and :class:`linear_model.RidgeClassifier`.
-  :pr:`28425` by :user:`Lucy Liu <lucyleeow>`.
+  accept large sparse data formats.
+  :pr:`27576` by :user:`Stefanie Senger <StefanieSenger>`.
 
 - |Fix| :class:`linear_model.RidgeCV` and :class:`RidgeClassifierCV` correctly pass
   `sample_weight` to the underlying scorer when `cv` is None.
@@ -362,6 +397,11 @@ Changelog
 - |Fix| `n_nonzero_coefs_` attribute in :class:`linear_model.OrthogonalMatchingPursuit`
   will now always be `None` when `tol` is set, as `n_nonzero_coefs` is ignored in
   this case. :pr:`28557` by :user:`Lucy Liu <lucyleeow>`.
+
+- |API| :class:`linear_model.RidgeCV` and :class:`linear_model.RidgeClassifierCV`
+  will now allow `alpha=0` when `cv != None`, which is consistent with
+  :class:`linear_model.Ridge` and :class:`linear_model.RidgeClassifier`.
+  :pr:`28425` by :user:`Lucy Liu <lucyleeow>`.
 
 - |API| Passing `average=0` to disable averaging is deprecated in
   :class:`linear_model.PassiveAggressiveClassifier`,
@@ -379,7 +419,8 @@ Changelog
   :pr:`28703` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |API| `store_cv_values` and `cv_values_` are deprecated in favor of
-  `store_cv_results` and `cv_results_` in `RidgeCV` and `RidgeClassifierCV`.
+  `store_cv_results` and `cv_results_` in `~linear_model.RidgeCV` and
+  `~linear_model.RidgeClassifierCV`.
   :pr:`28915` by :user:`Lucy Liu <lucyleeow>`.
 
 :mod:`sklearn.manifold`
@@ -398,8 +439,15 @@ Changelog
   :pr:`27456` by :user:`Venkatachalam N <venkyyuvy>`, :user:`Kshitij Mathur <Kshitij68>`
   and :user:`Julian Libiseller-Egger <julibeg>`.
 
+- |Feature| :func:`sklearn.metrics.check_scoring` now returns a multi-metric scorer
+  when `scoring` as a `dict`, `set`, `tuple`, or `list`. :pr:`28360` by `Thomas Fan`_.
+
+- |Feature| :func:`metrics.d2_log_loss_score` has been added which
+  calculates the D^2 score for the log loss.
+  :pr:`28351` by :user:`Omar Salman <OmarManzoor>`.
+
 - |Efficiency| Improve efficiency of functions :func:`~metrics.brier_score_loss`,
-  :func:`~metrics.calibration_curve`, :func:`~metrics.det_curve`,
+  :func:`~calibration.calibration_curve`, :func:`~metrics.det_curve`,
   :func:`~metrics.precision_recall_curve`,
   :func:`~metrics.roc_curve` when `pos_label` argument is specified.
   Also improve efficiency of methods `from_estimator`
@@ -407,9 +455,6 @@ Changelog
   :class:`~metrics.PrecisionRecallDisplay`, :class:`~metrics.DetCurveDisplay`,
   :class:`~calibration.CalibrationDisplay`.
   :pr:`28051` by :user:`Pierre de Fréminville <pidefrem>`.
-
-- |Feature| :func:`sklearn.metrics.check_scoring` now returns a multi-metric scorer
-  when `scoring` as a `dict`, `set`, `tuple`, or `list`. :pr:`28360` by `Thomas Fan`_.
 
 - |Fix|:class:`metrics.classification_report` now shows only accuracy and not
   micro-average when input is a subset of labels.
@@ -419,8 +464,8 @@ Changelog
   computation. This is likely to affect neighbor-based algorithms.
   :pr:`28692` by :user:`Loïc Estève <lesteve>`.
 
-- |API| :func:`metrics.precision_recall_curve` deprecated the keyword argument `probas_pred`
-  in favor of `y_score`. `probas_pred` will be removed in version 1.7.
+- |API| :func:`metrics.precision_recall_curve` deprecated the keyword argument
+  `probas_pred` in favor of `y_score`. `probas_pred` will be removed in version 1.7.
   :pr:`28092` by :user:`Adam Li <adam2392>`.
 
 - |API| :func:`metrics.brier_score_loss` deprecated the keyword argument `y_prob`
@@ -430,10 +475,6 @@ Changelog
 - |API| For classifiers and classification metrics, labels encoded as bytes
   is deprecated and will raise an error in v1.7.
   :pr:`18555` by :user:`Kaushik Amar Das <cozek>`.
-
-- |Feature| :func:`metrics.d2_log_loss_score` has been added which
-  calculates the D^2 score for the log loss.
-  :pr:`28351` by :user:`Omar Salman <OmarManzoor>`.
 
 :mod:`sklearn.mixture`
 ......................
@@ -457,21 +498,21 @@ Changelog
   raises a warning when groups are passed in to :term:`split`. :pr:`28210` by
   `Thomas Fan`_.
 
-- |Fix| the ``cv_results_`` attribute (of :class:`model_selection.GridSearchCV`) now
-  returns masked arrays of the appropriate NumPy dtype, as opposed to always returning
-  dtype ``object``. :pr:`28352` by :user:`Marco Gorelli<MarcoGorelli>`.
-
-- |Fix| :func:`sklearn.model_selection.train_test_score` works with Array API inputs.
-  Previously indexing was not handled correctly leading to exceptions when using strict
-  implementations of the Array API like CuPY.
-  :pr:`28407` by :user:`Tim Head <betatim>`.
-
 - |Enhancement| The HTML diagram representation of
   :class:`~model_selection.GridSearchCV`,
   :class:`~model_selection.RandomizedSearchCV`,
   :class:`~model_selection.HalvingGridSearchCV`, and
   :class:`~model_selection.HalvingRandomSearchCV` will show the best estimator when
   `refit=True`. :pr:`28722` by :user:`Yao Xiao <Charlie-XIAO>` and `Thomas Fan`_.
+
+- |Fix| the ``cv_results_`` attribute (of :class:`model_selection.GridSearchCV`) now
+  returns masked arrays of the appropriate NumPy dtype, as opposed to always returning
+  dtype ``object``. :pr:`28352` by :user:`Marco Gorelli<MarcoGorelli>`.
+
+- |Fix| :func:`model_selection.train_test_split` works with Array API inputs.
+  Previously indexing was not handled correctly leading to exceptions when using strict
+  implementations of the Array API like CuPY.
+  :pr:`28407` by :user:`Tim Head <betatim>`.
 
 :mod:`sklearn.multioutput`
 ..........................
@@ -515,6 +556,10 @@ Changelog
 :mod:`sklearn.utils`
 ....................
 
+- |Fix| :func:`~utils._safe_indexing` now works correctly for polars DataFrame when
+  `axis=0` and supports indexing polars Series.
+  :pr:`28521` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 - |API| :data:`utils.IS_PYPY` is deprecated and will be removed in version 1.7.
   :pr:`28768` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
@@ -526,14 +571,10 @@ Changelog
   `joblib.register_parallel_backend` instead.
   :pr:`28847` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |API| Raise informative warning message in :func:`type_of_target` when
-  represented as bytes. For classifiers and classification metrics, labels encoded
+- |API| Raise informative warning message in :func:`~utils.multiclass.type_of_target`
+  when represented as bytes. For classifiers and classification metrics, labels encoded
   as bytes is deprecated and will raise an error in v1.7.
   :pr:`18555` by :user:`Kaushik Amar Das <cozek>`.
-
-- |Fix| :func:`~utils._safe_indexing` now works correctly for polars DataFrame when
-  `axis=0` and supports indexing polars Series.
-  :pr:`28521` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 - |API| :func:`utils.estimator_checks.check_estimator_sparse_data` was split into two
   functions: :func:`utils.estimator_checks.check_estimator_sparse_matrix` and
@@ -545,4 +586,29 @@ Changelog
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.4, including:
 
-TODO: update at the time of the release.
+101AlexMartin, Abdulaziz Aloqeely, Adam J. Stewart, Adam Li, Adarsh Wase, Adrin
+Jalali, Advik Sinha, Akash Srivastava, Akihiro Kuno, Alan Guedes, Alexis
+IMBERT, Ana Paula Gomes, Anderson Nelson, Andrei Dzis, Arnaud Capitaine, Arturo
+Amor, Aswathavicky, Bharat Raghunathan, Brendan Lu, Bruno, Cemlyn, Christian
+Lorentzen, Christian Veenhuis, Cindy Liang, Claudio Salvatore Arcidiacono,
+Connor Boyle, Conrad Stevens, crispinlogan, davidleon123, DerWeh, Dipan Banik,
+Duarte São José, DUONG, Eddie Bergman, Edoardo Abati, Egehan Gunduz, Emad
+Izadifar, Erich Schubert, Filip Karlo Došilović, Franck Charras, Gael
+Varoquaux, Gönül Aycı, Guillaume Lemaitre, Gyeongjae Choi, Harmanan Kohli,
+Hong Xiang Yue, Ian Faust, itsaphel, Ivan Wiryadi, Jack Bowyer, Javier Marin
+Tur, Jérémie du Boisberranger, Jérôme Dockès, Jiawei Zhang, Joel Nothman,
+Johanna Bayer, John Cant, John Hopfensperger, jpcars, jpienaar-tuks, Julian
+Libiseller-Egger, Julien Jerphanion, KanchiMoe, Kaushik Amar Das, keyber,
+Koustav Ghosh, kraktus, Krsto Proroković, ldwy4, LeoGrin, lihaitao, Linus
+Sommer, Loic Esteve, Lucy Liu, Lukas Geiger, manasimj, Manuel Labbé, Manuel
+Morales, Marco Edward Gorelli, Maren Westermann, Marija Vlajic, Mark Elliot,
+Mateusz Sokół, Mavs, Michael Higgins, Michael Mayer, miguelcsilva, Miki
+Watanabe, Mohammed Hamdy, myenugula, Nathan Goldbaum, Naziya Mahimkar, Neto,
+Olivier Grisel, Omar Salman, Patrick Wang, Pierre de Fréminville, Priyash
+Shah, Puneeth K, Rahil Parikh, raisadz, Raj Pulapakura, Ralf Gommers, Ralph
+Urlus, Randolf Scholz, Reshama Shaikh, Richard Barnes, Rodrigo Romero, Saad
+Mahmood, Salim Dohri, Sandip Dutta, SarahRemus, scikit-learn-bot, Shaharyar
+Choudhry, Shubham, sperret6, Stefanie Senger, Suha Siddiqui, Thanh Lam DANG,
+thebabush, Thomas J. Fan, Thomas Lazarus, Thomas Li, Tialo, Tim Head, Tuhin
+Sharma, VarunChaduvula, Vineet Joshi, virchan, Waël Boukhobza, Weyb, Will
+Dean, Xavier Beltran, Xiao Yuan, Xuefeng Xu, Yao Xiao
