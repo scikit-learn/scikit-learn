@@ -1987,10 +1987,10 @@ def class_likelihood_ratios(
     # TODO(1.8): When `raise_warning` is removed, the default return value with
     # zero_division="warn" does not need to be "np.nan" anymore and should be the lowest
     # score for each metric respectively (1 for LR+ and 0 for LR-) to match the other
-    # functions that take a zero_division param. The Warns section in the docstring
-    # needs be be re-written and the hidden option for zero_division ("default") be
-    # removed and the default set to "warn" to match the other functions that take a
-    # zero_division param.
+    # functions that take a zero_division param. Return values and warning messages need
+    # to be updated. The Warns section in the docstring needs be be re-written and
+    # the hidden option for zero_division ("default") be removed and the default set to
+    # "warn" to match the other functions that take a zero_division param.
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type != "binary":
         raise ValueError(
@@ -2039,7 +2039,7 @@ def class_likelihood_ratios(
 
     if support_pos == 0:
         msg = (
-            "No samples of the positive class were present in `y_true`. "
+            "No samples of the positive class are present in `y_true`. "
             "`positive_likelihood_ratio` and `negative_likelihood_ratio` are both set "
             "to np.nan."
         )
@@ -2079,8 +2079,6 @@ def class_likelihood_ratios(
                 "Use the `zero_division` param to control this behavior."
             )
             warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
-            # ToDo(1.8): Currently, negative_likelihood_ratio is returned as np.nan, to
-            # keep `raise_warning`'s behaviour. Set to 0.0 in 1.8, change warning msg.
             negative_likelihood_ratio = np.nan
         elif isinstance(
             zero_division.get("LR-", None), (int, float)

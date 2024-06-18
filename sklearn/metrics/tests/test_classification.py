@@ -701,7 +701,7 @@ def test_confusion_matrix_single_label():
                 "y_true": np.array([0, 0, 0, 0, 0, 0]),
                 "y_pred": np.array([1, 1, 1, 0, 0, 0]),
             },
-            "No samples of the positive class were present in `y_true`.",
+            "No samples of the positive class are present in `y_true`.",
         ),
     ],
 )
