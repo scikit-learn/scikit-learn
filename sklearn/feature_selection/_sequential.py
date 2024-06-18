@@ -12,14 +12,11 @@ from ..model_selection import check_cv, cross_val_score
 from ..utils._metadata_requests import _raise_for_params
 from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
 from ..utils._tags import _safe_tags
-from ..utils.metadata_routing import _RoutingNotSupportedMixin
 from ..utils.validation import check_is_fitted
 from ._base import SelectorMixin
 
 
-class SequentialFeatureSelector(
-    _RoutingNotSupportedMixin, SelectorMixin, MetaEstimatorMixin, BaseEstimator
-):
+class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     """Transformer that performs Sequential Feature Selection.
 
     This Sequential Feature Selector adds (forward selection) or

@@ -392,6 +392,7 @@ def test_sequential_feature_selector_routes_metadata():
         check_recorded_metadata(
             obj=_estimator,
             method="fit",
+            parent="fit",
             split_params=("sample_weight", "metadata"),
             sample_weight=sample_weight,
             metadata=metadata,
@@ -402,6 +403,7 @@ def test_sequential_feature_selector_routes_metadata():
         check_recorded_metadata(
             obj=_splitter,
             method="split",
+            parent="fit",
             groups=groups,
             metadata=metadata,
         )
@@ -413,6 +415,7 @@ def test_sequential_feature_selector_routes_metadata():
             method="score",
             split_params=("sample_weight", "metadata"),
             sample_weight=sample_weight,
+            parent="fit",
             metadata=metadata,
         )
 
