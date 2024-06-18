@@ -200,7 +200,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             unsupervised learning.
 
         **params : dict, default=None
-            Parameters to be passed to the cross_val_score function.
+            Parameters to be passed to the :func:`cross_val_score` function.
 
             .. versionadded:: 1.6
 
