@@ -130,8 +130,8 @@ Changelog
   whether to raise an exception if a subset of the scorers in multimetric scoring fails
   or to return an error code. :pr:`28992` by :user:`Stefanie Senger <StefanieSenger>`.
 
-- |Enhancement| Adds `zero_division` to :func:`cohen_kappa_score`. When there is a zero
-  division, the metric is undefined and this value is returned.
+- |Enhancement| Adds `zero_division` to :func:`cohen_kappa_score`. When there is a
+  division by zero, the metric is undefined and this value is returned.
   :pr:`29210` by :user:`Marc Torrellas Socastro <marctorsoc>` and
   :user:`Stefanie Senger <StefanieSenger>`.
 
