@@ -3,11 +3,8 @@ Maximum likelihood covariance estimator.
 
 """
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Gael Varoquaux <gael.varoquaux@normalesup.org>
-#         Virgile Fritsch <virgile.fritsch@inria.fr>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # avoid division truncation
 import warnings
