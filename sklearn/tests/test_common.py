@@ -2,9 +2,8 @@
 General tests for all estimators in sklearn.
 """
 
-# Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
-#          Gael Varoquaux gael.varoquaux@normalesup.org
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import os
 import pkgutil
@@ -177,6 +176,7 @@ def test_check_estimator_generate_only():
 
 
 def test_setup_py_check():
+    pytest.importorskip("setuptools")
     # Smoke test `python setup.py check` command run at the root of the
     # scikit-learn source tree.
     cwd = os.getcwd()

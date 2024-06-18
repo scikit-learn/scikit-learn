@@ -7,25 +7,8 @@ Function named as ``*_error`` or ``*_loss`` return a scalar value to minimize:
 the lower the better.
 """
 
-# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#          Olivier Grisel <olivier.grisel@ensta.org>
-#          Arnaud Joly <a.joly@ulg.ac.be>
-#          Jochen Wersdorfer <jochen@wersdoerfer.de>
-#          Lars Buitinck
-#          Joel Nothman <joel.nothman@gmail.com>
-#          Karan Desai <karandesai281196@gmail.com>
-#          Noel Dawe <noel@dawe.me>
-#          Manoj Kumar <manojkumarsivaraj334@gmail.com>
-#          Michael Eickenberg <michael.eickenberg@gmail.com>
-#          Konstantin Shmelkov <konstantin.shmelkov@polytechnique.edu>
-#          Christian Lorentzen <lorentzen.ch@gmail.com>
-#          Ashutosh Hathidara <ashutoshhathidara98@gmail.com>
-#          Uttam kumar <bajiraouttamsinha@gmail.com>
-#          Sylvain Marie <sylvain.marie@se.com>
-#          Ohad Michel <ohadmich@gmail.com>
-#          Alejandro Martin Gil <almagil98@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Real
@@ -1290,10 +1273,11 @@ def max_error(y_true, y_pred):
     >>> max_error(y_true, y_pred)
     1
     """
+    xp, _ = get_namespace(y_true, y_pred)
     y_type, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred, None)
     if y_type == "continuous-multioutput":
         raise ValueError("Multioutput not supported in max_error")
-    return np.max(np.abs(y_true - y_pred))
+    return xp.max(xp.abs(y_true - y_pred))
 
 
 def _mean_tweedie_deviance(y_true, y_pred, sample_weight, power):
@@ -1411,7 +1395,7 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
             raise ValueError(message + "non-negative y and strictly positive y_pred.")
     elif power >= 2:
         # Gamma and Extreme stable distribution, y and y_pred > 0
-        if (y_true <= 0).any() or (y_pred <= 0).any():
+        if xp.any(y_true <= 0) or xp.any(y_pred <= 0):
             raise ValueError(message + "strictly positive y and y_pred.")
     else:  # pragma: nocover
         # Unreachable statement
