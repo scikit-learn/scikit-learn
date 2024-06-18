@@ -15,7 +15,7 @@ from sklearn.svm import SVC
 from sklearn.tests.test_pipeline import SimpleEstimator
 from sklearn.tree import DecisionTreeClassifier
 
-# Author: Oliver Rausch <rauscho@ethz.ch>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 # load the iris dataset and randomly permute it

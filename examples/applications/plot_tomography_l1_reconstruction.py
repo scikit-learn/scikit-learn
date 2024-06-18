@@ -36,7 +36,7 @@ contributed to fewer projections than the central disk.
 
 """
 
-# Author: Emmanuelle Gouillart <emmanuelle.gouillart@nsup.org>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt

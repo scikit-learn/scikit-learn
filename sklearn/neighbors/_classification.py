@@ -1,11 +1,6 @@
 """Nearest Neighbor Classification"""
 
-# Authors: Jake Vanderplas <vanderplas@astro.washington.edu>
-#          Fabian Pedregosa <fabian.pedregosa@inria.fr>
-#          Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Sparseness support by Lars Buitinck
-#          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
-#
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 import warnings
 from numbers import Integral

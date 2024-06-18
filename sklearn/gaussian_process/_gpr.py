@@ -1,7 +1,6 @@
 """Gaussian processes regression."""
 
-# Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-# Modified by: Pete Green <p.l.green@liverpool.ac.uk>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
