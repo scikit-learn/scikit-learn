@@ -1613,12 +1613,15 @@ def permutation_test_score(
 
     params : dict, default=None
         Parameters to pass to the `fit` method of the estimator and to the scorer.
+
             - If `enable_metadata_routing=False` (default):
               Parameters directly passed to the `fit` method of the estimator.
+
             - If `enable_metadata_routing=True`:
               Parameters safely routed to the `fit` method of the estimator.
               See :ref:`Metadata Routing User Guide <metadata_routing>` for more
               details.
+
             .. versionadded:: 1.6
 
     Returns
