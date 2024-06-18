@@ -1,8 +1,6 @@
 """Graph utilities and algorithms."""
 
-# Authors: Aric Hagberg <hagberg@lanl.gov>
-#          Gael Varoquaux <gael.varoquaux@normalesup.org>
-#          Jake Vanderplas <vanderplas@astro.washington.edu>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np

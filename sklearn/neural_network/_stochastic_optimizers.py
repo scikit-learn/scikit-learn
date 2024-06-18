@@ -1,6 +1,6 @@
 """Stochastic optimization methods for MLP"""
 
-# Authors: Jiyuan Qian <jq401@nyu.edu>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np

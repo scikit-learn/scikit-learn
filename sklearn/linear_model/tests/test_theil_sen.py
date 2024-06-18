@@ -2,7 +2,7 @@
 Testing for Theil-Sen module (sklearn.linear_model.theil_sen)
 """
 
-# Author: Florian Wilhelm <florian.wilhelm@gmail.com>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 import os
 import re

@@ -27,7 +27,7 @@ random resampling of the dataset.
 
 """
 
-# Authors: Gael Varoquaux
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 from time import time
