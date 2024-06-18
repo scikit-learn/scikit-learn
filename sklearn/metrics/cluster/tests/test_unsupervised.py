@@ -426,6 +426,17 @@ def test_dbcv_score_precomputed_missing_d_valerr(density_sample):
         )
 
 
+def test_dbcv_score_irrelevant_d_warning(density_sample):
+    expected_msg = (
+        'The "d" value you provided is being ignored. '
+        "It's only required for precomputed distances"
+    )
+    with warnings.catch_warnings(record=True) as record:
+        dbcv_score(*density_sample, d=2)
+        assert len(record == 1)
+        assert record[0].message == expected_msg
+
+
 def test_dbcv_score_rand_in_output_val_range(density_sample):
     X, y = density_sample
     np.random.shuffle(y)
