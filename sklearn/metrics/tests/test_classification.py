@@ -674,7 +674,7 @@ def test_confusion_matrix_single_label():
                 "y_true": np.array([1, 1, 1, 0, 0, 0]),
                 "y_pred": np.array([1, 1, 1, 0, 0, 0]),
             },
-            "positive_likelihood_ratio ill-defined and being set to nan",
+            "`positive_likelihood_ratio` ill-defined and set to np.nan.",
         ),
         # When `fp == 0` and `tp == 0`, LR+ is undefined
         (
@@ -682,7 +682,10 @@ def test_confusion_matrix_single_label():
                 "y_true": np.array([1, 1, 1, 0, 0, 0]),
                 "y_pred": np.array([0, 0, 0, 0, 0, 0]),
             },
-            "no samples predicted for the positive class",
+            (
+                "No samples were predicted for the positive class and "
+                "`positive_likelihood_ratio` is set to np.nan."
+            ),
         ),
         # When `tn == 0`, LR- is undefined
         (
@@ -797,12 +800,39 @@ def test_likelihood_ratios_zero_division_warn():
     "zero_division, expected",
     [
         ("warn", np.nan),
+        ({"LR+": 1.0, "LR-": 0.0}, 1.0),
+        ({"LR+": np.inf, "LR-": 1.0}, np.inf),
+        ({"LR+": np.nan, "LR-": np.nan}, np.nan),
+    ],
+)
+def test_likelihood_ratios_zero_division_0_fp(zero_division, expected):
+    """Test that the `zero_division` param returns the right value for the
+    positive_likelihood_ratio as defined by the user."""
+    # this data causes fp=0 (0 false positives) in the confusion_matrix and a division
+    # by zero that affects the positive_likelihood_ratio:
+    y_true = np.array([1, 1, 0])
+    y_pred = np.array([1, 0, 0])
+
+    positive_likelihood_ratio, _ = class_likelihood_ratios(
+        y_true, y_pred, zero_division=zero_division
+    )
+
+    if np.isnan(expected):
+        assert np.isnan(positive_likelihood_ratio)
+    else:
+        assert positive_likelihood_ratio == expected
+
+
+@pytest.mark.parametrize(
+    "zero_division, expected",
+    [
+        ("warn", np.nan),
         ({"LR+": 1.0, "LR-": 0.0}, 0.0),
         ({"LR+": np.inf, "LR-": 1.0}, 1.0),
         ({"LR+": np.nan, "LR-": np.nan}, np.nan),
     ],
 )
-def test_likelihood_ratios_zero_division(zero_division, expected):
+def test_likelihood_ratios_zero_division_0_tn(zero_division, expected):
     """Test that the `zero_division` param returns the right value for the
     negative_likelihood_ratio as defined by the user."""
     # this data causes tn=0 (0 true negatives) in the confusion_matrix and a division
