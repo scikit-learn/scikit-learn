@@ -428,7 +428,6 @@ def test_minibatch_sensible_reassign(global_random_seed):
     # check that identical initial clusters are reassigned
     # also a regression test for when there are more desired reassignments than
     # samples.
-    global_random_seed = 34
     zeroed_X, true_labels = make_blobs(
         n_samples=100, centers=5, random_state=global_random_seed
     )
