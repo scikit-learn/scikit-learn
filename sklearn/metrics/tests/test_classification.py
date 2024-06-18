@@ -811,6 +811,7 @@ def test_matthews_corrcoef_nan():
         precision_score,
         recall_score,
         accuracy_score,
+        partial(cohen_kappa_score, labels=[0, 1]),
     ],
 )
 def test_zero_division_nan_no_warning(metric, y_true, y_pred, zero_division):
@@ -839,6 +840,7 @@ def test_zero_division_nan_no_warning(metric, y_true, y_pred, zero_division):
         precision_score,
         recall_score,
         accuracy_score,
+        cohen_kappa_score,
     ],
 )
 def test_zero_division_nan_warning(metric, y_true, y_pred):
