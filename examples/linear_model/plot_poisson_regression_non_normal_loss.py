@@ -1,3 +1,5 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 """
 ======================================
 Poisson regression and non-normal loss
@@ -35,11 +37,6 @@ policyholders.
     <https://doi.org/10.2139/ssrn.3164764>`_
 
 """
-
-# Authors: Christian Lorentzen <lorentzen.ch@gmail.com>
-#          Roman Yurchak <rth.yurchak@gmail.com>
-#          Olivier Grisel <olivier.grisel@ensta.org>
-# License: BSD 3 clause
 
 import matplotlib.pyplot as plt
 import numpy as np

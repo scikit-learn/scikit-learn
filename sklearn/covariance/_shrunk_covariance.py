@@ -6,11 +6,8 @@ shrunk_cov = (1-shrinkage)*cov + shrinkage*structured_estimate.
 
 """
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Gael Varoquaux <gael.varoquaux@normalesup.org>
-#         Virgile Fritsch <virgile.fritsch@inria.fr>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # avoid division truncation
 import warnings
@@ -617,7 +614,7 @@ class LedoitWolf(EmpiricalCovariance):
     prefer_skip_nested_validation=False,
 )
 def oas(X, *, assume_centered=False):
-    """Estimate covariance with the Oracle Approximating Shrinkage as proposed in [1]_.
+    """Estimate covariance with the Oracle Approximating Shrinkage.
 
     Read more in the :ref:`User Guide <shrunk_covariance>`.
 
@@ -684,7 +681,7 @@ def oas(X, *, assume_centered=False):
 
 
 class OAS(EmpiricalCovariance):
-    """Oracle Approximating Shrinkage Estimator as proposed in [1]_.
+    """Oracle Approximating Shrinkage Estimator.
 
     Read more in the :ref:`User Guide <shrunk_covariance>`.
 

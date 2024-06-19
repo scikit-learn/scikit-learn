@@ -3,11 +3,8 @@ Least Angle Regression algorithm. See the documentation on the
 Generalized Linear Model for a complete discussion.
 """
 
-# Author: Fabian Pedregosa <fabian.pedregosa@inria.fr>
-#         Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Gael Varoquaux
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import sys
 import warnings
@@ -79,14 +76,14 @@ def lars_path(
     return_n_iter=False,
     positive=False,
 ):
-    """Compute Least Angle Regression or Lasso path using the LARS algorithm [1].
+    """Compute Least Angle Regression or Lasso path using the LARS algorithm.
 
     The optimization objective for the case method='lasso' is::
 
     (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
     in the case of method='lar', the objective function is only known in
-    the form of an implicit equation (see discussion in [1]).
+    the form of an implicit equation (see discussion in [1]_).
 
     Read more in the :ref:`User Guide <least_angle_regression>`.
 
@@ -268,14 +265,14 @@ def lars_path_gram(
     return_n_iter=False,
     positive=False,
 ):
-    """The lars_path in the sufficient stats mode [1].
+    """The lars_path in the sufficient stats mode.
 
     The optimization objective for the case method='lasso' is::
 
     (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
     in the case of method='lar', the objective function is only known in
-    the form of an implicit equation (see discussion in [1])
+    the form of an implicit equation (see discussion in [1]_).
 
     Read more in the :ref:`User Guide <least_angle_regression>`.
 

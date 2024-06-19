@@ -1,8 +1,5 @@
-# Author: Andreas Mueller <amueller@ais.uni-bonn.de>
-#         Lars Buitinck
-#         Paolo Toccaceli
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from cython cimport floating
 from cython.parallel cimport prange

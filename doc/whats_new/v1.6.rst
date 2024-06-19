@@ -1,0 +1,159 @@
+.. include:: _contributors.rst
+
+.. currentmodule:: sklearn
+
+.. _release_notes_1_6:
+
+===========
+Version 1.6
+===========
+
+..
+  -- UNCOMMENT WHEN 1.6.0 IS RELEASED --
+  For a short description of the main highlights of the release, please refer to
+  :ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_6_0.py`.
+
+.. include:: changelog_legend.inc
+
+.. _changes_1_6:
+
+Version 1.6.0
+=============
+
+**In Development**
+
+Support for Array API
+---------------------
+
+Additional estimators and functions have been updated to include support for all
+`Array API <https://data-apis.org/array-api/latest/>`_ compliant inputs.
+
+See :ref:`array_api` for more details.
+
+**Functions:**
+
+- :func:`sklearn.metrics.cluster.entropy` :pr:`29141` by :user:`Yaroslav Korobko <Tialo>`;
+- :func:`sklearn.metrics.d2_tweedie_score` :pr:`29207` by :user:`Emily Chen <EmilyXinyi>`;
+- :func:`sklearn.metrics.max_error` :pr:`29212` by :user:`Edoardo Abati <EdAbati>`;
+- :func:`sklearn.metrics.mean_absolute_error` :pr:`27736` by :user:`Edoardo Abati <EdAbati>`;
+- :func:`sklearn.metrics.mean_gamma_deviance` :pr:`29239` by :usser:`Emily Chen <EmilyXinyi>`;
+- :func:`sklearn.metrics.mean_squared_error` :pr:`29142` by :user:`Yaroslav Korobko <Tialo>`;
+- :func:`sklearn.metrics.mean_tweedie_deviance` :pr:`28106` by :user:`Thomas Li <lithomas1>`;
+- :func:`sklearn.metrics.pairwise.additive_chi2_kernel` :pr:`29144` by :user:`Yaroslav Korobko <Tialo>`;
+- :func:`sklearn.metrics.pairwise.cosine_similarity` :pr:`29014` by :user:`Edoardo Abati <EdAbati>`;
+- :func:`sklearn.metrics.pairwise.paired_cosine_distances` :pr:`29112` by :user:`Edoardo Abati <EdAbati>`.
+
+**Classes:**
+
+- :class:`preprocessing.LabelEncoder` now supports Array API compatible inputs.
+  :pr:`27381` by :user:`Omar Salman <OmarManzoor>`.
+- :class:`model_selection.GridSearchCV`,
+  :class:`model_selection.RandomizedSearchCV`,
+  :class:`model_selection.HalvingGridSearchCV` and
+  :class:`model_selection.HalvingRandomSearchCV` now support Array API
+  compatible inputs when their base estimators do. :pr:`27096` by :user:`Tim
+  Head <betatim>` and :user:`Olivier Grisel <ogrisel>`.
+
+Metadata Routing
+----------------
+
+The following models now support metadata routing in one or more of their
+methods. Refer to the :ref:`Metadata Routing User Guide <metadata_routing>` for
+more details.
+
+- |Feature| :func:`model_selection.learning_curve` now supports metadata routing for the
+  `fit` method of its estimator and for its underlying CV splitter and scorer.
+  :pr:`28975` by :user:`Stefanie Senger <StefanieSenger>`.
+
+- |Feature| :class:`ensemble.StackingClassifier` and
+  :class:`ensemble.StackingRegressor` now support metadata routing and pass
+  ``**fit_params`` to the underlying estimators via their `fit` methods.
+  :pr:`28701` by :user:`Stefanie Senger <StefanieSenger>`.
+
+- |Feature| :class:`compose.TransformedTargetRegressor` now supports metadata
+  routing in its `fit` and `predict` methods and routes the corresponding
+  params to the underlying regressor.
+  :pr:`29136` by :user:`Omar Salman <OmarManzoor>`.
+
+Dropping official support for PyPy
+----------------------------------
+
+Due to limited maintainer resources and small number of users, official PyPy
+support has been dropped. Some parts of scikit-learn may still work but PyPy is
+not tested anymore in the scikit-learn Continuous Integration.
+:pr:`29128` by :user:`Loïc Estève <lesteve>`.
+
+Changelog
+---------
+
+..
+    Entries should be grouped by module (in alphabetic order) and prefixed with
+    one of the labels: |MajorFeature|, |Feature|, |Efficiency|, |Enhancement|,
+    |Fix| or |API| (see whats_new.rst for descriptions).
+    Entries should be ordered by those labels (e.g. |Fix| after |Efficiency|).
+    Changes not specific to a module should be listed under *Multiple Modules*
+    or *Miscellaneous*.
+    Entries should end with:
+    :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
+    where 123455 is the *pull request* number, not the issue number.
+
+:mod:`sklearn.base`
+...................
+
+- |Enhancement| Added a function :func:`base.is_clusterer` which determines
+  whether a given estimator is of category clusterer.
+  :pr:`28936` by :user:`Christian Veenhuis <ChVeen>`.
+
+:mod:`sklearn.discriminant_analysis`
+....................................
+
+- |Fix| :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`
+  will now cause `LinAlgWarning` in case of collinear variables. These errors
+  can be silenced using the `reg_param` attribute.
+  :pr:`19731` by :user:`Alihan Zihna <azihna>`.
+
+:mod:`sklearn.impute`
+.....................
+
+- |Fix| :class:`impute.KNNImputer` excludes samples with nan distances when
+  computing the mean value for uniform weights.
+  :pr:`29135` by :user:`Xuefeng Xu <xuefeng-xu>`.
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |API| Deprecates `copy_X` in :class:`linear_model.TheilSenRegressor` as the parameter
+  has no effect. `copy_X` will be removed in 1.8.
+  :pr:`29105` by :user:`Adam Li <adam2392>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Enhancement| :func:`sklearn.metrics.check_scoring` now accepts `raise_exc` to specify
+  whether to raise an exception if a subset of the scorers in multimetric scoring fails
+  or to return an error code. :pr:`28992` by :user:`Stefanie Senger <StefanieSenger>`.
+
+- |Enhancement| Adds `zero_division` to :func:`cohen_kappa_score`. When there is a
+  division by zero, the metric is undefined and this value is returned.
+  :pr:`29210` by :user:`Marc Torrellas Socastro <marctorsoc>` and
+  :user:`Stefanie Senger <StefanieSenger>`.
+
+:mod:`sklearn.model_selection`
+..............................
+
+- |Enhancement| Add the parameter `prefit` to
+  :class:`model_selection.FixedThresholdClassifier` allowing the use of a pre-fitted
+  estimator without re-fitting it.
+  :pr:`29067` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| :class:`neighbors.LocalOutlierFactor` raises a warning in the `fit` method
+  when duplicate values in the training data lead to inaccurate outlier detection.
+  :pr:`28773` by :user:`Henrique Caroço <HenriqueProj>`.
+
+Thanks to everyone who has contributed to the maintenance and improvement of
+the project since version 1.5, including:
+
+TODO: update at the time of the release.
