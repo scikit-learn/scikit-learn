@@ -2,10 +2,7 @@
 
 set -e
 
-if [[ "$DISTRIB" =~ ^conda.* ]]; then
-    source activate $VIRTUALENV
-elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "pip-free-threaded" ]]; then
-    source $VIRTUALENV/bin/activate
-fi
+source build_tools/shared.sh
+activate_environment
 
 make test-doc
