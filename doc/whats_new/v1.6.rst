@@ -115,7 +115,8 @@ Changelog
 :mod:`sklearn.ensemble`
 ....................................
 
-- |Enhancement| :class:`ensemble.VotingClassifier` now supports multi-label and multi-output data.
+- |Enhancement| :class:`ensemble.VotingClassifier` now supports multilabel-indicator
+  target ``y`` in its `fit`, `predict`, `predict_proba`, and `transform` methods.
   :pr:`29238` by :user:`Adam Li <adam2392>`.
 
 :mod:`sklearn.impute`
