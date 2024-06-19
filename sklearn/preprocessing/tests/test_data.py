@@ -2007,15 +2007,16 @@ def test_binarizer(constructor):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, _", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
 )
-def test_binarizer_array_api_int(array_namespace, device, _):
+def test_binarizer_array_api_int(array_namespace, device, dtype_name):
     xp = _array_api_for_tests(array_namespace, device)
-    X_np = np.reshape(np.asarray([0, 1, 2, 3, 4]), (-1, 1))
-    X_xp = xp.asarray(X_np, device=device)
-    binarized_np = Binarizer(threshold=2.5).fit_transform(X_np)
-    with config_context(array_api_dispatch=True):
-        binarized_xp = Binarizer(threshold=2.5).fit_transform(X_xp)
+    for dtype_name_ in [dtype_name, "int32"]:
+        X_np = np.reshape(np.asarray([0, 1, 2, 3, 4], dtype=dtype_name_), (-1, 1))
+        X_xp = xp.asarray(X_np, device=device)
+        binarized_np = Binarizer(threshold=2.5).fit_transform(X_np)
+        with config_context(array_api_dispatch=True):
+            binarized_xp = Binarizer(threshold=2.5).fit_transform(X_xp)
         assert_array_equal(_convert_to_numpy(binarized_xp, xp), binarized_np)
 
 
