@@ -16,9 +16,8 @@ The module structure is the following:
   regression problems.
 """
 
-# Authors: Peter Prettenhofer, Scott White, Gilles Louppe, Emanuele Olivetti,
-#          Arnaud Joly, Jacob Schreiber
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import math
 import warnings

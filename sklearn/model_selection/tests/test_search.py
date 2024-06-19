@@ -23,6 +23,7 @@ from sklearn.datasets import (
     make_classification,
     make_multilabel_classification,
 )
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.exceptions import FitFailedWarning
@@ -73,11 +74,13 @@ from sklearn.tests.metadata_routing_common import (
     check_recorded_metadata,
 )
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
 from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 from sklearn.utils._testing import (
     MinimalClassifier,
     MinimalRegressor,
     MinimalTransformer,
+    _array_api_for_tests,
     assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
@@ -2611,6 +2614,7 @@ def test_multi_metric_search_forwards_metadata(SearchCV, param_search):
         check_recorded_metadata(
             obj=_scorer,
             method="score",
+            parent="_score",
             split_params=("sample_weight", "metadata"),
             sample_weight=score_weights,
             metadata=score_metadata,
@@ -2718,3 +2722,28 @@ def test_search_with_estimators_issue_29157():
     grid_search = GridSearchCV(pipe, grid_params, cv=2)
     grid_search.fit(X, y)
     assert grid_search.cv_results_["param_enc__enc"].dtype == object
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
+def test_array_api_search_cv_classifier(SearchCV, array_namespace, device, dtype):
+    xp = _array_api_for_tests(array_namespace, device)
+
+    X = np.arange(100).reshape((10, 10))
+    X_np = X.astype(dtype)
+    X_xp = xp.asarray(X_np, device=device)
+
+    # y should always be an integer, no matter what `dtype` is
+    y_np = np.array([0] * 5 + [1] * 5)
+    y_xp = xp.asarray(y_np, device=device)
+
+    with config_context(array_api_dispatch=True):
+        searcher = SearchCV(
+            LinearDiscriminantAnalysis(),
+            {"tol": [1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7]},
+            cv=2,
+        )
+        searcher.fit(X_xp, y_xp)
+        searcher.score(X_xp, y_xp)

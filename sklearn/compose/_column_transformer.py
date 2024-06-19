@@ -4,9 +4,8 @@ to work with heterogeneous data and to apply different transformers to
 different columns.
 """
 
-# Author: Andreas Mueller
-#         Joris Van den Bossche
-# License: BSD
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 import warnings
 from collections import Counter, UserList
 from itertools import chain

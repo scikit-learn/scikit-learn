@@ -5,9 +5,8 @@ Reference: Tables 8.3 and 8.4 page 196 in the book:
 Independent Component Analysis, by  Hyvarinen et al.
 """
 
-# Authors: Pierre Lafaye de Micheaux, Stefan van der Walt, Gael Varoquaux,
-#          Bertrand Thirion, Alexandre Gramfort, Denis A. Engemann
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Integral, Real

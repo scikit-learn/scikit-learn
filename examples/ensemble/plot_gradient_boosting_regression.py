@@ -18,11 +18,8 @@ showcasing some other advantages of
 
 """
 
-# Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#         Maria Telenczuk <https://github.com/maikia>
-#         Katrina Ni <https://github.com/nilichen>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np

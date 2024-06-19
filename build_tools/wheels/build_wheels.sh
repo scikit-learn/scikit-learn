@@ -59,6 +59,13 @@ if [[ "$GITHUB_EVENT_NAME" == "schedule" || "$CIRRUS_CRON" == "nightly" ]]; then
     export CIBW_BUILD_FRONTEND='pip; args: --pre --extra-index-url "https://pypi.anaconda.org/scientific-python-nightly-wheels/simple"'
 fi
 
+if [[ "$CIBW_FREE_THREADED_SUPPORT" =~ [tT]rue ]]; then
+    # Numpy, scipy, Cython only have free-threaded wheels on scientific-python-nightly-wheels
+    # TODO: remove this after CPython 3.13 is released (scheduled October 2024)
+    # and our dependencies have free-threaded wheels on PyPI
+    export CIBW_BUILD_FRONTEND='pip; args: --pre --extra-index-url "https://pypi.anaconda.org/scientific-python-nightly-wheels/simple"'
+fi
+
 # The version of the built dependencies are specified
 # in the pyproject.toml file, while the tests are run
 # against the most recent version of the dependencies
