@@ -276,6 +276,32 @@ def ensure_common_namespace_device(reference, *arrays):
         return arrays
 
 
+def convert_attributes(estimator, ref_array):
+    ref_xp, ref_is_array_api, ref_device = get_namespace_and_device(ref_array)
+    if not ref_is_array_api:
+        return
+    converted_attributes = {}
+
+    for name, value in vars(estimator):
+        xp, is_array_api, device_ = get_namespace_and_device(value)
+        if not is_array_api:
+            continue
+        if xp == ref_xp and device_ == ref_device:
+            continue
+        try:
+            converted_attributes[name] = ref_xp.asarray(value, device=ref_device)
+            continue
+        except Exception:
+            pass
+            # direct conversion to a different library may fail in which
+            # case we try converting to numpy first
+        value = _convert_to_numpy(value, xp)
+        converted_attributes[name] = ref_xp.asarray(value, device=ref_device)
+
+    for name, new_value in converted_attributes:
+        setattr(estimator, name, new_value)
+
+
 class _ArrayAPIWrapper:
     """sklearn specific Array API compatibility wrapper
 
