@@ -7,20 +7,8 @@ Function named as ``*_error`` or ``*_loss`` return a scalar value to minimize:
 the lower the better.
 """
 
-# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#          Olivier Grisel <olivier.grisel@ensta.org>
-#          Arnaud Joly <a.joly@ulg.ac.be>
-#          Jochen Wersdorfer <jochen@wersdoerfer.de>
-#          Lars Buitinck
-#          Joel Nothman <joel.nothman@gmail.com>
-#          Noel Dawe <noel@dawe.me>
-#          Jatin Shah <jatindshah@gmail.com>
-#          Saurabh Jha <saurabh.jhaa@gmail.com>
-#          Bernardo Stein <bernardovstein@gmail.com>
-#          Shangwu Yao <shangwuyao@gmail.com>
-#          Michal Karbownik <michakarbownik@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 import warnings
@@ -622,6 +610,37 @@ def multilabel_confusion_matrix(
     return np.array([tn, fp, fn, tp]).T.reshape(-1, 2, 2)
 
 
+def _metric_handle_division(*, numerator, denominator, metric, zero_division):
+    """Helper to handle zero-division.
+
+    Parameters
+    ----------
+    numerator : numbers.Real
+        The numerator of the division.
+    denominator : numbers.Real
+        The denominator of the division.
+    metric : str
+        Name of the caller metric function.
+    zero_division : {0.0, 1.0, "warn"}
+        The strategy to use when encountering 0-denominator.
+
+    Returns
+    -------
+    result : numbers.Real
+        The resulting of the division
+    is_zero_division : bool
+        Whether or not we encountered a zero division. This value could be
+        required to early return `result` in the "caller" function.
+    """
+    if np.isclose(denominator, 0):
+        if zero_division == "warn":
+            msg = f"{metric} is ill-defined and set to 0.0. Use the `zero_division` "
+            "param to control this behavior."
+            warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
+        return _check_zero_division(zero_division), True
+    return numerator / denominator, False
+
+
 @validate_params(
     {
         "y1": ["array-like"],
@@ -629,10 +648,16 @@ def multilabel_confusion_matrix(
         "labels": ["array-like", None],
         "weights": [StrOptions({"linear", "quadratic"}), None],
         "sample_weight": ["array-like", None],
+        "zero_division": [
+            StrOptions({"warn"}),
+            Options(Real, {0.0, 1.0, np.nan}),
+        ],
     },
     prefer_skip_nested_validation=True,
 )
-def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
+def cohen_kappa_score(
+    y1, y2, *, labels=None, weights=None, sample_weight=None, zero_division="warn"
+):
     r"""Compute Cohen's kappa: a statistic that measures inter-annotator agreement.
 
     This function computes Cohen's kappa [1]_, a score that expresses the level
@@ -665,11 +690,19 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
         ``y1`` or ``y2`` are used.
 
     weights : {'linear', 'quadratic'}, default=None
-        Weighting type to calculate the score. `None` means no weighted;
-        "linear" means linear weighted; "quadratic" means quadratic weighted.
+        Weighting type to calculate the score. `None` means not weighted;
+        "linear" means linear weighting; "quadratic" means quadratic weighting.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
+
+    zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
+        Sets the return value when there is a zero division. This is the case when both
+        labelings `y1` and `y2` both exclusively contain the 0 class (e. g.
+        `[0, 0, 0, 0]`) (or if both are empty). If set to "warn", returns `0.0`, but a
+        warning is also raised.
+
+        .. versionadded:: 1.6
 
     Returns
     -------
@@ -700,7 +733,18 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     n_classes = confusion.shape[0]
     sum0 = np.sum(confusion, axis=0)
     sum1 = np.sum(confusion, axis=1)
-    expected = np.outer(sum0, sum1) / np.sum(sum0)
+
+    numerator = np.outer(sum0, sum1)
+    denominator = np.sum(sum0)
+    expected, is_zero_division = _metric_handle_division(
+        numerator=numerator,
+        denominator=denominator,
+        metric="cohen_kappa_score()",
+        zero_division=zero_division,
+    )
+
+    if is_zero_division:
+        return expected
 
     if weights is None:
         w_mat = np.ones([n_classes, n_classes], dtype=int)
@@ -713,8 +757,18 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
         else:
             w_mat = (w_mat - w_mat.T) ** 2
 
-    k = np.sum(w_mat * confusion) / np.sum(w_mat * expected)
-    return 1 - k
+    numerator = np.sum(w_mat * confusion)
+    denominator = np.sum(w_mat * expected)
+    score, is_zero_division = _metric_handle_division(
+        numerator=numerator,
+        denominator=denominator,
+        metric="cohen_kappa_score()",
+        zero_division=zero_division,
+    )
+
+    if is_zero_division:
+        return score
+    return 1 - score
 
 
 @validate_params(

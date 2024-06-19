@@ -250,7 +250,7 @@ def supported_float_dtypes(xp):
 def ensure_common_namespace_device(reference, *arrays):
     """Ensure that all arrays use the same namespace and device as reference.
 
-    If neccessary the arrays are moved to the same namespace and device as
+    If necessary the arrays are moved to the same namespace and device as
     the reference array.
 
     Parameters
@@ -568,10 +568,15 @@ def get_namespace_and_device(*array_list, remove_none=True, remove_types=(str,))
 
     skip_remove_kwargs = dict(remove_none=False, remove_types=[])
 
-    return (
-        *get_namespace(*array_list, **skip_remove_kwargs),
-        device(*array_list, **skip_remove_kwargs),
-    )
+    xp, is_array_api = get_namespace(*array_list, **skip_remove_kwargs)
+    if is_array_api:
+        return (
+            xp,
+            is_array_api,
+            device(*array_list, **skip_remove_kwargs),
+        )
+    else:
+        return xp, False, None
 
 
 def _expit(X, xp=None):

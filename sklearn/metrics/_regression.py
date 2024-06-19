@@ -7,25 +7,8 @@ Function named as ``*_error`` or ``*_loss`` return a scalar value to minimize:
 the lower the better.
 """
 
-# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#          Olivier Grisel <olivier.grisel@ensta.org>
-#          Arnaud Joly <a.joly@ulg.ac.be>
-#          Jochen Wersdorfer <jochen@wersdoerfer.de>
-#          Lars Buitinck
-#          Joel Nothman <joel.nothman@gmail.com>
-#          Karan Desai <karandesai281196@gmail.com>
-#          Noel Dawe <noel@dawe.me>
-#          Manoj Kumar <manojkumarsivaraj334@gmail.com>
-#          Michael Eickenberg <michael.eickenberg@gmail.com>
-#          Konstantin Shmelkov <konstantin.shmelkov@polytechnique.edu>
-#          Christian Lorentzen <lorentzen.ch@gmail.com>
-#          Ashutosh Hathidara <ashutoshhathidara98@gmail.com>
-#          Uttam kumar <bajiraouttamsinha@gmail.com>
-#          Sylvain Marie <sylvain.marie@se.com>
-#          Ohad Michel <ohadmich@gmail.com>
-#          Alejandro Martin Gil <almagil98@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Real
@@ -483,7 +466,7 @@ def mean_squared_error(
 
     Returns
     -------
-    loss : float or ndarray of floats
+    loss : float or array of floats
         A non-negative floating point value (the best value is 0.0), or an
         array of floating point values, one for each individual target.
 
@@ -519,11 +502,14 @@ def mean_squared_error(
                 y_true, y_pred, sample_weight=sample_weight, multioutput=multioutput
             )
 
+    xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
+    dtype = _find_matching_floating_dtype(y_true, y_pred, xp=xp)
+
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput
+        y_true, y_pred, multioutput, dtype=dtype, xp=xp
     )
     check_consistent_length(y_true, y_pred, sample_weight)
-    output_errors = np.average((y_true - y_pred) ** 2, axis=0, weights=sample_weight)
+    output_errors = _average((y_true - y_pred) ** 2, axis=0, weights=sample_weight)
 
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
@@ -532,7 +518,10 @@ def mean_squared_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    # See comment in mean_absolute_error
+    mean_squared_error = _average(output_errors, weights=multioutput)
+    assert mean_squared_error.shape == ()
+    return float(mean_squared_error)
 
 
 @validate_params(
@@ -1284,10 +1273,11 @@ def max_error(y_true, y_pred):
     >>> max_error(y_true, y_pred)
     1
     """
+    xp, _ = get_namespace(y_true, y_pred)
     y_type, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred, None)
     if y_type == "continuous-multioutput":
         raise ValueError("Multioutput not supported in max_error")
-    return np.max(np.abs(y_true - y_pred))
+    return xp.max(xp.abs(y_true - y_pred))
 
 
 def _mean_tweedie_deviance(y_true, y_pred, sample_weight, power):
@@ -1405,7 +1395,7 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
             raise ValueError(message + "non-negative y and strictly positive y_pred.")
     elif power >= 2:
         # Gamma and Extreme stable distribution, y and y_pred > 0
-        if (y_true <= 0).any() or (y_pred <= 0).any():
+        if xp.any(y_true <= 0) or xp.any(y_pred <= 0):
             raise ValueError(message + "strictly positive y and y_pred.")
     else:  # pragma: nocover
         # Unreachable statement
@@ -1592,8 +1582,10 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     >>> d2_tweedie_score(y_true, y_true, power=2)
     1.0
     """
+    xp, _ = get_namespace(y_true, y_pred)
+
     y_type, y_true, y_pred, _ = _check_reg_targets(
-        y_true, y_pred, None, dtype=[np.float64, np.float32]
+        y_true, y_pred, None, dtype=[xp.float64, xp.float32], xp=xp
     )
     if y_type == "continuous-multioutput":
         raise ValueError("Multioutput not supported in d2_tweedie_score")
@@ -1603,12 +1595,12 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
         warnings.warn(msg, UndefinedMetricWarning)
         return float("nan")
 
-    y_true, y_pred = np.squeeze(y_true), np.squeeze(y_pred)
+    y_true, y_pred = xp.squeeze(y_true, axis=1), xp.squeeze(y_pred, axis=1)
     numerator = mean_tweedie_deviance(
         y_true, y_pred, sample_weight=sample_weight, power=power
     )
 
-    y_avg = np.average(y_true, weights=sample_weight)
+    y_avg = _average(y_true, weights=sample_weight, xp=xp)
     denominator = _mean_tweedie_deviance(
         y_true, y_avg, sample_weight=sample_weight, power=power
     )

@@ -1,11 +1,8 @@
-"""
-Multiclass classification strategies
-====================================
+"""Multiclass learning algorithms.
 
-This module implements multiclass learning algorithms:
-    - one-vs-the-rest / one-vs-all
-    - one-vs-one
-    - error correcting output codes
+- one-vs-the-rest / one-vs-all
+- one-vs-one
+- error correcting output codes
 
 The estimators provided in this module are meta-estimators: they require a base
 estimator to be provided in their constructor. For example, it is possible to
@@ -28,10 +25,8 @@ for a given sample *will not* sum to unity, as they do in the single label
 case.
 """
 
-# Author: Mathieu Blondel <mathieu@mblondel.org>
-# Author: Hamzeh Alsalhi <93hamsal@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import array
 import itertools

@@ -22,6 +22,7 @@ from sklearn.utils._array_api import (
     _ravel,
     device,
     get_namespace,
+    get_namespace_and_device,
     indexing_dtype,
     supported_float_dtypes,
     yield_namespace_device_dtype_combinations,
@@ -540,3 +541,28 @@ def test_isin(
         )
 
     assert_array_equal(_convert_to_numpy(result, xp=xp), expected)
+
+
+def test_get_namespace_and_device():
+    # Use torch as a library with custom Device objects:
+    torch = pytest.importorskip("torch")
+    xp_torch = pytest.importorskip("array_api_compat.torch")
+    some_torch_tensor = torch.arange(3, device="cpu")
+    some_numpy_array = numpy.arange(3)
+
+    # When dispatch is disabled, get_namespace_and_device should return the
+    # default NumPy wrapper namespace and no device. Our code will handle such
+    # inputs via the usual __array__ interface without attempting to dispatch
+    # via the array API.
+    namespace, is_array_api, device = get_namespace_and_device(some_torch_tensor)
+    assert namespace is get_namespace(some_numpy_array)[0]
+    assert not is_array_api
+    assert device is None
+
+    # Otherwise, expose the torch namespace and device via array API compat
+    # wrapper.
+    with config_context(array_api_dispatch=True):
+        namespace, is_array_api, device = get_namespace_and_device(some_torch_tensor)
+        assert namespace is xp_torch
+        assert is_array_api
+        assert device == some_torch_tensor.device
