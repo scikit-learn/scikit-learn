@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-set -x
 set -e
 
 # Decide what kind of documentation build to run, and run it.
@@ -16,6 +15,25 @@ set -e
 #
 # If the inspection of the current commit fails for any reason, the default
 # behavior is to quick build the documentation.
+
+# defines the get_dep and show_installed_libraries functions
+source build_tools/shared.sh
+
+if [ -n "$GITHUB_ACTION" ]
+then
+    # Map the variables from Github Action to CircleCI
+    CIRCLE_SHA1=$(git log -1 --pretty=format:%H)
+
+    CIRCLE_JOB=$GITHUB_JOB
+
+    if [ "$GITHUB_EVENT_NAME" == "pull_request" ]
+    then
+        CIRCLE_BRANCH=$GITHUB_HEAD_REF
+        CI_PULL_REQUEST=true
+    else
+        CIRCLE_BRANCH=$GITHUB_REF_NAME
+    fi
+fi
 
 get_build_type() {
     if [ -z "$CIRCLE_SHA1" ]
@@ -130,78 +148,53 @@ else
     make_args=html
 fi
 
-make_args="SPHINXOPTS=-T $make_args"  # show full traceback on exception
-
 # Installing required system packages to support the rendering of math
 # notation in the HTML documentation and to optimize the image files
 sudo -E apt-get -yq update --allow-releaseinfo-change
 sudo -E apt-get -yq --no-install-suggests --no-install-recommends \
     install dvipng gsfonts ccache zip optipng
 
-# deactivate circleci virtualenv and setup a miniconda env instead
+# deactivate circleci virtualenv and setup a conda env instead
 if [[ `type -t deactivate` ]]; then
   deactivate
 fi
 
-MINICONDA_PATH=$HOME/miniconda
-# Install dependencies with miniconda
-wget https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-x86_64.sh \
-    -O miniconda.sh
-chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
-export PATH="/usr/lib/ccache:$MINICONDA_PATH/bin:$PATH"
+# Install Miniforge
+MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh"
+curl -L --retry 10 $MINIFORGE_URL -o miniconda.sh
+MINIFORGE_PATH=$HOME/miniforge3
+bash ./miniconda.sh -b -p $MINIFORGE_PATH
+source $MINIFORGE_PATH/etc/profile.d/conda.sh
+conda activate
 
+export PATH="/usr/lib/ccache:$PATH"
 ccache -M 512M
 export CCACHE_COMPRESS=1
 
-# Old packages coming from the 'free' conda channel have been removed but we
-# are using them for our min-dependencies doc generation. See
-# https://www.anaconda.com/why-we-removed-the-free-channel-in-conda-4-7/ for
-# more details.
-if [[ "$CIRCLE_JOB" == "doc-min-dependencies" ]]; then
-    conda config --set restore_free_channel true
-fi
+create_conda_environment_from_lock_file $CONDA_ENV_NAME $LOCK_FILE
+conda activate $CONDA_ENV_NAME
 
-# imports get_dep
-source build_tools/shared.sh
-
-# packaging won't be needed once setuptools starts shipping packaging>=17.0
-mamba create -n $CONDA_ENV_NAME --yes --quiet \
-    python="${PYTHON_VERSION:-*}" \
-    "$(get_dep numpy $NUMPY_VERSION)" \
-    "$(get_dep scipy $SCIPY_VERSION)" \
-    "$(get_dep cython $CYTHON_VERSION)" \
-    "$(get_dep matplotlib $MATPLOTLIB_VERSION)" \
-    "$(get_dep sphinx $SPHINX_VERSION)" \
-    "$(get_dep pandas $PANDAS_VERSION)" \
-    joblib memory_profiler packaging seaborn pillow pytest coverage \
-    compilers
-
-source activate testenv
-pip install "$(get_dep scikit-image $SCIKIT_IMAGE_VERSION)"
-pip install "$(get_dep sphinx-gallery $SPHINX_GALLERY_VERSION)"
-pip install "$(get_dep numpydoc $NUMPYDOC_VERSION)"
-pip install "$(get_dep sphinx-prompt $SPHINX_PROMPT_VERSION)"
-pip install "$(get_dep sphinxext-opengraph $SPHINXEXT_OPENGRAPH_VERSION)"
+show_installed_libraries
 
 # Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
 # workers with 2 cores when building the compiled extensions of scikit-learn.
 export SKLEARN_BUILD_PARALLEL=3
-python setup.py develop
+pip install -e . --no-build-isolation
+
+echo "ccache build summary:"
+ccache -s
 
 export OMP_NUM_THREADS=1
 
 if [[ "$CIRCLE_BRANCH" =~ ^main$ && -z "$CI_PULL_REQUEST" ]]
 then
     # List available documentation versions if on main
-    python build_tools/circle/list_versions.py > doc/versions.rst
+    python build_tools/circle/list_versions.py --json doc/js/versions.json --rst doc/versions.rst
 fi
+
 
 # The pipefail is requested to propagate exit code
 set -o pipefail && cd doc && make $make_args 2>&1 | tee ~/log.txt
-
-# Insert the version warning for deployment
-find _build/html/stable -name "*.html" | xargs sed -i '/<\/body>/ i \
-\    <script src="https://scikit-learn.org/versionwarning.js"></script>'
 
 cd -
 set +o pipefail
@@ -246,7 +239,7 @@ then
     (
     echo '<html><body><ul>'
     echo "$affected" | sed 's|.*|<li><a href="&">&</a> [<a href="https://scikit-learn.org/dev/&">dev</a>, <a href="https://scikit-learn.org/stable/&">stable</a>]</li>|'
-    echo '</ul><p>General: <a href="index.html">Home</a> | <a href="modules/classes.html">API Reference</a> | <a href="auto_examples/index.html">Examples</a></p>'
+    echo '</ul><p>General: <a href="index.html">Home</a> | <a href="api/index.html">API Reference</a> | <a href="auto_examples/index.html">Examples</a></p>'
     echo '<strong>Sphinx Warnings in affected files</strong><ul>'
     echo "$warnings" | sed 's/\/home\/circleci\/project\//<li>/g'
     echo '</ul></body></html>'

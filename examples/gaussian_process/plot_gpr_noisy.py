@@ -1,7 +1,7 @@
 """
-=============================================================
-Gaussian process regression (GPR) with noise-level estimation
-=============================================================
+=========================================================================
+Ability of Gaussian process regression (GPR) to estimate data noise-level
+=========================================================================
 
 This example shows the ability of the
 :class:`~sklearn.gaussian_process.kernels.WhiteKernel` to estimate the noise
@@ -9,9 +9,8 @@ level in the data. Moreover, we show the importance of kernel hyperparameters
 initialization.
 """
 
-# Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-#          Guillaume Lemaitre <guillaume.lemaitre@inria.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Data generation
@@ -97,14 +96,16 @@ y_mean, y_std = gpr.predict(X, return_std=True)
 
 # %%
 plt.plot(X, y, label="Expected signal")
-plt.scatter(x=X_train[:, 0], y=y_train, color="black", alpha=0.4, label="Observsations")
+plt.scatter(x=X_train[:, 0], y=y_train, color="black", alpha=0.4, label="Observations")
 plt.errorbar(X, y_mean, y_std)
 plt.legend()
 plt.xlabel("X")
 plt.ylabel("y")
 _ = plt.title(
-    f"Initial: {kernel}\nOptimum: {gpr.kernel_}\nLog-Marginal-Likelihood: "
-    f"{gpr.log_marginal_likelihood(gpr.kernel_.theta)}",
+    (
+        f"Initial: {kernel}\nOptimum: {gpr.kernel_}\nLog-Marginal-Likelihood: "
+        f"{gpr.log_marginal_likelihood(gpr.kernel_.theta)}"
+    ),
     fontsize=8,
 )
 # %%
@@ -132,8 +133,10 @@ plt.legend()
 plt.xlabel("X")
 plt.ylabel("y")
 _ = plt.title(
-    f"Initial: {kernel}\nOptimum: {gpr.kernel_}\nLog-Marginal-Likelihood: "
-    f"{gpr.log_marginal_likelihood(gpr.kernel_.theta)}",
+    (
+        f"Initial: {kernel}\nOptimum: {gpr.kernel_}\nLog-Marginal-Likelihood: "
+        f"{gpr.log_marginal_likelihood(gpr.kernel_.theta)}"
+    ),
     fontsize=8,
 )
 

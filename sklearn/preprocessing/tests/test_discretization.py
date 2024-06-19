@@ -1,31 +1,57 @@
-import pytest
-import numpy as np
-import scipy.sparse as sp
 import warnings
 
+import numpy as np
+import pytest
+import scipy.sparse as sp
+
 from sklearn import clone
-from sklearn.preprocessing import KBinsDiscretizer
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import KBinsDiscretizer, OneHotEncoder
 from sklearn.utils._testing import (
+    assert_allclose,
+    assert_allclose_dense_sparse,
     assert_array_almost_equal,
     assert_array_equal,
-    assert_allclose_dense_sparse,
 )
 
 X = [[-2, 1.5, -4, -1], [-1, 2.5, -3, -0.5], [0, 3.5, -2, 0.5], [1, 4.5, -1, 2]]
 
 
 @pytest.mark.parametrize(
-    "strategy, expected",
+    "strategy, expected, sample_weight",
     [
-        ("uniform", [[0, 0, 0, 0], [1, 1, 1, 0], [2, 2, 2, 1], [2, 2, 2, 2]]),
-        ("kmeans", [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2]]),
-        ("quantile", [[0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2], [2, 2, 2, 2]]),
+        ("uniform", [[0, 0, 0, 0], [1, 1, 1, 0], [2, 2, 2, 1], [2, 2, 2, 2]], None),
+        ("kmeans", [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2]], None),
+        ("quantile", [[0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2], [2, 2, 2, 2]], None),
+        (
+            "quantile",
+            [[0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2], [2, 2, 2, 2]],
+            [1, 1, 2, 1],
+        ),
+        (
+            "quantile",
+            [[0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2], [2, 2, 2, 2]],
+            [1, 1, 1, 1],
+        ),
+        (
+            "quantile",
+            [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [1, 1, 1, 1]],
+            [0, 1, 1, 1],
+        ),
+        (
+            "kmeans",
+            [[0, 0, 0, 0], [1, 1, 1, 0], [1, 1, 1, 1], [2, 2, 2, 2]],
+            [1, 0, 3, 1],
+        ),
+        (
+            "kmeans",
+            [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2]],
+            [1, 1, 1, 1],
+        ),
     ],
 )
-def test_fit_transform(strategy, expected):
+def test_fit_transform(strategy, expected, sample_weight):
     est = KBinsDiscretizer(n_bins=3, encode="ordinal", strategy=strategy)
-    est.fit(X)
+    est.fit(X, sample_weight=sample_weight)
     assert_array_equal(expected, est.transform(X))
 
 
@@ -35,22 +61,16 @@ def test_valid_n_bins():
     assert KBinsDiscretizer(n_bins=2).fit(X).n_bins_.dtype == np.dtype(int)
 
 
-def test_invalid_n_bins():
-    est = KBinsDiscretizer(n_bins=1)
+@pytest.mark.parametrize("strategy", ["uniform"])
+def test_kbinsdiscretizer_wrong_strategy_with_weights(strategy):
+    """Check that we raise an error when the wrong strategy is used."""
+    sample_weight = np.ones(shape=(len(X)))
+    est = KBinsDiscretizer(n_bins=3, strategy=strategy)
     err_msg = (
-        "KBinsDiscretizer received an invalid number of bins. Received 1, expected at"
-        " least 2."
+        "`sample_weight` was provided but it cannot be used with strategy='uniform'."
     )
     with pytest.raises(ValueError, match=err_msg):
-        est.fit_transform(X)
-
-    est = KBinsDiscretizer(n_bins=1.1)
-    err_msg = (
-        "KBinsDiscretizer received an invalid n_bins type. Received float, expected"
-        " int."
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        est.fit_transform(X)
+        est.fit(X, sample_weight=sample_weight)
 
 
 def test_invalid_n_bins_array():
@@ -92,17 +112,45 @@ def test_invalid_n_bins_array():
 
 
 @pytest.mark.parametrize(
-    "strategy, expected",
+    "strategy, expected, sample_weight",
     [
-        ("uniform", [[0, 0, 0, 0], [0, 1, 1, 0], [1, 2, 2, 1], [1, 2, 2, 2]]),
-        ("kmeans", [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [1, 2, 2, 2]]),
-        ("quantile", [[0, 0, 0, 0], [0, 1, 1, 1], [1, 2, 2, 2], [1, 2, 2, 2]]),
+        ("uniform", [[0, 0, 0, 0], [0, 1, 1, 0], [1, 2, 2, 1], [1, 2, 2, 2]], None),
+        ("kmeans", [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [1, 2, 2, 2]], None),
+        ("quantile", [[0, 0, 0, 0], [0, 1, 1, 1], [1, 2, 2, 2], [1, 2, 2, 2]], None),
+        (
+            "quantile",
+            [[0, 0, 0, 0], [0, 1, 1, 1], [1, 2, 2, 2], [1, 2, 2, 2]],
+            [1, 1, 3, 1],
+        ),
+        (
+            "quantile",
+            [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [1, 1, 1, 1]],
+            [0, 1, 3, 1],
+        ),
+        # (
+        #     "quantile",
+        #     [[0, 0, 0, 0], [0, 1, 1, 1], [1, 2, 2, 2], [1, 2, 2, 2]],
+        #     [1, 1, 1, 1],
+        # ),
+        #
+        # TODO: This test case above aims to test if the case where an array of
+        #       ones passed in sample_weight parameter is equal to the case when
+        #       sample_weight is None.
+        #       Unfortunately, the behavior of `_weighted_percentile` when
+        #       `sample_weight = [1, 1, 1, 1]` are currently not equivalent.
+        #       This problem has been addressed in issue :
+        #       https://github.com/scikit-learn/scikit-learn/issues/17370
+        (
+            "kmeans",
+            [[0, 0, 0, 0], [0, 1, 1, 0], [1, 1, 1, 1], [1, 2, 2, 2]],
+            [1, 0, 3, 1],
+        ),
     ],
 )
-def test_fit_transform_n_bins_array(strategy, expected):
+def test_fit_transform_n_bins_array(strategy, expected, sample_weight):
     est = KBinsDiscretizer(
         n_bins=[2, 3, 3, 3], encode="ordinal", strategy=strategy
-    ).fit(X)
+    ).fit(X, sample_weight=sample_weight)
     assert_array_equal(expected, est.transform(X))
 
     # test the shape of bin_edges_
@@ -110,6 +158,28 @@ def test_fit_transform_n_bins_array(strategy, expected):
     assert est.bin_edges_.shape == (n_features,)
     for bin_edges, n_bins in zip(est.bin_edges_, est.n_bins_):
         assert bin_edges.shape == (n_bins + 1,)
+
+
+@pytest.mark.filterwarnings("ignore: Bins whose width are too small")
+def test_kbinsdiscretizer_effect_sample_weight():
+    """Check the impact of `sample_weight` one computed quantiles."""
+    X = np.array([[-2], [-1], [1], [3], [500], [1000]])
+    # add a large number of bins such that each sample with a non-null weight
+    # will be used as bin edge
+    est = KBinsDiscretizer(n_bins=10, encode="ordinal", strategy="quantile")
+    est.fit(X, sample_weight=[1, 1, 1, 1, 0, 0])
+    assert_allclose(est.bin_edges_[0], [-2, -1, 1, 3])
+    assert_allclose(est.transform(X), [[0.0], [1.0], [2.0], [2.0], [2.0], [2.0]])
+
+
+@pytest.mark.parametrize("strategy", ["kmeans", "quantile"])
+def test_kbinsdiscretizer_no_mutating_sample_weight(strategy):
+    """Make sure that `sample_weight` is not changed in place."""
+    est = KBinsDiscretizer(n_bins=3, encode="ordinal", strategy=strategy)
+    sample_weight = np.array([1, 3, 1, 2], dtype=np.float64)
+    sample_weight_copy = np.copy(sample_weight)
+    est.fit(X, sample_weight=sample_weight)
+    assert_allclose(sample_weight, sample_weight_copy)
 
 
 @pytest.mark.parametrize("strategy", ["uniform", "kmeans", "quantile"])
@@ -149,17 +219,6 @@ def test_numeric_stability(i):
     assert_array_equal(Xt_expected, Xt)
 
 
-def test_invalid_encode_option():
-    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], encode="invalid-encode")
-    err_msg = (
-        r"Valid options for 'encode' are "
-        r"\('onehot', 'onehot-dense', 'ordinal'\). "
-        r"Got encode='invalid-encode' instead."
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        est.fit(X)
-
-
 def test_encode_options():
     est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], encode="ordinal").fit(X)
     Xt_1 = est.transform(X)
@@ -168,7 +227,7 @@ def test_encode_options():
     assert not sp.issparse(Xt_2)
     assert_array_equal(
         OneHotEncoder(
-            categories=[np.arange(i) for i in [2, 3, 3, 3]], sparse=False
+            categories=[np.arange(i) for i in [2, 3, 3, 3]], sparse_output=False
         ).fit_transform(Xt_1),
         Xt_2,
     )
@@ -176,22 +235,13 @@ def test_encode_options():
     Xt_3 = est.transform(X)
     assert sp.issparse(Xt_3)
     assert_array_equal(
-        OneHotEncoder(categories=[np.arange(i) for i in [2, 3, 3, 3]], sparse=True)
+        OneHotEncoder(
+            categories=[np.arange(i) for i in [2, 3, 3, 3]], sparse_output=True
+        )
         .fit_transform(Xt_1)
         .toarray(),
         Xt_3.toarray(),
     )
-
-
-def test_invalid_strategy_option():
-    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], strategy="invalid-strategy")
-    err_msg = (
-        r"Valid options for 'strategy' are "
-        r"\('uniform', 'quantile', 'kmeans'\). "
-        r"Got strategy='invalid-strategy' instead."
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        est.fit(X)
 
 
 @pytest.mark.parametrize(
@@ -294,7 +344,7 @@ def test_overwrite():
 )
 def test_redundant_bins(strategy, expected_bin_edges):
     X = [[0], [0], [0], [0], [3], [3]]
-    kbd = KBinsDiscretizer(n_bins=3, strategy=strategy)
+    kbd = KBinsDiscretizer(n_bins=3, strategy=strategy, subsample=None)
     warning_message = "Consider decreasing the number of bins."
     with pytest.warns(UserWarning, match=warning_message):
         kbd.fit(X)
@@ -315,29 +365,23 @@ def test_percentile_numeric_stability():
 
 
 @pytest.mark.parametrize("in_dtype", [np.float16, np.float32, np.float64])
-@pytest.mark.parametrize("out_dtype", [None, np.float16, np.float32, np.float64])
+@pytest.mark.parametrize("out_dtype", [None, np.float32, np.float64])
 @pytest.mark.parametrize("encode", ["ordinal", "onehot", "onehot-dense"])
 def test_consistent_dtype(in_dtype, out_dtype, encode):
     X_input = np.array(X, dtype=in_dtype)
     kbd = KBinsDiscretizer(n_bins=3, encode=encode, dtype=out_dtype)
+    kbd.fit(X_input)
 
-    # a error is raised if a wrong dtype is define for the model
-    if out_dtype not in [None, np.float32, np.float64]:
-        with pytest.raises(ValueError, match="Valid options for 'dtype' are"):
-            kbd.fit(X_input)
+    # test output dtype
+    if out_dtype is not None:
+        expected_dtype = out_dtype
+    elif out_dtype is None and X_input.dtype == np.float16:
+        # wrong numeric input dtype are cast in np.float64
+        expected_dtype = np.float64
     else:
-        kbd.fit(X_input)
-
-        # test output dtype
-        if out_dtype is not None:
-            expected_dtype = out_dtype
-        elif out_dtype is None and X_input.dtype == np.float16:
-            # wrong numeric input dtype are cast in np.float64
-            expected_dtype = np.float64
-        else:
-            expected_dtype = X_input.dtype
-        Xt = kbd.transform(X_input)
-        assert Xt.dtype == expected_dtype
+        expected_dtype = X_input.dtype
+    Xt = kbd.transform(X_input)
+    assert Xt.dtype == expected_dtype
 
 
 @pytest.mark.parametrize("input_dtype", [np.float16, np.float32, np.float64])
@@ -360,78 +404,21 @@ def test_32_equal_64(input_dtype, encode):
     assert_allclose_dense_sparse(Xt_32, Xt_64)
 
 
-# FIXME: remove the `filterwarnings` in 1.3
-@pytest.mark.filterwarnings("ignore:In version 1.3 onwards, subsample=2e5")
-@pytest.mark.parametrize("subsample", [None, "warn"])
-def test_kbinsdiscretizer_subsample_default(subsample):
+def test_kbinsdiscretizer_subsample_default():
     # Since the size of X is small (< 2e5), subsampling will not take place.
     X = np.array([-2, 1.5, -4, -1]).reshape(-1, 1)
     kbd_default = KBinsDiscretizer(n_bins=10, encode="ordinal", strategy="quantile")
     kbd_default.fit(X)
 
-    kbd_with_subsampling = clone(kbd_default)
-    kbd_with_subsampling.set_params(subsample=subsample)
-    kbd_with_subsampling.fit(X)
+    kbd_without_subsampling = clone(kbd_default)
+    kbd_without_subsampling.set_params(subsample=None)
+    kbd_without_subsampling.fit(X)
 
     for bin_kbd_default, bin_kbd_with_subsampling in zip(
-        kbd_default.bin_edges_[0], kbd_with_subsampling.bin_edges_[0]
+        kbd_default.bin_edges_[0], kbd_without_subsampling.bin_edges_[0]
     ):
         np.testing.assert_allclose(bin_kbd_default, bin_kbd_with_subsampling)
-    assert kbd_default.bin_edges_.shape == kbd_with_subsampling.bin_edges_.shape
-
-
-def test_kbinsdiscretizer_subsample_invalid_strategy():
-    X = np.array([-2, 1.5, -4, -1]).reshape(-1, 1)
-    kbd = KBinsDiscretizer(n_bins=10, encode="ordinal", strategy="uniform", subsample=3)
-
-    err_msg = '`subsample` must be used with `strategy="quantile"`.'
-    with pytest.raises(ValueError, match=err_msg):
-        kbd.fit(X)
-
-
-def test_kbinsdiscretizer_subsample_invalid_type():
-    X = np.array([-2, 1.5, -4, -1]).reshape(-1, 1)
-    kbd = KBinsDiscretizer(
-        n_bins=10, encode="ordinal", strategy="quantile", subsample="full"
-    )
-
-    msg = "subsample must be an instance of int, not str."
-    with pytest.raises(TypeError, match=msg):
-        kbd.fit(X)
-
-
-# TODO: Remove in 1.3
-def test_kbinsdiscretizer_subsample_warn():
-    X = np.random.rand(200001, 1).reshape(-1, 1)
-    kbd = KBinsDiscretizer(n_bins=100, encode="ordinal", strategy="quantile")
-
-    msg = "In version 1.3 onwards, subsample=2e5 will be used by default."
-    with pytest.warns(FutureWarning, match=msg):
-        kbd.fit(X)
-
-
-@pytest.mark.parametrize("subsample", [0, int(2e5)])
-def test_kbinsdiscretizer_subsample_values(subsample):
-    X = np.random.rand(220000, 1).reshape(-1, 1)
-    kbd_default = KBinsDiscretizer(n_bins=10, encode="ordinal", strategy="quantile")
-
-    kbd_with_subsampling = clone(kbd_default)
-    kbd_with_subsampling.set_params(subsample=subsample)
-
-    if subsample == 0:
-        with pytest.raises(ValueError, match="subsample == 0, must be >= 1."):
-            kbd_with_subsampling.fit(X)
-    else:
-        # TODO: Remove in 1.3
-        msg = "In version 1.3 onwards, subsample=2e5 will be used by default."
-        with pytest.warns(FutureWarning, match=msg):
-            kbd_default.fit(X)
-
-        kbd_with_subsampling.fit(X)
-        assert not np.all(
-            kbd_default.bin_edges_[0] == kbd_with_subsampling.bin_edges_[0]
-        )
-        assert kbd_default.bin_edges_.shape == kbd_with_subsampling.bin_edges_.shape
+    assert kbd_default.bin_edges_.shape == kbd_without_subsampling.bin_edges_.shape
 
 
 @pytest.mark.parametrize(
@@ -470,3 +457,44 @@ def test_kbinsdiscrtizer_get_feature_names_out(encode, expected_names):
     assert Xt.shape[1] == output_names.shape[0]
 
     assert_array_equal(output_names, expected_names)
+
+
+@pytest.mark.parametrize("strategy", ["uniform", "kmeans", "quantile"])
+def test_kbinsdiscretizer_subsample(strategy, global_random_seed):
+    # Check that the bin edges are almost the same when subsampling is used.
+    X = np.random.RandomState(global_random_seed).random_sample((100000, 1)) + 1
+
+    kbd_subsampling = KBinsDiscretizer(
+        strategy=strategy, subsample=50000, random_state=global_random_seed
+    )
+    kbd_subsampling.fit(X)
+
+    kbd_no_subsampling = clone(kbd_subsampling)
+    kbd_no_subsampling.set_params(subsample=None)
+    kbd_no_subsampling.fit(X)
+
+    # We use a large tolerance because we can't expect the bin edges to be exactly the
+    # same when subsampling is used.
+    assert_allclose(
+        kbd_subsampling.bin_edges_[0], kbd_no_subsampling.bin_edges_[0], rtol=1e-2
+    )
+
+
+# TODO(1.7): remove this test
+def test_KBD_inverse_transform_Xt_deprecation():
+    X = np.arange(10)[:, None]
+    kbd = KBinsDiscretizer()
+    X = kbd.fit_transform(X)
+
+    with pytest.raises(TypeError, match="Missing required positional argument"):
+        kbd.inverse_transform()
+
+    with pytest.raises(TypeError, match="Cannot use both X and Xt. Use X only"):
+        kbd.inverse_transform(X=X, Xt=X)
+
+    with warnings.catch_warnings(record=True):
+        warnings.simplefilter("error")
+        kbd.inverse_transform(X)
+
+    with pytest.warns(FutureWarning, match="Xt was renamed X in version 1.5"):
+        kbd.inverse_transform(Xt=X)

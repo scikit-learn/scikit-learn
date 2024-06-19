@@ -26,30 +26,27 @@ Example of output :
     dummy                         0.00s       0.01s       0.8973
 """
 
-# Author: Issam H. Laradji
-#         Arnaud Joly <arnaud.v.joly@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
+import argparse
 import os
 from time import time
-import argparse
+
 import numpy as np
 from joblib import Memory
 
-from sklearn.datasets import fetch_openml
-from sklearn.datasets import get_data_home
-from sklearn.ensemble import ExtraTreesClassifier
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.datasets import fetch_openml, get_data_home
 from sklearn.dummy import DummyClassifier
-from sklearn.kernel_approximation import Nystroem
-from sklearn.kernel_approximation import RBFSampler
+from sklearn.ensemble import ExtraTreesClassifier, RandomForestClassifier
+from sklearn.kernel_approximation import Nystroem, RBFSampler
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import zero_one_loss
+from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import check_array
-from sklearn.linear_model import LogisticRegression
-from sklearn.neural_network import MLPClassifier
 
 # Memoize the data extraction and memory map the resulting
 # train / test splits in readonly mode
@@ -62,7 +59,7 @@ def load_data(dtype=np.float32, order="F"):
     ######################################################################
     # Load dataset
     print("Loading dataset...")
-    data = fetch_openml("mnist_784")
+    data = fetch_openml("mnist_784", as_frame=True)
     X = check_array(data["data"], dtype=dtype, order=order)
     y = data["target"]
 
@@ -223,7 +220,6 @@ if __name__ == "__main__":
     )
     print("-" * 60)
     for name in sorted(args["classifiers"], key=error.get):
-
         print(
             "{0: <23} {1: >10.2f}s {2: >10.2f}s {3: >12.4f}".format(
                 name, train_time[name], test_time[name], error[name]

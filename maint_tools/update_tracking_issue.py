@@ -11,9 +11,10 @@ This scope allows the bot to create and edit its own issues. It is best to use a
 github account that does **not** have commit access to the public repo.
 """
 
-from pathlib import Path
-import sys
 import argparse
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
 
 import defusedxml.ElementTree as ET
 from github import Github
@@ -35,6 +36,14 @@ parser.add_argument(
         "exists. If tests-passed is false, then the an issue is updated or created."
     ),
 )
+parser.add_argument(
+    "--auto-close",
+    help=(
+        "If --auto-close is false, then issues will not auto close even if the tests"
+        " pass."
+    ),
+    default="true",
+)
 
 args = parser.parse_args()
 
@@ -48,13 +57,16 @@ if args.junit_file is None and args.tests_passed is None:
 
 gh = Github(args.bot_github_token)
 issue_repo = gh.get_repo(args.issue_repo)
-title = f"⚠️ CI failed on {args.ci_name} ⚠️"
+dt_now = datetime.now(tz=timezone.utc)
+date_str = dt_now.strftime("%b %d, %Y")
+title_query = f"CI failed on {args.ci_name}"
+title = f"⚠️ {title_query} (last failure: {date_str}) ⚠️"
 
 
 def get_issue():
     login = gh.get_user().login
     issues = gh.search_issues(
-        f"repo:{args.issue_repo} {title} in:title state:open author:{login}"
+        f"repo:{args.issue_repo} {title_query} in:title state:open author:{login}"
     )
     first_page = issues.get_page(0)
     # Return issue if it exist
@@ -63,19 +75,29 @@ def get_issue():
 
 def create_or_update_issue(body=""):
     # Interact with GitHub API to create issue
-    header = f"**CI Failed on [{args.ci_name}]({args.link_to_ci_run})**"
-    body_text = f"{header}\n{body}"
+    link = f"[{args.ci_name}]({args.link_to_ci_run})"
     issue = get_issue()
+
+    max_body_length = 60_000
+    original_body_length = len(body)
+    # Avoid "body is too long (maximum is 65536 characters)" error from github REST API
+    if original_body_length > max_body_length:
+        body = (
+            f"{body[:max_body_length]}\n...\n"
+            f"Body was too long ({original_body_length} characters) and was shortened"
+        )
 
     if issue is None:
         # Create new issue
-        issue = issue_repo.create_issue(title=title, body=body_text)
+        header = f"**CI failed on {link}** ({date_str})"
+        issue = issue_repo.create_issue(title=title, body=f"{header}\n{body}")
         print(f"Created issue in {args.issue_repo}#{issue.number}")
         sys.exit()
     else:
         # Update existing issue
-        issue.edit(title=title, body=body_text)
-        print(f"Updated issue in {args.issue_repo}#{issue.number}")
+        header = f"**CI is still failing on {link}** ({date_str})"
+        issue.edit(title=title, body=f"{header}\n{body}")
+        print(f"Commented on issue: {args.issue_repo}#{issue.number}")
         sys.exit()
 
 
@@ -83,14 +105,24 @@ def close_issue_if_opened():
     print("Test has no failures!")
     issue = get_issue()
     if issue is not None:
-        print(f"Closing issue #{issue.number}")
-        new_body = (
-            "## Closed issue because CI is no longer failing! ✅\n\n"
-            f"[Successful run]({args.link_to_ci_run})\n\n"
-            "## Previous failure report\n\n"
-            f"{issue.body}"
+        header_str = "## CI is no longer failing!"
+        comment_str = (
+            f"{header_str} ✅\n\n[Successful run]({args.link_to_ci_run}) on {date_str}"
         )
-        issue.edit(state="closed", body=new_body)
+
+        print(f"Commented on issue #{issue.number}")
+        # New comment if "## CI is no longer failing!" comment does not exist
+        # If it does exist update the original comment which includes the new date
+        for comment in issue.get_comments():
+            if comment.body.startswith(header_str):
+                comment.edit(body=comment_str)
+                break
+        else:  # no break
+            issue.create_comment(body=comment_str)
+
+        if args.auto_close.lower() == "true":
+            print(f"Closing issue #{issue.number}")
+            issue.edit(state="closed")
     sys.exit()
 
 

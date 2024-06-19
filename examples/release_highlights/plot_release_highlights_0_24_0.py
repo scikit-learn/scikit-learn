@@ -1,4 +1,4 @@
-# flake8: noqa
+# ruff: noqa
 """
 ========================================
 Release Highlights for scikit-learn 0.24
@@ -9,7 +9,7 @@ Release Highlights for scikit-learn 0.24
 We are pleased to announce the release of scikit-learn 0.24! Many bug fixes
 and improvements were added, as well as some new key features. We detail
 below a few of the major features of this release. **For an exhaustive list of
-all the changes**, please refer to the :ref:`release notes <changes_0_24>`.
+all the changes**, please refer to the :ref:`release notes <release_notes_0_24>`.
 
 To install the latest version (with pip)::
 
@@ -196,13 +196,19 @@ linear_baseline.fit(X_train, y_train).score(X_test, y_test)
 
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.datasets import fetch_california_housing
-from sklearn.inspection import plot_partial_dependence
+
+# from sklearn.inspection import plot_partial_dependence
+from sklearn.inspection import PartialDependenceDisplay
 
 X, y = fetch_california_housing(return_X_y=True, as_frame=True)
 features = ["MedInc", "AveOccup", "HouseAge", "AveRooms"]
 est = RandomForestRegressor(n_estimators=10)
 est.fit(X, y)
-display = plot_partial_dependence(
+
+# plot_partial_dependence has been removed in version 1.2. From 1.2, use
+# PartialDependenceDisplay instead.
+# display = plot_partial_dependence(
+display = PartialDependenceDisplay.from_estimator(
     est,
     X,
     features,

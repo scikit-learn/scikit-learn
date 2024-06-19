@@ -1,9 +1,9 @@
 from sklearn.linear_model import (
-    LogisticRegression,
-    Ridge,
     ElasticNet,
     Lasso,
     LinearRegression,
+    LogisticRegression,
+    Ridge,
     SGDRegressor,
 )
 
@@ -52,7 +52,6 @@ class LogisticRegressionBenchmark(Predictor, Estimator, Benchmark):
         estimator = LogisticRegression(
             solver=solver,
             penalty=penalty,
-            multi_class="multinomial",
             tol=0.01,
             n_jobs=n_jobs,
             random_state=0,
@@ -110,7 +109,7 @@ class RidgeBenchmark(Predictor, Estimator, Benchmark):
 
 class LinearRegressionBenchmark(Predictor, Estimator, Benchmark):
     """
-    Benchmarks for Linear Reagression.
+    Benchmarks for Linear Regression.
     """
 
     param_names = ["representation"]
@@ -164,7 +163,11 @@ class SGDRegressorBenchmark(Predictor, Estimator, Benchmark):
         return data
 
     def make_estimator(self, params):
-        estimator = SGDRegressor(max_iter=1000, tol=1e-16, random_state=0)
+        (representation,) = params
+
+        max_iter = 60 if representation == "dense" else 300
+
+        estimator = SGDRegressor(max_iter=max_iter, tol=None, random_state=0)
 
         return estimator
 

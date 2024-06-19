@@ -1,6 +1,5 @@
-import warnings
 import functools
-
+import warnings
 
 __all__ = ["deprecated"]
 
@@ -15,10 +14,11 @@ class deprecated:
     and the docstring. Note: to use this with the default value for extra, put
     in an empty of parentheses:
 
+    Examples
+    --------
     >>> from sklearn.utils import deprecated
     >>> deprecated()
     <sklearn.utils.deprecation.deprecated object at ...>
-
     >>> @deprecated()
     ... def some_function(): pass
 
@@ -44,8 +44,8 @@ class deprecated:
         if isinstance(obj, type):
             return self._decorate_class(obj)
         elif isinstance(obj, property):
-            # Note that this is only triggered properly if the `property`
-            # decorator comes before the `deprecated` decorator, like so:
+            # Note that this is only triggered properly if the `deprecated`
+            # decorator is placed before the `property` decorator, like so:
             #
             # @deprecated(msg)
             # @property
@@ -60,18 +60,18 @@ class deprecated:
         if self.extra:
             msg += "; %s" % self.extra
 
-        # FIXME: we should probably reset __new__ for full generality
-        init = cls.__init__
+        new = cls.__new__
 
-        def wrapped(*args, **kwargs):
+        def wrapped(cls, *args, **kwargs):
             warnings.warn(msg, category=FutureWarning)
-            return init(*args, **kwargs)
+            if new is object.__new__:
+                return object.__new__(cls)
+            return new(cls, *args, **kwargs)
 
-        cls.__init__ = wrapped
+        cls.__new__ = wrapped
 
-        wrapped.__name__ = "__init__"
-        wrapped.__doc__ = self._update_doc(init.__doc__)
-        wrapped.deprecated_original = init
+        wrapped.__name__ = "__new__"
+        wrapped.deprecated_original = new
 
         return cls
 
@@ -87,7 +87,6 @@ class deprecated:
             warnings.warn(msg, category=FutureWarning)
             return fun(*args, **kwargs)
 
-        wrapped.__doc__ = self._update_doc(wrapped.__doc__)
         # Add a reference to the wrapped function so that we can introspect
         # on function arguments in Python 2 (already works in Python 3)
         wrapped.__wrapped__ = fun
@@ -103,17 +102,7 @@ class deprecated:
             warnings.warn(msg, category=FutureWarning)
             return prop.fget(*args, **kwargs)
 
-        wrapped.__doc__ = self._update_doc(wrapped.__doc__)
-
         return wrapped
-
-    def _update_doc(self, olddoc):
-        newdoc = "DEPRECATED"
-        if self.extra:
-            newdoc = "%s: %s" % (newdoc, self.extra)
-        if olddoc:
-            newdoc = "%s\n\n    %s" % (newdoc, olddoc)
-        return newdoc
 
 
 def _is_deprecated(func):
@@ -125,3 +114,22 @@ def _is_deprecated(func):
         [c.cell_contents for c in closures if isinstance(c.cell_contents, str)]
     )
     return is_deprecated
+
+
+# TODO: remove in 1.7
+def _deprecate_Xt_in_inverse_transform(X, Xt):
+    """Helper to deprecate the `Xt` argument in favor of `X` in inverse_transform."""
+    if X is not None and Xt is not None:
+        raise TypeError("Cannot use both X and Xt. Use X only.")
+
+    if X is None and Xt is None:
+        raise TypeError("Missing required positional argument: X.")
+
+    if Xt is not None:
+        warnings.warn(
+            "Xt was renamed X in version 1.5 and will be removed in 1.7.",
+            FutureWarning,
+        )
+        return Xt
+
+    return X

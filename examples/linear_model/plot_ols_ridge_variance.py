@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 =========================================================
 Ordinary Least Squares and Ridge Regression Variance
@@ -22,11 +21,11 @@ of the standard linear regression
 
 # Code source: Gaël Varoquaux
 # Modified for documentation by Jaques Grobler
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn import linear_model
 

@@ -1,3 +1,5 @@
-from ._pls import PLSCanonical, PLSRegression, PLSSVD, CCA
+"""Algorithms for cross decomposition."""
+
+from ._pls import CCA, PLSSVD, PLSCanonical, PLSRegression
 
 __all__ = ["PLSCanonical", "PLSRegression", "PLSSVD", "CCA"]

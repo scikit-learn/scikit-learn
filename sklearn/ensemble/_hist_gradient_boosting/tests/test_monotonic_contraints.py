@@ -1,18 +1,25 @@
+import re
+
 import numpy as np
 import pytest
 
+from sklearn.ensemble import (
+    HistGradientBoostingClassifier,
+    HistGradientBoostingRegressor,
+)
+from sklearn.ensemble._hist_gradient_boosting.common import (
+    G_H_DTYPE,
+    X_BINNED_DTYPE,
+    MonotonicConstraint,
+)
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
-from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
-from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
-from sklearn.ensemble._hist_gradient_boosting.common import MonotonicConstraint
+from sklearn.ensemble._hist_gradient_boosting.histogram import HistogramBuilder
 from sklearn.ensemble._hist_gradient_boosting.splitting import (
     Splitter,
     compute_node_value,
 )
-from sklearn.ensemble._hist_gradient_boosting.histogram import HistogramBuilder
-from sklearn.ensemble import HistGradientBoostingRegressor
-from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils._testing import _convert_container
 
 n_threads = _openmp_effective_n_threads()
 
@@ -197,24 +204,44 @@ def test_nodes_values(monotonic_cst, seed):
     assert_leaves_values_monotonic(predictor, monotonic_cst)
 
 
-@pytest.mark.parametrize("seed", range(3))
-def test_predictions(seed):
-    # Train a model with a POS constraint on the first feature and a NEG
-    # constraint on the second feature, and make sure the constraints are
-    # respected by checking the predictions.
+@pytest.mark.parametrize("use_feature_names", (True, False))
+def test_predictions(global_random_seed, use_feature_names):
+    # Train a model with a POS constraint on the first non-categorical feature
+    # and a NEG constraint on the second non-categorical feature, and make sure
+    # the constraints are respected by checking the predictions.
     # test adapted from lightgbm's test_monotone_constraint(), itself inspired
     # by https://xgboost.readthedocs.io/en/latest/tutorials/monotonic.html
 
-    rng = np.random.RandomState(seed)
+    rng = np.random.RandomState(global_random_seed)
 
     n_samples = 1000
     f_0 = rng.rand(n_samples)  # positive correlation with y
-    f_1 = rng.rand(n_samples)  # negative correslation with y
-    X = np.c_[f_0, f_1]
+    f_1 = rng.rand(n_samples)  # negative correlation with y
+
+    # extra categorical features, no correlation with y,
+    # to check the correctness of monotonicity constraint remapping, see issue #28898
+    f_a = rng.randint(low=0, high=9, size=n_samples)
+    f_b = rng.randint(low=0, high=9, size=n_samples)
+    f_c = rng.randint(low=0, high=9, size=n_samples)
+
+    X = np.c_[f_a, f_0, f_b, f_1, f_c]
+    columns_name = ["f_a", "f_0", "f_b", "f_1", "f_c"]
+    constructor_name = "dataframe" if use_feature_names else "array"
+    X = _convert_container(X, constructor_name, columns_name=columns_name)
+
     noise = rng.normal(loc=0.0, scale=0.01, size=n_samples)
     y = 5 * f_0 + np.sin(10 * np.pi * f_0) - 5 * f_1 - np.cos(10 * np.pi * f_1) + noise
 
-    gbdt = HistGradientBoostingRegressor(monotonic_cst=[1, -1])
+    if use_feature_names:
+        monotonic_cst = {"f_0": +1, "f_1": -1}
+        categorical_features = ["f_a", "f_b", "f_c"]
+    else:
+        monotonic_cst = [0, +1, 0, -1, 0]
+        categorical_features = [0, 2, 4]
+
+    gbdt = HistGradientBoostingRegressor(
+        monotonic_cst=monotonic_cst, categorical_features=categorical_features
+    )
     gbdt.fit(X, y)
 
     linspace = np.linspace(0, 1, 100)
@@ -231,23 +258,27 @@ def test_predictions(seed):
     # The constraint does not guanrantee that
     # x0 < x0' => f(x0, x1) < f(x0', x1')
 
-    # First feature (POS)
+    # First non-categorical feature (POS)
     # assert pred is all increasing when f_0 is all increasing
-    X = np.c_[linspace, constant]
+    X = np.c_[constant, linspace, constant, constant, constant]
+    X = _convert_container(X, constructor_name, columns_name=columns_name)
     pred = gbdt.predict(X)
     assert is_increasing(pred)
     # assert pred actually follows the variations of f_0
-    X = np.c_[sin, constant]
+    X = np.c_[constant, sin, constant, constant, constant]
+    X = _convert_container(X, constructor_name, columns_name=columns_name)
     pred = gbdt.predict(X)
     assert np.all((np.diff(pred) >= 0) == (np.diff(sin) >= 0))
 
-    # Second feature (NEG)
+    # Second non-categorical feature (NEG)
     # assert pred is all decreasing when f_1 is all increasing
-    X = np.c_[constant, linspace]
+    X = np.c_[constant, constant, constant, linspace, constant]
+    X = _convert_container(X, constructor_name, columns_name=columns_name)
     pred = gbdt.predict(X)
     assert is_decreasing(pred)
     # assert pred actually follows the inverse variations of f_1
-    X = np.c_[constant, sin]
+    X = np.c_[constant, constant, constant, sin, constant]
+    X = _convert_container(X, constructor_name, columns_name=columns_name)
     pred = gbdt.predict(X)
     assert ((np.diff(pred) <= 0) == (np.diff(sin) >= 0)).all()
 
@@ -258,15 +289,16 @@ def test_input_error():
 
     gbdt = HistGradientBoostingRegressor(monotonic_cst=[1, 0, -1])
     with pytest.raises(
-        ValueError, match="monotonic_cst has shape 3 but the input data"
+        ValueError, match=re.escape("monotonic_cst has shape (3,) but the input data")
     ):
         gbdt.fit(X, y)
 
-    for monotonic_cst in ([1, 3], [1, -3]):
+    for monotonic_cst in ([1, 3], [1, -3], [0.3, -0.7]):
         gbdt = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst)
-        with pytest.raises(
-            ValueError, match="must be None or an array-like of -1, 0 or 1"
-        ):
+        expected_msg = re.escape(
+            "must be an array-like of -1, 0 or 1. Observed values:"
+        )
+        with pytest.raises(ValueError, match=expected_msg):
             gbdt.fit(X, y)
 
     gbdt = HistGradientBoostingClassifier(monotonic_cst=[0, 1])
@@ -274,6 +306,44 @@ def test_input_error():
         ValueError,
         match="monotonic constraints are not supported for multiclass classification",
     ):
+        gbdt.fit(X, y)
+
+
+def test_input_error_related_to_feature_names():
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame({"a": [0, 1, 2], "b": [0, 1, 2]})
+    y = np.array([0, 1, 0])
+
+    monotonic_cst = {"d": 1, "a": 1, "c": -1}
+    gbdt = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst)
+    expected_msg = re.escape(
+        "monotonic_cst contains 2 unexpected feature names: ['c', 'd']."
+    )
+    with pytest.raises(ValueError, match=expected_msg):
+        gbdt.fit(X, y)
+
+    monotonic_cst = {k: 1 for k in "abcdefghijklmnopqrstuvwxyz"}
+    gbdt = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst)
+    expected_msg = re.escape(
+        "monotonic_cst contains 24 unexpected feature names: "
+        "['c', 'd', 'e', 'f', 'g', '...']."
+    )
+    with pytest.raises(ValueError, match=expected_msg):
+        gbdt.fit(X, y)
+
+    monotonic_cst = {"a": 1}
+    gbdt = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst)
+    expected_msg = re.escape(
+        "HistGradientBoostingRegressor was not fitted on data with feature "
+        "names. Pass monotonic_cst as an integer array instead."
+    )
+    with pytest.raises(ValueError, match=expected_msg):
+        gbdt.fit(X.values, y)
+
+    monotonic_cst = {"b": -1, "a": "+"}
+    gbdt = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst)
+    expected_msg = re.escape("monotonic_cst['a'] must be either -1, 0 or 1. Got '+'.")
+    with pytest.raises(ValueError, match=expected_msg):
         gbdt.fit(X, y)
 
 

@@ -8,25 +8,13 @@ import os
 import sys
 import textwrap
 import warnings
-import subprocess
-
-from distutils.errors import CompileError, LinkError
 
 from .pre_build_helpers import compile_test_program
 
 
-def get_openmp_flag(compiler):
-    if hasattr(compiler, "compiler"):
-        compiler = compiler.compiler[0]
-    else:
-        compiler = compiler.__class__.__name__
-
-    if sys.platform == "win32" and ("icc" in compiler or "icl" in compiler):
-        return ["/Qopenmp"]
-    elif sys.platform == "win32":
+def get_openmp_flag():
+    if sys.platform == "win32":
         return ["/openmp"]
-    elif sys.platform in ("darwin", "linux") and "icc" in compiler:
-        return ["-qopenmp"]
     elif sys.platform == "darwin" and "openmp" in os.getenv("CPPFLAGS", ""):
         # -fopenmp can't be passed as compile flag when using Apple-clang.
         # OpenMP support has to be enabled during preprocessing.
@@ -46,7 +34,7 @@ def get_openmp_flag(compiler):
 
 def check_openmp_support():
     """Check whether OpenMP test code can be compiled and run"""
-    if "PYODIDE_PACKAGE_ABI" in os.environ:
+    if "PYODIDE" in os.environ:
         # Pyodide doesn't support OpenMP
         return False
 
@@ -73,8 +61,9 @@ def check_openmp_support():
             if flag.startswith(("-L", "-Wl,-rpath", "-l", "-Wl,--sysroot=/"))
         ]
 
-    extra_postargs = get_openmp_flag
+    extra_postargs = get_openmp_flag()
 
+    openmp_exception = None
     try:
         output = compile_test_program(
             code, extra_preargs=extra_preargs, extra_postargs=extra_postargs
@@ -91,12 +80,21 @@ def check_openmp_support():
         else:
             openmp_supported = False
 
-    except (CompileError, LinkError, subprocess.CalledProcessError):
+    except Exception as exception:
+        # We could be more specific and only catch: CompileError, LinkError,
+        # and subprocess.CalledProcessError.
+        # setuptools introduced CompileError and LinkError, but that requires
+        # version 61.1. Even the latest version of Ubuntu (22.04LTS) only
+        # ships with 59.6. So for now we catch all exceptions and reraise a
+        # generic exception with the original error message instead:
         openmp_supported = False
+        openmp_exception = exception
 
     if not openmp_supported:
         if os.getenv("SKLEARN_FAIL_NO_OPENMP"):
-            raise CompileError("Failed to build with OpenMP")
+            raise Exception(
+                "Failed to build scikit-learn with OpenMP support"
+            ) from openmp_exception
         else:
             message = textwrap.dedent(
                 """

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 =========================================================
 Linear Regression Example
@@ -16,10 +15,11 @@ determination are also calculated.
 """
 
 # Code source: Jaques Grobler
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np
+
 from sklearn import datasets, linear_model
 from sklearn.metrics import mean_squared_error, r2_score
 

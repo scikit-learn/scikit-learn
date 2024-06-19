@@ -21,20 +21,19 @@ step before the final (global) clustering step that further reduces these
 
 """
 
-# Authors: Manoj Kumar <manojkumarsivaraj334@gmail.com
-#          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-from joblib import cpu_count
 from itertools import cycle
 from time import time
-import numpy as np
-import matplotlib.pyplot as plt
+
 import matplotlib.colors as colors
+import matplotlib.pyplot as plt
+import numpy as np
+from joblib import cpu_count
 
 from sklearn.cluster import Birch, MiniBatchKMeans
 from sklearn.datasets import make_blobs
-
 
 # Generate centers for the blobs so that it forms a 10 X 10 grid.
 xx = np.linspace(-22, 22, 10)
@@ -62,7 +61,6 @@ final_step = ["without global clustering", "with global clustering"]
 for ind, (birch_model, info) in enumerate(zip(birch_models, final_step)):
     t = time()
     birch_model.fit(X)
-    time_ = time() - t
     print("BIRCH %s as the final step took %0.2f seconds" % (info, (time() - t)))
 
     # Plot result

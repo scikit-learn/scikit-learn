@@ -9,17 +9,16 @@ target using both barycenter and constant weights.
 
 """
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Fabian Pedregosa <fabian.pedregosa@inria.fr>
-#
-# License: BSD 3 clause (C) INRIA
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 # %%
 # Generate sample data
 # --------------------
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn import neighbors
 
 np.random.seed(0)

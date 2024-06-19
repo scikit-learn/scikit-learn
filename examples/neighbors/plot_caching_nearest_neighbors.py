@@ -18,15 +18,15 @@ larger, or when the grid of parameter to search is large.
 
 """
 
-# Author: Tom Dupre la Tour
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 from tempfile import TemporaryDirectory
+
 import matplotlib.pyplot as plt
 
-from sklearn.neighbors import KNeighborsTransformer, KNeighborsClassifier
-from sklearn.model_selection import GridSearchCV
 from sklearn.datasets import load_digits
+from sklearn.model_selection import GridSearchCV
+from sklearn.neighbors import KNeighborsClassifier, KNeighborsTransformer
 from sklearn.pipeline import Pipeline
 
 X, y = load_digits(return_X_y=True)

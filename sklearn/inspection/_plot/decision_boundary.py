@@ -1,16 +1,22 @@
-from functools import reduce
-
 import numpy as np
 
-from ...preprocessing import LabelEncoder
-from ...utils import check_matplotlib_support
-from ...utils import _safe_indexing
 from ...base import is_regressor
-from ...utils.validation import check_is_fitted, _is_arraylike_not_scalar
+from ...preprocessing import LabelEncoder
+from ...utils import _safe_indexing
+from ...utils._optional_dependencies import check_matplotlib_support
+from ...utils._response import _get_response_values
+from ...utils._set_output import _get_adapter_from_container
+from ...utils.validation import (
+    _is_arraylike_not_scalar,
+    _is_pandas_df,
+    _is_polars_df,
+    _num_features,
+    check_is_fitted,
+)
 
 
-def _check_boundary_response_method(estimator, response_method):
-    """Return prediction method from the `response_method` for decision boundary.
+def _check_boundary_response_method(estimator, response_method, class_of_interest):
+    """Validate the response methods to be used with the fitted estimator.
 
     Parameters
     ----------
@@ -23,10 +29,16 @@ def _check_boundary_response_method(estimator, response_method):
         If set to 'auto', the response method is tried in the following order:
         :term:`decision_function`, :term:`predict_proba`, :term:`predict`.
 
+    class_of_interest : int, float, bool, str or None
+        The class considered when plotting the decision. If the label is specified, it
+        is then possible to plot the decision boundary in multiclass settings.
+
+        .. versionadded:: 1.4
+
     Returns
     -------
-    prediction_method: callable
-        Prediction method of estimator.
+    prediction_method : list of str or str
+        The name or list of names of the response methods to use.
     """
     has_classes = hasattr(estimator, "classes_")
     if has_classes and _is_arraylike_not_scalar(estimator.classes_[0]):
@@ -34,25 +46,21 @@ def _check_boundary_response_method(estimator, response_method):
         raise ValueError(msg)
 
     if has_classes and len(estimator.classes_) > 2:
-        if response_method not in {"auto", "predict"}:
+        if response_method not in {"auto", "predict"} and class_of_interest is None:
             msg = (
-                "Multiclass classifiers are only supported when response_method is"
-                " 'predict' or 'auto'"
+                "Multiclass classifiers are only supported when `response_method` is "
+                "'predict' or 'auto'. Else you must provide `class_of_interest` to "
+                "plot the decision boundary of a specific class."
             )
             raise ValueError(msg)
-        methods_list = ["predict"]
+        prediction_method = "predict" if response_method == "auto" else response_method
     elif response_method == "auto":
-        methods_list = ["decision_function", "predict_proba", "predict"]
+        if is_regressor(estimator):
+            prediction_method = "predict"
+        else:
+            prediction_method = ["decision_function", "predict_proba", "predict"]
     else:
-        methods_list = [response_method]
-
-    prediction_method = [getattr(estimator, method, None) for method in methods_list]
-    prediction_method = reduce(lambda x, y: x or y, prediction_method)
-    if prediction_method is None:
-        raise ValueError(
-            f"{estimator.__class__.__name__} has none of the following attributes: "
-            f"{', '.join(methods_list)}."
-        )
+        prediction_method = response_method
 
     return prediction_method
 
@@ -91,14 +99,44 @@ class DecisionBoundaryDisplay:
     surface_ : matplotlib `QuadContourSet` or `QuadMesh`
         If `plot_method` is 'contour' or 'contourf', `surface_` is a
         :class:`QuadContourSet <matplotlib.contour.QuadContourSet>`. If
-        `plot_method is `pcolormesh`, `surface_` is a
+        `plot_method` is 'pcolormesh', `surface_` is a
         :class:`QuadMesh <matplotlib.collections.QuadMesh>`.
 
     ax_ : matplotlib Axes
-        Axes with confusion matrix.
+        Axes with decision boundary.
 
     figure_ : matplotlib Figure
-        Figure containing the confusion matrix.
+        Figure containing the decision boundary.
+
+    See Also
+    --------
+    DecisionBoundaryDisplay.from_estimator : Plot decision boundary given an estimator.
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> import numpy as np
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.inspection import DecisionBoundaryDisplay
+    >>> from sklearn.tree import DecisionTreeClassifier
+    >>> iris = load_iris()
+    >>> feature_1, feature_2 = np.meshgrid(
+    ...     np.linspace(iris.data[:, 0].min(), iris.data[:, 0].max()),
+    ...     np.linspace(iris.data[:, 1].min(), iris.data[:, 1].max())
+    ... )
+    >>> grid = np.vstack([feature_1.ravel(), feature_2.ravel()]).T
+    >>> tree = DecisionTreeClassifier().fit(iris.data[:, :2], iris.target)
+    >>> y_pred = np.reshape(tree.predict(grid), feature_1.shape)
+    >>> display = DecisionBoundaryDisplay(
+    ...     xx0=feature_1, xx1=feature_2, response=y_pred
+    ... )
+    >>> display.plot()
+    <...>
+    >>> display.ax_.scatter(
+    ...     iris.data[:, 0], iris.data[:, 1], c=iris.target, edgecolor="black"
+    ... )
+    <...>
+    >>> plt.show()
     """
 
     def __init__(self, *, xx0, xx1, response, xlabel=None, ylabel=None):
@@ -118,7 +156,7 @@ class DecisionBoundaryDisplay:
             to the following matplotlib documentation for details:
             :func:`contourf <matplotlib.pyplot.contourf>`,
             :func:`contour <matplotlib.pyplot.contour>`,
-            :func:`pcolomesh <matplotlib.pyplot.pcolomesh>`.
+            :func:`pcolormesh <matplotlib.pyplot.pcolormesh>`.
 
         ax : Matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
@@ -136,6 +174,7 @@ class DecisionBoundaryDisplay:
         Returns
         -------
         display: :class:`~sklearn.inspection.DecisionBoundaryDisplay`
+            Object that stores computed values.
         """
         check_matplotlib_support("DecisionBoundaryDisplay.plot")
         import matplotlib.pyplot as plt  # noqa
@@ -172,6 +211,7 @@ class DecisionBoundaryDisplay:
         eps=1.0,
         plot_method="contourf",
         response_method="auto",
+        class_of_interest=None,
         xlabel=None,
         ylabel=None,
         ax=None,
@@ -203,7 +243,7 @@ class DecisionBoundaryDisplay:
             to the following matplotlib documentation for details:
             :func:`contourf <matplotlib.pyplot.contourf>`,
             :func:`contour <matplotlib.pyplot.contour>`,
-            :func:`pcolomesh <matplotlib.pyplot.pcolomesh>`.
+            :func:`pcolormesh <matplotlib.pyplot.pcolormesh>`.
 
         response_method : {'auto', 'predict_proba', 'decision_function', \
                 'predict'}, default='auto'
@@ -213,6 +253,14 @@ class DecisionBoundaryDisplay:
             :term:`decision_function`, :term:`predict_proba`, :term:`predict`.
             For multiclass problems, :term:`predict` is selected when
             `response_method="auto"`.
+
+        class_of_interest : int, float, bool or str, default=None
+            The class considered when plotting the decision. If None,
+            `estimator.classes_[1]` is considered as the positive class
+            for binary classifiers. For multiclass classifiers, passing
+            an explicit value for `class_of_interest` is mandatory.
+
+            .. versionadded:: 1.4
 
         xlabel : str, default=None
             The label used for the x-axis. If `None`, an attempt is made to
@@ -240,10 +288,10 @@ class DecisionBoundaryDisplay:
         See Also
         --------
         DecisionBoundaryDisplay : Decision boundary visualization.
-        ConfusionMatrixDisplay.from_estimator : Plot the confusion matrix
-            given an estimator, the data, and the label.
-        ConfusionMatrixDisplay.from_predictions : Plot the confusion matrix
-            given the true and predicted labels.
+        sklearn.metrics.ConfusionMatrixDisplay.from_estimator : Plot the
+            confusion matrix given an estimator, the data, and the label.
+        sklearn.metrics.ConfusionMatrixDisplay.from_predictions : Plot the
+            confusion matrix given the true and predicted labels.
 
         Examples
         --------
@@ -285,6 +333,12 @@ class DecisionBoundaryDisplay:
                 f"Got {plot_method} instead."
             )
 
+        num_features = _num_features(X)
+        if num_features != 2:
+            raise ValueError(
+                f"n_features must be equal to 2. Got {num_features} instead."
+            )
+
         x0, x1 = _safe_indexing(X, 0, axis=1), _safe_indexing(X, 1, axis=1)
 
         x0_min, x0_max = x0.min() - eps, x0.max() + eps
@@ -295,11 +349,39 @@ class DecisionBoundaryDisplay:
             np.linspace(x1_min, x1_max, grid_resolution),
         )
 
-        pred_func = _check_boundary_response_method(estimator, response_method)
-        response = pred_func(np.c_[xx0.ravel(), xx1.ravel()])
+        X_grid = np.c_[xx0.ravel(), xx1.ravel()]
+        if _is_pandas_df(X) or _is_polars_df(X):
+            adapter = _get_adapter_from_container(X)
+            X_grid = adapter.create_container(
+                X_grid,
+                X_grid,
+                columns=X.columns,
+            )
+
+        prediction_method = _check_boundary_response_method(
+            estimator, response_method, class_of_interest
+        )
+        try:
+            response, _, response_method_used = _get_response_values(
+                estimator,
+                X_grid,
+                response_method=prediction_method,
+                pos_label=class_of_interest,
+                return_response_method_used=True,
+            )
+        except ValueError as exc:
+            if "is not a valid label" in str(exc):
+                # re-raise a more informative error message since `pos_label` is unknown
+                # to our user when interacting with
+                # `DecisionBoundaryDisplay.from_estimator`
+                raise ValueError(
+                    f"class_of_interest={class_of_interest} is not a valid label: It "
+                    f"should be one of {estimator.classes_}"
+                ) from exc
+            raise
 
         # convert classes predictions into integers
-        if pred_func.__name__ == "predict" and hasattr(estimator, "classes_"):
+        if response_method_used == "predict" and hasattr(estimator, "classes_"):
             encoder = LabelEncoder()
             encoder.classes_ = estimator.classes_
             response = encoder.transform(response)
@@ -308,20 +390,19 @@ class DecisionBoundaryDisplay:
             if is_regressor(estimator):
                 raise ValueError("Multi-output regressors are not supported")
 
-            # TODO: Support pos_label
-            response = response[:, 1]
+            # For the multiclass case, `_get_response_values` returns the response
+            # as-is. Thus, we have a column per class and we need to select the column
+            # corresponding to the positive class.
+            col_idx = np.flatnonzero(estimator.classes_ == class_of_interest)[0]
+            response = response[:, col_idx]
 
-        if xlabel is not None:
-            xlabel = xlabel
-        else:
+        if xlabel is None:
             xlabel = X.columns[0] if hasattr(X, "columns") else ""
 
-        if ylabel is not None:
-            ylabel = ylabel
-        else:
+        if ylabel is None:
             ylabel = X.columns[1] if hasattr(X, "columns") else ""
 
-        display = DecisionBoundaryDisplay(
+        display = cls(
             xx0=xx0,
             xx1=xx1,
             response=response.reshape(xx0.shape),

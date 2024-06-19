@@ -1,11 +1,9 @@
-"""Utilities for the neural network modules
-"""
+"""Utilities for the neural network modules"""
 
-# Author: Issam H. Laradji <issam.laradji@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
-
 from scipy.special import expit as logistic_sigmoid
 from scipy.special import xlogy
 

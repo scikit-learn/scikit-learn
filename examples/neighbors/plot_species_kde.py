@@ -19,7 +19,7 @@ geospatial coordinates.
 The two species are:
 
  - `"Bradypus variegatus"
-   <http://www.iucnredlist.org/apps/redlist/details/3038/0>`_ ,
+   <https://www.iucnredlist.org/species/3038/47437046>`_ ,
    the Brown-throated Sloth.
 
  - `"Microryzomys minutus"
@@ -36,12 +36,12 @@ References
    190:231-259, 2006.
 """  # noqa: E501
 
-# Author: Jake Vanderplas <jakevdp@cs.washington.edu>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn.datasets import fetch_species_distributions
 from sklearn.neighbors import KernelDensity
 

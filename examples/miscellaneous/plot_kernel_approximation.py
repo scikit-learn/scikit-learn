@@ -34,19 +34,19 @@ This is not easily possible for the case of the kernelized SVM.
 # ---------------------------------------------------
 
 
-# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
-#         Andreas Mueller <amueller@ais.uni-bonn.de>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # Standard scientific Python imports
-import matplotlib.pyplot as plt
-import numpy as np
 from time import time
 
+import matplotlib.pyplot as plt
+import numpy as np
+
 # Import datasets, classifiers and performance metrics
-from sklearn import datasets, svm, pipeline
-from sklearn.kernel_approximation import RBFSampler, Nystroem
+from sklearn import datasets, pipeline, svm
 from sklearn.decomposition import PCA
+from sklearn.kernel_approximation import Nystroem, RBFSampler
 
 # The digits dataset
 digits = datasets.load_digits(n_class=9)
@@ -71,18 +71,24 @@ data_test, targets_test = (data[n_samples // 2 :], digits.target[n_samples // 2 
 
 # Create a classifier: a support vector classifier
 kernel_svm = svm.SVC(gamma=0.2)
-linear_svm = svm.LinearSVC()
+linear_svm = svm.LinearSVC(random_state=42)
 
 # create pipeline from kernel approximation
 # and linear svm
 feature_map_fourier = RBFSampler(gamma=0.2, random_state=1)
 feature_map_nystroem = Nystroem(gamma=0.2, random_state=1)
 fourier_approx_svm = pipeline.Pipeline(
-    [("feature_map", feature_map_fourier), ("svm", svm.LinearSVC())]
+    [
+        ("feature_map", feature_map_fourier),
+        ("svm", svm.LinearSVC(random_state=42)),
+    ]
 )
 
 nystroem_approx_svm = pipeline.Pipeline(
-    [("feature_map", feature_map_nystroem), ("svm", svm.LinearSVC())]
+    [
+        ("feature_map", feature_map_nystroem),
+        ("svm", svm.LinearSVC(random_state=42)),
+    ]
 )
 
 # fit and predict using linear and kernel svm:
@@ -191,7 +197,7 @@ plt.show()
 
 # visualize the decision surface, projected down to the first
 # two principal components of the dataset
-pca = PCA(n_components=8).fit(data_train)
+pca = PCA(n_components=8, random_state=42).fit(data_train)
 
 X = pca.transform(data_train)
 
@@ -223,12 +229,29 @@ for i, clf in enumerate((kernel_svm, nystroem_approx_svm, fourier_approx_svm)):
 
     # Put the result into a color plot
     Z = Z.reshape(grid.shape[:-1])
-    plt.contourf(multiples, multiples, Z, cmap=plt.cm.Paired)
+    levels = np.arange(10)
+    lv_eps = 0.01  # Adjust a mapping from calculated contour levels to color.
+    plt.contourf(
+        multiples,
+        multiples,
+        Z,
+        levels=levels - lv_eps,
+        cmap=plt.cm.tab10,
+        vmin=0,
+        vmax=10,
+        alpha=0.7,
+    )
     plt.axis("off")
 
     # Plot also the training points
     plt.scatter(
-        X[:, 0], X[:, 1], c=targets_train, cmap=plt.cm.Paired, edgecolors=(0, 0, 0)
+        X[:, 0],
+        X[:, 1],
+        c=targets_train,
+        cmap=plt.cm.tab10,
+        edgecolors=(0, 0, 0),
+        vmin=0,
+        vmax=10,
     )
 
     plt.title(titles[i])

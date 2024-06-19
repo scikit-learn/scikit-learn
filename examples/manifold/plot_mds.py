@@ -10,17 +10,16 @@ shifted to avoid overlapping.
 
 """
 
-# Author: Nelle Varoquaux <nelle.varoquaux@gmail.com>
-# License: BSD
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
-
 from matplotlib import pyplot as plt
 from matplotlib.collections import LineCollection
 
 from sklearn import manifold
-from sklearn.metrics import euclidean_distances
 from sklearn.decomposition import PCA
+from sklearn.metrics import euclidean_distances
 
 EPSILON = np.finfo(np.float32).eps
 n_samples = 20

@@ -21,31 +21,37 @@ dataset and which features a point in time split between the train and
 test sets. The compressed dataset size is around 14 Mb compressed. Once
 uncompressed the train set is 52 MB and the test set is 34 MB.
 """
-# Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
-# License: BSD 3 clause
 
-import os
-import logging
-import tarfile
-import pickle
-import shutil
-import re
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import codecs
+import logging
+import os
+import pickle
+import re
+import shutil
+import tarfile
+from contextlib import suppress
+from numbers import Integral, Real
 
+import joblib
 import numpy as np
 import scipy.sparse as sp
-import joblib
 
-from . import get_data_home
-from . import load_files
-from ._base import _convert_data_dataframe
-from ._base import _pkl_filepath
-from ._base import _fetch_remote
-from ._base import RemoteFileMetadata
-from ._base import load_descr
-from ..feature_extraction.text import CountVectorizer
 from .. import preprocessing
-from ..utils import check_random_state, Bunch
+from ..feature_extraction.text import CountVectorizer
+from ..utils import Bunch, check_random_state
+from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils.fixes import tarfile_extractall
+from . import get_data_home, load_files
+from ._base import (
+    RemoteFileMetadata,
+    _convert_data_dataframe,
+    _fetch_remote,
+    _pkl_filepath,
+    load_descr,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -62,20 +68,24 @@ TRAIN_FOLDER = "20news-bydate-train"
 TEST_FOLDER = "20news-bydate-test"
 
 
-def _download_20newsgroups(target_dir, cache_path):
+def _download_20newsgroups(target_dir, cache_path, n_retries, delay):
     """Download the 20 newsgroups data and stored it as a zipped pickle."""
     train_path = os.path.join(target_dir, TRAIN_FOLDER)
     test_path = os.path.join(target_dir, TEST_FOLDER)
 
-    if not os.path.exists(target_dir):
-        os.makedirs(target_dir)
+    os.makedirs(target_dir, exist_ok=True)
 
     logger.info("Downloading dataset from %s (14 MB)", ARCHIVE.url)
-    archive_path = _fetch_remote(ARCHIVE, dirname=target_dir)
+    archive_path = _fetch_remote(
+        ARCHIVE, dirname=target_dir, n_retries=n_retries, delay=delay
+    )
 
     logger.debug("Decompressing %s", archive_path)
-    tarfile.open(archive_path, "r:gz").extractall(path=target_dir)
-    os.remove(archive_path)
+    with tarfile.open(archive_path, "r:gz") as fp:
+        tarfile_extractall(fp, path=target_dir)
+
+    with suppress(FileNotFoundError):
+        os.remove(archive_path)
 
     # Store a zipped pickle
     cache = dict(
@@ -149,6 +159,21 @@ def strip_newsgroup_footer(text):
         return text
 
 
+@validate_params(
+    {
+        "data_home": [str, os.PathLike, None],
+        "subset": [StrOptions({"train", "test", "all"})],
+        "categories": ["array-like", None],
+        "shuffle": ["boolean"],
+        "random_state": ["random_state"],
+        "remove": [tuple],
+        "download_if_missing": ["boolean"],
+        "return_X_y": ["boolean"],
+        "n_retries": [Interval(Integral, 1, None, closed="left")],
+        "delay": [Interval(Real, 0.0, None, closed="neither")],
+    },
+    prefer_skip_nested_validation=True,
+)
 def fetch_20newsgroups(
     *,
     data_home=None,
@@ -159,6 +184,8 @@ def fetch_20newsgroups(
     remove=(),
     download_if_missing=True,
     return_X_y=False,
+    n_retries=3,
+    delay=1.0,
 ):
     """Load the filenames and data from the 20 newsgroups dataset \
 (classification).
@@ -176,7 +203,7 @@ def fetch_20newsgroups(
 
     Parameters
     ----------
-    data_home : str, default=None
+    data_home : str or path-like, default=None
         Specify a download and cache folder for the datasets. If None,
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
@@ -194,7 +221,7 @@ def fetch_20newsgroups(
         make the assumption that the samples are independent and identically
         distributed (i.i.d.), such as stochastic gradient descent.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int, RandomState instance or None, default=42
         Determines random number generation for dataset shuffling. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -213,7 +240,7 @@ def fetch_20newsgroups(
         correct.
 
     download_if_missing : bool, default=True
-        If False, raise an IOError if the data is not locally available
+        If False, raise an OSError if the data is not locally available
         instead of trying to download the data from the source site.
 
     return_X_y : bool, default=False
@@ -221,6 +248,16 @@ def fetch_20newsgroups(
         object.
 
         .. versionadded:: 0.22
+
+    n_retries : int, default=3
+        Number of retries when HTTP errors are encountered.
+
+        .. versionadded:: 1.5
+
+    delay : float, default=1.0
+        Number of seconds between retries.
+
+        .. versionadded:: 1.5
 
     Returns
     -------
@@ -245,6 +282,20 @@ def fetch_20newsgroups(
         (n_samples,) contains the target samples.
 
         .. versionadded:: 0.22
+
+    Examples
+    --------
+    >>> from sklearn.datasets import fetch_20newsgroups
+    >>> cats = ['alt.atheism', 'sci.space']
+    >>> newsgroups_train = fetch_20newsgroups(subset='train', categories=cats)
+    >>> list(newsgroups_train.target_names)
+    ['alt.atheism', 'sci.space']
+    >>> newsgroups_train.filenames.shape
+    (1073,)
+    >>> newsgroups_train.target.shape
+    (1073,)
+    >>> newsgroups_train.target[:10]
+    array([0, 1, 1, 1, 0, 1, 1, 0, 0, 0])
     """
 
     data_home = get_data_home(data_home=data_home)
@@ -267,10 +318,13 @@ def fetch_20newsgroups(
         if download_if_missing:
             logger.info("Downloading 20news dataset. This may take a few minutes.")
             cache = _download_20newsgroups(
-                target_dir=twenty_home, cache_path=cache_path
+                target_dir=twenty_home,
+                cache_path=cache_path,
+                n_retries=n_retries,
+                delay=delay,
             )
         else:
-            raise IOError("20Newsgroups dataset not found")
+            raise OSError("20Newsgroups dataset not found")
 
     if subset in ("train", "test"):
         data = cache[subset]
@@ -287,10 +341,6 @@ def fetch_20newsgroups(
         data.data = data_lst
         data.target = np.array(target)
         data.filenames = np.array(filenames)
-    else:
-        raise ValueError(
-            "subset can only be 'train', 'test' or 'all', got '%s'" % subset
-        )
 
     fdescr = load_descr("twenty_newsgroups.rst")
 
@@ -308,7 +358,7 @@ def fetch_20newsgroups(
         # Sort the categories to have the ordering of the labels
         labels.sort()
         labels, categories = zip(*labels)
-        mask = np.in1d(data.target, labels)
+        mask = np.isin(data.target, labels)
         data.filenames = data.filenames[mask]
         data.target = data.target[mask]
         # searchsorted to have continuous labels
@@ -336,6 +386,20 @@ def fetch_20newsgroups(
     return data
 
 
+@validate_params(
+    {
+        "subset": [StrOptions({"train", "test", "all"})],
+        "remove": [tuple],
+        "data_home": [str, os.PathLike, None],
+        "download_if_missing": ["boolean"],
+        "return_X_y": ["boolean"],
+        "normalize": ["boolean"],
+        "as_frame": ["boolean"],
+        "n_retries": [Interval(Integral, 1, None, closed="left")],
+        "delay": [Interval(Real, 0.0, None, closed="neither")],
+    },
+    prefer_skip_nested_validation=True,
+)
 def fetch_20newsgroups_vectorized(
     *,
     subset="train",
@@ -345,6 +409,8 @@ def fetch_20newsgroups_vectorized(
     return_X_y=False,
     normalize=True,
     as_frame=False,
+    n_retries=3,
+    delay=1.0,
 ):
     """Load and vectorize the 20 newsgroups dataset (classification).
 
@@ -388,12 +454,12 @@ def fetch_20newsgroups_vectorized(
         ends of posts that look like signatures, and 'quotes' removes lines
         that appear to be quoting another post.
 
-    data_home : str, default=None
+    data_home : str or path-like, default=None
         Specify an download and cache folder for the datasets. If None,
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     download_if_missing : bool, default=True
-        If False, raise an IOError if the data is not locally available
+        If False, raise an OSError if the data is not locally available
         instead of trying to download the data from the source site.
 
     return_X_y : bool, default=False
@@ -415,6 +481,16 @@ def fetch_20newsgroups_vectorized(
         `target_columns`.
 
         .. versionadded:: 0.24
+
+    n_retries : int, default=3
+        Number of retries when HTTP errors are encountered.
+
+        .. versionadded:: 1.5
+
+    delay : float, default=1.0
+        Number of seconds between retries.
+
+        .. versionadded:: 1.5
 
     Returns
     -------
@@ -442,6 +518,15 @@ def fetch_20newsgroups_vectorized(
         description above.
 
         .. versionadded:: 0.20
+
+    Examples
+    --------
+    >>> from sklearn.datasets import fetch_20newsgroups_vectorized
+    >>> newsgroups_vectorized = fetch_20newsgroups_vectorized(subset='test')
+    >>> newsgroups_vectorized.data.shape
+    (7532, 130107)
+    >>> newsgroups_vectorized.target.shape
+    (7532,)
     """
     data_home = get_data_home(data_home=data_home)
     filebase = "20newsgroup_vectorized"
@@ -458,6 +543,8 @@ def fetch_20newsgroups_vectorized(
         random_state=12,
         remove=remove,
         download_if_missing=download_if_missing,
+        n_retries=n_retries,
+        delay=delay,
     )
 
     data_test = fetch_20newsgroups(
@@ -468,6 +555,8 @@ def fetch_20newsgroups_vectorized(
         random_state=12,
         remove=remove,
         download_if_missing=download_if_missing,
+        n_retries=n_retries,
+        delay=delay,
     )
 
     if os.path.exists(target_file):
@@ -507,11 +596,6 @@ def fetch_20newsgroups_vectorized(
     elif subset == "all":
         data = sp.vstack((X_train, X_test)).tocsr()
         target = np.concatenate((data_train.target, data_test.target))
-    else:
-        raise ValueError(
-            "%r is not a valid subset: should be one of ['train', 'test', 'all']"
-            % subset
-        )
 
     fdescr = load_descr("twenty_newsgroups.rst")
 
