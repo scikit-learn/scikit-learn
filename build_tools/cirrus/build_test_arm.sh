@@ -39,7 +39,7 @@ python --version
 
 # Set parallelism to $N_CORES + 1 to overlap IO bound tasks with CPU bound tasks on CI
 # workers with $N_CORES cores when building the compiled extensions of scikit-learn.
-export SKLEARN_BUILD_PARALLEL=$(($N_CORES + 1))
+#export SKLEARN_BUILD_PARALLEL=$(($N_CORES + 1))
 
 # Disable the build isolation and build in the tree so that the same folder can be
 # cached between CI runs.
