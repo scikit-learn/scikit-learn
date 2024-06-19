@@ -64,7 +64,7 @@ from .utils.validation import (
 
 
 class CalibratedClassifierCV_test(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
-    """Probability calibration with isotonic regression or logistic regression.
+    """Probability calibration with isotonic regression, logistic regression, or temperature scaling (in-progress).
 
     This class uses cross-validation to both estimate the parameters of a
     classifier and subsequently calibrate a classifier. With default
@@ -98,11 +98,12 @@ class CalibratedClassifierCV_test(ClassifierMixin, MetaEstimatorMixin, BaseEstim
 
         .. versionadded:: 1.2
 
-    method : {'sigmoid', 'isotonic'}, default='sigmoid'
+    method : {'sigmoid', 'isotonic', 'temperature'}, default='sigmoid'
         The method to use for calibration. Can be 'sigmoid' which
-        corresponds to Platt's method (i.e. a logistic regression model) or
-        'isotonic' which is a non-parametric approach. It is not advised to
-        use isotonic calibration with too few calibration samples
+        corresponds to Platt's method (i.e. a logistic regression model),
+        'isotonic' which is a non-parametric approach, or 'temperature'
+        which corresponds to the temperature scalingt method. It is not
+        advised to use isotonic calibration with too few calibration samples
         ``(<<1000)`` since it tends to overfit.
 
     cv : int, cross-validation generator, iterable or "prefit", \
@@ -210,6 +211,9 @@ class CalibratedClassifierCV_test(ClassifierMixin, MetaEstimatorMixin, BaseEstim
 
     .. [4] Predicting Good Probabilities with Supervised Learning,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
+
+    .. [5] On Calibration of Modern Neural Networks,
+           C. Guo, G. Pleiss, Y. Sun & K. Q. Weinberger, ICML 2017
 
     Examples
     --------
@@ -933,9 +937,20 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
 
 
 def _row_max_normalization(data: np.ndarray) -> np.ndarray:
-    """Normalise the output by subtracting
-       the per-row maximum element.
+    """Normalize the input data by subtracting the maximum value of each row.
+
+    Parameters
+    ----------
+    data : np.ndarray
+        The input data array of shape (n_samples, n_classes).
+
+    Returns
+    -------
+    np.ndarray
+        A 2D array of the same shape as `data` where each row has been normalized
+        by subtracting the maximum value of that row.
     """
+
     row_max: np.ndarray = np.max(data,
                                  axis=1,
                                  keepdims=True
@@ -947,7 +962,27 @@ def _row_max_normalization(data: np.ndarray) -> np.ndarray:
 def _softmax_t(predictions: np.ndarray,
                temperature: float,
                ) -> np.ndarray:
-    """Softmax function scaled by the inverse temperature
+    """Compute the temperature-scaled softmax of the input predictions.
+
+    Parameters
+    ----------
+    predictions : np.ndarray
+        The input predictions array of shape (n_sample, n_classes).
+
+    temperature : float
+        The temperature parameter for scaling.
+
+    Returns
+    -------
+    np.ndarray
+        A 2D array of the same shape as `predictions` containing the temperature-scaled
+        softmax probabilities.
+
+    Notes
+    -----
+    - This function internally normalizes the predictions by subtracting the row-wise
+      maximum to improve numerical stability before scaling by the temperature.
+    - The softmax computation is done along the last axis of the input predictions.
     """
 
     softmax_t_output: np.ndarray = predictions
@@ -962,7 +997,27 @@ def _softmax_t(predictions: np.ndarray,
 def _exp_t(predictions: np.ndarray,
            temperature: float
            ) -> np.ndarray:
-    """Scale by inverse temperature, and then apply the nature exponential function
+    """Scale predictions by the inverse temperature and apply the exponential function.
+
+    Parameters
+    ----------
+    predictions : np.ndarray
+        The input predictions array of shape (n_samples, n_classes).
+
+    temperature : float
+        The temperature parameter for scaling.
+
+    Returns
+    -------
+    np.ndarray
+        A 2D array of the same shape as `predictions` containing the scaled and
+        exponentiated values.
+
+    Notes
+    -----
+    - This function internally normalizes the predictions by subtracting the row-wise
+      maximum to improve numerical stability before scaling by the temperature and
+      applying the exponential function.
     """
 
     exp_t_output: np.ndarray = predictions
@@ -977,12 +1032,46 @@ def _temperature_scaling(predictions: np.ndarray,
                          labels: np.ndarray,
                          initial_temperature: float
                          ) -> float:
-    """ Minimize the Negative Log Likelihood Loss with respect to Temperature
+    """Probability Calibration with temperature scaling (Guo-Pleiss-Sun-Weinberger 2017).
+
+    Parameters
+    ----------
+    predictions : ndarray of shape (n_samples,)
+        The decision function or predict proba for the samples.
+
+    labels : ndarray of shape (n_samples, n_classes)
+        One-hot encoded true labels for the samples.
+
+    initial_temperature : float
+       Initial temperature value to start the optimisation
+
+    Returns
+    -------
+    float
+        The optimised temperature parameter for probability calibration, with a
+        value in the range [1, infinity).
+
+    References
+    ----------
+    Guo, Pleiss, Sun & Weinberger, "On Calibration of Modern Neural Networks"
     """
 
     def negative_log_likelihood(temperature: float):
-        """Negative Log Likelihood Loss and its Derivative
-           with respect to Temperature
+        """ Compute the negative log likelihood loss and its derivative
+            with respect  to temperature.
+
+        Parameters
+        ----------
+        temperature : float
+            The current temperature value during optimisation.
+
+        Returns
+        -------
+        float
+            The negative log likelihood loss.
+        float
+            The derivative of the negative log likelihood loss with respect to
+            temperature.
         """
 
         # Initiate the Losses
@@ -1009,11 +1098,11 @@ def _temperature_scaling(predictions: np.ndarray,
         term_2 *= exp_t
         term_2 = term_2.sum(axis=1)
 
-        dL_dts: np.ndarray = (term_1 + term_2) / exp_t_sum
+        dlosses_dts: np.ndarray = (term_1 + term_2) / exp_t_sum
 
         # print(f"{-losses.sum() = },  {-dL_dts.sum() = }")
 
-        return -losses.sum(), -dL_dts.sum()
+        return -losses.sum(), -dlosses_dts.sum()
 
     temperature_minimizer: minimize = minimize(negative_log_likelihood,
                                                np.array([initial_temperature]),
@@ -1033,8 +1122,14 @@ class _TemperatureScaling():
 
     Attributes
     ----------
+
+    _initial_temperature: float or None
+        Initial temperature value to start the optimisation.
+        If None, the it is set to 1.5.
+
+
     T_ : float
-        The optimal temperature.
+        The optimised temperature for probability calibration.
     """
 
     def __init__(self,
@@ -1050,6 +1145,21 @@ class _TemperatureScaling():
             X,
             y
             ):
+        """Fit the model using X, y as training data.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_classes)
+            Training data.
+
+        y : array-like of shape (n_samples, n_classes)
+            Training target.
+
+        Returns
+        -------
+        self : object
+            Returns an instance of self.
+        """
 
         self.T_: float = _temperature_scaling(np.log(X), y, self._initial_temperature)
 
@@ -1061,11 +1171,12 @@ class _TemperatureScaling():
         Parameters
         ----------
         X : array-like of shape (n_samples, n_classes)
-            Data to predict from.
+            The decision function or predict proba for the samples
+
 
         Returns
         -------
-        X_ : ndarray of shape (n_samples,)
+        ndarray of shape (n_samples, n_classes)
             The predicted data.
         """
 

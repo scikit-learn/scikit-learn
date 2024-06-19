@@ -33,6 +33,8 @@ SVC_scaled.fit(X_train,y_train)
 Logistic_scaled.fit(X_train,y_train)
 Tree_scaled.fit(X_train,y_train)
 
+print(f" Initial temperatureSVC: {SVC_scaled.calibrated_classifiers_[0].calibrators[0]._initial_temperature}")
+
 print("Optimal Temperatures For Each Classifiers")
 print(f"- SVC: {SVC_scaled.calibrated_classifiers_[0].calibrators[0].T_}")
 print(f"- Logistic: {Logistic_scaled.calibrated_classifiers_[0].calibrators[0].T_}")
