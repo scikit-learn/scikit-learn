@@ -50,7 +50,9 @@ if [[ $(uname) == "Darwin" ]]; then
 fi
 
 
-if [[ "$GITHUB_EVENT_NAME" == "schedule" || "$CIRRUS_CRON" == "nightly" ]]; then
+if [[ "$GITHUB_EVENT_NAME" == "schedule" \
+        || "$GITHUB_EVENT_NAME" == "workflow_dispatch" \
+        || "$CIRRUS_CRON" == "nightly" ]]; then
     # Nightly build:  See also `../github/upload_anaconda.sh` (same branching).
     # To help with NumPy 2.0 transition, ensure that we use the NumPy 2.0
     # nightlies.  This lives on the edge and opts-in to all pre-releases.
