@@ -1,6 +1,6 @@
 """Utilities for the neural network modules"""
 
-# Author: Issam H. Laradji <issam.laradji@gmail.com>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np

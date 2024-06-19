@@ -37,8 +37,7 @@ is held out with the validation stopping criterion.
 
 """
 
-# Authors: Tom Dupre la Tour
-#
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import sys
