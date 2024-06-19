@@ -75,7 +75,7 @@ Changelog
     where 123455 is the *pull request* number, not the issue number.
 
 :mod:`sklearn.multiclass`
-....................
+.........................
 
 - |Fix| :class:`multiclass.OneVsOneClassifier`
   now it's decision function properly handles confidences when these are provided as
