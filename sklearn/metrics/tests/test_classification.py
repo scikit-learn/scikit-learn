@@ -3095,43 +3095,42 @@ def test_d2_log_loss_score_raises():
     with pytest.raises(ValueError, match=err):
         d2_log_loss_score(y_true, y_pred, labels=labels)
 
-import numpy as np
-from numpy.testing import assert_almost_equal
-import pytest
-from sklearn.metrics import confusion_matrix, tau_score
 
 def test_tau_score_binary_perfect_prediction():
     y_true = np.array([0, 1, 0, 1])
     y_pred = np.array([0, 1, 0, 1])
     expected_score = 1.0  # Perfect score
-    assert np.isclose(tau_score(y_true, y_pred), expected_score), "Test failed for binary perfect prediction"
+    assert np.isclose(tau_score(y_true, y_pred), expected_score)
 
 def test_tau_score_binary_imperfect_prediction():
     y_true = np.array([0, 1, 0, 1])
     y_pred = np.array([1, 1, 0, 0])
     # Assuming a manually calculated expected score
-    expected_score = 0.5  # Example expected score based on manual calculations
-    assert np.isclose(tau_score(y_true, y_pred), expected_score), "Test failed for binary imperfect prediction"
-
+    expected_score = 0.5 
+    assert np.isclose(tau_score(y_true, y_pred), expected_score)
 def test_tau_score_multi_class():
     y_true = np.array([0, 1, 2, 0, 1, 2])
     y_pred = np.array([0, 2, 1, 0, 1, 2])
     actual_score = tau_score(y_true, y_pred)
-    expected_score = 0.5917  # Recalculate this based on your normalization logic
-    print(f"Actual Score: {actual_score}")
-    assert np.isclose(actual_score, expected_score, atol=0.01), f"Test failed for multi-class, expected {expected_score}, got {actual_score}"
+    expected_score = 0.5917  
+    assert np.isclose(actual_score, expected_score, atol=0.01)
 
 def test_tau_score_with_all_wrong_predictions():
     y_true = np.array([0, 0, 0, 0])
     y_pred = np.array([1, 1, 1, 1])
     actual_score = tau_score(y_true, y_pred)
     expected_score = 0.0  # All predictions are wrong
-    print(f"Actual Score: {actual_score}")
-    assert np.isclose(actual_score, expected_score), f"Test failed for all wrong predictions, expected {expected_score}, got {actual_score}"
+    assert np.isclose(actual_score, expected_score)
 
 def test_tau_score_input_validation():
     y_true = [0, 1, 0, 1]
     y_pred = [0, 1]  # Incorrect length
+    with pytest.raises(ValueError):
+        tau_score(y_true, y_pred)
+
+def test_tau_score_invalid_input_type():
+    y_true = ['a', 'b', 'c']
+    y_pred = ['a', 'c', 'b']
     with pytest.raises(ValueError):
         tau_score(y_true, y_pred)
 

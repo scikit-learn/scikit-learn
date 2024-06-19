@@ -3355,10 +3355,29 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
 
     return 1 - (numerator / denominator)
 
-import numpy as np
-from sklearn.utils.validation import check_consistent_length
 
 def tau_score(y_true, y_pred, *, normalize=True):
+    """
+    Compute the Tau score as a measure of classification accuracy based on a geometric
+    approach. This function assesses distances from the model's performance to both a
+    perfect and a random-guess model's performance in a normalized performance space.
+    It is applicable to both binary and multi-class classification scenarios.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,) or sparse matrix
+        Ground truth (correct) labels.
+    y_pred : array-like of shape (n_samples,) or sparse matrix
+        Predicted labels, as returned by a classifier.
+    normalize : bool, default=True
+        Specifies whether to normalize the Tau score to the range [0, 1]. If True,
+        the score is normalized; otherwise, it is not.
+
+    Returns
+    -------
+    score : float
+        The Tau score, where higher values indicate better performance.
+    """
     check_consistent_length(y_true, y_pred)
     
     if not isinstance(normalize, bool):

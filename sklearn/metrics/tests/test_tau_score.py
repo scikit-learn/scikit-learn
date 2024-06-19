@@ -42,7 +42,7 @@ def test_tau_score_multiclass_imperfect_prediction():
     actual = tau_score(y_true, y_pred)
     
     # Define the expected score based on previous observations or manual calculation
-    expected = 0.35  # Example expected score, adjust based on your calculation logic
+    expected = 0.35
     
     # Print results for debug purposes
     print(f"Testing multi-class imperfect prediction - Expected: {expected}, Actual: {actual}")
