@@ -21,8 +21,8 @@ from ._classification import (
     precision_recall_fscore_support,
     precision_score,
     recall_score,
-    zero_one_loss,
     tau_score,
+    zero_one_loss,
 )
 from ._dist_metrics import DistanceMetric
 from ._plot.confusion_matrix import ConfusionMatrixDisplay
@@ -176,4 +176,5 @@ __all__ = [
     "v_measure_score",
     "zero_one_loss",
     "brier_score_loss",
+    "tau_score",
 ]

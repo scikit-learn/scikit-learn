@@ -3433,29 +3433,29 @@ def tau_score(y_true, y_pred, *, normalize=True):
         The Tau score, where higher values indicate better performance.
     """
     check_consistent_length(y_true, y_pred)
-    
+
     if not isinstance(normalize, bool):
         raise ValueError("normalize must be a boolean.")
     if len(y_true) == 0 or len(y_pred) == 0:
         raise ValueError("Input arrays must not be empty.")
     if any(isinstance(x, str) for x in np.concatenate((y_true, y_pred))):
         raise ValueError("Input arrays must contain numeric values only.")
-    
+
     cm = confusion_matrix(y_true, y_pred)
     n_classes = cm.shape[0]
 
     # Handle the potential division by zero in normalization
     sums = np.sum(cm, axis=1)
-    with np.errstate(divide='ignore', invalid='ignore'):
+    with np.errstate(divide="ignore", invalid="ignore"):
         model_point = np.diag(cm) / sums
         model_point[sums == 0] = 0  # Handle rows in CM where the sum is zero
 
     perfect_point = np.ones(n_classes)
-    random_point = np.full(n_classes, 1 / n_classes)
+    #random_point = np.full(n_classes, 1 / n_classes)
 
     # Compute distances
     dist_from_perfect = np.linalg.norm(model_point - perfect_point)
-    dist_from_random = np.linalg.norm(model_point - random_point)
+    #dist_from_random = np.linalg.norm(model_point - random_point)
 
     # Check for the case where there are no true positives across all classes
     if normalize:
