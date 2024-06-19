@@ -74,6 +74,14 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123455 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.multiclass`
+....................
+
+- |Fix| :class:`multiclass.OneVsOneClassifier`
+  now it's decision function properly handles confidences when these are provided as
+  predicted probabilities for the positive class.
+  :pr:`28739` by :user:`Luís Calado <LC1243>`.
+
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:
 

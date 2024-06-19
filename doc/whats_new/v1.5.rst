@@ -537,11 +537,6 @@ Changelog
 - |Fix| :func:`~utils._safe_indexing` now works correctly for polars DataFrame when
   `axis=0` and supports indexing polars Series.
   :pr:`28521` by :user:`Yao Xiao <Charlie-XIAO>`.
-  
-- |Fix| :func:`utils._ovr_decision_function`
-  now calcultes properly sum_of_confidences when confidences are provided as
-  predicted probabilities.
-  :pr:`28739` by :user:`Luís Calado <LC1243>`.
 
 - |API| :func:`utils.estimator_checks.check_estimator_sparse_data` was split into two
   functions: :func:`utils.estimator_checks.check_estimator_sparse_matrix` and
