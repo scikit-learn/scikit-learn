@@ -3451,11 +3451,11 @@ def tau_score(y_true, y_pred, *, normalize=True):
         model_point[sums == 0] = 0  # Handle rows in CM where the sum is zero
 
     perfect_point = np.ones(n_classes)
-    #random_point = np.full(n_classes, 1 / n_classes)
+    # random_point = np.full(n_classes, 1 / n_classes)
 
     # Compute distances
     dist_from_perfect = np.linalg.norm(model_point - perfect_point)
-    #dist_from_random = np.linalg.norm(model_point - random_point)
+    # dist_from_random = np.linalg.norm(model_point - random_point)
 
     # Check for the case where there are no true positives across all classes
     if normalize:
