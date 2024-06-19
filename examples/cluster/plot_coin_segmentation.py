@@ -20,9 +20,7 @@ There are three options to assign labels:
   that directly determines the partition in the embedding space.
 """
 
-# Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
-#         Brian Cheung
-#         Andrew Knyazev <Andrew.Knyazev@ucdenver.edu>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import time

@@ -1,14 +1,6 @@
 """Testing utilities."""
 
-# Copyright (c) 2011, 2012
-# Authors: Pietro Berkes,
-#          Andreas Muller
-#          Mathieu Blondel
-#          Olivier Grisel
-#          Arnaud Joly
-#          Denis Engemann
-#          Giorgio Patrini
-#          Thierry Guillemot
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 import atexit
 import contextlib

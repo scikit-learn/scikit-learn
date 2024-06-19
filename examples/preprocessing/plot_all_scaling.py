@@ -40,9 +40,7 @@ of the results_.
 
 """
 
-# Author:  Raghav RV <rvraghav93@gmail.com>
-#          Guillaume Lemaitre <g.lemaitre58@gmail.com>
-#          Thomas Unterthiner
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib as mpl
