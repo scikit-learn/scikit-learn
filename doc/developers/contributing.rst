@@ -192,12 +192,13 @@ Contributing code
   ``/take`` on it for the CI to automatically assign the issue to you.
 
 To maintain the quality of the codebase and ease the review process, any
-contribution must conform to the project's coding conventions, in particular:
+contribution must conform to the project's :ref:`coding guidelines
+<coding-guidelines>`, in particular:
 
-- Don't modify unrelated lines to keep the PR focused on the scope stated in its 
-description or issue.
-- Only write inline comments that add value and avoid stating the obvious: explain the
-  "why" rather than the "what".
+- Don't modify unrelated lines to keep the PR focused on the scope stated in its
+  description or issue.
+- Only write inline comments that add value and avoid stating the obvious: explain
+  the "why" rather than the "what".
 - **Most importantly**: Do not contribute code that you don't understand.
 
 Video resources
