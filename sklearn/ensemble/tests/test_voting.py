@@ -875,9 +875,8 @@ def test_voting_classifier_multilabel_transform(
     X_trans = np.asarray(voter.transform(X_test))
 
     if voting == "soft":
-        # # we should not have any collinear classes and thus nothing should sum to 1
-        # print(X_trans.shape, X_trans.squeeze().sum(axis=1).shape)
-        # print(X_trans.squeeze().sum(axis=1))
+        # XXX: should we test this?
+        # i.e. should not have any collinear classes and thus nothing should sum to 1
         # assert not any(np.isclose(X_trans.squeeze().sum(axis=1), 1.0)),
         # X_trans.sum(axis=1)
         if flatten_transform:

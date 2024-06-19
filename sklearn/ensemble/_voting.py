@@ -457,12 +457,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         check_is_fitted(self)
         if self.voting == "soft":
             maj = np.argmax(self.predict_proba(X), axis=-1).T
-            print("soft")
-            print(maj.shape)
         else:  # 'hard' voting
             predictions = self._predict(X).astype(np.int64)
-            print(predictions.shape)
-            print("hard")
             maj = np.apply_along_axis(
                 lambda x: np.argmax(np.bincount(x, weights=self._weights_not_none)),
                 axis=1,
@@ -470,7 +466,6 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
             )
 
         if isinstance(self.le_, list):
-            print(maj.shape)
             # Handle the multilabel-indicator case
             maj = np.array(
                 [
@@ -497,8 +492,6 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
             probas = np.zeros((len(self.estimators_), len(self.classes_), X.shape[0]))
             for est_idx, clf in enumerate(self.estimators_):
                 clf_predict_probas = clf.predict_proba(X)
-                print(np.array(probas).shape)
-                print(clf, np.array(clf_predict_probas).shape)
                 for idx in range(len(self.classes_)):
                     if isinstance(clf_predict_probas, list):
                         # `clf_predict_probas` is here a list of `n_targets` 2D
@@ -544,23 +537,6 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         avg = np.average(
             self._collect_probas(X), axis=0, weights=self._weights_not_none
         )
-        # print('in here...')
-        # print(avg.shape)
-        # if isinstance(self.le_, list):
-        #     probas = []
-        #     for idx in range(len(self.classes_)):
-        #         probas.append(avg[:, idx])
-        #     avg = probas
-
-        #     print(np.array(avg).shape)
-        #     probas = []
-        #     for idx, le in enumerate(self.le_):
-        #         print(le.classes_)
-
-        #         probas.append()
-        #     avg = probas
-        # Handle the multilabel-indicator cases
-        # avg = np.array([avg[idx, :, 0] for idx in range(len(self.classes_))]).T
         return avg
 
     def transform(self, X):
