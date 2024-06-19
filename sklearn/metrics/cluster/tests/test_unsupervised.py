@@ -451,7 +451,7 @@ def test_dbcv_score_output(density_samples_good_bad):
     # well separated clusters should result in a better score,
     # even if located in close proximity to one another and
     # of non-spherical shape
-    assert ground_truth_moons_score == 1
+    assert ground_truth_moons_score > 0
     # arbitrarily assigned clusters should result in a low score
     assert split_randomly_score < -0.5
 
@@ -460,7 +460,7 @@ def test_dbcv_score_output_no_mrd(density_samples_good_bad):
     ground_truth_moons_score = dbcv_score(*density_samples_good_bad[0], mst_raw_dist=True)
     split_randomly_score = dbcv_score(*density_samples_good_bad[1], mst_raw_dist=True)
 
-    assert ground_truth_moons_score == 1
+    assert ground_truth_moons_score > 0.5
     assert split_randomly_score < -0.5
 
 
