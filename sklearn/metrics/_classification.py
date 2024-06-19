@@ -3412,11 +3412,13 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
 
 def tau_score(y_true, y_pred, *, normalize=True):
     """
-    Calculate the Tau score, assessing model performance against perfect and random baselines.
+    Calculate the Tau score assessing model performance against perfect and
+    random baselines.
 
-    This function measures classification accuracy by computing Euclidean distances
-    from the model's performance point to both perfect and random-guess points in a
-    normalized performance space. It is suitable for both binary and multi-class classification.
+    This function measures classification accuracy by computing Euclidean
+    distances from the model's performance point to both perfect and random-guess
+    points in a normalized performance space. Suitable for both binary and
+    multi-class classification.
 
     Parameters
     ----------

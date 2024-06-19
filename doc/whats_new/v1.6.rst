@@ -138,6 +138,12 @@ Changelog
   :pr:`29210` by :user:`Marc Torrellas Socastro <marctorsoc>` and
   :user:`Stefanie Senger <StefanieSenger>`.
 
+- |Feature| Adds :func:`sklearn.metrics.tau_score`, a new function to compute the
+  Tau score, which evaluates model classification accuracy. This metric compares
+  model performance against perfect and random predictions using a geometric approach.
+  Suitable for both binary and multi-class scenarios.
+  :pr:`29305` by :user:`Siddhartha Reddy <siddu1324>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
