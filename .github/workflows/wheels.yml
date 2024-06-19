@@ -97,6 +97,7 @@ jobs:
             manylinux_image: manylinux2014
             # TODO: remove next line when Python 3.13 is released
             prerelease_pythons: True
+            free_threaded_support: True
 
           # MacOS x86_64
           - os: macos-12
