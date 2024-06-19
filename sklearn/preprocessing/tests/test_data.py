@@ -2011,7 +2011,7 @@ def test_binarizer(constructor):
 )
 def test_binarizer_array_api_int(array_namespace, device, dtype_name):
     xp = _array_api_for_tests(array_namespace, device)
-    for dtype_name_ in [dtype_name, "int32"]:
+    for dtype_name_ in [dtype_name, "int32", "int64"]:
         X_np = np.reshape(np.asarray([0, 1, 2, 3, 4], dtype=dtype_name_), (-1, 1))
         X_xp = xp.asarray(X_np, device=device)
         binarized_np = Binarizer(threshold=2.5).fit_transform(X_np)
