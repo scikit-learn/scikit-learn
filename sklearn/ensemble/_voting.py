@@ -456,12 +456,12 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         """
         check_is_fitted(self)
         if self.voting == "soft":
-            maj = np.argmax(self.predict_proba(X), axis=-1).T
+            maj = np.argmax(self.predict_proba(X), axis=-1)
         else:  # 'hard' voting
             predictions = self._predict(X).astype(np.int64)
             maj = np.apply_along_axis(
                 lambda x: np.argmax(np.bincount(x, weights=self._weights_not_none)),
-                axis=1,
+                axis=-1,
                 arr=predictions,
             )
 
@@ -470,7 +470,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
             maj = np.array(
                 [
                     self.le_[target_idx].inverse_transform(target)
-                    for target_idx, target in enumerate(maj.T)
+                    for target_idx, target in enumerate(maj)
                 ]
             ).T
         else:
@@ -478,7 +478,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
         return maj
 
-    def _collect_probas(self, X):
+    def _collect_probas(self, X, collapse_classes=True):
         """Collect results from clf.predict_proba calls.
 
         Output is array-like of shape (n_estimators, n_classes, n_samples)
@@ -489,23 +489,49 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         since there is only two classes per output.
         """
         if isinstance(self.classes_, list):
-            probas = np.zeros((len(self.estimators_), len(self.classes_), X.shape[0]))
-            for est_idx, clf in enumerate(self.estimators_):
-                clf_predict_probas = clf.predict_proba(X)
-                for idx in range(len(self.classes_)):
-                    if isinstance(clf_predict_probas, list):
-                        # `clf_predict_probas` is here a list of `n_targets` 2D
-                        # ndarrays of `n_classes` columns. The k-th column contains
-                        # the probabilities of the samples belonging the k-th class.
-                        #
-                        # Since those probabilities must sum to one for each sample,
-                        # we can work with probabilities of `n_classes - 1` classes.
-                        # Hence we drop the first column.
+            if collapse_classes:
+                probas = np.zeros(
+                    (len(self.estimators_), len(self.classes_), X.shape[0])
+                )
+                for est_idx, clf in enumerate(self.estimators_):
+                    clf_predict_probas = clf.predict_proba(X)
+                    for idx in range(len(self.classes_)):
+                        if isinstance(clf_predict_probas, list):
+                            # `clf_predict_probas` is here a list of `n_targets` 2D
+                            # ndarrays of `n_classes` columns. The k-th column contains
+                            # the probabilities of the samples belonging the k-th class.
+                            #
+                            # Since those probabilities must sum to one for each sample,
+                            # we can work with probabilities of `n_classes - 1` classes.
+                            # Hence we drop the first column.
 
-                        probas[est_idx, idx, ...] = clf_predict_probas[idx][:, 1:].T
-                    else:
-                        # `clf_predict_probas` is a 2D ndarray
-                        probas[est_idx, idx, ...] = clf_predict_probas[:, idx]
+                            probas[est_idx, idx, ...] = clf_predict_probas[idx][:, 1:].T
+                        else:
+                            # `clf_predict_probas` is a 2D ndarray
+                            probas[est_idx, idx, ...] = clf_predict_probas[:, idx]
+            else:
+                probas = [
+                    np.zeros(
+                        (len(self.estimators_), len(self.classes_[idx]), X.shape[0])
+                    )
+                    for idx in range(len(self.classes_))
+                ]
+                for est_idx, clf in enumerate(self.estimators_):
+                    clf_predict_probas = clf.predict_proba(X)
+                    for idx in range(len(self.classes_)):
+                        if isinstance(clf_predict_probas, list):
+                            # `clf_predict_probas` is here a list of `n_targets` 2D
+                            # ndarrays of `n_classes` columns. The k-th column contains
+                            # the probabilities of the samples belonging the k-th class.
+                            #
+                            # Since those probabilities must sum to one for each sample,
+                            # we can work with probabilities of `n_classes - 1` classes.
+                            # Hence we drop the first column.
+
+                            probas[idx][est_idx, ...] = clf_predict_probas[idx].T
+                        else:
+                            # `clf_predict_probas` is a 2D ndarray
+                            probas[idx][est_idx, ...] = clf_predict_probas[:, idx]
             return probas
         else:
             return np.asarray([clf.predict_proba(X) for clf in self.estimators_])
@@ -533,10 +559,20 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
             Weighted average probability for each class per sample.
         """
         check_is_fitted(self)
+
         # n_estimators, n_samples, n_classes
-        avg = np.average(
-            self._collect_probas(X), axis=0, weights=self._weights_not_none
-        )
+        if isinstance(self.classes_, list):
+            # multi-label indicator case, where we will output a list of
+            # n_output ndarrays of shape (n_samples, n_classes)
+            avg = []
+            for output_proba in self._collect_probas(X, collapse_classes=False):
+                avg.append(
+                    np.average(output_proba, axis=0, weights=self._weights_not_none).T
+                )
+        else:
+            avg = np.average(
+                self._collect_probas(X), axis=0, weights=self._weights_not_none
+            )
         return avg
 
     def transform(self, X):

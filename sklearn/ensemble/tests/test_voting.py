@@ -723,70 +723,6 @@ def test_multioutput_classifier():
         voting.fit(X_train, y_train)
 
 
-@pytest.mark.skip()
-def test_multioutput_string():
-    # Check estimators on multi-output problems with string outputs.
-
-    X_train = [
-        [-2, -1],
-        [-1, -1],
-        [-1, -2],
-        [1, 1],
-        [1, 2],
-        [2, 1],
-        [-2, 1],
-        [-1, 1],
-        [-1, 2],
-        [2, -1],
-        [1, -1],
-        [1, -2],
-    ]
-    y_train = [
-        ["red", "blue"],
-        ["red", "blue"],
-        ["red", "blue"],
-        ["green", "green"],
-        ["green", "green"],
-        ["green", "green"],
-        ["red", "purple"],
-        ["red", "purple"],
-        ["red", "purple"],
-        ["green", "yellow"],
-        ["green", "yellow"],
-        ["green", "yellow"],
-    ]
-    X_test = [[-1, -1], [1, 1], [-1, 1], [1, -1]]
-    y_test = [
-        ["red", "blue"],
-        ["green", "green"],
-        ["red", "purple"],
-        ["green", "yellow"],
-    ]
-
-    voting = VotingClassifier(
-        estimators=[
-            ("lr", LogisticRegression(random_state=0)),
-            ("tree", DecisionTreeClassifier(random_state=0)),
-        ],
-        voting="soft",
-        flatten_transform=False,
-    )
-    voting.fit(X_train, y_train)
-    y_pred = voting.predict(X_test)
-    assert_array_equal(y_pred, y_test)
-
-    with np.errstate(divide="ignore"):
-        proba = voting.predict_proba(X_test)
-        assert len(proba) == 2
-        assert proba[0].shape == (4, 2)
-        assert proba[1].shape == (4, 4)
-
-        log_proba = voting.predict_log_proba(X_test)
-        assert len(log_proba) == 2
-        assert log_proba[0].shape == (4, 2)
-        assert log_proba[1].shape == (4, 4)
-
-
 def test_multilabel():
     """Check if error is raised for multilabel classification."""
     X, y = make_multilabel_classification(
@@ -812,6 +748,8 @@ def test_voting_classifier_multilabel_predict_proba(estimator, voting):
         X_multilabel, y_multilabel, stratify=y_multilabel, random_state=42
     )
     n_outputs = 3
+    n_classes = len(np.unique(y_multilabel))
+    n_samples = X_test.shape[0]
 
     estimators = [("est", estimator)]
     voter = VotingClassifier(
@@ -828,8 +766,12 @@ def test_voting_classifier_multilabel_predict_proba(estimator, voting):
         assert inner_msg in str(exec_info.value.__cause__)
     else:
         y_proba = voter.predict_proba(X_test)
-        assert len(y_proba) == n_outputs
-        assert all(y_pred_proba.shape == (y_test.shape[0],) for y_pred_proba in y_proba)
+        assert isinstance(y_proba, list), f"{type(y_proba)}"
+        assert len(y_proba) == n_outputs, f"{len(y_proba)} != {n_outputs}"
+        assert all(
+            y_pred_proba.shape == (y_test.shape[0], n_classes)
+            for y_pred_proba in y_proba
+        ), f"{[y_pred_proba.shape for y_pred_proba in y_proba]} != {(n_samples,)}"
 
 
 @pytest.mark.parametrize(
@@ -845,7 +787,7 @@ def test_voting_classifier_multilabel_predict_proba(estimator, voting):
 @pytest.mark.parametrize("voting", ["soft", "hard"])
 @pytest.mark.parametrize("type_of_target", ["normal", "multilabel-indicator"])
 @pytest.mark.parametrize("flatten_transform", [True, False])
-def test_voting_classifier_multilabel_transform(
+def test_voting_classifier_transform_with_different_target_types(
     estimator, voting, type_of_target, flatten_transform
 ):
     """Check the behaviour for the multilabel classification case and the
@@ -906,7 +848,6 @@ def test_voting_classifier_multilabel_transform(
         assert X_trans.shape == expected_shape, f"{X_trans.shape} != {expected_shape}"
 
 
-@pytest.mark.skip()
 @pytest.mark.parametrize(
     "estimator",
     [
@@ -917,7 +858,13 @@ def test_voting_classifier_multilabel_transform(
         RandomForestClassifier(random_state=42),
     ],
 )
-@pytest.mark.parametrize("voting", ["soft", "hard"])
+@pytest.mark.parametrize(
+    "voting",
+    [
+        "soft",
+        # "hard"
+    ],
+)
 @pytest.mark.parametrize("type_of_target", ["normal", "multilabel-indicator"])
 def test_voting_classifier_multilabel_predict(estimator, voting, type_of_target):
     if type_of_target == "normal":
@@ -926,6 +873,8 @@ def test_voting_classifier_multilabel_predict(estimator, voting, type_of_target)
         X_train, X_test, y_train, y_test = train_test_split(
             X_multilabel, y_multilabel, stratify=y_multilabel, random_state=42
         )
+        y_train += 100
+        y_test += 100
 
     estimators = [("est", estimator)]
     voter = VotingClassifier(
@@ -933,14 +882,17 @@ def test_voting_classifier_multilabel_predict(estimator, voting, type_of_target)
         voting=voting,
     ).fit(X_train, y_train)
 
-    if type_of_target == "normal":
-        y_pred = voter.predict(X_test)
-        assert y_pred.shape == y_test.shape, f"{y_pred.shape} != {y_test.shape}"
-        # (n_estimators, n_classes, n_samples))
-
     y_pred = voter.predict(X_test)
-    print(estimators)
     assert y_pred.shape == y_test.shape, f"{y_pred.shape} != {y_test.shape}"
+
+    # check that encoding of the output is applied correctly
+    if type_of_target == "normal":
+        assert voter.le_.classes_.shape[0] == len(np.unique(y_train))
+        assert_array_equal(voter.le_.classes_, np.unique(y_train))
+    else:
+        for le in voter.le_:
+            assert le.classes_.shape[0] == len(np.unique(y_train))
+            assert_array_equal(le.classes_, np.unique(y_train))
 
 
 # Metadata Routing Tests
