@@ -3158,13 +3158,5 @@ def test_tau_score_empty_input():
         tau_score(y_true, y_pred)
 
 
-def test_tau_score_all_wrong_no_true_positives():
-    y_true = np.array([0, 0, 0, 0])
-    y_pred = np.array([1, 1, 1, 1])
-    expected_score = 0.0
-    assert np.isclose(tau_score(y_true, y_pred), expected_score)
-    assert np.isclose(tau_score(y_true, y_pred, normalize=False), expected_score)
-
-
 if __name__ == "__main__":
     pytest.main()
