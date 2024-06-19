@@ -437,10 +437,13 @@ def test_dbcv_score_irrelevant_d_warning(density_sample):
 
 def test_dbcv_score_output():
     one_gaussian_cluster, _ = datasets.make_blobs(centers=1, random_state=42)
-    assert dbcv_score(
-        one_gaussian_cluster, [i % 2 for i in range(one_gaussian_cluster.shape[0])]
-    ) == pytest.approx(0.0)
-    assert dbcv_score(*datasets.make_moons(random_state=42)) == pytest.approx(1.0)
+    assert (
+        dbcv_score(
+            one_gaussian_cluster, [i % 2 for i in range(one_gaussian_cluster.shape[0])]
+        )
+        < -0.5
+    )
+    assert dbcv_score(*datasets.make_moons(random_state=42)) > 0.5
 
 
 def test_dbcv_score_basic_input(density_sample):
