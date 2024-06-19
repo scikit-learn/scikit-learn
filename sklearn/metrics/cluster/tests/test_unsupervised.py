@@ -442,7 +442,8 @@ def test_dbcv_score_output():
         [i % 2 for i in range(one_gaussian_cluster.shape[0])]
     )
     assert mislabelled_into_two_scored < -0.5
-    assert dbcv_score(*datasets.make_moons(random_state=42)) > 0.5
+    assert dbcv_score(*datasets.make_moons(random_state=42)) > 0
+    assert dbcv_score(*datasets.make_moons(random_state=42), mst_raw_dist=True) > 0.5
 
 
 def test_dbcv_score_basic_input(density_sample):
