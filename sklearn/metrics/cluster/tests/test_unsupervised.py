@@ -411,6 +411,15 @@ def density_sample():
     return points, labels
 
 
+@pytest.fixture
+def density_samples_good_bad():
+    single_gauss_blob, _ = datasets.make_blobs(centers=1, random_state=42)
+    # normally distributed data, randomly split into two clusters
+    # (shuffled samples are labeled based on index mod 2)
+    bad = single_gauss_blob, [i % 2 for i in range(single_gauss_blob.shape[0])]
+    return datasets.make_moons(random_state=42), bad
+
+
 def test_dbcv_score_basic_validation_errs():
     assert_raises_on_only_one_label(dbcv_score)
     assert_raises_on_all_points_same_cluster(dbcv_score)
@@ -435,15 +444,24 @@ def test_dbcv_score_irrelevant_d_warning(density_sample):
         dbcv_score(*density_sample, d=2)
 
 
-def test_dbcv_score_output():
-    one_gaussian_cluster, _ = datasets.make_blobs(centers=1, random_state=42)
-    mislabelled_into_two_scored = dbcv_score(
-        one_gaussian_cluster,
-        [i % 2 for i in range(one_gaussian_cluster.shape[0])]
-    )
-    assert mislabelled_into_two_scored < -0.5
-    assert dbcv_score(*datasets.make_moons(random_state=42)) > 0
-    assert dbcv_score(*datasets.make_moons(random_state=42), mst_raw_dist=True) > 0.5
+def test_dbcv_score_output(density_samples_good_bad):
+    ground_truth_moons_score = dbcv_score(*density_samples_good_bad[0])
+    split_randomly_score = dbcv_score(*density_samples_good_bad[1])
+
+    # well separated clusters should result in a better score,
+    # even if located in close proximity to one another and
+    # of non-spherical shape
+    assert ground_truth_moons_score == 1
+    # arbitrarily assigned clusters should result in a low score
+    assert split_randomly_score < -0.5
+
+
+def test_dbcv_score_output_no_mrd(density_samples_good_bad):
+    ground_truth_moons_score = dbcv_score(*density_samples_good_bad[0], mst_raw_dist=True)
+    split_randomly_score = dbcv_score(*density_samples_good_bad[1], mst_raw_dist=True)
+
+    assert ground_truth_moons_score == 1
+    assert split_randomly_score < -0.5
 
 
 def test_dbcv_score_basic_input(density_sample):
