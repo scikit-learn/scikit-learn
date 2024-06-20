@@ -20,6 +20,8 @@ from sklearn.utils._array_api import (
     _nanmin,
     _NumPyAPIWrapper,
     _ravel,
+    check_fitted_attribute,
+    convert_attributes,
     device,
     get_namespace,
     get_namespace_and_device,
@@ -407,6 +409,10 @@ class SimpleEstimator(BaseEstimator):
         self.n_features_ = X.shape[0]
         return self
 
+    def predict(self, X):
+        check_fitted_attribute(self, "predict", "X_", X)
+        return X
+
 
 @skip_if_array_api_compat_not_configured
 @pytest.mark.parametrize(
@@ -426,6 +432,8 @@ def test_convert_estimator_to_ndarray(array_namespace, converter):
 
     new_est = _estimator_with_converted_arrays(est, converter)
     assert isinstance(new_est.X_, numpy.ndarray)
+    new_est = convert_attributes(est, numpy.asarray([0]))
+    assert isinstance(new_est.X_, numpy.ndarray)
 
 
 @skip_if_array_api_compat_not_configured
@@ -438,6 +446,20 @@ def test_convert_estimator_to_array_api():
 
     new_est = _estimator_with_converted_arrays(est, lambda array: xp.asarray(array))
     assert hasattr(new_est.X_, "__array_namespace__")
+    with config_context(array_api_dispatch=True):
+        new_est = convert_attributes(est, xp.asarray([0]))
+        assert get_namespace(new_est.X_)[0] == xp
+
+
+@skip_if_array_api_compat_not_configured
+def test_check_fitted_attribute():
+    xp = pytest.importorskip("array_api_strict")
+
+    X_np = numpy.asarray([[1.3, 4.5]])
+    with config_context(array_api_dispatch=True):
+        est = SimpleEstimator().fit(xp.asarray(X_np))
+        with pytest.raises(ValueError, match=".*must use the same array library"):
+            est.predict(numpy.asarray([0]))
 
 
 def test_reshape_behavior():

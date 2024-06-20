@@ -829,6 +829,15 @@ def make_converter(X):
 
     When X is not an array api array, the converter does nothing.
     """
+    if isinstance(X, numpy.ndarray):
+
+        def convert(data):
+            if not hasattr(data, "__dlpack__"):
+                return data
+            data_xp, _ = get_namespace(data)
+            return _convert_to_numpy(data, data_xp)
+
+        return convert
     xp, is_array_api = get_namespace(X)
     if not is_array_api:
 
