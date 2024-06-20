@@ -1321,9 +1321,9 @@ def _mean_tweedie_deviance(y_true, y_pred, sample_weight, power):
         dev = 2 * (xp.log(y_pred / y_true) + y_true / y_pred - 1)
     else:
         dev = 2 * (
-            xp.pow(y_true, 2 - p) / ((1 - p) * (2 - p))
-            - y_true * xp.pow(y_pred, 1 - p) / (1 - p)
-            + xp.pow(y_pred, 2 - p) / (2 - p)
+            xp.pow(y_true, xp.asarray(2 - p)) / ((1 - p) * (2 - p))
+            - y_true * xp.pow(y_pred, xp.asarray(1 - p)) / (1 - p)
+            + xp.pow(y_pred, xp.asarray(2 - p)) / (2 - p)
         )
     return float(_average(dev, weights=sample_weight))
 
@@ -1410,7 +1410,7 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
         pass
     elif 1 <= power < 2:
         # Poisson and compound Poisson distribution, y >= 0, y_pred > 0
-        if (y_true < 0).any() or (y_pred <= 0).any():
+        if xp.any(y_true < 0) or xp.any(y_pred <= 0):
             raise ValueError(message + "non-negative y and strictly positive y_pred.")
     elif power >= 2:
         # Gamma and Extreme stable distribution, y and y_pred > 0
