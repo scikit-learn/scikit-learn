@@ -1,12 +1,7 @@
 """Utilities to work with sparse matrices and arrays written in Cython."""
 
-# Authors: Mathieu Blondel
-#          Olivier Grisel
-#          Peter Prettenhofer
-#          Lars Buitinck
-#          Giorgio Patrini
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from libc.math cimport fabs, sqrt, isnan
 from libc.stdint cimport intptr_t

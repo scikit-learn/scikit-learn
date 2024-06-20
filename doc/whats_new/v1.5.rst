@@ -23,6 +23,12 @@ Version 1.5.1
 Changelog
 ---------
 
+Changes impacting many modules
+------------------------------
+
+- |Fix| Fixed a regression causing a dead-lock at import time in some settings.
+  :pr:`29235` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -42,6 +48,12 @@ Changelog
   grids that have estimators as parameter values.
   :pr:`29179` by :user:`Marco Gorelli<MarcoGorelli>`.
 
+:mod:`sklearn.metrics`
+..............................
+
+- |Fix| Fix a regression in :func:`metrics.zero_one_loss` causing an error
+  for Array API dispatch with multilabel inputs.
+  :pr:`29269` by :user:`Yaroslav Korobko <Tialo>`.
 
 .. _changes_1_5:
 

@@ -1,8 +1,7 @@
 """Bayesian Gaussian Mixture Model."""
 
-# Author: Wei Xue <xuewei4d@gmail.com>
-#         Thierry Guillemot <thierry.guillemot.work@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import math
 from numbers import Real

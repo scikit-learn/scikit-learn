@@ -1,9 +1,7 @@
 """Isotonic regression for obtaining monotonic fit to data."""
 
-# Authors: Fabian Pedregosa <fabian@fseoane.net>
-#          Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Nelle Varoquaux <nelle.varoquaux@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import math
 import warnings

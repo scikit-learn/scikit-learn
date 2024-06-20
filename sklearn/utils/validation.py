@@ -1,13 +1,7 @@
 """Functions to validate input and parameters within scikit-learn estimators."""
 
-# Authors: Olivier Grisel
-#          Gael Varoquaux
-#          Andreas Mueller
-#          Lars Buitinck
-#          Alexandre Gramfort
-#          Nicolas Tresegnie
-#          Sylvain Marie
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numbers
 import operator

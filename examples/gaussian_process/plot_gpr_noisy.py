@@ -9,9 +9,8 @@ level in the data. Moreover, we show the importance of kernel hyperparameters
 initialization.
 """
 
-# Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-#          Guillaume Lemaitre <guillaume.lemaitre@inria.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Data generation
