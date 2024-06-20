@@ -12,8 +12,7 @@ classifier will also be demonstrated.
 
 """
 
-# Author: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
-#         Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 # %%
 # Dataset

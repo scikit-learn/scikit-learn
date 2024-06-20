@@ -27,7 +27,7 @@ see :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py` for an
 example showcasing some other features of HGBT models.
 """
 
-# Author:  Arturo Amor <david-arturo.amor-quiroz@inria.fr>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 # %%

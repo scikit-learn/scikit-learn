@@ -1,9 +1,6 @@
 """Algorithms for spectral clustering"""
 
-# Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
-#         Brian Cheung
-#         Wei LI <kuantkid@gmail.com>
-#         Andrew Knyazev <Andrew.Knyazev@ucdenver.edu>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings

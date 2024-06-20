@@ -1,8 +1,6 @@
 """Unsupervised evaluation metrics."""
 
-# Authors: Robert Layton <robertlayton@gmail.com>
-#          Arnaud Fouchet <foucheta@gmail.com>
-#          Thierry Guillemot <thierry.guillemot.work@gmail.com>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 
