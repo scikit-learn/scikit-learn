@@ -2609,8 +2609,8 @@ def test_power_transformer_constant_feature(standardize):
 
 def test_yeo_johnson_inverse_transform_warning():
     """Check if a warning is triggered when the inverse transformations of the
-       Box-Cox and Yeo-Johnson transformers return NaN values."""
-    trans = PowerTransformer(method='yeo-johnson')
+    Box-Cox and Yeo-Johnson transformers return NaN values."""
+    trans = PowerTransformer(method="yeo-johnson")
     x = np.array([1, 1, 1e10]).reshape(-1, 1)  # extreme skew
     trans.fit(x)
     lmbda = trans.lambdas_[0]
