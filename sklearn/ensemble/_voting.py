@@ -16,7 +16,6 @@ import numpy as np
 
 from ..base import (
     ClassifierMixin,
-    MultiOutputMixin,
     RegressorMixin,
     TransformerMixin,
     _fit_context,
@@ -47,7 +46,7 @@ from ..utils.validation import (
 from ._base import _BaseHeterogeneousEnsemble, _fit_single_estimator
 
 
-class _BaseVoting(MultiOutputMixin, TransformerMixin, _BaseHeterogeneousEnsemble):
+class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
     """Base class for voting.
 
     Warning: This class should not be used directly. Use derived classes
