@@ -2,9 +2,8 @@
 General tests for all estimators in sklearn.
 """
 
-# Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
-#          Gael Varoquaux gael.varoquaux@normalesup.org
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import os
 import pkgutil
@@ -18,6 +17,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from scipy.linalg import LinAlgWarning
 
 import sklearn
 from sklearn.base import BaseEstimator
@@ -163,7 +163,9 @@ def _generate_pipeline():
 @parametrize_with_checks(list(chain(_tested_estimators(), _generate_pipeline())))
 def test_estimators(estimator, check, request):
     # Common tests for estimator instances
-    with ignore_warnings(category=(FutureWarning, ConvergenceWarning, UserWarning)):
+    with ignore_warnings(
+        category=(FutureWarning, ConvergenceWarning, UserWarning, LinAlgWarning)
+    ):
         _set_checking_parameters(estimator)
         check(estimator)
 
@@ -174,6 +176,7 @@ def test_check_estimator_generate_only():
 
 
 def test_setup_py_check():
+    pytest.importorskip("setuptools")
     # Smoke test `python setup.py check` command run at the root of the
     # scikit-learn source tree.
     cwd = os.getcwd()
@@ -327,7 +330,9 @@ def _generate_search_cv_instances():
         extra_params = (
             {"min_resources": "smallest"} if "min_resources" in init_params else {}
         )
-        search_cv = SearchCV(Estimator(), param_grid, cv=2, **extra_params)
+        search_cv = SearchCV(
+            Estimator(), param_grid, cv=2, error_score="raise", **extra_params
+        )
         set_random_state(search_cv)
         yield search_cv
 

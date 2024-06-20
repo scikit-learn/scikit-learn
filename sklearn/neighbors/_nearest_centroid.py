@@ -2,10 +2,8 @@
 Nearest Centroid Classification
 """
 
-# Author: Robert Layton <robertlayton@gmail.com>
-#         Olivier Grisel <olivier.grisel@ensta.org>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Real
 
@@ -95,6 +93,9 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
     NearestCentroid()
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
+
+    For a more detailed example see:
+    :ref:`sphx_glr_auto_examples_neighbors_plot_nearest_centroid.py`
     """
 
     _parameter_constraints: dict = {

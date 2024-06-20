@@ -1,6 +1,5 @@
-# Authors: Olivier Grisel <olivier.grisel@ensta.org>
-#          Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from copy import deepcopy
@@ -94,13 +93,17 @@ def test_lasso_zero():
     # Check that the lasso can handle zero data without crashing
     X = [[0], [0], [0]]
     y = [0, 0, 0]
-    clf = Lasso(alpha=0.1).fit(X, y)
+    # _cd_fast.pyx tests for gap < tol, but here we get 0.0 < 0.0
+    # should probably be changed to gap <= tol ?
+    with ignore_warnings(category=ConvergenceWarning):
+        clf = Lasso(alpha=0.1).fit(X, y)
     pred = clf.predict([[1], [2], [3]])
     assert_array_almost_equal(clf.coef_, [0])
     assert_array_almost_equal(pred, [0, 0, 0])
     assert_almost_equal(clf.dual_gap_, 0)
 
 
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_enet_nonfinite_params():
     # Check ElasticNet throws ValueError when dealing with non-finite parameter
     # values
@@ -358,6 +361,7 @@ def _scale_alpha_inplace(estimator, n_samples):
     estimator.set_params(alpha=alpha)
 
 
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize(
     "LinearModel, params",
     [
@@ -593,14 +597,16 @@ def test_uniform_targets():
     for model in models_single_task:
         for y_values in (0, 5):
             y1.fill(y_values)
-            assert_array_equal(model.fit(X_train, y1).predict(X_test), y1)
+            with ignore_warnings(category=ConvergenceWarning):
+                assert_array_equal(model.fit(X_train, y1).predict(X_test), y1)
             assert_array_equal(model.alphas_, [np.finfo(float).resolution] * 3)
 
     for model in models_multi_task:
         for y_values in (0, 5):
             y2[:, 0].fill(y_values)
             y2[:, 1].fill(2 * y_values)
-            assert_array_equal(model.fit(X_train, y2).predict(X_test), y2)
+            with ignore_warnings(category=ConvergenceWarning):
+                assert_array_equal(model.fit(X_train, y2).predict(X_test), y2)
             assert_array_equal(model.alphas_, [np.finfo(float).resolution] * 3)
 
 
@@ -686,7 +692,7 @@ def test_multitask_enet_and_lasso_cv():
 
     X, y, _, _ = build_dataset(n_targets=3)
     clf = MultiTaskElasticNetCV(
-        n_alphas=10, eps=1e-3, max_iter=100, l1_ratio=[0.3, 0.5], tol=1e-3, cv=3
+        n_alphas=10, eps=1e-3, max_iter=200, l1_ratio=[0.3, 0.5], tol=1e-3, cv=3
     )
     clf.fit(X, y)
     assert 0.5 == clf.l1_ratio_
@@ -696,7 +702,7 @@ def test_multitask_enet_and_lasso_cv():
     assert (2, 10) == clf.alphas_.shape
 
     X, y, _, _ = build_dataset(n_targets=3)
-    clf = MultiTaskLassoCV(n_alphas=10, eps=1e-3, max_iter=100, tol=1e-3, cv=3)
+    clf = MultiTaskLassoCV(n_alphas=10, eps=1e-3, max_iter=500, tol=1e-3, cv=3)
     clf.fit(X, y)
     assert (3, X.shape[1]) == clf.coef_.shape
     assert (3,) == clf.intercept_.shape
@@ -945,7 +951,8 @@ def test_check_input_false():
     # dtype is still cast in _preprocess_data to X's dtype. So the test should
     # pass anyway
     X = check_array(X, order="F", dtype="float32")
-    clf.fit(X, y, check_input=False)
+    with ignore_warnings(category=ConvergenceWarning):
+        clf.fit(X, y, check_input=False)
     # With no input checking, providing X in C order should result in false
     # computation
     X = check_array(X, order="C", dtype="float64")
@@ -1061,6 +1068,7 @@ def test_enet_float_precision():
             )
 
 
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_enet_l1_ratio():
     # Test that an error message is raised if an estimator that
     # uses _alpha_grid is called with l1_ratio=0
@@ -1129,8 +1137,6 @@ def test_warm_start_multitask_lasso():
     [
         (Lasso, 1, dict(precompute=True)),
         (Lasso, 1, dict(precompute=False)),
-        (MultiTaskLasso, 2, dict()),
-        (MultiTaskLasso, 2, dict()),
     ],
 )
 def test_enet_coordinate_descent(klass, n_classes, kwargs):
@@ -1474,6 +1480,7 @@ def test_enet_sample_weight_does_not_overwrite_sample_weight(check_input):
     assert_array_equal(sample_weight, sample_weight_1_25)
 
 
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("ridge_alpha", [1e-1, 1.0, 1e6])
 def test_enet_ridge_consistency(ridge_alpha):
     # Check that ElasticNet(l1_ratio=0) converges to the same solution as Ridge

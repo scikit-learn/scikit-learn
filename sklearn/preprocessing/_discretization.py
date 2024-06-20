@@ -1,7 +1,5 @@
-# Author: Henry Lin <hlin117@gmail.com>
-#         Tom Dupré la Tour
-
-# License: BSD
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 import warnings

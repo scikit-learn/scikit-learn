@@ -1,10 +1,5 @@
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Fabian Pedregosa <fabian.pedregosa@inria.fr>
-#         Olivier Grisel <olivier.grisel@ensta.org>
-#         Alexis Mignon <alexis.mignon@gmail.com>
-#         Manoj Kumar <manojkumarsivaraj334@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from libc.math cimport fabs
 import numpy as np
@@ -749,7 +744,7 @@ def enet_coordinate_descent_multi_task(
     bint random=0
 ):
     """Cython version of the coordinate descent algorithm
-        for Elastic-Net mult-task regression
+        for Elastic-Net multi-task regression
 
         We minimize
 
@@ -947,7 +942,7 @@ def enet_coordinate_descent_multi_task(
                     + 0.5 * l2_reg * (1 + const ** 2) * (w_norm ** 2)
                 )
 
-                if gap < tol:
+                if gap <= tol:
                     # return if we reached desired tolerance
                     break
         else:
