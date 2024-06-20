@@ -2019,7 +2019,6 @@ array_api_metric_checkers = {
     additive_chi2_kernel: [check_array_api_metric_pairwise],
     mean_gamma_deviance: [check_array_api_regression_metric],
     max_error: [check_array_api_regression_metric],
-    mean_poisson_deviance: [check_array_api_regression_metric],
     chi2_kernel: [check_array_api_metric_pairwise],
 }
 
