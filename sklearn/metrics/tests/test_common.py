@@ -1835,6 +1835,35 @@ def check_array_api_multiclass_classification_metric(
     )
 
 
+def check_array_api_multilabel_classification_metric(
+    metric, array_namespace, device, dtype_name
+):
+    y_true_np = np.array([[1, 1], [0, 1], [0, 0]], dtype=dtype_name)
+    y_pred_np = np.array([[1, 1], [1, 1], [1, 1]], dtype=dtype_name)
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=y_true_np,
+        b_np=y_pred_np,
+        sample_weight=None,
+    )
+
+    sample_weight = np.array([0.0, 0.1, 2.0], dtype=dtype_name)
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=y_true_np,
+        b_np=y_pred_np,
+        sample_weight=sample_weight,
+    )
+
+
 def check_array_api_regression_metric(metric, array_namespace, device, dtype_name):
     y_true_np = np.array([2.0, 0.1, 1.0, 4.0], dtype=dtype_name)
     y_pred_np = np.array([0.5, 0.5, 2, 2], dtype=dtype_name)
@@ -1954,10 +1983,12 @@ array_api_metric_checkers = {
     accuracy_score: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
     ],
     zero_one_loss: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
     ],
     mean_tweedie_deviance: [check_array_api_regression_metric],
     r2_score: [
