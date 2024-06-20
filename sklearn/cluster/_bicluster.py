@@ -488,7 +488,7 @@ class SpectralBiclustering(BaseSpectral):
     SpectralBiclustering(n_clusters=2, random_state=0)
 
     For a more detailed example, see
-	    :ref:`sphx_glr_auto_examples_bicluster_plot_spectral_biclustering.py`
+    :ref:`sphx_glr_auto_examples_bicluster_plot_spectral_biclustering.py`
     """
 
     _parameter_constraints: dict = {
