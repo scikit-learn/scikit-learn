@@ -75,6 +75,10 @@ more details.
   params to the underlying regressor.
   :pr:`29136` by :user:`Omar Salman <OmarManzoor>`.
 
+- |Feature| :class:`feature_selection.RFE` and :class:`feature_selection.RFECV`
+  now support metadata routing.
+  :pr:`29312` by :user:`Omar Salman <OmarManzoor>`.
+
 Dropping official support for PyPy
 ----------------------------------
 
