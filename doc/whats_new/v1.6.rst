@@ -56,7 +56,7 @@ See :ref:`array_api` for more details.
   compatible inputs when their base estimators do. :pr:`27096` by :user:`Tim
   Head <betatim>` and :user:`Olivier Grisel <ogrisel>`.
 - :class:`linear_model.Ridge` with `solver="cholesky"` now supports Array API
-  compatible inputs. :pr:`XXXXX` by :user:`Olivier Grisel <ogrisel>`.
+  compatible inputs. :pr:`29318` by :user:`Olivier Grisel <ogrisel>`.
 
 Metadata Routing
 ----------------
