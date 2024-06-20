@@ -155,7 +155,12 @@ def _alpha_grid(
             check_input=False,
         )
         if sample_weight is not None:
-            yw = y * sample_weight
+            if y.ndim>1:
+
+                yw = y * np.broadcast_to(sample_weight.reshape(-1,1),y.shape)
+            
+            else:
+                yw = y * sample_weight
         else:
             yw = y
         if sparse.issparse(X):
