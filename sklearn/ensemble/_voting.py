@@ -85,7 +85,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         if is_classifier(self) and isinstance(self.classes_, list):
             predictions = np.zeros(
                 (X.shape[0], len(self.classes_), len(self.estimators_)),
-                dtype=self.classes_.dtype,
+                dtype=int,
             )
             for i in range(len(self.classes_)):
                 label_preds = np.asarray(
@@ -458,7 +458,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         if self.voting == "soft":
             maj = np.argmax(self.predict_proba(X), axis=-1)
         else:  # 'hard' voting
-            predictions = self._predict(X).astype(self.classes_.dtype)
+            predictions = self._predict(X).astype(int)
             maj = np.apply_along_axis(
                 lambda x: np.argmax(np.bincount(x, weights=self._weights_not_none)),
                 axis=-1,
