@@ -334,6 +334,7 @@ class SimpleImputer(_BaseImputer):
                 reset=in_fit,
                 accept_sparse="csc",
                 dtype=dtype,
+                force_writeable=True if not in_fit else None,
                 force_all_finite=force_all_finite,
                 copy=self.copy,
             )

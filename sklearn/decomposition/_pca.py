@@ -511,6 +511,7 @@ class PCA(_BasePCA):
         X = self._validate_data(
             X,
             dtype=[xp.float64, xp.float32],
+            force_writeable=True,
             accept_sparse=("csr", "csc"),
             ensure_2d=True,
             copy=False,
