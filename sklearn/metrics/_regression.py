@@ -402,9 +402,11 @@ def mean_absolute_percentage_error(
         y_true, y_pred, multioutput
     )
     check_consistent_length(y_true, y_pred, sample_weight)
-    epsilon = xp.asarray(xp.finfo(xp.float64).eps)
-    y_true_abs = xp.abs(y_true)
-    mape = xp.abs(y_pred - y_true) / xp.where(epsilon < y_true_abs, y_true_abs, epsilon)
+    epsilon = xp.asarray(xp.finfo(xp.float64).eps, dtype=xp.float64)
+    y_true_abs = xp.asarray(xp.abs(y_true), dtype=xp.float64)
+    mape = xp.asarray(xp.abs(y_pred - y_true), dtype=xp.float64) / xp.where(
+        epsilon < y_true_abs, y_true_abs, epsilon
+    )
     output_errors = _average(mape, weights=sample_weight, axis=0)
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
