@@ -20,7 +20,7 @@ from ..utils.metadata_routing import (
 )
 from ..utils.metaestimators import _safe_split, available_if
 from ..utils.parallel import Parallel, delayed
-from ..utils.validation import check_is_fitted
+from ..utils.validation import _estimator_has, check_is_fitted
 from ._base import SelectorMixin, _get_feature_importances
 
 
@@ -45,25 +45,6 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
     )
 
     return rfe.step_scores_, rfe.step_n_features_
-
-
-def _estimator_has(attr):
-    """Check if we can delegate a method to the underlying estimator.
-
-    First, we check the fitted `estimator_` if available, otherwise we check the
-    unfitted `estimator`. We raise the original `AttributeError` if `attr` does
-    not exist. This function is used together with `available_if`.
-    """
-
-    def check(self):
-        if hasattr(self, "estimator_"):
-            getattr(self.estimator_, attr)
-        else:
-            getattr(self.estimator, attr)
-
-        return True
-
-    return check
 
 
 class RFE(_RoutingNotSupportedMixin, SelectorMixin, MetaEstimatorMixin, BaseEstimator):

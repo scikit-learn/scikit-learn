@@ -8,31 +8,12 @@ from ..utils import safe_mask
 from ..utils._param_validation import HasMethods, Interval, StrOptions
 from ..utils.metadata_routing import _RoutingNotSupportedMixin
 from ..utils.metaestimators import available_if
-from ..utils.validation import check_is_fitted
+from ..utils.validation import _estimator_has, check_is_fitted
 
 __all__ = ["SelfTrainingClassifier"]
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
-
-
-def _estimator_has(attr):
-    """Check if we can delegate a method to the underlying estimator.
-
-    First, we check the fitted `base_estimator_` if available, otherwise we check
-    the unfitted `base_estimator`. We raise the original `AttributeError` if
-    `attr` does not exist. This function is used together with `available_if`.
-    """
-
-    def check(self):
-        if hasattr(self, "base_estimator_"):
-            getattr(self.base_estimator_, attr)
-        else:
-            getattr(self.base_estimator, attr)
-
-        return True
-
-    return check
 
 
 class SelfTrainingClassifier(
@@ -297,7 +278,7 @@ class SelfTrainingClassifier(
         self.classes_ = self.base_estimator_.classes_
         return self
 
-    @available_if(_estimator_has("predict"))
+    @available_if(_estimator_has("predict", ("base_estimator_", "base_estimator")))
     def predict(self, X):
         """Predict the classes of `X`.
 
@@ -320,7 +301,9 @@ class SelfTrainingClassifier(
         )
         return self.base_estimator_.predict(X)
 
-    @available_if(_estimator_has("predict_proba"))
+    @available_if(
+        _estimator_has("predict_proba", ("base_estimator_", "base_estimator"))
+    )
     def predict_proba(self, X):
         """Predict probability for each possible outcome.
 
@@ -343,7 +326,9 @@ class SelfTrainingClassifier(
         )
         return self.base_estimator_.predict_proba(X)
 
-    @available_if(_estimator_has("decision_function"))
+    @available_if(
+        _estimator_has("decision_function", ("base_estimator_", "base_estimator"))
+    )
     def decision_function(self, X):
         """Call decision function of the `base_estimator`.
 
@@ -366,7 +351,9 @@ class SelfTrainingClassifier(
         )
         return self.base_estimator_.decision_function(X)
 
-    @available_if(_estimator_has("predict_log_proba"))
+    @available_if(
+        _estimator_has("predict_log_proba", ("base_estimator_", "base_estimator"))
+    )
     def predict_log_proba(self, X):
         """Predict log probability for each possible outcome.
 
@@ -389,7 +376,7 @@ class SelfTrainingClassifier(
         )
         return self.base_estimator_.predict_log_proba(X)
 
-    @available_if(_estimator_has("score"))
+    @available_if(_estimator_has("score", ("base_estimator_", "base_estimator")))
     def score(self, X, y):
         """Call score on the `base_estimator`.
 

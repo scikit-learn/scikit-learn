@@ -1623,6 +1623,32 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
         raise NotFittedError(msg % {"name": type(estimator).__name__})
 
 
+def _estimator_has(attr, delegate_attrs=("estimator_", "estimator")):
+    """Check if we can delegate a method to the underlying estimator.
+
+    First, we check the fitted estimator if available, otherwise we
+    check the unfitted estimator.
+    """
+
+    def check(self):
+        for delegate in delegate_attrs:
+            if delegate == "estimators_":
+                getattr(self.estimators_[0], attr)
+                return True
+            elif hasattr(self, delegate):
+                getattr(getattr(self, delegate), attr)
+                return True
+        return False
+
+        # if hasattr(self, delegate):
+        #     getattr(self.estimator_, attr)
+        # else:
+        #     getattr(self.estimator, attr)
+        # return True
+
+    return check
+
+
 def check_non_negative(X, whom):
     """
     Check if there is any negative value in an array.
