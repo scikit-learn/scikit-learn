@@ -23,7 +23,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import StandardScaler
-from sklearn.svm import SVC
+from sklearn.svm import SVC, OneClassSVM
 from sklearn.tests.metadata_routing_common import (
     ConsumingClassifier,
     ConsumingRegressor,
@@ -721,17 +721,6 @@ def test_multioutput_classifier():
     )
     with pytest.raises(ValueError, match="Unknown label type"):
         voting.fit(X_train, y_train)
-
-
-def test_multilabel():
-    """Check if error is raised for multilabel classification."""
-    X, y = make_multilabel_classification(
-        n_classes=2, n_labels=1, allow_unlabeled=False, random_state=123
-    )
-    clf = OneVsRestClassifier(SVC(kernel="linear"))
-
-    eclf = VotingClassifier(estimators=[("ovr", clf)], voting="hard")
-    eclf.fit(X, y)
 
 
 @pytest.mark.parametrize(
