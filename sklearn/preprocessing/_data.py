@@ -2859,6 +2859,8 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             accept_sparse="csc",
             copy=copy,
             dtype=FLOAT_DTYPES,
+            # only set force_writeable for the validation at transform time because
+            # it's the only place where QuantileTransformer performs inplace operations.
             force_writeable=True if not in_fit else None,
             force_all_finite="allow-nan",
         )

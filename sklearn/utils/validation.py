@@ -1094,9 +1094,13 @@ def check_array(
             )
 
     if force_writeable:
-        array_data = array.data if sp.issparse(array) else array
+        # By default, array.copy() creates a C-ordered copy. We set order=K to
+        # preserve the order of the array.
         copy_params = {"order": "K"} if not sp.issparse(array) else {}
-        if hasattr(array_data, "flags") and not array_data.flags.writeable:
+
+        array_data = array.data if sp.issparse(array) else array
+        flags = getattr(array_data, "flags", None)
+        if not getattr(flags, "writeable", True):
             # This situation can only happen when copy=False, the array is read-only and
             # a writeable output is requested. This is an ambiguous setting so we chose
             # to always (except for one specific setting, see below) make a copy to
