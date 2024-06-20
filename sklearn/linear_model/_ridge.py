@@ -198,57 +198,98 @@ def _solve_lsqr(
     return coefs, n_iter
 
 
-def _solve_cholesky(X, y, alpha):
+def _solve_cholesky(X, y, alpha, xp=None):
     # w = inv(X^t X + alpha*Id) * X.T y
+    if xp is None:
+        xp, _ = get_namespace(X, y)
     n_features = X.shape[1]
     n_targets = y.shape[1]
 
     A = safe_sparse_dot(X.T, X, dense_output=True)
     Xy = safe_sparse_dot(X.T, y, dense_output=True)
 
-    one_alpha = np.array_equal(alpha, len(alpha) * [alpha[0]])
+    one_alpha = xp.all(alpha == alpha[0])
+    if _is_numpy_namespace(xp):
+        # A.flat is guaranteed to be a view even when A is Fortran-ordered
+        # which typically happens when X is a CSR datastructure.
+        A_flat = A.flat
+    else:
+        # XXX: ideally one would like to pass copy=False explicitly to
+        # xp.reshape, but this is not supported by PyTorch at the time of
+        # writing.
+        A_flat = xp.reshape(A, (-1,))
 
     if one_alpha:
-        A.flat[:: n_features + 1] += alpha[0]
-        return linalg.solve(A, Xy, assume_a="pos", overwrite_a=True).T
+        A_flat[:: n_features + 1] += alpha[0]
+        if _is_numpy_namespace(xp):
+            return linalg.solve(A, Xy, assume_a="pos", overwrite_a=True).T
+        else:
+            return xp.linalg.solve(A, Xy).T
     else:
-        coefs = np.empty([n_targets, n_features], dtype=X.dtype)
+        coefs = xp.empty([n_targets, n_features], dtype=X.dtype, device=device(X))
         for coef, target, current_alpha in zip(coefs, Xy.T, alpha):
-            A.flat[:: n_features + 1] += current_alpha
-            coef[:] = linalg.solve(A, target, assume_a="pos", overwrite_a=False).ravel()
-            A.flat[:: n_features + 1] -= current_alpha
+            A_flat[:: n_features + 1] += current_alpha
+            if _is_numpy_namespace(xp):
+                coef[:] = linalg.solve(
+                    A, target, assume_a="pos", overwrite_a=False
+                ).ravel()
+            else:
+                coef[:] = _ravel(xp.linalg.solve(A, target))
+            A_flat[:: n_features + 1] -= current_alpha
         return coefs
 
 
-def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
+def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False, xp=None):
     # dual_coef = inv(X X^t + alpha*Id) y
+    if xp is None:
+        xp, _ = get_namespace(K, y, sample_weight)
     n_samples = K.shape[0]
     n_targets = y.shape[1]
 
     if copy:
         K = K.copy()
 
-    alpha = np.atleast_1d(alpha)
-    one_alpha = (alpha == alpha[0]).all()
-    has_sw = isinstance(sample_weight, np.ndarray) or sample_weight not in [1.0, None]
+    alpha = xp.asarray(alpha, dtype=K.dtype, device=device(K))
+    one_alpha = xp.all(alpha == alpha[0])
+    has_sw = sample_weight is not None
 
     if has_sw:
         # Unlike other solvers, we need to support sample_weight directly
         # because K might be a pre-computed kernel.
-        sw = np.sqrt(np.atleast_1d(sample_weight))
+        sw = xp.sqrt(sample_weight)
         y = y * sw[:, np.newaxis]
         K *= np.outer(sw, sw)
 
+    if _is_numpy_namespace(xp):
+        # K.flat is guaranteed to be a view even when K is Fortran-ordered
+        # which typically happens for the linear kernel X @ X.T with X being a
+        # CSR datastructure.
+        K_flat = K.flat
+    else:
+        # XXX: ideally one would like to pass copy=False explicitly to
+        # xp.reshape, but this is not supported by PyTorch at the time of
+        # writing.
+        K_flat = xp.reshape(K, (-1,))
     if one_alpha:
         # Only one penalty, we can solve multi-target problems in one time.
-        K.flat[:: n_samples + 1] += alpha[0]
+        K_flat[:: n_samples + 1] += alpha[0]
 
         try:
-            # Note: we must use overwrite_a=False in order to be able to
-            #       use the fall-back solution below in case a LinAlgError
-            #       is raised
-            dual_coef = linalg.solve(K, y, assume_a="pos", overwrite_a=False)
+            if _is_numpy_namespace(xp):
+                # Note: we must use overwrite_a=False in order to be able to
+                #       use the fall-back solution below in case a LinAlgError
+                #       is raised
+                dual_coef = linalg.solve(K, y, assume_a="pos", overwrite_a=False)
+            else:
+                dual_coef = xp.linalg.solve(K, y)
         except np.linalg.LinAlgError:
+            # XXX: this exception is numpy specific. If another
+            # xp.linalg.LinAlgError is raised instead and if the caller is
+            # _ridge_regression, the caller should catch it and fall back to
+            # the SVD solution instead.
+            #
+            # TODO: find out which call-back we want in case the caller is a
+            # non-linear kernel ridge instead.
             warnings.warn(
                 "Singular matrix in solving dual problem. Using "
                 "least-squares solution instead."
@@ -257,7 +298,7 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
 
         # K is expensive to compute and store in memory so change it back in
         # case it was user-given.
-        K.flat[:: n_samples + 1] -= alpha[0]
+        K_flat[:: n_samples + 1] -= alpha[0]
 
         if has_sw:
             dual_coef *= sw[:, np.newaxis]
@@ -265,16 +306,19 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
         return dual_coef
     else:
         # One penalty per target. We need to solve each target separately.
-        dual_coefs = np.empty([n_targets, n_samples], K.dtype)
+        dual_coefs = xp.empty([n_targets, n_samples], dtype=K.dtype, device=device(K))
 
         for dual_coef, target, current_alpha in zip(dual_coefs, y.T, alpha):
-            K.flat[:: n_samples + 1] += current_alpha
+            K_flat[:: n_samples + 1] += current_alpha
 
-            dual_coef[:] = linalg.solve(
-                K, target, assume_a="pos", overwrite_a=False
-            ).ravel()
+            if _is_numpy_namespace(xp):
+                dual_coef[:] = linalg.solve(
+                    K, target, assume_a="pos", overwrite_a=False
+                ).ravel()
+            else:
+                dual_coef[:] = _ravel(xp.linalg.solve(K, target))
 
-            K.flat[:: n_samples + 1] -= current_alpha
+            K_flat[:: n_samples + 1] -= current_alpha
 
         if has_sw:
             dual_coefs *= sw[np.newaxis, :]
@@ -625,10 +669,10 @@ def _ridge_regression(
     if is_numpy_namespace and not X_is_sparse:
         X = np.asarray(X)
 
-    if not is_numpy_namespace and solver != "svd":
+    if not is_numpy_namespace and solver not in ("svd", "cholesky"):
         raise ValueError(
             f"Array API dispatch to namespace {xp.__name__} only supports "
-            f"solver 'svd'. Got '{solver}'."
+            f"solver 'svd' and 'cholesky'. Got '{solver}'."
         )
 
     if positive and solver != "lbfgs":
@@ -739,16 +783,18 @@ def _ridge_regression(
         if n_features > n_samples:
             K = safe_sparse_dot(X, X.T, dense_output=True)
             try:
-                dual_coef = _solve_cholesky_kernel(K, y, alpha)
-
-                coef = safe_sparse_dot(X.T, dual_coef, dense_output=True).T
-            except linalg.LinAlgError:
+                dual_coef = _solve_cholesky_kernel(K, y, alpha, xp=xp)
+                if X_is_sparse:
+                    coef = safe_sparse_dot(X.T, dual_coef, dense_output=True).T
+                else:
+                    coef = dual_coef.T @ X
+            except (xp.linalg.LinAlgError, linalg.LinAlgError):
                 # use SVD solver if matrix is singular
                 solver = "svd"
         else:
             try:
-                coef = _solve_cholesky(X, y, alpha)
-            except linalg.LinAlgError:
+                coef = _solve_cholesky(X, y, alpha, xp=xp)
+            except (xp.linalg.LinAlgError, linalg.LinAlgError):
                 # use SVD solver if matrix is singular
                 solver = "svd"
 
@@ -837,23 +883,23 @@ def resolve_solver(solver, positive, return_intercept, is_sparse, xp):
     if positive:
         raise ValueError(
             "The solvers that support positive fitting do not support "
-            f"Array API dispatch to namespace {xp.__name__}. Please "
-            "either disable Array API dispatch, or use a numpy-like "
+            f"array API dispatch to namespace {xp.__name__}. Please "
+            "either disable array API dispatch, or use a numpy-like "
             "namespace, or set `positive=False`."
         )
 
-    # At the moment, Array API dispatch only supports the "svd" solver.
-    solver = "svd"
-    if solver != auto_solver_np:
+    resolved_solver = auto_solver_np
+    if auto_solver_np not in ("cholesky", "svd"):
+        resolved_solver = "cholesky"
         warnings.warn(
-            f"Using Array API dispatch to namespace {xp.__name__} with "
-            f"`solver='auto'` will result in using the solver '{solver}'. "
+            f"Using array API dispatch to namespace {xp.__name__} with "
+            f"`solver='auto'` will result in using the solver '{resolved_solver}'. "
             "The results may differ from those when using a Numpy array, "
             f"because in that case the preferred solver would be {auto_solver_np}. "
-            f"Set `solver='{solver}'` to suppress this warning."
+            f"Set `solver='{resolved_solver}'` to suppress this warning."
         )
 
-    return solver
+    return resolved_solver
 
 
 def resolve_solver_for_numpy(positive, return_intercept, is_sparse):

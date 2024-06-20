@@ -427,7 +427,14 @@ class _NumPyAPIWrapper:
 
         if copy is True:
             x = x.copy()
-        return numpy.reshape(x, shape)
+
+        output = numpy.reshape(x, shape)
+        if copy is False and not numpy.shares_memory(x, output):
+            raise ValueError(
+                f"reshape with copy=False is not compatible with shape {shape} "
+                "for the memory layout of the input array."
+            )
+        return output
 
     def isdtype(self, dtype, kind):
         return isdtype(dtype, kind, xp=self)

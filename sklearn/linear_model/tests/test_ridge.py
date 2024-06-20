@@ -1261,7 +1261,7 @@ def check_array_api_attributes(name, estimator, array_namespace, device, dtype_n
 )
 @pytest.mark.parametrize(
     "estimator",
-    [Ridge(solver="svd")],
+    [Ridge(solver="svd"), Ridge(solver="cholesky")],
     ids=_get_check_estimator_ids,
 )
 def test_ridge_array_api_compliance(
@@ -1281,11 +1281,11 @@ def test_array_api_error_and_warnings_for_solver_parameter(array_namespace):
     y_iris_xp = xp.asarray(y_iris[:5])
 
     available_solvers = Ridge._parameter_constraints["solver"][0].options
-    for solver in available_solvers - {"auto", "svd"}:
+    for solver in available_solvers - {"auto", "svd", "cholesky"}:
         ridge = Ridge(solver=solver, positive=solver == "lbfgs")
         expected_msg = (
             f"Array API dispatch to namespace {xp.__name__} only supports "
-            f"solver 'svd'. Got '{solver}'."
+            f"solver 'svd' and 'cholesky'. Got '{solver}'."
         )
 
         with pytest.raises(ValueError, match=expected_msg):
@@ -1295,23 +1295,12 @@ def test_array_api_error_and_warnings_for_solver_parameter(array_namespace):
     ridge = Ridge(solver="auto", positive=True)
     expected_msg = (
         "The solvers that support positive fitting do not support "
-        f"Array API dispatch to namespace {xp.__name__}. Please "
-        "either disable Array API dispatch, or use a numpy-like "
+        f"array API dispatch to namespace {xp.__name__}. Please "
+        "either disable array API dispatch, or use a numpy-like "
         "namespace, or set `positive=False`."
     )
 
     with pytest.raises(ValueError, match=expected_msg):
-        with config_context(array_api_dispatch=True):
-            ridge.fit(X_iris_xp, y_iris_xp)
-
-    ridge = Ridge()
-    expected_msg = (
-        f"Using Array API dispatch to namespace {xp.__name__} with `solver='auto'` "
-        "will result in using the solver 'svd'. The results may differ from those "
-        "when using a Numpy array, because in that case the preferred solver would "
-        "be cholesky. Set `solver='svd'` to suppress this warning."
-    )
-    with pytest.warns(UserWarning, match=expected_msg):
         with config_context(array_api_dispatch=True):
             ridge.fit(X_iris_xp, y_iris_xp)
 
