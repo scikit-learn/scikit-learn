@@ -2,7 +2,6 @@
 
 import itertools
 import math
-import numbers
 from functools import wraps
 
 import numpy
@@ -841,7 +840,7 @@ def make_converter(X):
         device_ = device(X)
 
         def convert(data):
-            if data is None or isinstance(data, (numbers.Number, str)):
+            if not isinstance(data, numpy.ndarray) and not hasattr(data, "__dlpack__"):
                 return data
             data_xp, data_is_array_api, data_device = get_namespace_and_device(data)
             if data_xp == xp and data_device == device_:
@@ -860,6 +859,11 @@ def make_converter(X):
 
 
 def convert_attributes(estimator, ref_array):
+    """
+    Convert attributes of estimator to namespace and device of reference array.
+
+    attributes which are not arrays are left unchanged.
+    """
     return _estimator_with_converted_arrays(estimator, make_converter(ref_array))
 
 
