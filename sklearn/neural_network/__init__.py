@@ -1,6 +1,6 @@
 """Models based on neural networks."""
 
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 from ._multilayer_perceptron import MLPClassifier, MLPRegressor
 from ._rbm import BernoulliRBM

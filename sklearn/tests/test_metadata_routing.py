@@ -2,8 +2,8 @@
 Metadata Routing Utility Tests
 """
 
-# Author: Adrin Jalali <adrin.jalali@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import re
 
@@ -327,14 +327,16 @@ def test_simple_metadata_routing():
     # and passing metadata to the consumer directly is fine regardless of its
     # metadata_request values.
     clf.fit(X, y, sample_weight=my_weights)
-    check_recorded_metadata(clf.estimator_, "fit")
+    check_recorded_metadata(clf.estimator_, method="fit", parent="fit")
 
     # Requesting a metadata will make the meta-estimator forward it correctly
     clf = WeightedMetaClassifier(
         estimator=ConsumingClassifier().set_fit_request(sample_weight=True)
     )
     clf.fit(X, y, sample_weight=my_weights)
-    check_recorded_metadata(clf.estimator_, "fit", sample_weight=my_weights)
+    check_recorded_metadata(
+        clf.estimator_, method="fit", parent="fit", sample_weight=my_weights
+    )
 
     # And requesting it with an alias
     clf = WeightedMetaClassifier(
@@ -343,7 +345,9 @@ def test_simple_metadata_routing():
         )
     )
     clf.fit(X, y, alternative_weight=my_weights)
-    check_recorded_metadata(clf.estimator_, "fit", sample_weight=my_weights)
+    check_recorded_metadata(
+        clf.estimator_, method="fit", parent="fit", sample_weight=my_weights
+    )
 
 
 def test_nested_routing():
@@ -367,17 +371,30 @@ def test_nested_routing():
         X, y, metadata=my_groups, sample_weight=w1, outer_weights=w2, inner_weights=w3
     )
     check_recorded_metadata(
-        pipeline.steps_[0].transformer_, "fit", metadata=my_groups, sample_weight=None
+        pipeline.steps_[0].transformer_,
+        method="fit",
+        parent="fit",
+        metadata=my_groups,
     )
     check_recorded_metadata(
-        pipeline.steps_[0].transformer_, "transform", sample_weight=w1, metadata=None
+        pipeline.steps_[0].transformer_,
+        method="transform",
+        parent="fit",
+        sample_weight=w1,
     )
-    check_recorded_metadata(pipeline.steps_[1], "fit", sample_weight=w2)
-    check_recorded_metadata(pipeline.steps_[1].estimator_, "fit", sample_weight=w3)
+    check_recorded_metadata(
+        pipeline.steps_[1], method="fit", parent="fit", sample_weight=w2
+    )
+    check_recorded_metadata(
+        pipeline.steps_[1].estimator_, method="fit", parent="fit", sample_weight=w3
+    )
 
     pipeline.predict(X, sample_weight=w3)
     check_recorded_metadata(
-        pipeline.steps_[0].transformer_, "transform", sample_weight=w3, metadata=None
+        pipeline.steps_[0].transformer_,
+        method="transform",
+        parent="fit",
+        sample_weight=w3,
     )
 
 

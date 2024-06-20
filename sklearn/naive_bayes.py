@@ -4,15 +4,8 @@ These are supervised learning methods based on applying Bayes' theorem with stro
 (naive) feature independence assumptions.
 """
 
-# Author: Vincent Michel <vincent.michel@inria.fr>
-#         Minor fixes by Fabian Pedregosa
-#         Amit Aides <amitibo@tx.technion.ac.il>
-#         Yehuda Finkelstein <yehudaf@tx.technion.ac.il>
-#         Lars Buitinck
-#         Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-#         (parts based on earlier work by Mathieu Blondel)
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real

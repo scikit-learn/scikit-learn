@@ -1,13 +1,7 @@
 """Principal Component Analysis."""
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Olivier Grisel <olivier.grisel@ensta.org>
-#         Mathieu Blondel <mathieu@mblondel.org>
-#         Denis A. Engemann <denis-alexander.engemann@inria.fr>
-#         Michael Eickenberg <michael.eickenberg@inria.fr>
-#         Giorgio Patrini <giorgio.patrini@anu.edu.au>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from math import log, sqrt
 from numbers import Integral, Real

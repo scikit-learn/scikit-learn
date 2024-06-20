@@ -1,7 +1,7 @@
 """Generic feature selection mixin"""
 
-# Authors: G. Varoquaux, A. Gramfort, L. Buitinck, J. Nothman
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from abc import ABCMeta, abstractmethod
