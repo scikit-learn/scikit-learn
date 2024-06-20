@@ -1765,8 +1765,7 @@ def check_array_api_metric(
     multioutput = metric_kwargs.get("multioutput")
     if multioutput is not None:
         if isinstance(multioutput, np.ndarray):
-            multioutput = xp.asarray(multioutput, device=device)
-        metric_kwargs["multioutput"] = multioutput
+            metric_kwargs["multioutput"] = xp.asarray(multioutput, device=device)
 
     with config_context(array_api_dispatch=True):
         metric_xp = metric(a_xp, b_xp, **metric_kwargs)
