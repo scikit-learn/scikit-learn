@@ -438,8 +438,8 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         self.gamma_ = 1 / X.shape[1] if self.gamma is None else self.gamma
         self._centerer = KernelCenterer().set_output(transform="default")
         K = self._get_kernel(X)
-        # safe to perform in place operations on K because a copy was made before if
-        # requested.
+        # When kernel="precomputed", K is X but it's safe to perform in place operations
+        # on K because a copy was made before if requested by copy_X.
         self._fit_transform_in_place(K)
 
         if self.fit_inverse_transform:
