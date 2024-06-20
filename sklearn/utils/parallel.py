@@ -1,5 +1,5 @@
-"""
-The :mod:`sklearn.utils.parallel` customizes `joblib` tools for scikit-learn usage.
+"""Customizations of :mod:`joblib` and :mod:`threadpoolctl` tools for scikit-learn
+usage.
 """
 
 import functools
@@ -7,8 +7,15 @@ import warnings
 from functools import update_wrapper
 
 import joblib
+from threadpoolctl import ThreadpoolController
 
 from .._config import config_context, get_config
+
+# Global threadpool controller instance that can be used to locally limit the number of
+# threads without looping through all shared libraries every time.
+# It should not be accessed directly and _get_threadpool_controller should be used
+# instead.
+_threadpool_controller = None
 
 
 def _with_config(delayed_func, config):
@@ -127,3 +134,33 @@ class _FuncWrapper:
             config = {}
         with config_context(**config):
             return self.function(*args, **kwargs)
+
+
+def _get_threadpool_controller():
+    """Return the global threadpool controller instance."""
+    global _threadpool_controller
+
+    if _threadpool_controller is None:
+        _threadpool_controller = ThreadpoolController()
+
+    return _threadpool_controller
+
+
+def _threadpool_controller_decorator(limits=1, user_api="blas"):
+    """Decorator to limit the number of threads used at the function level.
+
+    It should be prefered over `threadpoolctl.ThreadpoolController.wrap` because this
+    one only loads the shared libraries when the function is called while the latter
+    loads them at import time.
+    """
+
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            controller = _get_threadpool_controller()
+            with controller.limit(limits=limits, user_api=user_api):
+                return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator

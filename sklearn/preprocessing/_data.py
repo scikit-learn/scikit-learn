@@ -1,11 +1,5 @@
-# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#          Olivier Grisel <olivier.grisel@ensta.org>
-#          Andreas Mueller <amueller@ais.uni-bonn.de>
-#          Eric Martin <eric@ericmart.in>
-#          Giorgio Patrini <giorgio.patrini@anu.edu.au>
-#          Eric Chang <ericchang2017@u.northwestern.edu>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 import warnings
@@ -22,7 +16,7 @@ from ..base import (
     TransformerMixin,
     _fit_context,
 )
-from ..utils import _array_api, check_array
+from ..utils import _array_api, check_array, resample
 from ..utils._array_api import get_namespace
 from ..utils._param_validation import Interval, Options, StrOptions, validate_params
 from ..utils.extmath import _incremental_mean_and_var, row_norms
@@ -2372,10 +2366,6 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
            [ -5., -14.,  19.]])
     """
 
-    def __init__(self):
-        # Needed for backported inspect.signature compatibility with PyPy
-        pass
-
     def fit(self, K, y=None):
         """Fit KernelCenterer.
 
@@ -2672,15 +2662,13 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         n_samples, n_features = X.shape
         references = self.references_ * 100
 
-        self.quantiles_ = []
-        for col in X.T:
-            if self.subsample is not None and self.subsample < n_samples:
-                subsample_idx = random_state.choice(
-                    n_samples, size=self.subsample, replace=False
-                )
-                col = col.take(subsample_idx, mode="clip")
-            self.quantiles_.append(np.nanpercentile(col, references))
-        self.quantiles_ = np.transpose(self.quantiles_)
+        if self.subsample is not None and self.subsample < n_samples:
+            # Take a subsample of `X`
+            X = resample(
+                X, replace=False, n_samples=self.subsample, random_state=random_state
+            )
+
+        self.quantiles_ = np.nanpercentile(X, references, axis=0)
         # Due to floating-point precision error in `np.nanpercentile`,
         # make sure that quantiles are monotonically increasing.
         # Upstream issue in numpy:

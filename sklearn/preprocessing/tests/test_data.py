@@ -1,8 +1,5 @@
-# Authors:
-#
-#          Giorgio Patrini
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import re
 import warnings
@@ -208,7 +205,13 @@ def test_standard_scaler_dtype(add_sample_weight, sparse_container):
     else:
         sample_weight = None
     with_mean = True
-    for dtype in [np.float16, np.float32, np.float64]:
+    if sparse_container is not None:
+        # scipy sparse containers do not support float16, see
+        # https://github.com/scipy/scipy/issues/7408 for more details.
+        supported_dtype = [np.float64, np.float32]
+    else:
+        supported_dtype = [np.float64, np.float32, np.float16]
+    for dtype in supported_dtype:
         X = rng.randn(n_samples, n_features).astype(dtype)
         if sparse_container is not None:
             X = sparse_container(X)
@@ -589,6 +592,10 @@ def test_standard_scaler_partial_fit_numerical_stability(sparse_container):
     scaler_incr = StandardScaler(with_mean=False)
 
     for chunk in X:
+        if chunk.ndim == 1:
+            # Sparse arrays can be 1D (in scipy 1.14 and later) while old
+            # sparse matrix instances are always 2D.
+            chunk = chunk.reshape(1, -1)
         scaler_incr = scaler_incr.partial_fit(chunk)
 
     # Regardless of magnitude, they must not differ more than of 6 digits

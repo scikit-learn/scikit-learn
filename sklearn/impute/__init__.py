@@ -1,4 +1,5 @@
-"""Transformers for missing value imputation"""
+"""Transformers for missing value imputation."""
+
 import typing
 
 from ._base import MissingIndicator, SimpleImputer

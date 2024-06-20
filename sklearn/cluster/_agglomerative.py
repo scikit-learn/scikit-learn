@@ -7,6 +7,7 @@ Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
           Gael Varoquaux
 License: BSD 3 clause
 """
+
 import warnings
 from heapq import heapify, heappop, heappush, heappushpop
 from numbers import Integral, Real
@@ -754,8 +755,7 @@ def _hc_cut(n_clusters, children, n_leaves):
     if n_clusters > n_leaves:
         raise ValueError(
             "Cannot extract more clusters than samples: "
-            "%s clusters where given for a tree with %s leaves."
-            % (n_clusters, n_leaves)
+            f"{n_clusters} clusters were given for a tree with {n_leaves} leaves."
         )
     # In this function, we store nodes as a heap to avoid recomputing
     # the max of the nodes: the first element is always the smallest
@@ -817,6 +817,10 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         `kneighbors_graph`. Default is ``None``, i.e, the
         hierarchical clustering algorithm is unstructured.
 
+        For an example of connectivity matrix using
+        :class:`~sklearn.neighbors.kneighbors_graph`, see
+        :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`.
+
     compute_full_tree : 'auto' or bool, default='auto'
         Stop early the construction of the tree at ``n_clusters``. This is
         useful to decrease computation time if the number of clusters is not
@@ -845,6 +849,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         .. versionadded:: 0.20
             Added the 'single' option
 
+        For examples comparing different `linkage` criteria, see
+        :ref:`sphx_glr_auto_examples_cluster_plot_linkage_comparison.py`.
+
     distance_threshold : float, default=None
         The linkage distance threshold at or above which clusters will not be
         merged. If not ``None``, ``n_clusters`` must be ``None`` and
@@ -858,6 +865,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         a computational and memory overhead.
 
         .. versionadded:: 0.24
+
+        For an example of dendrogram visualization, see
+        :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_dendrogram.py`.
 
     Attributes
     ----------

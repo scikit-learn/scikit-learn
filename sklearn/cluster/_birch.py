@@ -1,7 +1,5 @@
-# Authors: Manoj Kumar <manojkumarsivaraj334@gmail.com>
-#          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
-#          Joel Nothman <joel.nothman@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from math import sqrt
@@ -636,17 +634,6 @@ class Birch(
             return self
         else:
             return self._fit(X, partial=True)
-
-    def _check_fit(self, X):
-        check_is_fitted(self)
-
-        if (
-            hasattr(self, "subcluster_centers_")
-            and X.shape[1] != self.subcluster_centers_.shape[1]
-        ):
-            raise ValueError(
-                "Training data and predicted data do not have same number of features."
-            )
 
     def predict(self, X):
         """

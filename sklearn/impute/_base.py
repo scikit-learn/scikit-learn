@@ -1,6 +1,5 @@
-# Authors: Nicolas Tresegnie <nicolas.tresegnie@gmail.com>
-#          Sergey Feldman <sergeyfeldman@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numbers
 import warnings
@@ -701,9 +700,8 @@ class SimpleImputer(_BaseImputer):
 
     def _more_tags(self):
         return {
-            "allow_nan": is_pandas_na(self.missing_values) or is_scalar_nan(
-                self.missing_values
-            )
+            "allow_nan": is_pandas_na(self.missing_values)
+            or is_scalar_nan(self.missing_values)
         }
 
     def get_feature_names_out(self, input_features=None):

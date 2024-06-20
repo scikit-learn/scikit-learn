@@ -14,8 +14,6 @@ from sklearn.ensemble import (
     AdaBoostRegressor,
     BaggingClassifier,
     BaggingRegressor,
-    StackingClassifier,
-    StackingRegressor,
 )
 from sklearn.exceptions import UnsetMetadataPassedError
 from sklearn.experimental import (
@@ -43,10 +41,12 @@ from sklearn.linear_model import (
     RidgeCV,
 )
 from sklearn.model_selection import (
+    FixedThresholdClassifier,
     GridSearchCV,
     HalvingGridSearchCV,
     HalvingRandomSearchCV,
     RandomizedSearchCV,
+    TunedThresholdClassifierCV,
 )
 from sklearn.multiclass import (
     OneVsOneClassifier,
@@ -77,6 +77,7 @@ rng = np.random.RandomState(42)
 N, M = 100, 4
 X = rng.rand(N, M)
 y = rng.randint(0, 3, size=N)
+y_binary = (y >= 1).astype(int)
 classes = np.unique(y)
 y_multi = rng.randint(0, 3, size=(N, 3))
 classes_multi = [np.unique(y_multi[:, i]) for i in range(y_multi.shape[1])]
@@ -199,6 +200,24 @@ METAESTIMATORS: list = [
         "scorer_routing_methods": ["fit", "score"],
         "cv_name": "cv",
         "cv_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": FixedThresholdClassifier,
+        "estimator_name": "estimator",
+        "estimator": "classifier",
+        "X": X,
+        "y": y_binary,
+        "estimator_routing_methods": ["fit"],
+        "preserves_metadata": "subset",
+    },
+    {
+        "metaestimator": TunedThresholdClassifierCV,
+        "estimator_name": "estimator",
+        "estimator": "classifier",
+        "X": X,
+        "y": y_binary,
+        "estimator_routing_methods": ["fit"],
+        "preserves_metadata": "subset",
     },
     {
         "metaestimator": OneVsRestClassifier,
@@ -356,6 +375,21 @@ METAESTIMATORS: list = [
         "cv_name": "cv",
         "cv_routing_methods": ["fit"],
     },
+    {
+        "metaestimator": GraphicalLassoCV,
+        "X": X,
+        "y": y,
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": TransformedTargetRegressor,
+        "estimator": "regressor",
+        "estimator_name": "regressor",
+        "X": X,
+        "y": y,
+        "estimator_routing_methods": ["fit", "predict"],
+    },
 ]
 """List containing all metaestimators to be tested and their settings
 
@@ -397,14 +431,10 @@ METAESTIMATOR_IDS = [str(row["metaestimator"].__name__) for row in METAESTIMATOR
 UNSUPPORTED_ESTIMATORS = [
     AdaBoostClassifier(),
     AdaBoostRegressor(),
-    GraphicalLassoCV(),
     RFE(ConsumingClassifier()),
     RFECV(ConsumingClassifier()),
     SelfTrainingClassifier(ConsumingClassifier()),
     SequentialFeatureSelector(ConsumingClassifier()),
-    StackingClassifier(ConsumingClassifier()),
-    StackingRegressor(ConsumingRegressor()),
-    TransformedTargetRegressor(),
 ]
 
 
@@ -584,7 +614,7 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
             instance = cls(**kwargs)
             msg = (
                 f"[{key}] are passed but are not explicitly set as requested or not"
-                f" for {estimator.__class__.__name__}.{method_name}"
+                f" requested for {estimator.__class__.__name__}.{method_name}"
             )
             with pytest.raises(UnsetMetadataPassedError, match=re.escape(msg)):
                 method = getattr(instance, method_name)
@@ -662,13 +692,7 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
             )
             if "fit" not in method_name:
                 # fit before calling method
-                set_requests(
-                    estimator,
-                    method_mapping=metaestimator.get("method_mapping", {}),
-                    methods=["fit"],
-                    metadata_name=key,
-                )
-                instance.fit(X, y, **method_kwargs, **extra_method_args)
+                instance.fit(X, y)
             try:
                 # `fit` and `partial_fit` accept y, others don't.
                 method(X, y, **method_kwargs, **extra_method_args)
@@ -678,17 +702,17 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
             # sanity check that registry is not empty, or else the test passes
             # trivially
             assert registry
-            if preserves_metadata is True:
-                for estimator in registry:
-                    check_recorded_metadata(estimator, method_name, **method_kwargs)
-            elif preserves_metadata == "subset":
-                for estimator in registry:
-                    check_recorded_metadata(
-                        estimator,
-                        method_name,
-                        split_params=method_kwargs.keys(),
-                        **method_kwargs,
-                    )
+            split_params = (
+                method_kwargs.keys() if preserves_metadata == "subset" else ()
+            )
+            for estimator in registry:
+                check_recorded_metadata(
+                    estimator,
+                    method=method_name,
+                    parent=method_name,
+                    split_params=split_params,
+                    **method_kwargs,
+                )
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
@@ -740,16 +764,22 @@ def test_metadata_is_routed_correctly_to_scorer(metaestimator):
 
     cls = metaestimator["metaestimator"]
     routing_methods = metaestimator["scorer_routing_methods"]
+    method_mapping = metaestimator.get("method_mapping", {})
 
     for method_name in routing_methods:
         kwargs, (estimator, _), (scorer, registry), (cv, _) = get_init_args(
             metaestimator, sub_estimator_consumes=True
         )
-        if estimator:
-            estimator.set_fit_request(sample_weight=True, metadata=True)
         scorer.set_score_request(sample_weight=True)
         if cv:
             cv.set_split_request(groups=True, metadata=True)
+        if estimator is not None:
+            set_requests(
+                estimator,
+                method_mapping=method_mapping,
+                methods=[method_name],
+                metadata_name="sample_weight",
+            )
         instance = cls(**kwargs)
         method = getattr(instance, method_name)
         method_kwargs = {"sample_weight": sample_weight}
@@ -762,6 +792,7 @@ def test_metadata_is_routed_correctly_to_scorer(metaestimator):
             check_recorded_metadata(
                 obj=_scorer,
                 method="score",
+                parent=method_name,
                 split_params=("sample_weight",),
                 **method_kwargs,
             )
@@ -796,4 +827,6 @@ def test_metadata_is_routed_correctly_to_splitter(metaestimator):
         method(X_, y_, **method_kwargs)
         assert registry
         for _splitter in registry:
-            check_recorded_metadata(obj=_splitter, method="split", **method_kwargs)
+            check_recorded_metadata(
+                obj=_splitter, method="split", parent=method_name, **method_kwargs
+            )

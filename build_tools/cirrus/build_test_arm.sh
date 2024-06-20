@@ -22,19 +22,16 @@ setup_ccache() {
     ccache -M 0
 }
 
-MAMBAFORGE_URL="https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-aarch64.sh"
+# Install Miniforge
+MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-aarch64.sh"
+curl -L --retry 10 $MINIFORGE_URL -o miniconda.sh
+MINIFORGE_PATH=$HOME/miniforge3
+bash ./miniconda.sh -b -p $MINIFORGE_PATH
+source $MINIFORGE_PATH/etc/profile.d/conda.sh
+conda activate
 
-# Install Mambaforge
-curl -L --retry 10 $MAMBAFORGE_URL -o mambaforge.sh
-MAMBAFORGE_PATH=$HOME/mambaforge
-bash ./mambaforge.sh -b -p $MAMBAFORGE_PATH
-export PATH=$MAMBAFORGE_PATH/bin:$PATH
-mamba init --all --verbose
-mamba update --yes mamba
-mamba update --yes conda
-mamba install "$(get_dep conda-lock min)" -y
-conda-lock install --name $CONDA_ENV_NAME $LOCK_FILE
-source activate $CONDA_ENV_NAME
+create_conda_environment_from_lock_file $CONDA_ENV_NAME $LOCK_FILE
+conda activate $CONDA_ENV_NAME
 
 setup_ccache
 

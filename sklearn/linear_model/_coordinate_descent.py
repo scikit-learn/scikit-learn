@@ -1,9 +1,5 @@
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Fabian Pedregosa <fabian.pedregosa@inria.fr>
-#         Olivier Grisel <olivier.grisel@ensta.org>
-#         Gael Varoquaux <gael.varoquaux@inria.fr>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numbers
 import sys
@@ -776,6 +772,9 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         Whether to use a precomputed Gram matrix to speed up
         calculations. The Gram matrix can also be passed as argument.
         For sparse input this option is always ``False`` to preserve sparsity.
+        Check :ref:`an example on how to use a precomputed Gram Matrix in ElasticNet
+        <sphx_glr_auto_examples_linear_model_plot_elastic_net_precomputed_gram_matrix_with_weighted_samples.py>`
+        for details.
 
     max_iter : int, default=1000
         The maximum number of iterations.
@@ -1860,7 +1859,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             .add_self_request(self)
             .add(
                 splitter=check_cv(self.cv),
-                method_mapping=MethodMapping().add(callee="split", caller="fit"),
+                method_mapping=MethodMapping().add(caller="fit", callee="split"),
             )
         )
         return router
