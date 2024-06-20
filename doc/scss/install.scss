@@ -7,21 +7,6 @@
  */
 
 .install-instructions .sd-tab-set {
-  &::before {
-    width: 5rem;
-    display: flex;
-    align-items: center;
-    font-weight: bold;
-  }
-
-  &.tabs-os::before {
-    content: "OS";
-  }
-
-  &.tabs-packager::before {
-    content: "Packager";
-  }
-
   .sd-tab-content {
     padding: 0.5rem 0 0 0; // Vertical gap between the two sets of nested tabs
     background-color: transparent;
@@ -40,16 +25,36 @@
     border-radius: 5px !important;
 
     &.tab-6 {
-      width: calc((100% - 5rem) / 2 - 6px) !important;
+      width: calc((100% - var(--tab-caption-width, 0%)) / 2 - 6px) !important;
     }
 
     &.tab-4 {
-      width: calc((100% - 5rem) / 3 - 6px) !important;
+      width: calc((100% - var(--tab-caption-width, 0%)) / 3 - 6px) !important;
     }
   }
 
   > input:checked + label.sd-tab-label {
     transform: unset;
     border: 2px solid var(--pst-color-primary);
+  }
+
+  // Show tab captions on large screens
+  @media screen and (min-width: 960px) {
+    --tab-caption-width: 20%;
+
+    &::before {
+      width: var(--tab-caption-width);
+      display: flex;
+      align-items: center;
+      font-weight: bold;
+    }
+
+    &.tabs-os::before {
+      content: "Operating System";
+    }
+
+    &.tabs-packager::before {
+      content: "Package Manager";
+    }
   }
 }

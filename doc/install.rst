@@ -71,24 +71,7 @@ Installing the latest release
           :class-label: tab-6
           :sync: packager-conda
 
-          Install conda using the `Anaconda or miniconda installers
-          <https://docs.conda.io/projects/conda/en/latest/user-guide/install/>`__
-          or the `miniforge installers
-          <https://github.com/conda-forge/miniforge#miniforge>`__ (no administrator
-          permission required for any of those). Then run:
-
-          .. prompt:: powershell
-
-            conda create -n sklearn-env -c conda-forge scikit-learn
-            conda activate sklearn-env
-
-          In order to check your installation, you can use:
-
-          .. prompt:: powershell
-
-            conda list scikit-learn  # show scikit-learn version and location
-            conda list               # show all installed packages in the environment
-            python -c "import sklearn; sklearn.show_versions()"
+          .. include:: ./install_instructions_conda.rst
 
     .. tab-item:: MacOS
       :class-label: tab-4
@@ -127,24 +110,7 @@ Installing the latest release
           :class-label: tab-6
           :sync: packager-conda
 
-          Install conda using the `Anaconda or miniconda installers
-          <https://docs.conda.io/projects/conda/en/latest/user-guide/install/>`__
-          or the `miniforge installers
-          <https://github.com/conda-forge/miniforge#miniforge>`__ (no administrator
-          permission required for any of those). Then run:
-
-          .. prompt:: bash
-
-            conda create -n sklearn-env -c conda-forge scikit-learn
-            conda activate sklearn-env
-
-          In order to check your installation, you can use:
-
-          .. prompt:: bash
-
-            conda list scikit-learn  # show scikit-learn version and location
-            conda list               # show all installed packages in the environment
-            python -c "import sklearn; sklearn.show_versions()"
+          .. include:: ./install_instructions_conda.rst
 
     .. tab-item:: Linux
       :class-label: tab-4
@@ -190,24 +156,7 @@ Installing the latest release
           :class-label: tab-6
           :sync: packager-conda
 
-          Install conda using the `Anaconda or miniconda installers
-          <https://docs.conda.io/projects/conda/en/latest/user-guide/install/>`__
-          or the `miniforge installers
-          <https://github.com/conda-forge/miniforge#miniforge>`__ (no administrator
-          permission required for any of those). Then run:
-
-          .. prompt:: bash
-
-            conda create -n sklearn-env -c conda-forge scikit-learn
-            conda activate sklearn-env
-
-          In order to check your installation, you can use:
-
-          .. prompt:: bash
-
-            conda list scikit-learn  # show scikit-learn version and location
-            conda list               # show all installed packages in the environment
-            python -c "import sklearn; sklearn.show_versions()"
+          .. include:: ./install_instructions_conda.rst
 
 
 Using an isolated environment such as pip venv or conda makes it possible to
