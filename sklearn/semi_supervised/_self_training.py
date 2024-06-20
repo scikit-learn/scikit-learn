@@ -1,11 +1,12 @@
 import warnings
 from numbers import Integral, Real
+from warnings import warn
 
 import numpy as np
 
 from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone
 from ..utils import Bunch, safe_mask
-from ..utils._param_validation import HasMethods, Interval, StrOptions
+from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
 from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -25,16 +26,16 @@ __all__ = ["SelfTrainingClassifier"]
 def _estimator_has(attr):
     """Check if we can delegate a method to the underlying estimator.
 
-    First, we check the fitted `base_estimator_` if available, otherwise we check
-    the unfitted `base_estimator`. We raise the original `AttributeError` if
+    First, we check the fitted `estimator_` if available, otherwise we check
+    the unfitted `estimator`. We raise the original `AttributeError` if
     `attr` does not exist. This function is used together with `available_if`.
     """
 
     def check(self):
-        if hasattr(self, "base_estimator_"):
-            getattr(self.base_estimator_, attr)
+        if hasattr(self, "estimator_"):
+            getattr(self.estimator_, attr)
         else:
-            getattr(self.base_estimator, attr)
+            getattr(self.estimator, attr)
 
         return True
 
@@ -56,10 +57,16 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
     Parameters
     ----------
-    base_estimator : estimator object
+    estimator : estimator object
         An estimator object implementing `fit` and `predict_proba`.
         Invoking the `fit` method will fit a clone of the passed estimator,
-        which will be stored in the `base_estimator_` attribute.
+        which will be stored in the `estimator_` attribute.
+
+    base_estimator : estimator object
+
+        .. deprecated:: 1.6
+            `base_estimator` was deprecated in 1.6 and will be removed in 1.8.
+            Use `estimator` instead.
 
     threshold : float, default=0.75
         The decision threshold for use with `criterion='threshold'`.
@@ -89,12 +96,12 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
     Attributes
     ----------
-    base_estimator_ : estimator object
+    estimator_ : estimator object
         The fitted estimator.
 
     classes_ : ndarray or list of ndarray of shape (n_classes,)
         Class labels for each output. (Taken from the trained
-        `base_estimator_`).
+        `estimator_`).
 
     transduction_ : ndarray of shape (n_samples,)
         The labels used for the final fit of the classifier, including
@@ -163,7 +170,12 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
     _parameter_constraints: dict = {
         # We don't require `predic_proba` here to allow passing a meta-estimator
         # that only exposes `predict_proba` after fitting.
-        "base_estimator": [HasMethods(["fit"])],
+        "estimator": [None, HasMethods(["fit"])],
+        # TODO(1.8) remove
+        "base_estimator": [
+            HasMethods(["fit"]),
+            Hidden(StrOptions({"deprecated"})),
+        ],
         "threshold": [Interval(Real, 0.0, 1.0, closed="left")],
         "criterion": [StrOptions({"threshold", "k_best"})],
         "k_best": [Interval(Integral, 1, None, closed="left")],
@@ -173,22 +185,26 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
     def __init__(
         self,
-        base_estimator,
+        estimator=None,
+        base_estimator="deprecated",
         threshold=0.75,
         criterion="threshold",
         k_best=10,
         max_iter=10,
         verbose=False,
     ):
-        self.base_estimator = base_estimator
+        self.estimator = estimator
         self.threshold = threshold
         self.criterion = criterion
         self.k_best = k_best
         self.max_iter = max_iter
         self.verbose = verbose
 
+        # TODO(1.8) remove
+        self.base_estimator = base_estimator
+
     @_fit_context(
-        # SelfTrainingClassifier.base_estimator is not validated yet
+        # SelfTrainingClassifier.estimator is not validated yet
         prefer_skip_nested_validation=False
     )
     def fit(self, X, y, **params):
@@ -227,7 +243,19 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             X, y, accept_sparse=["csr", "csc", "lil", "dok"], force_all_finite=False
         )
 
-        self.base_estimator_ = clone(self.base_estimator)
+        # TODO: remove in 1.8 and only keep clone(self.estimator)
+        if self.estimator is None and self.base_estimator != "deprecated":
+            self.estimator_ = clone(self.base_estimator)
+
+            warn(
+                (
+                    "`base_estimator` has been deprecated in 1.6 and will be removed"
+                    " in 1.8. Please use `estimator` instead."
+                ),
+                FutureWarning,
+            )
+        else:
+            self.estimator_ = clone(self.estimator)
 
         if y.dtype.kind in ["U", "S"]:
             raise ValueError(
@@ -257,7 +285,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             routed_params = process_routing(self, "fit", **params)
         else:
             routed_params = Bunch()
-            routed_params.base_estimator = Bunch(fit={})
+            routed_params.estimator = Bunch(fit=params)
 
         self.transduction_ = np.copy(y)
         self.labeled_iter_ = np.full_like(y, -1)
@@ -269,15 +297,15 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             self.max_iter is None or self.n_iter_ < self.max_iter
         ):
             self.n_iter_ += 1
-            self.base_estimator_.fit(
+            self.estimator_.fit(
                 X[safe_mask(X, has_label)],
                 self.transduction_[has_label],
-                **routed_params.base_estimator.fit,
+                **routed_params.estimator.fit,
             )
 
             # Predict on the unlabeled samples
-            prob = self.base_estimator_.predict_proba(X[safe_mask(X, ~has_label)])
-            pred = self.base_estimator_.classes_[np.argmax(prob, axis=1)]
+            prob = self.estimator_.predict_proba(X[safe_mask(X, ~has_label)])
+            pred = self.estimator_.classes_[np.argmax(prob, axis=1)]
             max_proba = np.max(prob, axis=1)
 
             # Select new labeled samples
@@ -315,12 +343,12 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         if np.all(has_label):
             self.termination_condition_ = "all_labeled"
 
-        self.base_estimator_.fit(
+        self.estimator_.fit(
             X[safe_mask(X, has_label)],
             self.transduction_[has_label],
-            **routed_params.base_estimator.fit,
+            **routed_params.estimator.fit,
         )
-        self.classes_ = self.base_estimator_.classes_
+        self.classes_ = self.estimator_.classes_
         return self
 
     @available_if(_estimator_has("predict"))
@@ -355,7 +383,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             routed_params = process_routing(self, "predict", **params)
         else:
             routed_params = Bunch()
-            routed_params.base_estimator = Bunch(predict={})
+            routed_params.estimator = Bunch(predict=params)
 
         X = self._validate_data(
             X,
@@ -363,7 +391,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             force_all_finite=False,
             reset=False,
         )
-        return self.base_estimator_.predict(X, **routed_params.base_estimator.predict)
+        return self.estimator_.predict(X, **routed_params.estimator.predict)
 
     @available_if(_estimator_has("predict_proba"))
     def predict_proba(self, X, **params):
@@ -397,7 +425,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             routed_params = process_routing(self, "predict_proba", **params)
         else:
             routed_params = Bunch()
-            routed_params.base_estimator = Bunch(predict_proba={})
+            routed_params.estimator = Bunch(predict_proba=params)
 
         X = self._validate_data(
             X,
@@ -405,13 +433,11 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             force_all_finite=False,
             reset=False,
         )
-        return self.base_estimator_.predict_proba(
-            X, **routed_params.base_estimator.predict_proba
-        )
+        return self.estimator_.predict_proba(X, **routed_params.estimator.predict_proba)
 
     @available_if(_estimator_has("decision_function"))
     def decision_function(self, X, **params):
-        """Call decision function of the `base_estimator`.
+        """Call decision function of the `estimator`.
 
         Parameters
         ----------
@@ -431,7 +457,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         Returns
         -------
         y : ndarray of shape (n_samples, n_features)
-            Result of the decision function of the `base_estimator`.
+            Result of the decision function of the `estimator`.
         """
         check_is_fitted(self)
         _raise_for_params(params, self, "decision_function")
@@ -441,7 +467,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             routed_params = process_routing(self, "decision_function", **params)
         else:
             routed_params = Bunch()
-            routed_params.base_estimator = Bunch(decision_function={})
+            routed_params.estimator = Bunch(decision_function=params)
 
         X = self._validate_data(
             X,
@@ -449,8 +475,8 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             force_all_finite=False,
             reset=False,
         )
-        return self.base_estimator_.decision_function(
-            X, **routed_params.base_estimator.decision_function
+        return self.estimator_.decision_function(
+            X, **routed_params.estimator.decision_function
         )
 
     @available_if(_estimator_has("predict_log_proba"))
@@ -485,7 +511,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             routed_params = process_routing(self, "predict_log_proba", **params)
         else:
             routed_params = Bunch()
-            routed_params.base_estimator = Bunch(predict_log_proba={})
+            routed_params.estimator = Bunch(predict_log_proba=params)
 
         X = self._validate_data(
             X,
@@ -493,13 +519,13 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             force_all_finite=False,
             reset=False,
         )
-        return self.base_estimator_.predict_log_proba(
-            X, **routed_params.base_estimator.predict_log_proba
+        return self.estimator_.predict_log_proba(
+            X, **routed_params.estimator.predict_log_proba
         )
 
     @available_if(_estimator_has("score"))
     def score(self, X, y, **params):
-        """Call score on the `base_estimator`.
+        """Call score on the `estimator`.
 
         Parameters
         ----------
@@ -522,7 +548,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         Returns
         -------
         score : float
-            Result of calling score on the `base_estimator`.
+            Result of calling score on the `estimator`.
         """
         check_is_fitted(self)
         _raise_for_params(params, self, "score")
@@ -532,7 +558,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             routed_params = process_routing(self, "score", **params)
         else:
             routed_params = Bunch()
-            routed_params.base_estimator = Bunch(score={})
+            routed_params.estimator = Bunch(score=params)
 
         X = self._validate_data(
             X,
@@ -540,7 +566,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             force_all_finite=False,
             reset=False,
         )
-        return self.base_estimator_.score(X, y, **routed_params.base_estimator["score"])
+        return self.estimator_.score(X, y, **routed_params.estimator["score"])
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.
@@ -558,7 +584,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         """
         router = MetadataRouter(owner=self.__class__.__name__)
         router.add(
-            base_estimator=self.base_estimator,
+            estimator=self.estimator,
             method_mapping=(
                 MethodMapping()
                 .add(callee="fit", caller="fit")
