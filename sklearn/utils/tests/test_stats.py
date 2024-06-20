@@ -105,9 +105,7 @@ def test_weighted_percentile_nan_filtered():
     one-dimensional sample_weight."""
 
     rng = np.random.RandomState(42)
-    array = rng.rand(10, 100)
-
-    array_with_nans = array.copy()
+    array_with_nans = rng.rand(10, 100)
     array_with_nans[rng.rand(*array_with_nans.shape) < 0.5] = np.nan
     nan_mask = np.isnan(array_with_nans)
 
@@ -119,7 +117,7 @@ def test_weighted_percentile_nan_filtered():
 
         # Find the weighted percentile on the filtered array:
         filtered_array = [
-            array[~nan_mask[:, col], col] for col in range(array.shape[1])
+            array_with_nans[~nan_mask[:, col], col] for col in range(array.shape[1])
         ]
         if sample_weight.ndim == 1:
             sample_weight = np.repeat(sample_weight, array.shape[1]).reshape(
