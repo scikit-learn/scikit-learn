@@ -117,20 +117,22 @@ def test_weighted_percentile_nan_filtered():
 
         # Find the weighted percentile on the filtered array:
         filtered_array = [
-            array_with_nans[~nan_mask[:, col], col] for col in range(array.shape[1])
+            array_with_nans[~nan_mask[:, col], col]
+            for col in range(array_with_nans.shape[1])
         ]
         if sample_weight.ndim == 1:
-            sample_weight = np.repeat(sample_weight, array.shape[1]).reshape(
-                array.shape[0], array.shape[1]
+            sample_weight = np.repeat(sample_weight, array_with_nans.shape[1]).reshape(
+                array_with_nans.shape[0], array_with_nans.shape[1]
             )
         filtered_weights = [
-            sample_weight[~nan_mask[:, col], col] for col in range(array.shape[1])
+            sample_weight[~nan_mask[:, col], col]
+            for col in range(array_with_nans.shape[1])
         ]
 
         expected_results = np.array(
             [
                 _weighted_percentile(filtered_array[col], filtered_weights[col], 30)
-                for col in range(array.shape[1])
+                for col in range(array_with_nans.shape[1])
             ]
         )
 
