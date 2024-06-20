@@ -1,6 +1,9 @@
 # utils is cimported from other subpackages so this is needed for the cimport
 # to work
 utils_cython_tree = [
+  # We add sklearn_root_cython_tree to make sure sklearn/__init__.py is copied
+  # early in the build
+  sklearn_root_cython_tree,
   fs.copyfile('__init__.py'),
   fs.copyfile('_cython_blas.pxd'),
   fs.copyfile('_heap.pxd'),
@@ -35,7 +38,7 @@ utils_extension_metadata = {
 foreach ext_name, ext_dict : utils_extension_metadata
   py.extension_module(
     ext_name,
-    ext_dict.get('sources') + utils_cython_tree,
+    [ext_dict.get('sources'), utils_cython_tree],
     dependencies: ext_dict.get('dependencies', []),
     override_options : ext_dict.get('override_options', []),
     cython_args: cython_args,
@@ -59,11 +62,15 @@ foreach name: util_extension_names
     name + '_pyx',
     output: name + '.pyx',
     input: name + '.pyx.tp',
-    command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@']
+    command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
+    # TODO in principle this should go in py.exension_module below. This is
+    # temporary work-around for dependency issue with .pyx.tp files. For more
+    # details, see https://github.com/mesonbuild/meson/issues/13212
+    depends: [pxd, utils_cython_tree],
   )
   py.extension_module(
     name,
-    [pxd, pyx] + utils_cython_tree,
+    pyx,
     cython_args: cython_args,
     subdir: 'sklearn/utils',
     install: true

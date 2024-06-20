@@ -1,6 +1,7 @@
 """
 Module contains classes for invertible (and differentiable) link functions.
 """
+
 # Author: Christian Lorentzen <lorentzen.ch@gmail.com>
 
 from abc import ABC, abstractmethod

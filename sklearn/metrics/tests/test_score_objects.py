@@ -53,7 +53,6 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.svm import LinearSVC
 from sklearn.tests.metadata_routing_common import (
-    assert_request_equal,
     assert_request_is_empty,
 )
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
@@ -62,9 +61,10 @@ from sklearn.utils._testing import (
     assert_array_equal,
     ignore_warnings,
 )
-from sklearn.utils.metadata_routing import MetadataRouter
+from sklearn.utils.metadata_routing import MetadataRouter, MethodMapping
 
 REGRESSION_SCORERS = [
+    "d2_absolute_error_score",
     "explained_variance",
     "r2",
     "neg_mean_absolute_error",
@@ -276,7 +276,7 @@ def test_check_scoring_and_check_multimetric_scoring(scoring):
     # To make sure the check_scoring is correctly applied to the constituent
     # scorers
 
-    estimator = LinearSVC(dual="auto", random_state=0)
+    estimator = LinearSVC(random_state=0)
     estimator.fit([[1], [2], [3]], [1, 1, 0])
 
     scorers = _check_multimetric_scoring(estimator, scoring)
@@ -337,12 +337,12 @@ def test_check_scoring_gridsearchcv():
     # test that check_scoring works on GridSearchCV and pipeline.
     # slightly redundant non-regression test.
 
-    grid = GridSearchCV(LinearSVC(dual="auto"), param_grid={"C": [0.1, 1]}, cv=3)
+    grid = GridSearchCV(LinearSVC(), param_grid={"C": [0.1, 1]}, cv=3)
     scorer = check_scoring(grid, scoring="f1")
     assert isinstance(scorer, _Scorer)
     assert scorer._response_method == "predict"
 
-    pipe = make_pipeline(LinearSVC(dual="auto"))
+    pipe = make_pipeline(LinearSVC())
     scorer = check_scoring(pipe, scoring="f1")
     assert isinstance(scorer, _Scorer)
     assert scorer._response_method == "predict"
@@ -384,7 +384,7 @@ def test_classification_binary_scores(scorer_name, metric):
     # binary classification.
     X, y = make_blobs(random_state=0, centers=2)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    clf = LinearSVC(dual="auto", random_state=0)
+    clf = LinearSVC(random_state=0)
     clf.fit(X_train, y_train)
 
     score = get_scorer(scorer_name)(clf, X_test, y_test)
@@ -434,7 +434,7 @@ def test_custom_scorer_pickling():
     # test that custom scorer can be pickled
     X, y = make_blobs(random_state=0, centers=2)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    clf = LinearSVC(dual="auto", random_state=0)
+    clf = LinearSVC(random_state=0)
     clf.fit(X_train, y_train)
 
     scorer = make_scorer(fbeta_score, beta=2)
@@ -532,7 +532,7 @@ def test_thresholded_scorers_multilabel_indicator_data():
     assert_almost_equal(score1, score2)
 
     # Multilabel decision function
-    clf = OneVsRestClassifier(LinearSVC(dual="auto", random_state=0))
+    clf = OneVsRestClassifier(LinearSVC(random_state=0))
     clf.fit(X_train, y_train)
     score1 = get_scorer("roc_auc")(clf, X_test, y_test)
     score2 = roc_auc_score(y_test, clf.decision_function(X_test))
@@ -926,7 +926,7 @@ def test_multiclass_roc_proba_scorer(scorer_name, metric):
     X, y = make_classification(
         n_classes=3, n_informative=3, n_samples=20, random_state=0
     )
-    lr = LogisticRegression(multi_class="multinomial").fit(X, y)
+    lr = LogisticRegression().fit(X, y)
     y_proba = lr.predict_proba(X)
     expected_score = metric(y, y_proba)
 
@@ -943,7 +943,7 @@ def test_multiclass_roc_proba_scorer_label():
     X, y = make_classification(
         n_classes=3, n_informative=3, n_samples=20, random_state=0
     )
-    lr = LogisticRegression(multi_class="multinomial").fit(X, y)
+    lr = LogisticRegression().fit(X, y)
     y_proba = lr.predict_proba(X)
 
     y_binary = y == 0
@@ -1233,7 +1233,8 @@ def test_scorer_metadata_request(name):
     # make sure putting the scorer in a router doesn't request anything by
     # default
     router = MetadataRouter(owner="test").add(
-        method_mapping="score", scorer=get_scorer(name)
+        scorer=get_scorer(name),
+        method_mapping=MethodMapping().add(caller="score", callee="score"),
     )
     # make sure `sample_weight` is refused if passed.
     with pytest.raises(TypeError, match="got unexpected argument"):
@@ -1244,7 +1245,8 @@ def test_scorer_metadata_request(name):
 
     # make sure putting weighted_scorer in a router requests sample_weight
     router = MetadataRouter(owner="test").add(
-        scorer=weighted_scorer, method_mapping="score"
+        scorer=weighted_scorer,
+        method_mapping=MethodMapping().add(caller="score", callee="score"),
     )
     router.validate_metadata(params={"sample_weight": 1}, method="score")
     routed_params = router.route_params(params={"sample_weight": 1}, caller="score")
@@ -1275,22 +1277,38 @@ def test_metadata_kwarg_conflict():
 
 
 @pytest.mark.usefixtures("enable_slep006")
-def test_PassthroughScorer_metadata_request():
-    """Test that _PassthroughScorer properly routes metadata.
+def test_PassthroughScorer_set_score_request():
+    """Test that _PassthroughScorer.set_score_request adds the correct metadata request
+    on itself and doesn't change its estimator's routing."""
+    est = LogisticRegression().set_score_request(sample_weight="estimator_weights")
+    # make a `_PassthroughScorer` with `check_scoring`:
+    scorer = check_scoring(est, None)
+    assert (
+        scorer.get_metadata_routing().score.requests["sample_weight"]
+        == "estimator_weights"
+    )
 
-    _PassthroughScorer should behave like a consumer, mirroring whatever is the
-    underlying score method.
-    """
-    scorer = _PassthroughScorer(
-        estimator=LinearSVC()
-        .set_score_request(sample_weight="alias")
-        .set_fit_request(sample_weight=True)
+    scorer.set_score_request(sample_weight="scorer_weights")
+    assert (
+        scorer.get_metadata_routing().score.requests["sample_weight"]
+        == "scorer_weights"
     )
-    # Test that _PassthroughScorer doesn't change estimator's routing.
-    assert_request_equal(
-        scorer.get_metadata_routing(),
-        {"fit": {"sample_weight": True}, "score": {"sample_weight": "alias"}},
+
+    # making sure changing the passthrough object doesn't affect the estimator.
+    assert (
+        est.get_metadata_routing().score.requests["sample_weight"]
+        == "estimator_weights"
     )
+
+
+def test_PassthroughScorer_set_score_request_raises_without_routing_enabled():
+    """Test that _PassthroughScorer.set_score_request raises if metadata routing is
+    disabled."""
+    scorer = check_scoring(LogisticRegression(), None)
+    msg = "This method is only available when metadata routing is enabled."
+
+    with pytest.raises(RuntimeError, match=msg):
+        scorer.set_score_request(sample_weight="my_weights")
 
 
 @pytest.mark.usefixtures("enable_slep006")
@@ -1537,6 +1555,34 @@ def test_multimetric_scorer_repr():
     multi_metric_scorer = check_scoring(scoring=["accuracy", "r2"])
 
     assert str(multi_metric_scorer) == 'MultiMetricScorer("accuracy", "r2")'
+
+
+def test_check_scoring_multimetric_raise_exc():
+    """Test that check_scoring returns error code for a subset of scorers in
+    multimetric scoring if raise_exc=False and raises otherwise."""
+
+    def raising_scorer(estimator, X, y):
+        raise ValueError("That doesn't work.")
+
+    X, y = make_classification(n_samples=150, n_features=10, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    clf = LogisticRegression().fit(X_train, y_train)
+
+    # "raising_scorer" is raising ValueError and should return an string representation
+    # of the error of the last scorer:
+    scoring = {
+        "accuracy": make_scorer(accuracy_score),
+        "raising_scorer": raising_scorer,
+    }
+    scoring_call = check_scoring(estimator=clf, scoring=scoring, raise_exc=False)
+    scores = scoring_call(clf, X_test, y_test)
+    assert "That doesn't work." in scores["raising_scorer"]
+
+    # should raise an error
+    scoring_call = check_scoring(estimator=clf, scoring=scoring, raise_exc=True)
+    err_msg = "That doesn't work."
+    with pytest.raises(ValueError, match=err_msg):
+        scores = scoring_call(clf, X_test, y_test)
 
 
 @pytest.mark.parametrize("enable_metadata_routing", [True, False])

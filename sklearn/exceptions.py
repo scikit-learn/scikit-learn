@@ -1,7 +1,4 @@
-"""
-The :mod:`sklearn.exceptions` module includes all custom warnings and error
-classes used across scikit-learn.
-"""
+"""Custom warnings and errors used across scikit-learn."""
 
 __all__ = [
     "NotFittedError",

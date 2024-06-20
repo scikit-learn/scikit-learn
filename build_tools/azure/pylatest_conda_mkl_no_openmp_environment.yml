@@ -9,19 +9,19 @@ dependencies:
   - blas[build=mkl]
   - scipy<1.12
   - joblib
-  - threadpoolctl
   - matplotlib
   - pandas
   - pyamg
-  - pytest<8
+  - pytest
   - pytest-xdist
   - pillow
   - pip
   - ninja
-  - meson-python
   - pytest-cov
   - coverage
   - ccache
   - pip
   - pip:
     - cython
+    - threadpoolctl
+    - meson-python

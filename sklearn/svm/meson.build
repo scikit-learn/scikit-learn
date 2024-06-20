@@ -19,7 +19,7 @@ libsvm_skl = static_library(
 
 py.extension_module(
   '_libsvm',
-  ['_libsvm.pyx'],
+  ['_libsvm.pyx', utils_cython_tree],
   include_directories: [newrand_include, libsvm_include],
   link_with: libsvm_skl,
   cython_args: cython_args,
@@ -29,7 +29,7 @@ py.extension_module(
 
 py.extension_module(
   '_libsvm_sparse',
-  ['_libsvm_sparse.pyx'],
+  ['_libsvm_sparse.pyx', utils_cython_tree],
   include_directories: [newrand_include, libsvm_include],
   link_with: libsvm_skl,
   cython_args: cython_args,
@@ -44,7 +44,7 @@ liblinear_skl = static_library(
 
 py.extension_module(
   '_liblinear',
-  ['_liblinear.pyx'],
+  ['_liblinear.pyx', utils_cython_tree],
   include_directories: [newrand_include, liblinear_include],
   link_with: [liblinear_skl],
   cython_args: cython_args,

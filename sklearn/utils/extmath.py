@@ -1,16 +1,7 @@
-"""
-The :mod:`sklearn.utils.extmath` module includes utilities to perform
-optimal mathematical operations in scikit-learn that are not available in SciPy.
-"""
-# Authors: Gael Varoquaux
-#          Alexandre Gramfort
-#          Alexandre T. Passos
-#          Olivier Grisel
-#          Lars Buitinck
-#          Stefan van der Walt
-#          Kyle Kastner
-#          Giorgio Patrini
-# License: BSD 3 clause
+"""Utilities to perform optimal mathematical operations in scikit-learn."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from functools import partial
@@ -863,12 +854,14 @@ def svd_flip(u, v, u_based_decision=True):
         Parameters u and v are the output of `linalg.svd` or
         :func:`~sklearn.utils.extmath.randomized_svd`, with matching inner
         dimensions so one can compute `np.dot(u * s, v)`.
+        u can be None if `u_based_decision` is False.
 
     v : ndarray
         Parameters u and v are the output of `linalg.svd` or
         :func:`~sklearn.utils.extmath.randomized_svd`, with matching inner
         dimensions so one can compute `np.dot(u * s, v)`. The input v should
         really be called vt to be consistent with scipy's output.
+        v can be None if `u_based_decision` is True.
 
     u_based_decision : bool, default=True
         If True, use the columns of u as the basis for sign flipping.
@@ -883,24 +876,25 @@ def svd_flip(u, v, u_based_decision=True):
     v_adjusted : ndarray
         Array v with adjusted rows and the same dimensions as v.
     """
-    xp, _ = get_namespace(u, v)
-    device = getattr(u, "device", None)
+    xp, _ = get_namespace(*[a for a in [u, v] if a is not None])
 
     if u_based_decision:
         # columns of u, rows of v, or equivalently rows of u.T and v
         max_abs_u_cols = xp.argmax(xp.abs(u.T), axis=1)
-        shift = xp.arange(u.T.shape[0], device=device)
+        shift = xp.arange(u.T.shape[0], device=device(u))
         indices = max_abs_u_cols + shift * u.T.shape[1]
         signs = xp.sign(xp.take(xp.reshape(u.T, (-1,)), indices, axis=0))
         u *= signs[np.newaxis, :]
-        v *= signs[:, np.newaxis]
+        if v is not None:
+            v *= signs[:, np.newaxis]
     else:
         # rows of v, columns of u
         max_abs_v_rows = xp.argmax(xp.abs(v), axis=1)
-        shift = xp.arange(v.shape[0], device=device)
+        shift = xp.arange(v.shape[0], device=device(v))
         indices = max_abs_v_rows + shift * v.shape[1]
-        signs = xp.sign(xp.take(xp.reshape(v, (-1,)), indices))
-        u *= signs[np.newaxis, :]
+        signs = xp.sign(xp.take(xp.reshape(v, (-1,)), indices, axis=0))
+        if u is not None:
+            u *= signs[np.newaxis, :]
         v *= signs[:, np.newaxis]
     return u, v
 

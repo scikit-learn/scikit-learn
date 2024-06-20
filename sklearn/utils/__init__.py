@@ -1,9 +1,7 @@
-"""
-The :mod:`sklearn.utils` module includes various utilities.
-"""
+"""Various utilities to help with development."""
 
 import platform
-import struct
+import warnings
 from collections.abc import Sequence
 
 import numpy as np
@@ -43,13 +41,16 @@ from .validation import (
     indexable,
 )
 
-# Do not deprecate parallel_backend and register_parallel_backend as they are
-# needed to tune `scikit-learn` behavior and have different effect if called
-# from the vendored version or or the site-package version. The other are
-# utilities that are independent of scikit-learn so they are not part of
-# scikit-learn public API.
-parallel_backend = _joblib.parallel_backend
-register_parallel_backend = _joblib.register_parallel_backend
+# TODO(1.7): remove parallel_backend and register_parallel_backend
+msg = "deprecated in 1.5 to be removed in 1.7. Use joblib.{} instead."
+register_parallel_backend = deprecated(msg)(_joblib.register_parallel_backend)
+
+
+# if a class, deprecated will change the object in _joblib module so we need to subclass
+@deprecated(msg)
+class parallel_backend(_joblib.parallel_backend):
+    pass
+
 
 __all__ = [
     "murmurhash3_32",
@@ -81,11 +82,20 @@ __all__ = [
     "gen_even_slices",
 ]
 
-IS_PYPY = platform.python_implementation() == "PyPy"
-_IS_32BIT = 8 * struct.calcsize("P") == 32
-_IS_WASM = platform.machine() in ["wasm32", "wasm64"]
+
+# TODO(1.7): remove
+def __getattr__(name):
+    if name == "IS_PYPY":
+        warnings.warn(
+            "IS_PYPY is deprecated and will be removed in 1.7.",
+            FutureWarning,
+        )
+        return platform.python_implementation() == "PyPy"
+    raise AttributeError(f"module {__name__} has no attribute {name}")
 
 
+# TODO(1.7): remove tosequence
+@deprecated("tosequence was deprecated in 1.5 and will be removed in 1.7")
 def tosequence(x):
     """Cast iterable x to a Sequence, avoiding a copy if possible.
 
