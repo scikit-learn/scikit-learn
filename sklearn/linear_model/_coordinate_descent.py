@@ -149,7 +149,7 @@ def _alpha_grid(
         X, y, X_offset, _, _ = _preprocess_data(
             X,
             y,
-            fit_intercept,
+            fit_intercept=fit_intercept,
             copy=copy_X,
             sample_weight=sample_weight,
             check_input=False,
