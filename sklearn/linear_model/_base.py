@@ -607,7 +607,12 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         accept_sparse = False if self.positive else ["csr", "csc", "coo"]
 
         X, y = self._validate_data(
-            X, y, accept_sparse=accept_sparse, y_numeric=True, multi_output=True
+            X,
+            y,
+            accept_sparse=accept_sparse,
+            y_numeric=True,
+            multi_output=True,
+            force_writeable=True,
         )
 
         has_sw = sample_weight is not None

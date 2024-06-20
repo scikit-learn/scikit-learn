@@ -219,7 +219,9 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         self : object
             FactorAnalysis class instance.
         """
-        X = self._validate_data(X, copy=self.copy, dtype=np.float64)
+        X = self._validate_data(
+            X, copy=self.copy, dtype=np.float64, force_writeable=True
+        )
 
         n_samples, n_features = X.shape
         n_components = self.n_components
