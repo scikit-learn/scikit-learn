@@ -27,14 +27,11 @@ Changes impacting many modules
   an unexpected error was raised when passing a DataFrame backed by a read-only buffer.
   :pr:`29018` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-Changelog
----------
-
-Changes impacting many modules
-------------------------------
-
 - |Fix| Fixed a regression causing a dead-lock at import time in some settings.
   :pr:`29235` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+Changelog
+---------
 
 :mod:`sklearn.metrics`
 ......................
