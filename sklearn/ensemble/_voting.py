@@ -84,7 +84,8 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         # Handle the multilabel-indicator case
         if is_classifier(self) and isinstance(self.classes_, list):
             predictions = np.zeros(
-                (X.shape[0], len(self.classes_), len(self.estimators_)), dtype=np.int64
+                (X.shape[0], len(self.classes_), len(self.estimators_)),
+                dtype=self.classes_.dtype,
             )
             for i in range(len(self.classes_)):
                 label_preds = np.asarray(
@@ -457,7 +458,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         if self.voting == "soft":
             maj = np.argmax(self.predict_proba(X), axis=-1)
         else:  # 'hard' voting
-            predictions = self._predict(X).astype(np.int64)
+            predictions = self._predict(X).astype(self.classes_.dtype)
             maj = np.apply_along_axis(
                 lambda x: np.argmax(np.bincount(x, weights=self._weights_not_none)),
                 axis=-1,
