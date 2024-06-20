@@ -1,6 +1,4 @@
-# Authors: Gael Varoquaux <gael.varoquaux@normalesup.org>
-#          Justin Vincent
-#          Lars Buitinck
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np

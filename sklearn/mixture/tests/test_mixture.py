@@ -1,4 +1,4 @@
-# Author: Guillaume Lemaitre <g.lemaitre58@gmail.com>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np

@@ -1,6 +1,6 @@
 """Generic feature selection mixin"""
 
-# Authors: G. Varoquaux, A. Gramfort, L. Buitinck, J. Nothman
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings

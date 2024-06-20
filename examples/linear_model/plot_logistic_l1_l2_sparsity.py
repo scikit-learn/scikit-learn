@@ -15,9 +15,7 @@ The visualization shows coefficients of the models for varying C.
 
 """
 
-# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#          Andreas Mueller <amueller@ais.uni-bonn.de>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt

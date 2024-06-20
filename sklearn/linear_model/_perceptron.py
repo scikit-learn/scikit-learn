@@ -1,4 +1,4 @@
-# Author: Mathieu Blondel
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 from numbers import Real
 

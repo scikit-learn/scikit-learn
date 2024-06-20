@@ -10,8 +10,7 @@ The dataset page is available from UCI Machine Learning Repository
 Courtesy of Jock A. Blackard and Colorado State University.
 """
 
-# Author: Lars Buitinck
-#         Peter Prettenhofer <peter.prettenhofer@gmail.com>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import logging

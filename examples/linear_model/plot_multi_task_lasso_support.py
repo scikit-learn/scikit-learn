@@ -13,7 +13,7 @@ point. This makes feature selection by the Lasso more stable.
 
 """
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 # %%

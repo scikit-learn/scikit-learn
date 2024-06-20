@@ -36,9 +36,7 @@ Hamming Loss).
 
 """
 
-# Authors: Eustache Diemert <eustache@diemert.fr>
-#          Maria Telenczuk <https://github.com/maikia>
-#          Guillaume Lemaitre <g.lemaitre58@gmail.com>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import time

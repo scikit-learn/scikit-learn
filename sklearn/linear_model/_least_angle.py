@@ -3,10 +3,7 @@ Least Angle Regression algorithm. See the documentation on the
 Generalized Linear Model for a complete discussion.
 """
 
-# Author: Fabian Pedregosa <fabian.pedregosa@inria.fr>
-#         Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Gael Varoquaux
-#
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import sys

@@ -1,10 +1,6 @@
 """Utilities to build a composite estimator as a chain of transforms and estimators."""
 
-# Author: Edouard Duchesnay
-#         Gael Varoquaux
-#         Virgile Fritsch
-#         Alexandre Gramfort
-#         Lars Buitinck
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 from collections import Counter, defaultdict

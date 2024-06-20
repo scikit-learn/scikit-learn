@@ -7,24 +7,7 @@ Function named as ``*_error`` or ``*_loss`` return a scalar value to minimize:
 the lower the better.
 """
 
-# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#          Olivier Grisel <olivier.grisel@ensta.org>
-#          Arnaud Joly <a.joly@ulg.ac.be>
-#          Jochen Wersdorfer <jochen@wersdoerfer.de>
-#          Lars Buitinck
-#          Joel Nothman <joel.nothman@gmail.com>
-#          Karan Desai <karandesai281196@gmail.com>
-#          Noel Dawe <noel@dawe.me>
-#          Manoj Kumar <manojkumarsivaraj334@gmail.com>
-#          Michael Eickenberg <michael.eickenberg@gmail.com>
-#          Konstantin Shmelkov <konstantin.shmelkov@polytechnique.edu>
-#          Christian Lorentzen <lorentzen.ch@gmail.com>
-#          Ashutosh Hathidara <ashutoshhathidara98@gmail.com>
-#          Uttam kumar <bajiraouttamsinha@gmail.com>
-#          Sylvain Marie <sylvain.marie@se.com>
-#          Ohad Michel <ohadmich@gmail.com>
-#          Alejandro Martin Gil <almagil98@gmail.com>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
@@ -139,10 +122,10 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric", xp=None):
         multioutput = check_array(multioutput, ensure_2d=False)
         if n_outputs == 1:
             raise ValueError("Custom weights are useful only in multi-output cases.")
-        elif n_outputs != len(multioutput):
+        elif n_outputs != multioutput.shape[0]:
             raise ValueError(
-                "There must be equally many custom weights (%d) as outputs (%d)."
-                % (len(multioutput), n_outputs)
+                "There must be equally many custom weights "
+                f"({multioutput.shape[0]}) as outputs ({n_outputs})."
             )
     y_type = "continuous" if n_outputs == 1 else "continuous-multioutput"
 

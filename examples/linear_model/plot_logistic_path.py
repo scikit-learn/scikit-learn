@@ -25,7 +25,7 @@ full-path.
 
 """
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 # %%

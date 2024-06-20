@@ -1,5 +1,4 @@
-# Authors: Robert Layton <robertlayton@gmail.com>
-#           Corey Lynch <coreylynch9@gmail.com>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 from libc.math cimport exp, lgamma

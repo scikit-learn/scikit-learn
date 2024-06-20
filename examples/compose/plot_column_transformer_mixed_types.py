@@ -25,8 +25,7 @@ model.
 
 """
 
-# Author: Pedro Morales <part.morales@gmail.com>
-#
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 # %%

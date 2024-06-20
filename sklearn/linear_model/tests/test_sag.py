@@ -1,6 +1,4 @@
-# Authors: Danny Sullivan <dbsullivan23@gmail.com>
-#          Tom Dupre la Tour <tom.dupre-la-tour@m4x.org>
-#
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import math

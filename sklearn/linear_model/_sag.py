@@ -1,7 +1,6 @@
 """Solvers for Ridge and LogisticRegression using SAG algorithm"""
 
-# Authors: Tom Dupre la Tour <tom.dupre-la-tour@m4x.org>
-#
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings

@@ -22,8 +22,7 @@ The main theoretical result behind the efficiency of random projection is the
   and can even be taken to be an orthogonal projection.
 """
 
-# Authors: Olivier Grisel <olivier.grisel@ensta.org>,
-#          Arnaud Joly <a.joly@ulg.ac.be>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings

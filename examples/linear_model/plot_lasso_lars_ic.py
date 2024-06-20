@@ -24,8 +24,7 @@ the best model.
     <0712.0881>`
 """
 
-# Author: Alexandre Gramfort
-#         Guillaume Lemaitre
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 # %%

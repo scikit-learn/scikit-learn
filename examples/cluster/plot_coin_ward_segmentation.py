@@ -9,8 +9,7 @@ for each segmented region to be in one piece.
 
 """
 
-# Author : Vincent Michel, 2010
-#          Alexandre Gramfort, 2011
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 # %%

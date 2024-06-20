@@ -1,12 +1,6 @@
 """Metrics for pairwise distances and affinity of sets of samples."""
 
-# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#          Robert Layton <robertlayton@gmail.com>
-#          Andreas Mueller <amueller@ais.uni-bonn.de>
-#          Philippe Gervais <philippe.gervais@inria.fr>
-#          Lars Buitinck
-#          Joel Nothman <joel.nothman@gmail.com>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import itertools

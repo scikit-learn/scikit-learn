@@ -1,8 +1,6 @@
 """Multi-layer Perceptron"""
 
-# Authors: Issam H. Laradji <issam.laradji@gmail.com>
-#          Andreas Mueller
-#          Jiyuan Qian
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings

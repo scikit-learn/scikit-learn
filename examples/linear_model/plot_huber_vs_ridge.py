@@ -13,7 +13,7 @@ function approaches that of the ridge.
 
 """
 
-# Authors: Manoj Kumar mks542@nyu.edu
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt

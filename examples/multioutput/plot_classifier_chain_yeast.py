@@ -20,7 +20,7 @@ The :ref:`Jaccard similarity <jaccard_similarity_score>` score for chain tends t
 greater than that of the set independent base models.
 """
 
-# Author: Adam Kleczewski
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 # %%

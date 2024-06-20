@@ -8,7 +8,7 @@ hand-written digits, from 0-9.
 
 """
 
-# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 # Standard scientific Python imports

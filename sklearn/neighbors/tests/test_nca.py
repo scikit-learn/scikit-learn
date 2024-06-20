@@ -2,8 +2,7 @@
 Testing for Neighborhood Component Analysis module (sklearn.neighbors.nca)
 """
 
-# Authors: William de Vazelhes <wdevazelhes@gmail.com>
-#          John Chiotellis <ioannis.chiotellis@in.tum.de>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import re

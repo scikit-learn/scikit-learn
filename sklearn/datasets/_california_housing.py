@@ -19,7 +19,7 @@ Statistics and Probability Letters, 33 (1997) 291-297.
 
 """
 
-# Authors: Peter Prettenhofer
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import logging

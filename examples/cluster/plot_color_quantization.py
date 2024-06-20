@@ -19,10 +19,7 @@ randomly) is also shown.
 
 """
 
-# Authors: Robert Layton <robertlayton@gmail.com>
-#          Olivier Grisel <olivier.grisel@ensta.org>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 from time import time

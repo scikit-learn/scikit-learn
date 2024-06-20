@@ -3,8 +3,7 @@ Several basic tests for hierarchical clustering procedures
 
 """
 
-# Authors: Vincent Michel, 2010, Gael Varoquaux 2012,
-#          Matteo Visconti di Oleggio Castello 2014
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 import itertools
 import shutil

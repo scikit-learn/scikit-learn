@@ -68,7 +68,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh workflow run .github/workflows/cuda-gpu-ci.yml -f pr_id=${{steps.cpr.outputs.pull-request-number}}
+          gh workflow run .github/workflows/cuda-gpu-ci.yml -f commit_hash=`git rev-parse HEAD`
 
       - name: Check Pull Request
         if: steps.cpr.outputs.pull-request-number != ''
