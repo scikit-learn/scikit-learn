@@ -392,7 +392,7 @@ METAESTIMATORS: list = [
     },
     {
         "metaestimator": SelfTrainingClassifier,
-        "estimator_name": "base_estimator",
+        "estimator_name": "estimator",
         "estimator": "classifier",
         "X": X,
         "y": y,
