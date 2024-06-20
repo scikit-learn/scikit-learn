@@ -2,6 +2,7 @@
 
 import itertools
 import math
+import numbers
 from functools import wraps
 
 import numpy
@@ -274,32 +275,6 @@ def ensure_common_namespace_device(reference, *arrays):
         return [xp.asarray(a, device=device_) for a in arrays]
     else:
         return arrays
-
-
-def convert_attributes(estimator, ref_array):
-    ref_xp, ref_is_array_api, ref_device = get_namespace_and_device(ref_array)
-    if not ref_is_array_api:
-        return
-    converted_attributes = {}
-
-    for name, value in vars(estimator):
-        xp, is_array_api, device_ = get_namespace_and_device(value)
-        if not is_array_api:
-            continue
-        if xp == ref_xp and device_ == ref_device:
-            continue
-        try:
-            converted_attributes[name] = ref_xp.asarray(value, device=ref_device)
-            continue
-        except Exception:
-            pass
-            # direct conversion to a different library may fail in which
-            # case we try converting to numpy first
-        value = _convert_to_numpy(value, xp)
-        converted_attributes[name] = ref_xp.asarray(value, device=ref_device)
-
-    for name, new_value in converted_attributes:
-        setattr(estimator, name, new_value)
 
 
 class _ArrayAPIWrapper:
@@ -846,6 +821,74 @@ def _estimator_with_converted_arrays(estimator, converter):
             attribute = converter(attribute)
         setattr(new_estimator, key, attribute)
     return new_estimator
+
+
+def make_converter(X):
+    """Helper to implement the 'y follows X' rule.
+
+    Returns a function that converts an array to the namespace and device of X.
+
+    When X is not an array api array, the converter does nothing.
+    """
+    xp, is_array_api = get_namespace(X)
+    if not is_array_api:
+
+        def convert(data):
+            return data
+
+        return convert
+    else:
+        device_ = device(X)
+
+        def convert(data):
+            if data is None or isinstance(data, (numbers.Number, str)):
+                return data
+            data_xp, data_is_array_api, data_device = get_namespace_and_device(data)
+            if data_xp == xp and data_device == device_:
+                return data
+            if not data_is_array_api:
+                return xp.asarray(data, device=device_)
+            try:
+                return xp.asarray(data, device=device_)
+            except Exception:
+                # direct conversion to a different library may fail in which
+                # case we try converting to numpy first
+                data = _convert_to_numpy(data, data_xp)
+                return xp.asarray(data, device=device_)
+
+        return convert
+
+
+def convert_attributes(estimator, ref_array):
+    return _estimator_with_converted_arrays(estimator, make_converter(ref_array))
+
+
+def check_fitted_attribute(estimator, method_name, attr_name, X):
+    attr = getattr(estimator, attr_name)
+    X_xp, X_is_array_api, X_device = get_namespace_and_device(X)
+    a_xp, a_is_array_api, a_device = get_namespace_and_device(attr)
+    if not X_is_array_api and not a_is_array_api:
+        return
+    if X_xp == a_xp and X_device == a_device:
+        return
+    if X_xp != a_xp:
+        msg = (
+            f"Array api namespaces used during fit ({a_xp.__name__}) "
+            f"and {method_name} ({X_xp.__name__}) differ."
+        )
+    else:
+        msg = (
+            f"Devices used during fit ({a_device}) "
+            f"and {method_name} ({X_device}) differ."
+        )
+    raise ValueError(
+        f"Inputs passed to {estimator.__class__.__name__}.{method_name}() "
+        "must use the same array library and the same device as those passed to fit(). "
+        f"{msg} "
+        "You can convert the estimator to the same library and device as X with: "
+        "'from sklearn.utils._array_api import convert_attributes; "
+        "converted_estimator = convert_attributes(estimator, X)'"
+    )
 
 
 def _atol_for_type(dtype):

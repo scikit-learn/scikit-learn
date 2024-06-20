@@ -36,6 +36,7 @@ from ..utils import check_array, check_random_state
 from ..utils._array_api import (
     _asarray_with_order,
     _average,
+    check_fitted_attribute,
     get_namespace,
     get_namespace_and_device,
     indexing_dtype,
@@ -281,6 +282,7 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
 
     def _decision_function(self, X):
         check_is_fitted(self)
+        check_fitted_attribute(self, "predict", "coef_", X)
 
         X = self._validate_data(X, accept_sparse=["csr", "csc", "coo"], reset=False)
         coef_ = self.coef_
