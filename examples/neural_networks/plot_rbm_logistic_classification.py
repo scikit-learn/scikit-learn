@@ -11,7 +11,7 @@ feature extraction.
 
 """
 
-# Authors: Yann N. Dauphin, Vlad Niculae, Gabriel Synnaeve
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 # %%

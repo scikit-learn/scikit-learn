@@ -2,8 +2,7 @@
 Testing for Isolation Forest algorithm (sklearn.ensemble.iforest).
 """
 
-# Authors: Nicolas Goix <nicolas.goix@telecom-paristech.fr>
-#          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings

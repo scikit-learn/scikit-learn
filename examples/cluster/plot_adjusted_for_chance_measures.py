@@ -15,8 +15,7 @@ experiments:
   as the "ground truth labels".
 """
 
-# Author: Olivier Grisel <olivier.grisel@ensta.org>
-#         Arturo Amor <david-arturo.amor-quiroz@inria.fr>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 # %%

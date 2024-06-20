@@ -1,6 +1,4 @@
-# Authors: Manoj Kumar <manojkumarsivaraj334@gmail.com>
-#          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
-#          Joel Nothman <joel.nothman@gmail.com>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings

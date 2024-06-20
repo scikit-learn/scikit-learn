@@ -1762,6 +1762,10 @@ def check_array_api_metric(
             metric_kwargs["sample_weight"], device=device
         )
 
+    multioutput = metric_kwargs.get("multioutput")
+    if isinstance(multioutput, np.ndarray):
+        metric_kwargs["multioutput"] = xp.asarray(multioutput, device=device)
+
     with config_context(array_api_dispatch=True):
         metric_xp = metric(a_xp, b_xp, **metric_kwargs)
 
@@ -1898,8 +1902,8 @@ def check_array_api_regression_metric(metric, array_namespace, device, dtype_nam
 def check_array_api_regression_metric_multioutput(
     metric, array_namespace, device, dtype_name
 ):
-    y_true_np = np.array([[1, 3], [1, 2]], dtype=dtype_name)
-    y_pred_np = np.array([[1, 4], [1, 1]], dtype=dtype_name)
+    y_true_np = np.array([[1, 3, 2], [1, 2, 2]], dtype=dtype_name)
+    y_pred_np = np.array([[1, 4, 4], [1, 1, 1]], dtype=dtype_name)
 
     check_array_api_metric(
         metric,
@@ -1923,12 +1927,25 @@ def check_array_api_regression_metric_multioutput(
         sample_weight=sample_weight,
     )
 
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=y_true_np,
+        b_np=y_pred_np,
+        multioutput=np.array([0.1, 0.3, 0.7], dtype=dtype_name),
+    )
 
-def check_array_api_multioutput_regression_metric(
-    metric, array_namespace, device, dtype_name
-):
-    metric = partial(metric, multioutput="raw_values")
-    check_array_api_regression_metric(metric, array_namespace, device, dtype_name)
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=y_true_np,
+        b_np=y_pred_np,
+        multioutput="raw_values",
+    )
 
 
 def check_array_api_metric_pairwise(metric, array_namespace, device, dtype_name):
@@ -1980,11 +1997,11 @@ array_api_metric_checkers = {
     cosine_similarity: [check_array_api_metric_pairwise],
     mean_absolute_error: [
         check_array_api_regression_metric,
-        check_array_api_multioutput_regression_metric,
+        check_array_api_regression_metric_multioutput,
     ],
     mean_squared_error: [
         check_array_api_regression_metric,
-        check_array_api_multioutput_regression_metric,
+        check_array_api_regression_metric_multioutput,
     ],
     d2_tweedie_score: [
         check_array_api_regression_metric,

@@ -25,8 +25,7 @@ We will illustrate these differences with an example and we will also focus on
 tuning the kernel hyperparameters.
 """
 
-# Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-#          Guillaume Lemaitre <g.lemaitre58@gmail.com>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 # %%

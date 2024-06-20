@@ -13,10 +13,7 @@ http://www.cs.ucl.ac.uk/staff/d.barber/brml,
 Algorithm 21.1
 """
 
-# Author: Christian Osendorfer <osendorf@gmail.com>
-#         Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Denis A. Engemann <denis-alexander.engemann@inria.fr>
-
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
