@@ -463,7 +463,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
                 lambda x: np.argmax(np.bincount(x, weights=self._weights_not_none)),
                 axis=-1,
                 arr=predictions,
-            )
+            ).T
 
         if isinstance(self.le_, list):
             # Handle the multilabel-indicator case
@@ -482,6 +482,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         """Collect results from clf.predict_proba calls.
 
         Output is array-like of shape (n_estimators, n_classes, n_samples)
+        or list of arrays of these shapes.
 
         When `y` type is `"multilabel-indicator"``, predicted probabilities
         can be either a `ndarray` of shape `(n_samples, n_class)` or for some estimators
@@ -489,49 +490,26 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         since there is only two classes per output.
         """
         if isinstance(self.classes_, list):
-            if collapse_classes:
-                probas = np.zeros(
-                    (len(self.estimators_), len(self.classes_), X.shape[0])
-                )
-                for est_idx, clf in enumerate(self.estimators_):
-                    clf_predict_probas = clf.predict_proba(X)
-                    for idx in range(len(self.classes_)):
-                        if isinstance(clf_predict_probas, list):
-                            # `clf_predict_probas` is here a list of `n_targets` 2D
-                            # ndarrays of `n_classes` columns. The k-th column contains
-                            # the probabilities of the samples belonging the k-th class.
-                            #
-                            # Since those probabilities must sum to one for each sample,
-                            # we can work with probabilities of `n_classes - 1` classes.
-                            # Hence we drop the first column.
+            probas = [
+                np.zeros((len(self.estimators_), len(self.classes_[idx]), X.shape[0]))
+                for idx in range(len(self.classes_))
+            ]
+            for est_idx, clf in enumerate(self.estimators_):
+                clf_predict_probas = clf.predict_proba(X)
+                for idx in range(len(self.classes_)):
+                    if isinstance(clf_predict_probas, list):
+                        # `clf_predict_probas` is here a list of `n_targets` 2D
+                        # ndarrays of `n_classes` columns. The k-th column contains
+                        # the probabilities of the samples belonging the k-th class.
+                        #
+                        # Since those probabilities must sum to one for each sample,
+                        # we can work with probabilities of `n_classes - 1` classes.
+                        # Hence we drop the first column.
 
-                            probas[est_idx, idx, ...] = clf_predict_probas[idx][:, 1:].T
-                        else:
-                            # `clf_predict_probas` is a 2D ndarray
-                            probas[est_idx, idx, ...] = clf_predict_probas[:, idx]
-            else:
-                probas = [
-                    np.zeros(
-                        (len(self.estimators_), len(self.classes_[idx]), X.shape[0])
-                    )
-                    for idx in range(len(self.classes_))
-                ]
-                for est_idx, clf in enumerate(self.estimators_):
-                    clf_predict_probas = clf.predict_proba(X)
-                    for idx in range(len(self.classes_)):
-                        if isinstance(clf_predict_probas, list):
-                            # `clf_predict_probas` is here a list of `n_targets` 2D
-                            # ndarrays of `n_classes` columns. The k-th column contains
-                            # the probabilities of the samples belonging the k-th class.
-                            #
-                            # Since those probabilities must sum to one for each sample,
-                            # we can work with probabilities of `n_classes - 1` classes.
-                            # Hence we drop the first column.
-
-                            probas[idx][est_idx, ...] = clf_predict_probas[idx].T
-                        else:
-                            # `clf_predict_probas` is a 2D ndarray
-                            probas[idx][est_idx, ...] = clf_predict_probas[:, idx]
+                        probas[idx][est_idx, ...] = clf_predict_probas[idx].T
+                    else:
+                        # `clf_predict_probas` is a 2D ndarray
+                        probas[idx][est_idx, ...] = clf_predict_probas[:, idx]
             return probas
         else:
             return np.asarray([clf.predict_proba(X) for clf in self.estimators_])
@@ -565,7 +543,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
             # multi-label indicator case, where we will output a list of
             # n_output ndarrays of shape (n_samples, n_classes)
             avg = []
-            for output_proba in self._collect_probas(X, collapse_classes=False):
+            for output_proba in self._collect_probas(X):
                 avg.append(
                     np.average(output_proba, axis=0, weights=self._weights_not_none).T
                 )
@@ -609,8 +587,18 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
             if isinstance(self.classes_, list):
 
                 # collect predicted probabilities per estimator
-                # (n_estimators, n_classes, n_samples)
                 predictions = self._collect_probas(X)
+
+                # convert list of n_outputs of shape
+                # (n_estimators, n_classes, n_samples)
+                # to (n_estimators, n_classes, n_samples) by only keeping the
+                # second idx per class
+                probas = np.zeros(
+                    (len(self.estimators_), len(self.classes_), X.shape[0])
+                )
+                for idx, preds in enumerate(predictions):
+                    probas[:, idx, :] = preds[:, 1:, :]
+                predictions = probas
 
                 if self.flatten_transform:
                     predictions = np.hstack(predictions).T

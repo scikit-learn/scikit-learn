@@ -819,8 +819,12 @@ def test_voting_classifier_transform_with_different_target_types(
     if voting == "soft":
         # XXX: should we test this?
         # i.e. should not have any collinear classes and thus nothing should sum to 1
-        # assert not any(np.isclose(X_trans.squeeze().sum(axis=1), 1.0)),
-        # X_trans.sum(axis=1)
+        # print(X_trans.shape)
+        # # print(X_trans[:, :, :, 0])
+        # print(X_trans[:, :2, :])
+        # print(X_trans.squeeze().sum(axis=1))
+        # assert not any(np.isclose(X_trans.squeeze().sum(axis=1), 1.0)),\
+        #     X_trans.squeeze().sum(axis=1)
         if flatten_transform:
             expected_shape = (
                 (X_test.shape[0], len(estimators) * n_outputs)
@@ -860,10 +864,7 @@ def test_voting_classifier_transform_with_different_target_types(
 )
 @pytest.mark.parametrize(
     "voting",
-    [
-        "soft",
-        # "hard"
-    ],
+    ["soft", "hard"],
 )
 @pytest.mark.parametrize("type_of_target", ["normal", "multilabel-indicator"])
 def test_voting_classifier_multilabel_predict(estimator, voting, type_of_target):
