@@ -687,7 +687,6 @@ cdef inline int node_split_random(
     cdef intp_t n_left, n_right
     cdef bint missing_go_to_left
     cdef intp_t p
-    # cdef bint separate_nan_and_non_nans = 0
 
     cdef intp_t[::1] samples = splitter.samples
     cdef intp_t[::1] features = splitter.features
