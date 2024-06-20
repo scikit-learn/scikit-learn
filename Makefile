@@ -13,3 +13,8 @@ dev: dev-meson
 
 dev-meson:
 	pip install --verbose --no-build-isolation --editable . --check-build-dependencies --config-settings editable-verbose=true
+
+clean-meson:
+	pip uninstall -y scikit-learn
+
+clean: clean-meson
