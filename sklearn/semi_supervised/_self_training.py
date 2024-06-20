@@ -63,6 +63,9 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         which will be stored in the `estimator_` attribute.
 
     base_estimator : estimator object
+        An estimator object implementing `fit` and `predict_proba`.
+        Invoking the `fit` method will fit a clone of the passed estimator,
+        which will be stored in the `estimator_` attribute.
 
         .. deprecated:: 1.6
             `base_estimator` was deprecated in 1.6 and will be removed in 1.8.
