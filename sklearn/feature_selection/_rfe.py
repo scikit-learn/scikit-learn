@@ -395,7 +395,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             Parameters to route to the ``predict`` method of the
             underlying estimator.
 
-            .. versionchanged:: 1.6
+            .. versionadded:: 1.6
                 See :ref:`Metadata Routing User Guide <metadata_routing>`
                 for more details.
 
