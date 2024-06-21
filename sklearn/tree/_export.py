@@ -12,7 +12,6 @@ import numpy as np
 
 from ..base import is_classifier
 from ..utils._param_validation import HasMethods, Interval, StrOptions, validate_params
-from ..utils.fixes import _IS_32BIT
 from ..utils.validation import check_array, check_is_fitted
 from . import DecisionTreeClassifier, DecisionTreeRegressor, _criterion, _tree
 from ._reingold_tilford import Tree, buchheim
@@ -260,12 +259,12 @@ class _BaseTreeExporter:
             self.colors["rgb"] = _color_brew(tree.n_classes[0])
             if tree.n_outputs != 1:
                 # Find max and min impurities for multi-output
-                # Avoid what looks like an issue with SIMD on non memory
-                # aligned arrays on 32bit OS, see
+                # The next line uses -max(impurity) instead of min(-impurity)
+                # and -min(impurity) instead of max(-impurity) on purpose, to
+                # avoid what looks like an issue with SIMD on non memory
+                # aligned arrays on 32bit OS, for more details see
                 # https://github.com/scikit-learn/scikit-learn/issues/27506 for
-                # more details
-                minus_impurity = -1.0 * tree.impurity if _IS_32BIT else -tree.impurity
-                self.colors["bounds"] = (np.min(minus_impurity), np.max(minus_impurity))
+                self.colors["bounds"] = (-np.max(tree.impurity), -np.min(tree.impurity))
             elif tree.n_classes[0] == 1 and len(np.unique(tree.value)) != 1:
                 # Find max and min values in leaf nodes for regression
                 self.colors["bounds"] = (np.min(tree.value), np.max(tree.value))
