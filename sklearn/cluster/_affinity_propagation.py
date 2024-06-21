@@ -1,9 +1,7 @@
 """Affinity Propagation clustering algorithm."""
 
-# Author: Alexandre Gramfort alexandre.gramfort@inria.fr
-#        Gael Varoquaux gael.varoquaux@normalesup.org
-
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Integral, Real
@@ -504,13 +502,10 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             Returns the instance itself.
         """
         if self.affinity == "precomputed":
-            accept_sparse = False
-        else:
-            accept_sparse = "csr"
-        X = self._validate_data(X, accept_sparse=accept_sparse)
-        if self.affinity == "precomputed":
-            self.affinity_matrix_ = X.copy() if self.copy else X
+            X = self._validate_data(X, copy=self.copy, force_writeable=True)
+            self.affinity_matrix_ = X
         else:  # self.affinity == "euclidean"
+            X = self._validate_data(X, accept_sparse="csr")
             self.affinity_matrix_ = -euclidean_distances(X, squared=True)
 
         if self.affinity_matrix_.shape[0] != self.affinity_matrix_.shape[1]:
