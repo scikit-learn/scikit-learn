@@ -534,6 +534,7 @@ def test_pca_validates_inverse_transform():
     with pytest.raises(ValueError, match=msg):
         pca.inverse_transform(range(10))
 
+
 @pytest.mark.parametrize(
     "data", [np.array([[0, 1, 0], [1, 0, 0]]), np.array([[0, 1, 0], [1, 0, 0]]).T]
 )
