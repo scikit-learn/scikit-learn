@@ -287,8 +287,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         if _routing_enabled():
             routed_params = process_routing(self, "fit", **params)
         else:
-            routed_params = Bunch()
-            routed_params.estimator = Bunch(fit=params)
+            routed_params = Bunch(estimator=Bunch(fit={}))
 
         self.transduction_ = np.copy(y)
         self.labeled_iter_ = np.full_like(y, -1)
@@ -385,8 +384,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             # metadata routing is enabled.
             routed_params = process_routing(self, "predict", **params)
         else:
-            routed_params = Bunch()
-            routed_params.estimator = Bunch(predict=params)
+            routed_params = Bunch(estimator=Bunch(predict={}))
 
         X = self._validate_data(
             X,
@@ -427,8 +425,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             # metadata routing is enabled.
             routed_params = process_routing(self, "predict_proba", **params)
         else:
-            routed_params = Bunch()
-            routed_params.estimator = Bunch(predict_proba=params)
+            routed_params = Bunch(estimator=Bunch(predict_proba={}))
 
         X = self._validate_data(
             X,
@@ -469,8 +466,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             # metadata routing is enabled.
             routed_params = process_routing(self, "decision_function", **params)
         else:
-            routed_params = Bunch()
-            routed_params.estimator = Bunch(decision_function=params)
+            routed_params = Bunch(estimator=Bunch(decision_function={}))
 
         X = self._validate_data(
             X,
@@ -513,8 +509,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             # metadata routing is enabled.
             routed_params = process_routing(self, "predict_log_proba", **params)
         else:
-            routed_params = Bunch()
-            routed_params.estimator = Bunch(predict_log_proba=params)
+            routed_params = Bunch(estimator=Bunch(predict_log_proba={}))
 
         X = self._validate_data(
             X,
@@ -560,8 +555,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             # metadata routing is enabled.
             routed_params = process_routing(self, "score", **params)
         else:
-            routed_params = Bunch()
-            routed_params.estimator = Bunch(score=params)
+            routed_params = Bunch(estimator=Bunch(score={}))
 
         X = self._validate_data(
             X,
