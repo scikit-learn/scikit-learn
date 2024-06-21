@@ -2,8 +2,8 @@ name: CUDA GPU
 on:
   workflow_dispatch:
     inputs:
-      pr_id:
-        description: Test the contents of this Pull Request
+      commit_hash:
+        description: Commit hash to test
         required: true
 
 permissions: read-all
@@ -19,12 +19,13 @@ jobs:
           # XXX: The 3.12.4 release of Python on GitHub Actions is corrupted:
           # https://github.com/actions/setup-python/issues/886
           python-version: '3.12.3'
-      - name: Checkout main repository
-        uses: actions/checkout@v4
-      - run: |
-          git fetch origin +refs/pull/${{ inputs.pr_id }}/head:pr-${{ inputs.pr_id }}
-          git checkout pr-${{ inputs.pr_id }}
-          echo "Checked out commit $(git rev-parse HEAD)"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit_hash }}
+      - name: PRs associated with commit
+        run: |
+          echo "This commit belongs to PR(s):"
+          git ls-remote origin 'pull/*/head' | grep -F -f <(git rev-parse HEAD) | awk -F'/' '{print $3}'
       - name: Cache conda environment
         id: cache-conda
         uses: actions/cache@v4
