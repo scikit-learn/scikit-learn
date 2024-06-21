@@ -777,7 +777,7 @@ class RFECV(RFE):
         # RFECV.estimator is not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y, **params):
+    def fit(self, X, y, groups=None, **params):
         """Fit the RFE model and automatically tune the number of selected features.
 
         Parameters
@@ -790,12 +790,16 @@ class RFECV(RFE):
             Target values (integers for classification, real numbers for
             regression).
 
+        groups : array-like of shape (n_samples,) or None, default=None
+            Group labels for the samples used while splitting the dataset into
+            train/test set. Only used in conjunction with a "Group" :term:`cv`
+            instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
+
+            .. versionadded:: 0.20
+
         **params : dict of str -> object
             Parameters passed to the ``fit`` method of the estimator,
             the scorer, and the CV splitter.
-
-            If ``groups`` is passed it will represent group labels for the
-            samples used while splitting the dataset into train/test set.
 
             ..versionadded:: 1.6
                 See :ref:`Metadata Routing User Guide <metadata_routing>`
@@ -817,11 +821,12 @@ class RFECV(RFE):
         )
 
         if _routing_enabled():
+            params.update({"groups": groups})
             routed_params = process_routing(self, "fit", **params)
         else:
             routed_params = Bunch(
                 estimator=Bunch(fit={}),
-                splitter=Bunch(split={"groups": params.get("groups")}),
+                splitter=Bunch(split={"groups": groups}),
                 scorer=Bunch(score={}),
             )
 
