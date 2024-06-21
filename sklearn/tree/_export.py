@@ -2,15 +2,8 @@
 This module defines export functions for decision trees.
 """
 
-# Authors: Gilles Louppe <g.louppe@gmail.com>
-#          Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#          Brian Holt <bdholt1@gmail.com>
-#          Noel Dawe <noel@dawe.me>
-#          Satrajit Gosh <satrajit.ghosh@gmail.com>
-#          Trevor Stephens <trev.stephens@gmail.com>
-#          Li Li <aiki.nogard@gmail.com>
-#          Giuseppe Vettigli <vettigli@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 from collections.abc import Iterable
 from io import StringIO
 from numbers import Integral
