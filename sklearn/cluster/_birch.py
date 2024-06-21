@@ -523,6 +523,9 @@ class Birch(
         self
             Fitted estimator.
         """
+        return self._fit(X, partial=False)
+
+    def _fit(self, X, partial):
         if self.copy != "deprecated":
             warnings.warn(
                 "`copy` was deprecated in 1.6 and will be removed in 1.8 since it "
@@ -530,9 +533,7 @@ class Birch(
                 "value to avoid this warning.",
                 FutureWarning,
             )
-        return self._fit(X, partial=False)
 
-    def _fit(self, X, partial):
         has_root = getattr(self, "root_", None)
         first_call = not (partial and has_root)
 
