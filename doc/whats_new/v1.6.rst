@@ -77,6 +77,10 @@ more details.
   params to the underlying regressor.
   :pr:`29136` by :user:`Omar Salman <OmarManzoor>`.
 
+- |Feature| :func:`model_selection.validation_curve` now supports metadata routing for
+  the `fit` method of its estimator and for its underlying CV splitter and scorer.
+  :pr:`29329` by :user:`Stefanie Senger <StefanieSenger>`.
+
 Dropping official support for PyPy
 ----------------------------------
 
