@@ -56,6 +56,13 @@ Changelog
   grids that have estimators as parameter values.
   :pr:`29179` by :user:`Marco Gorelli<MarcoGorelli>`.
 
+:mod:`sklearn.tree`
+...................
+
+- |Fix| Fix an issue in :func:`tree.export_graphviz` and :func:`tree.plot_tree`
+  that could potentially result in exception or wrong results on 32bit OSes.
+  :pr:`` by :user:`Loïc Estève<lesteve>`.
+
 :mod:`sklearn.utils`
 ....................
 
