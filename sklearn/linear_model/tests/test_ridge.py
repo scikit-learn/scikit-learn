@@ -1,4 +1,5 @@
 import warnings
+from functools import partial
 from itertools import product
 
 import numpy as np
@@ -1216,24 +1217,32 @@ def _test_tolerance(sparse_container):
     assert score >= score2
 
 
-def check_array_api_attributes(name, estimator, array_namespace, device, dtype_name):
+def check_array_api_attributes(
+    name, estimator, array_namespace, device, dtype_name, data_shape="tall"
+):
     xp = _array_api_for_tests(array_namespace, device)
 
-    X_iris_np = X_iris.astype(dtype_name)
-    y_iris_np = y_iris.astype(dtype_name)
+    if data_shape == "tall":
+        X_np = X_iris.astype(dtype_name)
+        y_np = y_iris.astype(dtype_name)
+    else:
+        rng = np.random.RandomState(0)
+        X_np = rng.randn(10, 100).astype(dtype_name)
+        w = rng.randn(100).astype(dtype_name)
+        y_np = X_np @ w + 0.01 * rng.randn(10).astype(dtype_name)
 
-    X_iris_xp = xp.asarray(X_iris_np, device=device)
-    y_iris_xp = xp.asarray(y_iris_np, device=device)
+    X_xp = xp.asarray(X_np, device=device)
+    y_xp = xp.asarray(y_np, device=device)
 
-    estimator.fit(X_iris_np, y_iris_np)
+    estimator.fit(X_np, y_np)
     coef_np = estimator.coef_
     intercept_np = estimator.intercept_
 
     with config_context(array_api_dispatch=True):
-        estimator_xp = clone(estimator).fit(X_iris_xp, y_iris_xp)
+        estimator_xp = clone(estimator).fit(X_xp, y_xp)
         coef_xp = estimator_xp.coef_
-        assert coef_xp.shape == (4,)
-        assert coef_xp.dtype == X_iris_xp.dtype
+        assert coef_xp.shape == (X_xp.shape[1],)
+        assert coef_xp.dtype == X_xp.dtype
 
         assert_allclose(
             _convert_to_numpy(coef_xp, xp=xp),
@@ -1242,7 +1251,7 @@ def check_array_api_attributes(name, estimator, array_namespace, device, dtype_n
         )
         intercept_xp = estimator_xp.intercept_
         assert intercept_xp.shape == ()
-        assert intercept_xp.dtype == X_iris_xp.dtype
+        assert intercept_xp.dtype == X_xp.dtype
 
         assert_allclose(
             _convert_to_numpy(intercept_xp, xp=xp),
@@ -1256,7 +1265,11 @@ def check_array_api_attributes(name, estimator, array_namespace, device, dtype_n
 )
 @pytest.mark.parametrize(
     "check",
-    [check_array_api_input_and_values, check_array_api_attributes],
+    [
+        check_array_api_input_and_values,
+        partial(check_array_api_attributes, data_shape="tall"),
+        partial(check_array_api_attributes, data_shape="wide"),
+    ],
     ids=_get_check_estimator_ids,
 )
 @pytest.mark.parametrize(
