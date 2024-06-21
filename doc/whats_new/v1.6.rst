@@ -163,6 +163,15 @@ Changelog
   when duplicate values in the training data lead to inaccurate outlier detection.
   :pr:`28773` by :user:`Henrique Caroço <HenriqueProj>`.
 
+:mod:`sklearn.tree`
+...................
+
+- |Fix| :func:`tree.plot_tree` now shows the correct proportion of samples instead of
+  absolute number of samples. This corresponds to the
+  ``tree_.value`` attribute for DecisionTreeClassifier, DecisionTreeRegressor,
+  ExtraTreeClassifier, and ExtraTreeRegressor.
+  :pr:`28773` by :user:`Adam Li <adam2392>`.
+
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:
 

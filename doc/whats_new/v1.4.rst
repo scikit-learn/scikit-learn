@@ -937,6 +937,13 @@ Changelog
   :pr:`13649` by :user:`Samuel Ronsin <samronsin>`, initiated by
   :user:`Patrick O'Reilly <pat-oreilly>`.
 
+- |API| The `tree_.value` attribute in :class:`tree.DecisionTreeClassifier`,
+  :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeClassifier` and
+  :class:`tree.ExtraTreeRegressor` changed from an weighted absolute count
+  of number of samples to a weighted fraction of the total number of samples.
+  :pr:`13649` by :user:`Samuel Ronsin <samronsin>`, initiated by
+  :user:`Patrick O'Reilly <pat-oreilly>`.
+
 :mod:`sklearn.utils`
 ....................
 
