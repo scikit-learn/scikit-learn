@@ -28,6 +28,7 @@ from ..utils import (
 )
 from ..utils._array_api import (
     _average,
+    _is_numpy_namespace,
     _union1d,
     get_namespace,
     get_namespace_and_device,
@@ -85,6 +86,7 @@ def _check_targets(y_true, y_pred):
 
     y_pred : array or indicator matrix
     """
+    xp, _ = get_namespace(y_true, y_pred)
     check_consistent_length(y_true, y_pred)
     type_true = type_of_target(y_true, input_name="y_true")
     type_pred = type_of_target(y_pred, input_name="y_pred")
@@ -130,8 +132,9 @@ def _check_targets(y_true, y_pred):
                 y_type = "multiclass"
 
     if y_type.startswith("multilabel"):
-        y_true = csr_matrix(y_true)
-        y_pred = csr_matrix(y_pred)
+        if _is_numpy_namespace(xp):
+            y_true = csr_matrix(y_true)
+            y_pred = csr_matrix(y_pred)
         y_type = "multilabel-indicator"
 
     return y_type, y_true, y_pred
@@ -211,7 +214,12 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
     if y_type.startswith("multilabel"):
-        differing_labels = count_nonzero(y_true - y_pred, axis=1)
+        if _is_numpy_namespace(xp):
+            differing_labels = count_nonzero(y_true - y_pred, axis=1)
+        else:
+            differing_labels = xp.sum(
+                xp.asarray(y_true - y_pred, dtype=xp.bool), axis=1
+            )
         score = xp.asarray(differing_labels == 0, device=device)
     else:
         score = y_true == y_pred
