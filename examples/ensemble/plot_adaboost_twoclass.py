@@ -17,8 +17,7 @@ with a decision score above some value.
 
 """
 
-# Author: Noel Dawe <noel.dawe@gmail.com>
-#
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt

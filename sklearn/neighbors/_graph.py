@@ -1,8 +1,6 @@
 """Nearest Neighbors graph functions"""
 
-# Author: Jake Vanderplas <vanderplas@astro.washington.edu>
-#         Tom Dupre la Tour
-#
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 import itertools
 

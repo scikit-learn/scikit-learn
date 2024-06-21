@@ -13,7 +13,7 @@ The plots represent the distribution of the prediction latency as a boxplot.
 
 """
 
-# Authors: Eustache Diemert <eustache@diemert.fr>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import gc

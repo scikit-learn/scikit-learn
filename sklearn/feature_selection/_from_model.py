@@ -1,4 +1,4 @@
-# Authors: Gilles Louppe, Mathieu Blondel, Maheshakya Wijewardena
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 from copy import deepcopy

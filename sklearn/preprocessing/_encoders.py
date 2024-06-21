@@ -1,5 +1,4 @@
-# Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
-#          Joris Van den Bossche <jorisvandenbossche@gmail.com>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import numbers

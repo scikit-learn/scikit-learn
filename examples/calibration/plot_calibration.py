@@ -23,11 +23,7 @@ Brier score.
 
 """
 
-# Authors:
-# Mathieu Blondel <mathieu@mblondel.org>
-# Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
-# Balazs Kegl <balazs.kegl@gmail.com>
-# Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 # %%

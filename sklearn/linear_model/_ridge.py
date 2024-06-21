@@ -2,10 +2,7 @@
 Ridge regression
 """
 
-# Author: Mathieu Blondel <mathieu@mblondel.org>
-#         Reuben Fletcher-Costin <reuben.fletchercostin@gmail.com>
-#         Fabian Pedregosa <fabian@fseoane.net>
-#         Michael Eickenberg <michael.eickenberg@nsup.org>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 
@@ -1244,6 +1241,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
             y,
             accept_sparse=_accept_sparse,
             dtype=[xp.float64, xp.float32],
+            force_writeable=True,
             multi_output=True,
             y_numeric=True,
         )
@@ -1293,6 +1291,7 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
             accept_sparse=accept_sparse,
             multi_output=True,
             y_numeric=False,
+            force_writeable=True,
         )
 
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
