@@ -269,6 +269,7 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False, xp=None)
         # writing.
         K_flat = xp.reshape(K, (-1,))
         linalg_solve = xp.linalg.solve
+
     if one_alpha:
         # Only one penalty, we can solve multi-target problems in one time.
         K_flat[:: n_samples + 1] += alpha[0]
@@ -300,7 +301,6 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False, xp=None)
     else:
         # One penalty per target. We need to solve each target separately.
         dual_coefs = xp.empty([n_targets, n_samples], dtype=K.dtype, device=device(K))
-
         for dual_coef, target, current_alpha in zip(dual_coefs, y.T, alpha):
             K_flat[:: n_samples + 1] += current_alpha
             dual_coef[:] = _ravel(linalg_solve(K, target))
