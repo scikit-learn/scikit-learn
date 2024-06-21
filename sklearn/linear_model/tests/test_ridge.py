@@ -1218,7 +1218,13 @@ def _test_tolerance(sparse_container):
 
 
 def check_array_api_attributes(
-    name, estimator, array_namespace, device, dtype_name, data_shape="tall"
+    name,
+    estimator,
+    array_namespace,
+    device,
+    dtype_name,
+    data_shape="tall",
+    multi_output=False,
 ):
     xp = _array_api_for_tests(array_namespace, device)
 
@@ -1231,6 +1237,13 @@ def check_array_api_attributes(
         w = rng.randn(100).astype(dtype_name)
         y_np = X_np @ w + 0.01 * rng.randn(10).astype(dtype_name)
 
+    if multi_output:
+        y_np = np.column_stack([y_np, y_np])
+
+        # Set different alphas for each target to increase test coverage.
+        estimator = clone(estimator)
+        estimator.set_params(alpha=[1.0, 2.0])
+
     X_xp = xp.asarray(X_np, device=device)
     y_xp = xp.asarray(y_np, device=device)
 
@@ -1241,7 +1254,10 @@ def check_array_api_attributes(
     with config_context(array_api_dispatch=True):
         estimator_xp = clone(estimator).fit(X_xp, y_xp)
         coef_xp = estimator_xp.coef_
-        assert coef_xp.shape == (X_xp.shape[1],)
+        if multi_output:
+            assert coef_xp.shape == (2, X_xp.shape[1])
+        else:
+            assert coef_xp.shape == (X_xp.shape[1],)
         assert coef_xp.dtype == X_xp.dtype
 
         assert_allclose(
@@ -1250,7 +1266,10 @@ def check_array_api_attributes(
             atol=_atol_for_type(dtype_name),
         )
         intercept_xp = estimator_xp.intercept_
-        assert intercept_xp.shape == ()
+        if multi_output:
+            assert intercept_xp.shape == (2,)
+        else:
+            assert intercept_xp.shape == ()
         assert intercept_xp.dtype == X_xp.dtype
 
         assert_allclose(
@@ -1268,7 +1287,9 @@ def check_array_api_attributes(
     [
         check_array_api_input_and_values,
         partial(check_array_api_attributes, data_shape="tall"),
+        partial(check_array_api_attributes, data_shape="tall", multi_output=True),
         partial(check_array_api_attributes, data_shape="wide"),
+        partial(check_array_api_attributes, data_shape="wide", multi_output=True),
     ],
     ids=_get_check_estimator_ids,
 )

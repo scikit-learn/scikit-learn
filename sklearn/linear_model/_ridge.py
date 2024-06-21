@@ -728,16 +728,8 @@ def _ridge_regression(
             # we implement sample_weight via a simple rescaling.
             X, y, sample_weight_sqrt = _rescale_data(X, y, sample_weight)
 
-    # Some callers of this method might pass alpha as single
-    # element array which already has been validated.
-    if alpha is not None and not isinstance(alpha, type(xp.asarray([0.0]))):
-        alpha = check_scalar(
-            alpha,
-            "alpha",
-            target_type=numbers.Real,
-            min_val=0.0,
-            include_boundaries="left",
-        )
+    if alpha is not None:
+        alpha = xp.asarray(alpha, dtype=X.dtype, device=device_)
 
     # There should be either 1 or n_targets penalties
     alpha = _ravel(xp.asarray(alpha, device=device_, dtype=X.dtype), xp=xp)
@@ -920,7 +912,7 @@ def resolve_solver_for_numpy(positive, return_intercept, is_sparse):
 
 class _BaseRidge(LinearModel, metaclass=ABCMeta):
     _parameter_constraints: dict = {
-        "alpha": [Interval(Real, 0, None, closed="left"), np.ndarray],
+        "alpha": [Interval(Real, 0, None, closed="left"), "array-like"],
         "fit_intercept": ["boolean"],
         "copy_X": ["boolean"],
         "max_iter": [Interval(Integral, 1, None, closed="left"), None],
