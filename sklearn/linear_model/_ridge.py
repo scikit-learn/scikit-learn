@@ -762,10 +762,7 @@ def _ridge_regression(
             K = safe_sparse_dot(X, X.T, dense_output=True)
             try:
                 dual_coef = _solve_cholesky_kernel(K, y, alpha, xp=xp)
-                if X_is_sparse:
-                    coef = safe_sparse_dot(X.T, dual_coef, dense_output=True).T
-                else:
-                    coef = dual_coef.T @ X
+                coef = safe_sparse_dot(X.T, dual_coef, dense_output=True).T
             except (xp.linalg.LinAlgError, linalg.LinAlgError):
                 # use SVD solver if matrix is singular
                 solver = "svd"
