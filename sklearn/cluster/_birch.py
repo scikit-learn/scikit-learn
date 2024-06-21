@@ -526,16 +526,16 @@ class Birch(
         return self._fit(X, partial=False)
 
     def _fit(self, X, partial):
-        if self.copy != "deprecated":
+        has_root = getattr(self, "root_", None)
+        first_call = not (partial and has_root)
+
+        if self.copy != "deprecated" and first_call:
             warnings.warn(
                 "`copy` was deprecated in 1.6 and will be removed in 1.8 since it "
                 "has no effect internally. Simply leave this parameter to its default "
                 "value to avoid this warning.",
                 FutureWarning,
             )
-
-        has_root = getattr(self, "root_", None)
-        first_call = not (partial and has_root)
 
         X = self._validate_data(
             X,
