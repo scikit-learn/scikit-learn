@@ -717,6 +717,7 @@ def check_array(
     dtype="numeric",
     order=None,
     copy=False,
+    force_writeable=False,
     force_all_finite=True,
     ensure_2d=True,
     allow_nd=False,
@@ -766,6 +767,13 @@ def check_array(
     copy : bool, default=False
         Whether a forced copy will be triggered. If copy=False, a copy might
         be triggered by a conversion.
+
+    force_writeable : bool, default=False
+        Whether to force the output array to be writeable. If True, the returned array
+        is guaranteed to be writeable, which may require a copy. Otherwise the
+        writeability of the input array is preserved.
+
+        .. versionadded:: 1.6
 
     force_all_finite : bool or 'allow-nan', default=True
         Whether to raise an error on np.inf, np.nan, pd.NA in array. The
@@ -1085,17 +1093,32 @@ def check_array(
                 % (n_features, array.shape, ensure_min_features, context)
             )
 
-    # With an input pandas dataframe or series, we know we can always make the
-    # resulting array writeable:
-    # - if copy=True, we have already made a copy so it is fine to make the
-    #   array writeable
-    # - if copy=False, the caller is telling us explicitly that we can do
-    #   in-place modifications
-    # See https://pandas.pydata.org/docs/dev/user_guide/copy_on_write.html#read-only-numpy-arrays
-    # for more details about pandas copy-on-write mechanism, that is enabled by
-    # default in pandas 3.0.0.dev.
-    if _is_pandas_df_or_series(array_orig) and hasattr(array, "flags"):
-        array.flags.writeable = True
+    if force_writeable:
+        # By default, array.copy() creates a C-ordered copy. We set order=K to
+        # preserve the order of the array.
+        copy_params = {"order": "K"} if not sp.issparse(array) else {}
+
+        array_data = array.data if sp.issparse(array) else array
+        flags = getattr(array_data, "flags", None)
+        if not getattr(flags, "writeable", True):
+            # This situation can only happen when copy=False, the array is read-only and
+            # a writeable output is requested. This is an ambiguous setting so we chose
+            # to always (except for one specific setting, see below) make a copy to
+            # ensure that the output is writeable, even if avoidable, to not overwrite
+            # the user's data by surprise.
+
+            if _is_pandas_df_or_series(array_orig):
+                try:
+                    # In pandas >= 3, np.asarray(df), called earlier in check_array,
+                    # returns a read-only intermediate array. It can be made writeable
+                    # safely without copy because if the original DataFrame was backed
+                    # by a read-only array, trying to change the flag would raise an
+                    # error, in which case we make a copy.
+                    array_data.flags.writeable = True
+                except ValueError:
+                    array = array.copy(**copy_params)
+            else:
+                array = array.copy(**copy_params)
 
     return array
 
@@ -1131,6 +1154,7 @@ def check_X_y(
     dtype="numeric",
     order=None,
     copy=False,
+    force_writeable=False,
     force_all_finite=True,
     ensure_2d=True,
     allow_nd=False,
@@ -1184,6 +1208,13 @@ def check_X_y(
     copy : bool, default=False
         Whether a forced copy will be triggered. If copy=False, a copy might
         be triggered by a conversion.
+
+    force_writeable : bool, default=False
+        Whether to force the output array to be writeable. If True, the returned array
+        is guaranteed to be writeable, which may require a copy. Otherwise the
+        writeability of the input array is preserved.
+
+        .. versionadded:: 1.6
 
     force_all_finite : bool or 'allow-nan', default=True
         Whether to raise an error on np.inf, np.nan, pd.NA in X. This parameter
@@ -1268,6 +1299,7 @@ def check_X_y(
         dtype=dtype,
         order=order,
         copy=copy,
+        force_writeable=force_writeable,
         force_all_finite=force_all_finite,
         ensure_2d=ensure_2d,
         allow_nd=allow_nd,
