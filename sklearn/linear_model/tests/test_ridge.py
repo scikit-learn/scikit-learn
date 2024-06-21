@@ -1325,18 +1325,12 @@ def test_array_api_numpy_namespace_no_warning(array_namespace):
     X_iris_xp = xp.asarray(X_iris[:5])
     y_iris_xp = xp.asarray(y_iris[:5])
 
-    ridge = Ridge()
-    expected_msg = (
-        "Results might be different than when Array API dispatch is "
-        "disabled, or when a numpy-like namespace is used"
-    )
-
     with warnings.catch_warnings():
-        warnings.filterwarnings("error", message=expected_msg, category=UserWarning)
+        warnings.filterwarnings("error", category=UserWarning)
         with config_context(array_api_dispatch=True):
-            ridge.fit(X_iris_xp, y_iris_xp)
+            Ridge().fit(X_iris_xp, y_iris_xp)
 
-    # All numpy namespaces are compatible with all solver, in particular
+    # All NumPy namespaces are compatible with all solver, in particular
     # solvers that support `positive=True` (like 'lbfgs') should work.
     with config_context(array_api_dispatch=True):
         Ridge(solver="auto", positive=True).fit(X_iris_xp, y_iris_xp)
