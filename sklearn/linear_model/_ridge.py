@@ -870,7 +870,7 @@ def resolve_solver(solver, positive, return_intercept, is_sparse, xp):
     if auto_solver_np != "cholesky":
         # The only way to end-up here is if the solver is 'auto' and the
         # namespace is not numpy, and ridge_regression was called with
-        # fit_intercept=True.
+        # return_intercept=True.
         assert return_intercept
         raise ValueError(
             "The solvers that support fitting fit intercept without preprocessing "
