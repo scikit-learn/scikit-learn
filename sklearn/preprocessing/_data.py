@@ -2435,7 +2435,11 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         xp, _ = get_namespace(K)
 
         K = self._validate_data(
-            K, copy=copy, dtype=_array_api.supported_float_dtypes(xp), reset=False
+            K,
+            copy=copy,
+            force_writeable=True,
+            dtype=_array_api.supported_float_dtypes(xp),
+            reset=False,
         )
 
         K_pred_cols = (xp.sum(K, axis=1) / self.K_fit_rows_.shape[0])[:, None]
