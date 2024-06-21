@@ -1039,6 +1039,8 @@ def _safe_accumulator_op(op, x, *args, **kwargs):
         except TypeError:
             # This op doesn't support a dtype kwarg, it seems. Rely on manual
             # type promotion, at the cost of memory allocations.
+            # xp.matmul is the most commonly used op that lacks a dtype kwarg at
+            # the time of writing.
             x = convert_(x)
             args = [(convert_(arg) if hasattr(arg, "dtype") else arg) for arg in args]
     return op(x, *args, **kwargs)
