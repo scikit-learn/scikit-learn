@@ -1317,6 +1317,19 @@ def test_array_api_error_and_warnings_for_solver_parameter(array_namespace):
         with config_context(array_api_dispatch=True):
             ridge.fit(X_iris_xp, y_iris_xp)
 
+    with config_context(array_api_dispatch=True):
+        ridge_regression(
+            X_iris_xp, y_iris_xp, alpha=1.0, return_intercept=False
+        )  # no error
+
+        expected_msg = (
+            "The solvers that support fitting fit intercept without preprocessing "
+            f"do not support array API dispatch to namespace {xp.__name__}."
+        )
+
+        with pytest.raises(ValueError, match=expected_msg):
+            ridge_regression(X_iris_xp, y_iris_xp, alpha=1.0, return_intercept=True)
+
 
 @pytest.mark.parametrize("array_namespace", sorted(_NUMPY_NAMESPACE_NAMES))
 def test_array_api_numpy_namespace_no_warning(array_namespace):

@@ -889,14 +889,16 @@ def resolve_solver(solver, positive, return_intercept, is_sparse, xp):
         )
 
     resolved_solver = auto_solver_np
-    if auto_solver_np not in ("cholesky", "svd"):
-        resolved_solver = "cholesky"
-        warnings.warn(
-            f"Using array API dispatch to namespace {xp.__name__} with "
-            f"`solver='auto'` will result in using the solver '{resolved_solver}'. "
-            "The results may differ from those when using a Numpy array, "
-            f"because in that case the preferred solver would be {auto_solver_np}. "
-            f"Set `solver='{resolved_solver}'` to suppress this warning."
+    if auto_solver_np != "cholesky":
+        # The only way to end-up here is if the solver is 'auto' and the
+        # namespace is not numpy, and ridge_regression was called with
+        # fit_intercept=True.
+        assert return_intercept
+        raise ValueError(
+            "The solvers that support fitting fit intercept without preprocessing "
+            f"do not support array API dispatch to namespace {xp.__name__}. Please "
+            "either disable array API dispatch, or use Ridge().fit_transform(X, y) "
+            "instead of ridge_regression(X, y)."
         )
 
     return resolved_solver
