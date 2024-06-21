@@ -355,7 +355,7 @@ def test_deprecation_warning_base_estimator():
         )
 
 
-# Test that metadata is routed correctly for SelfTrainingClassifier
+# Metadata routing tests
 # =================================================================
 
 
