@@ -409,7 +409,7 @@ class Birch(
 
         .. deprecated:: 1.6
             `copy` was deprecated in 1.6 and will be removed in 1.8. It has no effect
-            as a copy is always made.
+            as the estimator does not perform in-place operations on the input data.
 
     Attributes
     ----------
