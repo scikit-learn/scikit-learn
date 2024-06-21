@@ -1697,7 +1697,7 @@ def test_validation_curve_cv_splits_consistency():
     assert_array_almost_equal(np.array(scores3), np.array(scores1))
 
 
-def test_validation_curve_fit_params():
+def test_validation_curve_params():
     X = np.arange(100).reshape(10, 10)
     y = np.array([0] * 5 + [1] * 5)
     clf = CheckingClassifier(expected_sample_weight=True)
@@ -1722,7 +1722,7 @@ def test_validation_curve_fit_params():
             param_name="foo_param",
             param_range=[1, 2, 3],
             error_score="raise",
-            fit_params={"sample_weight": np.ones(1)},
+            params={"sample_weight": np.ones(1)},
         )
     validation_curve(
         clf,
@@ -1731,7 +1731,7 @@ def test_validation_curve_fit_params():
         param_name="foo_param",
         param_range=[1, 2, 3],
         error_score="raise",
-        fit_params={"sample_weight": np.ones(10)},
+        params={"sample_weight": np.ones(10)},
     )
 
 
