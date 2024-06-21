@@ -28,7 +28,6 @@ from sklearn.utils._testing import (
     SkipTest,
     assert_allclose,
     assert_array_equal,
-    fails_if_pypy,
 )
 
 OPENML_TEST_DATA_MODULE = "sklearn.datasets.tests.data.openml"
@@ -192,9 +191,6 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
 # Test the behaviour of `fetch_openml` depending of the input parameters.
 
 
-# Known failure of PyPy for OpenML. See the following issue:
-# https://github.com/scikit-learn/scikit-learn/issues/18906
-@fails_if_pypy
 @pytest.mark.parametrize(
     "data_id, dataset_params, n_samples, n_features, n_targets",
     [
@@ -264,9 +260,6 @@ def test_fetch_openml_as_frame_true(
     assert bunch.categories is None
 
 
-# Known failure of PyPy for OpenML. See the following issue:
-# https://github.com/scikit-learn/scikit-learn/issues/18906
-@fails_if_pypy
 @pytest.mark.parametrize(
     "data_id, dataset_params, n_samples, n_features, n_targets",
     [
@@ -329,9 +322,6 @@ def test_fetch_openml_as_frame_false(
     assert isinstance(bunch.categories, dict)
 
 
-# Known failure of PyPy for OpenML. See the following issue:
-# https://github.com/scikit-learn/scikit-learn/issues/18906
-@fails_if_pypy
 @pytest.mark.parametrize("data_id", [61, 1119, 40945])
 def test_fetch_openml_consistency_parser(monkeypatch, data_id):
     """Check the consistency of the LIAC-ARFF and pandas parsers."""
@@ -396,9 +386,6 @@ def test_fetch_openml_consistency_parser(monkeypatch, data_id):
     pd.testing.assert_frame_equal(frame_liac_with_fixed_dtypes, frame_pandas)
 
 
-# Known failure of PyPy for OpenML. See the following issue:
-# https://github.com/scikit-learn/scikit-learn/issues/18906
-@fails_if_pypy
 @pytest.mark.parametrize("parser", ["liac-arff", "pandas"])
 def test_fetch_openml_equivalence_array_dataframe(monkeypatch, parser):
     """Check the equivalence of the dataset when using `as_frame=False` and
@@ -426,9 +413,6 @@ def test_fetch_openml_equivalence_array_dataframe(monkeypatch, parser):
     assert_array_equal(bunch_as_frame_false.target, bunch_as_frame_true.target)
 
 
-# Known failure of PyPy for OpenML. See the following issue:
-# https://github.com/scikit-learn/scikit-learn/issues/18906
-@fails_if_pypy
 @pytest.mark.parametrize("parser", ["liac-arff", "pandas"])
 def test_fetch_openml_iris_pandas(monkeypatch, parser):
     """Check fetching on a numerical only dataset with string labels."""
@@ -477,9 +461,6 @@ def test_fetch_openml_iris_pandas(monkeypatch, parser):
     assert frame.index.is_unique
 
 
-# Known failure of PyPy for OpenML. See the following issue:
-# https://github.com/scikit-learn/scikit-learn/issues/18906
-@fails_if_pypy
 @pytest.mark.parametrize("parser", ["liac-arff", "pandas"])
 @pytest.mark.parametrize("target_column", ["petalwidth", ["petalwidth", "petallength"]])
 def test_fetch_openml_forcing_targets(monkeypatch, parser, target_column):
@@ -513,9 +494,6 @@ def test_fetch_openml_forcing_targets(monkeypatch, parser, target_column):
         assert bunch_forcing_target.data.shape == (150, 4)
 
 
-# Known failure of PyPy for OpenML. See the following issue:
-# https://github.com/scikit-learn/scikit-learn/issues/18906
-@fails_if_pypy
 @pytest.mark.parametrize("data_id", [61, 2, 561, 40589, 1119])
 @pytest.mark.parametrize("parser", ["liac-arff", "pandas"])
 def test_fetch_openml_equivalence_frame_return_X_y(monkeypatch, data_id, parser):
@@ -545,9 +523,6 @@ def test_fetch_openml_equivalence_frame_return_X_y(monkeypatch, data_id, parser)
         pd.testing.assert_frame_equal(bunch.target, y)
 
 
-# Known failure of PyPy for OpenML. See the following issue:
-# https://github.com/scikit-learn/scikit-learn/issues/18906
-@fails_if_pypy
 @pytest.mark.parametrize("data_id", [61, 561, 40589, 1119])
 @pytest.mark.parametrize("parser", ["liac-arff", "pandas"])
 def test_fetch_openml_equivalence_array_return_X_y(monkeypatch, data_id, parser):
@@ -574,9 +549,6 @@ def test_fetch_openml_equivalence_array_return_X_y(monkeypatch, data_id, parser)
     assert_array_equal(bunch.target, y)
 
 
-# Known failure of PyPy for OpenML. See the following issue:
-# https://github.com/scikit-learn/scikit-learn/issues/18906
-@fails_if_pypy
 def test_fetch_openml_difference_parsers(monkeypatch):
     """Check the difference between liac-arff and pandas parser."""
     pytest.importorskip("pandas")
@@ -900,9 +872,6 @@ def datasets_missing_values():
     }
 
 
-# Known failure of PyPy for OpenML. See the following issue:
-# https://github.com/scikit-learn/scikit-learn/issues/18906
-@fails_if_pypy
 @pytest.mark.parametrize(
     "data_id, parser, expected_n_categories, expected_n_floats, expected_n_ints",
     [
@@ -1055,9 +1024,6 @@ def test_fetch_openml_sparse_arff_error(monkeypatch, params, err_msg):
         )
 
 
-# Known failure of PyPy for OpenML. See the following issue:
-# https://github.com/scikit-learn/scikit-learn/issues/18906
-@fails_if_pypy
 @pytest.mark.filterwarnings("ignore:Version 1 of dataset Australian is inactive")
 @pytest.mark.parametrize(
     "data_id, data_type",
@@ -1076,9 +1042,6 @@ def test_fetch_openml_auto_mode(monkeypatch, data_id, data_type):
     assert isinstance(data.data, klass)
 
 
-# Known failure of PyPy for OpenML. See the following issue:
-# https://github.com/scikit-learn/scikit-learn/issues/18906
-@fails_if_pypy
 def test_convert_arff_data_dataframe_warning_low_memory_pandas(monkeypatch):
     """Check that we raise a warning regarding the working memory when using
     LIAC-ARFF parser."""
@@ -1487,9 +1450,6 @@ def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
     np.testing.assert_array_equal(y_fetched, y_cached)
 
 
-# Known failure of PyPy for OpenML. See the following issue:
-# https://github.com/scikit-learn/scikit-learn/issues/18906
-@fails_if_pypy
 @pytest.mark.parametrize(
     "as_frame, parser",
     [

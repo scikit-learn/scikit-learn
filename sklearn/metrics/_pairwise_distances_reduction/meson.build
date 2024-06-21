@@ -11,6 +11,11 @@
 # needed for the cimport to work
 _pairwise_distances_reduction_cython_tree = [
   fs.copyfile('__init__.py'),
+  # We are in a sub-module of metrics, so we always need to have
+  # sklearn/metrics/__init__.py copied to the build directory to avoid the
+  # error:
+  # relative cimport beyond main package is not allowed
+  metrics_cython_tree
 ]
 
 _classmode_pxd = fs.copyfile('_classmode.pxd')
@@ -26,11 +31,14 @@ _datasets_pair_pyx = custom_target(
   output: '_datasets_pair.pyx',
   input: '_datasets_pair.pyx.tp',
   command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
+  # TODO in principle this should go in py.exension_module below. This is
+  # temporary work-around for dependency issue with .pyx.tp files. For more
+  # details, see https://github.com/mesonbuild/meson/issues/13212
+  depends: [_datasets_pair_pxd, _pairwise_distances_reduction_cython_tree, utils_cython_tree],
 )
 _datasets_pair = py.extension_module(
   '_datasets_pair',
-  [_datasets_pair_pxd, _datasets_pair_pyx,
-    _pairwise_distances_reduction_cython_tree, utils_cython_tree],
+  _datasets_pair_pyx,
   dependencies: [np_dep, openmp_dep],
   override_options: ['cython_language=cpp'],
   cython_args: cython_args,
@@ -49,12 +57,15 @@ _base_pyx = custom_target(
   output: '_base.pyx',
   input: '_base.pyx.tp',
   command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
+  # TODO in principle this should go in py.exension_module below. This is
+  # temporary work-around for dependency issue with .pyx.tp files. For more
+  # details, see https://github.com/mesonbuild/meson/issues/13212
+  depends: [_base_pxd, _pairwise_distances_reduction_cython_tree,
+            _datasets_pair_pxd, utils_cython_tree],
 )
 _base = py.extension_module(
   '_base',
-  [_base_pxd, _base_pyx,
-   _pairwise_distances_reduction_cython_tree,
-   _datasets_pair_pxd, utils_cython_tree],
+  _base_pyx,
   dependencies: [np_dep, openmp_dep],
   override_options: ['cython_language=cpp'],
   cython_args: cython_args,
@@ -73,11 +84,16 @@ _middle_term_computer_pyx = custom_target(
   output: '_middle_term_computer.pyx',
   input: '_middle_term_computer.pyx.tp',
   command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
+  # TODO in principle this should go in py.exension_module below. This is
+  # temporary work-around for dependency issue with .pyx.tp files. For more
+  # details, see https://github.com/mesonbuild/meson/issues/13212
+  depends: [_middle_term_computer_pxd,
+            _pairwise_distances_reduction_cython_tree,
+            utils_cython_tree],
 )
 _middle_term_computer = py.extension_module(
   '_middle_term_computer',
-  [_middle_term_computer_pxd, _middle_term_computer_pyx,
-   _pairwise_distances_reduction_cython_tree, utils_cython_tree],
+  _middle_term_computer_pyx,
   dependencies: [np_dep, openmp_dep],
   override_options: ['cython_language=cpp'],
   cython_args: cython_args,
@@ -96,13 +112,16 @@ _argkmin_pyx = custom_target(
     output: '_argkmin.pyx',
     input: '_argkmin.pyx.tp',
     command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
-  )
+    # TODO in principle this should go in py.exension_module below. This is
+    # temporary work-around for dependency issue with .pyx.tp files. For more
+    # details, see https://github.com/mesonbuild/meson/issues/13212
+    depends: [_argkmin_pxd,
+              _pairwise_distances_reduction_cython_tree,
+              _datasets_pair_pxd, _base_pxd, _middle_term_computer_pxd],
+      )
 _argkmin = py.extension_module(
     '_argkmin',
-    [_argkmin_pxd, _argkmin_pyx,
-     _pairwise_distances_reduction_cython_tree,
-     _datasets_pair_pxd, _base_pxd, _middle_term_computer_pxd,
-     utils_cython_tree],
+    _argkmin_pyx,
     dependencies: [np_dep, openmp_dep],
     override_options: ['cython_language=cpp'],
     cython_args: cython_args,
@@ -121,12 +140,16 @@ _radius_neighbors_pyx = custom_target(
     output: '_radius_neighbors.pyx',
     input: '_radius_neighbors.pyx.tp',
     command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
-  )
+    # TODO in principle this should go in py.exension_module below. This is
+    # temporary work-around for dependency issue with .pyx.tp files. For more
+    # details, see https://github.com/mesonbuild/meson/issues/13212
+    depends: [_radius_neighbors_pxd,
+              _datasets_pair_pxd, _base_pxd, _middle_term_computer_pxd,
+              _pairwise_distances_reduction_cython_tree, utils_cython_tree],
+)
 _radius_neighbors = py.extension_module(
     '_radius_neighbors',
-    [_radius_neighbors_pxd, _radius_neighbors_pyx,
-     _datasets_pair_pxd, _base_pxd, _middle_term_computer_pxd,
-     _pairwise_distances_reduction_cython_tree, utils_cython_tree],
+    _radius_neighbors_pyx,
     dependencies: [np_dep, openmp_dep],
     override_options: ['cython_language=cpp'],
     cython_args: cython_args,
@@ -139,12 +162,16 @@ _argkmin_classmode_pyx = custom_target(
   output: '_argkmin_classmode.pyx',
   input: '_argkmin_classmode.pyx.tp',
   command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
+  # TODO in principle this should go in py.exension_module below. This is
+  # temporary work-around for dependency issue with .pyx.tp files. For more
+  # details, see https://github.com/mesonbuild/meson/issues/13212
+  depends: [_classmode_pxd,
+            _argkmin_pxd, _pairwise_distances_reduction_cython_tree,
+            _datasets_pair_pxd, _base_pxd, _middle_term_computer_pxd, utils_cython_tree],
 )
 _argkmin_classmode = py.extension_module(
   '_argkmin_classmode',
-  [_argkmin_classmode_pyx, _classmode_pxd,
-   _argkmin_pxd, _pairwise_distances_reduction_cython_tree,
-   _datasets_pair_pxd, _base_pxd, _middle_term_computer_pxd, utils_cython_tree],
+  _argkmin_classmode_pyx,
   dependencies: [np_dep],
   override_options: ['cython_language=cpp'],
   cython_args: cython_args,
@@ -161,13 +188,17 @@ _radius_neighbors_classmode_pyx = custom_target(
   output: '_radius_neighbors_classmode.pyx',
   input: '_radius_neighbors_classmode.pyx.tp',
   command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
+  # TODO in principle this should go in py.exension_module below. This is
+  # temporary work-around for dependency issue with .pyx.tp files. For more
+  # details, see https://github.com/mesonbuild/meson/issues/13212
+  depends: [_classmode_pxd,
+            _middle_term_computer_pxd, _radius_neighbors_pxd,
+            _pairwise_distances_reduction_cython_tree,
+            _datasets_pair_pxd, _base_pxd, utils_cython_tree],
 )
 _radius_neighbors_classmode = py.extension_module(
   '_radius_neighbors_classmode',
-  [_radius_neighbors_classmode_pyx, _classmode_pxd,
-  _middle_term_computer_pxd, _radius_neighbors_pxd,
-  _pairwise_distances_reduction_cython_tree,
-  _datasets_pair_pxd, _base_pxd, utils_cython_tree],
+  _radius_neighbors_classmode_pyx,
   dependencies: [np_dep],
   override_options: ['cython_language=cpp'],
   cython_args: cython_args,

@@ -315,7 +315,7 @@ Enhancements
 Documentation improvements
 ...........................
 
-- The :ref:`Working With Text Data <text_data_tutorial>` tutorial
+- The Working With Text Data tutorial
   has now been worked in to the main documentation's tutorial section.
   Includes exercises and skeletons for tutorial presentation.
   Original tutorial created by several authors including
