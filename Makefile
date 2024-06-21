@@ -2,6 +2,14 @@
 
 PYTHON ?= python
 
+all:
+	@echo "Please use 'make <target>' where <target> is one of"
+	@echo "  dev                  build scikit-learn with Meson"
+	@echo "  clean                clean scikit-learn Meson build. Very rarely needed,"
+	@echo "                       one use case is when switching back to setuptools)"
+	@echo "  dev-setuptools       build scikit-learn with setuptools"
+	@echo "  clean-setuptools     clean scikit-learn setuptools build"
+
 dev: dev-meson
 
 dev-meson:
