@@ -17,6 +17,7 @@ from ..utils import Bunch
 from ..utils._metadata_requests import (
     MetadataRouter,
     MethodMapping,
+    _raise_for_params,
     _routing_enabled,
     process_routing,
 )
@@ -404,6 +405,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         y : array of shape [n_samples]
             The predicted target values.
         """
+        _raise_for_params(predict_params, self, "predict")
         check_is_fitted(self)
         if _routing_enabled():
             routed_params = process_routing(self, "predict", **predict_params)
@@ -804,6 +806,7 @@ class RFECV(RFE):
         self : object
             Fitted estimator.
         """
+        _raise_for_params(params, self, "fit")
         X, y = self._validate_data(
             X,
             y,
