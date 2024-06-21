@@ -324,10 +324,10 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
             X, Y, metric=self.kernel, filter_params=True, n_jobs=self.n_jobs, **params
         )
 
-    def _fit_transform(self, K):
+    def _fit_transform_in_place(self, K):
         """Fit's using kernel K"""
-        # center kernel
-        K = self._centerer.fit_transform(K)
+        # center kernel in place
+        K = self._centerer.fit(K).transform(K, copy=False)
 
         # adjust n_components according to user inputs
         if self.n_components is None:
@@ -438,7 +438,9 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         self.gamma_ = 1 / X.shape[1] if self.gamma is None else self.gamma
         self._centerer = KernelCenterer().set_output(transform="default")
         K = self._get_kernel(X)
-        self._fit_transform(K)
+        # When kernel="precomputed", K is X but it's safe to perform in place operations
+        # on K because a copy was made before if requested by copy_X.
+        self._fit_transform_in_place(K)
 
         if self.fit_inverse_transform:
             # no need to use the kernel to transform X, use shortcut expression
