@@ -10,6 +10,8 @@ all:
 	@echo "  dev-setuptools       build scikit-learn with setuptools (deprecated)"
 	@echo "  clean-setuptools     clean scikit-learn setuptools build (deprecated)"
 
+.PHONY: all
+
 dev: dev-meson
 
 dev-meson:
