@@ -1086,36 +1086,33 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         for key, param_result in param_results.items():
             param_list = list(param_result.values())
             try:
-                with warnings.catch_warnings():
-                    warnings.filterwarnings(
-                        "ignore",
-                        message="in the future the `.dtype` attribute",
-                        category=DeprecationWarning,
-                    )
-                    # Warning raised by NumPy 1.20+
-                    arr_dtype = np.result_type(*param_list)
+                arr = np.array(param_list)
             except (TypeError, ValueError):
                 arr_dtype = np.dtype(object)
             else:
-                if any(np.min_scalar_type(x) == object for x in param_list):
-                    # `np.result_type` might get thrown off by `.dtype` properties
-                    # (which some estimators have).
-                    # If finding the result dtype this way would give object,
-                    # then we use object.
-                    # https://github.com/scikit-learn/scikit-learn/issues/29157
-                    arr_dtype = np.dtype(object)
-            if len(param_list) == n_candidates and arr_dtype != object:
-                # Exclude `object` else the numpy constructor might infer a list of
-                # tuples to be a 2d array.
-                results[key] = MaskedArray(param_list, mask=False, dtype=arr_dtype)
-            else:
-                # Use one MaskedArray and mask all the places where the param is not
-                # applicable for that candidate (which may not contain all the params).
-                ma = MaskedArray(np.empty(n_candidates), mask=True, dtype=arr_dtype)
-                for index, value in param_result.items():
-                    # Setting the value at an index unmasks that index
-                    ma[index] = value
-                results[key] = ma
+                arr_dtype = arr.dtype if arr.dtype.kind != "U" else object
+            if len(param_list) == n_candidates:
+                try:
+                    ma = MaskedArray(param_list, mask=False, dtype=arr_dtype)
+                except ValueError:
+                    # Fall back to iterating over `param_result.items()` below
+                    pass
+                else:
+                    if ma.ndim > 1:
+                        # If ndim > 1, then a list of tuples might be turned into
+                        # a 2D array, so we use the fallback below for that case too.
+                        arr_dtype = object
+                    else:
+                        results[key] = ma
+                        continue
+
+            # Use one MaskedArray and mask all the places where the param is not
+            # applicable for that candidate (which may not contain all the params).
+            ma = MaskedArray(np.empty(n_candidates), mask=True, dtype=arr_dtype)
+            for index, value in param_result.items():
+                # Setting the value at an index unmasks that index
+                ma[index] = value
+            results[key] = ma
 
         # Store a list of param dicts at the key 'params'
         results["params"] = candidate_params
