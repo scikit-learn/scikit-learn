@@ -528,7 +528,7 @@ def test_pca_validates_inverse_transform():
         pca.inverse_transform(X[:, :2])
 
     msg = (
-        f"X does not contain any components,"
+        f"X does not contain any components, "
         f"but \\w+ is expecting {X.shape[1]} components"
     )
     with pytest.raises(ValueError, match=msg):
