@@ -831,6 +831,8 @@ def _estimator_with_converted_arrays(estimator, converter):
 
 def _atol_for_type(dtype):
     """Return the absolute tolerance for a given numpy dtype."""
+    if dtype is None:
+        dtype = numpy.float64
     return numpy.finfo(dtype).eps * 100
 
 
