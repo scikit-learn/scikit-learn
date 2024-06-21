@@ -208,7 +208,7 @@ def _solve_cholesky(X, y, alpha, xp=None):
     A = safe_sparse_dot(X.T, X, dense_output=True)
     Xy = safe_sparse_dot(X.T, y, dense_output=True)
 
-    one_alpha = xp.all(alpha == alpha[0])
+    one_alpha = bool(xp.all(alpha == alpha[0]))
     if _is_numpy_namespace(xp):
         # A.flat is guaranteed to be a view even when A is Fortran-ordered
         # which typically happens when X is a CSR datastructure.
@@ -244,7 +244,7 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False, xp=None)
         K = K.copy()
 
     alpha = xp.asarray(alpha, dtype=K.dtype, device=device(K))
-    one_alpha = xp.all(alpha == alpha[0])
+    one_alpha = bool(xp.all(alpha == alpha[0]))
     has_sw = sample_weight is not None
 
     if has_sw:
