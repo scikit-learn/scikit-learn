@@ -604,11 +604,10 @@ def _add_to_diagonal(array, value, xp):
             array[i, i] += value
 
 
-def max_supported_float_dtype(xp, device):
-    """Return the maximum supported floating point dtype for the device."""
+def max_supported_float_precision(xp, device):
+    """Return the float dtype with the highest precision supported by the device."""
     xp_name = xp.__name__
-
-    if xp_name in {"array_api_compat.torch", "torch"} and device.type == "mps":
+    if xp_name in {"array_api_compat.torch", "torch"} and str(device).startswith("mps"):
         return xp.float32
     return xp.float64
 
