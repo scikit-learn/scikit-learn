@@ -1,7 +1,6 @@
 """Approximate kernel feature maps based on Fourier transforms and count sketches."""
 
-# Author: Andreas Mueller <amueller@ais.uni-bonn.de>
-#         Daniel Lopez-Sanchez (TensorSketch) <lope@usal.es>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings

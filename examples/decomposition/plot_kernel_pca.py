@@ -16,9 +16,7 @@ Finally, we show that inverting this projection is an approximation with
 :class:`~sklearn.decomposition.PCA`.
 """
 
-# Authors: Mathieu Blondel
-#          Andreas Mueller
-#          Guillaume Lemaitre
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 # %%

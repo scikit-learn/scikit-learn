@@ -1,6 +1,6 @@
 """Spectral biclustering algorithms."""
 
-# Authors : Kemal Eren
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 from abc import ABCMeta, abstractmethod
