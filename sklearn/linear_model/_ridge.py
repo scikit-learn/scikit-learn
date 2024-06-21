@@ -251,8 +251,8 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False, xp=None)
         # Unlike other solvers, we need to support sample_weight directly
         # because K might be a pre-computed kernel.
         sw = xp.sqrt(sample_weight)
-        y = y * sw[:, np.newaxis]
-        K *= np.outer(sw, sw)
+        y = y * sw[:, None]
+        K *= sw[:, None] @ sw[None, :]  # outer product
 
     if _is_numpy_namespace(xp):
         # K.flat is guaranteed to be a view even when K is Fortran-ordered
@@ -294,7 +294,7 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False, xp=None)
         K_flat[:: n_samples + 1] -= alpha[0]
 
         if has_sw:
-            dual_coef *= sw[:, np.newaxis]
+            dual_coef *= sw[:, None]
 
         return dual_coef
     else:
@@ -307,7 +307,7 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False, xp=None)
             K_flat[:: n_samples + 1] -= current_alpha
 
         if has_sw:
-            dual_coefs *= sw[np.newaxis, :]
+            dual_coefs *= sw[None, :]
 
         return dual_coefs.T
 
