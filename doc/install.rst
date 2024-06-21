@@ -39,11 +39,11 @@ Installing the latest release
       :class-label: tab-4
 
       .. tab-set::
-        :class: tabs-packager
+        :class: tabs-package-manager
 
         .. tab-item:: pip
           :class-label: tab-6
-          :sync: packager-pip
+          :sync: package-manager-pip
 
           Install the 64-bit version of Python 3, for instance from the
           `official website <https://www.python.org/downloads/windows/>`__.
@@ -69,7 +69,7 @@ Installing the latest release
 
         .. tab-item:: conda
           :class-label: tab-6
-          :sync: packager-conda
+          :sync: package-manager-conda
 
           .. include:: ./install_instructions_conda.rst
 
@@ -77,11 +77,11 @@ Installing the latest release
       :class-label: tab-4
 
       .. tab-set::
-        :class: tabs-packager
+        :class: tabs-package-manager
 
         .. tab-item:: pip
           :class-label: tab-6
-          :sync: packager-pip
+          :sync: package-manager-pip
 
           Install Python 3 using `homebrew <https://brew.sh/>`_ (`brew install python`)
           or by manually installing the package from the `official website
@@ -108,7 +108,7 @@ Installing the latest release
 
         .. tab-item:: conda
           :class-label: tab-6
-          :sync: packager-conda
+          :sync: package-manager-conda
 
           .. include:: ./install_instructions_conda.rst
 
@@ -116,11 +116,11 @@ Installing the latest release
       :class-label: tab-4
 
       .. tab-set::
-        :class: tabs-packager
+        :class: tabs-package-manager
 
         .. tab-item:: pip
           :class-label: tab-6
-          :sync: packager-pip
+          :sync: package-manager-pip
 
           Python 3 is usually installed by default on most Linux distributions. To
           check if you have it installed, try:
@@ -154,7 +154,7 @@ Installing the latest release
 
         .. tab-item:: conda
           :class-label: tab-6
-          :sync: packager-conda
+          :sync: package-manager-conda
 
           .. include:: ./install_instructions_conda.rst
 
