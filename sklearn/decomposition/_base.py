@@ -187,8 +187,6 @@ class _BasePCA(
         check_is_fitted(self)
 
         # run validate_data steps but for n_components_ instead of n_features_in_
-        X = check_array(X, input_name="X", dtype=[xp.float64, xp.float32])
-
         try:
             n_components = _num_features(X)
         except TypeError as e:
@@ -203,6 +201,7 @@ class _BasePCA(
                 f"X has {n_components} components, but {self.__class__.__name__} "
                 f"is expecting {self.n_components_} components as input."
             )
+        X = check_array(X, input_name="X", dtype=[xp.float64, xp.float32])
 
         if self.whiten:
             scaled_components = (
