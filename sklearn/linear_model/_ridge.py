@@ -213,28 +213,22 @@ def _solve_cholesky(X, y, alpha, xp=None):
         # A.flat is guaranteed to be a view even when A is Fortran-ordered
         # which typically happens when X is a CSR datastructure.
         A_flat = A.flat
+        linalg_solve = partial(linalg.solve, assume_a="pos", overwrite_a=one_alpha)
     else:
         # XXX: ideally one would like to pass copy=False explicitly to
         # xp.reshape, but this is not supported by PyTorch at the time of
         # writing.
         A_flat = xp.reshape(A, (-1,))
+        linalg_solve = xp.linalg.solve
 
     if one_alpha:
         A_flat[:: n_features + 1] += alpha[0]
-        if _is_numpy_namespace(xp):
-            return linalg.solve(A, Xy, assume_a="pos", overwrite_a=True).T
-        else:
-            return xp.linalg.solve(A, Xy).T
+        return linalg_solve(A, Xy).T
     else:
         coefs = xp.empty([n_targets, n_features], dtype=X.dtype, device=device(X))
         for coef, target, current_alpha in zip(coefs, Xy.T, alpha):
             A_flat[:: n_features + 1] += current_alpha
-            if _is_numpy_namespace(xp):
-                coef[:] = linalg.solve(
-                    A, target, assume_a="pos", overwrite_a=False
-                ).ravel()
-            else:
-                coef[:] = _ravel(xp.linalg.solve(A, target))
+            coef[:] = _ravel(linalg_solve(A, target))
             A_flat[:: n_features + 1] -= current_alpha
         return coefs
 
@@ -265,23 +259,22 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False, xp=None)
         # which typically happens for the linear kernel X @ X.T with X being a
         # CSR datastructure.
         K_flat = K.flat
+
+        # Note: we must use overwrite_a=False in order to be able to use the
+        # fall-back solution below in case a LinAlgError is raised.
+        linalg_solve = partial(linalg.solve, assume_a="pos", overwrite_a=False)
     else:
         # XXX: ideally one would like to pass copy=False explicitly to
         # xp.reshape, but this is not supported by PyTorch at the time of
         # writing.
         K_flat = xp.reshape(K, (-1,))
+        linalg_solve = xp.linalg.solve
     if one_alpha:
         # Only one penalty, we can solve multi-target problems in one time.
         K_flat[:: n_samples + 1] += alpha[0]
 
         try:
-            if _is_numpy_namespace(xp):
-                # Note: we must use overwrite_a=False in order to be able to
-                #       use the fall-back solution below in case a LinAlgError
-                #       is raised
-                dual_coef = linalg.solve(K, y, assume_a="pos", overwrite_a=False)
-            else:
-                dual_coef = xp.linalg.solve(K, y)
+            dual_coef = linalg_solve(K, y)
         except np.linalg.LinAlgError:
             # XXX: this exception is numpy specific. If another
             # xp.linalg.LinAlgError is raised instead and if the caller is
@@ -310,14 +303,7 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False, xp=None)
 
         for dual_coef, target, current_alpha in zip(dual_coefs, y.T, alpha):
             K_flat[:: n_samples + 1] += current_alpha
-
-            if _is_numpy_namespace(xp):
-                dual_coef[:] = linalg.solve(
-                    K, target, assume_a="pos", overwrite_a=False
-                ).ravel()
-            else:
-                dual_coef[:] = _ravel(xp.linalg.solve(K, target))
-
+            dual_coef[:] = _ravel(linalg_solve(K, target))
             K_flat[:: n_samples + 1] -= current_alpha
 
         if has_sw:
