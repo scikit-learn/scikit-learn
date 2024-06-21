@@ -1233,16 +1233,17 @@ def check_array_api_attributes(
         y_np = y_iris.astype(dtype_name)
     else:
         rng = np.random.RandomState(0)
-        X_np = rng.randn(10, 100).astype(dtype_name)
+        n_samples, n_features = 10, 100
+        X_np = rng.randn(n_samples, n_features).astype(dtype_name)
         w = rng.randn(100).astype(dtype_name)
-        y_np = X_np @ w + 0.01 * rng.randn(10).astype(dtype_name)
+        y_np = X_np @ w + 0.01 * rng.randn(n_samples).astype(dtype_name)
 
     if multi_output:
         y_np = np.column_stack([y_np, y_np])
 
         # Set different alphas for each target to increase test coverage.
         estimator = clone(estimator)
-        estimator.set_params(alpha=[1.0, 2.0])
+        estimator.set_params(alpha=[1e-6, 1e6])
 
     X_xp = xp.asarray(X_np, device=device)
     y_xp = xp.asarray(y_np, device=device)

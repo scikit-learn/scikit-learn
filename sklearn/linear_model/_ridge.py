@@ -226,7 +226,9 @@ def _solve_cholesky(X, y, alpha, xp=None):
         return linalg_solve(A, Xy).T
     else:
         coefs = xp.empty([n_targets, n_features], dtype=X.dtype, device=device(X))
-        for coef, target, current_alpha in zip(coefs, Xy.T, alpha):
+        for target_idx, current_alpha in enumerate(alpha):
+            coef = coefs[target_idx, :]
+            target = Xy[:, target_idx]
             A_flat[:: n_features + 1] += current_alpha
             coef[:] = _ravel(linalg_solve(A, target))
             A_flat[:: n_features + 1] -= current_alpha
@@ -243,7 +245,6 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False, xp=None)
     if copy:
         K = K.copy()
 
-    alpha = xp.asarray(alpha, dtype=K.dtype, device=device(K))
     one_alpha = bool(xp.all(alpha == alpha[0]))
     has_sw = sample_weight is not None
 
@@ -301,7 +302,9 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False, xp=None)
     else:
         # One penalty per target. We need to solve each target separately.
         dual_coefs = xp.empty([n_targets, n_samples], dtype=K.dtype, device=device(K))
-        for dual_coef, target, current_alpha in zip(dual_coefs, y.T, alpha):
+        for target_idx, current_alpha in enumerate(alpha):
+            dual_coef = dual_coefs[target_idx, :]
+            target = y[:, target_idx]
             K_flat[:: n_samples + 1] += current_alpha
             dual_coef[:] = _ravel(linalg_solve(K, target))
             K_flat[:: n_samples + 1] -= current_alpha
@@ -763,13 +766,13 @@ def _ridge_regression(
             try:
                 dual_coef = _solve_cholesky_kernel(K, y, alpha, xp=xp)
                 coef = safe_sparse_dot(X.T, dual_coef, dense_output=True).T
-            except (xp.linalg.LinAlgError, linalg.LinAlgError):
+            except linalg.LinAlgError:
                 # use SVD solver if matrix is singular
                 solver = "svd"
         else:
             try:
                 coef = _solve_cholesky(X, y, alpha, xp=xp)
-            except (xp.linalg.LinAlgError, linalg.LinAlgError):
+            except linalg.LinAlgError:
                 # use SVD solver if matrix is singular
                 solver = "svd"
 
