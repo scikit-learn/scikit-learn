@@ -1,6 +1,7 @@
 """
 This file contains preprocessing tools based on polynomials.
 """
+
 import collections
 from itertools import chain, combinations
 from itertools import combinations_with_replacement as combinations_w_r
@@ -495,7 +496,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 if combi:
                     out_col = 1
                     for col_idx in combi:
-                        out_col = X[:, col_idx].multiply(out_col)
+                        out_col = X[:, [col_idx]].multiply(out_col)
                     columns.append(out_col)
                 else:
                     bias = sparse.csc_matrix(np.ones((X.shape[0], 1)))
@@ -583,6 +584,9 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
     `n_splines=n_knots + degree - 1` (`n_knots - 1` for
     `extrapolation="periodic"`) spline basis functions
     (B-splines) of polynomial order=`degree` for each feature.
+
+    In order to learn more about the SplineTransformer class go to:
+    :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`
 
     Read more in the :ref:`User Guide <spline_transformer>`.
 

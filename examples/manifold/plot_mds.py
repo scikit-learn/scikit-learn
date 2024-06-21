@@ -10,8 +10,8 @@ shifted to avoid overlapping.
 
 """
 
-# Author: Nelle Varoquaux <nelle.varoquaux@gmail.com>
-# License: BSD
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -44,7 +44,6 @@ mds = manifold.MDS(
     random_state=seed,
     dissimilarity="precomputed",
     n_jobs=1,
-    normalized_stress="auto",
 )
 pos = mds.fit(similarities).embedding_
 
@@ -57,7 +56,6 @@ nmds = manifold.MDS(
     random_state=seed,
     n_jobs=1,
     n_init=1,
-    normalized_stress="auto",
 )
 npos = nmds.fit_transform(similarities, init=pos)
 

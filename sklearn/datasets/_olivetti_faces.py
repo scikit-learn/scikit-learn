@@ -10,10 +10,11 @@ web page of Sam Roweis:
     https://cs.nyu.edu/~roweis/
 """
 
-# Copyright (c) 2011 David Warde-Farley <wardefar at iro dot umontreal dot ca>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-from os import makedirs, remove
+from numbers import Integral, Real
+from os import PathLike, makedirs, remove
 from os.path import exists
 
 import joblib
@@ -21,7 +22,7 @@ import numpy as np
 from scipy.io import loadmat
 
 from ..utils import Bunch, check_random_state
-from ..utils._param_validation import validate_params
+from ..utils._param_validation import Interval, validate_params
 from . import get_data_home
 from ._base import RemoteFileMetadata, _fetch_remote, _pkl_filepath, load_descr
 
@@ -36,11 +37,13 @@ FACES = RemoteFileMetadata(
 
 @validate_params(
     {
-        "data_home": [str, None],
+        "data_home": [str, PathLike, None],
         "shuffle": ["boolean"],
         "random_state": ["random_state"],
         "download_if_missing": ["boolean"],
         "return_X_y": ["boolean"],
+        "n_retries": [Interval(Integral, 1, None, closed="left")],
+        "delay": [Interval(Real, 0.0, None, closed="neither")],
     },
     prefer_skip_nested_validation=True,
 )
@@ -51,6 +54,8 @@ def fetch_olivetti_faces(
     random_state=0,
     download_if_missing=True,
     return_X_y=False,
+    n_retries=3,
+    delay=1.0,
 ):
     """Load the Olivetti faces data-set from AT&T (classification).
 
@@ -67,7 +72,7 @@ def fetch_olivetti_faces(
 
     Parameters
     ----------
-    data_home : str, default=None
+    data_home : str or path-like, default=None
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
@@ -89,6 +94,16 @@ def fetch_olivetti_faces(
         below for more information about the `data` and `target` object.
 
         .. versionadded:: 0.22
+
+    n_retries : int, default=3
+        Number of retries when HTTP errors are encountered.
+
+        .. versionadded:: 1.5
+
+    delay : float, default=1.0
+        Number of seconds between retries.
+
+        .. versionadded:: 1.5
 
     Returns
     -------
@@ -112,6 +127,17 @@ def fetch_olivetti_faces(
         Tuple with the `data` and `target` objects described above.
 
         .. versionadded:: 0.22
+
+    Examples
+    --------
+    >>> from sklearn.datasets import fetch_olivetti_faces
+    >>> olivetti_faces = fetch_olivetti_faces()
+    >>> olivetti_faces.data.shape
+    (400, 4096)
+    >>> olivetti_faces.target.shape
+    (400,)
+    >>> olivetti_faces.images.shape
+    (400, 64, 64)
     """
     data_home = get_data_home(data_home=data_home)
     if not exists(data_home):
@@ -122,7 +148,9 @@ def fetch_olivetti_faces(
             raise OSError("Data not found and `download_if_missing` is False")
 
         print("downloading Olivetti faces from %s to %s" % (FACES.url, data_home))
-        mat_path = _fetch_remote(FACES, dirname=data_home)
+        mat_path = _fetch_remote(
+            FACES, dirname=data_home, n_retries=n_retries, delay=delay
+        )
         mfile = loadmat(file_name=mat_path)
         # delete raw .mat data
         remove(mat_path)

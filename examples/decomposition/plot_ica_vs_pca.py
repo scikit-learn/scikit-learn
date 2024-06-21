@@ -29,8 +29,8 @@ identify the directions of largest non-Gaussianity (lower right).
 
 """
 
-# Authors: Alexandre Gramfort, Gael Varoquaux
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Generate sample data
@@ -53,8 +53,6 @@ S_pca_ = pca.fit(X).transform(X)
 
 ica = FastICA(random_state=rng, whiten="arbitrary-variance")
 S_ica_ = ica.fit(X).transform(X)  # Estimate the sources
-
-S_ica_ /= S_ica_.std(axis=0)
 
 
 # %%
@@ -113,4 +111,5 @@ plot_samples(S_ica_ / np.std(S_ica_))
 plt.title("ICA recovered signals")
 
 plt.subplots_adjust(0.09, 0.04, 0.94, 0.94, 0.26, 0.36)
+plt.tight_layout()
 plt.show()

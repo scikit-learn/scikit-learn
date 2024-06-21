@@ -35,13 +35,65 @@ is advisable to compare results against exact kernel methods when possible.
 
 Nystroem Method for Kernel Approximation
 ----------------------------------------
-The Nystroem method, as implemented in :class:`Nystroem` is a general method
-for low-rank approximations of kernels. It achieves this by essentially subsampling
-the data on which the kernel is evaluated.
-By default :class:`Nystroem` uses the ``rbf`` kernel, but it can use any
-kernel function or a precomputed kernel matrix.
-The number of samples used - which is also the dimensionality of the features computed -
-is given by the parameter ``n_components``.
+The Nystroem method, as implemented in :class:`Nystroem` is a general method for
+reduced rank approximations of kernels. It achieves this by subsampling without
+replacement rows/columns of the data on which the kernel is evaluated. While the
+computational complexity of the exact method is
+:math:`\mathcal{O}(n^3_{\text{samples}})`, the complexity of the approximation
+is :math:`\mathcal{O}(n^2_{\text{components}} \cdot n_{\text{samples}})`, where
+one can set :math:`n_{\text{components}} \ll n_{\text{samples}}` without a
+significative decrease in performance [WS2001]_.
+
+We can construct the eigendecomposition of the kernel matrix :math:`K`, based
+on the features of the data, and then split it into sampled and unsampled data
+points.
+
+.. math::
+
+        K = U \Lambda U^T
+        = \begin{bmatrix} U_1 \\ U_2\end{bmatrix} \Lambda \begin{bmatrix} U_1 \\ U_2 \end{bmatrix}^T
+        = \begin{bmatrix} U_1 \Lambda U_1^T & U_1 \Lambda U_2^T \\ U_2 \Lambda U_1^T & U_2 \Lambda U_2^T \end{bmatrix}
+        \equiv \begin{bmatrix} K_{11} & K_{12} \\ K_{21} & K_{22} \end{bmatrix}
+
+where:
+
+* :math:`U` is orthonormal
+* :math:`\Lambda` is diagonal matrix of eigenvalues
+* :math:`U_1` is orthonormal matrix of samples that were chosen
+* :math:`U_2` is orthonormal matrix of samples that were not chosen
+
+Given that :math:`U_1 \Lambda U_1^T` can be obtained by orthonormalization of
+the matrix :math:`K_{11}`, and :math:`U_2 \Lambda U_1^T` can be evaluated (as
+well as its transpose), the only remaining term to elucidate is
+:math:`U_2 \Lambda U_2^T`. To do this we can express it in terms of the already
+evaluated matrices:
+
+.. math::
+
+         \begin{align} U_2 \Lambda U_2^T &= \left(K_{21} U_1 \Lambda^{-1}\right) \Lambda \left(K_{21} U_1 \Lambda^{-1}\right)^T
+         \\&= K_{21} U_1 (\Lambda^{-1} \Lambda) \Lambda^{-1} U_1^T K_{21}^T
+         \\&= K_{21} U_1 \Lambda^{-1} U_1^T K_{21}^T
+         \\&= K_{21} K_{11}^{-1} K_{21}^T
+         \\&= \left( K_{21} K_{11}^{-\frac12} \right) \left( K_{21} K_{11}^{-\frac12} \right)^T
+         .\end{align}
+
+During ``fit``, the class :class:`Nystroem` evaluates the basis :math:`U_1`, and
+computes the normalization constant, :math:`K_{11}^{-\frac12}`. Later, during
+``transform``, the kernel matrix is determined between the basis (given by the
+`components_` attribute) and the new data points, ``X``. This matrix is then
+multiplied by the ``normalization_`` matrix for the final result.
+
+By default :class:`Nystroem` uses the ``rbf`` kernel, but it can use any kernel
+function or a precomputed kernel matrix. The number of samples used - which is
+also the dimensionality of the features computed - is given by the parameter
+``n_components``.
+
+.. rubric:: Examples
+
+* See the example entitled
+  :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`,
+  that shows an efficient machine learning pipeline that uses a
+  :class:`Nystroem` kernel.
 
 .. _rbf_kernel_approx:
 
@@ -91,9 +143,9 @@ use of larger feature spaces more efficient.
 
     Comparing an exact RBF kernel (left) with the approximation (right)
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_miscellaneous_plot_kernel_approximation.py`
+* :ref:`sphx_glr_auto_examples_miscellaneous_plot_kernel_approximation.py`
 
 .. _additive_chi_kernel_approx:
 
@@ -163,8 +215,8 @@ function given by:
 
 where:
 
-    * ``x``, ``y`` are the input vectors
-    * ``d`` is the kernel degree
+* ``x``, ``y`` are the input vectors
+* ``d`` is the kernel degree
 
 Intuitively, the feature space of the polynomial kernel of degree `d`
 consists of all possible degree-`d` products among input features, which enables
@@ -189,9 +241,9 @@ In addition, this method can transform samples in
 time, where :math:`n_{\text{components}}` is the desired output dimension,
 determined by ``n_components``.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_kernel_approximation_plot_scalable_poly_kernels.py`
+* :ref:`sphx_glr_auto_examples_kernel_approximation_plot_scalable_poly_kernels.py`
 
 .. _tensor_sketch_kernel_approx:
 
@@ -231,26 +283,29 @@ The classes in this submodule allow to approximate the embedding
 or store training examples.
 
 
-.. topic:: References:
+.. rubric:: References
 
-    .. [RR2007] `"Random features for large-scale kernel machines"
-      <https://papers.nips.cc/paper/2007/hash/013a006f03dbc5392effeb8f18fda755-Abstract.html>`_
-      Rahimi, A. and Recht, B. - Advances in neural information processing 2007,
-    .. [LS2010] `"Random Fourier approximations for skewed multiplicative histogram kernels"
-      <https://www.researchgate.net/publication/221114584_Random_Fourier_Approximations_for_Skewed_Multiplicative_Histogram_Kernels>`_
-      Li, F., Ionescu, C., and Sminchisescu, C.
-      - Pattern Recognition,  DAGM 2010, Lecture Notes in Computer Science.
-    .. [VZ2010] `"Efficient additive kernels via explicit feature maps"
-      <https://www.robots.ox.ac.uk/~vgg/publications/2011/Vedaldi11/vedaldi11.pdf>`_
-      Vedaldi, A. and Zisserman, A. - Computer Vision and Pattern Recognition 2010
-    .. [VVZ2010] `"Generalized RBF feature maps for Efficient Detection"
-      <https://www.robots.ox.ac.uk/~vgg/publications/2010/Sreekanth10/sreekanth10.pdf>`_
-      Vempati, S. and Vedaldi, A. and Zisserman, A. and Jawahar, CV - 2010
-    .. [PP2013] :doi:`"Fast and scalable polynomial kernels via explicit feature maps"
-      <10.1145/2487575.2487591>`
-      Pham, N., & Pagh, R. - 2013
-    .. [CCF2002] `"Finding frequent items in data streams"
-      <https://www.cs.princeton.edu/courses/archive/spring04/cos598B/bib/CharikarCF.pdf>`_
-      Charikar, M., Chen, K., & Farach-Colton - 2002
-    .. [WIKICS] `"Wikipedia: Count sketch"
-      <https://en.wikipedia.org/wiki/Count_sketch>`_
+.. [WS2001] `"Using the Nyström method to speed up kernel machines"
+  <https://papers.nips.cc/paper_files/paper/2000/hash/19de10adbaa1b2ee13f77f679fa1483a-Abstract.html>`_
+  Williams, C.K.I.; Seeger, M. - 2001.
+.. [RR2007] `"Random features for large-scale kernel machines"
+  <https://papers.nips.cc/paper/2007/hash/013a006f03dbc5392effeb8f18fda755-Abstract.html>`_
+  Rahimi, A. and Recht, B. - Advances in neural information processing 2007,
+.. [LS2010] `"Random Fourier approximations for skewed multiplicative histogram kernels"
+  <https://www.researchgate.net/publication/221114584_Random_Fourier_Approximations_for_Skewed_Multiplicative_Histogram_Kernels>`_
+  Li, F., Ionescu, C., and Sminchisescu, C.
+  - Pattern Recognition,  DAGM 2010, Lecture Notes in Computer Science.
+.. [VZ2010] `"Efficient additive kernels via explicit feature maps"
+  <https://www.robots.ox.ac.uk/~vgg/publications/2011/Vedaldi11/vedaldi11.pdf>`_
+  Vedaldi, A. and Zisserman, A. - Computer Vision and Pattern Recognition 2010
+.. [VVZ2010] `"Generalized RBF feature maps for Efficient Detection"
+  <https://www.robots.ox.ac.uk/~vgg/publications/2010/Sreekanth10/sreekanth10.pdf>`_
+  Vempati, S. and Vedaldi, A. and Zisserman, A. and Jawahar, CV - 2010
+.. [PP2013] :doi:`"Fast and scalable polynomial kernels via explicit feature maps"
+  <10.1145/2487575.2487591>`
+  Pham, N., & Pagh, R. - 2013
+.. [CCF2002] `"Finding frequent items in data streams"
+  <https://www.cs.princeton.edu/courses/archive/spring04/cos598B/bib/CharikarCF.pdf>`_
+  Charikar, M., Chen, K., & Farach-Colton - 2002
+.. [WIKICS] `"Wikipedia: Count sketch"
+  <https://en.wikipedia.org/wiki/Count_sketch>`_

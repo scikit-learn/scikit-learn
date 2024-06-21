@@ -14,8 +14,8 @@ compatibility reasons, one extra neighbor is computed when `mode == 'distance'`.
 Please note that we do the same in the proposed `nmslib` wrapper.
 """
 
-# Author: Tom Dupre la Tour
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # First we try to import the packages and warn the user in case they are
@@ -103,7 +103,7 @@ class NMSlibTransformer(TransformerMixin, BaseEstimator):
 
 def load_mnist(n_samples):
     """Load MNIST, shuffle the data, and return only n_samples."""
-    mnist = fetch_openml("mnist_784", as_frame=False, parser="pandas")
+    mnist = fetch_openml("mnist_784", as_frame=False)
     X, y = shuffle(mnist.data, mnist.target, random_state=2)
     return X[:n_samples] / 255, y[:n_samples]
 

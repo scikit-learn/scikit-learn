@@ -10,8 +10,8 @@ The quantity that we use is the daily variation in quote price: quotes
 that are linked tend to fluctuate in relation to each other during a day.
 """
 
-# Author: Gael Varoquaux gael.varoquaux@normalesup.org
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Retrieve the data from Internet
@@ -263,12 +263,12 @@ for index, (name, label, (x, y)) in enumerate(zip(names, labels, embedding.T)):
     )
 
 plt.xlim(
-    embedding[0].min() - 0.15 * embedding[0].ptp(),
-    embedding[0].max() + 0.10 * embedding[0].ptp(),
+    embedding[0].min() - 0.15 * np.ptp(embedding[0]),
+    embedding[0].max() + 0.10 * np.ptp(embedding[0]),
 )
 plt.ylim(
-    embedding[1].min() - 0.03 * embedding[1].ptp(),
-    embedding[1].max() + 0.03 * embedding[1].ptp(),
+    embedding[1].min() - 0.03 * np.ptp(embedding[1]),
+    embedding[1].max() + 0.03 * np.ptp(embedding[1]),
 )
 
 plt.show()

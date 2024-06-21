@@ -1,6 +1,5 @@
-# Author: Virgile Fritsch <virgile.fritsch@inria.fr>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Real
 
@@ -35,7 +34,7 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
     support_fraction : float, default=None
         The proportion of points to be included in the support of the raw
         MCD estimate. If None, the minimum value of support_fraction will
-        be used within the algorithm: `[n_sample + n_features + 1] / 2`.
+        be used within the algorithm: `(n_samples + n_features + 1) / 2 * n_samples`.
         Range is (0, 1).
 
     contamination : float, default=0.1

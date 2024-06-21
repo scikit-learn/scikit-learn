@@ -16,9 +16,8 @@ stacking strategy. Stacking slightly improves the overall performance.
 
 """
 
-# Authors: Guillaume Lemaitre <g.lemaitre58@gmail.com>
-#          Maria Telenczuk    <https://github.com/maikia>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Download the dataset
@@ -45,7 +44,7 @@ from sklearn.utils import shuffle
 
 
 def load_ames_housing():
-    df = fetch_openml(name="house_prices", as_frame=True, parser="pandas")
+    df = fetch_openml(name="house_prices", as_frame=True)
     X = df.data
     y = df.target
 

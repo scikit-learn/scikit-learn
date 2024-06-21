@@ -76,6 +76,15 @@ def estimate_bandwidth(X, *, quantile=0.3, n_samples=None, random_state=0, n_job
     -------
     bandwidth : float
         The bandwidth parameter.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.cluster import estimate_bandwidth
+    >>> X = np.array([[1, 1], [2, 1], [1, 0],
+    ...               [4, 7], [3, 5], [3, 6]])
+    >>> estimate_bandwidth(X, quantile=0.5)
+    1.61...
     """
     X = check_array(X)
 
@@ -113,7 +122,7 @@ def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
         my_mean = np.mean(points_within, axis=0)
         # If converged or at max_iter, adds the cluster
         if (
-            np.linalg.norm(my_mean - my_old_mean) < stop_thresh
+            np.linalg.norm(my_mean - my_old_mean) <= stop_thresh
             or completed_iterations == max_iter
         ):
             break
@@ -211,6 +220,19 @@ def mean_shift(
     -----
     For an example, see :ref:`examples/cluster/plot_mean_shift.py
     <sphx_glr_auto_examples_cluster_plot_mean_shift.py>`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.cluster import mean_shift
+    >>> X = np.array([[1, 1], [2, 1], [1, 0],
+    ...               [4, 7], [3, 5], [3, 6]])
+    >>> cluster_centers, labels = mean_shift(X, bandwidth=2)
+    >>> cluster_centers
+    array([[3.33..., 6.     ],
+           [1.33..., 0.66...]])
+    >>> labels
+    array([1, 1, 1, 0, 0, 0])
     """
     model = MeanShift(
         bandwidth=bandwidth,

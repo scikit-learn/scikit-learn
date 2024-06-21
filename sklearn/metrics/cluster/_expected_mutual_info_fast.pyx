@@ -1,25 +1,26 @@
-# Authors: Robert Layton <robertlayton@gmail.com>
-#           Corey Lynch <coreylynch9@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from libc.math cimport exp, lgamma
-from scipy.special import gammaln
+
+from ...utils._typedefs cimport float64_t, int64_t
+
 import numpy as np
-cimport numpy as cnp
+from scipy.special import gammaln
 
 
-def expected_mutual_information(contingency, cnp.int64_t n_samples):
+def expected_mutual_information(contingency, int64_t n_samples):
     """Calculate the expected mutual information for two labelings."""
     cdef:
-        cnp.float64_t emi = 0
-        cnp.int64_t n_rows, n_cols
-        cnp.float64_t term2, term3, gln
-        cnp.int64_t[::1] a_view, b_view
-        cnp.float64_t[::1] term1
-        cnp.float64_t[::1] gln_a, gln_b, gln_Na, gln_Nb, gln_Nnij, log_Nnij
-        cnp.float64_t[::1] log_a, log_b
+        float64_t emi = 0
+        int64_t n_rows, n_cols
+        float64_t term2, term3, gln
+        int64_t[::1] a_view, b_view
+        float64_t[::1] term1
+        float64_t[::1] gln_a, gln_b, gln_Na, gln_Nb, gln_Nnij, log_Nnij
+        float64_t[::1] log_a, log_b
         Py_ssize_t i, j, nij
-        cnp.int64_t start, end
+        int64_t start, end
 
     n_rows, n_cols = contingency.shape
     a = np.ravel(contingency.sum(axis=1).astype(np.int64, copy=False))

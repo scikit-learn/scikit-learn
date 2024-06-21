@@ -1,5 +1,5 @@
-# Author: Mathieu Blondel
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 from numbers import Real
 
 from ..utils._param_validation import Interval, StrOptions
@@ -8,6 +8,14 @@ from ._stochastic_gradient import BaseSGDClassifier
 
 class Perceptron(BaseSGDClassifier):
     """Linear perceptron classifier.
+
+    The implementation is a wrapper around :class:`~sklearn.linear_model.SGDClassifier`
+    by fixing the `loss` and `learning_rate` parameters as::
+
+        SGDClassifier(loss="perceptron", learning_rate="constant")
+
+    Other available parameters are described below and are forwarded to
+    :class:`~sklearn.linear_model.SGDClassifier`.
 
     Read more in the :ref:`User Guide <perceptron>`.
 
@@ -68,11 +76,11 @@ class Perceptron(BaseSGDClassifier):
         See :term:`Glossary <random_state>`.
 
     early_stopping : bool, default=False
-        Whether to use early stopping to terminate training when validation.
+        Whether to use early stopping to terminate training when validation
         score is not improving. If set to True, it will automatically set aside
         a stratified fraction of training data as validation and terminate
-        training when validation score is not improving by at least tol for
-        n_iter_no_change consecutive epochs.
+        training when validation score is not improving by at least `tol` for
+        `n_iter_no_change` consecutive epochs.
 
         .. versionadded:: 0.20
 

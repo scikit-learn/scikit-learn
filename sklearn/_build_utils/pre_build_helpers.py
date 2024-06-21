@@ -7,11 +7,11 @@ import sys
 import tempfile
 import textwrap
 
-from setuptools.command.build_ext import customize_compiler, new_compiler
-
 
 def compile_test_program(code, extra_preargs=None, extra_postargs=None):
     """Check that some C code can be compiled and run"""
+    from setuptools.command.build_ext import customize_compiler, new_compiler
+
     ccompiler = new_compiler()
     customize_compiler(ccompiler)
 
@@ -60,14 +60,16 @@ def compile_test_program(code, extra_preargs=None, extra_postargs=None):
 
 def basic_check_build():
     """Check basic compilation and linking of C code"""
-    if "PYODIDE_PACKAGE_ABI" in os.environ:
+    if "PYODIDE" in os.environ:
         # The following check won't work in pyodide
         return
 
-    code = textwrap.dedent("""\
+    code = textwrap.dedent(
+        """\
         #include <stdio.h>
         int main(void) {
         return 0;
         }
-        """)
+        """
+    )
     compile_test_program(code)

@@ -15,7 +15,7 @@ completely different model fit compared to the fit with unscaled data (such as
 KNeighbors models). The latter is demoed on the first part of the present
 example.
 
-On the second part of the example we show how Principle Component Analysis (PCA)
+On the second part of the example we show how Principal Component Analysis (PCA)
 is impacted by normalization of features. To illustrate this, we compare the
 principal components found using :class:`~sklearn.decomposition.PCA` on unscaled
 data with those obatined when using a
@@ -26,10 +26,8 @@ accuracy of a model trained on PCA-reduced data.
 
 """
 
-# Author: Tyler Lanigan <tylerlanigan@gmail.com>
-#         Sebastian Raschka <mail@sebastianraschka.com>
-#         Arturo Amor <david-arturo.amor-quiroz@inria.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Load and prepare data
@@ -52,6 +50,8 @@ X_train, X_test, y_train, y_test = train_test_split(
 scaled_X_train = scaler.fit_transform(X_train)
 
 # %%
+# .. _neighbors_scaling:
+#
 # Effect of rescaling on a k-neighbors models
 # ===========================================
 #

@@ -9,6 +9,10 @@ sinusoidal dataset with a small amount of Gaussian noise.
 regressor. As the number of boosts is increased the regressor can fit more
 detail.
 
+See :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py` for an
+example showcasing the benefits of using more efficient regression models such
+as :class:`~ensemble.HistGradientBoostingRegressor`.
+
 .. [1] `H. Drucker, "Improving Regressors using Boosting Techniques", 1997.
         <https://citeseerx.ist.psu.edu/doc_view/pid/8d49e2dedb817f2c3330e74b63c5fc86d2399ce3>`_
 
@@ -19,9 +23,8 @@ detail.
 # ------------------
 # First, we prepare dummy data with a sinusoidal relationship and some gaussian noise.
 
-# Author: Noel Dawe <noel.dawe@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 

@@ -31,7 +31,7 @@ set.
 # Code source: Tom Dupré la Tour
 # Adapted from plot_classifier_comparison by Gaël Varoquaux and Andreas Müller
 #
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -68,13 +68,13 @@ classifiers = [
         {"logisticregression__C": np.logspace(-1, 1, 3)},
     ),
     (
-        make_pipeline(StandardScaler(), LinearSVC(random_state=0, dual="auto")),
+        make_pipeline(StandardScaler(), LinearSVC(random_state=0)),
         {"linearsvc__C": np.logspace(-1, 1, 3)},
     ),
     (
         make_pipeline(
             StandardScaler(),
-            KBinsDiscretizer(encode="onehot"),
+            KBinsDiscretizer(encode="onehot", random_state=0),
             LogisticRegression(random_state=0),
         ),
         {
@@ -85,8 +85,8 @@ classifiers = [
     (
         make_pipeline(
             StandardScaler(),
-            KBinsDiscretizer(encode="onehot"),
-            LinearSVC(random_state=0, dual="auto"),
+            KBinsDiscretizer(encode="onehot", random_state=0),
+            LinearSVC(random_state=0),
         ),
         {
             "kbinsdiscretizer__n_bins": np.arange(5, 8),

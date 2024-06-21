@@ -1,6 +1,5 @@
-# Authors: David Dale <dale.david@mail.ru>
-#          Christian Lorentzen <lorentzen.ch@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 import warnings
 from numbers import Real
 
@@ -11,7 +10,7 @@ from scipy.optimize import linprog
 from ..base import BaseEstimator, RegressorMixin, _fit_context
 from ..exceptions import ConvergenceWarning
 from ..utils import _safe_indexing
-from ..utils._param_validation import Hidden, Interval, StrOptions
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.fixes import parse_version, sp_version
 from ..utils.validation import _check_sample_weight
 from ._base import LinearModel
@@ -44,7 +43,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         Whether or not to fit the intercept.
 
     solver : {'highs-ds', 'highs-ipm', 'highs', 'interior-point', \
-            'revised simplex'}, default='interior-point'
+            'revised simplex'}, default='highs'
         Method used by :func:`scipy.optimize.linprog` to solve the linear
         programming formulation.
 
@@ -55,7 +54,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         From `scipy>=1.11.0`, "interior-point" is not available anymore.
 
         .. versionchanged:: 1.4
-           The default of `solver` will change to `"highs"` in version 1.4.
+           The default of `solver` changed to `"highs"` in version 1.4.
 
     solver_options : dict, default=None
         Additional parameters passed to :func:`scipy.optimize.linprog` as
@@ -121,7 +120,6 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
                     "revised simplex",
                 }
             ),
-            Hidden(StrOptions({"warn"})),
         ],
         "solver_options": [dict, None],
     }
@@ -132,7 +130,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         quantile=0.5,
         alpha=1.0,
         fit_intercept=True,
-        solver="warn",
+        solver="highs",
         solver_options=None,
     ):
         self.quantile = quantile
@@ -182,17 +180,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         # So we rescale the penalty term, which is equivalent.
         alpha = np.sum(sample_weight) * self.alpha
 
-        if self.solver == "warn":
-            warnings.warn(
-                (
-                    "The default solver will change from 'interior-point' to 'highs' in"
-                    " version 1.4. Set `solver='highs'` or to the desired solver to"
-                    " silence this warning."
-                ),
-                FutureWarning,
-            )
-            solver = "interior-point"
-        elif self.solver in (
+        if self.solver in (
             "highs-ds",
             "highs-ipm",
             "highs",

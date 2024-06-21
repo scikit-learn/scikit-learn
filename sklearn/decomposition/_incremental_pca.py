@@ -1,8 +1,7 @@
 """Incremental Principal Components Analysis."""
 
-# Author: Kyle Kastner <kastnerkyle@gmail.com>
-#         Giorgio Patrini
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Integral
 
@@ -38,6 +37,9 @@ class IncrementalPCA(_BasePCA):
     remain in memory at a time. There will be ``n_samples / batch_size`` SVD
     computations to get the principal components, versus 1 large SVD of
     complexity ``O(n_samples * n_features ** 2)`` for PCA.
+
+    For a usage example, see
+    :ref:`sphx_glr_auto_examples_decomposition_plot_incremental_pca.py`.
 
     Read more in the :ref:`User Guide <IncrementalPCA>`.
 
@@ -226,6 +228,7 @@ class IncrementalPCA(_BasePCA):
             accept_sparse=["csr", "csc", "lil"],
             copy=self.copy,
             dtype=[np.float64, np.float32],
+            force_writeable=True,
         )
         n_samples, n_features = X.shape
 
@@ -275,7 +278,11 @@ class IncrementalPCA(_BasePCA):
                     "or use IncrementalPCA.fit to do so in batches."
                 )
             X = self._validate_data(
-                X, copy=self.copy, dtype=[np.float64, np.float32], reset=first_pass
+                X,
+                copy=self.copy,
+                dtype=[np.float64, np.float32],
+                force_writeable=True,
+                reset=first_pass,
             )
         n_samples, n_features = X.shape
         if first_pass:

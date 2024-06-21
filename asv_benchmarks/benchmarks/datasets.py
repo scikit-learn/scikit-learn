@@ -60,9 +60,7 @@ def _20newsgroups_lowdim_dataset(n_components=100, ngrams=(1, 1), dtype=np.float
 
 @M.cache
 def _mnist_dataset(dtype=np.float32):
-    X, y = fetch_openml(
-        "mnist_784", version=1, return_X_y=True, as_frame=False, parser="pandas"
-    )
+    X, y = fetch_openml("mnist_784", version=1, return_X_y=True, as_frame=False)
     X = X.astype(dtype, copy=False)
     X = MaxAbsScaler().fit_transform(X)
 

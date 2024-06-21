@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import pytest
 from scipy import linalg
@@ -19,6 +21,7 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
 )
+from sklearn.utils.fixes import _IS_WASM
 
 # Data is just 6 separable points in the plane
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]], dtype="f")
@@ -591,40 +594,45 @@ def test_qda_store_covariance():
     )
 
 
+@pytest.mark.xfail(
+    _IS_WASM,
+    reason=(
+        "no floating point exceptions, see"
+        " https://github.com/numpy/numpy/pull/21895#issuecomment-1311525881"
+    ),
+)
 def test_qda_regularization():
     # The default is reg_param=0. and will cause issues when there is a
     # constant variable.
 
-    # Fitting on data with constant variable triggers an UserWarning.
-    collinear_msg = "Variables are collinear"
+    # Fitting on data with constant variable without regularization
+    # triggers a LinAlgError.
+    msg = r"The covariance matrix of class .+ is not full rank"
     clf = QuadraticDiscriminantAnalysis()
-    with pytest.warns(UserWarning, match=collinear_msg):
+    with pytest.warns(linalg.LinAlgWarning, match=msg):
         y_pred = clf.fit(X2, y6)
 
-    # XXX: RuntimeWarning is also raised at predict time because of divisions
-    # by zero when the model is fit with a constant feature and without
-    # regularization: should this be considered a bug? Either by the fit-time
-    # message more informative, raising and exception instead of a warning in
-    # this case or somehow changing predict to avoid division by zero.
-    with pytest.warns(RuntimeWarning, match="divide by zero"):
-        y_pred = clf.predict(X2)
+    y_pred = clf.predict(X2)
     assert np.any(y_pred != y6)
 
-    # Adding a little regularization fixes the division by zero at predict
-    # time. But UserWarning will persist at fit time.
+    # Adding a little regularization fixes the fit time error.
     clf = QuadraticDiscriminantAnalysis(reg_param=0.01)
-    with pytest.warns(UserWarning, match=collinear_msg):
-        clf.fit(X2, y6)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+    clf.fit(X2, y6)
     y_pred = clf.predict(X2)
     assert_array_equal(y_pred, y6)
 
-    # UserWarning should also be there for the n_samples_in_a_class <
+    # LinAlgWarning should also be there for the n_samples_in_a_class <
     # n_features case.
-    clf = QuadraticDiscriminantAnalysis(reg_param=0.1)
-    with pytest.warns(UserWarning, match=collinear_msg):
+    clf = QuadraticDiscriminantAnalysis()
+    with pytest.warns(linalg.LinAlgWarning, match=msg):
         clf.fit(X5, y5)
-    y_pred5 = clf.predict(X5)
-    assert_array_equal(y_pred5, y5)
+
+    # The error will persist even with regularization
+    clf = QuadraticDiscriminantAnalysis(reg_param=0.3)
+    with pytest.warns(linalg.LinAlgWarning, match=msg):
+        clf.fit(X5, y5)
 
 
 def test_covariance():

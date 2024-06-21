@@ -1,10 +1,8 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 """
 Generalized Linear Models with Exponential Dispersion Family
 """
-
-# Author: Christian Lorentzen <lorentzen.ch@gmail.com>
-# some parts and tricks stolen from other sklearn files.
-# License: BSD 3 clause
 
 from numbers import Integral, Real
 
@@ -207,10 +205,10 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             loss_dtype = min(max(y.dtype, X.dtype), np.float64)
         y = check_array(y, dtype=loss_dtype, order="C", ensure_2d=False)
 
-        # TODO: We could support samples_weight=None as the losses support it.
-        # Note that _check_sample_weight calls check_array(order="C") required by
-        # losses.
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=loss_dtype)
+        if sample_weight is not None:
+            # Note that _check_sample_weight calls check_array(order="C") required by
+            # losses.
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=loss_dtype)
 
         n_samples, n_features = X.shape
         self._base_loss = self._get_loss()
@@ -228,17 +226,20 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
         # TODO: if alpha=0 check that X is not rank deficient
 
-        # IMPORTANT NOTE: Rescaling of sample_weight:
+        # NOTE: Rescaling of sample_weight:
         # We want to minimize
-        #     obj = 1/(2*sum(sample_weight)) * sum(sample_weight * deviance)
+        #     obj = 1/(2 * sum(sample_weight)) * sum(sample_weight * deviance)
         #         + 1/2 * alpha * L2,
         # with
         #     deviance = 2 * loss.
         # The objective is invariant to multiplying sample_weight by a constant. We
-        # choose this constant such that sum(sample_weight) = 1. Thus, we end up with
+        # could choose this constant such that sum(sample_weight) = 1 in order to end
+        # up with
         #     obj = sum(sample_weight * loss) + 1/2 * alpha * L2.
-        # Note that LinearModelLoss.loss() computes sum(sample_weight * loss).
-        sample_weight = sample_weight / sample_weight.sum()
+        # But LinearModelLoss.loss() already computes
+        #     average(loss, weights=sample_weight)
+        # Thus, without rescaling, we have
+        #     obj = LinearModelLoss.loss(...)
 
         if self.warm_start and hasattr(self, "coef_"):
             if self.fit_intercept:
@@ -415,10 +416,10 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 f" {base_loss.__name__}."
             )
 
-        # Note that constant_to_optimal_zero is already multiplied by sample_weight.
-        constant = np.mean(base_loss.constant_to_optimal_zero(y_true=y))
-        if sample_weight is not None:
-            constant *= sample_weight.shape[0] / np.sum(sample_weight)
+        constant = np.average(
+            base_loss.constant_to_optimal_zero(y_true=y, sample_weight=None),
+            weights=sample_weight,
+        )
 
         # Missing factor of 2 in deviance cancels out.
         deviance = base_loss(
