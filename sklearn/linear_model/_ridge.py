@@ -831,8 +831,6 @@ def _ridge_regression(
     if ravel:
         coef = _ravel(coef)
 
-    coef = xp.asarray(coef)
-
     if return_n_iter and return_intercept:
         res = coef, n_iter, intercept
     elif return_intercept:
