@@ -26,10 +26,8 @@ accuracy of a model trained on PCA-reduced data.
 
 """
 
-# Author: Tyler Lanigan <tylerlanigan@gmail.com>
-#         Sebastian Raschka <mail@sebastianraschka.com>
-#         Arturo Amor <david-arturo.amor-quiroz@inria.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Load and prepare data
