@@ -27,7 +27,13 @@ from ..utils import (
     check_consistent_length,
     column_or_1d,
 )
-from ..utils._array_api import _average, _is_numpy_namespace, get_namespace
+from ..utils._array_api import (
+    _average,
+    _is_numpy_namespace,
+    _ravel,
+    get_namespace,
+    get_namespace_and_device,
+)
 from ..utils._encode import _encode, _unique
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.extmath import stable_cumsum
@@ -1512,13 +1518,18 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_base=2, ignore_ties=False):
         ranked = y_true[np.arange(ranking.shape[0])[:, np.newaxis], ranking]
         cumulative_gains = discount.dot(ranked.T)
     else:
-        discount_cumsum = xp.cumulative_sum(discount)
+        discount_cumsum = _cumulative_sum(discount, xp)
         cumulative_gains = [
             _tie_averaged_dcg(y_t, y_s, discount_cumsum)
             for y_t, y_s in zip(y_true, y_score)
         ]
-        cumulative_gains = np.asarray(cumulative_gains)
+        cumulative_gains = xp.asarray(cumulative_gains)
     return cumulative_gains
+
+
+def _cumulative_sum(arr, xp):
+    arr = _ravel(arr, xp)
+    return xp.asarray([xp.sum(arr[: i + 1]) for i in range(len(arr))])
 
 
 def _tie_averaged_dcg(y_true, y_score, discount_cumsum):
@@ -1558,7 +1569,7 @@ def _tie_averaged_dcg(y_true, y_score, discount_cumsum):
     European conference on information retrieval (pp. 414-421). Springer,
     Berlin, Heidelberg.
     """
-    xp, _ = get_namespace(y_true, y_score)
+    xp, _, device_ = get_namespace_and_device(y_true, y_score)
     if _is_numpy_namespace(xp):
         _, inv, counts = np.unique(-y_score, return_inverse=True, return_counts=True)
         ranked = np.zeros(len(counts))
@@ -1572,11 +1583,11 @@ def _tie_averaged_dcg(y_true, y_score, discount_cumsum):
     else:
         _, counts = xp.unique_counts(-y_score)
         _, inv = xp.unique_inverse(-y_score)
-        ranked = xp.zeros(len(counts))
-        xp.add.at(ranked, inv, y_true)
+        # ranked = xp.zeros(len(counts))
+        ranked = y_true[inv]
         ranked /= counts
-        groups = xp.cumulative_sum(counts) - 1
-        discount_sums = xp.empty(len(counts))
+        groups = _cumulative_sum(counts, xp) - 1
+        discount_sums = xp.asarray(xp.empty(len(counts)), device=device_)
         discount_sums[0] = discount_cumsum[groups[0]]
         discount_sums[1:] = xp.diff(discount_cumsum[groups])
         return xp.sum(ranked * discount_sums)
