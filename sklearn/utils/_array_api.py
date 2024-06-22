@@ -606,6 +606,8 @@ def _add_to_diagonal(array, value, xp):
 
 def max_supported_float_precision(xp, device):
     """Return the float dtype with the highest precision supported by the device."""
+    # TODO: Update to use `__array_namespace__info__()` from array-api v2023.12
+    # when/if that becomes more widespread.
     xp_name = xp.__name__
     if xp_name in {"array_api_compat.torch", "torch"} and str(device).startswith("mps"):
         return xp.float32
