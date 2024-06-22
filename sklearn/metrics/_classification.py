@@ -222,7 +222,8 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
             differing_labels = count_nonzero(y_true - y_pred, axis=1)
         else:
             differing_labels = xp.sum(
-                xp.asarray(y_true - y_pred, dtype=xp.bool), axis=1
+                xp.astype(xp.astype(y_true - y_pred, xp.bool), xp.int8),
+                axis=1,
             )
         score = xp.asarray(differing_labels == 0, device=device)
     else:
