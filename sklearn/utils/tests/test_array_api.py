@@ -16,6 +16,7 @@ from sklearn.utils._array_api import (
     _estimator_with_converted_arrays,
     _is_numpy_namespace,
     _isin,
+    _max_supported_float_precision,
     _nanmax,
     _nanmin,
     _NumPyAPIWrapper,
@@ -24,7 +25,6 @@ from sklearn.utils._array_api import (
     get_namespace,
     get_namespace_and_device,
     indexing_dtype,
-    max_supported_float_dtype,
     supported_float_dtypes,
     yield_namespace_device_dtype_combinations,
 )
@@ -513,10 +513,10 @@ def test_indexing_dtype(namespace, _device, _dtype):
 @pytest.mark.parametrize(
     "namespace, _device, _dtype", yield_namespace_device_dtype_combinations()
 )
-def test_max_supported_float_dtype(namespace, _device, _dtype):
+def test_max_supported_float_precision(namespace, _device, _dtype):
     xp = _array_api_for_tests(namespace, _device)
     expected_dtype = xp.float32 if _device == "mps" else xp.float64
-    assert max_supported_float_dtype(xp, _device) == expected_dtype
+    assert _max_supported_float_precision(xp, _device) == expected_dtype
 
 
 @pytest.mark.parametrize(
