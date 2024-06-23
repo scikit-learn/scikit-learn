@@ -1586,10 +1586,9 @@ def _tie_averaged_dcg(y_true, y_score, discount_cumsum):
         return (ranked * discount_sums).sum()
     _, counts = xp.unique_counts(-y_score)
     _, inv = xp.unique_inverse(-y_score)
-    ranked = y_true[inv]
-    ranked /= counts
+    ranked = y_true[inv] / counts
     groups = _cumulative_sum(counts, xp) - 1
-    discount_sums = xp.asarray(xp.empty(len(counts)), device=device_)
+    discount_sums = xp.asarray(xp.empty(counts.size), device=device_)
     discount_sums[0] = discount_cumsum[groups[0]]
     discount_sums[1:] = xp.diff(discount_cumsum[groups])
     return xp.sum(ranked * discount_sums)
