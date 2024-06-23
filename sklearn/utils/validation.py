@@ -1661,6 +1661,9 @@ def _estimator_has(attr, delegate_attrs=("estimator_", "estimator")):
     We check the `delegate_attrs` in the order they are passed.
     By default, we first check the fitted estimator if available,
     otherwise we check the unfitted estimator.
+
+    getattr() returns True if the attribute exists in the object, 
+    and raises `AttributeError` if it doesn't.
     """
 
     def check(self):
