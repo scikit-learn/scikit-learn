@@ -1507,9 +1507,10 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_base=2, ignore_ties=False):
         Cumulative Gain (the DCG obtained for a perfect ranking), in order to
         have a score between 0 and 1.
     """
-    xp, _ = get_namespace(y_true, y_score)
+    xp, _, device_ = get_namespace_and_device(y_true, y_score)
     discount = 1 / (
-        xp.log(xp.arange(y_true.shape[1]) + 2) / xp.log(xp.asarray(log_base))
+        xp.log(xp.arange(y_true.shape[1], device=device_) + 2)
+        / xp.log(xp.asarray(log_base, device=device_))
     )
     if k is not None:
         discount[k:] = 0
@@ -1523,7 +1524,7 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_base=2, ignore_ties=False):
             _tie_averaged_dcg(y_t, y_s, discount_cumsum)
             for y_t, y_s in zip(y_true, y_score)
         ]
-        cumulative_gains = xp.asarray(cumulative_gains)
+        cumulative_gains = xp.asarray(cumulative_gains, device=device_)
     return cumulative_gains
 
 
@@ -1583,7 +1584,6 @@ def _tie_averaged_dcg(y_true, y_score, discount_cumsum):
     else:
         _, counts = xp.unique_counts(-y_score)
         _, inv = xp.unique_inverse(-y_score)
-        # ranked = xp.zeros(len(counts))
         ranked = y_true[inv]
         ranked /= counts
         groups = _cumulative_sum(counts, xp) - 1
@@ -1714,18 +1714,17 @@ def dcg_score(
     ...           scores, k=1, ignore_ties=True)
     5.0
     """
-    xp, _ = get_namespace(y_true, y_score)
+    xp, _ = get_namespace(y_true, y_score, sample_weight)
     y_true = check_array(y_true, ensure_2d=False)
     y_score = check_array(y_score, ensure_2d=False)
     check_consistent_length(y_true, y_score, sample_weight)
     _check_dcg_target_type(y_true)
-    return _average(
-        _dcg_sample_scores(
-            y_true, y_score, k=k, log_base=log_base, ignore_ties=ignore_ties
-        ),
-        weights=sample_weight,
-        xp=xp,
+    discounted_cumulative_gains = _dcg_sample_scores(
+        y_true, y_score, k=k, log_base=log_base, ignore_ties=ignore_ties
     )
+    dcg_score = _average(discounted_cumulative_gains, weights=sample_weight, xp=xp)
+    assert dcg_score.shape == ()
+    return float(dcg_score)
 
 
 def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
