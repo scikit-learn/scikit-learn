@@ -1523,6 +1523,7 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_base=2, ignore_ties=False):
         discount_cumsum = _cumulative_sum(discount, xp)
         cumulative_gains = [
             _tie_averaged_dcg(y_t, y_s, discount_cumsum)
+            # TODO: zip doesn't seem to work with array_api_strict
             for y_t, y_s in zip(y_true, y_score)
         ]
     if _is_numpy_namespace(xp):
