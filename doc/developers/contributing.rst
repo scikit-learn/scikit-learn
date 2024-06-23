@@ -1016,7 +1016,7 @@ We expect code coverage of new features to be at least around 90%.
   To test code coverage, you need to install the `coverage
   <https://pypi.org/project/coverage/>`_ package in addition to `pytest`.
 
-  1. Run `make test-coverage`. The output lists for each file the line
+  1. Run `pytest --cov sklearn /path/to/tests`. The output lists for each file the line
      numbers that are not tested.
 
   2. Find a low hanging fruit, looking at which lines are not tested,
