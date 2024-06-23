@@ -1658,8 +1658,9 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
 def _estimator_has(attr, delegate_attrs=("estimator_", "estimator")):
     """Check if we can delegate a method to the underlying estimator.
 
-    First, we check the fitted estimator if available, otherwise we
-    check the unfitted estimator.
+    We check the `delegate_attrs` in the order they are passed.
+    By default, we first check the fitted estimator if available,
+    otherwise we check the unfitted estimator.
     """
 
     def check(self):
