@@ -2347,9 +2347,9 @@ def validation_curve(
               Parameters directly passed to the `fit` method of the estimator.
 
             - If `enable_metadata_routing=True`:
-              Parameters safely routed to the `fit` method of the estimator.
-              See :ref:`Metadata Routing User Guide <metadata_routing>` for more
-              details.
+              Parameters safely routed to the `fit` method of the estimator, to the
+              scorer and to the cross-validation object. See :ref:`Metadata Routing User
+              Guide <metadata_routing>` for more details.
 
             .. versionadded:: 1.6
 
