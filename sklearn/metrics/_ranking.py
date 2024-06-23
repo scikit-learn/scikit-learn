@@ -1509,8 +1509,9 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_base=2, ignore_ties=False):
     """
     xp, _, device_ = get_namespace_and_device(y_true, y_score)
     discount = 1 / (
-        xp.log(xp.arange(y_true.shape[1], device=device_) + 2)
-        / xp.log(xp.asarray(log_base, device=device_))
+        # TODO: float64 not for MPS!
+        xp.log(xp.astype(xp.arange(y_true.shape[1], device=device_), xp.float64) + 2)
+        / xp.log(xp.asarray(log_base, dtype=xp.float64, device=device_))
     )
     if k is not None:
         discount[k:] = 0
@@ -1524,13 +1525,14 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_base=2, ignore_ties=False):
             _tie_averaged_dcg(y_t, y_s, discount_cumsum)
             for y_t, y_s in zip(y_true, y_score)
         ]
-        cumulative_gains = xp.asarray(cumulative_gains, device=device_)
-    return cumulative_gains
+    if _is_numpy_namespace(xp):
+        return np.asarray(cumulative_gains)
+    return xp.asarray(cumulative_gains, device=device_)
 
 
 def _cumulative_sum(arr, xp):
     arr = _ravel(arr, xp)
-    return xp.asarray([xp.sum(arr[: i + 1]) for i in range(len(arr))])
+    return xp.asarray([xp.sum(arr[: i + 1]) for i in range(arr.size)])
 
 
 def _tie_averaged_dcg(y_true, y_score, discount_cumsum):
@@ -1572,6 +1574,8 @@ def _tie_averaged_dcg(y_true, y_score, discount_cumsum):
     """
     xp, _, device_ = get_namespace_and_device(y_true, y_score)
     if _is_numpy_namespace(xp):
+        print(xp.__name__)
+        print("NUMPY!!")
         _, inv, counts = np.unique(-y_score, return_inverse=True, return_counts=True)
         ranked = np.zeros(len(counts))
         np.add.at(ranked, inv, y_true)
@@ -1581,16 +1585,17 @@ def _tie_averaged_dcg(y_true, y_score, discount_cumsum):
         discount_sums[0] = discount_cumsum[groups[0]]
         discount_sums[1:] = np.diff(discount_cumsum[groups])
         return (ranked * discount_sums).sum()
-    else:
-        _, counts = xp.unique_counts(-y_score)
-        _, inv = xp.unique_inverse(-y_score)
-        ranked = y_true[inv]
-        ranked /= counts
-        groups = _cumulative_sum(counts, xp) - 1
-        discount_sums = xp.asarray(xp.empty(len(counts)), device=device_)
-        discount_sums[0] = discount_cumsum[groups[0]]
-        discount_sums[1:] = xp.diff(discount_cumsum[groups])
-        return xp.sum(ranked * discount_sums)
+    print(xp.__name__)
+    print("WHAAAT!!")
+    _, counts = xp.unique_counts(-y_score)
+    _, inv = xp.unique_inverse(-y_score)
+    ranked = y_true[inv]
+    ranked /= counts
+    groups = _cumulative_sum(counts, xp) - 1
+    discount_sums = xp.asarray(xp.empty(len(counts)), device=device_)
+    discount_sums[0] = discount_cumsum[groups[0]]
+    discount_sums[1:] = xp.diff(discount_cumsum[groups])
+    return xp.sum(ranked * discount_sums)
 
 
 def _check_dcg_target_type(y_true):
