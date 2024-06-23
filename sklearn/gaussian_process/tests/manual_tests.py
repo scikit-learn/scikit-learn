@@ -40,7 +40,7 @@ def m_test():
     )
     gpr = GaussianProcessRegressor(kernel=kernel, alpha=0.0001)  #, optimizer=None)
     tpr = TProcessRegressor(kernel=kernel, v=5, alpha=0.0001)  #, optimizer=None)
-    # plotSPR2(gpr)
+    plotSPR2(gpr)
     plotSPR2(tpr)
 
 
