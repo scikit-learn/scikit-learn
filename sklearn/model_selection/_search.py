@@ -1087,24 +1087,19 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             param_list = list(param_result.values())
             try:
                 arr = np.array(param_list)
-            except (TypeError, ValueError):
+            except ValueError:
                 arr_dtype = np.dtype(object)
             else:
                 arr_dtype = arr.dtype if arr.dtype.kind != "U" else object
             if len(param_list) == n_candidates:
-                try:
-                    ma = MaskedArray(param_list, mask=False, dtype=arr_dtype)
-                except ValueError:
-                    # Fall back to iterating over `param_result.items()` below
-                    pass
+                ma = MaskedArray(param_list, mask=False, dtype=arr_dtype)
+                if ma.ndim > 1:
+                    # If ndim > 1, then a list of tuples might be turned into
+                    # a 2D array, so we use the fallback below for that case too.
+                    arr_dtype = object
                 else:
-                    if ma.ndim > 1:
-                        # If ndim > 1, then a list of tuples might be turned into
-                        # a 2D array, so we use the fallback below for that case too.
-                        arr_dtype = object
-                    else:
-                        results[key] = ma
-                        continue
+                    results[key] = ma
+                    continue
 
             # Use one MaskedArray and mask all the places where the param is not
             # applicable for that candidate (which may not contain all the params).
