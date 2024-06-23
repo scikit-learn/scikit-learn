@@ -1632,19 +1632,11 @@ def _estimator_has(attr, delegate_attrs=("estimator_", "estimator")):
 
     def check(self):
         for delegate in delegate_attrs:
-            if delegate == "estimators_":
-                getattr(self.estimators_[0], attr)
-                return True
-            elif hasattr(self, delegate):
-                getattr(getattr(self, delegate), attr)
-                return True
-        return False
-
-        # if hasattr(self, delegate):
-        #     getattr(self.estimator_, attr)
-        # else:
-        #     getattr(self.estimator, attr)
-        # return True
+            if hasattr(self, delegate):
+                if delegate == "estimators_":
+                    return getattr(self.estimators_[0], attr)
+                else:
+                    return getattr(getattr(self, delegate), attr)
 
     return check
 
