@@ -1575,8 +1575,6 @@ def _tie_averaged_dcg(y_true, y_score, discount_cumsum):
     """
     xp, _, device_ = get_namespace_and_device(y_true, y_score)
     if _is_numpy_namespace(xp):
-        print(xp.__name__)
-        print("NUMPY!!")
         _, inv, counts = np.unique(-y_score, return_inverse=True, return_counts=True)
         ranked = np.zeros(len(counts))
         np.add.at(ranked, inv, y_true)
@@ -1586,8 +1584,6 @@ def _tie_averaged_dcg(y_true, y_score, discount_cumsum):
         discount_sums[0] = discount_cumsum[groups[0]]
         discount_sums[1:] = np.diff(discount_cumsum[groups])
         return (ranked * discount_sums).sum()
-    print(xp.__name__)
-    print("WHAAAT!!")
     _, counts = xp.unique_counts(-y_score)
     _, inv = xp.unique_inverse(-y_score)
     ranked = y_true[inv]
