@@ -2284,7 +2284,7 @@ def validation_curve(
             via ``sklearn.set_config(enable_metadata_routing=True)``. When routing
             is enabled, pass ``groups`` alongside other metadata via the ``params``
             argument instead. E.g.:
-            ``learning_curve(..., params={'groups': groups})``.
+            ``validation_curve(..., params={'groups': groups})``.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -2341,7 +2341,7 @@ def validation_curve(
             ``params`` instead.
 
     params : dict, default=None
-        Parameters to pass to the `fit` method of the estimator and to the scorer.
+        Parameters to pass to the estimator, scorer and cross-validation object.
 
             - If `enable_metadata_routing=False` (default):
               Parameters directly passed to the `fit` method of the estimator.
