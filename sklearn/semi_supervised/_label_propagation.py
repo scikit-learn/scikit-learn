@@ -52,9 +52,8 @@ Learning (2006), pp. 193-216
 Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
 """
 
-# Authors: Clay Woolam <clay@woolam.org>
-#          Utkarsh Upadhyay <mail@musicallyut.in>
-# License: BSD
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
