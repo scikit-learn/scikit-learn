@@ -810,6 +810,7 @@ def test_matthews_corrcoef_nan():
         partial(fbeta_score, beta=1),
         precision_score,
         recall_score,
+        accuracy_score,
         partial(cohen_kappa_score, labels=[0, 1]),
     ],
 )
@@ -817,6 +818,9 @@ def test_zero_division_nan_no_warning(metric, y_true, y_pred, zero_division):
     """Check the behaviour of `zero_division` when setting to 0, 1 or np.nan.
     No warnings should be raised.
     """
+    if metric == accuracy_score and (y_true, y_pred) != ([], []):
+        pytest.skip("Skipping accuracy_score for non-empty input pairs")
+
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         result = metric(y_true, y_pred, zero_division=zero_division)
@@ -835,6 +839,7 @@ def test_zero_division_nan_no_warning(metric, y_true, y_pred, zero_division):
         partial(fbeta_score, beta=1),
         precision_score,
         recall_score,
+        accuracy_score,
         cohen_kappa_score,
     ],
 )
@@ -842,6 +847,8 @@ def test_zero_division_nan_warning(metric, y_true, y_pred):
     """Check the behaviour of `zero_division` when setting to "warn".
     A `UndefinedMetricWarning` should be raised.
     """
+    if metric == accuracy_score and (y_true, y_pred) != ([], []):
+        pytest.skip("Skipping accuracy_score for non-empty input pairs")
     with pytest.warns(UndefinedMetricWarning):
         result = metric(y_true, y_pred, zero_division="warn")
     assert result == 0.0
