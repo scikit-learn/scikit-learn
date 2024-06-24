@@ -155,6 +155,20 @@ def test_fit_inputs():
         pce.fit(np.atleast_2d([1]), [1])
 
 
+# Test no variation in feature
+def test_no_variation():
+    x1 = [1.0, 3.0, 5.0, 6.0, 7.0, 8.0]
+    x2 = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+    X = np.vstack([x1, x2]).T
+    y1 = (x1 * np.sin(x1)).ravel()
+    y2 = (np.cos(x2) + 1).ravel()
+    Y = np.vstack([y1, y2]).T
+    pce = PolynomialChaosRegressor(degree=5)
+    pce.fit(X, Y)
+    y_fit = pce.predict(X)
+    assert np.linalg.norm(Y - y_fit) < 1e-12
+
+
 # Test grid search
 def test_grid_search():
     random_state = check_random_state(123)

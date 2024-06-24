@@ -328,7 +328,8 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         self.output_std_ = (
             np.std(y, axis=0) if self.scale_outputs else np.full(self.n_outputs_, 1)
         )
-        self.output_std_[self.output_std_ == 0] = 1  # avoid / 0 error
+        if self.n_outputs_ > 1:
+            self.output_std_[self.output_std_ == 0] = 1  # avoid / 0 error
         y = y - self.output_mean_
         y = y / self.output_std_
 
