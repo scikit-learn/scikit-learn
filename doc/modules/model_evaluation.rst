@@ -1934,9 +1934,10 @@ the actual formulas).
   that no samples of the positive class were present in the testing set. This can
   also happen when cross-validating highly imbalanced data.
 
-  In all the previous cases the :func:`class_likelihood_ratios` function raises by
-  default an appropriate warning message and returns `nan` to avoid pollution when
-  averaging over cross-validation folds.
+  In all these cases :func:`class_likelihood_ratios` raises by default an appropriate
+  warning message and returns `nan` to avoid pollution when averaging over
+  cross-validation folds. Users can control the warning behaviour and set return values
+  in case of a division by zero with the `zero_division` param.
 
   For a worked-out demonstration of the :func:`class_likelihood_ratios` function,
   see the example below.

@@ -2048,8 +2048,10 @@ def class_likelihood_ratios(
     # value with zero_division="warn" should be updated to the lowest score for each
     # metric respectively (1 for LR+ and 0 for LR-), return values and warning messages
     # need to be updated, the Warns section in the docstring needs be be re-written, the
-    # hidden option for zero_division ("default") needs to be removed and the default
-    # set to "warn".
+    # "Mathematical divergences" section in model_evaluation.rst needs to be updated on
+    # the new default behaviour of zero_division, the the hidden option for
+    # zero_division ("default") needs to be removed and the default set to "warn" in the
+    # function signature.
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type != "binary":
         raise ValueError(
