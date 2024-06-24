@@ -2005,14 +2005,14 @@ def class_likelihood_ratios(
     -----
     `UndefinedMetricWarning` is raised if `zero_division="warn"` or if
     `raise_warning=True` (deprecated) and a division by zero is triggered.
-    Specific conditions under which this warning is raised in relation to the confusion
-    matrix deriving from `y_true` and `y_pred` arguments:
+    Conditions under which this warning is raised in relation to the confusion matrix
+    deriving from the `y_true` and `y_pred` arguments:
     When the number of false positives is 0, the positive likelihood ratio is undefined.
     When the number of true negatives is 0, the negative likelihood ratio is undefined.
-    When the sum of true positives and false negatives is 0, both the positive and
-    negative likelihood ratios are undefined; in this case a warning in raised
-    regardles of the `zero_division` and `raise_warning` arguments, since it is not
-    caused by a division by zero.
+    `UndefinedMetricWarning` is also (and regardles of the `zero_division` and
+    `raise_warning` arguments) raised when no samples of the positive class are present
+    in `y_true` (when the sum of true positives and false negatives is 0). Then, both
+    the positive and the negative likelihood ratios are undefined.
     An undefined metric can be defined by setting the `zero_division` param.
 
     References
