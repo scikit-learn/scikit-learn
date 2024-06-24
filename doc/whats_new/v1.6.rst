@@ -137,10 +137,14 @@ Changelog
   division by zero, the metric is undefined and this value is returned.
   :pr:`29210` by :user:`Marc Torrellas Socastro <marctorsoc>` and
   :user:`Stefanie Senger <StefanieSenger>`.
-  
+
 - |Enhancement| Adds a `zero_division` param to :func:`class_likelihood_ratios`. When
   there is a division by zero, the metric is undefined and the set values are returned
   for LR+ and LR-. :pr:`29288` by :user:`Marc Torrellas Socastro <marctorsoc>` and
+  :user:`Stefanie Senger <StefanieSenger>`.
+
+- |Fix| :func:`class_likelihood_ratios` now raises `UndefinedMetricWarning` instead of
+  `UserWarning` with `raise_warning=True` when a division by zero occurs. :pr:`29288` by
   :user:`Stefanie Senger <StefanieSenger>`.
 
 :mod:`sklearn.model_selection`

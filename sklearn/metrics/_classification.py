@@ -1905,11 +1905,8 @@ def precision_recall_fscore_support(
         "raise_warning": ["boolean", Hidden(StrOptions({"deprecated"}))],
         "zero_division": [
             Hidden(StrOptions({"default"})),
-            StrOptions({"warn"}),
-            dict,  # this needs to be further defined, but Options only takes unmutable
-            # input, no dicts:
-            # Options(dict, {{"LR+": 1.0, "LR-": 0.0}, {"LR+": np.inf, "LR-": 1.0},
-            # {"LR+": np.nan, "LR-": np.nan}}),
+            StrOptions({"warn", "nan"}),
+            dict,
         ],
     },
     prefer_skip_nested_validation=True,
@@ -1986,14 +1983,14 @@ def class_likelihood_ratios(
             To define the return values in case of a division by zero, use
             `zero_division` instead.
 
-    zero_division : str or dict, default="warn"
+    zero_division : "warn", "nan" or dict, default="warn"
         Sets the return values for LR+ and LR- when there is a division by zero. Can
         take the values {"LR+": 1.0, "LR-": 0.0} (for returning the worst scores),
         {"LR+": np.inf, "LR-": 1.0} (for returning the best scores),
-        {"LR+": np.nan, "LR-": np.nan} (for returning undefined scores), or "warn". Only
-        the metric affected by a zero division is replaced by the set value; the other
-        value is calculated as usual. If set to "warn", returns np.nan for the affected
-        scoring metric, but a warning is also raised.
+        {"LR+": np.nan, "LR-": np.nan} or "nan" as a shorthand (for returning undefined
+        scores), or "warn". Only the metric affected by a zero division is replaced by
+        the set value; the other value is calculated as usual. If set to "warn", returns
+        `np.nan` for the affected scoring metric, but a warning is also raised.
 
         .. versionadded:: 1.6
 
@@ -2005,10 +2002,18 @@ def class_likelihood_ratios(
 
     Warns
     -----
-    When `false positive == 0`, the positive likelihood ratio is undefined.
-    When `true negative == 0`, the negative likelihood ratio is undefined.
-    When `true positive + false negative == 0` both ratios are undefined.
-    In such cases, `UserWarning` will be raised if raise_warning=True.
+    `UndefinedMetricWarning` is raised if `zero_division="warn"` or if
+    `raise_warning=True` (deprecated) and a division by zero is triggered.
+    Specific conditions under which this warning is raised in relation to the confusion
+    matrix deriving from `y_true` and `y_pred` arguments:
+    When the number of false positives is 0, the positive likelihood ratio is undefined.
+    When the number of true negatives is 0, the negative likelihood ratio is undefined.
+    When the sum of true positives and false negatives is 0, both the positive and
+    negative likelihood ratios are undefined; in this case a warning in raised
+    regardles of the `zero_division` and `raise_warning` arguments, since it is not
+    caused by a division by zero.
+    An undefined metric can be defined by setting the `zero_division` param.
+
 
     References
     ----------
@@ -2038,13 +2043,13 @@ def class_likelihood_ratios(
     >>> class_likelihood_ratios(y_true, y_pred, labels=["non-cat", "cat"])
     (1.5, 0.75)
     """
-    # TODO(1.8): When `raise_warning` is removed, the default return value with
-    # zero_division="warn" does not need to be "np.nan" anymore and should be the lowest
-    # score for each metric respectively (1 for LR+ and 0 for LR-) to match the other
-    # functions that take a zero_division param. Return values and warning messages need
-    # to be updated. The Warns section in the docstring needs be be re-written and
-    # the hidden option for zero_division ("default") be removed and the default set to
-    # "warn" to match the other functions that take a zero_division param.
+    # TODO(1.8): When `raise_warning` is removed, the following changes need to be made
+    # to match the other functions that take a zero_division param: The default return
+    # value with zero_division="warn" should be updated to the lowest score for each
+    # metric respectively (1 for LR+ and 0 for LR-), return values and warning messages
+    # need to be updated, the Warns section in the docstring needs be be re-written, the
+    # hidden option for zero_division ("default") needs to be removed and the default
+    # set to "warn".
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type != "binary":
         raise ValueError(
@@ -2056,14 +2061,14 @@ def class_likelihood_ratios(
         if zero_division != "default":
             raise ValueError(
                 "`zero_division` and `raise_warning` cannot both be set. "
-                "Use either one to control the return values in case "
-                "of a division by zero."
+                "Use `zero_division` to control the warning behaviour and the return "
+                "values in case of a division by zero."
             )
 
         warnings.warn(
-            "`raise_warning` was deprecated in version 1.6 and will be "
-            "removed in 1.8. To define the return values in case of a "
-            "division by zero, use `zero_division` instead.",
+            "`raise_warning` was deprecated in version 1.6 and will be removed "
+            "in 1.8. To control the warning behaviour in case of a division by "
+            "zero use `zero_division='warn'` instead.",
             FutureWarning,
         )
 
@@ -2071,7 +2076,7 @@ def class_likelihood_ratios(
             zero_division = "warn"
 
         else:  # user explicitly set `raise_warning=False`
-            zero_division = {"LR+": np.nan, "LR-": np.nan}
+            zero_division = "nan"
 
     if zero_division == "default":
         zero_division = "warn"
@@ -2095,9 +2100,9 @@ def class_likelihood_ratios(
         msg = (
             "No samples of the positive class are present in `y_true`. "
             "`positive_likelihood_ratio` and `negative_likelihood_ratio` are both set "
-            "to np.nan."
+            "to `np.nan`."
         )
-        warnings.warn(msg, UserWarning, stacklevel=2)
+        warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
         positive_likelihood_ratio = np.nan
         negative_likelihood_ratio = np.nan
 
@@ -2114,8 +2119,10 @@ def class_likelihood_ratios(
             "behavior."
             warnings.warn(msg_beginning + msg_end, UndefinedMetricWarning, stacklevel=2)
             positive_likelihood_ratio = np.nan
+        elif zero_division == "nan":
+            positive_likelihood_ratio = np.nan
         elif (
-            isinstance(zero_division.get("LR+", None), (int, float))
+            isinstance(zero_division.get("LR+", None), Real)
             and zero_division.get("LR+", None) == 1
         ):
             positive_likelihood_ratio = np.float64(zero_division["LR+"])
@@ -2134,9 +2141,11 @@ def class_likelihood_ratios(
             )
             warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
             negative_likelihood_ratio = np.nan
-        elif isinstance(
-            zero_division.get("LR-", None), (int, float)
-        ) and zero_division.get("LR-", None) in [0, 1]:
+        elif zero_division == "nan":
+            negative_likelihood_ratio = np.nan
+        elif isinstance(zero_division.get("LR-", None), Real) and zero_division.get(
+            "LR-", None
+        ) in [0, 1]:
             negative_likelihood_ratio = np.float64(zero_division["LR-"])
         else:  # np.isnan(zero_division["LR-"])
             negative_likelihood_ratio = np.nan

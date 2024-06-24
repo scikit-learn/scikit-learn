@@ -803,6 +803,7 @@ def test_likelihood_ratios_zero_division_warn():
         ({"LR+": 1.0, "LR-": 0.0}, 1.0),
         ({"LR+": np.inf, "LR-": 1.0}, np.inf),
         ({"LR+": np.nan, "LR-": np.nan}, np.nan),
+        ("nan", np.nan),
     ],
 )
 def test_likelihood_ratios_zero_division_0_fp(zero_division, expected):
@@ -830,6 +831,7 @@ def test_likelihood_ratios_zero_division_0_fp(zero_division, expected):
         ({"LR+": 1.0, "LR-": 0.0}, 0.0),
         ({"LR+": np.inf, "LR-": 1.0}, 1.0),
         ({"LR+": np.nan, "LR-": np.nan}, np.nan),
+        ("nan", np.nan),
     ],
 )
 def test_likelihood_ratios_zero_division_0_tn(zero_division, expected):
