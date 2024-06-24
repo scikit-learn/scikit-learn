@@ -2014,7 +2014,6 @@ def class_likelihood_ratios(
     caused by a division by zero.
     An undefined metric can be defined by setting the `zero_division` param.
 
-
     References
     ----------
     .. [1] `Wikipedia entry for the Likelihood ratios in diagnostic testing
