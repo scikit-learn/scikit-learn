@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 #
-# Copyright (C) 2007-2009 Cournapeau David <cournape@gmail.com>
-#               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
+# Authors: The scikit-learn developers
 # License: 3-clause BSD
 
 import importlib
@@ -589,7 +588,6 @@ def setup_package():
             "Programming Language :: Python :: 3.11",
             "Programming Language :: Python :: 3.12",
             "Programming Language :: Python :: Implementation :: CPython",
-            "Programming Language :: Python :: Implementation :: PyPy",
         ],
         cmdclass=cmdclass,
         python_requires=python_requires,

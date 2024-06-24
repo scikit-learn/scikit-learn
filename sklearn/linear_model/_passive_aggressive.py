@@ -1,5 +1,5 @@
-# Authors: Rob Zinkov, Mathieu Blondel
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 from numbers import Real
 
 from ..base import _fit_context

@@ -1,7 +1,5 @@
-# Authors: Peter Prettenhofer <peter.prettenhofer@gmail.com> (main author)
-#          Mathieu Blondel (partial_fit support)
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 """Classification, regression and One-Class SVM using Stochastic Gradient
 Descent (SGD).
 """
@@ -324,12 +322,12 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         )
 
 
-def _prepare_fit_binary(est, y, i, input_dtye):
+def _prepare_fit_binary(est, y, i, input_dtype):
     """Initialization for fit_binary.
 
     Returns y, coef, intercept, average_coef, average_intercept.
     """
-    y_i = np.ones(y.shape, dtype=input_dtye, order="C")
+    y_i = np.ones(y.shape, dtype=input_dtype, order="C")
     y_i[y != est.classes_[i]] = -1.0
     average_intercept = 0
     average_coef = None
@@ -424,7 +422,7 @@ def fit_binary(
     # if average is not true, average_coef, and average_intercept will be
     # unused
     y_i, coef, intercept, average_coef, average_intercept = _prepare_fit_binary(
-        est, y, i, input_dtye=X.dtype
+        est, y, i, input_dtype=X.dtype
     )
     assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
 
