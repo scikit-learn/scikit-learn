@@ -5,6 +5,7 @@ parameters of an estimator.
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
+from __future__ import annotations
 
 import numbers
 import operator
@@ -15,6 +16,7 @@ from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
 from functools import partial, reduce
 from itertools import product
+from typing import Any, Iterator
 
 import numpy as np
 from numpy.ma import MaskedArray
@@ -377,6 +379,41 @@ def _estimator_has(attr):
         return True
 
     return check
+
+
+def _get_param_masked_arrays(
+    candidate_params: Sequence[dict[str, Any]],
+) -> Iterator[tuple[str, MaskedArray]]:
+    n_candidates = len(candidate_params)
+    param_results: dict[str, Any] = defaultdict(dict)
+    for cand_idx, params in enumerate(candidate_params):
+        for name, value in params.items():
+            param_results["param_%s" % name][cand_idx] = value
+    for key, param_result in param_results.items():
+        param_list = list(param_result.values())
+        try:
+            arr = np.array(param_list)
+        except ValueError:
+            arr_dtype = np.dtype(object)
+        else:
+            arr_dtype = arr.dtype if arr.dtype.kind != "U" else object
+        if len(param_list) == n_candidates:
+            ma = MaskedArray(param_list, mask=False, dtype=arr_dtype)
+            if ma.ndim > 1:
+                # If ndim > 1, then a list of tuples might be turned into
+                # a 2D array, so we use the fallback below for that case too.
+                arr_dtype = object
+            else:
+                yield (key, ma)
+                continue
+
+        # Use one MaskedArray and mask all the places where the param is not
+        # applicable for that candidate (which may not contain all the params).
+        ma = MaskedArray(np.empty(n_candidates), mask=True, dtype=arr_dtype)
+        for index, value in param_result.items():
+            # Setting the value at an index unmasks that index
+            ma[index] = value
+        yield (key, ma)
 
 
 class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
@@ -1079,37 +1116,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         _store("fit_time", out["fit_time"])
         _store("score_time", out["score_time"])
-        param_results = defaultdict(dict)
-        for cand_idx, params in enumerate(candidate_params):
-            for name, value in params.items():
-                param_results["param_%s" % name][cand_idx] = value
-        for key, param_result in param_results.items():
-            param_list = list(param_result.values())
-            try:
-                arr = np.array(param_list)
-            except ValueError:
-                arr_dtype = np.dtype(object)
-            else:
-                arr_dtype = arr.dtype if arr.dtype.kind != "U" else object
-            if len(param_list) == n_candidates:
-                ma = MaskedArray(param_list, mask=False, dtype=arr_dtype)
-                if ma.ndim > 1:
-                    # If ndim > 1, then a list of tuples might be turned into
-                    # a 2D array, so we use the fallback below for that case too.
-                    arr_dtype = object
-                else:
-                    results[key] = ma
-                    continue
-
-            # Use one MaskedArray and mask all the places where the param is not
-            # applicable for that candidate (which may not contain all the params).
-            ma = MaskedArray(np.empty(n_candidates), mask=True, dtype=arr_dtype)
-            for index, value in param_result.items():
-                # Setting the value at an index unmasks that index
-                ma[index] = value
-            results[key] = ma
-
         # Store a list of param dicts at the key 'params'
+
+        for key, value in _get_param_masked_arrays(candidate_params):
+            results[key] = value
         results["params"] = candidate_params
 
         test_scores_dict = _normalize_score_results(out["test_scores"])
