@@ -534,7 +534,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Array representing the labels.
 
         **params : dict of str -> object
-            Parameters requested and accepted by base estimator's score function.
+            Parameters to pass to the underlying estimator's score method.
 
             .. versionadded:: 1.6
                 Only available if `enable_metadata_routing=True`,

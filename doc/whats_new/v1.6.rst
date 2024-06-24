@@ -163,6 +163,13 @@ Changelog
   when duplicate values in the training data lead to inaccurate outlier detection.
   :pr:`28773` by :user:`Henrique Caroço <HenriqueProj>`.
 
+:mod:`sklearn.semi_supervised`
+..............................
+
+- |API| :class:`semi_supervised.SelfTrainingClassifier`
+  deprecated the `base_estimator` parameter in favor of `estimator`.
+  :pr:`28494` by :user:`Adam Li <adam2392>`.
+
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:
 
