@@ -8,7 +8,7 @@ import tempfile
 import textwrap
 
 
-def compile_test_program(code, extra_preargs=None, extra_postargs=None):
+def compile_test_program(code, extra_preargs=None, extra_postargs=None, extension="c"):
     """Check that some C code can be compiled and run"""
     from setuptools.command.build_ext import customize_compiler, new_compiler
 
@@ -22,14 +22,16 @@ def compile_test_program(code, extra_preargs=None, extra_postargs=None):
             os.chdir(tmp_dir)
 
             # Write test program
-            with open("test_program.c", "w") as f:
+            with open(f"test_program.{extension}", "w") as f:
                 f.write(code)
 
             os.mkdir("objects")
 
             # Compile, test program
             ccompiler.compile(
-                ["test_program.c"], output_dir="objects", extra_postargs=extra_postargs
+                [f"test_program.{extension}"],
+                output_dir="objects",
+                extra_postargs=extra_postargs,
             )
 
             # Link test program
