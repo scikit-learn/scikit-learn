@@ -415,7 +415,10 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 kernel = self.kernel
 
             n_targets = self.n_targets if self.n_targets is not None else 1
-            y_mean = np.zeros(shape=(X.shape[0], n_targets)).squeeze()
+            if n_targets != 1:
+                y_mean = np.zeros(shape=(X.shape[0], n_targets))
+            else:
+                y_mean = np.zeros(shape=(X.shape[0], n_targets)).squeeze(axis=1)
 
             if return_cov:
                 y_cov = kernel(X)
