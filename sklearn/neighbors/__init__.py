@@ -12,8 +12,10 @@ from ._graph import (
 from ._kd_tree import KDTree
 from ._kde import KernelDensity
 from ._lof import LocalOutlierFactor
+from ._loop import LocalOutlierProbabilities
 from ._nca import NeighborhoodComponentsAnalysis
 from ._nearest_centroid import NearestCentroid
+from ._outlier import NearestNeighborOutlierDetection
 from ._regression import KNeighborsRegressor, RadiusNeighborsRegressor
 from ._unsupervised import NearestNeighbors
 
@@ -24,6 +26,7 @@ __all__ = [
     "KNeighborsRegressor",
     "KNeighborsTransformer",
     "NearestCentroid",
+    "NearestNeighborOutlierDetection",
     "NearestNeighbors",
     "RadiusNeighborsClassifier",
     "RadiusNeighborsRegressor",
@@ -32,6 +35,7 @@ __all__ = [
     "radius_neighbors_graph",
     "KernelDensity",
     "LocalOutlierFactor",
+    "LocalOutlierProbabilities",
     "NeighborhoodComponentsAnalysis",
     "sort_graph_by_row_values",
     "VALID_METRICS",
