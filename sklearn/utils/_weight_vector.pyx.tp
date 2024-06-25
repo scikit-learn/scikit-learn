@@ -20,10 +20,7 @@ dtypes = [('64', 'double', 1e-9),
 
 # cython: binding=False
 #
-# Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#         Lars Buitinck
-#         Danny Sullivan <dsullivan7@hotmail.com>
-#
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 cimport cython

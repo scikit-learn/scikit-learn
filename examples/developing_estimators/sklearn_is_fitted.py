@@ -27,8 +27,7 @@ by verifying the presence of the `_is_fitted` attribute.
 # scikit-learn and showcases the usage of the `__sklearn_is_fitted__` method
 # and the `check_is_fitted` utility function.
 
-# Author: Kushan <kushansharma1@gmail.com>
-#
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 from sklearn.base import BaseEstimator, ClassifierMixin

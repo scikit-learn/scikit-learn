@@ -18,8 +18,7 @@ helpful, but serves to illustrate the technique.
 
 """
 
-# Author: Matt Terry <matt.terry@gmail.com>
-#
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np

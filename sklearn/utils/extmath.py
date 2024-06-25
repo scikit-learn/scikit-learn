@@ -1,13 +1,6 @@
 """Utilities to perform optimal mathematical operations in scikit-learn."""
 
-# Authors: Gael Varoquaux
-#          Alexandre Gramfort
-#          Alexandre T. Passos
-#          Olivier Grisel
-#          Lars Buitinck
-#          Stefan van der Walt
-#          Kyle Kastner
-#          Giorgio Patrini
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings

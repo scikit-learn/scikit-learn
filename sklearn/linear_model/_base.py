@@ -2,16 +2,7 @@
 Generalized Linear Models.
 """
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# Fabian Pedregosa <fabian.pedregosa@inria.fr>
-# Olivier Grisel <olivier.grisel@ensta.org>
-#         Vincent Michel <vincent.michel@inria.fr>
-#         Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#         Mathieu Blondel <mathieu@mblondel.org>
-#         Lars Buitinck
-#         Maryan Morel <maryan.morel@polytechnique.edu>
-#         Giorgio Patrini <giorgio.patrini@anu.edu.au>
-#         Maria Telenczuk <https://github.com/maikia>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import numbers
@@ -607,7 +598,12 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         accept_sparse = False if self.positive else ["csr", "csc", "coo"]
 
         X, y = self._validate_data(
-            X, y, accept_sparse=accept_sparse, y_numeric=True, multi_output=True
+            X,
+            y,
+            accept_sparse=accept_sparse,
+            y_numeric=True,
+            multi_output=True,
+            force_writeable=True,
         )
 
         has_sw = sample_weight is not None

@@ -3,12 +3,7 @@ The :mod:`sklearn.model_selection._split` module includes classes and
 functions to split the data based on a preset strategy.
 """
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Gael Varoquaux <gael.varoquaux@normalesup.org>
-#         Olivier Grisel <olivier.grisel@ensta.org>
-#         Raghav RV <rvraghav93@gmail.com>
-#         Leandro Hermida <hermidal@cs.umd.edu>
-#         Rodion Martynov <marrodion@gmail.com>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import numbers
@@ -1183,7 +1178,9 @@ class TimeSeriesSplit(_BaseKFold):
     The training set has size ``i * n_samples // (n_splits + 1)
     + n_samples % (n_splits + 1)`` in the ``i`` th split,
     with a test set of size ``n_samples//(n_splits + 1)`` by default,
-    where ``n_samples`` is the number of samples.
+    where ``n_samples`` is the number of samples. Note that this
+    formula is only valid when ``test_size`` and ``max_train_size`` are
+    left to their default values.
     """
 
     def __init__(self, n_splits=5, *, max_train_size=None, test_size=None, gap=0):

@@ -1,12 +1,6 @@
 """Principal Component Analysis."""
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Olivier Grisel <olivier.grisel@ensta.org>
-#         Mathieu Blondel <mathieu@mblondel.org>
-#         Denis A. Engemann <denis-alexander.engemann@inria.fr>
-#         Michael Eickenberg <michael.eickenberg@inria.fr>
-#         Giorgio Patrini <giorgio.patrini@anu.edu.au>
-#
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 from math import log, sqrt
@@ -511,6 +505,7 @@ class PCA(_BasePCA):
         X = self._validate_data(
             X,
             dtype=[xp.float64, xp.float32],
+            force_writeable=True,
             accept_sparse=("csr", "csc"),
             ensure_2d=True,
             copy=False,

@@ -250,7 +250,7 @@ def supported_float_dtypes(xp):
 def ensure_common_namespace_device(reference, *arrays):
     """Ensure that all arrays use the same namespace and device as reference.
 
-    If neccessary the arrays are moved to the same namespace and device as
+    If necessary the arrays are moved to the same namespace and device as
     the reference array.
 
     Parameters
