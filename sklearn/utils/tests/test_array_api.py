@@ -26,6 +26,7 @@ from sklearn.utils._array_api import (
     get_namespace,
     get_namespace_and_device,
     indexing_dtype,
+    make_converter,
     supported_float_dtypes,
     yield_namespace_device_dtype_combinations,
 )
@@ -434,6 +435,28 @@ def test_convert_estimator_to_ndarray(array_namespace, converter):
     assert isinstance(new_est.X_, numpy.ndarray)
     new_est = convert_attributes(est, numpy.asarray([0]))
     assert isinstance(new_est.X_, numpy.ndarray)
+
+
+@skip_if_array_api_compat_not_configured
+def test_make_converter():
+    with config_context(array_api_dispatch=True):
+        torch = pytest.importorskip("torch")
+        X = numpy.ones(1)
+        X_torch = torch.asarray(X)
+        to_torch = make_converter(X_torch)
+        assert isinstance(to_torch(X), torch.Tensor)
+        assert to_torch(X_torch) is X_torch
+        s = "abc"
+        assert to_torch(s) is s
+        to_np = make_converter(X)
+        assert isinstance(to_np(X_torch), numpy.ndarray)
+        assert to_np(X) is X
+        assert to_np(s) is s
+    with config_context(array_api_dispatch=False):
+        passthrough = make_converter(X_torch)
+        assert passthrough(X) is X
+        assert passthrough(X_torch) is X_torch
+        assert passthrough(s) is s
 
 
 @skip_if_array_api_compat_not_configured
