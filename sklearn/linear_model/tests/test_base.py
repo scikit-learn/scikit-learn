@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 from scipy import linalg, sparse
 
+from sklearn import config_context
 from sklearn.datasets import load_iris, make_regression, make_sparse_uncorrelated
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model._base import (
@@ -15,10 +16,12 @@ from sklearn.linear_model._base import (
     make_dataset,
 )
 from sklearn.preprocessing import add_dummy_feature
+from sklearn.utils._array_api import convert_attributes
 from sklearn.utils._testing import (
     assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
+    skip_if_array_api_compat_not_configured,
 )
 from sklearn.utils.fixes import (
     COO_CONTAINERS,
@@ -784,3 +787,19 @@ def test_linear_regression_sample_weight_consistency(
     assert_allclose(reg1.coef_, reg2.coef_, rtol=1e-6)
     if fit_intercept:
         assert_allclose(reg1.intercept_, reg2.intercept_)
+
+
+@skip_if_array_api_compat_not_configured
+def test_array_api_fitted_attribute():
+    xp = pytest.importorskip("array_api_strict")
+    rng = np.random.default_rng()
+    X = rng.normal(size=(10, 5))
+    y = rng.normal(size=10)
+    reg = LinearRegression().fit(X, y)
+    X_xp = xp.asarray(X)
+    reg.predict(X_xp)
+    with config_context(array_api_dispatch=True):
+        with pytest.raises(ValueError, match=".*must use the same array library"):
+            reg.predict(X_xp)
+        reg = convert_attributes(reg, X_xp)
+        reg.predict(X_xp)
