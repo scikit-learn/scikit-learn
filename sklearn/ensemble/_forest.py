@@ -1547,6 +1547,20 @@ class RandomForestClassifier(ForestClassifier):
         self.monotonic_cst = monotonic_cst
         self.ccp_alpha = ccp_alpha
 
+    def _more_tags(self):
+        return {
+            "_xfail_checks": {
+                "check_interaction_of_class_and_sample_weight_excluding_samples": (
+                    "while using class weight, setting some samples' weights to zero "
+                    "is not equivalent to excluding those samples"
+                ),
+                "check_interaction_of_class_and_sample_weight_excluding_class": (
+                    "class_weight as zero to one class is not equivalent to excluding "
+                    "the samples from that class"
+                ),
+            }
+        }
+
 
 class RandomForestRegressor(ForestRegressor):
     """
