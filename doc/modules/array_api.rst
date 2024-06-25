@@ -122,6 +122,7 @@ Metrics
 - :func:`sklearn.metrics.mean_gamma_deviance`
 - :func:`sklearn.metrics.mean_squared_error`
 - :func:`sklearn.metrics.mean_tweedie_deviance`
+- :func:`sklearn.metrics.multilabel_confusion_matrix`
 - :func:`sklearn.metrics.pairwise.additive_chi2_kernel`
 - :func:`sklearn.metrics.pairwise.chi2_kernel`
 - :func:`sklearn.metrics.pairwise.cosine_similarity`
