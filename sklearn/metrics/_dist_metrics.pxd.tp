@@ -16,6 +16,18 @@ from ..utils._typedefs cimport float64_t, float32_t, int32_t, intp_t
 cdef class DistanceMetric:
     pass
 
+cdef extern from "_simd/_dist_optim.hpp":
+    cdef Type simd_manhattan_dist_scalar[Type](Type * x, Type * y, intp_t size) nogil
+    int WITH_SIMD
+cdef extern from "_simd/_dist_optim.hpp" namespace "manhattan":
+    ctypedef float (*func32_t)(const float *x, const float *y, size_t size) nogil
+    ctypedef float (*func64_t)(const double *x, const double *y, size_t size) nogil
+    # using the template function below fails, citing missing symbol
+    cdef float simd_manhattan_dist_f32(float * x, float * y, intp_t size) nogil
+    cdef double simd_manhattan_dist_f64(double * x, double * y, intp_t size) nogil
+    cdef func32_t get_simd_manhattan_f32() nogil
+    cdef func64_t get_simd_manhattan_f64() nogil
+
 {{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
 ######################################################################
@@ -70,6 +82,7 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
     cdef intp_t size
     cdef object func
     cdef object kwargs
+    cdef bint simd_runtime
 
     cdef {{INPUT_DTYPE_t}} dist(
         self,
