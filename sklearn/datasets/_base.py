@@ -2,10 +2,8 @@
 Base IO code for all datasets
 """
 
-# Copyright (c) 2007 David Cournapeau <cournape@gmail.com>
-#               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
-#               2010 Olivier Grisel <olivier.grisel@ensta.org>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 import csv
 import gzip
 import hashlib

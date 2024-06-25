@@ -32,12 +32,8 @@ The module structure is the following:
 Single and multi-output problems are both handled.
 """
 
-# Authors: Gilles Louppe <g.louppe@gmail.com>
-#          Brian Holt <bdholt1@gmail.com>
-#          Joly Arnaud <arnaud.v.joly@gmail.com>
-#          Fares Hedayati <fares.hedayati@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 import threading

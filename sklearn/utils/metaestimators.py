@@ -1,8 +1,7 @@
 """Utilities for meta-estimators."""
 
-# Author: Joel Nothman
-#         Andreas Mueller
-# License: BSD
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 from abc import ABCMeta, abstractmethod
 from contextlib import suppress
 from typing import Any, List
