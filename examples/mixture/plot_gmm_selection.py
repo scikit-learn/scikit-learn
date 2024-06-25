@@ -56,33 +56,11 @@ plt.show()
 # - `"diag"`: each component has its own diagonal covariance matrix.
 # - `"spherical"`: each component has its own single variance.
 #
-# We score the different models and keep the best model (the lowest BIC). This
-# is done by using :class:`~sklearn.model_selection.GridSearchCV` and a
-# user-defined score function which returns the negative BIC score, as
-# :class:`~sklearn.model_selection.GridSearchCV` is designed to **maximize** a
-# score (maximizing the negative BIC is equivalent to minimizing the BIC).
-#
-# The best set of parameters and estimator are stored in `best_parameters_` and
-# `best_estimator_`, respectively.
 
-from sklearn.mixture import GaussianMixture
-from sklearn.model_selection import GridSearchCV
+from sklearn.mixture import GaussianMixtureIC
 
-
-def gmm_bic_score(estimator, X):
-    """Callable to pass to GridSearchCV that will use the BIC score."""
-    # Make it negative since GridSearchCV expects a score to maximize
-    return -estimator.bic(X)
-
-
-param_grid = {
-    "n_components": range(1, 7),
-    "covariance_type": ["spherical", "tied", "diag", "full"],
-}
-grid_search = GridSearchCV(
-    GaussianMixture(), param_grid=param_grid, scoring=gmm_bic_score
-)
-grid_search.fit(X)
+gm_ic = GaussianMixtureIC(min_components=1, max_components=6, covariance_type="all")
+gm_ic.fit(X)
 
 # %%
 # Plot the BIC scores
@@ -94,17 +72,19 @@ grid_search.fit(X)
 
 import pandas as pd
 
-df = pd.DataFrame(grid_search.cv_results_)[
-    ["param_n_components", "param_covariance_type", "mean_test_score"]
-]
-df["mean_test_score"] = -df["mean_test_score"]
-df = df.rename(
-    columns={
-        "param_n_components": "Number of components",
-        "param_covariance_type": "Type of covariance",
-        "mean_test_score": "BIC score",
-    }
+from sklearn.model_selection import ParameterGrid
+
+param_grid = list(
+    ParameterGrid(
+        {
+            "n_components": range(1, 7),
+            "covariance_type": ["spherical", "tied", "diag", "full"],
+        }
+    )
 )
+df = pd.DataFrame(param_grid)
+df.columns = ["Type of covariance", "Number of components"]
+df["BIC score"] = gm_ic.criterion_
 df.sort_values(by="BIC score").head()
 
 # %%
@@ -141,14 +121,14 @@ from matplotlib.patches import Ellipse
 from scipy import linalg
 
 color_iter = sns.color_palette("tab10", 2)[::-1]
-Y_ = grid_search.predict(X)
+Y_ = gm_ic.predict(X)
 
 fig, ax = plt.subplots()
 
 for i, (mean, cov, color) in enumerate(
     zip(
-        grid_search.best_estimator_.means_,
-        grid_search.best_estimator_.covariances_,
+        gm_ic.means_,
+        gm_ic.covariances_,
         color_iter,
     )
 ):
@@ -166,8 +146,7 @@ for i, (mean, cov, color) in enumerate(
     ax.add_artist(ellipse)
 
 plt.title(
-    f"Selected GMM: {grid_search.best_params_['covariance_type']} model, "
-    f"{grid_search.best_params_['n_components']} components"
+    f"Selected GMM: {gm_ic.covariance_type_} model, {gm_ic.n_components_} components"
 )
 plt.axis("equal")
 plt.show()
