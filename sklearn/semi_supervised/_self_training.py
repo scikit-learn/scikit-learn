@@ -12,9 +12,8 @@ from ..utils.validation import check_is_fitted
 
 __all__ = ["SelfTrainingClassifier"]
 
-# Authors: Oliver Rausch   <rauscho@ethz.ch>
-#          Patrice Becker  <beckerp@ethz.ch>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 def _estimator_has(attr):

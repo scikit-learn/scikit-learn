@@ -33,6 +33,7 @@ from sklearn.tests.metadata_routing_common import (
     _Registry,
     check_recorded_metadata,
 )
+from sklearn.utils._indexing import _safe_indexing
 from sklearn.utils._testing import (
     _convert_container,
     assert_allclose_dense_sparse,
@@ -2521,8 +2522,12 @@ def test_column_transformer_column_renaming(dataframe_lib):
             ("A", "passthrough", ["x1", "x2", "x3"]),
             ("B", FunctionTransformer(), ["x1", "x2"]),
             ("C", StandardScaler(), ["x1", "x3"]),
-            # special case of empty transformer
-            ("D", FunctionTransformer(lambda x: x[[]]), ["x1", "x2", "x3"]),
+            # special case of a transformer returning 0-columns, e.g feature selector
+            (
+                "D",
+                FunctionTransformer(lambda x: _safe_indexing(x, [], axis=1)),
+                ["x1", "x2", "x3"],
+            ),
         ],
         verbose_feature_names_out=True,
     ).set_output(transform=dataframe_lib)
@@ -2551,8 +2556,12 @@ def test_column_transformer_error_with_duplicated_columns(dataframe_lib):
             ("A", "passthrough", ["x1", "x2", "x3"]),
             ("B", FunctionTransformer(), ["x1", "x2"]),
             ("C", StandardScaler(), ["x1", "x3"]),
-            # special case of empty transformer
-            ("D", FunctionTransformer(lambda x: x[[]]), ["x1", "x2", "x3"]),
+            # special case of a transformer returning 0-columns, e.g feature selector
+            (
+                "D",
+                FunctionTransformer(lambda x: _safe_indexing(x, [], axis=1)),
+                ["x1", "x2", "x3"],
+            ),
         ],
         verbose_feature_names_out=False,
     ).set_output(transform=dataframe_lib)
@@ -2631,7 +2640,7 @@ def test_metadata_routing_for_column_transformer(method):
     )
 
     if method == "transform":
-        trs.fit(X, y)
+        trs.fit(X, y, sample_weight=sample_weight, metadata=metadata)
         trs.transform(X, sample_weight=sample_weight, metadata=metadata)
     else:
         getattr(trs, method)(X, y, sample_weight=sample_weight, metadata=metadata)
@@ -2639,7 +2648,11 @@ def test_metadata_routing_for_column_transformer(method):
     assert len(registry)
     for _trs in registry:
         check_recorded_metadata(
-            obj=_trs, method=method, sample_weight=sample_weight, metadata=metadata
+            obj=_trs,
+            method=method,
+            parent=method,
+            sample_weight=sample_weight,
+            metadata=metadata,
         )
 
 

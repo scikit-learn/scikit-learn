@@ -2100,13 +2100,14 @@ def test_fit_and_score_failing():
     failing_clf = FailingClassifier(FailingClassifier.FAILING_PARAMETER)
     # dummy X data
     X = np.arange(1, 10)
+    train, test = np.arange(0, 5), np.arange(5, 9)
     fit_and_score_args = dict(
         estimator=failing_clf,
         X=X,
         y=None,
         scorer=dict(),
-        train=None,
-        test=None,
+        train=train,
+        test=test,
         verbose=0,
         parameters=None,
         fit_params=None,
@@ -2600,6 +2601,7 @@ def test_validation_functions_routing(func):
         check_recorded_metadata(
             obj=_scorer,
             method="score",
+            parent=func.__name__,
             split_params=("sample_weight", "metadata"),
             sample_weight=score_weights,
             metadata=score_metadata,
@@ -2610,6 +2612,7 @@ def test_validation_functions_routing(func):
         check_recorded_metadata(
             obj=_splitter,
             method="split",
+            parent=func.__name__,
             groups=split_groups,
             metadata=split_metadata,
         )
@@ -2619,6 +2622,7 @@ def test_validation_functions_routing(func):
         check_recorded_metadata(
             obj=_estimator,
             method="fit",
+            parent=func.__name__,
             split_params=("sample_weight", "metadata"),
             sample_weight=fit_sample_weight,
             metadata=fit_metadata,
@@ -2656,6 +2660,7 @@ def test_learning_curve_exploit_incremental_learning_routing():
         check_recorded_metadata(
             obj=_estimator,
             method="partial_fit",
+            parent="learning_curve",
             split_params=("sample_weight", "metadata"),
             sample_weight=fit_sample_weight,
             metadata=fit_metadata,
