@@ -12,6 +12,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.svm import SVC
+from sklearn.tests.test_pipeline import SimpleEstimator
 from sklearn.tree import DecisionTreeClassifier
 
 # Authors: The scikit-learn developers
@@ -343,3 +344,33 @@ def test_self_training_estimator_attribute_error():
         self_training.fit(X_train, y_train_missing_labels).decision_function(X_train)
     assert isinstance(exec_info.value.__cause__, AttributeError)
     assert inner_msg in str(exec_info.value.__cause__)
+
+
+# Test that metadata is routed correctly for SelfTrainingClassifier
+# =================================================================
+
+
+@pytest.mark.filterwarnings("ignore:y contains no unlabeled samples:UserWarning")
+@pytest.mark.parametrize(
+    "method", ["decision_function", "predict_log_proba", "predict_proba", "predict"]
+)
+def test_routing_passed_metadata_not_supported(method):
+    """Test that the right error message is raised when metadata is passed while
+    not supported when `enable_metadata_routing=False`."""
+    est = SelfTrainingClassifier(base_estimator=SimpleEstimator())
+    with pytest.raises(
+        ValueError, match="is only supported if enable_metadata_routing=True"
+    ):
+        est.fit([[1], [1]], [1, 1], sample_weight=[1], prop="a")
+
+    est = SelfTrainingClassifier(base_estimator=SimpleEstimator())
+    with pytest.raises(
+        ValueError, match="is only supported if enable_metadata_routing=True"
+    ):
+        # make sure that the estimator thinks it is already fitted
+        est.fitted_params_ = True
+        getattr(est, method)([[1]], sample_weight=[1], prop="a")
+
+
+# End of routing tests
+# ====================

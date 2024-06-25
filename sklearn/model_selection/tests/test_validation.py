@@ -862,7 +862,7 @@ def test_permutation_test_score_allow_nans():
     permutation_test_score(p, X, y)
 
 
-def test_permutation_test_score_fit_params():
+def test_permutation_test_score_params():
     X = np.arange(100).reshape(10, 10)
     y = np.array([0] * 5 + [1] * 5)
     clf = CheckingClassifier(expected_sample_weight=True)
@@ -873,8 +873,8 @@ def test_permutation_test_score_fit_params():
 
     err_msg = r"sample_weight.shape == \(1,\), expected \(8,\)!"
     with pytest.raises(ValueError, match=err_msg):
-        permutation_test_score(clf, X, y, fit_params={"sample_weight": np.ones(1)})
-    permutation_test_score(clf, X, y, fit_params={"sample_weight": np.ones(10)})
+        permutation_test_score(clf, X, y, params={"sample_weight": np.ones(1)})
+    permutation_test_score(clf, X, y, params={"sample_weight": np.ones(10)})
 
 
 def test_cross_val_score_allow_nans():
@@ -2487,8 +2487,10 @@ def test_cross_validate_return_indices(global_random_seed):
 
 
 # TODO(1.6): remove `cross_validate` and `cross_val_predict` from this test in 1.6 and
-# `learning_curve` in 1.8
-@pytest.mark.parametrize("func", [cross_validate, cross_val_predict, learning_curve])
+# `learning_curve` and `permutation_test_score` in 1.8
+@pytest.mark.parametrize(
+    "func", [cross_validate, cross_val_predict, learning_curve, permutation_test_score]
+)
 def test_fit_param_deprecation(func):
     """Check that we warn about deprecating `fit_params`."""
     with pytest.warns(FutureWarning, match="`fit_params` is deprecated"):
@@ -2502,7 +2504,14 @@ def test_fit_param_deprecation(func):
 
 @pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
-    "func", [cross_validate, cross_val_score, cross_val_predict, learning_curve]
+    "func",
+    [
+        cross_validate,
+        cross_val_score,
+        cross_val_predict,
+        learning_curve,
+        permutation_test_score,
+    ],
 )
 def test_groups_with_routing_validation(func):
     """Check that we raise an error if `groups` are passed to the cv method instead
@@ -2519,7 +2528,14 @@ def test_groups_with_routing_validation(func):
 
 @pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
-    "func", [cross_validate, cross_val_score, cross_val_predict, learning_curve]
+    "func",
+    [
+        cross_validate,
+        cross_val_score,
+        cross_val_predict,
+        learning_curve,
+        permutation_test_score,
+    ],
 )
 def test_passed_unrequested_metadata(func):
     """Check that we raise an error when passing metadata that is not
@@ -2536,7 +2552,14 @@ def test_passed_unrequested_metadata(func):
 
 @pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
-    "func", [cross_validate, cross_val_score, cross_val_predict, learning_curve]
+    "func",
+    [
+        cross_validate,
+        cross_val_score,
+        cross_val_predict,
+        learning_curve,
+        permutation_test_score,
+    ],
 )
 def test_validation_functions_routing(func):
     """Check that the respective cv method is properly dispatching the metadata
@@ -2565,9 +2588,11 @@ def test_validation_functions_routing(func):
 
     extra_params = {
         cross_validate: dict(scoring=dict(my_scorer=scorer, accuracy="accuracy")),
-        # cross_val_score and learning_curve don't support multiple scorers:
+        # cross_val_score, learning_curve, and permutation_test_score don't support
+        # multiple scorers:
         cross_val_score: dict(scoring=scorer),
         learning_curve: dict(scoring=scorer),
+        permutation_test_score: dict(scoring=scorer),
         # cross_val_predict doesn't need a scorer
         cross_val_predict: dict(),
     }

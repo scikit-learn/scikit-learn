@@ -1819,11 +1819,11 @@ def test_pipeline_inverse_transform_Xt_deprecation():
 
 
 class SimpleEstimator(BaseEstimator):
-    # This class is used in this section for testing routing in the pipeline.
+    # This class is used in this section for testing routing in pipeline.
     # This class should have every set_{method}_request
     def fit(self, X, y, sample_weight=None, prop=None):
-        assert sample_weight is not None
-        assert prop is not None
+        assert sample_weight is not None, sample_weight
+        assert prop is not None, prop
         return self
 
     def fit_transform(self, X, y, sample_weight=None, prop=None):
