@@ -22,11 +22,13 @@ from numpy.testing import (
 from sklearn.datasets import (
     load_digits,
     load_iris,
+    make_classification,
     make_multilabel_classification,
     make_regression,
 )
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.metrics import roc_auc_score
+from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 from sklearn.preprocessing import LabelBinarizer, MinMaxScaler, scale
 from sklearn.utils._testing import ignore_warnings
@@ -966,3 +968,151 @@ def test_mlp_partial_fit_after_fit(MLPEstimator):
     msg = "partial_fit does not support early_stopping=True"
     with pytest.raises(ValueError, match=msg):
         mlp.partial_fit(X_iris, y_iris)
+
+
+@pytest.mark.parametrize("MLPEstimator", [MLPClassifier, MLPRegressor])
+def test_mlp_with_all_zero_sample_weight(MLPEstimator):
+    """Check that using all zero sample weight will raise an error"""
+    mlp = MLPEstimator(random_state=0)
+
+    msg = "sample_weight must not be all zeros"
+    with pytest.raises(ValueError, match=msg):
+        mlp.fit(X_iris, y_iris, sample_weight=np.zeros_like(y_iris))
+
+
+@pytest.mark.parametrize("solver", ["lbfgs", "sgd", "adam"])
+@pytest.mark.parametrize("random_seed", [0, 1])
+@pytest.mark.parametrize("n_classes", [2, 3])
+@pytest.mark.parametrize("weighted_class", [i for i in range(2)])
+def test_mlp_classifier_sample_weight_effects(
+    solver, random_seed, n_classes, weighted_class
+):
+    """Test MLPClassifier with various configurations and sample weights."""
+    n_samples = 100
+    n_features = n_samples * 2
+
+    X, y = make_classification(
+        n_samples=n_samples,
+        n_features=n_features,
+        n_classes=n_classes,
+        n_informative=10,
+        random_state=random_seed,
+    )
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, train_size=0.5, random_state=random_seed
+    )
+
+    # Base test without sample weights
+    clf = MLPClassifier(solver=solver, random_state=random_seed)
+    clf.fit(X_train, y_train)
+    base_score = clf.score(X_test, y_test)
+
+    # Test with uniform sample weights
+    clf_unit_weighted = MLPClassifier(solver=solver, random_state=random_seed)
+    sample_weight = np.ones(y_train.shape[0])
+    clf_unit_weighted.fit(X_train, y_train, sample_weight=sample_weight)
+    unit_weighted_score = clf_unit_weighted.score(X_test, y_test)
+
+    # Scores and coefficients should be very close if sample weights are uniform
+    assert_allclose(base_score, unit_weighted_score, rtol=1e-5)
+    for a, b in zip(clf.coefs_, clf_unit_weighted.coefs_):
+        assert_allclose(a, b, rtol=1e-5)
+
+    # Test impact of zero weights
+    sample_weight[:10] = 0  # Zero weight to the first 10 samples
+    clf_zero_weight = MLPClassifier(solver=solver, random_state=random_seed)
+    clf_zero_weight.fit(X_train, y_train, sample_weight=sample_weight)
+    zero_weight_score = clf_zero_weight.score(X_test, y_test)
+
+    # Assert that performance changes when samples are effectively removed
+    assert zero_weight_score != unit_weighted_score
+
+    # test sample weight effect on the weighted class
+    sample_weight[:10] = 1
+    sample_weight[y_train == weighted_class] = 5
+    test_samples = X_test[y_test == weighted_class]
+    threshold = 0.15
+
+    clf_weighted = MLPClassifier(solver=solver, random_state=random_seed)
+    clf_weighted.fit(X_train, y_train, sample_weight=sample_weight)
+
+    sample_weighted_score = clf_weighted.predict_proba(test_samples)[:, weighted_class]
+    samples_with_greater_score = (
+        sample_weighted_score > base_score
+    ).sum() / sample_weighted_score.shape[0]
+
+    assert (
+        samples_with_greater_score > threshold
+    ), f"{samples_with_greater_score}, {threshold}"
+
+    # Test early stopping
+    if solver != "lbfgs":  # early stopping is only effective for 'sgd' and 'adam'
+        # test sample weight with early stopping
+        clf_es = MLPClassifier(
+            solver=solver,
+            random_state=random_seed,
+            early_stopping=True,
+            validation_fraction=0.2,
+        )
+        clf_es.fit(X_train, y_train, sample_weight=sample_weight)
+
+        # Training score will be smaller with early stopping
+        assert clf_es.score(X_train, y_train) < clf.score(X_train, y_train)
+
+
+@pytest.mark.parametrize("solver", ["lbfgs", "sgd", "adam"])
+@pytest.mark.parametrize("random_seed", [0, 42])
+def test_mlp_regressor_sample_weight_effects(solver, random_seed):
+    """Test MLPClassifier with various configurations and sample weights."""
+    n_samples = 100
+    n_features = n_samples * 2
+
+    X, y = make_regression(
+        n_samples=n_samples,
+        n_features=n_features,
+        n_informative=10,
+        random_state=random_seed,
+    )
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, train_size=0.5, random_state=random_seed
+    )
+
+    # Base test without sample weights
+    reg = MLPRegressor(solver=solver, random_state=random_seed)
+    reg.fit(X_train, y_train)
+    base_score = reg.score(X_test, y_test)
+
+    # Test with uniform sample weights
+    reg_weighted = MLPRegressor(solver=solver, random_state=random_seed)
+    sample_weight = np.ones(y_train.shape[0])
+    reg_weighted.fit(X_train, y_train, sample_weight=sample_weight)
+    weighted_score = reg_weighted.score(X_test, y_test)
+
+    # Scores and coefficients should be very close if sample weights are uniform
+    assert_allclose(base_score, weighted_score, rtol=1e-5)
+    for a, b in zip(reg.coefs_, reg_weighted.coefs_):
+        assert_allclose(a, b, rtol=1e-5)
+
+    # Test impact of zero weights
+    sample_weight[:10] = 0  # Zero weight to the first 10 samples
+    reg_zero_weight = MLPRegressor(solver=solver, random_state=random_seed)
+    reg_zero_weight.fit(X_train, y_train, sample_weight=sample_weight)
+    zero_weight_score = reg_zero_weight.score(X_test, y_test)
+
+    # Assert that performance changes when samples are effectively removed
+    assert zero_weight_score != weighted_score
+
+    # Test early stopping
+    if solver != "lbfgs":  # early stopping is only effective for 'sgd' and 'adam'
+        reg_es = MLPRegressor(
+            solver=solver,
+            random_state=random_seed,
+            early_stopping=True,
+            validation_fraction=0.2,
+        )
+        reg_es.fit(X_train, y_train, sample_weight=sample_weight)
+
+        # Training score will be smaller with early stopping
+        assert reg_es.score(X_train, y_train) < reg_zero_weight.score(X_train, y_train)

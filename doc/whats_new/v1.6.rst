@@ -106,14 +106,6 @@ Changelog
   whether a given estimator is of category clusterer.
   :pr:`28936` by :user:`Christian Veenhuis <ChVeen>`.
 
-:mod:`sklearn.cluster`
-......................
-
-- |API| The `copy` parameter of :class:`cluster.Birch` was deprecated in 1.6 and will be
-  removed in 1.8. It has no effect as the estimator does not perform in-place operations
-  on the input data.
-  :pr:`29124` by :user:`Yao Xiao <Charlie-XIAO>`.
-
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
@@ -162,6 +154,13 @@ Changelog
 - |Fix| :class:`neighbors.LocalOutlierFactor` raises a warning in the `fit` method
   when duplicate values in the training data lead to inaccurate outlier detection.
   :pr:`28773` by :user:`Henrique Caroço <HenriqueProj>`.
+
+:mod:`sklearn.neural_network`
+.............................
+
+- |Enhancement| Add support for `sample_weight` in
+  :class:`neural_network.MLPClassifier` and :class:`neural_network.MLPCRegressor`.
+  :pr:`25646` by :user:`Zach Shu <zshu115x>`.
 
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:
