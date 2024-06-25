@@ -163,14 +163,6 @@ Changelog
   when duplicate values in the training data lead to inaccurate outlier detection.
   :pr:`28773` by :user:`Henrique Caroço <HenriqueProj>`.
 
-:mod:`sklearn.tree`
-...................
-
-- |API| :func:`tree.plot_tree` now plots proportions by default by changing the default
-  keyword argument `proportion=True`. This change makes the plot consistent with the
-  `tree_.value` meaning.
-  :pr:`29331` by :user:`Adam Li <adam2392>`.
-
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:
 
