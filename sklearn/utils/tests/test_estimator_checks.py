@@ -456,7 +456,7 @@ class UntaggedBinaryClassifier(SGDClassifier):
 class TaggedBinaryClassifier(UntaggedBinaryClassifier):
     # Toy classifier that only supports binary classification.
     def _more_tags(self):
-        return {"binary_only": True}
+        return {"target_type": ["binary"]}
 
 
 class EstimatorMissingDefaultTags(BaseEstimator):
@@ -885,7 +885,7 @@ class _BaseMultiLabelClassifierMock(ClassifierMixin, BaseEstimator):
         return self
 
     def _more_tags(self):
-        return {"multilabel": True}
+        return {"target_type": ["multi-class", "multi-label"]}
 
 
 def test_check_classifiers_multilabel_output_format_predict():

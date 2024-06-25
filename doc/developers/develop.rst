@@ -542,19 +542,19 @@ allow_nan (default=False)
 array_api_support (default=False)
     whether the estimator supports Array API compatible inputs.
 
-binary_only (default=False)
-    whether estimator supports binary classification but lacks multi-class
-    classification support.
+target_type
+    the supported target types of the estimator, which can be a subset of:
+        - 'binary': binary classification. All estimators supporting
+          'multi-class' also support 'binary'; classifiers only;
+        - 'multi-class' (default for classifiers): multiclass classification;
+        - 'multi-label': multilabel output
+        - 'multi-output': multi-output regression or classification, i.e. `y`
+          has shape `(n_samples, n_outputs)`
+        - 'single-output' (default): single-output regression or classification, i.e.
+          `y` has shape `(n_samples,)`
 
-multilabel (default=False)
-    whether the estimator supports multilabel output
-
-multioutput (default=False)
-    whether a regressor supports multi-target outputs or a classifier supports
-    multi-class multi-output.
-
-multioutput_only (default=False)
-    whether estimator supports only multi-output classification or regression.
+    Note that an estimator can support multi-output but not single-output, or vice
+    versa. The same goes for binary and multi-class support.
 
 no_validation (default=False)
     whether the estimator skips input-validation. This is only meant for

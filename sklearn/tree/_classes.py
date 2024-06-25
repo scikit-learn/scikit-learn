@@ -1079,7 +1079,15 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             "log_loss",
             "entropy",
         }
-        return {"multilabel": True, "allow_nan": allow_nan}
+        return {
+            "target_type": [
+                "multi-label",
+                "multi-class",
+                "single-output",
+                "multi-output",
+            ],
+            "allow_nan": allow_nan,
+        }
 
 
 class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):

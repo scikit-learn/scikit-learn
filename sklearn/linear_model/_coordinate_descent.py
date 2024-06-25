@@ -2081,7 +2081,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
         return False
 
     def _more_tags(self):
-        return {"multioutput": False}
+        return {"target_type": ["single-output"]}
 
 
 class ElasticNetCV(RegressorMixin, LinearModelCV):
@@ -2320,7 +2320,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         return False
 
     def _more_tags(self):
-        return {"multioutput": False}
+        return {"target_type": ["single-output"]}
 
 
 ###############################################################################
@@ -2573,7 +2573,7 @@ class MultiTaskElasticNet(Lasso):
         return self
 
     def _more_tags(self):
-        return {"multioutput_only": True}
+        return {"target_type": ["multi-output"]}
 
 
 class MultiTaskLasso(MultiTaskElasticNet):
@@ -2940,7 +2940,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         return True
 
     def _more_tags(self):
-        return {"multioutput_only": True}
+        return {"target_type": ["multi-output"]}
 
     # This is necessary as LinearModelCV now supports sample_weight while
     # MultiTaskElasticNet does not (yet).
@@ -3178,7 +3178,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         return True
 
     def _more_tags(self):
-        return {"multioutput_only": True}
+        return {"target_type": ["multi-output"]}
 
     # This is necessary as LinearModelCV now supports sample_weight while
     # MultiTaskElasticNet does not (yet).

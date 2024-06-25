@@ -315,7 +315,10 @@ class Pipeline(_BaseComposition):
 
     @property
     def _estimator_type(self):
-        return self.steps[-1][1]._estimator_type
+        try:
+            return self.steps[-1][1]._estimator_type
+        except Exception:
+            return None
 
     @property
     def named_steps(self):
@@ -1036,7 +1039,7 @@ class Pipeline(_BaseComposition):
             pass
 
         try:
-            tags["multioutput"] = _safe_tags(self.steps[-1][1], "multioutput")
+            tags["target_type"] = _safe_tags(self.steps[-1][1], "target_type")
         except (ValueError, AttributeError, TypeError):
             # This happens when the `steps` is not a list of (name, estimator)
             # tuples and `fit` is not called yet to validate the steps.
