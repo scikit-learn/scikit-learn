@@ -95,7 +95,7 @@ def plot_tree(
     filled=False,
     impurity=True,
     node_ids=False,
-    proportion=False,
+    proportion=True,
     rounded=False,
     precision=3,
     ax=None,
@@ -148,9 +148,10 @@ def plot_tree(
     node_ids : bool, default=False
         When set to ``True``, show the ID number on each node.
 
-    proportion : bool, default=False
+    proportion : bool, default=True
         When set to ``True``, change the display of 'values' and/or 'samples'
-        to be proportions and percentages respectively.
+        to be proportions and percentages respectively. When set to ``False``,
+        change the display of 'values' and/or 'samples' to be counts.
 
     rounded : bool, default=False
         When set to ``True``, draw node boxes with rounded corners and use

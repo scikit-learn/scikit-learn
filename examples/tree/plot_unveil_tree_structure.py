@@ -162,7 +162,7 @@ for i in range(n_nodes):
 # Here, we show the proportions of samples of each class that reach each
 # node corresponding to the actual elements of `tree_.value` array.
 
-tree.plot_tree(clf, proportion=True)
+tree.plot_tree(clf)
 plt.show()
 
 ##############################################################################
