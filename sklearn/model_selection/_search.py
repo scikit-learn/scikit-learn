@@ -1117,7 +1117,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         _store("fit_time", out["fit_time"])
         _store("score_time", out["score_time"])
         # Store a list of param dicts at the key 'params'
-
         for key, value in _get_param_masked_arrays(candidate_params):
             results[key] = value
         results["params"] = candidate_params
