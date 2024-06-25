@@ -441,8 +441,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         as noise.
 
     min_samples : int, default=None
-        The number of samples in a neighborhood for a point
-        to be considered as a core point. This includes the point itself.
+        The parameter `k` used to calculate the distance between a point
+        `x_p` and its k-th nearest neighbor.
         When `None`, defaults to `min_cluster_size`.
 
     cluster_selection_epsilon : float, default=0.0
