@@ -1458,24 +1458,37 @@ def _fetch_remote(remote, dirname=None, n_retries=3, delay=1):
         Full path of the created file.
     """
 
+    # Determine the full path to save the file
     file_path = remote.filename if dirname is None else join(dirname, remote.filename)
-    while True:
-        try:
-            urlretrieve(remote.url, file_path)
-            break
-        except (URLError, TimeoutError):
-            if n_retries == 0:
-                # If no more retries are left, re-raise the caught exception.
-                raise
-            warnings.warn(f"Retry downloading from url: {remote.url}")
-            n_retries -= 1
-            time.sleep(delay)
 
-    checksum = _sha256(file_path)
-    if remote.checksum != checksum:
-        raise OSError(
-            "{} has an SHA256 checksum ({}) "
-            "differing from expected ({}), "
-            "file may be corrupted.".format(file_path, checksum, remote.checksum)
-        )
-    return file_path
+    while n_retries >= 0:
+        try:
+            # Attempt to download the file from the URL
+            urlretrieve(remote.url, file_path)
+
+            # Calculate the checksum of the downloaded file
+            checksum = _sha256(file_path)
+
+            # Verify if the checksum matches the expected checksum
+            if remote.checksum == checksum:
+                return file_path  # Return the file path if checksum is correct
+            else:
+                # Raise an error if the checksum does not match
+                raise OSError(
+                    f"Checksum mismatch for file {file_path}. "
+                    f"Expected: {remote.checksum}, Actual: {checksum}"
+                )
+        except (URLError, OSError) as e:
+            # If retries are exhausted, re-raise the exception
+            if n_retries == 0:
+                raise e
+
+            # Warn the user and retry after a delay
+            warnings.warn(
+                f"Retrying download from {remote.url}... {n_retries} attempts left."
+            )
+            time.sleep(delay)
+            n_retries -= 1
+
+    # Raise an error if the file could not be downloaded after multiple attempts
+    raise ConnectionError(f"Failed to download {remote.url} after multiple attempts.")
