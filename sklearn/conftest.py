@@ -264,10 +264,6 @@ def pyplot():
     pyplot.close("all")
 
 
-def is_xdist_controller(config):
-    return not hasattr(config, "workerinput")
-
-
 def pytest_generate_tests(metafunc):
     """Parametrization of global_random_seed fixture
 
