@@ -8,8 +8,10 @@ import csv
 import gzip
 import hashlib
 import os
+import re
 import shutil
 import time
+import unicodedata
 import warnings
 from collections import namedtuple
 from importlib import resources
@@ -17,7 +19,9 @@ from numbers import Integral
 from os import environ, listdir, makedirs
 from os.path import expanduser, isdir, join, splitext
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from urllib.error import URLError
+from urllib.parse import urlparse
 from urllib.request import urlretrieve
 
 import numpy as np
@@ -1427,20 +1431,26 @@ def _sha256(path):
 
 
 def _fetch_remote(remote, dirname=None, n_retries=3, delay=1):
-    """Helper function to download a remote dataset into path
+    """Helper function to download a remote dataset.
 
     Fetch a dataset pointed by remote's url, save into path using remote's
-    filename and ensure its integrity based on the SHA256 Checksum of the
+    filename and ensure its integrity based on the SHA256 checksum of the
     downloaded file.
+
+    .. versionchanged:: 1.6
+
+        If the file already exists locally and the SHA256 checksums match, the
+        path to the local file is returned without re-downloading.
 
     Parameters
     ----------
     remote : RemoteFileMetadata
         Named tuple containing remote dataset meta information: url, filename
-        and checksum
+        and checksum.
 
-    dirname : str
-        Directory to save the file to.
+    dirname : str or Path, default=None
+        Directory to save the file to. If None, the current working directory
+        is used.
 
     n_retries : int, default=3
         Number of retries when HTTP errors are encountered.
@@ -1454,28 +1464,166 @@ def _fetch_remote(remote, dirname=None, n_retries=3, delay=1):
 
     Returns
     -------
-    file_path: str
+    file_path: Path
         Full path of the created file.
     """
+    if dirname is None:
+        folder_path = Path(".")
+    else:
+        folder_path = Path(dirname)
 
-    file_path = remote.filename if dirname is None else join(dirname, remote.filename)
-    while True:
-        try:
-            urlretrieve(remote.url, file_path)
-            break
-        except (URLError, TimeoutError):
-            if n_retries == 0:
-                # If no more retries are left, re-raise the caught exception.
-                raise
-            warnings.warn(f"Retry downloading from url: {remote.url}")
-            n_retries -= 1
-            time.sleep(delay)
+    file_path = folder_path / remote.filename
 
-    checksum = _sha256(file_path)
-    if remote.checksum != checksum:
-        raise OSError(
-            "{} has an SHA256 checksum ({}) "
-            "differing from expected ({}), "
-            "file may be corrupted.".format(file_path, checksum, remote.checksum)
-        )
+    if file_path.exists():
+        if remote.checksum is None:
+            return file_path
+
+        checksum = _sha256(file_path)
+        if checksum == remote.checksum:
+            return file_path
+        else:
+            warnings.warn(
+                f"SHA256 checksum of existing local file at {str(file_path)} "
+                f"({checksum}) differs from expected ({remote.checksum}): "
+                f"re-downloading from {remote.url} ."
+            )
+
+    temp_file = NamedTemporaryFile(
+        prefix=remote.filename + ".part_", dir=folder_path, delete=False
+    )
+    try:
+        temp_file_path = Path(temp_file.name)
+        while True:
+            try:
+                urlretrieve(remote.url, temp_file_path)
+                break
+            except (URLError, TimeoutError):
+                if n_retries == 0:
+                    # If no more retries are left, re-raise the caught exception.
+                    raise
+                warnings.warn(f"Retry downloading from url: {remote.url}")
+                n_retries -= 1
+                time.sleep(delay)
+
+        checksum = _sha256(temp_file_path)
+        if remote.checksum is not None and remote.checksum != checksum:
+            raise OSError(
+                f"{remote.filename} has an SHA256 checksum ({checksum}) "
+                f"differing from expected ({remote.checksum}), "
+                "file may be corrupted."
+            )
+    except BaseException:
+        temp_file.close()
+        os.unlink(temp_file.name)
+        raise
+
+    # The following renaming is atomic whenever temp_file_path and
+    # file_path are on the same filesystem. This should be the case most of
+    # the time, but we still use shutil.move instead of os.rename in case
+    # they are not.
+    shutil.move(temp_file_path, file_path)
+
     return file_path
+
+
+def _slugify(value, allow_unicode=False):
+    """Derive a name that is safe to use as filename from the given string.
+
+    Adapted from
+    https://github.com/django/django/blob/master/django/utils/text.py
+
+    Convert to ASCII if 'allow_unicode' is False. Convert spaces or repeated
+    dashes to single dashes. Remove characters that aren't alphanumerics,
+    underscores, or hyphens. Convert to lowercase. Also strip leading and
+    trailing whitespace, dashes, and underscores.
+
+    Note: this version keeps "." characters unchanged contrary to the django
+    version and replace other un-authorized characters by "_".
+    """
+    value = str(value)
+    if allow_unicode:
+        value = unicodedata.normalize("NFKC", value)
+    else:
+        value = (
+            unicodedata.normalize("NFKD", value)
+            .encode("ascii", "ignore")
+            .decode("ascii")
+        )
+    value = re.sub(r"[^.\w\s-]", "_", value.lower())
+    value = re.sub(r"_+", "_", value)
+    return re.sub(r"[-\s]+", "-", value).strip("-_")
+
+
+def _derive_folder_and_filename_from_url(url):
+    parsed_url = urlparse(url)
+    path = parsed_url.path
+    if not path:
+        path = "/"
+
+    if "/" in path:
+        base_folder, filename = path.rsplit("/", 1)
+
+    if not filename:
+        filename = "downloaded_file"
+
+    base_folder = _slugify(base_folder)
+    if base_folder:
+        base_folder = "/" + base_folder
+
+    return (
+        _slugify(parsed_url.hostname) + base_folder,
+        _slugify(filename),
+    )
+
+
+def fetch_file(
+    url, folder=None, local_filename=None, sha256=None, n_retries=3, delay=1
+):
+    """Fetch a file from the web.
+
+    If the file already exists locally and the SHA256 checksums match, the path
+    to the local file is returned without re-downloading.
+
+    Parameters
+    ----------
+    url : str
+        URL of the file to download.
+
+    folder : str or Path, default=None
+        Directory to save the file to. If None, the file is downloaded in a
+        folder with a name derived from the URL host name and path under
+        scikit-learn data home folder.
+
+    local_filename : str, default=None
+        Name of the file to save. If None, the filename is inferred from the
+        URL.
+
+    sha256 : str, default=None
+        SHA256 checksum of the file. If None, no checksum is verified.
+
+    n_retries : int, default=3
+        Number of retries when HTTP errors are encountered.
+
+    delay : int, default=1
+        Number of seconds between retries.
+
+    Returns
+    -------
+    file_path : Path
+        Full path of the downloaded file.
+    """
+    folder_from_url, filename_from_url = _derive_folder_and_filename_from_url(url)
+
+    if local_filename is None:
+        local_filename = filename_from_url
+
+    if folder is None:
+        folder = Path(get_data_home()) / folder_from_url
+        makedirs(folder, exist_ok=True)
+
+    remote_metadata = RemoteFileMetadata(
+        filename=local_filename, url=url, checksum=sha256
+    )
+    return _fetch_remote(
+        remote_metadata, dirname=folder, n_retries=n_retries, delay=delay
+    )

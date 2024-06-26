@@ -28,6 +28,7 @@ from sklearn.datasets import (
 )
 from sklearn.datasets._base import (
     RemoteFileMetadata,
+    _derive_folder_and_filename_from_url,
     _fetch_remote,
     load_csv_data,
     load_gzip_compressed_csv_data,
@@ -391,3 +392,37 @@ def test_fetch_remote_raise_warnings_with_invalid_url(monkeypatch):
         for r in record:
             assert str(r.message) == f"Retry downloading from url: {url}"
         assert len(record) == 3
+
+
+def test_derive_folder_and_filename_from_url():
+    folder, filename = _derive_folder_and_filename_from_url(
+        "https://example.com/file.tar.gz"
+    )
+    assert folder == "example.com"
+    assert filename == "file.tar.gz"
+
+    folder, filename = _derive_folder_and_filename_from_url(
+        "https://example.com/path/to/file.tar.gz"
+    )
+    assert folder == "example.com/path_to"
+    assert filename == "file.tar.gz"
+
+    folder, filename = _derive_folder_and_filename_from_url("https://example.com/")
+    assert folder == "example.com"
+    assert filename == "downloaded_file"
+
+    folder, filename = _derive_folder_and_filename_from_url("https://example.com")
+    assert folder == "example.com"
+    assert filename == "downloaded_file"
+
+    folder, filename = _derive_folder_and_filename_from_url(
+        "https://example.com/path/@to/data.json?param=value"
+    )
+    assert folder == "example.com/path_to"
+    assert filename == "data.json"
+
+    folder, filename = _derive_folder_and_filename_from_url(
+        "https://example.com/path/@to/data.json#anchor"
+    )
+    assert folder == "example.com/path_to"
+    assert filename == "data.json"
