@@ -3,7 +3,7 @@ Feature agglomeration. Base classes and functions for performing feature
 agglomeration.
 """
 
-# Author: V. Michel, A. Gramfort
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 

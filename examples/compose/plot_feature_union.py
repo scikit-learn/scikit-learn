@@ -16,8 +16,7 @@ dataset and is only used to illustrate the usage of FeatureUnion.
 
 """
 
-# Author: Andreas Mueller <amueller@ais.uni-bonn.de>
-#
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 from sklearn.datasets import load_iris

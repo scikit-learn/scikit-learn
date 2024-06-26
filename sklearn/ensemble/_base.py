@@ -1,6 +1,6 @@
 """Base class for ensemble-based estimators."""
 
-# Authors: Gilles Louppe
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 from abc import ABCMeta, abstractmethod

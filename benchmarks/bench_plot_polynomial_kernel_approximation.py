@@ -39,7 +39,7 @@ Programming (pp. 693-703). Springer, Berlin, Heidelberg.
 
 """
 
-# Author: Daniel Lopez-Sanchez <lope@usal.es>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 # Load data manipulation functions

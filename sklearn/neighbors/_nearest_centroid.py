@@ -2,9 +2,7 @@
 Nearest Centroid Classification
 """
 
-# Author: Robert Layton <robertlayton@gmail.com>
-#         Olivier Grisel <olivier.grisel@ensta.org>
-#
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Real

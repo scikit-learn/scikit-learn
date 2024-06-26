@@ -6,7 +6,7 @@ An example showing how different online solvers perform
 on the hand-written digits dataset.
 """
 
-# Author: Rob Zinkov <rob at zinkov dot com>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt

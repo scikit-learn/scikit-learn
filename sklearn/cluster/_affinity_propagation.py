@@ -1,8 +1,6 @@
 """Affinity Propagation clustering algorithm."""
 
-# Author: Alexandre Gramfort alexandre.gramfort@inria.fr
-#        Gael Varoquaux gael.varoquaux@normalesup.org
-
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings

@@ -1,6 +1,6 @@
 """Dictionary learning."""
 
-# Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import itertools

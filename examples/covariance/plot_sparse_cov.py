@@ -50,9 +50,8 @@ iteratively refined in the neighborhood of the maximum.
 
 """
 
-# author: Gael Varoquaux <gael.varoquaux@inria.fr>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright: INRIA
 
 # %%
 # Generate the data

@@ -26,7 +26,7 @@ This example aims at showcasing all points except 2 and 6 in a real life
 setting.
 """
 
-# Author: Arturo Amor <david-arturo.amor-quiroz@inria.fr>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 # %%

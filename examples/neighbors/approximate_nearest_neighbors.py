@@ -14,7 +14,7 @@ compatibility reasons, one extra neighbor is computed when `mode == 'distance'`.
 Please note that we do the same in the proposed `nmslib` wrapper.
 """
 
-# Author: Tom Dupre la Tour
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 # %%

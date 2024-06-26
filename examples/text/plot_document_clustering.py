@@ -23,10 +23,7 @@ For document analysis via a supervised learning approach, see the example script
 
 """
 
-# Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#         Lars Buitinck
-#         Olivier Grisel <olivier.grisel@ensta.org>
-#         Arturo Amor <david-arturo.amor-quiroz@inria.fr>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 # %%

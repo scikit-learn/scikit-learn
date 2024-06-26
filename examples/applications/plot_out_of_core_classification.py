@@ -14,8 +14,7 @@ features (words) may appear in each batch.
 
 """
 
-# Authors: Eustache Diemert <eustache@diemert.fr>
-#          @FedericoV <https://github.com/FedericoV/>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import itertools

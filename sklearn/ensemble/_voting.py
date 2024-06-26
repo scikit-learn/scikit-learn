@@ -6,11 +6,7 @@ This module contains:
  - A Voting regressor for regression estimators.
 """
 
-# Authors: Sebastian Raschka <se.raschka@gmail.com>,
-#          Gilles Louppe <g.louppe@gmail.com>,
-#          Ramil Nugmanov <stsouko@live.ru>
-#          Mohamed Ali Jamaoui <m.ali.jamaoui@gmail.com>
-#
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 from abc import abstractmethod

@@ -2,9 +2,7 @@
 Benchmarks of Non-Negative Matrix Factorization
 """
 
-# Authors: Tom Dupre la Tour (benchmark)
-#          Chih-Jen Linn (original projected gradient NMF implementation)
-#          Anthony Di Franco (projected gradient, Python and NumPy port)
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import numbers

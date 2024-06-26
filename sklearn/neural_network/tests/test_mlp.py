@@ -2,7 +2,7 @@
 Testing for Multi-layer Perceptron module (sklearn.neural_network)
 """
 
-# Author: Issam H. Laradji
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import re

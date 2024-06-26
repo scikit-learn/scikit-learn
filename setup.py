@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 #
-# Copyright (C) 2007-2009 Cournapeau David <cournape@gmail.com>
-#               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
+# Authors: The scikit-learn developers
 # License: 3-clause BSD
 
 import importlib

@@ -2,10 +2,7 @@
 Testing for the forest module (sklearn.ensemble.forest).
 """
 
-# Authors: Gilles Louppe,
-#          Brian Holt,
-#          Andreas Mueller,
-#          Arnaud Joly
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import itertools

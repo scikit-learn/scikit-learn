@@ -14,10 +14,7 @@ performance of some other classifiers, see the
 notebook.
 """
 
-# Author: Olivier Grisel <olivier.grisel@ensta.org>
-#         Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#         Mathieu Blondel <mathieu@mblondel.org>
-#         Arturo Amor <david-arturo.amor-quiroz@inria.fr>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 # %%

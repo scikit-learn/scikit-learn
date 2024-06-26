@@ -1,5 +1,4 @@
-# Authors: Ashim Bhattarai <ashimb9@gmail.com>
-#          Thomas J Fan <thomasjpfan@gmail.com>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Integral

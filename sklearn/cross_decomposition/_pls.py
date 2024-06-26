@@ -2,7 +2,7 @@
 The :mod:`sklearn.pls` module implements Partial Least Squares (PLS).
 """
 
-# Author: Edouard Duchesnay <edouard.duchesnay@cea.fr>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings

@@ -1,9 +1,6 @@
 """A collection of utilities to work with sparse matrices and arrays."""
 
-# Authors: Manoj Kumar
-#          Thomas Unterthiner
-#          Giorgio Patrini
-#
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 import numpy as np
 import scipy.sparse as sp

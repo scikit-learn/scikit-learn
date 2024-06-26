@@ -17,7 +17,7 @@ multi-layer perceptron model on this dataset.
 
 """
 
-# Author: Arthur Mensch <arthur.mensch@m4x.org>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import time

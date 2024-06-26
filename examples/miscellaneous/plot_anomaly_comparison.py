@@ -62,8 +62,7 @@ the problem is completely unsupervised so model selection can be a challenge.
 
 """
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Albert Thomas <albert.thomas@telecom-paristech.fr>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import time

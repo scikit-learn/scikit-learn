@@ -27,7 +27,7 @@ in such a way that a balance is maintained between both.
 
 """
 
-# Author: Fabian Pedregosa -- <fabian.pedregosa@inria.fr>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt

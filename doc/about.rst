@@ -14,7 +14,9 @@ In 2010 Fabian Pedregosa, Gael Varoquaux, Alexandre Gramfort and Vincent
 Michel of INRIA took leadership of the project and made the first public
 release, February the 1st 2010. Since then, several releases have appeared
 following an approximately 3-month cycle, and a thriving international
-community has been leading the development.
+community has been leading the development. As a result, INRIA holds the
+copyright over the work done by people who were employed by INRIA at the
+time of the contribution.
 
 Governance
 ----------

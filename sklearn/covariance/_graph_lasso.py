@@ -2,9 +2,8 @@
 estimator.
 """
 
-# Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright: INRIA
 import operator
 import sys
 import time

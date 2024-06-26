@@ -1,7 +1,6 @@
 """Utilities for handling weights based on class labels."""
 
-# Authors: Andreas Mueller
-#          Manoj Kumar
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np

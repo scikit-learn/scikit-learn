@@ -1,6 +1,6 @@
 """Determination of parameter bounds"""
 
-# Author: Paolo Losi
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Real

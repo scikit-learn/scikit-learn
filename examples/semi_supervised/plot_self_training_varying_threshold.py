@@ -29,7 +29,7 @@ around 0.7.
 
 """
 
-# Authors: Oliver Rausch <rauscho@ethz.ch>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt

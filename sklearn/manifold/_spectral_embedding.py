@@ -1,7 +1,6 @@
 """Spectral Embedding."""
 
-# Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
-#         Wei LI <kuantkid@gmail.com>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 

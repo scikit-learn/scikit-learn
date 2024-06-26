@@ -21,8 +21,7 @@ step before the final (global) clustering step that further reduces these
 
 """
 
-# Authors: Manoj Kumar <manojkumarsivaraj334@gmail.com
-#          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 from itertools import cycle

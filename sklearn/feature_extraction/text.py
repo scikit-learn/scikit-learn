@@ -1,12 +1,6 @@
 """Utilities to build feature vectors from text documents."""
 
-# Authors: Olivier Grisel <olivier.grisel@ensta.org>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#          Lars Buitinck
-#          Robert Layton <robertlayton@gmail.com>
-#          Jochen Wersdörfer <jochen@wersdoerfer.de>
-#          Roman Sinayev <roman.sinayev@gmail.com>
-#
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import array

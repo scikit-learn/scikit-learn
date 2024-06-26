@@ -1,9 +1,6 @@
 """Utilities to extract features from images."""
 
-# Authors: Emmanuelle Gouillart <emmanuelle.gouillart@normalesup.org>
-#          Gael Varoquaux <gael.varoquaux@normalesup.org>
-#          Olivier Grisel
-#          Vlad Niculae
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 from itertools import product

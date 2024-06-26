@@ -5,12 +5,7 @@ a base estimator to be provided in their constructor. The meta-estimator
 extends single output estimators to multioutput estimators.
 """
 
-# Author: Tim Head <betatim@gmail.com>
-# Author: Hugo Bowne-Anderson <hugobowne@gmail.com>
-# Author: Chris Rivera <chris.richard.rivera@gmail.com>
-# Author: Michael Williamson
-# Author: James Ashton Nichols <james.ashton.nichols@gmail.com>
-#
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 
