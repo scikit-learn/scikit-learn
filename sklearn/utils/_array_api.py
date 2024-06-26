@@ -749,7 +749,6 @@ def _nanmax(X, axis=None, xp=None):
 def _clip(X, S, min_val, max_val, xp):
     # TODO: remove this method and change all usage once we move to array api 2023.12
     # https://data-apis.org/array-api/2023.12/API_specification/generated/array_api.clip.html#clip
-    xp, _ = get_namespace(X, xp=xp)
     if _is_numpy_namespace(xp):
         return numpy.clip(S, min_val, max_val)
     else:
