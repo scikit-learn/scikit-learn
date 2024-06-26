@@ -1137,7 +1137,7 @@ def cosine_distances(X, Y=None):
 
 def _fill_diagonal_2d(S, val, xp):
     assert S.ndim == 2, "_fill_diagonal_2d supports 2D arrays only"
-    n, m = S.shape
+    _, m = S.shape
     S_flat = xp.reshape(S, (-1,))
     S_flat[:: m + 1] = val
 
