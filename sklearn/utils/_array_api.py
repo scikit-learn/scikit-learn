@@ -967,3 +967,14 @@ def _in1d(ar1, ar2, xp, assume_unique=False, invert=False):
         return ret[: ar1.shape[0]]
     else:
         return xp.take(ret, rev_idx, axis=0)
+
+
+def _count_nonzero(X, xp, device, axis=None):
+    """A variant of `sklearn.utils.sparsefuncs.count_nonzero` for the Array API."""
+    if axis == -1:
+        axis = 1
+    elif axis == -2:
+        axis = 0
+    one_scalar = xp.asarray(1, device=device)
+    zero_scalar = xp.asarray(0, device=device)
+    return xp.sum(xp.where(X != 0, one_scalar, zero_scalar), axis=axis)

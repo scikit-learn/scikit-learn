@@ -28,6 +28,7 @@ from ..utils import (
 )
 from ..utils._array_api import (
     _average,
+    _count_nonzero,
     _is_numpy_namespace,
     _union1d,
     get_namespace,
@@ -221,9 +222,8 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
         if _is_numpy_namespace(xp):
             differing_labels = count_nonzero(y_true - y_pred, axis=1)
         else:
-            differing_labels = xp.sum(
-                xp.astype(xp.astype(y_true - y_pred, xp.bool), xp.int8),
-                axis=1,
+            differing_labels = _count_nonzero(
+                y_true - y_pred, xp=xp, device=device, axis=1
             )
         score = xp.asarray(differing_labels == 0, device=device)
     else:
