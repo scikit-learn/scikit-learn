@@ -284,8 +284,8 @@ The sections below dive into technical aspects of successive halving.
   multiple of both `min_resources` and `factor` (this constraint will be clear
   in the next section). :class:`HalvingRandomSearchCV` achieves this by
   sampling the right amount of candidates, while :class:`HalvingGridSearchCV`
-  achieves this by properly setting `min_resources`. Please see
-  :ref:`exhausting_the_resources` for details.
+  achieves this by properly setting `min_resources`.
+  Please see below for details.
 
 .. _amount_of_resource_and_number_of_candidates:
 
