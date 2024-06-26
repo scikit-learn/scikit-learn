@@ -68,7 +68,7 @@ specifications for multiindex sets in
   .. figure:: ../auto_examples/polynomial_chaos/images/sphx_glr_plot_index_sets_002.png
      :target: ../auto_examples/polynomial_chaos/plot_index_sets.html
      :align: center
-      
+
   The weights allow one to select certain preferential features where the
   polynomial order should be higher.
 
@@ -102,7 +102,7 @@ to solve to obtain the Polynomial Chaos coefficients can be underdetermined
 `regularization <https://en.wikipedia.org/wiki/Regularization_(mathematics)>`_ of
 the problem may be required to find a good Polynomial Chaos surrogate. We can
 take advantage of the various linear models, such as
-:class:`~sklearn.linear_model.LassoCV`, by specifying the `solver` argument in 
+:class:`~sklearn.linear_model.LassoCV`, by specifying the `solver` argument in
 the :class:`PolynomialChaosRegressor`.
 
 For more details and a technical description of Polynomial Chaos expansions, we
@@ -172,7 +172,7 @@ Polynomial Chaos examples
    * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_sobol_g.py`
    * :ref:`sphx_glr_auto_examples_polynomial_chaos_plot_pcr_noisy_data.py`
 
-Simple one-dimensional model 
+Simple one-dimensional model
 ----------------------------
 
 This example illustrates how Polynomial Chaos expansions work by constructing a
@@ -243,8 +243,9 @@ consider the model problem in :math:`d = 4` dimensions. The figure below shows
 the values of the main sensitivity indices extracted from a second-order
 accurate Polynomial Chaos surrogate model. Despite the relatively low dimension
 of the problem, this example demonstrates the challenges faced when constructing
-higher-order accurate Polynomial Chaos surrogates. We then discuss an adaptive
-basis construction approach, that somewhat alleviates this issue.
+higher-order accurate Polynomial Chaos surrogates. We then discuss the adaptive
+basis construction approach from [Gerstner2003]_., that somewhat alleviates this
+issue.
 
 .. figure:: ../auto_examples/polynomial_chaos/images/sphx_glr_plot_pcr_sobol_g_001.png
    :target: ../auto_examples/polynomial_chaos/plot_pcr_sobol_g.html
