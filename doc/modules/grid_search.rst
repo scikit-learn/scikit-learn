@@ -72,41 +72,41 @@ evaluated and the best combination is retained.
 
 .. currentmodule:: sklearn.model_selection
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    - See :ref:`sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py`
-      for an example of Grid Search within a cross validation loop on the iris
-      dataset. This is the best practice for evaluating the performance of a
-      model with grid search.
+- See :ref:`sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py`
+  for an example of Grid Search within a cross validation loop on the iris
+  dataset. This is the best practice for evaluating the performance of a
+  model with grid search.
 
-    - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py` for an example
-      of Grid Search coupling parameters from a text documents feature
-      extractor (n-gram count vectorizer and TF-IDF transformer) with a
-      classifier (here a linear SVM trained with SGD with either elastic
-      net or L2 penalty) using a :class:`~sklearn.pipeline.Pipeline` instance.
+- See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py` for an example
+  of Grid Search coupling parameters from a text documents feature
+  extractor (n-gram count vectorizer and TF-IDF transformer) with a
+  classifier (here a linear SVM trained with SGD with either elastic
+  net or L2 penalty) using a :class:`~sklearn.pipeline.Pipeline` instance.
 
 
-    |details-start|
-    Advanced examples
-    |details-split|
+.. dropdown:: Advanced examples
 
-    - See :ref:`sphx_glr_auto_examples_model_selection_plot_multi_metric_evaluation.py`
-      for an example of :class:`GridSearchCV` being used to evaluate multiple
-      metrics simultaneously.
+  - See :ref:`sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py`
+    for an example of Grid Search within a cross validation loop on the iris
+    dataset. This is the best practice for evaluating the performance of a
+    model with grid search.
 
-    - See
-      :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`
-      and
-      :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
-      for examples of using ``refit=callable`` interface in
-      :class:`GridSearchCV`. This allows providing a custom strategy to decide
-      what is the "best" estimator.
+  - See :ref:`sphx_glr_auto_examples_model_selection_plot_multi_metric_evaluation.py`
+    for an example of :class:`GridSearchCV` being used to evaluate multiple
+    metrics simultaneously.
 
-    - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`
-      for an example of how to do a statistical comparison on the outputs of
-      :class:`GridSearchCV`.
+  - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`
+    for an example of using ``refit=callable`` interface in
+    :class:`GridSearchCV`. The example shows how this interface adds certain
+    amount of flexibility in identifying the "best" estimator. This interface
+    can also be used in multiple metrics evaluation.
 
-    |details-end|
+  - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`
+    for an example of how to do a statistical comparison on the outputs of
+    :class:`GridSearchCV`.
+
 
 .. _randomized_parameter_search:
 
@@ -167,16 +167,16 @@ variable that is log-uniformly distributed between ``1e0`` and ``1e3``::
    'kernel': ['rbf'],
    'class_weight':['balanced', None]}
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_model_selection_plot_randomized_search.py` compares the usage and efficiency
-      of randomized search and grid search.
+* :ref:`sphx_glr_auto_examples_model_selection_plot_randomized_search.py` compares the usage and efficiency
+  of randomized search and grid search.
 
-.. topic:: References:
+.. rubric:: References
 
-    * Bergstra, J. and Bengio, Y.,
-      Random search for hyper-parameter optimization,
-      The Journal of Machine Learning Research (2012)
+* Bergstra, J. and Bengio, Y.,
+  Random search for hyper-parameter optimization,
+  The Journal of Machine Learning Research (2012)
 
 .. _successive_halving_user_guide:
 
@@ -222,343 +222,321 @@ These estimators are still **experimental**: their predictions
 and their API might change without any deprecation cycle. To use them, you
 need to explicitly import ``enable_halving_search_cv``::
 
-  >>> # explicitly require this experimental feature
   >>> from sklearn.experimental import enable_halving_search_cv  # noqa
-  >>> # now you can import normally from model_selection
   >>> from sklearn.model_selection import HalvingGridSearchCV
   >>> from sklearn.model_selection import HalvingRandomSearchCV
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_model_selection_plot_successive_halving_heatmap.py`
-    * :ref:`sphx_glr_auto_examples_model_selection_plot_successive_halving_iterations.py`
+* :ref:`sphx_glr_auto_examples_model_selection_plot_successive_halving_heatmap.py`
+* :ref:`sphx_glr_auto_examples_model_selection_plot_successive_halving_iterations.py`
 
 The sections below dive into technical aspects of successive halving.
 
-|details-start|
-Choosing ``min_resources`` and the number of candidates
-|details-split|
+.. dropdown:: Choosing ``min_resources`` and the number of candidates
 
-Beside ``factor``, the two main parameters that influence the behaviour of a
-successive halving search are the ``min_resources`` parameter, and the
-number of candidates (or parameter combinations) that are evaluated.
-``min_resources`` is the amount of resources allocated at the first
-iteration for each candidate. The number of candidates is specified directly
-in :class:`HalvingRandomSearchCV`, and is determined from the ``param_grid``
-parameter of :class:`HalvingGridSearchCV`.
+  Beside ``factor``, the two main parameters that influence the behaviour of a
+  successive halving search are the ``min_resources`` parameter, and the
+  number of candidates (or parameter combinations) that are evaluated.
+  ``min_resources`` is the amount of resources allocated at the first
+  iteration for each candidate. The number of candidates is specified directly
+  in :class:`HalvingRandomSearchCV`, and is determined from the ``param_grid``
+  parameter of :class:`HalvingGridSearchCV`.
 
-Consider a case where the resource is the number of samples, and where we
-have 1000 samples. In theory, with ``min_resources=10`` and ``factor=2``, we
-are able to run **at most** 7 iterations with the following number of
-samples: ``[10, 20, 40, 80, 160, 320, 640]``.
+  Consider a case where the resource is the number of samples, and where we
+  have 1000 samples. In theory, with ``min_resources=10`` and ``factor=2``, we
+  are able to run **at most** 7 iterations with the following number of
+  samples: ``[10, 20, 40, 80, 160, 320, 640]``.
 
-But depending on the number of candidates, we might run less than 7
-iterations: if we start with a **small** number of candidates, the last
-iteration might use less than 640 samples, which means not using all the
-available resources (samples). For example if we start with 5 candidates, we
-only need 2 iterations: 5 candidates for the first iteration, then
-`5 // 2 = 2` candidates at the second iteration, after which we know which
-candidate performs the best (so we don't need a third one). We would only be
-using at most 20 samples which is a waste since we have 1000 samples at our
-disposal. On the other hand, if we start with a **high** number of
-candidates, we might end up with a lot of candidates at the last iteration,
-which may not always be ideal: it means that many candidates will run with
-the full resources, basically reducing the procedure to standard search.
+  But depending on the number of candidates, we might run less than 7
+  iterations: if we start with a **small** number of candidates, the last
+  iteration might use less than 640 samples, which means not using all the
+  available resources (samples). For example if we start with 5 candidates, we
+  only need 2 iterations: 5 candidates for the first iteration, then
+  `5 // 2 = 2` candidates at the second iteration, after which we know which
+  candidate performs the best (so we don't need a third one). We would only be
+  using at most 20 samples which is a waste since we have 1000 samples at our
+  disposal. On the other hand, if we start with a **high** number of
+  candidates, we might end up with a lot of candidates at the last iteration,
+  which may not always be ideal: it means that many candidates will run with
+  the full resources, basically reducing the procedure to standard search.
 
-In the case of :class:`HalvingRandomSearchCV`, the number of candidates is set
-by default such that the last iteration uses as much of the available
-resources as possible. For :class:`HalvingGridSearchCV`, the number of
-candidates is determined by the `param_grid` parameter. Changing the value of
-``min_resources`` will impact the number of possible iterations, and as a
-result will also have an effect on the ideal number of candidates.
+  In the case of :class:`HalvingRandomSearchCV`, the number of candidates is set
+  by default such that the last iteration uses as much of the available
+  resources as possible. For :class:`HalvingGridSearchCV`, the number of
+  candidates is determined by the `param_grid` parameter. Changing the value of
+  ``min_resources`` will impact the number of possible iterations, and as a
+  result will also have an effect on the ideal number of candidates.
 
-Another consideration when choosing ``min_resources`` is whether or not it
-is easy to discriminate between good and bad candidates with a small amount
-of resources. For example, if you need a lot of samples to distinguish
-between good and bad parameters, a high ``min_resources`` is recommended. On
-the other hand if the distinction is clear even with a small amount of
-samples, then a small ``min_resources`` may be preferable since it would
-speed up the computation.
+  Another consideration when choosing ``min_resources`` is whether or not it
+  is easy to discriminate between good and bad candidates with a small amount
+  of resources. For example, if you need a lot of samples to distinguish
+  between good and bad parameters, a high ``min_resources`` is recommended. On
+  the other hand if the distinction is clear even with a small amount of
+  samples, then a small ``min_resources`` may be preferable since it would
+  speed up the computation.
 
-Notice in the example above that the last iteration does not use the maximum
-amount of resources available: 1000 samples are available, yet only 640 are
-used, at most. By default, both :class:`HalvingRandomSearchCV` and
-:class:`HalvingGridSearchCV` try to use as many resources as possible in the
-last iteration, with the constraint that this amount of resources must be a
-multiple of both `min_resources` and `factor` (this constraint will be clear
-in the next section). :class:`HalvingRandomSearchCV` achieves this by
-sampling the right amount of candidates, while :class:`HalvingGridSearchCV`
-achieves this by properly setting `min_resources`. Please see
-:ref:`exhausting_the_resources` for details.
-|details-end|
+  Notice in the example above that the last iteration does not use the maximum
+  amount of resources available: 1000 samples are available, yet only 640 are
+  used, at most. By default, both :class:`HalvingRandomSearchCV` and
+  :class:`HalvingGridSearchCV` try to use as many resources as possible in the
+  last iteration, with the constraint that this amount of resources must be a
+  multiple of both `min_resources` and `factor` (this constraint will be clear
+  in the next section). :class:`HalvingRandomSearchCV` achieves this by
+  sampling the right amount of candidates, while :class:`HalvingGridSearchCV`
+  achieves this by properly setting `min_resources`. Please see
+  :ref:`exhausting_the_resources` for details.
 
 .. _amount_of_resource_and_number_of_candidates:
 
-|details-start|
-Amount of resource and number of candidates at each iteration
-|details-split|
+.. dropdown:: Amount of resource and number of candidates at each iteration
 
-At any iteration `i`, each candidate is allocated a given amount of resources
-which we denote `n_resources_i`. This quantity is controlled by the
-parameters ``factor`` and ``min_resources`` as follows (`factor` is strictly
-greater than 1)::
+  At any iteration `i`, each candidate is allocated a given amount of resources
+  which we denote `n_resources_i`. This quantity is controlled by the
+  parameters ``factor`` and ``min_resources`` as follows (`factor` is strictly
+  greater than 1)::
 
-    n_resources_i = factor**i * min_resources,
+      n_resources_i = factor**i * min_resources,
 
-or equivalently::
+  or equivalently::
 
-    n_resources_{i+1} = n_resources_i * factor
+      n_resources_{i+1} = n_resources_i * factor
 
-where ``min_resources == n_resources_0`` is the amount of resources used at
-the first iteration. ``factor`` also defines the proportions of candidates
-that will be selected for the next iteration::
+  where ``min_resources == n_resources_0`` is the amount of resources used at
+  the first iteration. ``factor`` also defines the proportions of candidates
+  that will be selected for the next iteration::
 
-    n_candidates_i = n_candidates // (factor ** i)
+      n_candidates_i = n_candidates // (factor ** i)
 
-or equivalently::
+  or equivalently::
 
-    n_candidates_0 = n_candidates
-    n_candidates_{i+1} = n_candidates_i // factor
+      n_candidates_0 = n_candidates
+      n_candidates_{i+1} = n_candidates_i // factor
 
-So in the first iteration, we use ``min_resources`` resources
-``n_candidates`` times. In the second iteration, we use ``min_resources *
-factor`` resources ``n_candidates // factor`` times. The third again
-multiplies the resources per candidate and divides the number of candidates.
-This process stops when the maximum amount of resource per candidate is
-reached, or when we have identified the best candidate. The best candidate
-is identified at the iteration that is evaluating `factor` or less candidates
-(see just below for an explanation).
+  So in the first iteration, we use ``min_resources`` resources
+  ``n_candidates`` times. In the second iteration, we use ``min_resources *
+  factor`` resources ``n_candidates // factor`` times. The third again
+  multiplies the resources per candidate and divides the number of candidates.
+  This process stops when the maximum amount of resource per candidate is
+  reached, or when we have identified the best candidate. The best candidate
+  is identified at the iteration that is evaluating `factor` or less candidates
+  (see just below for an explanation).
 
-Here is an example with ``min_resources=3`` and ``factor=2``, starting with
-70 candidates:
+  Here is an example with ``min_resources=3`` and ``factor=2``, starting with
+  70 candidates:
 
-+-----------------------+-----------------------+
-| ``n_resources_i``     | ``n_candidates_i``    |
-+=======================+=======================+
-| 3 (=min_resources)    | 70 (=n_candidates)    |
-+-----------------------+-----------------------+
-| 3 * 2 = 6             | 70 // 2 = 35          |
-+-----------------------+-----------------------+
-| 6 * 2 = 12            | 35 // 2 = 17          |
-+-----------------------+-----------------------+
-| 12 * 2 = 24           | 17 // 2 = 8           |
-+-----------------------+-----------------------+
-| 24 * 2 = 48           | 8 // 2 = 4            |
-+-----------------------+-----------------------+
-| 48 * 2 = 96           | 4 // 2 = 2            |
-+-----------------------+-----------------------+
+  +-----------------------+-----------------------+
+  | ``n_resources_i``     | ``n_candidates_i``    |
+  +=======================+=======================+
+  | 3 (=min_resources)    | 70 (=n_candidates)    |
+  +-----------------------+-----------------------+
+  | 3 * 2 = 6             | 70 // 2 = 35          |
+  +-----------------------+-----------------------+
+  | 6 * 2 = 12            | 35 // 2 = 17          |
+  +-----------------------+-----------------------+
+  | 12 * 2 = 24           | 17 // 2 = 8           |
+  +-----------------------+-----------------------+
+  | 24 * 2 = 48           | 8 // 2 = 4            |
+  +-----------------------+-----------------------+
+  | 48 * 2 = 96           | 4 // 2 = 2            |
+  +-----------------------+-----------------------+
 
-We can note that:
+  We can note that:
 
-- the process stops at the first iteration which evaluates `factor=2`
-  candidates: the best candidate is the best out of these 2 candidates. It
-  is not necessary to run an additional iteration, since it would only
-  evaluate one candidate (namely the best one, which we have already
-  identified). For this reason, in general, we want the last iteration to
-  run at most ``factor`` candidates. If the last iteration evaluates more
-  than `factor` candidates, then this last iteration reduces to a regular
-  search (as in :class:`RandomizedSearchCV` or :class:`GridSearchCV`).
-- each ``n_resources_i`` is a multiple of both ``factor`` and
-  ``min_resources`` (which is confirmed by its definition above).
+  - the process stops at the first iteration which evaluates `factor=2`
+    candidates: the best candidate is the best out of these 2 candidates. It
+    is not necessary to run an additional iteration, since it would only
+    evaluate one candidate (namely the best one, which we have already
+    identified). For this reason, in general, we want the last iteration to
+    run at most ``factor`` candidates. If the last iteration evaluates more
+    than `factor` candidates, then this last iteration reduces to a regular
+    search (as in :class:`RandomizedSearchCV` or :class:`GridSearchCV`).
+  - each ``n_resources_i`` is a multiple of both ``factor`` and
+    ``min_resources`` (which is confirmed by its definition above).
 
-The amount of resources that is used at each iteration can be found in the
-`n_resources_` attribute.
-|details-end|
+  The amount of resources that is used at each iteration can be found in the
+  `n_resources_` attribute.
 
-|details-start|
-Choosing a resource
-|details-split|
+.. dropdown:: Choosing a resource
 
-By default, the resource is defined in terms of number of samples. That is,
-each iteration will use an increasing amount of samples to train on. You can
-however manually specify a parameter to use as the resource with the
-``resource`` parameter. Here is an example where the resource is defined in
-terms of the number of estimators of a random forest::
+  By default, the resource is defined in terms of number of samples. That is,
+  each iteration will use an increasing amount of samples to train on. You can
+  however manually specify a parameter to use as the resource with the
+  ``resource`` parameter. Here is an example where the resource is defined in
+  terms of the number of estimators of a random forest::
 
-    >>> from sklearn.datasets import make_classification
-    >>> from sklearn.ensemble import RandomForestClassifier
-    >>> from sklearn.experimental import enable_halving_search_cv  # noqa
-    >>> from sklearn.model_selection import HalvingGridSearchCV
-    >>> import pandas as pd
-    >>>
-    >>> param_grid = {'max_depth': [3, 5, 10],
-    ...               'min_samples_split': [2, 5, 10]}
-    >>> base_estimator = RandomForestClassifier(random_state=0)
-    >>> X, y = make_classification(n_samples=1000, random_state=0)
-    >>> sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
-    ...                          factor=2, resource='n_estimators',
-    ...                          max_resources=30).fit(X, y)
-    >>> sh.best_estimator_
-    RandomForestClassifier(max_depth=5, n_estimators=24, random_state=0)
+      >>> from sklearn.datasets import make_classification
+      >>> from sklearn.ensemble import RandomForestClassifier
+      >>> from sklearn.experimental import enable_halving_search_cv  # noqa
+      >>> from sklearn.model_selection import HalvingGridSearchCV
+      >>> import pandas as pd
+      >>> param_grid = {'max_depth': [3, 5, 10],
+      ...               'min_samples_split': [2, 5, 10]}
+      >>> base_estimator = RandomForestClassifier(random_state=0)
+      >>> X, y = make_classification(n_samples=1000, random_state=0)
+      >>> sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
+      ...                          factor=2, resource='n_estimators',
+      ...                          max_resources=30).fit(X, y)
+      >>> sh.best_estimator_
+      RandomForestClassifier(max_depth=5, n_estimators=24, random_state=0)
 
-Note that it is not possible to budget on a parameter that is part of the
-parameter grid.
-|details-end|
+  Note that it is not possible to budget on a parameter that is part of the
+  parameter grid.
 
 .. _exhausting_the_resources:
 
-|details-start|
-Exhausting the available resources
-|details-split|
+.. dropdown:: Exhausting the available resources
 
-As mentioned above, the number of resources that is used at each iteration
-depends on the `min_resources` parameter.
-If you have a lot of resources available but start with a low number of
-resources, some of them might be wasted (i.e. not used)::
+  As mentioned above, the number of resources that is used at each iteration
+  depends on the `min_resources` parameter.
+  If you have a lot of resources available but start with a low number of
+  resources, some of them might be wasted (i.e. not used)::
 
-    >>> from sklearn.datasets import make_classification
-    >>> from sklearn.svm import SVC
-    >>> from sklearn.experimental import enable_halving_search_cv  # noqa
-    >>> from sklearn.model_selection import HalvingGridSearchCV
-    >>> import pandas as pd
-    >>> param_grid= {'kernel': ('linear', 'rbf'),
-    ...              'C': [1, 10, 100]}
-    >>> base_estimator = SVC(gamma='scale')
-    >>> X, y = make_classification(n_samples=1000)
-    >>> sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
-    ...                          factor=2, min_resources=20).fit(X, y)
-    >>> sh.n_resources_
-    [20, 40, 80]
+      >>> from sklearn.datasets import make_classification
+      >>> from sklearn.svm import SVC
+      >>> from sklearn.experimental import enable_halving_search_cv  # noqa
+      >>> from sklearn.model_selection import HalvingGridSearchCV
+      >>> import pandas as pd
+      >>> param_grid= {'kernel': ('linear', 'rbf'),
+      ...              'C': [1, 10, 100]}
+      >>> base_estimator = SVC(gamma='scale')
+      >>> X, y = make_classification(n_samples=1000)
+      >>> sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
+      ...                          factor=2, min_resources=20).fit(X, y)
+      >>> sh.n_resources_
+      [20, 40, 80]
 
-The search process will only use 80 resources at most, while our maximum
-amount of available resources is ``n_samples=1000``. Here, we have
-``min_resources = r_0 = 20``.
+  The search process will only use 80 resources at most, while our maximum
+  amount of available resources is ``n_samples=1000``. Here, we have
+  ``min_resources = r_0 = 20``.
 
-For :class:`HalvingGridSearchCV`, by default, the `min_resources` parameter
-is set to 'exhaust'. This means that `min_resources` is automatically set
-such that the last iteration can use as many resources as possible, within
-the `max_resources` limit::
+  For :class:`HalvingGridSearchCV`, by default, the `min_resources` parameter
+  is set to 'exhaust'. This means that `min_resources` is automatically set
+  such that the last iteration can use as many resources as possible, within
+  the `max_resources` limit::
 
-    >>> sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
-    ...                          factor=2, min_resources='exhaust').fit(X, y)
-    >>> sh.n_resources_
-    [250, 500, 1000]
+      >>> sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
+      ...                          factor=2, min_resources='exhaust').fit(X, y)
+      >>> sh.n_resources_
+      [250, 500, 1000]
 
-`min_resources` was here automatically set to 250, which results in the last
-iteration using all the resources. The exact value that is used depends on
-the number of candidate parameter, on `max_resources` and on `factor`.
+  `min_resources` was here automatically set to 250, which results in the last
+  iteration using all the resources. The exact value that is used depends on
+  the number of candidate parameter, on `max_resources` and on `factor`.
 
-For :class:`HalvingRandomSearchCV`, exhausting the resources can be done in 2
-ways:
+  For :class:`HalvingRandomSearchCV`, exhausting the resources can be done in 2
+  ways:
 
-- by setting `min_resources='exhaust'`, just like for
-  :class:`HalvingGridSearchCV`;
-- by setting `n_candidates='exhaust'`.
+  - by setting `min_resources='exhaust'`, just like for
+    :class:`HalvingGridSearchCV`;
+  - by setting `n_candidates='exhaust'`.
 
-Both options are mutually exclusive: using `min_resources='exhaust'` requires
-knowing the number of candidates, and symmetrically `n_candidates='exhaust'`
-requires knowing `min_resources`.
+  Both options are mutually exclusive: using `min_resources='exhaust'` requires
+  knowing the number of candidates, and symmetrically `n_candidates='exhaust'`
+  requires knowing `min_resources`.
 
-In general, exhausting the total number of resources leads to a better final
-candidate parameter, and is slightly more time-intensive.
-|details-end|
+  In general, exhausting the total number of resources leads to a better final
+  candidate parameter, and is slightly more time-intensive.
 
 .. _aggressive_elimination:
 
-|details-start|
-Aggressive elimination of candidates
-|details-split|
+.. dropdown:: Aggressive elimination of candidates
 
-Ideally, we want the last iteration to evaluate ``factor`` candidates (see
-:ref:`amount_of_resource_and_number_of_candidates`). We then just have to
-pick the best one. When the number of available resources is small with
-respect to the number of candidates, the last iteration may have to evaluate
-more than ``factor`` candidates::
+  Ideally, we want the last iteration to evaluate ``factor`` candidates (see
+  :ref:`amount_of_resource_and_number_of_candidates`). We then just have to
+  pick the best one. When the number of available resources is small with
+  respect to the number of candidates, the last iteration may have to evaluate
+  more than ``factor`` candidates::
 
-    >>> from sklearn.datasets import make_classification
-    >>> from sklearn.svm import SVC
-    >>> from sklearn.experimental import enable_halving_search_cv  # noqa
-    >>> from sklearn.model_selection import HalvingGridSearchCV
-    >>> import pandas as pd
-    >>>
-    >>>
-    >>> param_grid = {'kernel': ('linear', 'rbf'),
-    ...               'C': [1, 10, 100]}
-    >>> base_estimator = SVC(gamma='scale')
-    >>> X, y = make_classification(n_samples=1000)
-    >>> sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
-    ...                          factor=2, max_resources=40,
-    ...                          aggressive_elimination=False).fit(X, y)
-    >>> sh.n_resources_
-    [20, 40]
-    >>> sh.n_candidates_
-    [6, 3]
+      >>> from sklearn.datasets import make_classification
+      >>> from sklearn.svm import SVC
+      >>> from sklearn.experimental import enable_halving_search_cv  # noqa
+      >>> from sklearn.model_selection import HalvingGridSearchCV
+      >>> import pandas as pd
+      >>> param_grid = {'kernel': ('linear', 'rbf'),
+      ...               'C': [1, 10, 100]}
+      >>> base_estimator = SVC(gamma='scale')
+      >>> X, y = make_classification(n_samples=1000)
+      >>> sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
+      ...                          factor=2, max_resources=40,
+      ...                          aggressive_elimination=False).fit(X, y)
+      >>> sh.n_resources_
+      [20, 40]
+      >>> sh.n_candidates_
+      [6, 3]
 
-Since we cannot use more than ``max_resources=40`` resources, the process
-has to stop at the second iteration which evaluates more than ``factor=2``
-candidates.
+  Since we cannot use more than ``max_resources=40`` resources, the process
+  has to stop at the second iteration which evaluates more than ``factor=2``
+  candidates.
 
-Using the ``aggressive_elimination`` parameter, you can force the search
-process to end up with less than ``factor`` candidates at the last
-iteration. To do this, the process will eliminate as many candidates as
-necessary using ``min_resources`` resources::
+  Using the ``aggressive_elimination`` parameter, you can force the search
+  process to end up with less than ``factor`` candidates at the last
+  iteration. To do this, the process will eliminate as many candidates as
+  necessary using ``min_resources`` resources::
 
-    >>> sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
-    ...                            factor=2,
-    ...                            max_resources=40,
-    ...                            aggressive_elimination=True,
-    ...                            ).fit(X, y)
-    >>> sh.n_resources_
-    [20, 20,  40]
-    >>> sh.n_candidates_
-    [6, 3, 2]
+      >>> sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
+      ...                            factor=2,
+      ...                            max_resources=40,
+      ...                            aggressive_elimination=True,
+      ...                            ).fit(X, y)
+      >>> sh.n_resources_
+      [20, 20, 40]
+      >>> sh.n_candidates_
+      [6, 3, 2]
 
-Notice that we end with 2 candidates at the last iteration since we have
-eliminated enough candidates during the first iterations, using ``n_resources =
-min_resources = 20``.
-|details-end|
+  Notice that we end with 2 candidates at the last iteration since we have
+  eliminated enough candidates during the first iterations, using ``n_resources =
+  min_resources = 20``.
 
 .. _successive_halving_cv_results:
 
-|details-start|
-Analyzing results with the `cv_results_` attribute
-|details-split|
+.. dropdown:: Analyzing results with the `cv_results_` attribute
 
-The ``cv_results_`` attribute contains useful information for analyzing the
-results of a search. It can be converted to a pandas dataframe with ``df =
-pd.DataFrame(est.cv_results_)``. The ``cv_results_`` attribute of
-:class:`HalvingGridSearchCV` and :class:`HalvingRandomSearchCV` is similar
-to that of :class:`GridSearchCV` and :class:`RandomizedSearchCV`, with
-additional information related to the successive halving process.
+  The ``cv_results_`` attribute contains useful information for analyzing the
+  results of a search. It can be converted to a pandas dataframe with ``df =
+  pd.DataFrame(est.cv_results_)``. The ``cv_results_`` attribute of
+  :class:`HalvingGridSearchCV` and :class:`HalvingRandomSearchCV` is similar
+  to that of :class:`GridSearchCV` and :class:`RandomizedSearchCV`, with
+  additional information related to the successive halving process.
 
-Here is an example with some of the columns of a (truncated) dataframe:
+  Here is an example with some of the columns of a (truncated) dataframe:
 
-====  ======  ===============  =================  ========================================================================================
-  ..    iter      n_resources    mean_test_score  params
-====  ======  ===============  =================  ========================================================================================
-   0       0              125           0.983667  {'criterion': 'log_loss', 'max_depth': None, 'max_features': 9, 'min_samples_split': 5}
-   1       0              125           0.983667  {'criterion': 'gini', 'max_depth': None, 'max_features': 8, 'min_samples_split': 7}
-   2       0              125           0.983667  {'criterion': 'gini', 'max_depth': None, 'max_features': 10, 'min_samples_split': 10}
-   3       0              125           0.983667  {'criterion': 'log_loss', 'max_depth': None, 'max_features': 6, 'min_samples_split': 6}
- ...     ...              ...                ...  ...
-  15       2              500           0.951958  {'criterion': 'log_loss', 'max_depth': None, 'max_features': 9, 'min_samples_split': 10}
-  16       2              500           0.947958  {'criterion': 'gini', 'max_depth': None, 'max_features': 10, 'min_samples_split': 10}
-  17       2              500           0.951958  {'criterion': 'gini', 'max_depth': None, 'max_features': 10, 'min_samples_split': 4}
-  18       3             1000           0.961009  {'criterion': 'log_loss', 'max_depth': None, 'max_features': 9, 'min_samples_split': 10}
-  19       3             1000           0.955989  {'criterion': 'gini', 'max_depth': None, 'max_features': 10, 'min_samples_split': 4}
-====  ======  ===============  =================  ========================================================================================
+  ====  ======  ===============  =================  ========================================================================================
+    ..    iter      n_resources    mean_test_score  params
+  ====  ======  ===============  =================  ========================================================================================
+     0       0              125           0.983667  {'criterion': 'log_loss', 'max_depth': None, 'max_features': 9, 'min_samples_split': 5}
+     1       0              125           0.983667  {'criterion': 'gini', 'max_depth': None, 'max_features': 8, 'min_samples_split': 7}
+     2       0              125           0.983667  {'criterion': 'gini', 'max_depth': None, 'max_features': 10, 'min_samples_split': 10}
+     3       0              125           0.983667  {'criterion': 'log_loss', 'max_depth': None, 'max_features': 6, 'min_samples_split': 6}
+   ...     ...              ...                ...  ...
+    15       2              500           0.951958  {'criterion': 'log_loss', 'max_depth': None, 'max_features': 9, 'min_samples_split': 10}
+    16       2              500           0.947958  {'criterion': 'gini', 'max_depth': None, 'max_features': 10, 'min_samples_split': 10}
+    17       2              500           0.951958  {'criterion': 'gini', 'max_depth': None, 'max_features': 10, 'min_samples_split': 4}
+    18       3             1000           0.961009  {'criterion': 'log_loss', 'max_depth': None, 'max_features': 9, 'min_samples_split': 10}
+    19       3             1000           0.955989  {'criterion': 'gini', 'max_depth': None, 'max_features': 10, 'min_samples_split': 4}
+  ====  ======  ===============  =================  ========================================================================================
 
-Each row corresponds to a given parameter combination (a candidate) and a given
-iteration. The iteration is given by the ``iter`` column. The ``n_resources``
-column tells you how many resources were used.
+  Each row corresponds to a given parameter combination (a candidate) and a given
+  iteration. The iteration is given by the ``iter`` column. The ``n_resources``
+  column tells you how many resources were used.
 
-In the example above, the best parameter combination is ``{'criterion':
-'log_loss', 'max_depth': None, 'max_features': 9, 'min_samples_split': 10}``
-since it has reached the last iteration (3) with the highest score:
-0.96.
+  In the example above, the best parameter combination is ``{'criterion':
+  'log_loss', 'max_depth': None, 'max_features': 9, 'min_samples_split': 10}``
+  since it has reached the last iteration (3) with the highest score:
+  0.96.
 
-.. topic:: References:
+  .. rubric:: References
 
-    .. [1] K. Jamieson, A. Talwalkar,
-       `Non-stochastic Best Arm Identification and Hyperparameter
-       Optimization <http://proceedings.mlr.press/v51/jamieson16.html>`_, in
-       proc. of Machine Learning Research, 2016.
-    .. [2] L. Li, K. Jamieson, G. DeSalvo, A. Rostamizadeh, A. Talwalkar,
-       :arxiv:`Hyperband: A Novel Bandit-Based Approach to Hyperparameter Optimization
-       <1603.06560>`, in Machine Learning Research 18, 2018.
+  .. [1] K. Jamieson, A. Talwalkar,
+     `Non-stochastic Best Arm Identification and Hyperparameter
+     Optimization <http://proceedings.mlr.press/v51/jamieson16.html>`_, in
+     proc. of Machine Learning Research, 2016.
+
+  .. [2] L. Li, K. Jamieson, G. DeSalvo, A. Rostamizadeh, A. Talwalkar,
+     :arxiv:`Hyperband: A Novel Bandit-Based Approach to Hyperparameter Optimization
+     <1603.06560>`, in Machine Learning Research 18, 2018.
 
 
-|details-end|
 
 .. _grid_search_tips:
 
@@ -627,7 +605,7 @@ parameters of composite or nested estimators such as
   >>> search = GridSearchCV(calibrated_forest, param_grid, cv=5)
   >>> search.fit(X, y)
   GridSearchCV(cv=5,
-               estimator=CalibratedClassifierCV(...),
+               estimator=CalibratedClassifierCV(estimator=RandomForestClassifier(n_estimators=10)),
                param_grid={'estimator__max_depth': [2, 4, 6, 8]})
 
 Here, ``<estimator>`` is the parameter name of the nested estimator,

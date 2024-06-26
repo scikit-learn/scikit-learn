@@ -1,7 +1,7 @@
-"""Base classes for all estimators."""
+"""Base classes for all estimators and various utility functions."""
 
-# Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import copy
 import functools
@@ -16,7 +16,6 @@ import numpy as np
 from . import __version__
 from ._config import config_context, get_config
 from .exceptions import InconsistentVersionWarning
-from .utils import _IS_32BIT
 from .utils._estimator_html_repr import _HTMLDocumentationLinkMixin, estimator_html_repr
 from .utils._metadata_requests import _MetadataRequester, _routing_enabled
 from .utils._param_validation import validate_parameter_constraints
@@ -24,6 +23,7 @@ from .utils._set_output import _SetOutputMixin
 from .utils._tags import (
     _DEFAULT_TAGS,
 )
+from .utils.fixes import _IS_32BIT
 from .utils.validation import (
     _check_feature_names_in,
     _check_y,
@@ -1353,9 +1353,8 @@ class _UnstableArchMixin:
 
     def _more_tags(self):
         return {
-            "non_deterministic": _IS_32BIT or platform.machine().startswith(
-                ("ppc", "powerpc")
-            )
+            "non_deterministic": _IS_32BIT
+            or platform.machine().startswith(("ppc", "powerpc"))
         }
 
 
@@ -1375,12 +1374,16 @@ def is_classifier(estimator):
     Examples
     --------
     >>> from sklearn.base import is_classifier
+    >>> from sklearn.cluster import KMeans
     >>> from sklearn.svm import SVC, SVR
     >>> classifier = SVC()
     >>> regressor = SVR()
+    >>> kmeans = KMeans()
     >>> is_classifier(classifier)
     True
     >>> is_classifier(regressor)
+    False
+    >>> is_classifier(kmeans)
     False
     """
     return getattr(estimator, "_estimator_type", None) == "classifier"
@@ -1402,15 +1405,52 @@ def is_regressor(estimator):
     Examples
     --------
     >>> from sklearn.base import is_regressor
+    >>> from sklearn.cluster import KMeans
     >>> from sklearn.svm import SVC, SVR
     >>> classifier = SVC()
     >>> regressor = SVR()
+    >>> kmeans = KMeans()
     >>> is_regressor(classifier)
     False
     >>> is_regressor(regressor)
     True
+    >>> is_regressor(kmeans)
+    False
     """
     return getattr(estimator, "_estimator_type", None) == "regressor"
+
+
+def is_clusterer(estimator):
+    """Return True if the given estimator is (probably) a clusterer.
+
+    .. versionadded:: 1.6
+
+    Parameters
+    ----------
+    estimator : object
+        Estimator object to test.
+
+    Returns
+    -------
+    out : bool
+        True if estimator is a clusterer and False otherwise.
+
+    Examples
+    --------
+    >>> from sklearn.base import is_clusterer
+    >>> from sklearn.cluster import KMeans
+    >>> from sklearn.svm import SVC, SVR
+    >>> classifier = SVC()
+    >>> regressor = SVR()
+    >>> kmeans = KMeans()
+    >>> is_clusterer(classifier)
+    False
+    >>> is_clusterer(regressor)
+    False
+    >>> is_clusterer(kmeans)
+    True
+    """
+    return getattr(estimator, "_estimator_type", None) == "clusterer"
 
 
 def is_outlier_detector(estimator):

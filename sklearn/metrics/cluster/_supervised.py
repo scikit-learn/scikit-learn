@@ -4,16 +4,8 @@ Functions named as *_score return a scalar value to maximize: the higher the
 better.
 """
 
-# Authors: Olivier Grisel <olivier.grisel@ensta.org>
-#          Wei LI <kuantkid@gmail.com>
-#          Diego Molla <dmolla-aliod@gmail.com>
-#          Arnaud Fouchet <foucheta@gmail.com>
-#          Thierry Guillemot <thierry.guillemot.work@gmail.com>
-#          Gregory Stupp <stuppie@gmail.com>
-#          Joel Nothman <joel.nothman@gmail.com>
-#          Arya McCarthy <arya@jhu.edu>
-#          Uwe F Mayer <uwe_f_mayer@yahoo.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 import warnings
@@ -23,6 +15,7 @@ from numbers import Real
 import numpy as np
 from scipy import sparse as sp
 
+from ...utils._array_api import get_namespace
 from ...utils._param_validation import Interval, StrOptions, validate_params
 from ...utils.multiclass import type_of_target
 from ...utils.validation import check_array, check_consistent_length
@@ -188,12 +181,12 @@ def contingency_matrix(
     prefer_skip_nested_validation=True,
 )
 def pair_confusion_matrix(labels_true, labels_pred):
-    """Pair confusion matrix arising from two clusterings [1]_.
+    """Pair confusion matrix arising from two clusterings.
 
     The pair confusion matrix :math:`C` computes a 2 by 2 similarity matrix
     between two clusterings by considering all pairs of samples and counting
     pairs that are assigned into the same or into different clusters under
-    the true and predicted clusterings.
+    the true and predicted clusterings [1]_.
 
     Considering a pair of samples that is clustered together a positive pair,
     then as in binary classification the count of true negatives is
@@ -1282,17 +1275,20 @@ def entropy(labels):
     -----
     The logarithm used is the natural logarithm (base-e).
     """
-    if len(labels) == 0:
+    xp, is_array_api_compliant = get_namespace(labels)
+    labels_len = labels.shape[0] if is_array_api_compliant else len(labels)
+    if labels_len == 0:
         return 1.0
-    label_idx = np.unique(labels, return_inverse=True)[1]
-    pi = np.bincount(label_idx).astype(np.float64)
-    pi = pi[pi > 0]
+
+    pi = xp.astype(xp.unique_counts(labels)[1], xp.float64)
 
     # single cluster => zero entropy
     if pi.size == 1:
         return 0.0
 
-    pi_sum = np.sum(pi)
+    pi_sum = xp.sum(pi)
     # log(a / b) should be calculated as log(a) - log(b) for
     # possible loss of precision
-    return -np.sum((pi / pi_sum) * (np.log(pi) - log(pi_sum)))
+    # Always convert the result as a Python scalar (on CPU) instead of a device
+    # specific scalar array.
+    return float(-xp.sum((pi / pi_sum) * (xp.log(pi) - log(pi_sum))))

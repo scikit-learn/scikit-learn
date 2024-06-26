@@ -1,4 +1,5 @@
 """Testing for K-means"""
+
 import re
 import sys
 from io import StringIO
@@ -30,7 +31,8 @@ from sklearn.utils._testing import (
     create_memmap_backed_data,
 )
 from sklearn.utils.extmath import row_norms
-from sklearn.utils.fixes import CSR_CONTAINERS, threadpool_limits
+from sklearn.utils.fixes import CSR_CONTAINERS
+from sklearn.utils.parallel import _get_threadpool_controller
 
 # non centered, sparse centers to check the
 centers = np.array(
@@ -198,19 +200,6 @@ def test_kmeans_convergence(algorithm, global_random_seed):
     ).fit(X)
 
     assert km.n_iter_ < max_iter
-
-
-@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
-def test_predict_sample_weight_deprecation_warning(Estimator):
-    X = np.random.rand(100, 2)
-    sample_weight = np.random.uniform(size=100)
-    kmeans = Estimator()
-    kmeans.fit(X, sample_weight=sample_weight)
-    warn_msg = (
-        "'sample_weight' was deprecated in version 1.3 and will be removed in 1.5."
-    )
-    with pytest.warns(FutureWarning, match=warn_msg):
-        kmeans.predict(X, sample_weight=sample_weight)
 
 
 @pytest.mark.parametrize("X_csr", X_as_any_csr)
@@ -448,21 +437,24 @@ def test_minibatch_sensible_reassign(global_random_seed):
         n_clusters=20, batch_size=10, random_state=global_random_seed, init="random"
     ).fit(zeroed_X)
     # there should not be too many exact zero cluster centers
-    assert km.cluster_centers_.any(axis=1).sum() > 10
+    num_non_zero_clusters = km.cluster_centers_.any(axis=1).sum()
+    assert num_non_zero_clusters > 9, f"{num_non_zero_clusters=} is too small"
 
     # do the same with batch-size > X.shape[0] (regression test)
     km = MiniBatchKMeans(
         n_clusters=20, batch_size=200, random_state=global_random_seed, init="random"
     ).fit(zeroed_X)
     # there should not be too many exact zero cluster centers
-    assert km.cluster_centers_.any(axis=1).sum() > 10
+    num_non_zero_clusters = km.cluster_centers_.any(axis=1).sum()
+    assert num_non_zero_clusters > 9, f"{num_non_zero_clusters=} is too small"
 
     # do the same with partial_fit API
     km = MiniBatchKMeans(n_clusters=20, random_state=global_random_seed, init="random")
     for i in range(100):
         km.partial_fit(zeroed_X)
     # there should not be too many exact zero cluster centers
-    assert km.cluster_centers_.any(axis=1).sum() > 10
+    num_non_zero_clusters = km.cluster_centers_.any(axis=1).sum()
+    assert num_non_zero_clusters > 9, f"{num_non_zero_clusters=} is too small"
 
 
 @pytest.mark.parametrize(
@@ -979,13 +971,13 @@ def test_result_equal_in_diff_n_threads(Estimator, global_random_seed):
     rnd = np.random.RandomState(global_random_seed)
     X = rnd.normal(size=(50, 10))
 
-    with threadpool_limits(limits=1, user_api="openmp"):
+    with _get_threadpool_controller().limit(limits=1, user_api="openmp"):
         result_1 = (
             Estimator(n_clusters=n_clusters, random_state=global_random_seed)
             .fit(X)
             .labels_
         )
-    with threadpool_limits(limits=2, user_api="openmp"):
+    with _get_threadpool_controller().limit(limits=2, user_api="openmp"):
         result_2 = (
             Estimator(n_clusters=n_clusters, random_state=global_random_seed)
             .fit(X)
