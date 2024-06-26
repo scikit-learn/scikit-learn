@@ -307,7 +307,7 @@ class VerboseReporter:
         verbose_fmt.append("{remaining_time:>16s}")
 
         # print the header line
-        print(("%10s " + "%16s " * (len(header_fields) - 1)) % tuple(header_fields))
+        print(''.join([f"{v:>16} " if idx else f"{v:>10} " for idx, v in enumerate(header_fields)]))
 
         self.verbose_fmt = " ".join(verbose_fmt)
         # plot verbose info each time i % verbose_mod == 0
