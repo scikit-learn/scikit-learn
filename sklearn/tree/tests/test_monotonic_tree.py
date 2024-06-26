@@ -29,12 +29,21 @@ TREE_BASED_REGRESSOR_CLASSES = TREE_REGRESSOR_CLASSES + [
 ]
 
 
+def missing_data_supported(TreeEstimator, criterion):
+    return TreeEstimator in [
+        DecisionTreeRegressor,
+        DecisionTreeClassifier,
+    ] and criterion in ["squared_error", "gini", "entropy", "log_loss"]
+
+
 @pytest.mark.parametrize("TreeClassifier", TREE_BASED_CLASSIFIER_CLASSES)
+@pytest.mark.parametrize("with_missing", (True, False))
 @pytest.mark.parametrize("depth_first_builder", (True, False))
 @pytest.mark.parametrize("sparse_splitter", (True, False))
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
 def test_monotonic_constraints_classifications(
     TreeClassifier,
+    with_missing,
     depth_first_builder,
     sparse_splitter,
     global_random_seed,
@@ -75,6 +84,12 @@ def test_monotonic_constraints_classifications(
         est.set_params(**{"random_state": global_random_seed})
     if hasattr(est, "n_estimators"):
         est.set_params(**{"n_estimators": 5})
+    if with_missing:
+        if sparse_splitter or not missing_data_supported(TreeClassifier, est.criterion):
+            return
+        generator = np.random.default_rng(seed=global_random_seed)
+        mask = generator.choice(2, size=X_train.shape).astype(bool)
+        X_train[mask] = np.nan
     if sparse_splitter:
         X_train = csc_container(X_train)
     est.fit(X_train, y_train)
@@ -95,12 +110,14 @@ def test_monotonic_constraints_classifications(
 
 
 @pytest.mark.parametrize("TreeRegressor", TREE_BASED_REGRESSOR_CLASSES)
+@pytest.mark.parametrize("with_missing", (True, False))
 @pytest.mark.parametrize("depth_first_builder", (True, False))
 @pytest.mark.parametrize("sparse_splitter", (True, False))
 @pytest.mark.parametrize("criterion", ("absolute_error", "squared_error"))
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
 def test_monotonic_constraints_regressions(
     TreeRegressor,
+    with_missing,
     depth_first_builder,
     sparse_splitter,
     criterion,
@@ -146,6 +163,12 @@ def test_monotonic_constraints_regressions(
         est.set_params(random_state=global_random_seed)
     if hasattr(est, "n_estimators"):
         est.set_params(**{"n_estimators": 5})
+    if with_missing:
+        if sparse_splitter or not missing_data_supported(TreeRegressor, est.criterion):
+            return
+        generator = np.random.default_rng(seed=global_random_seed)
+        mask = generator.choice(2, size=X_train.shape).astype(bool)
+        X_train[mask] = np.nan
     if sparse_splitter:
         X_train = csc_container(X_train)
     est.fit(X_train, y_train)
@@ -190,25 +213,6 @@ def test_multiple_output_raises(TreeClassifier):
         est.fit(X, y)
 
 
-@pytest.mark.parametrize(
-    "DecisionTreeEstimator", [DecisionTreeClassifier, DecisionTreeRegressor]
-)
-def test_missing_values_raises(DecisionTreeEstimator):
-    X, y = make_classification(
-        n_samples=100, n_features=5, n_classes=2, n_informative=3, random_state=0
-    )
-    X[0, 0] = np.nan
-    monotonic_cst = np.zeros(X.shape[1])
-    monotonic_cst[0] = 1
-    est = DecisionTreeEstimator(
-        max_depth=None, monotonic_cst=monotonic_cst, random_state=0
-    )
-
-    msg = "Input X contains NaN"
-    with pytest.raises(ValueError, match=msg):
-        est.fit(X, y)
-
-
 @pytest.mark.parametrize("TreeClassifier", TREE_BASED_CLASSIFIER_CLASSES)
 def test_bad_monotonic_cst_raises(TreeClassifier):
     X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
@@ -246,20 +250,20 @@ def assert_1d_reg_tree_children_monotonic_bounded(tree_, monotonic_sign):
                 assert values[i_left] <= values[i_right]
             elif monotonic_sign == -1:
                 assert values[i_left] >= values[i_right]
-            val_middle = (values[i_left] + values[i_right]) / 2
+            val_middle = np.float32((values[i_left] + values[i_right]) / 2)
             # Check bounds on grand-children, filtering out leaf nodes
             if tree_.feature[i_left] >= 0:
                 i_left_right = tree_.children_right[i_left]
                 if monotonic_sign == 1:
-                    assert values[i_left_right] <= val_middle
+                    assert np.float32(values[i_left_right]) <= val_middle
                 elif monotonic_sign == -1:
-                    assert values[i_left_right] >= val_middle
+                    assert np.float32(values[i_left_right]) >= val_middle
             if tree_.feature[i_right] >= 0:
                 i_right_left = tree_.children_left[i_right]
                 if monotonic_sign == 1:
-                    assert val_middle <= values[i_right_left]
+                    assert val_middle <= np.float32(values[i_right_left])
                 elif monotonic_sign == -1:
-                    assert val_middle >= values[i_right_left]
+                    assert val_middle >= np.float32(values[i_right_left])
 
 
 def test_assert_1d_reg_tree_children_monotonic_bounded():
@@ -303,11 +307,17 @@ def test_1d_opposite_monotonicity_cst_data(TreeRegressor):
 
 
 @pytest.mark.parametrize("TreeRegressor", TREE_REGRESSOR_CLASSES)
+@pytest.mark.parametrize("with_missing", (True, False))
 @pytest.mark.parametrize("monotonic_sign", (-1, 1))
 @pytest.mark.parametrize("depth_first_builder", (True, False))
 @pytest.mark.parametrize("criterion", ("absolute_error", "squared_error"))
 def test_1d_tree_nodes_values(
-    TreeRegressor, monotonic_sign, depth_first_builder, criterion, global_random_seed
+    TreeRegressor,
+    with_missing,
+    monotonic_sign,
+    depth_first_builder,
+    criterion,
+    global_random_seed,
 ):
     # Adaptation from test_nodes_values in test_monotonic_constraints.py
     # in sklearn.ensemble._hist_gradient_boosting
@@ -330,6 +340,12 @@ def test_1d_tree_nodes_values(
     n_samples = 1000
     n_features = 1
     X = rng.rand(n_samples, n_features)
+    if with_missing:
+        if not missing_data_supported(TreeRegressor, criterion):
+            return
+        generator = np.random.default_rng(seed=global_random_seed)
+        mask = generator.choice(2, size=X.shape, p=[0.8, 0.2]).astype(bool)
+        X[mask] = np.nan
     y = rng.rand(n_samples)
 
     if depth_first_builder:
@@ -353,7 +369,9 @@ def test_1d_tree_nodes_values(
     assert_1d_reg_monotonic(clf, monotonic_sign, np.min(X), np.max(X), 100)
 
 
-def assert_nd_reg_tree_children_monotonic_bounded(tree_, monotonic_cst):
+def assert_nd_reg_tree_children_monotonic_bounded(
+    tree_, monotonic_cst, with_missing=False
+):
     upper_bound = np.full(tree_.node_count, np.inf)
     lower_bound = np.full(tree_.node_count, -np.inf)
     for i in range(tree_.node_count):
@@ -365,8 +383,12 @@ def assert_nd_reg_tree_children_monotonic_bounded(tree_, monotonic_cst):
         # is slightly different from the value of the right sibling.
         # This can cause a discrepancy up to numerical noise when clipping,
         # which is resolved by comparing with some loss of precision.
-        assert np.float32(node_value) <= np.float32(upper_bound[i])
-        assert np.float32(node_value) >= np.float32(lower_bound[i])
+        # Clipping modifies the actual middle values and in turn the
+        # lower_bound and upper_bound computed here with missing values,
+        # which causes node_value to trespass the final bounds (post clipping)
+        if not with_missing:
+            assert np.float32(node_value) <= np.float32(upper_bound[i])
+            assert np.float32(node_value) >= np.float32(lower_bound[i])
 
         if feature < 0:
             # Leaf: nothing to do
@@ -375,7 +397,7 @@ def assert_nd_reg_tree_children_monotonic_bounded(tree_, monotonic_cst):
         # Split node: check and update bounds for the children.
         i_left = tree_.children_left[i]
         i_right = tree_.children_right[i]
-        # unpack value from nx1x1 array
+        # unpack value from nx1x1 array (middle_value after clipping)
         middle_value = (tree_.value[i_left][0][0] + tree_.value[i_right][0][0]) / 2
 
         if monotonic_cst[feature] == 0:
@@ -456,11 +478,17 @@ def test_assert_nd_reg_tree_children_monotonic_bounded():
 
 
 @pytest.mark.parametrize("TreeRegressor", TREE_REGRESSOR_CLASSES)
+@pytest.mark.parametrize("with_missing", (True, False))
 @pytest.mark.parametrize("monotonic_sign", (-1, 1))
 @pytest.mark.parametrize("depth_first_builder", (True, False))
 @pytest.mark.parametrize("criterion", ("absolute_error", "squared_error"))
 def test_nd_tree_nodes_values(
-    TreeRegressor, monotonic_sign, depth_first_builder, criterion, global_random_seed
+    TreeRegressor,
+    with_missing,
+    monotonic_sign,
+    depth_first_builder,
+    criterion,
+    global_random_seed,
 ):
     # Build tree with several features, and make sure the nodes
     # values respect the monotonicity constraints.
@@ -487,6 +515,12 @@ def test_nd_tree_nodes_values(
     n_features = 2
     monotonic_cst = [monotonic_sign, 0]
     X = rng.rand(n_samples, n_features)
+    if with_missing:
+        if not missing_data_supported(TreeRegressor, criterion):
+            return
+        generator = np.random.default_rng(seed=global_random_seed)
+        mask = generator.choice(2, size=X.shape, p=[0.8, 0.2]).astype(bool)
+        X[mask] = np.nan
     y = rng.rand(n_samples)
 
     if depth_first_builder:
@@ -505,4 +539,6 @@ def test_nd_tree_nodes_values(
             random_state=global_random_seed,
         )
     clf.fit(X, y)
-    assert_nd_reg_tree_children_monotonic_bounded(clf.tree_, monotonic_cst)
+    assert_nd_reg_tree_children_monotonic_bounded(
+        clf.tree_, monotonic_cst, with_missing=with_missing
+    )

@@ -488,7 +488,10 @@ cdef inline int node_split_best(
 
         # Evaluate when there are missing values and all missing values goes
         # to the right node and non-missing values goes to the left node.
-        if has_missing:
+        if has_missing and not (
+            with_monotonic_cst
+            and monotonic_cst[current_split.feature] != 0
+        ):
             n_left, n_right = end - start - n_missing, n_missing
             p = end - n_missing
             missing_go_to_left = 0
