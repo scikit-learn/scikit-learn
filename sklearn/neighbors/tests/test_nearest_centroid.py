@@ -159,3 +159,40 @@ def test_features_zero_var():
     clf = NearestCentroid(shrink_threshold=0.1)
     with pytest.raises(ValueError):
         clf.fit(X, y)
+
+
+def test_partial_fit():
+    # Test the partial fitting
+
+    clf = NearestCentroid()
+
+    clf.partial_fit(X[:3], y[:3], classes=[-1, 1])
+    clf_partial_pred = clf.predict(T)
+    assert not np.array_equal(clf_partial_pred, true_result)
+
+    clf.partial_fit(X[3:], y[3:])
+    clf_complete_pred = clf.predict(T)
+    assert_array_equal(clf_complete_pred, true_result)
+    assert not np.array_equal(clf_complete_pred, clf_partial_pred)
+
+    clf_fit = NearestCentroid()
+    clf_fit = clf_fit.fit(X, y)
+    assert_array_equal(clf_fit.predict(T), clf_complete_pred)
+
+
+def test_partial_shrinkage_correct():
+    # Ensure that the shrinking is correct.
+    # The expected result is calculated by R (pamr),
+    # which is implemented by the author of the original paper.
+    # (One need to modify the code to output the new centroid in pamr.predict)
+
+    X = np.array([[0, 1], [1, 0], [1, 1], [2, 0], [6, 8]])
+    y = np.array([1, 1, 2, 2, 2])
+    clf = NearestCentroid(shrink_threshold=0.1)
+    clf.partial_fit(X[:3], y[:3], classes=[1, 2])
+    expected_result = np.array([[0.55773503, 0.55773503], [0.88452995, 0.88452995]])
+    np.testing.assert_array_almost_equal(clf.centroids_, expected_result)
+
+    clf.partial_fit(X[3:], y[3:])
+    expected_result = np.array([[0.7787310, 0.8545292], [2.814179, 2.763647]])
+    np.testing.assert_array_almost_equal(clf.centroids_, expected_result)
