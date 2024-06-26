@@ -7,7 +7,6 @@ from numbers import Integral, Real
 from warnings import warn
 
 import numpy as np
-from joblib import Parallel, delayed
 from scipy.sparse import issparse
 
 from ..base import OutlierMixin, _fit_context
@@ -20,6 +19,7 @@ from ..utils import (
 )
 from ..utils._chunking import get_chunk_n_rows
 from ..utils._param_validation import Interval, RealNotInt, StrOptions
+from ..utils.parallel import Parallel, delayed
 from ..utils.validation import _num_samples, check_is_fitted
 from ._bagging import BaseBagging
 from ._base import _partition_estimators
