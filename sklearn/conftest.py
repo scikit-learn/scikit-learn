@@ -4,7 +4,6 @@ import sys
 from contextlib import suppress
 from functools import wraps
 from os import environ
-from random import Random
 from unittest import SkipTest
 
 import joblib
@@ -300,30 +299,10 @@ def handle_global_random_seed(config):
     default_random_seeds = [42]
 
     # When using pytest-xdist this function is called both in the xdist
-    # controller and xdist workers. Care is needed in the
-    # SKLEARN_TESTS_GLOBAL_RANDOM_SEED == 'any' case to generate a random seed
-    # in the xdist controller and reuse it in the xdist workers.
-    if random_seed_var == "any":
-        # Inside the xdist controller, or when xdist is disabled: pick-up one
-        # seed at random in the range of admissible random seeds.
-        if is_xdist_controller(config):
-            random_seeds = [Random().choice(RANDOM_SEED_RANGE)]
-        else:
-            # inside a xdist worker: reuse random_seeds that have been
-            # generated in the xdist controller and passed to the xdist workers
-            # by pytest_configure_node. In some edge cases, pytest_configure in
-            # not called in the xdist controller (hence pytest_configure_node
-            # is not called and config.workerinput does not have the key
-            # "random_seeds"), for example:
-            # pytest -n2 --pyargs sklearn.tests.test_dummy
-            # For more details, see
-            # https://github.com/pytest-dev/pytest-xdist/issues/917#issuecomment-2015189622.
-            # In these edge cases, random_seeds is set to a fixed value
-            random_seeds = config.workerinput.get("random_seeds", default_random_seeds)
-
-    # When SKLEARN_TESTS_GLOBAL_RANDOM_SEED != 'any', we rely on the
-    # SKLEARN_TESTS_GLOBAL_RANDOM_SEED environment variable
-    elif random_seed_var is None:
+    # controller and xdist workers. In both cases, we rely on
+    # SKLEARN_TESTS_GLOBAL_RANDOM_SEED environment variable which is set in the
+    # main process and available in subprocesses
+    if random_seed_var is None:
         random_seeds = default_random_seeds
     elif random_seed_var == "all":
         random_seeds = RANDOM_SEED_RANGE
@@ -338,7 +317,7 @@ def handle_global_random_seed(config):
             raise ValueError(
                 "The value(s) of the environment variable "
                 "SKLEARN_TESTS_GLOBAL_RANDOM_SEED must be in the range [0, 99] "
-                f"(or 'any' or 'all'), got: {random_seed_var}"
+                f"(or 'all'), got: {random_seed_var}"
             )
 
     # Set the random_seeds to that it can be accessed in other places e.g.
@@ -358,12 +337,7 @@ def handle_global_random_seed(config):
 
 def pytest_report_header(config):
     random_seed_var = environ.get("SKLEARN_TESTS_GLOBAL_RANDOM_SEED")
-    if random_seed_var == "any":
-        # Actual random seed has been set in pytest_configure, this is the one
-        # we should show in the header
-        random_seeds = config.option.random_seeds[0]
-    else:
-        random_seeds = random_seed_var
+    random_seeds = random_seed_var
 
     return [
         "To reproduce this test run, set the following environment variable:",
