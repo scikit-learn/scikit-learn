@@ -430,6 +430,7 @@ def test_convert_estimator_to_ndarray(array_namespace, converter):
 
     X = xp.asarray([[1.3, 4.5]])
     est = SimpleEstimator().fit(X)
+    est.predict(X)
 
     new_est = _estimator_with_converted_arrays(est, converter)
     assert isinstance(new_est.X_, numpy.ndarray)
