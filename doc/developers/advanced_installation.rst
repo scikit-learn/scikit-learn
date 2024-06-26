@@ -485,6 +485,9 @@ the base system and these steps will not be necessary.
 Alternative compilers
 =====================
 
+TODO what to do about this section, is there a precise use case?
+
+
 The following command will build scikit-learn using your default C/C++ compiler.
 
 .. prompt:: bash $
