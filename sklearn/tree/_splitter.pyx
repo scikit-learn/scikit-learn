@@ -286,14 +286,15 @@ cdef inline int node_split_best(
     Criterion criterion,
     SplitRecord* split,
     ParentInfo* parent_record,
-    bint with_monotonic_cst,
-    const int8_t[:] monotonic_cst,
 ) except -1 nogil:
     """Find the best split on node samples[start:end]
 
     Returns -1 in case of failure to allocate memory (and raise MemoryError)
     or 0 otherwise.
     """
+    cdef const int8_t[:] monotonic_cst = splitter.monotonic_cst
+    cdef bint with_monotonic_cst = splitter.with_monotonic_cst
+
     # Find the best split
     cdef intp_t start = splitter.start
     cdef intp_t end = splitter.end
@@ -667,14 +668,15 @@ cdef inline int node_split_random(
     Criterion criterion,
     SplitRecord* split,
     ParentInfo* parent_record,
-    bint with_monotonic_cst,
-    const int8_t[:] monotonic_cst,
 ) except -1 nogil:
     """Find the best random split on node samples[start:end]
 
     Returns -1 in case of failure to allocate memory (and raise MemoryError)
     or 0 otherwise.
     """
+    cdef const int8_t[:] monotonic_cst = splitter.monotonic_cst
+    cdef bint with_monotonic_cst = splitter.with_monotonic_cst
+
     # Draw random splits and pick the best
     cdef intp_t start = splitter.start
     cdef intp_t end = splitter.end
@@ -1512,8 +1514,6 @@ cdef class BestSplitter(Splitter):
             self.criterion,
             split,
             parent_record,
-            self.with_monotonic_cst,
-            self.monotonic_cst,
         )
 
 cdef class BestSparseSplitter(Splitter):
@@ -1542,8 +1542,6 @@ cdef class BestSparseSplitter(Splitter):
             self.criterion,
             split,
             parent_record,
-            self.with_monotonic_cst,
-            self.monotonic_cst,
         )
 
 cdef class RandomSplitter(Splitter):
@@ -1572,8 +1570,6 @@ cdef class RandomSplitter(Splitter):
             self.criterion,
             split,
             parent_record,
-            self.with_monotonic_cst,
-            self.monotonic_cst,
         )
 
 cdef class RandomSparseSplitter(Splitter):
@@ -1601,6 +1597,4 @@ cdef class RandomSparseSplitter(Splitter):
             self.criterion,
             split,
             parent_record,
-            self.with_monotonic_cst,
-            self.monotonic_cst,
         )

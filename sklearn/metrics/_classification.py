@@ -30,6 +30,7 @@ from ..utils._array_api import (
     _average,
     _union1d,
     get_namespace,
+    get_namespace_and_device,
 )
 from ..utils._param_validation import (
     Hidden,
@@ -205,13 +206,13 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     >>> accuracy_score(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
     0.5
     """
-
+    xp, _, device = get_namespace_and_device(y_true, y_pred, sample_weight)
     # Compute accuracy for each possible representation
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
     if y_type.startswith("multilabel"):
         differing_labels = count_nonzero(y_true - y_pred, axis=1)
-        score = differing_labels == 0
+        score = xp.asarray(differing_labels == 0, device=device)
     else:
         score = y_true == y_pred
 
