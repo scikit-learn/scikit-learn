@@ -1,13 +1,13 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import threading
 import numbers
+import threading
 from numbers import Integral, Real
 from warnings import warn
-from joblib import Parallel, delayed
 
 import numpy as np
+from joblib import Parallel, delayed
 from scipy.sparse import issparse
 
 from ..base import OutlierMixin, _fit_context
@@ -448,8 +448,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
         Notes
         -----
-        The decision_function method can be parallelized by setting a joblib context. This
-        inherently does NOT use the ``n_jobs`` parameter initialized in the class,
+        The decision_function method can be parallelized by setting a joblib context.
+        This inherently does NOT use the ``n_jobs`` parameter initialized in the class,
         which is used during ``fit``. This is because, calculating the score may
         actually be faster without parallelization for a small number of samples.
         The user can set the number of jobs in the joblib context to control the

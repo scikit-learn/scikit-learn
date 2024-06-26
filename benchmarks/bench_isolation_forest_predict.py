@@ -17,13 +17,13 @@ assumed to contain outliers.
 We compare the prediction time at the very end.
 """
 
-from time import time
-from pathlib import Path
 from collections import defaultdict
+from pathlib import Path
+from time import time
 
 import numpy as np
-from joblib import parallel_backend
 import pandas as pd
+from joblib import parallel_backend
 
 from sklearn.ensemble import IsolationForest
 
@@ -60,7 +60,11 @@ results = defaultdict(list)
 
 # Loop over all datasets for fitting and scoring the estimator:
 n_samples_train = 1000
-for n_samples_test in [1000, 10000, 100000]:
+for n_samples_test in [
+    1000,
+    10000,
+    # 100000
+]:
     for n_features in [10, 100, 1000]:
         for contamination in [0.01, 0.1, 0.5]:
             for n_jobs in [1, 2, 3, 4]:
