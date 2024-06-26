@@ -16,7 +16,7 @@ from ..preprocessing import LabelEncoder
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.multiclass import check_classification_targets
 from ..utils.sparsefuncs import csc_median_axis_0
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, column_or_1d
 
 
 class NearestCentroid(ClassifierMixin, BaseEstimator):
@@ -120,6 +120,37 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
             Note that centroid shrinking cannot be used with sparse matrices.
         y : array-like of shape (n_samples,)
             Target values.
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
+        """
+        X, y = self._validate_data(X, y, accept_sparse=True)
+        y = column_or_1d(y, warn=True)
+        return self._partial_fit(X, y, np.unique(y), _refit=True)
+    def _partial_fit(self, X, y, classes=None, _refit=False):
+        """
+        Actual implementation of the Nearest Centroid fitting.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training vector, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+            Note that centroid shrinking cannot be used with sparse matrices.
+
+        y : array-like of shape (n_samples,)
+            Target values.
+
+        classes : array-like of shape (n_classes,), optional (default=None)
+            List of all the classes that can possibly appear in the `y` vector.
+            Must be provided at the first call to `partial_fit`, can be omitted
+            in subsequent calls.
+
+        _refit : bool, optional (default=False)
+            If True, act as though this were the first time we called
+            `_partial_fit` (i.e. throw away any past fitting and start over).
 
         Returns
         -------
