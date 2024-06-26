@@ -845,24 +845,23 @@ def make_converter(X):
             return data
 
         return convert
-    else:
-        device_ = device(X)
+    device_ = device(X)
 
-        def convert(data):
-            if not isinstance(data, numpy.ndarray) and not hasattr(data, "__dlpack__"):
-                return data
-            data_xp, _, data_device = get_namespace_and_device(data)
-            if data_xp == xp and data_device == device_:
-                return data
-            try:
-                return xp.asarray(data, device=device_)
-            except Exception:
-                # direct conversion to a different library may fail in which
-                # case we try converting to numpy first
-                data = _convert_to_numpy(data, data_xp)
-                return xp.asarray(data, device=device_)
+    def convert(data):
+        if not isinstance(data, numpy.ndarray) and not hasattr(data, "__dlpack__"):
+            return data
+        data_xp, _, data_device = get_namespace_and_device(data)
+        if data_xp == xp and data_device == device_:
+            return data
+        try:
+            return xp.asarray(data, device=device_)
+        except Exception:
+            # direct conversion to a different library may fail in which
+            # case we try converting to numpy first
+            data = _convert_to_numpy(data, data_xp)
+            return xp.asarray(data, device=device_)
 
-        return convert
+    return convert
 
 
 def convert_attributes(estimator, ref_array):
