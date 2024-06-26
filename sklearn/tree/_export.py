@@ -150,8 +150,7 @@ def plot_tree(
 
     proportion : bool, default=False
         When set to ``True``, change the display of 'values' and/or 'samples'
-        to be proportions and percentages respectively. When set to ``False``,
-        change the display of 'values' and/or 'samples' to be counts.
+        to be proportions and percentages respectively.
 
     rounded : bool, default=False
         When set to ``True``, draw node boxes with rounded corners and use
