@@ -851,11 +851,9 @@ def make_converter(X):
         def convert(data):
             if not isinstance(data, numpy.ndarray) and not hasattr(data, "__dlpack__"):
                 return data
-            data_xp, data_is_array_api, data_device = get_namespace_and_device(data)
+            data_xp, _, data_device = get_namespace_and_device(data)
             if data_xp == xp and data_device == device_:
                 return data
-            if not data_is_array_api:
-                return xp.asarray(data, device=device_)
             try:
                 return xp.asarray(data, device=device_)
             except Exception:
