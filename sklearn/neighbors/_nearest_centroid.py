@@ -129,6 +129,37 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         X, y = self._validate_data(X, y, accept_sparse=True)
         y = column_or_1d(y, warn=True)
         return self._partial_fit(X, y, np.unique(y), _refit=True)
+
+    def partial_fit(self, X, y, classes=None):
+        """Incremental fit on a batch of samples.
+
+        This method is expected to be called several times consecutively
+        on different chunks of a dataset so as to implement out-of-core
+        or online learning.
+        This is especially useful when the whole dataset is too big to fit in
+        memory at once.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training vector, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+            Note that centroid shrinking cannot be used with sparse matrices.
+
+        y : array-like of shape (n_samples,)
+            Target values (integers).
+
+        classes : array-like of shape (n_classes,), optional (default=None)
+            List of all the classes that can possibly appear in the `y` vector.
+            Must be provided at the first call to `partial_fit`, can be omitted
+            in subsequent calls.
+        """
+        if self.metric == "manhattan":
+            raise ValueError(
+                "Partial fitting with 'manhattan' metric is not supported."
+            )
+        return self._partial_fit(X, y, classes, _refit=False)
+
     def _partial_fit(self, X, y, classes=None, _refit=False):
         """
         Actual implementation of the Nearest Centroid fitting.
