@@ -278,26 +278,15 @@ def pytest_generate_tests(metafunc):
     https://scikit-learn.org/dev/computing/parallelism.html#sklearn-tests-global-random-seed
 
     """
-    # metafunc.config["random_seeds"] has been set in the
-    # handle_global_random_seed function based on
-    # SKLEARN_TESTS_GLOBAL_RANDOM_SEED
-    random_seeds = metafunc.config.getoption("random_seeds")
-
-    if "global_random_seed" in metafunc.fixturenames:
-        metafunc.parametrize("global_random_seed", random_seeds)
-
-
-def handle_global_random_seed(config):
-    """Part of pytest_configure that deals with the global_random_seed fixture."""
+    # When using pytest-xdist this function is called both in the xdist
+    # controller and xdist workers. In both cases, we rely on
+    # SKLEARN_TESTS_GLOBAL_RANDOM_SEED environment variable which is set in the
+    # main process and available in subprocesses
     RANDOM_SEED_RANGE = list(range(100))  # All seeds in [0, 99] should be valid.
     random_seed_var = environ.get("SKLEARN_TESTS_GLOBAL_RANDOM_SEED")
 
     default_random_seeds = [42]
 
-    # When using pytest-xdist this function is called both in the xdist
-    # controller and xdist workers. In both cases, we rely on
-    # SKLEARN_TESTS_GLOBAL_RANDOM_SEED environment variable which is set in the
-    # main process and available in subprocesses
     if random_seed_var is None:
         random_seeds = default_random_seeds
     elif random_seed_var == "all":
@@ -316,19 +305,8 @@ def handle_global_random_seed(config):
                 f"(or 'all'), got: {random_seed_var}"
             )
 
-    # Set the random_seeds to that it can be accessed in other places e.g.
-    # pytest_generate_tests
-    config.option.random_seeds = random_seeds
-
-    class XDistHooks:
-        def pytest_configure_node(self, node) -> None:
-            # This passes the random seeds generated in the xdist controller to
-            # xdist workers
-            random_seeds = node.config.getoption("random_seeds")
-            node.workerinput["random_seeds"] = random_seeds
-
-    if config.pluginmanager.hasplugin("xdist"):
-        config.pluginmanager.register(XDistHooks())
+    if "global_random_seed" in metafunc.fixturenames:
+        metafunc.parametrize("global_random_seed", random_seeds)
 
 
 def pytest_report_header(config):
@@ -361,8 +339,6 @@ def pytest_configure(config):
         # xdist is using to prevent oversubscription.
         allowed_parallelism = max(allowed_parallelism // int(xdist_worker_count), 1)
     threadpool_limits(allowed_parallelism)
-
-    handle_global_random_seed(config)
 
     if environ.get("SKLEARN_WARNINGS_AS_ERRORS", "0") != "0":
         # This seems like the only way to programmatically change the config
