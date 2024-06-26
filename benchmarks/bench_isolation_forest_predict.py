@@ -54,6 +54,113 @@ def get_data(
     return X_train, X_test
 
 
+def plot(bench_results, pr_name, main_name, image_path):
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    import seaborn as sns
+
+    results_path = Path(bench_results)
+    pr_path = results_path / f"{pr_name}.csv"
+    main_path = results_path / f"{main_name}.csv"
+    image_path = results_path / image_path
+
+    df_pr = pd.read_csv(pr_path).assign(branch=pr_name)
+    df_main = pd.read_csv(main_path).assign(branch=main_name)
+
+    # Merge the two datasets on the common columns
+    merged_data = pd.merge(
+        df_pr,
+        df_main,
+        on=["n_samples_train", "n_samples_test", "n_jobs"],
+        suffixes=("_pr", "_main"),
+    )
+
+    # Set up the plotting grid
+    sns.set(style="whitegrid")
+
+    # Create a figure with subplots
+    fig, axes = plt.subplots(1, 2, figsize=(18, 6))
+
+    # Plot predict time as a function of n_samples_train with different n_jobs
+    sns.lineplot(
+        data=merged_data,
+        x="n_samples_train",
+        y="predict_time_pr",
+        hue="n_jobs",
+        style=False,
+        markers="o",
+        dashes=False,
+        ax=axes[0],
+        legend="full",
+    )
+    sns.lineplot(
+        data=merged_data,
+        x="n_samples_train",
+        y="predict_time_main",
+        hue="n_jobs",
+        style=False,
+        markers="X",
+        dashes=True,
+        ax=axes[0],
+        legend=False,
+    )
+    axes[0].set_title("Predict Time vs. n_samples_train")
+    axes[0].set_ylabel("Predict Time")
+    axes[0].set_xlabel("n_samples_train")
+
+    # Plot predict time as a function of n_samples_test with different n_jobs
+    sns.lineplot(
+        data=merged_data,
+        x="n_samples_test",
+        y="predict_time_pr",
+        hue="n_jobs",
+        style=False,
+        markers="o",
+        dashes=False,
+        ax=axes[1],
+        legend="full",
+    )
+    sns.lineplot(
+        data=merged_data,
+        x="n_samples_test",
+        y="predict_time_main",
+        hue="n_jobs",
+        style=False,
+        markers="X",
+        dashes=True,
+        ax=axes[1],
+        legend=False,
+    )
+    axes[1].set_title("Predict Time vs. n_samples_test")
+    axes[1].set_ylabel("Predict Time")
+    axes[1].set_xlabel("n_samples_test")
+
+    # Create a custom legend for the PR and Main datasets
+    handles, labels = axes[0].get_legend_handles_labels()
+    pr_handle = plt.Line2D(
+        [0], [0], linestyle="-", marker="o", color="black", label="PR"
+    )
+    main_handle = plt.Line2D(
+        [0], [0], linestyle="--", marker="X", color="black", label="Main"
+    )
+    handles.extend([pr_handle, main_handle])
+    labels.extend(["PR", "Main"])
+
+    axes[0].legend(
+        handles, labels, title="Legend", bbox_to_anchor=(1.05, 1), loc="upper left"
+    )
+    axes[1].legend(
+        handles, labels, title="Legend", bbox_to_anchor=(1.05, 1), loc="upper left"
+    )
+
+    # Adjust layout and display the plots
+    plt.tight_layout()
+
+    print(image_path)
+    fig.savefig(image_path, bbox_inches="tight")
+    print(f"Saved image to {image_path}")
+
+
 random_state = 1
 
 results = defaultdict(list)
@@ -108,43 +215,10 @@ for n_samples_test in [
                 results["n_jobs"].append(n_jobs)
 
 df = pd.DataFrame(results)
-df.to_csv("bench_results/isolation_forest_predict.csv", index=False)
+df.to_csv("~/bench_results_forest/main.csv", index=False)
 
 
-def plot(bench_results, pr_name, main_name, image_path):
-    import matplotlib.pyplot as plt
-    import pandas as pd
-    import seaborn as sns
-
-    results_path = Path(bench_results)
-    pr_path = results_path / f"{pr_name}.csv"
-    main_path = results_path / f"{main_name}.csv"
-    image_path = results_path / image_path
-
-    df_pr = pd.read_csv(pr_path).assign(branch=pr_name)
-    df_main = pd.read_csv(main_path).assign(branch=main_name)
-    df_all = pd.concat((df_pr, df_main), ignore_index=True)
-
-    gb = df_all.groupby(["n_jobs", "n_samples_test"])
-    groups = gb.groups
-
-    n_rows, n_cols = 2, 4
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=(12, 8), constrained_layout=True)
-    axes_flat = axes.ravel()
-    for i, (keys, idx) in enumerate(groups.items()):
-        ax = axes_flat[i]
-        ax.set_title(" | ".join(keys))
-        sns.boxplot(data=df_all.loc[idx], y="predict_time", x="branch", ax=ax)
-        if i % n_cols != 0:
-            ax.set_ylabel("")
-
-    axes_flat[-1].set_visible(False)
-
-    fig.savefig(image_path)
-    print(f"Saved image to {image_path}")
-
-
-bench_results = Path("~/bench_results_forest")
+bench_results = Path("/Users/adam2392/bench_results_forest")
 pr_name = "pr"
 main_name = "main"
 image_path = "results_image.png"
