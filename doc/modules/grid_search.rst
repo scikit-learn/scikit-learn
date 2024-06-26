@@ -286,7 +286,6 @@ The sections below dive into technical aspects of successive halving.
   sampling the right amount of candidates, while :class:`HalvingGridSearchCV`
   achieves this by properly setting `min_resources`.
 
-.. _amount_of_resource_and_number_of_candidates:
 
 .. dropdown:: Amount of resource and number of candidates at each iteration
 
@@ -441,11 +440,10 @@ The sections below dive into technical aspects of successive halving.
 
 .. dropdown:: Aggressive elimination of candidates
 
-  Ideally, we want the last iteration to evaluate ``factor`` candidates (see
-  :ref:`amount_of_resource_and_number_of_candidates`). We then just have to
-  pick the best one. When the number of available resources is small with
-  respect to the number of candidates, the last iteration may have to evaluate
-  more than ``factor`` candidates::
+  Ideally, we want the last iteration to evaluate ``factor`` candidates . We
+  then just have to pick the best one. When the number of available resources is
+  small with respect to the number of candidates, the last iteration may have to
+  evaluate more than ``factor`` candidates::
 
       >>> from sklearn.datasets import make_classification
       >>> from sklearn.svm import SVC
