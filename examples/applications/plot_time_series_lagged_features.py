@@ -24,8 +24,11 @@ engineering.
 # step in a convenience tool such as `sklearn.datasets.fetch_openml`.
 #
 # The URL of the parquet file can be found in the JSON description of the
-# Bike Sharing Demand v7 dataset on openml.org
+# Bike Sharing Demand dataset with id 44063 on openml.org
 # (https://openml.org/search?type=data&status=active&id=44063).
+#
+# The `sha256` hash of the file is also provided to ensure the integrity of the
+# downloaded file.
 import numpy as np
 import polars as pl
 
