@@ -82,7 +82,7 @@ def plot(bench_results, pr_name, main_name, image_path):
     fig, axes = plt.subplots(1, 2, figsize=(18, 6), sharex=True, sharey=True)
 
     # Plot predict time as a function of n_samples_test with different n_jobs
-    print(merged_data['n_jobs'].unique())
+    print(merged_data["n_jobs"].unique())
     ax = axes[0]
     sns.lineplot(
         data=merged_data,
