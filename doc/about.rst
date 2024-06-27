@@ -499,6 +499,9 @@ the past:
 .. |aphp| image:: images/logo_APHP_text.png
   :target: https://aphp.fr/
 
+.. |hf| image:: images/huggingface_logo-noborder.png
+  :target: https://huggingface.co
+
 .. raw:: html
 
   <style>
