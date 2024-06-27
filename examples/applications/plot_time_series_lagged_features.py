@@ -19,26 +19,31 @@ engineering.
 # Analyzing the Bike Sharing Demand dataset
 # -----------------------------------------
 #
-# We start by loading the data from the OpenML repository
-# as a pandas dataframe. This will be replaced with Polars
-# once `fetch_openml` adds a native support for it.
-# We convert to Polars for feature engineering, as it automatically caches
-# common subexpressions which are reused in multiple expressions
-# (like `pl.col("count").shift(1)` below). See
-# https://docs.pola.rs/user-guide/lazy/optimizations/ for more information.
-
+# We start by loading the data from the OpenML repository as a raw parquet file
+# to illustrate how to work with arbitrary parquet file instead of hiding this
+# step in a convenience too such as `sklearn.datasets.fetch_openml`.
 import numpy as np
 import polars as pl
 
-from sklearn.datasets import fetch_openml
+from sklearn.datasets import fetch_file
 
 pl.Config.set_fmt_str_lengths(20)
 
-bike_sharing = fetch_openml(
-    "Bike_Sharing_Demand", version=2, as_frame=True, parser="pandas"
+# Direct download of the parquet file of the Bike Sharing Demand v7 dataset on
+# openml.org:
+bike_sharing_data_file = fetch_file(
+    "https://openml1.win.tue.nl/datasets/0004/44063/dataset_44063.pq",
+    sha256="d120af76829af0d256338dc6dd4be5df4fd1f35bf3a283cab66a51c1c6abd06a",
 )
-df = bike_sharing.frame
-df = pl.DataFrame({col: df[col].to_numpy() for col in df.columns})
+bike_sharing_data_file
+
+# %%
+# We load the parquet file with Polars for feature engineering, as it
+# automatically caches common subexpressions which are reused in multiple
+# expressions (like `pl.col("count").shift(1)` below). See
+# https://docs.pola.rs/user-guide/lazy/optimizations/ for more information.
+
+df = pl.read_parquet(bike_sharing_data_file)
 
 # %%
 # Next, we take a look at the statistical summary of the dataset
@@ -423,3 +428,5 @@ plt.show()
 # by `sktime <https://www.sktime.net/en/latest/users.html>`_
 # can be used to extend scikit-learn estimators by making use of recursive time
 # series forecasting, that enables dynamic predictions of future values.
+
+# %%
