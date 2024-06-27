@@ -3,12 +3,8 @@ The :mod:`sklearn.model_selection._validation` module includes classes and
 functions to validate the model.
 """
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Gael Varoquaux <gael.varoquaux@normalesup.org>
-#         Olivier Grisel <olivier.grisel@ensta.org>
-#         Raghav RV <rvraghav93@gmail.com>
-#         Michal Karbownik <michakarbownik@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 import numbers
@@ -27,9 +23,10 @@ from joblib import logger
 from ..base import clone, is_classifier
 from ..exceptions import FitFailedWarning, UnsetMetadataPassedError
 from ..metrics import check_scoring, get_scorer_names
-from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
+from ..metrics._scorer import _MultimetricScorer
 from ..preprocessing import LabelEncoder
 from ..utils import Bunch, _safe_indexing, check_random_state, indexable
+from ..utils._array_api import device, get_namespace
 from ..utils._param_validation import (
     HasMethods,
     Integral,
@@ -353,15 +350,9 @@ def cross_validate(
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
 
-    if callable(scoring):
-        scorers = scoring
-    elif scoring is None or isinstance(scoring, str):
-        scorers = check_scoring(estimator, scoring)
-    else:
-        scorers = _check_multimetric_scoring(estimator, scoring)
-        scorers = _MultimetricScorer(
-            scorers=scorers, raise_exc=(error_score == "raise")
-        )
+    scorers = check_scoring(
+        estimator, scoring=scoring, raise_exc=(error_score == "raise")
+    )
 
     if _routing_enabled():
         # For estimators, a MetadataRouter is created in get_metadata_routing
@@ -836,6 +827,13 @@ def _fit_and_score(
         fit_error : str or None
             Traceback str if the fit failed, None if the fit succeeded.
     """
+    xp, _ = get_namespace(X)
+    X_device = device(X)
+
+    # Make sure that we can fancy index X even if train and test are provided
+    # as NumPy arrays by NumPy only cross-validation splitters.
+    train, test = xp.asarray(train, device=X_device), xp.asarray(test, device=X_device)
+
     if not isinstance(error_score, numbers.Number) and error_score != "raise":
         raise ValueError(
             "error_score must be the string 'raise' or a numeric value. "

@@ -1,8 +1,7 @@
 """Locally Linear Embedding"""
 
-# Author: Fabian Pedregosa -- <fabian.pedregosa@inria.fr>
-#         Jake Vanderplas  -- <vanderplas@astro.washington.edu>
-# License: BSD 3 clause (C) INRIA 2011
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Integral, Real
 

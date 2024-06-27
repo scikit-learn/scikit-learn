@@ -6,7 +6,7 @@
 #
 attrs==23.2.0
     # via pytest
-coverage==7.5.1
+coverage==7.5.3
     # via pytest-cov
 cython==3.0.10
     # via -r build_tools/azure/debian_atlas_32bit_requirements.txt
@@ -14,13 +14,13 @@ iniconfig==2.0.0
     # via pytest
 joblib==1.2.0
     # via -r build_tools/azure/debian_atlas_32bit_requirements.txt
-meson==1.4.0
+meson==1.4.1
     # via meson-python
 meson-python==0.16.0
     # via -r build_tools/azure/debian_atlas_32bit_requirements.txt
 ninja==1.11.1.1
     # via -r build_tools/azure/debian_atlas_32bit_requirements.txt
-packaging==24.0
+packaging==24.1
     # via
     #   meson-python
     #   pyproject-metadata

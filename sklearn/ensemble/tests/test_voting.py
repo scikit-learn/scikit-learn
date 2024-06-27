@@ -759,7 +759,7 @@ def test_metadata_routing_for_voting_estimators(Estimator, Child, prop):
         registry = estimator[1].registry
         assert len(registry)
         for sub_est in registry:
-            check_recorded_metadata(obj=sub_est, method="fit", **kwargs)
+            check_recorded_metadata(obj=sub_est, method="fit", parent="fit", **kwargs)
 
 
 @pytest.mark.usefixtures("enable_slep006")

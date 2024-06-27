@@ -14,10 +14,8 @@ namely the Pareto distribution.
 
 """
 
-# Authors: David Dale <dale.david@mail.ru>
-#          Christian Lorentzen <lorentzen.ch@gmail.com>
-#          Guillaume Lemaitre <glemaitre58@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Dataset generation
