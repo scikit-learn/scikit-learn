@@ -83,6 +83,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     The calibration is based on the :term:`decision_function` method of the
     `estimator` if it exists, else on :term:`predict_proba`.
 
+    For examples of usage, see:
+    :ref:`sphx_glr_auto_examples_calibration_plot_calibration.py`.
+    :ref:`sphx_glr_auto_examples_calibration_plot_calibration_curve.py`.
+    :ref:`sphx_glr_auto_examples_calibration_plot_calibration_multiclass.py`.
+
     Read more in the :ref:`User Guide <calibration>`.
 
     Parameters
@@ -242,6 +247,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     1
     >>> calibrated_clf.predict_proba([[-0.5, 0.5]])
     array([[0.936..., 0.063...]])
+
+    For more examples of usage, see:
+    :ref:`sphx_glr_auto_examples_calibration_plot_calibration.py`,
+    :ref:`sphx_glr_auto_examples_calibration_plot_calibration_curve.py`, and
+    :ref:`sphx_glr_auto_examples_calibration_plot_calibration_multiclass.py`.
     """
 
     _parameter_constraints: dict = {
@@ -1267,7 +1277,10 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> clf.fit(X_train, y_train)
         LogisticRegression(random_state=0)
         >>> disp = CalibrationDisplay.from_estimator(clf, X_test, y_test)
-        >>> plt.show()
+        >>> plt.show() # doctest: +SKIP
+
+        For another example of usage, see:
+        :ref:`sphx_glr_auto_examples_calibration_plot_compare_calibration.py`.
         """
         y_prob, pos_label, name = cls._validate_and_get_response_values(
             estimator,
@@ -1316,6 +1329,9 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
 
         Read more about calibration in the :ref:`User Guide <calibration>` and
         more about the scikit-learn visualization API in :ref:`visualizations`.
+
+        For an example of usage, see:
+        :ref:`sphx_glr_auto_examples_calibration_plot_compare_calibration.py`.
 
         .. versionadded:: 1.0
 
