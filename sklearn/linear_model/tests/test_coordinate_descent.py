@@ -1309,22 +1309,22 @@ def test_enet_sample_weight_consistency(
 @pytest.mark.parametrize("sparse_container", [None] + CSC_CONTAINERS)
 def test_enet_cv_sample_weight(fit_intercept, sparse_container, global_random_seed):
     rng = np.random.RandomState(global_random_seed)
-    rng = np.random.RandomState(0)
 
-    X, y = make_regression(
-            n_samples=10000, n_features=5, random_state=10
-        )
+    X, y = make_regression(n_samples=10000, n_features=5, random_state=rng)
 
     sample_weight = rng.randint(0, 5, size=X.shape[0])
     X_resampled_by_weights = np.repeat(X, sample_weight, axis=0)
     y_resampled_by_weights = np.repeat(y, sample_weight, axis=0)
 
-    est_weighted = ElasticNetCV(selection='cyclic').fit(X,y,sample_weight=sample_weight)
-    est_repeated = ElasticNetCV(selection='cyclic').fit(X_resampled_by_weights,y_resampled_by_weights)
+    est_weighted = ElasticNetCV(selection="cyclic", random_state=rng).fit(
+        X, y, sample_weight=sample_weight
+    )
+    est_repeated = ElasticNetCV(selection="cyclic",  random_state=rng).fit(
+        X_resampled_by_weights, y_resampled_by_weights
+    )
 
     assert_allclose(est_weighted.alphas_, est_repeated.alphas_)
     assert_allclose(est_weighted.coef_, est_repeated.coef_)
-
 
 
 @pytest.mark.parametrize("fit_intercept", [True, False])

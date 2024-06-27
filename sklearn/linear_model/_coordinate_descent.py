@@ -155,10 +155,9 @@ def _alpha_grid(
             check_input=False,
         )
         if sample_weight is not None:
-            if y.ndim>1:
+            if y.ndim > 1:
+                yw = y * np.broadcast_to(sample_weight.reshape(-1, 1), y.shape)
 
-                yw = y * np.broadcast_to(sample_weight.reshape(-1,1),y.shape)
-            
             else:
                 yw = y * sample_weight
         else:
@@ -176,8 +175,8 @@ def _alpha_grid(
         n_samples = X.shape[0]
     alpha_max = np.sqrt(np.sum(Xyw**2, axis=1)).max() / (n_samples * l1_ratio)
 
-    if alpha_max <= np.finfo(float).resolution:
-        return np.full(n_alphas, np.finfo(float).resolution)
+    if alpha_max <= np.finfo(np.float64).resolution:
+        return np.full(n_alphas, np.finfo(np.float64).resolution)
 
     return np.geomspace(alpha_max, alpha_max * eps, num=n_alphas)
 
@@ -980,7 +979,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                 accept_sparse="csc",
                 order="F",
                 dtype=[np.float64, np.float32],
-                force_writeable=True,
                 accept_large_sparse=False,
                 copy=X_copied,
                 multi_output=True,
@@ -1609,7 +1607,6 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             check_X_params = dict(
                 accept_sparse="csc",
                 dtype=[np.float64, np.float32],
-                force_writeable=True,
                 copy=False,
                 accept_large_sparse=False,
             )
@@ -1635,7 +1632,6 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 accept_sparse="csc",
                 dtype=[np.float64, np.float32],
                 order="F",
-                force_writeable=True,
                 copy=copy_X,
             )
             X, y = self._validate_data(
@@ -2513,7 +2509,6 @@ class MultiTaskElasticNet(Lasso):
         check_X_params = dict(
             dtype=[np.float64, np.float32],
             order="F",
-            force_writeable=True,
             copy=self.copy_X and self.fit_intercept,
         )
         check_y_params = dict(ensure_2d=False, order="F")
