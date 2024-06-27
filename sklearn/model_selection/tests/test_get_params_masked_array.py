@@ -12,12 +12,6 @@ from sklearn.preprocessing import (
 one_hot_encoder = OneHotEncoder()
 ordinal_encoder = OrdinalEncoder()
 
-# If we construct this directly via `MaskedArray`, the list of tuples
-# gets auto-converted to a 2D array.
-ma = np.ma.MaskedArray(np.empty(2), mask=True, dtype=object)
-ma[0] = (1, 2)
-ma[1] = (3, 4)
-
 
 @pytest.mark.parametrize(
     ("candidate_params", "expected"),
@@ -55,7 +49,12 @@ ma[1] = (3, 4)
         pytest.param(
             [{"foo": (1, 2)}, {"foo": (3, 4)}],
             [
-                ("param_foo", ma),
+                (
+                    "param_foo",
+                    np.ma.MaskedArray(
+                        np.fromiter(iter([(1, 2), (3, 4)]), dtype=object)
+                    ),
+                ),
             ],
             id="lists tuples",
         ),
