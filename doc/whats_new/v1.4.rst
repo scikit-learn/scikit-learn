@@ -29,6 +29,16 @@ Version 1.4.1
 
 **February 2024**
 
+Changed models
+--------------
+
+- |API| The `tree_.value` attribute in :class:`tree.DecisionTreeClassifier`,
+  :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeClassifier` and
+  :class:`tree.ExtraTreeRegressor` changed from an weighted absolute count
+  of number of samples to a weighted fraction of the total number of samples.
+  :pr:`27639` by :user:`Samuel Ronsin <samronsin>`, initiated by
+  :user:`Patrick O'Reilly <pat-oreilly>`.
+
 Metadata Routing
 ----------------
 
@@ -934,13 +944,6 @@ Changelog
   monotonic constraints, useful when features are supposed to have a positive/negative
   effect on the target. Missing values in the train data and multi-output targets are
   not supported.
-  :pr:`13649` by :user:`Samuel Ronsin <samronsin>`, initiated by
-  :user:`Patrick O'Reilly <pat-oreilly>`.
-
-- |API| The `tree_.value` attribute in :class:`tree.DecisionTreeClassifier`,
-  :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeClassifier` and
-  :class:`tree.ExtraTreeRegressor` changed from an weighted absolute count
-  of number of samples to a weighted fraction of the total number of samples.
   :pr:`13649` by :user:`Samuel Ronsin <samronsin>`, initiated by
   :user:`Patrick O'Reilly <pat-oreilly>`.
 

@@ -68,7 +68,8 @@ clf.fit(X_train, y_train)
 #   - ``weighted_n_node_samples[i]``: the weighted number of training samples
 #     reaching node ``i``
 #   - ``value[i, j, k]``: the summary of the training samples that reached node i for
-#     output j and class k (for regression tree, class is set to 1).
+#     output j and class k (for regression tree, class is set to 1). See below
+#     for more information about ``value``.
 #
 # Using the arrays, we can traverse the tree structure to compute various
 # properties. Below, we will compute the depth of each node and whether or not
@@ -141,7 +142,7 @@ for i in range(n_nodes):
 # samples.
 #
 # For example, in the above tree built on the iris dataset, the root node has
-# ``value = [0.331, 0.304, 0.366]`` indicating there are 33.1% of class 0 samples,
+# ``value = [0.33, 0.304, 0.366]`` indicating there are 33% of class 0 samples,
 # 30.4% of class 1 samples, and 36.6% of class 2 samples at the root node. One can
 # convert this to the absolute number of samples by multiplying by the number of
 # samples reaching the root node, which is `tree_.n_node_samples[0]`. Then the root
