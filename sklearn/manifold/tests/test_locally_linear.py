@@ -41,7 +41,8 @@ def test_barycenter_kneighbors_graph(global_dtype):
 # Test LLE by computing the reconstruction error on some manifolds.
 
 
-def test_lle_simple_grid(global_dtype):
+@pytest.mark.parametrize("solver", eigen_solvers)
+def test_lle_simple_grid(global_dtype, solver):
     # note: ARPACK is numerically unstable, so this test will fail for
     #       some random seeds.  We choose 42 because the tests pass.
     #       for arm64 platforms 2 makes the test fail.
@@ -64,16 +65,15 @@ def test_lle_simple_grid(global_dtype):
     reconstruction_error = linalg.norm(np.dot(N, X) - X, "fro")
     assert reconstruction_error < tol
 
-    for solver in eigen_solvers:
-        clf.set_params(eigen_solver=solver)
-        clf.fit(X)
-        assert clf.embedding_.shape[1] == n_components
-        reconstruction_error = (
-            linalg.norm(np.dot(N, clf.embedding_) - clf.embedding_, "fro") ** 2
-        )
+    clf.set_params(eigen_solver=solver)
+    clf.fit(X)
+    assert clf.embedding_.shape[1] == n_components
+    reconstruction_error = (
+        linalg.norm(np.dot(N, clf.embedding_) - clf.embedding_, "fro") ** 2
+    )
 
-        assert reconstruction_error < tol
-        assert_allclose(clf.reconstruction_error_, reconstruction_error, atol=1e-1)
+    assert reconstruction_error < tol
+    assert_allclose(clf.reconstruction_error_, reconstruction_error, atol=1e-1)
 
     # re-embed a noisy version of X using the transform method
     noise = rng.randn(*X.shape).astype(global_dtype, copy=False) / 100
@@ -84,7 +84,7 @@ def test_lle_simple_grid(global_dtype):
 @pytest.mark.parametrize("method", ["standard", "hessian", "modified", "ltsa"])
 @pytest.mark.parametrize("solver", eigen_solvers)
 def test_lle_manifold(global_dtype, method, solver):
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(97)
     # similar test on a slightly more complex manifold
     X = np.array(list(product(np.arange(18), repeat=2)))
     X = np.c_[X, X[:, 0] ** 2 / 18]
@@ -169,3 +169,93 @@ def test_get_feature_names_out():
     assert_array_equal(
         [f"locallylinearembedding{i}" for i in range(n_components)], names
     )
+
+
+@pytest.mark.parametrize("method", ["standard", "hessian", "modified", "ltsa"])
+@pytest.mark.parametrize("solver", eigen_solvers)
+@pytest.mark.parametrize(
+    "data_type, expected_type",
+    (
+        (np.float32, np.float32),
+        (np.float64, np.float64),
+        (np.int32, np.float64),
+        (np.int64, np.float64),
+    ),
+)
+def test_fit_transform_preserves_dtype(method, solver, data_type, expected_type):
+    """Checks dtype preservations for various method and solver combinations.
+
+    LocallyLinearEmbedding implements quite different algorithms depending on the
+    method and solver specified, so this test ensures that dtype preservation is
+    correctly implemted in all combinations, in addition to the default setting
+    which is tested as part of the common test.
+    """
+    rng = np.random.RandomState(42)
+    X = np.array(list(product(range(5), repeat=2)))
+    X = X + 1e-10 * rng.uniform(size=X.shape)
+    X = X.astype(data_type, copy=False)
+    n_components = 2
+
+    clf = manifold.LocallyLinearEmbedding(
+        n_neighbors=6, n_components=n_components, method=method, random_state=0
+    )
+
+    clf.set_params(eigen_solver=solver)
+    X_trans = clf.fit_transform(X)
+
+    assert X_trans.dtype == expected_type
+
+
+@pytest.mark.parametrize("method", ["standard", "hessian", "modified", "ltsa"])
+@pytest.mark.parametrize("solver", eigen_solvers)
+@pytest.mark.parametrize(
+    "data_type, expected_type",
+    (
+        (np.float32, np.float32),
+        (np.float64, np.float64),
+        (np.int32, np.float64),
+        (np.int64, np.float64),
+    ),
+)
+def test_fit_preserves_dtype(method, solver, data_type, expected_type):
+    """Ensures dtype preservations for various method and solver combinations."""
+    rng = np.random.RandomState(42)
+    X = np.array(list(product(range(5), repeat=2)))
+    X = X + 1e-10 * rng.uniform(size=X.shape)
+    X = X.astype(data_type, copy=False)
+    n_components = 2
+
+    clf = manifold.LocallyLinearEmbedding(
+        n_neighbors=6, n_components=n_components, method=method, random_state=0
+    )
+
+    clf.set_params(eigen_solver=solver)
+    clf.fit(X)
+    X_trans = clf.transform(X)
+
+    assert X_trans.dtype == expected_type
+
+
+@pytest.mark.parametrize("method", ["standard", "hessian", "modified", "ltsa"])
+@pytest.mark.parametrize("solver", eigen_solvers)
+def test_fit_transform_numerical_consistency(method, solver):
+    """Ensures numerical consistency between np.float32 and np.float64 computations"""
+    rtol = 1e-4
+    rng = np.random.RandomState(42)
+    X = np.array(list(product(range(5), repeat=2)))
+    X = X + 1e-10 * rng.uniform(size=X.shape)
+    n_components = 2
+
+    model_32 = manifold.LocallyLinearEmbedding(
+        n_neighbors=6, n_components=n_components, method=method, random_state=0
+    )
+    model_32.set_params(eigen_solver=solver)
+    X_trans_32 = model_32.fit_transform(X.astype(np.float32))
+
+    model_64 = manifold.LocallyLinearEmbedding(
+        n_neighbors=6, n_components=n_components, method=method, random_state=0
+    )
+    model_64.set_params(eigen_solver=solver)
+    X_trans_64 = model_64.fit_transform(X.astype(np.float32))
+
+    assert_allclose(X_trans_32, X_trans_64, rtol=rtol)

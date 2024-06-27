@@ -118,7 +118,11 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=None):
     ind = knn.kneighbors(X, return_distance=False)[:, 1:]
     data = barycenter_weights(X, X, ind, reg=reg)
     indptr = np.arange(0, n_samples * n_neighbors + 1, n_neighbors)
-    return csr_matrix((data.ravel(), ind.ravel(), indptr), shape=(n_samples, n_samples))
+    return csr_matrix(
+        (data.ravel(), ind.ravel(), indptr),
+        shape=(n_samples, n_samples),
+        dtype=X.dtype,
+    )
 
 
 def null_space(
@@ -238,7 +242,7 @@ def _locally_linear_embedding(
         # we'll compute M = (I-W)'(I-W)
         # depending on the solver, we'll do this differently
         if M_sparse:
-            M = eye(*W.shape, format=W.format) - W
+            M = eye(*W.shape, format=W.format, dtype=X.dtype) - W
             M = (M.T * M).tocsr()
         else:
             M = (W.T * W - W.T - W).toarray()
@@ -259,10 +263,10 @@ def _locally_linear_embedding(
         )
         neighbors = neighbors[:, 1:]
 
-        Yi = np.empty((n_neighbors, 1 + n_components + dp), dtype=np.float64)
+        Yi = np.empty((n_neighbors, 1 + n_components + dp), dtype=X.dtype)
         Yi[:, 0] = 1
 
-        M = np.zeros((N, N), dtype=np.float64)
+        M = np.zeros((N, N), dtype=X.dtype)
 
         use_svd = n_neighbors > d_in
 
@@ -310,9 +314,9 @@ def _locally_linear_embedding(
         # find the eigenvectors and eigenvalues of each local covariance
         # matrix. We want V[i] to be a [n_neighbors x n_neighbors] matrix,
         # where the columns are eigenvectors
-        V = np.zeros((N, n_neighbors, n_neighbors))
+        V = np.zeros((N, n_neighbors, n_neighbors), dtype=X.dtype)
         nev = min(d_in, n_neighbors)
-        evals = np.zeros([N, nev])
+        evals = np.zeros([N, nev], dtype=X.dtype)
 
         # choose the most efficient way to find the eigenvectors
         use_svd = n_neighbors > d_in
@@ -361,7 +365,7 @@ def _locally_linear_embedding(
 
         # Now calculate M.
         # This is the [N x N] matrix whose null space is the desired embedding
-        M = np.zeros((N, N), dtype=np.float64)
+        M = np.zeros((N, N), dtype=X.dtype)
         for i in range(N):
             s_i = s_range[i]
 
@@ -409,7 +413,7 @@ def _locally_linear_embedding(
         )
         neighbors = neighbors[:, 1:]
 
-        M = np.zeros((N, N))
+        M = np.zeros((N, N), dtype=X.dtype)
 
         use_svd = n_neighbors > d_in
 
@@ -752,6 +756,9 @@ class LocallyLinearEmbedding(
         "n_jobs": [None, Integral],
     }
 
+    def _more_tags(self):
+        return {"preserves_dtype": [np.float64, np.float32]}
+
     def __init__(
         self,
         *,
@@ -789,7 +796,7 @@ class LocallyLinearEmbedding(
         )
 
         random_state = check_random_state(self.random_state)
-        X = self._validate_data(X, dtype=float)
+        X = self._validate_data(X, dtype=[np.float64, np.float32])
         self.nbrs_.fit(X)
         self.embedding_, self.reconstruction_error_ = _locally_linear_embedding(
             X=self.nbrs_,
@@ -868,12 +875,12 @@ class LocallyLinearEmbedding(
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, reset=False)
+        X = self._validate_data(X, reset=False, dtype=[np.float64, np.float32])
         ind = self.nbrs_.kneighbors(
             X, n_neighbors=self.n_neighbors, return_distance=False
         )
         weights = barycenter_weights(X, self.nbrs_._fit_X, ind, reg=self.reg)
-        X_new = np.empty((X.shape[0], self.n_components))
+        X_new = np.empty((X.shape[0], self.n_components), dtype=X.dtype)
         for i in range(X.shape[0]):
             X_new[i] = np.dot(self.embedding_[ind[i]].T, weights[i])
         return X_new
