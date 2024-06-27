@@ -1,5 +1,7 @@
+import hashlib
 import io
 import os
+import re
 import shutil
 import tempfile
 import warnings
@@ -9,12 +11,14 @@ from pathlib import Path
 from pickle import dumps, loads
 from unittest.mock import Mock
 from urllib.error import HTTPError
+from urllib.parse import urlparse
 
 import numpy as np
 import pytest
 
 from sklearn.datasets import (
     clear_data_home,
+    fetch_file,
     get_data_home,
     load_breast_cancer,
     load_diabetes,
@@ -426,3 +430,140 @@ def test_derive_folder_and_filename_from_url():
     )
     assert folder == "example.com/path_to"
     assert filename == "data.json"
+
+
+def _mock_urlretrieve(server_side):
+    def _urlretrieve_mock(url, local_path):
+        file_path = urlparse(url).path
+        if not server_side.join(file_path).check():
+            raise HTTPError(url, 404, "Not Found", None, None)
+        shutil.copy(server_side / file_path, local_path)
+
+    return Mock(side_effect=_urlretrieve_mock)
+
+
+def test_fetch_file_without_sha256(monkeypatch, tmpdir):
+    server_side = tmpdir.mkdir("server_side")
+    data_file = Path(server_side / "data.jsonl")
+    server_data = '{"a": 1, "b": 2}\n'
+    data_file.write_text(server_data, encoding="utf-8")
+
+    client_side = tmpdir.mkdir("client_side")
+
+    urlretrieve_mock = _mock_urlretrieve(server_side)
+    monkeypatch.setattr("sklearn.datasets._base.urlretrieve", urlretrieve_mock)
+
+    # The first call should trigger a download:
+    fetched_file_path = fetch_file(
+        "https://example.com/data.jsonl",
+        folder=client_side,
+    )
+    assert fetched_file_path == client_side / "data.jsonl"
+    assert fetched_file_path.read_text(encoding="utf-8") == server_data
+    assert urlretrieve_mock.call_count == 1
+
+    # Fetching again the same file to the same folder should do nothing:
+    fetched_file_path = fetch_file(
+        "https://example.com/data.jsonl",
+        folder=client_side,
+    )
+    assert fetched_file_path == client_side / "data.jsonl"
+    assert fetched_file_path.read_text(encoding="utf-8") == server_data
+    assert urlretrieve_mock.call_count == 1
+
+    # Deleting and calling again should re-download
+    fetched_file_path.unlink()
+    fetched_file_path = fetch_file(
+        "https://example.com/data.jsonl",
+        folder=client_side,
+    )
+    assert fetched_file_path == client_side / "data.jsonl"
+    assert fetched_file_path.read_text(encoding="utf-8") == server_data
+    assert urlretrieve_mock.call_count == 2
+
+
+def test_fetch_file_with_sha256(monkeypatch, tmpdir):
+    server_side = tmpdir.mkdir("server_side")
+    data_file = Path(server_side / "data.jsonl")
+    server_data = '{"a": 1, "b": 2}\n'
+    data_file.write_text(server_data, encoding="utf-8")
+    expected_sha256 = hashlib.sha256(data_file.read_bytes()).hexdigest()
+
+    client_side = tmpdir.mkdir("client_side")
+
+    urlretrieve_mock = _mock_urlretrieve(server_side)
+    monkeypatch.setattr("sklearn.datasets._base.urlretrieve", urlretrieve_mock)
+
+    # The first call should trigger a download.
+    fetched_file_path = fetch_file(
+        "https://example.com/data.jsonl", folder=client_side, sha256=expected_sha256
+    )
+    assert fetched_file_path == client_side / "data.jsonl"
+    assert fetched_file_path.read_text(encoding="utf-8") == server_data
+    assert urlretrieve_mock.call_count == 1
+
+    # Fetching again the same file to the same folder should do nothing when
+    # the sha256 match:
+    fetched_file_path = fetch_file(
+        "https://example.com/data.jsonl", folder=client_side, sha256=expected_sha256
+    )
+    assert fetched_file_path == client_side / "data.jsonl"
+    assert fetched_file_path.read_text(encoding="utf-8") == server_data
+    assert urlretrieve_mock.call_count == 1
+
+    # Corrupting the local data should yield a warning and trigger a new download:
+    fetched_file_path.write_text("corruped contents", encoding="utf-8")
+    expected_msg = (
+        r"SHA256 checksum of existing local file at .*client_side/data.jsonl "
+        rf"\(.*\) differs from expected \({expected_sha256}\): "
+        r"re-downloading from https://example.com/data.jsonl \."
+    )
+    with pytest.warns(match=expected_msg):
+        fetched_file_path = fetch_file(
+            "https://example.com/data.jsonl", folder=client_side, sha256=expected_sha256
+        )
+        assert fetched_file_path == client_side / "data.jsonl"
+        assert fetched_file_path.read_text(encoding="utf-8") == server_data
+        assert urlretrieve_mock.call_count == 2
+
+    # Calling again should do nothing:
+    fetched_file_path = fetch_file(
+        "https://example.com/data.jsonl", folder=client_side, sha256=expected_sha256
+    )
+    assert fetched_file_path == client_side / "data.jsonl"
+    assert fetched_file_path.read_text(encoding="utf-8") == server_data
+    assert urlretrieve_mock.call_count == 2
+
+    # Deleting the local file and calling again should redownload without warning:
+    fetched_file_path.unlink()
+    fetched_file_path = fetch_file(
+        "https://example.com/data.jsonl", folder=client_side, sha256=expected_sha256
+    )
+    assert fetched_file_path == client_side / "data.jsonl"
+    assert fetched_file_path.read_text(encoding="utf-8") == server_data
+    assert urlretrieve_mock.call_count == 3
+
+    # Calling without a sha256 should also work without redownloading:
+    fetched_file_path = fetch_file(
+        "https://example.com/data.jsonl",
+        folder=client_side,
+    )
+    assert fetched_file_path == client_side / "data.jsonl"
+    assert fetched_file_path.read_text(encoding="utf-8") == server_data
+    assert urlretrieve_mock.call_count == 3
+
+    # Calling with a wrong sha256 should raise an informative exception:
+    non_matching_sha256 = "deadbabecafebeef"
+    expected_msg = re.escape(
+        f"The SHA256 checksum of data.jsonl ({expected_sha256}) differs from "
+        f"expected ({non_matching_sha256})."
+    )
+    with pytest.raises(OSError, match=expected_msg):
+        fetch_file(
+            "https://example.com/data.jsonl",
+            folder=client_side,
+            sha256=non_matching_sha256,
+        )
+        # The local file should not have been deleted.
+        assert client_side.join("data.jsonl").read_text(encoding="utf-8") == server_data
+        assert urlretrieve_mock.call_count == 3

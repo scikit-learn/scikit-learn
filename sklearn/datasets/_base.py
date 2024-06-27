@@ -1508,9 +1508,8 @@ def _fetch_remote(remote, dirname=None, n_retries=3, delay=1):
         checksum = _sha256(temp_file_path)
         if remote.checksum is not None and remote.checksum != checksum:
             raise OSError(
-                f"{remote.filename} has an SHA256 checksum ({checksum}) "
-                f"differing from expected ({remote.checksum}), "
-                "file may be corrupted."
+                f"The SHA256 checksum of {remote.filename} ({checksum}) "
+                f"differs from expected ({remote.checksum})."
             )
     except BaseException:
         temp_file.close()
