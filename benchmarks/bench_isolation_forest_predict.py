@@ -9,7 +9,7 @@ The benchmark is run as follows:
 assumed to contain outliers.
 2. Isolation Forest is trained on the training set fixed at 1000 samples.
 3. The test samples are scored using the trained model at:
-    - 1000, 10000, 100000 samples
+    - 1000, 10000, 50000 samples
     - 10, 100, 1000 features
     - 0.01, 0.1, 0.5 contamination
     - 1, 2, 3, 4 n_jobs
@@ -71,92 +71,52 @@ def plot(bench_results, pr_name, main_name, image_path):
     merged_data = pd.merge(
         df_pr,
         df_main,
-        on=["n_samples_train", "n_samples_test", "n_jobs"],
+        on=["n_samples_test", "n_jobs"],
         suffixes=("_pr", "_main"),
     )
 
     # Set up the plotting grid
-    sns.set(style="whitegrid")
+    sns.set(style="whitegrid", context="notebook", font_scale=1.5)
 
     # Create a figure with subplots
-    fig, axes = plt.subplots(1, 2, figsize=(18, 6))
-
-    # Plot predict time as a function of n_samples_train with different n_jobs
-    sns.lineplot(
-        data=merged_data,
-        x="n_samples_train",
-        y="predict_time_pr",
-        hue="n_jobs",
-        style=False,
-        markers="o",
-        dashes=False,
-        ax=axes[0],
-        legend="full",
-    )
-    sns.lineplot(
-        data=merged_data,
-        x="n_samples_train",
-        y="predict_time_main",
-        hue="n_jobs",
-        style=False,
-        markers="X",
-        dashes=True,
-        ax=axes[0],
-        legend=False,
-    )
-    axes[0].set_title("Predict Time vs. n_samples_train")
-    axes[0].set_ylabel("Predict Time")
-    axes[0].set_xlabel("n_samples_train")
+    fig, axes = plt.subplots(1, 2, figsize=(18, 6), sharex=True, sharey=True)
 
     # Plot predict time as a function of n_samples_test with different n_jobs
+    print(merged_data['n_jobs'].unique())
+    ax = axes[0]
     sns.lineplot(
         data=merged_data,
         x="n_samples_test",
         y="predict_time_pr",
         hue="n_jobs",
-        style=False,
+        style="n_jobs",
         markers="o",
-        dashes=False,
-        ax=axes[1],
+        # dashes=False,
+        ax=ax,
         legend="full",
     )
+    ax.set_title("Predict Time vs. n_samples_test - PR branch")
+    ax.set_ylabel("Predict Time (Seconds)")
+    ax.set_xlabel("n_samples_test")
+
+    ax = axes[1]
     sns.lineplot(
         data=merged_data,
         x="n_samples_test",
         y="predict_time_main",
         hue="n_jobs",
-        style=False,
+        style="n_jobs",
         markers="X",
         dashes=True,
-        ax=axes[1],
-        legend=False,
+        ax=ax,
+        legend=None,
     )
-    axes[1].set_title("Predict Time vs. n_samples_test")
-    axes[1].set_ylabel("Predict Time")
-    axes[1].set_xlabel("n_samples_test")
-
-    # Create a custom legend for the PR and Main datasets
-    handles, labels = axes[0].get_legend_handles_labels()
-    pr_handle = plt.Line2D(
-        [0], [0], linestyle="-", marker="o", color="black", label="PR"
-    )
-    main_handle = plt.Line2D(
-        [0], [0], linestyle="--", marker="X", color="black", label="Main"
-    )
-    handles.extend([pr_handle, main_handle])
-    labels.extend(["PR", "Main"])
-
-    axes[0].legend(
-        handles, labels, title="Legend", bbox_to_anchor=(1.05, 1), loc="upper left"
-    )
-    axes[1].legend(
-        handles, labels, title="Legend", bbox_to_anchor=(1.05, 1), loc="upper left"
-    )
+    ax.set_title("Predict Time vs. n_samples_test - Main branch")
+    ax.set_ylabel("Predict Time")
+    ax.set_xlabel("n_samples_test")
 
     # Adjust layout and display the plots
     plt.tight_layout()
-
-    print(image_path)
     fig.savefig(image_path, bbox_inches="tight")
     print(f"Saved image to {image_path}")
 
@@ -170,7 +130,7 @@ n_samples_train = 1000
 for n_samples_test in [
     1000,
     10000,
-    # 100000
+    50000,
 ]:
     for n_features in [10, 100, 1000]:
         for contamination in [0.01, 0.1, 0.5]:
@@ -215,7 +175,7 @@ for n_samples_test in [
                 results["n_jobs"].append(n_jobs)
 
 df = pd.DataFrame(results)
-df.to_csv("~/bench_results_forest/main.csv", index=False)
+df.to_csv("~/bench_results_forest/pr.csv", index=False)
 
 
 bench_results = Path("/Users/adam2392/bench_results_forest")
