@@ -176,8 +176,9 @@ The project would like to thank the following funders.
 
   .. div:: text-box
 
-    `:probabl. <https://probabl.ai>`_ funds Adrin Jalali, Arturo Amor, François Goupil,
-    Guillaume Lemaitre, Jérémie du Boisberranger, Olivier Grisel, and Stefanie Senger.
+    `:probabl. <https://probabl.ai>`_ employs Adrin Jalali, Arturo Amor,
+    François Goupil, Guillaume Lemaitre, Jérémie du Boisberranger, Loïc Estève,
+    Olivier Grisel, and Stefanie Senger.
 
   .. div:: image-box
 
@@ -197,9 +198,6 @@ The project would like to thank the following funders.
 
 .. |dataiku| image:: images/dataiku.png
   :target: https://www.dataiku.com/
-
-.. |hf| image:: images/huggingface_logo-noborder.png
-  :target: https://huggingface.co
 
 .. |nvidia| image:: images/nvidia.png
   :target: https://www.nvidia.com
@@ -245,7 +243,7 @@ The project would like to thank the following funders.
       +----------+-----------+
       |  |axa|   |    |bnp|  |
       +----------+-----------+
-      | |nvidia| |    |hf|   |
+      |       |nvidia|       |
       +----------+-----------+
       |       |dataiku|      |
       +----------+-----------+
