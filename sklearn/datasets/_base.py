@@ -1483,7 +1483,7 @@ def _fetch_remote(remote, dirname=None, n_retries=3, delay=1):
             return file_path
         else:
             warnings.warn(
-                f"SHA256 checksum of existing local file at {str(file_path)} "
+                f"SHA256 checksum of existing local file {file_path.name} "
                 f"({checksum}) differs from expected ({remote.checksum}): "
                 f"re-downloading from {remote.url} ."
             )
