@@ -36,8 +36,7 @@ Changed models
   :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeClassifier` and
   :class:`tree.ExtraTreeRegressor` changed from an weighted absolute count
   of number of samples to a weighted fraction of the total number of samples.
-  :pr:`27639` by :user:`Samuel Ronsin <samronsin>`, initiated by
-  :user:`Patrick O'Reilly <pat-oreilly>`.
+  :pr:`27639` by :user:`Samuel Ronsin <samronsin>`.
 
 Metadata Routing
 ----------------
