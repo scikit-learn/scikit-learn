@@ -1828,9 +1828,12 @@ def chi2_kernel(X, Y=None, gamma=1.0):
     array([[0.36..., 0.13...],
            [0.13..., 0.36...]])
     """
+    xp, _ = get_namespace(X, Y)
     K = additive_chi2_kernel(X, Y)
     K *= gamma
-    return np.exp(K, K)
+    if _is_numpy_namespace(xp):
+        return np.exp(K, out=K)
+    return xp.exp(K)
 
 
 # Helper functions - distance

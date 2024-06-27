@@ -980,6 +980,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                 accept_sparse="csc",
                 order="F",
                 dtype=[np.float64, np.float32],
+                force_writeable=True,
                 accept_large_sparse=False,
                 copy=X_copied,
                 multi_output=True,
@@ -1608,6 +1609,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             check_X_params = dict(
                 accept_sparse="csc",
                 dtype=[np.float64, np.float32],
+                force_writeable=True,
                 copy=False,
                 accept_large_sparse=False,
             )
@@ -1633,6 +1635,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 accept_sparse="csc",
                 dtype=[np.float64, np.float32],
                 order="F",
+                force_writeable=True,
                 copy=copy_X,
             )
             X, y = self._validate_data(
@@ -2510,6 +2513,7 @@ class MultiTaskElasticNet(Lasso):
         check_X_params = dict(
             dtype=[np.float64, np.float32],
             order="F",
+            force_writeable=True,
             copy=self.copy_X and self.fit_intercept,
         )
         check_y_params = dict(ensure_2d=False, order="F")

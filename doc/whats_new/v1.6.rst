@@ -35,11 +35,13 @@ See :ref:`array_api` for more details.
 - :func:`sklearn.metrics.cluster.entropy` :pr:`29141` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.metrics.d2_tweedie_score` :pr:`29207` by :user:`Emily Chen <EmilyXinyi>`;
 - :func:`sklearn.metrics.max_error` :pr:`29212` by :user:`Edoardo Abati <EdAbati>`;
-- :func:`sklearn.metrics.mean_absolute_error` :pr:`27736` by :user:`Edoardo Abati <EdAbati>`;
+- :func:`sklearn.metrics.mean_absolute_error` :pr:`27736` by :user:`Edoardo Abati <EdAbati>`
+  and :pr:`29143` by :user:`Tialo <Tialo>` and :user:`Loïc Estève <lesteve>`;
 - :func:`sklearn.metrics.mean_gamma_deviance` :pr:`29239` by :usser:`Emily Chen <EmilyXinyi>`;
 - :func:`sklearn.metrics.mean_squared_error` :pr:`29142` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.metrics.mean_tweedie_deviance` :pr:`28106` by :user:`Thomas Li <lithomas1>`;
 - :func:`sklearn.metrics.pairwise.additive_chi2_kernel` :pr:`29144` by :user:`Yaroslav Korobko <Tialo>`;
+- :func:`sklearn.metrics.pairwise.chi2_kernel` :pr:`29267` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.metrics.pairwise.cosine_similarity` :pr:`29014` by :user:`Edoardo Abati <EdAbati>`;
 - :func:`sklearn.metrics.pairwise.paired_cosine_distances` :pr:`29112` by :user:`Edoardo Abati <EdAbati>`.
 
@@ -104,6 +106,14 @@ Changelog
   whether a given estimator is of category clusterer.
   :pr:`28936` by :user:`Christian Veenhuis <ChVeen>`.
 
+:mod:`sklearn.cluster`
+......................
+
+- |API| The `copy` parameter of :class:`cluster.Birch` was deprecated in 1.6 and will be
+  removed in 1.8. It has no effect as the estimator does not perform in-place operations
+  on the input data.
+  :pr:`29124` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
@@ -125,6 +135,14 @@ Changelog
 - |API| Deprecates `copy_X` in :class:`linear_model.TheilSenRegressor` as the parameter
   has no effect. `copy_X` will be removed in 1.8.
   :pr:`29105` by :user:`Adam Li <adam2392>`.
+
+:mod:`sklearn.manifold`
+.......................
+
+- |Efficiency| :func:`manifold.locally_linear_embedding` and
+  :class:`manifold.LocallyLinearEmbedding` now allocate more efficiently the memory of
+  sparse matrices in the Hessian, Modified and LTSA methods.
+  :pr:`28096` by :user:`Giorgio Angelotti <giorgioangel>`.
 
 :mod:`sklearn.metrics`
 ......................
