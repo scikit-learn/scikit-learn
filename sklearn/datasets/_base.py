@@ -1572,7 +1572,7 @@ def _derive_folder_and_filename_from_url(url):
 def fetch_file(
     url, folder=None, local_filename=None, sha256=None, n_retries=3, delay=1
 ):
-    """Fetch a file from the web.
+    """Fetch a file from the web if not already present in the local folder.
 
     If the file already exists locally (and the SHA256 checksums match when
     provided), the path to the local file is returned without re-downloading.
