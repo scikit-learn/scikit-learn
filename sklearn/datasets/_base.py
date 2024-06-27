@@ -1491,6 +1491,7 @@ def _fetch_remote(remote, dirname=None, n_retries=3, delay=1):
     temp_file = NamedTemporaryFile(
         prefix=remote.filename + ".part_", dir=folder_path, delete=False
     )
+    temp_file.close()
     try:
         temp_file_path = Path(temp_file.name)
         while True:
@@ -1512,7 +1513,6 @@ def _fetch_remote(remote, dirname=None, n_retries=3, delay=1):
                 f"differs from expected ({remote.checksum})."
             )
     except BaseException:
-        temp_file.close()
         os.unlink(temp_file.name)
         raise
 
