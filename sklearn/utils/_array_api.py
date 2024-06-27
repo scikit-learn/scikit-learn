@@ -975,12 +975,12 @@ def _count_nonzero(X, xp, device, axis=None, sample_weight=None):
         axis = 1
     elif axis == -2:
         axis = 0
-    
+
     weights = xp.ones_like(X, device=device)
     if sample_weight is not None:
         sample_weight = xp.asarray(sample_weight, device=device)
         sample_weight = xp.reshape(sample_weight, (sample_weight.shape[0], 1))
         weights = xp.astype(weights, sample_weight.dtype) * sample_weight
-    
+
     zero_scalar = xp.asarray(0, device=device, dtype=weights.dtype)
     return xp.sum(xp.where(X != 0, weights, zero_scalar), axis=axis)
