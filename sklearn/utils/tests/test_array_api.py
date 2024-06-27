@@ -584,7 +584,9 @@ def test_count_nonzero(array_namespace, device, _, csr_container, axis):
     array_xp = xp.asarray(array, device=device)
 
     with config_context(array_api_dispatch=True):
-        result = _count_nonzero(array_xp, xp=xp, device=device, axis=axis)
+        result = _count_nonzero(
+            array_xp, xp=xp, device=device, axis=axis, sample_weight=sample_weight
+        )
 
     assert_allclose(_convert_to_numpy(result, xp=xp), expected)
     assert getattr(array_xp, "device", None) == getattr(result, "device", None)
