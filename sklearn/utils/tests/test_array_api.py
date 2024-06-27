@@ -574,7 +574,10 @@ def test_get_namespace_and_device():
 )
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 @pytest.mark.parametrize("axis", [0, 1, None, -1, -2])
-def test_count_nonzero(array_namespace, device, _, csr_container, axis):
+@pytest.mark.parametrize("sample_weight_type", [None, "int", "float"])
+def test_count_nonzero(
+    array_namespace, device, dtype_name, csr_container, axis, sample_weight_type
+):
 
     from sklearn.utils.sparsefuncs import count_nonzero as sparse_count_nonzero
 
