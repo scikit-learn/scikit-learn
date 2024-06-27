@@ -580,7 +580,15 @@ def test_count_nonzero(array_namespace, device, _, csr_container, axis):
 
     xp = _array_api_for_tests(array_namespace, device)
     array = numpy.array([[0, 3, 0], [2, -1, 0], [0, 0, 0], [9, 8, 7], [4, 0, 5]])
-    expected = sparse_count_nonzero(csr_container(array), axis=axis)
+    if sample_weight_type == "int":
+        sample_weight = numpy.asarray([1, 2, 2, 3, 1])
+    elif sample_weight_type == "float":
+        sample_weight = numpy.asarray([0.5, 1.5, 0.8, 3.2, 2.4], dtype=dtype_name)
+    else:
+        sample_weight = None
+    expected = sparse_count_nonzero(
+        csr_container(array), axis=axis, sample_weight=sample_weight
+    )
     array_xp = xp.asarray(array, device=device)
 
     with config_context(array_api_dispatch=True):
