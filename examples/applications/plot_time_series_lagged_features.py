@@ -20,8 +20,11 @@ engineering.
 # -----------------------------------------
 #
 # We start by loading the data from the OpenML repository as a raw parquet file
-# to illustrate how to work with arbitrary parquet file instead of hiding this
+# to illustrate how to work with an arbitrary parquet file instead of hiding this
 # step in a convenience too such as `sklearn.datasets.fetch_openml`.
+#
+# The URL of the parquet file can be found in the JSON description of the
+# Bike Sharing Demand v7 dataset on openml.org.
 import numpy as np
 import polars as pl
 
@@ -29,8 +32,6 @@ from sklearn.datasets import fetch_file
 
 pl.Config.set_fmt_str_lengths(20)
 
-# Direct download of the parquet file of the Bike Sharing Demand v7 dataset on
-# openml.org:
 bike_sharing_data_file = fetch_file(
     "https://openml1.win.tue.nl/datasets/0004/44063/dataset_44063.pq",
     sha256="d120af76829af0d256338dc6dd4be5df4fd1f35bf3a283cab66a51c1c6abd06a",
@@ -38,7 +39,7 @@ bike_sharing_data_file = fetch_file(
 bike_sharing_data_file
 
 # %%
-# We load the parquet file with Polars for feature engineering, as it
+# We load the parquet file with Polars for feature engineering. Polas
 # automatically caches common subexpressions which are reused in multiple
 # expressions (like `pl.col("count").shift(1)` below). See
 # https://docs.pola.rs/user-guide/lazy/optimizations/ for more information.
