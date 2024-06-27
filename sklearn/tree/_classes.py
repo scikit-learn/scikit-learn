@@ -1257,9 +1257,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
 
-        .. versionchanged:: 1.4
-            `value` property now stores proportions instead of counts.
-
     See Also
     --------
     DecisionTreeClassifier : A decision tree classifier.
@@ -1616,9 +1613,6 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
 
-        .. versionchanged:: 1.4
-            `value` property now stores proportions instead of counts.
-
     See Also
     --------
     ExtraTreeRegressor : An extremely randomized tree regressor.
@@ -1868,9 +1862,6 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
-
-        .. versionchanged:: 1.4
-            `value` property now stores proportions instead of counts.
 
     See Also
     --------
