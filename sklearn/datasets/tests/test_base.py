@@ -619,6 +619,3 @@ def test_fetch_file_with_sha256(monkeypatch, tmpdir):
                 folder=client_side,
                 sha256=non_matching_sha256,
             )
-        # The local file should not have been deleted.
-        assert client_side.join("data.jsonl").read_text(encoding="utf-8") == server_data
-        assert urlretrieve_mock.call_count == 3

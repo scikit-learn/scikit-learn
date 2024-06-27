@@ -1525,7 +1525,7 @@ def _fetch_remote(remote, dirname=None, n_retries=3, delay=1):
     return file_path
 
 
-def _slugify(value, allow_unicode=False):
+def _slugify(value):
     """Derive a name that is safe to use as filename from the given string.
 
     Adapted from
@@ -1539,15 +1539,9 @@ def _slugify(value, allow_unicode=False):
     Note: this version keeps "." characters unchanged contrary to the django
     version and replace other un-authorized characters by "_".
     """
-    value = str(value)
-    if allow_unicode:
-        value = unicodedata.normalize("NFKC", value)
-    else:
-        value = (
-            unicodedata.normalize("NFKD", value)
-            .encode("ascii", "ignore")
-            .decode("ascii")
-        )
+    value = (
+        unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
+    )
     value = re.sub(r"[^.\w\s-]", "_", value.lower())
     value = re.sub(r"_+", "_", value)
     return re.sub(r"[-\s]+", "-", value).strip("-_")
