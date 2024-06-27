@@ -25,8 +25,8 @@ that of representing a flat map of the Earth, as with
 
 """
 
-# Author: Jaques Grobler <jaques.grobler@inria.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from time import time
 

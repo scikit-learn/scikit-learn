@@ -77,6 +77,7 @@ Scoring                                Function                                 
 'roc_auc_ovo'                          :func:`metrics.roc_auc_score`
 'roc_auc_ovr_weighted'                 :func:`metrics.roc_auc_score`
 'roc_auc_ovo_weighted'                 :func:`metrics.roc_auc_score`
+'d2_log_loss_score'                    :func:`metrics.d2_log_loss_score`
 
 **Clustering**
 'adjusted_mutual_info_score'           :func:`metrics.adjusted_mutual_info_score`
@@ -102,11 +103,8 @@ Scoring                                Function                                 
 'neg_mean_poisson_deviance'            :func:`metrics.mean_poisson_deviance`
 'neg_mean_gamma_deviance'              :func:`metrics.mean_gamma_deviance`
 'neg_mean_absolute_percentage_error'   :func:`metrics.mean_absolute_percentage_error`
-'d2_absolute_error_score'              :func:`metrics.d2_absolute_error_score`
-'d2_pinball_score'                     :func:`metrics.d2_pinball_score`
-'d2_tweedie_score'                     :func:`metrics.d2_tweedie_score`
+'d2_absolute_error_score' 	           :func:`metrics.d2_absolute_error_score`
 ====================================   ==============================================     ==================================
-
 
 Usage examples:
 
@@ -130,27 +128,25 @@ Usage examples:
 Defining your scoring strategy from metric functions
 -----------------------------------------------------
 
-The module :mod:`sklearn.metrics` also exposes a set of simple functions
-measuring a prediction error given ground truth and prediction:
-
-- functions ending with ``_score`` return a value to
-  maximize, the higher the better.
-
-- functions ending with ``_error`` or ``_loss`` return a
-  value to minimize, the lower the better.  When converting
-  into a scorer object using :func:`make_scorer`, set
-  the ``greater_is_better`` parameter to ``False`` (``True`` by default; see the
-  parameter description below).
-
-Metrics available for various machine learning tasks are detailed in sections
-below.
-
-Many metrics are not given names to be used as ``scoring`` values,
+The following metrics functions are not implemented as named scorers,
 sometimes because they require additional parameters, such as
-:func:`fbeta_score`. In such cases, you need to generate an appropriate
-scoring object.  The simplest way to generate a callable object for scoring
-is by using :func:`make_scorer`. That function converts metrics
-into callables that can be used for model evaluation.
+:func:`fbeta_score`. They cannot be passed to the ``scoring``
+parameters; instead their callable needs to be passed to
+:func:`make_scorer` together with the value of the user-settable
+parameters.
+
+=====================================  =========  ==============================================
+Function                               Parameter  Example usage
+=====================================  =========  ==============================================
+**Classification**
+:func:`metrics.fbeta_score`            ``beta``   ``make_scorer(fbeta_score, beta=2)``
+
+**Regression**
+:func:`metrics.mean_tweedie_deviance`  ``power``  ``make_scorer(mean_tweedie_deviance, power=1.5)``
+:func:`metrics.mean_pinball_loss`      ``alpha``  ``make_scorer(mean_pinball_loss, alpha=0.95)``
+:func:`metrics.d2_tweedie_score`       ``power``  ``make_scorer(d2_tweedie_score, power=1.5)``
+:func:`metrics.d2_pinball_score`       ``alpha``  ``make_scorer(d2_pinball_score, alpha=0.95)``
+=====================================  =========  ==============================================
 
 One typical use case is to wrap an existing metric function from the library
 with non-default values for its parameters, such as the ``beta`` parameter for
@@ -160,62 +156,69 @@ the :func:`fbeta_score` function::
     >>> ftwo_scorer = make_scorer(fbeta_score, beta=2)
     >>> from sklearn.model_selection import GridSearchCV
     >>> from sklearn.svm import LinearSVC
-    >>> grid = GridSearchCV(LinearSVC(dual="auto"), param_grid={'C': [1, 10]},
+    >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]},
     ...                     scoring=ftwo_scorer, cv=5)
 
+The module :mod:`sklearn.metrics` also exposes a set of simple functions
+measuring a prediction error given ground truth and prediction:
 
-|details-start|
-**Custom scorer objects**
-|details-split|
+- functions ending with ``_score`` return a value to
+  maximize, the higher the better.
+
+- functions ending with ``_error``, ``_loss``, or ``_deviance`` return a
+  value to minimize, the lower the better.  When converting
+  into a scorer object using :func:`make_scorer`, set
+  the ``greater_is_better`` parameter to ``False`` (``True`` by default; see the
+  parameter description below).
 
 
-The second use case is to build a completely custom scorer object
-from a simple python function using :func:`make_scorer`, which can
-take several parameters:
+.. dropdown:: Custom scorer objects
 
-* the python function you want to use (``my_custom_loss_func``
-  in the example below)
+  The second use case is to build a completely custom scorer object
+  from a simple python function using :func:`make_scorer`, which can
+  take several parameters:
 
-* whether the python function returns a score (``greater_is_better=True``,
-  the default) or a loss (``greater_is_better=False``).  If a loss, the output
-  of the python function is negated by the scorer object, conforming to
-  the cross validation convention that scorers return higher values for better models.
+  * the python function you want to use (``my_custom_loss_func``
+    in the example below)
 
-* for classification metrics only: whether the python function you provided requires
-  continuous decision certainties. If the scoring function only accepts probability
-  estimates (e.g. :func:`metrics.log_loss`) then one needs to set the parameter
-  `response_method`, thus in this case `response_method="predict_proba"`. Some scoring
-  function do not necessarily require probability estimates but rather non-thresholded
-  decision values (e.g. :func:`metrics.roc_auc_score`). In this case, one provides a
-  list such as `response_method=["decision_function", "predict_proba"]`. In this case,
-  the scorer will use the first available method, in the order given in the list,
-  to compute the scores.
+  * whether the python function returns a score (``greater_is_better=True``,
+    the default) or a loss (``greater_is_better=False``).  If a loss, the output
+    of the python function is negated by the scorer object, conforming to
+    the cross validation convention that scorers return higher values for better models.
 
-* any additional parameters, such as ``beta`` or ``labels`` in :func:`f1_score`.
+  * for classification metrics only: whether the python function you provided requires
+    continuous decision certainties. If the scoring function only accepts probability
+    estimates (e.g. :func:`metrics.log_loss`) then one needs to set the parameter
+    `response_method`, thus in this case `response_method="predict_proba"`. Some scoring
+    function do not necessarily require probability estimates but rather non-thresholded
+    decision values (e.g. :func:`metrics.roc_auc_score`). In this case, one provides a
+    list such as `response_method=["decision_function", "predict_proba"]`. In this case,
+    the scorer will use the first available method, in the order given in the list,
+    to compute the scores.
 
-Here is an example of building custom scorers, and of using the
-``greater_is_better`` parameter::
+  * any additional parameters, such as ``beta`` or ``labels`` in :func:`f1_score`.
 
-    >>> import numpy as np
-    >>> def my_custom_loss_func(y_true, y_pred):
-    ...     diff = np.abs(y_true - y_pred).max()
-    ...     return np.log1p(diff)
-    ...
-    >>> # score will negate the return value of my_custom_loss_func,
-    >>> # which will be np.log(2), 0.693, given the values for X
-    >>> # and y defined below.
-    >>> score = make_scorer(my_custom_loss_func, greater_is_better=False)
-    >>> X = [[1], [1]]
-    >>> y = [0, 1]
-    >>> from sklearn.dummy import DummyClassifier
-    >>> clf = DummyClassifier(strategy='most_frequent', random_state=0)
-    >>> clf = clf.fit(X, y)
-    >>> my_custom_loss_func(y, clf.predict(X))
-    0.69...
-    >>> score(clf, X, y)
-    -0.69...
+  Here is an example of building custom scorers, and of using the
+  ``greater_is_better`` parameter::
 
-|details-end|
+      >>> import numpy as np
+      >>> def my_custom_loss_func(y_true, y_pred):
+      ...     diff = np.abs(y_true - y_pred).max()
+      ...     return np.log1p(diff)
+      ...
+      >>> # score will negate the return value of my_custom_loss_func,
+      >>> # which will be np.log(2), 0.693, given the values for X
+      >>> # and y defined below.
+      >>> score = make_scorer(my_custom_loss_func, greater_is_better=False)
+      >>> X = [[1], [1]]
+      >>> y = [0, 1]
+      >>> from sklearn.dummy import DummyClassifier
+      >>> clf = DummyClassifier(strategy='most_frequent', random_state=0)
+      >>> clf = clf.fit(X, y)
+      >>> my_custom_loss_func(y, clf.predict(X))
+      0.69...
+      >>> score(clf, X, y)
+      -0.69...
 
 .. _diy_scoring:
 
@@ -226,51 +229,47 @@ You can generate even more flexible model scorers by constructing your own
 scoring object from scratch, without using the :func:`make_scorer` factory.
 
 
-|details-start|
-**How to build a scorer from scratch**
-|details-split|
+.. dropdown:: How to build a scorer from scratch
 
-For a callable to be a scorer, it needs to meet the protocol specified by
-the following two rules:
+  For a callable to be a scorer, it needs to meet the protocol specified by
+  the following two rules:
 
-- It can be called with parameters ``(estimator, X, y)``, where ``estimator``
-  is the model that should be evaluated, ``X`` is validation data, and ``y`` is
-  the ground truth target for ``X`` (in the supervised case) or ``None`` (in the
-  unsupervised case).
+  - It can be called with parameters ``(estimator, X, y)``, where ``estimator``
+    is the model that should be evaluated, ``X`` is validation data, and ``y`` is
+    the ground truth target for ``X`` (in the supervised case) or ``None`` (in the
+    unsupervised case).
 
-- It returns a floating point number that quantifies the
-  ``estimator`` prediction quality on ``X``, with reference to ``y``.
-  Again, by convention higher numbers are better, so if your scorer
-  returns loss, that value should be negated.
+  - It returns a floating point number that quantifies the
+    ``estimator`` prediction quality on ``X``, with reference to ``y``.
+    Again, by convention higher numbers are better, so if your scorer
+    returns loss, that value should be negated.
 
-- Advanced: If it requires extra metadata to be passed to it, it should expose
-  a ``get_metadata_routing`` method returning the requested metadata. The user
-  should be able to set the requested metadata via a ``set_score_request``
-  method. Please see :ref:`User Guide <metadata_routing>` and :ref:`Developer
-  Guide <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>` for
-  more details.
+  - Advanced: If it requires extra metadata to be passed to it, it should expose
+    a ``get_metadata_routing`` method returning the requested metadata. The user
+    should be able to set the requested metadata via a ``set_score_request``
+    method. Please see :ref:`User Guide <metadata_routing>` and :ref:`Developer
+    Guide <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>` for
+    more details.
 
 
-.. note:: **Using custom scorers in functions where n_jobs > 1**
+  .. note:: **Using custom scorers in functions where n_jobs > 1**
 
-    While defining the custom scoring function alongside the calling function
-    should work out of the box with the default joblib backend (loky),
-    importing it from another module will be a more robust approach and work
-    independently of the joblib backend.
+      While defining the custom scoring function alongside the calling function
+      should work out of the box with the default joblib backend (loky),
+      importing it from another module will be a more robust approach and work
+      independently of the joblib backend.
 
-    For example, to use ``n_jobs`` greater than 1 in the example below,
-    ``custom_scoring_function`` function is saved in a user-created module
-    (``custom_scorer_module.py``) and imported::
+      For example, to use ``n_jobs`` greater than 1 in the example below,
+      ``custom_scoring_function`` function is saved in a user-created module
+      (``custom_scorer_module.py``) and imported::
 
-        >>> from custom_scorer_module import custom_scoring_function # doctest: +SKIP
-        >>> cross_val_score(model,
-        ...  X_train,
-        ...  y_train,
-        ...  scoring=make_scorer(custom_scoring_function, greater_is_better=False),
-        ...  cv=5,
-        ...  n_jobs=-1) # doctest: +SKIP
-
-|details-end|
+          >>> from custom_scorer_module import custom_scoring_function # doctest: +SKIP
+          >>> cross_val_score(model,
+          ...  X_train,
+          ...  y_train,
+          ...  scoring=make_scorer(custom_scoring_function, greater_is_better=False),
+          ...  cv=5,
+          ...  n_jobs=-1) # doctest: +SKIP
 
 .. _multimetric_scoring:
 
@@ -301,7 +300,7 @@ parameter:
     >>> from sklearn.metrics import confusion_matrix
     >>> # A sample toy binary classification dataset
     >>> X, y = datasets.make_classification(n_classes=2, random_state=0)
-    >>> svm = LinearSVC(dual="auto", random_state=0)
+    >>> svm = LinearSVC(random_state=0)
     >>> def confusion_matrix_scorer(clf, X, y):
     ...      y_pred = clf.predict(X)
     ...      cm = confusion_matrix(y, y_pred)
@@ -370,6 +369,7 @@ Some also work in the multilabel case:
    recall_score
    roc_auc_score
    zero_one_loss
+   d2_log_loss_score
 
 And some work with binary and multilabel (but not multiclass) problems:
 
@@ -465,11 +465,11 @@ In the multilabel case with binary label indicators::
   >>> accuracy_score(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
   0.5
 
-.. topic:: Example:
+.. rubric:: Examples
 
-  * See :ref:`sphx_glr_auto_examples_model_selection_plot_permutation_tests_for_classification.py`
-    for an example of accuracy score usage using permutations of
-    the dataset.
+* See :ref:`sphx_glr_auto_examples_model_selection_plot_permutation_tests_for_classification.py`
+  for an example of accuracy score usage using permutations of
+  the dataset.
 
 .. _top_k_accuracy_score:
 
@@ -580,22 +580,20 @@ or *informedness*.
     * Balanced Accuracy as described in [Urbanowicz2015]_: the average of sensitivity and specificity
       is computed for each class and then averaged over total number of classes.
 
-.. topic:: References:
+.. rubric:: References
 
-  .. [Guyon2015] I. Guyon, K. Bennett, G. Cawley, H.J. Escalante, S. Escalera, T.K. Ho, N. Macià,
-     B. Ray, M. Saeed, A.R. Statnikov, E. Viegas, `Design of the 2015 ChaLearn AutoML Challenge
-     <https://ieeexplore.ieee.org/document/7280767>`_,
-     IJCNN 2015.
-  .. [Mosley2013] L. Mosley, `A balanced approach to the multi-class imbalance problem
-     <https://lib.dr.iastate.edu/etd/13537/>`_,
-     IJCV 2010.
-  .. [Kelleher2015] John. D. Kelleher, Brian Mac Namee, Aoife D'Arcy, `Fundamentals of
-     Machine Learning for Predictive Data Analytics: Algorithms, Worked Examples,
-     and Case Studies <https://mitpress.mit.edu/books/fundamentals-machine-learning-predictive-data-analytics>`_,
-     2015.
-  .. [Urbanowicz2015] Urbanowicz R.J.,  Moore, J.H. :doi:`ExSTraCS 2.0: description
-      and evaluation of a scalable learning classifier
-      system <10.1007/s12065-015-0128-8>`, Evol. Intel. (2015) 8: 89.
+.. [Guyon2015] I. Guyon, K. Bennett, G. Cawley, H.J. Escalante, S. Escalera, T.K. Ho, N. Macià,
+    B. Ray, M. Saeed, A.R. Statnikov, E. Viegas, `Design of the 2015 ChaLearn AutoML Challenge
+    <https://ieeexplore.ieee.org/document/7280767>`_, IJCNN 2015.
+.. [Mosley2013] L. Mosley, `A balanced approach to the multi-class imbalance problem
+    <https://lib.dr.iastate.edu/etd/13537/>`_, IJCV 2010.
+.. [Kelleher2015] John. D. Kelleher, Brian Mac Namee, Aoife D'Arcy, `Fundamentals of
+    Machine Learning for Predictive Data Analytics: Algorithms, Worked Examples,
+    and Case Studies <https://mitpress.mit.edu/books/fundamentals-machine-learning-predictive-data-analytics>`_,
+    2015.
+.. [Urbanowicz2015] Urbanowicz R.J.,  Moore, J.H. :doi:`ExSTraCS 2.0: description
+    and evaluation of a scalable learning classifier
+    system <10.1007/s12065-015-0128-8>`, Evol. Intel. (2015) 8: 89.
 
 .. _cohen_kappa:
 
@@ -607,7 +605,7 @@ The function :func:`cohen_kappa_score` computes `Cohen's kappa
 This measure is intended to compare labelings by different human annotators,
 not a classifier versus a ground truth.
 
-The kappa score (see docstring) is a number between -1 and 1.
+The kappa score is a number between -1 and 1.
 Scores above .8 are generally considered good agreement;
 zero or lower means no agreement (practically random labels).
 
@@ -616,9 +614,9 @@ but not for multilabel problems (except by manually computing a per-label score)
 and not for more than two annotators.
 
   >>> from sklearn.metrics import cohen_kappa_score
-  >>> y_true = [2, 0, 2, 2, 0, 1]
-  >>> y_pred = [0, 0, 2, 2, 0, 2]
-  >>> cohen_kappa_score(y_true, y_pred)
+  >>> labeling1 = [2, 0, 2, 2, 0, 1]
+  >>> labeling2 = [0, 0, 2, 2, 0, 2]
+  >>> cohen_kappa_score(labeling1, labeling2)
   0.4285714285714286
 
 .. _confusion_matrix:
@@ -674,19 +672,19 @@ false negatives and true positives as follows::
   >>> tn, fp, fn, tp
   (2, 1, 2, 3)
 
-.. topic:: Example:
+.. rubric:: Examples
 
-  * See :ref:`sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py`
-    for an example of using a confusion matrix to evaluate classifier output
-    quality.
+* See :ref:`sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py`
+  for an example of using a confusion matrix to evaluate classifier output
+  quality.
 
-  * See :ref:`sphx_glr_auto_examples_classification_plot_digits_classification.py`
-    for an example of using a confusion matrix to classify
-    hand-written digits.
+* See :ref:`sphx_glr_auto_examples_classification_plot_digits_classification.py`
+  for an example of using a confusion matrix to classify
+  hand-written digits.
 
-  * See :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
-    for an example of using a confusion matrix to classify text
-    documents.
+* See :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
+  for an example of using a confusion matrix to classify text
+  documents.
 
 .. _classification_report:
 
@@ -713,15 +711,15 @@ and inferred labels::
    weighted avg       0.67      0.60      0.59         5
    <BLANKLINE>
 
-.. topic:: Example:
+.. rubric:: Examples
 
-  * See :ref:`sphx_glr_auto_examples_classification_plot_digits_classification.py`
-    for an example of classification report usage for
-    hand-written digits.
+* See :ref:`sphx_glr_auto_examples_classification_plot_digits_classification.py`
+  for an example of classification report usage for
+  hand-written digits.
 
-  * See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
-    for an example of classification report usage for
-    grid search with nested cross-validation.
+* See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
+  for an example of classification report usage for
+  grid search with nested cross-validation.
 
 .. _hamming_loss:
 
@@ -839,33 +837,31 @@ precision-recall curve as follows.
         :scale: 75
         :align: center
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
-    for an example of :func:`precision_score` and :func:`recall_score` usage
-    to estimate parameters using grid search with nested cross-validation.
+* See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
+  for an example of :func:`precision_score` and :func:`recall_score` usage
+  to estimate parameters using grid search with nested cross-validation.
 
-  * See :ref:`sphx_glr_auto_examples_model_selection_plot_precision_recall.py`
-    for an example of :func:`precision_recall_curve` usage to evaluate
-    classifier output quality.
+* See :ref:`sphx_glr_auto_examples_model_selection_plot_precision_recall.py`
+  for an example of :func:`precision_recall_curve` usage to evaluate
+  classifier output quality.
 
+.. rubric:: References
 
-.. topic:: References:
-
-  .. [Manning2008] C.D. Manning, P. Raghavan, H. Schütze, `Introduction to Information Retrieval
-     <https://nlp.stanford.edu/IR-book/html/htmledition/evaluation-of-ranked-retrieval-results-1.html>`_,
-     2008.
-  .. [Everingham2010] M. Everingham, L. Van Gool, C.K.I. Williams, J. Winn, A. Zisserman,
-     `The Pascal Visual Object Classes (VOC) Challenge
-     <https://citeseerx.ist.psu.edu/doc_view/pid/b6bebfd529b233f00cb854b7d8070319600cf59d>`_,
-     IJCV 2010.
-  .. [Davis2006] J. Davis, M. Goadrich, `The Relationship Between Precision-Recall and ROC Curves
-     <https://www.biostat.wisc.edu/~page/rocpr.pdf>`_,
-     ICML 2006.
-  .. [Flach2015] P.A. Flach, M. Kull, `Precision-Recall-Gain Curves: PR Analysis Done Right
-     <https://papers.nips.cc/paper/5867-precision-recall-gain-curves-pr-analysis-done-right.pdf>`_,
-     NIPS 2015.
-
+.. [Manning2008] C.D. Manning, P. Raghavan, H. Schütze, `Introduction to Information Retrieval
+    <https://nlp.stanford.edu/IR-book/html/htmledition/evaluation-of-ranked-retrieval-results-1.html>`_,
+    2008.
+.. [Everingham2010] M. Everingham, L. Van Gool, C.K.I. Williams, J. Winn, A. Zisserman,
+    `The Pascal Visual Object Classes (VOC) Challenge
+    <https://citeseerx.ist.psu.edu/doc_view/pid/b6bebfd529b233f00cb854b7d8070319600cf59d>`_,
+    IJCV 2010.
+.. [Davis2006] J. Davis, M. Goadrich, `The Relationship Between Precision-Recall and ROC Curves
+    <https://www.biostat.wisc.edu/~page/rocpr.pdf>`_,
+    ICML 2006.
+.. [Flach2015] P.A. Flach, M. Kull, `Precision-Recall-Gain Curves: PR Analysis Done Right
+    <https://papers.nips.cc/paper/5867-precision-recall-gain-curves-pr-analysis-done-right.pdf>`_,
+    NIPS 2015.
 
 Binary classification
 ^^^^^^^^^^^^^^^^^^^^^
@@ -963,10 +959,17 @@ specified by the ``average`` argument to the
 :func:`average_precision_score`, :func:`f1_score`,
 :func:`fbeta_score`, :func:`precision_recall_fscore_support`,
 :func:`precision_score` and :func:`recall_score` functions, as described
-:ref:`above <average>`. Note that if all labels are included, "micro"-averaging
-in a multiclass setting will produce precision, recall and :math:`F`
-that are all identical to accuracy. Also note that "weighted" averaging may
-produce an F-score that is not between precision and recall.
+:ref:`above <average>`.
+
+Note the following behaviors when averaging:
+
+* If all labels are included, "micro"-averaging in a multiclass setting will produce
+  precision, recall and :math:`F` that are all identical to accuracy.
+* "weighted" averaging may produce a F-score that is not between precision and recall.
+* "macro" averaging for F-measures is calculated as the arithmetic mean over
+  per-label/class F-measures, not the harmonic mean over the arithmetic precision and
+  recall means. Both calculations can be seen in the literature but are not equivalent,
+  see [OB2019]_ for details.
 
 To make this more explicit, consider the following notation:
 
@@ -1026,6 +1029,11 @@ Similarly, labels not present in the data sample may be accounted for in macro-a
 
   >>> metrics.precision_score(y_true, y_pred, labels=[0, 1, 2, 3], average='macro')
   0.166...
+
+.. rubric:: References
+
+.. [OB2019] :arxiv:`Opitz, J., & Burst, S. (2019). "Macro f1 and macro f1."
+    <1911.03347>`
 
 .. _jaccard_similarity_score:
 
@@ -1131,9 +1139,9 @@ with a svm classifier in a binary class problem::
   >>> from sklearn.metrics import hinge_loss
   >>> X = [[0], [1]]
   >>> y = [-1, 1]
-  >>> est = svm.LinearSVC(dual="auto", random_state=0)
+  >>> est = svm.LinearSVC(random_state=0)
   >>> est.fit(X, y)
-  LinearSVC(dual='auto', random_state=0)
+  LinearSVC(random_state=0)
   >>> pred_decision = est.decision_function([[-2], [3], [0.5]])
   >>> pred_decision
   array([-2.18...,  2.36...,  0.09...])
@@ -1146,9 +1154,9 @@ with a svm classifier in a multiclass problem::
   >>> X = np.array([[0], [1], [2], [3]])
   >>> Y = np.array([0, 1, 2, 3])
   >>> labels = np.array([0, 1, 2, 3])
-  >>> est = svm.LinearSVC(dual="auto")
+  >>> est = svm.LinearSVC()
   >>> est.fit(X, Y)
-  LinearSVC(dual='auto')
+  LinearSVC()
   >>> pred_decision = est.decision_function([[-1], [2], [3]])
   >>> y_true = [0, 2, 3]
   >>> hinge_loss(y_true, pred_decision, labels=labels)
@@ -1259,6 +1267,7 @@ When there are more than two labels, the value of the MCC will no longer range
 between -1 and +1. Instead the minimum value will be somewhere between -1 and 0
 depending on the number and distribution of ground true labels. The maximum
 value is always +1.
+For additional information, see [WikipediaMCC2021]_.
 
 Here is a small example illustrating the usage of the :func:`matthews_corrcoef`
 function:
@@ -1268,6 +1277,13 @@ function:
     >>> y_pred = [+1, -1, +1, +1]
     >>> matthews_corrcoef(y_true, y_pred)
     -0.33...
+
+.. topic:: References:
+
+  .. [WikipediaMCC2021] Wikipedia contributors. Phi coefficient.
+     Wikipedia, The Free Encyclopedia. April 21, 2021, 12:21 CEST.
+     Available at: https://en.wikipedia.org/wiki/Phi_coefficient
+     Accessed April 21, 2021.
 
 .. _multilabel_confusion_matrix:
 
@@ -1477,53 +1493,57 @@ correspond to the probability estimates that a sample belongs to a particular
 class. The OvO and OvR algorithms support weighting uniformly
 (``average='macro'``) and by prevalence (``average='weighted'``).
 
-**One-vs-one Algorithm**: Computes the average AUC of all possible pairwise
-combinations of classes. [HT2001]_ defines a multiclass AUC metric weighted
-uniformly:
+.. dropdown:: One-vs-one Algorithm
 
-.. math::
+  Computes the average AUC of all possible pairwise
+  combinations of classes. [HT2001]_ defines a multiclass AUC metric weighted
+  uniformly:
 
-   \frac{1}{c(c-1)}\sum_{j=1}^{c}\sum_{k > j}^c (\text{AUC}(j | k) +
-   \text{AUC}(k | j))
+  .. math::
 
-where :math:`c` is the number of classes and :math:`\text{AUC}(j | k)` is the
-AUC with class :math:`j` as the positive class and class :math:`k` as the
-negative class. In general,
-:math:`\text{AUC}(j | k) \neq \text{AUC}(k | j))` in the multiclass
-case. This algorithm is used by setting the keyword argument ``multiclass``
-to ``'ovo'`` and ``average`` to ``'macro'``.
+    \frac{1}{c(c-1)}\sum_{j=1}^{c}\sum_{k > j}^c (\text{AUC}(j | k) +
+    \text{AUC}(k | j))
 
-The [HT2001]_ multiclass AUC metric can be extended to be weighted by the
-prevalence:
+  where :math:`c` is the number of classes and :math:`\text{AUC}(j | k)` is the
+  AUC with class :math:`j` as the positive class and class :math:`k` as the
+  negative class. In general,
+  :math:`\text{AUC}(j | k) \neq \text{AUC}(k | j))` in the multiclass
+  case. This algorithm is used by setting the keyword argument ``multiclass``
+  to ``'ovo'`` and ``average`` to ``'macro'``.
 
-.. math::
+  The [HT2001]_ multiclass AUC metric can be extended to be weighted by the
+  prevalence:
 
-   \frac{1}{c(c-1)}\sum_{j=1}^{c}\sum_{k > j}^c p(j \cup k)(
-   \text{AUC}(j | k) + \text{AUC}(k | j))
+  .. math::
 
-where :math:`c` is the number of classes. This algorithm is used by setting
-the keyword argument ``multiclass`` to ``'ovo'`` and ``average`` to
-``'weighted'``. The ``'weighted'`` option returns a prevalence-weighted average
-as described in [FC2009]_.
+    \frac{1}{c(c-1)}\sum_{j=1}^{c}\sum_{k > j}^c p(j \cup k)(
+    \text{AUC}(j | k) + \text{AUC}(k | j))
 
-**One-vs-rest Algorithm**: Computes the AUC of each class against the rest
-[PD2000]_. The algorithm is functionally the same as the multilabel case. To
-enable this algorithm set the keyword argument ``multiclass`` to ``'ovr'``.
-Additionally to ``'macro'`` [F2006]_ and ``'weighted'`` [F2001]_ averaging, OvR
-supports ``'micro'`` averaging.
+  where :math:`c` is the number of classes. This algorithm is used by setting
+  the keyword argument ``multiclass`` to ``'ovo'`` and ``average`` to
+  ``'weighted'``. The ``'weighted'`` option returns a prevalence-weighted average
+  as described in [FC2009]_.
 
-In applications where a high false positive rate is not tolerable the parameter
-``max_fpr`` of :func:`roc_auc_score` can be used to summarize the ROC curve up
-to the given limit.
+.. dropdown:: One-vs-rest Algorithm
 
-The following figure shows the micro-averaged ROC curve and its corresponding
-ROC-AUC score for a classifier aimed to distinguish the different species in
-the :ref:`iris_dataset`:
+  Computes the AUC of each class against the rest
+  [PD2000]_. The algorithm is functionally the same as the multilabel case. To
+  enable this algorithm set the keyword argument ``multiclass`` to ``'ovr'``.
+  Additionally to ``'macro'`` [F2006]_ and ``'weighted'`` [F2001]_ averaging, OvR
+  supports ``'micro'`` averaging.
 
-.. image:: ../auto_examples/model_selection/images/sphx_glr_plot_roc_002.png
-   :target: ../auto_examples/model_selection/plot_roc.html
-   :scale: 75
-   :align: center
+  In applications where a high false positive rate is not tolerable the parameter
+  ``max_fpr`` of :func:`roc_auc_score` can be used to summarize the ROC curve up
+  to the given limit.
+
+  The following figure shows the micro-averaged ROC curve and its corresponding
+  ROC-AUC score for a classifier aimed to distinguish the different species in
+  the :ref:`iris_dataset`:
+
+  .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_roc_002.png
+    :target: ../auto_examples/model_selection/plot_roc.html
+    :scale: 75
+    :align: center
 
 .. _roc_auc_multilabel:
 
@@ -1553,46 +1573,43 @@ And the decision values do not require such processing.
   >>> roc_auc_score(y, y_score, average=None)
   array([0.81..., 0.84... , 0.93..., 0.87..., 0.94...])
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * See :ref:`sphx_glr_auto_examples_model_selection_plot_roc.py`
-    for an example of using ROC to
-    evaluate the quality of the output of a classifier.
+* See :ref:`sphx_glr_auto_examples_model_selection_plot_roc.py` for an example of
+  using ROC to evaluate the quality of the output of a classifier.
 
-  * See :ref:`sphx_glr_auto_examples_model_selection_plot_roc_crossval.py`
-    for an example of using ROC to
-    evaluate classifier output quality, using cross-validation.
+* See :ref:`sphx_glr_auto_examples_model_selection_plot_roc_crossval.py`  for an
+  example of using ROC to evaluate classifier output quality, using cross-validation.
 
-  * See :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`
-    for an example of using ROC to
-    model species distribution.
+* See :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`
+  for an example of using ROC to model species distribution.
 
-.. topic:: References:
+.. rubric:: References
 
-    .. [HT2001] Hand, D.J. and Till, R.J., (2001). `A simple generalisation
-       of the area under the ROC curve for multiple class classification problems.
-       <http://link.springer.com/article/10.1023/A:1010920819831>`_
-       Machine learning, 45(2), pp. 171-186.
+.. [HT2001] Hand, D.J. and Till, R.J., (2001). `A simple generalisation
+   of the area under the ROC curve for multiple class classification problems.
+   <http://link.springer.com/article/10.1023/A:1010920819831>`_
+   Machine learning, 45(2), pp. 171-186.
 
-    .. [FC2009] Ferri, Cèsar & Hernandez-Orallo, Jose & Modroiu, R. (2009).
-       `An Experimental Comparison of Performance Measures for Classification.
-       <https://www.math.ucdavis.edu/~saito/data/roc/ferri-class-perf-metrics.pdf>`_
-       Pattern Recognition Letters. 30. 27-38.
+.. [FC2009] Ferri, Cèsar & Hernandez-Orallo, Jose & Modroiu, R. (2009).
+   `An Experimental Comparison of Performance Measures for Classification.
+   <https://www.math.ucdavis.edu/~saito/data/roc/ferri-class-perf-metrics.pdf>`_
+   Pattern Recognition Letters. 30. 27-38.
 
-    .. [PD2000] Provost, F., Domingos, P. (2000). `Well-trained PETs: Improving
-       probability estimation trees
-       <https://fosterprovost.com/publication/well-trained-pets-improving-probability-estimation-trees/>`_
-       (Section 6.2), CeDER Working Paper #IS-00-04, Stern School of Business,
-       New York University.
+.. [PD2000] Provost, F., Domingos, P. (2000). `Well-trained PETs: Improving
+   probability estimation trees
+   <https://fosterprovost.com/publication/well-trained-pets-improving-probability-estimation-trees/>`_
+   (Section 6.2), CeDER Working Paper #IS-00-04, Stern School of Business,
+   New York University.
 
-    .. [F2006] Fawcett, T., 2006. `An introduction to ROC analysis.
-       <http://www.sciencedirect.com/science/article/pii/S016786550500303X>`_
-       Pattern Recognition Letters, 27(8), pp. 861-874.
+.. [F2006] Fawcett, T., 2006. `An introduction to ROC analysis.
+   <http://www.sciencedirect.com/science/article/pii/S016786550500303X>`_
+   Pattern Recognition Letters, 27(8), pp. 861-874.
 
-    .. [F2001] Fawcett, T., 2001. `Using rule sets to maximize
-       ROC performance <https://ieeexplore.ieee.org/document/989510/>`_
-       In Data Mining, 2001.
-       Proceedings IEEE International Conference, pp. 131-138.
+.. [F2001] Fawcett, T., 2001. `Using rule sets to maximize
+   ROC performance <https://ieeexplore.ieee.org/document/989510/>`_
+   In Data Mining, 2001.
+   Proceedings IEEE International Conference, pp. 131-138.
 
 .. _det_curve:
 
@@ -1628,59 +1645,57 @@ same classification task:
    :scale: 75
    :align: center
 
-**Properties:**
+.. dropdown:: Properties
 
-* DET curves form a linear curve in normal deviate scale if the detection
-  scores are normally (or close-to normally) distributed.
-  It was shown by [Navratil2007]_ that the reverse is not necessarily true and
-  even more general distributions are able to produce linear DET curves.
+  * DET curves form a linear curve in normal deviate scale if the detection
+    scores are normally (or close-to normally) distributed.
+    It was shown by [Navratil2007]_ that the reverse is not necessarily true and
+    even more general distributions are able to produce linear DET curves.
 
-* The normal deviate scale transformation spreads out the points such that a
-  comparatively larger space of plot is occupied.
-  Therefore curves with similar classification performance might be easier to
-  distinguish on a DET plot.
+  * The normal deviate scale transformation spreads out the points such that a
+    comparatively larger space of plot is occupied.
+    Therefore curves with similar classification performance might be easier to
+    distinguish on a DET plot.
 
-* With False Negative Rate being "inverse" to True Positive Rate the point
-  of perfection for DET curves is the origin (in contrast to the top left
-  corner for ROC curves).
+  * With False Negative Rate being "inverse" to True Positive Rate the point
+    of perfection for DET curves is the origin (in contrast to the top left
+    corner for ROC curves).
 
-**Applications and limitations:**
+.. dropdown:: Applications and limitations
 
-DET curves are intuitive to read and hence allow quick visual assessment of a
-classifier's performance.
-Additionally DET curves can be consulted for threshold analysis and operating
-point selection.
-This is particularly helpful if a comparison of error types is required.
+  DET curves are intuitive to read and hence allow quick visual assessment of a
+  classifier's performance.
+  Additionally DET curves can be consulted for threshold analysis and operating
+  point selection.
+  This is particularly helpful if a comparison of error types is required.
 
-On the other hand DET curves do not provide their metric as a single number.
-Therefore for either automated evaluation or comparison to other
-classification tasks metrics like the derived area under ROC curve might be
-better suited.
+  On the other hand DET curves do not provide their metric as a single number.
+  Therefore for either automated evaluation or comparison to other
+  classification tasks metrics like the derived area under ROC curve might be
+  better suited.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * See :ref:`sphx_glr_auto_examples_model_selection_plot_det.py`
-    for an example comparison between receiver operating characteristic (ROC)
-    curves and Detection error tradeoff (DET) curves.
+* See :ref:`sphx_glr_auto_examples_model_selection_plot_det.py`
+  for an example comparison between receiver operating characteristic (ROC)
+  curves and Detection error tradeoff (DET) curves.
 
-.. topic:: References:
+.. rubric:: References
 
-  .. [WikipediaDET2017] Wikipedia contributors. Detection error tradeoff.
-     Wikipedia, The Free Encyclopedia. September 4, 2017, 23:33 UTC.
-     Available at: https://en.wikipedia.org/w/index.php?title=Detection_error_tradeoff&oldid=798982054.
-     Accessed February 19, 2018.
+.. [WikipediaDET2017] Wikipedia contributors. Detection error tradeoff.
+    Wikipedia, The Free Encyclopedia. September 4, 2017, 23:33 UTC.
+    Available at: https://en.wikipedia.org/w/index.php?title=Detection_error_tradeoff&oldid=798982054.
+    Accessed February 19, 2018.
 
-  .. [Martin1997] A. Martin, G. Doddington, T. Kamm, M. Ordowski, and M. Przybocki,
-     `The DET Curve in Assessment of Detection Task Performance
-     <https://ccc.inaoep.mx/~villasen/bib/martin97det.pdf>`_,
-     NIST 1997.
+.. [Martin1997] A. Martin, G. Doddington, T. Kamm, M. Ordowski, and M. Przybocki,
+    `The DET Curve in Assessment of Detection Task Performance
+    <https://ccc.inaoep.mx/~villasen/bib/martin97det.pdf>`_, NIST 1997.
 
-  .. [Navratil2007] J. Navractil and D. Klusacek,
-     "`On Linear DETs,
-     <https://ieeexplore.ieee.org/document/4218079>`_"
-     2007 IEEE International Conference on Acoustics,
-     Speech and Signal Processing - ICASSP '07, Honolulu,
-     HI, 2007, pp. IV-229-IV-232.
+.. [Navratil2007] J. Navractil and D. Klusacek,
+    `"On Linear DETs" <https://ieeexplore.ieee.org/document/4218079>`_,
+    2007 IEEE International Conference on Acoustics,
+    Speech and Signal Processing - ICASSP '07, Honolulu,
+    HI, 2007, pp. IV-229-IV-232.
 
 .. _zero_one_loss:
 
@@ -1728,11 +1743,11 @@ set [0,1] has an error::
   >>> zero_one_loss(np.array([[0, 1], [1, 1]]), np.ones((2, 2)),  normalize=False)
   1.0
 
-.. topic:: Example:
+.. rubric:: Examples
 
-  * See :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`
-    for an example of zero one loss usage to perform recursive feature
-    elimination with cross-validation.
+* See :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`
+  for an example of zero one loss usage to perform recursive feature
+  elimination with cross-validation.
 
 .. _brier_score_loss:
 
@@ -1788,28 +1803,27 @@ necessarily mean a better calibrated model. "Only when refinement loss remains
 the same does a lower Brier score loss always mean better calibration"
 [Bella2012]_, [Flach2008]_.
 
-.. topic:: Example:
+.. rubric:: Examples
 
-  * See :ref:`sphx_glr_auto_examples_calibration_plot_calibration.py`
-    for an example of Brier score loss usage to perform probability
-    calibration of classifiers.
+* See :ref:`sphx_glr_auto_examples_calibration_plot_calibration.py`
+  for an example of Brier score loss usage to perform probability
+  calibration of classifiers.
 
-.. topic:: References:
+.. rubric:: References
 
-  .. [Brier1950] G. Brier, `Verification of forecasts expressed in terms of
-    probability
-    <ftp://ftp.library.noaa.gov/docs.lib/htdocs/rescue/mwr/078/mwr-078-01-0001.pdf>`_,
-    Monthly weather review 78.1 (1950)
+.. [Brier1950] G. Brier, `Verification of forecasts expressed in terms of probability
+  <ftp://ftp.library.noaa.gov/docs.lib/htdocs/rescue/mwr/078/mwr-078-01-0001.pdf>`_,
+  Monthly weather review 78.1 (1950)
 
-  .. [Bella2012] Bella, Ferri, Hernández-Orallo, and Ramírez-Quintana
-    `"Calibration of Machine Learning Models"
-    <http://dmip.webs.upv.es/papers/BFHRHandbook2010.pdf>`_
-    in Khosrow-Pour, M. "Machine learning: concepts, methodologies, tools
-    and applications." Hershey, PA: Information Science Reference (2012).
+.. [Bella2012] Bella, Ferri, Hernández-Orallo, and Ramírez-Quintana
+  `"Calibration of Machine Learning Models"
+  <http://dmip.webs.upv.es/papers/BFHRHandbook2010.pdf>`_
+  in Khosrow-Pour, M. "Machine learning: concepts, methodologies, tools
+  and applications." Hershey, PA: Information Science Reference (2012).
 
-  .. [Flach2008] Flach, Peter, and Edson Matsubara. `"On classification, ranking,
-    and probability estimation." <https://drops.dagstuhl.de/opus/volltexte/2008/1382/>`_
-    Dagstuhl Seminar Proceedings. Schloss Dagstuhl-Leibniz-Zentrum fr Informatik (2008).
+.. [Flach2008] Flach, Peter, and Edson Matsubara. `"On classification, ranking,
+  and probability estimation." <https://drops.dagstuhl.de/opus/volltexte/2008/1382/>`_
+  Dagstuhl Seminar Proceedings. Schloss Dagstuhl-Leibniz-Zentrum fr Informatik (2008).
 
 .. _class_likelihood_ratios:
 
@@ -1862,72 +1876,72 @@ counts ``tp`` (see `the wikipedia page
 <https://en.wikipedia.org/wiki/Likelihood_ratios_in_diagnostic_testing>`_ for
 the actual formulas).
 
-**Interpretation across varying prevalence:**
+.. rubric:: Examples
 
-Both class likelihood ratios are interpretable in terms of an odds ratio
-(pre-test and post-tests):
+* :ref:`sphx_glr_auto_examples_model_selection_plot_likelihood_ratios.py`
 
-.. math::
+.. dropdown:: Interpretation across varying prevalence
 
-   \text{post-test odds} = \text{Likelihood ratio} \times \text{pre-test odds}.
+  Both class likelihood ratios are interpretable in terms of an odds ratio
+  (pre-test and post-tests):
 
-Odds are in general related to probabilities via
+  .. math::
 
-.. math::
+    \text{post-test odds} = \text{Likelihood ratio} \times \text{pre-test odds}.
 
-   \text{odds} = \frac{\text{probability}}{1 - \text{probability}},
+  Odds are in general related to probabilities via
 
-or equivalently
+  .. math::
 
-.. math::
+    \text{odds} = \frac{\text{probability}}{1 - \text{probability}},
 
-   \text{probability} = \frac{\text{odds}}{1 + \text{odds}}.
+  or equivalently
 
-On a given population, the pre-test probability is given by the prevalence. By
-converting odds to probabilities, the likelihood ratios can be translated into a
-probability of truly belonging to either class before and after a classifier
-prediction:
+  .. math::
 
-.. math::
+    \text{probability} = \frac{\text{odds}}{1 + \text{odds}}.
 
-   \text{post-test odds} = \text{Likelihood ratio} \times
-   \frac{\text{pre-test probability}}{1 - \text{pre-test probability}},
+  On a given population, the pre-test probability is given by the prevalence. By
+  converting odds to probabilities, the likelihood ratios can be translated into a
+  probability of truly belonging to either class before and after a classifier
+  prediction:
 
-.. math::
+  .. math::
 
-   \text{post-test probability} = \frac{\text{post-test odds}}{1 + \text{post-test odds}}.
+    \text{post-test odds} = \text{Likelihood ratio} \times
+    \frac{\text{pre-test probability}}{1 - \text{pre-test probability}},
 
-**Mathematical divergences:**
+  .. math::
 
-The positive likelihood ratio is undefined when :math:`fp = 0`, which can be
-interpreted as the classifier perfectly identifying positive cases. If :math:`fp
-= 0` and additionally :math:`tp = 0`, this leads to a zero/zero division. This
-happens, for instance, when using a `DummyClassifier` that always predicts the
-negative class and therefore the interpretation as a perfect classifier is lost.
+    \text{post-test probability} = \frac{\text{post-test odds}}{1 + \text{post-test odds}}.
 
-The negative likelihood ratio is undefined when :math:`tn = 0`. Such divergence
-is invalid, as :math:`LR_- > 1` would indicate an increase in the odds of a
-sample belonging to the positive class after being classified as negative, as if
-the act of classifying caused the positive condition. This includes the case of
-a `DummyClassifier` that always predicts the positive class (i.e. when
-:math:`tn=fn=0`).
+.. dropdown:: Mathematical divergences
 
-Both class likelihood ratios are undefined when :math:`tp=fn=0`, which means
-that no samples of the positive class were present in the testing set. This can
-also happen when cross-validating highly imbalanced data.
+  The positive likelihood ratio is undefined when :math:`fp = 0`, which can be
+  interpreted as the classifier perfectly identifying positive cases. If :math:`fp
+  = 0` and additionally :math:`tp = 0`, this leads to a zero/zero division. This
+  happens, for instance, when using a `DummyClassifier` that always predicts the
+  negative class and therefore the interpretation as a perfect classifier is lost.
 
-In all the previous cases the :func:`class_likelihood_ratios` function raises by
-default an appropriate warning message and returns `nan` to avoid pollution when
-averaging over cross-validation folds.
+  The negative likelihood ratio is undefined when :math:`tn = 0`. Such divergence
+  is invalid, as :math:`LR_- > 1` would indicate an increase in the odds of a
+  sample belonging to the positive class after being classified as negative, as if
+  the act of classifying caused the positive condition. This includes the case of
+  a `DummyClassifier` that always predicts the positive class (i.e. when
+  :math:`tn=fn=0`).
 
-For a worked-out demonstration of the :func:`class_likelihood_ratios` function,
-see the example below.
+  Both class likelihood ratios are undefined when :math:`tp=fn=0`, which means
+  that no samples of the positive class were present in the testing set. This can
+  also happen when cross-validating highly imbalanced data.
 
-.. topic:: Examples:
+  In all the previous cases the :func:`class_likelihood_ratios` function raises by
+  default an appropriate warning message and returns `nan` to avoid pollution when
+  averaging over cross-validation folds.
 
-  * :ref:`sphx_glr_auto_examples_model_selection_plot_likelihood_ratios.py`
+  For a worked-out demonstration of the :func:`class_likelihood_ratios` function,
+  see the example below.
 
-.. topic:: References:
+.. dropdown:: References
 
   * `Wikipedia entry for Likelihood ratios in diagnostic testing
     <https://en.wikipedia.org/wiki/Likelihood_ratios_in_diagnostic_testing>`_
@@ -1936,6 +1950,68 @@ see the example below.
     Variation of sensitivity, specificity, likelihood ratios and predictive
     values with disease prevalence.
     Statistics in medicine, 16(9), 981-991.
+
+
+.. _d2_score_classification:
+
+D² score for classification
+---------------------------
+
+The D² score computes the fraction of deviance explained.
+It is a generalization of R², where the squared error is generalized and replaced
+by a classification deviance of choice :math:`\text{dev}(y, \hat{y})`
+(e.g., Log loss). D² is a form of a *skill score*.
+It is calculated as
+
+.. math::
+
+  D^2(y, \hat{y}) = 1 - \frac{\text{dev}(y, \hat{y})}{\text{dev}(y, y_{\text{null}})} \,.
+
+Where :math:`y_{\text{null}}` is the optimal prediction of an intercept-only model
+(e.g., the per-class proportion of `y_true` in the case of the Log loss).
+
+Like R², the best possible score is 1.0 and it can be negative (because the
+model can be arbitrarily worse). A constant model that always predicts
+:math:`y_{\text{null}}`, disregarding the input features, would get a D² score
+of 0.0.
+
+.. dropdown:: D2 log loss score
+
+  The :func:`d2_log_loss_score` function implements the special case
+  of D² with the log loss, see :ref:`log_loss`, i.e.:
+
+  .. math::
+
+    \text{dev}(y, \hat{y}) = \text{log_loss}(y, \hat{y}).
+
+  Here are some usage examples of the :func:`d2_log_loss_score` function::
+
+    >>> from sklearn.metrics import d2_log_loss_score
+    >>> y_true = [1, 1, 2, 3]
+    >>> y_pred = [
+    ...    [0.5, 0.25, 0.25],
+    ...    [0.5, 0.25, 0.25],
+    ...    [0.5, 0.25, 0.25],
+    ...    [0.5, 0.25, 0.25],
+    ... ]
+    >>> d2_log_loss_score(y_true, y_pred)
+    0.0
+    >>> y_true = [1, 2, 3]
+    >>> y_pred = [
+    ...     [0.98, 0.01, 0.01],
+    ...     [0.01, 0.98, 0.01],
+    ...     [0.01, 0.01, 0.98],
+    ... ]
+    >>> d2_log_loss_score(y_true, y_pred)
+    0.981...
+    >>> y_true = [1, 2, 3]
+    >>> y_pred = [
+    ...     [0.1, 0.6, 0.3],
+    ...     [0.1, 0.6, 0.3],
+    ...     [0.4, 0.5, 0.1],
+    ... ]
+    >>> d2_log_loss_score(y_true, y_pred)
+    -0.552...
 
 
 .. _multilabel_ranking_metrics:
@@ -2076,10 +2152,11 @@ Here is a small example of usage of this function::
     0.0
 
 
-.. topic:: References:
+.. dropdown:: References
 
   * Tsoumakas, G., Katakis, I., & Vlahavas, I. (2010). Mining multi-label data. In
     Data mining and knowledge discovery handbook (pp. 667-685). Springer US.
+
 
 .. _ndcg:
 
@@ -2125,7 +2202,7 @@ DCG score is
 and the NDCG score is the DCG score divided by the DCG score obtained for
 :math:`y`.
 
-.. topic:: References:
+.. dropdown:: References
 
   * `Wikipedia entry for Discounted Cumulative Gain
     <https://en.wikipedia.org/wiki/Discounted_cumulative_gain>`_
@@ -2142,6 +2219,7 @@ and the NDCG score is the DCG score divided by the DCG score obtained for
     performance measures efficiently in the presence of tied scores. In
     European conference on information retrieval (pp. 414-421). Springer,
     Berlin, Heidelberg.
+
 
 .. _regression_metrics:
 
@@ -2174,9 +2252,6 @@ leads to a weighting of each individual score by the variance of the
 corresponding target variable. This setting quantifies the globally captured
 unscaled variance. If the target variables are of different scale, then this
 score puts more importance on explaining the higher variance variables.
-``multioutput='variance_weighted'`` is the default value for :func:`r2_score`
-for backward compatibility. This will be changed to ``uniform_average`` in the
-future.
 
 .. _r2_score:
 
@@ -2254,11 +2329,11 @@ Here is a small example of usage of the :func:`r2_score` function::
   >>> r2_score(y_true, y_pred, force_finite=False)
   -inf
 
-.. topic:: Example:
+.. rubric:: Examples
 
-  * See :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
-    for an example of R² score usage to
-    evaluate Lasso and Elastic Net on sparse signals.
+* See :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
+  for an example of R² score usage to
+  evaluate Lasso and Elastic Net on sparse signals.
 
 .. _mean_absolute_error:
 
@@ -2325,11 +2400,10 @@ function::
   >>> mean_squared_error(y_true, y_pred)
   0.7083...
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * See :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regression.py`
-    for an example of mean squared error usage to
-    evaluate gradient boosting regression.
+* See :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regression.py`
+  for an example of mean squared error usage to evaluate gradient boosting regression.
 
 Taking the square root of the MSE, called the root mean squared error (RMSE), is another
 common metric that provides a measure in the same units as the target variable. RSME is
@@ -2667,12 +2741,12 @@ It is also possible to build scorer objects for hyper-parameter tuning. The
 sign of the loss must be switched to ensure that greater means better as
 explained in the example linked below.
 
-.. topic:: Example:
+.. rubric:: Examples
 
-  * See :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`
-    for an example of using the pinball loss to evaluate and tune the
-    hyper-parameters of quantile regression models on data with non-symmetric
-    noise and outliers.
+* See :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`
+  for an example of using the pinball loss to evaluate and tune the
+  hyper-parameters of quantile regression models on data with non-symmetric
+  noise and outliers.
 
 .. _d2_score:
 
@@ -2698,68 +2772,66 @@ model can be arbitrarily worse). A constant model that always predicts
 :math:`y_{\text{null}}`, disregarding the input features, would get a D² score
 of 0.0.
 
-D² Tweedie score
-^^^^^^^^^^^^^^^^
+.. dropdown:: D² Tweedie score
 
-The :func:`d2_tweedie_score` function implements the special case of D²
-where :math:`\text{dev}(y, \hat{y})` is the Tweedie deviance, see :ref:`mean_tweedie_deviance`.
-It is also known as D² Tweedie and is related to McFadden's likelihood ratio index.
+  The :func:`d2_tweedie_score` function implements the special case of D²
+  where :math:`\text{dev}(y, \hat{y})` is the Tweedie deviance, see :ref:`mean_tweedie_deviance`.
+  It is also known as D² Tweedie and is related to McFadden's likelihood ratio index.
 
-The argument ``power`` defines the Tweedie power as for
-:func:`mean_tweedie_deviance`. Note that for `power=0`,
-:func:`d2_tweedie_score` equals :func:`r2_score` (for single targets).
+  The argument ``power`` defines the Tweedie power as for
+  :func:`mean_tweedie_deviance`. Note that for `power=0`,
+  :func:`d2_tweedie_score` equals :func:`r2_score` (for single targets).
 
-A scorer object with a specific choice of ``power`` can be built by::
+  A scorer object with a specific choice of ``power`` can be built by::
 
-  >>> from sklearn.metrics import d2_tweedie_score, make_scorer
-  >>> d2_tweedie_score_15 = make_scorer(d2_tweedie_score, power=1.5)
+    >>> from sklearn.metrics import d2_tweedie_score, make_scorer
+    >>> d2_tweedie_score_15 = make_scorer(d2_tweedie_score, power=1.5)
 
-D² pinball score
-^^^^^^^^^^^^^^^^^^^^^
+.. dropdown:: D² pinball score
 
-The :func:`d2_pinball_score` function implements the special case
-of D² with the pinball loss, see :ref:`pinball_loss`, i.e.:
+  The :func:`d2_pinball_score` function implements the special case
+  of D² with the pinball loss, see :ref:`pinball_loss`, i.e.:
 
-.. math::
+  .. math::
 
-  \text{dev}(y, \hat{y}) = \text{pinball}(y, \hat{y}).
+    \text{dev}(y, \hat{y}) = \text{pinball}(y, \hat{y}).
 
-The argument ``alpha`` defines the slope of the pinball loss as for
-:func:`mean_pinball_loss` (:ref:`pinball_loss`). It determines the
-quantile level ``alpha`` for which the pinball loss and also D²
-are optimal. Note that for `alpha=0.5` (the default) :func:`d2_pinball_score`
-equals :func:`d2_absolute_error_score`.
+  The argument ``alpha`` defines the slope of the pinball loss as for
+  :func:`mean_pinball_loss` (:ref:`pinball_loss`). It determines the
+  quantile level ``alpha`` for which the pinball loss and also D²
+  are optimal. Note that for `alpha=0.5` (the default) :func:`d2_pinball_score`
+  equals :func:`d2_absolute_error_score`.
 
-A scorer object with a specific choice of ``alpha`` can be built by::
+  A scorer object with a specific choice of ``alpha`` can be built by::
 
-  >>> from sklearn.metrics import d2_pinball_score, make_scorer
-  >>> d2_pinball_score_08 = make_scorer(d2_pinball_score, alpha=0.8)
+    >>> from sklearn.metrics import d2_pinball_score, make_scorer
+    >>> d2_pinball_score_08 = make_scorer(d2_pinball_score, alpha=0.8)
 
-D² absolute error score
-^^^^^^^^^^^^^^^^^^^^^^^
+.. dropdown:: D² absolute error score
 
-The :func:`d2_absolute_error_score` function implements the special case of
-the :ref:`mean_absolute_error`:
+  The :func:`d2_absolute_error_score` function implements the special case of
+  the :ref:`mean_absolute_error`:
 
-.. math::
+  .. math::
 
-  \text{dev}(y, \hat{y}) = \text{MAE}(y, \hat{y}).
+    \text{dev}(y, \hat{y}) = \text{MAE}(y, \hat{y}).
 
-Here are some usage examples of the :func:`d2_absolute_error_score` function::
+  Here are some usage examples of the :func:`d2_absolute_error_score` function::
 
-  >>> from sklearn.metrics import d2_absolute_error_score
-  >>> y_true = [3, -0.5, 2, 7]
-  >>> y_pred = [2.5, 0.0, 2, 8]
-  >>> d2_absolute_error_score(y_true, y_pred)
-  0.764...
-  >>> y_true = [1, 2, 3]
-  >>> y_pred = [1, 2, 3]
-  >>> d2_absolute_error_score(y_true, y_pred)
-  1.0
-  >>> y_true = [1, 2, 3]
-  >>> y_pred = [2, 2, 2]
-  >>> d2_absolute_error_score(y_true, y_pred)
-  0.0
+    >>> from sklearn.metrics import d2_absolute_error_score
+    >>> y_true = [3, -0.5, 2, 7]
+    >>> y_pred = [2.5, 0.0, 2, 8]
+    >>> d2_absolute_error_score(y_true, y_pred)
+    0.764...
+    >>> y_true = [1, 2, 3]
+    >>> y_pred = [1, 2, 3]
+    >>> d2_absolute_error_score(y_true, y_pred)
+    1.0
+    >>> y_true = [1, 2, 3]
+    >>> y_pred = [2, 2, 2]
+    >>> d2_absolute_error_score(y_true, y_pred)
+    0.0
+
 
 .. _visualization_regression_evaluation:
 
@@ -2829,12 +2901,12 @@ model might be useful.
 Refer to the example below to see a model evaluation that makes use of this
 display.
 
-.. topic:: Example:
+.. rubric:: Examples
 
-  * See :ref:`sphx_glr_auto_examples_compose_plot_transformed_target.py` for
-    an example on how to use :class:`~sklearn.metrics.PredictionErrorDisplay`
-    to visualize the prediction quality improvement of a regression model
-    obtained by transforming the target before learning.
+* See :ref:`sphx_glr_auto_examples_compose_plot_transformed_target.py` for
+  an example on how to use :class:`~sklearn.metrics.PredictionErrorDisplay`
+  to visualize the prediction quality improvement of a regression model
+  obtained by transforming the target before learning.
 
 .. _clustering_metrics:
 

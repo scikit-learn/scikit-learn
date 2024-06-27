@@ -1,16 +1,110 @@
+[project]
+name = "scikit-learn"
+version = "1.6.dev0"
+description = "A set of python modules for machine learning and data mining"
+readme = "README.rst"
+maintainers = [
+    {name = "scikit-learn developers", email="scikit-learn@python.org"},
+]
+dependencies = [
+  "numpy>=1.19.5",
+  "scipy>=1.6.0",
+  "joblib>=1.2.0",
+  "threadpoolctl>=3.1.0",
+]
+requires-python = ">=3.9"
+license = {text = "new BSD"}
+classifiers=[
+  "Intended Audience :: Science/Research",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: BSD License",
+  "Programming Language :: C",
+  "Programming Language :: Python",
+  "Topic :: Software Development",
+  "Topic :: Scientific/Engineering",
+  "Development Status :: 5 - Production/Stable",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: POSIX",
+  "Operating System :: Unix",
+  "Operating System :: MacOS",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+]
+
+[project.urls]
+homepage = "https://scikit-learn.org"
+source = "https://github.com/scikit-learn/scikit-learn"
+download = "https://pypi.org/project/scikit-learn/#files"
+tracker = "https://github.com/scikit-learn/scikit-learn/issues"
+"release notes" = "https://scikit-learn.org/stable/whats_new"
+
+[project.optional-dependencies]
+build = ["numpy>=1.19.5", "scipy>=1.6.0", "cython>=3.0.10", "meson-python>=0.16.0"]
+install = ["numpy>=1.19.5", "scipy>=1.6.0", "joblib>=1.2.0", "threadpoolctl>=3.1.0"]
+benchmark = ["matplotlib>=3.3.4", "pandas>=1.1.5", "memory_profiler>=0.57.0"]
+docs = [
+    "matplotlib>=3.3.4",
+    "scikit-image>=0.17.2",
+    "pandas>=1.1.5",
+    "seaborn>=0.9.0",
+    "memory_profiler>=0.57.0",
+    "sphinx>=7.3.7",
+    "sphinx-copybutton>=0.5.2",
+    "sphinx-gallery>=0.16.0",
+    "numpydoc>=1.2.0",
+    "Pillow>=7.1.2",
+    "pooch>=1.6.0",
+    "sphinx-prompt>=1.4.0",
+    "sphinxext-opengraph>=0.9.1",
+    "plotly>=5.14.0",
+    "polars>=0.20.23",
+    "sphinx-design>=0.5.0",
+    "sphinxcontrib-sass>=0.3.4",
+    "pydata-sphinx-theme>=0.15.3",
+    "sphinx-remove-toctrees>=1.0.0.post1",
+]
+examples = [
+    "matplotlib>=3.3.4",
+    "scikit-image>=0.17.2",
+    "pandas>=1.1.5",
+    "seaborn>=0.9.0",
+    "pooch>=1.6.0",
+    "plotly>=5.14.0",
+]
+tests = [
+    "matplotlib>=3.3.4",
+    "scikit-image>=0.17.2",
+    "pandas>=1.1.5",
+    "pytest>=7.1.2",
+    "pytest-cov>=2.9.0",
+    "ruff>=0.2.1",
+    "black>=24.3.0",
+    "mypy>=1.9",
+    "pyamg>=4.0.0",
+    "polars>=0.20.23",
+    "pyarrow>=12.0.0",
+    "numpydoc>=1.2.0",
+    "pooch>=1.6.0",
+]
+maintenance = ["conda-lock==2.5.6"]
+
 [build-system]
+build-backend = "mesonpy"
 # Minimum requirements for the build system to execute.
 requires = [
-    "setuptools",
-    "wheel",
-    "Cython>=3.0.8",
+    "meson-python>=0.16.0",
+    "Cython>=3.0.10",
     "numpy>=1.25",
     "scipy>=1.6.0",
 ]
 
 [tool.black]
 line-length = 88
-target_version = ['py39', 'py310', 'py311']
+target-version = ['py39', 'py310', 'py311']
 preview = true
 exclude = '''
 /(
@@ -20,7 +114,6 @@ exclude = '''
   | \.vscode
   | build
   | dist
-  | doc/tutorial
   | doc/_build
   | doc/auto_examples
   | sklearn/externals
@@ -29,13 +122,26 @@ exclude = '''
 '''
 
 [tool.ruff]
-# all rules can be found here: https://beta.ruff.rs/docs/rules/
-select = ["E", "F", "W", "I"]
-
 # max line length for black
 line-length = 88
 target-version = "py38"
+exclude=[
+    ".git",
+    "__pycache__",
+    "dist",
+    "sklearn/externals",
+    "doc/_build",
+    "doc/auto_examples",
+    "build",
+    "asv_benchmarks/env",
+    "asv_benchmarks/html",
+    "asv_benchmarks/results",
+    "asv_benchmarks/benchmarks/cache",
+]
 
+[tool.ruff.lint]
+# all rules can be found here: https://beta.ruff.rs/docs/rules/
+select = ["E", "F", "W", "I"]
 ignore=[
     # space before : (needed for how black formats slicing)
     "E203",
@@ -45,22 +151,7 @@ ignore=[
     "E741",
 ]
 
-exclude=[
-    ".git",
-    "__pycache__",
-    "dist",
-    "sklearn/externals",
-    "doc/_build",
-    "doc/auto_examples",
-    "doc/tutorial",
-    "build",
-    "asv_benchmarks/env",
-    "asv_benchmarks/html",
-    "asv_benchmarks/results",
-    "asv_benchmarks/benchmarks/cache",
-]
-
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 # It's fine not to put the import at the top of the file in the examples
 # folder.
 "examples/*"=["E402"]
@@ -113,3 +204,9 @@ exclude= '''
   | sklearn/metrics/_pairwise_distances_reduction/_radius_neighbors.pyx
 )
 '''
+
+[tool.check-sdist]
+# These settings should match .gitattributes
+sdist-only = []
+git-only = [".*", "asv_benchmarks", "azure-pipelines.yml", "benchmarks", "build_tools", "maint_tools"]
+default-ignore = false

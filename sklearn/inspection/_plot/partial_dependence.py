@@ -11,10 +11,10 @@ from ...utils import (
     Bunch,
     _safe_indexing,
     check_array,
-    check_matplotlib_support,  # noqa
     check_random_state,
 )
 from ...utils._encode import _unique
+from ...utils._optional_dependencies import check_matplotlib_support  # noqa
 from ...utils.parallel import Parallel, delayed
 from .. import partial_dependence
 from .._pd_utils import _check_feature_names, _get_feature_index

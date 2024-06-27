@@ -15,7 +15,9 @@ dependencies:
   - pytest
   - pytest-xdist
   - pillow
-  - setuptools
+  - pip
+  - ninja
+  - meson-python
   - pytest-cov
   - coverage
   - wheel

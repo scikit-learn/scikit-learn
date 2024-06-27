@@ -9,7 +9,6 @@ from scipy import sparse
 
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.utils import _IS_WASM
 from sklearn.utils._testing import (
     TempMemmap,
     _convert_container,
@@ -31,6 +30,7 @@ from sklearn.utils._testing import (
 )
 from sklearn.utils.deprecation import deprecated
 from sklearn.utils.fixes import (
+    _IS_WASM,
     CSC_CONTAINERS,
     CSR_CONTAINERS,
     parse_version,
@@ -684,8 +684,8 @@ def test_convert_container(
 ):
     """Check that we convert the container to the right type of array with the
     right data type."""
-    if constructor_name in ("dataframe", "series", "index"):
-        # delay the import of pandas within the function to only skip this test
+    if constructor_name in ("dataframe", "polars", "series", "polars_series", "index"):
+        # delay the import of pandas/polars within the function to only skip this test
         # instead of the whole file
         container_type = container_type()
     container = [0, 1]

@@ -6,7 +6,7 @@ from scipy import sparse
 
 from sklearn.exceptions import NotFittedError
 from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder
-from sklearn.utils import is_scalar_nan
+from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._testing import (
     _convert_container,
     assert_allclose,

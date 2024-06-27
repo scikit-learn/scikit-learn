@@ -1,6 +1,5 @@
-# Authors: Nicolas Goix <nicolas.goix@telecom-paristech.fr>
-#          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Real
@@ -315,6 +314,14 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         else:
             self.offset_ = np.percentile(
                 self.negative_outlier_factor_, 100.0 * self.contamination
+            )
+
+        # Verify if negative_outlier_factor_ values are within acceptable range.
+        # Novelty must also be false to detect outliers
+        if np.min(self.negative_outlier_factor_) < -1e7 and not self.novelty:
+            warnings.warn(
+                "Duplicate values are leading to incorrect results. "
+                "Increase the number of neighbors for more accurate results."
             )
 
         return self

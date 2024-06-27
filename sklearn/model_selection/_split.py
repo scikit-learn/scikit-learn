@@ -3,13 +3,8 @@ The :mod:`sklearn.model_selection._split` module includes classes and
 functions to split the data based on a preset strategy.
 """
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Gael Varoquaux <gael.varoquaux@normalesup.org>
-#         Olivier Grisel <olivier.grisel@ensta.org>
-#         Raghav RV <rvraghav93@gmail.com>
-#         Leandro Hermida <hermidal@cs.umd.edu>
-#         Rodion Martynov <marrodion@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numbers
 import warnings
@@ -24,13 +19,18 @@ import numpy as np
 from scipy.special import comb
 
 from ..utils import (
-    _approximate_mode,
     _safe_indexing,
     check_random_state,
     indexable,
     metadata_routing,
 )
+from ..utils._array_api import (
+    _convert_to_numpy,
+    ensure_common_namespace_device,
+    get_namespace,
+)
 from ..utils._param_validation import Interval, RealNotInt, validate_params
+from ..utils.extmath import _approximate_mode
 from ..utils.metadata_routing import _MetadataRequester
 from ..utils.multiclass import type_of_target
 from ..utils.validation import _num_samples, check_array, column_or_1d
@@ -536,7 +536,7 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
     number of distinct groups has to be at least equal to the number of folds).
 
     The folds are approximately balanced in the sense that the number of
-    distinct groups is approximately the same in each fold.
+    samples is approximately the same in each test fold.
 
     Read more in the :ref:`User Guide <group_k_fold>`.
 
@@ -740,7 +740,15 @@ class StratifiedKFold(_BaseKFold):
 
     def _make_test_folds(self, X, y=None):
         rng = check_random_state(self.random_state)
-        y = np.asarray(y)
+        # XXX: as of now, cross-validation splitters only operate in NumPy-land
+        # without attempting to leverage array API namespace features. However
+        # they might be fed by array API inputs, e.g. in CV-enabled estimators so
+        # we need the following explicit conversion:
+        xp, is_array_api = get_namespace(y)
+        if is_array_api:
+            y = _convert_to_numpy(y, xp)
+        else:
+            y = np.asarray(y)
         type_of_target_y = type_of_target(y)
         allowed_target_types = ("binary", "multiclass")
         if type_of_target_y not in allowed_target_types:
@@ -1170,7 +1178,9 @@ class TimeSeriesSplit(_BaseKFold):
     The training set has size ``i * n_samples // (n_splits + 1)
     + n_samples % (n_splits + 1)`` in the ``i`` th split,
     with a test set of size ``n_samples//(n_splits + 1)`` by default,
-    where ``n_samples`` is the number of samples.
+    where ``n_samples`` is the number of samples. Note that this
+    formula is only valid when ``test_size`` and ``max_train_size`` are
+    left to their default values.
     """
 
     def __init__(self, n_splits=5, *, max_train_size=None, test_size=None, gap=0):
@@ -2221,6 +2231,12 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             default_test_size=self._default_test_size,
         )
 
+        # Convert to numpy as not all operations are supported by the Array API.
+        # `y` is probably never a very large array, which means that converting it
+        # should be cheap
+        xp, _ = get_namespace(y)
+        y = _convert_to_numpy(y, xp=xp)
+
         if y.ndim == 2:
             # for multi-label y, map each distinct row to a string repr
             # using join because str(row) uses an ellipsis if len(row) > 1000
@@ -2585,7 +2601,7 @@ def check_cv(cv=5, y=None, *, classifier=False):
 
     Parameters
     ----------
-    cv : int, cross-validation generator or an iterable, default=None
+    cv : int, cross-validation generator, iterable or None, default=5
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
         - None, to use the default 5-fold cross validation,
@@ -2786,6 +2802,8 @@ def train_test_split(
         cv = CVClass(test_size=n_test, train_size=n_train, random_state=random_state)
 
         train, test = next(cv.split(X=arrays[0], y=stratify))
+
+    train, test = ensure_common_namespace_device(arrays[0], train, test)
 
     return list(
         chain.from_iterable(

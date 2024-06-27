@@ -65,11 +65,10 @@ BaseEstimator.__repr__ for pretty-printing estimators"""
 
 import inspect
 import pprint
-from collections import OrderedDict
 
 from .._config import get_config
 from ..base import BaseEstimator
-from . import is_scalar_nan
+from ._missing import is_scalar_nan
 
 
 class KeyValTuple(tuple):
@@ -200,10 +199,8 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
         else:
             params = object.get_params(deep=False)
 
-        params = OrderedDict((name, val) for (name, val) in sorted(params.items()))
-
         self._format_params(
-            params.items(), stream, indent, allowance + 1, context, level
+            sorted(params.items()), stream, indent, allowance + 1, context, level
         )
         stream.write(")")
 
