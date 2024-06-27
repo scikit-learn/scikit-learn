@@ -381,9 +381,24 @@ def _estimator_has(attr):
     return check
 
 
-def _get_param_masked_arrays(
+def _yield_masked_array_for_each_param(
     candidate_params: Sequence[dict[str, Any]],
 ) -> Iterator[tuple[str, MaskedArray]]:
+    """
+    Yield a masked array for each candidate param.
+
+    `candidate_params` is a sequence of params which were used in
+    a `GridSearchCV`. We use masked arrays for the results, as not
+    all params are necessarily present in each element of
+    `candidate_params`. For example, if using `GridSearchCV` with
+    a `SVC` model, then one might search over params like:
+
+        - kernel=["rbf"], C=[1, 10], gamma=[0.1, 1]
+        - kernel=["poly"], degree=[1, 2]
+
+    and then param `'C'` would not be present in entries of
+    `candidate_params` corresponding to `kernel='poly'`.
+    """
     n_candidates = len(candidate_params)
     param_results: dict[str, Any] = defaultdict(dict)
     for cand_idx, params in enumerate(candidate_params):
@@ -1117,7 +1132,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         _store("fit_time", out["fit_time"])
         _store("score_time", out["score_time"])
         # Store a list of param dicts at the key 'params'
-        for key, value in _get_param_masked_arrays(candidate_params):
+        for key, value in _yield_masked_array_for_each_param(candidate_params):
             results[key] = value
         results["params"] = candidate_params
 
