@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from sklearn.model_selection._search import _get_param_masked_arrays
+from sklearn.model_selection._search import _yield_masked_array_for_each_param
 from sklearn.preprocessing import (
     OneHotEncoder,
     OrdinalEncoder,
@@ -70,8 +70,8 @@ ordinal_encoder = OrdinalEncoder()
         ),
     ],
 )
-def test_get_params_masked_array(candidate_params, expected) -> None:
-    result = list(_get_param_masked_arrays(candidate_params))
+def test_yield_masked_array_for_each_param(candidate_params, expected) -> None:
+    result = list(_yield_masked_array_for_each_param(candidate_params))
     for (key, value), (expected_key, expected_value) in zip(result, expected):
         assert key == expected_key
         np.testing.assert_array_equal(value, expected_value)
