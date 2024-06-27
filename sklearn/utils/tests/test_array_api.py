@@ -570,7 +570,7 @@ def test_get_namespace_and_device():
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, _", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 @pytest.mark.parametrize("axis", [0, 1, None, -1, -2])
