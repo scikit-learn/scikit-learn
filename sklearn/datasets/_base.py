@@ -1580,8 +1580,10 @@ def fetch_file(
 ):
     """Fetch a file from the web.
 
-    If the file already exists locally and the SHA256 checksums match, the path
-    to the local file is returned without re-downloading.
+    If the file already exists locally (and the SHA256 checksums match when
+    provided), the path to the local file is returned without re-downloading.
+
+    .. versionadded:: 1.6
 
     Parameters
     ----------
