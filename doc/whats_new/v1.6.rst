@@ -55,6 +55,9 @@ See :ref:`array_api` for more details.
   :class:`model_selection.HalvingRandomSearchCV` now support Array API
   compatible inputs when their base estimators do. :pr:`27096` by :user:`Tim
   Head <betatim>` and :user:`Olivier Grisel <ogrisel>`.
+- :class:`linear_model.Ridge` now raises a more informative error message when arrays passed at
+  fit and prediction time are of different types (array api namespaces) or are
+  on different devices. :pr:`29313` by :user:`Jérôme Dockès <jeromedockes>`.
 
 Metadata Routing
 ----------------
