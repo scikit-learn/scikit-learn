@@ -33,6 +33,7 @@ from sklearn.metrics import (
     precision_recall_fscore_support,
     precision_score,
     recall_score,
+    tau_score,
     zero_one_loss,
 )
 from sklearn.metrics._classification import _check_targets, d2_log_loss_score
@@ -3096,3 +3097,66 @@ def test_d2_log_loss_score_raises():
     err = "The labels array needs to contain at least two"
     with pytest.raises(ValueError, match=err):
         d2_log_loss_score(y_true, y_pred, labels=labels)
+
+
+def test_tau_score_binary_perfect_prediction():
+    y_true = np.array([0, 1, 0, 1])
+    y_pred = np.array([0, 1, 0, 1])
+    expected_score = 1.0  # Perfect score
+    assert np.isclose(tau_score(y_true, y_pred), expected_score)
+
+
+def test_tau_score_binary_imperfect_prediction():
+    y_true = np.array([0, 1, 0, 1])
+    y_pred = np.array([1, 1, 0, 0])
+    # Assuming a manually calculated expected score
+    expected_score = 0.5
+    assert np.isclose(tau_score(y_true, y_pred), expected_score)
+
+
+def test_tau_score_multi_class():
+    y_true = np.array([0, 1, 2, 0, 1, 2])
+    y_pred = np.array([0, 2, 1, 0, 1, 2])
+    actual_score = tau_score(y_true, y_pred)
+    expected_score = 0.5917
+    assert np.isclose(actual_score, expected_score, atol=0.01)
+
+
+def test_tau_score_with_all_wrong_predictions():
+    y_true = np.array([0, 0, 0, 0])
+    y_pred = np.array([1, 1, 1, 1])
+    actual_score = tau_score(y_true, y_pred)
+    expected_score = 0.0  # All predictions are wrong
+    assert np.isclose(actual_score, expected_score)
+
+
+def test_tau_score_input_validation():
+    y_true = [0, 1, 0, 1]
+    y_pred = [0, 1]  # Incorrect length
+    with pytest.raises(ValueError):
+        tau_score(y_true, y_pred)
+
+
+def test_tau_score_invalid_input_type():
+    y_true = ["a", "b", "c"]
+    y_pred = ["a", "c", "b"]
+    with pytest.raises(ValueError):
+        tau_score(y_true, y_pred)
+
+
+def test_tau_score_non_boolean_normalize():
+    y_true = np.array([0, 1])
+    y_pred = np.array([1, 0])
+    with pytest.raises(ValueError):
+        tau_score(y_true, y_pred, normalize="yes")
+
+
+def test_tau_score_empty_input():
+    y_true = np.array([])
+    y_pred = np.array([])
+    with pytest.raises(ValueError):
+        tau_score(y_true, y_pred)
+
+
+if __name__ == "__main__":
+    pytest.main()

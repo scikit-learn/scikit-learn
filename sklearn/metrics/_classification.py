@@ -3409,3 +3409,65 @@ def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
     )
 
     return 1 - (numerator / denominator)
+
+
+def tau_score(y_true, y_pred, *, normalize=True):
+    """
+    Calculate the Tau score for model performance evaluation.
+
+    This function measures classification accuracy by computing Euclidean
+    distances from the model's performance point to both perfect and random-guess
+    points in a normalized performance space. Suitable for both binary and
+    multi-class classification.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,) or sparse matrix
+        Ground truth (correct) labels.
+    y_pred : array-like of shape (n_samples,) or sparse matrix
+        Predicted labels, as returned by a classifier.
+    normalize : bool, default=True
+        Specifies whether to normalize the Tau score to the range [0, 1]. If True,
+        the score is normalized; otherwise, it is not.
+
+    Returns
+    -------
+    score : float
+        The Tau score, where higher values indicate better performance.
+    """
+    check_consistent_length(y_true, y_pred)
+
+    if not isinstance(normalize, bool):
+        raise ValueError("normalize must be a boolean.")
+    if len(y_true) == 0 or len(y_pred) == 0:
+        raise ValueError("Input arrays must not be empty.")
+    if any(isinstance(x, str) for x in np.concatenate((y_true, y_pred))):
+        raise ValueError("Input arrays must contain numeric values only.")
+
+    cm = confusion_matrix(y_true, y_pred)
+    n_classes = cm.shape[0]
+
+    # Handle the potential division by zero in normalization
+    sums = np.sum(cm, axis=1)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        model_point = np.diag(cm) / sums
+        model_point[sums == 0] = 0  # Handle rows in CM where the sum is zero
+
+    perfect_point = np.ones(n_classes)
+    # random_point = np.full(n_classes, 1 / n_classes)
+
+    # Compute distances
+    dist_from_perfect = np.linalg.norm(model_point - perfect_point)
+    # dist_from_random = np.linalg.norm(model_point - random_point)
+
+    # Check for the case where there are no true positives across all classes
+    if normalize:
+        if n_classes > 0:
+            max_dist = np.sqrt(n_classes)
+            tau = 1 - dist_from_perfect / max_dist
+        else:
+            tau = 0.0
+    else:
+        tau = dist_from_perfect
+
+    return tau
