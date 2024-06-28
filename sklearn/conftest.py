@@ -309,19 +309,6 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize("global_random_seed", random_seeds)
 
 
-def pytest_report_header(config):
-    random_seed_var = environ.get("SKLEARN_TESTS_GLOBAL_RANDOM_SEED")
-
-    return [
-        "To reproduce this test run, set the following environment variable:",
-        f'    SKLEARN_TESTS_GLOBAL_RANDOM_SEED="{random_seed_var}"',
-        (
-            "See: https://scikit-learn.org/dev/computing/parallelism.html"
-            "#sklearn-tests-global-random-seed"
-        ),
-    ]
-
-
 def pytest_configure(config):
     # Use matplotlib agg backend during the tests including doctests
     try:
