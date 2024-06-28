@@ -145,6 +145,14 @@ Changelog
   has no effect. `copy_X` will be removed in 1.8.
   :pr:`29105` by :user:`Adam Li <adam2392>`.
 
+:mod:`sklearn.manifold`
+.......................
+
+- |Efficiency| :func:`manifold.locally_linear_embedding` and
+  :class:`manifold.LocallyLinearEmbedding` now allocate more efficiently the memory of
+  sparse matrices in the Hessian, Modified and LTSA methods.
+  :pr:`28096` by :user:`Giorgio Angelotti <giorgioangel>`.
+
 :mod:`sklearn.metrics`
 ......................
 
