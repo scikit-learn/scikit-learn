@@ -1225,14 +1225,15 @@ def check_array_api_attributes(
     dtype_name,
     data_shape="tall",
     multi_output=False,
+    use_sample_weight=False,
 ):
+    rng = np.random.RandomState(0)
     xp = _array_api_for_tests(array_namespace, device)
 
     if data_shape == "tall":
         X_np = X_iris.astype(dtype_name)
         y_np = y_iris.astype(dtype_name)
     else:
-        rng = np.random.RandomState(0)
         n_samples, n_features = 10, 100
         X_np = rng.randn(n_samples, n_features).astype(dtype_name)
         w = rng.randn(100).astype(dtype_name)
@@ -1245,15 +1246,21 @@ def check_array_api_attributes(
         estimator = clone(estimator)
         estimator.set_params(alpha=[1e-6, 1e6])
 
+    if use_sample_weight:
+        sample_weight_np = rng.rand(X_np.shape[0]).astype(dtype_name)
+        sample_weight_xp = xp.asarray(sample_weight_np, device=device)
+    else:
+        sample_weight_np = sample_weight_xp = None
+
     X_xp = xp.asarray(X_np, device=device)
     y_xp = xp.asarray(y_np, device=device)
 
-    estimator.fit(X_np, y_np)
+    estimator.fit(X_np, y_np, sample_weight_np)
     coef_np = estimator.coef_
     intercept_np = estimator.intercept_
 
     with config_context(array_api_dispatch=True):
-        estimator_xp = clone(estimator).fit(X_xp, y_xp)
+        estimator_xp = clone(estimator).fit(X_xp, y_xp, sample_weight=sample_weight_xp)
         coef_xp = estimator_xp.coef_
         if multi_output:
             assert coef_xp.shape == (2, X_xp.shape[1])
@@ -1287,10 +1294,15 @@ def check_array_api_attributes(
     "check",
     [
         check_array_api_input_and_values,
-        partial(check_array_api_attributes, data_shape="tall"),
+        partial(check_array_api_attributes, data_shape="tall", use_sample_weight=True),
         partial(check_array_api_attributes, data_shape="tall", multi_output=True),
         partial(check_array_api_attributes, data_shape="wide"),
-        partial(check_array_api_attributes, data_shape="wide", multi_output=True),
+        partial(
+            check_array_api_attributes,
+            data_shape="wide",
+            multi_output=True,
+            use_sample_weight=True,
+        ),
     ],
     ids=_get_check_estimator_ids,
 )
