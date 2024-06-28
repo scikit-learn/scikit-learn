@@ -33,6 +33,13 @@ Changes impacting many modules
 Changelog
 ---------
 
+:mod:`sklearn.compose`
+......................
+
+- |Efficiency| Fix a performance regression in :class:`compose.ColumnTransformer`
+  where the full input data was copied for each transformer when `n_jobs > 1`.
+  :pr:`29330` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.metrics`
 ......................
 
