@@ -23,7 +23,7 @@ from time import time
 
 import numpy as np
 import pandas as pd
-from joblib import parallel_backend
+from joblib import parallel_config
 
 from sklearn.ensemble import IsolationForest
 
@@ -56,7 +56,6 @@ def get_data(
 
 def plot(bench_results, pr_name, main_name, image_path):
     import matplotlib.pyplot as plt
-    import pandas as pd
     import seaborn as sns
 
     results_path = Path(bench_results)
@@ -95,7 +94,7 @@ def plot(bench_results, pr_name, main_name, image_path):
         ax=ax,
         legend="full",
     )
-    ax.set_title("Predict Time vs. n_samples_test - PR branch")
+    ax.set_title(f"Predict Time vs. n_samples_test - {pr_name} branch")
     ax.set_ylabel("Predict Time (Seconds)")
     ax.set_xlabel("n_samples_test")
 
@@ -111,7 +110,7 @@ def plot(bench_results, pr_name, main_name, image_path):
         ax=ax,
         legend=None,
     )
-    ax.set_title("Predict Time vs. n_samples_test - Main branch")
+    ax.set_title(f"Predict Time vs. n_samples_test - {main_name} branch")
     ax.set_ylabel("Predict Time")
     ax.set_xlabel("n_samples_test")
 
@@ -121,66 +120,63 @@ def plot(bench_results, pr_name, main_name, image_path):
     print(f"Saved image to {image_path}")
 
 
-random_state = 1
+def main():
+    random_state = 1
 
-results = defaultdict(list)
+    results = defaultdict(list)
 
-# Loop over all datasets for fitting and scoring the estimator:
-n_samples_train = 1000
-for n_samples_test in [
-    1000,
-    10000,
-    50000,
-]:
-    for n_features in [10, 100, 1000]:
-        for contamination in [0.01, 0.1, 0.5]:
-            for n_jobs in [1, 2, 3, 4]:
-                X_train, X_test = get_data(
-                    n_samples_train,
-                    n_samples_test,
-                    n_features,
-                    contamination,
-                    random_state,
-                )
+    # Loop over all datasets for fitting and scoring the estimator:
+    n_samples_train = 1000
+    for n_samples_test in [
+        1000,
+        10000,
+        50000,
+    ]:
+        for n_features in [10, 100, 1000]:
+            for contamination in [0.01, 0.1, 0.5]:
+                for n_jobs in [1, 2, 3, 4]:
+                    X_train, X_test = get_data(
+                        n_samples_train,
+                        n_samples_test,
+                        n_features,
+                        contamination,
+                        random_state,
+                    )
 
-                print("--- Fitting the IsolationForest estimator...")
-                model = IsolationForest(n_jobs=-1, random_state=random_state)
-                tstart = time()
-                model.fit(X_train)
-                fit_time = time() - tstart
-
-                tstart = time()
-                scoring = -model.decision_function(
-                    X_test
-                )  # the lower, the more abnormal
-                predict_time = time() - tstart
-
-                # clearcache
-                for _ in range(1000):
-                    1 + 1
-
-                with parallel_backend("loky", n_jobs=n_jobs):
+                    print("--- Fitting the IsolationForest estimator...")
+                    model = IsolationForest(n_jobs=-1, random_state=random_state)
                     tstart = time()
-                    scoring = -model.decision_function(
-                        X_test
-                    )  # the lower, the more abnormal
-                    predict_time = time() - tstart
+                    model.fit(X_train)
+                    fit_time = time() - tstart
 
-                results["predict_time"].append(predict_time)
-                results["fit_time"].append(fit_time)
-                results["n_samples_train"].append(n_samples_train)
-                results["n_samples_test"].append(n_samples_test)
-                results["n_features"].append(n_features)
-                results["contamination"].append(contamination)
-                results["n_jobs"].append(n_jobs)
+                    tstart = time()
 
-df = pd.DataFrame(results)
-df.to_csv("~/bench_results_forest/pr.csv", index=False)
+                    # clearcache
+                    for _ in range(1000):
+                        1 + 1
+                    with parallel_config("threading", n_jobs=n_jobs):
+                        tstart = time()
+                        model.decision_function(X_test)  # the lower, the more abnormal
+                        predict_time = time() - tstart
 
+                    results["predict_time"].append(predict_time)
+                    results["fit_time"].append(fit_time)
+                    results["n_samples_train"].append(n_samples_train)
+                    results["n_samples_test"].append(n_samples_test)
+                    results["n_features"].append(n_features)
+                    results["contamination"].append(contamination)
+                    results["n_jobs"].append(n_jobs)
+
+    # df = pd.DataFrame(results)
+    # df.to_csv("~/bench_results_forest/pr-threading.csv", index=False)
+
+
+#
+main()
 
 bench_results = Path("/Users/adam2392/bench_results_forest")
-pr_name = "pr"
-main_name = "main"
+pr_name = "pr-threading"
+main_name = "pr"
 image_path = "results_image.png"
 plot(
     bench_results=bench_results,

@@ -289,7 +289,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         # ExtraTreeRegressor releases the GIL, so it's more efficient to use
         # a thread-based backend rather than a process-based backend so as
         # to avoid suffering from communication overhead and extra memory
-        # copies.
+        # copies. This is only used in the fit method.
         return {"prefer": "threads"}
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -410,7 +410,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
             from joblib import parallel_backend
 
-            with parallel_backend('loky', n_jobs=4):
+            # Note, we use threading here as the predict method is not CPU bound.
+            with parallel_backend("threading", n_jobs=4):
                 model.predict(X)
         """
         check_is_fitted(self)
@@ -459,7 +460,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
             from joblib import parallel_backend
 
-            with parallel_backend('loky', n_jobs=4):
+            # Note, we use threading here as the predict method is not CPU bound.
+            with parallel_backend("threading", n_jobs=4):
                 model.decision_function(X)
         """
         # We subtract self.offset_ to make 0 be the threshold value for being
@@ -504,7 +506,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
             from joblib import parallel_backend
 
-            with parallel_backend('loky', n_jobs=4):
+            # Note, we use threading here as the predict method is not CPU bound.
+            with parallel_backend("threading", n_jobs=4):
                 model.score(X)
         """
         # Check data
@@ -590,7 +593,6 @@ class IsolationForest(OutlierMixin, BaseBagging):
             n_jobs=n_jobs,
             verbose=self.verbose,
             require="sharedmem",
-            **self._parallel_args(),
         )(
             delayed(_parallel_compute_tree_depths)(
                 tree,
