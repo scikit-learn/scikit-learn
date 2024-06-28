@@ -1226,18 +1226,27 @@ def check_array_api_attributes(
     data_shape="tall",
     multi_output=False,
     use_sample_weight=False,
+    rank_deficient=False,
 ):
     rng = np.random.RandomState(0)
     xp = _array_api_for_tests(array_namespace, device)
 
     if data_shape == "tall":
         X_np = X_iris.astype(dtype_name)
+        if rank_deficient:
+            # Introduce redundant features to make the covariance matrix rank
+            # deficient
+            X_np = np.hstack([X_np] * 2)
         y_np = y_iris.astype(dtype_name)
     else:
         n_samples, n_features = 10, 100
         X_np = rng.randn(n_samples, n_features).astype(dtype_name)
         w = rng.randn(100).astype(dtype_name)
         y_np = X_np @ w + 0.01 * rng.randn(n_samples).astype(dtype_name)
+        if rank_deficient:
+            # Duplicated some rows to make the kernel matrix rank deficient
+            X_np = np.vstack([X_np] * 2)
+            y_np = np.hstack([y_np] * 2)
 
     if multi_output:
         y_np = np.column_stack([y_np, y_np])
@@ -1295,7 +1304,12 @@ def check_array_api_attributes(
     [
         check_array_api_input_and_values,
         partial(check_array_api_attributes, data_shape="tall", use_sample_weight=True),
-        partial(check_array_api_attributes, data_shape="tall", multi_output=True),
+        partial(
+            check_array_api_attributes,
+            data_shape="tall",
+            multi_output=True,
+        ),
+        partial(check_array_api_attributes, data_shape="tall", rank_deficient=True),
         partial(check_array_api_attributes, data_shape="wide"),
         partial(
             check_array_api_attributes,
@@ -1303,12 +1317,13 @@ def check_array_api_attributes(
             multi_output=True,
             use_sample_weight=True,
         ),
+        partial(check_array_api_attributes, data_shape="wide", rank_deficient=True),
     ],
     ids=_get_check_estimator_ids,
 )
 @pytest.mark.parametrize(
     "estimator",
-    [Ridge(solver="svd"), Ridge(solver="cholesky")],
+    [Ridge(solver="svd"), Ridge(solver="cholesky"), Ridge(solver="cholesky", alpha=0)],
     ids=_get_check_estimator_ids,
 )
 def test_ridge_array_api_compliance(
