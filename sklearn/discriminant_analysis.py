@@ -943,11 +943,9 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
             rank = np.sum(S2 > self.tol)
             if rank < n_features:
                 warnings.warn(
-                    (
-                        f"The covariance matrix of class {ind} is not full rank. "
-                        "Increasing the value of parameter `reg_param` might help"
-                        " reducing the collinearity."
-                    ),
+                    f"The covariance matrix of class {ind} is not full rank. "
+                    "Increasing the value of parameter `reg_param` might help"
+                    " reducing the collinearity.",
                     linalg.LinAlgWarning,
                 )
             if self.store_covariance or store_covariance:

@@ -531,11 +531,9 @@ class Birch(
 
         if self.copy != "deprecated" and first_call:
             warnings.warn(
-                (
-                    "`copy` was deprecated in 1.6 and will be removed in 1.8 since it"
-                    " has no effect internally. Simply leave this parameter to its"
-                    " default value to avoid this warning."
-                ),
+                "`copy` was deprecated in 1.6 and will be removed in 1.8 since it "
+                "has no effect internally. Simply leave this parameter to its default "
+                "value to avoid this warning.",
                 FutureWarning,
             )
 
