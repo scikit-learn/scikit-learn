@@ -130,6 +130,12 @@ Changelog
   by parallelizing the initial search for bin thresholds
   :pr:`28064` by :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |Enhancement| The verbosity of :class:`ensemble.HistGradientBoostingClassifier`
+  and :class:`ensemble.HistGradientBoostingRegressor` got a more granular control. Now,
+  `verbose = 1` prints only summary messages, `verbose >= 2` prints the full
+  information as before.
+  :pr:`28179` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 :mod:`sklearn.impute`
 .....................
 
