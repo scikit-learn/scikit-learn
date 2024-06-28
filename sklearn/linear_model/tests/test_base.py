@@ -792,7 +792,7 @@ def test_linear_regression_sample_weight_consistency(
 @skip_if_array_api_compat_not_configured
 def test_array_api_fitted_attribute():
     xp = pytest.importorskip("array_api_strict")
-    rng = np.random.default_rng()
+    rng = np.random.default_rng(0)
     X = rng.normal(size=(10, 5))
     y = rng.normal(size=10)
     reg = LinearRegression().fit(X, y)

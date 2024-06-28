@@ -838,14 +838,13 @@ def make_converter(X):
             return _convert_to_numpy(data, data_xp)
 
         return convert
-    xp, is_array_api = get_namespace(X)
+    xp, is_array_api, device_ = get_namespace_and_device(X)
     if not is_array_api:
 
         def convert(data):
             return data
 
         return convert
-    device_ = device(X)
 
     def convert(data):
         if not isinstance(data, numpy.ndarray) and not hasattr(data, "__dlpack__"):
@@ -855,7 +854,7 @@ def make_converter(X):
             return data
         try:
             return xp.asarray(data, device=device_)
-        except Exception:
+        except Exception:  # pragma: no cover
             # direct conversion to a different library may fail in which
             # case we try converting to numpy first
             data = _convert_to_numpy(data, data_xp)
@@ -868,7 +867,7 @@ def convert_attributes(estimator, ref_array):
     """
     Convert attributes of estimator to namespace and device of reference array.
 
-    attributes which are not arrays are left unchanged.
+    Attributes which are not arrays are left unchanged.
     """
     return _estimator_with_converted_arrays(estimator, make_converter(ref_array))
 
@@ -886,7 +885,7 @@ def check_fitted_attribute(estimator, method_name, attr_name, X):
             f"Array api namespaces used during fit ({a_xp.__name__}) "
             f"and {method_name} ({X_xp.__name__}) differ."
         )
-    else:
+    else:  # pragma: no cover
         msg = (
             f"Devices used during fit ({a_device}) "
             f"and {method_name} ({X_device}) differ."
