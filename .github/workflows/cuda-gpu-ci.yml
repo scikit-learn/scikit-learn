@@ -5,9 +5,11 @@ name: CUDA GPU
 on:
   pull_request:
     types:
-      -labeled
+      - labeled
 
-permissions: read-all
+# In order to remove the "CUDA CI" label we need to have write permissions for PRs
+permissions:
+  pull-requests: write
 
 jobs:
   tests:
