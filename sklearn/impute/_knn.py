@@ -1,6 +1,5 @@
-# Authors: Ashim Bhattarai <ashimb9@gmail.com>
-#          Thomas J Fan <thomasjpfan@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Integral
 
@@ -10,8 +9,8 @@ from ..base import _fit_context
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import _NAN_METRICS
 from ..neighbors._base import _get_weights
-from ..utils import is_scalar_nan
 from ..utils._mask import _get_mask
+from ..utils._missing import is_scalar_nan
 from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils.validation import FLOAT_DTYPES, _check_feature_names_in, check_is_fitted
 from ._base import _BaseImputer
@@ -195,6 +194,9 @@ class KNNImputer(_BaseImputer):
         # fill nans with zeros
         if weight_matrix is not None:
             weight_matrix[np.isnan(weight_matrix)] = 0.0
+        else:
+            weight_matrix = np.ones_like(donors_dist)
+            weight_matrix[np.isnan(donors_dist)] = 0.0
 
         # Retrieve donor values and calculate kNN average
         donors = fit_X_col.take(donors_idx)
@@ -267,6 +269,7 @@ class KNNImputer(_BaseImputer):
             X,
             accept_sparse=False,
             dtype=FLOAT_DTYPES,
+            force_writeable=True,
             force_all_finite=force_all_finite,
             copy=self.copy,
             reset=False,

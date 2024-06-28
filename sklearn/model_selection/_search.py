@@ -3,12 +3,8 @@ The :mod:`sklearn.model_selection._search` includes utilities to fine-tune the
 parameters of an estimator.
 """
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
-#         Gael Varoquaux <gael.varoquaux@normalesup.org>
-#         Andreas Mueller <amueller@ais.uni-bonn.de>
-#         Olivier Grisel <olivier.grisel@ensta.org>
-#         Raghav RV <rvraghav93@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numbers
 import operator
@@ -33,8 +29,10 @@ from ..metrics._scorer import (
     get_scorer_names,
 )
 from ..utils import Bunch, check_random_state
+from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._param_validation import HasMethods, Interval, StrOptions
 from ..utils._tags import _safe_tags
+from ..utils.deprecation import _deprecate_Xt_in_inverse_transform
 from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -438,6 +436,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             "_xfail_checks": {
                 "check_supervised_y_2d": "DataConversionWarning not caught"
             },
+            "array_api_support": _safe_tags(self.estimator, "array_api_support"),
         }
 
     def score(self, X, y=None, **params):
@@ -484,8 +483,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         if self.scorer_ is None:
             raise ValueError(
                 "No score function explicitly defined, "
-                "and the estimator doesn't provide one %s"
-                % self.best_estimator_
+                "and the estimator doesn't provide one %s" % self.best_estimator_
             )
         if isinstance(self.scorer_, dict):
             if self.multimetric_:
@@ -637,7 +635,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         return self.best_estimator_.transform(X)
 
     @available_if(_estimator_has("inverse_transform"))
-    def inverse_transform(self, Xt):
+    def inverse_transform(self, X=None, Xt=None):
         """Call inverse_transform on the estimator with the best found params.
 
         Only available if the underlying estimator implements
@@ -645,9 +643,16 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
+        X : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
         Xt : indexable, length n_samples
             Must fulfill the input assumptions of the
             underlying estimator.
+
+            .. deprecated:: 1.5
+                `Xt` was deprecated in 1.5 and will be removed in 1.7. Use `X` instead.
 
         Returns
         -------
@@ -655,8 +660,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Result of the `inverse_transform` function for `Xt` based on the
             estimator with the best found parameters.
         """
+        X = _deprecate_Xt_in_inverse_transform(X, Xt)
         check_is_fitted(self)
-        return self.best_estimator_.inverse_transform(Xt)
+        return self.best_estimator_.inverse_transform(X)
 
     @property
     def n_features_in_(self):
@@ -781,17 +787,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             best_index = results[f"rank_test_{refit_metric}"].argmin()
         return best_index
 
-    def _get_scorers(self, convert_multimetric):
+    def _get_scorers(self):
         """Get the scorer(s) to be used.
 
         This is used in ``fit`` and ``get_metadata_routing``.
-
-        Parameters
-        ----------
-        convert_multimetric : bool
-            Whether to convert a dict of scorers to a _MultimetricScorer. This
-            is used in ``get_metadata_routing`` to include the routing info for
-            multiple scorers.
 
         Returns
         -------
@@ -807,10 +806,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             scorers = _check_multimetric_scoring(self.estimator, self.scoring)
             self._check_refit_for_multimetric(scorers)
             refit_metric = self.refit
-            if convert_multimetric and isinstance(scorers, dict):
-                scorers = _MultimetricScorer(
-                    scorers=scorers, raise_exc=(self.error_score == "raise")
-                )
+            scorers = _MultimetricScorer(
+                scorers=scorers, raise_exc=(self.error_score == "raise")
+            )
 
         return scorers, refit_metric
 
@@ -866,10 +864,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Instance of fitted estimator.
         """
         estimator = self.estimator
-        # Here we keep a dict of scorers as is, and only convert to a
-        # _MultimetricScorer at a later stage. Issue:
-        # https://github.com/scikit-learn/scikit-learn/issues/27001
-        scorers, refit_metric = self._get_scorers(convert_multimetric=False)
+        scorers, refit_metric = self._get_scorers()
 
         X, y = indexable(X, y)
         params = _check_method_params(X, params=params)
@@ -974,7 +969,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             first_test_score = all_out[0]["test_scores"]
             self.multimetric_ = isinstance(first_test_score, dict)
 
-            # check refit_metric now for a callabe scorer that is multimetric
+            # check refit_metric now for a callable scorer that is multimetric
             if callable(self.scoring) and self.multimetric_:
                 self._check_refit_for_multimetric(first_test_score)
                 refit_metric = self.refit
@@ -1015,7 +1010,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 self.feature_names_in_ = self.best_estimator_.feature_names_in_
 
         # Store the only scorer not as a dict for single metric evaluation
-        self.scorer_ = scorers
+        if isinstance(scorers, _MultimetricScorer):
+            self.scorer_ = scorers._scorers
+        else:
+            self.scorer_ = scorers
 
         self.cv_results_ = results
         self.n_splits_ = n_splits
@@ -1081,27 +1079,44 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         _store("fit_time", out["fit_time"])
         _store("score_time", out["score_time"])
-        # Use one MaskedArray and mask all the places where the param is not
-        # applicable for that candidate. Use defaultdict as each candidate may
-        # not contain all the params
-        param_results = defaultdict(
-            partial(
-                MaskedArray,
-                np.empty(
-                    n_candidates,
-                ),
-                mask=True,
-                dtype=object,
-            )
-        )
+        param_results = defaultdict(dict)
         for cand_idx, params in enumerate(candidate_params):
             for name, value in params.items():
-                # An all masked empty array gets created for the key
-                # `"param_%s" % name` at the first occurrence of `name`.
-                # Setting the value at an index also unmasks that index
                 param_results["param_%s" % name][cand_idx] = value
+        for key, param_result in param_results.items():
+            param_list = list(param_result.values())
+            try:
+                with warnings.catch_warnings():
+                    warnings.filterwarnings(
+                        "ignore",
+                        message="in the future the `.dtype` attribute",
+                        category=DeprecationWarning,
+                    )
+                    # Warning raised by NumPy 1.20+
+                    arr_dtype = np.result_type(*param_list)
+            except (TypeError, ValueError):
+                arr_dtype = np.dtype(object)
+            else:
+                if any(np.min_scalar_type(x) == object for x in param_list):
+                    # `np.result_type` might get thrown off by `.dtype` properties
+                    # (which some estimators have).
+                    # If finding the result dtype this way would give object,
+                    # then we use object.
+                    # https://github.com/scikit-learn/scikit-learn/issues/29157
+                    arr_dtype = np.dtype(object)
+            if len(param_list) == n_candidates and arr_dtype != object:
+                # Exclude `object` else the numpy constructor might infer a list of
+                # tuples to be a 2d array.
+                results[key] = MaskedArray(param_list, mask=False, dtype=arr_dtype)
+            else:
+                # Use one MaskedArray and mask all the places where the param is not
+                # applicable for that candidate (which may not contain all the params).
+                ma = MaskedArray(np.empty(n_candidates), mask=True, dtype=arr_dtype)
+                for index, value in param_result.items():
+                    # Setting the value at an index unmasks that index
+                    ma[index] = value
+                results[key] = ma
 
-        results.update(param_results)
         # Store a list of param dicts at the key 'params'
         results["params"] = candidate_params
 
@@ -1147,7 +1162,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
 
-        scorer, _ = self._get_scorers(convert_multimetric=True)
+        scorer, _ = self._get_scorers()
         router.add(
             scorer=scorer,
             method_mapping=MethodMapping()
@@ -1159,6 +1174,19 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             method_mapping=MethodMapping().add(caller="fit", callee="split"),
         )
         return router
+
+    def _sk_visual_block_(self):
+        if hasattr(self, "best_estimator_"):
+            key, estimator = "best_estimator_", self.best_estimator_
+        else:
+            key, estimator = "estimator", self.estimator
+
+        return _VisualBlock(
+            "parallel",
+            [estimator],
+            names=[f"{key}: {estimator.__class__.__name__}"],
+            name_details=[str(estimator)],
+        )
 
 
 class GridSearchCV(BaseSearchCV):

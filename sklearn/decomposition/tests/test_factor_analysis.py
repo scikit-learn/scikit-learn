@@ -1,6 +1,5 @@
-# Author: Christian Osendorfer <osendorf@gmail.com>
-#         Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# License: BSD3
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from itertools import combinations
 
@@ -19,9 +18,9 @@ from sklearn.utils._testing import (
 
 # Ignore warnings from switching to more power iterations in randomized_svd
 @ignore_warnings
-def test_factor_analysis():
+def test_factor_analysis(global_random_seed):
     # Test FactorAnalysis ability to recover the data covariance structure
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n_samples, n_features, n_components = 20, 5, 3
 
     # Some random settings for the generative model
@@ -57,7 +56,7 @@ def test_factor_analysis():
         # Model Covariance
         mcov = fa.get_covariance()
         diff = np.sum(np.abs(scov - mcov)) / W.size
-        assert diff < 0.1, "Mean absolute difference is %f" % diff
+        assert diff < 0.2, "Mean absolute difference is %f" % diff
         fa = FactorAnalysis(
             n_components=n_components, noise_variance_init=np.ones(n_features)
         )

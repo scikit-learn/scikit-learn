@@ -17,7 +17,9 @@ dependencies:
   - pytest
   - pytest-xdist
   - pillow
-  - setuptools
+  - pip
+  - ninja
+  - meson-python
   - pytest-cov
   - coverage
   - ccache
@@ -26,3 +28,4 @@ dependencies:
   - polars
   - pyarrow
   - array-api-compat
+  - array-api-strict

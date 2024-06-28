@@ -35,9 +35,10 @@ from sklearn.metrics import get_scorer, mean_gamma_deviance, mean_poisson_devian
 from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler, OneHotEncoder
-from sklearn.utils import _IS_32BIT, shuffle
+from sklearn.utils import shuffle
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._testing import _convert_container
+from sklearn.utils.fixes import _IS_32BIT
 
 n_threads = _openmp_effective_n_threads()
 
@@ -1669,3 +1670,15 @@ def test_different_bitness_joblib_pickle():
     new_clf = joblib.load(joblib_dump_with_different_bitness())
     new_score = new_clf.score(X, y)
     assert score == pytest.approx(new_score)
+
+
+def test_pandas_nullable_dtype():
+    # Non regression test for https://github.com/scikit-learn/scikit-learn/issues/28317
+    pd = pytest.importorskip("pandas")
+
+    rng = np.random.default_rng(0)
+    X = pd.DataFrame({"a": rng.integers(10, size=100)}).astype(pd.Int64Dtype())
+    y = rng.integers(2, size=100)
+
+    clf = HistGradientBoostingClassifier()
+    clf.fit(X, y)

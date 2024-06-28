@@ -3,16 +3,8 @@ This module gathers tree-based methods, including decision, regression and
 randomized trees. Single and multi-output problems are both handled.
 """
 
-# Authors: Gilles Louppe <g.louppe@gmail.com>
-#          Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#          Brian Holt <bdholt1@gmail.com>
-#          Noel Dawe <noel@dawe.me>
-#          Satrajit Gosh <satrajit.ghosh@gmail.com>
-#          Joly Arnaud <arnaud.v.joly@gmail.com>
-#          Fares Hedayati <fares.hedayati@gmail.com>
-#          Nelson Liu <nelson@nelsonliu.me>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import copy
 import numbers
@@ -1387,22 +1379,23 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         Parameters
         ----------
-        grid : ndarray of shape (n_samples, n_target_features)
+        grid : ndarray of shape (n_samples, n_target_features), dtype=np.float32
             The grid points on which the partial dependence should be
             evaluated.
-        target_features : ndarray of shape (n_target_features)
+        target_features : ndarray of shape (n_target_features), dtype=np.intp
             The set of target features for which the partial dependence
             should be evaluated.
 
         Returns
         -------
-        averaged_predictions : ndarray of shape (n_samples,)
+        averaged_predictions : ndarray of shape (n_samples,), dtype=np.float64
             The value of the partial dependence function on each grid point.
         """
         grid = np.asarray(grid, dtype=DTYPE, order="C")
         averaged_predictions = np.zeros(
             shape=grid.shape[0], dtype=np.float64, order="C"
         )
+        target_features = np.asarray(target_features, dtype=np.intp, order="C")
 
         self.tree_.compute_partial_dependence(
             grid, target_features, averaged_predictions

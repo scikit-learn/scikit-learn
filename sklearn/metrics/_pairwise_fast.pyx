@@ -1,26 +1,22 @@
-# Author: Andreas Mueller <amueller@ais.uni-bonn.de>
-#         Lars Buitinck
-#         Paolo Toccaceli
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-cimport numpy as cnp
 from cython cimport floating
 from cython.parallel cimport prange
 from libc.math cimport fabs
 
-from ..utils._openmp_helpers import _openmp_effective_n_threads
+from ..utils._typedefs cimport intp_t
 
-cnp.import_array()
+from ..utils._openmp_helpers import _openmp_effective_n_threads
 
 
 def _chi2_kernel_fast(floating[:, :] X,
                       floating[:, :] Y,
                       floating[:, :] result):
-    cdef cnp.npy_intp i, j, k
-    cdef cnp.npy_intp n_samples_X = X.shape[0]
-    cdef cnp.npy_intp n_samples_Y = Y.shape[0]
-    cdef cnp.npy_intp n_features = X.shape[1]
+    cdef intp_t i, j, k
+    cdef intp_t n_samples_X = X.shape[0]
+    cdef intp_t n_samples_Y = Y.shape[0]
+    cdef intp_t n_features = X.shape[1]
     cdef double res, nom, denom
 
     with nogil:
@@ -52,7 +48,7 @@ def _sparse_manhattan(
     ...                   Y.data, Y.indices, Y.indptr,
     ...                   D)
     """
-    cdef cnp.npy_intp px, py, i, j, ix, iy
+    cdef intp_t px, py, i, j, ix, iy
     cdef double d = 0.0
 
     cdef int m = D.shape[0]

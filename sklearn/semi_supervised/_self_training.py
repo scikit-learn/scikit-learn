@@ -12,18 +12,27 @@ from ..utils.validation import check_is_fitted
 
 __all__ = ["SelfTrainingClassifier"]
 
-# Authors: Oliver Rausch   <rauscho@ethz.ch>
-#          Patrice Becker  <beckerp@ethz.ch>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 def _estimator_has(attr):
-    """Check if `self.base_estimator_ `or `self.base_estimator_` has `attr`."""
-    return lambda self: (
-        hasattr(self.base_estimator_, attr)
-        if hasattr(self, "base_estimator_")
-        else hasattr(self.base_estimator, attr)
-    )
+    """Check if we can delegate a method to the underlying estimator.
+
+    First, we check the fitted `base_estimator_` if available, otherwise we check
+    the unfitted `base_estimator`. We raise the original `AttributeError` if
+    `attr` does not exist. This function is used together with `available_if`.
+    """
+
+    def check(self):
+        if hasattr(self, "base_estimator_"):
+            getattr(self.base_estimator_, attr)
+        else:
+            getattr(self.base_estimator, attr)
+
+        return True
+
+    return check
 
 
 class SelfTrainingClassifier(

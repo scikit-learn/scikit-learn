@@ -1,11 +1,7 @@
 """Base and mixin classes for nearest neighbors."""
-# Authors: Jake Vanderplas <vanderplas@astro.washington.edu>
-#          Fabian Pedregosa <fabian.pedregosa@inria.fr>
-#          Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Sparseness support by Lars Buitinck
-#          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
-#
-# License: BSD 3 clause (C) INRIA, University of Amsterdam
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 import itertools
 import numbers
 import warnings
@@ -26,7 +22,6 @@ from ..metrics._pairwise_distances_reduction import (
 )
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import (
-    _to_object_array,
     check_array,
     gen_even_slices,
 )
@@ -34,7 +29,7 @@ from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.fixes import parse_version, sp_base_version
 from ..utils.multiclass import check_classification_targets
 from ..utils.parallel import Parallel, delayed
-from ..utils.validation import check_is_fitted, check_non_negative
+from ..utils.validation import _to_object_array, check_is_fitted, check_non_negative
 from ._ball_tree import BallTree
 from ._kd_tree import KDTree
 
@@ -445,8 +440,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 raise ValueError(
                     "kd_tree does not support callable metric '%s'"
                     "Function call overhead will result"
-                    "in very poor performance."
-                    % self.metric
+                    "in very poor performance." % self.metric
                 )
         elif self.metric not in VALID_METRICS[alg_check] and not isinstance(
             self.metric, DistanceMetric
@@ -696,15 +690,6 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         return {"pairwise": self.metric == "precomputed"}
 
 
-def _tree_query_parallel_helper(tree, *args, **kwargs):
-    """Helper for the Parallel calls in KNeighborsMixin.kneighbors.
-
-    The Cython method tree.query is not directly picklable by cloudpickle
-    under PyPy.
-    """
-    return tree.query(*args, **kwargs)
-
-
 class KNeighborsMixin:
     """Mixin for k-neighbors searches."""
 
@@ -899,13 +884,10 @@ class KNeighborsMixin:
             if issparse(X):
                 raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
-                    "or set algorithm='brute'"
-                    % self._fit_method
+                    "or set algorithm='brute'" % self._fit_method
                 )
             chunked_results = Parallel(n_jobs, prefer="threads")(
-                delayed(_tree_query_parallel_helper)(
-                    self._tree, X[s], n_neighbors, return_distance
-                )
+                delayed(self._tree.query)(X[s], n_neighbors, return_distance)
                 for s in gen_even_slices(X.shape[0], n_jobs)
             )
         else:
@@ -1030,15 +1012,6 @@ class KNeighborsMixin:
         )
 
         return kneighbors_graph
-
-
-def _tree_query_radius_parallel_helper(tree, *args, **kwargs):
-    """Helper for the Parallel calls in RadiusNeighborsMixin.radius_neighbors.
-
-    The Cython method tree.query_radius is not directly picklable by
-    cloudpickle under PyPy.
-    """
-    return tree.query_radius(*args, **kwargs)
 
 
 class RadiusNeighborsMixin:
@@ -1254,16 +1227,13 @@ class RadiusNeighborsMixin:
             if issparse(X):
                 raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
-                    "or set algorithm='brute'"
-                    % self._fit_method
+                    "or set algorithm='brute'" % self._fit_method
                 )
 
             n_jobs = effective_n_jobs(self.n_jobs)
-            delayed_query = delayed(_tree_query_radius_parallel_helper)
+            delayed_query = delayed(self._tree.query_radius)
             chunked_results = Parallel(n_jobs, prefer="threads")(
-                delayed_query(
-                    self._tree, X[s], radius, return_distance, sort_results=sort_results
-                )
+                delayed_query(X[s], radius, return_distance, sort_results=sort_results)
                 for s in gen_even_slices(X.shape[0], n_jobs)
             )
             if return_distance:
