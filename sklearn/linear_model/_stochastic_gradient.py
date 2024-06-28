@@ -1,7 +1,5 @@
-# Authors: Peter Prettenhofer <peter.prettenhofer@gmail.com> (main author)
-#          Mathieu Blondel (partial_fit support)
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 """Classification, regression and One-Class SVM using Stochastic Gradient
 Descent (SGD).
 """
@@ -22,7 +20,7 @@ from ..base import (
 )
 from ..exceptions import ConvergenceWarning
 from ..model_selection import ShuffleSplit, StratifiedShuffleSplit
-from ..utils import check_random_state, compute_class_weight, deprecated
+from ..utils import check_random_state, compute_class_weight
 from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils.extmath import safe_sparse_dot
 from ..utils.metaestimators import available_if
@@ -323,23 +321,13 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
             classes=classes,
         )
 
-    # TODO(1.6): Remove
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `loss_function_` was deprecated in version 1.4 and will be removed "
-        "in 1.6."
-    )
-    @property
-    def loss_function_(self):
-        return self._loss_function_
 
-
-def _prepare_fit_binary(est, y, i, input_dtye):
+def _prepare_fit_binary(est, y, i, input_dtype):
     """Initialization for fit_binary.
 
     Returns y, coef, intercept, average_coef, average_intercept.
     """
-    y_i = np.ones(y.shape, dtype=input_dtye, order="C")
+    y_i = np.ones(y.shape, dtype=input_dtype, order="C")
     y_i[y != est.classes_[i]] = -1.0
     average_intercept = 0
     average_coef = None
@@ -434,7 +422,7 @@ def fit_binary(
     # if average is not true, average_coef, and average_intercept will be
     # unused
     y_i, coef, intercept, average_coef, average_intercept = _prepare_fit_binary(
-        est, y, i, input_dtye=X.dtype
+        est, y, i, input_dtype=X.dtype
     )
     assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
 
@@ -1160,12 +1148,6 @@ class SGDClassifier(BaseSGDClassifier):
     n_iter_ : int
         The actual number of iterations before reaching the stopping criterion.
         For multiclass fits, it is the maximum over every binary fit.
-
-    loss_function_ : concrete ``LossFunction``
-
-        .. deprecated:: 1.4
-            Attribute `loss_function_` was deprecated in version 1.4 and will be
-            removed in 1.6.
 
     classes_ : array of shape (n_classes,)
 
@@ -2187,12 +2169,6 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
     t_ : int
         Number of weight updates performed during training.
         Same as ``(n_iter_ * n_samples + 1)``.
-
-    loss_function_ : concrete ``LossFunction``
-
-        .. deprecated:: 1.4
-            ``loss_function_`` was deprecated in version 1.4 and will be removed in
-            1.6.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.

@@ -17,11 +17,13 @@ from scipy.stats import bernoulli, expon, uniform
 from sklearn import config_context
 from sklearn.base import BaseEstimator, ClassifierMixin, is_classifier
 from sklearn.cluster import KMeans
+from sklearn.compose import ColumnTransformer
 from sklearn.datasets import (
     make_blobs,
     make_classification,
     make_multilabel_classification,
 )
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.exceptions import FitFailedWarning
@@ -64,7 +66,7 @@ from sklearn.model_selection.tests.common import OneTimeSplitter
 from sklearn.naive_bayes import ComplementNB
 from sklearn.neighbors import KernelDensity, KNeighborsClassifier, LocalOutlierFactor
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler
 from sklearn.svm import SVC, LinearSVC
 from sklearn.tests.metadata_routing_common import (
     ConsumingScorer,
@@ -72,11 +74,13 @@ from sklearn.tests.metadata_routing_common import (
     check_recorded_metadata,
 )
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
 from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 from sklearn.utils._testing import (
     MinimalClassifier,
     MinimalRegressor,
     MinimalTransformer,
+    _array_api_for_tests,
     assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
@@ -1403,9 +1407,7 @@ def test_search_cv_results_none_param():
             est_parameters,
             cv=cv,
         ).fit(X, y)
-        assert_array_equal(
-            grid_search.cv_results_["param_random_state"], [0, float("nan")]
-        )
+        assert_array_equal(grid_search.cv_results_["param_random_state"], [0, None])
 
 
 @ignore_warnings()
@@ -2612,6 +2614,7 @@ def test_multi_metric_search_forwards_metadata(SearchCV, param_search):
         check_recorded_metadata(
             obj=_scorer,
             method="score",
+            parent="_score",
             split_params=("sample_weight", "metadata"),
             sample_weight=score_weights,
             metadata=score_metadata,
@@ -2641,3 +2644,106 @@ def test_score_rejects_params_with_no_routing_enabled(SearchCV, param_search):
 
 # End of Metadata Routing Tests
 # =============================
+
+
+def test_cv_results_dtype_issue_29074():
+    """Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/29074"""
+
+    class MetaEstimator(BaseEstimator, ClassifierMixin):
+        def __init__(
+            self,
+            base_clf,
+            parameter1=None,
+            parameter2=None,
+            parameter3=None,
+            parameter4=None,
+        ):
+            self.base_clf = base_clf
+            self.parameter1 = parameter1
+            self.parameter2 = parameter2
+            self.parameter3 = parameter3
+            self.parameter4 = parameter4
+
+        def fit(self, X, y=None):
+            self.base_clf.fit(X, y)
+            return self
+
+        def score(self, X, y):
+            return self.base_clf.score(X, y)
+
+    # Values of param_grid are such that np.result_type gives slightly
+    # different errors, in particular ValueError and TypeError
+    param_grid = {
+        "parameter1": [None, {"option": "A"}, {"option": "B"}],
+        "parameter2": [None, [1, 2]],
+        "parameter3": [{"a": 1}],
+        "parameter4": ["str1", "str2"],
+    }
+    grid_search = GridSearchCV(
+        estimator=MetaEstimator(LogisticRegression()),
+        param_grid=param_grid,
+        cv=3,
+    )
+
+    X, y = make_blobs(random_state=0)
+    grid_search.fit(X, y)
+    for param in param_grid:
+        assert grid_search.cv_results_[f"param_{param}"].dtype == object
+
+
+def test_search_with_estimators_issue_29157():
+    """Check cv_results_ for estimators with a `dtype` parameter, e.g. OneHotEncoder."""
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame(
+        {
+            "numeric_1": [1, 2, 3, 4, 5],
+            "object_1": ["a", "a", "a", "a", "a"],
+            "target": [1.0, 4.1, 2.0, 3.0, 1.0],
+        }
+    )
+    X = df.drop("target", axis=1)
+    y = df["target"]
+    enc = ColumnTransformer(
+        [("enc", OneHotEncoder(sparse_output=False), ["object_1"])],
+        remainder="passthrough",
+    )
+    pipe = Pipeline(
+        [
+            ("enc", enc),
+            ("regressor", LinearRegression()),
+        ]
+    )
+    grid_params = {
+        "enc__enc": [
+            OneHotEncoder(sparse_output=False),
+            OrdinalEncoder(),
+        ]
+    }
+    grid_search = GridSearchCV(pipe, grid_params, cv=2)
+    grid_search.fit(X, y)
+    assert grid_search.cv_results_["param_enc__enc"].dtype == object
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
+def test_array_api_search_cv_classifier(SearchCV, array_namespace, device, dtype):
+    xp = _array_api_for_tests(array_namespace, device)
+
+    X = np.arange(100).reshape((10, 10))
+    X_np = X.astype(dtype)
+    X_xp = xp.asarray(X_np, device=device)
+
+    # y should always be an integer, no matter what `dtype` is
+    y_np = np.array([0] * 5 + [1] * 5)
+    y_xp = xp.asarray(y_np, device=device)
+
+    with config_context(array_api_dispatch=True):
+        searcher = SearchCV(
+            LinearDiscriminantAnalysis(),
+            {"tol": [1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7]},
+            cv=2,
+        )
+        searcher.fit(X_xp, y_xp)
+        searcher.score(X_xp, y_xp)

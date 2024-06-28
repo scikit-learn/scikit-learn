@@ -25,10 +25,8 @@ for a given sample *will not* sum to unity, as they do in the single label
 case.
 """
 
-# Author: Mathieu Blondel <mathieu@mblondel.org>
-# Author: Hamzeh Alsalhi <93hamsal@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import array
 import itertools

@@ -16,12 +16,8 @@ The module structure is the following:
   (AdaBoost.R2) for regression problems.
 """
 
-# Authors: Noel Dawe <noel@dawe.me>
-#          Gilles Louppe <g.louppe@gmail.com>
-#          Hamzeh Alsalhi <ha258@cornell.edu>
-#          Arnaud Joly <arnaud.v.joly@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from abc import ABCMeta, abstractmethod
@@ -1080,6 +1076,10 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
     array([4.7972...])
     >>> regr.score(X, y)
     0.9771...
+
+    For a detailed example of utilizing :class:`~sklearn.ensemble.AdaBoostRegressor`
+    to fit a sequence of decision trees as weak learners, please refer to
+    :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_regression.py`.
     """
 
     _parameter_constraints: dict = {
