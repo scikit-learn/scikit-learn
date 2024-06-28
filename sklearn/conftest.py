@@ -278,10 +278,10 @@ def pytest_generate_tests(metafunc):
     https://scikit-learn.org/dev/computing/parallelism.html#sklearn-tests-global-random-seed
 
     """
-    # When using pytest-xdist this function is called both in the xdist
-    # controller and xdist workers. In both cases, we rely on
-    # SKLEARN_TESTS_GLOBAL_RANDOM_SEED environment variable which is set in the
-    # main process and available in subprocesses
+    # When using pytest-xdist this function is called in the xdist workers.
+    # We rely on SKLEARN_TESTS_GLOBAL_RANDOM_SEED environment variable which is
+    # set in before running pytest and is available in xdist workers since they
+    # are subprocesses.
     RANDOM_SEED_RANGE = list(range(100))  # All seeds in [0, 99] should be valid.
     random_seed_var = environ.get("SKLEARN_TESTS_GLOBAL_RANDOM_SEED")
 
