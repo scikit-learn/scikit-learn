@@ -1599,7 +1599,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         iterations to be considered an improvement upon the reference score.
     verbose : int, default=0
         The verbosity level. If not zero, print some information about the
-        fitting process, ``1`` prints only summary infos, ``2`` per iteration.
+        fitting process. ``1`` prints only a summary info, ``2`` prints info per
+        iteration.
     random_state : int, RandomState instance or None, default=None
         Pseudo-random number generator to control the subsampling in the
         binning process, and the train/validation data split if early stopping
@@ -1977,7 +1978,8 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         considered an improvement upon the reference score.
     verbose : int, default=0
         The verbosity level. If not zero, print some information about the
-        fitting process, ``1`` prints only summary infos, ``2`` per iteration.
+        fitting process. ``1`` prints only a summary info, ``2`` prints info per
+        iteration.
     random_state : int, RandomState instance or None, default=None
         Pseudo-random number generator to control the subsampling in the
         binning process, and the train/validation data split if early stopping
