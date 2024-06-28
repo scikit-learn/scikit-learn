@@ -430,6 +430,8 @@ class _NumPyAPIWrapper:
 
         output = numpy.reshape(x, shape)
         if copy is False and not numpy.shares_memory(x, output):
+            # See the following ref in the spec for the meaning of copy=False:
+            # https://data-apis.org/array-api/latest/API_specification/generated/array_api.reshape.html
             raise ValueError(
                 f"reshape with copy=False is not compatible with shape {shape} "
                 "for the memory layout of the input array."
