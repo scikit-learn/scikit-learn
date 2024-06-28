@@ -122,6 +122,14 @@ Changelog
   can be silenced using the `reg_param` attribute.
   :pr:`19731` by :user:`Alihan Zihna <azihna>`.
 
+:mod:`sklearn.ensemble`
+.......................
+
+- |Efficiency| Small runtime improvement of fitting
+  :class:`ensemble.HistGradientBoostingClassifier` and :class:`ensemble.HistGradientBoostingRegressor`
+  by parallelizing the initial search for bin thresholds
+  :pr:`28064` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 :mod:`sklearn.impute`
 .....................
 
