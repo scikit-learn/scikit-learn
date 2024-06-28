@@ -35,7 +35,7 @@ jobs:
     - bash: |
         source build_tools/shared.sh
         # Include pytest compatibility with mypy
-        pip install pytest ruff $(get_dep mypy min) $(get_dep black min) cython-lint
+        pip install pytest $(get_dep ruff min) $(get_dep mypy min) $(get_dep black min) cython-lint
       displayName: Install linters
     - bash: |
         ./build_tools/linting.sh
@@ -247,7 +247,7 @@ jobs:
 - template: build_tools/azure/posix.yml
   parameters:
     name: macOS
-    vmImage: macOS-11
+    vmImage: macOS-12
     dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
     # Runs when dependencies succeeded or skipped
     condition: |

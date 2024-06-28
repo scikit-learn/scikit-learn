@@ -26,7 +26,7 @@ the difficult-to-classify samples.
 """
 
 # Noel Dawe <noel.dawe@gmail.com>
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Creating the dataset
