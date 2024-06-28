@@ -2808,19 +2808,17 @@ ma_with_tuples[1] = (3, 4)
         pytest.param(
             [{"foo": 1}, {"foo": 2}],
             [
-                ("param_foo", np.ma.MaskedArray(np.array([1, 2], dtype=np.int64))),
+                ("param_foo", np.ma.MaskedArray(np.array([1, 2]))),
             ],
             id="simple numeric, single param",
         ),
         pytest.param(
             [{"foo": 1, "bar": 3}, {"foo": 2, "bar": 4}, {"foo": 3}],
             [
-                ("param_foo", np.ma.MaskedArray(np.array([1, 2, 3]), dtype=np.int64)),
+                ("param_foo", np.ma.MaskedArray(np.array([1, 2, 3]))),
                 (
                     "param_bar",
-                    np.ma.MaskedArray(
-                        np.array([3, 4, 0]), mask=[False, False, True], dtype=np.int64
-                    ),
+                    np.ma.MaskedArray(np.array([3, 4, 0]), mask=[False, False, True]),
                 ),
             ],
             id="simple numeric, one param is missing in one round",
