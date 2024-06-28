@@ -393,34 +393,36 @@ def _yield_masked_array_for_each_param(
     `candidate_params`. For example, if using `GridSearchCV` with
     a `SVC` model, then one might search over params like:
 
-        - kernel=["rbf"], C=[1, 10], gamma=[0.1, 1]
+        - kernel=["rbf"], gamma=[0.1, 1]
         - kernel=["poly"], degree=[1, 2]
 
-    and then param `'C'` would not be present in entries of
+    and then param `'gamma'` would not be present in entries of
     `candidate_params` corresponding to `kernel='poly'`.
     """
     n_candidates = len(candidate_params)
     param_results: dict[str, Any] = defaultdict(dict)
+
     for cand_idx, params in enumerate(candidate_params):
         for name, value in params.items():
             param_results["param_%s" % name][cand_idx] = value
+
     for key, param_result in param_results.items():
         param_list = list(param_result.values())
         try:
             arr = np.array(param_list)
         except ValueError:
+            # This can happen when param_list contains lists of different
+            # lengths, for example:
+            # param_list=[[1], [2, 3]]
             arr_dtype = np.dtype(object)
         else:
-            arr_dtype = arr.dtype if arr.dtype.kind != "U" else object
-        if len(param_list) == n_candidates:
-            ma = MaskedArray(param_list, mask=False, dtype=arr_dtype)
-            if ma.ndim > 1:
-                # If ndim > 1, then a list of tuples might be turned into
-                # a 2D array, so we use the fallback below for that case too.
-                arr_dtype = object
-            else:
-                yield (key, ma)
-                continue
+            # There are two cases when we don't use the automatically inferred
+            # dtype when creating the array and we use object instead:
+            # - string dtype
+            # - when array.ndim > 1, that means that param_list was something
+            #   like a list of same-size sequences, which gets turned into a
+            #   multi-dimensional array but we want a 1d array
+            arr_dtype = arr.dtype if arr.dtype.kind != "U" and arr.ndim == 1 else object
 
         # Use one MaskedArray and mask all the places where the param is not
         # applicable for that candidate (which may not contain all the params).

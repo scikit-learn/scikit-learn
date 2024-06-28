@@ -2861,5 +2861,6 @@ def test_yield_masked_array_for_each_param(candidate_params, expected) -> None:
     result = list(_yield_masked_array_for_each_param(candidate_params))
     for (key, value), (expected_key, expected_value) in zip(result, expected):
         assert key == expected_key
+        assert value.dtype == expected_value.dtype
         np.testing.assert_array_equal(value, expected_value)
         np.testing.assert_array_equal(value.mask, expected_value.mask)
