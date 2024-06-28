@@ -114,6 +114,7 @@ else:
         "neighbors",
         "neural_network",
         "pipeline",
+        "polynomial_chaos",
         "preprocessing",
         "random_projection",
         "semi_supervised",
