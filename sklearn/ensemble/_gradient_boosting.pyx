@@ -9,7 +9,7 @@ from scipy.sparse import issparse
 
 from ..utils._typedefs cimport float32_t, float64_t, intp_t, int32_t, uint8_t
 # Note: _tree uses cimport numpy, cnp.import_array, so we need to include
-# numpy headers, see setup.py.
+# numpy headers in the build configuration of this extension
 from ..tree._tree cimport Node
 from ..tree._tree cimport Tree
 from ..tree._utils cimport safe_realloc

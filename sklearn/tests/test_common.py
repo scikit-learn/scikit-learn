@@ -79,6 +79,7 @@ from sklearn.utils.estimator_checks import (
     check_get_feature_names_out_error,
     check_global_output_transform_pandas,
     check_global_set_output_transform_polars,
+    check_inplace_ensure_writeable,
     check_n_features_in_after_fitting,
     check_param_validation,
     check_set_output_transform,
@@ -617,3 +618,31 @@ def test_set_output_transform_configured(estimator, check_func):
     _set_checking_parameters(estimator)
     with ignore_warnings(category=(FutureWarning)):
         check_func(estimator.__class__.__name__, estimator)
+
+
+@pytest.mark.parametrize(
+    "estimator", _tested_estimators(), ids=_get_check_estimator_ids
+)
+def test_check_inplace_ensure_writeable(estimator):
+    name = estimator.__class__.__name__
+
+    if hasattr(estimator, "copy"):
+        estimator.set_params(copy=False)
+    elif hasattr(estimator, "copy_X"):
+        estimator.set_params(copy_X=False)
+    else:
+        raise SkipTest(f"{name} doesn't require writeable input.")
+
+    _set_checking_parameters(estimator)
+
+    # The following estimators can work inplace only with certain settings
+    if name == "HDBSCAN":
+        estimator.set_params(metric="precomputed", algorithm="brute")
+
+    if name == "PCA":
+        estimator.set_params(svd_solver="full")
+
+    if name == "KernelPCA":
+        estimator.set_params(kernel="precomputed")
+
+    check_inplace_ensure_writeable(name, estimator)

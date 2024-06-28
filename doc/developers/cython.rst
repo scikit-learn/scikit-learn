@@ -97,8 +97,6 @@ Tips for performance
 
 * Inline methods and function when it makes sense
 
-* Make sure your Cython compilation units `use NumPy recent C API <https://github.com/scikit-learn/scikit-learn/blob/62a017efa047e9581ae7df8bbaa62cf4c0544ee4/setup.py#L64-L70>`_.
-
 * In doubt, read the generated C or C++ code if you can: "The fewer C instructions and indirections
   for a line of Cython code, the better" is a good rule of thumb.
 

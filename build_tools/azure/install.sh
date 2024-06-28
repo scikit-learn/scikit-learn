@@ -76,8 +76,9 @@ python_environment_install_and_activate() {
         python3.13t -m venv $VIRTUALENV
         source $VIRTUALENV/bin/activate
         pip install -r "${LOCK_FILE}"
-        # TODO for now need pip 24.1b1 to find free-threaded wheels
-        pip install -U --pre pip
+        # TODO you need pip>=24.1 to find free-threaded wheels. This may be
+        # removed when the underlying Ubuntu image has pip>=24.1.
+        pip install 'pip>=24.1'
         # TODO When there are CPython 3.13 free-threaded wheels for numpy,
         # scipy and cython move them to
         # build_tools/azure/cpython_free_threaded_requirements.txt. For now we

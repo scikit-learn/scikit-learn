@@ -142,13 +142,6 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         Number of weight updates performed during training.
         Same as ``(n_iter_ * n_samples + 1)``.
 
-    loss_function_ : callable
-        Loss function used by the algorithm.
-
-         .. deprecated:: 1.4
-            Attribute `loss_function_` was deprecated in version 1.4 and will be
-            removed in 1.6.
-
     See Also
     --------
     SGDClassifier : Incrementally trained logistic regression.
