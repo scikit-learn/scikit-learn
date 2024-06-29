@@ -1928,7 +1928,7 @@ def test_get_feature_names_invalid_dtypes(names, dtypes):
         names = _get_feature_names(X)
 
 
-class PassthroughTransformer:
+class PassthroughTransformer(BaseEstimator):
     def fit(self, X, y=None):
         self._validate_data(X, reset=True)
         return self
