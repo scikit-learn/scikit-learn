@@ -202,11 +202,6 @@ class KernelDensity(BaseEstimator):
             return algorithm
 
     def _evaluate_hypercube_faces(self):
-        lower, upper = np.transpose(self.bounds)
-        if np.any(upper <= lower):
-            raise ValueError(
-                f"invalid bounds: upper ({upper}) is not larger than lower ({lower})"
-            )
         n_dims = len(self.bounds)
         # Start the queue with all vertices, then recursively create all faces.
         queue = set(itertools.product(*self.bounds))
@@ -434,6 +429,11 @@ class KernelDensity(BaseEstimator):
     ):
         if self.bounds is not None:
             lower, upper = np.transpose(self.bounds)
+            if np.any(upper <= lower):
+                raise ValueError(
+                    f"invalid bounds: upper ({upper}) is not larger than lower "
+                    f"({lower})"
+                )
             if np.any(X < lower):
                 raise ValueError("samples must be larger than lower bound")
             if np.any(X > upper):
