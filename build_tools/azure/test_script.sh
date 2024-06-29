@@ -11,7 +11,10 @@ if [[ "$BUILD_REASON" == "Schedule" ]]; then
     # Enable global random seed randomization to discover seed-sensitive tests
     # only on nightly builds.
     # https://scikit-learn.org/stable/computing/parallelism.html#environment-variables
-    export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="any"
+    export SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$(($RANDOM % 100))
+    echo "To reproduce this test run, set the following environment variable:"
+    echo "    SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$SKLEARN_TESTS_GLOBAL_RANDOM_SEED",
+    echo "See: https://scikit-learn.org/dev/computing/parallelism.html#sklearn-tests-global-random-seed"
 
     # Enable global dtype fixture for all nightly builds to discover
     # numerical-sensitive tests.
