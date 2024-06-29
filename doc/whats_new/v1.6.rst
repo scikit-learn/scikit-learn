@@ -273,6 +273,9 @@ Changelog
 - |Fix| :class:`neighbors.LocalOutlierFactor` raises a warning in the `fit` method
   when duplicate values in the training data lead to inaccurate outlier detection.
   :pr:`28773` by :user:`Henrique Caroço <HenriqueProj>`.
+- |Enhancement| :class:`neighbors.KernelDensity` supports a new keyword argument
+  `bounds` to attenuate density estimation bias near the boundary of a finite domain.
+  :pr:`29370` by :user:`Till Hoffmann <tillahoffmann>`.
 
 :mod:`sklearn.preprocessing`
 ............................
