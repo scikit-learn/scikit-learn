@@ -970,11 +970,11 @@ def _in1d(ar1, ar2, xp, assume_unique=False, invert=False):
 
 
 def _count_nonzero(X, xp, device, axis=None, sample_weight=None):
-    """A variant of `sklearn.utils.sparsefuncs.count_nonzero` for the Array API."""
-    if axis == -1:
-        axis = 1
-    elif axis == -2:
-        axis = 0
+    """A variant of `sklearn.utils.sparsefuncs.count_nonzero` for the Array API.
+
+    It only supports 2D arrays.
+    """
+    assert X.ndim == 2
 
     weights = xp.ones_like(X, device=device)
     if sample_weight is not None:
