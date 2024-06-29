@@ -604,7 +604,7 @@ def _add_to_diagonal(array, value, xp):
             array[i, i] += value
 
 
-def _max_supported_float_precision(xp, device):
+def _max_precision_float_dtype(xp, device):
     """Return the float dtype with the highest precision supported by the device."""
     # TODO: Update to use `__array_namespace__info__()` from array-api v2023.12
     # when/if that becomes more widespread.
