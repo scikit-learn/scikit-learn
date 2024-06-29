@@ -15,8 +15,29 @@ assumed to contain outliers.
     - 1, 2, 3, 4 n_jobs
 
 We compare the prediction time at the very end.
+
+Here are instructions for running this benchmark:
+
+1. Build this PR and run:
+
+```bash
+python bench_isolation_forest_predict.py bench ~/bench_results pr
+```
+
+2. On main run:
+
+```bash
+python bench_isolation_forest_predict.py bench ~/bench_results main
+```
+
+3. Plotting
+
+```bash
+python bench_isolation_forest_predict.py plot ~/bench_results pr main results_image.png
+```
 """
 
+import argparse
 from collections import defaultdict
 from pathlib import Path
 from time import time
@@ -54,9 +75,14 @@ def get_data(
     return X_train, X_test
 
 
-def plot(bench_results, pr_name, main_name, image_path):
+def plot(args):
     import matplotlib.pyplot as plt
     import seaborn as sns
+
+    bench_results = Path(args.bench_results)
+    pr_name = args.pr_name
+    main_name = args.main_name
+    image_path = args.image_path
 
     results_path = Path(bench_results)
     pr_path = results_path / f"{pr_name}.csv"
@@ -90,7 +116,6 @@ def plot(bench_results, pr_name, main_name, image_path):
         hue="n_jobs",
         style="n_jobs",
         markers="o",
-        # dashes=False,
         ax=ax,
         legend="full",
     )
@@ -120,7 +145,9 @@ def plot(bench_results, pr_name, main_name, image_path):
     print(f"Saved image to {image_path}")
 
 
-def main():
+def bench(args):
+    results_dir = Path(args.bench_results)
+    branch = args.branch
     random_state = 1
 
     results = defaultdict(list)
@@ -149,8 +176,6 @@ def main():
                     model.fit(X_train)
                     fit_time = time() - tstart
 
-                    tstart = time()
-
                     # clearcache
                     for _ in range(1000):
                         1 + 1
@@ -167,20 +192,28 @@ def main():
                     results["contamination"].append(contamination)
                     results["n_jobs"].append(n_jobs)
 
-    # df = pd.DataFrame(results)
-    # df.to_csv("~/bench_results_forest/pr-threading.csv", index=False)
+    df = pd.DataFrame(results)
+    df.to_csv(results_dir / f"{branch}.csv", index=False)
 
 
-#
-main()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
 
-bench_results = Path("/Users/adam2392/bench_results_forest")
-pr_name = "pr-threading"
-main_name = "pr"
-image_path = "results_image.png"
-plot(
-    bench_results=bench_results,
-    pr_name=pr_name,
-    main_name=main_name,
-    image_path=image_path,
-)
+    # parse arguments for benchmarking
+    subparsers = parser.add_subparsers()
+    bench_parser = subparsers.add_parser("bench")
+    bench_parser.add_argument("bench_results")
+    bench_parser.add_argument("branch")
+    bench_parser.set_defaults(func=bench)
+
+    # parse arguments for plotting
+    plot_parser = subparsers.add_parser("plot")
+    plot_parser.add_argument("bench_results")
+    plot_parser.add_argument("pr_name")
+    plot_parser.add_argument("main_name")
+    plot_parser.add_argument("image_path")
+    plot_parser.set_defaults(func=plot)
+
+    # enable the parser and run the relevant function
+    args = parser.parse_args()
+    args.func(args)

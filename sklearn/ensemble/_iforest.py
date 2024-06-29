@@ -403,7 +403,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
         The predict method can be parallelized by setting a joblib context. This
         inherently does NOT use the ``n_jobs`` parameter initialized in the class,
         which is used during ``fit``. This is because, predict may actually be faster
-        without parallelization for a small number of samples. The user can set the
+        without parallelization for a small number of samples,
+        such as for 1000 samples or less. The user can set the
         number of jobs in the joblib context to control the number of parallel jobs.
 
         .. code-block:: python
@@ -452,7 +453,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
         The decision_function method can be parallelized by setting a joblib context.
         This inherently does NOT use the ``n_jobs`` parameter initialized in the class,
         which is used during ``fit``. This is because, calculating the score may
-        actually be faster without parallelization for a small number of samples.
+        actually be faster without parallelization for a small number of samples,
+        such as for 1000 samples or less.
         The user can set the number of jobs in the joblib context to control the
         number of parallel jobs.
 
@@ -498,7 +500,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
         The score function method can be parallelized by setting a joblib context. This
         inherently does NOT use the ``n_jobs`` parameter initialized in the class,
         which is used during ``fit``. This is because, calculating the score may
-        actually be faster without parallelization for a small number of samples.
+        actually be faster without parallelization for a small number of samples,
+        such as for 1000 samples or less.
         The user can set the number of jobs in the joblib context to control the
         number of parallel jobs.
 
@@ -587,7 +590,6 @@ class IsolationForest(OutlierMixin, BaseBagging):
         # the computation of the scores, which will not require a high n_jobs.
         # value for e.g. < 1k samples.
         n_jobs, _, _ = _partition_estimators(self.n_estimators, None)
-
         lock = threading.Lock()
         Parallel(
             n_jobs=n_jobs,
