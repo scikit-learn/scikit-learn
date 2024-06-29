@@ -1140,26 +1140,53 @@ def test_check_array_memmap(copy):
 
 
 def test_estimator_has_with_default_args():
-    class MockEstimator:
+    class MockEstimatorFitted:
         def __init__(self, attr_value):
-            self.estimator_ = type("estimator", (), {attr_value: True})
-            self.estimator = type("estimator", (), {attr_value: True})
-            self.estimators_ = [type("estimator", (), {attr_value: True})]
+            self.estimator_ = type("estimator_", (), {attr_value: True})
 
-    mock_estimator = MockEstimator("test_attr")
+    class MockEstimatorUnFitted:
+        def __init__(self, attr_value):
+            self.estimator = type("estimator", (), {attr_value: True})
+
+    class NonEstimator:
+        def __init__(self, attr_value):
+            self.not_estimator = type("not_estimator", (), {attr_value: True})
+
+    fitted_mock_estimator = MockEstimatorFitted("test_attr")
+    unfitted_mock_estimator = MockEstimatorUnFitted("test_attr")
+    mock_estimator_without_attr = MockEstimatorFitted("other_attr")
+    non_estimator = NonEstimator("test_attr")
 
     check = _estimator_has("test_attr")
-    assert check(mock_estimator)
 
-    check = _estimator_has("test_attr", delegate_attrs=("estimator",))
-    assert check(mock_estimator)
-
-    check = _estimator_has("test_attr", delegate_attrs=("estimators_",))
-    assert check(mock_estimator)
+    assert check(fitted_mock_estimator)
+    assert check(unfitted_mock_estimator)
 
     with pytest.raises(AttributeError):
-        check = _estimator_has("non_existent_attr")
-        check(mock_estimator)
+        check(mock_estimator_without_attr)
+
+    with pytest.raises(ValueError):
+        check(non_estimator)
+
+
+def test_estimator_has_with_delegates():
+
+    class MockEstimatorListFitted:
+        def __init__(self, attr_value):
+            self.estimators_ = [type("estimator_", (), {attr_value: True})]
+
+    class MockEstimatorFitted:
+        def __init__(self, attr_value):
+            self.custom_name = type("estimator_", (), {attr_value: True})
+
+    fitted_mock_estimator_list = MockEstimatorListFitted("test_attr")
+    fitted_mock_estimator = MockEstimatorFitted("test_attr")
+
+    check_list = _estimator_has("test_attr", delegates=["estimators_"])
+    check_custom = _estimator_has("test_attr", delegates=["custom_name"])
+
+    assert check_list(fitted_mock_estimator_list)
+    assert check_custom(fitted_mock_estimator)
 
 
 @pytest.mark.parametrize(
@@ -1901,7 +1928,7 @@ def test_get_feature_names_invalid_dtypes(names, dtypes):
         names = _get_feature_names(X)
 
 
-class PassthroughTransformer(BaseEstimator):
+class PassthroughTransformer:
     def fit(self, X, y=None):
         self._validate_data(X, reset=True)
         return self

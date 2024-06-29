@@ -1655,24 +1655,31 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
         raise NotFittedError(msg % {"name": type(estimator).__name__})
 
 
-def _estimator_has(attr, delegate_attrs=("estimator_", "estimator")):
+def _estimator_has(attr, delegates=None):
     """Check if we can delegate a method to the underlying estimator.
 
     We check the `delegate_attrs` in the order they are passed.
     By default, we first check the fitted estimator if available,
     otherwise we check the unfitted estimator.
 
-    getattr() returns True if the attribute exists in the object, 
+    getattr() returns True if the attribute exists in the object,
     and raises `AttributeError` if it doesn't.
+
+    If None of delegates are present in the object, ValueError is raised.
     """
 
+    if delegates is None:
+        delegates = ["estimator_", "estimator"]
+
     def check(self):
-        for delegate in delegate_attrs:
+        for delegate in delegates:
             if hasattr(self, delegate):
                 if delegate == "estimators_":
                     return getattr(self.estimators_[0], attr)
                 else:
                     return getattr(getattr(self, delegate), attr)
+
+        raise ValueError(f"None of the delegates {delegates} are present in the class.")
 
     return check
 

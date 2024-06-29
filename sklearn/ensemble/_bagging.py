@@ -1006,7 +1006,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
         return log_proba
 
-    @available_if(_estimator_has("decision_function", ("estimators_", "estimator")))
+    @available_if(_estimator_has("decision_function", ["estimators_", "estimator"]))
     def decision_function(self, X):
         """Average of the decision functions of the base classifiers.
 

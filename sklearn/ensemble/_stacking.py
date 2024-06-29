@@ -346,7 +346,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
 
         return np.asarray(meta_names, dtype=object)
 
-    @available_if(_estimator_has("predict", ("final_estimator_", "final_estimator")))
+    @available_if(_estimator_has("predict", ["final_estimator_", "final_estimator"]))
     def predict(self, X, **predict_params):
         """Predict target for X.
 
@@ -713,7 +713,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             fit_params["sample_weight"] = sample_weight
         return super().fit(X, y_encoded, **fit_params)
 
-    @available_if(_estimator_has("predict", ("final_estimator_", "final_estimator")))
+    @available_if(_estimator_has("predict", ["final_estimator_", "final_estimator"]))
     def predict(self, X, **predict_params):
         """Predict target for X.
 
@@ -767,7 +767,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         return y_pred
 
     @available_if(
-        _estimator_has("predict_proba", ("final_estimator_", "final_estimator"))
+        _estimator_has("predict_proba", ["final_estimator_", "final_estimator"])
     )
     def predict_proba(self, X):
         """Predict class probabilities for `X` using the final estimator.
@@ -793,7 +793,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         return y_pred
 
     @available_if(
-        _estimator_has("decision_function", ("final_estimator_", "final_estimator"))
+        _estimator_has("decision_function", ["final_estimator_", "final_estimator"])
     )
     def decision_function(self, X):
         """Decision function for samples in `X` using the final estimator.
@@ -1108,7 +1108,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
             fit_params["sample_weight"] = sample_weight
         return super().fit_transform(X, y, **fit_params)
 
-    @available_if(_estimator_has("predict", ("final_estimator_", "final_estimator")))
+    @available_if(_estimator_has("predict", ["final_estimator_", "final_estimator"]))
     def predict(self, X, **predict_params):
         """Predict target for X.
 

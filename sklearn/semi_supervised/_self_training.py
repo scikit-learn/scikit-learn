@@ -278,7 +278,7 @@ class SelfTrainingClassifier(
         self.classes_ = self.base_estimator_.classes_
         return self
 
-    @available_if(_estimator_has("predict", ("base_estimator_", "base_estimator")))
+    @available_if(_estimator_has("predict", ["base_estimator_", "base_estimator"]))
     def predict(self, X):
         """Predict the classes of `X`.
 
@@ -302,7 +302,7 @@ class SelfTrainingClassifier(
         return self.base_estimator_.predict(X)
 
     @available_if(
-        _estimator_has("predict_proba", ("base_estimator_", "base_estimator"))
+        _estimator_has("predict_proba", ["base_estimator_", "base_estimator"])
     )
     def predict_proba(self, X):
         """Predict probability for each possible outcome.
@@ -327,7 +327,7 @@ class SelfTrainingClassifier(
         return self.base_estimator_.predict_proba(X)
 
     @available_if(
-        _estimator_has("decision_function", ("base_estimator_", "base_estimator"))
+        _estimator_has("decision_function", ["base_estimator_", "base_estimator"])
     )
     def decision_function(self, X):
         """Call decision function of the `base_estimator`.
@@ -352,7 +352,7 @@ class SelfTrainingClassifier(
         return self.base_estimator_.decision_function(X)
 
     @available_if(
-        _estimator_has("predict_log_proba", ("base_estimator_", "base_estimator"))
+        _estimator_has("predict_log_proba", ["base_estimator_", "base_estimator"])
     )
     def predict_log_proba(self, X):
         """Predict log probability for each possible outcome.
@@ -376,7 +376,7 @@ class SelfTrainingClassifier(
         )
         return self.base_estimator_.predict_log_proba(X)
 
-    @available_if(_estimator_has("score", ("base_estimator_", "base_estimator")))
+    @available_if(_estimator_has("score", ["base_estimator_", "base_estimator"]))
     def score(self, X, y):
         """Call score on the `base_estimator`.
 
