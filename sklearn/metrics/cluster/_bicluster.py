@@ -58,7 +58,7 @@ def consensus_score(a, b, *, similarity="jaccard"):
     """The similarity of two sets of biclusters.
 
     Similarity between individual biclusters is computed. Then the
-    best matching between sets is found using a modified 
+    best matching between sets is found using a modified
     Jonker-Volgenant algorithm.
     The final score is the sum of similarities divided by the size of
     the larger set.
@@ -87,7 +87,7 @@ def consensus_score(a, b, *, similarity="jaccard"):
     See Also
     --------
     scipy.optimize.linear_sum_assignment : Solve the linear sum assignment problem.
-    
+
     References
     ----------
 
