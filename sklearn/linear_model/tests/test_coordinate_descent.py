@@ -1332,14 +1332,16 @@ def test_enet_cv_sample_weight_correctness(fit_intercept, sparse_container):
     # We repeat the first fold 2 times and provide splits ourselves
     if sparse_container is not None:
         X = X.toarray()
-    X_rep = np.repeat(X[:n_samples], sw, axis=0)
+    X_rep = np.repeat(X, sw.astype(int), axis=0)
     ##Need to know number of repitions made in total
     n_reps = X_rep.shape[0] - X.shape[0]
     X = X_rep
     if sparse_container is not None:
         X = sparse_container(X)
-    y = np.repeat(y[:n_samples], sw, axis=0)
-    groups = np.r_[np.full(n_reps, 0), np.full(n_samples, 1), np.full(n_samples, 2)]
+    y = np.repeat(y, sw.astype(int), axis=0)
+    groups = np.r_[
+        np.full(n_reps + n_samples, 0), np.full(n_samples, 1), np.full(n_samples, 2)
+    ]
     splits = list(LeaveOneGroupOut().split(X, groups=groups))
     reg = ElasticNetCV(cv=splits, fit_intercept=fit_intercept, **params)
     reg.fit(X, y)
