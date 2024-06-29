@@ -71,6 +71,17 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             StrOptions({"auto"}),
             Interval(Integral, 1, None, closed="left"),
         ],
+        "loss": [
+            StrOptions(
+                {
+                    "squared_error",
+                    "log_loss",
+                    "binary_log_loss",
+                    "absolute_error",
+                    "logcosh",
+                }
+            )
+        ],
         "learning_rate": [StrOptions({"constant", "invscaling", "adaptive"})],
         "learning_rate_init": [Interval(Real, 0, None, closed="neither")],
         "power_t": [Interval(Real, 0, None, closed="left")],
@@ -805,6 +816,16 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         For small datasets, however, 'lbfgs' can converge faster and perform
         better.
 
+    loss : {'log_loss', 'binary_log_loss'}, default='log_loss'
+        The function to measure the error of the predictions. Supported losses are:
+
+        - 'log_loss' log transform of the likelihood function
+          logistic loss or cross-entropy loss.
+
+        - 'binary_log_loss', used automatically when activation == "logistic"
+
+        .. versionadded:: 1.6.0
+
     alpha : float, default=0.0001
         Strength of the L2 regularization term. The L2 regularization term
         is divided by the sample size when added to the loss.
@@ -1042,6 +1063,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         activation="relu",
         *,
         solver="adam",
+        loss="log_loss",
         alpha=0.0001,
         batch_size="auto",
         learning_rate="constant",
@@ -1073,7 +1095,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             learning_rate_init=learning_rate_init,
             power_t=power_t,
             max_iter=max_iter,
-            loss="log_loss",
+            loss=loss,
             shuffle=shuffle,
             random_state=random_state,
             tol=tol,
@@ -1303,6 +1325,19 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         both training time and validation score.
         For small datasets, however, 'lbfgs' can converge faster and perform
         better.
+
+    loss : {'squared_error', 'absolute_error', 'logcosh'}, default='squared_error'
+        The function to measure the error of the predictions. Supported losses are:
+
+        - 'squared_error' for the mean squared error, which minimizes the L2 loss.
+
+        - 'absolute_error' for the mean absolute error, which minimizes the L1 loss.
+
+        - 'logcosh' for the log cosh loss, which computes the logarithm of the
+          hyperbolic cosine of the prediction error and is more robust to
+          outliers than squared_error.
+
+        .. versionadded:: 1.6.0
 
     alpha : float, default=0.0001
         Strength of the L2 regularization term. The L2 regularization term
@@ -1538,6 +1573,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         activation="relu",
         *,
         solver="adam",
+        loss="squared_error",
         alpha=0.0001,
         batch_size="auto",
         learning_rate="constant",
@@ -1569,7 +1605,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
             learning_rate_init=learning_rate_init,
             power_t=power_t,
             max_iter=max_iter,
-            loss="squared_error",
+            loss=loss,
             shuffle=shuffle,
             random_state=random_state,
             tol=tol,

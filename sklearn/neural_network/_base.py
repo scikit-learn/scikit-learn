@@ -172,6 +172,45 @@ def squared_loss(y_true, y_pred):
     return ((y_true - y_pred) ** 2).mean() / 2
 
 
+def absolute_error(y_true, y_pred):
+    """Compute the mean absolute error for regression.
+
+    Parameters
+    ----------
+    y_true : array-like or label indicator matrix
+        Ground truth (correct) values.
+
+    y_pred : array-like or label indicator matrix
+        Predicted values, as returned by a regression estimator.
+
+    Returns
+    -------
+    loss : float
+        The degree to which the samples are correctly predicted.
+    """
+    return np.abs(y_true - y_pred).mean()
+
+
+def logcosh_loss(y_true, y_pred):
+    """Compute the Log-Cosh loss for regression.
+
+    Parameters
+    ----------
+    y_true : array-like or label indicator matrix
+        Ground truth (correct) values.
+
+    y_pred : array-like or label indicator matrix
+        Predicted values, as returned by a regression estimator.
+
+    Returns
+    -------
+    loss : float
+        The degree to which the samples are correctly predicted.
+    """
+    error = y_true - y_pred
+    return np.log(np.cosh(error)).mean()
+
+
 def log_loss(y_true, y_prob):
     """Compute Logistic loss for classification.
 
@@ -232,4 +271,6 @@ LOSS_FUNCTIONS = {
     "squared_error": squared_loss,
     "log_loss": log_loss,
     "binary_log_loss": binary_log_loss,
+    "absolute_error": absolute_error,
+    "logcosh": logcosh_loss,
 }
