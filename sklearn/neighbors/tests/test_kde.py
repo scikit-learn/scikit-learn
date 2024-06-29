@@ -274,6 +274,21 @@ def test_kde_hypercube_faces(n_dims, expected_counts):
     np.testing.assert_array_equal(actual_counts, expected_counts)
 
 
+def test_kde_with_bounds_invalid():
+    with pytest.raises(ValueError, match="invalid bounds"):
+        KernelDensity(bounds=[(3, 1)]).fit(None)
+
+    kde = KernelDensity(bounds=[(0, 2)]).fit(np.ones((3, 1)))
+    with pytest.raises(NotImplementedError):
+        kde.sample()
+
+    with pytest.raises(ValueError, match="samples must be larger"):
+        KernelDensity(bounds=[(1, 2)]).fit(np.zeros((3, 1)))
+
+    with pytest.raises(ValueError, match="samples must be smaller"):
+        KernelDensity(bounds=[(1, 2)]).fit(3 * np.ones((3, 1)))
+
+
 def test_kde_bounded_density():
     n_samples, n_features = (100_000, 2)
     rng = np.random.RandomState(0)
