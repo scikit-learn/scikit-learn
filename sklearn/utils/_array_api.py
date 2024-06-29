@@ -609,7 +609,9 @@ def _max_supported_float_precision(xp, device):
     # TODO: Update to use `__array_namespace__info__()` from array-api v2023.12
     # when/if that becomes more widespread.
     xp_name = xp.__name__
-    if xp_name in {"array_api_compat.torch", "torch"} and str(device).startswith("mps"):  # pragma: no cover
+    if xp_name in {"array_api_compat.torch", "torch"} and (  # pragma: no cover
+        str(device).startswith("mps")
+    ):
         return xp.float32
     return xp.float64
 
