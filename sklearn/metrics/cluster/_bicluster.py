@@ -89,10 +89,10 @@ def consensus_score(a, b, *, similarity="jaccard"):
 
     References
     ----------
-
     * Hochreiter, Bodenhofer, et. al., 2010. `FABIA: factor analysis
       for bicluster acquisition
       <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2881408/>`__.
+
     Examples
     --------
     >>> from sklearn.metrics import consensus_score
@@ -101,6 +101,7 @@ def consensus_score(a, b, *, similarity="jaccard"):
     >>> consensus_score(a, b, similarity='jaccard')
     1.0
     """
+    pass
     if similarity == "jaccard":
         similarity = _jaccard
     matrix = _pairwise_similarity(a, b, similarity)
