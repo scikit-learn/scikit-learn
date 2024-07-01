@@ -2417,13 +2417,18 @@ def test_missing_values_best_splitter_dtc_on_equal_nodes_no_missing(criterion):
     assert_allclose(y_pred, [np.mean(y_equal[-4:])])
 
 
+@pytest.mark.parametrize("seed", range(3))
 @pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
-def test_missing_values_best_splitter_etc_on_equal_nodes_no_missing(criterion):
-    """Check missing values goes to correct node during predictions for ExtraTree."""
+def test_missing_values_best_splitter_etc_on_equal_nodes_no_missing(criterion, seed):
+    """Check missing values goes to correct node during predictions for ExtraTree.
+
+    Since ETC use random splits, we use different seeds to verify that the
+    left/right node is chosen correctly when the splits occur.
+    """
     X = np.array([[0, 1, 2, 3, 8, 9, 11, 12, 15]]).T
     y = np.array([0.1, 0.2, 0.3, 0.2, 1.4, 1.4, 1.5, 1.6, 2.6])
 
-    dtc = ExtraTreeRegressor(random_state=42, max_depth=1, criterion=criterion)
+    dtc = ExtraTreeRegressor(random_state=seed, max_depth=1, criterion=criterion)
     dtc.fit(X, y)
 
     # see which node has the most data points
