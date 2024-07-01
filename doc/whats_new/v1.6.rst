@@ -125,6 +125,11 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
+- |Efficiency| Small runtime improvement of fitting
+  :class:`ensemble.HistGradientBoostingClassifier` and :class:`ensemble.HistGradientBoostingRegressor`
+  by parallelizing the initial search for bin thresholds
+  :pr:`28064` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Efficiency| :class:`ensemble.IsolationForest` now runs parallel jobs
   during :term:`predict` offering a speedup of up to 2-4x on sample sizes
   larger than 2000 using `joblib`.
@@ -144,6 +149,14 @@ Changelog
 - |API| Deprecates `copy_X` in :class:`linear_model.TheilSenRegressor` as the parameter
   has no effect. `copy_X` will be removed in 1.8.
   :pr:`29105` by :user:`Adam Li <adam2392>`.
+
+:mod:`sklearn.manifold`
+.......................
+
+- |Efficiency| :func:`manifold.locally_linear_embedding` and
+  :class:`manifold.LocallyLinearEmbedding` now allocate more efficiently the memory of
+  sparse matrices in the Hessian, Modified and LTSA methods.
+  :pr:`28096` by :user:`Giorgio Angelotti <giorgioangel>`.
 
 :mod:`sklearn.metrics`
 ......................
