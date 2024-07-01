@@ -785,7 +785,7 @@ class KNeighborsMixin:
         >>> neigh.kneighbors(X, return_distance=False)
         array([[1],
                [2]]...)
-        
+
         For a more comprehensive example see:
         :ref:`sphx_glr_auto_examples_neighbors_approximate_nearest_neighbors.py`
         """
