@@ -27,9 +27,11 @@ from ..utils import check_array, check_random_state
 from ..utils._array_api import (
     _asarray_with_order,
     _average,
+    _convert_to_numpy,
     get_namespace,
     get_namespace_and_device,
     indexing_dtype,
+    make_converter,
     supported_float_dtypes,
 )
 from ..utils._seq_dataset import (
@@ -349,10 +351,15 @@ class LinearClassifierMixin(ClassifierMixin):
             this class would be predicted.
         """
         check_is_fitted(self)
+        # X must be in the same namespace as self.coef_; self.intercept_ is
+        # either a python float or in the same namespace as self.coef_
         xp, _ = get_namespace(X)
+        follow_X = make_converter(X)
 
         X = self._validate_data(X, accept_sparse="csr", reset=False)
-        scores = safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
+        scores = safe_sparse_dot(
+            X, follow_X(self.coef_).T, dense_output=True
+        ) + follow_X(self.intercept_)
         return xp.reshape(scores, (-1,)) if scores.shape[1] == 1 else scores
 
     def predict(self, X):
@@ -376,7 +383,15 @@ class LinearClassifierMixin(ClassifierMixin):
         else:
             indices = xp.argmax(scores, axis=1)
 
-        return xp.take(self.classes_, indices, axis=0)
+        classes_xp, _ = get_namespace(self.classes_)
+        if classes_xp == xp:
+            return xp.take(self.classes_, indices, axis=0)
+
+        return np.take(
+            _convert_to_numpy(self.classes_, classes_xp),
+            _convert_to_numpy(indices, xp),
+            axis=0,
+        )
 
     def _predict_proba_lr(self, X):
         """Probability estimation for OvR logistic regression.

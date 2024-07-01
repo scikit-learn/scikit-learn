@@ -2,10 +2,12 @@
 
 import itertools
 import math
+import numbers
 from functools import wraps
 
 import numpy
 import scipy.special as special
+from scipy import sparse
 
 from .._config import get_config
 from .fixes import parse_version
@@ -232,19 +234,81 @@ def _isdtype_single(dtype, kind, *, xp):
         return dtype == kind
 
 
-def supported_float_dtypes(xp):
-    """Supported floating point types for the namespace.
+# TODO: supported_float_dtypes and max_precision_float_dtype below have been
+# copied from PR # 27113. Once 27113 is merged update the section below to
+# remove any lingering diff.
 
-    Note: float16 is not officially part of the Array API spec at the
+
+def supported_float_dtypes(xp, device=None):
+    """Supported floating point types for the namespace/device pair.
+
+    Parameters
+    ----------
+    xp : module
+        Array namespace to inspect.
+
+    device : str, default=None
+        Device to use for dtype selection. If ``None``, then a default device
+        is assumed.
+
+    Returns
+    -------
+    supported_dtypes : tuple
+        Tuple of real floating data types supported by the provided array namespace,
+        ordered from the highest precision to lowest.
+
+    See Also
+    --------
+    max_precision_float_dtype : Maximum float dtype for a namespace/device pair.
+
+    Notes
+    -----
+    `float16` is not officially part of the Array API spec at the
     time of writing but scikit-learn estimators and functions can choose
     to accept it when xp.float16 is defined.
 
+    Additionally, some devices available within a namespace may not support
+    all floating-point types that the namespace provides.
+
     https://data-apis.org/array-api/latest/API_specification/data_types.html
     """
-    if hasattr(xp, "float16"):
-        return (xp.float64, xp.float32, xp.float16)
+    # TODO: Update to use `__array_namespace__info__()` from array-api v2023.12
+    #       when/if that becomes more widespread.
+    if xp.__name__ in {"array_api_compat.torch", "torch"} and device == "mps":
+        # N.B. Yanked from pull/27232
+        dtypes = (xp.float32,)
     else:
-        return (xp.float64, xp.float32)
+        dtypes = (xp.float64, xp.float32)
+
+    if hasattr(xp, "float16"):
+        return (*dtypes, xp.float16)
+
+    return dtypes
+
+
+def max_precision_float_dtype(xp, device=None):
+    """Get the maximum precision real-floating type for the namespace and device.
+
+    Parameters
+    ----------
+    xp : module
+        Array namespace.
+
+    device : str, default=None
+        Device to use for dtype selection. If ``None``, then the maximum
+        precision in the namespace is returned.
+
+    Returns
+    -------
+    dtype: data-type
+        The maximum precision real-floating data type supported by the namespace
+        and device.
+
+    See Also
+    --------
+    supported_float_dtypes : All supported real floating dtypes for a namespace.
+    """
+    return supported_float_dtypes(xp, device=device)[0]
 
 
 def ensure_common_namespace_device(reference, *arrays):
@@ -297,6 +361,8 @@ class _ArrayAPIWrapper:
         return getattr(self._namespace, name)
 
     def __eq__(self, other):
+        if not isinstance(other, _ArrayAPIWrapper):
+            return False
         return self._namespace == other._namespace
 
     def isdtype(self, dtype, kind):
@@ -542,6 +608,9 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
         *arrays, remove_none=remove_none, remove_types=remove_types
     )
 
+    if any(map(sparse.issparse, arrays)):
+        return _NUMPY_API_WRAPPER_INSTANCE, False
+
     _check_array_api_dispatch(array_api_dispatch)
 
     # array-api-compat is a required dependency of scikit-learn only when
@@ -550,7 +619,10 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     # message in case it is missing.
     import array_api_compat
 
-    namespace, is_array_api_compliant = array_api_compat.get_namespace(*arrays), True
+    namespace, is_array_api_compliant = (
+        array_api_compat.get_namespace(*arrays),
+        True,
+    )
 
     # These namespaces need additional wrapping to smooth out small differences
     # between implementations
@@ -577,6 +649,42 @@ def get_namespace_and_device(*array_list, remove_none=True, remove_types=(str,))
         )
     else:
         return xp, False, None
+
+
+def make_converter(X):
+    """Helper to implement the 'y follows X' rule.
+
+    Returns a function that converts an array to the namespace and device of X.
+
+    When X is not an array api array, the converter does nothing.
+    """
+    xp, is_array_api = get_namespace(X)
+    if not is_array_api:
+
+        def convert(data):
+            return data
+
+        return convert
+    else:
+        device_ = device(X)
+
+        def convert(data):
+            if data is None or isinstance(data, (numbers.Number, str)):
+                return data
+            data_xp, data_is_array_api, data_device = get_namespace_and_device(data)
+            if data_xp == xp and data_device == device_:
+                return data
+            if not data_is_array_api:
+                return xp.asarray(data, device=device_)
+            try:
+                return xp.asarray(data, device=device_)
+            except Exception:
+                # direct conversion to a different library may fail in which
+                # case we try converting to numpy first
+                data = _convert_to_numpy(data, data_xp)
+                return xp.asarray(data, device=device_)
+
+        return convert
 
 
 def _expit(X, xp=None):

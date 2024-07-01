@@ -17,7 +17,12 @@ import scipy.sparse as sp
 
 from .. import get_config as _get_config
 from ..exceptions import DataConversionWarning, NotFittedError, PositiveSpectrumWarning
-from ..utils._array_api import _asarray_with_order, _is_numpy_namespace, get_namespace
+from ..utils._array_api import (
+    _asarray_with_order,
+    _is_numpy_namespace,
+    device,
+    get_namespace,
+)
 from ..utils.fixes import ComplexWarning, _preserve_dia_indices_dtype
 from ._isfinite import FiniteStatus, cy_isfinite
 from .fixes import _object_dtype_isnan
@@ -2022,18 +2027,20 @@ def _check_sample_weight(
     sample_weight : ndarray of shape (n_samples,)
         Validated sample weight. It is guaranteed to be "C" contiguous.
     """
+    xp, _ = get_namespace(X)
+    device_ = device(X)
     n_samples = _num_samples(X)
 
-    if dtype is not None and dtype not in [np.float32, np.float64]:
-        dtype = np.float64
+    if dtype is not None and dtype not in [xp.float32, xp.float64]:
+        dtype = xp.float64
 
     if sample_weight is None:
-        sample_weight = np.ones(n_samples, dtype=dtype)
+        sample_weight = xp.ones(n_samples, dtype=dtype, device=device_)
     elif isinstance(sample_weight, numbers.Number):
-        sample_weight = np.full(n_samples, sample_weight, dtype=dtype)
+        sample_weight = xp.full(n_samples, sample_weight, dtype=dtype, device=device_)
     else:
         if dtype is None:
-            dtype = [np.float64, np.float32]
+            dtype = [xp.float64, xp.float32]
         sample_weight = check_array(
             sample_weight,
             accept_sparse=False,
