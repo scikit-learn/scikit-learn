@@ -2732,7 +2732,11 @@ def test_search_with_estimators_issue_29157():
     assert grid_search.cv_results_["param_enc__enc"].dtype == object
 
 
-def test_cv_results_multi_size_array_29277():
+def test_cv_results_multi_size_array():
+    """Check that GridSearchCV works with params that are arrays of different sizes.
+
+    Non-regression test for #29277.
+    """
     n_features = 10
     X, y = make_classification(n_features=10)
 
