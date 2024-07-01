@@ -481,6 +481,10 @@ cdef inline int node_split_best(
                         current_split.threshold = feature_values[p_prev]
 
                     current_split.n_missing = n_missing
+
+                    # if there are no missing values in the training data, during
+                    # test time, we send missing values to the branch that contains
+                    # the most samples during training time.
                     if n_missing == 0:
                         current_split.missing_go_to_left = n_left > n_right
                     else:
@@ -855,6 +859,9 @@ cdef inline int node_split_random(
         if current_proxy_improvement > best_proxy_improvement:
             current_split.n_missing = n_missing
 
+            # if there are no missing values in the training data, during
+            # test time, we send missing values to the branch that contains
+            # the most samples during training time.
             if n_missing == 0:
                 current_split.missing_go_to_left = n_left > n_right
             else:
