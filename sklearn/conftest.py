@@ -26,7 +26,6 @@ from sklearn.datasets import (
     fetch_rcv1,
     fetch_species_distributions,
 )
-from sklearn.tests import random_seed
 from sklearn.utils._testing import get_pytest_filterwarning_lines
 from sklearn.utils.fixes import (
     _IS_32BIT,
@@ -265,6 +264,51 @@ def pyplot():
     pyplot.close("all")
 
 
+def pytest_generate_tests(metafunc):
+    """Parametrization of global_random_seed fixture
+
+    based on the SKLEARN_TESTS_GLOBAL_RANDOM_SEED environment variable.
+
+    The goal of this fixture is to prevent tests that use it to be sensitive
+    to a specific seed value while still being deterministic by default.
+
+    See the documentation for the SKLEARN_TESTS_GLOBAL_RANDOM_SEED
+    variable for instructions on how to use this fixture.
+
+    https://scikit-learn.org/dev/computing/parallelism.html#sklearn-tests-global-random-seed
+
+    """
+    # When using pytest-xdist this function is called in the xdist workers.
+    # We rely on SKLEARN_TESTS_GLOBAL_RANDOM_SEED environment variable which is
+    # set in before running pytest and is available in xdist workers since they
+    # are subprocesses.
+    RANDOM_SEED_RANGE = list(range(100))  # All seeds in [0, 99] should be valid.
+    random_seed_var = environ.get("SKLEARN_TESTS_GLOBAL_RANDOM_SEED")
+
+    default_random_seeds = [42]
+
+    if random_seed_var is None:
+        random_seeds = default_random_seeds
+    elif random_seed_var == "all":
+        random_seeds = RANDOM_SEED_RANGE
+    else:
+        if "-" in random_seed_var:
+            start, stop = random_seed_var.split("-")
+            random_seeds = list(range(int(start), int(stop) + 1))
+        else:
+            random_seeds = [int(random_seed_var)]
+
+        if min(random_seeds) < 0 or max(random_seeds) > 99:
+            raise ValueError(
+                "The value(s) of the environment variable "
+                "SKLEARN_TESTS_GLOBAL_RANDOM_SEED must be in the range [0, 99] "
+                f"(or 'all'), got: {random_seed_var}"
+            )
+
+    if "global_random_seed" in metafunc.fixturenames:
+        metafunc.parametrize("global_random_seed", random_seeds)
+
+
 def pytest_configure(config):
     # Use matplotlib agg backend during the tests including doctests
     try:
@@ -281,10 +325,6 @@ def pytest_configure(config):
         # xdist is using to prevent oversubscription.
         allowed_parallelism = max(allowed_parallelism // int(xdist_worker_count), 1)
     threadpool_limits(allowed_parallelism)
-
-    # Register global_random_seed plugin if it is not already registered
-    if not config.pluginmanager.hasplugin("sklearn.tests.random_seed"):
-        config.pluginmanager.register(random_seed)
 
     if environ.get("SKLEARN_WARNINGS_AS_ERRORS", "0") != "0":
         # This seems like the only way to programmatically change the config
