@@ -138,15 +138,16 @@ for i in range(n_nodes):
 #
 # One could convert this to the absolute weighted number of samples reaching a node,
 # by multiplying this number by `tree_.weighted_n_node_samples[node_idx]` for the
-# given node, or by `tree_.n_node_samples[node_idx]` for the unweighted number of
-# samples.
+# given node. Note sample weights are not used in this example, so the weighted
+# number of samples is the number of samples reaching the node because each sample
+# has a weight of 1 by default.
 #
 # For example, in the above tree built on the iris dataset, the root node has
 # ``value = [0.33, 0.304, 0.366]`` indicating there are 33% of class 0 samples,
 # 30.4% of class 1 samples, and 36.6% of class 2 samples at the root node. One can
 # convert this to the absolute number of samples by multiplying by the number of
-# samples reaching the root node, which is `tree_.n_node_samples[0]`. Then the root
-# node has ``value = [37, 34, 41]``, indicating there are 37 samples
+# samples reaching the root node, which is `tree_.weighted_n_node_samples[0]`.
+# Then the root node has ``value = [37, 34, 41]``, indicating there are 37 samples
 # of class 0, 34 samples of class 1, and 41 samples of class 2 at the root node.
 #
 # Traversing the tree, the samples are split and as a result, the ``value`` array
