@@ -63,6 +63,10 @@ Changelog
   grids that have estimators as parameter values.
   :pr:`29179` by :user:`Marco Gorelli<MarcoGorelli>`.
 
+- |Fix| Fix a regression in :class:`model_selection.GridSearchCV` for parameter
+  grids that have arrays of different sizes as parameter values.
+  :pr:`29314` by :user:`Marco Gorelli<MarcoGorelli>`.
+
 :mod:`sklearn.tree`
 ...................
 
