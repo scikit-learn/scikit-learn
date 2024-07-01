@@ -1918,10 +1918,13 @@ the actual formulas).
 .. dropdown:: Mathematical divergences
 
   The positive likelihood ratio is undefined when :math:`fp = 0`, which can be
-  interpreted as the classifier perfectly identifying positive cases. If :math:`fp
-  = 0` and additionally :math:`tp = 0`, this leads to a zero/zero division. This
-  happens, for instance, when using a `DummyClassifier` that always predicts the
+  interpreted as the classifier never wrongly identifying negative cases as positives.
+  This happens, for instance, when using a `DummyClassifier` that always predicts the
   negative class and therefore the interpretation as a perfect classifier is lost.
+
+  Both class likelihood ratios are undefined when :math:`tp=fn=0`, leading to a
+  zero/zero division, which means that no samples of the positive class were present in
+  the testing set. This can happen when cross-validating highly imbalanced data.
 
   The negative likelihood ratio is undefined when :math:`tn = 0`. Such divergence
   is invalid, as :math:`LR_- > 1` would indicate an increase in the odds of a
@@ -1930,13 +1933,10 @@ the actual formulas).
   a `DummyClassifier` that always predicts the positive class (i.e. when
   :math:`tn=fn=0`).
 
-  Both class likelihood ratios are undefined when :math:`tp=fn=0`, which means
-  that no samples of the positive class were present in the testing set. This can
-  also happen when cross-validating highly imbalanced data.
-
-  In all the previous cases the :func:`class_likelihood_ratios` function raises by
-  default an appropriate warning message and returns `nan` to avoid pollution when
-  averaging over cross-validation folds.
+  In all of these cases :func:`class_likelihood_ratios` by default raises an appropriate
+  warning message and returns `nan` to avoid pollution when averaging over
+  cross-validation folds. Users can control the warning behaviour and set return values
+  in case of a division by zero with the `zero_division` param.
 
   For a worked-out demonstration of the :func:`class_likelihood_ratios` function,
   see the example below.
