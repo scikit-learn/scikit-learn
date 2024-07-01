@@ -10,6 +10,7 @@ from sklearn.ensemble import (
 from sklearn.ensemble._hist_gradient_boosting.common import (
     G_H_DTYPE,
     X_BINNED_DTYPE,
+    BinnedData,
     MonotonicConstraint,
 )
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
@@ -171,7 +172,7 @@ def test_nodes_values(monotonic_cst, seed):
     n_samples = 1000
     n_features = 1
     X_binned = rng.randint(0, 255, size=(n_samples, n_features), dtype=np.uint8)
-    X_binned = np.asfortranarray(X_binned)
+    X_binned = BinnedData.from_array(np.asfortranarray(X_binned))
 
     gradients = rng.normal(size=n_samples).astype(G_H_DTYPE)
     hessians = np.ones(shape=1, dtype=G_H_DTYPE)
@@ -190,7 +191,7 @@ def test_nodes_values(monotonic_cst, seed):
 
     # We pass undefined binning_thresholds because we won't use predict anyway
     predictor = grower.make_predictor(
-        binning_thresholds=np.zeros((X_binned.shape[1], X_binned.max() + 1))
+        binning_thresholds=np.zeros((X_binned.shape[1], np.max(X_binned) + 1))
     )
 
     # The consistency of the bounds can only be checked on the tree grower
@@ -360,6 +361,7 @@ def test_bounded_value_min_gain_to_split():
     min_samples_leaf = 1
     n_bins = n_samples = 5
     X_binned = np.arange(n_samples).reshape(-1, 1).astype(X_BINNED_DTYPE)
+    X_binned = BinnedData.from_array(X_binned)
     sample_indices = np.arange(n_samples, dtype=np.uint32)
     all_hessians = np.ones(n_samples, dtype=G_H_DTYPE)
     all_gradients = np.array([1, 1, 100, 1, 1], dtype=G_H_DTYPE)
@@ -370,20 +372,18 @@ def test_bounded_value_min_gain_to_split():
     builder = HistogramBuilder(
         X_binned, n_bins, all_gradients, all_hessians, hessians_are_constant, n_threads
     )
-    n_bins_non_missing = np.array([n_bins - 1] * X_binned.shape[1], dtype=np.uint32)
+    n_bins_non_missing = np.array([n_bins - 1] * X_binned.shape[1], dtype=np.uint16)
     has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
     monotonic_cst = np.array(
         [MonotonicConstraint.NO_CST] * X_binned.shape[1], dtype=np.int8
     )
     is_categorical = np.zeros_like(monotonic_cst, dtype=np.uint8)
-    missing_values_bin_idx = n_bins - 1
     children_lower_bound, children_upper_bound = -np.inf, np.inf
 
     min_gain_to_split = 2000
     splitter = Splitter(
         X_binned,
         n_bins_non_missing,
-        missing_values_bin_idx,
         has_missing_values,
         is_categorical,
         monotonic_cst,

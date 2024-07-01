@@ -1,13 +1,13 @@
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose
+from numpy.testing import assert_allclose, assert_array_equal
 
 from sklearn.ensemble._hist_gradient_boosting._bitset import (
     in_bitset_memoryview,
     set_bitset_memoryview,
     set_raw_bitset_from_binned_bitset,
 )
-from sklearn.ensemble._hist_gradient_boosting.common import X_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common import X_DTYPE, Bitsets
 
 
 @pytest.mark.parametrize(
@@ -48,17 +48,25 @@ def test_raw_bitset_from_binned_bitset(
     raw_categories, binned_cat_to_insert, expected_raw_bitset
 ):
     binned_bitset = np.zeros(2, dtype=np.uint32)
-    raw_bitset = np.zeros(2, dtype=np.uint32)
+    # To keep it simple, the Bitsets contains only one bitset of length 2.
+    raw_bitset = Bitsets(offsets=np.array([0, 2], dtype=np.uint32))
     raw_categories = np.asarray(raw_categories, dtype=X_DTYPE)
+
+    # TODO: With numpy 1.24, just use assert_array_equal(..., strict=True)
+    assert raw_bitset.bitsets.dtype == np.uint32
+    assert raw_bitset.bitsets.shape == (2,)
+    assert_array_equal(raw_bitset.bitsets, np.zeros(2, dtype=np.uint32))
 
     for val in binned_cat_to_insert:
         set_bitset_memoryview(binned_bitset, val)
 
-    set_raw_bitset_from_binned_bitset(raw_bitset, binned_bitset, raw_categories)
+    set_raw_bitset_from_binned_bitset(
+        raw_bitset, binned_bitset, raw_categories, bitset_idx=0
+    )
 
-    assert_allclose(expected_raw_bitset, raw_bitset)
+    assert_allclose(raw_bitset.bitsets, expected_raw_bitset)
     for binned_cat_val, raw_cat_val in enumerate(raw_categories):
         if binned_cat_val in binned_cat_to_insert:
-            assert in_bitset_memoryview(raw_bitset, raw_cat_val)
+            assert in_bitset_memoryview(raw_bitset.bitsets, raw_cat_val)
         else:
-            assert not in_bitset_memoryview(raw_bitset, raw_cat_val)
+            assert not in_bitset_memoryview(raw_bitset.bitsets, raw_cat_val)
