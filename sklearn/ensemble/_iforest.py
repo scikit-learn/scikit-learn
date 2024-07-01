@@ -462,7 +462,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
             from joblib import parallel_backend
 
-            # Note, we use threading here as the predict method is not CPU bound.
+            # Note, we use threading here as the decision_function method is not CPU bound.
             with parallel_backend("threading", n_jobs=4):
                 model.decision_function(X)
         """
@@ -509,7 +509,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
             from joblib import parallel_backend
 
-            # Note, we use threading here as the predict method is not CPU bound.
+            # Note, we use threading here as the score_samples method is not CPU bound.
             with parallel_backend("threading", n_jobs=4):
                 model.score(X)
         """
@@ -585,10 +585,10 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
         average_path_length_max_samples = _average_path_length([self._max_samples])
 
-        # Note: allows joblib.parallel_backend to set the number of jobs separately
-        # from the number of n_jobs during fit. This is useful for parallelizing
-        # the computation of the scores, which will not require a high n_jobs.
-        # value for e.g. < 1k samples.
+        # Note: using joblib.parallel_backend allows for setting the number of jobs
+        # separately from the n_jobs parameter specified during fit. This is useful for
+        # parallelizing  the computation of the scores, which will not require a high
+        # n_jobs value for e.g. < 1k samples.
         n_jobs, _, _ = _partition_estimators(self.n_estimators, None)
         lock = threading.Lock()
         Parallel(
