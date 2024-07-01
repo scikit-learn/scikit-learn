@@ -21,8 +21,8 @@ approximating the accuracy of a kernelized classifier in a scalable manner.
 
 """
 
-# Author: Daniel Lopez-Sanchez <lope@usal.es>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Preparing the data
@@ -85,7 +85,7 @@ from sklearn.svm import LinearSVC
 
 results = {}
 
-lsvm = LinearSVC(dual="auto")
+lsvm = LinearSVC()
 start = time.time()
 lsvm.fit(X_train, y_train)
 lsvm_time = time.time() - start
@@ -126,7 +126,7 @@ for n_components in N_COMPONENTS:
     for _ in range(n_runs):
         pipeline = make_pipeline(
             PolynomialCountSketch(n_components=n_components, degree=4),
-            LinearSVC(dual="auto"),
+            LinearSVC(),
         )
 
         start = time.time()

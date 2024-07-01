@@ -11,7 +11,7 @@ from numpy.testing import assert_allclose, assert_array_almost_equal, assert_arr
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.compose import TransformedTargetRegressor
 from sklearn.cross_decomposition import CCA, PLSCanonical, PLSRegression
-from sklearn.datasets import load_iris, make_friedman1
+from sklearn.datasets import load_iris, make_classification, make_friedman1
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_selection import RFE, RFECV
 from sklearn.impute import SimpleImputer
@@ -464,7 +464,7 @@ def test_rfe_wrapped_estimator(importance_getter, selector, expected_n_features)
     # Non-regression test for
     # https://github.com/scikit-learn/scikit-learn/issues/15312
     X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
-    estimator = LinearSVR(dual="auto", random_state=0)
+    estimator = LinearSVR(random_state=0)
 
     log_estimator = TransformedTargetRegressor(
         regressor=estimator, func=np.log, inverse_func=np.exp
@@ -486,7 +486,7 @@ def test_rfe_wrapped_estimator(importance_getter, selector, expected_n_features)
 @pytest.mark.parametrize("Selector", [RFE, RFECV])
 def test_rfe_importance_getter_validation(importance_getter, err_type, Selector):
     X, y = make_friedman1(n_samples=50, n_features=10, random_state=42)
-    estimator = LinearSVR(dual="auto")
+    estimator = LinearSVR()
     log_estimator = TransformedTargetRegressor(
         regressor=estimator, func=np.log, inverse_func=np.exp
     )
@@ -537,15 +537,51 @@ def test_rfecv_std_and_mean(global_random_seed):
 
     rfecv = RFECV(estimator=SVC(kernel="linear"))
     rfecv.fit(X, y)
-    n_split_keys = len(rfecv.cv_results_) - 2
-    split_keys = [f"split{i}_test_score" for i in range(n_split_keys)]
-
+    split_keys = [key for key in rfecv.cv_results_.keys() if "split" in key]
     cv_scores = np.asarray([rfecv.cv_results_[key] for key in split_keys])
     expected_mean = np.mean(cv_scores, axis=0)
     expected_std = np.std(cv_scores, axis=0)
 
     assert_allclose(rfecv.cv_results_["mean_test_score"], expected_mean)
     assert_allclose(rfecv.cv_results_["std_test_score"], expected_std)
+
+
+@pytest.mark.parametrize(
+    ["min_features_to_select", "n_features", "step", "cv_results_n_features"],
+    [
+        [1, 4, 1, np.array([1, 2, 3, 4])],
+        [1, 5, 1, np.array([1, 2, 3, 4, 5])],
+        [1, 4, 2, np.array([1, 2, 4])],
+        [1, 5, 2, np.array([1, 3, 5])],
+        [1, 4, 3, np.array([1, 4])],
+        [1, 5, 3, np.array([1, 2, 5])],
+        [1, 4, 4, np.array([1, 4])],
+        [1, 5, 4, np.array([1, 5])],
+        [4, 4, 2, np.array([4])],
+        [4, 5, 1, np.array([4, 5])],
+        [4, 5, 2, np.array([4, 5])],
+    ],
+)
+def test_rfecv_cv_results_n_features(
+    min_features_to_select,
+    n_features,
+    step,
+    cv_results_n_features,
+):
+    X, y = make_classification(
+        n_samples=20, n_features=n_features, n_informative=n_features, n_redundant=0
+    )
+    rfecv = RFECV(
+        estimator=SVC(kernel="linear"),
+        step=step,
+        min_features_to_select=min_features_to_select,
+    )
+    rfecv.fit(X, y)
+    assert_array_equal(rfecv.cv_results_["n_features"], cv_results_n_features)
+    assert all(
+        len(value) == len(rfecv.cv_results_["n_features"])
+        for value in rfecv.cv_results_.values()
+    )
 
 
 @pytest.mark.parametrize("ClsRFE", [RFE, RFECV])
@@ -613,3 +649,20 @@ def test_rfe_estimator_attribute_error():
         rfe.fit(iris.data, iris.target).decision_function(iris.data)
     assert isinstance(exec_info.value.__cause__, AttributeError)
     assert inner_msg in str(exec_info.value.__cause__)
+
+
+@pytest.mark.parametrize(
+    "ClsRFE, param", [(RFE, "n_features_to_select"), (RFECV, "min_features_to_select")]
+)
+def test_rfe_n_features_to_select_warning(ClsRFE, param):
+    """Check if the correct warning is raised when trying to initialize a RFE
+    object with a n_features_to_select attribute larger than the number of
+    features present in the X variable that is passed to the fit method
+    """
+    X, y = make_classification(n_features=20, random_state=0)
+
+    with pytest.warns(UserWarning, match=f"{param}=21 > n_features=20"):
+        # Create RFE/RFECV with n_features_to_select/min_features_to_select
+        # larger than the number of features present in the X variable
+        clsrfe = ClsRFE(estimator=LogisticRegression(), **{param: 21})
+        clsrfe.fit(X, y)

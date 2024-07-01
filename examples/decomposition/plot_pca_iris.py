@@ -11,7 +11,7 @@ information on this dataset.
 """
 
 # Code source: Gaël Varoquaux
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 

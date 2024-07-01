@@ -1,14 +1,9 @@
-# Authors: Gilles Louppe <g.louppe@gmail.com>
-#          Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#          Brian Holt <bdholt1@gmail.com>
-#          Joel Nothman <joel.nothman@gmail.com>
-#          Arnaud Joly <arnaud.v.joly@gmail.com>
-#          Jacob Schreiber <jmschreiber91@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # See _splitter.pyx for details.
 from ._criterion cimport Criterion
+from ._tree cimport ParentInfo
 
 from ..utils._typedefs cimport float32_t, float64_t, intp_t, int8_t, int32_t, uint32_t
 
@@ -26,7 +21,7 @@ cdef struct SplitRecord:
     float64_t lower_bound     # Lower bound on value of both children for monotonicity
     float64_t upper_bound     # Upper bound on value of both children for monotonicity
     unsigned char missing_go_to_left  # Controls if missing values go to the left node.
-    intp_t n_missing       # Number of missing values for the feature being split on
+    intp_t n_missing            # Number of missing values for the feature being split on
 
 cdef class Splitter:
     # The splitter searches in the input space for a feature and a threshold
@@ -98,11 +93,8 @@ cdef class Splitter:
 
     cdef int node_split(
         self,
-        float64_t impurity,   # Impurity of the node
+        ParentInfo* parent,
         SplitRecord* split,
-        intp_t* n_constant_features,
-        float64_t lower_bound,
-        float64_t upper_bound,
     ) except -1 nogil
 
     cdef void node_value(self, float64_t* dest) noexcept nogil

@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 #
-# Copyright (C) 2007-2009 Cournapeau David <cournape@gmail.com>
-#               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
+# Authors: The scikit-learn developers
 # License: 3-clause BSD
 
 import importlib
@@ -33,8 +32,8 @@ DISTNAME = "scikit-learn"
 DESCRIPTION = "A set of python modules for machine learning and data mining"
 with open("README.rst") as f:
     LONG_DESCRIPTION = f.read()
-MAINTAINER = "Andreas Mueller"
-MAINTAINER_EMAIL = "amueller@ais.uni-bonn.de"
+MAINTAINER = "scikit-learn developers"
+MAINTAINER_EMAIL = "scikit-learn@python.org"
 URL = "https://scikit-learn.org"
 DOWNLOAD_URL = "https://pypi.org/project/scikit-learn/#files"
 LICENSE = "new BSD"
@@ -589,7 +588,6 @@ def setup_package():
             "Programming Language :: Python :: 3.11",
             "Programming Language :: Python :: 3.12",
             "Programming Language :: Python :: Implementation :: CPython",
-            "Programming Language :: Python :: Implementation :: PyPy",
         ],
         cmdclass=cmdclass,
         python_requires=python_requires,
