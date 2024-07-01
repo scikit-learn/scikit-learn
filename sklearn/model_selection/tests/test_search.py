@@ -2733,33 +2733,27 @@ def test_search_with_estimators_issue_29157():
 
 
 def test_cv_results_multi_size_array_29277():
-    x = np.linspace(-np.pi * 2, np.pi * 5, 1000)
-    y_true = np.sin(x)
-    y_train = y_true[(0 < x) & (x < np.pi * 2)]
-
-    x_train = x[(0 < x) & (x < np.pi * 2)]
-    y_train_noise = y_train + np.random.normal(size=y_train.shape, scale=0.5)
-
-    x = x.reshape((-1, 1))
-    x_train = x_train.reshape((-1, 1))
+    n_features = 10
+    X, y = make_classification(n_features=10)
 
     spline_reg_pipe = make_pipeline(
         SplineTransformer(extrapolation="periodic"),
-        LinearRegression(fit_intercept=False),
+        LogisticRegression(),
     )
 
+    n_knots_list = [n_features * i for i in [10, 11, 12]]
+    knots_list = [
+        np.linspace(0, np.pi * 2, n_knots).reshape((-1, n_features))
+        for n_knots in n_knots_list
+    ]
     spline_reg_pipe_cv = GridSearchCV(
         estimator=spline_reg_pipe,
         param_grid={
-            "splinetransformer__knots": [
-                np.linspace(0, np.pi * 2, n_knots).reshape((-1, 1))
-                for n_knots in range(10, 21, 5)
-            ],
+            "splinetransformer__knots": knots_list,
         },
-        verbose=1,
     )
 
-    spline_reg_pipe_cv.fit(X=x_train, y=y_train_noise)
+    spline_reg_pipe_cv.fit(X, y)
     assert (
         spline_reg_pipe_cv.cv_results_["param_splinetransformer__knots"].dtype == object
     )
