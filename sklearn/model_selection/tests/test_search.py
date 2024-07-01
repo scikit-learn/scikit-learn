@@ -2853,7 +2853,7 @@ ma_with_tuples[1] = (3, 4)
         ),
     ],
 )
-def test_yield_masked_array_for_each_param(candidate_params, expected) -> None:
+def test_yield_masked_array_for_each_param(candidate_params, expected):
     result = list(_yield_masked_array_for_each_param(candidate_params))
     for (key, value), (expected_key, expected_value) in zip(result, expected):
         assert key == expected_key

@@ -5,7 +5,6 @@ parameters of an estimator.
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
-from __future__ import annotations
 
 import numbers
 import operator
@@ -16,7 +15,6 @@ from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
 from functools import partial, reduce
 from itertools import product
-from typing import Any, Iterator
 
 import numpy as np
 from numpy.ma import MaskedArray
@@ -381,9 +379,7 @@ def _estimator_has(attr):
     return check
 
 
-def _yield_masked_array_for_each_param(
-    candidate_params: Sequence[dict[str, Any]],
-) -> Iterator[tuple[str, MaskedArray]]:
+def _yield_masked_array_for_each_param(candidate_params):
     """
     Yield a masked array for each candidate param.
 
@@ -400,7 +396,7 @@ def _yield_masked_array_for_each_param(
     `candidate_params` corresponding to `kernel='poly'`.
     """
     n_candidates = len(candidate_params)
-    param_results: dict[str, Any] = defaultdict(dict)
+    param_results = defaultdict(dict)
 
     for cand_idx, params in enumerate(candidate_params):
         for name, value in params.items():
