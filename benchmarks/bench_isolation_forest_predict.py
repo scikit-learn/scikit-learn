@@ -16,21 +16,15 @@ assumed to contain outliers.
 
 We compare the prediction time at the very end.
 
-Here are instructions for running this benchmark:
+Here are instructions for running this benchmark to compare runtime against main branch:
 
-1. Build this PR and run:
+1. Build and run on a branch, or main:
 
 ```bash
 python bench_isolation_forest_predict.py bench ~/bench_results pr
 ```
 
-2. On main run:
-
-```bash
-python bench_isolation_forest_predict.py bench ~/bench_results main
-```
-
-3. Plotting
+2. Plotting to compare two branches `pr` and `main`:
 
 ```bash
 python bench_isolation_forest_predict.py plot ~/bench_results pr main results_image.png

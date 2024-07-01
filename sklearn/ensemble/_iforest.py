@@ -462,7 +462,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
             from joblib import parallel_backend
 
-            # Note, we use threading here as the decision_function method is not CPU bound.
+            # Note, we use threading here as the decision_function method is
+            # not CPU bound.
             with parallel_backend("threading", n_jobs=4):
                 model.decision_function(X)
         """
