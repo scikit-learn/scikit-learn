@@ -289,14 +289,15 @@ cdef inline int node_split_best(
     Criterion criterion,
     SplitRecord* split,
     ParentInfo* parent_record,
-    bint with_monotonic_cst,
-    const int8_t[:] monotonic_cst,
 ) except -1 nogil:
     """Find the best split on node samples[start:end]
 
     Returns -1 in case of failure to allocate memory (and raise MemoryError)
     or 0 otherwise.
     """
+    cdef const int8_t[:] monotonic_cst = splitter.monotonic_cst
+    cdef bint with_monotonic_cst = splitter.with_monotonic_cst
+
     # Find the best split
     cdef intp_t start = splitter.start
     cdef intp_t end = splitter.end
@@ -674,14 +675,15 @@ cdef inline int node_split_random(
     Criterion criterion,
     SplitRecord* split,
     ParentInfo* parent_record,
-    bint with_monotonic_cst,
-    const int8_t[:] monotonic_cst,
 ) except -1 nogil:
     """Find the best random split on node samples[start:end]
 
     Returns -1 in case of failure to allocate memory (and raise MemoryError)
     or 0 otherwise.
     """
+    cdef const int8_t[:] monotonic_cst = splitter.monotonic_cst
+    cdef bint with_monotonic_cst = splitter.with_monotonic_cst
+
     # Draw random splits and pick the best
     cdef intp_t start = splitter.start
     cdef intp_t end = splitter.end
@@ -784,7 +786,7 @@ cdef inline int node_split_random(
             max_feature_value <= min_feature_value + FEATURE_THRESHOLD
         ):
             # We consider this feature constant in this case.
-            # Since finding a split among constant feature is not valuable,
+            # Since finding a split with a constant feature is not valuable,
             # we do not consider this feature for splitting.
             features[f_j], features[n_total_constants] = features[n_total_constants], current_split.feature
 
@@ -806,7 +808,7 @@ cdef inline int node_split_random(
 
         if has_missing:
             # If there are missing values, then we randomly make all missing
-            # values go to the right, or left
+            # values go to the right or left
             missing_go_to_left = rand_int(0, 2, random_state)
         else:
             missing_go_to_left = 0
@@ -1044,10 +1046,11 @@ cdef class DensePartitioner:
         # effectively. We need to also count the number of missing-values there are
         if missing_values_in_feature_mask is not None and missing_values_in_feature_mask[current_feature]:
             p, current_end = self.start, self.end - 1
-            # Missing values are placed at the end and do not participate in the min/max
+            # Missing values are placed at the end and do not participate in the
+            # min/max calculation.
             while p <= current_end:
                 # Finds the right-most value that is not missing so that
-                # it can be swapped with missing values at its left.
+                # it can be swapped with missing values towards its left.
                 if isnan(X[samples[current_end], current_feature]):
                     n_missing += 1
                     current_end -= 1
@@ -1639,8 +1642,6 @@ cdef class BestSplitter(Splitter):
             self.criterion,
             split,
             parent_record,
-            self.with_monotonic_cst,
-            self.monotonic_cst,
         )
 
 cdef class BestSparseSplitter(Splitter):
@@ -1669,8 +1670,6 @@ cdef class BestSparseSplitter(Splitter):
             self.criterion,
             split,
             parent_record,
-            self.with_monotonic_cst,
-            self.monotonic_cst,
         )
 
 cdef class RandomSplitter(Splitter):
@@ -1699,8 +1698,6 @@ cdef class RandomSplitter(Splitter):
             self.criterion,
             split,
             parent_record,
-            self.with_monotonic_cst,
-            self.monotonic_cst,
         )
 
 cdef class RandomSparseSplitter(Splitter):
@@ -1728,6 +1725,4 @@ cdef class RandomSparseSplitter(Splitter):
             self.criterion,
             split,
             parent_record,
-            self.with_monotonic_cst,
-            self.monotonic_cst,
         )
