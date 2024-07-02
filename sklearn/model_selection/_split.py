@@ -3,13 +3,8 @@ The :mod:`sklearn.model_selection._split` module includes classes and
 functions to split the data based on a preset strategy.
 """
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Gael Varoquaux <gael.varoquaux@normalesup.org>
-#         Olivier Grisel <olivier.grisel@ensta.org>
-#         Raghav RV <rvraghav93@gmail.com>
-#         Leandro Hermida <hermidal@cs.umd.edu>
-#         Rodion Martynov <marrodion@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numbers
 import warnings
@@ -745,7 +740,15 @@ class StratifiedKFold(_BaseKFold):
 
     def _make_test_folds(self, X, y=None):
         rng = check_random_state(self.random_state)
-        y = np.asarray(y)
+        # XXX: as of now, cross-validation splitters only operate in NumPy-land
+        # without attempting to leverage array API namespace features. However
+        # they might be fed by array API inputs, e.g. in CV-enabled estimators so
+        # we need the following explicit conversion:
+        xp, is_array_api = get_namespace(y)
+        if is_array_api:
+            y = _convert_to_numpy(y, xp)
+        else:
+            y = np.asarray(y)
         type_of_target_y = type_of_target(y)
         allowed_target_types = ("binary", "multiclass")
         if type_of_target_y not in allowed_target_types:
@@ -1175,7 +1178,9 @@ class TimeSeriesSplit(_BaseKFold):
     The training set has size ``i * n_samples // (n_splits + 1)
     + n_samples % (n_splits + 1)`` in the ``i`` th split,
     with a test set of size ``n_samples//(n_splits + 1)`` by default,
-    where ``n_samples`` is the number of samples.
+    where ``n_samples`` is the number of samples. Note that this
+    formula is only valid when ``test_size`` and ``max_train_size`` are
+    left to their default values.
     """
 
     def __init__(self, n_splits=5, *, max_train_size=None, test_size=None, gap=0):
@@ -2596,7 +2601,7 @@ def check_cv(cv=5, y=None, *, classifier=False):
 
     Parameters
     ----------
-    cv : int, cross-validation generator or an iterable, default=None
+    cv : int, cross-validation generator, iterable or None, default=5
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
         - None, to use the default 5-fold cross validation,

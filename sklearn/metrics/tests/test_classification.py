@@ -810,6 +810,7 @@ def test_matthews_corrcoef_nan():
         partial(fbeta_score, beta=1),
         precision_score,
         recall_score,
+        partial(cohen_kappa_score, labels=[0, 1]),
     ],
 )
 def test_zero_division_nan_no_warning(metric, y_true, y_pred, zero_division):
@@ -834,6 +835,7 @@ def test_zero_division_nan_no_warning(metric, y_true, y_pred, zero_division):
         partial(fbeta_score, beta=1),
         precision_score,
         recall_score,
+        cohen_kappa_score,
     ],
 )
 def test_zero_division_nan_warning(metric, y_true, y_pred):
@@ -3048,7 +3050,8 @@ def test_d2_log_loss_score():
 
 
 def test_d2_log_loss_score_raises():
-    """Test that d2_log_loss raises error on invalid input."""
+    """Test that d2_log_loss_score raises the appropriate errors on
+    invalid inputs."""
     y_true = [0, 1, 2]
     y_pred = [[0.2, 0.8], [0.5, 0.5], [0.4, 0.6]]
     err = "contain different number of classes"

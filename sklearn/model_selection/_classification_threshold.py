@@ -106,6 +106,14 @@ class BaseThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator
         self.estimator = estimator
         self.response_method = response_method
 
+    def _get_response_method(self):
+        """Define the response method."""
+        if self.response_method == "auto":
+            response_method = ["predict_proba", "decision_function"]
+        else:
+            response_method = self.response_method
+        return response_method
+
     @_fit_context(
         # *ThresholdClassifier*.estimator is not validated yet
         prefer_skip_nested_validation=False
@@ -139,11 +147,6 @@ class BaseThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator
             raise ValueError(
                 f"Only binary classification is supported. Unknown label type: {y_type}"
             )
-
-        if self.response_method == "auto":
-            self._response_method = ["predict_proba", "decision_function"]
-        else:
-            self._response_method = self.response_method
 
         self._fit(X, y, **params)
 
@@ -268,6 +271,13 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
           If the method is not implemented by the classifier, it will raise an
           error.
 
+    prefit : bool, default=False
+        Whether a pre-fitted model is expected to be passed into the constructor
+        directly or not. If `True`, `estimator` must be a fitted estimator. If `False`,
+        `estimator` is fitted and updated by calling `fit`.
+
+        .. versionadded:: 1.6
+
     Attributes
     ----------
     estimator_ : estimator instance
@@ -319,6 +329,7 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
         **BaseThresholdClassifier._parameter_constraints,
         "threshold": [StrOptions({"auto"}), Real],
         "pos_label": [Real, str, "boolean", None],
+        "prefit": ["boolean"],
     }
 
     def __init__(
@@ -328,10 +339,12 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
         threshold="auto",
         pos_label=None,
         response_method="auto",
+        prefit=False,
     ):
         super().__init__(estimator=estimator, response_method=response_method)
         self.pos_label = pos_label
         self.threshold = threshold
+        self.prefit = prefit
 
     def _fit(self, X, y, **params):
         """Fit the classifier.
@@ -354,7 +367,13 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
             Returns an instance of self.
         """
         routed_params = process_routing(self, "fit", **params)
-        self.estimator_ = clone(self.estimator).fit(X, y, **routed_params.estimator.fit)
+        if self.prefit:
+            check_is_fitted(self.estimator)
+            self.estimator_ = self.estimator
+        else:
+            self.estimator_ = clone(self.estimator).fit(
+                X, y, **routed_params.estimator.fit
+            )
         return self
 
     def predict(self, X):
@@ -374,7 +393,7 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
         y_score, _, response_method_used = _get_response_values_binary(
             self.estimator_,
             X,
-            self._response_method,
+            self._get_response_method(),
             pos_label=self.pos_label,
             return_response_method_used=True,
         )
@@ -636,7 +655,7 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         The objective metric to be optimized. Can be one of:
 
         * a string associated to a scoring function for binary classification
-          (see model evaluation documentation);
+          (see :ref:`scoring_parameter`);
         * a scorer callable object created with :func:`~sklearn.metrics.make_scorer`;
 
     response_method : {"auto", "decision_function", "predict_proba"}, default="auto"
@@ -954,7 +973,7 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         y_score, _ = _get_response_values_binary(
             self.estimator_,
             X,
-            self._response_method,
+            self._get_response_method(),
             pos_label=pos_label,
         )
 
@@ -995,6 +1014,6 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         """Get the curve scorer based on the objective metric used."""
         scoring = check_scoring(self.estimator, scoring=self.scoring)
         curve_scorer = _CurveScorer.from_scorer(
-            scoring, self._response_method, self.thresholds
+            scoring, self._get_response_method(), self.thresholds
         )
         return curve_scorer

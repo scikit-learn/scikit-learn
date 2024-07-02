@@ -1139,6 +1139,8 @@ def test_logreg_predict_proba_multinomial():
     assert clf_wrong_loss > clf_multi_loss
 
 
+# TODO(1.7): remove filterwarnings after the deprecation of multi_class
+@pytest.mark.filterwarnings("ignore:.*'multi_class' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize("max_iter", np.arange(1, 5))
 @pytest.mark.parametrize("multi_class", ["ovr", "multinomial"])
 @pytest.mark.parametrize(

@@ -3,12 +3,8 @@ The :mod:`sklearn.model_selection._search` includes utilities to fine-tune the
 parameters of an estimator.
 """
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
-#         Gael Varoquaux <gael.varoquaux@normalesup.org>
-#         Andreas Mueller <amueller@ais.uni-bonn.de>
-#         Olivier Grisel <olivier.grisel@ensta.org>
-#         Raghav RV <rvraghav93@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numbers
 import operator
@@ -383,6 +379,56 @@ def _estimator_has(attr):
     return check
 
 
+def _yield_masked_array_for_each_param(candidate_params):
+    """
+    Yield a masked array for each candidate param.
+
+    `candidate_params` is a sequence of params which were used in
+    a `GridSearchCV`. We use masked arrays for the results, as not
+    all params are necessarily present in each element of
+    `candidate_params`. For example, if using `GridSearchCV` with
+    a `SVC` model, then one might search over params like:
+
+        - kernel=["rbf"], gamma=[0.1, 1]
+        - kernel=["poly"], degree=[1, 2]
+
+    and then param `'gamma'` would not be present in entries of
+    `candidate_params` corresponding to `kernel='poly'`.
+    """
+    n_candidates = len(candidate_params)
+    param_results = defaultdict(dict)
+
+    for cand_idx, params in enumerate(candidate_params):
+        for name, value in params.items():
+            param_results["param_%s" % name][cand_idx] = value
+
+    for key, param_result in param_results.items():
+        param_list = list(param_result.values())
+        try:
+            arr = np.array(param_list)
+        except ValueError:
+            # This can happen when param_list contains lists of different
+            # lengths, for example:
+            # param_list=[[1], [2, 3]]
+            arr_dtype = np.dtype(object)
+        else:
+            # There are two cases when we don't use the automatically inferred
+            # dtype when creating the array and we use object instead:
+            # - string dtype
+            # - when array.ndim > 1, that means that param_list was something
+            #   like a list of same-size sequences, which gets turned into a
+            #   multi-dimensional array but we want a 1d array
+            arr_dtype = arr.dtype if arr.dtype.kind != "U" and arr.ndim == 1 else object
+
+        # Use one MaskedArray and mask all the places where the param is not
+        # applicable for that candidate (which may not contain all the params).
+        ma = MaskedArray(np.empty(n_candidates), mask=True, dtype=arr_dtype)
+        for index, value in param_result.items():
+            # Setting the value at an index unmasks that index
+            ma[index] = value
+        yield (key, ma)
+
+
 class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     """Abstract base class for hyper parameter search with cross-validation."""
 
@@ -440,6 +486,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             "_xfail_checks": {
                 "check_supervised_y_2d": "DataConversionWarning not caught"
             },
+            "array_api_support": _safe_tags(self.estimator, "array_api_support"),
         }
 
     def score(self, X, y=None, **params):
@@ -972,7 +1019,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             first_test_score = all_out[0]["test_scores"]
             self.multimetric_ = isinstance(first_test_score, dict)
 
-            # check refit_metric now for a callabe scorer that is multimetric
+            # check refit_metric now for a callable scorer that is multimetric
             if callable(self.scoring) and self.multimetric_:
                 self._check_refit_for_multimetric(first_test_score)
                 refit_metric = self.refit
@@ -1082,30 +1129,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         _store("fit_time", out["fit_time"])
         _store("score_time", out["score_time"])
-        param_results = defaultdict(dict)
-        for cand_idx, params in enumerate(candidate_params):
-            for name, value in params.items():
-                param_results["param_%s" % name][cand_idx] = value
-        for key, param_result in param_results.items():
-            param_list = list(param_result.values())
-            try:
-                arr_dtype = np.result_type(*param_list)
-            except TypeError:
-                arr_dtype = object
-            if len(param_list) == n_candidates and arr_dtype != object:
-                # Exclude `object` else the numpy constructor might infer a list of
-                # tuples to be a 2d array.
-                results[key] = MaskedArray(param_list, mask=False, dtype=arr_dtype)
-            else:
-                # Use one MaskedArray and mask all the places where the param is not
-                # applicable for that candidate (which may not contain all the params).
-                ma = MaskedArray(np.empty(n_candidates), mask=True, dtype=arr_dtype)
-                for index, value in param_result.items():
-                    # Setting the value at an index unmasks that index
-                    ma[index] = value
-                results[key] = ma
-
         # Store a list of param dicts at the key 'params'
+        for param, ma in _yield_masked_array_for_each_param(candidate_params):
+            results[param] = ma
         results["params"] = candidate_params
 
         test_scores_dict = _normalize_score_results(out["test_scores"])

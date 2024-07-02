@@ -636,7 +636,7 @@ def _log_reg_scoring_path(
         values are chosen in a logarithmic scale between 1e-4 and 1e4.
 
     scoring : callable
-        A string (see model evaluation documentation) or
+        A string (see :ref:`scoring_parameter`) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``. For a list of scoring functions
         that can be used, look at :mod:`sklearn.metrics`.
@@ -1403,7 +1403,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         the softmax function is used to find the predicted probability of
         each class.
         Else use a one-vs-rest approach, i.e. calculate the probability
-        of each class assuming it to be positive using the logistic function.
+        of each class assuming it to be positive using the logistic function
         and normalize these values across all the classes.
 
         Parameters
@@ -1521,7 +1521,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            solver.
 
     scoring : str or callable, default=None
-        A string (see model evaluation documentation) or
+        A string (see :ref:`scoring_parameter`) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``. For a list of scoring functions
         that can be used, look at :mod:`sklearn.metrics`. The

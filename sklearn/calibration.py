@@ -1,11 +1,7 @@
-"""Calibration of predicted probabilities."""
+"""Methods for calibrating predicted probabilities."""
 
-# Author: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
-#         Balazs Kegl <balazs.kegl@gmail.com>
-#         Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-#         Mathieu Blondel <mathieu@mblondel.org>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from inspect import signature
