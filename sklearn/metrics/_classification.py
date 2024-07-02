@@ -586,23 +586,25 @@ def multilabel_confusion_matrix(
         true_sum = xp.take(true_sum, indices, axis=0)
         pred_sum = xp.take(pred_sum, indices, axis=0)
 
-    else:  # y_true is a 2D sparse matrix of one-hot multi-label indicators
+    else:
         sum_axis = 1 if samplewise else 0
 
         # All labels are index integers for multilabel.
         # Select labels:
-        if not np.array_equal(labels, present_labels):
-            if np.max(labels) > np.max(present_labels):
+        if labels.shape != present_labels.shape or xp.any(
+            xp.not_equal(labels, present_labels)
+        ):
+            if xp.max(labels) > xp.max(present_labels):
                 raise ValueError(
                     "All labels must be in [0, n labels) for "
                     "multilabel targets. "
-                    "Got %d > %d" % (np.max(labels), np.max(present_labels))
+                    "Got %d > %d" % (xp.max(labels), xp.max(present_labels))
                 )
-            if np.min(labels) < 0:
+            if xp.min(labels) < 0:
                 raise ValueError(
                     "All labels must be in [0, n labels) for "
                     "multilabel targets. "
-                    "Got %d < 0" % np.min(labels)
+                    "Got %d < 0" % xp.min(labels)
                 )
 
         if n_labels is not None:
@@ -610,12 +612,36 @@ def multilabel_confusion_matrix(
             y_pred = y_pred[:, labels[:n_labels]]
 
         # calculate weighted counts
-        true_and_pred = y_true.multiply(y_pred)
-        tp_sum = count_nonzero(
-            true_and_pred, axis=sum_axis, sample_weight=sample_weight
-        )
-        pred_sum = count_nonzero(y_pred, axis=sum_axis, sample_weight=sample_weight)
-        true_sum = count_nonzero(y_true, axis=sum_axis, sample_weight=sample_weight)
+        if _is_numpy_namespace(xp=xp):
+            true_and_pred = y_true.multiply(y_pred)
+            tp_sum = count_nonzero(
+                true_and_pred, axis=sum_axis, sample_weight=sample_weight
+            )
+            pred_sum = count_nonzero(y_pred, axis=sum_axis, sample_weight=sample_weight)
+            true_sum = count_nonzero(y_true, axis=sum_axis, sample_weight=sample_weight)
+        else:
+            true_and_pred = xp.multiply(y_true, y_pred)
+            tp_sum = _count_nonzero(
+                true_and_pred,
+                xp=xp,
+                device=device_,
+                axis=sum_axis,
+                sample_weight=sample_weight,
+            )
+            pred_sum = _count_nonzero(
+                y_pred,
+                xp=xp,
+                device=device_,
+                axis=sum_axis,
+                sample_weight=sample_weight,
+            )
+            true_sum = _count_nonzero(
+                y_true,
+                xp=xp,
+                device=device_,
+                axis=sum_axis,
+                sample_weight=sample_weight,
+            )
 
     fp = pred_sum - tp_sum
     fn = true_sum - tp_sum

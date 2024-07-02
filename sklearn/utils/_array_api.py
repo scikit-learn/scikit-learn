@@ -6,6 +6,7 @@ from functools import wraps
 
 import numpy
 import scipy.special as special
+from scipy.sparse import issparse
 
 from .._config import get_config
 from .fixes import parse_version
@@ -541,6 +542,9 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     arrays = _remove_non_arrays(
         *arrays, remove_none=remove_none, remove_types=remove_types
     )
+
+    if any(issparse(arr) for arr in arrays):
+        return _NUMPY_API_WRAPPER_INSTANCE, False
 
     _check_array_api_dispatch(array_api_dispatch)
 
