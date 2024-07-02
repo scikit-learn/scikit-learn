@@ -8,8 +8,8 @@ different columns.
 # SPDX-License-Identifier: BSD-3-Clause
 import warnings
 from collections import Counter, UserList
-from itertools import chain
 from functools import partial
+from itertools import chain
 from numbers import Integral, Real
 
 import numpy as np
