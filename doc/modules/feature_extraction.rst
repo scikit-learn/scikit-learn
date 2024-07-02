@@ -106,8 +106,8 @@ suitable for feeding into a classifier (maybe after being piped into a
   >>> vec = DictVectorizer()
   >>> pos_vectorized = vec.fit_transform(pos_window)
   >>> pos_vectorized
-  <1x6 sparse matrix of type '<... 'numpy.float64'>'
-      with 6 stored elements in Compressed Sparse ... format>
+  <Compressed Sparse...dtype 'float64'
+    with 6 stored elements and shape (1, 6)>
   >>> pos_vectorized.toarray()
   array([[1., 1., 1., 1., 1., 1.]])
   >>> vec.get_feature_names_out()
@@ -324,8 +324,8 @@ corpus of text documents::
   ... ]
   >>> X = vectorizer.fit_transform(corpus)
   >>> X
-  <4x9 sparse matrix of type '<... 'numpy.int64'>'
-      with 19 stored elements in Compressed Sparse ... format>
+  <Compressed Sparse...dtype 'int64'
+    with 19 stored elements and shape (4, 9)>
 
 The default configuration tokenizes the string by extracting words of
 at least 2 letters. The specific function that does this step can be
@@ -507,8 +507,8 @@ Again please see the :ref:`reference documentation
     ...
     >>> tfidf = transformer.fit_transform(counts)
     >>> tfidf
-    <6x3 sparse matrix of type '<... 'numpy.float64'>'
-        with 9 stored elements in Compressed Sparse ... format>
+    <Compressed Sparse...dtype 'float64'
+      with 9 stored elements and shape (6, 3)>
 
     >>> tfidf.toarray()
     array([[0.81940995, 0.        , 0.57320793],
@@ -592,8 +592,8 @@ Again please see the :ref:`reference documentation
     >>> from sklearn.feature_extraction.text import TfidfVectorizer
     >>> vectorizer = TfidfVectorizer()
     >>> vectorizer.fit_transform(corpus)
-    <4x9 sparse matrix of type '<... 'numpy.float64'>'
-        with 19 stored elements in Compressed Sparse ... format>
+    <Compressed Sparse...dtype 'float64'
+      with 19 stored elements and shape (4, 9)>
 
   While the tf-idf normalization is often very useful, there might
   be cases where the binary occurrence markers might offer better
@@ -755,15 +755,16 @@ span across words::
 
   >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(5, 5))
   >>> ngram_vectorizer.fit_transform(['jumpy fox'])
-  <1x4 sparse matrix of type '<... 'numpy.int64'>'
-     with 4 stored elements in Compressed Sparse ... format>
+  <Compressed Sparse...dtype 'int64'
+    with 4 stored elements and shape (1, 4)>
+
   >>> ngram_vectorizer.get_feature_names_out()
   array([' fox ', ' jump', 'jumpy', 'umpy '], ...)
 
   >>> ngram_vectorizer = CountVectorizer(analyzer='char', ngram_range=(5, 5))
   >>> ngram_vectorizer.fit_transform(['jumpy fox'])
-  <1x5 sparse matrix of type '<... 'numpy.int64'>'
-      with 5 stored elements in Compressed Sparse ... format>
+  <Compressed Sparse...dtype 'int64'
+    with 5 stored elements and shape (1, 5)>
   >>> ngram_vectorizer.get_feature_names_out()
   array(['jumpy', 'mpy f', 'py fo', 'umpy ', 'y fox'], ...)
 
@@ -829,8 +830,8 @@ meaning that you don't have to call ``fit`` on it::
   >>> from sklearn.feature_extraction.text import HashingVectorizer
   >>> hv = HashingVectorizer(n_features=10)
   >>> hv.transform(corpus)
-  <4x10 sparse matrix of type '<... 'numpy.float64'>'
-      with 16 stored elements in Compressed Sparse ... format>
+  <Compressed Sparse...dtype 'float64'
+    with 16 stored elements and shape (4, 10)>
 
 You can see that 16 non-zero feature tokens were extracted in the vector
 output: this is less than the 19 non-zeros extracted previously by the
@@ -853,8 +854,8 @@ Let's try again with the default setting::
 
   >>> hv = HashingVectorizer()
   >>> hv.transform(corpus)
-  <4x1048576 sparse matrix of type '<... 'numpy.float64'>'
-      with 19 stored elements in Compressed Sparse ... format>
+  <Compressed Sparse...dtype 'float64'
+    with 19 stored elements and shape (4, 1048576)>
 
 We no longer get the collisions, but this comes at the expense of a much larger
 dimensionality of the output space.

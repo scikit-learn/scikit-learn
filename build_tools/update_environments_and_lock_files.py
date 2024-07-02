@@ -130,6 +130,9 @@ build_metadata_list = [
         "package_constraints": {
             "blas": "[build=mkl]",
             "pytorch": "1.13",
+            # TODO some breaking changes in array-api-strict 2, see
+            # https://github.com/scikit-learn/scikit-learn/pull/29276#issuecomment-2203119711
+            "array-api-strict": "<2",
         },
     },
     {
