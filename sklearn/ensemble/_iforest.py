@@ -315,7 +315,9 @@ class IsolationForest(OutlierMixin, BaseBagging):
         self : object
             Fitted estimator.
         """
-        X = self._validate_data(X, accept_sparse=["csc"], dtype=tree_dtype)
+        X = self._validate_data(
+            X, accept_sparse=["csc"], dtype=tree_dtype, force_all_finite=False
+        )
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
             # ensemble sorts the indices.
@@ -515,7 +517,13 @@ class IsolationForest(OutlierMixin, BaseBagging):
                 model.score(X)
         """
         # Check data
-        X = self._validate_data(X, accept_sparse="csr", dtype=tree_dtype, reset=False)
+        X = self._validate_data(
+            X,
+            accept_sparse="csr",
+            dtype=tree_dtype,
+            reset=False,
+            force_all_finite=False,
+        )
 
         return self._score_samples(X)
 
@@ -627,7 +635,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
                 ),
-            }
+            },
+            "allow_nan": True,
         }
 
 
