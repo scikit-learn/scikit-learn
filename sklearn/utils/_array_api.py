@@ -557,6 +557,9 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     if namespace.__name__ in {"cupy.array_api"}:
         namespace = _ArrayAPIWrapper(namespace)
 
+    if namespace.__name__ == "array_api_strict":
+        namespace.set_array_api_strict_flags(api_version="2023.12")
+
     return namespace, is_array_api_compliant
 
 
@@ -856,11 +859,7 @@ def _searchsorted(xp, a, v, *, side="left", sorter=None):
     # adopted by implementers of the Array API spec. This is a quite
     # recent addition to the spec:
     # https://data-apis.org/array-api/latest/API_specification/generated/array_api.searchsorted.html # noqa
-    # api_api_strict currently raises an error which mentions that searchsorted
-    # requires API version 2023.12 or later.
-    # TODO: remove the additional check when array_api_strict supports
-    #  API version 2023.12.
-    if hasattr(xp, "searchsorted") and xp.__name__ != "array_api_strict":
+    if hasattr(xp, "searchsorted"):
         return xp.searchsorted(a, v, side=side, sorter=sorter)
 
     a_np = _convert_to_numpy(a, xp=xp)
