@@ -2001,19 +2001,20 @@ def check_array_api_metric_pairwise(metric, array_namespace, device, dtype_name)
 
 array_api_metric_checkers = {
     # classification
-    # accuracy_score: [
-    #     check_array_api_binary_classification_metric,
-    #     check_array_api_multiclass_classification_metric,
-    #     check_array_api_multilabel_classification_metric,
-    # ],
+    accuracy_score: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
     f1_score: [
-        # check_array_api_binary_classification_metric,
-        # check_array_api_multiclass_classification_metric,
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
     ],
     multilabel_confusion_matrix: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
     ],
     zero_one_loss: [
         check_array_api_binary_classification_metric,
