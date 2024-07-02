@@ -373,6 +373,9 @@ class SpectralBiclustering(BaseSpectral):
     biclusters. The outer product of the corresponding row and column
     label vectors gives this checkerboard structure.
 
+    In order to learn more about the SpectralBiclustering class go to:
+    :ref:`sphx_glr_auto_examples_bicluster_plot_spectral_biclustering.py`
+
     Read more in the :ref:`User Guide <spectral_biclustering>`.
 
     Parameters
