@@ -673,10 +673,14 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             feature_names_out_callable = self.verbose_feature_names_out
         elif isinstance(self.verbose_feature_names_out, str):
             feature_names_out_callable = partial(
-                _feature_names_out, str_format=self.verbose_feature_names_out
+                _feature_names_out_with_str_format,
+                str_format=self.verbose_feature_names_out,
             )
         elif self.verbose_feature_names_out is True:
-            feature_names_out_callable = _feature_names_out
+            feature_names_out_callable = partial(
+                _feature_names_out_with_str_format,
+                str_format="{transformer_name}__{feature_name}",
+            )
 
         if feature_names_out_callable is not None:
             # Prefix the feature names out with the transformers name
@@ -1676,11 +1680,9 @@ def _with_dtype_warning_enabled_set_to(warning_enabled, transformers):
     return result
 
 
-def _feature_names_out(
-    transformer_name: str, feature_name: str, str_format: str | None = None
+def _feature_names_out_with_str_format(
+    transformer_name: str, feature_name: str, str_format: str
 ) -> str:
-    if str_format is None:
-        str_format = "{transformer_name}__{feature_name}"
     return str_format.format(
         transformer_name=transformer_name, feature_name=feature_name
     )
