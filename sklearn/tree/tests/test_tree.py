@@ -2458,7 +2458,7 @@ def test_missing_values_random_splitter_etc_on_equal_nodes_no_missing(criterion,
 @pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
 def test_missing_values_random_splitter_on_equal_nodes_no_missing(criterion):
     """Check missing values go to the correct node during predictions.
-    
+
     This checks for the case where there are no missing values during training,
     and missing values are only present during prediction.
     """
