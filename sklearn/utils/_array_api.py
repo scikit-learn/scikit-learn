@@ -2,6 +2,8 @@
 
 import itertools
 import math
+import os
+import warnings
 from functools import wraps
 
 import numpy
@@ -102,6 +104,14 @@ def _check_array_api_dispatch(array_api_dispatch):
             raise ImportError(
                 f"NumPy must be {min_numpy_version} or newer to dispatch array using"
                 " the API specification"
+            )
+        if os.environ.get("SCIPY_ARRAY_API") != "1":
+            warnings.warn(
+                (
+                    "Some scikit-learn array API features might rely on enabling "
+                    "SciPy's own support for array API to function properly. "
+                ),
+                UserWarning,
             )
 
 
