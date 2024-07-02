@@ -65,6 +65,11 @@ jobs:
           - os: windows-latest
             python: 312
             platform_id: win_amd64
+          - os: windows-latest
+            python: 313
+            platform_id: win_amd64
+            # TODO: remove next line when Python 3.13 is released
+            prerelease_pythons: True
 
           # Linux 64 bit manylinux2014
           - os: ubuntu-latest
@@ -107,6 +112,11 @@ jobs:
           - os: macos-12
             python: 312
             platform_id: macosx_x86_64
+          - os: macos-12
+            python: 313
+            platform_id: macosx_x86_64
+            # TODO: remove next line when Python 3.13 is released
+            prerelease_pythons: True
 
           # MacOS arm64
           - os: macos-14
@@ -121,6 +131,11 @@ jobs:
           - os: macos-14
             python: 312
             platform_id: macosx_arm64
+          - os: macos-14
+            python: 313
+            platform_id: macosx_arm64
+            # TODO: remove next line when Python 3.13 is released
+            prerelease_pythons: True
 
     steps:
       - name: Checkout scikit-learn
@@ -164,7 +179,7 @@ jobs:
           CIBW_PRERELEASE_PYTHONS: ${{ matrix.prerelease_pythons }}
           CIBW_FREE_THREADED_SUPPORT: ${{ matrix.free_threaded_support }}
           CIBW_ENVIRONMENT: SKLEARN_SKIP_NETWORK_TESTS=1
-            SKLEARN_BUILD_PARALLEL=3
+            #SKLEARN_BUILD_PARALLEL=3
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
           CIBW_ARCHS: all
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}
@@ -216,8 +231,8 @@ jobs:
 
       - name: Build source distribution
         run: bash build_tools/github/build_source.sh
-        env:
-          SKLEARN_BUILD_PARALLEL: 3
+        #env:
+        #  SKLEARN_BUILD_PARALLEL: 3
 
       - name: Test source distribution
         run: bash build_tools/github/test_source.sh
