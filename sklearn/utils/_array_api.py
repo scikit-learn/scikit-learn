@@ -856,7 +856,7 @@ def _searchsorted(xp, a, v, *, side="left", sorter=None):
     # adopted by implementers of the Array API spec. This is a quite
     # recent addition to the spec:
     # https://data-apis.org/array-api/latest/API_specification/generated/array_api.searchsorted.html # noqa
-    if hasattr(xp, "searchsorted"):
+    if hasattr(xp, "searchsorted") and xp.__name__ != "array_api_strict":
         return xp.searchsorted(a, v, side=side, sorter=sorter)
 
     a_np = _convert_to_numpy(a, xp=xp)
