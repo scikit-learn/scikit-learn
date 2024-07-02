@@ -99,6 +99,12 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123455 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.linear_model`
+..........................
+- |Fix| :func:`_coordinate_descent._alpha_grid` adapted to account for sample weights.
+  :pr:`23045`by :user:`John Hopfensperger <s-banach>`and :pr:`29308`by :user:`Shruti Nath <snath-xoc>`.
+
+
 :mod:`sklearn.base`
 ...................
 

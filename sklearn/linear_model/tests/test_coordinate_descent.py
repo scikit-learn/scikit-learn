@@ -48,6 +48,7 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
+    assert_array_less,
     ignore_warnings,
 )
 from sklearn.utils.fixes import COO_CONTAINERS, CSC_CONTAINERS, CSR_CONTAINERS
@@ -1319,39 +1320,34 @@ def test_enet_cv_sample_weight_correctness(fit_intercept, sparse_container):
         X = sparse_container(X)
     params = dict(tol=1e-6)
 
-    # Set alphas, otherwise the two cv models might use different ones.
-    if fit_intercept:
-        alphas = np.linspace(0.001, 0.01, num=91)
-    else:
-        alphas = np.linspace(0.01, 0.1, num=91)
-
-    # We weight the first fold 2 times more.
-    sw[:n_samples] = 2
+    # We weight the first fold n times more.
+    sw[:n_samples] = rng.randint(0, 5, size=sw[:n_samples].shape[0])
     groups_sw = np.r_[
         np.full(n_samples, 0), np.full(n_samples, 1), np.full(n_samples, 2)
     ]
     splits_sw = list(LeaveOneGroupOut().split(X, groups=groups_sw))
-    reg_sw = ElasticNetCV(
-        alphas=alphas, cv=splits_sw, fit_intercept=fit_intercept, **params
-    )
+    reg_sw = ElasticNetCV(cv=splits_sw, fit_intercept=fit_intercept, **params)
     reg_sw.fit(X, y, sample_weight=sw)
 
     # We repeat the first fold 2 times and provide splits ourselves
     if sparse_container is not None:
         X = X.toarray()
-    X = np.r_[X[:n_samples], X]
+    X_rep = np.repeat(X, sw.astype(int), axis=0)
+    ##Need to know number of repitions made in total
+    n_reps = X_rep.shape[0] - X.shape[0]
+    X = X_rep
     if sparse_container is not None:
         X = sparse_container(X)
-    y = np.r_[y[:n_samples], y]
+    y = np.repeat(y, sw.astype(int), axis=0)
     groups = np.r_[
-        np.full(2 * n_samples, 0), np.full(n_samples, 1), np.full(n_samples, 2)
+        np.full(n_reps + n_samples, 0), np.full(n_samples, 1), np.full(n_samples, 2)
     ]
     splits = list(LeaveOneGroupOut().split(X, groups=groups))
-    reg = ElasticNetCV(alphas=alphas, cv=splits, fit_intercept=fit_intercept, **params)
+    reg = ElasticNetCV(cv=splits, fit_intercept=fit_intercept, **params)
     reg.fit(X, y)
 
     # ensure that we chose meaningful alphas, i.e. not boundaries
-    assert alphas[0] < reg.alpha_ < alphas[-1]
+    assert_allclose(reg_sw.alphas_, reg.alphas_)
     assert reg_sw.alpha_ == reg.alpha_
     assert_allclose(reg_sw.coef_, reg.coef_)
     assert reg_sw.intercept_ == pytest.approx(reg.intercept_)
@@ -1390,6 +1386,26 @@ def test_enet_cv_grid_search(sample_weight):
 
     assert reg.l1_ratio_ == pytest.approx(gs.best_params_["l1_ratio"])
     assert reg.alpha_ == pytest.approx(gs.best_params_["alpha"])
+
+
+@pytest.mark.parametrize("sparseX", [False, True])
+@pytest.mark.parametrize("fit_intercept", [False, True])
+@pytest.mark.parametrize("sample_weight", [np.array([10, 1, 10, 1]), None])
+def test_enet_alpha_max_sample_weight(sparseX, fit_intercept, sample_weight):
+    X = np.array([[3.0, 1.0], [2.0, 5.0], [5.0, 3.0], [1.0, 4.0]])
+    beta = np.array([1, 1])
+    y = X @ beta
+    if sparseX:
+        X = sparse.csc_matrix(X)
+    # Test alpha_max makes coefs zero.
+    reg = ElasticNetCV(n_alphas=1, cv=2, eps=1, fit_intercept=fit_intercept)
+    reg.fit(X, y, sample_weight=sample_weight)
+    assert_almost_equal(reg.coef_, 0)
+    alpha_max = reg.alpha_
+    # Test smaller alpha makes coefs nonzero.
+    reg = ElasticNet(alpha=0.99 * alpha_max, fit_intercept=fit_intercept)
+    reg.fit(X, y, sample_weight=sample_weight)
+    assert_array_less(1e-3, np.max(np.abs(reg.coef_)))
 
 
 @pytest.mark.parametrize("fit_intercept", [True, False])
