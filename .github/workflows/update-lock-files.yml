@@ -6,9 +6,9 @@ on:
   schedule:
     - cron: '0 5 * * 1'
 
-# XXX Set the right permissions, per step??
-# Can we set read only at the global level here and then elevate to write for some steps?
-#permissions: read-all
+# In order to add the "CUDA CI" label we need to have write permissions for PRs
+permissions:
+  pull-requests: write
 
 jobs:
   update_lock_files:
@@ -68,7 +68,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh workflow run .github/workflows/cuda-gpu-ci.yml -f commit_hash=`git rev-parse HEAD`
+          gh pr edit ${{steps.cpr.outputs.pull-request-number}} --add-label "CUDA CI"
 
       - name: Check Pull Request
         if: steps.cpr.outputs.pull-request-number != ''
