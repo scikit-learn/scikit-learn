@@ -1812,27 +1812,37 @@ def check_array_api_multiclass_classification_metric(
     y_true_np = np.array([0, 1, 2, 3])
     y_pred_np = np.array([0, 1, 0, 2])
 
-    check_array_api_metric(
-        metric,
-        array_namespace,
-        device,
-        dtype_name,
-        a_np=y_true_np,
-        b_np=y_pred_np,
-        sample_weight=None,
+    additional_params = {
+        "average": ("micro", "macro", "weighted"),
+    }
+    metric_kwargs_combinations = _get_metric_kwargs_for_array_api_testing(
+        metric=metric,
+        params=additional_params,
     )
+    for metric_kwargs in metric_kwargs_combinations:
+        check_array_api_metric(
+            metric,
+            array_namespace,
+            device,
+            dtype_name,
+            a_np=y_true_np,
+            b_np=y_pred_np,
+            sample_weight=None,
+            **metric_kwargs,
+        )
 
-    sample_weight = np.array([0.0, 0.1, 2.0, 1.0], dtype=dtype_name)
+        sample_weight = np.array([0.0, 0.1, 2.0, 1.0], dtype=dtype_name)
 
-    check_array_api_metric(
-        metric,
-        array_namespace,
-        device,
-        dtype_name,
-        a_np=y_true_np,
-        b_np=y_pred_np,
-        sample_weight=sample_weight,
-    )
+        check_array_api_metric(
+            metric,
+            array_namespace,
+            device,
+            dtype_name,
+            a_np=y_true_np,
+            b_np=y_pred_np,
+            sample_weight=sample_weight,
+            **metric_kwargs,
+        )
 
 
 def check_array_api_multilabel_classification_metric(
@@ -1841,27 +1851,37 @@ def check_array_api_multilabel_classification_metric(
     y_true_np = np.array([[1, 1], [0, 1], [0, 0]], dtype=dtype_name)
     y_pred_np = np.array([[1, 1], [1, 1], [1, 1]], dtype=dtype_name)
 
-    check_array_api_metric(
-        metric,
-        array_namespace,
-        device,
-        dtype_name,
-        a_np=y_true_np,
-        b_np=y_pred_np,
-        sample_weight=None,
+    additional_params = {
+        "average": ("micro", "macro", "weighted"),
+    }
+    metric_kwargs_combinations = _get_metric_kwargs_for_array_api_testing(
+        metric=metric,
+        params=additional_params,
     )
+    for metric_kwargs in metric_kwargs_combinations:
+        check_array_api_metric(
+            metric,
+            array_namespace,
+            device,
+            dtype_name,
+            a_np=y_true_np,
+            b_np=y_pred_np,
+            sample_weight=None,
+            **metric_kwargs,
+        )
 
-    sample_weight = np.array([0.0, 0.1, 2.0], dtype=dtype_name)
+        sample_weight = np.array([0.0, 0.1, 2.0], dtype=dtype_name)
 
-    check_array_api_metric(
-        metric,
-        array_namespace,
-        device,
-        dtype_name,
-        a_np=y_true_np,
-        b_np=y_pred_np,
-        sample_weight=sample_weight,
-    )
+        check_array_api_metric(
+            metric,
+            array_namespace,
+            device,
+            dtype_name,
+            a_np=y_true_np,
+            b_np=y_pred_np,
+            sample_weight=sample_weight,
+            **metric_kwargs,
+        )
 
 
 def check_array_api_regression_metric(metric, array_namespace, device, dtype_name):
@@ -1980,7 +2000,18 @@ def check_array_api_metric_pairwise(metric, array_namespace, device, dtype_name)
 
 
 array_api_metric_checkers = {
+    # classification
     accuracy_score: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
+    f1_score: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+        check_array_api_multilabel_classification_metric,
+    ],
+    multilabel_confusion_matrix: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
@@ -1990,6 +2021,7 @@ array_api_metric_checkers = {
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
     ],
+    # regression
     mean_tweedie_deviance: [check_array_api_regression_metric],
     r2_score: [
         check_array_api_regression_metric,
@@ -2007,6 +2039,7 @@ array_api_metric_checkers = {
     d2_tweedie_score: [
         check_array_api_regression_metric,
     ],
+    # pairwise
     paired_cosine_distances: [check_array_api_metric_pairwise],
     additive_chi2_kernel: [check_array_api_metric_pairwise],
     mean_gamma_deviance: [check_array_api_regression_metric],
@@ -2027,3 +2060,21 @@ def yield_metric_checker_combinations(metric_checkers=array_api_metric_checkers)
 @pytest.mark.parametrize("metric, check_func", yield_metric_checker_combinations())
 def test_array_api_compliance(metric, array_namespace, device, dtype_name, check_func):
     check_func(metric, array_namespace, device, dtype_name)
+
+
+def _get_metric_kwargs_for_array_api_testing(metric, params):
+    metric_kwargs_combinations = [{}]
+    for param, values in params.items():
+        if param not in signature(metric).parameters:
+            continue
+
+        new_combinations = []
+        for kwargs in metric_kwargs_combinations:
+            for value in values:
+                new_kwargs = kwargs.copy()
+                new_kwargs[param] = value
+                new_combinations.append(new_kwargs)
+
+        metric_kwargs_combinations = new_combinations
+
+    return metric_kwargs_combinations

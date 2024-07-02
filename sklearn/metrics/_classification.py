@@ -28,9 +28,14 @@ from ..utils import (
 )
 from ..utils._array_api import (
     _average,
+    _bincount,
     _count_nonzero,
+    _find_matching_floating_dtype,
     _is_numpy_namespace,
+    _searchsorted,
+    _setdiff1d,
     _union1d,
+    device,
     get_namespace,
     get_namespace_and_device,
 )
@@ -516,9 +521,11 @@ def multilabel_confusion_matrix(
            [[2, 1],
             [1, 2]]])
     """
+    xp, _ = get_namespace(y_true, y_pred)
+    device_ = device(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if sample_weight is not None:
-        sample_weight = column_or_1d(sample_weight)
+        sample_weight = xp.asarray(column_or_1d(sample_weight), device=device_)
     check_consistent_length(y_true, y_pred, sample_weight)
 
     if y_type not in ("binary", "multiclass", "multilabel-indicator"):
@@ -529,9 +536,11 @@ def multilabel_confusion_matrix(
         labels = present_labels
         n_labels = None
     else:
-        n_labels = len(labels)
-        labels = np.hstack(
-            [labels, np.setdiff1d(present_labels, labels, assume_unique=True)]
+        labels = xp.asarray(labels, device=device_)
+        n_labels = labels.shape[0]
+        labels = xp.concat(
+            [labels, _setdiff1d(present_labels, labels, assume_unique=True, xp=xp)],
+            axis=-1,
         )
 
     if y_true.ndim == 1:
@@ -551,45 +560,51 @@ def multilabel_confusion_matrix(
         tp = y_true == y_pred
         tp_bins = y_true[tp]
         if sample_weight is not None:
-            tp_bins_weights = np.asarray(sample_weight)[tp]
+            tp_bins_weights = sample_weight[tp]
         else:
             tp_bins_weights = None
 
-        if len(tp_bins):
-            tp_sum = np.bincount(
-                tp_bins, weights=tp_bins_weights, minlength=len(labels)
+        if tp_bins.shape[0]:
+            tp_sum = _bincount(
+                xp, tp_bins, weights=tp_bins_weights, minlength=labels.shape[0]
             )
         else:
             # Pathological case
-            true_sum = pred_sum = tp_sum = np.zeros(len(labels))
-        if len(y_pred):
-            pred_sum = np.bincount(y_pred, weights=sample_weight, minlength=len(labels))
-        if len(y_true):
-            true_sum = np.bincount(y_true, weights=sample_weight, minlength=len(labels))
+            true_sum = pred_sum = tp_sum = xp.zeros(labels.shape[0])
+        if y_pred.shape[0]:
+            pred_sum = _bincount(
+                xp, y_pred, weights=sample_weight, minlength=labels.shape[0]
+            )
+        if y_true.shape[0]:
+            true_sum = _bincount(
+                xp, y_true, weights=sample_weight, minlength=labels.shape[0]
+            )
 
         # Retain only selected labels
-        indices = np.searchsorted(sorted_labels, labels[:n_labels])
-        tp_sum = tp_sum[indices]
-        true_sum = true_sum[indices]
-        pred_sum = pred_sum[indices]
+        indices = _searchsorted(xp, sorted_labels, labels[:n_labels])
+        tp_sum = xp.take(tp_sum, indices, axis=0)
+        true_sum = xp.take(true_sum, indices, axis=0)
+        pred_sum = xp.take(pred_sum, indices, axis=0)
 
     else:
         sum_axis = 1 if samplewise else 0
 
         # All labels are index integers for multilabel.
         # Select labels:
-        if not np.array_equal(labels, present_labels):
-            if np.max(labels) > np.max(present_labels):
+        if labels.shape != present_labels.shape or xp.any(
+            xp.not_equal(labels, present_labels)
+        ):
+            if xp.max(labels) > xp.max(present_labels):
                 raise ValueError(
                     "All labels must be in [0, n labels) for "
                     "multilabel targets. "
-                    "Got %d > %d" % (np.max(labels), np.max(present_labels))
+                    "Got %d > %d" % (xp.max(labels), xp.max(present_labels))
                 )
-            if np.min(labels) < 0:
+            if xp.min(labels) < 0:
                 raise ValueError(
                     "All labels must be in [0, n labels) for "
                     "multilabel targets. "
-                    "Got %d < 0" % np.min(labels)
+                    "Got %d < 0" % xp.min(labels)
                 )
 
         if n_labels is not None:
@@ -597,31 +612,54 @@ def multilabel_confusion_matrix(
             y_pred = y_pred[:, labels[:n_labels]]
 
         # calculate weighted counts
-        true_and_pred = y_true.multiply(y_pred)
-        tp_sum = count_nonzero(
-            true_and_pred, axis=sum_axis, sample_weight=sample_weight
-        )
-        pred_sum = count_nonzero(y_pred, axis=sum_axis, sample_weight=sample_weight)
-        true_sum = count_nonzero(y_true, axis=sum_axis, sample_weight=sample_weight)
+        if _is_numpy_namespace(xp=xp):
+            true_and_pred = y_true.multiply(y_pred)
+            tp_sum = count_nonzero(
+                true_and_pred, axis=sum_axis, sample_weight=sample_weight
+            )
+            pred_sum = count_nonzero(y_pred, axis=sum_axis, sample_weight=sample_weight)
+            true_sum = count_nonzero(y_true, axis=sum_axis, sample_weight=sample_weight)
+        else:
+            true_and_pred = xp.multiply(y_true, y_pred)
+            tp_sum = _count_nonzero(
+                true_and_pred,
+                xp=xp,
+                device=device_,
+                axis=sum_axis,
+                sample_weight=sample_weight,
+            )
+            pred_sum = _count_nonzero(
+                y_pred,
+                xp=xp,
+                device=device_,
+                axis=sum_axis,
+                sample_weight=sample_weight,
+            )
+            true_sum = _count_nonzero(
+                y_true,
+                xp=xp,
+                device=device_,
+                axis=sum_axis,
+                sample_weight=sample_weight,
+            )
 
     fp = pred_sum - tp_sum
     fn = true_sum - tp_sum
     tp = tp_sum
 
     if sample_weight is not None and samplewise:
-        sample_weight = np.array(sample_weight)
-        tp = np.array(tp)
-        fp = np.array(fp)
-        fn = np.array(fn)
+        tp = xp.asarray(tp)
+        fp = xp.asarray(fp)
+        fn = xp.asarray(fn)
         tn = sample_weight * y_true.shape[1] - tp - fp - fn
     elif sample_weight is not None:
-        tn = sum(sample_weight) - tp - fp - fn
+        tn = xp.sum(sample_weight) - tp - fp - fn
     elif samplewise:
         tn = y_true.shape[1] - tp - fp - fn
     else:
         tn = y_true.shape[0] - tp - fp - fn
 
-    return np.array([tn, fp, fn, tp]).T.reshape(-1, 2, 2)
+    return xp.reshape(xp.stack([tn, fp, fn, tp]).T, (-1, 2, 2))
 
 
 def _metric_handle_division(*, numerator, denominator, metric, zero_division):
@@ -1562,12 +1600,14 @@ def _prf_divide(
     The metric, modifier and average arguments are used only for determining
     an appropriate warning.
     """
-    mask = denominator == 0.0
-    denominator = denominator.copy()
+    xp, _ = get_namespace(numerator, denominator)
+    dtype_float = _find_matching_floating_dtype(numerator, denominator, xp=xp)
+    mask = denominator == 0
+    denominator = xp.asarray(denominator, copy=True, dtype=dtype_float)
     denominator[mask] = 1  # avoid infs/nans
-    result = numerator / denominator
+    result = xp.asarray(numerator, dtype=dtype_float) / denominator
 
-    if not np.any(mask):
+    if not xp.any(mask):
         return result
 
     # set those with 0 denominator to `zero_division`, and 0 when "warn"
@@ -1615,7 +1655,7 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     # Convert to Python primitive type to avoid NumPy type / Python str
     # comparison. See https://github.com/numpy/numpy/issues/6784
-    present_labels = unique_labels(y_true, y_pred).tolist()
+    present_labels = list(unique_labels(y_true, y_pred))
     if average == "binary":
         if y_type == "binary":
             if pos_label not in present_labels:
@@ -1855,10 +1895,11 @@ def precision_recall_fscore_support(
     pred_sum = tp_sum + MCM[:, 0, 1]
     true_sum = tp_sum + MCM[:, 1, 0]
 
+    xp, _ = get_namespace(y_true, y_pred)
     if average == "micro":
-        tp_sum = np.array([tp_sum.sum()])
-        pred_sum = np.array([pred_sum.sum()])
-        true_sum = np.array([true_sum.sum()])
+        tp_sum = xp.reshape(xp.sum(tp_sum), shape=(1,))
+        pred_sum = xp.reshape(xp.sum(pred_sum), shape=(1,))
+        true_sum = xp.reshape(xp.sum(true_sum), shape=(1,))
 
     # Finally, we have all our sufficient statistics. Divide! #
     beta2 = beta**2
@@ -1901,10 +1942,10 @@ def precision_recall_fscore_support(
         weights = None
 
     if average is not None:
-        assert average != "binary" or len(precision) == 1
-        precision = _nanaverage(precision, weights=weights)
-        recall = _nanaverage(recall, weights=weights)
-        f_score = _nanaverage(f_score, weights=weights)
+        assert average != "binary" or precision.shape[0] == 1
+        precision = float(_nanaverage(precision, weights=weights))
+        recall = float(_nanaverage(recall, weights=weights))
+        f_score = float(_nanaverage(f_score, weights=weights))
         true_sum = None  # return no support
 
     return precision, recall, f_score, true_sum

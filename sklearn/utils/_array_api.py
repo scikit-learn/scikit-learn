@@ -6,6 +6,7 @@ from functools import wraps
 
 import numpy
 import scipy.special as special
+from scipy.sparse import issparse
 
 from .._config import get_config
 from .fixes import parse_version
@@ -542,6 +543,9 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
         *arrays, remove_none=remove_none, remove_types=remove_types
     )
 
+    if any(issparse(arr) for arr in arrays):
+        return _NUMPY_API_WRAPPER_INSTANCE, False
+
     _check_array_api_dispatch(array_api_dispatch)
 
     # array-api-compat is a required dependency of scikit-learn only when
@@ -733,6 +737,19 @@ def _nanmax(X, axis=None, xp=None):
         if xp.any(mask):
             X = xp.where(mask, xp.asarray(xp.nan), X)
         return X
+
+
+def _nanmean(X, axis=None, xp=None):
+    # TODO: refactor once nan-aware reductions are standardized:
+    # https://github.com/data-apis/array-api/issues/621
+    xp, _ = get_namespace(X, xp=xp)
+    if _is_numpy_namespace(xp):
+        return xp.asarray(numpy.nanmean(X, axis=axis))
+    else:
+        mask = xp.isnan(X)
+        total = xp.sum(xp.where(mask, xp.asarray(0.0, device=device(X)), X), axis=axis)
+        count = xp.sum(xp.astype(xp.logical_not(mask), X.dtype), axis=axis)
+        return total / count
 
 
 def _asarray_with_order(
@@ -984,3 +1001,18 @@ def _count_nonzero(X, xp, device, axis=None, sample_weight=None):
 
     zero_scalar = xp.asarray(0, device=device, dtype=weights.dtype)
     return xp.sum(xp.where(X != 0, weights, zero_scalar), axis=axis)
+
+
+def _bincount(xp, array, weights=None, minlength=None):
+    # TODO: update if bincount is ever adopted in a future version of the standard:
+    # https://github.com/data-apis/array-api/issues/812
+    if hasattr(xp, "bincount"):
+        return xp.bincount(array, weights=weights, minlength=minlength)
+
+    array_np = _convert_to_numpy(array, xp=xp)
+    if weights is not None:
+        weights_np = _convert_to_numpy(weights, xp=xp)
+    else:
+        weights_np = None
+    bin_out = numpy.bincount(array_np, weights=weights_np, minlength=minlength)
+    return xp.asarray(bin_out, device=device(array))
