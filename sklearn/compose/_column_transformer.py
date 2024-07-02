@@ -148,11 +148,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         new feature name.
         If str, it must be a string ready for formatting. The given string will
         be formatted using two field names: transformer_name and feature_name.
+        e.g. "{feature_name}__{transformer_name}".
         See str.format method from the standard library for more info.
 
         .. versionadded:: 1.0
 
-        .. versionchanged:: 1.X
+        .. versionchanged:: 1.6
             `verbose_feature_names_out` can be a callable or a string to be formatted.
 
 
