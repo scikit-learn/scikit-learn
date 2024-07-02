@@ -13,6 +13,7 @@ from sklearn.utils._array_api import (
     _atol_for_type,
     _average,
     _convert_to_numpy,
+    _count_nonzero,
     _estimator_with_converted_arrays,
     _is_numpy_namespace,
     _isin,
@@ -32,7 +33,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
     skip_if_array_api_compat_not_configured,
 )
-from sklearn.utils.fixes import _IS_32BIT
+from sklearn.utils.fixes import _IS_32BIT, CSR_CONTAINERS
 
 
 @pytest.mark.parametrize("X", [numpy.asarray([1, 2, 3]), [1, 2, 3]])
@@ -566,3 +567,37 @@ def test_get_namespace_and_device():
         assert namespace is xp_torch
         assert is_array_api
         assert device == some_torch_tensor.device
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+@pytest.mark.parametrize("axis", [0, 1, None, -1, -2])
+@pytest.mark.parametrize("sample_weight_type", [None, "int", "float"])
+def test_count_nonzero(
+    array_namespace, device, dtype_name, csr_container, axis, sample_weight_type
+):
+
+    from sklearn.utils.sparsefuncs import count_nonzero as sparse_count_nonzero
+
+    xp = _array_api_for_tests(array_namespace, device)
+    array = numpy.array([[0, 3, 0], [2, -1, 0], [0, 0, 0], [9, 8, 7], [4, 0, 5]])
+    if sample_weight_type == "int":
+        sample_weight = numpy.asarray([1, 2, 2, 3, 1])
+    elif sample_weight_type == "float":
+        sample_weight = numpy.asarray([0.5, 1.5, 0.8, 3.2, 2.4], dtype=dtype_name)
+    else:
+        sample_weight = None
+    expected = sparse_count_nonzero(
+        csr_container(array), axis=axis, sample_weight=sample_weight
+    )
+    array_xp = xp.asarray(array, device=device)
+
+    with config_context(array_api_dispatch=True):
+        result = _count_nonzero(
+            array_xp, xp=xp, device=device, axis=axis, sample_weight=sample_weight
+        )
+
+    assert_allclose(_convert_to_numpy(result, xp=xp), expected)
+    assert getattr(array_xp, "device", None) == getattr(result, "device", None)
