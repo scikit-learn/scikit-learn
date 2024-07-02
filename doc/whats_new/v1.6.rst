@@ -178,6 +178,14 @@ Changelog
   estimator without re-fitting it.
   :pr:`29067` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.multiclass`
+.........................
+
+- |Fix| :class:`multiclass.OneVsOneClassifier`
+  now it's decision function properly handles confidences when these are provided as
+  predicted probabilities for the positive class.
+  :pr:`28739` by :user:`Luís Calado <LC1243>`.
+
 :mod:`sklearn.neighbors`
 ........................
 
