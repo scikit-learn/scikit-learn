@@ -56,6 +56,7 @@ from sklearn.metrics.pairwise import (
     chi2_kernel,
     cosine_similarity,
     paired_cosine_distances,
+    paired_euclidean_distances,
 )
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import shuffle
@@ -2012,6 +2013,7 @@ array_api_metric_checkers = {
     mean_gamma_deviance: [check_array_api_regression_metric],
     max_error: [check_array_api_regression_metric],
     chi2_kernel: [check_array_api_metric_pairwise],
+    paired_euclidean_distances: [check_array_api_metric_pairwise],
 }
 
 

@@ -44,6 +44,7 @@ See :ref:`array_api` for more details.
 - :func:`sklearn.metrics.pairwise.chi2_kernel` :pr:`29267` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.metrics.pairwise.cosine_similarity` :pr:`29014` by :user:`Edoardo Abati <EdAbati>`;
 - :func:`sklearn.metrics.pairwise.paired_cosine_distances` :pr:`29112` by :user:`Edoardo Abati <EdAbati>`.
+- :func:`sklearn.metrics.pairwise.paired_euclidean_distances` :pr:`29389` by :user:`Emily Chen <EmilyXinyi>`;
 
 **Classes:**
 
