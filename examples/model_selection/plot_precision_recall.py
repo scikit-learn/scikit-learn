@@ -28,9 +28,10 @@ over the number of true positives plus the number of false negatives
 
 The precision-recall curve shows the tradeoff between precision and
 recall for different thresholds. A high area under the curve represents
-both high recall and high precision, where high precision relates to low
-false positives in returned results, and high recall relates to a low false negatives
-in relevant results. High scores for both show that the classifier is returning
+both high recall and high precision. High precision is achieved by having
+few false positives in the returned results, and high recall is achieved by
+having few false negatives in the relevant results.
+High scores for both show that the classifier is returning
 accurate results (high precision), as well as returning a majority of all relevant
 results (high recall).
 
