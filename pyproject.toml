@@ -210,3 +210,20 @@ exclude= '''
 sdist-only = []
 git-only = [".*", "asv_benchmarks", "azure-pipelines.yml", "benchmarks", "build_tools", "maint_tools"]
 default-ignore = false
+
+[tool.spin]
+package = "sklearn"  # name of your package
+# commands = [
+#   "spin.cmds.meson.test",
+#   "spin.cmds.pip.install",
+# ]
+
+[tool.spin.commands]
+"Build" = [
+  "spin.cmds.pip.install",
+  "spin.cmds.meson.test",
+  "spin.cmds.build.sdist",
+]
+"Documentation" = [
+  "spin.cmds.meson.docs"
+]
