@@ -22,6 +22,7 @@ from ..utils import (
     gen_even_slices,
 )
 from ..utils._array_api import (
+    _clip,
     _find_matching_floating_dtype,
     _is_numpy_namespace,
     get_namespace,
@@ -1120,16 +1121,25 @@ def cosine_distances(X, Y=None):
     array([[1.     , 1.     ],
            [0.42..., 0.18...]])
     """
+    xp, _ = get_namespace(X, Y)
+
     # 1.0 - cosine_similarity(X, Y) without copy
     S = cosine_similarity(X, Y)
     S *= -1
     S += 1
-    np.clip(S, 0, 2, out=S)
+    S = _clip(X, S, 0, 2, xp)
     if X is Y or Y is None:
         # Ensure that distances between vectors and themselves are set to 0.0.
         # This may not be the case due to floating point rounding errors.
-        np.fill_diagonal(S, 0.0)
+        _fill_diagonal_2d(S, 0.0, xp)
     return S
+
+
+def _fill_diagonal_2d(S, val, xp):
+    assert S.ndim == 2, "_fill_diagonal_2d supports 2D arrays only"
+    _, m = S.shape
+    S_flat = xp.reshape(S, (-1,))
+    S_flat[:: m + 1] = val
 
 
 # Paired distances
