@@ -390,6 +390,26 @@ METAESTIMATORS: list = [
         "y": y,
         "estimator_routing_methods": ["fit", "predict"],
     },
+    {
+        "metaestimator": RFE,
+        "estimator": "classifier",
+        "estimator_name": "estimator",
+        "X": X,
+        "y": y,
+        "estimator_routing_methods": ["fit", "predict", "score"],
+    },
+    {
+        "metaestimator": RFECV,
+        "estimator": "classifier",
+        "estimator_name": "estimator",
+        "estimator_routing_methods": ["fit"],
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+        "scorer_name": "scoring",
+        "scorer_routing_methods": ["fit"],
+        "X": X,
+        "y": y,
+    },
 ]
 """List containing all metaestimators to be tested and their settings
 
@@ -431,8 +451,6 @@ METAESTIMATOR_IDS = [str(row["metaestimator"].__name__) for row in METAESTIMATOR
 UNSUPPORTED_ESTIMATORS = [
     AdaBoostClassifier(),
     AdaBoostRegressor(),
-    RFE(ConsumingClassifier()),
-    RFECV(ConsumingClassifier()),
     SelfTrainingClassifier(ConsumingClassifier()),
     SequentialFeatureSelector(ConsumingClassifier()),
 ]

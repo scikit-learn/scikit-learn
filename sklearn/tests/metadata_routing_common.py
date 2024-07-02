@@ -201,6 +201,7 @@ class NonConsumingClassifier(ClassifierMixin, BaseEstimator):
 
     def fit(self, X, y):
         self.classes_ = np.unique(y)
+        self.coef_ = np.ones_like(X)
         return self
 
     def partial_fit(self, X, y, classes=None):
@@ -270,6 +271,7 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         )
 
         self.classes_ = np.unique(y)
+        self.coef_ = np.ones_like(X)
         return self
 
     def predict(self, X, sample_weight="default", metadata="default"):
@@ -308,12 +310,11 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         y_score[: len(X) // 2] = 1
         return y_score
 
-    # uncomment when needed
-    # def score(self, X, y, sample_weight="default", metadata="default"):
-    # record_metadata_not_default(
-    #    self, sample_weight=sample_weight, metadata=metadata
-    # )
-    # return 1
+    def score(self, X, y, sample_weight="default", metadata="default"):
+        record_metadata_not_default(
+            self, sample_weight=sample_weight, metadata=metadata
+        )
+        return 1
 
 
 class ConsumingTransformer(TransformerMixin, BaseEstimator):
