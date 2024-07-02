@@ -1,5 +1,5 @@
 import numpy as np
-from numpy.testing import assert_allclose
+from numpy.testing import assert_allclose, assert_array_equal
 from pytest import approx
 
 from sklearn.utils.stats import _weighted_percentile
@@ -13,8 +13,8 @@ def test_weighted_percentile():
     y[50] = 1
     sw = np.ones(102, dtype=np.float64)
     sw[-1] = 0.0
-    score = _weighted_percentile(y, sw, 50)
-    assert approx(score) == 1
+    value = _weighted_percentile(y, sw, 50)
+    assert approx(value) == 1
 
 
 def test_weighted_percentile_equal():
@@ -22,8 +22,8 @@ def test_weighted_percentile_equal():
     y.fill(0.0)
     sw = np.ones(102, dtype=np.float64)
     sw[-1] = 0.0
-    score = _weighted_percentile(y, sw, 50)
-    assert score == 0
+    value = _weighted_percentile(y, sw, 50)
+    assert value == 0
 
 
 def test_weighted_percentile_zero_weight():
@@ -31,21 +31,21 @@ def test_weighted_percentile_zero_weight():
     y.fill(1.0)
     sw = np.ones(102, dtype=np.float64)
     sw.fill(0.0)
-    score = _weighted_percentile(y, sw, 50)
-    assert approx(score) == 1.0
+    value = _weighted_percentile(y, sw, 50)
+    assert approx(value) == 1.0
 
 
 def test_weighted_percentile_zero_weight_zero_percentile():
     y = np.array([0, 1, 2, 3, 4, 5])
     sw = np.array([0, 0, 1, 1, 1, 0])
-    score = _weighted_percentile(y, sw, 0)
-    assert approx(score) == 2
+    value = _weighted_percentile(y, sw, 0)
+    assert approx(value) == 2
 
-    score = _weighted_percentile(y, sw, 50)
-    assert approx(score) == 3
+    value = _weighted_percentile(y, sw, 50)
+    assert approx(value) == 3
 
-    score = _weighted_percentile(y, sw, 100)
-    assert approx(score) == 4
+    value = _weighted_percentile(y, sw, 100)
+    assert approx(value) == 4
 
 
 def test_weighted_median_equal_weights():
@@ -96,3 +96,71 @@ def test_weighted_percentile_2d():
         _weighted_percentile(x_2d[:, i], w_2d[:, i]) for i in range(x_2d.shape[1])
     ]
     assert_allclose(w_median, p_axis_0)
+
+
+def test_weighted_percentile_nan_filtered():
+    """Test that calling _weighted_percentile on an array with nan values returns
+    the same results as calling _weighted_percentile on a filtered version of the data.
+    We test both with sample_weight of the same shape as the data and for
+    one-dimensional sample_weight."""
+
+    rng = np.random.RandomState(42)
+    array_with_nans = rng.rand(10, 100)
+    array_with_nans[rng.rand(*array_with_nans.shape) < 0.5] = np.nan
+    nan_mask = np.isnan(array_with_nans)
+
+    sample_weights = [rng.randint(1, 6, size=(10, 100)), rng.randint(1, 6, size=(10,))]
+
+    for sample_weight in sample_weights:
+        # Find the weighted percentile on the array with nans:
+        results = _weighted_percentile(array_with_nans, sample_weight, 30)
+
+        # Find the weighted percentile on the filtered array:
+        filtered_array = [
+            array_with_nans[~nan_mask[:, col], col]
+            for col in range(array_with_nans.shape[1])
+        ]
+        if sample_weight.ndim == 1:
+            sample_weight = np.repeat(sample_weight, array_with_nans.shape[1]).reshape(
+                array_with_nans.shape[0], array_with_nans.shape[1]
+            )
+        filtered_weights = [
+            sample_weight[~nan_mask[:, col], col]
+            for col in range(array_with_nans.shape[1])
+        ]
+
+        expected_results = np.array(
+            [
+                _weighted_percentile(filtered_array[col], filtered_weights[col], 30)
+                for col in range(array_with_nans.shape[1])
+            ]
+        )
+
+        assert_array_equal(expected_results, results)
+
+
+def test_weighted_percentile_nan_redirected():
+    """Test that _weighted_percentile redirects percentiles, that are nans to the next
+    lower value if there is one. Since the function sorts the indices to nan values to
+    the end of every column using np.argsort(), we have to set the percentile rather
+    high in order to test this."""
+
+    array = np.array(
+        [
+            [np.nan, 5],
+            [np.nan, 1],
+            [np.nan, np.nan],
+            [np.nan, np.nan],
+            [np.nan, 2],
+            [np.nan, np.nan],
+        ]
+    )
+    weights = np.ones_like(array)
+    percentile = 90
+
+    values = _weighted_percentile(array, weights, percentile)
+
+    # The percentile of the second column should be `5` even though there are many nan
+    # values present; the percentile of the first column can only be nan, since there
+    # are no other possible values:
+    assert np.array_equal(values, np.array([np.nan, 5]), equal_nan=True)
