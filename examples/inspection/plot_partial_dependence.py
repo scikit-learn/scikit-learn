@@ -16,9 +16,12 @@ features of interest, ICE plots visualize the dependence of the prediction on a
 feature for each :term:`sample` separately, with one line per sample.
 Only one feature of interest is supported for ICE plots.
 
-This example shows how to obtain partial dependence and ICE plots from a
-:class:`~sklearn.neural_network.MLPRegressor` and a
-:class:`~sklearn.ensemble.HistGradientBoostingRegressor` trained on the
+Furthermore, the concept of partial dependence is used to measure interaction
+strength of feature pairs. The corresponding measure is called *H-statistic*
+and has been introduced in [4]_.
+
+To illustrate these methods, we use a :class:`~sklearn.neural_network.MLPRegressor`
+and a :class:`~sklearn.ensemble.HistGradientBoostingRegressor` trained on the
 bike sharing dataset. The example is inspired by [1]_.
 
 .. [1] `Molnar, Christoph. "Interpretable machine learning.
@@ -32,6 +35,10 @@ bike sharing dataset. The example is inspired by [1]_.
        "Peeking Inside the Black Box: Visualizing Statistical Learning With Plots of
        Individual Conditional Expectation". Journal of Computational and
        Graphical Statistics, 24(1): 44-65 <1309.6392>`
+
+.. [4] Friedman, J. H. and Popescu, B. E. (2008).
+       "Predictive Learning via Rule Ensembles".
+       The Annals of Applied Statistics, 2(3), 916-954, 2008.
 """
 
 # %%
@@ -567,3 +574,48 @@ clb.ax.set_title("Partial\ndependence")
 plt.show()
 
 # %%
+# Interaction strength
+# --------------------
+#
+# Above considerations show that comparing 2D PDPs with their univariate versions
+# give hints about feature interactions. This idea is formalized by Friedman
+# and Popescu's (pairwise) H-statistic, see [4]_.
+# It measures how well the 2D partial dependence function can be approximated
+# by the two one-dimensional partial dependence functions.
+# The resulting value is then normalized and can be interpreted as proportion of effect
+# variability explained by the interaction. Besides this relative measure, we advocate
+# to also consider unnormalized statistics. They can directly be compared between
+# feature pairs to see which interactions are strongest.
+#
+# Since computational burden is high, H-statistics are usually calculated only for
+# important features, e.g., selected by permutation importance. What do we get for
+# our model?
+print("Select five important features and crunch H-statistics...")
+
+from sklearn.inspection import h_statistic, permutation_importance
+
+tic = time()
+imp = permutation_importance(hgbdt_model, X=X_train, y=y_train, random_state=0)
+features = X_train.columns[np.argsort(imp.importances_mean)][-5:]
+
+H = h_statistic(hgbdt_model, X=X_train, features=features, random_state=0)
+
+print(f"done in {time() - tic:.3f}s")
+
+fig, axes = plt.subplots(1, 2, figsize=(8, 4))
+bar_labels = np.array([str(pair) for pair in H["feature_pairs"]])
+stats = (H["h_squared_pairwise"], np.sqrt(H["numerator_pairwise"]))
+
+for ax, stat, name in zip(axes, stats, ("$H^2$", "Unnormalized $H$")):
+    stat = stat.ravel()
+    idx = np.argsort(stat)
+    ax.barh(bar_labels[idx], stat[idx], color="orange")
+    ax.set(xlabel=name, title=name)
+_ = fig.tight_layout()
+
+# %%
+# **The left plot** shows that the interaction between 'workingday' and 'hour'
+# explains about 8% of their joint effect variability. For the other pairs, it is
+# less than 5%. **The right plot** additionally shows that the interaction between
+# 'workingday' and 'hour' is also largest in absolute terms (on the scale of the
+# predictions).

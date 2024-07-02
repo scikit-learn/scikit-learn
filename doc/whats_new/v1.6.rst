@@ -99,6 +99,13 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123455 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.inspection`
+...........................
+
+- |MajorFeature| Added function :func:`inspection.h_statistic` to
+  calculate Friedman and Popescu's H-Statistic of pairwise interaction strength.
+  :pr:`28375` by :user:`Michael Mayer <mayer79>`.
+
 :mod:`sklearn.base`
 ...................
 
