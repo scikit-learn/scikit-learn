@@ -97,6 +97,7 @@ def test_multi_target_regression_partial_fit():
     y_pred = sgr.predict(X_test)
     assert_almost_equal(references, y_pred)
     assert not hasattr(MultiOutputRegressor(Lasso), "partial_fit")
+    assert "partial_fit" not in dir(MultiOutputRegressor(Lasso))
 
 
 def test_multi_target_regression_one_target():
@@ -215,7 +216,9 @@ def test_hasattr_multi_output_predict_proba():
     sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5)
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
     multi_target_linear.fit(X, y)
+
     assert not hasattr(multi_target_linear, "predict_proba")
+    assert "predict_proba" not in dir(multi_target_linear)
 
     # case where predict_proba attribute exists
     sgd_linear_clf = SGDClassifier(loss="log_loss", random_state=1, max_iter=5)
@@ -478,8 +481,10 @@ def test_multi_output_delegate_predict_proba():
     assert hasattr(moc, "predict_proba")
 
     # A base estimator without `predict_proba` should raise an AttributeError
-    moc = MultiOutputClassifier(LinearSVC())
+    moc = MultiOutputClassifier(LinearSVC(dual="auto"))
+
     assert not hasattr(moc, "predict_proba")
+    assert "predict_proba" not in dir(moc)
 
     outer_msg = "'MultiOutputClassifier' has no attribute 'predict_proba'"
     inner_msg = "'LinearSVC' object has no attribute 'predict_proba'"
@@ -490,6 +495,7 @@ def test_multi_output_delegate_predict_proba():
 
     moc.fit(X, y)
     assert not hasattr(moc, "predict_proba")
+    assert "predict_proba" not in dir(moc)
     with pytest.raises(AttributeError, match=outer_msg) as exec_info:
         moc.predict_proba(X)
     assert isinstance(exec_info.value.__cause__, AttributeError)
@@ -525,6 +531,7 @@ def test_classifier_chain_fit_and_predict_with_linear_svc(chain_method):
     Y_binary = Y_decision >= 0
     assert_array_equal(Y_binary, Y_pred)
     assert not hasattr(classifier_chain, "predict_proba")
+    assert "predict_proba" not in dir(classifier_chain)
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)

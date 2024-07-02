@@ -645,6 +645,7 @@ def test_rfe_estimator_attribute_error():
 
     outer_msg = "This 'RFE' has no attribute 'decision_function'"
     inner_msg = "'LinearRegression' object has no attribute 'decision_function'"
+    assert "decision_function" not in dir(rfe.fit(iris.data, iris.target))
     with pytest.raises(AttributeError, match=outer_msg) as exec_info:
         rfe.fit(iris.data, iris.target).decision_function(iris.data)
     assert isinstance(exec_info.value.__cause__, AttributeError)
