@@ -69,6 +69,7 @@ from sklearn.utils.validation import (
     _check_sample_weight,
     _check_y,
     _deprecate_positional_args,
+    _estimator_has,
     _get_feature_names,
     _is_fitted,
     _is_pandas_df,
@@ -1136,6 +1137,56 @@ def test_check_array_memmap(copy):
         X_checked = check_array(X_memmap, copy=copy)
         assert np.may_share_memory(X_memmap, X_checked) == (not copy)
         assert X_checked.flags["WRITEABLE"] == copy
+
+
+def test_estimator_has_with_default_args():
+    class MockEstimatorFitted:
+        def __init__(self, attr_value):
+            self.estimator_ = type("estimator_", (), {attr_value: True})
+
+    class MockEstimatorUnFitted:
+        def __init__(self, attr_value):
+            self.estimator = type("estimator", (), {attr_value: True})
+
+    class NonEstimator:
+        def __init__(self, attr_value):
+            self.not_estimator = type("not_estimator", (), {attr_value: True})
+
+    fitted_mock_estimator = MockEstimatorFitted("test_attr")
+    unfitted_mock_estimator = MockEstimatorUnFitted("test_attr")
+    mock_estimator_without_attr = MockEstimatorFitted("other_attr")
+    non_estimator = NonEstimator("test_attr")
+
+    check = _estimator_has("test_attr")
+
+    assert check(fitted_mock_estimator)
+    assert check(unfitted_mock_estimator)
+
+    with pytest.raises(AttributeError):
+        check(mock_estimator_without_attr)
+
+    with pytest.raises(ValueError):
+        check(non_estimator)
+
+
+def test_estimator_has_with_delegates():
+
+    class MockEstimatorListFitted:
+        def __init__(self, attr_value):
+            self.estimators_ = [type("estimator_", (), {attr_value: True})]
+
+    class MockEstimatorFitted:
+        def __init__(self, attr_value):
+            self.custom_name = type("estimator_", (), {attr_value: True})
+
+    fitted_mock_estimator_list = MockEstimatorListFitted("test_attr")
+    fitted_mock_estimator = MockEstimatorFitted("test_attr")
+
+    check_list = _estimator_has("test_attr", delegates=["estimators_"])
+    check_custom = _estimator_has("test_attr", delegates=["custom_name"])
+
+    assert check_list(fitted_mock_estimator_list)
+    assert check_custom(fitted_mock_estimator)
 
 
 @pytest.mark.parametrize(

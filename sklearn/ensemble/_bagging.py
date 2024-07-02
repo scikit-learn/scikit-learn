@@ -41,6 +41,7 @@ from ..utils.validation import (
     _check_method_params,
     _check_sample_weight,
     _deprecate_positional_args,
+    _estimator_has,
     check_is_fitted,
     has_fit_parameter,
 )
@@ -266,22 +267,6 @@ def _parallel_predict_regression(estimators, estimators_features, X):
         estimator.predict(X[:, features])
         for estimator, features in zip(estimators, estimators_features)
     )
-
-
-def _estimator_has(attr):
-    """Check if we can delegate a method to the underlying estimator.
-
-    First, we check the first fitted estimator if available, otherwise we
-    check the estimator attribute.
-    """
-
-    def check(self):
-        if hasattr(self, "estimators_"):
-            return hasattr(self.estimators_[0], attr)
-        else:  # self.estimator is not None
-            return hasattr(self.estimator, attr)
-
-    return check
 
 
 class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
@@ -1021,7 +1006,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
         return log_proba
 
-    @available_if(_estimator_has("decision_function"))
+    @available_if(_estimator_has("decision_function", ["estimators_", "estimator"]))
     def decision_function(self, X):
         """Average of the decision functions of the base classifiers.
 
