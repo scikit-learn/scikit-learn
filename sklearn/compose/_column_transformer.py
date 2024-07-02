@@ -133,7 +133,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         If True, the time elapsed while fitting each transformer will be
         printed as it is completed.
 
-    verbose_feature_names_out : bool | str | Callable[[str, str], str], default=True
+    verbose_feature_names_out : bool, str or Callable[[str, str], str], default=True
         If True, :meth:`ColumnTransformer.get_feature_names_out` will prefix
         all feature names with the name of the transformer that generated that
         feature. It is equivalent to setting
@@ -155,7 +155,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         .. versionchanged:: 1.6
             `verbose_feature_names_out` can be a callable or a string to be formatted.
-
 
     force_int_remainder_cols : bool, default=True
         Force the columns of the last entry of `transformers_`, which
