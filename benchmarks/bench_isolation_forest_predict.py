@@ -18,7 +18,7 @@ We compare the prediction time at the very end.
 
 Here are instructions for running this benchmark to compare runtime against main branch:
 
-1. Build and run on a branch, or main:
+1. Build and run on a branch or main, e.g. for a branch named `pr`:
 
 ```bash
 python bench_isolation_forest_predict.py bench ~/bench_results pr
