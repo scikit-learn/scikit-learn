@@ -48,9 +48,11 @@ Changelog
   instead of implicitly converting those inputs as regular NumPy arrays.
   :pr:`29119` by :user:`Olivier Grisel`.
 
-- |Fix| Fix a regression in :func:`metrics.accuracy_score` and in :func:`metrics.zero_one_loss`
-  causing an error for Array API dispatch with multilabel inputs.
-  :pr:`29269` by :user:`Yaroslav Korobko <Tialo>` and :pr:`29336` by :user:`Edoardo Abati <EdAbati>`.
+- |Fix| Fix a regression in :func:`metrics.accuracy_score` and in
+  :func:`metrics.zero_one_loss` causing an error for Array API dispatch with multilabel
+  inputs.
+  :pr:`29269` by :user:`Yaroslav Korobko <Tialo>` and
+  :pr:`29336` by :user:`Edoardo Abati <EdAbati>`.
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -72,7 +74,7 @@ Changelog
 
 - |Fix| Fix an issue in :func:`tree.export_graphviz` and :func:`tree.plot_tree`
   that could potentially result in exception or wrong results on 32bit OSes.
-  :pr:`` by :user:`Loïc Estève<lesteve>`.
+  :pr:`29327` by :user:`Loïc Estève<lesteve>`.
 
 :mod:`sklearn.utils`
 ....................
