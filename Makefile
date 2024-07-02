@@ -15,7 +15,7 @@ all:
 dev: dev-meson
 
 dev-meson:
-	pip install --verbose --no-build-isolation --editable . --check-build-dependencies --config-settings editable-verbose=true
+	pip install --verbose --no-build-isolation --editable . --config-settings editable-verbose=true
 
 clean: clean-meson
 
