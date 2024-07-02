@@ -2419,8 +2419,8 @@ def test_missing_values_best_splitter_dtc_on_equal_nodes_no_missing(criterion):
 
 @pytest.mark.parametrize("seed", range(3))
 @pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
-def test_missing_values_best_splitter_etc_on_equal_nodes_no_missing(criterion, seed):
-    """Check missing values goes to correct node during predictions for ExtraTree.
+def test_missing_values_random_splitter_etc_on_equal_nodes_no_missing(criterion, seed):
+    """Check missing values go to the correct node during predictions for ExtraTree.
 
     Since ETC use random splits, we use different seeds to verify that the
     left/right node is chosen correctly when the splits occur.
@@ -2457,10 +2457,10 @@ def test_missing_values_best_splitter_etc_on_equal_nodes_no_missing(criterion, s
 
 @pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
 def test_missing_values_random_splitter_on_equal_nodes_no_missing(criterion):
-    """Check missing values goes to correct node during predictions.
-
-    When there are no missing values during training, missing-values during
-    prediction
+    """Check missing values go to the correct node during predictions.
+    
+    This checks for the case where there are no missing values during training,
+    and missing values are only present during prediction.
     """
     X = np.array([[0, 1, 2, 3, 8, 9, 11, 12, 15]]).T
     y = np.array([0.1, 0.2, 0.3, 0.2, 1.4, 1.4, 1.5, 1.6, 2.6])

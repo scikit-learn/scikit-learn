@@ -872,8 +872,8 @@ cdef inline int node_split_random(
             best_proxy_improvement = current_proxy_improvement
             best_split = current_split  # copy
 
-        # Evaluate when there are missing values and all missing values goes
-        # to the right node and non-missing values goes to the left node.
+        # Evaluate when there are missing values and all missing values go
+        # to the right node and non-missing values go to the left node.
         if has_missing:
             p = end - n_missing
             n_left, n_right = end - start - n_missing, n_missing
