@@ -102,9 +102,6 @@ requires = [
     "scipy>=1.6.0",
 ]
 
-[tool.setuptools.dynamic]
-version = { attr = "sklearn.__init__.__version__" }
-
 [tool.black]
 line-length = 88
 target-version = ['py39', 'py310', 'py311']
