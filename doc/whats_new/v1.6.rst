@@ -77,6 +77,15 @@ more details.
   params to the underlying regressor.
   :pr:`29136` by :user:`Omar Salman <OmarManzoor>`.
 
+Dropping support for building with setuptools
+---------------------------------------------
+
+From scikit-learn 1.6 onwards, support for building with setuptools has been
+removed. Meson is the only supported way to build scikit-learn, see
+:ref:`Building from source <install_bleeding_edge>` for more details.
+
+:pr:`29400` by :user:`Loïc Estève <lesteve>`
+
 Dropping official support for PyPy
 ----------------------------------
 
