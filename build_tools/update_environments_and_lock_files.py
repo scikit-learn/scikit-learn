@@ -374,6 +374,13 @@ build_metadata_list = [
             # and numpy 2 that cause a segmentation fault in some examples. For
             # more details, see https://github.com/pola-rs/polars/issues/16998
             "numpy": "<2",
+            # TODO: this needs to be adapted when matplotlib 3.11 is out. In
+            # the meantime, this avoids a warning in matplotlib 3.9 boxplot
+            # labels has been renamed to tick_labels. Possible options:
+            # - bump minimum matplotlib supported versions to 3.9 at one point
+            # - complicate the example code to do the right thing depending on
+            #   maplotlib version
+            "matplotlib": "<3.9",
         },
     },
     {
