@@ -86,8 +86,8 @@ ctypedef void (*openblas_threads_callback)(int, openblas_dojob_callback, int, si
 ctypedef void (*openblas_set_threads_callback_function_type)(openblas_threads_callback)
 
 
-# Callback for OpenBLAS to make it use an OpenMP backend, took from
-# https://github.com/OpenMathLib/OpenBLAS/pull/4577#issue-2204960832
+# Callback for OpenBLAS to make it use an OpenMP backend, took from
+# https://github.com/OpenMathLib/OpenBLAS/pull/4577#issue-2204960832
 cdef void openblas_openmp_callback(
     int sync,
     openblas_dojob_callback dojob,
@@ -108,7 +108,7 @@ def set_openblas_openmp_callback():
     controller = _get_threadpool_controller()
     openblas_controllers = controller.select(internal_api="openblas").lib_controllers
 
-    cdef openblas_set_threads_callback_function_type f_ptr 
+    cdef openblas_set_threads_callback_function_type f_ptr
 
     for ct in openblas_controllers:
         lib = ct.dynlib
