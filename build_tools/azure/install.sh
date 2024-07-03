@@ -140,9 +140,10 @@ scikit_learn_install() {
         # TODO Always add --check-build-dependencies when all CI builds have
         # pip >= 22.1.1. At the time of writing, two CI builds (debian32_atlas and
         # ubuntu_atlas) have an older pip
-        if pip install --help | grep check-build-dependencies; then
-            ADDITIONAL_PIP_OPTIONS="$ADDITIONAL_PIP_OPTIONS --check-build-dependencies"
-        fi
+        # TODO temporary hack while waiting for version checks inside meson.build
+        # if [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
+        #     ADDITIONAL_PIP_OPTIONS="$ADDITIONAL_PIP_OPTIONS --check-build-dependencies"
+        # fi
         # Use the pre-installed build dependencies and build directly in the
         # current environment.
         pip install --verbose --no-build-isolation --editable . $ADDITIONAL_PIP_OPTIONS

@@ -208,6 +208,9 @@ def test_import_all_consistency():
     for modname in submods + ["sklearn"]:
         if ".tests." in modname:
             continue
+        # Avoid test suite depending on setuptools
+        if "sklearn._build_utils" in modname:
+            continue
         package = __import__(modname, fromlist="dummy")
         for name in getattr(package, "__all__", ()):
             assert hasattr(package, name), "Module '{0}' has no attribute '{1}'".format(
@@ -217,7 +220,7 @@ def test_import_all_consistency():
 
 def test_root_import_all_completeness():
     sklearn_path = [os.path.dirname(sklearn.__file__)]
-    EXCEPTIONS = ("utils", "tests", "base", "setup", "conftest")
+    EXCEPTIONS = ("utils", "tests", "base", "conftest")
     for _, modname, _ in pkgutil.walk_packages(
         path=sklearn_path, onerror=lambda _: None
     ):
@@ -258,7 +261,9 @@ def test_all_tests_are_importable():
     assert missing_tests == [], (
         "{0} do not have `tests` subpackages. "
         "Perhaps they require "
-        "__init__.py".format(missing_tests)
+        "__init__.py or a meson.build "
+        "in the parent "
+        "directory".format(missing_tests)
     )
 
 
