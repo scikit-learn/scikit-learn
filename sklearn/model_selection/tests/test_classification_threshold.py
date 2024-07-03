@@ -18,7 +18,7 @@ from sklearn.metrics import (
     fbeta_score,
     make_scorer,
 )
-from sklearn.metrics._classification_threshold import _CurveScorer
+from sklearn.metrics._scorer import _CurveScorer
 from sklearn.model_selection import (
     FixedThresholdClassifier,
     StratifiedShuffleSplit,

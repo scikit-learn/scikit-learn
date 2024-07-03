@@ -15,7 +15,7 @@ from ..metrics import (
     check_scoring,
     get_scorer_names,
 )
-from ..metrics._classification_threshold import (
+from ..metrics._scorer import (
     _CurveScorer,
     _threshold_scores_to_class_labels,
 )
