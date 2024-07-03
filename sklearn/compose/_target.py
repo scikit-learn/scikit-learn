@@ -198,6 +198,10 @@ class TransformedTargetRegressor(
                 validate=True,
                 check_inverse=self.check_inverse,
             )
+            # to force `_get_output_config()` to use the `set_output` setting of
+            # FunctionTransformer's instance and not the global configuration from
+            # `set_config`:
+            self.transformer_.set_output(transform="default")
         # XXX: sample_weight is not currently passed to the
         # transformer. However, if transformer starts using sample_weight, the
         # code should be modified accordingly. At the time to consider the
