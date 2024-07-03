@@ -512,7 +512,8 @@ def test_forest_classifier_oob(
         test_score = classifier.score(X_test, y_test)
         assert classifier.oob_score_ >= lower_bound_accuracy
 
-    assert abs(test_score - classifier.oob_score_) <= 0.1
+    diff = abs(test_score - classifier.oob_score_)
+    assert diff <= 0.1, f"{diff=}"
 
     assert hasattr(classifier, "oob_score_")
     assert not hasattr(classifier, "oob_prediction_")
