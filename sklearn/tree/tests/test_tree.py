@@ -2455,43 +2455,6 @@ def test_missing_values_random_splitter_etc_on_equal_nodes_no_missing(criterion,
         assert_allclose(y_pred_right, y_pred)
 
 
-@pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
-def test_missing_values_random_splitter_on_equal_nodes_no_missing(criterion):
-    """Check missing values go to the correct node during predictions.
-
-    This checks for the case where there are no missing values during training,
-    and missing values are only present during prediction.
-    """
-    X = np.array([[0, 1, 2, 3, 8, 9, 11, 12, 15]]).T
-    y = np.array([0.1, 0.2, 0.3, 0.2, 1.4, 1.4, 1.5, 1.6, 2.6])
-
-    dtc = ExtraTreeRegressor(random_state=42, max_depth=2, criterion=criterion)
-    dtc.fit(X, y)
-
-    # Goes to right node because it has the most data points
-    decision_path = dtc.decision_path([[np.nan]])
-
-    # Note: when max_leaf_nodes is not defined, the implementation will build
-    # the tree using DFS
-    # For a 7-node binary tree with DFS traversal, this results in the following
-    # decision-path of the nodes, which is the right-side view of the binary tree
-    expected_decision_path = [[1, 0, 0, 0, 1, 0, 1]]
-    assert_array_equal(decision_path.toarray(), expected_decision_path)
-
-    # BFS building of the binary tree
-    dtc = ExtraTreeRegressor(
-        random_state=42, max_depth=2, criterion=criterion, max_leaf_nodes=5
-    )
-    dtc.fit(X, y)
-    decision_path = dtc.decision_path([[np.nan]])
-    # Note: when max_leaf_nodes is defined, the implementation will build
-    # the tree using BFS
-    # For a 7-node binary tree with BFS traversal, this results in the following
-    # decision-path of the nodes, which is the right-side view of the binary tree
-    expected_decision_path = [[1, 0, 1, 0, 1, 0, 0]]
-    assert_array_equal(decision_path.toarray(), expected_decision_path)
-
-
 @pytest.mark.parametrize("criterion", ["entropy", "gini"])
 def test_missing_values_best_splitter_three_classes(criterion):
     """Test when missing values are uniquely present in a class among 3 classes."""
