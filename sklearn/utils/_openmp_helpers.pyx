@@ -1,5 +1,9 @@
 import os
 from joblib import cpu_count
+from cython.parallel import prange
+from ctypes import addressof
+
+from.parallel import _get_threadpool_controller
 
 
 # Module level cache for cpu_count as we do not expect this to change during
@@ -75,3 +79,46 @@ cpdef _openmp_effective_n_threads(n_threads=None, only_physical_cores=True):
         return max(1, max_n_threads + n_threads + 1)
 
     return n_threads
+
+
+ctypedef void (*openblas_dojob_callback)(int, void*, int) noexcept nogil
+ctypedef void (*openblas_threads_callback)(int, openblas_dojob_callback, int, size_t, void*, int)
+ctypedef void (*openblas_set_threads_callback_function_type)(openblas_threads_callback)
+
+
+# Callback for OpenBLAS to make it use an OpenMP backend, took from
+# https://github.com/OpenMathLib/OpenBLAS/pull/4577#issue-2204960832
+cdef void openblas_openmp_callback(
+    int sync,
+    openblas_dojob_callback dojob,
+    int numjobs,
+    size_t jobdata_elsize,
+    void *jobdata,
+    int dojob_data
+) noexcept nogil:
+    cdef int i
+    cdef void *element_adrr
+
+    for i in prange(numjobs, nogil=True):
+        element_adrr = <void *>(((<char *>jobdata) + (<unsigned>i) * jobdata_elsize))
+        dojob(i, element_adrr, dojob_data)
+
+
+def set_openblas_openmp_callback():
+    controller = _get_threadpool_controller()
+    openblas_controllers = controller.select(internal_api="openblas").lib_controllers
+
+    cdef openblas_set_threads_callback_function_type f_ptr 
+
+    for ct in openblas_controllers:
+        lib = ct.dynlib
+
+        # openblas_set_threads_callback_function is available since v0.3.28
+        if hasattr(lib, "openblas_set_threads_callback_function"):
+            func = lib.openblas_set_threads_callback_function
+
+            # cast to the correct function pointer type
+            f_ptr = (<openblas_set_threads_callback_function_type*><size_t>addressof(func))[0]
+            f_ptr(openblas_openmp_callback)
+
+            print("OpenBLAS OpenMP backend callback set")
