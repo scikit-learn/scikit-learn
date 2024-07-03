@@ -29,6 +29,15 @@ Version 1.4.1
 
 **February 2024**
 
+Changed models
+--------------
+
+- |API| The `tree_.value` attribute in :class:`tree.DecisionTreeClassifier`,
+  :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeClassifier` and
+  :class:`tree.ExtraTreeRegressor` changed from an weighted absolute count
+  of number of samples to a weighted fraction of the total number of samples.
+  :pr:`27639` by :user:`Samuel Ronsin <samronsin>`.
+
 Metadata Routing
 ----------------
 
