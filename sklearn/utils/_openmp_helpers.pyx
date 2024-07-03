@@ -111,14 +111,20 @@ def set_openblas_openmp_callback():
     cdef openblas_set_threads_callback_function_type f_ptr
 
     for ct in openblas_controllers:
+        if not hasattr(ct, "dynlib"):
+            # too old version of threadpoolctl
+            continue
+
         lib = ct.dynlib
 
-        # openblas_set_threads_callback_function is available since v0.3.28
-        if hasattr(lib, "openblas_set_threads_callback_function"):
-            func = lib.openblas_set_threads_callback_function
+        if not hasattr(lib, "openblas_set_threads_callback_function"):
+            # openblas_set_threads_callback_function is available since v0.3.28
+            continue
 
-            # cast to the correct function pointer type
-            f_ptr = (<openblas_set_threads_callback_function_type*><size_t>addressof(func))[0]
-            f_ptr(openblas_openmp_callback)
+        func = lib.openblas_set_threads_callback_function
 
-            print("OpenBLAS OpenMP backend callback set")
+        # cast to the correct function pointer type
+        f_ptr = (<openblas_set_threads_callback_function_type*><size_t>addressof(func))[0]
+        f_ptr(openblas_openmp_callback)
+
+        print("OpenBLAS OpenMP backend callback set")
