@@ -180,7 +180,7 @@ build_metadata_list = [
         "channels": ["defaults"],
         "conda_dependencies": remove_from(
             common_dependencies,
-            ["pandas", "threadpoolctl", "pip", "ninja", "meson-python"],
+            ["pandas", "threadpoolctl", "pip"],
         )
         + ["ccache"],
         "package_constraints": {
