@@ -107,10 +107,6 @@ scikit_learn_install() {
     setup_ccache
     show_installed_libraries
 
-    # Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
-    # workers with 2 cores when building the compiled extensions of scikit-learn.
-    export SKLEARN_BUILD_PARALLEL=3
-
     if [[ "$UNAMESTR" == "Darwin" && "$SKLEARN_TEST_NO_OPENMP" == "true" ]]; then
         # Without openmp, we use the system clang. Here we use /usr/bin/ar
         # instead because llvm-ar errors
@@ -129,9 +125,7 @@ scikit_learn_install() {
         export LDFLAGS="$LDFLAGS -Wl,--sysroot=/"
     fi
 
-    if [[ "$BUILD_WITH_SETUPTOOLS" == "true" ]]; then
-        python setup.py develop
-    elif [[ "$PIP_BUILD_ISOLATION" == "true" ]]; then
+    if [[ "$PIP_BUILD_ISOLATION" == "true" ]]; then
         # Check that pip can automatically build scikit-learn with the build
         # dependencies specified in pyproject.toml using an isolated build
         # environment:
