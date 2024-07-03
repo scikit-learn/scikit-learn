@@ -18,16 +18,27 @@ For a short description of the main highlights of the release, please refer to
 Version 1.5.1
 =============
 
-**TODO**
-
-Changelog
----------
+**July 2024**
 
 Changes impacting many modules
 ------------------------------
 
+- |Fix| Fixed a regression in the validation of the input data of all estimators where
+  an unexpected error was raised when passing a DataFrame backed by a read-only buffer.
+  :pr:`29018` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 - |Fix| Fixed a regression causing a dead-lock at import time in some settings.
   :pr:`29235` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+Changelog
+---------
+
+:mod:`sklearn.compose`
+......................
+
+- |Efficiency| Fix a performance regression in :class:`compose.ColumnTransformer`
+  where the full input data was copied for each transformer when `n_jobs > 1`.
+  :pr:`29330` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.metrics`
 ......................
@@ -36,6 +47,12 @@ Changes impacting many modules
   with array API dispatched disabled would complain about non-CPU devices
   instead of implicitly converting those inputs as regular NumPy arrays.
   :pr:`29119` by :user:`Olivier Grisel`.
+
+- |Fix| Fix a regression in :func:`metrics.accuracy_score` and in
+  :func:`metrics.zero_one_loss` causing an error for Array API dispatch with multilabel
+  inputs.
+  :pr:`29269` by :user:`Yaroslav Korobko <Tialo>` and
+  :pr:`29336` by :user:`Edoardo Abati <EdAbati>`.
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -48,12 +65,25 @@ Changes impacting many modules
   grids that have estimators as parameter values.
   :pr:`29179` by :user:`Marco Gorelli<MarcoGorelli>`.
 
-:mod:`sklearn.metrics`
-..............................
+- |Fix| Fix a regression in :class:`model_selection.GridSearchCV` for parameter
+  grids that have arrays of different sizes as parameter values.
+  :pr:`29314` by :user:`Marco Gorelli<MarcoGorelli>`.
 
-- |Fix| Fix a regression in :func:`metrics.zero_one_loss` causing an error
-  for Array API dispatch with multilabel inputs.
-  :pr:`29269` by :user:`Yaroslav Korobko <Tialo>`.
+:mod:`sklearn.tree`
+...................
+
+- |Fix| Fix an issue in :func:`tree.export_graphviz` and :func:`tree.plot_tree`
+  that could potentially result in exception or wrong results on 32bit OSes.
+  :pr:`29327` by :user:`Loïc Estève<lesteve>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |API| :func:`utils.validation.check_array` has a new parameter, `force_writeable`, to
+  control the writeability of the output array. If set to `True`, the output array will
+  be guaranteed to be writeable and a copy will be made if the input array is read-only.
+  If set to `False`, no guarantee is made about the writeability of the output array.
+  :pr:`29018` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 .. _changes_1_5:
 
