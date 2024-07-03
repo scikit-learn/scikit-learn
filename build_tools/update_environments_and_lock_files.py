@@ -370,6 +370,10 @@ build_metadata_list = [
         ],
         "package_constraints": {
             "python": "3.9",
+            # TOOD: temporary pin numpy<2 to work around an issue with polars
+            # and numpy 2 that cause a segmentation fault in some examples. For
+            # more details, see https://github.com/pola-rs/polars/issues/16998
+            "numpy": "<2",
         },
     },
     {
