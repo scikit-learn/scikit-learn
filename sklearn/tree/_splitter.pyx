@@ -864,10 +864,10 @@ cdef inline int node_split_random(
             # if there are no missing values in the training data, during
             # test time, we send missing values to the branch that contains
             # the most samples during training time.
-            if n_missing == 0:
-                current_split.missing_go_to_left = n_left > n_right
-            else:
+            if has_missing:
                 current_split.missing_go_to_left = missing_go_to_left
+            else:
+                current_split.missing_go_to_left = n_left > n_right
 
             best_proxy_improvement = current_proxy_improvement
             best_split = current_split  # copy
