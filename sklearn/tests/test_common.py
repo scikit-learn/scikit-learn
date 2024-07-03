@@ -208,7 +208,7 @@ def test_import_all_consistency():
     for modname in submods + ["sklearn"]:
         if ".tests." in modname:
             continue
-        # Avoid test suite depending on setuptools
+        # Avoid test suite depending on build dependencies, for example Cython
         if "sklearn._build_utils" in modname:
             continue
         package = __import__(modname, fromlist="dummy")
