@@ -178,7 +178,7 @@ class Pipeline(_BaseComposition):
             - `"default"`: Default output format of a transformer
             - `"pandas"`: DataFrame output
             - `"polars"`: Polars output
-            - `None`: Transform configuration is unchanged
+            - `None`: Transform configuration is unchanged, global configuration is used
 
             .. versionadded:: 1.4
                 `"polars"` option was added.
@@ -1456,7 +1456,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             - `"default"`: Default output format of a transformer
             - `"pandas"`: DataFrame output
             - `"polars"`: Polars output
-            - `None`: Transform configuration is unchanged
+            - `None`: Transform configuration is unchanged, global configuration is used
 
         Returns
         -------

@@ -142,7 +142,7 @@ def set_config(
         - `"default"`: Default output format of a transformer
         - `"pandas"`: DataFrame output
         - `"polars"`: Polars output
-        - `None`: Transform configuration is unchanged
+        - `None`: Transform configuration is unchanged, global configuration is used
 
         .. versionadded:: 1.2
         .. versionadded:: 1.4
@@ -297,7 +297,7 @@ def config_context(
         - `"default"`: Default output format of a transformer
         - `"pandas"`: DataFrame output
         - `"polars"`: Polars output
-        - `None`: Transform configuration is unchanged
+        - `None`: Transform configuration is unchanged, global configuration is used
 
         .. versionadded:: 1.2
         .. versionadded:: 1.4
