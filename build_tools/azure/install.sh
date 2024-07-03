@@ -38,6 +38,8 @@ pre_python_environment_install() {
         apt-get install -y python3-dev python3-numpy python3-scipy \
                 python3-matplotlib libatlas3-base libatlas-base-dev \
                 python3-virtualenv python3-pandas ccache git
+        # TODO system pip is too old to know what to do with pyproject.toml ...
+        python3 -m pip install pip>=21.1
 
     # TODO for now we use CPython 3.13 from Ubuntu deadsnakes PPA. When CPython
     # 3.13 is released (scheduled October 2024) we can use something more
