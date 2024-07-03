@@ -540,7 +540,7 @@ class PartialDependenceDisplay:
         # Use check_array only on lists and other non-array-likes / sparse. Do not
         # convert DataFrame into a NumPy array.
         if not (hasattr(X, "__array__") or sparse.issparse(X)):
-            X = check_array(X, force_all_finite="allow-nan", dtype=object)
+            X = check_array(X, ensure_all_finite="allow-nan", dtype=object)
         n_features = X.shape[1]
 
         feature_names = _check_feature_names(X, feature_names)

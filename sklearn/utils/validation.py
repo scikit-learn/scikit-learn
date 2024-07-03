@@ -212,7 +212,9 @@ def assert_all_finite(
     )
 
 
-def as_float_array(X, *, copy=True, force_all_finite=True):
+def as_float_array(
+    X, *, copy=True, force_all_finite="deprecated", ensure_all_finite=True
+):
     """Convert an array-like to an array of floats.
 
     The new dtype will be np.float32 or np.float64, depending on the original
@@ -229,19 +231,41 @@ def as_float_array(X, *, copy=True, force_all_finite=True):
         returned if X's dtype is not a floating point type.
 
     force_all_finite : bool or 'allow-nan', default=True
-        Whether to raise an error on np.inf, np.nan, pd.NA in X. The
+        Whether to raise an error on np.inf, np.nan, pd.NA in array. The
         possibilities are:
 
-        - True: Force all values of X to be finite.
-        - False: accepts np.inf, np.nan, pd.NA in X.
-        - 'allow-nan': accepts only np.nan and pd.NA values in X. Values cannot
-          be infinite.
+        - True: Force all values of array to be finite.
+        - False: accepts np.inf, np.nan, pd.NA in array.
+        - 'allow-nan': accepts only np.nan and pd.NA values in array. Values
+          cannot be infinite.
 
         .. versionadded:: 0.20
            ``force_all_finite`` accepts the string ``'allow-nan'``.
 
         .. versionchanged:: 0.23
            Accepts `pd.NA` and converts it into `np.nan`
+
+        .. deprecated:: 1.6
+           `force_all_finite` was renamed to `ensure_all_finite` and will be removed
+           in 1.8.
+
+    ensure_all_finite : bool or 'allow-nan', default=True
+        Whether to raise an error on np.inf, np.nan, pd.NA in array. The
+        possibilities are:
+
+        - True: Force all values of array to be finite.
+        - False: accepts np.inf, np.nan, pd.NA in array.
+        - 'allow-nan': accepts only np.nan and pd.NA values in array. Values
+          cannot be infinite.
+
+        .. versionadded:: 0.20
+           Accepts the string ``'allow-nan'``.
+
+        .. versionchanged:: 0.23
+           Accepts `pd.NA` and converts it into `np.nan`
+
+        .. versionadded:: 1.6
+           `force_all_finite` was renamed to `ensure_all_finite`.
 
     Returns
     -------
@@ -256,6 +280,14 @@ def as_float_array(X, *, copy=True, force_all_finite=True):
     >>> as_float_array(array)
     array([0., 0., 1., 2., 2.])
     """
+    if force_all_finite != "deprecated":
+        warnings.warn(
+            "'force_all_finite' was renamed to 'ensure_all_finite' in 1.6 and will be "
+            "removed in 1.8",
+            FutureWarning,
+        )
+        ensure_all_finite = force_all_finite
+
     if isinstance(X, np.matrix) or (
         not isinstance(X, np.ndarray) and not sp.issparse(X)
     ):
@@ -264,7 +296,7 @@ def as_float_array(X, *, copy=True, force_all_finite=True):
             accept_sparse=["csr", "csc", "coo"],
             dtype=np.float64,
             copy=copy,
-            force_all_finite=force_all_finite,
+            ensure_all_finite=ensure_all_finite,
             ensure_2d=False,
         )
     elif sp.issparse(X) and X.dtype in [np.float32, np.float64]:
@@ -514,7 +546,7 @@ def _ensure_sparse_format(
     accept_sparse,
     dtype,
     copy,
-    force_all_finite,
+    ensure_all_finite,
     accept_large_sparse,
     estimator_name=None,
     input_name="",
@@ -542,7 +574,7 @@ def _ensure_sparse_format(
         Whether a forced copy will be triggered. If copy=False, a copy might
         be triggered by a conversion.
 
-    force_all_finite : bool or 'allow-nan'
+    ensure_all_finite : bool or 'allow-nan'
         Whether to raise an error on np.inf, np.nan, pd.NA in X. The
         possibilities are:
 
@@ -552,7 +584,7 @@ def _ensure_sparse_format(
           be infinite.
 
         .. versionadded:: 0.20
-           ``force_all_finite`` accepts the string ``'allow-nan'``.
+           ``ensure_all_finite`` accepts the string ``'allow-nan'``.
 
         .. versionchanged:: 0.23
            Accepts `pd.NA` and converts it into `np.nan`
@@ -615,7 +647,7 @@ def _ensure_sparse_format(
         # force copy
         sparse_container = sparse_container.copy()
 
-    if force_all_finite:
+    if ensure_all_finite:
         if not hasattr(sparse_container, "data"):
             warnings.warn(
                 f"Can't check {sparse_container.format} sparse matrix for nan or inf.",
@@ -624,7 +656,7 @@ def _ensure_sparse_format(
         else:
             _assert_all_finite(
                 sparse_container.data,
-                allow_nan=force_all_finite == "allow-nan",
+                allow_nan=ensure_all_finite == "allow-nan",
                 estimator_name=estimator_name,
                 input_name=input_name,
             )
@@ -718,7 +750,8 @@ def check_array(
     order=None,
     copy=False,
     force_writeable=False,
-    force_all_finite=True,
+    force_all_finite="deprecated",
+    ensure_all_finite=True,
     ensure_2d=True,
     allow_nd=False,
     ensure_min_samples=1,
@@ -790,6 +823,28 @@ def check_array(
         .. versionchanged:: 0.23
            Accepts `pd.NA` and converts it into `np.nan`
 
+        .. deprecated:: 1.6
+           `force_all_finite` was renamed to `ensure_all_finite` and will be removed
+           in 1.8.
+
+    ensure_all_finite : bool or 'allow-nan', default=True
+        Whether to raise an error on np.inf, np.nan, pd.NA in array. The
+        possibilities are:
+
+        - True: Force all values of array to be finite.
+        - False: accepts np.inf, np.nan, pd.NA in array.
+        - 'allow-nan': accepts only np.nan and pd.NA values in array. Values
+          cannot be infinite.
+
+        .. versionadded:: 0.20
+           Accepts the string ``'allow-nan'``.
+
+        .. versionchanged:: 0.23
+           Accepts `pd.NA` and converts it into `np.nan`
+
+        .. versionadded:: 1.6
+           `force_all_finite` was renamed to `ensure_all_finite`.
+
     ensure_2d : bool, default=True
         Whether to raise a value error if array is not 2D.
 
@@ -831,6 +886,14 @@ def check_array(
     >>> X_checked
     array([[1, 2, 3], [4, 5, 6]])
     """
+    if force_all_finite != "deprecated":
+        warnings.warn(
+            "'force_all_finite' was renamed to 'ensure_all_finite' in 1.6 and will be "
+            "removed in 1.8",
+            FutureWarning,
+        )
+        ensure_all_finite = force_all_finite
+
     if isinstance(array, np.matrix):
         raise TypeError(
             "np.matrix is not supported. Please convert to a numpy array with "
@@ -924,11 +987,10 @@ def check_array(
         # Since we converted here, we do not need to convert again later
         dtype = None
 
-    if force_all_finite not in (True, False, "allow-nan"):
+    if ensure_all_finite not in (True, False, "allow-nan"):
         raise ValueError(
-            'force_all_finite should be a bool or "allow-nan". Got {!r} instead'.format(
-                force_all_finite
-            )
+            "ensure_all_finite should be a bool or 'allow-nan'. Got "
+            f"{ensure_all_finite!r} instead."
         )
 
     if dtype is not None and _is_numpy_namespace(xp):
@@ -967,7 +1029,7 @@ def check_array(
             accept_sparse=accept_sparse,
             dtype=dtype,
             copy=copy,
-            force_all_finite=force_all_finite,
+            ensure_all_finite=ensure_all_finite,
             accept_large_sparse=accept_large_sparse,
             estimator_name=estimator_name,
             input_name=input_name,
@@ -1054,12 +1116,12 @@ def check_array(
                 % (array.ndim, estimator_name)
             )
 
-        if force_all_finite:
+        if ensure_all_finite:
             _assert_all_finite(
                 array,
                 input_name=input_name,
                 estimator_name=estimator_name,
-                allow_nan=force_all_finite == "allow-nan",
+                allow_nan=ensure_all_finite == "allow-nan",
             )
 
         if copy:
@@ -1155,7 +1217,8 @@ def check_X_y(
     order=None,
     copy=False,
     force_writeable=False,
-    force_all_finite=True,
+    force_all_finite="deprecated",
+    ensure_all_finite=True,
     ensure_2d=True,
     allow_nd=False,
     multi_output=False,
@@ -1217,20 +1280,41 @@ def check_X_y(
         .. versionadded:: 1.6
 
     force_all_finite : bool or 'allow-nan', default=True
-        Whether to raise an error on np.inf, np.nan, pd.NA in X. This parameter
-        does not influence whether y can have np.inf, np.nan, pd.NA values.
-        The possibilities are:
+        Whether to raise an error on np.inf, np.nan, pd.NA in array. The
+        possibilities are:
 
-        - True: Force all values of X to be finite.
-        - False: accepts np.inf, np.nan, pd.NA in X.
-        - 'allow-nan': accepts only np.nan or pd.NA values in X. Values cannot
-          be infinite.
+        - True: Force all values of array to be finite.
+        - False: accepts np.inf, np.nan, pd.NA in array.
+        - 'allow-nan': accepts only np.nan and pd.NA values in array. Values
+          cannot be infinite.
 
         .. versionadded:: 0.20
            ``force_all_finite`` accepts the string ``'allow-nan'``.
 
         .. versionchanged:: 0.23
            Accepts `pd.NA` and converts it into `np.nan`
+
+        .. deprecated:: 1.6
+           `force_all_finite` was renamed to `ensure_all_finite` and will be removed
+           in 1.8.
+
+    ensure_all_finite : bool or 'allow-nan', default=True
+        Whether to raise an error on np.inf, np.nan, pd.NA in array. The
+        possibilities are:
+
+        - True: Force all values of array to be finite.
+        - False: accepts np.inf, np.nan, pd.NA in array.
+        - 'allow-nan': accepts only np.nan and pd.NA values in array. Values
+          cannot be infinite.
+
+        .. versionadded:: 0.20
+           Accepts the string ``'allow-nan'``.
+
+        .. versionchanged:: 0.23
+           Accepts `pd.NA` and converts it into `np.nan`
+
+        .. versionadded:: 1.6
+           `force_all_finite` was renamed to `ensure_all_finite`.
 
     ensure_2d : bool, default=True
         Whether to raise a value error if X is not 2D.
@@ -1292,6 +1376,14 @@ def check_X_y(
             f"{estimator_name} requires y to be passed, but the target y is None"
         )
 
+    if force_all_finite != "deprecated":
+        warnings.warn(
+            "'force_all_finite' was renamed to 'ensure_all_finite' in 1.6 and will be "
+            "removed in 1.8",
+            FutureWarning,
+        )
+        ensure_all_finite = force_all_finite
+
     X = check_array(
         X,
         accept_sparse=accept_sparse,
@@ -1300,7 +1392,7 @@ def check_X_y(
         order=order,
         copy=copy,
         force_writeable=force_writeable,
-        force_all_finite=force_all_finite,
+        ensure_all_finite=ensure_all_finite,
         ensure_2d=ensure_2d,
         allow_nd=allow_nd,
         ensure_min_samples=ensure_min_samples,
@@ -1322,7 +1414,7 @@ def _check_y(y, multi_output=False, y_numeric=False, estimator=None):
         y = check_array(
             y,
             accept_sparse="csr",
-            force_all_finite=True,
+            ensure_all_finite=True,
             ensure_2d=False,
             dtype=None,
             input_name="y",
@@ -1377,7 +1469,7 @@ def column_or_1d(y, *, dtype=None, warn=False):
         ensure_2d=False,
         dtype=dtype,
         input_name="y",
-        force_all_finite=False,
+        ensure_all_finite=False,
         ensure_min_samples=0,
     )
 

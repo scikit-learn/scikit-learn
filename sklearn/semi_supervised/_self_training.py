@@ -208,7 +208,7 @@ class SelfTrainingClassifier(
         # we need row slicing support for sparse matrices, but costly finiteness check
         # can be delegated to the base estimator.
         X, y = self._validate_data(
-            X, y, accept_sparse=["csr", "csc", "lil", "dok"], force_all_finite=False
+            X, y, accept_sparse=["csr", "csc", "lil", "dok"], ensure_all_finite=False
         )
 
         self.base_estimator_ = clone(self.base_estimator)
@@ -315,7 +315,7 @@ class SelfTrainingClassifier(
         X = self._validate_data(
             X,
             accept_sparse=True,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
         return self.base_estimator_.predict(X)
@@ -338,7 +338,7 @@ class SelfTrainingClassifier(
         X = self._validate_data(
             X,
             accept_sparse=True,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
         return self.base_estimator_.predict_proba(X)
@@ -361,7 +361,7 @@ class SelfTrainingClassifier(
         X = self._validate_data(
             X,
             accept_sparse=True,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
         return self.base_estimator_.decision_function(X)
@@ -384,7 +384,7 @@ class SelfTrainingClassifier(
         X = self._validate_data(
             X,
             accept_sparse=True,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
         return self.base_estimator_.predict_log_proba(X)
@@ -410,7 +410,7 @@ class SelfTrainingClassifier(
         X = self._validate_data(
             X,
             accept_sparse=True,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
         return self.base_estimator_.score(X, y)

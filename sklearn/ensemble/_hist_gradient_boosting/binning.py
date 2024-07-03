@@ -193,7 +193,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
                 )
             )
 
-        X = check_array(X, dtype=[X_DTYPE], force_all_finite=False)
+        X = check_array(X, dtype=[X_DTYPE], ensure_all_finite=False)
         max_bins = self.n_bins - 1
 
         rng = check_random_state(self.random_state)
@@ -276,7 +276,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         X_binned : array-like of shape (n_samples, n_features)
             The binned data (fortran-aligned).
         """
-        X = check_array(X, dtype=[X_DTYPE], force_all_finite=False)
+        X = check_array(X, dtype=[X_DTYPE], ensure_all_finite=False)
         check_is_fitted(self)
         if X.shape[1] != self.n_bins_non_missing_.shape[0]:
             raise ValueError(

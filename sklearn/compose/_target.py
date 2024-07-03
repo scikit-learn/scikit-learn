@@ -263,7 +263,7 @@ class TransformedTargetRegressor(
             y,
             input_name="y",
             accept_sparse=False,
-            force_all_finite=True,
+            ensure_all_finite=True,
             ensure_2d=False,
             dtype="numeric",
             allow_nd=True,

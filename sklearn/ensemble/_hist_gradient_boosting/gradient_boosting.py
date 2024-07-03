@@ -262,7 +262,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         """
         # If there is a preprocessor, we let the preprocessor handle the validation.
         # Otherwise, we validate the data ourselves.
-        check_X_kwargs = dict(dtype=[X_DTYPE], force_all_finite=False)
+        check_X_kwargs = dict(dtype=[X_DTYPE], ensure_all_finite=False)
         if not reset:
             if self._preprocessor is None:
                 return self._validate_data(X, reset=False, **check_X_kwargs)
