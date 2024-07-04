@@ -122,6 +122,20 @@ Changelog
   can be silenced using the `reg_param` attribute.
   :pr:`19731` by :user:`Alihan Zihna <azihna>`.
 
+:mod:`sklearn.ensemble`
+.......................
+
+- |Efficiency| Small runtime improvement of fitting
+  :class:`ensemble.HistGradientBoostingClassifier` and :class:`ensemble.HistGradientBoostingRegressor`
+  by parallelizing the initial search for bin thresholds
+  :pr:`28064` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+- |Efficiency| :class:`ensemble.IsolationForest` now runs parallel jobs
+  during :term:`predict` offering a speedup of up to 2-4x on sample sizes
+  larger than 2000 using `joblib`.
+  :pr:`28622` by :user:`Adam Li <adam2392>` and
+  :user:`Sérgio Pereira <sergiormpereira>`.
+
 :mod:`sklearn.impute`
 .....................
 
