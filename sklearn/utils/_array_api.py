@@ -987,3 +987,19 @@ def _count_nonzero(X, xp, device, axis=None, sample_weight=None):
 
     zero_scalar = xp.asarray(0, device=device, dtype=weights.dtype)
     return xp.sum(xp.where(X != 0, weights, zero_scalar), axis=axis)
+
+
+def _cumulative_sum1d(array, xp, device):
+    """Cumulative sum of a 1D array.
+
+    Included in the v2023.12 of the Array API spec.
+    https://data-apis.org/array-api/latest/API_specification/generated/array_api.cumulative_sum.html
+    """
+    print(type(array))
+    array = _ravel(array, xp)
+    # PyTorch doesn't define `size` in an Array API compatible way
+    # https://data-apis.org/array-api-compat/helper-functions.html#array_api_compat.size
+    array_size = xp.size(array) if hasattr(xp, "size") else array.size
+    return xp.asarray(
+        [xp.sum(array[: i + 1]) for i in range(array_size)], device=device
+    )
