@@ -29,8 +29,8 @@ from ..utils import (
 )
 from ..utils._array_api import (
     _average,
+    _cumulative_sum1d,
     _is_numpy_namespace,
-    _ravel,
     get_namespace,
     get_namespace_and_device,
 )
@@ -1520,7 +1520,7 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_base=2, ignore_ties=False):
         ranked = y_true[np.arange(ranking.shape[0])[:, np.newaxis], ranking]
         cumulative_gains = discount.dot(ranked.T)
     else:
-        discount_cumsum = _cumulative_sum(discount, xp)
+        discount_cumsum = _cumulative_sum1d(discount, xp, device_)
         cumulative_gains = [
             _tie_averaged_dcg(y_t, y_s, discount_cumsum)
             # TODO: zip doesn't seem to work with array_api_strict
@@ -1529,11 +1529,6 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_base=2, ignore_ties=False):
     if _is_numpy_namespace(xp):
         return np.asarray(cumulative_gains)
     return xp.asarray(cumulative_gains, device=device_)
-
-
-def _cumulative_sum(arr, xp):
-    arr = _ravel(arr, xp)
-    return xp.asarray([xp.sum(arr[: i + 1]) for i in range(arr.size)])
 
 
 def _tie_averaged_dcg(y_true, y_score, discount_cumsum):
@@ -1587,7 +1582,7 @@ def _tie_averaged_dcg(y_true, y_score, discount_cumsum):
     _, counts = xp.unique_counts(-y_score)
     _, inv = xp.unique_inverse(-y_score)
     ranked = y_true[inv] / counts
-    groups = _cumulative_sum(counts, xp) - 1
+    groups = _cumulative_sum1d(counts, xp, device_) - 1
     discount_sums = xp.asarray(xp.empty(counts.size), device=device_)
     discount_sums[0] = discount_cumsum[groups[0]]
     discount_sums[1:] = xp.diff(discount_cumsum[groups])
