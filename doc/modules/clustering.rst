@@ -1370,7 +1370,7 @@ will not necessarily be close to zero.::
   - **Bounded range**: Lower values indicate different labelings, similar
     clusterings have a high (adjusted or unadjusted) Rand index, 1.0 is the
     perfect match score. The score range is [0, 1] for the unadjusted Rand index
-    and [-1, 1] for the adjusted Rand index.
+    and [-0.5, 1] for the adjusted Rand index.
 
   - **No assumption is made on the cluster structure**: The (adjusted or
     unadjusted) Rand index can be used to compare all kinds of clustering
@@ -1443,6 +1443,10 @@ will not necessarily be close to zero.::
 
   * `Wikipedia entry for the Rand index
     <https://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index>`_
+
+  * `Minimum adjusted Rand index for two clusterings of a given size
+    <https://link.springer.com/article/10.1007/s11634-022-00491-w>`_ J. Chacon and A. 
+    Rastrojo, Advances in Dta Analysis and Classification 2023
 
 
 .. _mutual_info_score:
