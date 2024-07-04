@@ -2392,8 +2392,8 @@ def test_min_sample_split_1_error(Tree):
 
 
 @pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
-def test_missing_values_best_splitter_dtc_on_equal_nodes_no_missing(criterion):
-    """Check missing values goes to correct node during predictions for DTC."""
+def test_missing_values_best_splitter_on_equal_nodes_no_missing(criterion):
+    """Check missing values goes to correct node during predictions."""
     X = np.array([[0, 1, 2, 3, 8, 9, 11, 12, 15]]).T
     y = np.array([0.1, 0.2, 0.3, 0.2, 1.4, 1.4, 1.5, 1.6, 2.6])
 
@@ -2419,7 +2419,7 @@ def test_missing_values_best_splitter_dtc_on_equal_nodes_no_missing(criterion):
 
 @pytest.mark.parametrize("seed", range(3))
 @pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
-def test_missing_values_random_splitter_etc_on_equal_nodes_no_missing(criterion, seed):
+def test_missing_values_random_splitter_on_equal_nodes_no_missing(criterion, seed):
     """Check missing values go to the correct node during predictions for ExtraTree.
 
     Since ETC use random splits, we use different seeds to verify that the
@@ -2428,27 +2428,27 @@ def test_missing_values_random_splitter_etc_on_equal_nodes_no_missing(criterion,
     X = np.array([[0, 1, 2, 3, 8, 9, 11, 12, 15]]).T
     y = np.array([0.1, 0.2, 0.3, 0.2, 1.4, 1.4, 1.5, 1.6, 2.6])
 
-    dtc = ExtraTreeRegressor(random_state=seed, max_depth=1, criterion=criterion)
-    dtc.fit(X, y)
+    etr = ExtraTreeRegressor(random_state=seed, max_depth=1, criterion=criterion)
+    etr.fit(X, y)
 
     # see which node has the most data points
-    dtc.tree_.value
+    etr.tree_.value
 
     # Get the left and right children of the root node
-    left_child = dtc.tree_.children_left[0]
-    right_child = dtc.tree_.children_right[0]
+    left_child = etr.tree_.children_left[0]
+    right_child = etr.tree_.children_right[0]
 
     # Get the number of samples for the left and right children
-    left_samples = dtc.tree_.weighted_n_node_samples[left_child]
-    right_samples = dtc.tree_.weighted_n_node_samples[right_child]
+    left_samples = etr.tree_.weighted_n_node_samples[left_child]
+    right_samples = etr.tree_.weighted_n_node_samples[right_child]
     went_left = left_samples > right_samples
 
     # predictions
-    y_pred_left = dtc.tree_.value[left_child][0]
-    y_pred_right = dtc.tree_.value[right_child][0]
+    y_pred_left = etr.tree_.value[left_child][0]
+    y_pred_right = etr.tree_.value[right_child][0]
 
     # Goes to node with the most data points
-    y_pred = dtc.predict([[np.nan]])
+    y_pred = etr.predict([[np.nan]])
     if went_left:
         assert_allclose(y_pred_left, y_pred)
     else:
