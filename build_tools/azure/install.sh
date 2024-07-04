@@ -70,8 +70,6 @@ python_environment_install_and_activate() {
     elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
         python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
         source $VIRTUALENV/bin/activate
-        # TODO system pip is too old to know what to do with pyproject.toml ...
-        python3 -m pip install 'pip>=21.1'
         pip install -r "${LOCK_FILE}"
 
     elif [[ "$DISTRIB" == "pip-free-threaded" ]]; then
