@@ -21,7 +21,7 @@ clean: clean-meson
 clean-meson:
 	pip uninstall -y scikit-learn
 	# It seems in some cases removing the folder avoids weird compilation
-	# errors (e.g. when switching from numpy>=2 to numpy<2). For some 
+	# errors (e.g. when switching from numpy>=2 to numpy<2). For some
 	# reason ninja clean -C $(DEFAULT_MESON_BUILD_DIR) is not
 	# enough
 	rm -rf $(DEFAULT_MESON_BUILD_DIR)
