@@ -1531,6 +1531,20 @@ def test_iterative_imputer_keep_empty_features(initial_strategy):
     assert_allclose(X_imputed[:, 1], 0)
 
 
+@pytest.mark.parametrize("keep_empty_features", [True, False])
+def test_iterative_imputer_keep_empty_features_different_input_x(keep_empty_features):
+    """Check the behaviour of the iterative imputer with different keep_empty_features
+    and different input.
+    """
+    X = np.array([[np.nan, 0, 1], [2, np.nan, 3], [4, 5, np.nan]])
+
+    imputer = IterativeImputer(
+        keep_empty_features=keep_empty_features
+    )
+    X_imputed = imputer.fit_transform(X)
+    assert X_imputed.shape == (3, 3)
+
+
 def test_iterative_imputer_constant_fill_value():
     """Check that we propagate properly the parameter `fill_value`."""
     X = np.array([[-1, 2, 3, -1], [4, -1, 5, -1], [6, 7, -1, -1], [8, 9, 0, -1]])
