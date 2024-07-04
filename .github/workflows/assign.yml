@@ -20,7 +20,7 @@ jobs:
     steps:
       - run: |
           echo "Assigning issue ${{ github.event.issue.number }} to ${{ github.event.comment.user.login }}"
-          curl -H "Authorization: token ${{ github.token }}" -d '{"assignees": ["${{ github.event.comment.user.login }}"]}' \
+          curl -H "Authorization: token $GH_TOKEN" -d '{"assignees": ["${{ github.event.comment.user.login }}"]}' \
               https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/assignees
           gh issue edit $ISSUE --remove-label "help wanted"
         env:
