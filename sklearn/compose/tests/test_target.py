@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import pytest
 
@@ -395,7 +397,6 @@ def test_transform_target_regressor_pass_extra_predict_parameters():
     assert regr.regressor_.predict_called
 
 
-@pytest.mark.filterwarnings("error")
 @pytest.mark.parametrize("output_format", ["pandas", "polars"])
 def test_transform_target_regressor_not_warns_with_global_output_set(output_format):
     """Test that TransformedTargetRegressor will not raise warnings if
@@ -404,6 +405,8 @@ def test_transform_target_regressor_not_warns_with_global_output_set(output_form
     X, y = datasets.make_regression()
     y = np.abs(y) + 1
     with config_context(transform_output=output_format):
-        TransformedTargetRegressor(
-            regressor=LinearRegression(), func=np.log, inverse_func=np.exp
-        ).fit(X, y)
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            TransformedTargetRegressor(
+                regressor=LinearRegression(), func=np.log, inverse_func=np.exp
+            ).fit(X, y)
