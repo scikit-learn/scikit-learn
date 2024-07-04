@@ -39,10 +39,10 @@ jobs:
       run: |
         python build_tools/github/check_wheels.py
     - name: Publish package to TestPyPI
-      uses: pypa/gh-action-pypi-publish@v1.8.5
+      uses: pypa/gh-action-pypi-publish@ec4db0b4ddc65acdf4bff5fa45ac92d78b56bdf0 # v1.9.0
       with:
         repository_url: https://test.pypi.org/legacy/
       if: ${{ github.event.inputs.pypi_repo == 'testpypi' }}
     - name: Publish package to PyPI
-      uses: pypa/gh-action-pypi-publish@v1.8.5
+      uses: pypa/gh-action-pypi-publish@ec4db0b4ddc65acdf4bff5fa45ac92d78b56bdf0 # v1.9.0
       if: ${{ github.event.inputs.pypi_repo == 'pypi' }}
