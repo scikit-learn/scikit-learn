@@ -1,6 +1,7 @@
 # simple makefile to simplify repetitive build env management tasks under posix
 
 PYTHON ?= python
+DEFAULT_MESON_BUILD_DIR = build/cp$(shell python -c 'import sys; print(f"{sys.version_info.major}{sys.version_info.minor}")' )
 
 all:
 	@echo "Please use 'make <target>' where <target> is one of"
@@ -21,6 +22,11 @@ clean: clean-meson
 
 clean-meson:
 	pip uninstall -y scikit-learn
+  # It seems in some cases (e.g. weird compilation errors when switching
+  # between numpy<2 and numpy>=2) removing the folder avoids weird compilation
+  # errors. For some reason ninja clean -C $(DEFAULT_MESON_BUILD_DIR) is not
+  # enough
+	rm -rf $(DEFAULT_MESON_BUILD_DIR)
 
 dev-setuptools:
 	$(PYTHON) setup.py build_ext -i
