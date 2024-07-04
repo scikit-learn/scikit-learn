@@ -1538,9 +1538,7 @@ def test_iterative_imputer_keep_empty_features_different_input_x(keep_empty_feat
     """
     X = np.array([[np.nan, 0, 1], [2, np.nan, 3], [4, 5, np.nan]])
 
-    imputer = IterativeImputer(
-        keep_empty_features=keep_empty_features
-    )
+    imputer = IterativeImputer(keep_empty_features=keep_empty_features)
     X_imputed = imputer.fit_transform(X)
     assert X_imputed.shape == (3, 3)
 
