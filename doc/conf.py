@@ -906,6 +906,7 @@ else:
 # Each entry is in the format (template name, file name, kwargs for rendering)
 rst_templates = [
     ("index", "index", {"development_link": development_link}),
+    ("developers/maintainer", "developers/maintainer", {}),
     (
         "min_dependency_table",
         "min_dependency_table",
@@ -915,11 +916,6 @@ rst_templates = [
         "min_dependency_substitutions",
         "min_dependency_substitutions",
         {"dependent_packages": dependent_packages},
-    ),
-    (
-        "developers/maintainer",
-        "developers/maintainer",
-        {},
     ),
     (
         "api/index",

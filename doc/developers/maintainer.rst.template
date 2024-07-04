@@ -9,6 +9,37 @@ release (also known as a bug-fix release). Our convention is that we release one
 release candidates (0.RRrcN) before releasing the final distributions. We follow `PEP101
 <https://www.python.org/dev/peps/pep-0101/>`_ to indicate different types of releases.
 
+.. rubric:: Preparation
+
+- Confirm that all blockers tagged for the milestone have been resolved, and that other
+  issues tagged for the milestone can be postponed.
+
+- Ensure that the changelog and commits correspond, and that the changelog is reasonably
+  well curated. Some tools for these tasks include:
+
+  - `maint_tools/sort_whats_new.py` can put what's new entries into sections. It is
+    however not perfect and requires manual checking of the changes.
+  - `maint_tools/whats_missing.sh` can be used to identify pull requests that were
+    merged but likely missing from the changelog.
+
+- Make sure the deprecations, FIXMEs, and TODOs tagged for the release have been taken
+  care of.
+
+.. rubric:: Permissions
+
+- The release manager must be a **maintainer** of the
+  https://github.com/scikit-learn/scikit-learn repository to be able to publish on
+  `pypi.org` and `test.pypi.org` (via a manual trigger of a dedicated Github Actions
+  workflow).
+
+- The release manager must be a **maintainer** of the
+  https://github.com/conda-forge/scikit-learn-feedstock repository to be able to publish
+  on `conda-forge`. This can be changed by editing the `recipe/meta.yaml` file in the
+  first release pull request.
+
+Reference Steps
+^^^^^^^^^^^^^^^
+
 .. tab-set::
 
   {% for key in ["rc", "major", "minor"] %}
@@ -33,36 +64,6 @@ release candidates (0.RRrcN) before releasing the final distributions. We follow
     :class-label: tab-4
 
     Suppose that we are preparing the release `{{ release }}`.
-
-    .. rubric:: Preparation
-
-    - Confirm that all blockers tagged for the milestone have been resolved, and that
-      other issues tagged for the milestone can be postponed.
-
-    - Ensure that the changelog and commits correspond, and that the changelog is
-      reasonably well curated. Some tools for these tasks include:
-
-      - `maint_tools/sort_whats_new.py` can put what's new entries into sections. It is
-        however not perfect and requires manual checking of the changes.
-      - `maint_tools/whats_missing.sh` can be used to identify pull requests that were
-        merged but likely missing from the changelog.
-
-    - Make sure the deprecations, FIXMEs, and TODOs tagged for the release have been
-      taken care of.
-
-    .. rubric:: Permissions
-
-    - The release manager must be a **maintainer** of the
-      https://github.com/scikit-learn/scikit-learn repository to be able to publish on
-      `pypi.org` and `test.pypi.org` (via a manual trigger of a dedicated Github Actions
-      workflow).
-
-    - The release manager must be a **maintainer** of the
-      https://github.com/conda-forge/scikit-learn-feedstock repository to be able to publish
-      on `conda-forge`. This can be changed by editing the `recipe/meta.yaml` file in the
-      first release pull request.
-
-    .. rubric:: Procedure Reference
 
     {% if key == "rc" %}
     - Create the release branch `{{ version }}.X` directly in the main repository, where
