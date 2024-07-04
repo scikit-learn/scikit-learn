@@ -557,6 +557,11 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     if namespace.__name__ in {"cupy.array_api"}:
         namespace = _ArrayAPIWrapper(namespace)
 
+    if namespace.__name__ == "array_api_strict" and hasattr(
+        namespace, "set_array_api_strict_flags"
+    ):
+        namespace.set_array_api_strict_flags(api_version="2023.12")
+
     return namespace, is_array_api_compliant
 
 
@@ -967,3 +972,20 @@ def _in1d(ar1, ar2, xp, assume_unique=False, invert=False):
         return ret[: ar1.shape[0]]
     else:
         return xp.take(ret, rev_idx, axis=0)
+
+
+def _count_nonzero(X, xp, device, axis=None, sample_weight=None):
+    """A variant of `sklearn.utils.sparsefuncs.count_nonzero` for the Array API.
+
+    It only supports 2D arrays.
+    """
+    assert X.ndim == 2
+
+    weights = xp.ones_like(X, device=device)
+    if sample_weight is not None:
+        sample_weight = xp.asarray(sample_weight, device=device)
+        sample_weight = xp.reshape(sample_weight, (sample_weight.shape[0], 1))
+        weights = xp.astype(weights, sample_weight.dtype) * sample_weight
+
+    zero_scalar = xp.asarray(0, device=device, dtype=weights.dtype)
+    return xp.sum(xp.where(X != 0, weights, zero_scalar), axis=axis)
