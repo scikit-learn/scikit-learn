@@ -364,8 +364,6 @@ def add_js_css_files(app, pagename, templatename, context, doctree):
         app.add_css_file("styles/api-search.css")
     elif pagename == "index":
         app.add_css_file("styles/index.css")
-    elif pagename == "install":
-        app.add_css_file("styles/install.css")
     elif pagename.startswith("modules/generated/"):
         app.add_css_file("styles/api.css")
 
@@ -917,6 +915,11 @@ rst_templates = [
         "min_dependency_substitutions",
         "min_dependency_substitutions",
         {"dependent_packages": dependent_packages},
+    ),
+    (
+        "developers/maintainer",
+        "developers/maintainer",
+        {},
     ),
     (
         "api/index",
