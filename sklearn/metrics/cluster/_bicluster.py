@@ -101,7 +101,6 @@ def consensus_score(a, b, *, similarity="jaccard"):
     >>> consensus_score(a, b, similarity='jaccard')
     1.0
     """
-    pass
     if similarity == "jaccard":
         similarity = _jaccard
     matrix = _pairwise_similarity(a, b, similarity)
