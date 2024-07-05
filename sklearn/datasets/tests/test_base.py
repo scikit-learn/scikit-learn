@@ -412,7 +412,7 @@ def test_derive_folder_and_filename_from_url():
     assert filename == "نمونه-نماینده.data"
 
     folder, filename = _derive_folder_and_filename_from_url(
-        "https://example.com/path/to/.file.tar.gz"
+        "https://example.com/path/to-/.file.tar.gz"
     )
     assert folder == "example.com/path_to"
     assert filename == "file.tar.gz"
@@ -444,9 +444,9 @@ def test_derive_folder_and_filename_from_url():
     assert filename == "some_file.txt"
 
     folder, filename = _derive_folder_and_filename_from_url(
-        "https://example.com/../some_file.txt"
+        "http://example/../some_file.txt"
     )
-    assert folder == "example.com"
+    assert folder == "example"
     assert filename == "some_file.txt"
 
     folder, filename = _derive_folder_and_filename_from_url(
