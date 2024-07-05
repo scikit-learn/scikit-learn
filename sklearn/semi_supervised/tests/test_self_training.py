@@ -355,13 +355,13 @@ def test_deprecation_warning_base_estimator():
         )
 
     error_msg = "You must pass an estimator to SelfTrainingClassifier"
-    with pytest.warns(ValueError, match=error_msg):
+    with pytest.raises(ValueError, match=error_msg):
         SelfTrainingClassifier().fit(X_train, y_train_missing_labels)
 
     error_msg = "You must pass only one estimator to SelfTrainingClassifier."
-    with pytest.warns(ValueError, match=error_msg):
+    with pytest.raises(ValueError, match=error_msg):
         SelfTrainingClassifier(
-            DecisionTreeClassifier(), estimator=DecisionTreeClassifier()
+            base_estimator=DecisionTreeClassifier(), estimator=DecisionTreeClassifier()
         ).fit(X_train, y_train_missing_labels)
 
 
