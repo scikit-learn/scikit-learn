@@ -655,10 +655,10 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
                     metadata_name=key,
                     value=None,
                 )
-                if method_name in ["fit", "partial_fit", "score"]:
+                try:
                     # `fit`, `partial_fit`, 'score' accept y, others don't.
                     method(X, y, **method_kwargs)
-                else:
+                except TypeError:
                     method(X, **method_kwargs)
 
 

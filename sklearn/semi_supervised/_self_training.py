@@ -62,6 +62,9 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         Invoking the `fit` method will fit a clone of the passed estimator,
         which will be stored in the `estimator_` attribute.
 
+        .. versionadded:: 1.6
+            `estimator` was added to replace `base_estimator`.
+
     base_estimator : estimator object
         An estimator object implementing `fit` and `predict_proba`.
         Invoking the `fit` method will fit a clone of the passed estimator,
@@ -173,10 +176,11 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
     _parameter_constraints: dict = {
         # We don't require `predic_proba` here to allow passing a meta-estimator
         # that only exposes `predict_proba` after fitting.
+        # TODO(1.8) remove None option
         "estimator": [None, HasMethods(["fit"])],
         # TODO(1.8) remove
         "base_estimator": [
-            HasMethods(["fit"]),
+            Hidden(HasMethods(["fit"])),
             Hidden(StrOptions({"deprecated"})),
         ],
         "threshold": [Interval(Real, 0.0, 1.0, closed="left")],
@@ -205,6 +209,35 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
         # TODO(1.8) remove
         self.base_estimator = base_estimator
+
+    def get_estimator(self):
+        """Get the estimator.
+
+        Returns
+        -------
+        estimator_ : estimator object
+            The cloned estimator object.
+        """
+        # TODO(1.8): remove and only keep clone(self.estimator)
+        if self.estimator is None and self.base_estimator != "deprecated":
+            estimator_ = clone(self.base_estimator)
+
+            warn(
+                (
+                    "`base_estimator` has been deprecated in 1.6 and will be removed"
+                    " in 1.8. Please use `estimator` instead."
+                ),
+                FutureWarning,
+            )
+        # TODO(1.8) remove
+        elif self.estimator is None and self.base_estimator == "deprecated":
+            raise ValueError(
+                "You must pass an estimator to SelfTrainingClassifier."
+                " Use `estimator`."
+            )
+        else:
+            estimator_ = clone(self.estimator)
+        return estimator_
 
     @_fit_context(
         # SelfTrainingClassifier.estimator is not validated yet
@@ -240,25 +273,13 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         """
         _raise_for_params(params, self, "fit")
 
+        self.estimator_ = self.get_estimator()
+
         # we need row slicing support for sparse matrices, but costly finiteness check
         # can be delegated to the base estimator.
         X, y = self._validate_data(
             X, y, accept_sparse=["csr", "csc", "lil", "dok"], force_all_finite=False
         )
-
-        # TODO: remove in 1.8 and only keep clone(self.estimator)
-        if self.estimator is None and self.base_estimator != "deprecated":
-            self.estimator_ = clone(self.base_estimator)
-
-            warn(
-                (
-                    "`base_estimator` has been deprecated in 1.6 and will be removed"
-                    " in 1.8. Please use `estimator` instead."
-                ),
-                FutureWarning,
-            )
-        else:
-            self.estimator_ = clone(self.estimator)
 
         if y.dtype.kind in ["U", "S"]:
             raise ValueError(
