@@ -555,7 +555,7 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
     shuffle : bool, default=False
         Whether to shuffle the groups before splitting into batches.
         Note that the samples within each split will not be shuffled.
-        
+
         .. versionadded:: 1.6
 
     random_state : int, RandomState instance or None, default=None
@@ -564,7 +564,7 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
         parameter has no effect.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
-        
+
         .. versionadded:: 1.6
 
     Notes
