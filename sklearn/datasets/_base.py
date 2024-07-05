@@ -1538,11 +1538,10 @@ def _filter_filename(value, filter_dots=True):
     """
     value = unicodedata.normalize("NFKD", value).lower()
     if filter_dots:
-        value = re.sub(r"[^\w\s-]", "_", value)
+        value = re.sub(r"[^\w\s-]+", "_", value)
     else:
-        value = re.sub(r"[^.\w\s-]", "_", value)
-    value = re.sub(r"_+", "_", value)
-    value = re.sub(r"-+", "-", value)
+        value = re.sub(r"[^.\w\s-]+", "_", value)
+    value = re.sub(r"[\s-]+", "-", value)
     return value.strip("-_.")
 
 
