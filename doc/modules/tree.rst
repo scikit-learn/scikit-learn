@@ -579,10 +579,16 @@ Note that it fits much slower than the MSE criterion.
 Missing Values Support
 ======================
 
-:class:`DecisionTreeClassifier` and :class:`DecisionTreeRegressor`
-have built-in support for missing values when `splitter='best'` and criterion is
+:class:`DecisionTreeClassifier`, :class:`DecisionTreeRegressor`
+have built-in support for missing values when `splitter='best'`, while
+:class:`ExtraTreeClassifier`, and :class:`ExtraTreeRegressor` have built-in
+support for missing values when `splitter='random'`.
+The criterion supported when there are missing-values are
 `'gini'`, `'entropy`', or `'log_loss'`, for classification or
 `'squared_error'`, `'friedman_mse'`, or `'poisson'` for regression.
+
+First we will describe how :class:`DecisionTreeClassifier`, :class:`DecisionTreeRegressor`
+handle missing-values in the data.
 
 For each potential threshold on the non-missing data, the splitter will evaluate
 the split with all the missing values going to the left node or the right node.
@@ -633,6 +639,18 @@ Decisions are made as follows:
     >>> X_test = np.array([np.nan]).reshape(-1, 1)
     >>> tree.predict(X_test)
     array([1])
+
+:class:`ExtraTreeClassifier`, and :class:`ExtraTreeRegressor` handle missing values
+in a slightly different way. When splitting a node, the the missing values
+are sent randomly either to the left, or to the right. 
+
+Otherwise during prediction, the treatment of missing-values is the same:
+
+- By default when predicting, the samples with missing values are classified
+  with the class used in the split found during training.
+
+- If no missing values are seen during training for a given feature, then during
+  prediction missing values are mapped to the child with the most samples.
 
 .. _minimal_cost_complexity_pruning:
 

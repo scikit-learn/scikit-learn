@@ -2392,8 +2392,8 @@ def test_min_sample_split_1_error(Tree):
 
 
 @pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
-def test_missing_values_best_splitter_dtc_on_equal_nodes_no_missing(criterion):
-    """Check missing values goes to correct node during predictions for DTC."""
+def test_missing_values_best_splitter_on_equal_nodes_no_missing(criterion):
+    """Check missing values goes to correct node during predictions."""
     X = np.array([[0, 1, 2, 3, 8, 9, 11, 12, 15]]).T
     y = np.array([0.1, 0.2, 0.3, 0.2, 1.4, 1.4, 1.5, 1.6, 2.6])
 
@@ -2419,7 +2419,7 @@ def test_missing_values_best_splitter_dtc_on_equal_nodes_no_missing(criterion):
 
 @pytest.mark.parametrize("seed", range(3))
 @pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
-def test_missing_values_random_splitter_etc_on_equal_nodes_no_missing(criterion, seed):
+def test_missing_values_random_splitter_on_equal_nodes_no_missing(criterion, seed):
     """Check missing values go to the correct node during predictions for ExtraTree.
 
     Since ETC use random splits, we use different seeds to verify that the
@@ -2428,68 +2428,31 @@ def test_missing_values_random_splitter_etc_on_equal_nodes_no_missing(criterion,
     X = np.array([[0, 1, 2, 3, 8, 9, 11, 12, 15]]).T
     y = np.array([0.1, 0.2, 0.3, 0.2, 1.4, 1.4, 1.5, 1.6, 2.6])
 
-    dtc = ExtraTreeRegressor(random_state=seed, max_depth=1, criterion=criterion)
-    dtc.fit(X, y)
+    etr = ExtraTreeRegressor(random_state=seed, max_depth=1, criterion=criterion)
+    etr.fit(X, y)
 
     # see which node has the most data points
-    dtc.tree_.value
+    etr.tree_.value
 
     # Get the left and right children of the root node
-    left_child = dtc.tree_.children_left[0]
-    right_child = dtc.tree_.children_right[0]
+    left_child = etr.tree_.children_left[0]
+    right_child = etr.tree_.children_right[0]
 
     # Get the number of samples for the left and right children
-    left_samples = dtc.tree_.weighted_n_node_samples[left_child]
-    right_samples = dtc.tree_.weighted_n_node_samples[right_child]
+    left_samples = etr.tree_.weighted_n_node_samples[left_child]
+    right_samples = etr.tree_.weighted_n_node_samples[right_child]
     went_left = left_samples > right_samples
 
     # predictions
-    y_pred_left = dtc.tree_.value[left_child][0]
-    y_pred_right = dtc.tree_.value[right_child][0]
+    y_pred_left = etr.tree_.value[left_child][0]
+    y_pred_right = etr.tree_.value[right_child][0]
 
     # Goes to node with the most data points
-    y_pred = dtc.predict([[np.nan]])
+    y_pred = etr.predict([[np.nan]])
     if went_left:
         assert_allclose(y_pred_left, y_pred)
     else:
         assert_allclose(y_pred_right, y_pred)
-
-
-@pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
-def test_missing_values_random_splitter_on_equal_nodes_no_missing(criterion):
-    """Check missing values go to the correct node during predictions.
-
-    This checks for the case where there are no missing values during training,
-    and missing values are only present during prediction.
-    """
-    X = np.array([[0, 1, 2, 3, 8, 9, 11, 12, 15]]).T
-    y = np.array([0.1, 0.2, 0.3, 0.2, 1.4, 1.4, 1.5, 1.6, 2.6])
-
-    dtc = ExtraTreeRegressor(random_state=42, max_depth=2, criterion=criterion)
-    dtc.fit(X, y)
-
-    # Goes to right node because it has the most data points
-    decision_path = dtc.decision_path([[np.nan]])
-
-    # Note: when max_leaf_nodes is not defined, the implementation will build
-    # the tree using DFS
-    # For a 7-node binary tree with DFS traversal, this results in the following
-    # decision-path of the nodes, which is the right-side view of the binary tree
-    expected_decision_path = [[1, 0, 0, 0, 1, 0, 1]]
-    assert_array_equal(decision_path.toarray(), expected_decision_path)
-
-    # BFS building of the binary tree
-    dtc = ExtraTreeRegressor(
-        random_state=42, max_depth=2, criterion=criterion, max_leaf_nodes=5
-    )
-    dtc.fit(X, y)
-    decision_path = dtc.decision_path([[np.nan]])
-    # Note: when max_leaf_nodes is defined, the implementation will build
-    # the tree using BFS
-    # For a 7-node binary tree with BFS traversal, this results in the following
-    # decision-path of the nodes, which is the right-side view of the binary tree
-    expected_decision_path = [[1, 0, 1, 0, 1, 0, 0]]
-    assert_array_equal(decision_path.toarray(), expected_decision_path)
 
 
 @pytest.mark.parametrize("criterion", ["entropy", "gini"])
@@ -2638,12 +2601,16 @@ def test_missing_values_is_resilience(
     else:
         sample_weight = None
 
-    native_tree = Tree(random_state=global_random_seed)
+    # max_depth is used to avoid overfitting and also improve the runtime
+    # of the test.
+    max_depth = 10
+
+    native_tree = Tree(max_depth=max_depth, random_state=global_random_seed)
     native_tree.fit(X_missing_train, y_train, sample_weight=sample_weight)
     score_native_tree = native_tree.score(X_missing_test, y_test)
 
     tree_with_imputer = make_pipeline(
-        SimpleImputer(), Tree(random_state=global_random_seed)
+        SimpleImputer(), Tree(max_depth=max_depth, random_state=global_random_seed)
     )
     tree_with_imputer.fit(X_missing_train, y_train)
     score_tree_with_imputer = tree_with_imputer.score(X_missing_test, y_test)
