@@ -563,14 +563,6 @@ Changelog
   `get_feature_names_out` returns the correct number of feature names.
   :pr:`28306` by :user:`Brendan Lu <brendanlu>`.
 
-- |Feature| :class:`model_selection.GroupKFold` now has the ability to shuffle groups
-  into different folds when `shuffle=True`.
-  :pr:`28519` by :user:`Zachary Vealey <zvealey>`.
-
-- |Feature| :class:`model_selection.RepeatedGroupKFold` has been created for repeating
-  GroupKFold with different shuffling randomizations.
-  :pr:`28519` by :user:`Zachary Vealey <zvealey>`.
-
 :mod:`sklearn.pipeline`
 .......................
 
