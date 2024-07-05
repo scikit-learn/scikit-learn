@@ -555,6 +555,8 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
     shuffle : bool, default=False
         Whether to shuffle the groups before splitting into batches.
         Note that the samples within each split will not be shuffled.
+        
+        .. versionadded:: 1.6
 
     random_state : int, RandomState instance or None, default=None
         When `shuffle` is True, `random_state` affects the ordering of the
@@ -562,6 +564,8 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
         parameter has no effect.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
+        
+        .. versionadded:: 1.6
 
     Notes
     -----
@@ -614,7 +618,7 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
             raise ValueError("The 'groups' parameter should not be None.")
         groups = check_array(groups, input_name="groups", ensure_2d=False, dtype=None)
 
-        unique_groups, group_inds = np.unique(groups, return_inverse=True)
+        unique_groups, group_idx = np.unique(groups, return_inverse=True)
         n_groups = len(unique_groups)
 
         if self.n_splits > n_groups:
@@ -634,7 +638,7 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
 
         else:
             # Weight groups by their number of occurrences
-            n_samples_per_group = np.bincount(group_inds)
+            n_samples_per_group = np.bincount(group_idx)
 
             # Distribute the most frequent groups first
             indices = np.argsort(n_samples_per_group)[::-1]
@@ -652,7 +656,7 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
                 n_samples_per_fold[lightest_fold] += weight
                 group_to_fold[indices[group_index]] = lightest_fold
 
-            indices = group_to_fold[group_inds]
+            indices = group_to_fold[group_idx]
 
             for f in range(self.n_splits):
                 yield np.where(indices == f)[0]
