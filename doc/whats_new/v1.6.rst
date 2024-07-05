@@ -186,10 +186,6 @@ Changelog
   into different folds when `shuffle=True`.
   :pr:`28519` by :user:`Zachary Vealey <zvealey>`.
 
-- |Feature| :class:`model_selection.RepeatedGroupKFold` has been created for repeating
-  GroupKFold with different shuffling randomizations.
-  :pr:`28519` by :user:`Zachary Vealey <zvealey>`.
-
 :mod:`sklearn.neighbors`
 ........................
 
