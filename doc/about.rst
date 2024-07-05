@@ -551,7 +551,7 @@ Coding Sprints
 The scikit-learn project has a long history of `open source coding sprints
 <https://blog.scikit-learn.org/events/sprints-value/>`_ with over 50 sprint
 events from 2010 to present day. There are scores of sponsors who contributed
-to costs including venue, food, travel, developer time and more. See
+to costs which include venue, food, travel, developer time and more. See
 `scikit-learn sprints <https://blog.scikit-learn.org/sprints/>`_ for a full
 list of events.
 
