@@ -24,7 +24,6 @@ from sklearn.model_selection import (
     LeavePGroupsOut,
     LeavePOut,
     PredefinedSplit,
-    RepeatedGroupKFold,
     RepeatedKFold,
     RepeatedStratifiedKFold,
     ShuffleSplit,
@@ -83,7 +82,6 @@ GROUP_SPLITTERS = [
     StratifiedGroupKFold(),
     LeaveOneGroupOut(),
     GroupShuffleSplit(),
-    RepeatedGroupKFold(),
 ]
 GROUP_SPLITTER_NAMES = set(splitter.__class__.__name__ for splitter in GROUP_SPLITTERS)
 
@@ -215,7 +213,6 @@ def test_2d_y():
         StratifiedKFold(),
         RepeatedKFold(),
         RepeatedStratifiedKFold(),
-        RepeatedGroupKFold(n_splits=3),
         StratifiedGroupKFold(),
         ShuffleSplit(),
         StratifiedShuffleSplit(test_size=0.5),
@@ -1186,7 +1183,7 @@ def test_repeated_cv_value_errors():
 
 
 @pytest.mark.parametrize(
-    "RepeatedCV", [RepeatedKFold, RepeatedStratifiedKFold, RepeatedGroupKFold]
+    "RepeatedCV", [RepeatedKFold, RepeatedStratifiedKFold]
 )
 def test_repeated_cv_repr(RepeatedCV):
     n_splits, n_repeats = 2, 6
@@ -2050,8 +2047,6 @@ def test_random_state_shuffle_false(Klass):
         (RepeatedKFold(random_state=np.random.RandomState(0)), False),
         (RepeatedStratifiedKFold(random_state=None), False),
         (RepeatedStratifiedKFold(random_state=np.random.RandomState(0)), False),
-        (RepeatedGroupKFold(random_state=None), False),
-        (RepeatedGroupKFold(random_state=np.random.RandomState(0)), False),
         (ShuffleSplit(random_state=None), False),
         (ShuffleSplit(random_state=np.random.RandomState(0)), False),
         (GroupShuffleSplit(random_state=None), False),
