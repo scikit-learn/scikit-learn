@@ -608,10 +608,6 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
 
     def __init__(self, n_splits=5, shuffle=False, random_state=None):
         super().__init__(n_splits, shuffle=shuffle, random_state=random_state)
-        if isinstance(random_state, np.random.RandomState):
-            self.rng = random_state
-        else:
-            self.rng = np.random.RandomState(random_state)
 
     def _iter_test_indices(self, X, y, groups):
         if groups is None:
@@ -629,7 +625,8 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
 
         if self.shuffle:
             # Split and shuffle unique groups across n_splits
-            unique_groups = self.rng.permutation(unique_groups)
+            rng = check_random_state(self.random_state)
+            unique_groups = rng.permutation(unique_groups)
             split_groups = np.array_split(unique_groups, self.n_splits)
 
             for test_group_ids in split_groups:
