@@ -1666,6 +1666,18 @@ def _estimator_has(attr, delegates=None):
     and raises `AttributeError` if it doesn't.
 
     If none of the delegates are present in the object, ValueError is raised.
+    Parameters
+    ----------
+    attr : str
+        Name of the attribute the delegate might or might not have.
+
+    delegates: list
+        List of sub-estimator(s).
+
+    Returns
+    -------
+    check : function
+        Function to check if the delegate has the attribute.
     """
 
     if delegates is None:
