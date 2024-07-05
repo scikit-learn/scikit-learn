@@ -180,7 +180,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         "estimator": [None, HasMethods(["fit"])],
         # TODO(1.8) remove
         "base_estimator": [
-            Hidden(HasMethods(["fit"])),
+            HasMethods(["fit"]),
             Hidden(StrOptions({"deprecated"})),
         ],
         "threshold": [Interval(Real, 0.0, 1.0, closed="left")],
