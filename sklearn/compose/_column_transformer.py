@@ -350,7 +350,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             - `"default"`: Default output format of a transformer
             - `"pandas"`: DataFrame output
             - `"polars"`: Polars output
-            - `None`: Transform configuration is unchanged, global configuration is used
+            - `None`: Transform configuration is unchanged
 
             .. versionadded:: 1.4
                 `"polars"` option was added.
