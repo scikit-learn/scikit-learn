@@ -548,22 +548,8 @@ the past:
 Sprints
 -------
 
-- The International 2019 Paris sprint was kindly hosted by `AXA <https://www.axa.fr/>`_.
-  Also some participants could attend thanks to the support of the `Alfred P.
-  Sloan Foundation <https://sloan.org>`_, the `Python Software
-  Foundation <https://www.python.org/psf/>`_ (PSF) and the `DATAIA Institute
-  <https://dataia.eu/en>`_.
-
-- The 2013 International Paris Sprint was made possible thanks to the support of
-  `Télécom Paristech <https://www.telecom-paristech.fr/>`_, `tinyclues
-  <https://www.tinyclues.com/>`_, the `French Python Association
-  <https://www.afpy.org/>`_ and the `Fonds de la Recherche Scientifique
-  <https://www.frs-fnrs.be>`_.
-
-- The 2011 International Granada sprint was made possible thanks to the support
-  of the `PSF <https://www.python.org/psf/>`_ and `tinyclues
-  <https://www.tinyclues.com/>`_.
-
+See `list of scikit-learn sprints <https://blog.scikit-learn.org/sprints/>`_ for
+more details.
 
 Donating to the project
 -----------------------
