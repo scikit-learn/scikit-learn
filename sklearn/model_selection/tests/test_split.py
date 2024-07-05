@@ -1650,7 +1650,8 @@ def test_group_kfold(kfold, shuffle):
     len(np.unique(groups))
     # Get the test fold indices from the test set indices of each fold
     folds = np.zeros(n_samples)
-    lkf = kfold(n_splits=n_splits, shuffle=shuffle)
+    random_state = rng if shuffle else None
+    lkf = kfold(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
     for i, (_, test) in enumerate(lkf.split(X, y, groups)):
         folds[test] = i
 
