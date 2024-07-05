@@ -1665,7 +1665,7 @@ def _estimator_has(attr, delegates=None):
     getattr() returns True if the attribute exists in the object,
     and raises `AttributeError` if it doesn't.
 
-    If None of delegates are present in the object, ValueError is raised.
+    If none of the delegates are present in the object, ValueError is raised.
     """
 
     if delegates is None:
