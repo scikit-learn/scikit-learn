@@ -741,9 +741,11 @@ def _log_reg_scoring_path(
     y_train = y[train]
     y_test = y[test]
 
+    sw_train, sw_test = None, None
     if sample_weight is not None:
         sample_weight = _check_sample_weight(sample_weight, X)
-        sample_weight = sample_weight[train]
+        sw_train = sample_weight[train]
+        sw_test = sample_weight[test]
 
     coefs, Cs, n_iter = _logistic_regression_path(
         X_train,
@@ -764,7 +766,7 @@ def _log_reg_scoring_path(
         random_state=random_state,
         check_input=False,
         max_squared_sum=max_squared_sum,
-        sample_weight=sample_weight,
+        sample_weight=sw_train,
     )
 
     log_reg = LogisticRegression(solver=solver, multi_class=multi_class)
@@ -798,12 +800,11 @@ def _log_reg_scoring_path(
             log_reg.intercept_ = 0.0
 
         if scoring is None:
-            scores.append(log_reg.score(X_test, y_test))
+            scores.append(log_reg.score(X_test, y_test, sample_weight=sw_test))
         else:
             score_params = score_params or {}
             score_params = _check_method_params(X=X, params=score_params, indices=test)
             scores.append(scoring(log_reg, X_test, y_test, **score_params))
-
     return coefs, Cs, np.array(scores), n_iter
 
 
