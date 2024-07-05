@@ -13,7 +13,7 @@ from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone, is_cl
 from ..metrics import check_scoring
 from ..model_selection import check_cv
 from ..model_selection._validation import _score
-from ..utils import Bunch
+from ..utils import Bunch, metadata_routing
 from ..utils._metadata_requests import (
     MetadataRouter,
     MethodMapping,
@@ -397,6 +397,9 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             underlying estimator.
 
             .. versionadded:: 1.6
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
                 See :ref:`Metadata Routing User Guide <metadata_routing>`
                 for more details.
 
@@ -438,7 +441,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
             - If `enable_metadata_routing=True`:
 
-                Parameters safely routed to the `fit` method of the
+                Parameters safely routed to the `score` method of the
                 underlying estimator.
 
                 .. versionchanged:: 1.6
@@ -751,6 +754,7 @@ class RFECV(RFE):
         "n_jobs": [None, Integral],
     }
     _parameter_constraints.pop("n_features_to_select")
+    __metadata_request__fit = {"groups": metadata_routing.UNUSED}
 
     def __init__(
         self,
@@ -777,7 +781,7 @@ class RFECV(RFE):
         # RFECV.estimator is not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y, groups=None, **params):
+    def fit(self, X, y, *, groups=None, **params):
         """Fit the RFE model and automatically tune the number of selected features.
 
         Parameters
@@ -802,6 +806,9 @@ class RFECV(RFE):
             the scorer, and the CV splitter.
 
             ..versionadded:: 1.6
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
                 See :ref:`Metadata Routing User Guide <metadata_routing>`
                 for more details.
 
@@ -930,7 +937,10 @@ class RFECV(RFE):
         router = MetadataRouter(owner=self.__class__.__name__)
         router.add(
             estimator=self.estimator,
-            method_mapping=MethodMapping().add(caller="fit", callee="fit"),
+            method_mapping=MethodMapping()
+            .add(caller="fit", callee="fit")
+            .add(caller="predict", callee="predict")
+            .add(caller="score", callee="score"),
         )
         router.add(
             splitter=check_cv(self.cv),
