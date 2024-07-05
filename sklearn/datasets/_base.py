@@ -1525,45 +1525,48 @@ def _fetch_remote(remote, dirname=None, n_retries=3, delay=1):
     return file_path
 
 
-def _slugify(value):
+def _filter_filename(value, filter_dots=True):
     """Derive a name that is safe to use as filename from the given string.
 
     Adapted from
     https://github.com/django/django/blob/master/django/utils/text.py
 
-    Convert to ASCII, convert spaces or repeated dashes to single dashes.
-    Replace characters that aren't alphanumerics, underscores, hyphens or
-    periods by underscores. Convert to lowercase. Also strip leading and
-    trailing whitespace, dashes, and underscores.
+    Convert spaces or repeated dashes to single dashes. Replace characters that
+    aren't alphanumerics, underscores, hyphens or dots by underscores. Convert
+    to lowercase. Also strip leading and trailing whitespace, dashes, and
+    underscores.
     """
-    value = (
-        unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
-    )
-    value = re.sub(r"[^.\w\s-]", "_", value.lower())
+    value = unicodedata.normalize("NFKD", value).lower()
+    if filter_dots:
+        value = re.sub(r"[^\w\s-]", "_", value)
+    else:
+        value = re.sub(r"[^.\w\s-]", "_", value)
     value = re.sub(r"_+", "_", value)
-    return re.sub(r"[-\s]+", "-", value).strip("-_")
+    value = re.sub(r"-+", "-", value)
+    return value.strip("-_.")
 
 
 def _derive_folder_and_filename_from_url(url):
     parsed_url = urlparse(url)
+    if not parsed_url.hostname:
+        raise ValueError(f"Invalid URL: {url}")
+    folder_components = [_filter_filename(parsed_url.hostname, filter_dots=False)]
     path = parsed_url.path
-    if not path:
-        path = "/"
 
     if "/" in path:
-        base_folder, filename = path.rsplit("/", 1)
+        base_folder, raw_filename = path.rsplit("/", 1)
 
+        base_folder = _filter_filename(base_folder)
+        if base_folder:
+            folder_components.append(base_folder)
+    else:
+        raw_filename = path
+
+    filename = _filter_filename(raw_filename, filter_dots=False)
     if not filename:
         filename = "downloaded_file"
 
-    base_folder = _slugify(base_folder)
-    if base_folder:
-        base_folder = "/" + base_folder
-
-    return (
-        _slugify(parsed_url.hostname) + base_folder,
-        _slugify(filename),
-    )
+    return "/".join(folder_components), filename
 
 
 def fetch_file(
