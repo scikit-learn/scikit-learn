@@ -210,7 +210,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         # TODO(1.8) remove
         self.base_estimator = base_estimator
 
-    def get_estimator(self):
+    def _get_estimator(self):
         """Get the estimator.
 
         Returns
@@ -273,7 +273,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         """
         _raise_for_params(params, self, "fit")
 
-        self.estimator_ = self.get_estimator()
+        self.estimator_ = self._get_estimator()
 
         # we need row slicing support for sparse matrices, but costly finiteness check
         # can be delegated to the base estimator.
