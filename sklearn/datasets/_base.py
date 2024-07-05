@@ -1531,13 +1531,10 @@ def _slugify(value):
     Adapted from
     https://github.com/django/django/blob/master/django/utils/text.py
 
-    Convert to ASCII if 'allow_unicode' is False. Convert spaces or repeated
-    dashes to single dashes. Remove characters that aren't alphanumerics,
-    underscores, or hyphens. Convert to lowercase. Also strip leading and
+    Convert to ASCII, convert spaces or repeated dashes to single dashes.
+    Replace characters that aren't alphanumerics, underscores, hyphens or
+    periods by underscores. Convert to lowercase. Also strip leading and
     trailing whitespace, dashes, and underscores.
-
-    Note: this version keeps "." characters unchanged contrary to the django
-    version and replace other un-authorized characters by "_".
     """
     value = (
         unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
