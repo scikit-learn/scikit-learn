@@ -13,6 +13,23 @@ For a short description of the main highlights of the release, please refer to
 
 .. include:: changelog_legend.inc
 
+.. _changes_1_5_2:
+
+Version 1.5.2
+=============
+
+**release date of 1.5.2**
+
+Changelog
+---------
+
+:mod:`sklearn.compose`
+......................
+
+- |Fix| Fixed :class:`compose.TransformedTargetRegressor` not to raise `UserWarning` if
+  transform output is set to `pandas` or `polars`, since it isn't a transformer.
+  :pr:`29401` by :user:`Stefanie Senger <StefanieSenger>`.
+
 .. _changes_1_5_1:
 
 Version 1.5.1
