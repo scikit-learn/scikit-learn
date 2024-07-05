@@ -235,6 +235,11 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
                 "You must pass an estimator to SelfTrainingClassifier."
                 " Use `estimator`."
             )
+        elif self.estimator is not None and self.base_estimator != "deprecated":
+            raise ValueError(
+                "You must pass only one estimator to SelfTrainingClassifier."
+                " Use `estimator`."
+            )
         else:
             estimator_ = clone(self.estimator)
         return estimator_

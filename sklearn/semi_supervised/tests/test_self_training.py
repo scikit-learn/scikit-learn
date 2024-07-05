@@ -354,6 +354,16 @@ def test_deprecation_warning_base_estimator():
             X_train, y_train_missing_labels
         )
 
+    error_msg = "You must pass an estimator to SelfTrainingClassifier"
+    with pytest.warns(ValueError, match=error_msg):
+        SelfTrainingClassifier().fit(X_train, y_train_missing_labels)
+
+    error_msg = "You must pass only one estimator to SelfTrainingClassifier."
+    with pytest.warns(ValueError, match=error_msg):
+        SelfTrainingClassifier(
+            DecisionTreeClassifier(), estimator=DecisionTreeClassifier()
+        ).fit(X_train, y_train_missing_labels)
+
 
 # Metadata routing tests
 # =================================================================
