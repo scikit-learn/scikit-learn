@@ -1855,7 +1855,7 @@ def learning_curve(
         Parameters to pass to the fit method of the estimator.
 
         .. deprecated:: 1.6
-            This parameter is deprecated and will be removed in version 1.6. Use
+            This parameter is deprecated and will be removed in version 1.8. Use
             ``params`` instead.
 
     params : dict, default=None
@@ -2221,6 +2221,7 @@ def _incremental_fit_estimator(
         "verbose": ["verbose"],
         "error_score": [StrOptions({"raise"}), Real],
         "fit_params": [dict, None],
+        "params": [dict, None],
     },
     prefer_skip_nested_validation=False,  # estimator is not validated yet
 )
@@ -2239,6 +2240,7 @@ def validation_curve(
     verbose=0,
     error_score=np.nan,
     fit_params=None,
+    params=None,
 ):
     """Validation curve.
 
@@ -2276,6 +2278,13 @@ def validation_curve(
         Group labels for the samples used while splitting the dataset into
         train/test set. Only used in conjunction with a "Group" :term:`cv`
         instance (e.g., :class:`GroupKFold`).
+
+        .. versionchanged:: 1.6
+            ``groups`` can only be passed if metadata routing is not enabled
+            via ``sklearn.set_config(enable_metadata_routing=True)``. When routing
+            is enabled, pass ``groups`` alongside other metadata via the ``params``
+            argument instead. E.g.:
+            ``validation_curve(..., params={'groups': groups})``.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -2327,7 +2336,22 @@ def validation_curve(
     fit_params : dict, default=None
         Parameters to pass to the fit method of the estimator.
 
-        .. versionadded:: 0.24
+        .. deprecated:: 1.6
+            This parameter is deprecated and will be removed in version 1.8. Use
+            ``params`` instead.
+
+    params : dict, default=None
+        Parameters to pass to the estimator, scorer and cross-validation object.
+
+            - If `enable_metadata_routing=False` (default):
+              Parameters directly passed to the `fit` method of the estimator.
+
+            - If `enable_metadata_routing=True`:
+              Parameters safely routed to the `fit` method of the estimator, to the
+              scorer and to the cross-validation object. See :ref:`Metadata Routing User
+              Guide <metadata_routing>` for more details.
+
+            .. versionadded:: 1.6
 
     Returns
     -------
@@ -2358,10 +2382,58 @@ def validation_curve(
     >>> print(f"The average test accuracy is {test_scores.mean():.2f}")
     The average test accuracy is 0.81
     """
+    params = _check_params_groups_deprecation(fit_params, params, groups, "1.8")
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring)
+
+    if _routing_enabled():
+        router = (
+            MetadataRouter(owner="validation_curve")
+            .add(
+                estimator=estimator,
+                method_mapping=MethodMapping().add(caller="fit", callee="fit"),
+            )
+            .add(
+                splitter=cv,
+                method_mapping=MethodMapping().add(caller="fit", callee="split"),
+            )
+            .add(
+                scorer=scorer,
+                method_mapping=MethodMapping().add(caller="fit", callee="score"),
+            )
+        )
+
+        try:
+            routed_params = process_routing(router, "fit", **params)
+        except UnsetMetadataPassedError as e:
+            # The default exception would mention `fit` since in the above
+            # `process_routing` code, we pass `fit` as the caller. However,
+            # the user is not calling `fit` directly, so we change the message
+            # to make it more suitable for this case.
+            unrequested_params = sorted(e.unrequested_params)
+            raise UnsetMetadataPassedError(
+                message=(
+                    f"{unrequested_params} are passed to `validation_curve` but are not"
+                    " explicitly set as requested or not requested for"
+                    f" validation_curve's estimator: {estimator.__class__.__name__}."
+                    " Call `.set_fit_request({{metadata}}=True)` on the estimator for"
+                    f" each metadata in {unrequested_params} that you"
+                    " want to use and `metadata=False` for not using it. See the"
+                    " Metadata Routing User guide"
+                    " <https://scikit-learn.org/stable/metadata_routing.html> for more"
+                    " information."
+                ),
+                unrequested_params=e.unrequested_params,
+                routed_params=e.routed_params,
+            )
+
+    else:
+        routed_params = Bunch()
+        routed_params.estimator = Bunch(fit=params)
+        routed_params.splitter = Bunch(split={"groups": groups})
+        routed_params.scorer = Bunch(score={})
 
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch, verbose=verbose)
     results = parallel(
@@ -2374,14 +2446,13 @@ def validation_curve(
             test=test,
             verbose=verbose,
             parameters={param_name: v},
-            fit_params=fit_params,
-            # TODO(SLEP6): support score params here
-            score_params=None,
+            fit_params=routed_params.estimator.fit,
+            score_params=routed_params.scorer.score,
             return_train_score=True,
             error_score=error_score,
         )
         # NOTE do not change order of iteration to allow one time cv splitters
-        for train, test in cv.split(X, y, groups)
+        for train, test in cv.split(X, y, **routed_params.splitter.split)
         for v in param_range
     )
     n_params = len(param_range)
