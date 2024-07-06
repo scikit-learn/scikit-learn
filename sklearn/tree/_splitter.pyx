@@ -692,6 +692,7 @@ cdef inline int node_split_random(
     cdef bint has_missing = 0
     cdef intp_t n_left, n_right
     cdef bint missing_go_to_left
+    cdef intp_t p
 
     cdef intp_t[::1] samples = splitter.samples
     cdef intp_t[::1] features = splitter.features
