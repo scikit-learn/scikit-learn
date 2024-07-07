@@ -2604,7 +2604,6 @@ def test_missing_values_is_resilience(
     # max_depth is used to avoid overfitting and also improve the runtime
     # of the test.
     max_depth = 10
-
     native_tree = Tree(max_depth=max_depth, random_state=global_random_seed)
     native_tree.fit(X_missing_train, y_train, sample_weight=sample_weight)
     score_native_tree = native_tree.score(X_missing_test, y_test)
