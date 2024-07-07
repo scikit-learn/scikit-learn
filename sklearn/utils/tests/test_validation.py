@@ -1140,7 +1140,8 @@ def test_check_array_memmap(copy):
 
 
 @pytest.mark.parametrize(
-    "sub_est, attr, delegates, output, error",
+    "estimator_attribute_name, estimator_attribute_value, delegates, expected_result, "
+    "expected_exception",
     [
         (
             "estimator_",
@@ -1166,14 +1167,14 @@ def test_check_array_memmap(copy):
             None,  # no error output is True
         ),
         (
-            "custom_estimator",
+            "custom_estimator",  # custom estimator attribute name
             type("SubEstimator", (), {"attribute_present": True}),
-            ["custom_estimator"],
+            ["custom_estimator"],  # custom delegates
             True,  # output is True b/c delegate and attribute are present
             None,  # no error output is True
         ),
         (
-            "no_estimator",
+            "no_estimator",  # no estimator attribute name
             type("SubEstimator", (), {"attribute_present": True}),
             None,  # default delegates - ["estimator_", "estimator"]
             None,  # output not relevant b/c ValueError should be raised
@@ -1181,7 +1182,7 @@ def test_check_array_memmap(copy):
         ),
         (
             "estimator",
-            type("SubEstimator", (), {"attribute_absent": True}),
+            type("SubEstimator", (), {"attribute_absent": True}),  # attribute_absent
             None,  # default delegates - ["estimator_", "estimator"]
             None,  # output not relevant b/c AttributeError should be raised
             AttributeError,  # should raise AttributeError b/c attribute is absent
@@ -1196,7 +1197,13 @@ def test_check_array_memmap(copy):
         "estimator_with_default_delegates_but_absent_attribute",
     ],
 )
-def test_estimator_has(sub_est, attr, delegates, output, error):
+def test_estimator_has(
+    estimator_attribute_name,
+    estimator_attribute_value,
+    delegates,
+    expected_result,
+    expected_exception,
+):
     """
     Tests the _estimator_has function by verifying:
     - Functionality with default and custom delegates.
@@ -1212,13 +1219,13 @@ def test_estimator_has(sub_est, attr, delegates, output, error):
         pass
 
     a = MockEstimator()
-    setattr(a, sub_est, attr)
+    setattr(a, estimator_attribute_name, estimator_attribute_value)
 
-    if error:
-        with pytest.raises(error):
+    if expected_exception:
+        with pytest.raises(expected_exception):
             check(a)
     else:
-        assert check(a) == output
+        assert check(a) == expected_result
 
 
 @pytest.mark.parametrize(
