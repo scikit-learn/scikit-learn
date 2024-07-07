@@ -12,6 +12,7 @@ import numpy as np
 import scipy.optimize
 from scipy.linalg import cho_solve, cholesky, solve_triangular
 from scipy.special import gamma as gam
+from scipy.stats import multivariate_t
 
 from ..base import BaseEstimator, MultiOutputMixin, RegressorMixin, _fit_context, clone
 from ..preprocessing._data import _handle_zeros_in_scale
@@ -277,17 +278,60 @@ class TProcessRegressor(GaussianProcessRegressor):
                 "At most one of return_std, return_cov, return_tShape or return_tShapeMatrix can be requested."
             )
 
-        # Spread may be either std or cov
+        ### Spread may be either std or cov ###
         if not any([return_std, return_cov, return_tShape, return_tShapeMatrix]):
             return super().predict(X, return_std, return_cov)
-        else:
-            y_mean, y_spread = super().predict(X, return_std, return_cov)
-            if return_tShape or return_tShapeMatrix:
-                y_spread = y_spread * (self.m_dis + self.v0) / self.v
-            elif return_std or return_cov:
-                y_spread = y_spread * (self.m_dis + self.v0) / (self.v - 2)
+        elif return_cov or return_tShapeMatrix:  # Return a matrix:
+            y_mean, y_spread = super().predict(X, return_cov=True)
+        else:  # Return spread metric at points
+            y_mean, y_spread = super().predict(X, return_std=True)
+
+        ### Adjust depending on desired posterior ###
+        if return_tShape or return_tShapeMatrix:
+            y_spread = y_spread * (self.m_dis + self.v0) / self.v
+        elif return_std or return_cov:
+            y_spread = y_spread * (self.m_dis + self.v0) / (self.v - 2)
 
         return y_mean, y_spread
+
+    def sample_y(self, X, n_samples=1, random_state=0):
+        """Draw samples from T-process and evaluate at X.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples_X, n_features) or list of object
+            Query points where the GP is evaluated.
+
+        n_samples : int, default=1
+            Number of samples drawn from the T-process per query point.
+
+        random_state : int, RandomState instance or None, default=0
+            Determines random number generation to randomly draw samples.
+            Pass an int for reproducible results across multiple function
+            calls.
+            See :term:`Glossary <random_state>`.
+
+        Returns
+        -------
+        y_samples : ndarray of shape (n_samples_X, n_samples), or \
+            (n_samples_X, n_targets, n_samples)
+            Values of n_samples samples drawn from T-process and
+            evaluated at query points.
+        """
+        rng = check_random_state(random_state)
+
+        y_mean, y_tShapeMatrix = self.predict(X, return_tShapeMatrix=True)
+        if y_mean.ndim == 1:
+            y_samples = multivariate_t(y_mean, y_tShapeMatrix, self.v, seed=rng).rvs(n_samples).T
+        else:
+            y_samples = [
+                multivariate_t(
+                    y_mean[:, target], y_tShapeMatrix[..., target], self.v, seed=rng
+                ).rvs(n_samples).T[:, np.newaxis]
+                for target in range(y_mean.shape[1])
+            ]
+            y_samples = np.hstack(y_samples)
+        return y_samples
 
     def _log_likelihood_calc(self, y_train, alpha, L, K):
         """Returns the log-likelihood given L and the training points.
