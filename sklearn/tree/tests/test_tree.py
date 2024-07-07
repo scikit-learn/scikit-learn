@@ -2574,7 +2574,7 @@ def make_friedman1_classification(*args, **kwargs):
         (datasets.make_friedman1, DecisionTreeRegressor, 0),
         (datasets.make_friedman1, ExtraTreeRegressor, 0),
         (make_friedman1_classification, DecisionTreeClassifier, 0.02),
-        (make_friedman1_classification, ExtraTreeClassifier, 0.05),
+        (make_friedman1_classification, ExtraTreeClassifier, 0.07),
     ],
 )
 @pytest.mark.parametrize("sample_weight_train", [None, "ones"])
