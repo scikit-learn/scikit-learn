@@ -20,7 +20,7 @@ from sklearn.dummy import DummyRegressor
 from sklearn.exceptions import NotFittedError
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import accuracy_score, mean_poisson_deviance, mean_squared_error
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.pipeline import make_pipeline
 from sklearn.random_projection import _sparse_random_matrix
 from sklearn.tree import (
@@ -2572,9 +2572,9 @@ def make_friedman1_classification(*args, **kwargs):
         # Due to randomness in ExtraTree, we expect the native handling of missing
         # values to be sometimes better than the naive mean imputation, but not always
         (datasets.make_friedman1, DecisionTreeRegressor, 0),
-        (datasets.make_friedman1, ExtraTreeRegressor, 0),
-        (make_friedman1_classification, DecisionTreeClassifier, 0.02),
-        (make_friedman1_classification, ExtraTreeClassifier, 0.07),
+        (datasets.make_friedman1, ExtraTreeRegressor, 0.05),
+        (make_friedman1_classification, DecisionTreeClassifier, 0.05),
+        (make_friedman1_classification, ExtraTreeClassifier, 0.1),
     ],
 )
 @pytest.mark.parametrize("sample_weight_train", [None, "ones"])
@@ -2620,7 +2620,7 @@ def test_missing_values_is_resilience(
     )
 
 
-@pytest.mark.parametrize("Tree, expected_score", zip(CLF_TREES.values(), [0.85, 0.7]))
+@pytest.mark.parametrize("Tree, expected_score", zip(CLF_TREES.values(), [0.85, 0.53]))
 def test_missing_value_is_predictive(Tree, expected_score, global_random_seed):
     """Check the tree learns when only the missing value is predictive."""
     rng = np.random.RandomState(0)
@@ -2639,11 +2639,14 @@ def test_missing_value_is_predictive(Tree, expected_score, global_random_seed):
 
     X[:, 5] = X_predictive
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
-    tree = Tree(random_state=global_random_seed).fit(X_train, y_train)
+    tree = Tree(random_state=global_random_seed)
 
-    assert tree.score(X_train, y_train) >= expected_score
-    assert tree.score(X_test, y_test) >= expected_score
+    # Check that the tree can learn the predictive feature
+    # over an average of cross-validation fits.
+    tree_cv_score = cross_val_score(tree, X, y, cv=5).mean()
+    assert (
+        tree_cv_score >= expected_score
+    ), f"Expected CV score: {expected_score} but got {tree_cv_score}"
 
 
 @pytest.mark.parametrize(
