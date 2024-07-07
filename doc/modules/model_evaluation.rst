@@ -77,6 +77,7 @@ Scoring                                Function                                 
 'roc_auc_ovo'                          :func:`metrics.roc_auc_score`
 'roc_auc_ovr_weighted'                 :func:`metrics.roc_auc_score`
 'roc_auc_ovo_weighted'                 :func:`metrics.roc_auc_score`
+'d2_log_loss_score'                    :func:`metrics.d2_log_loss_score`
 
 **Clustering**
 'adjusted_mutual_info_score'           :func:`metrics.adjusted_mutual_info_score`
@@ -377,6 +378,7 @@ Some also work in the multilabel case:
    recall_score
    roc_auc_score
    zero_one_loss
+   d2_log_loss_score
 
 And some work with binary and multilabel (but not multiclass) problems:
 
@@ -1986,6 +1988,71 @@ see the example below.
 
 |details-end|
 
+.. _d2_score_classification:
+
+D² score for classification
+---------------------------
+
+The D² score computes the fraction of deviance explained.
+It is a generalization of R², where the squared error is generalized and replaced
+by a classification deviance of choice :math:`\text{dev}(y, \hat{y})`
+(e.g., Log loss). D² is a form of a *skill score*.
+It is calculated as
+
+.. math::
+
+  D^2(y, \hat{y}) = 1 - \frac{\text{dev}(y, \hat{y})}{\text{dev}(y, y_{\text{null}})} \,.
+
+Where :math:`y_{\text{null}}` is the optimal prediction of an intercept-only model
+(e.g., the per-class proportion of `y_true` in the case of the Log loss).
+
+Like R², the best possible score is 1.0 and it can be negative (because the
+model can be arbitrarily worse). A constant model that always predicts
+:math:`y_{\text{null}}`, disregarding the input features, would get a D² score
+of 0.0.
+
+|details-start|
+**D2 log loss score**
+|details-split|
+
+The :func:`d2_log_loss_score` function implements the special case
+of D² with the log loss, see :ref:`log_loss`, i.e.:
+
+.. math::
+
+  \text{dev}(y, \hat{y}) = \text{log_loss}(y, \hat{y}).
+
+Here are some usage examples of the :func:`d2_log_loss_score` function::
+
+  >>> from sklearn.metrics import d2_log_loss_score
+  >>> y_true = [1, 1, 2, 3]
+  >>> y_pred = [
+  ...    [0.5, 0.25, 0.25],
+  ...    [0.5, 0.25, 0.25],
+  ...    [0.5, 0.25, 0.25],
+  ...    [0.5, 0.25, 0.25],
+  ... ]
+  >>> d2_log_loss_score(y_true, y_pred)
+  0.0
+  >>> y_true = [1, 2, 3]
+  >>> y_pred = [
+  ...     [0.98, 0.01, 0.01],
+  ...     [0.01, 0.98, 0.01],
+  ...     [0.01, 0.01, 0.98],
+  ... ]
+  >>> d2_log_loss_score(y_true, y_pred)
+  0.981...
+  >>> y_true = [1, 2, 3]
+  >>> y_pred = [
+  ...     [0.1, 0.6, 0.3],
+  ...     [0.1, 0.6, 0.3],
+  ...     [0.4, 0.5, 0.1],
+  ... ]
+  >>> d2_log_loss_score(y_true, y_pred)
+  -0.552...
+
+|details-end|
+
 .. _multilabel_ranking_metrics:
 
 Multilabel ranking metrics
@@ -2230,9 +2297,6 @@ leads to a weighting of each individual score by the variance of the
 corresponding target variable. This setting quantifies the globally captured
 unscaled variance. If the target variables are of different scale, then this
 score puts more importance on explaining the higher variance variables.
-``multioutput='variance_weighted'`` is the default value for :func:`r2_score`
-for backward compatibility. This will be changed to ``uniform_average`` in the
-future.
 
 .. _r2_score:
 

@@ -35,7 +35,7 @@ from sklearn.metrics import (
     recall_score,
     zero_one_loss,
 )
-from sklearn.metrics._classification import _check_targets
+from sklearn.metrics._classification import _check_targets, d2_log_loss_score
 from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import LabelBinarizer, label_binarize
 from sklearn.tree import DecisionTreeClassifier
@@ -2895,3 +2895,202 @@ def test_brier_score_loss_deprecation_warning():
             y_prob=y_pred,
             y_proba=y_pred,
         )
+
+
+def test_d2_log_loss_score():
+    y_true = [0, 0, 0, 1, 1, 1]
+    y_true_string = ["no", "no", "no", "yes", "yes", "yes"]
+    y_pred = np.array(
+        [
+            [0.5, 0.5],
+            [0.9, 0.1],
+            [0.4, 0.6],
+            [0.6, 0.4],
+            [0.35, 0.65],
+            [0.01, 0.99],
+        ]
+    )
+    y_pred_null = np.array(
+        [
+            [0.5, 0.5],
+            [0.5, 0.5],
+            [0.5, 0.5],
+            [0.5, 0.5],
+            [0.5, 0.5],
+            [0.5, 0.5],
+        ]
+    )
+    d2_score = d2_log_loss_score(y_true=y_true, y_pred=y_pred)
+    log_likelihood = log_loss(y_true=y_true, y_pred=y_pred, normalize=False)
+    log_likelihood_null = log_loss(y_true=y_true, y_pred=y_pred_null, normalize=False)
+    d2_score_true = 1 - log_likelihood / log_likelihood_null
+    assert d2_score == pytest.approx(d2_score_true)
+
+    # check that using sample weight also gives the correct d2 score
+    sample_weight = np.array([2, 1, 3, 4, 3, 1])
+    y_pred_null[:, 0] = sample_weight[:3].sum() / sample_weight.sum()
+    y_pred_null[:, 1] = sample_weight[3:].sum() / sample_weight.sum()
+    d2_score = d2_log_loss_score(
+        y_true=y_true, y_pred=y_pred, sample_weight=sample_weight
+    )
+    log_likelihood = log_loss(
+        y_true=y_true,
+        y_pred=y_pred,
+        sample_weight=sample_weight,
+        normalize=False,
+    )
+    log_likelihood_null = log_loss(
+        y_true=y_true,
+        y_pred=y_pred_null,
+        sample_weight=sample_weight,
+        normalize=False,
+    )
+    d2_score_true = 1 - log_likelihood / log_likelihood_null
+    assert d2_score == pytest.approx(d2_score_true)
+
+    # check if good predictions give a relatively higher value for the d2 score
+    y_pred = np.array(
+        [
+            [0.9, 0.1],
+            [0.8, 0.2],
+            [0.9, 0.1],
+            [0.1, 0.9],
+            [0.2, 0.8],
+            [0.1, 0.9],
+        ]
+    )
+    d2_score = d2_log_loss_score(y_true, y_pred)
+    assert 0.5 < d2_score < 1.0
+    # check that a similar value is obtained for string labels
+    d2_score_string = d2_log_loss_score(y_true_string, y_pred)
+    assert d2_score_string == pytest.approx(d2_score)
+
+    # check if poor predictions gives a relatively low value for the d2 score
+    y_pred = np.array(
+        [
+            [0.5, 0.5],
+            [0.1, 0.9],
+            [0.1, 0.9],
+            [0.9, 0.1],
+            [0.75, 0.25],
+            [0.1, 0.9],
+        ]
+    )
+    d2_score = d2_log_loss_score(y_true, y_pred)
+    assert d2_score < 0
+    # check that a similar value is obtained for string labels
+    d2_score_string = d2_log_loss_score(y_true_string, y_pred)
+    assert d2_score_string == pytest.approx(d2_score)
+
+    # check if simply using the average of the classes as the predictions
+    # gives a d2 score of 0
+    y_true = [0, 0, 0, 1, 1, 1]
+    y_pred = np.array(
+        [
+            [0.5, 0.5],
+            [0.5, 0.5],
+            [0.5, 0.5],
+            [0.5, 0.5],
+            [0.5, 0.5],
+            [0.5, 0.5],
+        ]
+    )
+    d2_score = d2_log_loss_score(y_true, y_pred)
+    assert d2_score == 0
+    d2_score_string = d2_log_loss_score(y_true_string, y_pred)
+    assert d2_score_string == 0
+
+    # check if simply using the average of the classes as the predictions
+    # gives a d2 score of 0 when the positive class has a higher proportion
+    y_true = [0, 1, 1, 1]
+    y_true_string = ["no", "yes", "yes", "yes"]
+    y_pred = np.array([[0.25, 0.75], [0.25, 0.75], [0.25, 0.75], [0.25, 0.75]])
+    d2_score = d2_log_loss_score(y_true, y_pred)
+    assert d2_score == 0
+    d2_score_string = d2_log_loss_score(y_true_string, y_pred)
+    assert d2_score_string == 0
+    sample_weight = [2, 2, 2, 2]
+    d2_score_with_sample_weight = d2_log_loss_score(
+        y_true, y_pred, sample_weight=sample_weight
+    )
+    assert d2_score_with_sample_weight == 0
+
+    # check that the d2 scores seem correct when more than 2
+    # labels are specified
+    y_true = ["high", "high", "low", "neutral"]
+    sample_weight = [1.4, 0.6, 0.8, 0.2]
+
+    y_pred = np.array(
+        [
+            [0.8, 0.1, 0.1],
+            [0.8, 0.1, 0.1],
+            [0.1, 0.8, 0.1],
+            [0.1, 0.1, 0.8],
+        ]
+    )
+    d2_score = d2_log_loss_score(y_true, y_pred)
+    assert 0.5 < d2_score < 1.0
+    d2_score = d2_log_loss_score(y_true, y_pred, sample_weight=sample_weight)
+    assert 0.5 < d2_score < 1.0
+
+    y_pred = np.array(
+        [
+            [0.2, 0.5, 0.3],
+            [0.1, 0.7, 0.2],
+            [0.1, 0.1, 0.8],
+            [0.2, 0.7, 0.1],
+        ]
+    )
+    d2_score = d2_log_loss_score(y_true, y_pred)
+    assert d2_score < 0
+    d2_score = d2_log_loss_score(y_true, y_pred, sample_weight=sample_weight)
+    assert d2_score < 0
+
+
+def test_d2_log_loss_score_raises():
+    """Test that d2_log_loss_score raises the appropriate errors on
+    invalid inputs."""
+    y_true = [0, 1, 2]
+    y_pred = [[0.2, 0.8], [0.5, 0.5], [0.4, 0.6]]
+    err = "contain different number of classes"
+    with pytest.raises(ValueError, match=err):
+        d2_log_loss_score(y_true, y_pred)
+
+    # check error if the number of classes in labels do not match the number
+    # of classes in y_pred.
+    y_true = ["a", "b", "c"]
+    y_pred = [[0.5, 0.5], [0.5, 0.5], [0.5, 0.5]]
+    labels = [0, 1, 2]
+    err = "number of classes in labels is different"
+    with pytest.raises(ValueError, match=err):
+        d2_log_loss_score(y_true, y_pred, labels=labels)
+
+    # check error if y_true and y_pred do not have equal lengths
+    y_true = [0, 1, 2]
+    y_pred = [[0.5, 0.5, 0.5], [0.6, 0.3, 0.1]]
+    err = "inconsistent numbers of samples"
+    with pytest.raises(ValueError, match=err):
+        d2_log_loss_score(y_true, y_pred)
+
+    # check warning for samples < 2
+    y_true = [1]
+    y_pred = [[0.5, 0.5]]
+    err = "score is not well-defined"
+    with pytest.warns(UndefinedMetricWarning, match=err):
+        d2_log_loss_score(y_true, y_pred)
+
+    # check error when y_true only has 1 label
+    y_true = [1, 1, 1]
+    y_pred = [[0.5, 0.5], [0.5, 0.5], [0.5, 5]]
+    err = "y_true contains only one label"
+    with pytest.raises(ValueError, match=err):
+        d2_log_loss_score(y_true, y_pred)
+
+    # check error when y_true only has 1 label and labels also has
+    # only 1 label
+    y_true = [1, 1, 1]
+    labels = [1]
+    y_pred = [[0.5, 0.5], [0.5, 0.5], [0.5, 5]]
+    err = "The labels array needs to contain at least two"
+    with pytest.raises(ValueError, match=err):
+        d2_log_loss_score(y_true, y_pred, labels=labels)
