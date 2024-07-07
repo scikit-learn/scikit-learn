@@ -20,7 +20,7 @@ from sklearn.dummy import DummyRegressor
 from sklearn.exceptions import NotFittedError
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import accuracy_score, mean_poisson_deviance, mean_squared_error
-from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.random_projection import _sparse_random_matrix
 from sklearn.tree import (
