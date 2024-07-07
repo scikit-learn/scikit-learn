@@ -1145,44 +1145,46 @@ def test_check_array_memmap(copy):
         (
             "estimator_",
             type("SubEstimator", (), {"attribute_present": True}),
-            None,
-            True,
-            None,
+            None,  # default delegates - ["estimator_", "estimator"]
+            True,  # output is True b/c delegate and attribute are present
+            None,  # no error output is True
         ),
         (
             "estimator",
             type("SubEstimator", (), {"attribute_present": True}),
-            None,
-            True,
-            None,
+            None,  # default delegates - ["estimator_", "estimator"]
+            True,  # output is True b/c delegate and attribute are present
+            None,  # no error output is True
         ),
         (
             "estimators_",
-            [type("SubEstimator", (), {"attribute_present": True})],
+            [
+                type("SubEstimator", (), {"attribute_present": True})
+            ],  # list of sub-estimators
             ["estimators_"],
-            True,
-            None,
+            True,  # output is True b/c delegate and attribute are present
+            None,  # no error output is True
         ),
         (
             "custom_estimator",
             type("SubEstimator", (), {"attribute_present": True}),
             ["custom_estimator"],
-            True,
-            None,
+            True,  # output is True b/c delegate and attribute are present
+            None,  # no error output is True
         ),
         (
             "no_estimator",
             type("SubEstimator", (), {"attribute_present": True}),
-            None,
-            None,
-            ValueError,
+            None,  # default delegates - ["estimator_", "estimator"]
+            None,  # output not relevant b/c ValueError should be raised
+            ValueError,  # should raise ValueError b/c no estimator found from delegates
         ),
         (
             "estimator",
             type("SubEstimator", (), {"attribute_absent": True}),
-            None,
-            None,
-            AttributeError,
+            None,  # default delegates - ["estimator_", "estimator"]
+            None,  # output not relevant b/c AttributeError should be raised
+            AttributeError,  # should raise AttributeError b/c attribute is absent
         ),
     ],
     ids=[
