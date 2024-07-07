@@ -645,9 +645,10 @@ in a slightly different way. When splitting a node, a random threshold will be c
 to split the non-missing values on. Then two possible splits are evaluated:
 
 1. Split the non-missing values with the random threshold and randomly 
-  send all the missing values to the left, or right child
+   send all the missing values to the left, or right child.
+
 2. Split all the missing values to one child node and all the
-  non-missing values to the other child node
+   non-missing values to the other child node.
 
 The best split among these is chosen. Therefore, with missing values, there is an extra
 split evaluation per feature with missing-values at each node.
