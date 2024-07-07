@@ -1140,22 +1140,21 @@ def test_check_array_memmap(copy):
 
 
 @pytest.mark.parametrize(
-    "estimator_attribute_name, estimator_attribute_value, delegates, expected_result, "
-    "expected_exception",
+    "estimator_name, estimator_value, delegates, expected_result, expected_exception",
     [
         (
             "estimator_",
             type("SubEstimator", (), {"attribute_present": True}),
             None,  # default delegates - ["estimator_", "estimator"]
-            True,  # output is True b/c delegate and attribute are present
-            None,  # no error output is True
+            True,  # expected_result is True b/c delegate and attribute are present
+            None,  # expected_exception not relevant for this case
         ),
         (
             "estimator",
             type("SubEstimator", (), {"attribute_present": True}),
             None,  # default delegates - ["estimator_", "estimator"]
-            True,  # output is True b/c delegate and attribute are present
-            None,  # no error output is True
+            True,  # expected_result is True b/c delegate and attribute are present
+            None,  # expected_exception not relevant for this case
         ),
         (
             "estimators_",
@@ -1163,28 +1162,28 @@ def test_check_array_memmap(copy):
                 type("SubEstimator", (), {"attribute_present": True})
             ],  # list of sub-estimators
             ["estimators_"],
-            True,  # output is True b/c delegate and attribute are present
-            None,  # no error output is True
+            True,  # expected_result is True b/c delegate and attribute are present
+            None,  # expected_exception not relevant for this case
         ),
         (
             "custom_estimator",  # custom estimator attribute name
             type("SubEstimator", (), {"attribute_present": True}),
             ["custom_estimator"],  # custom delegates
-            True,  # output is True b/c delegate and attribute are present
-            None,  # no error output is True
+            True,  # expected_result is True b/c delegate and attribute are present
+            None,  # expected_exception not relevant for this case
         ),
         (
             "no_estimator",  # no estimator attribute name
             type("SubEstimator", (), {"attribute_present": True}),
             None,  # default delegates - ["estimator_", "estimator"]
-            None,  # output not relevant b/c ValueError should be raised
+            None,  # expected_result is not relevant for this case
             ValueError,  # should raise ValueError b/c no estimator found from delegates
         ),
         (
             "estimator",
             type("SubEstimator", (), {"attribute_absent": True}),  # attribute_absent
             None,  # default delegates - ["estimator_", "estimator"]
-            None,  # output not relevant b/c AttributeError should be raised
+            None,  # expected_result is not relevant for this case
             AttributeError,  # should raise AttributeError b/c attribute is absent
         ),
     ],
@@ -1198,11 +1197,7 @@ def test_check_array_memmap(copy):
     ],
 )
 def test_estimator_has(
-    estimator_attribute_name,
-    estimator_attribute_value,
-    delegates,
-    expected_result,
-    expected_exception,
+    estimator_name, estimator_value, delegates, expected_result, expected_exception
 ):
     """
     Tests the _estimator_has function by verifying:
@@ -1219,7 +1214,7 @@ def test_estimator_has(
         pass
 
     a = MockEstimator()
-    setattr(a, estimator_attribute_name, estimator_attribute_value)
+    setattr(a, estimator_name, estimator_value)
 
     if expected_exception:
         with pytest.raises(expected_exception):
