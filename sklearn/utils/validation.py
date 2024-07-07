@@ -1686,6 +1686,9 @@ def _estimator_has(attr, delegates=None):
     def check(self):
         for delegate in delegates:
             if hasattr(self, delegate):
+                # In meta estimators with multiple sub estimators,
+                # only the attribute of the first sub estimator is checked,
+                # assuming uniformity across all sub estimators.
                 if delegate == "estimators_":
                     return getattr(self.estimators_[0], attr)
                 else:

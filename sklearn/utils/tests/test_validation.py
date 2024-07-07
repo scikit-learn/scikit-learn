@@ -1142,32 +1142,44 @@ def test_check_array_memmap(copy):
 @pytest.mark.parametrize(
     "sub_est, attr, delegates, output, error",
     [
-        ("estimator_", type("", (), {"attribute_present": True}), None, True, None),
-        ("estimator", type("", (), {"attribute_present": True}), None, True, None),
+        (
+            "estimator_",
+            type("SubEstimator", (), {"attribute_present": True}),
+            None,
+            True,
+            None,
+        ),
+        (
+            "estimator",
+            type("SubEstimator", (), {"attribute_present": True}),
+            None,
+            True,
+            None,
+        ),
         (
             "estimators_",
-            [type("", (), {"attribute_present": True})],
+            [type("SubEstimator", (), {"attribute_present": True})],
             ["estimators_"],
             True,
             None,
         ),
         (
             "custom_estimator",
-            type("", (), {"attribute_present": True}),
+            type("SubEstimator", (), {"attribute_present": True}),
             ["custom_estimator"],
             True,
             None,
         ),
         (
             "no_estimator",
-            type("", (), {"attribute_present": True}),
+            type("SubEstimator", (), {"attribute_present": True}),
             None,
             None,
             ValueError,
         ),
         (
             "estimator",
-            type("", (), {"attribute_absent": True}),
+            type("SubEstimator", (), {"attribute_absent": True}),
             None,
             None,
             AttributeError,
@@ -1179,10 +1191,16 @@ def test_check_array_memmap(copy):
         "list_of_estimators_with_estimators_",
         "custom_estimator_with_custom_delegates",
         "no_estimator_with_default_delegates",
-        "estimator_with_absent_attribute",
+        "estimator_with_default_delegates_but_absent_attribute",
     ],
 )
 def test_estimator_has(sub_est, attr, delegates, output, error):
+    """
+    Tests the _estimator_has function by verifying:
+    - Functionality with default and custom delegates.
+    - Raises ValueError if delegates are missing.
+    - Raises AttributeError if the specified attribute is missing.
+    """
 
     # always checks for attribute - "attribute_present"
     # ["estimator_", "estimator"] is used when delegates is None
