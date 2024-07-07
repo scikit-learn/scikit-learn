@@ -692,6 +692,7 @@ cdef inline int node_split_random(
     cdef bint has_missing = 0
     cdef intp_t n_left, n_right
     cdef bint missing_go_to_left
+    cdef intp_t p
 
     cdef intp_t[::1] samples = splitter.samples
     cdef intp_t[::1] features = splitter.features
@@ -808,12 +809,6 @@ cdef inline int node_split_random(
         if has_missing:
             # If there are missing values, then we randomly make all missing
             # values go to the right or left.
-            # Note: compared to the BestSplitter, we do not evaluate the
-            # edge case where all the missing values go to the right node
-            # and the non-missing values go to the left node. This is because
-            # this would indicate a threshold outside of the observed range
-            # of the feature. However, it is not clear how much probability weight should
-            # be given to this edge case.
             missing_go_to_left = rand_int(0, 2, random_state)
         else:
             missing_go_to_left = 0
@@ -876,6 +871,29 @@ cdef inline int node_split_random(
 
             best_proxy_improvement = current_proxy_improvement
             best_split = current_split  # copy
+
+        # Evaluate when there are missing values and all missing values go
+        # to the right node and non-missing values go to the left node.
+        if has_missing:
+            p = end - n_missing
+            n_left, n_right = end - start - n_missing, n_missing
+            missing_go_to_left = 0
+
+            if not (n_left < min_samples_leaf or n_right < min_samples_leaf):
+                criterion.missing_go_to_left = missing_go_to_left
+                criterion.update(p)
+
+                if not ((criterion.weighted_n_left < min_weight_leaf) or
+                        (criterion.weighted_n_right < min_weight_leaf)):
+                    current_proxy_improvement = criterion.proxy_impurity_improvement()
+
+                    if current_proxy_improvement > best_proxy_improvement:
+                        best_proxy_improvement = current_proxy_improvement
+                        current_split.threshold = INFINITY
+                        current_split.missing_go_to_left = missing_go_to_left
+                        current_split.n_missing = n_missing
+                        current_split.pos = p
+                        best_split = current_split
 
     # Reorganize into samples[start:best.pos] + samples[best.pos:end]
     if best_split.pos < end:
