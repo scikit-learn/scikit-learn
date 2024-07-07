@@ -1139,54 +1139,66 @@ def test_check_array_memmap(copy):
         assert X_checked.flags["WRITEABLE"] == copy
 
 
-def test_estimator_has_with_default_args():
-    class MockEstimatorFitted:
-        def __init__(self, attr_value):
-            self.estimator_ = type("estimator_", (), {attr_value: True})
+@pytest.mark.parametrize(
+    "sub_est, attr, delegates, output, error",
+    [
+        ("estimator_", type("", (), {"attribute_present": True}), None, True, None),
+        ("estimator", type("", (), {"attribute_present": True}), None, True, None),
+        (
+            "estimators_",
+            [type("", (), {"attribute_present": True})],
+            ["estimators_"],
+            True,
+            None,
+        ),
+        (
+            "custom_estimator",
+            type("", (), {"attribute_present": True}),
+            ["custom_estimator"],
+            True,
+            None,
+        ),
+        (
+            "no_estimator",
+            type("", (), {"attribute_present": True}),
+            None,
+            None,
+            ValueError,
+        ),
+        (
+            "estimator",
+            type("", (), {"attribute_absent": True}),
+            None,
+            None,
+            AttributeError,
+        ),
+    ],
+    ids=[
+        "fitted_estimator_with_default_delegates",
+        "estimator_with_default_delegates",
+        "list_of_estimators_with_estimators_",
+        "custom_estimator_with_custom_delegates",
+        "no_estimator_with_default_delegates",
+        "estimator_with_absent_attribute",
+    ],
+)
+def test_estimator_has(sub_est, attr, delegates, output, error):
 
-    class MockEstimatorUnFitted:
-        def __init__(self, attr_value):
-            self.estimator = type("estimator", (), {attr_value: True})
+    # always checks for attribute - "attribute_present"
+    # ["estimator_", "estimator"] is used when delegates is None
+    check = _estimator_has("attribute_present", delegates)
 
-    class NonEstimator:
-        def __init__(self, attr_value):
-            self.not_estimator = type("not_estimator", (), {attr_value: True})
+    class MockEstimator:
+        pass
 
-    fitted_mock_estimator = MockEstimatorFitted("test_attr")
-    unfitted_mock_estimator = MockEstimatorUnFitted("test_attr")
-    mock_estimator_without_attr = MockEstimatorFitted("other_attr")
-    non_estimator = NonEstimator("test_attr")
+    a = MockEstimator()
+    setattr(a, sub_est, attr)
 
-    check = _estimator_has("test_attr")
-
-    assert check(fitted_mock_estimator)
-    assert check(unfitted_mock_estimator)
-
-    with pytest.raises(AttributeError):
-        check(mock_estimator_without_attr)
-
-    with pytest.raises(ValueError):
-        check(non_estimator)
-
-
-def test_estimator_has_with_delegates():
-
-    class MockEstimatorListFitted:
-        def __init__(self, attr_value):
-            self.estimators_ = [type("estimator_", (), {attr_value: True})]
-
-    class MockEstimatorFitted:
-        def __init__(self, attr_value):
-            self.custom_name = type("estimator_", (), {attr_value: True})
-
-    fitted_mock_estimator_list = MockEstimatorListFitted("test_attr")
-    fitted_mock_estimator = MockEstimatorFitted("test_attr")
-
-    check_list = _estimator_has("test_attr", delegates=["estimators_"])
-    check_custom = _estimator_has("test_attr", delegates=["custom_name"])
-
-    assert check_list(fitted_mock_estimator_list)
-    assert check_custom(fitted_mock_estimator)
+    if error:
+        with pytest.raises(error):
+            check(a)
+    else:
+        assert check(a) == output
 
 
 @pytest.mark.parametrize(
