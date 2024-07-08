@@ -55,7 +55,7 @@ pre_python_environment_install() {
 check_packages_dev_version() {
     for package in $@; do
         package_version=$(python -c "import $package; print($package.__version__)")
-        if ! [[ $package_version =~ "dev" ]]; then
+        if [[ $package_version =~ "^[.0-9]+$" ]]; then
             echo "$package is not a development version: $package_version"
             exit 1
         fi
@@ -76,33 +76,26 @@ python_environment_install_and_activate() {
         python3.13t -m venv $VIRTUALENV
         source $VIRTUALENV/bin/activate
         pip install -r "${LOCK_FILE}"
-        # TODO for now need pip 24.1b1 to find free-threaded wheels
-        pip install -U --pre pip
-        # TODO When there are CPython 3.13 free-threaded wheels for numpy and
-        # scipy move this to
+        # TODO you need pip>=24.1 to find free-threaded wheels. This may be
+        # removed when the underlying Ubuntu image has pip>=24.1.
+        pip install 'pip>=24.1'
+        # TODO When there are CPython 3.13 free-threaded wheels for numpy,
+        # scipy and cython move them to
         # build_tools/azure/cpython_free_threaded_requirements.txt. For now we
         # install them from scientific-python-nightly-wheels
         dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
-        dev_packages="numpy scipy"
+        dev_packages="numpy scipy Cython"
         pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url $dev_packages
-        # TODO Move cython to
-        # build_tools/azure/cpython_free_threaded_requirements.txt when there
-        # is a CPython 3.13 free-threaded wheel
-        # For now, we need the development version of Cython which has CPython
-        # 3.13 free-threaded fixes so we install it from source
-        pip install git+https://github.com/cython/cython
     fi
 
     if [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
         echo "Installing development dependency wheels"
         dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
-        dev_packages="numpy scipy pandas"
+        dev_packages="numpy scipy pandas Cython"
         pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url $dev_packages
 
         check_packages_dev_version $dev_packages
 
-        echo "Installing Cython from latest sources"
-        pip install https://github.com/cython/cython/archive/master.zip
         echo "Installing joblib from latest sources"
         pip install https://github.com/joblib/joblib/archive/master.zip
         echo "Installing pillow from latest sources"

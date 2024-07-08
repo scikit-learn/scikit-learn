@@ -10,7 +10,7 @@ space. Please refer to the :ref:`User Guide <nca>` for more information.
 
 """
 
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np

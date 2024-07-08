@@ -1,7 +1,7 @@
 """Isomap for manifold learning"""
 
-# Author: Jake Vanderplas  -- <vanderplas@astro.washington.edu>
-# License: BSD 3 clause (C) 2011
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 import warnings
 from numbers import Integral, Real
 
