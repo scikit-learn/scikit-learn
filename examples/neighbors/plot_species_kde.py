@@ -36,9 +36,8 @@ References
    190:231-259, 2006.
 """  # noqa: E501
 
-# Author: Jake Vanderplas <jakevdp@cs.washington.edu>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np

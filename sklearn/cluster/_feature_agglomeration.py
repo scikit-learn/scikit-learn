@@ -3,8 +3,8 @@ Feature agglomeration. Base classes and functions for performing feature
 agglomeration.
 """
 
-# Author: V. Michel, A. Gramfort
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 import numpy as np
