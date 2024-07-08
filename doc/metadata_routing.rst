@@ -307,6 +307,7 @@ Meta-estimators and functions supporting metadata routing:
 - :func:`sklearn.model_selection.cross_val_score`
 - :func:`sklearn.model_selection.cross_val_predict`
 - :class:`sklearn.model_selection.learning_curve`
+- :class:`sklearn.model_selection.validation_curve`
 - :class:`sklearn.multiclass.OneVsOneClassifier`
 - :class:`sklearn.multiclass.OneVsRestClassifier`
 - :class:`sklearn.multiclass.OutputCodeClassifier`
@@ -323,5 +324,4 @@ Meta-estimators and tools not supporting metadata routing yet:
 - :class:`sklearn.ensemble.AdaBoostRegressor`
 - :class:`sklearn.feature_selection.SequentialFeatureSelector`
 - :class:`sklearn.model_selection.permutation_test_score`
-- :class:`sklearn.model_selection.validation_curve`
 - :class:`sklearn.semi_supervised.SelfTrainingClassifier`
