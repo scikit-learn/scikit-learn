@@ -1444,9 +1444,7 @@ will not necessarily be close to zero.::
   * `Wikipedia entry for the Rand index
     <https://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index>`_
 
-  * `Minimum adjusted Rand index for two clusterings of a given size
-    <https://link.springer.com/article/10.1007/s11634-022-00491-w>`_ J. Chacon and A. 
-    Rastrojo, Advances in Dta Analysis and Classification 2023
+  * :doi:`Minimum adjusted Rand index for two clusterings of a given size, 2022, J. E. Chacón and A. I. Rastrojo <10.1007/s11634-022-00491-w>`
 
 
 .. _mutual_info_score:
