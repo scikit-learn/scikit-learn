@@ -389,7 +389,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Array representing the data.
 
         **params : dict of str -> object
-            Parameters to pass to the underlying estimator's predict method.
+            Parameters to pass to the underlying estimator's ``predict`` method.
 
             .. versionadded:: 1.6
                 Only available if `enable_metadata_routing=True`,
@@ -430,7 +430,8 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Array representing the data.
 
         **params : dict of str -> object
-            Parameters to pass to the underlying estimator's predict_proba method.
+            Parameters to pass to the underlying estimator's
+            ``predict_proba`` method.
 
             .. versionadded:: 1.6
                 Only available if `enable_metadata_routing=True`,
@@ -471,7 +472,8 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Array representing the data.
 
         **params : dict of str -> object
-            Parameters to pass to the underlying estimator's decision_function method.
+            Parameters to pass to the underlying estimator's
+            ``decision_function`` method.
 
             .. versionadded:: 1.6
                 Only available if `enable_metadata_routing=True`,
@@ -514,7 +516,8 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Array representing the data.
 
         **params : dict of str -> object
-            Parameters to pass to the underlying estimator's predict_log_proba method.
+            Parameters to pass to the underlying estimator's
+            ``predict_log_proba`` method.
 
             .. versionadded:: 1.6
                 Only available if `enable_metadata_routing=True`,
@@ -560,7 +563,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Array representing the labels.
 
         **params : dict of str -> object
-            Parameters to pass to the underlying estimator's score method.
+            Parameters to pass to the underlying estimator's ``score`` method.
 
             .. versionadded:: 1.6
                 Only available if `enable_metadata_routing=True`,
