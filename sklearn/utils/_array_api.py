@@ -592,21 +592,33 @@ def _expit(X, xp=None):
     return 1.0 / (1.0 + xp.exp(-X))
 
 
-def _add_to_diagonal(array, value, xp):
-    # Workaround for the lack of support for xp.reshape(a, shape, copy=False) in
-    # numpy.array_api: https://github.com/numpy/numpy/issues/23410
-    value = xp.asarray(value, dtype=array.dtype)
-    if _is_numpy_namespace(xp):
-        array_np = numpy.asarray(array)
-        array_np.flat[:: array.shape[0] + 1] += value
-        return xp.asarray(array_np)
-    elif value.ndim == 1:
-        for i in range(array.shape[0]):
-            array[i, i] += value[i]
+def _add_to_diagonal(array, value, xp, add_value=True, wrap=False):
+    """Implementation to facilitate adding or assigning specified values to the
+    diagonal of a 2-d array.
+
+    If ``add_value`` is `True` then the values will be added to the diagonal
+    elements otherwise the values will be assigned to the diagonal elements.
+    This is currently only supported for 2-d arrays.
+
+    The implementation is taken from the `numpy.fill_diagonal` function:
+    https://github.com/numpy/numpy/blob/v2.0.0/numpy/lib/_index_tricks_impl.py#L799-L929
+    """
+    if array.ndim != 2:
+        raise ValueError("array should be 2-d")
+
+    value = xp.asarray(value, dtype=array.dtype, device=device(array))
+    end = None
+    # Explicit, fast formula for the common case.  For 2-d arrays, we
+    # accept rectangular ones.
+    step = array.shape[1] + 1
+    if not wrap:
+        end = array.shape[1] * array.shape[1]
+
+    array_flat = xp.reshape(array, (-1,))
+    if add_value:
+        array_flat[:end:step] += value
     else:
-        # scalar value
-        for i in range(array.shape[0]):
-            array[i, i] += value
+        array_flat[:end:step] = value
 
 
 def _max_precision_float_dtype(xp, device):
