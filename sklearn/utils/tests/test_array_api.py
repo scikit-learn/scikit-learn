@@ -411,7 +411,7 @@ class SimpleEstimator(BaseEstimator):
         return self
 
     def predict(self, X):
-        check_same_namespace(X, self, attr_name="X_", method_name="predict")
+        check_same_namespace(X, self, attribute="X_", method="predict")
         return X
 
 

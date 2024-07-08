@@ -872,8 +872,32 @@ def convert_attributes(estimator, ref_array):
     return _estimator_with_converted_arrays(estimator, make_converter(ref_array))
 
 
-def check_same_namespace(X, estimator, *, attr_name, method_name):
-    attr = getattr(estimator, attr_name)
+def check_same_namespace(X, estimator, *, attribute, method):
+    """Check that X is in the same namespace and device as the fitting data.
+
+    This function checks that the array API namespace and device used during
+    ``fit`` and during a subsequent method such as ``predict`` are consistent.
+    It does so by comparing the namespace and device of ``X`` and the provided
+    ``attribute``.
+
+    Parameters
+    ----------
+    X : array-like
+        The data passed to the fitted estimator's method, e.g. to ``predict``.
+
+    estimator : estimator object
+        The fitted estimator
+
+    attribute : str
+        The name of the fitted attribute to check; for example it could be
+        ``"coef_"`` for a linear model. This function will check that ``X`` is
+        in a namespace and device that are consistent with the attribute.
+
+    method : str
+        The name of the calling method (e.g. ``"predict"``). It is used to
+        write the error message if the check fails.
+    """
+    attr = getattr(estimator, attribute)
     X_xp, X_is_array_api, X_device = get_namespace_and_device(X)
     a_xp, a_is_array_api, a_device = get_namespace_and_device(attr)
     if not X_is_array_api and not a_is_array_api:
@@ -883,15 +907,15 @@ def check_same_namespace(X, estimator, *, attr_name, method_name):
     if X_xp != a_xp:
         msg = (
             f"Array api namespaces used during fit ({a_xp.__name__}) "
-            f"and {method_name} ({X_xp.__name__}) differ."
+            f"and {method} ({X_xp.__name__}) differ."
         )
     else:  # pragma: no cover
         msg = (
             f"Devices used during fit ({a_device}) "
-            f"and {method_name} ({X_device}) differ."
+            f"and {method} ({X_device}) differ."
         )
     raise ValueError(
-        f"Inputs passed to {estimator.__class__.__name__}.{method_name}() "
+        f"Inputs passed to {estimator.__class__.__name__}.{method}() "
         "must use the same array library and the same device as those passed to fit(). "
         f"{msg} "
         "You can convert the estimator to the same library and device as X with: "

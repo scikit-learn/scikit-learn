@@ -273,7 +273,7 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
 
     def _decision_function(self, X):
         check_is_fitted(self)
-        check_same_namespace(X, self, attr_name="coef_", method_name="predict")
+        check_same_namespace(X, self, attribute="coef_", method="predict")
 
         X = self._validate_data(X, accept_sparse=["csr", "csc", "coo"], reset=False)
         coef_ = self.coef_
