@@ -2,9 +2,8 @@
 General tests for all estimators in sklearn.
 """
 
-# Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
-#          Gael Varoquaux gael.varoquaux@normalesup.org
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import os
 import pkgutil
@@ -80,6 +79,7 @@ from sklearn.utils.estimator_checks import (
     check_get_feature_names_out_error,
     check_global_output_transform_pandas,
     check_global_set_output_transform_polars,
+    check_inplace_ensure_writeable,
     check_n_features_in_after_fitting,
     check_param_validation,
     check_set_output_transform,
@@ -177,6 +177,7 @@ def test_check_estimator_generate_only():
 
 
 def test_setup_py_check():
+    pytest.importorskip("setuptools")
     # Smoke test `python setup.py check` command run at the root of the
     # scikit-learn source tree.
     cwd = os.getcwd()
@@ -330,7 +331,9 @@ def _generate_search_cv_instances():
         extra_params = (
             {"min_resources": "smallest"} if "min_resources" in init_params else {}
         )
-        search_cv = SearchCV(Estimator(), param_grid, cv=2, **extra_params)
+        search_cv = SearchCV(
+            Estimator(), param_grid, cv=2, error_score="raise", **extra_params
+        )
         set_random_state(search_cv)
         yield search_cv
 
@@ -615,3 +618,31 @@ def test_set_output_transform_configured(estimator, check_func):
     _set_checking_parameters(estimator)
     with ignore_warnings(category=(FutureWarning)):
         check_func(estimator.__class__.__name__, estimator)
+
+
+@pytest.mark.parametrize(
+    "estimator", _tested_estimators(), ids=_get_check_estimator_ids
+)
+def test_check_inplace_ensure_writeable(estimator):
+    name = estimator.__class__.__name__
+
+    if hasattr(estimator, "copy"):
+        estimator.set_params(copy=False)
+    elif hasattr(estimator, "copy_X"):
+        estimator.set_params(copy_X=False)
+    else:
+        raise SkipTest(f"{name} doesn't require writeable input.")
+
+    _set_checking_parameters(estimator)
+
+    # The following estimators can work inplace only with certain settings
+    if name == "HDBSCAN":
+        estimator.set_params(metric="precomputed", algorithm="brute")
+
+    if name == "PCA":
+        estimator.set_params(svd_solver="full")
+
+    if name == "KernelPCA":
+        estimator.set_params(kernel="precomputed")
+
+    check_inplace_ensure_writeable(name, estimator)

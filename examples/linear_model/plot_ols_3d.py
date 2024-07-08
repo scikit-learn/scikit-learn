@@ -11,7 +11,7 @@ give us much regarding `y` when compared to just feature 1.
 
 # Code source: Gaël Varoquaux
 # Modified for documentation by Jaques Grobler
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # First we load the diabetes dataset.

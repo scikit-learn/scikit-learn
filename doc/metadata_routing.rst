@@ -276,6 +276,7 @@ Meta-estimators and functions supporting metadata routing:
 
 - :class:`sklearn.calibration.CalibratedClassifierCV`
 - :class:`sklearn.compose.ColumnTransformer`
+- :class:`sklearn.compose.TransformedTargetRegressor`
 - :class:`sklearn.covariance.GraphicalLassoCV`
 - :class:`sklearn.ensemble.StackingClassifier`
 - :class:`sklearn.ensemble.StackingRegressor`
@@ -304,6 +305,7 @@ Meta-estimators and functions supporting metadata routing:
 - :func:`sklearn.model_selection.cross_val_score`
 - :func:`sklearn.model_selection.cross_val_predict`
 - :class:`sklearn.model_selection.learning_curve`
+- :class:`sklearn.model_selection.validation_curve`
 - :class:`sklearn.multiclass.OneVsOneClassifier`
 - :class:`sklearn.multiclass.OneVsRestClassifier`
 - :class:`sklearn.multiclass.OutputCodeClassifier`
@@ -316,12 +318,10 @@ Meta-estimators and functions supporting metadata routing:
 
 Meta-estimators and tools not supporting metadata routing yet:
 
-- :class:`sklearn.compose.TransformedTargetRegressor`
 - :class:`sklearn.ensemble.AdaBoostClassifier`
 - :class:`sklearn.ensemble.AdaBoostRegressor`
 - :class:`sklearn.feature_selection.RFE`
 - :class:`sklearn.feature_selection.RFECV`
 - :class:`sklearn.feature_selection.SequentialFeatureSelector`
 - :class:`sklearn.model_selection.permutation_test_score`
-- :class:`sklearn.model_selection.validation_curve`
 - :class:`sklearn.semi_supervised.SelfTrainingClassifier`
