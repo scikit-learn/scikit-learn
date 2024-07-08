@@ -873,12 +873,11 @@ def convert_attributes(estimator, ref_array):
 
 
 def check_same_namespace(X, estimator, *, attribute, method):
-    """Check that X is in the same namespace and device as the fitting data.
+    """Check that estimator's fitted attribute is compatible with X.
 
-    This function checks that the array API namespace and device used during
-    ``fit`` and during a subsequent method such as ``predict`` are consistent.
-    It does so by comparing the namespace and device of ``X`` and the provided
-    ``attribute``.
+    Use this to check that an estimator was fitted using the same array
+    namespace and device as ``X``. This is done by comparing the namespace and
+    device of ``X`` and the provided ``attribute``.
 
     Parameters
     ----------
