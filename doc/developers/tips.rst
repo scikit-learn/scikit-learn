@@ -242,6 +242,33 @@ PR: Don't change unrelated
 
     Please do not change unrelated lines. It makes your contribution harder to review and may introduce merge conflicts to other pull requests.
 
+.. _debugging_ci_issues:
+
+Debugging CI issues
+-------------------
+
+CI issues happen for a variety of reasons, so this is by no way a comprehensive
+guide but more a list of useful tips and tricks.
+
+Using a lock-file to get an environment close to the CI
++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+`conda-lock` can be used to create an conda environment with the exact same
+conda and pip packages as on the CI. For example, the following command will
+create a conda environment named `scikit-learn-doc` that is similar to the CI:
+
+.. prompt bash $
+
+  conda-lock install -n scikit-learn-doc build_tools/circle/doc_linux-64_conda.lock
+
+.. note::
+
+    It only works if you have the same OS as the CI build (check `platform:` in
+    the lock-file). For example, the previous command will only work if you are
+    on a Linux machine. Also this may not allow you to reproduce some of the
+    issues that are more tied to the particularities of the CI environment, for
+    example CPU architecture reported by OpenBLAS in `sklearn.show_versions()`.
+
 .. highlight:: default
 
 Debugging memory errors in Cython with valgrind
