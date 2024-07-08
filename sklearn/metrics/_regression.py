@@ -397,14 +397,15 @@ def mean_absolute_percentage_error(
     """
     input_arrays = [y_true, y_pred, sample_weight, multioutput]
     xp, _ = get_namespace(*input_arrays)
+    dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
 
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
     )
     check_consistent_length(y_true, y_pred, sample_weight)
-    epsilon = xp.asarray(xp.finfo(xp.float64).eps, dtype=xp.asarray(0.0).dtype)
-    y_true_abs = xp.asarray(xp.abs(y_true), dtype=xp.asarray(0.0).dtype)
-    mape = xp.asarray(xp.abs(y_pred - y_true), dtype=xp.asarray(0.0).dtype) / xp.where(
+    epsilon = xp.asarray(xp.finfo(xp.float64).eps, dtype=dtype)
+    y_true_abs = xp.asarray(xp.abs(y_true), dtype=dtype)
+    mape = xp.asarray(xp.abs(y_pred - y_true), dtype=dtype) / xp.where(
         epsilon < y_true_abs, y_true_abs, epsilon
     )
     output_errors = _average(mape, weights=sample_weight, axis=0)
