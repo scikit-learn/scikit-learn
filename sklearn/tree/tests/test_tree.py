@@ -2572,9 +2572,9 @@ def make_friedman1_classification(*args, **kwargs):
         # Due to randomness in ExtraTree, we expect the native handling of missing
         # values to be sometimes better than the naive mean imputation, but not always
         (datasets.make_friedman1, DecisionTreeRegressor, 0),
-        (datasets.make_friedman1, ExtraTreeRegressor, 0.05),
-        (make_friedman1_classification, DecisionTreeClassifier, 0.05),
-        (make_friedman1_classification, ExtraTreeClassifier, 0.1),
+        (datasets.make_friedman1, ExtraTreeRegressor, 0.07),
+        (make_friedman1_classification, DecisionTreeClassifier, 0.03),
+        (make_friedman1_classification, ExtraTreeClassifier, 0.12),
     ],
 )
 @pytest.mark.parametrize("sample_weight_train", [None, "ones"])
@@ -2620,14 +2620,18 @@ def test_missing_values_is_resilience(
     )
 
 
+# A single ExtraTree will randomly send missing values down the left, or right child,
+# and therefore will not necessarily have the same performance as the greedy
+# handling of missing values.
 @pytest.mark.parametrize("Tree, expected_score", zip(CLF_TREES.values(), [0.85, 0.53]))
 def test_missing_value_is_predictive(Tree, expected_score, global_random_seed):
     """Check the tree learns when only the missing value is predictive."""
     rng = np.random.RandomState(0)
-    n_samples = 1000
+    n_samples = 500
 
-    X = rng.standard_normal(size=(n_samples, 10))
-    y = rng.randint(0, high=2, size=n_samples)
+    X = rng.standard_normal(size=(n_samples, 20))
+    y = np.concatenate([np.zeros(n_samples // 2), np.ones(n_samples // 2)])
+    # y = rng.randint(0, high=2, size=n_samples)
 
     # Create a predictive feature using `y` and with some noise
     X_random_mask = rng.choice([False, True], size=n_samples, p=[0.95, 0.05])

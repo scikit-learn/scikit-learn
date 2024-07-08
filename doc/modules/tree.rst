@@ -642,16 +642,10 @@ Decisions are made as follows:
 
 :class:`ExtraTreeClassifier`, and :class:`ExtraTreeRegressor` handle missing values
 in a slightly different way. When splitting a node, a random threshold will be chosen
-to split the non-missing values on. Then two possible splits are evaluated:
-
-1. Split the non-missing values with the random threshold and randomly 
-   send all the missing values to the left, or right child.
-
-2. Split all the missing values to one child node and all the
-   non-missing values to the other child node.
-
-The best split among these is chosen. Therefore, with missing values, there is an extra
-split evaluation per feature with missing-values at each node.
+to split the non-missing values on. Then the non-missing values will be sent to the
+left and right child based on the randomly selected threshold, while the missing
+values will also be randomly sent to the left or right child. This is repeated for
+every feature considered at each split. The best split among these is chosen.
 
 During prediction, the treatment of missing-values is the same as that of the decision tree:
 
