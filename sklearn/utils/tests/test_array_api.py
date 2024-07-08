@@ -615,4 +615,8 @@ def test_count_nonzero(
         )
 
     assert_allclose(_convert_to_numpy(result, xp=xp), expected)
-    assert getattr(array_xp, "device", None) == getattr(result, "device", None)
+
+    if np_version < parse_version("2.0.0") or np_version >= parse_version("2.1.0"):
+        # NumPy 2.0 has a problem with the device attribute of scalar arrays:
+        # https://github.com/numpy/numpy/issues/26850
+        assert getattr(array_xp, "device", None) == getattr(result, "device", None)
