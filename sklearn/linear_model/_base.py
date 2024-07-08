@@ -352,6 +352,7 @@ class LinearClassifierMixin(ClassifierMixin):
         """
         check_is_fitted(self)
         xp, _ = get_namespace(X)
+        check_same_namespace(X, self, attribute="coef_", method="decision_function")
 
         X = self._validate_data(X, accept_sparse="csr", reset=False)
         scores = safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
