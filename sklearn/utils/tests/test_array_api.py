@@ -34,7 +34,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
     skip_if_array_api_compat_not_configured,
 )
-from sklearn.utils.fixes import _IS_32BIT, CSR_CONTAINERS
+from sklearn.utils.fixes import _IS_32BIT, CSR_CONTAINERS, np_version, parse_version
 
 
 @pytest.mark.parametrize("X", [numpy.asarray([1, 2, 3]), [1, 2, 3]])
@@ -67,7 +67,12 @@ def test_get_namespace_ndarray_with_dispatch():
     with config_context(array_api_dispatch=True):
         xp_out, is_array_api_compliant = get_namespace(X_np)
         assert is_array_api_compliant
-        assert xp_out is array_api_compat.numpy
+        if np_version >= parse_version("2.0.0"):
+            # NumPy 2.0+ is an array API compliant library.
+            assert xp_out is numpy
+        else:
+            # Older NumPy versions require the compatibility layer.
+            assert xp_out is array_api_compat.numpy
 
 
 @skip_if_array_api_compat_not_configured
