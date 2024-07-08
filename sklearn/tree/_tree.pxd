@@ -141,6 +141,7 @@ cdef class TreeBuilder:
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight=*,
         const unsigned char[::1] missing_values_in_feature_mask=*,
+        const int32_t[::1] n_categories=*,
     )
 
     cdef _check_input(

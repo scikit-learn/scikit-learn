@@ -161,6 +161,7 @@ cdef class TreeBuilder:
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight=None,
         const unsigned char[::1] missing_values_in_feature_mask=None,
+        const int32_t[::1] n_categories=None,
     ):
         """Build a decision tree from the training set (X, y)."""
         pass
@@ -237,6 +238,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight=None,
         const unsigned char[::1] missing_values_in_feature_mask=None,
+        const int32_t[::1] n_categories=None,
     ):
         """Build a decision tree from the training set (X, y)."""
 
@@ -262,7 +264,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef float64_t min_impurity_decrease = self.min_impurity_decrease
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight, missing_values_in_feature_mask)
+        splitter.init(X, y, sample_weight, missing_values_in_feature_mask, n_categories)
 
         cdef intp_t start
         cdef intp_t end
@@ -500,6 +502,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight=None,
         const unsigned char[::1] missing_values_in_feature_mask=None,
+        const int32_t[::1] n_categories=None,
     ):
         """Build a decision tree from the training set (X, y)."""
 
@@ -511,7 +514,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef intp_t max_leaf_nodes = self.max_leaf_nodes
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight, missing_values_in_feature_mask)
+        splitter.init(X, y, sample_weight, missing_values_in_feature_mask, n_categories)
 
         cdef vector[FrontierRecord] frontier
         cdef FrontierRecord record
@@ -820,6 +823,12 @@ cdef class Tree:
     missing_go_to_left : array of bool, shape [node_count]
         missing_go_to_left[i] holds a bool indicating whether or not there were
         missing values at node i.
+
+    n_classes : array of intp_t, shape [n_outputs]
+        n_classes[j] holds the number of classes of the j-th output.
+
+    n_categories : array of int32_t, shape [n_features]
+        n_categories[i] holds the number of categories of the i-th feature.
     """
     # Wrap for outside world.
     # WARNING: these reference the current `nodes` and `value` buffers, which

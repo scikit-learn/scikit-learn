@@ -458,6 +458,9 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             # might be shared and modified concurrently during parallel fitting
             criterion = copy.deepcopy(criterion)
 
+        # We automatically use the Breiman shortcut for categorical splits
+        # if the criterion is Gini or Entropy and the tree is a binary classifier,
+        # or if the criterion is MSE and the tree is a regression tree.
         if is_classification:
             breiman_shortcut = self.n_classes_.tolist() == [2] and (
                 isinstance(criterion, _criterion.Gini)
@@ -465,7 +468,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             )
         else:
             breiman_shortcut = isinstance(criterion, _criterion.MSE)
-        breiman_shortcut
 
         SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
 
@@ -517,7 +519,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 min_weight_leaf,
                 random_state,
                 monotonic_cst,
-                # breiman_shortcut,
+                breiman_shortcut,
             )
 
         if (

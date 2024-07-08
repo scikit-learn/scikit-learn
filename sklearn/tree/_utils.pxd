@@ -27,6 +27,7 @@ ctypedef fused realloc_ptr:
     (float32_t*)
     (intp_t*)
     (int32_t*)
+    (uint32_t*)
     (unsigned char*)
     (WeightedPQueueRecord*)
     (float64_t*)

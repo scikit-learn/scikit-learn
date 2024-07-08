@@ -70,6 +70,9 @@ cdef class Splitter:
     cdef intp_t start                    # Start position for the current node
     cdef intp_t end                      # End position for the current node
 
+    cdef bint breiman_shortcut           # Whether decision trees are allowed to use the
+    #                                    # Breiman shortcut for categorical features
+
     cdef const float64_t[:, ::1] y
     # Monotonicity constraints for each feature.
     # The encoding is as follows:
@@ -79,6 +82,9 @@ cdef class Splitter:
     cdef const int8_t[:] monotonic_cst
     cdef bint with_monotonic_cst
     cdef const float64_t[:] sample_weight
+
+    cdef const int32_t[:] n_categories
+    cdef BITSET_INNER_DTYPE_C* cat_cache
 
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,
@@ -103,6 +109,7 @@ cdef class Splitter:
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
         const unsigned char[::1] missing_values_in_feature_mask,
+        const int32_t[::1] n_categories,
     ) except -1
 
     cdef int node_reset(

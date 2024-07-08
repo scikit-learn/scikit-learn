@@ -11,6 +11,7 @@ from ._utils cimport log
 from ._utils cimport rand_int
 from ._utils cimport rand_uniform
 from ._utils cimport RAND_R_MAX
+from ._utils cimport safe_realloc
 from ..utils._typedefs cimport int8_t
 
 import numpy as np
@@ -51,6 +52,7 @@ cdef class Splitter:
         float64_t min_weight_leaf,
         object random_state,
         const int8_t[:] monotonic_cst,
+        bint breiman_shortcut,
     ):
         """
         Parameters
@@ -77,6 +79,9 @@ cdef class Splitter:
         monotonic_cst : const int8_t[:]
             Monotonicity constraints
 
+        breiman_shortcut : bint
+            Whether we use the Breiman shortcut method when splitting
+            a categorical feature.
         """
 
         self.criterion = criterion
@@ -90,6 +95,7 @@ cdef class Splitter:
         self.random_state = random_state
         self.monotonic_cst = monotonic_cst
         self.with_monotonic_cst = monotonic_cst is not None
+        self.breiman_shortcut = breiman_shortcut
 
     def __getstate__(self):
         return {}
@@ -98,12 +104,15 @@ cdef class Splitter:
         pass
 
     def __reduce__(self):
-        return (type(self), (self.criterion,
-                             self.max_features,
-                             self.min_samples_leaf,
-                             self.min_weight_leaf,
-                             self.random_state,
-                             self.monotonic_cst), self.__getstate__())
+        return (type(self), (
+            self.criterion,
+            self.max_features,
+            self.min_samples_leaf,
+            self.min_weight_leaf,
+            self.random_state,
+            self.monotonic_cst,
+            self.breiman_shortcut
+        ), self.__getstate__())
 
     cdef int init(
         self,
@@ -111,6 +120,7 @@ cdef class Splitter:
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
         const unsigned char[::1] missing_values_in_feature_mask,
+        const int32_t[::1] n_categories,
     ) except -1:
         """Initialize the splitter.
 
@@ -177,6 +187,20 @@ cdef class Splitter:
         self.sample_weight = sample_weight
         if missing_values_in_feature_mask is not None:
             self.criterion.init_sum_missing()
+
+        # Initialize the number of categories for each feature
+        # A value of -1 indicates a non-categorical feature
+        if n_categories is None:
+            self.n_categories = np.array([-1] * n_features, dtype=np.int32)
+        else:
+            self.n_categories = np.empty(n_categories, dtype=np.int32)
+            self.n_categories[:] = n_categories
+
+        # If needed, allocate cache space for categorical splits
+        cdef int32_t max_n_categories = max(self.n_categories)
+        if max_n_categories > 0:
+            cache_size = (max_n_categories + 63) // 64
+            safe_realloc(&self.cat_cache, cache_size)
         return 0
 
     cdef int node_reset(
@@ -1497,16 +1521,17 @@ cdef class BestSplitter(Splitter):
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
         const unsigned char[::1] missing_values_in_feature_mask,
+        const int32_t[::1] n_categories,
     ) except -1:
-        Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask)
+        Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask, n_categories)
         self.partitioner = DensePartitioner(
             X, self.samples, self.feature_values, missing_values_in_feature_mask
         )
 
     cdef int node_split(
-            self,
-            ParentInfo* parent_record,
-            SplitRecord* split,
+        self,
+        ParentInfo* parent_record,
+        SplitRecord* split,
     ) except -1 nogil:
         return node_split_best(
             self,
@@ -1525,8 +1550,9 @@ cdef class BestSparseSplitter(Splitter):
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
         const unsigned char[::1] missing_values_in_feature_mask,
+        const int32_t[::1] n_categories,
     ) except -1:
-        Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask)
+        Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask, n_categories)
         self.partitioner = SparsePartitioner(
             X, self.samples, self.n_samples, self.feature_values, missing_values_in_feature_mask
         )
@@ -1553,8 +1579,9 @@ cdef class RandomSplitter(Splitter):
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
         const unsigned char[::1] missing_values_in_feature_mask,
+        const int32_t[::1] n_categories,
     ) except -1:
-        Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask)
+        Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask, n_categories)
         self.partitioner = DensePartitioner(
             X, self.samples, self.feature_values, missing_values_in_feature_mask
         )
@@ -1581,8 +1608,9 @@ cdef class RandomSparseSplitter(Splitter):
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
         const unsigned char[::1] missing_values_in_feature_mask,
+        const int32_t[::1] n_categories,
     ) except -1:
-        Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask)
+        Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask, n_categories)
         self.partitioner = SparsePartitioner(
             X, self.samples, self.n_samples, self.feature_values, missing_values_in_feature_mask
         )
