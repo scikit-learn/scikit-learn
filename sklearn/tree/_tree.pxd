@@ -7,9 +7,31 @@ import numpy as np
 cimport numpy as cnp
 
 from ..utils._typedefs cimport float32_t, float64_t, intp_t, int32_t, uint32_t
+from ..ensemble._hist_gradient_boosting.common cimport BITSET_DTYPE_C
 
 from ._splitter cimport Splitter
 from ._splitter cimport SplitRecord
+from ._splitter cimport SplitValue
+
+ctypedef union SplitValue:
+    # Union type to generalize the concept of a threshold to categorical
+    # features. The floating point view, i.e. ``SplitValue.split_value.threshold`` is used
+    # for numerical features, where feature values less than or equal to the
+    # threshold go left, and values greater than the threshold go right.
+    #
+    # For categorical features, the BITSET_DTYPE_C view (`SplitValue.cat_split``) is
+    # used. It works in one of two ways, indicated by the value of its least
+    # significant bit (LSB). If the LSB is 0, then cat_split acts as a bitfield
+    # for up to 64 categories, sending samples left if the bit corresponding to
+    # their category is 1 or right if it is 0. If the LSB is 1, then the most
+    # significant 32 bits of cat_split make a random seed. To evaluate a
+    # sample, use the random seed to flip a coin (category_value + 1) times and
+    # send it left if the last flip gives 1; otherwise right. This second
+    # method allows up to 2**31 category values, but can only be used for
+    # RandomSplitter.
+    float64_t threshold
+    BITSET_DTYPE_C cat_split
+
 
 cdef struct Node:
     # Base storage structure for the nodes in a Tree object
@@ -17,7 +39,10 @@ cdef struct Node:
     intp_t left_child                    # id of the left child of the node
     intp_t right_child                   # id of the right child of the node
     intp_t feature                       # Feature used for splitting the node
-    float64_t threshold                  # Threshold value at the node
+    # SplitValue split_value             # Generalized threshold for categorical and
+                                         # non-categorical features
+    float64_t threshold
+    BITSET_DTYPE_C cat_split
     float64_t impurity                   # Impurity of the node (i.e., the value of the criterion)
     intp_t n_node_samples                # Number of samples at the node
     float64_t weighted_n_node_samples    # Weighted number of samples at the node

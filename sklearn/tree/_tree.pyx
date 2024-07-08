@@ -54,12 +54,48 @@ TREE_UNDEFINED = -2
 cdef intp_t _TREE_LEAF = TREE_LEAF
 cdef intp_t _TREE_UNDEFINED = TREE_UNDEFINED
 
+"""
+this includes cat_split, but it breaks joblib.hash
+NODE_DTYPE = np.dtype({
+    'names': ['left_child', 'right_child', 'feature', 'threshold', 'cat_split',
+              'impurity', 'n_node_samples', 'weighted_n_node_samples'],
+    'formats': [np.intp, np.intp, np.intp, np.float64, np.uint64, np.float64,
+                np.intp, np.float64],
+    'offsets': [
+        <Py_ssize_t> &(<Node*> NULL).left_child,
+        <Py_ssize_t> &(<Node*> NULL).right_child,
+        <Py_ssize_t> &(<Node*> NULL).feature,
+        <Py_ssize_t> &(<Node*> NULL).split_value,
+        <Py_ssize_t> &(<Node*> NULL).split_value,
+        <Py_ssize_t> &(<Node*> NULL).impurity,
+        <Py_ssize_t> &(<Node*> NULL).n_node_samples,
+        <Py_ssize_t> &(<Node*> NULL).weighted_n_node_samples
+    ]
+})
+"""
 # Build the corresponding numpy dtype for Node.
 # This works by casting `dummy` to an array of Node of length 1, which numpy
 # can construct a `dtype`-object for. See https://stackoverflow.com/q/62448946
 # for a more detailed explanation.
 cdef Node dummy
 NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
+# NODE_DTYPE = np.dtype({
+#     'names': ['left_child', 'right_child', 'feature', 'threshold', 'cat_split',
+#               'impurity', 'n_node_samples', 'weighted_n_node_samples', 'missing_go_to_left'],
+#     'formats': [np.intp, np.intp, np.intp, np.float64, np.uint64, np.float64,
+#                 np.intp, np.float64, np.bool],
+#     'offsets': [
+#         <Py_ssize_t> &(<Node*> NULL).left_child,
+#         <Py_ssize_t> &(<Node*> NULL).right_child,
+#         <Py_ssize_t> &(<Node*> NULL).feature,
+#         <Py_ssize_t> &(<Node*> NULL).split_value,
+#         <Py_ssize_t> &(<Node*> NULL).split_value,
+#         <Py_ssize_t> &(<Node*> NULL).impurity,
+#         <Py_ssize_t> &(<Node*> NULL).n_node_samples,
+#         <Py_ssize_t> &(<Node*> NULL).weighted_n_node_samples,
+#         <Py_ssize_t> &(<Node*> NULL).missing_go_to_left
+#     ]
+# })
 
 cdef inline void _init_parent_record(ParentInfo* record) noexcept nogil:
     record.n_constant_features = 0
@@ -266,7 +302,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                                 min_impurity_decrease))
 
                 node_id = tree._add_node(parent, is_left, is_leaf, split.feature,
-                                         split.threshold, parent_record.impurity,
+                                         split.split_value.threshold, parent_record.impurity,
                                          n_node_samples, weighted_n_node_samples,
                                          split.missing_go_to_left)
 
@@ -624,7 +660,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                  if parent != NULL
                                  else _TREE_UNDEFINED,
                                  is_left, is_leaf,
-                                 split.feature, split.threshold, parent_record.impurity,
+                                 split.feature, split.split_value.threshold, parent_record.impurity,
                                  n_node_samples, weighted_n_node_samples,
                                  split.missing_go_to_left)
         if node_id == INTPTR_MAX:

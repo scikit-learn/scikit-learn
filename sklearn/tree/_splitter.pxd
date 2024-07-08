@@ -6,7 +6,27 @@ from ._criterion cimport Criterion
 from ._tree cimport ParentInfo
 
 from ..utils._typedefs cimport float32_t, float64_t, intp_t, int8_t, int32_t, uint32_t
+from ..ensemble._hist_gradient_boosting.common cimport BITSET_DTYPE_C
 
+
+ctypedef union SplitValue:
+    # Union type to generalize the concept of a threshold to categorical
+    # features. The floating point view, i.e. ``SplitValue.split_value.threshold`` is used
+    # for numerical features, where feature values less than or equal to the
+    # threshold go left, and values greater than the threshold go right.
+    #
+    # For categorical features, the BITSET_DTYPE_C view (`SplitValue.cat_split``) is
+    # used. It works in one of two ways, indicated by the value of its least
+    # significant bit (LSB). If the LSB is 0, then cat_split acts as a bitfield
+    # for up to 64 categories, sending samples left if the bit corresponding to
+    # their category is 1 or right if it is 0. If the LSB is 1, then the most
+    # significant 32 bits of cat_split make a random seed. To evaluate a
+    # sample, use the random seed to flip a coin (category_value + 1) times and
+    # send it left if the last flip gives 1; otherwise right. This second
+    # method allows up to 2**31 category values, but can only be used for
+    # RandomSplitter.
+    float64_t threshold
+    BITSET_DTYPE_C cat_split
 
 cdef struct SplitRecord:
     # Data to track sample split
@@ -14,7 +34,8 @@ cdef struct SplitRecord:
     intp_t pos             # Split samples array at the given position,
     #                      # i.e. count of samples below threshold for feature.
     #                      # pos is >= end if the node is a leaf.
-    float64_t threshold       # Threshold to split at.
+    SplitValue split_value    # Generalized threshold for categorical and
+                              # non-categorical features to split samples.
     float64_t improvement     # Impurity improvement given parent node.
     float64_t impurity_left   # Impurity of the left split.
     float64_t impurity_right  # Impurity of the right split.
