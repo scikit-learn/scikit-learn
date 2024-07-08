@@ -4,9 +4,11 @@
 # See _utils.pyx for details.
 
 cimport numpy as cnp
-from ._tree cimport Node
+
 from ..neighbors._quad_tree cimport Cell
-from ..utils._typedefs cimport float32_t, float64_t, intp_t, int32_t, uint32_t, uint64_t, BITSET_t
+from ..utils._typedefs cimport (BITSET_t, float32_t, float64_t, int32_t,
+                                intp_t, uint32_t, uint64_t)
+from ._tree cimport Node
 
 
 cdef enum:

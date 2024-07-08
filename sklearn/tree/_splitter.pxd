@@ -2,12 +2,12 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 # See _splitter.pyx for details.
+
+from ..ensemble._hist_gradient_boosting.common cimport BITSET_INNER_DTYPE_C
+from ..utils._typedefs cimport (BITSET_t, float32_t, float64_t, int8_t,
+                                int32_t, intp_t, uint32_t, uint64_t)
 from ._criterion cimport Criterion
 from ._tree cimport ParentInfo
-
-from ..utils._typedefs cimport float32_t, float64_t, intp_t, int8_t, int32_t, uint32_t, uint64_t, BITSET_t
-from ..ensemble._hist_gradient_boosting.common cimport BITSET_INNER_DTYPE_C
-
 
 ctypedef union SplitValue:
     # Union type to generalize the concept of a threshold to categorical

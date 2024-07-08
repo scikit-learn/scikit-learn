@@ -6,14 +6,10 @@ from libc.math cimport isnan
 from libc.stdlib cimport qsort
 from libc.string cimport memcpy
 
-from ._criterion cimport Criterion
-from ._utils cimport log
-from ._utils cimport rand_int
-from ._utils cimport rand_uniform
-from ._utils cimport RAND_R_MAX
-from ._utils cimport bs_set, bs_get, bs_from_template
-from ._utils cimport setup_cat_cache
 from ..utils._typedefs cimport int8_t
+from ._criterion cimport Criterion
+from ._utils cimport (RAND_R_MAX, bs_from_template, bs_get, bs_set, log,
+                      rand_int, rand_uniform, setup_cat_cache)
 
 import numpy as np
 from scipy.sparse import issparse

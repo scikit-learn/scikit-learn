@@ -1,18 +1,19 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from libc.string cimport memcpy
-from libc.string cimport memset
-from libc.math cimport fabs, INFINITY
+from libc.math cimport INFINITY, fabs
+from libc.string cimport memcpy, memset
 
 import numpy as np
+
 cimport numpy as cnp
+
 cnp.import_array()
 
 from scipy.special.cython_special cimport xlogy
 
-from ._utils cimport log
-from ._utils cimport WeightedMedianCalculator
+from ._utils cimport WeightedMedianCalculator, log
+
 
 # EPSILON is used in the Poisson criterion
 cdef float64_t EPSILON = 10 * np.finfo('double').eps

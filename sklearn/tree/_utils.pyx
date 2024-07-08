@@ -1,13 +1,14 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from libc.stdlib cimport free
-from libc.stdlib cimport realloc
-from libc.math cimport log as ln
 from libc.math cimport isnan
+from libc.math cimport log as ln
+from libc.stdlib cimport free, realloc
 
 import numpy as np
+
 cimport numpy as cnp
+
 cnp.import_array()
 
 from ..utils._random cimport our_rand_r

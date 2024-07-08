@@ -2,29 +2,27 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from cpython cimport Py_INCREF, PyObject, PyTypeObject
-
-from libc.stdlib cimport free
-from libc.string cimport memcpy
-from libc.string cimport memset
-from libc.stdint cimport INTPTR_MAX
 from libc.math cimport isnan
-from libcpp.vector cimport vector
-from libcpp.algorithm cimport pop_heap
-from libcpp.algorithm cimport push_heap
-from libcpp.stack cimport stack
+from libc.stdint cimport INTPTR_MAX
+from libc.stdlib cimport free
+from libc.string cimport memcpy, memset
 from libcpp cimport bool
+from libcpp.algorithm cimport pop_heap, push_heap
+from libcpp.stack cimport stack
+from libcpp.vector cimport vector
 
 import struct
 
 import numpy as np
+
 cimport numpy as cnp
+
 cnp.import_array()
 
-from scipy.sparse import issparse
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix, issparse
 
-from ._utils cimport safe_realloc
-from ._utils cimport sizet_ptr_to_ndarray, int32t_ptr_to_ndarray
+from ._utils cimport int32t_ptr_to_ndarray, safe_realloc, sizet_ptr_to_ndarray
+
 
 cdef extern from "numpy/arrayobject.h":
     object PyArray_NewFromDescr(PyTypeObject* subtype, cnp.dtype descr,
@@ -39,6 +37,7 @@ cdef extern from "numpy/arrayobject.h":
 
 from numpy import float32 as DTYPE
 from numpy import float64 as DOUBLE
+
 
 cdef float64_t INFINITY = np.inf
 cdef float64_t EPSILON = np.finfo('double').eps

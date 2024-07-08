@@ -4,14 +4,12 @@
 # See _tree.pyx for details.
 
 import numpy as np
+
 cimport numpy as cnp
 
-from ..utils._typedefs cimport float32_t, float64_t, intp_t, int32_t, uint32_t
 from ..ensemble._hist_gradient_boosting.common cimport BITSET_INNER_DTYPE_C
-
-from ._splitter cimport Splitter
-from ._splitter cimport SplitRecord
-from ._splitter cimport SplitValue
+from ..utils._typedefs cimport float32_t, float64_t, int32_t, intp_t, uint32_t
+from ._splitter cimport SplitRecord, Splitter, SplitValue
 
 ctypedef union SplitValue:
     # Union type to generalize the concept of a threshold to categorical
