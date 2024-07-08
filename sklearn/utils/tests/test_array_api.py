@@ -234,14 +234,15 @@ def test_average_raises_with_wrong_dtype(array_namespace, device, dtype_name):
         (
             0,
             [[1, 2]],
-            TypeError,
-            "1D weights expected",
+            # NumPy 2 raises ValueError, NumPy 1 raises TypeError
+            (ValueError, TypeError),
+            "weights",  # the message is different for NumPy 1 and 2...
         ),
         (
             0,
             [1, 2, 3, 4],
             ValueError,
-            "Length of weights",
+            "weights",
         ),
         (0, [-1, 1], ZeroDivisionError, "Weights sum to zero, can't be normalized"),
     ),

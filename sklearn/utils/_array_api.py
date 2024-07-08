@@ -672,16 +672,10 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
                 f"weights {tuple(weights.shape)} differ."
             )
 
-        if weights.ndim != 1:
-            raise TypeError(
-                f"1D weights expected when a.shape={tuple(a.shape)} and "
-                f"weights.shape={tuple(weights.shape)} differ."
-            )
-
-        if size(weights) != a.shape[axis]:
+        if tuple(weights.shape) != (a.shape[axis],):
             raise ValueError(
-                f"Length of weights {size(weights)} not compatible with "
-                f" a.shape={tuple(a.shape)} and {axis=}."
+                f"Shape of weights weights.shape={tuple(weights.shape)} must be "
+                f"consistent with a.shape={tuple(a.shape)} and {axis=}."
             )
 
         # If weights are 1D, add singleton dimensions for broadcasting
