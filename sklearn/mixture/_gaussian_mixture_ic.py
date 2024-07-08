@@ -7,7 +7,6 @@
 
 import numpy as np
 
-from ..base import BaseEstimator, ClusterMixin
 from ..model_selection import GridSearchCV
 from ..utils import check_scalar
 from ..utils._param_validation import StrOptions
@@ -33,7 +32,7 @@ def _check_multi_comp_inputs(input, name, default):
     return input
 
 
-class GaussianMixtureIC(ClusterMixin, BaseEstimator):
+class GaussianMixtureIC(GaussianMixture):
     """Gaussian mixture with BIC/AIC.
 
     Automatic Gaussian Mixture Model (GMM) selection via the
@@ -182,7 +181,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
     >>> X = np.array([[1, 2], [1, 4], [1, 0], [10, 2], [10, 4], [10, 0]])
     >>> gmIC = GaussianMixtureIC(max_components=4)
     >>> gmIC.fit_predict(X)
-    array([0, 0, 0, 1, 1, 1])
+    array([1, 1, 1, 0, 0, 0])
     >>> print(gmIC.n_components_)
     2
     """
