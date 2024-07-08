@@ -30,6 +30,7 @@ from ..utils import (
 from ..utils._array_api import (
     _average,
     _cumulative_sum1d,
+    _find_matching_floating_dtype,
     _is_numpy_namespace,
     get_namespace,
     get_namespace_and_device,
@@ -1520,12 +1521,20 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_base=2, ignore_ties=False):
         ranked = y_true[np.arange(ranking.shape[0])[:, np.newaxis], ranking]
         cumulative_gains = discount.dot(ranked.T)
     else:
-        discount_cumsum = _cumulative_sum1d(discount, xp, device_)
-        cumulative_gains = [
-            _tie_averaged_dcg(y_t, y_s, discount_cumsum)
-            # TODO: zip doesn't seem to work with array_api_strict
-            for y_t, y_s in zip(y_true, y_score)
-        ]
+        if _is_numpy_namespace(xp):
+            discount_cumsum = np.cumsum(discount)
+            cumulative_gains = [
+                _tie_averaged_dcg(y_t, y_s, discount_cumsum)
+                for y_t, y_s in zip(y_true, y_score)
+            ]
+        else:
+            discount_cumsum = _cumulative_sum1d(discount, xp, device_)
+            n_rows = y_true.shape[0]
+            cumulative_gains = [
+                _tie_averaged_dcg(y_true[i, ...], y_score[i, ...], discount_cumsum)
+                # TODO: zip doesn't seem to work with array_api_strict
+                for i in range(n_rows)
+            ]
     if _is_numpy_namespace(xp):
         return np.asarray(cumulative_gains)
     return xp.asarray(cumulative_gains, device=device_)
@@ -1581,11 +1590,16 @@ def _tie_averaged_dcg(y_true, y_score, discount_cumsum):
         return (ranked * discount_sums).sum()
     _, counts = xp.unique_counts(-y_score)
     _, inv = xp.unique_inverse(-y_score)
-    ranked = y_true[inv] / counts
+    float_dtype = _find_matching_floating_dtype(y_true, y_score, xp=xp)
+    ranked = xp.asarray(xp.take(y_true, inv, axis=0), dtype=float_dtype)
+    ranked /= xp.asarray(counts, dtype=float_dtype)
     groups = _cumulative_sum1d(counts, xp, device_) - 1
-    discount_sums = xp.asarray(xp.empty(counts.size), device=device_)
+    discount_sums = xp.empty_like(counts, dtype=float_dtype, device=device_)
     discount_sums[0] = discount_cumsum[groups[0]]
-    discount_sums[1:] = xp.diff(discount_cumsum[groups])
+    array_diff = xp.take(discount_cumsum, groups[1:], axis=0) - xp.take(
+        discount_cumsum, groups[:-1], axis=0
+    )
+    discount_sums[1:] = array_diff
     return xp.sum(ranked * discount_sums)
 
 

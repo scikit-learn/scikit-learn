@@ -995,7 +995,6 @@ def _cumulative_sum1d(array, xp, device):
     Included in the v2023.12 of the Array API spec.
     https://data-apis.org/array-api/latest/API_specification/generated/array_api.cumulative_sum.html
     """
-    print(type(array))
     array = _ravel(array, xp)
     # PyTorch doesn't define `size` in an Array API compatible way
     # https://data-apis.org/array-api-compat/helper-functions.html#array_api_compat.size
@@ -1003,3 +1002,8 @@ def _cumulative_sum1d(array, xp, device):
     return xp.asarray(
         [xp.sum(array[: i + 1]) for i in range(array_size)], device=device
     )
+
+
+def _zip(*arrays, xp):
+    """Zip arrays together."""
+    pass
