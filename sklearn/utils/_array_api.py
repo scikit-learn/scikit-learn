@@ -918,7 +918,7 @@ def check_same_namespace(X, estimator, *, attribute, method):
     X_xp, X_is_array_api, X_device = get_namespace_and_device(X)
     with config_context(array_api_dispatch=True):
         a_xp, a_is_array_api, a_device = get_namespace_and_device(attr)
-    if not X_is_array_api and not a_is_array_api:
+    if not X_is_array_api and (not a_is_array_api or isinstance(attr, numpy.ndarray)):
         return
     if X_xp == a_xp and X_device == a_device:
         return
