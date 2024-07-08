@@ -1509,10 +1509,10 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_base=2, ignore_ties=False):
         have a score between 0 and 1.
     """
     xp, _, device_ = get_namespace_and_device(y_true, y_score)
+    float_dtype = _find_matching_floating_dtype(y_true, y_score, xp=xp)
     discount = 1 / (
-        # TODO: float64 not for MPS!
-        xp.log(xp.astype(xp.arange(y_true.shape[1], device=device_), xp.float64) + 2)
-        / xp.log(xp.asarray(log_base, dtype=xp.float64, device=device_))
+        xp.log(xp.astype(xp.arange(y_true.shape[1], device=device_), float_dtype) + 2)
+        / xp.log(xp.asarray(log_base, dtype=float_dtype, device=device_))
     )
     if k is not None:
         discount[k:] = 0
@@ -1532,7 +1532,6 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_base=2, ignore_ties=False):
             n_rows = y_true.shape[0]
             cumulative_gains = [
                 _tie_averaged_dcg(y_true[i, ...], y_score[i, ...], discount_cumsum)
-                # TODO: zip doesn't seem to work with array_api_strict
                 for i in range(n_rows)
             ]
     if _is_numpy_namespace(xp):
