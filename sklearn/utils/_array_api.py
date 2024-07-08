@@ -880,14 +880,16 @@ def make_converter(X):
     return convert
 
 
-def convert_estimator(estimator, ref_array):
+def convert_estimator(estimator, reference_array):
     """
     Convert attributes of estimator to namespace and device of reference array.
 
     Attributes which are not arrays are left unchanged.
     """
     with config_context(array_api_dispatch=True):
-        return _estimator_with_converted_arrays(estimator, make_converter(ref_array))
+        return _estimator_with_converted_arrays(
+            estimator, make_converter(reference_array)
+        )
 
 
 def check_same_namespace(X, estimator, *, attribute, method):
