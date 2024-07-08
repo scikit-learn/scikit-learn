@@ -49,6 +49,10 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
 
         Uniform weights are used by default.
 
+        See the following example for a demonstration of the impact of
+        different weighting schemes on predictions:
+        :ref:`sphx_glr_auto_examples_neighbors_plot_regression.py`.
+
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         Algorithm used to compute the nearest neighbors:
 
