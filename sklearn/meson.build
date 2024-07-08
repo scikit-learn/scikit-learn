@@ -26,9 +26,9 @@ if not cython.version().version_compare('>=' + cython_min_version)
   error('scikit-learn requires Cython>=' + cython_min_version + ', got ' + cython.version() + ' instead')
 endif
 
-# Only check numpy and scipy versions when not cross-compiling, as numpy and
-# scipy are not installed in the build machine. For more details, see
-# https://docs.scipy.org/doc/scipy/building/cross_compilation.html
+# Only check build dependencies version when not cross-compiling, as running
+# Python interpreter can be tricky in cross-compilation settings. For more
+# details, see https://docs.scipy.org/doc/scipy/building/cross_compilation.html
 if not meson.is_cross_build()
     numpy_version = run_command(py,
       ['-c', 'import numpy; print(numpy.__version__)'], check: true).stdout().strip()
