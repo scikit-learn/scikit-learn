@@ -148,8 +148,8 @@ Changelog
   :pr:`29135` by :user:`Xuefeng Xu <xuefeng-xu>`.
 
 - |Fix| :class:`impute.IterativeImputer` Now gives same output 
-  when keep_empty_features is set to True, This is the same as when
-  keep_empty_features is to False.
+  when ``keep_empty_features=True`` compared to when
+  ``keep_empty_features=False`` on non-empty features.
   :pr:`29414` by :user:`Anurag Varma <Anurag-Varma>`.
 
 :mod:`sklearn.linear_model`
