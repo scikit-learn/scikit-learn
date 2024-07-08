@@ -352,7 +352,7 @@ def test_function_transformer_feature_names_out_is_None():
     transformer = FunctionTransformer()
     X = np.random.rand(100, 2)
     transformer.fit_transform(X)
-
+    assert "get_feature_names_out" not in dir(transformer)
     msg = "This 'FunctionTransformer' has no attribute 'get_feature_names_out'"
     with pytest.raises(AttributeError, match=msg):
         transformer.get_feature_names_out()

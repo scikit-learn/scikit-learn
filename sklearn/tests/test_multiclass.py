@@ -133,7 +133,10 @@ def test_ovr_partial_fit():
 
     # test partial_fit only exists if estimator has it:
     ovr = OneVsRestClassifier(SVC())
+    # check __dir__ method does not return partial_fit
+
     assert not hasattr(ovr, "partial_fit")
+    assert "partial_fit" not in dir(ovr)
 
 
 def test_ovr_partial_fit_exceptions():
@@ -385,12 +388,15 @@ def test_ovr_multilabel_predict_proba():
         # Decision function only estimator.
         decision_only = OneVsRestClassifier(svm.SVR()).fit(X_train, Y_train)
         assert not hasattr(decision_only, "predict_proba")
+        assert "predict_proba" not in dir(decision_only)
 
         # Estimator with predict_proba disabled, depending on parameters.
         decision_only = OneVsRestClassifier(svm.SVC(probability=False))
         assert not hasattr(decision_only, "predict_proba")
+        assert "predict_proba" not in dir(decision_only)
         decision_only.fit(X_train, Y_train)
         assert not hasattr(decision_only, "predict_proba")
+        assert "predict_proba" not in dir(decision_only)
         assert hasattr(decision_only, "decision_function")
 
         # Estimator which can get predict_proba enabled after fitting
@@ -399,6 +405,7 @@ def test_ovr_multilabel_predict_proba():
         )
         proba_after_fit = OneVsRestClassifier(gs)
         assert not hasattr(proba_after_fit, "predict_proba")
+        assert "predict_proba" not in dir(proba_after_fit)
         proba_after_fit.fit(X_train, Y_train)
         assert hasattr(proba_after_fit, "predict_proba")
 
@@ -421,6 +428,7 @@ def test_ovr_single_label_predict_proba():
     # Decision function only estimator.
     decision_only = OneVsRestClassifier(svm.SVR()).fit(X_train, Y_train)
     assert not hasattr(decision_only, "predict_proba")
+    assert "predict_proba" not in dir(decision_only)
 
     Y_pred = clf.predict(X_test)
     Y_proba = clf.predict_proba(X_test)
@@ -560,6 +568,7 @@ def test_ovo_partial_fit_predict():
     # test partial_fit only exists if estimator has it:
     ovr = OneVsOneClassifier(SVC())
     assert not hasattr(ovr, "partial_fit")
+    assert "partial_fit" not in dir(ovr)
 
 
 def test_ovo_decision_function():

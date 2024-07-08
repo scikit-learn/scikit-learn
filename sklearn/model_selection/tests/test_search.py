@@ -1567,6 +1567,7 @@ def test_predict_proba_disabled():
     clf = SVC(probability=False)
     gs = GridSearchCV(clf, {}, cv=2).fit(X, y)
     assert not hasattr(gs, "predict_proba")
+    assert "predict_proba" not in dir(gs)
 
 
 def test_grid_search_allows_nans():
@@ -1781,6 +1782,7 @@ def test_stochastic_gradient_loss_param():
     # When the estimator is not fitted, `predict_proba` is not available as the
     # loss is 'hinge'.
     assert not hasattr(clf, "predict_proba")
+    assert "predict_proba" not in dir(clf)
     clf.fit(X, y)
     clf.predict_proba(X)
     clf.predict_log_proba(X)
@@ -1794,8 +1796,10 @@ def test_stochastic_gradient_loss_param():
         estimator=SGDClassifier(loss="hinge"), param_grid=param_grid, cv=3
     )
     assert not hasattr(clf, "predict_proba")
+    assert "predict_proba" not in dir(clf)
     clf.fit(X, y)
     assert not hasattr(clf, "predict_proba")
+    assert "predict_proba" not in dir(clf)
 
 
 def test_search_train_scores_set_to_false():

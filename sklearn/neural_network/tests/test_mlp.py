@@ -500,6 +500,7 @@ def test_partial_fit_errors():
 
     # lbfgs doesn't support partial_fit
     assert not hasattr(MLPClassifier(solver="lbfgs"), "partial_fit")
+    assert "parital_fit" not in dir(MLPClassifier(solver="lbfgs"))
 
 
 def test_nonfinite_params():

@@ -889,8 +889,11 @@ def test_stacking_final_estimator_attribute_error():
         estimators=estimators, final_estimator=final_estimator, cv=3
     )
 
+    assert "decision_function" not in dir(clf.fit(X, y))
+
     outer_msg = "This 'StackingClassifier' has no attribute 'decision_function'"
     inner_msg = "'RandomForestClassifier' object has no attribute 'decision_function'"
+
     with pytest.raises(AttributeError, match=outer_msg) as exec_info:
         clf.fit(X, y).decision_function(X)
     assert isinstance(exec_info.value.__cause__, AttributeError)
