@@ -1,11 +1,8 @@
-"""
-The :mod:`sklearn.utils.multiclass` module includes utilities to handle
-multiclass/multioutput target in classifiers.
-"""
+"""Utilities to handle multiclass/multioutput target in classifiers."""
 
-# Author: Arnaud Joly, Joel Nothman, Hamzeh Alsalhi
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import warnings
 from collections.abc import Sequence
 from itertools import chain
@@ -342,13 +339,24 @@ def type_of_target(y, input_name=""):
                 # see NEP 34
                 y = check_array(y, dtype=object, **check_y_kwargs)
 
-    # The old sequence of sequences format
     try:
-        first_row = y[[0], :] if issparse(y) else y[0]
+        # TODO(1.7): Change to ValueError when byte labels is deprecated.
+        # labels in bytes format
+        first_row_or_val = y[[0], :] if issparse(y) else y[0]
+        if isinstance(first_row_or_val, bytes):
+            warnings.warn(
+                (
+                    "Support for labels represented as bytes is deprecated in v1.5 and"
+                    " will error in v1.7. Convert the labels to a string or integer"
+                    " format."
+                ),
+                FutureWarning,
+            )
+        # The old sequence of sequences format
         if (
-            not hasattr(first_row, "__array__")
-            and isinstance(first_row, Sequence)
-            and not isinstance(first_row, str)
+            not hasattr(first_row_or_val, "__array__")
+            and isinstance(first_row_or_val, Sequence)
+            and not isinstance(first_row_or_val, str)
         ):
             raise ValueError(
                 "You appear to be using a legacy multi-label data"
@@ -390,9 +398,9 @@ def type_of_target(y, input_name=""):
             return "continuous" + suffix
 
     # Check multiclass
-    if issparse(first_row):
-        first_row = first_row.data
-    if xp.unique_values(y).shape[0] > 2 or (y.ndim == 2 and len(first_row) > 1):
+    if issparse(first_row_or_val):
+        first_row_or_val = first_row_or_val.data
+    if xp.unique_values(y).shape[0] > 2 or (y.ndim == 2 and len(first_row_or_val) > 1):
         # [1, 2, 3] or [[1., 2., 3]] or [[1, 2]]
         return "multiclass" + suffix
     else:

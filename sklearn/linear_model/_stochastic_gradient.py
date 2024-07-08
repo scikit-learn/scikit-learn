@@ -1,7 +1,5 @@
-# Authors: Peter Prettenhofer <peter.prettenhofer@gmail.com> (main author)
-#          Mathieu Blondel (partial_fit support)
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 """Classification, regression and One-Class SVM using Stochastic Gradient
 Descent (SGD).
 """
@@ -22,7 +20,7 @@ from ..base import (
 )
 from ..exceptions import ConvergenceWarning
 from ..model_selection import ShuffleSplit, StratifiedShuffleSplit
-from ..utils import check_random_state, compute_class_weight, deprecated
+from ..utils import check_random_state, compute_class_weight
 from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils.extmath import safe_sparse_dot
 from ..utils.metaestimators import available_if
@@ -90,7 +88,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         "verbose": ["verbose"],
         "random_state": ["random_state"],
         "warm_start": ["boolean"],
-        "average": [Interval(Integral, 0, None, closed="left"), bool, np.bool_],
+        "average": [Interval(Integral, 0, None, closed="left"), "boolean"],
     }
 
     def __init__(
@@ -323,23 +321,13 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
             classes=classes,
         )
 
-    # TODO(1.6): Remove
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `loss_function_` was deprecated in version 1.4 and will be removed "
-        "in 1.6."
-    )
-    @property
-    def loss_function_(self):
-        return self._loss_function_
 
-
-def _prepare_fit_binary(est, y, i, input_dtye):
+def _prepare_fit_binary(est, y, i, input_dtype):
     """Initialization for fit_binary.
 
     Returns y, coef, intercept, average_coef, average_intercept.
     """
-    y_i = np.ones(y.shape, dtype=input_dtye, order="C")
+    y_i = np.ones(y.shape, dtype=input_dtype, order="C")
     y_i[y != est.classes_[i]] = -1.0
     average_intercept = 0
     average_coef = None
@@ -434,7 +422,7 @@ def fit_binary(
     # if average is not true, average_coef, and average_intercept will be
     # unused
     y_i, coef, intercept, average_coef, average_intercept = _prepare_fit_binary(
-        est, y, i, input_dtye=X.dtype
+        est, y, i, input_dtype=X.dtype
     )
     assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
 
@@ -603,6 +591,17 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             reset=first_call,
         )
 
+        if first_call:
+            # TODO(1.7) remove 0 from average parameter constraint
+            if not isinstance(self.average, (bool, np.bool_)) and self.average == 0:
+                warnings.warn(
+                    (
+                        "Passing average=0 to disable averaging is deprecated and will"
+                        " be removed in 1.7. Please use average=False instead."
+                    ),
+                    FutureWarning,
+                )
+
         n_samples, n_features = X.shape
 
         _check_partial_fit_first_call(self, classes)
@@ -677,6 +676,16 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         if hasattr(self, "classes_"):
             # delete the attribute otherwise _partial_fit thinks it's not the first call
             delattr(self, "classes_")
+
+        # TODO(1.7) remove 0 from average parameter constraint
+        if not isinstance(self.average, (bool, np.bool_)) and self.average == 0:
+            warnings.warn(
+                (
+                    "Passing average=0 to disable averaging is deprecated and will be "
+                    "removed in 1.7. Please use average=False instead."
+                ),
+                FutureWarning,
+            )
 
         # labels can be encoded as float, int, or string literals
         # np.unique sorts in asc order; largest class id is positive class
@@ -1140,12 +1149,6 @@ class SGDClassifier(BaseSGDClassifier):
         The actual number of iterations before reaching the stopping criterion.
         For multiclass fits, it is the maximum over every binary fit.
 
-    loss_function_ : concrete ``LossFunction``
-
-        .. deprecated:: 1.4
-            Attribute `loss_function_` was deprecated in version 1.4 and will be
-            removed in 1.6.
-
     classes_ : array of shape (n_classes,)
 
     t_ : int
@@ -1337,8 +1340,7 @@ class SGDClassifier(BaseSGDClassifier):
             raise NotImplementedError(
                 "predict_(log_)proba only supported when"
                 " loss='log_loss' or loss='modified_huber' "
-                "(%r given)"
-                % self.loss
+                "(%r given)" % self.loss
             )
 
     @available_if(_check_proba)
@@ -1465,6 +1467,17 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         )
         y = y.astype(X.dtype, copy=False)
 
+        if first_call:
+            # TODO(1.7) remove 0 from average parameter constraint
+            if not isinstance(self.average, (bool, np.bool_)) and self.average == 0:
+                warnings.warn(
+                    (
+                        "Passing average=0 to disable averaging is deprecated and will"
+                        " be removed in 1.7. Please use average=False instead."
+                    ),
+                    FutureWarning,
+                )
+
         n_samples, n_features = X.shape
 
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
@@ -1542,6 +1555,16 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         intercept_init=None,
         sample_weight=None,
     ):
+        # TODO(1.7) remove 0 from average parameter constraint
+        if not isinstance(self.average, (bool, np.bool_)) and self.average == 0:
+            warnings.warn(
+                (
+                    "Passing average=0 to disable averaging is deprecated and will be "
+                    "removed in 1.7. Please use average=False instead."
+                ),
+                FutureWarning,
+            )
+
         if self.warm_start and getattr(self, "coef_", None) is not None:
             if coef_init is None:
                 coef_init = self.coef_
@@ -2147,12 +2170,6 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         Number of weight updates performed during training.
         Same as ``(n_iter_ * n_samples + 1)``.
 
-    loss_function_ : concrete ``LossFunction``
-
-        .. deprecated:: 1.4
-            ``loss_function_`` was deprecated in version 1.4 and will be removed in
-            1.6.
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
@@ -2358,6 +2375,17 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
             reset=first_call,
         )
 
+        if first_call:
+            # TODO(1.7) remove 0 from average parameter constraint
+            if not isinstance(self.average, (bool, np.bool_)) and self.average == 0:
+                warnings.warn(
+                    (
+                        "Passing average=0 to disable averaging is deprecated and will"
+                        " be removed in 1.7. Please use average=False instead."
+                    ),
+                    FutureWarning,
+                )
+
         n_features = X.shape[1]
 
         # Allocate datastructures from input arguments
@@ -2448,6 +2476,16 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         offset_init=None,
         sample_weight=None,
     ):
+        # TODO(1.7) remove 0 from average parameter constraint
+        if not isinstance(self.average, (bool, np.bool_)) and self.average == 0:
+            warnings.warn(
+                (
+                    "Passing average=0 to disable averaging is deprecated and will be "
+                    "removed in 1.7. Please use average=False instead."
+                ),
+                FutureWarning,
+            )
+
         if self.warm_start and hasattr(self, "coef_"):
             if coef_init is None:
                 coef_init = self.coef_

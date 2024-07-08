@@ -1,7 +1,7 @@
 """Generic feature selection mixin"""
 
-# Authors: G. Varoquaux, A. Gramfort, L. Buitinck, J. Nothman
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from abc import ABCMeta, abstractmethod
@@ -11,15 +11,10 @@ import numpy as np
 from scipy.sparse import csc_matrix, issparse
 
 from ..base import TransformerMixin
-from ..utils import (
-    _is_pandas_df,
-    _safe_indexing,
-    check_array,
-    safe_sqr,
-)
+from ..utils import _safe_indexing, check_array, safe_sqr
 from ..utils._set_output import _get_output_config
 from ..utils._tags import _safe_tags
-from ..utils.validation import _check_feature_names_in, check_is_fitted
+from ..utils.validation import _check_feature_names_in, _is_pandas_df, check_is_fitted
 
 
 class SelectorMixin(TransformerMixin, metaclass=ABCMeta):

@@ -32,7 +32,7 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
@@ -53,8 +53,6 @@ jobs:
       matrix:
         include:
           # Window 64 bit
-          # Note: windows-2019 is needed for older Python versions:
-          # https://github.com/scikit-learn/scikit-learn/issues/22530
           - os: windows-latest
             python: 39
             platform_id: win_amd64
@@ -88,18 +86,25 @@ jobs:
             python: 312
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
+          - os: ubuntu-latest
+            python: 313t
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux2014
+            # TODO: remove next line when Python 3.13 is released
+            prerelease_pythons: True
+            free_threaded_support: True
 
           # MacOS x86_64
-          - os: macos-latest
+          - os: macos-12
             python: 39
             platform_id: macosx_x86_64
-          - os: macos-latest
+          - os: macos-12
             python: 310
             platform_id: macosx_x86_64
-          - os: macos-latest
+          - os: macos-12
             python: 311
             platform_id: macosx_x86_64
-          - os: macos-latest
+          - os: macos-12
             python: 312
             platform_id: macosx_x86_64
 
@@ -119,10 +124,10 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11" # update once build dependencies are available
 
@@ -156,16 +161,22 @@ jobs:
 
       - name: Build and test wheels
         env:
-          CIBW_PRERELEASE_PYTHONS: ${{ matrix.prerelease }}
+          CIBW_PRERELEASE_PYTHONS: ${{ matrix.prerelease_pythons }}
+          CIBW_FREE_THREADED_SUPPORT: ${{ matrix.free_threaded_support }}
           CIBW_ENVIRONMENT: SKLEARN_SKIP_NETWORK_TESTS=1
             SKLEARN_BUILD_PARALLEL=3
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
           CIBW_ARCHS: all
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}
           CIBW_MANYLINUX_I686_IMAGE: ${{ matrix.manylinux_image }}
+          # Needed on Windows CI to compile with Visual Studio compiler
+          # otherwise Meson detects a MINGW64 platform and use MINGW64
+          # toolchain
+          CIBW_CONFIG_SETTINGS_WINDOWS: "setup-args=--vsenv"
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir}
           CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }}
-          CIBW_TEST_REQUIRES: pytest pandas threadpoolctl
+          CIBW_TEST_REQUIRES: pytest
+          CIBW_BEFORE_TEST: bash {project}/build_tools/wheels/cibw_before_test.sh
           CIBW_TEST_COMMAND: bash {project}/build_tools/wheels/test_wheels.sh
           CIBW_TEST_COMMAND_WINDOWS: bash {project}/build_tools/github/test_windows_wheels.sh ${{ matrix.python }}
           CIBW_BUILD_VERBOSITY: 1
@@ -173,8 +184,9 @@ jobs:
         run: bash build_tools/wheels/build_wheels.sh
 
       - name: Store artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
+          name: cibw-wheels-cp${{ matrix.python }}-${{ matrix.platform_id }}
           path: wheelhouse/*.whl
 
   update-tracker:
@@ -195,10 +207,10 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.9" # update once build dependencies are available
 
@@ -213,8 +225,9 @@ jobs:
           SKLEARN_SKIP_NETWORK_TESTS: 1
 
       - name: Store artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
+          name: cibw-sdist
           path: dist/*.tar.gz
 
   # Upload the wheels and the source distribution
@@ -228,21 +241,23 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
+          pattern: cibw-*
           path: dist
+          merge-multiple: true
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
 
       - name: Upload artifacts
         env:
           # Secret variables need to be mapped to environment variables explicitly
           SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN }}
           SCIKIT_LEARN_STAGING_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_STAGING_UPLOAD_TOKEN }}
-          ARTIFACTS_PATH: dist/artifact
+          ARTIFACTS_PATH: dist
         # Force a replacement if the remote file already exists
         run: bash build_tools/github/upload_anaconda.sh

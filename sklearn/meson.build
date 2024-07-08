@@ -55,11 +55,36 @@ print(incdir)
 endif
 
 inc_np = include_directories(incdir_numpy)
-np_dep = declare_dependency(include_directories: inc_np)
+# Don't use the deprecated NumPy C API. Define this to a fixed version instead of
+# NPY_API_VERSION in order not to break compilation for released SciPy versions
+# when NumPy introduces a new deprecation.
+numpy_no_deprecated_api = ['-DNPY_NO_DEPRECATED_API=NPY_1_9_API_VERSION']
+np_dep = declare_dependency(include_directories: inc_np, compile_args: numpy_no_deprecated_api)
 
 openmp_dep = dependency('OpenMP', language: 'c', required: false)
 
 if not openmp_dep.found()
+  warn_about_missing_openmp = true
+  # On Apple Clang avoid a misleading warning if compiler variables are set.
+  # See https://github.com/scikit-learn/scikit-learn/issues/28710 for more
+  # details. This may be removed if the OpenMP detection on Apple Clang improves,
+  # see https://github.com/mesonbuild/meson/issues/7435#issuecomment-2047585466.
+  if host_machine.system() == 'darwin' and cc.get_id() == 'clang'
+    compiler_env_vars_with_openmp = run_command(py,
+      [
+        '-c',
+        '''
+import os
+
+compiler_env_vars_to_check = ["CPPFLAGS", "CFLAGS", "CXXFLAGS"]
+
+compiler_env_vars_with_openmp = [
+    var for var in compiler_env_vars_to_check if "-fopenmp" in os.getenv(var, "")]
+print(compiler_env_vars_with_openmp)
+'''], check: true).stdout().strip()
+      warn_about_missing_openmp = compiler_env_vars_with_openmp == '[]'
+  endif
+  if warn_about_missing_openmp
     warning(
 '''
                 ***********
@@ -84,6 +109,13 @@ It seems that scikit-learn cannot be built with OpenMP.
 
                     ***
 ''')
+  else
+    warning(
+'''It looks like compiler environment variables were set to enable OpenMP support.
+Check the output of "import sklearn; sklearn.show_versions()" after the build
+to make sure that scikit-learn was actually built with OpenMP support.
+''')
+  endif
 endif
 
 # For now, we keep supporting SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES variable
@@ -127,7 +159,6 @@ custom_target('write_built_with_meson_file',
     install: true,
     install_dir: py.get_install_dir() / 'sklearn'
 )
-# endif
 
 extensions = ['_isotonic']
 
@@ -141,7 +172,9 @@ py.extension_module(
 
 # Need for Cython cimports across subpackages to work, i.e. avoid errors like
 # relative cimport from non-package directory is not allowed
-fs.copyfile('__init__.py')
+sklearn_root_cython_tree = [
+  fs.copyfile('__init__.py')
+]
 
 sklearn_dir = py.get_install_dir() / 'sklearn'
 

@@ -1,10 +1,12 @@
 """
 Test the pipeline module.
 """
+
 import itertools
 import re
 import shutil
 import time
+import warnings
 from tempfile import mkdtemp
 
 import joblib
@@ -21,7 +23,7 @@ from sklearn.ensemble import (
     RandomForestClassifier,
     RandomTreesEmbedding,
 )
-from sklearn.exceptions import NotFittedError
+from sklearn.exceptions import NotFittedError, UnsetMetadataPassedError
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.impute import SimpleImputer
@@ -33,7 +35,9 @@ from sklearn.pipeline import FeatureUnion, Pipeline, make_pipeline, make_union
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
 from sklearn.svm import SVC
 from sklearn.tests.metadata_routing_common import (
+    ConsumingNoFitTransformTransformer,
     ConsumingTransformer,
+    _Registry,
     check_recorded_metadata,
 )
 from sklearn.utils._metadata_requests import COMPOSITE_METHODS, METHODS
@@ -331,7 +335,8 @@ def test_pipeline_raise_set_params_error():
     # expected error message
     error_msg = re.escape(
         "Invalid parameter 'fake' for estimator Pipeline(steps=[('cls',"
-        " LinearRegression())]). Valid parameters are: ['memory', 'steps', 'verbose']."
+        " LinearRegression())]). Valid parameters are: ['memory', 'steps',"
+        " 'verbose']."
     )
     with pytest.raises(ValueError, match=error_msg):
         pipe.set_params(fake="nope")
@@ -1531,7 +1536,7 @@ def test_n_features_in_feature_union():
 
 def test_feature_union_fit_params():
     # Regression test for issue: #15117
-    class Dummy(TransformerMixin, BaseEstimator):
+    class DummyTransformer(TransformerMixin, BaseEstimator):
         def fit(self, X, y=None, **fit_params):
             if fit_params != {"a": 0}:
                 raise ValueError
@@ -1541,7 +1546,7 @@ def test_feature_union_fit_params():
             return X
 
     X, y = iris.data, iris.target
-    t = FeatureUnion([("dummy0", Dummy()), ("dummy1", Dummy())])
+    t = FeatureUnion([("dummy0", DummyTransformer()), ("dummy1", DummyTransformer())])
     with pytest.raises(ValueError):
         t.fit(X, y)
 
@@ -1550,6 +1555,30 @@ def test_feature_union_fit_params():
 
     t.fit(X, y, a=0)
     t.fit_transform(X, y, a=0)
+
+
+def test_feature_union_fit_params_without_fit_transform():
+    # Test that metadata is passed correctly to underlying transformers that don't
+    # implement a `fit_transform` method when SLEP6 is not enabled.
+
+    class DummyTransformer(ConsumingNoFitTransformTransformer):
+        def fit(self, X, y=None, **fit_params):
+            if fit_params != {"metadata": 1}:
+                raise ValueError
+            return self
+
+    X, y = iris.data, iris.target
+    t = FeatureUnion(
+        [
+            ("nofittransform0", DummyTransformer()),
+            ("nofittransform1", DummyTransformer()),
+        ]
+    )
+
+    with pytest.raises(ValueError):
+        t.fit_transform(X, y, metadata=0)
+
+    t.fit_transform(X, y, metadata=1)
 
 
 def test_pipeline_missing_values_leniency():
@@ -1765,8 +1794,28 @@ def test_feature_union_feature_names_in_():
     assert not hasattr(union, "feature_names_in_")
 
 
-# Test that metadata is routed correctly for pipelines
-# ====================================================
+# TODO(1.7): remove this test
+def test_pipeline_inverse_transform_Xt_deprecation():
+    X = np.random.RandomState(0).normal(size=(10, 5))
+    pipe = Pipeline([("pca", PCA(n_components=2))])
+    X = pipe.fit_transform(X)
+
+    with pytest.raises(TypeError, match="Missing required positional argument"):
+        pipe.inverse_transform()
+
+    with pytest.raises(TypeError, match="Cannot use both X and Xt. Use X only"):
+        pipe.inverse_transform(X=X, Xt=X)
+
+    with warnings.catch_warnings(record=True):
+        warnings.simplefilter("error")
+        pipe.inverse_transform(X)
+
+    with pytest.warns(FutureWarning, match="Xt was renamed X in version 1.5"):
+        pipe.inverse_transform(Xt=X)
+
+
+# Test that metadata is routed correctly for pipelines and FeatureUnion
+# =====================================================================
 
 
 class SimpleEstimator(BaseEstimator):
@@ -1780,38 +1829,47 @@ class SimpleEstimator(BaseEstimator):
     def fit_transform(self, X, y, sample_weight=None, prop=None):
         assert sample_weight is not None
         assert prop is not None
+        return X + 1
 
     def fit_predict(self, X, y, sample_weight=None, prop=None):
         assert sample_weight is not None
         assert prop is not None
+        return np.ones(len(X))
 
     def predict(self, X, sample_weight=None, prop=None):
         assert sample_weight is not None
         assert prop is not None
+        return np.ones(len(X))
 
     def predict_proba(self, X, sample_weight=None, prop=None):
         assert sample_weight is not None
         assert prop is not None
+        return np.ones(len(X))
 
     def predict_log_proba(self, X, sample_weight=None, prop=None):
         assert sample_weight is not None
         assert prop is not None
+        return np.zeros(len(X))
 
     def decision_function(self, X, sample_weight=None, prop=None):
         assert sample_weight is not None
         assert prop is not None
+        return np.ones(len(X))
 
     def score(self, X, y, sample_weight=None, prop=None):
         assert sample_weight is not None
         assert prop is not None
+        return 1
 
     def transform(self, X, sample_weight=None, prop=None):
         assert sample_weight is not None
         assert prop is not None
+        return X + 1
 
     def inverse_transform(self, X, sample_weight=None, prop=None):
         assert sample_weight is not None
         assert prop is not None
+        return X - 1
 
 
 @pytest.mark.usefixtures("enable_slep006")
@@ -1835,7 +1893,7 @@ def test_metadata_routing_for_pipeline(method):
             getattr(est, f"set_{method}_request")(**kwarg)
         return est
 
-    X, y = [[1]], [1]
+    X, y = np.array([[1]]), np.array([1])
     sample_weight, prop, metadata = [1], "a", "b"
 
     # test that metadata is routed correctly for pipelines when requested
@@ -1851,9 +1909,7 @@ def test_metadata_routing_for_pipeline(method):
     pipeline = Pipeline([("trs", trs), ("estimator", est)])
 
     if "fit" not in method:
-        pipeline = pipeline.fit(
-            [[1]], [1], sample_weight=sample_weight, prop=prop, metadata=metadata
-        )
+        pipeline = pipeline.fit(X, y, sample_weight=sample_weight, prop=prop)
 
     try:
         getattr(pipeline, method)(
@@ -1868,10 +1924,18 @@ def test_metadata_routing_for_pipeline(method):
     # Make sure the transformer has received the metadata
     # For the transformer, always only `fit` and `transform` are called.
     check_recorded_metadata(
-        obj=trs, method="fit", sample_weight=sample_weight, metadata=metadata
+        obj=trs,
+        method="fit",
+        parent="fit",
+        sample_weight=sample_weight,
+        metadata=metadata,
     )
     check_recorded_metadata(
-        obj=trs, method="transform", sample_weight=sample_weight, metadata=metadata
+        obj=trs,
+        method="transform",
+        parent="transform",
+        sample_weight=sample_weight,
+        metadata=metadata,
     )
 
 
@@ -1889,7 +1953,7 @@ def test_metadata_routing_error_for_pipeline(method):
     pipeline = Pipeline([("estimator", est)])
     error_message = (
         "[sample_weight, prop] are passed but are not explicitly set as requested"
-        f" or not for SimpleEstimator.{method}"
+        f" or not requested for SimpleEstimator.{method}"
     )
     with pytest.raises(ValueError, match=re.escape(error_message)):
         try:
@@ -1935,6 +1999,100 @@ def test_pipeline_with_no_last_step(last_step):
     """
     pipe = Pipeline([("trs", FunctionTransformer()), ("estimator", last_step)])
     assert pipe.fit([[1]], [1]).transform([[1], [2], [3]]) == [[1], [2], [3]]
+
+
+@pytest.mark.usefixtures("enable_slep006")
+def test_feature_union_metadata_routing_error():
+    """Test that the right error is raised when metadata is not requested."""
+    X = np.array([[0, 1], [2, 2], [4, 6]])
+    y = [1, 2, 3]
+    sample_weight, metadata = [1, 1, 1], "a"
+
+    # test lacking set_fit_request
+    feature_union = FeatureUnion([("sub_transformer", ConsumingTransformer())])
+
+    error_message = (
+        "[sample_weight, metadata] are passed but are not explicitly set as requested"
+        f" or not requested for {ConsumingTransformer.__name__}.fit"
+    )
+
+    with pytest.raises(UnsetMetadataPassedError, match=re.escape(error_message)):
+        feature_union.fit(X, y, sample_weight=sample_weight, metadata=metadata)
+
+    # test lacking set_transform_request
+    feature_union = FeatureUnion(
+        [
+            (
+                "sub_transformer",
+                ConsumingTransformer().set_fit_request(
+                    sample_weight=True, metadata=True
+                ),
+            )
+        ]
+    )
+
+    error_message = (
+        "[sample_weight, metadata] are passed but are not explicitly set as requested "
+        f"or not requested for {ConsumingTransformer.__name__}.transform"
+    )
+
+    with pytest.raises(UnsetMetadataPassedError, match=re.escape(error_message)):
+        feature_union.fit(
+            X, y, sample_weight=sample_weight, metadata=metadata
+        ).transform(X, sample_weight=sample_weight, metadata=metadata)
+
+
+@pytest.mark.usefixtures("enable_slep006")
+def test_feature_union_get_metadata_routing_without_fit():
+    """Test that get_metadata_routing() works regardless of the Child's
+    consumption of any metadata."""
+    feature_union = FeatureUnion([("sub_transformer", ConsumingTransformer())])
+    feature_union.get_metadata_routing()
+
+
+@pytest.mark.usefixtures("enable_slep006")
+@pytest.mark.parametrize(
+    "transformer", [ConsumingTransformer, ConsumingNoFitTransformTransformer]
+)
+def test_feature_union_metadata_routing(transformer):
+    """Test that metadata is routed correctly for FeatureUnion."""
+    X = np.array([[0, 1], [2, 2], [4, 6]])
+    y = [1, 2, 3]
+    sample_weight, metadata = [1, 1, 1], "a"
+
+    feature_union = FeatureUnion(
+        [
+            (
+                "sub_trans1",
+                transformer(registry=_Registry())
+                .set_fit_request(sample_weight=True, metadata=True)
+                .set_transform_request(sample_weight=True, metadata=True),
+            ),
+            (
+                "sub_trans2",
+                transformer(registry=_Registry())
+                .set_fit_request(sample_weight=True, metadata=True)
+                .set_transform_request(sample_weight=True, metadata=True),
+            ),
+        ]
+    )
+
+    kwargs = {"sample_weight": sample_weight, "metadata": metadata}
+    feature_union.fit(X, y, **kwargs)
+    feature_union.fit_transform(X, y, **kwargs)
+    feature_union.fit(X, y, **kwargs).transform(X, **kwargs)
+
+    for transformer in feature_union.transformer_list:
+        # access sub-transformer in (name, trans) with transformer[1]
+        registry = transformer[1].registry
+        assert len(registry)
+        for sub_trans in registry:
+            check_recorded_metadata(
+                obj=sub_trans,
+                method="fit",
+                parent="fit",
+                **kwargs,
+            )
 
 
 # End of routing tests

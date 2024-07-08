@@ -360,7 +360,7 @@ def test_late_onset_averaging_reached(klass):
         shuffle=False,
     )
     clf2 = klass(
-        average=0,
+        average=False,
         learning_rate="constant",
         loss="squared_error",
         eta0=eta0,
@@ -1546,7 +1546,12 @@ def test_late_onset_averaging_reached_oneclass(klass):
     )
     # 1 pass over the training set with no averaging
     clf2 = klass(
-        average=0, learning_rate="constant", eta0=eta0, nu=nu, max_iter=1, shuffle=False
+        average=False,
+        learning_rate="constant",
+        eta0=eta0,
+        nu=nu,
+        max_iter=1,
+        shuffle=False,
     )
 
     clf1.fit(X)
@@ -2211,14 +2216,9 @@ def test_sgd_numerical_consistency(SGDEstimator):
     assert_allclose(sgd_64.coef_, sgd_32.coef_)
 
 
-# TODO(1.6): remove
-@pytest.mark.parametrize("Estimator", [SGDClassifier, SGDOneClassSVM])
-def test_loss_attribute_deprecation(Estimator):
-    # Check that we raise the proper deprecation warning if accessing
-    # `loss_function_`.
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
-    est = Estimator().fit(X, y)
-
-    with pytest.warns(FutureWarning, match="`loss_function_` was deprecated"):
-        est.loss_function_
+# TODO(1.7): remove
+@pytest.mark.parametrize("Estimator", [SGDClassifier, SGDRegressor, SGDOneClassSVM])
+def test_passive_aggressive_deprecated_average(Estimator):
+    est = Estimator(average=0)
+    with pytest.warns(FutureWarning, match="average=0"):
+        est.fit(X, Y)

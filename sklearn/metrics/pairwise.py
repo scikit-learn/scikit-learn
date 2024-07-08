@@ -1,11 +1,7 @@
-# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#          Robert Layton <robertlayton@gmail.com>
-#          Andreas Mueller <amueller@ais.uni-bonn.de>
-#          Philippe Gervais <philippe.gervais@inria.fr>
-#          Lars Buitinck
-#          Joel Nothman <joel.nothman@gmail.com>
-# License: BSD 3 clause
+"""Metrics for pairwise distances and affinity of sets of samples."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import itertools
 import warnings
@@ -24,10 +20,15 @@ from ..utils import (
     check_array,
     gen_batches,
     gen_even_slices,
-    get_chunk_n_rows,
-    is_scalar_nan,
 )
+from ..utils._array_api import (
+    _find_matching_floating_dtype,
+    _is_numpy_namespace,
+    get_namespace,
+)
+from ..utils._chunking import get_chunk_n_rows
 from ..utils._mask import _get_mask
+from ..utils._missing import is_scalar_nan
 from ..utils._param_validation import (
     Hidden,
     Interval,
@@ -74,9 +75,10 @@ def check_pairwise_arrays(
     Y,
     *,
     precomputed=False,
-    dtype=None,
+    dtype="infer_float",
     accept_sparse="csr",
     force_all_finite=True,
+    ensure_2d=True,
     copy=False,
 ):
     """Set X and Y appropriately and checks inputs.
@@ -102,9 +104,10 @@ def check_pairwise_arrays(
         True if X is to be treated as precomputed distances to the samples in
         Y.
 
-    dtype : str, type, list of type, default=None
-        Data type required for X and Y. If None, the dtype will be an
-        appropriate float type selected by _return_float_dtype.
+    dtype : str, type, list of type or None default="infer_float"
+        Data type required for X and Y. If "infer_float", the dtype will be an
+        appropriate float type selected by _return_float_dtype. If None, the
+        dtype of the input is preserved.
 
         .. versionadded:: 0.18
 
@@ -130,6 +133,13 @@ def check_pairwise_arrays(
         .. versionchanged:: 0.23
            Accepts `pd.NA` and converts it into `np.nan`.
 
+    ensure_2d : bool, default=True
+        Whether to raise an error when the input arrays are not 2-dimensional. Setting
+        this to `False` is necessary when using a custom metric with certain
+        non-numerical inputs (e.g. a list of strings).
+
+        .. versionadded:: 1.5
+
     copy : bool, default=False
         Whether a forced copy will be triggered. If copy=False, a copy might
         be triggered by a conversion.
@@ -145,10 +155,14 @@ def check_pairwise_arrays(
         An array equal to Y if Y was not None, guaranteed to be a numpy array.
         If Y was None, safe_Y will be a pointer to X.
     """
-    X, Y, dtype_float = _return_float_dtype(X, Y)
+    xp, _ = get_namespace(X, Y)
+    if any([issparse(X), issparse(Y)]) or _is_numpy_namespace(xp):
+        X, Y, dtype_float = _return_float_dtype(X, Y)
+    else:
+        dtype_float = _find_matching_floating_dtype(X, Y, xp=xp)
 
     estimator = "check_pairwise_arrays"
-    if dtype is None:
+    if dtype == "infer_float":
         dtype = dtype_float
 
     if Y is X or Y is None:
@@ -159,6 +173,7 @@ def check_pairwise_arrays(
             copy=copy,
             force_all_finite=force_all_finite,
             estimator=estimator,
+            ensure_2d=ensure_2d,
         )
     else:
         X = check_array(
@@ -168,6 +183,7 @@ def check_pairwise_arrays(
             copy=copy,
             force_all_finite=force_all_finite,
             estimator=estimator,
+            ensure_2d=ensure_2d,
         )
         Y = check_array(
             Y,
@@ -176,6 +192,7 @@ def check_pairwise_arrays(
             copy=copy,
             force_all_finite=force_all_finite,
             estimator=estimator,
+            ensure_2d=ensure_2d,
         )
 
     if precomputed:
@@ -185,7 +202,9 @@ def check_pairwise_arrays(
                 "(n_queries, n_indexed). Got (%d, %d) "
                 "for %d indexed." % (X.shape[0], X.shape[1], Y.shape[0])
             )
-    elif X.shape[1] != Y.shape[1]:
+    elif ensure_2d and X.shape[1] != Y.shape[1]:
+        # Only check the number of features if 2d arrays are enforced. Otherwise,
+        # validation is left to the user for custom metrics.
         raise ValueError(
             "Incompatible dimension for X and Y matrices: "
             "X.shape[1] == %d while Y.shape[1] == %d" % (X.shape[1], Y.shape[1])
@@ -892,9 +911,6 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
     >>> pairwise_distances_argmin(X, Y)
     array([0, 1])
     """
-    if metric_kwargs is None:
-        metric_kwargs = {}
-
     X, Y = check_pairwise_arrays(X, Y)
 
     if axis == 0:
@@ -1640,7 +1656,7 @@ def cosine_similarity(X, Y=None, dense_output=True):
 
     Returns
     -------
-    similarities : ndarray of shape (n_samples_X, n_samples_Y)
+    similarities : ndarray or sparse matrix of shape (n_samples_X, n_samples_Y)
         Returns the cosine similarity between samples in X and Y.
 
     Examples
@@ -1696,7 +1712,7 @@ def additive_chi2_kernel(X, Y=None):
 
     Returns
     -------
-    kernel : ndarray of shape (n_samples_X, n_samples_Y)
+    kernel : array-like of shape (n_samples_X, n_samples_Y)
         The kernel matrix.
 
     See Also
@@ -1728,15 +1744,26 @@ def additive_chi2_kernel(X, Y=None):
     array([[-1., -2.],
            [-2., -1.]])
     """
+    xp, _ = get_namespace(X, Y)
     X, Y = check_pairwise_arrays(X, Y, accept_sparse=False)
-    if (X < 0).any():
+    if xp.any(X < 0):
         raise ValueError("X contains negative values.")
-    if Y is not X and (Y < 0).any():
+    if Y is not X and xp.any(Y < 0):
         raise ValueError("Y contains negative values.")
 
-    result = np.zeros((X.shape[0], Y.shape[0]), dtype=X.dtype)
-    _chi2_kernel_fast(X, Y, result)
-    return result
+    if _is_numpy_namespace(xp):
+        result = np.zeros((X.shape[0], Y.shape[0]), dtype=X.dtype)
+        _chi2_kernel_fast(X, Y, result)
+        return result
+    else:
+        dtype = _find_matching_floating_dtype(X, Y, xp=xp)
+        xb = X[:, None, :]
+        yb = Y[None, :, :]
+        nom = -((xb - yb) ** 2)
+        denom = xb + yb
+        nom = xp.where(denom == 0, xp.asarray(0, dtype=dtype), nom)
+        denom = xp.where(denom == 0, xp.asarray(1, dtype=dtype), denom)
+        return xp.sum(nom / denom, axis=2)
 
 
 @validate_params(
@@ -1801,9 +1828,12 @@ def chi2_kernel(X, Y=None, gamma=1.0):
     array([[0.36..., 0.13...],
            [0.13..., 0.36...]])
     """
+    xp, _ = get_namespace(X, Y)
     K = additive_chi2_kernel(X, Y)
     K *= gamma
-    return np.exp(K, K)
+    if _is_numpy_namespace(xp):
+        return np.exp(K, out=K)
+    return xp.exp(K)
 
 
 # Helper functions - distance
@@ -1888,7 +1918,13 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
 
 def _pairwise_callable(X, Y, metric, force_all_finite=True, **kwds):
     """Handle the callable case for pairwise_{distances,kernels}."""
-    X, Y = check_pairwise_arrays(X, Y, force_all_finite=force_all_finite)
+    X, Y = check_pairwise_arrays(
+        X,
+        Y,
+        dtype=None,
+        force_all_finite=force_all_finite,
+        ensure_2d=False,
+    )
 
     if X is Y:
         # Only calculate metric for upper triangle
@@ -2166,13 +2202,22 @@ def pairwise_distances_chunked(
     prefer_skip_nested_validation=True,
 )
 def pairwise_distances(
-    X, Y=None, metric="euclidean", *, n_jobs=None, force_all_finite=True, **kwds
+    X,
+    Y=None,
+    metric="euclidean",
+    *,
+    n_jobs=None,
+    force_all_finite=True,
+    **kwds,
 ):
     """Compute the distance matrix from a vector array X and optional Y.
 
     This method takes either a vector array or a distance matrix, and returns
-    a distance matrix. If the input is a vector array, the distances are
-    computed. If the input is a distances matrix, it is returned instead.
+    a distance matrix.
+    If the input is a vector array, the distances are computed.
+    If the input is a distances matrix, it is returned instead.
+    If the input is a collection of non-numeric data (e.g. a list of strings or a
+    boolean array), a custom metric must be passed.
 
     This method provides a safe way to take a distance matrix as input, while
     preserving compatibility with many other algorithms that take a vector
@@ -2242,6 +2287,10 @@ def pairwise_distances(
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+        The "euclidean" and "cosine" metrics rely heavily on BLAS which is already
+        multithreaded. So, increasing `n_jobs` would likely cause oversubscription
+        and quickly degrade performance.
+
     force_all_finite : bool or 'allow-nan', default=True
         Whether to raise an error on np.inf, np.nan, pd.NA in array. Ignored
         for a metric listed in ``pairwise.PAIRWISE_DISTANCE_FUNCTIONS``. The
@@ -2304,13 +2353,16 @@ def pairwise_distances(
         func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
     elif callable(metric):
         func = partial(
-            _pairwise_callable, metric=metric, force_all_finite=force_all_finite, **kwds
+            _pairwise_callable,
+            metric=metric,
+            force_all_finite=force_all_finite,
+            **kwds,
         )
     else:
         if issparse(X) or issparse(Y):
             raise TypeError("scipy distance metrics do not support sparse matrices.")
 
-        dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else None
+        dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else "infer_float"
 
         if dtype == bool and (X.dtype != bool or (Y is not None and Y.dtype != bool)):
             msg = "Data was converted to boolean for metric %s" % metric

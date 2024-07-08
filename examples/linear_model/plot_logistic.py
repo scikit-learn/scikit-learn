@@ -10,7 +10,7 @@ i.e. class one or two, using the logistic curve.
 """
 
 # Code source: Gael Varoquaux
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np

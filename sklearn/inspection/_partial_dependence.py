@@ -1,9 +1,7 @@
 """Partial dependence plots for regression and classification models."""
 
-# Authors: Peter Prettenhofer
-#          Trevor Stephens
-#          Nicolas Hug
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from collections.abc import Iterable
 
@@ -19,15 +17,9 @@ from ..ensemble._hist_gradient_boosting.gradient_boosting import (
 )
 from ..exceptions import NotFittedError
 from ..tree import DecisionTreeRegressor
-from ..utils import (
-    Bunch,
-    _determine_key_type,
-    _get_column_indices,
-    _safe_assign,
-    _safe_indexing,
-    check_array,
-    check_matplotlib_support,  # noqa
-)
+from ..utils import Bunch, _safe_indexing, check_array
+from ..utils._indexing import _determine_key_type, _get_column_indices, _safe_assign
+from ..utils._optional_dependencies import check_matplotlib_support  # noqa
 from ..utils._param_validation import (
     HasMethods,
     Integral,
@@ -534,14 +526,6 @@ def partial_dependence(
             `method` is 'recursion').
             Only available when `kind='average'` or `kind='both'`.
 
-        values : seq of 1d ndarrays
-            The values with which the grid has been created.
-
-            .. deprecated:: 1.3
-                The key `values` has been deprecated in 1.3 and will be removed
-                in 1.5 in favor of `grid_values`. See `grid_values` for details
-                about the `values` attribute.
-
         grid_values : seq of 1d ndarrays
             The values with which the grid has been created. The generated
             grid is a cartesian product of the arrays in `grid_values` where
@@ -722,15 +706,7 @@ def partial_dependence(
     averaged_predictions = averaged_predictions.reshape(
         -1, *[val.shape[0] for val in values]
     )
-    pdp_results = Bunch()
-
-    msg = (
-        "Key: 'values', is deprecated in 1.3 and will be removed in 1.5. "
-        "Please use 'grid_values' instead."
-    )
-    pdp_results._set_deprecated(
-        values, new_key="grid_values", deprecated_key="values", warning_message=msg
-    )
+    pdp_results = Bunch(grid_values=values)
 
     if kind == "average":
         pdp_results["average"] = averaged_predictions

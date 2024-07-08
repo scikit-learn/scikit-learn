@@ -13,12 +13,30 @@ For a short description of the main highlights of the release, please refer to
 
 .. include:: changelog_legend.inc
 
+.. _changes_1_4_2:
+
+Version 1.4.2
+=============
+
+**April 2024**
+
+This release only includes support for numpy 2.
+
 .. _changes_1_4_1:
 
 Version 1.4.1
 =============
 
 **February 2024**
+
+Changed models
+--------------
+
+- |API| The `tree_.value` attribute in :class:`tree.DecisionTreeClassifier`,
+  :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeClassifier` and
+  :class:`tree.ExtraTreeRegressor` changed from an weighted absolute count
+  of number of samples to a weighted fraction of the total number of samples.
+  :pr:`27639` by :user:`Samuel Ronsin <samronsin>`.
 
 Metadata Routing
 ----------------

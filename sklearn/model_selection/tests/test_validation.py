@@ -1,4 +1,5 @@
 """Test the validation module"""
+
 import os
 import re
 import sys
@@ -1534,7 +1535,7 @@ def test_learning_curve_with_shuffle():
     )
 
 
-def test_learning_curve_fit_params():
+def test_learning_curve_params():
     X = np.arange(100).reshape(10, 10)
     y = np.array([0] * 5 + [1] * 5)
     clf = CheckingClassifier(expected_sample_weight=True)
@@ -1546,14 +1547,14 @@ def test_learning_curve_fit_params():
     err_msg = r"sample_weight.shape == \(1,\), expected \(2,\)!"
     with pytest.raises(ValueError, match=err_msg):
         learning_curve(
-            clf, X, y, error_score="raise", fit_params={"sample_weight": np.ones(1)}
+            clf, X, y, error_score="raise", params={"sample_weight": np.ones(1)}
         )
     learning_curve(
-        clf, X, y, error_score="raise", fit_params={"sample_weight": np.ones(10)}
+        clf, X, y, error_score="raise", params={"sample_weight": np.ones(10)}
     )
 
 
-def test_learning_curve_incremental_learning_fit_params():
+def test_learning_curve_incremental_learning_params():
     X, y = make_classification(
         n_samples=30,
         n_features=1,
@@ -1586,7 +1587,7 @@ def test_learning_curve_incremental_learning_fit_params():
             exploit_incremental_learning=True,
             train_sizes=np.linspace(0.1, 1.0, 10),
             error_score="raise",
-            fit_params={"sample_weight": np.ones(3)},
+            params={"sample_weight": np.ones(3)},
         )
 
     learning_curve(
@@ -1597,7 +1598,7 @@ def test_learning_curve_incremental_learning_fit_params():
         exploit_incremental_learning=True,
         train_sizes=np.linspace(0.1, 1.0, 10),
         error_score="raise",
-        fit_params={"sample_weight": np.ones(2)},
+        params={"sample_weight": np.ones(2)},
     )
 
 
@@ -1696,7 +1697,7 @@ def test_validation_curve_cv_splits_consistency():
     assert_array_almost_equal(np.array(scores3), np.array(scores1))
 
 
-def test_validation_curve_fit_params():
+def test_validation_curve_params():
     X = np.arange(100).reshape(10, 10)
     y = np.array([0] * 5 + [1] * 5)
     clf = CheckingClassifier(expected_sample_weight=True)
@@ -1721,7 +1722,7 @@ def test_validation_curve_fit_params():
             param_name="foo_param",
             param_range=[1, 2, 3],
             error_score="raise",
-            fit_params={"sample_weight": np.ones(1)},
+            params={"sample_weight": np.ones(1)},
         )
     validation_curve(
         clf,
@@ -1730,7 +1731,7 @@ def test_validation_curve_fit_params():
         param_name="foo_param",
         param_range=[1, 2, 3],
         error_score="raise",
-        fit_params={"sample_weight": np.ones(10)},
+        params={"sample_weight": np.ones(10)},
     )
 
 
@@ -2099,13 +2100,14 @@ def test_fit_and_score_failing():
     failing_clf = FailingClassifier(FailingClassifier.FAILING_PARAMETER)
     # dummy X data
     X = np.arange(1, 10)
+    train, test = np.arange(0, 5), np.arange(5, 9)
     fit_and_score_args = dict(
         estimator=failing_clf,
         X=X,
         y=None,
         scorer=dict(),
-        train=None,
-        test=None,
+        train=train,
+        test=test,
         verbose=0,
         parameters=None,
         fit_params=None,
@@ -2402,7 +2404,7 @@ def test_callable_multimetric_confusion_matrix_cross_validate():
         return {"tn": cm[0, 0], "fp": cm[0, 1], "fn": cm[1, 0], "tp": cm[1, 1]}
 
     X, y = make_classification(n_samples=40, n_features=4, random_state=42)
-    est = LinearSVC(dual="auto", random_state=42)
+    est = LinearSVC(random_state=42)
     est.fit(X, y)
     cv_results = cross_validate(est, X, y, cv=5, scoring=custom_scorer)
 
@@ -2480,63 +2482,104 @@ def test_cross_validate_return_indices(global_random_seed):
         assert_array_equal(test_indices[split_idx], expected_test_idx)
 
 
-# Tests for metadata routing in cross_val*
-# ========================================
+# Tests for metadata routing in cross_val* and in *curve
+# ======================================================
 
 
-# TODO(1.6): remove this test in 1.6
-def test_cross_validate_fit_param_deprecation():
+# TODO(1.6): remove `cross_validate` and `cross_val_predict` from this test in 1.6 and
+# `learning_curve` and `validation_curve` in 1.8
+@pytest.mark.parametrize(
+    "func, extra_args",
+    [
+        (cross_validate, {}),
+        (cross_val_score, {}),
+        (cross_val_predict, {}),
+        (learning_curve, {}),
+        (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
+    ],
+)
+def test_fit_param_deprecation(func, extra_args):
     """Check that we warn about deprecating `fit_params`."""
     with pytest.warns(FutureWarning, match="`fit_params` is deprecated"):
-        cross_validate(estimator=ConsumingClassifier(), X=X, y=y, cv=2, fit_params={})
+        func(
+            estimator=ConsumingClassifier(), X=X, y=y, cv=2, fit_params={}, **extra_args
+        )
 
     with pytest.raises(
         ValueError, match="`params` and `fit_params` cannot both be provided"
     ):
-        cross_validate(
-            estimator=ConsumingClassifier(), X=X, y=y, fit_params={}, params={}
+        func(
+            estimator=ConsumingClassifier(),
+            X=X,
+            y=y,
+            fit_params={},
+            params={},
+            **extra_args,
         )
 
 
 @pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
-    "cv_method", [cross_validate, cross_val_score, cross_val_predict]
+    "func, extra_args",
+    [
+        (cross_validate, {}),
+        (cross_val_score, {}),
+        (cross_val_predict, {}),
+        (learning_curve, {}),
+        (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
+    ],
 )
-def test_groups_with_routing_validation(cv_method):
+def test_groups_with_routing_validation(func, extra_args):
     """Check that we raise an error if `groups` are passed to the cv method instead
     of `params` when metadata routing is enabled.
     """
     with pytest.raises(ValueError, match="`groups` can only be passed if"):
-        cv_method(
+        func(
             estimator=ConsumingClassifier(),
             X=X,
             y=y,
             groups=[],
+            **extra_args,
         )
 
 
 @pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
-    "cv_method", [cross_validate, cross_val_score, cross_val_predict]
+    "func, extra_args",
+    [
+        (cross_validate, {}),
+        (cross_val_score, {}),
+        (cross_val_predict, {}),
+        (learning_curve, {}),
+        (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
+    ],
 )
-def test_passed_unrequested_metadata(cv_method):
+def test_passed_unrequested_metadata(func, extra_args):
     """Check that we raise an error when passing metadata that is not
     requested."""
     err_msg = re.escape("but are not explicitly set as requested or not requested")
     with pytest.raises(ValueError, match=err_msg):
-        cv_method(
+        func(
             estimator=ConsumingClassifier(),
             X=X,
             y=y,
             params=dict(metadata=[]),
+            **extra_args,
         )
 
 
 @pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
-    "cv_method", [cross_validate, cross_val_score, cross_val_predict]
+    "func, extra_args",
+    [
+        (cross_validate, {}),
+        (cross_val_score, {}),
+        (cross_val_predict, {}),
+        (learning_curve, {}),
+        (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
+    ],
 )
-def test_cross_validate_routing(cv_method):
+def test_validation_functions_routing(func, extra_args):
     """Check that the respective cv method is properly dispatching the metadata
     to the consumer."""
     scorer_registry = _Registry()
@@ -2551,6 +2594,7 @@ def test_cross_validate_routing(cv_method):
     estimator = ConsumingClassifier(registry=estimator_registry).set_fit_request(
         sample_weight="fit_sample_weight", metadata="fit_metadata"
     )
+
     n_samples = _num_samples(X)
     rng = np.random.RandomState(0)
     score_weights = rng.rand(n_samples)
@@ -2560,11 +2604,11 @@ def test_cross_validate_routing(cv_method):
     fit_sample_weight = rng.rand(n_samples)
     fit_metadata = rng.rand(n_samples)
 
-    extra_params = {
+    scoring_args = {
         cross_validate: dict(scoring=dict(my_scorer=scorer, accuracy="accuracy")),
-        # cross_val_score doesn't support multiple scorers
         cross_val_score: dict(scoring=scorer),
-        # cross_val_predict doesn't need a scorer
+        learning_curve: dict(scoring=scorer),
+        validation_curve: dict(scoring=scorer),
         cross_val_predict: dict(),
     }
 
@@ -2575,28 +2619,30 @@ def test_cross_validate_routing(cv_method):
         fit_metadata=fit_metadata,
     )
 
-    if cv_method is not cross_val_predict:
+    if func is not cross_val_predict:
         params.update(
             score_weights=score_weights,
             score_metadata=score_metadata,
         )
 
-    cv_method(
+    func(
         estimator,
         X=X,
         y=y,
         cv=splitter,
-        **extra_params[cv_method],
+        **scoring_args[func],
+        **extra_args,
         params=params,
     )
 
-    if cv_method is not cross_val_predict:
+    if func is not cross_val_predict:
         # cross_val_predict doesn't need a scorer
         assert len(scorer_registry)
     for _scorer in scorer_registry:
         check_recorded_metadata(
             obj=_scorer,
             method="score",
+            parent=func.__name__,
             split_params=("sample_weight", "metadata"),
             sample_weight=score_weights,
             metadata=score_metadata,
@@ -2607,6 +2653,7 @@ def test_cross_validate_routing(cv_method):
         check_recorded_metadata(
             obj=_splitter,
             method="split",
+            parent=func.__name__,
             groups=split_groups,
             metadata=split_metadata,
         )
@@ -2616,6 +2663,45 @@ def test_cross_validate_routing(cv_method):
         check_recorded_metadata(
             obj=_estimator,
             method="fit",
+            parent=func.__name__,
+            split_params=("sample_weight", "metadata"),
+            sample_weight=fit_sample_weight,
+            metadata=fit_metadata,
+        )
+
+
+@pytest.mark.usefixtures("enable_slep006")
+def test_learning_curve_exploit_incremental_learning_routing():
+    """Test that learning_curve routes metadata to the estimator correctly while
+    partial_fitting it with `exploit_incremental_learning=True`."""
+
+    n_samples = _num_samples(X)
+    rng = np.random.RandomState(0)
+    fit_sample_weight = rng.rand(n_samples)
+    fit_metadata = rng.rand(n_samples)
+
+    estimator_registry = _Registry()
+    estimator = ConsumingClassifier(
+        registry=estimator_registry
+    ).set_partial_fit_request(
+        sample_weight="fit_sample_weight", metadata="fit_metadata"
+    )
+
+    learning_curve(
+        estimator,
+        X=X,
+        y=y,
+        cv=ConsumingSplitter(),
+        exploit_incremental_learning=True,
+        params=dict(fit_sample_weight=fit_sample_weight, fit_metadata=fit_metadata),
+    )
+
+    assert len(estimator_registry)
+    for _estimator in estimator_registry:
+        check_recorded_metadata(
+            obj=_estimator,
+            method="partial_fit",
+            parent="learning_curve",
             split_params=("sample_weight", "metadata"),
             sample_weight=fit_sample_weight,
             metadata=fit_metadata,

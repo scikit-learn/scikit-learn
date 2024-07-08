@@ -1,3 +1,5 @@
+from ..utils._typedefs cimport intp_t
+
 cdef extern from "_cython_blas_helpers.h":
     ctypedef double (*dot_func)(int, const double*, int, const double*, int)
     ctypedef void (*axpy_func)(int, double, const double*, int, double*, int)
@@ -33,7 +35,7 @@ cdef extern from "liblinear_helper.c":
     problem *set_problem (char *, int, int, int, int, double, char *, char *)
     problem *csr_set_problem (char *, int, char *, char *, int, int, int, double, char *, char *)
 
-    model *set_model(parameter *, char *, cnp.npy_intp *, char *, double)
+    model *set_model(parameter *, char *, intp_t *, char *, double)
 
     double get_bias(model *)
     void free_problem (problem *)
