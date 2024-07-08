@@ -259,7 +259,7 @@ create a conda environment named `scikit-learn-doc` that is similar to the CI:
 
 .. prompt bash $
 
-  conda-lock install -n scikit-learn-doc build_tools/circle/doc_linux-64_conda.lock
+    conda-lock install -n scikit-learn-doc build_tools/circle/doc_linux-64_conda.lock
 
 .. note::
 
