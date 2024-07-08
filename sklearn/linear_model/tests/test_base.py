@@ -16,7 +16,7 @@ from sklearn.linear_model._base import (
     make_dataset,
 )
 from sklearn.preprocessing import add_dummy_feature
-from sklearn.utils._array_api import convert_attributes
+from sklearn.utils._array_api import convert_estimator
 from sklearn.utils._testing import (
     assert_allclose,
     assert_array_almost_equal,
@@ -801,5 +801,5 @@ def test_array_api_fitted_attribute():
     with config_context(array_api_dispatch=True):
         with pytest.raises(ValueError, match=".*must use the same array library"):
             reg.predict(X_xp)
-        reg = convert_attributes(reg, X_xp)
+        reg = convert_estimator(reg, X_xp)
         reg.predict(X_xp)

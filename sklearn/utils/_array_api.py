@@ -863,7 +863,7 @@ def make_converter(X):
     return convert
 
 
-def convert_attributes(estimator, ref_array):
+def convert_estimator(estimator, ref_array):
     """
     Convert attributes of estimator to namespace and device of reference array.
 
@@ -918,8 +918,8 @@ def check_same_namespace(X, estimator, *, attribute, method):
         "must use the same array library and the same device as those passed to fit(). "
         f"{msg} "
         "You can convert the estimator to the same library and device as X with: "
-        "'from sklearn.utils._array_api import convert_attributes; "
-        "converted_estimator = convert_attributes(estimator, X)'"
+        "'from sklearn.utils._array_api import convert_estimator; "
+        "estimator = convert_estimator(estimator, X)'"
     )
 
 

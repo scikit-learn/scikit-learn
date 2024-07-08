@@ -21,7 +21,7 @@ from sklearn.utils._array_api import (
     _NumPyAPIWrapper,
     _ravel,
     check_same_namespace,
-    convert_attributes,
+    convert_estimator,
     device,
     get_namespace,
     get_namespace_and_device,
@@ -434,7 +434,7 @@ def test_convert_estimator_to_ndarray(array_namespace, converter):
 
     new_est = _estimator_with_converted_arrays(est, converter)
     assert isinstance(new_est.X_, numpy.ndarray)
-    new_est = convert_attributes(est, numpy.asarray([0]))
+    new_est = convert_estimator(est, numpy.asarray([0]))
     assert isinstance(new_est.X_, numpy.ndarray)
 
 
@@ -471,7 +471,7 @@ def test_convert_estimator_to_array_api():
     new_est = _estimator_with_converted_arrays(est, lambda array: xp.asarray(array))
     assert hasattr(new_est.X_, "__array_namespace__")
     with config_context(array_api_dispatch=True):
-        new_est = convert_attributes(est, xp.asarray([0]))
+        new_est = convert_estimator(est, xp.asarray([0]))
         assert get_namespace(new_est.X_)[0] == xp
 
 
