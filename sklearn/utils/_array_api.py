@@ -7,7 +7,7 @@ from functools import wraps
 import numpy
 import scipy.special as special
 
-from .._config import get_config
+from .._config import config_context, get_config
 from .fixes import parse_version
 
 _NUMPY_NAMESPACE_NAMES = {"numpy", "array_api_compat.numpy"}
@@ -886,7 +886,8 @@ def convert_estimator(estimator, ref_array):
 
     Attributes which are not arrays are left unchanged.
     """
-    return _estimator_with_converted_arrays(estimator, make_converter(ref_array))
+    with config_context(array_api_dispatch=True):
+        return _estimator_with_converted_arrays(estimator, make_converter(ref_array))
 
 
 def check_same_namespace(X, estimator, *, attribute, method):
@@ -915,7 +916,8 @@ def check_same_namespace(X, estimator, *, attribute, method):
     """
     attr = getattr(estimator, attribute)
     X_xp, X_is_array_api, X_device = get_namespace_and_device(X)
-    a_xp, a_is_array_api, a_device = get_namespace_and_device(attr)
+    with config_context(array_api_dispatch=True):
+        a_xp, a_is_array_api, a_device = get_namespace_and_device(attr)
     if not X_is_array_api and not a_is_array_api:
         return
     if X_xp == a_xp and X_device == a_device:
