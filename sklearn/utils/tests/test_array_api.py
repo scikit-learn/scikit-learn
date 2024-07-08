@@ -184,7 +184,10 @@ def test_average(
     with config_context(array_api_dispatch=True):
         result = _average(array_in, axis=axis, weights=weights, normalize=normalize)
 
-    assert getattr(array_in, "device", None) == getattr(result, "device", None)
+    if np_version < parse_version("2.0.0") or np_version >= parse_version("2.1.0"):
+        # NumPy 2.0 has a problem with the device attribute of scalar arrays:
+        # https://github.com/numpy/numpy/issues/26850
+        assert getattr(array_in, "device", None) == getattr(result, "device", None)
 
     result = _convert_to_numpy(result, xp)
     assert_allclose(result, expected, atol=_atol_for_type(dtype_name))
