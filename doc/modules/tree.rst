@@ -580,9 +580,13 @@ Missing Values Support
 ======================
 
 :class:`DecisionTreeClassifier`, :class:`DecisionTreeRegressor`
-have built-in support for missing values when `splitter='best'`, while
+have built-in support for missing values using `splitter='best'`, where
+the splits are determined in a greedy fashion.
 :class:`ExtraTreeClassifier`, and :class:`ExtraTreeRegressor` have built-in
-support for missing values when `splitter='random'`.
+support for missing values for `splitter='random'`, where the splits
+are determined randomly. For more details on how the splitter differs onn
+non-missing values, see the :ref:`Forest section <forest>`.
+
 The criterion supported when there are missing-values are
 `'gini'`, `'entropy`', or `'log_loss'`, for classification or
 `'squared_error'`, `'friedman_mse'`, or `'poisson'` for regression.
@@ -647,7 +651,8 @@ left and right child based on the randomly selected threshold, while the missing
 values will also be randomly sent to the left or right child. This is repeated for
 every feature considered at each split. The best split among these is chosen.
 
-During prediction, the treatment of missing-values is the same as that of the decision tree:
+During prediction, the treatment of missing-values is the same as that of the
+decision tree:
 
 - By default when predicting, the samples with missing values are classified
   with the class used in the split found during training.

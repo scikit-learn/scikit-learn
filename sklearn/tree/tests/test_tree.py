@@ -2431,9 +2431,6 @@ def test_missing_values_random_splitter_on_equal_nodes_no_missing(criterion, see
     etr = ExtraTreeRegressor(random_state=seed, max_depth=1, criterion=criterion)
     etr.fit(X, y)
 
-    # see which node has the most data points
-    etr.tree_.value
-
     # Get the left and right children of the root node
     left_child = etr.tree_.children_left[0]
     right_child = etr.tree_.children_right[0]
