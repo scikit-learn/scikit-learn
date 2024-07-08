@@ -39,3 +39,5 @@ ctypedef double float64_t
 ctypedef signed char int8_t
 ctypedef signed int int32_t
 ctypedef signed long long int64_t
+
+ctypedef uint64_t BITSET_t

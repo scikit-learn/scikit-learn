@@ -140,6 +140,12 @@ Changelog
   :pr:`28622` by :user:`Adam Li <adam2392>` and
   :user:`Sérgio Pereira <sergiormpereira>`.
 
+- |MajorFeature| :class:`ensemble.RandomForestClassifier`, :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier`, and :class:`ensemble.ExtraTreesRegressor`
+  now support splitting on categorical features using the `categorical_features`
+  parameter.
+  :pr:`29437` by :user:`Adam Li <adam2392>`.
+
 :mod:`sklearn.impute`
 .....................
 
@@ -188,6 +194,14 @@ Changelog
 - |Fix| :class:`neighbors.LocalOutlierFactor` raises a warning in the `fit` method
   when duplicate values in the training data lead to inaccurate outlier detection.
   :pr:`28773` by :user:`Henrique Caroço <HenriqueProj>`.
+
+:mod:`sklearn.tree`
+...................
+
+- |Enhancement| :class:`tree.DecisionTreeClassifier`, :class:`tree.DecisionTreeRegressor`,
+  :class:`tree.ExtraTreeClassifier`, and :class:`tree.ExtraTreeRegressor` now support
+  splitting on categorical features using the `categorical_features` parameter.
+  :pr:`29437` by :user:`Adam Li <adam2392>`.
 
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:

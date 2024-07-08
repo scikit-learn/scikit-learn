@@ -5,7 +5,7 @@
 from ._criterion cimport Criterion
 from ._tree cimport ParentInfo
 
-from ..utils._typedefs cimport float32_t, float64_t, intp_t, int8_t, int32_t, uint32_t
+from ..utils._typedefs cimport float32_t, float64_t, intp_t, int8_t, int32_t, uint32_t, uint64_t, BITSET_t
 from ..ensemble._hist_gradient_boosting.common cimport BITSET_INNER_DTYPE_C
 
 
@@ -84,7 +84,7 @@ cdef class Splitter:
     cdef const float64_t[:] sample_weight
 
     cdef const int32_t[:] n_categories
-    cdef BITSET_INNER_DTYPE_C* cat_cache
+    cdef BITSET_t[:] cat_cache
 
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,

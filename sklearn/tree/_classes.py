@@ -256,13 +256,19 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             missing_values_in_feature_mask = (
                 self._compute_missing_values_in_feature_mask(X)
             )
-            if issparse(X):
+
+            is_sparse_X = issparse(X)
+            if is_sparse_X:
                 X.sort_indices()
 
                 if X.indices.dtype != np.intc or X.indptr.dtype != np.intc:
                     raise ValueError(
                         "No support for np.int64 index based sparse matrices"
                     )
+            if is_sparse_X and self.categorical_features is not None:
+                raise NotImplementedError(
+                    "Categorical features not supported" " with sparse inputs"
+                )
 
             if self.criterion == "poisson":
                 if np.any(y < 0):
@@ -590,10 +596,15 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 reset=False,
                 force_all_finite=force_all_finite,
             )
-            if issparse(X) and (
+            is_sparse_X = issparse(X)
+            if is_sparse_X and (
                 X.indices.dtype != np.intc or X.indptr.dtype != np.intc
             ):
                 raise ValueError("No support for np.int64 index based sparse matrices")
+            if is_sparse_X and np.any(self.n_categories_ > 0):
+                raise NotImplementedError(
+                    "Categorical features not supported" " with sparse inputs"
+                )
         else:
             # The number of features is checked regardless of `check_input`
             self._check_n_features(X, reset=False)

@@ -6,7 +6,8 @@
 cimport numpy as cnp
 from ._tree cimport Node
 from ..neighbors._quad_tree cimport Cell
-from ..utils._typedefs cimport float32_t, float64_t, intp_t, int32_t, uint32_t
+from ..utils._typedefs cimport float32_t, float64_t, intp_t, int32_t, uint32_t, uint64_t, BITSET_t
+
 
 cdef enum:
     # Max value for our rand_r replacement (near the bottom).
@@ -28,6 +29,7 @@ ctypedef fused realloc_ptr:
     (intp_t*)
     (int32_t*)
     (uint32_t*)
+    (uint64_t*)
     (unsigned char*)
     (WeightedPQueueRecord*)
     (float64_t*)
@@ -100,3 +102,19 @@ cdef class WeightedMedianCalculator:
         self, float64_t data, float64_t weight,
         float64_t original_median) noexcept nogil
     cdef float64_t get_median(self) noexcept nogil
+
+
+cdef void setup_cat_cache(
+    BITSET_t[:] cachebits,
+    BITSET_t cat_split,
+    int32_t n_categories
+) noexcept nogil
+
+cdef BITSET_t bs_set(BITSET_t value, intp_t i) noexcept nogil
+cdef BITSET_t bs_reset(BITSET_t value, intp_t i) noexcept nogil
+cdef BITSET_t bs_flip(BITSET_t value, intp_t i) noexcept nogil
+cdef BITSET_t bs_flip_all(BITSET_t value, intp_t n_low_bits) noexcept nogil
+cdef bint bs_get(BITSET_t value, intp_t i) noexcept nogil
+cdef BITSET_t bs_from_template(uint64_t template,
+                               int32_t *cat_offs,
+                               intp_t ncats_present) noexcept nogil
