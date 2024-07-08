@@ -872,7 +872,7 @@ def convert_attributes(estimator, ref_array):
     return _estimator_with_converted_arrays(estimator, make_converter(ref_array))
 
 
-def check_fitted_attribute(estimator, method_name, attr_name, X):
+def check_same_namespace(X, estimator, *, attr_name, method_name):
     attr = getattr(estimator, attr_name)
     X_xp, X_is_array_api, X_device = get_namespace_and_device(X)
     a_xp, a_is_array_api, a_device = get_namespace_and_device(attr)

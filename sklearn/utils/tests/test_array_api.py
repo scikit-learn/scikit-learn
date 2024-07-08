@@ -20,7 +20,7 @@ from sklearn.utils._array_api import (
     _nanmin,
     _NumPyAPIWrapper,
     _ravel,
-    check_fitted_attribute,
+    check_same_namespace,
     convert_attributes,
     device,
     get_namespace,
@@ -411,7 +411,7 @@ class SimpleEstimator(BaseEstimator):
         return self
 
     def predict(self, X):
-        check_fitted_attribute(self, "predict", "X_", X)
+        check_same_namespace(X, self, attr_name="X_", method_name="predict")
         return X
 
 
