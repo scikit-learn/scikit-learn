@@ -26,6 +26,7 @@ ctypedef fused realloc_ptr:
     # Add pointer types here as needed.
     (float32_t*)
     (intp_t*)
+    (int32_t*)
     (unsigned char*)
     (WeightedPQueueRecord*)
     (float64_t*)
@@ -39,6 +40,7 @@ cdef int safe_realloc(realloc_ptr* p, size_t nelems) except -1 nogil
 
 cdef cnp.ndarray sizet_ptr_to_ndarray(intp_t* data, intp_t size)
 
+cdef cnp.ndarray int32t_ptr_to_ndarray(int32_t* data, intp_t size)
 
 cdef intp_t rand_int(intp_t low, intp_t high,
                      uint32_t* random_state) noexcept nogil

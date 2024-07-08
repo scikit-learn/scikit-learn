@@ -7,7 +7,7 @@ import numpy as np
 cimport numpy as cnp
 
 from ..utils._typedefs cimport float32_t, float64_t, intp_t, int32_t, uint32_t
-from ..ensemble._hist_gradient_boosting.common cimport BITSET_DTYPE_C
+from ..ensemble._hist_gradient_boosting.common cimport BITSET_INNER_DTYPE_C
 
 from ._splitter cimport Splitter
 from ._splitter cimport SplitRecord
@@ -19,7 +19,7 @@ ctypedef union SplitValue:
     # for numerical features, where feature values less than or equal to the
     # threshold go left, and values greater than the threshold go right.
     #
-    # For categorical features, the BITSET_DTYPE_C view (`SplitValue.cat_split``) is
+    # For categorical features, the BITSET_INNER_DTYPE_C view (`SplitValue.cat_split``) is
     # used. It works in one of two ways, indicated by the value of its least
     # significant bit (LSB). If the LSB is 0, then cat_split acts as a bitfield
     # for up to 64 categories, sending samples left if the bit corresponding to
@@ -30,7 +30,7 @@ ctypedef union SplitValue:
     # method allows up to 2**31 category values, but can only be used for
     # RandomSplitter.
     float64_t threshold
-    BITSET_DTYPE_C cat_split
+    BITSET_INNER_DTYPE_C cat_split
 
 
 cdef struct Node:
@@ -40,9 +40,9 @@ cdef struct Node:
     intp_t right_child                   # id of the right child of the node
     intp_t feature                       # Feature used for splitting the node
     # SplitValue split_value             # Generalized threshold for categorical and
-                                         # non-categorical features
+    #                                    # non-categorical features
     float64_t threshold
-    BITSET_DTYPE_C cat_split
+    BITSET_INNER_DTYPE_C cat_split
     float64_t impurity                   # Impurity of the node (i.e., the value of the criterion)
     intp_t n_node_samples                # Number of samples at the node
     float64_t weighted_n_node_samples    # Weighted number of samples at the node
@@ -68,6 +68,8 @@ cdef class Tree:
     cdef intp_t* n_classes               # Number of classes in y[:, k]
     cdef public intp_t n_outputs         # Number of outputs in y
     cdef public intp_t max_n_classes     # max(n_classes)
+    cdef int32_t *n_categories           # (n_features,) array giving number of
+    #                                    # categories (<0 for non-categorical)
 
     # Inner structures: values are stored separately from node structure,
     # since size is determined at runtime.
@@ -79,11 +81,19 @@ cdef class Tree:
     cdef intp_t value_stride             # = n_outputs * max_n_classes
 
     # Methods
-    cdef intp_t _add_node(self, intp_t parent, bint is_left, bint is_leaf,
-                          intp_t feature, float64_t threshold, float64_t impurity,
-                          intp_t n_node_samples,
-                          float64_t weighted_n_node_samples,
-                          unsigned char missing_go_to_left) except -1 nogil
+    cdef intp_t _add_node(
+        self,
+        intp_t parent,
+        bint is_left,
+        bint is_leaf,
+        intp_t feature,
+        SplitValue split_value,
+        # float64_t threshold,
+        float64_t impurity,
+        intp_t n_node_samples,
+        float64_t weighted_n_node_samples,
+        unsigned char missing_go_to_left
+    ) except -1 nogil
     cdef int _resize(self, intp_t capacity) except -1 nogil
     cdef int _resize_c(self, intp_t capacity=*) except -1 nogil
 
@@ -139,3 +149,17 @@ cdef class TreeBuilder:
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
     )
+
+
+# cdef class CategoryCacheMgr:
+#     # Class to manage the category cache memory during Tree.apply()
+
+#     cdef intp_t n_nodes
+#     cdef BITSET_INNER_DTYPE_C **bits
+
+#     cdef void populate(
+#         self,
+#         Node *nodes,
+#         intp_t n_nodes,
+#         int32_t *n_categories
+#     )

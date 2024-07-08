@@ -367,19 +367,20 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 sample_weight = expanded_class_weight
 
         # Validate categorical features
-        if isinstance(self.categorical, str):
-            if self.categorical == "none":
-                categorical = np.array([], dtype=np.int)
-            elif self.categorical == "all":
-                categorical = np.arange(self.n_features_)
+        if isinstance(self.categorical_features, str):
+            if self.categorical_features == "all":
+                categorical = np.arange(self.n_features_in_)
             else:
                 raise ValueError(
                     "Invalid value for categorical: {}. Allowed"
                     " strings are 'all' or 'none'"
-                    "".format(self.categorical)
+                    "".format(self.categorical_features)
                 )
+        elif self.categorical_features is None:
+            categorical = np.array([], dtype=np.intp)
         else:
-            categorical = np.atleast_1d(self.categorical).flatten()
+            categorical = np.atleast_1d(self.categorical_features).flatten()
+        print(categorical)
         if categorical.dtype == np.bool:
             if categorical.size != self.n_features_:
                 raise ValueError(
@@ -388,9 +389,10 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     "be (n_features,)"
                 )
             categorical = np.nonzero(categorical)[0]
-        if np.size(categorical) > self.n_features_ or (
+        print(categorical)
+        if np.size(categorical) > self.n_features_in_ or (
             categorical.size > 0
-            and (categorical.min() < 0 or categorical.max() >= self.n_features_)
+            and (categorical.min() < 0 or categorical.max() >= self.n_features_in_)
         ):
             raise ValueError(
                 "Invalid value for categorical: Invalid shape or "
@@ -403,7 +405,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     "Categorical features not supported" " with sparse inputs"
                 )
         else:
-            if np.any(X[:, categorical].astype(np.int) < 0):
+            if np.any(X[:, categorical].astype(np.intp) < 0):
                 raise ValueError(
                     "Invalid value for categorical: given values "
                     "for categorical features must be "
@@ -413,15 +415,15 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         # Calculate n_categories and verify they are all at least 1% populated
         n_categories = np.array(
             [
-                np.int(X[:, i].max()) + 1 if i in categorical else -1
-                for i in range(self.n_features_)
+                np.intp(X[:, i].max()) + 1 if i in categorical else -1
+                for i in range(self.n_features_in_)
             ],
             dtype=np.int32,
         )
         n_cat_present = np.array(
             [
-                np.unique(X[:, i].astype(np.int)).size if i in categorical else -1
-                for i in range(self.n_features_)
+                np.unique(X[:, i].astype(np.intp)).size if i in categorical else -1
+                for i in range(self.n_features_in_)
             ],
             dtype=np.int32,
         )
@@ -433,6 +435,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 " represent the categories as sequential integers.",
                 UserWarning,
             )
+
+        self.n_categories_ = n_categories
 
         # Set min_weight_leaf from min_weight_fraction_leaf
         if sample_weight is None:
@@ -461,6 +465,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             )
         else:
             breiman_shortcut = isinstance(criterion, _criterion.MSE)
+        breiman_shortcut
 
         SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
 
@@ -512,7 +517,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 min_weight_leaf,
                 random_state,
                 monotonic_cst,
-                breiman_shortcut,
+                # breiman_shortcut,
             )
 
         if (
@@ -706,13 +711,16 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         # build pruned tree
         if is_classifier(self):
             n_classes = np.atleast_1d(self.n_classes_)
-            pruned_tree = Tree(self.n_features_in_, n_classes, self.n_outputs_)
+            pruned_tree = Tree(
+                self.n_features_in_, n_classes, self.n_outputs_, self.n_categories_
+            )
         else:
             pruned_tree = Tree(
                 self.n_features_in_,
                 # TODO: the tree shouldn't need this param
                 np.array([1] * self.n_outputs_, dtype=np.intp),
                 self.n_outputs_,
+                self.n_categories_,
             )
         _build_pruned_tree_ccp(pruned_tree, self.tree_, self.ccp_alpha)
 

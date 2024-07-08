@@ -6,7 +6,7 @@ from ._criterion cimport Criterion
 from ._tree cimport ParentInfo
 
 from ..utils._typedefs cimport float32_t, float64_t, intp_t, int8_t, int32_t, uint32_t
-from ..ensemble._hist_gradient_boosting.common cimport BITSET_DTYPE_C
+from ..ensemble._hist_gradient_boosting.common cimport BITSET_INNER_DTYPE_C
 
 
 ctypedef union SplitValue:
@@ -15,7 +15,7 @@ ctypedef union SplitValue:
     # for numerical features, where feature values less than or equal to the
     # threshold go left, and values greater than the threshold go right.
     #
-    # For categorical features, the BITSET_DTYPE_C view (`SplitValue.cat_split``) is
+    # For categorical features, the BITSET_INNER_DTYPE_C view (`SplitValue.cat_split``) is
     # used. It works in one of two ways, indicated by the value of its least
     # significant bit (LSB). If the LSB is 0, then cat_split acts as a bitfield
     # for up to 64 categories, sending samples left if the bit corresponding to
@@ -26,7 +26,7 @@ ctypedef union SplitValue:
     # method allows up to 2**31 category values, but can only be used for
     # RandomSplitter.
     float64_t threshold
-    BITSET_DTYPE_C cat_split
+    BITSET_INNER_DTYPE_C cat_split
 
 cdef struct SplitRecord:
     # Data to track sample split
@@ -35,7 +35,7 @@ cdef struct SplitRecord:
     #                      # i.e. count of samples below threshold for feature.
     #                      # pos is >= end if the node is a leaf.
     SplitValue split_value    # Generalized threshold for categorical and
-                              # non-categorical features to split samples.
+    #                         # non-categorical features to split samples.
     float64_t improvement     # Impurity improvement given parent node.
     float64_t impurity_left   # Impurity of the left split.
     float64_t impurity_right  # Impurity of the right split.

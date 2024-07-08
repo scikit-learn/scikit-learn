@@ -49,6 +49,12 @@ cdef inline cnp.ndarray sizet_ptr_to_ndarray(intp_t* data, intp_t size):
     return cnp.PyArray_SimpleNewFromData(1, shape, cnp.NPY_INTP, data).copy()
 
 
+cdef inline cnp.ndarray int32t_ptr_to_ndarray(int32_t* data, intp_t size):
+    """Encapsulate data into a 1D numpy array of int32's."""
+    cdef cnp.npy_intp shape[1]
+    shape[0] = <cnp.npy_intp> size
+    return cnp.PyArray_SimpleNewFromData(1, shape, cnp.NPY_INT32, data)
+
 cdef inline intp_t rand_int(intp_t low, intp_t high,
                             uint32_t* random_state) noexcept nogil:
     """Generate a random integer in [low; end)."""
