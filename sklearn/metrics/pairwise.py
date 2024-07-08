@@ -1127,7 +1127,7 @@ def cosine_distances(X, Y=None):
     S = cosine_similarity(X, Y)
     S *= -1
     S += 1
-    S = _clip(X, S, 0, 2, xp)
+    S = _clip(S, 0, 2, xp)
     if X is Y or Y is None:
         # Ensure that distances between vectors and themselves are set to 0.0.
         # This may not be the case due to floating point rounding errors.
