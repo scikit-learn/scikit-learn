@@ -15,7 +15,7 @@ from numbers import Real
 import numpy as np
 from scipy import sparse as sp
 
-from ...utils._array_api import get_namespace
+from ...utils._array_api import _max_precision_float_dtype, get_namespace_and_device
 from ...utils._param_validation import Interval, StrOptions, validate_params
 from ...utils.multiclass import type_of_target
 from ...utils.validation import check_array, check_consistent_length
@@ -1275,12 +1275,12 @@ def entropy(labels):
     -----
     The logarithm used is the natural logarithm (base-e).
     """
-    xp, is_array_api_compliant = get_namespace(labels)
+    xp, is_array_api_compliant, device_ = get_namespace_and_device(labels)
     labels_len = labels.shape[0] if is_array_api_compliant else len(labels)
     if labels_len == 0:
         return 1.0
 
-    pi = xp.astype(xp.unique_counts(labels)[1], xp.float64)
+    pi = xp.astype(xp.unique_counts(labels)[1], _max_precision_float_dtype(xp, device_))
 
     # single cluster => zero entropy
     if pi.size == 1:
