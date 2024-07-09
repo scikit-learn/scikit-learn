@@ -127,8 +127,8 @@ print(
 )
 
 # %%
-# Rational Quadradtic kernel
-# ..........................
+# Rational Quadratic kernel
+# .........................
 from sklearn.gaussian_process.kernels import RationalQuadratic
 
 kernel = 1.0 * RationalQuadratic(length_scale=1.0, alpha=0.1, alpha_bounds=(1e-5, 1e15))
@@ -201,7 +201,7 @@ from sklearn.gaussian_process.kernels import ConstantKernel, DotProduct
 kernel = ConstantKernel(0.1, (0.01, 10.0)) * (
     DotProduct(sigma_0=1.0, sigma_0_bounds=(0.1, 10.0)) ** 2
 )
-gpr = GaussianProcessRegressor(kernel=kernel, random_state=0)
+gpr = GaussianProcessRegressor(kernel=kernel, random_state=0, normalize_y=True)
 
 fig, axs = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(10, 8))
 
