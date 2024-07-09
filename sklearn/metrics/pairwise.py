@@ -408,7 +408,7 @@ def _euclidean_distances(X, Y, X_norm_squared=None, Y_norm_squared=None, squared
         distances += XX
         distances += YY
 
-    xp_zero = xp.asarray(0.0, device=device_)
+    xp_zero = xp.asarray(0, device=device_, dtype=distances.dtype)
     if _xp_method_has_out(xp_method=xp.maximum):
         xp.maximum(distances, xp_zero, out=distances)
     else:
