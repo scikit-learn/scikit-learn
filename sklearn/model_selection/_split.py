@@ -1769,6 +1769,43 @@ class RepeatedStratifiedKFold(_UnsupportedGroupCVMixin, _RepeatedSplits):
             n_splits=n_splits,
         )
 
+    def split(self, X, y, groups=None):
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+
+            Note that providing ``y`` is sufficient to generate the splits and
+            hence ``np.zeros(n_samples)`` may be used as a placeholder for
+            ``X`` instead of actual training data.
+
+        y : array-like of shape (n_samples,)
+            The target variable for supervised learning problems.
+            Stratification is done based on the y labels.
+
+        groups : object
+            Always ignored, exists for compatibility.
+
+        Yields
+        ------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+
+        Notes
+        -----
+        Randomized CV splitters may return different results for each call of
+        split. You can make the results identical by setting `random_state`
+        to an integer.
+        """
+        y = check_array(y, input_name="y", ensure_2d=False, dtype=None)
+        return super().split(X, y, groups=groups)
+
 
 class BaseShuffleSplit(_MetadataRequester, metaclass=ABCMeta):
     """Base class for *ShuffleSplit.
