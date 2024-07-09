@@ -187,8 +187,8 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
     >>> from sklearn.mixture import GaussianMixtureIC
     >>> X = np.array([[1, 2], [1, 4], [1, 0], [10, 2], [10, 4], [10, 0]])
     >>> gmIC = GaussianMixtureIC(max_components=4)
-    >>> gmIC.fit_predict(X)
-    array([1, 1, 1, 0, 0, 0])
+    >>> print(np.sort(gmIC.fit_predict(X)))
+    array([0, 0, 0, 1, 1, 1])
     >>> print(gmIC.n_components_)
     2
     """
@@ -255,7 +255,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        estimator: estimator object
+        estimator : estimator object
             A score function to calculate either BIC or AIC.
 
         X : array-like, shape (n_samples, n_features)
@@ -332,7 +332,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         self.n_iter_ = best_estimator.n_iter_
         self.lower_bound_ = best_estimator.lower_bound_
         self.n_features_in_ = X.shape[1]
-        self.labels_ = None
+        self.labels_ = best_estimator.predict(X)
 
         return self
 
