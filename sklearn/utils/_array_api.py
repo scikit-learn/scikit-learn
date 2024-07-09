@@ -308,6 +308,12 @@ class _ArrayAPIWrapper:
         x_max = numpy.maximum(x1_np, x2_np)
         return self._namespace.asarray(x_max, device=device(x1, x2))
 
+    def tensordot(self, a, b, axes):
+        a_np = _convert_to_numpy(a, xp=self._namespace)
+        b_np = _convert_to_numpy(b, xp=self._namespace)
+        x_max = numpy.tensordot(a_np, b_np, axes=axes)
+        return self._namespace.asarray(x_max, device=device(a, b))
+
 
 def _check_device_cpu(device):  # noqa
     if device not in {"cpu", None}:

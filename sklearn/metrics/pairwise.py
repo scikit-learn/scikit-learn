@@ -1560,13 +1560,14 @@ def rbf_kernel(X, Y=None, gamma=None):
     array([[0.71..., 0.51...],
            [0.51..., 0.71...]])
     """
+    xp, _ = get_namespace(X, Y)
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
         gamma = 1.0 / X.shape[1]
 
     K = euclidean_distances(X, Y, squared=True)
     K *= -gamma
-    np.exp(K, K)  # exponentiate K in-place
+    K = xp.exp(K)  # exponentiate K in-place
     return K
 
 
