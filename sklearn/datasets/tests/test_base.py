@@ -602,7 +602,7 @@ def test_fetch_file_with_sha256(monkeypatch, tmpdir):
     assert urlretrieve_mock.call_count == 1
 
     # Corrupting the local data should yield a warning and trigger a new download:
-    fetched_file_path.write_text("corruped contents", encoding="utf-8")
+    fetched_file_path.write_text("corrupted contents", encoding="utf-8")
     expected_msg = (
         r"SHA256 checksum of existing local file data.jsonl "
         rf"\(.*\) differs from expected \({expected_sha256}\): "
