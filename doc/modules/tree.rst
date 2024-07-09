@@ -584,7 +584,7 @@ have built-in support for missing values using `splitter='best'`, where
 the splits are determined in a greedy fashion.
 :class:`ExtraTreeClassifier`, and :class:`ExtraTreeRegressor` have built-in
 support for missing values for `splitter='random'`, where the splits
-are determined randomly. For more details on how the splitter differs onn
+are determined randomly. For more details on how the splitter differs on
 non-missing values, see the :ref:`Forest section <forest>`.
 
 The criterion supported when there are missing-values are
