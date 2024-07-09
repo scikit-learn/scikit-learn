@@ -247,17 +247,17 @@ PR: Don't change unrelated
 Debugging CI issues
 -------------------
 
-CI issues happen for a variety of reasons, so this is by no way a comprehensive
-guide but more a list of useful tips and tricks.
+CI issues may arise for a variety of reasons, so this is by no means a
+comprehensive guide, but rather a list of useful tips and tricks.
 
 Using a lock-file to get an environment close to the CI
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-`conda-lock` can be used to create an conda environment with the exact same
+`conda-lock` can be used to create a conda environment with the exact same
 conda and pip packages as on the CI. For example, the following command will
 create a conda environment named `scikit-learn-doc` that is similar to the CI:
 
-.. prompt bash $
+.. prompt:: bash $
 
     conda-lock install -n scikit-learn-doc build_tools/circle/doc_linux-64_conda.lock
 
@@ -274,7 +274,7 @@ environment from the right environment yaml file, although it won't be as close
 as the CI environment as using the associated lock-file. For example for the
 doc build:
 
-.. prompt bash $
+.. prompt:: bash $
 
     conda env create -n scikit-learn-doc -f build_tools/circle/doc_environment.yml -y
 
