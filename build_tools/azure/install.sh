@@ -137,13 +137,6 @@ scikit_learn_install() {
            # toolchain
            ADDITIONAL_PIP_OPTIONS='-Csetup-args=--vsenv'
         fi
-        # TODO This is a stop-gap solution until #28721 is merged. In Ubuntu
-        # build, pip is too old (pip < 22.1.1) to have --check-build-dependencies.
-        # In Debian 32 build , pip is recent enough but system numpy is too old
-        # (numpy<1.25) to satisfy pyproject.toml build dependencies
-        if [[ "$DISTRIB" != "ubuntu" && "$DISTRIB" != "debian-32" ]]; then
-            ADDITIONAL_PIP_OPTIONS="$ADDITIONAL_PIP_OPTIONS --check-build-dependencies"
-        fi
         # Use the pre-installed build dependencies and build directly in the
         # current environment.
         pip install --verbose --no-build-isolation --editable . $ADDITIONAL_PIP_OPTIONS
