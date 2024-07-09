@@ -332,7 +332,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         self.n_iter_ = best_estimator.n_iter_
         self.lower_bound_ = best_estimator.lower_bound_
         self.n_features_in_ = X.shape[1]
-        self.labels = None
+        self.labels_ = None
 
         return self
 
