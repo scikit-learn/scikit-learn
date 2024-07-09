@@ -223,7 +223,8 @@ class NonConsumingClassifier(ClassifierMixin, BaseEstimator):
         return y_proba
 
     def predict_log_proba(self, X):
-        pass  # pragma: no cover
+        # dummy probabilities to support predict_log_proba
+        return self.predict_proba(X)
 
 
 class NonConsumingRegressor(RegressorMixin, BaseEstimator):
