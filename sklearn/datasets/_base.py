@@ -1528,7 +1528,7 @@ def _fetch_remote(remote, dirname=None, n_retries=3, delay=1):
 def _filter_filename(value, filter_dots=True):
     """Derive a name that is safe to use as filename from the given string.
 
-    Adapted from
+    Adapted from the `slugify` function of django:
     https://github.com/django/django/blob/master/django/utils/text.py
 
     Convert spaces or repeated dashes to single dashes. Replace characters that
