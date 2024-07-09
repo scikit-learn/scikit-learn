@@ -557,6 +557,11 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     if namespace.__name__ in {"cupy.array_api"}:
         namespace = _ArrayAPIWrapper(namespace)
 
+    if namespace.__name__ == "array_api_strict" and hasattr(
+        namespace, "set_array_api_strict_flags"
+    ):
+        namespace.set_array_api_strict_flags(api_version="2023.12")
+
     return namespace, is_array_api_compliant
 
 
@@ -602,6 +607,18 @@ def _add_to_diagonal(array, value, xp):
         # scalar value
         for i in range(array.shape[0]):
             array[i, i] += value
+
+
+def _max_precision_float_dtype(xp, device):
+    """Return the float dtype with the highest precision supported by the device."""
+    # TODO: Update to use `__array_namespace__info__()` from array-api v2023.12
+    # when/if that becomes more widespread.
+    xp_name = xp.__name__
+    if xp_name in {"array_api_compat.torch", "torch"} and (
+        str(device).startswith("mps")
+    ):  # pragma: no cover
+        return xp.float32
+    return xp.float64
 
 
 def _find_matching_floating_dtype(*arrays, xp):
