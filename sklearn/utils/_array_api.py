@@ -1023,4 +1023,5 @@ def _count_nonzero(X, xp, device, axis=None, sample_weight=None):
 
 def _xp_method_has_out(xp_method):
     out_param = "out=None"
-    return out_param in xp_method.__doc__
+    method_doc = xp_method.__doc__
+    return method_doc and out_param in method_doc
