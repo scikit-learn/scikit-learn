@@ -31,7 +31,7 @@ from sklearn.utils._testing import (
     _array_api_for_tests,
     skip_if_array_api_compat_not_configured,
 )
-from sklearn.utils.fixes import _IS_32BIT, CSR_CONTAINERS
+from sklearn.utils.fixes import _IS_32BIT, CSR_CONTAINERS, np_version, parse_version
 
 
 @pytest.mark.parametrize("X", [numpy.asarray([1, 2, 3]), [1, 2, 3]])
@@ -64,7 +64,12 @@ def test_get_namespace_ndarray_with_dispatch():
     with config_context(array_api_dispatch=True):
         xp_out, is_array_api_compliant = get_namespace(X_np)
         assert is_array_api_compliant
-        assert xp_out is array_api_compat.numpy
+        if np_version >= parse_version("2.0.0"):
+            # NumPy 2.0+ is an array API compliant library.
+            assert xp_out is numpy
+        else:
+            # Older NumPy versions require the compatibility layer.
+            assert xp_out is array_api_compat.numpy
 
 
 @skip_if_array_api_compat_not_configured
@@ -132,7 +137,7 @@ def test_asarray_with_order_ignored():
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize(
     "weights, axis, normalize, expected",
@@ -164,19 +169,22 @@ def test_asarray_with_order_ignored():
     ],
 )
 def test_average(
-    array_namespace, device, dtype_name, weights, axis, normalize, expected
+    array_namespace, device_, dtype_name, weights, axis, normalize, expected
 ):
-    xp = _array_api_for_tests(array_namespace, device)
+    xp = _array_api_for_tests(array_namespace, device_)
     array_in = numpy.asarray([[1, 2, 3], [4, 5, 6]], dtype=dtype_name)
-    array_in = xp.asarray(array_in, device=device)
+    array_in = xp.asarray(array_in, device=device_)
     if weights is not None:
         weights = numpy.asarray(weights, dtype=dtype_name)
-        weights = xp.asarray(weights, device=device)
+        weights = xp.asarray(weights, device=device_)
 
     with config_context(array_api_dispatch=True):
         result = _average(array_in, axis=axis, weights=weights, normalize=normalize)
 
-    assert getattr(array_in, "device", None) == getattr(result, "device", None)
+    if np_version < parse_version("2.0.0") or np_version >= parse_version("2.1.0"):
+        # NumPy 2.0 has a problem with the device attribute of scalar arrays:
+        # https://github.com/numpy/numpy/issues/26850
+        assert device(array_in) == device(result)
 
     result = _convert_to_numpy(result, xp)
     assert_allclose(result, expected, atol=_atol_for_type(dtype_name))
@@ -223,14 +231,15 @@ def test_average_raises_with_wrong_dtype(array_namespace, device, dtype_name):
         (
             0,
             [[1, 2]],
-            TypeError,
-            "1D weights expected",
+            # NumPy 2 raises ValueError, NumPy 1 raises TypeError
+            (ValueError, TypeError),
+            "weights",  # the message is different for NumPy 1 and 2...
         ),
         (
             0,
             [1, 2, 3, 4],
             ValueError,
-            "Length of weights",
+            "weights",
         ),
         (0, [-1, 1], ZeroDivisionError, "Weights sum to zero, can't be normalized"),
     ),
@@ -534,18 +543,18 @@ def test_get_namespace_and_device():
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 @pytest.mark.parametrize("axis", [0, 1, None, -1, -2])
 @pytest.mark.parametrize("sample_weight_type", [None, "int", "float"])
 def test_count_nonzero(
-    array_namespace, device, dtype_name, csr_container, axis, sample_weight_type
+    array_namespace, device_, dtype_name, csr_container, axis, sample_weight_type
 ):
 
     from sklearn.utils.sparsefuncs import count_nonzero as sparse_count_nonzero
 
-    xp = _array_api_for_tests(array_namespace, device)
+    xp = _array_api_for_tests(array_namespace, device_)
     array = numpy.array([[0, 3, 0], [2, -1, 0], [0, 0, 0], [9, 8, 7], [4, 0, 5]])
     if sample_weight_type == "int":
         sample_weight = numpy.asarray([1, 2, 2, 3, 1])
@@ -556,12 +565,16 @@ def test_count_nonzero(
     expected = sparse_count_nonzero(
         csr_container(array), axis=axis, sample_weight=sample_weight
     )
-    array_xp = xp.asarray(array, device=device)
+    array_xp = xp.asarray(array, device=device_)
 
     with config_context(array_api_dispatch=True):
         result = _count_nonzero(
-            array_xp, xp=xp, device=device, axis=axis, sample_weight=sample_weight
+            array_xp, xp=xp, device=device_, axis=axis, sample_weight=sample_weight
         )
 
     assert_allclose(_convert_to_numpy(result, xp=xp), expected)
-    assert getattr(array_xp, "device", None) == getattr(result, "device", None)
+
+    if np_version < parse_version("2.0.0") or np_version >= parse_version("2.1.0"):
+        # NumPy 2.0 has a problem with the device attribute of scalar arrays:
+        # https://github.com/numpy/numpy/issues/26850
+        assert device(array_xp) == device(result)

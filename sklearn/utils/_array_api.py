@@ -647,16 +647,10 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
                 f"weights {tuple(weights.shape)} differ."
             )
 
-        if weights.ndim != 1:
-            raise TypeError(
-                f"1D weights expected when a.shape={tuple(a.shape)} and "
-                f"weights.shape={tuple(weights.shape)} differ."
-            )
-
-        if size(weights) != a.shape[axis]:
+        if tuple(weights.shape) != (a.shape[axis],):
             raise ValueError(
-                f"Length of weights {size(weights)} not compatible with "
-                f" a.shape={tuple(a.shape)} and {axis=}."
+                f"Shape of weights weights.shape={tuple(weights.shape)} must be "
+                f"consistent with a.shape={tuple(a.shape)} and {axis=}."
             )
 
         # If weights are 1D, add singleton dimensions for broadcasting
@@ -814,9 +808,14 @@ def _estimator_with_converted_arrays(estimator, converter):
     return new_estimator
 
 
-def _atol_for_type(dtype):
+def _atol_for_type(dtype_or_dtype_name):
     """Return the absolute tolerance for a given numpy dtype."""
-    return numpy.finfo(dtype).eps * 100
+    if dtype_or_dtype_name is None:
+        # If no dtype is specified when running tests for a given namespace, we
+        # expect the same floating precision level as NumPy's default floating
+        # point dtype.
+        dtype_or_dtype_name = numpy.float64
+    return numpy.finfo(dtype_or_dtype_name).eps * 100
 
 
 def indexing_dtype(xp):
