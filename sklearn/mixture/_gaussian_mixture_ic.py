@@ -7,6 +7,7 @@
 
 import numpy as np
 
+from ..base import BaseEstimator, ClusterMixin
 from ..model_selection import GridSearchCV
 from ..utils import check_scalar
 from ..utils._param_validation import StrOptions
@@ -32,7 +33,7 @@ def _check_multi_comp_inputs(input, name, default):
     return input
 
 
-class GaussianMixtureIC(GaussianMixture):
+class GaussianMixtureIC(ClusterMixin, BaseEstimator):
     """Gaussian mixture with BIC/AIC.
 
     Automatic Gaussian Mixture Model (GMM) selection via the
@@ -94,6 +95,9 @@ class GaussianMixtureIC(GaussianMixture):
         Select the best model based on Bayesian Information Criterion (bic) or
         Aikake Information Criterion (aic).
 
+    n_jobs : int
+        The number of jobs to use for the computation
+        This works by computing each of the n_init runs in parallel.
 
     Attributes
     ----------
@@ -145,6 +149,9 @@ class GaussianMixtureIC(GaussianMixture):
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
+
+    labels_ : ndarray of shape (n_samples,)
+        Labels of each point.
 
     See Also
     --------
@@ -244,6 +251,22 @@ class GaussianMixtureIC(GaussianMixture):
         return covariance_type
 
     def criterion_score(self, estimator, X):
+        """Callable to pass to GridSearchCV that will use the BIC score.
+
+        Parameters
+        ----------
+        estimator: estimator object
+            A score function to calculate either BIC or AIC.
+
+        X : array-like, shape (n_samples, n_features)
+            List of n_features-dimensional data points. Each row
+            corresponds to a single data point.
+
+        Returns
+        -------
+        self : object
+            Returns an instance of self.
+        """
         if self.criterion == "bic":
             return -estimator.bic(X)
         else:
@@ -271,7 +294,6 @@ class GaussianMixtureIC(GaussianMixture):
         self : object
             Returns an instance of self.
         """
-
         covariance_type = self._check_parameters()
         X = self._validate_data(X, dtype=[np.float64, np.float32], ensure_min_samples=1)
 
@@ -310,6 +332,7 @@ class GaussianMixtureIC(GaussianMixture):
         self.n_iter_ = best_estimator.n_iter_
         self.lower_bound_ = best_estimator.lower_bound_
         self.n_features_in_ = X.shape[1]
+        self.labels = None
 
         return self
 
