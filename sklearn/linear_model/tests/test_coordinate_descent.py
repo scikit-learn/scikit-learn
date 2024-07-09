@@ -1311,46 +1311,54 @@ def test_enet_cv_sample_weight_correctness(fit_intercept, sparse_container):
     """Test that ElasticNetCV with sample weights gives correct results."""
     rng = np.random.RandomState(42)
     n_splits, n_samples, n_features = 3, 10, 5
-    X = rng.rand(n_splits * n_samples, n_features)
+    X_with_weights = rng.rand(n_splits * n_samples, n_features)
     beta = rng.rand(n_features)
     beta[0:2] = 0
-    y = X @ beta + rng.rand(n_splits * n_samples)
-    sw = np.ones_like(y)
+    y_with_weights = X_with_weights @ beta + rng.rand(n_splits * n_samples)
+    sw = np.ones_like(y_with_weights)
     if sparse_container is not None:
-        X = sparse_container(X)
+        X_with_weights = sparse_container(X_with_weights)
     params = dict(tol=1e-6)
 
-    # We weight the first fold n times more.
+    # Inspect the total number of random repetitions so as to adjust the size of
+    # the first cross-validation group accordingly.
     sw[:n_samples] = rng.randint(0, 5, size=sw[:n_samples].shape[0])
-    groups_sw = np.r_[
+    groups_with_weights = np.r_[
         np.full(n_samples, 0), np.full(n_samples, 1), np.full(n_samples, 2)
     ]
-    splits_sw = list(LeaveOneGroupOut().split(X, groups=groups_sw))
-    reg_sw = ElasticNetCV(cv=splits_sw, fit_intercept=fit_intercept, **params)
-    reg_sw.fit(X, y, sample_weight=sw)
+    splits_with_weights = list(
+        LeaveOneGroupOut().split(X_with_weights, groups=groups_with_weights)
+    )
+    reg_with_weights = ElasticNetCV(
+        cv=splits_with_weights, fit_intercept=fit_intercept, **params
+    )
+    reg_with_weights.fit(X_with_weights, y_with_weights, sample_weight=sw)
 
     # We repeat the first fold 2 times and provide splits ourselves
     if sparse_container is not None:
-        X = X.toarray()
-    X_rep = np.repeat(X, sw.astype(int), axis=0)
-    ##Need to know number of repitions made in total
-    n_reps = X_rep.shape[0] - X.shape[0]
-    X = X_rep
+        X_with_weights = X_with_weights.toarray()
+    X_with_repetitions = np.repeat(X_with_weights, sw.astype(int), axis=0)
+
     if sparse_container is not None:
-        X = sparse_container(X)
-    y = np.repeat(y, sw.astype(int), axis=0)
-    groups = np.r_[
-        np.full(n_reps + n_samples, 0), np.full(n_samples, 1), np.full(n_samples, 2)
-    ]
-    splits = list(LeaveOneGroupOut().split(X, groups=groups))
-    reg = ElasticNetCV(cv=splits, fit_intercept=fit_intercept, **params)
-    reg.fit(X, y)
+        X_with_repetitions = sparse_container(X_with_repetitions)
+
+    y_with_repetitions = np.repeat(y_with_weights, sw.astype(int), axis=0)
+    groups_with_repetitions = np.repeat(groups_with_weights, sw.astype(int), axis=0)
+
+    splits_with_repetitions = list(
+        LeaveOneGroupOut().split(X_with_repetitions, groups=groups_with_repetitions)
+    )
+    reg_with_repetitions = ElasticNetCV(
+        cv=splits_with_repetitions, fit_intercept=fit_intercept, **params
+    )
+    reg_with_repetitions.fit(X_with_repetitions, y_with_repetitions)
 
     # ensure that we chose meaningful alphas, i.e. not boundaries
-    assert_allclose(reg_sw.alphas_, reg.alphas_)
-    assert reg_sw.alpha_ == reg.alpha_
-    assert_allclose(reg_sw.coef_, reg.coef_)
-    assert reg_sw.intercept_ == pytest.approx(reg.intercept_)
+    assert_allclose(reg_with_weights.mse_path_, reg_with_repetitions.mse_path_)
+    assert_allclose(reg_with_weights.alphas_, reg_with_repetitions.alphas_)
+    assert reg_with_weights.alpha_ == reg_with_repetitions.alpha_
+    assert_allclose(reg_with_weights.coef_, reg_with_repetitions.coef_)
+    assert reg_with_weights.intercept_ == pytest.approx(reg_with_repetitions.intercept_)
 
 
 @pytest.mark.parametrize("sample_weight", [False, True])
