@@ -427,7 +427,16 @@ class _NumPyAPIWrapper:
 
         if copy is True:
             x = x.copy()
-        return numpy.reshape(x, shape)
+
+        output = numpy.reshape(x, shape)
+        if copy is False and not numpy.shares_memory(x, output):
+            # See the following ref in the spec for the meaning of copy=False:
+            # https://data-apis.org/array-api/latest/API_specification/generated/array_api.reshape.html
+            raise ValueError(
+                f"reshape with copy=False is not compatible with shape {shape} "
+                "for the memory layout of the input array."
+            )
+        return output
 
     def isdtype(self, dtype, kind):
         return isdtype(dtype, kind, xp=self)
@@ -565,20 +574,50 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     return namespace, is_array_api_compliant
 
 
-def get_namespace_and_device(*array_list, remove_none=True, remove_types=(str,)):
-    """Combination into one single function of `get_namespace` and `device`."""
-    array_list = _remove_non_arrays(
-        *array_list, remove_none=remove_none, remove_types=remove_types
+def get_namespace_and_device(*arrays, remove_none=True, remove_types=(str,), xp=None):
+    """Combination into one single function of `get_namespace` and `device`.
+
+    Parameters
+    ----------
+    *arrays : array objects
+        Array objects.
+
+    remove_none : bool, default=True
+        Whether to ignore None objects passed in arrays.
+
+    remove_types : tuple or list, default=(str,)
+        Types to ignore in the arrays.
+
+    xp : module, default=None
+        Precomputed array namespace module. When passed, typically from a caller
+        that has already performed inspection of its own inputs, skips array
+        namespace inspection.
+
+    Returns
+    -------
+    namespace : module
+        Namespace shared by array objects. If any of the `arrays` are not arrays,
+        the namespace defaults to NumPy.
+
+    is_array_api_compliant : bool
+        True if the arrays are containers that implement the Array API spec.
+        Always False when array_api_dispatch=False.
+
+    device : device
+        `device` object (see the "Device Support" section of the array API spec).
+    """
+    arrays = _remove_non_arrays(
+        *arrays, remove_none=remove_none, remove_types=remove_types
     )
 
     skip_remove_kwargs = dict(remove_none=False, remove_types=[])
 
-    xp, is_array_api = get_namespace(*array_list, **skip_remove_kwargs)
+    xp, is_array_api = get_namespace(*arrays, xp=xp, **skip_remove_kwargs)
     if is_array_api:
         return (
             xp,
             is_array_api,
-            device(*array_list, **skip_remove_kwargs),
+            device(*arrays, **skip_remove_kwargs),
         )
     else:
         return xp, False, None
@@ -841,6 +880,8 @@ def _estimator_with_converted_arrays(estimator, converter):
 
 def _atol_for_type(dtype):
     """Return the absolute tolerance for a given numpy dtype."""
+    if dtype is None:
+        dtype = numpy.float64
     return numpy.finfo(dtype).eps * 100
 
 

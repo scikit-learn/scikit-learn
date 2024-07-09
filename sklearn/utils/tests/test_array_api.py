@@ -456,6 +456,13 @@ def test_reshape_behavior():
     with pytest.raises(TypeError, match="shape must be a tuple"):
         xp.reshape(X, -1)
 
+    X_fortran = numpy.asfortranarray(X)
+    with pytest.raises(ValueError, match="reshape with copy=False is not compatible"):
+        xp.reshape(X_fortran, (-1,), copy=False)
+
+    X_copy = xp.reshape(X_fortran, (-1,))
+    assert X_copy.base is not X_fortran.base
+
 
 @pytest.mark.parametrize("wrapper", [_ArrayAPIWrapper, _NumPyAPIWrapper])
 def test_get_namespace_array_api_isdtype(wrapper):

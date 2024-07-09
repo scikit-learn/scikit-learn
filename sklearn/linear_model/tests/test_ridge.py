@@ -1,4 +1,5 @@
 import warnings
+from functools import partial
 from itertools import product
 
 import numpy as np
@@ -1216,24 +1217,65 @@ def _test_tolerance(sparse_container):
     assert score >= score2
 
 
-def check_array_api_attributes(name, estimator, array_namespace, device, dtype_name):
+def check_array_api_attributes(
+    name,
+    estimator,
+    array_namespace,
+    device,
+    dtype_name,
+    data_shape="tall",
+    multi_output=False,
+    use_sample_weight=False,
+    rank_deficient=False,
+):
+    rng = np.random.RandomState(0)
     xp = _array_api_for_tests(array_namespace, device)
 
-    X_iris_np = X_iris.astype(dtype_name)
-    y_iris_np = y_iris.astype(dtype_name)
+    if data_shape == "tall":
+        X_np = X_iris.astype(dtype_name)
+        if rank_deficient:
+            # Introduce redundant features to make the covariance matrix rank
+            # deficient
+            X_np = np.hstack([X_np] * 2)
+        y_np = y_iris.astype(dtype_name)
+    else:
+        n_samples, n_features = 10, 100
+        X_np = rng.randn(n_samples, n_features).astype(dtype_name)
+        w = rng.randn(100).astype(dtype_name)
+        y_np = X_np @ w + 0.01 * rng.randn(n_samples).astype(dtype_name)
+        if rank_deficient:
+            # Duplicated some rows to make the kernel matrix rank deficient
+            X_np = np.vstack([X_np] * 2)
+            y_np = np.hstack([y_np] * 2)
 
-    X_iris_xp = xp.asarray(X_iris_np, device=device)
-    y_iris_xp = xp.asarray(y_iris_np, device=device)
+    if multi_output:
+        y_np = np.column_stack([y_np, y_np])
 
-    estimator.fit(X_iris_np, y_iris_np)
+        # Set different alphas for each target to increase test coverage.
+        estimator = clone(estimator)
+        estimator.set_params(alpha=[1e-6, 1e6])
+
+    if use_sample_weight:
+        sample_weight_np = rng.rand(X_np.shape[0]).astype(dtype_name)
+        sample_weight_xp = xp.asarray(sample_weight_np, device=device)
+    else:
+        sample_weight_np = sample_weight_xp = None
+
+    X_xp = xp.asarray(X_np, device=device)
+    y_xp = xp.asarray(y_np, device=device)
+
+    estimator.fit(X_np, y_np, sample_weight_np)
     coef_np = estimator.coef_
     intercept_np = estimator.intercept_
 
     with config_context(array_api_dispatch=True):
-        estimator_xp = clone(estimator).fit(X_iris_xp, y_iris_xp)
+        estimator_xp = clone(estimator).fit(X_xp, y_xp, sample_weight=sample_weight_xp)
         coef_xp = estimator_xp.coef_
-        assert coef_xp.shape == (4,)
-        assert coef_xp.dtype == X_iris_xp.dtype
+        if multi_output:
+            assert coef_xp.shape == (2, X_xp.shape[1])
+        else:
+            assert coef_xp.shape == (X_xp.shape[1],)
+        assert coef_xp.dtype == X_xp.dtype
 
         assert_allclose(
             _convert_to_numpy(coef_xp, xp=xp),
@@ -1241,8 +1283,11 @@ def check_array_api_attributes(name, estimator, array_namespace, device, dtype_n
             atol=_atol_for_type(dtype_name),
         )
         intercept_xp = estimator_xp.intercept_
-        assert intercept_xp.shape == ()
-        assert intercept_xp.dtype == X_iris_xp.dtype
+        if multi_output:
+            assert intercept_xp.shape == (2,)
+        else:
+            assert intercept_xp.shape == ()
+        assert intercept_xp.dtype == X_xp.dtype
 
         assert_allclose(
             _convert_to_numpy(intercept_xp, xp=xp),
@@ -1256,12 +1301,29 @@ def check_array_api_attributes(name, estimator, array_namespace, device, dtype_n
 )
 @pytest.mark.parametrize(
     "check",
-    [check_array_api_input_and_values, check_array_api_attributes],
+    [
+        check_array_api_input_and_values,
+        partial(check_array_api_attributes, data_shape="tall", use_sample_weight=True),
+        partial(
+            check_array_api_attributes,
+            data_shape="tall",
+            multi_output=True,
+        ),
+        partial(check_array_api_attributes, data_shape="tall", rank_deficient=True),
+        partial(check_array_api_attributes, data_shape="wide"),
+        partial(
+            check_array_api_attributes,
+            data_shape="wide",
+            multi_output=True,
+            use_sample_weight=True,
+        ),
+        partial(check_array_api_attributes, data_shape="wide", rank_deficient=True),
+    ],
     ids=_get_check_estimator_ids,
 )
 @pytest.mark.parametrize(
     "estimator",
-    [Ridge(solver="svd")],
+    [Ridge(solver="svd"), Ridge(solver="cholesky"), Ridge(solver="cholesky", alpha=0)],
     ids=_get_check_estimator_ids,
 )
 def test_ridge_array_api_compliance(
@@ -1281,11 +1343,11 @@ def test_array_api_error_and_warnings_for_solver_parameter(array_namespace):
     y_iris_xp = xp.asarray(y_iris[:5])
 
     available_solvers = Ridge._parameter_constraints["solver"][0].options
-    for solver in available_solvers - {"auto", "svd"}:
+    for solver in available_solvers - {"auto", "svd", "cholesky"}:
         ridge = Ridge(solver=solver, positive=solver == "lbfgs")
         expected_msg = (
             f"Array API dispatch to namespace {xp.__name__} only supports "
-            f"solver 'svd'. Got '{solver}'."
+            f"solver 'svd' and 'cholesky'. Got '{solver}'."
         )
 
         with pytest.raises(ValueError, match=expected_msg):
@@ -1295,8 +1357,8 @@ def test_array_api_error_and_warnings_for_solver_parameter(array_namespace):
     ridge = Ridge(solver="auto", positive=True)
     expected_msg = (
         "The solvers that support positive fitting do not support "
-        f"Array API dispatch to namespace {xp.__name__}. Please "
-        "either disable Array API dispatch, or use a numpy-like "
+        f"array API dispatch to namespace {xp.__name__}. Please "
+        "either disable array API dispatch, or use a numpy-like "
         "namespace, or set `positive=False`."
     )
 
@@ -1304,16 +1366,18 @@ def test_array_api_error_and_warnings_for_solver_parameter(array_namespace):
         with config_context(array_api_dispatch=True):
             ridge.fit(X_iris_xp, y_iris_xp)
 
-    ridge = Ridge()
-    expected_msg = (
-        f"Using Array API dispatch to namespace {xp.__name__} with `solver='auto'` "
-        "will result in using the solver 'svd'. The results may differ from those "
-        "when using a Numpy array, because in that case the preferred solver would "
-        "be cholesky. Set `solver='svd'` to suppress this warning."
-    )
-    with pytest.warns(UserWarning, match=expected_msg):
-        with config_context(array_api_dispatch=True):
-            ridge.fit(X_iris_xp, y_iris_xp)
+    with config_context(array_api_dispatch=True):
+        ridge_regression(
+            X_iris_xp, y_iris_xp, alpha=1.0, return_intercept=False
+        )  # no error
+
+        expected_msg = (
+            "The solvers that support fitting fit intercept without preprocessing "
+            f"do not support array API dispatch to namespace {xp.__name__}."
+        )
+
+        with pytest.raises(ValueError, match=expected_msg):
+            ridge_regression(X_iris_xp, y_iris_xp, alpha=1.0, return_intercept=True)
 
 
 @pytest.mark.parametrize("array_namespace", sorted(_NUMPY_NAMESPACE_NAMES))
@@ -1323,18 +1387,12 @@ def test_array_api_numpy_namespace_no_warning(array_namespace):
     X_iris_xp = xp.asarray(X_iris[:5])
     y_iris_xp = xp.asarray(y_iris[:5])
 
-    ridge = Ridge()
-    expected_msg = (
-        "Results might be different than when Array API dispatch is "
-        "disabled, or when a numpy-like namespace is used"
-    )
-
     with warnings.catch_warnings():
-        warnings.filterwarnings("error", message=expected_msg, category=UserWarning)
+        warnings.filterwarnings("error", category=UserWarning)
         with config_context(array_api_dispatch=True):
-            ridge.fit(X_iris_xp, y_iris_xp)
+            Ridge().fit(X_iris_xp, y_iris_xp)
 
-    # All numpy namespaces are compatible with all solver, in particular
+    # All NumPy namespaces are compatible with all solver, in particular
     # solvers that support `positive=True` (like 'lbfgs') should work.
     with config_context(array_api_dispatch=True):
         Ridge(solver="auto", positive=True).fit(X_iris_xp, y_iris_xp)
