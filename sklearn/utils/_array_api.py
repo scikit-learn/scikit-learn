@@ -1019,3 +1019,8 @@ def _count_nonzero(X, xp, device, axis=None, sample_weight=None):
 
     zero_scalar = xp.asarray(0, device=device, dtype=weights.dtype)
     return xp.sum(xp.where(X != 0, weights, zero_scalar), axis=axis)
+
+
+def _xp_method_has_out(xp_method):
+    out_param = "out=None"
+    return out_param in xp_method.__doc__

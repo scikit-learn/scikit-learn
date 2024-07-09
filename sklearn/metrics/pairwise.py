@@ -26,6 +26,7 @@ from ..utils._array_api import (
     _find_matching_floating_dtype,
     _is_numpy_namespace,
     _max_precision_float_dtype,
+    _xp_method_has_out,
     get_namespace,
     get_namespace_and_device,
 )
@@ -406,14 +407,26 @@ def _euclidean_distances(X, Y, X_norm_squared=None, Y_norm_squared=None, squared
         distances = -2 * safe_sparse_dot(X, Y.T, dense_output=True)
         distances += XX
         distances += YY
-    distances = xp.maximum(distances, xp.asarray(0.0, device=device_))
+
+    xp_zero = xp.asarray(0.0, device=device_)
+    if _xp_method_has_out(xp_method=xp.maximum):
+        xp.maximum(distances, xp_zero, out=distances)
+    else:
+        distances = xp.maximum(distances, xp_zero)
 
     # Ensure that distances between vectors and themselves are set to 0.0.
     # This may not be the case due to floating point rounding errors.
     if X is Y:
         _add_to_diagonal(distances, 0, xp=xp, add_value=False)
 
-    return distances if squared else xp.sqrt(distances)
+    if squared:
+        return distances
+
+    if _xp_method_has_out(xp_method=xp.sqrt):
+        xp.sqrt(distances, out=distances)
+    else:
+        distances = xp.sqrt(distances)
+    return distances
 
 
 @validate_params(
@@ -1567,7 +1580,10 @@ def rbf_kernel(X, Y=None, gamma=None):
 
     K = euclidean_distances(X, Y, squared=True)
     K *= -gamma
-    K = xp.exp(K)  # exponentiate K in-place
+    if _xp_method_has_out(xp_method=xp.exp):
+        xp.exp(K, out=K)  # exponentiate K in-place
+    else:
+        K = xp.exp(K)
     return K
 
 
