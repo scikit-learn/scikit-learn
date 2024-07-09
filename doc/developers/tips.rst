@@ -269,6 +269,30 @@ create a conda environment named `scikit-learn-doc` that is similar to the CI:
     issues that are more tied to the particularities of the CI environment, for
     example CPU architecture reported by OpenBLAS in `sklearn.show_versions()`.
 
+If you don't have the same OS as the CI build you can still create a conda
+environment from the right environment yaml file, although it won't be as close
+as the CI environment as using a lock-file. For example for the doc build:
+
+.. prompt bash $
+
+    conda env create -n scikit-learn-doc -f build_tools/circle/doc_environment.yml -y
+
+
+This may not give you exactly the same package versions as in the CI for a
+variety of reasons, for example:
+
+- some packages may have been updated between the time the lock files were
+  last updated in the `main` branch and the time you run the `conda create`
+  command. You can always try to look at the version in the lock-file and
+  specify the versions by hand for some specific packages that you think would
+  help reproducing the issue.
+- different package may be installed by default depending on the OS. For
+  example, the default BLAS library when installing numpy is OpenBLAS on Linux
+  and MKL on Windows.
+
+Also the problem may be OS specific so the only way to be able to reproduce
+would be to have the same OS as the CI build.
+
 .. highlight:: default
 
 Debugging memory errors in Cython with valgrind
