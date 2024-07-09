@@ -43,7 +43,6 @@ jobs:
           conda activate sklearn
           pip install --verbose --no-build-isolation --config-settings editable-verbose=true --editable .
       - name: Run array API tests
-        id: tests
         run: |
           source "${HOME}/conda/etc/profile.d/conda.sh"
           conda activate sklearn
