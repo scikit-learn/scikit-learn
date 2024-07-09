@@ -18,7 +18,7 @@ jobs:
       group: cuda-gpu-runner-group
     name: Run Array API unit tests
     steps:
-      - uses: actions-ecosystem/action-remove-labels@v1.3.0
+      - uses: actions-ecosystem/action-remove-labels@v1
         with:
           labels: CUDA CI
       - uses: actions/setup-python@v5
