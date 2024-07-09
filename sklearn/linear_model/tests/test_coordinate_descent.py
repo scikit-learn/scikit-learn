@@ -1307,9 +1307,11 @@ def test_enet_sample_weight_consistency(
 
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("sparse_container", [None] + CSC_CONTAINERS)
-def test_enet_cv_sample_weight_correctness(fit_intercept, sparse_container):
+def test_enet_cv_sample_weight_correctness(
+    fit_intercept, sparse_container, global_random_seed
+):
     """Test that ElasticNetCV with sample weights gives correct results."""
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     n_splits, n_samples, n_features = 3, 10, 5
     X_with_weights = rng.rand(n_splits * n_samples, n_features)
     beta = rng.rand(n_features)
@@ -1322,7 +1324,7 @@ def test_enet_cv_sample_weight_correctness(fit_intercept, sparse_container):
 
     # Inspect the total number of random repetitions so as to adjust the size of
     # the first cross-validation group accordingly.
-    sw[:n_samples] = rng.randint(0, 5, size=sw[:n_samples].shape[0])
+    sw[:n_samples] = rng.randint(0, 5, size=n_samples)
     groups_with_weights = np.r_[
         np.full(n_samples, 0), np.full(n_samples, 1), np.full(n_samples, 2)
     ]
