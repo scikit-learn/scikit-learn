@@ -1,31 +1,36 @@
 name: CUDA GPU
-on:
-  workflow_dispatch:
-    inputs:
-      commit_hash:
-        description: Commit hash to test
-        required: true
 
-permissions: read-all
+# Only run this workflow when a Pull Request is labeled with the
+# 'CUDA CI' label.
+on:
+  pull_request:
+    types:
+      - labeled
+
+# In order to remove the "CUDA CI" label we need to have write permissions for PRs
+permissions:
+  pull-requests: write
 
 jobs:
   tests:
+    if: contains(github.event.pull_request.labels.*.name, 'CUDA CI')
     runs-on:
       group: cuda-gpu-runner-group
+    # Set this high enough so that the tests can comforatble run. We set a
+    # timeout to make abusing this workflow less attractive.
+    timeout-minutes: 20
     name: Run Array API unit tests
     steps:
+      - uses: actions-ecosystem/action-remove-labels@v1
+        with:
+          labels: CUDA CI
       - uses: actions/setup-python@v5
         with:
           # XXX: The 3.12.4 release of Python on GitHub Actions is corrupted:
           # https://github.com/actions/setup-python/issues/886
           python-version: '3.12.3'
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.commit_hash }}
-      - name: PRs associated with commit
-        run: |
-          echo "This commit belongs to PR(s):"
-          git ls-remote origin 'pull/*/head' | grep -F -f <(git rev-parse HEAD) | awk -F'/' '{print $3}'
+      - name: Checkout main repository
+        uses: actions/checkout@v4
       - name: Cache conda environment
         id: cache-conda
         uses: actions/cache@v4
