@@ -7,7 +7,7 @@ all:
 	@echo "Please use 'make <target>' where <target> is one of"
 	@echo "  dev                  build scikit-learn with Meson"
 	@echo "  clean                clean scikit-learn Meson build. Very rarely needed,"
-	@echo "                       since meson-python recompiles on import"
+	@echo "                       since meson-python recompiles on import."
 
 .PHONY: all
 
@@ -23,5 +23,5 @@ clean-meson:
 	# It seems in some cases removing the folder avoids weird compilation
 	# errors (e.g. when switching from numpy>=2 to numpy<2). For some
 	# reason ninja clean -C $(DEFAULT_MESON_BUILD_DIR) is not
-	# enough
+	# enough.
 	rm -rf $(DEFAULT_MESON_BUILD_DIR)
