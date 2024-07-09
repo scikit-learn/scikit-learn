@@ -188,7 +188,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
     >>> X = np.array([[1, 2], [1, 4], [1, 0], [10, 2], [10, 4], [10, 0]])
     >>> gmIC = GaussianMixtureIC(max_components=4)
     >>> print(np.sort(gmIC.fit_predict(X)))
-    array([0, 0, 0, 1, 1, 1])
+    [0 0 0 1 1 1]
     >>> print(gmIC.n_components_)
     2
     """
