@@ -271,7 +271,8 @@ create a conda environment named `scikit-learn-doc` that is similar to the CI:
 
 If you don't have the same OS as the CI build you can still create a conda
 environment from the right environment yaml file, although it won't be as close
-as the CI environment as using a lock-file. For example for the doc build:
+as the CI environment as using the associated lock-file. For example for the
+doc build:
 
 .. prompt bash $
 
