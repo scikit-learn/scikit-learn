@@ -1852,13 +1852,14 @@ def test_missing_value_is_predictive(Forest):
     )
 
 
-def test_non_supported_criterion_raises_error_with_missing_values():
+@pytest.mark.parametrize("Forest", FOREST_REGRESSORS.values())
+def test_non_supported_criterion_raises_error_with_missing_values(Forest):
     """Raise error for unsupported criterion when there are missing values."""
     X = np.array([[0, 1, 2], [np.nan, 0, 2.0]])
     y = [0.5, 1.0]
 
-    forest = RandomForestRegressor(criterion="absolute_error")
+    forest = Forest(criterion="absolute_error")
 
-    msg = "RandomForestRegressor does not accept missing values"
+    msg = ".*does not accept missing values"
     with pytest.raises(ValueError, match=msg):
         forest.fit(X, y)
