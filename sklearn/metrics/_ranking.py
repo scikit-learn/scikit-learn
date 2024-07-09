@@ -1517,9 +1517,15 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_base=2, ignore_ties=False):
     if k is not None:
         discount[k:] = 0
     if ignore_ties:
-        ranking = np.argsort(y_score)[:, ::-1]
-        ranked = y_true[np.arange(ranking.shape[0])[:, np.newaxis], ranking]
-        cumulative_gains = discount.dot(ranked.T)
+        if _is_numpy_namespace(xp):
+            ranking = np.argsort(y_score)[:, ::-1]
+            ranked = y_true[np.arange(ranking.shape[0])[:, np.newaxis], ranking]
+            cumulative_gains = discount.dot(ranked.T)
+        else:
+            # TODO this doesn't work yet
+            ranking = xp.argsort(y_score)[:, ::-1]
+            ranked = y_true[xp.arange(ranking.shape[0])[:, xp.newaxis], ranking]
+            cumulative_gains = xp.tensordot(discount, ranked.T, axes=1)
     else:
         if _is_numpy_namespace(xp):
             discount_cumsum = np.cumsum(discount)

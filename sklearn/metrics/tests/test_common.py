@@ -2043,6 +2043,7 @@ array_api_metric_checkers = {
     chi2_kernel: [check_array_api_metric_pairwise],
     dcg_score: [check_array_api_metric_ranking],
     partial(dcg_score, k=1): [check_array_api_metric_ranking],
+    partial(dcg_score, k=1, ignore_ties=True): [check_array_api_metric_ranking],
 }
 
 
