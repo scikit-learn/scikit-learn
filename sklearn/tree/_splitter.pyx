@@ -878,29 +878,6 @@ cdef inline int node_split_random(
             best_proxy_improvement = current_proxy_improvement
             best_split = current_split  # copy
 
-        # Evaluate when there are missing values and all missing values go
-        # to the right node and non-missing values go to the left node.
-        if has_missing:
-            p = end - n_missing
-            n_left, n_right = end - start - n_missing, n_missing
-            missing_go_to_left = 0
-
-            if not (n_left < min_samples_leaf or n_right < min_samples_leaf):
-                criterion.missing_go_to_left = missing_go_to_left
-                criterion.update(p)
-
-                if not ((criterion.weighted_n_left < min_weight_leaf) or
-                        (criterion.weighted_n_right < min_weight_leaf)):
-                    current_proxy_improvement = criterion.proxy_impurity_improvement()
-
-                    if current_proxy_improvement > best_proxy_improvement:
-                        best_proxy_improvement = current_proxy_improvement
-                        current_split.threshold = INFINITY
-                        current_split.missing_go_to_left = missing_go_to_left
-                        current_split.n_missing = n_missing
-                        current_split.pos = p
-                        best_split = current_split
-
     # Reorganize into samples[start:best.pos] + samples[best.pos:end]
     if best_split.pos < end:
         if current_split.feature != best_split.feature:
