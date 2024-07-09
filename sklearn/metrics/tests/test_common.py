@@ -2042,6 +2042,7 @@ array_api_metric_checkers = {
     max_error: [check_array_api_regression_metric],
     chi2_kernel: [check_array_api_metric_pairwise],
     dcg_score: [check_array_api_metric_ranking],
+    partial(dcg_score, k=1): [check_array_api_metric_ranking],
 }
 
 
