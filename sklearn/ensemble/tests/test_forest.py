@@ -1776,7 +1776,6 @@ def test_missing_values_is_resilient(make_data, Forest):
 
     rng = np.random.RandomState(0)
     n_samples, n_features = 1000, 10
-    resilience_score = 0.8
     X, y = make_data(n_samples=n_samples, n_features=n_features, random_state=rng)
 
     # Create dataset with missing values
@@ -1799,8 +1798,8 @@ def test_missing_values_is_resilient(make_data, Forest):
     forest.fit(X_train, y_train)
     score_without_missing = forest.score(X_test, y_test)
 
-    # Score is still a high percent of the forest's score that had no missing values
-    assert score_with_missing >= resilience_score * score_without_missing
+    # Score is still 80 percent of the forest's score that had no missing values
+    assert score_with_missing >= 0.80 * score_without_missing
 
 
 @pytest.mark.parametrize(
