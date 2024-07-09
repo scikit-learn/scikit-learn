@@ -692,7 +692,6 @@ cdef inline int node_split_random(
     cdef bint has_missing = 0
     cdef intp_t n_left, n_right
     cdef bint missing_go_to_left
-    cdef intp_t p
 
     cdef intp_t[::1] samples = splitter.samples
     cdef intp_t[::1] features = splitter.features
@@ -809,6 +808,13 @@ cdef inline int node_split_random(
         if has_missing:
             # If there are missing values, then we randomly make all missing
             # values go to the right or left.
+            #
+            # Note: compared to the BestSplitter, we do not evaluate the
+            # edge case where all the missing values go to the right node
+            # and the non-missing values go to the left node. This is because
+            # this would indicate a threshold outside of the observed range
+            # of the feature. However, it is not clear how much probability weight should
+            # be given to this edge case.
             missing_go_to_left = rand_int(0, 2, random_state)
         else:
             missing_go_to_left = 0
