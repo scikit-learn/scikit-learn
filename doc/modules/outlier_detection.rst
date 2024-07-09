@@ -247,7 +247,7 @@ This strategy is illustrated below.
   assess the degree of outlyingness of an observation.
 
 * See :ref:`sphx_glr_auto_examples_applications_plot_outlier_detection_wine.py`
-for an example of robust covariance estimation on a real data set.
+  for an example of robust covariance estimation on a real data set.
 
 
 .. rubric:: References
