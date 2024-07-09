@@ -225,11 +225,11 @@ build_metadata_list = [
         "pip_dependencies": (
             remove_from(common_dependencies, ["python", "blas", "pip"])
             + docstring_test_dependencies
+            # Test with some optional dependencies
             + ["lightgbm", "scikit-image"]
+            # Test array API on CPU without PyTorch
+            + ["array-api-compat", "array-api-strict"]
         ),
-        "package_constraints": {
-            "python": "3.9",
-        },
     },
     {
         "name": "pylatest_pip_scipy_dev",
