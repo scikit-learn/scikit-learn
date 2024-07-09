@@ -833,9 +833,14 @@ def _estimator_with_converted_arrays(estimator, converter):
     return new_estimator
 
 
-def _atol_for_type(dtype):
+def _atol_for_type(dtype_or_dtype_name):
     """Return the absolute tolerance for a given numpy dtype."""
-    return numpy.finfo(dtype).eps * 100
+    if dtype_or_dtype_name is None:
+        # If no dtype is specified when running tests for a given namespace, we
+        # expect the same floating precision level as NumPy's default floating
+        # point dtype.
+        dtype_or_dtype_name = numpy.float64
+    return numpy.finfo(dtype_or_dtype_name).eps * 100
 
 
 def indexing_dtype(xp):
