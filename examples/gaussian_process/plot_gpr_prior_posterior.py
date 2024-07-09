@@ -126,8 +126,8 @@ print(
 )
 
 # %%
-# Rational Quadradtic kernel
-# ..........................
+# Rational Quadratic kernel
+# .........................
 from sklearn.gaussian_process.kernels import RationalQuadratic
 
 kernel = 1.0 * RationalQuadratic(length_scale=1.0, alpha=0.1, alpha_bounds=(1e-5, 1e15))
