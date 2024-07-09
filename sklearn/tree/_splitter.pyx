@@ -50,6 +50,7 @@ cdef class Splitter:
         object random_state,
         const int8_t[:] monotonic_cst,
         bint breiman_shortcut,
+        *argv
     ):
         """
         Parameters
@@ -76,9 +77,8 @@ cdef class Splitter:
         monotonic_cst : const int8_t[:]
             Monotonicity constraints
 
-        breiman_shortcut : bint
-            Whether we use the Breiman shortcut method when splitting
-            a categorical feature.
+        breiman_shortcut : bool
+            Whether to use the breiman shortcut or not when possible.
         """
 
         self.criterion = criterion
@@ -93,6 +93,24 @@ cdef class Splitter:
         self.monotonic_cst = monotonic_cst
         self.with_monotonic_cst = monotonic_cst is not None
         self.breiman_shortcut = breiman_shortcut
+
+        if self.breiman_shortcut:
+            self.sort_value = np.zeros(64, dtype=np.float32)
+            self.sort_density = np.zeros(64, dtype=np.float32)
+
+            # XXX: unsure what this it.
+            self.cat_offs = np.empty(64, dtype=np.int32)
+            # A storage of the sorted categories used in Breiman shortcut
+            self.sorted_cat = np.empty(64, dtype=np.intp)
+
+        else:
+            self.sort_value = np.zeros(1, dtype=np.float32)
+            self.sort_density = np.zeros(1, dtype=np.float32)
+
+            # XXX: unsure what this it.
+            self.cat_offs = np.empty(1, dtype=np.int32)
+            # A storage of the sorted categories used in Breiman shortcut
+            self.sorted_cat = np.empty(1, dtype=np.intp)
 
     def __getstate__(self):
         return {}
@@ -269,6 +287,65 @@ cdef class Splitter:
 
         return self.criterion.node_impurity()
 
+    cdef inline void _breiman_sort_categories(
+        self,
+        intp_t start,
+        intp_t end,
+        int32_t ncat,
+        intp_t ncat_present,
+        const int32_t[:] cat_offset,
+        intp_t[:] sorted_cat
+    ) noexcept nogil:
+        """The Breiman shortcut for finding the best split involves a
+        preprocessing step wherein we sort the categories by
+        increasing (weighted) mean of the outcome y (whether 0/1
+        binary for classification or quantitative for
+        regression).
+
+        This function implements this preprocessing step
+        and produces a sorted list of category values.
+
+        This function assumes that y is comprised of a single column
+        indicating a single outcome target.
+        """
+        cdef:
+            intp_t[:] samples = self.samples
+            float32_t[:] feature_values = self.feature_values
+            const float64_t[:, ::1] y = self.y
+            const float64_t[:] sample_weight = self.sample_weight
+
+            float64_t w
+            intp_t cat, localcat
+            intp_t q, sample_idx
+
+        # categorical features with more than 64 categories are not supported
+        # here.
+        self.sort_value[:] = 0
+        self.sort_density[:] = 0
+        # memset(sort_value, 0, 64 * sizeof(float32_t))
+        # memset(sort_density, 0, 64 * sizeof(float32_t))
+
+        for q in range(start, end):
+            cat = <intp_t> feature_values[q]
+            sample_idx = samples[q]
+
+            if sample_weight is not None:
+                w = sample_weight[sample_idx]
+            else:
+                w = 1.0
+            self.sort_value[cat] += w * y[sample_idx, 0]
+            self.sort_density[cat] += w
+
+        for localcat in range(ncat_present):
+            cat = localcat + cat_offset[localcat]
+            if self.sort_density[cat] == 0:  # Avoid dividing by zero
+                self.sort_density[cat] = 1
+            self.sort_value[localcat] = self.sort_value[cat] / self.sort_density[cat]
+            sorted_cat[localcat] = cat
+
+        # cdef inline void sort(float32_t* feature_values, intp_t* samples, intp_t n) noexcept nogil:
+        sort(&self.sort_value[0], &sorted_cat[0], ncat_present)
+
 
 cdef inline bint goes_left(
     float32_t feature_value,
@@ -409,10 +486,10 @@ cdef inline int node_split_best(
     cdef BITSET_t cat_split = 0
 
     # XXX: unsure what this it.
-    cdef int32_t cat_offs[64]
+    cdef int32_t[:] cat_offs = splitter.cat_offset
 
     # A storage of the sorted categories used in Breiman shortcut
-    # cdef intp_t sorted_cat[64]
+    cdef intp_t[:] sorted_cat = splitter.sorted_cat
 
     cdef intp_t f_i = n_features
     cdef intp_t f_j
@@ -529,11 +606,15 @@ cdef inline int node_split_best(
 
             # Apply sorting to the categories if we can leverage the Breiman computational
             # trick to improve the computational efficiency of the categorical splits
-            # if breiman_shortcut:
-            #     ._breiman_sort_categories(
-            #         start, end, splitter.n_categories[current_split.feature],
-            #         ncat_present, cat_offs, &sorted_cat[0]
-            #     )
+            if breiman_shortcut:
+                splitter._breiman_sort_categories(
+                    start,
+                    end,
+                    splitter.n_categories[current_split.feature],
+                    ncat_present,
+                    cat_offs,
+                    sorted_cat
+                )
 
         # Evaluate all splits
 
@@ -1780,8 +1861,14 @@ cdef inline void sparse_swap(intp_t[::1] index_to_samples, intp_t[::1] samples,
 
 
 cdef class BestSplitter(Splitter):
-    """Splitter for finding the best split on dense data."""
+    """Splitter for finding the best split on dense data.
+
+    breiman_shortcut : bint
+        Whether we use the Breiman shortcut method when splitting
+        a categorical feature.
+    """
     cdef DensePartitioner partitioner
+
     cdef int init(
         self,
         object X,

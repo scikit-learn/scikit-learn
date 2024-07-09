@@ -117,6 +117,8 @@ cdef BITSET_t bs_reset(BITSET_t value, intp_t i) noexcept nogil
 cdef BITSET_t bs_flip(BITSET_t value, intp_t i) noexcept nogil
 cdef BITSET_t bs_flip_all(BITSET_t value, intp_t n_low_bits) noexcept nogil
 cdef bint bs_get(BITSET_t value, intp_t i) noexcept nogil
-cdef BITSET_t bs_from_template(uint64_t template,
-                               int32_t *cat_offs,
-                               intp_t ncats_present) noexcept nogil
+cdef BITSET_t bs_from_template(
+    uint64_t template,
+    int32_t[:] cat_offs,
+    intp_t ncats_present
+) noexcept nogil

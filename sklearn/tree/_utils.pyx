@@ -529,9 +529,11 @@ cdef inline BITSET_t bs_flip_all(BITSET_t value, intp_t n_low_bits) noexcept nog
 cdef inline bint bs_get(BITSET_t value, intp_t i) noexcept nogil:
     return (value >> i) & (<uint64_t> 1)
 
-cdef inline BITSET_t bs_from_template(uint64_t template,
-                                      int32_t *cat_offs,
-                                      intp_t ncats_present) noexcept nogil:
+cdef inline BITSET_t bs_from_template(
+    uint64_t template,
+    int32_t[:] cat_offs,
+    intp_t ncats_present
+) noexcept nogil:
     cdef intp_t i
     cdef BITSET_t value = 0
     for i in range(ncats_present):

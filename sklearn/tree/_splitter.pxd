@@ -70,8 +70,22 @@ cdef class Splitter:
     cdef intp_t start                    # Start position for the current node
     cdef intp_t end                      # End position for the current node
 
+    # XXX: I think we can refactor this only into BestSplitter
     cdef bint breiman_shortcut           # Whether decision trees are allowed to use the
     #                                    # Breiman shortcut for categorical features
+    cdef float32_t[:] sort_value
+    cdef float32_t[:] sort_density
+    cdef int32_t[:] cat_offset
+    cdef intp_t[:] sorted_cat
+    cdef void _breiman_sort_categories(
+        self,
+        intp_t start,
+        intp_t end,
+        int32_t ncat,
+        intp_t ncat_present,
+        const int32_t[:] cat_offset,
+        intp_t[:] sorted_cat
+    ) noexcept nogil
 
     cdef const float64_t[:, ::1] y
     # Monotonicity constraints for each feature.
