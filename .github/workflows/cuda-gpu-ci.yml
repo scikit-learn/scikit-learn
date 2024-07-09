@@ -16,6 +16,9 @@ jobs:
     if: contains(github.event.pull_request.labels.*.name, 'CUDA CI')
     runs-on:
       group: cuda-gpu-runner-group
+    # Set this high enough so that the tests can comforatble run. We set a
+    # timeout to make abusing this workflow less attractive.
+    timeout-minutes: 20
     name: Run Array API unit tests
     steps:
       - uses: actions-ecosystem/action-remove-labels@v1
