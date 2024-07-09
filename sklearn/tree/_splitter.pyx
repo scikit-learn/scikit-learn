@@ -274,7 +274,7 @@ cdef inline bint goes_left(
     float32_t feature_value,
     SplitValue split,
     int32_t n_categories,
-    BITSET_t[::1] cachebits
+    BITSET_t[:] cat_cache
 ) noexcept nogil:
     """Determine whether a sample goes to the left or right child node.
 
@@ -296,8 +296,8 @@ cdef inline bint goes_left(
         The number of categories present in the feature in question. The
         feature is considered a numerical one and not a categorical one if
         n_categories is negative.
-    cachebits : BITSET_t*
-        The array containing the expantion of split.cat_split. The function
+    cat_cache : BITSET_t*
+        The array containing the expansion of split.cat_split. The function
         setup_cat_cache is the one filling it.
 
     Returns
@@ -315,7 +315,7 @@ cdef inline bint goes_left(
         if (<intp_t> feature_value) < n_categories:
             idx = (<intp_t> feature_value) // 64
             offset = (<intp_t> feature_value) % 64
-            return bs_get(cachebits[idx], offset)
+            return bs_get(cat_cache[idx], offset)
         else:
             return 0
 
@@ -675,7 +675,7 @@ cdef inline int node_split_best(
 
         partitioner.partition_samples_final(
             best_split.pos,
-            best_split.split_value.threshold,
+            best_split.split_value,
             best_split.feature,
             best_split.n_missing
         )
@@ -962,7 +962,10 @@ cdef inline int node_split_random(
             current_split.split_value.cat_split,
             splitter.n_categories[current_split.feature]
         )
-        current_split.pos = partitioner.partition_samples(current_split.split_value.threshold)
+        current_split.pos = partitioner.partition_samples(
+            current_split.split_value,
+            current_split.feature
+        )
 
         # Reject if min_samples_leaf is not guaranteed
         if (((current_split.pos - start) < min_samples_leaf) or
@@ -1009,7 +1012,7 @@ cdef inline int node_split_random(
         if current_split.feature != best_split.feature:
             # TODO: Pass in best.n_missing when random splitter supports missing values.
             partitioner.partition_samples_final(
-                best_split.pos, best_split.split_value.threshold, best_split.feature, 0
+                best_split.pos, best_split.split_value, best_split.feature, 0
             )
 
         criterion.reset()
@@ -1051,6 +1054,8 @@ cdef class DensePartitioner:
         cdef intp_t end
         cdef intp_t n_missing
         cdef const unsigned char[::1] missing_values_in_feature_mask
+        cdef const int32_t[::1] n_categories
+        cdef BITSET_t[::1] cat_cache
 
     def __init__(
         self,
@@ -1058,11 +1063,29 @@ cdef class DensePartitioner:
         intp_t[::1] samples,
         float32_t[::1] feature_values,
         const unsigned char[::1] missing_values_in_feature_mask,
+        const int32_t[::1] n_categories,
     ):
         self.X = X
         self.samples = samples
         self.feature_values = feature_values
         self.missing_values_in_feature_mask = missing_values_in_feature_mask
+
+        # Initialize the number of categories for each feature
+        # A value of -1 indicates a non-categorical feature
+        n_features = X.shape[1]
+        if n_categories is None:
+            self.n_categories = np.array([-1] * n_features, dtype=np.int32)
+        else:
+            self.n_categories = np.empty(n_categories, dtype=np.int32)
+            self.n_categories[:] = n_categories
+
+        # If needed, allocate cache space for categorical splits
+        cdef int32_t max_n_categories = max(self.n_categories)
+        if max_n_categories > 0:
+            cache_size = (max_n_categories + 63) // 64
+            self.cat_cache[:] = np.empty(cache_size, dtype=np.uint32)
+        else:
+            self.cat_cache[:] = np.empty(1, dtype=np.uint32)
 
     cdef inline void init_node_split(self, intp_t start, intp_t end) noexcept nogil:
         """Initialize splitter at the beginning of node_split."""
@@ -1170,18 +1193,29 @@ cdef class DensePartitioner:
         # (feature_values[p] >= end) or (feature_values[p] > feature_values[p - 1])
         p[0] += 1
 
-    cdef inline intp_t partition_samples(self, float64_t current_threshold) noexcept nogil:
+    cdef inline intp_t partition_samples(
+        self,
+        # float64_t current_threshold
+        SplitValue split_value,
+        intp_t feature,
+    ) noexcept nogil:
         """Partition samples for feature_values at the current_threshold."""
         cdef:
             intp_t p = self.start
             intp_t partition_end = self.end
             intp_t[::1] samples = self.samples
             float32_t[::1] feature_values = self.feature_values
+            const int32_t[:] n_categories = self.n_categories
+            BITSET_t[:] cat_cache = self.cat_cache
 
         while p < partition_end:
-            if feature_values[p] <= current_threshold:
-                # TODO: generalize going left with stuff
-                # if goes_left():
+            # if feature_values[p] <= current_threshold:
+            if goes_left(
+                feature_values[p],
+                split_value,
+                n_categories[feature],
+                cat_cache,
+            ):
                 p += 1
             else:
                 partition_end -= 1
@@ -1215,7 +1249,8 @@ cdef class DensePartitioner:
     cdef inline void partition_samples_final(
         self,
         intp_t best_pos,
-        float64_t best_threshold,
+        # float64_t best_threshold,
+        SplitValue best_split_value,
         intp_t best_feature,
         intp_t best_n_missing,
     ) noexcept nogil:
@@ -1234,6 +1269,8 @@ cdef class DensePartitioner:
             intp_t[::1] samples = self.samples
             const float32_t[:, :] X = self.X
             float32_t current_value
+            const int32_t[:] n_categories = self.n_categories
+            BITSET_t[:] cat_cache = self.cat_cache
 
         if best_n_missing != 0:
             # Move samples with missing values to the end while partitioning the
@@ -1255,19 +1292,27 @@ cdef class DensePartitioner:
                     current_value = X[samples[p], best_feature]
 
                 # Partition the non-missing samples
-                if current_value <= best_threshold:
+                # if current_value <= best_threshold:
+                if goes_left(
+                    current_value,
+                    best_split_value,
+                    n_categories[best_feature],
+                    cat_cache,
+                ):
                     p += 1
                 else:
                     samples[p], samples[partition_end] = samples[partition_end], samples[p]
                     partition_end -= 1
-        # elif best_n_categories != 0:
-        #     # goes_left
-        #     # TODO: implement
-        #     pass
         else:
             # Partitioning routine when there are no missing values
             while p < partition_end:
-                if X[samples[p], best_feature] <= best_threshold:
+                # if X[samples[p], best_feature] <= best_threshold:
+                if goes_left(
+                    X[samples[p], best_feature],
+                    best_split_value,
+                    n_categories[best_feature],
+                    cat_cache,
+                ):
                     p += 1
                 else:
                     samples[p], samples[partition_end] = samples[partition_end], samples[p]
@@ -1286,6 +1331,8 @@ cdef class SparsePartitioner:
     cdef intp_t end
     cdef intp_t n_missing
     cdef const unsigned char[::1] missing_values_in_feature_mask
+    cdef const int32_t[::1] n_categories
+    cdef BITSET_t[::1] cat_cache
 
     cdef const float32_t[::1] X_data
     cdef const int32_t[::1] X_indices
@@ -1307,6 +1354,7 @@ cdef class SparsePartitioner:
         intp_t n_samples,
         float32_t[::1] feature_values,
         const unsigned char[::1] missing_values_in_feature_mask,
+        const int32_t[::1] n_categories
     ):
         if not (issparse(X) and X.format == "csc"):
             raise ValueError("X should be in csc format")
@@ -1331,6 +1379,23 @@ cdef class SparsePartitioner:
             self.index_to_samples[samples[p]] = p
 
         self.missing_values_in_feature_mask = missing_values_in_feature_mask
+
+        # Initialize the number of categories for each feature
+        # A value of -1 indicates a non-categorical feature
+        n_features = X.shape[1]
+        if n_categories is None:
+            self.n_categories = np.array([-1] * n_features, dtype=np.int32)
+        else:
+            self.n_categories = np.empty(n_categories, dtype=np.int32)
+            self.n_categories[:] = n_categories
+
+        # If needed, allocate cache space for categorical splits
+        cdef int32_t max_n_categories = max(self.n_categories)
+        if max_n_categories > 0:
+            cache_size = (max_n_categories + 63) // 64
+            self.cat_cache[:] = np.empty(cache_size, dtype=np.uint32)
+        else:
+            self.cat_cache[:] = np.empty(1, dtype=np.uint32)
 
     cdef inline void init_node_split(self, intp_t start, intp_t end) noexcept nogil:
         """Initialize splitter at the beginning of node_split."""
@@ -1442,23 +1507,30 @@ cdef class SparsePartitioner:
         p_prev[0] = p[0]
         p[0] = p_next
 
-    cdef inline intp_t partition_samples(self, float64_t current_threshold) noexcept nogil:
+    cdef inline intp_t partition_samples(
+        self,
+        # float64_t current_threshold
+        SplitValue split_value,
+        intp_t feature,
+    ) noexcept nogil:
         """Partition samples for feature_values at the current_threshold."""
-        return self._partition(current_threshold, self.start_positive)
+        return self._partition(split_value.threshold, self.start_positive)
 
     cdef inline void partition_samples_final(
         self,
         intp_t best_pos,
-        float64_t best_threshold,
+        SplitValue best_split_value,
+        # float64_t best_threshold,
         intp_t best_feature,
         intp_t n_missing,
     ) noexcept nogil:
         """Partition samples for X at the best_threshold and best_feature."""
         self.extract_nnz(best_feature)
-        self._partition(best_threshold, best_pos)
+        self._partition(best_split_value.threshold, best_pos)
 
     cdef inline intp_t _partition(self, float64_t threshold, intp_t zero_pos) noexcept nogil:
         """Partition samples[start:end] based on threshold."""
+        # TODO: implement partitioning samples based on categorical split
         cdef:
             intp_t p, partition_end
             intp_t[::1] index_to_samples = self.index_to_samples
@@ -1720,7 +1792,7 @@ cdef class BestSplitter(Splitter):
     ) except -1:
         Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask, n_categories)
         self.partitioner = DensePartitioner(
-            X, self.samples, self.feature_values, missing_values_in_feature_mask
+            X, self.samples, self.feature_values, missing_values_in_feature_mask, n_categories
         )
 
     cdef int node_split(
@@ -1749,7 +1821,7 @@ cdef class BestSparseSplitter(Splitter):
     ) except -1:
         Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask, n_categories)
         self.partitioner = SparsePartitioner(
-            X, self.samples, self.n_samples, self.feature_values, missing_values_in_feature_mask
+            X, self.samples, self.n_samples, self.feature_values, missing_values_in_feature_mask, n_categories
         )
 
     cdef int node_split(
@@ -1778,7 +1850,7 @@ cdef class RandomSplitter(Splitter):
     ) except -1:
         Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask, n_categories)
         self.partitioner = DensePartitioner(
-            X, self.samples, self.feature_values, missing_values_in_feature_mask
+            X, self.samples, self.feature_values, missing_values_in_feature_mask, n_categories
         )
 
     cdef int node_split(
@@ -1807,7 +1879,7 @@ cdef class RandomSparseSplitter(Splitter):
     ) except -1:
         Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask, n_categories)
         self.partitioner = SparsePartitioner(
-            X, self.samples, self.n_samples, self.feature_values, missing_values_in_feature_mask
+            X, self.samples, self.n_samples, self.feature_values, missing_values_in_feature_mask, n_categories
         )
     cdef int node_split(
             self,

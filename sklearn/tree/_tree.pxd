@@ -8,7 +8,7 @@ import numpy as np
 cimport numpy as cnp
 
 from ..ensemble._hist_gradient_boosting.common cimport BITSET_INNER_DTYPE_C
-from ..utils._typedefs cimport float32_t, float64_t, int32_t, intp_t, uint32_t
+from ..utils._typedefs cimport float32_t, float64_t, int32_t, intp_t, uint32_t, BITSET_t
 from ._splitter cimport SplitRecord, Splitter, SplitValue
 
 ctypedef union SplitValue:
@@ -28,7 +28,7 @@ ctypedef union SplitValue:
     # method allows up to 2**31 category values, but can only be used for
     # RandomSplitter.
     float64_t threshold
-    BITSET_INNER_DTYPE_C cat_split
+    BITSET_t cat_split
 
 
 cdef struct Node:
@@ -40,7 +40,7 @@ cdef struct Node:
     # SplitValue split_value             # Generalized threshold for categorical and
     #                                    # non-categorical features
     float64_t threshold
-    BITSET_INNER_DTYPE_C cat_split
+    BITSET_t cat_split
     float64_t impurity                   # Impurity of the node (i.e., the value of the criterion)
     intp_t n_node_samples                # Number of samples at the node
     float64_t weighted_n_node_samples    # Weighted number of samples at the node

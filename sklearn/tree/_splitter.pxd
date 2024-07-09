@@ -26,7 +26,7 @@ ctypedef union SplitValue:
     # method allows up to 2**31 category values, but can only be used for
     # RandomSplitter.
     float64_t threshold
-    BITSET_INNER_DTYPE_C cat_split
+    BITSET_t cat_split
 
 cdef struct SplitRecord:
     # Data to track sample split
@@ -83,7 +83,12 @@ cdef class Splitter:
     cdef bint with_monotonic_cst
     cdef const float64_t[:] sample_weight
 
+    # We know the number of categories within our dataset across each feature.
+    # If a feature index has -1, then it is not categorical
     cdef const int32_t[:] n_categories
+
+    # We implement a caching of the categories, so it is easy/cheap to determine
+    # whether the split should move samples to the left, or right child
     cdef BITSET_t[:] cat_cache
 
     # The samples vector `samples` is maintained by the Splitter object such
