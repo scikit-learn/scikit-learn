@@ -278,16 +278,15 @@ doc build:
 
     conda env create -n scikit-learn-doc -f build_tools/circle/doc_environment.yml -y
 
-
 This may not give you exactly the same package versions as in the CI for a
 variety of reasons, for example:
 
-- some packages may have been updated between the time the lock files were
+- some packages may have had new releases between the time the lock files were
   last updated in the `main` branch and the time you run the `conda create`
   command. You can always try to look at the version in the lock-file and
   specify the versions by hand for some specific packages that you think would
   help reproducing the issue.
-- different package may be installed by default depending on the OS. For
+- different packages may be installed by default depending on the OS. For
   example, the default BLAS library when installing numpy is OpenBLAS on Linux
   and MKL on Windows.
 
