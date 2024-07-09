@@ -1941,8 +1941,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         )
 
     def _more_tags(self):
-        # XXX: nan is only support for dense arrays, but we set this for common test to
-        # pass, specifically: check_estimators_nan_inf
+        # XXX: nan is only supported for dense arrays, but we set this for the common test
+        # to pass, specifically: check_estimators_nan_inf
         allow_nan = self.splitter == "random" and self.criterion in {
             "squared_error",
             "friedman_mse",
