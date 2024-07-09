@@ -43,7 +43,9 @@ See :ref:`array_api` for more details.
 - :func:`sklearn.metrics.pairwise.additive_chi2_kernel` :pr:`29144` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.metrics.pairwise.chi2_kernel` :pr:`29267` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.metrics.pairwise.cosine_similarity` :pr:`29014` by :user:`Edoardo Abati <EdAbati>`;
-- :func:`sklearn.metrics.pairwise.paired_cosine_distances` :pr:`29112` by :user:`Edoardo Abati <EdAbati>`.
+- :func:`sklearn.metrics.pairwise.euclidean_distances` :pr:`` by :user:`Omar Salman <OmarManzoor>`;
+- :func:`sklearn.metrics.pairwise.paired_cosine_distances` :pr:`29112` by :user:`Edoardo Abati <EdAbati>`;
+- :func:`sklearn.metrics.pairwise.rbf_kernel` :pr:`` by :user:`Omar Salman <OmarManzoor>`.
 
 **Classes:**
 
@@ -71,7 +73,7 @@ more details.
   :class:`ensemble.StackingRegressor` now support metadata routing and pass
   ``**fit_params`` to the underlying estimators via their `fit` methods.
   :pr:`28701` by :user:`Stefanie Senger <StefanieSenger>`.
-  
+
 - |Feature| :class:`compose.TransformedTargetRegressor` now supports metadata
   routing in its `fit` and `predict` methods and routes the corresponding
   params to the underlying regressor.

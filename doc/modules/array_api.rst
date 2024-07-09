@@ -123,7 +123,9 @@ Metrics
 - :func:`sklearn.metrics.pairwise.additive_chi2_kernel`
 - :func:`sklearn.metrics.pairwise.chi2_kernel`
 - :func:`sklearn.metrics.pairwise.cosine_similarity`
+- :func:`sklearn.metrics.pairwise.euclidean_distances`
 - :func:`sklearn.metrics.pairwise.paired_cosine_distances`
+- :func:`sklearn.metrics.pairwise.rbf_kernel`
 - :func:`sklearn.metrics.r2_score`
 - :func:`sklearn.metrics.zero_one_loss`
 
