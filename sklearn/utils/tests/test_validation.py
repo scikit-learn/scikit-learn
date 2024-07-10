@@ -2190,3 +2190,17 @@ def test_check_array_writeable_df():
     # df is backed by a read-only array, a copy is made
     assert not np.may_share_memory(out, df)
     assert out.flags.writeable
+
+
+# TODO(1.8): remove
+def test_force_all_finite_rename_warning():
+    X = np.random.uniform(size=(10, 10))
+    y = np.random.randint(1, size=(10,))
+
+    msg = "'force_all_finite' was renamed to 'ensure_all_finite'"
+
+    with pytest.warns(FutureWarning, match=msg):
+        check_array(X, force_all_finite=True)
+
+    with pytest.warns(FutureWarning, match=msg):
+        check_array(X, y, force_all_finite=True)
