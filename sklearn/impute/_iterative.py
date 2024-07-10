@@ -774,8 +774,17 @@ class IterativeImputer(_BaseImputer):
             self.n_iter_ = 0
             return super()._concatenate_indicator(Xt, X_indicator)
 
-        self._min_value = self._validate_limit(self.min_value, "min", X.shape[1])
-        self._max_value = self._validate_limit(self.max_value, "max", X.shape[1])
+        self._min_value = self._validate_limit(
+            self.min_value, "min", complete_mask.shape[1]
+        )
+        self._max_value = self._validate_limit(
+            self.max_value, "max", complete_mask.shape[1]
+        )
+
+        # Make sure to remove the empty feature elements from the bounds
+        nonempty_feature_mask = np.logical_not(np.all(complete_mask, axis=0))
+        self._min_value = self._min_value[nonempty_feature_mask]
+        self._max_value = self._max_value[nonempty_feature_mask]
 
         if not np.all(np.greater(self._max_value, self._min_value)):
             raise ValueError("One (or more) features have min_value >= max_value.")
