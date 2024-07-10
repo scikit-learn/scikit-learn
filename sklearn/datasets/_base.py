@@ -1520,7 +1520,7 @@ def _fetch_remote(remote, dirname=None, n_retries=3, delay=1):
                 f"The SHA256 checksum of {remote.filename} ({checksum}) "
                 f"differs from expected ({remote.checksum})."
             )
-    except Exception:
+    except (Exception, KeyboardInterrupt):
         os.unlink(temp_file.name)
         raise
 
