@@ -129,7 +129,6 @@ build_metadata_list = [
         ],
         "package_constraints": {
             "blas": "[build=mkl]",
-            "pytorch": "1.13",
         },
     },
     {
@@ -225,9 +224,14 @@ build_metadata_list = [
         "pip_dependencies": (
             remove_from(common_dependencies, ["python", "blas", "pip"])
             + docstring_test_dependencies
+            # Test with some optional dependencies
             + ["lightgbm", "scikit-image"]
+            # Test array API on CPU without PyTorch
+            + ["array-api-compat", "array-api-strict"]
         ),
         "package_constraints": {
+            # XXX: we would like to use the latest version of Python but this makes
+            # the CI much slower. We need to investigate why.
             "python": "3.9",
         },
     },
@@ -367,6 +371,13 @@ build_metadata_list = [
         ],
         "package_constraints": {
             "python": "3.9",
+            # TODO: this needs to be adapted when matplotlib 3.11 is out. In
+            # the meantime, this avoids a warning in matplotlib 3.9 boxplot
+            # labels has been renamed to tick_labels. Possible options:
+            # - bump minimum matplotlib supported versions to 3.9 at one point
+            # - complicate the example code to do the right thing depending on
+            #   maplotlib version
+            "matplotlib": "<3.9",
         },
     },
     {

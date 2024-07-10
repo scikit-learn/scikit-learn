@@ -77,6 +77,18 @@ more details.
   params to the underlying regressor.
   :pr:`29136` by :user:`Omar Salman <OmarManzoor>`.
 
+- |Feature| :func:`model_selection.validation_curve` now supports metadata routing for
+  the `fit` method of its estimator and for its underlying CV splitter and scorer.
+  :pr:`29329` by :user:`Stefanie Senger <StefanieSenger>`.
+
+- |Feature| :class:`semi_supervised.SelfTrainingClassifier`
+  now supports metadata routing. The fit method now accepts ``**fit_params``
+  which are passed to the underlying estimators via their `fit` methods.
+  In addition, the `predict`, `predict_proba`, `predict_log_proba`, `score`
+  and `decision_function` methods also accept ``**params`` which are
+  passed to the underlying estimators via their respective methods.
+  :pr:`28494` by :user:`Adam Li <adam2392>`.
+
 Dropping official support for PyPy
 ----------------------------------
 
@@ -136,6 +148,17 @@ Changelog
   information as before.
   :pr:`28179` by :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |Efficiency| :class:`ensemble.IsolationForest` now runs parallel jobs
+  during :term:`predict` offering a speedup of up to 2-4x on sample sizes
+  larger than 2000 using `joblib`.
+  :pr:`28622` by :user:`Adam Li <adam2392>` and
+  :user:`Sérgio Pereira <sergiormpereira>`.
+
+- |Feature| :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor` now support
+  missing-values in the data matrix `X`. Missing-values are handled by randomly moving all of
+  the samples to the left, or right child node as the tree is traversed.
+  :pr:`28268` by :user:`Adam Li <adam2392>`.
+
 :mod:`sklearn.impute`
 .....................
 
@@ -184,6 +207,22 @@ Changelog
 - |Fix| :class:`neighbors.LocalOutlierFactor` raises a warning in the `fit` method
   when duplicate values in the training data lead to inaccurate outlier detection.
   :pr:`28773` by :user:`Henrique Caroço <HenriqueProj>`.
+
+:mod:`sklearn.semi_supervised`
+..............................
+
+- |API| :class:`semi_supervised.SelfTrainingClassifier`
+  deprecated the `base_estimator` parameter in favor of `estimator`.
+  :pr:`28494` by :user:`Adam Li <adam2392>`.
+
+:mod:`sklearn.tree`
+...................
+
+- |Feature| :class:`tree.ExtraTreeClassifier` and :class:`tree.ExtraTreeRegressor` now
+  support missing-values in the data matrix ``X``. Missing-values are handled by
+  randomly moving all of the samples to the left, or right child node as the tree is
+  traversed.
+  :pr:`27966` by :user:`Adam Li <adam2392>`.
 
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:

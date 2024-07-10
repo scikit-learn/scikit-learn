@@ -61,12 +61,20 @@ from sklearn.model_selection import (
     StratifiedShuffleSplit,
     train_test_split,
 )
-from sklearn.model_selection._search import BaseSearchCV
+from sklearn.model_selection._search import (
+    BaseSearchCV,
+    _yield_masked_array_for_each_param,
+)
 from sklearn.model_selection.tests.common import OneTimeSplitter
 from sklearn.naive_bayes import ComplementNB
 from sklearn.neighbors import KernelDensity, KNeighborsClassifier, LocalOutlierFactor
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.preprocessing import (
+    OneHotEncoder,
+    OrdinalEncoder,
+    SplineTransformer,
+    StandardScaler,
+)
 from sklearn.svm import SVC, LinearSVC
 from sklearn.tests.metadata_routing_common import (
     ConsumingScorer,
@@ -2724,6 +2732,37 @@ def test_search_with_estimators_issue_29157():
     assert grid_search.cv_results_["param_enc__enc"].dtype == object
 
 
+def test_cv_results_multi_size_array():
+    """Check that GridSearchCV works with params that are arrays of different sizes.
+
+    Non-regression test for #29277.
+    """
+    n_features = 10
+    X, y = make_classification(n_features=10)
+
+    spline_reg_pipe = make_pipeline(
+        SplineTransformer(extrapolation="periodic"),
+        LogisticRegression(),
+    )
+
+    n_knots_list = [n_features * i for i in [10, 11, 12]]
+    knots_list = [
+        np.linspace(0, np.pi * 2, n_knots).reshape((-1, n_features))
+        for n_knots in n_knots_list
+    ]
+    spline_reg_pipe_cv = GridSearchCV(
+        estimator=spline_reg_pipe,
+        param_grid={
+            "splinetransformer__knots": knots_list,
+        },
+    )
+
+    spline_reg_pipe_cv.fit(X, y)
+    assert (
+        spline_reg_pipe_cv.cv_results_["param_splinetransformer__knots"].dtype == object
+    )
+
+
 @pytest.mark.parametrize(
     "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
 )
@@ -2747,3 +2786,77 @@ def test_array_api_search_cv_classifier(SearchCV, array_namespace, device, dtype
         )
         searcher.fit(X_xp, y_xp)
         searcher.score(X_xp, y_xp)
+
+
+# Construct these outside the tests so that the same object is used
+# for both input and `expected`
+one_hot_encoder = OneHotEncoder()
+ordinal_encoder = OrdinalEncoder()
+
+# If we construct this directly via `MaskedArray`, the list of tuples
+# gets auto-converted to a 2D array.
+ma_with_tuples = np.ma.MaskedArray(np.empty(2), mask=True, dtype=object)
+ma_with_tuples[0] = (1, 2)
+ma_with_tuples[1] = (3, 4)
+
+
+@pytest.mark.parametrize(
+    ("candidate_params", "expected"),
+    [
+        pytest.param(
+            [{"foo": 1}, {"foo": 2}],
+            [
+                ("param_foo", np.ma.MaskedArray(np.array([1, 2]))),
+            ],
+            id="simple numeric, single param",
+        ),
+        pytest.param(
+            [{"foo": 1, "bar": 3}, {"foo": 2, "bar": 4}, {"foo": 3}],
+            [
+                ("param_foo", np.ma.MaskedArray(np.array([1, 2, 3]))),
+                (
+                    "param_bar",
+                    np.ma.MaskedArray(np.array([3, 4, 0]), mask=[False, False, True]),
+                ),
+            ],
+            id="simple numeric, one param is missing in one round",
+        ),
+        pytest.param(
+            [{"foo": [[1], [2], [3]]}, {"foo": [[1], [2]]}],
+            [
+                (
+                    "param_foo",
+                    np.ma.MaskedArray([[[1], [2], [3]], [[1], [2]]], dtype=object),
+                ),
+            ],
+            id="lists of different lengths",
+        ),
+        pytest.param(
+            [{"foo": (1, 2)}, {"foo": (3, 4)}],
+            [
+                (
+                    "param_foo",
+                    ma_with_tuples,
+                ),
+            ],
+            id="lists tuples",
+        ),
+        pytest.param(
+            [{"foo": ordinal_encoder}, {"foo": one_hot_encoder}],
+            [
+                (
+                    "param_foo",
+                    np.ma.MaskedArray([ordinal_encoder, one_hot_encoder], dtype=object),
+                ),
+            ],
+            id="estimators",
+        ),
+    ],
+)
+def test_yield_masked_array_for_each_param(candidate_params, expected):
+    result = list(_yield_masked_array_for_each_param(candidate_params))
+    for (key, value), (expected_key, expected_value) in zip(result, expected):
+        assert key == expected_key
+        assert value.dtype == expected_value.dtype
+        np.testing.assert_array_equal(value, expected_value)
+        np.testing.assert_array_equal(value.mask, expected_value.mask)

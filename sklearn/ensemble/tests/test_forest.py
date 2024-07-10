@@ -1767,6 +1767,8 @@ def test_estimators_samples(ForestClass, bootstrap, seed):
     [
         (datasets.make_regression, RandomForestRegressor),
         (datasets.make_classification, RandomForestClassifier),
+        (datasets.make_regression, ExtraTreesRegressor),
+        (datasets.make_classification, ExtraTreesClassifier),
     ],
 )
 def test_missing_values_is_resilient(make_data, Forest):
@@ -1800,12 +1802,21 @@ def test_missing_values_is_resilient(make_data, Forest):
     assert score_with_missing >= 0.80 * score_without_missing
 
 
-@pytest.mark.parametrize("Forest", [RandomForestClassifier, RandomForestRegressor])
+@pytest.mark.parametrize(
+    "Forest",
+    [
+        RandomForestClassifier,
+        RandomForestRegressor,
+        ExtraTreesRegressor,
+        ExtraTreesClassifier,
+    ],
+)
 def test_missing_value_is_predictive(Forest):
     """Check that the forest learns when missing values are only present for
     a predictive feature."""
     rng = np.random.RandomState(0)
     n_samples = 300
+    expected_score = 0.75
 
     X_non_predictive = rng.standard_normal(size=(n_samples, 10))
     y = rng.randint(0, high=2, size=n_samples)
@@ -1835,19 +1846,20 @@ def test_missing_value_is_predictive(Forest):
 
     predictive_test_score = forest_predictive.score(X_predictive_test, y_test)
 
-    assert predictive_test_score >= 0.75
+    assert predictive_test_score >= expected_score
     assert predictive_test_score >= forest_non_predictive.score(
         X_non_predictive_test, y_test
     )
 
 
-def test_non_supported_criterion_raises_error_with_missing_values():
+@pytest.mark.parametrize("Forest", FOREST_REGRESSORS.values())
+def test_non_supported_criterion_raises_error_with_missing_values(Forest):
     """Raise error for unsupported criterion when there are missing values."""
     X = np.array([[0, 1, 2], [np.nan, 0, 2.0]])
     y = [0.5, 1.0]
 
-    forest = RandomForestRegressor(criterion="absolute_error")
+    forest = Forest(criterion="absolute_error")
 
-    msg = "RandomForestRegressor does not accept missing values"
+    msg = ".*does not accept missing values"
     with pytest.raises(ValueError, match=msg):
         forest.fit(X, y)
