@@ -271,16 +271,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
         # last iterations evaluates less than `factor` candidates.
         n_required_iterations = 1 + floor(log(len(candidate_params), self.factor))
 
-        if self.min_resources == "exhaust":
-            # To exhaust the resources, we want to start with the biggest
-            # min_resources possible so that the last (required) iteration
-            # uses as many resources as possible
-            last_iteration = n_required_iterations - 1
-            self.min_resources_ = max(
-                self.min_resources_,
-                self.max_resources_ // self.factor**last_iteration,
-            )
-
         # n_possible_iterations is the number of iterations that we can
         # actually do starting from min_resources and without exceeding
         # max_resources. Depending on max_resources and the number of
@@ -294,6 +284,16 @@ class BaseSuccessiveHalving(BaseSearchCV):
             n_iterations = n_required_iterations
         else:
             n_iterations = min(n_possible_iterations, n_required_iterations)
+
+        if self.min_resources == "exhaust":
+            # To exhaust the resources, we want to start with the biggest
+            # min_resources possible so that the last (actual) iteration
+            # uses as many resources as possible
+            last_iteration = n_iterations - 1
+            self.min_resources_ = max(
+                self.min_resources_,
+                self.max_resources_ // self.factor**last_iteration,
+            )
 
         if self.verbose:
             print(f"n_iterations: {n_iterations}")
