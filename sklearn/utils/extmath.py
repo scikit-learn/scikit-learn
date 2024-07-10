@@ -194,7 +194,7 @@ def safe_sparse_dot(a, b, *, dense_output=False):
             ret = a_2d @ b
             ret = ret.reshape(*a.shape[:-1], b.shape[1])
         else:
-            # alternative for `np.dot` when dealing with a or b having
+            # Alternative for `np.dot` when dealing with a or b having
             # more than 2 dimensions, that works with the array api.
             # If b is 1-dim then the last axis for b is taken otherwise
             # if b is >= 2-dim then the second to last axis is taken.

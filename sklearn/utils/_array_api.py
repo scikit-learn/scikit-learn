@@ -572,7 +572,31 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
 
 
 def get_namespace_and_device(*array_list, remove_none=True, remove_types=(str,)):
-    """Combination into one single function of `get_namespace` and `device`."""
+    """Combination into one single function of `get_namespace` and `device`.
+
+    Parameters
+    ----------
+    *arrays : array objects
+        Array objects.
+    remove_none : bool, default=True
+        Whether to ignore None objects passed in arrays.
+    remove_types : tuple or list, default=(str,)
+        Types to ignore in the arrays.
+    xp : module, default=None
+        Precomputed array namespace module. When passed, typically from a caller
+        that has already performed inspection of its own inputs, skips array
+        namespace inspection.
+    Returns
+    -------
+    namespace : module
+        Namespace shared by array objects. If any of the `arrays` are not arrays,
+        the namespace defaults to NumPy.
+    is_array_api_compliant : bool
+        True if the arrays are containers that implement the Array API spec.
+        Always False when array_api_dispatch=False.
+    device : device
+        `device` object (see the "Device Support" section of the array API spec).
+    """
     array_list = _remove_non_arrays(
         *array_list, remove_none=remove_none, remove_types=remove_types
     )
@@ -598,7 +622,7 @@ def _expit(X, xp=None):
     return 1.0 / (1.0 + xp.exp(-X))
 
 
-def _add_to_diagonal(array, value, xp, add_value=True, wrap=False):
+def _fill_or_add_to_diagonal(array, value, xp, add_value=True, wrap=False):
     """Implementation to facilitate adding or assigning specified values to the
     diagonal of a 2-d array.
 
@@ -1020,7 +1044,9 @@ def _count_nonzero(X, xp, device, axis=None, sample_weight=None):
     return xp.sum(xp.where(X != 0, weights, zero_scalar), axis=axis)
 
 
-def _xp_method_has_out(xp_method):
-    out_param = "out=None"
-    method_doc = xp_method.__doc__
-    return method_doc and out_param in method_doc
+def _modify_in_place_if_numpy(xp, func, *args, out=None, **kwargs):
+    if _is_numpy_namespace(xp):
+        func(*args, out=out, **kwargs)
+    else:
+        out = func(*args, **kwargs)
+    return out

@@ -22,11 +22,11 @@ from ..utils import (
     gen_even_slices,
 )
 from ..utils._array_api import (
-    _add_to_diagonal,
+    _fill_or_add_to_diagonal,
     _find_matching_floating_dtype,
     _is_numpy_namespace,
     _max_precision_float_dtype,
-    _xp_method_has_out,
+    _modify_in_place_if_numpy,
     get_namespace,
     get_namespace_and_device,
 )
@@ -409,23 +409,19 @@ def _euclidean_distances(X, Y, X_norm_squared=None, Y_norm_squared=None, squared
         distances += YY
 
     xp_zero = xp.asarray(0, device=device_, dtype=distances.dtype)
-    if _xp_method_has_out(xp_method=xp.maximum):
-        xp.maximum(distances, xp_zero, out=distances)
-    else:
-        distances = xp.maximum(distances, xp_zero)
+    distances = _modify_in_place_if_numpy(
+        xp, xp.maximum, distances, xp_zero, out=distances
+    )
 
     # Ensure that distances between vectors and themselves are set to 0.0.
     # This may not be the case due to floating point rounding errors.
     if X is Y:
-        _add_to_diagonal(distances, 0, xp=xp, add_value=False)
+        _fill_or_add_to_diagonal(distances, 0, xp=xp, add_value=False)
 
     if squared:
         return distances
 
-    if _xp_method_has_out(xp_method=xp.sqrt):
-        xp.sqrt(distances, out=distances)
-    else:
-        distances = xp.sqrt(distances)
+    distances = _modify_in_place_if_numpy(xp, xp.sqrt, distances, out=distances)
     return distances
 
 
@@ -1580,10 +1576,8 @@ def rbf_kernel(X, Y=None, gamma=None):
 
     K = euclidean_distances(X, Y, squared=True)
     K *= -gamma
-    if _xp_method_has_out(xp_method=xp.exp):
-        xp.exp(K, out=K)  # exponentiate K in-place
-    else:
-        K = xp.exp(K)
+    # exponentiate K in-place when using numpy
+    K = _modify_in_place_if_numpy(xp, xp.exp, K, out=K)
     return K
 
 
