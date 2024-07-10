@@ -636,6 +636,9 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     HDBSCAN(min_cluster_size=20)
     >>> hdb.labels_
     array([ 2,  6, -1, ..., -1, -1, -1])
+
+    For an example of the HDBSCAN clustering algorithm, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_hdbscan.py`.
     """
 
     _parameter_constraints = {
