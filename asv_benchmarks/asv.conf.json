@@ -23,7 +23,7 @@
     //
     // "install_command": ["python -mpip install {wheel_file}"],
     // "uninstall_command": ["return-code=any python -mpip uninstall -y {project}"],
-    // "build_command": ["python -m build --wheel -o {build_cache_dir} {build_dir}"],
+    "build_command": ["python -m pip install -e ."],
     // List of branches to benchmark. If not provided, defaults to "master
     // (for git) or "default" (for mercurial).
     "branches": ["main"],
@@ -40,7 +40,7 @@
     // If missing or the empty string, the tool will be automatically
     // determined by looking for tools on the PATH environment
     // variable.
-    "environment_type": "conda",
+    "environment_type": "mamba",
 
     // timeout in seconds for installing any dependencies in environment
     // defaults to 10 min
@@ -73,11 +73,11 @@
     //
     "matrix": {
         "numpy": ["1.25.2"],
-        "scipy": ["1.11.2"],
+        "scipy": ["1.13.0"],
         "cython": ["3.0.10"],
-        "joblib": ["1.3.2"],
-        "threadpoolctl": ["3.2.0"],
-        "pandas": ["2.1.0"]
+        "joblib": ["1.4.2"],
+        "threadpoolctl": ["3.5.0"],
+        "pandas": ["2.2.2"],
     },
 
     // Combinations of libraries/python versions can be excluded/included
