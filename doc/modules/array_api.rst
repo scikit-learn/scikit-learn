@@ -123,9 +123,9 @@ Metrics
 - :func:`sklearn.metrics.pairwise.additive_chi2_kernel`
 - :func:`sklearn.metrics.pairwise.chi2_kernel`
 - :func:`sklearn.metrics.pairwise.cosine_similarity`
-- :func:`sklearn.metrics.pairwise.euclidean_distances`
+- :func:`sklearn.metrics.pairwise.euclidean_distances` (see :ref:`device_support_for_float64`)
 - :func:`sklearn.metrics.pairwise.paired_cosine_distances`
-- :func:`sklearn.metrics.pairwise.rbf_kernel`
+- :func:`sklearn.metrics.pairwise.rbf_kernel` (see :ref:`device_support_for_float64`)
 - :func:`sklearn.metrics.r2_score`
 - :func:`sklearn.metrics.zero_one_loss`
 
@@ -207,4 +207,5 @@ correctness (e.g., :func:`metrics.pairwise.euclidean_distances`). However,
 certain combinations of array namespaces and devices, such as `PyTorch on MPS`
 (see :ref:`mps_support`) do not support the `float64` data type. In these cases,
 scikit-learn will revert to using the `float32` data type instead. This can result in
-different behavior compared to not using Array API dispatching.
+different behavior (typically numerically unstable results) compared to not using array
+API dispatching or using a device with `float64` support.
