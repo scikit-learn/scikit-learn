@@ -15,6 +15,7 @@ from sklearn.utils._array_api import (
     _convert_to_numpy,
     _count_nonzero,
     _estimator_with_converted_arrays,
+    _fill_or_add_to_diagonal,
     _is_numpy_namespace,
     _isin,
     _max_precision_float_dtype,
@@ -639,3 +640,16 @@ def test_count_nonzero(
         # NumPy 2.0 has a problem with the device attribute of scalar arrays:
         # https://github.com/numpy/numpy/issues/26850
         assert device(array_xp) == device(result)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize("wrap", [True, False])
+def test_fill_or_add_to_diagonal(array_namespace, device_, dtype_name, wrap):
+    xp = _array_api_for_tests(array_namespace, device_)
+    array_np = numpy.zeros((5, 4), dtype=numpy.int64)
+    array_xp = xp.asarray(array_np)
+    _fill_or_add_to_diagonal(array_xp, value=1, xp=xp, add_value=False, wrap=wrap)
+    numpy.fill_diagonal(array_np, val=1, wrap=wrap)
+    assert_array_equal(_convert_to_numpy(array_xp, xp=xp), array_np)
