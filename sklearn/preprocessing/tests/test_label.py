@@ -19,7 +19,6 @@ from sklearn.utils._array_api import (
 from sklearn.utils._testing import (
     _array_api_for_tests,
     assert_array_equal,
-    ignore_warnings,
 )
 from sklearn.utils.fixes import (
     COO_CONTAINERS,
