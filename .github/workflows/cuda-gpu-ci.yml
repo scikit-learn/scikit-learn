@@ -13,7 +13,10 @@ permissions:
 
 jobs:
   tests:
-    if: contains(github.event.pull_request.labels.*.name, 'CUDA CI')
+    if: |
+      github.event.pull_request.state == 'open' &&
+      github.event.pull_request.merged == false &&
+      contains(github.event.pull_request.labels.*.name, 'CUDA CI')
     runs-on:
       group: cuda-gpu-runner-group
     # Set this high enough so that the tests can comforatble run. We set a
