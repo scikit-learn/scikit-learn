@@ -1528,6 +1528,43 @@ def test_iterative_imputer_constant_fill_value():
     assert_array_equal(imputer.initial_imputer_.statistics_, fill_value)
 
 
+@pytest.mark.parametrize(
+    "missing_column,check_column,min_value,max_value",
+    [
+        (2, 3, 4, 5),
+        (3, 2, 3.5, 6),
+    ],
+)
+def test_iterative_imputer_min_max_value_remove_empty(
+    missing_column, check_column, min_value, max_value
+):
+    """Check that we properly apply the empty feature mask to
+    `min_value` and `max_value.
+    """
+    X = np.array([[1, 2, -1, -1], [4, 5, 6, 6], [7, 8, -1, -1], [10, 11, 12, 12]])
+    X[:, missing_column] = -1
+
+    min_value_array = [-np.inf] * 4
+    max_value_array = [np.inf] * 4
+    min_value_array[check_column] = min_value
+    max_value_array[check_column] = max_value
+
+    imputer = IterativeImputer(
+        missing_values=-1,
+        min_value=min_value_array,
+        max_value=max_value_array,
+        keep_empty_features=False,
+    )
+
+    X_no_missing = X[:, [i for i in range(X.shape[1]) if i != missing_column]]
+    X_imputed = imputer.fit_transform(X)
+
+    assert X_imputed.shape == X_no_missing.shape
+
+    assert_allclose(np.min(X_imputed[X_no_missing == -1]), min_value)
+    assert_allclose(np.max(X_imputed[X_no_missing == -1]), max_value)
+
+
 @pytest.mark.parametrize("keep_empty_features", [True, False])
 def test_knn_imputer_keep_empty_features(keep_empty_features):
     """Check the behaviour of `keep_empty_features` for `KNNImputer`."""
