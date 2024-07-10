@@ -230,11 +230,6 @@ build_metadata_list = [
             # Test array API on CPU without PyTorch
             + ["array-api-compat", "array-api-strict"]
         ),
-        "package_constraints": {
-            # XXX: we would like to use the latest version of Python but this makes
-            # the CI much slower. We need to investigate why.
-            "python": "3.9",
-        },
     },
     {
         "name": "pylatest_pip_scipy_dev",
