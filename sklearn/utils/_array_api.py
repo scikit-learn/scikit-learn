@@ -900,7 +900,7 @@ def check_same_namespace(X, estimator, *, attribute, method):
         The data passed to the fitted estimator's method, e.g. to ``predict``.
 
     estimator : estimator object
-        The fitted estimator
+        The fitted estimator.
 
     attribute : str
         The name of the fitted attribute to check; for example it could be
