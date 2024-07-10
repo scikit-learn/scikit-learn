@@ -2023,6 +2023,8 @@ array_api_metric_checkers = {
     ],
     # regression
     mean_tweedie_deviance: [check_array_api_regression_metric],
+    partial(mean_tweedie_deviance, power=-0.5): [check_array_api_regression_metric],
+    partial(mean_tweedie_deviance, power=1.5): [check_array_api_regression_metric],
     r2_score: [
         check_array_api_regression_metric,
         check_array_api_regression_metric_multioutput,
