@@ -1365,7 +1365,6 @@ def test_elasticnet_convergence(klass):
             assert_almost_equal(cd.coef_, sgd.coef_, decimal=2, err_msg=err_msg)
 
 
-@ignore_warnings
 @pytest.mark.parametrize("klass", [SGDRegressor, SparseSGDRegressor])
 def test_partial_fit(klass):
     third = X.shape[0] // 3

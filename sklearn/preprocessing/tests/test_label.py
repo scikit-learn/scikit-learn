@@ -143,7 +143,6 @@ def test_label_binarizer_pandas_nullable(dtype, unique_first):
     assert_array_equal(y_out, [[1], [0]])
 
 
-@ignore_warnings
 def test_label_binarizer_errors():
     # Check that invalid arguments yield ValueError
     one_class = np.array([0, 0, 0, 0])
