@@ -20,7 +20,7 @@ jobs:
     CCACHE_DIR: $(Pipeline.Workspace)/ccache
     CCACHE_COMPRESS: '1'
     PYTEST_XDIST_VERSION: 'latest'
-    COVERAGE: 'true'
+    COVERAGE: 'false'
     CREATE_ISSUE_ON_TRACKER: 'true'
   strategy:
     matrix:
