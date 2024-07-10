@@ -11,7 +11,7 @@ dependencies:
   - cython
   - joblib
   - threadpoolctl
-  - matplotlib
+  - matplotlib<3.9
   - pandas
   - pyamg
   - pytest
