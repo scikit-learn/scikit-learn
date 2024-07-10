@@ -129,7 +129,6 @@ build_metadata_list = [
         ],
         "package_constraints": {
             "blas": "[build=mkl]",
-            "pytorch": "1.13",
         },
     },
     {
@@ -225,9 +224,14 @@ build_metadata_list = [
         "pip_dependencies": (
             remove_from(common_dependencies, ["python", "blas", "pip"])
             + docstring_test_dependencies
+            # Test with some optional dependencies
             + ["lightgbm", "scikit-image"]
+            # Test array API on CPU without PyTorch
+            + ["array-api-compat", "array-api-strict"]
         ),
         "package_constraints": {
+            # XXX: we would like to use the latest version of Python but this makes
+            # the CI much slower. We need to investigate why.
             "python": "3.9",
         },
     },
