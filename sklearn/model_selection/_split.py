@@ -866,15 +866,15 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
     Each group will appear exactly once in the test set across all folds (the
     number of distinct groups has to be at least equal to the number of folds).
 
-    The difference between :class:`~sklearn.model_selection.GroupKFold`
-    and :class:`~sklearn.model_selection.StratifiedGroupKFold` is that
+    The difference between :class:`GroupKFold`
+    and `StratifiedGroupKFold` is that
     the former attempts to create balanced folds such that the number of
     distinct groups is approximately the same in each fold, whereas
-    StratifiedGroupKFold attempts to create folds which preserve the
+    `StratifiedGroupKFold` attempts to create folds which preserve the
     percentage of samples for each class as much as possible given the
     constraint of non-overlapping groups between splits.
 
-    Read more in the :ref:`User Guide <cross_validation>`.
+    Read more in the :ref:`User Guide <stratified_group_k_fold>`.
 
     For visualisation of cross-validation behaviour and
     comparison between common scikit-learn split methods
