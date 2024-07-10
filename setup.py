@@ -378,7 +378,11 @@ extension_config = {
             "optimization_level": "O3",
         },
         {"sources": ["_splitter.pyx"], "include_np": True, "optimization_level": "O3"},
-        {"sources": ["_partitioner.pyx"], "include_np": True, "optimization_level": "O3"},
+        {
+            "sources": ["_partitioner.pyx"],
+            "include_np": True,
+            "optimization_level": "O3",
+        },
         {"sources": ["_criterion.pyx"], "include_np": True, "optimization_level": "O3"},
         {"sources": ["_utils.pyx"], "include_np": True, "optimization_level": "O3"},
     ],
