@@ -129,7 +129,6 @@ build_metadata_list = [
         ],
         "package_constraints": {
             "blas": "[build=mkl]",
-            "pytorch": "1.13",
         },
     },
     {
