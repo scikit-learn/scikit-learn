@@ -1072,7 +1072,7 @@ cdef inline int node_split_random(
             current_split.split_value,
             current_split.feature
         )
-        
+
         # Randomly split missing values
         if has_missing:
             # If there are missing values, then we randomly make all missing
