@@ -112,6 +112,21 @@ def test_array_api_wrapper_astype():
     assert X_converted.dtype == xp.float32
 
 
+def test_array_api_wrapper_maximum():
+    """Test _ArrayAPIWrapper for ArrayAPIs that is not NumPy."""
+    array_api_strict = pytest.importorskip("array_api_strict")
+    xp_ = _AdjustableNameAPITestWrapper(array_api_strict, "array_api_strict")
+    xp = _ArrayAPIWrapper(xp_)
+
+    x1 = xp.asarray(([[1, 2, 3], [3, 9, 5]]), dtype=xp.int64)
+    x2 = xp.asarray(([[0, 1, 6], [8, 4, 5]]), dtype=xp.int64)
+    result = xp.asarray([[1, 2, 6], [8, 9, 5]], dtype=xp.int64)
+
+    x_max = xp.maximum(x1, x2)
+    assert x_max.dtype == x1.dtype
+    assert xp.all(xp.equal(x_max, result))
+
+
 @pytest.mark.parametrize("array_api", ["numpy", "array_api_strict"])
 def test_asarray_with_order(array_api):
     """Test _asarray_with_order passes along order for NumPy arrays."""

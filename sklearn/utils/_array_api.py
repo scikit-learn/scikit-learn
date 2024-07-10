@@ -302,6 +302,12 @@ class _ArrayAPIWrapper:
     def isdtype(self, dtype, kind):
         return isdtype(dtype, kind, xp=self._namespace)
 
+    def maximum(self, x1, x2):
+        x1_np = _convert_to_numpy(x1, xp=self._namespace)
+        x2_np = _convert_to_numpy(x2, xp=self._namespace)
+        x_max = numpy.maximum(x1_np, x2_np)
+        return self._namespace.asarray(x_max, device=device(x1, x2))
+
 
 def _check_device_cpu(device):  # noqa
     if device not in {"cpu", None}:

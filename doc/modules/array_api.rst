@@ -203,7 +203,7 @@ Note on device support for ``float64``
 
 Certain operations within scikit-learn will automatically perform operations
 on floating-point values with `float64` precision to prevent overflows and ensure
-correctness (e.g., :class:`preprocessing.StandardScaler`). However,
+correctness (e.g., :func:`metrics.pairwise.euclidean_distances`). However,
 certain combinations of array namespaces and devices, such as `PyTorch on MPS`
 (see :ref:`mps_support`) do not support the `float64` data type. In these cases,
 scikit-learn will revert to using the `float32` data type instead. This can result in
