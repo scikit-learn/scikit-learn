@@ -628,7 +628,8 @@ def _fill_or_add_to_diagonal(array, value, xp, add_value=True, wrap=False):
 
     If ``add_value`` is `True` then the values will be added to the diagonal
     elements otherwise the values will be assigned to the diagonal elements.
-    This is currently only supported for 2-d arrays.
+    By default, ``add_value`` is set to `True. This is currently only
+    supported for 2-d arrays.
 
     The implementation is taken from the `numpy.fill_diagonal` function:
     https://github.com/numpy/numpy/blob/v2.0.0/numpy/lib/_index_tricks_impl.py#L799-L929
