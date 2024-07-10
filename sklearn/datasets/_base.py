@@ -1488,6 +1488,14 @@ def _fetch_remote(remote, dirname=None, n_retries=3, delay=1):
                 f"re-downloading from {remote.url} ."
             )
 
+    # We create a temporary file dedicated to this particular download to avoid
+    # conflicts with parallel downloads. If the download is successful, the
+    # temporary file is atomically renamed to the final file path (with
+    # `shutil.move`). We therefore pass `delete=False` to `NamedTemporaryFile`.
+    # Otherwise, garbage collecting temp_file would raise an error when
+    # attempting to delete a file that was already renamed. If the download
+    # fails or the result does not match the expected SHA256 digest, the
+    # temporary file is removed manually in the except block.
     temp_file = NamedTemporaryFile(
         prefix=remote.filename + ".part_", dir=folder_path, delete=False
     )
@@ -1512,7 +1520,7 @@ def _fetch_remote(remote, dirname=None, n_retries=3, delay=1):
                 f"The SHA256 checksum of {remote.filename} ({checksum}) "
                 f"differs from expected ({remote.checksum})."
             )
-    except BaseException:
+    except Exception:
         os.unlink(temp_file.name)
         raise
 
