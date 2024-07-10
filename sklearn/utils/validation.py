@@ -283,7 +283,8 @@ def as_float_array(
     if force_all_finite != "deprecated":
         warnings.warn(
             "'force_all_finite' was renamed to 'ensure_all_finite' in 1.6 and will be "
-            "removed in 1.8",
+            "removed in 1.8. Until then, ensure_all_finite is ignored when "
+            "force_all_finite is set.",
             FutureWarning,
         )
         ensure_all_finite = force_all_finite
@@ -889,7 +890,8 @@ def check_array(
     if force_all_finite != "deprecated":
         warnings.warn(
             "'force_all_finite' was renamed to 'ensure_all_finite' in 1.6 and will be "
-            "removed in 1.8",
+            "removed in 1.8. Until then, ensure_all_finite is ignored when "
+            "force_all_finite is set.",
             FutureWarning,
         )
         ensure_all_finite = force_all_finite
@@ -1379,7 +1381,8 @@ def check_X_y(
     if force_all_finite != "deprecated":
         warnings.warn(
             "'force_all_finite' was renamed to 'ensure_all_finite' in 1.6 and will be "
-            "removed in 1.8",
+            "removed in 1.8. Until then, ensure_all_finite is ignored when "
+            "force_all_finite is set.",
             FutureWarning,
         )
         ensure_all_finite = force_all_finite
