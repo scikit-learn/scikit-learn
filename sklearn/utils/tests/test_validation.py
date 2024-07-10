@@ -2203,4 +2203,7 @@ def test_force_all_finite_rename_warning():
         check_array(X, force_all_finite=True)
 
     with pytest.warns(FutureWarning, match=msg):
-        check_array(X, y, force_all_finite=True)
+        check_X_y(X, y, force_all_finite=True)
+
+    with pytest.warns(FutureWarning, match=msg):
+        as_float_array(X, force_all_finite=True)
