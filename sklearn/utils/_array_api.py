@@ -2,6 +2,7 @@
 
 import itertools
 import math
+from contextlib import nullcontext
 from functools import wraps
 
 import numpy
@@ -918,7 +919,11 @@ def check_same_namespace(X, estimator, *, attribute, method):
     """
     attr = getattr(estimator, attribute)
     X_xp, X_is_array_api, X_device = get_namespace_and_device(X)
-    with config_context(array_api_dispatch=True):
+    if hasattr(attr, "__dlpack__") and not isinstance(attr, numpy.ndarray):
+        context = config_context(array_api_dispatch=True)
+    else:
+        context = nullcontext()
+    with context:
         a_xp, a_is_array_api, a_device = get_namespace_and_device(attr)
     if not X_is_array_api and (not a_is_array_api or isinstance(attr, numpy.ndarray)):
         return
