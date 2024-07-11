@@ -114,7 +114,12 @@ def test_array_api_wrapper_astype():
 
 
 def test_array_api_wrapper_maximum():
-    """Test _ArrayAPIWrapper `maximum` for ArrayAPIs other than NumPy."""
+    """Test _ArrayAPIWrapper `maximum` for ArrayAPIs other than NumPy.
+
+    This is mainly used to test for `cupy.array_api` but since that is
+    not available on our coverage-enabled PR CI, we resort to using
+    `array-api-strict`.
+    """
     array_api_strict = pytest.importorskip("array_api_strict")
     xp_ = _AdjustableNameAPITestWrapper(array_api_strict, "array_api_strict")
     xp = _ArrayAPIWrapper(xp_)

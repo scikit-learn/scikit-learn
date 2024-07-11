@@ -303,6 +303,8 @@ class _ArrayAPIWrapper:
         return isdtype(dtype, kind, xp=self._namespace)
 
     def maximum(self, x1, x2):
+        # TODO: Remove when `maximum` is made compatible for `cupy.array_api`.
+        # https://github.com/data-apis/array-api-compat/issues/160
         x1_np = _convert_to_numpy(x1, xp=self._namespace)
         x2_np = _convert_to_numpy(x2, xp=self._namespace)
         x_max = numpy.maximum(x1_np, x2_np)

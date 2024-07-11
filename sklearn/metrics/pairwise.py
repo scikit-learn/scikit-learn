@@ -398,15 +398,7 @@ def _euclidean_distances(X, Y, X_norm_squared=None, Y_norm_squared=None, squared
         else:
             YY = None
 
-    if _max_precision_float_dtype(xp=xp, device=device_) == xp.float32:
-        # special case for mps devices which don't support float64.
-        # Note: Computing the Euclidean distances directly as compared to the
-        # default method used in this function, is more numerically stable
-        # for float32.
-        X_r = X[:, None]
-        Y_r = Y[None, :]
-        distances = xp.sum((X_r - Y_r) ** 2, axis=2)
-    elif X.dtype == xp.float32 or Y.dtype == xp.float32:
+    if X.dtype == xp.float32 or Y.dtype == xp.float32:
         # To minimize precision issues with float32, we compute the distance
         # matrix on chunks of X and Y upcast to float64
         distances = _euclidean_distances_upcast(X, XX, Y, YY)
@@ -611,9 +603,9 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None, batch_size=None):
         batch_size = max(int(batch_size), 1)
 
     x_batches = gen_batches(n_samples_X, batch_size)
-
+    xp_max_float = _max_precision_float_dtype(xp=xp, device=device_)
     for i, x_slice in enumerate(x_batches):
-        X_chunk = xp.astype(X[x_slice], xp.float64)
+        X_chunk = xp.astype(X[x_slice], xp_max_float)
         if XX is None:
             XX_chunk = row_norms(X_chunk, squared=True)[:, None]
         else:
@@ -628,7 +620,7 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None, batch_size=None):
                 d = distances[y_slice, x_slice].T
 
             else:
-                Y_chunk = xp.astype(Y[y_slice], xp.float64)
+                Y_chunk = xp.astype(Y[y_slice], xp_max_float)
                 if YY is None:
                     YY_chunk = row_norms(Y_chunk, squared=True)[None, :]
                 else:
