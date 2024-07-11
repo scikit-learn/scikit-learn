@@ -1614,7 +1614,8 @@ def permutation_test_score(
               Parameters directly passed to the `fit` method of the estimator.
 
             - If `enable_metadata_routing=True`:
-              Parameters safely routed to the `fit` method of the estimator.
+              Parameters safely routed to the `fit` method of the estimator,
+              `cv` object and `scorer`.
               See :ref:`Metadata Routing User Guide <metadata_routing>` for more
               details.
 
