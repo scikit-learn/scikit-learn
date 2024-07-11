@@ -1670,7 +1670,6 @@ def check_non_negative(X, whom):
     whom : str
         Who passed X to this function.
     """
-    xp, _ = get_namespace(X)
     # avoid X.min() on sparse matrix since it also sorts the indices
     if sp.issparse(X):
         if X.format in ["lil", "dok"]:
@@ -1680,6 +1679,7 @@ def check_non_negative(X, whom):
         else:
             X_min = X.data.min()
     else:
+        xp, _ = get_namespace(X)
         X_min = xp.min(X)
 
     if X_min < 0:

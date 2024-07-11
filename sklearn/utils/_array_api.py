@@ -5,6 +5,7 @@ import math
 from functools import wraps
 
 import numpy
+import scipy.sparse as sp
 import scipy.special as special
 
 from .._config import get_config
@@ -528,6 +529,13 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
         True if the arrays are containers that implement the Array API spec.
         Always False when array_api_dispatch=False.
     """
+    if any(sp.issparse(a) for a in arrays):
+        # Consistently reject scipy sparse arrays, whether or not array_api_dispatch
+        # is enabled.
+        raise ValueError(
+            "Scipy sparse arrays or matrices are not supported in get_namespace."
+        )
+
     array_api_dispatch = get_config()["array_api_dispatch"]
     if not array_api_dispatch:
         if xp is not None:
