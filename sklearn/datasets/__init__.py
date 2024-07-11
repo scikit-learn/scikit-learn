@@ -7,6 +7,7 @@ import textwrap
 
 from ._base import (
     clear_data_home,
+    fetch_file,
     get_data_home,
     load_breast_cancer,
     load_diabetes,
@@ -60,6 +61,7 @@ __all__ = [
     "dump_svmlight_file",
     "fetch_20newsgroups",
     "fetch_20newsgroups_vectorized",
+    "fetch_file",
     "fetch_lfw_pairs",
     "fetch_lfw_people",
     "fetch_olivetti_faces",

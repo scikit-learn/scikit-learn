@@ -46,6 +46,7 @@ from sklearn.utils._testing import (
     assert_allclose_dense_sparse,
     assert_array_equal,
     assert_no_warnings,
+    create_memmap_backed_data,
     ignore_warnings,
     skip_if_array_api_compat_not_configured,
 )
@@ -2124,3 +2125,67 @@ def test__is_polars_df():
             self.schema = ["a", "b"]
 
     assert not _is_polars_df(LooksLikePolars())
+
+
+def test_check_array_writeable_np():
+    """Check the behavior of check_array when a writeable array is requested
+    without copy if possible, on numpy arrays.
+    """
+    X = np.random.uniform(size=(10, 10))
+
+    out = check_array(X, copy=False, force_writeable=True)
+    # X is already writeable, no copy is needed
+    assert np.may_share_memory(out, X)
+    assert out.flags.writeable
+
+    X.flags.writeable = False
+
+    out = check_array(X, copy=False, force_writeable=True)
+    # X is not writeable, a copy is made
+    assert not np.may_share_memory(out, X)
+    assert out.flags.writeable
+
+
+def test_check_array_writeable_mmap():
+    """Check the behavior of check_array when a writeable array is requested
+    without copy if possible, on a memory-map.
+
+    A common situation is when a meta-estimators run in parallel using multiprocessing
+    with joblib, which creates read-only memory-maps of large arrays.
+    """
+    X = np.random.uniform(size=(10, 10))
+
+    mmap = create_memmap_backed_data(X, mmap_mode="w+")
+    out = check_array(mmap, copy=False, force_writeable=True)
+    # mmap is already writeable, no copy is needed
+    assert np.may_share_memory(out, mmap)
+    assert out.flags.writeable
+
+    mmap = create_memmap_backed_data(X, mmap_mode="r")
+    out = check_array(mmap, copy=False, force_writeable=True)
+    # mmap is read-only, a copy is made
+    assert not np.may_share_memory(out, mmap)
+    assert out.flags.writeable
+
+
+def test_check_array_writeable_df():
+    """Check the behavior of check_array when a writeable array is requested
+    without copy if possible, on a dataframe.
+    """
+    pd = pytest.importorskip("pandas")
+
+    X = np.random.uniform(size=(10, 10))
+    df = pd.DataFrame(X, copy=False)
+
+    out = check_array(df, copy=False, force_writeable=True)
+    # df is backed by a writeable array, no copy is needed
+    assert np.may_share_memory(out, df)
+    assert out.flags.writeable
+
+    X.flags.writeable = False
+    df = pd.DataFrame(X, copy=False)
+
+    out = check_array(df, copy=False, force_writeable=True)
+    # df is backed by a read-only array, a copy is made
+    assert not np.may_share_memory(out, df)
+    assert out.flags.writeable

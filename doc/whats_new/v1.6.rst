@@ -35,11 +35,13 @@ See :ref:`array_api` for more details.
 - :func:`sklearn.metrics.cluster.entropy` :pr:`29141` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.metrics.d2_tweedie_score` :pr:`29207` by :user:`Emily Chen <EmilyXinyi>`;
 - :func:`sklearn.metrics.max_error` :pr:`29212` by :user:`Edoardo Abati <EdAbati>`;
-- :func:`sklearn.metrics.mean_absolute_error` :pr:`27736` by :user:`Edoardo Abati <EdAbati>`;
+- :func:`sklearn.metrics.mean_absolute_error` :pr:`27736` by :user:`Edoardo Abati <EdAbati>`
+  and :pr:`29143` by :user:`Tialo <Tialo>` and :user:`Loïc Estève <lesteve>`;
 - :func:`sklearn.metrics.mean_gamma_deviance` :pr:`29239` by :usser:`Emily Chen <EmilyXinyi>`;
 - :func:`sklearn.metrics.mean_squared_error` :pr:`29142` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.metrics.mean_tweedie_deviance` :pr:`28106` by :user:`Thomas Li <lithomas1>`;
 - :func:`sklearn.metrics.pairwise.additive_chi2_kernel` :pr:`29144` by :user:`Yaroslav Korobko <Tialo>`;
+- :func:`sklearn.metrics.pairwise.chi2_kernel` :pr:`29267` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.metrics.pairwise.cosine_similarity` :pr:`29014` by :user:`Edoardo Abati <EdAbati>`;
 - :func:`sklearn.metrics.pairwise.paired_cosine_distances` :pr:`29112` by :user:`Edoardo Abati <EdAbati>`.
 
@@ -75,6 +77,31 @@ more details.
   params to the underlying regressor.
   :pr:`29136` by :user:`Omar Salman <OmarManzoor>`.
 
+- |Feature| :func:`model_selection.validation_curve` now supports metadata routing for
+  the `fit` method of its estimator and for its underlying CV splitter and scorer.
+  :pr:`29329` by :user:`Stefanie Senger <StefanieSenger>`.
+
+- |Feature| :class:`semi_supervised.SelfTrainingClassifier`
+  now supports metadata routing. The fit method now accepts ``**fit_params``
+  which are passed to the underlying estimators via their `fit` methods.
+  In addition, the `predict`, `predict_proba`, `predict_log_proba`, `score`
+  and `decision_function` methods also accept ``**params`` which are
+  passed to the underlying estimators via their respective methods.
+  :pr:`28494` by :user:`Adam Li <adam2392>`.
+
+- |Feature| :func:`model_selection.permutation_test_score` now supports metadata routing
+  for the `fit` method of its estimator and for its underlying CV splitter and scorer.
+  :pr:`29266` by :user:`Adam Li <adam2392>`.
+
+Dropping support for building with setuptools
+---------------------------------------------
+
+From scikit-learn 1.6 onwards, support for building with setuptools has been
+removed. Meson is the only supported way to build scikit-learn, see
+:ref:`Building from source <install_bleeding_edge>` for more details.
+
+:pr:`29400` by :user:`Loïc Estève <lesteve>`
+
 Dropping official support for PyPy
 ----------------------------------
 
@@ -104,6 +131,23 @@ Changelog
   whether a given estimator is of category clusterer.
   :pr:`28936` by :user:`Christian Veenhuis <ChVeen>`.
 
+:mod:`sklearn.cluster`
+......................
+
+- |API| The `copy` parameter of :class:`cluster.Birch` was deprecated in 1.6 and will be
+  removed in 1.8. It has no effect as the estimator does not perform in-place operations
+  on the input data.
+  :pr:`29124` by :user:`Yao Xiao <Charlie-XIAO>`.
+
+
+:mod:`sklearn.datasets`
+.......................
+
+- |Feature| :func:`datasets.fetch_file` allows downloading arbitrary data-file
+  from the web. It handles local caching, integrity checks with SHA256 digests
+  and automatic retries in case of HTTP errors. :pr:`29354` by :user:`Olivier
+  Grisel <ogrisel>`.
+
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
@@ -111,6 +155,31 @@ Changelog
   will now cause `LinAlgWarning` in case of collinear variables. These errors
   can be silenced using the `reg_param` attribute.
   :pr:`19731` by :user:`Alihan Zihna <azihna>`.
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Efficiency| Small runtime improvement of fitting
+  :class:`ensemble.HistGradientBoostingClassifier` and :class:`ensemble.HistGradientBoostingRegressor`
+  by parallelizing the initial search for bin thresholds
+  :pr:`28064` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+- |Enhancement| The verbosity of :class:`ensemble.HistGradientBoostingClassifier`
+  and :class:`ensemble.HistGradientBoostingRegressor` got a more granular control. Now,
+  `verbose = 1` prints only summary messages, `verbose >= 2` prints the full
+  information as before.
+  :pr:`28179` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+- |Efficiency| :class:`ensemble.IsolationForest` now runs parallel jobs
+  during :term:`predict` offering a speedup of up to 2-4x on sample sizes
+  larger than 2000 using `joblib`.
+  :pr:`28622` by :user:`Adam Li <adam2392>` and
+  :user:`Sérgio Pereira <sergiormpereira>`.
+
+- |Feature| :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor` now support
+  missing-values in the data matrix `X`. Missing-values are handled by randomly moving all of
+  the samples to the left, or right child node as the tree is traversed.
+  :pr:`28268` by :user:`Adam Li <adam2392>`.
 
 :mod:`sklearn.impute`
 .....................
@@ -126,12 +195,25 @@ Changelog
   has no effect. `copy_X` will be removed in 1.8.
   :pr:`29105` by :user:`Adam Li <adam2392>`.
 
+:mod:`sklearn.manifold`
+.......................
+
+- |Efficiency| :func:`manifold.locally_linear_embedding` and
+  :class:`manifold.LocallyLinearEmbedding` now allocate more efficiently the memory of
+  sparse matrices in the Hessian, Modified and LTSA methods.
+  :pr:`28096` by :user:`Giorgio Angelotti <giorgioangel>`.
+
 :mod:`sklearn.metrics`
 ......................
 
 - |Enhancement| :func:`sklearn.metrics.check_scoring` now accepts `raise_exc` to specify
   whether to raise an exception if a subset of the scorers in multimetric scoring fails
   or to return an error code. :pr:`28992` by :user:`Stefanie Senger <StefanieSenger>`.
+
+- |Enhancement| Adds `zero_division` to :func:`cohen_kappa_score`. When there is a
+  division by zero, the metric is undefined and this value is returned.
+  :pr:`29210` by :user:`Marc Torrellas Socastro <marctorsoc>` and
+  :user:`Stefanie Senger <StefanieSenger>`.
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -141,12 +223,31 @@ Changelog
   estimator without re-fitting it.
   :pr:`29067` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| Improve error message when :func:`model_selection.RepeatedStratifiedKFold.split` is called without a `y` argument
+  :pr:`29402` by :user:`Anurag Varma <Anurag-Varma>`.
+
 :mod:`sklearn.neighbors`
 ........................
 
 - |Fix| :class:`neighbors.LocalOutlierFactor` raises a warning in the `fit` method
   when duplicate values in the training data lead to inaccurate outlier detection.
   :pr:`28773` by :user:`Henrique Caroço <HenriqueProj>`.
+
+:mod:`sklearn.semi_supervised`
+..............................
+
+- |API| :class:`semi_supervised.SelfTrainingClassifier`
+  deprecated the `base_estimator` parameter in favor of `estimator`.
+  :pr:`28494` by :user:`Adam Li <adam2392>`.
+
+:mod:`sklearn.tree`
+...................
+
+- |Feature| :class:`tree.ExtraTreeClassifier` and :class:`tree.ExtraTreeRegressor` now
+  support missing-values in the data matrix ``X``. Missing-values are handled by
+  randomly moving all of the samples to the left, or right child node as the tree is
+  traversed.
+  :pr:`27966` by :user:`Adam Li <adam2392>`.
 
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:
