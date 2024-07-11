@@ -21,6 +21,7 @@ showcasing some other advantages of
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -28,6 +29,7 @@ from sklearn import datasets, ensemble
 from sklearn.inspection import permutation_importance
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
+from sklearn.utils.fixes import parse_version
 
 # %%
 # Load the data
@@ -145,11 +147,18 @@ result = permutation_importance(
 )
 sorted_idx = result.importances_mean.argsort()
 plt.subplot(1, 2, 2)
-plt.boxplot(
-    result.importances[sorted_idx].T,
-    vert=False,
-    labels=np.array(diabetes.feature_names)[sorted_idx],
+
+# labels has been renamed to tick_labels in matplotlib 3.9.
+# This code can be simplified when scikit-learn minimum supported version is 3.9
+tick_labels_parameter_name = (
+    "tick_labels"
+    if parse_version(matplotlib.__version__) >= parse_version("3.9")
+    else "labels"
 )
+tick_labels_dict = {
+    tick_labels_parameter_name: np.array(diabetes.feature_names)[sorted_idx]
+}
+plt.boxplot(result.importances[sorted_idx].T, vert=False, **tick_labels_dict)
 plt.title("Permutation Importance (test set)")
 fig.tight_layout()
 plt.show()
