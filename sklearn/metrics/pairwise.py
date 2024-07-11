@@ -400,6 +400,9 @@ def _euclidean_distances(X, Y, X_norm_squared=None, Y_norm_squared=None, squared
 
     if _max_precision_float_dtype(xp=xp, device=device_) == xp.float32:
         # special case for mps devices which don't support float64.
+        # Note: Computing the Euclidean distances directly as compared to the
+        # default method used in this function, is more numerically stable
+        # for float32.
         X_r = X[:, None]
         Y_r = Y[None, :]
         distances = xp.sum((X_r - Y_r) ** 2, axis=2)
@@ -580,10 +583,10 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None, batch_size=None):
 
     if batch_size is None:
         x_density = (
-            X.nnz / np.prod(X.shape) if issparse(X) else xp.asarray(1, device=device_)
+            X.nnz / xp.prod(X.shape) if issparse(X) else xp.asarray(1, device=device_)
         )
         y_density = (
-            Y.nnz / np.prod(Y.shape) if issparse(Y) else xp.asarray(1, device=device_)
+            Y.nnz / xp.prod(Y.shape) if issparse(Y) else xp.asarray(1, device=device_)
         )
 
         # Allow 10% more memory than X, Y and the distance matrix take (at
