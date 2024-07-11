@@ -139,6 +139,15 @@ Changelog
   on the input data.
   :pr:`29124` by :user:`Yao Xiao <Charlie-XIAO>`.
 
+
+:mod:`sklearn.datasets`
+.......................
+
+- |Feature| :func:`datasets.fetch_file` allows downloading arbitrary data-file
+  from the web. It handles local caching, integrity checks with SHA256 digests
+  and automatic retries in case of HTTP errors. :pr:`29354` by :user:`Olivier
+  Grisel <ogrisel>`.
+
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
