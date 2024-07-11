@@ -125,7 +125,7 @@ def test_lars_lstsq():
     X1 = 3 * X  # use un-normalized dataset
     clf = linear_model.LassoLars(alpha=0.0)
     clf.fit(X1, y)
-    coef_lstsq = np.linalg.lstsq(X1, y, rcond=None)[0]
+    coef_lstsq = np.linalg.lstsq(X1, y)[0]
     assert_array_almost_equal(clf.coef_, coef_lstsq)
 
 
