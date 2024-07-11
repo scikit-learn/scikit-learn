@@ -28,7 +28,7 @@ def X_y_data():
 
 @pytest.fixture
 def default_solver():
-    return "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
+    return "highs"
 
 
 @pytest.mark.skipif(
@@ -45,18 +45,6 @@ def test_incompatible_solver_for_sparse_input(X_y_data, solver, csc_container):
     )
     with pytest.raises(ValueError, match=err_msg):
         QuantileRegressor(solver=solver).fit(X_sparse, y)
-
-
-@pytest.mark.parametrize("solver", ("highs-ds", "highs-ipm", "highs"))
-@pytest.mark.skipif(
-    sp_version >= parse_version("1.6.0"),
-    reason="Solvers are available as of scipy 1.6.0",
-)
-def test_too_new_solver_methods_raise_error(X_y_data, solver):
-    """Test that highs solver raises for scipy<1.6.0."""
-    X, y = X_y_data
-    with pytest.raises(ValueError, match="scipy>=1.6.0"):
-        QuantileRegressor(solver=solver).fit(X, y)
 
 
 @pytest.mark.parametrize(
@@ -134,10 +122,6 @@ def test_quantile_sample_weight(default_solver):
     assert weighted_fraction_below == approx(0.5, abs=3e-2)
 
 
-@pytest.mark.skipif(
-    sp_version < parse_version("1.6.0"),
-    reason="The `highs` solver is available from the 1.6.0 scipy version",
-)
 @pytest.mark.parametrize("quantile", [0.2, 0.5, 0.8])
 def test_asymmetric_error(quantile, default_solver):
     """Test quantile regression for asymmetric distributed targets."""
@@ -264,10 +248,6 @@ def test_linprog_failure():
 
 
 @skip_if_32bit
-@pytest.mark.skipif(
-    sp_version <= parse_version("1.6.0"),
-    reason="Solvers are available as of scipy 1.6.0",
-)
 @pytest.mark.parametrize(
     "sparse_container", CSC_CONTAINERS + CSR_CONTAINERS + COO_CONTAINERS
 )

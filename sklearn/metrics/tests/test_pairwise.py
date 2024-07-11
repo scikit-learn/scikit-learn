@@ -2,6 +2,7 @@ import warnings
 from types import GeneratorType
 
 import numpy as np
+import pytest
 from numpy import linalg
 from scipy.sparse import issparse
 from scipy.spatial.distance import (
@@ -12,15 +13,6 @@ from scipy.spatial.distance import (
     pdist,
     squareform,
 )
-
-try:
-    from scipy.spatial.distance import wminkowski
-except ImportError:
-    # In scipy 1.6.0, wminkowski is deprecated and minkowski
-    # should be used instead.
-    from scipy.spatial.distance import minkowski as wminkowski
-
-import pytest
 
 from sklearn import config_context
 from sklearn.exceptions import DataConversionWarning
@@ -299,7 +291,7 @@ def test_pairwise_precomputed_non_negative():
 
 
 _minkowski_kwds = {"w": np.arange(1, 5).astype("double", copy=False), "p": 1}
-_wminkowski_kwds = {"w": np.arange(1, 5).astype("double", copy=False), "p": 1}
+_minkowski_kwds = {"w": np.arange(1, 5).astype("double", copy=False), "p": 1}
 
 
 def callable_rbf_kernel(x, y, **kwds):
@@ -325,20 +317,20 @@ def callable_rbf_kernel(x, y, **kwds):
         ),
         pytest.param(
             pairwise_distances,
-            wminkowski,
-            _wminkowski_kwds,
+            minkowski,
+            _minkowski_kwds,
             marks=pytest.mark.skipif(
                 sp_version >= parse_version("1.6.0"),
-                reason="wminkowski is now minkowski and it has been already tested.",
+                reason="minkowski is now minkowski and it has been already tested.",
             ),
         ),
         pytest.param(
             pairwise_distances,
-            "wminkowski",
-            _wminkowski_kwds,
+            "minkowski",
+            _minkowski_kwds,
             marks=pytest.mark.skipif(
                 sp_version >= parse_version("1.6.0"),
-                reason="wminkowski is now minkowski and it has been already tested.",
+                reason="minkowski is now minkowski and it has been already tested.",
             ),
         ),
         (pairwise_kernels, "polynomial", {"degree": 1}),
