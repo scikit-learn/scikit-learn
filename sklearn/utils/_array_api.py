@@ -635,7 +635,7 @@ def _fill_or_add_to_diagonal(array, value, xp, add_value=True, wrap=False):
     https://github.com/numpy/numpy/blob/v2.0.0/numpy/lib/_index_tricks_impl.py#L799-L929
     """
     if array.ndim != 2:
-        raise ValueError("array should be 2-d")
+        raise ValueError(f"array should be 2-d. Got array with shape {tuple(array.shape)}")
 
     value = xp.asarray(value, dtype=array.dtype, device=device(array))
     end = None
