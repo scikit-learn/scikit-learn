@@ -208,7 +208,6 @@ jobs:
         SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES: '1'
         SKLEARN_RUN_FLOAT32_TESTS: '1'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '2'  # non-default seed
-        BUILD_WITH_SETUPTOOLS: 'true'
       # Linux environment to test the latest available dependencies.
       # It runs tests requiring lightgbm, pandas and PyAMG.
       pylatest_pip_openblas_pandas:
@@ -236,7 +235,7 @@ jobs:
       )
     matrix:
       debian_atlas_32bit:
-        DOCKER_CONTAINER: 'i386/debian:11.2'
+        DOCKER_CONTAINER: 'i386/debian:12'
         DISTRIB: 'debian-32'
         COVERAGE: "true"
         LOCK_FILE: './build_tools/azure/debian_atlas_32bit_lock.txt'
