@@ -1660,9 +1660,13 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
         if y_type == "binary":
             if pos_label not in present_labels:
                 if len(present_labels) >= 2:
+                    if isinstance(present_labels[0], np.generic):
+                        valid_labels = [lab.item() for lab in present_labels]
+                    else:
+                        valid_labels = present_labels
                     raise ValueError(
                         f"pos_label={pos_label} is not a valid label. It "
-                        f"should be one of {present_labels}"
+                        f"should be one of {valid_labels}"
                     )
             labels = [pos_label]
         else:
@@ -1897,9 +1901,9 @@ def precision_recall_fscore_support(
 
     xp, _ = get_namespace(y_true, y_pred)
     if average == "micro":
-        tp_sum = xp.reshape(xp.sum(tp_sum), shape=(1,))
-        pred_sum = xp.reshape(xp.sum(pred_sum), shape=(1,))
-        true_sum = xp.reshape(xp.sum(true_sum), shape=(1,))
+        tp_sum = xp.reshape(xp.sum(tp_sum), (1,))
+        pred_sum = xp.reshape(xp.sum(pred_sum), (1,))
+        true_sum = xp.reshape(xp.sum(true_sum), (1,))
 
     # Finally, we have all our sufficient statistics. Divide! #
     beta2 = beta**2
