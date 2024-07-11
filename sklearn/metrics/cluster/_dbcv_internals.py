@@ -162,9 +162,9 @@ def _internal_minimum_spanning_tree(mr_distances):
         # max over all the edges that exist in the MST, so we simply
         # do nothing and return all the edges in the MST.
         msg = (
-            "Fell back on unspecified, implementation specific behavior "
-            "by skipping edge selection: the minimum spanning tree "
-            "has no internal edges"
+            "The minimum spanning tree has no internal edges: "
+            "falling back on implementation-specific behavior "
+            "by skipping edge selection."
         )
         warnings.warn(msg, UserWarning)
         edges = min_span_tree.copy()
