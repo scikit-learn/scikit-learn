@@ -1538,11 +1538,15 @@ def test_iterative_imputer_constant_fill_value():
 def test_iterative_imputer_min_max_value_remove_empty(
     missing_column, check_column, min_value, max_value
 ):
-    """Check that we properly apply the empty feature mask to
-    `min_value` and `max_value.
+    """Check that we properly apply the empty feature mask to `min_value` and
+    `max_value`.
+
+    Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/29355
     """
-    X = np.array([[1, 2, -1, -1], [4, 5, 6, 6], [7, 8, -1, -1], [10, 11, 12, 12]])
-    X[:, missing_column] = -1
+    X = np.array(
+        [[1, 2, np.nan, np.nan], [4, 5, 6, 6], [7, 8, np.nan, np.nan], [10, 11, 12, 12]]
+    )
+    X[:, missing_column] = np.nan
 
     min_value_array = [-np.inf] * 4
     max_value_array = [np.inf] * 4
@@ -1550,7 +1554,6 @@ def test_iterative_imputer_min_max_value_remove_empty(
     max_value_array[check_column] = max_value
 
     imputer = IterativeImputer(
-        missing_values=-1,
         min_value=min_value_array,
         max_value=max_value_array,
         keep_empty_features=False,
@@ -1561,8 +1564,8 @@ def test_iterative_imputer_min_max_value_remove_empty(
 
     assert X_imputed.shape == X_no_missing.shape
 
-    assert_allclose(np.min(X_imputed[X_no_missing == -1]), min_value)
-    assert_allclose(np.max(X_imputed[X_no_missing == -1]), max_value)
+    assert_allclose(np.min(X_imputed[np.isnan(X_no_missing)]), min_value)
+    assert_allclose(np.max(X_imputed[np.isnan(X_no_missing)]), max_value)
 
 
 @pytest.mark.parametrize("keep_empty_features", [True, False])
