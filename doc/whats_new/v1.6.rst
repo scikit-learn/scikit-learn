@@ -91,6 +91,10 @@ more details.
   passed to the underlying estimators via their respective methods.
   :pr:`28494` by :user:`Adam Li <adam2392>`.
 
+- |Feature| :func:`model_selection.permutation_test_score` now supports metadata routing
+  for the `fit` method of its estimator and for its underlying CV splitter and scorer.
+  :pr:`29266` by :user:`Adam Li <adam2392>`.
+
 Dropping support for building with setuptools
 ---------------------------------------------
 
@@ -136,6 +140,15 @@ Changelog
   removed in 1.8. It has no effect as the estimator does not perform in-place operations
   on the input data.
   :pr:`29124` by :user:`Yao Xiao <Charlie-XIAO>`.
+
+
+:mod:`sklearn.datasets`
+.......................
+
+- |Feature| :func:`datasets.fetch_file` allows downloading arbitrary data-file
+  from the web. It handles local caching, integrity checks with SHA256 digests
+  and automatic retries in case of HTTP errors. :pr:`29354` by :user:`Olivier
+  Grisel <ogrisel>`.
 
 :mod:`sklearn.discriminant_analysis`
 ....................................
