@@ -214,7 +214,7 @@ def _logistic_regression_path(
         If the option chosen is 'ovr', then a binary problem is fit for each
         label. For 'multinomial' the loss minimised is the multinomial loss fit
         across the entire probability distribution, *even when the data is
-        binary*. 'multinomial' is unavailable when solver='liblinear'.
+        binary*. 'multinomial' is unavailable when solver is 'liblinear' or 'newton-cholesky'.
         'auto' selects 'ovr' if the data is binary, or if solver='liblinear',
         and otherwise selects 'multinomial'.
 
@@ -695,7 +695,7 @@ def _log_reg_scoring_path(
         If the option chosen is 'ovr', then a binary problem is fit for each
         label. For 'multinomial' the loss minimised is the multinomial loss fit
         across the entire probability distribution, *even when the data is
-        binary*. 'multinomial' is unavailable when solver='liblinear'.
+        binary*. 'multinomial' is unavailable when solver is 'liblinear' or 'newton-cholesky'.
 
     random_state : int, RandomState instance
         Used when ``solver`` == 'sag', 'saga' or 'liblinear' to shuffle the
@@ -960,7 +960,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         If the option chosen is 'ovr', then a binary problem is fit for each
         label. For 'multinomial' the loss minimised is the multinomial loss fit
         across the entire probability distribution, *even when the data is
-        binary*. 'multinomial' is unavailable when solver='liblinear'.
+        binary*. 'multinomial' is unavailable when solver is 'liblinear' or 'newton-cholesky'.
         'auto' selects 'ovr' if the data is binary, or if solver='liblinear',
         and otherwise selects 'multinomial'.
 
@@ -1629,7 +1629,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         If the option chosen is 'ovr', then a binary problem is fit for each
         label. For 'multinomial' the loss minimised is the multinomial loss fit
         across the entire probability distribution, *even when the data is
-        binary*. 'multinomial' is unavailable when solver='liblinear'.
+        binary*. 'multinomial' is unavailable when solver is 'liblinear' or 'newton-cholesky'.
         'auto' selects 'ovr' if the data is binary, or if solver='liblinear',
         and otherwise selects 'multinomial'.
 
