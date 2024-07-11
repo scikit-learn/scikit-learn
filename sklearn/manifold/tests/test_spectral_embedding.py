@@ -303,6 +303,9 @@ def test_spectral_embedding_amg_solver(dtype, coo_container, seed=36):
             se_amg.fit_transform(affinity)
 
 
+@pytest.mark.skipif(
+    not pyamg_available, reason="PyAMG is required for the tests in this function."
+)
 @pytest.mark.parametrize("dtype", (np.float32, np.float64))
 def test_spectral_embedding_amg_solver_failure(dtype, seed=36):
     # Non-regression test for amg solver failure (issue #13393 on github)
