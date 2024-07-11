@@ -1608,7 +1608,8 @@ def permutation_test_score(
             ``params`` instead.
 
     params : dict, default=None
-        Parameters to pass to the `fit` method of the estimator, the scorer and the cv splitter object.
+        Parameters to pass to the `fit` method of the estimator, the scorer
+        and the cv splitter.
 
             - If `enable_metadata_routing=False` (default):
               Parameters directly passed to the `fit` method of the estimator.
