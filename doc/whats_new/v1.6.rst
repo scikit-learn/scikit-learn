@@ -210,6 +210,9 @@ Changelog
   estimator without re-fitting it.
   :pr:`29067` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| Improve error message when :func:`model_selection.RepeatedStratifiedKFold.split` is called without a `y` argument
+  :pr:`29402` by :user:`Anurag Varma <Anurag-Varma>`.
+
 :mod:`sklearn.neighbors`
 ........................
 
