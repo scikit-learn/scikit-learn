@@ -1499,7 +1499,7 @@ def _fetch_remote(remote, dirname=None, n_retries=3, delay=1):
     temp_file = NamedTemporaryFile(
         prefix=remote.filename + ".part_", dir=folder_path, delete=False
     )
-    # Note that Python 3.12's `delete_on_close=True` is ignored as we set 
+    # Note that Python 3.12's `delete_on_close=True` is ignored as we set
     # `delete=False` explicitly. So after this line the empty temporary file still
     # exists on disk to make sure that it's uniquely reserved for this specific call of
     # `_fetch_remote` and therefore it protects against any corruption by parallel
