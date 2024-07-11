@@ -547,8 +547,6 @@ def dbcv_score(
         (depending on the given metric, e.g. euclidean distances)
         instead of using mutual reachability distances.
         Thus setting this parameter to True avoids using 'all-points-core-distances'.
-        This is advantageous specifically in the case of elongated clusters
-        that lie in close proximity to each other <citation needed>.
 
     verbose : bool, default=False
         If True additional, informational messages are ommitted via stdout.
