@@ -56,6 +56,10 @@ See :ref:`array_api` for more details.
   compatible inputs when their base estimators do. :pr:`27096` by :user:`Tim
   Head <betatim>` and :user:`Olivier Grisel <ogrisel>`.
 
+- |Fix| func:`validation.check_array` now accepts scipy sparse inputs without error
+  even when array API dispatch is enabled.
+  :pr:`29469` by :user:`Olivier Grisel <ogrisel>`.
+
 Metadata Routing
 ----------------
 
