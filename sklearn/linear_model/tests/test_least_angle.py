@@ -117,16 +117,20 @@ def test_all_precomputed():
             assert_array_almost_equal(expected, got)
 
 
+# TODO: remove warning filter when numpy min version >= 2.0.0
+@pytest.mark.filterwarnings("ignore: `rcond` parameter will change")
 def test_lars_lstsq():
     # Test that Lars gives least square solution at the end
     # of the path
     X1 = 3 * X  # use un-normalized dataset
     clf = linear_model.LassoLars(alpha=0.0)
     clf.fit(X1, y)
-    coef_lstsq = np.linalg.lstsq(X1, y)[0]
+    coef_lstsq = np.linalg.lstsq(X1, y, rcond=None)[0]
     assert_array_almost_equal(clf.coef_, coef_lstsq)
 
 
+# TODO: remove warning filter when numpy min version >= 2.0.0
+@pytest.mark.filterwarnings("ignore: `rcond` parameter will change")
 def test_lasso_gives_lstsq_solution():
     # Test that Lars Lasso gives least square solution at the end
     # of the path
