@@ -2018,6 +2018,16 @@ def test_check_array_array_api_has_non_finite(array_namespace):
             check_array(X_inf)
 
 
+@skip_if_array_api_compat_not_configured
+def test_check_array_on_sparse_inputs_with_array_api_enabled():
+    X_sp = sp.csr_array([[0, 1, 0], [1, 0, 1]])
+    with config_context(array_api_dispatch=True):
+        assert sp.issparse(check_array(X_sp, accept_sparse=True))
+
+        with pytest.raises(TypeError):
+            check_array(X_sp)
+
+
 @pytest.mark.parametrize(
     "extension_dtype, regular_dtype",
     [

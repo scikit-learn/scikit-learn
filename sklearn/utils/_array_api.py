@@ -5,6 +5,7 @@ import math
 from functools import wraps
 
 import numpy
+import scipy.sparse as sp
 import scipy.special as special
 
 from .._config import get_config
@@ -549,6 +550,19 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     # protected by _check_array_api_dispatch to display an informative error
     # message in case it is missing.
     import array_api_compat
+
+    # Special handling of scipy sparse inputs, potentially mixed with dense
+    # arrays.
+    if all(sp.issparse(a) for a in arrays):
+        # For all-scipy sparse inputs, it's safe to assume that the namespace
+        # is numpy (or its array-api-compat wrapper for versions before 2.0).
+        return array_api_compat.get_namespace(numpy.empty(shape=0)), True
+    else:
+        # For mixed dense/sparse array inputs, ignore the sparse arrays and
+        # proceed only with the dense ones. The caller code in scikit-learn
+        # should always be in charge of special handling scipy sparse
+        # operations under sp.issparse() branches when needed.
+        arrays = [a for a in arrays if not sp.issparse(a)]
 
     namespace, is_array_api_compliant = array_api_compat.get_namespace(*arrays), True
 

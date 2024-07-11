@@ -3,6 +3,7 @@ from functools import partial
 
 import numpy
 import pytest
+import scipy.sparse as sp
 from numpy.testing import assert_allclose
 
 from sklearn._config import config_context
@@ -60,19 +61,31 @@ def test_get_namespace_ndarray_creation_device():
 @skip_if_array_api_compat_not_configured
 def test_get_namespace_ndarray_with_dispatch():
     """Test get_namespace on NumPy ndarrays."""
-    array_api_compat = pytest.importorskip("array_api_compat")
+    array_api_compat_numpy = pytest.importorskip("array_api_compat.numpy")
 
     X_np = numpy.asarray([[1, 2, 3]])
+    if np_version >= parse_version("2.0.0"):
+        # NumPy 2.0+ is an array API compliant library.
+        expected_namespace = numpy
+    else:
+        # Older NumPy versions require the compatibility layer.
+        expected_namespace = array_api_compat_numpy
 
     with config_context(array_api_dispatch=True):
         xp_out, is_array_api_compliant = get_namespace(X_np)
         assert is_array_api_compliant
-        if np_version >= parse_version("2.0.0"):
-            # NumPy 2.0+ is an array API compliant library.
-            assert xp_out is numpy
-        else:
-            # Older NumPy versions require the compatibility layer.
-            assert xp_out is array_api_compat.numpy
+        assert xp_out is expected_namespace
+
+    X_sp = sp.csr_array(X_np)
+    with config_context(array_api_dispatch=True):
+        xp_out, is_array_api_compliant = get_namespace(X_sp)
+        assert is_array_api_compliant
+        assert xp_out is expected_namespace
+
+    with config_context(array_api_dispatch=True):
+        xp_out, is_array_api_compliant = get_namespace(X_np, X_sp)
+        assert is_array_api_compliant
+        assert xp_out is expected_namespace
 
 
 @skip_if_array_api_compat_not_configured
@@ -82,12 +95,19 @@ def test_get_namespace_array_api():
 
     X_np = numpy.asarray([[1, 2, 3]])
     X_xp = xp.asarray(X_np)
+    X_sp = sp.csr_array(X_np)
+
     with config_context(array_api_dispatch=True):
         xp_out, is_array_api_compliant = get_namespace(X_xp)
         assert is_array_api_compliant
+        assert xp_out is xp
 
         with pytest.raises(TypeError):
             xp_out, is_array_api_compliant = get_namespace(X_xp, X_np)
+
+        xp_out, is_array_api_compliant = get_namespace(X_xp, X_sp)
+        assert is_array_api_compliant
+        assert xp_out is xp
 
 
 class _AdjustableNameAPITestWrapper(_ArrayAPIWrapper):
