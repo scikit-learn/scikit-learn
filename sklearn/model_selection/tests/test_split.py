@@ -2066,6 +2066,6 @@ def test_no_group_splitters_warns_with_groups(cv):
     "cv", SPLITTERS_REQUIRING_TARGET, ids=[str(cv) for cv in SPLITTERS_REQUIRING_TARGET]
 )
 def test_stratified_splitter_without_y(cv):
-    msg = r"missing 1 required positional argument: 'y'"
+    msg = "missing 1 required positional argument: 'y'"
     with pytest.raises(TypeError, match=msg):
         cv.split(X)
