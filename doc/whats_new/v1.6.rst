@@ -73,7 +73,7 @@ more details.
   :class:`ensemble.StackingRegressor` now support metadata routing and pass
   ``**fit_params`` to the underlying estimators via their `fit` methods.
   :pr:`28701` by :user:`Stefanie Senger <StefanieSenger>`.
-  
+
 - |Feature| :class:`compose.TransformedTargetRegressor` now supports metadata
   routing in its `fit` and `predict` methods and routes the corresponding
   params to the underlying regressor.
@@ -90,6 +90,15 @@ more details.
   and `decision_function` methods also accept ``**params`` which are
   passed to the underlying estimators via their respective methods.
   :pr:`28494` by :user:`Adam Li <adam2392>`.
+
+Dropping support for building with setuptools
+---------------------------------------------
+
+From scikit-learn 1.6 onwards, support for building with setuptools has been
+removed. Meson is the only supported way to build scikit-learn, see
+:ref:`Building from source <install_bleeding_edge>` for more details.
+
+:pr:`29400` by :user:`Loïc Estève <lesteve>`
 
 Dropping official support for PyPy
 ----------------------------------
@@ -144,11 +153,22 @@ Changelog
   by parallelizing the initial search for bin thresholds
   :pr:`28064` by :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |Enhancement| The verbosity of :class:`ensemble.HistGradientBoostingClassifier`
+  and :class:`ensemble.HistGradientBoostingRegressor` got a more granular control. Now,
+  `verbose = 1` prints only summary messages, `verbose >= 2` prints the full
+  information as before.
+  :pr:`28179` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Efficiency| :class:`ensemble.IsolationForest` now runs parallel jobs
   during :term:`predict` offering a speedup of up to 2-4x on sample sizes
   larger than 2000 using `joblib`.
   :pr:`28622` by :user:`Adam Li <adam2392>` and
   :user:`Sérgio Pereira <sergiormpereira>`.
+
+- |Feature| :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor` now support
+  missing-values in the data matrix `X`. Missing-values are handled by randomly moving all of
+  the samples to the left, or right child node as the tree is traversed.
+  :pr:`28268` by :user:`Adam Li <adam2392>`.
 
 :mod:`sklearn.impute`
 .....................
@@ -191,6 +211,9 @@ Changelog
   :class:`model_selection.FixedThresholdClassifier` allowing the use of a pre-fitted
   estimator without re-fitting it.
   :pr:`29067` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| Improve error message when :func:`model_selection.RepeatedStratifiedKFold.split` is called without a `y` argument
+  :pr:`29402` by :user:`Anurag Varma <Anurag-Varma>`.
 
 :mod:`sklearn.neighbors`
 ........................

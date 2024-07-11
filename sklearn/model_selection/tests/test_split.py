@@ -86,6 +86,12 @@ GROUP_SPLITTER_NAMES = set(splitter.__class__.__name__ for splitter in GROUP_SPL
 
 ALL_SPLITTERS = NO_GROUP_SPLITTERS + GROUP_SPLITTERS  # type: ignore
 
+SPLITTERS_REQUIRING_TARGET = [
+    StratifiedKFold(),
+    StratifiedShuffleSplit(),
+    RepeatedStratifiedKFold(),
+]
+
 X = np.ones(10)
 y = np.arange(10) // 2
 test_groups = (
@@ -2054,3 +2060,12 @@ def test_no_group_splitters_warns_with_groups(cv):
 
     with pytest.warns(UserWarning, match=msg):
         cv.split(X, y, groups=groups)
+
+
+@pytest.mark.parametrize(
+    "cv", SPLITTERS_REQUIRING_TARGET, ids=[str(cv) for cv in SPLITTERS_REQUIRING_TARGET]
+)
+def test_stratified_splitter_without_y(cv):
+    msg = "missing 1 required positional argument: 'y'"
+    with pytest.raises(TypeError, match=msg):
+        cv.split(X)
