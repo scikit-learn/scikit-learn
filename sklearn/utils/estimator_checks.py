@@ -81,7 +81,7 @@ from ._testing import (
     raises,
     set_random_state,
 )
-from .fixes import SPARSE_ARRAY_PRESENT, parse_version, sp_version
+from .fixes import SPARSE_ARRAY_PRESENT
 from .validation import _num_samples, check_is_fitted, has_fit_parameter
 
 REGRESSION_DATASET = None
@@ -778,7 +778,7 @@ def _set_checking_parameters(estimator):
 
     if name == "QuantileRegressor":
         # Avoid warning due to Scipy deprecating interior-point solver
-        solver = "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
+        solver = "highs"
         estimator.set_params(solver=solver)
 
     if name in CROSS_DECOMPOSITION:

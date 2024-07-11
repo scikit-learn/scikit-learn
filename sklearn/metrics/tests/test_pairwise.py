@@ -60,8 +60,6 @@ from sklearn.utils.fixes import (
     CSC_CONTAINERS,
     CSR_CONTAINERS,
     DOK_CONTAINERS,
-    parse_version,
-    sp_version,
 )
 from sklearn.utils.parallel import Parallel, delayed
 
@@ -290,10 +288,6 @@ def test_pairwise_precomputed_non_negative():
         pairwise_distances(np.full((5, 5), -1), metric="precomputed")
 
 
-_minkowski_kwds = {"w": np.arange(1, 5).astype("double", copy=False), "p": 1}
-_minkowski_kwds = {"w": np.arange(1, 5).astype("double", copy=False), "p": 1}
-
-
 def callable_rbf_kernel(x, y, **kwds):
     # Callable version of pairwise.rbf_kernel.
     K = rbf_kernel(np.atleast_2d(x), np.atleast_2d(y), **kwds)
@@ -308,30 +302,12 @@ def callable_rbf_kernel(x, y, **kwds):
         pytest.param(
             pairwise_distances,
             minkowski,
-            _minkowski_kwds,
+            {},
         ),
         pytest.param(
             pairwise_distances,
             "minkowski",
-            _minkowski_kwds,
-        ),
-        pytest.param(
-            pairwise_distances,
-            minkowski,
-            _minkowski_kwds,
-            marks=pytest.mark.skipif(
-                sp_version >= parse_version("1.6.0"),
-                reason="minkowski is now minkowski and it has been already tested.",
-            ),
-        ),
-        pytest.param(
-            pairwise_distances,
-            "minkowski",
-            _minkowski_kwds,
-            marks=pytest.mark.skipif(
-                sp_version >= parse_version("1.6.0"),
-                reason="minkowski is now minkowski and it has been already tested.",
-            ),
+            {},
         ),
         (pairwise_kernels, "polynomial", {"degree": 1}),
         (pairwise_kernels, callable_rbf_kernel, {"gamma": 0.1}),
