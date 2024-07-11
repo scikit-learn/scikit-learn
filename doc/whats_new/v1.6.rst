@@ -95,6 +95,10 @@ more details.
   for the `fit` method of its estimator and for its underlying CV splitter and scorer.
   :pr:`29266` by :user:`Adam Li <adam2392>`.
 
+- |Feature| :class:`ensemble.AdaBoostClassifier` and :class:`ensemble.AdaBoostRegressor`
+  now supports metadata routing.
+  :pr:`28494` by :user:`Adam Li <adam2392>`.
+
 Dropping support for building with setuptools
 ---------------------------------------------
 

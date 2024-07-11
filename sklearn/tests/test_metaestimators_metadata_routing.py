@@ -407,6 +407,40 @@ METAESTIMATORS: list = [
         ],
         "method_mapping": {"fit": ["fit", "score"]},
     },
+    {
+        "metaestimator": AdaBoostClassifier,
+        "estimator_name": "estimator",
+        "estimator": "classifier",
+        "X": X,
+        "y": y,
+        "preserves_metadata": True,
+        "estimator_routing_methods": [
+            "fit",
+            "predict",
+            "predict_proba",
+            "predict_log_proba",
+            "decision_function",
+            "score",
+        ],
+        "method_mapping": {"fit": ["fit", "score"]},
+    },
+        {
+        "metaestimator": AdaBoostRegressor,
+        "estimator_name": "estimator",
+        "estimator": "regressor",
+        "X": X,
+        "y": y,
+        "preserves_metadata": True,
+        "estimator_routing_methods": [
+            "fit",
+            "predict",
+            "predict_proba",
+            "predict_log_proba",
+            "decision_function",
+            "score",
+        ],
+        "method_mapping": {"fit": ["fit", "score"]},
+    },
 ]
 """List containing all metaestimators to be tested and their settings
 
@@ -446,8 +480,6 @@ The keys are as follows:
 METAESTIMATOR_IDS = [str(row["metaestimator"].__name__) for row in METAESTIMATORS]
 
 UNSUPPORTED_ESTIMATORS = [
-    AdaBoostClassifier(),
-    AdaBoostRegressor(),
     RFE(ConsumingClassifier()),
     RFECV(ConsumingClassifier()),
     SequentialFeatureSelector(ConsumingClassifier()),
