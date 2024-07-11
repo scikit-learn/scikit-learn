@@ -299,16 +299,8 @@ def callable_rbf_kernel(x, y, **kwds):
     "func, metric, kwds",
     [
         (pairwise_distances, "euclidean", {}),
-        pytest.param(
-            pairwise_distances,
-            minkowski,
-            {},
-        ),
-        pytest.param(
-            pairwise_distances,
-            "minkowski",
-            {},
-        ),
+        (pairwise_distances, minkowski, {}),
+        (pairwise_distances, "minkowski", {}),
         (pairwise_kernels, "polynomial", {"degree": 1}),
         (pairwise_kernels, callable_rbf_kernel, {"gamma": 0.1}),
     ],
