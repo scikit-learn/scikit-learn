@@ -15,6 +15,7 @@ from sklearn.utils._array_api import (
     _convert_to_numpy,
     _count_nonzero,
     _estimator_with_converted_arrays,
+    _fill_or_add_to_diagonal,
     _is_numpy_namespace,
     _isin,
     _max_precision_float_dtype,
@@ -110,6 +111,26 @@ def test_array_api_wrapper_astype():
 
     X_converted = xp.asarray(X, dtype=xp.float32)
     assert X_converted.dtype == xp.float32
+
+
+def test_array_api_wrapper_maximum():
+    """Test _ArrayAPIWrapper `maximum` for ArrayAPIs other than NumPy.
+
+    This is mainly used to test for `cupy.array_api` but since that is
+    not available on our coverage-enabled PR CI, we resort to using
+    `array-api-strict`.
+    """
+    array_api_strict = pytest.importorskip("array_api_strict")
+    xp_ = _AdjustableNameAPITestWrapper(array_api_strict, "array_api_strict")
+    xp = _ArrayAPIWrapper(xp_)
+
+    x1 = xp.asarray(([[1, 2, 3], [3, 9, 5]]), dtype=xp.int64)
+    x2 = xp.asarray(([[0, 1, 6], [8, 4, 5]]), dtype=xp.int64)
+    result = xp.asarray([[1, 2, 6], [8, 9, 5]], dtype=xp.int64)
+
+    x_max = xp.maximum(x1, x2)
+    assert x_max.dtype == x1.dtype
+    assert xp.all(xp.equal(x_max, result))
 
 
 @pytest.mark.parametrize("array_api", ["numpy", "array_api_strict"])
@@ -624,3 +645,16 @@ def test_count_nonzero(
         # NumPy 2.0 has a problem with the device attribute of scalar arrays:
         # https://github.com/numpy/numpy/issues/26850
         assert device(array_xp) == device(result)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize("wrap", [True, False])
+def test_fill_or_add_to_diagonal(array_namespace, device_, dtype_name, wrap):
+    xp = _array_api_for_tests(array_namespace, device_)
+    array_np = numpy.zeros((5, 4), dtype=numpy.int64)
+    array_xp = xp.asarray(array_np)
+    _fill_or_add_to_diagonal(array_xp, value=1, xp=xp, add_value=False, wrap=wrap)
+    numpy.fill_diagonal(array_np, val=1, wrap=wrap)
+    assert_array_equal(_convert_to_numpy(array_xp, xp=xp), array_np)

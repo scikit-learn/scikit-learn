@@ -43,7 +43,9 @@ See :ref:`array_api` for more details.
 - :func:`sklearn.metrics.pairwise.additive_chi2_kernel` :pr:`29144` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.metrics.pairwise.chi2_kernel` :pr:`29267` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.metrics.pairwise.cosine_similarity` :pr:`29014` by :user:`Edoardo Abati <EdAbati>`;
-- :func:`sklearn.metrics.pairwise.paired_cosine_distances` :pr:`29112` by :user:`Edoardo Abati <EdAbati>`.
+- :func:`sklearn.metrics.pairwise.euclidean_distances` :pr:`29433` by :user:`Omar Salman <OmarManzoor>`;
+- :func:`sklearn.metrics.pairwise.paired_cosine_distances` :pr:`29112` by :user:`Edoardo Abati <EdAbati>`;
+- :func:`sklearn.metrics.pairwise.rbf_kernel` :pr:`29433` by :user:`Omar Salman <OmarManzoor>`.
 
 **Classes:**
 
@@ -89,6 +91,19 @@ more details.
   passed to the underlying estimators via their respective methods.
   :pr:`28494` by :user:`Adam Li <adam2392>`.
 
+- |Feature| :func:`model_selection.permutation_test_score` now supports metadata routing
+  for the `fit` method of its estimator and for its underlying CV splitter and scorer.
+  :pr:`29266` by :user:`Adam Li <adam2392>`.
+
+Dropping support for building with setuptools
+---------------------------------------------
+
+From scikit-learn 1.6 onwards, support for building with setuptools has been
+removed. Meson is the only supported way to build scikit-learn, see
+:ref:`Building from source <install_bleeding_edge>` for more details.
+
+:pr:`29400` by :user:`Loïc Estève <lesteve>`
+
 Dropping official support for PyPy
 ----------------------------------
 
@@ -125,6 +140,15 @@ Changelog
   removed in 1.8. It has no effect as the estimator does not perform in-place operations
   on the input data.
   :pr:`29124` by :user:`Yao Xiao <Charlie-XIAO>`.
+
+
+:mod:`sklearn.datasets`
+.......................
+
+- |Feature| :func:`datasets.fetch_file` allows downloading arbitrary data-file
+  from the web. It handles local caching, integrity checks with SHA256 digests
+  and automatic retries in case of HTTP errors. :pr:`29354` by :user:`Olivier
+  Grisel <ogrisel>`.
 
 :mod:`sklearn.discriminant_analysis`
 ....................................
@@ -200,6 +224,9 @@ Changelog
   :class:`model_selection.FixedThresholdClassifier` allowing the use of a pre-fitted
   estimator without re-fitting it.
   :pr:`29067` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| Improve error message when :func:`model_selection.RepeatedStratifiedKFold.split` is called without a `y` argument
+  :pr:`29402` by :user:`Anurag Varma <Anurag-Varma>`.
 
 :mod:`sklearn.neighbors`
 ........................
