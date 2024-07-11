@@ -838,7 +838,10 @@ def check_array(
             "https://numpy.org/doc/stable/reference/generated/numpy.matrix.html"
         )
 
-    xp, is_array_api_compliant = get_namespace(array)
+    if sp.issparse(array):
+        xp, is_array_api_compliant = None, False
+    else:
+        xp, is_array_api_compliant = get_namespace(array)
 
     # store reference to original array to check if copy is needed when
     # function returns
@@ -931,7 +934,7 @@ def check_array(
             )
         )
 
-    if dtype is not None and _is_numpy_namespace(xp):
+    if dtype is not None and xp is not None and _is_numpy_namespace(xp):
         # convert to dtype object to conform to Array API to be use `xp.isdtype` later
         dtype = np.dtype(dtype)
 
