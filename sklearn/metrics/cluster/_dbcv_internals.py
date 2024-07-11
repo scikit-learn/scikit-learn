@@ -102,7 +102,7 @@ def _density_separation(
 
 def _internal_minimum_spanning_tree(mr_distances):
     """
-    Compute the 'internal' minimum spanning tree given a matrix of mutual
+    Compute the 'internal' minimum spanning tree given an array of mutual
     reachability distances. Given a minimum spanning tree the 'internal'
     graph is the subgraph induced by vertices of degree greater than one.
 
