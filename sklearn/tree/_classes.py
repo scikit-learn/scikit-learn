@@ -3,16 +3,8 @@ This module gathers tree-based methods, including decision, regression and
 randomized trees. Single and multi-output problems are both handled.
 """
 
-# Authors: Gilles Louppe <g.louppe@gmail.com>
-#          Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#          Brian Holt <bdholt1@gmail.com>
-#          Noel Dawe <noel@dawe.me>
-#          Satrajit Gosh <satrajit.ghosh@gmail.com>
-#          Joly Arnaud <arnaud.v.joly@gmail.com>
-#          Fares Hedayati <fares.hedayati@gmail.com>
-#          Nelson Liu <nelson@nelsonliu.me>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import copy
 import numbers
@@ -1082,7 +1074,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     def _more_tags(self):
         # XXX: nan is only support for dense arrays, but we set this for common test to
         # pass, specifically: check_estimators_nan_inf
-        allow_nan = self.splitter == "best" and self.criterion in {
+        allow_nan = self.splitter in ("best", "random") and self.criterion in {
             "gini",
             "log_loss",
             "entropy",
@@ -1413,7 +1405,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     def _more_tags(self):
         # XXX: nan is only support for dense arrays, but we set this for common test to
         # pass, specifically: check_estimators_nan_inf
-        allow_nan = self.splitter == "best" and self.criterion in {
+        allow_nan = self.splitter in ("best", "random") and self.criterion in {
             "squared_error",
             "friedman_mse",
             "poisson",
@@ -1694,6 +1686,16 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             monotonic_cst=monotonic_cst,
         )
 
+    def _more_tags(self):
+        # XXX: nan is only supported for dense arrays, but we set this for the
+        # common test to pass, specifically: check_estimators_nan_inf
+        allow_nan = self.splitter == "random" and self.criterion in {
+            "gini",
+            "log_loss",
+            "entropy",
+        }
+        return {"multilabel": True, "allow_nan": allow_nan}
+
 
 class ExtraTreeRegressor(DecisionTreeRegressor):
     """An extremely randomized tree regressor.
@@ -1937,3 +1939,13 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             ccp_alpha=ccp_alpha,
             monotonic_cst=monotonic_cst,
         )
+
+    def _more_tags(self):
+        # XXX: nan is only supported for dense arrays, but we set this for the
+        # common test to pass, specifically: check_estimators_nan_inf
+        allow_nan = self.splitter == "random" and self.criterion in {
+            "squared_error",
+            "friedman_mse",
+            "poisson",
+        }
+        return {"allow_nan": allow_nan}

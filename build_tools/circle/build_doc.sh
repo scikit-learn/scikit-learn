@@ -176,9 +176,6 @@ conda activate $CONDA_ENV_NAME
 
 show_installed_libraries
 
-# Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
-# workers with 2 cores when building the compiled extensions of scikit-learn.
-export SKLEARN_BUILD_PARALLEL=3
 pip install -e . --no-build-isolation
 
 echo "ccache build summary:"

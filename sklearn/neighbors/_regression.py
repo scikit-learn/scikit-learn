@@ -1,13 +1,7 @@
 """Nearest Neighbor Regression."""
 
-# Authors: Jake Vanderplas <vanderplas@astro.washington.edu>
-#          Fabian Pedregosa <fabian.pedregosa@inria.fr>
-#          Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Sparseness support by Lars Buitinck
-#          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
-#          Empty radius support by Andreas Bjerre-Nielsen
-#
-# License: BSD 3 clause (C) INRIA, University of Amsterdam,
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 #                           University of Copenhagen
 
 import warnings
@@ -48,6 +42,10 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
           containing the weights.
 
         Uniform weights are used by default.
+
+        See the following example for a demonstration of the impact of
+        different weighting schemes on predictions:
+        :ref:`sphx_glr_auto_examples_neighbors_plot_regression.py`.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         Algorithm used to compute the nearest neighbors:

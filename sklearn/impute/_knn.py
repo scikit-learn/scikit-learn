@@ -1,6 +1,5 @@
-# Authors: Ashim Bhattarai <ashimb9@gmail.com>
-#          Thomas J Fan <thomasjpfan@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Integral
 
@@ -270,6 +269,7 @@ class KNNImputer(_BaseImputer):
             X,
             accept_sparse=False,
             dtype=FLOAT_DTYPES,
+            force_writeable=True,
             force_all_finite=force_all_finite,
             copy=self.copy,
             reset=False,

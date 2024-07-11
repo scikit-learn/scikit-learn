@@ -1,7 +1,7 @@
 """Matrix factorization with Sparse PCA."""
 
-# Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Integral, Real
 
