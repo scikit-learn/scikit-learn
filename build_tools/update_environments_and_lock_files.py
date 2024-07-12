@@ -129,7 +129,6 @@ build_metadata_list = [
         ],
         "package_constraints": {
             "blas": "[build=mkl]",
-            "pytorch": "1.13",
         },
     },
     {
@@ -180,7 +179,7 @@ build_metadata_list = [
         "channels": ["defaults"],
         "conda_dependencies": remove_from(
             common_dependencies,
-            ["pandas", "threadpoolctl", "pip", "ninja", "meson-python"],
+            ["pandas", "threadpoolctl", "pip", "meson-python"],
         )
         + ["ccache"],
         "package_constraints": {
@@ -192,10 +191,11 @@ build_metadata_list = [
             "cython": "min",
             "joblib": "min",
             "threadpoolctl": "min",
+            "meson-python": "min",
         },
         # TODO: put pip dependencies back to conda dependencies when required
         # version is available on the defaults channel.
-        "pip_dependencies": ["threadpoolctl"],
+        "pip_dependencies": ["threadpoolctl", "meson-python"],
     },
     {
         "name": "pymin_conda_forge_openblas_ubuntu_2204",
@@ -225,10 +225,16 @@ build_metadata_list = [
         "pip_dependencies": (
             remove_from(common_dependencies, ["python", "blas", "pip"])
             + docstring_test_dependencies
+            # Test with some optional dependencies
             + ["lightgbm", "scikit-image"]
+            # Test array API on CPU without PyTorch
+            + ["array-api-compat", "array-api-strict"]
         ),
         "package_constraints": {
-            "python": "3.9",
+            # XXX: we would like to use the latest Python version, but for now using
+            # Python 3.12 makes the CI much slower so we use Python 3.11. See
+            # https://github.com/scikit-learn/scikit-learn/pull/29444#issuecomment-2219550662.
+            "python": "3.11",
         },
     },
     {
@@ -367,6 +373,13 @@ build_metadata_list = [
         ],
         "package_constraints": {
             "python": "3.9",
+            # TODO: this needs to be adapted when matplotlib 3.11 is out. In
+            # the meantime, this avoids a warning in matplotlib 3.9 boxplot
+            # labels has been renamed to tick_labels. Possible options:
+            # - bump minimum matplotlib supported versions to 3.9 at one point
+            # - complicate the example code to do the right thing depending on
+            #   maplotlib version
+            "matplotlib": "<3.9",
         },
     },
     {
