@@ -48,6 +48,13 @@ if [[ "$COVERAGE" == "true" ]]; then
     # report that otherwise hides the test failures and forces long scrolls in
     # the CI logs.
     export COVERAGE_PROCESS_START="$BUILD_SOURCESDIRECTORY/.coveragerc"
+
+    # Use sysmon for Python 3.12 to make statement coverage faster. Note: at
+    # the time of writing (July 2024) this can make branch coverage twice slower.
+    HAS_SYSMON=$(python -c 'import sys; print(sys.version_info >= (3, 12))')
+    if [[ "$HAS_SYSMON" == "True" ]]; then
+        export COVERAGE_CORE=sysmon
+    fi
     TEST_CMD="$TEST_CMD --cov-config='$COVERAGE_PROCESS_START' --cov sklearn --cov-report="
 fi
 
