@@ -259,7 +259,11 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         "min_components": [Interval(Integral, 1, None, closed="left")],
         "max_components": [Interval(Integral, 1, None, closed="left")],
         "n_jobs": [Integral, None],
-        "covariance_type": [StrOptions({"spherical", "diag", "tied", "full", "all"})],
+        "covariance_type": [
+            StrOptions({"spherical", "diag", "tied", "full", "all"}),
+            list,
+            np.ndarray,
+        ],
     }
     _parameter_constraints.pop("n_components")
 
