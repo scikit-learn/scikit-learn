@@ -227,10 +227,6 @@ def test_fit_docstring_attributes(name, Estimator):
     if Estimator.__name__ in ("NMF", "MiniBatchNMF"):
         est.set_params(n_components="auto")
 
-    if Estimator.__name__ == "QuantileRegressor":
-        solver = "highs"
-        est.set_params(solver=solver)
-
     # Low max iter to speed up tests: we are only interested in checking the existence
     # of fitted attributes. This should be invariant to whether it has converged or not.
     if "max_iter" in est.get_params():

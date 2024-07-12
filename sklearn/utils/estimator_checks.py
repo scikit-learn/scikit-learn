@@ -776,11 +776,6 @@ def _set_checking_parameters(estimator):
     if name == "OneHotEncoder":
         estimator.set_params(handle_unknown="ignore")
 
-    if name == "QuantileRegressor":
-        # Avoid warning due to Scipy deprecating interior-point solver
-        solver = "highs"
-        estimator.set_params(solver=solver)
-
     if name in CROSS_DECOMPOSITION:
         estimator.set_params(n_components=1)
 

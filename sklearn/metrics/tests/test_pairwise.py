@@ -288,6 +288,9 @@ def test_pairwise_precomputed_non_negative():
         pairwise_distances(np.full((5, 5), -1), metric="precomputed")
 
 
+_minkowski_kwds = {"w": np.arange(1, 5).astype("double", copy=False), "p": 1}
+
+
 def callable_rbf_kernel(x, y, **kwds):
     # Callable version of pairwise.rbf_kernel.
     K = rbf_kernel(np.atleast_2d(x), np.atleast_2d(y), **kwds)
@@ -299,8 +302,16 @@ def callable_rbf_kernel(x, y, **kwds):
     "func, metric, kwds",
     [
         (pairwise_distances, "euclidean", {}),
-        (pairwise_distances, minkowski, {}),
-        (pairwise_distances, "minkowski", {}),
+        (
+            pairwise_distances,
+            minkowski,
+            _minkowski_kwds,
+        ),
+        (
+            pairwise_distances,
+            "minkowski",
+            _minkowski_kwds,
+        ),
         (pairwise_kernels, "polynomial", {"degree": 1}),
         (pairwise_kernels, callable_rbf_kernel, {"gamma": 0.1}),
     ],
