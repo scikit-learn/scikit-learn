@@ -1,5 +1,4 @@
 [run]
-branch = True
 source = sklearn
 parallel = True
 omit =
