@@ -9,13 +9,8 @@ import numpy as np
 
 from ..base import BaseEstimator, ClusterMixin
 from ..model_selection import GridSearchCV
-from ..utils import check_scalar
-from ..utils._param_validation import (
-    StrOptions,
-    Integral,
-    InvalidParameterError,
-    Interval,
-)
+from ..utils._param_validation import (Integral, Interval,
+                                       InvalidParameterError, StrOptions)
 from ..utils.validation import check_is_fitted
 from . import GaussianMixture
 
