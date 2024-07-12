@@ -33,7 +33,6 @@ from sklearn.utils.estimator_checks import (
     _enforce_estimator_tags_X,
     _enforce_estimator_tags_y,
 )
-from sklearn.utils.fixes import parse_version, sp_version
 
 # walk_packages() ignores DeprecationWarnings, now we need to ignore
 # FutureWarnings
@@ -227,10 +226,6 @@ def test_fit_docstring_attributes(name, Estimator):
     # TODO(1.6): remove (avoid FutureWarning)
     if Estimator.__name__ in ("NMF", "MiniBatchNMF"):
         est.set_params(n_components="auto")
-
-    if Estimator.__name__ == "QuantileRegressor":
-        solver = "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
-        est.set_params(solver=solver)
 
     # Low max iter to speed up tests: we are only interested in checking the existence
     # of fitted attributes. This should be invariant to whether it has converged or not.
