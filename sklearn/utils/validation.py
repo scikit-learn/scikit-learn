@@ -838,7 +838,7 @@ def check_array(
             "https://numpy.org/doc/stable/reference/generated/numpy.matrix.html"
         )
 
-    xp, is_array_api_compliant = get_namespace(array)
+    xp, is_array_api_compliant = get_namespace(array, remove_sparse=True)
 
     # store reference to original array to check if copy is needed when
     # function returns

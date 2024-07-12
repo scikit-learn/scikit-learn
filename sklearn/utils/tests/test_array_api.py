@@ -1,4 +1,3 @@
-import re
 from functools import partial
 
 import numpy
@@ -283,20 +282,10 @@ def test_average_raises_with_invalid_parameters(
         _average(array_in, axis=axis, weights=weights)
 
 
-def test_device_raises_if_no_input():
-    err_msg = re.escape(
-        "At least one input array expected after filtering with remove_none=True, "
-        "remove_types=[str]. Got none. Original types: []."
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        device()
+def test_device_none_if_no_input():
+    assert device() is None
 
-    err_msg = re.escape(
-        "At least one input array expected after filtering with remove_none=True, "
-        "remove_types=[str]. Got none. Original types: [NoneType, str]."
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        device(None, "name")
+    assert device(None, "name") is None
 
 
 def test_device_inspection():

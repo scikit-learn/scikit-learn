@@ -5,6 +5,7 @@ import math
 from functools import wraps
 
 import numpy
+import scipy.sparse as sp
 import scipy.special as special
 
 from .._config import get_config
@@ -140,7 +141,9 @@ def device(*array_list, remove_none=True, remove_types=(str,)):
         *array_list, remove_none=remove_none, remove_types=remove_types
     )
 
-    # Note that _remove_non_arrays ensures that array_list is not empty.
+    if not array_list:
+        return None
+
     device_ = _single_array_device(array_list[0])
 
     # Note: here we cannot simply use a Python `set` as it requires
@@ -448,7 +451,9 @@ class _NumPyAPIWrapper:
 _NUMPY_API_WRAPPER_INSTANCE = _NumPyAPIWrapper()
 
 
-def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
+def _remove_non_arrays(
+    *arrays, remove_none=True, remove_types=(str,), remove_sparse=False
+):
     """Filter arrays to exclude None and/or specific types.
 
     Raise ValueError if no arrays are left after filtering.
@@ -464,6 +469,8 @@ def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
     remove_types : tuple or list, default=(str,)
         Types to ignore in the arrays.
 
+    remove_sparse : book, default=False
+        Whether to ignore sparse arrays.
     Returns
     -------
     filtered_arrays : list
@@ -476,18 +483,16 @@ def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
             continue
         if isinstance(array, remove_types):
             continue
+        if remove_sparse and sp.issparse(array):
+            continue
         filtered_arrays.append(array)
 
-    if not filtered_arrays:
-        raise ValueError(
-            f"At least one input array expected after filtering with {remove_none=}, "
-            f"remove_types=[{', '.join(t.__name__ for t in remove_types)}]. Got none. "
-            f"Original types: [{', '.join(type(a).__name__ for a in arrays)}]."
-        )
     return filtered_arrays
 
 
-def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
+def get_namespace(
+    *arrays, remove_none=True, remove_types=(str,), remove_sparse=False, xp=None
+):
     """Get namespace of arrays.
 
     Introspect `arrays` arguments and return their common Array API compatible
@@ -522,6 +527,9 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     remove_types : tuple or list, default=(str,)
         Types to ignore in the arrays.
 
+    remove_sparse : book, default=False
+        Whether to ignore sparse arrays.
+
     xp : module, default=None
         Precomputed array namespace module. When passed, typically from a caller
         that has already performed inspection of its own inputs, skips array
@@ -548,8 +556,14 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
         return xp, True
 
     arrays = _remove_non_arrays(
-        *arrays, remove_none=remove_none, remove_types=remove_types
+        *arrays,
+        remove_none=remove_none,
+        remove_types=remove_types,
+        remove_sparse=remove_sparse,
     )
+
+    if not arrays:
+        return _NUMPY_API_WRAPPER_INSTANCE, False
 
     _check_array_api_dispatch(array_api_dispatch)
 
@@ -574,7 +588,9 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     return namespace, is_array_api_compliant
 
 
-def get_namespace_and_device(*array_list, remove_none=True, remove_types=(str,)):
+def get_namespace_and_device(
+    *array_list, remove_none=True, remove_types=(str,), remove_sparse=False
+):
     """Combination into one single function of `get_namespace` and `device`.
 
     Parameters
@@ -585,6 +601,8 @@ def get_namespace_and_device(*array_list, remove_none=True, remove_types=(str,))
         Whether to ignore None objects passed in arrays.
     remove_types : tuple or list, default=(str,)
         Types to ignore in the arrays.
+    remove_sparse : book, default=False
+        Whether to ignore sparse arrays.
 
     Returns
     -------
@@ -598,7 +616,10 @@ def get_namespace_and_device(*array_list, remove_none=True, remove_types=(str,))
         `device` object (see the "Device Support" section of the array API spec).
     """
     array_list = _remove_non_arrays(
-        *array_list, remove_none=remove_none, remove_types=remove_types
+        *array_list,
+        remove_none=remove_none,
+        remove_types=remove_types,
+        remove_sparse=remove_sparse,
     )
 
     skip_remove_kwargs = dict(remove_none=False, remove_types=[])
