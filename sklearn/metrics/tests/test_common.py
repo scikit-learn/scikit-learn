@@ -56,8 +56,11 @@ from sklearn.metrics.pairwise import (
     chi2_kernel,
     cosine_similarity,
     euclidean_distances,
+    linear_kernel,
     paired_cosine_distances,
+    polynomial_kernel,
     rbf_kernel,
+    sigmoid_kernel,
 )
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import shuffle
@@ -2017,7 +2020,10 @@ array_api_metric_checkers = {
     max_error: [check_array_api_regression_metric],
     chi2_kernel: [check_array_api_metric_pairwise],
     euclidean_distances: [check_array_api_metric_pairwise],
+    linear_kernel: [check_array_api_metric_pairwise],
+    polynomial_kernel: [check_array_api_metric_pairwise],
     rbf_kernel: [check_array_api_metric_pairwise],
+    sigmoid_kernel: [check_array_api_metric_pairwise],
 }
 
 
