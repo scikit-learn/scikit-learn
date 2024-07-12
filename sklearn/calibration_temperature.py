@@ -463,6 +463,7 @@ class CalibratedClassifierCV_test(ClassifierMixin, MetaEstimatorMixin, BaseEstim
             self.n_features_in_ = first_clf.n_features_in_
         if hasattr(first_clf, "feature_names_in_"):
             self.feature_names_in_ = first_clf.feature_names_in_
+
         return self
 
     def predict_proba(self, X):
@@ -959,6 +960,38 @@ def _row_max_normalization(data: np.ndarray) -> np.ndarray:
     return data - row_max
 
 
+def _additive_smoothing(probabilities: np.ndarray) -> np.ndarray:
+    """Additive Smoothing.
+    Modify the original probability array to avoid numerical instability when
+    applying logarithm.
+
+    This method adjusts probabilities to avoid exact 0 or 1 values by using
+    a fixed transformation. The transformation ensures that probabilities
+    are within a safe range for logarithmic operations.
+
+    For more details, refer to:
+    https://en.wikipedia.org/wiki/Additive_smoothing
+
+    Parameters
+    ----------
+        probabilities : np.ndarray
+            The input 2D numpy array of probabilities.
+
+    Returns
+    -------
+        np.ndarray
+            The smoothed probability array, with values adjusted to avoid 0 and 1.
+    """
+
+    n_classes: int = probabilities.shape[1]
+
+    smooth_probabilities: np.ndarray = (probabilities * (n_classes - 1) + 0.5) / n_classes
+
+    smooth_probabilities = smooth_probabilities.astype(dtype=probabilities.dtype)
+
+    return smooth_probabilities
+
+
 def _softmax_t(predictions: np.ndarray,
                temperature: float,
                ) -> np.ndarray:
@@ -977,16 +1010,9 @@ def _softmax_t(predictions: np.ndarray,
     np.ndarray
         A 2D array of the same shape as `predictions` containing the temperature-scaled
         softmax probabilities.
-
-    Notes
-    -----
-    - This function internally normalizes the predictions by subtracting the row-wise
-      maximum to improve numerical stability before scaling by the temperature.
-    - The softmax computation is done along the last axis of the input predictions.
     """
 
     softmax_t_output: np.ndarray = predictions
-    softmax_t_output = _row_max_normalization(softmax_t_output)
     softmax_t_output /= temperature
     softmax_t_output = softmax(softmax_t_output, axis=1)
     softmax_t_output = softmax_t_output.astype(dtype=predictions.dtype)
@@ -1012,16 +1038,10 @@ def _exp_t(predictions: np.ndarray,
     np.ndarray
         A 2D array of the same shape as `predictions` containing the scaled and
         exponentiated values.
-
-    Notes
-    -----
-    - This function internally normalizes the predictions by subtracting the row-wise
-      maximum to improve numerical stability before scaling by the temperature and
-      applying the exponential function.
     """
 
     exp_t_output: np.ndarray = predictions
-    exp_t_output = _row_max_normalization(exp_t_output)
+    # exp_t_output = _row_max_normalization(exp_t_output)
     exp_t_output /= temperature
     exp_t_output = np.exp(exp_t_output)
 
@@ -1087,14 +1107,16 @@ def _temperature_scaling(predictions: np.ndarray,
         exp_t: np.ndarray = _exp_t(predictions, temperature)
         exp_t_sum = exp_t.sum(axis=1)
 
-        term_1: np.ndarray = _row_max_normalization(predictions)
+        # term_1: np.ndarray = _row_max_normalization(predictions)
+        term_1: np.ndarray = _additive_smoothing(predictions)
         term_1 /= temperature ** 2
         term_1 = - term_1[np.arange(term_1.shape[0]), class_indices]
         term_1 *= exp_t_sum
 
-        term_2: np.ndarray = _row_max_normalization(predictions)
+        # term_2: np.ndarray = _row_max_normalization(predictions)
+        term_2: np.ndarray = _additive_smoothing(predictions)
         term_2 /= temperature ** 2
-        term_2 = _row_max_normalization(term_2)
+        # term_2 = _row_max_normalization(term_2)
         term_2 *= exp_t
         term_2 = term_2.sum(axis=1)
 
@@ -1115,6 +1137,31 @@ def _temperature_scaling(predictions: np.ndarray,
                                                )
 
     return temperature_minimizer.x[0]
+
+
+def _is_predict_proba(X: np.ndarray) -> bool:
+    """
+    Helper function to check if the input array contains probabilities.
+
+    Specifically, it checks if all rows in the array sum to 1 and if all
+    entries are floats between 0 and 1.
+
+    Parameters:
+    ----------
+        np.ndarray: The input 2D numpy array.
+
+    Returns:
+    --------
+        bool: True if the array is likely to be probabilities, False if it is likely to be logits.
+    """
+
+    # Check if all entries are between 0 and 1
+    entries_zero_to_one: bool = np.all((X >= 0) & (X <= 1))
+
+    # Check if each row sums approximately to 1
+    row_sums_to_one: bool = np.all(np.isclose(np.sum(X, axis=1), 1.0))
+
+    return entries_zero_to_one and row_sums_to_one
 
 
 class _TemperatureScaling():
@@ -1161,7 +1208,14 @@ class _TemperatureScaling():
             Returns an instance of self.
         """
 
-        self.T_: float = _temperature_scaling(np.log(X), y, self._initial_temperature)
+        # If X are outputs of `decision_function`
+        # i.e., logits (e.g., SVC(probability=False) )
+        if _is_predict_proba(X):
+            self.T_ = _temperature_scaling(np.log(_additive_smoothing(X)), y, self._initial_temperature)
+
+        # If X are outputs of `predict_proba`
+        else:
+            self.T_ = _temperature_scaling(X, y, self._initial_temperature)
 
         return self
 
@@ -1180,7 +1234,11 @@ class _TemperatureScaling():
             The predicted data.
         """
 
-        return _softmax_t(np.log(X), self.T_)
+        if _is_predict_proba(X):
+            return _softmax_t(np.log(_additive_smoothing(X)), self.T_)
+
+        else:
+            return _softmax_t(X, self.T_)
 
 
 @validate_params(

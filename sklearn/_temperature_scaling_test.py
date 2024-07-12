@@ -5,6 +5,7 @@ Reference: https://github.com/scikit-learn/scikit-learn/issues/28574
 
 The file also includes examples related to developing a temperature scaling method
 for probability calibration in multi-class classification.
+
 '''
 
 from sklearn.calibration_temperature import CalibratedClassifierCV_test
@@ -22,21 +23,37 @@ X_train, X_calib, y_train, y_calib = train_test_split(X, y)
 SV_classifier: SVC = SVC(probability=True)
 Logistic_classifier: LogisticRegression = LogisticRegression()
 Tree_classifier: DecisionTreeClassifier = DecisionTreeClassifier()
+# compare_classifier = DecisionTreeClassifier()
 
 # Initiate the calibrators for the classifiers
-SVC_scaled: CalibratedClassifierCV_test = CalibratedClassifierCV_test(SV_classifier, cv=3, method='temperature')
-Logistic_scaled: CalibratedClassifierCV_test = CalibratedClassifierCV_test(Logistic_classifier, cv=3, method='temperature')
-Tree_scaled: CalibratedClassifierCV_test = CalibratedClassifierCV_test(Tree_classifier, cv=3, method='temperature')
+SVC_scaled: CalibratedClassifierCV_test = CalibratedClassifierCV_test(SV_classifier,
+                                                                      cv=3,
+                                                                      method='temperature'
+                                                                      )
+Logistic_scaled: CalibratedClassifierCV_test = CalibratedClassifierCV_test(Logistic_classifier,
+                                                                           cv=3,
+                                                                           method='temperature'
+                                                                           )
+Tree_scaled: CalibratedClassifierCV_test = CalibratedClassifierCV_test(Tree_classifier,
+                                                                       cv=3,
+                                                                       method='temperature'
+                                                                       )
 
 # Fit all classifier-calibrator pairs
 SVC_scaled.fit(X_train,y_train)
 Logistic_scaled.fit(X_train,y_train)
 Tree_scaled.fit(X_train,y_train)
+# compare_classifier.fit(X_train, y_train)
 
-print(f" Initial temperatureSVC: {SVC_scaled.calibrated_classifiers_[0].calibrators[0]._initial_temperature}")
-
+# print(f" Initial temperatureSVC: {SVC_scaled.calibrated_classifiers_[0].calibrators[0]._initial_temperature}")
 print("Optimal Temperatures For Each Classifiers")
 print(f"- SVC: {SVC_scaled.calibrated_classifiers_[0].calibrators[0].T_}")
 print(f"- Logistic: {Logistic_scaled.calibrated_classifiers_[0].calibrators[0].T_}")
 print(f"- Decision Tree: {Tree_scaled.calibrated_classifiers_[0].calibrators[0].T_}")
 
+print("Printing calibrated probabilities...")
+print(f"{SVC_scaled.predict_proba((X_calib)) = }")
+print(f"{Logistic_scaled.predict_proba((X_calib))=}")
+print(f"{Tree_scaled.predict_proba(X_calib)=}")
+# print(f"{compare_classifier.predict_proba(X_calib)=}")
+print(f"{y_calib=}")
