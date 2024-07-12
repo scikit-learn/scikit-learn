@@ -1154,13 +1154,6 @@ def cosine_distances(X, Y=None):
     return S
 
 
-# def _fill_diagonal_2d(S, val, xp):
-#     assert S.ndim == 2, "_fill_diagonal_2d supports 2D arrays only"
-#     _, m = S.shape
-#     S_flat = xp.reshape(S, (-1,))
-#     S_flat[:: m + 1] = val
-
-
 # Paired distances
 @validate_params(
     {"X": ["array-like", "sparse matrix"], "Y": ["array-like", "sparse matrix"]},
