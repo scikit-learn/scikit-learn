@@ -216,6 +216,17 @@ class NonConsumingClassifier(ClassifierMixin, BaseEstimator):
         y_pred[len(X) // 2 :] = 1
         return y_pred
 
+    def predict_proba(self, X):
+        # dummy probabilities to support predict_proba
+        y_proba = np.empty(shape=(len(X), 2))
+        y_proba[: len(X) // 2, :] = np.asarray([1.0, 0.0])
+        y_proba[len(X) // 2 :, :] = np.asarray([0.0, 1.0])
+        return y_proba
+
+    def predict_log_proba(self, X):
+        # dummy probabilities to support predict_log_proba
+        return self.predict_proba(X)
+
 
 class NonConsumingRegressor(RegressorMixin, BaseEstimator):
     """A classifier which accepts no metadata on any method."""
@@ -293,13 +304,10 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         return y_proba
 
     def predict_log_proba(self, X, sample_weight="default", metadata="default"):
-        pass  # pragma: no cover
-
-        # uncomment when needed
-        # record_metadata_not_default(
-        #     self, sample_weight=sample_weight, metadata=metadata
-        # )
-        # return np.zeros(shape=(len(X), 2))
+        record_metadata_not_default(
+            self, sample_weight=sample_weight, metadata=metadata
+        )
+        return np.zeros(shape=(len(X), 2))
 
     def decision_function(self, X, sample_weight="default", metadata="default"):
         record_metadata_not_default(
