@@ -97,7 +97,7 @@ more details.
 
 - |Feature| :class:`ensemble.AdaBoostClassifier` and :class:`ensemble.AdaBoostRegressor`
   now supports metadata routing.
-  :pr:`28494` by :user:`Adam Li <adam2392>`.
+  :pr:`29472` by :user:`Adam Li <adam2392>`.
 
 Dropping support for building with setuptools
 ---------------------------------------------

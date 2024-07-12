@@ -107,7 +107,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         # AdaBoost*.estimator is not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y, *, sample_weight=None, **fit_params):
+    def fit(self, X, y, *, sample_weight=None, **params):
         """Build a boosted classifier/regressor from the training set (X, y).
 
         Parameters
@@ -123,7 +123,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
             Sample weights. If None, the sample weights are initialized to
             1 / n_samples.
 
-        **fit_params : dict
+        **params : dict
             Parameters to pass to the underlying estimators.
 
             .. versionadded:: 1.6
@@ -139,7 +139,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
-        _raise_for_params(fit_params, self, "fit")
+        _raise_for_params(params, self, "fit")
 
         X, y = self._validate_data(
             X,
@@ -152,14 +152,10 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         )
 
         # sample weight should always be defined and thus is part of
-        # the metadata fit_params.
-        if (
-            sample_weight is None
-            and _routing_enabled()
-            and "sample_weight" in fit_params
-        ):
+        # the metadata params.
+        if sample_weight is None and _routing_enabled() and "sample_weight" in params:
             sample_weight = _check_sample_weight(
-                fit_params["sample_weight"],
+                params["sample_weight"],
                 X,
                 np.float64,
                 copy=True,
@@ -171,17 +167,15 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
             )
 
         sample_weight /= sample_weight.sum()
-        fit_params["sample_weight"] = sample_weight
+        params["sample_weight"] = sample_weight
 
         if _routing_enabled():
-            routed_params = process_routing(self, "fit", **fit_params)
+            routed_params = process_routing(self, "fit", **params)
         else:
             routed_params = Bunch()
-            routed_params.estimator = Bunch(fit=fit_params)
-            if "sample_weight" in fit_params:
-                routed_params.estimator.fit["sample_weight"] = fit_params[
-                    "sample_weight"
-                ]
+            routed_params.estimator = Bunch(fit=params)
+            if "sample_weight" in params:
+                routed_params.estimator.fit["sample_weight"] = params["sample_weight"]
 
         # Check parameters
         self._validate_estimator()
@@ -210,7 +204,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
                 routed_params.estimator.fit["sample_weight"],
                 estimator_weight,
                 estimator_error,
-            ) = self._boost(iboost, X, y, random_state, fit_params)
+            ) = self._boost(iboost, X, y, random_state, params)
 
             # Early termination
             if routed_params.estimator.fit["sample_weight"] is None:
@@ -246,7 +240,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         return self
 
     @abstractmethod
-    def _boost(self, iboost, X, y, random_state, fit_params):
+    def _boost(self, iboost, X, y, random_state, params):
         """Implement a single boost.
 
         Warning: This method needs to be overridden by subclasses.
@@ -266,7 +260,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         random_state : RandomState
             The current random number generator
 
-        fit_params : dict
+        params : dict
             Parameters to pass to the underlying estimators.
 
             .. versionadded:: 1.6
@@ -334,11 +328,19 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
             if sample_weight is not None:
                 routed_params.scorer.score["sample_weight"] = sample_weight
 
+        scorer = self._get_scorer()
         for y_pred in self.staged_predict(X, **routed_params.estimator.staged_predict):
             if is_classifier(self):
-                yield accuracy_score(y, y_pred, **routed_params.scorer.score)
+                yield scorer(y, y_pred, **routed_params.scorer.score)
             else:
-                yield r2_score(y, y_pred, **routed_params.scorer.score)
+                yield scorer(y, y_pred, **routed_params.scorer.score)
+
+    def _get_scorer(self):
+        """Return the default scorer for the estimator."""
+        if is_classifier(self):
+            return accuracy_score
+        else:
+            return r2_score
 
     @property
     def feature_importances_(self):
@@ -397,12 +399,20 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         router = MetadataRouter(owner=self.__class__.__name__)
         router.add(
             estimator=self.estimator,
-            method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+            method_mapping=(
+                MethodMapping()
+                .add(caller="fit", callee="fit")
+                .add(caller="staged_score", callee="staged_predict")
+            ),
+        )
+        router.add(
+            self._get_scorer(),
+            method_mapping=MethodMapping().add(caller="staged_score", callee="score"),
         )
         return router
 
 
-def _samme_proba(estimator, n_classes, X):
+def _samme_proba(estimator, n_classes, X, params):
     """Calculate algorithm 4, step 2, equation c) of Zhu et al [1].
 
     References
@@ -410,7 +420,7 @@ def _samme_proba(estimator, n_classes, X):
     .. [1] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
 
     """
-    proba = estimator.predict_proba(X)
+    proba = estimator.predict_proba(X, **params)
 
     # Displace zero probabilities so the log is defined.
     # Also fix negative elements which may occur with
@@ -636,7 +646,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     # "algorithm" parameter in version 1.6. Thus, a distinguishing function is
     # no longer needed. (Or adjust code here, if another algorithm, shall be
     # used instead of SAMME.R.)
-    def _boost(self, iboost, X, y, random_state, fit_params):
+    def _boost(self, iboost, X, y, random_state, params):
         """Implement a single boost.
 
         Perform a single boost according to the real multi-class SAMME.R
@@ -658,7 +668,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             The RandomState instance used if the base estimator accepts a
             `random_state` attribute.
 
-        fit_params : dict
+        params : dict
             Parameters to pass to the underlying estimators.
 
             .. versionadded:: 1.6
@@ -678,18 +688,18 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             If None then boosting has terminated early.
         """
         if self.algorithm == "SAMME.R":
-            return self._boost_real(iboost, X, y, random_state, fit_params)
+            return self._boost_real(iboost, X, y, random_state, params)
 
         else:  # elif self.algorithm == "SAMME":
-            return self._boost_discrete(iboost, X, y, random_state, fit_params)
+            return self._boost_discrete(iboost, X, y, random_state, params)
 
     # TODO(1.6): Remove function. The `_boost_real` function won't be used any
     # longer, because the SAMME.R algorithm will be deprecated in 1.6.
-    def _boost_real(self, iboost, X, y, random_state, fit_params):
+    def _boost_real(self, iboost, X, y, random_state, params):
         """Implement a single boost using the SAMME.R real algorithm."""
         estimator = self._make_estimator(random_state=random_state)
-        sample_weight = fit_params["sample_weight"]
-        estimator.fit(X, y, **fit_params)
+        sample_weight = params["sample_weight"]
+        estimator.fit(X, y, **params)
 
         # XXX: how do we pass in score params here?
         y_predict_proba = estimator.predict_proba(X)
@@ -745,11 +755,11 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
 
         return sample_weight, 1.0, estimator_error
 
-    def _boost_discrete(self, iboost, X, y, random_state, fit_params):
+    def _boost_discrete(self, iboost, X, y, random_state, params):
         """Implement a single boost using the SAMME discrete algorithm."""
         estimator = self._make_estimator(random_state=random_state)
-        sample_weight = fit_params["sample_weight"]
-        estimator.fit(X, y, **fit_params)
+        sample_weight = params["sample_weight"]
+        estimator.fit(X, y, **params)
 
         y_predict = estimator.predict(X)
 
@@ -911,21 +921,23 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             # metadata routing is enabled.
             routed_params = process_routing(self, "decision_function", **params)
         else:
-            routed_params = Bunch(estimator=Bunch(decision_function={}))
+            routed_params = Bunch()
+            routed_params.estimator = Bunch(predict={}, predict_proba={})
 
         # TODO(1.6): Remove, because "algorithm" param will be deprecated in 1.6
         if self.algorithm == "SAMME.R":
             # The weights are all 1. for SAMME.R
             pred = sum(
-                _samme_proba(estimator, n_classes, X) for estimator in self.estimators_
+                _samme_proba(
+                    estimator, n_classes, X, routed_params.estimator.predict_proba
+                )
+                for estimator in self.estimators_
             )
         else:  # self.algorithm == "SAMME"
             pred = sum(
                 np.where(
                     (
-                        estimator.predict(
-                            X, **routed_params.estimator.decision_function
-                        )
+                        estimator.predict(X, **routed_params.estimator.predict)
                         == classes
                     ).T,
                     w,
@@ -981,7 +993,8 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             # metadata routing is enabled.
             routed_params = process_routing(self, "staged_decision_function", **params)
         else:
-            routed_params = Bunch(estimator=Bunch(predict={}))
+            routed_params = Bunch()
+            routed_params.estimator = Bunch(predict={}, predict_proba={})
 
         n_classes = self.n_classes_
         classes = self.classes_[:, np.newaxis]
@@ -995,13 +1008,13 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             # 1.6
             if self.algorithm == "SAMME.R":
                 # The weights are all 1. for SAMME.R
-                current_pred = _samme_proba(estimator, n_classes, X)
+                current_pred = _samme_proba(
+                    estimator, n_classes, X, routed_params.estimator.predict_proba
+                )
             else:  # elif self.algorithm == "SAMME":
                 current_pred = np.where(
                     (
-                        estimator.predict(
-                            X, **routed_params.estimator.staged_decision_function
-                        )
+                        estimator.predict(X, **routed_params.estimator.predict)
                         == classes
                     ).T,
                     weight,
@@ -1080,9 +1093,9 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             # metadata routing is enabled.
             routed_params = process_routing(self, "predict_proba", **params)
         else:
-            routed_params = Bunch(estimator=Bunch(predict_proba={}))
+            routed_params = Bunch(self=Bunch(decision_function={}))
 
-        decision = self.decision_function(X, **routed_params.estimator.predict_proba)
+        decision = self.decision_function(X, **routed_params.self.decision_function)
         return self._compute_proba_from_decision(decision, n_classes)
 
     def staged_predict_proba(self, X, **params):
@@ -1114,12 +1127,12 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             # metadata routing is enabled.
             routed_params = process_routing(self, "staged_predict_proba", **params)
         else:
-            routed_params = Bunch(estimator=Bunch(staged_predict_proba={}))
+            routed_params = Bunch(self=Bunch(staged_decision_function={}))
 
         n_classes = self.n_classes_
 
         for decision in self.staged_decision_function(
-            X, **routed_params.estimator.staged_predict
+            X, **routed_params.self.staged_decision_function
         ):
             yield self._compute_proba_from_decision(decision, n_classes)
 
@@ -1148,11 +1161,9 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             # metadata routing is enabled.
             routed_params = process_routing(self, "predict_log_proba", **params)
         else:
-            routed_params = Bunch(estimator=Bunch(predict_log_proba={}))
+            routed_params = Bunch(self=Bunch(predict_proba={}))
 
-        return np.log(
-            self.predict_proba(X, **routed_params.estimator.predict_log_proba)
-        )
+        return np.log(self.predict_proba(X, **routed_params.self.predict_proba))
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.
@@ -1171,22 +1182,26 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         router = MetadataRouter(owner=self.__class__.__name__)
         router.add_self_request(self)
         router.add(
+            self._get_scorer(),
+            method_mapping=MethodMapping().add(caller="staged_score", callee="score"),
+        )
+        router.add(
             estimator=self.estimator,
             method_mapping=(
                 MethodMapping()
                 .add(callee="fit", caller="fit")
-                .add(callee="score", caller="fit")
-                .add(callee="predict", caller="predict")
-                .add(callee="predict_proba", caller="predict_proba")
-                .add(callee="decision_function", caller="decision_function")
-                .add(callee="predict_log_proba", caller="predict_log_proba")
+                # .add(callee="predict", caller="predict")
+                # .add(callee="staged_predict", caller="staged_predict")
+                .add(callee="predict", caller="decision_function")
+                .add(callee="predict_proba", caller="decision_function")
+                .add(callee="predict", caller="staged_decision_function")
+                .add(callee="predict_proba", caller="staged_decision_function")
+                # .add(callee="predict_proba", caller="predict_proba")
+                # .add(callee="decision_function", caller="predict_proba")
+                # .add(callee="staged_predict_proba", caller="staged_predict_proba")
+                # .add(callee="predict_log_proba", caller="predict_log_proba")
                 .add(callee="score", caller="score")
                 .add(callee="staged_score", caller="staged_score")
-                .add(callee="staged_predict", caller="staged_predict")
-                .add(callee="staged_predict_proba", caller="staged_predict_proba")
-                .add(
-                    callee="staged_decision_function", caller="staged_decision_function"
-                )
             ),
         )
         return router
@@ -1437,10 +1452,10 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
 
         return sample_weight, estimator_weight, estimator_error
 
-    def _get_median_predict(self, X, limit, **predict_params):
+    def _get_median_predict(self, X, limit, **params):
         # Evaluate predictions of all estimators
         predictions = np.array(
-            [est.predict(X, **predict_params) for est in self.estimators_[:limit]]
+            [est.predict(X, **params) for est in self.estimators_[:limit]]
         ).T
 
         # Sort the predictions
@@ -1560,12 +1575,12 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
             estimator=self.estimator,
             method_mapping=(
                 MethodMapping()
-                .add(callee="fit", caller="fit")
-                .add(callee="score", caller="fit")
-                .add(callee="predict", caller="predict")
-                .add(callee="score", caller="score")
-                .add(callee="staged_predict", caller="staged_predict")
-                .add(callee="staged_score", caller="staged_score")
+                .add(caller="fit", callee="fit")
+                .add(caller="score", callee="fit")
+                .add(caller="predict", callee="predict")
+                .add(caller="score", callee="score")
+                .add(caller="staged_predict", callee="staged_predict")
+                .add(caller="staged_score", callee="staged_score")
             ),
         )
         return router
