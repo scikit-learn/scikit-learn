@@ -10,7 +10,12 @@ import numpy as np
 from ..base import BaseEstimator, ClusterMixin
 from ..model_selection import GridSearchCV
 from ..utils import check_scalar
-from ..utils._param_validation import StrOptions
+from ..utils._param_validation import (
+    StrOptions,
+    Integral,
+    InvalidParameterError,
+    Interval,
+)
 from ..utils.validation import check_is_fitted
 from . import GaussianMixture
 
@@ -20,15 +25,19 @@ def _check_multi_comp_inputs(input, name, default):
         input = list(np.unique(input))
     elif isinstance(input, str):
         if input not in default:
-            raise ValueError(f"{name} is {input} but must be one of {default}.")
+            raise InvalidParameterError(
+                f"The '{name}' parameter of GaussianMixtureIC must be one of {default}."
+                f" Got {input} instead."
+            )
         if input != "all":
             input = [input]
         else:
             input = default.copy()
             input.remove("all")
     else:
-        raise TypeError(
-            f"{name} is a {type(input)} but must be a numpy array, a list, or a string."
+        raise InvalidParameterError(
+            f"The '{name}' parameter of GaussianMixtureIC must be one of {default}. "
+            f"Got {input} instead."
         )
     return input
 
@@ -153,6 +162,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
     labels_ : ndarray of shape (n_samples,)
         Labels of each point.
 
+
     See Also
     --------
     GaussianMixture : Fit Gaussian mixture model.
@@ -196,57 +206,59 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
     _parameter_constraints: dict = {
         **GaussianMixture._parameter_constraints,
         "criterion": [StrOptions({"aic", "bic"})],
+        "min_components": [Interval(Integral, 1, None, closed="left")],
+        "max_components": [Interval(Integral, 1, None, closed="left")],
+        "n_jobs": [Integral, None],
+        "covariance_type": [StrOptions({"spherical", "diag", "tied", "full", "all"})],
     }
+    _parameter_constraints.pop("n_components")
 
     def __init__(
         self,
+        *,
         min_components=2,
         max_components=10,
-        covariance_type="all",
+        covariance_type="full",
         n_init=1,
         init_params="kmeans",
-        max_iter=100,
-        verbose=0,
         criterion="bic",
         n_jobs=None,
+        tol=1e-3,
+        reg_covar=1e-6,
+        weights_init=None,
+        means_init=None,
+        precisions_init=None,
+        random_state=None,
+        warm_start=False,
+        max_iter=100,
+        verbose=0,
+        verbose_interval=10,
     ):
+        super().__init__()
+        self.covariance_type = covariance_type
         self.min_components = min_components
         self.max_components = max_components
-        self.covariance_type = covariance_type
-        self.n_init = n_init
-        self.init_params = init_params
-        self.max_iter = max_iter
-        self.verbose = verbose
         self.criterion = criterion
         self.n_jobs = n_jobs
+        self.n_init = n_init
+        self.init_params = init_params
+        self.tol = tol
+        self.reg_covar = reg_covar
+        self.weights_init = weights_init
+        self.means_init = means_init
+        self.precisions_init = precisions_init
+        self.random_state = random_state
+        self.warm_start = warm_start
+        self.max_iter = max_iter
+        self.verbose = verbose
+        self.verbose_interval = verbose_interval
 
     def _check_parameters(self):
-        check_scalar(
-            self.min_components,
-            min_val=1,
-            max_val=self.max_components,
-            name="min_components",
-            target_type=int,
-        )
-        check_scalar(
-            self.max_components,
-            min_val=self.min_components,
-            name="max_components",
-            target_type=int,
-        )
-
         covariance_type = _check_multi_comp_inputs(
             self.covariance_type,
             "covariance_type",
             ["spherical", "diag", "tied", "full", "all"],
         )
-
-        check_scalar(self.n_init, name="n_init", target_type=int, min_val=1)
-
-        if self.criterion not in ["aic", "bic"]:
-            raise ValueError(
-                f'criterion is {self.criterion} but must be "aic" or "bic".'
-            )
 
         return covariance_type
 
@@ -264,8 +276,8 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
 
         Returns
         -------
-        self : object
-            Returns an instance of self.
+        score : float
+            The BIC or AIC score.
         """
         if self.criterion == "bic":
             return -estimator.bic(X)
@@ -294,6 +306,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         self : object
             Returns an instance of self.
         """
+        self._validate_params()
         covariance_type = self._check_parameters()
         X = self._validate_data(X, dtype=[np.float64, np.float32], ensure_min_samples=1)
 
@@ -302,6 +315,10 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
             msg = "max_components must be <= n_samples, but max_components"
             msg += "= {}, n_samples = {}".format(self.max_components, X.shape[0])
             raise ValueError(msg)
+
+        # Ensure reproducibility
+        if self.random_state is not None:
+            np.random.seed(self.random_state)
 
         param_grid = {
             "covariance_type": covariance_type,
