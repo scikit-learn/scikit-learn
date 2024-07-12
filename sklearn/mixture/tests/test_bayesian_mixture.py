@@ -118,7 +118,7 @@ def test_bayesian_mixture_precisions_prior_initialisation():
     )
     msg = (
         "The parameter 'degrees_of_freedom_prior' should be greater than"
-        f" {n_features - 1}, but got {bad_degrees_of_freedom_prior_:.3f}."
+        f" {n_features -1}, but got {bad_degrees_of_freedom_prior_:.3f}."
     )
     with pytest.raises(ValueError, match=msg):
         bgmm.fit(X)

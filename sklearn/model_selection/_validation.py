@@ -844,9 +844,9 @@ def _fit_and_score(
     progress_msg = ""
     if verbose > 2:
         if split_progress is not None:
-            progress_msg = f" {split_progress[0] + 1}/{split_progress[1]}"
+            progress_msg = f" {split_progress[0]+1}/{split_progress[1]}"
         if candidate_progress and verbose > 9:
-            progress_msg += f"; {candidate_progress[0] + 1}/{candidate_progress[1]}"
+            progress_msg += f"; {candidate_progress[0]+1}/{candidate_progress[1]}"
 
     if verbose > 1:
         if parameters is None:
