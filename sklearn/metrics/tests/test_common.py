@@ -54,6 +54,7 @@ from sklearn.metrics._base import _average_binary_score
 from sklearn.metrics.pairwise import (
     additive_chi2_kernel,
     chi2_kernel,
+    cosine_distances,
     cosine_similarity,
     euclidean_distances,
     paired_cosine_distances,
@@ -2016,6 +2017,7 @@ array_api_metric_checkers = {
     mean_gamma_deviance: [check_array_api_regression_metric],
     max_error: [check_array_api_regression_metric],
     chi2_kernel: [check_array_api_metric_pairwise],
+    cosine_distances: [check_array_api_metric_pairwise],
     euclidean_distances: [check_array_api_metric_pairwise],
     rbf_kernel: [check_array_api_metric_pairwise],
 }
