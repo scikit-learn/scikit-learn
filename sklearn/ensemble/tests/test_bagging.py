@@ -2,8 +2,8 @@
 Testing for the bagging ensemble module (sklearn.ensemble.bagging).
 """
 
-# Author: Gilles Louppe
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 from itertools import cycle, product
 
 import joblib
