@@ -1150,15 +1150,15 @@ def cosine_distances(X, Y=None):
     if X is Y or Y is None:
         # Ensure that distances between vectors and themselves are set to 0.0.
         # This may not be the case due to floating point rounding errors.
-        _fill_diagonal_2d(S, 0.0, xp)
+        _fill_or_add_to_diagonal(S, 0.0, xp, add_value=False)
     return S
 
 
-def _fill_diagonal_2d(S, val, xp):
-    assert S.ndim == 2, "_fill_diagonal_2d supports 2D arrays only"
-    _, m = S.shape
-    S_flat = xp.reshape(S, (-1,))
-    S_flat[:: m + 1] = val
+# def _fill_diagonal_2d(S, val, xp):
+#     assert S.ndim == 2, "_fill_diagonal_2d supports 2D arrays only"
+#     _, m = S.shape
+#     S_flat = xp.reshape(S, (-1,))
+#     S_flat[:: m + 1] = val
 
 
 # Paired distances
