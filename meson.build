@@ -3,7 +3,7 @@ project(
   'c', 'cpp', 'cython',
   version: run_command('sklearn/_build_utils/version.py', check: true).stdout().strip(),
   license: 'BSD-3',
-  meson_version: '>= 1.1.0',
+  meson_version: '>= 1.5.0',
   default_options: [
     'buildtype=debugoptimized',
     'c_std=c17',
