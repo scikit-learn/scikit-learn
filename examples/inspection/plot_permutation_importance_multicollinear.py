@@ -66,7 +66,6 @@ import pandas as pd
 
 mdi_importances = pd.Series(clf.feature_importances_, index=X_train.columns)
 tree_importance_sorted_idx = np.argsort(clf.feature_importances_)
-tree_indices = np.arange(0, len(clf.feature_importances_)) + 0.5
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 8))
 mdi_importances.sort_values().plot.barh(ax=ax1)
