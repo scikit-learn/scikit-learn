@@ -63,7 +63,7 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         The maximum number of mixture components to consider.
         Must be greater than or equal to ``min_components``.
 
-    covariance_type : {'full', 'tied', 'diag', 'spherical', 'all' (default)},
+    covariance_type : {'full' (default), 'tied', 'diag', 'spherical', 'all'},
             optional
         String or list/array describing the type of covariance parameters
         to use.
@@ -91,14 +91,6 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         The method used to initialize the weights, the means and the precisions
         for Gaussian mixture modeling.
 
-    max_iter : int, optional (default = 100)
-        The maximum number of EM iterations to perform.
-
-    verbose : int, optional (default = 0)
-        Enable verbose output. If 1 then it prints the current initialization
-        and each iteration step. If greater than 1 then it prints also
-        the log probability and the time needed for each step.
-
     criterion : str {"bic" or "aic"}, optional, (default = "bic")
         Select the best model based on Bayesian Information Criterion (bic) or
         Aikake Information Criterion (aic).
@@ -106,6 +98,62 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
     n_jobs : int
         The number of jobs to use for the computation
         This works by computing each of the n_init runs in parallel.
+
+    tol : float, default=1e-3
+        The convergence threshold. EM iterations will stop when the
+        lower bound average gain is below this threshold.
+
+    reg_covar : float, default=1e-6
+        Non-negative regularization added to the diagonal of covariance.
+        Allows to assure that the covariance matrices are all positive.
+
+    weights_init : array-like of shape (n_components, ), default=None
+        The user-provided initial weights.
+        If it is None, weights are initialized using the `init_params` method.
+
+    means_init : array-like of shape (n_components, n_features), default=None
+        The user-provided initial means,
+        If it is None, means are initialized using the `init_params` method.
+
+    precisions_init : array-like, default=None
+        The user-provided initial precisions (inverse of the covariance
+        matrices).
+        If it is None, precisions are initialized using the 'init_params'
+        method.
+        The shape depends on 'covariance_type'::
+
+            (n_components,)                        if 'spherical',
+            (n_features, n_features)               if 'tied',
+            (n_components, n_features)             if 'diag',
+            (n_components, n_features, n_features) if 'full'
+
+    random_state : int, RandomState instance or None, default=None
+        Controls the random seed given to the method chosen to initialize the
+        parameters (see `init_params`).
+        In addition, it controls the generation of random samples from the
+        fitted distribution (see the method `sample`).
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
+
+    warm_start : bool, default=False
+        If 'warm_start' is True, the solution of the last fitting is used as
+        initialization for the next call of fit(). This can speed up
+        convergence when fit is called several times on similar problems.
+        In that case, 'n_init' is ignored and only a single initialization
+        occurs upon the first call.
+        See :term:`the Glossary <warm_start>`.
+
+    max_iter : int, optional (default = 100)
+        The maximum number of EM iterations to perform.
+
+    verbose : int, default=0
+        Enable verbose output. If 1 then it prints the current
+        initialization and each iteration step. If greater than 1 then
+        it prints also the log probability and the time needed
+        for each step.
+
+    verbose_interval : int, default=10
+        Number of iteration done before the next print.
 
     Attributes
     ----------
@@ -143,13 +191,17 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         for the model with the best bic/aic.
         See :class:`~sklearn.mixture.GaussianMixture` for details.
 
-    converged_: bool
-        True when convergence was reached in :term:`fit` for the model
+    converged_ : bool
+        True only when convergence was reached in :term:`fit` for the model
         with the best bic/aic, False otherwise.
 
     n_iter_ : int
         Number of step used by the best fit of EM for the best model
         to reach the convergence.
+
+    lower_bound_ : float
+        Lower bound value on the log-likelihood (of the training data with
+        respect to the model) of the best fit of EM.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -160,7 +212,6 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
 
     labels_ : ndarray of shape (n_samples,)
         Labels of each point.
-
 
     See Also
     --------
