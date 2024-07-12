@@ -22,27 +22,6 @@ engineering.
 # Analyzing the Bike Sharing Demand dataset
 # -----------------------------------------
 #
-# We start by loading the data from the OpenML repository
-# as a pandas dataframe. This will be replaced with Polars
-# once `fetch_openml` adds a native support for it.
-# We convert to Polars for feature engineering, as it automatically caches
-# common subexpressions which are reused in multiple expressions
-# (like `pl.col("count").shift(1)` below). See
-# https://docs.pola.rs/user-guide/lazy/optimizations/ for more information.
-
-import numpy as np
-import polars as pl
-
-from sklearn.datasets import fetch_openml
-
-pl.Config.set_fmt_str_lengths(20)
-
-bike_sharing = fetch_openml(
-    "Bike_Sharing_Demand", version=2, as_frame=True, parser="pandas"
-)
-df = bike_sharing.frame
-df = pl.DataFrame({col: df[col].to_numpy() for col in df.columns})
-== == == =
 # We start by loading the data from the OpenML repository as a raw parquet file
 # to illustrate how to work with an arbitrary parquet file instead of hiding this
 # step in a convenience tool such as `sklearn.datasets.fetch_openml`.
@@ -287,11 +266,7 @@ for quantile in quantile_list:
     time = cv_results["fit_time"]
     scores["fit_time"].append(f"{time.mean():.2f} ± {time.std():.2f} s")
 
-<< << << < HEAD
     scores["loss"].append(f"quantile {int(quantile * 100)}")
-== == == =
-    scores["loss"].append(f"quantile {int(quantile * 100)}")
->> >> >> > upstream / main
     for key, value in cv_results.items():
         if key.startswith("test_"):
             metric = key.split("test_")[1]
