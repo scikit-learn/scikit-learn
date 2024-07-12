@@ -134,22 +134,23 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         printed as it is completed.
 
     verbose_feature_names_out : bool, str or Callable[[str, str], str], default=True
-        If True, :meth:`ColumnTransformer.get_feature_names_out` will prefix
-        all feature names with the name of the transformer that generated that
-        feature. It is equivalent to setting
-        `verbose_feature_names_out="{transformer_name}__{feature_name}"`.
-        If False, :meth:`ColumnTransformer.get_feature_names_out` will not
-        prefix any feature names and will error if feature names are not
-        unique.
-        If Callable[[str, str], str], :meth:`ColumnTransformer.get_feature_names_out`
-        will rename all the features using the name of the transformer. The
-        first argument of the callable is the transformer name and the
-        second argument is the feature name. The returned string will be the
-        new feature name.
-        If str, it must be a string ready for formatting. The given string will
-        be formatted using two field names: transformer_name and feature_name.
-        e.g. "{feature_name}__{transformer_name}".
-        See str.format method from the standard library for more info.
+
+        - If True, :meth:`ColumnTransformer.get_feature_names_out` will prefix
+          all feature names with the name of the transformer that generated that
+          feature. It is equivalent to setting
+          `verbose_feature_names_out="{transformer_name}__{feature_name}"`.
+        - If False, :meth:`ColumnTransformer.get_feature_names_out` will not
+          prefix any feature names and will error if feature names are not
+          unique.
+        - If ``Callable[[str, str], str]``,
+          :meth:`ColumnTransformer.get_feature_names_out` will rename all the features
+          using the name of the transformer. The first argument of the callable is the
+          transformer name and the second argument is the feature name. The returned
+          string will be the new feature name.
+        - If ``str``, it must be a string ready for formatting. The given string will
+          be formatted using two field names: ``transformer_name`` and ``feature_name``.
+          e.g. ``"{feature_name}__{transformer_name}"``. See :meth:`str.format` method
+          from the standard library for more info.
 
         .. versionadded:: 1.0
 
