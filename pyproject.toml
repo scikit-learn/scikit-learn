@@ -1,6 +1,6 @@
 [project]
 name = "scikit-learn"
-version = "1.5.1"
+dynamic = ["version"]
 description = "A set of python modules for machine learning and data mining"
 readme = "README.rst"
 maintainers = [
