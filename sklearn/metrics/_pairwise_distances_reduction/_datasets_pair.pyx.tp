@@ -98,11 +98,11 @@ cdef class DatasetsPair{{name_suffix}}:
             metric_kwargs = copy.copy(metric_kwargs)
             metric_kwargs.pop("X_norm_squared", None)
             metric_kwargs.pop("Y_norm_squared", None)
-
+     
         if metric == 'precomputed':
-            return PrecomputedDistanceMatrix{{name_suffix}}(
+            return PrecomputedDistanceMatrix{name_suffix}}(
                 distance_matrix=Y,
-            )
+            ) 
 
         cdef:
             {{DistanceMetric}} distance_metric = DistanceMetric.get_metric(
@@ -172,7 +172,8 @@ cdef class PrecomputedDistanceMatrix{{name_suffix}}(DatasetsPair{{name_suffix}})
     Parameters
     ----------
     distance_matrix: ndarray of shape (n_samples_X, n_samples_Y)
-        Rows represent vectors. Must be C-contiguous.
+        Rows represent vectors. Must be C-contiguous. 
+        Indicates precomputed distance.
     """
 
     def __init__(
@@ -197,13 +198,14 @@ cdef class PrecomputedDistanceMatrix{{name_suffix}}(DatasetsPair{{name_suffix}})
         return self.distance_matrix.shape[1]
 
     @final
-    cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) noexcept nogil:
+    cdef DTYPE_t precomputed_distance(self, ITYPE_t i, ITYPE_t j) noexcept nogil:
         return self.distance_matrix[i, j]
 
-    @final
-    cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) noexcept nogil:
-        return self.distance_matrix[i, j]
-
+    #TODO: comment out if same as above
+    #@final
+    #cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) noexcept nogil:
+    #    return self.distance_matrix[i, j]
+    
 
 @final
 cdef class DenseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):

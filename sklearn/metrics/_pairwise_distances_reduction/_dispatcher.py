@@ -27,7 +27,7 @@ from ._radius_neighbors_classmode import (
     RadiusNeighborsClassMode32,
     RadiusNeighborsClassMode64,
 )
-
+from ._datasets_pair import PrecomputedDistanceMatrix
 
 def sqeuclidean_row_norms(X, num_threads):
     """Compute the squared euclidean norm of the rows of X in parallel.
@@ -418,6 +418,9 @@ class RadiusNeighbors(BaseDistancesReductionDispatcher):
         for the concrete implementation are therefore freed when this classmethod
         returns.
         """
+        if metric == 'precomputed':
+            return PrecomputedDistanceMatrix.precomputed_distance()
+        
         if X.dtype == Y.dtype == np.float64:
             return RadiusNeighbors64.compute(
                 X=X,
@@ -575,6 +578,9 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
         for the concrete implementation are therefore freed when this classmethod
         returns.
         """
+        if metric == "precomputed":
+            return PrecomputedDistanceMatrix.precomputed_distance()
+        
         if weights not in {"uniform", "distance"}:
             raise ValueError(
                 "Only the 'uniform' or 'distance' weights options are supported"
