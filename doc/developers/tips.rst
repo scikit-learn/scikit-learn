@@ -242,6 +242,57 @@ PR: Don't change unrelated
 
     Please do not change unrelated lines. It makes your contribution harder to review and may introduce merge conflicts to other pull requests.
 
+.. _debugging_ci_issues:
+
+Debugging CI issues
+-------------------
+
+CI issues may arise for a variety of reasons, so this is by no means a
+comprehensive guide, but rather a list of useful tips and tricks.
+
+Using a lock-file to get an environment close to the CI
++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+`conda-lock` can be used to create a conda environment with the exact same
+conda and pip packages as on the CI. For example, the following command will
+create a conda environment named `scikit-learn-doc` that is similar to the CI:
+
+.. prompt:: bash $
+
+    conda-lock install -n scikit-learn-doc build_tools/circle/doc_linux-64_conda.lock
+
+.. note::
+
+    It only works if you have the same OS as the CI build (check `platform:` in
+    the lock-file). For example, the previous command will only work if you are
+    on a Linux machine. Also this may not allow you to reproduce some of the
+    issues that are more tied to the particularities of the CI environment, for
+    example CPU architecture reported by OpenBLAS in `sklearn.show_versions()`.
+
+If you don't have the same OS as the CI build you can still create a conda
+environment from the right environment yaml file, although it won't be as close
+as the CI environment as using the associated lock-file. For example for the
+doc build:
+
+.. prompt:: bash $
+
+    conda env create -n scikit-learn-doc -f build_tools/circle/doc_environment.yml -y
+
+This may not give you exactly the same package versions as in the CI for a
+variety of reasons, for example:
+
+- some packages may have had new releases between the time the lock files were
+  last updated in the `main` branch and the time you run the `conda create`
+  command. You can always try to look at the version in the lock-file and
+  specify the versions by hand for some specific packages that you think would
+  help reproducing the issue.
+- different packages may be installed by default depending on the OS. For
+  example, the default BLAS library when installing numpy is OpenBLAS on Linux
+  and MKL on Windows.
+
+Also the problem may be OS specific so the only way to be able to reproduce
+would be to have the same OS as the CI build.
+
 .. highlight:: default
 
 Debugging memory errors in Cython with valgrind
