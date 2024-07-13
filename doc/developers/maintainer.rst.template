@@ -127,7 +127,7 @@ Reference Steps
         {%- if key != "rc" %}
         * [ ] Update SECURITY.md in main branch
         {%- endif %}
-    
+
     {% if key != "rc" %}
     - Rebase this PR from the `{{ version }}.X` branch:
 
@@ -264,13 +264,13 @@ Reference Steps
         `test.pypi.org` first.
 
         .. prompt:: bash
-        
+
           twine upload --verbose --repository-url https://test.pypi.org/legacy/ dist/*
 
         Then upload everything at once to `pypi.org`.
 
         .. prompt:: bash
-        
+
           twine upload dist/*
 
     {% if key == "finale" %}
