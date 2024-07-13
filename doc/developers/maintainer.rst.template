@@ -4,26 +4,40 @@ Maintainer Information
 Releasing
 ---------
 
-This section is about preparing a major release, a release candidate (RC), or a minor
-release (also known as a bug-fix release). Our convention is that we release one or more
-release candidates (0.RRrcN) before releasing the final distributions. We follow `PEP101
-<https://www.python.org/dev/peps/pep-0101/>`_ to indicate different types of releases.
+This section is about preparing a major/minor release, a release candidate (RC), or a
+bug-fix release. We follow `PEP440 <https://www.python.org/dev/peps/pep-0440/>`_ for
+the version scheme and to indicate different types of releases. Our convention is to
+follow the "major.minor.micro" scheme, although in practice there is no fundamental
+difference between major and minor releases and micro releases are bug-fix releases.
+
+We adopted the following release schedule:
+
+- Major/Minor releases every 6 months, usually in May and November. These releases
+  are numbered `X.Y.0` and are preceded by one or more release candidates `X.Y.0rcN`.
+- Bug-fix releases are done as needed between major/minor releases and only apply to
+  the last stable version. These releases are numbered `X.Y.Z`.
 
 .. rubric:: Preparation
 
 - Confirm that all blockers tagged for the milestone have been resolved, and that other
   issues tagged for the milestone can be postponed.
 
+- Make sure the deprecations, FIXMEs, and TODOs tagged for the release have been taken
+  care of.
+
+- For major/minor final releases, make sure that a Release Highlights page as been done
+  as a runnable example and check that its HTML rendering looks correct. It should be
+  linked from the what's new file for the new version of scikit-learn.
+
 - Ensure that the changelog and commits correspond, and that the changelog is reasonably
-  well curated. Some tools for these tasks include:
+  well curated. In particular, make sure that the changelog entries are labeled and
+  ordered within each section. The order of the labels should be `|MajorFeature|`,
+  `|Feature|`, `|Efficiency|`, `|Enhancement|`, `|Fix|`, and `|API|`.
 
   - `maint_tools/sort_whats_new.py` can put what's new entries into sections. It is
     however not perfect and requires manual checking of the changes.
   - `maint_tools/whats_missing.sh` can be used to identify pull requests that were
     merged but likely missing from the changelog.
-
-- Make sure the deprecations, FIXMEs, and TODOs tagged for the release have been taken
-  care of.
 
 .. rubric:: Permissions
 
@@ -42,19 +56,19 @@ Reference Steps
 
 .. tab-set::
 
-  {% for key in ["rc", "major", "minor"] %}
+  {% for key in ["rc", "finale", "bf"] %}
   {%- if key == "rc" -%}
-    {%- set title = "RC" -%}
+    {%- set title = "Major/Minor RC" -%}
     {%- set release = "1.6.0rc1" -%}
     {%- set version = "1.6" -%}
     {%- set prev_version = "1.5" -%}
-  {%- elif key == "major" -%}
-    {%- set title = "Major" -%}
+  {%- elif key == "finale" -%}
+    {%- set title = "Major/Minor Finale" -%}
     {%- set release = "1.6.0" -%}
     {%- set version = "1.6" -%}
     {%- set prev_version = "1.5" -%}
   {%- else -%}
-    {%- set title = "Minor" -%}
+    {%- set title = "Bug-fix" -%}
     {%- set release = "1.5.1" -%}
     {%- set version = "1.5" -%}
     {%- set prev_version = "1.4" -%}
@@ -66,10 +80,16 @@ Reference Steps
     Suppose that we are preparing the release `{{ release }}`.
 
     {% if key == "rc" %}
+    .. note::
+
+      The first RC ideally counts as a **feature freeze**. Each coming release candidate
+      and the final release afterwards should include only minor documentation changes
+      and bug fixes. Any major enhancement or new feature should be excluded.
+
     - Create the release branch `{{ version }}.X` directly in the main repository, where
-      `X` is really the letter X, **not a placeholder**. The development for the major
-      and minor releases of `{{ version }}` should also happen under this branch with
-      different tags.
+      `X` is really the letter X, **not a placeholder**. The development for the finale
+      and subsequent bug-fix releases of `{{ version }}` should also happen under this
+      branch with different tags.
 
       .. prompt:: bash
 
@@ -87,6 +107,9 @@ Reference Steps
 
         * [ ] Update news and what's new date in release branch
         * [ ] Update news and what's new date and sklearn dev0 version in main branch
+        {%- if key == "rc" %}
+        * [ ] Update the sklearn dev0 version in main branch
+        {%- endif %}
         * [ ] Check that the wheels for the release can be built successfully
         * [ ] Merge the PR with `[cd build]` commit message to upload wheels to the staging repo
         * [ ] Upload the wheels and source tarball to https://test.pypi.org
@@ -98,14 +121,14 @@ Reference Steps
         * [ ] Publish to https://github.com/scikit-learn/scikit-learn/releases
         {%- endif %}
         * [ ] Announce on mailing list and on Twitter, and LinkedIn
-        {%- if key == "major" %}
+        {%- if key == "finale" %}
         * [ ] Update symlink for stable in https://github.com/scikit-learn/scikit-learn.github.io
         {%- endif %}
         {%- if key != "rc" %}
         * [ ] Update SECURITY.md in main branch
         {%- endif %}
     
-    {% if key == "minor" %}
+    {% if key != "rc" %}
     - Rebase this PR from the `{{ version }}.X` branch:
 
       .. prompt:: bash
@@ -117,15 +140,12 @@ Reference Steps
       rebase with at least someone else (to not forget something and to avoid doubts).
 
       - Do not remove lines but drop commit by replacing `pick` with `drop`.
-      - Commits to pick for a minor (bug-fix) release are *generally* prefixed with
-        `FIX`, `CI`, and `DOC`. They should at least include all the commits of the
-        merged PRs that were milestoned for this release and/or documented as such in
-        the changelog. It is likely that some bug fixes were documented in the changelog
-        of the next major release, in which case, the matching changelog entries will
-        need to be moved, first in `main` then backported in this release PR.
-      - Commits to `drop` for a minor (bug-fix) release are *generally* prefixed with
-        `FEAT`, `MAINT`, `ENH`, and `API`. Reasons for not including them is to prevent
-        change of behavior (which should only happen in major releases).
+      - Commits to pick for a bug-fix release are *generally* prefixed with `FIX`, `CI`,
+        and `DOC`. They should at least include all the commits of the merged PRs that
+        were milestoned for this release and/or documented as such in the changelog.
+      - Commits to `drop` for a bug-fix release are *generally* prefixed with `FEAT`,
+        `MAINT`, `ENH`, and `API`. Reasons for not including them is to prevent change
+        of behavior (which should only happen in major/minor releases).
       - After having dropped or picked commits, **do not exit** but paste the content of
         the `git-rebase-todo` message in the PR. This file is located at
         `.git/rebase-merge/git-rebase-todo`.
@@ -133,12 +153,23 @@ Reference Steps
         necessary.
     {% endif %}
 
-    - Change the version numbers `__version__` in `sklearn/__init__.py` and `version` in
-      `pyproject.toml` to `{{ release }}`.
+    {% if key == "rc" %}
+    - Create a PR from `main` and targeting `main` to increment the `__version__`
+      variable in `sklearn/__init__.py` to increment the dev0 version. This means while
+      we are in the release candidate period, the latest stable is two version behind
+      the `main` branch, instead of one. In this PR targeting `main`, you should also
+      include a new what's new file under the `doc/whats_new/` directory so PRs that
+      target the next version can contribute their changelog entries to this file in
+      parallel to the release process.
+    {% endif %}
+
+    - In the `{{ version }}.X` branch, change the version numbers `__version__` in
+      `sklearn/__init__.py` to `{{ release }}`.
 
     {% if key != "rc" %}
-    - Edit `doc/whats_new/v{{ version }}.rst` to update the release date
-      {%- if key == "major" %}, link the release highlights example,{% endif %}
+    - In the `main` branch, edit `doc/whats_new/v{{ version }}.rst` to update the
+      release date
+      {%- if key == "finale" %}, link the release highlights example,{% endif %}
       and add the list of contributor names. You can retrieve the list of contributor
       names with the following command, replacing `${PREVIOUS_RELEASE_TAG}` with the tag
       of the last release in version `{{ prev_version }}`:
@@ -152,12 +183,15 @@ Reference Steps
           | sed "s/;/, /g;s/, $//" \
           | fold -s
 
-    - Edit `doc/templates/index.html` to change the "News" section in the landing page,
-      along with the month of the release.
-      {%- if key == "major" %}
+      Then cherry-pick it in the `{{ version }}.X` release branch.
+
+    - In the `main` branch, edit `doc/templates/index.html` to change the "News" section
+      in the landing page, along with the month of the release.
+      {%- if key == "finale" %}
       Do not forget to remove old entries (two years or three releases ago) and update
       the "On-going development" entry.
       {%- endif %}
+      Then cherry-pick it in the `{{ version }}.X` release branch.
     {% endif %}
 
     - Trigger the wheel builder with the `[cd build]` commit marker. See also the
@@ -167,14 +201,6 @@ Reference Steps
       .. prompt:: bash
 
         git commit --allow-empty -m "[cd build] Trigger wheel builder workflow"
-
-      .. note::
-
-        Before building the wheels, make sure that `pyproject.toml` is up to date and
-        using the oldest version of `numpy` for each Python version to avoid `ABI
-        <https://en.wikipedia.org/wiki/Application_binary_interface>`_ incompatibility
-        issues. Moreover, a new line have to be included in `pyproject.toml` for each
-        new supported version of Python.
 
       .. note::
 
@@ -247,9 +273,23 @@ Reference Steps
         
           twine upload dist/*
 
-    {% if key == "major" %}
+    {% if key == "finale" %}
     - Update the symlink for `stable` and the `latestStable` variable in
       `versionwarning.js` in https://github.com/scikit-learn/scikit-learn.github.io.
+
+      .. prompt:: bash
+
+        cd /tmp
+        git clone --depth 1 --no-checkout git@github.com:scikit-learn/scikit-learn.github.io.git
+        cd scikit-learn.github.io
+        echo stable > .git/info/sparse-checkout
+        git checkout main
+        rm stable
+        ln -s {{ version }} stable
+        sed -i "s/latestStable = '.*/latestStable = '{{ version }}';/" versionwarning.js
+        git add stable versionwarning.js
+        git commit -m "Update stable to point to {{ version }}"
+        git push origin main
     {% endif %}
 
     {% if key != "rc" %}
