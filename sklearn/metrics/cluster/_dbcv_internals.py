@@ -143,7 +143,7 @@ def _internal_minimum_spanning_tree(mr_distances):
     # (Fortran format to get indexing right) and take the product to do an and
     # then convert back to boolean type.
     edge_selection = np.prod(
-        np.in1d(min_span_tree.T[:2], internal_node_indices).reshape(
+        np.isin(min_span_tree.T[:2], internal_node_indices).reshape(
             (min_span_tree.shape[0], 2), order="F"
         ),
         axis=1,
