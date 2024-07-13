@@ -100,7 +100,7 @@ cdef class DatasetsPair{{name_suffix}}:
             metric_kwargs.pop("Y_norm_squared", None)
      
         if metric == 'precomputed':
-            return PrecomputedDistanceMatrix{name_suffix}}(
+            return PrecomputedDistanceMatrix{{name_suffix}}(
                 distance_matrix=Y,
             ) 
 
@@ -173,7 +173,7 @@ cdef class PrecomputedDistanceMatrix{{name_suffix}}(DatasetsPair{{name_suffix}})
     ----------
     distance_matrix: ndarray of shape (n_samples_X, n_samples_Y)
         Rows represent vectors. Must be C-contiguous. 
-        Indicates precomputed distance.
+        Requires (i,j) indices to access the precomputed value
     """
 
     def __init__(
@@ -197,11 +197,12 @@ cdef class PrecomputedDistanceMatrix{{name_suffix}}(DatasetsPair{{name_suffix}})
     cdef ITYPE_t n_samples_Y(self) noexcept nogil:
         return self.distance_matrix.shape[1]
 
+    # retrieve the distance from the distance matrix
     @final
     cdef DTYPE_t precomputed_distance(self, ITYPE_t i, ITYPE_t j) noexcept nogil:
         return self.distance_matrix[i, j]
 
-    #TODO: comment out if same as above
+    #TODO: comment out if same as above. Is this for float32?
     #@final
     #cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) noexcept nogil:
     #    return self.distance_matrix[i, j]

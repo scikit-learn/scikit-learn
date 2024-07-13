@@ -9,6 +9,7 @@ from .._dist_metrics import (
     BOOL_METRICS,
     METRIC_MAPPING64,
     DistanceMetric,
+
 )
 from ._argkmin import (
     ArgKmin32,
@@ -27,7 +28,6 @@ from ._radius_neighbors_classmode import (
     RadiusNeighborsClassMode32,
     RadiusNeighborsClassMode64,
 )
-from ._datasets_pair import PrecomputedDistanceMatrix
 
 def sqeuclidean_row_norms(X, num_threads):
     """Compute the squared euclidean norm of the rows of X in parallel.
@@ -102,6 +102,13 @@ class BaseDistancesReductionDispatcher:
         -------
         True if the dispatcher can be used, else False.
         """
+        
+        #TODO: have the option to use the dispatcher but pass on the compute function
+        # instead call the precomputed distance for (i,j)
+        #question: for the rest of the indices should the compute method be defined?
+        # look at  EuclideanRadiusNeighbors{32,64}
+        if metric == 'precomputed':
+            return True
 
         # FIXME: the current Cython implementation is too slow for a large number of
         # features. We temporarily disable it to fallback on SciPy's implementation.
@@ -418,6 +425,7 @@ class RadiusNeighbors(BaseDistancesReductionDispatcher):
         for the concrete implementation are therefore freed when this classmethod
         returns.
         """
+        #TODO: to maintain RAII, look at the implementation of the compute method
         if metric == 'precomputed':
             return PrecomputedDistanceMatrix.precomputed_distance()
         
