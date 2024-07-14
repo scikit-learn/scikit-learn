@@ -302,7 +302,7 @@ def _all_points_core_distance(distance_matrix, d=2):
             "does not have the aforementioned limitation due to avoiding the use of "
             "core distances altogether.)"
         )
-    
+
     distance_matrix[non_diagonal_indices] = (
         1.0 / distance_matrix[non_diagonal_indices]
     ) ** d
