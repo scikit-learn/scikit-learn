@@ -171,7 +171,7 @@ class TProcessRegressor(GaussianProcessRegressor):
     def __init__(
             self,
             kernel=None,
-            v=2,
+            v=3,
             *,
             alpha=1e-10,
             optimizer="fmin_l_bfgs_b",
@@ -224,6 +224,7 @@ class TProcessRegressor(GaussianProcessRegressor):
         self.c_fit1 = self.v / 2
         self.log_likelihood_dims_const = gam(self.c_fit1) - self.c1 - self.n / 2 * self.c2
         super().fit(X, y)
+        return self
 
     def predict(self, X, return_std=False, return_cov=False, return_tShape=False, return_tShapeMatrix=False):
         """Predict using the T process regression model.
@@ -287,10 +288,19 @@ class TProcessRegressor(GaussianProcessRegressor):
             y_mean, y_spread = super().predict(X, return_std=True)
 
         ### Adjust depending on desired posterior ###
-        if return_tShape or return_tShapeMatrix:
-            y_spread = y_spread * (self.m_dis + self.v0) / self.v
-        elif return_std or return_cov:
-            y_spread = y_spread * (self.m_dis + self.v0) / (self.v - 2)
+        if self.n > 0 and (return_tShape or return_tShapeMatrix):
+            scailing_factor = (self.m_dis + self.v0 - 2) / self.v
+        elif self.n > 0 and (return_std or return_cov):
+            scailing_factor = (self.m_dis + self.v0 - 2) / (self.v - 2)
+        elif self.n == 0 and (return_tShape or return_tShapeMatrix):
+            scailing_factor = (self.v - 2) / self.v
+        else:
+            scailing_factor = 1
+
+        if return_std:
+            y_spread = y_spread * np.sqrt(scailing_factor)
+        else:
+            y_spread = y_spread * scailing_factor
 
         return y_mean, y_spread
 
