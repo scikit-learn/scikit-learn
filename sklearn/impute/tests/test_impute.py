@@ -1559,13 +1559,13 @@ def test_iterative_imputer_min_max_value_remove_empty(
         keep_empty_features=False,
     )
 
-    X_no_missing = X[:, [i for i in range(X.shape[1]) if i != missing_column]]
+    X_without_missing_column = np.delete(X, missing_column, axis=1)
     X_imputed = imputer.fit_transform(X)
 
-    assert X_imputed.shape == X_no_missing.shape
+    assert X_imputed.shape == X_without_missing_column.shape
 
-    assert_allclose(np.min(X_imputed[np.isnan(X_no_missing)]), min_value)
-    assert_allclose(np.max(X_imputed[np.isnan(X_no_missing)]), max_value)
+    assert np.min(X_imputed[np.isnan(X_without_missing_column)]) == min_value
+    assert np.max(X_imputed[np.isnan(X_without_missing_column)]) == max_value
 
 
 @pytest.mark.parametrize("keep_empty_features", [True, False])
