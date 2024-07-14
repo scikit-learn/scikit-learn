@@ -307,7 +307,7 @@ def _all_points_core_distance(distance_matrix, d=2):
         1.0 / distance_matrix[non_diagonal_indices]
     ) ** d
     result = distance_matrix.sum(axis=1) / (distance_matrix.shape[0] - 1)
-    return result**-1.0 / d
+    return result ** (-1 / d)
 
 
 def _max_ratio(stacked_distances):
