@@ -81,7 +81,7 @@ from ._testing import (
     raises,
     set_random_state,
 )
-from .fixes import SPARSE_ARRAY_PRESENT, parse_version, sp_version
+from .fixes import SPARSE_ARRAY_PRESENT
 from .validation import _num_samples, check_is_fitted, has_fit_parameter
 
 REGRESSION_DATASET = None
@@ -776,11 +776,6 @@ def _set_checking_parameters(estimator):
     if name == "OneHotEncoder":
         estimator.set_params(handle_unknown="ignore")
 
-    if name == "QuantileRegressor":
-        # Avoid warning due to Scipy deprecating interior-point solver
-        solver = "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
-        estimator.set_params(solver=solver)
-
     if name in CROSS_DECOMPOSITION:
         estimator.set_params(n_components=1)
 
@@ -1028,9 +1023,9 @@ def check_array_api_input_and_values(
 def _check_estimator_sparse_container(name, estimator_orig, sparse_type):
     rng = np.random.RandomState(0)
     X = rng.uniform(size=(40, 3))
-    X[X < 0.8] = 0
+    X[X < 0.6] = 0
     X = _enforce_estimator_tags_X(estimator_orig, X)
-    y = (4 * rng.uniform(size=40)).astype(int)
+    y = (4 * rng.uniform(size=X.shape[0])).astype(np.int32)
     # catch deprecation warnings
     with ignore_warnings(category=FutureWarning):
         estimator = clone(estimator_orig)
