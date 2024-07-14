@@ -292,18 +292,22 @@ def _all_points_core_distance(distance_matrix, d=2):
     2014. Density-Based Clustering Validation. In SDM (pp. 839-847).
     <https://www.dbs.ifi.lmu.de/~zimek/publications/SDM2014/DBCV.pdf>`_
     """
-    distance_matrix[distance_matrix != 0] = (
-        1.0 / distance_matrix[distance_matrix != 0]
+    non_diagonal_indices = ~np.eye(*distance_matrix.shape, dtype=bool)
+    if distance_matrix[non_diagonal_indices].min() == 0.0:
+        raise ValueError(
+            "Identified identical points in the input data. Such points cause their "
+            "all-points-core-distances to be undefined, in turn affecting the whole "
+            "DBCV score to be undefined for the given input. (Hint: try calling "
+            "`dbcv_score` with `mst_raw_dist` set to `True`, a variant of DBCV which "
+            "does not have the aforementioned limitation due to avoiding the use of "
+            "core distances altogether.)"
+        )
+    
+    distance_matrix[non_diagonal_indices] = (
+        1.0 / distance_matrix[non_diagonal_indices]
     ) ** d
-    result = distance_matrix.sum(axis=1)
-    result /= distance_matrix.shape[0] - 1
-
-    if result.sum() == 0:
-        result = np.zeros(distance_matrix.shape[0])
-    else:
-        result **= -1.0 / d
-
-    return result
+    result = distance_matrix.sum(axis=1) / (distance_matrix.shape[0] - 1)
+    return result ** -1.0 / d
 
 
 def _max_ratio(stacked_distances):
