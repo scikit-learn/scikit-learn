@@ -692,8 +692,8 @@ class MetadataRequest:
 # `_route_mappings` attribute.
 RouterMappingPair = namedtuple("RouterMappingPair", ["mapping", "router"])
 
-# `MethodPair` is used to store a single method route. `MethodMapping` stores a list of
-# `MethodPair` objects in its `_routes` attribute.
+# `MethodPair` is used to store a single method routing. `MethodMapping` stores a list
+# of `MethodPair` objects in its `_routes` attribute.
 MethodPair = namedtuple("MethodPair", ["caller", "callee"])
 
 
