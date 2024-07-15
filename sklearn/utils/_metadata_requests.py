@@ -61,8 +61,8 @@ To give the above representation some structure, we use the following objects:
 
 - ``(caller=..., callee=...)`` creates an instance of a ``MethodPair`` class
 
-- The list of ``MethodPair`` stored in a ``mapping`` field is a
-  ``MethodMapping`` object
+- The list of ``MethodPair`` stored in the ``mapping`` field of a `RouterMappingPair` is
+  a ``MethodMapping`` object
 
 - ``(mapping=..., router=...)`` creates an instance of a ``RouterMappingPair`` class
 
