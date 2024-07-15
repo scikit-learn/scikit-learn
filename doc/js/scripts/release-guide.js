@@ -56,68 +56,153 @@ function validateVersion(version, key) {
   }
 }
 
-for (const key of ["rc", "finale", "bf"]) {
-  document.addEventListener("DOMContentLoaded", () => {
-    const versionFullTargets = document.querySelectorAll(
-      `.${key}-version-full`
-    );
-    const versionMainTargets = document.querySelectorAll(
-      `.${key}-version-main`
-    );
-    const warningContainer = document.getElementById(
-      `${key}-invalid-release-version-warning`
-    );
+document.addEventListener("DOMContentLoaded", () => {
+  fetch(DOCUMENTATION_OPTIONS.theme_switcher_json_url).then((response) => {
+    response.json().then((data) => {
+      for (const key of ["rc", "finale", "bf"]) {
+        const versionFullTargets = document.querySelectorAll(
+          `.${key}-version-full`
+        );
+        const versionMainTargets = document.querySelectorAll(
+          `.${key}-version-main`
+        );
+        const previousTagTargets = document.querySelectorAll(
+          `.${key}-previous-tag`
+        );
+        const warningContainer = document.getElementById(
+          `${key}-invalid-release-version-warning`
+        );
+        const versionFullInput = document.getElementById(
+          `${key}-version-full-input`
+        );
+        const previousTagInput = document.getElementById(
+          `${key}-previous-tag-input`
+        );
 
-    const defaultVersionFull = versionFullTargets[0].textContent;
-    const [defaultMajor, defaultMinor, _] = validateVersion(
-      defaultVersionFull,
-      key
-    );
+        // Update target texts, styles, and the warning message
+        const updateContents = (
+          version,
+          major,
+          minor,
+          warningMessage = "",
+          color = "",
+          cursor = "",
+          title = ""
+        ) => {
+          versionFullTargets.forEach((target) => {
+            target.textContent = version;
+            target.style.color = color;
+            target.style.cursor = cursor;
+            target.title = title;
+          });
+          versionMainTargets.forEach((target) => {
+            target.textContent = `${major}.${minor}`;
+            target.style.color = color;
+            target.style.cursor = cursor;
+            target.title = title;
+          });
+          warningContainer.textContent = warningMessage;
+        };
 
-    document
-      .getElementById(`${key}-version-to-release`)
-      .addEventListener("input", (e) => {
-        const version = e.target.value || defaultVersionFull;
+        // Update the previous tag text
+        const updatePreviousTag = (previousTag) => {
+          previousTagTargets.forEach((target) => {
+            target.textContent = previousTag;
+          });
+        };
 
-        let currentVersionFull = defaultVersionFull;
-        let currentMajor = defaultMajor;
-        let currentMinor = defaultMinor;
-        let warningMessage = "";
-        let color = "";
-        let cursor = "";
-        let title = "";
+        // Static fallback as given in the rst
+        let defaultVersionFull = versionFullTargets[0].textContent;
+        const defaultVersionFullParts = defaultVersionFull.split(".");
+        let defaultMajor = Number(defaultVersionFullParts[0]);
+        let defaultMinor = Number(defaultVersionFullParts[1]);
+        let defaultPreviousTag =
+          key == "rc" ? null : previousTagTargets[0].textContent;
 
-        // Validate the version string
-        const validationResult = validateVersion(version, key);
-        if (typeof validationResult !== "string") {
-          // Valid version; major/minor/micro numbers returned
-          currentVersionFull = version;
-          currentMajor = validationResult[0];
-          currentMinor = validationResult[1];
+        // Try to get a more reasonable default
+        if (key == "bf") {
+          // Bug-fix release; should be micro+1 from the latest stable
+          const stableVersionIndex = data.findIndex((v) => v.preferred);
+          const stableVersionParts =
+            data[stableVersionIndex].version.split(".");
+          defaultMajor = Number(stableVersionParts[0]);
+          defaultMinor = Number(stableVersionParts[1]);
+          defaultVersionFull = `${defaultMajor}.${defaultMinor}.${
+            Number(stableVersionParts[2]) + 1
+          }`;
+          defaultPreviousTag = data[stableVersionIndex - 1].version;
+        } else if (key == "rc") {
+          const rcVersionIndex = data.findIndex((v) =>
+            v.version.includes(".0rc")
+          );
+          if (rcVersionIndex != -1) {
+            // Not the first release candidate; should be rc+1 from the current rc
+            const rcVersionParts = data[rcVersionIndex].version.split(".");
+            defaultMajor = Number(rcVersionParts[0]);
+            defaultMinor = Number(rcVersionParts[1]);
+            const rcVersionPart = rcVersionParts[2];
+            defaultVersionFull = `${defaultMajor}.${defaultMinor}.0rc${
+              Number(rcVersionPart[rcVersionPart.length - 1]) + 1
+            }`;
+          } else {
+            // First release candidate; should be minor+1 from the latest stable
+            const stableVersionIndex = data.findIndex((v) => v.preferred);
+            const stableVersionParts =
+              data[stableVersionIndex].version.split(".");
+            defaultMajor = Number(stableVersionParts[0]);
+            defaultMinor = Number(stableVersionParts[1]) + 1;
+            defaultVersionFull = `${defaultMajor}.${defaultMinor}.0rc1`;
+          }
         } else {
-          // Invalid version; invalid reason returned
-          warningMessage = validationResult;
-          color = "var(--pst-color-danger)";
-          cursor = "help";
-          title = "Invalid version; fallback to default";
+          // Finale major/minor release; should be minor+1 from the latest stable
+          const stableVersionIndex = data.findIndex((v) => v.preferred);
+          const stableVersionParts =
+            data[stableVersionIndex].version.split(".");
+          defaultMajor = Number(stableVersionParts[0]);
+          defaultMinor = Number(stableVersionParts[1]) + 1;
+          defaultVersionFull = `${defaultMajor}.${defaultMinor}.0`;
+          defaultPreviousTag = data[stableVersionIndex].version;
         }
 
-        // Set warning message
-        warningContainer.textContent = warningMessage;
+        // Update once with the updated default
+        versionFullInput.placeholder = defaultVersionFull;
+        updateContents(defaultVersionFull, defaultMajor, defaultMinor);
+        if (key != "rc") {
+          previousTagInput.placeholder = defaultPreviousTag;
+          updatePreviousTag(defaultPreviousTag);
+        }
 
-        // Replace target texts
-        versionFullTargets.forEach((target) => {
-          target.textContent = currentVersionFull;
-          target.style.color = color;
-          target.style.cursor = cursor;
-          target.title = title;
+        // Event listener for the full version input
+        versionFullInput.addEventListener("input", (e) => {
+          const version = e.target.value || defaultVersionFull;
+
+          // Validate the version string
+          const validationResult = validateVersion(version, key);
+          if (typeof validationResult !== "string") {
+            // Valid version; major/minor/micro numbers returned
+            updateContents(version, validationResult[0], validationResult[1]);
+          } else {
+            // Invalid version; invalid reason returned
+            updateContents(
+              defaultVersionFull,
+              defaultMajor,
+              defaultMinor,
+              validationResult,
+              "var(--pst-color-danger)",
+              "help",
+              "Invalid version; fallback to default"
+            );
+          }
         });
-        versionMainTargets.forEach((target) => {
-          target.textContent = `${currentMajor}.${currentMinor}`;
-          target.style.color = color;
-          target.style.cursor = cursor;
-          target.title = title;
-        });
-      });
+
+        // Event listener for the previous tag input
+        if (key != "rc") {
+          previousTagInput.addEventListener("input", (e) => {
+            const previousTag = e.target.value || defaultPreviousTag;
+            updatePreviousTag(previousTag);
+          });
+        }
+      }
+    });
   });
-}
+});

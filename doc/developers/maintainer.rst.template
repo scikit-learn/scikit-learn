@@ -59,24 +59,27 @@ Reference Steps
   {% for key in ["rc", "finale", "bf"] %}
   {%- if key == "rc" -%}
     {%- set title = "Major/Minor RC" -%}
-    {%- set default_version_full = "0.99.0rc1" -%}
-    {%- set default_version_main = "0.99" -%}
+    {%- set default_version_full = "0.1.0rc1" -%}
+    {%- set default_version_main = "0.1" -%}
   {%- elif key == "finale" -%}
     {%- set title = "Major/Minor Finale" -%}
-    {%- set default_version_full = "0.99.0" -%}
-    {%- set default_version_main = "0.99" -%}
+    {%- set default_version_full = "0.1.0" -%}
+    {%- set default_version_main = "0.1" -%}
   {%- else -%}
     {%- set title = "Bug-fix" -%}
-    {%- set default_version_full = "0.98.1" -%}
-    {%- set default_version_main = "0.98" -%}
+    {%- set default_version_full = "0.0.1" -%}
+    {%- set default_version_main = "0.0" -%}
   {%- endif %}
 
   .. role:: {{ key }}-version-full
 
   .. role:: {{ key }}-version-main
 
+  .. role:: {{ key }}-previous-tag
+
   {%- set version_full = ":" + key + "-version-full:`" + default_version_full + "`" %}
   {%- set version_main = ":" + key + "-version-main:`" + default_version_main + "`" %}
+  {%- set previous_tag = ":" + key + "-previous-tag:`X.Y.Z`" %}
 
   .. tab-item:: {{ title }}
     :class-label: tab-4
@@ -85,11 +88,13 @@ Reference Steps
 
       <style>
         .{{ key }}-version-full,
-        .{{ key }}-version-main {
+        .{{ key }}-version-main,
+        .{{ key }}-previous-tag {
           text-decoration: underline dotted;
         }
 
-        #{{ key }}-version-to-release {
+        #{{ key }}-version-full-input,
+        #{{ key }}-previous-tag-input {
           all: unset;
           line-height: 1;
           padding: 0 5px;
@@ -97,7 +102,8 @@ Reference Steps
           border-bottom: 1px solid var(--pst-color-text-muted);
         }
 
-        #{{ key }}-version-to-release:focus {
+        #{{ key }}-version-full-input:focus,
+        #{{ key }}-previous-tag-input:focus {
           border-bottom-color: var(--pst-color-primary);
         }
 
@@ -108,8 +114,8 @@ Reference Steps
       </style>
 
       <div style="margin-bottom: 1.15rem;">
-        <label for="{{ key }}-version-to-release">Suppose that we are preparing the release</label>
-        <input type="text" id="{{ key }}-version-to-release" placeholder="{{ default_version_full }}" />.
+        Suppose that we are preparing the release
+        <input type="text" id="{{ key }}-version-full-input" placeholder="{{ default_version_full }}" />.
         <div id="{{ key }}-invalid-release-version-warning"></div>
       </div>
 
@@ -210,18 +216,23 @@ Reference Steps
     - In the `main` branch, edit the corresponding file in the `doc/whats_new` directory
       to update the release date
       {%- if key == "finale" %}, link the release highlights example,{% endif %}
-      and add the list of contributor names. You can retrieve the list of contributor
-      names with the following command, replacing `${PREVIOUS_RELEASE_TAG}` with the tag
-      of the last release in the previous major/minor version:
+      and add the list of contributor names.
 
-      .. prompt:: bash
+      .. raw:: html
 
-        git shortlog -s ${PREVIOUS_RELEASE_TAG}.. \
-          | cut -f2- \
-          | sort --ignore-case \
-          | tr "\n" ";" \
-          | sed "s/;/, /g;s/, $//" \
-          | fold -s
+        <div style="margin-bottom: 1.15rem;">
+          Input the tag of the last release in the previous major/minor version to get
+          the command for retrieving the list of contributor names:
+          <input type="text" id="{{ key }}-previous-tag-input" placeholder="X.Y.Z" />.
+        </div>
+
+      .. div:: highlight-default
+
+        .. div:: highlight
+
+          .. parsed-literal::
+
+            git shortlog -s {{ previous_tag }}.. \| cut -f2- \| sort --ignore-case \| tr "\\n" ";" \| sed "s/;/, /g;s/, $//" \| fold -s
 
       Then cherry-pick it in the {{ version_main }}.X release branch.
 
