@@ -1,3 +1,12 @@
+"""Partition samples in the construction of a tree.
+
+This module contains the algorithms for moving sample indices to
+the left and right child node given a split determined by the
+splitting algorithm in `_splitter.pyx`.
+
+Partitioning is done in a way that is efficient for both dense data,
+and sparse data stored in a Compressed Sparse Column (CSC) format.
+"""
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 

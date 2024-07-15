@@ -1,3 +1,22 @@
+"""Splitting algorithms in the construction of a tree.
+
+This module contains the main splitting algorithms for constructing a tree.
+Splitting is concerned with finding the optimal partition of the data into
+two groups. The impurity of the groups is minimized, and the impurity is measured
+by some criterion, which is typically the Gini impurity or the entropy. Criterion
+are implemented in the ``_criterion`` module.
+
+Splitting evaluates a subset of features (defined by `max_features` also
+known as mtry in the literature). The module supports two primary types
+of splitting strategies:
+
+- Best Split: A greedy approach to find the optimal split. This method
+  ensures that the best possible split is chosen by examining various
+  thresholds for each candidate feature.
+- Random Split: A stochastic approach that selects a split randomly
+  from a subset of the best splits. This method is faster but does
+  not guarantee the optimal split.
+"""
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
