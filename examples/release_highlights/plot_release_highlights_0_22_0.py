@@ -34,6 +34,7 @@ or with conda::
 # `plot_confusion_matrix`. Read more about this new API in the
 # :ref:`User Guide <visualizations>`.
 
+import matplotlib
 import matplotlib.pyplot as plt
 
 from sklearn.datasets import make_classification
@@ -43,6 +44,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import RocCurveDisplay
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
+from sklearn.utils.fixes import parse_version
 
 X, y = make_classification(random_state=0)
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
@@ -117,9 +119,18 @@ result = permutation_importance(rf, X, y, n_repeats=10, random_state=0, n_jobs=2
 
 fig, ax = plt.subplots()
 sorted_idx = result.importances_mean.argsort()
-ax.boxplot(
-    result.importances[sorted_idx].T, vert=False, labels=feature_names[sorted_idx]
+
+# `labels` argument in boxplot is deprecated in matplotlib 3.9 and has been
+# renamed to `tick_labels`. The following code handles this, but as a
+# scikit-learn user you probably can write simpler code by using `labels=...`
+# (matplotlib < 3.9) or `tick_labels=...` (matplotlib >= 3.9).
+tick_labels_parameter_name = (
+    "tick_labels"
+    if parse_version(matplotlib.__version__) >= parse_version("3.9")
+    else "labels"
 )
+tick_labels_dict = {tick_labels_parameter_name: feature_names[sorted_idx]}
+ax.boxplot(result.importances[sorted_idx].T, vert=False, **tick_labels_dict)
 ax.set_title("Permutation Importance of each feature")
 ax.set_ylabel("Features")
 fig.tight_layout()
