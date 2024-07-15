@@ -702,8 +702,7 @@ class MethodMapping:
 
     This class is primarily used in a ``get_metadata_routing()`` of a router
     object when defining the mapping between the router's methods and a sub-object (a
-    sub-estimator or a scorer). It stores a list of `MethodPair` objects in its
-    `_routes` attribute.
+    sub-estimator or a scorer).
 
     Iterating through an instance of this class will yield
     ``MethodPair(caller, callee)`` instances.
