@@ -124,7 +124,6 @@ sorted_idx = result.importances_mean.argsort()
 # renamed to `tick_labels`. The following code handles this, but as a
 # scikit-learn user you probably can write simpler code by using `labels=...`
 # (matplotlib < 3.9) or `tick_labels=...` (matplotlib >= 3.9).
-# Once the minimum matplotlib version is 3.9, the following code can be simplified
 tick_labels_parameter_name = (
     "tick_labels"
     if parse_version(matplotlib.__version__) >= parse_version("3.9")
