@@ -449,7 +449,7 @@ build_metadata_list = [
 def execute_command(command_list):
     logger.debug(" ".join(command_list))
     proc = subprocess.Popen(
-        command_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        command_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
     )
 
     out, err = proc.communicate()
