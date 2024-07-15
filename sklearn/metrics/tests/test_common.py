@@ -54,8 +54,11 @@ from sklearn.metrics._base import _average_binary_score
 from sklearn.metrics.pairwise import (
     additive_chi2_kernel,
     chi2_kernel,
+    cosine_distances,
     cosine_similarity,
+    euclidean_distances,
     paired_cosine_distances,
+    rbf_kernel,
 )
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import shuffle
@@ -1991,6 +1994,8 @@ array_api_metric_checkers = {
         check_array_api_multilabel_classification_metric,
     ],
     mean_tweedie_deviance: [check_array_api_regression_metric],
+    partial(mean_tweedie_deviance, power=-0.5): [check_array_api_regression_metric],
+    partial(mean_tweedie_deviance, power=1.5): [check_array_api_regression_metric],
     r2_score: [
         check_array_api_regression_metric,
         check_array_api_regression_metric_multioutput,
@@ -2011,7 +2016,14 @@ array_api_metric_checkers = {
     additive_chi2_kernel: [check_array_api_metric_pairwise],
     mean_gamma_deviance: [check_array_api_regression_metric],
     max_error: [check_array_api_regression_metric],
+    mean_absolute_percentage_error: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
     chi2_kernel: [check_array_api_metric_pairwise],
+    cosine_distances: [check_array_api_metric_pairwise],
+    euclidean_distances: [check_array_api_metric_pairwise],
+    rbf_kernel: [check_array_api_metric_pairwise],
 }
 
 
