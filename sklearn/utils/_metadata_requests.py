@@ -59,12 +59,12 @@ stored here. Conceptually, this information looks like:
 
 To give the above representation some structure, we use the following objects:
 
-- ``(caller=..., callee=...)`` is an instance of a ``MethodPair`` class
+- ``(caller=..., callee=...)`` creates an instance of a ``MethodPair`` class
 
 - The list of ``MethodPair`` stored in a ``mapping`` field is a
   ``MethodMapping`` object
 
-- ``(mapping=..., router=...)`` is an instance of a ``RouterMappingPair`` class
+- ``(mapping=..., router=...)`` creates an instance of a ``RouterMappingPair`` class
 
 The ``set_{method}_request`` methods are dynamically generated for estimators
 which inherit from the ``BaseEstimator``. This is done by attaching instances
