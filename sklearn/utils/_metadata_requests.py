@@ -4,7 +4,7 @@ Metadata Routing Utility
 In order to better understand the components implemented in this file, one
 needs to understand their relationship to one another.
 
-The only relevant public API for end users are the ``set_{method}_request``,
+The only relevant public API for end users are the ``set_{method}_request`` methods,
 e.g. ``estimator.set_fit_request(sample_weight=True)``. However, third-party
 developers and users who implement custom meta-estimators, need to deal with
 the objects implemented in this file.
@@ -59,12 +59,12 @@ stored here. Conceptually, this information looks like:
 
 To give the above representation some structure, we use the following objects:
 
-- ``(caller, callee)`` is a namedtuple called ``MethodPair``
+- ``(caller=..., callee=...)`` is an instance of a ``MethodPair`` class
 
-- The list of ``MethodPair`` stored in the ``mapping`` field is a
+- The list of ``MethodPair`` stored in a ``mapping`` field is a
   ``MethodMapping`` object
 
-- ``(mapping=..., router=...)`` is a namedtuple called ``RouterMappingPair``
+- ``(mapping=..., router=...)`` is an instance of a ``RouterMappingPair`` class
 
 The ``set_{method}_request`` methods are dynamically generated for estimators
 which inherit from the ``BaseEstimator``. This is done by attaching instances
@@ -686,13 +686,14 @@ class MetadataRequest:
 # This section includes all objects required for MetadataRouter which is used
 # in routers, returned by their ``get_metadata_routing``.
 
-# This namedtuple is used to store a (mapping, routing) pair. Mapping is a
-# MethodMapping object, and routing is the output of `get_metadata_routing`.
-# MetadataRouter stores a collection of these namedtuples.
+# `RouterMappingPair` is used to store a (mapping, router) tuple where `mapping` is a
+# `MethodMapping` object and `router` is the output of `get_metadata_routing`.
+# `MetadataRouter` stores a collection of `RouterMappingPair` objects in its
+# `_route_mappings` attribute.
 RouterMappingPair = namedtuple("RouterMappingPair", ["mapping", "router"])
 
-# A namedtuple storing a single method route. A collection of these namedtuples
-# is stored in a MetadataRouter.
+# `MethodPair` is used to store a single method route. `MethodMapping` stores a list of
+# `MethodPair` objects in its `_routes` attribute.
 MethodPair = namedtuple("MethodPair", ["caller", "callee"])
 
 
@@ -700,11 +701,12 @@ class MethodMapping:
     """Stores the mapping between caller and callee methods for a router.
 
     This class is primarily used in a ``get_metadata_routing()`` of a router
-    object when defining the mapping between a sub-object (a sub-estimator or a
-    scorer) to the router's methods. It stores a collection of namedtuples.
+    object when defining the mapping between the router's methods and a sub-object (a
+    sub-estimator or a scorer). It stores a list of `MethodPair` objects in its
+    `_routes` attribute.
 
-    Iterating through an instance of this class will yield named
-    ``MethodPair(caller, callee)`` tuples.
+    Iterating through an instance of this class will yield
+    ``MethodPair(caller, callee)`` instances.
 
     .. versionadded:: 1.3
     """
