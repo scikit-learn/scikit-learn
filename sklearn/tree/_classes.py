@@ -1106,7 +1106,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         mean squared error with Friedman's improvement score for potential
         splits, "absolute_error" for the mean absolute error, which minimizes
         the L1 loss using the median of each terminal node, and "poisson" which
-        uses reduction in Poisson deviance to find splits.
+        uses reduction in the half mean Poisson deviance to find splits.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
