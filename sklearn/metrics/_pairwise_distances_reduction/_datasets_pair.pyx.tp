@@ -101,7 +101,7 @@ cdef class DatasetsPair{{name_suffix}}:
      
         if metric == 'precomputed':
             return PrecomputedDistanceMatrix{{name_suffix}}(
-                distance_matrix=Y,
+                precomputed_distance
             ) 
 
         cdef:
@@ -171,14 +171,14 @@ cdef class PrecomputedDistanceMatrix{{name_suffix}}(DatasetsPair{{name_suffix}})
 
     Parameters
     ----------
-    distance_matrix: ndarray of shape (n_samples_X, n_samples_Y)
+    precomputed_distance: ndarray of shape (n_samples_X, n_samples_Y) 
         Rows represent vectors. Must be C-contiguous. 
         Requires (i,j) indices to access the precomputed value
     """
 
     def __init__(
         self,
-        const {{INPUT_DTYPE_t}}[:, ::1] distance_matrix,
+        const {{INPUT_DTYPE_t}}[:, ::1] precomputed_distance,
     ):
         super().__init__(
             # This DistanceMetric is necessary for conversion between
@@ -187,25 +187,25 @@ cdef class PrecomputedDistanceMatrix{{name_suffix}}(DatasetsPair{{name_suffix}})
             n_features=0,
         )
         # Arrays have already been checked
-        self.distance_matrix = distance_matrix
+        self.precomputed_distance = precomputed_distance
 
     @final
     cdef ITYPE_t n_samples_X(self) noexcept nogil:
-        return self.distance_matrix.shape[0]
+        return self.precomputed_distance.shape[0]
 
     @final
     cdef ITYPE_t n_samples_Y(self) noexcept nogil:
-        return self.distance_matrix.shape[1]
+        return self.precomputed_distance.shape[1]
 
     # retrieve the distance from the distance matrix
     @final
-    cdef DTYPE_t precomputed_distance(self, ITYPE_t i, ITYPE_t j) noexcept nogil:
-        return self.distance_matrix[i, j]
+    cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) noexcept nogil:
+        return self.precomputed_distance[i, j]
 
-    #TODO: comment out if same as above. Is this for float32?
-    #@final
-    #cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) noexcept nogil:
-    #    return self.distance_matrix[i, j]
+    
+    @final
+    cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) noexcept nogil:
+        return self.precomputed_distance[i, j]
     
 
 @final
