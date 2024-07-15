@@ -704,7 +704,7 @@ class MethodMapping:
     object when defining the mapping between the router's methods and a sub-object (a
     sub-estimator or a scorer).
 
-    Iterating through an instance of this class will yield
+    Iterating through an instance of this class yields
     ``MethodPair(caller, callee)`` instances.
 
     .. versionadded:: 1.3
