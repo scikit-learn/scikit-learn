@@ -59,47 +59,83 @@ Reference Steps
   {% for key in ["rc", "finale", "bf"] %}
   {%- if key == "rc" -%}
     {%- set title = "Major/Minor RC" -%}
-    {%- set release = "1.6.0rc1" -%}
-    {%- set version = "1.6" -%}
-    {%- set prev_version = "1.5" -%}
+    {%- set default_version_full = "0.99.0rc1" -%}
+    {%- set default_version_main = "0.99" -%}
   {%- elif key == "finale" -%}
     {%- set title = "Major/Minor Finale" -%}
-    {%- set release = "1.6.0" -%}
-    {%- set version = "1.6" -%}
-    {%- set prev_version = "1.5" -%}
+    {%- set default_version_full = "0.99.0" -%}
+    {%- set default_version_main = "0.99" -%}
   {%- else -%}
     {%- set title = "Bug-fix" -%}
-    {%- set release = "1.5.1" -%}
-    {%- set version = "1.5" -%}
-    {%- set prev_version = "1.4" -%}
+    {%- set default_version_full = "0.98.1" -%}
+    {%- set default_version_main = "0.98" -%}
   {%- endif %}
+
+  .. role:: {{ key }}-version-full
+
+  .. role:: {{ key }}-version-main
+
+  {%- set version_full = ":" + key + "-version-full:`" + default_version_full + "`" %}
+  {%- set version_main = ":" + key + "-version-main:`" + default_version_main + "`" %}
 
   .. tab-item:: {{ title }}
     :class-label: tab-4
 
-    Suppose that we are preparing the release `{{ release }}`.
+    .. raw:: html
+
+      <style>
+        .{{ key }}-version-full,
+        .{{ key }}-version-main {
+          text-decoration: underline dotted;
+        }
+
+        #{{ key }}-version-to-release {
+          all: unset;
+          line-height: 1;
+          padding: 0 5px;
+          width: 100px;
+          border-bottom: 1px solid var(--pst-color-text-muted);
+        }
+
+        #{{ key }}-version-to-release:focus {
+          border-bottom-color: var(--pst-color-primary);
+        }
+
+        #{{ key }}-invalid-release-version-warning {
+          font-size: 0.8rem;
+          color: var(--pst-color-danger);
+        }
+      </style>
+
+      <div style="margin-bottom: 1.15rem;">
+        <label for="{{ key }}-version-to-release">Suppose that we are preparing the release</label>
+        <input type="text" id="{{ key }}-version-to-release" placeholder="{{ default_version_full }}" />.
+        <div id="{{ key }}-invalid-release-version-warning"></div>
+      </div>
 
     {% if key == "rc" %}
-    .. note::
+    The first RC ideally counts as a **feature freeze**. Each coming release candidate
+    and the final release afterwards should include only minor documentation changes
+    and bug fixes. Any major enhancement or new feature should be excluded.
 
-      The first RC ideally counts as a **feature freeze**. Each coming release candidate
-      and the final release afterwards should include only minor documentation changes
-      and bug fixes. Any major enhancement or new feature should be excluded.
-
-    - Create the release branch `{{ version }}.X` directly in the main repository, where
+    - Create the release branch {{ version_main }}.X directly in the main repository, where
       `X` is really the letter X, **not a placeholder**. The development for the finale
-      and subsequent bug-fix releases of `{{ version }}` should also happen under this
+      and subsequent bug-fix releases of {{ version_main }} should also happen under this
       branch with different tags.
 
-      .. prompt:: bash
+      .. div:: highlight-default
 
-        git fetch upstream main
-        git checkout upstream/main
-        git checkout -b {{ version }}.X
-        git push --set-upstream upstream {{ version }}.X
+        .. div:: highlight
+
+          .. parsed-literal::
+
+            git fetch upstream main
+            git checkout upstream/main
+            git checkout -b {{ version_main }}.X
+            git push --set-upstream upstream {{ version_main }}.X
     {% endif %}
 
-    - Create a PR from the `main` branch targeting the `{{ version }}.X` branch. Copy
+    - Create a PR from the `main` branch targeting the {{ version_main }}.X branch. Copy
       the following release checklist to the description of this PR to track the
       progress.
 
@@ -129,11 +165,15 @@ Reference Steps
         {%- endif %}
 
     {% if key != "rc" %}
-    - Rebase this PR from the `{{ version }}.X` branch:
+    - Rebase this PR from the {{ version_main }}.X branch:
 
-      .. prompt:: bash
+      .. div:: highlight-default
 
-        git rebase -i upstream/{{ version }}.X
+        .. div:: highlight
+
+          .. parsed-literal::
+
+            git rebase -i upstream/{{ version_main }}.X
 
       This will open an interactive rebase with the `git-rebase-todo` containing all the
       latest commits on `main`. At this stage, you have to perform this interactive
@@ -163,16 +203,16 @@ Reference Steps
       parallel to the release process.
     {% endif %}
 
-    - In the `{{ version }}.X` branch, change the version numbers `__version__` in
-      `sklearn/__init__.py` to `{{ release }}`.
+    - In the {{ version_main }}.X branch, change the version numbers `__version__` in
+      `sklearn/__init__.py` to {{ version_full }}.
 
     {% if key != "rc" %}
-    - In the `main` branch, edit `doc/whats_new/v{{ version }}.rst` to update the
-      release date
+    - In the `main` branch, edit the corresponding file in the `doc/whats_new` directory
+      to update the release date
       {%- if key == "finale" %}, link the release highlights example,{% endif %}
       and add the list of contributor names. You can retrieve the list of contributor
       names with the following command, replacing `${PREVIOUS_RELEASE_TAG}` with the tag
-      of the last release in version `{{ prev_version }}`:
+      of the last release in the previous major/minor version:
 
       .. prompt:: bash
 
@@ -183,7 +223,7 @@ Reference Steps
           | sed "s/;/, /g;s/, $//" \
           | fold -s
 
-      Then cherry-pick it in the `{{ version }}.X` release branch.
+      Then cherry-pick it in the {{ version_main }}.X release branch.
 
     - In the `main` branch, edit `doc/templates/index.html` to change the "News" section
       in the landing page, along with the month of the release.
@@ -191,7 +231,7 @@ Reference Steps
       Do not forget to remove old entries (two years or three releases ago) and update
       the "On-going development" entry.
       {%- endif %}
-      Then cherry-pick it in the `{{ version }}.X` release branch.
+      Then cherry-pick it in the {{ version_main }}.X release branch.
     {% endif %}
 
     - Trigger the wheel builder with the `[cd build]` commit marker. See also the
@@ -225,10 +265,14 @@ Reference Steps
       ready, since adding a new tag to the main repository can trigger certain automated
       processes.
 
-      .. prompt:: bash
+      .. div:: highlight-default
 
-        git tag -a {{ release }}  # in the {{ version }}.X branch
-        git push git@github.com:scikit-learn/scikit-learn.git {{ release }}
+        .. div:: highlight
+
+          .. parsed-literal::
+
+            git tag -a {{ version_full }}  # in the {{ version_main }}.X branch
+            git push git@github.com:scikit-learn/scikit-learn.git {{ version_full }}
 
     - Confirm that the bot has detected the tag on the conda-forge feedstock repository
       https://github.com/conda-forge/scikit-learn-feedstock. If not, submit a PR for the
@@ -277,23 +321,27 @@ Reference Steps
     - Update the symlink for `stable` and the `latestStable` variable in
       `versionwarning.js` in https://github.com/scikit-learn/scikit-learn.github.io.
 
-      .. prompt:: bash
+      .. div:: highlight-default
 
-        cd /tmp
-        git clone --depth 1 --no-checkout git@github.com:scikit-learn/scikit-learn.github.io.git
-        cd scikit-learn.github.io
-        echo stable > .git/info/sparse-checkout
-        git checkout main
-        rm stable
-        ln -s {{ version }} stable
-        sed -i "s/latestStable = '.*/latestStable = '{{ version }}';/" versionwarning.js
-        git add stable versionwarning.js
-        git commit -m "Update stable to point to {{ version }}"
-        git push origin main
+        .. div:: highlight
+
+          .. parsed-literal::
+
+            cd /tmp
+            git clone --depth 1 --no-checkout git@github.com:scikit-learn/scikit-learn.github.io.git
+            cd scikit-learn.github.io
+            echo stable > .git/info/sparse-checkout
+            git checkout main
+            rm stable
+            ln -s {{ version_main }} stable
+            sed -i "s/latestStable = '.*/latestStable = '{{ version_main }}';/" versionwarning.js
+            git add stable versionwarning.js
+            git commit -m "Update stable to point to {{ version_main }}"
+            git push origin main
     {% endif %}
 
     {% if key != "rc" %}
-    - Update `SECURITY.md` to reflect the latest supported version `{{ release }}`.
+    - Update `SECURITY.md` to reflect the latest supported version {{ version_full }}.
     {% endif %}
   {% endfor %}
 
