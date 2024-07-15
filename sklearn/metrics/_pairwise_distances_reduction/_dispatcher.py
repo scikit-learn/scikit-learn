@@ -173,6 +173,8 @@ class BaseDistancesReductionDispatcher:
         This method is an abstract class method: it has to be implemented
         for all subclasses.
         """
+      
+      
 
 
 class ArgKmin(BaseDistancesReductionDispatcher):
