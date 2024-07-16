@@ -9,7 +9,7 @@ from ..utils._typedefs cimport float32_t, float64_t, intp_t, int8_t, int32_t, ui
 cdef float32_t FEATURE_THRESHOLD = 1e-7
 
 
-cdef class Partitioner:
+cdef class BasePartitioner:
     cdef intp_t[::1] samples
     cdef float32_t[::1] feature_values
     cdef intp_t start
@@ -49,7 +49,7 @@ cdef class Partitioner:
     ) noexcept nogil
 
 
-cdef class DensePartitioner(Partitioner):
+cdef class DensePartitioner(BasePartitioner):
     """Partitioner specialized for dense data.
 
     Note that this partitioner is agnostic to the splitting strategy (best vs. random).
@@ -57,7 +57,7 @@ cdef class DensePartitioner(Partitioner):
     cdef const float32_t[:, :] X
 
 
-cdef class SparsePartitioner(Partitioner):
+cdef class SparsePartitioner(BasePartitioner):
     """Partitioner specialized for sparse CSC data.
 
     Note that this partitioner is agnostic to the splitting strategy (best vs. random).

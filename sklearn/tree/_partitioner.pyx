@@ -27,7 +27,7 @@ cdef float32_t EXTRACT_NNZ_SWITCH = 0.1
 cdef float32_t INFINITY_32t = np.inf
 
 
-cdef class Partitioner:
+cdef class BasePartitioner:
     cdef void sort_samples_and_feature_values(
         self, intp_t current_feature
     ) noexcept nogil:
@@ -67,7 +67,7 @@ cdef class Partitioner:
 
 
 @final
-cdef class DensePartitioner(Partitioner):
+cdef class DensePartitioner(BasePartitioner):
     """Partitioner specialized for dense data.
 
     Note that this partitioner is agnostic to the splitting strategy (best vs. random).
@@ -426,7 +426,7 @@ cdef void heapsort(float32_t* feature_values, intp_t* samples, intp_t n) noexcep
 
 
 @final
-cdef class SparsePartitioner(Partitioner):
+cdef class SparsePartitioner(BasePartitioner):
     """Partitioner specialized for sparse CSC data.
 
     Note that this partitioner is agnostic to the splitting strategy (best vs. random).
