@@ -20,7 +20,6 @@ from ..exceptions import UndefinedMetricWarning
 from ..utils._array_api import (
     _average,
     _find_matching_floating_dtype,
-    _max_precision_float_dtype,
     get_namespace,
     get_namespace_and_device,
     size,
@@ -397,8 +396,8 @@ def mean_absolute_percentage_error(
     112589990684262.48
     """
     input_arrays = [y_true, y_pred, sample_weight, multioutput]
-    xp, _, device_ = get_namespace_and_device(*input_arrays)
-    dtype = _max_precision_float_dtype(xp=xp, device=device_)
+    xp, _ = get_namespace(*input_arrays)
+    dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
 
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
