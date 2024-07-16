@@ -52,7 +52,6 @@ bike_sharing_data_file
 # https://docs.pola.rs/user-guide/lazy/optimizations/ for more information.
 
 df = pl.read_parquet(bike_sharing_data_file)
->> >> >> > upstream / main
 
 # %%
 # Next, we take a look at the statistical summary of the dataset
