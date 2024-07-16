@@ -181,8 +181,8 @@ build_metadata_list = [
         "package_constraints": {
             "python": "3.9",
             "blas": "[build=openblas]",
-            "numpy": "min",  # the min version is not available on the defaults channel
-            "scipy": "min",  # the min version has some low level crashes
+            "numpy": "min",
+            "scipy": "min",
             "matplotlib": "min",
             "cython": "min",
             "joblib": "min",
