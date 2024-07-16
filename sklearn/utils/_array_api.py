@@ -2,7 +2,6 @@
 
 import itertools
 import math
-import warnings
 from functools import wraps
 
 import numpy
@@ -446,15 +445,8 @@ class _NumPyAPIWrapper:
             # In older versions of the libraries, data types that arise from
             # outside numpy like from a Polars Series raise a TypeError.
             # e.g. TypeError: Cannot interpret 'Int64' as a data type.
-            # Therefore, we return False along with raising a UserWarning.
-            warnings.warn(
-                (
-                    f"{dtype} raises an error when being compared with internal"
-                    f"numpy data types. Consider converting the Series object"
-                    f"to a numpy array to suppress this warning."
-                ),
-                UserWarning,
-            )
+            # Therefore, we return False.
+            return False
 
     def pow(self, x1, x2):
         return numpy.power(x1, x2)
