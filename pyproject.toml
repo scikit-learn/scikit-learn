@@ -213,10 +213,6 @@ default-ignore = false
 
 [tool.spin]
 package = "sklearn"  # name of your package
-# commands = [
-#   "spin.cmds.meson.test",
-#   "spin.cmds.pip.install",
-# ]
 
 [tool.spin.commands]
 "Build" = [
