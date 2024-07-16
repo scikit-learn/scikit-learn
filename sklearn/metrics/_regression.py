@@ -395,21 +395,30 @@ def mean_absolute_percentage_error(
     >>> mean_absolute_percentage_error(y_true, y_pred)
     112589990684262.48
     """
+    input_arrays = [y_true, y_pred, sample_weight, multioutput]
+    xp, _ = get_namespace(*input_arrays)
+    dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
+
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
     )
     check_consistent_length(y_true, y_pred, sample_weight)
-    epsilon = np.finfo(np.float64).eps
-    mape = np.abs(y_pred - y_true) / np.maximum(np.abs(y_true), epsilon)
-    output_errors = np.average(mape, weights=sample_weight, axis=0)
+    epsilon = xp.asarray(xp.finfo(xp.float64).eps, dtype=dtype)
+    y_true_abs = xp.asarray(xp.abs(y_true), dtype=dtype)
+    mape = xp.asarray(xp.abs(y_pred - y_true), dtype=dtype) / xp.maximum(
+        y_true_abs, epsilon
+    )
+    output_errors = _average(mape, weights=sample_weight, axis=0)
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
             return output_errors
         elif multioutput == "uniform_average":
-            # pass None as weights to np.average: uniform mean
+            # pass None as weights to _average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    mean_absolute_percentage_error = _average(output_errors, weights=multioutput)
+    assert mean_absolute_percentage_error.shape == ()
+    return float(mean_absolute_percentage_error)
 
 
 @validate_params(
