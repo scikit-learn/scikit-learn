@@ -1,0 +1,110 @@
+# Workflow to update lock files in a PR, triggered by specific PR comments
+name: Update lock files in PR
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  update-lock-files:
+    if: >-
+      github.repository == 'scikit-learn/scikit-learn'
+      && github.event.issue.pull_request
+      && startsWith(github.event.comment.body, 'please update lock-files')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Parse the comment
+        id: parse-comment
+        run: |
+          first_line=$(echo "${{ github.event.comment.body }}" | head -n 1)
+          is_valid=0
+          select_tag=""
+          select_build=""
+          skip_build=""
+
+          if [[ $first_line == "please update lock-files all" ]]; then
+            is_valid=1
+          else
+            select_tag=$(echo "$first_line" | sed -n 's/.*\[tag \([^]]*\).*/\1/p')
+            select_build=$(echo "$first_line" | sed -n 's/.*\[build \([^]]*\).*/\1/p')
+            skip_build=$(echo "$first_line" | sed -n 's/.*\[-build \([^]]*\).*/\1/p')
+
+            # If none of the tags are specified it should be invalid, since it might
+            # be some typo in the comment; explicitly state "all" instead
+            if [[ -n $select_tag || -n $select_build || -n $skip_build ]]; then
+              is_valid=1
+            fi
+          fi
+
+          echo "is_valid=$is_valid" >> $GITHUB_OUTPUT
+          if [[ $is_valid -eq 1 ]]; then
+            echo "select_tag=$select_tag" >> $GITHUB_OUTPUT
+            echo "select_build=$select_build" >> $GITHUB_OUTPUT
+            echo "skip_build=$skip_build" >> $GITHUB_OUTPUT
+          fi
+
+      # There is no direct way to get the HEAD ref of a PR when triggered by an
+      # `issue_comment` event; use the GitHub CLI instead
+      - name: Get pull request HEAD ref
+        if: ${{ steps.parse-comment.outputs.is_valid == '1' }}
+        id: pr-head-ref
+        run: echo "pr_head_ref=$(gh pr view ${{ github.event.issue.number }} --repo ${{ github.repository }} --json headRefName | jq -r '.headRefName')" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check out the PR branch
+        if: ${{ steps.parse-comment.outputs.is_valid == '1' }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.pr-head-ref.outputs.pr_head_ref }}
+
+      - name: Update lock files
+        if: ${{ steps.parse-comment.outputs.is_valid == '1' }}
+        run: |
+          select_tag=${{ steps.parse-comment.outputs.select_tag }}
+          select_build=${{ steps.parse-comment.outputs.select_build }}
+          skip_build=${{ steps.parse-comment.outputs.skip_build }}
+
+          # Assemble the command
+          command="python build_tools/update_environments_and_lock_files.py"
+          if [[ -n $select_tag ]]; then
+            command+=" --select-tag \"$select_tag\""
+          fi
+          if [[ -n $select_build ]]; then
+            command+=" --select-build \"$select_build\""
+          fi
+          if [[ -n $skip_build ]]; then
+            command+=" --skip-build \"$skip_build\""
+          fi
+
+          source build_tools/shared.sh
+          source $CONDA/bin/activate
+          conda install -n base conda conda-libmamba-solver -y
+          conda config --set solver libmamba
+          conda install -c conda-forge "$(get_dep conda-lock min)" -y
+          $command
+
+      - name: Commit changes
+        if: ${{ steps.parse-comment.outputs.is_valid == '1' }}
+        run: |
+          # Get marker from selected tag (if any)
+          marker=""
+          case "${{ steps.parse-comment.outputs.select_tag }}" in
+            "main-ci")
+              marker="[doc build] "
+              ;;
+            "scipy-dev")
+              marker="[scipy-dev] "
+              ;;
+            "arm")
+              marker="[cirrus arm] "
+              ;;
+            *)
+              ;;
+          esac
+
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "${marker}Update lock files"
+          git push
