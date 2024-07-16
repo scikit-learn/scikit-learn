@@ -15,9 +15,11 @@ dependencies:
   - pytest
   - pytest-xdist
   - pillow
+  - ninja
   - pytest-cov
   - coverage
   - ccache
   - pip
   - pip:
     - threadpoolctl==3.1.0  # min
+    - meson-python==0.16.0  # min

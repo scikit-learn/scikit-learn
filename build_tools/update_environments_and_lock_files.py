@@ -179,7 +179,7 @@ build_metadata_list = [
         "channels": ["defaults"],
         "conda_dependencies": remove_from(
             common_dependencies,
-            ["pandas", "threadpoolctl", "pip", "ninja", "meson-python"],
+            ["pandas", "threadpoolctl", "pip", "meson-python"],
         )
         + ["ccache"],
         "package_constraints": {
@@ -191,10 +191,11 @@ build_metadata_list = [
             "cython": "min",
             "joblib": "min",
             "threadpoolctl": "min",
+            "meson-python": "min",
         },
         # TODO: put pip dependencies back to conda dependencies when required
         # version is available on the defaults channel.
-        "pip_dependencies": ["threadpoolctl"],
+        "pip_dependencies": ["threadpoolctl", "meson-python"],
     },
     {
         "name": "pymin_conda_forge_openblas_ubuntu_2204",
@@ -230,9 +231,10 @@ build_metadata_list = [
             + ["array-api-compat", "array-api-strict"]
         ),
         "package_constraints": {
-            # XXX: we would like to use the latest version of Python but this makes
-            # the CI much slower. We need to investigate why.
-            "python": "3.9",
+            # XXX: we would like to use the latest Python version, but for now using
+            # Python 3.12 makes the CI much slower so we use Python 3.11. See
+            # https://github.com/scikit-learn/scikit-learn/pull/29444#issuecomment-2219550662.
+            "python": "3.11",
         },
     },
     {

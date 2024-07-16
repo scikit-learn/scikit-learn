@@ -11,6 +11,16 @@ from ..utils._typedefs cimport (BITSET_t, float32_t, float64_t, int32_t,
 from ._tree cimport Node
 
 
+cdef struct ParentInfo:
+    # Structure to store information about the parent of a node
+    # This is passed to the splitter, to provide information about the previous split
+
+    float64_t lower_bound           # the lower bound of the parent's impurity
+    float64_t upper_bound           # the upper bound of the parent's impurity
+    float64_t impurity              # the impurity of the parent
+    intp_t n_constant_features      # the number of constant features found in parent
+
+
 cdef enum:
     # Max value for our rand_r replacement (near the bottom).
     # We don't use RAND_MAX because it's different across platforms and
