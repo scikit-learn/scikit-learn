@@ -15,8 +15,11 @@ jobs:
     steps:
       - name: Parse the comment
         id: parse-comment
+        env:
+          # Avoid potential code injection
+          COMMENT: ${{ github.event.comment.body }}
         run: |
-          first_line=$(echo "${{ github.event.comment.body }}" | head -n 1)
+          first_line=$(echo "$COMMENT" | head -n 1)
           is_valid=0
           select_tag=""
           select_build=""
