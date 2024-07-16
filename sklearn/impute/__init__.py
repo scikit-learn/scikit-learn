@@ -1,4 +1,4 @@
-"""Transformers for missing value imputation"""
+"""Transformers for missing value imputation."""
 
 import typing
 

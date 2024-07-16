@@ -32,12 +32,8 @@ The module structure is the following:
 Single and multi-output problems are both handled.
 """
 
-# Authors: Gilles Louppe <g.louppe@gmail.com>
-#          Brian Holt <bdholt1@gmail.com>
-#          Joly Arnaud <arnaud.v.joly@gmail.com>
-#          Fares Hedayati <fares.hedayati@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 import threading
@@ -1308,7 +1304,7 @@ class RandomForestClassifier(ForestClassifier):
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`Glossary <warm_start>` and
-        :ref:`gradient_boosting_warm_start` for details.
+        :ref:`tree_ensemble_warm_start` for details.
 
     class_weight : {"balanced", "balanced_subsample"}, dict or list of dicts, \
             default=None
@@ -1710,7 +1706,7 @@ class RandomForestRegressor(ForestRegressor):
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`Glossary <warm_start>` and
-        :ref:`gradient_boosting_warm_start` for details.
+        :ref:`tree_ensemble_warm_start` for details.
 
     ccp_alpha : non-negative float, default=0.0
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
@@ -2049,7 +2045,7 @@ class ExtraTreesClassifier(ForestClassifier):
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`Glossary <warm_start>` and
-        :ref:`gradient_boosting_warm_start` for details.
+        :ref:`tree_ensemble_warm_start` for details.
 
     class_weight : {"balanced", "balanced_subsample"}, dict or list of dicts, \
             default=None
@@ -2434,7 +2430,7 @@ class ExtraTreesRegressor(ForestRegressor):
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`Glossary <warm_start>` and
-        :ref:`gradient_boosting_warm_start` for details.
+        :ref:`tree_ensemble_warm_start` for details.
 
     ccp_alpha : non-negative float, default=0.0
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
@@ -2727,7 +2723,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`Glossary <warm_start>` and
-        :ref:`gradient_boosting_warm_start` for details.
+        :ref:`tree_ensemble_warm_start` for details.
 
     Attributes
     ----------

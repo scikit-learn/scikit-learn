@@ -1,24 +1,15 @@
-"""
-The :mod:`sklearn.kernel_approximation` module implements several
-approximate kernel feature maps based on Fourier transforms and Count Sketches.
-"""
+"""Approximate kernel feature maps based on Fourier transforms and count sketches."""
 
-# Author: Andreas Mueller <amueller@ais.uni-bonn.de>
-#         Daniel Lopez-Sanchez (TensorSketch) <lope@usal.es>
-
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Integral, Real
 
 import numpy as np
 import scipy.sparse as sp
+from scipy.fft import fft, ifft
 from scipy.linalg import svd
-
-try:
-    from scipy.fft import fft, ifft
-except ImportError:  # scipy < 1.4
-    from scipy.fftpack import fft, ifft
 
 from .base import (
     BaseEstimator,

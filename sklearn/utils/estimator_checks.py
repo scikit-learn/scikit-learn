@@ -1,7 +1,4 @@
-"""
-The :mod:`sklearn.utils.estimator_checks` module includes various utilities to
-check the compatibility of estimators with the scikit-learn API.
-"""
+"""Various utilities to check the compatibility of estimators with scikit-learn API."""
 
 import pickle
 import re
@@ -84,7 +81,7 @@ from ._testing import (
     raises,
     set_random_state,
 )
-from .fixes import _IS_PYPY, SPARSE_ARRAY_PRESENT, parse_version, sp_version
+from .fixes import SPARSE_ARRAY_PRESENT
 from .validation import _num_samples, check_is_fitted, has_fit_parameter
 
 REGRESSION_DATASET = None
@@ -779,11 +776,6 @@ def _set_checking_parameters(estimator):
     if name == "OneHotEncoder":
         estimator.set_params(handle_unknown="ignore")
 
-    if name == "QuantileRegressor":
-        # Avoid warning due to Scipy deprecating interior-point solver
-        solver = "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
-        estimator.set_params(solver=solver)
-
     if name in CROSS_DECOMPOSITION:
         estimator.set_params(n_components=1)
 
@@ -1031,9 +1023,9 @@ def check_array_api_input_and_values(
 def _check_estimator_sparse_container(name, estimator_orig, sparse_type):
     rng = np.random.RandomState(0)
     X = rng.uniform(size=(40, 3))
-    X[X < 0.8] = 0
+    X[X < 0.6] = 0
     X = _enforce_estimator_tags_X(estimator_orig, X)
-    y = (4 * rng.uniform(size=40)).astype(int)
+    y = (4 * rng.uniform(size=X.shape[0])).astype(np.int32)
     # catch deprecation warnings
     with ignore_warnings(category=FutureWarning):
         estimator = clone(estimator_orig)
@@ -3290,11 +3282,6 @@ def check_no_attributes_set_in_init(name, estimator_orig):
         return
 
     init_params = _get_args(type(estimator).__init__)
-    if _IS_PYPY:
-        # __init__ signature has additional objects in PyPy
-        for key in ["obj"]:
-            if key in init_params:
-                init_params.remove(key)
     parents_init_params = [
         param
         for params_parent in (_get_args(parent) for parent in type(estimator).__mro__)
@@ -4730,3 +4717,49 @@ def check_set_output_transform_polars(name, transformer_orig):
 
 def check_global_set_output_transform_polars(name, transformer_orig):
     _check_set_output_transform_polars_context(name, transformer_orig, "global")
+
+
+@ignore_warnings(category=FutureWarning)
+def check_inplace_ensure_writeable(name, estimator_orig):
+    """Check that estimators able to do inplace operations can work on read-only
+    input data even if a copy is not explicitly requested by the user.
+
+    Make sure that a copy is made and consequently that the input array and its
+    writeability are not modified by the estimator.
+    """
+    rng = np.random.RandomState(0)
+
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+
+    n_samples = 100
+
+    X, _ = make_blobs(n_samples=n_samples, n_features=3, random_state=rng)
+    X = _enforce_estimator_tags_X(estimator, X)
+
+    # These estimators can only work inplace with fortran ordered input
+    if name in ("Lasso", "ElasticNet", "MultiTaskElasticNet", "MultiTaskLasso"):
+        X = np.asfortranarray(X)
+
+    # Add a missing value for imputers so that transform has to do something
+    if hasattr(estimator, "missing_values"):
+        X[0, 0] = np.nan
+
+    if is_regressor(estimator):
+        y = rng.normal(size=n_samples)
+    else:
+        y = rng.randint(low=0, high=2, size=n_samples)
+    y = _enforce_estimator_tags_y(estimator, y)
+
+    X_copy = X.copy()
+
+    # Make X read-only
+    X.setflags(write=False)
+
+    estimator.fit(X, y)
+
+    if hasattr(estimator, "transform"):
+        estimator.transform(X)
+
+    assert not X.flags.writeable
+    assert_allclose(X, X_copy)
