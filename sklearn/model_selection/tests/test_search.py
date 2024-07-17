@@ -273,7 +273,6 @@ def test_SearchCV_with_fit_params(SearchCV):
     searcher.fit(X, y, spam=np.ones(10), eggs=np.zeros(10))
 
 
-@ignore_warnings
 def test_grid_search_no_score():
     # Test grid-search on classifier that has no score function.
     clf = LinearSVC(random_state=0)
@@ -812,7 +811,6 @@ def test_y_as_list():
     assert hasattr(grid_search, "cv_results_")
 
 
-@ignore_warnings
 def test_pandas_input():
     # check cross_val_score doesn't destroy pandas dataframe
     types = [(MockDataFrame, MockDataFrame)]

@@ -176,8 +176,9 @@ The project would like to thank the following funders.
 
   .. div:: text-box
 
-    `:probabl. <https://probabl.ai>`_ funds Adrin Jalali, Arturo Amor, François Goupil,
-    Guillaume Lemaitre, Jérémie du Boisberranger, Olivier Grisel, and Stefanie Senger.
+    `:probabl. <https://probabl.ai>`_ employs Adrin Jalali, Arturo Amor,
+    François Goupil, Guillaume Lemaitre, Jérémie du Boisberranger, Loïc Estève,
+    Olivier Grisel, and Stefanie Senger.
 
   .. div:: image-box
 
@@ -197,9 +198,6 @@ The project would like to thank the following funders.
 
 .. |dataiku| image:: images/dataiku.png
   :target: https://www.dataiku.com/
-
-.. |hf| image:: images/huggingface_logo-noborder.png
-  :target: https://huggingface.co
 
 .. |nvidia| image:: images/nvidia.png
   :target: https://www.nvidia.com
@@ -245,7 +243,7 @@ The project would like to thank the following funders.
       +----------+-----------+
       |  |axa|   |    |bnp|  |
       +----------+-----------+
-      | |nvidia| |    |hf|   |
+      |       |nvidia|       |
       +----------+-----------+
       |       |dataiku|      |
       +----------+-----------+
@@ -501,6 +499,9 @@ the past:
 .. |aphp| image:: images/logo_APHP_text.png
   :target: https://aphp.fr/
 
+.. |hf| image:: images/huggingface_logo-noborder.png
+  :target: https://huggingface.co
+
 .. raw:: html
 
   <style>
@@ -538,26 +539,21 @@ the past:
 
     |aphp|
 
+  .. grid-item::
+    :class: sd-text-center
+    :child-align: center
 
-Sprints
--------
+    |hf|
 
-- The International 2019 Paris sprint was kindly hosted by `AXA <https://www.axa.fr/>`_.
-  Also some participants could attend thanks to the support of the `Alfred P.
-  Sloan Foundation <https://sloan.org>`_, the `Python Software
-  Foundation <https://www.python.org/psf/>`_ (PSF) and the `DATAIA Institute
-  <https://dataia.eu/en>`_.
+Coding Sprints
+--------------
 
-- The 2013 International Paris Sprint was made possible thanks to the support of
-  `Télécom Paristech <https://www.telecom-paristech.fr/>`_, `tinyclues
-  <https://www.tinyclues.com/>`_, the `French Python Association
-  <https://www.afpy.org/>`_ and the `Fonds de la Recherche Scientifique
-  <https://www.frs-fnrs.be>`_.
-
-- The 2011 International Granada sprint was made possible thanks to the support
-  of the `PSF <https://www.python.org/psf/>`_ and `tinyclues
-  <https://www.tinyclues.com/>`_.
-
+The scikit-learn project has a long history of `open source coding sprints
+<https://blog.scikit-learn.org/events/sprints-value/>`_ with over 50 sprint
+events from 2010 to present day. There are scores of sponsors who contributed
+to costs which include venue, food, travel, developer time and more. See
+`scikit-learn sprints <https://blog.scikit-learn.org/sprints/>`_ for a full
+list of events.
 
 Donating to the project
 -----------------------
