@@ -124,7 +124,7 @@ cdef class DensePartitioner(BasePartitioner):
             self.sort_density = np.zeros(1, dtype=np.float32)
 
             # XXX: unsure what this it.
-            self.cat_offs = np.empty(1, dtype=np.int32)
+            self.cat_offset = np.empty(1, dtype=np.int32)
             # A storage of the sorted categories used in Breiman shortcut
             self.sorted_cat = np.empty(1, dtype=np.intp)
 
@@ -642,7 +642,7 @@ cdef class SparsePartitioner(BasePartitioner):
             self.sort_density = np.zeros(1, dtype=np.float32)
 
             # XXX: unsure what this it.
-            self.cat_offs = np.empty(1, dtype=np.int32)
+            self.cat_offset = np.empty(1, dtype=np.int32)
             # A storage of the sorted categories used in Breiman shortcut
             self.sorted_cat = np.empty(1, dtype=np.intp)
 

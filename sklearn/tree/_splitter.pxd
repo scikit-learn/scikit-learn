@@ -46,6 +46,10 @@ cdef class Splitter:
     cdef bint with_monotonic_cst
     cdef const float64_t[:] sample_weight
 
+    # Whether or not to sort categories by probabilities to split categorical
+    # features using the Breiman shortcut
+    cdef bint breiman_shortcut
+
     # We know the number of categories within our dataset across each feature.
     # If a feature index has -1, then it is not categorical
     cdef const int32_t[:] n_categories

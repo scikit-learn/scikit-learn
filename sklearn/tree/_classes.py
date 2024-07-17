@@ -520,29 +520,19 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
         splitter = self.splitter
         if not isinstance(self.splitter, Splitter):
-            # Random splitter does not need to know about breiman shortcut
-            if self.splitter == "random":
-                splitter = SPLITTERS[self.splitter](
-                    criterion,
-                    self.max_features_,
-                    min_samples_leaf,
-                    min_weight_leaf,
-                    random_state,
-                    monotonic_cst,
-                )
-            else:
-                splitter = SPLITTERS[self.splitter](
-                    criterion,
-                    self.max_features_,
-                    min_samples_leaf,
-                    min_weight_leaf,
-                    random_state,
-                    monotonic_cst,
-                    breiman_shortcut,
-                )
+            # Note: random splitter does not use breiman shortcut
+            splitter = SPLITTERS[self.splitter](
+                criterion,
+                self.max_features_,
+                min_samples_leaf,
+                min_weight_leaf,
+                random_state,
+                monotonic_cst,
+                breiman_shortcut,
+            )
 
         if (
-            not isinstance(splitter, _splitter.RandomSplitter)
+            not isinstance(splitter, _splitter.RandomDenseSplitter)
             and np.max(n_categories) > 64
         ):
             raise ValueError(

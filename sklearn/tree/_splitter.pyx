@@ -69,6 +69,7 @@ cdef class Splitter:
         float64_t min_weight_leaf,
         object random_state,
         const int8_t[:] monotonic_cst,
+        bint breiman_shortcut,
         *argv
     ):
         """
@@ -111,6 +112,9 @@ cdef class Splitter:
         self.random_state = random_state
         self.monotonic_cst = monotonic_cst
         self.with_monotonic_cst = monotonic_cst is not None
+        
+        # Unused in random splitters
+        self.breiman_shortcut = breiman_shortcut
 
     def __getstate__(self):
         return {}
@@ -126,6 +130,7 @@ cdef class Splitter:
             self.min_weight_leaf,
             self.random_state,
             self.monotonic_cst,
+            self.breiman_shortcut,
         ), self.__getstate__())
 
     cdef int init(
@@ -280,41 +285,7 @@ cdef class Splitter:
         return self.criterion.node_impurity()
 
 
-cdef class BestSplitter(Splitter):
-    """Splitter for finding the best split on dense data.
-
-    breiman_shortcut : bint
-        Whether we use the Breiman shortcut method when splitting
-        a categorical feature.
-    """
-    cdef bint breiman_shortcut
-
-    def __cinit__(
-        self,
-        Criterion criterion,
-        intp_t max_features,
-        intp_t min_samples_leaf,
-        float64_t min_weight_leaf,
-        object random_state,
-        const int8_t[:] monotonic_cst,
-        bint breiman_shortcut,
-        *argv
-    ):
-        self.breiman_shortcut = breiman_shortcut
-
-    def __reduce__(self):
-        return (type(self), (
-            self.criterion,
-            self.max_features,
-            self.min_samples_leaf,
-            self.min_weight_leaf,
-            self.random_state,
-            self.monotonic_cst,
-            self.breiman_shortcut
-        ), self.__getstate__())
-
-
-cdef class BestDenseSplitter(BestSplitter):
+cdef class BestDenseSplitter(Splitter):
     """Splitter for finding the best split on dense data."""
     cdef DensePartitioner partitioner
     cdef int init(
@@ -348,7 +319,7 @@ cdef class BestDenseSplitter(BestSplitter):
             parent_record,
         )
 
-cdef class BestSparseSplitter(BestSplitter):
+cdef class BestSparseSplitter(Splitter):
     """Splitter for finding the best split, using the sparse data."""
     cdef SparsePartitioner partitioner
     cdef int init(
@@ -361,7 +332,7 @@ cdef class BestSparseSplitter(BestSplitter):
     ) except -1:
         Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask, n_categories)
         self.partitioner = SparsePartitioner(
-            X, self.samples, self.n_samples, self.feature_values, missing_values_in_feature_mask, n_categories
+            X, self.samples, self.n_samples, self.feature_values, missing_values_in_feature_mask, n_categories, self.breiman_shortcut
         )
 
     cdef int node_split(
@@ -438,7 +409,7 @@ cdef class RandomSparseSplitter(Splitter):
 
 
 cdef inline int node_split_best(
-    BestSplitter splitter,
+    Splitter splitter,
     Partitioner partitioner,
     Criterion criterion,
     SplitRecord* split,
