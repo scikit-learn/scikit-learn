@@ -217,6 +217,7 @@ package = "sklearn"  # name of your package
 [tool.spin.commands]
 "Build" = [
   "spin.cmds.pip.install",
+  ".spin/cmds.py:clean",
   "spin.cmds.meson.test",
 ]
 "Documentation" = [
