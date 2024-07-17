@@ -25,19 +25,14 @@ We adopted the following release schedule:
 - Make sure the deprecations, FIXMEs, and TODOs tagged for the release have been taken
   care of.
 
-- For major/minor final releases, make sure that a Release Highlights page as been done
-  as a runnable example and check that its HTML rendering looks correct. It should be
-  linked from the what's new file for the new version of scikit-learn.
+- For major/minor final releases, make sure that a *Release Highlights* page has been
+  done as a runnable example and check that its HTML rendering looks correct. It should
+  be linked from the what's new file for the new version of scikit-learn.
 
 - Ensure that the changelog and commits correspond, and that the changelog is reasonably
   well curated. In particular, make sure that the changelog entries are labeled and
   ordered within each section. The order of the labels should be `|MajorFeature|`,
   `|Feature|`, `|Efficiency|`, `|Enhancement|`, `|Fix|`, and `|API|`.
-
-  - `maint_tools/sort_whats_new.py` can put what's new entries into sections. It is
-    however not perfect and requires manual checking of the changes.
-  - `maint_tools/whats_missing.sh` can be used to identify pull requests that were
-    merged but likely missing from the changelog.
 
 .. rubric:: Permissions
 
@@ -56,102 +51,54 @@ Reference Steps
 
 .. tab-set::
 
-  {% for key in ["rc", "finale", "bf"] %}
+  {% for key in ["rc", "final", "bf"] %}
   {%- if key == "rc" -%}
     {%- set title = "Major/Minor RC" -%}
-    {%- set default_version_full = "0.1.0rc1" -%}
-    {%- set default_version_main = "0.1" -%}
-  {%- elif key == "finale" -%}
-    {%- set title = "Major/Minor Finale" -%}
-    {%- set default_version_full = "0.1.0" -%}
-    {%- set default_version_main = "0.1" -%}
+  {%- elif key == "final" -%}
+    {%- set title = "Major/Minor Final" -%}
   {%- else -%}
     {%- set title = "Bug-fix" -%}
-    {%- set default_version_full = "0.0.1" -%}
-    {%- set default_version_main = "0.0" -%}
-  {%- endif %}
+  {%- endif -%}
 
-  .. role:: {{ key }}-version-full
-
-  .. role:: {{ key }}-version-main
-
-  .. role:: {{ key }}-previous-tag
-
-  {%- set version_full = ":" + key + "-version-full:`" + default_version_full + "`" %}
-  {%- set version_main = ":" + key + "-version-main:`" + default_version_main + "`" %}
-  {%- set previous_tag = ":" + key + "-previous-tag:`X.Y.Z`" %}
+  {%- set version_full = inferred["version_full"][key] -%}
+  {%- set version_main = inferred["version_main"][key] -%}
+  {%- set previous_tag = inferred["previous_tag"][key] -%}
 
   .. tab-item:: {{ title }}
     :class-label: tab-4
 
-    .. raw:: html
-
-      <style>
-        .{{ key }}-version-full,
-        .{{ key }}-version-main,
-        .{{ key }}-previous-tag {
-          text-decoration: underline dotted;
-        }
-
-        #{{ key }}-version-full-input,
-        #{{ key }}-previous-tag-input {
-          all: unset;
-          line-height: 1;
-          padding: 0 5px;
-          width: 100px;
-          border-bottom: 1px solid var(--pst-color-text-muted);
-        }
-
-        #{{ key }}-version-full-input:focus,
-        #{{ key }}-previous-tag-input:focus {
-          border-bottom-color: var(--pst-color-primary);
-        }
-
-        #{{ key }}-invalid-release-version-warning {
-          font-size: 0.8rem;
-          color: var(--pst-color-danger);
-        }
-      </style>
-
-      <div style="margin-bottom: 1.15rem;">
-        Suppose that we are preparing the release
-        <input type="text" id="{{ key }}-version-full-input" placeholder="{{ default_version_full }}" />.
-        <div id="{{ key }}-invalid-release-version-warning"></div>
-      </div>
+    Suppose that we are preparing the release `{{ version_full }}`.
 
     {% if key == "rc" %}
     The first RC ideally counts as a **feature freeze**. Each coming release candidate
     and the final release afterwards should include only minor documentation changes
     and bug fixes. Any major enhancement or new feature should be excluded.
 
-    - Create the release branch {{ version_main }}.X directly in the main repository, where
-      `X` is really the letter X, **not a placeholder**. The development for the finale
-      and subsequent bug-fix releases of {{ version_main }} should also happen under this
-      branch with different tags.
+    - Create the release branch `{{ version_main }}.X` directly in the main repository,
+      where `X` is really the letter X, **not a placeholder**. The development for the
+      final and subsequent bug-fix releases of `{{ version_main }}` should also happen
+      under this branch with different tags.
 
-      .. div:: highlight-default
+      .. prompt:: bash
 
-        .. div:: highlight
-
-          .. parsed-literal::
-
-            git fetch upstream main
-            git checkout upstream/main
-            git checkout -b {{ version_main }}.X
-            git push --set-upstream upstream {{ version_main }}.X
+        git fetch upstream main
+        git checkout upstream/main
+        git checkout -b {{ version_main }}.X
+        git push --set-upstream upstream {{ version_main }}.X
     {% endif %}
 
-    - Create a PR from the `main` branch targeting the {{ version_main }}.X branch. Copy
-      the following release checklist to the description of this PR to track the
+    - Create a PR from the `main` branch targeting the `{{ version_main }}.X` branch.
+      Copy the following release checklist to the description of this PR to track the
       progress.
 
       .. code-block:: markdown
 
         * [ ] Update news and what's new date in release branch
-        * [ ] Update news and what's new date and sklearn dev0 version in main branch
+        * [ ] Backport news and what's new date in release branch
         {%- if key == "rc" %}
         * [ ] Update the sklearn dev0 version in main branch
         {%- endif %}
+        * [ ] Set the version number in the release branch
         * [ ] Check that the wheels for the release can be built successfully
         * [ ] Merge the PR with `[cd build]` commit message to upload wheels to the staging repo
         * [ ] Upload the wheels and source tarball to https://test.pypi.org
@@ -163,7 +110,7 @@ Reference Steps
         * [ ] Publish to https://github.com/scikit-learn/scikit-learn/releases
         {%- endif %}
         * [ ] Announce on mailing list and on Twitter, and LinkedIn
-        {%- if key == "finale" %}
+        {%- if key == "final" %}
         * [ ] Update symlink for stable in https://github.com/scikit-learn/scikit-learn.github.io
         {%- endif %}
         {%- if key != "rc" %}
@@ -171,15 +118,11 @@ Reference Steps
         {%- endif %}
 
     {% if key != "rc" %}
-    - Rebase this PR from the {{ version_main }}.X branch:
+    - Rebase this PR from the `{{ version_main }}.X` branch:
 
-      .. div:: highlight-default
+      .. prompt:: bash
 
-        .. div:: highlight
-
-          .. parsed-literal::
-
-            git rebase -i upstream/{{ version_main }}.X
+        git rebase -i upstream/{{ version_main }}.X
 
       This will open an interactive rebase with the `git-rebase-todo` containing all the
       latest commits on `main`. At this stage, you have to perform this interactive
@@ -209,40 +152,35 @@ Reference Steps
       parallel to the release process.
     {% endif %}
 
-    - In the {{ version_main }}.X branch, change the version numbers `__version__` in
-      `sklearn/__init__.py` to {{ version_full }}.
+    - In the `{{ version_main }}.X` branch, change the version number `__version__` in
+      `sklearn/__init__.py` to `{{ version_full }}`.
 
     {% if key != "rc" %}
     - In the `main` branch, edit the corresponding file in the `doc/whats_new` directory
       to update the release date
-      {%- if key == "finale" %}, link the release highlights example,{% endif %}
-      and add the list of contributor names.
+      {%- if key == "final" %}, link the release highlights example,{% endif %}
+      and add the list of contributor names. Suppose that the tag of the last release in
+      the previous major/minor version is `{{ previous_tag }}`, then you can use the
+      following command to retrieve the list of contributor names:
 
-      .. raw:: html
+      .. prompt:: bash
 
-        <div style="margin-bottom: 1.15rem;">
-          Input the tag of the last release in the previous major/minor version to get
-          the command for retrieving the list of contributor names:
-          <input type="text" id="{{ key }}-previous-tag-input" placeholder="X.Y.Z" />.
-        </div>
+        git shortlog -s {{ previous_tag }}.. |
+          cut -f2- |
+          sort --ignore-case |
+          tr "\n" ";" |
+          sed "s/;/, /g;s/, $//" |
+          fold -s
 
-      .. div:: highlight-default
-
-        .. div:: highlight
-
-          .. parsed-literal::
-
-            git shortlog -s {{ previous_tag }}.. \| cut -f2- \| sort --ignore-case \| tr "\\n" ";" \| sed "s/;/, /g;s/, $//" \| fold -s
-
-      Then cherry-pick it in the {{ version_main }}.X release branch.
+      Then cherry-pick it in the `{{ version_main }}.X` release branch.
 
     - In the `main` branch, edit `doc/templates/index.html` to change the "News" section
       in the landing page, along with the month of the release.
-      {%- if key == "finale" %}
+      {%- if key == "final" %}
       Do not forget to remove old entries (two years or three releases ago) and update
       the "On-going development" entry.
       {%- endif %}
-      Then cherry-pick it in the {{ version_main }}.X release branch.
+      Then cherry-pick it in the `{{ version_main }}.X` release branch.
     {% endif %}
 
     - Trigger the wheel builder with the `[cd build]` commit marker. See also the
@@ -276,14 +214,10 @@ Reference Steps
       ready, since adding a new tag to the main repository can trigger certain automated
       processes.
 
-      .. div:: highlight-default
+      .. prompt:: bash
 
-        .. div:: highlight
-
-          .. parsed-literal::
-
-            git tag -a {{ version_full }}  # in the {{ version_main }}.X branch
-            git push git@github.com:scikit-learn/scikit-learn.git {{ version_full }}
+        git tag -a {{ version_full }}  # in the {{ version_main }}.X branch
+        git push git@github.com:scikit-learn/scikit-learn.git {{ version_full }}
 
     - Confirm that the bot has detected the tag on the conda-forge feedstock repository
       https://github.com/conda-forge/scikit-learn-feedstock. If not, submit a PR for the
@@ -328,31 +262,27 @@ Reference Steps
 
           twine upload dist/*
 
-    {% if key == "finale" %}
+    {% if key == "final" %}
     - Update the symlink for `stable` and the `latestStable` variable in
       `versionwarning.js` in https://github.com/scikit-learn/scikit-learn.github.io.
 
-      .. div:: highlight-default
+      .. prompt:: bash
 
-        .. div:: highlight
-
-          .. parsed-literal::
-
-            cd /tmp
-            git clone --depth 1 --no-checkout git@github.com:scikit-learn/scikit-learn.github.io.git
-            cd scikit-learn.github.io
-            echo stable > .git/info/sparse-checkout
-            git checkout main
-            rm stable
-            ln -s {{ version_main }} stable
-            sed -i "s/latestStable = '.*/latestStable = '{{ version_main }}';/" versionwarning.js
-            git add stable versionwarning.js
-            git commit -m "Update stable to point to {{ version_main }}"
-            git push origin main
+        cd /tmp
+        git clone --depth 1 --no-checkout git@github.com:scikit-learn/scikit-learn.github.io.git
+        cd scikit-learn.github.io
+        echo stable > .git/info/sparse-checkout
+        git checkout main
+        rm stable
+        ln -s {{ version_main }} stable
+        sed -i "s/latestStable = '.*/latestStable = '{{ version_main }}';/" versionwarning.js
+        git add stable versionwarning.js
+        git commit -m "Update stable to point to {{ version_main }}"
+        git push origin main
     {% endif %}
 
     {% if key != "rc" %}
-    - Update `SECURITY.md` to reflect the latest supported version {{ version_full }}.
+    - Update `SECURITY.md` to reflect the latest supported version `{{ version_full }}`.
     {% endif %}
   {% endfor %}
 
@@ -442,7 +372,7 @@ modules. Note that using `from sklearn.experimental import *` **does not work**.
 .. note::
 
   Some experimental classes and functions may not be included in the
-  :mod:`sklearn.experimental` module, e.g., `sklearn.datasets.fetch_openml`.`
+  :mod:`sklearn.experimental` module, e.g., `sklearn.datasets.fetch_openml`.
 
 Once the feature becomes stable, remove all occurrences of
 `enable_my_experimental_feature` in the scikit-learn code base and make the
