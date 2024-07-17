@@ -73,7 +73,10 @@ CRITERIA_REG = {
     "poisson": _criterion.Poisson,
 }
 
-DENSE_SPLITTERS = {"best": _splitter.BestSplitter, "random": _splitter.RandomSplitter}
+DENSE_SPLITTERS = {
+    "best": _splitter.BestDenseSplitter,
+    "random": _splitter.RandomDenseSplitter,
+}
 
 SPARSE_SPLITTERS = {
     "best": _splitter.BestSparseSplitter,
@@ -475,9 +478,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             breiman_shortcut = isinstance(criterion, _criterion.MSE)
 
-        SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
-
-        splitter = self.splitter
         if self.monotonic_cst is None:
             monotonic_cst = None
         else:
@@ -517,16 +517,29 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 # *positive class*, all signs must be flipped.
                 monotonic_cst *= -1
 
+        SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
+        splitter = self.splitter
         if not isinstance(self.splitter, Splitter):
-            splitter = SPLITTERS[self.splitter](
-                criterion,
-                self.max_features_,
-                min_samples_leaf,
-                min_weight_leaf,
-                random_state,
-                monotonic_cst,
-                breiman_shortcut,
-            )
+            # Random splitter does not need to know about breiman shortcut
+            if self.splitter == "random":
+                splitter = SPLITTERS[self.splitter](
+                    criterion,
+                    self.max_features_,
+                    min_samples_leaf,
+                    min_weight_leaf,
+                    random_state,
+                    monotonic_cst,
+                )
+            else:
+                splitter = SPLITTERS[self.splitter](
+                    criterion,
+                    self.max_features_,
+                    min_samples_leaf,
+                    min_weight_leaf,
+                    random_state,
+                    monotonic_cst,
+                    breiman_shortcut,
+                )
 
         if (
             not isinstance(splitter, _splitter.RandomSplitter)

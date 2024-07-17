@@ -8,7 +8,7 @@ from ..utils._typedefs cimport (BITSET_t, float32_t, float64_t, int8_t,
                                 int32_t, intp_t, uint8_t, uint32_t, uint64_t)
 from ._utils cimport ParentInfo, SplitRecord, SplitValue
 from ._criterion cimport Criterion
-# from ._partitioner cimport SplitValue
+
 
 cdef class Splitter:
     # The splitter searches in the input space for a feature and a threshold
@@ -36,10 +36,6 @@ cdef class Splitter:
     cdef intp_t start                    # Start position for the current node
     cdef intp_t end                      # End position for the current node
 
-    # XXX: I think we can refactor this only into BestSplitter
-    cdef bint breiman_shortcut           # Whether decision trees are allowed to use the
-    #                                    # Breiman shortcut for categorical features
-
     cdef const float64_t[:, ::1] y
     # Monotonicity constraints for each feature.
     # The encoding is as follows:
@@ -53,10 +49,6 @@ cdef class Splitter:
     # We know the number of categories within our dataset across each feature.
     # If a feature index has -1, then it is not categorical
     cdef const int32_t[:] n_categories
-
-    # We implement a caching of the categories, so it is easy/cheap to determine
-    # whether the split should move samples to the left, or right child
-    cdef BITSET_t[:] cat_cache
 
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,
