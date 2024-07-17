@@ -31,8 +31,6 @@ as well.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-# Author: Jake Vanderplas <jakevdp@cs.washington.edu>
-#
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import norm

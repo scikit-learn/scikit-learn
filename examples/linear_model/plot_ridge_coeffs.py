@@ -54,8 +54,6 @@ capable of generalizing well to unseen data while avoiding overfitting.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-# Author: Kornel Kielczewski -- <kornel.k@plusnet.pl>
-
 # %%
 # Purpose of this example
 # -----------------------

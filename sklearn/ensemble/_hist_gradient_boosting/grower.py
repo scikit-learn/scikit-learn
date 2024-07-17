@@ -8,8 +8,6 @@ the gradients and hessians of the training data.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-# Author: Nicolas Hug
-
 import numbers
 from heapq import heappop, heappush
 from timeit import default_timer as time

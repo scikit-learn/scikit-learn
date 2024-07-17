@@ -24,8 +24,6 @@ compared with the ground-truth.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-# Author: Arturo Amor <david-arturo.amor-quiroz@inria.fr>
-
 # %%
 # Generate synthetic dataset
 # --------------------------

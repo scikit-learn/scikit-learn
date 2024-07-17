@@ -21,8 +21,6 @@ NY, USA: Springer New York Inc..
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-# Author: Wenhao Zhang <wenhaoz@ucla.edu>
-
 import matplotlib.pyplot as plt
 import numpy as np
 

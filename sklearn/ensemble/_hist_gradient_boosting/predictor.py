@@ -5,8 +5,6 @@ This module contains the TreePredictor class which is used for prediction.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-# Author: Nicolas Hug
-
 import numpy as np
 
 from ._predictor import (
