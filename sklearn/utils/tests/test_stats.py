@@ -76,6 +76,7 @@ def test_weighted_median_equal_weights(array_namespace, device, dtype_name):
     # Odd size as _weighted_percentile takes lower weighted percentile
     x = rng.randint(10, size=11)
     x = x.astype(dtype_name, copy=False)
+    x = xp.asarray(x, device=device)
     weights = xp.ones(x.shape)
 
     median = np.median(x)
@@ -87,11 +88,13 @@ def test_weighted_median_equal_weights(array_namespace, device, dtype_name):
     "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
 )
 def test_weighted_median_integer_weights(array_namespace, device, dtype_name):
+    xp = _array_api_for_tests(array_namespace, device)
     # Checks weighted percentile=0.5 is same as median when manually weight
     # data
     rng = np.random.RandomState(0)
     x = rng.randint(20, size=10)
     x = x.astype(dtype_name, copy=False)
+    x = xp.asarray(x, device=device)
     weights = rng.choice(5, size=10)
     x_manual = np.repeat(x, weights)
 
@@ -101,14 +104,22 @@ def test_weighted_median_integer_weights(array_namespace, device, dtype_name):
     assert median == approx(w_median)
 
 
-def test_weighted_percentile_2d():
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+)
+def test_weighted_percentile_2d(array_namespace, device, dtype_name):
+    xp = _array_api_for_tests(array_namespace, device)
     # Check for when array 2D and sample_weight 1D
     rng = np.random.RandomState(0)
     x1 = rng.randint(10, size=10)
     w1 = rng.choice(5, size=10)
+    w1 = w1.astype(dtype_name, copy=False)
+    w1 = xp.asarray(w1, device=device)
 
     x2 = rng.randint(20, size=10)
     x_2d = np.vstack((x1, x2)).T
+    x_2d = x_2d.astype(dtype_name, copy=False)
+    x_2d = xp.asarray(x_2d, device=device)
 
     w_median = _weighted_percentile(x_2d, w1)
     p_axis_0 = [_weighted_percentile(x_2d[:, i], w1) for i in range(x_2d.shape[1])]
@@ -117,6 +128,8 @@ def test_weighted_percentile_2d():
     # Check when array and sample_weight boht 2D
     w2 = rng.choice(5, size=10)
     w_2d = np.vstack((w1, w2)).T
+    w_2d = w_2d.astype(dtype_name, copy=False)
+    w_2d = xp.asarray(w_2d, device=device)
 
     w_median = _weighted_percentile(x_2d, w_2d)
     p_axis_0 = [

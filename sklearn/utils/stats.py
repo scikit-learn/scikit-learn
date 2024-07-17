@@ -1,4 +1,4 @@
-from ..utils._array_api import get_namespace
+from ..utils._array_api import _find_matching_floating_dtype, get_namespace
 from .extmath import stable_cumsum
 
 
@@ -65,12 +65,15 @@ def _weighted_percentile(array, sample_weight, percentile=50):
 
     col_index = xp.arange(array.shape[1])
     percentile_in_sorted = sorted_idx[percentile_idx, col_index]
+    array = xp.asarray(array)
     percentile = array[percentile_in_sorted, col_index]
     return percentile[0] if n_dim == 1 else percentile
 
 
 def _take_along_axis(sample_weight, sorted_idx, xp=None):
-    sorted_weights = xp.empty_like(sorted_idx, dtype=sample_weight.dtype)
+    sorted_weights = xp.empty_like(
+        sorted_idx, dtype=_find_matching_floating_dtype(sample_weight, xp=xp)
+    )
     if sample_weight.ndim == 1:
         for i in range(sorted_idx.shape[0]):
             sorted_weights[i] = sample_weight[sorted_idx[i]]
