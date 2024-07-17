@@ -24,7 +24,7 @@ from libc.string cimport memcpy
 
 from ._utils cimport rand_int
 from ._utils cimport rand_uniform
-from ._utils cimport RAND_R_MAX, log, bs_get, bs_set, bs_from_template, setup_cat_cache
+from ._utils cimport RAND_R_MAX, bs_get, bs_set, bs_from_template, setup_cat_cache
 from ._criterion cimport Criterion
 from ._partitioner cimport DensePartitioner, SparsePartitioner, FEATURE_THRESHOLD
 
@@ -136,7 +136,7 @@ cdef class Splitter:
         object X,
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
-        const unsigned char[::1] missing_values_in_feature_mask,
+        const uint8_t[::1] missing_values_in_feature_mask,
         const int32_t[::1] n_categories,
     ) except -1:
         """Initialize the splitter.
@@ -964,7 +964,7 @@ cdef class BestSplitter(Splitter):
         object X,
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
-        const unsigned char[::1] missing_values_in_feature_mask,
+        const uint8_t[::1] missing_values_in_feature_mask,
         const int32_t[::1] n_categories,
     ) except -1:
         Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask, n_categories)
@@ -998,7 +998,7 @@ cdef class BestSparseSplitter(Splitter):
         object X,
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
-        const unsigned char[::1] missing_values_in_feature_mask,
+        const uint8_t[::1] missing_values_in_feature_mask,
         const int32_t[::1] n_categories,
     ) except -1:
         Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask, n_categories)
@@ -1027,7 +1027,7 @@ cdef class RandomSplitter(Splitter):
         object X,
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
-        const unsigned char[::1] missing_values_in_feature_mask,
+        const uint8_t[::1] missing_values_in_feature_mask,
         const int32_t[::1] n_categories,
     ) except -1:
         Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask, n_categories)
@@ -1056,7 +1056,7 @@ cdef class RandomSparseSplitter(Splitter):
         object X,
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
-        const unsigned char[::1] missing_values_in_feature_mask,
+        const uint8_t[::1] missing_values_in_feature_mask,
         const int32_t[::1] n_categories,
     ) except -1:
         Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask, n_categories)

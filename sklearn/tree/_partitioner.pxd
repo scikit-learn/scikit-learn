@@ -2,31 +2,12 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 # See _partitioner.pyx for details.
-from ..utils._typedefs cimport BITSET_t, float32_t, float64_t, intp_t, int8_t, int32_t, uint32_t
+from ..utils._typedefs cimport BITSET_t, float32_t, float64_t, intp_t, int8_t, int32_t, uint8_t, uint32_t
+from ._utils cimport SplitValue
 
 
 # Mitigate precision differences between 32 bit and 64 bit
 cdef float32_t FEATURE_THRESHOLD = 1e-7
-
-
-ctypedef union SplitValue:
-    # Union type to generalize the concept of a threshold to categorical
-    # features. The floating point view, i.e. ``SplitValue.split_value.threshold`` is used
-    # for numerical features, where feature values less than or equal to the
-    # threshold go left, and values greater than the threshold go right.
-    #
-    # For categorical features, the BITSET_INNER_DTYPE_C view (`SplitValue.cat_split``) is
-    # used. It works in one of two ways, indicated by the value of its least
-    # significant bit (LSB). If the LSB is 0, then cat_split acts as a bitfield
-    # for up to 64 categories, sending samples left if the bit corresponding to
-    # their category is 1 or right if it is 0. If the LSB is 1, then the most
-    # significant 32 bits of cat_split make a random seed. To evaluate a
-    # sample, use the random seed to flip a coin (category_value + 1) times and
-    # send it left if the last flip gives 1; otherwise right. This second
-    # method allows up to 2**31 category values, but can only be used for
-    # RandomSplitter.
-    float64_t threshold
-    BITSET_t cat_split
 
 
 cdef class BasePartitioner:
@@ -35,7 +16,7 @@ cdef class BasePartitioner:
     cdef intp_t start
     cdef intp_t end
     cdef intp_t n_missing
-    cdef const unsigned char[::1] missing_values_in_feature_mask
+    cdef const uint8_t[::1] missing_values_in_feature_mask
     cdef const int32_t[::1] n_categories
     cdef BITSET_t[::1] cat_cache
 

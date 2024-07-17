@@ -8,26 +8,10 @@ import numpy as np
 cimport numpy as cnp
 
 from ..ensemble._hist_gradient_boosting.common cimport BITSET_INNER_DTYPE_C
-from ..utils._typedefs cimport float32_t, float64_t, int32_t, intp_t, uint32_t, BITSET_t
-from ._utils cimport ParentInfo
-from ._partitioner cimport SplitValue
-from ._splitter cimport SplitRecord, Splitter
-
-
-cdef struct Node:
-    # Base storage structure for the nodes in a Tree object
-
-    intp_t left_child                    # id of the left child of the node
-    intp_t right_child                   # id of the right child of the node
-    intp_t feature                       # Feature used for splitting the node
-    # SplitValue split_value             # Generalized threshold for categorical and
-    #                                    # non-categorical features
-    float64_t threshold
-    BITSET_t cat_split
-    float64_t impurity                   # Impurity of the node (i.e., the value of the criterion)
-    intp_t n_node_samples                # Number of samples at the node
-    float64_t weighted_n_node_samples    # Weighted number of samples at the node
-    unsigned char missing_go_to_left     # Whether features have missing values
+from ..utils._typedefs cimport float32_t, float64_t, int32_t, intp_t, uint8_t, uint32_t, BITSET_t
+from ._utils cimport ParentInfo, SplitRecord, SplitValue, Node
+# from ._partitioner cimport SplitValue
+from ._splitter cimport Splitter
 
 
 cdef class Tree:
@@ -64,7 +48,7 @@ cdef class Tree:
         float64_t impurity,
         intp_t n_node_samples,
         float64_t weighted_n_node_samples,
-        unsigned char missing_go_to_left
+        uint8_t missing_go_to_left
     ) except -1 nogil
     cdef int _resize(self, intp_t capacity) except -1 nogil
     cdef int _resize_c(self, intp_t capacity=*) except -1 nogil
@@ -112,7 +96,7 @@ cdef class TreeBuilder:
         object X,
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight=*,
-        const unsigned char[::1] missing_values_in_feature_mask=*,
+        const uint8_t[::1] missing_values_in_feature_mask=*,
         const int32_t[::1] n_categories=*,
     )
 
