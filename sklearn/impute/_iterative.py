@@ -695,13 +695,7 @@ class IterativeImputer(_BaseImputer):
         limit = limit_bound if limit is None else limit
         if np.isscalar(limit):
             limit = np.full(n_features, limit)
-        limit = check_array(limit, ensure_all_finite=False, copy=False, ensure_2d=False)
-        if not limit.shape[0] == n_features:
-            raise ValueError(
-                f"'{limit_type}_value' should be of "
-                f"shape ({n_features},) when an array-like "
-                f"is provided. Got {limit.shape}, instead."
-            )
+        limit = check_array(limit, force_all_finite=False, copy=False, ensure_2d=False)
         return limit
 
     @_fit_context(
@@ -762,6 +756,29 @@ class IterativeImputer(_BaseImputer):
             X, in_fit=True
         )
 
+        err_msg = (
+            "'{}' should be of shape ({},) when an array-like is provided. "
+            "Got {}, instead."
+        )
+
+        n_features_in = complete_mask.shape[1]
+        if (
+            self.min_value is not None
+            and not np.isscalar(self.min_value)
+            and len(self.min_value) != n_features_in
+        ):
+            raise ValueError(
+                err_msg.format("min_value", n_features_in, len(self.min_value))
+            )
+        if (
+            self.max_value is not None
+            and not np.isscalar(self.max_value)
+            and len(self.max_value) != n_features_in
+        ):
+            raise ValueError(
+                err_msg.format("max_value", n_features_in, len(self.max_value))
+            )
+
         super()._fit_indicator(complete_mask)
         X_indicator = super()._transform_indicator(complete_mask)
 
@@ -774,17 +791,15 @@ class IterativeImputer(_BaseImputer):
             self.n_iter_ = 0
             return super()._concatenate_indicator(Xt, X_indicator)
 
-        self._min_value = self._validate_limit(
-            self.min_value, "min", complete_mask.shape[1]
-        )
-        self._max_value = self._validate_limit(
-            self.max_value, "max", complete_mask.shape[1]
-        )
+        self._min_value = self._validate_limit(self.min_value, "min", X.shape[1])
+        self._max_value = self._validate_limit(self.max_value, "max", X.shape[1])
 
         # Make sure to remove the empty feature elements from the bounds
         nonempty_feature_mask = np.logical_not(np.all(complete_mask, axis=0))
-        self._min_value = self._min_value[nonempty_feature_mask]
-        self._max_value = self._max_value[nonempty_feature_mask]
+        if len(self._min_value) == len(nonempty_feature_mask):
+            self._min_value = self._min_value[nonempty_feature_mask]
+        if len(self._max_value) == len(nonempty_feature_mask):
+            self._max_value = self._max_value[nonempty_feature_mask]
 
         if not np.all(np.greater(self._max_value, self._min_value)):
             raise ValueError("One (or more) features have min_value >= max_value.")
