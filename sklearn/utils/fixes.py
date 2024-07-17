@@ -18,7 +18,7 @@ import scipy.stats
 try:
     import pandas as pd
 except ImportError:
-    pandas = None
+    pd = None
 
 from ..externals._packaging.version import parse as parse_version
 from .parallel import _get_threadpool_controller
