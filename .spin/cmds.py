@@ -6,7 +6,7 @@ import click
 
 @click.command()
 def clean():
-    """🔧 Clean Meson build.
+    """🪥 Clean Meson build.
 
     Very rarely needed since meson-python recompile as needed when sklearn is
     imported.
