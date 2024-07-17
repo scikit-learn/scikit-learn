@@ -218,7 +218,6 @@ package = "sklearn"  # name of your package
 "Build" = [
   "spin.cmds.pip.install",
   "spin.cmds.meson.test",
-  "spin.cmds.build.sdist",
 ]
 "Documentation" = [
   "spin.cmds.meson.docs"
