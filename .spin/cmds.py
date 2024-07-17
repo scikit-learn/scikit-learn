@@ -11,9 +11,9 @@ def clean():
     Very rarely needed since meson-python recompile as needed when sklearn is
     imported.
 
-    One known use case where "spin clean" is useful: to avoid compilation
-    errors when switching from numpy<2 to numpy>=2 in the same conda
-    environment or virtualenv.
+    One known use case where "spin clean" is useful: avoid compilation errors
+    when switching from numpy<2 to numpy>=2 in the same conda environment or
+    virtualenv.
     """
     default_meson_build_dir = (
         f"build/cp{sys.version_info.major}{sys.version_info.minor}"
