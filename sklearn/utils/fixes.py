@@ -413,9 +413,8 @@ def _in_unstable_openblas_configuration():
 if pd is not None and parse_version(pd.__version__) < parse_version("1.4"):
 
     def _create_pandas_dataframe_from_non_pandas_container(X, *, index, copy):
-        X_output = pd.DataFrame(X, index=index, copy=copy)
         if "polars" not in str(X.__class__):
-            return X_output
+            return pd.DataFrame(X, index=index, copy=copy)
 
         # Bug in pandas<1.4 when constructing from polars DataFrame, an
         # additional column is added
