@@ -672,7 +672,7 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
 
     elif method == 'temperature':
         calibrator = _TemperatureScaling()
-        calibrator.fit(predictions, Y)
+        calibrator.fit(predictions, Y, sample_weight)
         calibrators.append(calibrator)
 
     pipeline = _CalibratedClassifier(clf, calibrators, method=method, classes=classes)
@@ -943,12 +943,12 @@ def _row_max_normalization(data: np.ndarray) -> np.ndarray:
     Parameters
     ----------
     data : np.ndarray
-        The input data array of shape (n_samples, n_classes).
+        The input array.
 
     Returns
     -------
     np.ndarray
-        A 2D array of the same shape as `data` where each row has been normalized
+        An array of the same shape as `data` where each row has been normalized
         by subtracting the maximum value of that row.
     """
 
@@ -974,13 +974,13 @@ def _additive_smoothing(probabilities: np.ndarray) -> np.ndarray:
 
     Parameters
     ----------
-        probabilities : np.ndarray
-            The input 2D numpy array of probabilities.
+    probabilities : np.ndarray
+        The input 2D numpy array of probabilities.
 
     Returns
     -------
-        np.ndarray
-            The smoothed probability array, with values adjusted to avoid 0 and 1.
+    np.ndarray
+        The smoothed probability array, with values adjusted to avoid 0 and 1.
     """
 
     n_classes: int = probabilities.shape[1]
@@ -992,15 +992,15 @@ def _additive_smoothing(probabilities: np.ndarray) -> np.ndarray:
     return smooth_probabilities
 
 
-def _softmax_t(predictions: np.ndarray,
+def _softmax_t(X: np.ndarray,
                temperature: float,
                ) -> np.ndarray:
-    """Compute the temperature-scaled softmax of the input predictions.
+    """Compute the temperature-scaled softmax of the input array.
 
     Parameters
     ----------
-    predictions : np.ndarray
-        The input predictions array of shape (n_sample, n_classes).
+    X : np.ndarray
+        The input array.
 
     temperature : float
         The temperature parameter for scaling.
@@ -1008,27 +1008,28 @@ def _softmax_t(predictions: np.ndarray,
     Returns
     -------
     np.ndarray
-        A 2D array of the same shape as `predictions` containing the temperature-scaled
+        An array of the same shape as the input containing the temperature-scaled
         softmax probabilities.
     """
 
-    softmax_t_output: np.ndarray = predictions
+    softmax_t_output: np.ndarray = X
+    softmax_t_output = _row_max_normalization(softmax_t_output)
     softmax_t_output /= temperature
     softmax_t_output = softmax(softmax_t_output, axis=1)
-    softmax_t_output = softmax_t_output.astype(dtype=predictions.dtype)
+    softmax_t_output = softmax_t_output.astype(dtype=X.dtype)
 
     return softmax_t_output
 
 
-def _exp_t(predictions: np.ndarray,
+def _exp_t(X: np.ndarray,
            temperature: float
            ) -> np.ndarray:
     """Scale predictions by the inverse temperature and apply the exponential function.
 
     Parameters
     ----------
-    predictions : np.ndarray
-        The input predictions array of shape (n_samples, n_classes).
+    X : np.ndarray
+        The input array.
 
     temperature : float
         The temperature parameter for scaling.
@@ -1036,21 +1037,23 @@ def _exp_t(predictions: np.ndarray,
     Returns
     -------
     np.ndarray
-        A 2D array of the same shape as `predictions` containing the scaled and
+        An array of the same shape as the input containing the temperature-scaled and
         exponentiated values.
     """
 
-    exp_t_output: np.ndarray = predictions
-    # exp_t_output = _row_max_normalization(exp_t_output)
+    exp_t_output: np.ndarray = X
+    exp_t_output = _row_max_normalization(exp_t_output)
     exp_t_output /= temperature
     exp_t_output = np.exp(exp_t_output)
+    exp_t_output = exp_t_output.astype(dtype=X.dtype)
 
     return exp_t_output
 
 
 def _temperature_scaling(predictions: np.ndarray,
                          labels: np.ndarray,
-                         initial_temperature: float
+                         sample_weight=None,
+                         initial_temperature: float = 1.0
                          ) -> float:
     """Probability Calibration with temperature scaling (Guo-Pleiss-Sun-Weinberger 2017).
 
@@ -1062,8 +1065,11 @@ def _temperature_scaling(predictions: np.ndarray,
     labels : ndarray of shape (n_samples, n_classes)
         One-hot encoded true labels for the samples.
 
-    initial_temperature : float
-       Initial temperature value to start the optimisation
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights. If None, then samples are equally weighted.
+
+    initial_temperature : float, default=1.0
+       Initial temperature value to start the optimisation.
 
     Returns
     -------
@@ -1089,6 +1095,7 @@ def _temperature_scaling(predictions: np.ndarray,
         -------
         float
             The negative log likelihood loss.
+
         float
             The derivative of the negative log likelihood loss with respect to
             temperature.
@@ -1103,33 +1110,38 @@ def _temperature_scaling(predictions: np.ndarray,
 
         losses = np.log(losses)
 
+        # Apply sample weight
+        if sample_weight is not None:
+            losses *= sample_weight
+
         # Derivatives with respect to Temperature
         exp_t: np.ndarray = _exp_t(predictions, temperature)
         exp_t_sum = exp_t.sum(axis=1)
 
-        # term_1: np.ndarray = _row_max_normalization(predictions)
-        term_1: np.ndarray = _additive_smoothing(predictions)
+        term_1: np.ndarray = predictions
+        term_1 = _row_max_normalization(predictions)
         term_1 /= temperature ** 2
         term_1 = - term_1[np.arange(term_1.shape[0]), class_indices]
         term_1 *= exp_t_sum
 
-        # term_2: np.ndarray = _row_max_normalization(predictions)
-        term_2: np.ndarray = _additive_smoothing(predictions)
+        term_2: np.ndarray = predictions
+        term_2 = _row_max_normalization(term_2)
         term_2 /= temperature ** 2
-        # term_2 = _row_max_normalization(term_2)
         term_2 *= exp_t
         term_2 = term_2.sum(axis=1)
 
         dlosses_dts: np.ndarray = (term_1 + term_2) / exp_t_sum
 
-        # print(f"{-losses.sum() = },  {-dL_dts.sum() = }")
+        # Apply sample weight
+        if sample_weight is not None:
+            dlosses_dts *= sample_weight
 
         return -losses.sum(), -dlosses_dts.sum()
 
     temperature_minimizer: minimize = minimize(negative_log_likelihood,
                                                np.array([initial_temperature]),
                                                method="L-BFGS-B",
-                                               bounds=[(1, None)],
+                                               bounds=[(1e-2, None)],
                                                jac=True,
                                                options={"gtol": 1e-6,
                                                         "ftol": 64 * np.finfo(float).eps,
@@ -1140,19 +1152,20 @@ def _temperature_scaling(predictions: np.ndarray,
 
 
 def _is_predict_proba(X: np.ndarray) -> bool:
-    """
-    Helper function to check if the input array contains probabilities.
-
+    """Helper function to check if the input array contains probabilities.
     Specifically, it checks if all rows in the array sum to 1 and if all
     entries are floats between 0 and 1.
 
     Parameters:
     ----------
-        np.ndarray: The input 2D numpy array.
+    X : np.ndarray
+        The input numpy array of shape (n_samples, n_classes).
 
     Returns:
     --------
-        bool: True if the array is likely to be probabilities, False if it is likely to be logits.
+    bool
+        True if the array is likely to be output of `predict_proba`,
+        False if it is likely to be output of `decision_function`.
     """
 
     # Check if all entries are between 0 and 1
@@ -1164,43 +1177,36 @@ def _is_predict_proba(X: np.ndarray) -> bool:
     return entries_zero_to_one and row_sums_to_one
 
 
-class _TemperatureScaling():
+class _TemperatureScaling(RegressorMixin, BaseEstimator):
     """Temperature Scaling model.
 
     Attributes
     ----------
-
-    _initial_temperature: float or None
-        Initial temperature value to start the optimisation.
-        If None, the it is set to 1.5.
-
-
     T_ : float
         The optimised temperature for probability calibration.
+        Available after the calibrator is fitted.
     """
 
-    def __init__(self,
-                 initial_temperature: float = None
-                 ):
-
-        self._initial_temperature: float = initial_temperature
-
-        if initial_temperature is None:
-            self._initial_temperature = 1.5
 
     def fit(self,
             X,
-            y
+            y,
+            sample_weight=None
             ):
         """Fit the model using X, y as training data.
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_classes)
+        X : np.ndarray
+            array-like of shape (n_samples, n_classes).
             Training data.
 
-        y : array-like of shape (n_samples, n_classes)
-            Training target.
+        y : np.ndarray
+            array-like of shape (n_samples, n_classes)
+            Training labels.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If None, then samples are equally weighted.
 
         Returns
         -------
@@ -1211,11 +1217,11 @@ class _TemperatureScaling():
         # If X are outputs of `decision_function`
         # i.e., logits (e.g., SVC(probability=False) )
         if _is_predict_proba(X):
-            self.T_ = _temperature_scaling(np.log(_additive_smoothing(X)), y, self._initial_temperature)
+            self.T_ = _temperature_scaling(np.log(_additive_smoothing(X)), y, sample_weight)
 
         # If X are outputs of `predict_proba`
         else:
-            self.T_ = _temperature_scaling(X, y, self._initial_temperature)
+            self.T_ = _temperature_scaling(X, y, sample_weight)
 
         return self
 
@@ -1224,13 +1230,14 @@ class _TemperatureScaling():
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_classes)
-            The decision function or predict proba for the samples
-
+        X : np.ndarray
+            array-like of shape (n_samples, n_classes)
+            The output of `decision_function` or `predict_proba`.
 
         Returns
         -------
-        ndarray of shape (n_samples, n_classes)
+        np.ndarray
+            ndarray of shape (n_samples, n_classes)
             The predicted data.
         """
 
