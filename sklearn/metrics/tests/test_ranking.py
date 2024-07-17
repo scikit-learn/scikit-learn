@@ -34,7 +34,6 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
-    ignore_warnings,
 )
 from sklearn.utils.extmath import softmax
 from sklearn.utils.fixes import CSR_CONTAINERS
@@ -876,7 +875,7 @@ def test_binary_clf_curve_implicit_pos_label(curve_func):
 
 
 # TODO(1.7): Update test to check for error when bytes support is removed.
-@ignore_warnings(category=FutureWarning)
+@pytest.mark.filterwarnings("ignore:Support for labels represented as bytes")
 @pytest.mark.parametrize("curve_func", [precision_recall_curve, roc_curve])
 @pytest.mark.parametrize("labels_type", ["list", "array"])
 def test_binary_clf_curve_implicit_bytes_pos_label(curve_func, labels_type):

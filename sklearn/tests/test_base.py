@@ -35,7 +35,6 @@ from sklearn.utils._testing import (
     _convert_container,
     assert_array_equal,
     assert_no_warnings,
-    ignore_warnings,
 )
 
 
@@ -600,12 +599,12 @@ class SingleInheritanceEstimator(BaseEstimator):
         self._attribute_not_pickled = None
 
     def __getstate__(self):
-        data = self.__dict__.copy()
-        data["_attribute_not_pickled"] = None
-        return data
+        state = super().__getstate__()
+        state["_attribute_not_pickled"] = None
+        return state
 
 
-@ignore_warnings(category=(UserWarning))
+@pytest.mark.filterwarnings
 def test_pickling_works_when_getstate_is_overwritten_in_the_child_class():
     estimator = SingleInheritanceEstimator()
     estimator._attribute_not_pickled = "this attribute should not be pickled"

@@ -639,7 +639,6 @@ def test_sample_order_invariance(name):
         )
 
 
-@ignore_warnings
 def test_sample_order_invariance_multilabel_and_multioutput():
     random_state = check_random_state(0)
 
@@ -973,7 +972,6 @@ def test_classification_binary_continuous_input(metric):
         metric(y_true, y_score)
 
 
-@ignore_warnings
 def check_single_sample(name):
     # Non-regression test: scores should work with a single sample.
     # This is important for leave-one-out cross validation.
@@ -990,13 +988,14 @@ def check_single_sample(name):
         metric([i], [j])
 
 
-@ignore_warnings
 def check_single_sample_multioutput(name):
     metric = ALL_METRICS[name]
     for i, j, k, l in product([0, 1], repeat=4):
         metric(np.array([[i, j]]), np.array([[k, l]]))
 
 
+# filter many metric specific warnings
+@pytest.mark.filterwarnings("ignore")
 @pytest.mark.parametrize(
     "name",
     sorted(
@@ -1011,6 +1010,8 @@ def test_single_sample(name):
     check_single_sample(name)
 
 
+# filter many metric specific warnings
+@pytest.mark.filterwarnings("ignore")
 @pytest.mark.parametrize("name", sorted(MULTIOUTPUT_METRICS | MULTILABELS_METRICS))
 def test_single_sample_multioutput(name):
     check_single_sample_multioutput(name)
@@ -1045,7 +1046,7 @@ def test_multioutput_regression_invariance_to_dimension_shuffling(name):
         )
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.UndefinedMetricWarning")
 @pytest.mark.parametrize("coo_container", COO_CONTAINERS)
 def test_multilabel_representation_invariance(coo_container):
     # Generate some data
@@ -1247,7 +1248,6 @@ def test_normalize_option_multilabel_classification(name):
     )
 
 
-@ignore_warnings
 def _check_averaging(
     metric, y_true, y_pred, y_true_binarize, y_pred_binarize, is_multilabel
 ):
@@ -1396,7 +1396,6 @@ def test_averaging_multilabel_all_ones(name):
     check_averaging(name, y_true, y_true_binarize, y_pred, y_pred_binarize, y_score)
 
 
-@ignore_warnings
 def check_sample_weight_invariance(name, metric, y1, y2):
     rng = np.random.RandomState(0)
     sample_weight = rng.randint(1, 10, size=len(y1))
@@ -1590,7 +1589,6 @@ def test_multilabel_sample_weight_invariance(name):
         check_sample_weight_invariance(name, metric, y_true, y_pred)
 
 
-@ignore_warnings
 def test_no_averaging_labels():
     # test labels argument when not using averaging
     # in multi-class and multi-label cases
