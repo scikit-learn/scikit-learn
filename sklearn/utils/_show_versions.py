@@ -7,8 +7,6 @@ adapted from :func:`pandas.show_versions`
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-# SPDX-License-Identifier: BSD-3-Clause
-
 import platform
 import sys
 
