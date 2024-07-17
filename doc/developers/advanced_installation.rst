@@ -68,7 +68,7 @@ feature, code or documentation improvement).
 
    .. prompt:: bash $
 
-     conda create -n sklearn-env -c conda-forge python numpy scipy cython meson-python ninja spin
+     conda create -n sklearn-env -c conda-forge python numpy scipy cython meson-python ninja
 
    It is not always necessary but it is safer to open a new prompt before
    activating the newly created conda environment.
@@ -87,7 +87,7 @@ feature, code or documentation improvement).
 
      python3 -m venv sklearn-env
      source sklearn-env/bin/activate
-     pip install wheel numpy scipy cython meson-python ninja spin
+     pip install wheel numpy scipy cython meson-python ninja
 
 #. Install a compiler with OpenMP_ support for your platform. See instructions
    for :ref:`compiler_windows`, :ref:`compiler_macos`, :ref:`compiler_linux`
@@ -97,7 +97,9 @@ feature, code or documentation improvement).
 
    .. prompt:: bash $
 
-     spin install -v
+     pip install --editable . \
+        --verbose --no-build-isolation \
+        --config-settings editable-verbose=true
 
 #. Check that the installed scikit-learn has a version number ending with
    `.dev0`:
@@ -111,9 +113,14 @@ feature, code or documentation improvement).
 
 .. note::
 
-    You only have to run the `spin` command once. You can then run the tests
-    with pytest and import `sklearn` will automatically rebuild `sklearn` as
-    needed.
+    `--config-settings editable-verbose=true` is optional but recommended
+    to avoid surprises when you import `sklearn`. `meson-python` implements
+    editable installs by rebuilding `sklearn` when executing `import sklearn`.
+    With the recommended setting you will see a message when this happens,
+    rather than potentially waiting without feed-back and wondering
+    what is taking so long. Bonus: this means you only have to run the `pip
+    install` command once, `sklearn` will automatically be rebuilt when
+    importing `sklearn`.
 
 Dependencies
 ------------
@@ -229,7 +236,9 @@ Finally, build scikit-learn with this command prompt:
 
 .. prompt:: bash $
 
-    spin install -v
+    pip install --editable . \
+        --verbose --no-build-isolation \
+        --config-settings editable-verbose=true
 
 .. _compiler_macos:
 
@@ -275,7 +284,11 @@ activating the newly created conda environment.
 
 .. prompt:: bash $
 
-    spin install -v
+    conda activate sklearn-dev
+    make clean
+    pip install --editable . \
+        --verbose --no-build-isolation \
+        --config-settings editable-verbose=true
 
 .. note::
 
@@ -349,7 +362,9 @@ Finally, build scikit-learn in verbose mode (to check for the presence of the
 .. prompt:: bash $
 
     make clean
-    spin install -v
+    pip install --editable . \
+        --verbose --no-build-isolation \
+        --config-settings editable-verbose=true
 
 .. _compiler_linux:
 
@@ -374,8 +389,10 @@ then proceed as usual:
 
 .. prompt:: bash $
 
-    pip3 install cython spin
-    spin install -v
+    pip3 install cython
+    pip3 install --editable . \
+        --verbose --no-build-isolation \
+        --config-settings editable-verbose=true
 
 Cython and the pre-compiled wheels for the runtime dependencies (numpy, scipy
 and joblib) should automatically be installed in
@@ -407,7 +424,7 @@ in the user folder using conda:
 .. prompt:: bash $
 
     conda create -n sklearn-dev -c conda-forge python numpy scipy cython \
-        joblib threadpoolctl pytest compilers meson-python ninja spin
+        joblib threadpoolctl pytest compilers meson-python ninja
 
 It is not always necessary but it is safer to open a new prompt before
 activating the newly created conda environment.
@@ -415,7 +432,9 @@ activating the newly created conda environment.
 .. prompt:: bash $
 
     conda activate sklearn-dev
-    spin install -v
+    pip install --editable . \
+        --verbose --no-build-isolation \
+        --config-settings editable-verbose=true
 
 .. _compiler_freebsd:
 
@@ -444,7 +463,9 @@ Finally, build the package using the standard command:
 
 .. prompt:: bash $
 
-    spin install -v
+    pip install --editable . \
+        --verbose --no-build-isolation \
+        --config-settings editable-verbose=true
 
 For the upcoming FreeBSD 12.1 and 11.3 versions, OpenMP will be included in
 the base system and these steps will not be necessary.
