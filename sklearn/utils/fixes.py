@@ -15,6 +15,11 @@ import scipy
 import scipy.sparse.linalg
 import scipy.stats
 
+try:
+    import pandas as pd
+except ImportError:
+    pandas = None
+
 from ..externals._packaging.version import parse as parse_version
 from .parallel import _get_threadpool_controller
 
@@ -402,3 +407,21 @@ def _in_unstable_openblas_configuration():
             # See discussions in https://github.com/numpy/numpy/issues/19411
             return True  # pragma: no cover
     return False
+
+
+# TODO: remove when pandas >= 1.4 is the minimum supported version
+if pd is not None and parse_version(pd.__version__) < parse_version("1.4"):
+
+    def _create_pandas_dataframe_from_non_pandas_container(X, *, index, copy):
+        X_output = pd.DataFrame(X, index=index, copy=copy)
+        if "polars" not in str(X.__class__):
+            return X_output
+
+        # Bug in pandas<1.4 when constructing from polars DataFrame, an
+        # additional column is added
+        return pd.DataFrame(X.to_numpy(), index=index, copy=copy)
+
+else:
+
+    def _create_pandas_dataframe_from_non_pandas_container(X, *, index, copy):
+        return pd.DataFrame(X, index=index, copy=copy)

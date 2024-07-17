@@ -198,9 +198,9 @@ jobs:
       )
     matrix:
       # Linux + Python 3.9 build with minimum supported version of dependencies
-      pymin_conda_forge_min_dependencies:
+      pymin_conda_forge_openblas_min_dependencies:
         DISTRIB: 'conda'
-        LOCK_FILE: './build_tools/azure/pymin_conda_forge_min_dependencies_linux-64_conda.lock'
+        LOCK_FILE: './build_tools/azure/pymin_conda_forge_openblas_min_dependencies_linux-64_conda.lock'
         # Enable debug Cython directives to capture IndexError exceptions in
         # combination with the -Werror::pytest.PytestUnraisableExceptionWarning
         # flag for pytest.

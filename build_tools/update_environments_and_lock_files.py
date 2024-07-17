@@ -171,7 +171,7 @@ build_metadata_list = [
         "pip_dependencies": ["cython", "threadpoolctl", "meson-python"],
     },
     {
-        "name": "pymin_conda_forge_min_dependencies",
+        "name": "pymin_conda_forge_openblas_min_dependencies",
         "type": "conda",
         "tag": "main-ci",
         "folder": "build_tools/azure",
