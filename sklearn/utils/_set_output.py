@@ -5,6 +5,8 @@ from typing import Protocol, runtime_checkable
 import numpy as np
 from scipy.sparse import issparse
 
+from sklearn.utils.fixes import parse_version
+
 from .._config import get_config
 from ._available_if import available_if
 
@@ -129,11 +131,13 @@ class PandasAdapter:
             # We don't pass columns here because it would intend columns selection
             # instead of renaming.
             X_output_orig = X_output
-            X_output = pd.DataFrame(X_output, index=index, copy=not inplace)
+            X_output = pd.DataFrame(X_output_orig, index=index, copy=not inplace)
             # TODO Bug in pandas<1.4 when constructing from polars DataFrame an
             # additional column is added, this can be removed when minimum
             # supported version is pandas >= 1.4
-            if X_output.shape != X_output_orig.shape:
+            if "polars" in str(X_output_orig.__class__) and parse_version(
+                pd.__version__
+            ) < parse_version("1.4"):
                 X_output = pd.DataFrame(
                     X_output_orig.to_numpy(), index=index, copy=not inplace
                 )
