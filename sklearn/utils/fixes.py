@@ -9,6 +9,7 @@ at which the fix is no longer needed.
 
 import platform
 import struct
+import sys
 
 import numpy as np
 import scipy
@@ -413,11 +414,12 @@ def _in_unstable_openblas_configuration():
 if pd is not None and parse_version(pd.__version__) < parse_version("1.4"):
 
     def _create_pandas_dataframe_from_non_pandas_container(X, *, index, copy):
-        if "polars" not in str(X.__class__):
+        pl = sys.modules.get("polars")
+        if pl is None or not isinstance(X, pl.DataFrame):
             return pd.DataFrame(X, index=index, copy=copy)
 
-        # Bug in pandas<1.4 when constructing from polars DataFrame, an
-        # additional column is added
+        # Bug in pandas<1.4: when constructing a pandas DataFrame from a polars
+        # DataFrame, the data is transposed ...
         return pd.DataFrame(X.to_numpy(), index=index, copy=copy)
 
 else:
