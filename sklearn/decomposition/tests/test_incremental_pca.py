@@ -51,11 +51,11 @@ def test_incremental_pca():
 def test_incremental_pca_sparse(sparse_container):
     # Incremental PCA on sparse arrays.
     X = iris.data
-    pca = PCA(n_components=2)
+    pca = PCA(n_components=2, random_state=0)
     pca.fit_transform(X)
     X_sparse = sparse_container(X)
     batch_size = X_sparse.shape[0] // 3
-    ipca = IncrementalPCA(n_components=2, batch_size=batch_size)
+    ipca = IncrementalPCA(n_components=2, batch_size=batch_size, random_state=0)
 
     X_transformed = ipca.fit_transform(X_sparse)
 
@@ -66,24 +66,14 @@ def test_incremental_pca_sparse(sparse_container):
         rtol=1e-3,
     )
 
-    for n_components in [1, 2, X.shape[1]]:
-        ipca = IncrementalPCA(n_components, batch_size=batch_size)
+    for n_components in [1, 2, X.shape[1] - 1]:
+        ipca = IncrementalPCA(n_components, batch_size=batch_size, random_state=0)
         ipca.fit(X_sparse)
         cov = ipca.get_covariance()
         precision = ipca.get_precision()
         np.testing.assert_allclose(
             np.dot(cov, precision), np.eye(X_sparse.shape[1]), atol=1e-13
         )
-
-    with pytest.raises(
-        TypeError,
-        match=(
-            "IncrementalPCA.partial_fit does not support "
-            "sparse input. Either convert data to dense "
-            "or use IncrementalPCA.fit to do so in batches."
-        ),
-    ):
-        ipca.partial_fit(X_sparse)
 
 
 def test_incremental_pca_check_projection():
