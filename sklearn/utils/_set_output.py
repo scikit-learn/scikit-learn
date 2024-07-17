@@ -128,7 +128,15 @@ class PandasAdapter:
 
             # We don't pass columns here because it would intend columns selection
             # instead of renaming.
+            X_output_orig = X_output
             X_output = pd.DataFrame(X_output, index=index, copy=not inplace)
+            # TODO Bug in pandas<1.4 when constructing from polars DataFrame an
+            # additional column is added, this can be removed when minimum
+            # supported version is pandas >= 1.4
+            if X_output.shape != X_output_orig.shape:
+                X_output = pd.DataFrame(
+                    X_output_orig.to_numpy(), index=index, copy=not inplace
+                )
 
         if columns is not None:
             return self.rename_columns(X_output, columns)

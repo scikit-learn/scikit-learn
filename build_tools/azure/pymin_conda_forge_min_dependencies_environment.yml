@@ -12,6 +12,7 @@ dependencies:
   - joblib=1.2.0  # min
   - threadpoolctl=3.1.0  # min
   - matplotlib=3.3.4  # min
+  - pandas=1.1.5  # min
   - pyamg
   - pytest
   - pytest-xdist
@@ -22,3 +23,4 @@ dependencies:
   - pytest-cov
   - coverage
   - ccache
+  - polars=0.20.30  # min

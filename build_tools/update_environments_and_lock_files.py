@@ -177,7 +177,7 @@ build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channels": ["conda-forge"],
-        "conda_dependencies": remove_from(common_dependencies, ["pandas"]) + ["ccache"],
+        "conda_dependencies": common_dependencies + ["ccache", "polars"],
         "package_constraints": {
             "python": "3.9",
             "blas": "[build=openblas]",
