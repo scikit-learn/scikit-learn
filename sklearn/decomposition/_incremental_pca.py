@@ -34,9 +34,9 @@ class IncrementalPCA(_BasePCA):
     memory efficient than a PCA.
 
     This algorithm has constant memory complexity, on the order of
-    `batch_size * n_features`, enabling use of :class:`np.memmap` files without loading
-    the entire file into memory. For sparse inputs, it can use the ARPACK implementation
-    of the truncated SVD via :func:`scipy.sparse.linalg.svds`.
+    `batch_size * n_features`, enabling use of :class:`numpy.memmap` files without
+    loading the entire file into memory. For sparse inputs, it can use the ARPACK
+    implementation of the truncated SVD via :func:`scipy.sparse.linalg.svds`.
 
     The computational overhead of each SVD is
     ``O(batch_size * n_features ** 2)``, but only 2 * batch_size samples
@@ -68,17 +68,16 @@ class IncrementalPCA(_BasePCA):
         improve the predictive accuracy of the downstream estimators by
         making data respect some hard-wired assumptions.
 
-    svd_solver : {"auto", "full", "arpack"}, default="auto"
+    svd_solver : {"full", "arpack"}, default="full"
         The SVD solver to use.
 
-        - `"auto"`: The solver is selected by a default "auto" policy. If `X` is dense
-          the `"full"` solver is used, otherwise the `"arpack"` solver is used.
         - `"full"`: Run exact full SVD calling the standard LAPACK solver via
-          :func:`scipy.linalg.svd` and select the components by postprocessing. This
-          solver would densify sparse inputs first in batches.
+          :func:`scipy.linalg.svd` and select the components by postprocessing. For
+          sparse inputs, this solver will densify data in batches first.
         - `"arpack"`: Run SVD truncated to `n_components` calling ARPACK solver via
           :func:`scipy.sparse.linalg.svds`. It requires strictly
-          `0 < n_components < min(X.shape)`.
+          `0 < n_components < min(X.shape)`. This solver is recommended for sparse
+          inputs to avoid densifying the input data.
 
         .. versionadded:: 1.6
 
@@ -213,7 +212,7 @@ class IncrementalPCA(_BasePCA):
     _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left"), None],
         "whiten": ["boolean"],
-        "svd_solver": [StrOptions({"auto", "full", "arpack"})],
+        "svd_solver": [StrOptions({"full", "arpack"})],
         "copy": ["boolean"],
         "batch_size": [Interval(Integral, 1, None, closed="left"), None],
         "random_state": ["random_state"],
@@ -224,7 +223,7 @@ class IncrementalPCA(_BasePCA):
         n_components=None,
         *,
         whiten=False,
-        svd_solver="auto",
+        svd_solver="full",
         copy=True,
         batch_size=None,
         random_state=None,
@@ -282,7 +281,10 @@ class IncrementalPCA(_BasePCA):
         for batch in gen_batches(
             n_samples, self.batch_size_, min_batch_size=self.n_components or 0
         ):
-            self.partial_fit(X[batch], check_input=False)
+            X_batch = X[batch]
+            if sparse.issparse(X_batch) and self.svd_solver != "arpack":
+                X_batch = X_batch.toarray()
+            self.partial_fit(X_batch, check_input=False)
 
         return self
 
@@ -321,23 +323,12 @@ class IncrementalPCA(_BasePCA):
         n_samples, n_features = X.shape
         X_is_sparse = sparse.issparse(X)
 
-        if X_is_sparse and self.svd_solver not in ("arpack", "auto"):
-            raise ValueError(
-                'IncrementalPCA only supports sparse inputs with the "arpack" solver, '
-                f'while "{self.svd_solver}" was passed. See TruncatedSVD for a '
-                "possible alternative."
-            )
-
-        self._fit_svd_solver = self.svd_solver
-        if self._fit_svd_solver == "auto":
-            self._fit_svd_solver = "full" if not X_is_sparse else "arpack"
-
         if first_pass:
             self.components_ = None
 
         if self.n_components is None:
             if self.components_ is None:
-                if self._fit_svd_solver == "arpack":
+                if self.svd_solver == "arpack":
                     self.n_components_ = min(n_samples, n_features) - 1
                 else:
                     self.n_components_ = min(n_samples, n_features)
@@ -355,7 +346,7 @@ class IncrementalPCA(_BasePCA):
                 "the batch number of samples "
                 "%d." % (self.n_components, n_samples)
             )
-        elif self._fit_svd_solver == "arpack" and self.n_components == min(
+        elif self.svd_solver == "arpack" and self.n_components == min(
             n_samples, n_features
         ):
             raise ValueError(
@@ -441,12 +432,12 @@ class IncrementalPCA(_BasePCA):
                 )
             )
 
-        if self._fit_svd_solver == "arpack":
+        if self.svd_solver == "arpack":
             v0 = _init_arpack_v0(min(X.shape), random_state=self._random_state)
             U, S, Vt = svds(X, k=self.n_components_, v0=v0)
             S = S[::-1]
             _, Vt = svd_flip(U[:, ::-1], Vt[::-1], u_based_decision=False)
-        else:  # self._fit_svd_solver == "full"
+        else:  # self.svd_solver == "full"
             U, S, Vt = linalg.svd(X, full_matrices=False, check_finite=False)
             _, Vt = svd_flip(U, Vt, u_based_decision=False)
 
@@ -457,7 +448,7 @@ class IncrementalPCA(_BasePCA):
         self.mean_ = col_mean
         self.var_ = col_var
 
-        if self._fit_svd_solver == "arpack":
+        if self.svd_solver == "arpack":
             self.components_ = Vt
             self.singular_values_ = S
             self.explained_variance_ = explained_variance
@@ -471,7 +462,7 @@ class IncrementalPCA(_BasePCA):
             ]
 
         if self.n_components_ < min(n_features, n_samples):
-            if self._fit_svd_solver == "arpack":
+            if self.svd_solver == "arpack":
                 total_var = self.var_.sum() * n_samples / (n_samples - 1)  # ddof=1
                 self.noise_variance_ = total_var - np.sum(self.explained_variance_)
                 self.noise_variance_ /= min(n_features, n_samples) - self.n_components_
