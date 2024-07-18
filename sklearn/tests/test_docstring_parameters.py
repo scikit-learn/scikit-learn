@@ -70,10 +70,6 @@ _METHODS_IGNORE_NONE_Y = [
 ]
 
 
-# numpydoc 0.8.0's docscrape tool raises because of collections.abc under
-# Python 3.7
-@pytest.mark.filterwarnings("ignore::FutureWarning")
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_docstring_parameters():
     # Test module docstring formatting
 
