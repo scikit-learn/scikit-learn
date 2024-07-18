@@ -24,9 +24,10 @@ from libc.string cimport memcpy
 
 from ..utils._typedefs cimport int8_t
 from ._criterion cimport Criterion
-from ._partitioner cimport (FEATURE_THRESHOLD, DensePartitioner,
-                            SparsePartitioner,
-                            shift_missing_values_to_left_if_required)
+from ._partitioner cimport (
+    FEATURE_THRESHOLD, DensePartitioner, SparsePartitioner,
+    shift_missing_values_to_left_if_required
+)
 from ._utils cimport RAND_R_MAX, rand_int, rand_uniform
 
 import numpy as np

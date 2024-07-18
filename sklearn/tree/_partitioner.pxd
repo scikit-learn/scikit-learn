@@ -3,8 +3,9 @@
 
 # See _partitioner.pyx for details.
 
-from ..utils._typedefs cimport (float32_t, float64_t, int8_t, int32_t, intp_t,
-                                uint8_t, uint32_t)
+from ..utils._typedefs cimport (
+    float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t
+)
 from ._splitter cimport SplitRecord
 
 
