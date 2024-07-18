@@ -57,8 +57,8 @@ class NeighborhoodComponentsAnalysis(
 
         - `'auto'`
             Depending on `n_components`, the most reasonable initialization
-            will be chosen. If `n_components <= n_classes` we use `'lda'`, as
-            it uses labels information. If not, but
+            is chosen. If `n_components <= min(n_features, n_classes - 1)`
+            we use `'lda'`, as it uses labels information. If not, but
             `n_components < min(n_features, n_samples)`, we use `'pca'`, as
             it projects data in meaningful directions (those of higher
             variance). Otherwise, we just use `'identity'`.
