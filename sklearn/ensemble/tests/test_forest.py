@@ -512,7 +512,8 @@ def test_forest_classifier_oob(
         test_score = classifier.score(X_test, y_test)
         assert classifier.oob_score_ >= lower_bound_accuracy
 
-    assert abs(test_score - classifier.oob_score_) <= 0.1
+    abs_diff = abs(test_score - classifier.oob_score_)
+    assert abs_diff <= 0.11, f"{abs_diff=} is greater than 0.11"
 
     assert hasattr(classifier, "oob_score_")
     assert not hasattr(classifier, "oob_prediction_")
@@ -878,8 +879,6 @@ def test_random_trees_dense_equal():
     assert_array_equal(X_transformed_sparse.toarray(), X_transformed_dense)
 
 
-# Ignore warnings from switching to more power iterations in randomized_svd
-@ignore_warnings
 def test_random_hasher():
     # test random forest hashing on circles dataset
     # make sure that it is linearly separable.

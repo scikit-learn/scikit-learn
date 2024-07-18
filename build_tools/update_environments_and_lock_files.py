@@ -179,7 +179,7 @@ build_metadata_list = [
         "channels": ["defaults"],
         "conda_dependencies": remove_from(
             common_dependencies,
-            ["pandas", "threadpoolctl", "pip", "ninja", "meson-python"],
+            ["pandas", "threadpoolctl", "pip", "meson-python"],
         )
         + ["ccache"],
         "package_constraints": {
@@ -191,10 +191,11 @@ build_metadata_list = [
             "cython": "min",
             "joblib": "min",
             "threadpoolctl": "min",
+            "meson-python": "min",
         },
         # TODO: put pip dependencies back to conda dependencies when required
         # version is available on the defaults channel.
-        "pip_dependencies": ["threadpoolctl"],
+        "pip_dependencies": ["threadpoolctl", "meson-python"],
     },
     {
         "name": "pymin_conda_forge_openblas_ubuntu_2204",
