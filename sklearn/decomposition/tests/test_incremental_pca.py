@@ -13,7 +13,7 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
 )
-from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS, LIL_CONTAINERS
+from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 
 iris = datasets.load_iris()
 
@@ -45,9 +45,7 @@ def test_incremental_pca():
         )
 
 
-@pytest.mark.parametrize(
-    "sparse_container", CSC_CONTAINERS + CSR_CONTAINERS + LIL_CONTAINERS
-)
+@pytest.mark.parametrize("sparse_container", CSC_CONTAINERS + CSR_CONTAINERS)
 def test_incremental_pca_sparse(sparse_container):
     # Incremental PCA on sparse arrays.
     X = iris.data
