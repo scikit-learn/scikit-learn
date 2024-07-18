@@ -22,15 +22,14 @@ of splitting strategies:
 
 from libc.string cimport memcpy
 
-from ._partitioner cimport DensePartitioner, SparsePartitioner, FEATURE_THRESHOLD, shift_missing_values_to_left_if_required
-from ._criterion cimport Criterion
-from ._utils cimport rand_int
-from ._utils cimport rand_uniform
-from ._utils cimport RAND_R_MAX
 from ..utils._typedefs cimport int8_t
+from ._criterion cimport Criterion
+from ._partitioner cimport (FEATURE_THRESHOLD, DensePartitioner,
+                            SparsePartitioner,
+                            shift_missing_values_to_left_if_required)
+from ._utils cimport RAND_R_MAX, rand_int, rand_uniform
 
 import numpy as np
-
 
 # Introduce a fused-class to make it possible to share the split implementation
 # between the dense and sparse cases in the node_split_best and node_split_random

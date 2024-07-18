@@ -14,9 +14,9 @@ from cython cimport final
 from libc.math cimport isnan, log
 from libc.stdlib cimport qsort
 from libc.string cimport memcpy
-from scipy.sparse import issparse
 
 import numpy as np
+from scipy.sparse import issparse
 
 
 # Constant to switch between algorithm non zero value extract algorithm
