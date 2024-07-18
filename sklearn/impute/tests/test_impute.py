@@ -1013,6 +1013,7 @@ def test_iterative_imputer_min_max_array_like(min_value, max_value, correct_outp
         (100, 0, "min_value >= max_value."),
         (np.inf, -np.inf, "min_value >= max_value."),
         ([-5, 5], [100, 200, 0], "_value' should be of shape"),
+        ([-5, 5, 5], [100, 200], "_value' should be of shape"),
     ],
 )
 def test_iterative_imputer_catch_min_max_error(min_value, max_value, err_msg):
