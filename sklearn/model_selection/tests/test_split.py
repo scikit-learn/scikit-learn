@@ -2093,7 +2093,7 @@ def test_stratified_splitter_without_y(cv):
         ),
     ],
 )
-def test_group_k_fold_is_stable_tied(folds, n_groups, group_size, expected):
+def test_group_kfold_is_stable_with_ties(folds, n_groups, group_size, expected):
     """Verify groups are assigned based on a stable sort, with ties."""
     groups = np.repeat(np.arange(n_groups), group_size)
     X = np.arange(n_groups * group_size)
