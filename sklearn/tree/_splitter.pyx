@@ -113,7 +113,7 @@ cdef class Splitter:
         object X,
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
-        const unsigned char[::1] missing_values_in_feature_mask,
+        const uint8_t[::1] missing_values_in_feature_mask,
     ) except -1:
         """Initialize the splitter.
 
@@ -932,14 +932,14 @@ cdef class DensePartitioner:
         cdef intp_t start
         cdef intp_t end
         cdef intp_t n_missing
-        cdef const unsigned char[::1] missing_values_in_feature_mask
+        cdef const uint8_t[::1] missing_values_in_feature_mask
 
     def __init__(
         self,
         const float32_t[:, :] X,
         intp_t[::1] samples,
         float32_t[::1] feature_values,
-        const unsigned char[::1] missing_values_in_feature_mask,
+        const uint8_t[::1] missing_values_in_feature_mask,
     ):
         self.X = X
         self.samples = samples
@@ -967,7 +967,7 @@ cdef class DensePartitioner:
             const float32_t[:, :] X = self.X
             intp_t[::1] samples = self.samples
             intp_t n_missing = 0
-            const unsigned char[::1] missing_values_in_feature_mask = self.missing_values_in_feature_mask
+            const uint8_t[::1] missing_values_in_feature_mask = self.missing_values_in_feature_mask
 
         # Sort samples along that feature; by
         # copying the values into an array and
@@ -1022,7 +1022,7 @@ cdef class DensePartitioner:
             float32_t max_feature_value = -INFINITY_32t
             float32_t[::1] feature_values = self.feature_values
             intp_t n_missing = 0
-            const unsigned char[::1] missing_values_in_feature_mask = self.missing_values_in_feature_mask
+            const uint8_t[::1] missing_values_in_feature_mask = self.missing_values_in_feature_mask
 
         # We are copying the values into an array and
         # finding min/max of the array in a manner which utilizes the cache more
@@ -1184,7 +1184,7 @@ cdef class SparsePartitioner:
     cdef intp_t start
     cdef intp_t end
     cdef intp_t n_missing
-    cdef const unsigned char[::1] missing_values_in_feature_mask
+    cdef const uint8_t[::1] missing_values_in_feature_mask
 
     cdef const float32_t[::1] X_data
     cdef const int32_t[::1] X_indices
@@ -1205,7 +1205,7 @@ cdef class SparsePartitioner:
         intp_t[::1] samples,
         intp_t n_samples,
         float32_t[::1] feature_values,
-        const unsigned char[::1] missing_values_in_feature_mask,
+        const uint8_t[::1] missing_values_in_feature_mask,
     ):
         if not (issparse(X) and X.format == "csc"):
             raise ValueError("X should be in csc format")
@@ -1607,7 +1607,7 @@ cdef class BestSplitter(Splitter):
         object X,
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
-        const unsigned char[::1] missing_values_in_feature_mask,
+        const uint8_t[::1] missing_values_in_feature_mask,
     ) except -1:
         Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask)
         self.partitioner = DensePartitioner(
@@ -1635,7 +1635,7 @@ cdef class BestSparseSplitter(Splitter):
         object X,
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
-        const unsigned char[::1] missing_values_in_feature_mask,
+        const uint8_t[::1] missing_values_in_feature_mask,
     ) except -1:
         Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask)
         self.partitioner = SparsePartitioner(
@@ -1663,7 +1663,7 @@ cdef class RandomSplitter(Splitter):
         object X,
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
-        const unsigned char[::1] missing_values_in_feature_mask,
+        const uint8_t[::1] missing_values_in_feature_mask,
     ) except -1:
         Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask)
         self.partitioner = DensePartitioner(
@@ -1691,7 +1691,7 @@ cdef class RandomSparseSplitter(Splitter):
         object X,
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
-        const unsigned char[::1] missing_values_in_feature_mask,
+        const uint8_t[::1] missing_values_in_feature_mask,
     ) except -1:
         Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask)
         self.partitioner = SparsePartitioner(
