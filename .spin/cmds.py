@@ -7,7 +7,7 @@ from spin.cmds import util
 
 @click.command()
 def clean():
-    """🪥 Clean Meson build.
+    """🪥 Clean build folder.
 
     Very rarely needed since meson-python recompiles as needed when sklearn is
     imported.
