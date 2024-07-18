@@ -128,11 +128,11 @@ def check_pairwise_arrays(
         - 'allow-nan': accepts only np.nan and pd.NA values in array. Values
           cannot be infinite.
 
-        .. versionadded:: 0.20
+        .. versionadded:: 0.22
            ``force_all_finite`` accepts the string ``'allow-nan'``.
 
         .. versionchanged:: 0.23
-           Accepts `pd.NA` and converts it into `np.nan`
+           Accepts `pd.NA` and converts it into `np.nan`.
 
         .. deprecated:: 1.6
            `force_all_finite` was renamed to `ensure_all_finite` and will be removed
@@ -147,7 +147,7 @@ def check_pairwise_arrays(
         - 'allow-nan': accepts only np.nan and pd.NA values in array. Values
           cannot be infinite.
 
-        .. versionadded:: 0.20
+        .. versionadded:: 0.22
            Accepts the string ``'allow-nan'``.
 
         .. versionchanged:: 0.23
@@ -2342,7 +2342,7 @@ def pairwise_distances(
            ``force_all_finite`` accepts the string ``'allow-nan'``.
 
         .. versionchanged:: 0.23
-           Accepts `pd.NA` and converts it into `np.nan`
+           Accepts `pd.NA` and converts it into `np.nan`.
 
         .. deprecated:: 1.6
            `force_all_finite` was renamed to `ensure_all_finite` and will be removed
