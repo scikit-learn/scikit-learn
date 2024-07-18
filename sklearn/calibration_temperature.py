@@ -585,7 +585,7 @@ def _fit_classifier_calibrator_pair(
     test : ndarray, shape (n_test_indices,)
         Indices of the testing subset.
 
-    method : {'sigmoid', 'isotonic'}
+    method : {'sigmoid', 'isotonic', 'temperature'}
         Method to use for calibration.
 
     classes : ndarray, shape (n_classes,)
@@ -646,7 +646,7 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
     classes : ndarray, shape (n_classes,)
         All the prediction classes.
 
-    method : {'sigmoid', 'isotonic'}
+    method : {'sigmoid', 'isotonic', 'temperature'}
         The method to use for calibration.
 
     sample_weight : ndarray, shape (n_samples,), default=None
@@ -696,7 +696,7 @@ class _CalibratedClassifier:
     classes : array-like of shape (n_classes,)
         All the prediction classes.
 
-    method : {'sigmoid', 'isotonic'}, default='sigmoid'
+    method : {'sigmoid', 'isotonic', 'temperature'}, default='sigmoid'
         The method to use for calibration. Can be 'sigmoid' which
         corresponds to Platt's method or 'isotonic' which is a
         non-parametric approach based on isotonic regression.
