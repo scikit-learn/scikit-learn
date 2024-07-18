@@ -128,6 +128,90 @@ fetch_species_distributions_fxt = _fetch_fixture(fetch_species_distributions)
 raccoon_face_fxt = pytest.fixture(raccoon_face_or_skip)
 
 
+TEST_MODULES_EXCEPTIONS = [
+    "sklearn.cluster.tests.test_affinity_propagation.py",
+    "sklearn.cluster.tests.test_bicluster.py",
+    "sklearn.cluster.tests.test_birch.py",
+    "sklearn.cluster.tests.test_dbscan.py",
+    "sklearn.cluster.tests.test_hdbscan.py",
+    "sklearn.cluster.tests.test_hierarchical.py",
+    "sklearn.cluster.tests.test_mean_shift.py",
+    "sklearn.cluster.tests.test_optics.py",
+    "sklearn.cluster.tests.test_spectral.py",
+    "sklearn.compose.tests.test_target.py",
+    "sklearn.covariance.tests.test_graphical_lasso.py",
+    "sklearn.covariance.tests.test_robust_covariance.py",
+    "sklearn.datasets.tests.test_openml.py",
+    "sklearn.datasets.tests.test_svmlight_format.py",
+    "sklearn.decomposition.tests.test_kernel_pca.py",
+    "sklearn.decomposition.tests.test_nmf.py",
+    "sklearn.decomposition.tests.test_online_lda.py",
+    "sklearn.ensemble.tests.test_bagging.py",
+    "sklearn.ensemble.tests.test_common.py",
+    "sklearn.ensemble.tests.test_forest.py",
+    "sklearn.ensemble.tests.test_stacking.py",
+    "sklearn.ensemble.tests.test_weight_boosting.py",
+    "sklearn.feature_extraction.tests.test_text.py",
+    "sklearn.feature_selection.tests.test_feature_select.py",
+    "sklearn.feature_selection.tests.test_from_model.py",
+    "sklearn.feature_selection.tests.test_rfe.py",
+    "sklearn.feature_selection.tests.test_variance_threshold.py",
+    "sklearn.gaussian_process.tests.test_gpc.py",
+    "sklearn.gaussian_process.tests.test_gpr.py",
+    "sklearn.impute.tests.test_common.py",
+    "sklearn.impute.tests.test_impute.py",
+    "sklearn.impute.tests.test_knn.py",
+    "sklearn.linear_model.tests.test_coordinate_descent.py",
+    "sklearn.linear_model.tests.test_huber.py",
+    "sklearn.linear_model.tests.test_logistic.py",
+    "sklearn.linear_model.tests.test_omp.py",
+    "sklearn.linear_model.tests.test_passive_aggressive.py",
+    "sklearn.linear_model.tests.test_quantile.py",
+    "sklearn.linear_model.tests.test_ridge.py",
+    "sklearn.linear_model.tests.test_sparse_coordinate_descent.py",
+    "sklearn.manifold.tests.test_isomap.py",
+    "sklearn.manifold.tests.test_spectral_embedding.py",
+    "sklearn.metrics.tests.test_classification.py",
+    "sklearn.metrics.tests.test_common.py",
+    "sklearn.metrics.tests.test_pairwise.py",
+    "sklearn.metrics.tests.test_ranking.py",
+    "sklearn.metrics.tests.test_regression.py",
+    "sklearn.metrics.tests.test_score_objects.py",
+    "sklearn.mixture.tests.test_gaussian_mixture.py",
+    "sklearn.mixture.tests.test_mixture.py",
+    "sklearn.model_selection.tests.test_search.py",
+    "sklearn.model_selection.tests.test_split.py",
+    "sklearn.model_selection.tests.test_successive_halving.py",
+    "sklearn.model_selection.tests.test_validation.py",
+    "sklearn.neighbors.tests.test_lof.py",
+    "sklearn.neighbors.tests.test_neighbors.py",
+    "sklearn.neighbors.tests.test_neighbors_pipeline.py",
+    "sklearn.neural_network.tests.test_mlp.py",
+    "sklearn.preprocessing.tests.test_common.py",
+    "sklearn.preprocessing.tests.test_data.py",
+    "sklearn.preprocessing.tests.test_discretization.py",
+    "sklearn.svm.tests.test_svm.py",
+    "sklearn.tests.test_calibration.py",
+    "sklearn.tests.test_common.py",
+    "sklearn.tests.test_discriminant_analysis.py",
+    "sklearn.tests.test_docstring_parameters.py",
+    "sklearn.tests.test_metaestimators.py",
+    "sklearn.tests.test_metaestimators_metadata_routing.py",
+    "sklearn.tests.test_multiclass.py",
+    "sklearn.tests.test_multioutput.py",
+    "sklearn.tests.test_naive_bayes.py",
+    "sklearn.tests.test_pipeline.py",
+    "sklearn.tree.tests.test_tree.py",
+    "sklearn.utils.tests.test_estimator_checks.py",
+    "sklearn.utils.tests.test_estimator_html_repr.py",
+    "sklearn.utils.tests.test_graph.py",
+    "sklearn.utils.tests.test_optimize.py",
+    "sklearn.utils.tests.test_response.py",
+    "sklearn.utils.tests.test_testing.py",
+    "sklearn.utils.tests.test_validation.py",
+]
+
+
 def pytest_collection_modifyitems(config, items):
     """Called after collect is completed.
 
@@ -247,6 +331,26 @@ def pytest_collection_modifyitems(config, items):
                 "sklearn.feature_extraction.image.extract_patches_2d",
             ]:
                 item.add_marker(skip_marker)
+
+    # Turn all warnings into errors. TODO: when the TEST_MODULES_EXCEPTIONS list is
+    # empty, remove this and add a config warning filter Warning("error") in
+    # sklearn.utils._testing.py::_get_warnings_filters_info_list
+    error_mark = pytest.mark.filterwarnings("error")
+    for item in items:
+        if _get_item_module(item) not in TEST_MODULES_EXCEPTIONS:
+            # When markers overlap, the last one has priority. Thus we need to insert
+            # this global one at the beginning to be able to keep module or test-level
+            # markers.
+            item.own_markers.insert(0, error_mark)
+
+
+def _get_item_module(item):
+    """Get the full module name of a test item."""
+    module = []
+    while item.name != "sklearn":
+        item = item.parent
+        module.append(item.name)
+    return ".".join(reversed(module))
 
 
 @pytest.fixture(scope="function")
