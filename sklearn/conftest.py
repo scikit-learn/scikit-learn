@@ -161,6 +161,7 @@ TEST_MODULES_EXCEPTIONS = [
     "sklearn.impute.tests.test_common.py",
     "sklearn.impute.tests.test_impute.py",
     "sklearn.impute.tests.test_knn.py",
+    "sklearn.inspection._plot.tests.test_boundary_decision_display.py",
     "sklearn.linear_model.tests.test_coordinate_descent.py",
     "sklearn.linear_model.tests.test_huber.py",
     "sklearn.linear_model.tests.test_logistic.py",
