@@ -231,7 +231,9 @@ class SequentialFeatureSelector(
             self.n_features_to_select_ = int(n_features * self.n_features_to_select)
 
         if self.tol is not None and self.tol < 0 and self.direction == "forward":
-            raise ValueError("tol must be strictly positive when doing forward selection")
+            raise ValueError(
+                "tol must be strictly positive when doing forward selection"
+            )
 
         cv = check_cv(self.cv, y, classifier=is_classifier(self.estimator))
 
