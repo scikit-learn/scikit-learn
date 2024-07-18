@@ -9,7 +9,7 @@ from spin.cmds import util
 def clean():
     """🪥 Clean Meson build.
 
-    Very rarely needed since meson-python recompile as needed when sklearn is
+    Very rarely needed since meson-python recompiles as needed when sklearn is
     imported.
 
     One known use case where "spin clean" is useful: avoid compilation errors
