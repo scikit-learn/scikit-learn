@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 # See _partitioner.pyx for details.
-from ..utils._typedefs cimport float32_t, float64_t, intp_t, int8_t, int32_t, uint32_t
+from ..utils._typedefs cimport float32_t, float64_t, intp_t, int8_t, int32_t, uint8_t, uint32_t
 
 
 # Mitigate precision differences between 32 bit and 64 bit
@@ -15,7 +15,7 @@ cdef class BasePartitioner:
     cdef intp_t start
     cdef intp_t end
     cdef intp_t n_missing
-    cdef const unsigned char[::1] missing_values_in_feature_mask
+    cdef const uint8_t[::1] missing_values_in_feature_mask
 
     cdef void sort_samples_and_feature_values(
         self, intp_t current_feature
