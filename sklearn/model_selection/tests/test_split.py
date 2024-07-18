@@ -2104,7 +2104,7 @@ def test_group_k_fold_is_stable_tied(folds, n_groups, group_size, expected):
         assert_array_equal(train, np.array(expected[i]))
 
 
-def test_group_k_fold_is_stable_no_tied():
+def test_group_kfold_with_no_ties():
     """Verify groups are assigned based on a stable sort, without ties."""
     groups = np.array(list(chain.from_iterable([[i] * i for i in range(1, 10)])))
     X = np.arange(len(groups))
