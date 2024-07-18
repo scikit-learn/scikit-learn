@@ -219,8 +219,7 @@ class _BaseScorer(_MetadataRequester):
         self._sign = sign
         self._kwargs = kwargs
         self._response_method = response_method
-        # XXX After removing the deprecated scorers (v1.8) remove the
-        # XXX deprecation_msg property again and remove __call__'s body again
+        # TODO (1.8): remove in 1.8 (scoring="max_error" has been deprecated in 1.6)
         self._deprecation_msg = None
 
     def _get_pos_label(self):
@@ -273,6 +272,7 @@ class _BaseScorer(_MetadataRequester):
         score : float
             Score function applied to prediction of estimator on X.
         """
+        # TODO (1.8): remove in 1.8 (scoring="max_error" has been deprecated in 1.6)
         if self._deprecation_msg is not None:
             warnings.warn(
                 self._deprecation_msg, category=DeprecationWarning, stacklevel=2
@@ -429,7 +429,8 @@ def get_scorer(scoring):
     if isinstance(scoring, str):
         try:
             if scoring == "max_error":
-                # deprecated
+                # TODO (1.8): scoring="max_error" has been deprecated in 1.6,
+                # TODO (1.8) remove in 1.8
                 scorer = max_error_scorer
             else:
                 scorer = copy.deepcopy(_SCORERS[scoring])
@@ -772,6 +773,7 @@ explained_variance_scorer = make_scorer(explained_variance_score)
 r2_scorer = make_scorer(r2_score)
 neg_max_error_scorer = make_scorer(max_error, greater_is_better=False)
 max_error_scorer = make_scorer(max_error, greater_is_better=False)
+# TODO (1.8): remove in 1.8 (scoring="max_error" has been deprecated in 1.6)
 deprecation_msg = (
     "Scoring method max_error was renamed to "
     "neg_max_error in version 1.6 and will "
