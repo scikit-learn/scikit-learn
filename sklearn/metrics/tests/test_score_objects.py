@@ -551,7 +551,6 @@ def test_supervised_cluster_scorers():
         assert_almost_equal(score1, score2)
 
 
-@ignore_warnings
 def test_raises_on_score_list():
     # Test that when a list of scores is returned, we raise proper errors.
     X, y = make_blobs(random_state=0)
@@ -566,7 +565,6 @@ def test_raises_on_score_list():
         grid_search.fit(X, y)
 
 
-@ignore_warnings
 def test_classification_scorer_sample_weight():
     # Test that classification scorers support sample_weight or raise sensible
     # errors
@@ -626,7 +624,6 @@ def test_classification_scorer_sample_weight():
             )
 
 
-@ignore_warnings
 def test_regression_scorer_sample_weight():
     # Test that regression scorers support sample_weight or raise sensible
     # errors
