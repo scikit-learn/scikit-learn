@@ -2330,7 +2330,8 @@ def pairwise_distances(
         and quickly degrade performance.
 
     force_all_finite : bool or 'allow-nan', default=True
-        Whether to raise an error on np.inf, np.nan, pd.NA in array. The
+        Whether to raise an error on np.inf, np.nan, pd.NA in array. Ignored
+        for a metric listed in ``pairwise.PAIRWISE_DISTANCE_FUNCTIONS``. The
         possibilities are:
 
         - True: Force all values of array to be finite.
@@ -2349,7 +2350,8 @@ def pairwise_distances(
            in 1.8.
 
     ensure_all_finite : bool or 'allow-nan', default=True
-        Whether to raise an error on np.inf, np.nan, pd.NA in array. The
+        Whether to raise an error on np.inf, np.nan, pd.NA in array. Ignored
+        for a metric listed in ``pairwise.PAIRWISE_DISTANCE_FUNCTIONS``. The
         possibilities are:
 
         - True: Force all values of array to be finite.
