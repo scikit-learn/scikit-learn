@@ -2,7 +2,7 @@
 
 import re
 import warnings
-from itertools import combinations, combinations_with_replacement, permutations, chain
+from itertools import chain, combinations, combinations_with_replacement, permutations
 
 import numpy as np
 import pytest
