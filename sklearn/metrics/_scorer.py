@@ -430,7 +430,7 @@ def get_scorer(scoring):
         try:
             if scoring == "max_error":
                 # TODO (1.8): scoring="max_error" has been deprecated in 1.6,
-                # TODO (1.8) remove in 1.8
+                # remove in 1.8
                 scorer = max_error_scorer
             else:
                 scorer = copy.deepcopy(_SCORERS[scoring])
