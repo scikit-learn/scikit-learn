@@ -107,10 +107,8 @@ cdef class DensePartitioner(BasePartitioner):
             intp_t n_missing = 0
             const uint8_t[::1] missing_values_in_feature_mask = self.missing_values_in_feature_mask
 
-        # Sort samples along that feature; by
-        # copying the values into an array and
-        # sorting the array in a manner which utilizes the cache more
-        # effectively.
+        # Sort samples along that feature; by copying the values into an array and
+        # sorting the array in a manner which utilizes the cache more effectively.
         if missing_values_in_feature_mask is not None and missing_values_in_feature_mask[current_feature]:
             i, current_end = self.start, self.end - 1
             # Missing values are placed at the end and do not participate in the sorting.
@@ -147,9 +145,8 @@ cdef class DensePartitioner(BasePartitioner):
     ) noexcept nogil:
         """Find the minimum and maximum value for current_feature.
 
-        Missing values are stored at the end of feature_values.
-        The number of missing values observed in feature_values is stored
-        in self.n_missing.
+        Missing values are stored at the end of feature_values. The number of missing
+        values observed in feature_values is stored in self.n_missing.
         """
         cdef:
             intp_t p, current_end
@@ -162,9 +159,9 @@ cdef class DensePartitioner(BasePartitioner):
             intp_t n_missing = 0
             const uint8_t[::1] missing_values_in_feature_mask = self.missing_values_in_feature_mask
 
-        # We are copying the values into an array and
-        # finding min/max of the array in a manner which utilizes the cache more
-        # effectively. We need to also count the number of missing-values there are
+        # We are copying the values into an array and finding min/max of the array in
+        # a manner which utilizes the cache more effectively. We need to also count
+        # the number of missing-values there are.
         if missing_values_in_feature_mask is not None and missing_values_in_feature_mask[current_feature]:
             p, current_end = self.start, self.end - 1
             # Missing values are placed at the end and do not participate in the
@@ -830,3 +827,29 @@ cdef inline void sparse_swap(intp_t[::1] index_to_samples, intp_t[::1] samples,
     samples[pos_1], samples[pos_2] = samples[pos_2], samples[pos_1]
     index_to_samples[samples[pos_1]] = pos_1
     index_to_samples[samples[pos_2]] = pos_2
+
+
+cdef inline void shift_missing_values_to_left_if_required(
+    SplitRecord* best,
+    intp_t[::1] samples,
+    intp_t end,
+) noexcept nogil:
+    """Shift missing value sample indices to the left of the split if required.
+
+    Note: this should always be called at the very end because it will
+    move samples around, thereby affecting the criterion.
+    This affects the computation of the children impurity, which affects
+    the computation of the next node.
+    """
+    cdef intp_t i, p, current_end
+    # The partitioner partitions the data such that the missing values are in
+    # samples[-n_missing:] for the criterion to consume. If the missing values
+    # are going to the right node, then the missing values are already in the
+    # correct position. If the missing values go left, then we move the missing
+    # values to samples[best.pos:best.pos+n_missing] and update `best.pos`.
+    if best.n_missing > 0 and best.missing_go_to_left:
+        for p in range(best.n_missing):
+            i = best.pos + p
+            current_end = end - 1 - p
+            samples[i], samples[current_end] = samples[current_end], samples[i]
+        best.pos += best.n_missing

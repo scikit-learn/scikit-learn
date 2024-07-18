@@ -3,6 +3,7 @@
 
 # See _partitioner.pyx for details.
 from ..utils._typedefs cimport float32_t, float64_t, intp_t, int8_t, int32_t, uint8_t, uint32_t
+from ._splitter cimport SplitRecord
 
 
 # Mitigate precision differences between 32 bit and 64 bit
@@ -84,3 +85,10 @@ cdef class SparsePartitioner(BasePartitioner):
         float64_t threshold,
         intp_t zero_pos
     ) noexcept nogil
+
+
+cdef void shift_missing_values_to_left_if_required(
+    SplitRecord* best,
+    intp_t[::1] samples,
+    intp_t end,
+) noexcept nogil

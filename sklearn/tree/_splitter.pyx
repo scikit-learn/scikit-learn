@@ -22,7 +22,7 @@ of splitting strategies:
 
 from libc.string cimport memcpy
 
-from ._partitioner cimport DensePartitioner, SparsePartitioner, FEATURE_THRESHOLD
+from ._partitioner cimport DensePartitioner, SparsePartitioner, FEATURE_THRESHOLD, shift_missing_values_to_left_if_required
 from ._criterion cimport Criterion
 from ._utils cimport rand_int
 from ._utils cimport rand_uniform
@@ -264,31 +264,6 @@ cdef class Splitter:
         """Return the impurity of the current node."""
 
         return self.criterion.node_impurity()
-
-cdef inline void shift_missing_values_to_left_if_required(
-    SplitRecord* best,
-    intp_t[::1] samples,
-    intp_t end,
-) noexcept nogil:
-    """Shift missing value sample indices to the left of the split if required.
-
-    Note: this should always be called at the very end because it will
-    move samples around, thereby affecting the criterion.
-    This affects the computation of the children impurity, which affects
-    the computation of the next node.
-    """
-    cdef intp_t i, p, current_end
-    # The partitioner partitions the data such that the missing values are in
-    # samples[-n_missing:] for the criterion to consume. If the missing values
-    # are going to the right node, then the missing values are already in the
-    # correct position. If the missing values go left, then we move the missing
-    # values to samples[best.pos:best.pos+n_missing] and update `best.pos`.
-    if best.n_missing > 0 and best.missing_go_to_left:
-        for p in range(best.n_missing):
-            i = best.pos + p
-            current_end = end - 1 - p
-            samples[i], samples[current_end] = samples[current_end], samples[i]
-        best.pos += best.n_missing
 
 
 cdef inline int node_split_best(
