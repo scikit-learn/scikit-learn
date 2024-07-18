@@ -2041,33 +2041,18 @@ def test_array_api_compliance(metric, array_namespace, device, dtype_name, check
     check_func(metric, array_namespace, device, dtype_name)
 
 
-@pytest.mark.parametrize("name", sorted(ALL_METRICS))
-def test_metrics_pandas_series(name):
-    pd = pytest.importorskip("pandas")
+@pytest.mark.parametrize("df_lib_name", ["pandas", "polars"])
+@pytest.mark.parametrize("metric_name", sorted(ALL_METRICS))
+def test_metrics_dataframe_series(metric_name, df_lib_name):
+    df_lib = pytest.importorskip(df_lib_name)
 
-    y_pred = pd.Series([0.0, 1.0, 0, 1.0])
-    y_true = pd.Series([1.0, 0.0, 0.0, 0.0])
+    y_pred = df_lib.Series([0.0, 1.0, 0, 1.0])
+    y_true = df_lib.Series([1.0, 0.0, 0.0, 0.0])
 
-    metric = ALL_METRICS[name]
+    metric = ALL_METRICS[metric_name]
     try:
         expected_metric = metric(y_pred.to_numpy(), y_true.to_numpy())
     except ValueError:
-        pytest.skip(f"{name} can not deal with 1d inputs")
-
-    assert_allclose(metric(y_pred, y_true), expected_metric)
-
-
-@pytest.mark.parametrize("name", sorted(ALL_METRICS))
-def test_metrics_polars_series(name):
-    pl = pytest.importorskip("polars")
-
-    y_pred = pl.Series([0.0, 1.0, 0, 1.0])
-    y_true = pl.Series([1.0, 0.0, 0.0, 0.0])
-
-    metric = ALL_METRICS[name]
-    try:
-        expected_metric = metric(y_pred.to_numpy(), y_true.to_numpy())
-    except ValueError:
-        pytest.skip(f"{name} can not deal with 1d inputs")
+        pytest.skip(f"{metric_name} can not deal with 1d inputs")
 
     assert_allclose(metric(y_pred, y_true), expected_metric)
