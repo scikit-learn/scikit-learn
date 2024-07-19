@@ -18,11 +18,13 @@ from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 iris = datasets.load_iris()
 
 
-def test_incremental_pca():
+@pytest.mark.parametrize("svd_solver", ["full", "arpack"])
+def test_incremental_pca(svd_solver):
     # Incremental PCA on dense arrays.
     X = iris.data
     batch_size = X.shape[0] // 3
-    ipca = IncrementalPCA(n_components=2, batch_size=batch_size)
+    kwargs = {"batch_size": batch_size, "svd_solver": svd_solver, "random_state": 0}
+    ipca = IncrementalPCA(n_components=2, **kwargs)
     pca = PCA(n_components=2)
     pca.fit_transform(X)
 
@@ -35,8 +37,9 @@ def test_incremental_pca():
         rtol=1e-3,
     )
 
-    for n_components in [1, 2, X.shape[1]]:
-        ipca = IncrementalPCA(n_components, batch_size=batch_size)
+    max_n_components = X.shape[1] - 1 if svd_solver == "arpack" else X.shape[1]
+    for n_components in [1, 2, max_n_components]:
+        ipca = IncrementalPCA(n_components, **kwargs)
         ipca.fit(X)
         cov = ipca.get_covariance()
         precision = ipca.get_precision()
@@ -46,14 +49,16 @@ def test_incremental_pca():
 
 
 @pytest.mark.parametrize("sparse_container", CSC_CONTAINERS + CSR_CONTAINERS)
-def test_incremental_pca_sparse(sparse_container):
+@pytest.mark.parametrize("svd_solver", ["full", "arpack"])
+def test_incremental_pca_sparse(sparse_container, svd_solver):
     # Incremental PCA on sparse arrays.
     X = iris.data
     pca = PCA(n_components=2, random_state=0)
     pca.fit_transform(X)
     X_sparse = sparse_container(X)
     batch_size = X_sparse.shape[0] // 3
-    ipca = IncrementalPCA(n_components=2, batch_size=batch_size, random_state=0)
+    kwargs = {"batch_size": batch_size, "svd_solver": svd_solver, "random_state": 0}
+    ipca = IncrementalPCA(n_components=2, **kwargs)
 
     X_transformed = ipca.fit_transform(X_sparse)
 
@@ -64,8 +69,11 @@ def test_incremental_pca_sparse(sparse_container):
         rtol=1e-3,
     )
 
-    for n_components in [1, 2, X.shape[1] - 1]:
-        ipca = IncrementalPCA(n_components, batch_size=batch_size, random_state=0)
+    max_n_components = (
+        X_sparse.shape[1] - 1 if svd_solver == "arpack" else X_sparse.shape[1]
+    )
+    for n_components in [1, 2, max_n_components]:
+        ipca = IncrementalPCA(n_components, **kwargs)
         ipca.fit(X_sparse)
         cov = ipca.get_covariance()
         precision = ipca.get_precision()

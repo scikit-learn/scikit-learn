@@ -10,6 +10,7 @@ from sklearn.utils._testing import assert_allclose
 from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS, LIL_CONTAINERS
 from sklearn.utils.sparsefuncs import (
     _implicit_column_offset,
+    _implicit_vstack,
     count_nonzero,
     csc_median_axis_0,
     incr_mean_variance_axis,
@@ -996,3 +997,59 @@ def test_implit_center_rmatvec(global_random_seed, centered_matrices):
     y = rng.standard_normal(X_dense_centered.shape[0])
     assert_allclose(X_dense_centered.T @ y, X_sparse_centered.rmatvec(y))
     assert_allclose(X_dense_centered.T @ y, X_sparse_centered.T @ y)
+
+
+@pytest.fixture(scope="module", params=CSR_CONTAINERS + CSC_CONTAINERS)
+def vstacked_matrices(request):
+    """Returns equivalent tuple[sp.linalg.LinearOperator, np.ndarray]."""
+    sparse_container = request.param
+
+    random_state = np.random.default_rng(42)
+
+    A = sparse_container(
+        sp.random(100, 50, density=0.2, format="csr", random_state=random_state)
+    )
+    B = sparse_container(
+        sp.random(399, 50, density=0.2, format="csr", random_state=random_state)
+    )
+    C = sparse_container(
+        sp.random(1, 50, density=0.2, format="csr", random_state=random_state)
+    )
+
+    X_sparse_vstacked = _implicit_vstack((A, B, C))
+    X_dense_vstacked = np.vstack((A.toarray(), B.toarray(), C.toarray()))
+
+    return X_sparse_vstacked, X_dense_vstacked
+
+
+def test_implicit_vstack_matmat(global_random_seed, vstacked_matrices):
+    X_sparse_vstacked, X_dense_vstacked = vstacked_matrices
+    rng = np.random.default_rng(global_random_seed)
+    Y = rng.standard_normal((X_dense_vstacked.shape[1], 50))
+    print(X_dense_vstacked.shape, X_sparse_vstacked.shape, Y.shape)
+    assert_allclose(X_dense_vstacked @ Y, X_sparse_vstacked.matmat(Y))
+    assert_allclose(X_dense_vstacked @ Y, X_sparse_vstacked @ Y)
+
+
+def test_implicit_vstack_matvec(global_random_seed, vstacked_matrices):
+    X_sparse_vstacked, X_dense_vstacked = vstacked_matrices
+    rng = np.random.default_rng(global_random_seed)
+    y = rng.standard_normal(X_dense_vstacked.shape[1])
+    assert_allclose(X_dense_vstacked @ y, X_sparse_vstacked.matvec(y))
+    assert_allclose(X_dense_vstacked @ y, X_sparse_vstacked @ y)
+
+
+def test_implicit_vstack_rmatmat(global_random_seed, vstacked_matrices):
+    X_sparse_vstacked, X_dense_vstacked = vstacked_matrices
+    rng = np.random.default_rng(global_random_seed)
+    Y = rng.standard_normal((X_dense_vstacked.shape[0], 50))
+    assert_allclose(X_dense_vstacked.T @ Y, X_sparse_vstacked.rmatmat(Y))
+    assert_allclose(X_dense_vstacked.T @ Y, X_sparse_vstacked.T @ Y)
+
+
+def test_implit_vstack_rmatvec(global_random_seed, vstacked_matrices):
+    X_sparse_vstacked, X_dense_vstacked = vstacked_matrices
+    rng = np.random.default_rng(global_random_seed)
+    y = rng.standard_normal(X_dense_vstacked.shape[0])
+    assert_allclose(X_dense_vstacked.T @ y, X_sparse_vstacked.rmatvec(y))
+    assert_allclose(X_dense_vstacked.T @ y, X_sparse_vstacked.T @ y)

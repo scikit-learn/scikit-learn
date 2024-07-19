@@ -743,7 +743,7 @@ def _implicit_vstack(blocks):
     """Create an implicitly vertically stacked linear operator.
 
     This is used by IncrementalPCA on sparse data to avoid densifying the whole data
-    matrix.
+    matrix. The reason is that `scipy.sparse.vstack` does not handle LinearOperator.
 
     Parameters
     ----------
@@ -754,7 +754,7 @@ def _implicit_vstack(blocks):
 
     Returns
     -------
-    stacked : LinearOperator
+    vstacked : LinearOperator
     """
     dtypes = [block.dtype for block in blocks]
     ms = [block.shape[0] for block in blocks]
