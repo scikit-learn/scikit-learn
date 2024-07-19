@@ -61,7 +61,7 @@ Reference Steps
   {%- endif -%}
 
   {%- set version_full = inferred["version_full"][key] -%}
-  {%- set version_main = inferred["version_main"][key] -%}
+  {%- set version_short = inferred["version_short"][key] -%}
   {%- set previous_tag = inferred["previous_tag"][key] -%}
 
   .. tab-item:: {{ title }}
@@ -74,20 +74,20 @@ Reference Steps
     and the final release afterwards should include only minor documentation changes
     and bug fixes. Any major enhancement or new feature should be excluded.
 
-    - Create the release branch `{{ version_main }}.X` directly in the main repository,
+    - Create the release branch `{{ version_short }}.X` directly in the main repository,
       where `X` is really the letter X, **not a placeholder**. The development for the
-      final and subsequent bug-fix releases of `{{ version_main }}` should also happen
+      final and subsequent bug-fix releases of `{{ version_short }}` should also happen
       under this branch with different tags.
 
       .. prompt:: bash
 
         git fetch upstream main
         git checkout upstream/main
-        git checkout -b {{ version_main }}.X
-        git push --set-upstream upstream {{ version_main }}.X
+        git checkout -b {{ version_short }}.X
+        git push --set-upstream upstream {{ version_short }}.X
     {% endif %}
 
-    - Create a PR from the `main` branch targeting the `{{ version_main }}.X` branch.
+    - Create a PR from the `main` branch targeting the `{{ version_short }}.X` branch.
       Copy the following release checklist to the description of this PR to track the
       progress.
 
@@ -118,11 +118,11 @@ Reference Steps
         {%- endif %}
 
     {% if key != "rc" %}
-    - Rebase this PR from the `{{ version_main }}.X` branch:
+    - Rebase this PR from the `{{ version_short }}.X` branch:
 
       .. prompt:: bash
 
-        git rebase -i upstream/{{ version_main }}.X
+        git rebase -i upstream/{{ version_short }}.X
 
       This will open an interactive rebase with the `git-rebase-todo` containing all the
       latest commits on `main`. At this stage, you have to perform this interactive
@@ -143,16 +143,16 @@ Reference Steps
     {% endif %}
 
     {% if key == "rc" %}
-    - Create a PR from `main` and targeting `main` to increment the `__version__`
-      variable in `sklearn/__init__.py` to increment the dev0 version. This means while
-      we are in the release candidate period, the latest stable is two version behind
-      the `main` branch, instead of one. In this PR targeting `main`, you should also
-      include a new what's new file under the `doc/whats_new/` directory so PRs that
-      target the next version can contribute their changelog entries to this file in
-      parallel to the release process.
+    - Create a PR from `main` and targeting `main` to increment the dev0 `__version__`
+      variable in `sklearn/__init__.py`. This means while we are in the release
+      candidate period, the latest stable is two version behind the `main` branch,
+      instead of one. In this PR targeting `main`, you should also include a new what's
+      new file under the `doc/whats_new/` directory so PRs that target the next version
+      can contribute their changelog entries to this file in parallel to the release
+      process.
     {% endif %}
 
-    - In the `{{ version_main }}.X` branch, change the version number `__version__` in
+    - In the `{{ version_short }}.X` branch, change the version number `__version__` in
       `sklearn/__init__.py` to `{{ version_full }}`.
 
     {% if key != "rc" %}
@@ -172,7 +172,7 @@ Reference Steps
           sed "s/;/, /g;s/, $//" |
           fold -s
 
-      Then cherry-pick it in the `{{ version_main }}.X` release branch.
+      Then cherry-pick it in the `{{ version_short }}.X` release branch.
 
     - In the `main` branch, edit `doc/templates/index.html` to change the "News" section
       in the landing page, along with the month of the release.
@@ -180,7 +180,7 @@ Reference Steps
       Do not forget to remove old entries (two years or three releases ago) and update
       the "On-going development" entry.
       {%- endif %}
-      Then cherry-pick it in the `{{ version_main }}.X` release branch.
+      Then cherry-pick it in the `{{ version_short }}.X` release branch.
     {% endif %}
 
     - Trigger the wheel builder with the `[cd build]` commit marker. See also the
@@ -202,12 +202,22 @@ Reference Steps
         and publish packages for the development branch of scikit-learn. See also
         :ref:`install_nightly_builds`.
 
-    - Once all the CD jobs have completed successfully in the PR, merge it again with
-      the `[cd build]` marker in the commit message. This time the results will be
+    - Once all the CD jobs have completed successfully in the PR, merge it with the
+      `[cd build]` marker in the commit message. This time the results will be
       uploaded to the staging area. You should then be able to upload the generated
       artifacts (`.tar.gz` and `.whl` files) to https://test.pypi.org/ using the "Run
       workflow" form for the `PyPI publishing workflow
       <https://github.com/scikit-learn/scikit-learn/actions/workflows/publish_pypi.yml>`_.
+
+      .. warning::
+
+        This PR should be merged with the rebase mode instead of the usual squash mode
+        because we want to keep the history in the `{{ version_short }}.X` branch close
+        to the history of the main branch which will help for future bug fix releases.
+
+        In addition if on merging, the last commit, containing the `[cd build]` marker,
+        is empty, the CD jobs won't be triggered. In this case, you can directly push
+        a commit with the marker in the `{{ version_short }}.X` to trigger them.
 
     - If the steps above went fine, proceed **with caution** to create a new tag for the
       release. This should be done only when you are almost certain that the release is
@@ -216,7 +226,7 @@ Reference Steps
 
       .. prompt:: bash
 
-        git tag -a {{ version_full }}  # in the {{ version_main }}.X branch
+        git tag -a {{ version_full }}  # in the {{ version_short }}.X branch
         git push git@github.com:scikit-learn/scikit-learn.git {{ version_full }}
 
     - Confirm that the bot has detected the tag on the conda-forge feedstock repository
@@ -274,10 +284,10 @@ Reference Steps
         echo stable > .git/info/sparse-checkout
         git checkout main
         rm stable
-        ln -s {{ version_main }} stable
-        sed -i "s/latestStable = '.*/latestStable = '{{ version_main }}';/" versionwarning.js
+        ln -s {{ version_short }} stable
+        sed -i "s/latestStable = '.*/latestStable = '{{ version_short }}';/" versionwarning.js
         git add stable versionwarning.js
-        git commit -m "Update stable to point to {{ version_main }}"
+        git commit -m "Update stable to point to {{ version_short }}"
         git push origin main
     {% endif %}
 
