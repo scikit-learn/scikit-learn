@@ -28,9 +28,6 @@ the difficult-to-classify samples.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-# Noel Dawe <noel.dawe@gmail.com>
-# SPDX-License-Identifier: BSD-3-Clause
-
 # %%
 # Creating the dataset
 # --------------------
