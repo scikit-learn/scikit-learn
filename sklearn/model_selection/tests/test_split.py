@@ -2083,7 +2083,7 @@ def test_group_kfold_is_stable_with_ties(folds, n_groups, group_size):
 
     split = [a for a in gkf.split(X, groups=groups)]
     for i, (_, test) in enumerate(split):
-        expected = X[(n_groups - 1 - groups) % folds == i]
+        expected = X[groups[::-1] % folds == i]
         assert_array_equal(test, expected)
 
 
