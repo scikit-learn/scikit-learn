@@ -2068,40 +2068,23 @@ def test_stratified_splitter_without_y(cv):
 
 
 @pytest.mark.parametrize(
-    "folds,n_groups,group_size,expected",
+    "folds,n_groups,group_size",
     [
-        (
-            333,
-            333,
-            1,
-            [[j for j in range(333) if j != i] for i in reversed(range(333))],
-        ),
-        (
-            2,
-            41,
-            5,
-            [
-                list(
-                    chain.from_iterable(
-                        [range(10 * i + 5, 10 * i + 10) for i in range(20)]
-                    )
-                ),
-                list(
-                    chain.from_iterable([range(10 * i, 10 * i + 5) for i in range(21)])
-                ),
-            ],
-        ),
+        (333, 333, 1),
+        (2, 41, 5),
+        (3, 5, 16),
     ],
 )
-def test_group_kfold_is_stable_with_ties(folds, n_groups, group_size, expected):
+def test_group_kfold_is_stable_with_ties(folds, n_groups, group_size):
     """Verify groups are assigned based on a stable sort, with ties."""
     groups = np.repeat(np.arange(n_groups), group_size)
     X = np.arange(n_groups * group_size)
     gkf = GroupKFold(folds)
 
     split = [a for a in gkf.split(X, groups=groups)]
-    for i, (train, _) in enumerate(split):
-        assert_array_equal(train, np.array(expected[i]))
+    for i, (_, test) in enumerate(split):
+        expected = X[(n_groups - 1 - groups) % folds == i]
+        assert_array_equal(test, expected)
 
 
 def test_group_kfold_with_no_ties():
