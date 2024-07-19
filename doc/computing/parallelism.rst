@@ -232,14 +232,12 @@ the `global_random_seed`` fixture.
 All tests that use this fixture accept the contract that they should
 deterministically pass for any seed value from 0 to 99 included.
 
-If the `SKLEARN_TESTS_GLOBAL_RANDOM_SEED` environment variable is set to
-`"any"` (which should be the case on nightly builds on the CI), the fixture
-will choose an arbitrary seed in the above range (based on the BUILD_NUMBER or
-the current day) and all fixtured tests will run for that specific seed. The
-goal is to ensure that, over time, our CI will run all tests with different
-seeds while keeping the test duration of a single run of the full test suite
-limited. This will check that the assertions of tests written to use this
-fixture are not dependent on a specific seed value.
+In nightly CI builds, the `SKLEARN_TESTS_GLOBAL_RANDOM_SEED` environment
+variable is drawn randomly in the above range and all fixtured tests will run
+for that specific seed. The goal is to ensure that, over time, our CI will run
+all tests with different seeds while keeping the test duration of a single run
+of the full test suite limited. This will check that the assertions of tests
+written to use this fixture are not dependent on a specific seed value.
 
 The range of admissible seed values is limited to [0, 99] because it is often
 not possible to write a test that can work for any possible seed and we want to
@@ -250,8 +248,6 @@ Valid values for `SKLEARN_TESTS_GLOBAL_RANDOM_SEED`:
 - `SKLEARN_TESTS_GLOBAL_RANDOM_SEED="42"`: run tests with a fixed seed of 42
 - `SKLEARN_TESTS_GLOBAL_RANDOM_SEED="40-42"`: run the tests with all seeds
   between 40 and 42 included
-- `SKLEARN_TESTS_GLOBAL_RANDOM_SEED="any"`: run the tests with an arbitrary
-  seed selected between 0 and 99 included
 - `SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"`: run the tests with all seeds
   between 0 and 99 included. This can take a long time: only use for individual
   tests, not the full test suite!
