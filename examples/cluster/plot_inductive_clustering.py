@@ -23,9 +23,6 @@ extends clustering by inducing a classifier from the cluster labels.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-# Authors: Chirag Nagpal
-#          Christos Aridas
-
 import matplotlib.pyplot as plt
 
 from sklearn.base import BaseEstimator, clone

@@ -12,11 +12,6 @@ Seeding is performed using a binning technique for scalability.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-# Authors: Conrad Lee <conradlee@gmail.com>
-#          Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Gael Varoquaux <gael.varoquaux@normalesup.org>
-#          Martino Sorbaro <martino.sorbaro@ed.ac.uk>
-
 import warnings
 from collections import defaultdict
 from numbers import Integral, Real

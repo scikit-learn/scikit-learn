@@ -28,8 +28,6 @@ prevalence of the positive class.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-# Authors:  Arturo Amor <david-arturo.amor-quiroz@inria.fr>
-#           Olivier Grisel <olivier.grisel@ensta.org>
 # %%
 # Pre-test vs. post-test analysis
 # ===============================

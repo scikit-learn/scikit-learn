@@ -16,11 +16,6 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-# Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
-#          Lars Buitinck
-#          Arnaud Joly <arnaud.v.joly@gmail.com>
-# License: Simplified BSD
-
 import copy
 import warnings
 from collections import Counter
