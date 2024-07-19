@@ -1171,7 +1171,7 @@ def _get_warnings_filters_info_list():
                 "preliminary."
             ),
             category=UserWarning,
-        )
+        ),
     ]
 
 
