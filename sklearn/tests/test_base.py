@@ -327,8 +327,8 @@ def test_set_params():
 
     # we don't currently catch if the things in pipeline are estimators
     # bad_pipeline = Pipeline([("bad", NoEstimator())])
-    # assert_raises(AttributeError, bad_pipeline.set_params,
-    #               bad__stupid_param=True)
+    # with pytest.raises(AttributeError):
+    #    bad_pipeline.set_params(bad__stupid_param=True)
 
 
 def test_set_params_passes_all_parameters():

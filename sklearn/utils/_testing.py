@@ -20,7 +20,6 @@ from dataclasses import dataclass
 from functools import wraps
 from inspect import signature
 from subprocess import STDOUT, CalledProcessError, TimeoutExpired, check_output
-from unittest import TestCase
 
 import joblib
 import numpy as np
@@ -28,7 +27,6 @@ import scipy as sp
 from numpy.testing import assert_allclose as np_assert_allclose
 from numpy.testing import (
     assert_almost_equal,
-    assert_approx_equal,
     assert_array_almost_equal,
     assert_array_equal,
     assert_array_less,
@@ -52,29 +50,17 @@ from sklearn.utils.validation import (
 )
 
 __all__ = [
-    "assert_raises",
-    "assert_raises_regexp",
     "assert_array_equal",
     "assert_almost_equal",
     "assert_array_almost_equal",
     "assert_array_less",
-    "assert_approx_equal",
     "assert_allclose",
     "assert_run_python_script_without_output",
     "assert_no_warnings",
     "SkipTest",
 ]
 
-_dummy = TestCase("__init__")
-assert_raises = _dummy.assertRaises
 SkipTest = unittest.case.SkipTest
-assert_dict_equal = _dummy.assertDictEqual
-
-assert_raises_regex = _dummy.assertRaisesRegex
-# assert_raises_regexp is deprecated in Python 3.4 in favor of
-# assert_raises_regex but lets keep the backward compat in scikit-learn with
-# the old name for now
-assert_raises_regexp = assert_raises_regex
 
 
 def ignore_warnings(obj=None, category=Warning):
