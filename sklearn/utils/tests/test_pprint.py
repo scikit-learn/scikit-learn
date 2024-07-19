@@ -357,7 +357,7 @@ RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estima
         ),
     ],
 )
-def test_depth(print_changed_only, expected):
+def test_print_estimator_max_depth(print_changed_only, expected):
     with config_context(print_changed_only=print_changed_only):
         pp = _EstimatorPrettyPrinter(depth=1)
 
