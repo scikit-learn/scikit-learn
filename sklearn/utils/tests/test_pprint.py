@@ -2,6 +2,7 @@ import re
 from pprint import PrettyPrinter
 
 import numpy as np
+import pytest
 
 from sklearn.utils._pprint import _EstimatorPrettyPrinter
 from sklearn.linear_model import LogisticRegressionCV
@@ -346,12 +347,22 @@ RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estima
     assert rfe.__repr__() == expected
 
 
-def test_depth(print_changed_only_false):
-    pp = _EstimatorPrettyPrinter(depth=1)
+@pytest.mark.parametrize(
+    ("print_changed_only", "expected"),
+    [
+        (True, "RFE(estimator=RFE(...))"),
+        (
+            False,
+            "RFE(estimator=RFE(...), n_features_to_select=None, step=1, verbose=0)",
+        ),
+    ],
+)
+def test_depth(print_changed_only, expected):
+    with config_context(print_changed_only=print_changed_only):
+        pp = _EstimatorPrettyPrinter(depth=1)
 
-    rfe = RFE(RFE(RFE(RFE(RFE(LogisticRegression())))))
-    expected = "RFE(estimator=RFE(...), n_features_to_select=None, step=1, verbose=0)"
-    assert pp.pformat(rfe) == expected
+        rfe = RFE(RFE(RFE(RFE(RFE(LogisticRegression())))))
+        assert pp.pformat(rfe) == expected
 
 
 def test_gridsearch(print_changed_only_false):
