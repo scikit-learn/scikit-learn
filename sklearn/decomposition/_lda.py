@@ -194,15 +194,14 @@ class LatentDirichletAllocation(
         In general, if the data size is large, the online update will be much
         faster than the batch update.
 
-        Valid options::
+        Valid options:
 
-            'batch': Batch variational Bayes method. Use all training data in
-                each EM update.
-                Old `components_` will be overwritten in each iteration.
-            'online': Online variational Bayes method. In each EM update, use
-                mini-batch of training data to update the ``components_``
-                variable incrementally. The learning rate is controlled by the
-                ``learning_decay`` and the ``learning_offset`` parameters.
+        - 'batch': Batch variational Bayes method. Use all training data in each EM
+          update. Old `components_` will be overwritten in each iteration.
+        - 'online': Online variational Bayes method. In each EM update, use mini-batch
+          of training data to update the ``components_`` variable incrementally. The
+          learning rate is controlled by the ``learning_decay`` and the
+          ``learning_offset`` parameters.
 
         .. versionchanged:: 0.20
             The default learning method is now ``"batch"``.
@@ -240,8 +239,7 @@ class LatentDirichletAllocation(
         Total number of documents. Only used in the :meth:`partial_fit` method.
 
     perp_tol : float, default=1e-1
-        Perplexity tolerance in batch learning. Only used when
-        ``evaluate_every`` is greater than 0.
+        Perplexity tolerance. Only used when ``evaluate_every`` is greater than 0.
 
     mean_change_tol : float, default=1e-3
         Stopping tolerance for updating document topic distribution in E-step.

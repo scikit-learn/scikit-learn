@@ -1,7 +1,9 @@
+import warnings
+
 import numpy as np
 import pytest
 
-from sklearn import datasets
+from sklearn import config_context, datasets
 from sklearn.base import BaseEstimator, TransformerMixin, clone
 from sklearn.compose import TransformedTargetRegressor
 from sklearn.dummy import DummyRegressor
@@ -37,11 +39,19 @@ def test_transform_target_regressor_error():
         match=r"fit\(\) got an unexpected " "keyword argument 'sample_weight'",
     ):
         regr.fit(X, y, sample_weight=sample_weight)
-    # func is given but inverse_func is not
+
+    # one of (func, inverse_func) is given but the other one is not
     regr = TransformedTargetRegressor(func=np.exp)
     with pytest.raises(
         ValueError,
         match="When 'func' is provided, 'inverse_func' must also be provided",
+    ):
+        regr.fit(X, y)
+
+    regr = TransformedTargetRegressor(inverse_func=np.log)
+    with pytest.raises(
+        ValueError,
+        match="When 'inverse_func' is provided, 'func' must also be provided",
     ):
         regr.fit(X, y)
 
@@ -385,3 +395,18 @@ def test_transform_target_regressor_pass_extra_predict_parameters():
     regr.fit(X, y)
     regr.predict(X, check_input=False)
     assert regr.regressor_.predict_called
+
+
+@pytest.mark.parametrize("output_format", ["pandas", "polars"])
+def test_transform_target_regressor_not_warns_with_global_output_set(output_format):
+    """Test that TransformedTargetRegressor will not raise warnings if
+    set_config(transform_output="pandas"/"polars") is set globally; regression test for
+    issue #29361."""
+    X, y = datasets.make_regression()
+    y = np.abs(y) + 1
+    with config_context(transform_output=output_format):
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            TransformedTargetRegressor(
+                regressor=LinearRegression(), func=np.log, inverse_func=np.exp
+            ).fit(X, y)

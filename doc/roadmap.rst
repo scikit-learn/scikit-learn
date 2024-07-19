@@ -1,4 +1,4 @@
-﻿.. |ss| raw:: html
+.. |ss| raw:: html
 
    <strike>
 
