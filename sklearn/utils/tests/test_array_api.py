@@ -13,21 +13,29 @@ from sklearn.utils._array_api import (
     _atol_for_type,
     _average,
     _convert_to_numpy,
+    _count_nonzero,
     _estimator_with_converted_arrays,
+    _fill_or_add_to_diagonal,
+    _is_numpy_namespace,
+    _isin,
+    _max_precision_float_dtype,
     _nanmax,
     _nanmin,
     _NumPyAPIWrapper,
+    _ravel,
     device,
     get_namespace,
+    get_namespace_and_device,
     indexing_dtype,
     supported_float_dtypes,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
     _array_api_for_tests,
+    assert_array_equal,
     skip_if_array_api_compat_not_configured,
 )
-from sklearn.utils.fixes import _IS_32BIT
+from sklearn.utils.fixes import _IS_32BIT, CSR_CONTAINERS, np_version, parse_version
 
 
 @pytest.mark.parametrize("X", [numpy.asarray([1, 2, 3]), [1, 2, 3]])
@@ -60,7 +68,12 @@ def test_get_namespace_ndarray_with_dispatch():
     with config_context(array_api_dispatch=True):
         xp_out, is_array_api_compliant = get_namespace(X_np)
         assert is_array_api_compliant
-        assert xp_out is array_api_compat.numpy
+        if np_version >= parse_version("2.0.0"):
+            # NumPy 2.0+ is an array API compliant library.
+            assert xp_out is numpy
+        else:
+            # Older NumPy versions require the compatibility layer.
+            assert xp_out is array_api_compat.numpy
 
 
 @skip_if_array_api_compat_not_configured
@@ -100,6 +113,26 @@ def test_array_api_wrapper_astype():
     assert X_converted.dtype == xp.float32
 
 
+def test_array_api_wrapper_maximum():
+    """Test _ArrayAPIWrapper `maximum` for ArrayAPIs other than NumPy.
+
+    This is mainly used to test for `cupy.array_api` but since that is
+    not available on our coverage-enabled PR CI, we resort to using
+    `array-api-strict`.
+    """
+    array_api_strict = pytest.importorskip("array_api_strict")
+    xp_ = _AdjustableNameAPITestWrapper(array_api_strict, "array_api_strict")
+    xp = _ArrayAPIWrapper(xp_)
+
+    x1 = xp.asarray(([[1, 2, 3], [3, 9, 5]]), dtype=xp.int64)
+    x2 = xp.asarray(([[0, 1, 6], [8, 4, 5]]), dtype=xp.int64)
+    result = xp.asarray([[1, 2, 6], [8, 9, 5]], dtype=xp.int64)
+
+    x_max = xp.maximum(x1, x2)
+    assert x_max.dtype == x1.dtype
+    assert xp.all(xp.equal(x_max, result))
+
+
 @pytest.mark.parametrize("array_api", ["numpy", "array_api_strict"])
 def test_asarray_with_order(array_api):
     """Test _asarray_with_order passes along order for NumPy arrays."""
@@ -128,7 +161,7 @@ def test_asarray_with_order_ignored():
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize(
     "weights, axis, normalize, expected",
@@ -160,19 +193,22 @@ def test_asarray_with_order_ignored():
     ],
 )
 def test_average(
-    array_namespace, device, dtype_name, weights, axis, normalize, expected
+    array_namespace, device_, dtype_name, weights, axis, normalize, expected
 ):
-    xp = _array_api_for_tests(array_namespace, device)
+    xp = _array_api_for_tests(array_namespace, device_)
     array_in = numpy.asarray([[1, 2, 3], [4, 5, 6]], dtype=dtype_name)
-    array_in = xp.asarray(array_in, device=device)
+    array_in = xp.asarray(array_in, device=device_)
     if weights is not None:
         weights = numpy.asarray(weights, dtype=dtype_name)
-        weights = xp.asarray(weights, device=device)
+        weights = xp.asarray(weights, device=device_)
 
     with config_context(array_api_dispatch=True):
         result = _average(array_in, axis=axis, weights=weights, normalize=normalize)
 
-    assert getattr(array_in, "device", None) == getattr(result, "device", None)
+    if np_version < parse_version("2.0.0") or np_version >= parse_version("2.1.0"):
+        # NumPy 2.0 has a problem with the device attribute of scalar arrays:
+        # https://github.com/numpy/numpy/issues/26850
+        assert device(array_in) == device(result)
 
     result = _convert_to_numpy(result, xp)
     assert_allclose(result, expected, atol=_atol_for_type(dtype_name))
@@ -219,14 +255,15 @@ def test_average_raises_with_wrong_dtype(array_namespace, device, dtype_name):
         (
             0,
             [[1, 2]],
-            TypeError,
-            "1D weights expected",
+            # NumPy 2 raises ValueError, NumPy 1 raises TypeError
+            (ValueError, TypeError),
+            "weights",  # the message is different for NumPy 1 and 2...
         ),
         (
             0,
             [1, 2, 3, 4],
             ValueError,
-            "Length of weights",
+            "weights",
         ),
         (0, [-1, 1], ZeroDivisionError, "Weights sum to zero, can't be normalized"),
     ),
@@ -346,6 +383,26 @@ def test_nan_reductions(library, X, reduction, expected):
 
     result = _convert_to_numpy(result, xp)
     assert_allclose(result, expected)
+
+
+@pytest.mark.parametrize(
+    "namespace, _device, _dtype", yield_namespace_device_dtype_combinations()
+)
+def test_ravel(namespace, _device, _dtype):
+    xp = _array_api_for_tests(namespace, _device)
+
+    array = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
+    array_xp = xp.asarray(array, device=_device)
+    with config_context(array_api_dispatch=True):
+        result = _ravel(array_xp)
+
+    result = _convert_to_numpy(result, xp)
+    expected = numpy.ravel(array, order="C")
+
+    assert_allclose(expected, result)
+
+    if _is_numpy_namespace(xp):
+        assert numpy.asarray(result).flags["C_CONTIGUOUS"]
 
 
 @skip_if_array_api_compat_not_configured
@@ -482,3 +539,122 @@ def test_indexing_dtype(namespace, _device, _dtype):
         assert indexing_dtype(xp) == xp.int32
     else:
         assert indexing_dtype(xp) == xp.int64
+
+
+@pytest.mark.parametrize(
+    "namespace, _device, _dtype", yield_namespace_device_dtype_combinations()
+)
+def test_max_precision_float_dtype(namespace, _device, _dtype):
+    xp = _array_api_for_tests(namespace, _device)
+    expected_dtype = xp.float32 if _device == "mps" else xp.float64
+    assert _max_precision_float_dtype(xp, _device) == expected_dtype
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, _", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize("invert", [True, False])
+@pytest.mark.parametrize("assume_unique", [True, False])
+@pytest.mark.parametrize("element_size", [6, 10, 14])
+@pytest.mark.parametrize("int_dtype", ["int16", "int32", "int64", "uint8"])
+def test_isin(
+    array_namespace, device, _, invert, assume_unique, element_size, int_dtype
+):
+    xp = _array_api_for_tests(array_namespace, device)
+    r = element_size // 2
+    element = 2 * numpy.arange(element_size).reshape((r, 2)).astype(int_dtype)
+    test_elements = numpy.array(numpy.arange(14), dtype=int_dtype)
+    element_xp = xp.asarray(element, device=device)
+    test_elements_xp = xp.asarray(test_elements, device=device)
+    expected = numpy.isin(
+        element=element,
+        test_elements=test_elements,
+        assume_unique=assume_unique,
+        invert=invert,
+    )
+    with config_context(array_api_dispatch=True):
+        result = _isin(
+            element=element_xp,
+            test_elements=test_elements_xp,
+            xp=xp,
+            assume_unique=assume_unique,
+            invert=invert,
+        )
+
+    assert_array_equal(_convert_to_numpy(result, xp=xp), expected)
+
+
+def test_get_namespace_and_device():
+    # Use torch as a library with custom Device objects:
+    torch = pytest.importorskip("torch")
+    xp_torch = pytest.importorskip("array_api_compat.torch")
+    some_torch_tensor = torch.arange(3, device="cpu")
+    some_numpy_array = numpy.arange(3)
+
+    # When dispatch is disabled, get_namespace_and_device should return the
+    # default NumPy wrapper namespace and no device. Our code will handle such
+    # inputs via the usual __array__ interface without attempting to dispatch
+    # via the array API.
+    namespace, is_array_api, device = get_namespace_and_device(some_torch_tensor)
+    assert namespace is get_namespace(some_numpy_array)[0]
+    assert not is_array_api
+    assert device is None
+
+    # Otherwise, expose the torch namespace and device via array API compat
+    # wrapper.
+    with config_context(array_api_dispatch=True):
+        namespace, is_array_api, device = get_namespace_and_device(some_torch_tensor)
+        assert namespace is xp_torch
+        assert is_array_api
+        assert device == some_torch_tensor.device
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+@pytest.mark.parametrize("axis", [0, 1, None, -1, -2])
+@pytest.mark.parametrize("sample_weight_type", [None, "int", "float"])
+def test_count_nonzero(
+    array_namespace, device_, dtype_name, csr_container, axis, sample_weight_type
+):
+
+    from sklearn.utils.sparsefuncs import count_nonzero as sparse_count_nonzero
+
+    xp = _array_api_for_tests(array_namespace, device_)
+    array = numpy.array([[0, 3, 0], [2, -1, 0], [0, 0, 0], [9, 8, 7], [4, 0, 5]])
+    if sample_weight_type == "int":
+        sample_weight = numpy.asarray([1, 2, 2, 3, 1])
+    elif sample_weight_type == "float":
+        sample_weight = numpy.asarray([0.5, 1.5, 0.8, 3.2, 2.4], dtype=dtype_name)
+    else:
+        sample_weight = None
+    expected = sparse_count_nonzero(
+        csr_container(array), axis=axis, sample_weight=sample_weight
+    )
+    array_xp = xp.asarray(array, device=device_)
+
+    with config_context(array_api_dispatch=True):
+        result = _count_nonzero(
+            array_xp, xp=xp, device=device_, axis=axis, sample_weight=sample_weight
+        )
+
+    assert_allclose(_convert_to_numpy(result, xp=xp), expected)
+
+    if np_version < parse_version("2.0.0") or np_version >= parse_version("2.1.0"):
+        # NumPy 2.0 has a problem with the device attribute of scalar arrays:
+        # https://github.com/numpy/numpy/issues/26850
+        assert device(array_xp) == device(result)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize("wrap", [True, False])
+def test_fill_or_add_to_diagonal(array_namespace, device_, dtype_name, wrap):
+    xp = _array_api_for_tests(array_namespace, device_)
+    array_np = numpy.zeros((5, 4), dtype=numpy.int64)
+    array_xp = xp.asarray(array_np)
+    _fill_or_add_to_diagonal(array_xp, value=1, xp=xp, add_value=False, wrap=wrap)
+    numpy.fill_diagonal(array_np, val=1, wrap=wrap)
+    assert_array_equal(_convert_to_numpy(array_xp, xp=xp), array_np)

@@ -3,13 +3,8 @@ The :mod:`sklearn.model_selection._split` module includes classes and
 functions to split the data based on a preset strategy.
 """
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Gael Varoquaux <gael.varoquaux@normalesup.org>
-#         Olivier Grisel <olivier.grisel@ensta.org>
-#         Raghav RV <rvraghav93@gmail.com>
-#         Leandro Hermida <hermidal@cs.umd.edu>
-#         Rodion Martynov <marrodion@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numbers
 import warnings
@@ -745,7 +740,15 @@ class StratifiedKFold(_BaseKFold):
 
     def _make_test_folds(self, X, y=None):
         rng = check_random_state(self.random_state)
-        y = np.asarray(y)
+        # XXX: as of now, cross-validation splitters only operate in NumPy-land
+        # without attempting to leverage array API namespace features. However
+        # they might be fed by array API inputs, e.g. in CV-enabled estimators so
+        # we need the following explicit conversion:
+        xp, is_array_api = get_namespace(y)
+        if is_array_api:
+            y = _convert_to_numpy(y, xp)
+        else:
+            y = np.asarray(y)
         type_of_target_y = type_of_target(y)
         allowed_target_types = ("binary", "multiclass")
         if type_of_target_y not in allowed_target_types:
@@ -863,15 +866,15 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
     Each group will appear exactly once in the test set across all folds (the
     number of distinct groups has to be at least equal to the number of folds).
 
-    The difference between :class:`~sklearn.model_selection.GroupKFold`
-    and :class:`~sklearn.model_selection.StratifiedGroupKFold` is that
+    The difference between :class:`GroupKFold`
+    and `StratifiedGroupKFold` is that
     the former attempts to create balanced folds such that the number of
     distinct groups is approximately the same in each fold, whereas
-    StratifiedGroupKFold attempts to create folds which preserve the
+    `StratifiedGroupKFold` attempts to create folds which preserve the
     percentage of samples for each class as much as possible given the
     constraint of non-overlapping groups between splits.
 
-    Read more in the :ref:`User Guide <cross_validation>`.
+    Read more in the :ref:`User Guide <stratified_group_k_fold>`.
 
     For visualisation of cross-validation behaviour and
     comparison between common scikit-learn split methods
@@ -1175,7 +1178,9 @@ class TimeSeriesSplit(_BaseKFold):
     The training set has size ``i * n_samples // (n_splits + 1)
     + n_samples % (n_splits + 1)`` in the ``i`` th split,
     with a test set of size ``n_samples//(n_splits + 1)`` by default,
-    where ``n_samples`` is the number of samples.
+    where ``n_samples`` is the number of samples. Note that this
+    formula is only valid when ``test_size`` and ``max_train_size`` are
+    left to their default values.
     """
 
     def __init__(self, n_splits=5, *, max_train_size=None, test_size=None, gap=0):
@@ -1763,6 +1768,43 @@ class RepeatedStratifiedKFold(_UnsupportedGroupCVMixin, _RepeatedSplits):
             random_state=random_state,
             n_splits=n_splits,
         )
+
+    def split(self, X, y, groups=None):
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+
+            Note that providing ``y`` is sufficient to generate the splits and
+            hence ``np.zeros(n_samples)`` may be used as a placeholder for
+            ``X`` instead of actual training data.
+
+        y : array-like of shape (n_samples,)
+            The target variable for supervised learning problems.
+            Stratification is done based on the y labels.
+
+        groups : object
+            Always ignored, exists for compatibility.
+
+        Yields
+        ------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+
+        Notes
+        -----
+        Randomized CV splitters may return different results for each call of
+        split. You can make the results identical by setting `random_state`
+        to an integer.
+        """
+        y = check_array(y, input_name="y", ensure_2d=False, dtype=None)
+        return super().split(X, y, groups=groups)
 
 
 class BaseShuffleSplit(_MetadataRequester, metaclass=ABCMeta):
@@ -2596,7 +2638,7 @@ def check_cv(cv=5, y=None, *, classifier=False):
 
     Parameters
     ----------
-    cv : int, cross-validation generator or an iterable, default=None
+    cv : int, cross-validation generator, iterable or None, default=5
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
         - None, to use the default 5-fold cross validation,

@@ -1,7 +1,3 @@
-.. Places parent toc into the sidebar
-
-:parenttoc: True
-
 .. _array_api:
 
 ================================
@@ -95,16 +91,43 @@ Estimators
 
 - :class:`decomposition.PCA` (with `svd_solver="full"`,
   `svd_solver="randomized"` and `power_iteration_normalizer="QR"`)
+- :class:`linear_model.Ridge` (with `solver="svd"`)
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` (with `solver="svd"`)
 - :class:`preprocessing.KernelCenterer`
 - :class:`preprocessing.MaxAbsScaler`
 - :class:`preprocessing.MinMaxScaler`
 - :class:`preprocessing.Normalizer`
 
+Meta-estimators
+---------------
+
+Meta-estimators that accept Array API inputs conditioned on the fact that the
+base estimator also does:
+
+- :class:`model_selection.GridSearchCV`
+- :class:`model_selection.RandomizedSearchCV`
+- :class:`model_selection.HalvingGridSearchCV`
+- :class:`model_selection.HalvingRandomSearchCV`
+
 Metrics
 -------
 
+- :func:`sklearn.metrics.cluster.entropy`
 - :func:`sklearn.metrics.accuracy_score`
+- :func:`sklearn.metrics.d2_tweedie_score`
+- :func:`sklearn.metrics.max_error`
+- :func:`sklearn.metrics.mean_absolute_error`
+- :func:`sklearn.metrics.mean_absolute_percentage_error`
+- :func:`sklearn.metrics.mean_gamma_deviance`
+- :func:`sklearn.metrics.mean_squared_error`
+- :func:`sklearn.metrics.mean_tweedie_deviance`
+- :func:`sklearn.metrics.pairwise.additive_chi2_kernel`
+- :func:`sklearn.metrics.pairwise.chi2_kernel`
+- :func:`sklearn.metrics.pairwise.cosine_similarity`
+- :func:`sklearn.metrics.pairwise.cosine_distances`
+- :func:`sklearn.metrics.pairwise.euclidean_distances` (see :ref:`device_support_for_float64`)
+- :func:`sklearn.metrics.pairwise.paired_cosine_distances`
+- :func:`sklearn.metrics.pairwise.rbf_kernel` (see :ref:`device_support_for_float64`)
 - :func:`sklearn.metrics.r2_score`
 - :func:`sklearn.metrics.zero_one_loss`
 
@@ -153,6 +176,8 @@ automatically skipped. Therefore it's important to run the tests with the
     pip install array-api-compat  # and other libraries as needed
     pytest -k "array_api" -v
 
+.. _mps_support:
+
 Note on MPS device support
 --------------------------
 
@@ -172,3 +197,17 @@ To enable the MPS support in PyTorch, set the environment variable
 
 At the time of writing all scikit-learn tests should pass, however, the
 computational speed is not necessarily better than with the CPU device.
+
+.. _device_support_for_float64:
+
+Note on device support for ``float64``
+--------------------------------------
+
+Certain operations within scikit-learn will automatically perform operations
+on floating-point values with `float64` precision to prevent overflows and ensure
+correctness (e.g., :func:`metrics.pairwise.euclidean_distances`). However,
+certain combinations of array namespaces and devices, such as `PyTorch on MPS`
+(see :ref:`mps_support`) do not support the `float64` data type. In these cases,
+scikit-learn will revert to using the `float32` data type instead. This can result in
+different behavior (typically numerically unstable results) compared to not using array
+API dispatching or using a device with `float64` support.

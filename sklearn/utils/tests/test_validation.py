@@ -46,6 +46,7 @@ from sklearn.utils._testing import (
     assert_allclose_dense_sparse,
     assert_array_equal,
     assert_no_warnings,
+    create_memmap_backed_data,
     ignore_warnings,
     skip_if_array_api_compat_not_configured,
 )
@@ -80,9 +81,29 @@ from sklearn.utils.validation import (
     check_is_fitted,
     check_memory,
     check_non_negative,
+    check_random_state,
     check_scalar,
+    column_or_1d,
     has_fit_parameter,
 )
+
+
+def test_make_rng():
+    # Check the check_random_state utility function behavior
+    assert check_random_state(None) is np.random.mtrand._rand
+    assert check_random_state(np.random) is np.random.mtrand._rand
+
+    rng_42 = np.random.RandomState(42)
+    assert check_random_state(42).randint(100) == rng_42.randint(100)
+
+    rng_42 = np.random.RandomState(42)
+    assert check_random_state(rng_42) is rng_42
+
+    rng_42 = np.random.RandomState(42)
+    assert check_random_state(43).randint(100) != rng_42.randint(100)
+
+    with pytest.raises(ValueError):
+        check_random_state("some invalid seed")
 
 
 def test_as_float_array():
@@ -340,6 +361,14 @@ def test_check_array():
     # ensure_2d=True with scalar array
     with pytest.raises(ValueError, match="Expected 2D array, got scalar array instead"):
         check_array(10, ensure_2d=True)
+
+    # ensure_2d=True with 1d sparse array
+    if hasattr(sp, "csr_array"):
+        sparse_row = next(iter(sp.csr_array(X)))
+        if sparse_row.ndim == 1:
+            # In scipy 1.14 and later, sparse row is 1D while it was 2D before.
+            with pytest.raises(ValueError, match="Expected 2D input, got"):
+                check_array(sparse_row, accept_sparse=True, ensure_2d=True)
 
     # don't allow ndim > 3
     X_ndim = np.arange(8).reshape(2, 2, 2)
@@ -2061,3 +2090,102 @@ def test_to_object_array(sequence):
     assert isinstance(out, np.ndarray)
     assert out.dtype.kind == "O"
     assert out.ndim == 1
+
+
+def test_column_or_1d():
+    EXAMPLES = [
+        ("binary", ["spam", "egg", "spam"]),
+        ("binary", [0, 1, 0, 1]),
+        ("continuous", np.arange(10) / 20.0),
+        ("multiclass", [1, 2, 3]),
+        ("multiclass", [0, 1, 2, 2, 0]),
+        ("multiclass", [[1], [2], [3]]),
+        ("multilabel-indicator", [[0, 1, 0], [0, 0, 1]]),
+        ("multiclass-multioutput", [[1, 2, 3]]),
+        ("multiclass-multioutput", [[1, 1], [2, 2], [3, 1]]),
+        ("multiclass-multioutput", [[5, 1], [4, 2], [3, 1]]),
+        ("multiclass-multioutput", [[1, 2, 3]]),
+        ("continuous-multioutput", np.arange(30).reshape((-1, 3))),
+    ]
+
+    for y_type, y in EXAMPLES:
+        if y_type in ["binary", "multiclass", "continuous"]:
+            assert_array_equal(column_or_1d(y), np.ravel(y))
+        else:
+            with pytest.raises(ValueError):
+                column_or_1d(y)
+
+
+def test__is_polars_df():
+    """Check that _is_polars_df return False for non-dataframe objects."""
+
+    class LooksLikePolars:
+        def __init__(self):
+            self.columns = ["a", "b"]
+            self.schema = ["a", "b"]
+
+    assert not _is_polars_df(LooksLikePolars())
+
+
+def test_check_array_writeable_np():
+    """Check the behavior of check_array when a writeable array is requested
+    without copy if possible, on numpy arrays.
+    """
+    X = np.random.uniform(size=(10, 10))
+
+    out = check_array(X, copy=False, force_writeable=True)
+    # X is already writeable, no copy is needed
+    assert np.may_share_memory(out, X)
+    assert out.flags.writeable
+
+    X.flags.writeable = False
+
+    out = check_array(X, copy=False, force_writeable=True)
+    # X is not writeable, a copy is made
+    assert not np.may_share_memory(out, X)
+    assert out.flags.writeable
+
+
+def test_check_array_writeable_mmap():
+    """Check the behavior of check_array when a writeable array is requested
+    without copy if possible, on a memory-map.
+
+    A common situation is when a meta-estimators run in parallel using multiprocessing
+    with joblib, which creates read-only memory-maps of large arrays.
+    """
+    X = np.random.uniform(size=(10, 10))
+
+    mmap = create_memmap_backed_data(X, mmap_mode="w+")
+    out = check_array(mmap, copy=False, force_writeable=True)
+    # mmap is already writeable, no copy is needed
+    assert np.may_share_memory(out, mmap)
+    assert out.flags.writeable
+
+    mmap = create_memmap_backed_data(X, mmap_mode="r")
+    out = check_array(mmap, copy=False, force_writeable=True)
+    # mmap is read-only, a copy is made
+    assert not np.may_share_memory(out, mmap)
+    assert out.flags.writeable
+
+
+def test_check_array_writeable_df():
+    """Check the behavior of check_array when a writeable array is requested
+    without copy if possible, on a dataframe.
+    """
+    pd = pytest.importorskip("pandas")
+
+    X = np.random.uniform(size=(10, 10))
+    df = pd.DataFrame(X, copy=False)
+
+    out = check_array(df, copy=False, force_writeable=True)
+    # df is backed by a writeable array, no copy is needed
+    assert np.may_share_memory(out, df)
+    assert out.flags.writeable
+
+    X.flags.writeable = False
+    df = pd.DataFrame(X, copy=False)
+
+    out = check_array(df, copy=False, force_writeable=True)
+    # df is backed by a read-only array, a copy is made
+    assert not np.may_share_memory(out, df)
+    assert out.flags.writeable

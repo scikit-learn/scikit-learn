@@ -1,7 +1,7 @@
 """Base class for ensemble-based estimators."""
 
-# Authors: Gilles Louppe
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from abc import ABCMeta, abstractmethod
 from typing import List
@@ -21,7 +21,7 @@ def _fit_single_estimator(
     estimator, X, y, fit_params, message_clsname=None, message=None
 ):
     """Private function used to fit an estimator within a job."""
-    # TODO(SLEP6): remove if condition for unrouted sample_weight when metadata
+    # TODO(SLEP6): remove if-condition for unrouted sample_weight when metadata
     # routing can't be disabled.
     if not _routing_enabled() and "sample_weight" in fit_params:
         try:

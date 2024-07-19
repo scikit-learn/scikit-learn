@@ -17,9 +17,8 @@ with a decision score above some value.
 
 """
 
-# Author: Noel Dawe <noel.dawe@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -74,7 +73,6 @@ for i, n, c in zip(range(2), class_names, plot_colors):
         X[idx, 0],
         X[idx, 1],
         c=c,
-        cmap=plt.cm.Paired,
         s=20,
         edgecolor="k",
         label="Class %s" % n,

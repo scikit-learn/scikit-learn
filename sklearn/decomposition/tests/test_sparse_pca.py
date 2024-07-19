@@ -1,5 +1,5 @@
-# Author: Vlad Niculae
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import sys
 
@@ -14,6 +14,7 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     if_safe_multiprocessing_with_blas,
 )
+from sklearn.utils.extmath import svd_flip
 
 
 def generate_toy_data(n_components, n_samples, image_size, random_state=None):
@@ -114,7 +115,10 @@ def test_initialization():
         n_components=3, U_init=U_init, V_init=V_init, max_iter=0, random_state=rng
     )
     model.fit(rng.randn(5, 4))
-    assert_allclose(model.components_, V_init / np.linalg.norm(V_init, axis=1)[:, None])
+
+    expected_components = V_init / np.linalg.norm(V_init, axis=1, keepdims=True)
+    expected_components = svd_flip(u=expected_components.T, v=None)[0].T
+    assert_allclose(model.components_, expected_components)
 
 
 def test_mini_batch_correct_shapes():

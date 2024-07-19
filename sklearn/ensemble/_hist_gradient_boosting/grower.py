@@ -4,6 +4,7 @@ This module contains the TreeGrower class.
 TreeGrower builds a regression tree fitting a Newton-Raphson step, based on
 the gradients and hessians of the training data.
 """
+
 # Author: Nicolas Hug
 
 import numbers

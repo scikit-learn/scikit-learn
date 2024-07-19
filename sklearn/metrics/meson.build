@@ -3,6 +3,8 @@
 metrics_cython_tree = [
   fs.copyfile('__init__.py')
 ]
+# Some metrics code cimports code from utils, we may as well copy all the necessary files
+metrics_cython_tree += utils_cython_tree
 
 _dist_metrics_pxd = custom_target(
   '_dist_metrics_pxd',
@@ -20,12 +22,16 @@ _dist_metrics_pyx = custom_target(
   '_dist_metrics_pyx',
   output: '_dist_metrics.pyx',
   input: '_dist_metrics.pyx.tp',
-  command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@']
+  command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
+  # TODO in principle this should go in py.exension_module below. This is
+  # temporary work-around for dependency issue with .pyx.tp files. For more
+  # details, see https://github.com/mesonbuild/meson/issues/13212
+  depends: metrics_cython_tree,
 )
 
 _dist_metrics = py.extension_module(
   '_dist_metrics',
-  [_dist_metrics_pyx, utils_cython_tree, metrics_cython_tree],
+  _dist_metrics_pyx,
   dependencies: [np_dep],
   cython_args: cython_args,
   subdir: 'sklearn/metrics',
@@ -34,7 +40,7 @@ _dist_metrics = py.extension_module(
 
 py.extension_module(
   '_pairwise_fast',
-  ['_pairwise_fast.pyx', utils_cython_tree, metrics_cython_tree],
+  ['_pairwise_fast.pyx', metrics_cython_tree],
   cython_args: cython_args,
   subdir: 'sklearn/metrics',
   install: true

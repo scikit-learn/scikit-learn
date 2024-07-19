@@ -1,9 +1,7 @@
-"""Orthogonal matching pursuit algorithms
-"""
+"""Orthogonal matching pursuit algorithms"""
 
-# Author: Vlad Niculae
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from math import sqrt
@@ -1117,6 +1115,6 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
 
         router = MetadataRouter(owner=self.__class__.__name__).add(
             splitter=self.cv,
-            method_mapping=MethodMapping().add(callee="split", caller="fit"),
+            method_mapping=MethodMapping().add(caller="fit", callee="split"),
         )
         return router
