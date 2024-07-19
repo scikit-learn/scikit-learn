@@ -210,7 +210,7 @@ TEST_MODULES_EXCEPTIONS = [
     "utils.tests.test_response.py",
     "utils.tests.test_testing.py",
     "utils.tests.test_validation.py",
-    # doctests
+    # doctests
     "calibration.py",
     "datasets._base.py",
     "decomposition._nmf.py",
