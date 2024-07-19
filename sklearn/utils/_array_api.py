@@ -439,7 +439,15 @@ class _NumPyAPIWrapper:
         return numpy.reshape(x, shape)
 
     def isdtype(self, dtype, kind):
-        return isdtype(dtype, kind, xp=self)
+        try:
+            return isdtype(dtype, kind, xp=self)
+        except TypeError:
+            # In older versions of numpy, data types that arise from outside
+            # numpy like from a Polars Series raise a TypeError.
+            # e.g. TypeError: Cannot interpret 'Int64' as a data type.
+            # Therefore, we return False.
+            # TODO: Remove when minimum supported version of numpy is >= 1.21.
+            return False
 
     def pow(self, x1, x2):
         return numpy.power(x1, x2)

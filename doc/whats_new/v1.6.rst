@@ -219,6 +219,10 @@ Changelog
   :pr:`29210` by :user:`Marc Torrellas Socastro <marctorsoc>` and
   :user:`Stefanie Senger <StefanieSenger>`.
 
+- |API| scoring="neg_max_error" should be used instead of
+  scoring="max_error" which is now deprecated.
+  :pr:`29462` by :user:`Farid "Freddie" Taba <artificialfintelligence>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
