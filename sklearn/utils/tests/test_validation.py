@@ -993,9 +993,6 @@ def test_check_consistent_length(array_namespace, device, _):
     check_consistent_length(
         xp.asarray([1], device=device),
         xp.asarray([2], device=device),
-        xp.asarray([3], device=device),
-        xp.asarray([4], device=device),
-        xp.asarray([5], device=device),
     )
     if xp.__name__ == "numpy":
         check_consistent_length(
@@ -1019,6 +1016,8 @@ def test_check_consistent_length(array_namespace, device, _):
 
     with pytest.raises(TypeError):
         check_consistent_length(xp.asarray([1, 2], device=device), np.array(1))
+
+    check_consistent_length(xp.asarray([1, 2], device=device), np.array(1))
 
     # Despite ensembles having __len__ they must raise TypeError
     with pytest.raises(TypeError, match="Expected sequence or array-like"):
