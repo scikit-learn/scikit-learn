@@ -1013,12 +1013,8 @@ def test_check_consistent_length(array_namespace, device, _):
         check_consistent_length(xp.asarray([1, 2], device=device), 1)
     with pytest.raises(TypeError, match=r"got <\w+ 'object'>"):
         check_consistent_length(xp.asarray([1, 2], device=device), object())
-
     with pytest.raises(TypeError):
         check_consistent_length(xp.asarray([1, 2], device=device), np.array(1))
-
-    check_consistent_length(xp.asarray([1, 2], device=device), np.array(1))
-
     # Despite ensembles having __len__ they must raise TypeError
     with pytest.raises(TypeError, match="Expected sequence or array-like"):
         check_consistent_length(
