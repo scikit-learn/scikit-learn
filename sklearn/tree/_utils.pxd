@@ -1,9 +1,4 @@
-# Authors: Gilles Louppe <g.louppe@gmail.com>
-#          Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#          Arnaud Joly <arnaud.v.joly@gmail.com>
-#          Jacob Schreiber <jmschreiber91@gmail.com>
-#          Nelson Liu <nelson@nelsonliu.me>
-#
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 # See _utils.pyx for details.
@@ -11,7 +6,7 @@
 cimport numpy as cnp
 from ._tree cimport Node
 from ..neighbors._quad_tree cimport Cell
-from ..utils._typedefs cimport float32_t, float64_t, intp_t, int32_t, uint32_t
+from ..utils._typedefs cimport float32_t, float64_t, intp_t, uint8_t, int32_t, uint32_t
 
 cdef enum:
     # Max value for our rand_r replacement (near the bottom).
@@ -31,7 +26,7 @@ ctypedef fused realloc_ptr:
     # Add pointer types here as needed.
     (float32_t*)
     (intp_t*)
-    (unsigned char*)
+    (uint8_t*)
     (WeightedPQueueRecord*)
     (float64_t*)
     (float64_t**)

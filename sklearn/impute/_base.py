@@ -1,5 +1,4 @@
-# Authors: Nicolas Tresegnie <nicolas.tresegnie@gmail.com>
-#          Sergey Feldman <sergeyfeldman@gmail.com>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import numbers
@@ -334,6 +333,7 @@ class SimpleImputer(_BaseImputer):
                 reset=in_fit,
                 accept_sparse="csc",
                 dtype=dtype,
+                force_writeable=True if not in_fit else None,
                 force_all_finite=force_all_finite,
                 copy=self.copy,
             )

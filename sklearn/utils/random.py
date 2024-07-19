@@ -1,7 +1,6 @@
 """Utilities for random sampling."""
 
-# Author: Hamzeh Alsalhi <ha258@cornell.edu>
-#
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 import array
 

@@ -1,8 +1,6 @@
 """Gaussian process based regression and classification."""
 
-# Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-#         Vincent Dubourg <vincent.dubourg@gmail.com>
-#         (mostly translation, see implementation details)
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 from . import kernels
