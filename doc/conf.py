@@ -898,51 +898,39 @@ def infer_next_release_versions():
     """Infer the most likely next release versions to make."""
     all_version_full = {"rc": "0.99.0rc1", "final": "0.99.0", "bf": "0.98.1"}
     all_version_main = {"rc": "0.99", "final": "0.99", "bf": "0.98"}
-    all_previous_tag = {"rc": "X.Y.Z", "final": "X.Y.Z", "bf": "X.Y.Z"}
+    all_previous_tag = {"rc": "0.98.micro", "final": "0.98.micro", "bf": "0.97.micro"}
 
     try:
         # Fetch the version switcher JSON; see `html_theme_options` for more details
         versions_json = json.loads(
             urlopen(html_theme_options["switcher"]["json_url"], timeout=10).read()
         )
-        stable_version_index, rc_version_index = None, None
+        stable_version_index, stable_version = None, None
         for i, ver in enumerate(versions_json):
             if ver.get("preferred"):
                 stable_version_index = i
-                stable_ver = parse(ver["version"])
-            if ".0rc" in ver["version"]:
-                rc_version_index = i
-                rc_ver = parse(ver["version"])
+                stable_version = parse(ver["version"])
         assert stable_version_index is not None  # By version switcher spec
 
-        # If there is no RC, then the next RC is the RC of dev, otherwise it is the RC
-        # with RC number incremented by 1
-        if rc_version_index is not None:
-            all_version_full["rc"] = f"{rc_ver.base_version}rc{rc_ver.pre[0]}"
-            all_version_main["rc"] = f"{rc_ver.major}.{rc_ver.minor}"
-        else:
-            all_version_full["rc"] = f"{parsed_version.base_version}.0rc1"
-            all_version_main["rc"] = f"{parsed_version.major}.{parsed_version.minor}"
+        # For RC, should be .dev0 version replaced with .0rc1
+        all_version_full["rc"] = f"{parsed_version.base_version}.0rc1"
+        all_version_main["rc"] = f"{parsed_version.major}.{parsed_version.minor}"
 
-        # If there is no RC, then the next major/minor final release is just dev,
-        # otherwise it is the RC with the RC number removed
-        if rc_version_index is not None:
-            prev_ver = parse(versions_json[rc_version_index - 1]["version"])
-            all_version_full["final"] = rc_ver.base_version
-            all_version_main["final"] = f"{rc_ver.major}.{rc_ver.minor}"
-            all_previous_tag["final"] = stable_ver.base_version
-        else:
-            all_version_full["final"] = f"{parsed_version.base_version}.0"
-            all_version_main["final"] = f"{parsed_version.major}.{parsed_version.minor}"
-            all_previous_tag["final"] = stable_ver.base_version
+        # For major/minor, should be .dev0 version replaced with .0; the previous
+        # version should be the latest stable
+        all_version_full["final"] = f"{parsed_version.base_version}.0"
+        all_version_main["final"] = f"{parsed_version.major}.{parsed_version.minor}"
+        all_previous_tag["final"] = stable_version.base_version
 
-        # The next bug-fix release is the current stable with micro +1
-        prev_ver = parse(versions_json[stable_version_index + 1]["version"])
+        # For bug-fix, should be stable version with micro+1; the previous version
+        # should be the version before it
         all_version_full["bf"] = (
-            f"{stable_ver.major}.{stable_ver.minor}.{stable_ver.micro + 1}"
+            f"{stable_version.major}.{stable_version.minor}.{stable_version.micro + 1}"
         )
-        all_version_main["bf"] = f"{stable_ver.major}.{stable_ver.minor}"
-        all_previous_tag["bf"] = prev_ver.base_version
+        all_version_main["bf"] = f"{stable_version.major}.{stable_version.minor}"
+        all_previous_tag["bf"] = parse(
+            versions_json[stable_version_index + 1]["version"]
+        ).base_version
     except Exception as e:
         logger.warning(
             "Failed to infer all possible next release versions because of "
