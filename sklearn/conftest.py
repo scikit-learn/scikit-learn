@@ -372,6 +372,7 @@ def _get_item_module(item):
     """Get the full module name of a test item."""
     module = []
     while "sklearn" not in item.parent.name:
+        print(type(item), item.name, item.parent.name)
         item = item.parent
         module.append(item.name)
     return ".".join(reversed(module))
