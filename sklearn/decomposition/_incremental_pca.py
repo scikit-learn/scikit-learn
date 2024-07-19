@@ -262,8 +262,6 @@ class IncrementalPCA(_BasePCA):
         self.explained_variance_ratio_ = None
         self.noise_variance_ = None
 
-        self._random_state = check_random_state(self.random_state)
-
         X = self._validate_data(
             X,
             accept_sparse=["csr", "csc"],
@@ -433,7 +431,8 @@ class IncrementalPCA(_BasePCA):
             )
 
         if self.svd_solver == "arpack":
-            v0 = _init_arpack_v0(min(X.shape), random_state=self._random_state)
+            random_state = check_random_state(self.random_state)
+            v0 = _init_arpack_v0(min(X.shape), random_state=random_state)
             U, S, Vt = svds(X, k=self.n_components_, v0=v0)
             S = S[::-1]
             _, Vt = svd_flip(U[:, ::-1], Vt[::-1], u_based_decision=False)
