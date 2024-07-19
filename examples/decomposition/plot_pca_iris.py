@@ -13,9 +13,6 @@ information on this dataset.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-# Code source: Gaël Varoquaux
-# SPDX-License-Identifier: BSD-3-Clause
-
 import matplotlib.pyplot as plt
 
 # unused but required import for doing 3d projections with matplotlib < 3.2

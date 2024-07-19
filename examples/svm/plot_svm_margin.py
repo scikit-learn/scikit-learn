@@ -16,10 +16,6 @@ the margins to be calculated using all the data in the area.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-# Code source: Gaël Varoquaux
-# Modified for documentation by Jaques Grobler
-# SPDX-License-Identifier: BSD-3-Clause
-
 import matplotlib.pyplot as plt
 import numpy as np
 

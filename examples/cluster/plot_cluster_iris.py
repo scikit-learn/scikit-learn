@@ -21,10 +21,6 @@ The plot shows:
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-# Code source: Gaël Varoquaux
-# Modified for documentation by Jaques Grobler
-# SPDX-License-Identifier: BSD-3-Clause
-
 import matplotlib.pyplot as plt
 
 # Though the following import is not directly being used, it is required

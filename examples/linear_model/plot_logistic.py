@@ -12,9 +12,6 @@ i.e. class one or two, using the logistic curve.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-# Code source: Gael Varoquaux
-# SPDX-License-Identifier: BSD-3-Clause
-
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.special import expit
