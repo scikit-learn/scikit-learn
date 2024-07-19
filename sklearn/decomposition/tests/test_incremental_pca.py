@@ -291,21 +291,34 @@ def test_incremental_pca_batch_rank():
 
 
 @pytest.mark.parametrize("svd_solver", ["full", "arpack"])
-def test_incremental_pca_partial_fit(svd_solver):
+@pytest.mark.parametrize("container", [np.array] + CSC_CONTAINERS + CSR_CONTAINERS)
+def test_incremental_pca_partial_fit(svd_solver, container):
     # Test that fit and partial_fit get equivalent results.
     rng = np.random.RandomState(1999)
     n, p = 50, 3
     X = rng.randn(n, p)  # spherical data
     X[:, 1] *= 0.00001  # make middle component relatively small
     X += [5, 4, 3]  # make a large mean
+    X = container(X)
+
+    batch_size = 10
+    ipca = IncrementalPCA(n_components=2, batch_size=batch_size, svd_solver=svd_solver)
+    pipca = IncrementalPCA(n_components=2, batch_size=batch_size, svd_solver=svd_solver)
+
+    if svd_solver != "arpack" and container is not np.array:
+        with pytest.raises(
+            TypeError,
+            match=(
+                "IncrementalPCA.partial_fit only support sparse inputs with the "
+                '"arpack" solver'
+            ),
+        ):
+            pipca.partial_fit(X)
+        return
 
     # same check that we can find the original data from the transformed
     # signal (since the data is almost of rank n_components)
-    batch_size = 10
-    ipca = IncrementalPCA(
-        n_components=2, batch_size=batch_size, svd_solver=svd_solver
-    ).fit(X)
-    pipca = IncrementalPCA(n_components=2, batch_size=batch_size, svd_solver=svd_solver)
+    ipca.fit(X)
     # Add one to make sure endpoint is included
     batch_itr = np.arange(0, n + 1, batch_size)
     for i, j in zip(batch_itr[:-1], batch_itr[1:]):

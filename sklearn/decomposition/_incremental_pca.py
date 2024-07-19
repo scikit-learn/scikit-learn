@@ -321,6 +321,14 @@ class IncrementalPCA(_BasePCA):
         n_samples, n_features = X.shape
         X_is_sparse = sparse.issparse(X)
 
+        if X_is_sparse and self.svd_solver != "arpack":
+            raise TypeError(
+                "IncrementalPCA.partial_fit only support sparse inputs with the "
+                f'"arpack" solver, while "{self.svd_solver}" was passed. You may '
+                'consider using the "arpack" solver, or converting data to dense, '
+                "or using IncrementalPCA.fit to densify data in batches."
+            )
+
         if first_pass:
             self.components_ = None
 
