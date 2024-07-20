@@ -140,7 +140,6 @@ def _update_terminal_regions(
     sample_mask,
     learning_rate=0.1,
     k=0,
-    line_search=True,
 ):
     """Update the leaf values to be predicted by the tree and raw_prediction.
 
@@ -183,14 +182,11 @@ def _update_terminal_regions(
          ``learning_rate``.
     k : int, default=0
         The index of the estimator being updated.
-    line_search : bool, default=True
-        Whether line search must be performed. Line search must not be
-        performed under monotonic constraints.
     """
     # compute leaf for each sample in ``X``.
     terminal_regions = tree.apply(X)
 
-    if line_search and not isinstance(loss, HalfSquaredError):
+    if not isinstance(loss, HalfSquaredError):
         # mask all which are not in sample mask.
         masked_terminal_regions = terminal_regions.copy()
         masked_terminal_regions[~sample_mask] = -1
@@ -261,6 +257,11 @@ def _update_terminal_regions(
             y_ = y.take(indices, axis=0)
             sw = None if sample_weight is None else sample_weight[indices]
             update = compute_update(y_, indices, neg_gradient, raw_prediction, k)
+
+            if update > tree.upper_bound[leaf]:
+                update = tree.upper_bound[leaf]
+            elif update < tree.lower_bound[leaf]:
+                update = tree.lower_bound[leaf]
 
             # TODO: Multiply here by learning rate instead of everywhere else.
             tree.value[leaf, 0, 0] = update
@@ -515,7 +516,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 sample_mask,
                 learning_rate=self.learning_rate,
                 k=k,
-                line_search=self.monotonic_cst is None,
             )
 
             # add tree to ensemble
