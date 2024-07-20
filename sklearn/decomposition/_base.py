@@ -9,7 +9,7 @@ import numpy as np
 from scipy import linalg
 
 from ..base import BaseEstimator, ClassNamePrefixFeaturesOutMixin, TransformerMixin
-from ..utils._array_api import _add_to_diagonal, device, get_namespace
+from ..utils._array_api import _fill_or_add_to_diagonal, device, get_namespace
 from ..utils.validation import check_is_fitted
 
 
@@ -44,10 +44,10 @@ class _BasePCA(
         exp_var_diff = xp.where(
             exp_var > self.noise_variance_,
             exp_var_diff,
-            xp.asarray(0.0, device=device(exp_var)),
+            xp.asarray(0.0, device=device(exp_var), dtype=exp_var.dtype),
         )
         cov = (components_.T * exp_var_diff) @ components_
-        _add_to_diagonal(cov, self.noise_variance_, xp)
+        _fill_or_add_to_diagonal(cov, self.noise_variance_, xp)
         return cov
 
     def get_precision(self):
@@ -89,10 +89,10 @@ class _BasePCA(
             xp.asarray(0.0, device=device(exp_var)),
         )
         precision = components_ @ components_.T / self.noise_variance_
-        _add_to_diagonal(precision, 1.0 / exp_var_diff, xp)
+        _fill_or_add_to_diagonal(precision, 1.0 / exp_var_diff, xp)
         precision = components_.T @ linalg_inv(precision) @ components_
         precision /= -(self.noise_variance_**2)
-        _add_to_diagonal(precision, 1.0 / self.noise_variance_, xp)
+        _fill_or_add_to_diagonal(precision, 1.0 / self.noise_variance_, xp)
         return precision
 
     @abstractmethod

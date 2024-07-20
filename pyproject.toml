@@ -1,6 +1,6 @@
 [project]
 name = "scikit-learn"
-version = "1.6.dev0"
+dynamic = ["version"]
 description = "A set of python modules for machine learning and data mining"
 readme = "README.rst"
 maintainers = [
@@ -62,7 +62,7 @@ docs = [
     "sphinxext-opengraph>=0.9.1",
     "plotly>=5.14.0",
     "polars>=0.20.23",
-    "sphinx-design>=0.5.0",
+    "sphinx-design>=0.6.0",
     "sphinxcontrib-sass>=0.3.4",
     "pydata-sphinx-theme>=0.15.3",
     "sphinx-remove-toctrees>=1.0.0.post1",
@@ -98,7 +98,7 @@ build-backend = "mesonpy"
 requires = [
     "meson-python>=0.16.0",
     "Cython>=3.0.10",
-    "numpy>=1.25",
+    "numpy>=2",
     "scipy>=1.6.0",
 ]
 
