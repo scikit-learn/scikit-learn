@@ -2039,3 +2039,20 @@ def yield_metric_checker_combinations(metric_checkers=array_api_metric_checkers)
 @pytest.mark.parametrize("metric, check_func", yield_metric_checker_combinations())
 def test_array_api_compliance(metric, array_namespace, device, dtype_name, check_func):
     check_func(metric, array_namespace, device, dtype_name)
+
+
+@pytest.mark.parametrize("df_lib_name", ["pandas", "polars"])
+@pytest.mark.parametrize("metric_name", sorted(ALL_METRICS))
+def test_metrics_dataframe_series(metric_name, df_lib_name):
+    df_lib = pytest.importorskip(df_lib_name)
+
+    y_pred = df_lib.Series([0.0, 1.0, 0, 1.0])
+    y_true = df_lib.Series([1.0, 0.0, 0.0, 0.0])
+
+    metric = ALL_METRICS[metric_name]
+    try:
+        expected_metric = metric(y_pred.to_numpy(), y_true.to_numpy())
+    except ValueError:
+        pytest.skip(f"{metric_name} can not deal with 1d inputs")
+
+    assert_allclose(metric(y_pred, y_true), expected_metric)
