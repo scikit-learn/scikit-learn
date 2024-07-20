@@ -86,32 +86,28 @@ code.literal {
 /* Dropdowns (sphinx-design) */
 
 details.sd-dropdown {
-  &:hover > summary.sd-summary-title > a.headerlink {
-    visibility: visible;
+  &:hover > summary.sd-summary-title {
+    > .sd-summary-text > a.headerlink {
+      visibility: visible;
+    }
+
+    > .sk-toggle-all {
+      opacity: 1;
+    }
   }
 
   > summary.sd-summary-title {
-    > a.headerlink {
+    > .sd-summary-text > a.headerlink {
       font-size: 1rem;
     }
 
     // See `js/scripts/dropdown.js`: this is styling the "expand/collapse all" button
-    > button.sk-toggle-all {
+    > .sk-toggle-all {
       color: var(--pst-sd-dropdown-color);
-      top: 0.9rem !important;
-      right: 3rem !important;
+      margin-right: 0.5rem;
       pointer-events: auto !important;
-      display: none;
-      border: none;
-      background: transparent;
+      opacity: 0;
     }
-  }
-
-  &[open] > summary.sd-summary-title:hover > .sd-summary-up.sk-toggle-all,
-  &:not([open])
-    > summary.sd-summary-title:hover
-    > .sd-summary-down.sk-toggle-all {
-    display: block;
   }
 }
 
