@@ -1,6 +1,5 @@
 import atexit
 import os
-import unittest
 import warnings
 
 import numpy as np
@@ -16,7 +15,6 @@ from sklearn.utils._testing import (
     _get_warnings_filters_info_list,
     assert_allclose,
     assert_allclose_dense_sparse,
-    assert_no_warnings,
     assert_run_python_script_without_output,
     check_docstring_parameters,
     create_memmap_backed_data,
@@ -76,8 +74,12 @@ def test_ignore_warning():
         warnings.warn("deprecation warning")
 
     # Check the function directly
-    assert_no_warnings(ignore_warnings(_warning_function))
-    assert_no_warnings(ignore_warnings(_warning_function, category=DeprecationWarning))
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+
+        ignore_warnings(_warning_function)
+        ignore_warnings(_warning_function, category=DeprecationWarning)
+
     with pytest.warns(DeprecationWarning):
         ignore_warnings(_warning_function, category=UserWarning)()
 
@@ -92,9 +94,10 @@ def test_ignore_warning():
     assert len(record) == 1
     assert isinstance(record[0].message, DeprecationWarning)
 
-    assert_no_warnings(
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+
         ignore_warnings(_warning_function, category=(DeprecationWarning, UserWarning))
-    )
 
     # Check the decorator
     @ignore_warnings
@@ -122,9 +125,13 @@ def test_ignore_warning():
     def decorator_no_user_multiple_warning():
         _multiple_warning_function()
 
-    assert_no_warnings(decorator_no_warning)
-    assert_no_warnings(decorator_no_warning_multiple)
-    assert_no_warnings(decorator_no_deprecation_warning)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+
+        decorator_no_warning()
+        decorator_no_warning_multiple()
+        decorator_no_deprecation_warning()
+
     with pytest.warns(DeprecationWarning):
         decorator_no_user_warning()
     with pytest.warns(UserWarning):
@@ -157,9 +164,13 @@ def test_ignore_warning():
         with ignore_warnings(category=UserWarning):
             _multiple_warning_function()
 
-    assert_no_warnings(context_manager_no_warning)
-    assert_no_warnings(context_manager_no_warning_multiple)
-    assert_no_warnings(context_manager_no_deprecation_warning)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+
+        context_manager_no_warning()
+        context_manager_no_warning_multiple()
+        context_manager_no_deprecation_warning()
+
     with pytest.warns(DeprecationWarning):
         context_manager_no_user_warning()
     with pytest.warns(UserWarning):
@@ -180,17 +191,6 @@ def test_ignore_warning():
         @ignore_warnings(warning_class)
         def test():
             pass
-
-
-class TestWarns(unittest.TestCase):
-    def test_warn(self):
-        def f():
-            warnings.warn("yo")
-            return 3
-
-        with pytest.raises(AssertionError):
-            assert_no_warnings(f)
-        assert assert_no_warnings(lambda x: x, 1) == 1
 
 
 # Tests for docstrings:

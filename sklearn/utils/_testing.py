@@ -30,7 +30,6 @@ from numpy.testing import (
     assert_array_almost_equal,
     assert_array_equal,
     assert_array_less,
-    assert_no_warnings,
 )
 
 import sklearn
@@ -56,7 +55,6 @@ __all__ = [
     "assert_array_less",
     "assert_allclose",
     "assert_run_python_script_without_output",
-    "assert_no_warnings",
     "SkipTest",
 ]
 
