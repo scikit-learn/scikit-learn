@@ -712,9 +712,9 @@ def test_parallel_pairwise_distances_diagonal(metric, global_dtype):
 
 @pytest.mark.filterwarnings("ignore:Could not adhere to working_memory config")
 def test_pairwise_distances_chunked(global_dtype):
-    # Test the pairwise_distance hel"per function.
+    # Test the pairwise_distance helper function.
     rng = np.random.RandomState(0)
-    # Euclidean distanc"e should be equivalent to calling the function.
+    # Euclidean distance should be equivalent to calling the function.
     X = rng.random_sample((200, 4)).astype(global_dtype, copy=False)
     check_pairwise_distances_chunked(X, None, working_memory=1, metric="euclidean")
     # Test small amounts of memory
