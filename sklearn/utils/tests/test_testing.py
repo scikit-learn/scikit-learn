@@ -15,9 +15,6 @@ from sklearn.utils._testing import (
     _get_warnings_filters_info_list,
     assert_allclose,
     assert_allclose_dense_sparse,
-    assert_raise_message,
-    assert_raises,
-    assert_raises_regex,
     assert_run_python_script_without_output,
     check_docstring_parameters,
     create_memmap_backed_data,
@@ -64,51 +61,6 @@ def test_assert_allclose_dense_sparse(csr_container):
     B = csr_container(np.ones((1, 5)))
     with pytest.raises(AssertionError, match="Arrays are not equal"):
         assert_allclose_dense_sparse(B, A)
-
-
-def test_assert_raises_msg():
-    with assert_raises_regex(AssertionError, "Hello world"):
-        with assert_raises(ValueError, msg="Hello world"):
-            pass
-
-
-def test_assert_raise_message():
-    def _raise_ValueError(message):
-        raise ValueError(message)
-
-    def _no_raise():
-        pass
-
-    assert_raise_message(ValueError, "test", _raise_ValueError, "test")
-
-    assert_raises(
-        AssertionError,
-        assert_raise_message,
-        ValueError,
-        "something else",
-        _raise_ValueError,
-        "test",
-    )
-
-    assert_raises(
-        ValueError,
-        assert_raise_message,
-        TypeError,
-        "something else",
-        _raise_ValueError,
-        "test",
-    )
-
-    assert_raises(AssertionError, assert_raise_message, ValueError, "test", _no_raise)
-
-    # multiple exceptions in a tuple
-    assert_raises(
-        AssertionError,
-        assert_raise_message,
-        (ValueError, AttributeError),
-        "test",
-        _no_raise,
-    )
 
 
 def test_ignore_warning():
