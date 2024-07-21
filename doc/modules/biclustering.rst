@@ -147,21 +147,21 @@ Then the rows of :math:`Z` are clustered using :ref:`k-means
 and the remaining ``n_columns`` labels provide the column partitioning.
 
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_bicluster_plot_spectral_coclustering.py`: A simple example
-   showing how to generate a data matrix with biclusters and apply
-   this method to it.
+* :ref:`sphx_glr_auto_examples_bicluster_plot_spectral_coclustering.py`: A simple example
+  showing how to generate a data matrix with biclusters and apply
+  this method to it.
 
- * :ref:`sphx_glr_auto_examples_bicluster_plot_bicluster_newsgroups.py`: An example of finding
-   biclusters in the twenty newsgroup dataset.
+* :ref:`sphx_glr_auto_examples_bicluster_plot_bicluster_newsgroups.py`: An example of finding
+  biclusters in the twenty newsgroup dataset.
 
 
-.. topic:: References:
+.. rubric:: References
 
- * Dhillon, Inderjit S, 2001. :doi:`Co-clustering documents and words using
-   bipartite spectral graph partitioning
-   <10.1145/502512.502550>`
+* Dhillon, Inderjit S, 2001. :doi:`Co-clustering documents and words using
+  bipartite spectral graph partitioning
+  <10.1145/502512.502550>`
 
 
 .. _spectral_biclustering:
@@ -234,17 +234,17 @@ Similarly, projecting the columns to :math:`A^{\top} * U` and
 clustering this :math:`n \times q` matrix yields the column labels.
 
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_bicluster_plot_spectral_biclustering.py`: a simple example
-   showing how to generate a checkerboard matrix and bicluster it.
+* :ref:`sphx_glr_auto_examples_bicluster_plot_spectral_biclustering.py`: a simple example
+  showing how to generate a checkerboard matrix and bicluster it.
 
 
-.. topic:: References:
+.. rubric:: References
 
- * Kluger, Yuval, et. al., 2003. :doi:`Spectral biclustering of microarray
-   data: coclustering genes and conditions
-   <10.1101/gr.648603>`
+* Kluger, Yuval, et. al., 2003. :doi:`Spectral biclustering of microarray
+  data: coclustering genes and conditions
+  <10.1101/gr.648603>`
 
 
 .. _biclustering_evaluation:
@@ -288,7 +288,8 @@ available:
 
 2. Assign biclusters from one set to another in a one-to-one fashion
    to maximize the sum of their similarities. This step is performed
-   using the Hungarian algorithm.
+   using :func:`scipy.optimize.linear_sum_assignment`, which uses a 
+   modified Jonker-Volgenant algorithm.
 
 3. The final sum of similarities is divided by the size of the larger
    set.
@@ -298,8 +299,8 @@ are totally dissimilar. The maximum score, 1, occurs when both sets
 are identical.
 
 
-.. topic:: References:
+.. rubric:: References
 
- * Hochreiter, Bodenhofer, et. al., 2010. `FABIA: factor analysis
-   for bicluster acquisition
-   <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2881408/>`__.
+* Hochreiter, Bodenhofer, et. al., 2010. `FABIA: factor analysis
+  for bicluster acquisition
+  <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2881408/>`__.

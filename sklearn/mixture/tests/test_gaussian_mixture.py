@@ -1,6 +1,5 @@
-# Author: Wei Xue <xuewei4d@gmail.com>
-#         Thierry Guillemot <thierry.guillemot.work@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import copy
 import itertools
@@ -683,9 +682,9 @@ def test_gaussian_mixture_fit_convergence_warning():
             covariance_type=covar_type,
         )
         msg = (
-            f"Initialization {max_iter} did not converge. Try different init "
-            "parameters, or increase max_iter, tol or check for degenerate"
-            " data."
+            "Best performing initialization did not converge. "
+            "Try different init parameters, or increase max_iter, "
+            "tol, or check for degenerate data."
         )
         with pytest.warns(ConvergenceWarning, match=msg):
             g.fit(X)

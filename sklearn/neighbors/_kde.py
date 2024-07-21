@@ -2,6 +2,7 @@
 Kernel Density Estimation
 -------------------------
 """
+
 # Author: Jake Vanderplas <jakevdp@cs.washington.edu>
 import itertools
 from numbers import Integral, Real

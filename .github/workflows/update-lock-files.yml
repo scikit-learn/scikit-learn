@@ -6,6 +6,10 @@ on:
   schedule:
     - cron: '0 5 * * 1'
 
+# In order to add the "CUDA CI" label we need to have write permissions for PRs
+permissions:
+  pull-requests: write
+
 jobs:
   update_lock_files:
     if: github.repository == 'scikit-learn/scikit-learn'
@@ -17,17 +21,16 @@ jobs:
       matrix:
         include:
           - name: main
-            update_script_args: "--skip-build 'scipy-dev|^pymin_conda_forge$|pypy'"
+            update_script_args: "--select-tag main-ci"
             additional_commit_message: "[doc build]"
           - name: scipy-dev
-            update_script_args: "--select-build scipy_dev"
+            update_script_args: "--select-tag scipy-dev"
             additional_commit_message: "[scipy-dev]"
           - name: cirrus-arm
-            update_script_args: "--select-build '^pymin_conda_forge$'"
+            update_script_args: "--select-tag arm"
             additional_commit_message: "[cirrus arm]"
-          - name: pypy
-            update_script_args: "--select-build pypy"
-            additional_commit_message: "[pypy]"
+          - name: array-api
+            update_script_args: "--select-tag cuda"
 
     steps:
       - uses: actions/checkout@v4
@@ -43,7 +46,7 @@ jobs:
 
       - name: Create Pull Request
         id: cpr
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.BOT_GITHUB_TOKEN }}
           push-to-fork: scikit-learn-bot/scikit-learn
@@ -58,6 +61,14 @@ jobs:
 
             ### Note
             If the CI tasks fail, create a new branch based on this PR and add the required fixes to that branch.
+
+      # The CUDA workflow needs to be triggered explicitly as it uses an expensive runner
+      - name: Trigger additional tests
+        if: steps.cpr.outputs.pull-request-number != '' && matrix.name == 'array-api'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr edit ${{steps.cpr.outputs.pull-request-number}} --add-label "CUDA CI"
 
       - name: Check Pull Request
         if: steps.cpr.outputs.pull-request-number != ''

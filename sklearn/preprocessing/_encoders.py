@@ -1,6 +1,5 @@
-# Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
-#          Joris Van den Bossche <jorisvandenbossche@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numbers
 import warnings
@@ -10,9 +9,10 @@ import numpy as np
 from scipy import sparse
 
 from ..base import BaseEstimator, OneToOneFeatureMixin, TransformerMixin, _fit_context
-from ..utils import _safe_indexing, check_array, is_scalar_nan
+from ..utils import _safe_indexing, check_array
 from ..utils._encode import _check_unknown, _encode, _get_counts, _unique
 from ..utils._mask import _get_mask
+from ..utils._missing import is_scalar_nan
 from ..utils._param_validation import Interval, RealNotInt, StrOptions
 from ..utils._set_output import _get_output_config
 from ..utils.validation import _check_feature_names_in, check_is_fitted

@@ -57,18 +57,18 @@ univariate statistical tests. It can be seen as a preprocessing step
 to an estimator. Scikit-learn exposes feature selection routines
 as objects that implement the ``transform`` method:
 
- * :class:`SelectKBest` removes all but the :math:`k` highest scoring features
+* :class:`SelectKBest` removes all but the :math:`k` highest scoring features
 
- * :class:`SelectPercentile` removes all but a user-specified highest scoring
-   percentage of features
+* :class:`SelectPercentile` removes all but a user-specified highest scoring
+  percentage of features
 
- * using common univariate statistical tests for each feature:
-   false positive rate :class:`SelectFpr`, false discovery rate
-   :class:`SelectFdr`, or family wise error :class:`SelectFwe`.
+* using common univariate statistical tests for each feature:
+  false positive rate :class:`SelectFpr`, false discovery rate
+  :class:`SelectFdr`, or family wise error :class:`SelectFwe`.
 
- * :class:`GenericUnivariateSelect` allows to perform univariate feature
-   selection with a configurable strategy. This allows to select the best
-   univariate selection strategy with hyper-parameter search estimator.
+* :class:`GenericUnivariateSelect` allows to perform univariate feature
+  selection with a configurable strategy. This allows to select the best
+  univariate selection strategy with hyper-parameter search estimator.
 
 For instance, we can use a F-test to retrieve the two
 best features for a dataset as follows:
@@ -87,9 +87,9 @@ These objects take as input a scoring function that returns univariate scores
 and p-values (or only scores for :class:`SelectKBest` and
 :class:`SelectPercentile`):
 
- * For regression: :func:`r_regression`, :func:`f_regression`, :func:`mutual_info_regression`
+* For regression: :func:`r_regression`, :func:`f_regression`, :func:`mutual_info_regression`
 
- * For classification: :func:`chi2`, :func:`f_classif`, :func:`mutual_info_classif`
+* For classification: :func:`chi2`, :func:`f_classif`, :func:`mutual_info_classif`
 
 The methods based on F-test estimate the degree of linear dependency between
 two random variables. On the other hand, mutual information methods can capture
@@ -114,11 +114,11 @@ applied to non-negative features, such as frequencies.
     feature selection as well. One needs to provide a `score_func` where `y=None`.
     The `score_func` should use internally `X` to compute the scores.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_feature_selection_plot_feature_selection.py`
+* :ref:`sphx_glr_auto_examples_feature_selection_plot_feature_selection.py`
 
-    * :ref:`sphx_glr_auto_examples_feature_selection_plot_f_test_vs_mi.py`
+* :ref:`sphx_glr_auto_examples_feature_selection_plot_f_test_vs_mi.py`
 
 .. _rfe:
 
@@ -144,14 +144,14 @@ of selected features and aggregated together. Finally, the scores are averaged
 across folds and the number of features selected is set to the number of
 features that maximize the cross-validation score.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_digits.py`: A recursive feature elimination example
-      showing the relevance of pixels in a digit classification task.
+* :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_digits.py`: A recursive feature elimination example
+  showing the relevance of pixels in a digit classification task.
 
-    * :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`: A recursive feature
-      elimination example with automatic tuning of the number of features
-      selected with cross-validation.
+* :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`: A recursive feature
+  elimination example with automatic tuning of the number of features
+  selected with cross-validation.
 
 .. _select_from_model:
 
@@ -171,9 +171,9 @@ Available heuristics are "mean", "median" and float multiples of these like
 
 For examples on how it is to be used refer to the sections below.
 
-.. topic:: Examples
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_feature_selection_plot_select_from_model_diabetes.py`
+* :ref:`sphx_glr_auto_examples_feature_selection_plot_select_from_model_diabetes.py`
 
 .. _l1_feature_selection:
 
@@ -207,42 +207,39 @@ With SVMs and logistic-regression, the parameter C controls the sparsity:
 the smaller C the fewer features selected. With Lasso, the higher the
 alpha parameter, the fewer features selected.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_dense_vs_sparse_data.py`.
+* :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_dense_vs_sparse_data.py`.
 
 .. _compressive_sensing:
 
-|details-start|
-**L1-recovery and compressive sensing**
-|details-split|
+.. dropdown:: L1-recovery and compressive sensing
 
-For a good choice of alpha, the :ref:`lasso` can fully recover the
-exact set of non-zero variables using only few observations, provided
-certain specific conditions are met. In particular, the number of
-samples should be "sufficiently large", or L1 models will perform at
-random, where "sufficiently large" depends on the number of non-zero
-coefficients, the logarithm of the number of features, the amount of
-noise, the smallest absolute value of non-zero coefficients, and the
-structure of the design matrix X. In addition, the design matrix must
-display certain specific properties, such as not being too correlated.
+  For a good choice of alpha, the :ref:`lasso` can fully recover the
+  exact set of non-zero variables using only few observations, provided
+  certain specific conditions are met. In particular, the number of
+  samples should be "sufficiently large", or L1 models will perform at
+  random, where "sufficiently large" depends on the number of non-zero
+  coefficients, the logarithm of the number of features, the amount of
+  noise, the smallest absolute value of non-zero coefficients, and the
+  structure of the design matrix X. In addition, the design matrix must
+  display certain specific properties, such as not being too correlated.
 
-There is no general rule to select an alpha parameter for recovery of
-non-zero coefficients. It can by set by cross-validation
-(:class:`~sklearn.linear_model.LassoCV` or
-:class:`~sklearn.linear_model.LassoLarsCV`), though this may lead to
-under-penalized models: including a small number of non-relevant variables
-is not detrimental to prediction score. BIC
-(:class:`~sklearn.linear_model.LassoLarsIC`) tends, on the opposite, to set
-high values of alpha.
+  There is no general rule to select an alpha parameter for recovery of
+  non-zero coefficients. It can by set by cross-validation
+  (:class:`~sklearn.linear_model.LassoCV` or
+  :class:`~sklearn.linear_model.LassoLarsCV`), though this may lead to
+  under-penalized models: including a small number of non-relevant variables
+  is not detrimental to prediction score. BIC
+  (:class:`~sklearn.linear_model.LassoLarsIC`) tends, on the opposite, to set
+  high values of alpha.
 
-.. topic:: Reference
+  .. rubric:: References
 
-   Richard G. Baraniuk "Compressive Sensing", IEEE Signal
-   Processing Magazine [120] July 2007
-   http://users.isr.ist.utl.pt/~aguiar/CS_notes.pdf
+  Richard G. Baraniuk "Compressive Sensing", IEEE Signal
+  Processing Magazine [120] July 2007
+  http://users.isr.ist.utl.pt/~aguiar/CS_notes.pdf
 
-|details-end|
 
 Tree-based feature selection
 ----------------------------
@@ -268,14 +265,13 @@ meta-transformer)::
   >>> X_new.shape               # doctest: +SKIP
   (150, 2)
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances.py`: example on
-      synthetic data showing the recovery of the actually meaningful
-      features.
+* :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances.py`: example on
+  synthetic data showing the recovery of the actually meaningful features.
 
-    * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`: example
-      on face recognition data.
+* :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`: example
+  on face recognition data.
 
 .. _sequential_feature_selection:
 
@@ -299,38 +295,35 @@ instead of starting with no features and greedily adding features, we start
 with *all* the features and greedily *remove* features from the set. The
 `direction` parameter controls whether forward or backward SFS is used.
 
-|details-start|
-**Detail on Sequential Feature Selection**
-|details-split|
+.. dropdown:: Details on Sequential Feature Selection
 
-In general, forward and backward selection do not yield equivalent results.
-Also, one may be much faster than the other depending on the requested number
-of selected features: if we have 10 features and ask for 7 selected features,
-forward selection would need to perform 7 iterations while backward selection
-would only need to perform 3.
+  In general, forward and backward selection do not yield equivalent results.
+  Also, one may be much faster than the other depending on the requested number
+  of selected features: if we have 10 features and ask for 7 selected features,
+  forward selection would need to perform 7 iterations while backward selection
+  would only need to perform 3.
 
-SFS differs from :class:`~sklearn.feature_selection.RFE` and
-:class:`~sklearn.feature_selection.SelectFromModel` in that it does not
-require the underlying model to expose a `coef_` or `feature_importances_`
-attribute. It may however be slower considering that more models need to be
-evaluated, compared to the other approaches. For example in backward
-selection, the iteration going from `m` features to `m - 1` features using k-fold
-cross-validation requires fitting `m * k` models, while
-:class:`~sklearn.feature_selection.RFE` would require only a single fit, and
-:class:`~sklearn.feature_selection.SelectFromModel` always just does a single
-fit and requires no iterations.
+  SFS differs from :class:`~sklearn.feature_selection.RFE` and
+  :class:`~sklearn.feature_selection.SelectFromModel` in that it does not
+  require the underlying model to expose a `coef_` or `feature_importances_`
+  attribute. It may however be slower considering that more models need to be
+  evaluated, compared to the other approaches. For example in backward
+  selection, the iteration going from `m` features to `m - 1` features using k-fold
+  cross-validation requires fitting `m * k` models, while
+  :class:`~sklearn.feature_selection.RFE` would require only a single fit, and
+  :class:`~sklearn.feature_selection.SelectFromModel` always just does a single
+  fit and requires no iterations.
 
-.. topic:: Reference
+  .. rubric:: References
 
-   .. [sfs] Ferri et al, `Comparative study of techniques for
+  .. [sfs] Ferri et al, `Comparative study of techniques for
       large-scale feature selection
       <https://citeseerx.ist.psu.edu/doc_view/pid/5fedabbb3957bbb442802e012d829ee0629a01b6>`_.
 
-|details-end|
 
-.. topic:: Examples
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_feature_selection_plot_select_from_model_diabetes.py`
+* :ref:`sphx_glr_auto_examples_feature_selection_plot_select_from_model_diabetes.py`
 
 Feature selection as part of a pipeline
 =======================================
@@ -340,7 +333,7 @@ the actual learning. The recommended way to do this in scikit-learn is
 to use a :class:`~pipeline.Pipeline`::
 
   clf = Pipeline([
-    ('feature_selection', SelectFromModel(LinearSVC(dual="auto", penalty="l1"))),
+    ('feature_selection', SelectFromModel(LinearSVC(penalty="l1"))),
     ('classification', RandomForestClassifier())
   ])
   clf.fit(X, y)

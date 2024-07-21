@@ -1,9 +1,14 @@
+import copyreg
+import io
+import pickle
 import re
 import warnings
 from unittest.mock import Mock
 
+import joblib
 import numpy as np
 import pytest
+from joblib.numpy_pickle import NumpyPickler
 from numpy.testing import assert_allclose, assert_array_equal
 
 import sklearn
@@ -24,6 +29,7 @@ from sklearn.ensemble import (
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
+from sklearn.ensemble._hist_gradient_boosting.predictor import TreePredictor
 from sklearn.exceptions import NotFittedError
 from sklearn.metrics import get_scorer, mean_gamma_deviance, mean_poisson_deviance
 from sklearn.model_selection import cross_val_score, train_test_split
@@ -32,6 +38,7 @@ from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler, OneHotEncoder
 from sklearn.utils import shuffle
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._testing import _convert_container
+from sklearn.utils.fixes import _IS_32BIT
 
 n_threads = _openmp_effective_n_threads()
 
@@ -153,7 +160,7 @@ def test_early_stopping_classification(
     X, y = data
 
     gb = HistGradientBoostingClassifier(
-        verbose=1,  # just for coverage
+        verbose=2,  # just for coverage
         min_samples_leaf=5,  # easier to overfit fast
         scoring=scoring,
         tol=tol,
@@ -1580,3 +1587,98 @@ def test_categorical_features_warn():
     msg = "The categorical_features parameter will change to 'from_dtype' in v1.6"
     with pytest.warns(FutureWarning, match=msg):
         hist.fit(X, y)
+
+
+def get_different_bitness_node_ndarray(node_ndarray):
+    new_dtype_for_indexing_fields = np.int64 if _IS_32BIT else np.int32
+
+    # field names in Node struct with np.intp types (see
+    # sklearn/ensemble/_hist_gradient_boosting/common.pyx)
+    indexing_field_names = ["feature_idx"]
+
+    new_dtype_dict = {
+        name: dtype for name, (dtype, _) in node_ndarray.dtype.fields.items()
+    }
+    for name in indexing_field_names:
+        new_dtype_dict[name] = new_dtype_for_indexing_fields
+
+    new_dtype = np.dtype(
+        {"names": list(new_dtype_dict.keys()), "formats": list(new_dtype_dict.values())}
+    )
+    return node_ndarray.astype(new_dtype, casting="same_kind")
+
+
+def reduce_predictor_with_different_bitness(predictor):
+    cls, args, state = predictor.__reduce__()
+
+    new_state = state.copy()
+    new_state["nodes"] = get_different_bitness_node_ndarray(new_state["nodes"])
+
+    return (cls, args, new_state)
+
+
+def test_different_bitness_pickle():
+    X, y = make_classification(random_state=0)
+
+    clf = HistGradientBoostingClassifier(random_state=0, max_depth=3)
+    clf.fit(X, y)
+    score = clf.score(X, y)
+
+    def pickle_dump_with_different_bitness():
+        f = io.BytesIO()
+        p = pickle.Pickler(f)
+        p.dispatch_table = copyreg.dispatch_table.copy()
+        p.dispatch_table[TreePredictor] = reduce_predictor_with_different_bitness
+
+        p.dump(clf)
+        f.seek(0)
+        return f
+
+    # Simulate loading a pickle of the same model trained on a platform with different
+    # bitness that than the platform it will be used to make predictions on:
+    new_clf = pickle.load(pickle_dump_with_different_bitness())
+    new_score = new_clf.score(X, y)
+    assert score == pytest.approx(new_score)
+
+
+def test_different_bitness_joblib_pickle():
+    # Make sure that a platform specific pickle generated on a 64 bit
+    # platform can be converted at pickle load time into an estimator
+    # with Cython code that works with the host's native integer precision
+    # to index nodes in the tree data structure when the host is a 32 bit
+    # platform (and vice versa).
+    #
+    # This is in particular useful to be able to train a model on a 64 bit Linux
+    # server and deploy the model as part of a (32 bit) WASM in-browser
+    # application using pyodide.
+    X, y = make_classification(random_state=0)
+
+    clf = HistGradientBoostingClassifier(random_state=0, max_depth=3)
+    clf.fit(X, y)
+    score = clf.score(X, y)
+
+    def joblib_dump_with_different_bitness():
+        f = io.BytesIO()
+        p = NumpyPickler(f)
+        p.dispatch_table = copyreg.dispatch_table.copy()
+        p.dispatch_table[TreePredictor] = reduce_predictor_with_different_bitness
+
+        p.dump(clf)
+        f.seek(0)
+        return f
+
+    new_clf = joblib.load(joblib_dump_with_different_bitness())
+    new_score = new_clf.score(X, y)
+    assert score == pytest.approx(new_score)
+
+
+def test_pandas_nullable_dtype():
+    # Non regression test for https://github.com/scikit-learn/scikit-learn/issues/28317
+    pd = pytest.importorskip("pandas")
+
+    rng = np.random.default_rng(0)
+    X = pd.DataFrame({"a": rng.integers(10, size=100)}).astype(pd.Int64Dtype())
+    y = rng.integers(2, size=100)
+
+    clf = HistGradientBoostingClassifier()
+    clf.fit(X, y)

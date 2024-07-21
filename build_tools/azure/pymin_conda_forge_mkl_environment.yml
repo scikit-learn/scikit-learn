@@ -13,9 +13,11 @@ dependencies:
   - threadpoolctl
   - matplotlib
   - pytest
-  - pytest-xdist=2.5.0
+  - pytest-xdist
   - pillow
-  - setuptools
+  - pip
+  - ninja
+  - meson-python
   - pytest-cov
   - coverage
   - wheel

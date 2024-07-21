@@ -49,8 +49,6 @@ X = [[-2, 1.5, -4, -1], [-1, 2.5, -3, -0.5], [0, 3.5, -2, 0.5], [1, 4.5, -1, 2]]
         ),
     ],
 )
-# TODO(1.5) remove warning filter when kbd's subsample default is changed
-@pytest.mark.filterwarnings("ignore:In version 1.5 onwards, subsample=200_000")
 def test_fit_transform(strategy, expected, sample_weight):
     est = KBinsDiscretizer(n_bins=3, encode="ordinal", strategy=strategy)
     est.fit(X, sample_weight=sample_weight)
@@ -149,8 +147,6 @@ def test_invalid_n_bins_array():
         ),
     ],
 )
-# TODO(1.5) remove warning filter when kbd's subsample default is changed
-@pytest.mark.filterwarnings("ignore:In version 1.5 onwards, subsample=200_000")
 def test_fit_transform_n_bins_array(strategy, expected, sample_weight):
     est = KBinsDiscretizer(
         n_bins=[2, 3, 3, 3], encode="ordinal", strategy=strategy
@@ -176,8 +172,6 @@ def test_kbinsdiscretizer_effect_sample_weight():
     assert_allclose(est.transform(X), [[0.0], [1.0], [2.0], [2.0], [2.0], [2.0]])
 
 
-# TODO(1.5) remove warning filter when kbd's subsample default is changed
-@pytest.mark.filterwarnings("ignore:In version 1.5 onwards, subsample=200_000")
 @pytest.mark.parametrize("strategy", ["kmeans", "quantile"])
 def test_kbinsdiscretizer_no_mutating_sample_weight(strategy):
     """Make sure that `sample_weight` is not changed in place."""
@@ -258,8 +252,6 @@ def test_encode_options():
         ("quantile", [0, 0, 0, 1, 1, 1], [0, 0, 1, 1, 2, 2], [0, 1, 2, 3, 4, 4]),
     ],
 )
-# TODO(1.5) remove warning filter when kbd's subsample default is changed
-@pytest.mark.filterwarnings("ignore:In version 1.5 onwards, subsample=200_000")
 def test_nonuniform_strategies(
     strategy, expected_2bins, expected_3bins, expected_5bins
 ):
@@ -313,8 +305,6 @@ def test_nonuniform_strategies(
         ),
     ],
 )
-# TODO(1.5) remove warning filter when kbd's subsample default is changed
-@pytest.mark.filterwarnings("ignore:In version 1.5 onwards, subsample=200_000")
 @pytest.mark.parametrize("encode", ["ordinal", "onehot", "onehot-dense"])
 def test_inverse_transform(strategy, encode, expected_inv):
     kbd = KBinsDiscretizer(n_bins=3, strategy=strategy, encode=encode)
@@ -323,8 +313,6 @@ def test_inverse_transform(strategy, encode, expected_inv):
     assert_array_almost_equal(expected_inv, Xinv)
 
 
-# TODO(1.5) remove warning filter when kbd's subsample default is changed
-@pytest.mark.filterwarnings("ignore:In version 1.5 onwards, subsample=200_000")
 @pytest.mark.parametrize("strategy", ["uniform", "kmeans", "quantile"])
 def test_transform_outside_fit_range(strategy):
     X = np.array([0, 1, 2, 3])[:, None]
@@ -356,7 +344,7 @@ def test_overwrite():
 )
 def test_redundant_bins(strategy, expected_bin_edges):
     X = [[0], [0], [0], [0], [3], [3]]
-    kbd = KBinsDiscretizer(n_bins=3, strategy=strategy)
+    kbd = KBinsDiscretizer(n_bins=3, strategy=strategy, subsample=None)
     warning_message = "Consider decreasing the number of bins."
     with pytest.warns(UserWarning, match=warning_message):
         kbd.fit(X)
@@ -492,12 +480,21 @@ def test_kbinsdiscretizer_subsample(strategy, global_random_seed):
     )
 
 
-# TODO(1.5) remove this test
-@pytest.mark.parametrize("strategy", ["uniform", "kmeans"])
-def test_kbd_subsample_warning(strategy):
-    # Check the future warning for the change of default of subsample
-    X = np.random.RandomState(0).random_sample((100, 1))
+# TODO(1.7): remove this test
+def test_KBD_inverse_transform_Xt_deprecation():
+    X = np.arange(10)[:, None]
+    kbd = KBinsDiscretizer()
+    X = kbd.fit_transform(X)
 
-    kbd = KBinsDiscretizer(strategy=strategy, random_state=0)
-    with pytest.warns(FutureWarning, match="subsample=200_000 will be used by default"):
-        kbd.fit(X)
+    with pytest.raises(TypeError, match="Missing required positional argument"):
+        kbd.inverse_transform()
+
+    with pytest.raises(TypeError, match="Cannot use both X and Xt. Use X only"):
+        kbd.inverse_transform(X=X, Xt=X)
+
+    with warnings.catch_warnings(record=True):
+        warnings.simplefilter("error")
+        kbd.inverse_transform(X)
+
+    with pytest.warns(FutureWarning, match="Xt was renamed X in version 1.5"):
+        kbd.inverse_transform(Xt=X)

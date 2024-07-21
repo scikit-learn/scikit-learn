@@ -23,68 +23,68 @@ the tree, the more complex the decision rules and the fitter the model.
 
 Some advantages of decision trees are:
 
-    - Simple to understand and to interpret. Trees can be visualized.
+- Simple to understand and to interpret. Trees can be visualized.
 
-    - Requires little data preparation. Other techniques often require data
-      normalization, dummy variables need to be created and blank values to
-      be removed. Some tree and algorithm combinations support
-      :ref:`missing values <tree_missing_value_support>`.
+- Requires little data preparation. Other techniques often require data
+  normalization, dummy variables need to be created and blank values to
+  be removed. Some tree and algorithm combinations support
+  :ref:`missing values <tree_missing_value_support>`.
 
-    - The cost of using the tree (i.e., predicting data) is logarithmic in the
-      number of data points used to train the tree.
+- The cost of using the tree (i.e., predicting data) is logarithmic in the
+  number of data points used to train the tree.
 
-    - Able to handle both numerical and categorical data. However, the scikit-learn
-      implementation does not support categorical variables for now. Other
-      techniques are usually specialized in analyzing datasets that have only one type
-      of variable. See :ref:`algorithms <tree_algorithms>` for more
-      information.
+- Able to handle both numerical and categorical data. However, the scikit-learn
+  implementation does not support categorical variables for now. Other
+  techniques are usually specialized in analyzing datasets that have only one type
+  of variable. See :ref:`algorithms <tree_algorithms>` for more
+  information.
 
-    - Able to handle multi-output problems.
+- Able to handle multi-output problems.
 
-    - Uses a white box model. If a given situation is observable in a model,
-      the explanation for the condition is easily explained by boolean logic.
-      By contrast, in a black box model (e.g., in an artificial neural
-      network), results may be more difficult to interpret.
+- Uses a white box model. If a given situation is observable in a model,
+  the explanation for the condition is easily explained by boolean logic.
+  By contrast, in a black box model (e.g., in an artificial neural
+  network), results may be more difficult to interpret.
 
-    - Possible to validate a model using statistical tests. That makes it
-      possible to account for the reliability of the model.
+- Possible to validate a model using statistical tests. That makes it
+  possible to account for the reliability of the model.
 
-    - Performs well even if its assumptions are somewhat violated by
-      the true model from which the data were generated.
+- Performs well even if its assumptions are somewhat violated by
+  the true model from which the data were generated.
 
 
 The disadvantages of decision trees include:
 
-    - Decision-tree learners can create over-complex trees that do not
-      generalize the data well. This is called overfitting. Mechanisms
-      such as pruning, setting the minimum number of samples required
-      at a leaf node or setting the maximum depth of the tree are
-      necessary to avoid this problem.
+- Decision-tree learners can create over-complex trees that do not
+  generalize the data well. This is called overfitting. Mechanisms
+  such as pruning, setting the minimum number of samples required
+  at a leaf node or setting the maximum depth of the tree are
+  necessary to avoid this problem.
 
-    - Decision trees can be unstable because small variations in the
-      data might result in a completely different tree being generated.
-      This problem is mitigated by using decision trees within an
-      ensemble.
+- Decision trees can be unstable because small variations in the
+  data might result in a completely different tree being generated.
+  This problem is mitigated by using decision trees within an
+  ensemble.
 
-    - Predictions of decision trees are neither smooth nor continuous, but
-      piecewise constant approximations as seen in the above figure. Therefore,
-      they are not good at extrapolation.
+- Predictions of decision trees are neither smooth nor continuous, but
+  piecewise constant approximations as seen in the above figure. Therefore,
+  they are not good at extrapolation.
 
-    - The problem of learning an optimal decision tree is known to be
-      NP-complete under several aspects of optimality and even for simple
-      concepts. Consequently, practical decision-tree learning algorithms
-      are based on heuristic algorithms such as the greedy algorithm where
-      locally optimal decisions are made at each node. Such algorithms
-      cannot guarantee to return the globally optimal decision tree.  This
-      can be mitigated by training multiple trees in an ensemble learner,
-      where the features and samples are randomly sampled with replacement.
+- The problem of learning an optimal decision tree is known to be
+  NP-complete under several aspects of optimality and even for simple
+  concepts. Consequently, practical decision-tree learning algorithms
+  are based on heuristic algorithms such as the greedy algorithm where
+  locally optimal decisions are made at each node. Such algorithms
+  cannot guarantee to return the globally optimal decision tree.  This
+  can be mitigated by training multiple trees in an ensemble learner,
+  where the features and samples are randomly sampled with replacement.
 
-    - There are concepts that are hard to learn because decision trees
-      do not express them easily, such as XOR, parity or multiplexer problems.
+- There are concepts that are hard to learn because decision trees
+  do not express them easily, such as XOR, parity or multiplexer problems.
 
-    - Decision tree learners create biased trees if some classes dominate.
-      It is therefore recommended to balance the dataset prior to fitting
-      with the decision tree.
+- Decision tree learners create biased trees if some classes dominate.
+  It is therefore recommended to balance the dataset prior to fitting
+  with the decision tree.
 
 
 .. _tree_classification:
@@ -146,82 +146,78 @@ Once trained, you can plot the tree with the :func:`plot_tree` function::
    :scale: 75
    :align: center
 
-|details-start|
-**Alternative ways to export trees**
-|details-split|
+.. dropdown:: Alternative ways to export trees
 
-We can also export the tree in `Graphviz
-<https://www.graphviz.org/>`_ format using the :func:`export_graphviz`
-exporter. If you use the `conda <https://conda.io>`_ package manager, the graphviz binaries
-and the python package can be installed with `conda install python-graphviz`.
+  We can also export the tree in `Graphviz
+  <https://www.graphviz.org/>`_ format using the :func:`export_graphviz`
+  exporter. If you use the `conda <https://conda.io>`_ package manager, the graphviz binaries
+  and the python package can be installed with `conda install python-graphviz`.
 
-Alternatively binaries for graphviz can be downloaded from the graphviz project homepage,
-and the Python wrapper installed from pypi with `pip install graphviz`.
+  Alternatively binaries for graphviz can be downloaded from the graphviz project homepage,
+  and the Python wrapper installed from pypi with `pip install graphviz`.
 
-Below is an example graphviz export of the above tree trained on the entire
-iris dataset; the results are saved in an output file `iris.pdf`::
+  Below is an example graphviz export of the above tree trained on the entire
+  iris dataset; the results are saved in an output file `iris.pdf`::
 
 
-    >>> import graphviz # doctest: +SKIP
-    >>> dot_data = tree.export_graphviz(clf, out_file=None) # doctest: +SKIP
-    >>> graph = graphviz.Source(dot_data) # doctest: +SKIP
-    >>> graph.render("iris") # doctest: +SKIP
+      >>> import graphviz # doctest: +SKIP
+      >>> dot_data = tree.export_graphviz(clf, out_file=None) # doctest: +SKIP
+      >>> graph = graphviz.Source(dot_data) # doctest: +SKIP
+      >>> graph.render("iris") # doctest: +SKIP
 
-The :func:`export_graphviz` exporter also supports a variety of aesthetic
-options, including coloring nodes by their class (or value for regression) and
-using explicit variable and class names if desired. Jupyter notebooks also
-render these plots inline automatically::
+  The :func:`export_graphviz` exporter also supports a variety of aesthetic
+  options, including coloring nodes by their class (or value for regression) and
+  using explicit variable and class names if desired. Jupyter notebooks also
+  render these plots inline automatically::
 
-    >>> dot_data = tree.export_graphviz(clf, out_file=None, # doctest: +SKIP
-    ...                      feature_names=iris.feature_names,  # doctest: +SKIP
-    ...                      class_names=iris.target_names,  # doctest: +SKIP
-    ...                      filled=True, rounded=True,  # doctest: +SKIP
-    ...                      special_characters=True)  # doctest: +SKIP
-    >>> graph = graphviz.Source(dot_data)  # doctest: +SKIP
-    >>> graph # doctest: +SKIP
+      >>> dot_data = tree.export_graphviz(clf, out_file=None, # doctest: +SKIP
+      ...                      feature_names=iris.feature_names,  # doctest: +SKIP
+      ...                      class_names=iris.target_names,  # doctest: +SKIP
+      ...                      filled=True, rounded=True,  # doctest: +SKIP
+      ...                      special_characters=True)  # doctest: +SKIP
+      >>> graph = graphviz.Source(dot_data)  # doctest: +SKIP
+      >>> graph # doctest: +SKIP
 
-.. only:: html
+  .. only:: html
 
-    .. figure:: ../images/iris.svg
-       :align: center
+      .. figure:: ../images/iris.svg
+        :align: center
 
-.. only:: latex
+  .. only:: latex
 
-    .. figure:: ../images/iris.pdf
-       :align: center
+      .. figure:: ../images/iris.pdf
+        :align: center
 
-.. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_dtc_001.png
-   :target: ../auto_examples/tree/plot_iris_dtc.html
-   :align: center
-   :scale: 75
+  .. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_dtc_001.png
+    :target: ../auto_examples/tree/plot_iris_dtc.html
+    :align: center
+    :scale: 75
 
-Alternatively, the tree can also be exported in textual format with the
-function :func:`export_text`. This method doesn't require the installation
-of external libraries and is more compact:
+  Alternatively, the tree can also be exported in textual format with the
+  function :func:`export_text`. This method doesn't require the installation
+  of external libraries and is more compact:
 
-    >>> from sklearn.datasets import load_iris
-    >>> from sklearn.tree import DecisionTreeClassifier
-    >>> from sklearn.tree import export_text
-    >>> iris = load_iris()
-    >>> decision_tree = DecisionTreeClassifier(random_state=0, max_depth=2)
-    >>> decision_tree = decision_tree.fit(iris.data, iris.target)
-    >>> r = export_text(decision_tree, feature_names=iris['feature_names'])
-    >>> print(r)
-    |--- petal width (cm) <= 0.80
-    |   |--- class: 0
-    |--- petal width (cm) >  0.80
-    |   |--- petal width (cm) <= 1.75
-    |   |   |--- class: 1
-    |   |--- petal width (cm) >  1.75
-    |   |   |--- class: 2
-    <BLANKLINE>
+      >>> from sklearn.datasets import load_iris
+      >>> from sklearn.tree import DecisionTreeClassifier
+      >>> from sklearn.tree import export_text
+      >>> iris = load_iris()
+      >>> decision_tree = DecisionTreeClassifier(random_state=0, max_depth=2)
+      >>> decision_tree = decision_tree.fit(iris.data, iris.target)
+      >>> r = export_text(decision_tree, feature_names=iris['feature_names'])
+      >>> print(r)
+      |--- petal width (cm) <= 0.80
+      |   |--- class: 0
+      |--- petal width (cm) >  0.80
+      |   |--- petal width (cm) <= 1.75
+      |   |   |--- class: 1
+      |   |--- petal width (cm) >  1.75
+      |   |   |--- class: 2
+      <BLANKLINE>
 
-|details-end|
+.. rubric:: Examples
 
-.. topic:: Examples:
-
- * :ref:`sphx_glr_auto_examples_tree_plot_iris_dtc.py`
- * :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
+* :ref:`sphx_glr_auto_examples_tree_plot_iris_dtc.py`
+* :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
 
 .. _tree_regression:
 
@@ -248,9 +244,9 @@ instead of integer values::
     >>> clf.predict([[1, 1]])
     array([0.5])
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_tree_plot_tree_regression.py`
+* :ref:`sphx_glr_auto_examples_tree_plot_tree_regression.py`
 
 
 .. _tree_multioutput:
@@ -273,19 +269,19 @@ generalization accuracy of the resulting estimator may often be increased.
 With regard to decision trees, this strategy can readily be used to support
 multi-output problems. This requires the following changes:
 
-  - Store n output values in leaves, instead of 1;
-  - Use splitting criteria that compute the average reduction across all
-    n outputs.
+- Store n output values in leaves, instead of 1;
+- Use splitting criteria that compute the average reduction across all
+  n outputs.
 
 This module offers support for multi-output problems by implementing this
 strategy in both :class:`DecisionTreeClassifier` and
 :class:`DecisionTreeRegressor`. If a decision tree is fit on an output array Y
 of shape ``(n_samples, n_outputs)`` then the resulting estimator will:
 
-  * Output n_output values upon ``predict``;
+* Output n_output values upon ``predict``;
 
-  * Output a list of n_output arrays of class probabilities upon
-    ``predict_proba``.
+* Output a list of n_output arrays of class probabilities upon
+  ``predict_proba``.
 
 The use of multi-output trees for regression is demonstrated in
 :ref:`sphx_glr_auto_examples_tree_plot_tree_regression_multioutput.py`. In this example, the input
@@ -306,21 +302,17 @@ the lower half of those faces.
    :scale: 75
    :align: center
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_tree_plot_tree_regression_multioutput.py`
-  * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`
+* :ref:`sphx_glr_auto_examples_tree_plot_tree_regression_multioutput.py`
+* :ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`
 
-|details-start|
-**References**
-|details-split|
+.. rubric:: References
 
- * M. Dumont et al,  `Fast multi-class image annotation with random subwindows
-   and multiple output randomized trees
-   <http://www.montefiore.ulg.ac.be/services/stochastic/pubs/2009/DMWG09/dumont-visapp09-shortpaper.pdf>`_, International Conference on
-   Computer Vision Theory and Applications 2009
-
-|details-end|
+* M. Dumont et al,  `Fast multi-class image annotation with random subwindows
+  and multiple output randomized trees
+  <http://www.montefiore.ulg.ac.be/services/stochastic/pubs/2009/DMWG09/dumont-visapp09-shortpaper.pdf>`_,
+  International Conference on Computer Vision Theory and Applications 2009
 
 .. _tree_complexity:
 
@@ -343,65 +335,65 @@ total cost over the entire trees (by summing the cost at each node) of
 Tips on practical use
 =====================
 
-  * Decision trees tend to overfit on data with a large number of features.
-    Getting the right ratio of samples to number of features is important, since
-    a tree with few samples in high dimensional space is very likely to overfit.
+* Decision trees tend to overfit on data with a large number of features.
+  Getting the right ratio of samples to number of features is important, since
+  a tree with few samples in high dimensional space is very likely to overfit.
 
-  * Consider performing  dimensionality reduction (:ref:`PCA <PCA>`,
-    :ref:`ICA <ICA>`, or :ref:`feature_selection`) beforehand to
-    give your tree a better chance of finding features that are discriminative.
+* Consider performing  dimensionality reduction (:ref:`PCA <PCA>`,
+  :ref:`ICA <ICA>`, or :ref:`feature_selection`) beforehand to
+  give your tree a better chance of finding features that are discriminative.
 
-  * :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py` will help
-    in gaining more insights about how the decision tree makes predictions, which is
-    important for understanding the important features in the data.
+* :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py` will help
+  in gaining more insights about how the decision tree makes predictions, which is
+  important for understanding the important features in the data.
 
-  * Visualize your tree as you are training by using the ``export``
-    function.  Use ``max_depth=3`` as an initial tree depth to get a feel for
-    how the tree is fitting to your data, and then increase the depth.
+* Visualize your tree as you are training by using the ``export``
+  function.  Use ``max_depth=3`` as an initial tree depth to get a feel for
+  how the tree is fitting to your data, and then increase the depth.
 
-  * Remember that the number of samples required to populate the tree doubles
-    for each additional level the tree grows to.  Use ``max_depth`` to control
-    the size of the tree to prevent overfitting.
+* Remember that the number of samples required to populate the tree doubles
+  for each additional level the tree grows to.  Use ``max_depth`` to control
+  the size of the tree to prevent overfitting.
 
-  * Use ``min_samples_split`` or ``min_samples_leaf`` to ensure that multiple
-    samples inform every decision in the tree, by controlling which splits will
-    be considered. A very small number will usually mean the tree will overfit,
-    whereas a large number will prevent the tree from learning the data. Try
-    ``min_samples_leaf=5`` as an initial value. If the sample size varies
-    greatly, a float number can be used as percentage in these two parameters.
-    While ``min_samples_split`` can create arbitrarily small leaves,
-    ``min_samples_leaf`` guarantees that each leaf has a minimum size, avoiding
-    low-variance, over-fit leaf nodes in regression problems.  For
-    classification with few classes, ``min_samples_leaf=1`` is often the best
-    choice.
+* Use ``min_samples_split`` or ``min_samples_leaf`` to ensure that multiple
+  samples inform every decision in the tree, by controlling which splits will
+  be considered. A very small number will usually mean the tree will overfit,
+  whereas a large number will prevent the tree from learning the data. Try
+  ``min_samples_leaf=5`` as an initial value. If the sample size varies
+  greatly, a float number can be used as percentage in these two parameters.
+  While ``min_samples_split`` can create arbitrarily small leaves,
+  ``min_samples_leaf`` guarantees that each leaf has a minimum size, avoiding
+  low-variance, over-fit leaf nodes in regression problems.  For
+  classification with few classes, ``min_samples_leaf=1`` is often the best
+  choice.
 
-    Note that ``min_samples_split`` considers samples directly and independent of
-    ``sample_weight``, if provided (e.g. a node with m weighted samples is still
-    treated as having exactly m samples). Consider ``min_weight_fraction_leaf`` or
-    ``min_impurity_decrease`` if accounting for sample weights is required at splits.
+  Note that ``min_samples_split`` considers samples directly and independent of
+  ``sample_weight``, if provided (e.g. a node with m weighted samples is still
+  treated as having exactly m samples). Consider ``min_weight_fraction_leaf`` or
+  ``min_impurity_decrease`` if accounting for sample weights is required at splits.
 
-  * Balance your dataset before training to prevent the tree from being biased
-    toward the classes that are dominant. Class balancing can be done by
-    sampling an equal number of samples from each class, or preferably by
-    normalizing the sum of the sample weights (``sample_weight``) for each
-    class to the same value. Also note that weight-based pre-pruning criteria,
-    such as ``min_weight_fraction_leaf``, will then be less biased toward
-    dominant classes than criteria that are not aware of the sample weights,
-    like ``min_samples_leaf``.
+* Balance your dataset before training to prevent the tree from being biased
+  toward the classes that are dominant. Class balancing can be done by
+  sampling an equal number of samples from each class, or preferably by
+  normalizing the sum of the sample weights (``sample_weight``) for each
+  class to the same value. Also note that weight-based pre-pruning criteria,
+  such as ``min_weight_fraction_leaf``, will then be less biased toward
+  dominant classes than criteria that are not aware of the sample weights,
+  like ``min_samples_leaf``.
 
-  * If the samples are weighted, it will be easier to optimize the tree
-    structure using weight-based pre-pruning criterion such as
-    ``min_weight_fraction_leaf``, which ensure that leaf nodes contain at least
-    a fraction of the overall sum of the sample weights.
+* If the samples are weighted, it will be easier to optimize the tree
+  structure using weight-based pre-pruning criterion such as
+  ``min_weight_fraction_leaf``, which ensure that leaf nodes contain at least
+  a fraction of the overall sum of the sample weights.
 
-  * All decision trees use ``np.float32`` arrays internally.
-    If training data is not in this format, a copy of the dataset will be made.
+* All decision trees use ``np.float32`` arrays internally.
+  If training data is not in this format, a copy of the dataset will be made.
 
-  * If the input matrix X is very sparse, it is recommended to convert to sparse
-    ``csc_matrix`` before calling fit and sparse ``csr_matrix`` before calling
-    predict. Training time can be orders of magnitude faster for a sparse
-    matrix input compared to a dense matrix when features have zero values in
-    most of the samples.
+* If the input matrix X is very sparse, it is recommended to convert to sparse
+  ``csc_matrix`` before calling fit and sparse ``csr_matrix`` before calling
+  predict. Training time can be orders of magnitude faster for a sparse
+  matrix input compared to a dense matrix when features have zero values in
+  most of the samples.
 
 
 .. _tree_algorithms:
@@ -412,36 +404,32 @@ Tree algorithms: ID3, C4.5, C5.0 and CART
 What are all the various decision tree algorithms and how do they differ
 from each other? Which one is implemented in scikit-learn?
 
-|details-start|
-**Various decision tree algorithms**
-|details-split|
+.. dropdown:: Various decision tree algorithms
 
-ID3_ (Iterative Dichotomiser 3) was developed in 1986 by Ross Quinlan.
-The algorithm creates a multiway tree, finding for each node (i.e. in
-a greedy manner) the categorical feature that will yield the largest
-information gain for categorical targets. Trees are grown to their
-maximum size and then a pruning step is usually applied to improve the
-ability of the tree to generalize to unseen data.
+  ID3_ (Iterative Dichotomiser 3) was developed in 1986 by Ross Quinlan.
+  The algorithm creates a multiway tree, finding for each node (i.e. in
+  a greedy manner) the categorical feature that will yield the largest
+  information gain for categorical targets. Trees are grown to their
+  maximum size and then a pruning step is usually applied to improve the
+  ability of the tree to generalize to unseen data.
 
-C4.5 is the successor to ID3 and removed the restriction that features
-must be categorical by dynamically defining a discrete attribute (based
-on numerical variables) that partitions the continuous attribute value
-into a discrete set of intervals. C4.5 converts the trained trees
-(i.e. the output of the ID3 algorithm) into sets of if-then rules.
-The accuracy of each rule is then evaluated to determine the order
-in which they should be applied. Pruning is done by removing a rule's
-precondition if the accuracy of the rule improves without it.
+  C4.5 is the successor to ID3 and removed the restriction that features
+  must be categorical by dynamically defining a discrete attribute (based
+  on numerical variables) that partitions the continuous attribute value
+  into a discrete set of intervals. C4.5 converts the trained trees
+  (i.e. the output of the ID3 algorithm) into sets of if-then rules.
+  The accuracy of each rule is then evaluated to determine the order
+  in which they should be applied. Pruning is done by removing a rule's
+  precondition if the accuracy of the rule improves without it.
 
-C5.0 is Quinlan's latest version release under a proprietary license.
-It uses less memory and builds smaller rulesets than C4.5 while being
-more accurate.
+  C5.0 is Quinlan's latest version release under a proprietary license.
+  It uses less memory and builds smaller rulesets than C4.5 while being
+  more accurate.
 
-CART (Classification and Regression Trees) is very similar to C4.5, but
-it differs in that it supports numerical target variables (regression) and
-does not compute rule sets. CART constructs binary trees using the feature
-and threshold that yield the largest information gain at each node.
-
-|details-end|
+  CART (Classification and Regression Trees) is very similar to C4.5, but
+  it differs in that it supports numerical target variables (regression) and
+  does not compute rule sets. CART constructs binary trees using the feature
+  and threshold that yield the largest information gain at each node.
 
 scikit-learn uses an optimized version of the CART algorithm; however, the
 scikit-learn implementation does not support categorical variables for now.
@@ -515,9 +503,7 @@ Log Loss or Entropy:
 
     H(Q_m) = - \sum_k p_{mk} \log(p_{mk})
 
-|details-start|
-Shannon entropy:
-|details-split|
+.. dropdown:: Shannon entropy
 
   The entropy criterion computes the Shannon entropy of the possible classes. It
   takes the class frequencies of the training data points that reached a given
@@ -547,8 +533,6 @@ Shannon entropy:
 
       \mathrm{LL}(D, T) = \sum_{m \in T} \frac{n_m}{n} H(Q_m)
 
-|details-end|
-
 Regression criteria
 -------------------
 
@@ -568,17 +552,18 @@ Mean Squared Error:
 
     H(Q_m) = \frac{1}{n_m} \sum_{y \in Q_m} (y - \bar{y}_m)^2
 
-Half Poisson deviance:
+Mean Poisson deviance:
 
 .. math::
 
-    H(Q_m) = \frac{1}{n_m} \sum_{y \in Q_m} (y \log\frac{y}{\bar{y}_m}
+    H(Q_m) = \frac{2}{n_m} \sum_{y \in Q_m} (y \log\frac{y}{\bar{y}_m}
     - y + \bar{y}_m)
 
 Setting `criterion="poisson"` might be a good choice if your target is a count
 or a frequency (count per some unit). In any case, :math:`y >= 0` is a
 necessary condition to use this criterion. Note that it fits much slower than
-the MSE criterion.
+the MSE criterion. For performance reasons the actual implementation minimizes
+the half mean poisson deviance, i.e. the mean poisson deviance divided by 2.
 
 Mean Absolute Error:
 
@@ -595,60 +580,86 @@ Note that it fits much slower than the MSE criterion.
 Missing Values Support
 ======================
 
-:class:`DecisionTreeClassifier` and :class:`DecisionTreeRegressor`
-have built-in support for missing values when `splitter='best'` and criterion is
+:class:`DecisionTreeClassifier`, :class:`DecisionTreeRegressor`
+have built-in support for missing values using `splitter='best'`, where
+the splits are determined in a greedy fashion.
+:class:`ExtraTreeClassifier`, and :class:`ExtraTreeRegressor` have built-in
+support for missing values for `splitter='random'`, where the splits
+are determined randomly. For more details on how the splitter differs on
+non-missing values, see the :ref:`Forest section <forest>`.
+
+The criterion supported when there are missing-values are
 `'gini'`, `'entropy`', or `'log_loss'`, for classification or
 `'squared_error'`, `'friedman_mse'`, or `'poisson'` for regression.
+
+First we will describe how :class:`DecisionTreeClassifier`, :class:`DecisionTreeRegressor`
+handle missing-values in the data.
 
 For each potential threshold on the non-missing data, the splitter will evaluate
 the split with all the missing values going to the left node or the right node.
 
 Decisions are made as follows:
 
-    - By default when predicting, the samples with missing values are classified
-      with the class used in the split found during training::
+- By default when predicting, the samples with missing values are classified
+  with the class used in the split found during training::
 
-        >>> from sklearn.tree import DecisionTreeClassifier
-        >>> import numpy as np
+    >>> from sklearn.tree import DecisionTreeClassifier
+    >>> import numpy as np
 
-        >>> X = np.array([0, 1, 6, np.nan]).reshape(-1, 1)
-        >>> y = [0, 0, 1, 1]
+    >>> X = np.array([0, 1, 6, np.nan]).reshape(-1, 1)
+    >>> y = [0, 0, 1, 1]
 
-        >>> tree = DecisionTreeClassifier(random_state=0).fit(X, y)
-        >>> tree.predict(X)
-        array([0, 0, 1, 1])
+    >>> tree = DecisionTreeClassifier(random_state=0).fit(X, y)
+    >>> tree.predict(X)
+    array([0, 0, 1, 1])
 
-    - If the criterion evaluation is the same for both nodes,
-      then the tie for missing value at predict time is broken by going to the
-      right node. The splitter also checks the split where all the missing
-      values go to one child and non-missing values go to the other::
+- If the criterion evaluation is the same for both nodes,
+  then the tie for missing value at predict time is broken by going to the
+  right node. The splitter also checks the split where all the missing
+  values go to one child and non-missing values go to the other::
 
-        >>> from sklearn.tree import DecisionTreeClassifier
-        >>> import numpy as np
+    >>> from sklearn.tree import DecisionTreeClassifier
+    >>> import numpy as np
 
-        >>> X = np.array([np.nan, -1, np.nan, 1]).reshape(-1, 1)
-        >>> y = [0, 0, 1, 1]
+    >>> X = np.array([np.nan, -1, np.nan, 1]).reshape(-1, 1)
+    >>> y = [0, 0, 1, 1]
 
-        >>> tree = DecisionTreeClassifier(random_state=0).fit(X, y)
+    >>> tree = DecisionTreeClassifier(random_state=0).fit(X, y)
 
-        >>> X_test = np.array([np.nan]).reshape(-1, 1)
-        >>> tree.predict(X_test)
-        array([1])
+    >>> X_test = np.array([np.nan]).reshape(-1, 1)
+    >>> tree.predict(X_test)
+    array([1])
 
-    - If no missing values are seen during training for a given feature, then during
-      prediction missing values are mapped to the child with the most samples::
+- If no missing values are seen during training for a given feature, then during
+  prediction missing values are mapped to the child with the most samples::
 
-        >>> from sklearn.tree import DecisionTreeClassifier
-        >>> import numpy as np
+    >>> from sklearn.tree import DecisionTreeClassifier
+    >>> import numpy as np
 
-        >>> X = np.array([0, 1, 2, 3]).reshape(-1, 1)
-        >>> y = [0, 1, 1, 1]
+    >>> X = np.array([0, 1, 2, 3]).reshape(-1, 1)
+    >>> y = [0, 1, 1, 1]
 
-        >>> tree = DecisionTreeClassifier(random_state=0).fit(X, y)
+    >>> tree = DecisionTreeClassifier(random_state=0).fit(X, y)
 
-        >>> X_test = np.array([np.nan]).reshape(-1, 1)
-        >>> tree.predict(X_test)
-        array([1])
+    >>> X_test = np.array([np.nan]).reshape(-1, 1)
+    >>> tree.predict(X_test)
+    array([1])
+
+:class:`ExtraTreeClassifier`, and :class:`ExtraTreeRegressor` handle missing values
+in a slightly different way. When splitting a node, a random threshold will be chosen
+to split the non-missing values on. Then the non-missing values will be sent to the
+left and right child based on the randomly selected threshold, while the missing
+values will also be randomly sent to the left or right child. This is repeated for
+every feature considered at each split. The best split among these is chosen.
+
+During prediction, the treatment of missing-values is the same as that of the
+decision tree:
+
+- By default when predicting, the samples with missing values are classified
+  with the class used in the split found during training.
+
+- If no missing values are seen during training for a given feature, then during
+  prediction missing values are mapped to the child with the most samples.
 
 .. _minimal_cost_complexity_pruning:
 
@@ -685,25 +696,21 @@ with the smallest value of :math:`\alpha_{eff}` is the weakest link and will
 be pruned. This process stops when the pruned tree's minimal
 :math:`\alpha_{eff}` is greater than the ``ccp_alpha`` parameter.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
+* :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
 
-|details-start|
-**References**
-|details-split|
+.. rubric:: References
 
-    .. [BRE] L. Breiman, J. Friedman, R. Olshen, and C. Stone. Classification
-      and Regression Trees. Wadsworth, Belmont, CA, 1984.
+.. [BRE] L. Breiman, J. Friedman, R. Olshen, and C. Stone. Classification
+  and Regression Trees. Wadsworth, Belmont, CA, 1984.
 
-    * https://en.wikipedia.org/wiki/Decision_tree_learning
+* https://en.wikipedia.org/wiki/Decision_tree_learning
 
-    * https://en.wikipedia.org/wiki/Predictive_analytics
+* https://en.wikipedia.org/wiki/Predictive_analytics
 
-    * J.R. Quinlan. C4. 5: programs for machine learning. Morgan
-      Kaufmann, 1993.
+* J.R. Quinlan. C4. 5: programs for machine learning. Morgan
+  Kaufmann, 1993.
 
-    * T. Hastie, R. Tibshirani and J. Friedman. Elements of Statistical
-      Learning, Springer, 2009.
-
-|details-end|
+* T. Hastie, R. Tibshirani and J. Friedman. Elements of Statistical
+  Learning, Springer, 2009.

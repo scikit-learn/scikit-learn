@@ -1,11 +1,7 @@
-"""
-The :mod:`sklearn.utils.class_weight` module includes utilities for handling
-weights based on class labels.
-"""
+"""Utilities for handling weights based on class labels."""
 
-# Authors: Andreas Mueller
-#          Manoj Kumar
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 from scipy import sparse
@@ -49,6 +45,14 @@ def compute_class_weight(class_weight, *, classes, y):
     ----------
     The "balanced" heuristic is inspired by
     Logistic Regression in Rare Events Data, King, Zen, 2001.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils.class_weight import compute_class_weight
+    >>> y = [1, 1, 1, 1, 0, 0]
+    >>> compute_class_weight(class_weight="balanced", classes=np.unique(y), y=y)
+    array([1.5 , 0.75])
     """
     # Import error caused by circular imports.
     from ..preprocessing import LabelEncoder
@@ -133,6 +137,13 @@ def compute_sample_weight(class_weight, y, *, indices=None):
     -------
     sample_weight_vect : ndarray of shape (n_samples,)
         Array with sample weights as applied to the original `y`.
+
+    Examples
+    --------
+    >>> from sklearn.utils.class_weight import compute_sample_weight
+    >>> y = [1, 1, 1, 1, 0, 0]
+    >>> compute_sample_weight(class_weight="balanced", y=y)
+    array([0.75, 0.75, 0.75, 0.75, 1.5 , 1.5 ])
     """
 
     # Ensure y is 2D. Sparse matrices are already 2D.
