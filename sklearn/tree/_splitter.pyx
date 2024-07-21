@@ -112,7 +112,7 @@ cdef class Splitter:
         self.random_state = random_state
         self.monotonic_cst = monotonic_cst
         self.with_monotonic_cst = monotonic_cst is not None
-        
+
         # Unused in random splitters
         self.breiman_shortcut = breiman_shortcut
 
@@ -212,8 +212,7 @@ cdef class Splitter:
         if n_categories is None:
             self.n_categories = np.array([-1] * n_features, dtype=np.int32)
         else:
-            self.n_categories = np.empty(n_categories, dtype=np.int32)
-            self.n_categories[:] = n_categories
+            self.n_categories = n_categories
 
         return 0
 
@@ -283,129 +282,6 @@ cdef class Splitter:
         """Return the impurity of the current node."""
 
         return self.criterion.node_impurity()
-
-
-cdef class BestDenseSplitter(Splitter):
-    """Splitter for finding the best split on dense data."""
-    cdef DensePartitioner partitioner
-    cdef int init(
-        self,
-        object X,
-        const float64_t[:, ::1] y,
-        const float64_t[:] sample_weight,
-        const uint8_t[::1] missing_values_in_feature_mask,
-        const int32_t[::1] n_categories,
-    ) except -1:
-        Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask, n_categories)
-        self.partitioner = DensePartitioner(
-            X,
-            self.samples,
-            self.feature_values,
-            missing_values_in_feature_mask,
-            n_categories,
-            self.breiman_shortcut
-        )
-
-    cdef int node_split(
-        self,
-        ParentInfo* parent_record,
-        SplitRecord* split,
-    ) except -1 nogil:
-        return node_split_best(
-            self,
-            self.partitioner,
-            self.criterion,
-            split,
-            parent_record,
-        )
-
-cdef class BestSparseSplitter(Splitter):
-    """Splitter for finding the best split, using the sparse data."""
-    cdef SparsePartitioner partitioner
-    cdef int init(
-        self,
-        object X,
-        const float64_t[:, ::1] y,
-        const float64_t[:] sample_weight,
-        const uint8_t[::1] missing_values_in_feature_mask,
-        const int32_t[::1] n_categories,
-    ) except -1:
-        Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask, n_categories)
-        self.partitioner = SparsePartitioner(
-            X, self.samples, self.n_samples, self.feature_values, missing_values_in_feature_mask, n_categories, self.breiman_shortcut
-        )
-
-    cdef int node_split(
-        self,
-        ParentInfo* parent_record,
-        SplitRecord* split,
-    ) except -1 nogil:
-        return node_split_best(
-            self,
-            self.partitioner,
-            self.criterion,
-            split,
-            parent_record,
-        )
-
-
-cdef class RandomDenseSplitter(Splitter):
-    """Splitter for finding the best random split on dense data."""
-    cdef DensePartitioner partitioner
-    cdef int init(
-        self,
-        object X,
-        const float64_t[:, ::1] y,
-        const float64_t[:] sample_weight,
-        const uint8_t[::1] missing_values_in_feature_mask,
-        const int32_t[::1] n_categories,
-    ) except -1:
-        Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask, n_categories)
-        self.partitioner = DensePartitioner(
-            X, self.samples, self.feature_values, missing_values_in_feature_mask, n_categories
-        )
-
-    cdef int node_split(
-        self,
-        ParentInfo* parent_record,
-        SplitRecord* split,
-    ) except -1 nogil:
-        return node_split_random(
-            self,
-            self.partitioner,
-            self.criterion,
-            split,
-            parent_record,
-        )
-
-cdef class RandomSparseSplitter(Splitter):
-    """Splitter for finding the best random split, using the sparse data."""
-    cdef SparsePartitioner partitioner
-    cdef int init(
-        self,
-        object X,
-        const float64_t[:, ::1] y,
-        const float64_t[:] sample_weight,
-        const uint8_t[::1] missing_values_in_feature_mask,
-        const int32_t[::1] n_categories,
-    ) except -1:
-        Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask, n_categories)
-        self.partitioner = SparsePartitioner(
-            X, self.samples, self.n_samples, self.feature_values, missing_values_in_feature_mask, n_categories
-        )
-
-    cdef int node_split(
-        self,
-        ParentInfo* parent_record,
-        SplitRecord* split,
-    ) except -1 nogil:
-        return node_split_random(
-            self,
-            self.partitioner,
-            self.criterion,
-            split,
-            parent_record,
-        )
 
 
 cdef inline int node_split_best(
@@ -1047,3 +923,119 @@ cdef inline int node_split_random(
     parent_record.n_constant_features = n_total_constants
     split[0] = best_split
     return 0
+
+
+cdef class BestSplitter(Splitter):
+    """Splitter for finding the best split on dense data."""
+    cdef DensePartitioner partitioner
+    cdef int init(
+        self,
+        object X,
+        const float64_t[:, ::1] y,
+        const float64_t[:] sample_weight,
+        const uint8_t[::1] missing_values_in_feature_mask,
+        const int32_t[::1] n_categories,
+    ) except -1:
+        Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask, n_categories)
+        self.partitioner = DensePartitioner(
+            X, self.samples, self.feature_values, missing_values_in_feature_mask, n_categories, self.breiman_shortcut
+        )
+
+    cdef int node_split(
+            self,
+            ParentInfo* parent_record,
+            SplitRecord* split,
+    ) except -1 nogil:
+        return node_split_best(
+            self,
+            self.partitioner,
+            self.criterion,
+            split,
+            parent_record,
+        )
+
+cdef class BestSparseSplitter(Splitter):
+    """Splitter for finding the best split, using the sparse data."""
+    cdef SparsePartitioner partitioner
+    cdef int init(
+        self,
+        object X,
+        const float64_t[:, ::1] y,
+        const float64_t[:] sample_weight,
+        const uint8_t[::1] missing_values_in_feature_mask,
+        const int32_t[::1] n_categories,
+    ) except -1:
+        Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask, n_categories)
+        self.partitioner = SparsePartitioner(
+            X, self.samples, self.n_samples, self.feature_values, missing_values_in_feature_mask, n_categories, self.breiman_shortcut
+        )
+
+    cdef int node_split(
+            self,
+            ParentInfo* parent_record,
+            SplitRecord* split,
+    ) except -1 nogil:
+        return node_split_best(
+            self,
+            self.partitioner,
+            self.criterion,
+            split,
+            parent_record,
+        )
+
+cdef class RandomSplitter(Splitter):
+    """Splitter for finding the best random split on dense data."""
+    cdef DensePartitioner partitioner
+    cdef int init(
+        self,
+        object X,
+        const float64_t[:, ::1] y,
+        const float64_t[:] sample_weight,
+        const uint8_t[::1] missing_values_in_feature_mask,
+        const int32_t[::1] n_categories,
+    ) except -1:
+        Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask, n_categories)
+        self.partitioner = DensePartitioner(
+            X, self.samples, self.feature_values, missing_values_in_feature_mask, n_categories, self.breiman_shortcut
+        )
+
+    cdef int node_split(
+            self,
+            ParentInfo* parent_record,
+            SplitRecord* split,
+    ) except -1 nogil:
+        return node_split_random(
+            self,
+            self.partitioner,
+            self.criterion,
+            split,
+            parent_record,
+        )
+
+cdef class RandomSparseSplitter(Splitter):
+    """Splitter for finding the best random split, using the sparse data."""
+    cdef SparsePartitioner partitioner
+    cdef int init(
+        self,
+        object X,
+        const float64_t[:, ::1] y,
+        const float64_t[:] sample_weight,
+        const uint8_t[::1] missing_values_in_feature_mask,
+        const int32_t[::1] n_categories,
+    ) except -1:
+        Splitter.init(self, X, y, sample_weight, missing_values_in_feature_mask, n_categories)
+        self.partitioner = SparsePartitioner(
+            X, self.samples, self.n_samples, self.feature_values, missing_values_in_feature_mask, n_categories, self.breiman_shortcut
+        )
+    cdef int node_split(
+            self,
+            ParentInfo* parent_record,
+            SplitRecord* split,
+    ) except -1 nogil:
+        return node_split_random(
+            self,
+            self.partitioner,
+            self.criterion,
+            split,
+            parent_record,
+        )

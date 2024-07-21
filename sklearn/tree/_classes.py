@@ -74,8 +74,8 @@ CRITERIA_REG = {
 }
 
 DENSE_SPLITTERS = {
-    "best": _splitter.BestDenseSplitter,
-    "random": _splitter.RandomDenseSplitter,
+    "best": _splitter.BestSplitter,
+    "random": _splitter.RandomSplitter,
 }
 
 SPARSE_SPLITTERS = {
@@ -532,7 +532,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             )
 
         if (
-            not isinstance(splitter, _splitter.RandomDenseSplitter)
+            not isinstance(splitter, _splitter.RandomSplitter)
             and np.max(n_categories) > 64
         ):
             raise ValueError(
@@ -575,7 +575,14 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 self.min_impurity_decrease,
             )
 
-        builder.build(self.tree_, X, y, sample_weight, missing_values_in_feature_mask)
+        builder.build(
+            self.tree_,
+            X,
+            y,
+            sample_weight,
+            missing_values_in_feature_mask,
+            n_categories,
+        )
 
         if self.n_outputs_ == 1 and is_classifier(self):
             self.n_classes_ = self.n_classes_[0]

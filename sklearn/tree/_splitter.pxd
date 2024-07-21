@@ -4,8 +4,9 @@
 # See _splitter.pyx for details.
 
 from ..ensemble._hist_gradient_boosting.common cimport BITSET_INNER_DTYPE_C
-from ..utils._typedefs cimport (BITSET_t, float32_t, float64_t, int8_t,
-                                int32_t, intp_t, uint8_t, uint32_t, uint64_t)
+from ..utils._typedefs cimport (
+    BITSET_t, float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t, uint64_t
+)
 from ._utils cimport ParentInfo, SplitRecord, SplitValue
 from ._criterion cimport Criterion
 
