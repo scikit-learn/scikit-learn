@@ -325,7 +325,7 @@ class RFE(_RoutingNotSupportedMixin, SelectorMixin, MetaEstimatorMixin, BaseEsti
                 self.importance_getter,
                 transform_func="square",
             )
-            ranks = np.argsort(importances)
+            ranks = np.argsort(importances, kind="stable")
 
             # for sparse case ranks is matrix
             ranks = np.ravel(ranks)
