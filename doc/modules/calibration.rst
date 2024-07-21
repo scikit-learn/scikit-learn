@@ -167,11 +167,11 @@ predicted probabilities of the `k` estimators in the `calibrated_classifiers_`
 list. The output of :term:`predict` is the class that has the highest
 probability.
 
-It is important to choose `cv` carefully such that all classes are present in
-every train split when `ensemble=True`. When a
+It is important to choose `cv` carefully when using `ensemble=True`.
+All classes should be present in every train split. When a
 class is absent, the predicted probability for that class will
-default to 0 for that `(classifier, calibrator)` couple. This
-skews the :term:`predict_proba` as it averages across all `calibrated_classifiers_`.
+default to 0 for the `(classifier, calibrator)` couple of that split. This
+skews the :term:`predict_proba` as it averages across all couples.
 
 When `ensemble=False`, cross-validation is used to obtain 'unbiased'
 predictions for all the data, via
