@@ -171,12 +171,12 @@ def _write_label_html(
                 f' rel="noreferrer" target="_blank" href="{doc_link}">?{doc_label}</a>'
             )
 
-        name_div = (
+        name_caption_div = (
             ""
             if name_caption is None
             else f'<div class="caption">{html.escape(name_caption)}</div>'
         )
-        name_div = f"<div><div>{name}</div>{name_div}</div>"
+        name_caption_div = f"<div><div>{name}</div>{name_caption_div}</div>"
         links_div = (
             f"<div>{doc_link}{is_fitted_icon}</div>"
             if doc_link or is_fitted_icon
@@ -185,7 +185,7 @@ def _write_label_html(
 
         label_html = (
             f'<label for="{est_id}" class="sk-toggleable__label {is_fitted_css_class} '
-            f'sk-toggleable__label-arrow">{name_div}{links_div}</label>'
+            f'sk-toggleable__label-arrow">{name_caption_div}{links_div}</label>'
         )
 
         fmt_str = (
