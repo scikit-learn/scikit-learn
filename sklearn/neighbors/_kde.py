@@ -219,26 +219,36 @@ class KernelDensity(BaseEstimator):
             sample_weight = _check_sample_weight(
                 sample_weight, X, dtype=np.float64, only_non_negative=True
             )
+            normalized_sample_weight = sample_weight / sample_weight.sum()
+            n_effective_samples = 1 / np.sum(normalized_sample_weight**2)
+        else:
+            n_effective_samples = X.shape[0]
 
         if isinstance(self.bandwidth, str):
             if self.bandwidth == "scott":
-                self.bandwidth_ = X.shape[0] ** (-1 / (X.shape[1] + 4))
+                self.bandwidth_ = n_effective_samples ** (-1 / (X.shape[1] + 4))
             elif self.bandwidth == "silverman":
-                self.bandwidth_ = (X.shape[0] * (X.shape[1] + 2) / 4) ** (
+                self.bandwidth_ = (n_effective_samples * (X.shape[1] + 2) / 4) ** (
                     -1 / (X.shape[1] + 4)
                 )
         else:
             self.bandwidth_ = self.bandwidth
 
         X = self._validate_data(X, order="C", dtype=np.float64)
-        self._cov = np.atleast_2d(np.cov(X.T))
+
+        # The formula is:
+        #   1 / (N * sum(w_i) * |H|) * sum_i [ w_i * K(H^{-1} (x - x_i)) ],
+        # where H = bandwidth * covariance^{1/2}. Here `self._cho_cov` is just the
+        # square root of the covariance matrix
+        self._cov = np.atleast_2d(np.cov(X.T, aweights=sample_weight))
         self._cho_cov = cholesky(self._cov, lower=True)
 
         kwargs = self.metric_params
         if kwargs is None:
             kwargs = {}
 
-        # Data need to be scaled
+        # Data need to be scaled before passing to the tree (bandwidth is taken care
+        # of by the tree so we only scale by covariance^{-1/2} here)
         self.tree_ = TREE_DICT[algorithm](
             solve_triangular(self._cho_cov, X.T, lower=True).T,
             metric=self.metric,
