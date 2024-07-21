@@ -75,13 +75,12 @@ from ._testing import (
     assert_array_almost_equal,
     assert_array_equal,
     assert_array_less,
-    assert_raise_message,
     create_memmap_backed_data,
     ignore_warnings,
     raises,
     set_random_state,
 )
-from .fixes import SPARSE_ARRAY_PRESENT, parse_version, sp_version
+from .fixes import SPARSE_ARRAY_PRESENT
 from .validation import _num_samples, check_is_fitted, has_fit_parameter
 
 REGRESSION_DATASET = None
@@ -775,11 +774,6 @@ def _set_checking_parameters(estimator):
 
     if name == "OneHotEncoder":
         estimator.set_params(handle_unknown="ignore")
-
-    if name == "QuantileRegressor":
-        # Avoid warning due to Scipy deprecating interior-point solver
-        solver = "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
-        estimator.set_params(solver=solver)
 
     if name in CROSS_DECOMPOSITION:
         estimator.set_params(n_components=1)
@@ -1494,9 +1488,8 @@ def check_fit2d_predict1d(name, estimator_orig):
 
     for method in ["predict", "transform", "decision_function", "predict_proba"]:
         if hasattr(estimator, method):
-            assert_raise_message(
-                ValueError, "Reshape your data", getattr(estimator, method), X[0]
-            )
+            with raises(ValueError, match="Reshape your data"):
+                getattr(estimator, method)(X[0])
 
 
 def _apply_on_subsets(func, X):
