@@ -2005,7 +2005,7 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
 
     The difference between :class:`LeavePGroupsOut` and ``GroupShuffleSplit`` is that
     the former generates splits using all subsets of size ``p`` unique groups,
-    whereas GroupShuffleSplit generates a user-determined number of random
+    whereas ``GroupShuffleSplit`` generates a user-determined number of random
     test splits, each with a user-determined fraction of unique groups.
 
     For example, a less computationally intensive alternative to
@@ -2013,7 +2013,7 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
     ``GroupShuffleSplit(test_size=10, n_splits=100)``.
 
     Note: The parameters ``test_size`` and ``train_size`` refer to groups, and
-    not to samples, as in :class:`ShuffleSplit`.
+    not to samples as in :class:`ShuffleSplit`.
 
     Read more in the :ref:`User Guide <group_shuffle_split>`.
 
