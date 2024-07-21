@@ -1349,7 +1349,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         over the probability of the positive class.
         Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
 
-        .. versionadded:: 1.4
+        .. versionadded:: 1.6
 
     Attributes
     ----------
@@ -1987,7 +1987,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         over the probability of the positive class.
         Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
 
-        .. versionadded:: 1.4
+        .. versionadded:: 1.6
 
     Attributes
     ----------
