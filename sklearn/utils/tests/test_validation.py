@@ -462,6 +462,12 @@ def test_check_array():
     result = check_array(X_no_array)
     assert isinstance(result, np.ndarray)
 
+    # check negative values when only_non_negative=True
+    X_neg = check_array([[1, 2], [-3, 4]])
+    err_msg = "Negative values in data passed to check_array"
+    with pytest.raises(ValueError, match=err_msg):
+        check_array(X_neg, only_non_negative=True)
+
 
 @pytest.mark.parametrize(
     "X",

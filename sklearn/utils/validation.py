@@ -719,6 +719,7 @@ def check_array(
     copy=False,
     force_writeable=False,
     force_all_finite=True,
+    only_non_negative=False,
     ensure_2d=True,
     allow_nd=False,
     ensure_min_samples=1,
@@ -789,6 +790,10 @@ def check_array(
 
         .. versionchanged:: 0.23
            Accepts `pd.NA` and converts it into `np.nan`
+
+    only_non_negative: bool, default=False
+        Make sure the array has only non-negative values. An array that contains
+        non-negative values will raise a ValueError.
 
     ensure_2d : bool, default=True
         Whether to raise a value error if array is not 2D.
@@ -1014,6 +1019,9 @@ def check_array(
         # result is that np.array(..) produces an array of complex dtype
         # and we need to catch and raise exception for such cases.
         _ensure_no_complex_data(array)
+
+        if only_non_negative:
+            check_non_negative(array, "check_array")
 
         if ensure_2d:
             # If input is scalar raise error
