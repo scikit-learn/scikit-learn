@@ -172,7 +172,7 @@ def _construct_sparse_coder(Estimator):
     return Estimator(dictionary=dictionary)
 
 
-@ignore_warnings(category=sklearn.exceptions.ConvergenceWarning)
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 # TODO(1.6): remove "@pytest.mark.filterwarnings" as SAMME.R will be removed
 # and substituted with the SAMME algorithm as a default
 @pytest.mark.filterwarnings("ignore:The SAMME.R algorithm")
