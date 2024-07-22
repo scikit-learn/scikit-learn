@@ -21,6 +21,7 @@ doc/css/*
 !doc/css/.gitkeep
 doc/modules/generated/
 doc/datasets/generated/
+doc/developers/maintainer.rst
 doc/index.rst
 doc/min_dependency_table.rst
 doc/min_dependency_substitutions.rst
