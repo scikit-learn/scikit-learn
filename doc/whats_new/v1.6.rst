@@ -241,6 +241,9 @@ Changelog
   when duplicate values in the training data lead to inaccurate outlier detection.
   :pr:`28773` by :user:`Henrique Caroço <HenriqueProj>`.
 
+- |Fix| :class:`neighbors.KernelDensity` now correctly handles data with non-unit
+  variance. :pr:`26658` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 

@@ -236,6 +236,11 @@ class KernelDensity(BaseEstimator):
 
         X = self._validate_data(X, order="C", dtype=np.float64)
 
+        if X.shape[0] == 1:
+            raise ValueError(
+                "n_samples=1 while KernelDensity requires more than one sample"
+            )
+
         # The formula is:
         #   1 / (N * sum(w_i) * |H|) * sum_i [ w_i * K(H^{-1} (x - x_i)) ],
         # where H = bandwidth * covariance^{1/2}. Here `self._cho_cov` is just the
