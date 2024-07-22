@@ -188,6 +188,7 @@ def accuracy_score(
         Sets the value to return when there is a zero division,
         e.g. when `y_true` and `y_pred` are empty.
         If set to "warn", returns 0.0 input, but a warning is also raised.
+
         versionadded:: 1.6
 
     Returns
@@ -231,10 +232,7 @@ def accuracy_score(
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
 
-    # Check y_true and y_pred is empty
-    len_y_true = _num_samples(y_true)
-
-    if len_y_true == 0:  # empty vectors
+    if _num_samples(y_true) == 0:
         if zero_division == "warn":
             msg = (
                 "accuracy() is ill-defined and set to 0.0. Use the `zero_division` "

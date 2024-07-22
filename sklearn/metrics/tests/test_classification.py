@@ -817,8 +817,10 @@ def test_zero_division_nan_no_warning(metric, y_true, y_pred, zero_division):
     """Check the behaviour of `zero_division` when setting to 0, 1 or np.nan.
     No warnings should be raised.
     """
-    if metric == accuracy_score and (y_true, y_pred) != ([], []):
-        pytest.skip("Skipping accuracy_score for non-empty input pairs")
+    if metric is accuracy_score and len(y_true):
+        pytest.skip(
+            reason="zero_division is only used with empty y_true/y_pred for accuracy"
+        )
 
     with warnings.catch_warnings():
         warnings.simplefilter("error")
@@ -846,8 +848,11 @@ def test_zero_division_nan_warning(metric, y_true, y_pred):
     """Check the behaviour of `zero_division` when setting to "warn".
     A `UndefinedMetricWarning` should be raised.
     """
-    if metric == accuracy_score and (y_true, y_pred) != ([], []):
-        pytest.skip("Skipping accuracy_score for non-empty input pairs")
+    if metric is accuracy_score and len(y_true):
+        pytest.skip(
+            reason="zero_division is only used with empty y_true/y_pred for accuracy"
+        )
+
     with pytest.warns(UndefinedMetricWarning):
         result = metric(y_true, y_pred, zero_division="warn")
     assert result == 0.0
