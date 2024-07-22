@@ -2063,14 +2063,12 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
     n_splits : int, default=5
         Number of re-shuffling & splitting iterations.
 
-    test_size : float, int, default=0.2
+    test_size : float, int, default=None
         If float, should be between 0.0 and 1.0 and represent the proportion
         of groups to include in the test split (rounded up). If int,
         represents the absolute number of test groups. If None, the value is
-        set to the complement of the train size.
-        The default will change in version 0.21. It will remain 0.2 only
-        if ``train_size`` is unspecified, otherwise it will complement
-        the specified ``train_size``.
+        set to the complement of the train size. If ``train_size`` is also None,
+        it will be set to 0.2.
 
     train_size : float or int, default=None
         If float, should be between 0.0 and 1.0 and represent the
