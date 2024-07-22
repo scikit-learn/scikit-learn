@@ -18,7 +18,6 @@ from sklearn.datasets import make_blobs, make_classification
 from sklearn.exceptions import (
     ConvergenceWarning,
     NotFittedError,
-    UndefinedMetricWarning,
 )
 from sklearn.metrics import f1_score
 from sklearn.metrics.pairwise import rbf_kernel
@@ -36,7 +35,6 @@ from sklearn.svm import (  # type: ignore
 )
 from sklearn.svm._classes import _validate_dual_parameter
 from sklearn.utils import check_random_state, shuffle
-from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.fixes import CSR_CONTAINERS, LIL_CONTAINERS
 from sklearn.utils.validation import _num_samples
 
@@ -641,7 +639,6 @@ def test_negative_weight_equal_coeffs(Estimator, sample_weight):
     assert coef[0] == pytest.approx(coef[1], rel=1e-3)
 
 
-@ignore_warnings(category=UndefinedMetricWarning)
 def test_auto_weight():
     # Test class weights for imbalanced data
     from sklearn.linear_model import LogisticRegression
@@ -1055,7 +1052,7 @@ def test_unfitted():
 
 
 # ignore convergence warnings from max_iter=1
-@ignore_warnings
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_consistent_proba():
     a = svm.SVC(probability=True, max_iter=1, random_state=0)
     proba_1 = a.fit(X, Y).predict_proba(X)
