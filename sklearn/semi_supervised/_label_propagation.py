@@ -54,6 +54,7 @@ Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
+
 import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
