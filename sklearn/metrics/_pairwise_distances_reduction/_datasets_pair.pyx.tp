@@ -172,7 +172,7 @@ cdef class PrecomputedDistanceMatrix{{name_suffix}}(DatasetsPair{{name_suffix}})
     Parameters
     ----------
     precomputed_distance: ndarray of shape (n_samples_X, n_samples_Y) 
-        Rows represent vectors. Must be C-contiguous. 
+        Must be C-contiguous. 
         Requires (i,j) indices to access the precomputed value
     """
 
@@ -181,8 +181,6 @@ cdef class PrecomputedDistanceMatrix{{name_suffix}}(DatasetsPair{{name_suffix}})
         const {{INPUT_DTYPE_t}}[:, ::1] precomputed_distance,
     ):
         super().__init__(
-            # This DistanceMetric is necessary for conversion between
-            # reduced distance and distance (it performs no-ops).
             distance_metric={{DistanceMetric}}(),
             n_features=0,
         )
@@ -202,11 +200,13 @@ cdef class PrecomputedDistanceMatrix{{name_suffix}}(DatasetsPair{{name_suffix}})
     cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) noexcept nogil:
         return self.precomputed_distance[i, j]
 
-    
     @final
     cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) noexcept nogil:
         return self.precomputed_distance[i, j]
-    
+
+    @classmethod
+    cdef DTYPE_t matrix(cls) noexcept nogil:
+        return self.precomputed_distance
 
 @final
 cdef class DenseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
