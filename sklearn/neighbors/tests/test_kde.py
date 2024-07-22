@@ -58,8 +58,9 @@ def check_results(kernel, bandwidth, atol, rtol, X, Y, dens_true, breadth_first)
         np.exp(kde.score(Y)), np.prod(dens_true), atol=atol, rtol=max(1e-7, rtol)
     )
 
-    if bandwidth == "gaussian":
-        # scipy support only Gaussian kernel
+    # Check against the scipy brute-force implementation, but scipy supports only
+    # Gaussian kernel
+    if kernel == "gaussian":
         scipy_res = gaussian_kde(X.T, bw_method=bandwidth).pdf(Y.T)
         assert_allclose(np.exp(log_dens), scipy_res, atol=atol, rtol=max(1e-7, rtol))
 
@@ -171,9 +172,6 @@ def test_kde_pipeline_gridsearch():
 @pytest.mark.parametrize("metric", ["euclidean", "minkowski", "manhattan", "chebyshev"])
 @pytest.mark.parametrize("d", [1, 2, 10])
 def test_kde_sample_weights(algorithm, metric, d):
-    if algorithm == "kd_tree" and metric not in KDTree.valid_metrics:
-        pytest.skip("Invalid metric for KDTree")
-
     n_samples = 400
     size_test = 20
     weights_neutral = np.full(n_samples, 3.0)
