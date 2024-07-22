@@ -13,7 +13,7 @@ dependencies = [
   "threadpoolctl>=3.1.0",
 ]
 requires-python = ">=3.9"
-license = {text = "new BSD"}
+license = {file = "COPYING"}
 classifiers=[
   "Intended Audience :: Science/Research",
   "Intended Audience :: Developers",
@@ -62,7 +62,7 @@ docs = [
     "sphinxext-opengraph>=0.9.1",
     "plotly>=5.14.0",
     "polars>=0.20.23",
-    "sphinx-design>=0.5.0",
+    "sphinx-design>=0.6.0",
     "sphinxcontrib-sass>=0.3.4",
     "pydata-sphinx-theme>=0.15.3",
     "sphinx-remove-toctrees>=1.0.0.post1",
@@ -98,7 +98,7 @@ build-backend = "mesonpy"
 requires = [
     "meson-python>=0.16.0",
     "Cython>=3.0.10",
-    "numpy>=1.25",
+    "numpy>=2",
     "scipy>=1.6.0",
 ]
 
@@ -210,3 +210,16 @@ exclude= '''
 sdist-only = []
 git-only = [".*", "asv_benchmarks", "azure-pipelines.yml", "benchmarks", "build_tools", "maint_tools"]
 default-ignore = false
+
+[tool.spin]
+package = "sklearn"  # name of your package
+
+[tool.spin.commands]
+"Build" = [
+  "spin.cmds.pip.install",
+  "spin.cmds.meson.test",
+  ".spin/cmds.py:clean",
+]
+"Documentation" = [
+  "spin.cmds.meson.docs"
+]

@@ -70,10 +70,6 @@ _METHODS_IGNORE_NONE_Y = [
 ]
 
 
-# numpydoc 0.8.0's docscrape tool raises because of collections.abc under
-# Python 3.7
-@pytest.mark.filterwarnings("ignore::FutureWarning")
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_docstring_parameters():
     # Test module docstring formatting
 
@@ -176,7 +172,7 @@ def _construct_sparse_coder(Estimator):
     return Estimator(dictionary=dictionary)
 
 
-@ignore_warnings(category=sklearn.exceptions.ConvergenceWarning)
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 # TODO(1.6): remove "@pytest.mark.filterwarnings" as SAMME.R will be removed
 # and substituted with the SAMME algorithm as a default
 @pytest.mark.filterwarnings("ignore:The SAMME.R algorithm")

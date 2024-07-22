@@ -219,6 +219,10 @@ Changelog
   :pr:`29210` by :user:`Marc Torrellas Socastro <marctorsoc>` and
   :user:`Stefanie Senger <StefanieSenger>`.
 
+- |API| scoring="neg_max_error" should be used instead of
+  scoring="max_error" which is now deprecated.
+  :pr:`29462` by :user:`Farid "Freddie" Taba <artificialfintelligence>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -237,6 +241,13 @@ Changelog
   when duplicate values in the training data lead to inaccurate outlier detection.
   :pr:`28773` by :user:`Henrique Caroço <HenriqueProj>`.
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Enhancement| The HTML representation of :class:`preprocessing.FunctionTransformer`
+  will show the function name in the label.
+  :pr:`29158` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 :mod:`sklearn.semi_supervised`
 ..............................
 
@@ -252,6 +263,8 @@ Changelog
   randomly moving all of the samples to the left, or right child node as the tree is
   traversed.
   :pr:`27966` by :user:`Adam Li <adam2392>`.
+
+.. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:
