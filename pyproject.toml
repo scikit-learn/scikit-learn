@@ -13,7 +13,7 @@ dependencies = [
   "threadpoolctl>=3.1.0",
 ]
 requires-python = ">=3.9"
-license = {text = "new BSD"}
+license = {file = "COPYING"}
 classifiers=[
   "Intended Audience :: Science/Research",
   "Intended Audience :: Developers",
