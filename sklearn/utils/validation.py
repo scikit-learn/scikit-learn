@@ -791,7 +791,7 @@ def check_array(
         .. versionchanged:: 0.23
            Accepts `pd.NA` and converts it into `np.nan`
 
-    only_non_negative: bool, default=False
+    only_non_negative : bool, default=False
         Make sure the array has only non-negative values. An array that contains
         non-negative values will raise a ValueError.
 
