@@ -93,7 +93,6 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
-    ignore_warnings,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS
 from sklearn.utils.validation import _num_samples
@@ -622,7 +621,7 @@ class BrokenClassifier(BaseEstimator):
         return np.zeros(X.shape[0])
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.UndefinedMetricWarning")
 def test_refit():
     # Regression test for bug in refitting
     # Simulates re-fitting a broken estimator; this used to break with
@@ -1416,7 +1415,7 @@ def test_search_cv_results_none_param():
         assert_array_equal(grid_search.cv_results_["param_random_state"], [0, None])
 
 
-@ignore_warnings()
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.FitFailedWarning")
 def test_search_cv_timing():
     svc = LinearSVC(random_state=0)
 

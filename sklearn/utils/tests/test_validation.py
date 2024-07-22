@@ -46,7 +46,6 @@ from sklearn.utils._testing import (
     assert_allclose_dense_sparse,
     assert_array_equal,
     create_memmap_backed_data,
-    ignore_warnings,
     skip_if_array_api_compat_not_configured,
 )
 from sklearn.utils.estimator_checks import _NotAnArray
@@ -341,7 +340,7 @@ def test_check_array_series_err_msg():
         check_array(ser, ensure_2d=True)
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings("ignore:Can't check dok sparse matrix for nan or inf")
 def test_check_array():
     # accept_sparse == False
     # raise error on sparse inputs
