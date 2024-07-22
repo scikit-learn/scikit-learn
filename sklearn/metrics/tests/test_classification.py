@@ -285,7 +285,7 @@ def test_precision_recall_f1_score_binary():
             )
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings(r"ignore::sklearn.exceptions.UndefinedMetricWarning")
 def test_precision_recall_f_binary_single_class():
     # Test precision, recall and F-scores behave with a single positive or
     # negative class
@@ -304,7 +304,7 @@ def test_precision_recall_f_binary_single_class():
     )
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings(r"ignore::sklearn.exceptions.UndefinedMetricWarning")
 def test_precision_recall_f_extra_labels():
     # Test handling of explicit additional (not in input) labels to PRF
     y_true = [1, 3, 3, 2]
@@ -350,7 +350,7 @@ def test_precision_recall_f_extra_labels():
     assert_almost_equal(np.array([p, r, f]), np.array([3 / 4, 1, 5 / 6]))
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings(r"ignore::sklearn.exceptions.UndefinedMetricWarning")
 def test_precision_recall_f_ignored_labels():
     # Test a subset of labels may be requested for PRF
     y_true = [1, 1, 2, 3]
@@ -1410,7 +1410,7 @@ def test_classification_report_no_labels_target_names_unequal_length():
         classification_report(y_true, y_pred, target_names=target_names)
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings(r"ignore::sklearn.exceptions.UndefinedMetricWarning")
 def test_multilabel_classification_report():
     n_classes = 4
     n_samples = 50
@@ -1680,7 +1680,7 @@ def test_jaccard_score_zero_division_set_value(zero_division, expected_score):
     assert score == pytest.approx(expected_score)
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings(r"ignore::sklearn.exceptions.UndefinedMetricWarning")
 def test_precision_recall_f1_score_multilabel_1():
     # Test precision_recall_f1_score on a crafted multilabel example
     # First crafted example
@@ -1747,7 +1747,7 @@ def test_precision_recall_f1_score_multilabel_1():
     assert_almost_equal(fbeta_score(y_true, y_pred, beta=2, average="samples"), 0.5)
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings(r"ignore::sklearn.exceptions.UndefinedMetricWarning")
 def test_precision_recall_f1_score_multilabel_2():
     # Test precision_recall_f1_score on a crafted multilabel example 2
     # Second crafted example
@@ -1812,7 +1812,7 @@ def test_precision_recall_f1_score_multilabel_2():
     )
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings(r"ignore::sklearn.exceptions.UndefinedMetricWarning")
 @pytest.mark.parametrize(
     "zero_division, zero_division_expected",
     [("warn", 0), (0, 0), (1, 1), (np.nan, np.nan)],
