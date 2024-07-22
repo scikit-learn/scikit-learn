@@ -427,7 +427,7 @@ def _safe_repr(object, context, maxlevels, level, changed_only=False):
     if issubclass(typ, BaseEstimator):
         objid = id(object)
         if maxlevels and level >= maxlevels:
-            return "{...}", False, objid in context
+            return f"{typ.__name__}(...)", False, objid in context
         if objid in context:
             return pprint._recursion(object), False, True
         context[objid] = 1

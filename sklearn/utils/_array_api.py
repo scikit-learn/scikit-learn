@@ -439,7 +439,15 @@ class _NumPyAPIWrapper:
         return numpy.reshape(x, shape)
 
     def isdtype(self, dtype, kind):
-        return isdtype(dtype, kind, xp=self)
+        try:
+            return isdtype(dtype, kind, xp=self)
+        except TypeError:
+            # In older versions of numpy, data types that arise from outside
+            # numpy like from a Polars Series raise a TypeError.
+            # e.g. TypeError: Cannot interpret 'Int64' as a data type.
+            # Therefore, we return False.
+            # TODO: Remove when minimum supported version of numpy is >= 1.21.
+            return False
 
     def pow(self, x1, x2):
         return numpy.power(x1, x2)
@@ -789,6 +797,19 @@ def _nanmax(X, axis=None, xp=None):
         if xp.any(mask):
             X = xp.where(mask, xp.asarray(xp.nan), X)
         return X
+
+
+def _clip(S, min_val, max_val, xp):
+    # TODO: remove this method and change all usage once we move to array api 2023.12
+    # https://data-apis.org/array-api/2023.12/API_specification/generated/array_api.clip.html#clip
+    if _is_numpy_namespace(xp):
+        return numpy.clip(S, min_val, max_val)
+    else:
+        min_arr = xp.asarray(min_val, dtype=S.dtype)
+        max_arr = xp.asarray(max_val, dtype=S.dtype)
+        S = xp.where(S < min_arr, min_arr, S)
+        S = xp.where(S > max_arr, max_arr, S)
+        return S
 
 
 def _asarray_with_order(

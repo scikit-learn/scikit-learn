@@ -75,7 +75,6 @@ from ._testing import (
     assert_array_almost_equal,
     assert_array_equal,
     assert_array_less,
-    assert_raise_message,
     create_memmap_backed_data,
     ignore_warnings,
     raises,
@@ -1489,9 +1488,8 @@ def check_fit2d_predict1d(name, estimator_orig):
 
     for method in ["predict", "transform", "decision_function", "predict_proba"]:
         if hasattr(estimator, method):
-            assert_raise_message(
-                ValueError, "Reshape your data", getattr(estimator, method), X[0]
-            )
+            with raises(ValueError, match="Reshape your data"):
+                getattr(estimator, method)(X[0])
 
 
 def _apply_on_subsets(func, X):
