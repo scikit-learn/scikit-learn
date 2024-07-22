@@ -177,6 +177,7 @@ notice-rgx = "\\#\\ Authors:\\ The\\ scikit\\-learn\\ developers\\\n\\#\\ SPDX\\
 "build_tools/*"=["CPY001"]
 "sklearn/_build_utils/*"=["CPY001"]
 "maint_tools/*"=["CPY001"]
+".spin/*"=["CPY001"]
 ".github/*"=["CPY001"]
 # __doc__ is too long (>4096 chars) and therefore false positive on copyright check
 "examples/model_selection/plot_precision_recall.py"=["CPY001"]
