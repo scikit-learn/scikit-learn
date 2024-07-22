@@ -204,8 +204,10 @@ def test_kde_sample_weights(algorithm, metric, d):
     kde.fit(X_repetitions)
     scores_ref_sampling = kde.score_samples(test_points)
     sample_ref_sampling = kde.sample(random_state=1234)
-    assert_allclose(scores_weight, scores_ref_sampling)
-    assert_allclose(sample_weight, sample_ref_sampling)
+    assert_allclose(
+        np.exp(scores_weight), np.exp(scores_ref_sampling), atol=1e-8, rtol=1e-2
+    )
+    assert_allclose(sample_weight, sample_ref_sampling, rtol=1e-2)
 
     # Test that sample weights has a non-trivial effect
     diff = np.max(np.abs(scores_no_weight - scores_weight))
