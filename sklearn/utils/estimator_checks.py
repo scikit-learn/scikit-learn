@@ -1,5 +1,8 @@
 """Various utilities to check the compatibility of estimators with scikit-learn API."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import pickle
 import re
 import warnings

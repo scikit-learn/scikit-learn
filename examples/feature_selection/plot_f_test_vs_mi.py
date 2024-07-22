@@ -23,6 +23,9 @@ perception for this example. Both methods correctly mark x_3 as irrelevant.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib.pyplot as plt
 import numpy as np
 
