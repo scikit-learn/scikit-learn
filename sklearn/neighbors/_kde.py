@@ -1,6 +1,5 @@
 """
 Kernel Density Estimation
--------------------------
 """
 
 # Authors: The scikit-learn developers
@@ -374,7 +373,7 @@ class KernelDensity(BaseEstimator):
                 self._cov * self.bandwidth_**2,
                 size=n_samples,
             )
-            return np.atleast_2d(data[i] + norm)
+            return data[i] + norm
 
         elif self.kernel == "tophat":
             # we first draw points from a d-dimensional normal distribution,

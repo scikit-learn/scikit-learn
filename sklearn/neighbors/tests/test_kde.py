@@ -83,7 +83,8 @@ def test_kernel_density(kernel, bandwidth, rtol, atol, breadth_first):
     check_results(kernel, bandwidth, atol, rtol, X, Y, dens_true, breadth_first)
 
 
-def test_kernel_density_sampling(n_samples=100, n_features=3):
+def test_kernel_density_sampling():
+    n_samples, n_features = 100, 3
     rng = np.random.RandomState(0)
     X = rng.randn(n_samples, n_features)
 
@@ -92,8 +93,8 @@ def test_kernel_density_sampling(n_samples=100, n_features=3):
     for kernel in ["gaussian", "tophat"]:
         # draw a tophat sample
         kde = KernelDensity(bandwidth=bandwidth, kernel=kernel).fit(X)
-        samp = kde.sample(100)
-        assert X.shape == samp.shape
+        samp = kde.sample(50)
+        assert samp.shape == (50, n_features)
 
         # check that samples are in the right range
         nbrs = NearestNeighbors(n_neighbors=1).fit(X)
@@ -110,7 +111,7 @@ def test_kernel_density_sampling(n_samples=100, n_features=3):
     for kernel in ["epanechnikov", "exponential", "linear", "cosine"]:
         kde = KernelDensity(bandwidth=bandwidth, kernel=kernel).fit(X)
         with pytest.raises(NotImplementedError):
-            kde.sample(100)
+            kde.sample(50)
 
     # non-regression test: used to return a scalar
     X = rng.randn(4, 1)
