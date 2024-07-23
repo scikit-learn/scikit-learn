@@ -506,6 +506,30 @@ def test_dbcv_score_zero_distance_intra():
     )
 
 
+def test_dbcv_score_zero_distance_inter():
+    expected_msg = (
+        "Aborting aggregation of score subcomponents: "
+        "the density separation between cluster 0 and "
+        "cluster 1 is zero, leading to an overall score "
+        "which is undefined."
+    )
+
+    # DBCV is undefined if DSPC is zero for any combination
+    with pytest.raises(ValueError, match=expected_msg):
+        dbcv_score(
+            [[0, 0], [0, 1], [0, 1], [1, 1]],
+            [0, 0, 1, 1],
+        )
+
+    # The same is true if the `mst_raw_dist` toggle is activated
+    # Going with a dataset of only duplicates here since the
+    # non-MRD version doesn't already fail on intra-cluster duplicates
+    with pytest.raises(ValueError, match=expected_msg):
+        dbcv_score(
+            [[0, 1] for _ in range(100)], [i % 2 for i in range(100)], mst_raw_dist=True
+        )
+
+
 def test_dbcv_score_tiny_cluster():
     dbcv_score(np.random.rand(5, 2), np.array([-1, 1, 1, 0, 0]))
     dbcv_score(
