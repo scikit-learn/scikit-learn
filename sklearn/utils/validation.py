@@ -719,7 +719,7 @@ def check_array(
     copy=False,
     force_writeable=False,
     force_all_finite=True,
-    only_non_negative=False,
+    ensure_non_negative=False,
     ensure_2d=True,
     allow_nd=False,
     ensure_min_samples=1,
@@ -791,7 +791,7 @@ def check_array(
         .. versionchanged:: 0.23
            Accepts `pd.NA` and converts it into `np.nan`
 
-    only_non_negative : bool, default=False
+    ensure_non_negative : bool, default=False
         Make sure the array has only non-negative values. An array that contains
         non-negative values will raise a ValueError.
 
@@ -1020,7 +1020,7 @@ def check_array(
         # and we need to catch and raise exception for such cases.
         _ensure_no_complex_data(array)
 
-        if only_non_negative:
+        if ensure_non_negative:
             check_non_negative(array, "check_array")
 
         if ensure_2d:
@@ -1993,7 +1993,7 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
 
 
 def _check_sample_weight(
-    sample_weight, X, dtype=None, copy=False, only_non_negative=False
+    sample_weight, X, dtype=None, copy=False, ensure_non_negative=False
 ):
     """Validate sample weights.
 
@@ -2010,7 +2010,7 @@ def _check_sample_weight(
     X : {ndarray, list, sparse matrix}
         Input data.
 
-    only_non_negative : bool, default=False,
+    ensure_non_negative : bool, default=False,
         Whether or not the weights are expected to be non-negative.
 
         .. versionadded:: 1.0
@@ -2061,7 +2061,7 @@ def _check_sample_weight(
                 )
             )
 
-    if only_non_negative:
+    if ensure_non_negative:
         check_non_negative(sample_weight, "`sample_weight`")
 
     return sample_weight

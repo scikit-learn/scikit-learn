@@ -462,11 +462,11 @@ def test_check_array():
     result = check_array(X_no_array)
     assert isinstance(result, np.ndarray)
 
-    # check negative values when only_non_negative=True
+    # check negative values when ensure_non_negative=True
     X_neg = check_array([[1, 2], [-3, 4]])
     err_msg = "Negative values in data passed to check_array"
     with pytest.raises(ValueError, match=err_msg):
-        check_array(X_neg, only_non_negative=True)
+        check_array(X_neg, ensure_non_negative=True)
 
 
 @pytest.mark.parametrize(
@@ -1486,13 +1486,13 @@ def test_check_sample_weight():
     sample_weight = _check_sample_weight(None, X, dtype=X.dtype)
     assert sample_weight.dtype == np.float64
 
-    # check negative weight when only_non_negative=True
+    # check negative weight when ensure_non_negative=True
     X = np.ones((5, 2))
     sample_weight = np.ones(_num_samples(X))
     sample_weight[-1] = -10
     err_msg = "Negative values in data passed to `sample_weight`"
     with pytest.raises(ValueError, match=err_msg):
-        _check_sample_weight(sample_weight, X, only_non_negative=True)
+        _check_sample_weight(sample_weight, X, ensure_non_negative=True)
 
 
 @pytest.mark.parametrize("toarray", [np.array, sp.csr_matrix, sp.csc_matrix])
