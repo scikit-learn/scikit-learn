@@ -1530,7 +1530,7 @@ def test_iterative_imputer_constant_fill_value():
 
 
 @pytest.mark.parametrize(
-    "missing_column,check_column,min_value,max_value",
+    "missing_column, check_column, min_value, max_value",
     [
         (2, 3, 4, 5),
         (3, 2, 3.5, 6),
