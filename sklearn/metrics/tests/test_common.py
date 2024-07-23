@@ -58,6 +58,7 @@ from sklearn.metrics.pairwise import (
     cosine_similarity,
     euclidean_distances,
     paired_cosine_distances,
+    paired_euclidean_distances,
     rbf_kernel,
 )
 from sklearn.preprocessing import LabelBinarizer
@@ -75,7 +76,7 @@ from sklearn.utils._testing import (
     assert_array_less,
     ignore_warnings,
 )
-from sklearn.utils.fixes import COO_CONTAINERS
+from sklearn.utils.fixes import COO_CONTAINERS, parse_version, sp_version
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import _num_samples, check_random_state
 
@@ -1866,6 +1867,12 @@ def check_array_api_multilabel_classification_metric(
 
 
 def check_array_api_regression_metric(metric, array_namespace, device, dtype_name):
+    func_name = metric.func.__name__ if isinstance(metric, partial) else metric.__name__
+    if func_name == "mean_poisson_deviance" and sp_version < parse_version("1.14.0"):
+        pytest.skip(
+            "mean_poisson_deviance's dependency `xlogy` is available as of scipy 1.14.0"
+        )
+
     y_true_np = np.array([2.0, 0.1, 1.0, 4.0], dtype=dtype_name)
     y_pred_np = np.array([0.5, 0.5, 2, 2], dtype=dtype_name)
 
@@ -2011,6 +2018,7 @@ array_api_metric_checkers = {
         check_array_api_regression_metric,
     ],
     paired_cosine_distances: [check_array_api_metric_pairwise],
+    mean_poisson_deviance: [check_array_api_regression_metric],
     additive_chi2_kernel: [check_array_api_metric_pairwise],
     mean_gamma_deviance: [check_array_api_regression_metric],
     max_error: [check_array_api_regression_metric],
@@ -2019,6 +2027,7 @@ array_api_metric_checkers = {
         check_array_api_regression_metric_multioutput,
     ],
     chi2_kernel: [check_array_api_metric_pairwise],
+    paired_euclidean_distances: [check_array_api_metric_pairwise],
     cosine_distances: [check_array_api_metric_pairwise],
     euclidean_distances: [check_array_api_metric_pairwise],
     rbf_kernel: [check_array_api_metric_pairwise],

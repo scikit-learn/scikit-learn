@@ -25,6 +25,9 @@ n_neighbors=20 appears to work well in general.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib
 import matplotlib.lines as mlines
 import matplotlib.pyplot as plt
