@@ -1,5 +1,9 @@
-from ..utils._array_api import _find_matching_floating_dtype, get_namespace
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+import numpy as np
 from .extmath import stable_cumsum
+from ..utils._array_api import _find_matching_floating_dtype, get_namespace
 
 
 def _weighted_percentile(array, sample_weight, percentile=50):

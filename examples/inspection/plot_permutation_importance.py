@@ -25,6 +25,9 @@ can mitigate those limitations.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Data Loading and Feature Engineering
 # ------------------------------------

@@ -2,13 +2,8 @@
 Logistic Regression
 """
 
-# Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
-#         Fabian Pedregosa <f@bianp.net>
-#         Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
-#         Manoj Kumar <manojkumarsivaraj334@gmail.com>
-#         Lars Buitinck
-#         Simon Wu <s8wu@uwaterloo.ca>
-#         Arthur Mensch <arthur.mensch@m4x.org
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numbers
 import warnings
