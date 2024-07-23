@@ -1,5 +1,8 @@
 """All minimum dependencies for scikit-learn."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import argparse
 from collections import defaultdict
 
@@ -29,7 +32,7 @@ dependent_packages = {
     "memory_profiler": ("0.57.0", "benchmark, docs"),
     "pytest": (PYTEST_MIN_VERSION, "tests"),
     "pytest-cov": ("2.9.0", "tests"),
-    "ruff": ("0.2.1", "tests"),
+    "ruff": ("0.5.1", "tests"),
     "black": ("24.3.0", "tests"),
     "mypy": ("1.9", "tests"),
     "pyamg": ("4.0.0", "tests"),
@@ -46,7 +49,7 @@ dependent_packages = {
     "plotly": ("5.14.0", "docs, examples"),
     "sphinxcontrib-sass": ("0.3.4", "docs"),
     "sphinx-remove-toctrees": ("1.0.0.post1", "docs"),
-    "sphinx-design": ("0.5.0", "docs"),
+    "sphinx-design": ("0.6.0", "docs"),
     "pydata-sphinx-theme": ("0.15.3", "docs"),
     # XXX: Pin conda-lock to the latest released version (needs manual update
     # from time to time)
