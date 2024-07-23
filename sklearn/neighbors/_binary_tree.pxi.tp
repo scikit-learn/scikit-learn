@@ -2104,18 +2104,16 @@ cdef class BinaryTree{{name_suffix}}:
                 node_log_min_bounds[i1] = (log(N1) +
                                            compute_log_kernel(dist_UB_1,
                                                               h, kernel))
-                node_log_bound_spreads[i1] = logsubexp(
-                    log(N1) + compute_log_kernel(dist_LB_1, h, kernel),
-                    node_log_min_bounds[i1],
-                )
+                node_log_bound_spreads[i1] = (log(N1) +
+                                              compute_log_kernel(dist_LB_1,
+                                                                 h, kernel))
 
                 node_log_min_bounds[i2] = (log(N2) +
                                            compute_log_kernel(dist_UB_2,
                                                               h, kernel))
-                node_log_bound_spreads[i2] = logsubexp(
-                    log(N2) + compute_log_kernel(dist_LB_2, h, kernel),
-                    node_log_min_bounds[i2]
-                )
+                node_log_bound_spreads[i2] = (log(N2) +
+                                              compute_log_kernel(dist_LB_2,
+                                                                 h, kernel))
 
                 global_log_min_bound = logsubexp(global_log_min_bound,
                                                  node_log_min_bounds[i_node])
