@@ -636,6 +636,15 @@ def dbcv_score(
 
     for cluster_id in cluster_ids:
         min_density_sep = density_sep[cluster_id].min()
+        if min_density_sep == 0.0:
+            raise ValueError(
+                "Aborting aggregation of score subcomponents: "
+                "the density separation between cluster "
+                f"{le.classes_[cluster_id]} and cluster "
+                f"{le.classes_[density_sep[cluster_id].argmin()]} "
+                "is zero, leading to an overall score which is undefined."
+            )
+
         labels_to_scores[le.classes_[cluster_id]] = (
             min_density_sep - density_sparseness[cluster_id]
         ) / max(min_density_sep, density_sparseness[cluster_id])
