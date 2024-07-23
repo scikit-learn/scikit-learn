@@ -71,6 +71,55 @@ div.sk-landing-top-bar {
     color: black;
   }
 }
+/* banner */
+.update-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background-color: #f7f7f7;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+
+
+  .update-title {
+    display: inline-block;
+    font-size: 22px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 10px;
+    margin-top: auto;
+    
+  }
+
+  .update-title a {
+    text-decoration: none;
+    color: #337ab7;
+    
+  }
+
+  .update-date {
+    display: inline-block;
+    font-size: 16px;
+    color: #292828;
+    margin-top: 10px;
+    margin-top: auto;
+    
+  }
+
+  .update-date a {
+    text-decoration: none;
+    color: #666;
+    
+  }
+
+  .update-container:hover {
+    box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+    transform: scale(1.01);
+    transition: 0.3s;
+  }
+}
 
 /* Body */
 
