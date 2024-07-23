@@ -578,11 +578,11 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12]])
     >>> y = np.array([1, 2, 3, 4, 5, 6])
     >>> groups = np.array([0, 0, 2, 2, 3, 3])
-    >>> group_kfold = GroupKFold(n_splits=2, shuffle=False)
+    >>> group_kfold = GroupKFold(n_splits=2)
     >>> group_kfold.get_n_splits(X, y, groups)
     2
     >>> print(group_kfold)
-    GroupKFold(n_splits=2, random_state=None, shuffle=False)
+    GroupKFold(n_splits=2)
     >>> for i, (train_index, test_index) in enumerate(group_kfold.split(X, y, groups)):
     ...     print(f"Fold {i}:")
     ...     print(f"  Train: index={train_index}, group={groups[train_index]}")
@@ -604,7 +604,7 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
         classification tasks).
     """
 
-    def __init__(self, n_splits=5, shuffle=False, random_state=None):
+    def __init__(self, n_splits=5, *, shuffle=False, random_state=None):
         super().__init__(n_splits, shuffle=shuffle, random_state=random_state)
 
     def _iter_test_indices(self, X, y, groups):

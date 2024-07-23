@@ -2,7 +2,6 @@
 
 import re
 import warnings
-from copy import deepcopy
 from itertools import combinations, combinations_with_replacement, permutations
 
 import numpy as np
@@ -1623,19 +1622,13 @@ def test_cv_iterable_wrapper():
     )
 
 
-@pytest.mark.parametrize(
-    "kfold, shuffle",
-    [
-        (GroupKFold, True),
-        (GroupKFold, False),
-        (StratifiedGroupKFold, False),
-    ],
-)
-def test_group_kfold(kfold, shuffle):
-    rng = np.random.RandomState(0)
+@pytest.mark.parametrize("kfold", [GroupKFold, StratifiedGroupKFold])
+@pytest.mark.parametrize("shuffle", [True, False])
+def test_group_kfold(kfold, shuffle, global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
 
     # Parameters of the test
-    n_groups = 45
+    n_groups = 15
     n_samples = 1000
     n_splits = 5
 
@@ -1650,7 +1643,7 @@ def test_group_kfold(kfold, shuffle):
     len(np.unique(groups))
     # Get the test fold indices from the test set indices of each fold
     folds = np.zeros(n_samples)
-    random_state = rng if shuffle else None
+    random_state = None if not shuffle else global_random_seed
     lkf = kfold(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
     for i, (_, test) in enumerate(lkf.split(X, y, groups)):
         folds[test] = i
@@ -1743,8 +1736,9 @@ def test_group_kfold(kfold, shuffle):
     for train, test in lkf.split(X, y, groups):
         assert len(np.intersect1d(groups[train], groups[test])) == 0
 
-    # groups can also be a list (copy object for reproducibility when shuffled)
-    lkf_copy = deepcopy(lkf)
+    # groups can also be a list
+    # use a new instance for reproducibility when shuffle=True
+    lkf_copy = kfold(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
     cv_iter = list(lkf.split(X, y, groups.tolist()))
     for (train1, test1), (train2, test2) in zip(lkf_copy.split(X, y, groups), cv_iter):
         assert_array_equal(train1, train2)
