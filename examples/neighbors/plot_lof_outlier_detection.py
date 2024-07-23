@@ -22,6 +22,9 @@ outliers. In practice, such information is generally not available, and taking
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Generate data with outliers
 # ---------------------------

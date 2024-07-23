@@ -1,5 +1,8 @@
 """Score functions, performance metrics, pairwise metrics and distance computations."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from . import cluster
 from ._classification import (
     accuracy_score,

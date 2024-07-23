@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import builtins
 import platform
 import sys
@@ -208,6 +211,10 @@ def pytest_collection_modifyitems(config, items):
 
     if np_base_version >= parse_version("2"):
         reason = "Due to NEP 51 numpy scalar repr has changed in numpy 2"
+        skip_doctests = True
+
+    if sp_version < parse_version("1.14"):
+        reason = "Scipy sparse matrix repr has changed in scipy 1.14"
         skip_doctests = True
 
     # Normally doctest has the entire module's scope. Here we set globs to an empty dict

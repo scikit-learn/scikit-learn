@@ -45,9 +45,6 @@ from sklearn.utils.fixes import (
 )
 from sklearn.utils.multiclass import check_classification_targets, type_of_target
 
-msg = "The default value for `force_alpha` will change"
-pytestmark = pytest.mark.filterwarnings(f"ignore:{msg}:FutureWarning")
-
 iris = datasets.load_iris()
 rng = np.random.RandomState(0)
 perm = rng.permutation(iris.target.size)

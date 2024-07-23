@@ -221,13 +221,6 @@ else:
     from numpy import ComplexWarning, VisibleDeprecationWarning  # type: ignore  # noqa
 
 
-# TODO: Remove when Scipy 1.6 is the minimum supported version
-try:
-    from scipy.integrate import trapezoid  # type: ignore  # noqa
-except ImportError:
-    from scipy.integrate import trapz as trapezoid  # type: ignore  # noqa
-
-
 # TODO: Adapt when Pandas > 2.2 is the minimum supported version
 def pd_fillna(pd, frame):
     pd_version = parse_version(pd.__version__).base_version
