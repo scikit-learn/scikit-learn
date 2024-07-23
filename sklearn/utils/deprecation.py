@@ -97,7 +97,7 @@ class deprecated:
         msg = self.extra
 
         @property
-        @functools.wraps(prop)
+        @functools.wraps(prop.fget)
         def wrapped(*args, **kwargs):
             warnings.warn(msg, category=FutureWarning)
             return prop.fget(*args, **kwargs)
