@@ -91,7 +91,7 @@ def test_get_namespace_array_api(monkeypatch):
         with pytest.raises(TypeError):
             xp_out, is_array_api_compliant = get_namespace(X_xp, X_np)
 
-        def mock_getenv(key):  # pragma: nocover
+        def mock_getenv(key):
             if key == "SCIPY_ARRAY_API":
                 return "0"
 
