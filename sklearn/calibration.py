@@ -724,6 +724,7 @@ class _CalibratedClassifier:
 
         label_encoder = LabelEncoder().fit(self.classes)
         pos_class_indices = label_encoder.transform(self.estimator.classes_)
+
         proba = np.zeros((_num_samples(X), n_classes))
         for class_idx, this_pred, calibrator in zip(
             pos_class_indices, predictions.T, self.calibrators
