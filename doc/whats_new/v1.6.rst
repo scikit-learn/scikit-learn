@@ -272,7 +272,6 @@ Changelog
   `utils.validation.check_non_negative`.
   :pr:`29540` by :user: `Tamara Atanasoska <tamaraatanasoska>`.
 
-
 .. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
