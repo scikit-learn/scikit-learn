@@ -19,6 +19,9 @@ show that we obtain similar results on a toy dataset.
 
 """  # noqa: E501
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 import matplotlib
 import matplotlib.lines as mlines
