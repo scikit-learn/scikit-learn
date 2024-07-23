@@ -1522,9 +1522,10 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_base=2, ignore_ties=False):
             ranked = y_true[np.arange(ranking.shape[0])[:, np.newaxis], ranking]
             cumulative_gains = discount.dot(ranked.T)
         else:
-            # TODO this doesn't work yet
-            ranking = xp.argsort(y_score)[:, ::-1]
-            ranked = y_true[xp.arange(ranking.shape[0])[:, xp.newaxis], ranking]
+            ranking = xp.flip(xp.argsort(y_score), axis=1)
+            # TODO this doesn't work yet for array_api_strict
+            ranking_index = xp.arange(ranking.shape[0])[:, xp.newaxis]
+            ranked = y_true[ranking_index, ranking]
             cumulative_gains = xp.tensordot(discount, ranked.T, axes=1)
     else:
         if _is_numpy_namespace(xp):
