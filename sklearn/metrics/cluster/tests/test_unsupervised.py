@@ -484,17 +484,25 @@ def test_dbcv_score_basic_input(density_sample):
     assert res[0] < dbcv_score(*sample_without_noise)
 
 
-def test_dbcv_score_zero_distance():
+def test_dbcv_score_zero_distance_intra():
     # DBCV is undefined if any all-points-core-distances are undefined
     # due to identical points, thus raising an error
-    with pytest.raises(ValueError):
-        dbcv_score([[0, 1] for _ in range(100)], [i % 2 for i in range(100)])
+    with pytest.raises(ValueError) as exc_info:
+        dbcv_score(
+            [[1, 1] if i % 2 else [0, 0] for i in range(100)],
+            [i % 2 for i in range(100)],
+        )
+    assert exc_info.value.args[0].startswith(
+        "Identified duplicated points in a cluster."
+    )
 
     # Identical points should NOT affect DBCV in its non-default configuration, with
     # the `mst_raw_dist` toggle activated, which directly uses "raw" distances and
     # as such avoids the use of all-points-core-distances entirely
     dbcv_score(
-        [[0, 1] for _ in range(100)], [i % 2 for i in range(100)], mst_raw_dist=True
+        [[1, 1] if i % 2 else [0, 0] for i in range(100)],
+        [i % 2 for i in range(100)],
+        mst_raw_dist=True,
     )
 
 
