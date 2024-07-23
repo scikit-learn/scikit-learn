@@ -1,5 +1,8 @@
 """Permutation importance for estimators."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numbers
 
 import numpy as np

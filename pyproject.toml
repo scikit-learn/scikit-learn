@@ -1,6 +1,6 @@
 [project]
 name = "scikit-learn"
-version = "1.6.dev0"
+dynamic = ["version"]
 description = "A set of python modules for machine learning and data mining"
 readme = "README.rst"
 maintainers = [
@@ -13,7 +13,7 @@ dependencies = [
   "threadpoolctl>=3.1.0",
 ]
 requires-python = ">=3.9"
-license = {text = "new BSD"}
+license = {file = "COPYING"}
 classifiers=[
   "Intended Audience :: Science/Research",
   "Intended Audience :: Developers",
@@ -62,7 +62,7 @@ docs = [
     "sphinxext-opengraph>=0.9.1",
     "plotly>=5.14.0",
     "polars>=0.20.23",
-    "sphinx-design>=0.5.0",
+    "sphinx-design>=0.6.0",
     "sphinxcontrib-sass>=0.3.4",
     "pydata-sphinx-theme>=0.15.3",
     "sphinx-remove-toctrees>=1.0.0.post1",
@@ -81,7 +81,7 @@ tests = [
     "pandas>=1.1.5",
     "pytest>=7.1.2",
     "pytest-cov>=2.9.0",
-    "ruff>=0.2.1",
+    "ruff>=0.5.1",
     "black>=24.3.0",
     "mypy>=1.9",
     "pyamg>=4.0.0",
@@ -98,7 +98,7 @@ build-backend = "mesonpy"
 requires = [
     "meson-python>=0.16.0",
     "Cython>=3.0.10",
-    "numpy>=1.25",
+    "numpy>=2",
     "scipy>=1.6.0",
 ]
 
@@ -140,8 +140,12 @@ exclude=[
 ]
 
 [tool.ruff.lint]
+# This enables us to use CPY001: copyright header check
+preview = true
+# This enables us to use the explicit preview rules that we want only
+explicit-preview-rules = true
 # all rules can be found here: https://beta.ruff.rs/docs/rules/
-select = ["E", "F", "W", "I"]
+select = ["E", "F", "W", "I", "CPY001"]
 ignore=[
     # space before : (needed for how black formats slicing)
     "E203",
@@ -149,13 +153,37 @@ ignore=[
     "E731",
     # do not use variables named 'l', 'O', or 'I'
     "E741",
+    # E721 is in preview (july 2024) and gives many false positives.
+    # Use `is` and `is not` for type comparisons, or `isinstance()` for
+    # isinstance checks
+    "E721",
+    # F841 is in preview (july 2024), and we don't care much about it.
+    # Local variable ... is assigned to but never used
+    "F841",
 ]
+
+[tool.ruff.lint.flake8-copyright]
+notice-rgx = "\\#\\ Authors:\\ The\\ scikit\\-learn\\ developers\\\n\\#\\ SPDX\\-License\\-Identifier:\\ BSD\\-3\\-Clause\\\n"
 
 [tool.ruff.lint.per-file-ignores]
 # It's fine not to put the import at the top of the file in the examples
 # folder.
 "examples/*"=["E402"]
 "doc/conf.py"=["E402"]
+"**/tests/*"=["CPY001"]
+"asv_benchmarks/*"=["CPY001"]
+"benchmarks/*"=["CPY001"]
+"doc/*"=["CPY001"]
+"build_tools/*"=["CPY001"]
+"sklearn/_build_utils/*"=["CPY001"]
+"maint_tools/*"=["CPY001"]
+".spin/*"=["CPY001"]
+".github/*"=["CPY001"]
+# __doc__ is too long (>4096 chars) and therefore false positive on copyright check
+"examples/model_selection/plot_precision_recall.py"=["CPY001"]
+"examples/svm/plot_rbf_parameters.py"=["CPY001"]
+# __all__ has un-imported names
+"sklearn/__init__.py"=["F822"]
 
 
 [tool.cython-lint]
@@ -210,3 +238,16 @@ exclude= '''
 sdist-only = []
 git-only = [".*", "asv_benchmarks", "azure-pipelines.yml", "benchmarks", "build_tools", "maint_tools"]
 default-ignore = false
+
+[tool.spin]
+package = "sklearn"  # name of your package
+
+[tool.spin.commands]
+"Build" = [
+  "spin.cmds.pip.install",
+  "spin.cmds.meson.test",
+  ".spin/cmds.py:clean",
+]
+"Documentation" = [
+  "spin.cmds.meson.docs"
+]

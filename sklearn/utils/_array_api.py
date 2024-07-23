@@ -1,5 +1,8 @@
 """Tools to support array_api."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import itertools
 import math
 from functools import wraps
@@ -302,6 +305,15 @@ class _ArrayAPIWrapper:
     def isdtype(self, dtype, kind):
         return isdtype(dtype, kind, xp=self._namespace)
 
+    def maximum(self, x1, x2):
+        # TODO: Remove when `maximum` is made compatible in `array_api_compat`,
+        #  based on the `2023.12` specification.
+        #  https://github.com/data-apis/array-api-compat/issues/127
+        x1_np = _convert_to_numpy(x1, xp=self._namespace)
+        x2_np = _convert_to_numpy(x2, xp=self._namespace)
+        x_max = numpy.maximum(x1_np, x2_np)
+        return self._namespace.asarray(x_max, device=device(x1, x2))
+
 
 def _check_device_cpu(device):  # noqa
     if device not in {"cpu", None}:
@@ -430,7 +442,15 @@ class _NumPyAPIWrapper:
         return numpy.reshape(x, shape)
 
     def isdtype(self, dtype, kind):
-        return isdtype(dtype, kind, xp=self)
+        try:
+            return isdtype(dtype, kind, xp=self)
+        except TypeError:
+            # In older versions of numpy, data types that arise from outside
+            # numpy like from a Polars Series raise a TypeError.
+            # e.g. TypeError: Cannot interpret 'Int64' as a data type.
+            # Therefore, we return False.
+            # TODO: Remove when minimum supported version of numpy is >= 1.21.
+            return False
 
     def pow(self, x1, x2):
         return numpy.power(x1, x2)
@@ -557,11 +577,37 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     if namespace.__name__ in {"cupy.array_api"}:
         namespace = _ArrayAPIWrapper(namespace)
 
+    if namespace.__name__ == "array_api_strict" and hasattr(
+        namespace, "set_array_api_strict_flags"
+    ):
+        namespace.set_array_api_strict_flags(api_version="2023.12")
+
     return namespace, is_array_api_compliant
 
 
 def get_namespace_and_device(*array_list, remove_none=True, remove_types=(str,)):
-    """Combination into one single function of `get_namespace` and `device`."""
+    """Combination into one single function of `get_namespace` and `device`.
+
+    Parameters
+    ----------
+    *array_list : array objects
+        Array objects.
+    remove_none : bool, default=True
+        Whether to ignore None objects passed in arrays.
+    remove_types : tuple or list, default=(str,)
+        Types to ignore in the arrays.
+
+    Returns
+    -------
+    namespace : module
+        Namespace shared by array objects. If any of the `arrays` are not arrays,
+        the namespace defaults to NumPy.
+    is_array_api_compliant : bool
+        True if the arrays are containers that implement the Array API spec.
+        Always False when array_api_dispatch=False.
+    device : device
+        `device` object (see the "Device Support" section of the array API spec).
+    """
     array_list = _remove_non_arrays(
         *array_list, remove_none=remove_none, remove_types=remove_types
     )
@@ -587,21 +633,48 @@ def _expit(X, xp=None):
     return 1.0 / (1.0 + xp.exp(-X))
 
 
-def _add_to_diagonal(array, value, xp):
-    # Workaround for the lack of support for xp.reshape(a, shape, copy=False) in
-    # numpy.array_api: https://github.com/numpy/numpy/issues/23410
-    value = xp.asarray(value, dtype=array.dtype)
-    if _is_numpy_namespace(xp):
-        array_np = numpy.asarray(array)
-        array_np.flat[:: array.shape[0] + 1] += value
-        return xp.asarray(array_np)
-    elif value.ndim == 1:
-        for i in range(array.shape[0]):
-            array[i, i] += value[i]
+def _fill_or_add_to_diagonal(array, value, xp, add_value=True, wrap=False):
+    """Implementation to facilitate adding or assigning specified values to the
+    diagonal of a 2-d array.
+
+    If ``add_value`` is `True` then the values will be added to the diagonal
+    elements otherwise the values will be assigned to the diagonal elements.
+    By default, ``add_value`` is set to `True. This is currently only
+    supported for 2-d arrays.
+
+    The implementation is taken from the `numpy.fill_diagonal` function:
+    https://github.com/numpy/numpy/blob/v2.0.0/numpy/lib/_index_tricks_impl.py#L799-L929
+    """
+    if array.ndim != 2:
+        raise ValueError(
+            f"array should be 2-d. Got array with shape {tuple(array.shape)}"
+        )
+
+    value = xp.asarray(value, dtype=array.dtype, device=device(array))
+    end = None
+    # Explicit, fast formula for the common case.  For 2-d arrays, we
+    # accept rectangular ones.
+    step = array.shape[1] + 1
+    if not wrap:
+        end = array.shape[1] * array.shape[1]
+
+    array_flat = xp.reshape(array, (-1,))
+    if add_value:
+        array_flat[:end:step] += value
     else:
-        # scalar value
-        for i in range(array.shape[0]):
-            array[i, i] += value
+        array_flat[:end:step] = value
+
+
+def _max_precision_float_dtype(xp, device):
+    """Return the float dtype with the highest precision supported by the device."""
+    # TODO: Update to use `__array_namespace__info__()` from array-api v2023.12
+    # when/if that becomes more widespread.
+    xp_name = xp.__name__
+    if xp_name in {"array_api_compat.torch", "torch"} and (
+        str(device).startswith("mps")
+    ):  # pragma: no cover
+        return xp.float32
+    return xp.float64
 
 
 def _find_matching_floating_dtype(*arrays, xp):
@@ -655,16 +728,10 @@ def _average(a, axis=None, weights=None, normalize=True, xp=None):
                 f"weights {tuple(weights.shape)} differ."
             )
 
-        if weights.ndim != 1:
-            raise TypeError(
-                f"1D weights expected when a.shape={tuple(a.shape)} and "
-                f"weights.shape={tuple(weights.shape)} differ."
-            )
-
-        if size(weights) != a.shape[axis]:
+        if tuple(weights.shape) != (a.shape[axis],):
             raise ValueError(
-                f"Length of weights {size(weights)} not compatible with "
-                f" a.shape={tuple(a.shape)} and {axis=}."
+                f"Shape of weights weights.shape={tuple(weights.shape)} must be "
+                f"consistent with a.shape={tuple(a.shape)} and {axis=}."
             )
 
         # If weights are 1D, add singleton dimensions for broadcasting
@@ -733,6 +800,19 @@ def _nanmax(X, axis=None, xp=None):
         if xp.any(mask):
             X = xp.where(mask, xp.asarray(xp.nan), X)
         return X
+
+
+def _clip(S, min_val, max_val, xp):
+    # TODO: remove this method and change all usage once we move to array api 2023.12
+    # https://data-apis.org/array-api/2023.12/API_specification/generated/array_api.clip.html#clip
+    if _is_numpy_namespace(xp):
+        return numpy.clip(S, min_val, max_val)
+    else:
+        min_arr = xp.asarray(min_val, dtype=S.dtype)
+        max_arr = xp.asarray(max_val, dtype=S.dtype)
+        S = xp.where(S < min_arr, min_arr, S)
+        S = xp.where(S > max_arr, max_arr, S)
+        return S
 
 
 def _asarray_with_order(
@@ -822,9 +902,14 @@ def _estimator_with_converted_arrays(estimator, converter):
     return new_estimator
 
 
-def _atol_for_type(dtype):
+def _atol_for_type(dtype_or_dtype_name):
     """Return the absolute tolerance for a given numpy dtype."""
-    return numpy.finfo(dtype).eps * 100
+    if dtype_or_dtype_name is None:
+        # If no dtype is specified when running tests for a given namespace, we
+        # expect the same floating precision level as NumPy's default floating
+        # point dtype.
+        dtype_or_dtype_name = numpy.float64
+    return numpy.finfo(dtype_or_dtype_name).eps * 100
 
 
 def indexing_dtype(xp):
@@ -967,3 +1052,28 @@ def _in1d(ar1, ar2, xp, assume_unique=False, invert=False):
         return ret[: ar1.shape[0]]
     else:
         return xp.take(ret, rev_idx, axis=0)
+
+
+def _count_nonzero(X, xp, device, axis=None, sample_weight=None):
+    """A variant of `sklearn.utils.sparsefuncs.count_nonzero` for the Array API.
+
+    It only supports 2D arrays.
+    """
+    assert X.ndim == 2
+
+    weights = xp.ones_like(X, device=device)
+    if sample_weight is not None:
+        sample_weight = xp.asarray(sample_weight, device=device)
+        sample_weight = xp.reshape(sample_weight, (sample_weight.shape[0], 1))
+        weights = xp.astype(weights, sample_weight.dtype) * sample_weight
+
+    zero_scalar = xp.asarray(0, device=device, dtype=weights.dtype)
+    return xp.sum(xp.where(X != 0, weights, zero_scalar), axis=axis)
+
+
+def _modify_in_place_if_numpy(xp, func, *args, out=None, **kwargs):
+    if _is_numpy_namespace(xp):
+        func(*args, out=out, **kwargs)
+    else:
+        out = func(*args, **kwargs)
+    return out

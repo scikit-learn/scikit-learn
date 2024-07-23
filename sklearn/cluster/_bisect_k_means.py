@@ -1,6 +1,7 @@
 """Bisecting K-means clustering."""
 
-# Author: Michal Krawczyk <mkrwczyk.1@gmail.com>
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 
