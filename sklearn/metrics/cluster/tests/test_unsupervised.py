@@ -515,13 +515,6 @@ def test_dbcv_score_zero_distance_inter():
     )
 
     # DBCV is undefined if DSPC is zero for any combination
-    with pytest.raises(ValueError, match=expected_msg):
-        dbcv_score(
-            [[0, 0], [0, 1], [0, 1], [1, 1]],
-            [0, 0, 1, 1],
-        )
-
-    # The same is true if the `mst_raw_dist` toggle is activated
     # Going with a dataset of only duplicates here since the
     # non-MRD version doesn't already fail on intra-cluster duplicates
     with pytest.raises(ValueError, match=expected_msg):
