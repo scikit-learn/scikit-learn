@@ -76,6 +76,7 @@ div.sk-landing-top-bar {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  text-align: center;
   background-color: #f7f7f7;
   padding: 20px;
   border: 1px solid #ccc;
@@ -84,7 +85,7 @@ div.sk-landing-top-bar {
 
 
   .update-title {
-    display: inline-block;
+    display: block;
     font-size: 22px;
     font-weight: bold;
     color: #333;
@@ -100,7 +101,7 @@ div.sk-landing-top-bar {
   }
 
   .update-date {
-    display: inline-block;
+    display: block;
     font-size: 16px;
     color: #292828;
     margin-top: 10px;
