@@ -795,6 +795,8 @@ def check_array(
         Make sure the array has only non-negative values. An array that contains
         non-negative values will raise a ValueError.
 
+        .. versionadded:: 1.6
+
     ensure_2d : bool, default=True
         Whether to raise a value error if array is not 2D.
 
