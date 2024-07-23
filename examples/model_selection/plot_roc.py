@@ -33,6 +33,9 @@ curves.
     curves and their respective AUC.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Load and prepare data
 # =====================

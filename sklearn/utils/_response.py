@@ -3,6 +3,9 @@
 It allows to make uniform checks and validation.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numpy as np
 
 from ..base import is_classifier

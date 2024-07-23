@@ -5,6 +5,7 @@ Several basic tests for hierarchical clustering procedures
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
+
 import itertools
 import shutil
 from functools import partial

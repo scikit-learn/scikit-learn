@@ -866,15 +866,15 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
     Each group will appear exactly once in the test set across all folds (the
     number of distinct groups has to be at least equal to the number of folds).
 
-    The difference between :class:`~sklearn.model_selection.GroupKFold`
-    and :class:`~sklearn.model_selection.StratifiedGroupKFold` is that
+    The difference between :class:`GroupKFold`
+    and `StratifiedGroupKFold` is that
     the former attempts to create balanced folds such that the number of
     distinct groups is approximately the same in each fold, whereas
-    StratifiedGroupKFold attempts to create folds which preserve the
+    `StratifiedGroupKFold` attempts to create folds which preserve the
     percentage of samples for each class as much as possible given the
     constraint of non-overlapping groups between splits.
 
-    Read more in the :ref:`User Guide <cross_validation>`.
+    Read more in the :ref:`User Guide <stratified_group_k_fold>`.
 
     For visualisation of cross-validation behaviour and
     comparison between common scikit-learn split methods
@@ -1279,7 +1279,7 @@ class LeaveOneGroupOut(GroupsConsumerMixin, BaseCrossValidator):
 
     Provides train/test indices to split data such that each training set is
     comprised of all samples except ones belonging to one specific group.
-    Arbitrary domain specific group information is provided an array integers
+    Arbitrary domain specific group information is provided as an array of integers
     that encodes the group of each sample.
 
     For instance the groups could be the year of collection of the samples
@@ -1769,6 +1769,43 @@ class RepeatedStratifiedKFold(_UnsupportedGroupCVMixin, _RepeatedSplits):
             n_splits=n_splits,
         )
 
+    def split(self, X, y, groups=None):
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+
+            Note that providing ``y`` is sufficient to generate the splits and
+            hence ``np.zeros(n_samples)`` may be used as a placeholder for
+            ``X`` instead of actual training data.
+
+        y : array-like of shape (n_samples,)
+            The target variable for supervised learning problems.
+            Stratification is done based on the y labels.
+
+        groups : object
+            Always ignored, exists for compatibility.
+
+        Yields
+        ------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+
+        Notes
+        -----
+        Randomized CV splitters may return different results for each call of
+        split. You can make the results identical by setting `random_state`
+        to an integer.
+        """
+        y = check_array(y, input_name="y", ensure_2d=False, dtype=None)
+        return super().split(X, y, groups=groups)
+
 
 class BaseShuffleSplit(_MetadataRequester, metaclass=ABCMeta):
     """Base class for *ShuffleSplit.
@@ -2003,9 +2040,9 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
     For instance the groups could be the year of collection of the samples
     and thus allow for cross-validation against time-based splits.
 
-    The difference between LeavePGroupsOut and GroupShuffleSplit is that
+    The difference between :class:`LeavePGroupsOut` and ``GroupShuffleSplit`` is that
     the former generates splits using all subsets of size ``p`` unique groups,
-    whereas GroupShuffleSplit generates a user-determined number of random
+    whereas ``GroupShuffleSplit`` generates a user-determined number of random
     test splits, each with a user-determined fraction of unique groups.
 
     For example, a less computationally intensive alternative to
@@ -2013,7 +2050,7 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
     ``GroupShuffleSplit(test_size=10, n_splits=100)``.
 
     Note: The parameters ``test_size`` and ``train_size`` refer to groups, and
-    not to samples, as in ShuffleSplit.
+    not to samples as in :class:`ShuffleSplit`.
 
     Read more in the :ref:`User Guide <group_shuffle_split>`.
 
@@ -2026,14 +2063,12 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
     n_splits : int, default=5
         Number of re-shuffling & splitting iterations.
 
-    test_size : float, int, default=0.2
+    test_size : float, int, default=None
         If float, should be between 0.0 and 1.0 and represent the proportion
         of groups to include in the test split (rounded up). If int,
         represents the absolute number of test groups. If None, the value is
-        set to the complement of the train size.
-        The default will change in version 0.21. It will remain 0.2 only
-        if ``train_size`` is unspecified, otherwise it will complement
-        the specified ``train_size``.
+        set to the complement of the train size. If ``train_size`` is also None,
+        it will be set to 0.2.
 
     train_size : float or int, default=None
         If float, should be between 0.0 and 1.0 and represent the
