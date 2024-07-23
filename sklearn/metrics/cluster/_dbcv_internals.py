@@ -295,7 +295,7 @@ def _all_points_core_distance(distance_matrix, d=2):
     non_diagonal_indices = ~np.eye(*distance_matrix.shape, dtype=bool)
     if distance_matrix[non_diagonal_indices].min() == 0.0:
         raise ValueError(
-            "Identified identical points in the input data. Such points cause their "
+            "Identified duplicated points in a cluster. Such points cause their "
             "all-points-core-distances to be undefined, in turn affecting the whole "
             "DBCV score to be undefined for the given input. (Hint: try calling "
             "`dbcv_score` with `mst_raw_dist` set to `True`, a variant of DBCV which "
