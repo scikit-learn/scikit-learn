@@ -719,13 +719,11 @@ class _CalibratedClassifier:
         if predictions.ndim == 1:
             # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
             predictions = predictions.reshape(-1, 1)
-        print(f'preds {predictions.T}')
+
         n_classes = len(self.classes)
 
         label_encoder = LabelEncoder().fit(self.classes)
         pos_class_indices = label_encoder.transform(self.estimator.classes_)
-        print(f'pos lass ind {pos_class_indices}')
-        print(f'len calibr {len(self.calibrators)}')
         proba = np.zeros((_num_samples(X), n_classes))
         for class_idx, this_pred, calibrator in zip(
             pos_class_indices, predictions.T, self.calibrators
@@ -735,7 +733,7 @@ class _CalibratedClassifier:
                 # clf.classes_[1] but `pos_class_indices` = 0
                 class_idx += 1
             proba[:, class_idx] = calibrator.predict(this_pred)
-        print(f'proba: {proba}')
+
         # Normalize the probabilities
         if n_classes == 2:
             proba[:, 0] = 1.0 - proba[:, 1]
