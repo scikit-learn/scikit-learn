@@ -15,6 +15,9 @@ engineering.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Analyzing the Bike Sharing Demand dataset
 # -----------------------------------------

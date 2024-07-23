@@ -44,6 +44,9 @@ complex and costly missing values imputation strategies.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
