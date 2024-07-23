@@ -3,6 +3,9 @@ HDBSCAN: Hierarchical Density-Based Spatial Clustering
          of Applications with Noise
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Authors: Leland McInnes <leland.mcinnes@gmail.com>
 #          Steve Astels <sastels@gmail.com>
 #          John Healy <jchealy@gmail.com>

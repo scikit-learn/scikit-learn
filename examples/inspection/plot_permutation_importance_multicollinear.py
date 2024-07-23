@@ -21,6 +21,9 @@ picking a threshold, and keeping a single feature from each cluster.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Random Forest Feature Importance on Breast Cancer Data
 # ------------------------------------------------------
