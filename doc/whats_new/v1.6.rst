@@ -116,6 +116,24 @@ support has been dropped. Some parts of scikit-learn may still work but PyPy is
 not tested anymore in the scikit-learn Continuous Integration.
 :pr:`29128` by :user:`Loïc Estève <lesteve>`.
 
+Changed models
+--------------
+
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+- |Fix| :class:`neighbors.KernelDensity` now correctly scales data to unit variance
+  (with respect to sample weights) when performing kernel density estimation. If you had
+  data with non-unit variance, the results will change with this new version of
+  scikit-learn to the correct behavior (i.e., approximately the shape of histogram, and
+  consistent with the results of other KDE implementations e.g.
+  :class:`scipy.linalg.gaussian_kde`). On top of that, it also takes sample weights into
+  account when computing the bandwidth if using automatic strategies `bandwidth="scott"`
+  or `bandwidth="silverman"`.
+  :pr:`27971` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 Changelog
 ---------
 
@@ -242,9 +260,6 @@ Changelog
 - |Fix| :class:`neighbors.LocalOutlierFactor` raises a warning in the `fit` method
   when duplicate values in the training data lead to inaccurate outlier detection.
   :pr:`28773` by :user:`Henrique Caroço <HenriqueProj>`.
-
-- |Fix| :class:`neighbors.KernelDensity` now correctly handles data with non-unit
-  variance. :pr:`27971` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 :mod:`sklearn.preprocessing`
 ............................
