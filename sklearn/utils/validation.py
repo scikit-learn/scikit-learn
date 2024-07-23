@@ -938,9 +938,6 @@ def check_array(
             )
         )
 
-    if ensure_non_negative:
-        check_non_negative(array, "check_array")
-
     if dtype is not None and _is_numpy_namespace(xp):
         # convert to dtype object to conform to Array API to be use `xp.isdtype` later
         dtype = np.dtype(dtype)
@@ -1129,6 +1126,9 @@ def check_array(
                     array = array.copy(**copy_params)
             else:
                 array = array.copy(**copy_params)
+
+    if ensure_non_negative:
+        check_non_negative(array, "check_array")
 
     return array
 

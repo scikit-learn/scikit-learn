@@ -596,7 +596,7 @@ def test_precomputed_sparse_invalid(csr_container):
     # Checks error with inconsistent distance matrix
     dist = np.array([[5.0, 2.0, 1.0], [-2.0, 0.0, 3.0], [1.0, 3.0, 0.0]])
     dist_csr = csr_container(dist)
-    msg = "Negative values in data passed to precomputed distance matrix."
+    msg = "Negative values in data passed to check_array"
     with pytest.raises(ValueError, match=msg):
         neigh.kneighbors(dist_csr, n_neighbors=1)
 
