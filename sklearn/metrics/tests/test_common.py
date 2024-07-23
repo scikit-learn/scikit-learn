@@ -54,8 +54,11 @@ from sklearn.metrics._base import _average_binary_score
 from sklearn.metrics.pairwise import (
     additive_chi2_kernel,
     chi2_kernel,
+    cosine_distances,
     cosine_similarity,
+    euclidean_distances,
     paired_cosine_distances,
+    rbf_kernel,
 )
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import shuffle
@@ -636,7 +639,6 @@ def test_sample_order_invariance(name):
         )
 
 
-@ignore_warnings
 def test_sample_order_invariance_multilabel_and_multioutput():
     random_state = check_random_state(0)
 
@@ -970,7 +972,6 @@ def test_classification_binary_continuous_input(metric):
         metric(y_true, y_score)
 
 
-@ignore_warnings
 def check_single_sample(name):
     # Non-regression test: scores should work with a single sample.
     # This is important for leave-one-out cross validation.
@@ -987,13 +988,14 @@ def check_single_sample(name):
         metric([i], [j])
 
 
-@ignore_warnings
 def check_single_sample_multioutput(name):
     metric = ALL_METRICS[name]
     for i, j, k, l in product([0, 1], repeat=4):
         metric(np.array([[i, j]]), np.array([[k, l]]))
 
 
+# filter many metric specific warnings
+@pytest.mark.filterwarnings("ignore")
 @pytest.mark.parametrize(
     "name",
     sorted(
@@ -1008,6 +1010,8 @@ def test_single_sample(name):
     check_single_sample(name)
 
 
+# filter many metric specific warnings
+@pytest.mark.filterwarnings("ignore")
 @pytest.mark.parametrize("name", sorted(MULTIOUTPUT_METRICS | MULTILABELS_METRICS))
 def test_single_sample_multioutput(name):
     check_single_sample_multioutput(name)
@@ -1042,7 +1046,7 @@ def test_multioutput_regression_invariance_to_dimension_shuffling(name):
         )
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.UndefinedMetricWarning")
 @pytest.mark.parametrize("coo_container", COO_CONTAINERS)
 def test_multilabel_representation_invariance(coo_container):
     # Generate some data
@@ -1244,7 +1248,6 @@ def test_normalize_option_multilabel_classification(name):
     )
 
 
-@ignore_warnings
 def _check_averaging(
     metric, y_true, y_pred, y_true_binarize, y_pred_binarize, is_multilabel
 ):
@@ -1393,7 +1396,6 @@ def test_averaging_multilabel_all_ones(name):
     check_averaging(name, y_true, y_true_binarize, y_pred, y_pred_binarize, y_score)
 
 
-@ignore_warnings
 def check_sample_weight_invariance(name, metric, y1, y2):
     rng = np.random.RandomState(0)
     sample_weight = rng.randint(1, 10, size=len(y1))
@@ -1587,7 +1589,6 @@ def test_multilabel_sample_weight_invariance(name):
         check_sample_weight_invariance(name, metric, y_true, y_pred)
 
 
-@ignore_warnings
 def test_no_averaging_labels():
     # test labels argument when not using averaging
     # in multi-class and multi-label cases
@@ -2013,7 +2014,14 @@ array_api_metric_checkers = {
     additive_chi2_kernel: [check_array_api_metric_pairwise],
     mean_gamma_deviance: [check_array_api_regression_metric],
     max_error: [check_array_api_regression_metric],
+    mean_absolute_percentage_error: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
     chi2_kernel: [check_array_api_metric_pairwise],
+    cosine_distances: [check_array_api_metric_pairwise],
+    euclidean_distances: [check_array_api_metric_pairwise],
+    rbf_kernel: [check_array_api_metric_pairwise],
 }
 
 
@@ -2029,3 +2037,20 @@ def yield_metric_checker_combinations(metric_checkers=array_api_metric_checkers)
 @pytest.mark.parametrize("metric, check_func", yield_metric_checker_combinations())
 def test_array_api_compliance(metric, array_namespace, device, dtype_name, check_func):
     check_func(metric, array_namespace, device, dtype_name)
+
+
+@pytest.mark.parametrize("df_lib_name", ["pandas", "polars"])
+@pytest.mark.parametrize("metric_name", sorted(ALL_METRICS))
+def test_metrics_dataframe_series(metric_name, df_lib_name):
+    df_lib = pytest.importorskip(df_lib_name)
+
+    y_pred = df_lib.Series([0.0, 1.0, 0, 1.0])
+    y_true = df_lib.Series([1.0, 0.0, 0.0, 0.0])
+
+    metric = ALL_METRICS[metric_name]
+    try:
+        expected_metric = metric(y_pred.to_numpy(), y_true.to_numpy())
+    except ValueError:
+        pytest.skip(f"{metric_name} can not deal with 1d inputs")
+
+    assert_allclose(metric(y_pred, y_true), expected_metric)

@@ -1,5 +1,8 @@
 """Utilities to discover scikit-learn objects."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import inspect
 import pkgutil
 from importlib import import_module

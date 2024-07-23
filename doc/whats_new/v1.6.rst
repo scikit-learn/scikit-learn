@@ -37,13 +37,17 @@ See :ref:`array_api` for more details.
 - :func:`sklearn.metrics.max_error` :pr:`29212` by :user:`Edoardo Abati <EdAbati>`;
 - :func:`sklearn.metrics.mean_absolute_error` :pr:`27736` by :user:`Edoardo Abati <EdAbati>`
   and :pr:`29143` by :user:`Tialo <Tialo>` and :user:`Loïc Estève <lesteve>`;
-- :func:`sklearn.metrics.mean_gamma_deviance` :pr:`29239` by :usser:`Emily Chen <EmilyXinyi>`;
+- :func:`sklearn.metrics.mean_absolute_percentage_error` :pr:`29300` by :user:`Emily Chen <EmilyXinyi>`;
+- :func:`sklearn.metrics.mean_gamma_deviance` :pr:`29239` by :user:`Emily Chen <EmilyXinyi>`;
 - :func:`sklearn.metrics.mean_squared_error` :pr:`29142` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.metrics.mean_tweedie_deviance` :pr:`28106` by :user:`Thomas Li <lithomas1>`;
 - :func:`sklearn.metrics.pairwise.additive_chi2_kernel` :pr:`29144` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.metrics.pairwise.chi2_kernel` :pr:`29267` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.metrics.pairwise.cosine_similarity` :pr:`29014` by :user:`Edoardo Abati <EdAbati>`;
-- :func:`sklearn.metrics.pairwise.paired_cosine_distances` :pr:`29112` by :user:`Edoardo Abati <EdAbati>`.
+- :func:`sklearn.metrics.pairwise.cosine_distances` :pr:`29265` by :user:`Emily Chen <EmilyXinyi>`;
+- :func:`sklearn.metrics.pairwise.euclidean_distances` :pr:`29433` by :user:`Omar Salman <OmarManzoor>`;
+- :func:`sklearn.metrics.pairwise.paired_cosine_distances` :pr:`29112` by :user:`Edoardo Abati <EdAbati>`;
+- :func:`sklearn.metrics.pairwise.rbf_kernel` :pr:`29433` by :user:`Omar Salman <OmarManzoor>`.
 
 **Classes:**
 
@@ -71,7 +75,7 @@ more details.
   :class:`ensemble.StackingRegressor` now support metadata routing and pass
   ``**fit_params`` to the underlying estimators via their `fit` methods.
   :pr:`28701` by :user:`Stefanie Senger <StefanieSenger>`.
-  
+
 - |Feature| :class:`compose.TransformedTargetRegressor` now supports metadata
   routing in its `fit` and `predict` methods and routes the corresponding
   params to the underlying regressor.
@@ -88,6 +92,19 @@ more details.
   and `decision_function` methods also accept ``**params`` which are
   passed to the underlying estimators via their respective methods.
   :pr:`28494` by :user:`Adam Li <adam2392>`.
+
+- |Feature| :func:`model_selection.permutation_test_score` now supports metadata routing
+  for the `fit` method of its estimator and for its underlying CV splitter and scorer.
+  :pr:`29266` by :user:`Adam Li <adam2392>`.
+
+Dropping support for building with setuptools
+---------------------------------------------
+
+From scikit-learn 1.6 onwards, support for building with setuptools has been
+removed. Meson is the only supported way to build scikit-learn, see
+:ref:`Building from source <install_bleeding_edge>` for more details.
+
+:pr:`29400` by :user:`Loïc Estève <lesteve>`
 
 Dropping official support for PyPy
 ----------------------------------
@@ -126,6 +143,15 @@ Changelog
   on the input data.
   :pr:`29124` by :user:`Yao Xiao <Charlie-XIAO>`.
 
+
+:mod:`sklearn.datasets`
+.......................
+
+- |Feature| :func:`datasets.fetch_file` allows downloading arbitrary data-file
+  from the web. It handles local caching, integrity checks with SHA256 digests
+  and automatic retries in case of HTTP errors. :pr:`29354` by :user:`Olivier
+  Grisel <ogrisel>`.
+
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
@@ -142,11 +168,22 @@ Changelog
   by parallelizing the initial search for bin thresholds
   :pr:`28064` by :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |Enhancement| The verbosity of :class:`ensemble.HistGradientBoostingClassifier`
+  and :class:`ensemble.HistGradientBoostingRegressor` got a more granular control. Now,
+  `verbose = 1` prints only summary messages, `verbose >= 2` prints the full
+  information as before.
+  :pr:`28179` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Efficiency| :class:`ensemble.IsolationForest` now runs parallel jobs
   during :term:`predict` offering a speedup of up to 2-4x on sample sizes
   larger than 2000 using `joblib`.
   :pr:`28622` by :user:`Adam Li <adam2392>` and
   :user:`Sérgio Pereira <sergiormpereira>`.
+
+- |Feature| :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor` now support
+  missing-values in the data matrix `X`. Missing-values are handled by randomly moving all of
+  the samples to the left, or right child node as the tree is traversed.
+  :pr:`28268` by :user:`Adam Li <adam2392>`.
 
 :mod:`sklearn.impute`
 .....................
@@ -182,6 +219,10 @@ Changelog
   :pr:`29210` by :user:`Marc Torrellas Socastro <marctorsoc>` and
   :user:`Stefanie Senger <StefanieSenger>`.
 
+- |API| scoring="neg_max_error" should be used instead of
+  scoring="max_error" which is now deprecated.
+  :pr:`29462` by :user:`Farid "Freddie" Taba <artificialfintelligence>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -190,12 +231,22 @@ Changelog
   estimator without re-fitting it.
   :pr:`29067` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| Improve error message when :func:`model_selection.RepeatedStratifiedKFold.split` is called without a `y` argument
+  :pr:`29402` by :user:`Anurag Varma <Anurag-Varma>`.
+
 :mod:`sklearn.neighbors`
 ........................
 
 - |Fix| :class:`neighbors.LocalOutlierFactor` raises a warning in the `fit` method
   when duplicate values in the training data lead to inaccurate outlier detection.
   :pr:`28773` by :user:`Henrique Caroço <HenriqueProj>`.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Enhancement| The HTML representation of :class:`preprocessing.FunctionTransformer`
+  will show the function name in the label.
+  :pr:`29158` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 :mod:`sklearn.semi_supervised`
 ..............................
@@ -212,6 +263,8 @@ Changelog
   randomly moving all of the samples to the left, or right child node as the tree is
   traversed.
   :pr:`27966` by :user:`Adam Li <adam2392>`.
+
+.. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:

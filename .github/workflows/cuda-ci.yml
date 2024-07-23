@@ -7,10 +7,6 @@ on:
     types:
       - labeled
 
-# In order to remove the "CUDA CI" label we need to have write permissions for PRs
-permissions:
-  pull-requests: write
-
 jobs:
   tests:
     if: contains(github.event.pull_request.labels.*.name, 'CUDA CI')
@@ -21,9 +17,6 @@ jobs:
     timeout-minutes: 20
     name: Run Array API unit tests
     steps:
-      - uses: actions-ecosystem/action-remove-labels@v1
-        with:
-          labels: CUDA CI
       - uses: actions/setup-python@v5
         with:
           # XXX: The 3.12.4 release of Python on GitHub Actions is corrupted:
