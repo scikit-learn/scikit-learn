@@ -267,9 +267,9 @@ Changelog
 :mod:`sklearn.utils`
 ....................
 
-- |Enhancement| :func:`utils.validation.check_array` now accepts `ensure_non_negative` to
-  check for negative values in the passed array, until now only available through calling
-  :func:`utils.validation.check_non_negative`.
+- |Enhancement| :func:`utils.validation.check_array` now accepts `ensure_non_negative`
+  to check for negative values in the passed array, until now only available through
+  calling :func:`utils.validation.check_non_negative`.
   :pr:`29540` by :user:`Tamara Atanasoska <tamaraatanasoska>`.
 
 .. rubric:: Code and documentation contributors
