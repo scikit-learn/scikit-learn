@@ -1,5 +1,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
+
 """
 Generalized Linear Models with Exponential Dispersion Family
 """

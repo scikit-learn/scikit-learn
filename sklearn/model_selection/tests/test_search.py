@@ -93,7 +93,6 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
-    ignore_warnings,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS
 from sklearn.utils.validation import _num_samples
@@ -273,7 +272,6 @@ def test_SearchCV_with_fit_params(SearchCV):
     searcher.fit(X, y, spam=np.ones(10), eggs=np.zeros(10))
 
 
-@ignore_warnings
 def test_grid_search_no_score():
     # Test grid-search on classifier that has no score function.
     clf = LinearSVC(random_state=0)
@@ -623,7 +621,7 @@ class BrokenClassifier(BaseEstimator):
         return np.zeros(X.shape[0])
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.UndefinedMetricWarning")
 def test_refit():
     # Regression test for bug in refitting
     # Simulates re-fitting a broken estimator; this used to break with
@@ -812,7 +810,6 @@ def test_y_as_list():
     assert hasattr(grid_search, "cv_results_")
 
 
-@ignore_warnings
 def test_pandas_input():
     # check cross_val_score doesn't destroy pandas dataframe
     types = [(MockDataFrame, MockDataFrame)]
@@ -1418,7 +1415,7 @@ def test_search_cv_results_none_param():
         assert_array_equal(grid_search.cv_results_["param_random_state"], [0, None])
 
 
-@ignore_warnings()
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.FitFailedWarning")
 def test_search_cv_timing():
     svc = LinearSVC(random_state=0)
 
