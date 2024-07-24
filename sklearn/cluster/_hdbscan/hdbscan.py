@@ -431,8 +431,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     Read more in the :ref:`User Guide <hdbscan>`.
 
     For an example of how to use HDBSCAN, as well as a comparison to
-    :class:`~sklearn.cluster.DBSCAN`, please see the :ref:`plotting demo
-    <sphx_glr_auto_examples_cluster_plot_hdbscan.py>`.
+    :class:`~sklearn.cluster.DBSCAN`, please see the
+    - :ref:`sphx_glr_auto_examples_cluster_plot_hdbscan.py`.
 
     .. versionadded:: 1.3
 
