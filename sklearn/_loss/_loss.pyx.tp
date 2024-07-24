@@ -1161,7 +1161,7 @@ cdef class CyHalfMultinomialLoss():
         const floating_in sample_weight,
         floating_out[::1] gradient_out,         # OUT
     ) noexcept nogil:
-        """Compute gradient of loss w.r.t. raw_prediction for a single sample.
+        """Compute gradient of loss w.r.t. `raw_prediction` for a single sample.
 
         The gradient of the multinomial logistic loss with respect to a class k,
         and for one sample is:
