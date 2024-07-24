@@ -756,19 +756,18 @@ class IterativeImputer(_BaseImputer):
             X, in_fit=True
         )
 
+        n_features_in = complete_mask.shape[1]
         err_msg = (
-            "'{}' should be of shape ({},) when an array-like is provided. "
-            "Got {}, instead."
+            f"should be of shape ({n_features_in},) when an array-like is provided. "
         )
 
-        n_features_in = complete_mask.shape[1]
         if (
             self.min_value is not None
             and not np.isscalar(self.min_value)
             and len(self.min_value) != n_features_in
         ):
             raise ValueError(
-                err_msg.format("min_value", n_features_in, len(self.min_value))
+                f"'min_value' {err_msg}. Got {len(self.min_value)}, instead."
             )
         if (
             self.max_value is not None
@@ -776,7 +775,7 @@ class IterativeImputer(_BaseImputer):
             and len(self.max_value) != n_features_in
         ):
             raise ValueError(
-                err_msg.format("max_value", n_features_in, len(self.max_value))
+                f"'max_value' {err_msg}. Got {len(self.max_value)}, instead."
             )
 
         super()._fit_indicator(complete_mask)
