@@ -826,10 +826,27 @@ def _estimator_with_converted_arrays(estimator, converter):
     """
     from sklearn.base import clone
 
+    estimator_type = type(estimator)
+    if estimator_type is dict:
+        return {
+            k: _estimator_with_converted_arrays(v, converter)
+            for k, v in estimator.items()
+        }
+    if estimator_type in (list, tuple, set, frozenset):
+        return estimator_type(
+            _estimator_with_converted_arrays(v, converter) for v in estimator
+        )
+    if hasattr(estimator, "__sklearn_array_api_convert__") and not isinstance(
+        estimator, type
+    ):
+        return estimator.__sklearn_array_api_convert__(converter)
+    if hasattr(estimator, "__dlpack__") or isinstance(estimator, numpy.ndarray):
+        return converter(estimator)
+    if not hasattr(estimator, "get_params") or isinstance(estimator, type):
+        return estimator
     new_estimator = clone(estimator)
     for key, attribute in vars(estimator).items():
-        if hasattr(attribute, "__dlpack__") or isinstance(attribute, numpy.ndarray):
-            attribute = converter(attribute)
+        attribute = _estimator_with_converted_arrays(attribute, converter)
         setattr(new_estimator, key, attribute)
     return new_estimator
 
