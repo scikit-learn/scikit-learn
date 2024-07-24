@@ -321,12 +321,12 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         )
 
 
-def _prepare_fit_binary(est, y, i, input_dtye, label_encode=True):
+def _prepare_fit_binary(est, y, i, input_dtype, label_encode=True):
     """Initialization for fit_binary.
 
     Returns y, coef, intercept, average_coef, average_intercept.
     """
-    y_i = np.ones(y.shape, dtype=input_dtye, order="C")
+    y_i = np.ones(y.shape, dtype=input_dtype, order="C")
     if label_encode:
         # y in {0, 1}
         y_i[y != est.classes_[i]] = 0.0
@@ -427,7 +427,7 @@ def fit_binary(
     # unused
     label_encode = isinstance(est._loss_function_, CyHalfBinomialLoss)
     y_i, coef, intercept, average_coef, average_intercept = _prepare_fit_binary(
-        est, y, i, input_dtye=X.dtype, label_encode=label_encode
+        est, y, i, input_dtype=X.dtype, label_encode=label_encode
     )
     assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
 
