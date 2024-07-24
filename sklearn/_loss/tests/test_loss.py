@@ -1069,11 +1069,11 @@ def test_multinomial_loss_fit_intercept_only():
 
 
 def test_multinomial_cy_gradient(global_random_seed):
-    """Test that Multinomial cy_gradient gives the same as gradient.
+    """Test that Multinomial cy_gradient gives the same result as gradient.
 
     CyHalfMultinomialLoss does not inherit from CyLossFunction and has a different API.
-    As a consequence, the functions like `loss` and `gradient` do no rely on `cy_loss`
-    and cy_gradient.
+    As a consequence, the functions like `loss` and `gradient` do not rely on `cy_loss`
+    and `cy_gradient`.
     """
     n_samples = 100
     n_classes = 5
