@@ -1,8 +1,8 @@
 """Kernel ridge regression."""
 
-# Authors: Mathieu Blondel <mathieu@mblondel.org>
-#          Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
+
 from numbers import Real
 
 import numpy as np

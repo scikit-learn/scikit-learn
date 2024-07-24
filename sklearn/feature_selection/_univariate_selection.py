@@ -1,7 +1,6 @@
 """Univariate features selection."""
 
-# Authors: V. Michel, B. Thirion, G. Varoquaux, A. Gramfort, E. Duchesnay.
-#          L. Buitinck, A. Joly
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 

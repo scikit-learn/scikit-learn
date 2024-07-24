@@ -389,6 +389,23 @@ METAESTIMATORS: list = [
         "y": y,
         "estimator_routing_methods": ["fit", "predict"],
     },
+    {
+        "metaestimator": SelfTrainingClassifier,
+        "estimator_name": "estimator",
+        "estimator": "classifier",
+        "X": X,
+        "y": y,
+        "preserves_metadata": True,
+        "estimator_routing_methods": [
+            "fit",
+            "predict",
+            "predict_proba",
+            "predict_log_proba",
+            "decision_function",
+            "score",
+        ],
+        "method_mapping": {"fit": ["fit", "score"]},
+    },
 ]
 """List containing all metaestimators to be tested and their settings
 
@@ -432,7 +449,6 @@ UNSUPPORTED_ESTIMATORS = [
     AdaBoostRegressor(),
     RFE(ConsumingClassifier()),
     RFECV(ConsumingClassifier()),
-    SelfTrainingClassifier(ConsumingClassifier()),
 ]
 
 
@@ -638,7 +654,7 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
                     value=None,
                 )
                 try:
-                    # `fit` and `partial_fit` accept y, others don't.
+                    # `fit`, `partial_fit`, 'score' accept y, others don't.
                     method(X, y, **method_kwargs)
                 except TypeError:
                     method(X, **method_kwargs)

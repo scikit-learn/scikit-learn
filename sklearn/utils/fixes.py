@@ -4,11 +4,7 @@ If you add content to this file, please give the version of the package
 at which the fix is no longer needed.
 """
 
-# Authors: Emmanuelle Gouillart <emmanuelle.gouillart@normalesup.org>
-#          Gael Varoquaux <gael.varoquaux@normalesup.org>
-#          Fabian Pedregosa <fpedregosa@acm.org>
-#          Lars Buitinck
-#
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import platform
@@ -223,13 +219,6 @@ if np_version >= parse_version("1.25.0"):
     from numpy.exceptions import ComplexWarning, VisibleDeprecationWarning
 else:
     from numpy import ComplexWarning, VisibleDeprecationWarning  # type: ignore  # noqa
-
-
-# TODO: Remove when Scipy 1.6 is the minimum supported version
-try:
-    from scipy.integrate import trapezoid  # type: ignore  # noqa
-except ImportError:
-    from scipy.integrate import trapz as trapezoid  # type: ignore  # noqa
 
 
 # TODO: Adapt when Pandas > 2.2 is the minimum supported version

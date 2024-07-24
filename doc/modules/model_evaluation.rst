@@ -92,7 +92,7 @@ Scoring                                Function                                 
 
 **Regression**
 'explained_variance'                   :func:`metrics.explained_variance_score`
-'max_error'                            :func:`metrics.max_error`
+'neg_max_error'                        :func:`metrics.max_error`
 'neg_mean_absolute_error'              :func:`metrics.mean_absolute_error`
 'neg_mean_squared_error'               :func:`metrics.mean_squared_error`
 'neg_root_mean_squared_error'          :func:`metrics.root_mean_squared_error`
@@ -605,7 +605,7 @@ The function :func:`cohen_kappa_score` computes `Cohen's kappa
 This measure is intended to compare labelings by different human annotators,
 not a classifier versus a ground truth.
 
-The kappa score (see docstring) is a number between -1 and 1.
+The kappa score is a number between -1 and 1.
 Scores above .8 are generally considered good agreement;
 zero or lower means no agreement (practically random labels).
 
@@ -614,9 +614,9 @@ but not for multilabel problems (except by manually computing a per-label score)
 and not for more than two annotators.
 
   >>> from sklearn.metrics import cohen_kappa_score
-  >>> y_true = [2, 0, 2, 2, 0, 1]
-  >>> y_pred = [0, 0, 2, 2, 0, 2]
-  >>> cohen_kappa_score(y_true, y_pred)
+  >>> labeling1 = [2, 0, 2, 2, 0, 1]
+  >>> labeling2 = [0, 0, 2, 2, 0, 2]
+  >>> cohen_kappa_score(labeling1, labeling2)
   0.4285714285714286
 
 .. _confusion_matrix:

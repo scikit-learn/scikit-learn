@@ -1,6 +1,6 @@
 """Spectral biclustering algorithms."""
 
-# Authors : Kemal Eren
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 from abc import ABCMeta, abstractmethod
@@ -486,6 +486,9 @@ class SpectralBiclustering(BaseSpectral):
     array([1, 0], dtype=int32)
     >>> clustering
     SpectralBiclustering(n_clusters=2, random_state=0)
+
+    For a more detailed example, see
+    :ref:`sphx_glr_auto_examples_bicluster_plot_spectral_biclustering.py`
     """
 
     _parameter_constraints: dict = {
