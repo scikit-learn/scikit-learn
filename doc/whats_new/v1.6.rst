@@ -37,14 +37,18 @@ See :ref:`array_api` for more details.
 - :func:`sklearn.metrics.max_error` :pr:`29212` by :user:`Edoardo Abati <EdAbati>`;
 - :func:`sklearn.metrics.mean_absolute_error` :pr:`27736` by :user:`Edoardo Abati <EdAbati>`
   and :pr:`29143` by :user:`Tialo <Tialo>` and :user:`Loïc Estève <lesteve>`;
-- :func:`sklearn.metrics.mean_gamma_deviance` :pr:`29239` by :usser:`Emily Chen <EmilyXinyi>`;
+- :func:`sklearn.metrics.mean_absolute_percentage_error` :pr:`29300` by :user:`Emily Chen <EmilyXinyi>`;
+- :func:`sklearn.metrics.mean_gamma_deviance` :pr:`29239` by :user:`Emily Chen <EmilyXinyi>`;
+- :func:`sklearn.metrics.mean_poisson_deviance` :pr:`29227` by :user:`Emily Chen <EmilyXinyi>`;
 - :func:`sklearn.metrics.mean_squared_error` :pr:`29142` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.metrics.mean_tweedie_deviance` :pr:`28106` by :user:`Thomas Li <lithomas1>`;
 - :func:`sklearn.metrics.pairwise.additive_chi2_kernel` :pr:`29144` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.metrics.pairwise.chi2_kernel` :pr:`29267` by :user:`Yaroslav Korobko <Tialo>`;
+- :func:`sklearn.metrics.pairwise.cosine_distances` :pr:`29265` by :user:`Emily Chen <EmilyXinyi>`;
 - :func:`sklearn.metrics.pairwise.cosine_similarity` :pr:`29014` by :user:`Edoardo Abati <EdAbati>`;
+- :func:`sklearn.metrics.pairwise.paired_cosine_distances` :pr:`29112` by :user:`Edoardo Abati <EdAbati>`.
+- :func:`sklearn.metrics.pairwise.paired_euclidean_distances` :pr:`29389` by :user:`Emily Chen <EmilyXinyi>`;
 - :func:`sklearn.metrics.pairwise.euclidean_distances` :pr:`29433` by :user:`Omar Salman <OmarManzoor>`;
-- :func:`sklearn.metrics.pairwise.paired_cosine_distances` :pr:`29112` by :user:`Edoardo Abati <EdAbati>`;
 - :func:`sklearn.metrics.pairwise.rbf_kernel` :pr:`29433` by :user:`Omar Salman <OmarManzoor>`.
 
 **Classes:**
@@ -141,6 +145,12 @@ Changelog
   on the input data.
   :pr:`29124` by :user:`Yao Xiao <Charlie-XIAO>`.
 
+:mod:`sklearn.compose`
+......................
+
+- |Enhancement| :func:`sklearn.compose.ColumnTransformer` `verbose_feature_names_out`
+  now accepts string format or callable to generate feature names. :pr:`28934` by
+  :user:`Marc Bresson <MarcBresson>`.
 
 :mod:`sklearn.datasets`
 .......................
@@ -217,6 +227,10 @@ Changelog
   :pr:`29210` by :user:`Marc Torrellas Socastro <marctorsoc>` and
   :user:`Stefanie Senger <StefanieSenger>`.
 
+- |API| scoring="neg_max_error" should be used instead of
+  scoring="max_error" which is now deprecated.
+  :pr:`29462` by :user:`Farid "Freddie" Taba <artificialfintelligence>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -235,6 +249,13 @@ Changelog
   when duplicate values in the training data lead to inaccurate outlier detection.
   :pr:`28773` by :user:`Henrique Caroço <HenriqueProj>`.
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Enhancement| The HTML representation of :class:`preprocessing.FunctionTransformer`
+  will show the function name in the label.
+  :pr:`29158` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 :mod:`sklearn.semi_supervised`
 ..............................
 
@@ -250,6 +271,8 @@ Changelog
   randomly moving all of the samples to the left, or right child node as the tree is
   traversed.
   :pr:`27966` by :user:`Adam Li <adam2392>`.
+
+.. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:

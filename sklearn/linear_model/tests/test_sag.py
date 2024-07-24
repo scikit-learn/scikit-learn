@@ -254,7 +254,7 @@ def get_step_size(X, alpha, fit_intercept, classification=True):
 def test_classifier_matching():
     n_samples = 20
     X, y = make_blobs(n_samples=n_samples, centers=2, random_state=0, cluster_std=0.1)
-    y[y == 0] = -1
+    # y must be 0 or 1
     alpha = 1.1
     fit_intercept = True
     step_size = get_step_size(X, alpha, fit_intercept)
@@ -276,7 +276,7 @@ def test_classifier_matching():
 
         weights, intercept = sag_sparse(
             X,
-            y,
+            2 * y - 1,  # y must be -1 or +1
             step_size,
             alpha,
             n_iter=n_iter,
@@ -286,7 +286,7 @@ def test_classifier_matching():
         )
         weights2, intercept2 = sag(
             X,
-            y,
+            2 * y - 1,  # y must be -1 or +1
             step_size,
             alpha,
             n_iter=n_iter,

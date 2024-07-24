@@ -552,17 +552,18 @@ Mean Squared Error:
 
     H(Q_m) = \frac{1}{n_m} \sum_{y \in Q_m} (y - \bar{y}_m)^2
 
-Half Poisson deviance:
+Mean Poisson deviance:
 
 .. math::
 
-    H(Q_m) = \frac{1}{n_m} \sum_{y \in Q_m} (y \log\frac{y}{\bar{y}_m}
+    H(Q_m) = \frac{2}{n_m} \sum_{y \in Q_m} (y \log\frac{y}{\bar{y}_m}
     - y + \bar{y}_m)
 
 Setting `criterion="poisson"` might be a good choice if your target is a count
 or a frequency (count per some unit). In any case, :math:`y >= 0` is a
 necessary condition to use this criterion. Note that it fits much slower than
-the MSE criterion.
+the MSE criterion. For performance reasons the actual implementation minimizes
+the half mean poisson deviance, i.e. the mean poisson deviance divided by 2.
 
 Mean Absolute Error:
 

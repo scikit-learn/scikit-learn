@@ -35,6 +35,9 @@ case, the business metric depends on the amount of each individual transaction.
     <https://cseweb.ucsd.edu/~elkan/rescale.pdf>`_
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Cost-sensitive learning with constant gains and costs
 # -----------------------------------------------------
