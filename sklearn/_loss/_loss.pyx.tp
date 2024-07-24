@@ -289,7 +289,7 @@ cdef inline double_pair sum_exp_minus_max(
     cdef:
         int k
         int n_classes = raw_prediction.shape[1]
-        double_pair max_value_and_sum_exps  # va1 = max_value, val2 = sum_exps
+        double_pair max_value_and_sum_exps  # val1 = max_value, val2 = sum_exps
 
     max_value_and_sum_exps.val1 = raw_prediction[i, 0]
     max_value_and_sum_exps.val2 = 0
