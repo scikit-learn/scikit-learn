@@ -464,9 +464,14 @@ def test_check_array():
 
     # check negative values when ensure_non_negative=True
     X_neg = check_array([[1, 2], [-3, 4]])
-    err_msg = "Negative values in data passed to check_array"
+    err_msg = "Negative values in data passed to X in RandomForestRegressor"
     with pytest.raises(ValueError, match=err_msg):
-        check_array(X_neg, ensure_non_negative=True)
+        check_array(
+            X_neg,
+            ensure_non_negative=True,
+            input_name="X",
+            estimator=RandomForestRegressor(),
+        )
 
 
 @pytest.mark.parametrize(

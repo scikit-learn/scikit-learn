@@ -1128,7 +1128,8 @@ def check_array(
                 array = array.copy(**copy_params)
 
     if ensure_non_negative:
-        check_non_negative(array, "check_array")
+        estimator_name = estimator_name if estimator_name else "estimator"
+        check_non_negative(array, f"{input_name} in {estimator_name}")
 
     return array
 

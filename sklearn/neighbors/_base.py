@@ -166,7 +166,7 @@ def _check_precomputed(X):
         case only non-zero elements may be considered neighbors.
     """
     if not issparse(X):
-        X = check_array(X, ensure_non_negative=True)
+        X = check_array(X, ensure_non_negative=True, input_name="X")
         return X
     else:
         graph = X
@@ -177,7 +177,9 @@ def _check_precomputed(X):
             "its handling of explicit zeros".format(graph.format)
         )
     copied = graph.format != "csr"
-    graph = check_array(graph, accept_sparse="csr", ensure_non_negative=True)
+    graph = check_array(
+        graph, accept_sparse="csr", ensure_non_negative=True, input_name="graph"
+    )
     graph = sort_graph_by_row_values(graph, copy=not copied, warn_when_not_sorted=True)
 
     return graph
