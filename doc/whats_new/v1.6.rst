@@ -225,6 +225,11 @@ Changelog
   scoring="max_error" which is now deprecated.
   :pr:`29462` by :user:`Farid "Freddie" Taba <artificialfintelligence>`.
 
+- |Feature| :pr:`28244` by :user:`Luis Görler <luis261>`
+  introduces a new unsupervised clustering validity metric,
+  suitable for optimizing density based clustering algorithms,
+  such as DBSCAN etc: :func:`metrics.cluster.dbcv_score`
+
 :mod:`sklearn.model_selection`
 ..............................
 
