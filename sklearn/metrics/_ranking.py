@@ -1541,8 +1541,6 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_base=2, ignore_ties=False):
                 _tie_averaged_dcg(y_true[i, ...], y_score[i, ...], discount_cumsum)
                 for i in range(n_rows)
             ]
-    if _is_numpy_namespace(xp):
-        return np.asarray(cumulative_gains)
     return xp.asarray(cumulative_gains, device=device_)
 
 
