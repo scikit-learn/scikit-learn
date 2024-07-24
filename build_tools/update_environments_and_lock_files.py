@@ -174,6 +174,26 @@ build_metadata_list = [
         "pip_dependencies": ["cython", "threadpoolctl", "meson-python", "meson"],
     },
     {
+        "name": "pymin_conda_forge_array-api_linux-64",
+        "type": "conda",
+        "tag": "main-ci",
+        "folder": "build_tools/azure",
+        "platform": "linux-64",
+        "channels": ["conda-forge"],
+        "conda_dependencies": common_dependencies
+        + [
+            "ccache",
+            "pytorch-cpu",
+            "polars",
+            "pyarrow",
+            "array-api-compat",
+            "array-api-strict",
+        ],
+        "package_constraints": {
+            "scipy": "=1.14.0",
+        },
+    },
+    {
         "name": "pymin_conda_defaults_openblas",
         "type": "conda",
         "tag": "main-ci",
