@@ -478,8 +478,8 @@ def test_calibration_less_classes(ensemble):
     # When `ensemble=False`, `cross_val_predict` is used to compute predictions
     # to fit only one `calibrated_classifiers_`
     else:
-        probs = cal_clf.calibrated_classifiers_[0].predict_proba(X)
-        assert_array_almost_equal(probs.sum(axis=1), np.ones(probs.shape[0]))
+        proba = cal_clf.calibrated_classifiers_[0].predict_proba(X)
+        assert_array_almost_equal(proba.sum(axis=1), np.ones(proba.shape[0]))
 
 
 @pytest.mark.parametrize(
