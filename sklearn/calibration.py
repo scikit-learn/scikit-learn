@@ -24,7 +24,7 @@ from .base import (
     clone,
 )
 from .isotonic import IsotonicRegression
-from .model_selection import check_cv, cross_val_predict, LeaveOneOut
+from .model_selection import LeaveOneOut, check_cv, cross_val_predict
 from .preprocessing import LabelEncoder, label_binarize
 from .svm import LinearSVC
 from .utils import (
