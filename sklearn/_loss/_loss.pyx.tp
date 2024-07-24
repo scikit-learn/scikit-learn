@@ -278,9 +278,7 @@ cdef inline double_pair sum_exp_minus_max(
     #     return.val2 = sum_exps = sum(p[k], k = 0 to n_classes-1) = sum of exponentials
     # len(p) must be n_classes
     # Notes:
-    # - Using "by reference" arguments doesn't work well, see
-    #   https://github.com/cython/cython/issues/1863
-    #   Therefore we return a double_pair and also store in p.
+    # - We return the max value and sum of exps (stored in p) as a double_pair.
     # - i needs to be passed (and stays constant) because otherwise Cython does
     #   not generate optimal code, see
     #   https://github.com/scikit-learn/scikit-learn/issues/17299
@@ -1136,7 +1134,7 @@ cdef class {{name}}(CyLossFunction):
 
 # The multinomial deviance loss is also known as categorical cross-entropy or
 # multinomial log-likelihood.
-# Here, we do not inherit from CyLossFunction as it's cy_gradient method deviates
+# Here, we do not inherit from CyLossFunction as its cy_gradient method deviates
 # from the API.
 cdef class CyHalfMultinomialLoss():
     """Half Multinomial deviance loss with multinomial logit link.
