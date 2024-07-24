@@ -8,12 +8,8 @@ from numbers import Integral, Real
 
 import numpy as np
 import scipy.sparse as sp
+from scipy.fft import fft, ifft
 from scipy.linalg import svd
-
-try:
-    from scipy.fft import fft, ifft
-except ImportError:  # scipy < 1.4
-    from scipy.fftpack import fft, ifft
 
 from .base import (
     BaseEstimator,
