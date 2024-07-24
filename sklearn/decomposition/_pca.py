@@ -414,7 +414,7 @@ class PCA(_BasePCA):
         return self.n_features_in_
 
     @property
-    def loadings(self):
+    def loadings_(self):
         return self.components_.T * np.sqrt(self.explained_variance_)
     
     def fit(self, X, y=None):
