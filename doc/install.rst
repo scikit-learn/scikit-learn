@@ -28,7 +28,24 @@ There are different ways to install scikit-learn:
 Installing the latest release
 =============================
 
-.. `scss/install.scss` overrides some default sphinx-design styling for the tabs
+.. raw:: html
+
+  <style>
+    /* Show caption on large screens */
+    @media screen and (min-width: 960px) {
+      .install-instructions .sd-tab-set {
+        --tab-caption-width: 20%;
+      }
+
+      .install-instructions .sd-tab-set.tabs-os::before {
+        content: "Operating System";
+      }
+
+      .install-instructions .sd-tab-set.tabs-package-manager::before {
+        content: "Package Manager";
+      }
+    }
+  </style>
 
 .. div:: install-instructions
 

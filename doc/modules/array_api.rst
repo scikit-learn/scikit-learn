@@ -119,6 +119,7 @@ Metrics
 - :func:`sklearn.metrics.mean_absolute_error`
 - :func:`sklearn.metrics.mean_absolute_percentage_error`
 - :func:`sklearn.metrics.mean_gamma_deviance`
+- :func:`sklearn.metrics.mean_poisson_deviance` (requires `enabling array API support for SciPy <https://docs.scipy.org/doc/scipy/dev/api-dev/array_api.html#using-array-api-standard-support>`_)
 - :func:`sklearn.metrics.mean_squared_error`
 - :func:`sklearn.metrics.mean_tweedie_deviance`
 - :func:`sklearn.metrics.pairwise.additive_chi2_kernel`
@@ -127,6 +128,7 @@ Metrics
 - :func:`sklearn.metrics.pairwise.cosine_distances`
 - :func:`sklearn.metrics.pairwise.euclidean_distances` (see :ref:`device_support_for_float64`)
 - :func:`sklearn.metrics.pairwise.paired_cosine_distances`
+- :func:`sklearn.metrics.pairwise.paired_euclidean_distances`
 - :func:`sklearn.metrics.pairwise.rbf_kernel` (see :ref:`device_support_for_float64`)
 - :func:`sklearn.metrics.r2_score`
 - :func:`sklearn.metrics.zero_one_loss`

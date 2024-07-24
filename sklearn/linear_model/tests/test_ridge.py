@@ -1691,7 +1691,7 @@ def test_sparse_cg_max_iter():
     assert reg.coef_.shape[0] == X_diabetes.shape[1]
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_n_iter():
     # Test that self.n_iter_ is correct.
     n_targets = 2
