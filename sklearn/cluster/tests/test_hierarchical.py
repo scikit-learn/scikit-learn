@@ -2,9 +2,10 @@
 Several basic tests for hierarchical clustering procedures
 
 """
-# Authors: Vincent Michel, 2010, Gael Varoquaux 2012,
-#          Matteo Visconti di Oleggio Castello 2014
-# License: BSD 3 clause
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import itertools
 import shutil
 from functools import partial

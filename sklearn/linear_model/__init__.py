@@ -1,6 +1,7 @@
-"""
-The :mod:`sklearn.linear_model` module implements a variety of linear models.
-"""
+"""A variety of linear models."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # See http://scikit-learn.sourceforge.net/modules/sgd.html and
 # http://scikit-learn.sourceforge.net/modules/linear_model.html for

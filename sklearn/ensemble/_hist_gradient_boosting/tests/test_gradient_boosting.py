@@ -160,7 +160,7 @@ def test_early_stopping_classification(
     X, y = data
 
     gb = HistGradientBoostingClassifier(
-        verbose=1,  # just for coverage
+        verbose=2,  # just for coverage
         min_samples_leaf=5,  # easier to overfit fast
         scoring=scoring,
         tol=tol,

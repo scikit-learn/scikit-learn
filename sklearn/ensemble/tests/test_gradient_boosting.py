@@ -1,6 +1,7 @@
 """
 Testing for the gradient boosting module (sklearn.ensemble.gradient_boosting).
 """
+
 import re
 import warnings
 

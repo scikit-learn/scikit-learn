@@ -2,8 +2,8 @@
 The :mod:`sklearn.pls` module implements Partial Least Squares (PLS).
 """
 
-# Author: Edouard Duchesnay <edouard.duchesnay@cea.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from abc import ABCMeta, abstractmethod
@@ -263,10 +263,19 @@ class _PLS(
 
         check_consistent_length(X, y)
         X = self._validate_data(
-            X, dtype=np.float64, copy=self.copy, ensure_min_samples=2
+            X,
+            dtype=np.float64,
+            force_writeable=True,
+            copy=self.copy,
+            ensure_min_samples=2,
         )
         y = check_array(
-            y, input_name="y", dtype=np.float64, copy=self.copy, ensure_2d=False
+            y,
+            input_name="y",
+            dtype=np.float64,
+            force_writeable=True,
+            copy=self.copy,
+            ensure_2d=False,
         )
         if y.ndim == 1:
             self._predict_1d = True
@@ -388,7 +397,7 @@ class _PLS(
             pinv2(np.dot(self.y_loadings_.T, self.y_weights_), check_finite=False),
         )
         self.coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
-        self.coef_ = (self.coef_ * self._y_std).T
+        self.coef_ = (self.coef_ * self._y_std).T / self._x_std
         self.intercept_ = self._y_mean
         self._n_features_out = self.x_rotations_.shape[1]
         return self
@@ -517,9 +526,8 @@ class _PLS(
         """
         check_is_fitted(self)
         X = self._validate_data(X, copy=copy, dtype=FLOAT_DTYPES, reset=False)
-        # Normalize
+        # Only center X but do not scale it since the coefficients are already scaled
         X -= self._x_mean
-        X /= self._x_std
         Ypred = X @ self.coef_.T + self.intercept_
         return Ypred.ravel() if self._predict_1d else Ypred
 
@@ -1057,10 +1065,19 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         y = _deprecate_Y_when_required(y, Y)
         check_consistent_length(X, y)
         X = self._validate_data(
-            X, dtype=np.float64, copy=self.copy, ensure_min_samples=2
+            X,
+            dtype=np.float64,
+            force_writeable=True,
+            copy=self.copy,
+            ensure_min_samples=2,
         )
         y = check_array(
-            y, input_name="y", dtype=np.float64, copy=self.copy, ensure_2d=False
+            y,
+            input_name="y",
+            dtype=np.float64,
+            force_writeable=True,
+            copy=self.copy,
+            ensure_2d=False,
         )
         if y.ndim == 1:
             y = y.reshape(-1, 1)

@@ -63,8 +63,8 @@ can provide additional strategies beyond what is built-in:
   - :class:`semi_supervised.LabelSpreading`
   - :class:`discriminant_analysis.LinearDiscriminantAnalysis`
   - :class:`svm.LinearSVC` (setting multi_class="crammer_singer")
-  - :class:`linear_model.LogisticRegression` (setting multi_class="multinomial")
-  - :class:`linear_model.LogisticRegressionCV` (setting multi_class="multinomial")
+  - :class:`linear_model.LogisticRegression` (with most solvers)
+  - :class:`linear_model.LogisticRegressionCV` (with most solvers)
   - :class:`neural_network.MLPClassifier`
   - :class:`neighbors.NearestCentroid`
   - :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`
@@ -86,8 +86,8 @@ can provide additional strategies beyond what is built-in:
   - :class:`ensemble.GradientBoostingClassifier`
   - :class:`gaussian_process.GaussianProcessClassifier` (setting multi_class = "one_vs_rest")
   - :class:`svm.LinearSVC` (setting multi_class="ovr")
-  - :class:`linear_model.LogisticRegression` (setting multi_class="ovr")
-  - :class:`linear_model.LogisticRegressionCV` (setting multi_class="ovr")
+  - :class:`linear_model.LogisticRegression` (most solvers)
+  - :class:`linear_model.LogisticRegressionCV` (most solvers)
   - :class:`linear_model.SGDClassifier`
   - :class:`linear_model.Perceptron`
   - :class:`linear_model.PassiveAggressiveClassifier`
@@ -172,6 +172,9 @@ Valid :term:`multiclass` representations for
     >>> from scipy import sparse
     >>> y_sparse = sparse.csr_matrix(y_dense)
     >>> print(y_sparse)
+    <Compressed Sparse Row sparse matrix of dtype 'int64'
+    	with 4 stored elements and shape (4, 3)>
+      Coords	Values
       (0, 0)	1
       (1, 2)	1
       (2, 0)	1
@@ -201,7 +204,7 @@ Below is an example of multiclass learning using OvR::
   >>> from sklearn.multiclass import OneVsRestClassifier
   >>> from sklearn.svm import LinearSVC
   >>> X, y = datasets.load_iris(return_X_y=True)
-  >>> OneVsRestClassifier(LinearSVC(dual="auto", random_state=0)).fit(X, y).predict(X)
+  >>> OneVsRestClassifier(LinearSVC(random_state=0)).fit(X, y).predict(X)
   array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -222,9 +225,9 @@ in which cell [i, j] indicates the presence of label j in sample i.
     :scale: 75%
 
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multilabel.py`
+* :ref:`sphx_glr_auto_examples_miscellaneous_plot_multilabel.py`
 
 .. _ovo_classification:
 
@@ -253,7 +256,7 @@ Below is an example of multiclass learning using OvO::
   >>> from sklearn.multiclass import OneVsOneClassifier
   >>> from sklearn.svm import LinearSVC
   >>> X, y = datasets.load_iris(return_X_y=True)
-  >>> OneVsOneClassifier(LinearSVC(dual="auto", random_state=0)).fit(X, y).predict(X)
+  >>> OneVsOneClassifier(LinearSVC(random_state=0)).fit(X, y).predict(X)
   array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -263,10 +266,10 @@ Below is an example of multiclass learning using OvO::
          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
 
 
-.. topic:: References:
+.. rubric:: References
 
-    * "Pattern Recognition and Machine Learning. Springer",
-      Christopher M. Bishop, page 183, (First Edition)
+* "Pattern Recognition and Machine Learning. Springer",
+  Christopher M. Bishop, page 183, (First Edition)
 
 .. _ecoc:
 
@@ -311,8 +314,7 @@ Below is an example of multiclass learning using Output-Codes::
   >>> from sklearn.multiclass import OutputCodeClassifier
   >>> from sklearn.svm import LinearSVC
   >>> X, y = datasets.load_iris(return_X_y=True)
-  >>> clf = OutputCodeClassifier(LinearSVC(dual="auto", random_state=0),
-  ...                            code_size=2, random_state=0)
+  >>> clf = OutputCodeClassifier(LinearSVC(random_state=0), code_size=2, random_state=0)
   >>> clf.fit(X, y).predict(X)
   array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -322,21 +324,16 @@ Below is an example of multiclass learning using Output-Codes::
          2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 1, 1, 2, 2, 2,
          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
 
-.. topic:: References:
+.. rubric:: References
 
-    * "Solving multiclass learning problems via error-correcting output codes",
-      Dietterich T., Bakiri G.,
-      Journal of Artificial Intelligence Research 2,
-      1995.
+* "Solving multiclass learning problems via error-correcting output codes",
+  Dietterich T., Bakiri G., Journal of Artificial Intelligence Research 2, 1995.
 
-    .. [3] "The error coding method and PICTs",
-        James G., Hastie T.,
-        Journal of Computational and Graphical statistics 7,
-        1998.
+.. [3] "The error coding method and PICTs", James G., Hastie T.,
+  Journal of Computational and Graphical statistics 7, 1998.
 
-    * "The Elements of Statistical Learning",
-      Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
-      2008.
+* "The Elements of Statistical Learning",
+  Hastie T., Tibshirani R., Friedman J., page 606 (second-edition), 2008.
 
 .. _multilabel_classification:
 
@@ -383,6 +380,9 @@ An example of the same ``y`` in sparse matrix form:
 
   >>> y_sparse = sparse.csr_matrix(y)
   >>> print(y_sparse)
+  <Compressed Sparse Row sparse matrix of dtype 'int64'
+    with 4 stored elements and shape (3, 4)>
+    Coords	Values
     (0, 0)	1
     (0, 3)	1
     (1, 2)	1
@@ -433,10 +433,10 @@ one does not know the optimal ordering of the models in the chain so
 typically many randomly ordered chains are fit and their predictions are
 averaged together.
 
-.. topic:: References:
+.. rubric:: References
 
-    Jesse Read, Bernhard Pfahringer, Geoff Holmes, Eibe Frank,
-        "Classifier Chains for Multi-label Classification", 2009.
+* Jesse Read, Bernhard Pfahringer, Geoff Holmes, Eibe Frank,
+  "Classifier Chains for Multi-label Classification", 2009.
 
 .. _multiclass_multioutput_classification:
 

@@ -11,6 +11,10 @@ The dataset used in this example is a preprocessed excerpt of the
 .. _LFW: http://vis-www.cs.umass.edu/lfw/
 
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 from time import time
 

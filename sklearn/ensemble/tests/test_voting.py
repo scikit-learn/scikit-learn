@@ -34,7 +34,6 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
-    ignore_warnings,
 )
 
 # Load datasets
@@ -314,7 +313,8 @@ def test_parallel_fit(global_random_seed):
     assert_array_almost_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
 
 
-@ignore_warnings(category=FutureWarning)
+# TODO(1.7): remove warning filter when sample_weight is kwarg only
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_sample_weight(global_random_seed):
     """Tests sample_weight parameter of VotingClassifier"""
     clf1 = LogisticRegression(random_state=global_random_seed)
@@ -759,7 +759,7 @@ def test_metadata_routing_for_voting_estimators(Estimator, Child, prop):
         registry = estimator[1].registry
         assert len(registry)
         for sub_est in registry:
-            check_recorded_metadata(obj=sub_est, method="fit", **kwargs)
+            check_recorded_metadata(obj=sub_est, method="fit", parent="fit", **kwargs)
 
 
 @pytest.mark.usefixtures("enable_slep006")

@@ -1,11 +1,7 @@
-# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#          Robert Layton <robertlayton@gmail.com>
-#          Andreas Mueller <amueller@ais.uni-bonn.de>
-#          Philippe Gervais <philippe.gervais@inria.fr>
-#          Lars Buitinck
-#          Joel Nothman <joel.nothman@gmail.com>
-# License: BSD 3 clause
+"""Metrics for pairwise distances and affinity of sets of samples."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import itertools
 import warnings
@@ -24,6 +20,16 @@ from ..utils import (
     check_array,
     gen_batches,
     gen_even_slices,
+)
+from ..utils._array_api import (
+    _clip,
+    _fill_or_add_to_diagonal,
+    _find_matching_floating_dtype,
+    _is_numpy_namespace,
+    _max_precision_float_dtype,
+    _modify_in_place_if_numpy,
+    get_namespace,
+    get_namespace_and_device,
 )
 from ..utils._chunking import get_chunk_n_rows
 from ..utils._mask import _get_mask
@@ -154,7 +160,11 @@ def check_pairwise_arrays(
         An array equal to Y if Y was not None, guaranteed to be a numpy array.
         If Y was None, safe_Y will be a pointer to X.
     """
-    X, Y, dtype_float = _return_float_dtype(X, Y)
+    xp, _ = get_namespace(X, Y)
+    if any([issparse(X), issparse(Y)]) or _is_numpy_namespace(xp):
+        X, Y, dtype_float = _return_float_dtype(X, Y)
+    else:
+        dtype_float = _find_matching_floating_dtype(X, Y, xp=xp)
 
     estimator = "check_pairwise_arrays"
     if dtype == "infer_float":
@@ -330,13 +340,14 @@ def euclidean_distances(
     array([[1.        ],
            [1.41421356]])
     """
+    xp, _ = get_namespace(X, Y)
     X, Y = check_pairwise_arrays(X, Y)
 
     if X_norm_squared is not None:
         X_norm_squared = check_array(X_norm_squared, ensure_2d=False)
         original_shape = X_norm_squared.shape
         if X_norm_squared.shape == (X.shape[0],):
-            X_norm_squared = X_norm_squared.reshape(-1, 1)
+            X_norm_squared = xp.reshape(X_norm_squared, (-1, 1))
         if X_norm_squared.shape == (1, X.shape[0]):
             X_norm_squared = X_norm_squared.T
         if X_norm_squared.shape != (X.shape[0], 1):
@@ -349,7 +360,7 @@ def euclidean_distances(
         Y_norm_squared = check_array(Y_norm_squared, ensure_2d=False)
         original_shape = Y_norm_squared.shape
         if Y_norm_squared.shape == (Y.shape[0],):
-            Y_norm_squared = Y_norm_squared.reshape(1, -1)
+            Y_norm_squared = xp.reshape(Y_norm_squared, (1, -1))
         if Y_norm_squared.shape == (Y.shape[0], 1):
             Y_norm_squared = Y_norm_squared.T
         if Y_norm_squared.shape != (1, Y.shape[0]):
@@ -370,24 +381,25 @@ def _euclidean_distances(X, Y, X_norm_squared=None, Y_norm_squared=None, squared
     float32, norms needs to be recomputed on upcast chunks.
     TODO: use a float64 accumulator in row_norms to avoid the latter.
     """
-    if X_norm_squared is not None and X_norm_squared.dtype != np.float32:
-        XX = X_norm_squared.reshape(-1, 1)
-    elif X.dtype != np.float32:
-        XX = row_norms(X, squared=True)[:, np.newaxis]
+    xp, _, device_ = get_namespace_and_device(X, Y)
+    if X_norm_squared is not None and X_norm_squared.dtype != xp.float32:
+        XX = xp.reshape(X_norm_squared, (-1, 1))
+    elif X.dtype != xp.float32:
+        XX = row_norms(X, squared=True)[:, None]
     else:
         XX = None
 
     if Y is X:
         YY = None if XX is None else XX.T
     else:
-        if Y_norm_squared is not None and Y_norm_squared.dtype != np.float32:
-            YY = Y_norm_squared.reshape(1, -1)
-        elif Y.dtype != np.float32:
-            YY = row_norms(Y, squared=True)[np.newaxis, :]
+        if Y_norm_squared is not None and Y_norm_squared.dtype != xp.float32:
+            YY = xp.reshape(Y_norm_squared, (1, -1))
+        elif Y.dtype != xp.float32:
+            YY = row_norms(Y, squared=True)[None, :]
         else:
             YY = None
 
-    if X.dtype == np.float32 or Y.dtype == np.float32:
+    if X.dtype == xp.float32 or Y.dtype == xp.float32:
         # To minimize precision issues with float32, we compute the distance
         # matrix on chunks of X and Y upcast to float64
         distances = _euclidean_distances_upcast(X, XX, Y, YY)
@@ -396,14 +408,22 @@ def _euclidean_distances(X, Y, X_norm_squared=None, Y_norm_squared=None, squared
         distances = -2 * safe_sparse_dot(X, Y.T, dense_output=True)
         distances += XX
         distances += YY
-    np.maximum(distances, 0, out=distances)
+
+    xp_zero = xp.asarray(0, device=device_, dtype=distances.dtype)
+    distances = _modify_in_place_if_numpy(
+        xp, xp.maximum, distances, xp_zero, out=distances
+    )
 
     # Ensure that distances between vectors and themselves are set to 0.0.
     # This may not be the case due to floating point rounding errors.
     if X is Y:
-        np.fill_diagonal(distances, 0)
+        _fill_or_add_to_diagonal(distances, 0, xp=xp, add_value=False)
 
-    return distances if squared else np.sqrt(distances, out=distances)
+    if squared:
+        return distances
+
+    distances = _modify_in_place_if_numpy(xp, xp.sqrt, distances, out=distances)
+    return distances
 
 
 @validate_params(
@@ -547,15 +567,20 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None, batch_size=None):
     X and Y are upcast to float64 by chunks, which size is chosen to limit
     memory increase by approximately 10% (at least 10MiB).
     """
+    xp, _, device_ = get_namespace_and_device(X, Y)
     n_samples_X = X.shape[0]
     n_samples_Y = Y.shape[0]
     n_features = X.shape[1]
 
-    distances = np.empty((n_samples_X, n_samples_Y), dtype=np.float32)
+    distances = xp.empty((n_samples_X, n_samples_Y), dtype=xp.float32, device=device_)
 
     if batch_size is None:
-        x_density = X.nnz / np.prod(X.shape) if issparse(X) else 1
-        y_density = Y.nnz / np.prod(Y.shape) if issparse(Y) else 1
+        x_density = (
+            X.nnz / xp.prod(X.shape) if issparse(X) else xp.asarray(1, device=device_)
+        )
+        y_density = (
+            Y.nnz / xp.prod(Y.shape) if issparse(Y) else xp.asarray(1, device=device_)
+        )
 
         # Allow 10% more memory than X, Y and the distance matrix take (at
         # least 10MiB)
@@ -575,15 +600,15 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None, batch_size=None):
         # Hence x² + (xd+yd)kx = M, where x=batch_size, k=n_features, M=maxmem
         #                                 xd=x_density and yd=y_density
         tmp = (x_density + y_density) * n_features
-        batch_size = (-tmp + np.sqrt(tmp**2 + 4 * maxmem)) / 2
+        batch_size = (-tmp + xp.sqrt(tmp**2 + 4 * maxmem)) / 2
         batch_size = max(int(batch_size), 1)
 
     x_batches = gen_batches(n_samples_X, batch_size)
-
+    xp_max_float = _max_precision_float_dtype(xp=xp, device=device_)
     for i, x_slice in enumerate(x_batches):
-        X_chunk = X[x_slice].astype(np.float64)
+        X_chunk = xp.astype(X[x_slice], xp_max_float)
         if XX is None:
-            XX_chunk = row_norms(X_chunk, squared=True)[:, np.newaxis]
+            XX_chunk = row_norms(X_chunk, squared=True)[:, None]
         else:
             XX_chunk = XX[x_slice]
 
@@ -596,9 +621,9 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None, batch_size=None):
                 d = distances[y_slice, x_slice].T
 
             else:
-                Y_chunk = Y[y_slice].astype(np.float64)
+                Y_chunk = xp.astype(Y[y_slice], xp_max_float)
                 if YY is None:
-                    YY_chunk = row_norms(Y_chunk, squared=True)[np.newaxis, :]
+                    YY_chunk = row_norms(Y_chunk, squared=True)[None, :]
                 else:
                     YY_chunk = YY[:, y_slice]
 
@@ -606,7 +631,7 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None, batch_size=None):
                 d += XX_chunk
                 d += YY_chunk
 
-            distances[x_slice, y_slice] = d.astype(np.float32, copy=False)
+            distances[x_slice, y_slice] = xp.astype(d, xp.float32, copy=False)
 
     return distances
 
@@ -1115,15 +1140,17 @@ def cosine_distances(X, Y=None):
     array([[1.     , 1.     ],
            [0.42..., 0.18...]])
     """
+    xp, _ = get_namespace(X, Y)
+
     # 1.0 - cosine_similarity(X, Y) without copy
     S = cosine_similarity(X, Y)
     S *= -1
     S += 1
-    np.clip(S, 0, 2, out=S)
+    S = _clip(S, 0, 2, xp)
     if X is Y or Y is None:
         # Ensure that distances between vectors and themselves are set to 0.0.
         # This may not be the case due to floating point rounding errors.
-        np.fill_diagonal(S, 0.0)
+        _fill_or_add_to_diagonal(S, 0.0, xp, add_value=False)
     return S
 
 
@@ -1544,13 +1571,15 @@ def rbf_kernel(X, Y=None, gamma=None):
     array([[0.71..., 0.51...],
            [0.51..., 0.71...]])
     """
+    xp, _ = get_namespace(X, Y)
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
         gamma = 1.0 / X.shape[1]
 
     K = euclidean_distances(X, Y, squared=True)
     K *= -gamma
-    np.exp(K, K)  # exponentiate K in-place
+    # exponentiate K in-place when using numpy
+    K = _modify_in_place_if_numpy(xp, xp.exp, K, out=K)
     return K
 
 
@@ -1651,7 +1680,7 @@ def cosine_similarity(X, Y=None, dense_output=True):
 
     Returns
     -------
-    similarities : ndarray of shape (n_samples_X, n_samples_Y)
+    similarities : ndarray or sparse matrix of shape (n_samples_X, n_samples_Y)
         Returns the cosine similarity between samples in X and Y.
 
     Examples
@@ -1707,7 +1736,7 @@ def additive_chi2_kernel(X, Y=None):
 
     Returns
     -------
-    kernel : ndarray of shape (n_samples_X, n_samples_Y)
+    kernel : array-like of shape (n_samples_X, n_samples_Y)
         The kernel matrix.
 
     See Also
@@ -1739,15 +1768,26 @@ def additive_chi2_kernel(X, Y=None):
     array([[-1., -2.],
            [-2., -1.]])
     """
+    xp, _ = get_namespace(X, Y)
     X, Y = check_pairwise_arrays(X, Y, accept_sparse=False)
-    if (X < 0).any():
+    if xp.any(X < 0):
         raise ValueError("X contains negative values.")
-    if Y is not X and (Y < 0).any():
+    if Y is not X and xp.any(Y < 0):
         raise ValueError("Y contains negative values.")
 
-    result = np.zeros((X.shape[0], Y.shape[0]), dtype=X.dtype)
-    _chi2_kernel_fast(X, Y, result)
-    return result
+    if _is_numpy_namespace(xp):
+        result = np.zeros((X.shape[0], Y.shape[0]), dtype=X.dtype)
+        _chi2_kernel_fast(X, Y, result)
+        return result
+    else:
+        dtype = _find_matching_floating_dtype(X, Y, xp=xp)
+        xb = X[:, None, :]
+        yb = Y[None, :, :]
+        nom = -((xb - yb) ** 2)
+        denom = xb + yb
+        nom = xp.where(denom == 0, xp.asarray(0, dtype=dtype), nom)
+        denom = xp.where(denom == 0, xp.asarray(1, dtype=dtype), denom)
+        return xp.sum(nom / denom, axis=2)
 
 
 @validate_params(
@@ -1812,9 +1852,12 @@ def chi2_kernel(X, Y=None, gamma=1.0):
     array([[0.36..., 0.13...],
            [0.13..., 0.36...]])
     """
+    xp, _ = get_namespace(X, Y)
     K = additive_chi2_kernel(X, Y)
     K *= gamma
-    return np.exp(K, K)
+    if _is_numpy_namespace(xp):
+        return np.exp(K, out=K)
+    return xp.exp(K)
 
 
 # Helper functions - distance
