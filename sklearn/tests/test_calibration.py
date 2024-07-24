@@ -452,13 +452,7 @@ def test_calibration_prob_sum(ensemble):
     assert_array_almost_equal(probs.sum(axis=1), np.ones(probs.shape[0]))
 
 
-@pytest.mark.parametrize(
-    "ensemble",
-    [
-        False,
-    ],
-)
-# @pytest.mark.parametrize("ensemble", [True, False])
+@pytest.mark.parametrize("ensemble", [True, False])
 def test_calibration_less_classes(ensemble):
     # Test to check calibration works fine when train set in a test-train
     # split does not contain all classes
