@@ -178,7 +178,10 @@ def _check_precomputed(X):
         )
     copied = graph.format != "csr"
     graph = check_array(
-        graph, accept_sparse="csr", ensure_non_negative=True, input_name="graph"
+        graph,
+        accept_sparse="csr",
+        ensure_non_negative=True,
+        input_name="precomputed distance matrix",
     )
     graph = sort_graph_by_row_values(graph, copy=not copied, warn_when_not_sorted=True)
 

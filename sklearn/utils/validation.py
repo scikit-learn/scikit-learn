@@ -792,8 +792,8 @@ def check_array(
            Accepts `pd.NA` and converts it into `np.nan`
 
     ensure_non_negative : bool, default=False
-        Make sure the array has only non-negative values. An array that contains
-        non-negative values will raise a ValueError.
+        Make sure the array has only non-negative values. If True, an array that
+        contains negative values will raise a ValueError.
 
         .. versionadded:: 1.6
 
@@ -1100,6 +1100,12 @@ def check_array(
                 % (n_features, array.shape, ensure_min_features, context)
             )
 
+    if ensure_non_negative:
+        whom = input_name
+        if estimator_name:
+            whom += f" in {estimator_name}"
+        check_non_negative(array, whom)
+
     if force_writeable:
         # By default, array.copy() creates a C-ordered copy. We set order=K to
         # preserve the order of the array.
@@ -1126,12 +1132,6 @@ def check_array(
                     array = array.copy(**copy_params)
             else:
                 array = array.copy(**copy_params)
-
-    if ensure_non_negative:
-        whom = input_name
-        if estimator_name:
-            whom += f" in {estimator_name}"
-        check_non_negative(array, whom)
 
     return array
 
@@ -1693,7 +1693,7 @@ def check_non_negative(X, whom):
         X_min = xp.min(X)
 
     if X_min < 0:
-        raise ValueError("Negative values in data passed to %s" % whom)
+        raise ValueError(f"Negative values in data passed to {whom}.")
 
 
 def check_scalar(
