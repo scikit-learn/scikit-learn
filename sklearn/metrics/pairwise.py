@@ -178,7 +178,7 @@ def check_pairwise_arrays(
         An array equal to Y if Y was not None, guaranteed to be a numpy array.
         If Y was None, safe_Y will be a pointer to X.
     """
-    ensure_all_finite = _deprecate_force_all_finite(ensure_all_finite, force_all_finite)
+    ensure_all_finite = _deprecate_force_all_finite(force_all_finite, ensure_all_finite)
 
     xp, _ = get_namespace(X, Y)
     if any([issparse(X), issparse(Y)]) or _is_numpy_namespace(xp):
@@ -2405,7 +2405,7 @@ def pairwise_distances(
     array([[1., 2.],
            [2., 1.]])
     """
-    ensure_all_finite = _deprecate_force_all_finite(ensure_all_finite, force_all_finite)
+    ensure_all_finite = _deprecate_force_all_finite(force_all_finite, ensure_all_finite)
 
     if metric == "precomputed":
         X, _ = check_pairwise_arrays(

@@ -275,7 +275,7 @@ def as_float_array(
     >>> as_float_array(array)
     array([0., 0., 1., 2., 2.])
     """
-    ensure_all_finite = _deprecate_force_all_finite(ensure_all_finite, force_all_finite)
+    ensure_all_finite = _deprecate_force_all_finite(force_all_finite, ensure_all_finite)
 
     if isinstance(X, np.matrix) or (
         not isinstance(X, np.ndarray) and not sp.issparse(X)
@@ -869,7 +869,7 @@ def check_array(
     >>> X_checked
     array([[1, 2, 3], [4, 5, 6]])
     """
-    ensure_all_finite = _deprecate_force_all_finite(ensure_all_finite, force_all_finite)
+    ensure_all_finite = _deprecate_force_all_finite(force_all_finite, ensure_all_finite)
 
     if isinstance(array, np.matrix):
         raise TypeError(
@@ -1349,7 +1349,7 @@ def check_X_y(
             f"{estimator_name} requires y to be passed, but the target y is None"
         )
 
-    ensure_all_finite = _deprecate_force_all_finite(ensure_all_finite, force_all_finite)
+    ensure_all_finite = _deprecate_force_all_finite(force_all_finite, ensure_all_finite)
 
     X = check_array(
         X,
