@@ -151,7 +151,8 @@ def _deprecate_force_all_finite(force_all_finite, ensure_all_finite):
 
         if ensure_all_finite is not None:
             raise ValueError(
-                "'force_all_finite' and 'ensure_all_finite' cannot be used together."
+                "'force_all_finite' and 'ensure_all_finite' cannot be used together. "
+                "Pass `ensure_all_finite` only."
             )
 
         return force_all_finite
