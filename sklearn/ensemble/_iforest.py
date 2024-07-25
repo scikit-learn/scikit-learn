@@ -316,7 +316,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
             Fitted estimator.
         """
         X = self._validate_data(
-            X, accept_sparse=["csc"], dtype=tree_dtype, force_all_finite=False
+            X, accept_sparse=["csc"], dtype=tree_dtype, ensure_all_finite=False
         )
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
@@ -522,7 +522,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
             accept_sparse="csr",
             dtype=tree_dtype,
             reset=False,
-            force_all_finite=False,
+            ensure_all_finite=False,
         )
 
         return self._score_samples(X)
