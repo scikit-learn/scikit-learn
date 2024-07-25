@@ -10,7 +10,7 @@ import numpy as np
 from joblib import effective_n_jobs
 
 from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone, is_classifier
-from ..metrics import check_scoring
+from ..metrics import get_scorer
 from ..model_selection import check_cv
 from ..model_selection._validation import _score
 from ..utils import Bunch, metadata_routing
@@ -49,7 +49,6 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer, routed_params):
         X_train,
         y_train,
         lambda estimator, features: _score(
-            # TODO(SLEP6): pass score_params here
             estimator,
             X_test[:, features],
             y_test,
@@ -926,6 +925,42 @@ class RFECV(RFE):
         }
         return self
 
+    def score(self, X, y, **score_params):
+        """Score using the `scoring` option on the given test data and labels.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Test samples.
+
+        y : array-like of shape (n_samples,)
+            True labels for X.
+
+        **score_params : dict
+            Parameters to pass to the `score` method of the underlying scorer.
+
+            ..versionadded:: 1.6
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>`
+                for more details.
+
+        Returns
+        -------
+        score : float
+            Score of self.predict(X) w.r.t. y defined by `scoring`.
+        """
+        _raise_for_params(score_params, self, "score")
+        scoring = self._get_scorer()
+        if _routing_enabled():
+            routed_params = process_routing(self, "score", **score_params)
+        else:
+            routed_params = Bunch()
+            routed_params.scorer = Bunch(score={})
+
+        return scoring(self, X, y, **routed_params.scorer.score)
+
     def get_metadata_routing(self):
         """Get metadata routing of this object.
 
@@ -943,10 +978,7 @@ class RFECV(RFE):
         router = MetadataRouter(owner=self.__class__.__name__)
         router.add(
             estimator=self.estimator,
-            method_mapping=MethodMapping()
-            .add(caller="fit", callee="fit")
-            .add(caller="predict", callee="predict")
-            .add(caller="score", callee="score"),
+            method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
         router.add(
             splitter=check_cv(self.cv),
@@ -957,10 +989,16 @@ class RFECV(RFE):
         )
         router.add(
             scorer=self._get_scorer(),
-            method_mapping=MethodMapping().add(caller="fit", callee="score"),
+            method_mapping=MethodMapping()
+            .add(caller="fit", callee="score")
+            .add(caller="score", callee="score"),
         )
 
         return router
 
     def _get_scorer(self):
-        return check_scoring(self.estimator, scoring=self.scoring)
+        if self.scoring is None:
+            scoring = "accuracy" if is_classifier(self.estimator) else "r2"
+        else:
+            scoring = self.scoring
+        return get_scorer(scoring)

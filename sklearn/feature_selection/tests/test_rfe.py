@@ -26,7 +26,7 @@ from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.fixes import CSR_CONTAINERS
 
 
-class MockClassifier:
+class MockClassifier(ClassifierMixin):
     """
     Dummy classifier to test recursive feature elimination
     """
@@ -37,10 +37,11 @@ class MockClassifier:
     def fit(self, X, y):
         assert len(X) == len(y)
         self.coef_ = np.ones(X.shape[1], dtype=np.float64)
+        self.classes_ = sorted(set(y))
         return self
 
     def predict(self, T):
-        return T.shape[0]
+        return np.ones(T.shape[0])
 
     predict_proba = predict
     decision_function = predict
