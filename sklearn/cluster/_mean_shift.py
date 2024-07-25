@@ -38,7 +38,8 @@ from ..utils.validation import check_is_fitted
     },
     prefer_skip_nested_validation=True,
 )
-def estimate_bandwidth(X, *, quantile=0.3, n_samples=None, random_state=0, n_jobs=None):
+def estimate_bandwidth(X, *, quantile=0.3, n_samples=None,
+                       random_state=0, n_jobs=None):
     """Estimate the bandwidth to use with the mean-shift algorithm.
 
     This function takes time at least quadratic in `n_samples`. For large
@@ -112,7 +113,8 @@ def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
     completed_iterations = 0
     while True:
         # Find mean of points within bandwidth
-        i_nbrs = nbrs.radius_neighbors([my_mean], bandwidth, return_distance=False)[0]
+        i_nbrs = nbrs.radius_neighbors([my_mean], bandwidth,
+                                       return_distance=False)[0]
         points_within = X[i_nbrs]
         if len(points_within) == 0:
             break  # Depending on seeding strategy this condition may occur
@@ -188,8 +190,8 @@ def mean_shift(
         operation terminates (for that seed point), if has not converged yet.
 
     n_jobs : int, default=None
-        The number of jobs to use for the computation. The following tasks benefit
-        from the parallelization:
+        The number of jobs to use for the computation. The following tasks
+        benefit from the parallelization:
 
         - The search of nearest neighbors for bandwidth estimation and label
           assignments. See the details in the docstring of the
@@ -216,7 +218,8 @@ def mean_shift(
 
     Notes
     -----
-    For an example, see :ref:`sphx_glr_auto_examples_cluster_plot_mean_shift.py`.
+    For an example, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_mean_shift.py`.
 
     Examples
     --------
@@ -288,7 +291,8 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
     )
     if len(bin_seeds) == len(X):
         warnings.warn(
-            "Binning data failed with provided bin_size=%f, using data points as seeds."
+            "Binning data failed with provided bin_size=%f, "
+            "using data points as seeds."
             % bin_size
         )
         return X
@@ -346,8 +350,8 @@ class MeanShift(ClusterMixin, BaseEstimator):
         If false, then orphans are given cluster label -1.
 
     n_jobs : int, default=None
-        The number of jobs to use for the computation. The following tasks benefit
-        from the parallelization:
+        The number of jobs to use for the computation. The following tasks
+        benefit from the parallelization:
 
         - The search of nearest neighbors for bandwidth estimation and label
           assignments. See the details in the docstring of the
@@ -513,8 +517,8 @@ class MeanShift(ClusterMixin, BaseEstimator):
         if not center_intensity_dict:
             # nothing near seeds
             raise ValueError(
-                "No point was within bandwidth=%f of any seed. Try a different seeding"
-                " strategy                              or increase the bandwidth."
+                "No point was within bandwidth=%f of any seed.  Try a "
+                "different seeding strategy or increase the bandwidth."
                 % bandwidth
             )
 
@@ -535,15 +539,17 @@ class MeanShift(ClusterMixin, BaseEstimator):
         )
         for i, center in enumerate(sorted_centers):
             if unique[i]:
-                neighbor_idxs = nbrs.radius_neighbors([center], return_distance=False)[
-                    0
-                ]
+                neighbor_idxs = nbrs.radius_neighbors(
+                    [center], return_distance=False
+                    )[0]
                 unique[neighbor_idxs] = 0
                 unique[i] = 1  # leave the current point as unique
         cluster_centers = sorted_centers[unique]
 
         # ASSIGN LABELS: a point belongs to the cluster that it is closest to
-        nbrs = NearestNeighbors(n_neighbors=1, n_jobs=self.n_jobs).fit(cluster_centers)
+        nbrs = NearestNeighbors(
+            n_neighbors=1, n_jobs=self.n_jobs
+            ).fit(cluster_centers)
         labels = np.zeros(n_samples, dtype=int)
         distances, idxs = nbrs.kneighbors(X)
         if self.cluster_all:
