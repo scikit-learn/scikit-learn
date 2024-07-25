@@ -216,8 +216,7 @@ def mean_shift(
 
     Notes
     -----
-    For an example, see :ref:`examples/cluster/plot_mean_shift.py
-    <sphx_glr_auto_examples_cluster_plot_mean_shift.py>`.
+    For an example, see :ref:`sphx_glr_auto_examples_cluster_plot_mean_shift.py>`.
 
     Examples
     --------
