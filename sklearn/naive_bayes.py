@@ -6,6 +6,7 @@ These are supervised learning methods based on applying Bayes' theorem with stro
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
+
 import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real

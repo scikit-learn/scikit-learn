@@ -92,6 +92,9 @@ matrix as a binary prediction (:ref:`micro-averaging <average>`).
              :func:`sklearn.metrics.f1_score`
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # In binary classification settings
 # ---------------------------------

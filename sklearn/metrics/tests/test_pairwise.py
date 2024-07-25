@@ -2,6 +2,7 @@ import warnings
 from types import GeneratorType
 
 import numpy as np
+import pytest
 from numpy import linalg
 from scipy.sparse import issparse
 from scipy.spatial.distance import (
@@ -12,15 +13,6 @@ from scipy.spatial.distance import (
     pdist,
     squareform,
 )
-
-try:
-    from scipy.spatial.distance import wminkowski
-except ImportError:
-    # In scipy 1.6.0, wminkowski is deprecated and minkowski
-    # should be used instead.
-    from scipy.spatial.distance import minkowski as wminkowski
-
-import pytest
 
 from sklearn import config_context
 from sklearn.exceptions import DataConversionWarning
@@ -68,8 +60,6 @@ from sklearn.utils.fixes import (
     CSC_CONTAINERS,
     CSR_CONTAINERS,
     DOK_CONTAINERS,
-    parse_version,
-    sp_version,
 )
 from sklearn.utils.parallel import Parallel, delayed
 
@@ -299,7 +289,6 @@ def test_pairwise_precomputed_non_negative():
 
 
 _minkowski_kwds = {"w": np.arange(1, 5).astype("double", copy=False), "p": 1}
-_wminkowski_kwds = {"w": np.arange(1, 5).astype("double", copy=False), "p": 1}
 
 
 def callable_rbf_kernel(x, y, **kwds):
@@ -313,33 +302,15 @@ def callable_rbf_kernel(x, y, **kwds):
     "func, metric, kwds",
     [
         (pairwise_distances, "euclidean", {}),
-        pytest.param(
+        (
             pairwise_distances,
             minkowski,
             _minkowski_kwds,
         ),
-        pytest.param(
+        (
             pairwise_distances,
             "minkowski",
             _minkowski_kwds,
-        ),
-        pytest.param(
-            pairwise_distances,
-            wminkowski,
-            _wminkowski_kwds,
-            marks=pytest.mark.skipif(
-                sp_version >= parse_version("1.6.0"),
-                reason="wminkowski is now minkowski and it has been already tested.",
-            ),
-        ),
-        pytest.param(
-            pairwise_distances,
-            "wminkowski",
-            _wminkowski_kwds,
-            marks=pytest.mark.skipif(
-                sp_version >= parse_version("1.6.0"),
-                reason="wminkowski is now minkowski and it has been already tested.",
-            ),
         ),
         (pairwise_kernels, "polynomial", {"degree": 1}),
         (pairwise_kernels, callable_rbf_kernel, {"gamma": 0.1}),
@@ -739,7 +710,7 @@ def test_parallel_pairwise_distances_diagonal(metric, global_dtype):
     assert_allclose(np.diag(distances), 0, atol=1e-10)
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings("ignore:Could not adhere to working_memory config")
 def test_pairwise_distances_chunked(global_dtype):
     # Test the pairwise_distance helper function.
     rng = np.random.RandomState(0)
