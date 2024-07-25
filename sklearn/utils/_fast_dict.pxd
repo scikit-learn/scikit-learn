@@ -1,5 +1,6 @@
-# Author: Gael Varoquaux
-# License: BSD
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 """
 Uses C++ map containers for fast dict-like behavior with keys being
 integers, and values float.

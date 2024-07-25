@@ -7,25 +7,8 @@ Function named as ``*_error`` or ``*_loss`` return a scalar value to minimize:
 the lower the better.
 """
 
-# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#          Olivier Grisel <olivier.grisel@ensta.org>
-#          Arnaud Joly <a.joly@ulg.ac.be>
-#          Jochen Wersdorfer <jochen@wersdoerfer.de>
-#          Lars Buitinck
-#          Joel Nothman <joel.nothman@gmail.com>
-#          Karan Desai <karandesai281196@gmail.com>
-#          Noel Dawe <noel@dawe.me>
-#          Manoj Kumar <manojkumarsivaraj334@gmail.com>
-#          Michael Eickenberg <michael.eickenberg@gmail.com>
-#          Konstantin Shmelkov <konstantin.shmelkov@polytechnique.edu>
-#          Christian Lorentzen <lorentzen.ch@gmail.com>
-#          Ashutosh Hathidara <ashutoshhathidara98@gmail.com>
-#          Uttam kumar <bajiraouttamsinha@gmail.com>
-#          Sylvain Marie <sylvain.marie@se.com>
-#          Ohad Michel <ohadmich@gmail.com>
-#          Alejandro Martin Gil <almagil98@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Real
@@ -139,10 +122,10 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric", xp=None):
         multioutput = check_array(multioutput, ensure_2d=False)
         if n_outputs == 1:
             raise ValueError("Custom weights are useful only in multi-output cases.")
-        elif n_outputs != len(multioutput):
+        elif n_outputs != multioutput.shape[0]:
             raise ValueError(
-                "There must be equally many custom weights (%d) as outputs (%d)."
-                % (len(multioutput), n_outputs)
+                "There must be equally many custom weights "
+                f"({multioutput.shape[0]}) as outputs ({n_outputs})."
             )
     y_type = "continuous" if n_outputs == 1 else "continuous-multioutput"
 
@@ -412,21 +395,30 @@ def mean_absolute_percentage_error(
     >>> mean_absolute_percentage_error(y_true, y_pred)
     112589990684262.48
     """
+    input_arrays = [y_true, y_pred, sample_weight, multioutput]
+    xp, _ = get_namespace(*input_arrays)
+    dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
+
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
     )
     check_consistent_length(y_true, y_pred, sample_weight)
-    epsilon = np.finfo(np.float64).eps
-    mape = np.abs(y_pred - y_true) / np.maximum(np.abs(y_true), epsilon)
-    output_errors = np.average(mape, weights=sample_weight, axis=0)
+    epsilon = xp.asarray(xp.finfo(xp.float64).eps, dtype=dtype)
+    y_true_abs = xp.asarray(xp.abs(y_true), dtype=dtype)
+    mape = xp.asarray(xp.abs(y_pred - y_true), dtype=dtype) / xp.maximum(
+        y_true_abs, epsilon
+    )
+    output_errors = _average(mape, weights=sample_weight, axis=0)
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
             return output_errors
         elif multioutput == "uniform_average":
-            # pass None as weights to np.average: uniform mean
+            # pass None as weights to _average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    mean_absolute_percentage_error = _average(output_errors, weights=multioutput)
+    assert mean_absolute_percentage_error.shape == ()
+    return float(mean_absolute_percentage_error)
 
 
 @validate_params(
@@ -1290,22 +1282,25 @@ def max_error(y_true, y_pred):
     >>> max_error(y_true, y_pred)
     1
     """
+    xp, _ = get_namespace(y_true, y_pred)
     y_type, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred, None)
     if y_type == "continuous-multioutput":
         raise ValueError("Multioutput not supported in max_error")
-    return np.max(np.abs(y_true - y_pred))
+    return xp.max(xp.abs(y_true - y_pred))
 
 
 def _mean_tweedie_deviance(y_true, y_pred, sample_weight, power):
     """Mean Tweedie deviance regression loss."""
     xp, _ = get_namespace(y_true, y_pred)
     p = power
+    zero = xp.asarray(0, dtype=y_true.dtype)
     if p < 0:
         # 'Extreme stable', y any real number, y_pred > 0
         dev = 2 * (
-            xp.pow(xp.where(y_true > 0, y_true, 0), 2 - p) / ((1 - p) * (2 - p))
-            - y_true * xp.pow(y_pred, 1 - p) / (1 - p)
-            + xp.pow(y_pred, 2 - p) / (2 - p)
+            xp.pow(xp.where(y_true > 0, y_true, zero), xp.asarray(2 - p))
+            / ((1 - p) * (2 - p))
+            - y_true * xp.pow(y_pred, xp.asarray(1 - p)) / (1 - p)
+            + xp.pow(y_pred, xp.asarray(2 - p)) / (2 - p)
         )
     elif p == 0:
         # Normal distribution, y and y_pred any real number
@@ -1318,9 +1313,9 @@ def _mean_tweedie_deviance(y_true, y_pred, sample_weight, power):
         dev = 2 * (xp.log(y_pred / y_true) + y_true / y_pred - 1)
     else:
         dev = 2 * (
-            xp.pow(y_true, 2 - p) / ((1 - p) * (2 - p))
-            - y_true * xp.pow(y_pred, 1 - p) / (1 - p)
-            + xp.pow(y_pred, 2 - p) / (2 - p)
+            xp.pow(y_true, xp.asarray(2 - p)) / ((1 - p) * (2 - p))
+            - y_true * xp.pow(y_pred, xp.asarray(1 - p)) / (1 - p)
+            + xp.pow(y_pred, xp.asarray(2 - p)) / (2 - p)
         )
     return float(_average(dev, weights=sample_weight))
 
@@ -1400,18 +1395,18 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
     message = f"Mean Tweedie deviance error with power={power} can only be used on "
     if power < 0:
         # 'Extreme stable', y any real number, y_pred > 0
-        if (y_pred <= 0).any():
+        if xp.any(y_pred <= 0):
             raise ValueError(message + "strictly positive y_pred.")
     elif power == 0:
         # Normal, y and y_pred can be any real number
         pass
     elif 1 <= power < 2:
         # Poisson and compound Poisson distribution, y >= 0, y_pred > 0
-        if (y_true < 0).any() or (y_pred <= 0).any():
+        if xp.any(y_true < 0) or xp.any(y_pred <= 0):
             raise ValueError(message + "non-negative y and strictly positive y_pred.")
     elif power >= 2:
         # Gamma and Extreme stable distribution, y and y_pred > 0
-        if (y_true <= 0).any() or (y_pred <= 0).any():
+        if xp.any(y_true <= 0) or xp.any(y_pred <= 0):
             raise ValueError(message + "strictly positive y and y_pred.")
     else:  # pragma: nocover
         # Unreachable statement

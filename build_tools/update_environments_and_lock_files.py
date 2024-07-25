@@ -129,7 +129,6 @@ build_metadata_list = [
         ],
         "package_constraints": {
             "blas": "[build=mkl]",
-            "pytorch": "1.13",
         },
     },
     {
@@ -166,10 +165,13 @@ build_metadata_list = [
             # TODO: release scipy constraint when 1.13 is available in the "default"
             # channel.
             "scipy": "<1.12",
+            # TODO temporary to avoid a timeout in the no-OpenMP build, see
+            # https://github.com/scikit-learn/scikit-learn/pull/29486#issuecomment-2242359516
+            "meson": "<1.5",
         },
         # TODO: put cython, threadpoolctl and meson-python back to conda
         # dependencies when required version is available on the main channel
-        "pip_dependencies": ["cython", "threadpoolctl", "meson-python"],
+        "pip_dependencies": ["cython", "threadpoolctl", "meson-python", "meson"],
     },
     {
         "name": "pymin_conda_defaults_openblas",
@@ -180,7 +182,7 @@ build_metadata_list = [
         "channels": ["defaults"],
         "conda_dependencies": remove_from(
             common_dependencies,
-            ["pandas", "threadpoolctl", "pip", "ninja", "meson-python"],
+            ["pandas", "threadpoolctl", "pip", "meson-python"],
         )
         + ["ccache"],
         "package_constraints": {
@@ -192,10 +194,11 @@ build_metadata_list = [
             "cython": "min",
             "joblib": "min",
             "threadpoolctl": "min",
+            "meson-python": "min",
         },
         # TODO: put pip dependencies back to conda dependencies when required
         # version is available on the defaults channel.
-        "pip_dependencies": ["threadpoolctl"],
+        "pip_dependencies": ["threadpoolctl", "meson-python"],
     },
     {
         "name": "pymin_conda_forge_openblas_ubuntu_2204",
@@ -225,10 +228,16 @@ build_metadata_list = [
         "pip_dependencies": (
             remove_from(common_dependencies, ["python", "blas", "pip"])
             + docstring_test_dependencies
+            # Test with some optional dependencies
             + ["lightgbm", "scikit-image"]
+            # Test array API on CPU without PyTorch
+            + ["array-api-compat", "array-api-strict"]
         ),
         "package_constraints": {
-            "python": "3.9",
+            # XXX: we would like to use the latest Python version, but for now using
+            # Python 3.12 makes the CI much slower so we use Python 3.11. See
+            # https://github.com/scikit-learn/scikit-learn/pull/29444#issuecomment-2219550662.
+            "python": "3.11",
         },
     },
     {
@@ -407,7 +416,7 @@ build_metadata_list = [
             "cython": "min",
         },
         # same Python version as in debian-32 build
-        "python_version": "3.9.2",
+        "python_version": "3.11.2",
     },
     {
         "name": "ubuntu_atlas",

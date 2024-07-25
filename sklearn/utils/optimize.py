@@ -9,10 +9,11 @@ regression with large design matrix), this approach gives very
 significant speedups.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # This is a modified file from scipy.optimize
 # Original authors: Travis Oliphant, Eric Jones
-# Modifications by Gael Varoquaux, Mathieu Blondel and Tom Dupre la Tour
-# License: BSD
 
 import warnings
 
@@ -352,11 +353,8 @@ def _check_optimize_result(solver, result, max_iter=None, extra_warning_msg=None
     # handle both scipy and scikit-learn solver names
     if solver == "lbfgs":
         if result.status != 0:
-            try:
-                # The message is already decoded in scipy>=1.6.0
-                result_message = result.message.decode("latin1")
-            except AttributeError:
-                result_message = result.message
+            result_message = result.message
+
             warning_msg = (
                 "{} failed to converge (status={}):\n{}.\n\n"
                 "Increase the number of iterations (max_iter) "

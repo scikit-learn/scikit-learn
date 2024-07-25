@@ -1,8 +1,5 @@
-# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Vincent Michel <vincent.michel@inria.fr>
-#          Gilles Louppe <g.louppe@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 """Recursive feature elimination for feature ranking"""
 
@@ -529,7 +526,7 @@ class RFECV(RFE):
 
         For integer/None inputs, if ``y`` is binary or multiclass,
         :class:`~sklearn.model_selection.StratifiedKFold` is used. If the
-        estimator is a classifier or if ``y`` is neither binary nor multiclass,
+        estimator is not a classifier or if ``y`` is neither binary nor multiclass,
         :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various

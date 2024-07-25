@@ -86,32 +86,74 @@ code.literal {
 /* Dropdowns (sphinx-design) */
 
 details.sd-dropdown {
-  &:hover > summary.sd-summary-title > a.headerlink {
-    visibility: visible;
+  &:hover > summary.sd-summary-title {
+    > .sd-summary-text > a.headerlink {
+      visibility: visible;
+    }
+
+    > .sk-toggle-all {
+      opacity: 1;
+    }
   }
 
   > summary.sd-summary-title {
-    > a.headerlink {
+    > .sd-summary-text > a.headerlink {
       font-size: 1rem;
     }
 
     // See `js/scripts/dropdown.js`: this is styling the "expand/collapse all" button
-    > button.sk-toggle-all {
+    > .sk-toggle-all {
       color: var(--pst-sd-dropdown-color);
-      top: 0.9rem !important;
-      right: 3rem !important;
+      margin-right: 0.5rem;
       pointer-events: auto !important;
-      display: none;
-      border: none;
-      background: transparent;
+      opacity: 0;
+    }
+  }
+}
+
+/* Tabs (sphinx-design) */
+
+.sd-tab-set {
+  --tab-caption-width: 0%;  // No tab caption by default
+  margin-top: 1.5rem;
+
+  &::before {
+    // Set `content` for tab caption
+    width: var(--tab-caption-width);
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+  }
+
+  .sd-tab-content {
+    padding: 0.5rem 0 0 0 !important;
+    background-color: transparent !important;
+    border: none !important;
+
+    > p:first-child {
+      margin-top: 1rem !important;
     }
   }
 
-  &[open] > summary.sd-summary-title:hover > .sd-summary-up.sk-toggle-all,
-  &:not([open])
-    > summary.sd-summary-title:hover
-    > .sd-summary-down.sk-toggle-all {
-    display: block;
+  > label.sd-tab-label {
+    margin: 0 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px !important;
+
+    &.tab-6 {
+      width: calc((100% - var(--tab-caption-width)) / 2 - 6px) !important;
+    }
+
+    &.tab-4 {
+      width: calc((100% - var(--tab-caption-width)) / 3 - 6px) !important;
+    }
+  }
+
+  > input:checked + label.sd-tab-label {
+    transform: unset;
+    border: 2px solid var(--pst-color-primary);
   }
 }
 
