@@ -18,6 +18,7 @@ import scipy.sparse as sp
 from .. import get_config as _get_config
 from ..exceptions import DataConversionWarning, NotFittedError, PositiveSpectrumWarning
 from ..utils._array_api import _asarray_with_order, _is_numpy_namespace, get_namespace
+from ..utils.deprecation import _deprecate_force_all_finite
 from ..utils.fixes import ComplexWarning, _preserve_dia_indices_dtype
 from ._isfinite import FiniteStatus, cy_isfinite
 from .fixes import _object_dtype_isnan
@@ -213,7 +214,7 @@ def assert_all_finite(
 
 
 def as_float_array(
-    X, *, copy=True, force_all_finite="deprecated", ensure_all_finite=True
+    X, *, copy=True, force_all_finite="deprecated", ensure_all_finite=None
 ):
     """Convert an array-like to an array of floats.
 
@@ -258,12 +259,6 @@ def as_float_array(
         - 'allow-nan': accepts only np.nan and pd.NA values in X. Values cannot
           be infinite.
 
-        .. versionadded:: 0.20
-           Accepts the string ``'allow-nan'``.
-
-        .. versionchanged:: 0.23
-           Accepts `pd.NA` and converts it into `np.nan`
-
         .. versionadded:: 1.6
            `force_all_finite` was renamed to `ensure_all_finite`.
 
@@ -280,14 +275,7 @@ def as_float_array(
     >>> as_float_array(array)
     array([0., 0., 1., 2., 2.])
     """
-    if force_all_finite != "deprecated":
-        warnings.warn(
-            "'force_all_finite' was renamed to 'ensure_all_finite' in 1.6 and will be "
-            "removed in 1.8. Until then, ensure_all_finite is ignored when "
-            "force_all_finite is set.",
-            FutureWarning,
-        )
-        ensure_all_finite = force_all_finite
+    ensure_all_finite = _deprecate_force_all_finite(ensure_all_finite, force_all_finite)
 
     if isinstance(X, np.matrix) or (
         not isinstance(X, np.ndarray) and not sp.issparse(X)
@@ -752,7 +740,7 @@ def check_array(
     copy=False,
     force_writeable=False,
     force_all_finite="deprecated",
-    ensure_all_finite=True,
+    ensure_all_finite=None,
     ensure_2d=True,
     allow_nd=False,
     ensure_min_samples=1,
@@ -837,12 +825,6 @@ def check_array(
         - 'allow-nan': accepts only np.nan and pd.NA values in array. Values
           cannot be infinite.
 
-        .. versionadded:: 0.20
-           Accepts the string ``'allow-nan'``.
-
-        .. versionchanged:: 0.23
-           Accepts `pd.NA` and converts it into `np.nan`
-
         .. versionadded:: 1.6
            `force_all_finite` was renamed to `ensure_all_finite`.
 
@@ -887,14 +869,7 @@ def check_array(
     >>> X_checked
     array([[1, 2, 3], [4, 5, 6]])
     """
-    if force_all_finite != "deprecated":
-        warnings.warn(
-            "'force_all_finite' was renamed to 'ensure_all_finite' in 1.6 and will be "
-            "removed in 1.8. Until then, ensure_all_finite is ignored when "
-            "force_all_finite is set.",
-            FutureWarning,
-        )
-        ensure_all_finite = force_all_finite
+    ensure_all_finite = _deprecate_force_all_finite(ensure_all_finite, force_all_finite)
 
     if isinstance(array, np.matrix):
         raise TypeError(
@@ -1220,7 +1195,7 @@ def check_X_y(
     copy=False,
     force_writeable=False,
     force_all_finite="deprecated",
-    ensure_all_finite=True,
+    ensure_all_finite=None,
     ensure_2d=True,
     allow_nd=False,
     multi_output=False,
@@ -1311,12 +1286,6 @@ def check_X_y(
         - 'allow-nan': accepts only np.nan or pd.NA values in X. Values cannot
           be infinite.
 
-        .. versionadded:: 0.20
-           Accepts the string ``'allow-nan'``.
-
-        .. versionchanged:: 0.23
-           Accepts `pd.NA` and converts it into `np.nan`
-
         .. versionadded:: 1.6
            `force_all_finite` was renamed to `ensure_all_finite`.
 
@@ -1380,14 +1349,7 @@ def check_X_y(
             f"{estimator_name} requires y to be passed, but the target y is None"
         )
 
-    if force_all_finite != "deprecated":
-        warnings.warn(
-            "'force_all_finite' was renamed to 'ensure_all_finite' in 1.6 and will be "
-            "removed in 1.8. Until then, ensure_all_finite is ignored when "
-            "force_all_finite is set.",
-            FutureWarning,
-        )
-        ensure_all_finite = force_all_finite
+    ensure_all_finite = _deprecate_force_all_finite(ensure_all_finite, force_all_finite)
 
     X = check_array(
         X,

@@ -42,6 +42,7 @@ from ..utils._param_validation import (
     StrOptions,
     validate_params,
 )
+from ..utils.deprecation import _deprecate_force_all_finite
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.fixes import parse_version, sp_base_version
 from ..utils.parallel import Parallel, delayed
@@ -83,7 +84,7 @@ def check_pairwise_arrays(
     dtype="infer_float",
     accept_sparse="csr",
     force_all_finite="deprecated",
-    ensure_all_finite=True,
+    ensure_all_finite=None,
     ensure_2d=True,
     copy=False,
 ):
@@ -152,12 +153,6 @@ def check_pairwise_arrays(
         - 'allow-nan': accepts only np.nan and pd.NA values in array. Values
           cannot be infinite.
 
-        .. versionadded:: 0.22
-           Accepts the string ``'allow-nan'``.
-
-        .. versionchanged:: 0.23
-           Accepts `pd.NA` and converts it into `np.nan`
-
         .. versionadded:: 1.6
            `force_all_finite` was renamed to `ensure_all_finite`.
 
@@ -183,14 +178,7 @@ def check_pairwise_arrays(
         An array equal to Y if Y was not None, guaranteed to be a numpy array.
         If Y was None, safe_Y will be a pointer to X.
     """
-    if force_all_finite != "deprecated":
-        warnings.warn(
-            "'force_all_finite' was renamed to 'ensure_all_finite' in 1.6 and will be "
-            "removed in 1.8. Until then, ensure_all_finite is ignored when "
-            "force_all_finite is set.",
-            FutureWarning,
-        )
-        ensure_all_finite = force_all_finite
+    ensure_all_finite = _deprecate_force_all_finite(ensure_all_finite, force_all_finite)
 
     xp, _ = get_namespace(X, Y)
     if any([issparse(X), issparse(Y)]) or _is_numpy_namespace(xp):
@@ -2258,7 +2246,7 @@ def pairwise_distances_chunked(
             StrOptions({"allow-nan"}),
             Hidden(StrOptions({"deprecated"})),
         ],
-        "ensure_all_finite": ["boolean", StrOptions({"allow-nan"})],
+        "ensure_all_finite": ["boolean", StrOptions({"allow-nan"}), Hidden(None)],
     },
     prefer_skip_nested_validation=True,
 )
@@ -2269,7 +2257,7 @@ def pairwise_distances(
     *,
     n_jobs=None,
     force_all_finite="deprecated",
-    ensure_all_finite=True,
+    ensure_all_finite=None,
     **kwds,
 ):
     """Compute the distance matrix from a vector array X and optional Y.
@@ -2383,12 +2371,6 @@ def pairwise_distances(
         - 'allow-nan': accepts only np.nan and pd.NA values in array. Values
           cannot be infinite.
 
-        .. versionadded:: 0.22
-           Accepts the string ``'allow-nan'``.
-
-        .. versionchanged:: 0.23
-           Accepts `pd.NA` and converts it into `np.nan`
-
         .. versionadded:: 1.6
            `force_all_finite` was renamed to `ensure_all_finite`.
 
@@ -2423,14 +2405,7 @@ def pairwise_distances(
     array([[1., 2.],
            [2., 1.]])
     """
-    if force_all_finite != "deprecated":
-        warnings.warn(
-            "'force_all_finite' was renamed to 'ensure_all_finite' in 1.6 and will be "
-            "removed in 1.8. Until then, ensure_all_finite is ignored when "
-            "force_all_finite is set.",
-            FutureWarning,
-        )
-        ensure_all_finite = force_all_finite
+    ensure_all_finite = _deprecate_force_all_finite(ensure_all_finite, force_all_finite)
 
     if metric == "precomputed":
         X, _ = check_pairwise_arrays(
