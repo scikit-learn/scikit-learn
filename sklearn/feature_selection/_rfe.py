@@ -274,7 +274,7 @@ class RFE(_RoutingNotSupportedMixin, SelectorMixin, MetaEstimatorMixin, BaseEsti
             y,
             accept_sparse="csc",
             ensure_min_features=2,
-            force_all_finite=False,
+            ensure_all_finite=False,
             multi_output=True,
         )
 
@@ -725,7 +725,7 @@ class RFECV(RFE):
             y,
             accept_sparse="csr",
             ensure_min_features=2,
-            force_all_finite=False,
+            ensure_all_finite=False,
             multi_output=True,
         )
 
