@@ -1,8 +1,13 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import warnings
+from functools import partial
 
 import numpy as np
 
 from ..base import BaseEstimator, TransformerMixin, _fit_context
+from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._param_validation import StrOptions
 from ..utils._set_output import (
     _get_adapter_from_container,
@@ -414,3 +419,21 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
         self._sklearn_output_config["transform"] = transform
         return self
+
+    def _get_function_name(self):
+        """Get the name display of the `func` used in HTML representation."""
+        if hasattr(self.func, "__name__"):
+            return self.func.__name__
+        if isinstance(self.func, partial):
+            return self.func.func.__name__
+        return f"{self.func.__class__.__name__}(...)"
+
+    def _sk_visual_block_(self):
+        return _VisualBlock(
+            "single",
+            self,
+            names=self._get_function_name(),
+            name_details=str(self),
+            name_caption="FunctionTransformer",
+            doc_link_label="FunctionTransformer",
+        )
