@@ -283,7 +283,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         # we need row slicing support for sparse matrices, but costly finiteness check
         # can be delegated to the base estimator.
         X, y = self._validate_data(
-            X, y, accept_sparse=["csr", "csc", "lil", "dok"], force_all_finite=False
+            X, y, accept_sparse=["csr", "csc", "lil", "dok"], ensure_all_finite=False
         )
 
         if y.dtype.kind in ["U", "S"]:
@@ -415,7 +415,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         X = self._validate_data(
             X,
             accept_sparse=True,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
         return self.estimator_.predict(X, **routed_params.estimator.predict)
@@ -457,7 +457,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         X = self._validate_data(
             X,
             accept_sparse=True,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
         return self.estimator_.predict_proba(X, **routed_params.estimator.predict_proba)
@@ -499,7 +499,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         X = self._validate_data(
             X,
             accept_sparse=True,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
         return self.estimator_.decision_function(
@@ -543,7 +543,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         X = self._validate_data(
             X,
             accept_sparse=True,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
         return self.estimator_.predict_log_proba(
@@ -589,7 +589,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         X = self._validate_data(
             X,
             accept_sparse=True,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
         return self.estimator_.score(X, y, **routed_params.estimator.score)
