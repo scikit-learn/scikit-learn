@@ -1,6 +1,7 @@
 """
 This file contains preprocessing tools based on polynomials.
 """
+
 import collections
 from itertools import chain, combinations
 from itertools import combinations_with_replacement as combinations_w_r
@@ -14,6 +15,7 @@ from scipy.special import comb
 from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import check_array
 from ..utils._param_validation import Interval, StrOptions
+from ..utils.extmath import _incremental_mean_and_var
 from ..utils.fixes import parse_version, sp_version
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import (
@@ -963,8 +965,13 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         n_samples, n_features = X.shape
         n_splines = self.bsplines_[0].c.shape[1]
         degree = self.degree
-        mean_X = np.mean(X, axis=0, dtype=np.float64)
-        var_X = np.var(X, axis=0, dtype=np.float64)
+
+        mean_X, var_X, _ = _incremental_mean_and_var(
+            X,
+            last_mean=0.0,
+            last_variance=0.0,
+            last_sample_count=np.repeat(0, n_features),
+        )
 
         # TODO: Remove this condition, once scipy 1.10 is the minimum version.
         #       Only scipy => 1.10 supports design_matrix(.., extrapolate=..).

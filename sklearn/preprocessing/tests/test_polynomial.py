@@ -493,19 +493,23 @@ def test_spline_transformer_n_features_out(
 def test_spline_transformer_with_constant_and_near_constant_features(
     global_random_seed,
 ):
-    """Test SplineTransformer does not output nan values for constant
-    and near constant features."""
+    """Should not output nan values for constant and near constant features.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/26390
+    """
     rng = np.random.RandomState(global_random_seed)
 
     spt = SplineTransformer(extrapolation="periodic")
 
-    assert np.all(spt.fit_transform(np.ones(shape=(5, 1))) == 0)
-    assert not np.all(
-        spt.fit_transform(np.ones(shape=(5, 1)) + rng.randn(5, 1) * 1e-16) == 0
+    X_constant = np.ones(shape=(5, 1))
+    np.testing.assert_allclose(spt.fit_transform(X_constant), 0.0)
+    big_enough_noise = rng.normal(size=X_constant.shape) * 1e-16
+    np.testing.assert_allclose(
+        spt.fit_transform(X_constant + big_enough_noise).sum(axis=1), 1.0
     )
-    assert np.all(
-        spt.fit_transform(np.ones(shape=(5, 1)) + rng.randn(5, 1) * 1e-17) == 0
-    )
+    small_enough_noise = big_enough_noise / 10
+    np.testing.assert_allclose(spt.fit_transform(X_constant + small_enough_noise), 0.0)
 
 
 @pytest.mark.parametrize(
