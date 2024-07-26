@@ -216,7 +216,7 @@ def mean_shift(
 
     Notes
     -----
-    For an example, see
+    For a usage example, see
     :ref:`sphx_glr_auto_examples_cluster_plot_mean_shift.py`.
 
     Examples
@@ -308,10 +308,10 @@ class MeanShift(ClusterMixin, BaseEstimator):
 
     Seeding is performed using a binning technique for scalability.
 
-    Read more in the :ref:`User Guide <mean_shift>`.
-
     For an example of how to use MeanShift clustering, refer to:
     :ref:`sphx_glr_auto_examples_cluster_plot_mean_shift.py`.
+
+    Read more in the :ref:`User Guide <mean_shift>`.
 
     Parameters
     ----------
