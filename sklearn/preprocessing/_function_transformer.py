@@ -1,10 +1,18 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import warnings
+from functools import partial
 
 import numpy as np
 
 from ..base import BaseEstimator, TransformerMixin, _fit_context
+from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._param_validation import StrOptions
-from ..utils._set_output import ADAPTERS_MANAGER, _get_output_config
+from ..utils._set_output import (
+    _get_adapter_from_container,
+    _get_output_config,
+)
 from ..utils.metaestimators import available_if
 from ..utils.validation import (
     _allclose_dense_sparse,
@@ -14,24 +22,6 @@ from ..utils.validation import (
     _is_polars_df,
     check_array,
 )
-
-
-def _get_adapter_from_container(container):
-    """Get the adapter that nows how to handle such container.
-
-    See :class:`sklearn.utils._set_output.ContainerAdapterProtocol` for more
-    details.
-    """
-    module_name = container.__class__.__module__.split(".")[0]
-    try:
-        return ADAPTERS_MANAGER.adapters[module_name]
-    except KeyError as exc:
-        available_adapters = list(ADAPTERS_MANAGER.adapters.keys())
-        raise ValueError(
-            "The container does not have a registered adapter in scikit-learn. "
-            f"Available adapters are: {available_adapters} while the container "
-            f"provided is: {container!r}."
-        ) from exc
 
 
 def _identity(X):
@@ -408,7 +398,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        transform : {"default", "pandas"}, default=None
+        transform : {"default", "pandas", "polars"}, default=None
             Configure output of `transform` and `fit_transform`.
 
             - `"default"`: Default output format of a transformer
@@ -429,3 +419,21 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
         self._sklearn_output_config["transform"] = transform
         return self
+
+    def _get_function_name(self):
+        """Get the name display of the `func` used in HTML representation."""
+        if hasattr(self.func, "__name__"):
+            return self.func.__name__
+        if isinstance(self.func, partial):
+            return self.func.func.__name__
+        return f"{self.func.__class__.__name__}(...)"
+
+    def _sk_visual_block_(self):
+        return _VisualBlock(
+            "single",
+            self,
+            names=self._get_function_name(),
+            name_details=str(self),
+            name_caption="FunctionTransformer",
+            doc_link_label="FunctionTransformer",
+        )

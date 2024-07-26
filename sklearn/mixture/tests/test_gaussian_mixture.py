@@ -1,6 +1,5 @@
-# Author: Wei Xue <xuewei4d@gmail.com>
-#         Thierry Guillemot <thierry.guillemot.work@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import copy
 import itertools
@@ -35,7 +34,6 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
-    ignore_warnings,
 )
 from sklearn.utils.extmath import fast_logdet
 
@@ -683,9 +681,9 @@ def test_gaussian_mixture_fit_convergence_warning():
             covariance_type=covar_type,
         )
         msg = (
-            f"Initialization {max_iter} did not converge. Try different init "
-            "parameters, or increase max_iter, tol or check for degenerate"
-            " data."
+            "Best performing initialization did not converge. "
+            "Try different init parameters, or increase max_iter, "
+            "tol, or check for degenerate data."
         )
         with pytest.warns(ConvergenceWarning, match=msg):
             g.fit(X)
@@ -880,7 +878,7 @@ def test_warm_start(seed):
     assert h.converged_
 
 
-@ignore_warnings(category=ConvergenceWarning)
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_convergence_detected_with_warm_start():
     # We check that convergence is detected when warm_start=True
     rng = np.random.RandomState(0)
@@ -1117,7 +1115,7 @@ def test_sample():
             assert X_s.shape == (sample_size, n_features)
 
 
-@ignore_warnings(category=ConvergenceWarning)
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_init():
     # We check that by increasing the n_init number we have a better solution
     for random_state in range(15):

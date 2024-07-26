@@ -9,9 +9,8 @@ from _pytest.doctest import DoctestItem
 from sklearn.datasets import get_data_home
 from sklearn.datasets._base import _pkl_filepath
 from sklearn.datasets._twenty_newsgroups import CACHE_NAME
-from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import SkipTest, check_skip_network
-from sklearn.utils.fixes import np_base_version, parse_version
+from sklearn.utils.fixes import np_base_version, parse_version, sp_version
 
 
 def setup_labeled_faces():
@@ -35,8 +34,6 @@ def setup_twenty_newsgroups():
 
 
 def setup_working_with_text_data():
-    if IS_PYPY and os.environ.get("CI", None):
-        raise SkipTest("Skipping too slow test with PyPy on CI")
     check_skip_network()
     cache_path = _pkl_filepath(get_data_home(), CACHE_NAME)
     if not exists(cache_path):
@@ -129,10 +126,6 @@ def pytest_runtest_setup(item):
         setup_rcv1()
     elif fname.endswith("datasets/twenty_newsgroups.rst") or is_index:
         setup_twenty_newsgroups()
-    elif (
-        fname.endswith("tutorial/text_analytics/working_with_text_data.rst") or is_index
-    ):
-        setup_working_with_text_data()
     elif fname.endswith("modules/compose.rst") or is_index:
         setup_compose()
     elif fname.endswith("datasets/loading_other_datasets.rst"):
@@ -149,8 +142,6 @@ def pytest_runtest_setup(item):
     rst_files_requiring_matplotlib = [
         "modules/partial_dependence.rst",
         "modules/tree.rst",
-        "tutorial/statistical_inference/settings.rst",
-        "tutorial/statistical_inference/supervised_learning.rst",
     ]
     for each in rst_files_requiring_matplotlib:
         if fname.endswith(each):
@@ -184,6 +175,10 @@ def pytest_collection_modifyitems(config, items):
         # to decide what to do in the longer term:
         # https://github.com/scikit-learn/scikit-learn/issues/27339
         reason = "Due to NEP 51 numpy scalar repr has changed in numpy 2"
+        skip_doctests = True
+
+    if sp_version < parse_version("1.14"):
+        reason = "Scipy sparse matrix repr has changed in scipy 1.14"
         skip_doctests = True
 
     # Normally doctest has the entire module's scope. Here we set globs to an empty dict

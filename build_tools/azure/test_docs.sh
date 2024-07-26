@@ -1,11 +1,10 @@
 #!/bin/bash
 
-set -e
+set -ex
 
-if [[ "$DISTRIB" =~ ^conda.* ]]; then
-    source activate $VIRTUALENV
-elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "pip-nogil" ]]; then
-    source $VIRTUALENV/bin/activate
-fi
+source build_tools/shared.sh
+activate_environment
 
-make test-doc
+# XXX: for some unknown reason python -m pytest fails here in the CI, can't
+# reproduce locally and not worth spending time on this
+pytest $(find doc -name '*.rst' | sort)

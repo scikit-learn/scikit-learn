@@ -2,11 +2,8 @@
 DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 """
 
-# Author: Robert Layton <robertlayton@gmail.com>
-#         Joel Nothman <joel.nothman@gmail.com>
-#         Lars Buitinck
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Integral, Real
@@ -189,8 +186,10 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     Finds core samples of high density and expands clusters from them.
     Good for data which contains clusters of similar density.
 
-    The worst case memory complexity of DBSCAN is :math:`O({n}^2)`, which can
-    occur when the `eps` param is large and `min_samples` is low.
+    This implementation has a worst case memory complexity of :math:`O({n}^2)`,
+    which can occur when the `eps` param is large and `min_samples` is low,
+    while the original DBSCAN only uses linear memory.
+    For further details, see the Notes below.
 
     Read more in the :ref:`User Guide <dbscan>`.
 

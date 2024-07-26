@@ -3,7 +3,7 @@
 Lagged features for time series forecasting
 ===========================================
 
-This example demonstrates how pandas-engineered lagged features can be used
+This example demonstrates how Polars-engineered lagged features can be used
 for time series forecasting with
 :class:`~sklearn.ensemble.HistGradientBoostingRegressor` on the Bike Sharing
 Demand dataset.
@@ -15,31 +15,50 @@ engineering.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Analyzing the Bike Sharing Demand dataset
 # -----------------------------------------
 #
-# We start by loading the data from the OpenML repository.
+# We start by loading the data from the OpenML repository as a raw parquet file
+# to illustrate how to work with an arbitrary parquet file instead of hiding this
+# step in a convenience tool such as `sklearn.datasets.fetch_openml`.
+#
+# The URL of the parquet file can be found in the JSON description of the
+# Bike Sharing Demand dataset with id 44063 on openml.org
+# (https://openml.org/search?type=data&status=active&id=44063).
+#
+# The `sha256` hash of the file is also provided to ensure the integrity of the
+# downloaded file.
 import numpy as np
-import pandas as pd
+import polars as pl
 
-from sklearn.datasets import fetch_openml
+from sklearn.datasets import fetch_file
 
-bike_sharing = fetch_openml(
-    "Bike_Sharing_Demand", version=2, as_frame=True, parser="pandas"
+pl.Config.set_fmt_str_lengths(20)
+
+bike_sharing_data_file = fetch_file(
+    "https://openml1.win.tue.nl/datasets/0004/44063/dataset_44063.pq",
+    sha256="d120af76829af0d256338dc6dd4be5df4fd1f35bf3a283cab66a51c1c6abd06a",
 )
-df = bike_sharing.frame
+bike_sharing_data_file
+
+# %%
+# We load the parquet file with Polars for feature engineering. Polars
+# automatically caches common subexpressions which are reused in multiple
+# expressions (like `pl.col("count").shift(1)` below). See
+# https://docs.pola.rs/user-guide/lazy/optimizations/ for more information.
+
+df = pl.read_parquet(bike_sharing_data_file)
 
 # %%
 # Next, we take a look at the statistical summary of the dataset
 # so that we can better understand the data that we are working with.
-summary = pd.DataFrame(df.describe())
-summary = (
-    summary.style.background_gradient()
-    .set_table_attributes("style = 'display: inline'")
-    .set_caption("Statistics of the Dataset")
-    .set_table_styles([{"selector": "caption", "props": [("font-size", "16px")]}])
-)
+import polars.selectors as cs
+
+summary = df.select(cs.numeric()).describe()
 summary
 
 # %%
@@ -52,32 +71,26 @@ df["season"].value_counts()
 
 
 # %%
-# Generating pandas-engineered lagged features
+# Generating Polars-engineered lagged features
 # --------------------------------------------
 # Let's consider the problem of predicting the demand at the
 # next hour given past demands. Since the demand is a continuous
 # variable, one could intuitively use any regression model. However, we do
 # not have the usual `(X_train, y_train)` dataset. Instead, we just have
 # the `y_train` demand data sequentially organized by time.
-count = df["count"]
-lagged_df = pd.concat(
-    [
-        count,
-        count.shift(1).rename("lagged_count_1h"),
-        count.shift(2).rename("lagged_count_2h"),
-        count.shift(3).rename("lagged_count_3h"),
-        count.shift(24).rename("lagged_count_1d"),
-        count.shift(24 + 1).rename("lagged_count_1d_1h"),
-        count.shift(7 * 24).rename("lagged_count_7d"),
-        count.shift(7 * 24 + 1).rename("lagged_count_7d_1h"),
-        count.shift(1).rolling(24).mean().rename("lagged_mean_24h"),
-        count.shift(1).rolling(24).max().rename("lagged_max_24h"),
-        count.shift(1).rolling(24).min().rename("lagged_min_24h"),
-        count.shift(1).rolling(7 * 24).mean().rename("lagged_mean_7d"),
-        count.shift(1).rolling(7 * 24).max().rename("lagged_max_7d"),
-        count.shift(1).rolling(7 * 24).min().rename("lagged_min_7d"),
-    ],
-    axis="columns",
+lagged_df = df.select(
+    "count",
+    *[pl.col("count").shift(i).alias(f"lagged_count_{i}h") for i in [1, 2, 3]],
+    lagged_count_1d=pl.col("count").shift(24),
+    lagged_count_1d_1h=pl.col("count").shift(24 + 1),
+    lagged_count_7d=pl.col("count").shift(7 * 24),
+    lagged_count_7d_1h=pl.col("count").shift(7 * 24 + 1),
+    lagged_mean_24h=pl.col("count").shift(1).rolling_mean(24),
+    lagged_max_24h=pl.col("count").shift(1).rolling_max(24),
+    lagged_min_24h=pl.col("count").shift(1).rolling_min(24),
+    lagged_mean_7d=pl.col("count").shift(1).rolling_mean(7 * 24),
+    lagged_max_7d=pl.col("count").shift(1).rolling_max(7 * 24),
+    lagged_min_7d=pl.col("count").shift(1).rolling_min(7 * 24),
 )
 lagged_df.tail(10)
 
@@ -89,8 +102,8 @@ lagged_df.head(10)
 # %%
 # We can now separate the lagged features in a matrix `X` and the target variable
 # (the counts to predict) in an array of the same first dimension `y`.
-lagged_df = lagged_df.dropna()
-X = lagged_df.drop("count", axis="columns")
+lagged_df = lagged_df.drop_nulls()
+X = lagged_df.drop("count")
 y = lagged_df["count"]
 print("X shape: {}\ny shape: {}".format(X.shape, y.shape))
 
@@ -141,8 +154,8 @@ all_splits = list(ts_cv.split(X, y))
 # %%
 # Training the model and evaluating its performance based on MAPE.
 train_idx, test_idx = all_splits[0]
-X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
-y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
+X_train, X_test = X[train_idx, :], X[test_idx, :]
+y_train, y_test = y[train_idx], y[test_idx]
 
 model = HistGradientBoostingRegressor().fit(X_train, y_train)
 y_pred = model.predict(X_test)
@@ -258,40 +271,29 @@ for quantile in quantile_list:
             metric = key.split("test_")[1]
             scores = consolidate_scores(cv_results, scores, metric)
 
-df = pd.DataFrame(scores)
-
-styled_df_copy = df.copy()
-
-
-def extract_numeric(value):
-    parts = value.split("±")
-    mean_value = float(parts[0])
-    std_value = float(parts[1].split()[0])
-
-    return mean_value, std_value
-
-
-# Convert columns containing "±" to tuples of numerical values
-cols_to_convert = df.columns[1:]  # Exclude the "loss" column
-for col in cols_to_convert:
-    df[col] = df[col].apply(extract_numeric)
-
-min_values = df.min()
-
-# Create a mask for highlighting minimum values
-mask = pd.DataFrame("", index=df.index, columns=df.columns)
-for col in cols_to_convert:
-    mask[col] = df[col].apply(
-        lambda x: "font-weight: bold" if x == min_values[col] else ""
-    )
-
-styled_df_copy = styled_df_copy.style.apply(lambda x: mask, axis=None)
-styled_df_copy
+scores_df = pl.DataFrame(scores)
+scores_df
 
 
 # %%
-# Even if the score distributions overlap due to the variance in the dataset, it
-# is true that the average RMSE is lower when `loss="squared_error"`, whereas
+# Let us take a look at the losses that minimise each metric.
+def min_arg(col):
+    col_split = pl.col(col).str.split(" ")
+    return pl.arg_sort_by(
+        col_split.list.get(0).cast(pl.Float64),
+        col_split.list.get(2).cast(pl.Float64),
+    ).first()
+
+
+scores_df.select(
+    pl.col("loss").get(min_arg(col_name)).alias(col_name)
+    for col_name in scores_df.columns
+    if col_name != "loss"
+)
+
+# %%
+# Even if the score distributions overlap due to the variance in the dataset,
+# it is true that the average RMSE is lower when `loss="squared_error"`, whereas
 # the average MAPE is lower when `loss="absolute_error"` as expected. That is
 # also the case for the Mean Pinball Loss with the quantiles 5 and 95. The score
 # corresponding to the 50 quantile loss is overlapping with the score obtained
@@ -304,8 +306,8 @@ styled_df_copy
 all_splits = list(ts_cv.split(X, y))
 train_idx, test_idx = all_splits[0]
 
-X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
-y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
+X_train, X_test = X[train_idx, :], X[test_idx, :]
+y_train, y_test = y[train_idx], y[test_idx]
 
 max_iter = 50
 gbrt_mean_poisson = HistGradientBoostingRegressor(loss="poisson", max_iter=max_iter)
@@ -336,7 +338,7 @@ last_hours = slice(-96, None)
 fig, ax = plt.subplots(figsize=(15, 7))
 plt.title("Predictions by regression models")
 ax.plot(
-    y_test.values[last_hours],
+    y_test[last_hours],
     "x-",
     alpha=0.2,
     label="Actual demand",
@@ -399,7 +401,7 @@ labels = [
 ]
 for ax, pred, label in zip(axes, predictions, labels):
     PredictionErrorDisplay.from_predictions(
-        y_true=y_test.values,
+        y_true=y_test,
         y_pred=pred,
         kind="residual_vs_predicted",
         scatter_kwargs={"alpha": 0.3},

@@ -5,7 +5,6 @@ from functools import partial
 
 import numpy as np
 import pytest
-import threadpoolctl
 from scipy.spatial.distance import cdist
 
 from sklearn.metrics import euclidean_distances, pairwise_distances
@@ -23,6 +22,7 @@ from sklearn.utils._testing import (
     create_memmap_backed_data,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS
+from sklearn.utils.parallel import _get_threadpool_controller
 
 # Common supported metric between scipy.spatial.distance.cdist
 # and BaseDistanceReductionDispatcher.
@@ -1200,7 +1200,7 @@ def test_n_threads_agnosticism(
         **compute_parameters,
     )
 
-    with threadpoolctl.threadpool_limits(limits=1, user_api="openmp"):
+    with _get_threadpool_controller().limit(limits=1, user_api="openmp"):
         dist, indices = Dispatcher.compute(
             X,
             Y,

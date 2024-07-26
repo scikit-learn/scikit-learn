@@ -1,11 +1,7 @@
-"""Restricted Boltzmann Machine
-"""
+"""Restricted Boltzmann Machine"""
 
-# Authors: Yann N. Dauphin <dauphiya@iro.umontreal.ca>
-#          Vlad Niculae
-#          Gabriel Synnaeve
-#          Lars Buitinck
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import time
 from numbers import Integral, Real
@@ -127,6 +123,9 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
     >>> model = BernoulliRBM(n_components=2)
     >>> model.fit(X)
     BernoulliRBM(n_components=2)
+
+    For a more detailed example usage, see
+    :ref:`sphx_glr_auto_examples_neural_networks_plot_rbm_logistic_classification.py`.
     """
 
     _parameter_constraints: dict = {

@@ -1,15 +1,8 @@
 """Testing utilities."""
 
-# Copyright (c) 2011, 2012
-# Authors: Pietro Berkes,
-#          Andreas Muller
-#          Mathieu Blondel
-#          Olivier Grisel
-#          Arnaud Joly
-#          Denis Engemann
-#          Giorgio Patrini
-#          Thierry Guillemot
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import atexit
 import contextlib
 import functools
@@ -28,7 +21,6 @@ from dataclasses import dataclass
 from functools import wraps
 from inspect import signature
 from subprocess import STDOUT, CalledProcessError, TimeoutExpired, check_output
-from unittest import TestCase
 
 import joblib
 import numpy as np
@@ -36,21 +28,20 @@ import scipy as sp
 from numpy.testing import assert_allclose as np_assert_allclose
 from numpy.testing import (
     assert_almost_equal,
-    assert_approx_equal,
     assert_array_almost_equal,
     assert_array_equal,
     assert_array_less,
-    assert_no_warnings,
 )
 
 import sklearn
-from sklearn.utils import (
-    _IS_32BIT,
-    IS_PYPY,
-    _in_unstable_openblas_configuration,
-)
 from sklearn.utils._array_api import _check_array_api_dispatch
-from sklearn.utils.fixes import VisibleDeprecationWarning, parse_version, sp_version
+from sklearn.utils.fixes import (
+    _IS_32BIT,
+    VisibleDeprecationWarning,
+    _in_unstable_openblas_configuration,
+    parse_version,
+    sp_version,
+)
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
     check_array,
@@ -59,29 +50,16 @@ from sklearn.utils.validation import (
 )
 
 __all__ = [
-    "assert_raises",
-    "assert_raises_regexp",
     "assert_array_equal",
     "assert_almost_equal",
     "assert_array_almost_equal",
     "assert_array_less",
-    "assert_approx_equal",
     "assert_allclose",
     "assert_run_python_script_without_output",
-    "assert_no_warnings",
     "SkipTest",
 ]
 
-_dummy = TestCase("__init__")
-assert_raises = _dummy.assertRaises
 SkipTest = unittest.case.SkipTest
-assert_dict_equal = _dummy.assertDictEqual
-
-assert_raises_regex = _dummy.assertRaisesRegex
-# assert_raises_regexp is deprecated in Python 3.4 in favor of
-# assert_raises_regex but lets keep the backward compat in scikit-learn with
-# the old name for now
-assert_raises_regexp = assert_raises_regex
 
 
 def ignore_warnings(obj=None, category=Warning):
@@ -183,48 +161,6 @@ class _IgnoreWarnings:
         self._module.filters = self._filters
         self._module.showwarning = self._showwarning
         self.log[:] = []
-
-
-def assert_raise_message(exceptions, message, function, *args, **kwargs):
-    """Helper function to test the message raised in an exception.
-
-    Given an exception, a callable to raise the exception, and
-    a message string, tests that the correct exception is raised and
-    that the message is a substring of the error thrown. Used to test
-    that the specific message thrown during an exception is correct.
-
-    Parameters
-    ----------
-    exceptions : exception or tuple of exception
-        An Exception object.
-
-    message : str
-        The error message or a substring of the error message.
-
-    function : callable
-        Callable object to raise error.
-
-    *args : the positional arguments to `function`.
-
-    **kwargs : the keyword arguments to `function`.
-    """
-    try:
-        function(*args, **kwargs)
-    except exceptions as e:
-        error_message = str(e)
-        if message not in error_message:
-            raise AssertionError(
-                "Error message does not include the expected"
-                " string: %r. Observed error message: %r" % (message, error_message)
-            )
-    else:
-        # concatenate exception names
-        if isinstance(exceptions, tuple):
-            names = " or ".join(e.__name__ for e in exceptions)
-        else:
-            names = exceptions.__name__
-
-        raise AssertionError("%s not raised by %s" % (names, function.__name__))
 
 
 def assert_allclose(
@@ -368,7 +304,6 @@ try:
     import pytest
 
     skip_if_32bit = pytest.mark.skipif(_IS_32BIT, reason="skipped on 32bit platforms")
-    fails_if_pypy = pytest.mark.xfail(IS_PYPY, reason="not compatible with PyPy")
     fails_if_unstable_openblas = pytest.mark.xfail(
         _in_unstable_openblas_configuration(),
         reason="OpenBLAS is unstable for this configuration",
@@ -747,7 +682,9 @@ def _convert_container(
     container : array-like
         The container to convert.
     constructor_name : {"list", "tuple", "array", "sparse", "dataframe", \
-            "series", "index", "slice", "sparse_csr", "sparse_csc"}
+            "series", "index", "slice", "sparse_csr", "sparse_csc", \
+            "sparse_csr_array", "sparse_csc_array", "pyarrow", "polars", \
+            "polars_series"}
         The type of the returned container.
     columns_name : index or array-like, default=None
         For pandas container supporting `columns_names`, it will affect
@@ -807,6 +744,9 @@ def _convert_container(
     elif constructor_name == "series":
         pd = pytest.importorskip("pandas", minversion=minversion)
         return pd.Series(container, dtype=dtype)
+    elif constructor_name == "polars_series":
+        pl = pytest.importorskip("polars", minversion=minversion)
+        return pl.Series(values=container)
     elif constructor_name == "index":
         pd = pytest.importorskip("pandas", minversion=minversion)
         return pd.Index(container, dtype=dtype)
@@ -922,7 +862,7 @@ class _Raises(contextlib.AbstractContextManager):
 
 
 class MinimalClassifier:
-    """Minimal classifier implementation with inheriting from BaseEstimator.
+    """Minimal classifier implementation without inheriting from BaseEstimator.
 
     This estimator should be tested with:
 
@@ -971,7 +911,7 @@ class MinimalClassifier:
 
 
 class MinimalRegressor:
-    """Minimal regressor implementation with inheriting from BaseEstimator.
+    """Minimal regressor implementation without inheriting from BaseEstimator.
 
     This estimator should be tested with:
 
@@ -1011,7 +951,7 @@ class MinimalRegressor:
 
 
 class MinimalTransformer:
-    """Minimal transformer implementation with inheriting from
+    """Minimal transformer implementation without inheriting from
     BaseEstimator.
 
     This estimator should be tested with:
@@ -1048,13 +988,7 @@ class MinimalTransformer:
 
 def _array_api_for_tests(array_namespace, device):
     try:
-        if array_namespace == "numpy.array_api":
-            # FIXME: once it is not experimental anymore
-            with ignore_warnings(category=UserWarning):
-                # UserWarning: numpy.array_api submodule is still experimental.
-                array_mod = importlib.import_module(array_namespace)
-        else:
-            array_mod = importlib.import_module(array_namespace)
+        array_mod = importlib.import_module(array_namespace)
     except ModuleNotFoundError:
         raise SkipTest(
             f"{array_namespace} is not installed: not checking array_api input"
@@ -1147,6 +1081,30 @@ def _get_warnings_filters_info_list():
             "ignore",
             message=r"\s*Pyarrow will become a required dependency",
             category=DeprecationWarning,
+        ),
+        # warnings has been fixed from dateutil main but not released yet, see
+        # https://github.com/dateutil/dateutil/issues/1314
+        WarningInfo(
+            "ignore",
+            message="datetime.datetime.utcfromtimestamp",
+            category=DeprecationWarning,
+        ),
+        # Python 3.12 warnings from joblib fixed in master but not released yet,
+        # see https://github.com/joblib/joblib/pull/1518
+        WarningInfo(
+            "ignore", message="ast.Num is deprecated", category=DeprecationWarning
+        ),
+        WarningInfo(
+            "ignore", message="Attribute n is deprecated", category=DeprecationWarning
+        ),
+        # Python 3.12 warnings from sphinx-gallery fixed in master but not
+        # released yet, see
+        # https://github.com/sphinx-gallery/sphinx-gallery/pull/1242
+        WarningInfo(
+            "ignore", message="ast.Str is deprecated", category=DeprecationWarning
+        ),
+        WarningInfo(
+            "ignore", message="Attribute s is deprecated", category=DeprecationWarning
         ),
     ]
 

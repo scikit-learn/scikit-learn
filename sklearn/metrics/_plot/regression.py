@@ -1,8 +1,12 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numbers
 
 import numpy as np
 
-from ...utils import _safe_indexing, check_matplotlib_support, check_random_state
+from ...utils import _safe_indexing, check_random_state
+from ...utils._optional_dependencies import check_matplotlib_support
 
 
 class PredictionErrorDisplay:

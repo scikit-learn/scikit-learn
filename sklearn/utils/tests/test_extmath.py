@@ -1,8 +1,6 @@
-# Authors: Olivier Grisel <olivier.grisel@ensta.org>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#          Denis Engemann <denis-alexander.engemann@inria.fr>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numpy as np
 import pytest
 from scipy import linalg, sparse
@@ -22,6 +20,7 @@ from sklearn.utils._testing import (
     skip_if_32bit,
 )
 from sklearn.utils.extmath import (
+    _approximate_mode,
     _deterministic_vector_sign_flip,
     _incremental_mean_and_var,
     _randomized_eigsh,
@@ -702,9 +701,7 @@ def test_incremental_weighted_mean_and_variance_simple(rng, dtype):
     mean, var, _ = _incremental_mean_and_var(X, 0, 0, 0, sample_weight=sample_weight)
 
     expected_mean = np.average(X, weights=sample_weight, axis=0)
-    expected_var = (
-        np.average(X**2, weights=sample_weight, axis=0) - expected_mean**2
-    )
+    expected_var = np.average(X**2, weights=sample_weight, axis=0) - expected_mean**2
     assert_almost_equal(mean, expected_mean)
     assert_almost_equal(var, expected_var)
 
@@ -1062,3 +1059,20 @@ def test_safe_sparse_dot_dense_output(dense_output):
     if dense_output:
         expected = expected.toarray()
     assert_allclose_dense_sparse(actual, expected)
+
+
+def test_approximate_mode():
+    """Make sure sklearn.utils.extmath._approximate_mode returns valid
+    results for cases where "class_counts * n_draws" is enough
+    to overflow 32-bit signed integer.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/20774
+    """
+    X = np.array([99000, 1000], dtype=np.int32)
+    ret = _approximate_mode(class_counts=X, n_draws=25000, rng=0)
+
+    # Draws 25% of the total population, so in this case a fair draw means:
+    # 25% * 99.000 = 24.750
+    # 25% *  1.000 =    250
+    assert_array_equal(ret, [24750, 250])

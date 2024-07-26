@@ -1,3 +1,32 @@
+.. raw:: html
+
+  <style>
+    /* h3 headings on this page are the questions; make them rubric-like */
+    h3 {
+      font-size: 1rem;
+      font-weight: bold;
+      padding-bottom: 0.2rem;
+      margin: 2rem 0 1.15rem 0;
+      border-bottom: 1px solid var(--pst-color-border);
+    }
+
+    /* Increase top margin for first question in each section */
+    h2 + section > h3 {
+      margin-top: 2.5rem;
+    }
+
+    /* Make the headerlinks a bit more visible */
+    h3 > a.headerlink {
+      font-size: 0.9rem;
+    }
+
+    /* Remove the backlink decoration on the titles */
+    h2 > a.toc-backref,
+    h3 > a.toc-backref {
+      text-decoration: none;
+    }
+  </style>
+
 .. _faq:
 
 ==========================
@@ -9,8 +38,9 @@ Frequently Asked Questions
 Here we try to give some answers to questions that regularly pop up on the mailing list.
 
 .. contents:: Table of Contents
-   :local:
-   :depth: 2
+  :local:
+  :depth: 2
+
 
 About the project
 -----------------
@@ -32,14 +62,21 @@ Apart from scikit-learn, another popular one is `scikit-image <https://scikit-im
 Do you support PyPy?
 ^^^^^^^^^^^^^^^^^^^^
 
-scikit-learn is regularly tested and maintained to work with
-`PyPy <https://pypy.org/>`_ (an alternative Python implementation with
-a built-in just-in-time compiler).
+Due to limited maintainer resources and small number of users, using
+scikit-learn with `PyPy <https://pypy.org/>`_ (an alternative Python
+implementation with a built-in just-in-time compiler) is not officially
+supported.
 
-Note however that this support is still considered experimental and specific
-components might behave slightly differently. Please refer to the test
-suite of the specific module of interest for more details.
+How can I obtain permission to use the images in scikit-learn for my work?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+The images contained in the `scikit-learn repository
+<https://github.com/scikit-learn/scikit-learn>`_ and the images generated within
+the `scikit-learn documentation <https://scikit-learn.org/stable/index.html>`_
+can be used via the `BSD 3-Clause License
+<https://github.com/scikit-learn/scikit-learn?tab=BSD-3-Clause-1-ov-file>`_ for
+your work. Citations of scikit-learn are highly encouraged and appreciated. See
+:ref:`citing scikit-learn <citing-scikit-learn>`.
 
 Implementation decisions
 ------------------------
@@ -313,12 +350,14 @@ Using scikit-learn
 
 What's the best way to get help on scikit-learn usage?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-**For general machine learning questions**, please use
-`Cross Validated <https://stats.stackexchange.com/>`_ with the ``[machine-learning]`` tag.
 
-**For scikit-learn usage questions**, please use `Stack Overflow <https://stackoverflow.com/questions/tagged/scikit-learn>`_
-with the ``[scikit-learn]`` and ``[python]`` tags. You can alternatively use the `mailing list
-<https://mail.python.org/mailman/listinfo/scikit-learn>`_.
+* General machine learning questions: use `Cross Validated
+  <https://stats.stackexchange.com/>`_ with the ``[machine-learning]`` tag.
+
+* scikit-learn usage questions: use `Stack Overflow
+  <https://stackoverflow.com/questions/tagged/scikit-learn>`_ with the
+  ``[scikit-learn]`` and ``[python]`` tags. You can alternatively use the `mailing list
+  <https://mail.python.org/mailman/listinfo/scikit-learn>`_.
 
 Please make sure to include a minimal reproduction code snippet (ideally shorter
 than 10 lines) that highlights your problem on a toy dataset (for instance from
@@ -337,9 +376,6 @@ reproduction script.
 
 For bug reports or feature requests, please make use of the
 `issue tracker on GitHub <https://github.com/scikit-learn/scikit-learn/issues>`_.
-There is also a `scikit-learn Gitter channel
-<https://gitter.im/scikit-learn/scikit-learn>`_ where some users and developers
-might be found.
 
 .. warning::
   Please do not email any authors directly to ask for assistance, report bugs,
@@ -417,8 +453,8 @@ Note that the example above uses the third-party edit distance package
 `leven <https://pypi.org/project/leven/>`_. Similar tricks can be used,
 with some care, for tree kernels, graph kernels, etc.
 
-Why do I sometime get a crash/freeze with ``n_jobs > 1`` under OSX or Linux?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Why do I sometimes get a crash/freeze with ``n_jobs > 1`` under OSX or Linux?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Several scikit-learn tools such as :class:`~model_selection.GridSearchCV` and
 :class:`~model_selection.cross_val_score` rely internally on Python's
