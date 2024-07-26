@@ -447,9 +447,7 @@ def test_calibration_prob_sum(ensemble):
         clf, method="sigmoid", cv=KFold(n_splits=3), ensemble=ensemble
     )
     clf_prob.fit(X, y)
-
-    probs = clf_prob.predict_proba(X)
-    assert_array_almost_equal(probs.sum(axis=1), np.ones(probs.shape[0]))
+    assert_allclose(clf_prob.predict_proba(X).sum(axis=1), 1.0)
 
 
 @pytest.mark.parametrize("ensemble", [True, False])

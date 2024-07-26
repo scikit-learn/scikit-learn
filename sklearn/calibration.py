@@ -393,7 +393,9 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             if isinstance(self.cv, LeaveOneOut):
                 raise ValueError(
                     "LeaveOneOut cross-validation does not allow"
-                    "all classes to be present in test splits."
+                    "all classes to be present in test splits. "
+                    "Please use a cross-validation generator that allows "
+                    "all classes to appear in every test and train split."
                 )
             cv = check_cv(self.cv, y, classifier=True)
 

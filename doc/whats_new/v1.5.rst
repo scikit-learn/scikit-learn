@@ -23,6 +23,13 @@ Version 1.5.2
 Changelog
 ---------
 
+:mod:`sklearn.calibration`
+..........................
+
+- |Fix| Raise error when :class:`~sklearn.model_selection.LeaveOneOut` used in
+  `cv`, matching what would happen if `KFold(n_splits=n_samples)` was used.
+  :pr:`29545` by :user:`Lucy Liu <lucyleeow>`
+
 :mod:`sklearn.compose`
 ......................
 
@@ -267,10 +274,6 @@ Changelog
 - |Fix| Fixed a regression in :class:`calibration.CalibratedClassifierCV` where
   an error was wrongly raised with string targets.
   :pr:`28843` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
-
-- |Fix| Raise error when :class:`~sklearn.model_selection.LeaveOneOut` used in
-  `cv`, matching what would happen if `KFold(n_splits=n_samples)` was used.
-  :pr:`29545` by :user:`Lucy Liu <lucyleeow>`
 
 :mod:`sklearn.cluster`
 ......................
