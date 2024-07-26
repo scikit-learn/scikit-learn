@@ -174,7 +174,7 @@ build_metadata_list = [
         "pip_dependencies": ["cython", "threadpoolctl", "meson-python", "meson"],
     },
     {
-        "name": "pymin_conda_forge_array-api_linux-64",
+        "name": "pylatest_conda_forge_array-api_linux-64",
         "type": "conda",
         "tag": "main-ci",
         "folder": "build_tools/azure",
@@ -190,7 +190,10 @@ build_metadata_list = [
             "array-api-strict",
         ],
         "package_constraints": {
-            "scipy": "=1.14.0",
+            # These are the minimum versions of numpy and scipy we support
+            # for array API support
+            "scipy": "1.14.0",
+            "numpy": "1.21",
         },
     },
     {

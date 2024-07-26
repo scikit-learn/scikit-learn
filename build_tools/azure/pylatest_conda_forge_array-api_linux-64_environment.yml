@@ -5,7 +5,7 @@ channels:
   - conda-forge
 dependencies:
   - python
-  - numpy
+  - numpy=1.21
   - blas
   - scipy=1.14.0
   - cython
