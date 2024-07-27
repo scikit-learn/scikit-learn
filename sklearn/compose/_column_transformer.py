@@ -1137,7 +1137,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 # in a sparse matrix, `check_array` is used for the
                 # dtype conversion if necessary.
                 converted_Xs = [
-                    check_array(X, accept_sparse=True, force_all_finite=False)
+                    check_array(X, accept_sparse=True, ensure_all_finite=False)
                     for X in Xs
                 ]
             except ValueError as e:
@@ -1325,7 +1325,7 @@ def _check_X(X):
     """Use check_array only when necessary, e.g. on lists and other non-array-likes."""
     if hasattr(X, "__array__") or hasattr(X, "__dataframe__") or sparse.issparse(X):
         return X
-    return check_array(X, force_all_finite="allow-nan", dtype=object)
+    return check_array(X, ensure_all_finite="allow-nan", dtype=object)
 
 
 def _is_empty_column_selection(column):

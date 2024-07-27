@@ -42,6 +42,7 @@ from ..utils._param_validation import (
     StrOptions,
     validate_params,
 )
+from ..utils.deprecation import _deprecate_force_all_finite
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.fixes import parse_version, sp_base_version
 from ..utils.parallel import Parallel, delayed
@@ -82,7 +83,8 @@ def check_pairwise_arrays(
     precomputed=False,
     dtype="infer_float",
     accept_sparse="csr",
-    force_all_finite=True,
+    force_all_finite="deprecated",
+    ensure_all_finite=None,
     ensure_2d=True,
     copy=False,
 ):
@@ -138,6 +140,22 @@ def check_pairwise_arrays(
         .. versionchanged:: 0.23
            Accepts `pd.NA` and converts it into `np.nan`.
 
+        .. deprecated:: 1.6
+           `force_all_finite` was renamed to `ensure_all_finite` and will be removed
+           in 1.8.
+
+    ensure_all_finite : bool or 'allow-nan', default=True
+        Whether to raise an error on np.inf, np.nan, pd.NA in array. The
+        possibilities are:
+
+        - True: Force all values of array to be finite.
+        - False: accepts np.inf, np.nan, pd.NA in array.
+        - 'allow-nan': accepts only np.nan and pd.NA values in array. Values
+          cannot be infinite.
+
+        .. versionadded:: 1.6
+           `force_all_finite` was renamed to `ensure_all_finite`.
+
     ensure_2d : bool, default=True
         Whether to raise an error when the input arrays are not 2-dimensional. Setting
         this to `False` is necessary when using a custom metric with certain
@@ -160,6 +178,8 @@ def check_pairwise_arrays(
         An array equal to Y if Y was not None, guaranteed to be a numpy array.
         If Y was None, safe_Y will be a pointer to X.
     """
+    ensure_all_finite = _deprecate_force_all_finite(force_all_finite, ensure_all_finite)
+
     xp, _ = get_namespace(X, Y)
     if any([issparse(X), issparse(Y)]) or _is_numpy_namespace(xp):
         X, Y, dtype_float = _return_float_dtype(X, Y)
@@ -176,7 +196,7 @@ def check_pairwise_arrays(
             accept_sparse=accept_sparse,
             dtype=dtype,
             copy=copy,
-            force_all_finite=force_all_finite,
+            ensure_all_finite=ensure_all_finite,
             estimator=estimator,
             ensure_2d=ensure_2d,
         )
@@ -186,7 +206,7 @@ def check_pairwise_arrays(
             accept_sparse=accept_sparse,
             dtype=dtype,
             copy=copy,
-            force_all_finite=force_all_finite,
+            ensure_all_finite=ensure_all_finite,
             estimator=estimator,
             ensure_2d=ensure_2d,
         )
@@ -195,7 +215,7 @@ def check_pairwise_arrays(
             accept_sparse=accept_sparse,
             dtype=dtype,
             copy=copy,
-            force_all_finite=force_all_finite,
+            ensure_all_finite=ensure_all_finite,
             estimator=estimator,
             ensure_2d=ensure_2d,
         )
@@ -514,9 +534,9 @@ def nan_euclidean_distances(
            [1.41421356]])
     """
 
-    force_all_finite = "allow-nan" if is_scalar_nan(missing_values) else True
+    ensure_all_finite = "allow-nan" if is_scalar_nan(missing_values) else True
     X, Y = check_pairwise_arrays(
-        X, Y, accept_sparse=False, force_all_finite=force_all_finite, copy=copy
+        X, Y, accept_sparse=False, ensure_all_finite=ensure_all_finite, copy=copy
     )
     # Get missing mask for X
     missing_X = _get_mask(X, missing_values)
@@ -1940,13 +1960,13 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     return ret
 
 
-def _pairwise_callable(X, Y, metric, force_all_finite=True, **kwds):
+def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
     """Handle the callable case for pairwise_{distances,kernels}."""
     X, Y = check_pairwise_arrays(
         X,
         Y,
         dtype=None,
-        force_all_finite=force_all_finite,
+        ensure_all_finite=ensure_all_finite,
         ensure_2d=False,
     )
 
@@ -2221,7 +2241,12 @@ def pairwise_distances_chunked(
         "Y": ["array-like", "sparse matrix", None],
         "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
         "n_jobs": [Integral, None],
-        "force_all_finite": ["boolean", StrOptions({"allow-nan"})],
+        "force_all_finite": [
+            "boolean",
+            StrOptions({"allow-nan"}),
+            Hidden(StrOptions({"deprecated"})),
+        ],
+        "ensure_all_finite": ["boolean", StrOptions({"allow-nan"}), Hidden(None)],
     },
     prefer_skip_nested_validation=True,
 )
@@ -2231,7 +2256,8 @@ def pairwise_distances(
     metric="euclidean",
     *,
     n_jobs=None,
-    force_all_finite=True,
+    force_all_finite="deprecated",
+    ensure_all_finite=None,
     **kwds,
 ):
     """Compute the distance matrix from a vector array X and optional Y.
@@ -2331,6 +2357,23 @@ def pairwise_distances(
         .. versionchanged:: 0.23
            Accepts `pd.NA` and converts it into `np.nan`.
 
+        .. deprecated:: 1.6
+           `force_all_finite` was renamed to `ensure_all_finite` and will be removed
+           in 1.8.
+
+    ensure_all_finite : bool or 'allow-nan', default=True
+        Whether to raise an error on np.inf, np.nan, pd.NA in array. Ignored
+        for a metric listed in ``pairwise.PAIRWISE_DISTANCE_FUNCTIONS``. The
+        possibilities are:
+
+        - True: Force all values of array to be finite.
+        - False: accepts np.inf, np.nan, pd.NA in array.
+        - 'allow-nan': accepts only np.nan and pd.NA values in array. Values
+          cannot be infinite.
+
+        .. versionadded:: 1.6
+           `force_all_finite` was renamed to `ensure_all_finite`.
+
     **kwds : optional keyword parameters
         Any further parameters are passed directly to the distance function.
         If using a scipy.spatial.distance metric, the parameters are still
@@ -2362,9 +2405,11 @@ def pairwise_distances(
     array([[1., 2.],
            [2., 1.]])
     """
+    ensure_all_finite = _deprecate_force_all_finite(force_all_finite, ensure_all_finite)
+
     if metric == "precomputed":
         X, _ = check_pairwise_arrays(
-            X, Y, precomputed=True, force_all_finite=force_all_finite
+            X, Y, precomputed=True, ensure_all_finite=ensure_all_finite
         )
 
         whom = (
@@ -2379,7 +2424,7 @@ def pairwise_distances(
         func = partial(
             _pairwise_callable,
             metric=metric,
-            force_all_finite=force_all_finite,
+            ensure_all_finite=ensure_all_finite,
             **kwds,
         )
     else:
@@ -2393,7 +2438,7 @@ def pairwise_distances(
             warnings.warn(msg, DataConversionWarning)
 
         X, Y = check_pairwise_arrays(
-            X, Y, dtype=dtype, force_all_finite=force_all_finite
+            X, Y, dtype=dtype, ensure_all_finite=ensure_all_finite
         )
 
         # precompute data-derived metric params

@@ -27,7 +27,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
     """
 
-    def _check_X(self, X, force_all_finite=True):
+    def _check_X(self, X, ensure_all_finite=True):
         """
         Perform custom check_array:
         - convert list of strings to object dtype
@@ -41,16 +41,16 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         """
         if not (hasattr(X, "iloc") and getattr(X, "ndim", 0) == 2):
             # if not a dataframe, do normal check_array validation
-            X_temp = check_array(X, dtype=None, force_all_finite=force_all_finite)
+            X_temp = check_array(X, dtype=None, ensure_all_finite=ensure_all_finite)
             if not hasattr(X, "dtype") and np.issubdtype(X_temp.dtype, np.str_):
-                X = check_array(X, dtype=object, force_all_finite=force_all_finite)
+                X = check_array(X, dtype=object, ensure_all_finite=ensure_all_finite)
             else:
                 X = X_temp
             needs_validation = False
         else:
             # pandas dataframe, do validation later column by column, in order
             # to keep the dtype information to be used in the encoder.
-            needs_validation = force_all_finite
+            needs_validation = ensure_all_finite
 
         n_samples, n_features = X.shape
         X_columns = []
@@ -58,7 +58,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         for i in range(n_features):
             Xi = _safe_indexing(X, indices=i, axis=1)
             Xi = check_array(
-                Xi, ensure_2d=False, dtype=None, force_all_finite=needs_validation
+                Xi, ensure_2d=False, dtype=None, ensure_all_finite=needs_validation
             )
             X_columns.append(Xi)
 
@@ -68,7 +68,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         self,
         X,
         handle_unknown="error",
-        force_all_finite=True,
+        ensure_all_finite=True,
         return_counts=False,
         return_and_ignore_missing_for_infrequent=False,
     ):
@@ -76,7 +76,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         self._check_n_features(X, reset=True)
         self._check_feature_names(X, reset=True)
         X_list, n_samples, n_features = self._check_X(
-            X, force_all_finite=force_all_finite
+            X, ensure_all_finite=ensure_all_finite
         )
         self.n_features_in_ = n_features
 
@@ -186,12 +186,12 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         self,
         X,
         handle_unknown="error",
-        force_all_finite=True,
+        ensure_all_finite=True,
         warn_on_unknown=False,
         ignore_category_indices=None,
     ):
         X_list, n_samples, n_features = self._check_X(
-            X, force_all_finite=force_all_finite
+            X, ensure_all_finite=ensure_all_finite
         )
         self._check_feature_names(X, reset=False)
         self._check_n_features(X, reset=False)
@@ -975,7 +975,7 @@ class OneHotEncoder(_BaseEncoder):
         self._fit(
             X,
             handle_unknown=self.handle_unknown,
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
         )
         self._set_drop_idx()
         self._n_features_outs = self._compute_n_features_outs()
@@ -1023,7 +1023,7 @@ class OneHotEncoder(_BaseEncoder):
         X_int, X_mask = self._transform(
             X,
             handle_unknown=self.handle_unknown,
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
             warn_on_unknown=warn_on_unknown,
         )
 
@@ -1495,7 +1495,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         fit_results = self._fit(
             X,
             handle_unknown=self.handle_unknown,
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
             return_and_ignore_missing_for_infrequent=True,
         )
         self._missing_indices = fit_results["missing_indices"]
@@ -1577,7 +1577,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         X_int, X_mask = self._transform(
             X,
             handle_unknown=self.handle_unknown,
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
             ignore_category_indices=self._missing_indices,
         )
         X_trans = X_int.astype(self.dtype, copy=False)
@@ -1606,7 +1606,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
             Inverse transformed array.
         """
         check_is_fitted(self)
-        X = check_array(X, force_all_finite="allow-nan")
+        X = check_array(X, ensure_all_finite="allow-nan")
 
         n_samples, _ = X.shape
         n_features = len(self.categories_)

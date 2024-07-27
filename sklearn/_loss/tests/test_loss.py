@@ -1068,6 +1068,36 @@ def test_multinomial_loss_fit_intercept_only():
         assert_all_finite(baseline_prediction)
 
 
+def test_multinomial_cy_gradient(global_random_seed):
+    """Test that Multinomial cy_gradient gives the same result as gradient.
+
+    CyHalfMultinomialLoss does not inherit from CyLossFunction and has a different API.
+    As a consequence, the functions like `loss` and `gradient` do not rely on `cy_loss`
+    and `cy_gradient`.
+    """
+    n_samples = 100
+    n_classes = 5
+    loss = HalfMultinomialLoss(n_classes=n_classes)
+    y_true, raw_prediction = random_y_true_raw_prediction(
+        loss=loss,
+        n_samples=n_samples,
+        seed=global_random_seed,
+    )
+    sample_weight = np.linspace(0.1, 2, num=n_samples)
+
+    grad1 = loss.closs._test_cy_gradient(
+        y_true=y_true,
+        raw_prediction=raw_prediction,  # needs to be C-contiguous
+        sample_weight=sample_weight,
+    )
+    grad2 = loss.gradient(
+        y_true=y_true,
+        raw_prediction=raw_prediction,
+        sample_weight=sample_weight,
+    )
+    assert_allclose(grad1, grad2)
+
+
 def test_binomial_and_multinomial_loss(global_random_seed):
     """Test that multinomial loss with n_classes = 2 is the same as binomial loss."""
     rng = np.random.RandomState(global_random_seed)
