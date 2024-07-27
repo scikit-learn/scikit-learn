@@ -266,7 +266,7 @@ html_theme_options = {
     },
     "surface_warnings": True,
     # -- Template placement in theme layouts ----------------------------------
-    "navbar_start": ["navbar-logo", "algolia_searchbox"],
+    "navbar_start": ["navbar-logo", "algolia-searchbox"],
     # Note that the alignment of navbar_center is controlled by navbar_align
     "navbar_center": ["navbar-nav"],
     "navbar_end": ["theme-switcher", "navbar-icon-links", "version-switcher"],
@@ -380,14 +380,26 @@ def add_js_css_files(app, pagename, templatename, context, doctree):
     elif pagename.startswith("modules/generated/"):
         app.add_css_file("styles/api.css")
 
-    if use_algolia and pagename != "search":
-        # If using Algolia search, for all pages except for search page load Algolia
-        # docsearch CSS and JS to enable the search field in the navbar
-        app.add_css_file("https://cdn.jsdelivr.net/npm/@docsearch/css@3.6.1")
+    if use_algolia:
+        # If using Algolia search, load Algolia credentials and index name so that they
+        # are accessible in JavaScript
         app.add_js_file(
-            "https://cdn.jsdelivr.net/npm/@docsearch/js@3.6.1", loading_method="defer"
+            None,
+            body=(
+                'SKLEARN_ALGOLIA_APP_ID = "WAC7N12TSK";\n'
+                'SKLEARN_ALGOLIA_API_KEY = "85fcdebd88be36ce665548bbbf328519";\n'
+                'SKLEARN_ALGOLIA_INDEX_NAME = "scikit-learn";'
+            ),
         )
-        app.add_js_file("scripts/docsearch.js", loading_method="defer")
+        if pagename != "search":
+            # For all pages except for search page, load Algolia docsearch CSS and JS to
+            # enable the search field in the navbar
+            app.add_js_file(
+                "https://cdn.jsdelivr.net/npm/@docsearch/js@3.6.1",
+                loading_method="defer",
+            )
+            app.add_js_file("scripts/algolia-searchbox.js", loading_method="defer")
+            app.add_css_file("https://cdn.jsdelivr.net/npm/@docsearch/css@3.6.1")
 
 
 # If false, no module index is generated.
