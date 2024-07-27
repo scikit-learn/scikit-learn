@@ -1,8 +1,7 @@
 """Orthogonal matching pursuit algorithms"""
 
-# Author: Vlad Niculae
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from math import sqrt
@@ -1057,7 +1056,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         _raise_for_params(fit_params, self, "fit")
 
         X, y = self._validate_data(X, y, y_numeric=True, ensure_min_features=2)
-        X = as_float_array(X, copy=False, force_all_finite=False)
+        X = as_float_array(X, copy=False, ensure_all_finite=False)
         cv = check_cv(self.cv, classifier=False)
         if _routing_enabled():
             routed_params = process_routing(self, "fit", **fit_params)

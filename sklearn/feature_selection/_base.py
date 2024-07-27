@@ -1,7 +1,7 @@
 """Generic feature selection mixin"""
 
-# Authors: G. Varoquaux, A. Gramfort, L. Buitinck, J. Nothman
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from abc import ABCMeta, abstractmethod
@@ -103,7 +103,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
             X,
             dtype=None,
             accept_sparse="csr",
-            force_all_finite=not _safe_tags(self, key="allow_nan"),
+            ensure_all_finite=not _safe_tags(self, key="allow_nan"),
             cast_to_ndarray=not preserve_X,
             reset=False,
         )

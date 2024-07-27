@@ -1,12 +1,7 @@
 """Utilities to work with sparse matrices and arrays written in Cython."""
 
-# Authors: Mathieu Blondel
-#          Olivier Grisel
-#          Peter Prettenhofer
-#          Lars Buitinck
-#          Giorgio Patrini
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from libc.math cimport fabs, sqrt, isnan
 from libc.stdint cimport intptr_t
@@ -494,7 +489,11 @@ def inplace_csr_row_normalize_l1(X):
     --------
     >>> from scipy.sparse import csr_matrix
     >>> from sklearn.utils.sparsefuncs_fast import inplace_csr_row_normalize_l1
-    >>> X = csr_matrix(([1.0, 2.0, 3.0], [0, 2, 3], [0, 3, 4]), shape=(3, 4))
+    >>> import numpy as np
+    >>> indptr = np.array([0, 2, 3, 4])
+    >>> indices = np.array([0, 1, 2, 3])
+    >>> data = np.array([1.0, 2.0, 3.0, 4.0])
+    >>> X = csr_matrix((data, indices, indptr), shape=(3, 4))
     >>> X.toarray()
     array([[1., 2., 0., 0.],
            [0., 0., 3., 0.],
@@ -552,7 +551,11 @@ def inplace_csr_row_normalize_l2(X):
     --------
     >>> from scipy.sparse import csr_matrix
     >>> from sklearn.utils.sparsefuncs_fast import inplace_csr_row_normalize_l2
-    >>> X = csr_matrix(([1.0, 2.0, 3.0], [0, 2, 3], [0, 3, 4]), shape=(3, 4))
+    >>> import numpy as np
+    >>> indptr = np.array([0, 2, 3, 4])
+    >>> indices = np.array([0, 1, 2, 3])
+    >>> data = np.array([1.0, 2.0, 3.0, 4.0])
+    >>> X = csr_matrix((data, indices, indptr), shape=(3, 4))
     >>> X.toarray()
     array([[1., 2., 0., 0.],
            [0., 0., 3., 0.],

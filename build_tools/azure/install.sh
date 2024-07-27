@@ -39,18 +39,23 @@ pre_python_environment_install() {
                 python3-matplotlib libatlas3-base libatlas-base-dev \
                 python3-virtualenv python3-pandas ccache git
 
-    elif [[ "$DISTRIB" == "conda-pypy3" ]]; then
-        # need compilers
-        apt-get -yq update
-        apt-get -yq install build-essential
+    # TODO for now we use CPython 3.13 from Ubuntu deadsnakes PPA. When CPython
+    # 3.13 is released (scheduled October 2024) we can use something more
+    # similar to other conda+pip based builds
+    elif [[ "$DISTRIB" == "pip-free-threaded" ]]; then
+        sudo apt-get -yq update
+        sudo apt-get install -yq ccache
+        sudo apt-get install -yq software-properties-common
+        sudo add-apt-repository --yes ppa:deadsnakes/nightly
+        sudo apt-get update -yq
+        sudo apt-get install -yq --no-install-recommends python3.13-dev python3.13-venv python3.13-nogil
     fi
-
 }
 
 check_packages_dev_version() {
     for package in $@; do
         package_version=$(python -c "import $package; print($package.__version__)")
-        if ! [[ $package_version =~ "dev" ]]; then
+        if [[ $package_version =~ "^[.0-9]+$" ]]; then
             echo "$package is not a development version: $package_version"
             exit 1
         fi
@@ -59,12 +64,7 @@ check_packages_dev_version() {
 
 python_environment_install_and_activate() {
     if [[ "$DISTRIB" == "conda"* ]]; then
-        # Install/update conda with the libmamba solver because the legacy
-        # solver can be slow at installing a specific version of conda-lock.
-        conda install -n base conda conda-libmamba-solver -y
-        conda config --set solver libmamba
-        conda install -c conda-forge "$(get_dep conda-lock min)" -y
-        conda-lock install --name $VIRTUALENV $LOCK_FILE
+        create_conda_environment_from_lock_file $VIRTUALENV $LOCK_FILE
         source activate $VIRTUALENV
 
     elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
@@ -72,41 +72,40 @@ python_environment_install_and_activate() {
         source $VIRTUALENV/bin/activate
         pip install -r "${LOCK_FILE}"
 
-    elif [[ "$DISTRIB" == "pip-nogil" ]]; then
-        python -m venv $VIRTUALENV
+    elif [[ "$DISTRIB" == "pip-free-threaded" ]]; then
+        python3.13t -m venv $VIRTUALENV
         source $VIRTUALENV/bin/activate
         pip install -r "${LOCK_FILE}"
+        # TODO you need pip>=24.1 to find free-threaded wheels. This may be
+        # removed when the underlying Ubuntu image has pip>=24.1.
+        pip install 'pip>=24.1'
+        # TODO When there are CPython 3.13 free-threaded wheels for numpy,
+        # scipy and cython move them to
+        # build_tools/azure/cpython_free_threaded_requirements.txt. For now we
+        # install them from scientific-python-nightly-wheels
+        dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
+        dev_packages="numpy scipy Cython"
+        pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url $dev_packages
     fi
 
     if [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
         echo "Installing development dependency wheels"
         dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
-        dev_packages="numpy scipy pandas"
+        dev_packages="numpy scipy pandas Cython"
         pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url $dev_packages
 
         check_packages_dev_version $dev_packages
 
-        echo "Installing Cython from latest sources"
-        pip install https://github.com/cython/cython/archive/master.zip
         echo "Installing joblib from latest sources"
         pip install https://github.com/joblib/joblib/archive/master.zip
         echo "Installing pillow from latest sources"
         pip install https://github.com/python-pillow/Pillow/archive/main.zip
-
-    elif [[ "$DISTRIB" == "pip-nogil" ]]; then
-        apt-get -yq update
-        apt-get install -yq ccache
-
     fi
 }
 
 scikit_learn_install() {
     setup_ccache
     show_installed_libraries
-
-    # Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
-    # workers with 2 cores when building the compiled extensions of scikit-learn.
-    export SKLEARN_BUILD_PARALLEL=3
 
     if [[ "$UNAMESTR" == "Darwin" && "$SKLEARN_TEST_NO_OPENMP" == "true" ]]; then
         # Without openmp, we use the system clang. Here we use /usr/bin/ar
@@ -126,9 +125,7 @@ scikit_learn_install() {
         export LDFLAGS="$LDFLAGS -Wl,--sysroot=/"
     fi
 
-    if [[ "$BUILD_WITH_SETUPTOOLS" == "true" ]]; then
-        python setup.py develop
-    elif [[ "$PIP_BUILD_ISOLATION" == "true" ]]; then
+    if [[ "$PIP_BUILD_ISOLATION" == "true" ]]; then
         # Check that pip can automatically build scikit-learn with the build
         # dependencies specified in pyproject.toml using an isolated build
         # environment:

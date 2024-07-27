@@ -25,10 +25,8 @@ for a given sample *will not* sum to unity, as they do in the single label
 case.
 """
 
-# Author: Mathieu Blondel <mathieu@mblondel.org>
-# Author: Hamzeh Alsalhi <93hamsal@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import array
 import itertools
@@ -126,7 +124,7 @@ class _ConstantPredictor(BaseEstimator):
 
     def fit(self, X, y):
         check_params = dict(
-            force_all_finite=False, dtype=None, ensure_2d=False, accept_sparse=True
+            ensure_all_finite=False, dtype=None, ensure_2d=False, accept_sparse=True
         )
         self._validate_data(
             X, y, reset=True, validate_separately=(check_params, check_params)
@@ -138,7 +136,7 @@ class _ConstantPredictor(BaseEstimator):
         check_is_fitted(self)
         self._validate_data(
             X,
-            force_all_finite=False,
+            ensure_all_finite=False,
             dtype=None,
             accept_sparse=True,
             ensure_2d=False,
@@ -151,7 +149,7 @@ class _ConstantPredictor(BaseEstimator):
         check_is_fitted(self)
         self._validate_data(
             X,
-            force_all_finite=False,
+            ensure_all_finite=False,
             dtype=None,
             accept_sparse=True,
             ensure_2d=False,
@@ -164,7 +162,7 @@ class _ConstantPredictor(BaseEstimator):
         check_is_fitted(self)
         self._validate_data(
             X,
-            force_all_finite=False,
+            ensure_all_finite=False,
             dtype=None,
             accept_sparse=True,
             ensure_2d=False,
@@ -788,7 +786,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         # We need to validate the data because we do a safe_indexing later.
         X, y = self._validate_data(
-            X, y, accept_sparse=["csr", "csc"], force_all_finite=False
+            X, y, accept_sparse=["csr", "csc"], ensure_all_finite=False
         )
         check_classification_targets(y)
 
@@ -891,7 +889,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             X,
             y,
             accept_sparse=["csr", "csc"],
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=first_call,
         )
         check_classification_targets(y)
@@ -964,7 +962,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         X = self._validate_data(
             X,
             accept_sparse=True,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
 

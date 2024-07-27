@@ -1,5 +1,5 @@
-# Authors: Gilles Louppe, Mathieu Blondel, Maheshakya Wijewardena
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from copy import deepcopy
 from numbers import Integral, Real
