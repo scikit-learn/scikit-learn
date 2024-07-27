@@ -1,0 +1,150 @@
+{%- extends "page.html" %}
+
+{% block css %}
+{{ super() }}
+<link crossorigin href="https://R2IYF7ETH7-dsn.algolia.net" rel="preconnect" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/instantsearch.css@8.3.0/themes/reset-min.css" />
+<link rel="stylesheet" href="{{ pathto('_static/styles/search.css', 1) }}" />
+{% endblock css %}
+
+{% block docs_body %}
+
+<div class="bd-search-container">
+  <div id="docsearch-powered-by-light"></div>
+  <div id="docsearch-powered-by-dark"></div>
+  <noscript>
+    <div class="admonition error">
+      <p class="admonition-title">Error</p>
+      <p>Please activate JavaScript to enable the search functionality.</p>
+    </div>
+  </noscript>
+
+  <search id="docsearch" role="search">
+    <div id="docsearch-container"></div>
+  </search>
+
+  <div id="docsearch-stats"></div>
+  <div id="docsearch-hits"></div>
+</div>
+
+<script>
+  const searchClient = algoliasearch(
+    "R2IYF7ETH7",
+    "599cec31baffa4868cae4e79f180729b",
+  );
+
+  const search = instantsearch({
+    indexName: "docsearch",
+    initialUiState: {
+      docsearch: {
+        query: new URLSearchParams(window.location.search).get("q") || "",
+      },
+    },
+    searchClient,
+  });
+
+  search.addWidgets([
+    // The powered-by widget as the heading
+    instantsearch.widgets.poweredBy({
+      container: "#docsearch-powered-by-light",
+      theme: "light",
+    }),
+    instantsearch.widgets.poweredBy({
+      container: "#docsearch-powered-by-dark",
+      theme: "dark",
+    }),
+    // The search input box
+    instantsearch.widgets.searchBox({
+      container: "#docsearch-container",
+      placeholder: "Search the docs...",
+      autofocus: true,
+    }),
+    // The search statistics before the list of results
+    instantsearch.widgets.stats({
+      container: "#docsearch-stats",
+      templates: {
+        text: (data, { html }) => {
+          if (data.query === "") {
+            return "";
+          }
+
+          let count;
+          if (data.hasManyResults) {
+            count = `${data.nbHits} results`;
+          } else if (data.hasOneResult) {
+            count = "1 result";
+          } else {
+            count = "no results";
+          }
+          return html`
+            <div class="sk-search-stats-heading">Search Results</div>
+            <p class="sk-search-stats">
+              Search finished, found ${count} matching the search query in ${data.processingTimeMS}ms.
+            </p>
+          `;
+        },
+      },
+    }),
+    // The list of search results
+    instantsearch.widgets.infiniteHits({
+      container: "#docsearch-hits",
+      transformItems: (items, { results }) => {
+        if (results.query === "") {
+          return [];
+        }
+        return items;
+      },
+      templates: {
+        item: (hit, { html, components, sendEvent }) => {
+          const hierarchy = Object.entries(hit._highlightResult.hierarchy);
+          const lastKey = hierarchy[hierarchy.length - 1][0];
+
+          const sharedHTML = html`
+            <a class="sk-search-item-header" href="${hit.url}">
+              ${components.Highlight({ hit, attribute: `hierarchy.${lastKey}` })}
+            </a>
+            <div class="sk-search-item-path">
+              ${components.Highlight({ hit, attribute: "hierarchy.lvl0" })}
+              ${hierarchy.slice(1, -1).map(([key, value]) => {
+                return html`
+                  <span class="sk-search-item-path-divider">»</span>
+                  ${components.Highlight({ hit, attribute: `hierarchy.${key}` })}
+                `;
+              })}
+            </div>
+          `;
+
+          if (hit.type === "content") {
+            return html`
+              ${sharedHTML}
+              <p class="sk-search-item-context">
+                ${components.Highlight({ hit, attribute: "content" })}
+              </p>
+            `;
+          } else {
+            return sharedHTML;
+          }
+        },
+        empty: () => { return ""; },  // We have stats widget for this
+      },
+    }),
+    // Additional configuration of the widgets
+    instantsearch.widgets.configure({
+      hitsPerPage: 200,
+    }),
+  ]);
+
+  search.start();
+</script>
+
+{% endblock docs_body %}
+
+{%- block htmltitle -%}
+<title>Search - {{ title or docstitle }}</title>
+{%- endblock htmltitle -%}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/algoliasearch@4.24.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/instantsearch.js@4.73.2"></script>
+{% endblock scripts %}

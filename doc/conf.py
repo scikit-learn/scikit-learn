@@ -49,6 +49,10 @@ except ImportError:
     # that need plotly.
     pass
 
+# Set the environment variable to use Algolia docsearch to overwrite the default sphinx
+# local search; this is used in CI
+use_algolia = os.environ.get("SKLEARN_DOC_USE_ALGOLIA_SEARCH", "0") != "0"
+
 # -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
@@ -262,12 +266,12 @@ html_theme_options = {
     },
     "surface_warnings": True,
     # -- Template placement in theme layouts ----------------------------------
-    "navbar_start": ["navbar-logo"],
+    "navbar_start": ["navbar-logo", "algolia_searchbox"],
     # Note that the alignment of navbar_center is controlled by navbar_align
     "navbar_center": ["navbar-nav"],
     "navbar_end": ["theme-switcher", "navbar-icon-links", "version-switcher"],
     # navbar_persistent is persistent right (even when on mobiles)
-    "navbar_persistent": ["search-button"],
+    "navbar_persistent": [],
     "article_header_start": ["breadcrumbs"],
     "article_header_end": [],
     "article_footer_items": ["prev-next"],
@@ -330,6 +334,10 @@ html_sidebars = {
 # template names.
 html_additional_pages = {"index": "index.html"}
 
+if use_algolia:
+    # Overwrite the default search page with Algolia search page
+    html_additional_pages["search"] = "search.html"
+
 # Additional files to copy
 # html_extra_path = []
 
@@ -371,6 +379,15 @@ def add_js_css_files(app, pagename, templatename, context, doctree):
         app.add_css_file("styles/index.css")
     elif pagename.startswith("modules/generated/"):
         app.add_css_file("styles/api.css")
+
+    if use_algolia and pagename != "search":
+        # If using Algolia search, for all pages except for search page load Algolia
+        # docsearch CSS and JS to enable the search field in the navbar
+        app.add_css_file("https://cdn.jsdelivr.net/npm/@docsearch/css@3.6.1")
+        app.add_js_file(
+            "https://cdn.jsdelivr.net/npm/@docsearch/js@3.6.1", loading_method="defer"
+        )
+        app.add_js_file("scripts/docsearch.js", loading_method="defer")
 
 
 # If false, no module index is generated.
