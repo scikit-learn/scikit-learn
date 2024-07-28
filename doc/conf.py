@@ -266,12 +266,12 @@ html_theme_options = {
     },
     "surface_warnings": True,
     # -- Template placement in theme layouts ----------------------------------
-    "navbar_start": ["navbar-logo", "algolia-searchbox"],
+    "navbar_start": ["navbar-logo"],
     # Note that the alignment of navbar_center is controlled by navbar_align
     "navbar_center": ["navbar-nav"],
     "navbar_end": ["theme-switcher", "navbar-icon-links", "version-switcher"],
     # navbar_persistent is persistent right (even when on mobiles)
-    "navbar_persistent": [],
+    "navbar_persistent": ["search-button"],
     "article_header_start": ["breadcrumbs"],
     "article_header_end": [],
     "article_footer_items": ["prev-next"],
@@ -289,6 +289,14 @@ html_theme_options = {
     "show_version_warning_banner": True,
     "announcement": None,
 }
+
+if use_algolia:
+    # Remove the sphinx searchbox from the persistent field and add Algolia searchbox
+    # to the start field; note that Algolia searchbox can only be placed in the start
+    # field because all other fields have multiple slots to adapt to different screen
+    # sizes while Algolia can hydrate only one slot
+    html_theme_options["navbar_start"].append("algolia-searchbox")
+    html_theme_options["navbar_persistent"] = []
 
 # Add any paths that contain custom themes here, relative to this directory.
 # html_theme_path = ["themes"]
@@ -335,8 +343,7 @@ html_sidebars = {
 html_additional_pages = {"index": "index.html"}
 
 if use_algolia:
-    # Overwrite the default search page with Algolia search page
-    html_additional_pages["search"] = "search.html"
+    html_additional_pages["algolia-search"] = "algolia-search.html"
 
 # Additional files to copy
 # html_extra_path = []
@@ -391,7 +398,7 @@ def add_js_css_files(app, pagename, templatename, context, doctree):
                 'SKLEARN_ALGOLIA_INDEX_NAME = "scikit-learn";'
             ),
         )
-        if pagename != "search":
+        if pagename != "algolia-search":
             # For all pages except for search page, load Algolia docsearch CSS and JS to
             # enable the search field in the navbar
             app.add_js_file(
@@ -400,6 +407,7 @@ def add_js_css_files(app, pagename, templatename, context, doctree):
             )
             app.add_js_file("scripts/algolia-searchbox.js", loading_method="defer")
             app.add_css_file("https://cdn.jsdelivr.net/npm/@docsearch/css@3.6.1")
+            app.add_css_file("styles/algolia-searchbox.css")
 
 
 # If false, no module index is generated.

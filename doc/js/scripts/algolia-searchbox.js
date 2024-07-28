@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
   for (let i = 0; i < pagename.split("/").length - 1; i++) {
     searchPageHref += "../";
   }
-  searchPageHref += "search.html";
+  searchPageHref += "algolia-search.html";
 
   // Initialize the Algolia DocSearch widget
   docsearch({
