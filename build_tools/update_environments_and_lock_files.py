@@ -165,10 +165,13 @@ build_metadata_list = [
             # TODO: release scipy constraint when 1.13 is available in the "default"
             # channel.
             "scipy": "<1.12",
+            # TODO temporary to avoid a timeout in the no-OpenMP build, see
+            # https://github.com/scikit-learn/scikit-learn/pull/29486#issuecomment-2242359516
+            "meson": "<1.5",
         },
         # TODO: put cython, threadpoolctl and meson-python back to conda
         # dependencies when required version is available on the main channel
-        "pip_dependencies": ["cython", "threadpoolctl", "meson-python"],
+        "pip_dependencies": ["cython", "threadpoolctl", "meson-python", "meson"],
     },
     {
         "name": "pymin_conda_defaults_openblas",
@@ -373,13 +376,6 @@ build_metadata_list = [
         ],
         "package_constraints": {
             "python": "3.9",
-            # TODO: this needs to be adapted when matplotlib 3.11 is out. In
-            # the meantime, this avoids a warning in matplotlib 3.9 boxplot
-            # labels has been renamed to tick_labels. Possible options:
-            # - bump minimum matplotlib supported versions to 3.9 at one point
-            # - complicate the example code to do the right thing depending on
-            #   maplotlib version
-            "matplotlib": "<3.9",
         },
     },
     {
@@ -420,7 +416,7 @@ build_metadata_list = [
             "cython": "min",
         },
         # same Python version as in debian-32 build
-        "python_version": "3.9.2",
+        "python_version": "3.11.2",
     },
     {
         "name": "ubuntu_atlas",

@@ -39,14 +39,16 @@ See :ref:`array_api` for more details.
   and :pr:`29143` by :user:`Tialo <Tialo>` and :user:`Loïc Estève <lesteve>`;
 - :func:`sklearn.metrics.mean_absolute_percentage_error` :pr:`29300` by :user:`Emily Chen <EmilyXinyi>`;
 - :func:`sklearn.metrics.mean_gamma_deviance` :pr:`29239` by :user:`Emily Chen <EmilyXinyi>`;
+- :func:`sklearn.metrics.mean_poisson_deviance` :pr:`29227` by :user:`Emily Chen <EmilyXinyi>`;
 - :func:`sklearn.metrics.mean_squared_error` :pr:`29142` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.metrics.mean_tweedie_deviance` :pr:`28106` by :user:`Thomas Li <lithomas1>`;
 - :func:`sklearn.metrics.pairwise.additive_chi2_kernel` :pr:`29144` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.metrics.pairwise.chi2_kernel` :pr:`29267` by :user:`Yaroslav Korobko <Tialo>`;
-- :func:`sklearn.metrics.pairwise.cosine_similarity` :pr:`29014` by :user:`Edoardo Abati <EdAbati>`;
 - :func:`sklearn.metrics.pairwise.cosine_distances` :pr:`29265` by :user:`Emily Chen <EmilyXinyi>`;
+- :func:`sklearn.metrics.pairwise.cosine_similarity` :pr:`29014` by :user:`Edoardo Abati <EdAbati>`;
+- :func:`sklearn.metrics.pairwise.paired_cosine_distances` :pr:`29112` by :user:`Edoardo Abati <EdAbati>`.
+- :func:`sklearn.metrics.pairwise.paired_euclidean_distances` :pr:`29389` by :user:`Emily Chen <EmilyXinyi>`;
 - :func:`sklearn.metrics.pairwise.euclidean_distances` :pr:`29433` by :user:`Omar Salman <OmarManzoor>`;
-- :func:`sklearn.metrics.pairwise.paired_cosine_distances` :pr:`29112` by :user:`Edoardo Abati <EdAbati>`;
 - :func:`sklearn.metrics.pairwise.rbf_kernel` :pr:`29433` by :user:`Omar Salman <OmarManzoor>`.
 
 **Classes:**
@@ -143,6 +145,12 @@ Changelog
   on the input data.
   :pr:`29124` by :user:`Yao Xiao <Charlie-XIAO>`.
 
+:mod:`sklearn.compose`
+......................
+
+- |Enhancement| :func:`sklearn.compose.ColumnTransformer` `verbose_feature_names_out`
+  now accepts string format or callable to generate feature names. :pr:`28934` by
+  :user:`Marc Bresson <MarcBresson>`.
 
 :mod:`sklearn.datasets`
 .......................
@@ -223,6 +231,11 @@ Changelog
   scoring="max_error" which is now deprecated.
   :pr:`29462` by :user:`Farid "Freddie" Taba <artificialfintelligence>`.
 
+- |API| the `assert_all_finite` parameter of functions
+  :func:`metrics.pairwise.check_pairwise_arrays` and :func:`metrics.pairwise_distances`
+  is renamed into `ensure_all_finite`. `force_all_finite` will be removed in 1.8.
+  :pr:`29404` by :user:`Jérémie du Boisberranger <jeremiedb>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -263,6 +276,14 @@ Changelog
   randomly moving all of the samples to the left, or right child node as the tree is
   traversed.
   :pr:`27966` by :user:`Adam Li <adam2392>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |API| the `assert_all_finite` parameter of functions :func:`utils.check_array`,
+  :func:`utils.check_X_y`, :func:`utils.as_float_array` is renamed into
+  `ensure_all_finite`. `force_all_finite` will be removed in 1.8.
+  :pr:`29404` by :user:`Jérémie du Boisberranger <jeremiedb>`.
 
 .. rubric:: Code and documentation contributors
 
