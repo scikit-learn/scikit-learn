@@ -250,9 +250,10 @@ div.sk-text-image-grid-large {
 
   // Reuse text and background colors from pydata-sphinx-theme
   --docsearch-text-color: var(--pst-color-text-base);
+  --docsearch-muted-color: var(--pst-color-text-muted);
   --docsearch-highlight-color: var(--pst-color-primary);
   --docsearch-modal-background: var(--pst-color-background);
-  --docsearch-searchbox-background: var(--pst-color-background);
+  --docsearch-searchbox-background: var(--pst-color-surface);
   --docsearch-searchbox-focus-background: var(--pst-color-background);
   --docsearch-footer-background: var(--pst-color-on-background);
   --docsearch-searchbox-shadow: inset 0 0 0 2px var(--pst-color-primary);
@@ -282,10 +283,6 @@ div.sk-text-image-grid-large {
       .DocSearch-Modal {
         margin-top: 10vh;
       }
-    }
-
-    .DocSearch-Input {
-      font-size: var(--pst-font-size-icon);
     }
 
     .DocSearch-Hits {

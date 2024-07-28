@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
     appId: SKLEARN_ALGOLIA_APP_ID,
     apiKey: SKLEARN_ALGOLIA_API_KEY,
     indexName: SKLEARN_ALGOLIA_INDEX_NAME,
-    placeholder: "Search the docs...",
+    placeholder: "Search the docs ... (Alt+Enter to go to search page)",
     // Redirect to the search page with the corresponding query
     resultsFooterComponent: ({ state }) => ({
       type: "a",

@@ -36,7 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // The search input box
     instantsearch.widgets.searchBox({
       container: "#docsearch-container",
-      placeholder: "Search the docs...",
+      placeholder: "Search the docs ...",
       autofocus: true,
       // Debounce the search input to avoid making too many requests
       queryHook(query, refine) {
@@ -137,7 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const container = document.getElementById("docsearch-loading-indicator");
     if (search.status === "stalled") {
       container.innerText = "Loading search results...";
-      container.style.marginTop = "0.5rem";
+      container.style.marginTop = "0.4rem";
     } else {
       container.innerText = "";
       container.style.marginTop = "0";
