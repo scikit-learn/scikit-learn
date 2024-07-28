@@ -4,6 +4,9 @@ on:
   issue_comment:
     types: [created]
 
+permissions:
+  contents: write
+
 jobs:
   update-lock-files:
     if: >-
@@ -13,20 +16,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Parse the comment
-        id: parse-comment
-        env:
-          # Avoid potential code injection
-          COMMENT: ${{ github.event.comment.body }}
-        run: |
-          prefix="@scikit-learn-bot update lock-files"
-          first_line=$(echo "$COMMENT" | head -n 1)
-          args=""
-          if [[ "$first_line" == "$prefix"* ]]; then  # always true
-            args="${first_line#$prefix}"
-          fi
-          echo "args=$args" >> $GITHUB_OUTPUT
-
       # There is no direct way to get the HEAD information directly from issue_comment
       # event, so we use the GitHub CLI to get the PR head ref and repository
       - name: Get pull request HEAD information
@@ -47,6 +36,8 @@ jobs:
           repository: ${{ steps.pr-head-info.outputs.pr_head_repository }}
 
       - name: Update lock files
+        env:
+          COMMENT: ${{ github.event.comment.body }}
         run: |
           source build_tools/shared.sh
           source $CONDA/bin/activate
@@ -54,35 +45,4 @@ jobs:
           conda config --set solver libmamba
           conda install -c conda-forge "$(get_dep conda-lock min)" -y
 
-          python build_tools/update_environments_and_lock_files.py${{ steps.parse-comment.outputs.args }}
-
-      - name: Commit changes
-        run: |
-          args="${{ steps.parse-comment.outputs.args }}"
-          selected_tag=""
-          if [[ $args == *"--select-tag "* ]]; then
-            selected_tag=${args#*--select-tag }
-            selected_tag=${selected_tag%% *}
-          fi
-
-          # Get marker from selected tag (if any)
-          marker=""
-          case "$selected_tag" in
-            "main-ci")
-              marker="[doc build] "
-              ;;
-            "scipy-dev")
-              marker="[scipy-dev] "
-              ;;
-            "arm")
-              marker="[cirrus arm] "
-              ;;
-            *)
-              ;;
-          esac
-
-          git config --global user.name "scikit-learn-bot"
-          git config --global user.email "tjpfdev@gmail.com"
-          git add -A
-          git commit -m "${marker}Update lock files"
-          git push
+          python build_tools/update_environments_and_lock_files_pr.py
