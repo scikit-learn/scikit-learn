@@ -1,3 +1,4 @@
+import os
 import re
 from functools import partial
 
@@ -77,7 +78,7 @@ def test_get_namespace_ndarray_with_dispatch():
 
 
 @skip_if_array_api_compat_not_configured
-def test_get_namespace_array_api():
+def test_get_namespace_array_api(monkeypatch):
     """Test get_namespace for ArrayAPI arrays."""
     xp = pytest.importorskip("array_api_strict")
 
@@ -89,6 +90,18 @@ def test_get_namespace_array_api():
 
         with pytest.raises(TypeError):
             xp_out, is_array_api_compliant = get_namespace(X_xp, X_np)
+
+        def mock_getenv(key):
+            if key == "SCIPY_ARRAY_API":
+                return "0"
+
+        monkeypatch.setattr("os.environ.get", mock_getenv)
+        assert os.environ.get("SCIPY_ARRAY_API") != "1"
+        with pytest.warns(
+            UserWarning,
+            match="enabling SciPy's own support for array API to function properly. ",
+        ):
+            xp_out, is_array_api_compliant = get_namespace(X_xp)
 
 
 class _AdjustableNameAPITestWrapper(_ArrayAPIWrapper):

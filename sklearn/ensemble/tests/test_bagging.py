@@ -4,6 +4,7 @@ Testing for the bagging ensemble module (sklearn.ensemble.bagging).
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
+
 from itertools import cycle, product
 
 import joblib

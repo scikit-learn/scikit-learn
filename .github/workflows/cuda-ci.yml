@@ -42,4 +42,4 @@ jobs:
         run: |
           source "${HOME}/conda/etc/profile.d/conda.sh"
           conda activate sklearn
-          pytest -k 'array_api'
+          SCIPY_ARRAY_API=1 pytest -k 'array_api'

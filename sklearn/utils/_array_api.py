@@ -1,7 +1,12 @@
 """Tools to support array_api."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import itertools
 import math
+import os
+import warnings
 from functools import wraps
 
 import numpy
@@ -102,6 +107,17 @@ def _check_array_api_dispatch(array_api_dispatch):
             raise ImportError(
                 f"NumPy must be {min_numpy_version} or newer to dispatch array using"
                 " the API specification"
+            )
+        if os.environ.get("SCIPY_ARRAY_API") != "1":
+            warnings.warn(
+                (
+                    "Some scikit-learn array API features might rely on enabling "
+                    "SciPy's own support for array API to function properly. "
+                    "Please set the SCIPY_ARRAY_API=1 environment variable "
+                    "before importing sklearn or scipy. More details at: "
+                    "https://docs.scipy.org/doc/scipy/dev/api-dev/array_api.html"
+                ),
+                UserWarning,
             )
 
 
@@ -439,7 +455,15 @@ class _NumPyAPIWrapper:
         return numpy.reshape(x, shape)
 
     def isdtype(self, dtype, kind):
-        return isdtype(dtype, kind, xp=self)
+        try:
+            return isdtype(dtype, kind, xp=self)
+        except TypeError:
+            # In older versions of numpy, data types that arise from outside
+            # numpy like from a Polars Series raise a TypeError.
+            # e.g. TypeError: Cannot interpret 'Int64' as a data type.
+            # Therefore, we return False.
+            # TODO: Remove when minimum supported version of numpy is >= 1.21.
+            return False
 
     def pow(self, x1, x2):
         return numpy.power(x1, x2)
