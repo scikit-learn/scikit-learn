@@ -19,6 +19,9 @@ from datetime import datetime
 from pathlib import Path
 from urllib.request import urlopen
 
+from sphinx.builders.dirhtml import DirectoryHTMLBuilder
+from sphinx.builders.html import StandaloneHTMLBuilder
+
 from sklearn.externals._packaging.version import parse
 from sklearn.utils._testing import turn_warnings_into_errors
 
@@ -77,6 +80,7 @@ extensions = [
     "move_gallery_links",
     "override_pst_pagetoc",
     "sphinx_issues",
+    "sphinx_docsearch",
 ]
 
 # Specify how to identify the prompt when copying code snippets
@@ -262,12 +266,12 @@ html_theme_options = {
     },
     "surface_warnings": True,
     # -- Template placement in theme layouts ----------------------------------
-    "navbar_start": ["navbar-logo"],
+    "navbar_start": ["navbar-logo", "searchbox"],
     # Note that the alignment of navbar_center is controlled by navbar_align
     "navbar_center": ["navbar-nav"],
     "navbar_end": ["theme-switcher", "navbar-icon-links", "version-switcher"],
     # navbar_persistent is persistent right (even when on mobiles)
-    "navbar_persistent": ["search-button"],
+    "navbar_persistent": [],
     "article_header_start": ["breadcrumbs"],
     "article_header_end": [],
     "article_footer_items": ["prev-next"],
@@ -770,6 +774,11 @@ def setup(app):
     app.connect("build-finished", make_carousel_thumbs)
     app.connect("build-finished", filter_search_index)
 
+    # Renable built-in search disabled by sphinx-docsearch since it is used by the
+    # recommender system of sphinx-gallery
+    StandaloneHTMLBuilder.search = True
+    DirectoryHTMLBuilder.search = True
+
 
 # The following is used by sphinx.ext.linkcode to provide links to github
 linkcode_resolve = make_linkcode_resolve(
@@ -1017,3 +1026,8 @@ for rst_template_name, rst_target_name, kwargs in rst_templates:
     # Render the template and write to the target
     with (Path(".") / f"{rst_target_name}.rst").open("w", encoding="utf-8") as f:
         f.write(t.render(**kwargs))
+
+# Algolia docsearch setting
+docsearch_app_id = os.getenv("DOCSEARCH_APP_ID")
+docsearch_api_key = os.getenv("DOCSEARCH_API_KEY")
+docsearch_index_name = "scikit-learn"
