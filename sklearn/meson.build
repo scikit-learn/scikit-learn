@@ -47,10 +47,11 @@ if not meson.is_cross_build()
 
   # meson-python is required only when going through pip. Using meson directly
   # should not check meson-python version.
-  meson_python_version_output = run_command(py,
-    ['-c', 'import mesonpy; print(mesonpy.__version__)'])
-  meson_python_installed = meson_python_version_output.returncode() == 0
+  meson_python_version_command_result = run_command(py,
+    ['-c', 'import mesonpy; print(mesonpy.__version__)'], check: false)
+  meson_python_installed = meson_python_version_command_result.returncode() == 0
   if meson_python_installed
+    meson_python_version = meson_python_version_command_result.stdout().strip()
     meson_python_min_version = run_command(py, ['_min_dependencies.py', 'meson-python'], check: true).stdout().strip()
     if not meson_python_version.version_compare('>=' + meson_python_min_version)
       error('scikit-learn requires meson-python>=' + meson_python_min_version + ', got ' + meson_python_version + ' instead')
