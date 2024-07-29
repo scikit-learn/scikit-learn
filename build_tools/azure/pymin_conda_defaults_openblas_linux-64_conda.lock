@@ -17,7 +17,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/bzip2-1.0.8-h5eee18b_6.conda#f21a3f
 https://repo.anaconda.com/pkgs/main/linux-64/expat-2.6.2-h6a678d5_0.conda#55049db2772dae035f6b8a95f72b5970
 https://repo.anaconda.com/pkgs/main/linux-64/fftw-3.3.9-h5eee18b_2.conda#db1df41113accc18ec59a99f1631bfcd
 https://repo.anaconda.com/pkgs/main/linux-64/icu-73.1-h6a678d5_0.conda#6d09df641fc23f7d277a04dc7ea32dd4
-https://repo.anaconda.com/pkgs/main/linux-64/jpeg-9e-h5eee18b_1.conda#ac373800fda872108412d1ccfe3fa572
+https://repo.anaconda.com/pkgs/main/linux-64/jpeg-9e-h5eee18b_2.conda#5662b75d7140dea1fb183348af40bc49
 https://repo.anaconda.com/pkgs/main/linux-64/lerc-3.0-h295c915_0.conda#b97309770412f10bed8d9448f6f98f87
 https://repo.anaconda.com/pkgs/main/linux-64/libdeflate-1.17-h5eee18b_1.conda#82831ef0b6c9595382d74e0c281f6742
 https://repo.anaconda.com/pkgs/main/linux-64/libffi-3.4.4-h6a678d5_1.conda#70646cc713f0c43926cfdcfe9b695fe0
@@ -98,7 +98,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/pyamg-4.2.3-py39h79cecc1_0.conda#af
 https://repo.anaconda.com/pkgs/main/linux-64/qt-main-5.15.2-h53bd1ea_10.conda#bd0c79e82df6323f638bdcb871891b61
 https://repo.anaconda.com/pkgs/main/linux-64/pyqt-5.15.10-py39h6a678d5_0.conda#52da5ff9b1144b078d2f41bab0b213f2
 https://repo.anaconda.com/pkgs/main/linux-64/matplotlib-3.3.4-py39h06a4308_0.conda#384fc5e01ebfcf30e7161119d3029b5a
-# pip meson @ https://files.pythonhosted.org/packages/c4/cd/47e45d3abada2e1edb9e2ca9334be186d2e7f97a01b09b5b82799c4d7bd3/meson-1.5.0-py3-none-any.whl#sha256=52b34f4903b882df52ad0d533146d4b992c018ea77399f825579737672ae7b20
+# pip meson @ https://files.pythonhosted.org/packages/b7/33/513a9ca4fd5892463abb38592105b78fd425214f7983033633e2e48cbd30/meson-1.5.1-py3-none-any.whl#sha256=5531e24e6cfd6000bf1c712793cf28dff032841370b1a3b941a894e4fde46e5a
 # pip threadpoolctl @ https://files.pythonhosted.org/packages/61/cf/6e354304bcb9c6413c4e02a747b600061c21d38ba51e7e544ac7bc66aecc/threadpoolctl-3.1.0-py3-none-any.whl#sha256=8b99adda265feb6773280df41eece7b2e6561b772d21ffd52e372f999024907b
 # pip pyproject-metadata @ https://files.pythonhosted.org/packages/aa/5f/bb5970d3d04173b46c9037109f7f05fc8904ff5be073ee49bb6ff00301bc/pyproject_metadata-0.8.0-py3-none-any.whl#sha256=ad858d448e1d3a1fb408ac5bac9ea7743e7a8bbb472f2693aaa334d2db42f526
 # pip meson-python @ https://files.pythonhosted.org/packages/91/c0/104cb6244c83fe6bc3886f144cc433db0c0c78efac5dc00e409a5a08c87d/meson_python-0.16.0-py3-none-any.whl#sha256=842dc9f5dc29e55fc769ff1b6fe328412fe6c870220fc321060a1d2d395e69e8
