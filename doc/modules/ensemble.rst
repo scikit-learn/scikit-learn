@@ -741,7 +741,7 @@ case.
   :math:`x_i` belongs to the positive class is modeled as :math:`p(y_i = 1 |
   x_i) = \sigma(F_M(x_i))` where :math:`\sigma` is the sigmoid or expit function.
   For binary classification the class probabilities are computed as
-  :math:`\sigma(\sum_i tree_i(X)) and :math:`i = 1 \ldots n`, where :math:`n` is
+  :math:`\sigma(\sum_i tree_i(X))` and :math:`i = 1 \ldots n`, where :math:`n` is
   the number of trees or iterations.
 
   For multiclass classification, K trees (for K classes) are built at each of
