@@ -903,6 +903,6 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         """Get the curve scorer based on the objective metric used."""
         scoring = check_scoring(self.estimator, scoring=self.scoring)
         curve_scorer = _CurveScorer.from_scorer(
-            scoring, self._get_response_method(), self.thresholds
+            scoring, self.thresholds, self._get_response_method()
         )
         return curve_scorer
