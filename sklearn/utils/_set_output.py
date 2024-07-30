@@ -7,6 +7,7 @@ from scipy.sparse import issparse
 
 from .._config import get_config
 from ._available_if import available_if
+from .fixes import _create_pandas_dataframe_from_non_pandas_container
 
 
 def check_library_installed(library):
@@ -128,7 +129,9 @@ class PandasAdapter:
 
             # We don't pass columns here because it would intend columns selection
             # instead of renaming.
-            X_output = pd.DataFrame(X_output, index=index, copy=not inplace)
+            X_output = _create_pandas_dataframe_from_non_pandas_container(
+                X=X_output, index=index, copy=not inplace
+            )
 
         if columns is not None:
             return self.rename_columns(X_output, columns)
