@@ -45,14 +45,18 @@ def test_n_features_to_select(direction, n_features_to_select):
     assert sfs.transform(X).shape[1] == n_features_to_select
 
 
-@pytest.mark.parametrize("direction", ("forward", "backward"))
-def test_n_features_to_select_auto(direction):
-    """Check the behaviour of `n_features_to_select="auto"` with different
-    values for the parameter `tol`.
+@pytest.mark.parametrize(
+    "direction,max_features_to_select", (("forward", 9), ("backward", 10))
+)
+def test_n_features_to_select_auto(direction, max_features_to_select):
+    """Check the behaviour of `n_features_to_select="auto"` when selecting
+    features in a forward and backward direction.
     """
-
     n_features = 10
     tol = 1e-3
+    if direction == "backward":
+        tol *= -1
+
     X, y = make_regression(n_features=n_features, random_state=0)
     sfs = SequentialFeatureSelector(
         LinearRegression(),
@@ -63,7 +67,7 @@ def test_n_features_to_select_auto(direction):
     )
     sfs.fit(X, y)
 
-    max_features_to_select = n_features - 1
+    # max_features_to_select = n_features - 1
 
     assert sfs.get_support(indices=True).shape[0] <= max_features_to_select
     assert sfs.n_features_to_select_ <= max_features_to_select
@@ -94,6 +98,8 @@ def test_n_features_to_select_stopping_criterion(direction):
     X, y = make_regression(n_features=50, n_informative=10, random_state=0)
 
     tol = 1e-3
+    if direction == "backward":
+        tol *= -1
 
     sfs = SequentialFeatureSelector(
         LinearRegression(),
@@ -129,7 +135,15 @@ def test_n_features_to_select_stopping_criterion(direction):
         assert (sfs_cv_score - added_cv_score) <= tol
         assert (sfs_cv_score - removed_cv_score) >= tol
     else:
-        assert (added_cv_score - sfs_cv_score) <= tol
+        assert sfs_cv_score <= added_cv_score
+        assert sfs_cv_score >= removed_cv_score
+        # The "added" score should be equal or higher than the SFS score
+        # so the difference between them should be >= tol, which is a
+        # negative number.
+        assert (sfs_cv_score - added_cv_score) >= tol
+        # Because tol is negative the delta between scores should be
+        # less than or equal to the tolerance, in absolute terms
+        # the delta is bigger than the tolerance
         assert (removed_cv_score - sfs_cv_score) <= tol
 
 
@@ -268,8 +282,8 @@ def test_no_y_validation_model_fit(y):
         sfs.fit(X, y)
 
 
-def test_forward_neg_tol_error():
-    """Check that we raise an error when tol<0 and direction='forward'"""
+def test_tol_sign_depends_on_direction():
+    """Check that we raise an error if the sign of tol and direction do not match"""
     X, y = make_regression(n_features=10, random_state=0)
     sfs = SequentialFeatureSelector(
         LinearRegression(),
@@ -277,8 +291,16 @@ def test_forward_neg_tol_error():
         direction="forward",
         tol=-1e-3,
     )
-
     with pytest.raises(ValueError, match="tol must be positive"):
+        sfs.fit(X, y)
+
+    sfs = SequentialFeatureSelector(
+        LinearRegression(),
+        n_features_to_select="auto",
+        direction="backward",
+        tol=+1e-3,
+    )
+    with pytest.raises(ValueError, match="tol must be negative"):
         sfs.fit(X, y)
 
 
@@ -321,3 +343,28 @@ def test_cv_generator_support():
 
     sfs = SequentialFeatureSelector(knc, n_features_to_select=5, cv=splits)
     sfs.fit(X, y)
+
+
+def test_backwards_doesnt_remove_feature():
+    """All features should be kept.
+
+    Non regression test for #26369
+    """
+    expected_selected_features = [
+        0,
+        1,
+    ]
+    rng = np.random.RandomState(0)
+    n_samples = 500
+    X = rng.randn(n_samples, 2)
+    y = 3 * X[:, 0] - 10 * X[:, 1]
+
+    sfs = SequentialFeatureSelector(
+        LinearRegression(),
+        direction="backward",
+        cv=2,
+        n_features_to_select="auto",
+        tol=-0.01,
+    )
+    sfs.fit(X, y)
+    assert_array_equal(sfs.get_support(indices=True), expected_selected_features)

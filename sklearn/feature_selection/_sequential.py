@@ -232,8 +232,11 @@ class SequentialFeatureSelector(
         elif isinstance(self.n_features_to_select, Real):
             self.n_features_to_select_ = int(n_features * self.n_features_to_select)
 
-        if self.tol is not None and self.tol < 0 and self.direction == "forward":
-            raise ValueError("tol must be positive when doing forward selection")
+        if self.tol is not None:
+            if self.tol < 0 and self.direction == "forward":
+                raise ValueError("tol must be positive when doing forward selection")
+            if self.tol > 0 and self.direction == "backward":
+                raise ValueError("tol must be negative when doing backward selection")
 
         cv = check_cv(self.cv, y, classifier=is_classifier(self.estimator))
 
@@ -249,13 +252,28 @@ class SequentialFeatureSelector(
             else n_features - self.n_features_to_select_
         )
 
-        old_score = -np.inf
+        if self.direction == "forward":
+            old_score = -np.inf
+        else:
+            old_score = cross_val_score(
+                cloned_estimator,
+                X,
+                y,
+                cv=cv,
+                scoring=self.scoring,
+                n_jobs=self.n_jobs,
+            ).mean()
+
         is_auto_select = self.tol is not None and self.n_features_to_select == "auto"
         for _ in range(n_iterations):
             new_feature_idx, new_score = self._get_best_new_feature_score(
                 cloned_estimator, X, y, cv, current_mask
             )
+
             if is_auto_select and ((new_score - old_score) < self.tol):
+                # The score has not improved enough by adding the latest feature,
+                # so we stop. Or, the score has decreased too much by removing the
+                # latest feature, so we stop
                 break
 
             old_score = new_score
