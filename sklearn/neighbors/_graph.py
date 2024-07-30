@@ -378,6 +378,9 @@ class KNeighborsTransformer(
     >>> X_dist_graph = transformer.fit_transform(X)
     >>> X_dist_graph.shape
     (178, 178)
+
+    For a more comprehensive example see:
+    :ref:`sphx_glr_auto_examples_neighbors_approximate_nearest_neighbors.py`
     """
 
     _parameter_constraints: dict = {
