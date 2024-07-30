@@ -620,7 +620,6 @@ def test_cross_val_score_predict_groups():
             cross_val_predict(estimator=clf, X=X, y=y, cv=cv)
 
 
-@pytest.mark.filterwarnings("ignore: Using or importing the ABCs from")
 def test_cross_val_score_pandas():
     # check cross_val_score doesn't destroy pandas dataframe
     types = [(MockDataFrame, MockDataFrame)]
@@ -1116,8 +1115,6 @@ def test_cross_val_predict_input_types(coo_container):
     assert_array_equal(predictions.shape, (150,))
 
 
-@pytest.mark.filterwarnings("ignore: Using or importing the ABCs from")
-# python3.7 deprecation warnings in pandas via matplotlib :-/
 def test_cross_val_predict_pandas():
     # check cross_val_score doesn't destroy pandas dataframe
     types = [(MockDataFrame, MockDataFrame)]
@@ -2074,7 +2071,6 @@ def test_score_memmap():
                 sleep(1.0)
 
 
-@pytest.mark.filterwarnings("ignore: Using or importing the ABCs from")
 def test_permutation_test_score_pandas():
     # check permutation_test_score doesn't destroy pandas dataframe
     types = [(MockDataFrame, MockDataFrame)]

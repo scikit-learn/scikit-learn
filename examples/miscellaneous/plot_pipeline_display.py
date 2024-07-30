@@ -11,6 +11,9 @@ To see more detailed steps in the visualization of the pipeline, click on the
 steps in the pipeline.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Displaying a Pipeline with a Preprocessing Step and Classifier
 ################################################################################

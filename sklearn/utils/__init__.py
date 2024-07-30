@@ -1,5 +1,8 @@
 """Various utilities to help with development."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import platform
 import warnings
 from collections.abc import Sequence
