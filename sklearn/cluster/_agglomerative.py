@@ -8,6 +8,9 @@ Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
 License: BSD 3 clause
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import warnings
 from heapq import heapify, heappop, heappush, heappushpop
 from numbers import Integral, Real

@@ -49,18 +49,6 @@ if [[ $(uname) == "Darwin" ]]; then
     export LDFLAGS="$LDFLAGS -Wl,-rpath,$PREFIX/lib -L$PREFIX/lib -lomp"
 fi
 
-
-if [[ "$GITHUB_EVENT_NAME" == "schedule" \
-        || "$GITHUB_EVENT_NAME" == "workflow_dispatch" \
-        || "$CIRRUS_CRON" == "nightly" ]]; then
-    # Nightly build:  See also `../github/upload_anaconda.sh` (same branching).
-    # To help with NumPy 2.0 transition, ensure that we use the NumPy 2.0
-    # nightlies.  This lives on the edge and opts-in to all pre-releases.
-    # That could be an issue, in which case no-build-isolation and a targeted
-    # NumPy install may be necessary, instead.
-    export CIBW_BUILD_FRONTEND='pip; args: --pre --extra-index-url "https://pypi.anaconda.org/scientific-python-nightly-wheels/simple"'
-fi
-
 if [[ "$CIBW_FREE_THREADED_SUPPORT" =~ [tT]rue ]]; then
     # Numpy, scipy, Cython only have free-threaded wheels on scientific-python-nightly-wheels
     # TODO: remove this after CPython 3.13 is released (scheduled October 2024)

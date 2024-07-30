@@ -2,6 +2,9 @@
 Sequential feature selection
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from numbers import Integral, Real
 
 import numpy as np
@@ -211,7 +214,7 @@ class SequentialFeatureSelector(
             X,
             accept_sparse="csc",
             ensure_min_features=2,
-            force_all_finite=not tags.get("allow_nan", True),
+            ensure_all_finite=not tags.get("allow_nan", True),
         )
         n_features = X.shape[1]
 

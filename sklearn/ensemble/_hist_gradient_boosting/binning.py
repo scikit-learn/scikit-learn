@@ -6,8 +6,8 @@ Bin thresholds are computed with the quantiles so that each bin contains
 approximately the same number of samples.
 """
 
-# Author: Nicolas Hug
-import concurrent.futures
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 
@@ -15,6 +15,7 @@ from ...base import BaseEstimator, TransformerMixin
 from ...utils import check_array, check_random_state
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils.fixes import percentile
+from ...utils.parallel import Parallel, delayed
 from ...utils.validation import check_is_fitted
 from ._binning import _map_to_bins
 from ._bitset import set_bitset_memoryview
@@ -193,7 +194,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
                 )
             )
 
-        X = check_array(X, dtype=[X_DTYPE], force_all_finite=False)
+        X = check_array(X, dtype=[X_DTYPE], ensure_all_finite=False)
         max_bins = self.n_bins - 1
 
         rng = check_random_state(self.random_state)
@@ -230,19 +231,13 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         self.bin_thresholds_ = [None] * n_features
         n_bins_non_missing = [None] * n_features
 
-        with concurrent.futures.ThreadPoolExecutor(
-            max_workers=self.n_threads
-        ) as executor:
-            future_to_f_idx = {
-                executor.submit(_find_binning_thresholds, X[:, f_idx], max_bins): f_idx
-                for f_idx in range(n_features)
-                if not self.is_categorical_[f_idx]
-            }
-            for future in concurrent.futures.as_completed(future_to_f_idx):
-                f_idx = future_to_f_idx[future]
-                self.bin_thresholds_[f_idx] = future.result()
-                n_bins_non_missing[f_idx] = self.bin_thresholds_[f_idx].shape[0] + 1
+        non_cat_thresholds = Parallel(n_jobs=self.n_threads, backend="threading")(
+            delayed(_find_binning_thresholds)(X[:, f_idx], max_bins)
+            for f_idx in range(n_features)
+            if not self.is_categorical_[f_idx]
+        )
 
+        non_cat_idx = 0
         for f_idx in range(n_features):
             if self.is_categorical_[f_idx]:
                 # Since categories are assumed to be encoded in
@@ -252,6 +247,10 @@ class _BinMapper(TransformerMixin, BaseEstimator):
                 thresholds = known_categories[f_idx]
                 n_bins_non_missing[f_idx] = thresholds.shape[0]
                 self.bin_thresholds_[f_idx] = thresholds
+            else:
+                self.bin_thresholds_[f_idx] = non_cat_thresholds[non_cat_idx]
+                n_bins_non_missing[f_idx] = self.bin_thresholds_[f_idx].shape[0] + 1
+                non_cat_idx += 1
 
         self.n_bins_non_missing_ = np.array(n_bins_non_missing, dtype=np.uint32)
         return self
@@ -276,7 +275,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         X_binned : array-like of shape (n_samples, n_features)
             The binned data (fortran-aligned).
         """
-        X = check_array(X, dtype=[X_DTYPE], force_all_finite=False)
+        X = check_array(X, dtype=[X_DTYPE], ensure_all_finite=False)
         check_is_fitted(self)
         if X.shape[1] != self.n_bins_non_missing_.shape[0]:
             raise ValueError(
