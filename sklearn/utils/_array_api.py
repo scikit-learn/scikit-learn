@@ -5,11 +5,11 @@
 
 import itertools
 import math
-import os
 import warnings
 from functools import wraps
 
 import numpy
+import scipy._lib._array_api
 import scipy.special as special
 
 from .._config import get_config
@@ -86,7 +86,7 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
             yield array_namespace, None, None
 
 
-def _check_array_api_dispatch(array_api_dispatch, strict=False):
+def _check_array_api_dispatch(array_api_dispatch, misconfigured_scipy="warn"):
     """Check that required dependencies are installed in new enough versions.
 
     We need the array_api_compat package as well as new enough versions of
@@ -97,9 +97,8 @@ def _check_array_api_dispatch(array_api_dispatch, strict=False):
     array_api_dispatch : bool
         Enable or disable array API checks.
 
-    strict : bool, default=False
-        Do not allow any slack in the configuration of SciPy. Warnings are
-        raised as errors.
+    misconfigured_scipy : str, default="warn"
+        Warn or raise an exception when misconfigured SciPy is detected.
     """
     if array_api_dispatch:
         try:
@@ -117,7 +116,8 @@ def _check_array_api_dispatch(array_api_dispatch, strict=False):
                 f"NumPy must be {min_numpy_version} or newer to dispatch array using"
                 " the API specification"
             )
-        if os.environ.get("SCIPY_ARRAY_API") != "1":
+
+        if not scipy._lib._array_api.SCIPY_ARRAY_API:
             message = (
                 (
                     "Some scikit-learn array API features rely on enabling "
@@ -127,13 +127,10 @@ def _check_array_api_dispatch(array_api_dispatch, strict=False):
                     "https://docs.scipy.org/doc/scipy/dev/api-dev/array_api.html"
                 ),
             )
-            if strict:
+            if misconfigured_scipy == "raise":
                 raise RuntimeError(message)
             else:
-                warnings.warn(
-                    message,
-                    UserWarning,
-                )
+                warnings.warn(message, UserWarning)
 
 
 def _single_array_device(array):

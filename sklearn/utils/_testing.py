@@ -295,7 +295,7 @@ def set_random_state(estimator, random_state=0):
 
 
 try:
-    _check_array_api_dispatch(True, strict=True)
+    _check_array_api_dispatch(True, misconfigured_scipy="raise")
     ARRAY_API_COMPAT_FUNCTIONAL = True
 except ImportError:
     ARRAY_API_COMPAT_FUNCTIONAL = False
