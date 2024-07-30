@@ -106,7 +106,8 @@ def _check_array_api_dispatch(array_api_dispatch):
         min_numpy_version = "1.21"
         if numpy_version < parse_version(min_numpy_version):
             raise ImportError(
-                f"NumPy must be {min_numpy_version} or newer to dispatch array using"
+                f"NumPy must be {min_numpy_version} or newer (found"
+                f" {numpy.__version__}) to dispatch array using"
                 " the API specification"
             )
 
@@ -114,7 +115,8 @@ def _check_array_api_dispatch(array_api_dispatch):
         min_scipy_version = "1.14.0"
         if scipy_version < parse_version(min_scipy_version):
             raise ImportError(
-                f"SciPy must be {min_scipy_version} or newer to dispatch array using"
+                f"SciPy must be {min_scipy_version} or newer"
+                " (found {scipy.__version__}) to dispatch array using"
                 " the API specification"
             )
 
