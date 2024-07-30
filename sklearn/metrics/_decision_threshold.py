@@ -1,10 +1,14 @@
-"""Metrics per threshold curves are used to assess performance on binary
-classification task given threshold grid. One can undestand the behaviour of
-threshold-dependent metrics when changing the threshold.
+"""Metric per threshold curve to assess binary classification performance.
+
+Given threshold grid, one can undestand the behaviour of threshold-dependent
+metrics when changing the threshold. In imbalanced scenarios or
+cost-sensitive learning, a 0.5 threshold may not be optimal and tools like
+this can help you visualize how the performance changes.
 """
 
-# Authors: ########
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 
 from numbers import Integral
 
