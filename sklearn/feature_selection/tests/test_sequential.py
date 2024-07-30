@@ -11,13 +11,6 @@ from sklearn.model_selection import LeaveOneGroupOut, cross_val_score
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.tests.metadata_routing_common import (
-    ConsumingClassifier,
-    ConsumingScorer,
-    ConsumingSplitter,
-    _Registry,
-    check_recorded_metadata,
-)
 from sklearn.utils.fixes import CSR_CONTAINERS
 
 
@@ -330,10 +323,6 @@ def test_cv_generator_support():
     sfs.fit(X, y)
 
 
-# Metadata Routing Tests
-# ======================
-
-
 def test_fit_rejects_params_with_no_routing_enabled():
     X, y = make_classification(random_state=42)
     est = LinearRegression()
@@ -341,84 +330,3 @@ def test_fit_rejects_params_with_no_routing_enabled():
 
     with pytest.raises(ValueError, match="is only supported if"):
         sfs.fit(X, y, sample_weight=np.ones_like(y))
-
-
-@pytest.mark.usefixtures("enable_slep006")
-def test_fit_raises_with_unrequested_metadata():
-    X, y = make_classification(random_state=42)
-    est = LinearRegression()
-    sfs = SequentialFeatureSelector(estimator=est)
-
-    err_msg = "but are not explicitly set as requested or not requested"
-    with pytest.raises(ValueError, match=err_msg):
-        sfs.fit(X, y, sample_weight=np.ones_like(y))
-
-
-@pytest.mark.usefixtures("enable_slep006")
-def test_sequential_feature_selector_routes_metadata():
-    X, y = make_classification(random_state=42)
-    n_samples = len(y)
-    rng = np.random.RandomState(0)
-    sample_weight = np.round(rng.rand(n_samples))
-    metadata = rng.rand(n_samples)
-    groups = rng.randint(0, 3, n_samples)
-
-    estimator_registry = _Registry()
-    estimator = ConsumingClassifier(registry=estimator_registry).set_fit_request(
-        sample_weight="sample_weight", metadata="metadata"
-    )
-
-    scorer_registry = _Registry()
-    scorer = ConsumingScorer(registry=scorer_registry).set_score_request(
-        sample_weight="sample_weight", metadata="metadata"
-    )
-
-    splitter_registry = _Registry()
-    splitter = ConsumingSplitter(registry=splitter_registry).set_split_request(
-        groups="groups", metadata="metadata"
-    )
-
-    params = {
-        "sample_weight": sample_weight,
-        "metadata": metadata,
-        "groups": groups,
-    }
-
-    sfs = SequentialFeatureSelector(estimator=estimator, scoring=scorer, cv=splitter)
-    sfs.fit(X, y, **params)
-
-    assert len(estimator_registry)
-    for _estimator in estimator_registry:
-        check_recorded_metadata(
-            obj=_estimator,
-            method="fit",
-            parent="fit",
-            split_params=("sample_weight", "metadata"),
-            sample_weight=sample_weight,
-            metadata=metadata,
-        )
-
-    assert len(splitter_registry)
-    for _splitter in splitter_registry:
-        check_recorded_metadata(
-            obj=_splitter,
-            method="split",
-            parent="fit",
-            groups=groups,
-            metadata=metadata,
-        )
-
-    assert len(scorer_registry)
-    for _scorer in scorer_registry:
-        check_recorded_metadata(
-            obj=_scorer,
-            method="score",
-            split_params=("sample_weight", "metadata"),
-            sample_weight=sample_weight,
-            parent="fit",
-            metadata=metadata,
-        )
-
-
-# End of Metadata Routing Tests
-# =============================

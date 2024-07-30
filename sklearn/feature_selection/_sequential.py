@@ -10,9 +10,15 @@ from numbers import Integral, Real
 import numpy as np
 
 from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone, is_classifier
-from ..metrics import get_scorer_names
+from ..metrics import check_scoring, get_scorer_names
 from ..model_selection import check_cv, cross_val_score
-from ..utils._metadata_requests import _raise_for_params
+from ..utils._metadata_requests import (
+    MetadataRouter,
+    MethodMapping,
+    _raise_for_params,
+    _routing_enabled,
+    process_routing,
+)
 from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
 from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted
@@ -261,6 +267,12 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
 
         old_score = -np.inf
         is_auto_select = self.tol is not None and self.n_features_to_select == "auto"
+
+        # We only need to verify the routing here and not use the routed params
+        # because internally the actual routing will also take place inside the
+        # `cross_val_score` function.
+        if _routing_enabled():
+            process_routing(self, "fit", **params)
         for _ in range(n_iterations):
             new_feature_idx, new_score = self._get_best_new_feature_score(
                 cloned_estimator, X, y, cv, current_mask, **params
@@ -313,3 +325,19 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         return {
             "allow_nan": _safe_tags(self.estimator, key="allow_nan"),
         }
+
+    def get_metadata_routing(self):
+        router = MetadataRouter(owner=self.__class__.__name__)
+        router.add(
+            estimator=self.estimator,
+            method_mapping=MethodMapping().add(caller="fit", callee="fit"),
+        )
+        router.add(
+            splitter=check_cv(self.cv, classifier=is_classifier(self.estimator)),
+            method_mapping=MethodMapping().add(caller="fit", callee="split"),
+        )
+        router.add(
+            scorer=check_scoring(self.estimator, scoring=self.scoring),
+            method_mapping=MethodMapping().add(caller="fit", callee="score"),
+        )
+        return router

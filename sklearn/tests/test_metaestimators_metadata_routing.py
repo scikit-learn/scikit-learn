@@ -24,6 +24,7 @@ from sklearn.feature_selection import (
     RFE,
     RFECV,
     SelectFromModel,
+    SequentialFeatureSelector,
 )
 from sklearn.impute import IterativeImputer
 from sklearn.linear_model import (
@@ -405,6 +406,18 @@ METAESTIMATORS: list = [
             "score",
         ],
         "method_mapping": {"fit": ["fit", "score"]},
+    },
+    {
+        "metaestimator": SequentialFeatureSelector,
+        "estimator_name": "estimator",
+        "estimator": "classifier",
+        "X": X,
+        "y": y,
+        "estimator_routing_methods": ["fit"],
+        "scorer_name": "scoring",
+        "scorer_routing_methods": ["fit"],
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
     },
 ]
 """List containing all metaestimators to be tested and their settings
