@@ -2433,7 +2433,9 @@ def pairwise_distances(
 
         dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else "infer_float"
 
-        if dtype is bool and (X.dtype != bool or (Y is not None and Y.dtype != bool)):
+        if dtype is bool and (
+            X.dtype is not bool or (Y is not None and Y.dtype is not bool)
+        ):
             msg = "Data was converted to boolean for metric %s" % metric
             warnings.warn(msg, DataConversionWarning)
 
