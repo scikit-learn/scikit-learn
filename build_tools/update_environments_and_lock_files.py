@@ -411,7 +411,7 @@ build_metadata_list = [
             "cython": "min",
         },
         # same Python version as in debian-32 build
-        "python_version": "3.9.2",
+        "python_version": "3.11.2",
     },
     {
         "name": "ubuntu_atlas",
