@@ -94,6 +94,6 @@ def decision_threshold_curve(
     """
     # if scoring is function ... transform into scorer (do I need an estimator?)
     curve_scorer = _CurveScorer.from_scorer(scoring, thresholds)
-    thresholds, metric_values = curve_scorer._score_given_prediction(y_score)
+    metric_values, thresholds = curve_scorer._score_given_prediction(y_score)
 
     return metric_values, thresholds

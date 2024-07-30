@@ -1168,9 +1168,6 @@ class _CurveScorer(_BaseScorer):
         classes: TODO(Carlo)
             ...
 
-        pos_label: TODO(Carlo)
-            ...
-
         **kwargs : dict
             Other parameters passed to the scorer.
 
@@ -1184,8 +1181,7 @@ class _CurveScorer(_BaseScorer):
         """
         if classes is None:
             classes = _unique(y_true)
-        if pos_label is None:
-            pos_label = self._get_pos_label()
+        pos_label = self._get_pos_label()
         scoring_kwargs = {**self._kwargs, **kwargs}
         if isinstance(self._thresholds, Integral):
             potential_thresholds = np.linspace(
@@ -1239,14 +1235,13 @@ class _CurveScorer(_BaseScorer):
                 "If response_method is set to `None`, you can't use this method. "
                 "Use `_score_given_prediction` instead."
             )
-        pos_label = self._get_pos_label()
         y_score = method_caller(
-            estimator, self._response_method, X, pos_label=pos_label
+            estimator, self._response_method, X, pos_label=self._get_pos_label()
         )
         classes = estimator.classes_
 
         scores, potential_thresholds = self._score_given_prediction(
-            y_score, y_true, classes, pos_label, **kwargs
+            y_score, y_true, classes, **kwargs
         )
 
         return scores, potential_thresholds
