@@ -1,9 +1,9 @@
-import os
 import re
 from functools import partial
 
 import numpy
 import pytest
+import scipy
 from numpy.testing import assert_allclose
 
 from sklearn._config import config_context
@@ -91,12 +91,8 @@ def test_get_namespace_array_api(monkeypatch):
         with pytest.raises(TypeError):
             xp_out, is_array_api_compliant = get_namespace(X_xp, X_np)
 
-        def mock_getenv(key):
-            if key == "SCIPY_ARRAY_API":
-                return "0"
-
-        monkeypatch.setattr("os.environ.get", mock_getenv)
-        assert os.environ.get("SCIPY_ARRAY_API") != "1"
+        monkeypatch.setattr("scipy._lib._array_api.SCIPY_ARRAY_API", False)
+        assert not scipy._lib._array_api.SCIPY_ARRAY_API
         with pytest.warns(
             UserWarning,
             match="enabling SciPy's own support for array API to function properly. ",
