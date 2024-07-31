@@ -4,6 +4,7 @@ from .common cimport BITSET_INNER_DTYPE_C
 from .common cimport X_DTYPE_C
 from ...utils._typedefs cimport uint8_t
 
+
 cdef void init_bitset(BITSET_DTYPE_C bitset) noexcept nogil
 
 cdef void set_bitset(BITSET_DTYPE_C bitset, X_BINNED_DTYPE_C val) noexcept nogil

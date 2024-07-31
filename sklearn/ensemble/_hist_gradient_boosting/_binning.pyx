@@ -6,6 +6,7 @@ from libc.math cimport isnan
 from .common cimport X_DTYPE_C, X_BINNED_DTYPE_C
 from ...utils._typedefs cimport uint8_t
 
+
 def _map_to_bins(const X_DTYPE_C [:, :] data,
                  list binning_thresholds,
                  const uint8_t[::1] is_categorical,
