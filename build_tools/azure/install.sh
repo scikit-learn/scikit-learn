@@ -85,7 +85,7 @@ python_environment_install_and_activate() {
         # install them from scientific-python-nightly-wheels
         dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
         dev_packages="numpy scipy Cython"
-        pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url $dev_packages
+        pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url $dev_packages --only-binary :all:
     fi
 
     if [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
