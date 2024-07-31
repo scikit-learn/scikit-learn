@@ -25,17 +25,17 @@ cdef inline void set_bitset(BITSET_DTYPE_C bitset,  # OUT
     bitset[val // 32] |= (1 << (val % 32))
 
 
-cdef inline unsigned char in_bitset(BITSET_DTYPE_C bitset,
+cdef inline uint8_t in_bitset(BITSET_DTYPE_C bitset,
                                     X_BINNED_DTYPE_C val) noexcept nogil:
 
     return (bitset[val // 32] >> (val % 32)) & 1
 
 
-cpdef inline unsigned char in_bitset_memoryview(const BITSET_INNER_DTYPE_C[:] bitset,
+cpdef inline uint8_t in_bitset_memoryview(const BITSET_INNER_DTYPE_C[:] bitset,
                                                 X_BINNED_DTYPE_C val) noexcept nogil:
     return (bitset[val // 32] >> (val % 32)) & 1
 
-cdef inline unsigned char in_bitset_2d_memoryview(const BITSET_INNER_DTYPE_C [:, :] bitset,
+cdef inline uint8_t in_bitset_2d_memoryview(const BITSET_INNER_DTYPE_C [:, :] bitset,
                                                   X_BINNED_DTYPE_C val,
                                                   unsigned int row) noexcept nogil:
 
