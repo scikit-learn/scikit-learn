@@ -119,13 +119,11 @@ def _check_array_api_dispatch(array_api_dispatch, misconfigured_scipy="warn"):
 
         if not scipy._lib._array_api.SCIPY_ARRAY_API:
             message = (
-                (
-                    "Some scikit-learn array API features rely on enabling "
-                    "SciPy's own support for array API to function properly. "
-                    "Please set the SCIPY_ARRAY_API=1 environment variable "
-                    "before importing sklearn or scipy. More details at: "
-                    "https://docs.scipy.org/doc/scipy/dev/api-dev/array_api.html"
-                ),
+                "Some scikit-learn array API features rely on enabling "
+                "SciPy's own support for array API to function properly. "
+                "Please set the SCIPY_ARRAY_API=1 environment variable "
+                "before importing sklearn or scipy. More details at: "
+                "https://docs.scipy.org/doc/scipy/dev/api-dev/array_api.html"
             )
             if misconfigured_scipy == "raise":
                 raise RuntimeError(message)

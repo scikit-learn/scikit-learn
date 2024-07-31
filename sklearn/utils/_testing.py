@@ -295,7 +295,7 @@ def set_random_state(estimator, random_state=0):
 
 
 try:
-    _check_array_api_dispatch(True, misconfigured_scipy="raise")
+    _check_array_api_dispatch(True)
     ARRAY_API_COMPAT_FUNCTIONAL = True
 except ImportError:
     ARRAY_API_COMPAT_FUNCTIONAL = False
@@ -987,6 +987,7 @@ class MinimalTransformer:
 
 
 def _array_api_for_tests(array_namespace, device):
+    _check_array_api_dispatch(True, misconfigured_scipy="raise")
     try:
         array_mod = importlib.import_module(array_namespace)
     except ModuleNotFoundError:
