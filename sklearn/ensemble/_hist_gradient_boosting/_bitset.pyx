@@ -27,19 +27,18 @@ cdef inline void set_bitset(BITSET_DTYPE_C bitset,  # OUT
 
 
 cdef inline uint8_t in_bitset(BITSET_DTYPE_C bitset,
-                                    X_BINNED_DTYPE_C val) noexcept nogil:
-
+                              X_BINNED_DTYPE_C val) noexcept nogil:
     return (bitset[val // 32] >> (val % 32)) & 1
 
 
 cpdef inline uint8_t in_bitset_memoryview(const BITSET_INNER_DTYPE_C[:] bitset,
-                                                X_BINNED_DTYPE_C val) noexcept nogil:
+                                          X_BINNED_DTYPE_C val) noexcept nogil:
     return (bitset[val // 32] >> (val % 32)) & 1
 
-cdef inline uint8_t in_bitset_2d_memoryview(const BITSET_INNER_DTYPE_C [:, :] bitset,
-                                                  X_BINNED_DTYPE_C val,
-                                                  unsigned int row) noexcept nogil:
 
+cdef inline uint8_t in_bitset_2d_memoryview(const BITSET_INNER_DTYPE_C[:, :] bitset,
+                                            X_BINNED_DTYPE_C val,
+                                            unsigned int row) noexcept nogil:
     # Same as above but works on 2d memory views to avoid the creation of 1d
     # memory views. See https://github.com/scikit-learn/scikit-learn/issues/17299
     return (bitset[row, val // 32] >> (val % 32)) & 1
