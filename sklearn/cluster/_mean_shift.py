@@ -9,10 +9,8 @@ near-duplicates to form the final set of centroids.
 Seeding is performed using a binning technique for scalability.
 """
 
-# Authors: Conrad Lee <conradlee@gmail.com>
-#          Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Gael Varoquaux <gael.varoquaux@normalesup.org>
-#          Martino Sorbaro <martino.sorbaro@ed.ac.uk>
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from collections import defaultdict
@@ -122,7 +120,7 @@ def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
         my_mean = np.mean(points_within, axis=0)
         # If converged or at max_iter, adds the cluster
         if (
-            np.linalg.norm(my_mean - my_old_mean) < stop_thresh
+            np.linalg.norm(my_mean - my_old_mean) <= stop_thresh
             or completed_iterations == max_iter
         ):
             break
@@ -218,8 +216,8 @@ def mean_shift(
 
     Notes
     -----
-    For an example, see :ref:`examples/cluster/plot_mean_shift.py
-    <sphx_glr_auto_examples_cluster_plot_mean_shift.py>`.
+    For a usage example, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_mean_shift.py`.
 
     Examples
     --------
@@ -309,6 +307,9 @@ class MeanShift(ClusterMixin, BaseEstimator):
     eliminate near-duplicates to form the final set of centroids.
 
     Seeding is performed using a binning technique for scalability.
+
+    For an example of how to use MeanShift clustering, refer to:
+    :ref:`sphx_glr_auto_examples_cluster_plot_mean_shift.py`.
 
     Read more in the :ref:`User Guide <mean_shift>`.
 

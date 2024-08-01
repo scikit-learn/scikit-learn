@@ -3,24 +3,29 @@
 If you add content to this file, please give the version of the package
 at which the fix is no longer needed.
 """
-# Authors: Emmanuelle Gouillart <emmanuelle.gouillart@normalesup.org>
-#          Gael Varoquaux <gael.varoquaux@normalesup.org>
-#          Fabian Pedregosa <fpedregosa@acm.org>
-#          Lars Buitinck
-#
-# License: BSD 3 clause
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+import platform
+import struct
+import sys
 
 import numpy as np
 import scipy
 import scipy.sparse.linalg
 import scipy.stats
-import threadpoolctl
 
-import sklearn
+try:
+    import pandas as pd
+except ImportError:
+    pd = None
 
 from ..externals._packaging.version import parse as parse_version
-from .deprecation import deprecated
+from .parallel import _get_threadpool_controller
+
+_IS_32BIT = 8 * struct.calcsize("P") == 32
+_IS_WASM = platform.machine() in ["wasm32", "wasm64"]
 
 np_version = parse_version(np.__version__)
 np_base_version = parse_version(np_version.base_version)
@@ -89,52 +94,6 @@ if np_version < parse_version("1.22"):
     percentile = _percentile
 else:  # >= 1.22
     from numpy import percentile  # type: ignore  # noqa
-
-
-# compatibility fix for threadpoolctl >= 3.0.0
-# since version 3 it's possible to setup a global threadpool controller to avoid
-# looping through all loaded shared libraries each time.
-# the global controller is created during the first call to threadpoolctl.
-def _get_threadpool_controller():
-    if not hasattr(threadpoolctl, "ThreadpoolController"):
-        return None
-
-    if not hasattr(sklearn, "_sklearn_threadpool_controller"):
-        sklearn._sklearn_threadpool_controller = threadpoolctl.ThreadpoolController()
-
-    return sklearn._sklearn_threadpool_controller
-
-
-def threadpool_limits(limits=None, user_api=None):
-    controller = _get_threadpool_controller()
-    if controller is not None:
-        return controller.limit(limits=limits, user_api=user_api)
-    else:
-        return threadpoolctl.threadpool_limits(limits=limits, user_api=user_api)
-
-
-threadpool_limits.__doc__ = threadpoolctl.threadpool_limits.__doc__
-
-
-def threadpool_info():
-    controller = _get_threadpool_controller()
-    if controller is not None:
-        return controller.info()
-    else:
-        return threadpoolctl.threadpool_info()
-
-
-threadpool_info.__doc__ = threadpoolctl.threadpool_info.__doc__
-
-
-@deprecated(
-    "The function `delayed` has been moved from `sklearn.utils.fixes` to "
-    "`sklearn.utils.parallel`. This import path will be removed in 1.5."
-)
-def delayed(function):
-    from sklearn.utils.parallel import delayed
-
-    return delayed(function)
 
 
 # TODO: Remove when SciPy 1.11 is the minimum supported version
@@ -266,13 +225,6 @@ if np_version >= parse_version("1.25.0"):
     from numpy.exceptions import ComplexWarning, VisibleDeprecationWarning
 else:
     from numpy import ComplexWarning, VisibleDeprecationWarning  # type: ignore  # noqa
-
-
-# TODO: Remove when Scipy 1.6 is the minimum supported version
-try:
-    from scipy.integrate import trapezoid  # type: ignore  # noqa
-except ImportError:
-    from scipy.integrate import trapz as trapezoid  # type: ignore  # noqa
 
 
 # TODO: Adapt when Pandas > 2.2 is the minimum supported version
@@ -432,7 +384,7 @@ def _in_unstable_openblas_configuration():
     import numpy  # noqa
     import scipy  # noqa
 
-    modules_info = threadpool_info()
+    modules_info = _get_threadpool_controller().info()
 
     open_blas_used = any(info["internal_api"] == "openblas" for info in modules_info)
     if not open_blas_used:
@@ -456,3 +408,21 @@ def _in_unstable_openblas_configuration():
             # See discussions in https://github.com/numpy/numpy/issues/19411
             return True  # pragma: no cover
     return False
+
+
+# TODO: remove when pandas >= 1.4 is the minimum supported version
+if pd is not None and parse_version(pd.__version__) < parse_version("1.4"):
+
+    def _create_pandas_dataframe_from_non_pandas_container(X, *, index, copy):
+        pl = sys.modules.get("polars")
+        if pl is None or not isinstance(X, pl.DataFrame):
+            return pd.DataFrame(X, index=index, copy=copy)
+
+        # Bug in pandas<1.4: when constructing a pandas DataFrame from a polars
+        # DataFrame, the data is transposed ...
+        return pd.DataFrame(X.to_numpy(), index=index, copy=copy)
+
+else:
+
+    def _create_pandas_dataframe_from_non_pandas_container(X, *, index, copy):
+        return pd.DataFrame(X, index=index, copy=copy)

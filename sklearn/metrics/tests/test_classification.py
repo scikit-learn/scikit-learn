@@ -35,7 +35,7 @@ from sklearn.metrics import (
     recall_score,
     zero_one_loss,
 )
-from sklearn.metrics._classification import _check_targets
+from sklearn.metrics._classification import _check_targets, d2_log_loss_score
 from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import LabelBinarizer, label_binarize
 from sklearn.tree import DecisionTreeClassifier
@@ -268,27 +268,27 @@ def test_precision_recall_f1_score_binary():
     # individual scoring function that can be used for grid search: in the
     # binary class case the score is the value of the measure for the positive
     # class (e.g. label == 1). This is deprecated for average != 'binary'.
-    for kwargs, my_assert in [
-        ({}, assert_no_warnings),
-        ({"average": "binary"}, assert_no_warnings),
-    ]:
-        ps = my_assert(precision_score, y_true, y_pred, **kwargs)
-        assert_array_almost_equal(ps, 0.85, 2)
+    for kwargs in [{}, {"average": "binary"}]:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
 
-        rs = my_assert(recall_score, y_true, y_pred, **kwargs)
-        assert_array_almost_equal(rs, 0.68, 2)
+            ps = precision_score(y_true, y_pred, **kwargs)
+            assert_array_almost_equal(ps, 0.85, 2)
 
-        fs = my_assert(f1_score, y_true, y_pred, **kwargs)
-        assert_array_almost_equal(fs, 0.76, 2)
+            rs = recall_score(y_true, y_pred, **kwargs)
+            assert_array_almost_equal(rs, 0.68, 2)
 
-        assert_almost_equal(
-            my_assert(fbeta_score, y_true, y_pred, beta=2, **kwargs),
-            (1 + 2**2) * ps * rs / (2**2 * ps + rs),
-            2,
-        )
+            fs = f1_score(y_true, y_pred, **kwargs)
+            assert_array_almost_equal(fs, 0.76, 2)
+
+            assert_almost_equal(
+                fbeta_score(y_true, y_pred, beta=2, **kwargs),
+                (1 + 2**2) * ps * rs / (2**2 * ps + rs),
+                2,
+            )
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings(r"ignore::sklearn.exceptions.UndefinedMetricWarning")
 def test_precision_recall_f_binary_single_class():
     # Test precision, recall and F-scores behave with a single positive or
     # negative class
@@ -307,7 +307,7 @@ def test_precision_recall_f_binary_single_class():
     )
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings(r"ignore::sklearn.exceptions.UndefinedMetricWarning")
 def test_precision_recall_f_extra_labels():
     # Test handling of explicit additional (not in input) labels to PRF
     y_true = [1, 3, 3, 2]
@@ -353,7 +353,7 @@ def test_precision_recall_f_extra_labels():
     assert_almost_equal(np.array([p, r, f]), np.array([3 / 4, 1, 5 / 6]))
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings(r"ignore::sklearn.exceptions.UndefinedMetricWarning")
 def test_precision_recall_f_ignored_labels():
     # Test a subset of labels may be requested for PRF
     y_true = [1, 1, 2, 3]
@@ -812,6 +812,7 @@ def test_matthews_corrcoef_nan():
         partial(fbeta_score, beta=1),
         precision_score,
         recall_score,
+        partial(cohen_kappa_score, labels=[0, 1]),
     ],
 )
 def test_zero_division_nan_no_warning(metric, y_true, y_pred, zero_division):
@@ -836,6 +837,7 @@ def test_zero_division_nan_no_warning(metric, y_true, y_pred, zero_division):
         partial(fbeta_score, beta=1),
         precision_score,
         recall_score,
+        cohen_kappa_score,
     ],
 )
 def test_zero_division_nan_warning(metric, y_true, y_pred):
@@ -1411,7 +1413,7 @@ def test_classification_report_no_labels_target_names_unequal_length():
         classification_report(y_true, y_pred, target_names=target_names)
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings(r"ignore::sklearn.exceptions.UndefinedMetricWarning")
 def test_multilabel_classification_report():
     n_classes = 4
     n_samples = 50
@@ -1681,7 +1683,7 @@ def test_jaccard_score_zero_division_set_value(zero_division, expected_score):
     assert score == pytest.approx(expected_score)
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings(r"ignore::sklearn.exceptions.UndefinedMetricWarning")
 def test_precision_recall_f1_score_multilabel_1():
     # Test precision_recall_f1_score on a crafted multilabel example
     # First crafted example
@@ -1748,7 +1750,7 @@ def test_precision_recall_f1_score_multilabel_1():
     assert_almost_equal(fbeta_score(y_true, y_pred, beta=2, average="samples"), 0.5)
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings(r"ignore::sklearn.exceptions.UndefinedMetricWarning")
 def test_precision_recall_f1_score_multilabel_2():
     # Test precision_recall_f1_score on a crafted multilabel example 2
     # Second crafted example
@@ -1813,7 +1815,7 @@ def test_precision_recall_f1_score_multilabel_2():
     )
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings(r"ignore::sklearn.exceptions.UndefinedMetricWarning")
 @pytest.mark.parametrize(
     "zero_division, zero_division_expected",
     [("warn", 0), (0, 0), (1, 1), (np.nan, np.nan)],
@@ -1919,22 +1921,23 @@ def test_precision_recall_f1_no_labels(beta, average, zero_division):
     y_true = np.zeros((20, 3))
     y_pred = np.zeros_like(y_true)
 
-    p, r, f, s = assert_no_warnings(
-        precision_recall_fscore_support,
-        y_true,
-        y_pred,
-        average=average,
-        beta=beta,
-        zero_division=zero_division,
-    )
-    fbeta = assert_no_warnings(
-        fbeta_score,
-        y_true,
-        y_pred,
-        beta=beta,
-        average=average,
-        zero_division=zero_division,
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+
+        p, r, f, s = precision_recall_fscore_support(
+            y_true,
+            y_pred,
+            average=average,
+            beta=beta,
+            zero_division=zero_division,
+        )
+        fbeta = fbeta_score(
+            y_true,
+            y_pred,
+            beta=beta,
+            average=average,
+            zero_division=zero_division,
+        )
     assert s is None
 
     # if zero_division = nan, check that all metrics are nan and exit
@@ -1984,17 +1987,20 @@ def test_precision_recall_f1_no_labels_average_none(zero_division):
     # |y_i| = [0, 0, 0]
     # |y_hat_i| = [0, 0, 0]
 
-    p, r, f, s = assert_no_warnings(
-        precision_recall_fscore_support,
-        y_true,
-        y_pred,
-        average=None,
-        beta=1.0,
-        zero_division=zero_division,
-    )
-    fbeta = assert_no_warnings(
-        fbeta_score, y_true, y_pred, beta=1.0, average=None, zero_division=zero_division
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+
+        p, r, f, s = precision_recall_fscore_support(
+            y_true,
+            y_pred,
+            average=None,
+            beta=1.0,
+            zero_division=zero_division,
+        )
+        fbeta = fbeta_score(
+            y_true, y_pred, beta=1.0, average=None, zero_division=zero_division
+        )
+
     zero_division = np.float64(zero_division)
     assert_array_almost_equal(p, [zero_division, zero_division, zero_division], 2)
     assert_array_almost_equal(r, [zero_division, zero_division, zero_division], 2)
@@ -2138,59 +2144,57 @@ def test_prf_warnings():
 
 @pytest.mark.parametrize("zero_division", [0, 1, np.nan])
 def test_prf_no_warnings_if_zero_division_set(zero_division):
-    # average of per-label scores
-    f = precision_recall_fscore_support
-    for average in [None, "weighted", "macro"]:
-        assert_no_warnings(
-            f, [0, 1, 2], [1, 1, 2], average=average, zero_division=zero_division
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+
+        # average of per-label scores
+        for average in [None, "weighted", "macro"]:
+            precision_recall_fscore_support(
+                [0, 1, 2], [1, 1, 2], average=average, zero_division=zero_division
+            )
+
+            precision_recall_fscore_support(
+                [1, 1, 2], [0, 1, 2], average=average, zero_division=zero_division
+            )
+
+        # average of per-sample scores
+        precision_recall_fscore_support(
+            np.array([[1, 0], [1, 0]]),
+            np.array([[1, 0], [0, 0]]),
+            average="samples",
+            zero_division=zero_division,
         )
 
-        assert_no_warnings(
-            f, [1, 1, 2], [0, 1, 2], average=average, zero_division=zero_division
+        precision_recall_fscore_support(
+            np.array([[1, 0], [0, 0]]),
+            np.array([[1, 0], [1, 0]]),
+            average="samples",
+            zero_division=zero_division,
         )
 
-    # average of per-sample scores
-    assert_no_warnings(
-        f,
-        np.array([[1, 0], [1, 0]]),
-        np.array([[1, 0], [0, 0]]),
-        average="samples",
-        zero_division=zero_division,
-    )
+        # single score: micro-average
+        precision_recall_fscore_support(
+            np.array([[1, 1], [1, 1]]),
+            np.array([[0, 0], [0, 0]]),
+            average="micro",
+            zero_division=zero_division,
+        )
 
-    assert_no_warnings(
-        f,
-        np.array([[1, 0], [0, 0]]),
-        np.array([[1, 0], [1, 0]]),
-        average="samples",
-        zero_division=zero_division,
-    )
+        precision_recall_fscore_support(
+            np.array([[0, 0], [0, 0]]),
+            np.array([[1, 1], [1, 1]]),
+            average="micro",
+            zero_division=zero_division,
+        )
 
-    # single score: micro-average
-    assert_no_warnings(
-        f,
-        np.array([[1, 1], [1, 1]]),
-        np.array([[0, 0], [0, 0]]),
-        average="micro",
-        zero_division=zero_division,
-    )
+        # single positive label
+        precision_recall_fscore_support(
+            [1, 1], [-1, -1], average="binary", zero_division=zero_division
+        )
 
-    assert_no_warnings(
-        f,
-        np.array([[0, 0], [0, 0]]),
-        np.array([[1, 1], [1, 1]]),
-        average="micro",
-        zero_division=zero_division,
-    )
-
-    # single positive label
-    assert_no_warnings(
-        f, [1, 1], [-1, -1], average="binary", zero_division=zero_division
-    )
-
-    assert_no_warnings(
-        f, [-1, -1], [1, 1], average="binary", zero_division=zero_division
-    )
+        precision_recall_fscore_support(
+            [-1, -1], [1, 1], average="binary", zero_division=zero_division
+        )
 
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter("always")
@@ -2202,13 +2206,16 @@ def test_prf_no_warnings_if_zero_division_set(zero_division):
 
 @pytest.mark.parametrize("zero_division", ["warn", 0, 1, np.nan])
 def test_recall_warnings(zero_division):
-    assert_no_warnings(
-        recall_score,
-        np.array([[1, 1], [1, 1]]),
-        np.array([[0, 0], [0, 0]]),
-        average="micro",
-        zero_division=zero_division,
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+
+        recall_score(
+            np.array([[1, 1], [1, 1]]),
+            np.array([[0, 0], [0, 0]]),
+            average="micro",
+            zero_division=zero_division,
+        )
+
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter("always")
         recall_score(
@@ -2219,8 +2226,7 @@ def test_recall_warnings(zero_division):
         )
         if zero_division == "warn":
             assert (
-                str(record.pop().message)
-                == "Recall is ill-defined and "
+                str(record.pop().message) == "Recall is ill-defined and "
                 "being set to 0.0 due to no true samples."
                 " Use `zero_division` parameter to control"
                 " this behavior."
@@ -2231,8 +2237,7 @@ def test_recall_warnings(zero_division):
         recall_score([0, 0], [0, 0])
         if zero_division == "warn":
             assert (
-                str(record.pop().message)
-                == "Recall is ill-defined and "
+                str(record.pop().message) == "Recall is ill-defined and "
                 "being set to 0.0 due to no true samples."
                 " Use `zero_division` parameter to control"
                 " this behavior."
@@ -2251,8 +2256,7 @@ def test_precision_warnings(zero_division):
         )
         if zero_division == "warn":
             assert (
-                str(record.pop().message)
-                == "Precision is ill-defined and "
+                str(record.pop().message) == "Precision is ill-defined and "
                 "being set to 0.0 due to no predicted samples."
                 " Use `zero_division` parameter to control"
                 " this behavior."
@@ -2263,20 +2267,21 @@ def test_precision_warnings(zero_division):
         precision_score([0, 0], [0, 0])
         if zero_division == "warn":
             assert (
-                str(record.pop().message)
-                == "Precision is ill-defined and "
+                str(record.pop().message) == "Precision is ill-defined and "
                 "being set to 0.0 due to no predicted samples."
                 " Use `zero_division` parameter to control"
                 " this behavior."
             )
 
-    assert_no_warnings(
-        precision_score,
-        np.array([[0, 0], [0, 0]]),
-        np.array([[1, 1], [1, 1]]),
-        average="micro",
-        zero_division=zero_division,
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+
+        precision_score(
+            np.array([[0, 0], [0, 0]]),
+            np.array([[1, 1], [1, 1]]),
+            average="micro",
+            zero_division=zero_division,
+        )
 
 
 @pytest.mark.parametrize("zero_division", ["warn", 0, 1, np.nan])
@@ -2309,8 +2314,7 @@ def test_fscore_warnings(zero_division):
             )
             if zero_division == "warn":
                 assert (
-                    str(record.pop().message)
-                    == "F-score is ill-defined and "
+                    str(record.pop().message) == "F-score is ill-defined and "
                     "being set to 0.0 due to no true nor predicted "
                     "samples. Use `zero_division` parameter to "
                     "control this behavior."
@@ -2631,62 +2635,37 @@ def test_log_loss():
     )
     loss = log_loss(y_true, y_pred)
     loss_true = -np.mean(bernoulli.logpmf(np.array(y_true) == "yes", y_pred[:, 1]))
-    assert_almost_equal(loss, loss_true)
+    assert_allclose(loss, loss_true)
 
     # multiclass case; adapted from http://bit.ly/RJJHWA
     y_true = [1, 0, 2]
     y_pred = [[0.2, 0.7, 0.1], [0.6, 0.2, 0.2], [0.6, 0.1, 0.3]]
     loss = log_loss(y_true, y_pred, normalize=True)
-    assert_almost_equal(loss, 0.6904911)
+    assert_allclose(loss, 0.6904911)
 
     # check that we got all the shapes and axes right
     # by doubling the length of y_true and y_pred
     y_true *= 2
     y_pred *= 2
     loss = log_loss(y_true, y_pred, normalize=False)
-    assert_almost_equal(loss, 0.6904911 * 6, decimal=6)
-
-    user_warning_msg = "y_pred values do not sum to one"
-    # check eps and handling of absolute zero and one probabilities
-    y_pred = np.asarray(y_pred) > 0.5
-    with pytest.warns(FutureWarning):
-        loss = log_loss(y_true, y_pred, normalize=True, eps=0.1)
-    with pytest.warns(UserWarning, match=user_warning_msg):
-        assert_almost_equal(loss, log_loss(y_true, np.clip(y_pred, 0.1, 0.9)))
-
-    # binary case: check correct boundary values for eps = 0
-    with pytest.warns(FutureWarning):
-        assert log_loss([0, 1], [0, 1], eps=0) == 0
-    with pytest.warns(FutureWarning):
-        assert log_loss([0, 1], [0, 0], eps=0) == np.inf
-    with pytest.warns(FutureWarning):
-        assert log_loss([0, 1], [1, 1], eps=0) == np.inf
-
-    # multiclass case: check correct boundary values for eps = 0
-    with pytest.warns(FutureWarning):
-        assert log_loss([0, 1, 2], [[1, 0, 0], [0, 1, 0], [0, 0, 1]], eps=0) == 0
-    with pytest.warns(FutureWarning):
-        assert (
-            log_loss([0, 1, 2], [[0, 0.5, 0.5], [0, 1, 0], [0, 0, 1]], eps=0) == np.inf
-        )
+    assert_allclose(loss, 0.6904911 * 6)
 
     # raise error if number of classes are not equal.
     y_true = [1, 0, 2]
-    y_pred = [[0.2, 0.7], [0.6, 0.5], [0.4, 0.1]]
+    y_pred = [[0.3, 0.7], [0.6, 0.4], [0.4, 0.6]]
     with pytest.raises(ValueError):
         log_loss(y_true, y_pred)
 
     # case when y_true is a string array object
     y_true = ["ham", "spam", "spam", "ham"]
-    y_pred = [[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]]
-    with pytest.warns(UserWarning, match=user_warning_msg):
-        loss = log_loss(y_true, y_pred)
-    assert_almost_equal(loss, 1.0383217, decimal=6)
+    y_pred = [[0.3, 0.7], [0.6, 0.4], [0.4, 0.6], [0.7, 0.3]]
+    loss = log_loss(y_true, y_pred)
+    assert_allclose(loss, 0.7469410)
 
     # test labels option
 
     y_true = [2, 2]
-    y_pred = [[0.2, 0.7], [0.6, 0.5]]
+    y_pred = [[0.2, 0.8], [0.6, 0.4]]
     y_score = np.array([[0.1, 0.9], [0.1, 0.9]])
     error_str = (
         r"y_true contains only one label \(2\). Please provide "
@@ -2695,50 +2674,66 @@ def test_log_loss():
     with pytest.raises(ValueError, match=error_str):
         log_loss(y_true, y_pred)
 
-    y_pred = [[0.2, 0.7], [0.6, 0.5], [0.2, 0.3]]
-    error_str = "Found input variables with inconsistent numbers of samples: [3, 2]"
-    (ValueError, error_str, log_loss, y_true, y_pred)
+    y_pred = [[0.2, 0.8], [0.6, 0.4], [0.7, 0.3]]
+    error_str = r"Found input variables with inconsistent numbers of samples: \[3, 2\]"
+    with pytest.raises(ValueError, match=error_str):
+        log_loss(y_true, y_pred)
 
     # works when the labels argument is used
 
     true_log_loss = -np.mean(np.log(y_score[:, 1]))
     calculated_log_loss = log_loss(y_true, y_score, labels=[1, 2])
-    assert_almost_equal(calculated_log_loss, true_log_loss)
+    assert_allclose(calculated_log_loss, true_log_loss)
 
     # ensure labels work when len(np.unique(y_true)) != y_pred.shape[1]
     y_true = [1, 2, 2]
-    y_score2 = [[0.2, 0.7, 0.3], [0.6, 0.5, 0.3], [0.3, 0.9, 0.1]]
-    with pytest.warns(UserWarning, match=user_warning_msg):
-        loss = log_loss(y_true, y_score2, labels=[1, 2, 3])
-    assert_almost_equal(loss, 1.0630345, decimal=6)
+    y_score2 = [[0.7, 0.1, 0.2], [0.2, 0.7, 0.1], [0.1, 0.7, 0.2]]
+    loss = log_loss(y_true, y_score2, labels=[1, 2, 3])
+    assert_allclose(loss, -np.log(0.7))
 
 
-def test_log_loss_eps_auto(global_dtype):
-    """Check the behaviour of `eps="auto"` that changes depending on the input
-    array dtype.
+@pytest.mark.parametrize("dtype", [np.float64, np.float32, np.float16])
+def test_log_loss_eps(dtype):
+    """Check the behaviour internal eps that changes depending on the input dtype.
+
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/24315
     """
-    y_true = np.array([0, 1], dtype=global_dtype)
-    y_pred = y_true.copy()
+    y_true = np.array([0, 1], dtype=dtype)
+    y_pred = np.array([1, 0], dtype=dtype)
 
-    loss = log_loss(y_true, y_pred, eps="auto")
+    loss = log_loss(y_true, y_pred)
     assert np.isfinite(loss)
 
 
-def test_log_loss_eps_auto_float16():
-    """Check the behaviour of `eps="auto"` for np.float16"""
-    y_true = np.array([0, 1], dtype=np.float16)
-    y_pred = y_true.copy()
+@pytest.mark.parametrize("dtype", [np.float64, np.float32, np.float16])
+def test_log_loss_not_probabilities_warning(dtype):
+    """Check that log_loss raises a warning when y_pred values don't sum to 1."""
+    y_true = np.array([0, 1, 1, 0])
+    y_pred = np.array([[0.2, 0.7], [0.6, 0.3], [0.4, 0.7], [0.8, 0.3]], dtype=dtype)
 
-    loss = log_loss(y_true, y_pred, eps="auto")
-    assert np.isfinite(loss)
+    with pytest.warns(UserWarning, match="The y_pred values do not sum to one."):
+        log_loss(y_true, y_pred)
+
+
+@pytest.mark.parametrize(
+    "y_true, y_pred",
+    [
+        ([0, 1, 0], [0, 1, 0]),
+        ([0, 1, 0], [[1, 0], [0, 1], [1, 0]]),
+        ([0, 1, 2], [[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
+    ],
+)
+def test_log_loss_perfect_predictions(y_true, y_pred):
+    """Check that log_loss returns 0 for perfect predictions."""
+    # Because of the clipping, the result is not exactly 0
+    assert log_loss(y_true, y_pred) == pytest.approx(0)
 
 
 def test_log_loss_pandas_input():
     # case when input is a pandas series and dataframe gh-5715
     y_tr = np.array(["ham", "spam", "spam", "ham"])
-    y_pr = np.array([[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]])
+    y_pr = np.array([[0.3, 0.7], [0.6, 0.4], [0.4, 0.6], [0.7, 0.3]])
     types = [(MockDataFrame, MockDataFrame)]
     try:
         from pandas import DataFrame, Series
@@ -2749,9 +2744,8 @@ def test_log_loss_pandas_input():
     for TrueInputType, PredInputType in types:
         # y_pred dataframe, y_true series
         y_true, y_pred = TrueInputType(y_tr), PredInputType(y_pr)
-        with pytest.warns(UserWarning, match="y_pred values do not sum to one"):
-            loss = log_loss(y_true, y_pred)
-        assert_almost_equal(loss, 1.0383217, decimal=6)
+        loss = log_loss(y_true, y_pred)
+        assert_allclose(loss, 0.7469410)
 
 
 def test_brier_score_loss():
@@ -2928,3 +2922,202 @@ def test_brier_score_loss_deprecation_warning():
             y_prob=y_pred,
             y_proba=y_pred,
         )
+
+
+def test_d2_log_loss_score():
+    y_true = [0, 0, 0, 1, 1, 1]
+    y_true_string = ["no", "no", "no", "yes", "yes", "yes"]
+    y_pred = np.array(
+        [
+            [0.5, 0.5],
+            [0.9, 0.1],
+            [0.4, 0.6],
+            [0.6, 0.4],
+            [0.35, 0.65],
+            [0.01, 0.99],
+        ]
+    )
+    y_pred_null = np.array(
+        [
+            [0.5, 0.5],
+            [0.5, 0.5],
+            [0.5, 0.5],
+            [0.5, 0.5],
+            [0.5, 0.5],
+            [0.5, 0.5],
+        ]
+    )
+    d2_score = d2_log_loss_score(y_true=y_true, y_pred=y_pred)
+    log_likelihood = log_loss(y_true=y_true, y_pred=y_pred, normalize=False)
+    log_likelihood_null = log_loss(y_true=y_true, y_pred=y_pred_null, normalize=False)
+    d2_score_true = 1 - log_likelihood / log_likelihood_null
+    assert d2_score == pytest.approx(d2_score_true)
+
+    # check that using sample weight also gives the correct d2 score
+    sample_weight = np.array([2, 1, 3, 4, 3, 1])
+    y_pred_null[:, 0] = sample_weight[:3].sum() / sample_weight.sum()
+    y_pred_null[:, 1] = sample_weight[3:].sum() / sample_weight.sum()
+    d2_score = d2_log_loss_score(
+        y_true=y_true, y_pred=y_pred, sample_weight=sample_weight
+    )
+    log_likelihood = log_loss(
+        y_true=y_true,
+        y_pred=y_pred,
+        sample_weight=sample_weight,
+        normalize=False,
+    )
+    log_likelihood_null = log_loss(
+        y_true=y_true,
+        y_pred=y_pred_null,
+        sample_weight=sample_weight,
+        normalize=False,
+    )
+    d2_score_true = 1 - log_likelihood / log_likelihood_null
+    assert d2_score == pytest.approx(d2_score_true)
+
+    # check if good predictions give a relatively higher value for the d2 score
+    y_pred = np.array(
+        [
+            [0.9, 0.1],
+            [0.8, 0.2],
+            [0.9, 0.1],
+            [0.1, 0.9],
+            [0.2, 0.8],
+            [0.1, 0.9],
+        ]
+    )
+    d2_score = d2_log_loss_score(y_true, y_pred)
+    assert 0.5 < d2_score < 1.0
+    # check that a similar value is obtained for string labels
+    d2_score_string = d2_log_loss_score(y_true_string, y_pred)
+    assert d2_score_string == pytest.approx(d2_score)
+
+    # check if poor predictions gives a relatively low value for the d2 score
+    y_pred = np.array(
+        [
+            [0.5, 0.5],
+            [0.1, 0.9],
+            [0.1, 0.9],
+            [0.9, 0.1],
+            [0.75, 0.25],
+            [0.1, 0.9],
+        ]
+    )
+    d2_score = d2_log_loss_score(y_true, y_pred)
+    assert d2_score < 0
+    # check that a similar value is obtained for string labels
+    d2_score_string = d2_log_loss_score(y_true_string, y_pred)
+    assert d2_score_string == pytest.approx(d2_score)
+
+    # check if simply using the average of the classes as the predictions
+    # gives a d2 score of 0
+    y_true = [0, 0, 0, 1, 1, 1]
+    y_pred = np.array(
+        [
+            [0.5, 0.5],
+            [0.5, 0.5],
+            [0.5, 0.5],
+            [0.5, 0.5],
+            [0.5, 0.5],
+            [0.5, 0.5],
+        ]
+    )
+    d2_score = d2_log_loss_score(y_true, y_pred)
+    assert d2_score == 0
+    d2_score_string = d2_log_loss_score(y_true_string, y_pred)
+    assert d2_score_string == 0
+
+    # check if simply using the average of the classes as the predictions
+    # gives a d2 score of 0 when the positive class has a higher proportion
+    y_true = [0, 1, 1, 1]
+    y_true_string = ["no", "yes", "yes", "yes"]
+    y_pred = np.array([[0.25, 0.75], [0.25, 0.75], [0.25, 0.75], [0.25, 0.75]])
+    d2_score = d2_log_loss_score(y_true, y_pred)
+    assert d2_score == 0
+    d2_score_string = d2_log_loss_score(y_true_string, y_pred)
+    assert d2_score_string == 0
+    sample_weight = [2, 2, 2, 2]
+    d2_score_with_sample_weight = d2_log_loss_score(
+        y_true, y_pred, sample_weight=sample_weight
+    )
+    assert d2_score_with_sample_weight == 0
+
+    # check that the d2 scores seem correct when more than 2
+    # labels are specified
+    y_true = ["high", "high", "low", "neutral"]
+    sample_weight = [1.4, 0.6, 0.8, 0.2]
+
+    y_pred = np.array(
+        [
+            [0.8, 0.1, 0.1],
+            [0.8, 0.1, 0.1],
+            [0.1, 0.8, 0.1],
+            [0.1, 0.1, 0.8],
+        ]
+    )
+    d2_score = d2_log_loss_score(y_true, y_pred)
+    assert 0.5 < d2_score < 1.0
+    d2_score = d2_log_loss_score(y_true, y_pred, sample_weight=sample_weight)
+    assert 0.5 < d2_score < 1.0
+
+    y_pred = np.array(
+        [
+            [0.2, 0.5, 0.3],
+            [0.1, 0.7, 0.2],
+            [0.1, 0.1, 0.8],
+            [0.2, 0.7, 0.1],
+        ]
+    )
+    d2_score = d2_log_loss_score(y_true, y_pred)
+    assert d2_score < 0
+    d2_score = d2_log_loss_score(y_true, y_pred, sample_weight=sample_weight)
+    assert d2_score < 0
+
+
+def test_d2_log_loss_score_raises():
+    """Test that d2_log_loss_score raises the appropriate errors on
+    invalid inputs."""
+    y_true = [0, 1, 2]
+    y_pred = [[0.2, 0.8], [0.5, 0.5], [0.4, 0.6]]
+    err = "contain different number of classes"
+    with pytest.raises(ValueError, match=err):
+        d2_log_loss_score(y_true, y_pred)
+
+    # check error if the number of classes in labels do not match the number
+    # of classes in y_pred.
+    y_true = ["a", "b", "c"]
+    y_pred = [[0.5, 0.5], [0.5, 0.5], [0.5, 0.5]]
+    labels = [0, 1, 2]
+    err = "number of classes in labels is different"
+    with pytest.raises(ValueError, match=err):
+        d2_log_loss_score(y_true, y_pred, labels=labels)
+
+    # check error if y_true and y_pred do not have equal lengths
+    y_true = [0, 1, 2]
+    y_pred = [[0.5, 0.5, 0.5], [0.6, 0.3, 0.1]]
+    err = "inconsistent numbers of samples"
+    with pytest.raises(ValueError, match=err):
+        d2_log_loss_score(y_true, y_pred)
+
+    # check warning for samples < 2
+    y_true = [1]
+    y_pred = [[0.5, 0.5]]
+    err = "score is not well-defined"
+    with pytest.warns(UndefinedMetricWarning, match=err):
+        d2_log_loss_score(y_true, y_pred)
+
+    # check error when y_true only has 1 label
+    y_true = [1, 1, 1]
+    y_pred = [[0.5, 0.5], [0.5, 0.5], [0.5, 5]]
+    err = "y_true contains only one label"
+    with pytest.raises(ValueError, match=err):
+        d2_log_loss_score(y_true, y_pred)
+
+    # check error when y_true only has 1 label and labels also has
+    # only 1 label
+    y_true = [1, 1, 1]
+    labels = [1]
+    y_pred = [[0.5, 0.5], [0.5, 0.5], [0.5, 5]]
+    err = "The labels array needs to contain at least two"
+    with pytest.raises(ValueError, match=err):
+        d2_log_loss_score(y_true, y_pred, labels=labels)

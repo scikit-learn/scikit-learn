@@ -9,17 +9,17 @@ Template file for easily generate fused types consistent code using Tempita
 Generated file: _seq_dataset.pxd
 
 Each class is duplicated for all dtypes (float and double). The keywords
-between double braces are substituted in setup.py.
+between double braces are substituted during the build.
 """
 
 # name_suffix, c_type
-dtypes = [('64', 'double'),
-          ('32', 'float')]
+dtypes = [('64', 'float64_t'),
+          ('32', 'float32_t')]
 
 }}
 """Dataset abstractions for sequential data access."""
 
-cimport numpy as cnp
+from ._typedefs cimport float32_t, float64_t, intp_t, uint32_t
 
 # SequentialDataset and its two concrete subclasses are (optionally randomized)
 # iterators over the rows of a matrix X and corresponding target values y.
@@ -33,9 +33,9 @@ cdef class SequentialDataset{{name_suffix}}:
     cdef int[::1] index
     cdef int *index_data_ptr
     cdef Py_ssize_t n_samples
-    cdef cnp.uint32_t seed
+    cdef uint32_t seed
 
-    cdef void shuffle(self, cnp.uint32_t seed) noexcept nogil
+    cdef void shuffle(self, uint32_t seed) noexcept nogil
     cdef int _get_next_index(self) noexcept nogil
     cdef int _get_random_index(self) noexcept nogil
 
@@ -53,7 +53,7 @@ cdef class ArrayDataset{{name_suffix}}(SequentialDataset{{name_suffix}}):
     cdef const {{c_type}}[::1] Y
     cdef const {{c_type}}[::1] sample_weights
     cdef Py_ssize_t n_features
-    cdef cnp.npy_intp X_stride
+    cdef intp_t X_stride
     cdef {{c_type}} *X_data_ptr
     cdef {{c_type}} *Y_data_ptr
     cdef const int[::1] feature_indices

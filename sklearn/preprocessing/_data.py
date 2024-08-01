@@ -1,11 +1,5 @@
-# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#          Olivier Grisel <olivier.grisel@ensta.org>
-#          Andreas Mueller <amueller@ais.uni-bonn.de>
-#          Eric Martin <eric@ericmart.in>
-#          Giorgio Patrini <giorgio.patrini@anu.edu.au>
-#          Eric Chang <ericchang2017@u.northwestern.edu>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 import warnings
@@ -22,7 +16,7 @@ from ..base import (
     TransformerMixin,
     _fit_context,
 )
-from ..utils import _array_api, check_array
+from ..utils import _array_api, check_array, resample
 from ..utils._array_api import get_namespace
 from ..utils._param_validation import Interval, Options, StrOptions, validate_params
 from ..utils.extmath import _incremental_mean_and_var, row_norms
@@ -224,7 +218,7 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
         ensure_2d=False,
         estimator="the scale function",
         dtype=FLOAT_DTYPES,
-        force_all_finite="allow-nan",
+        ensure_all_finite="allow-nan",
     )
     if sparse.issparse(X):
         if with_mean:
@@ -491,7 +485,7 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             X,
             reset=first_pass,
             dtype=_array_api.supported_float_dtypes(xp),
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
         )
 
         data_min = _array_api._nanmin(X, axis=0, xp=xp)
@@ -535,7 +529,8 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             X,
             copy=self.copy,
             dtype=_array_api.supported_float_dtypes(xp),
-            force_all_finite="allow-nan",
+            force_writeable=True,
+            ensure_all_finite="allow-nan",
             reset=False,
         )
 
@@ -566,7 +561,8 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             X,
             copy=self.copy,
             dtype=_array_api.supported_float_dtypes(xp),
-            force_all_finite="allow-nan",
+            force_writeable=True,
+            ensure_all_finite="allow-nan",
         )
 
         X -= self.min_
@@ -672,7 +668,11 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     # Unlike the scaler object, this function allows 1d input.
     # If copy is required, it will be done inside the scaler object.
     X = check_array(
-        X, copy=False, ensure_2d=False, dtype=FLOAT_DTYPES, force_all_finite="allow-nan"
+        X,
+        copy=False,
+        ensure_2d=False,
+        dtype=FLOAT_DTYPES,
+        ensure_all_finite="allow-nan",
     )
     original_ndim = X.ndim
 
@@ -913,7 +913,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             X,
             accept_sparse=("csr", "csc"),
             dtype=FLOAT_DTYPES,
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
             reset=first_call,
         )
         n_features = X.shape[1]
@@ -1046,7 +1046,8 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             accept_sparse="csr",
             copy=copy,
             dtype=FLOAT_DTYPES,
-            force_all_finite="allow-nan",
+            force_writeable=True,
+            ensure_all_finite="allow-nan",
         )
 
         if sparse.issparse(X):
@@ -1087,7 +1088,8 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             accept_sparse="csr",
             copy=copy,
             dtype=FLOAT_DTYPES,
-            force_all_finite="allow-nan",
+            force_writeable=True,
+            ensure_all_finite="allow-nan",
         )
 
         if sparse.issparse(X):
@@ -1249,7 +1251,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             reset=first_pass,
             accept_sparse=("csr", "csc"),
             dtype=_array_api.supported_float_dtypes(xp),
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
         )
 
         if sparse.issparse(X):
@@ -1291,7 +1293,8 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             copy=self.copy,
             reset=False,
             dtype=_array_api.supported_float_dtypes(xp),
-            force_all_finite="allow-nan",
+            force_writeable=True,
+            ensure_all_finite="allow-nan",
         )
 
         if sparse.issparse(X):
@@ -1322,7 +1325,8 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             accept_sparse=("csr", "csc"),
             copy=self.copy,
             dtype=_array_api.supported_float_dtypes(xp),
-            force_all_finite="allow-nan",
+            force_writeable=True,
+            ensure_all_finite="allow-nan",
         )
 
         if sparse.issparse(X):
@@ -1417,7 +1421,7 @@ def maxabs_scale(X, *, axis=0, copy=True):
         copy=False,
         ensure_2d=False,
         dtype=FLOAT_DTYPES,
-        force_all_finite="allow-nan",
+        ensure_all_finite="allow-nan",
     )
     original_ndim = X.ndim
 
@@ -1592,7 +1596,7 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             X,
             accept_sparse="csc",
             dtype=FLOAT_DTYPES,
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
         )
 
         q_min, q_max = self.quantile_range
@@ -1654,8 +1658,9 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             accept_sparse=("csr", "csc"),
             copy=self.copy,
             dtype=FLOAT_DTYPES,
+            force_writeable=True,
             reset=False,
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
         )
 
         if sparse.issparse(X):
@@ -1687,7 +1692,8 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             accept_sparse=("csr", "csc"),
             copy=self.copy,
             dtype=FLOAT_DTYPES,
-            force_all_finite="allow-nan",
+            force_writeable=True,
+            ensure_all_finite="allow-nan",
         )
 
         if sparse.issparse(X):
@@ -1820,7 +1826,7 @@ def robust_scale(
         copy=False,
         ensure_2d=False,
         dtype=FLOAT_DTYPES,
-        force_all_finite="allow-nan",
+        ensure_all_finite="allow-nan",
     )
     original_ndim = X.ndim
 
@@ -1928,6 +1934,7 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
         copy=copy,
         estimator="the normalize function",
         dtype=_array_api.supported_float_dtypes(xp),
+        force_writeable=True,
     )
     if axis == 0:
         X = X.T
@@ -2091,8 +2098,10 @@ class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             Transformed array.
         """
         copy = copy if copy is not None else self.copy
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
-        return normalize(X, norm=self.norm, axis=1, copy=copy)
+        X = self._validate_data(
+            X, accept_sparse="csr", force_writeable=True, copy=copy, reset=False
+        )
+        return normalize(X, norm=self.norm, axis=1, copy=False)
 
     def _more_tags(self):
         return {"stateless": True, "array_api_support": True}
@@ -2146,7 +2155,7 @@ def binarize(X, *, threshold=0.0, copy=True):
     array([[0., 1., 0.],
            [1., 0., 0.]])
     """
-    X = check_array(X, accept_sparse=["csr", "csc"], copy=copy)
+    X = check_array(X, accept_sparse=["csr", "csc"], force_writeable=True, copy=copy)
     if sparse.issparse(X):
         if threshold < 0:
             raise ValueError("Cannot binarize a sparse matrix with threshold < 0")
@@ -2287,7 +2296,13 @@ class Binarizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         copy = copy if copy is not None else self.copy
         # TODO: This should be refactored because binarize also calls
         # check_array
-        X = self._validate_data(X, accept_sparse=["csr", "csc"], copy=copy, reset=False)
+        X = self._validate_data(
+            X,
+            accept_sparse=["csr", "csc"],
+            force_writeable=True,
+            copy=copy,
+            reset=False,
+        )
         return binarize(X, threshold=self.threshold, copy=False)
 
     def _more_tags(self):
@@ -2372,10 +2387,6 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
            [ -5., -14.,  19.]])
     """
 
-    def __init__(self):
-        # Needed for backported inspect.signature compatibility with PyPy
-        pass
-
     def fit(self, K, y=None):
         """Fit KernelCenterer.
 
@@ -2428,7 +2439,11 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         xp, _ = get_namespace(K)
 
         K = self._validate_data(
-            K, copy=copy, dtype=_array_api.supported_float_dtypes(xp), reset=False
+            K,
+            copy=copy,
+            force_writeable=True,
+            dtype=_array_api.supported_float_dtypes(xp),
+            reset=False,
         )
 
         K_pred_cols = (xp.sum(K, axis=1) / self.K_fit_rows_.shape[0])[:, None]
@@ -2672,15 +2687,13 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         n_samples, n_features = X.shape
         references = self.references_ * 100
 
-        self.quantiles_ = []
-        for col in X.T:
-            if self.subsample is not None and self.subsample < n_samples:
-                subsample_idx = random_state.choice(
-                    n_samples, size=self.subsample, replace=False
-                )
-                col = col.take(subsample_idx, mode="clip")
-            self.quantiles_.append(np.nanpercentile(col, references))
-        self.quantiles_ = np.transpose(self.quantiles_)
+        if self.subsample is not None and self.subsample < n_samples:
+            # Take a subsample of `X`
+            X = resample(
+                X, replace=False, n_samples=self.subsample, random_state=random_state
+            )
+
+        self.quantiles_ = np.nanpercentile(X, references, axis=0)
         # Due to floating-point precision error in `np.nanpercentile`,
         # make sure that quantiles are monotonically increasing.
         # Upstream issue in numpy:
@@ -2854,7 +2867,10 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             accept_sparse="csc",
             copy=copy,
             dtype=FLOAT_DTYPES,
-            force_all_finite="allow-nan",
+            # only set force_writeable for the validation at transform time because
+            # it's the only place where QuantileTransformer performs inplace operations.
+            force_writeable=True if not in_fit else None,
+            ensure_all_finite="allow-nan",
         )
         # we only accept positive sparse matrix when ignore_implicit_zeros is
         # false and that we call fit or transform.
@@ -3492,8 +3508,9 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             X,
             ensure_2d=True,
             dtype=FLOAT_DTYPES,
+            force_writeable=True,
             copy=self.copy,
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
             reset=in_fit,
         )
 

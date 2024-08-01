@@ -2,8 +2,8 @@
 Multi-dimensional Scaling (MDS).
 """
 
-# author: Nelle Varoquaux <nelle.varoquaux@gmail.com>
-# License: BSD
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Integral, Real

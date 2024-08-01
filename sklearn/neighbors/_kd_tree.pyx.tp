@@ -13,7 +13,7 @@ implementation_specific_values = [
 
 # By Jake Vanderplas (2013) <jakevdp@cs.washington.edu>
 # written for the scikit-learn project
-# License: BSD
+# SPDX-License-Identifier: BSD-3-Clause
 
 }}
 

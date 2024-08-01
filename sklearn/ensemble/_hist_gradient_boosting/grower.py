@@ -4,7 +4,9 @@ This module contains the TreeGrower class.
 TreeGrower builds a regression tree fitting a Newton-Raphson step, based on
 the gradients and hessians of the training data.
 """
-# Author: Nicolas Hug
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numbers
 from heapq import heappop, heappush
@@ -201,7 +203,8 @@ class TreeGrower:
     interaction_cst : list of sets of integers, default=None
         List of interaction constraints.
     l2_regularization : float, default=0.
-        The L2 regularization parameter.
+        The L2 regularization parameter penalizing leaves with small hessians.
+        Use ``0`` for no regularization (default).
     feature_fraction_per_split : float, default=1
         Proportion of randomly chosen features in each and every node split.
         This is a form of regularization, smaller values make the trees weaker

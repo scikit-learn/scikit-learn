@@ -27,8 +27,9 @@ from sklearn._loss.loss import (
     HuberLoss,
     PinballLoss,
 )
-from sklearn.utils import _IS_WASM, assert_all_finite
+from sklearn.utils import assert_all_finite
 from sklearn.utils._testing import create_memmap_backed_data, skip_if_32bit
+from sklearn.utils.fixes import _IS_WASM
 
 ALL_LOSSES = list(_LOSSES.values())
 
@@ -1065,6 +1066,36 @@ def test_multinomial_loss_fit_intercept_only():
         baseline_prediction = loss.fit_intercept_only(y_true=y_train)
         assert baseline_prediction.dtype == y_train.dtype
         assert_all_finite(baseline_prediction)
+
+
+def test_multinomial_cy_gradient(global_random_seed):
+    """Test that Multinomial cy_gradient gives the same result as gradient.
+
+    CyHalfMultinomialLoss does not inherit from CyLossFunction and has a different API.
+    As a consequence, the functions like `loss` and `gradient` do not rely on `cy_loss`
+    and `cy_gradient`.
+    """
+    n_samples = 100
+    n_classes = 5
+    loss = HalfMultinomialLoss(n_classes=n_classes)
+    y_true, raw_prediction = random_y_true_raw_prediction(
+        loss=loss,
+        n_samples=n_samples,
+        seed=global_random_seed,
+    )
+    sample_weight = np.linspace(0.1, 2, num=n_samples)
+
+    grad1 = loss.closs._test_cy_gradient(
+        y_true=y_true,
+        raw_prediction=raw_prediction,  # needs to be C-contiguous
+        sample_weight=sample_weight,
+    )
+    grad2 = loss.gradient(
+        y_true=y_true,
+        raw_prediction=raw_prediction,
+        sample_weight=sample_weight,
+    )
+    assert_allclose(grad1, grad2)
 
 
 def test_binomial_and_multinomial_loss(global_random_seed):

@@ -1,8 +1,7 @@
 """Kernel Principal Components Analysis."""
 
-# Author: Mathieu Blondel <mathieu@mblondel.org>
-#         Sylvain Marie <sylvain.marie@schneider-electric.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Integral, Real
 
@@ -30,10 +29,10 @@ from ..utils.validation import (
 
 
 class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
-    """Kernel Principal component analysis (KPCA) [1]_.
+    """Kernel Principal component analysis (KPCA).
 
-    Non-linear dimensionality reduction through the use of kernels (see
-    :ref:`metrics`).
+    Non-linear dimensionality reduction through the use of kernels [1]_, see also
+    :ref:`metrics`.
 
     It uses the :func:`scipy.linalg.eigh` LAPACK implementation of the full SVD
     or the :func:`scipy.sparse.linalg.eigsh` ARPACK implementation of the
@@ -41,8 +40,12 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
     components to extract. It can also use a randomized truncated SVD by the
     method proposed in [3]_, see `eigen_solver`.
 
-    For a usage example, see
+    For a usage example and comparison between
+    Principal Components Analysis (PCA) and its kernelized version (KPCA), see
     :ref:`sphx_glr_auto_examples_decomposition_plot_kernel_pca.py`.
+
+    For a usage example in denoising images using KPCA, see
+    :ref:`sphx_glr_auto_examples_applications_plot_digits_denoising.py`.
 
     Read more in the :ref:`User Guide <kernel_PCA>`.
 
@@ -321,10 +324,10 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
             X, Y, metric=self.kernel, filter_params=True, n_jobs=self.n_jobs, **params
         )
 
-    def _fit_transform(self, K):
+    def _fit_transform_in_place(self, K):
         """Fit's using kernel K"""
-        # center kernel
-        K = self._centerer.fit_transform(K)
+        # center kernel in place
+        K = self._centerer.fit(K).transform(K, copy=False)
 
         # adjust n_components according to user inputs
         if self.n_components is None:
@@ -366,9 +369,7 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         )
 
         # flip eigenvectors' sign to enforce deterministic output
-        self.eigenvectors_, _ = svd_flip(
-            self.eigenvectors_, np.zeros_like(self.eigenvectors_).T
-        )
+        self.eigenvectors_, _ = svd_flip(u=self.eigenvectors_, v=None)
 
         # sort eigenvectors in descending order
         indices = self.eigenvalues_.argsort()[::-1]
@@ -437,7 +438,9 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         self.gamma_ = 1 / X.shape[1] if self.gamma is None else self.gamma
         self._centerer = KernelCenterer().set_output(transform="default")
         K = self._get_kernel(X)
-        self._fit_transform(K)
+        # When kernel="precomputed", K is X but it's safe to perform in place operations
+        # on K because a copy was made before if requested by copy_X.
+        self._fit_transform_in_place(K)
 
         if self.fit_inverse_transform:
             # no need to use the kernel to transform X, use shortcut expression

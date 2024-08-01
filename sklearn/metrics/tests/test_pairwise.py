@@ -2,6 +2,7 @@ import warnings
 from types import GeneratorType
 
 import numpy as np
+import pytest
 from numpy import linalg
 from scipy.sparse import issparse
 from scipy.spatial.distance import (
@@ -12,15 +13,6 @@ from scipy.spatial.distance import (
     pdist,
     squareform,
 )
-
-try:
-    from scipy.spatial.distance import wminkowski
-except ImportError:
-    # In scipy 1.6.0, wminkowski is deprecated and minkowski
-    # should be used instead.
-    from scipy.spatial.distance import minkowski as wminkowski
-
-import pytest
 
 from sklearn import config_context
 from sklearn.exceptions import DataConversionWarning
@@ -68,8 +60,6 @@ from sklearn.utils.fixes import (
     CSC_CONTAINERS,
     CSR_CONTAINERS,
     DOK_CONTAINERS,
-    parse_version,
-    sp_version,
 )
 from sklearn.utils.parallel import Parallel, delayed
 
@@ -299,7 +289,6 @@ def test_pairwise_precomputed_non_negative():
 
 
 _minkowski_kwds = {"w": np.arange(1, 5).astype("double", copy=False), "p": 1}
-_wminkowski_kwds = {"w": np.arange(1, 5).astype("double", copy=False), "p": 1}
 
 
 def callable_rbf_kernel(x, y, **kwds):
@@ -313,33 +302,15 @@ def callable_rbf_kernel(x, y, **kwds):
     "func, metric, kwds",
     [
         (pairwise_distances, "euclidean", {}),
-        pytest.param(
+        (
             pairwise_distances,
             minkowski,
             _minkowski_kwds,
         ),
-        pytest.param(
+        (
             pairwise_distances,
             "minkowski",
             _minkowski_kwds,
-        ),
-        pytest.param(
-            pairwise_distances,
-            wminkowski,
-            _wminkowski_kwds,
-            marks=pytest.mark.skipif(
-                sp_version >= parse_version("1.6.0"),
-                reason="wminkowski is now minkowski and it has been already tested.",
-            ),
-        ),
-        pytest.param(
-            pairwise_distances,
-            "wminkowski",
-            _wminkowski_kwds,
-            marks=pytest.mark.skipif(
-                sp_version >= parse_version("1.6.0"),
-                reason="wminkowski is now minkowski and it has been already tested.",
-            ),
         ),
         (pairwise_kernels, "polynomial", {"degree": 1}),
         (pairwise_kernels, callable_rbf_kernel, {"gamma": 0.1}),
@@ -739,7 +710,7 @@ def test_parallel_pairwise_distances_diagonal(metric, global_dtype):
     assert_allclose(np.diag(distances), 0, atol=1e-10)
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings("ignore:Could not adhere to working_memory config")
 def test_pairwise_distances_chunked(global_dtype):
     # Test the pairwise_distance helper function.
     rng = np.random.RandomState(0)
@@ -1608,6 +1579,54 @@ def test_numeric_pairwise_distances_datatypes(metric, global_dtype, y_is_x):
     assert_allclose(dist, expected_dist)
 
 
+@pytest.mark.parametrize(
+    "X,Y,expected_distance",
+    [
+        (
+            ["a", "ab", "abc"],
+            None,
+            [[0.0, 1.0, 2.0], [1.0, 0.0, 1.0], [2.0, 1.0, 0.0]],
+        ),
+        (
+            ["a", "ab", "abc"],
+            ["a", "ab"],
+            [[0.0, 1.0], [1.0, 0.0], [2.0, 1.0]],
+        ),
+    ],
+)
+def test_pairwise_dist_custom_metric_for_string(X, Y, expected_distance):
+    """Check pairwise_distances with lists of strings as input."""
+
+    def dummy_string_similarity(x, y):
+        return np.abs(len(x) - len(y))
+
+    actual_distance = pairwise_distances(X=X, Y=Y, metric=dummy_string_similarity)
+    assert_allclose(actual_distance, expected_distance)
+
+
+def test_pairwise_dist_custom_metric_for_bool():
+    """Check that pairwise_distances does not convert boolean input to float
+    when using a custom metric.
+    """
+
+    def dummy_bool_dist(v1, v2):
+        # dummy distance func using `&` and thus relying on the input data being boolean
+        return 1 - (v1 & v2).sum() / (v1 | v2).sum()
+
+    X = np.array([[1, 0, 0, 0], [1, 0, 1, 0], [1, 1, 1, 1]], dtype=bool)
+
+    expected_distance = np.array(
+        [
+            [0.0, 0.5, 0.75],
+            [0.5, 0.0, 0.5],
+            [0.75, 0.5, 0.0],
+        ]
+    )
+
+    actual_distance = pairwise_distances(X=X, metric=dummy_bool_dist)
+    assert_allclose(actual_distance, expected_distance)
+
+
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_sparse_manhattan_readonly_dataset(csr_container):
     # Non-regression test for: https://github.com/scikit-learn/scikit-learn/issues/7981
@@ -1618,3 +1637,17 @@ def test_sparse_manhattan_readonly_dataset(csr_container):
     Parallel(n_jobs=2, max_nbytes=0)(
         delayed(manhattan_distances)(m1, m2) for m1, m2 in zip(matrices1, matrices2)
     )
+
+
+# TODO(1.8): remove
+def test_force_all_finite_rename_warning():
+    X = np.random.uniform(size=(10, 10))
+    Y = np.random.uniform(size=(10, 10))
+
+    msg = "'force_all_finite' was renamed to 'ensure_all_finite'"
+
+    with pytest.warns(FutureWarning, match=msg):
+        check_pairwise_arrays(X, Y, force_all_finite=True)
+
+    with pytest.warns(FutureWarning, match=msg):
+        pairwise_distances(X, Y, force_all_finite=True)

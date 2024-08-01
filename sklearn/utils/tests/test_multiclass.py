@@ -10,6 +10,7 @@ from sklearn.svm import SVC
 from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
 from sklearn.utils._testing import (
     _array_api_for_tests,
+    _convert_container,
     assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
@@ -412,7 +413,6 @@ def test_check_classification_targets():
                 check_classification_targets(example)
 
 
-# @ignore_warnings
 def test_type_of_target():
     for group, group_examples in EXAMPLES.items():
         for example in group_examples:
@@ -595,3 +595,18 @@ def test_ovr_decision_function():
     ]
 
     assert_allclose(dec_values, dec_values_one, atol=1e-6)
+
+
+# TODO(1.7): Change to ValueError when byte labels is deprecated.
+@pytest.mark.parametrize("input_type", ["list", "array"])
+def test_labels_in_bytes_format(input_type):
+    # check that we raise an error with bytes encoded labels
+    # non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/16980
+    target = _convert_container([b"a", b"b"], input_type)
+    err_msg = (
+        "Support for labels represented as bytes is deprecated in v1.5 and will"
+        " error in v1.7. Convert the labels to a string or integer format."
+    )
+    with pytest.warns(FutureWarning, match=err_msg):
+        type_of_target(target)

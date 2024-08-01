@@ -5,8 +5,8 @@ Plot classification probability
 
 Plot the classification probability for different classifiers. We use a 3 class
 dataset, and we classify it with a Support Vector classifier, L1 and L2
-penalized logistic regression with either a One-Vs-Rest or multinomial setting,
-and Gaussian process classification.
+penalized logistic regression (multinomial multiclass), a One-Vs-Rest version with
+logistic regression, and Gaussian process classification.
 
 Linear SVC is not a probabilistic classifier by default but it has a built-in
 calibration option enabled in this example (`probability=True`).
@@ -17,8 +17,8 @@ other estimators.
 
 """
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -30,6 +30,7 @@ from sklearn.gaussian_process.kernels import RBF
 from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
+from sklearn.multiclass import OneVsRestClassifier
 from sklearn.svm import SVC
 
 iris = datasets.load_iris()
@@ -43,14 +44,12 @@ kernel = 1.0 * RBF([1.0, 1.0])  # for GPC
 
 # Create different classifiers.
 classifiers = {
-    "L1 logistic": LogisticRegression(
-        C=C, penalty="l1", solver="saga", multi_class="multinomial", max_iter=10000
-    ),
+    "L1 logistic": LogisticRegression(C=C, penalty="l1", solver="saga", max_iter=10000),
     "L2 logistic (Multinomial)": LogisticRegression(
-        C=C, penalty="l2", solver="saga", multi_class="multinomial", max_iter=10000
+        C=C, penalty="l2", solver="saga", max_iter=10000
     ),
-    "L2 logistic (OvR)": LogisticRegression(
-        C=C, penalty="l2", solver="saga", multi_class="ovr", max_iter=10000
+    "L2 logistic (OvR)": OneVsRestClassifier(
+        LogisticRegression(C=C, penalty="l2", solver="saga", max_iter=10000)
     ),
     "Linear SVC": SVC(kernel="linear", C=C, probability=True, random_state=0),
     "GPC": GaussianProcessClassifier(kernel),

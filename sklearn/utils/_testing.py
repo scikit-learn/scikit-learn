@@ -1,15 +1,8 @@
 """Testing utilities."""
 
-# Copyright (c) 2011, 2012
-# Authors: Pietro Berkes,
-#          Andreas Muller
-#          Mathieu Blondel
-#          Olivier Grisel
-#          Arnaud Joly
-#          Denis Engemann
-#          Giorgio Patrini
-#          Thierry Guillemot
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import atexit
 import contextlib
 import functools
@@ -31,7 +24,6 @@ from functools import wraps
 from inspect import signature
 from itertools import chain, groupby
 from subprocess import STDOUT, CalledProcessError, TimeoutExpired, check_output
-from unittest import TestCase
 
 import joblib
 import numpy as np
@@ -39,17 +31,15 @@ import scipy as sp
 from numpy.testing import assert_allclose as np_assert_allclose
 from numpy.testing import (
     assert_almost_equal,
-    assert_approx_equal,
     assert_array_almost_equal,
     assert_array_equal,
     assert_array_less,
-    assert_no_warnings,
 )
 
 import sklearn
-from sklearn.utils import _IS_32BIT, IS_PYPY
 from sklearn.utils._array_api import _check_array_api_dispatch
 from sklearn.utils.fixes import (
+    _IS_32BIT,
     VisibleDeprecationWarning,
     _in_unstable_openblas_configuration,
     parse_version,
@@ -63,29 +53,16 @@ from sklearn.utils.validation import (
 )
 
 __all__ = [
-    "assert_raises",
-    "assert_raises_regexp",
     "assert_array_equal",
     "assert_almost_equal",
     "assert_array_almost_equal",
     "assert_array_less",
-    "assert_approx_equal",
     "assert_allclose",
     "assert_run_python_script_without_output",
-    "assert_no_warnings",
     "SkipTest",
 ]
 
-_dummy = TestCase("__init__")
-assert_raises = _dummy.assertRaises
 SkipTest = unittest.case.SkipTest
-assert_dict_equal = _dummy.assertDictEqual
-
-assert_raises_regex = _dummy.assertRaisesRegex
-# assert_raises_regexp is deprecated in Python 3.4 in favor of
-# assert_raises_regex but lets keep the backward compat in scikit-learn with
-# the old name for now
-assert_raises_regexp = assert_raises_regex
 
 
 def ignore_warnings(obj=None, category=Warning):
@@ -187,48 +164,6 @@ class _IgnoreWarnings:
         self._module.filters = self._filters
         self._module.showwarning = self._showwarning
         self.log[:] = []
-
-
-def assert_raise_message(exceptions, message, function, *args, **kwargs):
-    """Helper function to test the message raised in an exception.
-
-    Given an exception, a callable to raise the exception, and
-    a message string, tests that the correct exception is raised and
-    that the message is a substring of the error thrown. Used to test
-    that the specific message thrown during an exception is correct.
-
-    Parameters
-    ----------
-    exceptions : exception or tuple of exception
-        An Exception object.
-
-    message : str
-        The error message or a substring of the error message.
-
-    function : callable
-        Callable object to raise error.
-
-    *args : the positional arguments to `function`.
-
-    **kwargs : the keyword arguments to `function`.
-    """
-    try:
-        function(*args, **kwargs)
-    except exceptions as e:
-        error_message = str(e)
-        if message not in error_message:
-            raise AssertionError(
-                "Error message does not include the expected"
-                " string: %r. Observed error message: %r" % (message, error_message)
-            )
-    else:
-        # concatenate exception names
-        if isinstance(exceptions, tuple):
-            names = " or ".join(e.__name__ for e in exceptions)
-        else:
-            names = exceptions.__name__
-
-        raise AssertionError("%s not raised by %s" % (names, function.__name__))
 
 
 def assert_allclose(
@@ -383,7 +318,6 @@ try:
     import pytest
 
     skip_if_32bit = pytest.mark.skipif(_IS_32BIT, reason="skipped on 32bit platforms")
-    fails_if_pypy = pytest.mark.xfail(IS_PYPY, reason="not compatible with PyPy")
     fails_if_unstable_openblas = pytest.mark.xfail(
         _in_unstable_openblas_configuration(),
         reason="OpenBLAS is unstable for this configuration",

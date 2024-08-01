@@ -1,7 +1,7 @@
-"""
-The :mod:`sklearn.utils.estimator_checks` module includes various utilities to
-check the compatibility of estimators with the scikit-learn API.
-"""
+"""Various utilities to check the compatibility of estimators with scikit-learn API."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import pickle
 import re
@@ -9,7 +9,7 @@ import warnings
 from contextlib import nullcontext
 from copy import deepcopy
 from functools import partial, wraps
-from inspect import signature
+from inspect import isfunction, signature
 from numbers import Integral, Real
 
 import joblib
@@ -62,9 +62,7 @@ from ..utils._param_validation import (
     generate_invalid_param_val,
     make_constraint,
 )
-from ..utils.fixes import SPARSE_ARRAY_PRESENT, parse_version, sp_version
-from ..utils.validation import check_is_fitted
-from . import IS_PYPY, shuffle
+from . import shuffle
 from ._missing import is_scalar_nan
 from ._param_validation import Interval
 from ._tags import (
@@ -80,13 +78,13 @@ from ._testing import (
     assert_array_almost_equal,
     assert_array_equal,
     assert_array_less,
-    assert_raise_message,
     create_memmap_backed_data,
     ignore_warnings,
     raises,
     set_random_state,
 )
-from .validation import _num_samples, has_fit_parameter
+from .fixes import SPARSE_ARRAY_PRESENT
+from .validation import _num_samples, check_is_fitted, has_fit_parameter
 
 REGRESSION_DATASET = None
 CROSS_DECOMPOSITION = ["PLSCanonical", "PLSRegression", "CCA", "PLSSVD"]
@@ -406,13 +404,11 @@ def _get_check_estimator_ids(obj):
     --------
     check_estimator
     """
-    if callable(obj):
-        if not isinstance(obj, partial):
-            return obj.__name__
-
+    if isfunction(obj):
+        return obj.__name__
+    if isinstance(obj, partial):
         if not obj.keywords:
             return obj.func.__name__
-
         kwstring = ",".join(["{}={}".format(k, v) for k, v in obj.keywords.items()])
         return "{}({})".format(obj.func.__name__, kwstring)
     if hasattr(obj, "get_params"):
@@ -782,11 +778,6 @@ def _set_checking_parameters(estimator):
     if name == "OneHotEncoder":
         estimator.set_params(handle_unknown="ignore")
 
-    if name == "QuantileRegressor":
-        # Avoid warning due to Scipy deprecating interior-point solver
-        solver = "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
-        estimator.set_params(solver=solver)
-
     if name in CROSS_DECOMPOSITION:
         estimator.set_params(n_components=1)
 
@@ -811,7 +802,7 @@ class _NotAnArray:
     def __init__(self, data):
         self.data = np.asarray(data)
 
-    def __array__(self, dtype=None):
+    def __array__(self, dtype=None, copy=None):
         return self.data
 
     def __array_function__(self, func, types, args, kwargs):
@@ -1034,9 +1025,9 @@ def check_array_api_input_and_values(
 def _check_estimator_sparse_container(name, estimator_orig, sparse_type):
     rng = np.random.RandomState(0)
     X = rng.uniform(size=(40, 3))
-    X[X < 0.8] = 0
+    X[X < 0.6] = 0
     X = _enforce_estimator_tags_X(estimator_orig, X)
-    y = (4 * rng.uniform(size=40)).astype(int)
+    y = (4 * rng.uniform(size=X.shape[0])).astype(np.int32)
     # catch deprecation warnings
     with ignore_warnings(category=FutureWarning):
         estimator = clone(estimator_orig)
@@ -1461,8 +1452,7 @@ def check_dont_overwrite_parameters(name, estimator_orig):
         " the fit method."
         " Estimators are only allowed to add private attributes"
         " either started with _ or ended"
-        " with _ but %s added"
-        % ", ".join(attrs_added_by_fit)
+        " with _ but %s added" % ", ".join(attrs_added_by_fit)
     )
 
     # check that fit doesn't change any public attribute
@@ -1477,8 +1467,7 @@ def check_dont_overwrite_parameters(name, estimator_orig):
         " the fit method. Estimators are only allowed"
         " to change attributes started"
         " or ended with _, but"
-        " %s changed"
-        % ", ".join(attrs_changed_by_fit)
+        " %s changed" % ", ".join(attrs_changed_by_fit)
     )
 
 
@@ -1502,9 +1491,8 @@ def check_fit2d_predict1d(name, estimator_orig):
 
     for method in ["predict", "transform", "decision_function", "predict_proba"]:
         if hasattr(estimator, method):
-            assert_raise_message(
-                ValueError, "Reshape your data", getattr(estimator, method), X[0]
-            )
+            with raises(ValueError, match="Reshape your data"):
+                getattr(estimator, method)(X[0])
 
 
 def _apply_on_subsets(func, X):
@@ -2927,8 +2915,7 @@ def check_supervised_y_2d(name, estimator_orig):
         assert len(w) > 0, msg
         assert (
             "DataConversionWarning('A column-vector y"
-            " was passed when a 1d array was expected"
-            in msg
+            " was passed when a 1d array was expected" in msg
         )
     assert_allclose(y_pred.ravel(), y_pred_2d.ravel())
 
@@ -3296,11 +3283,6 @@ def check_no_attributes_set_in_init(name, estimator_orig):
         return
 
     init_params = _get_args(type(estimator).__init__)
-    if IS_PYPY:
-        # __init__ signature has additional objects in PyPy
-        for key in ["obj"]:
-            if key in init_params:
-                init_params.remove(key)
     parents_init_params = [
         param
         for params_parent in (_get_args(parent) for parent in type(estimator).__mro__)
@@ -4003,8 +3985,8 @@ def check_n_features_in_after_fitting(name, estimator_orig):
     if "warm_start" in estimator.get_params():
         estimator.set_params(warm_start=False)
 
-    n_samples = 150
-    X = rng.normal(size=(n_samples, 8))
+    n_samples = 10
+    X = rng.normal(size=(n_samples, 4))
     X = _enforce_estimator_tags_X(estimator, X)
 
     if is_regressor(estimator):
@@ -4736,3 +4718,49 @@ def check_set_output_transform_polars(name, transformer_orig):
 
 def check_global_set_output_transform_polars(name, transformer_orig):
     _check_set_output_transform_polars_context(name, transformer_orig, "global")
+
+
+@ignore_warnings(category=FutureWarning)
+def check_inplace_ensure_writeable(name, estimator_orig):
+    """Check that estimators able to do inplace operations can work on read-only
+    input data even if a copy is not explicitly requested by the user.
+
+    Make sure that a copy is made and consequently that the input array and its
+    writeability are not modified by the estimator.
+    """
+    rng = np.random.RandomState(0)
+
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+
+    n_samples = 100
+
+    X, _ = make_blobs(n_samples=n_samples, n_features=3, random_state=rng)
+    X = _enforce_estimator_tags_X(estimator, X)
+
+    # These estimators can only work inplace with fortran ordered input
+    if name in ("Lasso", "ElasticNet", "MultiTaskElasticNet", "MultiTaskLasso"):
+        X = np.asfortranarray(X)
+
+    # Add a missing value for imputers so that transform has to do something
+    if hasattr(estimator, "missing_values"):
+        X[0, 0] = np.nan
+
+    if is_regressor(estimator):
+        y = rng.normal(size=n_samples)
+    else:
+        y = rng.randint(low=0, high=2, size=n_samples)
+    y = _enforce_estimator_tags_y(estimator, y)
+
+    X_copy = X.copy()
+
+    # Make X read-only
+    X.setflags(write=False)
+
+    estimator.fit(X, y)
+
+    if hasattr(estimator, "transform"):
+        estimator.transform(X)
+
+    assert not X.flags.writeable
+    assert_allclose(X, X_copy)
