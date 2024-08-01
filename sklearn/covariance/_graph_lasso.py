@@ -390,6 +390,9 @@ class BaseGraphicalLasso(EmpiricalCovariance):
 
 class GraphicalLasso(BaseGraphicalLasso):
     """Sparse inverse covariance estimation with an l1-penalized estimator.
+    
+    For a usage example see
+    :ref:`sphx_glr_auto_examples_applications_plot_stock_market.py`
 
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
 
@@ -482,9 +485,7 @@ class GraphicalLasso(BaseGraphicalLasso):
     GraphicalLassoCV : Sparse inverse covariance with
         cross-validated choice of the l1 penalty.
 
-    For a usage example see
-    :ref:`sphx_glr_auto_examples_applications_plot_stock_market.py`
-
+    
     Examples
     --------
     >>> import numpy as np
