@@ -13,6 +13,7 @@
 # use these consistently throughout the codebase.
 # NOTE: Extend this list as needed when converting more cython extensions.
 ctypedef unsigned char uint8_t
+ctypedef unsigned short uint16_t
 ctypedef unsigned int uint32_t
 ctypedef unsigned long long uint64_t
 # Note: In NumPy 2, indexing always happens with npy_intp which is an alias for

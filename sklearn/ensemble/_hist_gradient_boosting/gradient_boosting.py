@@ -327,7 +327,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         unique values in the considered feature column, after removing missing
         values.
 
-        If ``n_categories > self.max_bins`` for any feature, a ``ValueError``
+        If ``n_categories > 65536 - 1`` for any feature, a ``ValueError``
         is raised.
         """
         encoder = self._preprocessor.named_transformers_["encoder"]
@@ -343,16 +343,17 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             # already added by the _BinMapper.
             if len(categories) and is_scalar_nan(categories[-1]):
                 categories = categories[:-1]
-            if categories.size > self.max_bins:
+            if categories.size >= 65536:
                 try:
                     feature_name = repr(encoder.feature_names_in_[feature_idx])
                 except AttributeError:
                     feature_name = f"at index {feature_idx}"
                 raise ValueError(
                     f"Categorical feature {feature_name} is expected to "
-                    f"have a cardinality <= {self.max_bins} but actually "
+                    f"have a cardinality <= {65536 - 1} but actually "
                     f"has a cardinality of {categories.size}."
                 )
+            # TODO: Decide if dtype=uint16 would be a better fit.
             known_categories[feature_idx] = np.arange(len(categories), dtype=X_DTYPE)
         return known_categories
 
@@ -691,11 +692,19 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             X_binned_val = None
 
         # Uses binned data to check for missing values
-        has_missing_values = (
-            (X_binned_train == self._bin_mapper.missing_values_bin_idx_)
-            .any(axis=0)
-            .astype(np.uint8)
-        )
+        # Note that the missing bin index is always the last bin, i.e. the value of
+        # n_bins_non_missing.
+        # has_missing_values = (
+        #     (X_binned_train == self._bin_mapper.n_bins_non_missing_)
+        #     .any(axis=0)
+        #     .astype(np.uint8)
+        # )
+        # More memory-efficient version:
+        has_missing_values = np.empty(self._n_features, dtype=np.uint8)
+        for j in range(self._n_features):
+            has_missing_values[j] = np.any(
+                X_binned_train[:, j] == self._bin_mapper.n_bins_non_missing_[j]
+            )
 
         if self.verbose:
             print("Fitting gradient boosted rounds:")
@@ -952,7 +961,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     for k, pred in enumerate(self._predictors[-1]):
                         raw_predictions_val[:, k] += pred.predict_binned(
                             X_binned_val,
-                            self._bin_mapper.missing_values_bin_idx_,
+                            self._bin_mapper.n_bins_non_missing_,
                             n_threads,
                         )
 
@@ -1199,9 +1208,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             )
         tic = time()
         if is_training_data:
-            X_binned = self._bin_mapper.fit_transform(X)  # F-aligned array
+            X_binned = self._bin_mapper.fit_transform(X)  # F-aligned BinnedData
         else:
-            X_binned = self._bin_mapper.transform(X)  # F-aligned array
+            X_binned = self._bin_mapper.transform(X)  # F-aligned BinnedData
             # We convert the array to C-contiguous since predicting is faster
             # with this layout (training is faster on F-arrays though)
             X_binned = np.ascontiguousarray(X_binned)
@@ -1298,24 +1307,20 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
     def _predict_iterations(self, X, predictors, raw_predictions, is_binned, n_threads):
         """Add the predictions of the predictors to raw_predictions."""
         if not is_binned:
-            (
-                known_cat_bitsets,
-                f_idx_map,
-            ) = self._bin_mapper.make_known_categories_bitsets()
+            known_cat_bitsets = self._bin_mapper.make_known_categories_bitsets()
 
         for predictors_of_ith_iteration in predictors:
             for k, predictor in enumerate(predictors_of_ith_iteration):
                 if is_binned:
                     predict = partial(
                         predictor.predict_binned,
-                        missing_values_bin_idx=self._bin_mapper.missing_values_bin_idx_,
+                        n_bins_non_missing=self._bin_mapper.n_bins_non_missing_,
                         n_threads=n_threads,
                     )
                 else:
                     predict = partial(
                         predictor.predict,
                         known_cat_bitsets=known_cat_bitsets,
-                        f_idx_map=f_idx_map,
                         n_threads=n_threads,
                     )
                 raw_predictions[:, k] += predict(X)

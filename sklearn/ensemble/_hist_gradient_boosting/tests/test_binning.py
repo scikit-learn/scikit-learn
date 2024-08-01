@@ -9,8 +9,8 @@ from sklearn.ensemble._hist_gradient_boosting.binning import (
 )
 from sklearn.ensemble._hist_gradient_boosting.common import (
     ALMOST_INF,
-    X_BINNED_DTYPE,
     X_DTYPE,
+    BinnedData,
 )
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 
@@ -91,18 +91,25 @@ def test_bin_mapper_n_features_transform():
         mapper.transform(np.repeat(DATA, 2, axis=1))
 
 
-@pytest.mark.parametrize("max_bins", [16, 128, 255])
+@pytest.mark.parametrize("max_bins", [16 - 1, 128 - 1, 256 - 1])
 def test_map_to_bins(max_bins):
     bin_thresholds = [
         _find_binning_thresholds(DATA[:, i], max_bins=max_bins) for i in range(2)
     ]
-    binned = np.zeros_like(DATA, dtype=X_BINNED_DTYPE, order="F")
+    # binned = np.zeros_like(DATA, dtype=X_BINNED_DTYPE, order="F")
+    binned = BinnedData(
+        n_samples=DATA.shape[0], n_bins=np.full(DATA.shape[1], max_bins)
+    )
     is_categorical = np.zeros(2, dtype=np.uint8)
-    last_bin_idx = max_bins
-    _map_to_bins(DATA, bin_thresholds, is_categorical, last_bin_idx, n_threads, binned)
+    n_bins_non_missing = np.array([max_bins] * 2, dtype=np.uint16)
+    _map_to_bins(
+        DATA, n_bins_non_missing, bin_thresholds, is_categorical, n_threads, binned
+    )
     assert binned.shape == DATA.shape
-    assert binned.dtype == np.uint8
-    assert binned.flags.f_contiguous
+    assert binned.X8.dtype == np.uint8
+    assert binned.X16.dtype == np.uint16
+    assert binned.X8.flags.f_contiguous
+    assert binned.X16.flags.f_contiguous
 
     min_indices = DATA.argmin(axis=0)
     max_indices = DATA.argmax(axis=0)
@@ -126,9 +133,10 @@ def test_bin_mapper_random_data(max_bins):
     binned = mapper.transform(DATA)
 
     assert binned.shape == (n_samples, n_features)
-    assert binned.dtype == np.uint8
-    assert_array_equal(binned.min(axis=0), np.array([0, 0]))
-    assert_array_equal(binned.max(axis=0), np.array([max_bins - 1, max_bins - 1]))
+    assert binned.X8.dtype == np.uint8
+    assert binned.X16.dtype == np.uint16
+    assert_array_equal(np.min(binned, axis=0), np.array([0, 0]))
+    assert_array_equal(np.max(binned, axis=0), np.array([max_bins - 1, max_bins - 1]))
     assert len(mapper.bin_thresholds_) == n_features
     for bin_thresholds_feature in mapper.bin_thresholds_:
         assert bin_thresholds_feature.shape == (max_bins - 1,)
@@ -153,8 +161,11 @@ def test_bin_mapper_small_random_data(n_samples, max_bins):
     binned = mapper.fit_transform(data)
 
     assert binned.shape == data.shape
-    assert binned.dtype == np.uint8
-    assert_array_equal(binned.ravel()[np.argsort(data.ravel())], np.arange(n_samples))
+    assert binned.X8.dtype == np.uint8
+    assert binned.X16.dtype == np.uint16
+    assert_array_equal(
+        np.asarray(binned).ravel()[np.argsort(data.ravel())], np.arange(n_samples)
+    )
 
 
 @pytest.mark.parametrize(
@@ -269,10 +280,10 @@ def test_subsample():
             256,
             [4, 2, 2],
             [
-                [0, 0, 0],  # 255 <=> missing value
-                [255, 255, 0],
+                [0, 0, 0],  # 4, 2, 2 are also the missing bin values per feature
+                [4, 2, 0],
                 [1, 0, 0],
-                [255, 1, 1],
+                [4, 1, 1],
                 [2, 1, 1],
                 [3, 0, 0],
             ],
@@ -317,8 +328,6 @@ def test_missing_values_support(n_bins, n_bins_non_missing, X_trans_expected):
             == n_bins_non_missing[feature_idx] - 1
         )
 
-    assert mapper.missing_values_bin_idx_ == n_bins - 1
-
     X_trans = mapper.transform(X)
     assert_array_equal(X_trans, X_trans_expected)
 
@@ -357,16 +366,36 @@ def test_categorical_feature(n_bins):
     assert_array_equal(bin_mapper.bin_thresholds_[0], [0, 1, 4, 7, 10, 13])
 
     X = np.array([[0, 1, 4, np.nan, 7, 10, 13]], dtype=X_DTYPE).T
-    expected_trans = np.array([[0, 1, 2, n_bins - 1, 3, 4, 5]]).T
+    missing = 6  # = bin_mapper.n_bins_non_missing_
+    expected_trans = np.array([[0, 1, 2, missing, 3, 4, 5]]).T
     assert_array_equal(bin_mapper.transform(X), expected_trans)
 
     # Negative categories are mapped to the missing values' bin
-    # (i.e. the bin of index `missing_values_bin_idx_ == n_bins - 1).
+    # (i.e. the bin of index `missing_values_bin_idx = bin_mapper.n_bins_non_missing_).
     # Unknown positive categories does not happen in practice and tested
     # for illustration purpose.
     X = np.array([[-4, -1, 100]], dtype=X_DTYPE).T
-    expected_trans = np.array([[n_bins - 1, n_bins - 1, 6]]).T
+    expected_trans = np.array([[missing, missing, 6]]).T
     assert_array_equal(bin_mapper.transform(X), expected_trans)
+
+
+def test_high_cardinality_categorical_feature():
+    n_cat_small = 256 - 1
+    n_cat_large = 65536 - 1
+    n_samples = 2 * n_cat_large
+    shift = 100
+    X = np.empty((n_samples, 2))
+    X[:, 0] = np.arange(n_samples, dtype=X_DTYPE) % n_cat_small + shift
+    X[:, 1] = np.arange(n_samples, dtype=X_DTYPE) % n_cat_large + shift
+    known_categories = [np.unique(X[:, 0]), np.unique(X[:, 1])]
+    bin_mapper = _BinMapper(
+        n_bins=256,  # no impact on categoricals
+        is_categorical=np.array([True, True]),
+        known_categories=known_categories,
+    ).fit(X)
+    assert_array_equal(bin_mapper.n_bins_non_missing_, [n_cat_small, n_cat_large])
+    assert_array_equal(bin_mapper.bin_thresholds_[0], np.arange(n_cat_small) + shift)
+    assert_array_equal(bin_mapper.bin_thresholds_[1], np.arange(n_cat_large) + shift)
 
 
 def test_categorical_feature_negative_missing():
@@ -385,9 +414,9 @@ def test_categorical_feature_negative_missing():
     X = np.array([[-1, 1, 3, 5, np.nan]], dtype=X_DTYPE).T
 
     # Negative values for categorical features are considered as missing values.
-    # They are mapped to the bin of index `bin_mapper.missing_values_bin_idx_`,
-    # which is 3 here.
-    assert bin_mapper.missing_values_bin_idx_ == 3
+    # They are mapped to the bin of index
+    # `missing_values_bin_idx = bin_mapper.n_bins_non_missing_`,
+    # which is n_bins - 1 = 3 here, see assertion above
     expected_trans = np.array([[3, 0, 1, 2, 3]]).T
     assert_array_equal(bin_mapper.transform(X), expected_trans)
 
@@ -441,29 +470,29 @@ def test_make_known_categories_bitsets():
     )
     bin_mapper.fit(X)
 
-    known_cat_bitsets, f_idx_map = bin_mapper.make_known_categories_bitsets()
+    known_cat_bitsets = bin_mapper.make_known_categories_bitsets()
 
-    # Note that for non-categorical features, values are left to 0
-    expected_f_idx_map = np.array([0, 0, 1], dtype=np.uint8)
-    assert_allclose(expected_f_idx_map, f_idx_map)
+    # Note that for non-categorical features, adjacent offsets have the same value.
+    # max(feature 1) = 240, with missing bit => ceil((240 + 1) / 32) = 8
+    # max(feature 2) = 180, with missing bit => ceil((180 + 1) / 32) = 6
+    expected_offset = np.array([0, 0, 8, 8 + 6])
+    assert_allclose(known_cat_bitsets.offsets, expected_offset)
 
-    expected_cat_bitset = np.zeros((2, 8), dtype=np.uint32)
+    expected_cat_bitset = np.zeros(8 + 6, dtype=np.uint32)
 
-    # first categorical feature: [2, 4, 10, 240]
-    f_idx = 1
-    mapped_f_idx = f_idx_map[f_idx]
-    expected_cat_bitset[mapped_f_idx, 0] = 2**2 + 2**4 + 2**10
-    # 240 = 32**7 + 16, therefore the 16th bit of the 7th array is 1.
-    expected_cat_bitset[mapped_f_idx, 7] = 2**16
+    # first categorical feature: [2, 4, 10, 240], f_idx = 1
+    offset = 0
+    expected_cat_bitset[offset] = 2**2 + 2**4 + 2**10
+    # 240 = 32 * 7 + 16, therefore the 16th bit of the 7th array is 1.
+    expected_cat_bitset[offset + 7] = 2**16
 
-    # second categorical feature [30, 70, 180]
-    f_idx = 2
-    mapped_f_idx = f_idx_map[f_idx]
-    expected_cat_bitset[mapped_f_idx, 0] = 2**30
-    expected_cat_bitset[mapped_f_idx, 2] = 2**6
-    expected_cat_bitset[mapped_f_idx, 5] = 2**20
+    # second categorical feature [30, 70, 180], f_idx = 2
+    offset = 8
+    expected_cat_bitset[offset + 0] = 2**30
+    expected_cat_bitset[offset + 2] = 2**6
+    expected_cat_bitset[offset + 5] = 2**20
 
-    assert_allclose(expected_cat_bitset, known_cat_bitsets)
+    assert_allclose(known_cat_bitsets.bitsets, expected_cat_bitset)
 
 
 @pytest.mark.parametrize(
@@ -474,6 +503,16 @@ def test_make_known_categories_bitsets():
             np.array([False]),
             np.array([1, 2, 3]),
             "isn't marked as a categorical feature, but categories were passed",
+        ),
+        (
+            np.array([True]),
+            [np.arange(4).reshape(2, 2).astype(X_DTYPE)],
+            "The array of known categories of feature 0 must be of shape",
+        ),
+        (
+            np.array([True]),
+            [np.arange(2**16).astype(X_DTYPE)],
+            "Only a maximum of 2\\*\\*16 - 1 = 65535 categorical levels are supported.",
         ),
     ],
 )

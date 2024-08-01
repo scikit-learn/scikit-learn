@@ -1,25 +1,32 @@
 # Author: Nicolas Hug
 
-from cython.parallel import prange
 from libc.math cimport isnan
-import numpy as np
 
-from ...utils._typedefs cimport intp_t
+from ...utils._typedefs cimport intp_t, uint8_t, uint16_t
+from ._bitset cimport in_bitset
+from .common cimport BinnedData
+from .common cimport Bitsets
 from .common cimport X_DTYPE_C
 from .common cimport Y_DTYPE_C
-from .common import Y_DTYPE
 from .common cimport X_BINNED_DTYPE_C
-from .common cimport BITSET_INNER_DTYPE_C
 from .common cimport node_struct
-from ._bitset cimport in_bitset_2d_memoryview
+
+import numpy as np
+from cython.parallel import prange
+from .common import Y_DTYPE
+
+
+ctypedef fused X_BINNED_PREDICT:
+    uint8_t[:, :]
+    uint16_t[:, :]
+    BinnedData
 
 
 def _predict_from_raw_data(  # raw data = non-binned data
         const node_struct [:] nodes,
         const X_DTYPE_C [:, :] numeric_data,
-        const BITSET_INNER_DTYPE_C [:, ::1] raw_left_cat_bitsets,
-        const BITSET_INNER_DTYPE_C [:, ::1] known_cat_bitsets,
-        const unsigned int [::1] f_idx_map,
+        Bitsets raw_left_cat_bitsets,
+        Bitsets known_cat_bitsets,
         int n_threads,
         Y_DTYPE_C [:] out):
 
@@ -31,15 +38,14 @@ def _predict_from_raw_data(  # raw data = non-binned data
         out[i] = _predict_one_from_raw_data(
             nodes, numeric_data, raw_left_cat_bitsets,
             known_cat_bitsets,
-            f_idx_map, i)
+            i)
 
 
 cdef inline Y_DTYPE_C _predict_one_from_raw_data(
         const node_struct [:] nodes,
         const X_DTYPE_C [:, :] numeric_data,
-        const BITSET_INNER_DTYPE_C [:, ::1] raw_left_cat_bitsets,
-        const BITSET_INNER_DTYPE_C [:, ::1] known_cat_bitsets,
-        const unsigned int [::1] f_idx_map,
+        Bitsets raw_left_cat_bitsets,
+        Bitsets known_cat_bitsets,
         const int row) noexcept nogil:
     # Need to pass the whole array and the row index, else prange won't work.
     # See issue Cython #2798
@@ -64,15 +70,15 @@ cdef inline Y_DTYPE_C _predict_one_from_raw_data(
             if data_val < 0:
                 # data_val is not in the accepted range, so it is treated as missing value
                 node_idx = node.left if node.missing_go_to_left else node.right
-            elif in_bitset_2d_memoryview(
-                    raw_left_cat_bitsets,
-                    <X_BINNED_DTYPE_C>data_val,
-                    node.bitset_idx):
+            elif in_bitset(
+                raw_left_cat_bitsets.at(node.bitset_idx),
+                <X_BINNED_DTYPE_C>data_val,
+            ):
                 node_idx = node.left
-            elif in_bitset_2d_memoryview(
-                    known_cat_bitsets,
-                    <X_BINNED_DTYPE_C>data_val,
-                    f_idx_map[node.feature_idx]):
+            elif in_bitset(
+                known_cat_bitsets.at(node.feature_idx),
+                <X_BINNED_DTYPE_C>data_val,
+            ):
                 node_idx = node.right
             else:
                 # Treat unknown categories as missing.
@@ -87,29 +93,45 @@ cdef inline Y_DTYPE_C _predict_one_from_raw_data(
 
 def _predict_from_binned_data(
         node_struct [:] nodes,
-        const X_BINNED_DTYPE_C [:, :] binned_data,
-        BITSET_INNER_DTYPE_C [:, :] binned_left_cat_bitsets,
-        const unsigned char missing_values_bin_idx,
+        X_BINNED_PREDICT binned_data,
+        Bitsets binned_left_cat_bitsets,
+        const uint16_t [::1] n_bins_non_missing,
         int n_threads,
         Y_DTYPE_C [:] out):
 
     cdef:
         int i
+        int n_samples = binned_data.shape[0]
 
-    for i in prange(binned_data.shape[0], schedule='static', nogil=True,
-                    num_threads=n_threads):
-        out[i] = _predict_one_from_binned_data(nodes,
-                                               binned_data,
-                                               binned_left_cat_bitsets, i,
-                                               missing_values_bin_idx)
+    if X_BINNED_PREDICT == BinnedData:
+        for i in prange(
+            n_samples, schedule='static', nogil=True, num_threads=n_threads
+        ):
+            out[i] = _predict_one_from_binned_data[BinnedData](
+                nodes, binned_data, binned_left_cat_bitsets, i, n_bins_non_missing
+            )
+    elif X_BINNED_PREDICT == uint8_t[:, :]:
+        for i in prange(
+            n_samples, schedule='static', nogil=True, num_threads=n_threads
+        ):
+            out[i] = _predict_one_from_binned_data[uint8_t[:, :]](
+                nodes, binned_data, binned_left_cat_bitsets, i, n_bins_non_missing
+            )
+    else:
+        for i in prange(
+            n_samples, schedule='static', nogil=True, num_threads=n_threads
+        ):
+            out[i] = _predict_one_from_binned_data[uint16_t[:, :]](
+                nodes, binned_data, binned_left_cat_bitsets, i, n_bins_non_missing
+            )
 
 
 cdef inline Y_DTYPE_C _predict_one_from_binned_data(
         node_struct [:] nodes,
-        const X_BINNED_DTYPE_C [:, :] binned_data,
-        const BITSET_INNER_DTYPE_C [:, :] binned_left_cat_bitsets,
+        X_BINNED_PREDICT X_binned,
+        Bitsets binned_left_cat_bitsets,
         const int row,
-        const unsigned char missing_values_bin_idx) noexcept nogil:
+        const uint16_t [::1] n_bins_non_missing) noexcept nogil:
     # Need to pass the whole array and the row index, else prange won't work.
     # See issue Cython #2798
 
@@ -117,12 +139,22 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
         node_struct node = nodes[0]
         unsigned int node_idx = 0
         X_BINNED_DTYPE_C data_val
+        uint16_t missing_values_bin_idx
+        int feature_idx
 
     while True:
         if node.is_leaf:
             return node.value
 
-        data_val = binned_data[row, node.feature_idx]
+        feature_idx = node.feature_idx
+        if X_BINNED_PREDICT == BinnedData:
+            if X_binned.feature_is_8bit_view[feature_idx]:
+                data_val = X_binned.get_item8(row, feature_idx)
+            else:
+                data_val = X_binned.get_item16(row, feature_idx)
+        else:
+            data_val = X_binned[row, feature_idx]
+        missing_values_bin_idx = n_bins_non_missing[feature_idx]
 
         if data_val == missing_values_bin_idx:
             if node.missing_go_to_left:
@@ -130,10 +162,10 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
             else:
                 node_idx = node.right
         elif node.is_categorical:
-            if in_bitset_2d_memoryview(
-                    binned_left_cat_bitsets,
-                    data_val,
-                    node.bitset_idx):
+            if in_bitset(
+                binned_left_cat_bitsets.at(node.bitset_idx),
+                data_val,
+            ):
                 node_idx = node.left
             else:
                 node_idx = node.right

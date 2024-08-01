@@ -4,10 +4,12 @@ from numpy.testing import assert_allclose, assert_array_equal
 
 from sklearn.ensemble._hist_gradient_boosting.common import (
     G_H_DTYPE,
-    HISTOGRAM_DTYPE,
     X_BINNED_DTYPE,
+    BinnedData,
+    Histograms,
 )
 from sklearn.ensemble._hist_gradient_boosting.histogram import (
+    HistogramBuilder,
     _build_histogram,
     _build_histogram_naive,
     _build_histogram_no_hessian,
@@ -15,6 +17,43 @@ from sklearn.ensemble._hist_gradient_boosting.histogram import (
     _build_histogram_root_no_hessian,
     _subtract_histograms,
 )
+
+
+@pytest.mark.parametrize("n_bins", (12, np.array([4, 8, 12], dtype=np.uint32)))
+def test_histogram_init_via_histogram_builder(n_bins):
+    """Test that histograms are initialized correctly."""
+    n_samples, n_features = 4, 3
+    # X_binned = [[ 0,  4,  8],
+    #             [ 1,  5,  9],
+    #             [ 2,  6, 10],
+    #             [ 3,  7, 11]]
+    X_binned = np.asfortranarray(
+        np.arange(n_samples * n_features).reshape((n_features, n_samples)).T,
+        dtype=X_BINNED_DTYPE,
+    )
+    X_binned = BinnedData.from_array(X_binned)
+    gradients = np.array(np.arange(n_samples) ** 2, dtype=G_H_DTYPE)
+    hessians = np.ones_like(gradients)
+    sample_indices = np.arange(n_samples, dtype=np.uint32)
+    builder = HistogramBuilder(
+        X_binned=X_binned,
+        n_bins=n_bins,
+        gradients=gradients,
+        hessians=hessians,
+        hessians_are_constant=False,
+        n_threads=1,
+    )
+    histograms = builder.compute_histograms_brute(sample_indices)
+    assert histograms.histograms.ndim == 1
+    if isinstance(n_bins, int):
+        assert histograms.histograms.shape[0] == n_bins * n_features
+        assert_array_equal(histograms.bin_offsets, [0, n_bins, 2 * n_bins, 3 * n_bins])
+    else:
+        assert histograms.histograms.shape[0] == np.sum(n_bins)
+        assert_array_equal(
+            histograms.bin_offsets,
+            [0, n_bins[0], n_bins[0] + n_bins[1], n_bins[0] + n_bins[1] + n_bins[2]],
+        )
 
 
 @pytest.mark.parametrize("build_func", [_build_histogram_naive, _build_histogram])
@@ -26,11 +65,11 @@ def test_build_histogram(build_func):
     ordered_hessians = np.array([1, 1, 2], dtype=G_H_DTYPE)
 
     sample_indices = np.array([0, 2, 3], dtype=np.uint32)
-    hist = np.zeros((1, 3), dtype=HISTOGRAM_DTYPE)
+    hist = Histograms(n_features=1, bin_offsets=3).fill_zeros()
     build_func(
         0, sample_indices, binned_feature, ordered_gradients, ordered_hessians, hist
     )
-    hist = hist[0]
+    hist = hist.histograms
     assert_array_equal(hist["count"], [2, 1, 0])
     assert_allclose(hist["sum_gradients"], [1, 3, 0])
     assert_allclose(hist["sum_hessians"], [2, 2, 0])
@@ -40,11 +79,11 @@ def test_build_histogram(build_func):
     ordered_gradients = np.array([0, 1, 3, 0, 1], dtype=G_H_DTYPE)
     ordered_hessians = np.array([1, 1, 2, 1, 0], dtype=G_H_DTYPE)
 
-    hist = np.zeros((1, 3), dtype=HISTOGRAM_DTYPE)
+    hist = Histograms(n_features=1, bin_offsets=3).fill_zeros()
     build_func(
         0, sample_indices, binned_feature, ordered_gradients, ordered_hessians, hist
     )
-    hist = hist[0]
+    hist = hist.histograms
     assert_array_equal(hist["count"], [2, 2, 1])
     assert_allclose(hist["sum_gradients"], [1, 4, 0])
     assert_allclose(hist["sum_hessians"], [2, 2, 1])
@@ -63,19 +102,19 @@ def test_histogram_sample_order_independence():
         np.arange(n_samples, dtype=np.uint32), n_sub_samples, replace=False
     )
     ordered_gradients = rng.randn(n_sub_samples).astype(G_H_DTYPE)
-    hist_gc = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
+    hist_gc = Histograms(n_features=1, bin_offsets=n_bins).fill_zeros()
     _build_histogram_no_hessian(
         0, sample_indices, binned_feature, ordered_gradients, hist_gc
     )
 
     ordered_hessians = rng.exponential(size=n_sub_samples).astype(G_H_DTYPE)
-    hist_ghc = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
+    hist_ghc = Histograms(n_features=1, bin_offsets=n_bins).fill_zeros()
     _build_histogram(
         0, sample_indices, binned_feature, ordered_gradients, ordered_hessians, hist_ghc
     )
 
     permutation = rng.permutation(n_sub_samples)
-    hist_gc_perm = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
+    hist_gc_perm = Histograms(n_features=1, bin_offsets=n_bins).fill_zeros()
     _build_histogram_no_hessian(
         0,
         sample_indices[permutation],
@@ -84,7 +123,7 @@ def test_histogram_sample_order_independence():
         hist_gc_perm,
     )
 
-    hist_ghc_perm = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
+    hist_ghc_perm = Histograms(n_features=1, bin_offsets=n_bins).fill_zeros()
     _build_histogram(
         0,
         sample_indices[permutation],
@@ -94,10 +133,10 @@ def test_histogram_sample_order_independence():
         hist_ghc_perm,
     )
 
-    hist_gc = hist_gc[0]
-    hist_ghc = hist_ghc[0]
-    hist_gc_perm = hist_gc_perm[0]
-    hist_ghc_perm = hist_ghc_perm[0]
+    hist_gc = hist_gc.histograms
+    hist_ghc = hist_ghc.histograms
+    hist_gc_perm = hist_gc_perm.histograms
+    hist_ghc_perm = hist_ghc_perm.histograms
 
     assert_allclose(hist_gc["sum_gradients"], hist_gc_perm["sum_gradients"])
     assert_array_equal(hist_gc["count"], hist_gc_perm["count"])
@@ -122,11 +161,11 @@ def test_unrolled_equivalent_to_naive(constant_hessian):
     else:
         ordered_hessians = rng.lognormal(size=n_samples).astype(G_H_DTYPE)
 
-    hist_gc_root = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
-    hist_ghc_root = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
-    hist_gc = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
-    hist_ghc = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
-    hist_naive = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
+    hist_gc_root = Histograms(n_features=1, bin_offsets=n_bins).fill_zeros()
+    hist_ghc_root = Histograms(n_features=1, bin_offsets=n_bins).fill_zeros()
+    hist_gc = Histograms(n_features=1, bin_offsets=n_bins).fill_zeros()
+    hist_ghc = Histograms(n_features=1, bin_offsets=n_bins).fill_zeros()
+    hist_naive = Histograms(n_features=1, bin_offsets=n_bins).fill_zeros()
 
     _build_histogram_root_no_hessian(0, binned_feature, ordered_gradients, hist_gc_root)
     _build_histogram_root(
@@ -147,11 +186,11 @@ def test_unrolled_equivalent_to_naive(constant_hessian):
         hist_naive,
     )
 
-    hist_naive = hist_naive[0]
-    hist_gc_root = hist_gc_root[0]
-    hist_ghc_root = hist_ghc_root[0]
-    hist_gc = hist_gc[0]
-    hist_ghc = hist_ghc[0]
+    hist_naive = hist_naive.histograms
+    hist_gc_root = hist_gc_root.histograms
+    hist_ghc_root = hist_ghc_root.histograms
+    hist_gc = hist_gc.histograms
+    hist_ghc = hist_ghc.histograms
     for hist in (hist_gc_root, hist_ghc_root, hist_gc, hist_ghc):
         assert_array_equal(hist["count"], hist_naive["count"])
         assert_allclose(hist["sum_gradients"], hist_naive["sum_gradients"])
@@ -176,7 +215,7 @@ def test_hist_subtraction(constant_hessian):
     else:
         ordered_hessians = rng.lognormal(size=n_samples).astype(G_H_DTYPE)
 
-    hist_parent = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
+    hist_parent = Histograms(n_features=1, bin_offsets=n_bins).fill_zeros()
     if constant_hessian:
         _build_histogram_no_hessian(
             0, sample_indices, binned_feature, ordered_gradients, hist_parent
@@ -196,7 +235,7 @@ def test_hist_subtraction(constant_hessian):
     sample_indices_left = sample_indices[mask]
     ordered_gradients_left = ordered_gradients[mask]
     ordered_hessians_left = ordered_hessians[mask]
-    hist_left = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
+    hist_left = Histograms(n_features=1, bin_offsets=n_bins).fill_zeros()
     if constant_hessian:
         _build_histogram_no_hessian(
             0, sample_indices_left, binned_feature, ordered_gradients_left, hist_left
@@ -214,7 +253,7 @@ def test_hist_subtraction(constant_hessian):
     sample_indices_right = sample_indices[~mask]
     ordered_gradients_right = ordered_gradients[~mask]
     ordered_hessians_right = ordered_hessians[~mask]
-    hist_right = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
+    hist_right = Histograms(n_features=1, bin_offsets=n_bins).fill_zeros()
     if constant_hessian:
         _build_histogram_no_hessian(
             0, sample_indices_right, binned_feature, ordered_gradients_right, hist_right
@@ -229,11 +268,53 @@ def test_hist_subtraction(constant_hessian):
             hist_right,
         )
 
-    hist_left_sub = np.copy(hist_parent)
-    hist_right_sub = np.copy(hist_parent)
-    _subtract_histograms(0, n_bins, hist_left_sub, hist_right)
-    _subtract_histograms(0, n_bins, hist_right_sub, hist_left)
+    hist_left_sub = hist_parent.copy()
+    hist_right_sub = hist_parent.copy()
+    _subtract_histograms(0, hist_left_sub, hist_right)
+    _subtract_histograms(0, hist_right_sub, hist_left)
 
     for key in ("count", "sum_hessians", "sum_gradients"):
-        assert_allclose(hist_left[key], hist_left_sub[key], rtol=1e-6)
-        assert_allclose(hist_right[key], hist_right_sub[key], rtol=1e-6)
+        assert_allclose(
+            hist_left.histograms[key], hist_left_sub.histograms[key], rtol=1e-6
+        )
+        assert_allclose(
+            hist_right.histograms[key], hist_right_sub.histograms[key], rtol=1e-6
+        )
+
+
+def test_histogram_with_interaction_constraints():
+    X_binned = np.array(
+        [
+            [0, 0, 0],
+            [1, 0, 0],
+            [2, 1, 0],
+            [3, 1, 1],
+            [4, 2, 1],
+            [5, 2, 2],  # Note, last feature is a missing value.
+        ],
+        dtype=np.uint8,
+    )
+    X_binned = BinnedData.from_array(X_binned)
+    gradients = np.arange(X_binned.shape[0], dtype=G_H_DTYPE)
+    hessians = np.ones_like(gradients)
+    sample_indices = np.arange(X_binned.shape[0], dtype=np.uint32)
+    builder = HistogramBuilder(
+        X_binned=X_binned,
+        n_bins=np.array([7, 4, 3], dtype=np.uint32),
+        gradients=gradients,
+        hessians=hessians,
+        hessians_are_constant=False,
+        n_threads=1,
+    )
+    allowed_features = np.array([0, 2], dtype=np.uint32)
+    histograms = builder.compute_histograms_brute(sample_indices, allowed_features)
+    assert_allclose(histograms.feature_histo(0)["count"], [1, 1, 1, 1, 1, 1, 0])
+    assert_allclose(
+        histograms.feature_histo(2)["count"],
+        [3, 2, 1],
+    )
+    assert_allclose(histograms.feature_histo(0)["sum_gradients"], [0, 1, 2, 3, 4, 5, 0])
+    assert_allclose(
+        histograms.feature_histo(2)["sum_gradients"],
+        [0 + 1 + 2, 3 + 4, 5],
+    )

@@ -17,10 +17,11 @@ import numpy as np
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 
 from ...utils.arrayfuncs import sum_parallel
-from ._bitset import set_raw_bitset_from_binned_bitset
+from ._bitset import copyto_feature_bitset_array, set_raw_bitset_from_binned_bitset
 from .common import (
     PREDICTOR_RECORD_DTYPE,
-    X_BITSET_INNER_DTYPE,
+    BinnedData,
+    Bitsets,
     MonotonicConstraint,
 )
 from .histogram import HistogramBuilder
@@ -182,7 +183,7 @@ class TreeGrower:
     n_bins : int, default=256
         The total number of bins, including the bin for missing values. Used
         to define the shape of the histograms.
-    n_bins_non_missing : ndarray, dtype=np.uint32, default=None
+    n_bins_non_missing : ndarray of shape (n_features,), dtype=np.uint16, default=None
         For each feature, gives the number of bins actually used for
         non-missing values. For features with a lot of unique values, this
         is equal to ``n_bins - 1``. If it's an int, all features are
@@ -191,7 +192,7 @@ class TreeGrower:
     has_missing_values : bool or ndarray, dtype=bool, default=False
         Whether each feature contains missing values (in the training data).
         If it's a bool, the same value is used for all features.
-    is_categorical : ndarray of bool of shape (n_features,), default=None
+    is_categorical : ndarray of shape (n_features,), dtype=bool, default=None
         Indicates categorical features.
     monotonic_cst : array-like of int of shape (n_features,), dtype=int, default=None
         Indicates the monotonic constraint to enforce on each feature.
@@ -227,9 +228,8 @@ class TreeGrower:
     root : TreeNode
     finalized_leaves : list of TreeNode
     splittable_nodes : list of TreeNode
-    missing_values_bin_idx : int
-        Equals n_bins - 1
     n_categorical_splits : int
+    n_base_bitsets :. int
     n_features : int
     n_nodes : int
     total_find_split_time : float
@@ -277,10 +277,10 @@ class TreeGrower:
 
         if isinstance(n_bins_non_missing, numbers.Integral):
             n_bins_non_missing = np.array(
-                [n_bins_non_missing] * X_binned.shape[1], dtype=np.uint32
+                [n_bins_non_missing] * X_binned.shape[1], dtype=np.uint16
             )
         else:
-            n_bins_non_missing = np.asarray(n_bins_non_missing, dtype=np.uint32)
+            n_bins_non_missing = np.asarray(n_bins_non_missing, dtype=np.uint16)
 
         if isinstance(has_missing_values, bool):
             has_missing_values = [has_missing_values] * X_binned.shape[1]
@@ -313,13 +313,17 @@ class TreeGrower:
 
         hessians_are_constant = hessians.shape[0] == 1
         self.histogram_builder = HistogramBuilder(
-            X_binned, n_bins, gradients, hessians, hessians_are_constant, n_threads
+            X_binned=X_binned,
+            n_bins=n_bins_non_missing.astype(np.uint32)
+            + 1,  # need total number of bins
+            gradients=gradients,
+            hessians=hessians,
+            hessians_are_constant=hessians_are_constant,
+            n_threads=n_threads,
         )
-        missing_values_bin_idx = n_bins - 1
         self.splitter = Splitter(
             X_binned=X_binned,
             n_bins_non_missing=n_bins_non_missing,
-            missing_values_bin_idx=missing_values_bin_idx,
             has_missing_values=has_missing_values,
             is_categorical=is_categorical,
             monotonic_cst=monotonic_cst,
@@ -338,7 +342,6 @@ class TreeGrower:
         self.min_samples_leaf = min_samples_leaf
         self.min_gain_to_split = min_gain_to_split
         self.n_bins_non_missing = n_bins_non_missing
-        self.missing_values_bin_idx = missing_values_bin_idx
         self.has_missing_values = has_missing_values
         self.is_categorical = is_categorical
         self.monotonic_cst = monotonic_cst
@@ -353,6 +356,7 @@ class TreeGrower:
         self.total_compute_hist_time = 0.0  # time spent computing histograms
         self.total_apply_split_time = 0.0  # time spent splitting nodes
         self.n_categorical_splits = 0
+        self.n_base_bitsets = 0
         self._initialize_root(gradients, hessians)
         self.n_nodes = 1
 
@@ -366,13 +370,13 @@ class TreeGrower:
 
         Also validate parameters passed to splitter.
         """
-        if X_binned.dtype != np.uint8:
-            raise NotImplementedError("X_binned must be of type uint8.")
-        if not X_binned.flags.f_contiguous:
+        if not isinstance(X_binned, BinnedData):
             raise ValueError(
-                "X_binned should be passed as Fortran contiguous "
-                "array for maximum efficiency."
+                "X_binned must be of type BinnedData (mixed uint8/uin16), with "
+                "internal Fortran contiguous arrays for maximum efficiency."
             )
+            # As BinnedData is guaranteed to be F-contiguous, we do not need to check
+            # the array.flags.f_contiguous.
         if min_gain_to_split < 0:
             raise ValueError(
                 "min_gain_to_split={} must be positive.".format(min_gain_to_split)
@@ -539,7 +543,9 @@ class TreeGrower:
             )
 
         self.n_nodes += 2
-        self.n_categorical_splits += node.split_info.is_categorical
+        if node.split_info.is_categorical:
+            self.n_categorical_splits += node.split_info.is_categorical
+            self.n_base_bitsets += node.split_info.left_cat_bitset.shape[0]
 
         if self.max_leaf_nodes is not None and n_leaf_nodes == self.max_leaf_nodes:
             self._finalize_leaf(left_child_node)
@@ -710,12 +716,17 @@ class TreeGrower:
         A TreePredictor object.
         """
         predictor_nodes = np.zeros(self.n_nodes, dtype=PREDICTOR_RECORD_DTYPE)
-        binned_left_cat_bitsets = np.zeros(
-            (self.n_categorical_splits, 8), dtype=X_BITSET_INNER_DTYPE
-        )
-        raw_left_cat_bitsets = np.zeros(
-            (self.n_categorical_splits, 8), dtype=X_BITSET_INNER_DTYPE
-        )
+        bitsets_offsets = np.empty(shape=self.n_categorical_splits + 1, dtype=np.uint32)
+        # For initialization of bitsets, only offsets[-1] is required, offsets[0] is
+        # also important, the rest can be filled later.
+        bitsets_offsets[0], bitsets_offsets[-1] = 0, self.n_base_bitsets
+        binned_left_cat_bitsets = Bitsets(offsets=bitsets_offsets)
+        # Same for bitsets of raw categories.
+        # TODO: Think about sharing the same offsets array.
+        bitsets_offsets = np.empty(shape=self.n_categorical_splits + 1, dtype=np.uint32)
+        bitsets_offsets[0], bitsets_offsets[-1] = 0, self.n_base_bitsets
+        raw_left_cat_bitsets = Bitsets(offsets=bitsets_offsets)
+
         _fill_predictor_arrays(
             predictor_nodes,
             binned_left_cat_bitsets,
@@ -770,11 +781,24 @@ def _fill_predictor_arrays(
     elif split_info.is_categorical:
         categories = binning_thresholds[feature_idx]
         node["bitset_idx"] = next_free_bitset_idx
-        binned_left_cat_bitsets[next_free_bitset_idx] = split_info.left_cat_bitset
+        binned_left_cat_bitsets.offsets[next_free_bitset_idx + 1] = (
+            binned_left_cat_bitsets.offsets[next_free_bitset_idx]
+            + split_info.left_cat_bitset.shape[0]
+        )
+        copyto_feature_bitset_array(
+            dst=binned_left_cat_bitsets,
+            bitset_idx=next_free_bitset_idx,
+            src=split_info.left_cat_bitset,
+        )
+        raw_left_cat_bitsets.offsets[next_free_bitset_idx + 1] = (
+            binned_left_cat_bitsets.offsets[next_free_bitset_idx + 1]
+        )
+
         set_raw_bitset_from_binned_bitset(
-            raw_left_cat_bitsets[next_free_bitset_idx],
+            raw_left_cat_bitsets,
             split_info.left_cat_bitset,
             categories,
+            next_free_bitset_idx,
         )
         next_free_bitset_idx += 1
     else:

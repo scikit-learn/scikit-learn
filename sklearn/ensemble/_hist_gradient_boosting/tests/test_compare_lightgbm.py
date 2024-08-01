@@ -78,7 +78,9 @@ def test_same_predictions_regression(
     if n_samples > 255:
         # bin data and convert it to float32 so that the estimator doesn't
         # treat it as pre-binned
-        X = _BinMapper(n_bins=max_bins + 1).fit_transform(X).astype(np.float32)
+        X = np.asarray(_BinMapper(n_bins=max_bins + 1).fit_transform(X)).astype(
+            np.float32
+        )
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 
@@ -158,7 +160,9 @@ def test_same_predictions_classification(
     if n_samples > 255:
         # bin data and convert it to float32 so that the estimator doesn't
         # treat it as pre-binned
-        X = _BinMapper(n_bins=max_bins + 1).fit_transform(X).astype(np.float32)
+        X = np.asarray(_BinMapper(n_bins=max_bins + 1).fit_transform(X)).astype(
+            np.float32
+        )
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 
@@ -237,7 +241,9 @@ def test_same_predictions_multiclass_classification(
     if n_samples > 255:
         # bin data and convert it to float32 so that the estimator doesn't
         # treat it as pre-binned
-        X = _BinMapper(n_bins=max_bins + 1).fit_transform(X).astype(np.float32)
+        X = np.asarray(_BinMapper(n_bins=max_bins + 1).fit_transform(X)).astype(
+            np.float32
+        )
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 

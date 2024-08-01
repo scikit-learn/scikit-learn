@@ -22,10 +22,10 @@ class TreePredictor:
     ----------
     nodes : ndarray of PREDICTOR_RECORD_DTYPE
         The nodes of the tree.
-    binned_left_cat_bitsets : ndarray of shape (n_categorical_splits, 8), dtype=uint32
+    binned_left_cat_bitsets : Bitsets
         Array of bitsets for binned categories used in predict_binned when a
         split is categorical.
-    raw_left_cat_bitsets : ndarray of shape (n_categorical_splits, 8), dtype=uint32
+    raw_left_cat_bitsets : Bitsets
         Array of bitsets for raw categories used in predict when a split is
         categorical.
     """
@@ -43,7 +43,7 @@ class TreePredictor:
         """Return maximum depth among all leaves."""
         return int(self.nodes["depth"].max())
 
-    def predict(self, X, known_cat_bitsets, f_idx_map, n_threads):
+    def predict(self, X, known_cat_bitsets, n_threads):
         """Predict raw values for non-binned data.
 
         Parameters
@@ -51,12 +51,9 @@ class TreePredictor:
         X : ndarray, shape (n_samples, n_features)
             The input samples.
 
-        known_cat_bitsets : ndarray of shape (n_categorical_features, 8)
-            Array of bitsets of known categories, for each categorical feature.
-
-        f_idx_map : ndarray of shape (n_features,)
-            Map from original feature index to the corresponding index in the
-            known_cat_bitsets array.
+        known_cat_bitsets : Bitsets
+            Bitsets of known categories for each categorical feature.
+            Offsets map from feature index to position of the bitsets array.
 
         n_threads : int
             Number of OpenMP threads to use.
@@ -73,23 +70,22 @@ class TreePredictor:
             X,
             self.raw_left_cat_bitsets,
             known_cat_bitsets,
-            f_idx_map,
             n_threads,
             out,
         )
         return out
 
-    def predict_binned(self, X, missing_values_bin_idx, n_threads):
+    def predict_binned(self, X, n_bins_non_missing, n_threads):
         """Predict raw values for binned data.
 
         Parameters
         ----------
-        X : ndarray, shape (n_samples, n_features)
-            The input samples.
-        missing_values_bin_idx : uint8
-            Index of the bin that is used for missing values. This is the
-            index of the last bin and is always equal to max_bins (as passed
-            to the GBDT classes), or equivalently to n_bins - 1.
+        X : BinnedData of shape (n_samples, n_features)
+            The binned input samples.
+        n_bins_non_missing : ndarray of shape (n_features,), dtype=np.uint16
+            For each feature, gives the number of bins actually used for non-missing
+            values. The index of the bin where missing values are mapped is always
+            given by the last bin, i.e. bin index ``n_bins_non_missing``.
         n_threads : int
             Number of OpenMP threads to use.
 
@@ -103,7 +99,7 @@ class TreePredictor:
             self.nodes,
             X,
             self.binned_left_cat_bitsets,
-            missing_values_bin_idx,
+            n_bins_non_missing,
             n_threads,
             out,
         )
