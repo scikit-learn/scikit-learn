@@ -7,7 +7,7 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy import optimize, sparse, stats
-from scipy.special import boxcox
+from scipy.special import boxcox, inv_boxcox
 
 from ..base import (
     BaseEstimator,
@@ -3376,7 +3376,7 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             X = self._scaler.inverse_transform(X)
 
         inv_fun = {
-            "box-cox": self._box_cox_inverse_tranform,
+            "box-cox": inv_boxcox,
             "yeo-johnson": self._yeo_johnson_inverse_transform,
         }[self.method]
         for i, lmbda in enumerate(self.lambdas_):
@@ -3384,17 +3384,6 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                 X[:, i] = inv_fun(X[:, i], lmbda)
 
         return X
-
-    def _box_cox_inverse_tranform(self, x, lmbda):
-        """Return inverse-transformed input x following Box-Cox inverse
-        transform with parameter lambda.
-        """
-        if lmbda == 0:
-            x_inv = np.exp(x)
-        else:
-            x_inv = (x * lmbda + 1) ** (1 / lmbda)
-
-        return x_inv
 
     def _yeo_johnson_inverse_transform(self, x, lmbda):
         """Return inverse-transformed input x following Yeo-Johnson inverse
