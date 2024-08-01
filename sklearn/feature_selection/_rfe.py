@@ -303,7 +303,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             y,
             accept_sparse="csc",
             ensure_min_features=2,
-            force_all_finite=False,
+            ensure_all_finite=False,
             multi_output=True,
         )
 
@@ -615,7 +615,7 @@ class RFECV(RFE):
 
         For integer/None inputs, if ``y`` is binary or multiclass,
         :class:`~sklearn.model_selection.StratifiedKFold` is used. If the
-        estimator is a classifier or if ``y`` is neither binary nor multiclass,
+        estimator is not a classifier or if ``y`` is neither binary nor multiclass,
         :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
@@ -828,7 +828,7 @@ class RFECV(RFE):
             y,
             accept_sparse="csr",
             ensure_min_features=2,
-            force_all_finite=False,
+            ensure_all_finite=False,
             multi_output=True,
         )
 

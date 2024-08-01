@@ -83,6 +83,11 @@ more details.
   params to the underlying regressor.
   :pr:`29136` by :user:`Omar Salman <OmarManzoor>`.
 
+- |Feature| :class:`feature_selection.SequentialFeatureSelector` now supports
+  metadata routing in its `fit` method and passes the corresponding params to
+  the :func:`model_selection.cross_val_score` function.
+  :pr:`29260` by :user:`Omar Salman <OmarManzoor>`.
+
 - |Feature| :func:`model_selection.validation_curve` now supports metadata routing for
   the `fit` method of its estimator and for its underlying CV splitter and scorer.
   :pr:`29329` by :user:`Stefanie Senger <StefanieSenger>`.
@@ -235,6 +240,11 @@ Changelog
   scoring="max_error" which is now deprecated.
   :pr:`29462` by :user:`Farid "Freddie" Taba <artificialfintelligence>`.
 
+- |API| the `assert_all_finite` parameter of functions
+  :func:`metrics.pairwise.check_pairwise_arrays` and :func:`metrics.pairwise_distances`
+  is renamed into `ensure_all_finite`. `force_all_finite` will be removed in 1.8.
+  :pr:`29404` by :user:`Jérémie du Boisberranger <jeremiedb>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -275,6 +285,14 @@ Changelog
   randomly moving all of the samples to the left, or right child node as the tree is
   traversed.
   :pr:`27966` by :user:`Adam Li <adam2392>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |API| the `assert_all_finite` parameter of functions :func:`utils.check_array`,
+  :func:`utils.check_X_y`, :func:`utils.as_float_array` is renamed into
+  `ensure_all_finite`. `force_all_finite` will be removed in 1.8.
+  :pr:`29404` by :user:`Jérémie du Boisberranger <jeremiedb>`.
 
 .. rubric:: Code and documentation contributors
 
