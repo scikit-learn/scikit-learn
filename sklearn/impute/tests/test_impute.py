@@ -1085,8 +1085,11 @@ def test_iterative_imputer_dont_set_random_state(rs_imputer, rs_estimator):
         def predict(self, X):
             return np.zeros(X.shape[0])
 
+        def get_params(self, deep=True):
+            return {"random_state": self.random_state}
+
     estimator = ZeroEstimator(random_state=rs_estimator)
-    imputer = IterativeImputer(random_state=rs_imputer)
+    imputer = IterativeImputer(random_state=rs_imputer, estimator=estimator)
     X_train = np.zeros((10, 3))
     imputer.fit(X_train)
     assert estimator.random_state == rs_estimator
