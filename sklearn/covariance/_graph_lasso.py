@@ -485,7 +485,6 @@ class GraphicalLasso(BaseGraphicalLasso):
     GraphicalLassoCV : Sparse inverse covariance with
         cross-validated choice of the l1 penalty.
 
-    
     Examples
     --------
     >>> import numpy as np
