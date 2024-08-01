@@ -129,7 +129,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
     minimal redundant code.
 
     If metric is 'precomputed' and the precomputed matrix is provided, 
-    able to return it.
+    a subclass must be able to access it through the compute method.
     """
     
     

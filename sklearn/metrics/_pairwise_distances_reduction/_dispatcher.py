@@ -12,7 +12,6 @@ from .._dist_metrics import (
     BOOL_METRICS,
     METRIC_MAPPING64,
     DistanceMetric,
-
 )
 from ._argkmin import (
     ArgKmin32,
@@ -31,6 +30,7 @@ from ._radius_neighbors_classmode import (
     RadiusNeighborsClassMode32,
     RadiusNeighborsClassMode64,
 )
+
 
 def sqeuclidean_row_norms(X, num_threads):
     """Compute the squared euclidean norm of the rows of X in parallel.
@@ -81,7 +81,9 @@ class BaseDistancesReductionDispatcher:
             "hamming",
             *BOOL_METRICS,
         }
-        return sorted(({"sqeuclidean", "precomputed"} | set(METRIC_MAPPING64.keys())) - excluded)
+        return sorted(
+            ({"sqeuclidean", "precomputed"} | set(METRIC_MAPPING64.keys())) - excluded
+        )
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
@@ -105,12 +107,8 @@ class BaseDistancesReductionDispatcher:
         -------
         True if the dispatcher can be used, else False.
         """
-        
-        #TODO: have the option to use the dispatcher but pass on the compute function
-        # instead call the precomputed distance for (i,j)
-        #question: for the rest of the indices should the compute method be defined?
-        # look at  EuclideanRadiusNeighbors{32,64}
-        if metric == 'precomputed':
+
+        if metric == "precomputed":
             return True
 
         # FIXME: the current Cython implementation is too slow for a large number of
@@ -176,8 +174,7 @@ class BaseDistancesReductionDispatcher:
         This method is an abstract class method: it has to be implemented
         for all subclasses.
         """
-      
-      
+        
 
 
 class ArgKmin(BaseDistancesReductionDispatcher):
@@ -201,6 +198,7 @@ class ArgKmin(BaseDistancesReductionDispatcher):
         Y,
         k,
         metric="euclidean",
+        precomputed_matrix = None,
         chunk_size=None,
         metric_kwargs=None,
         strategy=None,
@@ -430,10 +428,10 @@ class RadiusNeighbors(BaseDistancesReductionDispatcher):
         for the concrete implementation are therefore freed when this classmethod
         returns.
         """
-        #TODO: to maintain RAII, look at the implementation of the compute method
-        if metric == 'precomputed':
-            return PrecomputedDistanceMatrix.precomputed_distance()
-        
+        # TODO: to maintain RAII, look at the implementation of the compute method
+        # if metric == 'precomputed':
+        #   return PrecomputedDistanceMatrix.precomputed_distance()
+
         if X.dtype == Y.dtype == np.float64:
             return RadiusNeighbors64.compute(
                 X=X,
@@ -591,9 +589,7 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
         for the concrete implementation are therefore freed when this classmethod
         returns.
         """
-        if metric == "precomputed":
-            return PrecomputedDistanceMatrix.precomputed_distance()
-        
+
         if weights not in {"uniform", "distance"}:
             raise ValueError(
                 "Only the 'uniform' or 'distance' weights options are supported"

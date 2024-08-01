@@ -39,6 +39,7 @@ cdef class ArgKminClassMode{{name_suffix}}(ArgKmin{{name_suffix}}):
         chunk_size=None,
         dict metric_kwargs=None,
         str strategy=None,
+        precomputed_matrix = None
     ):
         """Compute the argkmin reduction with Y_labels.
 
@@ -55,8 +56,14 @@ cdef class ArgKminClassMode{{name_suffix}}(ArgKmin{{name_suffix}}):
         """
         # Use a generic implementation that handles most scipy
         # metrics by computing the distances between 2 vectors at a time.
-        if metric == 'precomputed':
-            return PrecomputedDistanceMatrix.dist(i,j)
+
+        # If a precomputed matrix is provided at the class level, skip the 
+        # rest of the computation and just return the variable stored in the 
+        # datasets_pair file. TODO: check syntax
+
+        if precomputed_matrix:
+            return PrecomputedDistanceMatrix.precomputed
+           
         pda = ArgKminClassMode{{name_suffix}}(
             datasets_pair=DatasetsPair{{name_suffix}}.get_for(X, Y, metric, metric_kwargs),
             k=k,
