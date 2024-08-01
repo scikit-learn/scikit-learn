@@ -16,17 +16,12 @@ from sklearn.utils._testing import (
     assert_allclose,
     assert_allclose_dense_sparse,
     assert_docstring_consistency,
-    assert_no_warnings,
-    assert_raise_message,
-    assert_raises,
-    assert_raises_regex,
     assert_run_python_script_without_output,
     check_docstring_parameters,
     create_memmap_backed_data,
     ignore_warnings,
     raises,
     set_random_state,
-    skip_if_no_numpydoc,
     turn_warnings_into_errors,
 )
 from sklearn.utils.deprecation import deprecated
