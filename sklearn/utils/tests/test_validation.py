@@ -975,17 +975,32 @@ def test_check_is_fitted_with_attributes(wrap):
         check_is_fitted(ard, wrap(["coef_bad_"]))
 
 
-def test_check_consistent_length_sparse():
-    """Test that `check_consistent_length` works with sparse data."""
+def test_check_consistent_length():
+    """Test that `check_consistent_length` raises on inconsistent lengths and wrong
+    input types trigger TypeErrors."""
+    check_consistent_length([1], [2], [3], [4], [5])
+    check_consistent_length([[1, 2], [[1, 2]]], [1, 2], ["a", "b"])
     check_consistent_length([1], (2,), np.array([3]), sp.csr_matrix((1, 2)))
+    with pytest.raises(ValueError, match="inconsistent numbers of samples"):
+        check_consistent_length([1, 2], [1])
+
+    with pytest.raises(TypeError, match=r"got <\w+ 'int'>"):
+        check_consistent_length([1, 2], 1)
+    with pytest.raises(TypeError, match=r"got <\w+ 'object'>"):
+        check_consistent_length([1, 2], object())
+    with pytest.raises(TypeError):
+        check_consistent_length([1, 2], np.array(1))
+    # Despite ensembles having __len__ they must raise TypeError
+    with pytest.raises(TypeError, match="Expected sequence or array-like"):
+        check_consistent_length([1, 2], RandomForestRegressor())
+    # XXX: We should have a test with a string, but what is correct behaviour?
 
 
 @pytest.mark.parametrize(
     "array_namespace, device, _", yield_namespace_device_dtype_combinations()
 )
-def test_check_consistent_length(array_namespace, device, _):
-    """Test that `check_consistent_length` raises on inconsistent lengthes and wrong
-    input types trigger TypeErrors."""
+def test_check_consistent_length_array_API(array_namespace, device, _):
+    """Test that check_consistent_length works with different array types."""
     xp = _array_api_for_tests(array_namespace, device)
 
     check_consistent_length(
@@ -1007,18 +1022,6 @@ def test_check_consistent_length(array_namespace, device, _):
         check_consistent_length(
             xp.asarray([1, 2], device=device), xp.asarray([1], device=device)
         )
-    with pytest.raises(TypeError, match=r"got <\w+ 'int'>"):
-        check_consistent_length(xp.asarray([1, 2], device=device), 1)
-    with pytest.raises(TypeError, match=r"got <\w+ 'object'>"):
-        check_consistent_length(xp.asarray([1, 2], device=device), object())
-    with pytest.raises(TypeError):
-        check_consistent_length(xp.asarray([1, 2], device=device), np.array(1))
-    # Despite ensembles having __len__ they must raise TypeError
-    with pytest.raises(TypeError, match="Expected sequence or array-like"):
-        check_consistent_length(
-            xp.asarray([1, 2], device=device), RandomForestRegressor()
-        )
-    # XXX: We should have a test with a string, but what is correct behaviour?
 
 
 def test_check_dataframe_fit_attribute():
