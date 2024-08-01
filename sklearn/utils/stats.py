@@ -40,10 +40,13 @@ def _weighted_percentile(array, sample_weight, percentile=50):
     # When sample_weight 1D, repeat for each array.shape[1]
     if array.shape != sample_weight.shape and array.shape[0] == sample_weight.shape[0]:
         sample_weight = np.tile(sample_weight, (array.shape[1], 1)).T
+
     sorted_idx = np.argsort(array, axis=0)
     sorted_weights = np.take_along_axis(sample_weight, sorted_idx, axis=0)
 
     # Find index of median prediction for each sample
+    sorted_nan_mask = np.take_along_axis(np.isnan(array), sorted_idx, axis=0)
+    sorted_weights[sorted_nan_mask] = 0
     weight_cdf = stable_cumsum(sorted_weights, axis=0)
     adjusted_percentile = percentile / 100 * weight_cdf[-1]
 
@@ -59,6 +62,7 @@ def _weighted_percentile(array, sample_weight, percentile=50):
             for i in range(weight_cdf.shape[1])
         ]
     )
+
     percentile_idx = np.array(percentile_idx)
     # In rare cases, percentile_idx equals to sorted_idx.shape[0]
     max_idx = sorted_idx.shape[0] - 1
@@ -69,4 +73,16 @@ def _weighted_percentile(array, sample_weight, percentile=50):
     col_index = np.arange(array.shape[1])
     percentile_in_sorted = sorted_idx[percentile_idx, col_index]
     percentile = array[percentile_in_sorted, col_index]
+
+    # percentiles that point to nan values are redirected to the next lower
+    # value unless we have reached the lowest index (0) in `sortex_idx`:
+    while (percentile_isnan_mask := np.isnan(percentile)).any() and (
+        percentile_idx[percentile_isnan_mask] > 0
+    ).any():
+        percentile_idx[percentile_isnan_mask] = np.maximum(
+            percentile_idx[percentile_isnan_mask] - 1, 0
+        )
+        percentile_in_sorted = sorted_idx[percentile_idx, col_index]
+        percentile = array[percentile_in_sorted, col_index]
+
     return percentile[0] if n_dim == 1 else percentile
