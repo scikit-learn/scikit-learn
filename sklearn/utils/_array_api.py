@@ -542,7 +542,7 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
         the namespace defaults to the NumPy namespace.
 
     is_array_api_compliant : bool
-        True if the arrays are containers that implement the Array API spec (see
+        True if the arrays are containers that implement the array API spec (see
         https://data-apis.org/array-api/latest/API_specification/).
         Always False when array_api_dispatch=False.
     """
