@@ -22,6 +22,7 @@ from sklearn.utils._testing import (
     ignore_warnings,
     raises,
     set_random_state,
+    skip_if_no_numpydoc,
     turn_warnings_into_errors,
 )
 from sklearn.utils.deprecation import deprecated
