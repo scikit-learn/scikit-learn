@@ -45,4 +45,4 @@ jobs:
           conda config --set solver libmamba
           conda install -c conda-forge "$(get_dep conda-lock min)" -y
 
-          python build_tools/update_environments_and_lock_files_pr.py
+          python build_tools/on_pr_comment_update_environments_and_lock_files.py

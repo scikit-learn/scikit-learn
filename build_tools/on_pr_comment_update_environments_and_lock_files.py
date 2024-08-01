@@ -15,18 +15,30 @@ def main():
     # Extract the command-line arguments from the comment
     prefix = "@scikit-learn-bot update lock-files"
     assert comment.startswith(prefix)
-    args_string = comment[len(prefix) :]  # including any leading spaces
+    all_args_list = shlex.split(comment[len(prefix) :])
 
-    # Extract the tag from the args (if any)
+    # Parse the options for the lock-file script
     parser = argparse.ArgumentParser()
+    parser.add_argument("--select-build", default="")
+    parser.add_argument("--skip-build", default=None)
     parser.add_argument("--select-tag", default=None)
-    parser.add_argument("--commit-marker", default=None)
-    args, _ = parser.parse_known_args(shlex.split(args_string))
+    args, extra_args_list = parser.parse_known_args(all_args_list)
 
-    # Determine the marker to add in the commit message (if any)
+    # Rebuild the command-line arguments for the lock-file script
+    args_string = ""
+    if args.select_build != "":
+        args_string += f" --select-build {args.select_build}"
+    if args.skip_build is not None:
+        args_string += f" --skip-build {args.skip_build}"
+    if args.select_tag is not None:
+        args_string += f" --select-tag {args.select_tag}"
+
+    # Parse extra arguments
+    extra_parser = argparse.ArgumentParser()
+    extra_parser.add_argument("--commit-marker", default=None)
+    extra_args, _ = extra_parser.parse_known_args(extra_args_list)
+
     marker = ""
-    if args.commit_marker is not None:
-        marker += args.commit_marker + " "
     # Additional markers based on the tag
     if args.select_tag == "main-ci":
         marker += "[doc build] "
@@ -34,9 +46,12 @@ def main():
         marker += "[scipy-dev] "
     elif args.select_tag == "arm":
         marker += "[cirrus arm] "
-    elif args_string.strip() == "":
+    elif len(all_args_list) == 0:
         # No arguments which will update all lock files so add all markers
         marker += "[doc build] [scipy-dev] [cirrus arm] "
+    # The additional `--commit-marker` argument
+    if extra_args.commit_marker is not None:
+        marker += extra_args.commit_marker + " "
 
     execute_command(
         f"python build_tools/update_environments_and_lock_files.py{args_string}"
