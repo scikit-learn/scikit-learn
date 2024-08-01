@@ -4,7 +4,7 @@ from cython cimport floating, final, integral
 from cython.operator cimport dereference as deref
 from cython.parallel cimport parallel, prange
 from ._classmode cimport WeightingStrategy
-from ...utils._typedefs cimport intp_t, float64_t
+from ...utils._typedefs cimport intp_t, float64_t, uint8_t
 
 import numpy as np
 from scipy.sparse import issparse
@@ -25,7 +25,7 @@ cdef class RadiusNeighborsClassMode{{name_suffix}}(RadiusNeighbors{{name_suffix}
         intp_t outlier_label_index
         bint outlier_label_exists
         bint outliers_exist
-        unsigned char[::1] outliers
+        uint8_t[::1] outliers
         object outlier_label
         float64_t[:, ::1] class_scores
         WeightingStrategy weight_type
