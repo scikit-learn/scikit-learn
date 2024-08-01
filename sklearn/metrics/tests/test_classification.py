@@ -47,6 +47,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
     assert_docstring_consistency,
     ignore_warnings,
+    skip_if_no_numpydoc,
 )
 from sklearn.utils.extmath import _nanaverage
 from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
