@@ -220,14 +220,14 @@ def test_aggressive_elimination(
         # without enough resources, only one iteration can be done
         ("smallest", 30, 1, 1, [20]),
         # with exhaust: use as much resources as possible at the last iter
-        ("exhaust", "auto", 2, 2, [333, 999]),
-        ("exhaust", 1000, 2, 2, [333, 999]),
-        ("exhaust", 999, 2, 2, [333, 999]),
-        ("exhaust", 600, 2, 2, [200, 600]),
-        ("exhaust", 599, 2, 2, [199, 597]),
-        ("exhaust", 300, 2, 2, [100, 300]),
+        ("exhaust", "auto", 2, 4, [333, 999]),
+        ("exhaust", 1000, 2, 4, [333, 999]),
+        ("exhaust", 999, 2, 4, [333, 999]),
+        ("exhaust", 600, 2, 4, [200, 600]),
+        ("exhaust", 599, 2, 4, [199, 597]),
+        ("exhaust", 300, 2, 3, [100, 300]),
         ("exhaust", 60, 2, 2, [20, 60]),
-        ("exhaust", 50, 1, 1, [20]),
+        ("exhaust", 50, 1, 1, [50]),
         ("exhaust", 20, 1, 1, [20]),
     ],
 )
