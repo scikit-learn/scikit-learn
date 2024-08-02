@@ -16,7 +16,8 @@ maximize the TPR while minimizing the FPR.
 This example demonstrates how the classifier's ROC response is influenced by
 variations in the training data as obtained through K-fold cross-validation.
 By analyzing all these curves, we can calculate the mean AUC and visualize the
-variance among them.
+variability of the estimated curves across CV folds via a quantile-based
+region.
 
 .. note::
 
@@ -117,7 +118,7 @@ quantile_offsets = np.linspace(0.05, 0.45, 5)
 for offset in quantile_offsets:
     upper_quantile = np.quantile(tprs, 0.5 + offset, axis=0)
     lower_quantile = np.quantile(tprs, 0.5 - offset, axis=0)
-    label = f"total quantile coverage = {2*offset:.0%}" if offset == 0.45 else None
+    label = f"5% to 95% percentile region" if offset == 0.45 else None
     ax.fill_between(
         mean_fpr,
         lower_quantile,
