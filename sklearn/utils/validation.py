@@ -1394,7 +1394,7 @@ def _check_y(y, multi_output=False, y_numeric=False, estimator=None):
         y = check_array(
             y,
             accept_sparse="csr",
-            force_all_finite=True,
+            ensure_all_finite=True,
             ensure_2d=False,
             dtype=None,
             input_name="y",
@@ -1449,7 +1449,7 @@ def column_or_1d(y, *, dtype=None, warn=False):
         ensure_2d=False,
         dtype=dtype,
         input_name="y",
-        force_all_finite=False,
+        ensure_all_finite=False,
         ensure_min_samples=0,
     )
 
