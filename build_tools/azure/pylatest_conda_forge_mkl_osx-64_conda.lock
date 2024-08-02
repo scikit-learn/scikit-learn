@@ -23,7 +23,7 @@ https://conda.anaconda.org/conda-forge/osx-64/bzip2-1.0.8-hfdf4475_7.conda#7ed43
 https://conda.anaconda.org/conda-forge/osx-64/icu-75.1-h120a0e1_0.conda#d68d48a3060eb5abdc1cdc8e2a3a5966
 https://conda.anaconda.org/conda-forge/osx-64/libbrotlidec-1.1.0-h0dc2134_1.conda#9ee0bab91b2ca579e10353738be36063
 https://conda.anaconda.org/conda-forge/osx-64/libbrotlienc-1.1.0-h0dc2134_1.conda#8a421fe09c6187f0eb5e2338a8a8be6d
-https://conda.anaconda.org/conda-forge/osx-64/libcxx-18.1.8-hef8daea_0.conda#4101cde4241c92aeac310d65e6791579
+https://conda.anaconda.org/conda-forge/osx-64/libcxx-18.1.8-hef8daea_1.conda#8309952890f89dbd4283a18633ecdfe3
 https://conda.anaconda.org/conda-forge/osx-64/libxcb-1.16-h0dc2134_0.conda#07e80289d4ba724f37b4b6f001f88fbe
 https://conda.anaconda.org/conda-forge/osx-64/libzlib-1.3.1-h87427d6_1.conda#b7575b5aa92108dcc9aaab0f05f2dbce
 https://conda.anaconda.org/conda-forge/osx-64/llvm-openmp-18.1.8-h15ab845_0.conda#2c3c6c8aaf8728f87326964a82fdc7d8
@@ -50,7 +50,7 @@ https://conda.anaconda.org/conda-forge/osx-64/libgfortran-5.0.0-13_2_0_h97931a8_
 https://conda.anaconda.org/conda-forge/osx-64/libhwloc-2.11.1-default_h456cccd_1000.conda#a14989f6bbea46e6ec4521a403f63ff2
 https://conda.anaconda.org/conda-forge/osx-64/libllvm16-16.0.6-hbedff68_3.conda#8fd56c0adc07a37f93bd44aa61a97c90
 https://conda.anaconda.org/conda-forge/osx-64/libtiff-4.6.0-h129831d_3.conda#568593071d2e6cea7b5fc1f75bfa10ca
-https://conda.anaconda.org/conda-forge/osx-64/mpfr-4.2.1-h4f6b447_1.conda#b90df08f0deb2f58631447c1462c92a7
+https://conda.anaconda.org/conda-forge/osx-64/mpfr-4.2.1-hc80595b_2.conda#fc9b5179824146b67ad5a0b053b253ff
 https://conda.anaconda.org/conda-forge/osx-64/python-3.12.4-h37a9e06_0_cpython.conda#94e2b77992f580ac6b7a4fc9b53018b3
 https://conda.anaconda.org/conda-forge/noarch/certifi-2024.7.4-pyhd8ed1ab_0.conda#24e7fd6ca65997938fff9e5ab6f653e4
 https://conda.anaconda.org/conda-forge/noarch/colorama-0.4.6-pyhd8ed1ab_0.tar.bz2#3faab06a954c2a04039983f2c4a50d99
@@ -89,12 +89,12 @@ https://conda.anaconda.org/conda-forge/osx-64/fonttools-4.53.1-py312hbd25219_0.c
 https://conda.anaconda.org/conda-forge/osx-64/gfortran_impl_osx-64-12.3.0-hc328e78_3.conda#b3d751dc7073bbfdfa9d863e39b9685d
 https://conda.anaconda.org/conda-forge/noarch/joblib-1.4.2-pyhd8ed1ab_0.conda#25df261d4523d9f9783bcdb7208d872f
 https://conda.anaconda.org/conda-forge/osx-64/ld64-711-ha02d983_0.conda#3ae4930ec076735cce481e906f5192e0
-https://conda.anaconda.org/conda-forge/noarch/meson-1.5.0-pyhd8ed1ab_0.conda#9d971c5bf99aed063664d6650e7e7ed8
+https://conda.anaconda.org/conda-forge/noarch/meson-1.5.1-pyhd8ed1ab_0.conda#a87a68d26db0c5bea5cab1f8d7772112
 https://conda.anaconda.org/conda-forge/osx-64/mkl-2023.2.0-h54c2260_50500.conda#0a342ccdc79e4fcd359245ac51941e7b
 https://conda.anaconda.org/conda-forge/osx-64/pillow-10.4.0-py312hbd70edc_0.conda#8d55e92fa6380ac8c245f253b096fefd
 https://conda.anaconda.org/conda-forge/noarch/pip-24.0-pyhd8ed1ab_0.conda#f586ac1e56c8638b64f9c8122a7b8a67
 https://conda.anaconda.org/conda-forge/noarch/pyproject-metadata-0.8.0-pyhd8ed1ab_0.conda#573fe09d7bd0cd4bcc210d8369b5ca47
-https://conda.anaconda.org/conda-forge/noarch/pytest-8.3.1-pyhd8ed1ab_0.conda#b6a3ab8559a42070c6b6c3063faea1ed
+https://conda.anaconda.org/conda-forge/noarch/pytest-8.3.2-pyhd8ed1ab_0.conda#e010a224b90f1f623a917c35addbb924
 https://conda.anaconda.org/conda-forge/noarch/python-dateutil-2.9.0-pyhd8ed1ab_0.conda#2cf4264fffb9e6eff6031c5b6884d61c
 https://conda.anaconda.org/conda-forge/osx-64/cctools-986-h40f6528_0.conda#b7a2ca0062a6ee8bc4e83ec887bef942
 https://conda.anaconda.org/conda-forge/osx-64/clang-16.0.6-default_h179603d_11.conda#29c8b527d8b8fac52f5e2cf6abfcdc93
@@ -108,7 +108,7 @@ https://conda.anaconda.org/conda-forge/osx-64/libcblas-3.9.0-20_osx64_mkl.conda#
 https://conda.anaconda.org/conda-forge/osx-64/liblapack-3.9.0-20_osx64_mkl.conda#58f08e12ad487fac4a08f90ff0b87aec
 https://conda.anaconda.org/conda-forge/noarch/compiler-rt_osx-64-16.0.6-ha38d28d_2.conda#7a46507edc35c6c8818db0adaf8d787f
 https://conda.anaconda.org/conda-forge/osx-64/liblapacke-3.9.0-20_osx64_mkl.conda#124ae8e384268a8da66f1d64114a1eda
-https://conda.anaconda.org/conda-forge/osx-64/numpy-2.0.0-py312h8813227_0.conda#814dba0ed2de85d89e09a5b811024a86
+https://conda.anaconda.org/conda-forge/osx-64/numpy-2.0.1-py312h8813227_0.conda#7f239fbf9d9355f86529a35af0b24d29
 https://conda.anaconda.org/conda-forge/osx-64/blas-devel-3.9.0-20_osx64_mkl.conda#cc3260179093918b801e373c6e888e02
 https://conda.anaconda.org/conda-forge/osx-64/compiler-rt-16.0.6-ha38d28d_2.conda#3b9e8c5c63b8e86234f499490acd85c2
 https://conda.anaconda.org/conda-forge/osx-64/contourpy-1.2.1-py312h9230928_0.conda#079df34ce7c71259cfdd394645370891
