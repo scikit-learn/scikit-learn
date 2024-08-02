@@ -41,6 +41,7 @@ from sklearn.utils._array_api import (
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     _convert_container,
     assert_allclose,
     assert_allclose_dense_sparse,
@@ -2475,13 +2476,17 @@ def test_standard_scaler_sparse_partial_fit_finite_variance(X_2):
     assert np.isfinite(scaler.var_[0])
 
 
+@pytest.mark.parametrize(
+    "array_namespace, device, _", yield_namespace_device_dtype_combinations()
+)
 @pytest.mark.parametrize("feature_range", [(0, 1), (-10, 10)])
-def test_minmax_scaler_clip(feature_range):
+def test_minmax_scaler_clip(feature_range, array_namespace, device, _):
     # test behaviour of the parameter 'clip' in MinMaxScaler
-    X = iris.data
+    xp = _array_api_for_tests(array_namespace, device)
+    X = xp.asarray(iris.data)
     scaler = MinMaxScaler(feature_range=feature_range, clip=True).fit(X)
-    X_min, X_max = np.min(X, axis=0), np.max(X, axis=0)
-    X_test = [np.r_[X_min[:2] - 10, X_max[2:] + 10]]
+    X_min, X_max = xp.min(X, axis=0), xp.max(X, axis=0)
+    X_test = xp.asarray([np.r_[X_min[:2] - 10, X_max[2:] + 10]])
     X_transformed = scaler.transform(X_test)
     assert_allclose(
         X_transformed,
