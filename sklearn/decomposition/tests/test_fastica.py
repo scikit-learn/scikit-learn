@@ -446,8 +446,11 @@ def test_fastica_eigh_low_rank_warning(global_random_seed):
     rng = np.random.RandomState(global_random_seed)
     A = rng.randn(10, 2)
     X = A @ A.T
+    # Use a large max_iter to avoid ConvergenceWarning before getting the
+    # singular values warning.
+    max_iter = 10_000
     ica = FastICA(
-        random_state=0, whiten="unit-variance", whiten_solver="eigh", max_iter=1000
+        random_state=0, whiten="unit-variance", whiten_solver="eigh", max_iter=max_iter
     )
     msg = "There are some small singular values"
     with pytest.warns(UserWarning, match=msg):
