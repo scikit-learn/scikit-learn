@@ -996,7 +996,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         ----------
         X : ndarray of shape (n_samples, n_features) or (n_samples, n_samples)
             Training instances to cluster, or distances between instances if
-            ``affinity='precomputed'``.
+            ``metric='precomputed'``.
 
         Returns
         -------
