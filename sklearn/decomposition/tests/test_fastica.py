@@ -452,6 +452,6 @@ def test_fastica_eigh_low_rank_warning(global_random_seed):
     with pytest.warns(UserWarning, match=msg):
         with ignore_warnings(category=ConvergenceWarning):
             # The FastICA solver may not converge for some data with specific
-            # random seed but this will happen after the whiten step so this is
+            # random seeds but this happens after the whiten step so this is
             # not want we want to test here.
             ica.fit(X)

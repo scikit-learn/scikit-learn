@@ -169,7 +169,7 @@ Changelog
 ............................
 
 - |Fix| Increase rank defficiency threshold in the whitening step of
-  :class:`decomposition.FastICA` with `whiten_solver="eigh"` to improvement
+  :class:`decomposition.FastICA` with `whiten_solver="eigh"` to improve the
   platform-agnosticity of the estimator. :pr:`29612` by :user:`Olivier Grisel
   <ogrisel>`.
 
