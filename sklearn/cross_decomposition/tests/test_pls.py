@@ -409,7 +409,7 @@ def test_copy(Est):
 
     X_orig = X.copy()
     with pytest.raises(AssertionError):
-        pls.predict(X, copy=False)
+        pls.predict(X, copy=False),
         assert_array_almost_equal(X, X_orig)
 
     # Make sure copy=True gives same transform and predictions as predict=False

@@ -631,6 +631,7 @@ def test_get_namespace_and_device():
 def test_count_nonzero(
     array_namespace, device_, dtype_name, csr_container, axis, sample_weight_type
 ):
+
     from sklearn.utils.sparsefuncs import count_nonzero as sparse_count_nonzero
 
     xp = _array_api_for_tests(array_namespace, device_)

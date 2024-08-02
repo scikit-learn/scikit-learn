@@ -394,9 +394,8 @@ def test_custom_optimizer(kernel):
     # Define a dummy optimizer that simply tests 50 random hyperparameters
     def optimizer(obj_func, initial_theta, bounds):
         rng = np.random.RandomState(0)
-        theta_opt, func_min = (
-            initial_theta,
-            obj_func(initial_theta, eval_gradient=False),
+        theta_opt, func_min = initial_theta, obj_func(
+            initial_theta, eval_gradient=False
         )
         for _ in range(50):
             theta = np.atleast_1d(

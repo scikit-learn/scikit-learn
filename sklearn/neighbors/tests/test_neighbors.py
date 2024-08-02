@@ -650,12 +650,10 @@ def test_unsupervised_radius_neighbors(
             assert_allclose(np.concatenate(list(ind)), np.concatenate(list(ind1)))
 
         for i in range(len(results) - 1):
-            (
-                assert_allclose(
-                    np.concatenate(list(results[i][0])),
-                    np.concatenate(list(results[i + 1][0])),
-                ),
-            )
+            assert_allclose(
+                np.concatenate(list(results[i][0])),
+                np.concatenate(list(results[i + 1][0])),
+            ),
             assert_allclose(
                 np.concatenate(list(results[i][1])),
                 np.concatenate(list(results[i + 1][1])),
