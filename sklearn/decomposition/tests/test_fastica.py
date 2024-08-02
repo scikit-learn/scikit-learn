@@ -446,7 +446,9 @@ def test_fastica_eigh_low_rank_warning(global_random_seed):
     rng = np.random.RandomState(global_random_seed)
     A = rng.randn(10, 2)
     X = A @ A.T
-    ica = FastICA(random_state=0, whiten="unit-variance", whiten_solver="eigh")
+    ica = FastICA(
+        random_state=0, whiten="unit-variance", whiten_solver="eigh", max_iter=1000
+    )
     msg = "There are some small singular values"
     with pytest.warns(UserWarning, match=msg):
         ica.fit(X)
