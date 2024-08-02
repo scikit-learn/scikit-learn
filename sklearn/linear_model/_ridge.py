@@ -5,7 +5,6 @@ Ridge regression
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
 import numbers
 import warnings
 from abc import ABCMeta, abstractmethod
@@ -570,9 +569,9 @@ def ridge_regression(
     >>> y = 2.0 * X[:, 0] - 1.0 * X[:, 1] + 0.1 * rng.standard_normal(100)
     >>> coef, intercept = ridge_regression(X, y, alpha=1.0, return_intercept=True)
     >>> list(coef)
-    [1.9..., -1.0..., -0.0..., -0.0...]
+    [np.float64(1.9...), np.float64(-1.0...), np.float64(-0.0...), np.float64(-0.0...)]
     >>> intercept
-    -0.0...
+    np.float64(-0.0...)
     """
     return _ridge_regression(
         X,

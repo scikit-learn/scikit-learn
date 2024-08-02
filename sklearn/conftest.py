@@ -209,7 +209,7 @@ def pytest_collection_modifyitems(config, items):
         )
         skip_doctests = True
 
-    if np_base_version >= parse_version("2"):
+    if np_base_version < parse_version("2"):
         reason = "Due to NEP 51 numpy scalar repr has changed in numpy 2"
         skip_doctests = True
 
