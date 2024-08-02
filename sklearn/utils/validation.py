@@ -535,7 +535,7 @@ def _ensure_sparse_format(
     accept_sparse,
     dtype,
     copy,
-    force_all_finite,
+    ensure_all_finite,
     accept_large_sparse,
     estimator_name=None,
     input_name="",
@@ -563,7 +563,7 @@ def _ensure_sparse_format(
         Whether a forced copy will be triggered. If copy=False, a copy might
         be triggered by a conversion.
 
-    force_all_finite : bool or 'allow-nan'
+    ensure_all_finite : bool or 'allow-nan'
         Whether to raise an error on np.inf, np.nan, pd.NA in X. The
         possibilities are:
 
@@ -573,7 +573,7 @@ def _ensure_sparse_format(
           be infinite.
 
         .. versionadded:: 0.20
-           ``force_all_finite`` accepts the string ``'allow-nan'``.
+           ``ensure_all_finite`` accepts the string ``'allow-nan'``.
 
         .. versionchanged:: 0.23
            Accepts `pd.NA` and converts it into `np.nan`
@@ -636,7 +636,7 @@ def _ensure_sparse_format(
         # force copy
         sparse_container = sparse_container.copy()
 
-    if force_all_finite:
+    if ensure_all_finite:
         if not hasattr(sparse_container, "data"):
             warnings.warn(
                 f"Can't check {sparse_container.format} sparse matrix for nan or inf.",
@@ -645,7 +645,7 @@ def _ensure_sparse_format(
         else:
             _assert_all_finite(
                 sparse_container.data,
-                allow_nan=force_all_finite == "allow-nan",
+                allow_nan=ensure_all_finite == "allow-nan",
                 estimator_name=estimator_name,
                 input_name=input_name,
             )
