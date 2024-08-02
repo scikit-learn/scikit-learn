@@ -13,7 +13,7 @@ from scipy import stats
 from sklearn.decomposition import PCA, FastICA, fastica
 from sklearn.decomposition._fastica import _gs_decorrelation
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_allclose, ignore_warnings
 
 
 def center_and_norm(x, axis=-1):
@@ -446,12 +446,12 @@ def test_fastica_eigh_low_rank_warning(global_random_seed):
     rng = np.random.RandomState(global_random_seed)
     A = rng.randn(10, 2)
     X = A @ A.T
-    # Use a large max_iter to avoid ConvergenceWarning before getting the
-    # singular values warning.
-    max_iter = 10_000
-    ica = FastICA(
-        random_state=0, whiten="unit-variance", whiten_solver="eigh", max_iter=max_iter
-    )
+    ica = FastICA(random_state=0, whiten="unit-variance", whiten_solver="eigh")
     msg = "There are some small singular values"
+
     with pytest.warns(UserWarning, match=msg):
-        ica.fit(X)
+        with ignore_warnings(category=ConvergenceWarning):
+            # The FastICA solver may not converge for some data with specific
+            # random seed but this will happen after the whiten step so this is
+            # not want we want to test here.
+            ica.fit(X)
