@@ -66,6 +66,9 @@ X = np.concatenate([X, random_state.randn(n_samples, 200 * n_features)], axis=1)
 # plot the ROC curves fold-wise. Notice that the baseline to define the chance
 # level (dashed ROC curve) is a classifier that would always predict the most
 # frequent class.
+#
+# In the following plot, quantile coverage is represented by shades of grey,
+# with darker colors indicating values closer to the median.
 
 import matplotlib.pyplot as plt
 
@@ -112,17 +115,19 @@ ax.plot(
     alpha=0.8,
 )
 
-std_tpr = np.std(tprs, axis=0)
-tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
-tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
-ax.fill_between(
-    mean_fpr,
-    tprs_lower,
-    tprs_upper,
-    color="grey",
-    alpha=0.2,
-    label=r"$\pm$ 1 std. dev.",
-)
+quantile_offsets = np.linspace(0.05, 0.45, 5)
+for offset in quantile_offsets:
+    upper_quantile = np.quantile(tprs, 0.5 + offset, axis=0)
+    lower_quantile = np.quantile(tprs, 0.5 - offset, axis=0)
+    label = f"total quantile coverage = {2*offset:.0%}" if offset == 0.45 else None
+    ax.fill_between(
+        mean_fpr,
+        lower_quantile,
+        upper_quantile,
+        color="grey",
+        alpha=0.4,
+        label=label,
+    )
 
 ax.set(
     xlabel="False Positive Rate",
