@@ -1098,9 +1098,8 @@ class MetadataRouter:
             method_mapping = MethodMapping()
             for method in METHODS:
                 method_mapping.add(caller=method, callee=method)
-            yield (
-                "$self_request",
-                RouterMappingPair(mapping=method_mapping, router=self._self_request),
+            yield "$self_request", RouterMappingPair(
+                mapping=method_mapping, router=self._self_request
             )
         for name, route_mapping in self._route_mappings.items():
             yield (name, route_mapping)
