@@ -21,7 +21,7 @@ from ._bitset import set_bitset_memoryview
 from .common import ALMOST_INF, X_BINNED_DTYPE, X_BITSET_INNER_DTYPE, X_DTYPE
 
 
-def _find_binning_thresholds(col_data, sample_weights, max_bins):
+def _find_binning_thresholds(col_data, sample_weight, max_bins):
     """Extract quantiles from a continuous feature.
 
     Missing values are ignored for finding the thresholds.
@@ -59,13 +59,13 @@ def _find_binning_thresholds(col_data, sample_weights, max_bins):
         # np.unique(col_data, return_counts) instead but this is more
         # work and the performance benefit will be limited because we
         # work on a fixed-size subsample of the full data.
-        if sample_weights is None:
-            sample_weights = np.ones(col_data.shape[0])
+        if sample_weight is None:
+            sample_weight = np.ones(col_data.shape[0])
         percentiles = np.linspace(0, 100, num=max_bins + 1)
         percentiles = percentiles[1:-1]
         midpoints = np.array(
             [
-                _weighted_percentile(col_data, sample_weights, percentile).astype(
+                _weighted_percentile(col_data, sample_weight, percentile).astype(
                     X_DTYPE
                 )
                 for percentile in percentiles
@@ -177,7 +177,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         self.random_state = random_state
         self.n_threads = n_threads
 
-    def fit(self, X, y=None, sample_weights=None):
+    def fit(self, X, y=None, sample_weight=None):
         """Fit data X by computing the binning thresholds.
 
         The last bin is reserved for missing values, whether missing values
@@ -241,7 +241,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         n_bins_non_missing = [None] * n_features
 
         non_cat_thresholds = Parallel(n_jobs=self.n_threads, backend="threading")(
-            delayed(_find_binning_thresholds)(X[:, f_idx], sample_weights, max_bins)
+            delayed(_find_binning_thresholds)(X[:, f_idx], sample_weight, max_bins)
             for f_idx in range(n_features)
             if not self.is_categorical_[f_idx]
         )
