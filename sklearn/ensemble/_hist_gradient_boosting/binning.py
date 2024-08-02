@@ -14,8 +14,8 @@ from ...base import BaseEstimator, TransformerMixin
 from ...utils import check_array, check_random_state
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils.parallel import Parallel, delayed
+from ...utils.stats import _weighted_percentile
 from ...utils.validation import check_is_fitted
-from ..utils.stats import _weighted_percentile
 from ._binning import _map_to_bins
 from ._bitset import set_bitset_memoryview
 from .common import ALMOST_INF, X_BINNED_DTYPE, X_BITSET_INNER_DTYPE, X_DTYPE
