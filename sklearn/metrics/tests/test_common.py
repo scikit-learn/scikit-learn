@@ -58,6 +58,7 @@ from sklearn.metrics.pairwise import (
     cosine_similarity,
     euclidean_distances,
     paired_cosine_distances,
+    paired_euclidean_distances,
     rbf_kernel,
 )
 from sklearn.preprocessing import LabelBinarizer
@@ -75,7 +76,7 @@ from sklearn.utils._testing import (
     assert_array_less,
     ignore_warnings,
 )
-from sklearn.utils.fixes import COO_CONTAINERS
+from sklearn.utils.fixes import COO_CONTAINERS, parse_version, sp_version
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import _num_samples, check_random_state
 
@@ -639,7 +640,6 @@ def test_sample_order_invariance(name):
         )
 
 
-@ignore_warnings
 def test_sample_order_invariance_multilabel_and_multioutput():
     random_state = check_random_state(0)
 
@@ -973,7 +973,6 @@ def test_classification_binary_continuous_input(metric):
         metric(y_true, y_score)
 
 
-@ignore_warnings
 def check_single_sample(name):
     # Non-regression test: scores should work with a single sample.
     # This is important for leave-one-out cross validation.
@@ -990,13 +989,14 @@ def check_single_sample(name):
         metric([i], [j])
 
 
-@ignore_warnings
 def check_single_sample_multioutput(name):
     metric = ALL_METRICS[name]
     for i, j, k, l in product([0, 1], repeat=4):
         metric(np.array([[i, j]]), np.array([[k, l]]))
 
 
+# filter many metric specific warnings
+@pytest.mark.filterwarnings("ignore")
 @pytest.mark.parametrize(
     "name",
     sorted(
@@ -1011,6 +1011,8 @@ def test_single_sample(name):
     check_single_sample(name)
 
 
+# filter many metric specific warnings
+@pytest.mark.filterwarnings("ignore")
 @pytest.mark.parametrize("name", sorted(MULTIOUTPUT_METRICS | MULTILABELS_METRICS))
 def test_single_sample_multioutput(name):
     check_single_sample_multioutput(name)
@@ -1045,7 +1047,7 @@ def test_multioutput_regression_invariance_to_dimension_shuffling(name):
         )
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.UndefinedMetricWarning")
 @pytest.mark.parametrize("coo_container", COO_CONTAINERS)
 def test_multilabel_representation_invariance(coo_container):
     # Generate some data
@@ -1247,7 +1249,6 @@ def test_normalize_option_multilabel_classification(name):
     )
 
 
-@ignore_warnings
 def _check_averaging(
     metric, y_true, y_pred, y_true_binarize, y_pred_binarize, is_multilabel
 ):
@@ -1396,7 +1397,6 @@ def test_averaging_multilabel_all_ones(name):
     check_averaging(name, y_true, y_true_binarize, y_pred, y_pred_binarize, y_score)
 
 
-@ignore_warnings
 def check_sample_weight_invariance(name, metric, y1, y2):
     rng = np.random.RandomState(0)
     sample_weight = rng.randint(1, 10, size=len(y1))
@@ -1590,7 +1590,6 @@ def test_multilabel_sample_weight_invariance(name):
         check_sample_weight_invariance(name, metric, y_true, y_pred)
 
 
-@ignore_warnings
 def test_no_averaging_labels():
     # test labels argument when not using averaging
     # in multi-class and multi-label cases
@@ -1868,6 +1867,12 @@ def check_array_api_multilabel_classification_metric(
 
 
 def check_array_api_regression_metric(metric, array_namespace, device, dtype_name):
+    func_name = metric.func.__name__ if isinstance(metric, partial) else metric.__name__
+    if func_name == "mean_poisson_deviance" and sp_version < parse_version("1.14.0"):
+        pytest.skip(
+            "mean_poisson_deviance's dependency `xlogy` is available as of scipy 1.14.0"
+        )
+
     y_true_np = np.array([2.0, 0.1, 1.0, 4.0], dtype=dtype_name)
     y_pred_np = np.array([0.5, 0.5, 2, 2], dtype=dtype_name)
 
@@ -2013,6 +2018,7 @@ array_api_metric_checkers = {
         check_array_api_regression_metric,
     ],
     paired_cosine_distances: [check_array_api_metric_pairwise],
+    mean_poisson_deviance: [check_array_api_regression_metric],
     additive_chi2_kernel: [check_array_api_metric_pairwise],
     mean_gamma_deviance: [check_array_api_regression_metric],
     max_error: [check_array_api_regression_metric],
@@ -2021,6 +2027,7 @@ array_api_metric_checkers = {
         check_array_api_regression_metric_multioutput,
     ],
     chi2_kernel: [check_array_api_metric_pairwise],
+    paired_euclidean_distances: [check_array_api_metric_pairwise],
     cosine_distances: [check_array_api_metric_pairwise],
     euclidean_distances: [check_array_api_metric_pairwise],
     rbf_kernel: [check_array_api_metric_pairwise],

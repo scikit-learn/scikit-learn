@@ -225,15 +225,15 @@ class KNNImputer(_BaseImputer):
         """
         # Check data integrity and calling arguments
         if not is_scalar_nan(self.missing_values):
-            force_all_finite = True
+            ensure_all_finite = True
         else:
-            force_all_finite = "allow-nan"
+            ensure_all_finite = "allow-nan"
 
         X = self._validate_data(
             X,
             accept_sparse=False,
             dtype=FLOAT_DTYPES,
-            force_all_finite=force_all_finite,
+            ensure_all_finite=ensure_all_finite,
             copy=self.copy,
         )
 
@@ -262,15 +262,15 @@ class KNNImputer(_BaseImputer):
 
         check_is_fitted(self)
         if not is_scalar_nan(self.missing_values):
-            force_all_finite = True
+            ensure_all_finite = True
         else:
-            force_all_finite = "allow-nan"
+            ensure_all_finite = "allow-nan"
         X = self._validate_data(
             X,
             accept_sparse=False,
             dtype=FLOAT_DTYPES,
             force_writeable=True,
-            force_all_finite=force_all_finite,
+            ensure_all_finite=ensure_all_finite,
             copy=self.copy,
             reset=False,
         )
@@ -363,7 +363,7 @@ class KNNImputer(_BaseImputer):
             self._fit_X,
             metric=self.metric,
             missing_values=self.missing_values,
-            force_all_finite=force_all_finite,
+            ensure_all_finite=ensure_all_finite,
             reduce_func=process_chunk,
         )
         for chunk in gen:

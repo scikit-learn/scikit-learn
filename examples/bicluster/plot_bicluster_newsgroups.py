@@ -23,6 +23,9 @@ achieve a better V-measure than clusters found by MiniBatchKMeans.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import operator
 from collections import defaultdict
 from time import time

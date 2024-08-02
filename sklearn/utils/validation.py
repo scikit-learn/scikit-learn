@@ -718,7 +718,8 @@ def check_array(
     order=None,
     copy=False,
     force_writeable=False,
-    force_all_finite=True,
+    force_all_finite="deprecated",
+    ensure_all_finite=None,
     ensure_non_negative=False,
     ensure_2d=True,
     allow_nd=False,
@@ -790,6 +791,22 @@ def check_array(
 
         .. versionchanged:: 0.23
            Accepts `pd.NA` and converts it into `np.nan`
+
+        .. deprecated:: 1.6
+           `force_all_finite` was renamed to `ensure_all_finite` and will be removed
+           in 1.8.
+
+    ensure_all_finite : bool or 'allow-nan', default=True
+        Whether to raise an error on np.inf, np.nan, pd.NA in array. The
+        possibilities are:
+
+        - True: Force all values of array to be finite.
+        - False: accepts np.inf, np.nan, pd.NA in array.
+        - 'allow-nan': accepts only np.nan and pd.NA values in array. Values
+          cannot be infinite.
+
+        .. versionadded:: 1.6
+           `force_all_finite` was renamed to `ensure_all_finite`.
 
     ensure_non_negative : bool, default=False
         Make sure the array has only non-negative values. If True, an array that

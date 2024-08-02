@@ -127,7 +127,7 @@ def sag_solver(
 
     y : ndarray of shape (n_samples,)
         Target values. With loss='multinomial', y must be label encoded
-        (see preprocessing.LabelEncoder).
+        (see preprocessing.LabelEncoder). For loss='log' it must be in [0, 1].
 
     sample_weight : array-like of shape (n_samples,), default=None
         Weights applied to individual samples (1. for unweighted).

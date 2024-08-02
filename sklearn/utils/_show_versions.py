@@ -4,6 +4,7 @@ Utility methods to print system info for debugging
 adapted from :func:`pandas.show_versions`
 """
 
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import platform
