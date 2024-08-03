@@ -119,7 +119,7 @@ persist and plan to serve the model:
   to get predictions. This environment can be minimal and does not necessarily
   even require Python to be installed to load the model and compute
   predictions. Also note that `onnxruntime` typically requires much less RAM
-  than Python to to compute predictions from small models.
+  than Python to compute predictions from small models.
 
 - :mod:`skops.io`, :mod:`pickle`, :mod:`joblib`, `cloudpickle`_: You need a
   Python environment with the appropriate dependencies installed to load the
