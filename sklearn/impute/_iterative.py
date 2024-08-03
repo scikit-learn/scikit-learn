@@ -695,7 +695,7 @@ class IterativeImputer(_BaseImputer):
         limit = limit_bound if limit is None else limit
         if np.isscalar(limit):
             limit = np.full(n_features, limit)
-        limit = check_array(limit, force_all_finite=False, copy=False, ensure_2d=False)
+        limit = check_array(limit, ensure_all_finite=False, copy=False, ensure_2d=False)
         return limit
 
     @_fit_context(
