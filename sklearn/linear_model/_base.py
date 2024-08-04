@@ -609,7 +609,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         has_sw = sample_weight is not None
         if has_sw:
             sample_weight = _check_sample_weight(
-                sample_weight, X, dtype=X.dtype, only_non_negative=True
+                sample_weight, X, dtype=X.dtype, ensure_non_negative=True
             )
 
         # Note that neither _rescale_data nor the rest of the fit method of
