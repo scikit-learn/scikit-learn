@@ -1045,6 +1045,10 @@ def check_array(
                     # Conversion float -> int should not contain NaN or
                     # inf (numpy#14412). We cannot use casting='safe' because
                     # then conversion float -> int would be disallowed.
+                    print(
+                        "###in check array #####before _asarray_with_order###########"
+                    )
+                    print(type(array))
                     array = _asarray_with_order(array, order=order, xp=xp)
                     print("###in check array #####after _asarray_with_order###########")
                     print(type(array))
