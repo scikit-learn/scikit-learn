@@ -601,12 +601,23 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             return log_likelihood
 
     def _log_likelihood_calc(slef, y_train, alpha, L, K):
-        """Returns the log-likelihood given the required algebraic terms.
+        """Returns the log-likelihood of the multivariate Gaussian distribution.
+
+        Parameters
+        ----------
+        y_train : array-like of shape (n_samples,) or (n_samples, n_targets)
+                  Target values.
+
+        alpha : K^(-1) * y_train
+
+        L : Lower cholesky decomposition of the kernel matrix K.
+
+        K : Kernel matrix used.
 
         Returns
         -------
         log_likelihood : float
-            Log-marginal likelihood of theta for training data given 
+            Log-marginal likelihood of multivariate Gaussian distribution using covariance K and training data
         """
         # Alg 2.1, page 19, line 7
         # -0.5 . y^T . alpha - sum(log(diag(L))) - n_samples / 2 log(2*pi)
@@ -624,6 +635,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         log_likelihood_dims -= K.shape[0] / 2 * np.log(2 * np.pi)
         # the log likehood is sum-up across the outputs
         log_likelihood = log_likelihood_dims.sum(axis=-1)
+        print(slef.kernel_.theta)
         return log_likelihood
 
     def _log_likelihood_gradient_calc(self, alpha, L, K, K_gradient):

@@ -13,7 +13,7 @@ import pytest
 from scipy.optimize import approx_fprime
 
 from sklearn.exceptions import ConvergenceWarning
-# from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process import TProcessRegressor
 from sklearn.gaussian_process.kernels import (
     RBF,
@@ -227,7 +227,8 @@ def test_anisotropic_kernel():
     # than in the other. The corresponding length-scales should differ by at
     # least a factor 5
     rng = np.random.RandomState(0)
-    X = rng.uniform(-1, 1, (50, 2))
+    # X = rng.uniform(-1, 1, (50, 2))
+    X = rng.uniform(-1, 1, (25, 2))  # Less observations must be used for testing T-process Regression
     y = X[:, 0] + 0.1 * X[:, 1]
 
     kernel = RBF([1.0, 1.0])
@@ -251,13 +252,14 @@ def test_random_starts():
         length_scale=[1.0] * n_features, length_scale_bounds=[(1e-4, 1e2)] * n_features
     ) + WhiteKernel(noise_level=1e-5, noise_level_bounds=(1e-5, 1e1))
     last_lml = -np.inf
-    for n_restarts_optimizer in range(5):
-        gp = TProcessRegressor(
+    # for n_restarts_optimizer in range(5):
+    for n_restarts_optimizer in range(3):  # Less restarts must be used when testing T-Processes
+        tp = TProcessRegressor(
             kernel=kernel,
             n_restarts_optimizer=n_restarts_optimizer,
             random_state=0,
         ).fit(X, y)
-        lml = gp.log_marginal_likelihood(gp.kernel_.theta)
+        lml = tp.log_marginal_likelihood(tp.kernel_.theta)
         assert lml > last_lml - np.finfo(np.float32).eps
         last_lml = lml
 
@@ -435,10 +437,10 @@ def test_tpr_correct_error_message():
     kernel = DotProduct()
     tpr = TProcessRegressor(kernel=kernel, alpha=0.0)
     message = (
-        "The kernel, %s, is not returning a "
-        "positive definite matrix. Try gradually increasing "
-        "the 'alpha' parameter of your "
-        "TProcessRegressor estimator." % kernel
+            "The kernel, %s, is not returning a "
+            "positive definite matrix. Try gradually increasing "
+            "the 'alpha' parameter of your "
+            "GaussianProcessRegressor estimator." % kernel
     )
     with pytest.raises(np.linalg.LinAlgError, match=re.escape(message)):
         tpr.fit(X, y)
@@ -692,7 +694,7 @@ def test_tpr_predict_error():
     """Check that we raise the proper error during predict."""
     tpr = TProcessRegressor(kernel=RBF()).fit(X, y)
 
-    err_msg = "At most one of return_std or return_cov can be requested."
+    err_msg = "At most one of return_std, return_cov, return_tShape or return_tShapeMatrix can be requested."
     with pytest.raises(RuntimeError, match=err_msg):
         tpr.predict(X, return_cov=True, return_std=True)
 

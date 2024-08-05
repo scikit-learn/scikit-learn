@@ -223,6 +223,7 @@ class TProcessRegressor(GaussianProcessRegressor):
         self.v = self.v0 + self.n
         self.c_fit1 = self.v / 2
         self.log_likelihood_dims_const = gam(self.c_fit1) - self.c1 - self.n / 2 * self.c2
+
         super().fit(X, y)
         return self
 
@@ -346,26 +347,49 @@ class TProcessRegressor(GaussianProcessRegressor):
     def _log_likelihood_calc(self, y_train, alpha, L, K):
         """Returns the log-likelihood given L and the training points.
 
+        Parameters
+        ----------
+        y_train : array-like of shape (n_samples,) or (n_samples, n_targets)
+                  Target values.
+
+        alpha : K^(-1) * y_train
+
+        L : Lower cholesky decomposition of the kernel matrix K.
+
+        K : Kernel matrix used.
+
         Returns
         -------
         log_likelihood : float
-            Log-marginal likelihood of theta for training data given
+            Log-marginal likelihood of multivariate T distribution using covariance K and training data
         """
         # TODO find citation of algorithm
-        self.m_dis = np.einsum("ik,ik->k", y_train, alpha)
+        self.m_dis = np.einsum("ik,ik->k", y_train, alpha)  # TODO Double check
         log_likelihood_dims = self.log_likelihood_dims_const
         log_likelihood_dims -= self.c_fit1 * np.log(1 + self.m_dis / self.v0)
         log_likelihood_dims -= np.log(np.diag(L)).sum()
         log_likelihood = log_likelihood_dims.sum(axis=-1)
+        print(self.kernel_.theta)
         return log_likelihood
 
     def _log_likelihood_gradient_calc(self, alpha, L, K, K_gradient):
         """Returns the log-likelihood gradient given teh required algebraic terms.
 
-                Returns
-                -------
-                log_likelihood_gradient : np.array
-                    Log-marginal likelihood gradient with respect to theta
+        Parameters
+        ----------
+        y_train : array-like of shape (n_samples,) or (n_samples, n_targets)
+                  Target values.
+
+        alpha : K^(-1) * y_train
+
+        L : Lower cholesky decomposition of the kernel matrix K.
+
+        K : Kernel matrix used.
+
+        Returns
+        -------
+        log_likelihood_gradient : np.array
+            Log-marginal likelihood gradient with respect to theta
         """
         # TODO find citation of algorithm
         inner_term = np.einsum("ik,jk->ijk", alpha, alpha)
