@@ -172,7 +172,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     >>> # encodings:
     >>> enc_high_smooth = TargetEncoder(smooth=5000.0).fit(X, y)
     >>> enc_high_smooth.target_mean_
-    44...
+    np.float64(44...)
     >>> enc_high_smooth.encodings_
     [array([44..., 44..., 44...])]
 

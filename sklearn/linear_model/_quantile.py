@@ -104,7 +104,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     >>> solver = "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
     >>> reg = QuantileRegressor(quantile=0.8, solver=solver).fit(X, y)
     >>> np.mean(y <= reg.predict(X))
-    0.8
+    np.float64(0.8)
     """
 
     _parameter_constraints: dict = {

@@ -66,10 +66,10 @@ def check_increasing(x, y):
     >>> from sklearn.isotonic import check_increasing
     >>> x, y = [1, 2, 3, 4, 5], [2, 4, 6, 8, 10]
     >>> check_increasing(x, y)
-    True
+    np.True_
     >>> y = [10, 8, 6, 4, 2]
     >>> check_increasing(x, y)
-    False
+    np.False_
     """
 
     # Calculate Spearman rho estimate and set return accordingly.

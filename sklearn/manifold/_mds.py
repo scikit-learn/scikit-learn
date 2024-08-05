@@ -322,7 +322,7 @@ def smacof(
            [ 1.74..., -0.75...],
            [-1.79...,  1.83...]])
     >>> stress
-    0.0012...
+    np.float64(0.0012...)
     """
 
     dissimilarities = check_array(dissimilarities)

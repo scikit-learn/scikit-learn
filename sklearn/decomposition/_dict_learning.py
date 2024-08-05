@@ -847,7 +847,7 @@ def dict_learning_online(
     We can check the level of sparsity of `U`:
 
     >>> np.mean(U == 0)
-    0.53...
+    np.float64(0.53...)
 
     We can compare the average squared euclidean norm of the reconstruction
     error of the sparse coded signal relative to the squared euclidean norm of
@@ -855,7 +855,7 @@ def dict_learning_online(
 
     >>> X_hat = U @ V
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
-    0.05...
+    np.float64(0.05...)
     """
     # TODO(1.6): remove in 1.6
     if max_iter is None:
@@ -1049,7 +1049,7 @@ def dict_learning(
     We can check the level of sparsity of `U`:
 
     >>> np.mean(U == 0)
-    0.6...
+    np.float64(0.6...)
 
     We can compare the average squared euclidean norm of the reconstruction
     error of the sparse coded signal relative to the squared euclidean norm of
@@ -1057,7 +1057,7 @@ def dict_learning(
 
     >>> X_hat = U @ V
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
-    0.01...
+    np.float64(0.01...)
     """
     estimator = DictionaryLearning(
         n_components=n_components,
@@ -1551,7 +1551,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     We can check the level of sparsity of `X_transformed`:
 
     >>> np.mean(X_transformed == 0)
-    0.52...
+    np.float64(0.52...)
 
     We can compare the average squared euclidean norm of the reconstruction
     error of the sparse coded signal relative to the squared euclidean norm of
@@ -1559,7 +1559,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     >>> X_hat = X_transformed @ dict_learner.components_
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
-    0.05...
+    np.float64(0.05...)
     """
 
     _parameter_constraints: dict = {
@@ -1914,7 +1914,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     We can check the level of sparsity of `X_transformed`:
 
     >>> np.mean(X_transformed == 0) > 0.5
-    True
+    np.True_
 
     We can compare the average squared euclidean norm of the reconstruction
     error of the sparse coded signal relative to the squared euclidean norm of
@@ -1922,7 +1922,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     >>> X_hat = X_transformed @ dict_learner.components_
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
-    0.052...
+    np.float64(0.052...)
     """
 
     _parameter_constraints: dict = {
