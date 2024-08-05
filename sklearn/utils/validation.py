@@ -1062,6 +1062,7 @@ def check_array(
         _ensure_no_complex_data(array)
 
         print("############################in check array #######################")
+        print(type(array))
         if hasattr(array, "device"):
             print(array.device)
         if hasattr(array, "shape"):
