@@ -24,7 +24,6 @@ from .utils.extmath import safe_sparse_dot
 from .utils.validation import (
     _check_feature_names_in,
     check_is_fitted,
-    check_non_negative,
 )
 
 
@@ -674,8 +673,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         self : object
             Returns the transformer.
         """
-        X = self._validate_data(X, accept_sparse="csr")
-        check_non_negative(X, "X in AdditiveChi2Sampler.fit")
+        X = self._validate_data(X, accept_sparse="csr", ensure_non_negative=True)
 
         if self.sample_interval is None and self.sample_steps not in (1, 2, 3):
             raise ValueError(
@@ -701,8 +699,9 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
             Whether the return value is an array or sparse matrix depends on
             the type of the input X.
         """
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
-        check_non_negative(X, "X in AdditiveChi2Sampler.transform")
+        X = self._validate_data(
+            X, accept_sparse="csr", reset=False, ensure_non_negative=True
+        )
         sparse = sp.issparse(X)
 
         if self.sample_interval is None:

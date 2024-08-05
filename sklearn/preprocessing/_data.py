@@ -218,7 +218,7 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
         ensure_2d=False,
         estimator="the scale function",
         dtype=FLOAT_DTYPES,
-        force_all_finite="allow-nan",
+        ensure_all_finite="allow-nan",
     )
     if sparse.issparse(X):
         if with_mean:
@@ -485,7 +485,7 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             X,
             reset=first_pass,
             dtype=_array_api.supported_float_dtypes(xp),
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
         )
 
         data_min = _array_api._nanmin(X, axis=0, xp=xp)
@@ -530,7 +530,7 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             copy=self.copy,
             dtype=_array_api.supported_float_dtypes(xp),
             force_writeable=True,
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
             reset=False,
         )
 
@@ -562,7 +562,7 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             copy=self.copy,
             dtype=_array_api.supported_float_dtypes(xp),
             force_writeable=True,
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
         )
 
         X -= self.min_
@@ -668,7 +668,11 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     # Unlike the scaler object, this function allows 1d input.
     # If copy is required, it will be done inside the scaler object.
     X = check_array(
-        X, copy=False, ensure_2d=False, dtype=FLOAT_DTYPES, force_all_finite="allow-nan"
+        X,
+        copy=False,
+        ensure_2d=False,
+        dtype=FLOAT_DTYPES,
+        ensure_all_finite="allow-nan",
     )
     original_ndim = X.ndim
 
@@ -909,7 +913,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             X,
             accept_sparse=("csr", "csc"),
             dtype=FLOAT_DTYPES,
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
             reset=first_call,
         )
         n_features = X.shape[1]
@@ -1043,7 +1047,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             copy=copy,
             dtype=FLOAT_DTYPES,
             force_writeable=True,
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
         )
 
         if sparse.issparse(X):
@@ -1085,7 +1089,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             copy=copy,
             dtype=FLOAT_DTYPES,
             force_writeable=True,
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
         )
 
         if sparse.issparse(X):
@@ -1247,7 +1251,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             reset=first_pass,
             accept_sparse=("csr", "csc"),
             dtype=_array_api.supported_float_dtypes(xp),
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
         )
 
         if sparse.issparse(X):
@@ -1290,7 +1294,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             reset=False,
             dtype=_array_api.supported_float_dtypes(xp),
             force_writeable=True,
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
         )
 
         if sparse.issparse(X):
@@ -1322,7 +1326,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             copy=self.copy,
             dtype=_array_api.supported_float_dtypes(xp),
             force_writeable=True,
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
         )
 
         if sparse.issparse(X):
@@ -1417,7 +1421,7 @@ def maxabs_scale(X, *, axis=0, copy=True):
         copy=False,
         ensure_2d=False,
         dtype=FLOAT_DTYPES,
-        force_all_finite="allow-nan",
+        ensure_all_finite="allow-nan",
     )
     original_ndim = X.ndim
 
@@ -1592,7 +1596,7 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             X,
             accept_sparse="csc",
             dtype=FLOAT_DTYPES,
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
         )
 
         q_min, q_max = self.quantile_range
@@ -1656,7 +1660,7 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             dtype=FLOAT_DTYPES,
             force_writeable=True,
             reset=False,
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
         )
 
         if sparse.issparse(X):
@@ -1689,7 +1693,7 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             copy=self.copy,
             dtype=FLOAT_DTYPES,
             force_writeable=True,
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
         )
 
         if sparse.issparse(X):
@@ -1822,7 +1826,7 @@ def robust_scale(
         copy=False,
         ensure_2d=False,
         dtype=FLOAT_DTYPES,
-        force_all_finite="allow-nan",
+        ensure_all_finite="allow-nan",
     )
     original_ndim = X.ndim
 
@@ -2866,7 +2870,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             # only set force_writeable for the validation at transform time because
             # it's the only place where QuantileTransformer performs inplace operations.
             force_writeable=True if not in_fit else None,
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
         )
         # we only accept positive sparse matrix when ignore_implicit_zeros is
         # false and that we call fit or transform.
@@ -3506,7 +3510,7 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             dtype=FLOAT_DTYPES,
             force_writeable=True,
             copy=self.copy,
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
             reset=in_fit,
         )
 

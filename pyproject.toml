@@ -61,7 +61,8 @@ docs = [
     "sphinx-prompt>=1.4.0",
     "sphinxext-opengraph>=0.9.1",
     "plotly>=5.14.0",
-    "polars>=0.20.23",
+    "polars>=0.20.30",
+    "sphinx-design>=0.5.0",
     "sphinx-design>=0.6.0",
     "sphinxcontrib-sass>=0.3.4",
     "pydata-sphinx-theme>=0.15.3",
@@ -85,7 +86,7 @@ tests = [
     "black>=24.3.0",
     "mypy>=1.9",
     "pyamg>=4.0.0",
-    "polars>=0.20.23",
+    "polars>=0.20.30",
     "pyarrow>=12.0.0",
     "numpydoc>=1.2.0",
     "pooch>=1.6.0",
@@ -163,7 +164,7 @@ ignore=[
 ]
 
 [tool.ruff.lint.flake8-copyright]
-notice-rgx = "\\#\\ Authors:\\ The\\ scikit\\-learn\\ developers\\\n\\#\\ SPDX\\-License\\-Identifier:\\ BSD\\-3\\-Clause\\\n"
+notice-rgx = "\\#\\ Authors:\\ The\\ scikit\\-learn\\ developers\\\r?\\\n\\#\\ SPDX\\-License\\-Identifier:\\ BSD\\-3\\-Clause"
 
 [tool.ruff.lint.per-file-ignores]
 # It's fine not to put the import at the top of the file in the examples
