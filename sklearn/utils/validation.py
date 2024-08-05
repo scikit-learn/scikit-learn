@@ -876,6 +876,13 @@ def check_array(
     >>> X_checked
     array([[1, 2, 3], [4, 5, 6]])
     """
+    print("###########in the beginning of check array #######################")
+    print(type(array))
+    if hasattr(array, "device"):
+        print(array.device)
+    if hasattr(array, "shape"):
+        print(array.shape)
+    print("##################################################################")
     ensure_all_finite = _deprecate_force_all_finite(force_all_finite, ensure_all_finite)
 
     if isinstance(array, np.matrix):
@@ -968,6 +975,8 @@ def check_array(
         # Use the original dtype for conversion if dtype is None
         new_dtype = dtype_orig if dtype is None else dtype
         array = array.astype(new_dtype)
+        print("####type after array = array.astype(new_dtype)")
+        print(type(array))
         # Since we converted here, we do not need to convert again later
         dtype = None
 
@@ -995,6 +1004,8 @@ def check_array(
             if array.dtypes.apply(is_sparse).all():
                 # DataFrame.sparse only supports `to_coo`
                 array = array.sparse.to_coo()
+                print("####type after array = array.sparse.to_coo()")
+                print(type(array))
                 if array.dtype == np.dtype("object"):
                     unique_dtypes = set([dt.subtype.name for dt in array_orig.dtypes])
                     if len(unique_dtypes) > 1:
@@ -1018,6 +1029,8 @@ def check_array(
             estimator_name=estimator_name,
             input_name=input_name,
         )
+        print("####type after array = _ensure_sparse_format(")
+        print(type(array))
         if ensure_2d and array.ndim < 2:
             raise ValueError(
                 f"Expected 2D input, got input with shape {array.shape}.\n"
@@ -1039,6 +1052,11 @@ def check_array(
                     # inf (numpy#14412). We cannot use casting='safe' because
                     # then conversion float -> int would be disallowed.
                     array = _asarray_with_order(array, order=order, xp=xp)
+                    print(
+                        "####type after array = _asarray_with_order(array, order=order,\
+                         xp=xp)"
+                    )
+                    print(type(array))
                     if xp.isdtype(array.dtype, ("real floating", "complex floating")):
                         _assert_all_finite(
                             array,
@@ -1048,8 +1066,15 @@ def check_array(
                             input_name=input_name,
                         )
                     array = xp.astype(array, dtype, copy=False)
+                    print("####type after array = xp.astype(array, dtype, copy=False)")
+                    print(type(array))
                 else:
                     array = _asarray_with_order(array, order=order, dtype=dtype, xp=xp)
+                    print(
+                        "####type after array = _asarray_with_order(array, order=order,\
+                         dtype=dtype, xp=xp)"
+                    )
+                    print(type(array))
             except ComplexWarning as complex_warning:
                 raise ValueError(
                     "Complex data not supported\n{}\n".format(array)
