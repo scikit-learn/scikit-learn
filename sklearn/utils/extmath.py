@@ -121,7 +121,7 @@ def fast_logdet(A):
     >>> from sklearn.utils.extmath import fast_logdet
     >>> a = np.array([[5, 1], [2, 8]])
     >>> fast_logdet(a)
-    3.6375861597263857
+    np.float64(3.6375861597263857)
     """
     xp, _ = get_namespace(A)
     sign, ld = xp.linalg.slogdet(A)

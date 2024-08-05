@@ -74,11 +74,11 @@ class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
     >>> le.fit(["paris", "paris", "tokyo", "amsterdam"])
     LabelEncoder()
     >>> list(le.classes_)
-    ['amsterdam', 'paris', 'tokyo']
+    [np.str_('amsterdam'), np.str_('paris'), np.str_('tokyo')]
     >>> le.transform(["tokyo", "tokyo", "paris"])
     array([2, 2, 1]...)
     >>> list(le.inverse_transform([2, 2, 1]))
-    ['tokyo', 'tokyo', 'paris']
+    [np.str_('tokyo'), np.str_('tokyo'), np.str_('paris')]
     """
 
     def fit(self, y):

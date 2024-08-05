@@ -1646,7 +1646,7 @@ class LarsCV(Lars):
     >>> reg.score(X, y)
     0.9996...
     >>> reg.alpha_
-    0.2961...
+    np.float64(0.2961...)
     >>> reg.predict(X[:1,])
     array([154.3996...])
     """
@@ -1986,7 +1986,7 @@ class LassoLarsCV(LarsCV):
     >>> reg.score(X, y)
     0.9993...
     >>> reg.alpha_
-    0.3972...
+    np.float64(0.3972...)
     >>> reg.predict(X[:1,])
     array([-78.4831...])
     """

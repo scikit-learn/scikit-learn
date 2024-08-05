@@ -338,7 +338,7 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     >>> X = rng.multivariate_normal(mean=[0, 0], cov=real_cov, size=50)
     >>> shrinkage_coefficient = ledoit_wolf_shrinkage(X)
     >>> shrinkage_coefficient
-    0.23...
+    np.float64(0.23...)
     """
     X = check_array(X)
     # for only one feature, the result is the same whatever the shrinkage
@@ -455,7 +455,7 @@ def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
     array([[0.44..., 0.16...],
            [0.16..., 0.80...]])
     >>> shrinkage
-    0.23...
+    np.float64(0.23...)
     """
     estimator = LedoitWolf(
         assume_centered=assume_centered,
@@ -675,7 +675,7 @@ def oas(X, *, assume_centered=False):
     array([[0.7533..., 0.2763...],
            [0.2763..., 0.3964...]])
     >>> shrinkage
-    0.0195...
+    np.float64(0.0195...)
     """
     estimator = OAS(
         assume_centered=assume_centered,
@@ -781,7 +781,7 @@ class OAS(EmpiricalCovariance):
     array([[ 1.7833..., -1.2431... ],
            [-1.2431...,  3.3889...]])
     >>> oas.shrinkage_
-    0.0195...
+    np.float64(0.0195...)
     """
 
     @_fit_context(prefer_skip_nested_validation=True)

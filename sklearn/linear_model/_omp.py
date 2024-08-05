@@ -996,7 +996,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     >>> reg.score(X, y)
     0.9991...
     >>> reg.n_nonzero_coefs_
-    10
+    np.int64(10)
     >>> reg.predict(X[:1,])
     array([-78.3854...])
     """

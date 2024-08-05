@@ -205,7 +205,7 @@ def make_classification(
     >>> y.shape
     (100,)
     >>> list(y[:5])
-    [0, 0, 1, 1, 0]
+    [np.int64(0), np.int64(0), np.int64(1), np.int64(1), np.int64(0)]
     """
     generator = check_random_state(random_state)
 
@@ -557,7 +557,8 @@ def make_hastie_10_2(n_samples=12000, *, random_state=None):
     >>> y.shape
     (24000,)
     >>> list(y[:5])
-    [-1.0, 1.0, -1.0, 1.0, -1.0]
+    [np.float64(-1.0), np.float64(1.0), np.float64(-1.0), np.float64(1.0),
+    np.float64(-1.0)]
     """
     rs = check_random_state(random_state)
 
@@ -797,7 +798,7 @@ def make_circles(
     >>> y.shape
     (100,)
     >>> list(y[:5])
-    [1, 1, 1, 0, 0]
+    [np.int64(1), np.int64(1), np.int64(1), np.int64(0), np.int64(0)]
     """
     if isinstance(n_samples, numbers.Integral):
         n_samples_out = n_samples // 2
@@ -1169,7 +1170,7 @@ def make_friedman1(n_samples=100, n_features=10, *, noise=0.0, random_state=None
     >>> y.shape
     (100,)
     >>> list(y[:3])
-    [16.8..., 5.8..., 9.4...]
+    [np.float64(16.8...), np.float64(5.8...), np.float64(9.4...)]
     """
     generator = check_random_state(random_state)
 
@@ -1251,7 +1252,7 @@ def make_friedman2(n_samples=100, *, noise=0.0, random_state=None):
     >>> y.shape
     (100,)
     >>> list(y[:3])
-    [1229.4..., 27.0..., 65.6...]
+    [np.float64(1229.4...), np.float64(27.0...), np.float64(65.6...)]
     """
     generator = check_random_state(random_state)
 
@@ -1335,7 +1336,7 @@ def make_friedman3(n_samples=100, *, noise=0.0, random_state=None):
     >>> y.shape
     (100,)
     >>> list(y[:3])
-    [1.5..., 0.9..., 0.4...]
+    [np.float64(1.5...), np.float64(0.9...), np.float64(0.4...)]
     """
     generator = check_random_state(random_state)
 
@@ -2050,7 +2051,7 @@ def make_gaussian_quantiles(
     >>> y.shape
     (100,)
     >>> list(y[:5])
-    [2, 0, 1, 0, 2]
+    [np.int64(2), np.int64(0), np.int64(1), np.int64(0), np.int64(2)]
     """
     if n_samples < n_classes:
         raise ValueError("n_samples must be at least n_classes")
