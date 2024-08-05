@@ -1061,6 +1061,10 @@ def check_array(
         # and we need to catch and raise exception for such cases.
         _ensure_no_complex_data(array)
 
+        print("############################in check array #######################")
+        print(array.device)
+        print(array.shape)
+        print("##################################################################")
         if ensure_2d:
             # If input is scalar raise error
             if array.ndim == 0:
