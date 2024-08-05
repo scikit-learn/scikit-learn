@@ -1062,8 +1062,10 @@ def check_array(
         _ensure_no_complex_data(array)
 
         print("############################in check array #######################")
-        print(array.device)
-        print(array.shape)
+        if hasattr(array.device):
+            print(array.device)
+        if hasattr(array.shape):
+            print(array.shape)
         print("##################################################################")
         if ensure_2d:
             # If input is scalar raise error

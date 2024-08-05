@@ -631,8 +631,10 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
                 out = X, y
         elif not no_val_X and no_val_y:
             print("#############################in _validate_data####################")
-            print(X.device)
-            print(X.shape)
+            if hasattr(X.device):
+                print(X.device)
+            if hasattr(X.shape):
+                print(X.shape)
             print("##################################################################")
             out = check_array(X, input_name="X", **check_params)
         elif no_val_X and not no_val_y:
