@@ -53,6 +53,7 @@ See :ref:`array_api` for more details.
 
 **Classes:**
 
+- :class:`preprocessing.Binarizer` :pr:`27588` by :user:`Yaroslav Korobko <Tialo>`;
 - :class:`preprocessing.LabelEncoder` now supports Array API compatible inputs.
   :pr:`27381` by :user:`Omar Salman <OmarManzoor>`.
 - :class:`model_selection.GridSearchCV`,
