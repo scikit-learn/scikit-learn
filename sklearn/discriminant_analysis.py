@@ -20,7 +20,7 @@ from .base import (
 from .covariance import empirical_covariance, ledoit_wolf, shrunk_covariance
 from .linear_model._base import LinearClassifierMixin
 from .preprocessing import StandardScaler
-from .utils._array_api import _expit, device, get_namespace, size
+from .utils._array_api import _expit, check_same_namespace, device, get_namespace, size
 from .utils._param_validation import HasMethods, Interval, StrOptions
 from .utils.extmath import softmax
 from .utils.multiclass import check_classification_targets, unique_labels
@@ -674,6 +674,7 @@ class LinearDiscriminantAnalysis(
                 "transform not implemented for 'lsqr' solver (use 'svd' or 'eigen')."
             )
         check_is_fitted(self)
+        check_same_namespace(X, self, attribute="coef_", method="transform")
         xp, _ = get_namespace(X)
         X = self._validate_data(X, reset=False)
 
@@ -698,6 +699,7 @@ class LinearDiscriminantAnalysis(
             Estimated probabilities.
         """
         check_is_fitted(self)
+        check_same_namespace(X, self, attribute="coef_", method="predict_proba")
         xp, is_array_api_compliant = get_namespace(X)
         decision = self.decision_function(X)
         if size(self.classes_) == 2:

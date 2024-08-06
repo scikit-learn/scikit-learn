@@ -24,10 +24,13 @@ from sklearn.utils._array_api import (
     _nanmin,
     _NumPyAPIWrapper,
     _ravel,
+    check_same_namespace,
+    convert_estimator,
     device,
     get_namespace,
     get_namespace_and_device,
     indexing_dtype,
+    make_converter,
     supported_float_dtypes,
     yield_namespace_device_dtype_combinations,
 )
@@ -452,6 +455,10 @@ class SimpleEstimator(BaseEstimator):
         self.n_features_ = X.shape[0]
         return self
 
+    def predict(self, X):
+        check_same_namespace(X, self, attribute="X_", method="predict")
+        return X
+
 
 @skip_if_array_api_compat_not_configured
 @pytest.mark.parametrize(
@@ -467,10 +474,36 @@ def test_convert_estimator_to_ndarray(array_namespace, converter):
     xp = pytest.importorskip(array_namespace)
 
     X = xp.asarray([[1.3, 4.5]])
-    est = SimpleEstimator().fit(X)
+    with config_context(array_api_dispatch=True):
+        est = SimpleEstimator().fit(X)
+        est.predict(X)
 
     new_est = _estimator_with_converted_arrays(est, converter)
     assert isinstance(new_est.X_, numpy.ndarray)
+    new_est = convert_estimator(est, numpy.asarray([0]))
+    assert isinstance(new_est.X_, numpy.ndarray)
+
+
+@skip_if_array_api_compat_not_configured
+def test_make_converter():
+    with config_context(array_api_dispatch=True):
+        torch = pytest.importorskip("torch")
+        X = numpy.ones(1)
+        X_torch = torch.asarray(X)
+        to_torch = make_converter(X_torch)
+        assert isinstance(to_torch(X), torch.Tensor)
+        assert to_torch(X_torch) is X_torch
+        s = "abc"
+        assert to_torch(s) is s
+        to_np = make_converter(X)
+        assert isinstance(to_np(X_torch), numpy.ndarray)
+        assert to_np(X) is X
+        assert to_np(s) is s
+    with config_context(array_api_dispatch=False):
+        passthrough = make_converter(X_torch)
+        assert passthrough(X) is X
+        assert passthrough(X_torch) is X_torch
+        assert passthrough(s) is s
 
 
 @skip_if_array_api_compat_not_configured
@@ -483,6 +516,20 @@ def test_convert_estimator_to_array_api():
 
     new_est = _estimator_with_converted_arrays(est, lambda array: xp.asarray(array))
     assert hasattr(new_est.X_, "__array_namespace__")
+    with config_context(array_api_dispatch=True):
+        new_est = convert_estimator(est, xp.asarray([0]))
+        assert get_namespace(new_est.X_)[0] == xp
+
+
+@skip_if_array_api_compat_not_configured
+def test_check_fitted_attribute():
+    xp = pytest.importorskip("array_api_strict")
+
+    X_np = numpy.asarray([[1.3, 4.5]])
+    with config_context(array_api_dispatch=True):
+        est = SimpleEstimator().fit(xp.asarray(X_np))
+        with pytest.raises(ValueError, match=".*must use the same array library"):
+            est.predict(numpy.asarray([0]))
 
 
 def test_reshape_behavior():
