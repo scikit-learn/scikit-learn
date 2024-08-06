@@ -18,9 +18,23 @@ fi
 # threadpoolctl output section of the show_versions output:
 python -c "import sklearn; sklearn.show_versions()"
 
+# Dump a core file in case of low level crashes.
+echo "Preparing to dump core files"
+ulimit -c unlimited
+sudo mkdir -p /cores
+sudo chmod 1777 /cores
+
+echo "Adding entitlements to python"
+/usr/libexec/PlistBuddy -c "Add :com.apple.security.get-task-allow bool true" python.entitlements
+/usr/bin/codesign -s - -f --entitlements python.entitlements `which python`
+
+echo "Triggering a segfault manually to check that extracting backtraces works"
+python -X faulthandler -c "import ctypes; ctypes.string_at(0)" || (find /cores -name "core.*" -exec lldb -c {} --batch -o "thread backtrace all" -o "quit" \; && exit 0)
+
+echo "Running the tests with lldb backtrace reporint on failure"
 if pip show -qq pytest-xdist; then
     XDIST_WORKERS=$(python -c "import joblib; print(joblib.cpu_count(only_physical_cores=True))")
-    pytest --pyargs sklearn -n $XDIST_WORKERS
+    python -X faulthandler -m pytest --pyargs sklearn -n $XDIST_WORKERS || (find /cores -name "core.*" -exec lldb -c {} --batch -o "thread backtrace all" -o "quit" \; && exit 1)
 else
-    pytest --pyargs sklearn
+    python -X faulthandler -m pytest --pyargs sklearn || (find /cores -name "core.*" -exec lldb -c {} --batch -o "thread backtrace all" -o "quit" \; && exit 1)
 fi
