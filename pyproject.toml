@@ -252,3 +252,6 @@ package = "sklearn"  # name of your package
 "Documentation" = [
   "spin.cmds.meson.docs"
 ]
+
+[tool.black]
+line-length = 79
