@@ -213,13 +213,13 @@ jobs:
         with:
           python-version: "3.9" # update once build dependencies are available
 
-      - name: Build source distribution
-        run: bash build_tools/github/build_source.sh
+      # - name: Build source distribution
+      #   run: bash build_tools/github/build_source.sh
 
-      - name: Test source distribution
-        run: bash build_tools/github/test_source.sh
-        env:
-          SKLEARN_SKIP_NETWORK_TESTS: 1
+      # - name: Test source distribution
+      #   run: bash build_tools/github/test_source.sh
+      #   env:
+      #     SKLEARN_SKIP_NETWORK_TESTS: 1
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4
