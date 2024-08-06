@@ -2462,7 +2462,11 @@ class _BaseRidgeCV(LinearModel):
             .add_self_request(self)
             .add(
                 scorer=self._get_scorer(),
-                method_mapping=MethodMapping().add(callee="score", caller="fit"),
+                method_mapping=MethodMapping().add(caller="fit", callee="score"),
+            )
+            .add(
+                splitter=self.cv,
+                method_mapping=MethodMapping().add(caller="fit", callee="split"),
             )
         )
         return router

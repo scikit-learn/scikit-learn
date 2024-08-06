@@ -43,10 +43,12 @@ from sklearn.linear_model import (
 from sklearn.model_selection import (
     FixedThresholdClassifier,
     GridSearchCV,
+    GroupKFold,
     HalvingGridSearchCV,
     HalvingRandomSearchCV,
     RandomizedSearchCV,
     TunedThresholdClassifierCV,
+    cross_validate,
 )
 from sklearn.multiclass import (
     OneVsOneClassifier,
@@ -83,7 +85,7 @@ y_multi = rng.randint(0, 3, size=(N, 3))
 classes_multi = [np.unique(y_multi[:, i]) for i in range(y_multi.shape[1])]
 metadata = rng.randint(0, 10, size=N)
 sample_weight = rng.rand(N)
-groups = np.array([0, 1] * (len(y) // 2))
+groups = rng.randint(0, 10, size=len(y))
 
 
 @pytest.fixture(autouse=True)
@@ -857,3 +859,28 @@ def test_metadata_is_routed_correctly_to_splitter(metaestimator):
             check_recorded_metadata(
                 obj=_splitter, method="split", parent=method_name, **method_kwargs
             )
+
+
+@pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
+def test_metadata_routed_to_group_splitter(metaestimator):
+    """Test that groups are routed correctly if group splitter of CV estimator is used
+    within cross_validate."""
+
+    if "cv_routing_methods" not in metaestimator:
+        # This test is only for metaestimators accepting a CV splitter
+        return
+
+    cls = metaestimator["metaestimator"]
+    X_ = metaestimator["X"]
+    y_ = metaestimator["y"]
+
+    try:
+        cross_validate(
+            cls(cv=GroupKFold(n_splits=2)).set_score_request(sample_weight=False),
+            X_,
+            y_,
+            params={"groups": groups},
+            cv=GroupKFold(n_splits=2),
+        )
+    except TypeError:
+        return
