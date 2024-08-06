@@ -18,6 +18,10 @@ fi
 # threadpoolctl output section of the show_versions output:
 python -c "import sklearn; sklearn.show_versions()"
 
+# Print information about the machine (Type and generation of CPU, number of
+# cores...)
+system_profiler SPHardwareDataType
+
 # Dump a core file in case of low level crashes.
 echo "Preparing to dump core files"
 ulimit -c unlimited
