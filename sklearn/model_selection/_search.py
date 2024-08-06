@@ -890,9 +890,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         Parameters
         ----------
 
-        X : array-like of shape (n_samples, n_features)
-            Training vector, where `n_samples` is the number of samples and
-            `n_features` is the number of features.
+        X : array-like of shape (n_samples, n_features) or (n_samples, n_samples)
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features. For precomputed kernel or
+            distance matrix, the expected shape of X is (n_samples, n_samples).
 
         y : array-like of shape (n_samples, n_output) \
             or (n_samples,), default=None
