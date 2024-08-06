@@ -53,60 +53,60 @@ jobs:
       matrix:
         include:
           # Window 64 bit
-          - os: windows-latest
-            python: 39
-            platform_id: win_amd64
-          - os: windows-latest
-            python: 310
-            platform_id: win_amd64
-          - os: windows-latest
-            python: 311
-            platform_id: win_amd64
-          - os: windows-latest
-            python: 312
-            platform_id: win_amd64
+          # - os: windows-latest
+          #   python: 39
+          #   platform_id: win_amd64
+          # - os: windows-latest
+          #   python: 310
+          #   platform_id: win_amd64
+          # - os: windows-latest
+          #   python: 311
+          #   platform_id: win_amd64
+          # - os: windows-latest
+          #   python: 312
+          #   platform_id: win_amd64
 
-          # Linux 64 bit manylinux2014
-          - os: ubuntu-latest
-            python: 39
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
+          # # Linux 64 bit manylinux2014
+          # - os: ubuntu-latest
+          #   python: 39
+          #   platform_id: manylinux_x86_64
+          #   manylinux_image: manylinux2014
 
-          # NumPy on Python 3.10 only supports 64bit and is only available with manylinux2014
-          - os: ubuntu-latest
-            python: 310
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
+          # # NumPy on Python 3.10 only supports 64bit and is only available with manylinux2014
+          # - os: ubuntu-latest
+          #   python: 310
+          #   platform_id: manylinux_x86_64
+          #   manylinux_image: manylinux2014
 
-          - os: ubuntu-latest
-            python: 311
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
-          - os: ubuntu-latest
-            python: 312
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
-          - os: ubuntu-latest
-            python: 313t
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux2014
-            # TODO: remove next line when Python 3.13 is released
-            prerelease_pythons: True
-            free_threaded_support: True
+          # - os: ubuntu-latest
+          #   python: 311
+          #   platform_id: manylinux_x86_64
+          #   manylinux_image: manylinux2014
+          # - os: ubuntu-latest
+          #   python: 312
+          #   platform_id: manylinux_x86_64
+          #   manylinux_image: manylinux2014
+          # - os: ubuntu-latest
+          #   python: 313t
+          #   platform_id: manylinux_x86_64
+          #   manylinux_image: manylinux2014
+          #   # TODO: remove next line when Python 3.13 is released
+          #   prerelease_pythons: True
+          #   free_threaded_support: True
 
-          # MacOS x86_64
-          - os: macos-12
-            python: 39
-            platform_id: macosx_x86_64
-          - os: macos-12
-            python: 310
-            platform_id: macosx_x86_64
-          - os: macos-12
-            python: 311
-            platform_id: macosx_x86_64
-          - os: macos-12
-            python: 312
-            platform_id: macosx_x86_64
+          # # MacOS x86_64
+          # - os: macos-12
+          #   python: 39
+          #   platform_id: macosx_x86_64
+          # - os: macos-12
+          #   python: 310
+          #   platform_id: macosx_x86_64
+          # - os: macos-12
+          #   python: 311
+          #   platform_id: macosx_x86_64
+          # - os: macos-12
+          #   python: 312
+          #   platform_id: macosx_x86_64
 
           # MacOS arm64
           - os: macos-14
