@@ -188,6 +188,13 @@ jobs:
           name: cibw-wheels-cp${{ matrix.python }}-${{ matrix.platform_id }}
           path: wheelhouse/*.whl
 
+      - name: Store core dumps
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cibw-wheels-core-dumps-cp${{ matrix.python }}-${{ matrix.platform_id }}
+          path: /cores/core.*
+
   update-tracker:
     uses: ./.github/workflows/update_tracking_issue.yml
     if: ${{ always() }}
