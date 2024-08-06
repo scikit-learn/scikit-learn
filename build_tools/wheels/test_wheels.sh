@@ -31,6 +31,9 @@ echo "Adding entitlements to python"
 echo "Triggering a segfault manually to check that extracting backtraces works"
 python -X faulthandler -c "import ctypes; ctypes.string_at(0)" || (find /cores -name "core.*" -exec lldb -c {} --batch -o "thread backtrace all" -o "quit" \; && exit 0)
 
+echo "Removing the core file from the debug run"
+rm -rf /cores/core.*
+
 echo "Running the tests with lldb backtrace reporint on failure"
 if pip show -qq pytest-xdist; then
     XDIST_WORKERS=$(python -c "import joblib; print(joblib.cpu_count(only_physical_cores=True))")
