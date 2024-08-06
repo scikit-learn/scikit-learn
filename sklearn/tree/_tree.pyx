@@ -268,7 +268,9 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 node_id = tree._add_node(parent, is_left, is_leaf, split.feature,
                                          split.threshold, parent_record.impurity,
                                          n_node_samples, weighted_n_node_samples,
-                                         split.missing_go_to_left)
+                                         split.missing_go_to_left,
+                                         parent_record.lower_bound,
+                                         parent_record.upper_bound)
 
                 if node_id == INTPTR_MAX:
                     rc = -1
@@ -626,7 +628,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                  is_left, is_leaf,
                                  split.feature, split.threshold, parent_record.impurity,
                                  n_node_samples, weighted_n_node_samples,
-                                 split.missing_go_to_left)
+                                 split.missing_go_to_left,
+                                 parent_record.lower_bound, parent_record.upper_bound)
         if node_id == INTPTR_MAX:
             return -1
 
@@ -775,6 +778,14 @@ cdef class Tree:
         return self._get_node_ndarray()['missing_go_to_left'][:self.node_count]
 
     @property
+    def lower_bound(self):
+        return self._get_node_ndarray()['lower_bound'][:self.node_count]
+
+    @property
+    def upper_bound(self):
+        return self._get_node_ndarray()['upper_bound'][:self.node_count]
+
+    @property
     def value(self):
         return self._get_value_ndarray()[:self.node_count]
 
@@ -910,7 +921,9 @@ cdef class Tree:
                           intp_t feature, float64_t threshold, float64_t impurity,
                           intp_t n_node_samples,
                           float64_t weighted_n_node_samples,
-                          uint8_t missing_go_to_left) except -1 nogil:
+                          uint8_t missing_go_to_left,
+                          float64_t lower_bound,
+                          float64_t upper_bound) except -1 nogil:
         """Add a node to the tree.
 
         The new node registers itself as the child of its parent.
@@ -927,6 +940,8 @@ cdef class Tree:
         node.impurity = impurity
         node.n_node_samples = n_node_samples
         node.weighted_n_node_samples = weighted_n_node_samples
+        node.lower_bound = lower_bound
+        node.upper_bound = upper_bound
 
         if parent != _TREE_UNDEFINED:
             if is_left:
@@ -1934,7 +1949,8 @@ cdef _build_pruned_tree(
             new_node_id = tree._add_node(
                 parent, is_left, is_leaf, node.feature, node.threshold,
                 node.impurity, node.n_node_samples,
-                node.weighted_n_node_samples, node.missing_go_to_left)
+                node.weighted_n_node_samples, node.missing_go_to_left,
+                node.lower_bound, node.upper_bound)
 
             if new_node_id == INTPTR_MAX:
                 rc = -1

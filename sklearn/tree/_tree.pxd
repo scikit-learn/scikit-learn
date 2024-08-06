@@ -22,7 +22,8 @@ cdef struct Node:
     intp_t n_node_samples                # Number of samples at the node
     float64_t weighted_n_node_samples    # Weighted number of samples at the node
     uint8_t missing_go_to_left     # Whether features have missing values
-
+    float64_t lower_bound          # Lower bound of the node's impurity
+    float64_t upper_bound          # Upper bound of the node's impurity
 
 cdef struct ParentInfo:
     # Structure to store information about the parent of a node
@@ -58,7 +59,9 @@ cdef class Tree:
                           intp_t feature, float64_t threshold, float64_t impurity,
                           intp_t n_node_samples,
                           float64_t weighted_n_node_samples,
-                          uint8_t missing_go_to_left) except -1 nogil
+                          uint8_t missing_go_to_left,
+                          float64_t lower_bound,
+                          float64_t upper_bound) except -1 nogil
     cdef int _resize(self, intp_t capacity) except -1 nogil
     cdef int _resize_c(self, intp_t capacity=*) except -1 nogil
 
