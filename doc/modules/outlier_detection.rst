@@ -246,6 +246,10 @@ This strategy is illustrated below.
   (:class:`covariance.MinCovDet`) of location and covariance to
   assess the degree of outlyingness of an observation.
 
+* See :ref:`sphx_glr_auto_examples_applications_plot_outlier_detection_wine.py`
+  for an example of robust covariance estimation on a real data set.
+
+
 .. rubric:: References
 
 * Rousseeuw, P.J., Van Driessen, K. "A fast algorithm for the minimum
