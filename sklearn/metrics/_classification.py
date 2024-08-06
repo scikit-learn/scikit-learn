@@ -237,13 +237,14 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
         "y_true": ["array-like"],
         "y_pred": ["array-like"],
         "labels": ["array-like", None],
+        "pos_label": [Real, str, "boolean", None],
         "sample_weight": ["array-like", None],
         "normalize": [StrOptions({"true", "pred", "all"}), None],
     },
     prefer_skip_nested_validation=True,
 )
 def confusion_matrix(
-    y_true, y_pred, *, labels=None, sample_weight=None, normalize=None
+    y_true, y_pred, *, labels=None, pos_label=None, sample_weight=None, normalize=None
 ):
     """Compute confusion matrix to evaluate the accuracy of a classification.
 
@@ -270,6 +271,15 @@ def confusion_matrix(
         or select a subset of labels.
         If ``None`` is given, those that appear at least once
         in ``y_true`` or ``y_pred`` are used in sorted order.
+
+    pos_label : int, float, bool or str, default=None
+        The label of the positive class for binary classification.
+        When `pos_label=None`, if `y_true` is in `{-1, 1}` or `{0, 1}`,
+        `pos_label` is set to 1, otherwise an error will be raised.
+        An error is also raised if `pos_label` is set and `y_true` is not a binary
+        classification problem.
+
+        .. versionadded:: 1.4
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -330,6 +340,19 @@ def confusion_matrix(
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type not in ("binary", "multiclass"):
         raise ValueError("%s is not supported" % y_type)
+
+    if y_true.size == 0 and y_pred.size == 0:
+        # early return for empty arrays avoiding all checks
+        n_classes = 0 if labels is None else len(labels)
+        return np.zeros((n_classes, n_classes), dtype=int)
+
+    if y_type == "binary":
+        pos_label = _check_pos_label_consistency(pos_label, y_true)
+    elif pos_label is not None:
+        raise ValueError(
+            "`pos_label` should only be set when the target is binary. Got "
+            f"{y_type} type of target instead."
+        )
 
     if labels is None:
         labels = unique_labels(y_true, y_pred)
@@ -392,6 +415,11 @@ def confusion_matrix(
         elif normalize == "all":
             cm = cm / cm.sum()
         cm = np.nan_to_num(cm)
+
+    if pos_label is not None and pos_label != labels[-1]:
+        # Reorder the confusion matrix such that TP is at index
+        # [1, 1].
+        cm = cm[::-1, ::-1]
 
     if cm.shape == (1, 1):
         warnings.warn(
@@ -743,7 +771,17 @@ def cohen_kappa_score(
     >>> cohen_kappa_score(y1, y2)
     np.float64(0.6875)
     """
-    confusion = confusion_matrix(y1, y2, labels=labels, sample_weight=sample_weight)
+    y_type, y1, y2 = _check_targets(y1, y2)
+    if y_type == "binary":
+        # we can set `pos_label` to any class labels because the computation of MCC
+        # is symmetric and invariant to `pos_label` switch.
+        pos_label = y1[0]
+    else:
+        pos_label = None
+
+    confusion = confusion_matrix(
+        y1, y2, labels=labels, pos_label=pos_label, sample_weight=sample_weight
+    )
     n_classes = confusion.shape[0]
     sum0 = np.sum(confusion, axis=0)
     sum1 = np.sum(confusion, axis=1)
@@ -1059,12 +1097,21 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     if y_type not in {"binary", "multiclass"}:
         raise ValueError("%s is not supported" % y_type)
 
+    if y_type == "binary":
+        # we can set `pos_label` to any class labels because the computation of MCC
+        # is symmetric and invariant to `pos_label` switch.
+        pos_label = y_true[0]
+    else:
+        pos_label = None
+
     lb = LabelEncoder()
     lb.fit(np.hstack([y_true, y_pred]))
     y_true = lb.transform(y_true)
     y_pred = lb.transform(y_pred)
 
-    C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
+    C = confusion_matrix(
+        y_true, y_pred, pos_label=pos_label, sample_weight=sample_weight
+    )
     t_sum = C.sum(axis=1, dtype=np.float64)
     p_sum = C.sum(axis=0, dtype=np.float64)
     n_correct = np.trace(C, dtype=np.float64)
@@ -2035,11 +2082,18 @@ def class_likelihood_ratios(
             f"problems, got targets of type: {y_type}"
         )
 
+    if labels is None:
+        classes = np.unique(y_true)
+        pos_label = 1 if len(classes) < 2 else classes[1]
+    else:
+        pos_label = labels[-1]
+
     cm = confusion_matrix(
         y_true,
         y_pred,
         sample_weight=sample_weight,
         labels=labels,
+        pos_label=pos_label,
     )
 
     # Case when `y_test` contains a single class and `y_test == y_pred`.
@@ -2527,7 +2581,17 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
     >>> balanced_accuracy_score(y_true, y_pred)
     np.float64(0.625)
     """
-    C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
+    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    if y_type == "binary":
+        # We can set `pos_label` to any value since we are computing per-class
+        # statistics and averaging them.
+        pos_label = y_true[0]
+    else:
+        pos_label = None
+
+    C = confusion_matrix(
+        y_true, y_pred, pos_label=pos_label, sample_weight=sample_weight
+    )
     with np.errstate(divide="ignore", invalid="ignore"):
         per_class = np.diag(C) / C.sum(axis=1)
     if np.any(np.isnan(per_class)):
