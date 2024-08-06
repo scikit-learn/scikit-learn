@@ -21,7 +21,7 @@ jobs:
       - image: cimg/python:3.9.18
     environment:
       - MKL_NUM_THREADS: 2
-      - OPENBLAS_NUM_THREADS: 2
+      - OPENBLAS_NUM_THREADS: 1
       - CONDA_ENV_NAME: testenv
       - LOCK_FILE: build_tools/circle/doc_min_dependencies_linux-64_conda.lock
       # Do not fail if the documentation build generates warnings with minimum
@@ -59,7 +59,7 @@ jobs:
       - image: cimg/python:3.9.18
     environment:
       - MKL_NUM_THREADS: 2
-      - OPENBLAS_NUM_THREADS: 2
+      - OPENBLAS_NUM_THREADS: 1
       - CONDA_ENV_NAME: testenv
       - LOCK_FILE: build_tools/circle/doc_linux-64_conda.lock
       # Make sure that we fail if the documentation build generates warnings with
