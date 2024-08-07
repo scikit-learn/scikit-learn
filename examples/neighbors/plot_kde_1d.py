@@ -26,6 +26,12 @@ samples in 1 dimension.  Though this example uses 1D distributions, kernel
 density estimation is easily and efficiently extensible to higher dimensions
 as well.
 
+Kernel density estimates are biased if the support of the target distribution
+is bounded, e.g., if we seek to estimate the density of a non-negative random
+variable. The fourth figure shows density estimation for a gamma random
+variable using the :code:`bounds` keyword argument of
+:class:`~sklearn.neighbors.KernelDensity` to specify that the support is
+bounded below.
 """
 
 # Authors: The scikit-learn developers
@@ -33,7 +39,7 @@ as well.
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.stats import norm
+from scipy.stats import gamma, norm
 
 from sklearn.neighbors import KernelDensity
 
@@ -155,4 +161,36 @@ ax.plot(X[:, 0], -0.005 - 0.01 * np.random.random(X.shape[0]), "+k")
 
 ax.set_xlim(-4, 9)
 ax.set_ylim(-0.02, 0.4)
+plt.show()
+
+# ----------------------------------------------------------------------
+# Plot a 1D density example with bounded support
+dist = gamma(1)
+bandwidth = 0.2
+np.random.seed(1)
+x = dist.rvs(size=500)
+lin = np.linspace(0, 10, 1000)
+
+fig, ax = plt.subplots()
+true_dens = dist.pdf(lin)
+ax.scatter(
+    x,
+    -0.05 - 0.1 * np.random.random(x.shape),
+    color="k",
+    marker="+",
+    label="samples",
+)
+ax.plot(lin, true_dens, label="input distribution", color="black")
+
+kde = KernelDensity(bandwidth=bandwidth).fit(x[:, None])
+log_dens = kde.score_samples(lin[:, None])
+ax.plot(lin, np.exp(log_dens), label="without bounds")
+
+kde = KernelDensity(bandwidth=bandwidth, bounds=[(0, np.inf)]).fit(x[:, None])
+log_dens = kde.score_samples(lin[:, None])
+ax.plot(lin, np.exp(log_dens), label="with bounds")
+
+ax.legend()
+ax.set_xlabel("x")
+ax.set_ylabel("density estimate")
 plt.show()
