@@ -15,7 +15,8 @@ if [[ $FREE_THREADED_BUILD == "True" ]]; then
 fi
 
 # Upgrade numpy to nightly build:
-pip install --pre --extra-index https://pypi.anaconda.org/scientific-python-nightly-wheels/simple scikit-learn
+pip uninstall -y numpy
+pip install --pre --extra-index https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
 
 # Test that there are no links to system libraries in the
 # threadpoolctl output section of the show_versions output:
