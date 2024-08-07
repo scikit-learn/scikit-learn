@@ -1,5 +1,8 @@
 """Various utilities to check the compatibility of estimators with scikit-learn API."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import pickle
 import re
 import warnings
@@ -75,13 +78,12 @@ from ._testing import (
     assert_array_almost_equal,
     assert_array_equal,
     assert_array_less,
-    assert_raise_message,
     create_memmap_backed_data,
     ignore_warnings,
     raises,
     set_random_state,
 )
-from .fixes import SPARSE_ARRAY_PRESENT, parse_version, sp_version
+from .fixes import SPARSE_ARRAY_PRESENT
 from .validation import _num_samples, check_is_fitted, has_fit_parameter
 
 REGRESSION_DATASET = None
@@ -776,11 +778,6 @@ def _set_checking_parameters(estimator):
     if name == "OneHotEncoder":
         estimator.set_params(handle_unknown="ignore")
 
-    if name == "QuantileRegressor":
-        # Avoid warning due to Scipy deprecating interior-point solver
-        solver = "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
-        estimator.set_params(solver=solver)
-
     if name in CROSS_DECOMPOSITION:
         estimator.set_params(n_components=1)
 
@@ -1028,9 +1025,9 @@ def check_array_api_input_and_values(
 def _check_estimator_sparse_container(name, estimator_orig, sparse_type):
     rng = np.random.RandomState(0)
     X = rng.uniform(size=(40, 3))
-    X[X < 0.8] = 0
+    X[X < 0.6] = 0
     X = _enforce_estimator_tags_X(estimator_orig, X)
-    y = (4 * rng.uniform(size=40)).astype(int)
+    y = (4 * rng.uniform(size=X.shape[0])).astype(np.int32)
     # catch deprecation warnings
     with ignore_warnings(category=FutureWarning):
         estimator = clone(estimator_orig)
@@ -1494,9 +1491,8 @@ def check_fit2d_predict1d(name, estimator_orig):
 
     for method in ["predict", "transform", "decision_function", "predict_proba"]:
         if hasattr(estimator, method):
-            assert_raise_message(
-                ValueError, "Reshape your data", getattr(estimator, method), X[0]
-            )
+            with raises(ValueError, match="Reshape your data"):
+                getattr(estimator, method)(X[0])
 
 
 def _apply_on_subsets(func, X):

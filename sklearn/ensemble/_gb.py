@@ -773,7 +773,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 dtype=DTYPE,
                 order="C",
                 accept_sparse="csr",
-                force_all_finite=False,
+                ensure_all_finite=False,
             )
             raw_predictions = self._raw_predict(X_train)
             self._resize_state()

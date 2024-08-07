@@ -2,6 +2,7 @@
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
+
 import itertools
 import numbers
 import warnings
@@ -29,7 +30,7 @@ from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.fixes import parse_version, sp_base_version
 from ..utils.multiclass import check_classification_targets
 from ..utils.parallel import Parallel, delayed
-from ..utils.validation import _to_object_array, check_is_fitted, check_non_negative
+from ..utils.validation import _to_object_array, check_is_fitted
 from ._ball_tree import BallTree
 from ._kd_tree import KDTree
 
@@ -166,8 +167,7 @@ def _check_precomputed(X):
         case only non-zero elements may be considered neighbors.
     """
     if not issparse(X):
-        X = check_array(X)
-        check_non_negative(X, whom="precomputed distance matrix.")
+        X = check_array(X, ensure_non_negative=True, input_name="X")
         return X
     else:
         graph = X
@@ -178,8 +178,12 @@ def _check_precomputed(X):
             "its handling of explicit zeros".format(graph.format)
         )
     copied = graph.format != "csr"
-    graph = check_array(graph, accept_sparse="csr")
-    check_non_negative(graph, whom="precomputed distance matrix.")
+    graph = check_array(
+        graph,
+        accept_sparse="csr",
+        ensure_non_negative=True,
+        input_name="precomputed distance matrix",
+    )
     graph = sort_graph_by_row_values(graph, copy=not copied, warn_when_not_sorted=True)
 
     return graph

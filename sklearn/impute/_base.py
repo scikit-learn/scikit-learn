@@ -323,9 +323,9 @@ class SimpleImputer(_BaseImputer):
             dtype = self._fit_dtype
 
         if is_pandas_na(self.missing_values) or is_scalar_nan(self.missing_values):
-            force_all_finite = "allow-nan"
+            ensure_all_finite = "allow-nan"
         else:
-            force_all_finite = True
+            ensure_all_finite = True
 
         try:
             X = self._validate_data(
@@ -334,7 +334,7 @@ class SimpleImputer(_BaseImputer):
                 accept_sparse="csc",
                 dtype=dtype,
                 force_writeable=True if not in_fit else None,
-                force_all_finite=force_all_finite,
+                ensure_all_finite=ensure_all_finite,
                 copy=self.copy,
             )
         except ValueError as ve:
@@ -893,15 +893,15 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
     def _validate_input(self, X, in_fit):
         if not is_scalar_nan(self.missing_values):
-            force_all_finite = True
+            ensure_all_finite = True
         else:
-            force_all_finite = "allow-nan"
+            ensure_all_finite = "allow-nan"
         X = self._validate_data(
             X,
             reset=in_fit,
             accept_sparse=("csc", "csr"),
             dtype=None,
-            force_all_finite=force_all_finite,
+            ensure_all_finite=ensure_all_finite,
         )
         _check_inputs_dtype(X, self.missing_values)
         if X.dtype.kind not in ("i", "u", "f", "O"):

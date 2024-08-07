@@ -3,6 +3,9 @@ HDBSCAN: Hierarchical Density-Based Spatial Clustering
          of Applications with Noise
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Authors: Leland McInnes <leland.mcinnes@gmail.com>
 #          Steve Astels <sastels@gmail.com>
 #          John Healy <jchealy@gmail.com>
@@ -441,8 +444,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         as noise.
 
     min_samples : int, default=None
-        The number of samples in a neighborhood for a point
-        to be considered as a core point. This includes the point itself.
+        The parameter `k` used to calculate the distance between a point
+        `x_p` and its k-th nearest neighbor.
         When `None`, defaults to `min_cluster_size`.
 
     cluster_selection_epsilon : float, default=0.0
@@ -734,7 +737,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             X = self._validate_data(
                 X,
                 accept_sparse=["csr", "lil"],
-                force_all_finite=False,
+                ensure_all_finite=False,
                 dtype=np.float64,
             )
             self._raw_data = X
@@ -779,7 +782,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             # Perform data validation after removing infinite values (numpy.inf)
             # from the given distance matrix.
             X = self._validate_data(
-                X, force_all_finite=False, dtype=np.float64, force_writeable=True
+                X, ensure_all_finite=False, dtype=np.float64, force_writeable=True
             )
             if np.isnan(X).any():
                 # TODO: Support np.nan in Cython implementation for precomputed
