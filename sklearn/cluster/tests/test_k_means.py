@@ -964,6 +964,8 @@ def test_kmeans_empty_cluster_relocated(array_constr):
     assert_allclose(km.cluster_centers_, [[-1], [1]])
 
 
+# Ignore windows specific warning triggered by small size problems
+@pytest.mark.filterwarnings("ignore:KMeans is known to have a memory leak on Windows")
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 def test_result_equal_in_diff_n_threads(Estimator, global_random_seed):
     # Check that KMeans/MiniBatchKMeans give the same results in parallel mode
