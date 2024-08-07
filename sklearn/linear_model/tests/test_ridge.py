@@ -1020,7 +1020,7 @@ def _test_ridge_cv(sparse_container):
     ridge_cv.predict(X)
 
     assert len(ridge_cv.coef_.shape) == 1
-    assert type(ridge_cv.intercept_) == np.float64
+    assert type(ridge_cv.intercept_) is np.float64
 
     cv = KFold(5)
     ridge_cv.set_params(cv=cv)
@@ -1028,7 +1028,7 @@ def _test_ridge_cv(sparse_container):
     ridge_cv.predict(X)
 
     assert len(ridge_cv.coef_.shape) == 1
-    assert type(ridge_cv.intercept_) == np.float64
+    assert type(ridge_cv.intercept_) is np.float64
 
 
 @pytest.mark.parametrize(

@@ -80,7 +80,7 @@ def load_mtpl2(n_samples=None):
     df["ClaimAmount"] = df["ClaimAmount"].fillna(0)
 
     # unquote string fields
-    for column_name in df.columns[df.dtypes.values == object]:
+    for column_name in df.columns[[t is object for t in df.dtypes.values]]:
         df[column_name] = df[column_name].str.strip("'")
     return df.iloc[:n_samples]
 

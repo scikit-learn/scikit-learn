@@ -1502,7 +1502,7 @@ def _apply_on_subsets(func, X):
     result_by_batch = [func(batch.reshape(1, n_features)) for batch in X]
 
     # func can output tuple (e.g. score_samples)
-    if type(result_full) == tuple:
+    if isinstance(result_full, tuple):
         result_full = result_full[0]
         result_by_batch = list(map(lambda x: x[0], result_by_batch))
 
