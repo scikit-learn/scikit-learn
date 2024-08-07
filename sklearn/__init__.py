@@ -85,6 +85,7 @@ else:
         _distributor_init,  # noqa: F401
     )
     from .base import clone
+    from .utils._openmp_helpers import set_openblas_openmp_callback
     from .utils._show_versions import show_versions
 
     __all__ = [
@@ -140,6 +141,12 @@ else:
         _BUILT_WITH_MESON = True
     except ModuleNotFoundError:
         pass
+
+    # Register an OpenMP backend for OpenBLAS such that OpenBLAS uses the OpenMP
+    # thread pool which prevents active spin-waiting when making successive quick
+    # alternating calls to OpenBLAS and OpenMP.
+    # see https://github.com/OpenMathLib/OpenBLAS/issues/3187 for more details
+    set_openblas_openmp_callback()
 
 
 def setup_module(module):
