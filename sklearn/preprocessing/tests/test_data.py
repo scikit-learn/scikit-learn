@@ -2483,6 +2483,9 @@ def test_standard_scaler_sparse_partial_fit_finite_variance(X_2):
 def test_minmax_scaler_clip(feature_range, array_namespace, device, _):
     # test behaviour of the parameter 'clip' in MinMaxScaler
     xp = _array_api_for_tests(array_namespace, device)
+    print("################### in test_minmax_scaler_clip ###########")
+    print(xp)
+    print("##############################################")
     X = xp.asarray(iris.data)
     scaler = MinMaxScaler(feature_range=feature_range, clip=True).fit(X)
     X_min, X_max = xp.min(X, axis=0), xp.max(X, axis=0)

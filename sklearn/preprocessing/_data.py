@@ -479,6 +479,10 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             )
 
         xp, _ = get_namespace(X)
+        print("################### in partial_fit ###########")
+        print(type(X))
+        print(xp)
+        print("##############################################")
 
         first_pass = not hasattr(self, "n_samples_seen_")
         X = self._validate_data(

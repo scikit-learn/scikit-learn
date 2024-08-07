@@ -885,9 +885,13 @@ def check_array(
             "https://numpy.org/doc/stable/reference/generated/numpy.matrix.html"
         )
 
+    print("###beginning of check array ### before xp=get_namespace ########")
+    print(type(array))
+    print("##############################################")
+
     xp, is_array_api_compliant = get_namespace(array)
 
-    print("###beginning of check array ### afterxp=get_namespace ########")
+    print("########check array ### after xp=get_namespace ########")
     print(type(array))
     print(xp)
     print("##############################################")
