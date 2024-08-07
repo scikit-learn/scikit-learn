@@ -165,6 +165,14 @@ Changelog
   and automatic retries in case of HTTP errors. :pr:`29354` by :user:`Olivier
   Grisel <ogrisel>`.
 
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Increase rank defficiency threshold in the whitening step of
+  :class:`decomposition.FastICA` with `whiten_solver="eigh"` to improve the
+  platform-agnosticity of the estimator. :pr:`29612` by :user:`Olivier Grisel
+  <ogrisel>`.
+
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
@@ -177,8 +185,9 @@ Changelog
 .......................
 
 - |Efficiency| Small runtime improvement of fitting
-  :class:`ensemble.HistGradientBoostingClassifier` and :class:`ensemble.HistGradientBoostingRegressor`
-  by parallelizing the initial search for bin thresholds
+  :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` by parallelizing the initial search
+  for bin thresholds.
   :pr:`28064` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Enhancement| The verbosity of :class:`ensemble.HistGradientBoostingClassifier`
@@ -193,9 +202,10 @@ Changelog
   :pr:`28622` by :user:`Adam Li <adam2392>` and
   :user:`Sérgio Pereira <sergiormpereira>`.
 
-- |Feature| :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor` now support
-  missing-values in the data matrix `X`. Missing-values are handled by randomly moving all of
-  the samples to the left, or right child node as the tree is traversed.
+- |Feature| :class:`ensemble.ExtraTreesClassifier` and
+  :class:`ensemble.ExtraTreesRegressor` now support missing-values in the data matrix
+  `X`. Missing-values are handled by randomly moving all of the samples to the left, or
+  right child node as the tree is traversed.
   :pr:`28268` by :user:`Adam Li <adam2392>`.
 
 :mod:`sklearn.impute`
@@ -249,7 +259,8 @@ Changelog
   estimator without re-fitting it.
   :pr:`29067` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Fix| Improve error message when :func:`model_selection.RepeatedStratifiedKFold.split` is called without a `y` argument
+- |Fix| Improve error message when :func:`model_selection.RepeatedStratifiedKFold.split`
+  is called without a `y` argument
   :pr:`29402` by :user:`Anurag Varma <Anurag-Varma>`.
 
 :mod:`sklearn.neighbors`
@@ -284,6 +295,11 @@ Changelog
 
 :mod:`sklearn.utils`
 ....................
+
+- |Enhancement| :func:`utils.validation.check_array` now accepts `ensure_non_negative`
+  to check for negative values in the passed array, until now only available through
+  calling :func:`utils.validation.check_non_negative`.
+  :pr:`29540` by :user:`Tamara Atanasoska <tamaraatanasoska>`.
 
 - |API| the `assert_all_finite` parameter of functions :func:`utils.check_array`,
   :func:`utils.check_X_y`, :func:`utils.as_float_array` is renamed into

@@ -741,6 +741,7 @@ def check_array(
     force_writeable=False,
     force_all_finite="deprecated",
     ensure_all_finite=None,
+    ensure_non_negative=False,
     ensure_2d=True,
     allow_nd=False,
     ensure_min_samples=1,
@@ -827,6 +828,12 @@ def check_array(
 
         .. versionadded:: 1.6
            `force_all_finite` was renamed to `ensure_all_finite`.
+
+    ensure_non_negative : bool, default=False
+        Make sure the array has only non-negative values. If True, an array that
+        contains negative values will raise a ValueError.
+
+        .. versionadded:: 1.6
 
     ensure_2d : bool, default=True
         Whether to raise a value error if array is not 2D.
@@ -1131,6 +1138,12 @@ def check_array(
                 " a minimum of %d is required%s."
                 % (n_features, array.shape, ensure_min_features, context)
             )
+
+    if ensure_non_negative:
+        whom = input_name
+        if estimator_name:
+            whom += f" in {estimator_name}"
+        check_non_negative(array, whom)
 
     if force_writeable:
         # By default, array.copy() creates a C-ordered copy. We set order=K to
@@ -1739,7 +1752,7 @@ def check_non_negative(X, whom):
         X_min = xp.min(X)
 
     if X_min < 0:
-        raise ValueError("Negative values in data passed to %s" % whom)
+        raise ValueError(f"Negative values in data passed to {whom}.")
 
 
 def check_scalar(
@@ -2044,7 +2057,7 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
 
 
 def _check_sample_weight(
-    sample_weight, X, dtype=None, copy=False, only_non_negative=False
+    sample_weight, X, dtype=None, copy=False, ensure_non_negative=False
 ):
     """Validate sample weights.
 
@@ -2061,7 +2074,7 @@ def _check_sample_weight(
     X : {ndarray, list, sparse matrix}
         Input data.
 
-    only_non_negative : bool, default=False,
+    ensure_non_negative : bool, default=False,
         Whether or not the weights are expected to be non-negative.
 
         .. versionadded:: 1.0
@@ -2112,7 +2125,7 @@ def _check_sample_weight(
                 )
             )
 
-    if only_non_negative:
+    if ensure_non_negative:
         check_non_negative(sample_weight, "`sample_weight`")
 
     return sample_weight
