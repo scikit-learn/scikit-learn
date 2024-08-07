@@ -125,9 +125,9 @@ cdef class TreeBuilder:
 #
 # .. warning:: this function is not backwards compatible and may change without
 #              notice.
-cdef _build_pruned_tree(
+cdef void _build_pruned_tree(
     Tree tree,  # OUT
     Tree orig_tree,
     const uint8_t[:] leaves_in_subtree,
     intp_t capacity
-)
+) noexcept
