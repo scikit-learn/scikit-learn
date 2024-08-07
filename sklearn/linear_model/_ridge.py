@@ -2325,6 +2325,7 @@ class _BaseRidgeCV(LinearModel):
         """
         _raise_for_params(params, self, "fit")
         cv = self.cv
+        scorer = self._get_scorer()
 
         # TODO(1.7): Remove in 1.7
         # Also change `store_cv_results` default back to False
@@ -2391,7 +2392,7 @@ class _BaseRidgeCV(LinearModel):
             estimator = _RidgeGCV(
                 alphas,
                 fit_intercept=self.fit_intercept,
-                scoring=self.scoring,
+                scoring=scorer,
                 gcv_mode=self.gcv_mode,
                 store_cv_results=self._store_cv_results,
                 is_clf=is_classifier(self),
@@ -2427,7 +2428,7 @@ class _BaseRidgeCV(LinearModel):
                 estimator,
                 parameters,
                 cv=cv,
-                scoring=self.scoring,
+                scoring=scorer,
             )
 
             grid_search.fit(X, y, **params)
@@ -2462,13 +2463,24 @@ class _BaseRidgeCV(LinearModel):
             .add_self_request(self)
             .add(
                 scorer=self._get_scorer(),
-                method_mapping=MethodMapping().add(callee="score", caller="fit"),
+                method_mapping=MethodMapping().add(caller="fit", callee="score"),
+            )
+            .add(
+                splitter=self.cv,
+                method_mapping=MethodMapping().add(caller="fit", callee="split"),
             )
         )
         return router
 
     def _get_scorer(self):
-        return check_scoring(self, scoring=self.scoring, allow_none=True)
+        scorer = check_scoring(self, scoring=self.scoring, allow_none=True)
+        if self.scoring is None:
+            # This estimator passes an array of 1s as sample_weight even if
+            # sample_weight is not provided by the user. Therefore we need to
+            # always request it. But we don't set it if it's passed explicitly
+            # by the user.
+            scorer.set_score_request(sample_weight=True)
+        return scorer
 
     # TODO(1.7): Remove
     # mypy error: Decorated property not supported
