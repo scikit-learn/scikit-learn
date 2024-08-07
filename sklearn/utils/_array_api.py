@@ -855,6 +855,8 @@ def _asarray_with_order(
     the `order` parameter is only enforced if the input array implementation
     is NumPy based, otherwise `order` is just silently ignored.
     """
+    print("#################### in _asarray_with_order #######################")
+    print(f"xp: {xp}")
     xp, _ = get_namespace(array, xp=xp)
     print("#################### in _asarray_with_order #######################")
     print(f"xp: {xp}")
@@ -869,12 +871,6 @@ def _asarray_with_order(
         # container that is consistent with the input's namespace.
         return xp.asarray(array)
     else:
-        print(f"type(array): {type(array)}")
-        if hasattr(array, "device"):
-            print(array.device)
-        if hasattr(array, "shape"):
-            print(array.shape)
-        print("###########################################################")
         return xp.asarray(array, dtype=dtype, copy=copy, device=device)
 
 

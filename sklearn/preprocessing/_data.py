@@ -481,13 +481,6 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         xp, _ = get_namespace(X)
 
         first_pass = not hasattr(self, "n_samples_seen_")
-        print("#######################in partial fit#############################")
-        print(type(X))
-        if hasattr(X, "device"):
-            print(X.device)
-        if hasattr(X, "shape"):
-            print(X.shape)
-        print("##################################################################")
         X = self._validate_data(
             X,
             reset=first_pass,

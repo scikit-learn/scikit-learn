@@ -876,13 +876,6 @@ def check_array(
     >>> X_checked
     array([[1, 2, 3], [4, 5, 6]])
     """
-    print("###########in the beginning of check array #######################")
-    print(type(array))
-    if hasattr(array, "device"):
-        print(array.device)
-    if hasattr(array, "shape"):
-        print(array.shape)
-    print("##################################################################")
     ensure_all_finite = _deprecate_force_all_finite(force_all_finite, ensure_all_finite)
 
     if isinstance(array, np.matrix):
@@ -1060,6 +1053,7 @@ def check_array(
                         "###in check array #####before _asarray_with_order###########"
                     )
                     print(type(array))
+                    print(xp)
                     array = _asarray_with_order(array, order=order, dtype=dtype, xp=xp)
                     print("###in check array #####after _asarray_with_order###########")
                     print(type(array))
