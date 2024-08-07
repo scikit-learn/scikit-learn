@@ -12,6 +12,7 @@ from .common import HISTOGRAM_DTYPE
 from .common cimport hist_struct
 from .common cimport X_BINNED_DTYPE_C
 from .common cimport G_H_DTYPE_C
+from ...utils._typedefs cimport uint8_t
 
 
 # Notes:
@@ -79,13 +80,13 @@ cdef class HistogramBuilder:
         G_H_DTYPE_C [::1] hessians
         G_H_DTYPE_C [::1] ordered_gradients
         G_H_DTYPE_C [::1] ordered_hessians
-        unsigned char hessians_are_constant
+        uint8_t hessians_are_constant
         int n_threads
 
     def __init__(self, const X_BINNED_DTYPE_C [::1, :] X_binned,
                  unsigned int n_bins, G_H_DTYPE_C [::1] gradients,
                  G_H_DTYPE_C [::1] hessians,
-                 unsigned char hessians_are_constant,
+                 uint8_t hessians_are_constant,
                  int n_threads):
 
         self.X_binned = X_binned
@@ -130,7 +131,7 @@ cdef class HistogramBuilder:
             int f_idx
             int i
             # need local views to avoid python interactions
-            unsigned char hessians_are_constant = self.hessians_are_constant
+            uint8_t hessians_are_constant = self.hessians_are_constant
             int n_allowed_features = self.n_features
             G_H_DTYPE_C [::1] ordered_gradients = self.ordered_gradients
             G_H_DTYPE_C [::1] gradients = self.gradients
@@ -195,7 +196,7 @@ cdef class HistogramBuilder:
                 self.ordered_gradients[:n_samples]
             G_H_DTYPE_C [::1] ordered_hessians = \
                 self.ordered_hessians[:n_samples]
-            unsigned char hessians_are_constant = \
+            uint8_t hessians_are_constant = \
                 self.hessians_are_constant
 
         # Set histograms to zero.
