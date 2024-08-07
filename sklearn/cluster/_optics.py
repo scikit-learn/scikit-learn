@@ -17,6 +17,11 @@ import warnings
 from numbers import Integral, Real
 
 import numpy as np
+from _optics_helpers import (
+    cluster_optics_dbscan,
+    cluster_optics_xi,
+    compute_optics_graph,
+)
 from scipy.sparse import SparseEfficiencyWarning, issparse
 
 from ..base import BaseEstimator, ClusterMixin, _fit_context
@@ -29,7 +34,6 @@ from ..utils._param_validation import (
     StrOptions,
 )
 from ..utils.validation import check_memory
-from _optics_helpers import compute_optics_graph, cluster_optics_xi, cluster_optics_dbscan
 
 
 class OPTICS(ClusterMixin, BaseEstimator):

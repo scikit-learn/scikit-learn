@@ -39,6 +39,7 @@ def _validate_size(size, n_samples, param_name):
             % (param_name, n_samples, size)
         )
 
+
 def _compute_core_distances_(X, neighbors, min_samples, working_memory):
     """Compute the k-th nearest neighbor of each sample.
 
