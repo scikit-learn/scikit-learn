@@ -55,7 +55,9 @@ DELEGATING_METAESTIMATORS = [
         skip_methods=["score"],
     ),
     DelegatorData("RFE", RFE, skip_methods=["transform", "inverse_transform"]),
-    DelegatorData("RFECV", RFECV, skip_methods=["transform", "inverse_transform"]),
+    DelegatorData(
+        "RFECV", RFECV, skip_methods=["transform", "inverse_transform", "score"]
+    ),
     DelegatorData(
         "BaggingClassifier",
         BaggingClassifier,
