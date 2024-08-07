@@ -876,7 +876,7 @@ def test_metadata_routed_to_group_splitter(metaestimator):
 
     try:
         cross_validate(
-            cls(cv=GroupKFold(n_splits=2)).set_score_request(sample_weight=False),
+            cls(cv=GroupKFold(n_splits=2)),
             X_,
             y_,
             params={"groups": groups},
