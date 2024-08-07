@@ -241,7 +241,6 @@ METRIC_MAPPING{{name_suffix}} = {
     'jaccard': JaccardDistance{{name_suffix}},
     'dice': DiceDistance{{name_suffix}},
     'kulsinski': KulsinskiDistance{{name_suffix}},
-    'precomputed': PrecomputedDistanceMatrix{{name_suffix}},
     'rogerstanimoto': RogersTanimotoDistance{{name_suffix}},
     'russellrao': RussellRaoDistance{{name_suffix}},
     'sokalmichener': SokalMichenerDistance{{name_suffix}},
