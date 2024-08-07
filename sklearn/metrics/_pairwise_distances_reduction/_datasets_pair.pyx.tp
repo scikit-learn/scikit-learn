@@ -203,11 +203,10 @@ cdef class PrecomputedDistanceMatrix{{name_suffix}}(DatasetsPair{{name_suffix}})
     cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) noexcept nogil:
         return self.precomputed_distance[i, j]
     '''
-    # i don't believe this needs to be indexed.. but needs to be defined as 
-    # it is an abstract method
     @final
-    cdef DTYPE_t dist(self) noexcept nogil:
-        return self.precomputed_distance
+    cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) noexcept nogil:
+        return self.precomputed_distance[i, j]
+
 
    
    
