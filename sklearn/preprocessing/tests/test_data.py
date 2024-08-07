@@ -2479,7 +2479,7 @@ def test_standard_scaler_sparse_partial_fit_finite_variance(X_2):
 @pytest.mark.parametrize(
     "array_namespace, device, _", yield_namespace_device_dtype_combinations()
 )
-@pytest.mark.parametrize("feature_range", [(0, 1), (-10, 10)])
+@pytest.mark.parametrize("feature_range", [(0.0, 1.1), (-10.0, 10.0)])
 def test_minmax_scaler_clip(feature_range, array_namespace, device, _):
     # test behaviour of the parameter 'clip' in MinMaxScaler
     xp = _array_api_for_tests(array_namespace, device)

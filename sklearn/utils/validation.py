@@ -887,6 +887,11 @@ def check_array(
 
     xp, is_array_api_compliant = get_namespace(array)
 
+    print("###beginning of check array ### afterxp=get_namespace ########")
+    print(type(array))
+    print(xp)
+    print("##############################################")
+
     # store reference to original array to check if copy is needed when
     # function returns
     array_orig = array
@@ -1054,14 +1059,8 @@ def check_array(
                     )
                     print(type(array))
                     print(xp)
+                    print("##############################################")
                     array = _asarray_with_order(array, order=order, dtype=dtype, xp=xp)
-                    print("###in check array #####after _asarray_with_order###########")
-                    print(type(array))
-                    if hasattr(array, "device"):
-                        print(array.device)
-                    if hasattr(array, "shape"):
-                        print(array.shape)
-                    print("###########################################################")
             except ComplexWarning as complex_warning:
                 raise ValueError(
                     "Complex data not supported\n{}\n".format(array)

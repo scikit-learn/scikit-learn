@@ -856,10 +856,9 @@ def _asarray_with_order(
     is NumPy based, otherwise `order` is just silently ignored.
     """
     print("#################### in _asarray_with_order #######################")
+    print(f"type(array): {type(array)}")
     print(f"xp: {xp}")
     xp, _ = get_namespace(array, xp=xp)
-    print("#################### in _asarray_with_order #######################")
-    print(f"xp: {xp}")
     if _is_numpy_namespace(xp):
         # Use NumPy API to support order
         if copy is True:
