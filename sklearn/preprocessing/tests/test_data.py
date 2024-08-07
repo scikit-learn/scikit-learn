@@ -9,7 +9,7 @@ import numpy.linalg as la
 import pytest
 from scipy import sparse, stats
 
-from sklearn import datasets
+from sklearn import config_context, datasets
 from sklearn.base import clone
 from sklearn.exceptions import NotFittedError
 from sklearn.metrics.pairwise import linear_kernel
@@ -2483,14 +2483,12 @@ def test_standard_scaler_sparse_partial_fit_finite_variance(X_2):
 def test_minmax_scaler_clip(feature_range, array_namespace, device, _):
     # test behaviour of the parameter 'clip' in MinMaxScaler
     xp = _array_api_for_tests(array_namespace, device)
-    print("################### in test_minmax_scaler_clip ###########")
-    print(xp)
-    print("##############################################")
     X = xp.asarray(iris.data)
-    scaler = MinMaxScaler(feature_range=feature_range, clip=True).fit(X)
-    X_min, X_max = xp.min(X, axis=0), xp.max(X, axis=0)
-    X_test = xp.asarray([np.r_[X_min[:2] - 10, X_max[2:] + 10]])
-    X_transformed = scaler.transform(X_test)
+    with config_context(array_api_dispatch=True):
+        scaler = MinMaxScaler(feature_range=feature_range, clip=True).fit(X)
+        X_min, X_max = xp.min(X, axis=0), xp.max(X, axis=0)
+        X_test = xp.asarray([np.r_[X_min[:2] - 10, X_max[2:] + 10]])
+        X_transformed = scaler.transform(X_test)
     assert_allclose(
         X_transformed,
         [[feature_range[0], feature_range[0], feature_range[1], feature_range[1]]],

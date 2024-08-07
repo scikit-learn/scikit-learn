@@ -630,9 +630,6 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
             else:
                 out = X, y
         elif not no_val_X and no_val_y:
-            print("################### in partial_fit ###########")
-            print(type(X))
-            print("##############################################")
             out = check_array(X, input_name="X", **check_params)
         elif no_val_X and not no_val_y:
             out = _check_y(y, **check_params)

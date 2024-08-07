@@ -885,16 +885,7 @@ def check_array(
             "https://numpy.org/doc/stable/reference/generated/numpy.matrix.html"
         )
 
-    print("###beginning of check array ### before xp=get_namespace ########")
-    print(type(array))
-    print("##############################################")
-
     xp, is_array_api_compliant = get_namespace(array)
-
-    print("########check array ### after xp=get_namespace ########")
-    print(type(array))
-    print(xp)
-    print("##############################################")
 
     # store reference to original array to check if copy is needed when
     # function returns
@@ -1058,12 +1049,6 @@ def check_array(
                         )
                     array = xp.astype(array, dtype, copy=False)
                 else:
-                    print(
-                        "###in check array #####before _asarray_with_order###########"
-                    )
-                    print(type(array))
-                    print(xp)
-                    print("##############################################")
                     array = _asarray_with_order(array, order=order, dtype=dtype, xp=xp)
             except ComplexWarning as complex_warning:
                 raise ValueError(
