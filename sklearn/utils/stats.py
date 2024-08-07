@@ -1,9 +1,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import numpy as np
+from ..utils._array_api import _find_matching_floating_dtype, device, get_namespace
 from .extmath import stable_cumsum
-from ..utils._array_api import _find_matching_floating_dtype, get_namespace
 
 
 def _weighted_percentile(array, sample_weight, percentile=50):
@@ -33,6 +32,7 @@ def _weighted_percentile(array, sample_weight, percentile=50):
         Weighted percentile.
     """
     xp, _ = get_namespace(array)
+    sample_weight = xp.asarray(sample_weight, device=device(array))
     n_dim = array.ndim
     if n_dim == 0:
         return array[()]
@@ -54,7 +54,7 @@ def _weighted_percentile(array, sample_weight, percentile=50):
         adjusted_percentile[mask], adjusted_percentile[mask] + 1
     )
 
-    percentile_idx = xp.array(
+    percentile_idx = xp.asarray(
         [
             xp.searchsorted(weight_cdf[:, i], adjusted_percentile[i])
             for i in range(weight_cdf.shape[1])

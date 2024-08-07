@@ -3,9 +3,9 @@ import pytest
 from numpy.testing import assert_allclose
 from pytest import approx
 
+from sklearn._config import config_context
 from sklearn.utils._array_api import (
     yield_namespace_device_dtype_combinations,
-    yield_namespaces,
 )
 from sklearn.utils.estimator_checks import _array_api_for_tests
 from sklearn.utils.stats import _weighted_percentile
@@ -17,20 +17,23 @@ from sklearn.utils.stats import _weighted_percentile
 def test_weighted_percentile(array_namespace, device, dtype_name):
     xp = _array_api_for_tests(array_namespace, device)
 
-    y = xp.empty(102, dtype=xp.float64, device=device)
+    y = xp.empty(102, dtype=dtype_name, device=device)
     y[:50] = 0
     y[-51:] = 2
     y[-1] = 100000
     y[50] = 1
-    sw = xp.ones(102, dtype=xp.float64, device=device)
+    sw = xp.ones(102, dtype=dtype_name, device=device)
     sw[-1] = 0.0
     score = _weighted_percentile(y, sw, 50)
     assert approx(score) == 1
+    with config_context(array_api_dispatch=True):
+        score = _weighted_percentile(y, sw, 50)
+        assert approx(score) == 1
 
 
-@pytest.mark.parametrize("array_namespace", yield_namespaces())
-def test_weighted_percentile_equal(array_namespace):
-    xp = _array_api_for_tests(array_namespace, device=None)
+@pytest.mark.parametrize("array_namespace", yield_namespace_device_dtype_combinations())
+def test_weighted_percentile_equal(array_namespace, device, dtype_name):
+    xp = _array_api_for_tests(array_namespace, device)
     y = xp.full(102, 0.0, dtype=xp.float64)
     sw = xp.ones(102, dtype=xp.float64)
     sw[-1] = 0.0
@@ -38,9 +41,9 @@ def test_weighted_percentile_equal(array_namespace):
     assert score == 0
 
 
-@pytest.mark.parametrize("array_namespace", yield_namespaces())
-def test_weighted_percentile_zero_weight(array_namespace):
-    xp = _array_api_for_tests(array_namespace, device=None)
+@pytest.mark.parametrize("array_namespace", yield_namespace_device_dtype_combinations())
+def test_weighted_percentile_zero_weight(array_namespace, device, dtype_name):
+    xp = _array_api_for_tests(array_namespace, device)
     y = xp.full(102, 1.0, dtype=xp.float64)
     sw = xp.full(102, 0.0, dtype=xp.float64)
     score = _weighted_percentile(y, sw, 50)
@@ -77,7 +80,7 @@ def test_weighted_median_equal_weights(array_namespace, device, dtype_name):
     x = rng.randint(10, size=11)
     x = x.astype(dtype_name, copy=False)
     x = xp.asarray(x, device=device)
-    weights = xp.ones(x.shape)
+    weights = xp.ones(x.shape, device=device)
 
     median = np.median(x)
     w_median = _weighted_percentile(x, weights)
