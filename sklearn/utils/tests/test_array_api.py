@@ -351,8 +351,8 @@ def test_device_inspection():
     assert array1.device == device(array1, array1, array2)
 
 
-# TODO: add cupy and cupy.array_api to the list of libraries once the
-# the following upstream issue has been fixed:
+# TODO: add cupy and cupy.array_api to the list of libraries now that the
+# the following upstream issue had been fixed:
 # https://github.com/cupy/cupy/issues/8180
 @skip_if_array_api_compat_not_configured
 @pytest.mark.parametrize("library", ["numpy", "array_api_strict", "torch"])

@@ -537,7 +537,7 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         X *= self.scale_
         X += self.min_
         if self.clip:
-            xp.clip(X, self.feature_range[0], self.feature_range[1], out=X)
+            X = xp.clip(X, self.feature_range[0], self.feature_range[1])
         return X
 
     def inverse_transform(self, X):
