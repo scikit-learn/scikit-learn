@@ -127,16 +127,35 @@ cdef class BaseDistancesReduction{{name_suffix}}:
     Implementations inherit from this template and may override the several
     defined hooks as needed in order to easily extend functionality with
     minimal redundant code.
+
+    If metric is 'precomputed' and the precomputed matrix is provided, 
+    a subclass must be able to access it through the compute method.
     """
+    
+    
+    
+    
+    
+    
+    
+    
 
     def __init__(
         self,
         DatasetsPair{{name_suffix}} datasets_pair,
+        PrecomputedDistanceMatrix{{name_suffix}} precomputed=None,
         chunk_size=None,
         strategy=None,
      ):
+
+    
+    
+    
         cdef:
             intp_t X_n_full_chunks, Y_n_full_chunks
+        if precomputed:
+            self.precomputed = precomputed 
+     
 
         if chunk_size is None:
             chunk_size = get_config().get("pairwise_dist_chunk_size", 256)
@@ -202,6 +221,9 @@ cdef class BaseDistancesReduction{{name_suffix}}:
             self.Y_n_chunks if self.execute_in_parallel_on_Y else self.X_n_chunks,
             self.effective_n_threads,
         )
+
+    cdef get_precomputed(self) noexcept nogil:
+        return self.precomputed
 
     @final
     cdef void _parallel_on_X(self) noexcept nogil:

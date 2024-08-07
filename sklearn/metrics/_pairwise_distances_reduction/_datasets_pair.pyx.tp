@@ -98,6 +98,12 @@ cdef class DatasetsPair{{name_suffix}}:
             metric_kwargs = copy.copy(metric_kwargs)
             metric_kwargs.pop("X_norm_squared", None)
             metric_kwargs.pop("Y_norm_squared", None)
+     
+       
+            
+            
+            
+
         cdef:
             {{DistanceMetric}} distance_metric = DistanceMetric.get_metric(
                 metric,
@@ -157,6 +163,54 @@ cdef class DatasetsPair{{name_suffix}}:
         # This _must_ always be overwritten in subclasses.
         # TODO: add "with gil: raise" here when supporting Cython 3.0
         return -1
+
+
+@final
+cdef class PrecomputedDistanceMatrix{{name_suffix}}(DatasetsPair{{name_suffix}}):
+    """A precomputed distance matrix between row vectors of two arrays.
+    Its abstract class is DatasetsPair
+
+    Parameters
+    ----------
+    Must receive precomputed_distance: ndarray of shape (n_samples_X, n_samples_Y)? Really? 
+        Must be C-contiguous. 
+    """
+
+    def __init__(
+        self,
+        const {{INPUT_DTYPE_t}}[:, ::1] precomputed_distance,  # do we break it up into 64 and 32?
+    ):
+        super().__init__(
+            distance_metric={{DistanceMetric}}(),
+            n_features=0,  #what is n_features? aren't there more we need to take in?
+        )
+        # Arrays have already been checked
+        self.precomputed_distance = precomputed_distance
+
+    @final
+    cdef ITYPE_t n_samples_X(self) noexcept nogil:
+        return self.precomputed_distance.shape[0]
+
+    @final
+    cdef ITYPE_t n_samples_Y(self) noexcept nogil:
+      this is a surrogate distance that is used for real computations
+  
+
+    '''
+    # this is a surrogate distance that is used for real computations
+    # may not need to specify since this subclass does not recompute
+    @final
+    cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) noexcept nogil:
+        return self.precomputed_distance[i, j]
+    '''
+    @final
+    cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) noexcept nogil:
+        return self.precomputed_distance[i, j]
+
+
+   
+   
+   
 
 @final
 cdef class DenseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
