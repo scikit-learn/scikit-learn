@@ -14,6 +14,9 @@ if [[ $FREE_THREADED_BUILD == "True" ]]; then
     export PYTHON_GIL=0
 fi
 
+# Upgrade numpy to nightly build:
+pip install --pre --extra-index https://pypi.anaconda.org/scientific-python-nightly-wheels/simple scikit-learn
+
 # Test that there are no links to system libraries in the
 # threadpoolctl output section of the show_versions output:
 python -c "import sklearn; sklearn.show_versions()"
