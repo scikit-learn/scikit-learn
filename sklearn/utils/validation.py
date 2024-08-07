@@ -1045,18 +1045,7 @@ def check_array(
                     # Conversion float -> int should not contain NaN or
                     # inf (numpy#14412). We cannot use casting='safe' because
                     # then conversion float -> int would be disallowed.
-                    print(
-                        "###in check array #####before _asarray_with_order###########"
-                    )
-                    print(type(array))
                     array = _asarray_with_order(array, order=order, xp=xp)
-                    print("###in check array #####after _asarray_with_order###########")
-                    print(type(array))
-                    if hasattr(array, "device"):
-                        print(array.device)
-                    if hasattr(array, "shape"):
-                        print(array.shape)
-                    print("###########################################################")
                     if xp.isdtype(array.dtype, ("real floating", "complex floating")):
                         _assert_all_finite(
                             array,
@@ -1067,7 +1056,18 @@ def check_array(
                         )
                     array = xp.astype(array, dtype, copy=False)
                 else:
+                    print(
+                        "###in check array #####before _asarray_with_order###########"
+                    )
+                    print(type(array))
                     array = _asarray_with_order(array, order=order, dtype=dtype, xp=xp)
+                    print("###in check array #####after _asarray_with_order###########")
+                    print(type(array))
+                    if hasattr(array, "device"):
+                        print(array.device)
+                    if hasattr(array, "shape"):
+                        print(array.shape)
+                    print("###########################################################")
             except ComplexWarning as complex_warning:
                 raise ValueError(
                     "Complex data not supported\n{}\n".format(array)
