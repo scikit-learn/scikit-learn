@@ -10,6 +10,7 @@ import warnings
 from functools import wraps
 
 import numpy
+import scipy
 import scipy.special as special
 
 from .._config import get_config
@@ -105,9 +106,20 @@ def _check_array_api_dispatch(array_api_dispatch):
         min_numpy_version = "1.21"
         if numpy_version < parse_version(min_numpy_version):
             raise ImportError(
-                f"NumPy must be {min_numpy_version} or newer to dispatch array using"
-                " the API specification"
+                f"NumPy must be {min_numpy_version} or newer (found"
+                f" {numpy.__version__}) to dispatch array using"
+                " the array API specification"
             )
+
+        scipy_version = parse_version(scipy.__version__)
+        min_scipy_version = "1.14.0"
+        if scipy_version < parse_version(min_scipy_version):
+            raise ImportError(
+                f"SciPy must be {min_scipy_version} or newer"
+                " (found {scipy.__version__}) to dispatch array using"
+                " the array API specification"
+            )
+
         if os.environ.get("SCIPY_ARRAY_API") != "1":
             warnings.warn(
                 (
