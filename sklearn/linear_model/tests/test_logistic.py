@@ -776,9 +776,16 @@ def test_logistic_regressioncv_class_weights(weight, class_weight, global_random
         )
 
 
-def test_logistic_regression_sample_weights(global_random_seed):
+@pytest.mark.parametrize("problem", ("single", "cv"))
+@pytest.mark.parametrize(
+    "solver", ("lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag", "saga")
+)
+def test_logistic_regression_sample_weights(problem, solver, global_random_seed):
+    n_samples_per_cv_group = 100
+    n_cv_groups = 3
+
     X, y = make_classification(
-        n_samples=300,
+        n_samples=n_samples_per_cv_group * n_cv_groups,
         n_features=5,
         n_informative=3,
         n_classes=2,
@@ -786,56 +793,96 @@ def test_logistic_regression_sample_weights(global_random_seed):
     )
     rng = np.random.RandomState(global_random_seed)
     sw = np.ones(y.shape[0])
+
+    kw_weighted = {
+        "random_state": global_random_seed,
+        "fit_intercept": False,
+        "max_iter": 10_000,
+        "tol": 1e-8,
+    }
+    kw_repeated = kw_weighted.copy()
+    sw[:n_samples_per_cv_group] = rng.randint(0, 5, size=100)
+    X_repeated = np.repeat(X, sw.astype(int), axis=0)
+    y_repeated = np.repeat(y, sw.astype(int), axis=0)
+
+    if problem == "single":
+        LR = LogisticRegression
+    elif problem == "cv":
+        LR = LogisticRegressionCV
+        # We weight the first fold 2 times more.
+        groups_weighted = np.r_[
+            np.full(n_samples_per_cv_group, 0),
+            np.full(n_samples_per_cv_group, 1),
+            np.full(n_samples_per_cv_group, 2),
+        ]
+        splits_weighted = list(LeaveOneGroupOut().split(X, groups=groups_weighted))
+        kw_weighted.update({"Cs": 100, "cv": splits_weighted})
+
+        groups_repeated = np.repeat(groups_weighted, sw.astype(int), axis=0)
+        splits_repeated = list(
+            LeaveOneGroupOut().split(X_repeated, groups=groups_repeated)
+        )
+        kw_repeated.update({"Cs": 100, "cv": splits_repeated})
+
+        clf_sw_weighted = LR(solver=solver, **kw_weighted)
+        clf_sw_repeated = LR(solver=solver, **kw_repeated)
+        clf_sw_weighted.fit(X, y, sample_weight=sw)
+        clf_sw_repeated.fit(X_repeated, y_repeated)
+
+        if problem == "cv":
+            assert_allclose(clf_sw_weighted.scores_[1], clf_sw_repeated.scores_[1])
+        assert_allclose(
+            clf_sw_weighted.coef_, clf_sw_repeated.coef_, rtol=1e-5, atol=1e-8
+        )
+
+
+@pytest.mark.parametrize("solver", ("lbfgs", "liblinear"))
+def test_logistic_regression_solver_class_weights(solver, global_random_seed):
+    # Test that passing class_weight as [1,2] is the same as
+    # passing class weight = [1,1] but adjusting sample weights
+    # to be 2 for all instances of class 2
+
+    X, y = make_classification(
+        n_samples=300,
+        n_features=5,
+        n_informative=3,
+        n_classes=2,
+        random_state=global_random_seed,
+    )
+
     sample_weight = y + 1
 
-    for LR in [LogisticRegression, LogisticRegressionCV]:
-        kw_weighted = {"random_state": global_random_seed, "fit_intercept": False}
-        kw_repeated = kw_weighted.copy()
-        sw[:100] = rng.randint(0, 5, size=100)
-        X_repeated = np.repeat(X, sw.astype(int), axis=0)
-        y_repeated = np.repeat(y, sw.astype(int), axis=0)
-        if LR is LogisticRegressionCV:
-            # We weight the first fold 2 times more.
-            groups_weighted = np.r_[np.full(100, 0), np.full(100, 1), np.full(100, 2)]
-            splits_weighted = list(LeaveOneGroupOut().split(X, groups=groups_weighted))
-            kw_weighted.update({"Cs": 3, "cv": splits_weighted})
+    kw_weighted = {"random_state": global_random_seed, "fit_intercept": False}
+    clf_cw_12 = LogisticRegression(
+        solver=solver, class_weight={0: 1, 1: 2}, **kw_weighted
+    )
+    clf_cw_12.fit(X, y)
+    clf_sw_12 = LogisticRegression(solver=solver, **kw_weighted)
+    clf_sw_12.fit(X, y, sample_weight=sample_weight)
+    assert_allclose(clf_cw_12.coef_, clf_sw_12.coef_, rtol=1e-4)
 
-            groups_repeated = np.repeat(groups_weighted, sw.astype(int), axis=0)
-            splits_repeated = list(
-                LeaveOneGroupOut().split(X_repeated, groups=groups_repeated)
-            )
-            kw_repeated.update({"Cs": 3, "cv": splits_repeated})
-        # Test that passing sample_weight as ones is the same as
-        # not passing them at all (default None)
-        # Note doesn't work with sag and saga
-        for solver in ["lbfgs", "liblinear", "newton-cg", "newton-cholesky"]:
-            clf_sw_weighted = LR(solver=solver, **kw_weighted)
-            clf_sw_repeated = LR(solver=solver, **kw_repeated)
-            clf_sw_weighted.fit(X, y, sample_weight=sw)
-            clf_sw_repeated.fit(X_repeated, y_repeated)
-            if LR is LogisticRegressionCV:
-                assert_allclose(clf_sw_weighted.scores_[1], clf_sw_repeated.scores_[1])
-            assert_allclose(clf_sw_weighted.coef_, clf_sw_repeated.coef_, rtol=1e-4)
 
-        # Test that passing class_weight as [1,2] is the same as
-        # passing class weight = [1,1] but adjusting sample weights
-        # to be 2 for all instances of class 2
-        for solver in ["lbfgs", "liblinear"]:
-            clf_cw_12 = LR(solver=solver, class_weight={0: 1, 1: 2}, **kw_weighted)
-            clf_cw_12.fit(X, y)
-            clf_sw_12 = LR(solver=solver, **kw_weighted)
-            clf_sw_12.fit(X, y, sample_weight=sample_weight)
-            assert_allclose(clf_cw_12.coef_, clf_sw_12.coef_, rtol=1e-4)
-
+def test_logistic_regression_l1l2_liblinear(global_random_seed):
     # Test the above for l1 penalty and l2 penalty with dual=True.
     # since the patched liblinear code is different.
+
+    X, y = make_classification(
+        n_samples=300,
+        n_features=5,
+        n_informative=3,
+        n_classes=2,
+        random_state=global_random_seed,
+    )
+
+    sample_weight = y + 1
+
     clf_cw = LogisticRegression(
         solver="liblinear",
         fit_intercept=False,
         class_weight={0: 1, 1: 2},
         penalty="l1",
         tol=1e-5,
-        random_state=42,
+        random_state=global_random_seed,
     )
     clf_cw.fit(X, y)
     clf_sw = LogisticRegression(
@@ -843,7 +890,7 @@ def test_logistic_regression_sample_weights(global_random_seed):
         fit_intercept=False,
         penalty="l1",
         tol=1e-5,
-        random_state=42,
+        random_state=global_random_seed,
     )
     clf_sw.fit(X, y, sample_weight)
     assert_array_almost_equal(clf_cw.coef_, clf_sw.coef_, decimal=4)
@@ -854,7 +901,7 @@ def test_logistic_regression_sample_weights(global_random_seed):
         class_weight={0: 1, 1: 2},
         penalty="l2",
         dual=True,
-        random_state=42,
+        random_state=global_random_seed,
     )
     clf_cw.fit(X, y)
     clf_sw = LogisticRegression(
@@ -862,7 +909,7 @@ def test_logistic_regression_sample_weights(global_random_seed):
         fit_intercept=False,
         penalty="l2",
         dual=True,
-        random_state=42,
+        random_state=global_random_seed,
     )
     clf_sw.fit(X, y, sample_weight)
     assert_array_almost_equal(clf_cw.coef_, clf_sw.coef_, decimal=4)
