@@ -852,7 +852,12 @@ def test_logistic_regression_solver_class_weights(solver, global_random_seed):
 
     sample_weight = y + 1
 
-    kw_weighted = {"random_state": global_random_seed, "fit_intercept": False}
+    kw_weighted = {
+        "random_state": global_random_seed,
+        "fit_intercept": False,
+        "max_iter": 10_000,
+        "tol": 1e-8,
+    }
     clf_cw_12 = LogisticRegression(
         solver=solver, class_weight={0: 1, 1: 2}, **kw_weighted
     )
@@ -881,6 +886,7 @@ def test_logistic_regression_l1l2_liblinear(global_random_seed):
         fit_intercept=False,
         class_weight={0: 1, 1: 2},
         penalty="l1",
+        max_iter=10_000,
         tol=1e-5,
         random_state=global_random_seed,
     )
@@ -889,6 +895,7 @@ def test_logistic_regression_l1l2_liblinear(global_random_seed):
         solver="liblinear",
         fit_intercept=False,
         penalty="l1",
+        max_iter=10_000,
         tol=1e-5,
         random_state=global_random_seed,
     )
@@ -900,6 +907,8 @@ def test_logistic_regression_l1l2_liblinear(global_random_seed):
         fit_intercept=False,
         class_weight={0: 1, 1: 2},
         penalty="l2",
+        max_iter=10_000,
+        tol=1e-5,
         dual=True,
         random_state=global_random_seed,
     )
@@ -908,6 +917,8 @@ def test_logistic_regression_l1l2_liblinear(global_random_seed):
         solver="liblinear",
         fit_intercept=False,
         penalty="l2",
+        max_iter=10_000,
+        tol=1e-5,
         dual=True,
         random_state=global_random_seed,
     )
