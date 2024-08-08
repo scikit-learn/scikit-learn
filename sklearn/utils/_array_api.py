@@ -827,19 +827,6 @@ def _nanmax(X, axis=None, xp=None):
         return X
 
 
-def _clip(S, min_val, max_val, xp):
-    # TODO: remove this method and change all usage once we move to array api 2023.12
-    # https://data-apis.org/array-api/2023.12/API_specification/generated/array_api.clip.html#clip
-    if _is_numpy_namespace(xp):
-        return numpy.clip(S, min_val, max_val)
-    else:
-        min_arr = xp.asarray(min_val, dtype=S.dtype)
-        max_arr = xp.asarray(max_val, dtype=S.dtype)
-        S = xp.where(S < min_arr, min_arr, S)
-        S = xp.where(S > max_arr, max_arr, S)
-        return S
-
-
 def _asarray_with_order(
     array, dtype=None, order=None, copy=None, *, xp=None, device=None
 ):
