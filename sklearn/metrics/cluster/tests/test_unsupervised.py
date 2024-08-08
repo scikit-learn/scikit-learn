@@ -444,10 +444,7 @@ def test_dbcv_score_irrelevant_d_warning(density_sample):
         dbcv_score(*density_sample, d=2)
 
 
-@pytest.mark.parametrize(
-    "distance_metric",
-    ["euclidean", "manhattan", "minkowski"]
-)
+@pytest.mark.parametrize("distance_metric", ["euclidean", "manhattan", "minkowski"])
 def test_dbcv_score_output(density_samples_good_bad, distance_metric):
     ground_truth_moons_score = dbcv_score(
         *density_samples_good_bad[0], metric=distance_metric
@@ -464,10 +461,7 @@ def test_dbcv_score_output(density_samples_good_bad, distance_metric):
     assert split_randomly_score < -0.5
 
 
-@pytest.mark.parametrize(
-    "distance_metric",
-    ["euclidean", "manhattan", "minkowski"]
-)
+@pytest.mark.parametrize("distance_metric", ["euclidean", "manhattan", "minkowski"])
 def test_dbcv_score_output_no_mrd(density_samples_good_bad, distance_metric):
     ground_truth_moons_score = dbcv_score(
         *density_samples_good_bad[0], metric=distance_metric, mst_raw_dist=True
