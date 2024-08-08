@@ -11,18 +11,19 @@ _DEFAULT_TAGS = {
     "X_types": ["2darray"],
     "poor_score": False,
     "no_validation": False,
-    "multioutput": False,
     "allow_nan": False,
     "stateless": False,
-    "multilabel": False,
     "_skip_test": False,
     "_xfail_checks": False,
-    "multioutput_only": False,
-    "binary_only": False,
     "requires_fit": True,
     "preserves_dtype": [np.float64],
     "requires_y": False,
     "pairwise": False,
+    "target_type": ["single-output"],
+}
+
+_CLASSIFIER_DEFAULT_TAGS = _DEFAULT_TAGS | {
+    "target_type": ["single-output", "multi-class"]
 }
 
 
@@ -54,12 +55,24 @@ def _safe_tags(estimator, key=None):
     if hasattr(estimator, "_get_tags"):
         tags_provider = "_get_tags()"
         tags = estimator._get_tags()
-    elif hasattr(estimator, "_more_tags"):
-        tags_provider = "_more_tags()"
-        tags = {**_DEFAULT_TAGS, **estimator._more_tags()}
     else:
-        tags_provider = "_DEFAULT_TAGS"
-        tags = _DEFAULT_TAGS
+        # importing here to avoid circular import
+        from ..base import is_classifier
+
+        defaults = (
+            _CLASSIFIER_DEFAULT_TAGS if is_classifier(estimator) else _DEFAULT_TAGS
+        )
+
+        if hasattr(estimator, "_more_tags"):
+            tags_provider = "_more_tags()"
+            tags = {**defaults, **estimator._more_tags()}
+        else:
+            tags_provider = (
+                "_CLASSIFIER_DEFAULT_TAGS"
+                if is_classifier(estimator)
+                else "_DEFAULT_TAGS"
+            )
+            tags = defaults
 
     if key is not None:
         if key not in tags:
@@ -69,3 +82,22 @@ def _safe_tags(estimator, key=None):
             )
         return tags[key]
     return tags
+
+
+def binary_only(estimator):
+    """Check whether estimator is binary classification only.
+
+    An estimator is a binary only classifier if the "target_type" tag is set to
+    ["binary"].
+    """
+    return _safe_tags(estimator, "target_type") == ["binary"]
+
+
+def multioutput_only(estimator):
+    """Check whether estimator is multi-output only.
+
+    An estimator is a multi-output only estimator if the "target_type" tag does
+    not include "single-output".
+    """
+    target_type = _safe_tags(estimator, "target_type")
+    return "single-output" not in target_type and "multi-output" in target_type

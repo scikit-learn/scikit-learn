@@ -62,6 +62,7 @@ from ..utils._param_validation import (
     generate_invalid_param_val,
     make_constraint,
 )
+from ..utils._tags import binary_only, multioutput_only
 from . import shuffle
 from ._missing import is_scalar_nan
 from ._param_validation import Interval
@@ -158,21 +159,21 @@ def _yield_classifier_checks(classifier):
     yield check_classifiers_one_label_sample_weights
     yield check_classifiers_classes
     yield check_estimators_partial_fit_n_features
-    if tags["multioutput"]:
+    if "multi-output" in tags["target_type"]:
         yield check_classifier_multioutput
     # basic consistency testing
     yield check_classifiers_train
     yield partial(check_classifiers_train, readonly_memmap=True)
     yield partial(check_classifiers_train, readonly_memmap=True, X_dtype="float32")
     yield check_classifiers_regression_target
-    if tags["multilabel"]:
+    if "multi-label" in tags["target_type"]:
         yield check_classifiers_multilabel_representation_invariance
         yield check_classifiers_multilabel_output_format_predict
         yield check_classifiers_multilabel_output_format_predict_proba
         yield check_classifiers_multilabel_output_format_decision_function
     if not tags["no_validation"]:
         yield check_supervised_y_no_nan
-        if not tags["multioutput_only"]:
+        if not multioutput_only(classifier):
             yield check_supervised_y_2d
     if tags["requires_fit"]:
         yield check_estimators_unfitted
@@ -229,10 +230,10 @@ def _yield_regressor_checks(regressor):
     yield partial(check_regressors_train, readonly_memmap=True, X_dtype="float32")
     yield check_regressor_data_not_an_array
     yield check_estimators_partial_fit_n_features
-    if tags["multioutput"]:
+    if "multi-output" in tags["target_type"]:
         yield check_regressor_multioutput
     yield check_regressors_no_decision_function
-    if not tags["no_validation"] and not tags["multioutput_only"]:
+    if not tags["no_validation"] and not multioutput_only(regressor):
         yield check_supervised_y_2d
     yield check_supervised_y_no_nan
     name = regressor.__class__.__name__
@@ -1032,7 +1033,6 @@ def _check_estimator_sparse_container(name, estimator_orig, sparse_type):
     with ignore_warnings(category=FutureWarning):
         estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
-    tags = _safe_tags(estimator_orig)
     for matrix_format, X in _generate_sparse_data(sparse_type(X)):
         # catch deprecation warnings
         with ignore_warnings(category=FutureWarning):
@@ -1063,13 +1063,13 @@ def _check_estimator_sparse_container(name, estimator_orig, sparse_type):
                 estimator.fit(X, y)
             if hasattr(estimator, "predict"):
                 pred = estimator.predict(X)
-                if tags["multioutput_only"]:
+                if multioutput_only(estimator_orig):
                     assert pred.shape == (X.shape[0], 1)
                 else:
                     assert pred.shape == (X.shape[0],)
             if hasattr(estimator, "predict_proba"):
                 probs = estimator.predict_proba(X)
-                if tags["binary_only"]:
+                if binary_only(estimator_orig):
                     expected_probs_shape = (X.shape[0], 2)
                 else:
                     expected_probs_shape = (X.shape[0], 4)
@@ -1112,7 +1112,7 @@ def check_sample_weights_pandas_series(name, estimator_orig):
         X = pd.DataFrame(_enforce_estimator_tags_X(estimator_orig, X), copy=False)
         y = pd.Series([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 2])
         weights = pd.Series([1] * 12)
-        if _safe_tags(estimator, key="multioutput_only"):
+        if multioutput_only(estimator):
             y = pd.DataFrame(y, copy=False)
         try:
             estimator.fit(X, y, sample_weight=weights)
@@ -1153,7 +1153,7 @@ def check_sample_weights_not_an_array(name, estimator_orig):
     X = _NotAnArray(_enforce_estimator_tags_X(estimator_orig, X))
     y = _NotAnArray([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 2])
     weights = _NotAnArray([1] * 12)
-    if _safe_tags(estimator, key="multioutput_only"):
+    if multioutput_only(estimator):
         y = _NotAnArray(y.data.reshape(-1, 1))
     estimator.fit(X, y, sample_weight=weights)
 
@@ -1558,7 +1558,7 @@ def check_methods_sample_order_invariance(name, estimator_orig):
     X = 3 * rnd.uniform(size=(20, 3))
     X = _enforce_estimator_tags_X(estimator_orig, X)
     y = X[:, 0].astype(np.int64)
-    if _safe_tags(estimator_orig, key="binary_only"):
+    if binary_only(estimator_orig):
         y[y == 2] = 1
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
@@ -2377,7 +2377,7 @@ def check_classifiers_train(
 
     problems = [(X_b, y_b)]
     tags = _safe_tags(classifier_orig)
-    if not tags["binary_only"]:
+    if not binary_only(classifier_orig):
         problems.append((X_m, y_m))
 
     for X, y in problems:
@@ -2440,7 +2440,7 @@ def check_classifiers_train(
                 # decision_function agrees with predict
                 decision = classifier.decision_function(X)
                 if n_classes == 2:
-                    if not tags["multioutput_only"]:
+                    if not multioutput_only(classifier_orig):
                         assert decision.shape == (n_samples,)
                     else:
                         assert decision.shape == (n_samples, 1)
@@ -2910,7 +2910,7 @@ def check_supervised_y_2d(name, estimator_orig):
     msg = "expected 1 DataConversionWarning, got: %s" % ", ".join(
         [str(w_x) for w_x in w]
     )
-    if not tags["multioutput"]:
+    if "multi-output" not in tags["target_type"]:
         # check that we warned if we don't support multi-output
         assert len(w) > 0, msg
         assert (
@@ -3015,7 +3015,7 @@ def check_classifiers_classes(name, classifier_orig):
     y_names_binary = np.take(labels_binary, y_binary)
 
     problems = [(X_binary, y_binary, y_names_binary)]
-    if not _safe_tags(classifier_orig, key="binary_only"):
+    if not binary_only(classifier_orig):
         problems.append((X_multiclass, y_multiclass, y_names_multiclass))
 
     for X, y, y_names in problems:
@@ -3127,7 +3127,7 @@ def check_regressors_no_decision_function(name, regressor_orig):
 
 @ignore_warnings(category=FutureWarning)
 def check_class_weight_classifiers(name, classifier_orig):
-    if _safe_tags(classifier_orig, key="binary_only"):
+    if binary_only(classifier_orig):
         problems = [2]
     else:
         problems = [2, 3]
@@ -3528,11 +3528,11 @@ def _enforce_estimator_tags_y(estimator, y):
         # Create strictly positive y. The minimal increment above 0 is 1, as
         # y could be of integer dtype.
         y += 1 + abs(y.min())
-    if _safe_tags(estimator, key="binary_only") and y.size > 0:
+    if binary_only(estimator) and y.size > 0:
         y = np.where(y == y.flat[0], y, y.flat[0] + 1)
     # Estimators in mono_output_task_error raise ValueError if y is of 1-D
     # Convert into a 2-D y for those estimators.
-    if _safe_tags(estimator, key="multioutput_only"):
+    if multioutput_only(estimator):
         return np.reshape(y, (-1, 1))
     return y
 
@@ -4369,6 +4369,11 @@ def check_param_validation(name, estimator_orig):
             )
 
             with raises(InvalidParameterError, match=match, err_msg=err_msg):
+                try:
+                    _safe_tags(estimator, key="X_types")
+                except Exception:
+                    is_classifier(estimator)
+                    _safe_tags(estimator, key="X_types")
                 if any(
                     isinstance(X_type, str) and X_type.endswith("labels")
                     for X_type in _safe_tags(estimator, key="X_types")

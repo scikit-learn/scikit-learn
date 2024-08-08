@@ -309,7 +309,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         return np.asarray(y).T
 
     def _more_tags(self):
-        return {"multioutput_only": True}
+        return {"target_type": ["multi-output"]}
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.
@@ -1095,7 +1095,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         return router
 
     def _more_tags(self):
-        return {"_skip_test": True, "multioutput_only": True}
+        return {"_skip_test": True, "target_type": ["multi-output"]}
 
 
 class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
@@ -1244,4 +1244,4 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         return router
 
     def _more_tags(self):
-        return {"multioutput_only": True}
+        return {"target_type": ["multi-output"]}

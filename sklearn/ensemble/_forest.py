@@ -996,7 +996,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             return proba
 
     def _more_tags(self):
-        return {"multilabel": True}
+        return {"target_type": ["multi-label", "multi-class"]}
 
 
 class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
@@ -1160,7 +1160,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         return averaged_predictions
 
     def _more_tags(self):
-        return {"multilabel": True}
+        return {"target_type": ["multi-label"]}
 
 
 class RandomForestClassifier(ForestClassifier):

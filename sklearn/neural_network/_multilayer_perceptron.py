@@ -1253,7 +1253,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             return y_pred
 
     def _more_tags(self):
-        return {"multilabel": True}
+        return {"target_type": ["multi-class", "multi-label"]}
 
 
 class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):

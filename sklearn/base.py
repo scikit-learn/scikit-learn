@@ -20,9 +20,7 @@ from .utils._estimator_html_repr import _HTMLDocumentationLinkMixin, estimator_h
 from .utils._metadata_requests import _MetadataRequester, _routing_enabled
 from .utils._param_validation import validate_parameter_constraints
 from .utils._set_output import _SetOutputMixin
-from .utils._tags import (
-    _DEFAULT_TAGS,
-)
+from .utils._tags import _CLASSIFIER_DEFAULT_TAGS, _DEFAULT_TAGS
 from .utils.fixes import _IS_32BIT
 from .utils.validation import (
     _check_feature_names_in,
@@ -386,7 +384,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
             self.__dict__.update(state)
 
     def _more_tags(self):
-        return _DEFAULT_TAGS
+        return _CLASSIFIER_DEFAULT_TAGS if is_classifier(self) else _DEFAULT_TAGS
 
     def _get_tags(self):
         collected_tags = {}
@@ -1345,7 +1343,7 @@ class MultiOutputMixin:
     """Mixin to mark estimators that support multioutput."""
 
     def _more_tags(self):
-        return {"multioutput": True}
+        return {"target_type": ["single-output", "multi-output", "multi-class"]}
 
 
 class _UnstableArchMixin:
