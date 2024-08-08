@@ -24,7 +24,8 @@ def _density_separation(
 ):
     """
     Compute the density separation between two clusters. This is the minimum
-    distance between pairs of points, one from internal nodes of MSTs of each cluster.
+    distance between pairs of points belonging to the internal nodes of the MSTs
+    of each cluster.
 
     Parameters
     ----------
