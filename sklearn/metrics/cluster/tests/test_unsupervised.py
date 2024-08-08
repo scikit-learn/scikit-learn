@@ -444,9 +444,17 @@ def test_dbcv_score_irrelevant_d_warning(density_sample):
         dbcv_score(*density_sample, d=2)
 
 
-def test_dbcv_score_output(density_samples_good_bad):
-    ground_truth_moons_score = dbcv_score(*density_samples_good_bad[0])
-    split_randomly_score = dbcv_score(*density_samples_good_bad[1])
+@pytest.mark.parametrize(
+    "distance_metric",
+    ["euclidean", "manhattan", "minkowski"]
+)
+def test_dbcv_score_output(density_samples_good_bad, distance_metric):
+    ground_truth_moons_score = dbcv_score(
+        *density_samples_good_bad[0], metric=distance_metric
+    )
+    split_randomly_score = dbcv_score(
+        *density_samples_good_bad[1], metric=distance_metric
+    )
 
     # well separated clusters should result in a better score,
     # even if located in close proximity to one another and
@@ -456,11 +464,17 @@ def test_dbcv_score_output(density_samples_good_bad):
     assert split_randomly_score < -0.5
 
 
-def test_dbcv_score_output_no_mrd(density_samples_good_bad):
+@pytest.mark.parametrize(
+    "distance_metric",
+    ["euclidean", "manhattan", "minkowski"]
+)
+def test_dbcv_score_output_no_mrd(density_samples_good_bad, distance_metric):
     ground_truth_moons_score = dbcv_score(
-        *density_samples_good_bad[0], mst_raw_dist=True
+        *density_samples_good_bad[0], metric=distance_metric, mst_raw_dist=True
     )
-    split_randomly_score = dbcv_score(*density_samples_good_bad[1], mst_raw_dist=True)
+    split_randomly_score = dbcv_score(
+        *density_samples_good_bad[1], metric=distance_metric, mst_raw_dist=True
+    )
 
     assert ground_truth_moons_score > 0.5
     assert split_randomly_score < -0.5
