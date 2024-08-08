@@ -118,7 +118,7 @@ quantile_offsets = np.linspace(0.05, 0.45, 5)
 for offset in quantile_offsets:
     upper_quantile = np.quantile(tprs, 0.5 + offset, axis=0)
     lower_quantile = np.quantile(tprs, 0.5 - offset, axis=0)
-    label = f"5% to 95% percentile region" if offset == 0.45 else None
+    label = "5% to 95% percentile region" if offset == 0.45 else None
     ax.fill_between(
         mean_fpr,
         lower_quantile,
