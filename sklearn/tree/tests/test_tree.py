@@ -38,12 +38,12 @@ from sklearn.tree._classes import (
 from sklearn.tree._tree import (
     NODE_DTYPE,
     TREE_LEAF,
-    Tree,
     TREE_UNDEFINED,
+    Tree,
+    _build_pruned_tree_py,
     _check_n_classes,
     _check_node_ndarray,
     _check_value_ndarray,
-    _build_pruned_tree_py,
 )
 from sklearn.tree._tree import Tree as CythonTree
 from sklearn.utils import compute_sample_weight
