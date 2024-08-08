@@ -64,6 +64,10 @@ def _density_separation(
         set to `precomputed` then X is assumed to be the precomputed
         distance matrix between samples.
 
+    no_coredist : bool, default=False
+        If set to True, ignore core distances, work with
+        "raw" distances instead.
+
     **kwd_args :
         Extra arguments to pass to the distance computation for other
         metrics, such as minkowski, Mahanalobis etc.
@@ -218,6 +222,10 @@ def _distances_between_points(
         The number of features (dimension) of the dataset. This need only
         be set in the case of metric being set to `precomputed`, where
         the ambient dimension of the data is unknown to the function.
+
+    no_coredist : bool, default=False
+        If set to True, skip core distance calculcations, work with
+        "raw" distances instead.
 
     **kwd_args :
         Extra arguments to pass to the distance computation for other
