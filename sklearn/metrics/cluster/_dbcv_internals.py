@@ -29,8 +29,8 @@ def _density_separation(
     Parameters
     ----------
     X : array (n_samples, n_features) or (n_samples, n_samples)
-        The input data of the clustering. This can be the data, or, if
-        metric is set to `precomputed` the pairwise distance matrix used
+        The input data of the clustering. This can be the data, or, if the
+        metric is set to `precomputed`, the pairwise distance matrix used
         for the clustering.
 
     labels : array (n_samples)
@@ -38,16 +38,16 @@ def _density_separation(
         cluster label to each data point, with -1 for noise points.
 
     cluster_id1 : int
-        The first cluster label to compute separation between.
+        The first cluster label for which to compute the separation.
 
     cluster_id2 : int
-        The second cluster label to compute separation between.
+        The second cluster label for which to compute the separation.
 
     internal_nodes1 : array
-        The vertices of the MST for `cluster_id1` that were internal vertices.
+        The vertices of the MST for `cluster_id1` that are the internal vertices.
 
     internal_nodes2 : array
-        The vertices of the MST for `cluster_id2` that were internal vertices.
+        The vertices of the MST for `cluster_id2` that are the internal vertices.
 
     core_distances1 : array (size of cluster_id1,)
         The all-points-core_distances of all points in the cluster
@@ -143,9 +143,9 @@ def _internal_minimum_spanning_tree(mr_distances):
     ]
     if len(internal_node_indices) == 0:
         internal_node_indices = [0]
-    # A little "fancy" we select from the flattened array reshape back
-    # (Fortran format to get indexing right) and take the product to do an and
-    # then convert back to boolean type.
+    # A little "fancy" as we select from the flattened array, reshape back
+    # (Fortran format to get the indexing right) and take the product to do
+    # an `and` operation and then convert back to a boolean type.
     edge_selection = np.prod(
         np.isin(min_span_tree.T[:2], internal_node_indices).reshape(
             (min_span_tree.shape[0], 2), order="F"
