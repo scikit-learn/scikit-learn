@@ -49,9 +49,11 @@ def _find_binning_thresholds(col_data, sample_weight, max_bins):
         col_data = col_data[~missing_mask]
     # The data will be sorted anyway in np.unique and again in percentile, so we do it
     # here. Sorting also returns a contiguous array.
-    col_data = np.sort(col_data)
+    sort_idx = np.argsort(col_data)
+    col_data = col_data[sort_idx]
+    sample_weight = sample_weight[sort_idx]
     distinct_values = np.unique(col_data).astype(X_DTYPE)
-    if len(distinct_values) <= max_bins:
+    if sample_weight is None and len(distinct_values) <= max_bins:
         midpoints = distinct_values[:-1] + distinct_values[1:]
         midpoints *= 0.5
     else:
@@ -59,8 +61,6 @@ def _find_binning_thresholds(col_data, sample_weight, max_bins):
         # np.unique(col_data, return_counts) instead but this is more
         # work and the performance benefit will be limited because we
         # work on a fixed-size subsample of the full data.
-        if sample_weight is None:
-            sample_weight = np.ones(col_data.shape[0])
         percentiles = np.linspace(0, 100, num=max_bins + 1)
         percentiles = percentiles[1:-1]
         midpoints = np.array(
@@ -177,7 +177,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         self.random_state = random_state
         self.n_threads = n_threads
 
-    def fit(self, X, y=None, sample_weight=None):
+    def fit(self, X, y=None, sample_weight=None, weighted_thresholds=None):
         """Fit data X by computing the binning thresholds.
 
         The last bin is reserved for missing values, whether missing values
@@ -205,10 +205,15 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         X = check_array(X, dtype=[X_DTYPE], force_all_finite=False)
         max_bins = self.n_bins - 1
 
+        sample_weight_bin = np.ones(X.shape[0])
+        if sample_weight is not None:
+            sample_weight_bin = sample_weight / np.sum(sample_weight)
+
         rng = check_random_state(self.random_state)
         if self.subsample is not None and X.shape[0] > self.subsample:
-            ##Need to add weights here eventually
-            subset = rng.choice(X.shape[0], self.subsample, replace=False)
+            subset = rng.choice(
+                X.shape[0], self.subsample, p=sample_weight_bin, replace=False
+            )
             X = X.take(subset, axis=0)
 
         if self.is_categorical is None:
@@ -241,10 +246,14 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         n_bins_non_missing = [None] * n_features
 
         non_cat_thresholds = Parallel(n_jobs=self.n_threads, backend="threading")(
-            delayed(_find_binning_thresholds)(X[:, f_idx], sample_weight, max_bins)
+            delayed(_find_binning_thresholds)(X[:, f_idx], sample_weight_bin, max_bins)
             for f_idx in range(n_features)
             if not self.is_categorical_[f_idx]
         )
+        if weighted_thresholds is not None:
+            np.testing.assert_allclose(
+                np.stack(weighted_thresholds), np.stack(non_cat_thresholds)
+            )
 
         non_cat_idx = 0
         for f_idx in range(n_features):
