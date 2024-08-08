@@ -321,3 +321,12 @@ def test_cv_generator_support():
 
     sfs = SequentialFeatureSelector(knc, n_features_to_select=5, cv=splits)
     sfs.fit(X, y)
+
+
+def test_fit_rejects_params_with_no_routing_enabled():
+    X, y = make_classification(random_state=42)
+    est = LinearRegression()
+    sfs = SequentialFeatureSelector(estimator=est)
+
+    with pytest.raises(ValueError, match="is only supported if"):
+        sfs.fit(X, y, sample_weight=np.ones_like(y))
