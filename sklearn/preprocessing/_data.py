@@ -6,6 +6,7 @@ import warnings
 from numbers import Integral, Real
 
 import numpy as np
+import scipy
 from scipy import optimize, sparse, stats
 from scipy.special import boxcox
 
@@ -20,6 +21,7 @@ from ..utils import _array_api, check_array, resample
 from ..utils._array_api import get_namespace
 from ..utils._param_validation import Interval, Options, StrOptions, validate_params
 from ..utils.extmath import _incremental_mean_and_var, row_norms
+from ..utils.fixes import parse_version
 from ..utils.sparsefuncs import (
     incr_mean_variance_axis,
     inplace_column_scale,
@@ -3483,8 +3485,16 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         # the computation of lambda is influenced by NaNs so we need to
         # get rid of them
         x = x[~np.isnan(x)]
-        # choosing bracket -2, 2 like for boxcox
-        return optimize.brent(_neg_log_likelihood, brack=(-2, 2))
+
+        # TODO: remove this when minimum version of scipy >= 1.9.0
+        scipy_version = parse_version(scipy.__version__)
+        min_scipy_version = "1.9.0"
+        if scipy_version < parse_version(min_scipy_version):
+            # choosing bracket -2, 2 like for boxcox
+            return optimize.brent(_neg_log_likelihood, brack=(-2, 2))
+
+        _, lmbda = stats.yeojohnson(x, lmbda=None)
+        return lmbda
 
     def _check_input(self, X, in_fit, check_positive=False, check_shape=False):
         """Validate the input before fit and transform.
