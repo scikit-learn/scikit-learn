@@ -1,7 +1,13 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from ..utils._array_api import _find_matching_floating_dtype, device, get_namespace
+from ..utils._array_api import (
+    _apply_along_axis,
+    _find_matching_floating_dtype,
+    _nextafter,
+    _take_along_axis,
+    get_namespace_and_device,
+)
 from .extmath import stable_cumsum
 
 
@@ -31,8 +37,12 @@ def _weighted_percentile(array, sample_weight, percentile=50):
     percentile : int if `array` 1D, ndarray if `array` 2D
         Weighted percentile.
     """
-    xp, _ = get_namespace(array)
-    sample_weight = xp.asarray(sample_weight, device=device(array))
+    xp, is_array_api_compliant, device = get_namespace_and_device(array)
+    sample_weight = xp.asarray(
+        sample_weight,
+        dtype=_find_matching_floating_dtype(sample_weight, xp=xp),
+        device=device,
+    )
     n_dim = array.ndim
     if n_dim == 0:
         return array[()]
@@ -47,11 +57,18 @@ def _weighted_percentile(array, sample_weight, percentile=50):
     # Find index of median prediction for each sample
     weight_cdf = stable_cumsum(sorted_weights, axis=0)
     adjusted_percentile = percentile / 100 * weight_cdf[-1]
+    weight_cdf = xp.asarray(
+        weight_cdf, dtype=_find_matching_floating_dtype(weight_cdf, xp=xp)
+    )
+    adjusted_percentile = xp.asarray(
+        adjusted_percentile,
+        dtype=_find_matching_floating_dtype(adjusted_percentile, xp=xp),
+    )
 
     # For percentile=0, ignore leading observations with sample_weight=0. GH20528
     mask = adjusted_percentile == 0
-    adjusted_percentile[mask] = xp.nextafter(
-        adjusted_percentile[mask], adjusted_percentile[mask] + 1
+    adjusted_percentile[mask] = _nextafter(
+        adjusted_percentile[mask], adjusted_percentile[mask] + 1, xp=xp
     )
 
     percentile_idx = xp.asarray(
@@ -60,32 +77,23 @@ def _weighted_percentile(array, sample_weight, percentile=50):
             for i in range(weight_cdf.shape[1])
         ]
     )
-    percentile_idx = xp.array(percentile_idx)
+
     # In rare cases, percentile_idx equals to sorted_idx.shape[0]
     max_idx = sorted_idx.shape[0] - 1
-    percentile_idx = xp.apply_along_axis(
-        lambda x: xp.clip(x, 0, max_idx), axis=0, arr=percentile_idx
+    percentile_idx = _apply_along_axis(
+        lambda x: xp.clip(x, 0, max_idx), axis=0, arr=percentile_idx, xp=xp
     )
 
     col_index = xp.arange(array.shape[1])
-    percentile_in_sorted = sorted_idx[percentile_idx, col_index]
+    # percentile_in_sorted = sorted_idx[percentile_idx, col_index]
+    percentile_in_sorted = []
+    for i in range(percentile_idx.shape[0]):
+        percentile_in_sorted.append(sorted_idx[percentile_idx[i], col_index[i]])
+    percentile_in_sorted = xp.asarray(percentile_in_sorted)
     array = xp.asarray(array)
-    percentile = array[percentile_in_sorted, col_index]
+    # percentile = array[percentile_in_sorted, col_index]
+    percentile = []
+    for i in range(percentile_in_sorted.shape[0]):
+        percentile.append(array[percentile_in_sorted[i], col_index[i]])
+    percentile = xp.asarray(percentile)
     return percentile[0] if n_dim == 1 else percentile
-
-
-def _take_along_axis(sample_weight, sorted_idx, xp=None):
-    sorted_weights = xp.empty_like(
-        sorted_idx, dtype=_find_matching_floating_dtype(sample_weight, xp=xp)
-    )
-    if sample_weight.ndim == 1:
-        for i in range(sorted_idx.shape[0]):
-            sorted_weights[i] = sample_weight[sorted_idx[i]]
-        return sorted_weights
-    elif sample_weight.ndim == 2:
-        for j in range(sorted_idx.shape[1]):
-            for i in range(sorted_idx.shape[0]):
-                sorted_weights[i, j] = sample_weight[sorted_idx[i, j], j]
-        return sorted_weights
-    else:
-        raise ValueError("Only 1D and 2D arrays are allowed")
