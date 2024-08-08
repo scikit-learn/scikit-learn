@@ -18,6 +18,20 @@ For a short description of the main highlights of the release, please refer to
 Version 1.5.1
 =============
 
+**August 2024**
+
+Changelog
+---------
+
+:mod:`sklearn.linear_model`
+..........................
+
+-|Fix| Fixed sample weight handling for calculation of test scores under  _log_reg_scoring_path
+:pr:`29419` by :user:`Shruti Nath <snath-xoc>`
+
+Version 1.5.1
+=============
+
 **July 2024**
 
 Changes impacting many modules
