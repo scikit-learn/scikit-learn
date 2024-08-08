@@ -453,6 +453,9 @@ def mst_linkage_core(
         used to compute distances. Ignored if precomputed == \
         True
 
+    precomputed: bool, default=False
+        Set to True when passing in precomputed distances.
+
     Returns
     -------
     mst_core_data: array of shape (n_samples, 3)
