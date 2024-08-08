@@ -12,7 +12,7 @@ dependencies:
   - joblib
   - threadpoolctl
   - matplotlib
-  - pytest<8
+  - pytest
   - pytest-xdist
   - pillow
   - pip

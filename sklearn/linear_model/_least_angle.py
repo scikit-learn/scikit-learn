@@ -3,11 +3,8 @@ Least Angle Regression algorithm. See the documentation on the
 Generalized Linear Model for a complete discussion.
 """
 
-# Author: Fabian Pedregosa <fabian.pedregosa@inria.fr>
-#         Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Gael Varoquaux
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import sys
 import warnings
@@ -79,14 +76,14 @@ def lars_path(
     return_n_iter=False,
     positive=False,
 ):
-    """Compute Least Angle Regression or Lasso path using the LARS algorithm [1].
+    """Compute Least Angle Regression or Lasso path using the LARS algorithm.
 
     The optimization objective for the case method='lasso' is::
 
     (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
     in the case of method='lar', the objective function is only known in
-    the form of an implicit equation (see discussion in [1]).
+    the form of an implicit equation (see discussion in [1]_).
 
     Read more in the :ref:`User Guide <least_angle_regression>`.
 
@@ -268,14 +265,14 @@ def lars_path_gram(
     return_n_iter=False,
     positive=False,
 ):
-    """The lars_path in the sufficient stats mode [1].
+    """The lars_path in the sufficient stats mode.
 
     The optimization objective for the case method='lasso' is::
 
     (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
     in the case of method='lar', the objective function is only known in
-    the form of an implicit equation (see discussion in [1])
+    the form of an implicit equation (see discussion in [1]_).
 
     Read more in the :ref:`User Guide <least_angle_regression>`.
 
@@ -1180,7 +1177,9 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             Returns an instance of self.
         """
-        X, y = self._validate_data(X, y, y_numeric=True, multi_output=True)
+        X, y = self._validate_data(
+            X, y, force_writeable=True, y_numeric=True, multi_output=True
+        )
 
         alpha = getattr(self, "alpha", 0.0)
         if hasattr(self, "n_nonzero_coefs"):
@@ -1644,7 +1643,7 @@ class LarsCV(Lars):
     >>> reg.score(X, y)
     0.9996...
     >>> reg.alpha_
-    0.2961...
+    np.float64(0.2961...)
     >>> reg.predict(X[:1,])
     array([154.3996...])
     """
@@ -1721,7 +1720,7 @@ class LarsCV(Lars):
         """
         _raise_for_params(params, self, "fit")
 
-        X, y = self._validate_data(X, y, y_numeric=True)
+        X, y = self._validate_data(X, y, force_writeable=True, y_numeric=True)
         X = as_float_array(X, copy=self.copy_X)
         y = as_float_array(y, copy=self.copy_X)
 
@@ -1821,7 +1820,7 @@ class LarsCV(Lars):
         """
         router = MetadataRouter(owner=self.__class__.__name__).add(
             splitter=check_cv(self.cv),
-            method_mapping=MethodMapping().add(callee="split", caller="fit"),
+            method_mapping=MethodMapping().add(caller="fit", callee="split"),
         )
         return router
 
@@ -1984,7 +1983,7 @@ class LassoLarsCV(LarsCV):
     >>> reg.score(X, y)
     0.9993...
     >>> reg.alpha_
-    0.3972...
+    np.float64(0.3972...)
     >>> reg.predict(X[:1,])
     array([-78.4831...])
     """
@@ -2238,7 +2237,7 @@ class LassoLarsIC(LassoLars):
         """
         if copy_X is None:
             copy_X = self.copy_X
-        X, y = self._validate_data(X, y, y_numeric=True)
+        X, y = self._validate_data(X, y, force_writeable=True, y_numeric=True)
 
         X, y, Xmean, ymean, Xstd = _preprocess_data(
             X, y, fit_intercept=self.fit_intercept, copy=copy_X

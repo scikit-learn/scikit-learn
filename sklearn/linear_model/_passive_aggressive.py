@@ -1,5 +1,6 @@
-# Authors: Rob Zinkov, Mathieu Blondel
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from numbers import Real
 
 from ..base import _fit_context
@@ -141,9 +142,6 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     t_ : int
         Number of weight updates performed during training.
         Same as ``(n_iter_ * n_samples + 1)``.
-
-    loss_function_ : callable
-        Loss function used by the algorithm.
 
     See Also
     --------

@@ -39,11 +39,11 @@ easy to see whether the estimator suffers from bias or variance. However, in
 high-dimensional spaces, models can become very difficult to visualize. For
 this reason, it is often helpful to use the tools described below.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-   * :ref:`sphx_glr_auto_examples_model_selection_plot_underfitting_overfitting.py`
-   * :ref:`sphx_glr_auto_examples_model_selection_plot_validation_curve.py`
-   * :ref:`sphx_glr_auto_examples_model_selection_plot_learning_curve.py`
+* :ref:`sphx_glr_auto_examples_model_selection_plot_underfitting_overfitting.py`
+* :ref:`sphx_glr_auto_examples_model_selection_plot_validation_curve.py`
+* :ref:`sphx_glr_auto_examples_model_selection_plot_learning_curve.py`
 
 
 .. _validation_curve:
