@@ -79,8 +79,8 @@ def _density_separation(
     <https://www.dbs.ifi.lmu.de/~zimek/publications/SDM2014/DBCV.pdf>`_
     """
     if metric == "precomputed":
-        sub_select = X[labels == cluster_id1, :][:, labels == cluster_id2]
-        distance_matrix = sub_select[internal_nodes1, :][:, internal_nodes2]
+        X_subset = X[labels == cluster_id1, :][:, labels == cluster_id2]
+        distance_matrix = X_subset[internal_nodes1, :][:, internal_nodes2]
     else:
         cluster1 = X[labels == cluster_id1][internal_nodes1]
         cluster2 = X[labels == cluster_id2][internal_nodes2]
