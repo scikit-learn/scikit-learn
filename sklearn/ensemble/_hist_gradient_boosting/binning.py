@@ -177,7 +177,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         self.random_state = random_state
         self.n_threads = n_threads
 
-    def fit(self, X, y=None, sample_weight=None, weighted_thresholds=None):
+    def fit(self, X, y=None, sample_weight=None):
         """Fit data X by computing the binning thresholds.
 
         The last bin is reserved for missing values, whether missing values
@@ -250,10 +250,6 @@ class _BinMapper(TransformerMixin, BaseEstimator):
             for f_idx in range(n_features)
             if not self.is_categorical_[f_idx]
         )
-        if weighted_thresholds is not None:
-            np.testing.assert_allclose(
-                np.stack(weighted_thresholds), np.stack(non_cat_thresholds)
-            )
 
         non_cat_idx = 0
         for f_idx in range(n_features):
