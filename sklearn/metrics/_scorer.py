@@ -655,10 +655,10 @@ def _get_response_method(response_method, needs_threshold, needs_proba):
 
 
 def _get_response_method_name(response_method):
-    if isinstance(response_method, partial):
+    try:
+        return response_method.__name__
+    except AttributeError:
         return _get_response_method_name(response_method.func)
-
-    return response_method.__name__
 
 
 @validate_params(

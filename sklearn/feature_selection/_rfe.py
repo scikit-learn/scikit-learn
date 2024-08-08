@@ -833,7 +833,8 @@ class RFECV(RFE):
         )
 
         if _routing_enabled():
-            params.update({"groups": groups})
+            if groups is not None:
+                params.update({"groups": groups})
             routed_params = process_routing(self, "fit", **params)
         else:
             routed_params = Bunch(
