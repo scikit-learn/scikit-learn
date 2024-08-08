@@ -435,7 +435,7 @@ METAESTIMATORS: list = [
         "cv_name": "cv",
         "cv_routing_methods": ["fit"],
         "scorer_name": "scoring",
-        "scorer_routing_methods": ["fit"],
+        "scorer_routing_methods": ["fit", "score"],
         "X": X,
         "y": y,
     },
