@@ -70,7 +70,7 @@ def _density_separation(
 
     **kwd_args :
         Extra arguments to pass to the distance computation for other
-        metrics, such as minkowski, Mahanalobis etc.
+        metrics, such as minkowski, mahanalobis etc.
 
     Returns
     -------
@@ -126,7 +126,7 @@ def _internal_minimum_spanning_tree(mr_distances):
     Returns
     -------
     internal_nodes : array
-        An array listing the indices of the internal nodes of the MST
+        An array listing the indices of the internal nodes of the MST.
 
     internal_edges : array (?, 3)
         An array of internal edges in weighted edge list format; that is
@@ -162,7 +162,7 @@ def _internal_minimum_spanning_tree(mr_distances):
     # internal edges (as per the referenced paper). However
     # MATLAB code from the original authors simply selects the
     # largest of *all* the edges in the case that there are
-    # no internal edges, so we do the same here
+    # no internal edges, so we do the same here.
     if np.any(edge_selection):
         # If there are any internal edges, then subselect them out
         edges = min_span_tree[edge_selection]
@@ -210,7 +210,7 @@ def _distances_between_points(
         cluster label to each data point, with -1 for noise points.
 
     cluster_id : int
-        The cluster label for which to compute the distances
+        The cluster label for which to compute the distances.
 
     metric : str or callable, default='euclidean'
         The metric used to compute distances for the clustering (and
@@ -229,7 +229,7 @@ def _distances_between_points(
 
     **kwd_args :
         Extra arguments to pass to the distance computation for other
-        metrics, such as minkowski, Mahanalobis etc.
+        metrics, such as minkowski, mahanalobis etc.
 
     Returns
     -------
@@ -257,7 +257,7 @@ def _distances_between_points(
         if d is not None:
             msg = (
                 'The "d" value you provided is being ignored. '
-                "It's only required for precomputed distances"
+                "It's only required for precomputed distances."
             )
             warnings.warn(msg, UserWarning)
         d = X.shape[1]
@@ -297,7 +297,7 @@ def _all_points_core_distance(distance_matrix, d=2):
     Returns
     -------
     core_distances : array (cluster_size,)
-        The all-points-core-distance of each point in the cluster
+        The all-points-core-distance of each point in the cluster.
 
     References
     ----------

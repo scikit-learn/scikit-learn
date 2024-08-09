@@ -553,7 +553,7 @@ def dbcv_score(
 
     **kwd_args :
         Extra arguments to pass to the distance computation for other
-        metrics, such as minkowski, Mahanalobis etc.
+        metrics, such as minkowski, mahanalobis etc.
 
     Returns
     -------
@@ -580,7 +580,7 @@ def dbcv_score(
             if count > 1 or str(label) == "-1":
                 continue
 
-            raise ValueError("DBCV is not defined for clusters of size 1")
+            raise ValueError("DBCV is not defined for clusters of size 1.")
 
     le = LabelEncoder()
     labels = le.fit_transform(labels)
