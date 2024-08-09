@@ -292,6 +292,12 @@ The project would like to thank the following funders.
 
 ...........
 
+.. |czi| .. image:: images/czi.png
+  :target: https://chanzuckerberg.com
+
+.. |wellcome| .. image:: images/wellcome-trust.png
+  :target: https://wellcome.org/
+
 .. div:: sk-text-image-grid-small
 
   .. div:: text-box
@@ -302,15 +308,14 @@ The project would like to thank the following funders.
     cycle 6. It supports Lucy Liu and some diversity and inclusion initiatives that
     will be announced in the future.
 
-  .. div:: image-box
+.. div:: image-box
 
-    .. image:: images/czi.png
-      :target: https://chanzuckerberg.com
+    .. table::
+      :class: image-subtable
 
-  .. div:: image-box
-
-    .. image:: images/wellcome-trust.png
-      :target: https://wellcome.org/
+      +----------+----------------+
+      |  |czi|   |    |wellcome|  |
+      +----------+----------------+
 
 ...........
 
