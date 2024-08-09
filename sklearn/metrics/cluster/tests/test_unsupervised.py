@@ -1,4 +1,5 @@
 import warnings
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -10,6 +11,7 @@ from sklearn.metrics import pairwise_distances
 from sklearn.metrics.cluster import (
     calinski_harabasz_score,
     davies_bouldin_score,
+    dbcv_score,
     silhouette_samples,
     silhouette_score,
 )
@@ -394,6 +396,180 @@ def test_davies_bouldin_score():
     X = [[0, 0], [2, 2], [3, 3], [5, 5]]
     labels = [0, 0, 1, 2]
     pytest.approx(davies_bouldin_score(X, labels), (5.0 / 4) / 3)
+
+
+@pytest.fixture
+def density_sample():
+    points, labels = datasets.make_moons()
+    bounds = np.array([np.max(points, axis=0), np.min(points, axis=0)]).transpose()
+    noise = [
+        [np.random.uniform(*bounds[0]), np.random.uniform(*bounds[1])]
+        for _ in range(10)
+    ]
+    points = np.append(points, noise, axis=0)
+    labels = np.append(labels, [-1 for _ in range(10)])
+    return points, labels
+
+
+@pytest.fixture
+def density_samples_good_bad():
+    single_gauss_blob, _ = datasets.make_blobs(centers=1, random_state=42)
+    # normally distributed data, randomly split into two clusters
+    # (shuffled samples are labeled based on index mod 2)
+    bad = single_gauss_blob, [i % 2 for i in range(single_gauss_blob.shape[0])]
+    return datasets.make_moons(random_state=42), bad
+
+
+def test_dbcv_score_basic_validation_errs():
+    assert_raises_on_only_one_label(dbcv_score)
+    assert_raises_on_all_points_same_cluster(dbcv_score)
+
+
+def test_dbcv_score_precomputed_missing_d_valerr(density_sample):
+    msg = "If metric is precomputed a d value must be provided!"
+    with pytest.raises(ValueError, match=msg):
+        dbcv_score(
+            pairwise_distances(density_sample[0]),
+            density_sample[1],
+            metric="precomputed",
+        )
+
+
+def test_dbcv_score_irrelevant_d_warning(density_sample):
+    expected_msg = (
+        'The "d" value you provided is being ignored. '
+        "It's only required for precomputed distances."
+    )
+    with pytest.warns(UserWarning, match=expected_msg):
+        dbcv_score(*density_sample, d=2)
+
+
+@pytest.mark.parametrize("distance_metric", ["euclidean", "manhattan", "minkowski"])
+def test_dbcv_score_output(density_samples_good_bad, distance_metric):
+    ground_truth_moons_score = dbcv_score(
+        *density_samples_good_bad[0], metric=distance_metric
+    )
+    split_randomly_score = dbcv_score(
+        *density_samples_good_bad[1], metric=distance_metric
+    )
+
+    # well separated clusters should result in a better score,
+    # even if located in close proximity to one another and
+    # of non-spherical shape
+    assert ground_truth_moons_score > 0
+    # arbitrarily assigned clusters should result in a low score
+    assert split_randomly_score < -0.5
+
+
+@pytest.mark.parametrize("distance_metric", ["euclidean", "manhattan", "minkowski"])
+def test_dbcv_score_output_no_mrd(density_samples_good_bad, distance_metric):
+    ground_truth_moons_score = dbcv_score(
+        *density_samples_good_bad[0], metric=distance_metric, mst_raw_dist=True
+    )
+    split_randomly_score = dbcv_score(
+        *density_samples_good_bad[1], metric=distance_metric, mst_raw_dist=True
+    )
+
+    assert ground_truth_moons_score > 0.5
+    assert split_randomly_score < -0.5
+
+
+def test_dbcv_score_basic_input(density_sample):
+    res = dbcv_score(*density_sample, per_cluster_scores=True)
+
+    # score should at least be non-negative if labeled by ground-truth
+    assert res[0] >= 0
+
+    assert dbcv_score(*density_sample) == res[0]
+
+    assert isinstance(res[1], dict)
+    assert len(res[1]) == 2  # noise should not result in an extra entry
+
+    non_noise = density_sample[1] != -1
+    sample_without_noise = [component[non_noise] for component in density_sample]
+    # test for implicit noise penalty, which emerges from the definition of DBCV
+    # (as stated in the paper)
+    assert res[0] < dbcv_score(*sample_without_noise)
+
+
+def test_dbcv_score_zero_distance_intra():
+    # DBCV is undefined if any all-points-core-distances are undefined
+    # due to identical points, thus raising an error
+    with pytest.raises(ValueError) as exc_info:
+        dbcv_score(
+            [[1, 1] if i % 2 else [0, 0] for i in range(100)],
+            [i % 2 for i in range(100)],
+        )
+    assert exc_info.value.args[0].startswith(
+        "Identified duplicated points in a cluster."
+    )
+
+    # Identical points should NOT affect DBCV in its non-default configuration, with
+    # the `mst_raw_dist` toggle activated, which directly uses "raw" distances and
+    # as such avoids the use of all-points-core-distances entirely
+    dbcv_score(
+        [[1, 1] if i % 2 else [0, 0] for i in range(100)],
+        [i % 2 for i in range(100)],
+        mst_raw_dist=True,
+    )
+
+
+def test_dbcv_score_zero_distance_inter():
+    expected_msg = (
+        "Aborting aggregation of scores of subcomponents: "
+        "the density separation between cluster 0 and "
+        "cluster 1 is zero, leading to an overall score "
+        "which is undefined."
+    )
+
+    # DBCV is undefined if DSPC is zero for any combination
+    # Going with a dataset of only duplicates here since the
+    # non-MRD version doesn't already fail on intra-cluster duplicates
+    with pytest.raises(ValueError, match=expected_msg):
+        dbcv_score(
+            [[0, 1] for _ in range(100)], [i % 2 for i in range(100)], mst_raw_dist=True
+        )
+
+
+def test_dbcv_score_tiny_cluster():
+    dbcv_score(np.random.rand(5, 2), np.array([-1, 1, 1, 0, 0]))
+    dbcv_score(
+        np.random.rand(5, 2),
+        np.array([-1, 1, 1, 0, 0]),
+        strict_cluster_size_validation=True,
+    )
+    expected_msg = "DBCV is not defined for clusters of size 1."
+    with pytest.raises(ValueError, match=expected_msg):
+        dbcv_score(
+            np.random.rand(3, 2),
+            np.array([1, 1, 0]),
+            strict_cluster_size_validation=True,
+        )
+
+
+def test_dbcv_score_verbose(density_sample):
+    with patch("builtins.print") as mocked_print:
+        dbcv_score(*density_sample, verbose=True)
+        mocked_print.assert_called()
+
+
+def test_dbcv_score_precomputed_input(density_sample):
+    # score should at least be non-negative if labeled by ground-truth
+    assert (
+        dbcv_score(
+            pairwise_distances(density_sample[0]),
+            density_sample[1],
+            metric="precomputed",
+            d=2,
+        )
+        >= 0
+    )
+
+
+def test_dbcv_score_mst_raw_dist(density_sample):
+    # should be non-negative if labeled by ground-truth, regardless
+    # (or arguably especially in the case) of non-MRD MST's
+    assert dbcv_score(*density_sample, mst_raw_dist=True) >= 0
 
 
 def test_silhouette_score_integer_precomputed():
