@@ -33,7 +33,7 @@ from cython cimport floating
 from libc.math cimport exp, fabs, isfinite, log, pow, INFINITY
 
 from .._loss._loss cimport CyLossFunction
-from ..utils._typedefs cimport uint32_t
+from ..utils._typedefs cimport uint32_t, uint8_t
 from ..utils._weight_vector cimport WeightVector32, WeightVector64
 from ..utils._seq_dataset cimport SequentialDataset32, SequentialDataset64
 
@@ -287,7 +287,7 @@ def _plain_sgd{{name_suffix}}(
     double C,
     double l1_ratio,
     SequentialDataset{{name_suffix}} dataset,
-    const unsigned char[::1] validation_mask,
+    const uint8_t[::1] validation_mask,
     bint early_stopping,
     validation_score_cb,
     int n_iter_no_change,
@@ -333,7 +333,7 @@ def _plain_sgd{{name_suffix}}(
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
     dataset : SequentialDataset
         A concrete ``SequentialDataset`` object.
-    validation_mask : ndarray[unsigned char, ndim=1]
+    validation_mask : ndarray[uint8_t, ndim=1]
         Equal to True on the validation set.
     early_stopping : boolean
         Whether to use a stopping criterion based on the validation set.
