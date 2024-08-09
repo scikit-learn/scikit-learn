@@ -85,15 +85,23 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
                 yield array_namespace, device, dtype
             yield array_namespace, "mps", "float32"
         elif array_namespace == "jax.experimental.array_api":
-            import jax
+            # XXX: this will dynamically and implicitly pick-up any non-default
+            # device if JAX is configured to use it, contrary to PyTorch for
+            # which we explicitly list all the devices we want to test against
+            # and then later skip in in the tests if it is not available.
+            #
+            # TODO: make yield_namespace_device_dtype_combinations return
+            # device names instead and let _array_api_for_tests return the
+            # actual device objects and skip the tests if the device is not
+            # available.
+            try:
+                import jax
 
-            for device in jax.devices():
-                # XXX: this will dynamically and implicitly pick-up any
-                # non-default device if JAX is configured to use it, contrary
-                # to PyTorch for which we explicitly list all the devices we
-                # want to test against and then later skip in in the tests if
-                # it is not available.
-                yield array_namespace, device, "float32"
+                for device in jax.devices():
+                    yield array_namespace, device, "float32"
+            except ImportError:
+                continue
+
         else:
             yield array_namespace, None, None
 
