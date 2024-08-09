@@ -661,7 +661,7 @@ def _get_diff_msg(str_grouped_dict):
             if start is None:
                 msg_diff += "\n" + "\n".join(group)
             else:
-                msg_diff += ("\n" + start + " ".join(word[2:] for word in group))
+                msg_diff += "\n" + start + " ".join(word[2:] for word in group)
         # Add new lines at end of diff, to separate comparisons
         msg_diff += "\n\n"
     return msg_diff
@@ -679,9 +679,7 @@ def _check_grouped_dict(grouped_dict, type_or_desc, section, n_objects):
             skipped.append(item_name)
         elif len(str_grouped_dict.keys()) > 1:
             msg_diff = _get_diff_msg(str_grouped_dict)
-            obj_groups = " and ".join(
-                str(group) for group in str_grouped_dict.values()
-            )
+            obj_groups = " and ".join(str(group) for group in str_grouped_dict.values())
             msg = textwrap.fill(
                 f"The {type_or_desc} of {section[:-1]} '{item_name}' is inconsistent "
                 f"between {obj_groups}:"

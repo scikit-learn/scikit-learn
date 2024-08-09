@@ -2886,7 +2886,8 @@ def test_classification_metric_division_by_zero_nan_validaton(scoring):
 def test_prfs_docstring_consistency():
     """Check docstrings parameters of related metrics are consistent."""
     pytest.importorskip(
-        "numpydoc", reason="numpydoc is required to test the docstrings",
+        "numpydoc",
+        reason="numpydoc is required to test the docstrings",
     )
     assert_docstring_consistency(
         [

@@ -626,7 +626,8 @@ def f_three(a, b):
 def test_assert_docstring_consistency_arg_checks(objects, kwargs, error):
     """Check `assert_docstring_consistency` argument checking correct."""
     pytest.importorskip(
-        "numpydoc", reason="numpydoc is required to test the docstrings",
+        "numpydoc",
+        reason="numpydoc is required to test the docstrings",
     )
     with pytest.raises(TypeError, match=error):
         assert_docstring_consistency(objects, **kwargs)
@@ -681,7 +682,8 @@ def test_assert_docstring_consistency_arg_checks(objects, kwargs, error):
 def test_assert_docstring_consistency(objects, kwargs, error, warn):
     """Check `assert_docstring_consistency` gives correct results."""
     pytest.importorskip(
-        "numpydoc", reason="numpydoc is required to test the docstrings",
+        "numpydoc",
+        reason="numpydoc is required to test the docstrings",
     )
     if error:
         with pytest.raises(AssertionError, match=error):
@@ -696,7 +698,8 @@ def test_assert_docstring_consistency(objects, kwargs, error, warn):
 def test_assert_docstring_consistency_error_msg():
     """Check `assert_docstring_consistency` difference message."""
     numpydoc = pytest.importorskip(
-        "numpydoc", reason="numpydoc is required to test the docstrings",
+        "numpydoc",
+        reason="numpydoc is required to test the docstrings",
     )
     doc1 = """Function one.
 
