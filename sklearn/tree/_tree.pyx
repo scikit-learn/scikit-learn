@@ -1937,10 +1937,8 @@ cdef void _build_pruned_tree(
             # is a leaf in the pruned tree, or has a descendant that will be pruned.
             if (not is_leaf and node.left_child == _TREE_LEAF
                     and node.right_child == _TREE_LEAF):
-                raise ValueError(
-                    "Node has reached a leaf in the original tree, but is not "
-                    "marked as a leaf in the leaves_in_subtree mask."
-                )
+                rc = -2
+                break
 
             new_node_id = tree._add_node(
                 parent, is_left, is_leaf, node.feature, node.threshold,
@@ -1971,6 +1969,11 @@ cdef void _build_pruned_tree(
             tree.max_depth = max_depth_seen
     if rc == -1:
         raise MemoryError("pruning tree")
+    elif rc == -2:
+        raise ValueError(
+            "Node has reached a leaf in the original tree, but is not "
+            "marked as a leaf in the leaves_in_subtree mask."
+        )
 
 
 def _build_pruned_tree_py(Tree tree, Tree orig_tree, const uint8_t[:] leaves_in_subtree):
