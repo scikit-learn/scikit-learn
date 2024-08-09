@@ -296,6 +296,28 @@ The project would like to thank the following funders.
 
   .. div:: text-box
 
+    `The Chan-Zuckerberg Initiative <https://chanzuckerberg.com/>`_ and
+    `Wellcome Trust <https://wellcome.org/>`_ fund scikit-learn through the
+    `Essential Open Source Software for Science (EOSS) <https://chanzuckerberg.com/eoss/>`_
+    cycle 6. It supports Lucy Liu and some diversity and inclusion initiatives that
+    will be announced in the future.
+
+  .. div:: image-box
+
+    .. image:: images/czi.png
+      :target: https://chanzuckerberg.com
+
+  .. div:: image-box
+
+    .. image:: images/wellcome-trust.png
+      :target: https://wellcome.org/
+
+...........
+
+.. div:: sk-text-image-grid-small
+
+  .. div:: text-box
+
     `Tidelift <https://tidelift.com/>`_ supports the project via their service
     agreement.
 
@@ -455,7 +477,7 @@ Past Sponsors
 
   .. div:: image-box
 
-    .. image:: images/czi_logo.svg
+    .. image:: images/czi.png
       :target: https://chanzuckerberg.com
 
 ......................
