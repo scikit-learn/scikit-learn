@@ -292,10 +292,10 @@ The project would like to thank the following funders.
 
 ...........
 
-.. |czi| .. image:: images/czi.png
+.. |czi| image:: images/czi.png
   :target: https://chanzuckerberg.com
 
-.. |wellcome| .. image:: images/wellcome-trust.png
+.. |wellcome| image:: images/wellcome-trust.png
   :target: https://wellcome.org/
 
 .. div:: sk-text-image-grid-small
