@@ -824,16 +824,14 @@ def test_logistic_regression_sample_weights(problem, solver, global_random_seed)
         )
         kw_repeated.update({"Cs": 100, "cv": splits_repeated})
 
-        clf_sw_weighted = LR(solver=solver, **kw_weighted)
-        clf_sw_repeated = LR(solver=solver, **kw_repeated)
-        clf_sw_weighted.fit(X, y, sample_weight=sw)
-        clf_sw_repeated.fit(X_repeated, y_repeated)
+    clf_sw_weighted = LR(solver=solver, **kw_weighted)
+    clf_sw_repeated = LR(solver=solver, **kw_repeated)
+    clf_sw_weighted.fit(X, y, sample_weight=sw)
+    clf_sw_repeated.fit(X_repeated, y_repeated)
 
-        if problem == "cv":
-            assert_allclose(clf_sw_weighted.scores_[1], clf_sw_repeated.scores_[1])
-        assert_allclose(
-            clf_sw_weighted.coef_, clf_sw_repeated.coef_, rtol=1e-5, atol=1e-8
-        )
+    if problem == "cv":
+        assert_allclose(clf_sw_weighted.scores_[1], clf_sw_repeated.scores_[1])
+    assert_allclose(clf_sw_weighted.coef_, clf_sw_repeated.coef_, rtol=1e-5, atol=1e-8)
 
 
 @pytest.mark.parametrize("solver", ("lbfgs", "liblinear"))
