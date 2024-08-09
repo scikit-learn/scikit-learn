@@ -534,7 +534,7 @@ def test_check_docstring_parameters():
         assert msg == incorrect, '\n"%s"\n not in \n"%s"' % (msg, incorrect)
 
 
-def f_one(a, b):
+def f_one(a, b):  # pragma: no cover
     """Function one.
 
     Parameters
@@ -557,7 +557,7 @@ def f_one(a, b):
     pass
 
 
-def f_two(a, b):
+def f_two(a, b):  # pragma: no cover
     """Function two.
 
     Parameters
@@ -583,7 +583,7 @@ def f_two(a, b):
     pass
 
 
-def f_three(a, b):
+def f_three(a, b):  # pragma: no cover
     """Function two.
 
     Parameters
