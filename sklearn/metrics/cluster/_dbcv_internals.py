@@ -202,7 +202,7 @@ def _distances_between_points(
     ----------
     X : array (n_samples, n_features) or (n_samples, n_samples)
         The input data of the clustering. This can be the data, or, if
-        metric is set to `precomputed` the pairwise distance matrix used
+        metric is set to `precomputed`, the pairwise distance matrix used
         for the clustering.
 
     labels : array (n_samples)
@@ -292,7 +292,7 @@ def _all_points_core_distance(distance_matrix, d=2):
 
     d : int
         The dimension of the data set, which is used in the computation
-        of the all-point-core-distance as per the paper.
+        of the all-point-core-distance as per the referenced paper.
 
     Returns
     -------

@@ -638,7 +638,7 @@ def dbcv_score(
         min_density_sep = density_sep[cluster_id].min()
         if min_density_sep == 0.0:
             raise ValueError(
-                "Aborting aggregation of score subcomponents: "
+                "Aborting aggregation of scores of subcomponents: "
                 "the density separation between cluster "
                 f"{le.classes_[cluster_id]} and cluster "
                 f"{le.classes_[density_sep[cluster_id].argmin()]} "
