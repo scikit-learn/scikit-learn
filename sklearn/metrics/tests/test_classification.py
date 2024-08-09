@@ -47,7 +47,6 @@ from sklearn.utils._testing import (
     assert_array_equal,
     assert_docstring_consistency,
     ignore_warnings,
-    skip_if_no_numpydoc,
 )
 from sklearn.utils.extmath import _nanaverage
 from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
@@ -2884,9 +2883,11 @@ def test_classification_metric_division_by_zero_nan_validaton(scoring):
     cross_val_score(classifier, X, y, scoring=scoring, n_jobs=2, error_score="raise")
 
 
-@skip_if_no_numpydoc
 def test_prfs_docstring_consistency():
     """Check docstrings parameters of related metrics are consistent."""
+    pytest.importorskip(
+        "numpydoc", reason="numpydoc is required to test the docstrings",
+    )
     assert_docstring_consistency(
         [
             precision_recall_fscore_support,

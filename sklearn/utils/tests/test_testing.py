@@ -22,7 +22,6 @@ from sklearn.utils._testing import (
     ignore_warnings,
     raises,
     set_random_state,
-    skip_if_no_numpydoc,
     turn_warnings_into_errors,
 )
 from sklearn.utils.deprecation import deprecated
@@ -400,8 +399,12 @@ class MockMetaEstimator:
         """Incorrect docstring but should not be tested"""
 
 
-@skip_if_no_numpydoc
 def test_check_docstring_parameters():
+    pytest.importorskip(
+        "numpydoc",
+        reason="numpydoc is required to test the docstrings",
+        minversion="1.2.0",
+    )
     incorrect = check_docstring_parameters(f_ok)
     assert incorrect == []
     incorrect = check_docstring_parameters(f_ok, ignore=["b"])
@@ -605,7 +608,6 @@ def f_three(a, b):
     pass
 
 
-@skip_if_no_numpydoc
 @pytest.mark.parametrize(
     "objects, kwargs, error",
     [
@@ -623,11 +625,13 @@ def f_three(a, b):
 )
 def test_assert_docstring_consistency_arg_checks(objects, kwargs, error):
     """Check `assert_docstring_consistency` argument checking correct."""
+    pytest.importorskip(
+        "numpydoc", reason="numpydoc is required to test the docstrings",
+    )
     with pytest.raises(TypeError, match=error):
         assert_docstring_consistency(objects, **kwargs)
 
 
-@skip_if_no_numpydoc
 @pytest.mark.parametrize(
     "objects, kwargs, error, warn",
     [
@@ -676,6 +680,9 @@ def test_assert_docstring_consistency_arg_checks(objects, kwargs, error):
 )
 def test_assert_docstring_consistency(objects, kwargs, error, warn):
     """Check `assert_docstring_consistency` gives correct results."""
+    pytest.importorskip(
+        "numpydoc", reason="numpydoc is required to test the docstrings",
+    )
     if error:
         with pytest.raises(AssertionError, match=error):
             assert_docstring_consistency(objects, **kwargs)
@@ -686,10 +693,11 @@ def test_assert_docstring_consistency(objects, kwargs, error, warn):
         assert_docstring_consistency(objects, **kwargs)
 
 
-@skip_if_no_numpydoc
 def test_assert_docstring_consistency_error_msg():
     """Check `assert_docstring_consistency` difference message."""
-    from numpydoc import docscrape
+    numpydoc = pytest.importorskip(
+        "numpydoc", reason="numpydoc is required to test the docstrings",
+    )
     doc1 = """Function one.
 
     Parameters
@@ -718,9 +726,9 @@ def test_assert_docstring_consistency_error_msg():
         The group of labels to add when `average != 'binary'`, and the
         order if `average is None`. Labels present on them datas can be excluded.
     """
-    doc1 = docscrape.NumpyDocString(doc1)
-    doc2 = docscrape.NumpyDocString(doc2)
-    doc3 = docscrape.NumpyDocString(doc3)
+    doc1 = numpydoc.docscrape.NumpyDocString(doc1)
+    doc2 = numpydoc.docscrape.NumpyDocString(doc2)
+    doc3 = numpydoc.docscrape.NumpyDocString(doc3)
     msg = """The description of Parameter 'labels' is inconsistent between \['Object
 0'\] and \['Object 1'\] and \['Object 2'\]:
 
