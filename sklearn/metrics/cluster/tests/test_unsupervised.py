@@ -516,7 +516,7 @@ def test_dbcv_score_zero_distance_intra():
 
 def test_dbcv_score_zero_distance_inter():
     expected_msg = (
-        "Aborting aggregation of score subcomponents: "
+        "Aborting aggregation of scores of subcomponents: "
         "the density separation between cluster 0 and "
         "cluster 1 is zero, leading to an overall score "
         "which is undefined."
