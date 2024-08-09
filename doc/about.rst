@@ -308,7 +308,7 @@ The project would like to thank the following funders.
     cycle 6. It supports Lucy Liu and some diversity and inclusion initiatives that
     will be announced in the future.
 
-.. div:: image-box
+  .. div:: image-box
 
     .. table::
       :class: image-subtable
