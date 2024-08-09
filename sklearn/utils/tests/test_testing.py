@@ -607,6 +607,28 @@ def f_three(a, b):
 
 @skip_if_no_numpydoc
 @pytest.mark.parametrize(
+    "objects, kwargs, error",
+    [
+        (
+            [f_one, f_two],
+            {"include_params": ["a"], "exclude_params": ["b"]},
+            "The 'exclude_params' argument",
+        ),
+        (
+            [f_one, f_two],
+            {"include_returns": False, "exclude_returns": ["c"]},
+            "The 'exclude_returns' argument",
+        ),
+    ],
+)
+def test_assert_docstring_consistency_arg_checks(objects, kwargs, error):
+    """Check `assert_docstring_consistency` argument checking correct."""
+    with pytest.raises(TypeError, match=error):
+        assert_docstring_consistency(objects, **kwargs)
+
+
+@skip_if_no_numpydoc
+@pytest.mark.parametrize(
     "objects, kwargs, error, warn",
     [
         pytest.param(
@@ -617,8 +639,8 @@ def f_three(a, b):
             [f_one, f_two, f_three],
             {"include_params": ["a"]},
             (
-                r"The description of Parameter 'a' is inconsistent between \['f_one',"
-                r" 'f_two'\]"
+                r"The description of Parameter 'a' is inconsistent between "
+                r"\['f_one',\n'f_two'\]"
             ),
             "",
             id="2-1 group",
@@ -627,8 +649,8 @@ def f_three(a, b):
             [f_one, f_two, f_three],
             {"include_params": ["b"]},
             (
-                r"The description of Parameter 'b' is inconsistent between \['f_one'\]"
-                r" and \['f_two'\] and"
+                r"The description of Parameter 'b' is inconsistent between "
+                r"\['f_one'\] and\n\['f_two'\] and"
             ),
             "",
             id="1-1-1 group",
@@ -637,7 +659,7 @@ def f_three(a, b):
             [f_two, f_three],
             {"include_params": ["e"]},
             (
-                r"The type specification of Parameter 'e' is inconsistent between "
+                r"The type specification of Parameter 'e' is inconsistent between\n"
                 r"\['f_two'\] and"
             ),
             "",
@@ -665,25 +687,84 @@ def test_assert_docstring_consistency(objects, kwargs, error, warn):
 
 
 @skip_if_no_numpydoc
-@pytest.mark.parametrize(
-    "objects, kwargs, error",
-    [
-        (
-            [f_one, f_two],
-            {"include_params": ["a"], "exclude_params": ["b"]},
-            "The 'exclude_params' argument",
-        ),
-        (
-            [f_one, f_two],
-            {"include_returns": False, "exclude_returns": ["c"]},
-            "The 'exclude_returns' argument",
-        ),
-    ],
-)
-def test_assert_docstring_consistency_arg_checks(objects, kwargs, error):
-    """Check `assert_docstring_consistency` argument checking correct."""
-    with pytest.raises(TypeError, match=error):
-        assert_docstring_consistency(objects, **kwargs)
+def test_assert_docstring_consistency_error_msg():
+    """Check `assert_docstring_consistency` difference message."""
+    from numpydoc import docscrape
+    doc1 = """Function one.
+
+    Parameters
+    ----------
+
+    labels : array-like, default=None
+        The set of labels to include when `average != 'binary'`, and their
+        order if `average is None`. Labels present in the data can be excluded.
+    """
+    doc2 = """Function one.
+
+    Parameters
+    ----------
+
+    labels : array-like, default=None
+        The set of labels to include when `average != 'binary'`, and their
+        order if `average is None`. This is an extra line. Labels present in the
+        data can be excluded.
+    """
+    doc3 = """Function one.
+
+    Parameters
+    ----------
+
+    labels : array-like, default=None
+        The group of labels to add when `average != 'binary'`, and the
+        order if `average is None`. Labels present on them datas can be excluded.
+    """
+    doc1 = docscrape.NumpyDocString(doc1)
+    doc2 = docscrape.NumpyDocString(doc2)
+    doc3 = docscrape.NumpyDocString(doc3)
+    msg = """The description of Parameter 'labels' is inconsistent between \['Object
+0'\] and \['Object 1'\] and \['Object 2'\]:
+
+\*\*\* \['Object 0'\]
+--- \['Object 1'\]
+\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
+
+\*\*\* 10,25 \*\*\*\*
+
+--- 10,30 ----
+
+  'binary'`, and their order if `average is None`.
+\+ This is an extra line.
+  Labels present in the data can be excluded.
+
+\*\*\* \['Object 0'\]
+--- \['Object 2'\]
+\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
+
+\*\*\* 1,25 \*\*\*\*
+
+  The
+! set
+  of labels to
+! include
+  when `average != 'binary'`, and
+! their
+  order if `average is None`. Labels present
+! in the data
+  can be excluded.
+--- 1,25 ----
+
+  The
+! group
+  of labels to
+! add
+  when `average != 'binary'`, and
+! the
+  order if `average is None`. Labels present
+! on them datas
+  can be excluded."""
+
+    with pytest.raises(AssertionError, match=msg):
+        assert_docstring_consistency([doc1, doc2, doc3], include_params=True)
 
 
 class RegistrationCounter:

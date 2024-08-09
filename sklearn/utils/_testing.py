@@ -14,6 +14,7 @@ import re
 import shutil
 import sys
 import tempfile
+import textwrap
 import unittest
 import warnings
 from collections import defaultdict, namedtuple
@@ -645,7 +646,12 @@ def _diff_key(line):
 
 
 def _get_diff_msg(str_grouped_dict):
-    """Get message showing the difference between type/desc strings of all objects."""
+    """Get message showing the difference between type/desc strings of all objects.
+
+    `str_grouped_dict` keys should be the type/desc strings and values are a list
+    of objects with that string. Objects with the same type/desc string are
+    thus grouped together.
+    """
     msg_diff = ""
     ref_str = ""
     ref_group = []
@@ -669,12 +675,8 @@ def _get_diff_msg(str_grouped_dict):
             if start is None:
                 msg_diff += "\n" + "\n".join(group)
             else:
-                msg_diff += (
-                    "\n"
-                    + start
-                    + " ".join(word[2:] for word in group)
-                )
-        # Add new line at end of diff for one comparison
+                msg_diff += ("\n" + start + " ".join(word[2:] for word in group))
+        # Add new lines at end of diff, to separate comparisons
         msg_diff += "\n\n"
     return msg_diff
 
@@ -694,10 +696,11 @@ def _check_grouped_dict(grouped_dict, type_or_desc, section, n_objects):
             obj_groups = " and ".join(
                 str(group) for group in str_grouped_dict.values()
             )
-            msg = (
+            msg = textwrap.fill(
                 f"The {type_or_desc} of {section[:-1]} '{item_name}' is inconsistent "
-                f"between {obj_groups}:\n\n{msg_diff}"
+                f"between {obj_groups}:"
             )
+            msg += msg_diff
             raise AssertionError(msg)
     if skipped:
         warnings.warn(
