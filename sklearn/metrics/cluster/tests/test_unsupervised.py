@@ -438,7 +438,7 @@ def test_dbcv_score_precomputed_missing_d_valerr(density_sample):
 def test_dbcv_score_irrelevant_d_warning(density_sample):
     expected_msg = (
         'The "d" value you provided is being ignored. '
-        "It's only required for precomputed distances"
+        "It's only required for precomputed distances."
     )
     with pytest.warns(UserWarning, match=expected_msg):
         dbcv_score(*density_sample, d=2)
@@ -538,7 +538,7 @@ def test_dbcv_score_tiny_cluster():
         np.array([-1, 1, 1, 0, 0]),
         strict_cluster_size_validation=True,
     )
-    expected_msg = "DBCV is not defined for clusters of size 1"
+    expected_msg = "DBCV is not defined for clusters of size 1."
     with pytest.raises(ValueError, match=expected_msg):
         dbcv_score(
             np.random.rand(3, 2),
