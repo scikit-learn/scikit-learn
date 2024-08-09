@@ -682,7 +682,7 @@ def test_assert_docstring_consistency(objects, kwargs, error, warn):
 )
 def test_assert_docstring_consistency_arg_checks(objects, kwargs, error):
     """Check `assert_docstring_consistency` argument checking correct."""
-    with pytest.raises(TypeError, match=""):
+    with pytest.raises(TypeError, match=error):
         assert_docstring_consistency(objects, **kwargs)
 
 

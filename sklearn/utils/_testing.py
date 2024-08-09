@@ -300,8 +300,6 @@ def set_random_state(estimator, random_state=0):
 def _is_numpydoc():
     try:
         import numpydoc
-
-        assert parse_version(numpydoc.__version__) >= parse_version("1.2.0")
     except (ImportError, AssertionError):
         return False
     else:
@@ -633,54 +631,69 @@ def _check_item_included(item_name, args):
     return True
 
 
+def _diff_key(line):
+    """Key for grouping output from `context_diff`."""
+    if line.startswith("  "):
+        return "  "
+    elif line.startswith("- "):
+        return "- "
+    elif line.startswith("+ "):
+        return "+ "
+    elif line.startswith("! "):
+        return "! "
+    return None
+
+
+def _get_diff_msg(str_grouped_dict):
+    """Get message showing the difference between type/desc strings of all objects."""
+    msg_diff = ""
+    ref_str = ""
+    ref_group = []
+    for docstring, group in str_grouped_dict.items():
+        if not ref_str and not ref_group:
+            ref_str += docstring
+            ref_group.extend(group)
+        diff = list(
+            context_diff(
+                ref_str.split(),
+                docstring.split(),
+                fromfile=str(ref_group),
+                tofile=str(group),
+                n=8,
+            )
+        )
+        # Add header
+        msg_diff += "".join((diff[:3]))
+        # Group consecutive 'diff' words to shorten error message
+        for start, group in groupby(diff[3:], key=_diff_key):
+            if start is None:
+                msg_diff += "\n" + "\n".join(group)
+            else:
+                msg_diff += (
+                    "\n"
+                    + start
+                    + " ".join(word[2:] for word in group)
+                )
+        # Add new line at end of diff for one comparison
+        msg_diff += "\n\n"
+    return msg_diff
+
+
 def _check_grouped_dict(grouped_dict, type_or_desc, section, n_objects):
     """Helper to check only one type/desc key in grouped_dict.
 
     If item is not present in all objects, checking is skipped and warning raised.
     """
     skipped = []
-    for item_name, gd in grouped_dict.items():
+    for item_name, str_grouped_dict in grouped_dict.items():
         # If item not found in all objects, skip
-        if sum(map(len, gd.values())) < n_objects:
+        if sum(map(len, str_grouped_dict.values())) < n_objects:
             skipped.append(item_name)
-        elif len(gd.keys()) > 1:
-            msg_diff = ""
-            ref_str = ""
-            ref_group = []
-            for docstring, group in gd.items():
-                if not ref_str and not ref_group:
-                    ref_str += docstring
-                    ref_group.extend(group)
-                diff = list(
-                    context_diff(
-                        ref_str.split(),
-                        docstring.split(),
-                        fromfile=str(ref_group),
-                        tofile=str(group),
-                        n=1,
-                    )
-                )
-                # Add header
-                msg_diff += "".join((diff[:3]))
-                # '+' and '-' indicates words unique to one group of objects.
-                # Group consecutive '+' and '-' words to shorten error message
-                for unique, group in groupby(
-                    diff[3:], key=lambda x: x.startswith(("- ", "+ "))
-                ):
-                    if unique:
-                        group = list(group)
-                        msg_diff += (
-                            "\n"
-                            + group[0][:1]
-                            + " "
-                            + " ".join(word[2:] for word in group)
-                        )
-                    else:
-                        msg_diff += "\n" + "\n".join(group)
-                # Add new line at end of diff for one comparison
-                msg_diff += "\n\n"
-
-            obj_groups = " and ".join(str(group) for group in gd.values())
+        elif len(str_grouped_dict.keys()) > 1:
+            msg_diff = _get_diff_msg(str_grouped_dict)
+            obj_groups = " and ".join(
+                str(group) for group in str_grouped_dict.values()
+            )
             msg = (
                 f"The {type_or_desc} of {section[:-1]} '{item_name}' is inconsistent "
                 f"between {obj_groups}:\n\n{msg_diff}"
