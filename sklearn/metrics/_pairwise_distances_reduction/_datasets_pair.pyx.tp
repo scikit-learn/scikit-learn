@@ -172,7 +172,7 @@ cdef class PrecomputedDistanceMatrix{{name_suffix}}(DatasetsPair{{name_suffix}})
 
     Parameters
     ----------
-    Must receive precomputed_distance: ndarray of shape (n_samples_X, n_samples_Y)? Really? 
+    Must receive precomputed_distance: ndarray of shape (n_samples_X, n_samples_Y)
         Must be C-contiguous. 
     """
 
@@ -195,14 +195,10 @@ cdef class PrecomputedDistanceMatrix{{name_suffix}}(DatasetsPair{{name_suffix}})
     cdef ITYPE_t n_samples_Y(self) noexcept nogil:
       this is a surrogate distance that is used for real computations
   
-
-    '''
-    # this is a surrogate distance that is used for real computations
-    # may not need to specify since this subclass does not recompute
     @final
     cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) noexcept nogil:
         return self.precomputed_distance[i, j]
-    '''
+   
     @final
     cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) noexcept nogil:
         return self.precomputed_distance[i, j]
