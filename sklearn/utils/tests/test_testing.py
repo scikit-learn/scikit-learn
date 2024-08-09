@@ -697,8 +697,8 @@ def test_assert_docstring_consistency(objects, kwargs, error, warn):
 
 def test_assert_docstring_consistency_error_msg():
     """Check `assert_docstring_consistency` difference message."""
-    numpydoc = pytest.importorskip(
-        "numpydoc",
+    docscrape = pytest.importorskip(
+        "numpydoc.docscrape",
         reason="numpydoc is required to test the docstrings",
     )
     doc1 = """Function one.
@@ -729,10 +729,10 @@ def test_assert_docstring_consistency_error_msg():
         The group of labels to add when `average != 'binary'`, and the
         order if `average is None`. Labels present on them datas can be excluded.
     """
-    doc1 = numpydoc.docscrape.NumpyDocString(doc1)
-    doc2 = numpydoc.docscrape.NumpyDocString(doc2)
-    doc3 = numpydoc.docscrape.NumpyDocString(doc3)
-    msg = """The description of Parameter 'labels' is inconsistent between \['Object
+    doc1 = docscrape.NumpyDocString(doc1)
+    doc2 = docscrape.NumpyDocString(doc2)
+    doc3 = docscrape.NumpyDocString(doc3)
+    msg = r"""The description of Parameter 'labels' is inconsistent between \['Object
 0'\] and \['Object 1'\] and \['Object 2'\]:
 
 \*\*\* \['Object 0'\]
