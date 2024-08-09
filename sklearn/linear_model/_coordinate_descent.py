@@ -134,7 +134,7 @@ def _alpha_grid(
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    sample_weight : ndarray of shape (n_samples,)
+    sample_weight : ndarray of shape (n_samples,), default=None
     """
     if l1_ratio == 0:
         raise ValueError(
