@@ -103,7 +103,7 @@ def consensus_score(a, b, *, similarity="jaccard"):
     >>> a = ([[True, False], [False, True]], [[False, True], [True, False]])
     >>> b = ([[False, True], [True, False]], [[True, False], [False, True]])
     >>> consensus_score(a, b, similarity='jaccard')
-    1.0
+    np.float64(1.0)
     """
     if similarity == "jaccard":
         similarity = _jaccard
