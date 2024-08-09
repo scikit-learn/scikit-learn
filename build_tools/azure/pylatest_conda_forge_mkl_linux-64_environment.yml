@@ -27,5 +27,6 @@ dependencies:
   - pytorch-cpu
   - polars
   - pyarrow
+  - jax
   - array-api-compat
   - array-api-strict
