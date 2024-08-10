@@ -119,12 +119,14 @@ Multi-class classification
 --------------------------
 
 :class:`SVC` and :class:`NuSVC` implement the "one-versus-one"
-approach for multi-class classification. In total,
+approach for multi-class classification, which constructs
 ``n_classes * (n_classes - 1) / 2``
-classifiers are constructed and each one trains data from two classes.
-To provide a consistent interface with other classifiers, the
-``decision_function_shape`` option allows to monotonically transform the
-results of the "one-versus-one" classifiers to a "one-vs-rest" decision
+classifiers, with each one training data from two classes.
+By default, however, the `decision_function_shape` parameter is set to `'ovr'` 
+(one-vs-rest), providing a consistent interface with other classifiers.
+
+The ``decision_function_shape`` option allows for the results of the "one-versus-one"
+classifiers to be monotonically transformed into a "one-vs-rest" decision
 function of shape ``(n_samples, n_classes)``.
 
     >>> X = [[0], [1], [2], [3]]
@@ -140,7 +142,7 @@ function of shape ``(n_samples, n_classes)``.
     >>> dec.shape[1] # 4 classes
     4
 
-On the other hand, :class:`LinearSVC` implements "one-vs-the-rest"
+On the other hand, :class:`LinearSVC` implements a "one-vs-the-rest"
 multi-class strategy, thus training `n_classes` models.
 
     >>> lin_clf = svm.LinearSVC()
