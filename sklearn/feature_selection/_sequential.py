@@ -58,6 +58,7 @@ class SequentialFeatureSelector(
         consecutive feature additions or removals, stop adding or removing.
 
         `tol` can be negative when removing features using `direction="backward"`.
+        `tol` is required to be strictly positive when doing forward selection.
         It can be useful to reduce the number of features at the cost of a small
         decrease in the score.
 
@@ -230,7 +231,9 @@ class SequentialFeatureSelector(
             self.n_features_to_select_ = int(n_features * self.n_features_to_select)
 
         if self.tol is not None and self.tol < 0 and self.direction == "forward":
-            raise ValueError("tol must be positive when doing forward selection")
+            raise ValueError(
+                "tol must be strictly positive when doing forward selection"
+            )
 
         cv = check_cv(self.cv, y, classifier=is_classifier(self.estimator))
 
