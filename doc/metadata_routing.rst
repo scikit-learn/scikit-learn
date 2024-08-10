@@ -285,6 +285,7 @@ Meta-estimators and functions supporting metadata routing:
 - :class:`sklearn.ensemble.BaggingClassifier`
 - :class:`sklearn.ensemble.BaggingRegressor`
 - :class:`sklearn.feature_selection.SelectFromModel`
+- :class:`sklearn.feature_selection.SequentialFeatureSelector`
 - :class:`sklearn.impute.IterativeImputer`
 - :class:`sklearn.linear_model.ElasticNetCV`
 - :class:`sklearn.linear_model.LarsCV`
@@ -301,6 +302,7 @@ Meta-estimators and functions supporting metadata routing:
 - :class:`sklearn.model_selection.HalvingGridSearchCV`
 - :class:`sklearn.model_selection.HalvingRandomSearchCV`
 - :class:`sklearn.model_selection.RandomizedSearchCV`
+- :class:`sklearn.model_selection.permutation_test_score`
 - :func:`sklearn.model_selection.cross_validate`
 - :func:`sklearn.model_selection.cross_val_score`
 - :func:`sklearn.model_selection.cross_val_predict`
@@ -323,5 +325,3 @@ Meta-estimators and tools not supporting metadata routing yet:
 - :class:`sklearn.ensemble.AdaBoostRegressor`
 - :class:`sklearn.feature_selection.RFE`
 - :class:`sklearn.feature_selection.RFECV`
-- :class:`sklearn.feature_selection.SequentialFeatureSelector`
-- :class:`sklearn.model_selection.permutation_test_score`

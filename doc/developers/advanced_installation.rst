@@ -99,7 +99,6 @@ feature, code or documentation improvement).
 
      pip install --editable . \
         --verbose --no-build-isolation \
-        --check-build-dependencies \
         --config-settings editable-verbose=true
 
 #. Check that the installed scikit-learn has a version number ending with

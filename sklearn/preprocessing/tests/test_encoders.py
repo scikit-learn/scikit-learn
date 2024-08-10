@@ -1,4 +1,5 @@
 import re
+import warnings
 
 import numpy as np
 import pytest
@@ -796,7 +797,9 @@ def test_encoder_dtypes_pandas():
 def test_one_hot_encoder_warning():
     enc = OneHotEncoder()
     X = [["Male", 1], ["Female", 3]]
-    np.testing.assert_no_warnings(enc.fit_transform, X)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        enc.fit_transform(X)
 
 
 @pytest.mark.parametrize("missing_value", [np.nan, None, float("nan")])

@@ -34,8 +34,6 @@ from sklearn.utils._set_output import _get_output_config
 from sklearn.utils._testing import (
     _convert_container,
     assert_array_equal,
-    assert_no_warnings,
-    ignore_warnings,
 )
 
 
@@ -327,8 +325,8 @@ def test_set_params():
 
     # we don't currently catch if the things in pipeline are estimators
     # bad_pipeline = Pipeline([("bad", NoEstimator())])
-    # assert_raises(AttributeError, bad_pipeline.set_params,
-    #               bad__stupid_param=True)
+    # with pytest.raises(AttributeError):
+    #    bad_pipeline.set_params(bad__stupid_param=True)
 
 
 def test_set_params_passes_all_parameters():
@@ -472,7 +470,10 @@ def test_pickle_version_warning_is_not_raised_with_matching_version():
     tree = DecisionTreeClassifier().fit(iris.data, iris.target)
     tree_pickle = pickle.dumps(tree)
     assert b"_sklearn_version" in tree_pickle
-    tree_restored = assert_no_warnings(pickle.loads, tree_pickle)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        tree_restored = pickle.loads(tree_pickle)
 
     # test that we can predict with the restored decision tree classifier
     score_of_original = tree.score(iris.data, iris.target)
@@ -542,7 +543,11 @@ def test_pickle_version_no_warning_is_issued_with_non_sklearn_estimator():
     try:
         module_backup = TreeNoVersion.__module__
         TreeNoVersion.__module__ = "notsklearn"
-        assert_no_warnings(pickle.loads, tree_pickle_noversion)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+
+            pickle.loads(tree_pickle_noversion)
     finally:
         TreeNoVersion.__module__ = module_backup
 
@@ -600,12 +605,11 @@ class SingleInheritanceEstimator(BaseEstimator):
         self._attribute_not_pickled = None
 
     def __getstate__(self):
-        data = self.__dict__.copy()
-        data["_attribute_not_pickled"] = None
-        return data
+        state = super().__getstate__()
+        state["_attribute_not_pickled"] = None
+        return state
 
 
-@ignore_warnings(category=(UserWarning))
 def test_pickling_works_when_getstate_is_overwritten_in_the_child_class():
     estimator = SingleInheritanceEstimator()
     estimator._attribute_not_pickled = "this attribute should not be pickled"
