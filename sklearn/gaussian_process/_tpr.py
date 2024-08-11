@@ -219,7 +219,7 @@ class TProcessRegressor(GaussianProcessRegressor):
         self : object
             GaussianProcessRegressor class instance.
         """
-        self.n = sum(y.shape)
+        self.n = y.shape[0]
         self.v = self.v0 + self.n
         self.c_fit1 = self.v / 2
         self.log_likelihood_dims_const = gam(self.c_fit1) - self.c1 - self.n / 2 * self.c2

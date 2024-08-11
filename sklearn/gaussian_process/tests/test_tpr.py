@@ -360,33 +360,37 @@ def test_large_variance_y():
 
 
 def test_y_multioutput():
-    # Test that tpr can deal with multi-dimensional target values
+    # Test that tpr_1 can deal with multi-dimensional target values
     y_2d = np.vstack((y, y * 2)).T
 
     # Test for fixed kernel that first dimension of 2d GP equals the output
     # of 1d GP and that second dimension is twice as large
     kernel = RBF(length_scale=1.0)
 
-    tpr = TProcessRegressor(kernel=kernel, optimizer=None, normalize_y=False)
-    tpr.fit(X, y)
+    tpr_1 = TProcessRegressor(kernel=kernel, optimizer=None, normalize_y=False)
+    tpr_2 = TProcessRegressor(kernel=kernel, optimizer=None, normalize_y=False)
+    tpr_1.fit(X, y)
+    tpr_2.fit(X, y * 2)
 
     tpr_2d = TProcessRegressor(kernel=kernel, optimizer=None, normalize_y=False)
     tpr_2d.fit(X, y_2d)
 
-    y_pred_1d, y_std_1d = tpr.predict(X2, return_std=True)
-    y_pred_2d, y_std_2d = tpr_2d.predict(X2, return_std=True)
-    _, y_cov_1d = tpr.predict(X2, return_cov=True)
-    _, y_cov_2d = tpr_2d.predict(X2, return_cov=True)
+    y_pred_1d,  y_1_std_1d  = tpr_1.predict(X2, return_std=True)
+    _,          y_2_std_1d  = tpr_2.predict(X2, return_std=True)
+    y_pred_2d, y_std_2d     = tpr_2d.predict(X2, return_std=True)
+
+    _, y_1_cov_1d   = tpr_1.predict(X2, return_cov=True)
+    _, y_2_cov_1d   = tpr_2.predict(X2, return_cov=True)
+    _, y_cov_2d     = tpr_2d.predict(X2, return_cov=True)
 
     assert_almost_equal(y_pred_1d, y_pred_2d[:, 0])
     assert_almost_equal(y_pred_1d, y_pred_2d[:, 1] / 2)
 
     # Standard deviation and covariance do not depend on output
-    for target in range(y_2d.shape[1]):
-        assert_almost_equal(y_std_1d, y_std_2d[..., target])
-        assert_almost_equal(y_cov_1d, y_cov_2d[..., target])
+    assert_almost_equal(y_1_std_1d, y_std_2d[..., 0])
+    assert_almost_equal(y_2_std_1d, y_std_2d[..., 1])
 
-    y_sample_1d = tpr.sample_y(X2, n_samples=10)
+    y_sample_1d = tpr_1.sample_y(X2, n_samples=10)
     y_sample_2d = tpr_2d.sample_y(X2, n_samples=10)
 
     assert y_sample_1d.shape == (5, 10)
@@ -396,13 +400,13 @@ def test_y_multioutput():
 
     # Test hyperparameter optimization
     for kernel in kernels:
-        tpr = TProcessRegressor(kernel=kernel, normalize_y=True)
-        tpr.fit(X, y)
+        tpr_1 = TProcessRegressor(kernel=kernel, normalize_y=True)
+        tpr_1.fit(X, y)
 
         tpr_2d = TProcessRegressor(kernel=kernel, normalize_y=True)
         tpr_2d.fit(X, np.vstack((y, y)).T)
 
-        assert_almost_equal(tpr.kernel_.theta, tpr_2d.kernel_.theta, 4)
+        assert_almost_equal(tpr_1.kernel_.theta, tpr_2d.kernel_.theta, 4)
 
 
 @pytest.mark.parametrize("kernel", non_fixed_kernels)

@@ -52,9 +52,9 @@ Log likelihood and gradient of observed points:
 Log likelihood and gradient of observed points:
 \begin{equation}
 	\begin{aligned}
-		\ln(p(y) | X, \theta) &= \Gamma(\frac{v}{n}) - \Gamma(\frac{v_0}{n}) - \frac{n}{2}\ln(v_0\pi) - \frac{v}{2}\ln(1+\frac{1}{v_0}y^T_n K^{-1} y) - \frac{1}{2}\ln(|K|)\\
-		\diffp{}{{\theta_1}}\ln(p(y) | X, \theta) &= \diffp{}{{\theta_1}} \Bigl( - \frac{v}{2}\ln(1+\frac{1}{v_0}y^T_n K^{-1} y) \Bigl) + \diffp{}{{\theta_1}} \Bigl((-\frac{1}{2}\ln(|K|)\Bigl) \\
-		&= \frac{v}{2} \frac{y^TK^{-1} \diffp{K}{{\theta_1}} K^{-1} y}{v_0+y^T_n K^{-1} y} - \frac{1}{2}\text{tr}(K^{-1} \diffp{K}{{\theta_1}})\\
+		\ln(p(y) | X, \theta) &= \Gamma(\frac{v}{2}) - \Gamma(\frac{v_0}{2}) - \frac{n}{2}\ln(v_0\pi) - \frac{v}{2}\ln(1+\frac{1}{v_0}y^T K^{-1} y) - \frac{1}{2}\ln(|K|)\\
+		\diffp{}{{\theta_1}}\ln(p(y) | X, \theta) &= \diffp{}{{\theta_1}} \Bigl( - \frac{v}{2}\ln(1+\frac{1}{v_0}y^T K^{-1} y) \Bigl) + \diffp{}{{\theta_1}} \Bigl((-\frac{1}{2}\ln(|K|)\Bigl) \\
+		&= \frac{v}{2} \frac{y^TK^{-1} \diffp{K}{{\theta_1}} K^{-1} y}{v_0+y^T K^{-1} y} - \frac{1}{2}\text{tr}(K^{-1} \diffp{K}{{\theta_1}})\\
 		&= \frac{v}{v_0+y^T K^{-1} y} \times \frac{1}{2} y^TK^{-1} \diffp{K}{{\theta_1}} K^{-1} y - \frac{1}{2}\text{tr}(K^{-1} \diffp{K}{{\theta_1}})\\
 		&= \frac{v}{v_0 + y^T\alpha}\times\frac{1}{2} \text{tr}(\alpha\alpha^T \diffp{K}{{\theta_1}}) - \frac{1}{2}\text{tr}(K^{-1} \diffp{K}{{\theta_1}})\\
 		&= \frac{1}{2}\text{tr}\Bigl(\frac{v}{v_0 + y^T\alpha} \times \alpha\alpha^T \diffp{K}{{\theta_1}} -  K^{-1} \diffp{K}{{\theta_1}}\Bigl)\\
