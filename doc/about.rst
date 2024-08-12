@@ -307,7 +307,7 @@ The project would like to thank the following funders.
     `Essential Open Source Software for Science (EOSS) <https://chanzuckerberg.com/eoss/>`_
     cycle 6.
 
-    It supports Lucy Liu and some diversity and inclusion initiatives that will
+    It supports Lucy Liu and diversity & inclusion initiatives that will
     be announced in the future.
 
   .. div:: image-box
