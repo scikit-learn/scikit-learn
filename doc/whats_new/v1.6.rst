@@ -39,14 +39,16 @@ See :ref:`array_api` for more details.
   and :pr:`29143` by :user:`Tialo <Tialo>` and :user:`Loïc Estève <lesteve>`;
 - :func:`sklearn.metrics.mean_absolute_percentage_error` :pr:`29300` by :user:`Emily Chen <EmilyXinyi>`;
 - :func:`sklearn.metrics.mean_gamma_deviance` :pr:`29239` by :user:`Emily Chen <EmilyXinyi>`;
+- :func:`sklearn.metrics.mean_poisson_deviance` :pr:`29227` by :user:`Emily Chen <EmilyXinyi>`;
 - :func:`sklearn.metrics.mean_squared_error` :pr:`29142` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.metrics.mean_tweedie_deviance` :pr:`28106` by :user:`Thomas Li <lithomas1>`;
 - :func:`sklearn.metrics.pairwise.additive_chi2_kernel` :pr:`29144` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.metrics.pairwise.chi2_kernel` :pr:`29267` by :user:`Yaroslav Korobko <Tialo>`;
-- :func:`sklearn.metrics.pairwise.cosine_similarity` :pr:`29014` by :user:`Edoardo Abati <EdAbati>`;
 - :func:`sklearn.metrics.pairwise.cosine_distances` :pr:`29265` by :user:`Emily Chen <EmilyXinyi>`;
+- :func:`sklearn.metrics.pairwise.cosine_similarity` :pr:`29014` by :user:`Edoardo Abati <EdAbati>`;
+- :func:`sklearn.metrics.pairwise.paired_cosine_distances` :pr:`29112` by :user:`Edoardo Abati <EdAbati>`.
+- :func:`sklearn.metrics.pairwise.paired_euclidean_distances` :pr:`29389` by :user:`Emily Chen <EmilyXinyi>`;
 - :func:`sklearn.metrics.pairwise.euclidean_distances` :pr:`29433` by :user:`Omar Salman <OmarManzoor>`;
-- :func:`sklearn.metrics.pairwise.paired_cosine_distances` :pr:`29112` by :user:`Edoardo Abati <EdAbati>`;
 - :func:`sklearn.metrics.pairwise.rbf_kernel` :pr:`29433` by :user:`Omar Salman <OmarManzoor>`.
 
 **Classes:**
@@ -80,6 +82,11 @@ more details.
   routing in its `fit` and `predict` methods and routes the corresponding
   params to the underlying regressor.
   :pr:`29136` by :user:`Omar Salman <OmarManzoor>`.
+
+- |Feature| :class:`feature_selection.SequentialFeatureSelector` now supports
+  metadata routing in its `fit` method and passes the corresponding params to
+  the :func:`model_selection.cross_val_score` function.
+  :pr:`29260` by :user:`Omar Salman <OmarManzoor>`.
 
 - |Feature| :func:`model_selection.validation_curve` now supports metadata routing for
   the `fit` method of its estimator and for its underlying CV splitter and scorer.
@@ -143,6 +150,12 @@ Changelog
   on the input data.
   :pr:`29124` by :user:`Yao Xiao <Charlie-XIAO>`.
 
+:mod:`sklearn.compose`
+......................
+
+- |Enhancement| :func:`sklearn.compose.ColumnTransformer` `verbose_feature_names_out`
+  now accepts string format or callable to generate feature names. :pr:`28934` by
+  :user:`Marc Bresson <MarcBresson>`.
 
 :mod:`sklearn.datasets`
 .......................
@@ -151,6 +164,14 @@ Changelog
   from the web. It handles local caching, integrity checks with SHA256 digests
   and automatic retries in case of HTTP errors. :pr:`29354` by :user:`Olivier
   Grisel <ogrisel>`.
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Increase rank defficiency threshold in the whitening step of
+  :class:`decomposition.FastICA` with `whiten_solver="eigh"` to improve the
+  platform-agnosticity of the estimator. :pr:`29612` by :user:`Olivier Grisel
+  <ogrisel>`.
 
 :mod:`sklearn.discriminant_analysis`
 ....................................
@@ -164,8 +185,9 @@ Changelog
 .......................
 
 - |Efficiency| Small runtime improvement of fitting
-  :class:`ensemble.HistGradientBoostingClassifier` and :class:`ensemble.HistGradientBoostingRegressor`
-  by parallelizing the initial search for bin thresholds
+  :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` by parallelizing the initial search
+  for bin thresholds.
   :pr:`28064` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Enhancement| The verbosity of :class:`ensemble.HistGradientBoostingClassifier`
@@ -180,9 +202,10 @@ Changelog
   :pr:`28622` by :user:`Adam Li <adam2392>` and
   :user:`Sérgio Pereira <sergiormpereira>`.
 
-- |Feature| :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor` now support
-  missing-values in the data matrix `X`. Missing-values are handled by randomly moving all of
-  the samples to the left, or right child node as the tree is traversed.
+- |Feature| :class:`ensemble.ExtraTreesClassifier` and
+  :class:`ensemble.ExtraTreesRegressor` now support missing-values in the data matrix
+  `X`. Missing-values are handled by randomly moving all of the samples to the left, or
+  right child node as the tree is traversed.
   :pr:`28268` by :user:`Adam Li <adam2392>`.
 
 - |Feature| :class:`ensemble.GradientBoostingClassifier` and
@@ -229,6 +252,11 @@ Changelog
   scoring="max_error" which is now deprecated.
   :pr:`29462` by :user:`Farid "Freddie" Taba <artificialfintelligence>`.
 
+- |API| the `assert_all_finite` parameter of functions
+  :func:`metrics.pairwise.check_pairwise_arrays` and :func:`metrics.pairwise_distances`
+  is renamed into `ensure_all_finite`. `force_all_finite` will be removed in 1.8.
+  :pr:`29404` by :user:`Jérémie du Boisberranger <jeremiedb>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -237,7 +265,8 @@ Changelog
   estimator without re-fitting it.
   :pr:`29067` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Fix| Improve error message when :func:`model_selection.RepeatedStratifiedKFold.split` is called without a `y` argument
+- |Fix| Improve error message when :func:`model_selection.RepeatedStratifiedKFold.split`
+  is called without a `y` argument
   :pr:`29402` by :user:`Anurag Varma <Anurag-Varma>`.
 
 :mod:`sklearn.neighbors`
@@ -269,6 +298,19 @@ Changelog
   randomly moving all of the samples to the left, or right child node as the tree is
   traversed.
   :pr:`27966` by :user:`Adam Li <adam2392>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |Enhancement| :func:`utils.validation.check_array` now accepts `ensure_non_negative`
+  to check for negative values in the passed array, until now only available through
+  calling :func:`utils.validation.check_non_negative`.
+  :pr:`29540` by :user:`Tamara Atanasoska <tamaraatanasoska>`.
+
+- |API| the `assert_all_finite` parameter of functions :func:`utils.check_array`,
+  :func:`utils.check_X_y`, :func:`utils.as_float_array` is renamed into
+  `ensure_all_finite`. `force_all_finite` will be removed in 1.8.
+  :pr:`29404` by :user:`Jérémie du Boisberranger <jeremiedb>`.
 
 .. rubric:: Code and documentation contributors
 
