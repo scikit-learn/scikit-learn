@@ -39,9 +39,9 @@ jobs:
       # malicious changes to these scripts in PRs to be executed
       - name: Download scripts from main
         run: |
-          curl https://raw.githubusercontent.com/${{ github.repository }}/main/build_tools/shared.sh --retry 5 -o ./build_tools/shared.sh
-          curl https://raw.githubusercontent.com/${{ github.repository }}/main/build_tools/update_environments_and_lock_files.py --retry 5 -o ./build_tools/update_environments_and_lock_files.py
-          curl https://raw.githubusercontent.com/${{ github.repository }}/main/build_tools/on_pr_comment_update_environments_and_lock_files.py --retry 5 -o ./build_tools/on_pr_comment_update_environments_and_lock_files.py
+          curl https://raw.githubusercontent.com/${{ github.repository }}/comment-update-lock/build_tools/shared.sh --retry 5 -o ./build_tools/shared.sh
+          curl https://raw.githubusercontent.com/${{ github.repository }}/comment-update-lock/build_tools/update_environments_and_lock_files.py --retry 5 -o ./build_tools/update_environments_and_lock_files.py
+          curl https://raw.githubusercontent.com/${{ github.repository }}/comment-update-lock/build_tools/on_pr_comment_update_environments_and_lock_files.py --retry 5 -o ./build_tools/on_pr_comment_update_environments_and_lock_files.py
 
       - name: Update lock files
         env:
