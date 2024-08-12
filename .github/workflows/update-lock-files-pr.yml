@@ -10,8 +10,7 @@ permissions:
 jobs:
   update-lock-files:
     if: >-
-      github.repository == 'scikit-learn/scikit-learn'
-      && github.event.issue.pull_request
+      github.event.issue.pull_request
       && startsWith(github.event.comment.body, '@scikit-learn-bot update lock-files')
     runs-on: ubuntu-latest
 
