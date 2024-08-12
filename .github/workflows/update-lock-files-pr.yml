@@ -34,9 +34,20 @@ jobs:
           ref: ${{ steps.pr-head-info.outputs.pr_head_ref }}
           repository: ${{ steps.pr-head-info.outputs.pr_head_repository }}
 
+      # We overwrite all the scripts we are going to use in this workflow with their
+      # versions on main; since this workflow has the write permissions this is to avoid
+      # malicious changes to these scripts in PRs to be executed
+      - name: Download scripts from main
+        run: |
+          curl https://raw.githubusercontent.com/${{ github.repository }}/main/build_tools/shared.sh --retry 5 -o ./build_tools/shared.sh
+          curl https://raw.githubusercontent.com/${{ github.repository }}/main/build_tools/update_environments_and_lock_files.py --retry 5 -o ./build_tools/update_environments_and_lock_files.py
+          curl https://raw.githubusercontent.com/${{ github.repository }}/main/build_tools/on_pr_comment_update_environments_and_lock_files.py --retry 5 -o ./build_tools/on_pr_comment_update_environments_and_lock_files.py
+
       - name: Update lock files
         env:
           COMMENT: ${{ github.event.comment.body }}
+        # We download the lock files update scripts from main, since this workflow is
+        # run from main itself
         run: |
           source build_tools/shared.sh
           source $CONDA/bin/activate

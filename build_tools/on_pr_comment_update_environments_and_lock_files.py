@@ -59,6 +59,12 @@ def main():
     execute_command('git config --global user.name "scikit-learn-bot"')
     execute_command('git config --global user.email "noreply@github.com"')
     execute_command("git add -A")
+    # Avoiding commiting the scripts that are downloaded from main
+    execute_command("git reset build_tools/shared.sh")
+    execute_command("git reset build_tools/update_environments_and_lock_files.py")
+    execute_command(
+        "git reset build_tools/on_pr_comment_update_environments_and_lock_files.py"
+    )
     execute_command(f'git commit -m "{marker}Update lock files"')
     execute_command("git push")
 
