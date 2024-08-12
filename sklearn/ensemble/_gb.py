@@ -140,6 +140,8 @@ def _update_terminal_regions(
     sample_mask,
     learning_rate=0.1,
     k=0,
+    lower_bounds=None,
+    upper_bounds=None,
 ):
     """Update the leaf values to be predicted by the tree and raw_prediction.
 
@@ -182,9 +184,14 @@ def _update_terminal_regions(
          ``learning_rate``.
     k : int, default=0
         The index of the estimator being updated.
+    lower_bounds : ndarray of shape (node_count,), default=None
+        The lower bounds for the tree nodes.
+    upper_bounds : ndarray of shape (node_count,), default=None
+        The upper bounds for the tree nodes.
     """
     # compute leaf for each sample in ``X``.
     terminal_regions = tree.apply(X)
+    use_bounds = upper_bounds is not None and lower_bounds is not None
 
     if not isinstance(loss, HalfSquaredError):
         # mask all which are not in sample mask.
@@ -258,10 +265,11 @@ def _update_terminal_regions(
             sw = None if sample_weight is None else sample_weight[indices]
             update = compute_update(y_, indices, neg_gradient, raw_prediction, k)
 
-            if update > tree.upper_bound[leaf]:
-                update = tree.upper_bound[leaf]
-            elif update < tree.lower_bound[leaf]:
-                update = tree.lower_bound[leaf]
+            if use_bounds:
+                if update > upper_bounds[leaf]:
+                    update = upper_bounds[leaf]
+                elif update < lower_bounds[leaf]:
+                    update = lower_bounds[leaf]
 
             # TODO: Multiply here by learning rate instead of everywhere else.
             tree.value[leaf, 0, 0] = update
@@ -499,9 +507,19 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 sample_weight = sample_weight * sample_mask.astype(np.float64)
 
             X = X_csc if X_csc is not None else X
-            tree.fit(
-                X, neg_g_view[:, k], sample_weight=sample_weight, check_input=False
+            tree._fit(
+                X,
+                neg_g_view[:, k],
+                sample_weight=sample_weight,
+                check_input=False,
+                record_node_boundaries=self.monotonic_cst is not None,
             )
+
+            if self.monotonic_cst is None:
+                lower_bounds, upper_bounds = None, None
+            else:
+                lower_bounds = tree.tree_.lower_bounds
+                upper_bounds = tree.tree_.upper_bounds
 
             # update tree leaves
             X_for_tree_update = X_csr if X_csr is not None else X
@@ -516,6 +534,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 sample_mask,
                 learning_rate=self.learning_rate,
                 k=k,
+                lower_bounds=lower_bounds,
+                upper_bounds=upper_bounds,
             )
 
             # add tree to ensemble

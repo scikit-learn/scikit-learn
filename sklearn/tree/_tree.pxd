@@ -22,8 +22,6 @@ cdef struct Node:
     intp_t n_node_samples                # Number of samples at the node
     float64_t weighted_n_node_samples    # Weighted number of samples at the node
     uint8_t missing_go_to_left     # Whether features have missing values
-    float64_t lower_bound          # Lower bound of the node's impurity
-    float64_t upper_bound          # Upper bound of the node's impurity
 
 cdef struct ParentInfo:
     # Structure to store information about the parent of a node
@@ -54,6 +52,12 @@ cdef class Tree:
     cdef float64_t* value                # (capacity, n_outputs, max_n_classes) array of values
     cdef intp_t value_stride             # = n_outputs * max_n_classes
 
+    # Lower and upper boundaries of nodes, used for monotonic constraints of gradient
+    # boosting; they are left uninitialized otherwise
+    cdef bint record_node_boundaries     # Whether to record the node boundaries
+    cdef float64_t* lower_bounds         # Array of lower boundaries of nodes
+    cdef float64_t* upper_bounds         # Array of upper boundaries of nodes
+
     # Methods
     cdef intp_t _add_node(self, intp_t parent, bint is_left, bint is_leaf,
                           intp_t feature, float64_t threshold, float64_t impurity,
@@ -67,6 +71,8 @@ cdef class Tree:
 
     cdef cnp.ndarray _get_value_ndarray(self)
     cdef cnp.ndarray _get_node_ndarray(self)
+    cdef cnp.ndarray _get_lower_bounds_ndarray(self)
+    cdef cnp.ndarray _get_upper_bounds_ndarray(self)
 
     cpdef cnp.ndarray predict(self, object X)
 
