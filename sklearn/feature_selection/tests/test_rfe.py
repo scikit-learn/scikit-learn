@@ -666,3 +666,26 @@ def test_rfe_n_features_to_select_warning(ClsRFE, param):
         # larger than the number of features present in the X variable
         clsrfe = ClsRFE(estimator=LogisticRegression(), **{param: 21})
         clsrfe.fit(X, y)
+
+
+def test_rfe_ties_around_threshold():
+    """Check that RFE uses stable sort of feature importances."""
+    n_features = 47
+    n_features_to_select = 4
+    step = 2
+
+    X, y = make_classification(n_features=n_features, random_state=0)
+    clf = MockClassifier()  # mock classifier returns constant feature_importances
+    rfe = RFE(estimator=clf, n_features_to_select=n_features_to_select, step=step)
+    rfe.fit(X, y)
+
+    # stable sort with all ties will result in keeping the last n_features_to_select
+    assert_array_equal(
+        rfe.support_,
+        np.array(
+            [
+                *[False] * (n_features - n_features_to_select),
+                *[True] * n_features_to_select,
+            ]
+        ),
+    )
