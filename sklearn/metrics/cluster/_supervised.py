@@ -321,7 +321,7 @@ def rand_score(labels_true, labels_pred):
     are complete but may not always be pure, hence penalized:
 
       >>> rand_score([0, 0, 1, 2], [0, 0, 1, 1])
-      0.83...
+      np.float64(0.83...)
     """
     contingency = pair_confusion_matrix(labels_true, labels_pred)
     numerator = contingency.diagonal().sum()
@@ -517,7 +517,7 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
     >>> from sklearn.metrics import homogeneity_completeness_v_measure
     >>> y_true, y_pred = [0, 0, 1, 1, 2, 2], [0, 0, 1, 2, 2, 2]
     >>> homogeneity_completeness_v_measure(y_true, y_pred)
-    (0.71..., 0.77..., 0.73...)
+    (np.float64(0.71...), np.float64(0.77...), np.float64(0.73...))
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
 
@@ -601,7 +601,7 @@ def homogeneity_score(labels_true, labels_pred):
 
       >>> from sklearn.metrics.cluster import homogeneity_score
       >>> homogeneity_score([0, 0, 1, 1], [1, 1, 0, 0])
-      1.0
+      np.float64(1.0)
 
     Non-perfect labelings that further split classes into more clusters can be
     perfectly homogeneous::
@@ -677,7 +677,7 @@ def completeness_score(labels_true, labels_pred):
 
       >>> from sklearn.metrics.cluster import completeness_score
       >>> completeness_score([0, 0, 1, 1], [1, 1, 0, 0])
-      1.0
+      np.float64(1.0)
 
     Non-perfect labelings that assign all classes members to the same clusters
     are still complete::
@@ -766,9 +766,9 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
 
       >>> from sklearn.metrics.cluster import v_measure_score
       >>> v_measure_score([0, 0, 1, 1], [0, 0, 1, 1])
-      1.0
+      np.float64(1.0)
       >>> v_measure_score([0, 0, 1, 1], [1, 1, 0, 0])
-      1.0
+      np.float64(1.0)
 
     Labelings that assign all classes members to the same clusters
     are complete but not homogeneous, hence penalized::
@@ -874,7 +874,7 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     >>> labels_true = [0, 1, 1, 0, 1, 0]
     >>> labels_pred = [0, 1, 0, 0, 1, 1]
     >>> mutual_info_score(labels_true, labels_pred)
-    0.056...
+    np.float64(0.056...)
     """
     if contingency is None:
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -1231,9 +1231,9 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
 
       >>> from sklearn.metrics.cluster import fowlkes_mallows_score
       >>> fowlkes_mallows_score([0, 0, 1, 1], [0, 0, 1, 1])
-      1.0
+      np.float64(1.0)
       >>> fowlkes_mallows_score([0, 0, 1, 1], [1, 1, 0, 0])
-      1.0
+      np.float64(1.0)
 
     If classes members are completely split across different clusters,
     the assignment is totally random, hence the FMI is null::

@@ -4,9 +4,9 @@
 #
 #    pip-compile --output-file=build_tools/azure/debian_atlas_32bit_lock.txt build_tools/azure/debian_atlas_32bit_requirements.txt
 #
-attrs==23.2.0
+attrs==24.2.0
     # via pytest
-coverage==7.6.0
+coverage==7.6.1
     # via pytest-cov
 cython==3.0.10
     # via -r build_tools/azure/debian_atlas_32bit_requirements.txt
