@@ -23,11 +23,11 @@ https://repo.anaconda.com/pkgs/main/linux-64/readline-8.2-h5eee18b_0.conda#be421
 https://repo.anaconda.com/pkgs/main/linux-64/tk-8.6.14-h39e8969_0.conda#78dbc5e3c69143ebc037fc5d5b22e597
 https://repo.anaconda.com/pkgs/main/linux-64/sqlite-3.45.3-h5eee18b_0.conda#acf93d6aceb74d6110e20b44cc45939e
 https://repo.anaconda.com/pkgs/main/linux-64/python-3.12.4-h5148396_1.conda#7863dc035441267f7b617f080c933671
-https://repo.anaconda.com/pkgs/main/linux-64/setuptools-69.5.1-py312h06a4308_0.conda#ce85d9a864a73e0b12d31a97733c9fca
+https://repo.anaconda.com/pkgs/main/linux-64/setuptools-72.1.0-py312h06a4308_0.conda#bab64ac5186aa07014788baf1fbe3ca9
 https://repo.anaconda.com/pkgs/main/linux-64/wheel-0.43.0-py312h06a4308_0.conda#18d5f3b68a175c72576876db4afc9e9e
 https://repo.anaconda.com/pkgs/main/linux-64/pip-24.0-py312h06a4308_0.conda#6d9697bb8b9f3212be10b3b8e01a12b9
 # pip alabaster @ https://files.pythonhosted.org/packages/7e/b3/6b4067be973ae96ba0d615946e314c5ae35f9f993eca561b356540bb0c2b/alabaster-1.0.0-py3-none-any.whl#sha256=fc6786402dc3fcb2de3cabd5fe455a2db534b371124f1f21de8731783dec828b
-# pip babel @ https://files.pythonhosted.org/packages/27/45/377f7e32a5c93d94cd56542349b34efab5ca3f9e2fd5a68c5e93169aa32d/Babel-2.15.0-py3-none-any.whl#sha256=08706bdad8d0a3413266ab61bd6c34d0c28d6e1e7badf40a2cebe67644e2e1fb
+# pip babel @ https://files.pythonhosted.org/packages/ed/20/bc79bc575ba2e2a7f70e8a1155618bb1301eaa5132a8271373a6903f73f8/babel-2.16.0-py3-none-any.whl#sha256=368b5b98b37c06b7daf6696391c3240c938b37767d4584413e8438c5c435fa8b
 # pip certifi @ https://files.pythonhosted.org/packages/1c/d5/c84e1a17bf61d4df64ca866a1c9a913874b4e9bdc131ec689a0ad013fb36/certifi-2024.7.4-py3-none-any.whl#sha256=c198e21b1289c2ab85ee4e67bb4b4ef3ead0892059901a8d5b622f24a1101e90
 # pip charset-normalizer @ https://files.pythonhosted.org/packages/ee/fb/14d30eb4956408ee3ae09ad34299131fb383c47df355ddb428a7331cfa1e/charset_normalizer-3.3.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=90d558489962fd4918143277a773316e56c72da56ec7aa3dc3dbbe20fdfed15b
 # pip coverage @ https://files.pythonhosted.org/packages/1f/0f/c890339dd605f3ebc269543247bdd43b703cce6825b5ed42ff5f2d6122c7/coverage-7.6.1-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=c44fee9975f04b33331cb8eb272827111efc8930cfd582e0320613263ca849ca
@@ -64,4 +64,4 @@ https://repo.anaconda.com/pkgs/main/linux-64/pip-24.0-py312h06a4308_0.conda#6d96
 # pip pytest-cov @ https://files.pythonhosted.org/packages/78/3a/af5b4fa5961d9a1e6237b530eb87dd04aea6eb83da09d2a4073d81b54ccf/pytest_cov-5.0.0-py3-none-any.whl#sha256=4f0764a1219df53214206bf1feea4633c3b558a2925c8b59f144f682861ce652
 # pip pytest-xdist @ https://files.pythonhosted.org/packages/6d/82/1d96bf03ee4c0fdc3c0cbe61470070e659ca78dc0086fb88b66c185e2449/pytest_xdist-3.6.1-py3-none-any.whl#sha256=9ed4adfb68a016610848639bb7e02c9352d5d9f03d04809919e2dafc3be4cca7
 # pip sphinx @ https://files.pythonhosted.org/packages/4d/61/2ad169c6ff1226b46e50da0e44671592dbc6d840a52034a0193a99b28579/sphinx-8.0.2-py3-none-any.whl#sha256=56173572ae6c1b9a38911786e206a110c9749116745873feae4f9ce88e59391d
-# pip numpydoc @ https://files.pythonhosted.org/packages/f0/fa/dcfe0f65660661db757ee9ebd84e170ff98edd5d80235f62457d9088f85f/numpydoc-1.7.0-py3-none-any.whl#sha256=5a56419d931310d79a06cfc2a126d1558700feeb9b4f3d8dcae1a8134be829c9
+# pip numpydoc @ https://files.pythonhosted.org/packages/6c/45/56d99ba9366476cd8548527667f01869279cedb9e66b28eb4dfb27701679/numpydoc-1.8.0-py3-none-any.whl#sha256=72024c7fd5e17375dec3608a27c03303e8ad00c81292667955c6fea7a3ccf541
