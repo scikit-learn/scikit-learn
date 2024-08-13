@@ -67,7 +67,6 @@ docs = [
     "sphinxcontrib-sass>=0.3.4",
     "pydata-sphinx-theme>=0.15.3",
     "sphinx-remove-toctrees>=1.0.0.post1",
-    "sphinx_docsearch>=0.0.7",
 ]
 examples = [
     "matplotlib>=3.3.4",
