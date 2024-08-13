@@ -1996,6 +1996,7 @@ cdef _build_pruned_tree(
         float64_t* orig_value_ptr
         float64_t* new_value_ptr
 
+        bint record_node_boundaries = tree.record_node_boundaries and orig_tree.record_node_boundaries
         float64_t lower_bound
         float64_t upper_bound
 
@@ -2018,8 +2019,12 @@ cdef _build_pruned_tree(
             is_leaf = leaves_in_subtree[orig_node_id]
             node = &orig_tree.nodes[orig_node_id]
 
-            lower_bound = orig_tree.lower_bounds[orig_node_id]
-            upper_bound = orig_tree.lower_bounds[orig_node_id]
+            if record_node_boundaries:
+                lower_bound = orig_tree.lower_bounds[orig_node_id]
+                upper_bound = orig_tree.lower_bounds[orig_node_id]
+            else:
+                lower_bound = -INFINITY
+                upper_bound = INFINITY
 
             new_node_id = tree._add_node(
                 parent, is_left, is_leaf, node.feature, node.threshold,
