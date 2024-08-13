@@ -174,31 +174,26 @@ build_metadata_list = [
         "pip_dependencies": ["cython", "threadpoolctl", "meson-python", "meson"],
     },
     {
-        "name": "pymin_conda_defaults_openblas",
+        "name": "pymin_conda_forge_openblas_min_dependencies",
         "type": "conda",
         "tag": "main-ci",
         "folder": "build_tools/azure",
         "platform": "linux-64",
-        "channels": ["defaults"],
-        "conda_dependencies": remove_from(
-            common_dependencies,
-            ["pandas", "threadpoolctl", "pip", "meson-python"],
-        )
-        + ["ccache"],
+        "channels": ["conda-forge"],
+        "conda_dependencies": common_dependencies + ["ccache", "polars"],
         "package_constraints": {
             "python": "3.9",
             "blas": "[build=openblas]",
-            "numpy": "1.21",  # the min version is not available on the defaults channel
-            "scipy": "1.7",  # the min version has some low level crashes
+            "numpy": "min",
+            "scipy": "min",
             "matplotlib": "min",
             "cython": "min",
             "joblib": "min",
             "threadpoolctl": "min",
             "meson-python": "min",
+            "pandas": "min",
+            "polars": "min",
         },
-        # TODO: put pip dependencies back to conda dependencies when required
-        # version is available on the defaults channel.
-        "pip_dependencies": ["threadpoolctl", "meson-python"],
     },
     {
         "name": "pymin_conda_forge_openblas_ubuntu_2204",
