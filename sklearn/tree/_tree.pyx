@@ -1877,7 +1877,7 @@ cdef void _build_pruned_tree(
     Tree orig_tree,
     const uint8_t[:] leaves_in_subtree,
     intp_t capacity
-) noexcept:
+):
     """Build a pruned tree.
 
     Build a pruned tree from the original tree by transforming the nodes in
