@@ -401,6 +401,7 @@ class SimpleEstimator(BaseEstimator):
     [
         ("torch", lambda array: array.cpu().numpy()),
         ("array_api_strict", lambda array: numpy.asarray(array)),
+        ("cupy", lambda array: array.get()),
     ],
 )
 def test_convert_estimator_to_ndarray(array_namespace, converter):

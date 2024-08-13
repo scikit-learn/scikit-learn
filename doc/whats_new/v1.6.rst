@@ -65,7 +65,7 @@ See :ref:`array_api` for more details.
 **Other**
 
 - Support for the soon to be deprecated `cupy.array_api` module has been
-  removed in favor of direct support for the top level `cupy` module, possibly
+  removed in favor of directly supporting the top level `cupy` module, possibly
   via the `array_api_compat.cupy` compatibility wrapper. :pr:`29639` by
   :user:`Olivier Grisel <ogrisel>`.
 
