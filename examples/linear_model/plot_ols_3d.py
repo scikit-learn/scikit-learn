@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 =========================================================
 Sparsity Example: Fitting only features 1  and 2
@@ -10,15 +9,15 @@ has a strong coefficient on the full model, it does not
 give us much regarding `y` when compared to just feature 1.
 """
 
-# Code source: Gaël Varoquaux
-# Modified for documentation by Jaques Grobler
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # First we load the diabetes dataset.
 
-from sklearn import datasets
 import numpy as np
+
+from sklearn import datasets
 
 X, y = datasets.load_diabetes(return_X_y=True)
 indices = (0, 1)
@@ -42,6 +41,9 @@ _ = ols.fit(X_train, y_train)
 
 import matplotlib.pyplot as plt
 
+# unused but required import for doing 3d projections with matplotlib < 3.2
+import mpl_toolkits.mplot3d  # noqa: F401
+
 
 def plot_figs(fig_num, elev, azim, X_train, clf):
     fig = plt.figure(fig_num, figsize=(4, 3))
@@ -60,9 +62,9 @@ def plot_figs(fig_num, elev, azim, X_train, clf):
     ax.set_xlabel("X_1")
     ax.set_ylabel("X_2")
     ax.set_zlabel("Y")
-    ax.w_xaxis.set_ticklabels([])
-    ax.w_yaxis.set_ticklabels([])
-    ax.w_zaxis.set_ticklabels([])
+    ax.xaxis.set_ticklabels([])
+    ax.yaxis.set_ticklabels([])
+    ax.zaxis.set_ticklabels([])
 
 
 # Generate the three different figures from different views

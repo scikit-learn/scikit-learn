@@ -1,11 +1,22 @@
-# Author: Mathieu Blondel
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
+from numbers import Real
+
+from ..utils._param_validation import Interval, StrOptions
 from ._stochastic_gradient import BaseSGDClassifier
 
 
 class Perceptron(BaseSGDClassifier):
     """Linear perceptron classifier.
+
+    The implementation is a wrapper around :class:`~sklearn.linear_model.SGDClassifier`
+    by fixing the `loss` and `learning_rate` parameters as::
+
+        SGDClassifier(loss="perceptron", learning_rate="constant")
+
+    Other available parameters are described below and are forwarded to
+    :class:`~sklearn.linear_model.SGDClassifier`.
 
     Read more in the :ref:`User Guide <perceptron>`.
 
@@ -37,7 +48,7 @@ class Perceptron(BaseSGDClassifier):
 
         .. versionadded:: 0.19
 
-    tol : float, default=1e-3
+    tol : float or None, default=1e-3
         The stopping criterion. If it is not None, the iterations will stop
         when (loss > previous_loss - tol).
 
@@ -66,11 +77,11 @@ class Perceptron(BaseSGDClassifier):
         See :term:`Glossary <random_state>`.
 
     early_stopping : bool, default=False
-        Whether to use early stopping to terminate training when validation.
+        Whether to use early stopping to terminate training when validation
         score is not improving. If set to True, it will automatically set aside
         a stratified fraction of training data as validation and terminate
-        training when validation score is not improving by at least tol for
-        n_iter_no_change consecutive epochs.
+        training when validation score is not improving by at least `tol` for
+        `n_iter_no_change` consecutive epochs.
 
         .. versionadded:: 0.20
 
@@ -113,10 +124,6 @@ class Perceptron(BaseSGDClassifier):
     intercept_ : ndarray of shape (1,) if n_classes == 2 else (n_classes,)
         Constants in decision function.
 
-    loss_function_ : concrete LossFunction
-        The function that determines the loss, or difference between the
-        output of the algorithm and the target values.
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
@@ -134,7 +141,7 @@ class Perceptron(BaseSGDClassifier):
 
     t_ : int
         Number of weight updates performed during training.
-        Same as ``(n_iter_ * n_samples)``.
+        Same as ``(n_iter_ * n_samples + 1)``.
 
     See Also
     --------
@@ -163,6 +170,18 @@ class Perceptron(BaseSGDClassifier):
     >>> clf.score(X, y)
     0.939...
     """
+
+    _parameter_constraints: dict = {**BaseSGDClassifier._parameter_constraints}
+    _parameter_constraints.pop("loss")
+    _parameter_constraints.pop("average")
+    _parameter_constraints.update(
+        {
+            "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
+            "alpha": [Interval(Real, 0, None, closed="left")],
+            "l1_ratio": [Interval(Real, 0, 1, closed="both")],
+            "eta0": [Interval(Real, 0, None, closed="left")],
+        }
+    )
 
     def __init__(
         self,

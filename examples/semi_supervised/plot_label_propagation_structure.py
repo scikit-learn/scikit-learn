@@ -11,9 +11,8 @@ propagate correctly around the circle.
 
 """
 
-# Authors: Clay Woolam <clay@woolam.org>
-#          Andreas Mueller <amueller@ais.uni-bonn.de>
-# License: BSD
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # We generate a dataset with two concentric circles. In addition, a label
@@ -22,6 +21,7 @@ propagate correctly around the circle.
 # Here, all labels but two are tagged as unknown.
 
 import numpy as np
+
 from sklearn.datasets import make_circles
 
 n_samples = 200
@@ -61,8 +61,8 @@ plt.scatter(
     marker=".",
     label="unlabeled",
 )
-plt.legend(scatterpoints=1, shadow=False, loc="upper right")
-plt.title("Raw data (2 classes=outer and inner)")
+plt.legend(scatterpoints=1, shadow=False, loc="center")
+_ = plt.title("Raw data (2 classes=outer and inner)")
 
 # %%
 #
@@ -100,6 +100,6 @@ plt.scatter(
     s=10,
     label="inner learned",
 )
-plt.legend(scatterpoints=1, shadow=False, loc="upper right")
+plt.legend(scatterpoints=1, shadow=False, loc="center")
 plt.title("Labels learned with Label Spreading (KNN)")
 plt.show()

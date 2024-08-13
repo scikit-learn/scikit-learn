@@ -2,15 +2,9 @@
 Common code for all metrics.
 
 """
-# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#          Olivier Grisel <olivier.grisel@ensta.org>
-#          Arnaud Joly <a.joly@ulg.ac.be>
-#          Jochen Wersdorfer <jochen@wersdoerfer.de>
-#          Lars Buitinck
-#          Joel Nothman <joel.nothman@gmail.com>
-#          Noel Dawe <noel@dawe.me>
-# License: BSD 3 clause
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from itertools import combinations
 
@@ -197,55 +191,3 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average="macro
         pair_scores[ix] = (a_true_score + b_true_score) / 2
 
     return np.average(pair_scores, weights=prevalence)
-
-
-def _check_pos_label_consistency(pos_label, y_true):
-    """Check if `pos_label` need to be specified or not.
-
-    In binary classification, we fix `pos_label=1` if the labels are in the set
-    {-1, 1} or {0, 1}. Otherwise, we raise an error asking to specify the
-    `pos_label` parameters.
-
-    Parameters
-    ----------
-    pos_label : int, str or None
-        The positive label.
-    y_true : ndarray of shape (n_samples,)
-        The target vector.
-
-    Returns
-    -------
-    pos_label : int
-        If `pos_label` can be inferred, it will be returned.
-
-    Raises
-    ------
-    ValueError
-        In the case that `y_true` does not have label in {-1, 1} or {0, 1},
-        it will raise a `ValueError`.
-    """
-    # ensure binary classification if pos_label is not specified
-    # classes.dtype.kind in ('O', 'U', 'S') is required to avoid
-    # triggering a FutureWarning by calling np.array_equal(a, b)
-    # when elements in the two arrays are not comparable.
-    classes = np.unique(y_true)
-    if pos_label is None and (
-        classes.dtype.kind in "OUS"
-        or not (
-            np.array_equal(classes, [0, 1])
-            or np.array_equal(classes, [-1, 1])
-            or np.array_equal(classes, [0])
-            or np.array_equal(classes, [-1])
-            or np.array_equal(classes, [1])
-        )
-    ):
-        classes_repr = ", ".join(repr(c) for c in classes)
-        raise ValueError(
-            f"y_true takes value in {{{classes_repr}}} and pos_label is not "
-            "specified: either make y_true take value in {0, 1} or "
-            "{-1, 1} or pass pos_label explicitly."
-        )
-    elif pos_label is None:
-        pos_label = 1
-
-    return pos_label

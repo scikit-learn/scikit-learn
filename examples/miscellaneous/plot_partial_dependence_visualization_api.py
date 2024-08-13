@@ -2,8 +2,7 @@
 =========================================
 Advanced Plotting With Partial Dependence
 =========================================
-The :func:`~sklearn.inspection.plot_partial_dependence` function returns a
-:class:`~sklearn.inspection.PartialDependenceDisplay` object that can be used
+The :class:`~sklearn.inspection.PartialDependenceDisplay` object can be used
 for plotting without needing to recalculate the partial dependence. In this
 example, we show how to plot partial dependence plots and how to quickly
 customize the plot with the visualization API.
@@ -14,15 +13,18 @@ customize the plot with the visualization API.
 
 """  # noqa: E501
 
-import pandas as pd
-import matplotlib.pyplot as plt
-from sklearn.datasets import load_diabetes
-from sklearn.neural_network import MLPRegressor
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import make_pipeline
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.inspection import PartialDependenceDisplay
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
+import matplotlib.pyplot as plt
+import pandas as pd
+
+from sklearn.datasets import load_diabetes
+from sklearn.inspection import PartialDependenceDisplay
+from sklearn.neural_network import MLPRegressor
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.tree import DecisionTreeRegressor
 
 # %%
 # Train models on the diabetes dataset

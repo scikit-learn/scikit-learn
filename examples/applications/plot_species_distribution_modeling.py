@@ -4,8 +4,8 @@ Species distribution modeling
 =============================
 
 Modeling species' geographic distributions is an important
-problem in conservation biology. In this example we
-model the geographic distribution of two south american
+problem in conservation biology. In this example, we
+model the geographic distribution of two South American
 mammals given past observations and 14 environmental
 variables. Since we have only positive examples (there are
 no unsuccessful observations), we cast this problem as a
@@ -17,13 +17,13 @@ to plot the coast lines and national boundaries of South America.
 
 The two species are:
 
- - `"Bradypus variegatus"
-   <http://www.iucnredlist.org/details/3038/0>`_ ,
-   the Brown-throated Sloth.
+ - `Bradypus variegatus
+   <http://www.iucnredlist.org/details/3038/0>`_,
+   the brown-throated sloth.
 
- - `"Microryzomys minutus"
-   <http://www.iucnredlist.org/details/13408/0>`_ ,
-   also known as the Forest Small Rice Rat, a rodent that lives in Peru,
+ - `Microryzomys minutus
+   <http://www.iucnredlist.org/details/13408/0>`_,
+   also known as the forest small rice rat, a rodent that lives in Peru,
    Colombia, Ecuador, Peru, and Venezuela.
 
 References
@@ -36,19 +36,17 @@ References
 
 """
 
-# Authors: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#          Jake Vanderplas <vanderplas@astro.washington.edu>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from time import time
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from sklearn.utils import Bunch
+from sklearn import metrics, svm
 from sklearn.datasets import fetch_species_distributions
-from sklearn import svm, metrics
+from sklearn.utils import Bunch
 
 # if basemap is available, we'll use it.
 # otherwise, we'll improvise later...

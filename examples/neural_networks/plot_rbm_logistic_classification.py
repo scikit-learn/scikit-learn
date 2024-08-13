@@ -11,8 +11,8 @@ feature extraction.
 
 """
 
-# Authors: Yann N. Dauphin, Vlad Niculae, Gabriel Synnaeve
-# License: BSD
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Generate data
@@ -23,13 +23,11 @@ feature extraction.
 # linear shifts of 1 pixel in each direction.
 
 import numpy as np
-
 from scipy.ndimage import convolve
 
 from sklearn import datasets
-from sklearn.preprocessing import minmax_scale
-
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import minmax_scale
 
 
 def nudge_dataset(X, Y):

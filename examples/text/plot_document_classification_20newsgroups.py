@@ -4,26 +4,27 @@ Classification of text documents using sparse features
 ======================================================
 
 This is an example showing how scikit-learn can be used to classify documents by
-topics using a bag-of-words approach. This example uses a Tf-idf-weighted
-document-term sparse matrix to encode the features and demonstrates various
-classifiers that can efficiently handle sparse matrices.
+topics using a `Bag of Words approach
+<https://en.wikipedia.org/wiki/Bag-of-words_model>`_. This example uses a
+Tf-idf-weighted document-term sparse matrix to encode the features and
+demonstrates various classifiers that can efficiently handle sparse matrices.
+
+For document analysis via an unsupervised learning approach, see the example
+script :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`.
 
 """
 
-# Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#         Olivier Grisel <olivier.grisel@ensta.org>
-#         Mathieu Blondel <mathieu@mblondel.org>
-#         Arturo Amor <david-arturo.amor-quiroz@inria.fr>
-#         Lars Buitinck
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 # %%
-# Load data
-# ---------
+# Loading and vectorizing the 20 newsgroups text dataset
+# ======================================================
+#
 # We define a function to load data from :ref:`20newsgroups_dataset`, which
-# comprises around 18000 newsgroups posts on 20 topics split in two subsets: one
-# for training (or development) and the other one for testing (or for
+# comprises around 18,000 newsgroups posts on 20 topics split in two subsets:
+# one for training (or development) and the other one for testing (or for
 # performance evaluation). Note that, by default, the text samples contain some
 # message metadata such as `'headers'`, `'footers'` (signatures) and `'quotes'`
 # to other posts. The `fetch_20newsgroups` function therefore accepts a
@@ -31,9 +32,10 @@ classifiers that can efficiently handle sparse matrices.
 # the classification problem "too easy". This is achieved using simple
 # heuristics that are neither perfect nor standard, hence disabled by default.
 
+from time import time
+
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import TfidfVectorizer
-from time import time
 
 categories = [
     "alt.atheism",
@@ -88,7 +90,6 @@ def load_dataset(verbose=False, remove=()):
     feature_names = vectorizer.get_feature_names_out()
 
     if verbose:
-
         # compute size of loaded data
         data_train_size_mb = size_mb(data_train.data)
         data_test_size_mb = size_mb(data_test.data)
@@ -114,10 +115,20 @@ def load_dataset(verbose=False, remove=()):
 
 
 # %%
-# Compare feature effects
-# -----------------------
-# We train a first classification model without attempting to strip the metadata
-# of the dataset.
+# Analysis of a bag-of-words document classifier
+# ==============================================
+#
+# We will now train a classifier twice, once on the text samples including
+# metadata and once after stripping the metadata. For both cases we will analyze
+# the classification errors on a test set using a confusion matrix and inspect
+# the coefficients that define the classification function of the trained
+# models.
+#
+# Model without metadata stripping
+# --------------------------------
+#
+# We start by using the custom function `load_dataset` to load the data without
+# metadata stripping.
 
 X_train, X_test, y_train, y_test, feature_names, target_names = load_dataset(
     verbose=True
@@ -144,6 +155,7 @@ pred = clf.predict(X_test)
 # in the classification errors.
 
 import matplotlib.pyplot as plt
+
 from sklearn.metrics import ConfusionMatrixDisplay
 
 fig, ax = plt.subplots(figsize=(10, 5))
@@ -168,8 +180,8 @@ _ = ax.set_title(
 # We can gain a deeper understanding of how this classifier makes its decisions
 # by looking at the words with the highest average feature effects:
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 
 def plot_feature_effects():
@@ -247,6 +259,9 @@ for doc in data_train.data:
 # classifier to only learn from the "main content" of each text document instead
 # of relying on the leaked identity of the writers.
 #
+# Model with metadata stripping
+# -----------------------------
+#
 # The `remove` option of the 20 newsgroups dataset loader in scikit-learn allows
 # to heuristically attempt to filter out some of this unwanted metadata that
 # makes the classification problem artificially easier. Be aware that such
@@ -289,12 +304,17 @@ _ = plot_feature_effects().set_title("Average feature effects on filtered docume
 
 # %%
 # Benchmarking classifiers
-# ------------------------
+# ========================
 #
-# First we define small benchmarking utilities
+# Scikit-learn provides many different kinds of classification algorithms. In
+# this section we will train a selection of those classifiers on the same text
+# classification problem and measure both their generalization performance
+# (accuracy on the test set) and their computation performance (speed), both at
+# training time and testing time. For such purpose we define the following
+# benchmarking utilities:
 
-from sklearn.utils.extmath import density
 from sklearn import metrics
+from sklearn.utils.extmath import density
 
 
 def benchmark(clf, custom_name=False):
@@ -334,16 +354,16 @@ def benchmark(clf, custom_name=False):
 # such a multi-class text classification problem.
 #
 # Notice that the most important hyperparameters values were tuned using a grid
-# search procedure not shown in this notebook for the sake of simplicity.
+# search procedure not shown in this notebook for the sake of simplicity. See
+# the example script
+# :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`  # noqa: E501
+# for a demo on how such tuning can be done.
 
-from sklearn.linear_model import LogisticRegression
-from sklearn.svm import LinearSVC
-from sklearn.linear_model import SGDClassifier
-from sklearn.naive_bayes import ComplementNB
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.neighbors import NearestCentroid
 from sklearn.ensemble import RandomForestClassifier
-
+from sklearn.linear_model import LogisticRegression, SGDClassifier
+from sklearn.naive_bayes import ComplementNB
+from sklearn.neighbors import KNeighborsClassifier, NearestCentroid
+from sklearn.svm import LinearSVC
 
 results = []
 for clf, name in (
@@ -371,7 +391,8 @@ for clf, name in (
 
 # %%
 # Plot accuracy, training and test time of each classifier
-# --------------------------------------------------------
+# ========================================================
+#
 # The scatter plots show the trade-off between the test accuracy and the
 # training and testing time of each classifier.
 

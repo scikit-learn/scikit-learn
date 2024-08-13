@@ -11,19 +11,19 @@ loader or setting them to `None` to get all 20 of them.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 
 from sklearn.datasets import fetch_20newsgroups
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.feature_extraction.text import TfidfTransformer
-from sklearn.preprocessing import FunctionTransformer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.linear_model import SGDClassifier
+from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
-from sklearn.semi_supervised import SelfTrainingClassifier
-from sklearn.semi_supervised import LabelSpreading
-from sklearn.metrics import f1_score
+from sklearn.preprocessing import FunctionTransformer
+from sklearn.semi_supervised import LabelSpreading, SelfTrainingClassifier
 
 # Loading dataset containing first five categories
 data = fetch_20newsgroups(
@@ -41,7 +41,7 @@ print("%d categories" % len(data.target_names))
 print()
 
 # Parameters
-sdg_params = dict(alpha=1e-5, penalty="l2", loss="log")
+sdg_params = dict(alpha=1e-5, penalty="l2", loss="log_loss")
 vectorizer_params = dict(ngram_range=(1, 2), min_df=5, max_df=0.8)
 
 # Supervised Pipeline
@@ -66,7 +66,7 @@ ls_pipeline = Pipeline(
         ("vect", CountVectorizer(**vectorizer_params)),
         ("tfidf", TfidfTransformer()),
         # LabelSpreading does not support dense matrices
-        ("todense", FunctionTransformer(lambda x: x.todense())),
+        ("toarray", FunctionTransformer(lambda x: x.toarray())),
         ("clf", LabelSpreading()),
     ]
 )

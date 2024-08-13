@@ -35,8 +35,11 @@ feature distinguishes a particular class.
 
 """
 
-import numpy as np
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.datasets import make_multilabel_classification as make_ml_clf
 

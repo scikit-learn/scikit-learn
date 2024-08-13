@@ -25,34 +25,33 @@ of all other input features (the 'complement' features). Intuitively, we can
 interpret the partial dependence as the expected target response as a
 function of the input features of interest.
 
-Due to the limits of human perception the size of the set of input feature of
+Due to the limits of human perception, the size of the set of input features of
 interest must be small (usually, one or two) thus the input features of interest
 are usually chosen among the most important features.
 
 The figure below shows two one-way and one two-way partial dependence plots for
-the California housing dataset, with a :class:`HistGradientBoostingRegressor
-<sklearn.ensemble.HistGradientBoostingRegressor>`:
+the bike sharing dataset, with a
+:class:`~sklearn.ensemble.HistGradientBoostingRegressor`:
 
-.. figure:: ../auto_examples/inspection/images/sphx_glr_plot_partial_dependence_003.png
+.. figure:: ../auto_examples/inspection/images/sphx_glr_plot_partial_dependence_006.png
    :target: ../auto_examples/inspection/plot_partial_dependence.html
    :align: center
    :scale: 70
 
-One-way PDPs tell us about the interaction between the target response and an
-input feature of interest feature (e.g. linear, non-linear). The left plot
-in the above figure shows the effect of the average occupancy on the median
-house price; we can clearly see a linear relationship among them when the
-average occupancy is inferior to 3 persons. Similarly, we could analyze the
-effect of the house age on the median house price (middle plot). Thus, these
-interpretations are marginal, considering a feature at a time.
+One-way PDPs tell us about the interaction between the target response and an input
+feature of interest (e.g. linear, non-linear). The left plot in the above figure
+shows the effect of the temperature on the number of bike rentals; we can clearly see
+that a higher temperature is related with a higher number of bike rentals. Similarly, we
+could analyze the effect of the humidity on the number of bike rentals (middle plot).
+Thus, these interpretations are marginal, considering a feature at a time.
 
-PDPs with two input features of interest show the interactions among the two
-features. For example, the two-variable PDP in the above figure shows the
-dependence of median house price on joint values of house age and average
-occupants per household. We can clearly see an interaction between the two
-features: for an average occupancy greater than two, the house price is nearly
-independent of the house age, whereas for values less than 2 there is a strong
-dependence on age.
+PDPs with two input features of interest show the interactions among the two features.
+For example, the two-variable PDP in the above figure shows the dependence of the number
+of bike rentals on joint values of temperature and humidity. We can clearly see an
+interaction between the two features: with a temperature higher than 20 degrees Celsius,
+mainly the humidity has a strong impact on the number of bike rentals. For lower
+temperatures, both the temperature and the humidity have an impact on the number of bike
+rentals.
 
 The :mod:`sklearn.inspection` module provides a convenience function
 :func:`~PartialDependenceDisplay.from_estimator` to create one-way and two-way partial
@@ -74,19 +73,27 @@ and a two-way PDP between the two features::
 You can access the newly created figure and Axes objects using ``plt.gcf()``
 and ``plt.gca()``.
 
-For multi-class classification, you need to set the class label for which
-the PDPs should be created via the ``target`` argument::
+To make a partial dependence plot with categorical features, you need to specify
+which features are categorical using the parameter `categorical_features`. This
+parameter takes a list of indices, names of the categorical features or a boolean
+mask. The graphical representation of partial dependence for categorical features is
+a bar plot or a 2D heatmap.
 
-    >>> from sklearn.datasets import load_iris
-    >>> iris = load_iris()
-    >>> mc_clf = GradientBoostingClassifier(n_estimators=10,
-    ...     max_depth=1).fit(iris.data, iris.target)
-    >>> features = [3, 2, (3, 2)]
-    >>> PartialDependenceDisplay.from_estimator(mc_clf, X, features, target=0)
-    <...>
+.. dropdown:: PDPs for multi-class classification
 
-The same parameter ``target`` is used to specify the target in multi-output
-regression settings.
+    For multi-class classification, you need to set the class label for which
+    the PDPs should be created via the ``target`` argument::
+
+        >>> from sklearn.datasets import load_iris
+        >>> iris = load_iris()
+        >>> mc_clf = GradientBoostingClassifier(n_estimators=10,
+        ...     max_depth=1).fit(iris.data, iris.target)
+        >>> features = [3, 2, (3, 2)]
+        >>> PartialDependenceDisplay.from_estimator(mc_clf, X, features, target=0)
+        <...>
+
+    The same parameter ``target`` is used to specify the target in multi-output
+    regression settings.
 
 If you need the raw values of the partial dependence function rather than
 the plots, you can use the
@@ -97,7 +104,7 @@ the plots, you can use the
     >>> results = partial_dependence(clf, X, [0])
     >>> results["average"]
     array([[ 2.466...,  2.466..., ...
-    >>> results["values"]
+    >>> results["grid_values"]
     [array([-1.624..., -1.592..., ...
 
 The values at which the partial dependence should be evaluated are directly
@@ -120,12 +127,11 @@ feature for each sample separately with one line per sample.
 Due to the limits of human perception, only one input feature of interest is
 supported for ICE plots.
 
-The figures below show four ICE plots for the California housing dataset,
-with a :class:`HistGradientBoostingRegressor
-<sklearn.ensemble.HistGradientBoostingRegressor>`. The second figure plots
-the corresponding PD line overlaid on ICE lines.
+The figures below show two ICE plots for the bike sharing dataset,
+with a :class:`~sklearn.ensemble.HistGradientBoostingRegressor`:.
+The figures plot the corresponding PD line overlaid on ICE lines.
 
-.. figure:: ../auto_examples/inspection/images/sphx_glr_plot_partial_dependence_002.png
+.. figure:: ../auto_examples/inspection/images/sphx_glr_plot_partial_dependence_004.png
    :target: ../auto_examples/inspection/plot_partial_dependence.html
    :align: center
    :scale: 70
@@ -133,10 +139,11 @@ the corresponding PD line overlaid on ICE lines.
 While the PDPs are good at showing the average effect of the target features,
 they can obscure a heterogeneous relationship created by interactions.
 When interactions are present the ICE plot will provide many more insights.
-For example, we could observe a linear relationship between the median income
-and the house price in the PD line. However, the ICE lines show that there
-are some exceptions, where the house price remains constant in some ranges of
-the median income.
+For example, we see that the ICE for the temperature feature gives us some
+additional information: Some of the ICE lines are flat while some others
+shows a decrease of the dependence for temperature above 35 degrees Celsius.
+We observe a similar pattern for the humidity feature: some of the ICE
+lines show a sharp decrease when the humidity is above 80%.
 
 The :mod:`sklearn.inspection` module's :meth:`PartialDependenceDisplay.from_estimator`
 convenience function can be used to create ICE plots by setting
@@ -255,9 +262,9 @@ estimators that support it, and 'brute' is used for the rest.
     interpreting PDPs is that the features should be independent.
 
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
+* :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
 
 .. rubric:: Footnotes
 
@@ -265,21 +272,20 @@ estimators that support it, and 'brute' is used for the rest.
    class (the positive class for binary classification), or the decision
    function.
 
-.. topic:: References
+.. rubric:: References
 
-    .. [H2009] T. Hastie, R. Tibshirani and J. Friedman,
-               `The Elements of Statistical Learning
-               <https://web.stanford.edu/~hastie/ElemStatLearn//>`_,
-               Second Edition, Section 10.13.2, Springer, 2009.
+.. [H2009] T. Hastie, R. Tibshirani and J. Friedman,
+    `The Elements of Statistical Learning
+    <https://web.stanford.edu/~hastie/ElemStatLearn//>`_,
+    Second Edition, Section 10.13.2, Springer, 2009.
 
-    .. [M2019] C. Molnar,
-               `Interpretable Machine Learning
-               <https://christophm.github.io/interpretable-ml-book/>`_,
-               Section 5.1, 2019.
+.. [M2019] C. Molnar,
+    `Interpretable Machine Learning
+    <https://christophm.github.io/interpretable-ml-book/>`_,
+    Section 5.1, 2019.
 
-    .. [G2015] :arxiv:`A. Goldstein, A. Kapelner, J. Bleich, and E. Pitkin,
-               "Peeking Inside the Black Box: Visualizing Statistical
-               Learning With Plots of Individual Conditional Expectation"
-               Journal of Computational and Graphical Statistics,
-               24(1): 44-65, Springer, 2015.
-               <1309.6392>`
+.. [G2015] :arxiv:`A. Goldstein, A. Kapelner, J. Bleich, and E. Pitkin,
+    "Peeking Inside the Black Box: Visualizing Statistical
+    Learning With Plots of Individual Conditional Expectation"
+    Journal of Computational and Graphical Statistics,
+    24(1): 44-65, Springer, 2015. <1309.6392>`

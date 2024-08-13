@@ -29,7 +29,6 @@ setup_ccache() {
 
 pre_python_environment_install() {
     if [[ "$DISTRIB" == "ubuntu" ]]; then
-        sudo add-apt-repository --remove ppa:ubuntu-toolchain-r/test
         sudo apt-get update
         sudo apt-get install python3-scipy python3-matplotlib \
              libatlas3-base libatlas-base-dev python3-virtualenv ccache
@@ -38,44 +37,34 @@ pre_python_environment_install() {
         apt-get update
         apt-get install -y python3-dev python3-numpy python3-scipy \
                 python3-matplotlib libatlas3-base libatlas-base-dev \
-                python3-virtualenv python3-pandas ccache
+                python3-virtualenv python3-pandas ccache git
 
-    elif [[ "$DISTRIB" == "conda-pypy3" ]]; then
-        # need compilers
-        apt-get -yq update
-        apt-get -yq install build-essential
-
-    elif [[ "$DISTRIB" == "pip-nogil" ]]; then
-        echo "deb-src http://archive.ubuntu.com/ubuntu/ focal main" | sudo tee -a /etc/apt/sources.list
+    # TODO for now we use CPython 3.13 from Ubuntu deadsnakes PPA. When CPython
+    # 3.13 is released (scheduled October 2024) we can use something more
+    # similar to other conda+pip based builds
+    elif [[ "$DISTRIB" == "pip-free-threaded" ]]; then
         sudo apt-get -yq update
         sudo apt-get install -yq ccache
-        sudo apt-get build-dep -yq python3 python3-dev
-        setup_ccache  # speed-up the build of CPython itself
-        # build Python nogil
-        PYTHON_NOGIL_CLONE_PATH=../nogil
-        git clone --depth 1 https://github.com/colesbury/nogil $PYTHON_NOGIL_CLONE_PATH
-        cd $PYTHON_NOGIL_CLONE_PATH
-        ./configure && make -j 2
-        export PYTHON_NOGIL_PATH="${PYTHON_NOGIL_CLONE_PATH}/python"
-        cd $OLDPWD
-
-    elif [[ "$BUILD_WITH_ICC" == "true" ]]; then
-        wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-        sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-        rm GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-        sudo add-apt-repository "deb https://apt.repos.intel.com/oneapi all main"
-        sudo apt-get update
-        sudo apt-get install intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
-        source /opt/intel/oneapi/setvars.sh
-
+        sudo apt-get install -yq software-properties-common
+        sudo add-apt-repository --yes ppa:deadsnakes/nightly
+        sudo apt-get update -yq
+        sudo apt-get install -yq --no-install-recommends python3.13-dev python3.13-venv python3.13-nogil
     fi
+}
+
+check_packages_dev_version() {
+    for package in $@; do
+        package_version=$(python -c "import $package; print($package.__version__)")
+        if [[ $package_version =~ "^[.0-9]+$" ]]; then
+            echo "$package is not a development version: $package_version"
+            exit 1
+        fi
+    done
 }
 
 python_environment_install_and_activate() {
     if [[ "$DISTRIB" == "conda"* ]]; then
-        conda update -n base conda -y
-        conda install -c conda-forge "$(get_dep conda-lock min)" -y
-        conda-lock install --name $VIRTUALENV $LOCK_FILE
+        create_conda_environment_from_lock_file $VIRTUALENV $LOCK_FILE
         source activate $VIRTUALENV
 
     elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
@@ -83,21 +72,33 @@ python_environment_install_and_activate() {
         source $VIRTUALENV/bin/activate
         pip install -r "${LOCK_FILE}"
 
-    elif [[ "$DISTRIB" == "pip-nogil" ]]; then
-        ${PYTHON_NOGIL_PATH} -m venv $VIRTUALENV
+    elif [[ "$DISTRIB" == "pip-free-threaded" ]]; then
+        python3.13t -m venv $VIRTUALENV
         source $VIRTUALENV/bin/activate
         pip install -r "${LOCK_FILE}"
+        # TODO you need pip>=24.1 to find free-threaded wheels. This may be
+        # removed when the underlying Ubuntu image has pip>=24.1.
+        pip install 'pip>=24.1'
+        # TODO When there are CPython 3.13 free-threaded wheels for numpy,
+        # scipy and cython move them to
+        # build_tools/azure/cpython_free_threaded_requirements.txt. For now we
+        # install them from scientific-python-nightly-wheels
+        dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
+        dev_packages="numpy scipy Cython"
+        pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url $dev_packages --only-binary :all:
     fi
 
     if [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
         echo "Installing development dependency wheels"
-        dev_anaconda_url=https://pypi.anaconda.org/scipy-wheels-nightly/simple
-        pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy pandas scipy
-        echo "Installing Cython from PyPI enabling pre-releases"
-        pip install --pre cython
-        echo "Installing joblib master"
+        dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
+        dev_packages="numpy scipy pandas Cython"
+        pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url $dev_packages --only-binary :all:
+
+        check_packages_dev_version $dev_packages
+
+        echo "Installing joblib from latest sources"
         pip install https://github.com/joblib/joblib/archive/master.zip
-        echo "Installing pillow master"
+        echo "Installing pillow from latest sources"
         pip install https://github.com/python-pillow/Pillow/archive/main.zip
     fi
 }
@@ -106,14 +107,16 @@ scikit_learn_install() {
     setup_ccache
     show_installed_libraries
 
-    # Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
-    # workers with 2 cores when building the compiled extensions of scikit-learn.
-    export SKLEARN_BUILD_PARALLEL=3
-
     if [[ "$UNAMESTR" == "Darwin" && "$SKLEARN_TEST_NO_OPENMP" == "true" ]]; then
         # Without openmp, we use the system clang. Here we use /usr/bin/ar
         # instead because llvm-ar errors
         export AR=/usr/bin/ar
+        # Make sure omp.h is not present in the conda environment, so that
+        # using an unprotected "cimport openmp" will make this build fail. At
+        # the time of writing (2023-01-13), on OSX, blas (mkl or openblas)
+        # brings in openmp so that you end up having the omp.h include inside
+        # the conda environment.
+        find $CONDA_PREFIX -name omp.h -delete -print
     fi
 
     if [[ "$UNAMESTR" == "Linux" ]]; then
@@ -122,26 +125,24 @@ scikit_learn_install() {
         export LDFLAGS="$LDFLAGS -Wl,--sysroot=/"
     fi
 
-    if [[ "$BUILD_WITH_ICC" == "true" ]]; then
-        # The "build_clib" command is implicitly used to build "libsvm-skl".
-        # To compile with a different compiler, we also need to specify the
-        # compiler for this command
-        python setup.py build_ext --compiler=intelem -i build_clib --compiler=intelem
-    fi
-
-    # TODO use a specific variable for this rather than using a particular build ...
-    if [[ "$DISTRIB" == "conda-pip-latest" ]]; then
+    if [[ "$PIP_BUILD_ISOLATION" == "true" ]]; then
         # Check that pip can automatically build scikit-learn with the build
         # dependencies specified in pyproject.toml using an isolated build
         # environment:
-        pip install --verbose --editable .
+        pip install --verbose .
     else
+        if [[ "$UNAMESTR" == "MINGW64"* ]]; then
+           # Needed on Windows CI to compile with Visual Studio compiler
+           # otherwise Meson detects a MINGW64 platform and use MINGW64
+           # toolchain
+           ADDITIONAL_PIP_OPTIONS='-Csetup-args=--vsenv'
+        fi
         # Use the pre-installed build dependencies and build directly in the
         # current environment.
-        python setup.py develop
+        pip install --verbose --no-build-isolation --editable . $ADDITIONAL_PIP_OPTIONS
     fi
 
-    ccache -s
+    ccache -s || echo "ccache not installed, skipping ccache statistics"
 }
 
 main() {

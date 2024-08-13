@@ -1,7 +1,9 @@
 """
 Module contains classes for invertible (and differentiable) link functions.
 """
-# Author: Christian Lorentzen <lorentzen.ch@gmail.com>
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -9,6 +11,7 @@ from dataclasses import dataclass
 import numpy as np
 from scipy.special import expit, logit
 from scipy.stats import gmean
+
 from ..utils.extmath import softmax
 
 
@@ -187,6 +190,23 @@ class LogitLink(BaseLink):
         return expit(raw_prediction, out=out)
 
 
+class HalfLogitLink(BaseLink):
+    """Half the logit link function g(x)=1/2 * logit(x).
+
+    Used for the exponential loss.
+    """
+
+    interval_y_pred = Interval(0, 1, False, False)
+
+    def link(self, y_pred, out=None):
+        out = logit(y_pred, out=out)
+        out *= 0.5
+        return out
+
+    def inverse(self, raw_prediction, out=None):
+        return expit(2 * raw_prediction, out)
+
+
 class MultinomialLogit(BaseLink):
     """The symmetric multinomial logit function.
 
@@ -257,5 +277,6 @@ _LINKS = {
     "identity": IdentityLink,
     "log": LogLink,
     "logit": LogitLink,
+    "half_logit": HalfLogitLink,
     "multinomial_logit": MultinomialLogit,
 }

@@ -1,15 +1,18 @@
 """Incremental Principal Components Analysis."""
 
-# Author: Kyle Kastner <kastnerkyle@gmail.com>
-#         Giorgio Patrini
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+from numbers import Integral
 
 import numpy as np
 from scipy import linalg, sparse
 
-from ._base import _BasePCA
+from ..base import _fit_context
 from ..utils import gen_batches
-from ..utils.extmath import svd_flip, _incremental_mean_and_var
+from ..utils._param_validation import Interval
+from ..utils.extmath import _incremental_mean_and_var, svd_flip
+from ._base import _BasePCA
 
 
 class IncrementalPCA(_BasePCA):
@@ -34,6 +37,9 @@ class IncrementalPCA(_BasePCA):
     remain in memory at a time. There will be ``n_samples / batch_size`` SVD
     computations to get the principal components, versus 1 large SVD of
     complexity ``O(n_samples * n_features ** 2)`` for PCA.
+
+    For a usage example, see
+    :ref:`sphx_glr_auto_examples_decomposition_plot_incremental_pca.py`.
 
     Read more in the :ref:`User Guide <IncrementalPCA>`.
 
@@ -71,7 +77,7 @@ class IncrementalPCA(_BasePCA):
         Principal axes in feature space, representing the directions of
         maximum variance in the data. Equivalently, the right singular
         vectors of the centered input data, parallel to its eigenvectors.
-        The components are sorted by ``explained_variance_``.
+        The components are sorted by decreasing ``explained_variance_``.
 
     explained_variance_ : ndarray of shape (n_components,)
         Variance explained by each of the selected components.
@@ -137,10 +143,9 @@ class IncrementalPCA(_BasePCA):
     See https://www.cs.toronto.edu/~dross/ivt/RossLimLinYang_ijcv.pdf
 
     This model is an extension of the Sequential Karhunen-Loeve Transform from:
-    *A. Levy and M. Lindenbaum, Sequential Karhunen-Loeve Basis Extraction and
+    :doi:`A. Levy and M. Lindenbaum, Sequential Karhunen-Loeve Basis Extraction and
     its Application to Images, IEEE Transactions on Image Processing, Volume 9,
-    Number 8, pp. 1371-1374, August 2000.*
-    See https://www.cs.technion.ac.il/~mic/doc/skl-ip.pdf
+    Number 8, pp. 1371-1374, August 2000. <10.1109/83.855432>`
 
     We have specifically abstained from an optimization used by authors of both
     papers, a QR decomposition used in specific situations to reduce the
@@ -178,12 +183,20 @@ class IncrementalPCA(_BasePCA):
     (1797, 7)
     """
 
+    _parameter_constraints: dict = {
+        "n_components": [Interval(Integral, 1, None, closed="left"), None],
+        "whiten": ["boolean"],
+        "copy": ["boolean"],
+        "batch_size": [Interval(Integral, 1, None, closed="left"), None],
+    }
+
     def __init__(self, n_components=None, *, whiten=False, copy=True, batch_size=None):
         self.n_components = n_components
         self.whiten = whiten
         self.copy = copy
         self.batch_size = batch_size
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the model with X, using minibatches of size batch_size.
 
@@ -215,6 +228,7 @@ class IncrementalPCA(_BasePCA):
             accept_sparse=["csr", "csc", "lil"],
             copy=self.copy,
             dtype=[np.float64, np.float32],
+            force_writeable=True,
         )
         n_samples, n_features = X.shape
 
@@ -233,6 +247,7 @@ class IncrementalPCA(_BasePCA):
 
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y=None, check_input=True):
         """Incremental fit with X. All of X is processed as a single batch.
 
@@ -254,6 +269,7 @@ class IncrementalPCA(_BasePCA):
             Returns the instance itself.
         """
         first_pass = not hasattr(self, "components_")
+
         if check_input:
             if sparse.issparse(X):
                 raise TypeError(
@@ -262,7 +278,11 @@ class IncrementalPCA(_BasePCA):
                     "or use IncrementalPCA.fit to do so in batches."
                 )
             X = self._validate_data(
-                X, copy=self.copy, dtype=[np.float64, np.float32], reset=first_pass
+                X,
+                copy=self.copy,
+                dtype=[np.float64, np.float32],
+                force_writeable=True,
+                reset=first_pass,
             )
         n_samples, n_features = X.shape
         if first_pass:
@@ -273,7 +293,7 @@ class IncrementalPCA(_BasePCA):
                 self.n_components_ = min(n_samples, n_features)
             else:
                 self.n_components_ = self.components_.shape[0]
-        elif not 1 <= self.n_components <= n_features:
+        elif not self.n_components <= n_features:
             raise ValueError(
                 "n_components=%r invalid for n_features=%d, need "
                 "more rows than columns for IncrementalPCA "

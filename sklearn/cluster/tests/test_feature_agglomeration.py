@@ -1,13 +1,16 @@
 """
 Tests for sklearn.cluster._feature_agglomeration
 """
-# Authors: Sergul Aydore 2017
-import numpy as np
 
+import warnings
+
+import numpy as np
+import pytest
 from numpy.testing import assert_array_equal
+
 from sklearn.cluster import FeatureAgglomeration
-from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.datasets import make_blobs
+from sklearn.utils._testing import assert_array_almost_equal
 
 
 def test_feature_agglomeration():
@@ -53,3 +56,25 @@ def test_feature_agglomeration_feature_names_out():
     assert_array_equal(
         [f"featureagglomeration{i}" for i in range(n_clusters)], names_out
     )
+
+
+# TODO(1.7): remove this test
+def test_inverse_transform_Xt_deprecation():
+    X = np.array([0, 0, 1]).reshape(1, 3)  # (n_samples, n_features)
+
+    est = FeatureAgglomeration(n_clusters=1, pooling_func=np.mean)
+    est.fit(X)
+    X = est.transform(X)
+
+    with pytest.raises(TypeError, match="Missing required positional argument"):
+        est.inverse_transform()
+
+    with pytest.raises(TypeError, match="Cannot use both X and Xt. Use X only."):
+        est.inverse_transform(X=X, Xt=X)
+
+    with warnings.catch_warnings(record=True):
+        warnings.simplefilter("error")
+        est.inverse_transform(X)
+
+    with pytest.warns(FutureWarning, match="Xt was renamed X in version 1.5"):
+        est.inverse_transform(Xt=X)

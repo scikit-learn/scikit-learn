@@ -14,14 +14,17 @@ Note that those results can be highly dependent on the value of
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import warnings
 
 import matplotlib.pyplot as plt
 
-from sklearn.neural_network import MLPClassifier
-from sklearn.preprocessing import MinMaxScaler
 from sklearn import datasets
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.neural_network import MLPClassifier
+from sklearn.preprocessing import MinMaxScaler
 
 # different learning rate schedules and momentum parameters
 params = [
@@ -55,14 +58,14 @@ params = [
         "solver": "sgd",
         "learning_rate": "invscaling",
         "momentum": 0.9,
-        "nesterovs_momentum": True,
+        "nesterovs_momentum": False,
         "learning_rate_init": 0.2,
     },
     {
         "solver": "sgd",
         "learning_rate": "invscaling",
         "momentum": 0.9,
-        "nesterovs_momentum": False,
+        "nesterovs_momentum": True,
         "learning_rate_init": 0.2,
     },
     {"solver": "adam", "learning_rate_init": 0.01},

@@ -9,9 +9,8 @@ significance of a cross-validated score using permutations.
 
 """
 
-# Authors:  Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#           Lucy Liu
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Dataset
@@ -58,9 +57,8 @@ X_rand = rng.normal(size=(X.shape[0], n_uncorrelated_features))
 # the percentage of permutations for which the score obtained is greater
 # that the score obtained using the original data.
 
+from sklearn.model_selection import StratifiedKFold, permutation_test_score
 from sklearn.svm import SVC
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import permutation_test_score
 
 clf = SVC(kernel="linear", random_state=7)
 cv = StratifiedKFold(2, shuffle=True, random_state=0)
@@ -95,7 +93,7 @@ ax.axvline(score_iris, ls="--", color="r")
 score_label = f"Score on original\ndata: {score_iris:.2f}\n(p-value: {pvalue_iris:.3f})"
 ax.text(0.7, 10, score_label, fontsize=12)
 ax.set_xlabel("Accuracy score")
-_ = ax.set_ylabel("Probability")
+_ = ax.set_ylabel("Probability density")
 
 # %%
 # Random data
@@ -116,7 +114,7 @@ ax.axvline(score_rand, ls="--", color="r")
 score_label = f"Score on original\ndata: {score_rand:.2f}\n(p-value: {pvalue_rand:.3f})"
 ax.text(0.14, 7.5, score_label, fontsize=12)
 ax.set_xlabel("Accuracy score")
-ax.set_ylabel("Probability")
+ax.set_ylabel("Probability density")
 plt.show()
 
 # %%
@@ -129,10 +127,10 @@ plt.show()
 # Finally, note that this test has been shown to produce low p-values even
 # if there is only weak structure in the data [1]_.
 #
-# .. topic:: References:
+# .. rubric:: References
 #
-#   .. [1] Ojala and Garriga. `Permutation Tests for Studying Classifier
-#          Performance
-#          <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_. The
-#          Journal of Machine Learning Research (2010) vol. 11
+# .. [1] Ojala and Garriga. `Permutation Tests for Studying Classifier
+#        Performance
+#        <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_. The
+#        Journal of Machine Learning Research (2010) vol. 11
 #

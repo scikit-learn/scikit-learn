@@ -16,15 +16,15 @@ positively on sepal width.
 
 """
 
-# Authors: Jona Sassenhagen
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-from sklearn.decomposition import FactorAnalysis, PCA
-from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import load_iris
+from sklearn.decomposition import PCA, FactorAnalysis
+from sklearn.preprocessing import StandardScaler
 
 # %%
 # Load Iris data
@@ -56,7 +56,7 @@ methods = [
     ("Unrotated FA", FactorAnalysis()),
     ("Varimax FA", FactorAnalysis(rotation="varimax")),
 ]
-fig, axes = plt.subplots(ncols=len(methods), figsize=(10, 8))
+fig, axes = plt.subplots(ncols=len(methods), figsize=(10, 8), sharey=True)
 
 for ax, (method, fa) in zip(axes, methods):
     fa.set_params(n_components=n_comps)
@@ -69,10 +69,7 @@ for ax, (method, fa) in zip(axes, methods):
     vmax = np.abs(components).max()
     ax.imshow(components, cmap="RdBu_r", vmax=vmax, vmin=-vmax)
     ax.set_yticks(np.arange(len(feature_names)))
-    if ax.is_first_col():
-        ax.set_yticklabels(feature_names)
-    else:
-        ax.set_yticklabels([])
+    ax.set_yticklabels(feature_names)
     ax.set_title(str(method))
     ax.set_xticks([0, 1])
     ax.set_xticklabels(["Comp. 1", "Comp. 2"])

@@ -1,27 +1,21 @@
-# Author: Wei Xue <xuewei4d@gmail.com>
-#         Thierry Guillemot <thierry.guillemot.work@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import copy
-import re
 
 import numpy as np
-from scipy.special import gammaln
 import pytest
+from scipy.special import gammaln
 
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_equal
-
+from sklearn.exceptions import NotFittedError
 from sklearn.metrics.cluster import adjusted_rand_score
-
-from sklearn.mixture._bayesian_mixture import _log_dirichlet_norm
-from sklearn.mixture._bayesian_mixture import _log_wishart_norm
-
 from sklearn.mixture import BayesianGaussianMixture
-
+from sklearn.mixture._bayesian_mixture import _log_dirichlet_norm, _log_wishart_norm
 from sklearn.mixture.tests.test_gaussian_mixture import RandomData
-from sklearn.exceptions import ConvergenceWarning, NotFittedError
-from sklearn.utils._testing import ignore_warnings
-
+from sklearn.utils._testing import (
+    assert_almost_equal,
+    assert_array_equal,
+)
 
 COVARIANCE_TYPE = ["full", "tied", "diag", "spherical"]
 PRIOR_TYPE = ["dirichlet_process", "dirichlet_distribution"]
@@ -59,7 +53,7 @@ def test_log_wishart_norm():
                 ),
                 0,
             )
-        )
+        ).item()
     predected_norm = _log_wishart_norm(
         degrees_of_freedom, log_det_precisions_chol, n_features
     )
@@ -67,56 +61,10 @@ def test_log_wishart_norm():
     assert_almost_equal(expected_norm, predected_norm)
 
 
-def test_bayesian_mixture_covariance_type():
-    rng = np.random.RandomState(0)
-    n_samples, n_features = 10, 2
-    X = rng.rand(n_samples, n_features)
-
-    covariance_type = "bad_covariance_type"
-    bgmm = BayesianGaussianMixture(covariance_type=covariance_type, random_state=rng)
-
-    msg = re.escape(
-        f"Invalid value for 'covariance_type': {covariance_type} "
-        "'covariance_type' should be in ['spherical', 'tied', 'diag', 'full']"
-    )
-    with pytest.raises(ValueError, match=msg):
-        bgmm.fit(X)
-
-
-def test_bayesian_mixture_weight_concentration_prior_type():
-    rng = np.random.RandomState(0)
-    n_samples, n_features = 10, 2
-    X = rng.rand(n_samples, n_features)
-
-    bad_prior_type = "bad_prior_type"
-    bgmm = BayesianGaussianMixture(
-        weight_concentration_prior_type=bad_prior_type, random_state=rng
-    )
-    msg = re.escape(
-        "Invalid value for 'weight_concentration_prior_type':"
-        f" {bad_prior_type} 'weight_concentration_prior_type' should be in "
-        "['dirichlet_process', 'dirichlet_distribution']"
-    )
-    with pytest.raises(ValueError, match=msg):
-        bgmm.fit(X)
-
-
 def test_bayesian_mixture_weights_prior_initialisation():
     rng = np.random.RandomState(0)
     n_samples, n_components, n_features = 10, 5, 2
     X = rng.rand(n_samples, n_features)
-
-    # Check raise message for a bad value of weight_concentration_prior
-    bad_weight_concentration_prior_ = 0.0
-    bgmm = BayesianGaussianMixture(
-        weight_concentration_prior=bad_weight_concentration_prior_, random_state=0
-    )
-    msg = (
-        "The parameter 'weight_concentration_prior' should be greater "
-        f"than 0., but got {bad_weight_concentration_prior_:.3f}."
-    )
-    with pytest.raises(ValueError, match=msg):
-        bgmm.fit(X)
 
     # Check correct init for a given value of weight_concentration_prior
     weight_concentration_prior = rng.rand()
@@ -135,18 +83,6 @@ def test_bayesian_mixture_mean_prior_initialisation():
     n_samples, n_components, n_features = 10, 3, 2
     X = rng.rand(n_samples, n_features)
 
-    # Check raise message for a bad value of mean_precision_prior
-    bad_mean_precision_prior_ = 0.0
-    bgmm = BayesianGaussianMixture(
-        mean_precision_prior=bad_mean_precision_prior_, random_state=rng
-    )
-    msg = (
-        "The parameter 'mean_precision_prior' "
-        f"should be greater than 0., but got {bad_mean_precision_prior_:.3f}."
-    )
-    with pytest.raises(ValueError, match=msg):
-        bgmm.fit(X)
-
     # Check correct init for a given value of mean_precision_prior
     mean_precision_prior = rng.rand()
     bgmm = BayesianGaussianMixture(
@@ -157,15 +93,6 @@ def test_bayesian_mixture_mean_prior_initialisation():
     # Check correct init for the default value of mean_precision_prior
     bgmm = BayesianGaussianMixture(random_state=rng).fit(X)
     assert_almost_equal(1.0, bgmm.mean_precision_prior_)
-
-    # Check raise message for a bad shape of mean_prior
-    mean_prior = rng.rand(n_features + 1)
-    bgmm = BayesianGaussianMixture(
-        n_components=n_components, mean_prior=mean_prior, random_state=rng
-    )
-    msg = "The parameter 'means' should have the shape of "
-    with pytest.raises(ValueError, match=msg):
-        bgmm.fit(X)
 
     # Check correct init for a given value of mean_prior
     mean_prior = rng.rand(n_features)
@@ -226,20 +153,6 @@ def test_bayesian_mixture_precisions_prior_initialisation():
         bgmm.covariance_prior = covariance_prior[cov_type]
         bgmm.fit(X)
         assert_almost_equal(covariance_prior[cov_type], bgmm.covariance_prior_)
-
-    # Check raise message for a bad spherical value of covariance_prior
-    bad_covariance_prior_ = -1.0
-    bgmm = BayesianGaussianMixture(
-        covariance_type="spherical",
-        covariance_prior=bad_covariance_prior_,
-        random_state=rng,
-    )
-    msg = (
-        "The parameter 'spherical covariance_prior' "
-        f"should be greater than 0., but got {bad_covariance_prior_:.3f}."
-    )
-    with pytest.raises(ValueError, match=msg):
-        bgmm.fit(X)
 
     # Check correct init for the default value of covariance_prior
     covariance_prior_default = {
@@ -306,7 +219,7 @@ def test_bayesian_mixture_weights():
     assert_almost_equal(np.sum(dpgmm.weights_), 1.0)
 
 
-@ignore_warnings(category=ConvergenceWarning)
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_monotonic_likelihood():
     # We check that each step of the each step of variational inference without
     # regularization improve monotonically the training set of the bound
@@ -326,7 +239,7 @@ def test_monotonic_likelihood():
                 random_state=rng,
                 tol=1e-3,
             )
-            current_lower_bound = -np.infty
+            current_lower_bound = -np.inf
             # Do one training iteration at a time so we can make sure that the
             # training log likelihood increases after each iteration.
             for _ in range(600):
@@ -357,7 +270,7 @@ def test_compare_covar_type():
             random_state=0,
             tol=1e-7,
         )
-        bgmm._check_initial_parameters(X)
+        bgmm._check_parameters(X)
         bgmm._initialize_parameters(X, np.random.RandomState(0))
         full_covariances = (
             bgmm.covariances_ * bgmm.degrees_of_freedom_[:, np.newaxis, np.newaxis]
@@ -372,7 +285,7 @@ def test_compare_covar_type():
             random_state=0,
             tol=1e-7,
         )
-        bgmm._check_initial_parameters(X)
+        bgmm._check_parameters(X)
         bgmm._initialize_parameters(X, np.random.RandomState(0))
 
         tied_covariance = bgmm.covariances_ * bgmm.degrees_of_freedom_
@@ -387,7 +300,7 @@ def test_compare_covar_type():
             random_state=0,
             tol=1e-7,
         )
-        bgmm._check_initial_parameters(X)
+        bgmm._check_parameters(X)
         bgmm._initialize_parameters(X, np.random.RandomState(0))
 
         diag_covariances = bgmm.covariances_ * bgmm.degrees_of_freedom_[:, np.newaxis]
@@ -404,14 +317,14 @@ def test_compare_covar_type():
             random_state=0,
             tol=1e-7,
         )
-        bgmm._check_initial_parameters(X)
+        bgmm._check_parameters(X)
         bgmm._initialize_parameters(X, np.random.RandomState(0))
 
         spherical_covariances = bgmm.covariances_ * bgmm.degrees_of_freedom_
         assert_almost_equal(spherical_covariances, np.mean(diag_covariances, 1))
 
 
-@ignore_warnings(category=ConvergenceWarning)
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_check_covariance_precision():
     # We check that the dot product of the covariance and the precision
     # matrices is identity.
@@ -447,7 +360,6 @@ def test_check_covariance_precision():
             )
 
 
-@ignore_warnings(category=ConvergenceWarning)
 def test_invariant_translation():
     # We check here that adding a constant in the data change correctly the
     # parameters of the mixture

@@ -1,28 +1,28 @@
-# Authors: Manoj Kumar <manojkumarsivaraj334@gmail.com>
-#          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
-#          Joel Nothman <joel.nothman@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
-import numbers
+from math import sqrt
+from numbers import Integral, Real
+
 import numpy as np
 from scipy import sparse
-from math import sqrt
 
+from .._config import config_context
+from ..base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    ClusterMixin,
+    TransformerMixin,
+    _fit_context,
+)
+from ..exceptions import ConvergenceWarning
 from ..metrics import pairwise_distances_argmin
 from ..metrics.pairwise import euclidean_distances
-from ..base import (
-    TransformerMixin,
-    ClusterMixin,
-    BaseEstimator,
-    _ClassNamePrefixFeaturesOutMixin,
-)
+from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils.extmath import row_norms
-from ..utils import check_scalar, deprecated
 from ..utils.validation import check_is_fitted
-from ..exceptions import ConvergenceWarning
 from . import AgglomerativeClustering
-from .._config import config_context
 
 
 def _iterate_sparse_X(X):
@@ -357,7 +357,7 @@ class _CFSubcluster:
 
 
 class Birch(
-    _ClassNamePrefixFeaturesOutMixin, ClusterMixin, TransformerMixin, BaseEstimator
+    ClassNamePrefixFeaturesOutMixin, ClusterMixin, TransformerMixin, BaseEstimator
 ):
     """Implements the BIRCH clustering algorithm.
 
@@ -386,7 +386,7 @@ class Birch(
         in each. The parent subcluster of that node is removed and two new
         subclusters are added as parents of the 2 split nodes.
 
-    n_clusters : int, instance of sklearn.cluster model, default=3
+    n_clusters : int, instance of sklearn.cluster model or None, default=3
         Number of clusters after the final clustering step, which treats the
         subclusters from the leaves as new samples.
 
@@ -406,6 +406,10 @@ class Birch(
     copy : bool, default=True
         Whether or not to make a copy of the given data. If set to False,
         the initial data will be overwritten.
+
+        .. deprecated:: 1.6
+            `copy` was deprecated in 1.6 and will be removed in 1.8. It has no effect
+            as the estimator does not perform in-place operations on the input data.
 
     Attributes
     ----------
@@ -478,6 +482,14 @@ class Birch(
     array([0, 0, 0, 1, 1, 1])
     """
 
+    _parameter_constraints: dict = {
+        "threshold": [Interval(Real, 0.0, None, closed="neither")],
+        "branching_factor": [Interval(Integral, 1, None, closed="neither")],
+        "n_clusters": [None, ClusterMixin, Interval(Integral, 1, None, closed="left")],
+        "compute_labels": ["boolean"],
+        "copy": ["boolean", Hidden(StrOptions({"deprecated"}))],
+    }
+
     def __init__(
         self,
         *,
@@ -485,7 +497,7 @@ class Birch(
         branching_factor=50,
         n_clusters=3,
         compute_labels=True,
-        copy=True,
+        copy="deprecated",
     ):
         self.threshold = threshold
         self.branching_factor = branching_factor
@@ -493,24 +505,7 @@ class Birch(
         self.compute_labels = compute_labels
         self.copy = copy
 
-    # TODO: Remove in 1.2
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "`fit_` is deprecated in 1.0 and will be removed in 1.2."
-    )
-    @property
-    def fit_(self):
-        return self._deprecated_fit
-
-    # TODO: Remove in 1.2
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "`partial_fit_` is deprecated in 1.0 and will be removed in 1.2."
-    )
-    @property
-    def partial_fit_(self):
-        return self._deprecated_partial_fit
-
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """
         Build a CF Tree for the input data.
@@ -528,42 +523,23 @@ class Birch(
         self
             Fitted estimator.
         """
-
-        # Validating the scalar parameters.
-        check_scalar(
-            self.threshold,
-            "threshold",
-            target_type=numbers.Real,
-            min_val=0.0,
-            include_boundaries="neither",
-        )
-        check_scalar(
-            self.branching_factor,
-            "branching_factor",
-            target_type=numbers.Integral,
-            min_val=1,
-            include_boundaries="neither",
-        )
-        if isinstance(self.n_clusters, numbers.Number):
-            check_scalar(
-                self.n_clusters,
-                "n_clusters",
-                target_type=numbers.Integral,
-                min_val=1,
-            )
-
-        # TODO: Remove deprecated flags in 1.2
-        self._deprecated_fit, self._deprecated_partial_fit = True, False
         return self._fit(X, partial=False)
 
     def _fit(self, X, partial):
         has_root = getattr(self, "root_", None)
         first_call = not (partial and has_root)
 
+        if self.copy != "deprecated" and first_call:
+            warnings.warn(
+                "`copy` was deprecated in 1.6 and will be removed in 1.8 since it "
+                "has no effect internally. Simply leave this parameter to its default "
+                "value to avoid this warning.",
+                FutureWarning,
+            )
+
         X = self._validate_data(
             X,
             accept_sparse="csr",
-            copy=self.copy,
             reset=first_call,
             dtype=[np.float64, np.float32],
         )
@@ -643,6 +619,7 @@ class Birch(
             leaf_ptr = leaf_ptr.next_leaf_
         return leaves
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X=None, y=None):
         """
         Online learning. Prevents rebuilding of CFTree from scratch.
@@ -662,25 +639,12 @@ class Birch(
         self
             Fitted estimator.
         """
-        # TODO: Remove deprecated flags in 1.2
-        self._deprecated_partial_fit, self._deprecated_fit = True, False
         if X is None:
             # Perform just the final global clustering step.
             self._global_clustering()
             return self
         else:
             return self._fit(X, partial=True)
-
-    def _check_fit(self, X):
-        check_is_fitted(self)
-
-        if (
-            hasattr(self, "subcluster_centers_")
-            and X.shape[1] != self.subcluster_centers_.shape[1]
-        ):
-            raise ValueError(
-                "Training data and predicted data do not have same number of features."
-            )
 
     def predict(self, X):
         """
@@ -744,15 +708,11 @@ class Birch(
 
         # Preprocessing for the global clustering.
         not_enough_centroids = False
-        if isinstance(clusterer, numbers.Integral):
+        if isinstance(clusterer, Integral):
             clusterer = AgglomerativeClustering(n_clusters=self.n_clusters)
             # There is no need to perform the global clustering step.
             if len(centroids) < self.n_clusters:
                 not_enough_centroids = True
-        elif clusterer is not None and not hasattr(clusterer, "fit_predict"):
-            raise TypeError(
-                "n_clusters should be an instance of ClusterMixin or an int"
-            )
 
         # To use in predict to avoid recalculation.
         self._subcluster_norms = row_norms(self.subcluster_centers_, squared=True)

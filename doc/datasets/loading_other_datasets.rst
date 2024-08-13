@@ -1,7 +1,3 @@
-.. Places parent toc into the sidebar
-
-:parenttoc: True
-
 .. _loading_other_datasets:
 
 Loading other datasets
@@ -37,9 +33,9 @@ and pipelines on 2D data.
   if you plan to use ``matplotlib.pyplpt.imshow``, don't forget to scale to the range
   0 - 1 as done in the following example.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_cluster_plot_color_quantization.py`
+* :ref:`sphx_glr_auto_examples_cluster_plot_color_quantization.py`
 
 .. _libsvm_loader:
 
@@ -72,11 +68,10 @@ features::
   ...     "/path/to/test_dataset.txt", n_features=X_train.shape[1])
   ...                                                         # doctest: +SKIP
 
-.. topic:: Related links:
+.. rubric:: Related links
 
- _`Public datasets in svmlight / libsvm format`: https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets
-
- _`Faster API-compatible implementation`: https://github.com/mblondel/svmlight-loader
+- `Public datasets in svmlight / libsvm format`: https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets
+- `Faster API-compatible implementation`: https://github.com/mblondel/svmlight-loader
 
 ..
     For doctests:
@@ -99,7 +94,7 @@ from the repository using the function
 For example, to download a dataset of gene expressions in mice brains::
 
   >>> from sklearn.datasets import fetch_openml
-  >>> mice = fetch_openml(name='miceprotein', version=4, parser="auto")
+  >>> mice = fetch_openml(name='miceprotein', version=4)
 
 To fully specify a dataset, you need to provide a name and a version, though
 the version is optional, see :ref:`openml_versions` below.
@@ -147,7 +142,7 @@ dataset on the openml website::
 
 The ``data_id`` also uniquely identifies a dataset from OpenML::
 
-  >>> mice = fetch_openml(data_id=40966, parser="auto")
+  >>> mice = fetch_openml(data_id=40966)
   >>> mice.details # doctest: +SKIP
   {'id': '4550', 'name': 'MiceProtein', 'version': '1', 'format': 'ARFF',
   'creator': ...,
@@ -171,7 +166,7 @@ which can contain entirely different datasets.
 If a particular version of a dataset has been found to contain significant
 issues, it might be deactivated. Using a name to specify a dataset will yield
 the earliest version of a dataset that is still active. That means that
-``fetch_openml(name="miceprotein", parser="auto")`` can yield different results
+``fetch_openml(name="miceprotein")`` can yield different results
 at different times if earlier versions become inactive.
 You can see that the dataset with ``data_id`` 40966 that we fetched above is
 the first version of the "miceprotein" dataset::
@@ -182,19 +177,19 @@ the first version of the "miceprotein" dataset::
 In fact, this dataset only has one version. The iris dataset on the other hand
 has multiple versions::
 
-  >>> iris = fetch_openml(name="iris", parser="auto")
+  >>> iris = fetch_openml(name="iris")
   >>> iris.details['version']  #doctest: +SKIP
   '1'
   >>> iris.details['id']  #doctest: +SKIP
   '61'
 
-  >>> iris_61 = fetch_openml(data_id=61, parser="auto")
+  >>> iris_61 = fetch_openml(data_id=61)
   >>> iris_61.details['version']
   '1'
   >>> iris_61.details['id']
   '61'
 
-  >>> iris_969 = fetch_openml(data_id=969, parser="auto")
+  >>> iris_969 = fetch_openml(data_id=969)
   >>> iris_969.details['version']
   '3'
   >>> iris_969.details['id']
@@ -212,18 +207,18 @@ binarized version of the data::
 You can also specify both the name and the version, which also uniquely
 identifies the dataset::
 
-  >>> iris_version_3 = fetch_openml(name="iris", version=3, parser="auto")
+  >>> iris_version_3 = fetch_openml(name="iris", version=3)
   >>> iris_version_3.details['version']
   '3'
   >>> iris_version_3.details['id']
   '969'
 
 
-.. topic:: References:
+.. rubric:: References
 
- * :arxiv:`Vanschoren, van Rijn, Bischl and Torgo. "OpenML: networked science in
-   machine learning" ACM SIGKDD Explorations Newsletter, 15(2), 49-60, 2014.
-   <1407.7722>`
+* :arxiv:`Vanschoren, van Rijn, Bischl and Torgo. "OpenML: networked science in
+  machine learning" ACM SIGKDD Explorations Newsletter, 15(2), 49-60, 2014.
+  <1407.7722>`
 
 .. _openml_parser:
 
@@ -290,9 +285,9 @@ format usable by scikit-learn:
   context such as .mat and .arff
 * `numpy/routines.io <https://docs.scipy.org/doc/numpy/reference/routines.io.html>`_
   for standard loading of columnar data into numpy arrays
-* scikit-learn's :func:`datasets.load_svmlight_file` for the svmlight or libSVM
+* scikit-learn's :func:`load_svmlight_file` for the svmlight or libSVM
   sparse format
-* scikit-learn's :func:`datasets.load_files` for directories of text files where
+* scikit-learn's :func:`load_files` for directories of text files where
   the name of each directory is the name of each category and each file inside
   of each directory corresponds to one sample from that category
 
@@ -300,10 +295,10 @@ For some miscellaneous data such as images, videos, and audio, you may wish to
 refer to:
 
 * `skimage.io <https://scikit-image.org/docs/dev/api/skimage.io.html>`_ or
-  `Imageio <https://imageio.readthedocs.io/en/latest/userapi.html>`_
+  `Imageio <https://imageio.readthedocs.io/en/stable/reference/core_v3.html>`_
   for loading images and videos into numpy arrays
 * `scipy.io.wavfile.read
-  <https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.io.wavfile.read.html>`_
+  <https://docs.scipy.org/doc/scipy/reference/generated/scipy.io.wavfile.read.html>`_
   for reading WAV files into a numpy array
 
 Categorical (or nominal) features stored as strings (common in pandas DataFrames)

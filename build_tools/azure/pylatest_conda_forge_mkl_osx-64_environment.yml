@@ -17,9 +17,11 @@ dependencies:
   - pytest
   - pytest-xdist
   - pillow
-  - codecov
+  - pip
+  - ninja
+  - meson-python
   - pytest-cov
-  - coverage=6.2
+  - coverage
   - ccache
   - compilers
   - llvm-openmp

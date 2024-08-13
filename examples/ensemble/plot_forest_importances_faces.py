@@ -12,6 +12,9 @@ of the predictions can be parallelized within multiple jobs.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Loading the data and model fitting
 # ----------------------------------
@@ -59,6 +62,7 @@ forest.fit(X, y)
 #     cardinality** features (many unique values). See
 #     :ref:`permutation_importance` as an alternative.
 import time
+
 import matplotlib.pyplot as plt
 
 start_time = time.time()

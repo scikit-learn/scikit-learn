@@ -11,9 +11,12 @@ dependencies:
     - threadpoolctl
     - pytest
     - pytest-xdist
-    - codecov
+    - pip
+    - ninja
+    - meson-python
     - pytest-cov
-    - coverage==6.2
+    - coverage
+    - pooch
     - sphinx
     - numpydoc
     - python-dateutil

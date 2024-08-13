@@ -30,18 +30,21 @@ What we can see that:
 
 """
 
-from matplotlib import pyplot as plt
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numpy as np
+from matplotlib import pyplot as plt
 
 from sklearn.linear_model import (
-    LinearRegression,
-    TheilSenRegressor,
-    RANSACRegressor,
     HuberRegressor,
+    LinearRegression,
+    RANSACRegressor,
+    TheilSenRegressor,
 )
 from sklearn.metrics import mean_squared_error
-from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import PolynomialFeatures
 
 np.random.seed(42)
 

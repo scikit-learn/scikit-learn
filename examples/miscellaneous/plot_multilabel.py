@@ -29,17 +29,17 @@ have a label.
 
 """
 
-# Authors: Vlad Niculae, Mathieu Blondel
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
+from sklearn.cross_decomposition import CCA
 from sklearn.datasets import make_multilabel_classification
+from sklearn.decomposition import PCA
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.svm import SVC
-from sklearn.decomposition import PCA
-from sklearn.cross_decomposition import CCA
 
 
 def plot_hyperplane(clf, min_x, max_x, linestyle, label):

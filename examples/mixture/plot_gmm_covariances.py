@@ -27,13 +27,11 @@ dimensions.
 
 """
 
-# Author: Ron Weiss <ronweiss@gmail.com>, Gael Varoquaux
-# Modified by Thierry Guillemot <thierry.guillemot.work@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-
 import numpy as np
 
 from sklearn import datasets
@@ -59,7 +57,7 @@ def make_ellipses(gmm, ax):
         angle = 180 * angle / np.pi  # convert to degrees
         v = 2.0 * np.sqrt(2.0) * np.sqrt(v)
         ell = mpl.patches.Ellipse(
-            gmm.means_[n, :2], v[0], v[1], 180 + angle, color=color
+            gmm.means_[n, :2], v[0], v[1], angle=180 + angle, color=color
         )
         ell.set_clip_box(ax.bbox)
         ell.set_alpha(0.5)
