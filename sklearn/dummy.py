@@ -1,7 +1,7 @@
-# Author: Mathieu Blondel <mathieu@mblondel.org>
-#         Arnaud Joly <a.joly@ulg.ac.be>
-#         Maheshakya Wijewardena <maheshakya.10@cse.mrt.ac.lk>
-# License: BSD 3 clause
+"""Dummy estimators that implement simple rules of thumb."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Integral, Real

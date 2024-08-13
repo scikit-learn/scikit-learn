@@ -2,9 +2,8 @@
 Neighborhood Component Analysis
 """
 
-# Authors: William de Vazelhes <wdevazelhes@gmail.com>
-#          John Chiotellis <ioannis.chiotellis@in.tum.de>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import sys
 import time
@@ -57,8 +56,8 @@ class NeighborhoodComponentsAnalysis(
 
         - `'auto'`
             Depending on `n_components`, the most reasonable initialization
-            will be chosen. If `n_components <= n_classes` we use `'lda'`, as
-            it uses labels information. If not, but
+            is chosen. If `n_components <= min(n_features, n_classes - 1)`
+            we use `'lda'`, as it uses labels information. If not, but
             `n_components < min(n_features, n_samples)`, we use `'pca'`, as
             it projects data in meaningful directions (those of higher
             variance). Otherwise, we just use `'identity'`.

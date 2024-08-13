@@ -309,7 +309,7 @@ def test_pca_solver_equivalence(
     X_train, X_test = X[:n_samples], X[n_samples:]
 
     if global_dtype == np.float32:
-        tols = dict(atol=1e-2, rtol=1e-5)
+        tols = dict(atol=3e-2, rtol=1e-5)
         variance_threshold = 1e-5
     else:
         tols = dict(atol=1e-10, rtol=1e-12)

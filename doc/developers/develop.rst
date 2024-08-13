@@ -54,7 +54,7 @@ multiple interfaces):
 
 :Transformer:
 
-    For modifying the data in a supervised or unsupervised way (e.g. by adding, changing, 
+    For modifying the data in a supervised or unsupervised way (e.g. by adding, changing,
     or removing columns, but not by adding or removing rows). Implements::
 
       new_data = transformer.transform(data)
@@ -282,12 +282,16 @@ the correct interface more easily.
     in the scikit-learn-contrib
     `project template <https://github.com/scikit-learn-contrib/project-template/blob/master/skltemplate/_template.py>`__.
 
+    It is particularly important to notice that mixins should be "on the left" while
+    the ``BaseEstimator`` should be "on the right" in the inheritance list for proper
+    MRO.
+
       >>> import numpy as np
       >>> from sklearn.base import BaseEstimator, ClassifierMixin
       >>> from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
       >>> from sklearn.utils.multiclass import unique_labels
       >>> from sklearn.metrics import euclidean_distances
-      >>> class TemplateClassifier(BaseEstimator, ClassifierMixin):
+      >>> class TemplateClassifier(ClassifierMixin, BaseEstimator):
       ...
       ...     def __init__(self, demo_param='demo'):
       ...         self.demo_param = demo_param
@@ -349,7 +353,7 @@ The parameter `deep` will control whether or not the parameters of the
     subestimator__intercept_scaling -> 1
     subestimator__l1_ratio -> None
     subestimator__max_iter -> 100
-    subestimator__multi_class -> auto
+    subestimator__multi_class -> deprecated
     subestimator__n_jobs -> None
     subestimator__penalty -> l2
     subestimator__random_state -> None

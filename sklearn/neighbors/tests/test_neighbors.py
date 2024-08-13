@@ -14,7 +14,7 @@ from sklearn import (
     neighbors,
 )
 from sklearn.base import clone
-from sklearn.exceptions import DataConversionWarning, EfficiencyWarning, NotFittedError
+from sklearn.exceptions import EfficiencyWarning, NotFittedError
 from sklearn.metrics._dist_metrics import (
     DistanceMetric,
 )
@@ -2143,7 +2143,7 @@ def test_sparse_metric_callable(csr_container):
 
 
 # ignore conversion to boolean in pairwise_distances
-@ignore_warnings(category=DataConversionWarning)
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.DataConversionWarning")
 def test_pairwise_boolean_distance():
     # Non-regression test for #4523
     # 'brute': uses scipy.spatial.distance through pairwise_distances

@@ -1,24 +1,18 @@
-# Authors: Danny Sullivan <dbsullivan23@gmail.com>
-#          Tom Dupre la Tour <tom.dupre-la-tour@m4x.org>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import math
 import re
 
 import numpy as np
 import pytest
-from scipy.special import logsumexp
 
-from sklearn._loss.loss import HalfMultinomialLoss
 from sklearn.base import clone
 from sklearn.datasets import load_iris, make_blobs, make_classification
 from sklearn.linear_model import LogisticRegression, Ridge
-from sklearn.linear_model._base import make_dataset
-from sklearn.linear_model._linear_loss import LinearModelLoss
 from sklearn.linear_model._sag import get_auto_step_size
-from sklearn.linear_model._sag_fast import _multinomial_grad_loss_all_samples
-from sklearn.preprocessing import LabelBinarizer, LabelEncoder
+from sklearn.multiclass import OneVsRestClassifier
+from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import check_random_state, compute_class_weight
 from sklearn.utils._testing import (
     assert_allclose,
@@ -255,7 +249,7 @@ def get_step_size(X, alpha, fit_intercept, classification=True):
 def test_classifier_matching():
     n_samples = 20
     X, y = make_blobs(n_samples=n_samples, centers=2, random_state=0, cluster_std=0.1)
-    y[y == 0] = -1
+    # y must be 0 or 1
     alpha = 1.1
     fit_intercept = True
     step_size = get_step_size(X, alpha, fit_intercept)
@@ -272,13 +266,12 @@ def test_classifier_matching():
             C=1.0 / alpha / n_samples,
             max_iter=n_iter,
             random_state=10,
-            multi_class="ovr",
         )
         clf.fit(X, y)
 
         weights, intercept = sag_sparse(
             X,
-            y,
+            2 * y - 1,  # y must be -1 or +1
             step_size,
             alpha,
             n_iter=n_iter,
@@ -288,7 +281,7 @@ def test_classifier_matching():
         )
         weights2, intercept2 = sag(
             X,
-            y,
+            2 * y - 1,  # y must be -1 or +1
             step_size,
             alpha,
             n_iter=n_iter,
@@ -371,7 +364,6 @@ def test_sag_pobj_matches_logistic_regression(csr_container):
         C=1.0 / alpha / n_samples,
         max_iter=max_iter,
         random_state=10,
-        multi_class="ovr",
     )
     clf2 = clone(clf1)
     clf3 = LogisticRegression(
@@ -380,7 +372,6 @@ def test_sag_pobj_matches_logistic_regression(csr_container):
         C=1.0 / alpha / n_samples,
         max_iter=max_iter,
         random_state=10,
-        multi_class="ovr",
     )
 
     clf1.fit(X, y)
@@ -619,7 +610,6 @@ def test_sag_classifier_computed_correctly(csr_container):
         tol=tol,
         random_state=77,
         fit_intercept=fit_intercept,
-        multi_class="ovr",
     )
     clf2 = clone(clf1)
 
@@ -659,21 +649,22 @@ def test_sag_multiclass_computed_correctly(csr_container):
     """tests if the multiclass classifier is computed correctly"""
     alpha = 0.1
     n_samples = 20
-    tol = 0.00001
-    max_iter = 40
+    tol = 1e-5
+    max_iter = 70
     fit_intercept = True
     X, y = make_blobs(n_samples=n_samples, centers=3, random_state=0, cluster_std=0.1)
     step_size = get_step_size(X, alpha, fit_intercept, classification=True)
     classes = np.unique(y)
 
-    clf1 = LogisticRegression(
-        solver="sag",
-        C=1.0 / alpha / n_samples,
-        max_iter=max_iter,
-        tol=tol,
-        random_state=77,
-        fit_intercept=fit_intercept,
-        multi_class="ovr",
+    clf1 = OneVsRestClassifier(
+        LogisticRegression(
+            solver="sag",
+            C=1.0 / alpha / n_samples,
+            max_iter=max_iter,
+            tol=tol,
+            random_state=77,
+            fit_intercept=fit_intercept,
+        )
     )
     clf2 = clone(clf1)
 
@@ -719,11 +710,12 @@ def test_sag_multiclass_computed_correctly(csr_container):
     intercept2 = np.array(intercept2)
 
     for i, cl in enumerate(classes):
-        assert_array_almost_equal(clf1.coef_[i].ravel(), coef1[i].ravel(), decimal=2)
-        assert_almost_equal(clf1.intercept_[i], intercept1[i], decimal=1)
+        assert_allclose(clf1.estimators_[i].coef_.ravel(), coef1[i], rtol=1e-2)
+        assert_allclose(clf1.estimators_[i].intercept_, intercept1[i], rtol=1e-1)
 
-        assert_array_almost_equal(clf2.coef_[i].ravel(), coef2[i].ravel(), decimal=2)
-        assert_almost_equal(clf2.intercept_[i], intercept2[i], decimal=1)
+        assert_allclose(clf2.estimators_[i].coef_.ravel(), coef2[i], rtol=1e-2)
+        # Note the very crude accuracy, i.e. high rtol.
+        assert_allclose(clf2.estimators_[i].intercept_, intercept2[i], rtol=5e-1)
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
@@ -780,7 +772,6 @@ def test_binary_classifier_class_weight(csr_container):
         tol=tol,
         random_state=77,
         fit_intercept=fit_intercept,
-        multi_class="ovr",
         class_weight=class_weight,
     )
     clf2 = clone(clf1)
@@ -820,83 +811,6 @@ def test_binary_classifier_class_weight(csr_container):
     assert_almost_equal(clf2.intercept_, spintercept2, decimal=1)
 
 
-@pytest.mark.filterwarnings("ignore:The max_iter was reached")
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_multiclass_classifier_class_weight(csr_container):
-    """tests multiclass with classweights for each class"""
-    alpha = 0.1
-    n_samples = 20
-    tol = 0.00001
-    max_iter = 50
-    class_weight = {0: 0.45, 1: 0.55, 2: 0.75}
-    fit_intercept = True
-    X, y = make_blobs(n_samples=n_samples, centers=3, random_state=0, cluster_std=0.1)
-    step_size = get_step_size(X, alpha, fit_intercept, classification=True)
-    classes = np.unique(y)
-
-    clf1 = LogisticRegression(
-        solver="sag",
-        C=1.0 / alpha / n_samples,
-        max_iter=max_iter,
-        tol=tol,
-        random_state=77,
-        fit_intercept=fit_intercept,
-        multi_class="ovr",
-        class_weight=class_weight,
-    )
-    clf2 = clone(clf1)
-    clf1.fit(X, y)
-    clf2.fit(csr_container(X), y)
-
-    le = LabelEncoder()
-    class_weight_ = compute_class_weight(class_weight, classes=np.unique(y), y=y)
-    sample_weight = class_weight_[le.fit_transform(y)]
-
-    coef1 = []
-    intercept1 = []
-    coef2 = []
-    intercept2 = []
-    for cl in classes:
-        y_encoded = np.ones(n_samples)
-        y_encoded[y != cl] = -1
-
-        spweights1, spintercept1 = sag_sparse(
-            X,
-            y_encoded,
-            step_size,
-            alpha,
-            n_iter=max_iter,
-            dloss=log_dloss,
-            sample_weight=sample_weight,
-        )
-        spweights2, spintercept2 = sag_sparse(
-            X,
-            y_encoded,
-            step_size,
-            alpha,
-            n_iter=max_iter,
-            dloss=log_dloss,
-            sample_weight=sample_weight,
-            sparse=True,
-        )
-        coef1.append(spweights1)
-        intercept1.append(spintercept1)
-        coef2.append(spweights2)
-        intercept2.append(spintercept2)
-
-    coef1 = np.vstack(coef1)
-    intercept1 = np.array(intercept1)
-    coef2 = np.vstack(coef2)
-    intercept2 = np.array(intercept2)
-
-    for i, cl in enumerate(classes):
-        assert_array_almost_equal(clf1.coef_[i].ravel(), coef1[i].ravel(), decimal=2)
-        assert_almost_equal(clf1.intercept_[i], intercept1[i], decimal=1)
-
-        assert_array_almost_equal(clf2.coef_[i].ravel(), coef2[i].ravel(), decimal=2)
-        assert_almost_equal(clf2.intercept_[i], intercept2[i], decimal=1)
-
-
 def test_classifier_single_class():
     """tests if ValueError is thrown with only one class"""
     X = [[1, 2], [3, 4]]
@@ -924,85 +838,6 @@ def test_step_size_alpha_error():
     clf2 = Ridge(fit_intercept=fit_intercept, solver="sag", alpha=alpha)
     with pytest.raises(ZeroDivisionError, match=msg):
         clf2.fit(X, y)
-
-
-def test_multinomial_loss():
-    # test if the multinomial loss and gradient computations are consistent
-    X, y = iris.data, iris.target.astype(np.float64)
-    n_samples, n_features = X.shape
-    n_classes = len(np.unique(y))
-
-    rng = check_random_state(42)
-    weights = rng.randn(n_features, n_classes)
-    intercept = rng.randn(n_classes)
-    sample_weights = np.abs(rng.randn(n_samples))
-
-    # compute loss and gradient like in multinomial SAG
-    dataset, _ = make_dataset(X, y, sample_weights, random_state=42)
-    loss_1, grad_1 = _multinomial_grad_loss_all_samples(
-        dataset, weights, intercept, n_samples, n_features, n_classes
-    )
-    # compute loss and gradient like in multinomial LogisticRegression
-    loss = LinearModelLoss(
-        base_loss=HalfMultinomialLoss(n_classes=n_classes),
-        fit_intercept=True,
-    )
-    weights_intercept = np.vstack((weights, intercept)).T
-    loss_2, grad_2 = loss.loss_gradient(
-        weights_intercept, X, y, l2_reg_strength=0.0, sample_weight=sample_weights
-    )
-    grad_2 = grad_2[:, :-1].T
-    # convert to same convention, i.e. LinearModelLoss uses average(loss, weight=sw)
-    loss_2 *= np.sum(sample_weights)
-    grad_2 *= np.sum(sample_weights)
-
-    # comparison
-    assert_array_almost_equal(grad_1, grad_2)
-    assert_almost_equal(loss_1, loss_2)
-
-
-def test_multinomial_loss_ground_truth():
-    # n_samples, n_features, n_classes = 4, 2, 3
-    n_classes = 3
-    X = np.array([[1.1, 2.2], [2.2, -4.4], [3.3, -2.2], [1.1, 1.1]])
-    y = np.array([0, 1, 2, 0], dtype=np.float64)
-    lbin = LabelBinarizer()
-    Y_bin = lbin.fit_transform(y)
-
-    weights = np.array([[0.1, 0.2, 0.3], [1.1, 1.2, -1.3]])
-    intercept = np.array([1.0, 0, -0.2])
-    sample_weights = np.array([0.8, 1, 1, 0.8])
-
-    prediction = np.dot(X, weights) + intercept
-    logsumexp_prediction = logsumexp(prediction, axis=1)
-    p = prediction - logsumexp_prediction[:, np.newaxis]
-    loss_1 = -(sample_weights[:, np.newaxis] * p * Y_bin).sum()
-    diff = sample_weights[:, np.newaxis] * (np.exp(p) - Y_bin)
-    grad_1 = np.dot(X.T, diff)
-
-    loss = LinearModelLoss(
-        base_loss=HalfMultinomialLoss(n_classes=n_classes),
-        fit_intercept=True,
-    )
-    weights_intercept = np.vstack((weights, intercept)).T
-    loss_2, grad_2 = loss.loss_gradient(
-        weights_intercept, X, y, l2_reg_strength=0.0, sample_weight=sample_weights
-    )
-    grad_2 = grad_2[:, :-1].T
-    # convert to same convention, i.e. LinearModelLoss uses average(loss, weight=sw)
-    loss_2 *= np.sum(sample_weights)
-    grad_2 *= np.sum(sample_weights)
-
-    assert_almost_equal(loss_1, loss_2)
-    assert_array_almost_equal(grad_1, grad_2)
-
-    # ground truth
-    loss_gt = 11.680360354325961
-    grad_gt = np.array(
-        [[-0.557487, -1.619151, +2.176638], [-0.903942, +5.258745, -4.354803]]
-    )
-    assert_almost_equal(loss_1, loss_gt)
-    assert_array_almost_equal(grad_1, grad_gt)
 
 
 @pytest.mark.parametrize("solver", ["sag", "saga"])

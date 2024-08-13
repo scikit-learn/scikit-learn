@@ -1,7 +1,7 @@
 """Matrix factorization with Sparse PCA."""
 
-# Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Integral, Real
 
@@ -266,7 +266,7 @@ class SparsePCA(_BaseSparsePCA):
     (200, 5)
     >>> # most values in the components_ are zero (sparsity)
     >>> np.mean(transformer.components_ == 0)
-    0.9666...
+    np.float64(0.9666...)
     """
 
     _parameter_constraints: dict = {
@@ -472,7 +472,7 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
     (200, 5)
     >>> # most values in the components_ are zero (sparsity)
     >>> np.mean(transformer.components_ == 0)
-    0.9...
+    np.float64(0.9...)
     """
 
     _parameter_constraints: dict = {

@@ -1,5 +1,6 @@
-# Author: Lars Buitinck
-# License: 3-clause BSD
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from numbers import Real
 
 import numpy as np
@@ -100,7 +101,7 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
             X,
             accept_sparse=("csr", "csc"),
             dtype=np.float64,
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
         )
 
         if hasattr(X, "toarray"):  # sparse matrix

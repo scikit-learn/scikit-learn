@@ -1,11 +1,8 @@
-"""
-The :mod:`sklearn.utils.multiclass` module includes utilities to handle
-multiclass/multioutput target in classifiers.
-"""
+"""Utilities to handle multiclass/multioutput target in classifiers."""
 
-# Author: Arnaud Joly, Joel Nothman, Hamzeh Alsalhi
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import warnings
 from collections.abc import Sequence
 from itertools import chain
@@ -160,7 +157,7 @@ def is_multilabel(y):
         check_y_kwargs = dict(
             accept_sparse=True,
             allow_nd=True,
-            force_all_finite=False,
+            ensure_all_finite=False,
             ensure_2d=False,
             ensure_min_samples=0,
             ensure_min_features=0,
@@ -323,7 +320,7 @@ def type_of_target(y, input_name=""):
     check_y_kwargs = dict(
         accept_sparse=True,
         allow_nd=True,
-        force_all_finite=False,
+        ensure_all_finite=False,
         ensure_2d=False,
         ensure_min_samples=0,
         ensure_min_features=0,

@@ -20,7 +20,7 @@ from sklearn.dummy import DummyRegressor
 from sklearn.exceptions import NotFittedError
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import accuracy_score, mean_poisson_deviance, mean_squared_error
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.random_projection import _sparse_random_matrix
 from sklearn.tree import (
@@ -1543,7 +1543,6 @@ def test_explicit_sparse_zeros(tree_type, csc_container, csr_container):
             assert_array_almost_equal(s.predict_proba(X1), d.predict_proba(X2))
 
 
-@ignore_warnings
 def check_raise_error_on_1d_input(name):
     TreeEstimator = ALL_TREES[name]
 
@@ -2392,8 +2391,8 @@ def test_min_sample_split_1_error(Tree):
 
 
 @pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
-def test_missing_values_on_equal_nodes_no_missing(criterion):
-    """Check missing values goes to correct node during predictions"""
+def test_missing_values_best_splitter_on_equal_nodes_no_missing(criterion):
+    """Check missing values goes to correct node during predictions."""
     X = np.array([[0, 1, 2, 3, 8, 9, 11, 12, 15]]).T
     y = np.array([0.1, 0.2, 0.3, 0.2, 1.4, 1.4, 1.5, 1.6, 2.6])
 
@@ -2415,6 +2414,41 @@ def test_missing_values_on_equal_nodes_no_missing(criterion):
     # missing_go_to_left = n_left > n_right, which is False
     y_pred = dtc.predict([[np.nan]])
     assert_allclose(y_pred, [np.mean(y_equal[-4:])])
+
+
+@pytest.mark.parametrize("seed", range(3))
+@pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
+def test_missing_values_random_splitter_on_equal_nodes_no_missing(criterion, seed):
+    """Check missing values go to the correct node during predictions for ExtraTree.
+
+    Since ETC use random splits, we use different seeds to verify that the
+    left/right node is chosen correctly when the splits occur.
+    """
+    X = np.array([[0, 1, 2, 3, 8, 9, 11, 12, 15]]).T
+    y = np.array([0.1, 0.2, 0.3, 0.2, 1.4, 1.4, 1.5, 1.6, 2.6])
+
+    etr = ExtraTreeRegressor(random_state=seed, max_depth=1, criterion=criterion)
+    etr.fit(X, y)
+
+    # Get the left and right children of the root node
+    left_child = etr.tree_.children_left[0]
+    right_child = etr.tree_.children_right[0]
+
+    # Get the number of samples for the left and right children
+    left_samples = etr.tree_.weighted_n_node_samples[left_child]
+    right_samples = etr.tree_.weighted_n_node_samples[right_child]
+    went_left = left_samples > right_samples
+
+    # predictions
+    y_pred_left = etr.tree_.value[left_child][0]
+    y_pred_right = etr.tree_.value[right_child][0]
+
+    # Goes to node with the most data points
+    y_pred = etr.predict([[np.nan]])
+    if went_left:
+        assert_allclose(y_pred_left, y_pred)
+    else:
+        assert_allclose(y_pred_right, y_pred)
 
 
 @pytest.mark.parametrize("criterion", ["entropy", "gini"])
@@ -2466,7 +2500,7 @@ def test_missing_values_best_splitter_to_right(criterion):
 
 
 @pytest.mark.parametrize("criterion", ["entropy", "gini"])
-def test_missing_values_missing_both_classes_has_nan(criterion):
+def test_missing_values_best_splitter_missing_both_classes_has_nan(criterion):
     """Check behavior of missing value when there is one missing value in each class."""
     X = np.array([[1, 2, 3, 5, np.nan, 10, 20, 30, 60, np.nan]]).T
     y = np.array([0] * 5 + [1] * 5)
@@ -2485,8 +2519,8 @@ def test_missing_values_missing_both_classes_has_nan(criterion):
 @pytest.mark.parametrize(
     "tree",
     [
-        DecisionTreeClassifier(splitter="random"),
         DecisionTreeRegressor(criterion="absolute_error"),
+        ExtraTreeRegressor(criterion="absolute_error"),
     ],
 )
 def test_missing_value_errors(sparse_container, tree):
@@ -2502,7 +2536,8 @@ def test_missing_value_errors(sparse_container, tree):
         tree.fit(X, y)
 
 
-def test_missing_values_poisson():
+@pytest.mark.parametrize("Tree", REG_TREES.values())
+def test_missing_values_poisson(Tree):
     """Smoke test for poisson regression and missing values."""
     X, y = diabetes.data.copy(), diabetes.target
 
@@ -2510,7 +2545,7 @@ def test_missing_values_poisson():
     X[::5, 0] = np.nan
     X[::6, -1] = np.nan
 
-    reg = DecisionTreeRegressor(criterion="poisson", random_state=42)
+    reg = Tree(criterion="poisson", random_state=42)
     reg.fit(X, y)
 
     y_pred = reg.predict(X)
@@ -2524,20 +2559,31 @@ def make_friedman1_classification(*args, **kwargs):
 
 
 @pytest.mark.parametrize(
-    "make_data,Tree",
+    "make_data, Tree, tolerance",
     [
-        (datasets.make_friedman1, DecisionTreeRegressor),
-        (make_friedman1_classification, DecisionTreeClassifier),
+        # Due to the sine link between X and y, we expect the native handling of
+        # missing values to always be better than the naive mean imputation in the
+        # regression case.
+        #
+        # Due to randomness in ExtraTree, we expect the native handling of missing
+        # values to be sometimes better than the naive mean imputation, but not always
+        (datasets.make_friedman1, DecisionTreeRegressor, 0),
+        (datasets.make_friedman1, ExtraTreeRegressor, 0.07),
+        (make_friedman1_classification, DecisionTreeClassifier, 0.03),
+        (make_friedman1_classification, ExtraTreeClassifier, 0.12),
     ],
 )
 @pytest.mark.parametrize("sample_weight_train", [None, "ones"])
 def test_missing_values_is_resilience(
-    make_data, Tree, sample_weight_train, global_random_seed
+    make_data, Tree, sample_weight_train, global_random_seed, tolerance
 ):
     """Check that trees can deal with missing values have decent performance."""
     n_samples, n_features = 5_000, 10
     X, y = make_data(
-        n_samples=n_samples, n_features=n_features, random_state=global_random_seed
+        n_samples=n_samples,
+        n_features=n_features,
+        noise=1.0,
+        random_state=global_random_seed,
     )
 
     X_missing = X.copy()
@@ -2551,28 +2597,37 @@ def test_missing_values_is_resilience(
     else:
         sample_weight = None
 
-    native_tree = Tree(max_depth=10, random_state=global_random_seed)
+    # max_depth is used to avoid overfitting and also improve the runtime
+    # of the test.
+    max_depth = 10
+    native_tree = Tree(max_depth=max_depth, random_state=global_random_seed)
     native_tree.fit(X_missing_train, y_train, sample_weight=sample_weight)
     score_native_tree = native_tree.score(X_missing_test, y_test)
 
     tree_with_imputer = make_pipeline(
-        SimpleImputer(), Tree(max_depth=10, random_state=global_random_seed)
+        SimpleImputer(), Tree(max_depth=max_depth, random_state=global_random_seed)
     )
     tree_with_imputer.fit(X_missing_train, y_train)
     score_tree_with_imputer = tree_with_imputer.score(X_missing_test, y_test)
 
-    assert (
-        score_native_tree > score_tree_with_imputer
-    ), f"{score_native_tree=} should be strictly greater than {score_tree_with_imputer}"
+    assert score_native_tree + tolerance > score_tree_with_imputer, (
+        f"{score_native_tree=} + {tolerance} should be strictly greater than"
+        f" {score_tree_with_imputer}"
+    )
 
 
-def test_missing_value_is_predictive():
+# A single ExtraTree will randomly send missing values down the left, or right child,
+# and therefore will not necessarily have the same performance as the greedy
+# handling of missing values.
+@pytest.mark.parametrize("Tree, expected_score", zip(CLF_TREES.values(), [0.85, 0.53]))
+def test_missing_value_is_predictive(Tree, expected_score, global_random_seed):
     """Check the tree learns when only the missing value is predictive."""
     rng = np.random.RandomState(0)
-    n_samples = 1000
+    n_samples = 500
 
-    X = rng.standard_normal(size=(n_samples, 10))
-    y = rng.randint(0, high=2, size=n_samples)
+    X = rng.standard_normal(size=(n_samples, 20))
+    y = np.concatenate([np.zeros(n_samples // 2), np.ones(n_samples // 2)])
+    # y = rng.randint(0, high=2, size=n_samples)
 
     # Create a predictive feature using `y` and with some noise
     X_random_mask = rng.choice([False, True], size=n_samples, p=[0.95, 0.05])
@@ -2584,11 +2639,14 @@ def test_missing_value_is_predictive():
 
     X[:, 5] = X_predictive
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
-    tree = DecisionTreeClassifier(random_state=rng).fit(X_train, y_train)
+    tree = Tree(random_state=global_random_seed)
 
-    assert tree.score(X_train, y_train) >= 0.85
-    assert tree.score(X_test, y_test) >= 0.85
+    # Check that the tree can learn the predictive feature
+    # over an average of cross-validation fits.
+    tree_cv_score = cross_val_score(tree, X, y, cv=5).mean()
+    assert (
+        tree_cv_score >= expected_score
+    ), f"Expected CV score: {expected_score} but got {tree_cv_score}"
 
 
 @pytest.mark.parametrize(
@@ -2633,6 +2691,7 @@ def test_deterministic_pickle():
     assert pickle1 == pickle2
 
 
+@pytest.mark.parametrize("Tree", [DecisionTreeRegressor, ExtraTreeRegressor])
 @pytest.mark.parametrize(
     "X",
     [
@@ -2645,7 +2704,7 @@ def test_deterministic_pickle():
     ],
 )
 @pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
-def test_regression_tree_missing_values_toy(X, criterion):
+def test_regression_tree_missing_values_toy(Tree, X, criterion):
     """Check that we properly handle missing values in regression trees using a toy
     dataset.
 
@@ -2662,11 +2721,15 @@ def test_regression_tree_missing_values_toy(X, criterion):
     X = X.reshape(-1, 1)
     y = np.arange(6)
 
-    tree = DecisionTreeRegressor(criterion=criterion, random_state=0).fit(X, y)
+    tree = Tree(criterion=criterion, random_state=0).fit(X, y)
     tree_ref = clone(tree).fit(y.reshape(-1, 1), y)
+
     assert all(tree.tree_.impurity >= 0)  # MSE should always be positive
-    # Check the impurity match after the first split
-    assert_allclose(tree.tree_.impurity[:2], tree_ref.tree_.impurity[:2])
+
+    # Note: the impurity matches after the first split only on greedy trees
+    if Tree is DecisionTreeRegressor:
+        # Check the impurity match after the first split
+        assert_allclose(tree.tree_.impurity[:2], tree_ref.tree_.impurity[:2])
 
     # Find the leaves with a single sample where the MSE should be 0
     leaves_idx = np.flatnonzero(

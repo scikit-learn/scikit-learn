@@ -1,13 +1,7 @@
-"""
-The :mod:`sklearn.feature_extraction.image` submodule gathers utilities to
-extract features from images.
-"""
+"""Utilities to extract features from images."""
 
-# Authors: Emmanuelle Gouillart <emmanuelle.gouillart@normalesup.org>
-#          Gael Varoquaux <gael.varoquaux@normalesup.org>
-#          Olivier Grisel
-#          Vlad Niculae
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from itertools import product
 from numbers import Integral, Number, Real
@@ -240,6 +234,9 @@ def grid_to_graph(
     >>> mask[[1, 2], [1, 2], :] = True
     >>> graph = grid_to_graph(*shape_img, mask=mask)
     >>> print(graph)
+    <COOrdinate sparse matrix of dtype 'int64'
+      with 2 stored elements and shape (2, 2)>
+      Coords	Values
       (0, 0)    1
       (1, 1)    1
     """

@@ -1,8 +1,5 @@
-# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Vincent Michel <vincent.michel@inria.fr>
-#          Gilles Louppe <g.louppe@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 """Recursive feature elimination for feature ranking"""
 
@@ -278,7 +275,7 @@ class RFE(_RoutingNotSupportedMixin, SelectorMixin, MetaEstimatorMixin, BaseEsti
             y,
             accept_sparse="csc",
             ensure_min_features=2,
-            force_all_finite=False,
+            ensure_all_finite=False,
             multi_output=True,
         )
 
@@ -531,7 +528,7 @@ class RFECV(RFE):
 
         For integer/None inputs, if ``y`` is binary or multiclass,
         :class:`~sklearn.model_selection.StratifiedKFold` is used. If the
-        estimator is a classifier or if ``y`` is neither binary nor multiclass,
+        estimator is not a classifier or if ``y`` is neither binary nor multiclass,
         :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
@@ -541,7 +538,7 @@ class RFECV(RFE):
             ``cv`` default value of None changed from 3-fold to 5-fold.
 
     scoring : str, callable or None, default=None
-        A string (see model evaluation documentation) or
+        A string (see :ref:`scoring_parameter`) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
@@ -730,7 +727,7 @@ class RFECV(RFE):
             y,
             accept_sparse="csr",
             ensure_min_features=2,
-            force_all_finite=False,
+            ensure_all_finite=False,
             multi_output=True,
         )
 

@@ -1,8 +1,7 @@
 """Orthogonal matching pursuit algorithms"""
 
-# Author: Vlad Niculae
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from math import sqrt
@@ -996,7 +995,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     >>> reg.score(X, y)
     0.9991...
     >>> reg.n_nonzero_coefs_
-    10
+    np.int64(10)
     >>> reg.predict(X[:1,])
     array([-78.3854...])
     """
@@ -1057,7 +1056,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         _raise_for_params(fit_params, self, "fit")
 
         X, y = self._validate_data(X, y, y_numeric=True, ensure_min_features=2)
-        X = as_float_array(X, copy=False, force_all_finite=False)
+        X = as_float_array(X, copy=False, ensure_all_finite=False)
         cv = check_cv(self.cv, classifier=False)
         if _routing_enabled():
             routed_params = process_routing(self, "fit", **fit_params)
@@ -1116,6 +1115,6 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
 
         router = MetadataRouter(owner=self.__class__.__name__).add(
             splitter=self.cv,
-            method_mapping=MethodMapping().add(callee="split", caller="fit"),
+            method_mapping=MethodMapping().add(caller="fit", callee="split"),
         )
         return router

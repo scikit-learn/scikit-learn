@@ -1,6 +1,6 @@
 [project]
 name = "scikit-learn"
-version = "1.5.dev0"
+dynamic = ["version"]
 description = "A set of python modules for machine learning and data mining"
 readme = "README.rst"
 maintainers = [
@@ -13,7 +13,7 @@ dependencies = [
   "threadpoolctl>=3.1.0",
 ]
 requires-python = ">=3.9"
-license = {text = "new BSD"}
+license = {file = "COPYING"}
 classifiers=[
   "Intended Audience :: Science/Research",
   "Intended Audience :: Developers",
@@ -33,7 +33,6 @@ classifiers=[
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: Implementation :: CPython",
-  "Programming Language :: Python :: Implementation :: PyPy",
 ]
 
 [project.urls]
@@ -44,7 +43,7 @@ tracker = "https://github.com/scikit-learn/scikit-learn/issues"
 "release notes" = "https://scikit-learn.org/stable/whats_new"
 
 [project.optional-dependencies]
-build = ["numpy>=1.19.5", "scipy>=1.6.0", "cython>=3.0.10", "meson-python>=0.15.0"]
+build = ["numpy>=1.19.5", "scipy>=1.6.0", "cython>=3.0.10", "meson-python>=0.16.0"]
 install = ["numpy>=1.19.5", "scipy>=1.6.0", "joblib>=1.2.0", "threadpoolctl>=3.1.0"]
 benchmark = ["matplotlib>=3.3.4", "pandas>=1.1.5", "memory_profiler>=0.57.0"]
 docs = [
@@ -53,16 +52,21 @@ docs = [
     "pandas>=1.1.5",
     "seaborn>=0.9.0",
     "memory_profiler>=0.57.0",
-    "sphinx>=6.0.0",
+    "sphinx>=7.3.7",
     "sphinx-copybutton>=0.5.2",
-    "sphinx-gallery>=0.15.0",
+    "sphinx-gallery>=0.16.0",
     "numpydoc>=1.2.0",
     "Pillow>=7.1.2",
     "pooch>=1.6.0",
-    "sphinx-prompt>=1.3.0",
-    "sphinxext-opengraph>=0.4.2",
+    "sphinx-prompt>=1.4.0",
+    "sphinxext-opengraph>=0.9.1",
     "plotly>=5.14.0",
-    "polars>=0.19.12"
+    "polars>=0.20.30",
+    "sphinx-design>=0.5.0",
+    "sphinx-design>=0.6.0",
+    "sphinxcontrib-sass>=0.3.4",
+    "pydata-sphinx-theme>=0.15.3",
+    "sphinx-remove-toctrees>=1.0.0.post1",
 ]
 examples = [
     "matplotlib>=3.3.4",
@@ -78,11 +82,11 @@ tests = [
     "pandas>=1.1.5",
     "pytest>=7.1.2",
     "pytest-cov>=2.9.0",
-    "ruff>=0.2.1",
+    "ruff>=0.5.1",
     "black>=24.3.0",
     "mypy>=1.9",
     "pyamg>=4.0.0",
-    "polars>=0.19.12",
+    "polars>=0.20.30",
     "pyarrow>=12.0.0",
     "numpydoc>=1.2.0",
     "pooch>=1.6.0",
@@ -93,15 +97,15 @@ maintenance = ["conda-lock==2.5.6"]
 build-backend = "mesonpy"
 # Minimum requirements for the build system to execute.
 requires = [
-    "meson-python>=0.15.0",
+    "meson-python>=0.16.0",
     "Cython>=3.0.10",
-    "numpy>=1.25",
+    "numpy>=2",
     "scipy>=1.6.0",
 ]
 
 [tool.black]
 line-length = 88
-target_version = ['py39', 'py310', 'py311']
+target-version = ['py39', 'py310', 'py311']
 preview = true
 exclude = '''
 /(
@@ -111,7 +115,6 @@ exclude = '''
   | \.vscode
   | build
   | dist
-  | doc/tutorial
   | doc/_build
   | doc/auto_examples
   | sklearn/externals
@@ -130,7 +133,6 @@ exclude=[
     "sklearn/externals",
     "doc/_build",
     "doc/auto_examples",
-    "doc/tutorial",
     "build",
     "asv_benchmarks/env",
     "asv_benchmarks/html",
@@ -139,8 +141,12 @@ exclude=[
 ]
 
 [tool.ruff.lint]
+# This enables us to use CPY001: copyright header check
+preview = true
+# This enables us to use the explicit preview rules that we want only
+explicit-preview-rules = true
 # all rules can be found here: https://beta.ruff.rs/docs/rules/
-select = ["E", "F", "W", "I"]
+select = ["E", "F", "W", "I", "CPY001"]
 ignore=[
     # space before : (needed for how black formats slicing)
     "E203",
@@ -148,13 +154,37 @@ ignore=[
     "E731",
     # do not use variables named 'l', 'O', or 'I'
     "E741",
+    # E721 is in preview (july 2024) and gives many false positives.
+    # Use `is` and `is not` for type comparisons, or `isinstance()` for
+    # isinstance checks
+    "E721",
+    # F841 is in preview (july 2024), and we don't care much about it.
+    # Local variable ... is assigned to but never used
+    "F841",
 ]
+
+[tool.ruff.lint.flake8-copyright]
+notice-rgx = "\\#\\ Authors:\\ The\\ scikit\\-learn\\ developers\\\r?\\\n\\#\\ SPDX\\-License\\-Identifier:\\ BSD\\-3\\-Clause"
 
 [tool.ruff.lint.per-file-ignores]
 # It's fine not to put the import at the top of the file in the examples
 # folder.
 "examples/*"=["E402"]
 "doc/conf.py"=["E402"]
+"**/tests/*"=["CPY001"]
+"asv_benchmarks/*"=["CPY001"]
+"benchmarks/*"=["CPY001"]
+"doc/*"=["CPY001"]
+"build_tools/*"=["CPY001"]
+"sklearn/_build_utils/*"=["CPY001"]
+"maint_tools/*"=["CPY001"]
+".spin/*"=["CPY001"]
+".github/*"=["CPY001"]
+# __doc__ is too long (>4096 chars) and therefore false positive on copyright check
+"examples/model_selection/plot_precision_recall.py"=["CPY001"]
+"examples/svm/plot_rbf_parameters.py"=["CPY001"]
+# __all__ has un-imported names
+"sklearn/__init__.py"=["F822"]
 
 
 [tool.cython-lint]
@@ -209,3 +239,16 @@ exclude= '''
 sdist-only = []
 git-only = [".*", "asv_benchmarks", "azure-pipelines.yml", "benchmarks", "build_tools", "maint_tools"]
 default-ignore = false
+
+[tool.spin]
+package = "sklearn"  # name of your package
+
+[tool.spin.commands]
+"Build" = [
+  "spin.cmds.pip.install",
+  "spin.cmds.meson.test",
+  ".spin/cmds.py:clean",
+]
+"Documentation" = [
+  "spin.cmds.meson.docs"
+]

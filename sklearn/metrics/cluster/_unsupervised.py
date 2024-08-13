@@ -1,9 +1,7 @@
 """Unsupervised evaluation metrics."""
 
-# Authors: Robert Layton <robertlayton@gmail.com>
-#          Arnaud Fouchet <foucheta@gmail.com>
-#          Thierry Guillemot <thierry.guillemot.work@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 import functools
@@ -128,7 +126,7 @@ def silhouette_score(
     >>> X, y = make_blobs(random_state=42)
     >>> kmeans = KMeans(n_clusters=2, random_state=42)
     >>> silhouette_score(X, kmeans.fit_predict(X))
-    0.49...
+    np.float64(0.49...)
     """
     if sample_size is not None:
         X, labels = check_X_y(X, labels, accept_sparse=["csc", "csr"])
@@ -363,7 +361,7 @@ def calinski_harabasz_score(X, labels):
     >>> X, _ = make_blobs(random_state=0)
     >>> kmeans = KMeans(n_clusters=3, random_state=0,).fit(X)
     >>> calinski_harabasz_score(X, kmeans.labels_)
-    114.8...
+    np.float64(114.8...)
     """
     X, labels = check_X_y(X, labels)
     le = LabelEncoder()
@@ -438,7 +436,7 @@ def davies_bouldin_score(X, labels):
     >>> X = [[0, 1], [1, 1], [3, 4]]
     >>> labels = [0, 0, 1]
     >>> davies_bouldin_score(X, labels)
-    0.12...
+    np.float64(0.12...)
     """
     X, labels = check_X_y(X, labels)
     le = LabelEncoder()

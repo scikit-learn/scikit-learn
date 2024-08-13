@@ -7,20 +7,8 @@ Function named as ``*_error`` or ``*_loss`` return a scalar value to minimize:
 the lower the better.
 """
 
-# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#          Olivier Grisel <olivier.grisel@ensta.org>
-#          Arnaud Joly <a.joly@ulg.ac.be>
-#          Jochen Wersdorfer <jochen@wersdoerfer.de>
-#          Lars Buitinck
-#          Joel Nothman <joel.nothman@gmail.com>
-#          Noel Dawe <noel@dawe.me>
-#          Jatin Shah <jatindshah@gmail.com>
-#          Saurabh Jha <saurabh.jhaa@gmail.com>
-#          Bernardo Stein <bernardovstein@gmail.com>
-#          Shangwu Yao <shangwuyao@gmail.com>
-#          Michal Karbownik <michakarbownik@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 import warnings
@@ -40,8 +28,11 @@ from ..utils import (
 )
 from ..utils._array_api import (
     _average,
+    _count_nonzero,
+    _is_numpy_namespace,
     _union1d,
     get_namespace,
+    get_namespace_and_device,
 )
 from ..utils._param_validation import (
     Hidden,
@@ -53,7 +44,11 @@ from ..utils._param_validation import (
 from ..utils.extmath import _nanaverage
 from ..utils.multiclass import type_of_target, unique_labels
 from ..utils.sparsefuncs import count_nonzero
-from ..utils.validation import _check_pos_label_consistency, _num_samples
+from ..utils.validation import (
+    _check_pos_label_consistency,
+    _check_sample_weight,
+    _num_samples,
+)
 
 
 def _check_zero_division(zero_division):
@@ -92,6 +87,7 @@ def _check_targets(y_true, y_pred):
 
     y_pred : array or indicator matrix
     """
+    xp, _ = get_namespace(y_true, y_pred)
     check_consistent_length(y_true, y_pred)
     type_true = type_of_target(y_true, input_name="y_true")
     type_pred = type_of_target(y_pred, input_name="y_pred")
@@ -137,8 +133,13 @@ def _check_targets(y_true, y_pred):
                 y_type = "multiclass"
 
     if y_type.startswith("multilabel"):
-        y_true = csr_matrix(y_true)
-        y_pred = csr_matrix(y_pred)
+        if _is_numpy_namespace(xp):
+            # XXX: do we really want to sparse-encode multilabel indicators when
+            # they are passed as a dense arrays? This is not possible for array
+            # API inputs in general hence we only do it for NumPy inputs. But even
+            # for NumPy the usefulness is questionable.
+            y_true = csr_matrix(y_true)
+            y_pred = csr_matrix(y_pred)
         y_type = "multilabel-indicator"
 
     return y_type, y_true, y_pred
@@ -213,13 +214,18 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     >>> accuracy_score(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
     0.5
     """
-
+    xp, _, device = get_namespace_and_device(y_true, y_pred, sample_weight)
     # Compute accuracy for each possible representation
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
     if y_type.startswith("multilabel"):
-        differing_labels = count_nonzero(y_true - y_pred, axis=1)
-        score = differing_labels == 0
+        if _is_numpy_namespace(xp):
+            differing_labels = count_nonzero(y_true - y_pred, axis=1)
+        else:
+            differing_labels = _count_nonzero(
+                y_true - y_pred, xp=xp, device=device, axis=1
+            )
+        score = xp.asarray(differing_labels == 0, device=device)
     else:
         score = y_true == y_pred
 
@@ -319,7 +325,7 @@ def confusion_matrix(
 
     >>> tn, fp, fn, tp = confusion_matrix([0, 1, 0, 1], [1, 1, 1, 0]).ravel()
     >>> (tn, fp, fn, tp)
-    (0, 2, 1, 1)
+    (np.int64(0), np.int64(2), np.int64(1), np.int64(1))
     """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type not in ("binary", "multiclass"):
@@ -618,6 +624,37 @@ def multilabel_confusion_matrix(
     return np.array([tn, fp, fn, tp]).T.reshape(-1, 2, 2)
 
 
+def _metric_handle_division(*, numerator, denominator, metric, zero_division):
+    """Helper to handle zero-division.
+
+    Parameters
+    ----------
+    numerator : numbers.Real
+        The numerator of the division.
+    denominator : numbers.Real
+        The denominator of the division.
+    metric : str
+        Name of the caller metric function.
+    zero_division : {0.0, 1.0, "warn"}
+        The strategy to use when encountering 0-denominator.
+
+    Returns
+    -------
+    result : numbers.Real
+        The resulting of the division
+    is_zero_division : bool
+        Whether or not we encountered a zero division. This value could be
+        required to early return `result` in the "caller" function.
+    """
+    if np.isclose(denominator, 0):
+        if zero_division == "warn":
+            msg = f"{metric} is ill-defined and set to 0.0. Use the `zero_division` "
+            "param to control this behavior."
+            warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
+        return _check_zero_division(zero_division), True
+    return numerator / denominator, False
+
+
 @validate_params(
     {
         "y1": ["array-like"],
@@ -625,10 +662,16 @@ def multilabel_confusion_matrix(
         "labels": ["array-like", None],
         "weights": [StrOptions({"linear", "quadratic"}), None],
         "sample_weight": ["array-like", None],
+        "zero_division": [
+            StrOptions({"warn"}),
+            Options(Real, {0.0, 1.0, np.nan}),
+        ],
     },
     prefer_skip_nested_validation=True,
 )
-def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
+def cohen_kappa_score(
+    y1, y2, *, labels=None, weights=None, sample_weight=None, zero_division="warn"
+):
     r"""Compute Cohen's kappa: a statistic that measures inter-annotator agreement.
 
     This function computes Cohen's kappa [1]_, a score that expresses the level
@@ -661,11 +704,19 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
         ``y1`` or ``y2`` are used.
 
     weights : {'linear', 'quadratic'}, default=None
-        Weighting type to calculate the score. `None` means no weighted;
-        "linear" means linear weighted; "quadratic" means quadratic weighted.
+        Weighting type to calculate the score. `None` means not weighted;
+        "linear" means linear weighting; "quadratic" means quadratic weighting.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
+
+    zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
+        Sets the return value when there is a zero division. This is the case when both
+        labelings `y1` and `y2` both exclusively contain the 0 class (e. g.
+        `[0, 0, 0, 0]`) (or if both are empty). If set to "warn", returns `0.0`, but a
+        warning is also raised.
+
+        .. versionadded:: 1.6
 
     Returns
     -------
@@ -690,13 +741,24 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     >>> y1 = ["negative", "positive", "negative", "neutral", "positive"]
     >>> y2 = ["negative", "positive", "negative", "neutral", "negative"]
     >>> cohen_kappa_score(y1, y2)
-    0.6875
+    np.float64(0.6875)
     """
     confusion = confusion_matrix(y1, y2, labels=labels, sample_weight=sample_weight)
     n_classes = confusion.shape[0]
     sum0 = np.sum(confusion, axis=0)
     sum1 = np.sum(confusion, axis=1)
-    expected = np.outer(sum0, sum1) / np.sum(sum0)
+
+    numerator = np.outer(sum0, sum1)
+    denominator = np.sum(sum0)
+    expected, is_zero_division = _metric_handle_division(
+        numerator=numerator,
+        denominator=denominator,
+        metric="cohen_kappa_score()",
+        zero_division=zero_division,
+    )
+
+    if is_zero_division:
+        return expected
 
     if weights is None:
         w_mat = np.ones([n_classes, n_classes], dtype=int)
@@ -709,8 +771,18 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
         else:
             w_mat = (w_mat - w_mat.T) ** 2
 
-    k = np.sum(w_mat * confusion) / np.sum(w_mat * expected)
-    return 1 - k
+    numerator = np.sum(w_mat * confusion)
+    denominator = np.sum(w_mat * expected)
+    score, is_zero_division = _metric_handle_division(
+        numerator=numerator,
+        denominator=denominator,
+        metric="cohen_kappa_score()",
+        zero_division=zero_division,
+    )
+
+    if is_zero_division:
+        return score
+    return 1 - score
 
 
 @validate_params(
@@ -849,19 +921,19 @@ def jaccard_score(
     In the binary case:
 
     >>> jaccard_score(y_true[0], y_pred[0])
-    0.6666...
+    np.float64(0.6666...)
 
     In the 2D comparison case (e.g. image similarity):
 
     >>> jaccard_score(y_true, y_pred, average="micro")
-    0.6
+    np.float64(0.6)
 
     In the multilabel case:
 
     >>> jaccard_score(y_true, y_pred, average='samples')
-    0.5833...
+    np.float64(0.5833...)
     >>> jaccard_score(y_true, y_pred, average='macro')
-    0.6666...
+    np.float64(0.6666...)
     >>> jaccard_score(y_true, y_pred, average=None)
     array([0.5, 0.5, 1. ])
 
@@ -963,8 +1035,8 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
        accuracy of prediction algorithms for classification: an overview.
        <10.1093/bioinformatics/16.5.412>`
 
-    .. [2] `Wikipedia entry for the Matthews Correlation Coefficient
-       <https://en.wikipedia.org/wiki/Matthews_correlation_coefficient>`_.
+    .. [2] `Wikipedia entry for the Matthews Correlation Coefficient (phi coefficient)
+       <https://en.wikipedia.org/wiki/Phi_coefficient>`_.
 
     .. [3] `Gorodkin, (2004). Comparing two K-category assignments by a
         K-category correlation coefficient
@@ -980,7 +1052,7 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     >>> y_true = [+1, +1, +1, -1]
     >>> y_pred = [+1, -1, +1, +1]
     >>> matthews_corrcoef(y_true, y_pred)
-    -0.33...
+    np.float64(-0.33...)
     """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
@@ -1248,11 +1320,11 @@ def f1_score(
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
     >>> f1_score(y_true, y_pred, average='macro')
-    0.26...
+    np.float64(0.26...)
     >>> f1_score(y_true, y_pred, average='micro')
-    0.33...
+    np.float64(0.33...)
     >>> f1_score(y_true, y_pred, average='weighted')
-    0.26...
+    np.float64(0.26...)
     >>> f1_score(y_true, y_pred, average=None)
     array([0.8, 0. , 0. ])
 
@@ -1260,9 +1332,9 @@ def f1_score(
     >>> y_true_empty = [0, 0, 0, 0, 0, 0]
     >>> y_pred_empty = [0, 0, 0, 0, 0, 0]
     >>> f1_score(y_true_empty, y_pred_empty)
-    0.0...
+    np.float64(0.0...)
     >>> f1_score(y_true_empty, y_pred_empty, zero_division=1.0)
-    1.0...
+    np.float64(1.0...)
     >>> f1_score(y_true_empty, y_pred_empty, zero_division=np.nan)
     nan...
 
@@ -1451,17 +1523,17 @@ def fbeta_score(
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
     >>> fbeta_score(y_true, y_pred, average='macro', beta=0.5)
-    0.23...
+    np.float64(0.23...)
     >>> fbeta_score(y_true, y_pred, average='micro', beta=0.5)
-    0.33...
+    np.float64(0.33...)
     >>> fbeta_score(y_true, y_pred, average='weighted', beta=0.5)
-    0.23...
+    np.float64(0.23...)
     >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)
     array([0.71..., 0.        , 0.        ])
     >>> y_pred_empty = [0, 0, 0, 0, 0, 0]
     >>> fbeta_score(y_true, y_pred_empty,
     ...             average="macro", zero_division=np.nan, beta=0.5)
-    0.12...
+    np.float64(0.12...)
     """
 
     _, _, f, _ = precision_recall_fscore_support(
@@ -1752,11 +1824,11 @@ def precision_recall_fscore_support(
     >>> y_true = np.array(['cat', 'dog', 'pig', 'cat', 'dog', 'pig'])
     >>> y_pred = np.array(['cat', 'pig', 'dog', 'cat', 'cat', 'dog'])
     >>> precision_recall_fscore_support(y_true, y_pred, average='macro')
-    (0.22..., 0.33..., 0.26..., None)
+    (np.float64(0.22...), np.float64(0.33...), np.float64(0.26...), None)
     >>> precision_recall_fscore_support(y_true, y_pred, average='micro')
-    (0.33..., 0.33..., 0.33..., None)
+    (np.float64(0.33...), np.float64(0.33...), np.float64(0.33...), None)
     >>> precision_recall_fscore_support(y_true, y_pred, average='weighted')
-    (0.22..., 0.33..., 0.26..., None)
+    (np.float64(0.22...), np.float64(0.33...), np.float64(0.26...), None)
 
     It is possible to compute per-label precisions, recalls, F1-scores and
     supports instead of averaging:
@@ -1937,15 +2009,15 @@ def class_likelihood_ratios(
     >>> import numpy as np
     >>> from sklearn.metrics import class_likelihood_ratios
     >>> class_likelihood_ratios([0, 1, 0, 1, 0], [1, 1, 0, 0, 0])
-    (1.5, 0.75)
+    (np.float64(1.5), np.float64(0.75))
     >>> y_true = np.array(["non-cat", "cat", "non-cat", "cat", "non-cat"])
     >>> y_pred = np.array(["cat", "cat", "non-cat", "non-cat", "non-cat"])
     >>> class_likelihood_ratios(y_true, y_pred)
-    (1.33..., 0.66...)
+    (np.float64(1.33...), np.float64(0.66...))
     >>> y_true = np.array(["non-zebra", "zebra", "non-zebra", "zebra", "non-zebra"])
     >>> y_pred = np.array(["zebra", "zebra", "non-zebra", "non-zebra", "non-zebra"])
     >>> class_likelihood_ratios(y_true, y_pred)
-    (1.5, 0.75)
+    (np.float64(1.5), np.float64(0.75))
 
     To avoid ambiguities, use the notation `labels=[negative_class,
     positive_class]`
@@ -1953,7 +2025,7 @@ def class_likelihood_ratios(
     >>> y_true = np.array(["non-cat", "cat", "non-cat", "cat", "non-cat"])
     >>> y_pred = np.array(["cat", "cat", "non-cat", "non-cat", "non-cat"])
     >>> class_likelihood_ratios(y_true, y_pred, labels=["non-cat", "cat"])
-    (1.5, 0.75)
+    (np.float64(1.5), np.float64(0.75))
     """
 
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
@@ -2162,11 +2234,11 @@ def precision_score(
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
     >>> precision_score(y_true, y_pred, average='macro')
-    0.22...
+    np.float64(0.22...)
     >>> precision_score(y_true, y_pred, average='micro')
-    0.33...
+    np.float64(0.33...)
     >>> precision_score(y_true, y_pred, average='weighted')
-    0.22...
+    np.float64(0.22...)
     >>> precision_score(y_true, y_pred, average=None)
     array([0.66..., 0.        , 0.        ])
     >>> y_pred = [0, 0, 0, 0, 0, 0]
@@ -2343,11 +2415,11 @@ def recall_score(
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
     >>> recall_score(y_true, y_pred, average='macro')
-    0.33...
+    np.float64(0.33...)
     >>> recall_score(y_true, y_pred, average='micro')
-    0.33...
+    np.float64(0.33...)
     >>> recall_score(y_true, y_pred, average='weighted')
-    0.33...
+    np.float64(0.33...)
     >>> recall_score(y_true, y_pred, average=None)
     array([1., 0., 0.])
     >>> y_true = [0, 0, 0, 0, 0, 0]
@@ -2453,7 +2525,7 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
     >>> y_true = [0, 1, 0, 0, 1, 0]
     >>> y_pred = [0, 1, 0, 0, 0, 1]
     >>> balanced_accuracy_score(y_true, y_pred)
-    0.625
+    np.float64(0.625)
     """
     C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
     with np.errstate(divide="ignore", invalid="ignore"):
@@ -3041,7 +3113,7 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     >>> pred_decision
     array([-2.18...,  2.36...,  0.09...])
     >>> hinge_loss([-1, 1, 1], pred_decision)
-    0.30...
+    np.float64(0.30...)
 
     In the multiclass case:
 
@@ -3055,7 +3127,7 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     >>> pred_decision = est.decision_function([[-1], [2], [3]])
     >>> y_true = [0, 2, 3]
     >>> hinge_loss(y_true, pred_decision, labels=labels)
-    0.56...
+    np.float64(0.56...)
     """
     check_consistent_length(y_true, pred_decision, sample_weight)
     pred_decision = check_array(pred_decision, ensure_2d=False)
@@ -3201,13 +3273,13 @@ def brier_score_loss(
     >>> y_true_categorical = np.array(["spam", "ham", "ham", "spam"])
     >>> y_prob = np.array([0.1, 0.9, 0.8, 0.3])
     >>> brier_score_loss(y_true, y_prob)
-    0.037...
+    np.float64(0.037...)
     >>> brier_score_loss(y_true, 1-y_prob, pos_label=0)
-    0.037...
+    np.float64(0.037...)
     >>> brier_score_loss(y_true_categorical, y_prob, pos_label="ham")
-    0.037...
+    np.float64(0.037...)
     >>> brier_score_loss(y_true, np.array(y_prob) > 0.5)
-    0.0
+    np.float64(0.0)
     """
     # TODO(1.7): remove in 1.7 and reset y_proba to be required
     # Note: validate params will raise an error if y_prob is not array-like,
@@ -3257,3 +3329,96 @@ def brier_score_loss(
             raise
     y_true = np.array(y_true == pos_label, int)
     return np.average((y_true - y_proba) ** 2, weights=sample_weight)
+
+
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "labels": ["array-like", None],
+    },
+    prefer_skip_nested_validation=True,
+)
+def d2_log_loss_score(y_true, y_pred, *, sample_weight=None, labels=None):
+    """
+    :math:`D^2` score function, fraction of log loss explained.
+
+    Best possible score is 1.0 and it can be negative (because the model can be
+    arbitrarily worse). A model that always predicts the per-class proportions
+    of `y_true`, disregarding the input features, gets a D^2 score of 0.0.
+
+    Read more in the :ref:`User Guide <d2_score_classification>`.
+
+    .. versionadded:: 1.5
+
+    Parameters
+    ----------
+    y_true : array-like or label indicator matrix
+        The actuals labels for the n_samples samples.
+
+    y_pred : array-like of shape (n_samples, n_classes) or (n_samples,)
+        Predicted probabilities, as returned by a classifier's
+        predict_proba method. If ``y_pred.shape = (n_samples,)``
+        the probabilities provided are assumed to be that of the
+        positive class. The labels in ``y_pred`` are assumed to be
+        ordered alphabetically, as done by
+        :class:`~sklearn.preprocessing.LabelBinarizer`.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    labels : array-like, default=None
+        If not provided, labels will be inferred from y_true. If ``labels``
+        is ``None`` and ``y_pred`` has shape (n_samples,) the labels are
+        assumed to be binary and are inferred from ``y_true``.
+
+    Returns
+    -------
+    d2 : float or ndarray of floats
+        The D^2 score.
+
+    Notes
+    -----
+    This is not a symmetric function.
+
+    Like R^2, D^2 score may be negative (it need not actually be the square of
+    a quantity D).
+
+    This metric is not well-defined for a single sample and will return a NaN
+    value if n_samples is less than two.
+    """
+    y_pred = check_array(y_pred, ensure_2d=False, dtype="numeric")
+    check_consistent_length(y_pred, y_true, sample_weight)
+    if _num_samples(y_pred) < 2:
+        msg = "D^2 score is not well-defined with less than two samples."
+        warnings.warn(msg, UndefinedMetricWarning)
+        return float("nan")
+
+    # log loss of the fitted model
+    numerator = log_loss(
+        y_true=y_true,
+        y_pred=y_pred,
+        normalize=False,
+        sample_weight=sample_weight,
+        labels=labels,
+    )
+
+    # Proportion of labels in the dataset
+    weights = _check_sample_weight(sample_weight, y_true)
+
+    _, y_value_indices = np.unique(y_true, return_inverse=True)
+    counts = np.bincount(y_value_indices, weights=weights)
+    y_prob = counts / weights.sum()
+    y_pred_null = np.tile(y_prob, (len(y_true), 1))
+
+    # log loss of the null model
+    denominator = log_loss(
+        y_true=y_true,
+        y_pred=y_pred_null,
+        normalize=False,
+        sample_weight=sample_weight,
+        labels=labels,
+    )
+
+    return 1 - (numerator / denominator)

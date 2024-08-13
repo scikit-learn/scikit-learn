@@ -12,6 +12,9 @@ as an attribute of the impute module::
     >>> from sklearn.impute import IterativeImputer
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from .. import impute
 from ..impute._iterative import IterativeImputer
 

@@ -27,6 +27,9 @@ calculations, but it may also route it to the underlying estimator.
 First a few imports and some random data for the rest of the script.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 
 import warnings
@@ -167,9 +170,9 @@ class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         router = MetadataRouter(owner=self.__class__.__name__).add(
             estimator=self.estimator,
             method_mapping=MethodMapping()
-            .add(callee="fit", caller="fit")
-            .add(callee="predict", caller="predict")
-            .add(callee="score", caller="score"),
+            .add(caller="fit", callee="fit")
+            .add(caller="predict", callee="predict")
+            .add(caller="score", callee="score"),
         )
         return router
 
@@ -356,9 +359,9 @@ class RouterConsumerClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimato
             .add(
                 estimator=self.estimator,
                 method_mapping=MethodMapping()
-                .add(callee="fit", caller="fit")
-                .add(callee="predict", caller="predict")
-                .add(callee="score", caller="score"),
+                .add(caller="fit", callee="fit")
+                .add(caller="predict", callee="predict")
+                .add(caller="score", callee="score"),
             )
         )
         return router
@@ -488,16 +491,16 @@ class SimplePipeline(ClassifierMixin, BaseEstimator):
                 # The metadata is routed such that it retraces how
                 # `SimplePipeline` internally calls the transformer's `fit` and
                 # `transform` methods in its own methods (`fit` and `predict`).
-                .add(callee="fit", caller="fit")
-                .add(callee="transform", caller="fit")
-                .add(callee="transform", caller="predict"),
+                .add(caller="fit", callee="fit")
+                .add(caller="fit", callee="transform")
+                .add(caller="predict", callee="transform"),
             )
             # We add the routing for the classifier.
             .add(
                 classifier=self.classifier,
                 method_mapping=MethodMapping()
-                .add(callee="fit", caller="fit")
-                .add(callee="predict", caller="predict"),
+                .add(caller="fit", callee="fit")
+                .add(caller="predict", callee="predict"),
             )
         )
         return router
@@ -612,7 +615,7 @@ class MetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
     def get_metadata_routing(self):
         router = MetadataRouter(owner=self.__class__.__name__).add(
             estimator=self.estimator,
-            method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+            method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
         return router
 
@@ -651,7 +654,7 @@ class WeightedMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
             .add_self_request(self)
             .add(
                 estimator=self.estimator,
-                method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+                method_mapping=MethodMapping().add(caller="fit", callee="fit"),
             )
         )
         return router
@@ -692,7 +695,7 @@ for w in record:
     print(w.message)
 
 # %%
-# In the end, we disable the configuration flag for metadata routing:
+# At the end we disable the configuration flag for metadata routing:
 
 set_config(enable_metadata_routing=False)
 

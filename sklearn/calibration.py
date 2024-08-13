@@ -1,11 +1,7 @@
-"""Calibration of predicted probabilities."""
+"""Methods for calibrating predicted probabilities."""
 
-# Author: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
-#         Balazs Kegl <balazs.kegl@gmail.com>
-#         Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-#         Mathieu Blondel <mathieu@mblondel.org>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from inspect import signature
@@ -28,7 +24,7 @@ from .base import (
     clone,
 )
 from .isotonic import IsotonicRegression
-from .model_selection import check_cv, cross_val_predict
+from .model_selection import LeaveOneOut, check_cv, cross_val_predict
 from .preprocessing import LabelEncoder, label_binarize
 from .svm import LinearSVC
 from .utils import (
@@ -394,6 +390,13 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     "cross-validation but provided less than "
                     f"{n_folds} examples for at least one class."
                 )
+            if isinstance(self.cv, LeaveOneOut):
+                raise ValueError(
+                    "LeaveOneOut cross-validation does not allow"
+                    "all classes to be present in test splits. "
+                    "Please use a cross-validation generator that allows "
+                    "all classes to appear in every test and train split."
+                )
             cv = check_cv(self.cv, y, classifier=True)
 
             if self.ensemble:
@@ -523,11 +526,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             .add_self_request(self)
             .add(
                 estimator=self._get_estimator(),
-                method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+                method_mapping=MethodMapping().add(caller="fit", callee="fit"),
             )
             .add(
                 splitter=self.cv,
-                method_mapping=MethodMapping().add(callee="split", caller="fit"),
+                method_mapping=MethodMapping().add(caller="fit", callee="split"),
             )
         )
         return router
