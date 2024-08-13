@@ -2743,7 +2743,6 @@ def classification_report(
                 line_heading, *avg, width=width, digits=digits
             )
 
-
     if output_dict:
         if separate_avg:
             report_dict["averages"] = averages
