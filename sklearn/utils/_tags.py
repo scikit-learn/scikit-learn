@@ -1,6 +1,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+from dataclasses import dataclass, field
+
 import numpy as np
 
 _DEFAULT_TAGS = {
@@ -24,6 +26,59 @@ _DEFAULT_TAGS = {
     "requires_y": False,
     "pairwise": False,
 }
+
+
+@dataclass
+class InputTags:
+    two_d_array: bool = True
+    sparse: bool = False
+    categorical: bool = False
+    string: bool = False
+    positive_only: bool = False
+    nan_allowed: bool = False
+    pairwise: bool = False
+
+
+@dataclass
+class TargetTags:
+    required: bool
+    positive_only: bool = False
+    multi_output: bool = False
+    single_output: bool = True
+
+
+@dataclass
+class TransformerTags:
+    preserve_dtype: list[str] = field(default_factory=lambda: ["float64"])
+
+
+@dataclass
+class ClassifierTags:
+    poor_score: bool = False
+    binary: bool = True
+    multiclass: bool = True
+    multilabel: bool = False
+
+
+@dataclass
+class RegressorTags:
+    poor_score: bool = False
+
+
+@dataclass
+class Tags:
+    target_flags: TargetTags
+    transformer_flags: TransformerTags
+    classifier_flags: ClassifierTags
+    regressor_flags: RegressorTags
+    array_api_support: bool = False
+    no_validation: bool = False
+    stateless: bool = False
+    non_deterministic: bool = False
+    requires_fit: bool = True
+    _skip_test: bool = False
+    _xfail_checks: dict[str, str] = field(default_factory=dict)
+    input_flags: InputTags = field(default_factory=InputTags)
 
 
 def _safe_tags(estimator, key=None):
