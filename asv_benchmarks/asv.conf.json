@@ -20,13 +20,9 @@
 
     // Customizable commands for building, installing, and
     // uninstalling the project. See asv.conf.json documentation.
-    //
-    // "install_command": ["python -mpip install {wheel_file}"],
-    // "uninstall_command": ["return-code=any python -mpip uninstall -y {project}"],
-    // "build_command": [
-    //     "python setup.py build",
-    //     "PIP_NO_BUILD_ISOLATION=false python -mpip wheel --no-deps --no-index -w {build_cache_dir} {build_dir}"
-    // ],
+    "install_command": ["python -mpip install {wheel_file}"],
+    "uninstall_command": ["return-code=any python -mpip uninstall -y {project}"],
+    "build_command": ["python -m build --wheel -o {build_cache_dir} {build_dir}"],
 
     // List of branches to benchmark. If not provided, defaults to "master
     // (for git) or "default" (for mercurial).
@@ -71,13 +67,17 @@
     // pip (with all the conda available packages installed first,
     // followed by the pip installed packages).
     //
+    // The versions of the dependencies should be bumped in a dedicated commit
+    // to easily identify regressions/improvements due to code changes from
+    // those due to dependency changes.
+    //
     "matrix": {
-        "numpy": [],
-        "scipy": [],
-        "cython": [],
-        "joblib": [],
-        "threadpoolctl": [],
-        "pandas": []
+        "numpy": ["2.0.0"],
+        "scipy": ["1.14.0"],
+        "cython": ["3.0.10"],
+        "joblib": ["1.3.2"],
+        "threadpoolctl": ["3.2.0"],
+        "pandas": ["2.2.2"]
     },
 
     // Combinations of libraries/python versions can be excluded/included

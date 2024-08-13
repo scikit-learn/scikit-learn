@@ -24,17 +24,20 @@ usage constraints on our Continuous Integration infrastructure that is used
 to build this documentation on a regular basis.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import warnings
+
 import matplotlib.pyplot as plt
+
 from sklearn.datasets import fetch_openml
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import train_test_split
+from sklearn.neural_network import MLPClassifier
 
 # Load data from https://www.openml.org/d/554
-X, y = fetch_openml(
-    "mnist_784", version=1, return_X_y=True, as_frame=False, parser="pandas"
-)
+X, y = fetch_openml("mnist_784", version=1, return_X_y=True, as_frame=False)
 X = X / 255.0
 
 # Split data into train partition and test partition

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 =========================================================
 Logistic function
@@ -10,12 +9,13 @@ i.e. class one or two, using the logistic curve.
 
 """
 
-# Code source: Gael Varoquaux
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.special import expit
+
 from sklearn.linear_model import LinearRegression, LogisticRegression
 
 # Generate a toy dataset, it's just a straight line with some Gaussian noise:

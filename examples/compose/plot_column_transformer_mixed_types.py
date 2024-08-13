@@ -25,29 +25,26 @@ model.
 
 """
 
-# Author: Pedro Morales <part.morales@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 import numpy as np
 
 from sklearn.compose import ColumnTransformer
 from sklearn.datasets import fetch_openml
-from sklearn.pipeline import Pipeline
-from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from sklearn.feature_selection import SelectPercentile, chi2
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import RandomizedSearchCV, train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 np.random.seed(0)
 
 # %%
 # Load data from https://www.openml.org/d/40945
-X, y = fetch_openml(
-    "titanic", version=1, as_frame=True, return_X_y=True, parser="pandas"
-)
+X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True)
 
 # Alternatively X and y can be obtained directly from the frame attribute:
 # X = titanic.frame.drop('survived', axis=1)

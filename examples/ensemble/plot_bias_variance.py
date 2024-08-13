@@ -63,11 +63,11 @@ References
 
 """
 
-# Author: Gilles Louppe <g.louppe@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.ensemble import BaggingRegressor
 from sklearn.tree import DecisionTreeRegressor
@@ -185,7 +185,6 @@ for n, (name, estimator) in enumerate(estimators):
     plt.ylim([0, 0.1])
 
     if n == n_estimators - 1:
-
         plt.legend(loc=(1.1, 0.5))
 
 plt.subplots_adjust(right=0.75)

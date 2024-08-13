@@ -16,16 +16,12 @@ jobs:
     TEST_DIR: '$(Agent.WorkFolder)/tmp_folder'
     VIRTUALENV: 'testvenv'
     JUNITXML: 'test-data.xml'
-    OMP_NUM_THREADS: '2'
-    OPENBLAS_NUM_THREADS: '2'
-    CPU_COUNT: '2'
     SKLEARN_SKIP_NETWORK_TESTS: '1'
     CCACHE_DIR: $(Pipeline.Workspace)/ccache
     CCACHE_COMPRESS: '1'
     PYTEST_XDIST_VERSION: 'latest'
     COVERAGE: 'true'
     CREATE_ISSUE_ON_TRACKER: 'true'
-    SHOW_SHORT_SUMMARY: 'false'
   strategy:
     matrix:
       ${{ insert }}: ${{ parameters.matrix }}
@@ -63,12 +59,18 @@ jobs:
     - script: |
         build_tools/azure/test_docs.sh
       displayName: 'Test Docs'
-      condition: eq(variables['SELECTED_TESTS'], '')
+      condition: and(succeeded(), eq(variables['SELECTED_TESTS'], ''))
     - script: |
         build_tools/azure/test_pytest_soft_dependency.sh
       displayName: 'Test Soft Dependency'
-      condition: and(eq(variables['CHECK_PYTEST_SOFT_DEPENDENCY'], 'true'),
+      condition: and(succeeded(),
+                     eq(variables['CHECK_PYTEST_SOFT_DEPENDENCY'], 'true'),
                      eq(variables['SELECTED_TESTS'], ''))
+    - script: |
+        build_tools/azure/combine_coverage_reports.sh
+      condition: and(succeeded(), eq(variables['COVERAGE'], 'true'),
+                     eq(variables['SELECTED_TESTS'], ''))
+      displayName: 'Combine coverage'
     - task: PublishTestResults@2
       inputs:
         testResultsFiles: '$(TEST_DIR)/$(JUNITXML)'
@@ -104,5 +106,6 @@ jobs:
       condition: and(succeeded(), eq(variables['COVERAGE'], 'true'),
                      eq(variables['SELECTED_TESTS'], ''))
       displayName: 'Upload To Codecov'
+      retryCountOnTaskFailure: 5
       env:
         CODECOV_TOKEN: $(CODECOV_TOKEN)

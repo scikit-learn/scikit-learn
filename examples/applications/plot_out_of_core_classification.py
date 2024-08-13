@@ -14,29 +14,26 @@ features (words) may appear in each batch.
 
 """
 
-# Authors: Eustache Diemert <eustache@diemert.fr>
-#          @FedericoV <https://github.com/FedericoV/>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import itertools
-from pathlib import Path
-from hashlib import sha256
 import re
+import sys
 import tarfile
 import time
-import sys
+from hashlib import sha256
+from html.parser import HTMLParser
+from pathlib import Path
+from urllib.request import urlretrieve
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib import rcParams
 
-from html.parser import HTMLParser
-from urllib.request import urlretrieve
 from sklearn.datasets import get_data_home
 from sklearn.feature_extraction.text import HashingVectorizer
-from sklearn.linear_model import SGDClassifier
-from sklearn.linear_model import PassiveAggressiveClassifier
-from sklearn.linear_model import Perceptron
+from sklearn.linear_model import PassiveAggressiveClassifier, Perceptron, SGDClassifier
 from sklearn.naive_bayes import MultinomialNB
 
 
@@ -177,7 +174,8 @@ def stream_reuters_documents(data_path=None):
         assert sha256(archive_path.read_bytes()).hexdigest() == ARCHIVE_SHA256
 
         print("untarring Reuters dataset...")
-        tarfile.open(archive_path, "r:gz").extractall(data_path)
+        with tarfile.open(archive_path, "r:gz") as fp:
+            fp.extractall(data_path, filter="data")
         print("done.")
 
     parser = ReutersParser()
@@ -298,7 +296,6 @@ total_vect_time = 0.0
 
 # Main loop : iterate on mini-batches of examples
 for i, (X_train_text, y_train) in enumerate(minibatch_iterators):
-
     tick = time.time()
     X_train = vectorizer.transform(X_train_text)
     total_vect_time += time.time() - tick

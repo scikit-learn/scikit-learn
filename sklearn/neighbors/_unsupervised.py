@@ -1,7 +1,10 @@
 """Unsupervised nearest neighbors learner"""
-from ._base import NeighborsBase
-from ._base import KNeighborsMixin
-from ._base import RadiusNeighborsMixin
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+from ..base import _fit_context
+from ._base import KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin
 
 
 class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
@@ -56,7 +59,7 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
         between those vectors. This works for Scipy's metrics, but is less
         efficient than passing the metric name as a string.
 
-    p : float, default=2
+    p : float (positive), default=2
         Parameter for the Minkowski metric from
         sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
@@ -117,14 +120,11 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
     >>> import numpy as np
     >>> from sklearn.neighbors import NearestNeighbors
     >>> samples = [[0, 0, 2], [1, 0, 0], [0, 0, 1]]
-
     >>> neigh = NearestNeighbors(n_neighbors=2, radius=0.4)
     >>> neigh.fit(samples)
     NearestNeighbors(...)
-
     >>> neigh.kneighbors([[0, 0, 1.3]], 2, return_distance=False)
     array([[2, 0]]...)
-
     >>> nbrs = neigh.radius_neighbors(
     ...    [[0, 0, 1.3]], 0.4, return_distance=False
     ... )
@@ -155,6 +155,10 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
             n_jobs=n_jobs,
         )
 
+    @_fit_context(
+        # NearestNeighbors.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None):
         """Fit the nearest neighbors estimator from the training dataset.
 
@@ -172,5 +176,4 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
         self : NearestNeighbors
             The fitted nearest neighbors estimator.
         """
-        self._validate_params()
         return self._fit(X)

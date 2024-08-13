@@ -28,17 +28,15 @@ Authors
 """
 
 import  numpy as np
-cimport numpy as cnp
 from libc.stdlib cimport free
 from ..utils._cython_blas cimport _dot
+from ..utils._typedefs cimport float64_t, int32_t, intp_t
 
 include "_libsvm.pxi"
 
 cdef extern from *:
     ctypedef struct svm_parameter:
         pass
-
-cnp.import_array()
 
 
 ################################################################################
@@ -50,8 +48,8 @@ LIBSVM_KERNEL_TYPES = ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']
 # Wrapper functions
 
 def fit(
-    const cnp.float64_t[:, ::1] X,
-    const cnp.float64_t[::1] Y,
+    const float64_t[:, ::1] X,
+    const float64_t[::1] Y,
     int svm_type=0,
     kernel='rbf',
     int degree=3,
@@ -61,8 +59,8 @@ def fit(
     double C=1.0,
     double nu=0.5,
     double epsilon=0.1,
-    const cnp.float64_t[::1] class_weight=np.empty(0),
-    const cnp.float64_t[::1] sample_weight=np.empty(0),
+    const float64_t[::1] class_weight=np.empty(0),
+    const float64_t[::1] sample_weight=np.empty(0),
     int shrinking=1,
     int probability=0,
     double cache_size=100.,
@@ -166,15 +164,12 @@ def fit(
     cdef svm_problem problem
     cdef svm_model *model
     cdef const char *error_msg
-    cdef cnp.npy_intp SV_len
-    cdef cnp.npy_intp nr
-
+    cdef intp_t SV_len
 
     if len(sample_weight) == 0:
         sample_weight = np.ones(X.shape[0], dtype=np.float64)
     else:
-        assert (
-            sample_weight.shape[0] == X.shape[0],
+        assert sample_weight.shape[0] == X.shape[0], (
             f"sample_weight and X have incompatible shapes: sample_weight has "
             f"{sample_weight.shape[0]} samples while X has {X.shape[0]}"
         )
@@ -185,12 +180,12 @@ def fit(
         <char*> &X[0, 0],
         <char*> &Y[0],
         <char*> &sample_weight[0],
-        <cnp.npy_intp*> X.shape,
+        <intp_t*> X.shape,
         kernel_index,
     )
     if problem.x == NULL:
         raise MemoryError("Seems we've run out of memory")
-    cdef cnp.int32_t[::1] class_weight_label = np.arange(
+    cdef int32_t[::1] class_weight_label = np.arange(
         class_weight.shape[0], dtype=np.int32
     )
     set_parameter(
@@ -228,26 +223,26 @@ def fit(
 
     # from here until the end, we just copy the data returned by
     # svm_train
-    SV_len  = get_l(model)
+    SV_len = get_l(model)
     n_class = get_nr(model)
 
     cdef int[::1] n_iter = np.empty(max(1, n_class * (n_class - 1) // 2), dtype=np.intc)
     copy_n_iter(<char*> &n_iter[0], model)
 
-    cdef cnp.float64_t[:, ::1] sv_coef = np.empty((n_class-1, SV_len), dtype=np.float64)
+    cdef float64_t[:, ::1] sv_coef = np.empty((n_class-1, SV_len), dtype=np.float64)
     copy_sv_coef(<char*> &sv_coef[0, 0] if sv_coef.size > 0 else NULL, model)
 
     # the intercept is just model.rho but with sign changed
-    cdef cnp.float64_t[::1] intercept = np.empty(
+    cdef float64_t[::1] intercept = np.empty(
         int((n_class*(n_class-1))/2), dtype=np.float64
     )
-    copy_intercept(<char*> &intercept[0], model, <cnp.npy_intp*> intercept.shape)
+    copy_intercept(<char*> &intercept[0], model, <intp_t*> intercept.shape)
 
-    cdef cnp.int32_t[::1] support = np.empty(SV_len, dtype=np.int32)
+    cdef int32_t[::1] support = np.empty(SV_len, dtype=np.int32)
     copy_support(<char*> &support[0] if support.size > 0 else NULL, model)
 
     # copy model.SV
-    cdef cnp.float64_t[:, ::1] support_vectors
+    cdef float64_t[:, ::1] support_vectors
     if kernel_index == 4:
         # precomputed kernel
         support_vectors = np.empty((0, 0), dtype=np.float64)
@@ -256,10 +251,10 @@ def fit(
         copy_SV(
             <char*> &support_vectors[0, 0] if support_vectors.size > 0 else NULL,
             model,
-            <cnp.npy_intp*> support_vectors.shape,
+            <intp_t*> support_vectors.shape,
         )
 
-    cdef cnp.int32_t[::1] n_class_SV
+    cdef int32_t[::1] n_class_SV
     if svm_type == 0 or svm_type == 1:
         n_class_SV = np.empty(n_class, dtype=np.int32)
         copy_nSV(<char*> &n_class_SV[0] if n_class_SV.size > 0 else NULL, model)
@@ -267,17 +262,17 @@ def fit(
         # OneClass and SVR are considered to have 2 classes
         n_class_SV = np.array([SV_len, SV_len], dtype=np.int32)
 
-    cdef cnp.float64_t[::1] probA
-    cdef cnp.float64_t[::1] probB
+    cdef float64_t[::1] probA
+    cdef float64_t[::1] probB
     if probability != 0:
-        if svm_type < 2: # SVC and NuSVC
+        if svm_type < 2:  # SVC and NuSVC
             probA = np.empty(int(n_class*(n_class-1)/2), dtype=np.float64)
             probB = np.empty(int(n_class*(n_class-1)/2), dtype=np.float64)
-            copy_probB(<char*> &probB[0], model, <cnp.npy_intp*> probB.shape)
+            copy_probB(<char*> &probB[0], model, <intp_t*> probB.shape)
         else:
             probA = np.empty(1, dtype=np.float64)
             probB = np.empty(0, dtype=np.float64)
-        copy_probA(<char*> &probA[0], model, <cnp.npy_intp*> probA.shape)
+        copy_probA(<char*> &probA[0], model, <intp_t*> probA.shape)
     else:
         probA = np.empty(0, dtype=np.float64)
         probB = np.empty(0, dtype=np.float64)
@@ -347,21 +342,21 @@ cdef void set_predict_params(
 
 
 def predict(
-    const cnp.float64_t[:, ::1] X,
-    const cnp.int32_t[::1] support,
-    const cnp.float64_t[:, ::1] SV,
-    const cnp.int32_t[::1] nSV,
-    const cnp.float64_t[:, ::1] sv_coef,
-    const cnp.float64_t[::1] intercept,
-    const cnp.float64_t[::1] probA=np.empty(0),
-    const cnp.float64_t[::1] probB=np.empty(0),
+    const float64_t[:, ::1] X,
+    const int32_t[::1] support,
+    const float64_t[:, ::1] SV,
+    const int32_t[::1] nSV,
+    const float64_t[:, ::1] sv_coef,
+    const float64_t[::1] intercept,
+    const float64_t[::1] probA=np.empty(0),
+    const float64_t[::1] probB=np.empty(0),
     int svm_type=0,
     kernel='rbf',
     int degree=3,
     double gamma=0.1,
     double coef0=0.0,
-    const cnp.float64_t[::1] class_weight=np.empty(0),
-    const cnp.float64_t[::1] sample_weight=np.empty(0),
+    const float64_t[::1] class_weight=np.empty(0),
+    const float64_t[::1] sample_weight=np.empty(0),
     double cache_size=100.0,
 ):
     """
@@ -413,12 +408,12 @@ def predict(
     dec_values : array
         Predicted values.
     """
-    cdef cnp.float64_t[::1] dec_values
+    cdef float64_t[::1] dec_values
     cdef svm_parameter param
     cdef svm_model *model
     cdef int rv
 
-    cdef cnp.int32_t[::1] class_weight_label = np.arange(
+    cdef int32_t[::1] class_weight_label = np.arange(
         class_weight.shape[0], dtype=np.int32
     )
 
@@ -439,10 +434,10 @@ def predict(
         &param,
         <int> nSV.shape[0],
         <char*> &SV[0, 0] if SV.size > 0 else NULL,
-        <cnp.npy_intp*> SV.shape,
+        <intp_t*> SV.shape,
         <char*> &support[0] if support.size > 0 else NULL,
-        <cnp.npy_intp*> support.shape,
-        <cnp.npy_intp*> sv_coef.strides,
+        <intp_t*> support.shape,
+        <intp_t*> sv_coef.strides,
         <char*> &sv_coef[0, 0] if sv_coef.size > 0 else NULL,
         <char*> &intercept[0],
         <char*> &nSV[0],
@@ -451,14 +446,14 @@ def predict(
     )
     cdef BlasFunctions blas_functions
     blas_functions.dot = _dot[double]
-    #TODO: use check_model
+    # TODO: use check_model
     try:
         dec_values = np.empty(X.shape[0])
         with nogil:
             rv = copy_predict(
                 <char*> &X[0, 0],
                 model,
-                <cnp.npy_intp*> X.shape,
+                <intp_t*> X.shape,
                 <char*> &dec_values[0],
                 &blas_functions,
             )
@@ -471,21 +466,21 @@ def predict(
 
 
 def predict_proba(
-    const cnp.float64_t[:, ::1] X,
-    const cnp.int32_t[::1] support,
-    const cnp.float64_t[:, ::1] SV,
-    const cnp.int32_t[::1] nSV,
-    cnp.float64_t[:, ::1] sv_coef,
-    cnp.float64_t[::1] intercept,
-    cnp.float64_t[::1] probA=np.empty(0),
-    cnp.float64_t[::1] probB=np.empty(0),
+    const float64_t[:, ::1] X,
+    const int32_t[::1] support,
+    const float64_t[:, ::1] SV,
+    const int32_t[::1] nSV,
+    float64_t[:, ::1] sv_coef,
+    float64_t[::1] intercept,
+    float64_t[::1] probA=np.empty(0),
+    float64_t[::1] probB=np.empty(0),
     int svm_type=0,
     kernel='rbf',
     int degree=3,
     double gamma=0.1,
     double coef0=0.0,
-    cnp.float64_t[::1] class_weight=np.empty(0),
-    cnp.float64_t[::1] sample_weight=np.empty(0),
+    float64_t[::1] class_weight=np.empty(0),
+    float64_t[::1] sample_weight=np.empty(0),
     double cache_size=100.0,
 ):
     """
@@ -547,10 +542,10 @@ def predict_proba(
     dec_values : array
         Predicted values.
     """
-    cdef cnp.float64_t[:, ::1] dec_values
+    cdef float64_t[:, ::1] dec_values
     cdef svm_parameter param
     cdef svm_model *model
-    cdef cnp.int32_t[::1] class_weight_label = np.arange(
+    cdef int32_t[::1] class_weight_label = np.arange(
         class_weight.shape[0], dtype=np.int32
     )
     cdef int rv
@@ -572,10 +567,10 @@ def predict_proba(
         &param,
         <int> nSV.shape[0],
         <char*> &SV[0, 0] if SV.size > 0 else NULL,
-        <cnp.npy_intp*> SV.shape,
+        <intp_t*> SV.shape,
         <char*> &support[0],
-        <cnp.npy_intp*> support.shape,
-        <cnp.npy_intp*> sv_coef.strides,
+        <intp_t*> support.shape,
+        <intp_t*> sv_coef.strides,
         <char*> &sv_coef[0, 0],
         <char*> &intercept[0],
         <char*> &nSV[0],
@@ -583,7 +578,7 @@ def predict_proba(
         <char*> &probB[0] if probB.size > 0 else NULL,
     )
 
-    cdef cnp.npy_intp n_class = get_nr(model)
+    cdef intp_t n_class = get_nr(model)
     cdef BlasFunctions blas_functions
     blas_functions.dot = _dot[double]
     try:
@@ -592,7 +587,7 @@ def predict_proba(
             rv = copy_predict_proba(
                 <char*> &X[0, 0],
                 model,
-                <cnp.npy_intp*> X.shape,
+                <intp_t*> X.shape,
                 <char*> &dec_values[0, 0],
                 &blas_functions,
             )
@@ -605,21 +600,21 @@ def predict_proba(
 
 
 def decision_function(
-    const cnp.float64_t[:,::1] X,
-    const cnp.int32_t[::1] support,
-    const cnp.float64_t[:, ::1] SV,
-    const cnp.int32_t[::1] nSV,
-    const cnp.float64_t[:, ::1] sv_coef,
-    const cnp.float64_t[::1] intercept,
-    const cnp.float64_t[::1] probA=np.empty(0),
-    const cnp.float64_t[::1] probB=np.empty(0),
+    const float64_t[:, ::1] X,
+    const int32_t[::1] support,
+    const float64_t[:, ::1] SV,
+    const int32_t[::1] nSV,
+    const float64_t[:, ::1] sv_coef,
+    const float64_t[::1] intercept,
+    const float64_t[::1] probA=np.empty(0),
+    const float64_t[::1] probB=np.empty(0),
     int svm_type=0,
     kernel='rbf',
     int degree=3,
     double gamma=0.1,
     double coef0=0.0,
-    const cnp.float64_t[::1] class_weight=np.empty(0),
-    const cnp.float64_t[::1] sample_weight=np.empty(0),
+    const float64_t[::1] class_weight=np.empty(0),
+    const float64_t[::1] sample_weight=np.empty(0),
     double cache_size=100.0,
 ):
     """
@@ -674,12 +669,12 @@ def decision_function(
     dec_values : array
         Predicted values.
     """
-    cdef cnp.float64_t[:, ::1] dec_values
+    cdef float64_t[:, ::1] dec_values
     cdef svm_parameter param
     cdef svm_model *model
-    cdef cnp.npy_intp n_class
+    cdef intp_t n_class
 
-    cdef cnp.int32_t[::1] class_weight_label = np.arange(
+    cdef int32_t[::1] class_weight_label = np.arange(
         class_weight.shape[0], dtype=np.int32
     )
 
@@ -703,10 +698,10 @@ def decision_function(
         &param,
         <int> nSV.shape[0],
         <char*> &SV[0, 0] if SV.size > 0 else NULL,
-        <cnp.npy_intp*> SV.shape,
+        <intp_t*> SV.shape,
         <char*> &support[0],
-        <cnp.npy_intp*> support.shape,
-        <cnp.npy_intp*> sv_coef.strides,
+        <intp_t*> support.shape,
+        <intp_t*> sv_coef.strides,
         <char*> &sv_coef[0, 0],
         <char*> &intercept[0],
         <char*> &nSV[0],
@@ -727,7 +722,7 @@ def decision_function(
             rv = copy_predict_values(
                 <char*> &X[0, 0],
                 model,
-                <cnp.npy_intp*> X.shape,
+                <intp_t*> X.shape,
                 <char*> &dec_values[0, 0],
                 n_class,
                 &blas_functions,
@@ -741,8 +736,8 @@ def decision_function(
 
 
 def cross_validation(
-    const cnp.float64_t[:, ::1] X,
-    const cnp.float64_t[::1] Y,
+    const float64_t[:, ::1] X,
+    const float64_t[::1] Y,
     int n_fold,
     int svm_type=0,
     kernel='rbf',
@@ -753,8 +748,8 @@ def cross_validation(
     double C=1.0,
     double nu=0.5,
     double epsilon=0.1,
-    cnp.float64_t[::1] class_weight=np.empty(0),
-    cnp.float64_t[::1] sample_weight=np.empty(0),
+    float64_t[::1] class_weight=np.empty(0),
+    float64_t[::1] sample_weight=np.empty(0),
     int shrinking=0,
     int probability=0,
     double cache_size=100.0,
@@ -841,16 +836,12 @@ def cross_validation(
 
     cdef svm_parameter param
     cdef svm_problem problem
-    cdef svm_model *model
     cdef const char *error_msg
-    cdef cnp.npy_intp SV_len
-    cdef cnp.npy_intp nr
 
     if len(sample_weight) == 0:
         sample_weight = np.ones(X.shape[0], dtype=np.float64)
     else:
-        assert (
-            sample_weight.shape[0] == X.shape[0],
+        assert sample_weight.shape[0] == X.shape[0], (
             f"sample_weight and X have incompatible shapes: sample_weight has "
             f"{sample_weight.shape[0]} samples while X has {X.shape[0]}"
         )
@@ -865,12 +856,12 @@ def cross_validation(
         <char*> &X[0, 0],
         <char*> &Y[0],
         <char*> &sample_weight[0] if sample_weight.size > 0 else NULL,
-        <cnp.npy_intp*> X.shape,
+        <intp_t*> X.shape,
         kernel_index,
     )
     if problem.x == NULL:
         raise MemoryError("Seems we've run out of memory")
-    cdef cnp.int32_t[::1] class_weight_label = np.arange(
+    cdef int32_t[::1] class_weight_label = np.arange(
         class_weight.shape[0], dtype=np.int32
     )
 
@@ -896,11 +887,11 @@ def cross_validation(
         random_seed,
     )
 
-    error_msg = svm_check_parameter(&problem, &param);
+    error_msg = svm_check_parameter(&problem, &param)
     if error_msg:
         raise ValueError(error_msg)
 
-    cdef cnp.float64_t[::1] target
+    cdef float64_t[::1] target
     cdef BlasFunctions blas_functions
     blas_functions.dot = _dot[double]
     try:

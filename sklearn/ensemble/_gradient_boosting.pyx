@@ -1,21 +1,17 @@
-# Author: Peter Prettenhofer
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from libc.stdlib cimport free
 from libc.string cimport memset
 
 import numpy as np
-cimport numpy as cnp
-cnp.import_array()
-
 from scipy.sparse import issparse
 
+from ..utils._typedefs cimport float32_t, float64_t, intp_t, int32_t, uint8_t
+# Note: _tree uses cimport numpy, cnp.import_array, so we need to include
+# numpy headers in the build configuration of this extension
 from ..tree._tree cimport Node
 from ..tree._tree cimport Tree
-from ..tree._tree cimport DTYPE_t
-from ..tree._tree cimport SIZE_t
-from ..tree._tree cimport INT32_t
 from ..tree._utils cimport safe_realloc
 
 
@@ -24,17 +20,15 @@ from numpy import zeros as np_zeros
 
 
 # constant to mark tree leafs
-cdef SIZE_t TREE_LEAF = -1
+cdef intp_t TREE_LEAF = -1
 
 cdef void _predict_regression_tree_inplace_fast_dense(
-    const DTYPE_t[:, ::1] X,
+    const float32_t[:, ::1] X,
     Node* root_node,
     double *value,
     double scale,
     Py_ssize_t k,
-    Py_ssize_t n_samples,
-    Py_ssize_t n_features,
-    cnp.float64_t[:, :] out
+    float64_t[:, :] out
 ) noexcept nogil:
     """Predicts output for regression tree and stores it in ``out[i, k]``.
 
@@ -47,7 +41,7 @@ cdef void _predict_regression_tree_inplace_fast_dense(
 
     Parameters
     ----------
-    X : DTYPE_t 2d memory view
+    X : float32_t 2d memory view
         The memory view on the data ndarray of the input ``X``.
         Assumes that the array is c-continuous.
     root_node : tree Node pointer
@@ -60,16 +54,12 @@ cdef void _predict_regression_tree_inplace_fast_dense(
     k : int
         The index of the tree output to be predicted. Must satisfy
         0 <= ``k`` < ``K``.
-    n_samples : int
-        The number of samples in the input array ``X``;
-        ``n_samples == X.shape[0]``.
-    n_features : int
-        The number of features; ``n_samples == X.shape[1]``.
     out : memory view on array of type np.float64_t
         The data array where the predictions are stored.
         ``out`` is assumed to be a two-dimensional array of
         shape ``(n_samples, K)``.
     """
+    cdef intp_t n_samples = X.shape[0]
     cdef Py_ssize_t i
     cdef Node *node
     for i in range(n_samples):
@@ -82,30 +72,31 @@ cdef void _predict_regression_tree_inplace_fast_dense(
                 node = root_node + node.right_child
         out[i, k] += scale * value[node - root_node]
 
+
 def _predict_regression_tree_stages_sparse(
     object[:, :] estimators,
     object X,
     double scale,
-    cnp.float64_t[:, :] out
+    float64_t[:, :] out
 ):
     """Predicts output for regression tree inplace and adds scaled value to ``out[i, k]``.
 
     The function assumes that the ndarray that wraps ``X`` is csr_matrix.
     """
-    cdef const DTYPE_t[::1] X_data = X.data
-    cdef const INT32_t[::1] X_indices = X.indices
-    cdef const INT32_t[::1] X_indptr = X.indptr
+    cdef const float32_t[::1] X_data = X.data
+    cdef const int32_t[::1] X_indices = X.indices
+    cdef const int32_t[::1] X_indptr = X.indptr
 
-    cdef SIZE_t n_samples = X.shape[0]
-    cdef SIZE_t n_features = X.shape[1]
-    cdef SIZE_t n_stages = estimators.shape[0]
-    cdef SIZE_t n_outputs = estimators.shape[1]
+    cdef intp_t n_samples = X.shape[0]
+    cdef intp_t n_features = X.shape[1]
+    cdef intp_t n_stages = estimators.shape[0]
+    cdef intp_t n_outputs = estimators.shape[1]
 
     # Indices and temporary variables
-    cdef SIZE_t sample_i
-    cdef SIZE_t feature_i
-    cdef SIZE_t stage_i
-    cdef SIZE_t output_i
+    cdef intp_t sample_i
+    cdef intp_t feature_i
+    cdef intp_t stage_i
+    cdef intp_t output_i
     cdef Node *root_node = NULL
     cdef Node *node = NULL
     cdef double *value = NULL
@@ -122,18 +113,18 @@ def _predict_regression_tree_stages_sparse(
             values[stage_i * n_outputs + output_i] = tree.value
 
     # Initialize auxiliary data-structure
-    cdef DTYPE_t feature_value = 0.
-    cdef DTYPE_t* X_sample = NULL
+    cdef float32_t feature_value = 0.
+    cdef float32_t* X_sample = NULL
 
     # feature_to_sample as a data structure records the last seen sample
     # for each feature; functionally, it is an efficient way to identify
     # which features are nonzero in the present sample.
-    cdef SIZE_t* feature_to_sample = NULL
+    cdef intp_t* feature_to_sample = NULL
 
     safe_realloc(&X_sample, n_features)
     safe_realloc(&feature_to_sample, n_features)
 
-    memset(feature_to_sample, -1, n_features * sizeof(SIZE_t))
+    memset(feature_to_sample, -1, n_features * sizeof(intp_t))
 
     # Cycle through all samples
     for sample_i in range(n_samples):
@@ -174,7 +165,7 @@ def predict_stages(
     object[:, :] estimators,
     object X,
     double scale,
-    cnp.float64_t[:, :] out
+    float64_t[:, :] out
 ):
     """Add predictions of ``estimators`` to ``out``.
 
@@ -211,11 +202,9 @@ def predict_stages(
                     value=tree.value,
                     scale=scale,
                     k=k,
-                    n_samples=X.shape[0],
-                    n_features=X.shape[1],
                     out=out
                 )
-                ## out[:, k] += scale * tree.predict(X).ravel()
+                # out[:, k] += scale * tree.predict(X).ravel()
 
 
 def predict_stage(
@@ -223,7 +212,7 @@ def predict_stage(
     int stage,
     object X,
     double scale,
-    cnp.float64_t[:, :] out
+    float64_t[:, :] out
 ):
     """Add predictions of ``estimators[stage]`` to ``out``.
 
@@ -236,38 +225,38 @@ def predict_stage(
 
 
 def _random_sample_mask(
-    cnp.npy_intp n_total_samples,
-    cnp.npy_intp n_total_in_bag,
+    intp_t n_total_samples,
+    intp_t n_total_in_bag,
     random_state
 ):
-     """Create a random sample mask where ``n_total_in_bag`` elements are set.
+    """Create a random sample mask where ``n_total_in_bag`` elements are set.
 
-     Parameters
-     ----------
-     n_total_samples : int
-         The length of the resulting mask.
+    Parameters
+    ----------
+    n_total_samples : int
+        The length of the resulting mask.
 
-     n_total_in_bag : int
-         The number of elements in the sample mask which are set to 1.
+    n_total_in_bag : int
+        The number of elements in the sample mask which are set to 1.
 
-     random_state : RandomState
-         A numpy ``RandomState`` object.
+    random_state : RandomState
+        A numpy ``RandomState`` object.
 
-     Returns
-     -------
-     sample_mask : np.ndarray, shape=[n_total_samples]
-         An ndarray where ``n_total_in_bag`` elements are set to ``True``
-         the others are ``False``.
-     """
-     cdef cnp.float64_t[::1] rand = random_state.uniform(size=n_total_samples)
-     cdef cnp.uint8_t[::1] sample_mask = np_zeros((n_total_samples,), dtype=bool)
+    Returns
+    -------
+    sample_mask : np.ndarray, shape=[n_total_samples]
+        An ndarray where ``n_total_in_bag`` elements are set to ``True``
+        the others are ``False``.
+    """
+    cdef float64_t[::1] rand = random_state.uniform(size=n_total_samples)
+    cdef uint8_t[::1] sample_mask = np_zeros((n_total_samples,), dtype=bool)
 
-     cdef cnp.npy_intp n_bagged = 0
-     cdef cnp.npy_intp i = 0
+    cdef intp_t n_bagged = 0
+    cdef intp_t i = 0
 
-     for i in range(n_total_samples):
-         if rand[i] * (n_total_samples - i) < (n_total_in_bag - n_bagged):
-             sample_mask[i] = 1
-             n_bagged += 1
+    for i in range(n_total_samples):
+        if rand[i] * (n_total_samples - i) < (n_total_in_bag - n_bagged):
+            sample_mask[i] = 1
+            n_bagged += 1
 
-     return sample_mask.base
+    return sample_mask.base

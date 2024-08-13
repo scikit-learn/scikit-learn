@@ -22,19 +22,16 @@ usually gives a better estimate of the test loss
 but is computationally more demanding.
 """
 
-# Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+from scipy.special import expit
 
 from sklearn import ensemble
-from sklearn.model_selection import KFold
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import log_loss
-
-from scipy.special import expit
+from sklearn.model_selection import KFold, train_test_split
 
 # Generate data (adapted from G. Ridgeway's gbm example)
 n_samples = 1000

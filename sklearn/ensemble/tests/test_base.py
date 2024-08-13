@@ -2,20 +2,20 @@
 Testing for the base module (sklearn.ensemble.base).
 """
 
-# Authors: Gilles Louppe
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+from collections import OrderedDict
 
 import numpy as np
-import pytest
 
 from sklearn.datasets import load_iris
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.ensemble import BaggingClassifier
 from sklearn.ensemble._base import _set_random_states
-from sklearn.linear_model import Perceptron
-from collections import OrderedDict
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.pipeline import Pipeline
 from sklearn.feature_selection import SelectFromModel
+from sklearn.linear_model import Perceptron
+from sklearn.pipeline import Pipeline
 
 
 def test_base():
@@ -107,13 +107,3 @@ def test_set_random_states():
             est1.get_params()["clf__random_state"]
             == est2.get_params()["clf__random_state"]
         )
-
-
-# TODO(1.4): remove
-def test_validate_estimator_value_error():
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
-    model = BaggingClassifier(estimator=Perceptron(), base_estimator=Perceptron())
-    err_msg = "Both `estimator` and `base_estimator` were set. Only set `estimator`."
-    with pytest.raises(ValueError, match=err_msg):
-        model.fit(X, y)

@@ -14,17 +14,15 @@ identical to training the SVC on 100% of the data.
 
 """
 
-# Authors: Clay Woolam   <clay@woolam.org>
-#          Oliver Rausch <rauscho@ethz.ch>
-# License: BSD
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import numpy as np
 import matplotlib.pyplot as plt
-from sklearn import datasets
-from sklearn.svm import SVC
-from sklearn.semi_supervised import LabelSpreading
-from sklearn.semi_supervised import SelfTrainingClassifier
+import numpy as np
 
+from sklearn import datasets
+from sklearn.semi_supervised import LabelSpreading, SelfTrainingClassifier
+from sklearn.svm import SVC
 
 iris = datasets.load_iris()
 

@@ -1,12 +1,12 @@
 cimport numpy as cnp
 
 from libcpp.vector cimport vector
-from ..utils._typedefs cimport ITYPE_t, DTYPE_t, INT32TYPE_t, INT64TYPE_t
+from ..utils._typedefs cimport intp_t, float64_t, int32_t, int64_t
 
 ctypedef fused vector_typed:
-    vector[DTYPE_t]
-    vector[ITYPE_t]
-    vector[INT32TYPE_t]
-    vector[INT64TYPE_t]
+    vector[float64_t]
+    vector[intp_t]
+    vector[int32_t]
+    vector[int64_t]
 
 cdef cnp.ndarray vector_to_nd_array(vector_typed * vect_ptr)

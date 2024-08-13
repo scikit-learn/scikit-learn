@@ -16,9 +16,8 @@ stacking strategy. Stacking slightly improves the overall performance.
 
 """
 
-# Authors: Guillaume Lemaitre <g.lemaitre58@gmail.com>
-#          Maria Telenczuk    <https://github.com/maikia>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Download the dataset
@@ -45,7 +44,7 @@ from sklearn.utils import shuffle
 
 
 def load_ames_housing():
-    df = fetch_openml(name="house_prices", as_frame=True, parser="pandas")
+    df = fetch_openml(name="house_prices", as_frame=True)
     X = df.data
     y = df.target
 
@@ -131,8 +130,7 @@ tree_preprocessor
 # Then, we will now define the preprocessor used when the ending regressor
 # is a linear model.
 
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 cat_linear_processor = OneHotEncoder(handle_unknown="ignore")
 num_linear_processor = make_pipeline(
@@ -206,9 +204,11 @@ stacking_regressor
 
 
 import time
+
 import matplotlib.pyplot as plt
+
 from sklearn.metrics import PredictionErrorDisplay
-from sklearn.model_selection import cross_validate, cross_val_predict
+from sklearn.model_selection import cross_val_predict, cross_validate
 
 fig, axs = plt.subplots(2, 2, figsize=(9, 7))
 axs = np.ravel(axs)

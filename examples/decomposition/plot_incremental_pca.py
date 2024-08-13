@@ -19,11 +19,11 @@ incremental approaches.
 
 """
 
-# Authors: Kyle Kastner
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.datasets import load_iris
 from sklearn.decomposition import PCA, IncrementalPCA

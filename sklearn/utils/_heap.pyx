@@ -1,14 +1,14 @@
 from cython cimport floating
 
-from ._typedefs cimport ITYPE_t
+from ._typedefs cimport intp_t
 
 
 cdef inline int heap_push(
     floating* values,
-    ITYPE_t* indices,
-    ITYPE_t size,
+    intp_t* indices,
+    intp_t size,
     floating val,
-    ITYPE_t val_idx,
+    intp_t val_idx,
 ) noexcept nogil:
     """Push a tuple (val, val_idx) onto a fixed-size max-heap.
 
@@ -40,7 +40,7 @@ cdef inline int heap_push(
 
     """
     cdef:
-        ITYPE_t current_idx, left_child_idx, right_child_idx, swap_idx
+        intp_t current_idx, left_child_idx, right_child_idx, swap_idx
 
     # Check if val should be in heap
     if val >= values[0]:

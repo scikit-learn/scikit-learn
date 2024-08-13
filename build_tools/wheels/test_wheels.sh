@@ -3,20 +3,24 @@
 set -e
 set -x
 
-UNAME=$(uname)
+python -c "import joblib; print(f'Number of cores (physical): \
+{joblib.cpu_count()} ({joblib.cpu_count(only_physical_cores=True)})')"
 
-if [[ "$UNAME" != "Linux" ]]; then
-    # The Linux test environment is run in a Docker container and
-    # it is not possible to copy the test configuration file (yet)
-    cp $CONFTEST_PATH $CONFTEST_NAME
+FREE_THREADED_BUILD="$(python -c"import sysconfig; print(bool(sysconfig.get_config_var('Py_GIL_DISABLED')))")"
+if [[ $FREE_THREADED_BUILD == "True" ]]; then
+    # TODO: delete when importing numpy no longer enables the GIL
+    # setting to zero ensures the GIL is disabled while running the
+    # tests under free-threaded python
+    export PYTHON_GIL=0
 fi
 
 # Test that there are no links to system libraries in the
 # threadpoolctl output section of the show_versions output:
 python -c "import sklearn; sklearn.show_versions()"
 
-if [ ! -z "$CPU_COUNT" ]; then
-    pytest --pyargs sklearn -n $CPU_COUNT
+if pip show -qq pytest-xdist; then
+    XDIST_WORKERS=$(python -c "import joblib; print(joblib.cpu_count(only_physical_cores=True))")
+    pytest --pyargs sklearn -n $XDIST_WORKERS
 else
     pytest --pyargs sklearn
 fi

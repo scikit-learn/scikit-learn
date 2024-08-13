@@ -1,14 +1,16 @@
-"""
-The :mod:`sklearn.tree` module includes decision tree-based models for
-classification and regression.
-"""
+"""Decision tree based models for classification and regression."""
 
-from ._classes import BaseDecisionTree
-from ._classes import DecisionTreeClassifier
-from ._classes import DecisionTreeRegressor
-from ._classes import ExtraTreeClassifier
-from ._classes import ExtraTreeRegressor
-from ._export import export_graphviz, plot_tree, export_text
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+from ._classes import (
+    BaseDecisionTree,
+    DecisionTreeClassifier,
+    DecisionTreeRegressor,
+    ExtraTreeClassifier,
+    ExtraTreeRegressor,
+)
+from ._export import export_graphviz, export_text, plot_tree
 
 __all__ = [
     "BaseDecisionTree",

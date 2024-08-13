@@ -12,13 +12,14 @@ measured using the explained variance a.k.a. R^2.
 
 """
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Generate sample data
 # --------------------
 import numpy as np
+
 from sklearn import linear_model
 from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split

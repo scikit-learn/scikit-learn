@@ -12,9 +12,9 @@ classifier will also be demonstrated.
 
 """
 
-# Author: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
-#         Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-# License: BSD 3 clause.
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Dataset
 # -------
@@ -78,7 +78,7 @@ clf_list = [
 # %%
 fig = plt.figure(figsize=(10, 10))
 gs = GridSpec(4, 2)
-colors = plt.cm.get_cmap("Dark2")
+colors = plt.get_cmap("Dark2")
 
 ax_calibration_curve = fig.add_subplot(gs[:2, :2])
 calibration_displays = {}
@@ -140,11 +140,11 @@ from collections import defaultdict
 import pandas as pd
 
 from sklearn.metrics import (
+    brier_score_loss,
+    f1_score,
+    log_loss,
     precision_score,
     recall_score,
-    f1_score,
-    brier_score_loss,
-    log_loss,
     roc_auc_score,
 )
 
@@ -155,11 +155,11 @@ for i, (clf, name) in enumerate(clf_list):
     y_pred = clf.predict(X_test)
     scores["Classifier"].append(name)
 
-    for metric in [brier_score_loss, log_loss]:
+    for metric in [brier_score_loss, log_loss, roc_auc_score]:
         score_name = metric.__name__.replace("_", " ").replace("score", "").capitalize()
         scores[score_name].append(metric(y_test, y_prob[:, 1]))
 
-    for metric in [precision_score, recall_score, f1_score, roc_auc_score]:
+    for metric in [precision_score, recall_score, f1_score]:
         score_name = metric.__name__.replace("_", " ").replace("score", "").capitalize()
         scores[score_name].append(metric(y_test, y_pred))
 
@@ -300,11 +300,11 @@ for i, (clf, name) in enumerate(clf_list):
     y_pred = clf.predict(X_test)
     scores["Classifier"].append(name)
 
-    for metric in [brier_score_loss, log_loss]:
+    for metric in [brier_score_loss, log_loss, roc_auc_score]:
         score_name = metric.__name__.replace("_", " ").replace("score", "").capitalize()
         scores[score_name].append(metric(y_test, y_prob[:, 1]))
 
-    for metric in [precision_score, recall_score, f1_score, roc_auc_score]:
+    for metric in [precision_score, recall_score, f1_score]:
         score_name = metric.__name__.replace("_", " ").replace("score", "").capitalize()
         scores[score_name].append(metric(y_test, y_pred))
 

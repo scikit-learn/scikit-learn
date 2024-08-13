@@ -8,26 +8,34 @@ This implementation is modified from Matthew D. Hoffman's onlineldavb code
 Link: https://github.com/blei-lab/onlineldavb
 """
 
-# Author: Chyi-Kwei Yau
-# Author: Matthew D. Hoffman (original onlineldavb implementation)
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from numbers import Integral, Real
 
 import numpy as np
 import scipy.sparse as sp
-from scipy.special import gammaln, logsumexp
 from joblib import effective_n_jobs
+from scipy.special import gammaln, logsumexp
 
-from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
+from ..base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
 from ..utils import check_random_state, gen_batches, gen_even_slices
-from ..utils.validation import check_non_negative
-from ..utils.validation import check_is_fitted
-from ..utils.parallel import delayed, Parallel
 from ..utils._param_validation import Interval, StrOptions
-
+from ..utils.parallel import Parallel, delayed
+from ..utils.validation import check_is_fitted, check_non_negative
+from ._online_lda_fast import (
+    _dirichlet_expectation_1d as cy_dirichlet_expectation_1d,
+)
+from ._online_lda_fast import (
+    _dirichlet_expectation_2d,
+)
 from ._online_lda_fast import (
     mean_change as cy_mean_change,
-    _dirichlet_expectation_1d as cy_dirichlet_expectation_1d,
-    _dirichlet_expectation_2d,
 )
 
 EPS = np.finfo(float).eps
@@ -107,7 +115,7 @@ def _update_doc_distribution(
         X_indptr = X.indptr
 
     # These cython functions are called in a nested loop on usually very small arrays
-    # (lenght=n_topics). In that case, finding the appropriate signature of the
+    # (length=n_topics). In that case, finding the appropriate signature of the
     # fused-typed function can be more costly than its execution, hence the dispatch
     # is done outside of the loop.
     ctype = "float" if X.dtype == np.float32 else "double"
@@ -187,15 +195,14 @@ class LatentDirichletAllocation(
         In general, if the data size is large, the online update will be much
         faster than the batch update.
 
-        Valid options::
+        Valid options:
 
-            'batch': Batch variational Bayes method. Use all training data in
-                each EM update.
-                Old `components_` will be overwritten in each iteration.
-            'online': Online variational Bayes method. In each EM update, use
-                mini-batch of training data to update the ``components_``
-                variable incrementally. The learning rate is controlled by the
-                ``learning_decay`` and the ``learning_offset`` parameters.
+        - 'batch': Batch variational Bayes method. Use all training data in each EM
+          update. Old `components_` will be overwritten in each iteration.
+        - 'online': Online variational Bayes method. In each EM update, use mini-batch
+          of training data to update the ``components_`` variable incrementally. The
+          learning rate is controlled by the ``learning_decay`` and the
+          ``learning_offset`` parameters.
 
         .. versionchanged:: 0.20
             The default learning method is now ``"batch"``.
@@ -233,8 +240,7 @@ class LatentDirichletAllocation(
         Total number of documents. Only used in the :meth:`partial_fit` method.
 
     perp_tol : float, default=1e-1
-        Perplexity tolerance in batch learning. Only used when
-        ``evaluate_every`` is greater than 0.
+        Perplexity tolerance. Only used when ``evaluate_every`` is greater than 0.
 
     mean_change_tol : float, default=1e-3
         Stopping tolerance for updating document topic distribution in E-step.
@@ -568,6 +574,7 @@ class LatentDirichletAllocation(
 
         return X
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y=None):
         """Online VB with Mini-Batch update.
 
@@ -585,9 +592,6 @@ class LatentDirichletAllocation(
             Partially fitted estimator.
         """
         first_time = not hasattr(self, "components_")
-
-        if first_time:
-            self._validate_params()
 
         X = self._check_non_neg_array(
             X, reset_n_features=first_time, whom="LatentDirichletAllocation.partial_fit"
@@ -618,6 +622,7 @@ class LatentDirichletAllocation(
 
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Learn model for the data X with variational Bayes method.
 
@@ -637,7 +642,6 @@ class LatentDirichletAllocation(
         self
             Fitted estimator.
         """
-        self._validate_params()
         X = self._check_non_neg_array(
             X, reset_n_features=True, whom="LatentDirichletAllocation.fit"
         )

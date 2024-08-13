@@ -23,14 +23,16 @@ achieve a better V-measure than clusters found by MiniBatchKMeans.
 
 """
 
-from collections import defaultdict
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import operator
+from collections import defaultdict
 from time import time
 
 import numpy as np
 
-from sklearn.cluster import SpectralCoclustering
-from sklearn.cluster import MiniBatchKMeans
+from sklearn.cluster import MiniBatchKMeans, SpectralCoclustering
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.cluster import v_measure_score

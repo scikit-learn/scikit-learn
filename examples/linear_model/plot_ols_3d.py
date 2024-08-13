@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 =========================================================
 Sparsity Example: Fitting only features 1  and 2
@@ -10,15 +9,15 @@ has a strong coefficient on the full model, it does not
 give us much regarding `y` when compared to just feature 1.
 """
 
-# Code source: Gaël Varoquaux
-# Modified for documentation by Jaques Grobler
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # First we load the diabetes dataset.
 
-from sklearn import datasets
 import numpy as np
+
+from sklearn import datasets
 
 X, y = datasets.load_diabetes(return_X_y=True)
 indices = (0, 1)

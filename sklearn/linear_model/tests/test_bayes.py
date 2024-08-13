@@ -1,21 +1,20 @@
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Fabian Pedregosa <fabian.pedregosa@inria.fr>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from math import log
 
 import numpy as np
 import pytest
 
-
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_less
-from sklearn.utils import check_random_state
-from sklearn.linear_model import BayesianRidge, ARDRegression
-from sklearn.linear_model import Ridge
 from sklearn import datasets
+from sklearn.linear_model import ARDRegression, BayesianRidge, Ridge
+from sklearn.utils import check_random_state
+from sklearn.utils._testing import (
+    _convert_container,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_less,
+)
 from sklearn.utils.extmath import fast_logdet
 
 diabetes = datasets.load_diabetes()
@@ -73,7 +72,7 @@ def test_bayesian_ridge_score_values():
         alpha_2=alpha_2,
         lambda_1=lambda_1,
         lambda_2=lambda_2,
-        n_iter=1,
+        max_iter=1,
         fit_intercept=False,
         compute_score=True,
     )
@@ -174,7 +173,7 @@ def test_update_of_sigma_in_ard():
     # of the ARDRegression algorithm. See issue #10128.
     X = np.array([[1, 0], [0, 0]])
     y = np.array([0, 0])
-    clf = ARDRegression(n_iter=1)
+    clf = ARDRegression(max_iter=1)
     clf.fit(X, y)
     # With the inputs above, ARDRegression prunes both of the two coefficients
     # in the first iteration. Hence, the expected shape of `sigma_` is (0, 0).
@@ -209,7 +208,8 @@ def test_ard_accuracy_on_easy_problem(global_random_seed, n_samples, n_features)
     assert abs_coef_error < 1e-10
 
 
-def test_return_std():
+@pytest.mark.parametrize("constructor_name", ["array", "dataframe"])
+def test_return_std(constructor_name):
     # Test return_std option for both Bayesian regressors
     def f(X):
         return np.dot(X, w) + b
@@ -225,7 +225,10 @@ def test_return_std():
     b = 1.0
 
     X = np.random.random((n_train, d))
+    X = _convert_container(X, constructor_name)
+
     X_test = np.random.random((n_test, d))
+    X_test = _convert_container(X_test, constructor_name)
 
     for decimal, noise_mult in enumerate([1, 0.1, 0.01]):
         y = f_noise(X, noise_mult)

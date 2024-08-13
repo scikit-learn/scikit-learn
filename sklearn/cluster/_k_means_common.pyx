@@ -1,12 +1,5 @@
-# Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#         Olivier Grisel <olivier.grisel@ensta.org>
-#         Lars Buitinck
-#
-# License: BSD 3 clause
-
-# TODO: We still need to use ndarrays instead of typed memoryviews when using
-# fused types and when the array may be read-only (for instance when it's
-# provided by the user). This is fixed in cython > 0.3.
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 from cython cimport floating
@@ -35,11 +28,14 @@ cdef floating _euclidean_dense_dense(
 
     # We manually unroll the loop for better cache optimization.
     for i in range(n):
-        result += ((a[0] - b[0]) * (a[0] - b[0])
-                  +(a[1] - b[1]) * (a[1] - b[1])
-                  +(a[2] - b[2]) * (a[2] - b[2])
-                  +(a[3] - b[3]) * (a[3] - b[3]))
-        a += 4; b += 4
+        result += (
+            (a[0] - b[0]) * (a[0] - b[0]) +
+            (a[1] - b[1]) * (a[1] - b[1]) +
+            (a[2] - b[2]) * (a[2] - b[2]) +
+            (a[3] - b[3]) * (a[3] - b[3])
+        )
+        a += 4
+        b += 4
 
     for i in range(rem):
         result += (a[i] - b[i]) * (a[i] - b[i])
@@ -77,7 +73,8 @@ cdef floating _euclidean_sparse_dense(
 
     result += b_squared_norm
 
-    if result < 0: result = 0.0
+    if result < 0:
+        result = 0.0
 
     return result if squared else sqrt(result)
 
@@ -192,6 +189,11 @@ cpdef void _relocate_empty_clusters_dense(
         int new_cluster_id, old_cluster_id, far_idx, idx, k
         floating weight
 
+    if np.max(distances) == 0:
+        # Happens when there are more clusters than non-duplicate samples. Relocating
+        # is pointless in this case.
+        return
+
     for idx in range(n_empty):
 
         new_cluster_id = empty_clusters[idx]
@@ -241,6 +243,11 @@ cpdef void _relocate_empty_clusters_sparse(
             X_indices[X_indptr[i]: X_indptr[i + 1]],
             centers_old[j], centers_squared_norms[j], True)
 
+    if np.max(distances) == 0:
+        # Happens when there are more clusters than non-duplicate samples. Relocating
+        # is pointless in this case.
+        return
+
     cdef:
         int[::1] far_from_centers = np.argpartition(distances, -n_empty)[:-n_empty-1:-1].astype(np.int32)
 
@@ -274,12 +281,18 @@ cdef void _average_centers(
         int n_features = centers.shape[1]
         int j, k
         floating alpha
+        int argmax_weight = np.argmax(weight_in_clusters)
 
     for j in range(n_clusters):
         if weight_in_clusters[j] > 0:
             alpha = 1.0 / weight_in_clusters[j]
             for k in range(n_features):
                 centers[j, k] *= alpha
+        else:
+            # For convenience, we avoid setting empty clusters at the origin but place
+            # them at the location of the biggest cluster.
+            for k in range(n_features):
+                centers[j, k] = centers[argmax_weight, k]
 
 
 cdef void _center_shift(
