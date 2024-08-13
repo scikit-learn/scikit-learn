@@ -2780,6 +2780,7 @@ def test_array_api_search_cv_classifier(SearchCV, array_namespace, device, dtype
             LinearDiscriminantAnalysis(),
             {"tol": [1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7]},
             cv=2,
+            error_score="raise",
         )
         searcher.fit(X_xp, y_xp)
         searcher.score(X_xp, y_xp)
