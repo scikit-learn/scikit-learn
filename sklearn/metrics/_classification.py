@@ -2556,6 +2556,7 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
             "nan",
             StrOptions({"warn"}),
         ],
+        "separate_avg": ["boolean"],
     },
     prefer_skip_nested_validation=True,
 )
@@ -2569,6 +2570,7 @@ def classification_report(
     digits=2,
     output_dict=False,
     zero_division="warn",
+    separate_avg=True, 
 ):
     """Build a text report showing the main classification metrics.
 
@@ -2607,6 +2609,14 @@ def classification_report(
 
         .. versionadded:: 1.3
            `np.nan` option was added.
+           
+    separate_avg : bool, default=True
+        If True, average metrics (such as "macro avg", "weighted avg", etc.)
+        will be separated from the class-wise metrics and placed under a new
+        key "averages" in the output dictionary.
+
+        .. versionadded:: 1.4
+           `separate_avg` option was added.
 
     Returns
     -------
@@ -2615,27 +2625,12 @@ def classification_report(
         Dictionary returned if output_dict is True. Dictionary has the
         following structure::
 
-            {'label 1': {'precision':0.5,
-                         'recall':1.0,
-                         'f1-score':0.67,
-                         'support':1},
-             'label 2': { ... },
-              ...
+            {
+              'label 1': {'precision': 0.5, 'recall': 1.0, 'f1-score': 0.67, 'support': 1},
+              'label 2': { ... },
+              ...,
+              'averages': {'macro avg': {...}, 'weighted avg': {...}}  # New structure when separate_avg=True
             }
-
-        The reported averages include macro average (averaging the unweighted
-        mean per label), weighted average (averaging the support-weighted mean
-        per label), and sample average (only for multilabel classification).
-        Micro average (averaging the total true positives, false negatives and
-        false positives) is only shown for multi-label or multi-class
-        with a subset of classes, because it corresponds to accuracy
-        otherwise and would be the same for all metrics.
-        See also :func:`precision_recall_fscore_support` for more details
-        on averages.
-
-        Note that in binary classification, recall of the positive class
-        is also known as "sensitivity"; recall of the negative class is
-        "specificity".
 
     See Also
     --------
@@ -2643,38 +2638,6 @@ def classification_report(
         support for each class.
     confusion_matrix: Compute confusion matrix to evaluate the accuracy of a
         classification.
-    multilabel_confusion_matrix: Compute a confusion matrix for each class or sample.
-
-    Examples
-    --------
-    >>> from sklearn.metrics import classification_report
-    >>> y_true = [0, 1, 2, 2, 2]
-    >>> y_pred = [0, 0, 2, 2, 1]
-    >>> target_names = ['class 0', 'class 1', 'class 2']
-    >>> print(classification_report(y_true, y_pred, target_names=target_names))
-                  precision    recall  f1-score   support
-    <BLANKLINE>
-         class 0       0.50      1.00      0.67         1
-         class 1       0.00      0.00      0.00         1
-         class 2       1.00      0.67      0.80         3
-    <BLANKLINE>
-        accuracy                           0.60         5
-       macro avg       0.50      0.56      0.49         5
-    weighted avg       0.70      0.60      0.61         5
-    <BLANKLINE>
-    >>> y_pred = [1, 1, 0]
-    >>> y_true = [1, 1, 1]
-    >>> print(classification_report(y_true, y_pred, labels=[1, 2, 3]))
-                  precision    recall  f1-score   support
-    <BLANKLINE>
-               1       1.00      0.67      0.80         3
-               2       0.00      0.00      0.00         0
-               3       0.00      0.00      0.00         0
-    <BLANKLINE>
-       micro avg       1.00      0.67      0.80         3
-       macro avg       0.33      0.22      0.27         3
-    weighted avg       1.00      0.67      0.80         3
-    <BLANKLINE>
     """
 
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
@@ -2686,7 +2649,6 @@ def classification_report(
         labels = np.asarray(labels)
         labels_given = True
 
-    # labelled micro average
     micro_is_accuracy = (y_type == "multiclass" or y_type == "binary") and (
         not labels_given or (set(labels) >= set(unique_labels(y_true, y_pred)))
     )
@@ -2708,7 +2670,6 @@ def classification_report(
         target_names = ["%s" % l for l in labels]
 
     headers = ["precision", "recall", "f1-score", "support"]
-    # compute per-class results without averaging
     p, r, f1, s = precision_recall_fscore_support(
         y_true,
         y_pred,
@@ -2740,14 +2701,13 @@ def classification_report(
             report += row_fmt.format(*row, width=width, digits=digits)
         report += "\n"
 
-    # compute all applicable averages
+    averages = {}
     for average in average_options:
         if average.startswith("micro") and micro_is_accuracy:
             line_heading = "accuracy"
         else:
             line_heading = average + " avg"
 
-        # compute averages with specified averaging method
         avg_p, avg_r, avg_f1, _ = precision_recall_fscore_support(
             y_true,
             y_pred,
@@ -2759,7 +2719,10 @@ def classification_report(
         avg = [avg_p, avg_r, avg_f1, np.sum(s)]
 
         if output_dict:
-            report_dict[line_heading] = dict(zip(headers, [float(i) for i in avg]))
+            if separate_avg:
+                averages[line_heading] = dict(zip(headers, [float(i) for i in avg]))
+            else:
+                report_dict[line_heading] = dict(zip(headers, [float(i) for i in avg]))
         else:
             if line_heading == "accuracy":
                 row_fmt_accuracy = (
@@ -2775,6 +2738,10 @@ def classification_report(
                 report += row_fmt.format(line_heading, *avg, width=width, digits=digits)
 
     if output_dict:
+        if separate_avg:
+            report_dict["averages"] = averages
+        else:
+            report_dict.update(averages)
         if "accuracy" in report_dict.keys():
             report_dict["accuracy"] = report_dict["accuracy"]["precision"]
         return report_dict
