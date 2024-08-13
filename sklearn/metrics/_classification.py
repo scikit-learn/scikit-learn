@@ -2655,8 +2655,8 @@ def classification_report(
         support for each class.
     confusion_matrix: Compute confusion matrix to evaluate the accuracy of a
         classification.
-        multilabel_confusion_matrix: Compute a confusion matrix for each class or sample.
-    
+    multilabel_confusion_matrix: Compute a confusion matrix for each class or sample.
+
     Examples
     --------
     >>> from sklearn.metrics import classification_report
