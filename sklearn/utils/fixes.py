@@ -4,26 +4,26 @@ If you add content to this file, please give the version of the package
 at which the fix is no longer needed.
 """
 
-# Authors: Emmanuelle Gouillart <emmanuelle.gouillart@normalesup.org>
-#          Gael Varoquaux <gael.varoquaux@normalesup.org>
-#          Fabian Pedregosa <fpedregosa@acm.org>
-#          Lars Buitinck
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import platform
 import struct
+import sys
 
 import numpy as np
 import scipy
 import scipy.sparse.linalg
 import scipy.stats
 
-import sklearn
+try:
+    import pandas as pd
+except ImportError:
+    pd = None
 
 from ..externals._packaging.version import parse as parse_version
+from .parallel import _get_threadpool_controller
 
-_IS_PYPY = platform.python_implementation() == "PyPy"
 _IS_32BIT = 8 * struct.calcsize("P") == 32
 _IS_WASM = platform.machine() in ["wasm32", "wasm64"]
 
@@ -227,13 +227,6 @@ else:
     from numpy import ComplexWarning, VisibleDeprecationWarning  # type: ignore  # noqa
 
 
-# TODO: Remove when Scipy 1.6 is the minimum supported version
-try:
-    from scipy.integrate import trapezoid  # type: ignore  # noqa
-except ImportError:
-    from scipy.integrate import trapz as trapezoid  # type: ignore  # noqa
-
-
 # TODO: Adapt when Pandas > 2.2 is the minimum supported version
 def pd_fillna(pd, frame):
     pd_version = parse_version(pd.__version__).base_version
@@ -391,7 +384,7 @@ def _in_unstable_openblas_configuration():
     import numpy  # noqa
     import scipy  # noqa
 
-    modules_info = sklearn._threadpool_controller.info()
+    modules_info = _get_threadpool_controller().info()
 
     open_blas_used = any(info["internal_api"] == "openblas" for info in modules_info)
     if not open_blas_used:
@@ -415,3 +408,21 @@ def _in_unstable_openblas_configuration():
             # See discussions in https://github.com/numpy/numpy/issues/19411
             return True  # pragma: no cover
     return False
+
+
+# TODO: remove when pandas >= 1.4 is the minimum supported version
+if pd is not None and parse_version(pd.__version__) < parse_version("1.4"):
+
+    def _create_pandas_dataframe_from_non_pandas_container(X, *, index, copy):
+        pl = sys.modules.get("polars")
+        if pl is None or not isinstance(X, pl.DataFrame):
+            return pd.DataFrame(X, index=index, copy=copy)
+
+        # Bug in pandas<1.4: when constructing a pandas DataFrame from a polars
+        # DataFrame, the data is transposed ...
+        return pd.DataFrame(X.to_numpy(), index=index, copy=copy)
+
+else:
+
+    def _create_pandas_dataframe_from_non_pandas_container(X, *, index, copy):
+        return pd.DataFrame(X, index=index, copy=copy)

@@ -2,11 +2,8 @@
 Ridge regression
 """
 
-# Author: Mathieu Blondel <mathieu@mblondel.org>
-#         Reuben Fletcher-Costin <reuben.fletchercostin@gmail.com>
-#         Fabian Pedregosa <fabian@fseoane.net>
-#         Michael Eickenberg <michael.eickenberg@nsup.org>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 import numbers
@@ -573,9 +570,9 @@ def ridge_regression(
     >>> y = 2.0 * X[:, 0] - 1.0 * X[:, 1] + 0.1 * rng.standard_normal(100)
     >>> coef, intercept = ridge_regression(X, y, alpha=1.0, return_intercept=True)
     >>> list(coef)
-    [1.9..., -1.0..., -0.0..., -0.0...]
+    [np.float64(1.9...), np.float64(-1.0...), np.float64(-0.0...), np.float64(-0.0...)]
     >>> intercept
-    -0.0...
+    np.float64(-0.0...)
     """
     return _ridge_regression(
         X,
@@ -1244,6 +1241,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
             y,
             accept_sparse=_accept_sparse,
             dtype=[xp.float64, xp.float32],
+            force_writeable=True,
             multi_output=True,
             y_numeric=True,
         )
@@ -1293,6 +1291,7 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
             accept_sparse=accept_sparse,
             multi_output=True,
             y_numeric=False,
+            force_writeable=True,
         )
 
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)

@@ -8,6 +8,9 @@ Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
 License: BSD 3 clause
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import warnings
 from heapq import heapify, heappop, heappush, heappushpop
 from numbers import Integral, Real
@@ -755,8 +758,7 @@ def _hc_cut(n_clusters, children, n_leaves):
     if n_clusters > n_leaves:
         raise ValueError(
             "Cannot extract more clusters than samples: "
-            "%s clusters where given for a tree with %s leaves."
-            % (n_clusters, n_leaves)
+            f"{n_clusters} clusters were given for a tree with {n_leaves} leaves."
         )
     # In this function, we store nodes as a heap to avoid recomputing
     # the max of the nodes: the first element is always the smallest
@@ -817,6 +819,10 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         the data into a connectivity matrix, such as derived from
         `kneighbors_graph`. Default is ``None``, i.e, the
         hierarchical clustering algorithm is unstructured.
+
+        For an example of connectivity matrix using
+        :class:`~sklearn.neighbors.kneighbors_graph`, see
+        :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`.
 
     compute_full_tree : 'auto' or bool, default='auto'
         Stop early the construction of the tree at ``n_clusters``. This is
@@ -993,7 +999,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         ----------
         X : ndarray of shape (n_samples, n_features) or (n_samples, n_samples)
             Training instances to cluster, or distances between instances if
-            ``affinity='precomputed'``.
+            ``metric='precomputed'``.
 
         Returns
         -------

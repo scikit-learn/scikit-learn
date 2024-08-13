@@ -1,6 +1,5 @@
-# Author: Johannes Schönberger
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Integral, Real
@@ -364,7 +363,7 @@ class RANSACRegressor(
         # because that would allow y to be csr. Delay expensive finiteness
         # check to the estimator's own input validation.
         _raise_for_params(fit_params, self, "fit")
-        check_X_params = dict(accept_sparse="csr", force_all_finite=False)
+        check_X_params = dict(accept_sparse="csr", ensure_all_finite=False)
         check_y_params = dict(ensure_2d=False)
         X, y = self._validate_data(
             X, y, validate_separately=(check_X_params, check_y_params)
@@ -631,7 +630,7 @@ class RANSACRegressor(
         check_is_fitted(self)
         X = self._validate_data(
             X,
-            force_all_finite=False,
+            ensure_all_finite=False,
             accept_sparse=True,
             reset=False,
         )
@@ -679,7 +678,7 @@ class RANSACRegressor(
         check_is_fitted(self)
         X = self._validate_data(
             X,
-            force_all_finite=False,
+            ensure_all_finite=False,
             accept_sparse=True,
             reset=False,
         )

@@ -1,11 +1,11 @@
-"""Random Projection transformers.
+"""Random projection transformers.
 
-Random Projections are a simple and computationally efficient way to
+Random projections are a simple and computationally efficient way to
 reduce the dimensionality of the data by trading a controlled amount
 of accuracy (as additional variance) for faster processing times and
 smaller model sizes.
 
-The dimensions and distribution of Random Projections matrices are
+The dimensions and distribution of random projections matrices are
 controlled so as to preserve the pairwise distances between any two
 samples of the dataset.
 
@@ -20,12 +20,10 @@ The main theoretical result behind the efficiency of random projection is the
   much lower dimension in such a way that distances between the points are
   nearly preserved. The map used for the embedding is at least Lipschitz,
   and can even be taken to be an orthogonal projection.
-
 """
 
-# Authors: Olivier Grisel <olivier.grisel@ensta.org>,
-#          Arnaud Joly <a.joly@ulg.ac.be>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from abc import ABCMeta, abstractmethod
@@ -120,7 +118,7 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
     --------
     >>> from sklearn.random_projection import johnson_lindenstrauss_min_dim
     >>> johnson_lindenstrauss_min_dim(1e6, eps=0.5)
-    663
+    np.int64(663)
 
     >>> johnson_lindenstrauss_min_dim(1e6, eps=[0.5, 0.1, 0.01])
     array([    663,   11841, 1112658])
@@ -737,7 +735,7 @@ class SparseRandomProjection(BaseRandomProjection):
     (25, 2759)
     >>> # very few components are non-zero
     >>> np.mean(transformer.components_ != 0)
-    0.0182...
+    np.float64(0.0182...)
     """
 
     _parameter_constraints: dict = {
