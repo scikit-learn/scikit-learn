@@ -1992,7 +1992,7 @@ def _build_pruned_tree_py(Tree tree, Tree orig_tree, const uint8_t[:] leaves_in_
         Boolean mask for leaves to include in subtree. The array must have
         the same size as the number of nodes in the original tree.
     """
-    if len(leaves_in_subtree) != orig_tree.node_count:
+    if leaves_in_subtree.shape[0] != orig_tree.node_count:
         raise ValueError(
             f"The length of leaves_in_subtree {len(leaves_in_subtree)} must be "
             f"equal to the number of nodes in the original tree {orig_tree.node_count}."
