@@ -83,6 +83,11 @@ more details.
   params to the underlying regressor.
   :pr:`29136` by :user:`Omar Salman <OmarManzoor>`.
 
+- |Feature| :class:`feature_selection.SequentialFeatureSelector` now supports
+  metadata routing in its `fit` method and passes the corresponding params to
+  the :func:`model_selection.cross_val_score` function.
+  :pr:`29260` by :user:`Omar Salman <OmarManzoor>`.
+
 - |Feature| :func:`model_selection.validation_curve` now supports metadata routing for
   the `fit` method of its estimator and for its underlying CV splitter and scorer.
   :pr:`29329` by :user:`Stefanie Senger <StefanieSenger>`.
@@ -98,6 +103,10 @@ more details.
 - |Feature| :func:`model_selection.permutation_test_score` now supports metadata routing
   for the `fit` method of its estimator and for its underlying CV splitter and scorer.
   :pr:`29266` by :user:`Adam Li <adam2392>`.
+
+- |Feature| :class:`feature_selection.RFE` and :class:`feature_selection.RFECV`
+  now support metadata routing.
+  :pr:`29312` by :user:`Omar Salman <OmarManzoor>`.
 
 Dropping support for building with setuptools
 ---------------------------------------------
@@ -160,6 +169,14 @@ Changelog
   and automatic retries in case of HTTP errors. :pr:`29354` by :user:`Olivier
   Grisel <ogrisel>`.
 
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Increase rank defficiency threshold in the whitening step of
+  :class:`decomposition.FastICA` with `whiten_solver="eigh"` to improve the
+  platform-agnosticity of the estimator. :pr:`29612` by :user:`Olivier Grisel
+  <ogrisel>`.
+
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
@@ -172,8 +189,9 @@ Changelog
 .......................
 
 - |Efficiency| Small runtime improvement of fitting
-  :class:`ensemble.HistGradientBoostingClassifier` and :class:`ensemble.HistGradientBoostingRegressor`
-  by parallelizing the initial search for bin thresholds
+  :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` by parallelizing the initial search
+  for bin thresholds.
   :pr:`28064` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Enhancement| The verbosity of :class:`ensemble.HistGradientBoostingClassifier`
@@ -188,9 +206,10 @@ Changelog
   :pr:`28622` by :user:`Adam Li <adam2392>` and
   :user:`Sérgio Pereira <sergiormpereira>`.
 
-- |Feature| :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor` now support
-  missing-values in the data matrix `X`. Missing-values are handled by randomly moving all of
-  the samples to the left, or right child node as the tree is traversed.
+- |Feature| :class:`ensemble.ExtraTreesClassifier` and
+  :class:`ensemble.ExtraTreesRegressor` now support missing-values in the data matrix
+  `X`. Missing-values are handled by randomly moving all of the samples to the left, or
+  right child node as the tree is traversed.
   :pr:`28268` by :user:`Adam Li <adam2392>`.
 
 :mod:`sklearn.impute`
@@ -244,7 +263,8 @@ Changelog
   estimator without re-fitting it.
   :pr:`29067` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Fix| Improve error message when :func:`model_selection.RepeatedStratifiedKFold.split` is called without a `y` argument
+- |Fix| Improve error message when :func:`model_selection.RepeatedStratifiedKFold.split`
+  is called without a `y` argument
   :pr:`29402` by :user:`Anurag Varma <Anurag-Varma>`.
 
 :mod:`sklearn.neighbors`
@@ -279,6 +299,11 @@ Changelog
 
 :mod:`sklearn.utils`
 ....................
+
+- |Enhancement| :func:`utils.validation.check_array` now accepts `ensure_non_negative`
+  to check for negative values in the passed array, until now only available through
+  calling :func:`utils.validation.check_non_negative`.
+  :pr:`29540` by :user:`Tamara Atanasoska <tamaraatanasoska>`.
 
 - |API| the `assert_all_finite` parameter of functions :func:`utils.check_array`,
   :func:`utils.check_X_y`, :func:`utils.as_float_array` is renamed into

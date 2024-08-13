@@ -4,7 +4,7 @@ from cython.parallel import prange
 from libc.math cimport isnan
 import numpy as np
 
-from ...utils._typedefs cimport intp_t
+from ...utils._typedefs cimport intp_t, uint8_t
 from .common cimport X_DTYPE_C
 from .common cimport Y_DTYPE_C
 from .common import Y_DTYPE
@@ -89,7 +89,7 @@ def _predict_from_binned_data(
         node_struct [:] nodes,
         const X_BINNED_DTYPE_C [:, :] binned_data,
         BITSET_INNER_DTYPE_C [:, :] binned_left_cat_bitsets,
-        const unsigned char missing_values_bin_idx,
+        const uint8_t missing_values_bin_idx,
         int n_threads,
         Y_DTYPE_C [:] out):
 
@@ -109,7 +109,7 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
         const X_BINNED_DTYPE_C [:, :] binned_data,
         const BITSET_INNER_DTYPE_C [:, :] binned_left_cat_bitsets,
         const int row,
-        const unsigned char missing_values_bin_idx) noexcept nogil:
+        const uint8_t missing_values_bin_idx) noexcept nogil:
     # Need to pass the whole array and the row index, else prange won't work.
     # See issue Cython #2798
 
