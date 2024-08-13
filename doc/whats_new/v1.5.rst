@@ -165,9 +165,6 @@ Changes impacting many modules
   :class:`pipeline.Pipeline` and :class:`preprocessing.KBinsDiscretizer`.
   :pr:`28756` by :user:`Will Dean <wd60622>`.
 
-- |Enhancement| `__sklearn_tags__` was introduced for setting tags in estimators.
-  :pr:`22606` by `Thomas Fan`_.
-
 Support for Array API
 ---------------------
 

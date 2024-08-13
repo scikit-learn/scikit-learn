@@ -4053,11 +4053,11 @@ def check_estimator_get_tags_default_keys(name, estimator_orig):
 
 def check_estimator_tags_deprecated(name, estimator_orig):
     assert not hasattr(estimator_orig, "_more_tags"), (
-        "_more_tags() was deprecated in 1.5 support will be removed in 1.7. "
+        "_more_tags() was deprecated in 1.6 support will be removed in 1.8. "
         "Please use __sklearn_tags__ instead.",
     )
     assert not hasattr(estimator_orig, "_get_tags"), (
-        "_get_tags() was deprecated in 1.5 support will be removed in 1.7. "
+        "_get_tags() was deprecated in 1.6 support will be removed in 1.8. "
         "Please use __sklearn_tags__ instead."
     )
 
