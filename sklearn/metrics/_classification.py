@@ -2629,7 +2629,7 @@ def classification_report(
               'label 1': {'precision': 0.5, 'recall': 1.0, 'f1-score': 0.67, 'support': 1},
               'label 2': { ... },
               ...,
-              'averages': {'macro avg': {...}, 'weighted avg': {...}}  # New structure when separate_avg=True
+              'averages': {'macro avg': {...}, 'weighted avg': {...}}
             }
 
     See Also
@@ -2718,24 +2718,31 @@ def classification_report(
         )
         avg = [avg_p, avg_r, avg_f1, np.sum(s)]
 
-        if output_dict:
-            if separate_avg:
-                averages[line_heading] = dict(zip(headers, [float(i) for i in avg]))
-            else:
-                report_dict[line_heading] = dict(zip(headers, [float(i) for i in avg]))
+    if output_dict:
+        if separate_avg:
+            averages[line_heading] = dict(
+                zip(headers, [float(i) for i in avg])
+            )
         else:
-            if line_heading == "accuracy":
-                row_fmt_accuracy = (
-                    "{:>{width}s} "
-                    + " {:>9.{digits}}" * 2
-                    + " {:>9.{digits}f}"
-                    + " {:>9}\n"
-                )
-                report += row_fmt_accuracy.format(
-                    line_heading, "", "", *avg[2:], width=width, digits=digits
-                )
-            else:
-                report += row_fmt.format(line_heading, *avg, width=width, digits=digits)
+            report_dict[line_heading] = dict(
+                zip(headers, [float(i) for i in avg])
+            )
+    else:
+        if line_heading == "accuracy":
+            row_fmt_accuracy = (
+                "{:>{width}s} "
+                + " {:>9.{digits}}" * 2
+                + " {:>9.{digits}f}"
+                + " {:>9}\n"
+            )
+            report += row_fmt_accuracy.format(
+                line_heading, "", "", *avg[2:], width=width, digits=digits
+            )
+        else:
+            report += row_fmt.format(
+                line_heading, *avg, width=width, digits=digits
+            )
+
 
     if output_dict:
         if separate_avg:
