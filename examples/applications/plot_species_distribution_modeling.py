@@ -17,13 +17,13 @@ to plot the coast lines and national boundaries of South America.
 
 The two species are:
 
- - `"Bradypus variegatus"
-   <http://www.iucnredlist.org/details/3038/0>`_ ,
-   the Brown-throated Sloth.
+ - `Bradypus variegatus
+   <http://www.iucnredlist.org/details/3038/0>`_,
+   the brown-throated sloth.
 
- - `"Microryzomys minutus"
-   <http://www.iucnredlist.org/details/13408/0>`_ ,
-   also known as the Forest Small Rice Rat, a rodent that lives in Peru,
+ - `Microryzomys minutus
+   <http://www.iucnredlist.org/details/13408/0>`_,
+   also known as the forest small rice rat, a rodent that lives in Peru,
    Colombia, Ecuador, Peru, and Venezuela.
 
 References
