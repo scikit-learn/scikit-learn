@@ -1,9 +1,5 @@
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Fabian Pedregosa <fabian.pedregosa@inria.fr>
-#         Olivier Grisel <olivier.grisel@ensta.org>
-#         Gael Varoquaux <gael.varoquaux@inria.fr>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numbers
 import sys
@@ -983,6 +979,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                 accept_sparse="csc",
                 order="F",
                 dtype=[np.float64, np.float32],
+                force_writeable=True,
                 accept_large_sparse=False,
                 copy=X_copied,
                 multi_output=True,
@@ -1611,6 +1608,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             check_X_params = dict(
                 accept_sparse="csc",
                 dtype=[np.float64, np.float32],
+                force_writeable=True,
                 copy=False,
                 accept_large_sparse=False,
             )
@@ -1636,6 +1634,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 accept_sparse="csc",
                 dtype=[np.float64, np.float32],
                 order="F",
+                force_writeable=True,
                 copy=copy_X,
             )
             X, y = self._validate_data(
@@ -2512,6 +2511,7 @@ class MultiTaskElasticNet(Lasso):
         check_X_params = dict(
             dtype=[np.float64, np.float32],
             order="F",
+            force_writeable=True,
             copy=self.copy_X and self.fit_intercept,
         )
         check_y_params = dict(ensure_2d=False, order="F")
@@ -3127,7 +3127,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     >>> r2_score(y, reg.predict(X))
     0.9994...
     >>> reg.alpha_
-    0.5713...
+    np.float64(0.5713...)
     >>> reg.predict(X[:1,])
     array([[153.7971...,  94.9015...]])
     """

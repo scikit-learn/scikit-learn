@@ -22,13 +22,6 @@ from sklearn.utils._testing import (
     assert_array_equal,
 )
 
-# TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
-pytestmark = pytest.mark.filterwarnings(
-    "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
-    "matplotlib.*"
-)
-
-
 X, y = make_classification(
     n_informative=1,
     n_redundant=1,

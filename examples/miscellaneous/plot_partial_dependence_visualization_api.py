@@ -13,6 +13,9 @@ customize the plot with the visualization API.
 
 """  # noqa: E501
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib.pyplot as plt
 import pandas as pd
 

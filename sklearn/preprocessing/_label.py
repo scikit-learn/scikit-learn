@@ -1,10 +1,5 @@
-# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#          Olivier Grisel <olivier.grisel@ensta.org>
-#          Andreas Mueller <amueller@ais.uni-bonn.de>
-#          Joel Nothman <joel.nothman@gmail.com>
-#          Hamzeh Alsalhi <ha258@cornell.edu>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import array
 import itertools
@@ -75,11 +70,11 @@ class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
     >>> le.fit(["paris", "paris", "tokyo", "amsterdam"])
     LabelEncoder()
     >>> list(le.classes_)
-    ['amsterdam', 'paris', 'tokyo']
+    [np.str_('amsterdam'), np.str_('paris'), np.str_('tokyo')]
     >>> le.transform(["tokyo", "tokyo", "paris"])
     array([2, 2, 1]...)
     >>> list(le.inverse_transform([2, 2, 1]))
-    ['tokyo', 'tokyo', 'paris']
+    [np.str_('tokyo'), np.str_('tokyo'), np.str_('paris')]
     """
 
     def fit(self, y):

@@ -14,6 +14,9 @@ Note that those results can be highly dependent on the value of
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import warnings
 
 import matplotlib.pyplot as plt

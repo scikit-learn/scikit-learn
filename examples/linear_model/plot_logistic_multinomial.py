@@ -9,8 +9,8 @@ are represented by the dashed lines.
 
 """
 
-# Authors: Tom Dupre la Tour <tom.dupre-la-tour@m4x.org>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -46,9 +46,7 @@ for multi_class in ("multinomial", "ovr"):
     colors = "bry"
     for i, color in zip(clf.classes_, colors):
         idx = np.where(y == i)
-        plt.scatter(
-            X[idx, 0], X[idx, 1], c=color, cmap=plt.cm.Paired, edgecolor="black", s=20
-        )
+        plt.scatter(X[idx, 0], X[idx, 1], c=color, edgecolor="black", s=20)
 
     # Plot the three one-against-all classifiers
     xmin, xmax = plt.xlim()
