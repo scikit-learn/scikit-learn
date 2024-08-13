@@ -103,8 +103,7 @@ def test_multi_target_regression_one_target():
     # Test multi target regression raises
     X, y = datasets.make_regression(n_targets=1, random_state=0)
     rgr = MultiOutputRegressor(GradientBoostingRegressor(random_state=0))
-    msg = "at least two dimensions"
-    with pytest.raises(ValueError, match=msg):
+    with pytest.raises(ValueError, match="Expected 2D array, got 1D array instead"):
         rgr.fit(X, y)
 
 
@@ -456,7 +455,7 @@ def test_multi_output_exceptions():
     # ValueError when y is continuous
     msg = "Unknown label type"
     with pytest.raises(ValueError, match=msg):
-        moc.fit(X, X[:, 1])
+        moc.fit(X, X)
 
 
 @pytest.mark.parametrize("response_method", ["predict_proba", "predict"])

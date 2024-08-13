@@ -607,7 +607,8 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         """
         self._check_feature_names(X, reset=reset)
 
-        if y is None and self._get_tags()["requires_y"]:
+        tags = self._get_tags()
+        if y is None and tags["requires_y"]:
             raise ValueError(
                 f"This {self.__class__.__name__} estimator "
                 "requires y to be passed, but the target y is None."
@@ -620,7 +621,13 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
             raise ValueError("Validation should be done on X, y or both.")
 
         default_check_params = {"estimator": self}
-        check_params = {**default_check_params, **check_params}
+        check_X_params = {**default_check_params, **check_params}
+        check_y_params = {
+            **default_check_params,
+            "multi_output": tags.get("multioutput", False),
+            "ensure_2d": tags.get("multioutput_only", False),
+            **check_params,
+        }
 
         if not cast_to_ndarray:
             if not no_val_X and no_val_y:
@@ -630,9 +637,9 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
             else:
                 out = X, y
         elif not no_val_X and no_val_y:
-            out = check_array(X, input_name="X", **check_params)
+            out = check_array(X, input_name="X", **check_X_params)
         elif no_val_X and not no_val_y:
-            out = _check_y(y, **check_params)
+            out = _check_y(y, **check_y_params)
         else:
             if validate_separately:
                 # We need this because some estimators validate X and y
