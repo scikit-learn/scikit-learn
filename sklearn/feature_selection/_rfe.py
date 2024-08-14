@@ -536,14 +536,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         more_tags = {
             "poor_score": True,
             "requires_y": True,
-            "allow_nan": True,
+            "allow_nan": _safe_tags(self.estimator, "allow_nan"),
         }
-        # Adjust allow_nan if estimator explicitly defines `allow_nan`.
-        if hasattr(self.estimator, "__sklearn_tags__") or hasattr(
-            self.estimator, "_get_tags"
-        ):
-            more_tags["allow_nan"] = _safe_tags(self.estimator, "allow_nan")
-
         return {**super().__sklearn_tags__(), **more_tags}
 
     def get_metadata_routing(self):
