@@ -20,9 +20,7 @@ from .utils._estimator_html_repr import _HTMLDocumentationLinkMixin, estimator_h
 from .utils._metadata_requests import _MetadataRequester, _routing_enabled
 from .utils._param_validation import validate_parameter_constraints
 from .utils._set_output import _SetOutputMixin
-from .utils._tags import (
-    _DEFAULT_TAGS,
-)
+from .utils._tags import _DEFAULT_TAGS, _safe_tags
 from .utils.fixes import _IS_32BIT
 from .utils.validation import (
     _check_feature_names_in,
@@ -624,8 +622,8 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         check_X_params = {**default_check_params, **check_params}
         check_y_params = {
             **default_check_params,
-            "multi_output": tags.get("multioutput", False),
-            "ensure_2d": tags.get("multioutput_only", False),
+            "multi_output": _safe_tags(self, key="multioutput"),
+            "ensure_2d": _safe_tags(self, key="multioutput_only"),
             **check_params,
         }
 
