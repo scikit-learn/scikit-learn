@@ -104,6 +104,10 @@ more details.
   for the `fit` method of its estimator and for its underlying CV splitter and scorer.
   :pr:`29266` by :user:`Adam Li <adam2392>`.
 
+- |Feature| :class:`feature_selection.RFE` and :class:`feature_selection.RFECV`
+  now support metadata routing.
+  :pr:`29312` by :user:`Omar Salman <OmarManzoor>`.
+
 Dropping support for building with setuptools
 ---------------------------------------------
 
