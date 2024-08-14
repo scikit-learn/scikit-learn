@@ -20,10 +20,18 @@ from sklearn.experimental import (
     enable_iterative_imputer,  # noqa
 )
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
+    precision_recall_fscore_support,
+    f1_score,
+    fbeta_score,
+    precision_score,
+    recall_score,
+)
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils import all_estimators
 from sklearn.utils._testing import (
     _get_func_name,
+    assert_docstring_consistency,
     check_docstring_parameters,
     ignore_warnings,
 )
@@ -320,3 +328,26 @@ def _get_all_fitted_attributes(estimator):
             fit_attr.append(name)
 
     return [k for k in fit_attr if k.endswith("_") and not k.startswith("_")]
+
+
+def test_prfs_docstring_consistency():
+    """Check docstrings parameters of related metrics are consistent."""
+    pytest.importorskip(
+        "numpydoc",
+        reason="numpydoc is required to test the docstrings",
+    )
+    assert_docstring_consistency(
+        [
+            precision_recall_fscore_support,
+            f1_score,
+            fbeta_score,
+            precision_score,
+            recall_score,
+        ],
+        include_params=True,
+        # "average" - in `recall_score` we have an additional line: 'Weighted recall
+        # is equal to accuracy.'.
+        # "zero_division" - the reason for zero division differs between f scores,
+        # precison and recall.
+        exclude_params=["average", "zero_division"],
+    )

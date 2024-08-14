@@ -712,10 +712,10 @@ def assert_docstring_consistency(
 
     Parameters
     ----------
-    objects : list of {classes, functions, data descriptors, NumpyDocString}
+    objects : list of {classes, functions, data descriptors}
         Objects to check.
-        May be `NumpyDocString` instances or objects (classes, functions or
-        data descriptors) with docstrings that can be parsed by numpydoc.
+        Objects may be classes, functions or data descriptors with docstrings that
+        can be parsed by numpydoc.
 
     include_params : list of str or bool, default=False
         List of parameters to be included. If True, all parameters are included,
@@ -775,9 +775,7 @@ def assert_docstring_consistency(
 
     doc_dict = dict()
     for i, obj in enumerate(objects):
-        if isinstance(obj, docscrape.NumpyDocString):
-            doc_dict[f"Object {i}"] = obj
-        elif (
+        if (
             inspect.isdatadescriptor(obj)
             or inspect.isfunction(obj)
             or inspect.isclass(obj)
@@ -786,8 +784,8 @@ def assert_docstring_consistency(
             doc_dict[obj.__name__] = doc
         else:
             raise TypeError(
-                "All 'objects' must be one of: function, class, descriptor"
-                f" or NumpyDocString instance, got a: {type(obj)}."
+                "All 'objects' must be one of: function, class or descriptor, "
+                f"got a: {type(obj)}."
             )
 
     n_objects = len(objects)

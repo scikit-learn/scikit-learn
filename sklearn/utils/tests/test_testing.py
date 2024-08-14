@@ -695,13 +695,8 @@ def test_assert_docstring_consistency(objects, kwargs, error, warn):
         assert_docstring_consistency(objects, **kwargs)
 
 
-def test_assert_docstring_consistency_error_msg():
-    """Check `assert_docstring_consistency` difference message."""
-    docscrape = pytest.importorskip(
-        "numpydoc.docscrape",
-        reason="numpydoc is required to test the docstrings",
-    )
-    doc1 = """Function one.
+def f_four(labels):  # pragma: no cover
+    """Function four.
 
     Parameters
     ----------
@@ -710,7 +705,11 @@ def test_assert_docstring_consistency_error_msg():
         The set of labels to include when `average != 'binary'`, and their
         order if `average is None`. Labels present in the data can be excluded.
     """
-    doc2 = """Function one.
+    pass
+
+
+def f_five(labels):  # pragma: no cover
+    """Function five.
 
     Parameters
     ----------
@@ -720,7 +719,11 @@ def test_assert_docstring_consistency_error_msg():
         order if `average is None`. This is an extra line. Labels present in the
         data can be excluded.
     """
-    doc3 = """Function one.
+    pass
+
+
+def f_six(labels):  # pragma: no cover
+    """Function six.
 
     Parameters
     ----------
@@ -729,14 +732,20 @@ def test_assert_docstring_consistency_error_msg():
         The group of labels to add when `average != 'binary'`, and the
         order if `average is None`. Labels present on them datas can be excluded.
     """
-    doc1 = docscrape.NumpyDocString(doc1)
-    doc2 = docscrape.NumpyDocString(doc2)
-    doc3 = docscrape.NumpyDocString(doc3)
-    msg = r"""The description of Parameter 'labels' is inconsistent between \['Object
-0'\] and \['Object 1'\] and \['Object 2'\]:
+    pass
 
-\*\*\* \['Object 0'\]
---- \['Object 1'\]
+
+def test_assert_docstring_consistency_error_msg():
+    """Check `assert_docstring_consistency` difference message."""
+    docscrape = pytest.importorskip(
+        "numpydoc.docscrape",
+        reason="numpydoc is required to test the docstrings",
+    )
+    msg = r"""The description of Parameter 'labels' is inconsistent between
+\['f_four'\] and \['f_five'\] and \['f_six'\]:
+
+\*\*\* \['f_four'\]
+--- \['f_five'\]
 \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
 
 \*\*\* 10,25 \*\*\*\*
@@ -747,8 +756,8 @@ def test_assert_docstring_consistency_error_msg():
 \+ This is an extra line.
   Labels present in the data can be excluded.
 
-\*\*\* \['Object 0'\]
---- \['Object 2'\]
+\*\*\* \['f_four'\]
+--- \['f_six'\]
 \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
 
 \*\*\* 1,25 \*\*\*\*
@@ -775,7 +784,7 @@ def test_assert_docstring_consistency_error_msg():
   can be excluded."""
 
     with pytest.raises(AssertionError, match=msg):
-        assert_docstring_consistency([doc1, doc2, doc3], include_params=True)
+        assert_docstring_consistency([f_four, f_five, f_six], include_params=True)
 
 
 class RegistrationCounter:
