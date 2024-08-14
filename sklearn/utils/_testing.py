@@ -774,7 +774,7 @@ def assert_docstring_consistency(
             del section_dict[section]
 
     doc_dict = dict()
-    for i, obj in enumerate(objects):
+    for obj in objects:
         if (
             inspect.isdatadescriptor(obj)
             or inspect.isfunction(obj)
