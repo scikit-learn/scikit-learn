@@ -203,7 +203,7 @@ def test_classification_report_dict_separate_avg():
     y_true = [0, 1, 2, 2, 2, 0]
     y_pred = [0, 0, 2, 2, 1, 0]
     target_names = ['class 0', 'class 1', 'class 2']
-    
+
     report = classification_report(
         y_true, y_pred, target_names=target_names, output_dict=True,
         separate_avg=True

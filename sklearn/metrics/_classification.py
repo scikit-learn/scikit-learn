@@ -2570,7 +2570,7 @@ def classification_report(
     digits=2,
     output_dict=False,
     zero_division="warn",
-    separate_avg=True, 
+    separate_avg=True,
 ):
     """Build a text report showing the main classification metrics.
 
@@ -2609,7 +2609,7 @@ def classification_report(
 
         .. versionadded:: 1.3
            `np.nan` option was added.
-           
+
     separate_avg : bool, default=True
         If True, average metrics (such as "macro avg", "weighted avg", etc.)
         will be separated from the class-wise metrics and placed under a new
@@ -2631,7 +2631,7 @@ def classification_report(
                          'support':1},
              'label 2': { ... },
               ...,
-              'averages': {'macro avg': {...}, 
+              'averages': {'macro avg': {...},
                            'weighted avg': {...}}
             }
 
