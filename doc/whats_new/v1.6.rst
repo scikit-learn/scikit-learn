@@ -139,6 +139,16 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123455 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Enhancement| The `classification_report` function now includes a new parameter
+  `separate_avg` (default: `True`). This allows for the separation of class-wise
+  metrics from average metrics in the output dictionary when `output_dict=True`,
+  preventing potential conflicts between class names and average metrics such as
+  "accuracy" or "macro avg". Backward compatibility is maintained by setting
+  `separate_avg=False`. :pr:`29668` by :user:`Anuraag Pandhi <Anumon6395>`.
+
 :mod:`sklearn.base`
 ...................
 
