@@ -12,6 +12,8 @@ This example compares 2 dimensionality reduction strategies:
 Both methods are compared in a regression problem using
 a BayesianRidge as supervised estimator.
 
+See :ref:`sphx_glr_auto_examples_cluster_plot_feature_agglomeration_vs_univariate_selection.py`
+
 """
 
 # Authors: The scikit-learn developers
