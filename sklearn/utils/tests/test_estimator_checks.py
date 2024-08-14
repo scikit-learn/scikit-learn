@@ -30,6 +30,7 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.svm import SVC, NuSVC
 from sklearn.utils import _array_api, all_estimators, deprecated
 from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils._tags import _DEFAULT_TAGS
 from sklearn.utils._testing import (
     MinimalClassifier,
     MinimalRegressor,
@@ -52,6 +53,7 @@ from sklearn.utils.estimator_checks import (
     check_decision_proba_consistency,
     check_estimator,
     check_estimator_get_tags_default_keys,
+    check_estimator_tags_deprecated,
     check_estimators_unfitted,
     check_fit_check_is_fitted,
     check_fit_score_takes_y,
@@ -455,13 +457,14 @@ class UntaggedBinaryClassifier(SGDClassifier):
 
 class TaggedBinaryClassifier(UntaggedBinaryClassifier):
     # Toy classifier that only supports binary classification.
-    def _more_tags(self):
-        return {"binary_only": True}
+    def __sklearn_tags__(self):
+        more_tags = {"binary_only": True}
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 class EstimatorMissingDefaultTags(BaseEstimator):
-    def _get_tags(self):
-        tags = super()._get_tags().copy()
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__().copy()
         del tags["allow_nan"]
         return tags
 
@@ -473,8 +476,9 @@ class RequiresPositiveXRegressor(LinearRegression):
             raise ValueError("negative X values not supported!")
         return super().fit(X, y)
 
-    def _more_tags(self):
-        return {"requires_positive_X": True}
+    def __sklearn_tags__(self):
+        more_tags = {"requires_positive_X": True}
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 class RequiresPositiveYRegressor(LinearRegression):
@@ -484,16 +488,18 @@ class RequiresPositiveYRegressor(LinearRegression):
             raise ValueError("negative y values not supported!")
         return super().fit(X, y)
 
-    def _more_tags(self):
-        return {"requires_positive_y": True}
+    def __sklearn_tags__(self):
+        more_tags = {"requires_positive_y": True}
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 class PoorScoreLogisticRegression(LogisticRegression):
     def decision_function(self, X):
         return super().decision_function(X) + 1
 
-    def _more_tags(self):
-        return {"poor_score": True}
+    def __sklearn_tags__(self):
+        more_tags = {"poor_score": True}
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 class PartialFitChecksName(BaseEstimator):
@@ -850,7 +856,7 @@ def test_check_regressor_data_not_an_array():
 def test_check_estimator_get_tags_default_keys():
     estimator = EstimatorMissingDefaultTags()
     err_msg = (
-        r"EstimatorMissingDefaultTags._get_tags\(\) is missing entries"
+        r"EstimatorMissingDefaultTags.__sklearn_tags__\(\) is missing entries"
         r" for the following default tags: {'allow_nan'}"
     )
     with raises(AssertionError, match=err_msg):
@@ -884,8 +890,9 @@ class _BaseMultiLabelClassifierMock(ClassifierMixin, BaseEstimator):
     def fit(self, X, y):
         return self
 
-    def _more_tags(self):
-        return {"multilabel": True}
+    def __sklearn_tags__(self):
+        more_tags = {"multilabel": True}
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 def test_check_classifiers_multilabel_output_format_predict():
@@ -1215,12 +1222,34 @@ def test_non_deterministic_estimator_skip_tests():
         assert check_methods_subset_invariance in all_tests
 
         class Estimator(est):
-            def _more_tags(self):
-                return {"non_deterministic": True}
+            def __sklearn_tags__(self):
+                more_tags = {"non_deterministic": True}
+                return {**_DEFAULT_TAGS, **more_tags}
 
         all_tests = list(_yield_all_checks(Estimator()))
         assert check_methods_sample_order_invariance not in all_tests
         assert check_methods_subset_invariance not in all_tests
+
+
+# TODO(1.8) Remove `_more_tags` and `_get_tags` support
+def test_check_estimator_tags_deprecated():
+    """Check deprecation warnings are raised."""
+
+    class Estimator:
+        def _more_tags(self):
+            return {}  # pragma: no cover
+
+    err_msg = r"_more_tags\(\) was deprecated"
+    with raises(AssertionError, match=err_msg):
+        check_estimator_tags_deprecated("estimator", Estimator())
+
+    class Estimator:
+        def _get_tags(self):
+            return {}  # pragma: no cover
+
+    err_msg = r"_get_tags\(\) was deprecated"
+    with raises(AssertionError, match=err_msg):
+        check_estimator_tags_deprecated("estimator", Estimator())
 
 
 def test_check_outlier_contamination():

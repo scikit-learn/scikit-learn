@@ -647,14 +647,15 @@ class SpectralEmbedding(BaseEstimator):
         self.n_neighbors = n_neighbors
         self.n_jobs = n_jobs
 
-    def _more_tags(self):
-        return {
+    def __sklearn_tags__(self):
+        more_tags = {
             "pairwise": self.affinity
             in [
                 "precomputed",
                 "precomputed_nearest_neighbors",
             ]
         }
+        return {**super().__sklearn_tags__(), **more_tags}
 
     def _get_affinity_matrix(self, X, Y=None):
         """Calculate the affinity matrix from data

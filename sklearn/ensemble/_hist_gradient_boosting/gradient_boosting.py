@@ -1410,8 +1410,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         return averaged_predictions
 
-    def _more_tags(self):
-        return {"allow_nan": True}
+    def __sklearn_tags__(self):
+        more_tags = {"allow_nan": True}
+        return {**super().__sklearn_tags__(), **more_tags}
 
     @abstractmethod
     def _get_loss(self, sample_weight):

@@ -89,7 +89,7 @@ def _safe_tags(estimator, key=None):
     fall-back to the default tags.
 
     For scikit-learn built-in estimators, we should still rely on
-    `self._get_tags()`. `_safe_tags(est)` should be used when we are not sure
+    `self.__sklearn_tags__()`. `_safe_tags(est)` should be used when we are not sure
     where `est` comes from: typically `_safe_tags(self.base_estimator)` where
     `self` is a meta-estimator, or in the common checks.
 
@@ -106,12 +106,9 @@ def _safe_tags(estimator, key=None):
     tags : dict or tag value
         The estimator tags. A single value is returned if `key` is not None.
     """
-    if hasattr(estimator, "_get_tags"):
-        tags_provider = "_get_tags()"
-        tags = estimator._get_tags()
-    elif hasattr(estimator, "_more_tags"):
-        tags_provider = "_more_tags()"
-        tags = {**_DEFAULT_TAGS, **estimator._more_tags()}
+    if hasattr(estimator, "__sklearn_tags__"):
+        tags_provider = "__sklearn_tags__()"
+        tags = estimator.__sklearn_tags__()
     else:
         tags_provider = "_DEFAULT_TAGS"
         tags = _DEFAULT_TAGS

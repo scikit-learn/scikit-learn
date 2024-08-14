@@ -1373,8 +1373,8 @@ class SGDClassifier(BaseSGDClassifier):
         """
         return np.log(self.predict_proba(X))
 
-    def _more_tags(self):
-        return {
+    def __sklearn_tags__(self):
+        more_tags = {
             "_xfail_checks": {
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
@@ -1382,6 +1382,7 @@ class SGDClassifier(BaseSGDClassifier):
             },
             "preserves_dtype": [np.float64, np.float32],
         }
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 class BaseSGDRegressor(RegressorMixin, BaseSGD):
@@ -2057,8 +2058,8 @@ class SGDRegressor(BaseSGDRegressor):
             average=average,
         )
 
-    def _more_tags(self):
-        return {
+    def __sklearn_tags__(self):
+        more_tags = {
             "_xfail_checks": {
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
@@ -2066,6 +2067,7 @@ class SGDRegressor(BaseSGDRegressor):
             },
             "preserves_dtype": [np.float64, np.float32],
         }
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 class SGDOneClassSVM(BaseSGD, OutlierMixin):
@@ -2637,8 +2639,8 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         y[y == 0] = -1  # for consistency with outlier detectors
         return y
 
-    def _more_tags(self):
-        return {
+    def __sklearn_tags__(self):
+        more_tags = {
             "_xfail_checks": {
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
@@ -2646,3 +2648,4 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
             },
             "preserves_dtype": [np.float64, np.float32],
         }
+        return {**super().__sklearn_tags__(), **more_tags}

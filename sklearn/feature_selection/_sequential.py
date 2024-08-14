@@ -227,7 +227,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             Returns the instance itself.
         """
         _raise_for_params(params, self, "fit")
-        tags = self._get_tags()
+        tags = self.__sklearn_tags__()
         X = self._validate_data(
             X,
             accept_sparse="csc",
@@ -325,10 +325,11 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         check_is_fitted(self)
         return self.support_
 
-    def _more_tags(self):
-        return {
+    def __sklearn_tags__(self):
+        more_tags = {
             "allow_nan": _safe_tags(self.estimator, key="allow_nan"),
         }
+        return {**super().__sklearn_tags__(), **more_tags}
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.

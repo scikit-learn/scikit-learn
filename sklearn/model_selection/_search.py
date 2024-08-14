@@ -479,15 +479,16 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     def _estimator_type(self):
         return self.estimator._estimator_type
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
         # allows cross-validation to see 'precomputed' metrics
-        return {
+        more_tags = {
             "pairwise": _safe_tags(self.estimator, "pairwise"),
             "_xfail_checks": {
                 "check_supervised_y_2d": "DataConversionWarning not caught"
             },
             "array_api_support": _safe_tags(self.estimator, "array_api_support"),
         }
+        return {**super().__sklearn_tags__(), **more_tags}
 
     def score(self, X, y=None, **params):
         """Return the score on the given data, if the estimator has been refit.

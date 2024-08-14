@@ -310,8 +310,9 @@ class TruncatedSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
         X = check_array(X)
         return np.dot(X, self.components_)
 
-    def _more_tags(self):
-        return {"preserves_dtype": [np.float64, np.float32]}
+    def __sklearn_tags__(self):
+        more_tags = {"preserves_dtype": [np.float64, np.float32]}
+        return {**super().__sklearn_tags__(), **more_tags}
 
     @property
     def _n_features_out(self):

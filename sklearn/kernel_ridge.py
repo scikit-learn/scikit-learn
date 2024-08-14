@@ -167,8 +167,9 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
             params = {"gamma": self.gamma, "degree": self.degree, "coef0": self.coef0}
         return pairwise_kernels(X, Y, metric=self.kernel, filter_params=True, **params)
 
-    def _more_tags(self):
-        return {"pairwise": self.kernel == "precomputed"}
+    def __sklearn_tags__(self):
+        more_tags = {"pairwise": self.kernel == "precomputed"}
+        return {**super().__sklearn_tags__(), **more_tags}
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):

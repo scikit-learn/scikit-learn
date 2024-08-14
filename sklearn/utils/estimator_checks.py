@@ -142,6 +142,7 @@ def _yield_checks(estimator):
     yield partial(check_estimators_pickle, readonly_memmap=True)
 
     yield check_estimator_get_tags_default_keys
+    yield check_estimator_tags_deprecated
 
     if tags["array_api_support"]:
         for check in _yield_array_api_checks(estimator):
@@ -4036,17 +4037,28 @@ def check_n_features_in_after_fitting(name, estimator_orig):
 
 
 def check_estimator_get_tags_default_keys(name, estimator_orig):
-    # check that if _get_tags is implemented, it contains all keys from
+    # check that if __sklearn_tags__ is implemented, it contains all keys from
     # _DEFAULT_KEYS
     estimator = clone(estimator_orig)
-    if not hasattr(estimator, "_get_tags"):
+    if not hasattr(estimator, "__sklearn_tags__"):
         return
 
-    tags_keys = set(estimator._get_tags().keys())
+    tags_keys = set(estimator.__sklearn_tags__().keys())
     default_tags_keys = set(_DEFAULT_TAGS.keys())
     assert tags_keys.intersection(default_tags_keys) == default_tags_keys, (
-        f"{name}._get_tags() is missing entries for the following default tags"
+        f"{name}.__sklearn_tags__() is missing entries for the following default tags"
         f": {default_tags_keys - tags_keys.intersection(default_tags_keys)}"
+    )
+
+
+def check_estimator_tags_deprecated(name, estimator_orig):
+    assert not hasattr(estimator_orig, "_more_tags"), (
+        "_more_tags() was deprecated in 1.6 support will be removed in 1.8. "
+        "Please use __sklearn_tags__ instead.",
+    )
+    assert not hasattr(estimator_orig, "_get_tags"), (
+        "_get_tags() was deprecated in 1.6 support will be removed in 1.8. "
+        "Please use __sklearn_tags__ instead."
     )
 
 
@@ -4194,7 +4206,7 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
 
 
 def check_transformer_get_feature_names_out(name, transformer_orig):
-    tags = transformer_orig._get_tags()
+    tags = transformer_orig.__sklearn_tags__()
     if "2darray" not in tags["X_types"] or tags["no_validation"]:
         return
 
@@ -4249,7 +4261,7 @@ def check_transformer_get_feature_names_out_pandas(name, transformer_orig):
             "pandas is not installed: not checking column name consistency for pandas"
         )
 
-    tags = transformer_orig._get_tags()
+    tags = transformer_orig.__sklearn_tags__()
     if "2darray" not in tags["X_types"] or tags["no_validation"]:
         return
 
@@ -4420,7 +4432,7 @@ def check_param_validation(name, estimator_orig):
 def check_set_output_transform(name, transformer_orig):
     # Check transformer.set_output with the default configuration does not
     # change the transform output.
-    tags = transformer_orig._get_tags()
+    tags = _safe_tags(transformer_orig)
     if "2darray" not in tags["X_types"] or tags["no_validation"]:
         return
 
@@ -4608,7 +4620,7 @@ def _check_set_output_transform_dataframe(
         or a global context by using the `with config_context(...)`
     """
     # Check transformer.set_output configures the output of transform="pandas".
-    tags = transformer_orig._get_tags()
+    tags = _safe_tags(transformer_orig)
     if "2darray" not in tags["X_types"] or tags["no_validation"]:
         return
 

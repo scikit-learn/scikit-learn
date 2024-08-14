@@ -371,8 +371,8 @@ class BaseSuccessiveHalving(BaseSearchCV):
     def _generate_candidate_params(self):
         pass
 
-    def _more_tags(self):
-        tags = deepcopy(super()._more_tags())
+    def __sklearn_tags__(self):
+        tags = deepcopy(super().__sklearn_tags__())
         tags["_xfail_checks"].update(
             {
                 "check_fit2d_1sample": (

@@ -210,8 +210,8 @@ class BaseThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator
         check_is_fitted(self, "estimator_")
         return self.estimator_.decision_function(X)
 
-    def _more_tags(self):
-        return {
+    def __sklearn_tags__(self):
+        more_tags = {
             "binary_only": True,
             "_xfail_checks": {
                 "check_classifiers_train": "Threshold at probability 0.5 does not hold",
@@ -222,6 +222,7 @@ class BaseThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator
                 ),
             },
         }
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 class FixedThresholdClassifier(BaseThresholdClassifier):

@@ -546,11 +546,11 @@ class LatentDirichletAllocation(
         self.n_batch_iter_ += 1
         return
 
-    def _more_tags(self):
-        return {
-            "preserves_dtype": [np.float64, np.float32],
+    def __sklearn_tags__(self):
+        more_tags = {
             "requires_positive_X": True,
         }
+        return {**super().__sklearn_tags__(), **more_tags}
 
     def _check_non_neg_array(self, X, reset_n_features, whom):
         """check X format

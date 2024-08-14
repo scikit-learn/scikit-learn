@@ -1175,14 +1175,15 @@ class _BaseKMeans(
         )
         return -scores
 
-    def _more_tags(self):
-        return {
+    def __sklearn_tags__(self):
+        more_tags = {
             "_xfail_checks": {
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
                 ),
-            },
+            }
         }
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 class KMeans(_BaseKMeans):

@@ -22,6 +22,13 @@ Version 1.6.0
 
 **In Development**
 
+Changes impacting many modules
+------------------------------
+
+- |Enhancement| `__sklearn_tags__` was introduced for setting tags in estimators.
+  :pr:`22606` by `Thomas Fan`_.
+
+
 Support for Array API
 ---------------------
 
@@ -103,6 +110,10 @@ more details.
 - |Feature| :func:`model_selection.permutation_test_score` now supports metadata routing
   for the `fit` method of its estimator and for its underlying CV splitter and scorer.
   :pr:`29266` by :user:`Adam Li <adam2392>`.
+
+- |Feature| :class:`feature_selection.RFE` and :class:`feature_selection.RFECV`
+  now support metadata routing.
+  :pr:`29312` by :user:`Omar Salman <OmarManzoor>`.
 
 Dropping support for building with setuptools
 ---------------------------------------------

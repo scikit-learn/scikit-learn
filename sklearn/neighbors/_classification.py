@@ -403,8 +403,9 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
 
         return probabilities
 
-    def _more_tags(self):
-        return {"multilabel": True}
+    def __sklearn_tags__(self):
+        more_tags = {"multilabel": True}
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, NeighborsBase):
@@ -831,5 +832,6 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
 
         return probabilities
 
-    def _more_tags(self):
-        return {"multilabel": True}
+    def __sklearn_tags__(self):
+        more_tags = {"multilabel": True}
+        return {**super().__sklearn_tags__(), **more_tags}

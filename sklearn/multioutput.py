@@ -308,8 +308,9 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
 
         return np.asarray(y).T
 
-    def _more_tags(self):
-        return {"multioutput_only": True}
+    def __sklearn_tags__(self):
+        more_tags = {"multioutput_only": True}
+        return {**super().__sklearn_tags__(), **more_tags}
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.
@@ -609,9 +610,10 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         y_pred = self.predict(X)
         return np.mean(np.all(y == y_pred, axis=1))
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
         # FIXME
-        return {"_skip_test": True}
+        more_tags = {"_skip_test": True}
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 def _available_if_base_estimator_has(attr):
@@ -1094,8 +1096,9 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         )
         return router
 
-    def _more_tags(self):
-        return {"_skip_test": True, "multioutput_only": True}
+    def __sklearn_tags__(self):
+        more_tags = {"_skip_test": True, "multioutput_only": True}
+        return {**super().__sklearn_tags__(), **more_tags}
 
 
 class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
@@ -1243,5 +1246,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         )
         return router
 
-    def _more_tags(self):
-        return {"multioutput_only": True}
+    def __sklearn_tags__(self):
+        # FIXME
+        more_tags = {"multioutput_only": True}
+        return {**super().__sklearn_tags__(), **more_tags}

@@ -504,5 +504,6 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         if hasattr(self, "X_thresholds_") and hasattr(self, "y_thresholds_"):
             self._build_f(self.X_thresholds_, self.y_thresholds_)
 
-    def _more_tags(self):
-        return {"X_types": ["1darray"]}
+    def __sklearn_tags__(self):
+        more_tags = {"X_types": ["1darray"]}
+        return {**super().__sklearn_tags__(), **more_tags}

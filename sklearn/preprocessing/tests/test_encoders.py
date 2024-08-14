@@ -869,7 +869,7 @@ def test_categories(density, drop):
 
 @pytest.mark.parametrize("Encoder", [OneHotEncoder, OrdinalEncoder])
 def test_encoders_has_categorical_tags(Encoder):
-    assert "categorical" in Encoder()._get_tags()["X_types"]
+    assert "categorical" in Encoder().__sklearn_tags__()["X_types"]
 
 
 @pytest.mark.parametrize(
