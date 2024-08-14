@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
     appId: SKLEARN_ALGOLIA_APP_ID,
     apiKey: SKLEARN_ALGOLIA_API_KEY,
     indexName: SKLEARN_ALGOLIA_INDEX_NAME,
-    placeholder: "Search the docs ... (Alt+Enter to go to search page)",
+    placeholder: "Search the docs ...",
     // Redirect to the search page with the corresponding query
     resultsFooterComponent: ({ state }) => ({
       type: "a",
@@ -34,21 +34,18 @@ document.addEventListener("DOMContentLoaded", () => {
       },
       __v: null,
     }),
-  });
-
-  // Ctrl-Alt to navigate to the all results page
-  document.addEventListener("keydown", (e) => {
-    if (e.altKey && e.key === "Enter") {
-      e.preventDefault();
-
-      // Click the link if it exists so the query is preserved; otherwise navigate to
-      // the search page without query
-      const link = document.getElementById("sk-search-all-results-link");
-      if (link) {
-        link.click();
-      } else {
-        window.location.href = searchPageHref;
-      }
-    }
+    navigator: {
+      // Hack implementation to navigate to the search page instead of navigating to the
+      // corresponding search result page; `navigateNewTab` and `navigateNewWindow` are
+      // still left as the default behavior
+      navigate: () => {
+        const link = document.getElementById("sk-search-all-results-link");
+        if (link) {
+          link.click();
+        } else {
+          window.location.assign(searchPageHref);
+        }
+      },
+    },
   });
 });
