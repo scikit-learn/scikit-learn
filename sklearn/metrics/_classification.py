@@ -2773,13 +2773,9 @@ def classification_report(
 
     if output_dict:
         if separate_avg:
-            averages[line_heading] = dict(
-                zip(headers, [float(i) for i in avg])
-            )
+            averages[line_heading] = dict(zip(headers, [float(i) for i in avg]))
         else:
-            report_dict[line_heading] = dict(
-                zip(headers, [float(i) for i in avg])
-            )
+            report_dict[line_heading] = dict(zip(headers, [float(i) for i in avg]))
     else:
         if line_heading == "accuracy":
             row_fmt_accuracy = (
@@ -2792,9 +2788,7 @@ def classification_report(
                 line_heading, "", "", *avg[2:], width=width, digits=digits
             )
         else:
-            report += row_fmt.format(
-                line_heading, *avg, width=width, digits=digits
-            )
+            report += row_fmt.format(line_heading, *avg, width=width, digits=digits)
 
     if output_dict:
         if separate_avg:
