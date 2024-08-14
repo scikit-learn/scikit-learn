@@ -109,7 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return html`
               ${sharedHTML}
               <p class="sk-search-item-context">
-                ${components.Highlight({ hit, attribute: "content" })}
+                ${components.Snippet({ hit, attribute: "content" })}
               </p>
             `;
           } else {
@@ -124,7 +124,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }),
     // Additional configuration of the widgets
     instantsearch.widgets.configure({
-      hitsPerPage: 200,
+      hitsPerPage: 50,
+      attributesToSnippet: ["content:60"], // Lengthen snippets to show more context
     }),
   ]);
 
