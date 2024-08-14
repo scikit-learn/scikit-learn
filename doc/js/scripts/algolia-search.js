@@ -61,12 +61,11 @@ document.addEventListener("DOMContentLoaded", () => {
           } else {
             count = "no results";
           }
+
+          const stats = `Search finished, found ${count} matching the search query in ${data.processingTimeMS}ms.`;
           return html`
             <div class="sk-search-stats-heading">Search Results</div>
-            <p class="sk-search-stats">
-              Search finished, found ${count} matching the search query in
-              ${data.processingTimeMS}ms.
-            </p>
+            <p class="sk-search-stats">${stats}</p>
           `;
         },
       },
