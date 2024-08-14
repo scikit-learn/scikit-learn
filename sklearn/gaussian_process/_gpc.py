@@ -699,11 +699,11 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
             raise ValueError("kernel cannot be a CompoundKernel")
 
         if self.kernel is None or self.kernel.requires_vector_input:
-            X, y = self._validate_data(
+            X, y = self.__validate_data__(
                 X, y, multi_output=False, ensure_2d=True, dtype="numeric"
             )
         else:
-            X, y = self._validate_data(
+            X, y = self.__validate_data__(
                 X, y, multi_output=False, ensure_2d=False, dtype=None
             )
 
@@ -769,9 +769,9 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         check_is_fitted(self)
 
         if self.kernel is None or self.kernel.requires_vector_input:
-            X = self._validate_data(X, ensure_2d=True, dtype="numeric", reset=False)
+            X = self.__validate_data__(X, ensure_2d=True, dtype="numeric", reset=False)
         else:
-            X = self._validate_data(X, ensure_2d=False, dtype=None, reset=False)
+            X = self.__validate_data__(X, ensure_2d=False, dtype=None, reset=False)
 
         return self.base_estimator_.predict(X)
 
@@ -799,9 +799,9 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
             )
 
         if self.kernel is None or self.kernel.requires_vector_input:
-            X = self._validate_data(X, ensure_2d=True, dtype="numeric", reset=False)
+            X = self.__validate_data__(X, ensure_2d=True, dtype="numeric", reset=False)
         else:
-            X = self._validate_data(X, ensure_2d=False, dtype=None, reset=False)
+            X = self.__validate_data__(X, ensure_2d=False, dtype=None, reset=False)
 
         return self.base_estimator_.predict_proba(X)
 

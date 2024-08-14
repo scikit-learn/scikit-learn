@@ -247,7 +247,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             dtype, ensure_2d = "numeric", True
         else:
             dtype, ensure_2d = None, False
-        X, y = self._validate_data(
+        X, y = self.__validate_data__(
             X,
             y,
             multi_output=True,
@@ -404,7 +404,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         else:
             dtype, ensure_2d = None, False
 
-        X = self._validate_data(X, ensure_2d=ensure_2d, dtype=dtype, reset=False)
+        X = self.__validate_data__(X, ensure_2d=ensure_2d, dtype=dtype, reset=False)
 
         if not hasattr(self, "X_train_"):  # Unfitted;predict based on GP prior
             if self.kernel is None:

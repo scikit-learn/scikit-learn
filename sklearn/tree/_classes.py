@@ -241,7 +241,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 dtype=DTYPE, accept_sparse="csc", ensure_all_finite=False
             )
             check_y_params = dict(ensure_2d=False, dtype=None)
-            X, y = self._validate_data(
+            X, y = self.__validate_data__(
                 X, y, validate_separately=(check_X_params, check_y_params)
             )
 
@@ -478,7 +478,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 ensure_all_finite = "allow-nan"
             else:
                 ensure_all_finite = True
-            X = self._validate_data(
+            X = self.__validate_data__(
                 X,
                 dtype=DTYPE,
                 accept_sparse="csr",

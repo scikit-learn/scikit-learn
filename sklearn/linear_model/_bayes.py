@@ -235,7 +235,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
         self : object
             Returns the instance itself.
         """
-        X, y = self._validate_data(
+        X, y = self.__validate_data__(
             X, y, dtype=[np.float64, np.float32], force_writeable=True, y_numeric=True
         )
         dtype = X.dtype
@@ -621,7 +621,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         self : object
             Fitted estimator.
         """
-        X, y = self._validate_data(
+        X, y = self.__validate_data__(
             X,
             y,
             dtype=[np.float64, np.float32],

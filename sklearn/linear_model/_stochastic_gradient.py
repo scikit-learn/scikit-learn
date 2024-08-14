@@ -586,7 +586,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         intercept_init,
     ):
         first_call = not hasattr(self, "classes_")
-        X, y = self._validate_data(
+        X, y = self.__validate_data__(
             X,
             y,
             accept_sparse="csr",
@@ -694,7 +694,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
 
         # labels can be encoded as float, int, or string literals
         # np.unique sorts in asc order; largest class id is positive class
-        y = self._validate_data(y=y)
+        y = self.__validate_data__(y=y)
         classes = np.unique(y)
 
         if self.warm_start and hasattr(self, "coef_"):
@@ -1460,7 +1460,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         intercept_init,
     ):
         first_call = getattr(self, "coef_", None) is None
-        X, y = self._validate_data(
+        X, y = self.__validate_data__(
             X,
             y,
             accept_sparse="csr",
@@ -1665,7 +1665,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
+        X = self.__validate_data__(X, accept_sparse="csr", reset=False)
 
         scores = safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
         return scores.ravel()
@@ -2370,7 +2370,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         offset_init,
     ):
         first_call = getattr(self, "coef_", None) is None
-        X = self._validate_data(
+        X = self.__validate_data__(
             X,
             None,
             accept_sparse="csr",
@@ -2599,7 +2599,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
         check_is_fitted(self, "coef_")
 
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
+        X = self.__validate_data__(X, accept_sparse="csr", reset=False)
         decisions = safe_sparse_dot(X, self.coef_.T, dense_output=True) - self.offset_
 
         return decisions.ravel()

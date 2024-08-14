@@ -1236,7 +1236,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         """
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), self.solver)
         xp, _ = get_namespace(X, y, sample_weight)
-        X, y = self._validate_data(
+        X, y = self.__validate_data__(
             X,
             y,
             accept_sparse=_accept_sparse,
@@ -1285,7 +1285,7 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
             The binarized version of `y`.
         """
         accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), solver)
-        X, y = self._validate_data(
+        X, y = self.__validate_data__(
             X,
             y,
             accept_sparse=accept_sparse,
@@ -2081,7 +2081,7 @@ class _RidgeGCV(LinearModel):
         -------
         self : object
         """
-        X, y = self._validate_data(
+        X, y = self.__validate_data__(
             X,
             y,
             accept_sparse=["csr", "csc", "coo"],

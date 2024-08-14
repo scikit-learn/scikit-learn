@@ -239,7 +239,7 @@ class NeighborhoodComponentsAnalysis(
             Fitted estimator.
         """
         # Validate the inputs X and y, and converts y to numerical classes.
-        X, y = self._validate_data(X, y, ensure_min_samples=2)
+        X, y = self.__validate_data__(X, y, ensure_min_samples=2)
         check_classification_targets(y)
         y = LabelEncoder().fit_transform(y)
 
@@ -361,7 +361,7 @@ class NeighborhoodComponentsAnalysis(
         """
 
         check_is_fitted(self)
-        X = self._validate_data(X, reset=False)
+        X = self.__validate_data__(X, reset=False)
 
         return np.dot(X, self.components_.T)
 

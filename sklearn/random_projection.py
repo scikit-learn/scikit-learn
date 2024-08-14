@@ -378,7 +378,7 @@ class BaseRandomProjection(
         self : object
             BaseRandomProjection class instance.
         """
-        X = self._validate_data(
+        X = self.__validate_data__(
             X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
         )
 
@@ -596,7 +596,7 @@ class GaussianRandomProjection(BaseRandomProjection):
             Projected array.
         """
         check_is_fitted(self)
-        X = self._validate_data(
+        X = self.__validate_data__(
             X, accept_sparse=["csr", "csc"], reset=False, dtype=[np.float64, np.float32]
         )
 
@@ -802,7 +802,7 @@ class SparseRandomProjection(BaseRandomProjection):
             `dense_output = False`.
         """
         check_is_fitted(self)
-        X = self._validate_data(
+        X = self.__validate_data__(
             X, accept_sparse=["csr", "csc"], reset=False, dtype=[np.float64, np.float32]
         )
 

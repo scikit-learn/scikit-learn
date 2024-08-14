@@ -298,7 +298,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         # step_score is not exposed to users and is used when implementing RFECV
         # self.step_scores_ will not be calculated when calling _fit through fit
 
-        X, y = self._validate_data(
+        X, y = self.__validate_data__(
             X,
             y,
             accept_sparse="csc",
@@ -823,7 +823,7 @@ class RFECV(RFE):
             Fitted estimator.
         """
         _raise_for_params(params, self, "fit")
-        X, y = self._validate_data(
+        X, y = self.__validate_data__(
             X,
             y,
             accept_sparse="csr",

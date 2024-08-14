@@ -685,7 +685,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         self : object
             A fitted instance of the estimator.
         """
-        X = self._validate_data(
+        X = self.__validate_data__(
             X,
             accept_sparse=["csr", "csc", "coo"],
             dtype=np.float64,

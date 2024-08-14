@@ -229,7 +229,7 @@ class KNNImputer(_BaseImputer):
         else:
             ensure_all_finite = "allow-nan"
 
-        X = self._validate_data(
+        X = self.__validate_data__(
             X,
             accept_sparse=False,
             dtype=FLOAT_DTYPES,
@@ -265,7 +265,7 @@ class KNNImputer(_BaseImputer):
             ensure_all_finite = True
         else:
             ensure_all_finite = "allow-nan"
-        X = self._validate_data(
+        X = self.__validate_data__(
             X,
             accept_sparse=False,
             dtype=FLOAT_DTYPES,

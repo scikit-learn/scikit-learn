@@ -737,7 +737,7 @@ class SpectralEmbedding(BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(X, accept_sparse="csr", ensure_min_samples=2)
+        X = self.__validate_data__(X, accept_sparse="csr", ensure_min_samples=2)
 
         random_state = check_random_state(self.random_state)
 

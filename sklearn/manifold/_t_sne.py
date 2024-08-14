@@ -879,14 +879,14 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             self.learning_rate_ = self.learning_rate
 
         if self.method == "barnes_hut":
-            X = self._validate_data(
+            X = self.__validate_data__(
                 X,
                 accept_sparse=["csr"],
                 ensure_min_samples=2,
                 dtype=[np.float32, np.float64],
             )
         else:
-            X = self._validate_data(
+            X = self.__validate_data__(
                 X, accept_sparse=["csr", "csc", "coo"], dtype=[np.float32, np.float64]
             )
         if self.metric == "precomputed":

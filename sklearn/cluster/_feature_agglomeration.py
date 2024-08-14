@@ -47,7 +47,7 @@ class AgglomerationTransform(TransformerMixin):
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, reset=False)
+        X = self.__validate_data__(X, reset=False)
         if self.pooling_func == np.mean and not issparse(X):
             size = np.bincount(self.labels_)
             n_samples = X.shape[0]

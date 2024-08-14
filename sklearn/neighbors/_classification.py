@@ -332,7 +332,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
                 if self.metric == "precomputed":
                     X = _check_precomputed(X)
                 else:
-                    X = self._validate_data(
+                    X = self.__validate_data__(
                         X, accept_sparse="csr", reset=False, order="C"
                     )
 

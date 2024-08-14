@@ -159,7 +159,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         self : object
             Returns self.
         """
-        X, y = self._validate_data(
+        X, y = self.__validate_data__(
             X,
             y,
             accept_sparse=["csc", "csr", "coo"],

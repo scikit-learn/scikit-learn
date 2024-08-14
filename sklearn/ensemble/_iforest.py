@@ -315,7 +315,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         self : object
             Fitted estimator.
         """
-        X = self._validate_data(
+        X = self.__validate_data__(
             X, accept_sparse=["csc"], dtype=tree_dtype, ensure_all_finite=False
         )
         if issparse(X):
@@ -517,7 +517,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
                 model.score(X)
         """
         # Check data
-        X = self._validate_data(
+        X = self.__validate_data__(
             X,
             accept_sparse="csr",
             dtype=tree_dtype,

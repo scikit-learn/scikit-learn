@@ -734,7 +734,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         self._metric_params = self.metric_params or {}
         if self.metric != "precomputed":
             # Non-precomputed matrices may contain non-finite values.
-            X = self._validate_data(
+            X = self.__validate_data__(
                 X,
                 accept_sparse=["csr", "lil"],
                 ensure_all_finite=False,
@@ -769,7 +769,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 X = X[finite_index]
         elif issparse(X):
             # Handle sparse precomputed distance matrices separately
-            X = self._validate_data(
+            X = self.__validate_data__(
                 X,
                 accept_sparse=["csr", "lil"],
                 dtype=np.float64,
@@ -781,7 +781,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
             # Perform data validation after removing infinite values (numpy.inf)
             # from the given distance matrix.
-            X = self._validate_data(
+            X = self.__validate_data__(
                 X, ensure_all_finite=False, dtype=np.float64, force_writeable=True
             )
             if np.isnan(X).any():

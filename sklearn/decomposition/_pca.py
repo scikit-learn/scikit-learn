@@ -502,7 +502,7 @@ class PCA(_BasePCA):
         # the input data contrary to the other solvers.
         # The copy will happen
         # later, only if needed, once the solver negotiation below is done.
-        X = self._validate_data(
+        X = self.__validate_data__(
             X,
             dtype=[xp.float64, xp.float32],
             force_writeable=True,
@@ -815,7 +815,7 @@ class PCA(_BasePCA):
         """
         check_is_fitted(self)
         xp, _ = get_namespace(X)
-        X = self._validate_data(X, dtype=[xp.float64, xp.float32], reset=False)
+        X = self.__validate_data__(X, dtype=[xp.float64, xp.float32], reset=False)
         Xr = X - self.mean_
         n_features = X.shape[1]
         precision = self.get_precision()

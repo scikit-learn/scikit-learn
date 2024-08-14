@@ -201,7 +201,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             The decision function of the samples for each class in the model.
         """
         if check_input:
-            X = self._validate_data(X, accept_sparse=["csr", "csc"], reset=False)
+            X = self.__validate_data__(X, accept_sparse=["csr", "csc"], reset=False)
 
         # Initialize first layer
         activation = X
@@ -1091,7 +1091,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         )
 
     def _validate_input(self, X, y, incremental, reset):
-        X, y = self._validate_data(
+        X, y = self.__validate_data__(
             X,
             y,
             accept_sparse=["csr", "csc"],
@@ -1616,7 +1616,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         return r2_score(y, y_pred)
 
     def _validate_input(self, X, y, incremental, reset):
-        X, y = self._validate_data(
+        X, y = self.__validate_data__(
             X,
             y,
             accept_sparse=["csr", "csc"],

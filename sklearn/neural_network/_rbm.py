@@ -169,7 +169,7 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
         """
         check_is_fitted(self)
 
-        X = self._validate_data(
+        X = self.__validate_data__(
             X, accept_sparse="csr", reset=False, dtype=(np.float64, np.float32)
         )
         return self._mean_hiddens(X)
@@ -287,7 +287,7 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
             The fitted model.
         """
         first_pass = not hasattr(self, "components_")
-        X = self._validate_data(
+        X = self.__validate_data__(
             X, accept_sparse="csr", dtype=np.float64, reset=first_pass
         )
         if not hasattr(self, "random_state_"):
@@ -362,7 +362,7 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
         """
         check_is_fitted(self)
 
-        v = self._validate_data(X, accept_sparse="csr", reset=False)
+        v = self.__validate_data__(X, accept_sparse="csr", reset=False)
         rng = check_random_state(self.random_state)
 
         # Randomly corrupt one feature in each sample in v.
@@ -399,7 +399,9 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
         self : BernoulliRBM
             The fitted model.
         """
-        X = self._validate_data(X, accept_sparse="csr", dtype=(np.float64, np.float32))
+        X = self.__validate_data__(
+            X, accept_sparse="csr", dtype=(np.float64, np.float32)
+        )
         n_samples = X.shape[0]
         rng = check_random_state(self.random_state)
 

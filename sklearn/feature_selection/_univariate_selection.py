@@ -556,9 +556,9 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
             Returns the instance itself.
         """
         if y is None:
-            X = self._validate_data(X, accept_sparse=["csr", "csc"])
+            X = self.__validate_data__(X, accept_sparse=["csr", "csc"])
         else:
-            X, y = self._validate_data(
+            X, y = self.__validate_data__(
                 X, y, accept_sparse=["csr", "csc"], multi_output=True
             )
 

@@ -294,7 +294,7 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         self : object
             Fitted `HuberRegressor` estimator.
         """
-        X, y = self._validate_data(
+        X, y = self.__validate_data__(
             X,
             y,
             copy=False,

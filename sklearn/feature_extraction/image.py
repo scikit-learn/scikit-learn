@@ -630,7 +630,7 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
             `n_patches` is either `n_samples * max_patches` or the total
             number of patches that can be extracted.
         """
-        X = self._validate_data(
+        X = self.__validate_data__(
             X=X,
             ensure_2d=False,
             allow_nd=True,

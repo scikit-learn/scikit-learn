@@ -1110,7 +1110,7 @@ class _BaseSparseCoding(ClassNamePrefixFeaturesOutMixin, TransformerMixin):
     def _transform(self, X, dictionary):
         """Private method allowing to accommodate both DictionaryLearning and
         SparseCoder."""
-        X = self._validate_data(X, reset=False)
+        X = self.__validate_data__(X, reset=False)
 
         if hasattr(self, "alpha") and self.transform_alpha is None:
             transform_alpha = self.alpha
@@ -1671,7 +1671,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         method = "lasso_" + self.fit_algorithm
 
         random_state = check_random_state(self.random_state)
-        X = self._validate_data(X)
+        X = self.__validate_data__(X)
 
         if self.n_components is None:
             n_components = X.shape[1]
@@ -2177,7 +2177,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(
+        X = self.__validate_data__(
             X, dtype=[np.float64, np.float32], order="C", copy=False
         )
 
@@ -2274,7 +2274,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         """
         has_components = hasattr(self, "components_")
 
-        X = self._validate_data(
+        X = self.__validate_data__(
             X, dtype=[np.float64, np.float32], order="C", reset=not has_components
         )
 

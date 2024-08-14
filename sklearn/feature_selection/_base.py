@@ -99,7 +99,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
 
         # note: we use _safe_tags instead of _get_tags because this is a
         # public Mixin.
-        X = self._validate_data(
+        X = self.__validate_data__(
             X,
             dtype=None,
             accept_sparse="csr",

@@ -365,7 +365,7 @@ class RANSACRegressor(
         _raise_for_params(fit_params, self, "fit")
         check_X_params = dict(accept_sparse="csr", ensure_all_finite=False)
         check_y_params = dict(ensure_2d=False)
-        X, y = self._validate_data(
+        X, y = self.__validate_data__(
             X, y, validate_separately=(check_X_params, check_y_params)
         )
         check_consistent_length(X, y)
@@ -628,7 +628,7 @@ class RANSACRegressor(
             Returns predicted values.
         """
         check_is_fitted(self)
-        X = self._validate_data(
+        X = self.__validate_data__(
             X,
             ensure_all_finite=False,
             accept_sparse=True,
@@ -676,7 +676,7 @@ class RANSACRegressor(
             Score of the prediction.
         """
         check_is_fitted(self)
-        X = self._validate_data(
+        X = self.__validate_data__(
             X,
             ensure_all_finite=False,
             accept_sparse=True,

@@ -621,7 +621,7 @@ class MDS(BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
             X transformed in the new space.
         """
-        X = self._validate_data(X)
+        X = self.__validate_data__(X)
         if X.shape[0] == X.shape[1] and self.dissimilarity != "precomputed":
             warnings.warn(
                 "The MDS API has changed. ``fit`` now constructs an"

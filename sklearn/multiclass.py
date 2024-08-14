@@ -126,7 +126,7 @@ class _ConstantPredictor(BaseEstimator):
         check_params = dict(
             ensure_all_finite=False, dtype=None, ensure_2d=False, accept_sparse=True
         )
-        self._validate_data(
+        self.__validate_data__(
             X, y, reset=True, validate_separately=(check_params, check_params)
         )
         self.y_ = y
@@ -134,7 +134,7 @@ class _ConstantPredictor(BaseEstimator):
 
     def predict(self, X):
         check_is_fitted(self)
-        self._validate_data(
+        self.__validate_data__(
             X,
             ensure_all_finite=False,
             dtype=None,
@@ -147,7 +147,7 @@ class _ConstantPredictor(BaseEstimator):
 
     def decision_function(self, X):
         check_is_fitted(self)
-        self._validate_data(
+        self.__validate_data__(
             X,
             ensure_all_finite=False,
             dtype=None,
@@ -160,7 +160,7 @@ class _ConstantPredictor(BaseEstimator):
 
     def predict_proba(self, X):
         check_is_fitted(self)
-        self._validate_data(
+        self.__validate_data__(
             X,
             ensure_all_finite=False,
             dtype=None,
@@ -785,7 +785,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         )
 
         # We need to validate the data because we do a safe_indexing later.
-        X, y = self._validate_data(
+        X, y = self.__validate_data__(
             X, y, accept_sparse=["csr", "csc"], ensure_all_finite=False
         )
         check_classification_targets(y)
@@ -885,7 +885,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
                 )
             )
 
-        X, y = self._validate_data(
+        X, y = self.__validate_data__(
             X,
             y,
             accept_sparse=["csr", "csc"],
@@ -959,7 +959,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
                 scikit-learn conventions for binary classification.
         """
         check_is_fitted(self)
-        X = self._validate_data(
+        X = self.__validate_data__(
             X,
             accept_sparse=True,
             ensure_all_finite=False,
@@ -1173,7 +1173,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             **fit_params,
         )
 
-        y = self._validate_data(X="no_validation", y=y)
+        y = self.__validate_data__(X="no_validation", y=y)
 
         random_state = check_random_state(self.random_state)
         check_classification_targets(y)

@@ -131,7 +131,7 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
         self : object
             SpectralBiclustering instance.
         """
-        X = self._validate_data(X, accept_sparse="csr", dtype=np.float64)
+        X = self.__validate_data__(X, accept_sparse="csr", dtype=np.float64)
         self._check_parameters(X.shape[0])
         self._fit(X)
         return self

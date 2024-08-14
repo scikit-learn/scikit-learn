@@ -534,7 +534,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
 
             raise ValueError(message)
 
-    def _validate_data(
+    def __validate_data__(
         self,
         X="no_validation",
         y="no_validation",

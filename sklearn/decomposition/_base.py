@@ -135,7 +135,7 @@ class _BasePCA(
 
         check_is_fitted(self)
 
-        X = self._validate_data(
+        X = self.__validate_data__(
             X, dtype=[xp.float64, xp.float32], accept_sparse=("csr", "csc"), reset=False
         )
         return self._transform(X, xp=xp, x_is_centered=False)

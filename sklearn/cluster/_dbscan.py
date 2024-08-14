@@ -389,7 +389,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         self : object
             Returns a fitted instance of self.
         """
-        X = self._validate_data(X, accept_sparse="csr")
+        X = self.__validate_data__(X, accept_sparse="csr")
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)

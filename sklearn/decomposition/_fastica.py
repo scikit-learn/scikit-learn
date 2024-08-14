@@ -560,7 +560,7 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         S : ndarray of shape (n_samples, n_components) or None
             Sources matrix. `None` if `compute_sources` is `False`.
         """
-        XT = self._validate_data(
+        XT = self.__validate_data__(
             X, copy=self.whiten, dtype=[np.float64, np.float32], ensure_min_samples=2
         ).T
         fun_args = {} if self.fun_args is None else self.fun_args
@@ -752,7 +752,7 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = self._validate_data(
+        X = self.__validate_data__(
             X, copy=(copy and self.whiten), dtype=[np.float64, np.float32], reset=False
         )
         if self.whiten:

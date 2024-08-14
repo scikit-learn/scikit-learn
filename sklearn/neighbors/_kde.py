@@ -226,7 +226,7 @@ class KernelDensity(BaseEstimator):
         else:
             self.bandwidth_ = self.bandwidth
 
-        X = self._validate_data(X, order="C", dtype=np.float64)
+        X = self.__validate_data__(X, order="C", dtype=np.float64)
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(
@@ -265,7 +265,7 @@ class KernelDensity(BaseEstimator):
         # The returned density is normalized to the number of points.
         # For it to be a probability, we must scale it.  For this reason
         # we'll also scale atol.
-        X = self._validate_data(X, order="C", dtype=np.float64, reset=False)
+        X = self.__validate_data__(X, order="C", dtype=np.float64, reset=False)
         if self.tree_.sample_weight is None:
             N = self.tree_.data.shape[0]
         else:

@@ -655,7 +655,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         # Since check_array converts both X and y to the same dtype, but the
         # trees use different types for X and y, checking them separately.
 
-        X, y = self._validate_data(
+        X, y = self.__validate_data__(
             X, y, accept_sparse=["csr", "csc", "coo"], dtype=DTYPE, multi_output=True
         )
         sample_weight_is_none = sample_weight is None
@@ -986,7 +986,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             ``k == 1``, otherwise ``k==n_classes``.
         """
         if check_input:
-            X = self._validate_data(
+            X = self.__validate_data__(
                 X, dtype=DTYPE, order="C", accept_sparse="csr", reset=False
             )
         raw_predictions = self._raw_predict_init(X)
@@ -1560,7 +1560,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             :term:`classes_`. Regression and binary classification produce an
             array of shape (n_samples,).
         """
-        X = self._validate_data(
+        X = self.__validate_data__(
             X, dtype=DTYPE, order="C", accept_sparse="csr", reset=False
         )
         raw_predictions = self._raw_predict(X)
@@ -2121,7 +2121,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         y : ndarray of shape (n_samples,)
             The predicted values.
         """
-        X = self._validate_data(
+        X = self.__validate_data__(
             X, dtype=DTYPE, order="C", accept_sparse="csr", reset=False
         )
         # In regression we can directly return the raw value from the trees.

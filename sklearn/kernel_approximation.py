@@ -156,7 +156,7 @@ class PolynomialCountSketch(
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(X, accept_sparse="csc")
+        X = self.__validate_data__(X, accept_sparse="csc")
         random_state = check_random_state(self.random_state)
 
         n_features = X.shape[1]
@@ -187,7 +187,7 @@ class PolynomialCountSketch(
         """
 
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse="csc", reset=False)
+        X = self.__validate_data__(X, accept_sparse="csc", reset=False)
 
         X_gamma = np.sqrt(self.gamma) * X
 
@@ -353,7 +353,7 @@ class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(X, accept_sparse="csr")
+        X = self.__validate_data__(X, accept_sparse="csr")
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
         sparse = sp.issparse(X)
@@ -394,7 +394,7 @@ class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
+        X = self.__validate_data__(X, accept_sparse="csr", reset=False)
         projection = safe_sparse_dot(X, self.random_weights_)
         projection += self.random_offset_
         np.cos(projection, projection)
@@ -512,7 +512,7 @@ class SkewedChi2Sampler(
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(X)
+        X = self.__validate_data__(X)
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
         uniform = random_state.uniform(size=(n_features, self.n_components))
@@ -545,7 +545,7 @@ class SkewedChi2Sampler(
             Returns the instance itself.
         """
         check_is_fitted(self)
-        X = self._validate_data(
+        X = self.__validate_data__(
             X, copy=True, dtype=[np.float64, np.float32], reset=False
         )
         if (X <= -self.skewedness).any():
@@ -673,7 +673,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         self : object
             Returns the transformer.
         """
-        X = self._validate_data(X, accept_sparse="csr", ensure_non_negative=True)
+        X = self.__validate_data__(X, accept_sparse="csr", ensure_non_negative=True)
 
         if self.sample_interval is None and self.sample_steps not in (1, 2, 3):
             raise ValueError(
@@ -699,7 +699,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
             Whether the return value is an array or sparse matrix depends on
             the type of the input X.
         """
-        X = self._validate_data(
+        X = self.__validate_data__(
             X, accept_sparse="csr", reset=False, ensure_non_negative=True
         )
         sparse = sp.issparse(X)
@@ -991,7 +991,7 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(X, accept_sparse="csr")
+        X = self.__validate_data__(X, accept_sparse="csr")
         rnd = check_random_state(self.random_state)
         n_samples = X.shape[0]
 
@@ -1046,7 +1046,7 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
             Transformed data.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
+        X = self.__validate_data__(X, accept_sparse="csr", reset=False)
 
         kernel_params = self._get_kernel_params()
         embedded = pairwise_kernels(

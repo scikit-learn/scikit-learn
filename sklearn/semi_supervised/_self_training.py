@@ -282,7 +282,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
         # we need row slicing support for sparse matrices, but costly finiteness check
         # can be delegated to the base estimator.
-        X, y = self._validate_data(
+        X, y = self.__validate_data__(
             X, y, accept_sparse=["csr", "csc", "lil", "dok"], ensure_all_finite=False
         )
 
@@ -412,7 +412,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         else:
             routed_params = Bunch(estimator=Bunch(predict={}))
 
-        X = self._validate_data(
+        X = self.__validate_data__(
             X,
             accept_sparse=True,
             ensure_all_finite=False,
@@ -454,7 +454,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         else:
             routed_params = Bunch(estimator=Bunch(predict_proba={}))
 
-        X = self._validate_data(
+        X = self.__validate_data__(
             X,
             accept_sparse=True,
             ensure_all_finite=False,
@@ -496,7 +496,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         else:
             routed_params = Bunch(estimator=Bunch(decision_function={}))
 
-        X = self._validate_data(
+        X = self.__validate_data__(
             X,
             accept_sparse=True,
             ensure_all_finite=False,
@@ -540,7 +540,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         else:
             routed_params = Bunch(estimator=Bunch(predict_log_proba={}))
 
-        X = self._validate_data(
+        X = self.__validate_data__(
             X,
             accept_sparse=True,
             ensure_all_finite=False,
@@ -586,7 +586,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         else:
             routed_params = Bunch(estimator=Bunch(score={}))
 
-        X = self._validate_data(
+        X = self.__validate_data__(
             X,
             accept_sparse=True,
             ensure_all_finite=False,

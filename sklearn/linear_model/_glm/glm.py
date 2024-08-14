@@ -187,7 +187,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         self : object
             Fitted model.
         """
-        X, y = self._validate_data(
+        X, y = self.__validate_data__(
             X,
             y,
             accept_sparse=["csc", "csr"],
@@ -335,7 +335,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             Returns predicted values of linear predictor.
         """
         check_is_fitted(self)
-        X = self._validate_data(
+        X = self.__validate_data__(
             X,
             accept_sparse=["csr", "csc", "coo"],
             dtype=[np.float64, np.float32],

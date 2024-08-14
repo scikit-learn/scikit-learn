@@ -228,7 +228,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         """
         _raise_for_params(params, self, "fit")
         tags = self._get_tags()
-        X = self._validate_data(
+        X = self.__validate_data__(
             X,
             accept_sparse="csc",
             ensure_min_features=2,

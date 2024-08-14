@@ -940,7 +940,7 @@ class _BaseKMeans(
             )
 
     def _check_test_data(self, X):
-        X = self._validate_data(
+        X = self.__validate_data__(
             X,
             accept_sparse="csr",
             reset=False,
@@ -1453,7 +1453,7 @@ class KMeans(_BaseKMeans):
         self : object
             Fitted estimator.
         """
-        X = self._validate_data(
+        X = self.__validate_data__(
             X,
             accept_sparse="csr",
             dtype=[np.float64, np.float32],
@@ -2062,7 +2062,7 @@ class MiniBatchKMeans(_BaseKMeans):
         self : object
             Fitted estimator.
         """
-        X = self._validate_data(
+        X = self.__validate_data__(
             X,
             accept_sparse="csr",
             dtype=[np.float64, np.float32],
@@ -2218,7 +2218,7 @@ class MiniBatchKMeans(_BaseKMeans):
         """
         has_centers = hasattr(self, "cluster_centers_")
 
-        X = self._validate_data(
+        X = self.__validate_data__(
             X,
             accept_sparse="csr",
             dtype=[np.float64, np.float32],

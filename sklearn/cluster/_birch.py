@@ -537,7 +537,7 @@ class Birch(
                 FutureWarning,
             )
 
-        X = self._validate_data(
+        X = self.__validate_data__(
             X,
             accept_sparse="csr",
             reset=first_call,
@@ -663,7 +663,7 @@ class Birch(
             Labelled data.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
+        X = self.__validate_data__(X, accept_sparse="csr", reset=False)
         return self._predict(X)
 
     def _predict(self, X):
@@ -694,7 +694,7 @@ class Birch(
             Transformed data.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
+        X = self.__validate_data__(X, accept_sparse="csr", reset=False)
         with config_context(assume_finite=True):
             return euclidean_distances(X, self.subcluster_centers_)
 

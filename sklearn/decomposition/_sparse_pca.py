@@ -78,7 +78,7 @@ class _BaseSparsePCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
             Returns the instance itself.
         """
         random_state = check_random_state(self.random_state)
-        X = self._validate_data(X)
+        X = self.__validate_data__(X)
 
         self.mean_ = X.mean(axis=0)
         X = X - self.mean_
@@ -113,7 +113,7 @@ class _BaseSparsePCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, reset=False)
+        X = self.__validate_data__(X, reset=False)
         X = X - self.mean_
 
         U = ridge_regression(

@@ -97,7 +97,7 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(
+        X = self.__validate_data__(
             X,
             accept_sparse=("csr", "csc"),
             dtype=np.float64,

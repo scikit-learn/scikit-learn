@@ -216,7 +216,7 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         self : object
             FactorAnalysis class instance.
         """
-        X = self._validate_data(
+        X = self.__validate_data__(
             X, copy=self.copy, dtype=np.float64, force_writeable=True
         )
 
@@ -326,7 +326,7 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, reset=False)
+        X = self.__validate_data__(X, reset=False)
         Ih = np.eye(len(self.components_))
 
         X_transformed = X - self.mean_
@@ -396,7 +396,7 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
             Log-likelihood of each sample under the current model.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, reset=False)
+        X = self.__validate_data__(X, reset=False)
         Xr = X - self.mean_
         precision = self.get_precision()
         n_features = X.shape[1]

@@ -208,7 +208,9 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         labels : array, shape (n_samples,)
             Component labels.
         """
-        X = self._validate_data(X, dtype=[np.float64, np.float32], ensure_min_samples=2)
+        X = self.__validate_data__(
+            X, dtype=[np.float64, np.float32], ensure_min_samples=2
+        )
         if X.shape[0] < self.n_components:
             raise ValueError(
                 "Expected n_samples >= n_components "
@@ -342,7 +344,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             Log-likelihood of each sample in `X` under the current model.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, reset=False)
+        X = self.__validate_data__(X, reset=False)
 
         return logsumexp(self._estimate_weighted_log_prob(X), axis=1)
 
@@ -380,7 +382,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             Component labels.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, reset=False)
+        X = self.__validate_data__(X, reset=False)
         return self._estimate_weighted_log_prob(X).argmax(axis=1)
 
     def predict_proba(self, X):
@@ -398,7 +400,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             Density of each Gaussian component for each sample in X.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, reset=False)
+        X = self.__validate_data__(X, reset=False)
         _, log_resp = self._estimate_log_prob_resp(X)
         return np.exp(log_resp)
 

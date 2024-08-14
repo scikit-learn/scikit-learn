@@ -335,7 +335,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
             )
             warnings.warn(msg, DataConversionWarning)
 
-        X = self._validate_data(X, dtype=dtype, accept_sparse="csr")
+        X = self.__validate_data__(X, dtype=dtype, accept_sparse="csr")
         if self.metric == "precomputed" and issparse(X):
             X = X.copy()  # copy to avoid in-place modification
             with warnings.catch_warnings():

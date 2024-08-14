@@ -242,7 +242,7 @@ class EmpiricalCovariance(BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(X)
+        X = self.__validate_data__(X)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:
@@ -275,7 +275,7 @@ class EmpiricalCovariance(BaseEstimator):
             The log-likelihood of `X_test` with `self.location_` and `self.covariance_`
             as estimators of the Gaussian model mean and covariance matrix respectively.
         """
-        X_test = self._validate_data(X_test, reset=False)
+        X_test = self.__validate_data__(X_test, reset=False)
         # compute empirical covariance of the test set
         test_cov = empirical_covariance(X_test - self.location_, assume_centered=True)
         # compute log likelihood
@@ -349,7 +349,7 @@ class EmpiricalCovariance(BaseEstimator):
         dist : ndarray of shape (n_samples,)
             Squared Mahalanobis distances of the observations.
         """
-        X = self._validate_data(X, reset=False)
+        X = self.__validate_data__(X, reset=False)
 
         precision = self.get_precision()
         with config_context(assume_finite=True):

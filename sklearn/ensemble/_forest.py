@@ -356,7 +356,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         if issparse(y):
             raise ValueError("sparse multilabel-indicator for y is not supported.")
 
-        X, y = self._validate_data(
+        X, y = self.__validate_data__(
             X,
             y,
             multi_output=True,
@@ -634,7 +634,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         else:
             ensure_all_finite = True
 
-        X = self._validate_data(
+        X = self.__validate_data__(
             X,
             dtype=DTYPE,
             accept_sparse="csr",

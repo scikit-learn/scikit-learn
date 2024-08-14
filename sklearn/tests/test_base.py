@@ -713,11 +713,11 @@ def test_feature_names_in():
 
     class NoOpTransformer(TransformerMixin, BaseEstimator):
         def fit(self, X, y=None):
-            self._validate_data(X)
+            self.__validate_data__(X)
             return self
 
         def transform(self, X):
-            self._validate_data(X, reset=False)
+            self.__validate_data__(X, reset=False)
             return X
 
     # fit on dataframe saves the feature names
@@ -794,33 +794,33 @@ def test_validate_data_cast_to_ndarray():
         pass
 
     no_op = NoOpTransformer()
-    X_np_out = no_op._validate_data(df, cast_to_ndarray=True)
+    X_np_out = no_op.__validate_data__(df, cast_to_ndarray=True)
     assert isinstance(X_np_out, np.ndarray)
     assert_allclose(X_np_out, df.to_numpy())
 
-    X_df_out = no_op._validate_data(df, cast_to_ndarray=False)
+    X_df_out = no_op.__validate_data__(df, cast_to_ndarray=False)
     assert X_df_out is df
 
-    y_np_out = no_op._validate_data(y=y, cast_to_ndarray=True)
+    y_np_out = no_op.__validate_data__(y=y, cast_to_ndarray=True)
     assert isinstance(y_np_out, np.ndarray)
     assert_allclose(y_np_out, y.to_numpy())
 
-    y_series_out = no_op._validate_data(y=y, cast_to_ndarray=False)
+    y_series_out = no_op.__validate_data__(y=y, cast_to_ndarray=False)
     assert y_series_out is y
 
-    X_np_out, y_np_out = no_op._validate_data(df, y, cast_to_ndarray=True)
+    X_np_out, y_np_out = no_op.__validate_data__(df, y, cast_to_ndarray=True)
     assert isinstance(X_np_out, np.ndarray)
     assert_allclose(X_np_out, df.to_numpy())
     assert isinstance(y_np_out, np.ndarray)
     assert_allclose(y_np_out, y.to_numpy())
 
-    X_df_out, y_series_out = no_op._validate_data(df, y, cast_to_ndarray=False)
+    X_df_out, y_series_out = no_op.__validate_data__(df, y, cast_to_ndarray=False)
     assert X_df_out is df
     assert y_series_out is y
 
     msg = "Validation should be done on X, y or both."
     with pytest.raises(ValueError, match=msg):
-        no_op._validate_data()
+        no_op.__validate_data__()
 
 
 def test_clone_keeps_output_config():
@@ -897,11 +897,11 @@ def test_dataframe_protocol(constructor_name, minversion):
 
     class NoOpTransformer(TransformerMixin, BaseEstimator):
         def fit(self, X, y=None):
-            self._validate_data(X)
+            self.__validate_data__(X)
             return self
 
         def transform(self, X):
-            return self._validate_data(X, reset=False)
+            return self.__validate_data__(X, reset=False)
 
     no_op = NoOpTransformer()
     no_op.fit(df)

@@ -91,7 +91,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
 
     def _check_X(self, X):
         # Only called to validate X in non-fit methods, therefore reset=False
-        return self._validate_data(
+        return self.__validate_data__(
             X,
             accept_sparse=["csr", "csc"],
             ensure_2d=True,
@@ -126,7 +126,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
             Fitted estimator.
         """
         _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
-        X, y = self._validate_data(
+        X, y = self.__validate_data__(
             X,
             y,
             accept_sparse=["csr", "csc"],

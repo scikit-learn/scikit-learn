@@ -618,7 +618,7 @@ class IterativeImputer(_BaseImputer):
         else:
             ensure_all_finite = True
 
-        X = self._validate_data(
+        X = self.__validate_data__(
             X,
             dtype=FLOAT_DTYPES,
             order="F",

@@ -378,7 +378,7 @@ class BisectingKMeans(_BaseKMeans):
         self
             Fitted estimator.
         """
-        X = self._validate_data(
+        X = self.__validate_data__(
             X,
             accept_sparse="csr",
             dtype=[np.float64, np.float32],

@@ -223,7 +223,7 @@ class IncrementalPCA(_BasePCA):
         self.explained_variance_ratio_ = None
         self.noise_variance_ = None
 
-        X = self._validate_data(
+        X = self.__validate_data__(
             X,
             accept_sparse=["csr", "csc", "lil"],
             copy=self.copy,
@@ -277,7 +277,7 @@ class IncrementalPCA(_BasePCA):
                     "sparse input. Either convert data to dense "
                     "or use IncrementalPCA.fit to do so in batches."
                 )
-            X = self._validate_data(
+            X = self.__validate_data__(
                 X,
                 copy=self.copy,
                 dtype=[np.float64, np.float32],

@@ -1638,7 +1638,7 @@ class TfidfTransformer(
         # large sparse data is not supported for 32bit platforms because
         # _document_frequency uses np.bincount which works on arrays of
         # dtype NPY_INTP which is int32 for 32bit platforms. See #20923
-        X = self._validate_data(
+        X = self.__validate_data__(
             X, accept_sparse=("csr", "csc"), accept_large_sparse=not _IS_32BIT
         )
         if not sp.issparse(X):
@@ -1679,7 +1679,7 @@ class TfidfTransformer(
             Tf-idf-weighted document-term matrix.
         """
         check_is_fitted(self)
-        X = self._validate_data(
+        X = self.__validate_data__(
             X,
             accept_sparse="csr",
             dtype=[np.float64, np.float32],

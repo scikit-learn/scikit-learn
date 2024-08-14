@@ -266,7 +266,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         check_X_kwargs = dict(dtype=[X_DTYPE], ensure_all_finite=False)
         if not reset:
             if self._preprocessor is None:
-                return self._validate_data(X, reset=False, **check_X_kwargs)
+                return self.__validate_data__(X, reset=False, **check_X_kwargs)
             return self._preprocessor.transform(X)
 
         # At this point, reset is False, which runs during `fit`.
@@ -276,7 +276,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             self._preprocessor = None
             self._is_categorical_remapped = None
 
-            X = self._validate_data(X, **check_X_kwargs)
+            X = self.__validate_data__(X, **check_X_kwargs)
             return X, None
 
         n_features = X.shape[1]

@@ -989,7 +989,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         self : object
             Returns the fitted instance.
         """
-        X = self._validate_data(X, ensure_min_samples=2)
+        X = self.__validate_data__(X, ensure_min_samples=2)
         return self._fit(X)
 
     def _fit(self, X):
@@ -1338,7 +1338,7 @@ class FeatureAgglomeration(
         self : object
             Returns the transformer.
         """
-        X = self._validate_data(X, ensure_min_features=2)
+        X = self.__validate_data__(X, ensure_min_features=2)
         super()._fit(X.T)
         self._n_features_out = self.n_clusters_
         return self

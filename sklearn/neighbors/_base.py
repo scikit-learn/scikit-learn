@@ -471,7 +471,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     def _fit(self, X, y=None):
         if self._get_tags()["requires_y"]:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
-                X, y = self._validate_data(
+                X, y = self.__validate_data__(
                     X, y, accept_sparse="csr", multi_output=True, order="C"
                 )
 
@@ -513,7 +513,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         else:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
-                X = self._validate_data(X, accept_sparse="csr", order="C")
+                X = self.__validate_data__(X, accept_sparse="csr", order="C")
 
         self._check_algorithm_metric()
         if self.metric_params is None:
@@ -812,7 +812,9 @@ class KNeighborsMixin:
             if self.metric == "precomputed":
                 X = _check_precomputed(X)
             else:
-                X = self._validate_data(X, accept_sparse="csr", reset=False, order="C")
+                X = self.__validate_data__(
+                    X, accept_sparse="csr", reset=False, order="C"
+                )
 
         n_samples_fit = self.n_samples_fit_
         if n_neighbors > n_samples_fit:
@@ -1148,7 +1150,9 @@ class RadiusNeighborsMixin:
             if self.metric == "precomputed":
                 X = _check_precomputed(X)
             else:
-                X = self._validate_data(X, accept_sparse="csr", reset=False, order="C")
+                X = self.__validate_data__(
+                    X, accept_sparse="csr", reset=False, order="C"
+                )
 
         if radius is None:
             radius = self.radius

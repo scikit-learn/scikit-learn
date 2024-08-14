@@ -190,7 +190,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         if callable(self.kernel):
             check_consistent_length(X, y)
         else:
-            X, y = self._validate_data(
+            X, y = self.__validate_data__(
                 X,
                 y,
                 dtype=np.float64,
@@ -606,7 +606,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
 
         if not callable(self.kernel):
-            X = self._validate_data(
+            X = self.__validate_data__(
                 X,
                 accept_sparse="csr",
                 dtype=np.float64,

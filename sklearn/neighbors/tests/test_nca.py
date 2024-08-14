@@ -70,7 +70,7 @@ def test_toy_example_collapse_points():
             # Initialize a fake NCA and variables needed to compute the loss:
             self.fake_nca = NeighborhoodComponentsAnalysis()
             self.fake_nca.n_iter_ = np.inf
-            self.X, y = self.fake_nca._validate_data(X, y, ensure_min_samples=2)
+            self.X, y = self.fake_nca.__validate_data__(X, y, ensure_min_samples=2)
             y = LabelEncoder().fit_transform(y)
             self.same_class_mask = y[:, np.newaxis] == y[np.newaxis, :]
 
@@ -487,7 +487,7 @@ def test_expected_transformation_shape():
             # function:
             self.fake_nca = NeighborhoodComponentsAnalysis()
             self.fake_nca.n_iter_ = np.inf
-            self.X, y = self.fake_nca._validate_data(X, y, ensure_min_samples=2)
+            self.X, y = self.fake_nca.__validate_data__(X, y, ensure_min_samples=2)
             y = LabelEncoder().fit_transform(y)
             self.same_class_mask = y[:, np.newaxis] == y[np.newaxis, :]
 

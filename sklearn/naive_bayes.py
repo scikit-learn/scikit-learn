@@ -253,14 +253,14 @@ class GaussianNB(_BaseNB):
         self : object
             Returns the instance itself.
         """
-        y = self._validate_data(y=y)
+        y = self.__validate_data__(y=y)
         return self._partial_fit(
             X, y, np.unique(y), _refit=True, sample_weight=sample_weight
         )
 
     def _check_X(self, X):
         """Validate X, used only in predict* methods."""
-        return self._validate_data(X, reset=False)
+        return self.__validate_data__(X, reset=False)
 
     @staticmethod
     def _update_mean_variance(n_past, mu, var, X, sample_weight=None):
@@ -414,7 +414,7 @@ class GaussianNB(_BaseNB):
             self.classes_ = None
 
         first_call = _check_partial_fit_first_call(self, classes)
-        X, y = self._validate_data(X, y, reset=first_call)
+        X, y = self.__validate_data__(X, y, reset=first_call)
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
 
@@ -565,11 +565,11 @@ class _BaseDiscreteNB(_BaseNB):
 
     def _check_X(self, X):
         """Validate X, used only in predict* methods."""
-        return self._validate_data(X, accept_sparse="csr", reset=False)
+        return self.__validate_data__(X, accept_sparse="csr", reset=False)
 
     def _check_X_y(self, X, y, reset=True):
         """Validate X and y in fit methods."""
-        return self._validate_data(X, y, accept_sparse="csr", reset=reset)
+        return self.__validate_data__(X, y, accept_sparse="csr", reset=reset)
 
     def _update_class_log_prior(self, class_prior=None):
         """Update class log priors.
@@ -1420,14 +1420,14 @@ class CategoricalNB(_BaseDiscreteNB):
 
     def _check_X(self, X):
         """Validate X, used only in predict* methods."""
-        X = self._validate_data(
+        X = self.__validate_data__(
             X, dtype="int", accept_sparse=False, ensure_all_finite=True, reset=False
         )
         check_non_negative(X, "CategoricalNB (input X)")
         return X
 
     def _check_X_y(self, X, y, reset=True):
-        X, y = self._validate_data(
+        X, y = self.__validate_data__(
             X, y, dtype="int", accept_sparse=False, ensure_all_finite=True, reset=reset
         )
         check_non_negative(X, "CategoricalNB (input X)")

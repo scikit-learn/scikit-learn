@@ -789,7 +789,7 @@ class LocallyLinearEmbedding(
         )
 
         random_state = check_random_state(self.random_state)
-        X = self._validate_data(X, dtype=float)
+        X = self.__validate_data__(X, dtype=float)
         self.nbrs_.fit(X)
         self.embedding_, self.reconstruction_error_ = _locally_linear_embedding(
             X=self.nbrs_,
@@ -868,7 +868,7 @@ class LocallyLinearEmbedding(
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, reset=False)
+        X = self.__validate_data__(X, reset=False)
         ind = self.nbrs_.kneighbors(
             X, n_neighbors=self.n_neighbors, return_distance=False
         )

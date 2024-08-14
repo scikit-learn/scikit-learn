@@ -223,7 +223,9 @@ class TruncatedSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
         X_new : ndarray of shape (n_samples, n_components)
             Reduced version of X. This will always be a dense array.
         """
-        X = self._validate_data(X, accept_sparse=["csr", "csc"], ensure_min_features=2)
+        X = self.__validate_data__(
+            X, accept_sparse=["csr", "csc"], ensure_min_features=2
+        )
         random_state = check_random_state(self.random_state)
 
         if self.algorithm == "arpack":
@@ -289,7 +291,7 @@ class TruncatedSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
             Reduced version of X. This will always be a dense array.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse=["csr", "csc"], reset=False)
+        X = self.__validate_data__(X, accept_sparse=["csr", "csc"], reset=False)
         return safe_sparse_dot(X, self.components_.T)
 
     def inverse_transform(self, X):

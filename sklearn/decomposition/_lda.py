@@ -564,7 +564,7 @@ class LatentDirichletAllocation(
         """
         dtype = [np.float64, np.float32] if reset_n_features else self.components_.dtype
 
-        X = self._validate_data(
+        X = self.__validate_data__(
             X,
             reset=reset_n_features,
             accept_sparse="csr",

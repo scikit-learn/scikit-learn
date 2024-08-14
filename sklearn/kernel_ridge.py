@@ -192,7 +192,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
             Returns the instance itself.
         """
         # Convert data
-        X, y = self._validate_data(
+        X, y = self.__validate_data__(
             X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
         )
         if sample_weight is not None and not isinstance(sample_weight, float):
@@ -232,6 +232,6 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
             Returns predicted values.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse=("csr", "csc"), reset=False)
+        X = self.__validate_data__(X, accept_sparse=("csr", "csc"), reset=False)
         K = self._get_kernel(X, self.X_fit_)
         return np.dot(K, self.dual_coef_)

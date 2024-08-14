@@ -480,7 +480,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
         self : object
                Fitted instance.
         """
-        X = self._validate_data(X)
+        X = self.__validate_data__(X)
         bandwidth = self.bandwidth
         if bandwidth is None:
             bandwidth = estimate_bandwidth(X, n_jobs=self.n_jobs)
@@ -571,6 +571,6 @@ class MeanShift(ClusterMixin, BaseEstimator):
             Index of the cluster each sample belongs to.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, reset=False)
+        X = self.__validate_data__(X, reset=False)
         with config_context(assume_finite=True):
             return pairwise_distances_argmin(X, self.cluster_centers_)

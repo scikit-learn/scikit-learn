@@ -1644,7 +1644,7 @@ class NMF(_BaseNMF):
         W : ndarray of shape (n_samples, n_components)
             Transformed data.
         """
-        X = self._validate_data(
+        X = self.__validate_data__(
             X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32]
         )
 
@@ -1774,7 +1774,7 @@ class NMF(_BaseNMF):
             Transformed data.
         """
         check_is_fitted(self)
-        X = self._validate_data(
+        X = self.__validate_data__(
             X,
             accept_sparse=("csr", "csc"),
             dtype=[np.float64, np.float32],
@@ -2232,7 +2232,7 @@ class MiniBatchNMF(_BaseNMF):
         W : ndarray of shape (n_samples, n_components)
             Transformed data.
         """
-        X = self._validate_data(
+        X = self.__validate_data__(
             X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32]
         )
 
@@ -2361,7 +2361,7 @@ class MiniBatchNMF(_BaseNMF):
             Transformed data.
         """
         check_is_fitted(self)
-        X = self._validate_data(
+        X = self.__validate_data__(
             X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32], reset=False
         )
 
@@ -2403,7 +2403,7 @@ class MiniBatchNMF(_BaseNMF):
         """
         has_components = hasattr(self, "components_")
 
-        X = self._validate_data(
+        X = self.__validate_data__(
             X,
             accept_sparse=("csr", "csc"),
             dtype=[np.float64, np.float32],
