@@ -250,10 +250,10 @@ def test_unsupervised_kneighbors(
 @pytest.mark.parametrize(
     "NeighborsMixinSubclass",
     [
-        # neighbors.KNeighborsClassifier,
+        neighbors.KNeighborsClassifier,
         neighbors.KNeighborsRegressor,
-        # neighbors.RadiusNeighborsClassifier,
-        # neighbors.RadiusNeighborsRegressor,
+        neighbors.RadiusNeighborsClassifier,
+        neighbors.RadiusNeighborsRegressor,
     ],
 )
 def test_neigh_predictions_algorithm_agnosticity(
