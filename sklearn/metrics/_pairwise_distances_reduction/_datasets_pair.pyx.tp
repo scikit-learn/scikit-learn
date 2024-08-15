@@ -171,6 +171,7 @@ cdef class PrecomputedDistanceMatrix{{name_suffix}}(DatasetsPair{{name_suffix}})
     Its abstract class is DatasetsPair
 
     Parameters
+   
     ----------
     Must receive precomputed_distance: ndarray of shape (n_samples_X, n_samples_Y)
         Must be C-contiguous. 
@@ -206,8 +207,6 @@ cdef class PrecomputedDistanceMatrix{{name_suffix}}(DatasetsPair{{name_suffix}})
 
    
    
-   
-
 @final
 cdef class DenseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
     """Compute distances between row vectors of two arrays.

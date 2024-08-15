@@ -194,11 +194,11 @@ class ArgKmin(BaseDistancesReductionDispatcher):
     @classmethod
     def compute(
         cls,
-        X,
-        Y,
         k,
-        metric="euclidean",
+        X = None,
+        Y = None,
         precomputed_matrix = None,
+        metric="euclidean",
         chunk_size=None,
         metric_kwargs=None,
         strategy=None,
@@ -284,6 +284,13 @@ class ArgKmin(BaseDistancesReductionDispatcher):
         for the concrete implementation are therefore freed when this classmethod
         returns.
         """
+        if X is None and Y is None and precomputed_matrix is None:
+            raise ValueError("Either X and Y or precomputed_matrix must be provided.")
+        elif X is not None and Y is not None and precomputed_matrix is not None: 
+            raise ValueError("Only one of X and Y or precomputed_matrix must be provided.")      
+    
+    
+    
         if X.dtype == Y.dtype == np.float64:
             return ArgKmin64.compute(
                 X=X,
