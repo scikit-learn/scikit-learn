@@ -15,3 +15,6 @@ conda activate base
 CONDA_ENV_NAME=sklearn
 LOCK_FILE=build_tools/github/pylatest_conda_forge_cuda_array-api_linux-64_conda.lock
 create_conda_environment_from_lock_file $CONDA_ENV_NAME $LOCK_FILE
+
+conda activate $CONDA_ENV_NAME
+conda list
