@@ -12,6 +12,7 @@ class InputTags:
     sparse: bool = False
     categorical: bool = False
     string: bool = False
+    dict: bool = False
     positive_only: bool = False
     allow_nan: bool = False
     pairwise: bool = False
@@ -41,6 +42,7 @@ class ClassifierTags:
 @dataclass
 class RegressorTags:
     poor_score: bool = False
+    multi_label: bool = False
 
 
 @dataclass
@@ -74,9 +76,8 @@ def default_tags(estimator):
     """
     from ..base import is_classifier, is_regressor
 
-    target_required = (
-        True if is_classifier(estimator) or is_regressor(estimator) else False
-    )
+    target_required = is_classifier(estimator) or is_regressor(estimator)
+
     return Tags(
         target_tags=TargetTags(required=target_required),
         transformer_tags=TransformerTags() if hasattr(estimator, "transform") else None,

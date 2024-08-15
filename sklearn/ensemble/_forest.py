@@ -711,11 +711,12 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         return [sample_indices for sample_indices in self._get_estimators_indices()]
 
     def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
         # Only the criterion is required to determine if the tree supports
         # missing values
         estimator = type(self.estimator)(criterion=self.criterion)
-        more_tags = {"allow_nan": _safe_tags(estimator, key="allow_nan")}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags.input_tags.allow_nan = _safe_tags(estimator).input_tags.allow_nan
+        return tags
 
 
 def _accumulate_prediction(predict, X, out, lock):
@@ -997,8 +998,9 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             return proba
 
     def __sklearn_tags__(self):
-        more_tags = {"multilabel": True}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.classifier_tags.multi_label = True
+        return tags
 
 
 class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
@@ -1162,8 +1164,9 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         return averaged_predictions
 
     def __sklearn_tags__(self):
-        more_tags = {"multilabel": True}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.regressor_tags.multi_label = True
+        return tags
 
 
 class RandomForestClassifier(ForestClassifier):

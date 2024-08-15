@@ -1833,16 +1833,15 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         return self
 
     def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
         # Note: check_sample_weights_invariance(kind='ones') should work, but
         # currently we can only mark a whole test as xfail.
-        more_tags = {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            }
+        tags._xfail_checks = {
+            "check_sample_weights_invariance": (
+                "zero sample_weight is not equivalent to removing samples"
+            ),
         }
-        return {**super().__sklearn_tags__(), **more_tags}
+        return tags
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.
@@ -2082,8 +2081,9 @@ class LassoCV(RegressorMixin, LinearModelCV):
         return False
 
     def __sklearn_tags__(self):
-        more_tags = {"multioutput": False}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.target_tags.multi_output = False
+        return tags
 
 
 class ElasticNetCV(RegressorMixin, LinearModelCV):
@@ -2322,8 +2322,9 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         return False
 
     def __sklearn_tags__(self):
-        more_tags = {"multioutput": False}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.target_tags.multi_output = False
+        return tags
 
 
 ###############################################################################
@@ -2576,8 +2577,10 @@ class MultiTaskElasticNet(Lasso):
         return self
 
     def __sklearn_tags__(self):
-        more_tags = {"multioutput_only": True}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.target_tags.multi_output = True
+        tags.target_tags.single_output = False
+        return tags
 
 
 class MultiTaskLasso(MultiTaskElasticNet):
@@ -2944,8 +2947,10 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         return True
 
     def __sklearn_tags__(self):
-        more_tags = {"multioutput_only": True}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.target_tags.multi_output = True
+        tags.target_tags.single_output = False
+        return tags
 
     # This is necessary as LinearModelCV now supports sample_weight while
     # MultiTaskElasticNet does not (yet).
@@ -3183,8 +3188,10 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         return True
 
     def __sklearn_tags__(self):
-        more_tags = {"multioutput_only": True}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.target_tags.multi_output = True
+        tags.target_tags.single_output = False
+        return tags
 
     # This is necessary as LinearModelCV now supports sample_weight while
     # MultiTaskElasticNet does not (yet).
