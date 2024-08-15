@@ -610,6 +610,10 @@ def f_three(a, b):  # pragma: no cover
 
 def test_assert_docstring_consistency_object_type():
     """Check error raised when `objects` incorrect type."""
+    pytest.importorskip(
+        "numpydoc",
+        reason="numpydoc is required to test the docstrings",
+    )
     with pytest.raises(TypeError, match="All 'objects' must be one of"):
         assert_docstring_consistency(["string", f_one])
 
