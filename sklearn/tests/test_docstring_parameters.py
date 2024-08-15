@@ -21,9 +21,9 @@ from sklearn.experimental import (
 )
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
-    precision_recall_fscore_support,
     f1_score,
     fbeta_score,
+    precision_recall_fscore_support,
     precision_score,
     recall_score,
 )
