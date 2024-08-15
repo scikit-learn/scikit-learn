@@ -287,7 +287,11 @@ class ArgKmin(BaseDistancesReductionDispatcher):
         if X is None and Y is None and precomputed_matrix is None:
             raise ValueError("Either X and Y or precomputed_matrix must be provided.")
         elif X is not None and Y is not None and precomputed_matrix is not None: 
-            raise ValueError("Only one of X and Y or precomputed_matrix must be provided.")      
+            raise ValueError("Only one of X and Y or precomputed_matrix must be provided.")    
+        elif X is None and Y is not None:
+            raise ValueError("Y should not be provided without X.")
+        elif X is not None and Y is None:
+            raise ValueError("X should not be provided without Y.")  
     
     
     
