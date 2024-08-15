@@ -286,17 +286,17 @@ def mean_pinball_loss(
     >>> from sklearn.metrics import mean_pinball_loss
     >>> y_true = [1, 2, 3]
     >>> mean_pinball_loss(y_true, [0, 2, 3], alpha=0.1)
-    0.03...
+    np.float64(0.03...)
     >>> mean_pinball_loss(y_true, [1, 2, 4], alpha=0.1)
-    0.3...
+    np.float64(0.3...)
     >>> mean_pinball_loss(y_true, [0, 2, 3], alpha=0.9)
-    0.3...
+    np.float64(0.3...)
     >>> mean_pinball_loss(y_true, [1, 2, 4], alpha=0.9)
-    0.03...
+    np.float64(0.03...)
     >>> mean_pinball_loss(y_true, y_true, alpha=0.1)
-    0.0
+    np.float64(0.0)
     >>> mean_pinball_loss(y_true, y_true, alpha=0.9)
-    0.0
+    np.float64(0.0)
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
@@ -585,11 +585,11 @@ def root_mean_squared_error(
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> root_mean_squared_error(y_true, y_pred)
-    0.612...
+    np.float64(0.612...)
     >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
     >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
     >>> root_mean_squared_error(y_true, y_pred)
-    0.822...
+    np.float64(0.822...)
     """
     output_errors = np.sqrt(
         mean_squared_error(
@@ -773,7 +773,7 @@ def root_mean_squared_log_error(
     >>> y_true = [3, 5, 2.5, 7]
     >>> y_pred = [2.5, 5, 4, 8]
     >>> root_mean_squared_log_error(y_true, y_pred)
-    0.199...
+    np.float64(0.199...)
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     check_consistent_length(y_true, y_pred, sample_weight)
@@ -847,15 +847,15 @@ def median_absolute_error(
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> median_absolute_error(y_true, y_pred)
-    0.5
+    np.float64(0.5)
     >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> median_absolute_error(y_true, y_pred)
-    0.75
+    np.float64(0.75)
     >>> median_absolute_error(y_true, y_pred, multioutput='raw_values')
     array([0.5, 1. ])
     >>> median_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    0.85
+    np.float64(0.85)
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
@@ -1280,7 +1280,7 @@ def max_error(y_true, y_pred):
     >>> y_true = [3, 2, 7, 1]
     >>> y_pred = [4, 2, 7, 1]
     >>> max_error(y_true, y_pred)
-    1
+    np.int64(1)
     """
     xp, _ = get_namespace(y_true, y_pred)
     y_type, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred, None)
@@ -1703,13 +1703,13 @@ def d2_pinball_score(
     >>> y_true = [1, 2, 3]
     >>> y_pred = [1, 3, 3]
     >>> d2_pinball_score(y_true, y_pred)
-    0.5
+    np.float64(0.5)
     >>> d2_pinball_score(y_true, y_pred, alpha=0.9)
-    0.772...
+    np.float64(0.772...)
     >>> d2_pinball_score(y_true, y_pred, alpha=0.1)
-    -1.045...
+    np.float64(-1.045...)
     >>> d2_pinball_score(y_true, y_true, alpha=0.1)
-    1.0
+    np.float64(1.0)
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
@@ -1846,25 +1846,25 @@ def d2_absolute_error_score(
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> d2_absolute_error_score(y_true, y_pred)
-    0.764...
+    np.float64(0.764...)
     >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> d2_absolute_error_score(y_true, y_pred, multioutput='uniform_average')
-    0.691...
+    np.float64(0.691...)
     >>> d2_absolute_error_score(y_true, y_pred, multioutput='raw_values')
     array([0.8125    , 0.57142857])
     >>> y_true = [1, 2, 3]
     >>> y_pred = [1, 2, 3]
     >>> d2_absolute_error_score(y_true, y_pred)
-    1.0
+    np.float64(1.0)
     >>> y_true = [1, 2, 3]
     >>> y_pred = [2, 2, 2]
     >>> d2_absolute_error_score(y_true, y_pred)
-    0.0
+    np.float64(0.0)
     >>> y_true = [1, 2, 3]
     >>> y_pred = [3, 2, 1]
     >>> d2_absolute_error_score(y_true, y_pred)
-    -1.0
+    np.float64(-1.0)
     """
     return d2_pinball_score(
         y_true, y_pred, sample_weight=sample_weight, alpha=0.5, multioutput=multioutput

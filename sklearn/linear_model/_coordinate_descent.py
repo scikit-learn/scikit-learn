@@ -3127,7 +3127,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     >>> r2_score(y, reg.predict(X))
     0.9994...
     >>> reg.alpha_
-    0.5713...
+    np.float64(0.5713...)
     >>> reg.predict(X[:1,])
     array([[153.7971...,  94.9015...]])
     """

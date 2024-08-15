@@ -1,5 +1,8 @@
 """All minimum dependencies for scikit-learn."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import argparse
 from collections import defaultdict
 
@@ -29,11 +32,11 @@ dependent_packages = {
     "memory_profiler": ("0.57.0", "benchmark, docs"),
     "pytest": (PYTEST_MIN_VERSION, "tests"),
     "pytest-cov": ("2.9.0", "tests"),
-    "ruff": ("0.2.1", "tests"),
+    "ruff": ("0.5.1", "tests"),
     "black": ("24.3.0", "tests"),
     "mypy": ("1.9", "tests"),
     "pyamg": ("4.0.0", "tests"),
-    "polars": ("0.20.23", "docs, tests"),
+    "polars": ("0.20.30", "docs, tests"),
     "pyarrow": ("12.0.0", "tests"),
     "sphinx": ("7.3.7", "docs"),
     "sphinx-copybutton": ("0.5.2", "docs"),

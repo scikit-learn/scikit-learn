@@ -1,5 +1,8 @@
 """Various utilities to check the compatibility of estimators with scikit-learn API."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import pickle
 import re
 import warnings
@@ -1912,7 +1915,7 @@ def check_estimators_dtypes(name, estimator_orig):
     X_train_64 = X_train_32.astype(np.float64)
     X_train_int_64 = X_train_32.astype(np.int64)
     X_train_int_32 = X_train_32.astype(np.int32)
-    y = X_train_int_64[:, 0]
+    y = np.array([1, 2] * 10, dtype=np.int64)
     y = _enforce_estimator_tags_y(estimator_orig, y)
 
     methods = ["predict", "transform", "decision_function", "predict_proba"]
