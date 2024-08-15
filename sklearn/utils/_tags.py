@@ -27,15 +27,15 @@ class TargetTags:
 
 @dataclass
 class TransformerTags:
-    preserve_dtype: list[object] = field(default_factory=lambda: [np.float64])
+    preserves_dtype: list[object] = field(default_factory=lambda: [np.float64])
 
 
 @dataclass
 class ClassifierTags:
     poor_score: bool = False
     binary: bool = True
-    multiclass: bool = True
-    multilabel: bool = False
+    multi_class: bool = True
+    multi_label: bool = False
 
 
 @dataclass
@@ -85,7 +85,7 @@ def default_tags(estimator):
     )
 
 
-def _safe_tags(estimator, key=None):
+def _safe_tags(estimator):
     """Safely get estimator tags.
 
     :class:`~sklearn.BaseEstimator` provides the estimator tags machinery.

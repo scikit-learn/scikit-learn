@@ -1091,7 +1091,7 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags._xfail_checks = {
-            "check_transformer_preserve_dtypes": (
+            "check_transformer_preserves_dtypes": (
                 "dtypes are preserved but not at a close enough precision"
             )
         }

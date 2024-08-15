@@ -570,8 +570,9 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return X
 
     def __sklearn_tags__(self):
-        more_tags = {"allow_nan": True}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        return tags
 
 
 @validate_params(
@@ -1109,8 +1110,10 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return X
 
     def __sklearn_tags__(self):
-        more_tags = {"allow_nan": True, "preserves_dtype": [np.float64, np.float32]}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        tags.transformer_tags.preserves_dtype = [np.float64, np.float32]
+        return tags
 
 
 class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
@@ -1338,8 +1341,9 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return X
 
     def __sklearn_tags__(self):
-        more_tags = {"allow_nan": True}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        return tags
 
 
 @validate_params(
@@ -1710,8 +1714,9 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return X
 
     def __sklearn_tags__(self):
-        more_tags = {"allow_nan": True}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        return tags
 
 
 @validate_params(
@@ -2108,8 +2113,10 @@ class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return normalize(X, norm=self.norm, axis=1, copy=False)
 
     def __sklearn_tags__(self):
-        more_tags = {"stateless": True, "array_api_support": True}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.stateless = True
+        tags.array_api_support = True
+        return tags
 
 
 @validate_params(
@@ -2311,8 +2318,9 @@ class Binarizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return binarize(X, threshold=self.threshold, copy=False)
 
     def __sklearn_tags__(self):
-        more_tags = {"stateless": True}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.stateless = True
+        return tags
 
 
 class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
@@ -2470,8 +2478,10 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         return self.n_features_in_
 
     def __sklearn_tags__(self):
-        more_tags = {"pairwise": True, "array_api_support": True}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.input_tags.pairwise = True
+        tags.array_api_support = True
+        return tags
 
 
 @validate_params(
@@ -2969,8 +2979,9 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         return self._transform(X, inverse=True)
 
     def __sklearn_tags__(self):
-        more_tags = {"allow_nan": True}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        return tags
 
 
 @validate_params(
@@ -3541,8 +3552,9 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return X
 
     def __sklearn_tags__(self):
-        more_tags = {"allow_nan": True}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        return tags
 
 
 @validate_params(

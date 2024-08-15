@@ -19,6 +19,8 @@ from ..base import (
     RegressorMixin,
     TransformerMixin,
     _fit_context,
+    is_classifier,
+    is_regressor,
 )
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array, check_consistent_length
@@ -552,8 +554,13 @@ class _PLS(
         return self.fit(X, y).transform(X, y)
 
     def __sklearn_tags__(self):
-        more_tags = {"poor_score": True, "requires_y": False}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        if is_classifier(self):
+            tags.classifier_tags.poor_score = True
+        if is_regressor(self):
+            tags.regressor_tags.poor_score = True
+        tags.target_tags.required = False
+        return tags
 
 
 class PLSRegression(_PLS):

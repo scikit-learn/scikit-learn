@@ -528,5 +528,6 @@ class BisectingKMeans(_BaseKMeans):
         return labels
 
     def __sklearn_tags__(self):
-        more_tags = {"preserves_dtype": [np.float64, np.float32]}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = [np.float64, np.float32]
+        return tags

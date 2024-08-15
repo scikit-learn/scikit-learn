@@ -65,10 +65,7 @@ from ..utils._param_validation import (
 from . import shuffle
 from ._missing import is_scalar_nan
 from ._param_validation import Interval
-from ._tags import (
-    _DEFAULT_TAGS,
-    _safe_tags,
-)
+from ._tags import Tags, _safe_tags
 from ._testing import (
     SkipTest,
     _array_api_for_tests,
@@ -112,7 +109,7 @@ def _yield_checks(estimator):
 
     # Check that all estimator yield informative messages when
     # trained on empty datasets
-    if not tags["no_validation"]:
+    if not tags.no_validation:
         yield check_complex_data
         yield check_dtype_object
         yield check_estimators_empty_data_messages
@@ -121,11 +118,11 @@ def _yield_checks(estimator):
         # cross-decomposition's "transform" returns X and Y
         yield check_pipeline_consistency
 
-    if not tags["allow_nan"] and not tags["no_validation"]:
+    if not tags.input_tags.allow_nan and not tags.no_validation:
         # Test that all estimators check their input for NaN's and infs
         yield check_estimators_nan_inf
 
-    if tags["pairwise"]:
+    if tags.input_tags.pairwise:
         # Check that pairwise estimator throws error on non-square input
         yield check_nonsquare_error
 
@@ -144,7 +141,7 @@ def _yield_checks(estimator):
     yield check_estimator_get_tags_default_keys
     yield check_estimator_tags_deprecated
 
-    if tags["array_api_support"]:
+    if tags.array_api_support:
         for check in _yield_array_api_checks(estimator):
             yield check
 
@@ -159,21 +156,21 @@ def _yield_classifier_checks(classifier):
     yield check_classifiers_one_label_sample_weights
     yield check_classifiers_classes
     yield check_estimators_partial_fit_n_features
-    if tags["multioutput"]:
+    if tags.target_tags.multi_output:
         yield check_classifier_multioutput
     # basic consistency testing
     yield check_classifiers_train
     yield partial(check_classifiers_train, readonly_memmap=True)
     yield partial(check_classifiers_train, readonly_memmap=True, X_dtype="float32")
     yield check_classifiers_regression_target
-    if tags["multilabel"]:
+    if tags.classifier_tags.multi_label:
         yield check_classifiers_multilabel_representation_invariance
         yield check_classifiers_multilabel_output_format_predict
         yield check_classifiers_multilabel_output_format_predict_proba
         yield check_classifiers_multilabel_output_format_decision_function
-    if not tags["no_validation"]:
+    if not tags.no_validation:
         yield check_supervised_y_no_nan
-        if not tags["multioutput_only"]:
+        if not tags.target_tags.multi_output and not tags.target_tags.single_output:
             yield check_supervised_y_2d
     if tags["requires_fit"]:
         yield check_estimators_unfitted
@@ -249,14 +246,14 @@ def _yield_transformer_checks(transformer):
     tags = _safe_tags(transformer)
     # All transformers should either deal with sparse data or raise an
     # exception with type TypeError and an intelligible error message
-    if not tags["no_validation"]:
+    if not tags.no_validation:
         yield check_transformer_data_not_an_array
     # these don't actually fit the data, so don't raise errors
     yield check_transformer_general
-    if tags["preserves_dtype"]:
-        yield check_transformer_preserve_dtypes
+    if tags.transformer_tags.preserves_dtype:
+        yield check_transformer_preserves_dtypes
     yield partial(check_transformer_general, readonly_memmap=True)
-    if not _safe_tags(transformer, key="stateless"):
+    if not _safe_tags(transformer).stateless:
         yield check_transformers_unfitted
     else:
         yield check_transformers_unfitted_stateless
@@ -507,7 +504,7 @@ def _should_be_skipped_or_marked(estimator, check):
 
     check_name = check.func.__name__ if isinstance(check, partial) else check.__name__
 
-    xfail_checks = _safe_tags(estimator, key="_xfail_checks") or {}
+    xfail_checks = _safe_tags(estimator)._xfail_checks or {}
     if check_name in xfail_checks:
         return True, xfail_checks[check_name]
 
@@ -1934,7 +1931,7 @@ def check_estimators_dtypes(name, estimator_orig):
                 getattr(estimator, method)(X_train)
 
 
-def check_transformer_preserve_dtypes(name, transformer_orig):
+def check_transformer_preserves_dtypes(name, transformer_orig):
     # check that dtype are preserved meaning if input X is of some dtype
     # X_transformed should be from the same dtype.
     X, y = make_blobs(
@@ -4040,18 +4037,14 @@ def check_n_features_in_after_fitting(name, estimator_orig):
 
 
 def check_estimator_get_tags_default_keys(name, estimator_orig):
-    # check that if __sklearn_tags__ is implemented, it contains all keys from
-    # _DEFAULT_KEYS
+    # check that if __sklearn_tags__ is implemented, it's an instance of Tags
     estimator = clone(estimator_orig)
     if not hasattr(estimator, "__sklearn_tags__"):
         return
 
-    tags_keys = set(estimator.__sklearn_tags__().keys())
-    default_tags_keys = set(_DEFAULT_TAGS.keys())
-    assert tags_keys.intersection(default_tags_keys) == default_tags_keys, (
-        f"{name}.__sklearn_tags__() is missing entries for the following default tags"
-        f": {default_tags_keys - tags_keys.intersection(default_tags_keys)}"
-    )
+    assert isinstance(
+        estimator.__sklearn_tags__(), Tags
+    ), f"{name}.__sklearn_tags__() must be an instance of Tags"
 
 
 def check_estimator_tags_deprecated(name, estimator_orig):

@@ -14,7 +14,13 @@ from numbers import Integral, Real
 import numpy as np
 from scipy.special import logsumexp
 
-from .base import BaseEstimator, ClassifierMixin, _fit_context
+from .base import (
+    BaseEstimator,
+    ClassifierMixin,
+    _fit_context,
+    is_classifier,
+    is_regressor,
+)
 from .preprocessing import LabelBinarizer, binarize, label_binarize
 from .utils._param_validation import Interval
 from .utils.extmath import safe_sparse_dot
@@ -761,8 +767,12 @@ class _BaseDiscreteNB(_BaseNB):
         self.feature_count_ = np.zeros((n_classes, n_features), dtype=np.float64)
 
     def __sklearn_tags__(self):
-        more_tags = {"poor_score": True}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        if is_classifier(self):
+            tags.classifier_tags.poor_score = True
+        if is_regressor(self):
+            tags.regressor_tags.poor_score = True
+        return tags
 
 
 class MultinomialNB(_BaseDiscreteNB):
@@ -869,8 +879,9 @@ class MultinomialNB(_BaseDiscreteNB):
         )
 
     def __sklearn_tags__(self):
-        more_tags = {"requires_positive_X": True}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.input_tags.positive_only = True
+        return tags
 
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
@@ -1016,8 +1027,9 @@ class ComplementNB(_BaseDiscreteNB):
         self.norm = norm
 
     def __sklearn_tags__(self):
-        more_tags = {"requires_positive_X": True}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.input_tags.positive_only = True
+        return tags
 
     def _count(self, X, Y):
         """Count feature occurrences."""
@@ -1419,8 +1431,9 @@ class CategoricalNB(_BaseDiscreteNB):
         return super().partial_fit(X, y, classes, sample_weight=sample_weight)
 
     def __sklearn_tags__(self):
-        more_tags = {"requires_positive_X": True}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.input_tags.positive_only = True
+        return tags
 
     def _check_X(self, X):
         """Validate X, used only in predict* methods."""

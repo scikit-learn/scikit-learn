@@ -909,8 +909,10 @@ class HashingVectorizer(
         )
 
     def __sklearn_tags__(self):
-        more_tags = {"X_types": ["string"]}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.input_tags.string = True
+        tags.input_tags.two_d_array = False
+        return tags
 
 
 def _document_frequency(X):
@@ -1467,8 +1469,10 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         )
 
     def __sklearn_tags__(self):
-        more_tags = {"X_types": ["string"]}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.input_tags.string = True
+        tags.input_tags.two_d_array = False
+        return tags
 
 
 def _make_int_array():
@@ -1706,13 +1710,13 @@ class TfidfTransformer(
         return X
 
     def __sklearn_tags__(self):
-        more_tags = {
-            "X_types": ["2darray", "sparse"],
-            # FIXME: np.float16 could be preserved if _inplace_csr_row_normalize_l2
-            # accepted it.
-            "preserves_dtype": [np.float64, np.float32],
-        }
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.input_tags.two_d_array = True
+        tags.input_tags.sparse = True
+        # FIXME: np.float16 could be preserved if _inplace_csr_row_normalize_l2
+        # accepted it.
+        tags.transformer_tags.preserves_dtype = [np.float64, np.float32]
+        return tags
 
 
 class TfidfVectorizer(CountVectorizer):
@@ -2113,5 +2117,8 @@ class TfidfVectorizer(CountVectorizer):
         return self._tfidf.transform(X, copy=False)
 
     def __sklearn_tags__(self):
-        more_tags = {"X_types": ["string"], "_skip_test": True}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.input_tags.string = True
+        tags.input_tags.two_d_array = False
+        tags._skip_test = True
+        return tags

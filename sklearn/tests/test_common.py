@@ -61,7 +61,7 @@ from sklearn.preprocessing import (
 )
 from sklearn.semi_supervised import LabelPropagation, LabelSpreading
 from sklearn.utils import all_estimators
-from sklearn.utils._tags import _DEFAULT_TAGS, _safe_tags
+from sklearn.utils._tags import _safe_tags
 from sklearn.utils._testing import (
     SkipTest,
     ignore_warnings,
@@ -357,14 +357,29 @@ def test_search_cv(estimator, check, request):
 )
 def test_valid_tag_types(estimator):
     """Check that estimator tags are valid."""
-    tags = _safe_tags(estimator)
+    from dataclasses import fields
 
-    for name, tag in tags.items():
-        correct_tags = type(_DEFAULT_TAGS[name])
-        if name == "_xfail_checks":
-            # _xfail_checks can be a dictionary
-            correct_tags = (correct_tags, dict)
-        assert isinstance(tag, correct_tags)
+    from ..utils._tags import default_tags
+
+    def check_field_types(tags, defaults):
+        if tags is None:
+            return
+        tags_fields = fields(tags)
+        for field in tags_fields:
+            correct_tags = type(getattr(defaults, field.name))
+            if field.name == "_xfail_checks":
+                # _xfail_checks can be a dictionary
+                correct_tags = (correct_tags, dict)
+            assert isinstance(getattr(tags, field.name), correct_tags)
+
+    tags = _safe_tags(estimator)
+    defaults = default_tags(estimator)
+    check_field_types(tags, defaults)
+    check_field_types(tags.input_tags, defaults.input_tags)
+    check_field_types(tags.target_tags, defaults.target_tags)
+    check_field_types(tags.classifier_tags, defaults.classifier_tags)
+    check_field_types(tags.regressor_tags, defaults.regressor_tags)
+    check_field_types(tags.transformer_tags, defaults.transformer_tags)
 
 
 @pytest.mark.parametrize(

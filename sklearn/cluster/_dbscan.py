@@ -472,5 +472,6 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         return self.labels_
 
     def __sklearn_tags__(self):
-        more_tags = {"pairwise": self.metric == "precomputed"}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.input_tags.pairwise = self.metric == "precomputed"
+        return tags

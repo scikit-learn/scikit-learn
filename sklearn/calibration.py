@@ -536,16 +536,15 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         return router
 
     def __sklearn_tags__(self):
-        more_tags = {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "Due to the cross-validation and sample ordering, removing a sample"
-                    " is not strictly equal to putting is weight to zero. Specific unit"
-                    " tests are added for CalibratedClassifierCV specifically."
-                ),
-            }
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_sample_weights_invariance": (
+                "Due to the cross-validation and sample ordering, removing a sample"
+                " is not strictly equal to putting is weight to zero. Specific unit"
+                " tests are added for CalibratedClassifierCV specifically."
+            ),
         }
-        return {**super().__sklearn_tags__(), **more_tags}
+        return tags
 
 
 def _fit_classifier_calibrator_pair(

@@ -639,8 +639,11 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         """Resolve which estimator to return."""
 
     def __sklearn_tags__(self):
-        more_tags = {"allow_nan": _safe_tags(self._get_estimator(), "allow_nan")}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = _safe_tags(
+            self._get_estimator()
+        ).input_tags.allow_nan
+        return tags
 
 
 class BaggingClassifier(ClassifierMixin, BaseBagging):
