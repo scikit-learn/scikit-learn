@@ -327,15 +327,15 @@ def _yield_array_api_checks(estimator):
 def _yield_all_checks(estimator):
     name = estimator.__class__.__name__
     tags = _safe_tags(estimator)
-    if "2darray" not in tags["X_types"]:
+    if tags.input_tags.two_d_array:
         warnings.warn(
             "Can't test estimator {} which requires input  of type {}".format(
-                name, tags["X_types"]
+                name, tags.input_tags
             ),
             SkipTestWarning,
         )
         return
-    if tags["_skip_test"]:
+    if tags._skip_test:
         warnings.warn(
             "Explicit SKIP via _skip_test tag for estimator {}.".format(name),
             SkipTestWarning,
@@ -360,7 +360,7 @@ def _yield_all_checks(estimator):
         for check in _yield_outliers_checks(estimator):
             yield check
     yield check_parameters_default_constructible
-    if not tags["non_deterministic"]:
+    if not tags.non_deterministic:
         yield check_methods_sample_order_invariance
         yield check_methods_subset_invariance
     yield check_fit2d_1sample
@@ -371,13 +371,13 @@ def _yield_all_checks(estimator):
     yield check_dont_overwrite_parameters
     yield check_fit_idempotent
     yield check_fit_check_is_fitted
-    if not tags["no_validation"]:
+    if not tags.no_validation:
         yield check_n_features_in
         yield check_fit1d
         yield check_fit2d_predict1d
-        if tags["requires_y"]:
+        if tags.target_tags.required:
             yield check_requires_y_none
-    if tags["requires_positive_X"]:
+    if tags.input_tags.positive_only:
         yield check_fit_non_negative
 
 
@@ -1064,13 +1064,13 @@ def _check_estimator_sparse_container(name, estimator_orig, sparse_type):
                 estimator.fit(X, y)
             if hasattr(estimator, "predict"):
                 pred = estimator.predict(X)
-                if tags["multioutput_only"]:
+                if tags.target_tags.multi_output and not tags.target_tags.single_output:
                     assert pred.shape == (X.shape[0], 1)
                 else:
                     assert pred.shape == (X.shape[0],)
             if hasattr(estimator, "predict_proba"):
                 probs = estimator.predict_proba(X)
-                if tags["binary_only"]:
+                if tags.classifier_tags.binary and not tags.classifier_tags.multiclass:
                     expected_probs_shape = (X.shape[0], 2)
                 else:
                     expected_probs_shape = (X.shape[0], 4)
@@ -1113,7 +1113,10 @@ def check_sample_weights_pandas_series(name, estimator_orig):
         X = pd.DataFrame(_enforce_estimator_tags_X(estimator_orig, X), copy=False)
         y = pd.Series([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 2])
         weights = pd.Series([1] * 12)
-        if _safe_tags(estimator, key="multioutput_only"):
+        if (
+            not _safe_tags(estimator).target_tags.single_output
+            and _safe_tags(estimator).target_tags.multi_output
+        ):
             y = pd.DataFrame(y, copy=False)
         try:
             estimator.fit(X, y, sample_weight=weights)

@@ -402,8 +402,9 @@ class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         return projection
 
     def __sklearn_tags__(self):
-        more_tags = {"preserves_dtype": [np.float64, np.float32]}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = [np.float64, np.float32]
+        return tags
 
 
 class SkewedChi2Sampler(
@@ -561,8 +562,9 @@ class SkewedChi2Sampler(
         return projection
 
     def __sklearn_tags__(self):
-        more_tags = {"preserves_dtype": [np.float64, np.float32]}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = [np.float64, np.float32]
+        return tags
 
 
 class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
@@ -817,8 +819,10 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         return sp.hstack(X_new)
 
     def __sklearn_tags__(self):
-        more_tags = {"stateless": True, "requires_positive_X": True}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.stateless = True
+        tags.input_tags.positive_only = True
+        return tags
 
 
 class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
@@ -1085,12 +1089,11 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         return params
 
     def __sklearn_tags__(self):
-        more_tags = {
-            "_xfail_checks": {
-                "check_transformer_preserve_dtypes": (
-                    "dtypes are preserved but not at a close enough precision"
-                )
-            },
-            "preserves_dtype": [np.float64, np.float32],
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_transformer_preserve_dtypes": (
+                "dtypes are preserved but not at a close enough precision"
+            )
         }
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags.transformer_tags.preserves_dtype = [np.float64, np.float32]
+        return tags

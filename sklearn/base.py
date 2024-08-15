@@ -20,9 +20,7 @@ from .utils._estimator_html_repr import _HTMLDocumentationLinkMixin, estimator_h
 from .utils._metadata_requests import _MetadataRequester, _routing_enabled
 from .utils._param_validation import validate_parameter_constraints
 from .utils._set_output import _SetOutputMixin
-from .utils._tags import (
-    _DEFAULT_TAGS,
-)
+from .utils._tags import default_tags
 from .utils.fixes import _IS_32BIT
 from .utils.validation import (
     _check_feature_names_in,
@@ -386,7 +384,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
             self.__dict__.update(state)
 
     def __sklearn_tags__(self):
-        return copy.deepcopy(_DEFAULT_TAGS)
+        return default_tags(self)
 
     def _check_n_features(self, X, reset):
         """Set the `n_features_in_` attribute, or check against it.
@@ -596,7 +594,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         """
         self._check_feature_names(X, reset=reset)
 
-        if y is None and self.__sklearn_tags__()["requires_y"]:
+        if y is None and self.__sklearn_tags__().target_tags.required:
             raise ValueError(
                 f"This {self.__class__.__name__} estimator "
                 "requires y to be passed, but the target y is None."
@@ -752,11 +750,6 @@ class ClassifierMixin:
 
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags.update(requires_y=True)
-        return tags
-
 
 class RegressorMixin:
     """Mixin class for all regression estimators in scikit-learn.
@@ -839,10 +832,6 @@ class RegressorMixin:
         y_pred = self.predict(X)
         return r2_score(y, y_pred, sample_weight=sample_weight)
 
-    def __sklearn_tags__(self):
-        more_tags = {"requires_y": True}
-        return {**super().__sklearn_tags__(), **more_tags}
-
 
 class ClusterMixin:
     """Mixin class for all cluster estimators in scikit-learn.
@@ -891,10 +880,6 @@ class ClusterMixin:
         # method is possible for a given clustering algorithm
         self.fit(X, **kwargs)
         return self.labels_
-
-    def __sklearn_tags__(self):
-        more_tags = {"preserves_dtype": []}
-        return {**super().__sklearn_tags__(), **more_tags}
 
 
 class BiclusterMixin:
@@ -1338,20 +1323,20 @@ class MultiOutputMixin:
     """Mixin to mark estimators that support multioutput."""
 
     def __sklearn_tags__(self):
-        more_tags = {"multioutput": True}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.target_tags.multi_output = True
+        return tags
 
 
 class _UnstableArchMixin:
     """Mark estimators that are non-determinstic on 32bit or PowerPC"""
 
     def __sklearn_tags__(self):
-        more_tags = {
-            "non_deterministic": (
-                _IS_32BIT or platform.machine().startswith(("ppc", "powerpc"))
-            )
-        }
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.non_deterministic = _IS_32BIT or platform.machine().startswith(
+            ("ppc", "powerpc")
+        )
+        return tags
 
 
 def is_classifier(estimator):

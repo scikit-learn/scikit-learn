@@ -35,7 +35,7 @@ class InputTags:
     categorical: bool = False
     string: bool = False
     positive_only: bool = False
-    nan_allowed: bool = False
+    allow_nan: bool = False
     pairwise: bool = False
 
 
@@ -49,7 +49,7 @@ class TargetTags:
 
 @dataclass
 class TransformerTags:
-    preserve_dtype: list[str] = field(default_factory=lambda: ["float64"])
+    preserve_dtype: list[object] = field(default_factory=lambda: [np.float64])
 
 
 @dataclass
@@ -67,10 +67,10 @@ class RegressorTags:
 
 @dataclass
 class Tags:
-    target_flags: TargetTags
-    transformer_flags: TransformerTags
-    classifier_flags: ClassifierTags
-    regressor_flags: RegressorTags
+    target_tags: TargetTags
+    transformer_tags: TransformerTags
+    classifier_tags: ClassifierTags
+    regressor_tags: RegressorTags
     array_api_support: bool = False
     no_validation: bool = False
     stateless: bool = False
@@ -78,7 +78,33 @@ class Tags:
     requires_fit: bool = True
     _skip_test: bool = False
     _xfail_checks: dict[str, str] = field(default_factory=dict)
-    input_flags: InputTags = field(default_factory=InputTags)
+    input_tags: InputTags = field(default_factory=InputTags)
+
+
+def default_tags(estimator):
+    """Get the default tags for an estimator.
+
+    Parameters
+    ----------
+    estimator : estimator object
+        The estimator for which to get the default tags.
+
+    Returns
+    -------
+    tags : Tags
+        The default tags for the estimator.
+    """
+    from ..base import is_classifier, is_regressor
+
+    target_required = (
+        True if is_classifier(estimator) or is_regressor(estimator) else False
+    )
+    return Tags(
+        target_tags=TargetTags(required=target_required),
+        transformer_tags=TransformerTags() if hasattr(estimator, "transform") else None,
+        classifier_tags=ClassifierTags() if is_classifier(estimator) else None,
+        regressor_tags=RegressorTags() if is_regressor(estimator) else None,
+    )
 
 
 def _safe_tags(estimator, key=None):
@@ -90,7 +116,7 @@ def _safe_tags(estimator, key=None):
 
     For scikit-learn built-in estimators, we should still rely on
     `self.__sklearn_tags__()`. `_safe_tags(est)` should be used when we are not sure
-    where `est` comes from: typically `_safe_tags(self.base_estimator)` where
+    where `est` comes from: typically `_safe_tags(self.estimator)` where
     `self` is a meta-estimator, or in the common checks.
 
     Parameters
@@ -98,26 +124,14 @@ def _safe_tags(estimator, key=None):
     estimator : estimator object
         The estimator from which to get the tag.
 
-    key : str, default=None
-        Tag name to get. By default (`None`), all tags are returned.
-
     Returns
     -------
-    tags : dict or tag value
-        The estimator tags. A single value is returned if `key` is not None.
+    tags : Tags
+        The estimator tags.
     """
     if hasattr(estimator, "__sklearn_tags__"):
-        tags_provider = "__sklearn_tags__()"
         tags = estimator.__sklearn_tags__()
     else:
-        tags_provider = "_DEFAULT_TAGS"
-        tags = _DEFAULT_TAGS
+        tags = default_tags(estimator)
 
-    if key is not None:
-        if key not in tags:
-            raise ValueError(
-                f"The key {key} is not defined in {tags_provider} for the "
-                f"class {estimator.__class__.__name__}."
-            )
-        return tags[key]
     return tags

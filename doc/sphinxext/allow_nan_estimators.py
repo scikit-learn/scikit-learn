@@ -21,7 +21,7 @@ class AllowNanEstimators(Directive):
             with suppress(SkipTest):
                 est = _construct_instance(est_class)
 
-            if est.__sklearn_tags__().get("allow_nan"):
+            if est.__sklearn_tags__().input_tags.allow_nan:
                 module_name = ".".join(est_class.__module__.split(".")[:2])
                 class_title = f"{est_class.__name__}"
                 class_url = f"./generated/{module_name}.{class_title}.html"
