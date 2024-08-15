@@ -22,7 +22,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC, SVR, LinearSVR
 from sklearn.utils import check_random_state
-from sklearn.utils._tags import _DEFAULT_TAGS
+from sklearn.utils._tags import default_tags
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.fixes import CSR_CONTAINERS
 
@@ -58,8 +58,9 @@ class MockClassifier(ClassifierMixin):
         return self
 
     def __sklearn_tags__(self):
-        more_tags = {"allow_nan": True}
-        return {**_DEFAULT_TAGS, **more_tags}
+        tags = default_tags(self)
+        tags.input_tags.allow_nan = True
+        return tags
 
 
 def test_rfe_features_importance():
