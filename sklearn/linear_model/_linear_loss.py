@@ -294,25 +294,27 @@ class LinearModelLoss:
         grad_pointwise /= sw_sum
 
         with np.errstate(all="raise"):
-            if not self.base_loss.is_multiclass:
-                grad = np.empty_like(coef, dtype=weights.dtype)
-                try:
+            try:
+                if not self.base_loss.is_multiclass:
+                    grad = np.empty_like(coef, dtype=weights.dtype)
                     grad[:n_features] = X.T @ grad_pointwise + l2_reg_strength * weights
-                except FloatingPointError as e:
-                    raise ValueError(
-                        "Overflow detected. Try scaling the target variable or"
-                        " features, or using a different solver."
-                    ) from e
-                if self.fit_intercept:
-                    grad[-1] = grad_pointwise.sum()
-            else:
-                grad = np.empty((n_classes, n_dof), dtype=weights.dtype, order="F")
-                # grad_pointwise.shape = (n_samples, n_classes)
-                grad[:, :n_features] = grad_pointwise.T @ X + l2_reg_strength * weights
-                if self.fit_intercept:
-                    grad[:, -1] = grad_pointwise.sum(axis=0)
-                if coef.ndim == 1:
-                    grad = grad.ravel(order="F")
+                    if self.fit_intercept:
+                        grad[-1] = grad_pointwise.sum()
+                else:
+                    grad = np.empty((n_classes, n_dof), dtype=weights.dtype, order="F")
+                    # grad_pointwise.shape = (n_samples, n_classes)
+                    grad[:, :n_features] = (
+                        grad_pointwise.T @ X + l2_reg_strength * weights
+                    )
+                    if self.fit_intercept:
+                        grad[:, -1] = grad_pointwise.sum(axis=0)
+                    if coef.ndim == 1:
+                        grad = grad.ravel(order="F")
+            except FloatingPointError as e:
+                raise ValueError(
+                    "Overflow detected. Try scaling the target variable or"
+                    " features, or using a different solver."
+                ) from e
 
         return loss, grad
 

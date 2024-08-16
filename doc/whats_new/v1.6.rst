@@ -232,6 +232,10 @@ Changelog
 - |API| Deprecates `copy_X` in :class:`linear_model.TheilSenRegressor` as the parameter
   has no effect. `copy_X` will be removed in 1.8.
   :pr:`29105` by :user:`Adam Li <adam2392>`.
+- |Fix| Raises a `ValueError` in :class:`linear_model.LinearModelLoss` if a numpy
+  `FloatingPointError` is raised during gradient computation.
+  :pr:`27332` by :user:`Akaash Patel <akaashp2000>`
+  and :pr:`29681` by :user:`Steffen Schneider <stes>`.
 
 :mod:`sklearn.manifold`
 .......................

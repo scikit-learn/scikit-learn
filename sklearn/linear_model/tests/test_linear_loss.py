@@ -357,26 +357,33 @@ def test_multinomial_coef_shape(fit_intercept):
     assert_allclose(h, h_r.reshape(loss.base_loss.n_classes, -1, order="F"))
 
 
-def test_loss_gradient_overflow():
+@pytest.mark.parametrize("base_loss", [HalfPoissonLoss])
+@pytest.mark.parametrize("fit_intercept", [False, True])
+@pytest.mark.parametrize("trigger_overflow", [False, True])
+def test_loss_gradient_overflow(base_loss, fit_intercept, trigger_overflow):
+    """Checks if an overflow during gradient calculation is correctly handled."""
 
-    class DummyBaseLoss:
-        def __init__(self, is_multiclass=False, n_classes=1):
-            self.is_multiclass = is_multiclass
-            self.n_classes = n_classes
-
-        def loss_gradient(self, y_true, raw_prediction, sample_weight, n_threads):
-            loss = np.ones_like(y_true, dtype=np.float64)
-            gradient = (
-                np.ones_like(y_true, dtype=np.float64) * 1e308
-            )  # Large value to trigger overflow
+    class DummyBaseLoss(base_loss):
+        def loss_gradient(self, *args, **kwargs):
+            loss, gradient = super().loss_gradient(*args, **kwargs)
+            if trigger_overflow:
+                gradient[:] = 1e308
             return loss, gradient
 
-    base_loss = DummyBaseLoss()
-    model_loss = LinearModelLoss(base_loss=base_loss, fit_intercept=False)
+    base_loss_instance = DummyBaseLoss()
+    model_loss = LinearModelLoss(
+        base_loss=base_loss_instance, fit_intercept=fit_intercept
+    )
 
     coef = np.array([1.0, 1.0], dtype=np.float64)
+    if fit_intercept:
+        coef = np.array([1.0, 1.0, 0.1], dtype=np.float64)
+
     X = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=np.float64)
     y = np.array([1.0, 1.0], dtype=np.float64)
 
-    with pytest.raises(ValueError, match="Overflow detected"):
+    if trigger_overflow:
+        with pytest.raises(ValueError, match="Overflow detected"):
+            model_loss.loss_gradient(coef, X, y)
+    else:
         model_loss.loss_gradient(coef, X, y)
