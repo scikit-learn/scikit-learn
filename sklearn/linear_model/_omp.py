@@ -11,7 +11,7 @@ import numpy as np
 from scipy import linalg
 from scipy.linalg.lapack import get_lapack_funcs
 
-from ..base import MultiOutputMixin, RegressorMixin, _fit_context
+from ..base import RegressorMixin, _fit_context
 from ..model_selection import check_cv
 from ..utils import Bunch, as_float_array, check_array
 from ..utils._param_validation import Interval, StrOptions, validate_params
@@ -23,7 +23,7 @@ from ..utils.metadata_routing import (
     process_routing,
 )
 from ..utils.parallel import Parallel, delayed
-from ._base import LinearModel, _pre_fit
+from ._base import LinearModel, MultiOutputLinearModel, _pre_fit
 
 premature = (
     "Orthogonal matching pursuit ended prematurely due to linear"
@@ -641,7 +641,7 @@ def orthogonal_mp_gram(
         return np.squeeze(coef)
 
 
-class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
+class OrthogonalMatchingPursuit(RegressorMixin, MultiOutputLinearModel):
     """Orthogonal Matching Pursuit model (OMP).
 
     Read more in the :ref:`User Guide <omp>`.
