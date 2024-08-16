@@ -52,7 +52,7 @@ feature, code or documentation improvement).
 
    .. prompt:: bash $
 
-     git clone git://github.com/scikit-learn/scikit-learn.git  # add --depth 1 if your connection is slow
+     git clone git@github.com:scikit-learn/scikit-learn.git  # add --depth 1 if your connection is slow
      cd scikit-learn
 
    If you plan on submitting a pull-request, you should clone from your fork
