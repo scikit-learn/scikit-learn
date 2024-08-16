@@ -644,7 +644,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
     }
 
     def __init__(
-        self, estimator, *, order=None, cv=None, random_state=None, verbose=False, base_estimator = "deprecated"
+        self, estimator, *, order=None, cv=None, random_state=None, verbose=False, base_estimator="deprecated"
     ):
         self.estimator = estimator
         self.order = order
@@ -895,13 +895,6 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     ----------
     estimator : estimator
         The base estimator from which the classifier chain is built.
-
-    base_estimator : estimator
-        The base estimator from which the classifier chain is built.
-
-        .. deprecated:: 1.6
-            `base_estimator` is deprecated and will be removed in 1.8.
-            Use `estimator` instead.
             
     order : array-like of shape (n_outputs,) or 'random', default=None
         If `None`, the order will be determined by the order of columns in
@@ -956,6 +949,13 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         If True, chain progress is output as each model is completed.
 
         .. versionadded:: 1.2
+    
+    base_estimator : object, default="deprecated"
+         Use `estimator` instead.
+
+         .. deprecated:: 1.6
+             `base_estimator` is deprecated and will be removed in 1.8.
+             Use `estimator` instead
 
     Attributes
     ----------
@@ -1222,6 +1222,12 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         If True, chain progress is output as each model is completed.
 
         .. versionadded:: 1.2
+
+    base_estimator : object, default="deprecated"
+         Use `estimator` instead.
+         .. deprecated:: 1.6
+             `base_estimator` is deprecated and will be removed in 1.8.
+             Use `estimator` instead
 
     Attributes
     ----------
