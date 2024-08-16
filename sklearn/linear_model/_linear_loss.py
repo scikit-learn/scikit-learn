@@ -293,7 +293,7 @@ class LinearModelLoss:
 
         grad_pointwise /= sw_sum
 
-        with np.errstate(all='ignore'):
+        with np.errstate(all="raise"):
             if not self.base_loss.is_multiclass:
                 grad = np.empty_like(coef, dtype=weights.dtype)
                 try:
@@ -302,7 +302,7 @@ class LinearModelLoss:
                     raise ValueError(
                         "Overflow detected. Try scaling the target variable or"
                         " features, or using a different solver."
-                    ) from e 
+                    ) from e
                 if self.fit_intercept:
                     grad[-1] = grad_pointwise.sum()
             else:

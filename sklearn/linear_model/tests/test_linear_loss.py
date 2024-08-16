@@ -356,6 +356,7 @@ def test_multinomial_coef_shape(fit_intercept):
     assert_allclose(g, g_r.reshape(loss.base_loss.n_classes, -1, order="F"))
     assert_allclose(h, h_r.reshape(loss.base_loss.n_classes, -1, order="F"))
 
+
 def test_loss_gradient_overflow():
 
     class DummyBaseLoss:
@@ -365,7 +366,9 @@ def test_loss_gradient_overflow():
 
         def loss_gradient(self, y_true, raw_prediction, sample_weight, n_threads):
             loss = np.ones_like(y_true, dtype=np.float64)
-            gradient = np.ones_like(y_true, dtype=np.float64) * 1e308  # Large value to trigger overflow
+            gradient = (
+                np.ones_like(y_true, dtype=np.float64) * 1e308
+            )  # Large value to trigger overflow
             return loss, gradient
 
     base_loss = DummyBaseLoss()
