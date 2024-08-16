@@ -770,7 +770,11 @@ def test_group_shuffle_split_default_test_size(train_size, exp_train, exp_test):
 
     for group_by in ["size", "number"]:
 
-        X_train, X_test = next(GroupShuffleSplit(train_size=train_size, group_by=group_by).split(X, y, groups))
+        X_train, X_test = next(
+            GroupShuffleSplit(train_size=train_size, group_by=group_by).split(
+                X, y, groups
+            )
+        )
 
         assert len(X_train) == exp_train
         assert len(X_test) == exp_test
@@ -992,7 +996,9 @@ def test_group_shuffle_split():
 
         for group_by in ["size", "number"]:
 
-            slo = GroupShuffleSplit(n_splits, test_size=test_size, group_by=group_by, random_state=0)
+            slo = GroupShuffleSplit(
+                n_splits, test_size=test_size, group_by=group_by, random_state=0
+            )
 
             # Make sure the repr works
             repr(slo)
@@ -1019,9 +1025,15 @@ def test_group_shuffle_split():
                 if group_by == "number":
                     # Fourth test:
                     # unique train and test groups are correct, +- 1 for rounding error
-                    assert abs(len(l_test_unique) - round(test_size * len(l_unique))) <= 1
                     assert (
-                        abs(len(l_train_unique) - round((1.0 - test_size) * len(l_unique))) <= 1
+                        abs(len(l_test_unique) - round(test_size * len(l_unique))) <= 1
+                    )
+                    assert (
+                        abs(
+                            len(l_train_unique)
+                            - round((1.0 - test_size) * len(l_unique))
+                        )
+                        <= 1
                     )
 
 
@@ -1036,12 +1048,15 @@ def test_group_shuffle_split_group_by_size():
         train_size = 1 - test_size
         X = y = np.ones(len(groups))
 
-        slo = GroupShuffleSplit(n_splits, test_size=test_size, group_by="size", random_state=0)
+        slo = GroupShuffleSplit(
+            n_splits, test_size=test_size, group_by="size", random_state=0
+        )
         train, test = next(slo.split(X, y, groups=groups))
 
         # test that train and test samples are split in the correct ratio
         assert np.isclose(len(train) / len(X), train_size)
-        assert np.isclose(len(test) / len(X),  test_size)
+        assert np.isclose(len(test) / len(X), test_size)
+
 
 def test_leave_one_p_group_out():
     logo = LeaveOneGroupOut()

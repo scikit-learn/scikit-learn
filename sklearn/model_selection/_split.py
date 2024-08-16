@@ -2102,7 +2102,8 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
     >>> gss.get_n_splits()
     2
     >>> print(gss)
-    GroupShuffleSplit(group_by='number', n_splits=2, random_state=42, test_size=None, train_size=0.7)
+    GroupShuffleSplit(group_by='number', n_splits=2, random_state=42, test_size=None,
+                      train_size=0.7)
     >>> for i, (train_index, test_index) in enumerate(gss.split(X, y, groups)):
     ...     print(f"Fold {i}:")
     ...     print(f"  Train: index={train_index}, group={groups[train_index]}")
@@ -2116,7 +2117,8 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
 
     For unbalanced group sizes, ``group_by=size`` can be used:
     >>> groups = np.array([1, 1, 1, 1, 1, 2, 3, 4])
-    >>> gss = GroupShuffleSplit(n_splits=1, train_size=.7, group_by="size", random_state=42)
+    >>> gss = GroupShuffleSplit(n_splits=1, train_size=.7, group_by="size",
+    ...                         random_state=42)
     >>> train_index, test_index = next(gss.split(X, y, groups))
     >>> print(f"Train: index={train_index}, group={groups[train_index]}")
     Train: index=[5 0 3 4 2 1], group=[2 1 1 1 1 1]
@@ -2131,7 +2133,13 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
     """
 
     def __init__(
-        self, n_splits=5, *, test_size=None, train_size=None, group_by="number", random_state=None
+        self,
+        n_splits=5,
+        *,
+        test_size=None,
+        train_size=None,
+        group_by="number",
+        random_state=None,
     ):
         super().__init__(
             n_splits=n_splits,
@@ -2179,7 +2187,7 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
             bucket_elements = [[], []]
 
             for class_index, group_size, bucket_index in zip(
-                    class_indices_shuffled, group_counts_shuffled, random_bucket_assignments
+                class_indices_shuffled, group_counts_shuffled, random_bucket_assignments
             ):
                 first_bucket_size = bucket_sizes[bucket_index] + group_size
                 second_bucket_size = bucket_sizes[1 - bucket_index] + group_size
