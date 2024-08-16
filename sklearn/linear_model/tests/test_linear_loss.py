@@ -383,7 +383,9 @@ def test_loss_gradient_overflow(base_loss, fit_intercept, trigger_overflow):
     y = np.array([1.0, 1.0], dtype=np.float64)
 
     if trigger_overflow:
-        with pytest.raises(ValueError, match="Overflow detected"):
+        with pytest.raises(
+            ValueError, match="Overflow in gradient computation detected."
+        ):
             model_loss.loss_gradient(coef, X, y)
     else:
         model_loss.loss_gradient(coef, X, y)

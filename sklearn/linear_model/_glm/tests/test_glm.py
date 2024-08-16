@@ -1254,7 +1254,7 @@ def test_lbfgs_convergence_error():
     X, y = _load_edgecase()
 
     # Without scaling the data, an overflow error is raised when using the LBFGS solver
-    with pytest.raises(ValueError, match="Overflow detected"):
+    with pytest.raises(ValueError, match="Overflow in gradient computation detected."):
         model_sklearn_lbfgs = PoissonRegressor(alpha=0).fit(X, y)
 
     scale = 10.0

@@ -293,6 +293,10 @@ class LinearModelLoss:
 
         grad_pointwise /= sw_sum
 
+        # NOTE there are other instances of
+        # grad_pointwise.T @ X + l2_reg_strength * weights
+        # in this class. It might be necessary to adapt similar error
+        # handling for these instances as well.
         with np.errstate(all="raise"):
             try:
                 if not self.base_loss.is_multiclass:
@@ -312,8 +316,10 @@ class LinearModelLoss:
                         grad = grad.ravel(order="F")
             except FloatingPointError as e:
                 raise ValueError(
-                    "Overflow detected. Try scaling the target variable or"
-                    " features, or using a different solver."
+                    "Overflow in gradient computation detected. "
+                    "Scale the data as shown in:\n"
+                    "    https://scikit-learn.org/stable/modules/"
+                    "preprocessing.html, or select a different solver."
                 ) from e
 
         return loss, grad
