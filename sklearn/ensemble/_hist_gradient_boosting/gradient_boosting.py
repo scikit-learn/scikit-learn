@@ -2298,3 +2298,17 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             return HalfMultinomialLoss(
                 sample_weight=sample_weight, n_classes=self.n_trees_per_iteration_
             )
+
+    def _more_tags(self):
+        return {
+            "_xfail_checks": {
+                "check_interaction_of_class_and_sample_weight_excluding_samples": (
+                    "while using class weight, setting some samples' weights to zero "
+                    "is not equivalent to excluding those samples"
+                ),
+                "check_interaction_of_class_and_sample_weight_excluding_class": (
+                    "class_weight as zero to one class is not equivalent to excluding "
+                    "the samples from that class"
+                ),
+            }
+        }
