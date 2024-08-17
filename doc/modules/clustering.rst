@@ -1801,10 +1801,10 @@ pairwise precision and recall:
 Where ``TP`` is the number of **True Positive** (i.e. the number of pair
 of points that belong to the same clusters in both the true labels and the
 predicted labels), ``FP`` is the number of **False Positive** (i.e. the number
-of pair of points that belong to the same clusters in the true labels and not
-in the predicted labels) and ``FN`` is the number of **False Negative** (i.e. the
-number of pair of points that belongs in the same clusters in the predicted
-labels and not in the true labels).
+of pair of points that belong to the same clusters in the predicted labels and not
+in the true labels) and ``FN`` is the number of **False Negative** (i.e. the
+number of pair of points that belong to the same clusters in the true
+labels and not in the predicted labels).
 
 The score ranges from 0 to 1. A high value indicates a good similarity
 between two clusters.
