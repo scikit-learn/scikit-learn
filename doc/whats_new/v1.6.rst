@@ -62,6 +62,13 @@ See :ref:`array_api` for more details.
   compatible inputs when their base estimators do. :pr:`27096` by :user:`Tim
   Head <betatim>` and :user:`Olivier Grisel <ogrisel>`.
 
+**Other**
+
+- Support for the soon to be deprecated `cupy.array_api` module has been
+  removed in favor of directly supporting the top level `cupy` module, possibly
+  via the `array_api_compat.cupy` compatibility wrapper. :pr:`29639` by
+  :user:`Olivier Grisel <ogrisel>`.
+
 Metadata Routing
 ----------------
 
@@ -103,6 +110,10 @@ more details.
 - |Feature| :func:`model_selection.permutation_test_score` now supports metadata routing
   for the `fit` method of its estimator and for its underlying CV splitter and scorer.
   :pr:`29266` by :user:`Adam Li <adam2392>`.
+
+- |Feature| :class:`feature_selection.RFE` and :class:`feature_selection.RFECV`
+  now support metadata routing.
+  :pr:`29312` by :user:`Omar Salman <OmarManzoor>`.
 
 Dropping support for building with setuptools
 ---------------------------------------------
