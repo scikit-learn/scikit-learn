@@ -2233,10 +2233,8 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
                 test = np.flatnonzero(np.isin(group_indices, group_test))
 
                 yield train, test
-        elif self.group_by == "size":
-            yield from self._iter_indices_by_group_size(X, groups)
         else:
-            raise AssertionError("Unknown parameter for 'group_by'.")
+            yield from self._iter_indices_by_group_size(X, groups)
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.

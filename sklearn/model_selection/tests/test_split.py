@@ -989,6 +989,11 @@ def test_predefinedsplit_with_kfold_split():
 
 
 def test_group_shuffle_split():
+    with pytest.raises(ValueError):
+        GroupShuffleSplit(
+            1, test_size=0.3, group_by="Not a valid option.", random_state=0
+        )
+
     for groups_i in test_groups:
         X = y = np.ones(len(groups_i))
         n_splits = 6
