@@ -89,9 +89,6 @@ class RANSACRegressor(
     RANSAC is an iterative algorithm for the robust estimation of parameters
     from a subset of inliers from the complete data set.
 
-    For a better understanding see example,
-    :ref:`sphx_glr_auto_examples_linear_model_plot_ransac.py`
-
     Read more in the :ref:`User Guide <ransac_regression>`.
 
     Parameters
@@ -254,6 +251,9 @@ class RANSACRegressor(
     0.9885...
     >>> reg.predict(X[:1,])
     array([-31.9417...])
+
+    For a more detailed example, see
+    :ref:`sphx_glr_auto_examples_linear_model_plot_ransac.py`
     """  # noqa: E501
 
     _parameter_constraints: dict = {
