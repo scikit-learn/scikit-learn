@@ -708,7 +708,7 @@ def mean_squared_log_error(
     if (y_true < -1).any() or (y_pred < -1).any():
         raise ValueError(
             "Mean Squared Logarithmic Error cannot be used when "
-            "targets contain negative values."
+            "targets contain values less than -1."
         )
 
     return mean_squared_error(
