@@ -705,7 +705,7 @@ def mean_squared_log_error(
     )
     check_consistent_length(y_true, y_pred, sample_weight)
 
-    if (y_true < 0).any() or (y_pred < 0).any():
+    if (y_true < -1).any() or (y_pred < -1).any():
         raise ValueError(
             "Mean Squared Logarithmic Error cannot be used when "
             "targets contain negative values."
@@ -778,10 +778,10 @@ def root_mean_squared_log_error(
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     check_consistent_length(y_true, y_pred, sample_weight)
 
-    if (y_true < 0).any() or (y_pred < 0).any():
+    if (y_true < -1).any() or (y_pred < -1).any():
         raise ValueError(
             "Root Mean Squared Logarithmic Error cannot be used when "
-            "targets contain negative values."
+            "targets contain values less than -1."
         )
 
     return root_mean_squared_error(
