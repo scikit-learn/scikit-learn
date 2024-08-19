@@ -86,7 +86,7 @@ The following people help with :ref:`communication around scikit-learn
 .. include:: communication_team.rst
 
 Emeritus Core Contributors
-------------------------
+--------------------------
 
 Emeritus Maintainers Team
 .........................
