@@ -350,7 +350,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags._xfail_check = {
+        tags._xfail_checks = {
             "check_sample_weights_invariance": (
                 "zero sample_weight is not equivalent to removing samples"
             ),
@@ -609,7 +609,7 @@ class LinearSVR(RegressorMixin, LinearModel):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags._xfail_check = {
+        tags._xfail_checks = {
             "check_sample_weights_invariance": (
                 "zero sample_weight is not equivalent to removing samples"
             ),
@@ -890,7 +890,7 @@ class SVC(BaseSVC):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags._xfail_check = {
+        tags._xfail_checks = {
             "check_sample_weights_invariance": (
                 "zero sample_weight is not equivalent to removing samples"
             ),
@@ -1160,7 +1160,7 @@ class NuSVC(BaseSVC):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags._xfail_check = {
+        tags._xfail_checks = {
             "check_methods_subset_invariance": (
                 "fails for the decision_function method"
             ),
@@ -1368,7 +1368,7 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags._xfail_check = {
+        tags._xfail_checks = {
             "check_sample_weights_invariance": (
                 "zero sample_weight is not equivalent to removing samples"
             ),
@@ -1562,7 +1562,7 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags._xfail_check = {
+        tags._xfail_checks = {
             "check_sample_weights_invariance": (
                 "zero sample_weight is not equivalent to removing samples"
             ),
@@ -1825,7 +1825,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags._xfail_check = {
+        tags._xfail_checks = {
             "check_sample_weights_invariance": (
                 "zero sample_weight is not equivalent to removing samples"
             ),
