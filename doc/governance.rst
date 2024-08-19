@@ -56,7 +56,8 @@ Core contributors that have not contributed to the project, corresponding to
 their role, in the past 12 months will be asked if they want to become emeritus
 members and recant their rights until they become active again. The list of
 members, active and emeritus (with dates at which they became active) is public
-on the scikit-learn website.
+on the scikit-learn website. It is the responsibility of the active core
+contributors to send such a yearly reminder email.
 
 The following teams form the core contributors group:
 
