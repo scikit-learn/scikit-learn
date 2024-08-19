@@ -90,7 +90,7 @@ def empirical_covariance(X, *, assume_centered=False):
            [0.25, 0.25, 0.25],
            [0.25, 0.25, 0.25]])
     """
-    X = check_array(X, ensure_2d=False, force_all_finite=False)
+    X = check_array(X, ensure_2d=False, ensure_all_finite=False)
 
     if X.ndim == 1:
         X = np.reshape(X, (1, -1))

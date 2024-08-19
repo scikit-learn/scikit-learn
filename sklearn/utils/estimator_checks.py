@@ -1,5 +1,8 @@
 """Various utilities to check the compatibility of estimators with scikit-learn API."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import pickle
 import re
 import warnings
@@ -75,7 +78,6 @@ from ._testing import (
     assert_array_almost_equal,
     assert_array_equal,
     assert_array_less,
-    assert_raise_message,
     create_memmap_backed_data,
     ignore_warnings,
     raises,
@@ -1489,9 +1491,8 @@ def check_fit2d_predict1d(name, estimator_orig):
 
     for method in ["predict", "transform", "decision_function", "predict_proba"]:
         if hasattr(estimator, method):
-            assert_raise_message(
-                ValueError, "Reshape your data", getattr(estimator, method), X[0]
-            )
+            with raises(ValueError, match="Reshape your data"):
+                getattr(estimator, method)(X[0])
 
 
 def _apply_on_subsets(func, X):
@@ -1914,7 +1915,7 @@ def check_estimators_dtypes(name, estimator_orig):
     X_train_64 = X_train_32.astype(np.float64)
     X_train_int_64 = X_train_32.astype(np.int64)
     X_train_int_32 = X_train_32.astype(np.int32)
-    y = X_train_int_64[:, 0]
+    y = np.array([1, 2] * 10, dtype=np.int64)
     y = _enforce_estimator_tags_y(estimator_orig, y)
 
     methods = ["predict", "transform", "decision_function", "predict_proba"]

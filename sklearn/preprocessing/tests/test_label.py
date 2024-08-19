@@ -19,7 +19,6 @@ from sklearn.utils._array_api import (
 from sklearn.utils._testing import (
     _array_api_for_tests,
     assert_array_equal,
-    ignore_warnings,
 )
 from sklearn.utils.fixes import (
     COO_CONTAINERS,
@@ -143,7 +142,6 @@ def test_label_binarizer_pandas_nullable(dtype, unique_first):
     assert_array_equal(y_out, [[1], [0]])
 
 
-@ignore_warnings
 def test_label_binarizer_errors():
     # Check that invalid arguments yield ValueError
     one_class = np.array([0, 0, 0, 0])

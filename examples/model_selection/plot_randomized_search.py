@@ -20,6 +20,9 @@ simultaneously using grid search, but pick only the ones deemed most important.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from time import time
 
 import numpy as np

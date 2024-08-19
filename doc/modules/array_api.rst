@@ -21,8 +21,8 @@ At this stage, this support is **considered experimental** and must be enabled
 explicitly as explained in the following.
 
 .. note::
-    Currently, only `cupy.array_api`, `array-api-strict`, `cupy`, and `PyTorch`
-    are known to work with scikit-learn's estimators.
+    Currently, only `array-api-strict`, `cupy`, and `PyTorch` are known to work
+    with scikit-learn's estimators.
 
 Example usage
 =============
@@ -117,15 +117,19 @@ Metrics
 - :func:`sklearn.metrics.d2_tweedie_score`
 - :func:`sklearn.metrics.max_error`
 - :func:`sklearn.metrics.mean_absolute_error`
+- :func:`sklearn.metrics.mean_absolute_percentage_error`
 - :func:`sklearn.metrics.mean_gamma_deviance`
+- :func:`sklearn.metrics.mean_poisson_deviance` (requires `enabling array API support for SciPy <https://docs.scipy.org/doc/scipy/dev/api-dev/array_api.html#using-array-api-standard-support>`_)
 - :func:`sklearn.metrics.mean_squared_error`
 - :func:`sklearn.metrics.mean_tweedie_deviance`
 - :func:`sklearn.metrics.pairwise.additive_chi2_kernel`
 - :func:`sklearn.metrics.pairwise.chi2_kernel`
 - :func:`sklearn.metrics.pairwise.cosine_similarity`
+- :func:`sklearn.metrics.pairwise.cosine_distances`
 - :func:`sklearn.metrics.pairwise.euclidean_distances` (see :ref:`device_support_for_float64`)
 - :func:`sklearn.metrics.pairwise.linear_kernel`
 - :func:`sklearn.metrics.pairwise.paired_cosine_distances`
+- :func:`sklearn.metrics.pairwise.paired_euclidean_distances`
 - :func:`sklearn.metrics.pairwise.polynomial_kernel`
 - :func:`sklearn.metrics.pairwise.rbf_kernel` (see :ref:`device_support_for_float64`)
 - :func:`sklearn.metrics.pairwise.sigmoid_kernel`

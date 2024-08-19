@@ -5,7 +5,6 @@ project(
   license: 'BSD-3',
   meson_version: '>= 1.1.0',
   default_options: [
-    'buildtype=debugoptimized',
     'c_std=c11',
     'cpp_std=c++14',
   ],
@@ -13,6 +12,7 @@ project(
 
 cc = meson.get_compiler('c')
 cpp = meson.get_compiler('cpp')
+cython = meson.get_compiler('cython')
 
 # Check compiler is recent enough (see "Toolchain Roadmap" for details)
 if cc.get_id() == 'gcc'

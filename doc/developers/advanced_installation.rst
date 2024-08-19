@@ -52,7 +52,7 @@ feature, code or documentation improvement).
 
    .. prompt:: bash $
 
-     git clone git://github.com/scikit-learn/scikit-learn.git  # add --depth 1 if your connection is slow
+     git clone git@github.com:scikit-learn/scikit-learn.git  # add --depth 1 if your connection is slow
      cd scikit-learn
 
    If you plan on submitting a pull-request, you should clone from your fork
@@ -99,7 +99,6 @@ feature, code or documentation improvement).
 
      pip install --editable . \
         --verbose --no-build-isolation \
-        --check-build-dependencies \
         --config-settings editable-verbose=true
 
 #. Check that the installed scikit-learn has a version number ending with
