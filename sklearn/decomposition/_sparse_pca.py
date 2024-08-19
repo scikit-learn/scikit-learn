@@ -151,8 +151,9 @@ class _BaseSparsePCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         return self.components_.shape[0]
 
     def __sklearn_tags__(self):
-        more_tags = {"preserves_dtype": [np.float64, np.float32]}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = [np.float64, np.float32]
+        return tags
 
 
 class SparsePCA(_BaseSparsePCA):

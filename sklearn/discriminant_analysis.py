@@ -756,8 +756,9 @@ class LinearDiscriminantAnalysis(
         return super().decision_function(X)
 
     def __sklearn_tags__(self):
-        more_tags = {"array_api_support": True}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.array_api_support = True
+        return tags
 
 
 class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):

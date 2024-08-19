@@ -98,7 +98,7 @@ def _yield_checks(estimator):
         yield check_sample_weights_pandas_series
         yield check_sample_weights_not_an_array
         yield check_sample_weights_list
-        if not tags["pairwise"]:
+        if not tags.input_tags.pairwise:
             # We skip pairwise because the data is not pairwise
             yield check_sample_weights_shape
             yield check_sample_weights_not_overwritten
@@ -227,17 +227,17 @@ def _yield_regressor_checks(regressor):
     yield partial(check_regressors_train, readonly_memmap=True, X_dtype="float32")
     yield check_regressor_data_not_an_array
     yield check_estimators_partial_fit_n_features
-    if tags["multioutput"]:
+    if tags.target_tags.multi_output:
         yield check_regressor_multioutput
     yield check_regressors_no_decision_function
-    if not tags["no_validation"] and not tags["multioutput_only"]:
+    if not tags.no_validation and tags.target_tags.single_output:
         yield check_supervised_y_2d
     yield check_supervised_y_no_nan
     name = regressor.__class__.__name__
     if name != "CCA":
         # check that the regressor handles int input
         yield check_regressors_int
-    if tags["requires_fit"]:
+    if tags.requires_fit:
         yield check_estimators_unfitted
     yield check_non_transformer_estimators_n_iter
 
@@ -253,7 +253,7 @@ def _yield_transformer_checks(transformer):
     if tags.transformer_tags.preserves_dtype:
         yield check_transformer_preserves_dtypes
     yield partial(check_transformer_general, readonly_memmap=True)
-    if not _safe_tags(transformer).stateless:
+    if _safe_tags(transformer).requires_fit:
         yield check_transformers_unfitted
     else:
         yield check_transformers_unfitted_stateless
@@ -1829,7 +1829,7 @@ def _check_transformer(name, transformer_orig, X, y):
         # raises error on malformed input for transform
         if (
             hasattr(X, "shape")
-            and not _safe_tags(transformer, key="stateless")
+            and _safe_tags(transformer).requires_fit
             and X.ndim == 2
             and X.shape[1] > 1
         ):
@@ -3896,7 +3896,7 @@ def check_fit_check_is_fitted(name, estimator_orig):
         y = rng.randint(low=0, high=2, size=n_samples)
     y = _enforce_estimator_tags_y(estimator, y)
 
-    if not _safe_tags(estimator).get("stateless", False):
+    if _safe_tags(estimator).requires_fit:
         # stateless estimators (such as FunctionTransformer) are always "fit"!
         try:
             check_is_fitted(estimator)

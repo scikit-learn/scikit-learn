@@ -8,7 +8,11 @@ import numpy as np
 
 @dataclass
 class InputTags:
+    one_d_array = False
     two_d_array: bool = True
+    three_d_array: bool = False
+    one_d_labels = False
+    two_d_labels: bool = False
     sparse: bool = False
     categorical: bool = False
     string: bool = False
@@ -53,7 +57,6 @@ class Tags:
     regressor_tags: RegressorTags
     array_api_support: bool = False
     no_validation: bool = False
-    stateless: bool = False
     non_deterministic: bool = False
     requires_fit: bool = True
     _skip_test: bool = False
@@ -80,7 +83,11 @@ def default_tags(estimator):
 
     return Tags(
         target_tags=TargetTags(required=target_required),
-        transformer_tags=TransformerTags() if hasattr(estimator, "transform") else None,
+        transformer_tags=(
+            TransformerTags()
+            if hasattr(estimator, "transform") or hasattr(estimator, "fit_transform")
+            else None
+        ),
         classifier_tags=ClassifierTags() if is_classifier(estimator) else None,
         regressor_tags=RegressorTags() if is_regressor(estimator) else None,
     )

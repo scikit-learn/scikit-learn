@@ -1248,8 +1248,9 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         return super().fit(X, y, sample_weight=sample_weight)
 
     def __sklearn_tags__(self):
-        more_tags = {"array_api_support": True}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.array_api_support = True
+        return tags
 
 
 class _RidgeClassifierMixin(LinearClassifierMixin):
@@ -1336,8 +1337,9 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         return self._label_binarizer.classes_
 
     def __sklearn_tags__(self):
-        more_tags = {"multilabel": True}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.classifier_tags.multi_label = True
+        return tags
 
 
 class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
@@ -2882,12 +2884,11 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         return self
 
     def __sklearn_tags__(self):
-        more_tags = {
-            "multilabel": True,
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            },
+        tags = super().__sklearn_tags__()
+        tags.classifier_tags.multi_label = True
+        tags._xfail_checks = {
+            "check_sample_weights_invariance": (
+                "zero sample_weight is not equivalent to removing samples"
+            ),
         }
-        return {**super().__sklearn_tags__(), **more_tags}
+        return tags

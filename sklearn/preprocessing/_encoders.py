@@ -451,8 +451,10 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             X_int[rows_to_update, i] = np.take(mapping, X_int[rows_to_update, i])
 
     def __sklearn_tags__(self):
-        more_tags = {"X_types": ["2darray", "categorical"], "allow_nan": True}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.input_tags.categorical = True
+        tags.input_tags.allow_nan = True
+        return tags
 
 
 class OneHotEncoder(_BaseEncoder):

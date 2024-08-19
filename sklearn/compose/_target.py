@@ -354,12 +354,10 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         regressor = self._get_regressor()
-
-        more_tags = {
-            "poor_score": True,
-            "multioutput": _safe_tags(regressor, key="multioutput"),
-        }
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.regressor_tags.poor_score = True
+        tags.target_tags.multi_output = _safe_tags(regressor).target_tags.multi_output
+        return tags
 
     @property
     def n_features_in_(self):

@@ -529,7 +529,6 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             return feature_names
 
     def __sklearn_tags__(self):
-        more_tags = {
-            "requires_y": True,
-        }
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.target_tags.required = True
+        return tags

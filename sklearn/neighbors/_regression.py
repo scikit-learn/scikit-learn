@@ -192,9 +192,10 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         self.weights = weights
 
     def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
         # For cross-validation routines to split data correctly
-        more_tags = {"pairwise": self.metric == "precomputed"}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags.input_tags.pairwise = self.metric == "precomputed"
+        return tags
 
     @_fit_context(
         # KNeighborsRegressor.metric is not validated yet

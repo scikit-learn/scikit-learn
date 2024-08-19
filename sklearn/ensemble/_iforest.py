@@ -630,15 +630,14 @@ class IsolationForest(OutlierMixin, BaseBagging):
         return scores
 
     def __sklearn_tags__(self):
-        more_tags = {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            },
-            "allow_nan": True,
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_sample_weights_invariance": (
+                "zero sample_weight is not equivalent to removing samples"
+            ),
         }
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags.input_tags.allow_nan = True
+        return tags
 
 
 def _average_path_length(n_samples_leaf):

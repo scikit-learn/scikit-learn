@@ -533,12 +533,11 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         return self.estimator_.predict_log_proba(self.transform(X))
 
     def __sklearn_tags__(self):
-        more_tags = {
-            "poor_score": True,
-            "requires_y": True,
-            "allow_nan": _safe_tags(self.estimator, "allow_nan"),
-        }
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.classifier_tags.poor_score = True
+        tags.target_tags.required = True
+        tags.input_tags.allow_nan = _safe_tags(self.estimator).input_tags.allow_nan
+        return tags
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.

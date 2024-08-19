@@ -140,8 +140,9 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
         return np.concatenate([names, indicator_names])
 
     def __sklearn_tags__(self):
-        more_tags = {"allow_nan": is_scalar_nan(self.missing_values)}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = is_scalar_nan(self.missing_values)
+        return tags
 
 
 class SimpleImputer(_BaseImputer):
@@ -701,11 +702,11 @@ class SimpleImputer(_BaseImputer):
         return X_original
 
     def __sklearn_tags__(self):
-        more_tags = {
-            "allow_nan": is_pandas_na(self.missing_values)
-            or is_scalar_nan(self.missing_values)
-        }
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = is_pandas_na(self.missing_values) or is_scalar_nan(
+            self.missing_values
+        )
+        return tags
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
@@ -1089,9 +1090,8 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         )
 
     def __sklearn_tags__(self):
-        more_tags = {
-            "allow_nan": True,
-            "X_types": ["2darray", "string"],
-            "preserves_dtype": [],
-        }
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        tags.input_tags.string = True
+        tags.transformer_tags.preserves_dtype = []
+        return tags

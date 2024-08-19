@@ -232,7 +232,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             X,
             accept_sparse="csc",
             ensure_min_features=2,
-            ensure_all_finite=not tags.get("allow_nan", True),
+            ensure_all_finite=not tags.input_tags.allow_nan,
         )
         n_features = X.shape[1]
 
@@ -326,10 +326,9 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         return self.support_
 
     def __sklearn_tags__(self):
-        more_tags = {
-            "allow_nan": _safe_tags(self.estimator, key="allow_nan"),
-        }
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = _safe_tags(self.estimator).input_tags.allow_nan
+        return tags
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.

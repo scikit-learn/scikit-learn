@@ -143,9 +143,10 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         self.random_state = random_state
 
     def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
         # Used by cross_val_score.
-        more_tags = {"pairwise": self.kernel == "precomputed"}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags.input_tags.pairwise = self.kernel == "precomputed"
+        return tags
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):

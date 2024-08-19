@@ -1374,15 +1374,13 @@ class SGDClassifier(BaseSGDClassifier):
         return np.log(self.predict_proba(X))
 
     def __sklearn_tags__(self):
-        more_tags = {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            },
-            "preserves_dtype": [np.float64, np.float32],
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_sample_weights_invariance": (
+                "zero sample_weight is not equivalent to removing samples"
+            ),
         }
-        return {**super().__sklearn_tags__(), **more_tags}
+        return tags
 
 
 class BaseSGDRegressor(RegressorMixin, BaseSGD):
@@ -2059,15 +2057,13 @@ class SGDRegressor(BaseSGDRegressor):
         )
 
     def __sklearn_tags__(self):
-        more_tags = {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            },
-            "preserves_dtype": [np.float64, np.float32],
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_sample_weights_invariance": (
+                "zero sample_weight is not equivalent to removing samples"
+            ),
         }
-        return {**super().__sklearn_tags__(), **more_tags}
+        return tags
 
 
 class SGDOneClassSVM(BaseSGD, OutlierMixin):
@@ -2640,12 +2636,10 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         return y
 
     def __sklearn_tags__(self):
-        more_tags = {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                )
-            },
-            "preserves_dtype": [np.float64, np.float32],
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_sample_weights_invariance": (
+                "zero sample_weight is not equivalent to removing samples"
+            ),
         }
-        return {**super().__sklearn_tags__(), **more_tags}
+        return tags

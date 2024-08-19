@@ -2114,7 +2114,7 @@ class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.stateless = True
+        tags.requires_fit = False
         tags.array_api_support = True
         return tags
 
@@ -2319,7 +2319,7 @@ class Binarizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.stateless = True
+        tags.requires_fit = False
         return tags
 
 

@@ -194,5 +194,10 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         return X
 
     def __sklearn_tags__(self):
-        more_tags = {"X_types": [self.input_type]}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.input_tags.two_d_array = False
+        if self.input_type == "string":
+            tags.input_tags.string = True
+        elif self.input_type == "dict":
+            tags.input_tags.dict = True
+        return tags

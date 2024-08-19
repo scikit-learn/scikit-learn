@@ -789,8 +789,9 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         return super().fit_predict(X, y)
 
     def __sklearn_tags__(self):
-        more_tags = {
-            "pairwise": self.affinity
-            in ["precomputed", "precomputed_nearest_neighbors"]
-        }
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.input_tags.pairwise = self.affinity in [
+            "precomputed",
+            "precomputed_nearest_neighbors",
+        ]
+        return tags

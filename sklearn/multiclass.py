@@ -591,8 +591,9 @@ class OneVsRestClassifier(
 
     def __sklearn_tags__(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
-        more_tags = {"pairwise": _safe_tags(self.estimator, key="pairwise")}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.input_tags.pairwise = _safe_tags(self.estimator).input_tags.pairwise
+        return tags
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.
@@ -818,7 +819,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         self.estimators_ = estimators_indices[0]
 
-        pairwise = self.__sklearn_tags__()["pairwise"]
+        pairwise = self.__sklearn_tags__().input_tags.pairwise
         self.pairwise_indices_ = estimators_indices[1] if pairwise else None
 
         return self
@@ -991,8 +992,9 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
-        more_tags = {"pairwise": _safe_tags(self.estimator, key="pairwise")}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.input_tags.pairwise = _safe_tags(self.estimator).input_tags.pairwise
+        return tags
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.

@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from abc import abstractmethod
-from copy import deepcopy
 from math import ceil, floor, log
 from numbers import Integral, Real
 
@@ -372,8 +371,8 @@ class BaseSuccessiveHalving(BaseSearchCV):
         pass
 
     def __sklearn_tags__(self):
-        tags = deepcopy(super().__sklearn_tags__())
-        tags["_xfail_checks"].update(
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks.update(
             {
                 "check_fit2d_1sample": (
                     "Fail during parameter check since min/max resources requires"

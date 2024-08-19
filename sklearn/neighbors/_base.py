@@ -469,7 +469,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 )
 
     def _fit(self, X, y=None):
-        if self.__sklearn_tags__()["requires_y"]:
+        if self.__sklearn_tags__().target_tags.required:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
                 X, y = self._validate_data(
                     X, y, accept_sparse="csr", multi_output=True, order="C"
@@ -690,9 +690,10 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         return self
 
     def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
         # For cross-validation routines to split data correctly
-        more_tags = {"pairwise": self.metric == "precomputed"}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags.input_tags.pairwise = self.metric == "precomputed"
+        return tags
 
 
 class KNeighborsMixin:

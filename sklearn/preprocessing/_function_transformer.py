@@ -388,8 +388,10 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         return True
 
     def __sklearn_tags__(self):
-        more_tags = {"no_validation": not self.validate, "stateless": True}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.no_validation = not self.validate
+        tags.requires_fit = False
+        return tags
 
     def set_output(self, *, transform=None):
         """Set output container.

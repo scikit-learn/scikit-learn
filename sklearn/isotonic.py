@@ -505,5 +505,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
             self._build_f(self.X_thresholds_, self.y_thresholds_)
 
     def __sklearn_tags__(self):
-        more_tags = {"X_types": ["1darray"]}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.input_tags.one_d_array = True
+        tags.input_tags.two_d_array = False
+        return tags

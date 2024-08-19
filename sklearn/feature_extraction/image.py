@@ -675,5 +675,8 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
         return patches
 
     def __sklearn_tags__(self):
-        more_tags = {"X_types": ["3darray"], "stateless": True}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.input_tags.two_d_array = False
+        tags.input_tags.three_d_array = True
+        tags.requires_fit = False
+        return tags

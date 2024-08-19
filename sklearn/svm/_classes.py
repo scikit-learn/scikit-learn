@@ -349,14 +349,13 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         return self
 
     def __sklearn_tags__(self):
-        more_tags = {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            }
+        tags = super().__sklearn_tags__()
+        tags._xfail_check = {
+            "check_sample_weights_invariance": (
+                "zero sample_weight is not equivalent to removing samples"
+            ),
         }
-        return {**super().__sklearn_tags__(), **more_tags}
+        return tags
 
 
 class LinearSVR(RegressorMixin, LinearModel):
@@ -609,14 +608,13 @@ class LinearSVR(RegressorMixin, LinearModel):
         return self
 
     def __sklearn_tags__(self):
-        more_tags = {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            }
+        tags = super().__sklearn_tags__()
+        tags._xfail_check = {
+            "check_sample_weights_invariance": (
+                "zero sample_weight is not equivalent to removing samples"
+            ),
         }
-        return {**super().__sklearn_tags__(), **more_tags}
+        return tags
 
 
 class SVC(BaseSVC):
@@ -891,14 +889,13 @@ class SVC(BaseSVC):
         )
 
     def __sklearn_tags__(self):
-        more_tags = {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            }
+        tags = super().__sklearn_tags__()
+        tags._xfail_check = {
+            "check_sample_weights_invariance": (
+                "zero sample_weight is not equivalent to removing samples"
+            ),
         }
-        return {**super().__sklearn_tags__(), **more_tags}
+        return tags
 
 
 class NuSVC(BaseSVC):
@@ -1162,21 +1159,20 @@ class NuSVC(BaseSVC):
         )
 
     def __sklearn_tags__(self):
-        more_tags = {
-            "_xfail_checks": {
-                "check_methods_subset_invariance": (
-                    "fails for the decision_function method"
-                ),
-                "check_class_weight_classifiers": "class_weight is ignored.",
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-                "check_classifiers_one_label_sample_weights": (
-                    "specified nu is infeasible for the fit."
-                ),
-            }
+        tags = super().__sklearn_tags__()
+        tags._xfail_check = {
+            "check_methods_subset_invariance": (
+                "fails for the decision_function method"
+            ),
+            "check_class_weight_classifiers": "class_weight is ignored.",
+            "check_sample_weights_invariance": (
+                "zero sample_weight is not equivalent to removing samples"
+            ),
+            "check_classifiers_one_label_sample_weights": (
+                "specified nu is infeasible for the fit."
+            ),
         }
-        return {**super().__sklearn_tags__(), **more_tags}
+        return tags
 
 
 class SVR(RegressorMixin, BaseLibSVM):
@@ -1371,14 +1367,13 @@ class SVR(RegressorMixin, BaseLibSVM):
         )
 
     def __sklearn_tags__(self):
-        more_tags = {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            }
+        tags = super().__sklearn_tags__()
+        tags._xfail_check = {
+            "check_sample_weights_invariance": (
+                "zero sample_weight is not equivalent to removing samples"
+            ),
         }
-        return {**super().__sklearn_tags__(), **more_tags}
+        return tags
 
 
 class NuSVR(RegressorMixin, BaseLibSVM):
@@ -1566,14 +1561,13 @@ class NuSVR(RegressorMixin, BaseLibSVM):
         )
 
     def __sklearn_tags__(self):
-        more_tags = {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            }
+        tags = super().__sklearn_tags__()
+        tags._xfail_check = {
+            "check_sample_weights_invariance": (
+                "zero sample_weight is not equivalent to removing samples"
+            ),
         }
-        return {**super().__sklearn_tags__(), **more_tags}
+        return tags
 
 
 class OneClassSVM(OutlierMixin, BaseLibSVM):
@@ -1830,11 +1824,10 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         return np.asarray(y, dtype=np.intp)
 
     def __sklearn_tags__(self):
-        more_tags = {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            }
+        tags = super().__sklearn_tags__()
+        tags._xfail_check = {
+            "check_sample_weights_invariance": (
+                "zero sample_weight is not equivalent to removing samples"
+            ),
         }
-        return {**super().__sklearn_tags__(), **more_tags}
+        return tags

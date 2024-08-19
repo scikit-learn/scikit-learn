@@ -1015,34 +1015,35 @@ class Pipeline(_BaseComposition):
         return self.steps[-1][1].classes_
 
     def __sklearn_tags__(self):
-        more_tags = {
-            "_xfail_checks": {
-                "check_dont_overwrite_parameters": (
-                    "Pipeline changes the `steps` parameter, which it shouldn't."
-                    "Therefore this test is x-fail until we fix this."
-                ),
-                "check_estimators_overwrite_params": (
-                    "Pipeline changes the `steps` parameter, which it shouldn't."
-                    "Therefore this test is x-fail until we fix this."
-                ),
-            }
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_dont_overwrite_parameters": (
+                "Pipeline changes the `steps` parameter, which it shouldn't."
+                "Therefore this test is x-fail until we fix this."
+            ),
+            "check_estimators_overwrite_params": (
+                "Pipeline changes the `steps` parameter, which it shouldn't."
+                "Therefore this test is x-fail until we fix this."
+            ),
         }
 
         try:
-            more_tags["pairwise"] = _safe_tags(self.steps[0][1], "pairwise")
+            tags.input_tags.pairwise = _safe_tags(self.steps[0][1]).input_tags.pairwise
         except (ValueError, AttributeError, TypeError):
             # This happens when the `steps` is not a list of (name, estimator)
             # tuples and `fit` is not called yet to validate the steps.
             pass
 
         try:
-            more_tags["multioutput"] = _safe_tags(self.steps[-1][1], "multioutput")
+            tags.target_tags.multi_output = _safe_tags(
+                self.steps[-1][1]
+            ).target_tags.multi_output
         except (ValueError, AttributeError, TypeError):
             # This happens when the `steps` is not a list of (name, estimator)
             # tuples and `fit` is not called yet to validate the steps.
             pass
 
-        return {**super().__sklearn_tags__(), **more_tags}
+        return tags
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.

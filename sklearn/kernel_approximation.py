@@ -820,7 +820,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.stateless = True
+        tags.requires_fit = False
         tags.input_tags.positive_only = True
         return tags
 

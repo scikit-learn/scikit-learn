@@ -847,8 +847,7 @@ class PCA(_BasePCA):
         return float(xp.mean(self.score_samples(X)))
 
     def __sklearn_tags__(self):
-        more_tags = {
-            "preserves_dtype": [np.float64, np.float32],
-            "array_api_support": True,
-        }
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = [np.float64, np.float32]
+        tags.array_api_support = True
+        return tags

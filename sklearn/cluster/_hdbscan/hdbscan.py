@@ -1034,5 +1034,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         return labels
 
     def __sklearn_tags__(self):
-        more_tags = {"allow_nan": self.metric != "precomputed"}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = self.metric != "precomputed"
+        return tags
