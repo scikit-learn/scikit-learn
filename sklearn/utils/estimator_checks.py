@@ -172,7 +172,7 @@ def _yield_classifier_checks(classifier):
         yield check_supervised_y_no_nan
         if not tags.target_tags.multi_output and not tags.target_tags.single_output:
             yield check_supervised_y_2d
-    if tags["requires_fit"]:
+    if tags.requires_fit:
         yield check_estimators_unfitted
     if "class_weight" in classifier.get_params().keys():
         yield check_class_weight_classifiers
@@ -324,7 +324,7 @@ def _yield_array_api_checks(estimator):
 def _yield_all_checks(estimator):
     name = estimator.__class__.__name__
     tags = _safe_tags(estimator)
-    if tags.input_tags.two_d_array:
+    if not tags.input_tags.two_d_array:
         warnings.warn(
             "Can't test estimator {} which requires input  of type {}".format(
                 name, tags.input_tags
@@ -1067,7 +1067,7 @@ def _check_estimator_sparse_container(name, estimator_orig, sparse_type):
                     assert pred.shape == (X.shape[0],)
             if hasattr(estimator, "predict_proba"):
                 probs = estimator.predict_proba(X)
-                if tags.classifier_tags.binary and not tags.classifier_tags.multiclass:
+                if tags.classifier_tags.binary and not tags.classifier_tags.multi_class:
                     expected_probs_shape = (X.shape[0], 2)
                 else:
                     expected_probs_shape = (X.shape[0], 4)
@@ -1342,7 +1342,7 @@ def check_dtype_object(name, estimator_orig):
     with raises(Exception, match="Unknown label type", may_pass=True):
         estimator.fit(X, y.astype(object))
 
-    if "string" not in tags["X_types"]:
+    if not tags.input_tags.string:
         X[0, 0] = {"foo": "bar"}
         # This error is raised by:
         # - `np.asarray` in `check_array`
@@ -1561,7 +1561,11 @@ def check_methods_sample_order_invariance(name, estimator_orig):
     X = _enforce_estimator_tags_X(estimator_orig, X)
     y = X[:, 0].astype(np.int64)
     tags = _safe_tags(estimator_orig)
-    if tags.classifier_tags.binary and not tags.classifier_tags.multi_class:
+    if (
+        tags.classifier_tags is not None
+        and tags.classifier_tags.binary
+        and not tags.classifier_tags.multi_class
+    ):
         y[y == 2] = 1
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
@@ -2075,7 +2079,7 @@ def check_estimators_pickle(name, estimator_orig, readonly_memmap=False):
 
     tags = _safe_tags(estimator_orig)
     # include NaN values when the estimator should deal with them
-    if tags["allow_nan"]:
+    if tags.input_tags.allow_nan:
         # set randomly 10 elements to np.nan
         rng = np.random.RandomState(42)
         mask = rng.choice(X.size, 10, replace=False)
@@ -2175,7 +2179,7 @@ def check_classifier_multioutput(name, estimator):
     if hasattr(estimator, "predict_proba"):
         y_prob = estimator.predict_proba(X)
 
-        if isinstance(y_prob, list) and not tags["poor_score"]:
+        if isinstance(y_prob, list) and not tags.classifier_tags.poor_score:
             for i in range(n_classes):
                 assert y_prob[i].shape == (n_samples, 2), (
                     "The shape of the probability for multioutput data is"
@@ -2186,7 +2190,7 @@ def check_classifier_multioutput(name, estimator):
                 assert_array_equal(
                     np.argmax(y_prob[i], axis=1).astype(int), y_pred[:, i]
                 )
-        elif not tags["poor_score"]:
+        elif not tags.classifier_tags.poor_score:
             assert y_prob.shape == (n_samples, n_classes), (
                 "The shape of the probability for multioutput data is"
                 " incorrect. Expected {}, got {}.".format(
@@ -2384,7 +2388,7 @@ def check_classifiers_train(
 
     problems = [(X_b, y_b)]
     tags = _safe_tags(classifier_orig)
-    if not tags["binary_only"]:
+    if tags.classifier_tags.multi_class:
         problems.append((X_m, y_m))
 
     for X, y in problems:
@@ -2397,7 +2401,7 @@ def check_classifiers_train(
 
         set_random_state(classifier)
         # raises error on malformed input for fit
-        if not tags["no_validation"]:
+        if not tags.no_validation:
             with raises(
                 ValueError,
                 err_msg=(
@@ -2418,7 +2422,7 @@ def check_classifiers_train(
 
         assert y_pred.shape == (n_samples,)
         # training set performance
-        if not tags["poor_score"]:
+        if not tags.classifier_tags.poor_score:
             assert accuracy_score(y, y_pred) > 0.83
 
         # raises error on malformed input for predict
@@ -2432,8 +2436,8 @@ def check_classifiers_train(
             "fit."
         )
 
-        if not tags["no_validation"]:
-            if tags["pairwise"]:
+        if not tags.no_validation:
+            if tags.input_tags.pairwise:
                 with raises(
                     ValueError,
                     err_msg=msg_pairwise.format(name, "predict"),
@@ -2447,7 +2451,10 @@ def check_classifiers_train(
                 # decision_function agrees with predict
                 decision = classifier.decision_function(X)
                 if n_classes == 2:
-                    if not tags["multioutput_only"]:
+                    if (
+                        not tags.target_tags.multi_output
+                        or tags.target_tags.single_output
+                    ):
                         assert decision.shape == (n_samples,)
                     else:
                         assert decision.shape == (n_samples, 1)
@@ -2458,8 +2465,8 @@ def check_classifiers_train(
                     assert_array_equal(np.argmax(decision, axis=1), y_pred)
 
                 # raises error on malformed input for decision_function
-                if not tags["no_validation"]:
-                    if tags["pairwise"]:
+                if not tags.no_validation:
+                    if tags.input_tags.pairwise:
                         with raises(
                             ValueError,
                             err_msg=msg_pairwise.format(name, "decision_function"),
@@ -2481,9 +2488,9 @@ def check_classifiers_train(
             assert_array_equal(np.argmax(y_prob, axis=1), y_pred)
             # check that probas for all classes sum to one
             assert_array_almost_equal(np.sum(y_prob, axis=1), np.ones(n_samples))
-            if not tags["no_validation"]:
+            if not tags.no_validation:
                 # raises error on malformed input for predict_proba
-                if tags["pairwise"]:
+                if tags.input_tags.pairwise:
                     with raises(
                         ValueError,
                         err_msg=msg_pairwise.format(name, "predict_proba"),
@@ -2917,7 +2924,7 @@ def check_supervised_y_2d(name, estimator_orig):
     msg = "expected 1 DataConversionWarning, got: %s" % ", ".join(
         [str(w_x) for w_x in w]
     )
-    if not tags["multioutput"]:
+    if not tags.target_tags.multi_output:
         # check that we warned if we don't support multi-output
         assert len(w) > 0, msg
         assert (
@@ -3985,11 +3992,9 @@ def check_n_features_in_after_fitting(name, estimator_orig):
     # Make sure that n_features_in are checked after fitting
     tags = _safe_tags(estimator_orig)
 
-    is_supported_X_types = (
-        "2darray" in tags["X_types"] or "categorical" in tags["X_types"]
-    )
+    is_supported_X_types = tags.input_tags.two_d_array or tags.input_tags.categorical
 
-    if not is_supported_X_types or tags["no_validation"]:
+    if not is_supported_X_types or tags.no_validation:
         return
 
     rng = np.random.RandomState(0)
@@ -4080,11 +4085,9 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
         )
 
     tags = _safe_tags(estimator_orig)
-    is_supported_X_types = (
-        "2darray" in tags["X_types"] or "categorical" in tags["X_types"]
-    )
+    is_supported_X_types = tags.input_tags.two_d_array or tags.input_tags.categorical
 
-    if not is_supported_X_types or tags["no_validation"]:
+    if not is_supported_X_types or tags.no_validation:
         return
 
     rng = np.random.RandomState(0)
@@ -4216,7 +4219,7 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
 
 def check_transformer_get_feature_names_out(name, transformer_orig):
     tags = transformer_orig.__sklearn_tags__()
-    if "2darray" not in tags["X_types"] or tags["no_validation"]:
+    if "2darray" not in tags["X_types"] or tags.no_validation:
         return
 
     X, y = make_blobs(
@@ -4271,7 +4274,7 @@ def check_transformer_get_feature_names_out_pandas(name, transformer_orig):
         )
 
     tags = transformer_orig.__sklearn_tags__()
-    if "2darray" not in tags["X_types"] or tags["no_validation"]:
+    if "2darray" not in tags["X_types"] or tags.no_validation:
         return
 
     X, y = make_blobs(
@@ -4437,7 +4440,7 @@ def check_set_output_transform(name, transformer_orig):
     # Check transformer.set_output with the default configuration does not
     # change the transform output.
     tags = _safe_tags(transformer_orig)
-    if "2darray" not in tags["X_types"] or tags["no_validation"]:
+    if "2darray" not in tags["X_types"] or tags.no_validation:
         return
 
     rng = np.random.RandomState(0)
@@ -4625,7 +4628,7 @@ def _check_set_output_transform_dataframe(
     """
     # Check transformer.set_output configures the output of transform="pandas".
     tags = _safe_tags(transformer_orig)
-    if "2darray" not in tags["X_types"] or tags["no_validation"]:
+    if "2darray" not in tags["X_types"] or tags.no_validation:
         return
 
     rng = np.random.RandomState(0)

@@ -139,7 +139,7 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
         Indexed targets.
 
     """
-    if _safe_tags(estimator, key="pairwise"):
+    if _safe_tags(estimator).input_tags.pairwise:
         if not hasattr(X, "shape"):
             raise ValueError(
                 "Precomputed kernels or affinity matrices have "
