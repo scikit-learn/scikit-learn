@@ -170,7 +170,7 @@ def _yield_classifier_checks(classifier):
         yield check_classifiers_multilabel_output_format_decision_function
     if not tags.no_validation:
         yield check_supervised_y_no_nan
-        if tags.target_tags.multi_output and tags.target_tags.single_output:
+        if tags.target_tags.single_output:
             yield check_supervised_y_2d
     if tags.requires_fit:
         yield check_estimators_unfitted
