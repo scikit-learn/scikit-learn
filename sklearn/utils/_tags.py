@@ -93,7 +93,7 @@ def default_tags(estimator):
     )
 
 
-def _safe_tags(estimator):
+def _safe_tags(estimator) -> Tags:
     """Safely get estimator tags.
 
     :class:`~sklearn.BaseEstimator` provides the estimator tags machinery.
