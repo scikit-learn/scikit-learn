@@ -251,7 +251,7 @@ def _yield_transformer_checks(transformer):
     # these don't actually fit the data, so don't raise errors
     yield check_transformer_general
     if tags.transformer_tags.preserves_dtype:
-        yield check_transformer_preserves_dtypes
+        yield check_transformer_preserve_dtypes
     yield partial(check_transformer_general, readonly_memmap=True)
     if _safe_tags(transformer).requires_fit:
         yield check_transformers_unfitted
@@ -1937,7 +1937,7 @@ def check_estimators_dtypes(name, estimator_orig):
                 getattr(estimator, method)(X_train)
 
 
-def check_transformer_preserves_dtypes(name, transformer_orig):
+def check_transformer_preserve_dtypes(name, transformer_orig):
     # check that dtype are preserved meaning if input X is of some dtype
     # X_transformed should be from the same dtype.
     X, y = make_blobs(
