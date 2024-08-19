@@ -170,7 +170,7 @@ def _yield_classifier_checks(classifier):
         yield check_classifiers_multilabel_output_format_decision_function
     if not tags.no_validation:
         yield check_supervised_y_no_nan
-        if not tags.target_tags.multi_output and not tags.target_tags.single_output:
+        if not tags.target_tags.multi_output:
             yield check_supervised_y_2d
     if tags.requires_fit:
         yield check_estimators_unfitted
@@ -1916,10 +1916,6 @@ def check_fit_score_takes_y(name, estimator_orig):
 
 @ignore_warnings
 def check_estimators_dtypes(name, estimator_orig):
-    from sklearn.feature_extraction.text import CountVectorizer
-
-    if isinstance(estimator_orig, CountVectorizer):
-        print("aha")
     rnd = np.random.RandomState(0)
     X_train_32 = 3 * rnd.uniform(size=(20, 5)).astype(np.float32)
     X_train_32 = _enforce_estimator_tags_X(estimator_orig, X_train_32)
@@ -4067,12 +4063,10 @@ def check_estimator_get_tags_default_keys(name, estimator_orig):
 
 def check_estimator_tags_deprecated(name, estimator_orig):
     assert not hasattr(estimator_orig, "_more_tags"), (
-        "_more_tags() was deprecated in 1.6 support will be removed in 1.8. "
-        "Please use __sklearn_tags__ instead.",
+        "_more_tags() was removed in 1.6. " "Please use __sklearn_tags__ instead.",
     )
     assert not hasattr(estimator_orig, "_get_tags"), (
-        "_get_tags() was deprecated in 1.6 support will be removed in 1.8. "
-        "Please use __sklearn_tags__ instead."
+        "_get_tags() was removed in 1.6. " "Please use __sklearn_tags__ instead."
     )
 
 
@@ -4219,7 +4213,7 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
 
 def check_transformer_get_feature_names_out(name, transformer_orig):
     tags = transformer_orig.__sklearn_tags__()
-    if "2darray" not in tags["X_types"] or tags.no_validation:
+    if tags.input_tags.two_d_array or tags.no_validation:
         return
 
     X, y = make_blobs(
@@ -4274,7 +4268,7 @@ def check_transformer_get_feature_names_out_pandas(name, transformer_orig):
         )
 
     tags = transformer_orig.__sklearn_tags__()
-    if "2darray" not in tags["X_types"] or tags.no_validation:
+    if not tags.input_tags.two_d_array or tags.no_validation:
         return
 
     X, y = make_blobs(
@@ -4440,7 +4434,7 @@ def check_set_output_transform(name, transformer_orig):
     # Check transformer.set_output with the default configuration does not
     # change the transform output.
     tags = _safe_tags(transformer_orig)
-    if "2darray" not in tags["X_types"] or tags.no_validation:
+    if not tags.input_tags.two_d_array or tags.no_validation:
         return
 
     rng = np.random.RandomState(0)
@@ -4628,7 +4622,7 @@ def _check_set_output_transform_dataframe(
     """
     # Check transformer.set_output configures the output of transform="pandas".
     tags = _safe_tags(transformer_orig)
-    if "2darray" not in tags["X_types"] or tags.no_validation:
+    if not tags.input_tags.two_d_array or tags.no_validation:
         return
 
     rng = np.random.RandomState(0)
