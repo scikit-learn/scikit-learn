@@ -4212,7 +4212,7 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
 
 
 def check_transformer_get_feature_names_out(name, transformer_orig):
-    tags = transformer_orig.__sklearn_tags__()
+    tags = _safe_tags(transformer_orig)
     if not tags.input_tags.two_d_array or tags.no_validation:
         return
 
@@ -4267,7 +4267,7 @@ def check_transformer_get_feature_names_out_pandas(name, transformer_orig):
             "pandas is not installed: not checking column name consistency for pandas"
         )
 
-    tags = transformer_orig.__sklearn_tags__()
+    tags = _safe_tags(transformer_orig)
     if not tags.input_tags.two_d_array or tags.no_validation:
         return
 

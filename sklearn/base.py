@@ -881,6 +881,12 @@ class ClusterMixin:
         self.fit(X, **kwargs)
         return self.labels_
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        if tags.transformer_tags is not None:
+            tags.transformer_tags.preserves_dtype = []
+        return tags
+
 
 class BiclusterMixin:
     """Mixin class for all bicluster estimators in scikit-learn.

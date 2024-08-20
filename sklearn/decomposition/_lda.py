@@ -549,6 +549,7 @@ class LatentDirichletAllocation(
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.positive_only = True
+        tags.transformer_tags.preserves_dtype = [np.float32, np.float64]
         return tags
 
     def _check_non_neg_array(self, X, reset_n_features, whom):

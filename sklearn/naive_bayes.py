@@ -18,8 +18,6 @@ from .base import (
     BaseEstimator,
     ClassifierMixin,
     _fit_context,
-    is_classifier,
-    is_regressor,
 )
 from .preprocessing import LabelBinarizer, binarize, label_binarize
 from .utils._param_validation import Interval
@@ -768,9 +766,9 @@ class _BaseDiscreteNB(_BaseNB):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        if is_classifier(self):
+        if tags.classifier_tags is not None:
             tags.classifier_tags.poor_score = True
-        if is_regressor(self):
+        if tags.regressor_tags is not None:
             tags.regressor_tags.poor_score = True
         return tags
 

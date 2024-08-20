@@ -444,7 +444,7 @@ def test_spectral_embedding_preserves_dtype(eigen_solver, dtype):
     attribute and transformed data.
 
     Ideally, this test should be covered by the common test
-    `check_transformer_preserves_dtypes`. However, this test only run
+    `check_transformer_preserve_dtypes`. However, this test only run
     with transformers implementing `transform` while `SpectralEmbedding`
     implements only `fit_transform`.
     """

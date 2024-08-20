@@ -19,8 +19,6 @@ from ..base import (
     RegressorMixin,
     TransformerMixin,
     _fit_context,
-    is_classifier,
-    is_regressor,
 )
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array, check_consistent_length
@@ -555,9 +553,9 @@ class _PLS(
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        if is_classifier(self):
+        if tags.classifier_tags is not None:
             tags.classifier_tags.poor_score = True
-        if is_regressor(self):
+        if tags.regressor_tags is not None:
             tags.regressor_tags.poor_score = True
         tags.target_tags.required = False
         return tags
