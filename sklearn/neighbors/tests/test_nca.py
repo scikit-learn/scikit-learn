@@ -21,11 +21,14 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import check_random_state
 
 rng = check_random_state(0)
-# load and shuffle iris dataset
+# Load and shuffle the iris dataset.
 iris = load_iris()
 perm = rng.permutation(iris.target.size)
 iris_data = iris.data[perm]
 iris_target = iris.target[perm]
+# Avoid having test data introducing dependencies between tests.
+iris_data.flags.writeable = False
+iris_target.flags.writeable = False
 EPS = np.finfo(float).eps
 
 
@@ -413,8 +416,8 @@ def test_no_verbose(capsys):
 
 
 def test_singleton_class():
-    X = iris_data
-    y = iris_target
+    X = iris_data.copy()
+    y = iris_target.copy()
 
     # one singleton class
     singleton_class = 1
