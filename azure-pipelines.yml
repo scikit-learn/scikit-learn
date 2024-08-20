@@ -138,6 +138,7 @@ jobs:
         # Here we make sure, that they are still run on a regular basis.
         ${{ if eq(variables['Build.Reason'], 'Schedule') }}:
           SKLEARN_SKIP_NETWORK_TESTS: '0'
+        SCIPY_ARRAY_API: '1'
 
 # Check compilation with Ubuntu 22.04 LTS (Jammy Jellyfish) and scipy from conda-forge
 # By default the CI is sequential, where `Ubuntu_Jammy_Jellyfish` runs first and
@@ -197,10 +198,10 @@ jobs:
         not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
     matrix:
-      # Linux + Python 3.9 build with OpenBLAS and without pandas
-      pymin_conda_defaults_openblas:
+      # Linux + Python 3.9 build with minimum supported version of dependencies
+      pymin_conda_forge_openblas_min_dependencies:
         DISTRIB: 'conda'
-        LOCK_FILE: './build_tools/azure/pymin_conda_defaults_openblas_linux-64_conda.lock'
+        LOCK_FILE: './build_tools/azure/pymin_conda_forge_openblas_min_dependencies_linux-64_conda.lock'
         # Enable debug Cython directives to capture IndexError exceptions in
         # combination with the -Werror::pytest.PytestUnraisableExceptionWarning
         # flag for pytest.
@@ -221,6 +222,7 @@ jobs:
         # makes sure that they are single threaded in each xdist subprocess.
         PYTEST_XDIST_VERSION: 'none'
         PIP_BUILD_ISOLATION: 'true'
+        SCIPY_ARRAY_API: '1'
 
 - template: build_tools/azure/posix-docker.yml
   parameters:
@@ -259,6 +261,7 @@ jobs:
         DISTRIB: 'conda'
         LOCK_FILE: './build_tools/azure/pylatest_conda_forge_mkl_osx-64_conda.lock'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '5'  # non-default seed
+        SCIPY_ARRAY_API: '1'
       pylatest_conda_mkl_no_openmp:
         DISTRIB: 'conda'
         LOCK_FILE: './build_tools/azure/pylatest_conda_mkl_no_openmp_osx-64_conda.lock'

@@ -230,7 +230,7 @@ class KernelDensity(BaseEstimator):
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(
-                sample_weight, X, dtype=np.float64, only_non_negative=True
+                sample_weight, X, dtype=np.float64, ensure_non_negative=True
             )
 
         kwargs = self.metric_params
