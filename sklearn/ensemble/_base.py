@@ -295,7 +295,7 @@ class _BaseHeterogeneousEnsemble(
         tags = super().__sklearn_tags__()
         try:
             allow_nan = all(
-                _safe_tags(est[1])["allow_nan"] if est[1] != "drop" else True
+                _safe_tags(est[1]).input_tags.allow_nan if est[1] != "drop" else True
                 for est in self.estimators
             )
         except Exception:
