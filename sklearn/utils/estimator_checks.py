@@ -4213,7 +4213,7 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
 
 def check_transformer_get_feature_names_out(name, transformer_orig):
     tags = transformer_orig.__sklearn_tags__()
-    if tags.input_tags.two_d_array or tags.no_validation:
+    if not tags.input_tags.two_d_array or tags.no_validation:
         return
 
     X, y = make_blobs(
