@@ -553,10 +553,7 @@ class _PLS(
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        if tags.classifier_tags is not None:
-            tags.classifier_tags.poor_score = True
-        if tags.regressor_tags is not None:
-            tags.regressor_tags.poor_score = True
+        tags.regressor_tags.poor_score = True
         tags.target_tags.required = False
         return tags
 
