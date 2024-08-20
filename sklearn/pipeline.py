@@ -20,7 +20,7 @@ from .utils._set_output import (
     _get_container_adapter,
     _safe_set_output,
 )
-from .utils._tags import _safe_tags
+from .utils._tags import get_tags
 from .utils._user_interface import _print_elapsed_time
 from .utils.deprecation import _deprecate_Xt_in_inverse_transform
 from .utils.metadata_routing import (
@@ -1028,14 +1028,14 @@ class Pipeline(_BaseComposition):
         }
 
         try:
-            tags.input_tags.pairwise = _safe_tags(self.steps[0][1]).input_tags.pairwise
+            tags.input_tags.pairwise = get_tags(self.steps[0][1]).input_tags.pairwise
         except (ValueError, AttributeError, TypeError):
             # This happens when the `steps` is not a list of (name, estimator)
             # tuples and `fit` is not called yet to validate the steps.
             pass
 
         try:
-            tags.target_tags.multi_output = _safe_tags(
+            tags.target_tags.multi_output = get_tags(
                 self.steps[-1][1]
             ).target_tags.multi_output
         except (ValueError, AttributeError, TypeError):

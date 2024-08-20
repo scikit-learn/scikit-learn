@@ -50,7 +50,7 @@ from .metrics.pairwise import pairwise_distances_argmin
 from .preprocessing import LabelBinarizer
 from .utils import check_random_state
 from .utils._param_validation import HasMethods, Interval
-from .utils._tags import _safe_tags
+from .utils._tags import get_tags
 from .utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -592,7 +592,7 @@ class OneVsRestClassifier(
     def __sklearn_tags__(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
         tags = super().__sklearn_tags__()
-        tags.input_tags.pairwise = _safe_tags(self.estimator).input_tags.pairwise
+        tags.input_tags.pairwise = get_tags(self.estimator).input_tags.pairwise
         return tags
 
     def get_metadata_routing(self):
@@ -993,7 +993,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     def __sklearn_tags__(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
         tags = super().__sklearn_tags__()
-        tags.input_tags.pairwise = _safe_tags(self.estimator).input_tags.pairwise
+        tags.input_tags.pairwise = get_tags(self.estimator).input_tags.pairwise
         return tags
 
     def get_metadata_routing(self):

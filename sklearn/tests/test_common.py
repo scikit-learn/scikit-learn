@@ -61,7 +61,7 @@ from sklearn.preprocessing import (
 )
 from sklearn.semi_supervised import LabelPropagation, LabelSpreading
 from sklearn.utils import all_estimators
-from sklearn.utils._tags import _safe_tags
+from sklearn.utils._tags import get_tags
 from sklearn.utils._testing import (
     SkipTest,
     ignore_warnings,
@@ -372,7 +372,7 @@ def test_valid_tag_types(estimator):
                 correct_tags = (correct_tags, dict)
             assert isinstance(getattr(tags, field.name), correct_tags)
 
-    tags = _safe_tags(estimator)
+    tags = get_tags(estimator)
     defaults = default_tags(estimator)
     check_field_types(tags, defaults)
     check_field_types(tags.input_tags, defaults.input_tags)

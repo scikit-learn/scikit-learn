@@ -22,7 +22,7 @@ from ..utils._metadata_requests import (
     process_routing,
 )
 from ..utils._param_validation import HasMethods, Interval, RealNotInt
-from ..utils._tags import _safe_tags
+from ..utils._tags import get_tags
 from ..utils.metaestimators import _safe_split, available_if
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
@@ -539,7 +539,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         if tags.regressor_tags is not None:
             tags.regressor_tags.poor_score = True
         tags.target_tags.required = True
-        tags.input_tags.allow_nan = _safe_tags(self.estimator).input_tags.allow_nan
+        tags.input_tags.allow_nan = get_tags(self.estimator).input_tags.allow_nan
         return tags
 
     def get_metadata_routing(self):

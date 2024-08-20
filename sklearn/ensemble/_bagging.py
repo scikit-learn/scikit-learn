@@ -24,7 +24,7 @@ from ..utils import (
 )
 from ..utils._mask import indices_to_mask
 from ..utils._param_validation import HasMethods, Interval, RealNotInt
-from ..utils._tags import _safe_tags
+from ..utils._tags import get_tags
 from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -640,9 +640,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.input_tags.allow_nan = _safe_tags(
-            self._get_estimator()
-        ).input_tags.allow_nan
+        tags.input_tags.allow_nan = get_tags(self._get_estimator()).input_tags.allow_nan
         return tags
 
 

@@ -457,7 +457,6 @@ class TaggedBinaryClassifier(UntaggedBinaryClassifier):
     # Toy classifier that only supports binary classification.
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.classifier_tags.binary = True
         tags.classifier_tags.multi_class = False
         return tags
 

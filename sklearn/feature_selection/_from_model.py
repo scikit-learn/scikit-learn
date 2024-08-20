@@ -9,7 +9,7 @@ import numpy as np
 from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone
 from ..exceptions import NotFittedError
 from ..utils._param_validation import HasMethods, Interval, Options
-from ..utils._tags import _safe_tags
+from ..utils._tags import get_tags
 from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -520,5 +520,5 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.input_tags.allow_nan = _safe_tags(self.estimator).input_tags.allow_nan
+        tags.input_tags.allow_nan = get_tags(self.estimator).input_tags.allow_nan
         return tags

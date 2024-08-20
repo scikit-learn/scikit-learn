@@ -31,7 +31,7 @@ from ..metrics._scorer import (
 from ..utils import Bunch, check_random_state
 from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._param_validation import HasMethods, Interval, StrOptions
-from ..utils._tags import _safe_tags
+from ..utils._tags import get_tags
 from ..utils.deprecation import _deprecate_Xt_in_inverse_transform
 from ..utils.metadata_routing import (
     MetadataRouter,
@@ -482,12 +482,12 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         # allows cross-validation to see 'precomputed' metrics
-        tags.input_tags.pairwise = _safe_tags(self.estimator).input_tags.pairwise
+        tags.input_tags.pairwise = get_tags(self.estimator).input_tags.pairwise
         tags._xfail_checks = {
             "check_supervised_y_2d": "DataConversionWarning not caught",
             "check_requires_y_none": "Doesn't fail gracefully",
         }
-        tags.array_api_support = _safe_tags(self.estimator).array_api_support
+        tags.array_api_support = get_tags(self.estimator).array_api_support
         return tags
 
     def score(self, X, y=None, **params):

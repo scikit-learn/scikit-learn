@@ -212,7 +212,6 @@ class BaseThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.classifier_tags.binary = True
         tags.classifier_tags.multi_class = False
         tags._xfail_checks = {
             "check_classifiers_train": "Threshold at probability 0.5 does not hold",

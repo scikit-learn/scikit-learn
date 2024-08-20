@@ -17,7 +17,7 @@ from ..utils._metadata_requests import (
     process_routing,
 )
 from ..utils._param_validation import HasMethods
-from ..utils._tags import _safe_tags
+from ..utils._tags import get_tags
 from ..utils.validation import check_is_fitted
 
 __all__ = ["TransformedTargetRegressor"]
@@ -356,7 +356,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         regressor = self._get_regressor()
         tags = super().__sklearn_tags__()
         tags.regressor_tags.poor_score = True
-        tags.target_tags.multi_output = _safe_tags(regressor).target_tags.multi_output
+        tags.target_tags.multi_output = get_tags(regressor).target_tags.multi_output
         return tags
 
     @property

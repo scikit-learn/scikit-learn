@@ -66,7 +66,7 @@ from ..tree import (
 from ..tree._tree import DOUBLE, DTYPE
 from ..utils import check_random_state, compute_sample_weight
 from ..utils._param_validation import Interval, RealNotInt, StrOptions
-from ..utils._tags import _safe_tags
+from ..utils._tags import get_tags
 from ..utils.multiclass import check_classification_targets, type_of_target
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
@@ -715,7 +715,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         # Only the criterion is required to determine if the tree supports
         # missing values
         estimator = type(self.estimator)(criterion=self.criterion)
-        tags.input_tags.allow_nan = _safe_tags(estimator).input_tags.allow_nan
+        tags.input_tags.allow_nan = get_tags(estimator).input_tags.allow_nan
         return tags
 
 

@@ -1,7 +1,7 @@
 import pytest
 
 from sklearn.base import BaseEstimator, RegressorMixin, TransformerMixin
-from sklearn.utils._tags import _safe_tags
+from sklearn.utils._tags import get_tags
 
 
 class NoTagsEstimator:
@@ -23,4 +23,4 @@ class ClassifierEstimator:
     ],
 )
 def test_requires_y(estimator, value):
-    assert _safe_tags(estimator).target_tags.required == value
+    assert get_tags(estimator).target_tags.required == value
