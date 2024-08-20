@@ -36,20 +36,23 @@ from sklearn.utils._testing import (
 
 class NaNTag(BaseEstimator):
     def __sklearn_tags__(self):
-        more_tags = {"allow_nan": True}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        return tags
 
 
 class NoNaNTag(BaseEstimator):
     def __sklearn_tags__(self):
-        more_tags = {"allow_nan": False}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = False
+        return tags
 
 
 class NaNTagRandomForest(RandomForestClassifier):
     def __sklearn_tags__(self):
-        more_tags = {"allow_nan": True}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        return tags
 
 
 iris = datasets.load_iris()
@@ -561,11 +564,11 @@ def test_transform_accepts_nan_inf():
 def test_allow_nan_tag_comes_from_estimator():
     allow_nan_est = NaNTag()
     model = SelectFromModel(estimator=allow_nan_est)
-    assert model.__sklearn_tags__()["allow_nan"] is True
+    assert model.__sklearn_tags__().input_tags.allow_nan is True
 
     no_nan_est = NoNaNTag()
     model = SelectFromModel(estimator=no_nan_est)
-    assert model.__sklearn_tags__()["allow_nan"] is False
+    assert model.__sklearn_tags__().input_tags.allow_nan is False
 
 
 def _pca_importances(pca_estimator):

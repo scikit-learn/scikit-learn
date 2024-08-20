@@ -2276,13 +2276,14 @@ def test_search_cv_pairwise_property_delegated_to_base_estimator(pairwise):
 
     class TestEstimator(BaseEstimator):
         def __sklearn_tags__(self):
-            more_tags = {"pairwise": pairwise}
-            return {**super().__sklearn_tags__(), **more_tags}
+            tags = super().__sklearn_tags__()
+            tags.input_tags.pairwise = pairwise
+            return tags
 
     est = TestEstimator()
     attr_message = "BaseSearchCV pairwise tag must match estimator"
     cv = GridSearchCV(est, {"n_neighbors": [10]})
-    assert pairwise == cv.__sklearn_tags__()["pairwise"], attr_message
+    assert pairwise == cv.__sklearn_tags__().input_tags.pairwise, attr_message
 
 
 def test_search_cv__pairwise_property_delegated_to_base_estimator():
@@ -2299,8 +2300,9 @@ def test_search_cv__pairwise_property_delegated_to_base_estimator():
             self.pairwise = pairwise
 
         def __sklearn_tags__(self):
-            more_tags = {"pairwise": self.pairwise}
-            return {**super().__sklearn_tags__(), **more_tags}
+            tags = super().__sklearn_tags__()
+            tags.input_tags.pairwise = self.pairwise
+            return tags
 
     est = EstimatorPairwise()
     attr_message = "BaseSearchCV _pairwise property must match estimator"
@@ -2308,7 +2310,9 @@ def test_search_cv__pairwise_property_delegated_to_base_estimator():
     for _pairwise_setting in [True, False]:
         est.set_params(pairwise=_pairwise_setting)
         cv = GridSearchCV(est, {"n_neighbors": [10]})
-        assert _pairwise_setting == cv.__sklearn_tags__()["pairwise"], attr_message
+        assert (
+            _pairwise_setting == cv.__sklearn_tags__().input_tags.pairwise
+        ), attr_message
 
 
 def test_search_cv_pairwise_property_equivalence_of_precomputed():

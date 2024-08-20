@@ -336,8 +336,11 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         return score
 
     def __sklearn_tags__(self):
-        more_tags = {"_skip_test": True, "X_types": ["1dlabel"]}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags._skip_test = True
+        tags.input_tags.two_d_array = False
+        tags.input_tags.one_d_labels = True
+        return tags
 
 
 # Deactivate key validation for CheckingClassifier because we want to be able to
@@ -370,8 +373,9 @@ class NoSampleWeightWrapper(BaseEstimator):
         return self.est.predict_proba(X)
 
     def __sklearn_tags__(self):
-        more_tags = {"_skip_test": True}
-        return {**super().__sklearn_tags__(), **more_tags}
+        tags = super().__sklearn_tags__()
+        tags._skip_test = True
+        return tags
 
 
 def _check_response(method):

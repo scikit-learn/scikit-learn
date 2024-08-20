@@ -8,6 +8,48 @@ import numpy as np
 
 @dataclass
 class InputTags:
+    """Tags for the input data.
+
+    Parameters
+    ----------
+    one_d_array : bool
+        Whether the input can be a 1D array.
+
+    two_d_array : bool
+        Whether the input can be a 2D array.
+
+    three_d_array : bool
+        Whether the input can be a 3D array.
+
+    one_d_labels : bool
+        Whether the input is a 1D labels(y).
+
+    two_d_labels : bool
+        Whether the input is a 2D labels(y).
+
+    sparse : bool
+        Whether the input can be a sparse matrix.
+
+    categorical : bool
+        Whether the input can be categorical.
+
+    string : bool
+        Whether the input can be an array-like of strings.
+
+    dict : bool
+        Whether the input can be a dictionary.
+
+    positive_only : bool
+        Whether the input has to be positive.
+
+    allow_nan : bool
+        Whether the input can contain NaNs.
+
+    pairwise : bool
+        Whether the input is in the form of a calculated pairwise distances or computed
+        kernel values.
+    """
+
     one_d_array = False
     two_d_array: bool = True
     three_d_array: bool = False
@@ -24,6 +66,23 @@ class InputTags:
 
 @dataclass
 class TargetTags:
+    """Tags for the target data.
+
+    Parameters
+    ----------
+    required : bool
+        Whether the target is required.
+
+    positive_only : bool
+        Whether the target has to be positive.
+
+    multi_output : bool
+        Whether the target can be multi-output.
+
+    single_output : bool
+        Whether the target can be single-output.
+    """
+
     required: bool
     positive_only: bool = False
     multi_output: bool = False
@@ -32,11 +91,36 @@ class TargetTags:
 
 @dataclass
 class TransformerTags:
+    """Tags for the transformer.
+
+    Parameters
+    ----------
+    preserves_dtype : list[object]
+        The data types that the transformer preserves.
+    """
+
     preserves_dtype: list[object] = field(default_factory=lambda: [np.float64])
 
 
 @dataclass
 class ClassifierTags:
+    """Tags for the classifier.
+
+    Parameters
+    ----------
+    poor_score : bool
+        Whether the classifier can have a poor score in tests.
+
+    binary : bool
+        Whether the classifier can handle binary classification.
+
+    multi_class : bool
+        Whether the classifier can handle multi-class classification.
+
+    multi_label : bool
+        Whether the classifier can handle multi-label classification.
+    """
+
     poor_score: bool = False
     binary: bool = True
     multi_class: bool = True
@@ -45,12 +129,61 @@ class ClassifierTags:
 
 @dataclass
 class RegressorTags:
+    """Tags for the regressor.
+
+    Parameters
+    ----------
+    poor_score : bool
+        Whether the regressor can have a poor score in tests.
+
+    multi_label : bool
+        Whether the regressor can handle multi-label regression.
+    """
+
     poor_score: bool = False
     multi_label: bool = False
 
 
 @dataclass
 class Tags:
+    """Tags for the estimator.
+
+    Parameters
+    ----------
+    target_tags : TargetTags
+        The target(y) tags.
+
+    transformer_tags : TransformerTags
+        The transformer tags.
+
+    classifier_tags : ClassifierTags
+        The classifier tags.
+
+    regressor_tags : RegressorTags
+        The regressor tags.
+
+    array_api_support : bool
+        Whether the estimator supports array API supporting input.
+
+    no_validation : bool
+        Whether the estimator does not validate input.
+
+    non_deterministic : bool
+        Whether the estimator is non-deterministic.
+
+    requires_fit : bool
+        Whether the estimator requires fitting before other methods can be called.
+
+    _skip_test : bool
+        Whether the estimator should be skipped in tests.
+
+    _xfail_checks : dict[str, str]
+        Checks that should be xfailed.
+
+    input_tags : InputTags
+        The input data(X) tags.
+    """
+
     target_tags: TargetTags
     transformer_tags: TransformerTags
     classifier_tags: ClassifierTags

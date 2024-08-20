@@ -534,7 +534,10 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.classifier_tags.poor_score = True
+        if tags.classifier_tags is not None:
+            tags.classifier_tags.poor_score = True
+        if tags.regressor_tags is not None:
+            tags.regressor_tags.poor_score = True
         tags.target_tags.required = True
         tags.input_tags.allow_nan = _safe_tags(self.estimator).input_tags.allow_nan
         return tags
