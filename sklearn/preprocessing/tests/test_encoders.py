@@ -1,4 +1,5 @@
 import re
+import warnings
 
 import numpy as np
 import pytest
@@ -6,7 +7,7 @@ from scipy import sparse
 
 from sklearn.exceptions import NotFittedError
 from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder
-from sklearn.utils import is_scalar_nan
+from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._testing import (
     _convert_container,
     assert_allclose,
@@ -387,7 +388,7 @@ def test_X_is_not_1D_pandas(method):
     X = pd.Series([6, 3, 4, 6])
     oh = OneHotEncoder()
 
-    msg = "Expected 2D array, got 1D array instead"
+    msg = f"Expected a 2-dimensional container but got {type(X)} instead."
     with pytest.raises(ValueError, match=msg):
         getattr(oh, method)(X)
 
@@ -796,7 +797,9 @@ def test_encoder_dtypes_pandas():
 def test_one_hot_encoder_warning():
     enc = OneHotEncoder()
     X = [["Male", 1], ["Female", 3]]
-    np.testing.assert_no_warnings(enc.fit_transform, X)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        enc.fit_transform(X)
 
 
 @pytest.mark.parametrize("missing_value", [np.nan, None, float("nan")])

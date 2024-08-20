@@ -1,6 +1,6 @@
-# Author: Arnaud Joly
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 """
 Random utility function
 =======================
@@ -11,20 +11,20 @@ The module contains:
     * Fast rand_r alternative based on xor shifts
 """
 import numpy as np
-cimport numpy as cnp
-cnp.import_array()
-
 from . import check_random_state
 
-cdef UINT32_t DEFAULT_SEED = 1
+from ._typedefs cimport intp_t
+
+
+cdef uint32_t DEFAULT_SEED = 1
 
 
 # Compatibility type to always accept the default int type used by NumPy, both
-# before and after NumPy 2. On Windows, `long` does not always match `cnp.inp_t`.
+# before and after NumPy 2. On Windows, `long` does not always match `inp_t`.
 # See the comments in the `sample_without_replacement` Python function for more
 # details.
 ctypedef fused default_int:
-    cnp.intp_t
+    intp_t
     long
 
 
@@ -228,6 +228,49 @@ cdef _sample_without_replacement(default_int n_population,
                                  random_state=None):
     """Sample integers without replacement.
 
+    Private function for the implementation, see sample_without_replacement
+    documentation for more details.
+    """
+    _sample_without_replacement_check_input(n_population, n_samples)
+
+    all_methods = ("auto", "tracking_selection", "reservoir_sampling", "pool")
+
+    ratio = <double> n_samples / n_population if n_population != 0.0 else 1.0
+
+    # Check ratio and use permutation unless ratio < 0.01 or ratio > 0.99
+    if method == "auto" and ratio > 0.01 and ratio < 0.99:
+        rng = check_random_state(random_state)
+        return rng.permutation(n_population)[:n_samples]
+
+    if method == "auto" or method == "tracking_selection":
+        # TODO the pool based method can also be used.
+        #      however, it requires special benchmark to take into account
+        #      the memory requirement of the array vs the set.
+
+        # The value 0.2 has been determined through benchmarking.
+        if ratio < 0.2:
+            return _sample_without_replacement_with_tracking_selection(
+                n_population, n_samples, random_state)
+        else:
+            return _sample_without_replacement_with_reservoir_sampling(
+                n_population, n_samples, random_state)
+
+    elif method == "reservoir_sampling":
+        return _sample_without_replacement_with_reservoir_sampling(
+            n_population, n_samples, random_state)
+
+    elif method == "pool":
+        return _sample_without_replacement_with_pool(n_population, n_samples,
+                                                     random_state)
+    else:
+        raise ValueError('Expected a method name in %s, got %s. '
+                         % (all_methods, method))
+
+
+def sample_without_replacement(
+        object n_population, object n_samples, method="auto", random_state=None):
+    """Sample integers without replacement.
+
     Select n_samples integers from the set [0, n_population) without
     replacement.
 
@@ -275,47 +318,15 @@ cdef _sample_without_replacement(default_int n_population,
     out : ndarray of shape (n_samples,)
         The sampled subsets of integer. The subset of selected integer might
         not be randomized, see the method argument.
+
+    Examples
+    --------
+    >>> from sklearn.utils.random import sample_without_replacement
+    >>> sample_without_replacement(10, 5, random_state=42)
+    array([8, 1, 5, 0, 7])
     """
-    _sample_without_replacement_check_input(n_population, n_samples)
-
-    all_methods = ("auto", "tracking_selection", "reservoir_sampling", "pool")
-
-    ratio = <double> n_samples / n_population if n_population != 0.0 else 1.0
-
-    # Check ratio and use permutation unless ratio < 0.01 or ratio > 0.99
-    if method == "auto" and ratio > 0.01 and ratio < 0.99:
-        rng = check_random_state(random_state)
-        return rng.permutation(n_population)[:n_samples]
-
-    if method == "auto" or method == "tracking_selection":
-        # TODO the pool based method can also be used.
-        #      however, it requires special benchmark to take into account
-        #      the memory requirement of the array vs the set.
-
-        # The value 0.2 has been determined through benchmarking.
-        if ratio < 0.2:
-            return _sample_without_replacement_with_tracking_selection(
-                n_population, n_samples, random_state)
-        else:
-            return _sample_without_replacement_with_reservoir_sampling(
-                n_population, n_samples, random_state)
-
-    elif method == "reservoir_sampling":
-        return _sample_without_replacement_with_reservoir_sampling(
-            n_population, n_samples, random_state)
-
-    elif method == "pool":
-        return _sample_without_replacement_with_pool(n_population, n_samples,
-                                                     random_state)
-    else:
-        raise ValueError('Expected a method name in %s, got %s. '
-                         % (all_methods, method))
-
-
-def sample_without_replacement(
-        object n_population, object n_samples, method="auto", random_state=None):
     cdef:
-        cnp.intp_t n_pop_intp, n_samples_intp
+        intp_t n_pop_intp, n_samples_intp
         long n_pop_long, n_samples_long
 
     # On most platforms `np.int_ is np.intp`.  However, before NumPy 2 the
@@ -340,5 +351,5 @@ def sample_without_replacement(
 
 def _our_rand_r_py(seed):
     """Python utils to test the our_rand_r function"""
-    cdef UINT32_t my_seed = seed
+    cdef uint32_t my_seed = seed
     return our_rand_r(&my_seed)

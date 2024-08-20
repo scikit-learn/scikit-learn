@@ -9,10 +9,8 @@ near-duplicates to form the final set of centroids.
 Seeding is performed using a binning technique for scalability.
 """
 
-# Authors: Conrad Lee <conradlee@gmail.com>
-#          Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Gael Varoquaux <gael.varoquaux@normalesup.org>
-#          Martino Sorbaro <martino.sorbaro@ed.ac.uk>
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from collections import defaultdict
@@ -76,6 +74,15 @@ def estimate_bandwidth(X, *, quantile=0.3, n_samples=None, random_state=0, n_job
     -------
     bandwidth : float
         The bandwidth parameter.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.cluster import estimate_bandwidth
+    >>> X = np.array([[1, 1], [2, 1], [1, 0],
+    ...               [4, 7], [3, 5], [3, 6]])
+    >>> estimate_bandwidth(X, quantile=0.5)
+    np.float64(1.61...)
     """
     X = check_array(X)
 
@@ -113,7 +120,7 @@ def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
         my_mean = np.mean(points_within, axis=0)
         # If converged or at max_iter, adds the cluster
         if (
-            np.linalg.norm(my_mean - my_old_mean) < stop_thresh
+            np.linalg.norm(my_mean - my_old_mean) <= stop_thresh
             or completed_iterations == max_iter
         ):
             break
@@ -209,8 +216,21 @@ def mean_shift(
 
     Notes
     -----
-    For an example, see :ref:`examples/cluster/plot_mean_shift.py
-    <sphx_glr_auto_examples_cluster_plot_mean_shift.py>`.
+    For a usage example, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_mean_shift.py`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.cluster import mean_shift
+    >>> X = np.array([[1, 1], [2, 1], [1, 0],
+    ...               [4, 7], [3, 5], [3, 6]])
+    >>> cluster_centers, labels = mean_shift(X, bandwidth=2)
+    >>> cluster_centers
+    array([[3.33..., 6.     ],
+           [1.33..., 0.66...]])
+    >>> labels
+    array([1, 1, 1, 0, 0, 0])
     """
     model = MeanShift(
         bandwidth=bandwidth,
@@ -287,6 +307,9 @@ class MeanShift(ClusterMixin, BaseEstimator):
     eliminate near-duplicates to form the final set of centroids.
 
     Seeding is performed using a binning technique for scalability.
+
+    For an example of how to use MeanShift clustering, refer to:
+    :ref:`sphx_glr_auto_examples_cluster_plot_mean_shift.py`.
 
     Read more in the :ref:`User Guide <mean_shift>`.
 

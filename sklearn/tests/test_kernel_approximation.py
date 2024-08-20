@@ -144,19 +144,6 @@ def test_additive_chi2_sampler_sample_steps(method, sample_steps):
     assert transformer.sample_interval == sample_interval
 
 
-# TODO(1.5): remove
-def test_additive_chi2_sampler_future_warnings():
-    """Check that we raise a FutureWarning when accessing to `sample_interval_`."""
-    transformer = AdditiveChi2Sampler()
-    transformer.fit(X)
-    msg = re.escape(
-        "The ``sample_interval_`` attribute was deprecated in version 1.3 and "
-        "will be removed 1.5."
-    )
-    with pytest.warns(FutureWarning, match=msg):
-        assert transformer.sample_interval_ is not None
-
-
 @pytest.mark.parametrize("method", ["fit", "fit_transform", "transform"])
 def test_additive_chi2_sampler_wrong_sample_steps(method):
     """Check that we raise a ValueError on invalid sample_steps"""
@@ -213,9 +200,9 @@ def test_additive_chi2_sampler_exceptions():
     transformer = AdditiveChi2Sampler()
     X_neg = X.copy()
     X_neg[0, 0] = -1
-    with pytest.raises(ValueError, match="X in AdditiveChi2Sampler.fit"):
+    with pytest.raises(ValueError, match="X in AdditiveChi2Sampler"):
         transformer.fit(X_neg)
-    with pytest.raises(ValueError, match="X in AdditiveChi2Sampler.transform"):
+    with pytest.raises(ValueError, match="X in AdditiveChi2Sampler"):
         transformer.fit(X)
         transformer.transform(X_neg)
 

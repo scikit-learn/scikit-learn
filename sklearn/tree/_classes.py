@@ -3,16 +3,8 @@ This module gathers tree-based methods, including decision, regression and
 randomized trees. Single and multi-output problems are both handled.
 """
 
-# Authors: Gilles Louppe <g.louppe@gmail.com>
-#          Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#          Brian Holt <bdholt1@gmail.com>
-#          Noel Dawe <noel@dawe.me>
-#          Satrajit Gosh <satrajit.ghosh@gmail.com>
-#          Joly Arnaud <arnaud.v.joly@gmail.com>
-#          Fares Hedayati <fares.hedayati@gmail.com>
-#          Nelson Liu <nelson@nelsonliu.me>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import copy
 import numbers
@@ -246,7 +238,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             # _compute_missing_values_in_feature_mask will check for finite values and
             # compute the missing mask if the tree supports missing values
             check_X_params = dict(
-                dtype=DTYPE, accept_sparse="csc", force_all_finite=False
+                dtype=DTYPE, accept_sparse="csc", ensure_all_finite=False
             )
             check_y_params = dict(ensure_2d=False, dtype=None)
             X, y = self._validate_data(
@@ -483,15 +475,15 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         """Validate the training data on predict (probabilities)."""
         if check_input:
             if self._support_missing_values(X):
-                force_all_finite = "allow-nan"
+                ensure_all_finite = "allow-nan"
             else:
-                force_all_finite = True
+                ensure_all_finite = True
             X = self._validate_data(
                 X,
                 dtype=DTYPE,
                 accept_sparse="csr",
                 reset=False,
-                force_all_finite=force_all_finite,
+                ensure_all_finite=ensure_all_finite,
             )
             if issparse(X) and (
                 X.indices.dtype != np.intc or X.indptr.dtype != np.intc
@@ -1043,23 +1035,12 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         proba = self.tree_.predict(X)
 
         if self.n_outputs_ == 1:
-            proba = proba[:, : self.n_classes_]
-            normalizer = proba.sum(axis=1)[:, np.newaxis]
-            normalizer[normalizer == 0.0] = 1.0
-            proba /= normalizer
-
-            return proba
-
+            return proba[:, : self.n_classes_]
         else:
             all_proba = []
-
             for k in range(self.n_outputs_):
                 proba_k = proba[:, k, : self.n_classes_[k]]
-                normalizer = proba_k.sum(axis=1)[:, np.newaxis]
-                normalizer[normalizer == 0.0] = 1.0
-                proba_k /= normalizer
                 all_proba.append(proba_k)
-
             return all_proba
 
     def predict_log_proba(self, X):
@@ -1093,7 +1074,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     def _more_tags(self):
         # XXX: nan is only support for dense arrays, but we set this for common test to
         # pass, specifically: check_estimators_nan_inf
-        allow_nan = self.splitter == "best" and self.criterion in {
+        allow_nan = self.splitter in ("best", "random") and self.criterion in {
             "gini",
             "log_loss",
             "entropy",
@@ -1117,7 +1098,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         mean squared error with Friedman's improvement score for potential
         splits, "absolute_error" for the mean absolute error, which minimizes
         the L1 loss using the median of each terminal node, and "poisson" which
-        uses reduction in Poisson deviance to find splits.
+        uses reduction in the half mean Poisson deviance to find splits.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
@@ -1398,22 +1379,23 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         Parameters
         ----------
-        grid : ndarray of shape (n_samples, n_target_features)
+        grid : ndarray of shape (n_samples, n_target_features), dtype=np.float32
             The grid points on which the partial dependence should be
             evaluated.
-        target_features : ndarray of shape (n_target_features)
+        target_features : ndarray of shape (n_target_features), dtype=np.intp
             The set of target features for which the partial dependence
             should be evaluated.
 
         Returns
         -------
-        averaged_predictions : ndarray of shape (n_samples,)
+        averaged_predictions : ndarray of shape (n_samples,), dtype=np.float64
             The value of the partial dependence function on each grid point.
         """
         grid = np.asarray(grid, dtype=DTYPE, order="C")
         averaged_predictions = np.zeros(
             shape=grid.shape[0], dtype=np.float64, order="C"
         )
+        target_features = np.asarray(target_features, dtype=np.intp, order="C")
 
         self.tree_.compute_partial_dependence(
             grid, target_features, averaged_predictions
@@ -1423,7 +1405,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     def _more_tags(self):
         # XXX: nan is only support for dense arrays, but we set this for common test to
         # pass, specifically: check_estimators_nan_inf
-        allow_nan = self.splitter == "best" and self.criterion in {
+        allow_nan = self.splitter in ("best", "random") and self.criterion in {
             "squared_error",
             "friedman_mse",
             "poisson",
@@ -1704,6 +1686,16 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             monotonic_cst=monotonic_cst,
         )
 
+    def _more_tags(self):
+        # XXX: nan is only supported for dense arrays, but we set this for the
+        # common test to pass, specifically: check_estimators_nan_inf
+        allow_nan = self.splitter == "random" and self.criterion in {
+            "gini",
+            "log_loss",
+            "entropy",
+        }
+        return {"multilabel": True, "allow_nan": allow_nan}
+
 
 class ExtraTreeRegressor(DecisionTreeRegressor):
     """An extremely randomized tree regressor.
@@ -1947,3 +1939,13 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             ccp_alpha=ccp_alpha,
             monotonic_cst=monotonic_cst,
         )
+
+    def _more_tags(self):
+        # XXX: nan is only supported for dense arrays, but we set this for the
+        # common test to pass, specifically: check_estimators_nan_inf
+        allow_nan = self.splitter == "random" and self.criterion in {
+            "squared_error",
+            "friedman_mse",
+            "poisson",
+        }
+        return {"allow_nan": allow_nan}

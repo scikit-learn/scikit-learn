@@ -5,9 +5,8 @@ Reference: Tables 8.3 and 8.4 page 196 in the book:
 Independent Component Analysis, by  Hyvarinen et al.
 """
 
-# Authors: Pierre Lafaye de Micheaux, Stefan van der Walt, Gael Varoquaux,
-#          Bertrand Thirion, Alexandre Gramfort, Denis A. Engemann
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Integral, Real
@@ -320,6 +319,19 @@ def fastica(
     .. [1] A. Hyvarinen and E. Oja, "Fast Independent Component Analysis",
            Algorithms and Applications, Neural Networks, 13(4-5), 2000,
            pp. 411-430.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.decomposition import fastica
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> K, W, S = fastica(X, n_components=7, random_state=0, whiten='unit-variance')
+    >>> K.shape
+    (7, 64)
+    >>> W.shape
+    (7, 7)
+    >>> S.shape
+    (1797, 7)
     """
     est = FastICA(
         n_components=n_components,
@@ -593,7 +605,7 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
                 # Faster when num_samples >> n_features
                 d, u = linalg.eigh(XT.dot(X))
                 sort_indices = np.argsort(d)[::-1]
-                eps = np.finfo(d.dtype).eps
+                eps = np.finfo(d.dtype).eps * 10
                 degenerate_idx = d < eps
                 if np.any(degenerate_idx):
                     warnings.warn(

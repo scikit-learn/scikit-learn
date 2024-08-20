@@ -1,9 +1,9 @@
-# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Raghav RV <rvraghav93@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import importlib
 import inspect
+import os
 import warnings
 from inspect import signature
 from pkgutil import walk_packages
@@ -21,7 +21,7 @@ from sklearn.experimental import (
 )
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import FunctionTransformer
-from sklearn.utils import IS_PYPY, all_estimators
+from sklearn.utils import all_estimators
 from sklearn.utils._testing import (
     _get_func_name,
     check_docstring_parameters,
@@ -33,14 +33,13 @@ from sklearn.utils.estimator_checks import (
     _enforce_estimator_tags_X,
     _enforce_estimator_tags_y,
 )
-from sklearn.utils.fixes import parse_version, sp_version
 
 # walk_packages() ignores DeprecationWarnings, now we need to ignore
 # FutureWarnings
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", FutureWarning)
     # mypy error: Module has no attribute "__path__"
-    sklearn_path = sklearn.__path__  # type: ignore  # mypy issue #1422
+    sklearn_path = [os.path.dirname(sklearn.__file__)]
     PUBLIC_MODULES = set(
         [
             pckg[1]
@@ -50,6 +49,7 @@ with warnings.catch_warnings():
     )
 
 # functions to ignore args / docstring of
+# TODO(1.7): remove "sklearn.utils._joblib"
 _DOCSTRING_IGNORES = [
     "sklearn.utils.deprecation.load_mlcomp",
     "sklearn.pipeline.make_pipeline",
@@ -70,11 +70,6 @@ _METHODS_IGNORE_NONE_Y = [
 ]
 
 
-# numpydoc 0.8.0's docscrape tool raises because of collections.abc under
-# Python 3.7
-@pytest.mark.filterwarnings("ignore::FutureWarning")
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-@pytest.mark.skipif(IS_PYPY, reason="test segfaults on PyPy")
 def test_docstring_parameters():
     # Test module docstring formatting
 
@@ -177,7 +172,7 @@ def _construct_sparse_coder(Estimator):
     return Estimator(dictionary=dictionary)
 
 
-@ignore_warnings(category=sklearn.exceptions.ConvergenceWarning)
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 # TODO(1.6): remove "@pytest.mark.filterwarnings" as SAMME.R will be removed
 # and substituted with the SAMME algorithm as a default
 @pytest.mark.filterwarnings("ignore:The SAMME.R algorithm")
@@ -224,22 +219,17 @@ def test_fit_docstring_attributes(name, Estimator):
         # default raises an error, perplexity must be less than n_samples
         est.set_params(perplexity=2)
 
-    # TODO(1.5): TO BE REMOVED for 1.5 (avoid FutureWarning)
-    if Estimator.__name__ in ("LinearSVC", "LinearSVR"):
-        est.set_params(dual="auto")
-
     # TODO(1.6): remove (avoid FutureWarning)
     if Estimator.__name__ in ("NMF", "MiniBatchNMF"):
         est.set_params(n_components="auto")
-
-    if Estimator.__name__ == "QuantileRegressor":
-        solver = "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
-        est.set_params(solver=solver)
 
     # Low max iter to speed up tests: we are only interested in checking the existence
     # of fitted attributes. This should be invariant to whether it has converged or not.
     if "max_iter" in est.get_params():
         est.set_params(max_iter=2)
+        # min value for `TSNE` is 250
+        if Estimator.__name__ == "TSNE":
+            est.set_params(max_iter=250)
 
     if "random_state" in est.get_params():
         est.set_params(random_state=0)

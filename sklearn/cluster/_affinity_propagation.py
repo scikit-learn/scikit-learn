@@ -1,9 +1,7 @@
 """Affinity Propagation clustering algorithm."""
 
-# Author: Alexandre Gramfort alexandre.gramfort@inria.fr
-#        Gael Varoquaux gael.varoquaux@normalesup.org
-
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Integral, Real
@@ -53,7 +51,7 @@ def _affinity_propagation(
             "All samples have mutually equal similarities. "
             "Returning arbitrary cluster center(s)."
         )
-        if preference.flat[0] >= S.flat[n_samples - 1]:
+        if preference.flat[0] > S.flat[n_samples - 1]:
             return (
                 (np.arange(n_samples), np.arange(n_samples), 0)
                 if return_n_iter
@@ -278,6 +276,20 @@ def affinity_propagation(
     ----------
     Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
     Between Data Points", Science Feb. 2007
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.cluster import affinity_propagation
+    >>> from sklearn.metrics.pairwise import euclidean_distances
+    >>> X = np.array([[1, 2], [1, 4], [1, 0],
+    ...               [4, 2], [4, 4], [4, 0]])
+    >>> S = -euclidean_distances(X, squared=True)
+    >>> cluster_centers_indices, labels = affinity_propagation(S, random_state=0)
+    >>> cluster_centers_indices
+    array([0, 3])
+    >>> labels
+    array([0, 0, 0, 1, 1, 1])
     """
     estimator = AffinityPropagation(
         damping=damping,
@@ -490,13 +502,10 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             Returns the instance itself.
         """
         if self.affinity == "precomputed":
-            accept_sparse = False
-        else:
-            accept_sparse = "csr"
-        X = self._validate_data(X, accept_sparse=accept_sparse)
-        if self.affinity == "precomputed":
-            self.affinity_matrix_ = X.copy() if self.copy else X
+            X = self._validate_data(X, copy=self.copy, force_writeable=True)
+            self.affinity_matrix_ = X
         else:  # self.affinity == "euclidean"
+            X = self._validate_data(X, accept_sparse="csr")
             self.affinity_matrix_ = -euclidean_distances(X, squared=True)
 
         if self.affinity_matrix_.shape[0] != self.affinity_matrix_.shape[1]:
@@ -509,7 +518,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             preference = np.median(self.affinity_matrix_)
         else:
             preference = self.preference
-        preference = np.array(preference, copy=False)
+        preference = np.asarray(preference)
 
         random_state = check_random_state(self.random_state)
 

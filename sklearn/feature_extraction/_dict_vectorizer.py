@@ -1,6 +1,5 @@
-# Authors: Lars Buitinck
-#          Dan Blanchard <dblanchard@ets.org>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from array import array
 from collections.abc import Iterable, Mapping
@@ -338,6 +337,8 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         D : list of dict_type objects of shape (n_samples,)
             Feature mappings for the samples in X.
         """
+        check_is_fitted(self, "feature_names_")
+
         # COO matrix is not subscriptable
         X = check_array(X, accept_sparse=["csr", "csc"])
         n_samples = X.shape[0]
@@ -373,6 +374,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         Xa : {array, sparse matrix}
             Feature vectors; always 2-d.
         """
+        check_is_fitted(self, ["feature_names_", "vocabulary_"])
         return self._transform(X, fitting=False)
 
     def get_feature_names_out(self, input_features=None):
@@ -428,6 +430,8 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         >>> v.get_feature_names_out()
         array(['bar', 'foo'], ...)
         """
+        check_is_fitted(self, "feature_names_")
+
         if not indices:
             support = np.where(support)[0]
 

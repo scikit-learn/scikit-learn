@@ -11,7 +11,10 @@ if [[ "$BUILD_REASON" == "Schedule" ]]; then
     # Enable global random seed randomization to discover seed-sensitive tests
     # only on nightly builds.
     # https://scikit-learn.org/stable/computing/parallelism.html#environment-variables
-    export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="any"
+    export SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$(($RANDOM % 100))
+    echo "To reproduce this test run, set the following environment variable:"
+    echo "    SKLEARN_TESTS_GLOBAL_RANDOM_SEED=$SKLEARN_TESTS_GLOBAL_RANDOM_SEED",
+    echo "See: https://scikit-learn.org/dev/computing/parallelism.html#sklearn-tests-global-random-seed"
 
     # Enable global dtype fixture for all nightly builds to discover
     # numerical-sensitive tests.
@@ -48,28 +51,6 @@ if [[ "$COVERAGE" == "true" ]]; then
     TEST_CMD="$TEST_CMD --cov-config='$COVERAGE_PROCESS_START' --cov sklearn --cov-report="
 fi
 
-if [[ -n "$CHECK_WARNINGS" ]]; then
-    TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning -Werror::sklearn.utils.fixes.VisibleDeprecationWarning"
-
-    # numpy's 1.19.0's tostring() deprecation is ignored until scipy and joblib
-    # removes its usage
-    TEST_CMD="$TEST_CMD -Wignore:tostring:DeprecationWarning"
-
-    # Ignore distutils deprecation warning, used by joblib internally
-    TEST_CMD="$TEST_CMD -Wignore:distutils\ Version\ classes\ are\ deprecated:DeprecationWarning"
-
-    # Ignore pkg_resources deprecation warnings triggered by pyamg
-    TEST_CMD="$TEST_CMD -W 'ignore:pkg_resources is deprecated as an API:DeprecationWarning'"
-    TEST_CMD="$TEST_CMD -W 'ignore:Deprecated call to \`pkg_resources:DeprecationWarning'"
-
-    # In some case, exceptions are raised (by bug) in tests, and captured by pytest,
-    # but not raised again. This is for instance the case when Cython directives are
-    # activated: IndexErrors (which aren't fatal) are raised on out-of-bound accesses.
-    # In those cases, pytest instead raises pytest.PytestUnraisableExceptionWarnings,
-    # which we must treat as errors on the CI.
-    TEST_CMD="$TEST_CMD -Werror::pytest.PytestUnraisableExceptionWarning"
-fi
-
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
     XDIST_WORKERS=$(python -c "import joblib; print(joblib.cpu_count(only_physical_cores=True))")
     TEST_CMD="$TEST_CMD -n$XDIST_WORKERS"
@@ -82,6 +63,8 @@ if [[ -n "$SELECTED_TESTS" ]]; then
     export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"
 fi
 
+TEST_CMD="$TEST_CMD --pyargs sklearn"
+
 set -x
-eval "$TEST_CMD --pyargs sklearn"
+eval "$TEST_CMD"
 set +x

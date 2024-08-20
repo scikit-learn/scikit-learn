@@ -7,9 +7,8 @@ This example shows how one can use :class:`~sklearn.preprocessing.KBinsDiscretiz
 to perform vector quantization on a set of toy image, the raccoon face.
 """
 
-# Authors: Gael Varoquaux
-#          Jaques Grobler
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Original image
@@ -81,7 +80,6 @@ encoder = KBinsDiscretizer(
     encode="ordinal",
     strategy="uniform",
     random_state=0,
-    subsample=200_000,
 )
 compressed_raccoon_uniform = encoder.fit_transform(raccoon_face.reshape(-1, 1)).reshape(
     raccoon_face.shape
@@ -130,7 +128,6 @@ encoder = KBinsDiscretizer(
     encode="ordinal",
     strategy="kmeans",
     random_state=0,
-    subsample=200_000,
 )
 compressed_raccoon_kmeans = encoder.fit_transform(raccoon_face.reshape(-1, 1)).reshape(
     raccoon_face.shape

@@ -1,9 +1,7 @@
 """Partial dependence plots for regression and classification models."""
 
-# Authors: Peter Prettenhofer
-#          Trevor Stephens
-#          Nicolas Hug
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from collections.abc import Iterable
 
@@ -19,15 +17,9 @@ from ..ensemble._hist_gradient_boosting.gradient_boosting import (
 )
 from ..exceptions import NotFittedError
 from ..tree import DecisionTreeRegressor
-from ..utils import (
-    Bunch,
-    _determine_key_type,
-    _get_column_indices,
-    _safe_assign,
-    _safe_indexing,
-    check_array,
-    check_matplotlib_support,  # noqa
-)
+from ..utils import Bunch, _safe_indexing, check_array
+from ..utils._indexing import _determine_key_type, _get_column_indices, _safe_assign
+from ..utils._optional_dependencies import check_matplotlib_support  # noqa
 from ..utils._param_validation import (
     HasMethods,
     Integral,
@@ -534,14 +526,6 @@ def partial_dependence(
             `method` is 'recursion').
             Only available when `kind='average'` or `kind='both'`.
 
-        values : seq of 1d ndarrays
-            The values with which the grid has been created.
-
-            .. deprecated:: 1.3
-                The key `values` has been deprecated in 1.3 and will be removed
-                in 1.5 in favor of `grid_values`. See `grid_values` for details
-                about the `values` attribute.
-
         grid_values : seq of 1d ndarrays
             The values with which the grid has been created. The generated
             grid is a cartesian product of the arrays in `grid_values` where
@@ -582,7 +566,7 @@ def partial_dependence(
     # Use check_array only on lists and other non-array-likes / sparse. Do not
     # convert DataFrame into a NumPy array.
     if not (hasattr(X, "__array__") or sparse.issparse(X)):
-        X = check_array(X, force_all_finite="allow-nan", dtype=object)
+        X = check_array(X, ensure_all_finite="allow-nan", dtype=object)
 
     if is_regressor(estimator) and response_method != "auto":
         raise ValueError(
@@ -660,7 +644,7 @@ def partial_dependence(
             raise ValueError("all features must be in [0, {}]".format(X.shape[1] - 1))
 
     features_indices = np.asarray(
-        _get_column_indices(X, features), dtype=np.int32, order="C"
+        _get_column_indices(X, features), dtype=np.intp, order="C"
     ).ravel()
 
     feature_names = _check_feature_names(X, feature_names)
@@ -669,7 +653,7 @@ def partial_dependence(
     if categorical_features is None:
         is_categorical = [False] * len(features_indices)
     else:
-        categorical_features = np.array(categorical_features, copy=False)
+        categorical_features = np.asarray(categorical_features)
         if categorical_features.dtype.kind == "b":
             # categorical features provided as a list of boolean
             if categorical_features.size != n_features:
@@ -722,15 +706,7 @@ def partial_dependence(
     averaged_predictions = averaged_predictions.reshape(
         -1, *[val.shape[0] for val in values]
     )
-    pdp_results = Bunch()
-
-    msg = (
-        "Key: 'values', is deprecated in 1.3 and will be removed in 1.5. "
-        "Please use 'grid_values' instead."
-    )
-    pdp_results._set_deprecated(
-        values, new_key="grid_values", deprecated_key="values", warning_message=msg
-    )
+    pdp_results = Bunch(grid_values=values)
 
     if kind == "average":
         pdp_results["average"] = averaged_predictions

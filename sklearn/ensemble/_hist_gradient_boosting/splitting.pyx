@@ -9,12 +9,12 @@
 
 cimport cython
 from cython.parallel import prange
-cimport numpy as cnp
 import numpy as np
 from libc.math cimport INFINITY, ceil
 from libc.stdlib cimport malloc, free, qsort
 from libc.string cimport memcpy
 
+from ...utils._typedefs cimport uint8_t
 from .common cimport X_BINNED_DTYPE_C
 from .common cimport Y_DTYPE_C
 from .common cimport hist_struct
@@ -25,8 +25,6 @@ from ._bitset cimport init_bitset
 from ._bitset cimport set_bitset
 from ._bitset cimport in_bitset
 
-cnp.import_array()
-
 
 cdef struct split_info_struct:
     # Same as the SplitInfo class, but we need a C struct to use it in the
@@ -34,7 +32,7 @@ cdef struct split_info_struct:
     Y_DTYPE_C gain
     int feature_idx
     unsigned int bin_idx
-    unsigned char missing_go_to_left
+    uint8_t missing_go_to_left
     Y_DTYPE_C sum_gradient_left
     Y_DTYPE_C sum_gradient_right
     Y_DTYPE_C sum_hessian_left
@@ -43,7 +41,7 @@ cdef struct split_info_struct:
     unsigned int n_samples_right
     Y_DTYPE_C value_left
     Y_DTYPE_C value_right
-    unsigned char is_categorical
+    uint8_t is_categorical
     BITSET_DTYPE_C left_cat_bitset
 
 
@@ -170,11 +168,11 @@ cdef class Splitter:
         const X_BINNED_DTYPE_C [::1, :] X_binned
         unsigned int n_features
         const unsigned int [::1] n_bins_non_missing
-        unsigned char missing_values_bin_idx
-        const unsigned char [::1] has_missing_values
-        const unsigned char [::1] is_categorical
+        uint8_t missing_values_bin_idx
+        const uint8_t [::1] has_missing_values
+        const uint8_t [::1] is_categorical
         const signed char [::1] monotonic_cst
-        unsigned char hessians_are_constant
+        uint8_t hessians_are_constant
         Y_DTYPE_C l2_regularization
         Y_DTYPE_C min_hessian_to_split
         unsigned int min_samples_leaf
@@ -190,15 +188,15 @@ cdef class Splitter:
     def __init__(self,
                  const X_BINNED_DTYPE_C [::1, :] X_binned,
                  const unsigned int [::1] n_bins_non_missing,
-                 const unsigned char missing_values_bin_idx,
-                 const unsigned char [::1] has_missing_values,
-                 const unsigned char [::1] is_categorical,
+                 const uint8_t missing_values_bin_idx,
+                 const uint8_t [::1] has_missing_values,
+                 const uint8_t [::1] is_categorical,
                  const signed char [::1] monotonic_cst,
                  Y_DTYPE_C l2_regularization,
                  Y_DTYPE_C min_hessian_to_split=1e-3,
                  unsigned int min_samples_leaf=20,
                  Y_DTYPE_C min_gain_to_split=0.,
-                 unsigned char hessians_are_constant=False,
+                 uint8_t hessians_are_constant=False,
                  Y_DTYPE_C feature_fraction_per_split=1.0,
                  rng=np.random.RandomState(),
                  unsigned int n_threads=1):
@@ -309,14 +307,14 @@ cdef class Splitter:
         cdef:
             int n_samples = sample_indices.shape[0]
             X_BINNED_DTYPE_C bin_idx = split_info.bin_idx
-            unsigned char missing_go_to_left = split_info.missing_go_to_left
-            unsigned char missing_values_bin_idx = self.missing_values_bin_idx
+            uint8_t missing_go_to_left = split_info.missing_go_to_left
+            uint8_t missing_values_bin_idx = self.missing_values_bin_idx
             int feature_idx = split_info.feature_idx
             const X_BINNED_DTYPE_C [::1] X_binned = \
                 self.X_binned[:, feature_idx]
             unsigned int [::1] left_indices_buffer = self.left_indices_buffer
             unsigned int [::1] right_indices_buffer = self.right_indices_buffer
-            unsigned char is_categorical = split_info.is_categorical
+            uint8_t is_categorical = split_info.is_categorical
             # Cython is unhappy if we set left_cat_bitset to
             # split_info.left_cat_bitset directly, so we need a tmp var
             BITSET_INNER_DTYPE_C [:] cat_bitset_tmp = split_info.left_cat_bitset
@@ -336,7 +334,7 @@ cdef class Splitter:
             int thread_idx
             int sample_idx
             int right_child_position
-            unsigned char turn_left
+            uint8_t turn_left
             int [:] left_offset = np.zeros(n_threads, dtype=np.int32)
             int [:] right_offset = np.zeros(n_threads, dtype=np.int32)
 
@@ -484,13 +482,13 @@ cdef class Splitter:
             int n_allowed_features
             split_info_struct split_info
             split_info_struct * split_infos
-            const unsigned char [::1] has_missing_values = self.has_missing_values
-            const unsigned char [::1] is_categorical = self.is_categorical
+            const uint8_t [::1] has_missing_values = self.has_missing_values
+            const uint8_t [::1] is_categorical = self.is_categorical
             const signed char [::1] monotonic_cst = self.monotonic_cst
             int n_threads = self.n_threads
             bint has_interaction_cst = False
             Y_DTYPE_C feature_fraction_per_split = self.feature_fraction_per_split
-            cnp.npy_bool [:] subsample_mask
+            uint8_t [:] subsample_mask  # same as npy_bool
             int n_subsampled_features
 
         has_interaction_cst = allowed_features is not None
@@ -624,7 +622,7 @@ cdef class Splitter:
     cdef void _find_best_bin_to_split_left_to_right(
             Splitter self,
             unsigned int feature_idx,
-            unsigned char has_missing_values,
+            uint8_t has_missing_values,
             const hist_struct [:, ::1] histograms,  # IN
             unsigned int n_samples,
             Y_DTYPE_C sum_gradients,
@@ -660,7 +658,7 @@ cdef class Splitter:
             Y_DTYPE_C sum_gradient_right
             Y_DTYPE_C loss_current_node
             Y_DTYPE_C gain
-            unsigned char found_better_split = False
+            uint8_t found_better_split = False
 
             Y_DTYPE_C best_sum_hessian_left
             Y_DTYPE_C best_sum_gradient_left
@@ -773,7 +771,7 @@ cdef class Splitter:
             Y_DTYPE_C loss_current_node
             Y_DTYPE_C gain
             unsigned int start = self.n_bins_non_missing[feature_idx] - 2
-            unsigned char found_better_split = False
+            uint8_t found_better_split = False
 
             Y_DTYPE_C best_sum_hessian_left
             Y_DTYPE_C best_sum_gradient_left
@@ -853,7 +851,7 @@ cdef class Splitter:
     cdef void _find_best_bin_to_split_category(
             self,
             unsigned int feature_idx,
-            unsigned char has_missing_values,
+            uint8_t has_missing_values,
             const hist_struct [:, ::1] histograms,  # IN
             unsigned int n_samples,
             Y_DTYPE_C sum_gradients,
@@ -892,7 +890,7 @@ cdef class Splitter:
             unsigned int n_samples_left, n_samples_right
             Y_DTYPE_C gain
             Y_DTYPE_C best_gain = -1.0
-            unsigned char found_better_split = False
+            uint8_t found_better_split = False
             Y_DTYPE_C best_sum_hessian_left
             Y_DTYPE_C best_sum_gradient_left
             unsigned int best_n_samples_left
@@ -1141,12 +1139,12 @@ cdef inline Y_DTYPE_C _loss_from_value(
     """
     return sum_gradient * value
 
-cdef inline unsigned char sample_goes_left(
-        unsigned char missing_go_to_left,
-        unsigned char missing_values_bin_idx,
+cdef inline uint8_t sample_goes_left(
+        uint8_t missing_go_to_left,
+        uint8_t missing_values_bin_idx,
         X_BINNED_DTYPE_C split_bin_idx,
         X_BINNED_DTYPE_C bin_value,
-        unsigned char is_categorical,
+        uint8_t is_categorical,
         BITSET_DTYPE_C left_cat_bitset) noexcept nogil:
     """Helper to decide whether sample should go to left or right child."""
 

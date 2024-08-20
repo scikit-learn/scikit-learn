@@ -1,5 +1,5 @@
-# Authors: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 import pytest
@@ -146,6 +146,20 @@ def test_calibration_cv_splitter(data, ensemble):
     assert len(calib_clf.calibrated_classifiers_) == expected_n_clf
 
 
+def test_calibration_cv_nfold(data):
+    # Check error raised when number of examples per class less than nfold
+    X, y = data
+
+    kfold = KFold(n_splits=101)
+    calib_clf = CalibratedClassifierCV(cv=kfold, ensemble=True)
+    with pytest.raises(ValueError, match="Requesting 101-fold cross-validation"):
+        calib_clf.fit(X, y)
+
+    calib_clf = CalibratedClassifierCV(cv=LeaveOneOut(), ensemble=True)
+    with pytest.raises(ValueError, match="LeaveOneOut cross-validation does"):
+        calib_clf.fit(X, y)
+
+
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
 @pytest.mark.parametrize("ensemble", [True, False])
 def test_sample_weight(data, method, ensemble):
@@ -156,7 +170,7 @@ def test_sample_weight(data, method, ensemble):
     X_train, y_train, sw_train = X[:n_samples], y[:n_samples], sample_weight[:n_samples]
     X_test = X[n_samples:]
 
-    estimator = LinearSVC(dual="auto", random_state=42)
+    estimator = LinearSVC(random_state=42)
     calibrated_clf = CalibratedClassifierCV(estimator, method=method, ensemble=ensemble)
     calibrated_clf.fit(X_train, y_train, sample_weight=sw_train)
     probs_with_sw = calibrated_clf.predict_proba(X_test)
@@ -177,7 +191,7 @@ def test_parallel_execution(data, method, ensemble):
     X, y = data
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
-    estimator = make_pipeline(StandardScaler(), LinearSVC(dual="auto", random_state=42))
+    estimator = make_pipeline(StandardScaler(), LinearSVC(random_state=42))
 
     cal_clf_parallel = CalibratedClassifierCV(
         estimator, method=method, n_jobs=2, ensemble=ensemble
@@ -206,7 +220,7 @@ def test_calibration_multiclass(method, ensemble, seed):
 
     # Test calibration for multiclass with classifier that implements
     # only decision function.
-    clf = LinearSVC(dual="auto", random_state=7)
+    clf = LinearSVC(random_state=7)
     X, y = make_blobs(
         n_samples=500, n_features=100, random_state=seed, centers=10, cluster_std=15.0
     )
@@ -338,7 +352,7 @@ def test_calibration_ensemble_false(data, method):
     # Test that `ensemble=False` is the same as using predictions from
     # `cross_val_predict` to train calibrator.
     X, y = data
-    clf = LinearSVC(dual="auto", random_state=7)
+    clf = LinearSVC(random_state=7)
 
     cal_clf = CalibratedClassifierCV(clf, method=method, cv=3, ensemble=False)
     cal_clf.fit(X, y)
@@ -423,45 +437,47 @@ def test_calibration_nan_imputer(ensemble):
 
 @pytest.mark.parametrize("ensemble", [True, False])
 def test_calibration_prob_sum(ensemble):
-    # Test that sum of probabilities is 1. A non-regression test for
-    # issue #7796
-    num_classes = 2
-    X, y = make_classification(n_samples=10, n_features=5, n_classes=num_classes)
-    clf = LinearSVC(dual="auto", C=1.0, random_state=7)
+    # Test that sum of probabilities is (max) 1. A non-regression test for
+    # issue #7796 - when test has fewer classes than train
+    X, _ = make_classification(n_samples=10, n_features=5, n_classes=2)
+    y = [1, 1, 1, 1, 1, 0, 0, 0, 0, 0]
+    clf = LinearSVC(C=1.0, random_state=7)
+    # In the first and last fold, test will have 1 class while train will have 2
     clf_prob = CalibratedClassifierCV(
-        clf, method="sigmoid", cv=LeaveOneOut(), ensemble=ensemble
+        clf, method="sigmoid", cv=KFold(n_splits=3), ensemble=ensemble
     )
     clf_prob.fit(X, y)
-
-    probs = clf_prob.predict_proba(X)
-    assert_array_almost_equal(probs.sum(axis=1), np.ones(probs.shape[0]))
+    assert_allclose(clf_prob.predict_proba(X).sum(axis=1), 1.0)
 
 
 @pytest.mark.parametrize("ensemble", [True, False])
 def test_calibration_less_classes(ensemble):
     # Test to check calibration works fine when train set in a test-train
     # split does not contain all classes
-    # Since this test uses LOO, at each iteration train set will not contain a
-    # class label
-    X = np.random.randn(10, 5)
-    y = np.arange(10)
-    clf = LinearSVC(dual="auto", C=1.0, random_state=7)
+    # In 1st split, train is missing class 0
+    # In 3rd split, train is missing class 3
+    X = np.random.randn(12, 5)
+    y = [0, 0, 0, 1] + [1, 1, 2, 2] + [2, 3, 3, 3]
+    clf = DecisionTreeClassifier(random_state=7)
     cal_clf = CalibratedClassifierCV(
-        clf, method="sigmoid", cv=LeaveOneOut(), ensemble=ensemble
+        clf, method="sigmoid", cv=KFold(3), ensemble=ensemble
     )
     cal_clf.fit(X, y)
 
-    for i, calibrated_classifier in enumerate(cal_clf.calibrated_classifiers_):
-        proba = calibrated_classifier.predict_proba(X)
-        if ensemble:
+    if ensemble:
+        classes = np.arange(4)
+        for calib_i, class_i in zip([0, 2], [0, 3]):
+            proba = cal_clf.calibrated_classifiers_[calib_i].predict_proba(X)
             # Check that the unobserved class has proba=0
-            assert_array_equal(proba[:, i], np.zeros(len(y)))
+            assert_array_equal(proba[:, class_i], np.zeros(len(y)))
             # Check for all other classes proba>0
-            assert np.all(proba[:, :i] > 0)
-            assert np.all(proba[:, i + 1 :] > 0)
-        else:
-            # Check `proba` are all 1/n_classes
-            assert np.allclose(proba, 1 / proba.shape[0])
+            assert np.all(proba[:, classes != class_i] > 0)
+
+    # When `ensemble=False`, `cross_val_predict` is used to compute predictions
+    # to fit only one `calibrated_classifiers_`
+    else:
+        proba = cal_clf.calibrated_classifiers_[0].predict_proba(X)
+        assert_array_almost_equal(proba.sum(axis=1), np.ones(proba.shape[0]))
 
 
 @pytest.mark.parametrize(
@@ -542,8 +558,8 @@ def test_calibration_dict_pipeline(dict_data, dict_data_pipeline):
 @pytest.mark.parametrize(
     "clf, cv",
     [
-        pytest.param(LinearSVC(dual="auto", C=1), 2),
-        pytest.param(LinearSVC(dual="auto", C=1), "prefit"),
+        pytest.param(LinearSVC(C=1), 2),
+        pytest.param(LinearSVC(C=1), "prefit"),
     ],
 )
 def test_calibration_attributes(clf, cv):
@@ -567,7 +583,7 @@ def test_calibration_inconsistent_prefit_n_features_in():
     # Check that `n_features_in_` from prefit base estimator
     # is consistent with training set
     X, y = make_classification(n_samples=10, n_features=5, n_classes=2, random_state=7)
-    clf = LinearSVC(dual="auto", C=1).fit(X, y)
+    clf = LinearSVC(C=1).fit(X, y)
     calib_clf = CalibratedClassifierCV(clf, cv="prefit")
 
     msg = "X has 3 features, but LinearSVC is expecting 5 features as input."
@@ -1072,3 +1088,30 @@ def test_sigmoid_calibration_max_abs_prediction_threshold(global_random_seed):
     assert_allclose(a2, a3, atol=atol)
     assert_allclose(b1, b2, atol=atol)
     assert_allclose(b2, b3, atol=atol)
+
+
+def test_float32_predict_proba(data):
+    """Check that CalibratedClassifierCV works with float32 predict proba.
+
+    Non-regression test for gh-28245.
+    """
+
+    class DummyClassifer32(DummyClassifier):
+        def predict_proba(self, X):
+            return super().predict_proba(X).astype(np.float32)
+
+    model = DummyClassifer32()
+    calibrator = CalibratedClassifierCV(model)
+    # Does not raise an error
+    calibrator.fit(*data)
+
+
+def test_error_less_class_samples_than_folds():
+    """Check that CalibratedClassifierCV works with string targets.
+
+    non-regression test for issue #28841.
+    """
+    X = np.random.normal(size=(20, 3))
+    y = ["a"] * 10 + ["b"] * 10
+
+    CalibratedClassifierCV(cv=3).fit(X, y)

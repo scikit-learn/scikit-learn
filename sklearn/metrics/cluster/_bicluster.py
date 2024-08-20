@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 
@@ -57,8 +60,9 @@ def _pairwise_similarity(a, b, similarity):
 def consensus_score(a, b, *, similarity="jaccard"):
     """The similarity of two sets of biclusters.
 
-    Similarity between individual biclusters is computed. Then the
-    best matching between sets is found using the Hungarian algorithm.
+    Similarity between individual biclusters is computed. Then the best
+    matching between sets is found by solving a linear sum assignment problem,
+    using a modified Jonker-Volgenant algorithm.
     The final score is the sum of similarities divided by the size of
     the larger set.
 
@@ -83,12 +87,23 @@ def consensus_score(a, b, *, similarity="jaccard"):
        Consensus score, a non-negative value, sum of similarities
        divided by size of larger set.
 
+    See Also
+    --------
+    scipy.optimize.linear_sum_assignment : Solve the linear sum assignment problem.
+
     References
     ----------
-
     * Hochreiter, Bodenhofer, et. al., 2010. `FABIA: factor analysis
       for bicluster acquisition
       <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2881408/>`__.
+
+    Examples
+    --------
+    >>> from sklearn.metrics import consensus_score
+    >>> a = ([[True, False], [False, True]], [[False, True], [True, False]])
+    >>> b = ([[False, True], [True, False]], [[True, False], [False, True]])
+    >>> consensus_score(a, b, similarity='jaccard')
+    np.float64(1.0)
     """
     if similarity == "jaccard":
         similarity = _jaccard

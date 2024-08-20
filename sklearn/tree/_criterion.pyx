@@ -1,16 +1,5 @@
-# Authors: Gilles Louppe <g.louppe@gmail.com>
-#          Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#          Brian Holt <bdholt1@gmail.com>
-#          Noel Dawe <noel@dawe.me>
-#          Satrajit Gosh <satrajit.ghosh@gmail.com>
-#          Lars Buitinck
-#          Arnaud Joly <arnaud.v.joly@gmail.com>
-#          Joel Nothman <joel.nothman@gmail.com>
-#          Fares Hedayati <fares.hedayati@gmail.com>
-#          Jacob Schreiber <jmschreiber91@gmail.com>
-#          Nelson Liu <nelson@nelsonliu.me>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from libc.string cimport memcpy
 from libc.string cimport memset
@@ -568,15 +557,18 @@ cdef class ClassificationCriterion(Criterion):
         dest : float64_t pointer
             The memory address which we will save the node value into.
         """
-        cdef intp_t k
+        cdef intp_t k, c
 
         for k in range(self.n_outputs):
-            memcpy(dest, &self.sum_total[k, 0], self.n_classes[k] * sizeof(float64_t))
+            for c in range(self.n_classes[k]):
+                dest[c] = self.sum_total[k, c] / self.weighted_n_node_samples
             dest += self.max_n_classes
 
-    cdef void clip_node_value(self, float64_t * dest, float64_t lower_bound, float64_t upper_bound) noexcept nogil:
-        """Clip the value in dest between lower_bound and upper_bound for monotonic constraints.
-
+    cdef inline void clip_node_value(
+        self, float64_t * dest, float64_t lower_bound, float64_t upper_bound
+    ) noexcept nogil:
+        """Clip the values in dest such that predicted probabilities stay between
+        `lower_bound` and `upper_bound` when monotonic constraints are enforced.
         Note that monotonicity constraints are only supported for:
         - single-output trees and
         - binary classifications.
@@ -586,7 +578,7 @@ cdef class ClassificationCriterion(Criterion):
         elif dest[0] > upper_bound:
             dest[0] = upper_bound
 
-        # Class proportions for binary classification must sum to 1.
+        # Values for binary classification must sum to 1.
         dest[1] = 1 - dest[0]
 
     cdef inline float64_t middle_value(self) noexcept nogil:
@@ -1147,6 +1139,8 @@ cdef class MSE(RegressionCriterion):
         cdef intp_t k
         cdef float64_t w = 1.0
 
+        cdef intp_t end_non_missing
+
         for p in range(start, pos):
             i = sample_indices[p]
 
@@ -1156,6 +1150,22 @@ cdef class MSE(RegressionCriterion):
             for k in range(self.n_outputs):
                 y_ik = self.y[i, k]
                 sq_sum_left += w * y_ik * y_ik
+
+        if self.missing_go_to_left:
+            # add up the impact of these missing values on the left child
+            # statistics.
+            # Note: this only impacts the square sum as the sum
+            # is modified elsewhere.
+            end_non_missing = self.end - self.n_missing
+
+            for p in range(end_non_missing, self.end):
+                i = sample_indices[p]
+                if sample_weight is not None:
+                    w = sample_weight[i]
+
+                for k in range(self.n_outputs):
+                    y_ik = self.y[i, k]
+                    sq_sum_left += w * y_ik * y_ik
 
         sq_sum_right = self.sq_sum_total - sq_sum_left
 

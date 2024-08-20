@@ -14,7 +14,7 @@ from sklearn import (
     neighbors,
 )
 from sklearn.base import clone
-from sklearn.exceptions import DataConversionWarning, EfficiencyWarning, NotFittedError
+from sklearn.exceptions import EfficiencyWarning, NotFittedError
 from sklearn.metrics._dist_metrics import (
     DistanceMetric,
 )
@@ -476,8 +476,8 @@ def test_is_sorted_by_data(csr_container):
     # _is_sorted_by_data should return True when entries are sorted by data,
     # and False in all other cases.
 
-    # Test with sorted 1D array
-    X = csr_container(np.arange(10))
+    # Test with sorted single row sparse array
+    X = csr_container(np.arange(10).reshape(1, 10))
     assert _is_sorted_by_data(X)
     # Test with unsorted 1D array
     X[0, 2] = 5
@@ -1644,8 +1644,16 @@ def test_nearest_neighbors_validate_params():
     + DISTANCE_METRIC_OBJS,
 )
 def test_neighbors_metrics(
-    global_dtype, metric, n_samples=20, n_features=3, n_query_pts=2, n_neighbors=5
+    global_dtype,
+    global_random_seed,
+    metric,
+    n_samples=20,
+    n_features=3,
+    n_query_pts=2,
+    n_neighbors=5,
 ):
+    rng = np.random.RandomState(global_random_seed)
+
     metric = _parse_metric(metric, global_dtype)
 
     # Test computing the neighbors for various metrics
@@ -1697,15 +1705,19 @@ def test_neighbors_metrics(
         brute_dst, brute_idx = results["brute"]
         ball_tree_dst, ball_tree_idx = results["ball_tree"]
 
-        assert_allclose(brute_dst, ball_tree_dst)
+        # The returned distances are always in float64 regardless of the input dtype
+        # We need to adjust the tolerance w.r.t the input dtype
+        rtol = 1e-7 if global_dtype == np.float64 else 1e-4
+
+        assert_allclose(brute_dst, ball_tree_dst, rtol=rtol)
         assert_array_equal(brute_idx, ball_tree_idx)
 
         if not exclude_kd_tree:
             kd_tree_dst, kd_tree_idx = results["kd_tree"]
-            assert_allclose(brute_dst, kd_tree_dst)
+            assert_allclose(brute_dst, kd_tree_dst, rtol=rtol)
             assert_array_equal(brute_idx, kd_tree_idx)
 
-            assert_allclose(ball_tree_dst, kd_tree_dst)
+            assert_allclose(ball_tree_dst, kd_tree_dst, rtol=rtol)
             assert_array_equal(ball_tree_idx, kd_tree_idx)
 
 
@@ -2131,7 +2143,7 @@ def test_sparse_metric_callable(csr_container):
 
 
 # ignore conversion to boolean in pairwise_distances
-@ignore_warnings(category=DataConversionWarning)
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.DataConversionWarning")
 def test_pairwise_boolean_distance():
     # Non-regression test for #4523
     # 'brute': uses scipy.spatial.distance through pairwise_distances
@@ -2343,3 +2355,30 @@ def test_nearest_neighbours_works_with_p_less_than_1():
 
     y = neigh.kneighbors(X[0].reshape(1, -1), return_distance=False)
     assert_allclose(y[0], [0, 1, 2])
+
+
+def test_KNeighborsClassifier_raise_on_all_zero_weights():
+    """Check that `predict` and `predict_proba` raises on sample of all zeros weights.
+
+    Related to Issue #25854.
+    """
+    X = [[0, 1], [1, 2], [2, 3], [3, 4]]
+    y = [0, 0, 1, 1]
+
+    def _weights(dist):
+        return np.vectorize(lambda x: 0 if x > 0.5 else 1)(dist)
+
+    est = neighbors.KNeighborsClassifier(n_neighbors=3, weights=_weights)
+    est.fit(X, y)
+
+    msg = (
+        "All neighbors of some sample is getting zero weights. "
+        "Please modify 'weights' to avoid this case if you are "
+        "using a user-defined function."
+    )
+
+    with pytest.raises(ValueError, match=msg):
+        est.predict([[1.1, 1.1]])
+
+    with pytest.raises(ValueError, match=msg):
+        est.predict_proba([[1.1, 1.1]])

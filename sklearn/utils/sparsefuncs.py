@@ -1,13 +1,8 @@
-"""
-The :mod:`sklearn.utils.sparsefuncs` module includes a collection of utilities to
-work with sparse matrices and arrays.
-"""
+"""A collection of utilities to work with sparse matrices and arrays."""
 
-# Authors: Manoj Kumar
-#          Thomas Unterthiner
-#          Giorgio Patrini
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numpy as np
 import scipy.sparse as sp
 from scipy.sparse.linalg import LinearOperator
@@ -53,6 +48,28 @@ def inplace_csr_column_scale(X, scale):
 
     scale : ndarray of shape (n_features,), dtype={np.float32, np.float64}
         Array of precomputed feature-wise values to use for scaling.
+
+    Examples
+    --------
+    >>> from sklearn.utils import sparsefuncs
+    >>> from scipy import sparse
+    >>> import numpy as np
+    >>> indptr = np.array([0, 3, 4, 4, 4])
+    >>> indices = np.array([0, 1, 2, 2])
+    >>> data = np.array([8, 1, 2, 5])
+    >>> scale = np.array([2, 3, 2])
+    >>> csr = sparse.csr_matrix((data, indices, indptr))
+    >>> csr.todense()
+    matrix([[8, 1, 2],
+            [0, 0, 5],
+            [0, 0, 0],
+            [0, 0, 0]])
+    >>> sparsefuncs.inplace_csr_column_scale(csr, scale)
+    >>> csr.todense()
+    matrix([[16,  3,  4],
+            [ 0,  0, 10],
+            [ 0,  0,  0],
+            [ 0,  0,  0]])
     """
     assert scale.shape[0] == X.shape[1]
     X.data *= scale.take(X.indices, mode="clip")
@@ -111,6 +128,24 @@ def mean_variance_axis(X, axis, weights=None, return_sum_weights=False):
 
     sum_weights : ndarray of shape (n_features,), dtype=floating
         Returned if `return_sum_weights` is `True`.
+
+    Examples
+    --------
+    >>> from sklearn.utils import sparsefuncs
+    >>> from scipy import sparse
+    >>> import numpy as np
+    >>> indptr = np.array([0, 3, 4, 4, 4])
+    >>> indices = np.array([0, 1, 2, 2])
+    >>> data = np.array([8, 1, 2, 5])
+    >>> scale = np.array([2, 3, 2])
+    >>> csr = sparse.csr_matrix((data, indices, indptr))
+    >>> csr.todense()
+    matrix([[8, 1, 2],
+            [0, 0, 5],
+            [0, 0, 0],
+            [0, 0, 0]])
+    >>> sparsefuncs.mean_variance_axis(csr, axis=0)
+    (array([2.  , 0.25, 1.75]), array([12.    ,  0.1875,  4.1875]))
     """
     _raise_error_wrong_axis(axis)
 
@@ -195,6 +230,27 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n, weights=Non
     Notes
     -----
     NaNs are ignored in the algorithm.
+
+    Examples
+    --------
+    >>> from sklearn.utils import sparsefuncs
+    >>> from scipy import sparse
+    >>> import numpy as np
+    >>> indptr = np.array([0, 3, 4, 4, 4])
+    >>> indices = np.array([0, 1, 2, 2])
+    >>> data = np.array([8, 1, 2, 5])
+    >>> scale = np.array([2, 3, 2])
+    >>> csr = sparse.csr_matrix((data, indices, indptr))
+    >>> csr.todense()
+    matrix([[8, 1, 2],
+            [0, 0, 5],
+            [0, 0, 0],
+            [0, 0, 0]])
+    >>> sparsefuncs.incr_mean_variance_axis(
+    ...     csr, axis=0, last_mean=np.zeros(3), last_var=np.zeros(3), last_n=2
+    ... )
+    (array([1.3..., 0.1..., 1.1...]), array([8.8..., 0.1..., 3.4...]),
+    array([6., 6., 6.]))
     """
     _raise_error_wrong_axis(axis)
 
@@ -244,6 +300,28 @@ def inplace_column_scale(X, scale):
 
     scale : ndarray of shape (n_features,), dtype={np.float32, np.float64}
         Array of precomputed feature-wise values to use for scaling.
+
+    Examples
+    --------
+    >>> from sklearn.utils import sparsefuncs
+    >>> from scipy import sparse
+    >>> import numpy as np
+    >>> indptr = np.array([0, 3, 4, 4, 4])
+    >>> indices = np.array([0, 1, 2, 2])
+    >>> data = np.array([8, 1, 2, 5])
+    >>> scale = np.array([2, 3, 2])
+    >>> csr = sparse.csr_matrix((data, indices, indptr))
+    >>> csr.todense()
+    matrix([[8, 1, 2],
+            [0, 0, 5],
+            [0, 0, 0],
+            [0, 0, 0]])
+    >>> sparsefuncs.inplace_column_scale(csr, scale)
+    >>> csr.todense()
+    matrix([[16,  3,  4],
+            [ 0,  0, 10],
+            [ 0,  0,  0],
+            [ 0,  0,  0]])
     """
     if sp.issparse(X) and X.format == "csc":
         inplace_csr_row_scale(X.T, scale)
@@ -266,6 +344,28 @@ def inplace_row_scale(X, scale):
 
     scale : ndarray of shape (n_features,), dtype={np.float32, np.float64}
         Array of precomputed sample-wise values to use for scaling.
+
+    Examples
+    --------
+    >>> from sklearn.utils import sparsefuncs
+    >>> from scipy import sparse
+    >>> import numpy as np
+    >>> indptr = np.array([0, 2, 3, 4, 5])
+    >>> indices = np.array([0, 1, 2, 3, 3])
+    >>> data = np.array([8, 1, 2, 5, 6])
+    >>> scale = np.array([2, 3, 4, 5])
+    >>> csr = sparse.csr_matrix((data, indices, indptr))
+    >>> csr.todense()
+    matrix([[8, 1, 0, 0],
+            [0, 0, 2, 0],
+            [0, 0, 0, 5],
+            [0, 0, 0, 6]])
+    >>> sparsefuncs.inplace_row_scale(csr, scale)
+    >>> csr.todense()
+     matrix([[16,  2,  0,  0],
+             [ 0,  0,  6,  0],
+             [ 0,  0,  0, 20],
+             [ 0,  0,  0, 30]])
     """
     if sp.issparse(X) and X.format == "csc":
         inplace_csr_column_scale(X.T, scale)
@@ -382,6 +482,27 @@ def inplace_swap_row(X, m, n):
 
     n : int
         Index of the row of X to be swapped.
+
+    Examples
+    --------
+    >>> from sklearn.utils import sparsefuncs
+    >>> from scipy import sparse
+    >>> import numpy as np
+    >>> indptr = np.array([0, 2, 3, 3, 3])
+    >>> indices = np.array([0, 2, 2])
+    >>> data = np.array([8, 2, 5])
+    >>> csr = sparse.csr_matrix((data, indices, indptr))
+    >>> csr.todense()
+    matrix([[8, 0, 2],
+            [0, 0, 5],
+            [0, 0, 0],
+            [0, 0, 0]])
+    >>> sparsefuncs.inplace_swap_row(csr, 0, 1)
+    >>> csr.todense()
+    matrix([[0, 0, 5],
+            [8, 0, 2],
+            [0, 0, 0],
+            [0, 0, 0]])
     """
     if sp.issparse(X) and X.format == "csc":
         inplace_swap_row_csc(X, m, n)
@@ -406,6 +527,27 @@ def inplace_swap_column(X, m, n):
 
     n : int
         Index of the column of X to be swapped.
+
+    Examples
+    --------
+    >>> from sklearn.utils import sparsefuncs
+    >>> from scipy import sparse
+    >>> import numpy as np
+    >>> indptr = np.array([0, 2, 3, 3, 3])
+    >>> indices = np.array([0, 2, 2])
+    >>> data = np.array([8, 2, 5])
+    >>> csr = sparse.csr_matrix((data, indices, indptr))
+    >>> csr.todense()
+    matrix([[8, 0, 2],
+            [0, 0, 5],
+            [0, 0, 0],
+            [0, 0, 0]])
+    >>> sparsefuncs.inplace_swap_column(csr, 0, 1)
+    >>> csr.todense()
+    matrix([[0, 8, 2],
+            [0, 0, 5],
+            [0, 0, 0],
+            [0, 0, 0]])
     """
     if m < 0:
         m += X.shape[1]

@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
 from .._ranking import auc, roc_curve
 
@@ -402,7 +405,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         )
         roc_auc = auc(fpr, tpr)
 
-        viz = RocCurveDisplay(
+        viz = cls(
             fpr=fpr,
             tpr=tpr,
             roc_auc=roc_auc,

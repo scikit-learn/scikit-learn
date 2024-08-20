@@ -1,16 +1,5 @@
-# Authors: Gilles Louppe <g.louppe@gmail.com>
-#          Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#          Brian Holt <bdholt1@gmail.com>
-#          Noel Dawe <noel@dawe.me>
-#          Satrajit Gosh <satrajit.ghosh@gmail.com>
-#          Lars Buitinck
-#          Arnaud Joly <arnaud.v.joly@gmail.com>
-#          Joel Nothman <joel.nothman@gmail.com>
-#          Fares Hedayati <fares.hedayati@gmail.com>
-#          Jacob Schreiber <jmschreiber91@gmail.com>
-#          Nelson Liu <nelson@nelsonliu.me>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from cpython cimport Py_INCREF, PyObject, PyTypeObject
 
@@ -22,6 +11,7 @@ from libc.math cimport isnan
 from libcpp.vector cimport vector
 from libcpp.algorithm cimport pop_heap
 from libcpp.algorithm cimport push_heap
+from libcpp.stack cimport stack
 from libcpp cimport bool
 
 import struct
@@ -43,15 +33,6 @@ cdef extern from "numpy/arrayobject.h":
                                 void* data, int flags, object obj)
     int PyArray_SetBaseObject(cnp.ndarray arr, PyObject* obj)
 
-cdef extern from "<stack>" namespace "std" nogil:
-    cdef cppclass stack[T]:
-        ctypedef T value_type
-        stack() except +
-        bint empty()
-        void pop()
-        void push(T&) except +  # Raise c++ exception for bad_alloc -> MemoryError
-        T& top()
-
 # =============================================================================
 # Types and constants
 # =============================================================================
@@ -63,10 +44,10 @@ cdef float64_t INFINITY = np.inf
 cdef float64_t EPSILON = np.finfo('double').eps
 
 # Some handy constants (BestFirstTreeBuilder)
-cdef int IS_FIRST = 1
-cdef int IS_NOT_FIRST = 0
-cdef int IS_LEFT = 1
-cdef int IS_NOT_LEFT = 0
+cdef bint IS_FIRST = 1
+cdef bint IS_NOT_FIRST = 0
+cdef bint IS_LEFT = 1
+cdef bint IS_NOT_LEFT = 0
 
 TREE_LEAF = -1
 TREE_UNDEFINED = -2
@@ -79,6 +60,12 @@ cdef intp_t _TREE_UNDEFINED = TREE_UNDEFINED
 # for a more detailed explanation.
 cdef Node dummy
 NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
+
+cdef inline void _init_parent_record(ParentInfo* record) noexcept nogil:
+    record.n_constant_features = 0
+    record.impurity = INFINITY
+    record.lower_bound = -INFINITY
+    record.upper_bound = INFINITY
 
 # =============================================================================
 # TreeBuilder
@@ -93,7 +80,7 @@ cdef class TreeBuilder:
         object X,
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight=None,
-        const unsigned char[::1] missing_values_in_feature_mask=None,
+        const uint8_t[::1] missing_values_in_feature_mask=None,
     ):
         """Build a decision tree from the training set (X, y)."""
         pass
@@ -169,7 +156,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         object X,
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight=None,
-        const unsigned char[::1] missing_values_in_feature_mask=None,
+        const uint8_t[::1] missing_values_in_feature_mask=None,
     ):
         """Build a decision tree from the training set (X, y)."""
 
@@ -177,10 +164,10 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         X, y, sample_weight = self._check_input(X, y, sample_weight)
 
         # Initial capacity
-        cdef int init_capacity
+        cdef intp_t init_capacity
 
         if tree.max_depth <= 10:
-            init_capacity = <int> (2 ** (tree.max_depth + 1)) - 1
+            init_capacity = <intp_t> (2 ** (tree.max_depth + 1)) - 1
         else:
             init_capacity = 2047
 
@@ -207,15 +194,11 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef SplitRecord split
         cdef intp_t node_id
 
-        cdef float64_t impurity = INFINITY
-        cdef float64_t lower_bound
-        cdef float64_t upper_bound
         cdef float64_t middle_value
         cdef float64_t left_child_min
         cdef float64_t left_child_max
         cdef float64_t right_child_min
         cdef float64_t right_child_max
-        cdef intp_t n_constant_features
         cdef bint is_leaf
         cdef bint first = 1
         cdef intp_t max_depth_seen = -1
@@ -223,6 +206,9 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
         cdef stack[StackRecord] builder_stack
         cdef StackRecord stack_record
+
+        cdef ParentInfo parent_record
+        _init_parent_record(&parent_record)
 
         with nogil:
             # push root node onto stack
@@ -247,10 +233,10 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 depth = stack_record.depth
                 parent = stack_record.parent
                 is_left = stack_record.is_left
-                impurity = stack_record.impurity
-                n_constant_features = stack_record.n_constant_features
-                lower_bound = stack_record.lower_bound
-                upper_bound = stack_record.upper_bound
+                parent_record.impurity = stack_record.impurity
+                parent_record.n_constant_features = stack_record.n_constant_features
+                parent_record.lower_bound = stack_record.lower_bound
+                parent_record.upper_bound = stack_record.upper_bound
 
                 n_node_samples = end - start
                 splitter.node_reset(start, end, &weighted_n_node_samples)
@@ -261,19 +247,16 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                            weighted_n_node_samples < 2 * min_weight_leaf)
 
                 if first:
-                    impurity = splitter.node_impurity()
+                    parent_record.impurity = splitter.node_impurity()
                     first = 0
 
                 # impurity == 0 with tolerance due to rounding errors
-                is_leaf = is_leaf or impurity <= EPSILON
+                is_leaf = is_leaf or parent_record.impurity <= EPSILON
 
                 if not is_leaf:
                     splitter.node_split(
-                        impurity,
+                        &parent_record,
                         &split,
-                        &n_constant_features,
-                        lower_bound,
-                        upper_bound
                     )
                     # If EPSILON=0 in the below comparison, float precision
                     # issues stop splitting, producing trees that are
@@ -283,8 +266,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                                 min_impurity_decrease))
 
                 node_id = tree._add_node(parent, is_left, is_leaf, split.feature,
-                                         split.threshold, impurity, n_node_samples,
-                                         weighted_n_node_samples,
+                                         split.threshold, parent_record.impurity,
+                                         n_node_samples, weighted_n_node_samples,
                                          split.missing_go_to_left)
 
                 if node_id == INTPTR_MAX:
@@ -295,7 +278,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 # inspection and interpretation
                 splitter.node_value(tree.value + node_id * tree.value_stride)
                 if splitter.with_monotonic_cst:
-                    splitter.clip_node_value(tree.value + node_id * tree.value_stride, lower_bound, upper_bound)
+                    splitter.clip_node_value(tree.value + node_id * tree.value_stride, parent_record.lower_bound, parent_record.upper_bound)
 
                 if not is_leaf:
                     if (
@@ -307,12 +290,12 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                         # Current bounds must always be propagated to both children.
                         # If a monotonic constraint is active, bounds are used in
                         # node value clipping.
-                        left_child_min = right_child_min = lower_bound
-                        left_child_max = right_child_max = upper_bound
+                        left_child_min = right_child_min = parent_record.lower_bound
+                        left_child_max = right_child_max = parent_record.upper_bound
                     elif splitter.monotonic_cst[split.feature] == 1:
                         # Split on a feature with monotonic increase constraint
-                        left_child_min = lower_bound
-                        right_child_max = upper_bound
+                        left_child_min = parent_record.lower_bound
+                        right_child_max = parent_record.upper_bound
 
                         # Lower bound for right child and upper bound for left child
                         # are set to the same value.
@@ -321,8 +304,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                         left_child_max = middle_value
                     else:  # i.e. splitter.monotonic_cst[split.feature] == -1
                         # Split on a feature with monotonic decrease constraint
-                        right_child_min = lower_bound
-                        left_child_max = upper_bound
+                        right_child_min = parent_record.lower_bound
+                        left_child_max = parent_record.upper_bound
 
                         # Lower bound for left child and upper bound for right child
                         # are set to the same value.
@@ -338,7 +321,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                         "parent": node_id,
                         "is_left": 0,
                         "impurity": split.impurity_right,
-                        "n_constant_features": n_constant_features,
+                        "n_constant_features": parent_record.n_constant_features,
                         "lower_bound": right_child_min,
                         "upper_bound": right_child_max,
                     })
@@ -351,7 +334,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                         "parent": node_id,
                         "is_left": 1,
                         "impurity": split.impurity_left,
-                        "n_constant_features": n_constant_features,
+                        "n_constant_features": parent_record.n_constant_features,
                         "lower_bound": left_child_min,
                         "upper_bound": left_child_max,
                     })
@@ -428,7 +411,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         object X,
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight=None,
-        const unsigned char[::1] missing_values_in_feature_mask=None,
+        const uint8_t[::1] missing_values_in_feature_mask=None,
     ):
         """Build a decision tree from the training set (X, y)."""
 
@@ -458,6 +441,9 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef int rc = 0
         cdef Node* node
 
+        cdef ParentInfo parent_record
+        _init_parent_record(&parent_record)
+
         # Initial capacity
         cdef intp_t init_capacity = max_split_nodes + max_leaf_nodes
         tree._resize(init_capacity)
@@ -469,13 +455,11 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                 tree=tree,
                 start=0,
                 end=n_node_samples,
-                impurity=INFINITY,
                 is_first=IS_FIRST,
                 is_left=IS_LEFT,
                 parent=NULL,
                 depth=0,
-                lower_bound=-INFINITY,
-                upper_bound=INFINITY,
+                parent_record=&parent_record,
                 res=&split_node_left,
             )
             if rc >= 0:
@@ -533,18 +517,19 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                     max_split_nodes -= 1
 
                     # Compute left split node
+                    parent_record.lower_bound = left_child_min
+                    parent_record.upper_bound = left_child_max
+                    parent_record.impurity = record.impurity_left
                     rc = self._add_split_node(
                         splitter=splitter,
                         tree=tree,
                         start=record.start,
                         end=record.pos,
-                        impurity=record.impurity_left,
                         is_first=IS_NOT_FIRST,
                         is_left=IS_LEFT,
                         parent=node,
                         depth=record.depth + 1,
-                        lower_bound=left_child_min,
-                        upper_bound=left_child_max,
+                        parent_record=&parent_record,
                         res=&split_node_left,
                     )
                     if rc == -1:
@@ -554,18 +539,19 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                     node = &tree.nodes[record.node_id]
 
                     # Compute right split node
+                    parent_record.lower_bound = right_child_min
+                    parent_record.upper_bound = right_child_max
+                    parent_record.impurity = record.impurity_right
                     rc = self._add_split_node(
                         splitter=splitter,
                         tree=tree,
                         start=record.pos,
                         end=record.end,
-                        impurity=record.impurity_right,
                         is_first=IS_NOT_FIRST,
                         is_left=IS_NOT_LEFT,
                         parent=node,
                         depth=record.depth + 1,
-                        lower_bound=right_child_min,
-                        upper_bound=right_child_max,
+                        parent_record=&parent_record,
                         res=&split_node_right,
                     )
                     if rc == -1:
@@ -593,44 +579,41 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         Tree tree,
         intp_t start,
         intp_t end,
-        float64_t impurity,
         bint is_first,
         bint is_left,
         Node* parent,
         intp_t depth,
-        float64_t lower_bound,
-        float64_t upper_bound,
+        ParentInfo* parent_record,
         FrontierRecord* res
     ) except -1 nogil:
         """Adds node w/ partition ``[start, end)`` to the frontier. """
         cdef SplitRecord split
         cdef intp_t node_id
         cdef intp_t n_node_samples
-        cdef intp_t n_constant_features = 0
         cdef float64_t min_impurity_decrease = self.min_impurity_decrease
         cdef float64_t weighted_n_node_samples
         cdef bint is_leaf
 
         splitter.node_reset(start, end, &weighted_n_node_samples)
 
+        # reset n_constant_features for this specific split before beginning split search
+        parent_record.n_constant_features = 0
+
         if is_first:
-            impurity = splitter.node_impurity()
+            parent_record.impurity = splitter.node_impurity()
 
         n_node_samples = end - start
         is_leaf = (depth >= self.max_depth or
                    n_node_samples < self.min_samples_split or
                    n_node_samples < 2 * self.min_samples_leaf or
                    weighted_n_node_samples < 2 * self.min_weight_leaf or
-                   impurity <= EPSILON  # impurity == 0 with tolerance
+                   parent_record.impurity <= EPSILON  # impurity == 0 with tolerance
                    )
 
         if not is_leaf:
             splitter.node_split(
-                impurity,
+                parent_record,
                 &split,
-                &n_constant_features,
-                lower_bound,
-                upper_bound
             )
             # If EPSILON=0 in the below comparison, float precision issues stop
             # splitting early, producing trees that are dissimilar to v0.18
@@ -641,8 +624,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                  if parent != NULL
                                  else _TREE_UNDEFINED,
                                  is_left, is_leaf,
-                                 split.feature, split.threshold, impurity, n_node_samples,
-                                 weighted_n_node_samples,
+                                 split.feature, split.threshold, parent_record.impurity,
+                                 n_node_samples, weighted_n_node_samples,
                                  split.missing_go_to_left)
         if node_id == INTPTR_MAX:
             return -1
@@ -650,15 +633,15 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         # compute values also for split nodes (might become leafs later).
         splitter.node_value(tree.value + node_id * tree.value_stride)
         if splitter.with_monotonic_cst:
-            splitter.clip_node_value(tree.value + node_id * tree.value_stride, lower_bound, upper_bound)
+            splitter.clip_node_value(tree.value + node_id * tree.value_stride, parent_record.lower_bound, parent_record.upper_bound)
 
         res.node_id = node_id
         res.start = start
         res.end = end
         res.depth = depth
-        res.impurity = impurity
-        res.lower_bound = lower_bound
-        res.upper_bound = upper_bound
+        res.impurity = parent_record.impurity
+        res.lower_bound = parent_record.lower_bound
+        res.upper_bound = parent_record.upper_bound
         res.middle_value = splitter.criterion.middle_value()
 
         if not is_leaf:
@@ -674,8 +657,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
             res.pos = end
             res.is_leaf = 1
             res.improvement = 0.0
-            res.impurity_left = impurity
-            res.impurity_right = impurity
+            res.impurity_left = parent_record.impurity
+            res.impurity_right = parent_record.impurity
 
         return 0
 
@@ -696,32 +679,32 @@ cdef class Tree:
 
     Attributes
     ----------
-    node_count : int
+    node_count : intp_t
         The number of nodes (internal nodes + leaves) in the tree.
 
-    capacity : int
+    capacity : intp_t
         The current capacity (i.e., size) of the arrays, which is at least as
         great as `node_count`.
 
-    max_depth : int
+    max_depth : intp_t
         The depth of the tree, i.e. the maximum depth of its leaves.
 
-    children_left : array of int, shape [node_count]
+    children_left : array of intp_t, shape [node_count]
         children_left[i] holds the node id of the left child of node i.
         For leaves, children_left[i] == TREE_LEAF. Otherwise,
         children_left[i] > i. This child handles the case where
         X[:, feature[i]] <= threshold[i].
 
-    children_right : array of int, shape [node_count]
+    children_right : array of intp_t, shape [node_count]
         children_right[i] holds the node id of the right child of node i.
         For leaves, children_right[i] == TREE_LEAF. Otherwise,
         children_right[i] > i. This child handles the case where
         X[:, feature[i]] > threshold[i].
 
-    n_leaves : int
+    n_leaves : intp_t
         Number of leaves in the tree.
 
-    feature : array of int, shape [node_count]
+    feature : array of intp_t, shape [node_count]
         feature[i] holds the feature to split on, for the internal node i.
 
     threshold : array of float64_t, shape [node_count]
@@ -734,7 +717,7 @@ cdef class Tree:
         impurity[i] holds the impurity (i.e., the value of the splitting
         criterion) at node i.
 
-    n_node_samples : array of int, shape [node_count]
+    n_node_samples : array of intp_t, shape [node_count]
         n_node_samples[i] holds the number of training samples reaching node i.
 
     weighted_n_node_samples : array of float64_t, shape [node_count]
@@ -797,7 +780,7 @@ cdef class Tree:
 
     # TODO: Convert n_classes to cython.integral memory view once
     #  https://github.com/cython/cython/issues/5243 is fixed
-    def __cinit__(self, int n_features, cnp.ndarray n_classes, int n_outputs):
+    def __cinit__(self, intp_t n_features, cnp.ndarray n_classes, intp_t n_outputs):
         """Constructor."""
         cdef intp_t dummy = 0
         size_t_dtype = np.array(dummy).dtype
@@ -927,7 +910,7 @@ cdef class Tree:
                           intp_t feature, float64_t threshold, float64_t impurity,
                           intp_t n_node_samples,
                           float64_t weighted_n_node_samples,
-                          unsigned char missing_go_to_left) except -1 nogil:
+                          uint8_t missing_go_to_left) except -1 nogil:
         """Add a node to the tree.
 
         The new node registers itself as the child of its parent.
@@ -1343,7 +1326,7 @@ cdef class Tree:
         return arr
 
     def compute_partial_dependence(self, float32_t[:, ::1] X,
-                                   int[::1] target_features,
+                                   const intp_t[::1] target_features,
                                    float64_t[::1] out):
         """Partial dependence of the response on the ``target_feature`` set.
 
@@ -1379,7 +1362,7 @@ cdef class Tree:
                                                   dtype=np.intp)
             intp_t sample_idx
             intp_t feature_idx
-            int stack_size
+            intp_t stack_size
             float64_t left_sample_frac
             float64_t current_weight
             float64_t total_weight  # used for sanity check only
@@ -1595,7 +1578,7 @@ cdef class _CCPPruneController:
         """Save metrics when pruning"""
         pass
 
-    cdef void after_pruning(self, unsigned char[:] in_subtree) noexcept nogil:
+    cdef void after_pruning(self, uint8_t[:] in_subtree) noexcept nogil:
         """Called after pruning"""
         pass
 
@@ -1614,7 +1597,7 @@ cdef class _AlphaPruner(_CCPPruneController):
         # less than or equal to self.ccp_alpha
         return self.ccp_alpha < effective_alpha
 
-    cdef void after_pruning(self, unsigned char[:] in_subtree) noexcept nogil:
+    cdef void after_pruning(self, uint8_t[:] in_subtree) noexcept nogil:
         """Updates the number of leaves in subtree"""
         for i in range(in_subtree.shape[0]):
             if in_subtree[i]:
@@ -1627,7 +1610,7 @@ cdef class _PathFinder(_CCPPruneController):
     cdef float64_t[:] impurities
     cdef uint32_t count
 
-    def __cinit__(self,  int node_count):
+    def __cinit__(self,  intp_t node_count):
         self.ccp_alphas = np.zeros(shape=(node_count), dtype=np.float64)
         self.impurities = np.zeros(shape=(node_count), dtype=np.float64)
         self.count = 0
@@ -1644,7 +1627,7 @@ cdef struct CostComplexityPruningRecord:
     intp_t node_idx
     intp_t parent
 
-cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree,  # OUT
+cdef _cost_complexity_prune(uint8_t[:] leaves_in_subtree,  # OUT
                             Tree orig_tree,
                             _CCPPruneController controller):
     """Perform cost complexity pruning.
@@ -1657,7 +1640,7 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree,  # OUT
 
     Parameters
     ----------
-    leaves_in_subtree : unsigned char[:]
+    leaves_in_subtree : uint8_t[:]
         Output for leaves of subtree
     orig_tree : Tree
         Original tree
@@ -1691,10 +1674,9 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree,  # OUT
         intp_t parent_idx
 
         # candidate nodes that can be pruned
-        unsigned char[:] candidate_nodes = np.zeros(shape=n_nodes,
-                                                    dtype=np.uint8)
+        uint8_t[:] candidate_nodes = np.zeros(shape=n_nodes, dtype=np.uint8)
         # nodes in subtree
-        unsigned char[:] in_subtree = np.ones(shape=n_nodes, dtype=np.uint8)
+        uint8_t[:] in_subtree = np.ones(shape=n_nodes, dtype=np.uint8)
         intp_t pruned_branch_node_idx
         float64_t subtree_alpha
         float64_t effective_alpha
@@ -1828,7 +1810,7 @@ def _build_pruned_tree_ccp(
 
     cdef:
         intp_t n_nodes = orig_tree.node_count
-        unsigned char[:] leaves_in_subtree = np.zeros(
+        uint8_t[:] leaves_in_subtree = np.zeros(
             shape=n_nodes, dtype=np.uint8)
 
     pruning_controller = _AlphaPruner(ccp_alpha=ccp_alpha)
@@ -1860,7 +1842,7 @@ def ccp_pruning_path(Tree orig_tree):
             corresponding alpha value in ``ccp_alphas``.
     """
     cdef:
-        unsigned char[:] leaves_in_subtree = np.zeros(
+        uint8_t[:] leaves_in_subtree = np.zeros(
             shape=orig_tree.node_count, dtype=np.uint8)
 
     path_finder = _PathFinder(orig_tree.node_count)
@@ -1890,10 +1872,10 @@ cdef struct BuildPrunedRecord:
     intp_t parent
     bint is_left
 
-cdef _build_pruned_tree(
+cdef void _build_pruned_tree(
     Tree tree,  # OUT
     Tree orig_tree,
-    const unsigned char[:] leaves_in_subtree,
+    const uint8_t[:] leaves_in_subtree,
     intp_t capacity
 ):
     """Build a pruned tree.
@@ -1907,7 +1889,7 @@ cdef _build_pruned_tree(
         Location to place the pruned tree
     orig_tree : Tree
         Original tree
-    leaves_in_subtree : unsigned char memoryview, shape=(node_count, )
+    leaves_in_subtree : uint8_t memoryview, shape=(node_count, )
         Boolean mask for leaves to include in subtree
     capacity : intp_t
         Number of nodes to initially allocate in pruned tree
@@ -1949,6 +1931,15 @@ cdef _build_pruned_tree(
             is_leaf = leaves_in_subtree[orig_node_id]
             node = &orig_tree.nodes[orig_node_id]
 
+            # protect against an infinite loop as a runtime error, when leaves_in_subtree
+            # are improperly set where a node is not marked as a leaf, but is a node
+            # in the original tree. Thus, it violates the assumption that the node
+            # is a leaf in the pruned tree, or has a descendant that will be pruned.
+            if (not is_leaf and node.left_child == _TREE_LEAF
+                    and node.right_child == _TREE_LEAF):
+                rc = -2
+                break
+
             new_node_id = tree._add_node(
                 parent, is_left, is_leaf, node.feature, node.threshold,
                 node.impurity, node.n_node_samples,
@@ -1978,3 +1969,33 @@ cdef _build_pruned_tree(
             tree.max_depth = max_depth_seen
     if rc == -1:
         raise MemoryError("pruning tree")
+    elif rc == -2:
+        raise ValueError(
+            "Node has reached a leaf in the original tree, but is not "
+            "marked as a leaf in the leaves_in_subtree mask."
+        )
+
+
+def _build_pruned_tree_py(Tree tree, Tree orig_tree, const uint8_t[:] leaves_in_subtree):
+    """Build a pruned tree.
+
+    Build a pruned tree from the original tree by transforming the nodes in
+    ``leaves_in_subtree`` into leaves.
+
+    Parameters
+    ----------
+    tree : Tree
+        Location to place the pruned tree
+    orig_tree : Tree
+        Original tree
+    leaves_in_subtree : uint8_t ndarray, shape=(node_count, )
+        Boolean mask for leaves to include in subtree. The array must have
+        the same size as the number of nodes in the original tree.
+    """
+    if leaves_in_subtree.shape[0] != orig_tree.node_count:
+        raise ValueError(
+            f"The length of leaves_in_subtree {len(leaves_in_subtree)} must be "
+            f"equal to the number of nodes in the original tree {orig_tree.node_count}."
+        )
+
+    _build_pruned_tree(tree, orig_tree, leaves_in_subtree, orig_tree.node_count)

@@ -86,10 +86,10 @@ the training set is split into *k* smaller sets
 but generally follow the same principles).
 The following procedure is followed for each of the *k* "folds":
 
- * A model is trained using :math:`k-1` of the folds as training data;
- * the resulting model is validated on the remaining part of the data
-   (i.e., it is used as a test set to compute a performance measure
-   such as accuracy).
+* A model is trained using :math:`k-1` of the folds as training data;
+* the resulting model is validated on the remaining part of the data
+  (i.e., it is used as a test set to compute a performance measure
+  such as accuracy).
 
 The performance measure reported by *k*-fold cross-validation
 is then the average of the values computed in the loop.
@@ -170,32 +170,32 @@ indices, for example::
   >>> cross_val_score(clf, X, y, cv=custom_cv)
   array([1.        , 0.973...])
 
-.. topic:: Data transformation with held out data
+.. dropdown:: Data transformation with held-out data
 
-    Just as it is important to test a predictor on data held-out from
-    training, preprocessing (such as standardization, feature selection, etc.)
-    and similar :ref:`data transformations <data-transforms>` similarly should
-    be learnt from a training set and applied to held-out data for prediction::
+  Just as it is important to test a predictor on data held-out from
+  training, preprocessing (such as standardization, feature selection, etc.)
+  and similar :ref:`data transformations <data-transforms>` similarly should
+  be learnt from a training set and applied to held-out data for prediction::
 
-      >>> from sklearn import preprocessing
-      >>> X_train, X_test, y_train, y_test = train_test_split(
-      ...     X, y, test_size=0.4, random_state=0)
-      >>> scaler = preprocessing.StandardScaler().fit(X_train)
-      >>> X_train_transformed = scaler.transform(X_train)
-      >>> clf = svm.SVC(C=1).fit(X_train_transformed, y_train)
-      >>> X_test_transformed = scaler.transform(X_test)
-      >>> clf.score(X_test_transformed, y_test)
-      0.9333...
+    >>> from sklearn import preprocessing
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     X, y, test_size=0.4, random_state=0)
+    >>> scaler = preprocessing.StandardScaler().fit(X_train)
+    >>> X_train_transformed = scaler.transform(X_train)
+    >>> clf = svm.SVC(C=1).fit(X_train_transformed, y_train)
+    >>> X_test_transformed = scaler.transform(X_test)
+    >>> clf.score(X_test_transformed, y_test)
+    0.9333...
 
-    A :class:`Pipeline <sklearn.pipeline.Pipeline>` makes it easier to compose
-    estimators, providing this behavior under cross-validation::
+  A :class:`Pipeline <sklearn.pipeline.Pipeline>` makes it easier to compose
+  estimators, providing this behavior under cross-validation::
 
-      >>> from sklearn.pipeline import make_pipeline
-      >>> clf = make_pipeline(preprocessing.StandardScaler(), svm.SVC(C=1))
-      >>> cross_val_score(clf, X, y, cv=cv)
-      array([0.977..., 0.933..., 0.955..., 0.933..., 0.977...])
+    >>> from sklearn.pipeline import make_pipeline
+    >>> clf = make_pipeline(preprocessing.StandardScaler(), svm.SVC(C=1))
+    >>> cross_val_score(clf, X, y, cv=cv)
+    array([0.977..., 0.933..., 0.955..., 0.933..., 0.977...])
 
-    See :ref:`combining_estimators`.
+  See :ref:`combining_estimators`.
 
 
 .. _multimetric_cross_validation:
@@ -291,14 +291,14 @@ The function :func:`cross_val_predict` is appropriate for:
 The available cross validation iterators are introduced in the following
 section.
 
-.. topic:: Examples
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_model_selection_plot_roc_crossval.py`,
-    * :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`,
-    * :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`,
-    * :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`,
-    * :ref:`sphx_glr_auto_examples_model_selection_plot_cv_predict.py`,
-    * :ref:`sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py`.
+* :ref:`sphx_glr_auto_examples_model_selection_plot_roc_crossval.py`,
+* :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`,
+* :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`,
+* :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`,
+* :ref:`sphx_glr_auto_examples_model_selection_plot_cv_predict.py`,
+* :ref:`sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py`.
 
 Cross validation iterators
 ==========================
@@ -439,20 +439,19 @@ then 5- or 10- fold cross validation can overestimate the generalization error.
 As a general rule, most authors, and empirical evidence, suggest that 5- or 10-
 fold cross validation should be preferred to LOO.
 
+.. dropdown:: References
 
-.. topic:: References:
-
- * `<http://www.faqs.org/faqs/ai-faq/neural-nets/part3/section-12.html>`_;
- * T. Hastie, R. Tibshirani, J. Friedman,  `The Elements of Statistical Learning
-   <https://web.stanford.edu/~hastie/ElemStatLearn/>`_, Springer 2009
- * L. Breiman, P. Spector `Submodel selection and evaluation in regression: The X-random case
-   <https://digitalassets.lib.berkeley.edu/sdtr/ucb/text/197.pdf>`_, International Statistical Review 1992;
- * R. Kohavi, `A Study of Cross-Validation and Bootstrap for Accuracy Estimation and Model Selection
-   <https://www.ijcai.org/Proceedings/95-2/Papers/016.pdf>`_, Intl. Jnt. Conf. AI
- * R. Bharat Rao, G. Fung, R. Rosales, `On the Dangers of Cross-Validation. An Experimental Evaluation
-   <https://people.csail.mit.edu/romer/papers/CrossVal_SDM08.pdf>`_, SIAM 2008;
- * G. James, D. Witten, T. Hastie, R Tibshirani, `An Introduction to
-   Statistical Learning <https://www.statlearning.com>`_, Springer 2013.
+  * `<http://www.faqs.org/faqs/ai-faq/neural-nets/part3/section-12.html>`_;
+  * T. Hastie, R. Tibshirani, J. Friedman,  `The Elements of Statistical Learning
+    <https://web.stanford.edu/~hastie/ElemStatLearn/>`_, Springer 2009
+  * L. Breiman, P. Spector `Submodel selection and evaluation in regression: The X-random case
+    <https://digitalassets.lib.berkeley.edu/sdtr/ucb/text/197.pdf>`_, International Statistical Review 1992;
+  * R. Kohavi, `A Study of Cross-Validation and Bootstrap for Accuracy Estimation and Model Selection
+    <https://www.ijcai.org/Proceedings/95-2/Papers/016.pdf>`_, Intl. Jnt. Conf. AI
+  * R. Bharat Rao, G. Fung, R. Rosales, `On the Dangers of Cross-Validation. An Experimental Evaluation
+    <https://people.csail.mit.edu/romer/papers/CrossVal_SDM08.pdf>`_, SIAM 2008;
+  * G. James, D. Witten, T. Hastie, R Tibshirani, `An Introduction to
+    Statistical Learning <https://www.statlearning.com>`_, Springer 2013.
 
 .. _leave_p_out:
 
@@ -591,6 +590,19 @@ Here is a visualization of the cross-validation behavior.
    :align: center
    :scale: 75%
 
+.. _predefined_split:
+
+Predefined fold-splits / Validation-sets
+----------------------------------------
+
+For some datasets, a pre-defined split of the data into training- and
+validation fold or into several cross-validation folds already
+exists. Using :class:`PredefinedSplit` it is possible to use these folds
+e.g. when searching for hyperparameters.
+
+For example, when using a validation set, set the ``test_fold`` to 0 for all
+samples that are part of the validation set, and to -1 for all other samples.
+
 .. _group_cv:
 
 Cross-validation iterators for grouped data
@@ -681,26 +693,27 @@ Example::
   [ 0  1  4  5  6  7  8  9 11 12 13 14] [ 2  3 10 15 16 17]
   [ 1  2  3  8  9 10 12 13 14 15 16 17] [ 0  4  5  6  7 11]
 
-Implementation notes:
+.. dropdown:: Implementation notes
 
-- With the current implementation full shuffle is not possible in most
-  scenarios. When shuffle=True, the following happens:
+  - With the current implementation full shuffle is not possible in most
+    scenarios. When shuffle=True, the following happens:
 
-  1. All groups are shuffled.
-  2. Groups are sorted by standard deviation of classes using stable sort.
-  3. Sorted groups are iterated over and assigned to folds.
+    1. All groups are shuffled.
+    2. Groups are sorted by standard deviation of classes using stable sort.
+    3. Sorted groups are iterated over and assigned to folds.
 
-  That means that only groups with the same standard deviation of class
-  distribution will be shuffled, which might be useful when each group has only
-  a single class.
-- The algorithm greedily assigns each group to one of n_splits test sets,
-  choosing the test set that minimises the variance in class distribution
-  across test sets. Group assignment proceeds from groups with highest to
-  lowest variance in class frequency, i.e. large groups peaked on one or few
-  classes are assigned first.
-- This split is suboptimal in a sense that it might produce imbalanced splits
-  even if perfect stratification is possible. If you have relatively close
-  distribution of classes in each group, using :class:`GroupKFold` is better.
+    That means that only groups with the same standard deviation of class
+    distribution will be shuffled, which might be useful when each group has only
+    a single class.
+  - The algorithm greedily assigns each group to one of n_splits test sets,
+    choosing the test set that minimises the variance in class distribution
+    across test sets. Group assignment proceeds from groups with highest to
+    lowest variance in class frequency, i.e. large groups peaked on one or few
+    classes are assigned first.
+  - This split is suboptimal in a sense that it might produce imbalanced splits
+    even if perfect stratification is possible. If you have relatively close
+    distribution of classes in each group, using :class:`GroupKFold` is better.
+
 
 Here is a visualization of cross-validation behavior for uneven groups:
 
@@ -807,19 +820,6 @@ possible partitions with :math:`P` groups withheld would be prohibitively
 expensive. In such a scenario, :class:`GroupShuffleSplit` provides
 a random sample (with replacement) of the train / test splits
 generated by :class:`LeavePGroupsOut`.
-
-.. _predefined_split:
-
-Predefined fold-splits / Validation-sets
-----------------------------------------
-
-For some datasets, a pre-defined split of the data into training- and
-validation fold or into several cross-validation folds already
-exists. Using :class:`PredefinedSplit` it is possible to use these folds
-e.g. when searching for hyperparameters.
-
-For example, when using a validation set, set the ``test_fold`` to 0 for all
-samples that are part of the validation set, and to -1 for all other samples.
 
 Using cross-validation iterators to split train and test
 --------------------------------------------------------
@@ -989,12 +989,12 @@ using brute force and internally fits ``(n_permutations + 1) * n_cv`` models.
 It is therefore only tractable with small datasets for which fitting an
 individual model is very fast.
 
-.. topic:: Examples
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_model_selection_plot_permutation_tests_for_classification.py`
+* :ref:`sphx_glr_auto_examples_model_selection_plot_permutation_tests_for_classification.py`
 
-.. topic:: References:
+.. dropdown:: References
 
- * Ojala and Garriga. `Permutation Tests for Studying Classifier Performance
-   <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_.
-   J. Mach. Learn. Res. 2010.
+  * Ojala and Garriga. `Permutation Tests for Studying Classifier Performance
+    <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_.
+    J. Mach. Learn. Res. 2010.

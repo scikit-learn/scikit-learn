@@ -1,7 +1,6 @@
 """
 Testing for the partial dependence module.
 """
-import warnings
 
 import numpy as np
 import pytest
@@ -37,8 +36,8 @@ from sklearn.preprocessing import (
 )
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree.tests.test_tree import assert_is_subtree
-from sklearn.utils import _IS_32BIT
 from sklearn.utils._testing import assert_allclose, assert_array_equal
+from sklearn.utils.fixes import _IS_32BIT
 from sklearn.utils.validation import check_random_state
 
 # toy sample
@@ -272,7 +271,7 @@ def test_partial_dependence_helpers(est, method, target_feature):
     est.fit(X, y)
 
     # target feature will be set to .5 and then to 123
-    features = np.array([target_feature], dtype=np.int32)
+    features = np.array([target_feature], dtype=np.intp)
     grid = np.array([[0.5], [123]])
 
     if method == "brute":
@@ -356,7 +355,7 @@ def test_recursion_decision_tree_vs_forest_and_gbdt(seed):
 
     grid = rng.randn(50).reshape(-1, 1)
     for f in range(n_features):
-        features = np.array([f], dtype=np.int32)
+        features = np.array([f], dtype=np.intp)
 
         pdp_forest = _partial_dependence_recursion(forest, grid, features)
         pdp_gbdt = _partial_dependence_recursion(gbdt, grid, features)
@@ -481,7 +480,6 @@ class NoPredictProbaNoDecisionFunction(ClassifierMixin, BaseEstimator):
         return self
 
 
-@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize(
     "estimator, params, err_msg",
     [
@@ -912,34 +910,6 @@ def test_partial_dependence_sample_weight_with_recursion():
         partial_dependence(
             est, X, features=[0], method="recursion", sample_weight=sample_weight
         )
-
-
-# TODO(1.5): Remove when bunch values is deprecated in 1.5
-def test_partial_dependence_bunch_values_deprecated():
-    """Test that deprecation warning is raised when values is accessed."""
-
-    est = LogisticRegression()
-    (X, y), _ = binary_classification_data
-    est.fit(X, y)
-
-    pdp_avg = partial_dependence(est, X=X, features=[1, 2], kind="average")
-
-    msg = (
-        "Key: 'values', is deprecated in 1.3 and will be "
-        "removed in 1.5. Please use 'grid_values' instead"
-    )
-
-    with warnings.catch_warnings():
-        # Does not raise warnings with "grid_values"
-        warnings.simplefilter("error", FutureWarning)
-        grid_values = pdp_avg["grid_values"]
-
-    with pytest.warns(FutureWarning, match=msg):
-        # Warns for "values"
-        values = pdp_avg["values"]
-
-    # "values" and "grid_values" are the same object
-    assert values is grid_values
 
 
 def test_mixed_type_categorical():

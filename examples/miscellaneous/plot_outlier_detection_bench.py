@@ -6,9 +6,11 @@ Evaluation of outlier detection estimators
 This example compares two outlier detection algorithms, namely
 :ref:`local_outlier_factor` (LOF) and :ref:`isolation_forest` (IForest), on
 real-world datasets available in :class:`sklearn.datasets`. The goal is to show
-that different algorithms perform well on different datasets.
+that different algorithms perform well on different datasets and contrast their
+training speed and sensitivity to hyperparameters.
 
-The algorithms are trained in an outlier detection context:
+The algorithms are trained (without labels) on the whole dataset assumed to
+contain outliers.
 
 1. The ROC curves are computed using knowledge of the ground-truth labels
 and displayed using :class:`~sklearn.metrics.RocCurveDisplay`.
@@ -16,9 +18,8 @@ and displayed using :class:`~sklearn.metrics.RocCurveDisplay`.
 2. The performance is assessed in terms of the ROC-AUC.
 """
 
-# Author: Pharuj Rajborirug <pharuj.ra@kmitl.ac.th>
-#         Arturo Amor <david-arturo.amor-quiroz@inria.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Dataset preprocessing and model training
@@ -313,6 +314,12 @@ _ = plt.tight_layout(pad=2.0)  # spacing between subplots
 # similarly in terms of ROC AUC for the forestcover and cardiotocography
 # datasets. The score for IForest is slightly better for the SA dataset and LOF
 # performs considerably better on the Ames housing dataset than IForest.
+#
+# Recall however that Isolation Forest tends to train much faster than LOF on
+# datasets with a large number of samples. LOF needs to compute pairwise
+# distances to find nearest neighbors, which has a quadratic complexity with respect
+# to the number of observations. This can make this method prohibitive on large
+# datasets.
 #
 # Ablation study
 # ==============

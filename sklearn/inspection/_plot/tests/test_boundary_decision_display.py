@@ -17,16 +17,10 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import scale
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._testing import (
+    _convert_container,
     assert_allclose,
     assert_array_equal,
 )
-
-# TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
-pytestmark = pytest.mark.filterwarnings(
-    "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
-    "matplotlib.*"
-)
-
 
 X, y = make_classification(
     n_informative=1,
@@ -468,15 +462,18 @@ def test_string_target(pyplot):
     )
 
 
-def test_dataframe_support(pyplot):
+@pytest.mark.parametrize("constructor_name", ["pandas", "polars"])
+def test_dataframe_support(pyplot, constructor_name):
     """Check that passing a dataframe at fit and to the Display does not
     raise warnings.
 
     Non-regression test for:
-    https://github.com/scikit-learn/scikit-learn/issues/23311
+    * https://github.com/scikit-learn/scikit-learn/issues/23311
+    * https://github.com/scikit-learn/scikit-learn/issues/28717
     """
-    pd = pytest.importorskip("pandas")
-    df = pd.DataFrame(X, columns=["col_x", "col_y"])
+    df = _convert_container(
+        X, constructor_name=constructor_name, columns_name=["col_x", "col_y"]
+    )
     estimator = LogisticRegression().fit(df, y)
 
     with warnings.catch_warnings():
@@ -591,3 +588,19 @@ def test_class_of_interest_multiclass(pyplot, response_method):
             response_method=response_method,
             class_of_interest=None,
         )
+
+
+def test_subclass_named_constructors_return_type_is_subclass(pyplot):
+    """Check that named constructors return the correct type when subclassed.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/pull/27675
+    """
+    clf = LogisticRegression().fit(X, y)
+
+    class SubclassOfDisplay(DecisionBoundaryDisplay):
+        pass
+
+    curve = SubclassOfDisplay.from_estimator(estimator=clf, X=X)
+
+    assert isinstance(curve, SubclassOfDisplay)

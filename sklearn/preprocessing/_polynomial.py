@@ -1,6 +1,10 @@
 """
 This file contains preprocessing tools based on polynomials.
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import collections
 from itertools import chain, combinations
 from itertools import combinations_with_replacement as combinations_w_r
@@ -583,6 +587,9 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
     `n_splines=n_knots + degree - 1` (`n_knots - 1` for
     `extrapolation="periodic"`) spline basis functions
     (B-splines) of polynomial order=`degree` for each feature.
+
+    In order to learn more about the SplineTransformer class go to:
+    :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`
 
     Read more in the :ref:`User Guide <spline_transformer>`.
 

@@ -39,6 +39,9 @@ various features such as experience, age, or education.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 import matplotlib.pyplot as plt
 import numpy as np
@@ -305,6 +308,34 @@ plt.subplots_adjust(left=0.3)
 # other features remain constant.
 # Also, AGE, EXPERIENCE and EDUCATION are the three variables that most
 # influence the model.
+#
+# Interpreting coefficients: being cautious about causality
+# ---------------------------------------------------------
+#
+# Linear models are a great tool for measuring statistical association, but we
+# should be cautious when making statements about causality, after all
+# correlation doesn't always imply causation. This is particularly difficult in
+# the social sciences because the variables we observe only function as proxies
+# for the underlying causal process.
+#
+# In our particular case we can think of the EDUCATION of an individual as a
+# proxy for their professional aptitude, the real variable we're interested in
+# but can't observe. We'd certainly like to think that staying in school for
+# longer would increase technical competency, but it's also quite possible that
+# causality goes the other way too. That is, those who are technically
+# competent tend to stay in school for longer.
+#
+# An employer is unlikely to care which case it is (or if it's a mix of both),
+# as long as they remain convinced that a person with more EDUCATION is better
+# suited for the job, they will be happy to pay out a higher WAGE.
+#
+# This confounding of effects becomes problematic when thinking about some
+# form of intervention e.g. government subsidies of university degrees or
+# promotional material encouraging individuals to take up higher education.
+# The usefulness of these measures could end up being overstated, especially if
+# the degree of confounding is strong. Our model predicts a :math:`0.054699`
+# increase in hourly wage for each year of education. The actual causal effect
+# might be lower because of this confounding.
 #
 # Checking the variability of the coefficients
 # --------------------------------------------
@@ -742,6 +773,9 @@ plt.subplots_adjust(left=0.3)
 # * Coefficients must be scaled to the same unit of measure to retrieve
 #   feature importance. Scaling them with the standard-deviation of the
 #   feature is a useful proxy.
+# * Interpreting causality is difficult when there are confounding effects. If
+#   the relationship between two variables is also affected by something
+#   unobserved, we should be careful when making conclusions about causality.
 # * Coefficients in multivariate linear models represent the dependency
 #   between a given feature and the target, **conditional** on the other
 #   features.

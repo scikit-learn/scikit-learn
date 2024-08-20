@@ -14,10 +14,6 @@ from sklearn.ensemble import (
     AdaBoostRegressor,
     BaggingClassifier,
     BaggingRegressor,
-    StackingClassifier,
-    StackingRegressor,
-    VotingClassifier,
-    VotingRegressor,
 )
 from sklearn.exceptions import UnsetMetadataPassedError
 from sklearn.experimental import (
@@ -45,10 +41,12 @@ from sklearn.linear_model import (
     RidgeCV,
 )
 from sklearn.model_selection import (
+    FixedThresholdClassifier,
     GridSearchCV,
     HalvingGridSearchCV,
     HalvingRandomSearchCV,
     RandomizedSearchCV,
+    TunedThresholdClassifierCV,
 )
 from sklearn.multiclass import (
     OneVsOneClassifier,
@@ -61,13 +59,14 @@ from sklearn.multioutput import (
     MultiOutputRegressor,
     RegressorChain,
 )
-from sklearn.pipeline import FeatureUnion
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.tests.metadata_routing_common import (
     ConsumingClassifier,
     ConsumingRegressor,
     ConsumingScorer,
     ConsumingSplitter,
+    NonConsumingClassifier,
+    NonConsumingRegressor,
     _Registry,
     assert_request_is_empty,
     check_recorded_metadata,
@@ -78,6 +77,7 @@ rng = np.random.RandomState(42)
 N, M = 100, 4
 X = rng.rand(N, M)
 y = rng.randint(0, 3, size=N)
+y_binary = (y >= 1).astype(int)
 classes = np.unique(y)
 y_multi = rng.randint(0, 3, size=(N, 3))
 classes_multi = [np.unique(y_multi[:, i]) for i in range(y_multi.shape[1])]
@@ -97,7 +97,7 @@ METAESTIMATORS: list = [
     {
         "metaestimator": MultiOutputRegressor,
         "estimator_name": "estimator",
-        "estimator": ConsumingRegressor,
+        "estimator": "regressor",
         "X": X,
         "y": y_multi,
         "estimator_routing_methods": ["fit", "partial_fit"],
@@ -105,7 +105,7 @@ METAESTIMATORS: list = [
     {
         "metaestimator": MultiOutputClassifier,
         "estimator_name": "estimator",
-        "estimator": ConsumingClassifier,
+        "estimator": "classifier",
         "X": X,
         "y": y_multi,
         "estimator_routing_methods": ["fit", "partial_fit"],
@@ -114,16 +114,16 @@ METAESTIMATORS: list = [
     {
         "metaestimator": CalibratedClassifierCV,
         "estimator_name": "estimator",
-        "estimator": ConsumingClassifier,
+        "estimator": "classifier",
         "X": X,
         "y": y,
         "estimator_routing_methods": ["fit"],
-        "preserves_metadata": False,
+        "preserves_metadata": "subset",
     },
     {
         "metaestimator": ClassifierChain,
         "estimator_name": "base_estimator",
-        "estimator": ConsumingClassifier,
+        "estimator": "classifier",
         "X": X,
         "y": y_multi,
         "estimator_routing_methods": ["fit"],
@@ -131,7 +131,7 @@ METAESTIMATORS: list = [
     {
         "metaestimator": RegressorChain,
         "estimator_name": "base_estimator",
-        "estimator": ConsumingRegressor,
+        "estimator": "regressor",
         "X": X,
         "y": y_multi,
         "estimator_routing_methods": ["fit"],
@@ -148,7 +148,7 @@ METAESTIMATORS: list = [
     {
         "metaestimator": GridSearchCV,
         "estimator_name": "estimator",
-        "estimator": ConsumingClassifier,
+        "estimator": "classifier",
         "init_args": {"param_grid": {"alpha": [0.1, 0.2]}},
         "X": X,
         "y": y,
@@ -162,7 +162,7 @@ METAESTIMATORS: list = [
     {
         "metaestimator": RandomizedSearchCV,
         "estimator_name": "estimator",
-        "estimator": ConsumingClassifier,
+        "estimator": "classifier",
         "init_args": {"param_distributions": {"alpha": [0.1, 0.2]}},
         "X": X,
         "y": y,
@@ -176,7 +176,7 @@ METAESTIMATORS: list = [
     {
         "metaestimator": HalvingGridSearchCV,
         "estimator_name": "estimator",
-        "estimator": ConsumingClassifier,
+        "estimator": "classifier",
         "init_args": {"param_grid": {"alpha": [0.1, 0.2]}},
         "X": X,
         "y": y,
@@ -190,7 +190,7 @@ METAESTIMATORS: list = [
     {
         "metaestimator": HalvingRandomSearchCV,
         "estimator_name": "estimator",
-        "estimator": ConsumingClassifier,
+        "estimator": "classifier",
         "init_args": {"param_distributions": {"alpha": [0.1, 0.2]}},
         "X": X,
         "y": y,
@@ -202,9 +202,27 @@ METAESTIMATORS: list = [
         "cv_routing_methods": ["fit"],
     },
     {
+        "metaestimator": FixedThresholdClassifier,
+        "estimator_name": "estimator",
+        "estimator": "classifier",
+        "X": X,
+        "y": y_binary,
+        "estimator_routing_methods": ["fit"],
+        "preserves_metadata": "subset",
+    },
+    {
+        "metaestimator": TunedThresholdClassifierCV,
+        "estimator_name": "estimator",
+        "estimator": "classifier",
+        "X": X,
+        "y": y_binary,
+        "estimator_routing_methods": ["fit"],
+        "preserves_metadata": "subset",
+    },
+    {
         "metaestimator": OneVsRestClassifier,
         "estimator_name": "estimator",
-        "estimator": ConsumingClassifier,
+        "estimator": "classifier",
         "X": X,
         "y": y,
         "estimator_routing_methods": ["fit", "partial_fit"],
@@ -213,7 +231,7 @@ METAESTIMATORS: list = [
     {
         "metaestimator": OneVsOneClassifier,
         "estimator_name": "estimator",
-        "estimator": ConsumingClassifier,
+        "estimator": "classifier",
         "X": X,
         "y": y,
         "estimator_routing_methods": ["fit", "partial_fit"],
@@ -223,7 +241,7 @@ METAESTIMATORS: list = [
     {
         "metaestimator": OutputCodeClassifier,
         "estimator_name": "estimator",
-        "estimator": ConsumingClassifier,
+        "estimator": "classifier",
         "init_args": {"random_state": 42},
         "X": X,
         "y": y,
@@ -232,7 +250,7 @@ METAESTIMATORS: list = [
     {
         "metaestimator": SelectFromModel,
         "estimator_name": "estimator",
-        "estimator": ConsumingClassifier,
+        "estimator": "classifier",
         "X": X,
         "y": y,
         "estimator_routing_methods": ["fit", "partial_fit"],
@@ -287,14 +305,148 @@ METAESTIMATORS: list = [
         "cv_name": "cv",
         "cv_routing_methods": ["fit"],
     },
+    {
+        "metaestimator": RANSACRegressor,
+        "estimator_name": "estimator",
+        "estimator": "regressor",
+        "init_args": {"min_samples": 0.5},
+        "X": X,
+        "y": y,
+        "preserves_metadata": "subset",
+        "estimator_routing_methods": ["fit", "predict", "score"],
+        "method_mapping": {"fit": ["fit", "score"]},
+    },
+    {
+        "metaestimator": IterativeImputer,
+        "estimator_name": "estimator",
+        "estimator": "regressor",
+        "init_args": {"skip_complete": False},
+        "X": X,
+        "y": y,
+        "estimator_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": BaggingClassifier,
+        "estimator_name": "estimator",
+        "estimator": "classifier",
+        "X": X,
+        "y": y,
+        "preserves_metadata": False,
+        "estimator_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": BaggingRegressor,
+        "estimator_name": "estimator",
+        "estimator": "regressor",
+        "X": X,
+        "y": y,
+        "preserves_metadata": False,
+        "estimator_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": RidgeCV,
+        "X": X,
+        "y": y,
+        "scorer_name": "scoring",
+        "scorer_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": RidgeClassifierCV,
+        "X": X,
+        "y": y,
+        "scorer_name": "scoring",
+        "scorer_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": RidgeCV,
+        "X": X,
+        "y": y,
+        "scorer_name": "scoring",
+        "scorer_routing_methods": ["fit"],
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": RidgeClassifierCV,
+        "X": X,
+        "y": y,
+        "scorer_name": "scoring",
+        "scorer_routing_methods": ["fit"],
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": GraphicalLassoCV,
+        "X": X,
+        "y": y,
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": TransformedTargetRegressor,
+        "estimator": "regressor",
+        "estimator_name": "regressor",
+        "X": X,
+        "y": y,
+        "estimator_routing_methods": ["fit", "predict"],
+    },
+    {
+        "metaestimator": SelfTrainingClassifier,
+        "estimator_name": "estimator",
+        "estimator": "classifier",
+        "X": X,
+        "y": y,
+        "preserves_metadata": True,
+        "estimator_routing_methods": [
+            "fit",
+            "predict",
+            "predict_proba",
+            "predict_log_proba",
+            "decision_function",
+            "score",
+        ],
+        "method_mapping": {"fit": ["fit", "score"]},
+    },
+    {
+        "metaestimator": SequentialFeatureSelector,
+        "estimator_name": "estimator",
+        "estimator": "classifier",
+        "X": X,
+        "y": y,
+        "estimator_routing_methods": ["fit"],
+        "scorer_name": "scoring",
+        "scorer_routing_methods": ["fit"],
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": RFE,
+        "estimator": "classifier",
+        "estimator_name": "estimator",
+        "X": X,
+        "y": y,
+        "estimator_routing_methods": ["fit", "predict", "score"],
+    },
+    {
+        "metaestimator": RFECV,
+        "estimator": "classifier",
+        "estimator_name": "estimator",
+        "estimator_routing_methods": ["fit"],
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+        "scorer_name": "scoring",
+        "scorer_routing_methods": ["fit", "score"],
+        "X": X,
+        "y": y,
+    },
 ]
 """List containing all metaestimators to be tested and their settings
 
 The keys are as follows:
 
-- metaestimator: The metaestmator to be tested
+- metaestimator: The metaestimator to be tested
 - estimator_name: The name of the argument for the sub-estimator
-- estimator: The sub-estimator
+- estimator: The sub-estimator type, either "regressor" or "classifier"
 - init_args: The arguments to be passed to the metaestimator's constructor
 - X: X-data to fit and predict
 - y: y-data to fit
@@ -317,6 +469,9 @@ The keys are as follows:
   to the splitter
 - method_args: a dict of dicts, defining extra arguments needed to be passed to
   methods, such as passing `classes` to `partial_fit`.
+- method_mapping: a dict of the form `{caller: [callee1, ...]}` which signals
+  which `.set_{method}_request` methods should be called to set request values.
+  If not present, a one-to-one mapping is assumed.
 """
 
 # IDs used by pytest to get meaningful verbose messages when running the tests
@@ -325,32 +480,23 @@ METAESTIMATOR_IDS = [str(row["metaestimator"].__name__) for row in METAESTIMATOR
 UNSUPPORTED_ESTIMATORS = [
     AdaBoostClassifier(),
     AdaBoostRegressor(),
-    BaggingClassifier(),
-    BaggingRegressor(),
-    FeatureUnion([]),
-    GraphicalLassoCV(),
-    IterativeImputer(),
-    RANSACRegressor(),
-    RFE(ConsumingClassifier()),
-    RFECV(ConsumingClassifier()),
-    RidgeCV(),
-    RidgeClassifierCV(),
-    SelfTrainingClassifier(ConsumingClassifier()),
-    SequentialFeatureSelector(ConsumingClassifier()),
-    StackingClassifier(ConsumingClassifier()),
-    StackingRegressor(ConsumingRegressor()),
-    TransformedTargetRegressor(),
-    VotingClassifier(ConsumingClassifier()),
-    VotingRegressor(ConsumingRegressor()),
 ]
 
 
-def get_init_args(metaestimator_info):
+def get_init_args(metaestimator_info, sub_estimator_consumes):
     """Get the init args for a metaestimator
 
     This is a helper function to get the init args for a metaestimator from
     the METAESTIMATORS list. It returns an empty dict if no init args are
     required.
+
+    Parameters
+    ----------
+    metaestimator_info : dict
+        The metaestimator info from METAESTIMATORS
+
+    sub_estimator_consumes : bool
+        Whether the sub-estimator consumes metadata or not.
 
     Returns
     -------
@@ -373,7 +519,21 @@ def get_init_args(metaestimator_info):
     if "estimator" in metaestimator_info:
         estimator_name = metaestimator_info["estimator_name"]
         estimator_registry = _Registry()
-        estimator = metaestimator_info["estimator"](estimator_registry)
+        sub_estimator_type = metaestimator_info["estimator"]
+        if sub_estimator_consumes:
+            if sub_estimator_type == "regressor":
+                estimator = ConsumingRegressor(estimator_registry)
+            elif sub_estimator_type == "classifier":
+                estimator = ConsumingClassifier(estimator_registry)
+            else:
+                raise ValueError("Unpermitted `sub_estimator_type`.")  # pragma: nocover
+        else:
+            if sub_estimator_type == "regressor":
+                estimator = NonConsumingRegressor()
+            elif sub_estimator_type == "classifier":
+                estimator = NonConsumingClassifier()
+            else:
+                raise ValueError("Unpermitted `sub_estimator_type`.")  # pragma: nocover
         kwargs[estimator_name] = estimator
     if "scorer_name" in metaestimator_info:
         scorer_name = metaestimator_info["scorer_name"]
@@ -392,6 +552,38 @@ def get_init_args(metaestimator_info):
         (scorer, scorer_registry),
         (cv, cv_registry),
     )
+
+
+def set_requests(estimator, *, method_mapping, methods, metadata_name, value=True):
+    """Call `set_{method}_request` on a list of methods from the sub-estimator.
+
+    Parameters
+    ----------
+    estimator : BaseEstimator
+        The estimator for which `set_{method}_request` methods are called.
+
+    method_mapping : dict
+        The method mapping in the form of `{caller: [callee, ...]}`.
+        If a "caller" is not present in the method mapping, a one-to-one mapping is
+        assumed.
+
+    methods : list of str
+        The list of methods as "caller"s for which the request for the child should
+        be set.
+
+    metadata_name : str
+        The name of the metadata to be routed, usually either `"metadata"` or
+        `"sample_weight"` in our tests.
+
+    value : None, bool, or str
+        The request value to be set, by default it's `True`
+    """
+    for caller in methods:
+        for callee in method_mapping.get(caller, [caller]):
+            set_request_for_method = getattr(estimator, f"set_{callee}_request")
+            set_request_for_method(**{metadata_name: value})
+            if is_classifier(estimator) and callee == "partial_fit":
+                set_request_for_method(classes=True)
 
 
 @pytest.mark.parametrize("estimator", UNSUPPORTED_ESTIMATORS)
@@ -429,7 +621,7 @@ def test_registry_copy():
 def test_default_request(metaestimator):
     # Check that by default request is empty and the right type
     cls = metaestimator["metaestimator"]
-    kwargs, *_ = get_init_args(metaestimator)
+    kwargs, *_ = get_init_args(metaestimator, sub_estimator_consumes=True)
     instance = cls(**kwargs)
     if "cv_name" in metaestimator:
         # Our GroupCV splitters request groups by default, which we should
@@ -457,20 +649,46 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
 
     for method_name in routing_methods:
         for key in ["sample_weight", "metadata"]:
-            kwargs, (estimator, _), (scorer, _), *_ = get_init_args(metaestimator)
+            kwargs, (estimator, _), (scorer, _), *_ = get_init_args(
+                metaestimator, sub_estimator_consumes=True
+            )
             if scorer:
                 scorer.set_score_request(**{key: True})
             val = {"sample_weight": sample_weight, "metadata": metadata}[key]
             method_kwargs = {key: val}
+            instance = cls(**kwargs)
             msg = (
                 f"[{key}] are passed but are not explicitly set as requested or not"
-                f" for {estimator.__class__.__name__}.{method_name}"
+                f" requested for {estimator.__class__.__name__}.{method_name}"
             )
-
-            instance = cls(**kwargs)
             with pytest.raises(UnsetMetadataPassedError, match=re.escape(msg)):
                 method = getattr(instance, method_name)
-                method(X, y, **method_kwargs)
+                if "fit" not in method_name:
+                    # set request on fit
+                    set_requests(
+                        estimator,
+                        method_mapping=metaestimator.get("method_mapping", {}),
+                        methods=["fit"],
+                        metadata_name=key,
+                    )
+                    instance.fit(X, y, **method_kwargs)
+                # making sure the requests are unset, in case they were set as a
+                # side effect of setting them for fit. For instance, if method
+                # mapping for fit is: `"fit": ["fit", "score"]`, that would mean
+                # calling `.score` here would not raise, because we have already
+                # set request value for child estimator's `score`.
+                set_requests(
+                    estimator,
+                    method_mapping=metaestimator.get("method_mapping", {}),
+                    methods=["fit"],
+                    metadata_name=key,
+                    value=None,
+                )
+                try:
+                    # `fit`, `partial_fit`, 'score' accept y, others don't.
+                    method(X, y, **method_kwargs)
+                except TypeError:
+                    method(X, **method_kwargs)
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
@@ -482,17 +700,11 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
         # sub-estimator, e.g. MyMetaEstimator(estimator=MySubEstimator())
         return
 
-    def set_request(estimator, method_name):
-        # e.g. call set_fit_request on estimator
-        set_request_for_method = getattr(estimator, f"set_{method_name}_request")
-        set_request_for_method(sample_weight=True, metadata=True)
-        if is_classifier(estimator) and method_name == "partial_fit":
-            set_request_for_method(classes=True)
-
     cls = metaestimator["metaestimator"]
     X = metaestimator["X"]
     y = metaestimator["y"]
     routing_methods = metaestimator["estimator_routing_methods"]
+    method_mapping = metaestimator.get("method_mapping", {})
     preserves_metadata = metaestimator.get("preserves_metadata", True)
 
     for method_name in routing_methods:
@@ -501,33 +713,89 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
             method_kwargs = {key: val}
 
             kwargs, (estimator, registry), (scorer, _), (cv, _) = get_init_args(
-                metaestimator
+                metaestimator, sub_estimator_consumes=True
             )
             if scorer:
-                set_request(scorer, "score")
+                set_requests(
+                    scorer, method_mapping={}, methods=["score"], metadata_name=key
+                )
             if cv:
                 cv.set_split_request(groups=True, metadata=True)
-            set_request(estimator, method_name)
+
+            # `set_{method}_request({metadata}==True)` on the underlying objects
+            set_requests(
+                estimator,
+                method_mapping=method_mapping,
+                methods=[method_name],
+                metadata_name=key,
+            )
+
             instance = cls(**kwargs)
             method = getattr(instance, method_name)
             extra_method_args = metaestimator.get("method_args", {}).get(
                 method_name, {}
             )
-            method(X, y, **method_kwargs, **extra_method_args)
+            if "fit" not in method_name:
+                # fit before calling method
+                instance.fit(X, y)
+            try:
+                # `fit` and `partial_fit` accept y, others don't.
+                method(X, y, **method_kwargs, **extra_method_args)
+            except TypeError:
+                method(X, **method_kwargs, **extra_method_args)
+
             # sanity check that registry is not empty, or else the test passes
             # trivially
             assert registry
-            if preserves_metadata is True:
-                for estimator in registry:
-                    check_recorded_metadata(estimator, method_name, **method_kwargs)
-            elif preserves_metadata == "subset":
-                for estimator in registry:
-                    check_recorded_metadata(
-                        estimator,
-                        method_name,
-                        split_params=method_kwargs.keys(),
-                        **method_kwargs,
-                    )
+            split_params = (
+                method_kwargs.keys() if preserves_metadata == "subset" else ()
+            )
+            for estimator in registry:
+                check_recorded_metadata(
+                    estimator,
+                    method=method_name,
+                    parent=method_name,
+                    split_params=split_params,
+                    **method_kwargs,
+                )
+
+
+@pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
+def test_non_consuming_estimator_works(metaestimator):
+    # Test that when a non-consuming estimator is given, the meta-estimator
+    # works w/o setting any requests.
+    # Regression test for https://github.com/scikit-learn/scikit-learn/issues/28239
+    if "estimator" not in metaestimator:
+        # This test only makes sense for metaestimators which have a
+        # sub-estimator, e.g. MyMetaEstimator(estimator=MySubEstimator())
+        return
+
+    def set_request(estimator, method_name):
+        # e.g. call set_fit_request on estimator
+        if is_classifier(estimator) and method_name == "partial_fit":
+            estimator.set_partial_fit_request(classes=True)
+
+    cls = metaestimator["metaestimator"]
+    X = metaestimator["X"]
+    y = metaestimator["y"]
+    routing_methods = metaestimator["estimator_routing_methods"]
+
+    for method_name in routing_methods:
+        kwargs, (estimator, _), (_, _), (_, _) = get_init_args(
+            metaestimator, sub_estimator_consumes=False
+        )
+        instance = cls(**kwargs)
+        set_request(estimator, method_name)
+        method = getattr(instance, method_name)
+        extra_method_args = metaestimator.get("method_args", {}).get(method_name, {})
+        if "fit" not in method_name:
+            instance.fit(X, y, **extra_method_args)
+        # The following should pass w/o raising a routing error.
+        try:
+            # `fit` and `partial_fit` accept y, others don't.
+            method(X, y, **extra_method_args)
+        except TypeError:
+            method(X, **extra_method_args)
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
@@ -541,16 +809,22 @@ def test_metadata_is_routed_correctly_to_scorer(metaestimator):
 
     cls = metaestimator["metaestimator"]
     routing_methods = metaestimator["scorer_routing_methods"]
+    method_mapping = metaestimator.get("method_mapping", {})
 
     for method_name in routing_methods:
         kwargs, (estimator, _), (scorer, registry), (cv, _) = get_init_args(
-            metaestimator
+            metaestimator, sub_estimator_consumes=True
         )
-        if estimator:
-            estimator.set_fit_request(sample_weight=True, metadata=True)
         scorer.set_score_request(sample_weight=True)
         if cv:
             cv.set_split_request(groups=True, metadata=True)
+        if estimator is not None:
+            set_requests(
+                estimator,
+                method_mapping=method_mapping,
+                methods=[method_name],
+                metadata_name="sample_weight",
+            )
         instance = cls(**kwargs)
         method = getattr(instance, method_name)
         method_kwargs = {"sample_weight": sample_weight}
@@ -563,6 +837,7 @@ def test_metadata_is_routed_correctly_to_scorer(metaestimator):
             check_recorded_metadata(
                 obj=_scorer,
                 method="score",
+                parent=method_name,
                 split_params=("sample_weight",),
                 **method_kwargs,
             )
@@ -584,7 +859,7 @@ def test_metadata_is_routed_correctly_to_splitter(metaestimator):
 
     for method_name in routing_methods:
         kwargs, (estimator, _), (scorer, _), (cv, registry) = get_init_args(
-            metaestimator
+            metaestimator, sub_estimator_consumes=True
         )
         if estimator:
             estimator.set_fit_request(sample_weight=False, metadata=False)
@@ -597,4 +872,6 @@ def test_metadata_is_routed_correctly_to_splitter(metaestimator):
         method(X_, y_, **method_kwargs)
         assert registry
         for _splitter in registry:
-            check_recorded_metadata(obj=_splitter, method="split", **method_kwargs)
+            check_recorded_metadata(
+                obj=_splitter, method="split", parent=method_name, **method_kwargs
+            )

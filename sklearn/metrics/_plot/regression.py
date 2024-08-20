@@ -1,8 +1,12 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numbers
 
 import numpy as np
 
-from ...utils import _safe_indexing, check_matplotlib_support, check_random_state
+from ...utils import _safe_indexing, check_random_state
+from ...utils._optional_dependencies import check_matplotlib_support
 
 
 class PredictionErrorDisplay:
@@ -392,7 +396,7 @@ class PredictionErrorDisplay:
             y_true = _safe_indexing(y_true, indices, axis=0)
             y_pred = _safe_indexing(y_pred, indices, axis=0)
 
-        viz = PredictionErrorDisplay(
+        viz = cls(
             y_true=y_true,
             y_pred=y_pred,
         )
