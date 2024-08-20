@@ -1103,8 +1103,8 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         tags = super().__sklearn_tags__()
         # FIXME
         tags._skip_test = True
-        tags.classifier_tags.single_output = False
-        tags.classifier_tags.multi_output = True
+        tags.target_tags.single_output = False
+        tags.target_tags.multi_output = True
         return tags
 
 
