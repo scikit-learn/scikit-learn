@@ -2312,7 +2312,7 @@ def test_power_transformer_lambda_one():
     "method, lmbda",
     [
         ("box-cox", 0.1),
-        ("box-cox", 0.5),
+        ("box-cox", 0.2),
         ("yeo-johnson", 0.1),
         ("yeo-johnson", 0.5),
         ("yeo-johnson", 1.0),
