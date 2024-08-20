@@ -26,7 +26,7 @@ Changes impacting many modules
 ------------------------------
 
 - |Enhancement| `__sklearn_tags__` was introduced for setting tags in estimators.
-  :pr:`22606` by `Thomas Fan`_.
+  :pr:`22606` by `Thomas Fan`_ and :pr:`29677` by `Adrin Jalali`_.
 
 
 Support for Array API
