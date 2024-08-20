@@ -2254,6 +2254,12 @@ class _RidgeGCV(LinearModel):
 
         return _score
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        # Required since this is neither a RegressorMixin nor a ClassifierMixin
+        tags.target_tags.required = True
+        return tags
+
 
 class _BaseRidgeCV(LinearModel):
     _parameter_constraints: dict = {
