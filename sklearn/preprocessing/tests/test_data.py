@@ -2341,6 +2341,14 @@ def test_optimization_power_transformer(method, lmbda):
     assert_almost_equal(1, X_inv_trans.std(), decimal=1)
 
 
+def test_invserse_box_cox():
+    # output nan if the input is invalid
+    pt = PowerTransformer(method="box-cox", standardize=False)
+    pt.lambdas_ = [0.5]
+    X_inv = pt.inverse_transform([[-2.1]])
+    assert np.isnan(X_inv)
+
+
 def test_yeo_johnson_darwin_example():
     # test from original paper "A new family of power transformations to
     # improve normality or symmetry" by Yeo and Johnson.
