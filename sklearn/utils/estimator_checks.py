@@ -139,7 +139,7 @@ def _yield_checks(estimator):
     yield partial(check_estimators_pickle, readonly_memmap=True)
 
     yield check_estimator_get_tags_default_keys
-    # yield check_estimator_tags_deprecated
+    yield check_estimator_tags_renamed
 
     if tags.array_api_support:
         for check in _yield_array_api_checks(estimator):
@@ -4061,7 +4061,7 @@ def check_estimator_get_tags_default_keys(name, estimator_orig):
     ), f"{name}.__sklearn_tags__() must be an instance of Tags"
 
 
-def check_estimator_tags_deprecated(name, estimator_orig):
+def check_estimator_tags_renamed(name, estimator_orig):
     assert not hasattr(estimator_orig, "_more_tags"), (
         "_more_tags() was removed in 1.6. " "Please use __sklearn_tags__ instead.",
     )
