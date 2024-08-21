@@ -3,11 +3,8 @@ Maximum likelihood covariance estimator.
 
 """
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Gael Varoquaux <gael.varoquaux@normalesup.org>
-#         Virgile Fritsch <virgile.fritsch@inria.fr>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # avoid division truncation
 import warnings
@@ -93,7 +90,7 @@ def empirical_covariance(X, *, assume_centered=False):
            [0.25, 0.25, 0.25],
            [0.25, 0.25, 0.25]])
     """
-    X = check_array(X, ensure_2d=False, force_all_finite=False)
+    X = check_array(X, ensure_2d=False, ensure_all_finite=False)
 
     if X.ndim == 1:
         X = np.reshape(X, (1, -1))

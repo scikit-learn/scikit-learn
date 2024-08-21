@@ -1,7 +1,7 @@
-# Authors: Fabian Pedregosa <fabian@fseoane.net>
-#          Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Nelle Varoquaux <nelle.varoquaux@gmail.com>
-# License: BSD 3 clause
+"""Isotonic regression for obtaining monotonic fit to data."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import math
 import warnings
@@ -65,10 +65,10 @@ def check_increasing(x, y):
     >>> from sklearn.isotonic import check_increasing
     >>> x, y = [1, 2, 3, 4, 5], [2, 4, 6, 8, 10]
     >>> check_increasing(x, y)
-    True
+    np.True_
     >>> y = [10, 8, 6, 4, 2]
     >>> check_increasing(x, y)
-    False
+    np.False_
     """
 
     # Calculate Spearman rho estimate and set return accordingly.
