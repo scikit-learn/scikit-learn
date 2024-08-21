@@ -41,7 +41,7 @@ Changelog
   :pr:`29330` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.metrics`
-......................
+.......................
 
 - |Fix| Fix a regression in :func:`metrics.r2_score`. Passing torch CPU tensors
   with array API dispatched disabled would complain about non-CPU devices

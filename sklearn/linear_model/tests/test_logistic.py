@@ -798,7 +798,7 @@ def test_logistic_regression_sample_weights(problem, solver, global_random_seed)
         "random_state": global_random_seed,
         "fit_intercept": False,
         "max_iter": 10_000,
-        "tol": 1e-8,
+        "tol": 1e-6,
     }
     kw_repeated = kw_weighted.copy()
     sw[:n_samples_per_cv_group] = rng.randint(0, 5, size=100)
