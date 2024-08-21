@@ -252,6 +252,9 @@ class RANSACRegressor(
     0.9885...
     >>> reg.predict(X[:1,])
     array([-31.9417...])
+
+    For a more detailed example, see
+    :ref:`sphx_glr_auto_examples_linear_model_plot_ransac.py`
     """  # noqa: E501
 
     _parameter_constraints: dict = {
