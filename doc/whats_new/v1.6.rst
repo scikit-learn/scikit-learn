@@ -145,6 +145,8 @@ Changelog
 
 :mod:`sklearn.linear_model`
 ...........................
+-|Fix| :class:`linear_model.LogisticRegressionCV` Fixed sample weight handling for calculation
+  of test scores under  _log_reg_scoring_path :pr:`29419` by :user:`Shruti Nath <snath-xoc>`.
 
 - |API| Deprecates `copy_X` in :class:`linear_model.TheilSenRegressor` as the parameter
   has no effect. `copy_X` will be removed in 1.8.
