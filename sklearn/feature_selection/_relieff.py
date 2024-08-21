@@ -1,7 +1,6 @@
 import numpy as np
 
 from sklearn.base import BaseEstimator
-from sklearn.datasets import load_iris
 from sklearn.feature_selection import SelectorMixin
 from sklearn.neighbors import NearestNeighbors
 from sklearn.utils import check_random_state
@@ -38,7 +37,7 @@ class ReliefF(SelectorMixin, BaseEstimator):
         random_samples = np.arange(n_samples)
         random_state.shuffle(random_samples)
         if self.m != "all":
-            random_samples = random_samples[:self.m]
+            random_samples = random_samples[: self.m]
         else:
             self.m = n_samples
         feature_scale = X.max(axis=0) - X.min(axis=0)
@@ -60,16 +59,26 @@ class ReliefF(SelectorMixin, BaseEstimator):
 
                 class_indices = np.where(y == other_label)
                 X_class = X[class_indices]
-                prior_ratio = (other_class_prob / (1 - sample_class_prob))
-                self._update_weights(X_class, X_sample, feature_scale, prior_ratio=prior_ratio, hits=False)
+                prior_ratio = other_class_prob / (1 - sample_class_prob)
+                self._update_weights(
+                    X_class,
+                    X_sample,
+                    feature_scale,
+                    prior_ratio=prior_ratio,
+                    hits=False,
+                )
 
-    def _update_weights(self, X_class, X_sample, feature_scale, prior_ratio=1, hits=True):
+    def _update_weights(
+        self, X_class, X_sample, feature_scale, prior_ratio=1, hits=True
+    ):
         neighbor_indices = self._get_neighbors(X_class, X_sample)
         num_neighbors = len(neighbor_indices)
         distances = self._get_distances(num_neighbors)
         for i, neighbor_idx in enumerate(neighbor_indices):
             X_neighbor = X_class[neighbor_idx]
-            diff = self._get_differences(X_sample.reshape(-1), X_neighbor, feature_scale)
+            diff = self._get_differences(
+                X_sample.reshape(-1), X_neighbor, feature_scale
+            )
             update_values = prior_ratio * (diff / self.m) * distances[i]
             if hits:
                 self.weights_ -= update_values
@@ -84,7 +93,9 @@ class ReliefF(SelectorMixin, BaseEstimator):
             metric_params=self.metric_params,
         )
         nbrs.fit(X_class)
-        neighbor_indices = nbrs.kneighbors(X_sample, n_neighbors=self.k, return_distance=False)
+        neighbor_indices = nbrs.kneighbors(
+            X_sample, n_neighbors=self.k, return_distance=False
+        )
         return neighbor_indices.reshape(-1)
 
     def _get_differences(self, X_sample, X_neighbor, feature_scale):

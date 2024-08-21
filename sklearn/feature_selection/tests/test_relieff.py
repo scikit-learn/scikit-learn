@@ -1,7 +1,6 @@
-from sklearn.utils._testing import assert_allclose
-
 from sklearn.datasets import load_iris
 from sklearn.feature_selection._relieff import ReliefF
+from sklearn.utils._testing import assert_allclose
 
 
 def test_relieff_with_iris():
