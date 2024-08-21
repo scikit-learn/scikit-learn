@@ -119,3 +119,19 @@ cdef class TreeBuilder:
 #         intp_t n_nodes,
 #         int32_t *n_categories
 #     )
+
+# =============================================================================
+# Tree pruning
+# =============================================================================
+
+# The private function allows any external caller to prune the tree and return
+# a new tree with the pruned nodes. The pruned tree is a new tree object.
+#
+# .. warning:: this function is not backwards compatible and may change without
+#              notice.
+cdef void _build_pruned_tree(
+    Tree tree,  # OUT
+    Tree orig_tree,
+    const uint8_t[:] leaves_in_subtree,
+    intp_t capacity
+)

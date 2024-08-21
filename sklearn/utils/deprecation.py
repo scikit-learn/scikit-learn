@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import functools
 import warnings
 
@@ -97,7 +100,7 @@ class deprecated:
         msg = self.extra
 
         @property
-        @functools.wraps(prop)
+        @functools.wraps(prop.fget)
         def wrapped(*args, **kwargs):
             warnings.warn(msg, category=FutureWarning)
             return prop.fget(*args, **kwargs)
@@ -133,3 +136,28 @@ def _deprecate_Xt_in_inverse_transform(X, Xt):
         return Xt
 
     return X
+
+
+# TODO(1.8): remove force_all_finite and change the default value of ensure_all_finite
+# to True (remove None without deprecation).
+def _deprecate_force_all_finite(force_all_finite, ensure_all_finite):
+    """Helper to deprecate force_all_finite in favor of ensure_all_finite."""
+    if force_all_finite != "deprecated":
+        warnings.warn(
+            "'force_all_finite' was renamed to 'ensure_all_finite' in 1.6 and will be "
+            "removed in 1.8.",
+            FutureWarning,
+        )
+
+        if ensure_all_finite is not None:
+            raise ValueError(
+                "'force_all_finite' and 'ensure_all_finite' cannot be used together. "
+                "Pass `ensure_all_finite` only."
+            )
+
+        return force_all_finite
+
+    if ensure_all_finite is None:
+        return True
+
+    return ensure_all_finite

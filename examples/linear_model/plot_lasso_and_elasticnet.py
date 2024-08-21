@@ -21,7 +21,8 @@ score, the fitting time and the sparsity of the estimated coefficients when
 compared with the ground-truth.
 """
 
-# Author: Arturo Amor <david-arturo.amor-quiroz@inria.fr>
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Generate synthetic dataset
