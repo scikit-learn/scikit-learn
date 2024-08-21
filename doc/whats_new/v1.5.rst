@@ -13,6 +13,30 @@ For a short description of the main highlights of the release, please refer to
 
 .. include:: changelog_legend.inc
 
+.. _changes_1_5_2:
+
+Version 1.5.2
+=============
+
+**release date of 1.5.2**
+
+Changelog
+---------
+
+:mod:`sklearn.calibration`
+..........................
+
+- |Fix| Raise error when :class:`~sklearn.model_selection.LeaveOneOut` used in
+  `cv`, matching what would happen if `KFold(n_splits=n_samples)` was used.
+  :pr:`29545` by :user:`Lucy Liu <lucyleeow>`
+
+:mod:`sklearn.compose`
+......................
+
+- |Fix| Fixed :class:`compose.TransformedTargetRegressor` not to raise `UserWarning` if
+  transform output is set to `pandas` or `polars`, since it isn't a transformer.
+  :pr:`29401` by :user:`Stefanie Senger <StefanieSenger>`.
+
 .. _changes_1_5_1:
 
 Version 1.5.1

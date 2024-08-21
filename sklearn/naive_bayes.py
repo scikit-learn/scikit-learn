@@ -6,6 +6,7 @@ These are supervised learning methods based on applying Bayes' theorem with stro
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
+
 import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
@@ -1420,14 +1421,14 @@ class CategoricalNB(_BaseDiscreteNB):
     def _check_X(self, X):
         """Validate X, used only in predict* methods."""
         X = self._validate_data(
-            X, dtype="int", accept_sparse=False, force_all_finite=True, reset=False
+            X, dtype="int", accept_sparse=False, ensure_all_finite=True, reset=False
         )
         check_non_negative(X, "CategoricalNB (input X)")
         return X
 
     def _check_X_y(self, X, y, reset=True):
         X, y = self._validate_data(
-            X, y, dtype="int", accept_sparse=False, force_all_finite=True, reset=reset
+            X, y, dtype="int", accept_sparse=False, ensure_all_finite=True, reset=reset
         )
         check_non_negative(X, "CategoricalNB (input X)")
         return X, y

@@ -292,6 +292,35 @@ The project would like to thank the following funders.
 
 ...........
 
+.. |czi| image:: images/czi.png
+  :target: https://chanzuckerberg.com
+
+.. |wellcome| image:: images/wellcome-trust.png
+  :target: https://wellcome.org/
+
+.. div:: sk-text-image-grid-small
+
+  .. div:: text-box
+
+    `The Chan-Zuckerberg Initiative <https://chanzuckerberg.com/>`_ and
+    `Wellcome Trust <https://wellcome.org/>`_ fund scikit-learn through the
+    `Essential Open Source Software for Science (EOSS) <https://chanzuckerberg.com/eoss/>`_
+    cycle 6.
+
+    It supports Lucy Liu and diversity & inclusion initiatives that will
+    be announced in the future.
+
+  .. div:: image-box
+
+    .. table::
+      :class: image-subtable
+
+      +----------+----------------+
+      |  |czi|   |    |wellcome|  |
+      +----------+----------------+
+
+...........
+
 .. div:: sk-text-image-grid-small
 
   .. div:: text-box
@@ -455,7 +484,7 @@ Past Sponsors
 
   .. div:: image-box
 
-    .. image:: images/czi_logo.svg
+    .. image:: images/czi.png
       :target: https://chanzuckerberg.com
 
 ......................
@@ -545,25 +574,15 @@ the past:
 
     |hf|
 
-Sprints
--------
+Coding Sprints
+--------------
 
-- The International 2019 Paris sprint was kindly hosted by `AXA <https://www.axa.fr/>`_.
-  Also some participants could attend thanks to the support of the `Alfred P.
-  Sloan Foundation <https://sloan.org>`_, the `Python Software
-  Foundation <https://www.python.org/psf/>`_ (PSF) and the `DATAIA Institute
-  <https://dataia.eu/en>`_.
-
-- The 2013 International Paris Sprint was made possible thanks to the support of
-  `Télécom Paristech <https://www.telecom-paristech.fr/>`_, `tinyclues
-  <https://www.tinyclues.com/>`_, the `French Python Association
-  <https://www.afpy.org/>`_ and the `Fonds de la Recherche Scientifique
-  <https://www.frs-fnrs.be>`_.
-
-- The 2011 International Granada sprint was made possible thanks to the support
-  of the `PSF <https://www.python.org/psf/>`_ and `tinyclues
-  <https://www.tinyclues.com/>`_.
-
+The scikit-learn project has a long history of `open source coding sprints
+<https://blog.scikit-learn.org/events/sprints-value/>`_ with over 50 sprint
+events from 2010 to present day. There are scores of sponsors who contributed
+to costs which include venue, food, travel, developer time and more. See
+`scikit-learn sprints <https://blog.scikit-learn.org/sprints/>`_ for a full
+list of events.
 
 Donating to the project
 -----------------------
