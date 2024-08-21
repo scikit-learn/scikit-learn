@@ -216,6 +216,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
                 X.shape[0], self.subsample, p=sample_weight_bin, replace=False
             )
             X = X.take(subset, axis=0)
+            # TO DO: add switch so that weighted percentile is not used
 
         if self.is_categorical is None:
             self.is_categorical_ = np.zeros(X.shape[1], dtype=np.uint8)
