@@ -17,7 +17,7 @@ from ..linear_model import ridge_regression
 from ..utils import check_random_state
 from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils.extmath import svd_flip
-from ..utils.validation import check_array, check_is_fitted
+from ..utils.validation import check_array, check_is_fitted, validate_data
 from ._dict_learning import MiniBatchDictionaryLearning, dict_learning
 
 
@@ -78,7 +78,7 @@ class _BaseSparsePCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
             Returns the instance itself.
         """
         random_state = check_random_state(self.random_state)
-        X = self._validate_data(X)
+        X = validate_data(self, X)
 
         self.mean_ = X.mean(axis=0)
         X = X - self.mean_
@@ -113,7 +113,7 @@ class _BaseSparsePCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
         X = X - self.mean_
 
         U = ridge_regression(

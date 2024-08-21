@@ -44,6 +44,7 @@ from ..utils.validation import (
     _check_method_params,
     _check_sample_weight,
     check_is_fitted,
+    validate_data,
 )
 from ._base import BaseEstimator, LinearClassifierMixin, SparseCoefMixin
 from ._glm.glm import NewtonCholeskySolver
@@ -1215,7 +1216,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         else:
             _dtype = [np.float64, np.float32]
 
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse="csr",
@@ -1860,7 +1862,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
             l1_ratios_ = [None]
 
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse="csr",

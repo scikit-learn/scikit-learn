@@ -22,6 +22,7 @@ from ..utils.validation import (
     _num_samples,
     check_consistent_length,
     check_is_fitted,
+    validate_data,
 )
 from . import _liblinear as liblinear  # type: ignore
 
@@ -190,7 +191,8 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         if callable(self.kernel):
             check_consistent_length(X, y)
         else:
-            X, y = self._validate_data(
+            X, y = validate_data(
+                self,
                 X,
                 y,
                 dtype=np.float64,
@@ -606,7 +608,8 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
 
         if not callable(self.kernel):
-            X = self._validate_data(
+            X = validate_data(
+                self,
                 X,
                 accept_sparse="csr",
                 dtype=np.float64,

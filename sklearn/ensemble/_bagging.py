@@ -43,6 +43,7 @@ from ..utils.validation import (
     _deprecate_positional_args,
     check_is_fitted,
     has_fit_parameter,
+    validate_data,
 )
 from ._base import BaseEnsemble, _partition_estimators
 
@@ -386,7 +387,8 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         _raise_for_params(fit_params, self, "fit")
 
         # Convert data (X is required to be 2d and indexable)
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse=["csr", "csc"],
@@ -937,7 +939,8 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         """
         check_is_fitted(self)
         # Check data
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=["csr", "csc"],
             dtype=None,
@@ -987,7 +990,8 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         check_is_fitted(self)
         if hasattr(self.estimator_, "predict_log_proba"):
             # Check data
-            X = self._validate_data(
+            X = validate_data(
+                self,
                 X,
                 accept_sparse=["csr", "csc"],
                 dtype=None,
@@ -1042,7 +1046,8 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         check_is_fitted(self)
 
         # Check data
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=["csr", "csc"],
             dtype=None,
@@ -1275,7 +1280,8 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         """
         check_is_fitted(self)
         # Check data
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=["csr", "csc"],
             dtype=None,

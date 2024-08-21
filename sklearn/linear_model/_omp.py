@@ -23,6 +23,7 @@ from ..utils.metadata_routing import (
     process_routing,
 )
 from ..utils.parallel import Parallel, delayed
+from ..utils.validation import validate_data
 from ._base import LinearModel, _pre_fit
 
 premature = (
@@ -768,7 +769,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             Returns an instance of self.
         """
-        X, y = self._validate_data(X, y, multi_output=True, y_numeric=True)
+        X, y = validate_data(self, X, y, multi_output=True, y_numeric=True)
         n_features = X.shape[1]
 
         X, y, X_offset, y_offset, X_scale, Gram, Xy = _pre_fit(
@@ -1055,7 +1056,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         """
         _raise_for_params(fit_params, self, "fit")
 
-        X, y = self._validate_data(X, y, y_numeric=True, ensure_min_features=2)
+        X, y = validate_data(self, X, y, y_numeric=True, ensure_min_features=2)
         X = as_float_array(X, copy=False, ensure_all_finite=False)
         cv = check_cv(self.cv, classifier=False)
         if _routing_enabled():

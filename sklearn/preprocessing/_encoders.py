@@ -15,7 +15,12 @@ from ..utils._mask import _get_mask
 from ..utils._missing import is_scalar_nan
 from ..utils._param_validation import Interval, RealNotInt, StrOptions
 from ..utils._set_output import _get_output_config
-from ..utils.validation import _check_feature_names_in, check_is_fitted
+from ..utils.validation import (
+    _check_feature_names,
+    _check_feature_names_in,
+    _check_n_features,
+    check_is_fitted,
+)
 
 __all__ = ["OneHotEncoder", "OrdinalEncoder"]
 
@@ -73,8 +78,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         return_and_ignore_missing_for_infrequent=False,
     ):
         self._check_infrequent_enabled()
-        self._check_n_features(X, reset=True)
-        self._check_feature_names(X, reset=True)
+        _check_n_features(self, X, reset=True)
+        _check_feature_names(self, X, reset=True)
         X_list, n_samples, n_features = self._check_X(
             X, ensure_all_finite=ensure_all_finite
         )
@@ -193,8 +198,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         X_list, n_samples, n_features = self._check_X(
             X, ensure_all_finite=ensure_all_finite
         )
-        self._check_feature_names(X, reset=False)
-        self._check_n_features(X, reset=False)
+        _check_feature_names(self, X, reset=False)
+        _check_n_features(self, X, reset=False)
 
         X_int = np.zeros((n_samples, n_features), dtype=int)
         X_mask = np.ones((n_samples, n_features), dtype=bool)
