@@ -144,7 +144,7 @@ Changelog
   :pr:`29135` by :user:`Xuefeng Xu <xuefeng-xu>`.
 
 :mod:`sklearn.linear_model`
-...........................
+............................
 -|Fix| :class:`linear_model.LogisticRegressionCV` Fixed sample weight handling for calculation
   of test scores under  _log_reg_scoring_path :pr:`29419` by :user:`Shruti Nath <snath-xoc>`.
 
