@@ -834,7 +834,9 @@ def test_logistic_regression_sample_weights(problem, solver, global_random_seed)
     assert_allclose(clf_sw_weighted.coef_, clf_sw_repeated.coef_, rtol=1e-5, atol=1e-8)
 
 
-@pytest.mark.parametrize("solver", ("lbfgs", "liblinear"))
+@pytest.mark.parametrize(
+    "solver", ("lbfgs", "newton-cg", "newton-cholesky", "sag", "saga")
+)
 def test_logistic_regression_solver_class_weights(solver, global_random_seed):
     # Test that passing class_weight as [1,2] is the same as
     # passing class weight = [1,1] but adjusting sample weights
@@ -853,7 +855,7 @@ def test_logistic_regression_solver_class_weights(solver, global_random_seed):
     kw_weighted = {
         "random_state": global_random_seed,
         "fit_intercept": False,
-        "max_iter": 10_000,
+        "max_iter": 100_000,
         "tol": 1e-8,
     }
     clf_cw_12 = LogisticRegression(
@@ -862,10 +864,10 @@ def test_logistic_regression_solver_class_weights(solver, global_random_seed):
     clf_cw_12.fit(X, y)
     clf_sw_12 = LogisticRegression(solver=solver, **kw_weighted)
     clf_sw_12.fit(X, y, sample_weight=sample_weight)
-    assert_allclose(clf_cw_12.coef_, clf_sw_12.coef_, rtol=1e-4)
+    assert_allclose(clf_cw_12.coef_, clf_sw_12.coef_, atol=1e-6)
 
 
-def test_logistic_regression_l1l2_liblinear(global_random_seed):
+def test_sample_and_class_weight_equivalence_liblinear(global_random_seed):
     # Test the above for l1 penalty and l2 penalty with dual=True.
     # since the patched liblinear code is different.
 
@@ -885,7 +887,7 @@ def test_logistic_regression_l1l2_liblinear(global_random_seed):
         class_weight={0: 1, 1: 2},
         penalty="l1",
         max_iter=10_000,
-        tol=1e-5,
+        tol=1e-12,
         random_state=global_random_seed,
     )
     clf_cw.fit(X, y)
@@ -894,11 +896,11 @@ def test_logistic_regression_l1l2_liblinear(global_random_seed):
         fit_intercept=False,
         penalty="l1",
         max_iter=10_000,
-        tol=1e-5,
+        tol=1e-12,
         random_state=global_random_seed,
     )
     clf_sw.fit(X, y, sample_weight)
-    assert_array_almost_equal(clf_cw.coef_, clf_sw.coef_, decimal=4)
+    assert_allclose(clf_cw.coef_, clf_sw.coef_, atol=1e-10)
 
     clf_cw = LogisticRegression(
         solver="liblinear",
@@ -906,7 +908,7 @@ def test_logistic_regression_l1l2_liblinear(global_random_seed):
         class_weight={0: 1, 1: 2},
         penalty="l2",
         max_iter=10_000,
-        tol=1e-5,
+        tol=1e-12,
         dual=True,
         random_state=global_random_seed,
     )
@@ -916,12 +918,12 @@ def test_logistic_regression_l1l2_liblinear(global_random_seed):
         fit_intercept=False,
         penalty="l2",
         max_iter=10_000,
-        tol=1e-5,
+        tol=1e-12,
         dual=True,
         random_state=global_random_seed,
     )
     clf_sw.fit(X, y, sample_weight)
-    assert_array_almost_equal(clf_cw.coef_, clf_sw.coef_, decimal=4)
+    assert_allclose(clf_cw.coef_, clf_sw.coef_, atol=1e-10)
 
 
 def _compute_class_weight_dictionary(y):
