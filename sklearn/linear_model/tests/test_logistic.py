@@ -781,7 +781,7 @@ def test_logistic_regressioncv_class_weights(weight, class_weight, global_random
     "solver", ("lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag", "saga")
 )
 def test_logistic_regression_sample_weights(problem, solver, global_random_seed):
-    n_samples_per_cv_group = 100
+    n_samples_per_cv_group = 200
     n_cv_groups = 3
 
     X, y = make_classification(
@@ -789,6 +789,7 @@ def test_logistic_regression_sample_weights(problem, solver, global_random_seed)
         n_features=5,
         n_informative=3,
         n_classes=2,
+        n_redundant=0,
         random_state=global_random_seed,
     )
     rng = np.random.RandomState(global_random_seed)
@@ -797,11 +798,11 @@ def test_logistic_regression_sample_weights(problem, solver, global_random_seed)
     kw_weighted = {
         "random_state": global_random_seed,
         "fit_intercept": False,
-        "max_iter": 100_000,
+        "max_iter": 100_000 if solver.startswith("sag") else 1_000,
         "tol": 1e-8,
     }
     kw_repeated = kw_weighted.copy()
-    sw[:n_samples_per_cv_group] = rng.randint(0, 5, size=100)
+    sw[:n_samples_per_cv_group] = rng.randint(0, 5, size=n_samples_per_cv_group)
     X_repeated = np.repeat(X, sw.astype(int), axis=0)
     y_repeated = np.repeat(y, sw.astype(int), axis=0)
 
@@ -831,7 +832,7 @@ def test_logistic_regression_sample_weights(problem, solver, global_random_seed)
 
     if problem == "cv":
         assert_allclose(clf_sw_weighted.scores_[1], clf_sw_repeated.scores_[1])
-    assert_allclose(clf_sw_weighted.coef_, clf_sw_repeated.coef_, rtol=1e-5, atol=1e-8)
+    assert_allclose(clf_sw_weighted.coef_, clf_sw_repeated.coef_, atol=1e-5)
 
 
 @pytest.mark.parametrize(
