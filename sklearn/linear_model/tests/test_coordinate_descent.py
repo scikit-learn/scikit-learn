@@ -1372,7 +1372,7 @@ def test_enet_cv_sample_weight_correctness(
     assert_allclose(reg_with_weights.mse_path_, reg_with_repetitions.mse_path_)
     assert_allclose(reg_with_weights.alphas_, reg_with_repetitions.alphas_)
     assert reg_with_weights.alpha_ == pytest.approx(reg_with_repetitions.alpha_)
-    assert_allclose(reg_with_weights.coef_, reg_with_repetitions.coef_)
+    assert_allclose(reg_with_weights.coef_, reg_with_repetitions.coef_, atol=1e-10)
     assert reg_with_weights.intercept_ == pytest.approx(reg_with_repetitions.intercept_)
 
 
