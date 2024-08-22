@@ -55,6 +55,7 @@ cdef class DatasetsPair{{name_suffix}}:
         cls,
         X,
         Y,
+        precomputed = None
         metric="euclidean",
         dict metric_kwargs=None,
     ) -> DatasetsPair{{name_suffix}}:
@@ -71,6 +72,9 @@ cdef class DatasetsPair{{name_suffix}}:
             Input data.
             If provided as a ndarray, it must be C-contiguous.
             If provided as a sparse matrix, it must be in CSR format.
+
+        precomputed : ndarray of shape (n_samples_X, n_samples_Y) 
+            Precomputed distance if provided.
 
         metric : str or DistanceMetric object, default='euclidean'
             The distance metric to compute between rows of X and Y.
@@ -98,6 +102,9 @@ cdef class DatasetsPair{{name_suffix}}:
             metric_kwargs = copy.copy(metric_kwargs)
             metric_kwargs.pop("X_norm_squared", None)
             metric_kwargs.pop("Y_norm_squared", None)
+        if precomputed is not None:
+            # where do I initialize this? 
+            return precomputed
      
        
             
@@ -183,7 +190,7 @@ cdef class PrecomputedDistanceMatrix{{name_suffix}}(DatasetsPair{{name_suffix}})
     ):
         super().__init__(
             distance_metric={{DistanceMetric}}(),
-            n_features=0,  #what is n_features? aren't there more we need to take in?
+            n_features=0,  
         )
         # Arrays have already been checked
         self.precomputed_distance = precomputed_distance
