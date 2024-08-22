@@ -1932,8 +1932,9 @@ class ShuffleSplit(_UnsupportedGroupCVMixin, BaseShuffleSplit):
     Yields indices to split data into training and test sets.
 
     Note: contrary to other cross-validation strategies, random splits
-    do not guarantee that test sets across all folds will be different,
-    although this is still very likely for sizeable datasets.
+    do not guarantee that test sets across all folds will be mutually exclusive,
+    and might include overlapping samples. However, this is still very likely for
+    sizeable datasets.
 
     Read more in the :ref:`User Guide <ShuffleSplit>`.
 
@@ -2050,8 +2051,9 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
     ``GroupShuffleSplit(test_size=10, n_splits=100)``.
 
     Contrary to other cross-validation strategies, the random splits
-    do not guarantee that test sets across all folds will be different,
-    although this is still very likely for sizeable datasets.
+    do not guarantee that test sets across all folds will be mutually exclusive,
+    and might include overlapping samples. However, this is still very likely for
+    sizeable datasets.
 
     Note: The parameters ``test_size`` and ``train_size`` refer to groups, and
     not to samples as in :class:`ShuffleSplit`.
@@ -2185,8 +2187,9 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     are made by preserving the percentage of samples for each class.
 
     Note: like the :class:`ShuffleSplit` strategy, stratified random splits
-    do not guarantee that test sets across all folds will be different,
-    although this is still very likely for sizeable datasets.
+    do not guarantee that test sets across all folds will be mutually exclusive,
+    and might include overlapping samples. However, this is still very likely for
+    sizeable datasets.
 
     Read more in the :ref:`User Guide <stratified_shuffle_split>`.
 
