@@ -535,7 +535,7 @@ def test_get_namespace_and_device():
     namespace, is_array_api, device = get_namespace_and_device(some_torch_tensor)
     assert namespace is get_namespace(some_numpy_array)[0]
     assert not is_array_api
-    assert device is None
+    assert device.type == "cpu"
 
     # Otherwise, expose the torch namespace and device via array API compat
     # wrapper.
