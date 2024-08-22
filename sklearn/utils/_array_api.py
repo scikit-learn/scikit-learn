@@ -450,12 +450,12 @@ class _NumPyAPIWrapper:
 _NUMPY_API_WRAPPER_INSTANCE = _NumPyAPIWrapper()
 
 
-def _remove_non_arrays(
-    *arrays, remove_none=True, remove_types=(str,), remove_sparse=False
-):
+def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
     """Filter arrays to exclude None and/or specific types.
 
     Raise ValueError if no arrays are left after filtering.
+
+    Sparse arrays are always filtered out.
 
     Parameters
     ----------
@@ -468,12 +468,11 @@ def _remove_non_arrays(
     remove_types : tuple or list, default=(str,)
         Types to ignore in the arrays.
 
-    remove_sparse : book, default=False
-        Whether to ignore sparse arrays.
     Returns
     -------
     filtered_arrays : list
-        List of arrays with None and typoe
+        List of arrays filtered as requested. An empty list is returned if no input
+        passes the filters.
     """
     filtered_arrays = []
     remove_types = tuple(remove_types)
@@ -482,20 +481,20 @@ def _remove_non_arrays(
             continue
         if isinstance(array, remove_types):
             continue
-        if remove_sparse and sp.issparse(array):
+        if sp.issparse(array):
             continue
         filtered_arrays.append(array)
 
     return filtered_arrays
 
 
-def get_namespace(
-    *arrays, remove_none=True, remove_types=(str,), remove_sparse=False, xp=None
-):
+def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     """Get namespace of arrays.
 
     Introspect `arrays` arguments and return their common Array API compatible
     namespace object, if any.
+
+    Note that sparse arrays are filtered by default.
 
     See: https://numpy.org/neps/nep-0047-array-api-standard.html
 
@@ -526,9 +525,6 @@ def get_namespace(
     remove_types : tuple or list, default=(str,)
         Types to ignore in the arrays.
 
-    remove_sparse : book, default=False
-        Whether to ignore sparse arrays.
-
     xp : module, default=None
         Precomputed array namespace module. When passed, typically from a caller
         that has already performed inspection of its own inputs, skips array
@@ -543,6 +539,9 @@ def get_namespace(
     is_array_api_compliant : bool
         True if the arrays are containers that implement the Array API spec.
         Always False when array_api_dispatch=False.
+
+    Note that if no arrays pass the set filters, ``_NUMPY_API_WRAPPER_INSTANCE, False``
+    is returned.
     """
     array_api_dispatch = get_config()["array_api_dispatch"]
     if not array_api_dispatch:
@@ -558,7 +557,6 @@ def get_namespace(
         *arrays,
         remove_none=remove_none,
         remove_types=remove_types,
-        remove_sparse=remove_sparse,
     )
 
     if not arrays:
@@ -582,9 +580,7 @@ def get_namespace(
     return namespace, is_array_api_compliant
 
 
-def get_namespace_and_device(
-    *array_list, remove_none=True, remove_types=(str,), remove_sparse=False
-):
+def get_namespace_and_device(*array_list, remove_none=True, remove_types=(str,)):
     """Combination into one single function of `get_namespace` and `device`.
 
     Parameters
@@ -595,8 +591,6 @@ def get_namespace_and_device(
         Whether to ignore None objects passed in arrays.
     remove_types : tuple or list, default=(str,)
         Types to ignore in the arrays.
-    remove_sparse : book, default=False
-        Whether to ignore sparse arrays.
 
     Returns
     -------
@@ -613,7 +607,6 @@ def get_namespace_and_device(
         *array_list,
         remove_none=remove_none,
         remove_types=remove_types,
-        remove_sparse=remove_sparse,
     )
 
     skip_remove_kwargs = dict(remove_none=False, remove_types=[])
