@@ -104,13 +104,8 @@ cdef class DatasetsPair{{name_suffix}}:
             metric_kwargs.pop("Y_norm_squared", None)
         if precomputed is not None:
             # where do I initialize this? 
-            return precomputed
+            return PrecomputedDistanceMatrix{{name_suffix}}(precomputed)
      
-       
-            
-            
-            
-
         cdef:
             {{DistanceMetric}} distance_metric = DistanceMetric.get_metric(
                 metric,
@@ -174,19 +169,16 @@ cdef class DatasetsPair{{name_suffix}}:
 
 @final
 cdef class PrecomputedDistanceMatrix{{name_suffix}}(DatasetsPair{{name_suffix}}):
-    """A precomputed distance matrix between row vectors of two arrays.
-    Its abstract class is DatasetsPair
-
-    Parameters
-   
-    ----------
-    Must receive precomputed_distance: ndarray of shape (n_samples_X, n_samples_Y)
+    """A subclass of DatasetsPair 
+    
+    Parameters: must receive precomputed_distance: ndarray of shape
+        (n_samples_X, n_samples_Y),
         Must be C-contiguous. 
     """
 
     def __init__(
         self,
-        const {{INPUT_DTYPE_t}}[:, ::1] precomputed_distance,  # do we break it up into 64 and 32?
+        const {{INPUT_DTYPE_t}}[:, ::1] precomputed_distance,  
     ):
         super().__init__(
             distance_metric={{DistanceMetric}}(),
