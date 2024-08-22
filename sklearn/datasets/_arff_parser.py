@@ -1,5 +1,8 @@
 """Implementation of ARFF parsers: via LIAC-ARFF and pandas."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import itertools
 import re
 from collections import OrderedDict

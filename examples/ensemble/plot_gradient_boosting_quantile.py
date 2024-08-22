@@ -10,6 +10,9 @@ for an example showcasing some other features of
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Generate some data for a synthetic regression problem by applying the
 # function f to uniformly sampled random inputs.

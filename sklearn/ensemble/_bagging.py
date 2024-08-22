@@ -391,7 +391,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             y,
             accept_sparse=["csr", "csc"],
             dtype=None,
-            force_all_finite=False,
+            ensure_all_finite=False,
             multi_output=True,
         )
 
@@ -941,7 +941,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             X,
             accept_sparse=["csr", "csc"],
             dtype=None,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
 
@@ -991,7 +991,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
                 X,
                 accept_sparse=["csr", "csc"],
                 dtype=None,
-                force_all_finite=False,
+                ensure_all_finite=False,
                 reset=False,
             )
 
@@ -1046,7 +1046,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             X,
             accept_sparse=["csr", "csc"],
             dtype=None,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
 
@@ -1279,7 +1279,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
             X,
             accept_sparse=["csr", "csc"],
             dtype=None,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
 

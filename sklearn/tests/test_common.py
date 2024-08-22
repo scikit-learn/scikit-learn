@@ -196,7 +196,10 @@ def test_class_weight_balanced_linear_classifiers(name, Classifier):
 
 
 @pytest.mark.xfail(_IS_WASM, reason="importlib not supported for Pyodide packages")
-@ignore_warnings
+@pytest.mark.filterwarnings(
+    "ignore:Since version 1.0, it is not needed to import "
+    "enable_hist_gradient_boosting anymore"
+)
 def test_import_all_consistency():
     sklearn_path = [os.path.dirname(sklearn.__file__)]
     # Smoke test to check that any name in a __all__ list is actually defined
