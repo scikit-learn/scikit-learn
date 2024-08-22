@@ -514,6 +514,9 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     always returned irrespective of the fact that arrays implement the
     `__array_namespace__` protocol or not.
 
+    Note that if no arrays pass the set filters, ``_NUMPY_API_WRAPPER_INSTANCE, False``
+    is returned.
+
     Parameters
     ----------
     *arrays : array objects
@@ -539,9 +542,6 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     is_array_api_compliant : bool
         True if the arrays are containers that implement the Array API spec.
         Always False when array_api_dispatch=False.
-
-    Note that if no arrays pass the set filters, ``_NUMPY_API_WRAPPER_INSTANCE, False``
-    is returned.
     """
     array_api_dispatch = get_config()["array_api_dispatch"]
     if not array_api_dispatch:
