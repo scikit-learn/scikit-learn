@@ -594,7 +594,7 @@ def parametrize_with_checks(estimators, legacy=True):
     )
 
 
-def check_estimator(estimator=None, generate_only=False):
+def check_estimator(estimator=None, generate_only=False, legacy=True):
     """Check if estimator adheres to scikit-learn conventions.
 
     This function will run an extensive test-suite for input validation,
@@ -613,6 +613,11 @@ def check_estimator(estimator=None, generate_only=False):
     :func:`~sklearn.utils.estimator_checks.parametrize_with_checks`, making it
     easier to test multiple estimators.
 
+    Checks are categorised into the following groups:
+
+        - API checks: a set of checks to ensure API compatibility with scikit-learn
+        - legacy: a set of checks which gradually will be grouped into other categories
+
     Parameters
     ----------
     estimator : estimator object
@@ -629,6 +634,11 @@ def check_estimator(estimator=None, generate_only=False):
         `check(estimator)`.
 
         .. versionadded:: 0.22
+
+    legacy : bool (default=True)
+        Whether to include legacy checks.
+
+        .. versionadded:: 1.6
 
     Returns
     -------
@@ -659,7 +669,7 @@ def check_estimator(estimator=None, generate_only=False):
     name = type(estimator).__name__
 
     def checks_generator():
-        for check in _yield_all_checks(estimator):
+        for check in _yield_all_checks(estimator, legacy=legacy):
             check = _maybe_skip(estimator, check)
             yield estimator, partial(check, name)
 
