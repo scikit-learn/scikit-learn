@@ -595,3 +595,14 @@ def test_fill_or_add_to_diagonal(array_namespace, device_, dtype_name, wrap):
     _fill_or_add_to_diagonal(array_xp, value=1, xp=xp, add_value=False, wrap=wrap)
     numpy.fill_diagonal(array_np, val=1, wrap=wrap)
     assert_array_equal(_convert_to_numpy(array_xp, xp=xp), array_np)
+
+
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+@pytest.mark.parametrize("dispatch", [True, False])
+def test_sparse_device(csr_container, dispatch):
+    a, b = csr_container(numpy.array([1])), csr_container(numpy.array([2]))
+    with config_context(array_api_dispatch=dispatch):
+        assert device(a, b) is None
+        assert device(a, numpy.array([1])) == "cpu"
+        assert get_namespace_and_device(a, b)[2] is None
+        assert get_namespace_and_device(a, numpy.array([1]))[2] == "cpu"
