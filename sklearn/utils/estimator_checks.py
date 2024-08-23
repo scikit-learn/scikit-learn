@@ -3308,9 +3308,6 @@ def check_no_attributes_set_in_init(name, estimator_orig):
             f"Estimator {name} should store all parameters as an attribute during init."
         )
 
-    if hasattr(type(estimator).__init__, "deprecated_original"):
-        return
-
     init_params = _get_args(type(estimator).__init__)
     parents_init_params = [
         param

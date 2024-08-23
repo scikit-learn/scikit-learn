@@ -85,8 +85,7 @@ All built-in estimators also have a ``set_params`` method, which sets
 data-independent parameters (overriding previous parameter values passed
 to ``__init__``).
 
-All estimators in the main scikit-learn codebase should inherit from
-``sklearn.base.BaseEstimator``.
+All estimators should inherit from ``sklearn.base.BaseEstimator``.
 
 Instantiation
 ^^^^^^^^^^^^^
