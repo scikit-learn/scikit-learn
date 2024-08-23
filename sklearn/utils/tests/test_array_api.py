@@ -530,7 +530,7 @@ def test_get_namespace_and_device():
     some_numpy_array = numpy.arange(3)
 
     # When dispatch is disabled, get_namespace_and_device should return the
-    # default NumPy wrapper namespace and no device. Our code will handle such
+    # default NumPy wrapper namespace and "cpu" device. Our code will handle such
     # inputs via the usual __array__ interface without attempting to dispatch
     # via the array API.
     namespace, is_array_api, device = get_namespace_and_device(some_torch_tensor)
