@@ -21,8 +21,8 @@ At this stage, this support is **considered experimental** and must be enabled
 explicitly as explained in the following.
 
 .. note::
-    Currently, only `cupy.array_api`, `array-api-strict`, `cupy`, and `PyTorch`
-    are known to work with scikit-learn's estimators.
+    Currently, only `array-api-strict`, `cupy`, and `PyTorch` are known to work
+    with scikit-learn's estimators.
 
 Example usage
 =============

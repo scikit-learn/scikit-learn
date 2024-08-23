@@ -379,7 +379,10 @@ class _Scorer(_BaseScorer):
         pos_label = None if is_regressor(estimator) else self._get_pos_label()
         response_method = _check_response_method(estimator, self._response_method)
         y_pred = method_caller(
-            estimator, response_method.__name__, X, pos_label=pos_label
+            estimator,
+            _get_response_method_name(response_method),
+            X,
+            pos_label=pos_label,
         )
 
         scoring_kwargs = {**self._kwargs, **kwargs}
@@ -650,6 +653,13 @@ def _get_response_method(response_method, needs_threshold, needs_proba):
         response_method = "predict"
 
     return response_method
+
+
+def _get_response_method_name(response_method):
+    try:
+        return response_method.__name__
+    except AttributeError:
+        return _get_response_method_name(response_method.func)
 
 
 @validate_params(

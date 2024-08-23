@@ -462,6 +462,17 @@ def test_check_array():
     result = check_array(X_no_array)
     assert isinstance(result, np.ndarray)
 
+    # check negative values when ensure_non_negative=True
+    X_neg = check_array([[1, 2], [-3, 4]])
+    err_msg = "Negative values in data passed to X in RandomForestRegressor"
+    with pytest.raises(ValueError, match=err_msg):
+        check_array(
+            X_neg,
+            ensure_non_negative=True,
+            input_name="X",
+            estimator=RandomForestRegressor(),
+        )
+
 
 @pytest.mark.parametrize(
     "X",
@@ -1480,13 +1491,13 @@ def test_check_sample_weight():
     sample_weight = _check_sample_weight(None, X, dtype=X.dtype)
     assert sample_weight.dtype == np.float64
 
-    # check negative weight when only_non_negative=True
+    # check negative weight when ensure_non_negative=True
     X = np.ones((5, 2))
     sample_weight = np.ones(_num_samples(X))
     sample_weight[-1] = -10
     err_msg = "Negative values in data passed to `sample_weight`"
     with pytest.raises(ValueError, match=err_msg):
-        _check_sample_weight(sample_weight, X, only_non_negative=True)
+        _check_sample_weight(sample_weight, X, ensure_non_negative=True)
 
 
 @pytest.mark.parametrize("toarray", [np.array, sp.csr_matrix, sp.csc_matrix])
@@ -2000,10 +2011,9 @@ def test_pandas_array_returns_ndarray(input_values):
 
 
 @skip_if_array_api_compat_not_configured
-@pytest.mark.parametrize("array_namespace", ["array_api_strict", "cupy.array_api"])
-def test_check_array_array_api_has_non_finite(array_namespace):
+def test_check_array_array_api_has_non_finite():
     """Checks that Array API arrays checks non-finite correctly."""
-    xp = pytest.importorskip(array_namespace)
+    xp = pytest.importorskip("array_api_strict")
 
     X_nan = xp.asarray([[xp.nan, 1, 0], [0, xp.nan, 3]], dtype=xp.float32)
     with config_context(array_api_dispatch=True):

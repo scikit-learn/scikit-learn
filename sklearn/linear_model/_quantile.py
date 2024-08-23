@@ -103,7 +103,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     >>> from sklearn.utils.fixes import sp_version, parse_version
     >>> reg = QuantileRegressor(quantile=0.8).fit(X, y)
     >>> np.mean(y <= reg.predict(X))
-    0.8
+    np.float64(0.8)
     """
 
     _parameter_constraints: dict = {
