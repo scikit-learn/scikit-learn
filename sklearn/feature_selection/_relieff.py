@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numpy as np
 
 from sklearn.base import BaseEstimator
@@ -33,26 +36,25 @@ class ReliefF(SelectorMixin, BaseEstimator):
         )
         n_samples, n_features = X.shape[0], X.shape[1]
         random_state = check_random_state(self.random_state)
-        self.weights_ = np.zeros(n_features)
         random_samples = np.arange(n_samples)
         random_state.shuffle(random_samples)
         if self.m != "all":
             random_samples = random_samples[: self.m]
         else:
             self.m = n_samples
-        feature_scale = X.max(axis=0) - X.min(axis=0)
         values, counts = np.unique(y, return_counts=True)
         probabilities = counts / n_samples
         label_probs = dict(zip(values, probabilities))
-        X = (X - np.mean(X, axis=0)) / feature_scale
-
+        features_scale = X.max(axis=0) - X.min(axis=0)
+        X = (X - np.mean(X, axis=0)) / features_scale
+        self.weights_ = np.zeros(n_features)
         for i in random_samples:
             X_sample = X[i].reshape(1, -1)
             y_sample = y[i]
             sample_class_prob = label_probs[y_sample]
             matching_indices = np.where((y == y_sample) & (np.arange(n_samples) != i))
             X_hits = X[matching_indices]
-            self._update_weights(X_hits, X_sample, feature_scale)
+            self._update_weights(X_hits, X_sample)
             for other_label, other_class_prob in label_probs.items():
                 if other_label == y_sample:
                     continue
@@ -63,22 +65,17 @@ class ReliefF(SelectorMixin, BaseEstimator):
                 self._update_weights(
                     X_class,
                     X_sample,
-                    feature_scale,
                     prior_ratio=prior_ratio,
                     hits=False,
                 )
 
-    def _update_weights(
-        self, X_class, X_sample, feature_scale, prior_ratio=1, hits=True
-    ):
+    def _update_weights(self, X_class, X_sample, prior_ratio=1, hits=True):
         neighbor_indices = self._get_neighbors(X_class, X_sample)
         num_neighbors = len(neighbor_indices)
         distances = self._get_distances(num_neighbors)
         for i, neighbor_idx in enumerate(neighbor_indices):
             X_neighbor = X_class[neighbor_idx]
-            diff = self._get_differences(
-                X_sample.reshape(-1), X_neighbor, feature_scale
-            )
+            diff = self._get_differences(X_sample.reshape(-1), X_neighbor)
             update_values = prior_ratio * (diff / self.m) * distances[i]
             if hits:
                 self.weights_ -= update_values
@@ -98,7 +95,7 @@ class ReliefF(SelectorMixin, BaseEstimator):
         )
         return neighbor_indices.reshape(-1)
 
-    def _get_differences(self, X_sample, X_neighbor, feature_scale):
+    def _get_differences(self, X_sample, X_neighbor):
         return np.abs(X_sample - X_neighbor)
 
     def _get_distances(self, neighbor_count):
