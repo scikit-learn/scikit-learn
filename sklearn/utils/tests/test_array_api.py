@@ -600,7 +600,7 @@ def test_fill_or_add_to_diagonal(array_namespace, device_, dtype_name, wrap):
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 @pytest.mark.parametrize("dispatch", [True, False])
 def test_sparse_device(csr_container, dispatch):
-    a, b = csr_container(numpy.array([1])), csr_container(numpy.array([2]))
+    a, b = csr_container(numpy.array([[1]])), csr_container(numpy.array([[2]]))
     try:
         with config_context(array_api_dispatch=dispatch):
             assert device(a, b) is None
