@@ -46,7 +46,7 @@ class InputTags:
         Whether the estimator requires positive X.
 
     allow_nan : bool (default=False)
-        Whether the estimator supports data with missing values encoded as np.nan
+        Whether the estimator supports data with missing values encoded as np.nan.
 
     pairwise : bool (default=False)
         This boolean attribute indicates whether the data (`X`)
