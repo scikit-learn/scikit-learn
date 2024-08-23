@@ -60,6 +60,7 @@ from ._tags import (
 )
 from ._test_common.instance_generator import (
     CROSS_DECOMPOSITION,
+    INIT_PARAMS,
     _construct_instance,
     _get_check_estimator_ids,
 )
@@ -3256,11 +3257,11 @@ def check_estimator_repr(name, estimator_orig):
         raise AssertionError(f"Repr of {name} failed with error: {e}.") from e
 
 
-def check_parameters_default_constructible(name, Estimator):
+def check_parameters_default_constructible(name, estimator_orig):
     # test default-constructibility
     # get rid of deprecation warnings
 
-    Estimator = Estimator.__class__
+    Estimator = estimator_orig.__class__
 
     with ignore_warnings(category=FutureWarning):
         estimator = _construct_instance(Estimator)
@@ -3298,6 +3299,13 @@ def check_parameters_default_constructible(name, Estimator):
         params = estimator.get_params()
 
         for init_param in init_params:
+            if (
+                type(estimator) in INIT_PARAMS
+                and init_param.name in INIT_PARAMS[type(estimator)]
+            ):
+                # these parameters are coming from INIT_PARAMS and not the default
+                # values, therefore ignored.
+                continue
             assert (
                 init_param.default != init_param.empty
             ), "parameter %s for %s has no default value" % (

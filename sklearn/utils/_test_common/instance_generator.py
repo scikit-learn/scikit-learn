@@ -3,13 +3,11 @@
 
 
 import re
-import warnings
 from functools import partial
 from inspect import isfunction, signature
 from itertools import product
 
 from sklearn import config_context
-from sklearn.base import RegressorMixin
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.cluster import (
     HDBSCAN,
@@ -60,10 +58,12 @@ from sklearn.ensemble import (
     RandomTreesEmbedding,
     StackingClassifier,
     StackingRegressor,
+    VotingClassifier,
+    VotingRegressor,
 )
-from sklearn.exceptions import SkipTestWarning
 from sklearn.experimental import enable_halving_search_cv  # noqa
 from sklearn.feature_selection import (
+    RFE,
     RFECV,
     SelectFdr,
     SelectFromModel,
@@ -106,16 +106,27 @@ from sklearn.linear_model import (
 from sklearn.manifold import MDS, TSNE, LocallyLinearEmbedding, SpectralEmbedding
 from sklearn.mixture import BayesianGaussianMixture, GaussianMixture
 from sklearn.model_selection import (
+    FixedThresholdClassifier,
     GridSearchCV,
     HalvingGridSearchCV,
     HalvingRandomSearchCV,
     RandomizedSearchCV,
     TunedThresholdClassifierCV,
 )
-from sklearn.multioutput import ClassifierChain, RegressorChain
+from sklearn.multiclass import (
+    OneVsOneClassifier,
+    OneVsRestClassifier,
+    OutputCodeClassifier,
+)
+from sklearn.multioutput import (
+    ClassifierChain,
+    MultiOutputClassifier,
+    MultiOutputRegressor,
+    RegressorChain,
+)
 from sklearn.neighbors import NeighborhoodComponentsAnalysis
 from sklearn.neural_network import BernoulliRBM, MLPClassifier, MLPRegressor
-from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.pipeline import FeatureUnion, Pipeline, make_pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler, TargetEncoder
 from sklearn.random_projection import (
     GaussianRandomProjection,
@@ -301,51 +312,86 @@ def _generate_pipeline():
         )
 
 
+INIT_PARAMS = {
+    SelfTrainingClassifier: dict(estimator=LogisticRegression(C=1)),
+    CalibratedClassifierCV: dict(estimator=LogisticRegression(C=1)),
+    ClassifierChain: dict(base_estimator=LogisticRegression(C=1)),
+    ColumnTransformer: dict(transformers=[("trans1", StandardScaler(), [0])]),
+    FeatureUnion: dict(transformer_list=[("trans1", StandardScaler())]),
+    FixedThresholdClassifier: dict(estimator=LogisticRegression(C=1)),
+    GridSearchCV: dict(estimator=LogisticRegression(C=1), param_grid={"C": [1.0]}),
+    HalvingGridSearchCV: dict(
+        estimator=LogisticRegression(C=1), param_grid={"C": [1.0]}
+    ),
+    HalvingRandomSearchCV: dict(
+        estimator=LogisticRegression(C=1), param_distributions={"C": [1.0]}
+    ),
+    MultiOutputClassifier: dict(estimator=LogisticRegression(C=1)),
+    MultiOutputRegressor: dict(estimator=Ridge()),
+    OneVsOneClassifier: dict(estimator=LogisticRegression(C=1)),
+    OneVsRestClassifier: dict(estimator=LogisticRegression(C=1)),
+    OutputCodeClassifier: dict(estimator=LogisticRegression(C=1)),
+    Pipeline: dict(steps=[("scaler", StandardScaler()), ("est", Ridge())]),
+    RandomizedSearchCV: dict(
+        estimator=LogisticRegression(C=1), param_distributions={"C": [1.0]}
+    ),
+    # `RANSACRegressor` will raise an error with any model other
+    # than `LinearRegression` if we don't fix `min_samples` parameter.
+    # For common test, we can enforce using `LinearRegression` that
+    # is the default estimator in `RANSACRegressor` instead of `Ridge`.
+    RANSACRegressor: dict(estimator=LinearRegression()),
+    RegressorChain: dict(base_estimator=Ridge()),
+    RFECV: dict(estimator=LogisticRegression(C=1)),
+    RFE: dict(estimator=LogisticRegression(C=1)),
+    # Increases coverage because SGDRegressor has partial_fit
+    SelectFromModel: dict(estimator=SGDRegressor(random_state=0)),
+    SequentialFeatureSelector: dict(estimator=LogisticRegression(C=1)),
+    StackingClassifier: dict(
+        estimators=[
+            ("est1", DecisionTreeClassifier(max_depth=3, random_state=0)),
+            ("est2", DecisionTreeClassifier(max_depth=3, random_state=1)),
+        ]
+    ),
+    StackingRegressor: dict(
+        estimators=[
+            ("est1", DecisionTreeRegressor(max_depth=3, random_state=0)),
+            ("est2", DecisionTreeRegressor(max_depth=3, random_state=1)),
+        ]
+    ),
+    TunedThresholdClassifierCV: dict(estimator=LogisticRegression(C=1)),
+    VotingClassifier: dict(
+        estimators=[
+            ("est1", DecisionTreeClassifier(max_depth=3, random_state=0)),
+            ("est2", DecisionTreeClassifier(max_depth=3, random_state=1)),
+        ]
+    ),
+    VotingRegressor: dict(
+        estimators=[
+            ("est1", DecisionTreeRegressor(max_depth=3, random_state=0)),
+            ("est2", DecisionTreeRegressor(max_depth=3, random_state=1)),
+        ]
+    ),
+}
+
+
 def _construct_instance(Estimator):
     """Construct Estimator instance if possible."""
-    required_parameters = getattr(Estimator, "_required_parameters", [])
-    if len(required_parameters):
-        if required_parameters in (["estimator"], ["base_estimator"]):
-            # `RANSACRegressor` will raise an error with any model other
-            # than `LinearRegression` if we don't fix `min_samples` parameter.
-            # For common test, we can enforce using `LinearRegression` that
-            # is the default estimator in `RANSACRegressor` instead of `Ridge`.
-            if issubclass(Estimator, RANSACRegressor):
-                estimator = Estimator(LinearRegression())
-            elif issubclass(Estimator, RegressorMixin):
-                estimator = Estimator(Ridge())
-            elif issubclass(Estimator, SelectFromModel):
-                # Increases coverage because SGDRegressor has partial_fit
-                estimator = Estimator(SGDRegressor(random_state=0))
-            else:
-                estimator = Estimator(LogisticRegression(C=1))
-        elif required_parameters in (["estimators"],):
-            # Heterogeneous ensemble classes (i.e. stacking, voting)
-            if issubclass(Estimator, RegressorMixin):
-                estimator = Estimator(
-                    estimators=[
-                        ("est1", DecisionTreeRegressor(max_depth=3, random_state=0)),
-                        ("est2", DecisionTreeRegressor(max_depth=3, random_state=1)),
-                    ]
-                )
-            else:
-                estimator = Estimator(
-                    estimators=[
-                        ("est1", DecisionTreeClassifier(max_depth=3, random_state=0)),
-                        ("est2", DecisionTreeClassifier(max_depth=3, random_state=1)),
-                    ]
-                )
-        else:
-            msg = (
-                f"Can't instantiate estimator {Estimator.__name__} "
-                f"parameters {required_parameters}"
-            )
-            # raise additional warning to be shown by pytest
-            warnings.warn(msg, SkipTestWarning)
-            raise SkipTest(msg)
+    if Estimator in INIT_PARAMS:
+        estimator = Estimator(**INIT_PARAMS[Estimator])
     else:
         estimator = Estimator()
     return estimator
+    #     else:
+    #         msg = (
+    #             f"Can't instantiate estimator {Estimator.__name__} "
+    #             f"parameters {required_parameters}"
+    #         )
+    #         # raise additional warning to be shown by pytest
+    #         warnings.warn(msg, SkipTestWarning)
+    #         raise SkipTest(msg)
+    # else:
+    #     estimator = Estimator()
+    # return estimator
 
 
 def _get_check_estimator_ids(obj):
