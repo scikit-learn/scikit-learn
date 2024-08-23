@@ -276,9 +276,6 @@ TEST_PARAMS = {
 def _set_checking_parameters(estimator):
     # set parameters to speed up some estimators and
     # avoid deprecated behaviour
-    params = estimator.get_params()
-    name = estimator.__class__.__name__
-
     if type(estimator) in TEST_PARAMS:
         test_params = TEST_PARAMS[type(estimator)]
         estimator.set_params(**test_params)
