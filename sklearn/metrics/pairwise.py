@@ -1883,7 +1883,7 @@ def _dist_wrapper(dist_func, dist_matrix, slice_, *args, **kwargs):
 
 def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     """Break the pairwise matrix in n_jobs even slices
-    and compute them in parallel."""
+    and compute them using multithreading."""
 
     if Y is None:
         Y = X
@@ -2272,8 +2272,8 @@ def pairwise_distances(
 
     n_jobs : int, default=None
         The number of jobs to use for the computation. This works by breaking
-        down the pairwise matrix into n_jobs even slices and computing them in
-        parallel.
+        down the pairwise matrix into n_jobs even slices and computing them
+        using multithreading.
 
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -2517,8 +2517,8 @@ def pairwise_kernels(
 
     n_jobs : int, default=None
         The number of jobs to use for the computation. This works by breaking
-        down the pairwise matrix into n_jobs even slices and computing them in
-        parallel.
+        down the pairwise matrix into n_jobs even slices and computing them
+        using multithreading.
 
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
