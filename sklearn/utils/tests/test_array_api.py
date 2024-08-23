@@ -30,6 +30,7 @@ from sklearn.utils._array_api import (
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
+    SkipTest,
     _array_api_for_tests,
     assert_array_equal,
     skip_if_array_api_compat_not_configured,
