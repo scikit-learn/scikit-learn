@@ -601,8 +601,11 @@ def test_fill_or_add_to_diagonal(array_namespace, device_, dtype_name, wrap):
 @pytest.mark.parametrize("dispatch", [True, False])
 def test_sparse_device(csr_container, dispatch):
     a, b = csr_container(numpy.array([1])), csr_container(numpy.array([2]))
-    with config_context(array_api_dispatch=dispatch):
-        assert device(a, b) is None
-        assert device(a, numpy.array([1])) == "cpu"
-        assert get_namespace_and_device(a, b)[2] is None
-        assert get_namespace_and_device(a, numpy.array([1]))[2] == "cpu"
+    try:
+        with config_context(array_api_dispatch=dispatch):
+            assert device(a, b) is None
+            assert device(a, numpy.array([1])) == "cpu"
+            assert get_namespace_and_device(a, b)[2] is None
+            assert get_namespace_and_device(a, numpy.array([1]))[2] == "cpu"
+    except ImportError:
+        raise SkipTest("array_api_compat is not installed")
