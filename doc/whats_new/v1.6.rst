@@ -219,6 +219,13 @@ Changelog
   right child node as the tree is traversed.
   :pr:`28268` by :user:`Adam Li <adam2392>`.
 
+:mod:`sklearn.frozen`
+.....................
+
+- |Feature| :class:`~sklearn.frozen.FrozenEstimator` is now introduced which allows
+  freezing an estimator.
+  :pr:`29705` by `Adrin Jalali`_.
+
 :mod:`sklearn.impute`
 .....................
 

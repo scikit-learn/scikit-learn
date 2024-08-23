@@ -20,6 +20,38 @@ def _estimator_has(attr):
 
 
 class FrozenEstimator(BaseEstimator):
+    """Frozen estimator.
+
+    This meta-estimator takes an estimator and freezes it, in the sense that calling
+    `.fit` on it has no effect.
+
+    This is particularly useful when you have a fit or a pre-trained model as a
+    transformer in a pipeline, and you'd like `pipeline.fit` to have no effect on this
+    step.
+
+    Parameters
+    ----------
+    estimator : estimator
+        The estimator which is to be kept frozen.
+
+    See Also
+    --------
+    None: No siimlar entry in the scikit-learn documentation.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.frozen import FrozenEstimator
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> X, y = make_classification(random_state=0)
+    >>> clf = LogisticRegression(random_state=0).fit(X, y)
+    >>> frozen_clf = FrozenEstimator(clf)
+    >>> frozen_clf.fit(X, y)  # No-op
+    >>> frozen_clf.predict(X)  # Predictions from `clf.predict`
+    """
+
+    _required_parameters = ["estimator"]
+
     def __init__(self, estimator):
         self.estimator = estimator
 
@@ -35,10 +67,89 @@ class FrozenEstimator(BaseEstimator):
         return self
 
     def fit(self, X, y, *args, **kwargs):
-        # Fitting does not change the state of the estimator
+        """No-op.
+
+        As a frozen estimator, calling fit has no effect.
+
+        Parameters
+        ----------
+        X : object
+            Ignored.
+
+        y : object
+            Ignored.
+
+        *args : tuple
+            Additional positional arguments. Ignored, but present for API compatibility
+            with `self.estimator`.
+
+        **kwargs : dict
+            Additional keyword arguments. Ignored, but present for API compatibility
+            with `self.estimator`.
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
+        """
         return self
 
     @available_if(_estimator_has("fit_transform"))
     def fit_transform(self, X, y=None, *args, **kwargs):
+        """Call `estimator.transform`.
+
+        As a frozen estimator, the call to `fit` is skipped.
+
+        Parameters
+        ----------
+        X : object
+            Input data.
+
+        y : object
+            Ignored.
+
+        *args : tuple
+            Additional positional arguments. Ignored, but present for API compatibility
+            with `self.estimator`.
+
+        **kwargs : dict
+            Additional keyword arguments. Ignored, but present for API compatibility
+            with `self.estimator`.
+
+        Returns
+        -------
+        X_transformed : object
+            Transformed data.
+        """
         # fit_transform only transforms the data
-        return self.estimator.transform(X, y, *args, **kwargs)
+        return self.estimator.transform(X, *args, **kwargs)
+
+    @available_if(_estimator_has("fit_predict"))
+    def fit_predict(self, X, y=None, *args, **kwargs):
+        """Call `estimator.predict`.
+
+        As a frozen estimator, the call to `fit` is skipped.
+
+        Parameters
+        ----------
+        X : object
+            Input data.
+
+        y : object
+            Ignored.
+
+        *args : tuple
+            Additional positional arguments. Ignored, but present for API compatibility
+            with `self.estimator`.
+
+        **kwargs : dict
+            Additional keyword arguments. Ignored, but present for API compatibility
+            with `self.estimator`.
+
+        Returns
+        -------
+        y_pred : object
+            Predictions from `self.estimator.predict`.
+        """
+        # fit_transform only transforms the data
+        return self.estimator.predict(X, *args, **kwargs)

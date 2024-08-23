@@ -112,3 +112,35 @@ def test_frozen_metadata_routing():
     frozen["consumesmetadata"].set_predict_request(metadata=None)
     with pytest.raises(UnsetMetadataPassedError):
         frozen.predict(X, metadata="test")
+
+
+def test_composite_fit():
+    """Test that calling fit_transform and fit_predict doesn't call fit."""
+
+    class Estimator(BaseEstimator):
+        def fit(self, X, y):
+            self._counter = 1
+            return self
+
+        def predict(self, X):
+            return np.ones(len(X))
+
+        def transform(self, X):
+            return X
+
+        def fit_transform(self, X, y):
+            self._counter += 1
+            return X
+
+        def fit_predict(self, X):
+            self._counter += 1
+            return np.ones(len(X))
+
+    X, y = CLASSIFICATION_DATASET
+    est = Estimator().fit(X, y)
+    frozen = FrozenEstimator(est)
+
+    frozen.fit_predict(X, y)
+    frozen.fit_transform(X, y)
+
+    assert frozen._counter == 1
