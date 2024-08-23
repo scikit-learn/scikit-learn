@@ -51,6 +51,7 @@ from sklearn.semi_supervised import LabelPropagation, LabelSpreading
 from sklearn.utils import all_estimators
 from sklearn.utils._tags import _DEFAULT_TAGS, _safe_tags
 from sklearn.utils._test_common.instance_generator import (
+    _construct_instance,
     _generate_column_transformer_instances,
     _generate_pipeline,
     _generate_search_cv_instances,
@@ -151,12 +152,8 @@ def _tested_linear_classifiers():
 
     with warnings.catch_warnings(record=True):
         for name, clazz in classifiers:
-            required_parameters = getattr(clazz, "_required_parameters", [])
-            if len(required_parameters):
-                # FIXME
-                continue
-
-            if "class_weight" in clazz().get_params().keys() and issubclass(
+            instance = _construct_instance(clazz)
+            if "class_weight" in instance.get_params().keys() and issubclass(
                 clazz, LinearClassifierMixin
             ):
                 yield name, clazz

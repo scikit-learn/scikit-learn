@@ -87,6 +87,8 @@ def _yield_checks(estimator):
     name = estimator.__class__.__name__
     tags = _safe_tags(estimator)
 
+    yield check_estimator_cloneable
+    yield check_estimator_repr
     yield check_no_attributes_set_in_init
     yield check_estimators_dtypes
     yield check_fit_score_takes_y
@@ -3208,6 +3210,23 @@ def check_estimators_data_not_an_array(name, estimator_orig, X, y, obj_type):
     assert_allclose(pred1, pred2, atol=1e-2, err_msg=name)
 
 
+def check_estimator_cloneable(name, estimator_orig):
+    """Checks whether the estimator can be cloned."""
+    try:
+        clone(estimator_orig)
+    except Exception as e:
+        raise AssertionError(f"Cloning of {name} failed with error: {e}.") from e
+
+
+def check_estimator_repr(name, estimator_orig):
+    """Check that the estimator has a functioning repr."""
+    estimator = clone(estimator_orig)
+    try:
+        repr(estimator)
+    except Exception as e:
+        raise AssertionError(f"Repr of {name} failed with error: {e}.") from e
+
+
 def check_parameters_default_constructible(name, Estimator):
     # test default-constructibility
     # get rid of deprecation warnings
@@ -3216,10 +3235,6 @@ def check_parameters_default_constructible(name, Estimator):
 
     with ignore_warnings(category=FutureWarning):
         estimator = _construct_instance(Estimator)
-        # test cloning
-        clone(estimator)
-        # test __repr__
-        repr(estimator)
         # test that set_params returns self
         assert estimator.set_params() is estimator
 
@@ -3239,6 +3254,8 @@ def check_parameters_default_constructible(name, Estimator):
                     p.name != "self"
                     and p.kind != p.VAR_KEYWORD
                     and p.kind != p.VAR_POSITIONAL
+                    # and it should have a default value for this test
+                    and p.default != p.empty
                 )
 
             init_params = [
@@ -3250,8 +3267,6 @@ def check_parameters_default_constructible(name, Estimator):
             # true for mixins
             return
         params = estimator.get_params()
-        # they can need a non-default argument
-        init_params = init_params[len(getattr(estimator, "_required_parameters", [])) :]
 
         for init_param in init_params:
             assert (
