@@ -63,7 +63,7 @@ class InputTags:
         columns.
     """
 
-    one_d_array = False
+    one_d_array: bool = False
     two_d_array: bool = True
     three_d_array: bool = False
     one_d_labels = False
