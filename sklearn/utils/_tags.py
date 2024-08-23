@@ -49,7 +49,7 @@ class InputTags:
         Whether the estimator supports data with missing values encoded as np.nan.
 
     pairwise : bool (default=False)
-        This boolean attribute indicates whether the data (`X`)
+        This boolean attribute indicates whether the data (`X`),
         :term:`fit` and similar methods consists of pairwise measures
         over samples rather than a feature representation for each
         sample.  It is usually `True` where an estimator has a
