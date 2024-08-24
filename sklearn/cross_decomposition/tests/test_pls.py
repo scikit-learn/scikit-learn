@@ -404,12 +404,12 @@ def test_copy(Est):
 
     X_orig = X.copy()
     with pytest.raises(AssertionError):
-        pls.transform(X, Y, copy=False),
+        (pls.transform(X, Y, copy=False),)
         assert_array_almost_equal(X, X_orig)
 
     X_orig = X.copy()
     with pytest.raises(AssertionError):
-        pls.predict(X, copy=False),
+        (pls.predict(X, copy=False),)
         assert_array_almost_equal(X, X_orig)
 
     # Make sure copy=True gives same transform and predictions as predict=False
@@ -476,6 +476,17 @@ def test_n_components_upper_bounds(Estimator):
     Y = rng.randn(10, 3)
     est = Estimator(n_components=10)
     err_msg = "`n_components` upper bound is .*. Got 10 instead. Reduce `n_components`."
+    with pytest.raises(ValueError, match=err_msg):
+        est.fit(X, Y)
+
+
+def test_n_components_upper_PLSRegression():
+    """Check the validation of `n_components` upper bounds for PLSRegression."""
+    rng = np.random.RandomState(0)
+    X = rng.randn(20, 64)
+    Y = rng.randn(20, 3)
+    est = PLSRegression(n_components=30)
+    err_msg = "`n_components` upper bound is 20. Got 30 instead. Reduce `n_components`."
     with pytest.raises(ValueError, match=err_msg):
         est.fit(X, Y)
 
