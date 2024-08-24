@@ -172,7 +172,7 @@ Changelog
 ..................................
 
 - |Fix| :class:`cross_decomposition.PLSRegression` properly raises an error when
-  `n_components` is larger than `n_samples`. :pr:`xxxxx` by `Thomas Fan`_.
+  `n_components` is larger than `n_samples`. :pr:`29710` by `Thomas Fan`_.
 
 :mod:`sklearn.datasets`
 .......................
