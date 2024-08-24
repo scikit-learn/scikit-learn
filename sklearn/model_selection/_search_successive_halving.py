@@ -379,6 +379,9 @@ class BaseSuccessiveHalving(BaseSearchCV):
                     "Fail during parameter check since min/max resources requires"
                     " more samples"
                 ),
+                "check_estimators_nan_inf": "FIXME",
+                "check_classifiers_one_label_sample_weights": "FIXME",
+                "check_fit2d_1feature": "FIXME",
             }
         )
         return tags

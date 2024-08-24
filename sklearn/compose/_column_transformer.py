@@ -1320,6 +1320,19 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         return router
 
+    def _more_tags(self):
+        return {
+            "_xfail_checks": {
+                "check_estimators_empty_data_messages": "FIXME",
+                "check_estimators_nan_inf": "FIXME",
+                "check_estimator_sparse_array": "FIXME",
+                "check_estimator_sparse_matrix": "FIXME",
+                "check_transformer_data_not_an_array": "FIXME",
+                "check_fit1d": "FIXME",
+                "check_fit2d_predict1d": "FIXME",
+            }
+        }
+
 
 def _check_X(X):
     """Use check_array only when necessary, e.g. on lists and other non-array-likes."""

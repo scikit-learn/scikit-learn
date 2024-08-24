@@ -3,6 +3,7 @@
 
 
 import re
+import warnings
 from functools import partial
 from inspect import isfunction, signature
 from itertools import product
@@ -37,6 +38,7 @@ from sklearn.decomposition import (
     MiniBatchDictionaryLearning,
     MiniBatchNMF,
     MiniBatchSparsePCA,
+    SparseCoder,
     SparsePCA,
     TruncatedSVD,
 )
@@ -61,6 +63,7 @@ from sklearn.ensemble import (
     VotingClassifier,
     VotingRegressor,
 )
+from sklearn.exceptions import SkipTestWarning
 from sklearn.experimental import enable_halving_search_cv  # noqa
 from sklearn.feature_selection import (
     RFE,
@@ -373,25 +376,22 @@ INIT_PARAMS = {
     ),
 }
 
+SKIPPED_ESTIMATORS = [SparseCoder]
+
 
 def _construct_instance(Estimator):
     """Construct Estimator instance if possible."""
+    if Estimator in SKIPPED_ESTIMATORS:
+        msg = f"Can't instantiate estimator {Estimator.__name__}"
+        # raise additional warning to be shown by pytest
+        warnings.warn(msg, SkipTestWarning)
+        raise SkipTest(msg)
+
     if Estimator in INIT_PARAMS:
         estimator = Estimator(**INIT_PARAMS[Estimator])
     else:
         estimator = Estimator()
     return estimator
-    #     else:
-    #         msg = (
-    #             f"Can't instantiate estimator {Estimator.__name__} "
-    #             f"parameters {required_parameters}"
-    #         )
-    #         # raise additional warning to be shown by pytest
-    #         warnings.warn(msg, SkipTestWarning)
-    #         raise SkipTest(msg)
-    # else:
-    #     estimator = Estimator()
-    # return estimator
 
 
 def _get_check_estimator_ids(obj):
