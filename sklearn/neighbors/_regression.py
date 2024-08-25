@@ -228,10 +228,16 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
                 or (n_queries, n_indexed) if metric == 'precomputed'
             Test samples.
 
+        return_std : bool, default=False
+            If True, the standard-deviation of the predictions are returned.
+
         Returns
         -------
         y : ndarray of shape (n_queries,) or (n_queries, n_outputs), dtype=int
             Target values.
+
+        std : ndarray of shape (n_queries,) or (n_queries, n_outputs), dtype=float
+            Standard deviation of the predictions. Only returned if `return_std` is True
         """
         if self.weights == "uniform":
             # In that case, we do not need the distances to perform
