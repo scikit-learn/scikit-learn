@@ -174,7 +174,6 @@ class BaseDistancesReductionDispatcher:
         This method is an abstract class method: it has to be implemented
         for all subclasses.
         """
-        
 
 
 class ArgKmin(BaseDistancesReductionDispatcher):
@@ -195,9 +194,9 @@ class ArgKmin(BaseDistancesReductionDispatcher):
     def compute(
         cls,
         k,
-        X = None,
-        Y = None,
-        precomputed_matrix = None,
+        X=None,
+        Y=None,
+        precomputed_matrix=None,
         metric="euclidean",
         chunk_size=None,
         metric_kwargs=None,
@@ -286,19 +285,20 @@ class ArgKmin(BaseDistancesReductionDispatcher):
         """
         if X is None and Y is None and precomputed_matrix is None:
             raise ValueError("Either X and Y or precomputed_matrix must be provided.")
-        elif X is not None and Y is not None and precomputed_matrix is not None: 
-            raise ValueError("Only one of X and Y or precomputed_matrix must be provided.")    
+        elif X is not None and Y is not None and precomputed_matrix is not None:
+            raise ValueError(
+                "Only one of X and Y or precomputed_matrix must be provided."
+            )
         elif X is None and Y is not None:
             raise ValueError("Y should not be provided without X.")
         elif X is not None and Y is None:
-            raise ValueError("X should not be provided without Y.")  
-    
-    
-    
+            raise ValueError("X should not be provided without Y.")
+
         if X.dtype == Y.dtype == np.float64:
             return ArgKmin64.compute(
                 X=X,
                 Y=Y,
+                precomputed = precomputed
                 k=k,
                 metric=metric,
                 chunk_size=chunk_size,
@@ -344,9 +344,10 @@ class RadiusNeighbors(BaseDistancesReductionDispatcher):
     @classmethod
     def compute(
         cls,
-        X,
-        Y,
-        radius,
+        X=None,
+        Y=None,
+        precomputed=None,
+        radius=None,
         metric="euclidean",
         chunk_size=None,
         metric_kwargs=None,
@@ -439,9 +440,16 @@ class RadiusNeighbors(BaseDistancesReductionDispatcher):
         for the concrete implementation are therefore freed when this classmethod
         returns.
         """
-        # TODO: to maintain RAII, look at the implementation of the compute method
-        # if metric == 'precomputed':
-        #   return PrecomputedDistanceMatrix.precomputed_distance()
+        if X is None and Y is None and precomputed is None:
+            raise ValueError("Either X and Y or precomputed must be provided.")
+        elif X is not None and Y is not None and precomputed is not None:
+            raise ValueError("Only one of X and Y or precomputed must be provided.")
+        elif X is None and Y is not None:
+            raise ValueError("Y should not be provided without X.")
+        elif X is not None and Y is None:
+            raise ValueError("X should not be provided without Y.")
+        elif precomputed:
+            return precomputed
 
         if X.dtype == Y.dtype == np.float64:
             return RadiusNeighbors64.compute(

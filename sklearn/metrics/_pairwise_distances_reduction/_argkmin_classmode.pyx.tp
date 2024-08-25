@@ -31,6 +31,7 @@ cdef class ArgKminClassMode{{name_suffix}}(ArgKmin{{name_suffix}}):
         cls,
         X,
         Y,
+        precomputed,
         intp_t k,
         weights,
         Y_labels,
@@ -57,15 +58,15 @@ cdef class ArgKminClassMode{{name_suffix}}(ArgKmin{{name_suffix}}):
         # Use a generic implementation that handles most scipy
         # metrics by computing the distances between 2 vectors at a time.
 
-        # If a precomputed matrix is provided at the class level, skip the 
-        # rest of the computation and just return the variable stored in the 
-        # datasets_pair file. TODO: check syntax
+       
+       
+       
 
-        if precomputed_matrix:
-            return PrecomputedDistanceMatrix.precomputed
-           
+      
+      
+      
         pda = ArgKminClassMode{{name_suffix}}(
-            datasets_pair=DatasetsPair{{name_suffix}}.get_for(X, Y, metric, metric_kwargs),
+            datasets_pair=DatasetsPair{{name_suffix}}.get_for(X, Y, precomputed, metric, metric_kwargs),
             k=k,
             chunk_size=chunk_size,
             strategy=strategy,

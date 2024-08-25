@@ -34,8 +34,9 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
     @classmethod
     def compute(
         cls,
-        X,
-        Y,
+        X=None,
+        Y=None,
+        precomputed=None,
         intp_t k,
         metric="euclidean",
         chunk_size=None,
@@ -56,6 +57,7 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
 
         No instance should directly be created outside of this class method.
         """
+            
         # Limit the number of threads in second level of nested parallelism for BLAS
         # to avoid threads over-subscription (in DOT or GEMM for instance).
         with _get_threadpool_controller().limit(limits=1, user_api='blas'):
@@ -83,11 +85,12 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
                   strategy=strategy,
                   metric_kwargs=metric_kwargs,
               )
+        
           else:
               # Fall back on a generic implementation that handles most scipy
               # metrics by computing the distances between 2 vectors at a time.
               pda = ArgKmin{{name_suffix}}(
-                  datasets_pair=DatasetsPair{{name_suffix}}.get_for(X, Y, metric, metric_kwargs),
+                  datasets_pair=DatasetsPair{{name_suffix}}.get_for(X, Y, precomputed, metric, metric_kwargs),
                   k=k,
                   chunk_size=chunk_size,
                   strategy=strategy,
