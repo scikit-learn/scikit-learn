@@ -219,7 +219,7 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         """
         return self._fit(X, y)
 
-    def predict(self, X):
+    def predict(self, X, return_std=False):
         """Predict the target for the provided data.
 
         Parameters
@@ -249,17 +249,33 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
 
         if weights is None:
             y_pred = np.mean(_y[neigh_ind], axis=1)
+            if return_std:
+                y_std = np.std(_y[neigh_ind], axis=1)
         else:
             y_pred = np.empty((neigh_dist.shape[0], _y.shape[1]), dtype=np.float64)
+            if return_std:
+                y_std = np.empty((neigh_dist.shape[0], _y.shape[1]), dtype=np.float64)
             denom = np.sum(weights, axis=1)
 
             for j in range(_y.shape[1]):
                 num = np.sum(_y[neigh_ind, j] * weights, axis=1)
                 y_pred[:, j] = num / denom
+                if return_std:
+                    y_std[:, j] = np.sqrt(
+                        np.average(
+                            (_y[neigh_ind, j] - y_pred[:, j : j + 1]) ** 2,
+                            axis=1,
+                            weights=weights,
+                        )
+                    )
 
         if self._y.ndim == 1:
             y_pred = y_pred.ravel()
+            if return_std:
+                y_std = y_std.ravel()
 
+        if return_std:
+            return y_pred, y_std
         return y_pred
 
 
