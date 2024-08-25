@@ -78,7 +78,6 @@ from sklearn.utils.estimator_checks import (
     check_global_output_transform_pandas,
     check_global_set_output_transform_polars,
     check_inplace_ensure_writeable,
-    check_n_features_in_after_fitting,
     check_param_validation,
     check_set_output_transform,
     check_set_output_transform_pandas,
@@ -365,14 +364,6 @@ def test_valid_tag_types(estimator):
             # _xfail_checks can be a dictionary
             correct_tags = (correct_tags, dict)
         assert isinstance(tag, correct_tags)
-
-
-@pytest.mark.parametrize(
-    "estimator", _tested_estimators(), ids=_get_check_estimator_ids
-)
-def test_check_n_features_in_after_fitting(estimator):
-    _set_checking_parameters(estimator)
-    check_n_features_in_after_fitting(estimator.__class__.__name__, estimator)
 
 
 def _estimators_that_predict_in_fit():

@@ -96,6 +96,10 @@ def _yield_api_checks(estimator):
     yield check_estimators_overwrite_params
 
 
+def _yield_dataframe_checks(estimator):
+    yield check_n_features_in_after_fitting
+
+
 def _yield_checks(estimator):
     name = estimator.__class__.__name__
     tags = _safe_tags(estimator)
@@ -326,7 +330,7 @@ def _yield_array_api_checks(estimator):
         )
 
 
-def _yield_all_checks(estimator, legacy: bool):
+def _yield_all_checks(estimator, dataframe: bool, legacy: bool):
     name = estimator.__class__.__name__
     tags = _safe_tags(estimator)
     if "2darray" not in tags["X_types"]:
@@ -346,6 +350,10 @@ def _yield_all_checks(estimator, legacy: bool):
 
     for check in _yield_api_checks(estimator):
         yield check
+
+    if dataframe:
+        for check in _yield_dataframe_checks(estimator):
+            yield check
 
     if not legacy:
         return
@@ -522,7 +530,7 @@ def _should_be_skipped_or_marked(estimator, check):
     return False, "placeholder reason that will never be used"
 
 
-def parametrize_with_checks(estimators, legacy=True):
+def parametrize_with_checks(estimators, *, dataframe: bool = True, legacy: bool = True):
     """Pytest specific decorator for parametrizing estimator checks.
 
     Checks are categorised into the following groups:
@@ -546,6 +554,13 @@ def parametrize_with_checks(estimators, legacy=True):
            classes was removed in 0.24. Pass an instance instead.
 
         .. versionadded:: 0.24
+
+    dataframe : bool (default=True)
+        Whether to included checks related to inspecting feature counts and feature
+        names. Theese checks might include `polars` or `pandas` to be installed, and are
+        automatically skipped if otherwise.
+
+        .. versionadded:: 1.6
 
     legacy : bool (default=True)
         Whether to include legacy checks.
@@ -585,7 +600,9 @@ def parametrize_with_checks(estimators, legacy=True):
     def checks_generator():
         for estimator in estimators:
             name = type(estimator).__name__
-            for check in _yield_all_checks(estimator, legacy=legacy):
+            for check in _yield_all_checks(
+                estimator, dataframe=dataframe, legacy=legacy
+            ):
                 check = partial(check, name)
                 yield _maybe_mark_xfail(estimator, check, pytest)
 
@@ -594,7 +611,9 @@ def parametrize_with_checks(estimators, legacy=True):
     )
 
 
-def check_estimator(estimator=None, generate_only=False, legacy=True):
+def check_estimator(
+    estimator=None, generate_only=False, *, dataframe: bool = True, legacy: bool = True
+):
     """Check if estimator adheres to scikit-learn conventions.
 
     This function will run an extensive test-suite for input validation,
@@ -635,6 +654,13 @@ def check_estimator(estimator=None, generate_only=False, legacy=True):
 
         .. versionadded:: 0.22
 
+    dataframe : bool (default=True)
+        Whether to included checks related to inspecting feature counts and feature
+        names. Theese checks might include `polars` or `pandas` to be installed, and are
+        automatically skipped if otherwise.
+
+        .. versionadded:: 1.6
+
     legacy : bool (default=True)
         Whether to include legacy checks.
 
@@ -669,7 +695,7 @@ def check_estimator(estimator=None, generate_only=False, legacy=True):
     name = type(estimator).__name__
 
     def checks_generator():
-        for check in _yield_all_checks(estimator, legacy=legacy):
+        for check in _yield_all_checks(estimator, dataframe=dataframe, legacy=legacy):
             check = _maybe_skip(estimator, check)
             yield estimator, partial(check, name)
 
@@ -3995,75 +4021,6 @@ def check_requires_y_none(name, estimator_orig):
             raise ve
 
 
-@ignore_warnings(category=FutureWarning)
-def check_n_features_in_after_fitting(name, estimator_orig):
-    # Make sure that n_features_in are checked after fitting
-    tags = _safe_tags(estimator_orig)
-
-    is_supported_X_types = (
-        "2darray" in tags["X_types"] or "categorical" in tags["X_types"]
-    )
-
-    if not is_supported_X_types or tags["no_validation"]:
-        return
-
-    rng = np.random.RandomState(0)
-
-    estimator = clone(estimator_orig)
-    set_random_state(estimator)
-    if "warm_start" in estimator.get_params():
-        estimator.set_params(warm_start=False)
-
-    n_samples = 10
-    X = rng.normal(size=(n_samples, 4))
-    X = _enforce_estimator_tags_X(estimator, X)
-
-    if is_regressor(estimator):
-        y = rng.normal(size=n_samples)
-    else:
-        y = rng.randint(low=0, high=2, size=n_samples)
-    y = _enforce_estimator_tags_y(estimator, y)
-
-    estimator.fit(X, y)
-    assert estimator.n_features_in_ == X.shape[1]
-
-    # check methods will check n_features_in_
-    check_methods = [
-        "predict",
-        "transform",
-        "decision_function",
-        "predict_proba",
-        "score",
-    ]
-    X_bad = X[:, [1]]
-
-    msg = f"X has 1 features, but \\w+ is expecting {X.shape[1]} features as input"
-    for method in check_methods:
-        if not hasattr(estimator, method):
-            continue
-
-        callable_method = getattr(estimator, method)
-        if method == "score":
-            callable_method = partial(callable_method, y=y)
-
-        with raises(ValueError, match=msg):
-            callable_method(X_bad)
-
-    # partial_fit will check in the second call
-    if not hasattr(estimator, "partial_fit"):
-        return
-
-    estimator = clone(estimator_orig)
-    if is_classifier(estimator):
-        estimator.partial_fit(X, y, classes=np.unique(y))
-    else:
-        estimator.partial_fit(X, y)
-    assert estimator.n_features_in_ == X.shape[1]
-
-    with raises(ValueError, match=msg):
-        estimator.partial_fit(X_bad, y)
-
-
 def check_estimator_get_tags_default_keys(name, estimator_orig):
     # check that if _get_tags is implemented, it contains all keys from
     # _DEFAULT_KEYS
@@ -4793,3 +4750,74 @@ def check_inplace_ensure_writeable(name, estimator_orig):
 
     assert not X.flags.writeable
     assert_allclose(X, X_copy)
+
+
+# Dataframe / Feature Names inspection tests
+# ==========================================
+@ignore_warnings(category=FutureWarning)
+def check_n_features_in_after_fitting(name, estimator_orig):
+    # Make sure that n_features_in are checked after fitting
+    tags = _safe_tags(estimator_orig)
+
+    is_supported_X_types = (
+        "2darray" in tags["X_types"] or "categorical" in tags["X_types"]
+    )
+
+    if not is_supported_X_types or tags["no_validation"]:
+        return
+
+    rng = np.random.RandomState(0)
+
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+    if "warm_start" in estimator.get_params():
+        estimator.set_params(warm_start=False)
+
+    n_samples = 10
+    X = rng.normal(size=(n_samples, 4))
+    X = _enforce_estimator_tags_X(estimator, X)
+
+    if is_regressor(estimator):
+        y = rng.normal(size=n_samples)
+    else:
+        y = rng.randint(low=0, high=2, size=n_samples)
+    y = _enforce_estimator_tags_y(estimator, y)
+
+    estimator.fit(X, y)
+    assert estimator.n_features_in_ == X.shape[1]
+
+    # check methods will check n_features_in_
+    check_methods = [
+        "predict",
+        "transform",
+        "decision_function",
+        "predict_proba",
+        "score",
+    ]
+    X_bad = X[:, [1]]
+
+    msg = f"X has 1 features, but \\w+ is expecting {X.shape[1]} features as input"
+    for method in check_methods:
+        if not hasattr(estimator, method):
+            continue
+
+        callable_method = getattr(estimator, method)
+        if method == "score":
+            callable_method = partial(callable_method, y=y)
+
+        with raises(ValueError, match=msg):
+            callable_method(X_bad)
+
+    # partial_fit will check in the second call
+    if not hasattr(estimator, "partial_fit"):
+        return
+
+    estimator = clone(estimator_orig)
+    if is_classifier(estimator):
+        estimator.partial_fit(X, y, classes=np.unique(y))
+    else:
+        estimator.partial_fit(X, y)
+    assert estimator.n_features_in_ == X.shape[1]
+
+    with raises(ValueError, match=msg):
+        estimator.partial_fit(X_bad, y)
