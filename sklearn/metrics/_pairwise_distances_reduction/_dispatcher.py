@@ -193,10 +193,10 @@ class ArgKmin(BaseDistancesReductionDispatcher):
     @classmethod
     def compute(
         cls,
-        k,
         X=None,
         Y=None,
         precomputed_matrix=None,
+        k=None,
         metric="euclidean",
         chunk_size=None,
         metric_kwargs=None,
@@ -298,7 +298,7 @@ class ArgKmin(BaseDistancesReductionDispatcher):
             return ArgKmin64.compute(
                 X=X,
                 Y=Y,
-                precomputed = precomputed
+                precomputed=precomputed,
                 k=k,
                 metric=metric,
                 chunk_size=chunk_size,
