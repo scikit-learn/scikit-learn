@@ -64,7 +64,6 @@ from sklearn.utils._testing import (
 )
 from sklearn.utils.estimator_checks import (
     check_class_weight_balanced_linear_classifier,
-    check_dataframe_column_names_consistency,
     check_estimator,
     check_get_feature_names_out_error,
     check_global_output_transform_pandas,
@@ -282,51 +281,6 @@ def test_valid_tag_types(estimator):
             # _xfail_checks can be a dictionary
             correct_tags = (correct_tags, dict)
         assert isinstance(tag, correct_tags)
-
-
-def _estimators_that_predict_in_fit():
-    for estimator in _tested_estimators():
-        est_params = set(estimator.get_params())
-        if "oob_score" in est_params:
-            yield estimator.set_params(oob_score=True, bootstrap=True)
-        elif "early_stopping" in est_params:
-            est = estimator.set_params(early_stopping=True, n_iter_no_change=1)
-            if est.__class__.__name__ in {"MLPClassifier", "MLPRegressor"}:
-                # TODO: FIX MLP to not check validation set during MLP
-                yield pytest.param(
-                    est, marks=pytest.mark.xfail(msg="MLP still validates in fit")
-                )
-            else:
-                yield est
-        elif "n_iter_no_change" in est_params:
-            yield estimator.set_params(n_iter_no_change=1)
-
-
-# NOTE: When running `check_dataframe_column_names_consistency` on a meta-estimator that
-# delegates validation to a base estimator, the check is testing that the base estimator
-# is checking for column name consistency.
-column_name_estimators = list(
-    chain(
-        _tested_estimators(),
-        [make_pipeline(LogisticRegression(C=1))],
-        list(_generate_search_cv_instances()),
-        _estimators_that_predict_in_fit(),
-    )
-)
-
-
-@pytest.mark.parametrize(
-    "estimator", column_name_estimators, ids=_get_check_estimator_ids
-)
-def test_pandas_column_name_consistency(estimator):
-    _set_checking_parameters(estimator)
-    with ignore_warnings(category=(FutureWarning)):
-        with warnings.catch_warnings(record=True) as record:
-            check_dataframe_column_names_consistency(
-                estimator.__class__.__name__, estimator
-            )
-        for warning in record:
-            assert "was fitted without feature names" not in str(warning.message)
 
 
 # TODO: As more modules support get_feature_names_out they should be removed

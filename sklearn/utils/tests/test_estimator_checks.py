@@ -40,6 +40,7 @@ from sklearn.utils._testing import (
     raises,
 )
 from sklearn.utils.estimator_checks import (
+    _check_dataframe_column_names_consistency,
     _NotAnArray,
     _yield_all_checks,
     check_array_api_input,
@@ -48,7 +49,6 @@ from sklearn.utils.estimator_checks import (
     check_classifiers_multilabel_output_format_decision_function,
     check_classifiers_multilabel_output_format_predict,
     check_classifiers_multilabel_output_format_predict_proba,
-    check_dataframe_column_names_consistency,
     check_decision_proba_consistency,
     check_estimator,
     check_estimator_get_tags_default_keys,
@@ -864,17 +864,17 @@ def test_check_estimator_get_tags_default_keys():
 def test_check_dataframe_column_names_consistency():
     err_msg = "Estimator does not have a feature_names_in_"
     with raises(ValueError, match=err_msg):
-        check_dataframe_column_names_consistency("estimator_name", BaseBadClassifier())
-    check_dataframe_column_names_consistency("estimator_name", PartialFitChecksName())
+        _check_dataframe_column_names_consistency("estimator_name", BaseBadClassifier())
+    _check_dataframe_column_names_consistency("estimator_name", PartialFitChecksName())
 
     lr = LogisticRegression()
-    check_dataframe_column_names_consistency(lr.__class__.__name__, lr)
+    _check_dataframe_column_names_consistency(lr.__class__.__name__, lr)
     lr.__doc__ = "Docstring that does not document the estimator's attributes"
     err_msg = (
         "Estimator LogisticRegression does not document its feature_names_in_ attribute"
     )
     with raises(ValueError, match=err_msg):
-        check_dataframe_column_names_consistency(lr.__class__.__name__, lr)
+        _check_dataframe_column_names_consistency(lr.__class__.__name__, lr)
 
 
 class _BaseMultiLabelClassifierMock(ClassifierMixin, BaseEstimator):

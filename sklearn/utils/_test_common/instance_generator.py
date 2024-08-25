@@ -272,6 +272,28 @@ TEST_PARAMS = {
     TweedieRegressor: dict(max_iter=5),
 }
 
+SINGLE_TEST_PARAMS = {
+    "check_pandas_column_name_consistency": {
+        BaggingClassifier: dict(oob_score=True),
+        BaggingRegressor: dict(oob_score=True),
+        ExtraTreesClassifier: dict(bootstrap=True, oob_score=True),
+        ExtraTreesRegressor: dict(bootstrap=True, oob_score=True),
+        GradientBoostingClassifier: dict(n_iter_no_change=1),
+        GradientBoostingRegressor: dict(n_iter_no_change=1),
+        HistGradientBoostingClassifier: dict(early_stopping=True, n_iter_no_change=1),
+        HistGradientBoostingRegressor: dict(early_stopping=True, n_iter_no_change=1),
+        MLPClassifier: dict(early_stopping=True, n_iter_no_change=1),
+        MLPRegressor: dict(early_stopping=True, n_iter_no_change=1),
+        PassiveAggressiveClassifier: dict(early_stopping=True, n_iter_no_change=1),
+        PassiveAggressiveRegressor: dict(early_stopping=True, n_iter_no_change=1),
+        Perceptron: dict(early_stopping=True, n_iter_no_change=1),
+        RandomForestClassifier: dict(oob_score=True),
+        RandomForestRegressor: dict(oob_score=True),
+        SGDClassifier: dict(early_stopping=True, n_iter_no_change=1),
+        SGDRegressor: dict(early_stopping=True, n_iter_no_change=1),
+    }
+}
+
 
 def _set_checking_parameters(estimator):
     # set parameters to speed up some estimators and
