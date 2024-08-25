@@ -90,6 +90,20 @@ def _smacof_single(
     n_iter : int
         The number of iterations corresponding to the best stress.
 
+    See Also
+    --------
+    sklearn.decomposition.PCA : Principal component analysis that is a linear
+        dimensionality reduction method.
+    sklearn.decomposition.KernelPCA : Non-linear dimensionality reduction using
+        kernels and PCA.
+    Isomap : Non-linear dimensionality reduction through Isometric Mapping.
+    TSNE : T-distributed Stochastic Neighbor Embedding.
+    LocallyLinearEmbedding : Manifold learning using Locally Linear Embedding.
+    SpectralEmbedding : Spectral embedding for non-linear dimensionality.
+
+    For a comparison of dimensionality reduction techniques, 
+    see :ref:`sphx_glr_auto_examples_manifold_plot_compare_methods.py`.
+
     References
     ----------
     .. [1] "Nonmetric multidimensional scaling: a numerical method" Kruskal, J.
