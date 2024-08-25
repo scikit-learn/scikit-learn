@@ -237,7 +237,8 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
             Target values.
 
         std : ndarray of shape (n_queries,) or (n_queries, n_outputs), dtype=float
-            Standard deviation of the predictions. Only returned if `return_std` is True
+            Standard deviation of the predictions. \
+            Only returned if `return_std` is True.
         """
         if self.weights == "uniform":
             # In that case, we do not need the distances to perform
