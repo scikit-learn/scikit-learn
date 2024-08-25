@@ -90,13 +90,17 @@ REGRESSION_DATASET = None
 CROSS_DECOMPOSITION = ["PLSCanonical", "PLSRegression", "CCA", "PLSSVD"]
 
 
+def _yield_api_checks(estimator):
+    yield check_no_attributes_set_in_init
+    yield check_fit_score_takes_y
+    yield check_estimators_overwrite_params
+
+
 def _yield_checks(estimator):
     name = estimator.__class__.__name__
     tags = _safe_tags(estimator)
 
-    yield check_no_attributes_set_in_init
     yield check_estimators_dtypes
-    yield check_fit_score_takes_y
     if has_fit_parameter(estimator, "sample_weight"):
         yield check_sample_weights_pandas_series
         yield check_sample_weights_not_an_array
@@ -129,7 +133,6 @@ def _yield_checks(estimator):
         # Check that pairwise estimator throws error on non-square input
         yield check_nonsquare_error
 
-    yield check_estimators_overwrite_params
     if hasattr(estimator, "sparsify"):
         yield check_sparsify_coefficients
 
@@ -323,7 +326,7 @@ def _yield_array_api_checks(estimator):
         )
 
 
-def _yield_all_checks(estimator):
+def _yield_all_checks(estimator, legacy: bool):
     name = estimator.__class__.__name__
     tags = _safe_tags(estimator)
     if "2darray" not in tags["X_types"]:
@@ -339,6 +342,12 @@ def _yield_all_checks(estimator):
             "Explicit SKIP via _skip_test tag for estimator {}.".format(name),
             SkipTestWarning,
         )
+        return
+
+    for check in _yield_api_checks(estimator):
+        yield check
+
+    if not legacy:
         return
 
     for check in _yield_checks(estimator):
@@ -513,8 +522,13 @@ def _should_be_skipped_or_marked(estimator, check):
     return False, "placeholder reason that will never be used"
 
 
-def parametrize_with_checks(estimators):
+def parametrize_with_checks(estimators, legacy=True):
     """Pytest specific decorator for parametrizing estimator checks.
+
+    Checks are categorised into the following groups:
+
+        - API checks: a set of checks to ensure API compatibility with scikit-learn
+        - legacy: a set of checks which gradually will be grouped into other categories
 
     The `id` of each check is set to be a pprint version of the estimator
     and the name of the check with its keyword arguments.
@@ -532,6 +546,11 @@ def parametrize_with_checks(estimators):
            classes was removed in 0.24. Pass an instance instead.
 
         .. versionadded:: 0.24
+
+    legacy : bool (default=True)
+        Whether to include legacy checks.
+
+        .. versionadded:: 1.6
 
     Returns
     -------
@@ -566,7 +585,7 @@ def parametrize_with_checks(estimators):
     def checks_generator():
         for estimator in estimators:
             name = type(estimator).__name__
-            for check in _yield_all_checks(estimator):
+            for check in _yield_all_checks(estimator, legacy=legacy):
                 check = partial(check, name)
                 yield _maybe_mark_xfail(estimator, check, pytest)
 
@@ -575,7 +594,7 @@ def parametrize_with_checks(estimators):
     )
 
 
-def check_estimator(estimator=None, generate_only=False):
+def check_estimator(estimator=None, generate_only=False, legacy=True):
     """Check if estimator adheres to scikit-learn conventions.
 
     This function will run an extensive test-suite for input validation,
@@ -594,6 +613,11 @@ def check_estimator(estimator=None, generate_only=False):
     :func:`~sklearn.utils.estimator_checks.parametrize_with_checks`, making it
     easier to test multiple estimators.
 
+    Checks are categorised into the following groups:
+
+        - API checks: a set of checks to ensure API compatibility with scikit-learn
+        - legacy: a set of checks which gradually will be grouped into other categories
+
     Parameters
     ----------
     estimator : estimator object
@@ -610,6 +634,11 @@ def check_estimator(estimator=None, generate_only=False):
         `check(estimator)`.
 
         .. versionadded:: 0.22
+
+    legacy : bool (default=True)
+        Whether to include legacy checks.
+
+        .. versionadded:: 1.6
 
     Returns
     -------
@@ -640,7 +669,7 @@ def check_estimator(estimator=None, generate_only=False):
     name = type(estimator).__name__
 
     def checks_generator():
-        for check in _yield_all_checks(estimator):
+        for check in _yield_all_checks(estimator, legacy=legacy):
             check = _maybe_skip(estimator, check)
             yield estimator, partial(check, name)
 
