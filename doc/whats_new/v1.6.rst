@@ -147,7 +147,7 @@ Changelog
     where 123455 is the *pull request* number, not the issue number.
 
 :mod:`sklearn.neighbors`
-......................
+........................
 
 - |Enhancement| :func:`sklearn.neighbors.KNeighborsRegressor.predict` now accepts `return_std` flag and returns standard deviation of the predictions.
   :pr:`29711` by :user:`Ankit Dhokariya <ankit-dhokariya>`
