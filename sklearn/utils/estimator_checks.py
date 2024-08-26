@@ -94,6 +94,7 @@ def _yield_api_checks(estimator):
     yield check_no_attributes_set_in_init
     yield check_fit_score_takes_y
     yield check_estimators_overwrite_params
+    yield check_estimators_do_not_raise_errors_in_init_or_set_params
 
 
 def _yield_checks(estimator):
@@ -185,6 +186,124 @@ def _yield_classifier_checks(classifier):
     yield check_non_transformer_estimators_n_iter
     # test if predict_proba is a monotonic transformation of decision_function
     yield check_decision_proba_consistency
+
+
+# Basic API checks
+# ================
+
+
+@ignore_warnings(category=FutureWarning)
+def check_estimators_overwrite_params(name, estimator_orig):
+    X, y = make_blobs(random_state=0, n_samples=21)
+    X = _enforce_estimator_tags_X(estimator_orig, X, kernel=rbf_kernel)
+    estimator = clone(estimator_orig)
+    y = _enforce_estimator_tags_y(estimator, y)
+
+    set_random_state(estimator)
+
+    # Make a physical copy of the original estimator parameters before fitting.
+    params = estimator.get_params()
+    original_params = deepcopy(params)
+
+    # Fit the model
+    estimator.fit(X, y)
+
+    # Compare the state of the model parameters with the original parameters
+    new_params = estimator.get_params()
+    for param_name, original_value in original_params.items():
+        new_value = new_params[param_name]
+
+        # We should never change or mutate the internal state of input
+        # parameters by default. To check this we use the joblib.hash function
+        # that introspects recursively any subobjects to compute a checksum.
+        # The only exception to this rule of immutable constructor parameters
+        # is possible RandomState instance but in this check we explicitly
+        # fixed the random_state params recursively to be integer seeds.
+        assert joblib.hash(new_value) == joblib.hash(original_value), (
+            "Estimator %s should not change or mutate "
+            " the parameter %s from %s to %s during fit."
+            % (name, param_name, original_value, new_value)
+        )
+
+
+@ignore_warnings
+def check_fit_score_takes_y(name, estimator_orig):
+    # check that all estimators accept an optional y
+    # in fit and score so they can be used in pipelines
+    rnd = np.random.RandomState(0)
+    n_samples = 30
+    X = rnd.uniform(size=(n_samples, 3))
+    X = _enforce_estimator_tags_X(estimator_orig, X)
+    y = np.arange(n_samples) % 3
+    estimator = clone(estimator_orig)
+    y = _enforce_estimator_tags_y(estimator, y)
+    set_random_state(estimator)
+
+    funcs = ["fit", "score", "partial_fit", "fit_predict", "fit_transform"]
+    for func_name in funcs:
+        func = getattr(estimator, func_name, None)
+        if func is not None:
+            func(X, y)
+            args = [p.name for p in signature(func).parameters.values()]
+            if args[0] == "self":
+                # available_if makes methods into functions
+                # with an explicit "self", so need to shift arguments
+                args = args[1:]
+            assert args[1] in ["y", "Y"], (
+                "Expected y or Y as second argument for method "
+                "%s of %s. Got arguments: %r."
+                % (func_name, type(estimator).__name__, args)
+            )
+
+
+def check_estimators_do_not_raise_errors_in_init_or_set_params(name, estimator_orig):
+    """Check that init or set_param does not raise errors."""
+    Estimator = type(estimator_orig)
+    params = signature(Estimator).parameters
+
+    smoke_test_values = [-1, 3.0, "helloworld", np.array([1.0, 4.0]), [1], {}, []]
+    for value in smoke_test_values:
+        new_params = {key: value for key in params}
+
+        # Does not raise
+        est = Estimator(**new_params)
+
+        # Also do does not raise
+        est.set_params(**new_params)
+
+
+@ignore_warnings(category=FutureWarning)
+def check_no_attributes_set_in_init(name, estimator_orig):
+    """Check setting during init."""
+    try:
+        # Clone fails if the estimator does not store
+        # all parameters as an attribute during init
+        estimator = clone(estimator_orig)
+    except AttributeError:
+        raise AttributeError(
+            f"Estimator {name} should store all parameters as an attribute during init."
+        )
+
+    init_params = _get_args(type(estimator).__init__)
+    parents_init_params = [
+        param
+        for params_parent in (_get_args(parent) for parent in type(estimator).__mro__)
+        for param in params_parent
+    ]
+
+    # Test for no setting apart from parameters during init
+    invalid_attr = set(vars(estimator)) - set(init_params) - set(parents_init_params)
+    # Ignore private attributes
+    invalid_attr = set([attr for attr in invalid_attr if not attr.startswith("_")])
+    assert not invalid_attr, (
+        "Estimator %s should not set any attribute apart"
+        " from parameters during init. Found attributes %s."
+        % (name, sorted(invalid_attr))
+    )
+
+
+# Legacy Checks
+# =============
 
 
 @ignore_warnings(category=FutureWarning)
@@ -1907,36 +2026,6 @@ def check_pipeline_consistency(name, estimator_orig):
 
 
 @ignore_warnings
-def check_fit_score_takes_y(name, estimator_orig):
-    # check that all estimators accept an optional y
-    # in fit and score so they can be used in pipelines
-    rnd = np.random.RandomState(0)
-    n_samples = 30
-    X = rnd.uniform(size=(n_samples, 3))
-    X = _enforce_estimator_tags_X(estimator_orig, X)
-    y = np.arange(n_samples) % 3
-    estimator = clone(estimator_orig)
-    y = _enforce_estimator_tags_y(estimator, y)
-    set_random_state(estimator)
-
-    funcs = ["fit", "score", "partial_fit", "fit_predict", "fit_transform"]
-    for func_name in funcs:
-        func = getattr(estimator, func_name, None)
-        if func is not None:
-            func(X, y)
-            args = [p.name for p in signature(func).parameters.values()]
-            if args[0] == "self":
-                # available_if makes methods into functions
-                # with an explicit "self", so need to shift arguments
-                args = args[1:]
-            assert args[1] in ["y", "Y"], (
-                "Expected y or Y as second argument for method "
-                "%s of %s. Got arguments: %r."
-                % (func_name, type(estimator).__name__, args)
-            )
-
-
-@ignore_warnings
 def check_estimators_dtypes(name, estimator_orig):
     rnd = np.random.RandomState(0)
     X_train_32 = 3 * rnd.uniform(size=(20, 5)).astype(np.float32)
@@ -3259,70 +3348,6 @@ def check_class_weight_balanced_linear_classifier(name, Classifier):
         coef_balanced,
         coef_manual,
         err_msg="Classifier %s is not computing class_weight=balanced properly." % name,
-    )
-
-
-@ignore_warnings(category=FutureWarning)
-def check_estimators_overwrite_params(name, estimator_orig):
-    X, y = make_blobs(random_state=0, n_samples=21)
-    X = _enforce_estimator_tags_X(estimator_orig, X, kernel=rbf_kernel)
-    estimator = clone(estimator_orig)
-    y = _enforce_estimator_tags_y(estimator, y)
-
-    set_random_state(estimator)
-
-    # Make a physical copy of the original estimator parameters before fitting.
-    params = estimator.get_params()
-    original_params = deepcopy(params)
-
-    # Fit the model
-    estimator.fit(X, y)
-
-    # Compare the state of the model parameters with the original parameters
-    new_params = estimator.get_params()
-    for param_name, original_value in original_params.items():
-        new_value = new_params[param_name]
-
-        # We should never change or mutate the internal state of input
-        # parameters by default. To check this we use the joblib.hash function
-        # that introspects recursively any subobjects to compute a checksum.
-        # The only exception to this rule of immutable constructor parameters
-        # is possible RandomState instance but in this check we explicitly
-        # fixed the random_state params recursively to be integer seeds.
-        assert joblib.hash(new_value) == joblib.hash(original_value), (
-            "Estimator %s should not change or mutate "
-            " the parameter %s from %s to %s during fit."
-            % (name, param_name, original_value, new_value)
-        )
-
-
-@ignore_warnings(category=FutureWarning)
-def check_no_attributes_set_in_init(name, estimator_orig):
-    """Check setting during init."""
-    try:
-        # Clone fails if the estimator does not store
-        # all parameters as an attribute during init
-        estimator = clone(estimator_orig)
-    except AttributeError:
-        raise AttributeError(
-            f"Estimator {name} should store all parameters as an attribute during init."
-        )
-
-    init_params = _get_args(type(estimator).__init__)
-    parents_init_params = [
-        param
-        for params_parent in (_get_args(parent) for parent in type(estimator).__mro__)
-        for param in params_parent
-    ]
-
-    # Test for no setting apart from parameters during init
-    invalid_attr = set(vars(estimator)) - set(init_params) - set(parents_init_params)
-    # Ignore private attributes
-    invalid_attr = set([attr for attr in invalid_attr if not attr.startswith("_")])
-    assert not invalid_attr, (
-        "Estimator %s should not set any attribute apart"
-        " from parameters during init. Found attributes %s."
-        % (name, sorted(invalid_attr))
     )
 
 

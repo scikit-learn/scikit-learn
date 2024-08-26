@@ -472,25 +472,6 @@ def test_estimators_get_feature_names_out_error(estimator):
 
 
 @pytest.mark.parametrize(
-    "Estimator",
-    [est for name, est in all_estimators()],
-)
-def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
-    """Check that init or set_param does not raise errors."""
-    params = signature(Estimator).parameters
-
-    smoke_test_values = [-1, 3.0, "helloworld", np.array([1.0, 4.0]), [1], {}, []]
-    for value in smoke_test_values:
-        new_params = {key: value for key in params}
-
-        # Does not raise
-        est = Estimator(**new_params)
-
-        # Also do does not raise
-        est.set_params(**new_params)
-
-
-@pytest.mark.parametrize(
     "estimator",
     chain(
         _tested_estimators(),
