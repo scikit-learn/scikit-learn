@@ -501,9 +501,6 @@ class MDS(BaseEstimator):
     LocallyLinearEmbedding : Manifold learning using Locally Linear Embedding.
     SpectralEmbedding : Spectral embedding for non-linear dimensionality.
 
-    For a comparison of manifold learning techniques,
-        see :ref:`sphx_glr_auto_examples_manifold_plot_compare_methods.py`.
-
     References
     ----------
     .. [1] "Nonmetric multidimensional scaling: a numerical method" Kruskal, J.
@@ -529,6 +526,9 @@ class MDS(BaseEstimator):
 
     For a more detailed example of usage, see
     :ref:`sphx_glr_auto_examples_manifold_plot_mds.py`.
+
+    For a comparison of manifold learning techniques, see
+     :ref:`sphx_glr_auto_examples_manifold_plot_compare_methods.py`.
     """
 
     _parameter_constraints: dict = {
