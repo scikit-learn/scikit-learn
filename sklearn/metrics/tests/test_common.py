@@ -2021,7 +2021,6 @@ array_api_metric_checkers = {
     mean_squared_log_error: [
         check_array_api_regression_metric,
         check_array_api_regression_metric_multioutput,
-
     ],
     d2_tweedie_score: [
         check_array_api_regression_metric,
