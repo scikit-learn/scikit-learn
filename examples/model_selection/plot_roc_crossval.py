@@ -114,24 +114,22 @@ ax.plot(
     alpha=0.8,
 )
 
-quantile_offsets = np.linspace(0.05, 0.45, 5)
-for offset in quantile_offsets:
-    upper_quantile = np.quantile(tprs, 0.5 + offset, axis=0)
-    lower_quantile = np.quantile(tprs, 0.5 - offset, axis=0)
-    label = "5% to 95% percentile region" if offset == 0.45 else None
-    ax.fill_between(
-        mean_fpr,
-        lower_quantile,
-        upper_quantile,
-        color="grey",
-        alpha=0.4,
-        label=label,
-    )
+
+upper_quantile = np.quantile(tprs, 0.95, axis=0)
+lower_quantile = np.quantile(tprs, 0.05, axis=0)
+ax.fill_between(
+    mean_fpr,
+    lower_quantile,
+    upper_quantile,
+    color="grey",
+    alpha=0.4,
+    label="5% to 95% percentile region",
+)
 
 ax.set(
     xlabel="False Positive Rate",
     ylabel="True Positive Rate",
-    title=f"Mean ROC curve with variability\n(Positive label '{target_names[1]}')",
+    title="Mean ROC curve with variability",
 )
 ax.legend(loc="lower right")
 plt.show()
