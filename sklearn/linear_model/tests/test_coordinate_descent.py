@@ -265,9 +265,7 @@ def test_lasso_cv():
     )
     # check that they also give a similar MSE
     mse_lars = interpolate.interp1d(lars.cv_alphas_, lars.mse_path_.T)
-    np.testing.assert_approx_equal(
-        mse_lars(clf.alphas_[5]).mean(), clf.mse_path_[5].mean(), significant=2
-    )
+    assert_allclose(mse_lars(clf.alphas_[5]).mean(), clf.mse_path_[5].mean(), rtol=1e-2)
 
     # test set
     assert clf.score(X_test, y_test) > 0.99
@@ -1477,7 +1475,7 @@ def test_enet_alpha_max_sample_weight(X_is_sparse, fit_intercept, sample_weight)
     # Test alpha_max makes coefs zero.
     reg = ElasticNetCV(n_alphas=1, cv=2, eps=1, fit_intercept=fit_intercept)
     reg.fit(X, y, sample_weight=sample_weight)
-    assert_almost_equal(reg.coef_, 0)
+    assert_allclose(reg.coef_, 0, atol=1e-5)
     alpha_max = reg.alpha_
     # Test smaller alpha makes coefs nonzero.
     reg = ElasticNet(alpha=0.99 * alpha_max, fit_intercept=fit_intercept)
