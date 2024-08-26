@@ -103,7 +103,7 @@ ax.plot(
     mean_fpr,
     mean_tpr,
     color="b",
-    label=r"Mean ROC (AUC = %0.2f $\pm$ %0.2f)" % (mean_auc, std_auc),
+    label=rf"Mean ROC (AUC = {mean_auc:.2f} $\pm$ {std_auc:.2f})",
     lw=2,
     alpha=0.8,
 )
