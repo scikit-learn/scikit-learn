@@ -82,7 +82,7 @@ def estimate_bandwidth(X, *, quantile=0.3, n_samples=None, random_state=0, n_job
     >>> X = np.array([[1, 1], [2, 1], [1, 0],
     ...               [4, 7], [3, 5], [3, 6]])
     >>> estimate_bandwidth(X, quantile=0.5)
-    1.61...
+    np.float64(1.61...)
     """
     X = check_array(X)
 

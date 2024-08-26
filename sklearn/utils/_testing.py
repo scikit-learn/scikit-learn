@@ -1024,7 +1024,7 @@ def _array_api_for_tests(array_namespace, device):
                 "MPS is not available because the current PyTorch install was not "
                 "built with MPS enabled."
             )
-    elif array_namespace in {"cupy", "cupy.array_api"}:  # pragma: nocover
+    elif array_namespace == "cupy":  # pragma: nocover
         import cupy
 
         if cupy.cuda.runtime.getDeviceCount() == 0:
