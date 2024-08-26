@@ -16,7 +16,7 @@ maximize the TPR while minimizing the FPR.
 This example demonstrates how the classifier's ROC response is influenced by
 variations in the training data as obtained through ShuffleSplit cross-validation.
 By analyzing all these curves, we can calculate the mean AUC and visualize the
-variability of the estimated curves across CV folds via a quantile-based
+variability of the estimated curves across CV splits via a quantile-based
 region.
 
 .. note::
