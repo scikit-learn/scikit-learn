@@ -3198,11 +3198,13 @@ def check_class_weight_balanced_classifiers(
 
 
 @ignore_warnings(category=FutureWarning)
-def check_class_weight_balanced_linear_classifier(name, classifier):
+def check_class_weight_balanced_linear_classifier(name, estimator_orig):
     """Test class weights with non-contiguous class labels."""
     # this is run on classes, not instances, though this should be changed
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-0.8, -1.0], [1.0, 1.0], [1.0, 0.0]])
     y = np.array([1, 1, 1, -1, -1])
+
+    classifier = clone(estimator_orig)
 
     if hasattr(classifier, "n_iter"):
         # This is a very small dataset, default n_iter are likely to prevent
