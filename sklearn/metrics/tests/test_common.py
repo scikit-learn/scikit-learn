@@ -485,6 +485,8 @@ SYMMETRIC_METRICS = {
     "micro_f1_score",
     "macro_f1_score",
     "weighted_recall_score",
+    "mean_squared_log_error",
+    "root_mean_squared_log_error",
     # P = R = F = accuracy in multiclass case
     "micro_f0.5_score",
     "micro_f1_score",
