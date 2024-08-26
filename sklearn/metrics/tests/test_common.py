@@ -37,6 +37,7 @@ from sklearn.metrics import (
     mean_pinball_loss,
     mean_poisson_deviance,
     mean_squared_error,
+    mean_squared_log_error,
     mean_tweedie_deviance,
     median_absolute_error,
     multilabel_confusion_matrix,
@@ -47,6 +48,7 @@ from sklearn.metrics import (
     recall_score,
     roc_auc_score,
     roc_curve,
+    root_mean_squared_log_error,
     top_k_accuracy_score,
     zero_one_loss,
 )
@@ -117,11 +119,13 @@ REGRESSION_METRICS = {
     "max_error": max_error,
     "mean_absolute_error": mean_absolute_error,
     "mean_squared_error": mean_squared_error,
+    "mean_squared_log_error": mean_squared_log_error,
     "mean_pinball_loss": mean_pinball_loss,
     "median_absolute_error": median_absolute_error,
     "mean_absolute_percentage_error": mean_absolute_percentage_error,
     "explained_variance_score": explained_variance_score,
     "r2_score": partial(r2_score, multioutput="variance_weighted"),
+    "root_mean_squared_log_error": root_mean_squared_log_error,
     "mean_normal_deviance": partial(mean_tweedie_deviance, power=0),
     "mean_poisson_deviance": mean_poisson_deviance,
     "mean_gamma_deviance": mean_gamma_deviance,
@@ -2014,6 +2018,11 @@ array_api_metric_checkers = {
         check_array_api_regression_metric,
         check_array_api_regression_metric_multioutput,
     ],
+    mean_squared_log_error: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+
+    ],
     d2_tweedie_score: [
         check_array_api_regression_metric,
     ],
@@ -2031,6 +2040,10 @@ array_api_metric_checkers = {
     cosine_distances: [check_array_api_metric_pairwise],
     euclidean_distances: [check_array_api_metric_pairwise],
     rbf_kernel: [check_array_api_metric_pairwise],
+    root_mean_squared_log_error: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
 }
 
 
