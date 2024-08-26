@@ -183,6 +183,9 @@ Changelog
   :class:`decomposition.FastICA` with `whiten_solver="eigh"` to improve the
   platform-agnosticity of the estimator. :pr:`29612` by :user:`Olivier Grisel
   <ogrisel>`.
+- |Feature| Add input checks to inverse_transform method of 
+  :class:`decomposition.PCA` to provide informative errors for misshaped inputs.
+  :pr:`29310` by :user:`Ian Faust <icfaust>`.
 
 :mod:`sklearn.discriminant_analysis`
 ....................................
