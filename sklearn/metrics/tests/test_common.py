@@ -459,7 +459,9 @@ MULTIOUTPUT_METRICS = {
     "mean_absolute_error",
     "median_absolute_error",
     "mean_squared_error",
+    "mean_squared_log_error",
     "r2_score",
+    "root_mean_squared_log_error",
     "explained_variance_score",
     "mean_absolute_percentage_error",
     "mean_pinball_loss",
@@ -514,6 +516,7 @@ NOT_SYMMETRIC_METRICS = {
     "det_curve",
     "precision_score",
     "recall_score",
+    "root_mean_squared_log_error"
     "f2_score",
     "f0.5_score",
     "weighted_f0.5_score",
@@ -528,6 +531,7 @@ NOT_SYMMETRIC_METRICS = {
     "macro_recall_score",
     "hinge_loss",
     "mean_gamma_deviance",
+    "mean_squared_log_error",
     "mean_poisson_deviance",
     "mean_compound_poisson_deviance",
     "d2_tweedie_score",
@@ -549,6 +553,8 @@ METRICS_REQUIRE_POSITIVE_Y = {
     "mean_poisson_deviance",
     "mean_gamma_deviance",
     "mean_compound_poisson_deviance",
+    "mean_squared_log_error",
+    "root_mean_squared_log_error"
     "d2_tweedie_score",
 }
 
