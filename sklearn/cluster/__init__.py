@@ -1,5 +1,8 @@
 """Popular unsupervised clustering algorithms."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from ._affinity_propagation import AffinityPropagation, affinity_propagation
 from ._agglomerative import (
     AgglomerativeClustering,

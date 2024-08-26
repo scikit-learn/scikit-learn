@@ -8,6 +8,9 @@ Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
 License: BSD 3 clause
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import warnings
 from heapq import heapify, heappop, heappush, heappushpop
 from numbers import Integral, Real
@@ -996,7 +999,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         ----------
         X : ndarray of shape (n_samples, n_features) or (n_samples, n_samples)
             Training instances to cluster, or distances between instances if
-            ``affinity='precomputed'``.
+            ``metric='precomputed'``.
 
         Returns
         -------

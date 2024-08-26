@@ -98,14 +98,21 @@ controls the number of iterations of the boosting process::
   >>> clf.score(X_test, y_test)
   0.8965
 
-Available losses for regression are 'squared_error',
-'absolute_error', which is less sensitive to outliers, and
-'poisson', which is well suited to model counts and frequencies. For
-classification, 'log_loss' is the only option. For binary classification it uses the
-binary log loss, also known as binomial deviance or binary cross-entropy. For
-`n_classes >= 3`, it uses the multi-class log loss function, with multinomial deviance
-and categorical cross-entropy as alternative names. The appropriate loss version is
-selected based on :term:`y` passed to :term:`fit`.
+Available losses for **regression** are:
+
+- 'squared_error', which is the default loss;
+- 'absolute_error', which is less sensitive to outliers than the squared error;
+- 'gamma', which is well suited to model strictly positive outcomes;
+- 'poisson', which is well suited to model counts and frequencies;
+- 'quantile', which allows for estimating a conditional quantile that can later
+  be used to obtain prediction intervals.
+
+For **classification**, 'log_loss' is the only option. For binary classification
+it uses the binary log loss, also known as binomial deviance or binary
+cross-entropy. For `n_classes >= 3`, it uses the multi-class log loss function,
+with multinomial deviance and categorical cross-entropy as alternative names.
+The appropriate loss version is selected based on :term:`y` passed to
+:term:`fit`.
 
 The size of the trees can be controlled through the ``max_leaf_nodes``,
 ``max_depth``, and ``min_samples_leaf`` parameters.

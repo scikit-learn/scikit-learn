@@ -264,9 +264,7 @@ def test_lasso_cv():
     )
     # check that they also give a similar MSE
     mse_lars = interpolate.interp1d(lars.cv_alphas_, lars.mse_path_.T)
-    np.testing.assert_approx_equal(
-        mse_lars(clf.alphas_[5]).mean(), clf.mse_path_[5].mean(), significant=2
-    )
+    assert_allclose(mse_lars(clf.alphas_[5]).mean(), clf.mse_path_[5].mean(), rtol=1e-2)
 
     # test set
     assert clf.score(X_test, y_test) > 0.99
