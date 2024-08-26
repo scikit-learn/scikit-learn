@@ -637,7 +637,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     >>> er = er.fit(X, y)
     >>> len(er.estimators_)
     2
-    
+
     For a detailed example of utilizing
     :class:`~sklearn.ensemble.VotingRegressor`
     to fit several base regressors on the entire dataset and then averaging their
