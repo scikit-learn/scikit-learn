@@ -66,8 +66,8 @@ X = np.concatenate([X, random_state.randn(n_samples, 200 * n_features)], axis=1)
 # level (dashed ROC curve) is a classifier that would always predict the most
 # frequent class.
 #
-# In the following plot, quantile coverage is represented by shades of grey,
-# with darker colors indicating values closer to the median.
+# In the following plot, quantile coverage is represented in grey, though the
+# AUC value is reported in terms of the mean and standar deviation.
 
 import matplotlib.pyplot as plt
 
