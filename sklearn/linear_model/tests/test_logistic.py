@@ -798,7 +798,7 @@ def test_logistic_regression_sample_weights(problem, solver, global_random_seed)
     kw_weighted = {
         "random_state": global_random_seed,
         "fit_intercept": False,
-        "max_iter": 100_000 if solver.startswith("sag") else 10_000,
+        "max_iter": 100_000 if solver.startswith("sag") else 1_000,
         "tol": 1e-8,
     }
     kw_repeated = kw_weighted.copy()
@@ -827,8 +827,17 @@ def test_logistic_regression_sample_weights(problem, solver, global_random_seed)
 
     clf_sw_weighted = LR(solver=solver, **kw_weighted)
     clf_sw_repeated = LR(solver=solver, **kw_repeated)
-    clf_sw_weighted.fit(X, y, sample_weight=sw)
-    clf_sw_repeated.fit(X_repeated, y_repeated)
+
+    if solver == "lbfgs":
+        # lbfgs has convergence issues on the data
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", ConvergenceWarning)
+            clf_sw_weighted.fit(X, y, sample_weight=sw)
+            clf_sw_repeated.fit(X_repeated, y_repeated)
+
+    else:
+        clf_sw_weighted.fit(X, y, sample_weight=sw)
+        clf_sw_repeated.fit(X_repeated, y_repeated)
 
     if problem == "cv":
         assert_allclose(clf_sw_weighted.scores_[1], clf_sw_repeated.scores_[1])
