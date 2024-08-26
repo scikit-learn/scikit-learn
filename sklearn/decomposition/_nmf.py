@@ -1700,8 +1700,6 @@ class NMF(_BaseNMF):
         n_iter_ : int
             Actual number of iterations.
         """
-        check_non_negative(X, "NMF (input X)")
-
         # check parameters
         self._check_params(X)
 
@@ -1777,7 +1775,11 @@ class NMF(_BaseNMF):
         """
         check_is_fitted(self)
         X = self._validate_data(
-            X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32], reset=False
+            X,
+            accept_sparse=("csr", "csc"),
+            dtype=[np.float64, np.float32],
+            reset=False,
+            ensure_non_negative=True,
         )
 
         with config_context(assume_finite=True):

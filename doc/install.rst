@@ -28,21 +28,39 @@ There are different ways to install scikit-learn:
 Installing the latest release
 =============================
 
-.. `scss/install.scss` overrides some default sphinx-design styling for the tabs
+.. raw:: html
+
+  <style>
+    /* Show caption on large screens */
+    @media screen and (min-width: 960px) {
+      .install-instructions .sd-tab-set {
+        --tab-caption-width: 20%;
+      }
+
+      .install-instructions .sd-tab-set.tabs-os::before {
+        content: "Operating System";
+      }
+
+      .install-instructions .sd-tab-set.tabs-package-manager::before {
+        content: "Package Manager";
+      }
+    }
+  </style>
 
 .. div:: install-instructions
 
   .. tab-set::
+    :class: tabs-os
 
-    .. tab-item:: pip
-      :class-label: tab-6
-      :sync: packager-pip
+    .. tab-item:: Windows
+      :class-label: tab-4
 
       .. tab-set::
+        :class: tabs-package-manager
 
-        .. tab-item:: Windows
-          :class-label: tab-4
-          :sync: os-windows
+        .. tab-item:: pip
+          :class-label: tab-6
+          :sync: package-manager-pip
 
           Install the 64-bit version of Python 3, for instance from the
           `official website <https://www.python.org/downloads/windows/>`__.
@@ -66,9 +84,21 @@ Installing the latest release
             python -m pip freeze             # show all installed packages in the environment
             python -c "import sklearn; sklearn.show_versions()"
 
-        .. tab-item:: macOS
-          :class-label: tab-4
-          :sync: os-macos
+        .. tab-item:: conda
+          :class-label: tab-6
+          :sync: package-manager-conda
+
+          .. include:: ./install_instructions_conda.rst
+
+    .. tab-item:: MacOS
+      :class-label: tab-4
+
+      .. tab-set::
+        :class: tabs-package-manager
+
+        .. tab-item:: pip
+          :class-label: tab-6
+          :sync: package-manager-pip
 
           Install Python 3 using `homebrew <https://brew.sh/>`_ (`brew install python`)
           or by manually installing the package from the `official website
@@ -93,9 +123,21 @@ Installing the latest release
             python -m pip freeze             # show all installed packages in the environment
             python -c "import sklearn; sklearn.show_versions()"
 
-        .. tab-item:: Linux
-          :class-label: tab-4
-          :sync: os-linux
+        .. tab-item:: conda
+          :class-label: tab-6
+          :sync: package-manager-conda
+
+          .. include:: ./install_instructions_conda.rst
+
+    .. tab-item:: Linux
+      :class-label: tab-4
+
+      .. tab-set::
+        :class: tabs-package-manager
+
+        .. tab-item:: pip
+          :class-label: tab-6
+          :sync: package-manager-pip
 
           Python 3 is usually installed by default on most Linux distributions. To
           check if you have it installed, try:
@@ -127,28 +169,12 @@ Installing the latest release
             python3 -m pip freeze             # show all installed packages in the environment
             python3 -c "import sklearn; sklearn.show_versions()"
 
-    .. tab-item:: conda
-      :class-label: tab-6
-      :sync: packager-conda
+        .. tab-item:: conda
+          :class-label: tab-6
+          :sync: package-manager-conda
 
-      Install conda using the `Anaconda or miniconda installers
-      <https://docs.conda.io/projects/conda/en/latest/user-guide/install/>`__
-      or the `miniforge installers
-      <https://github.com/conda-forge/miniforge#miniforge>`__ (no administrator
-      permission required for any of those). Then run:
+          .. include:: ./install_instructions_conda.rst
 
-      .. prompt:: bash
-
-        conda create -n sklearn-env -c conda-forge scikit-learn
-        conda activate sklearn-env
-
-      In order to check your installation, you can use:
-
-      .. prompt:: bash
-
-        conda list scikit-learn  # show scikit-learn version and location
-        conda list               # show all installed packages in the environment
-        python -c "import sklearn; sklearn.show_versions()"
 
 Using an isolated environment such as pip venv or conda makes it possible to
 install a specific version of scikit-learn with pip or conda and its dependencies

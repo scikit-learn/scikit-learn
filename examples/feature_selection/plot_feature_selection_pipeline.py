@@ -10,6 +10,9 @@ We also show that you can easily inspect part of the pipeline.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # We will start by generating a binary classification dataset. Subsequently, we
 # will divide the dataset into two subsets.

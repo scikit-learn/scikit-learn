@@ -1,5 +1,8 @@
 """Decision tree based models for classification and regression."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from ._classes import (
     BaseDecisionTree,
     DecisionTreeClassifier,

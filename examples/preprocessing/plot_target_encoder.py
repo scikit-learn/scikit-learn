@@ -16,6 +16,9 @@ for handling categorical features: :class:`TargetEncoder`,
     :ref:`User Guide <target_encoder>`. for details.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Loading Data from OpenML
 # ========================
