@@ -516,7 +516,7 @@ NOT_SYMMETRIC_METRICS = {
     "det_curve",
     "precision_score",
     "recall_score",
-    "root_mean_squared_log_error"
+    "root_mean_squared_log_error",
     "f2_score",
     "f0.5_score",
     "weighted_f0.5_score",
@@ -554,7 +554,7 @@ METRICS_REQUIRE_POSITIVE_Y = {
     "mean_gamma_deviance",
     "mean_compound_poisson_deviance",
     "mean_squared_log_error",
-    "root_mean_squared_log_error"
+    "root_mean_squared_log_error",
     "d2_tweedie_score",
 }
 
