@@ -2121,7 +2121,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
         self : object
             Returns an instance of fitted model.
         """
-        super().fit(X, y, sample_weight=sample_weight, **params)
+        return super().fit(X, y, sample_weight=sample_weight, **params)
 
 
 class ElasticNetCV(RegressorMixin, LinearModelCV):
@@ -2400,7 +2400,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         self : object
             Returns an instance of fitted model.
         """
-        super().fit(X, y, sample_weight=sample_weight, **params)
+        return super().fit(X, y, sample_weight=sample_weight, **params)
 
 
 ###############################################################################
