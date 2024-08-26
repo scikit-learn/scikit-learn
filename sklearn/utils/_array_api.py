@@ -443,6 +443,9 @@ class _NumPyAPIWrapper:
     def pow(self, x1, x2):
         return numpy.power(x1, x2)
 
+    def cumulative_sum(self, x, axis=None, dtype=None):
+        return numpy.cumsum(x, axis=axis, dtype=dtype)
+
 
 _NUMPY_API_WRAPPER_INSTANCE = _NumPyAPIWrapper()
 
@@ -1045,3 +1048,23 @@ def _modify_in_place_if_numpy(xp, func, *args, out=None, **kwargs):
     else:
         out = func(*args, **kwargs)
     return out
+
+
+def _cumulative_sum1d(array, xp, device):
+    """Cumulative sum of a 1D array.
+
+    Included in the v2023.12 of the Array API spec.
+    https://data-apis.org/array-api/latest/API_specification/generated/array_api.cumulative_sum.html
+    """
+    array = _ravel(array, xp)
+    # PyTorch doesn't define `size` in an Array API compatible way
+    # https://data-apis.org/array-api-compat/helper-functions.html#array_api_compat.size
+    array_size = xp.size(array) if hasattr(xp, "size") else array.size
+    return xp.asarray(
+        [xp.sum(array[: i + 1]) for i in range(array_size)], device=device
+    )
+
+
+def _zip(*arrays, xp):
+    """Zip arrays together."""
+    pass

@@ -28,6 +28,14 @@ from ..utils import (
     check_consistent_length,
     column_or_1d,
 )
+from ..utils._array_api import (
+    _average,
+    _cumulative_sum1d,
+    _find_matching_floating_dtype,
+    _is_numpy_namespace,
+    get_namespace,
+    get_namespace_and_device,
+)
 from ..utils._encode import _encode, _unique
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.extmath import stable_cumsum
@@ -1500,21 +1508,40 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_base=2, ignore_ties=False):
         Cumulative Gain (the DCG obtained for a perfect ranking), in order to
         have a score between 0 and 1.
     """
-    discount = 1 / (np.log(np.arange(y_true.shape[1]) + 2) / np.log(log_base))
+    xp, _, device_ = get_namespace_and_device(y_true, y_score)
+    float_dtype = _find_matching_floating_dtype(y_true, y_score, xp=xp)
+    discount = 1 / (
+        xp.log(xp.astype(xp.arange(y_true.shape[1], device=device_), float_dtype) + 2)
+        / xp.log(xp.asarray(log_base, dtype=float_dtype, device=device_))
+    )
     if k is not None:
         discount[k:] = 0
     if ignore_ties:
-        ranking = np.argsort(y_score)[:, ::-1]
-        ranked = y_true[np.arange(ranking.shape[0])[:, np.newaxis], ranking]
-        cumulative_gains = discount.dot(ranked.T)
+        if _is_numpy_namespace(xp):
+            ranking = np.argsort(y_score)[:, ::-1]
+            ranked = y_true[np.arange(ranking.shape[0])[:, np.newaxis], ranking]
+            cumulative_gains = discount.dot(ranked.T)
+        else:
+            ranking = xp.flip(xp.argsort(y_score), axis=1)
+            # TODO this doesn't work yet for array_api_strict
+            ranking_index = xp.arange(ranking.shape[0])[:, xp.newaxis]
+            ranked = y_true[ranking_index, ranking]
+            cumulative_gains = xp.tensordot(discount, ranked.T, axes=1)
     else:
-        discount_cumsum = np.cumsum(discount)
-        cumulative_gains = [
-            _tie_averaged_dcg(y_t, y_s, discount_cumsum)
-            for y_t, y_s in zip(y_true, y_score)
-        ]
-        cumulative_gains = np.asarray(cumulative_gains)
-    return cumulative_gains
+        if _is_numpy_namespace(xp):
+            discount_cumsum = np.cumsum(discount)
+            cumulative_gains = [
+                _tie_averaged_dcg(y_t, y_s, discount_cumsum)
+                for y_t, y_s in zip(y_true, y_score)
+            ]
+        else:
+            discount_cumsum = _cumulative_sum1d(discount, xp, device_)
+            n_rows = y_true.shape[0]
+            cumulative_gains = [
+                _tie_averaged_dcg(y_true[i, ...], y_score[i, ...], discount_cumsum)
+                for i in range(n_rows)
+            ]
+    return xp.asarray(cumulative_gains, device=device_)
 
 
 def _tie_averaged_dcg(y_true, y_score, discount_cumsum):
@@ -1554,15 +1581,30 @@ def _tie_averaged_dcg(y_true, y_score, discount_cumsum):
     European conference on information retrieval (pp. 414-421). Springer,
     Berlin, Heidelberg.
     """
-    _, inv, counts = np.unique(-y_score, return_inverse=True, return_counts=True)
-    ranked = np.zeros(len(counts))
-    np.add.at(ranked, inv, y_true)
-    ranked /= counts
-    groups = np.cumsum(counts) - 1
-    discount_sums = np.empty(len(counts))
+    xp, _, device_ = get_namespace_and_device(y_true, y_score)
+    if _is_numpy_namespace(xp):
+        _, inv, counts = np.unique(-y_score, return_inverse=True, return_counts=True)
+        ranked = np.zeros(len(counts))
+        np.add.at(ranked, inv, y_true)
+        ranked /= counts
+        groups = np.cumsum(counts) - 1
+        discount_sums = np.empty(len(counts))
+        discount_sums[0] = discount_cumsum[groups[0]]
+        discount_sums[1:] = np.diff(discount_cumsum[groups])
+        return (ranked * discount_sums).sum()
+    _, counts = xp.unique_counts(-y_score)
+    _, inv = xp.unique_inverse(-y_score)
+    float_dtype = _find_matching_floating_dtype(y_true, y_score, xp=xp)
+    ranked = xp.asarray(xp.take(y_true, inv, axis=0), dtype=float_dtype)
+    ranked /= xp.asarray(counts, dtype=float_dtype)
+    groups = _cumulative_sum1d(counts, xp, device_) - 1
+    discount_sums = xp.empty_like(counts, dtype=float_dtype, device=device_)
     discount_sums[0] = discount_cumsum[groups[0]]
-    discount_sums[1:] = np.diff(discount_cumsum[groups])
-    return (ranked * discount_sums).sum()
+    array_diff = xp.take(discount_cumsum, groups[1:], axis=0) - xp.take(
+        discount_cumsum, groups[:-1], axis=0
+    )
+    discount_sums[1:] = array_diff
+    return xp.sum(ranked * discount_sums)
 
 
 def _check_dcg_target_type(y_true):
@@ -1686,16 +1728,17 @@ def dcg_score(
     ...           scores, k=1, ignore_ties=True)
     np.float64(5.0)
     """
+    xp, _ = get_namespace(y_true, y_score, sample_weight)
     y_true = check_array(y_true, ensure_2d=False)
     y_score = check_array(y_score, ensure_2d=False)
     check_consistent_length(y_true, y_score, sample_weight)
     _check_dcg_target_type(y_true)
-    return np.average(
-        _dcg_sample_scores(
-            y_true, y_score, k=k, log_base=log_base, ignore_ties=ignore_ties
-        ),
-        weights=sample_weight,
+    discounted_cumulative_gains = _dcg_sample_scores(
+        y_true, y_score, k=k, log_base=log_base, ignore_ties=ignore_ties
     )
+    dcg_score = _average(discounted_cumulative_gains, weights=sample_weight, xp=xp)
+    assert dcg_score.shape == ()
+    return float(dcg_score)
 
 
 def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):

@@ -14,6 +14,7 @@ from sklearn.utils._array_api import (
     _average,
     _convert_to_numpy,
     _count_nonzero,
+    _cumulative_sum1d,
     _estimator_with_converted_arrays,
     _fill_or_add_to_diagonal,
     _is_numpy_namespace,
@@ -606,3 +607,20 @@ def test_fill_or_add_to_diagonal(array_namespace, device_, dtype_name, wrap):
     _fill_or_add_to_diagonal(array_xp, value=1, xp=xp, add_value=False, wrap=wrap)
     numpy.fill_diagonal(array_np, val=1, wrap=wrap)
     assert_array_equal(_convert_to_numpy(array_xp, xp=xp), array_np)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+)
+def test_cumulative_sum1d(array_namespace, device, dtype_name):
+    xp = _array_api_for_tests(array_namespace, device)
+    array = numpy.array([[1, 2, 3], [4, 5, 6]], dtype=dtype_name)
+    expected = numpy.cumsum(array)
+
+    with config_context(array_api_dispatch=True):
+        array_xp = xp.asarray(array, device=device)
+        print(xp)
+        result = _cumulative_sum1d(array_xp, xp=xp, device=device)
+
+    assert_allclose(_convert_to_numpy(result, xp=xp), expected)
+    assert getattr(array_xp, "device", None) == getattr(result, "device", None)
