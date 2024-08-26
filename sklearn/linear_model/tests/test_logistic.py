@@ -798,7 +798,7 @@ def test_logistic_regression_sample_weights(problem, solver, global_random_seed)
     kw_weighted = {
         "random_state": global_random_seed,
         "fit_intercept": False,
-        "max_iter": 100_000 if solver.startswith("sag") else 1_000,
+        "max_iter": 100_000 if solver.startswith("sag") else 10_000,
         "tol": 1e-8,
     }
     kw_repeated = kw_weighted.copy()
