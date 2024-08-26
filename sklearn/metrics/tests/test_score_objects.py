@@ -895,8 +895,8 @@ def test_multimetric_scorer_exception_handling(raise_exc):
     multi_scorer = _MultimetricScorer(scorers=scorer_dict, raise_exc=raise_exc)
 
     error_msg = (
-        "Mean Squared Logarithmic Error cannot be used when targets contain"
-        " negative values."
+        "Mean Squared Logarithmic Error cannot be used when "
+        "targets contain values less than or equal to -1."
     )
 
     if raise_exc:
