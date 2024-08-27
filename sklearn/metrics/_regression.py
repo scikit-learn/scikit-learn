@@ -705,7 +705,7 @@ def mean_squared_log_error(
     )
     check_consistent_length(y_true, y_pred, sample_weight)
 
-    if (y_true <= -1).any() or (y_pred <= -1).any():
+    if any(t <= -1 for t in y_true) or any(t <= -1 for t in y_pred):
         raise ValueError(
             "Mean Squared Logarithmic Error cannot be used when "
             "targets contain values less than or equal to -1."
