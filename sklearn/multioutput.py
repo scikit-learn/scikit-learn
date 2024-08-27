@@ -1255,7 +1255,6 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # FIXME
         tags.target_tags.single_output = False
         tags.target_tags.multi_output = True
         return tags
