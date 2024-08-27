@@ -2443,10 +2443,7 @@ def check_classifiers_train(
                 # decision_function agrees with predict
                 decision = classifier.decision_function(X)
                 if n_classes == 2:
-                    if (
-                        not tags.target_tags.multi_output
-                        or tags.target_tags.single_output
-                    ):
+                    if tags.target_tags.single_output:
                         assert decision.shape == (n_samples,)
                     else:
                         assert decision.shape == (n_samples, 1)

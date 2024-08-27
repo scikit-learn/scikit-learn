@@ -1711,7 +1711,6 @@ class TfidfTransformer(
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.input_tags.two_d_array = True
         tags.input_tags.sparse = True
         # FIXME: np.float16 could be preserved if _inplace_csr_row_normalize_l2
         # accepted it.
