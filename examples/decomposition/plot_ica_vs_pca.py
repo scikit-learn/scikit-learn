@@ -81,10 +81,11 @@ def plot_samples(S, axis_list=None):
                 label=label,
             )
 
-    plt.hlines(0, -3, 3)
-    plt.vlines(0, -3, 3)
-    plt.xlim(-3, 3)
+    plt.hlines(0, -5, 5, color='black', linewidth=0.5)
+    plt.vlines(0, -3, 3, color='black', linewidth=0.5)
+    plt.xlim(-5, 5)
     plt.ylim(-3, 3)
+    plt.gca().set_aspect('equal')
     plt.xlabel("x")
     plt.ylabel("y")
 
@@ -97,7 +98,7 @@ plt.title("True Independent Sources")
 axis_list = [(pca.components_.T, "orange", "PCA"), (ica.mixing_, "red", "ICA")]
 plt.subplot(2, 2, 2)
 plot_samples(X / np.std(X), axis_list=axis_list)
-legend = plt.legend(loc="lower right")
+legend = plt.legend(loc="upper left")
 legend.set_zorder(100)
 
 plt.title("Observations")
