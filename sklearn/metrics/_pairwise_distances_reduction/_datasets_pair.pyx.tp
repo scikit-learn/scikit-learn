@@ -181,7 +181,7 @@ cdef class PrecomputedDistanceMatrix{{name_suffix}}(DatasetsPair{{name_suffix}})
         const {{INPUT_DTYPE_t}}[:, ::1] precomputed_distance,  
     ):
         super().__init__(
-            distance_metric={{DistanceMetric}}(),
+            distance_metric=DistanceMetric{{name_suffix}}(),
             n_features=0,  
         )
         # This array has already been checked.
