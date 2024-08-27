@@ -184,7 +184,7 @@ cdef class PrecomputedDistanceMatrix{{name_suffix}}(DatasetsPair{{name_suffix}})
             distance_metric={{DistanceMetric}}(),
             n_features=0,  
         )
-        # Arrays have already been checked
+        # This array has already been checked.
         self.precomputed_distance = precomputed_distance
 
     @final
