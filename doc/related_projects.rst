@@ -61,6 +61,10 @@ enhance the functionality of scikit-learn's estimators.
   It incorporates multiple modeling libraries under one API, and
   the objects that EvalML creates use an sklearn-compatible API.
 
+- `MLJAR AutoML <https://github.com/mljar/supervised>`_
+  Python package for AutoML on Tabular Data with Feature Engineering, 
+  Hyper-Parameters Tuning, Explanations and Automatic Documentation.
+
 **Experimentation and model registry frameworks**
 
 - `MLFlow <https://mlflow.org/>`_ MLflow is an open source platform to manage the ML
@@ -97,6 +101,11 @@ enhance the functionality of scikit-learn's estimators.
 - `yellowbrick <https://github.com/DistrictDataLabs/yellowbrick>`_ A suite of
   custom matplotlib visualizers for scikit-learn estimators to support visual feature
   analysis, model selection, evaluation, and diagnostics.
+
+- `supertree <https://github.com/mljar/supertree>`_
+  Python package designed to visualize decision trees in an interactive 
+  and user-friendly way within Jupyter Notebooks, Jupyter Lab, 
+  Google Colab, and any other notebooks that support HTML rendering.
 
 **Model selection**
 
