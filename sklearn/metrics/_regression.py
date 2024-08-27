@@ -700,20 +700,28 @@ def mean_squared_log_error(
                 y_true, y_pred, sample_weight=sample_weight, multioutput=multioutput
             )
 
-    y_type, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput
-    )
+    input_arrays = [y_true, y_pred, sample_weight, multioutput]
+    xp, _ = get_namespace(*input_arrays)
+
+    dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
+
+    _, y_true, y_pred, multioutput = _check_reg_targets(y_true,
+                                                        y_pred,
+                                                        multioutput,
+                                                        dtype=dtype,
+                                                        xp=xp
+                                                        )
     check_consistent_length(y_true, y_pred, sample_weight)
 
-    if (y_true <= -1).any() or (y_pred <= -1).any():
+    if xp.any(y_true <= -1) or xp.any(y_pred <= -1):
         raise ValueError(
             "Mean Squared Logarithmic Error cannot be used when "
             "targets contain values less than or equal to -1."
         )
 
     return mean_squared_error(
-        np.log1p(y_true),
-        np.log1p(y_pred),
+        xp.log1p(y_true),
+        xp.log1p(y_pred),
         sample_weight=sample_weight,
         multioutput=multioutput,
     )
@@ -775,18 +783,28 @@ def root_mean_squared_log_error(
     >>> root_mean_squared_log_error(y_true, y_pred)
     np.float64(0.199...)
     """
-    _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
+    input_arrays = [y_true, y_pred, sample_weight, multioutput]
+    xp, _ = get_namespace(*input_arrays)
+
+    dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
+
+    _, y_true, y_pred, multioutput = _check_reg_targets(y_true,
+                                                        y_pred,
+                                                        multioutput,
+                                                        dtype=dtype,
+                                                        xp=xp
+                                                        )
     check_consistent_length(y_true, y_pred, sample_weight)
 
-    if (y_true <= -1).any() or (y_pred <= -1).any():
+    if xp.any(y_true <= -1) or xp.any(y_pred <= -1):
         raise ValueError(
             "Root Mean Squared Logarithmic Error cannot be used when "
             "targets contain values less than or equal to -1."
         )
 
     return root_mean_squared_error(
-        np.log1p(y_true),
-        np.log1p(y_pred),
+        xp.log1p(y_true),
+        xp.log1p(y_pred),
         sample_weight=sample_weight,
         multioutput=multioutput,
     )
