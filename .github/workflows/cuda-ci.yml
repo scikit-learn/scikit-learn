@@ -71,6 +71,6 @@ jobs:
           python -c "import sklearn; sklearn.show_versions()"
 
           # Move to temporary directory to make sure we import from the installed sklearn
-          mkdir tmp
-          cd tmp
           SCIPY_ARRAY_API=1 pytest --pyargs sklearn -k 'array_api'
+        # Run in ~/dist to not use the sklearn that was checked out
+        working-directory: ~/dist
