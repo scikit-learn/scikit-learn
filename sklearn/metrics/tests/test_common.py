@@ -574,6 +574,8 @@ def _require_positive_targets(y1, y2):
 def _require_shifted_logarithm_targets(y1, y2):
     """Make targets strictly larger than -1"""
     offset = abs(min(y1.min(), y2.min())) - 0.99
+    y1 = y1.astype(float)
+    y2 = y2.astype(float)
     y1 += offset
     y2 += offset
     return y1, y2
