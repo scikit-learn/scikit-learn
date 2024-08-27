@@ -705,12 +705,9 @@ def mean_squared_log_error(
 
     dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
 
-    _, y_true, y_pred, multioutput = _check_reg_targets(y_true,
-                                                        y_pred,
-                                                        multioutput,
-                                                        dtype=dtype,
-                                                        xp=xp
-                                                        )
+    _, y_true, y_pred, multioutput = _check_reg_targets(
+        y_true, y_pred, multioutput, dtype=dtype, xp=xp
+    )
     check_consistent_length(y_true, y_pred, sample_weight)
 
     if xp.any(y_true <= -1) or xp.any(y_pred <= -1):
@@ -788,12 +785,9 @@ def root_mean_squared_log_error(
 
     dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
 
-    _, y_true, y_pred, multioutput = _check_reg_targets(y_true,
-                                                        y_pred,
-                                                        multioutput,
-                                                        dtype=dtype,
-                                                        xp=xp
-                                                        )
+    _, y_true, y_pred, multioutput = _check_reg_targets(
+        y_true, y_pred, multioutput, dtype=dtype, xp=xp
+    )
     check_consistent_length(y_true, y_pred, sample_weight)
 
     if xp.any(y_true <= -1) or xp.any(y_pred <= -1):
