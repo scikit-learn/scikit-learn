@@ -131,14 +131,6 @@ cdef class BaseDistancesReduction{{name_suffix}}:
     If metric is 'precomputed' and the precomputed matrix is provided, 
     a subclass must be able to access it through the compute method.
     """
-    
-    
-    
-    
-    
-    
-    
-    
 
     def __init__(
         self,
