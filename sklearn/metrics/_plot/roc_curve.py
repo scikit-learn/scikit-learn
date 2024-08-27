@@ -170,8 +170,8 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         else:
             self.chance_level_ = None
 
-        if ("label" in line_kwargs and line_kwargs.get("label") is not None) and (
-            "label" in chance_level_line_kw
+        if (
+            line_kwargs.get("label") is not None
             and chance_level_line_kw.get("label") is not None
         ):
             self.ax_.legend(loc="lower right")
