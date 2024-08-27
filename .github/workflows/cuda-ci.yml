@@ -70,7 +70,6 @@ jobs:
           conda activate sklearn
           python -c "import sklearn; sklearn.show_versions()"
 
-          # Move to temporary directory to make sure we import from the installed sklearn
           SCIPY_ARRAY_API=1 pytest --pyargs sklearn -k 'array_api'
         # Run in /home/runner to not load sklearn from the checkout repo
         working-directory: /home/runner
