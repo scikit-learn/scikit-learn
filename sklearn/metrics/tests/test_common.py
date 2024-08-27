@@ -571,7 +571,7 @@ def _require_positive_targets(y1, y2):
     return y1, y2
 
 
-def _require_shifted_logarithm_targets(y1, y2):
+def _require_log1p_targets(y1, y2):
     """Make targets strictly larger than -1"""
     offset = abs(min(y1.min(), y2.min())) - 0.99
     y1 = y1.astype(float)
@@ -604,7 +604,7 @@ def test_symmetric_metric(name):
         y_true, y_pred = _require_positive_targets(y_true, y_pred)
 
     elif name in METRICS_WITH_SHIFTED_LOGARITHM_Y:
-        y_true, y_pred = _require_shifted_logarithm_targets(y_true, y_pred)
+        y_true, y_pred = _require_log1p_targets(y_true, y_pred)
 
     y_true_bin = random_state.randint(0, 2, size=(20, 25))
     y_pred_bin = random_state.randint(0, 2, size=(20, 25))
@@ -637,9 +637,6 @@ def test_not_symmetric_metric(name):
     if name in METRICS_REQUIRE_POSITIVE_Y:
         y_true, y_pred = _require_positive_targets(y_true, y_pred)
 
-    elif name in METRICS_WITH_SHIFTED_LOGARITHM_Y:
-        y_true, y_pred = _require_shifted_logarithm_targets(y_true, y_pred)
-
     metric = ALL_METRICS[name]
 
     # use context manager to supply custom error message
@@ -658,9 +655,8 @@ def test_sample_order_invariance(name):
 
     if name in METRICS_REQUIRE_POSITIVE_Y:
         y_true, y_pred = _require_positive_targets(y_true, y_pred)
-
     elif name in METRICS_WITH_SHIFTED_LOGARITHM_Y:
-        y_true, y_pred = _require_shifted_logarithm_targets(y_true, y_pred)
+        y_true, y_pred = _require_log1p_targets(y_true, y_pred)
 
     y_true_shuffle, y_pred_shuffle = shuffle(y_true, y_pred, random_state=0)
 
@@ -728,9 +724,8 @@ def test_format_invariance_with_1d_vectors(name):
 
     if name in METRICS_REQUIRE_POSITIVE_Y:
         y1, y2 = _require_positive_targets(y1, y2)
-
     elif name in METRICS_WITH_SHIFTED_LOGARITHM_Y:
-        y1, y2 = _require_shifted_logarithm_targets(y1, y2)
+        y1, y2 = _require_log1p_targets(y1, y2)
 
     y1_list = list(y1)
     y2_list = list(y2)
