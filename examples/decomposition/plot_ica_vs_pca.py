@@ -67,8 +67,7 @@ def plot_samples(S, axis_list=None):
     )
     if axis_list is not None:
         for axis, color, label in axis_list:
-            axis /= axis.std()
-            x_axis, y_axis = axis
+            x_axis, y_axis = axis / axis.std()
             plt.quiver(
                 (0, 0),
                 (0, 0),
@@ -104,7 +103,7 @@ legend.set_zorder(100)
 plt.title("Observations")
 
 plt.subplot(2, 2, 3)
-plot_samples(S_pca_ / np.std(S_pca_, axis=0))
+plot_samples(S_pca_ / np.std(S_pca_))
 plt.title("PCA recovered signals")
 
 plt.subplot(2, 2, 4)
