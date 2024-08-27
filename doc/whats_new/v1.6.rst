@@ -264,9 +264,10 @@ Changelog
   is renamed into `ensure_all_finite`. `force_all_finite` will be removed in 1.8.
   :pr:`29404` by :user:`Jérémie du Boisberranger <jeremiedb>`.
 
-- |Fix| the functions :func:`metrics.mean_squared_log_error` and :func:`metrics.root_mean_squared_log_error`.
-  The functions now check whether the inputs are within the correct domain for the function :math:`y=\log(1+x)`,
-  rather than :math:`y=\log(x)`.
+- |Fix| the functions :func:`metrics.mean_squared_log_error` and
+  :func:`metrics.root_mean_squared_log_error` now check whether
+  the inputs are within the correct domain for the function
+  :math:`y=\log(1+x)`, rather than :math:`y=\log(x)`.
   :pr:`29709` by :user:`Virgil Chan <virchan>`.
 
 
