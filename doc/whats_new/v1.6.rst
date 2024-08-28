@@ -43,6 +43,7 @@ See :ref:`array_api` for more details.
 - :func:`sklearn.metrics.mean_squared_error` :pr:`29142` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.metrics.mean_squared_log_error` :pr:`29709` by :user:`Virgil Chan <virchan>`;
 - :func:`sklearn.metrics.mean_tweedie_deviance` :pr:`28106` by :user:`Thomas Li <lithomas1>`;
+- :func:`sklearn.metrics.root_mean_squared_error` :pr:`29709` by :user:`Virgil Chan <virchan>`;
 - :func:`sklearn.metrics.root_mean_squared_log_error` :pr:`29709` by :user:`Virgil Chan <virchan>`;
 - :func:`sklearn.metrics.pairwise.additive_chi2_kernel` :pr:`29144` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.metrics.pairwise.chi2_kernel` :pr:`29267` by :user:`Yaroslav Korobko <Tialo>`;
