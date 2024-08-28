@@ -595,7 +595,7 @@ def root_mean_squared_error(
     xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
     dtype = _find_matching_floating_dtype(y_true, y_pred, xp=xp)
 
-    y_type, y_true, y_pred = multioutput = _check_reg_targets(
+    y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput, dtype=dtype, xp=xp
     )
     check_consistent_length(y_true, y_pred, sample_weight)
