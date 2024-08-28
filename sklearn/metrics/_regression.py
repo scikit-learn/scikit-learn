@@ -524,7 +524,7 @@ def mean_squared_error(
         if multioutput == "raw_values":
             return output_errors
         elif multioutput == "uniform_average":
-            # pass None as weights to np.average: uniform mean
+            # pass None as weights to _average: uniform mean
             multioutput = None
 
     # See comment in mean_absolute_error
@@ -591,7 +591,15 @@ def root_mean_squared_error(
     >>> root_mean_squared_error(y_true, y_pred)
     np.float64(0.822...)
     """
-    output_errors = np.sqrt(
+
+    xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
+    dtype = _find_matching_floating_dtype(y_true, y_pred, xp=xp)
+
+    y_type, y_true, y_pred = multioutput = _check_reg_targets(
+        y_true, y_pred, multioutput, dtype=dtype, xp=xp
+    )
+    check_consistent_length(y_true, y_pred, sample_weight)
+    output_errors = xp.sqrt(
         mean_squared_error(
             y_true, y_pred, sample_weight=sample_weight, multioutput="raw_values"
         )
@@ -604,7 +612,9 @@ def root_mean_squared_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    root_mean_squared_error = _average(output_errors, weights=multioutput)
+    assert root_mean_squared_error.shape == ()
+    return float(root_mean_squared_error)
 
 
 @validate_params(
