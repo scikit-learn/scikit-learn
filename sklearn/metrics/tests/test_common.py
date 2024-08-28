@@ -57,9 +57,12 @@ from sklearn.metrics.pairwise import (
     cosine_distances,
     cosine_similarity,
     euclidean_distances,
+    linear_kernel,
     paired_cosine_distances,
     paired_euclidean_distances,
+    polynomial_kernel,
     rbf_kernel,
+    sigmoid_kernel,
 )
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import shuffle
@@ -1754,7 +1757,8 @@ def test_metrics_pos_label_error_str(metric, y_pred_threshold, dtype_y_str):
 def check_array_api_metric(
     metric, array_namespace, device, dtype_name, a_np, b_np, **metric_kwargs
 ):
-    if _array_api_skips.get(metric.__name__, {}).get(array_namespace) == "all":
+    func_name = metric.func.__name__ if isinstance(metric, partial) else metric.__name__
+    if _array_api_skips.get(func_name, {}).get(array_namespace) == "all":
         pytest.skip(
             f"{array_namespace} is not Array API compliant for {metric.__name__}"
         )
@@ -2036,7 +2040,10 @@ array_api_metric_checkers = {
     paired_euclidean_distances: [check_array_api_metric_pairwise],
     cosine_distances: [check_array_api_metric_pairwise],
     euclidean_distances: [check_array_api_metric_pairwise],
+    linear_kernel: [check_array_api_metric_pairwise],
+    polynomial_kernel: [check_array_api_metric_pairwise],
     rbf_kernel: [check_array_api_metric_pairwise],
+    sigmoid_kernel: [check_array_api_metric_pairwise],
 }
 
 
