@@ -585,11 +585,11 @@ def root_mean_squared_error(
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> root_mean_squared_error(y_true, y_pred)
-    np.float64(0.612...)
+    0.612...
     >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
     >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
     >>> root_mean_squared_error(y_true, y_pred)
-    np.float64(0.822...)
+    0.822...
     """
 
     xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
@@ -788,7 +788,7 @@ def root_mean_squared_log_error(
     >>> y_true = [3, 5, 2.5, 7]
     >>> y_pred = [2.5, 5, 4, 8]
     >>> root_mean_squared_log_error(y_true, y_pred)
-    np.float64(0.199...)
+    0.199...
     """
     input_arrays = [y_true, y_pred, sample_weight, multioutput]
     xp, _ = get_namespace(*input_arrays)
