@@ -1106,6 +1106,15 @@ def _get_warnings_filters_info_list():
         WarningInfo(
             "ignore", message="Attribute s is deprecated", category=DeprecationWarning
         ),
+        # TODO: remove when 2023.12 is not preliminary anymore
+        WarningInfo(
+            "ignore",
+            message=(
+                "The 2023.12 version of the array API specification is still "
+                "preliminary."
+            ),
+            category=UserWarning,
+        ),
     ]
 
 
