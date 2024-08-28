@@ -48,6 +48,7 @@ from sklearn.metrics import (
     recall_score,
     roc_auc_score,
     roc_curve,
+    root_mean_squared_error,
     root_mean_squared_log_error,
     top_k_accuracy_score,
     zero_one_loss,
@@ -125,6 +126,7 @@ REGRESSION_METRICS = {
     "mean_absolute_percentage_error": mean_absolute_percentage_error,
     "explained_variance_score": explained_variance_score,
     "r2_score": partial(r2_score, multioutput="variance_weighted"),
+    "root_mean_squared_error": root_mean_squared_error,
     "root_mean_squared_log_error": root_mean_squared_log_error,
     "mean_normal_deviance": partial(mean_tweedie_deviance, power=0),
     "mean_poisson_deviance": mean_poisson_deviance,
@@ -461,6 +463,7 @@ MULTIOUTPUT_METRICS = {
     "mean_squared_error",
     "mean_squared_log_error",
     "r2_score",
+    "root_mean_squared_error",
     "root_mean_squared_log_error",
     "explained_variance_score",
     "mean_absolute_percentage_error",
@@ -486,6 +489,7 @@ SYMMETRIC_METRICS = {
     "macro_f1_score",
     "weighted_recall_score",
     "mean_squared_log_error",
+    "root_mean_squared_error",
     "root_mean_squared_log_error",
     # P = R = F = accuracy in multiclass case
     "micro_f0.5_score",
@@ -2068,6 +2072,10 @@ array_api_metric_checkers = {
     cosine_distances: [check_array_api_metric_pairwise],
     euclidean_distances: [check_array_api_metric_pairwise],
     rbf_kernel: [check_array_api_metric_pairwise],
+    root_mean_squared_error: [
+        check_array_api_regression_metric,
+        check_array_api_regression_metric_multioutput,
+    ],
     root_mean_squared_log_error: [
         check_array_api_regression_metric,
         check_array_api_regression_metric_multioutput,
