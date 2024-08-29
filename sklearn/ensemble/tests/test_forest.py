@@ -1862,3 +1862,19 @@ def test_non_supported_criterion_raises_error_with_missing_values(Forest):
     msg = ".*does not accept missing values"
     with pytest.raises(ValueError, match=msg):
         forest.fit(X, y)
+
+
+def test_random_forest_regressor_estimators_predict():
+    X_train, X_test, y_train, _ = train_test_split(
+        X_reg, y_reg, test_size=0.5, random_state=0
+    )
+    rf = RandomForestRegressor().fit(X_train, y_train)
+
+    estimators_pred = rf.estimators_predict(X_test)
+    pred = rf.predict(X_test)
+
+    np.testing.assert_allclose(
+        estimators_pred,
+        np.array([estimator.predict(X_test) for estimator in rf.estimators_]),
+    )
+    np.testing.assert_allclose(estimators_pred.mean(axis=0), pred)
