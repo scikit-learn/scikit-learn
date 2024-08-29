@@ -593,12 +593,7 @@ def root_mean_squared_error(
     """
 
     xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
-    dtype = _find_matching_floating_dtype(y_true, y_pred, xp=xp)
 
-    y_type, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput, dtype=dtype, xp=xp
-    )
-    check_consistent_length(y_true, y_pred, sample_weight)
     output_errors = xp.sqrt(
         mean_squared_error(
             y_true, y_pred, sample_weight=sample_weight, multioutput="raw_values"
@@ -609,9 +604,10 @@ def root_mean_squared_error(
         if multioutput == "raw_values":
             return output_errors
         elif multioutput == "uniform_average":
-            # pass None as weights to np.average: uniform mean
+            # pass None as weights to _average: uniform mean
             multioutput = None
 
+    # See comment in mean_absolute_error
     root_mean_squared_error = _average(output_errors, weights=multioutput)
     assert root_mean_squared_error.shape == ()
     return float(root_mean_squared_error)
@@ -711,14 +707,10 @@ def mean_squared_log_error(
             )
 
     input_arrays = [y_true, y_pred, sample_weight, multioutput]
+
+    # Only xp is needed to check if y_true and y_pred are within
+    # the domain of y = log(1+x), and calling the log1p function.
     xp, _ = get_namespace(*input_arrays)
-
-    dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
-
-    _, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput, dtype=dtype, xp=xp
-    )
-    check_consistent_length(y_true, y_pred, sample_weight)
 
     if xp.any(y_true <= -1) or xp.any(y_pred <= -1):
         raise ValueError(
@@ -792,13 +784,6 @@ def root_mean_squared_log_error(
     """
     input_arrays = [y_true, y_pred, sample_weight, multioutput]
     xp, _ = get_namespace(*input_arrays)
-
-    dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
-
-    _, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput, dtype=dtype, xp=xp
-    )
-    check_consistent_length(y_true, y_pred, sample_weight)
 
     if xp.any(y_true <= -1) or xp.any(y_pred <= -1):
         raise ValueError(
