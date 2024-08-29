@@ -711,6 +711,11 @@ def mean_squared_log_error(
     # Only xp is needed to check if y_true and y_pred are within
     # the domain of y = log(1+x), and calling the log1p function.
     xp, _ = get_namespace(*input_arrays)
+    dtype = _find_matching_floating_dtype(y_true, y_pred, xp=xp)
+
+    _, y_true, y_pred, _ = _check_reg_targets(
+        y_true, y_pred, multioutput, dtype=dtype, xp=xp
+    )
 
     if xp.any(y_true <= -1) or xp.any(y_pred <= -1):
         raise ValueError(
@@ -786,7 +791,9 @@ def root_mean_squared_log_error(
     xp, _ = get_namespace(*input_arrays)
     dtype = _find_matching_floating_dtype(y_true, y_pred, xp=xp)
 
-    _, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred, dtype=dtype, xp=xp)
+    _, y_true, y_pred, multioutput = _check_reg_targets(
+        y_true, y_pred, multioutput, dtype=dtype, xp=xp
+    )
 
     if xp.any(y_true <= -1) or xp.any(y_pred <= -1):
         raise ValueError(
