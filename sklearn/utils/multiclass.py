@@ -12,19 +12,20 @@ from scipy.sparse import issparse
 
 from ..utils._array_api import get_namespace
 from ..utils.fixes import VisibleDeprecationWarning
+from ._unique import cached_unique
 from .validation import _assert_all_finite, check_array
 
 
-def _unique_multiclass(y):
-    xp, is_array_api_compliant = get_namespace(y)
+def _unique_multiclass(y, xp=None):
+    xp, is_array_api_compliant = get_namespace(y, xp=xp)
     if hasattr(y, "__array__") or is_array_api_compliant:
-        return xp.unique_values(xp.asarray(y))
+        return cached_unique(xp.asarray(y), xp)
     else:
         return set(y)
 
 
-def _unique_indicator(y):
-    xp, _ = get_namespace(y)
+def _unique_indicator(y, xp=None):
+    xp, _ = get_namespace(y, xp=xp)
     return xp.arange(
         check_array(y, input_name="y", accept_sparse=["csr", "csc", "coo"]).shape[1]
     )
@@ -37,7 +38,7 @@ _FN_UNIQUE_LABELS = {
 }
 
 
-def unique_labels(*ys):
+def unique_labels(*ys, xp=None):
     """Extract an ordered array of unique labels.
 
     We don't allow:
@@ -54,6 +55,11 @@ def unique_labels(*ys):
     *ys : array-likes
         Label values.
 
+    xp : module, default=None
+        Precomputed array namespace module. When passed, typically from a caller
+        that has already performed inspection of its own inputs, skips array
+        namespace inspection.
+
     Returns
     -------
     out : ndarray of shape (n_unique_labels,)
@@ -69,12 +75,12 @@ def unique_labels(*ys):
     >>> unique_labels([1, 2, 10], [5, 11])
     array([ 1,  2,  5, 10, 11])
     """
-    xp, is_array_api_compliant = get_namespace(*ys)
+    xp, is_array_api_compliant = get_namespace(*ys, xp=xp)
     if not ys:
         raise ValueError("No argument has been passed.")
     # Check that we don't mix label format
 
-    ys_types = set(type_of_target(x) for x in ys)
+    ys_types = set(type_of_target(x, xp=xp) for x in ys)
     if ys_types == {"binary", "multiclass"}:
         ys_types = {"multiclass"}
 
@@ -104,10 +110,12 @@ def unique_labels(*ys):
 
     if is_array_api_compliant:
         # array_api does not allow for mixed dtypes
-        unique_ys = xp.concat([_unique_labels(y) for y in ys])
+        unique_ys = xp.concat([_unique_labels(y, xp=xp) for y in ys])
         return xp.unique_values(unique_ys)
 
-    ys_labels = set(chain.from_iterable((i for i in _unique_labels(y)) for y in ys))
+    ys_labels = set(
+        chain.from_iterable((i for i in _unique_labels(y, xp=xp)) for y in ys)
+    )
     # Check that we don't mix string type with number type
     if len(set(isinstance(label, str) for label in ys_labels)) > 1:
         raise ValueError("Mix of label input types (string and number)")
@@ -122,13 +130,18 @@ def _is_integral_float(y):
     )
 
 
-def is_multilabel(y):
+def is_multilabel(y, xp=None):
     """Check if ``y`` is in a multilabel format.
 
     Parameters
     ----------
     y : ndarray of shape (n_samples,)
         Target values.
+
+    xp : module, default=None
+        Precomputed array namespace module. When passed, typically from a caller
+        that has already performed inspection of its own inputs, skips array
+        namespace inspection.
 
     Returns
     -------
@@ -150,7 +163,7 @@ def is_multilabel(y):
     >>> is_multilabel(np.array([[1, 0, 0]]))
     True
     """
-    xp, is_array_api_compliant = get_namespace(y)
+    xp, is_array_api_compliant = get_namespace(y, xp=xp)
     if hasattr(y, "__array__") or isinstance(y, Sequence) or is_array_api_compliant:
         # DeprecationWarning will be replaced by ValueError, see NEP 34
         # https://numpy.org/neps/nep-0034-infer-dtype-is-object.html
@@ -187,7 +200,7 @@ def is_multilabel(y):
             and (y.dtype.kind in "biu" or _is_integral_float(labels))  # bool, int, uint
         )
     else:
-        labels = xp.unique_values(y)
+        labels = cached_unique(y, xp=xp)
 
         return labels.shape[0] < 3 and (
             xp.isdtype(y.dtype, ("bool", "signed integer", "unsigned integer"))
@@ -222,7 +235,7 @@ def check_classification_targets(y):
         )
 
 
-def type_of_target(y, input_name=""):
+def type_of_target(y, input_name="", xp=None):
     """Determine the type of data indicated by the target.
 
     Note that this type is the most specific type that can be inferred.
@@ -233,6 +246,11 @@ def type_of_target(y, input_name=""):
           ``continuous``.
         * ``multilabel-indicator`` is more specific but compatible with
           ``multiclass-multioutput``.
+
+    xp : module, default=None
+        Precomputed array namespace module. When passed, typically from a caller
+        that has already performed inspection of its own inputs, skips array
+        namespace inspection.
 
     Parameters
     ----------
@@ -294,7 +312,7 @@ def type_of_target(y, input_name=""):
     >>> type_of_target(np.array([[0, 1], [1, 1]]))
     'multilabel-indicator'
     """
-    xp, is_array_api_compliant = get_namespace(y)
+    xp, is_array_api_compliant = get_namespace(y, xp=xp)
     valid = (
         (isinstance(y, Sequence) or issparse(y) or hasattr(y, "__array__"))
         and not isinstance(y, str)
@@ -400,7 +418,7 @@ def type_of_target(y, input_name=""):
     # Check multiclass
     if issparse(first_row_or_val):
         first_row_or_val = first_row_or_val.data
-    if xp.unique_values(y).shape[0] > 2 or (y.ndim == 2 and len(first_row_or_val) > 1):
+    if cached_unique(y).shape[0] > 2 or (y.ndim == 2 and len(first_row_or_val) > 1):
         # [1, 2, 3] or [[1., 2., 3]] or [[1, 2]]
         return "multiclass" + suffix
     else:

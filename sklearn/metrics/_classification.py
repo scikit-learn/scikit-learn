@@ -41,6 +41,7 @@ from ..utils._param_validation import (
     StrOptions,
     validate_params,
 )
+from ..utils._unique import attach_unique
 from ..utils.extmath import _nanaverage
 from ..utils.multiclass import type_of_target, unique_labels
 from ..utils.sparsefuncs import count_nonzero
@@ -89,8 +90,8 @@ def _check_targets(y_true, y_pred):
     """
     xp, _ = get_namespace(y_true, y_pred)
     check_consistent_length(y_true, y_pred)
-    type_true = type_of_target(y_true, input_name="y_true")
-    type_pred = type_of_target(y_pred, input_name="y_pred")
+    type_true = type_of_target(y_true, input_name="y_true", xp=xp)
+    type_pred = type_of_target(y_pred, input_name="y_pred", xp=xp)
 
     y_type = {type_true, type_pred}
     if y_type == {"binary", "multiclass"}:
@@ -2677,6 +2678,8 @@ def classification_report(
     <BLANKLINE>
     """
 
+    y_true = attach_unique(y_true)
+    y_pred = attach_unique(y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
 
     if labels is None:
