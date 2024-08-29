@@ -2332,7 +2332,7 @@ def test_optimization_power_transformer(method, lmbda):
     if method == "box-cox":
         # For box-cox, means that lmbda * y + 1 > 0 or y > - 1 / lmbda
         # Clip the data here to make sure the inequality is valid.
-        X = np.clip(X, - 1 / lmbda + 1e-5, None)
+        X = np.clip(X, -1 / lmbda + 1e-5, None)
 
     pt = PowerTransformer(method=method, standardize=False)
     pt.lambdas_ = [lmbda]
