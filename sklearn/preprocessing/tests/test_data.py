@@ -2312,7 +2312,7 @@ def test_power_transformer_lambda_one():
     "method, lmbda",
     [
         ("box-cox", 0.1),
-        ("box-cox", 0.2),
+        ("box-cox", 0.5),
         ("yeo-johnson", 0.1),
         ("yeo-johnson", 0.5),
         ("yeo-johnson", 1.0),
@@ -2328,6 +2328,11 @@ def test_optimization_power_transformer(method, lmbda):
     rng = np.random.RandomState(0)
     n_samples = 20000
     X = rng.normal(loc=0, scale=1, size=(n_samples, 1))
+
+    if method == "box-cox":
+        # For box-cox, means that lmbda * y + 1 > 0 or y > - 1 / lmbda
+        # Clip the data here to make sure the inequality is valid.
+        X = np.clip(X, - 1 / lmbda + 1e-5, None)
 
     pt = PowerTransformer(method=method, standardize=False)
     pt.lambdas_ = [lmbda]
