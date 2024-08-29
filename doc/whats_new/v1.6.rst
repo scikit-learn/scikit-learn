@@ -172,6 +172,12 @@ Changelog
   now accepts string format or callable to generate feature names. :pr:`28934` by
   :user:`Marc Bresson <MarcBresson>`.
 
+:mod:`sklearn.cross_decomposition`
+..................................
+
+- |Fix| :class:`cross_decomposition.PLSRegression` properly raises an error when
+  `n_components` is larger than `n_samples`. :pr:`29710` by `Thomas Fan`_.
+
 :mod:`sklearn.datasets`
 .......................
 
