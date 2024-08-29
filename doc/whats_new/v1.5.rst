@@ -20,6 +20,14 @@ Version 1.5.2
 
 **release date of 1.5.2**
 
+Changes impacting many modules
+------------------------------
+
+- |Fix| Fixed performance regression in a few Cython modules in
+  `sklearn._loss`, `sklearn.manifold`, `sklearn.metrics` and `sklearn.utils`,
+  which were built without OpenMP support.
+  :pr:`29694` by :user:`Loïc Estèvce <lesteve>`.
+
 Changelog
 ---------
 
