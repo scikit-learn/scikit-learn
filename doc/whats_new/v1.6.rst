@@ -175,6 +175,12 @@ Changelog
   now accepts string format or callable to generate feature names. :pr:`28934` by
   :user:`Marc Bresson <MarcBresson>`.
 
+:mod:`sklearn.cross_decomposition`
+..................................
+
+- |Fix| :class:`cross_decomposition.PLSRegression` properly raises an error when
+  `n_components` is larger than `n_samples`. :pr:`29710` by `Thomas Fan`_.
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -301,6 +307,10 @@ Changelog
 - |Enhancement| The HTML representation of :class:`preprocessing.FunctionTransformer`
   will show the function name in the label.
   :pr:`29158` by :user:`Yao Xiao <Charlie-XIAO>`.
+
+- |Fix| :class:`preprocessing.PowerTransformer` now uses `scipy.special.inv_boxcox`
+  to output `nan` if the input of BoxCox's inverse is invalid.
+  :pr:`27875` by :user:`Xuefeng Xu <xuefeng-xu>`.
 
 :mod:`sklearn.semi_supervised`
 ..............................
