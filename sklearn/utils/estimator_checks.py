@@ -348,7 +348,7 @@ def _yield_all_checks(estimator, legacy: bool):
         yield check
 
     if not legacy:
-        return
+        return  # pragma: no cover
 
     for check in _yield_checks(estimator):
         yield check
@@ -522,7 +522,7 @@ def _should_be_skipped_or_marked(estimator, check):
     return False, "placeholder reason that will never be used"
 
 
-def parametrize_with_checks(estimators, legacy=True):
+def parametrize_with_checks(estimators, *, legacy=True):
     """Pytest specific decorator for parametrizing estimator checks.
 
     Checks are categorised into the following groups:
@@ -594,7 +594,7 @@ def parametrize_with_checks(estimators, legacy=True):
     )
 
 
-def check_estimator(estimator=None, generate_only=False, legacy=True):
+def check_estimator(estimator=None, generate_only=False, *, legacy=True):
     """Check if estimator adheres to scikit-learn conventions.
 
     This function will run an extensive test-suite for input validation,
