@@ -1188,7 +1188,7 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
     points that belongs in the same clusters in both ``labels_true`` and
     ``labels_pred``), ``FP`` is the number of **False Positive** (i.e. the
     number of pairs of points that belong to the same cluster in
-    ``labels_pred`` and not in ``labels_true``) and ``FN`` is the number of
+    ``labels_pred`` but not in ``labels_true``) and ``FN`` is the number of
     **False Negative** (i.e. the number of pairs of points that belong to the
     same cluster in ``labels_true`` but not in ``labels_pred``).
 
