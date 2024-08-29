@@ -44,7 +44,7 @@ coverages
 samples
 doc/coverages
 doc/samples
-venv/
+venv*/
 *.prof
 .tox/
 .coverage
