@@ -84,7 +84,6 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
                   strategy=strategy,
                   metric_kwargs=metric_kwargs,
               )
-        
           else:
               # Fall back on a generic implementation that handles most scipy
               # metrics by computing the distances between 2 vectors at a time.
