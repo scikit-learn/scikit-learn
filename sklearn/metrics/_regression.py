@@ -784,6 +784,9 @@ def root_mean_squared_log_error(
     """
     input_arrays = [y_true, y_pred]
     xp, _ = get_namespace(*input_arrays)
+    dtype = _find_matching_floating_dtype(y_true, y_pred, xp=xp)
+
+    _, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred, dtype=dtype, xp=xp)
 
     if xp.any(y_true <= -1) or xp.any(y_pred <= -1):
         raise ValueError(
