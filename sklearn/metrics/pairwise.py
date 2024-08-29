@@ -1537,6 +1537,7 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     array([[0.76..., 0.76...],
            [0.87..., 0.93...]])
     """
+    xp, _ = get_namespace(X, Y)
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
         gamma = 1.0 / X.shape[1]
@@ -1544,7 +1545,8 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     K = safe_sparse_dot(X, Y.T, dense_output=True)
     K *= gamma
     K += coef0
-    np.tanh(K, K)  # compute tanh in-place
+    # compute tanh in-place for numpy
+    K = _modify_in_place_if_numpy(xp, xp.tanh, K, out=K)
     return K
 
 
@@ -1938,7 +1940,7 @@ def _dist_wrapper(dist_func, dist_matrix, slice_, *args, **kwargs):
 
 def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     """Break the pairwise matrix in n_jobs even slices
-    and compute them in parallel."""
+    and compute them using multithreading."""
 
     if Y is None:
         Y = X
@@ -2333,8 +2335,8 @@ def pairwise_distances(
 
     n_jobs : int, default=None
         The number of jobs to use for the computation. This works by breaking
-        down the pairwise matrix into n_jobs even slices and computing them in
-        parallel.
+        down the pairwise matrix into n_jobs even slices and computing them
+        using multithreading.
 
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -2597,8 +2599,8 @@ def pairwise_kernels(
 
     n_jobs : int, default=None
         The number of jobs to use for the computation. This works by breaking
-        down the pairwise matrix into n_jobs even slices and computing them in
-        parallel.
+        down the pairwise matrix into n_jobs even slices and computing them
+        using multithreading.
 
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
