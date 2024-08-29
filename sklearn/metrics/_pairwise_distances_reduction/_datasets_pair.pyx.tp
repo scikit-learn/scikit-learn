@@ -103,7 +103,6 @@ cdef class DatasetsPair{{name_suffix}}:
             metric_kwargs.pop("X_norm_squared", None)
             metric_kwargs.pop("Y_norm_squared", None)
         if precomputed is not None:
-            # where do I initialize this? 
             return PrecomputedDistanceMatrix{{name_suffix}}(precomputed)
      
         cdef:
