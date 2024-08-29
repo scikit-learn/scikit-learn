@@ -706,7 +706,7 @@ def mean_squared_log_error(
                 y_true, y_pred, sample_weight=sample_weight, multioutput=multioutput
             )
 
-    input_arrays = [y_true, y_pred, sample_weight, multioutput]
+    input_arrays = [y_true, y_pred]
 
     # Only xp is needed to check if y_true and y_pred are within
     # the domain of y = log(1+x), and calling the log1p function.
@@ -782,7 +782,7 @@ def root_mean_squared_log_error(
     >>> root_mean_squared_log_error(y_true, y_pred)
     0.199...
     """
-    input_arrays = [y_true, y_pred, sample_weight, multioutput]
+    input_arrays = [y_true, y_pred]
     xp, _ = get_namespace(*input_arrays)
 
     if xp.any(y_true <= -1) or xp.any(y_pred <= -1):
