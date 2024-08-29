@@ -1548,6 +1548,27 @@ class RandomForestClassifier(ForestClassifier):
         self.ccp_alpha = ccp_alpha
 
 
+def _collect_estimator_predictions(
+    predict,
+    X,
+    out,
+    lock,
+    estimator_index,
+) -> None:
+    """
+    A utility function for joblib's Parallel.
+
+    It can't go locally in RandomForestRegressor, because joblib
+    complains that it cannot pickle it when placed there.
+
+    It is similar to the _accumulate_prediction method, with slight
+    modifications for storing predictions for individual forest estimators.
+    """
+    prediction = predict(X, check_input=False)
+    with lock:
+        out[0][estimator_index] += prediction
+
+
 class RandomForestRegressor(ForestRegressor):
     """
     A random forest regressor.
@@ -1905,6 +1926,50 @@ class RandomForestRegressor(ForestRegressor):
         self.min_impurity_decrease = min_impurity_decrease
         self.ccp_alpha = ccp_alpha
         self.monotonic_cst = monotonic_cst
+
+    def estimators_predict(self, X):
+        """
+        Predict regression target for X, returning the predictions of the
+        individual estimators in the forest.
+
+        Note that multioutput regression is not yet supported.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The input samples. Internally, its dtype will be converted to
+            ``dtype=np.float32``. If a sparse matrix is provided, it will be
+            converted into a sparse ``csr_matrix``.
+
+        Returns
+        -------
+        y : ndarray of shape (n_estimators, n_samples)
+            The predicted values.
+        """
+        if self.n_outputs_ > 1:
+            raise NotImplementedError(
+                "The 'estimators_predict' method does not yet support multioutput "
+                "regression. Use 'predict' instead."
+            )
+
+        check_is_fitted(self)
+        # Check data
+        X = self._validate_X_predict(X)
+
+        # Assign chunk of trees to jobs
+        n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
+
+        # Allocate an array for storing the prediction
+        y_hat = np.zeros((self.n_estimators, X.shape[0]), dtype=np.float64)
+
+        # Parallel loop
+        lock = threading.Lock()
+        Parallel(n_jobs=n_jobs, verbose=self.verbose, require="sharedmem")(
+            delayed(_collect_estimator_predictions)(e.predict, X, [y_hat], lock, i)
+            for i, e in enumerate(self.estimators_)
+        )
+
+        return y_hat
 
 
 class ExtraTreesClassifier(ForestClassifier):
