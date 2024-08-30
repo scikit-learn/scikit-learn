@@ -955,8 +955,8 @@ To build the documentation, you need to be in the ``doc`` folder:
 
     cd doc
 
-In the vast majority of cases, you only need to generate the full web site,
-without the example gallery:
+In the vast majority of cases, you only need to generate the web site without
+the example gallery:
 
 .. prompt:: bash
 
@@ -971,13 +971,16 @@ To also generate the example gallery you can use:
 
     make html
 
-This will run all the examples, which takes a while. If you only want to generate a few
-examples, which is particularly useful if you are modifying only a few examples, you can
-use:
+This will run all the examples, which takes a while. If you only want to generate 
+images for a few examples, you can pass their names (or parts of) to the build command.
+The line below will run all examples with names starting with `plot_calibration`:
 
 .. prompt:: bash
 
-    EXAMPLES_PATTERN=your_regex_goes_here make html
+    EXAMPLES_PATTERN="plot_calibration" make html
+
+You can also pass regular expressions to gain more advanced control over examples
+you want run.
 
 Set the environment variable `NO_MATHJAX=1` if you intend to view the documentation in
 an offline setting. To build the PDF manual, run:
