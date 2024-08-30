@@ -978,7 +978,7 @@ Here is a way to run all examples with file names containing `plot_calibration`:
 
     EXAMPLES_PATTERN="plot_calibration" make html
 
-You can actually use regular expressions for more advanced use cases.
+You can use regular expressions for more advanced use cases.
 
 Set the environment variable `NO_MATHJAX=1` if you intend to view the documentation in
 an offline setting. To build the PDF manual, run:
