@@ -554,10 +554,10 @@ for your estimator's tags. For example::
     class MyMultiOutputEstimator(BaseEstimator):
 
         def __sklearn_tags__(self):
-	    tags = super().__sklearn_tags__()
-	    tags.target_tags.single_output = False
-	    tags.non_deterministic = True
-	    return tags
+            tags = super().__sklearn_tags__()
+            tags.target_tags.single_output = False
+            tags.non_deterministic = True
+            return tags
 
 You can create a new subclass of :class:`~sklearn.utils.Tags` if you wish
 to add new tags to the existing set.
