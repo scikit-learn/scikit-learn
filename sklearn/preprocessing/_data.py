@@ -17,7 +17,7 @@ from ..base import (
     _fit_context,
 )
 from ..utils import _array_api, check_array, resample
-from ..utils._array_api import get_namespace
+from ..utils._array_api import _modify_in_place_if_numpy, device, get_namespace
 from ..utils._param_validation import Interval, Options, StrOptions, validate_params
 from ..utils.extmath import _incremental_mean_and_var, row_norms
 from ..utils.sparsefuncs import (
@@ -537,7 +537,15 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         X *= self.scale_
         X += self.min_
         if self.clip:
-            xp.clip(X, self.feature_range[0], self.feature_range[1], out=X)
+            device_ = device(X)
+            X = _modify_in_place_if_numpy(
+                xp,
+                xp.clip,
+                X,
+                xp.asarray(self.feature_range[0], dtype=X.dtype, device=device_),
+                xp.asarray(self.feature_range[1], dtype=X.dtype, device=device_),
+                out=X,
+            )
         return X
 
     def inverse_transform(self, X):
@@ -570,7 +578,7 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return X
 
     def _more_tags(self):
-        return {"allow_nan": True}
+        return {"allow_nan": True, "array_api_support": True}
 
 
 @validate_params(
