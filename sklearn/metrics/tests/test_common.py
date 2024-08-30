@@ -9,6 +9,7 @@ from sklearn._config import config_context
 from sklearn.datasets import make_multilabel_classification
 from sklearn.metrics import (
     accuracy_score,
+    auc,
     average_precision_score,
     balanced_accuracy_score,
     brier_score_loss,
@@ -1990,7 +1991,27 @@ def check_array_api_metric_pairwise(metric, array_namespace, device, dtype_name)
     )
 
 
+def check_array_api_regression_ranking(metric, array_namespace, device, dtype_name):
+    x_np = np.array([-1.1, -0.3, 0.4, 1.0, 4.0], dtype=dtype_name)
+    y_np = np.array([1.0, 0.5, -0.5, 2, 2], dtype=dtype_name)
+
+    metric_kwargs = {}
+
+    check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype_name,
+        a_np=x_np,
+        b_np=y_np,
+        **metric_kwargs,
+    )
+
+
 array_api_metric_checkers = {
+    auc: [
+        check_array_api_regression_ranking,
+    ],
     accuracy_score: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
