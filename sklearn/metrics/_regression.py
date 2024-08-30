@@ -708,8 +708,6 @@ def mean_squared_log_error(
 
     input_arrays = [y_true, y_pred]
 
-    # Only xp is needed to check if y_true and y_pred are within
-    # the domain of y = log(1+x), and calling the log1p function.
     xp, _ = get_namespace(*input_arrays)
     dtype = _find_matching_floating_dtype(y_true, y_pred, xp=xp)
 
