@@ -1046,3 +1046,18 @@ def _modify_in_place_if_numpy(xp, func, *args, out=None, **kwargs):
     else:
         out = func(*args, **kwargs)
     return out
+
+
+def _trapezoid(y, x=None, dx=1.0, axis=None):
+    """Partial (one-dimensional) port of scipy.trapezoid to support the Array API."""
+    xp, _, device = get_namespace_and_device(x, y)
+
+    if size(y) < 2:
+        return xp.asarray(0, device=device, dtype=y.dtype)
+
+    if x is None:
+        d = dx
+    else:
+        d = xp.subtract(x[1:], x[:-1])
+
+    return xp.sum(d * (y[:-1] + y[1:]) / 2.0)
