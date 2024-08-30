@@ -465,10 +465,10 @@ def check_consistent_length(*arrays):
     >>> b = [2, 3, 4]
     >>> check_consistent_length(a, b)
     """
-
-    lengths = [_num_samples(X) for X in arrays if X is not None]
-    uniques = np.unique(lengths)
-    if len(uniques) > 1:
+    xp, _ = get_namespace(*arrays)
+    lengths = xp.asarray([_num_samples(X) for X in arrays if X is not None])
+    uniques = xp.unique_values(lengths)
+    if uniques.shape[0] > 1:
         raise ValueError(
             "Found input variables with inconsistent numbers of samples: %r"
             % [int(l) for l in lengths]
