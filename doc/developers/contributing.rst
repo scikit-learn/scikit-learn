@@ -971,16 +971,14 @@ To also generate the example gallery you can use:
 
     make html
 
-This will run all the examples, which takes a while. If you only want to generate 
-images for a few examples, you can pass their names (or parts of) to the build command.
-The line below will run all examples with names starting with `plot_calibration`:
+This will run all the examples, which takes a while. You can also run only a few examples based on their file names.
+Here is a way to run all examples with filenames containing `plot_calibration`:
 
 .. prompt:: bash
 
     EXAMPLES_PATTERN="plot_calibration" make html
 
-You can also pass regular expressions to gain more advanced control over examples
-you want run.
+You can use regular expressions for more advanced use cases.
 
 Set the environment variable `NO_MATHJAX=1` if you intend to view the documentation in
 an offline setting. To build the PDF manual, run:
