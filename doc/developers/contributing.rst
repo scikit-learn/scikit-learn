@@ -979,7 +979,7 @@ the line below will run all example files starting from `plot_calibration`:
 
     EXAMPLES_PATTERN="plot_calibration" make html
 
-You can also pass regulare expressions to gain more advanced control over examples
+You can also pass regular expressions to gain more advanced control over examples
 you want run.
 
 Set the environment variable `NO_MATHJAX=1` if you intend to view the documentation in
