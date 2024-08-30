@@ -66,7 +66,7 @@ class InputTags:
     one_d_array: bool = False
     two_d_array: bool = True
     three_d_array: bool = False
-    one_d_labels = False
+    one_d_labels: bool = False
     two_d_labels: bool = False
     sparse: bool = False
     categorical: bool = False
