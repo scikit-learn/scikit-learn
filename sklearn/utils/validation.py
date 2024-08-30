@@ -1388,14 +1388,14 @@ def check_X_y(
     return X, y
 
 
-def _check_y(y, multi_output=False, y_numeric=False, estimator=None):
+def _check_y(y, multi_output=False, y_numeric=False, estimator=None, ensure_2d=False):
     """Isolated part of check_X_y dedicated to y validation"""
     if multi_output:
         y = check_array(
             y,
             accept_sparse="csr",
             ensure_all_finite=True,
-            ensure_2d=False,
+            ensure_2d=ensure_2d,
             dtype=None,
             input_name="y",
             estimator=estimator,

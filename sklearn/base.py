@@ -20,9 +20,7 @@ from .utils._estimator_html_repr import _HTMLDocumentationLinkMixin, estimator_h
 from .utils._metadata_requests import _MetadataRequester, _routing_enabled
 from .utils._param_validation import validate_parameter_constraints
 from .utils._set_output import _SetOutputMixin
-from .utils._tags import (
-    _DEFAULT_TAGS,
-)
+from .utils._tags import _DEFAULT_TAGS, _safe_tags
 from .utils.fixes import _IS_32BIT
 from .utils.validation import (
     _check_feature_names_in,
@@ -607,7 +605,8 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         """
         self._check_feature_names(X, reset=reset)
 
-        if y is None and self._get_tags()["requires_y"]:
+        tags = self._get_tags()
+        if y is None and tags["requires_y"]:
             raise ValueError(
                 f"This {self.__class__.__name__} estimator "
                 "requires y to be passed, but the target y is None."
@@ -620,7 +619,13 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
             raise ValueError("Validation should be done on X, y or both.")
 
         default_check_params = {"estimator": self}
-        check_params = {**default_check_params, **check_params}
+        check_X_params = {**default_check_params, **check_params}
+        check_y_params = {
+            **default_check_params,
+            "multi_output": _safe_tags(self, key="multioutput"),
+            "ensure_2d": _safe_tags(self, key="multioutput_only"),
+            **check_params,
+        }
 
         if not cast_to_ndarray:
             if not no_val_X and no_val_y:
@@ -630,9 +635,9 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
             else:
                 out = X, y
         elif not no_val_X and no_val_y:
-            out = check_array(X, input_name="X", **check_params)
+            out = check_array(X, input_name="X", **check_X_params)
         elif no_val_X and not no_val_y:
-            out = _check_y(y, **check_params)
+            out = _check_y(y, **check_y_params)
         else:
             if validate_separately:
                 # We need this because some estimators validate X and y
