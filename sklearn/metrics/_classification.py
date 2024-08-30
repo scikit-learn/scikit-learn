@@ -90,8 +90,8 @@ def _check_targets(y_true, y_pred):
     """
     xp, _ = get_namespace(y_true, y_pred)
     check_consistent_length(y_true, y_pred)
-    type_true = type_of_target(y_true, input_name="y_true", xp=xp)
-    type_pred = type_of_target(y_pred, input_name="y_pred", xp=xp)
+    type_true = type_of_target(y_true, input_name="y_true")
+    type_pred = type_of_target(y_pred, input_name="y_pred")
 
     y_type = {type_true, type_pred}
     if y_type == {"binary", "multiclass"}:

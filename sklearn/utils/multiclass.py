@@ -19,7 +19,7 @@ from .validation import _assert_all_finite, check_array
 def _unique_multiclass(y, xp=None):
     xp, is_array_api_compliant = get_namespace(y, xp=xp)
     if hasattr(y, "__array__") or is_array_api_compliant:
-        return cached_unique(xp.asarray(y), xp)
+        return cached_unique(xp.asarray(y), xp=xp)
     else:
         return set(y)
 
@@ -38,7 +38,7 @@ _FN_UNIQUE_LABELS = {
 }
 
 
-def unique_labels(*ys, xp=None):
+def unique_labels(*ys):
     """Extract an ordered array of unique labels.
 
     We don't allow:
@@ -55,11 +55,6 @@ def unique_labels(*ys, xp=None):
     *ys : array-likes
         Label values.
 
-    xp : module, default=None
-        Precomputed array namespace module. When passed, typically from a caller
-        that has already performed inspection of its own inputs, skips array
-        namespace inspection.
-
     Returns
     -------
     out : ndarray of shape (n_unique_labels,)
@@ -75,7 +70,7 @@ def unique_labels(*ys, xp=None):
     >>> unique_labels([1, 2, 10], [5, 11])
     array([ 1,  2,  5, 10, 11])
     """
-    xp, is_array_api_compliant = get_namespace(*ys, xp=xp)
+    xp, is_array_api_compliant = get_namespace(*ys)
     if not ys:
         raise ValueError("No argument has been passed.")
     # Check that we don't mix label format
@@ -130,18 +125,13 @@ def _is_integral_float(y):
     )
 
 
-def is_multilabel(y, xp=None):
+def is_multilabel(y):
     """Check if ``y`` is in a multilabel format.
 
     Parameters
     ----------
     y : ndarray of shape (n_samples,)
         Target values.
-
-    xp : module, default=None
-        Precomputed array namespace module. When passed, typically from a caller
-        that has already performed inspection of its own inputs, skips array
-        namespace inspection.
 
     Returns
     -------
@@ -163,7 +153,7 @@ def is_multilabel(y, xp=None):
     >>> is_multilabel(np.array([[1, 0, 0]]))
     True
     """
-    xp, is_array_api_compliant = get_namespace(y, xp=xp)
+    xp, is_array_api_compliant = get_namespace(y)
     if hasattr(y, "__array__") or isinstance(y, Sequence) or is_array_api_compliant:
         # DeprecationWarning will be replaced by ValueError, see NEP 34
         # https://numpy.org/neps/nep-0034-infer-dtype-is-object.html
@@ -235,7 +225,7 @@ def check_classification_targets(y):
         )
 
 
-def type_of_target(y, input_name="", xp=None):
+def type_of_target(y, input_name=""):
     """Determine the type of data indicated by the target.
 
     Note that this type is the most specific type that can be inferred.
@@ -246,11 +236,6 @@ def type_of_target(y, input_name="", xp=None):
           ``continuous``.
         * ``multilabel-indicator`` is more specific but compatible with
           ``multiclass-multioutput``.
-
-    xp : module, default=None
-        Precomputed array namespace module. When passed, typically from a caller
-        that has already performed inspection of its own inputs, skips array
-        namespace inspection.
 
     Parameters
     ----------
@@ -312,7 +297,7 @@ def type_of_target(y, input_name="", xp=None):
     >>> type_of_target(np.array([[0, 1], [1, 1]]))
     'multilabel-indicator'
     """
-    xp, is_array_api_compliant = get_namespace(y, xp=xp)
+    xp, is_array_api_compliant = get_namespace(y)
     valid = (
         (isinstance(y, Sequence) or issparse(y) or hasattr(y, "__array__"))
         and not isinstance(y, str)
