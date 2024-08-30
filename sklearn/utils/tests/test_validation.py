@@ -1341,7 +1341,7 @@ def test_check_scalar_invalid(
             include_boundaries=include_boundaries,
         )
     assert str(raised_error.value) == str(err_msg)
-    assert type(raised_error.value) == type(err_msg)
+    assert isinstance(raised_error.value, type(err_msg))
 
 
 _psd_cases_valid = {
