@@ -972,8 +972,8 @@ To also generate the example gallery you can use:
     make html
 
 This will run all the examples, which takes a while. If you only want to generate 
-images for a few examples, you can pass their names (or parts of) to the build. Such,
-the line below will run all example files starting from `plot_calibration`:
+images for a few examples, you can pass their names (or parts of) to the build command.
+The line below will run all examples with names starting with `plot_calibration`:
 
 .. prompt:: bash
 
