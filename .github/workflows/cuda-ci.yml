@@ -11,6 +11,7 @@ jobs:
   build_wheel:
     if: contains(github.event.pull_request.labels.*.name, 'CUDA CI')
     runs-on: "ubuntu-latest"
+    name: Build wheel for Pull Request
     steps:
       - uses: actions/checkout@v4
 
