@@ -12,7 +12,7 @@ from scipy.sparse import issparse
 
 from ..utils._array_api import get_namespace
 from ..utils.fixes import VisibleDeprecationWarning
-from ._unique import cached_unique
+from ._unique import attach_unique, cached_unique
 from .validation import _assert_all_finite, check_array
 
 
@@ -70,12 +70,13 @@ def unique_labels(*ys):
     >>> unique_labels([1, 2, 10], [5, 11])
     array([ 1,  2,  5, 10, 11])
     """
+    ys = attach_unique(*ys, return_tuple=True)
     xp, is_array_api_compliant = get_namespace(*ys)
-    if not ys:
+    if len(ys) == 0:
         raise ValueError("No argument has been passed.")
     # Check that we don't mix label format
 
-    ys_types = set(type_of_target(x, xp=xp) for x in ys)
+    ys_types = set(type_of_target(x) for x in ys)
     if ys_types == {"binary", "multiclass"}:
         ys_types = {"multiclass"}
 

@@ -88,6 +88,7 @@ def _check_targets(y_true, y_pred):
 
     y_pred : array or indicator matrix
     """
+    y_true, y_pred = attach_unique(y_true, y_pred)
     xp, _ = get_namespace(y_true, y_pred)
     check_consistent_length(y_true, y_pred)
     type_true = type_of_target(y_true, input_name="y_true")
@@ -328,6 +329,7 @@ def confusion_matrix(
     >>> (tn, fp, fn, tp)
     (np.int64(0), np.int64(2), np.int64(1), np.int64(1))
     """
+    y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type not in ("binary", "multiclass"):
         raise ValueError("%s is not supported" % y_type)
@@ -517,6 +519,7 @@ def multilabel_confusion_matrix(
            [[2, 1],
             [1, 2]]])
     """
+    y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)

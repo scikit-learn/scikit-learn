@@ -2,35 +2,38 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
-from scipy.sparse import issparse
 
-from sklearn.utils._array_api import _is_numpy_namespace, get_namespace
+from sklearn.utils._array_api import get_namespace
 
 
-def attach_unique(y, xp=None):
+def _attach_unique(y):
     """Attach unique values of y to y and return the result.
 
     The result is a view of y, and the metadata (unique) is not attached to y.
     """
+    if not isinstance(y, np.ndarray):
+        return y
     try:
         # avoid recalculating unique in nested calls.
         if "unique" in y.dtype.metadata:
             return y
-    except AttributeError:
+    except (AttributeError, TypeError):
         pass
 
-    xp, _ = get_namespace(y, xp=xp)
-    if not _is_numpy_namespace(xp) or issparse(y):
-        # we don't support non-numpy arrays here
-        return y
-
     unique = np.unique_values(y)
-    try:
-        unique_dtype = np.dtype(y.dtype, metadata={"unique": unique})
-        return y.view(dtype=unique_dtype)
-    except AttributeError:
-        # if y is not a numpy array, we can't attach metadata
-        return y
+    unique_dtype = np.dtype(y.dtype, metadata={"unique": unique})
+    return y.view(dtype=unique_dtype)
+
+
+def attach_unique(*ys, return_tuple=False):
+    """Attach unique values of ys to ys and return the results.
+
+    The result is a view of y, and the metadata (unique) is not attached to y.
+    """
+    res = tuple(_attach_unique(y) for y in ys)
+    if len(res) == 1 and not return_tuple:
+        return res[0]
+    return res
 
 
 def _cached_unique(y, xp=None):
@@ -61,4 +64,7 @@ def cached_unique(*ys, xp=None):
 
     Call `attach_unique` to attach the unique values to y.
     """
-    return (_cached_unique(y, xp=xp) for y in ys)
+    res = tuple(_cached_unique(y, xp=xp) for y in ys)
+    if len(res) == 1:
+        return res[0]
+    return res
