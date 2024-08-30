@@ -8,6 +8,7 @@ from numpy.testing import assert_allclose
 
 from sklearn._config import config_context
 from sklearn.base import BaseEstimator
+from sklearn.metrics import precision_recall_curve
 from sklearn.utils._array_api import (
     _asarray_with_order,
     _atol_for_type,
@@ -236,6 +237,41 @@ def test_average_raises_with_invalid_parameters(
 
     with config_context(array_api_dispatch=True), pytest.raises(error, match=error_msg):
         _average(array_in, axis=axis, weights=weights)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize(
+    "y_true, y_score, drop, expected_precision, expected_recall",
+    [
+        ([0, 1], [0, 1], True, [.5, 1, 1], [1, 1, 0]),
+        ([0, 1], [0, 1], False, [.5, 1, 1], [1, 1, 0]),
+        ([0, 1], [1, 1], True, [.5, 0, 1], [1, 0, 0]),
+        ([0, 1], [1, 1], False, [.5, 0, 1], [1, 0, 0]),
+        ([1, 0], [1, 1], True, [.5, 1], [1, 0]),
+        ([1, 0], [1, 1], False, [.5, 1], [1, 0]),
+        ([1, 0], [1, 0], True, [.5, 1, 1], [1, 1, 0]),
+        ([1, 0], [1, 0], False, [.5, 1, 1], [1, 1, 0]),
+        ([1, 0], [.5, .5], True, [.5, 1], [1, 0]),
+        ([1, 0], [.5, .5], False, [.5, 1], [1, 0])
+    ],
+)
+def test_precision_recall_curve(
+    array_namespace, device_, dtype_name, y_true, y_score, drop, expected_precision, expected_recall
+):
+    xp = _array_api_for_tests(array_namespace, device_)
+    with config_context(array_api_dispatch=True):
+        y_true_array = numpy.asarray(y_true, dtype=dtype_name)
+        y_true_array = xp.asarray(y_true_array, device=device_)
+        y_score_array = numpy.asarray(y_score, dtype=dtype_name)
+        y_score_array = xp.asarray(y_score_array, device=device_)
+        precision, recall, _ = precision_recall_curve(y_true_array, y_score_array, drop_intermediate=drop)
+
+    precision_np = _convert_to_numpy(precision, xp)
+    recall_np = _convert_to_numpy(recall, xp)
+    assert_allclose(precision_np, expected_precision, atol=_atol_for_type(dtype_name))
+    assert_allclose(recall_np, expected_recall, atol=_atol_for_type(dtype_name))
 
 
 def test_device_raises_if_no_input():

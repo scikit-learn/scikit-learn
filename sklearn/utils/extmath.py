@@ -12,7 +12,7 @@ from scipy import linalg, sparse
 
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.deprecation import deprecated
-from ._array_api import _is_numpy_namespace, device, get_namespace
+from ._array_api import _is_numpy_namespace, device, get_namespace, _isclose
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array, check_random_state
 
@@ -1224,10 +1224,16 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
     out : ndarray
         Array with the cumulative sums along the chosen axis.
     """
-    out = np.cumsum(arr, axis=axis, dtype=np.float64)
-    expected = np.sum(arr, axis=axis, dtype=np.float64)
-    if not np.allclose(
-        out.take(-1, axis=axis), expected, rtol=rtol, atol=atol, equal_nan=True
+    xp, _ = get_namespace(arr)
+    try:
+        out = xp.cumulative_sum(arr, axis=axis, dtype=xp.float64)
+    except AttributeError:  # module 'array_api_compat.torch' has no attribute 'cumulative_sum'
+        if not axis:
+            axis = 0
+        out = xp.cumsum(arr, axis, dtype=xp.float64)
+    expected = xp.sum(arr, axis=axis, dtype=xp.float64)
+    if not _isclose(
+        xp.take(out, -1, axis=axis), expected, rtol=rtol, atol=atol, equal_nan=True
     ):
         warnings.warn(
             (

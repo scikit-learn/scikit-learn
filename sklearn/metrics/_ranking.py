@@ -28,6 +28,7 @@ from ..utils import (
     check_consistent_length,
     column_or_1d,
 )
+from ..utils._array_api import get_namespace, _diff
 from ..utils._encode import _encode, _unique
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.extmath import stable_cumsum
@@ -808,6 +809,8 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     if not (y_type == "binary" or (y_type == "multiclass" and pos_label is not None)):
         raise ValueError("{0} format is not supported".format(y_type))
 
+    xp, _ = get_namespace(y_true, y_score, sample_weight)
+
     check_consistent_length(y_true, y_score, sample_weight)
     y_true = column_or_1d(y_true)
     y_score = column_or_1d(y_score)
@@ -829,7 +832,16 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     y_true = y_true == pos_label
 
     # sort scores and corresponding truth values
-    desc_score_indices = np.argsort(y_score, kind="mergesort")[::-1]
+    # at the time of writing, NumPy does not support the `descending` kwarg for argsort
+    # so we revert it using [::-1]
+    # the NumPy implementation pinpointed kind="mergesort" for some reasons ?!?
+    # (see commit 7d314004c3b8d3cba3ad1b73be54c8ae38d7ca4e)
+    # we're just using a stable sort here
+    if xp is np:
+        desc_score_indices = xp.argsort(y_score, stable=True)[::-1]
+    else:
+        desc_score_indices = xp.argsort(y_score, stable=True, descending=True)
+
     y_score = y_score[desc_score_indices]
     y_true = y_true[desc_score_indices]
     if sample_weight is not None:
@@ -840,8 +852,8 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     # y_score typically has many tied values. Here we extract
     # the indices associated with the distinct values. We also
     # concatenate a value for the end of the curve.
-    distinct_value_indices = np.where(np.diff(y_score))[0]
-    threshold_idxs = np.r_[distinct_value_indices, y_true.size - 1]
+    distinct_value_indices = xp.nonzero(_diff(y_score))[0]
+    threshold_idxs = xp.concat((distinct_value_indices, xp.asarray([y_true.shape[0] - 1])))
 
     # accumulate the true positives with decreasing threshold
     tps = stable_cumsum(y_true * weight)[threshold_idxs]
@@ -990,6 +1002,7 @@ def precision_recall_curve(
             FutureWarning,
         )
         y_score = probas_pred
+    xp, _ = get_namespace(y_true, y_score)
 
     fps, tps, thresholds = _binary_clf_curve(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
@@ -1001,9 +1014,13 @@ def precision_recall_curve(
         # only the first and last point for each tps value. All points
         # with the same tps value have the same recall and thus x coordinate.
         # They appear as a vertical line on the plot.
-        optimal_idxs = np.where(
-            np.concatenate(
-                [[True], np.logical_or(np.diff(tps[:-1]), np.diff(tps[1:])), [True]]
+        optimal_idxs = xp.non_zero(
+            xp.concat(
+                [[True],
+                # functional equivalent to np.logical_or(np.diff(tps[:-1]), np.diff(tps[1:])),
+                # but compatible with Array API
+                 xp.logical_or(_diff(tps[:-1]), _diff(tps[1:])),
+                 [True]]
             )
         )[0]
         fps = fps[optimal_idxs]
@@ -1013,8 +1030,8 @@ def precision_recall_curve(
     ps = tps + fps
     # Initialize the result array with zeros to make sure that precision[ps == 0]
     # does not contain uninitialized values.
-    precision = np.zeros_like(tps)
-    np.divide(tps, ps, out=precision, where=(ps != 0))
+    precision = xp.zeros_like(tps)
+    xp.divide(tps, ps, out=precision, where=(ps != 0))
 
     # When no positive label in y_true, recall is set to 1 for all thresholds
     # tps[-1] == 0 <=> y_true == all negative labels
@@ -1023,13 +1040,13 @@ def precision_recall_curve(
             "No positive class found in y_true, "
             "recall is set to one for all thresholds."
         )
-        recall = np.ones_like(tps)
+        recall = xp.ones_like(tps)
     else:
         recall = tps / tps[-1]
 
     # reverse the outputs so recall is decreasing
     sl = slice(None, None, -1)
-    return np.hstack((precision[sl], 1)), np.hstack((recall[sl], 0)), thresholds[sl]
+    return xp.concat((precision[sl], [1]), axis=None), xp.concat((recall[sl], [0]), axis=None), thresholds[sl]
 
 
 @validate_params(

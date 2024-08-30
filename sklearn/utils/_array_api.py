@@ -785,6 +785,70 @@ def _nanmax(X, axis=None, xp=None):
         return X
 
 
+def _diff(a, n=1, axis=-1, xp=None):
+    """Partial port of np.diff to support the Array API.
+
+    Calculate the n-th discrete difference along the given axis.
+
+    The first difference is given by ``out[i] = a[i+1] - a[i]`` along
+    the given axis, higher differences are calculated by using `diff`
+    recursively.
+
+    Parameters
+    ----------
+    a : array_like
+        Input array
+    n : int, optional
+        The number of times values are differenced. If zero, the input
+        is returned as-is.
+    axis : int, optional
+        The axis along which the difference is taken, default is the
+        last axis.
+    """
+    xp, _ = get_namespace(a, xp=xp)
+    if _is_numpy_namespace(xp):
+        return xp.asarray(numpy.diff(a, n=n, axis=axis))
+
+    # TODO handle multi-dimensional arrays properly
+    return a[1:] - a[:-1]
+
+
+def _isclose(a, b, rtol=1e-5, atol=1e-8, equal_nan=False, xp=None):
+    """Partial port of np.isclose to support the Array API."""
+    xp, _ = get_namespace(a, b, xp=xp)
+    if _is_numpy_namespace(xp):
+        return xp.asarray(numpy.isclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan))
+    return a - b <= atol + rtol * abs(b) & xp.isfinite(b)
+    # # Turn all but python scalars into arrays.
+    # x, y, atol, rtol = (
+    #     a if isinstance(a, (int, float, complex)) else asanyarray(a)
+    #     for a in (a, b, atol, rtol))
+    #
+    # # Make sure y is an inexact type to avoid bad behavior on abs(MIN_INT).
+    # # This will cause casting of x later. Also, make sure to allow subclasses
+    # # (e.g., for numpy.ma).
+    # # NOTE: We explicitly allow timedelta, which used to work. This could
+    # #       possibly be deprecated. See also gh-18286.
+    # #       timedelta works if `atol` is an integer or also a timedelta.
+    # #       Although, the default tolerances are unlikely to be useful
+    # if (dtype := getattr(y, "dtype", None)) is not None and dtype.kind != "m":
+    #     dt = multiarray.result_type(y, 1.)
+    #     y = asanyarray(y, dtype=dt)
+    # elif isinstance(y, int):
+    #     y = float(y)
+    #
+    # with errstate(invalid='ignore'), _no_nep50_warning():
+    #     result = (less_equal(abs(x - y), atol + rtol * abs(y))
+    #               & isfinite(y)
+    #               | (x == y))
+    #     if equal_nan:
+    #         result |= isnan(x) & isnan(y)
+    #
+    # return result[()]
+
+
+
+
 def _asarray_with_order(
     array, dtype=None, order=None, copy=None, *, xp=None, device=None
 ):

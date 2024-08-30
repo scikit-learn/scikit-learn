@@ -465,10 +465,10 @@ def check_consistent_length(*arrays):
     >>> b = [2, 3, 4]
     >>> check_consistent_length(a, b)
     """
-
-    lengths = [_num_samples(X) for X in arrays if X is not None]
-    uniques = np.unique(lengths)
-    if len(uniques) > 1:
+    xp, _ = get_namespace(*arrays)
+    lengths = xp.asarray([_num_samples(X) for X in arrays if X is not None])
+    uniques = xp.unique_values(lengths)
+    if uniques.shape[0] > 1:
         raise ValueError(
             "Found input variables with inconsistent numbers of samples: %r"
             % [int(l) for l in lengths]
@@ -2094,18 +2094,19 @@ def _check_sample_weight(
     sample_weight : ndarray of shape (n_samples,)
         Validated sample weight. It is guaranteed to be "C" contiguous.
     """
+    xp, _ = get_namespace(X)
     n_samples = _num_samples(X)
 
-    if dtype is not None and dtype not in [np.float32, np.float64]:
-        dtype = np.float64
+    if dtype is not None and dtype not in [xp.float32, xp.float64]:
+        dtype = xp.float64
 
     if sample_weight is None:
-        sample_weight = np.ones(n_samples, dtype=dtype)
+        sample_weight = xp.ones(n_samples, dtype=dtype)
     elif isinstance(sample_weight, numbers.Number):
-        sample_weight = np.full(n_samples, sample_weight, dtype=dtype)
+        sample_weight = xp.full(n_samples, sample_weight, dtype=dtype)
     else:
         if dtype is None:
-            dtype = [np.float64, np.float32]
+            dtype = [xp.float64, xp.float32]
         sample_weight = check_array(
             sample_weight,
             accept_sparse=False,
