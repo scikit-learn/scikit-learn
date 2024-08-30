@@ -972,7 +972,7 @@ To also generate the example gallery you can use:
     make html
 
 This will run all the examples, which takes a while. You can also run only a few examples based on their file names.
-Here is a way to run all examples with file names containing `plot_calibration`:
+Here is a way to run all examples with filenames containing `plot_calibration`:
 
 .. prompt:: bash
 
