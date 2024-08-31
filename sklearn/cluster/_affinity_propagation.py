@@ -258,8 +258,8 @@ def affinity_propagation(
 
     Notes
     -----
-    For an example, see :ref:`examples/cluster/plot_affinity_propagation.py
-    <sphx_glr_auto_examples_cluster_plot_affinity_propagation.py>`.
+    For an example usage,
+    see :ref:`sphx_glr_auto_examples_cluster_plot_affinity_propagation.py`.
 
     When the algorithm does not converge, it will still return a arrays of
     ``cluster_center_indices`` and labels if there are any exemplars/clusters,
@@ -396,8 +396,8 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
     Notes
     -----
-    For an example, see :ref:`examples/cluster/plot_affinity_propagation.py
-    <sphx_glr_auto_examples_cluster_plot_affinity_propagation.py>`.
+    For an example usage,
+    see :ref:`sphx_glr_auto_examples_cluster_plot_affinity_propagation.py`.
 
     The algorithmic complexity of affinity propagation is quadratic
     in the number of points.
