@@ -2,8 +2,8 @@
 The :mod:`sklearn.pls` module implements Partial Least Squares (PLS).
 """
 
-# Author: Edouard Duchesnay <edouard.duchesnay@cea.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from abc import ABCMeta, abstractmethod
@@ -263,10 +263,19 @@ class _PLS(
 
         check_consistent_length(X, y)
         X = self._validate_data(
-            X, dtype=np.float64, copy=self.copy, ensure_min_samples=2
+            X,
+            dtype=np.float64,
+            force_writeable=True,
+            copy=self.copy,
+            ensure_min_samples=2,
         )
         y = check_array(
-            y, input_name="y", dtype=np.float64, copy=self.copy, ensure_2d=False
+            y,
+            input_name="y",
+            dtype=np.float64,
+            force_writeable=True,
+            copy=self.copy,
+            ensure_2d=False,
         )
         if y.ndim == 1:
             self._predict_1d = True
@@ -282,7 +291,9 @@ class _PLS(
         # With PLSRegression n_components is bounded by the rank of (X.T X) see
         # Wegelin page 25. With CCA and PLSCanonical, n_components is bounded
         # by the rank of X and the rank of Y: see Wegelin page 12
-        rank_upper_bound = p if self.deflation_mode == "regression" else min(n, p, q)
+        rank_upper_bound = (
+            min(n, p) if self.deflation_mode == "regression" else min(n, p, q)
+        )
         if n_components > rank_upper_bound:
             raise ValueError(
                 f"`n_components` upper bound is {rank_upper_bound}. "
@@ -1056,10 +1067,19 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         y = _deprecate_Y_when_required(y, Y)
         check_consistent_length(X, y)
         X = self._validate_data(
-            X, dtype=np.float64, copy=self.copy, ensure_min_samples=2
+            X,
+            dtype=np.float64,
+            force_writeable=True,
+            copy=self.copy,
+            ensure_min_samples=2,
         )
         y = check_array(
-            y, input_name="y", dtype=np.float64, copy=self.copy, ensure_2d=False
+            y,
+            input_name="y",
+            dtype=np.float64,
+            force_writeable=True,
+            copy=self.copy,
+            ensure_2d=False,
         )
         if y.ndim == 1:
             y = y.reshape(-1, 1)

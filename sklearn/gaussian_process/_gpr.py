@@ -1,8 +1,7 @@
 """Gaussian processes regression."""
 
-# Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-# Modified by: Pete Green <p.l.green@liverpool.ac.uk>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Integral, Real
@@ -530,7 +529,9 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             y_samples = np.hstack(y_samples)
         return y_samples
 
-    def log_marginal_likelihood(self, theta=None, eval_gradient=False, clone_kernel=True):
+    def log_marginal_likelihood(
+        self, theta=None, eval_gradient=False, clone_kernel=True
+    ):
         """Return log-marginal likelihood of theta for training data.
 
         Parameters
@@ -593,7 +594,9 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         log_likelihood = self._log_likelihood_calc(y_train, alpha, L, K)
 
         if eval_gradient:
-            log_likelihood_gradient = self._log_likelihood_gradient_calc(alpha, L, K, K_gradient)
+            log_likelihood_gradient = self._log_likelihood_gradient_calc(
+                alpha, L, K, K_gradient
+            )
 
         if eval_gradient:
             return log_likelihood, log_likelihood_gradient
@@ -617,7 +620,8 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         Returns
         -------
         log_likelihood : float
-            Log-marginal likelihood of multivariate Gaussian distribution using covariance K and training data
+            Log-marginal likelihood of multivariate Gaussian distribution using
+            covariance K and training data
         """
         # Alg 2.1, page 19, line 7
         # -0.5 . y^T . alpha - sum(log(diag(L))) - n_samples / 2 log(2*pi)
@@ -641,10 +645,10 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     def _log_likelihood_gradient_calc(self, alpha, L, K, K_gradient):
         """Returns the log-likelihood gradient given the required algebraic terms.
 
-                Returns
-                -------
-                log_likelihood_gradient : np.array
-                    Log-marginal likelihood gradient with respect to theta
+        Returns
+        -------
+        log_likelihood_gradient : np.array
+            Log-marginal likelihood gradient with respect to theta
         """
         # Eq. 5.9, p. 114, and footnote 5 in p. 114
         # 0.5 * trace((alpha . alpha^T - K^-1) . K_gradient)

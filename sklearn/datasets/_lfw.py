@@ -6,8 +6,8 @@ over the internet, all details are available on the official website:
     http://vis-www.cs.umass.edu/lfw/
 """
 
-# Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import logging
 from numbers import Integral, Real
@@ -280,6 +280,9 @@ def fetch_lfw_people(
     Dimensionality                         5828
     Features            real, between 0 and 255
     =================   =======================
+
+    For a usage example of this dataset, see
+    :ref:`sphx_glr_auto_examples_applications_plot_face_recognition.py`.
 
     Read more in the :ref:`User Guide <labeled_faces_in_the_wild_dataset>`.
 

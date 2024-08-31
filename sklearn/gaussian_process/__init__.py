@@ -1,20 +1,16 @@
-# Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-#         Vincent Dubourg <vincent.dubourg@gmail.com>
-#         Conrad Stevens <conrad.stevens@sydney.uni.com>
-#         (mostly translation, see implementation details)
-# License: BSD 3 clause
+"""Gaussian process based regression and classification."""
 
-"""
-The :mod:`sklearn.gaussian_process` module implements Gaussian Process
-based regression and classification.
-"""
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from . import kernels
 from ._gpc import GaussianProcessClassifier
 from ._gpr import GaussianProcessRegressor
 from ._tpr import TProcessRegressor
 
-__all__ = ["GaussianProcessRegressor",
-           "GaussianProcessClassifier",
-           "TProcessRegressor",
-           "kernels"]
+__all__ = [
+    "GaussianProcessRegressor",
+    "GaussianProcessClassifier",
+    "TProcessRegressor",
+    "kernels",
+]

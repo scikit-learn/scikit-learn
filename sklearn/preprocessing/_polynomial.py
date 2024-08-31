@@ -2,6 +2,9 @@
 This file contains preprocessing tools based on polynomials.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import collections
 from itertools import chain, combinations
 from itertools import combinations_with_replacement as combinations_w_r

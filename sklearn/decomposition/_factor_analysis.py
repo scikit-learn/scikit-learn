@@ -13,11 +13,8 @@ http://www.cs.ucl.ac.uk/staff/d.barber/brml,
 Algorithm 21.1
 """
 
-# Author: Christian Osendorfer <osendorf@gmail.com>
-#         Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Denis A. Engemann <denis-alexander.engemann@inria.fr>
-
-# License: BSD3
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from math import log, sqrt
@@ -219,7 +216,9 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         self : object
             FactorAnalysis class instance.
         """
-        X = self._validate_data(X, copy=self.copy, dtype=np.float64)
+        X = self._validate_data(
+            X, copy=self.copy, dtype=np.float64, force_writeable=True
+        )
 
         n_samples, n_features = X.shape
         n_components = self.n_components

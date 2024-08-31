@@ -1,9 +1,7 @@
 """Partial dependence plots for regression and classification models."""
 
-# Authors: Peter Prettenhofer
-#          Trevor Stephens
-#          Nicolas Hug
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from collections.abc import Iterable
 
@@ -568,7 +566,7 @@ def partial_dependence(
     # Use check_array only on lists and other non-array-likes / sparse. Do not
     # convert DataFrame into a NumPy array.
     if not (hasattr(X, "__array__") or sparse.issparse(X)):
-        X = check_array(X, force_all_finite="allow-nan", dtype=object)
+        X = check_array(X, ensure_all_finite="allow-nan", dtype=object)
 
     if is_regressor(estimator) and response_method != "auto":
         raise ValueError(

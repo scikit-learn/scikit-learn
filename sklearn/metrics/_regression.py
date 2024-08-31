@@ -7,25 +7,8 @@ Function named as ``*_error`` or ``*_loss`` return a scalar value to minimize:
 the lower the better.
 """
 
-# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#          Olivier Grisel <olivier.grisel@ensta.org>
-#          Arnaud Joly <a.joly@ulg.ac.be>
-#          Jochen Wersdorfer <jochen@wersdoerfer.de>
-#          Lars Buitinck
-#          Joel Nothman <joel.nothman@gmail.com>
-#          Karan Desai <karandesai281196@gmail.com>
-#          Noel Dawe <noel@dawe.me>
-#          Manoj Kumar <manojkumarsivaraj334@gmail.com>
-#          Michael Eickenberg <michael.eickenberg@gmail.com>
-#          Konstantin Shmelkov <konstantin.shmelkov@polytechnique.edu>
-#          Christian Lorentzen <lorentzen.ch@gmail.com>
-#          Ashutosh Hathidara <ashutoshhathidara98@gmail.com>
-#          Uttam kumar <bajiraouttamsinha@gmail.com>
-#          Sylvain Marie <sylvain.marie@se.com>
-#          Ohad Michel <ohadmich@gmail.com>
-#          Alejandro Martin Gil <almagil98@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Real
@@ -139,10 +122,10 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric", xp=None):
         multioutput = check_array(multioutput, ensure_2d=False)
         if n_outputs == 1:
             raise ValueError("Custom weights are useful only in multi-output cases.")
-        elif n_outputs != len(multioutput):
+        elif n_outputs != multioutput.shape[0]:
             raise ValueError(
-                "There must be equally many custom weights (%d) as outputs (%d)."
-                % (len(multioutput), n_outputs)
+                "There must be equally many custom weights "
+                f"({multioutput.shape[0]}) as outputs ({n_outputs})."
             )
     y_type = "continuous" if n_outputs == 1 else "continuous-multioutput"
 
@@ -189,7 +172,7 @@ def mean_absolute_error(
 
     Returns
     -------
-    loss : float or ndarray of floats
+    loss : float or array of floats
         If multioutput is 'raw_values', then mean absolute error is returned
         for each output separately.
         If multioutput is 'uniform_average' or an ndarray of weights, then the
@@ -213,11 +196,19 @@ def mean_absolute_error(
     >>> mean_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.85...
     """
-    y_type, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput
+    input_arrays = [y_true, y_pred, sample_weight, multioutput]
+    xp, _ = get_namespace(*input_arrays)
+
+    dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
+
+    _, y_true, y_pred, multioutput = _check_reg_targets(
+        y_true, y_pred, multioutput, dtype=dtype, xp=xp
     )
     check_consistent_length(y_true, y_pred, sample_weight)
-    output_errors = np.average(np.abs(y_pred - y_true), weights=sample_weight, axis=0)
+
+    output_errors = _average(
+        xp.abs(y_pred - y_true), weights=sample_weight, axis=0, xp=xp
+    )
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
             return output_errors
@@ -225,7 +216,15 @@ def mean_absolute_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    # Average across the outputs (if needed).
+    mean_absolute_error = _average(output_errors, weights=multioutput)
+
+    # Since `y_pred.ndim <= 2` and `y_true.ndim <= 2`, the second call to _average
+    # should always return a scalar array that we convert to a Python float to
+    # consistently return the same eager evaluated value, irrespective of the
+    # Array API implementation.
+    assert mean_absolute_error.shape == ()
+    return float(mean_absolute_error)
 
 
 @validate_params(
@@ -287,17 +286,17 @@ def mean_pinball_loss(
     >>> from sklearn.metrics import mean_pinball_loss
     >>> y_true = [1, 2, 3]
     >>> mean_pinball_loss(y_true, [0, 2, 3], alpha=0.1)
-    0.03...
+    np.float64(0.03...)
     >>> mean_pinball_loss(y_true, [1, 2, 4], alpha=0.1)
-    0.3...
+    np.float64(0.3...)
     >>> mean_pinball_loss(y_true, [0, 2, 3], alpha=0.9)
-    0.3...
+    np.float64(0.3...)
     >>> mean_pinball_loss(y_true, [1, 2, 4], alpha=0.9)
-    0.03...
+    np.float64(0.03...)
     >>> mean_pinball_loss(y_true, y_true, alpha=0.1)
-    0.0
+    np.float64(0.0)
     >>> mean_pinball_loss(y_true, y_true, alpha=0.9)
-    0.0
+    np.float64(0.0)
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
@@ -396,21 +395,30 @@ def mean_absolute_percentage_error(
     >>> mean_absolute_percentage_error(y_true, y_pred)
     112589990684262.48
     """
+    input_arrays = [y_true, y_pred, sample_weight, multioutput]
+    xp, _ = get_namespace(*input_arrays)
+    dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
+
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
     )
     check_consistent_length(y_true, y_pred, sample_weight)
-    epsilon = np.finfo(np.float64).eps
-    mape = np.abs(y_pred - y_true) / np.maximum(np.abs(y_true), epsilon)
-    output_errors = np.average(mape, weights=sample_weight, axis=0)
+    epsilon = xp.asarray(xp.finfo(xp.float64).eps, dtype=dtype)
+    y_true_abs = xp.asarray(xp.abs(y_true), dtype=dtype)
+    mape = xp.asarray(xp.abs(y_pred - y_true), dtype=dtype) / xp.maximum(
+        y_true_abs, epsilon
+    )
+    output_errors = _average(mape, weights=sample_weight, axis=0)
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
             return output_errors
         elif multioutput == "uniform_average":
-            # pass None as weights to np.average: uniform mean
+            # pass None as weights to _average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    mean_absolute_percentage_error = _average(output_errors, weights=multioutput)
+    assert mean_absolute_percentage_error.shape == ()
+    return float(mean_absolute_percentage_error)
 
 
 @validate_params(
@@ -467,7 +475,7 @@ def mean_squared_error(
 
     Returns
     -------
-    loss : float or ndarray of floats
+    loss : float or array of floats
         A non-negative floating point value (the best value is 0.0), or an
         array of floating point values, one for each individual target.
 
@@ -503,11 +511,14 @@ def mean_squared_error(
                 y_true, y_pred, sample_weight=sample_weight, multioutput=multioutput
             )
 
+    xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
+    dtype = _find_matching_floating_dtype(y_true, y_pred, xp=xp)
+
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput
+        y_true, y_pred, multioutput, dtype=dtype, xp=xp
     )
     check_consistent_length(y_true, y_pred, sample_weight)
-    output_errors = np.average((y_true - y_pred) ** 2, axis=0, weights=sample_weight)
+    output_errors = _average((y_true - y_pred) ** 2, axis=0, weights=sample_weight)
 
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
@@ -516,7 +527,10 @@ def mean_squared_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    # See comment in mean_absolute_error
+    mean_squared_error = _average(output_errors, weights=multioutput)
+    assert mean_squared_error.shape == ()
+    return float(mean_squared_error)
 
 
 @validate_params(
@@ -571,11 +585,11 @@ def root_mean_squared_error(
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> root_mean_squared_error(y_true, y_pred)
-    0.612...
+    np.float64(0.612...)
     >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
     >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
     >>> root_mean_squared_error(y_true, y_pred)
-    0.822...
+    np.float64(0.822...)
     """
     output_errors = np.sqrt(
         mean_squared_error(
@@ -759,7 +773,7 @@ def root_mean_squared_log_error(
     >>> y_true = [3, 5, 2.5, 7]
     >>> y_pred = [2.5, 5, 4, 8]
     >>> root_mean_squared_log_error(y_true, y_pred)
-    0.199...
+    np.float64(0.199...)
     """
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     check_consistent_length(y_true, y_pred, sample_weight)
@@ -833,15 +847,15 @@ def median_absolute_error(
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> median_absolute_error(y_true, y_pred)
-    0.5
+    np.float64(0.5)
     >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> median_absolute_error(y_true, y_pred)
-    0.75
+    np.float64(0.75)
     >>> median_absolute_error(y_true, y_pred, multioutput='raw_values')
     array([0.5, 1. ])
     >>> median_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    0.85
+    np.float64(0.85)
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
@@ -1266,24 +1280,27 @@ def max_error(y_true, y_pred):
     >>> y_true = [3, 2, 7, 1]
     >>> y_pred = [4, 2, 7, 1]
     >>> max_error(y_true, y_pred)
-    1
+    np.int64(1)
     """
+    xp, _ = get_namespace(y_true, y_pred)
     y_type, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred, None)
     if y_type == "continuous-multioutput":
         raise ValueError("Multioutput not supported in max_error")
-    return np.max(np.abs(y_true - y_pred))
+    return xp.max(xp.abs(y_true - y_pred))
 
 
 def _mean_tweedie_deviance(y_true, y_pred, sample_weight, power):
     """Mean Tweedie deviance regression loss."""
     xp, _ = get_namespace(y_true, y_pred)
     p = power
+    zero = xp.asarray(0, dtype=y_true.dtype)
     if p < 0:
         # 'Extreme stable', y any real number, y_pred > 0
         dev = 2 * (
-            xp.pow(xp.where(y_true > 0, y_true, 0), 2 - p) / ((1 - p) * (2 - p))
-            - y_true * xp.pow(y_pred, 1 - p) / (1 - p)
-            + xp.pow(y_pred, 2 - p) / (2 - p)
+            xp.pow(xp.where(y_true > 0, y_true, zero), xp.asarray(2 - p))
+            / ((1 - p) * (2 - p))
+            - y_true * xp.pow(y_pred, xp.asarray(1 - p)) / (1 - p)
+            + xp.pow(y_pred, xp.asarray(2 - p)) / (2 - p)
         )
     elif p == 0:
         # Normal distribution, y and y_pred any real number
@@ -1296,9 +1313,9 @@ def _mean_tweedie_deviance(y_true, y_pred, sample_weight, power):
         dev = 2 * (xp.log(y_pred / y_true) + y_true / y_pred - 1)
     else:
         dev = 2 * (
-            xp.pow(y_true, 2 - p) / ((1 - p) * (2 - p))
-            - y_true * xp.pow(y_pred, 1 - p) / (1 - p)
-            + xp.pow(y_pred, 2 - p) / (2 - p)
+            xp.pow(y_true, xp.asarray(2 - p)) / ((1 - p) * (2 - p))
+            - y_true * xp.pow(y_pred, xp.asarray(1 - p)) / (1 - p)
+            + xp.pow(y_pred, xp.asarray(2 - p)) / (2 - p)
         )
     return float(_average(dev, weights=sample_weight))
 
@@ -1378,18 +1395,18 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
     message = f"Mean Tweedie deviance error with power={power} can only be used on "
     if power < 0:
         # 'Extreme stable', y any real number, y_pred > 0
-        if (y_pred <= 0).any():
+        if xp.any(y_pred <= 0):
             raise ValueError(message + "strictly positive y_pred.")
     elif power == 0:
         # Normal, y and y_pred can be any real number
         pass
     elif 1 <= power < 2:
         # Poisson and compound Poisson distribution, y >= 0, y_pred > 0
-        if (y_true < 0).any() or (y_pred <= 0).any():
+        if xp.any(y_true < 0) or xp.any(y_pred <= 0):
             raise ValueError(message + "non-negative y and strictly positive y_pred.")
     elif power >= 2:
         # Gamma and Extreme stable distribution, y and y_pred > 0
-        if (y_true <= 0).any() or (y_pred <= 0).any():
+        if xp.any(y_true <= 0) or xp.any(y_pred <= 0):
             raise ValueError(message + "strictly positive y and y_pred.")
     else:  # pragma: nocover
         # Unreachable statement
@@ -1576,8 +1593,10 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     >>> d2_tweedie_score(y_true, y_true, power=2)
     1.0
     """
+    xp, _ = get_namespace(y_true, y_pred)
+
     y_type, y_true, y_pred, _ = _check_reg_targets(
-        y_true, y_pred, None, dtype=[np.float64, np.float32]
+        y_true, y_pred, None, dtype=[xp.float64, xp.float32], xp=xp
     )
     if y_type == "continuous-multioutput":
         raise ValueError("Multioutput not supported in d2_tweedie_score")
@@ -1587,12 +1606,12 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
         warnings.warn(msg, UndefinedMetricWarning)
         return float("nan")
 
-    y_true, y_pred = np.squeeze(y_true), np.squeeze(y_pred)
+    y_true, y_pred = xp.squeeze(y_true, axis=1), xp.squeeze(y_pred, axis=1)
     numerator = mean_tweedie_deviance(
         y_true, y_pred, sample_weight=sample_weight, power=power
     )
 
-    y_avg = np.average(y_true, weights=sample_weight)
+    y_avg = _average(y_true, weights=sample_weight, xp=xp)
     denominator = _mean_tweedie_deviance(
         y_true, y_avg, sample_weight=sample_weight, power=power
     )
@@ -1684,13 +1703,13 @@ def d2_pinball_score(
     >>> y_true = [1, 2, 3]
     >>> y_pred = [1, 3, 3]
     >>> d2_pinball_score(y_true, y_pred)
-    0.5
+    np.float64(0.5)
     >>> d2_pinball_score(y_true, y_pred, alpha=0.9)
-    0.772...
+    np.float64(0.772...)
     >>> d2_pinball_score(y_true, y_pred, alpha=0.1)
-    -1.045...
+    np.float64(-1.045...)
     >>> d2_pinball_score(y_true, y_true, alpha=0.1)
-    1.0
+    np.float64(1.0)
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
@@ -1827,25 +1846,25 @@ def d2_absolute_error_score(
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> d2_absolute_error_score(y_true, y_pred)
-    0.764...
+    np.float64(0.764...)
     >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> d2_absolute_error_score(y_true, y_pred, multioutput='uniform_average')
-    0.691...
+    np.float64(0.691...)
     >>> d2_absolute_error_score(y_true, y_pred, multioutput='raw_values')
     array([0.8125    , 0.57142857])
     >>> y_true = [1, 2, 3]
     >>> y_pred = [1, 2, 3]
     >>> d2_absolute_error_score(y_true, y_pred)
-    1.0
+    np.float64(1.0)
     >>> y_true = [1, 2, 3]
     >>> y_pred = [2, 2, 2]
     >>> d2_absolute_error_score(y_true, y_pred)
-    0.0
+    np.float64(0.0)
     >>> y_true = [1, 2, 3]
     >>> y_pred = [3, 2, 1]
     >>> d2_absolute_error_score(y_true, y_pred)
-    -1.0
+    np.float64(-1.0)
     """
     return d2_pinball_score(
         y_true, y_pred, sample_weight=sample_weight, alpha=0.5, multioutput=multioutput
