@@ -4,15 +4,33 @@
 # Modified by: TODO
 # License: TODO
 
-from ._gpr import GaussianProcessRegressor
+import warnings
+from numbers import Integral, Real
+from operator import itemgetter
+
+import numpy as np
+import scipy.optimize
+from scipy.linalg import cho_solve, cholesky, solve_triangular
+from scipy.special import gamma as gam
+from scipy.stats import multivariate_t
+
+from ..base import BaseEstimator, MultiOutputMixin, RegressorMixin, _fit_context, clone
+from ..preprocessing._data import _handle_zeros_in_scale
+from ..utils import check_random_state
+from ..utils._param_validation import Interval, StrOptions
+from ..utils.optimize import _check_optimize_result
+from ._gpr import GaussianProcessRegressor, GPR_CHOLESKY_LOWER
 from .kernels import RBF, Kernel
-from ..base import _fit_context
+from .kernels import ConstantKernel as C
 
 
 class TProcessRegressor(GaussianProcessRegressor):
     """ T Process Regressor (TPR)
 
-    The implementation is based of TODO MY THESIS
+    This implementation is primarily based of [SW2014]. However, due to their unusual
+    parametrization of the Student T distribution [TW2018] is also referenced.
+    Lastly the kernel parameter optimization is largely based off [RW2006] as was
+    done in GPs
 
     In addition to the gaussian process regressor (._gpr.GaussianProcessRegressor),
     :class:`TProcessRegressor`:
@@ -136,27 +154,37 @@ class TProcessRegressor(GaussianProcessRegressor):
 
     References
     ----------
-    TODO
+    .. [SW2014] `Amar Shah, Andrew Gordon Wilson, Zoubin Ghahramani,
+       "Student-t Processes as Alternatives to Gaussian Processes",
+       arxiv > stat > arXiv:1402.4306 <https://arxiv.org/abs/1402.4306>`_
+
+    .. [TW2018] `Brendan D. Tracey, David H. Wolpert,
+       "Upgrading from Gaussian Processes to Student's-T Processes"
+        arxiv > stat > arXiv:1801.06147 <https://arxiv.org/abs/1801.06147>`_
+
+
+    .. [RW2006] `Carl E. Rasmussen and Christopher K.I. Williams,
+       "Gaussian Processes for Machine Learning",
+       MIT Press 2006 <https://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_
 
     Examples
     --------
     >>> from sklearn.datasets import make_friedman2
-    >>> from sklearn.gaussian_process import GaussianProcessRegressor
+    >>> from sklearn.gaussian_process import TProcessRegressor
     >>> from sklearn.gaussian_process.kernels import DotProduct, WhiteKernel
-    >>> # TODO X, y = make_friedman2(n_samples=500, noise=0, random_state=0)
+    >>> X, y = make_friedman2(n_samples=500, noise=0, random_state=0)
     >>> kernel = DotProduct() + WhiteKernel()
-    >>> gpr = GaussianProcessRegressor(kernel=kernel,
+    >>> tpr = TProcessRegressor(kernel=kernel,
     ...         random_state=0).fit(X, y)
-    >>> gpr.score(X, y)
-    0.3680...
-    >>> gpr.predict(X[:2,:], return_std=True)
-    (array([653.0..., 592.1...]), array([316.6..., 316.6...]))
-
+    >>> tpr.score(X, y)
+    0.8690...
+    >>> tpr.predict(X[:2,:], return_std=True)
+    (array([[754.5..., 526.2...]), array([147.8..., 148.0...]))
     """
     def __init__(
             self,
             kernel=None,
-            v=2,
+            v=3,
             *,
             alpha=1e-10,
             optimizer="fmin_l_bfgs_b",
@@ -176,7 +204,16 @@ class TProcessRegressor(GaussianProcessRegressor):
             n_targets=n_targets,
             random_state=random_state
         )
-        self.v = v
+        self.m_dis = 0  # Mahalanobis Distance
+        self.v0 = v  # Starting degrees of freedom
+        self.v = self.v0
+        self.n = 0
+        self.log_likelihood_dims_const = -1
+
+        ### Constants that are used throughout functions ###
+        self.c1 = gam(self.v0 / 2)
+        self.c2 = np.log(self.v0 * np.pi)
+        self.c_fit1 = self.v/2
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
@@ -195,9 +232,15 @@ class TProcessRegressor(GaussianProcessRegressor):
         self : object
             GaussianProcessRegressor class instance.
         """
-        # TODO
+        self.n = y.shape[0]
+        self.v = self.v0 + self.n
+        self.c_fit1 = self.v / 2
+        self.log_likelihood_dims_const = gam(self.c_fit1) - self.c1 - self.n / 2 * self.c2
 
-    def predict(self, X, return_std=False, return_cov=False):
+        super().fit(X, y)
+        return self
+
+    def predict(self, X, return_std=False, return_cov=False, return_tShape=False, return_tShapeMatrix=False):
         """Predict using the T process regression model.
 
         We can also predict based on an unfitted model by using the TP prior.
@@ -218,10 +261,18 @@ class TProcessRegressor(GaussianProcessRegressor):
             If True, the covariance of the joint predictive distribution at
             the query points is returned along with the mean.
 
+        return_tShape : bool, default=False
+            If True, the shape parameter of the predictive t distribution at
+            the query points is returned along with the mean.
+
+        return_tShapeMatrix : bool, default=False
+            If True, the shape parameter of the joint predictive t distribution
+            the query points is returned along with the mean.
+
         Returns
         -------
         y_mean : ndarray of shape (n_samples,) or (n_samples, n_targets)
-            Mean of predictive distribution a query points.
+            Mean of predictive distribution at query points.
 
         y_std : ndarray of shape (n_samples,) or (n_samples, n_targets), optional
             Standard deviation of predictive distribution at query points.
@@ -229,11 +280,154 @@ class TProcessRegressor(GaussianProcessRegressor):
 
         y_cov : ndarray of shape (n_samples, n_samples) or \
                 (n_samples, n_samples, n_targets), optional
-            Covariance of joint predictive distribution a query points.
+            Covariance of joint predictive distribution at query points.
+            Only returned when `return_cov` is True.
+
+        y_tShape : ndarray of shape (n_samples, n_samples) or \
+                (n_samples, n_samples, n_targets), optional
+            Shape of joint predictive t distribution at query points.
             Only returned when `return_cov` is True.
         """
-        # TODO
+        if [return_std, return_cov, return_tShape, return_tShapeMatrix].count(True) > 1:
+            raise RuntimeError(
+                "At most one of return_std, return_cov, return_tShape or return_tShapeMatrix can be requested."
+            )
 
+        ### Spread may be either std or cov ###
+        if not any([return_std, return_cov, return_tShape, return_tShapeMatrix]):
+            return super().predict(X, return_std, return_cov)
+        elif return_cov or return_tShapeMatrix:  # Return a matrix:
+            y_mean, y_spread = super().predict(X, return_cov=True)
+        else:  # Return spread metric at points
+            y_mean, y_spread = super().predict(X, return_std=True)
 
-""" The remaining functions should come relatively quickly once the above is completed """
+        ### Adjust depending on desired posterior ###
+        if self.n > 0 and (return_tShape or return_tShapeMatrix):
+            scailing_factor = (self.m_dis + self.v0 - 2) / self.v
+        elif self.n > 0 and (return_std or return_cov):
+            scailing_factor = (self.m_dis + self.v0 - 2) / (self.v - 2)
+        elif self.n == 0 and (return_tShape or return_tShapeMatrix):
+            scailing_factor = (self.v - 2) / self.v
+        else:
+            scailing_factor = 1
 
+        if return_std:
+            y_spread = y_spread * np.sqrt(scailing_factor)
+        else:
+            y_spread = y_spread * scailing_factor
+
+        return y_mean, y_spread
+
+    def sample_y(self, X, n_samples=1, random_state=0):
+        """Draw samples from T-process and evaluate at X.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples_X, n_features) or list of object
+            Query points where the GP is evaluated.
+
+        n_samples : int, default=1
+            Number of samples drawn from the T-process per query point.
+
+        random_state : int, RandomState instance or None, default=0
+            Determines random number generation to randomly draw samples.
+            Pass an int for reproducible results across multiple function
+            calls.
+            See :term:`Glossary <random_state>`.
+
+        Returns
+        -------
+        y_samples : ndarray of shape (n_samples_X, n_samples), or \
+            (n_samples_X, n_targets, n_samples)
+            Values of n_samples samples drawn from T-process and
+            evaluated at query points.
+        """
+        rng = check_random_state(random_state)
+
+        y_mean, y_tShapeMatrix = self.predict(X, return_tShapeMatrix=True)
+        if y_mean.ndim == 1:
+            y_samples = multivariate_t(y_mean, y_tShapeMatrix, self.v, seed=rng).rvs(n_samples).T
+        else:
+            y_samples = [
+                multivariate_t(
+                    y_mean[:, target], y_tShapeMatrix[..., target], self.v, seed=rng
+                ).rvs(n_samples).T[:, np.newaxis]
+                for target in range(y_mean.shape[1])
+            ]
+            y_samples = np.hstack(y_samples)
+        return y_samples
+
+    def _log_likelihood_calc(self, y_train, alpha, L, K):
+        """ Returns the log-likelihood given L and the training points.
+
+        Parameters
+        ----------
+        y_train : array-like of shape (n_samples,) or (n_samples, n_targets)
+                  Target values.
+
+        alpha : K^(-1) * y_train
+
+        L : Lower cholesky decomposition of the kernel matrix K.
+
+        K : Kernel matrix used.
+
+        Returns
+        -------
+        log_likelihood : float
+            Log-marginal likelihood of multivariate T distribution using covariance K and training data
+        """
+        # Log-likelihood function can be found in [TW2018]
+        self.m_dis = np.einsum("ik,ik->k", y_train, alpha)
+        log_likelihood_dims = self.log_likelihood_dims_const
+        log_likelihood_dims -= self.c_fit1 * np.log(1 + self.m_dis / self.v0)
+        log_likelihood_dims -= np.log(np.diag(L)).sum()
+        log_likelihood = log_likelihood_dims.sum(axis=-1)
+        return log_likelihood
+
+    def _log_likelihood_gradient_calc(self, alpha, L, K, K_gradient):
+        """Returns the log-likelihood gradient given the required algebraic terms.
+
+        Parameters
+        ----------
+        y_train : array-like of shape (n_samples,) or (n_samples, n_targets)
+                  Target values.
+
+        alpha : K^(-1) * y_train
+
+        L : Lower cholesky decomposition of the kernel matrix K.
+
+        K : Kernel matrix used.
+
+        Returns
+        -------
+        log_likelihood_gradient : np.array
+            Log-marginal likelihood gradient with respect to theta
+        """
+        # Derivative of the Log-likelihood function can be found in [TW2018]
+        # Optimization is based of [RW2006] as was done in
+        # (._gpr.GaussianProcessRegressor)
+        inner_term = np.einsum("ik,jk->ijk", alpha, alpha)
+        inner_term = self.v / (self.v0 + self.m_dis) * inner_term
+        # compute K^-1 of shape (n_samples, n_samples)
+        K_inv = cho_solve(
+            (L, GPR_CHOLESKY_LOWER), np.eye(K.shape[0]), check_finite=False
+        )
+        # create a new axis to use broadcasting between inner_term and
+        # K_inv
+        inner_term -= K_inv[..., np.newaxis]
+        # Since we are interested about the trace of
+        # inner_term @ K_gradient, we don't explicitly compute the
+        # matrix-by-matrix operation and instead use an einsum. Therefore
+        # it is equivalent to:
+        # for param_idx in range(n_kernel_params):
+        #     for output_idx in range(n_output):
+        #         log_likehood_gradient_dims[param_idx, output_idx] = (
+        #             inner_term[..., output_idx] @
+        #             K_gradient[..., param_idx]
+        #         )
+        log_likelihood_gradient_dims = 0.5 * np.einsum(
+            "ijl,jik->kl", inner_term, K_gradient
+        )
+        # the log likehood gradient is the sum-up across the outputs
+        log_likelihood_gradient = log_likelihood_gradient_dims.sum(axis=-1)
+        return log_likelihood_gradient
