@@ -53,9 +53,7 @@ intuition. The total error of the bagging ensemble is lower than the total
 error of a single decision tree, and this difference indeed mainly stems from a
 reduced variance.
 
-For further details on bias-variance decomposition, see section 7.3 of [1]_ or
-see :ref:`sphx_glr_auto_examples_ensemble_plot_bias_variance.py` for an
-example usage.
+For further details on bias-variance decomposition, see section 7.3 of [1]_.
 
 References
 ----------
