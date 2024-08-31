@@ -170,7 +170,7 @@ def test_lml_gradient(kernel):
 
 @pytest.mark.parametrize("kernel", kernels)
 def test_prior(kernel):
-    # Test that GP prior has mean 0 and identical variances.
+    # Test that TP prior has mean 0 and identical variances.
     tpr = TProcessRegressor(kernel=kernel)
 
     y_mean, y_cov = tpr.predict(X, return_cov=True)
@@ -185,7 +185,7 @@ def test_prior(kernel):
 
 @pytest.mark.parametrize("kernel", kernels)
 def test_sample_statistics(kernel):
-    # Test that statistics of samples drawn from GP are correct.
+    # Test that statistics of samples drawn from TP are correct.
     tpr = TProcessRegressor(kernel=kernel).fit(X, y)
 
     y_mean, y_cov = tpr.predict(X2, return_cov=True)
@@ -237,7 +237,7 @@ def test_anisotropic_kernel():
 
 
 def test_random_starts():
-    # Test that an increasing number of random-starts of GP fitting only
+    # Test that an increasing number of random-starts of TP fitting only
     # increases the log marginal likelihood of the chosen theta.
     n_samples, n_features = 25, 2
     rng = np.random.RandomState(0)
@@ -267,9 +267,9 @@ def test_random_starts():
 @pytest.mark.parametrize("kernel", kernels)
 def test_y_normalization(kernel):
     """
-    Test normalization of the target values in GP
+    Test normalization of the target values in TP
 
-    Fitting non-normalizing GP on normalized y and fitting normalizing GP
+    Fitting non-normalizing TP on normalized y and fitting normalizing TP
     on unnormalized y should yield identical results. Note that, here,
     'normalized y' refers to y that has been made zero mean and unit
     variance.
@@ -280,11 +280,11 @@ def test_y_normalization(kernel):
     y_std = np.std(y)
     y_norm = (y - y_mean) / y_std
 
-    # Fit non-normalizing GP on normalized y
+    # Fit non-normalizing TP on normalized y
     tpr = TProcessRegressor(kernel=kernel)
     tpr.fit(X, y_norm)
 
-    # Fit normalizing GP on unnormalized y
+    # Fit normalizing TP on unnormalized y
     tpr_norm = TProcessRegressor(kernel=kernel, normalize_y=True)
     tpr_norm.fit(X, y)
 
@@ -306,14 +306,18 @@ def test_y_normalization(kernel):
 
 def test_large_variance_y():
     """
-    Here we test that, when noramlize_y=True, our GP can produce a
+    Here we test that, when noramlize_y=True, our TP can produce a
     sensible fit to training data whose variance is significantly
     larger than unity. This test was made in response to issue #15612.
 
-    GP predictions are verified against predictions that were made
+    TP predictions are verified against predictions that were made
     using GPy which, here, is treated as the 'gold standard'. Note that we
     only investigate the RBF kernel here, as that is what was used in the
     GPy implementation.
+
+    Note, the mean and standard deviation should still be the same as
+    given by a gp because the kernel parameters are being trained on.
+    The marginal distributions at each point are still TPs though.
 
     The following code can be used to recreate the GPy data:
 
@@ -331,7 +335,7 @@ def test_large_variance_y():
     # Here we utilise a larger variance version of the training data
     y_large = 10 * y
 
-    # Standard GP with normalize_y=True
+    # Standard TP with normalize_y=True
     RBF_params = {"length_scale": 1.0}
     kernel = RBF(**RBF_params)
     tpr = TProcessRegressor(kernel=kernel, normalize_y=True)
@@ -349,12 +353,12 @@ def test_large_variance_y():
     )
 
     # Based on numerical experiments, it's reasonable to expect our
-    # GP's mean predictions to get within 7% of predictions of those
+    # TP's mean predictions to get within 7% of predictions of those
     # made by GPy.
     assert_allclose(y_pred, y_pred_gpy, rtol=0.07, atol=0)
 
     # Based on numerical experiments, it's reasonable to expect our
-    # GP's std predictions to get within 15% of predictions of those
+    # TP's std predictions to get within 15% of predictions of those
     # made by GPy.
     assert_allclose(y_pred_std, y_pred_std_gpy, rtol=0.15, atol=0)
 
@@ -363,8 +367,8 @@ def test_y_multioutput():
     # Test that tpr_1 can deal with multi-dimensional target values
     y_2d = np.vstack((y, y * 2)).T
 
-    # Test for fixed kernel that first dimension of 2d GP equals the output
-    # of 1d GP and that second dimension is twice as large
+    # Test for fixed kernel that first dimension of 2d TP equals the output
+    # of 1d TP and that second dimension is twice as large
     kernel = RBF(length_scale=1.0)
 
     tpr_1 = TProcessRegressor(kernel=kernel, optimizer=None, normalize_y=False)
@@ -867,3 +871,30 @@ def test_tpr_predict_input_not_modified():
     _, _ = tpr.predict(X2, return_std=True)
 
     assert_allclose(X2, X2_copy)
+
+
+def test_degrees_of_freedom():
+    """ Checks that degrees of freedom are being added with each observation """
+    # Tests starting degrees of freedom
+    kernel = RBF(length_scale=1.0)
+    tpr_default = TProcessRegressor(kernel, optimizer=None)
+    tpr_5 = TProcessRegressor(kernel, v=5, optimizer=None)
+    assert tpr_default.v == 3
+    assert tpr_5.v == 5
+
+    # Tests degrees of freedom are being added to given observations
+    tpr_default.fit(X, y)
+    tpr_5.fit(X, y)
+    assert tpr_default.v == 9
+    assert tpr_5.v == 11
+
+
+def test_multi_output_degrees_of_freedom():
+    """ Checks the degrees of freedom are beinf added correctly when using mulitple outputs """
+    y_2d = np.vstack((y, y * 2)).T
+    kernel = RBF(length_scale=1.0)
+
+    tpr_1 = TProcessRegressor(kernel=kernel, optimizer=None, normalize_y=False)
+    assert tpr_1.v == 3
+    tpr_1.fit(X, y)
+    assert tpr_1.v == 9

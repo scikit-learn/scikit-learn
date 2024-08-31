@@ -639,7 +639,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         return log_likelihood
 
     def _log_likelihood_gradient_calc(self, alpha, L, K, K_gradient):
-        """Returns the log-likelihood gradient given teh required algebraic terms.
+        """Returns the log-likelihood gradient given the required algebraic terms.
 
                 Returns
                 -------

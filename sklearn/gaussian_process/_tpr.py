@@ -27,7 +27,10 @@ from .kernels import ConstantKernel as C
 class TProcessRegressor(GaussianProcessRegressor):
     """ T Process Regressor (TPR)
 
-    The implementation is based of TODO MY THESIS
+    This implementation is primarily based of [SW2014]. However, due to their unusual
+    parametrization of the Student T distribution [TW2018] is also referenced.
+    Lastly the kernel parameter optimization is largely based off [RW2006] as was
+    done in GPs
 
     In addition to the gaussian process regressor (._gpr.GaussianProcessRegressor),
     :class:`TProcessRegressor`:
@@ -151,22 +154,32 @@ class TProcessRegressor(GaussianProcessRegressor):
 
     References
     ----------
-    TODO: References
+    .. [SW2014] `Amar Shah, Andrew Gordon Wilson, Zoubin Ghahramani,
+       "Student-t Processes as Alternatives to Gaussian Processes",
+       arxiv > stat > arXiv:1402.4306 <https://arxiv.org/abs/1402.4306>`_
+
+    .. [TW2018] `Brendan D. Tracey, David H. Wolpert,
+       "Upgrading from Gaussian Processes to Student's-T Processes"
+        arxiv > stat > arXiv:1801.06147 <https://arxiv.org/abs/1801.06147>`_
+
+
+    .. [RW2006] `Carl E. Rasmussen and Christopher K.I. Williams,
+       "Gaussian Processes for Machine Learning",
+       MIT Press 2006 <https://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_
 
     Examples
     --------
     >>> from sklearn.datasets import make_friedman2
-    >>> from sklearn.gaussian_process import GaussianProcessRegressor
+    >>> from sklearn.gaussian_process import TProcessRegressor
     >>> from sklearn.gaussian_process.kernels import DotProduct, WhiteKernel
-    >>> # TODO X, y = make_friedman2(n_samples=500, noise=0, random_state=0)
+    >>> X, y = make_friedman2(n_samples=500, noise=0, random_state=0)
     >>> kernel = DotProduct() + WhiteKernel()
-    >>> gpr = GaussianProcessRegressor(kernel=kernel,
+    >>> tpr = TProcessRegressor(kernel=kernel,
     ...         random_state=0).fit(X, y)
-    >>> gpr.score(X, y)
-    0.3680...
-    >>> gpr.predict(X[:2,:], return_std=True)
-    (array([653.0..., 592.1...]), array([316.6..., 316.6...]))
-
+    >>> tpr.score(X, y)
+    0.8690...
+    >>> tpr.predict(X[:2,:], return_std=True)
+    (array([[754.5..., 526.2...]), array([147.8..., 148.0...]))
     """
     def __init__(
             self,
@@ -275,7 +288,7 @@ class TProcessRegressor(GaussianProcessRegressor):
             Shape of joint predictive t distribution at query points.
             Only returned when `return_cov` is True.
         """
-        if [return_std, return_cov, return_tShape, return_tShapeMatrix].count(True) != 1:
+        if [return_std, return_cov, return_tShape, return_tShapeMatrix].count(True) > 1:
             raise RuntimeError(
                 "At most one of return_std, return_cov, return_tShape or return_tShapeMatrix can be requested."
             )
@@ -345,7 +358,7 @@ class TProcessRegressor(GaussianProcessRegressor):
         return y_samples
 
     def _log_likelihood_calc(self, y_train, alpha, L, K):
-        """Returns the log-likelihood given L and the training points.
+        """ Returns the log-likelihood given L and the training points.
 
         Parameters
         ----------
@@ -363,17 +376,16 @@ class TProcessRegressor(GaussianProcessRegressor):
         log_likelihood : float
             Log-marginal likelihood of multivariate T distribution using covariance K and training data
         """
-        # TODO find citation of algorithm
-        self.m_dis = np.einsum("ik,ik->k", y_train, alpha)  # TODO Double check
+        # Log-likelihood function can be found in [TW2018]
+        self.m_dis = np.einsum("ik,ik->k", y_train, alpha)
         log_likelihood_dims = self.log_likelihood_dims_const
         log_likelihood_dims -= self.c_fit1 * np.log(1 + self.m_dis / self.v0)
         log_likelihood_dims -= np.log(np.diag(L)).sum()
         log_likelihood = log_likelihood_dims.sum(axis=-1)
-        print(self.kernel_.theta)
         return log_likelihood
 
     def _log_likelihood_gradient_calc(self, alpha, L, K, K_gradient):
-        """Returns the log-likelihood gradient given teh required algebraic terms.
+        """Returns the log-likelihood gradient given the required algebraic terms.
 
         Parameters
         ----------
@@ -391,7 +403,9 @@ class TProcessRegressor(GaussianProcessRegressor):
         log_likelihood_gradient : np.array
             Log-marginal likelihood gradient with respect to theta
         """
-        # TODO find citation of algorithm
+        # Derivative of the Log-likelihood function can be found in [TW2018]
+        # Optimization is based of [RW2006] as was done in
+        # (._gpr.GaussianProcessRegressor)
         inner_term = np.einsum("ik,jk->ijk", alpha, alpha)
         inner_term = self.v / (self.v0 + self.m_dis) * inner_term
         # compute K^-1 of shape (n_samples, n_samples)
@@ -417,8 +431,3 @@ class TProcessRegressor(GaussianProcessRegressor):
         # the log likehood gradient is the sum-up across the outputs
         log_likelihood_gradient = log_likelihood_gradient_dims.sum(axis=-1)
         return log_likelihood_gradient
-
-
-
-""" The remaining functions should come relatively quickly once the above is completed """
-
