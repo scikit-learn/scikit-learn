@@ -88,7 +88,6 @@ def _check_targets(y_true, y_pred):
 
     y_pred : array or indicator matrix
     """
-    y_true, y_pred = attach_unique(y_true, y_pred)
     xp, _ = get_namespace(y_true, y_pred)
     check_consistent_length(y_true, y_pred)
     type_true = type_of_target(y_true, input_name="y_true")
@@ -218,6 +217,7 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     """
     xp, _, device = get_namespace_and_device(y_true, y_pred, sample_weight)
     # Compute accuracy for each possible representation
+    y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
     if y_type.startswith("multilabel"):
@@ -1058,6 +1058,7 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     >>> matthews_corrcoef(y_true, y_pred)
     np.float64(-0.33...)
     """
+    y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
     if y_type not in {"binary", "multiclass"}:
@@ -1616,6 +1617,7 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
     if average not in average_options and average != "binary":
         raise ValueError("average has to be one of " + str(average_options))
 
+    y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     # Convert to Python primitive type to avoid NumPy type / Python str
     # comparison. See https://github.com/numpy/numpy/issues/6784
@@ -2031,7 +2033,7 @@ def class_likelihood_ratios(
     >>> class_likelihood_ratios(y_true, y_pred, labels=["non-cat", "cat"])
     (np.float64(1.5), np.float64(0.75))
     """
-
+    y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type != "binary":
         raise ValueError(
@@ -2681,8 +2683,7 @@ def classification_report(
     <BLANKLINE>
     """
 
-    y_true = attach_unique(y_true)
-    y_pred = attach_unique(y_pred)
+    y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
 
     if labels is None:
@@ -2871,7 +2872,7 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
     >>> hamming_loss(np.array([[0, 1], [1, 1]]), np.zeros((2, 2)))
     0.75
     """
-
+    y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
 
