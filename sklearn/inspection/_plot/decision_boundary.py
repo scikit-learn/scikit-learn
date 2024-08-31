@@ -260,9 +260,9 @@ class DecisionBoundaryDisplay:
         class_of_interest : int, float, bool or str, default=None
             The class considered when plotting the decision. If None,
             `estimator.classes_[1]` is considered as the positive class
-            for binary classifiers. For multiclass classifiers, when
-            `response_method` is 'predict_proba' or 'decision_function',
-            an explicit value for `class_of_interest` is mandatory.
+            for binary classifiers. Must have an explicit value for
+            multiclass classifiers when `response_method` is 'predict_proba'
+            or 'decision_function'.
 
             .. versionadded:: 1.4
 
