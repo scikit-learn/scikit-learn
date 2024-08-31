@@ -30,8 +30,8 @@ def _check_boundary_response_method(estimator, response_method, class_of_interes
         :term:`decision_function`, :term:`predict_proba`, :term:`predict`.
 
     class_of_interest : int, float, bool, str or None
-        The class considered when plotting the decision. If the label is specified, it
-        is then possible to plot the decision boundary in multiclass settings.
+        The class considered when plotting the decision. Cannot be None if
+        multiclass and `response_method` is 'predict_proba' or 'decision_function'.
 
         .. versionadded:: 1.4
 
@@ -257,8 +257,9 @@ class DecisionBoundaryDisplay:
         class_of_interest : int, float, bool or str, default=None
             The class considered when plotting the decision. If None,
             `estimator.classes_[1]` is considered as the positive class
-            for binary classifiers. For multiclass classifiers, passing
-            an explicit value for `class_of_interest` is mandatory.
+            for binary classifiers. Must have an explicit value for
+            multiclass classifiers when `response_method` is 'predict_proba'
+            or 'decision_function'.
 
             .. versionadded:: 1.4
 
