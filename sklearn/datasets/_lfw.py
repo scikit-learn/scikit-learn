@@ -595,7 +595,7 @@ def fetch_lfw_pairs(
     >>> from sklearn.datasets import fetch_lfw_pairs
     >>> lfw_pairs_train = fetch_lfw_pairs(subset='train')
     >>> list(lfw_pairs_train.target_names)
-    ['Different persons', 'Same person']
+    [np.str_('Different persons'), np.str_('Same person')]
     >>> lfw_pairs_train.pairs.shape
     (2200, 2, 62, 47)
     >>> lfw_pairs_train.data.shape
