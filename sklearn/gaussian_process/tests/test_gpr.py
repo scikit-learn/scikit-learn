@@ -841,7 +841,6 @@ def test_gpr_predict_input_not_modified():
     https://github.com/scikit-learn/scikit-learn/issues/24340
     """
     gpr = GaussianProcessRegressor(kernel=CustomKernel()).fit(X, y)
-
     X2_copy = np.copy(X2)
     _, _ = gpr.predict(X2, return_std=True)
 

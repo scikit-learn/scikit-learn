@@ -639,7 +639,6 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         log_likelihood_dims -= K.shape[0] / 2 * np.log(2 * np.pi)
         # the log likehood is sum-up across the outputs
         log_likelihood = log_likelihood_dims.sum(axis=-1)
-        print(slef.kernel_.theta)
         return log_likelihood
 
     def _log_likelihood_gradient_calc(self, alpha, L, K, K_gradient):
