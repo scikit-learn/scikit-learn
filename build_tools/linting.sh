@@ -113,6 +113,16 @@ else
     global_status=1
 fi
 
+meson_openmp_status=0
+meson_openmp_status="$(python build_tools/meson-openmp-linter.py)"
+if [[ $meson_openmp_status -eq 0 ]]
+then
+    echo -e "No problems detected related to Meson OpenMP checks\n"
+else
+    echo -e "\nProblems detected by Meson OpenMP checksk\n"
+    global_status=1
+fi
+
 echo -e "### Linting completed ###\n"
 
 if [[ $global_status -eq 1 ]]
