@@ -42,8 +42,6 @@ jobs:
       displayName: Run linters
     - bash: |
         pip install ninja meson scipy
-        meson setup build/debug
-        cat build/debug/build.ninja
         python build_tools/meson-openmp-linter.py
       displayName: Run Meson OpenMP checks
 
