@@ -42,7 +42,7 @@ jobs:
       displayName: Run linters
     - bash: |
         pip install meson scipy
-        python build_tools/meson-openmp-linter.sh
+        python build_tools/meson-openmp-linter.py
       displayName: Run Meson OpenMP checks
 
 
