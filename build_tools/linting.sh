@@ -114,7 +114,8 @@ else
 fi
 
 echo -e "### Checking for Meson OpenMP dependencies"
-meson_openmp_status=$(python build_tools/meson-openmp-linter.py)
+python build_tools/meson-openmp-linter.py
+meson_openmp_status=$?
 if [[ $meson_openmp_status -eq 0 ]]
 then
     echo -e "No problems detected related to Meson OpenMP checks\n"
