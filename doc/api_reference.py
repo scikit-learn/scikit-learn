@@ -468,6 +468,7 @@ API_REFERENCE = {
                 "autosummary": [
                     "GaussianProcessClassifier",
                     "GaussianProcessRegressor",
+                    "TProcessRegressor",
                 ],
             },
             {
