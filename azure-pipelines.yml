@@ -40,6 +40,11 @@ jobs:
     - bash: |
         ./build_tools/linting.sh
       displayName: Run linters
+    - bash: |
+        pip install meson scipy
+        python build_tools/meson-openmp-linter.sh
+      displayName: Run Meson OpenMP checks
+
 
 - template: build_tools/azure/posix.yml
   parameters:
