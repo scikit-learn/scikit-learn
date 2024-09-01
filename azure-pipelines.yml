@@ -41,7 +41,7 @@ jobs:
         ./build_tools/linting.sh
       displayName: Run linters
     - bash: |
-        pip install meson scipy
+        pip install ninja meson scipy
         python build_tools/meson-openmp-linter.py
       displayName: Run Meson OpenMP checks
 
