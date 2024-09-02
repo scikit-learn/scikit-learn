@@ -57,12 +57,9 @@ def get_meson_info():
 
 
 def get_git_grep_info():
-    git_grep_filenames = (
-        subprocess.check_output(
-            ["git", "grep", "-lP", "cython.*parallel|_openmp_helpers"], text=True
-        )
-        .splitlines()
-    )
+    git_grep_filenames = subprocess.check_output(
+        ["git", "grep", "-lP", "cython.*parallel|_openmp_helpers"], text=True
+    ).splitlines()
     git_grep_filenames = [f for f in git_grep_filenames if ".pyx" in f]
 
     return [get_canonical_name_git_grep(each) for each in git_grep_filenames]
