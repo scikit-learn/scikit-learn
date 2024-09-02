@@ -63,7 +63,10 @@ if [[ -n "$SELECTED_TESTS" ]]; then
     export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"
 fi
 
-python -m pip install pytest-repeat
+
+
+python -m pip install -q pytest-repeat
+lscpu
 
 TEST_CMD="$TEST_CMD --pyargs sklearn.feature_extraction -k test_img_to_graph -vs --count 10"
 
