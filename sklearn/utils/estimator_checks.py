@@ -1945,8 +1945,10 @@ def check_transformer_preserve_dtypes(name, transformer_orig):
     X = StandardScaler().fit_transform(X)
     X = _enforce_estimator_tags_X(transformer_orig, X)
 
+    dtype_map = {"float64": np.float64, "float32": np.float32}
+
     for dtype in get_tags(transformer_orig).transformer_tags.preserves_dtype:
-        X_cast = X.astype(dtype)
+        X_cast = X.astype(dtype_map[dtype])
         transformer = clone(transformer_orig)
         set_random_state(transformer)
         X_trans1 = transformer.fit_transform(X_cast, y)

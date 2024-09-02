@@ -1112,7 +1112,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.allow_nan = True
-        tags.transformer_tags.preserves_dtype = [np.float64, np.float32]
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
         return tags
 
 

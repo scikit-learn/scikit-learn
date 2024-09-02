@@ -1714,7 +1714,7 @@ class TfidfTransformer(
         tags.input_tags.sparse = True
         # FIXME: np.float16 could be preserved if _inplace_csr_row_normalize_l2
         # accepted it.
-        tags.transformer_tags.preserves_dtype = [np.float64, np.float32]
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
         return tags
 
 

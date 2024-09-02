@@ -1350,7 +1350,7 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.requires_fit = False
-        tags.transformer_tags.preserves_dtype = [np.float64, np.float32]
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
         return tags
 
     @property
@@ -1708,7 +1708,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.transformer_tags.preserves_dtype = [np.float64, np.float32]
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
         return tags
 
 
@@ -2306,5 +2306,5 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.transformer_tags.preserves_dtype = [np.float64, np.float32]
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
         return tags

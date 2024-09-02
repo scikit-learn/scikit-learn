@@ -448,5 +448,5 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
                 "fails for the score_samples method"
             ),
         }
-        tags.transformer_tags.preserves_dtype = [np.float64, np.float32]
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
         return tags
