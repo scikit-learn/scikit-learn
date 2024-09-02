@@ -184,16 +184,16 @@ class Tags:
 
     Parameters
     ----------
-    target_tags : TargetTags
+    target_tags : :class:`TargetTags`
         The target(y) tags.
 
-    transformer_tags : TransformerTags
+    transformer_tags : :class:`TransformerTags`
         The transformer tags.
 
-    classifier_tags : ClassifierTags
+    classifier_tags : :class:`ClassifierTags`
         The classifier tags.
 
-    regressor_tags : RegressorTags
+    regressor_tags : :class:`RegressorTags`
         The regressor tags.
 
     array_api_support : bool (default=False)
@@ -226,7 +226,7 @@ class Tags:
         to change because we are trying to make it more flexible: be
         prepared for breaking changes in the future.
 
-    input_tags : InputTags
+    input_tags : :class:`InputTags`
         The input data(X) tags.
     """
 

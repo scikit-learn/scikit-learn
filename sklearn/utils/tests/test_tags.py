@@ -9,6 +9,7 @@ class NoTagsEstimator:
 
 
 class ClassifierEstimator:
+    # This is to test whether not inheriting from mixins works.
     _estimator_type = "classifier"
 
 
