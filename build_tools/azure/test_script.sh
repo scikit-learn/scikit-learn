@@ -65,7 +65,7 @@ fi
 
 python -m pip install pytest-repeat
 
-TEST_CMD="$TEST_CMD --pyargs sklearn -k test_img_to_graph -vs --count 100"
+TEST_CMD="$TEST_CMD --pyargs sklearn.feature_extraction -k test_img_to_graph -vs --count 10"
 
 set -x
 eval "$TEST_CMD"
