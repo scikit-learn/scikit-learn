@@ -54,7 +54,7 @@ def _compute_gradient_3d(edges, img):
     print(f"{edges[0] = }")
     print(f"{n_y = }, {n_z = }")
     print(f"{n_y * n_z = }")
-    print(f"{edges[0] // (n_y * n_z) = }")
+    print(f"{(edges[0] // (n_y * n_z)) = }")
     print(f"{(edges[0] % (n_y * n_z)) = }")
     print(f"{(edges[0] % (n_y * n_z)) // n_z = }")
     print(f"{(edges[0] % (n_y * n_z)) % n_z = }")
