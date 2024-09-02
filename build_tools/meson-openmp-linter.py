@@ -49,8 +49,8 @@ def get_meson_info():
     subprocess.check_call(["meson", "setup", build_path, "--reconfigure"])
 
     json_out = subprocess.check_output(
-        ["meson", "introspect", build_path, "--targets"]
-    ).decode(encoding="utf-8")
+        ["meson", "introspect", build_path, "--targets"], text=True
+    )
     json_content = json.loads(json_out)
     meson_targets = get_targets_using_openmp(json_content)
     return [get_canonical_name_meson(each, build_path) for each in meson_targets]
@@ -59,9 +59,8 @@ def get_meson_info():
 def get_git_grep_info():
     git_grep_filenames = (
         subprocess.check_output(
-            ["git", "grep", "-lP", "cython.*parallel|_openmp_helpers"]
+            ["git", "grep", "-lP", "cython.*parallel|_openmp_helpers"], text=True
         )
-        .decode(encoding="utf-8")
         .splitlines()
     )
     git_grep_filenames = [f for f in git_grep_filenames if ".pyx" in f]
