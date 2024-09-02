@@ -47,7 +47,18 @@ def _make_edges_3d(n_x, n_y, n_z=1):
 
 
 def _compute_gradient_3d(edges, img):
+    print(f"Calling _compute_gradient_3d with {img.shape = }")
     _, n_y, n_z = img.shape
+    print(edges.shape, edges.dtype)
+    print(f"{edges = }")
+    print(f"{edges[0] = }")
+    print(f"{n_y = }, {n_z = }")
+    print(f"{n_y * n_z = }")
+    print(f"{edges[0] // (n_y * n_z) = }")
+    print(f"{(edges[0] % (n_y * n_z)) = }")
+    print(f"{(edges[0] % (n_y * n_z)) // n_z = }")
+    print(f"{(edges[0] % (n_y * n_z)) % n_z = }")
+
     gradient = np.abs(
         img[
             edges[0] // (n_y * n_z),

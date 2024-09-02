@@ -63,7 +63,7 @@ if [[ -n "$SELECTED_TESTS" ]]; then
     export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"
 fi
 
-TEST_CMD="$TEST_CMD --pyargs sklearn"
+TEST_CMD="$TEST_CMD --pyargs sklearn -k test_img_to_graph -vs"
 
 set -x
 eval "$TEST_CMD"
