@@ -1,31 +1,21 @@
 """T processes regression."""
 
-# Authors: Conrad Stevens <conrad.stevens@sydney.edu.au>
-# Modified by: TODO
-# License: TODO
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import warnings
-from numbers import Integral, Real
-from operator import itemgetter
 
 import numpy as np
-import scipy.optimize
-from scipy.linalg import cho_solve, cholesky, solve_triangular
+from scipy.linalg import cho_solve
 from scipy.special import gamma as gam
 from scipy.stats import multivariate_t
 
-from ..base import BaseEstimator, MultiOutputMixin, RegressorMixin, _fit_context, clone
-from ..preprocessing._data import _handle_zeros_in_scale
+from ..base import _fit_context
 from ..utils import check_random_state
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.optimize import _check_optimize_result
-from ._gpr import GaussianProcessRegressor, GPR_CHOLESKY_LOWER
-from .kernels import RBF, Kernel
-from .kernels import ConstantKernel as C
+from ._gpr import GPR_CHOLESKY_LOWER, GaussianProcessRegressor
 
 
 class TProcessRegressor(GaussianProcessRegressor):
-    """ T Process Regressor (TPR)
+    """T Process Regressor (TPR)
 
     This implementation is primarily based of [SW2014]. However, due to their unusual
     parametrization of the Student T distribution [TW2018] is also referenced.
@@ -181,18 +171,19 @@ class TProcessRegressor(GaussianProcessRegressor):
     >>> tpr.predict(X[:2,:], return_std=True)
     (array([[754.5..., 526.2...]), array([147.8..., 148.0...]))
     """
+
     def __init__(
-            self,
-            kernel=None,
-            v=3,
-            *,
-            alpha=1e-10,
-            optimizer="fmin_l_bfgs_b",
-            n_restarts_optimizer=0,
-            normalize_y=False,
-            copy_X_train=True,
-            n_targets=None,
-            random_state=None,
+        self,
+        kernel=None,
+        v=3,
+        *,
+        alpha=1e-10,
+        optimizer="fmin_l_bfgs_b",
+        n_restarts_optimizer=0,
+        normalize_y=False,
+        copy_X_train=True,
+        n_targets=None,
+        random_state=None,
     ):
         super().__init__(
             kernel,
@@ -202,7 +193,7 @@ class TProcessRegressor(GaussianProcessRegressor):
             normalize_y=normalize_y,
             copy_X_train=copy_X_train,
             n_targets=n_targets,
-            random_state=random_state
+            random_state=random_state,
         )
         self.m_dis = 0  # Mahalanobis Distance
         self.v0 = v  # Starting degrees of freedom
@@ -213,7 +204,7 @@ class TProcessRegressor(GaussianProcessRegressor):
         ### Constants that are used throughout functions ###
         self.c1 = gam(self.v0 / 2)
         self.c2 = np.log(self.v0 * np.pi)
-        self.c_fit1 = self.v/2
+        self.c_fit1 = self.v / 2
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
@@ -235,12 +226,21 @@ class TProcessRegressor(GaussianProcessRegressor):
         self.n = y.shape[0]
         self.v = self.v0 + self.n
         self.c_fit1 = self.v / 2
-        self.log_likelihood_dims_const = gam(self.c_fit1) - self.c1 - self.n / 2 * self.c2
+        self.log_likelihood_dims_const = (
+            gam(self.c_fit1) - self.c1 - self.n / 2 * self.c2
+        )
 
         super().fit(X, y)
         return self
 
-    def predict(self, X, return_std=False, return_cov=False, return_tShape=False, return_tShapeMatrix=False):
+    def predict(
+        self,
+        X,
+        return_std=False,
+        return_cov=False,
+        return_tShape=False,
+        return_tShapeMatrix=False,
+    ):
         """Predict using the T process regression model.
 
         We can also predict based on an unfitted model by using the TP prior.
@@ -290,7 +290,8 @@ class TProcessRegressor(GaussianProcessRegressor):
         """
         if [return_std, return_cov, return_tShape, return_tShapeMatrix].count(True) > 1:
             raise RuntimeError(
-                "At most one of return_std, return_cov, return_tShape or return_tShapeMatrix can be requested."
+                "At most one of return_std, return_cov, return_tShape or "
+                + "return_tShapeMatrix can be requested."
             )
 
         ### Spread may be either std or cov ###
@@ -346,19 +347,25 @@ class TProcessRegressor(GaussianProcessRegressor):
 
         y_mean, y_tShapeMatrix = self.predict(X, return_tShapeMatrix=True)
         if y_mean.ndim == 1:
-            y_samples = multivariate_t(y_mean, y_tShapeMatrix, self.v, seed=rng).rvs(n_samples).T
+            y_samples = (
+                multivariate_t(y_mean, y_tShapeMatrix, self.v, seed=rng)
+                .rvs(n_samples)
+                .T
+            )
         else:
             y_samples = [
                 multivariate_t(
                     y_mean[:, target], y_tShapeMatrix[..., target], self.v, seed=rng
-                ).rvs(n_samples).T[:, np.newaxis]
+                )
+                .rvs(n_samples)
+                .T[:, np.newaxis]
                 for target in range(y_mean.shape[1])
             ]
             y_samples = np.hstack(y_samples)
         return y_samples
 
     def _log_likelihood_calc(self, y_train, alpha, L, K):
-        """ Returns the log-likelihood given L and the training points.
+        """Returns the log-likelihood given L and the training points.
 
         Parameters
         ----------
@@ -374,7 +381,8 @@ class TProcessRegressor(GaussianProcessRegressor):
         Returns
         -------
         log_likelihood : float
-            Log-marginal likelihood of multivariate T distribution using covariance K and training data
+            Log-marginal likelihood of multivariate T distribution using
+            covariance K and training data
         """
         # Log-likelihood function can be found in [TW2018]
         self.m_dis = np.einsum("ik,ik->k", y_train, alpha)
