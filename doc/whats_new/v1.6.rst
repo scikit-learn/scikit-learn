@@ -80,7 +80,7 @@ Changelog
 - |Enhancement| Added a function :func:`base.is_clusterer` which determines
   whether a given estimator is of category clusterer.
   :pr:`28936` by :user:`Christian Veenhuis <ChVeen>`.
-  
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -96,6 +96,6 @@ TODO: update at the time of the release.
 :mod:`pipeline`
 ---------------
 
-- |Feature| :class:`pipeline.Pipeline` can now transform metadata up to the step
+- |MajorFeature| :class:`pipeline.Pipeline` can now transform metadata up to the step
   requiring the metadata, which can be set using the `transform_input` parameter.
   :pr:`28901` by `Adrin Jalali`_.

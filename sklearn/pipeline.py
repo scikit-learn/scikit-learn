@@ -95,10 +95,13 @@ class Pipeline(_BaseComposition):
         :ref:`Combining Estimators <combining_estimators>` for more details.
 
     transform_input : list of str, default=None
+        The names of the :term:`metadata` parameters that should be transformed by the
+        pipeline before passing it to the step consuming it.
+
         This enables transforming some input arguments to ``fit`` (other than ``X``)
         to be transformed by the steps of the pipeline up to the step which requires
         them. Requirement is defined via :ref:`metadata routing <metadata_routing>`.
-        This can be used to pass a validation set through the pipeline for instance.
+        For instance, this can be used to pass a validation set through the pipeline.
 
         See the example TBD for more details.
 
@@ -398,11 +401,30 @@ class Pipeline(_BaseComposition):
         This transforms the metadata up to this step if required, which is
         indicated by the `transform_input` parameter.
 
-        If a param in `step_params` is included in the `transform_input` list, it
-        will be transformed.
+        If a param in `step_params` is included in the `transform_input` list,
+        it will be transformed.
 
-        `all_params` are the metadata passed by the user. Used to call `transform`
-        on the pipeline itself.
+        Parameters
+        ----------
+        step_idx : int
+            Index of the step in the pipeline.
+
+        step_params : dict
+            Parameters specific to the step. These are routed parameters, e.g.
+            `routed_params[name]`. If a parameter name here is included in the
+            `pipeline.transform_input`, then it will be transformed. Note that
+            these parameters are *after* routing, so the aliases are already
+            resolved.
+
+        all_params : dict
+            All parameters passed by the user. Here this is used to call
+            `transform` on the slice of the pipeline itself.
+
+        Returns
+        -------
+        dict
+            Parameters to be passed to the step. The ones which should be
+            transformed are transformed.
         """
         if (
             self.transform_input is None
