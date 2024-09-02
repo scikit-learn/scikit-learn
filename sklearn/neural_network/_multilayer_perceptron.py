@@ -702,7 +702,12 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
     def _update_no_improvement_count(self, early_stopping, X_val, y_val):
         if early_stopping:
             # compute validation score, use that for stopping
-            self.validation_scores_.append(self._score(X_val, y_val))
+            try:
+                val_score = self._score(X_val, y_val)
+            except ValueError:
+                val_score = np.inf
+
+            self.validation_scores_.append(val_score)
 
             if self.verbose:
                 print("Validation score: %f" % self.validation_scores_[-1])
