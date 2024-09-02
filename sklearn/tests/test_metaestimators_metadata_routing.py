@@ -382,6 +382,63 @@ METAESTIMATORS: list = [
         "cv_name": "cv",
         "cv_routing_methods": ["fit"],
     },
+    {
+        "metaestimator": TransformedTargetRegressor,
+        "estimator": "regressor",
+        "estimator_name": "regressor",
+        "X": X,
+        "y": y,
+        "estimator_routing_methods": ["fit", "predict"],
+    },
+    {
+        "metaestimator": SelfTrainingClassifier,
+        "estimator_name": "estimator",
+        "estimator": "classifier",
+        "X": X,
+        "y": y,
+        "preserves_metadata": True,
+        "estimator_routing_methods": [
+            "fit",
+            "predict",
+            "predict_proba",
+            "predict_log_proba",
+            "decision_function",
+            "score",
+        ],
+        "method_mapping": {"fit": ["fit", "score"]},
+    },
+    {
+        "metaestimator": SequentialFeatureSelector,
+        "estimator_name": "estimator",
+        "estimator": "classifier",
+        "X": X,
+        "y": y,
+        "estimator_routing_methods": ["fit"],
+        "scorer_name": "scoring",
+        "scorer_routing_methods": ["fit"],
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": RFE,
+        "estimator": "classifier",
+        "estimator_name": "estimator",
+        "X": X,
+        "y": y,
+        "estimator_routing_methods": ["fit", "predict", "score"],
+    },
+    {
+        "metaestimator": RFECV,
+        "estimator": "classifier",
+        "estimator_name": "estimator",
+        "estimator_routing_methods": ["fit"],
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+        "scorer_name": "scoring",
+        "scorer_routing_methods": ["fit", "score"],
+        "X": X,
+        "y": y,
+    },
 ]
 """List containing all metaestimators to be tested and their settings
 
@@ -423,11 +480,6 @@ METAESTIMATOR_IDS = [str(row["metaestimator"].__name__) for row in METAESTIMATOR
 UNSUPPORTED_ESTIMATORS = [
     AdaBoostClassifier(),
     AdaBoostRegressor(),
-    RFE(ConsumingClassifier()),
-    RFECV(ConsumingClassifier()),
-    SelfTrainingClassifier(ConsumingClassifier()),
-    SequentialFeatureSelector(ConsumingClassifier()),
-    TransformedTargetRegressor(),
 ]
 
 
@@ -633,7 +685,7 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
                     value=None,
                 )
                 try:
-                    # `fit` and `partial_fit` accept y, others don't.
+                    # `fit`, `partial_fit`, 'score' accept y, others don't.
                     method(X, y, **method_kwargs)
                 except TypeError:
                     method(X, **method_kwargs)
@@ -757,16 +809,22 @@ def test_metadata_is_routed_correctly_to_scorer(metaestimator):
 
     cls = metaestimator["metaestimator"]
     routing_methods = metaestimator["scorer_routing_methods"]
+    method_mapping = metaestimator.get("method_mapping", {})
 
     for method_name in routing_methods:
         kwargs, (estimator, _), (scorer, registry), (cv, _) = get_init_args(
             metaestimator, sub_estimator_consumes=True
         )
-        if estimator:
-            estimator.set_fit_request(sample_weight=True, metadata=True)
         scorer.set_score_request(sample_weight=True)
         if cv:
             cv.set_split_request(groups=True, metadata=True)
+        if estimator is not None:
+            set_requests(
+                estimator,
+                method_mapping=method_mapping,
+                methods=[method_name],
+                metadata_name="sample_weight",
+            )
         instance = cls(**kwargs)
         method = getattr(instance, method_name)
         method_kwargs = {"sample_weight": sample_weight}

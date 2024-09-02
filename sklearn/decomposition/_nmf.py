@@ -1,10 +1,7 @@
 """Non-negative matrix factorization."""
 
-# Author: Vlad Niculae
-#         Lars Buitinck
-#         Mathieu Blondel <mathieu@mblondel.org>
-#         Tom Dupre la Tour
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import itertools
 import time
@@ -1703,8 +1700,6 @@ class NMF(_BaseNMF):
         n_iter_ : int
             Actual number of iterations.
         """
-        check_non_negative(X, "NMF (input X)")
-
         # check parameters
         self._check_params(X)
 
@@ -1780,7 +1775,11 @@ class NMF(_BaseNMF):
         """
         check_is_fitted(self)
         X = self._validate_data(
-            X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32], reset=False
+            X,
+            accept_sparse=("csr", "csc"),
+            dtype=[np.float64, np.float32],
+            reset=False,
+            ensure_non_negative=True,
         )
 
         with config_context(assume_finite=True):

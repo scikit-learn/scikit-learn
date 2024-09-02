@@ -1,9 +1,5 @@
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Fabian Pedregosa <fabian.pedregosa@inria.fr>
-#         Olivier Grisel <olivier.grisel@ensta.org>
-#         Gael Varoquaux <gael.varoquaux@inria.fr>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numbers
 import sys
@@ -983,6 +979,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                 accept_sparse="csc",
                 order="F",
                 dtype=[np.float64, np.float32],
+                force_writeable=True,
                 accept_large_sparse=False,
                 copy=X_copied,
                 multi_output=True,
@@ -1611,6 +1608,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             check_X_params = dict(
                 accept_sparse="csc",
                 dtype=[np.float64, np.float32],
+                force_writeable=True,
                 copy=False,
                 accept_large_sparse=False,
             )
@@ -1636,6 +1634,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 accept_sparse="csc",
                 dtype=[np.float64, np.float32],
                 order="F",
+                force_writeable=True,
                 copy=copy_X,
             )
             X, y = self._validate_data(
@@ -2084,6 +2083,46 @@ class LassoCV(RegressorMixin, LinearModelCV):
     def _more_tags(self):
         return {"multioutput": False}
 
+    def fit(self, X, y, sample_weight=None, **params):
+        """Fit Lasso model with coordinate descent.
+
+        Fit is on grid of alphas and best alpha estimated by cross-validation.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training data. Pass directly as Fortran-contiguous data
+            to avoid unnecessary memory duplication. If y is mono-output,
+            X can be sparse. Note that large sparse matrices and arrays
+            requiring `int64` indices are not accepted.
+
+        y : array-like of shape (n_samples,)
+            Target values.
+
+        sample_weight : float or array-like of shape (n_samples,), \
+                default=None
+            Sample weights used for fitting and evaluation of the weighted
+            mean squared error of each cv-fold. Note that the cross validated
+            MSE that is finally used to find the best model is the unweighted
+            mean over the (weighted) MSEs of each test fold.
+
+        **params : dict, default=None
+            Parameters to be passed to the CV splitter.
+
+            .. versionadded:: 1.4
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
+
+        Returns
+        -------
+        self : object
+            Returns an instance of fitted model.
+        """
+        return super().fit(X, y, sample_weight=sample_weight, **params)
+
 
 class ElasticNetCV(RegressorMixin, LinearModelCV):
     """Elastic Net model with iterative fitting along a regularization path.
@@ -2323,6 +2362,46 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     def _more_tags(self):
         return {"multioutput": False}
 
+    def fit(self, X, y, sample_weight=None, **params):
+        """Fit ElasticNet model with coordinate descent.
+
+        Fit is on grid of alphas and best alpha estimated by cross-validation.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training data. Pass directly as Fortran-contiguous data
+            to avoid unnecessary memory duplication. If y is mono-output,
+            X can be sparse. Note that large sparse matrices and arrays
+            requiring `int64` indices are not accepted.
+
+        y : array-like of shape (n_samples,)
+            Target values.
+
+        sample_weight : float or array-like of shape (n_samples,), \
+                default=None
+            Sample weights used for fitting and evaluation of the weighted
+            mean squared error of each cv-fold. Note that the cross validated
+            MSE that is finally used to find the best model is the unweighted
+            mean over the (weighted) MSEs of each test fold.
+
+        **params : dict, default=None
+            Parameters to be passed to the CV splitter.
+
+            .. versionadded:: 1.4
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
+
+        Returns
+        -------
+        self : object
+            Returns an instance of fitted model.
+        """
+        return super().fit(X, y, sample_weight=sample_weight, **params)
+
 
 ###############################################################################
 # Multi Task ElasticNet and Lasso models (with joint feature selection)
@@ -2512,6 +2591,7 @@ class MultiTaskElasticNet(Lasso):
         check_X_params = dict(
             dtype=[np.float64, np.float32],
             order="F",
+            force_writeable=True,
             copy=self.copy_X and self.fit_intercept,
         )
         check_y_params = dict(ensure_2d=False, order="F")
@@ -2943,7 +3023,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         return {"multioutput_only": True}
 
     # This is necessary as LinearModelCV now supports sample_weight while
-    # MultiTaskElasticNet does not (yet).
+    # MultiTaskElasticNetCV does not (yet).
     def fit(self, X, y, **params):
         """Fit MultiTaskElasticNet model with coordinate descent.
 
@@ -3127,7 +3207,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     >>> r2_score(y, reg.predict(X))
     0.9994...
     >>> reg.alpha_
-    0.5713...
+    np.float64(0.5713...)
     >>> reg.predict(X[:1,])
     array([[153.7971...,  94.9015...]])
     """
@@ -3181,7 +3261,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         return {"multioutput_only": True}
 
     # This is necessary as LinearModelCV now supports sample_weight while
-    # MultiTaskElasticNet does not (yet).
+    # MultiTaskLassoCV does not (yet).
     def fit(self, X, y, **params):
         """Fit MultiTaskLasso model with coordinate descent.
 

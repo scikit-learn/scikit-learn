@@ -1,4 +1,5 @@
 import inspect
+from collections import defaultdict
 from functools import partial
 
 import numpy as np
@@ -27,7 +28,7 @@ from sklearn.utils.multiclass import _check_partial_fit_first_call
 
 
 def record_metadata(obj, record_default=True, **kwargs):
-    """Utility function to store passed metadata to a method.
+    """Utility function to store passed metadata to a method of obj.
 
     If record_default is False, kwargs whose values are "default" are skipped.
     This is so that checks on keyword arguments whose default was not changed
@@ -35,21 +36,17 @@ def record_metadata(obj, record_default=True, **kwargs):
 
     """
     stack = inspect.stack()
-    method = stack[1].function
-    parent = stack[2].function
+    callee = stack[1].function
+    caller = stack[2].function
     if not hasattr(obj, "_records"):
-        obj._records = {}
-    if method not in obj._records:
-        obj._records[method] = {}
-    if parent not in obj._records[method]:
-        obj._records[method][parent] = []
+        obj._records = defaultdict(lambda: defaultdict(list))
     if not record_default:
         kwargs = {
             key: val
             for key, val in kwargs.items()
             if not isinstance(val, str) or (val != "default")
         }
-    obj._records[method][parent].append(kwargs)
+    obj._records[callee][caller].append(kwargs)
 
 
 def check_recorded_metadata(obj, method, parent, split_params=tuple(), **kwargs):
@@ -60,9 +57,11 @@ def check_recorded_metadata(obj, method, parent, split_params=tuple(), **kwargs)
     obj : estimator object
         sub-estimator to check routed params for
     method : str
-        sub-estimator's method where metadata is routed to
+        sub-estimator's method where metadata is routed to, or otherwise in
+        the context of metadata routing referred to as 'callee'
     parent : str
-        the parent method which should have called `method` or caller
+        the parent method which should have called `method`, or otherwise in
+        the context of metadata routing referred to as 'caller'
     split_params : tuple, default=empty
         specifies any parameters which are to be checked as being a subset
         of the original values
@@ -73,6 +72,8 @@ def check_recorded_metadata(obj, method, parent, split_params=tuple(), **kwargs)
         getattr(obj, "_records", dict()).get(method, dict()).get(parent, list())
     )
     for record in all_records:
+        # first check that the names of the metadata passed are the same as
+        # expected. The names are stored as keys in `record`.
         assert set(kwargs.keys()) == set(
             record.keys()
         ), f"Expected {kwargs.keys()} vs {record.keys()}"
@@ -200,6 +201,7 @@ class NonConsumingClassifier(ClassifierMixin, BaseEstimator):
 
     def fit(self, X, y):
         self.classes_ = np.unique(y)
+        self.coef_ = np.ones_like(X)
         return self
 
     def partial_fit(self, X, y, classes=None):
@@ -213,6 +215,17 @@ class NonConsumingClassifier(ClassifierMixin, BaseEstimator):
         y_pred[: len(X) // 2] = 0
         y_pred[len(X) // 2 :] = 1
         return y_pred
+
+    def predict_proba(self, X):
+        # dummy probabilities to support predict_proba
+        y_proba = np.empty(shape=(len(X), 2))
+        y_proba[: len(X) // 2, :] = np.asarray([1.0, 0.0])
+        y_proba[len(X) // 2 :, :] = np.asarray([0.0, 1.0])
+        return y_proba
+
+    def predict_log_proba(self, X):
+        # dummy probabilities to support predict_log_proba
+        return self.predict_proba(X)
 
 
 class NonConsumingRegressor(RegressorMixin, BaseEstimator):
@@ -269,6 +282,7 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         )
 
         self.classes_ = np.unique(y)
+        self.coef_ = np.ones_like(X)
         return self
 
     def predict(self, X, sample_weight="default", metadata="default"):
@@ -290,13 +304,10 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         return y_proba
 
     def predict_log_proba(self, X, sample_weight="default", metadata="default"):
-        pass  # pragma: no cover
-
-        # uncomment when needed
-        # record_metadata_not_default(
-        #     self, sample_weight=sample_weight, metadata=metadata
-        # )
-        # return np.zeros(shape=(len(X), 2))
+        record_metadata_not_default(
+            self, sample_weight=sample_weight, metadata=metadata
+        )
+        return np.zeros(shape=(len(X), 2))
 
     def decision_function(self, X, sample_weight="default", metadata="default"):
         record_metadata_not_default(
@@ -307,12 +318,11 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         y_score[: len(X) // 2] = 1
         return y_score
 
-    # uncomment when needed
-    # def score(self, X, y, sample_weight="default", metadata="default"):
-    # record_metadata_not_default(
-    #    self, sample_weight=sample_weight, metadata=metadata
-    # )
-    # return 1
+    def score(self, X, y, sample_weight="default", metadata="default"):
+        record_metadata_not_default(
+            self, sample_weight=sample_weight, metadata=metadata
+        )
+        return 1
 
 
 class ConsumingTransformer(TransformerMixin, BaseEstimator):
