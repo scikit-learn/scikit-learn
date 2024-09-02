@@ -481,7 +481,7 @@ class _HTMLDocumentationLinkMixin:
 
     If instead of overriding the attributes inside the class definition, you want to
     override a class instance, you can use `types.MethodType` to bind the method to the
-    `instance:
+    instance:
     >>> import types
     >>> estimator = BaseEstimator()
     >>> estimator._doc_link_template = doc_link_template
