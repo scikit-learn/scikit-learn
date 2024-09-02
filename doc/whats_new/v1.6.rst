@@ -46,10 +46,14 @@ See :ref:`array_api` for more details.
 - :func:`sklearn.metrics.pairwise.chi2_kernel` :pr:`29267` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.metrics.pairwise.cosine_distances` :pr:`29265` by :user:`Emily Chen <EmilyXinyi>`;
 - :func:`sklearn.metrics.pairwise.cosine_similarity` :pr:`29014` by :user:`Edoardo Abati <EdAbati>`;
+- :func:`sklearn.metrics.pairwise.euclidean_distances` :pr:`29433` by :user:`Omar Salman <OmarManzoor>`;
+- :func:`sklearn.metrics.pairwise.linear_kernel` :pr:`29475` by :user:`Omar Salman <OmarManzoor>`;
 - :func:`sklearn.metrics.pairwise.paired_cosine_distances` :pr:`29112` by :user:`Edoardo Abati <EdAbati>`.
 - :func:`sklearn.metrics.pairwise.paired_euclidean_distances` :pr:`29389` by :user:`Emily Chen <EmilyXinyi>`;
-- :func:`sklearn.metrics.pairwise.euclidean_distances` :pr:`29433` by :user:`Omar Salman <OmarManzoor>`;
-- :func:`sklearn.metrics.pairwise.rbf_kernel` :pr:`29433` by :user:`Omar Salman <OmarManzoor>`.
+- :func:`sklearn.metrics.pairwise.polynomial_kernel` :pr:`29475` by :user:`Omar Salman <OmarManzoor>`;
+- :func:`sklearn.metrics.pairwise.rbf_kernel` :pr:`29433` by :user:`Omar Salman <OmarManzoor>`;
+- :func:`sklearn.metrics.pairwise.sigmoid_kernel` :pr:`29475` by :user:`Omar Salman <OmarManzoor>`.
+
 
 **Classes:**
 
@@ -61,6 +65,13 @@ See :ref:`array_api` for more details.
   :class:`model_selection.HalvingRandomSearchCV` now support Array API
   compatible inputs when their base estimators do. :pr:`27096` by :user:`Tim
   Head <betatim>` and :user:`Olivier Grisel <ogrisel>`.
+
+**Other**
+
+- Support for the soon to be deprecated `cupy.array_api` module has been
+  removed in favor of directly supporting the top level `cupy` module, possibly
+  via the `array_api_compat.cupy` compatibility wrapper. :pr:`29639` by
+  :user:`Olivier Grisel <ogrisel>`.
 
 Metadata Routing
 ----------------
@@ -103,6 +114,10 @@ more details.
 - |Feature| :func:`model_selection.permutation_test_score` now supports metadata routing
   for the `fit` method of its estimator and for its underlying CV splitter and scorer.
   :pr:`29266` by :user:`Adam Li <adam2392>`.
+
+- |Feature| :class:`feature_selection.RFE` and :class:`feature_selection.RFECV`
+  now support metadata routing.
+  :pr:`29312` by :user:`Omar Salman <OmarManzoor>`.
 
 Dropping support for building with setuptools
 ---------------------------------------------
@@ -157,6 +172,12 @@ Changelog
   now accepts string format or callable to generate feature names. :pr:`28934` by
   :user:`Marc Bresson <MarcBresson>`.
 
+:mod:`sklearn.cross_decomposition`
+..................................
+
+- |Fix| :class:`cross_decomposition.PLSRegression` properly raises an error when
+  `n_components` is larger than `n_samples`. :pr:`29710` by `Thomas Fan`_.
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -164,6 +185,14 @@ Changelog
   from the web. It handles local caching, integrity checks with SHA256 digests
   and automatic retries in case of HTTP errors. :pr:`29354` by :user:`Olivier
   Grisel <ogrisel>`.
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Increase rank defficiency threshold in the whitening step of
+  :class:`decomposition.FastICA` with `whiten_solver="eigh"` to improve the
+  platform-agnosticity of the estimator. :pr:`29612` by :user:`Olivier Grisel
+  <ogrisel>`.
 
 :mod:`sklearn.discriminant_analysis`
 ....................................
@@ -177,8 +206,9 @@ Changelog
 .......................
 
 - |Efficiency| Small runtime improvement of fitting
-  :class:`ensemble.HistGradientBoostingClassifier` and :class:`ensemble.HistGradientBoostingRegressor`
-  by parallelizing the initial search for bin thresholds
+  :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` by parallelizing the initial search
+  for bin thresholds.
   :pr:`28064` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Enhancement| The verbosity of :class:`ensemble.HistGradientBoostingClassifier`
@@ -193,9 +223,10 @@ Changelog
   :pr:`28622` by :user:`Adam Li <adam2392>` and
   :user:`Sérgio Pereira <sergiormpereira>`.
 
-- |Feature| :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor` now support
-  missing-values in the data matrix `X`. Missing-values are handled by randomly moving all of
-  the samples to the left, or right child node as the tree is traversed.
+- |Feature| :class:`ensemble.ExtraTreesClassifier` and
+  :class:`ensemble.ExtraTreesRegressor` now support missing-values in the data matrix
+  `X`. Missing-values are handled by randomly moving all of the samples to the left, or
+  right child node as the tree is traversed.
   :pr:`28268` by :user:`Adam Li <adam2392>`.
 
 :mod:`sklearn.impute`
@@ -249,7 +280,8 @@ Changelog
   estimator without re-fitting it.
   :pr:`29067` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Fix| Improve error message when :func:`model_selection.RepeatedStratifiedKFold.split` is called without a `y` argument
+- |Fix| Improve error message when :func:`model_selection.RepeatedStratifiedKFold.split`
+  is called without a `y` argument
   :pr:`29402` by :user:`Anurag Varma <Anurag-Varma>`.
 
 :mod:`sklearn.neighbors`
@@ -265,6 +297,10 @@ Changelog
 - |Enhancement| The HTML representation of :class:`preprocessing.FunctionTransformer`
   will show the function name in the label.
   :pr:`29158` by :user:`Yao Xiao <Charlie-XIAO>`.
+
+- |Fix| :class:`preprocessing.PowerTransformer` now uses `scipy.special.inv_boxcox`
+  to output `nan` if the input of BoxCox's inverse is invalid.
+  :pr:`27875` by :user:`Xuefeng Xu <xuefeng-xu>`.
 
 :mod:`sklearn.semi_supervised`
 ..............................
@@ -284,6 +320,11 @@ Changelog
 
 :mod:`sklearn.utils`
 ....................
+
+- |Enhancement| :func:`utils.validation.check_array` now accepts `ensure_non_negative`
+  to check for negative values in the passed array, until now only available through
+  calling :func:`utils.validation.check_non_negative`.
+  :pr:`29540` by :user:`Tamara Atanasoska <tamaraatanasoska>`.
 
 - |API| the `assert_all_finite` parameter of functions :func:`utils.check_array`,
   :func:`utils.check_X_y`, :func:`utils.as_float_array` is renamed into

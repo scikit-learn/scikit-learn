@@ -322,7 +322,7 @@ def smacof(
            [ 1.74..., -0.75...],
            [-1.79...,  1.83...]])
     >>> stress
-    0.0012...
+    np.float64(0.0012...)
     """
 
     dissimilarities = check_array(dissimilarities)
@@ -524,8 +524,11 @@ class MDS(BaseEstimator):
     >>> X_transformed.shape
     (100, 2)
 
-    For a more detailed example of usage, see:
-    :ref:`sphx_glr_auto_examples_manifold_plot_mds.py`
+    For a more detailed example of usage, see
+    :ref:`sphx_glr_auto_examples_manifold_plot_mds.py`.
+
+    For a comparison of manifold learning techniques, see
+    :ref:`sphx_glr_auto_examples_manifold_plot_compare_methods.py`.
     """
 
     _parameter_constraints: dict = {
