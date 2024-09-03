@@ -33,6 +33,7 @@ from ..datasets import (
     make_regression,
 )
 from ..exceptions import DataConversionWarning, NotFittedError, SkipTestWarning
+from ..linear_model._base import LinearClassifierMixin
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 from ..metrics.pairwise import linear_kernel, pairwise_distances, rbf_kernel
 from ..model_selection import ShuffleSplit, train_test_split
@@ -175,6 +176,15 @@ def _yield_classifier_checks(classifier):
     yield check_non_transformer_estimators_n_iter
     # test if predict_proba is a monotonic transformation of decision_function
     yield check_decision_proba_consistency
+
+    if isinstance(classifier, LinearClassifierMixin):
+        if "class_weight" in classifier.get_params().keys():
+            yield check_class_weight_balanced_linear_classifier
+    if (
+        isinstance(classifier, LinearClassifierMixin)
+        and "class_weight" in classifier.get_params().keys()
+    ):
+        yield check_class_weight_balanced_linear_classifier
 
 
 @ignore_warnings(category=FutureWarning)
@@ -1294,7 +1304,7 @@ def _apply_on_subsets(func, X):
     result_by_batch = [func(batch.reshape(1, n_features)) for batch in X]
 
     # func can output tuple (e.g. score_samples)
-    if type(result_full) == tuple:
+    if isinstance(result_full, tuple):
         result_full = result_full[0]
         result_by_batch = list(map(lambda x: x[0], result_by_batch))
 
@@ -2985,13 +2995,13 @@ def check_class_weight_balanced_classifiers(
 
 
 @ignore_warnings(category=FutureWarning)
-def check_class_weight_balanced_linear_classifier(name, Classifier):
+def check_class_weight_balanced_linear_classifier(name, estimator_orig):
     """Test class weights with non-contiguous class labels."""
     # this is run on classes, not instances, though this should be changed
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-0.8, -1.0], [1.0, 1.0], [1.0, 0.0]])
     y = np.array([1, 1, 1, -1, -1])
 
-    classifier = Classifier()
+    classifier = clone(estimator_orig)
 
     if hasattr(classifier, "n_iter"):
         # This is a very small dataset, default n_iter are likely to prevent
