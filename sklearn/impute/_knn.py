@@ -55,9 +55,9 @@ class KNNImputer(_BaseImputer):
 
         - 'nan_euclidean'
         - callable : a user-defined function which conforms to the definition
-          of ``_pairwise_callable(X, Y, metric, **kwds)``. The function
-          accepts two arrays, X and Y, and a `missing_values` keyword in
-          `kwds` and returns a scalar distance value.
+          of ``_pairwise_callable(X, Y, *, missing_values=np.nan)``. The function
+          accepts two 1-D arrays, X and Y, and a `missing_values` keyword and 
+          returns a scalar distance value.
 
     copy : bool, default=True
         If True, a copy of X will be created. If False, imputation will
