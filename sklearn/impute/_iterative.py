@@ -408,16 +408,22 @@ class IterativeImputer(_BaseImputer):
 
         missing_row_mask = mask_missing_values[:, feat_idx]
         if fit_mode:
-            X_train = _safe_indexing(
-                _safe_indexing(X_filled, neighbor_feat_idx, axis=1),
-                ~missing_row_mask,
-                axis=0,
-            )
-            y_train = _safe_indexing(
-                _safe_indexing(X_filled, feat_idx, axis=1),
-                ~missing_row_mask,
-                axis=0,
-            )
+            if np.sum(missing_row_mask) == mask_missing_values.shape[0]:
+                # if all values at feat_idx are completely missing
+                # use imputed values from the initial imputation result
+                X_train = _safe_indexing(X_filled, neighbor_feat_idx, axis=1)
+                y_train = _safe_indexing(X_filled, feat_idx, axis=1)
+            else:
+                X_train = _safe_indexing(
+                    _safe_indexing(X_filled, neighbor_feat_idx, axis=1),
+                    ~missing_row_mask,
+                    axis=0,
+                )
+                y_train = _safe_indexing(
+                    _safe_indexing(X_filled, feat_idx, axis=1),
+                    ~missing_row_mask,
+                    axis=0,
+                )
             estimator.fit(X_train, y_train, **params)
 
         # if no missing values, don't predict
@@ -649,9 +655,7 @@ class IterativeImputer(_BaseImputer):
             Xt = X[:, valid_mask]
             mask_missing_values = mask_missing_values[:, valid_mask]
         else:
-            # mark empty features as not missing and keep the original
-            # imputation
-            mask_missing_values[:, valid_mask] = True
+            # keep the initial imputation result including empty features
             Xt = X
 
         return Xt, X_filled, mask_missing_values, X_missing_mask
