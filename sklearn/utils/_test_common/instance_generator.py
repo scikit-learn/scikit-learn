@@ -388,6 +388,8 @@ def _get_check_estimator_ids(obj):
 
 
 def _generate_column_transformer_instances():
+    """Generate a `ColumnTransformer` instance to check its compliance with
+    scikit-learn."""
     yield ColumnTransformer(
         transformers=[
             ("trans1", StandardScaler(), [0, 1]),
