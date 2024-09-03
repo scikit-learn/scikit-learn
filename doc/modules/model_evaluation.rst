@@ -2485,6 +2485,22 @@ the small magnitude values and only reflected the error in prediction of highest
 magnitude value. But that problem is resolved in case of MAPE because it calculates
 relative percentage error with respect to actual output.
 
+.. note::
+
+    The MAPE formula here represents a relative error and outputs a value in the 
+    range [0, 1]. It is not a percentage in the range [0, 100] and a value of 100 
+    does not mean 100% but 1e2. The motivation for the MAPE formula here to be in
+    the range [0, 1] is to be consistent with other error metrics in scikit-learn 
+    such as `accuracy_score`.
+    
+    To obtain the mean absolute percentage error as per the Wikipedia formula, 
+    multiply the `mean_absolute_percentage_error` computed here by 100.
+
+.. dropdown:: References
+
+  * `Wikipedia entry for Mean Absolute Percentage Error
+    <https://en.wikipedia.org/wiki/Mean_absolute_percentage_error>`_
+
 .. _median_absolute_error:
 
 Median absolute error
