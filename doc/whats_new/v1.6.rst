@@ -298,6 +298,10 @@ Changelog
   will show the function name in the label.
   :pr:`29158` by :user:`Yao Xiao <Charlie-XIAO>`.
 
+- |Fix| :class:`preprocessing.PowerTransformer` now uses `scipy.special.inv_boxcox`
+  to output `nan` if the input of BoxCox's inverse is invalid.
+  :pr:`27875` by :user:`Xuefeng Xu <xuefeng-xu>`.
+
 :mod:`sklearn.semi_supervised`
 ..............................
 

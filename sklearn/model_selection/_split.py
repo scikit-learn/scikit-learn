@@ -2940,7 +2940,7 @@ def _build_repr(self):
                 value = getattr(self, key, None)
                 if value is None and hasattr(self, "cvargs"):
                     value = self.cvargs.get(key, None)
-            if len(w) and w[0].category == FutureWarning:
+            if len(w) and w[0].category is FutureWarning:
                 # if the parameter is deprecated, don't show it
                 continue
         finally:
