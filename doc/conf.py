@@ -283,7 +283,10 @@ html_theme_options = {
     # Use :html_theme.sidebar_secondary.remove: for file-wide removal
     "secondary_sidebar_items": {"**": ["page-toc", "sourcelink"]},
     "show_version_warning_banner": True,
-    "announcement": None,
+    "announcement": (
+        '<a href="https://forms.gle/zUXvWjGUN1nWhJ2V6">Help us make '
+        "<code>scikit-learn</code> better! The 2024 user survey is now live.</a>"
+    ),
 }
 
 # Add any paths that contain custom themes here, relative to this directory.
