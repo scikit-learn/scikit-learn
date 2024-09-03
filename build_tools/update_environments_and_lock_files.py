@@ -402,7 +402,8 @@ build_metadata_list = [
             "ninja",
             "meson-python",
         ],
-        # same Python version as in debian-32 build
+        # Python version from the python3 APT package in the debian-32 docker
+        # image.
         "python_version": "3.12.5",
     },
     {
