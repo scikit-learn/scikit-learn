@@ -527,8 +527,10 @@ def parametrize_with_checks(estimators, *, legacy=True):
 
     Checks are categorised into the following groups:
 
-        - API checks: a set of checks to ensure API compatibility with scikit-learn
-        - legacy: a set of checks which gradually will be grouped into other categories
+        - API checks: a set of checks to ensure API compatibility with scikit-learn.
+          Refer to https://scikit-learn.org/dev/developers/develop.html a requirement of
+          scikit-learn estimators.
+        - legacy: a set of checks which gradually will be grouped into other categories.
 
     The `id` of each check is set to be a pprint version of the estimator
     and the name of the check with its keyword arguments.
@@ -547,8 +549,9 @@ def parametrize_with_checks(estimators, *, legacy=True):
 
         .. versionadded:: 0.24
 
-    legacy : bool (default=True)
-        Whether to include legacy checks.
+    legacy : bool, default=True
+        Whether to include legacy checks. Over time we remove checks from this category
+        and move them into their specific category.
 
         .. versionadded:: 1.6
 
@@ -615,8 +618,10 @@ def check_estimator(estimator=None, generate_only=False, *, legacy=True):
 
     Checks are categorised into the following groups:
 
-        - API checks: a set of checks to ensure API compatibility with scikit-learn
-        - legacy: a set of checks which gradually will be grouped into other categories
+        - API checks: a set of checks to ensure API compatibility with scikit-learn.
+          Refer to https://scikit-learn.org/dev/developers/develop.html a requirement of
+          scikit-learn estimators.
+        - legacy: a set of checks which gradually will be grouped into other categories.
 
     Parameters
     ----------
@@ -635,8 +640,9 @@ def check_estimator(estimator=None, generate_only=False, *, legacy=True):
 
         .. versionadded:: 0.22
 
-    legacy : bool (default=True)
-        Whether to include legacy checks.
+    legacy : bool, default=True
+        Whether to include legacy checks. Over time we remove checks from this category
+        and move them into their specific category.
 
         .. versionadded:: 1.6
 

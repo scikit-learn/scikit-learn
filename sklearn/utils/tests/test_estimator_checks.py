@@ -1285,3 +1285,24 @@ def test_decision_proba_tie_ranking():
     """
     estimator = SGDClassifier(loss="log_loss")
     check_decision_proba_consistency("SGDClassifier", estimator)
+
+
+def test_yield_all_checks_legacy():
+    # Test that _yield_all_checks with legacy=True returns more checks.
+    estimator = MinimalClassifier()
+
+    legacy_checks = list(_yield_all_checks(estimator, legacy=True))
+    non_legacy_checks = list(_yield_all_checks(estimator, legacy=False))
+
+    assert len(legacy_checks) > len(non_legacy_checks)
+
+    def get_check_name(check):
+        try:
+            return check.__name__
+        except AttributeError:
+            return check.func.__name__
+
+    # Check that all non-legacy checks are included in legacy checks
+    non_legacy_check_names = {get_check_name(check) for check in non_legacy_checks}
+    legacy_check_names = {get_check_name(check) for check in legacy_checks}
+    assert non_legacy_check_names.issubset(legacy_check_names)
