@@ -292,6 +292,9 @@ def _tested_estimators(type_filter=None):
 
 
 def _generate_pipeline():
+    """Generator of simple pipeline to check compliance of the
+    :class:`~sklearn.pipeline.Pipeline` class.
+    """
     for final_estimator in [Ridge(), LogisticRegression()]:
         yield Pipeline(
             steps=[
