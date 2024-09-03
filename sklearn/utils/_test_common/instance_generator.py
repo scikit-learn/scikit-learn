@@ -396,6 +396,7 @@ def _generate_column_transformer_instances():
 
 
 def _generate_search_cv_instances():
+    """Generator of `SearchCV` instances to check their compliance with scikit-learn."""
     for SearchCV, (Estimator, param_grid) in product(
         [
             GridSearchCV,
