@@ -63,9 +63,13 @@ if [[ -n "$SELECTED_TESTS" ]]; then
     export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"
 fi
 
-lscpu
+if which lscpu ; then
+    lscpu
+else
+    echo "Could not inspect CPU architecture."
+fi
 
-TEST_CMD="$TEST_CMD --pyargs sklearn.feature_extraction -k test_img_to_graph -vs"
+TEST_CMD="$TEST_CMD --pyargs sklearn"
 
 set -x
 eval "$TEST_CMD"

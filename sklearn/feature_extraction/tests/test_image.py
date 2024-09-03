@@ -17,13 +17,6 @@ from sklearn.feature_extraction.image import (
 
 
 def test_img_to_graph():
-    # Try to trigger the problem directly:
-    a = np.asarray(
-        [0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-    )
-    b = a // 4
-    assert all(b <= 3)
-
     x, y = np.mgrid[:4, :4] - 10
     grad_x = img_to_graph(x)
     grad_y = img_to_graph(y)
