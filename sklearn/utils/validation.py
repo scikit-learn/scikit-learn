@@ -2619,7 +2619,8 @@ def _check_feature_names(estimator, X, *, reset):
     .. versionadded:: 1.0
 
     .. versionchanged:: 1.6
-        Moved from `BaseEstimator` to `utils.validation`
+        Moved from :class:`~sklearn.base.BaseEstimator` to
+        :mod:`sklearn.utils.validation`.
 
     Parameters
     ----------
@@ -2709,7 +2710,8 @@ def _check_n_features(estimator, X, reset):
     """Set the `n_features_in_` attribute, or check against it on an estimator.
 
     .. versionchanged:: 1.6
-        Moved from `BaseEstimator` to `utils.validation`.
+        Moved from :class:`~sklearn.base.BaseEstimator` to
+        :mod:`~sklearn.utils.validation`.
 
     Parameters
     ----------
