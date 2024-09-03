@@ -274,8 +274,8 @@ TEST_PARAMS = {
 
 
 def _set_checking_parameters(estimator):
-    # set parameters to speed up some estimators and
-    # avoid deprecated behaviour
+    """Set the parameters of an estimator instance to speed-up tests and avoid
+    deprecation warnings in common test."""
     if type(estimator) in TEST_PARAMS:
         test_params = TEST_PARAMS[type(estimator)]
         estimator.set_params(**test_params)
