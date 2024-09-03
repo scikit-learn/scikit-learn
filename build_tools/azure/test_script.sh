@@ -64,7 +64,6 @@ if [[ -n "$SELECTED_TESTS" ]]; then
 fi
 
 lscpu
-head /sys/devices/cpu*/caps/pmu_name
 
 TEST_CMD="$TEST_CMD --pyargs sklearn.feature_extraction -k test_img_to_graph -vs"
 
