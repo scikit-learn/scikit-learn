@@ -187,6 +187,11 @@ def _yield_classifier_checks(classifier):
     if isinstance(classifier, LinearClassifierMixin):
         if "class_weight" in classifier.get_params().keys():
             yield check_class_weight_balanced_linear_classifier
+    if (
+        isinstance(classifier, LinearClassifierMixin)
+        and "class_weight" in classifier.get_params().keys()
+    ):
+        yield check_class_weight_balanced_linear_classifier
 
 
 @ignore_warnings(category=FutureWarning)
