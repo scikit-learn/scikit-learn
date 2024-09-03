@@ -1,62 +1,133 @@
-# %%
+"""
+Script checking that OpenMP dependencies are cgrrectly defined in meson.build files.
+
+This is based on trying to make sure the the following two things match:
+- the Cython files using OpenMP (based on a git grep regex)
+- the Cython extension modules that are built with OpenMP compiler flags (based
+  on meson introspect json output)
+"""
+
 import json
 import re
 import subprocess
 from pathlib import Path
 
 
-def uses_openmp(targets):
-    # TODO is the flag always openmp in all settings maybe try macOS just to
-    # make sure (Linux -fopenmp, Windows /openmp should work) ???
-    use_openmp = False
-    for target in targets["target_sources"]:
-        if any("openmp" in arg for arg in target["parameters"]):
-            use_openmp = True
-
-    return use_openmp
+def has_source_openmp_flags(target_source):
+    return any("openmp" in arg for arg in target_source["parameters"])
 
 
-def get_targets_using_openmp(json_content):
-    targets = [target for target in json_content if uses_openmp(target)]
-    for target in targets:
-        sources = target["target_sources"]
-        # TODO is it always in this order (compiler first and linker second)?
-        # Let's say probably and revisit in case of issues
-        # TODO raise more user-friendly ValueError
-        assert "compiler" in sources[0]
-        assert "linker" in sources[1]
+def has_openmp_flags(target):
+    """Return whether target sources use OpenMP flags.
 
-    return targets
+    Make sure that both compiler and linker source use OpenMP.
+    Look at `get_meson_info` docstring to see what `target` looks like.
+    """
+    target_sources = target["target_sources"]
+
+    target_use_openmp_flags = any(
+        has_source_openmp_flags(target_source) for target_source in target_sources
+    )
+
+    if not target_use_openmp_flags:
+        return False
+
+    # When the target use OpenMP we expect a compiler + linker source and we
+    # want to make sure that both the compiler and the linker use OpenMP
+    assert len(target_sources) == 2, len(target_sources)
+    compiler_source, linker_source = target_sources
+    assert "compiler" in compiler_source
+    assert "linker" in linker_source
+
+    compiler_use_openmp_flags = any(
+        "openmp" in arg for arg in compiler_source["parameters"]
+    )
+    linker_use_openmp_flags = any(
+        "openmp" in arg for arg in linker_source["parameters"]
+    )
+
+    assert compiler_use_openmp_flags == linker_use_openmp_flags
+    return compiler_use_openmp_flags
 
 
 def get_canonical_name_meson(target, build_path):
-    # TODO taking [0] I don't expect to have 2 filenames here
-    path = Path(target["filename"][0])
-    rel_path = path.relative_to(build_path.absolute())
+    """Return a name based on generated shared library.
+
+    The goal is to return a name that can be easily matched with the output
+    from `git_grep_info`.
+
+    Look at `get_meson_info` docstring to see what `target` looks like.
+    """
+    # Expect a list with one element with the name of the shared library
+    assert len(target["filename"]) == 1
+    shared_library_path = Path(target["filename"][0])
+    shared_library_relative_path = shared_library_path.relative_to(
+        build_path.absolute()
+    )
     # Needed on Windows to match git grep output
-    rel_path = rel_path.as_posix()
-    # OS-specific pattern .cpython on Linux and something like cp312 on Windows
-    pattern = r"\.(cpython|cp\d+).+"
+    rel_path = shared_library_relative_path.as_posix()
+    # OS-specific naming of the shared library .cpython- on POSIX and
+    # something like .cp312- on Windows
+    pattern = r"\.(cpython|cp\d+)-.+"
     return re.sub(pattern, "", str(rel_path))
 
 
 def get_canonical_name_git_grep(filename):
+    """Return name based on filename.
+
+    The goal is to return a name that can easily be matched with the output
+    from `get_meson_info`.
+    """
     return re.sub(r"\.pyx(\.tp)?", "", filename)
 
 
 def get_meson_info():
+    """Return names of extension that use OpenMP based on meson introspect output.
+
+    The meson introspect json info is a list of targets where a target is a dict
+    that looks like this (parts not used in this script are not shown for simplicity):
+    {
+      'name': '_k_means_elkan.cpython-312-x86_64-linux-gnu',
+      'filename': [
+        '<meson_build_dir>/sklearn/cluster/_k_means_elkan.cpython-312-x86_64-linux-gnu.so'
+      ],
+      'target_sources': [
+        {
+          'compiler': ['ccache', 'cc'],
+          'parameters': [
+            '-Wall',
+            '-std=c11',
+            '-fopenmp',
+            ...
+          ],
+          ...
+        },
+        {
+          'linker': ['cc'],
+          'parameters': [
+            '-shared',
+            '-fPIC',
+            '-fopenmp',
+            ...
+          ]
+        }
+      ]
+    }
+    """
     build_path = Path("build/introspect")
     subprocess.check_call(["meson", "setup", build_path, "--reconfigure"])
 
     json_out = subprocess.check_output(
         ["meson", "introspect", build_path, "--targets"], text=True
     )
-    json_content = json.loads(json_out)
-    meson_targets = get_targets_using_openmp(json_content)
+    target_list = json.loads(json_out)
+    meson_targets = [target for target in target_list if has_openmp_flags(target)]
+
     return [get_canonical_name_meson(each, build_path) for each in meson_targets]
 
 
 def get_git_grep_info():
+    """Return names of extensions that use OpenMP based on git grep regex."""
     git_grep_filenames = subprocess.check_output(
         ["git", "grep", "-lP", "cython.*parallel|_openmp_helpers"], text=True
     ).splitlines()
@@ -79,16 +150,15 @@ def main():
         )
         msg += (
             "Some Cython files use OpenMP,"
-            " but their meson.build is missing the openmp_dep dependency,"
-            " see below.\n"
+            " but their meson.build is missing the openmp_dep dependency:\n"
             f"{only_in_git_grep_msg}\n\n"
         )
 
     if only_in_meson:
         only_in_meson_msg = "\n".join([f"  {each}" for each in sorted(only_in_meson)])
         msg += (
-            f"Some Cython files do not use OpenMP,"
-            " so their meson.build does not need a openmp_dep dependency:\n"
+            "Some Cython files do not use OpenMP,"
+            " you should remove openmp_dep from their meson.build:\n"
             f"{only_in_meson_msg}\n\n"
         )
 
