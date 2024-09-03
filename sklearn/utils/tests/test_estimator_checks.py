@@ -1128,7 +1128,7 @@ def test_check_class_weight_balanced_linear_classifier():
     msg = "Classifier estimator_name is not computing class_weight=balanced properly"
     with raises(AssertionError, match=msg):
         check_class_weight_balanced_linear_classifier(
-            "estimator_name", BadBalancedWeightsClassifier
+            "estimator_name", BadBalancedWeightsClassifier()
         )
 
 
