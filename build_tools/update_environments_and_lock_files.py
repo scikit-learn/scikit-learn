@@ -402,16 +402,8 @@ build_metadata_list = [
             "ninja",
             "meson-python",
         ],
-        "package_constraints": {
-            "joblib": "min",
-            "threadpoolctl": "3.1.0",
-            "pytest": "min",
-            "pytest-cov": "min",
-            # no pytest-xdist because it causes issue on 32bit
-            "cython": "min",
-        },
         # same Python version as in debian-32 build
-        "python_version": "3.11.2",
+        "python_version": "3.12.5",
     },
     {
         "name": "ubuntu_atlas",
