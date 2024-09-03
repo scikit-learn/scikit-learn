@@ -76,7 +76,6 @@ jobs:
         -e CCACHE_COMPRESS
         -e BUILD_SOURCEVERSIONMESSAGE
         -e BUILD_REASON
-        --platform $DOCKER_PLATFORM
         $DOCKER_CONTAINER
         sleep 1000000
       displayName: 'Start container'
