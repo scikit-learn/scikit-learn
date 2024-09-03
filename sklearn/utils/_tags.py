@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-import numpy as np
-
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
@@ -125,7 +123,7 @@ class TransformerTags:
         preserved.
     """
 
-    preserves_dtype: list[object] = field(default_factory=lambda: [np.float64])
+    preserves_dtype: list[str] = field(default_factory=lambda: ["float64"])
 
 
 @dataclass
