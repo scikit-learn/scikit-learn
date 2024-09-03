@@ -228,8 +228,7 @@ jobs:
   parameters:
     name: Linux_Docker
     vmImage: ubuntu-20.04
-    # dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
-    dependsOn: [git_commit]
+    dependsOn: [linting, git_commit, Ubuntu_Jammy_Jellyfish]
     # Runs when dependencies succeeded or skipped
     condition: |
       and(
