@@ -34,7 +34,7 @@ def has_openmp_flags(target):
 
     # When the target use OpenMP we expect a compiler + linker source and we
     # want to make sure that both the compiler and the linker use OpenMP
-    assert len(target_sources) == 2, len(target_sources)
+    assert len(target_sources) == 2
     compiler_source, linker_source = target_sources
     assert "compiler" in compiler_source
     assert "linker" in linker_source
