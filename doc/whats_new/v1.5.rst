@@ -49,8 +49,8 @@ Changelog
 ..................
 
 - |Fix| Fixed a regression in :class:`svm.SVC` and :class:`svm.SVR` such that we accept
-  `C=float(inf)`.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  `C=float("inf")`.
+  :pr:`29780` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 .. _changes_1_5_1:
 
