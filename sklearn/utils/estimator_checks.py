@@ -901,7 +901,7 @@ def _check_estimator_sparse_container(name, estimator_orig, sparse_type):
             if hasattr(estimator, "predict"):
                 pred = estimator.predict(X)
                 if tags["multioutput_only"]:
-                    assert pred.shape == (X.shape[0], 1)
+                    assert pred.shape == (X.shape[0], 2)
                 else:
                     assert pred.shape == (X.shape[0],)
             if hasattr(estimator, "predict_proba"):
@@ -1494,7 +1494,6 @@ def check_fit2d_1feature(name, estimator_orig):
     if name == "RANSACRegressor":
         estimator.residual_threshold = 0.5
 
-    y = _enforce_estimator_tags_y(estimator, y)
     set_random_state(estimator, 1)
 
     msgs = [r"1 feature\(s\)", "n_features = 1", "n_features=1"]
@@ -3370,7 +3369,13 @@ def _enforce_estimator_tags_y(estimator, y):
     # Estimators in mono_output_task_error raise ValueError if y is of 1-D
     # Convert into a 2-D y for those estimators.
     if _safe_tags(estimator, key="multioutput_only"):
-        return np.reshape(y, (-1, 1))
+        y_2d = np.repeat(y[:, np.newaxis], 2, axis=1)
+        if _safe_tags(estimator, key="multilabel"):
+            # In multilabel classification, each target should be binary.
+            # If an estimator is supporting multioutput, it will for sure
+            # support multilabel since this is a special case of multioutput.
+            return (y_2d > y_2d.mean(axis=0)).astype(np.int64)
+        return y_2d
     return y
 
 
