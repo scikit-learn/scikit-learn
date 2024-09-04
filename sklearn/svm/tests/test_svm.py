@@ -14,7 +14,7 @@ from numpy.testing import (
 )
 
 from sklearn import base, datasets, linear_model, metrics, svm
-from sklearn.datasets import make_blobs, make_classification
+from sklearn.datasets import make_blobs, make_classification, make_regression
 from sklearn.exceptions import (
     ConvergenceWarning,
     NotFittedError,
@@ -1420,3 +1420,21 @@ def test_dual_auto_edge_cases():
         "auto", "squared_hinge", "l1", "ovr", np.asarray(X).T
     )
     assert dual is False  # only supports False
+
+
+@pytest.mark.parametrize(
+    "Estimator, make_dataset",
+    [(svm.SVC, make_classification), (svm.SVR, make_regression)],
+)
+@pytest.mark.parametrize("C_inf", [np.inf, float("inf")])
+def test_svm_with_infinite_C(Estimator, make_dataset, C_inf, global_random_seed):
+    """Check that we can pass `C=inf` that is equivalent to a very large C value.
+
+    Non-regression test for
+    https://github.com/scikit-learn/scikit-learn/issues/29772
+    """
+    X, y = make_dataset(random_state=global_random_seed)
+    estimator_C_inf = Estimator(C=C_inf).fit(X, y)
+    estimator_C_large = Estimator(C=1e10).fit(X, y)
+
+    assert_allclose(estimator_C_large.predict(X), estimator_C_inf.predict(X))
