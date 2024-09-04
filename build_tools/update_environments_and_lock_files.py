@@ -389,7 +389,7 @@ build_metadata_list = [
         },
     },
     {
-        "name": "debian_atlas_32bit",
+        "name": "debian_32bit",
         "type": "pip",
         "tag": "main-ci",
         "folder": "build_tools/azure",
