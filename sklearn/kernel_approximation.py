@@ -401,8 +401,10 @@ class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         projection *= (2.0 / self.n_components) ** 0.5
         return projection
 
-    def _more_tags(self):
-        return {"preserves_dtype": [np.float64, np.float32]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
 
 
 class SkewedChi2Sampler(
@@ -559,8 +561,10 @@ class SkewedChi2Sampler(
         projection *= np.sqrt(2.0) / np.sqrt(self.n_components)
         return projection
 
-    def _more_tags(self):
-        return {"preserves_dtype": [np.float64, np.float32]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
 
 
 class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
@@ -814,8 +818,11 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
 
         return sp.hstack(X_new)
 
-    def _more_tags(self):
-        return {"stateless": True, "requires_positive_X": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.requires_fit = False
+        tags.input_tags.positive_only = True
+        return tags
 
 
 class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
@@ -1081,12 +1088,12 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
 
         return params
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_transformer_preserve_dtypes": (
-                    "dtypes are preserved but not at a close enough precision"
-                )
-            },
-            "preserves_dtype": [np.float64, np.float32],
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_transformer_preserves_dtypes": (
+                "dtypes are preserved but not at a close enough precision"
+            )
         }
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
