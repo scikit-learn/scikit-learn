@@ -1511,7 +1511,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         # From here on, it is additional to the HGBT case.
         # expose n_classes_ attribute
         self.n_classes_ = n_classes
-
         if sample_weight is None:
             n_trim_classes = n_classes
         else:
