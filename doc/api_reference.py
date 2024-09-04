@@ -1175,6 +1175,7 @@ API_REFERENCE = {
                     "validation.check_symmetric",
                     "validation.column_or_1d",
                     "validation.has_fit_parameter",
+                    "validation.validate_data",
                 ],
             },
             {

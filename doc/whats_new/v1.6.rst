@@ -26,7 +26,9 @@ Changes impacting many modules
 ------------------------------
 
 - |API| :func:`utils.validation.validate_data` is introduced and replaces previously
-  private `base.BaseEstimator._validate_data` method.
+  private `base.BaseEstimator._validate_data` method. This is intended for third party
+  estimator developers, who should use this function in most cases instead of
+  :func:`utils.validation.check_array` and :func:`utils.validation.check_X_y`.
   :pr:`29696` by `Adrin Jalali`_.
 
 Support for Array API
@@ -337,12 +339,6 @@ Changelog
   :func:`utils.check_X_y`, :func:`utils.as_float_array` is renamed into
   `ensure_all_finite`. `force_all_finite` will be removed in 1.8.
   :pr:`29404` by :user:`Jérémie du Boisberranger <jeremiedb>`.
-
-- |API| :func:`utils.validation.validate_data` is added to the public API. This is
-  intended for third party estimator developers, who should use this function in most
-  cases instead of :func:`utils.validation.check_array` and
-  :func:`utils.validation.check_X_y`.
-  :pr:`29696` by `Adrin Jalali`_.
 
 .. rubric:: Code and documentation contributors
 
