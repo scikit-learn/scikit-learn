@@ -57,7 +57,7 @@ jobs:
 
       - name: Set up Pyodide virtual environment and test scikit-learn for Pyodide
         env:
-          SKLEARN_SKIP_OPENMP_TEST: true
+          SKLEARN_SKIP_OPENMP_TEST: "true"
         run: |
           # Set up Pyodide virtual environment
           pyodide xbuildenv install ${{ env.PYODIDE_VERSION }}
@@ -70,7 +70,6 @@ jobs:
           # package instead of the installed one
           cd doc
           pip install pytest
-          export SKLEARN_SKIP_OPENMP_TEST=1
           # Don't use the cache provider plugin, as it doesn't work with Pyodide
           # right now: https://github.com/pypa/cibuildwheel/issues/1966
-          pytest -svra -p no:cacheprovider --pyargs sklearn
+          pytest -svra -p no:cacheprovider --pyargs sklearn --durations 20 --showlocals
