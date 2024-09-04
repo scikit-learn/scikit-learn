@@ -60,6 +60,12 @@ if [[ -n "$SELECTED_TESTS" ]]; then
     export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"
 fi
 
+if which lscpu ; then
+    lscpu
+else
+    echo "Could not inspect CPU architecture."
+fi
+
 TEST_CMD="$TEST_CMD --pyargs sklearn"
 if [[ "$DISTRIB" == "conda-pypy3" ]]; then
     # Run only common tests for PyPy. Running the full test suite uses too
