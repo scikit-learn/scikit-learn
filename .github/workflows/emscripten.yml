@@ -62,6 +62,7 @@ jobs:
       - name: Set up Pyodide virtual environment and test scikit-learn for Pyodide
         env:
           SKLEARN_SKIP_OPENMP_TEST: "true"
+          SKLEARN_SKIP_NETWORK_TESTS: 1
         run: |
           # Set up Pyodide virtual environment
           pyodide xbuildenv install ${{ env.PYODIDE_VERSION }}
