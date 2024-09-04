@@ -30,6 +30,7 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.svm import SVC, NuSVC
 from sklearn.utils import _array_api, all_estimators, deprecated
 from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils._test_common.instance_generator import _set_checking_parameters
 from sklearn.utils._testing import (
     MinimalClassifier,
     MinimalRegressor,
@@ -40,7 +41,6 @@ from sklearn.utils._testing import (
 )
 from sklearn.utils.estimator_checks import (
     _NotAnArray,
-    _set_checking_parameters,
     _yield_all_checks,
     check_array_api_input,
     check_class_weight_balanced_linear_classifier,
