@@ -559,7 +559,7 @@ def test_svm_equivalence_sample_weight_C():
     "Estimator, err_msg",
     [
         (svm.SVC, "Invalid input - all samples have zero or negative weights."),
-        (svm.NuSVC, "(negative dimensions are not allowed|nu is infeasible)"),
+        (svm.NuSVC, "Invalid input - all samples have zero|specified nu is infeasible"),
         (svm.SVR, "Invalid input - all samples have zero or negative weights."),
         (svm.NuSVR, "Invalid input - all samples have zero or negative weights."),
         (svm.OneClassSVM, "Invalid input - all samples have zero or negative weights."),
@@ -1420,3 +1420,13 @@ def test_dual_auto_edge_cases():
         "auto", "squared_hinge", "l1", "ovr", np.asarray(X).T
     )
     assert dual is False  # only supports False
+
+
+# TODO: the same test should be done for sparse matrix as input
+def test_svc_null_weight():
+    """Check that the indices of support vectors are correct with null weights."""
+    X = np.array([[0.0, 0.0], [1.0, 0.0], [0.0, 1.0]])
+    y = [0, 1, 2]
+    sample_weight = [0.0, 1.0, 1.0]
+    clf = svm.SVC().fit(X, y, sample_weight=sample_weight)
+    assert_array_equal(clf.support_, [1, 2])
