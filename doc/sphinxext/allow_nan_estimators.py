@@ -4,8 +4,8 @@ from docutils import nodes
 from docutils.parsers.rst import Directive
 
 from sklearn.utils import all_estimators
+from sklearn.utils._test_common.instance_generator import _construct_instance
 from sklearn.utils._testing import SkipTest
-from sklearn.utils.estimator_checks import _construct_instance
 
 
 class AllowNanEstimators(Directive):
