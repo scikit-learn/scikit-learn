@@ -23,6 +23,7 @@ cdef struct Node:
     float64_t weighted_n_node_samples    # Weighted number of samples at the node
     uint8_t missing_go_to_left     # Whether features have missing values
 
+
 cdef struct ParentInfo:
     # Structure to store information about the parent of a node
     # This is passed to the splitter, to provide information about the previous split
@@ -52,27 +53,17 @@ cdef class Tree:
     cdef float64_t* value                # (capacity, n_outputs, max_n_classes) array of values
     cdef intp_t value_stride             # = n_outputs * max_n_classes
 
-    # Lower and upper boundaries of nodes, used for monotonic constraints of gradient
-    # boosting; they are left uninitialized otherwise
-    cdef bint record_node_boundaries     # Whether to record the node boundaries
-    cdef float64_t* lower_bounds         # Array of lower boundaries of nodes
-    cdef float64_t* upper_bounds         # Array of upper boundaries of nodes
-
     # Methods
     cdef intp_t _add_node(self, intp_t parent, bint is_left, bint is_leaf,
                           intp_t feature, float64_t threshold, float64_t impurity,
                           intp_t n_node_samples,
                           float64_t weighted_n_node_samples,
-                          uint8_t missing_go_to_left,
-                          float64_t lower_bound,
-                          float64_t upper_bound) except -1 nogil
+                          uint8_t missing_go_to_left) except -1 nogil
     cdef int _resize(self, intp_t capacity) except -1 nogil
     cdef int _resize_c(self, intp_t capacity=*) except -1 nogil
 
     cdef cnp.ndarray _get_value_ndarray(self)
     cdef cnp.ndarray _get_node_ndarray(self)
-    cdef cnp.ndarray _get_lower_bounds_ndarray(self)
-    cdef cnp.ndarray _get_upper_bounds_ndarray(self)
 
     cpdef cnp.ndarray predict(self, object X)
 

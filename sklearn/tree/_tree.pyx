@@ -268,9 +268,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 node_id = tree._add_node(parent, is_left, is_leaf, split.feature,
                                          split.threshold, parent_record.impurity,
                                          n_node_samples, weighted_n_node_samples,
-                                         split.missing_go_to_left,
-                                         parent_record.lower_bound,
-                                         parent_record.upper_bound)
+                                         split.missing_go_to_left)
 
                 if node_id == INTPTR_MAX:
                     rc = -1
@@ -628,8 +626,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                  is_left, is_leaf,
                                  split.feature, split.threshold, parent_record.impurity,
                                  n_node_samples, weighted_n_node_samples,
-                                 split.missing_go_to_left,
-                                 parent_record.lower_bound, parent_record.upper_bound)
+                                 split.missing_go_to_left)
         if node_id == INTPTR_MAX:
             return -1
 
@@ -781,22 +778,9 @@ cdef class Tree:
     def value(self):
         return self._get_value_ndarray()[:self.node_count]
 
-    @property
-    def lower_bounds(self):
-        if not self.record_node_boundaries:
-            raise ValueError("Tree was not built with record_node_boundaries=True")
-        return self._get_lower_bounds_ndarray()[:self.node_count]
-
-    @property
-    def upper_bounds(self):
-        if not self.record_node_boundaries:
-            raise ValueError("Tree was not built with record_node_boundaries=True")
-        return self._get_upper_bounds_ndarray()[:self.node_count]
-
     # TODO: Convert n_classes to cython.integral memory view once
     #  https://github.com/cython/cython/issues/5243 is fixed
-    def __cinit__(self, intp_t n_features, cnp.ndarray n_classes, intp_t n_outputs,
-                  bool record_node_boundaries=False):
+    def __cinit__(self, intp_t n_features, cnp.ndarray n_classes, intp_t n_outputs):
         """Constructor."""
         cdef intp_t dummy = 0
         size_t_dtype = np.array(dummy).dtype
@@ -822,10 +806,6 @@ cdef class Tree:
         self.capacity = 0
         self.value = NULL
         self.nodes = NULL
-        self.lower_bounds = NULL
-        self.upper_bounds = NULL
-
-        self.record_node_boundaries = record_node_boundaries
 
     def __dealloc__(self):
         """Destructor."""
@@ -833,8 +813,6 @@ cdef class Tree:
         free(self.n_classes)
         free(self.value)
         free(self.nodes)
-        free(self.lower_bounds)
-        free(self.upper_bounds)
 
     def __reduce__(self):
         """Reduce re-implementation, for pickling."""
@@ -850,19 +828,12 @@ cdef class Tree:
         d["node_count"] = self.node_count
         d["nodes"] = self._get_node_ndarray()
         d["values"] = self._get_value_ndarray()
-
-        d["record_node_boundaries"] = self.record_node_boundaries
-        if self.record_node_boundaries:
-            d["lower_bounds"] = self._get_lower_bounds_ndarray()
-            d["upper_bounds"] = self._get_upper_bounds_ndarray()
-
         return d
 
     def __setstate__(self, d):
         """Setstate re-implementation, for unpickling."""
         self.max_depth = d["max_depth"]
         self.node_count = d["node_count"]
-        self.record_node_boundaries = d["record_node_boundaries"]
 
         if 'nodes' not in d:
             raise ValueError('You have loaded Tree version which '
@@ -889,15 +860,6 @@ cdef class Tree:
                self.capacity * sizeof(Node))
         memcpy(self.value, cnp.PyArray_DATA(value_ndarray),
                self.capacity * self.value_stride * sizeof(float64_t))
-
-        if self.record_node_boundaries:
-            lower_bounds_ndarray = d["lower_bounds"]
-            upper_bounds_ndarray = d["upper_bounds"]
-
-            memcpy(self.lower_bounds, cnp.PyArray_DATA(lower_bounds_ndarray),
-                   self.capacity * sizeof(float64_t))
-            memcpy(self.upper_bounds, cnp.PyArray_DATA(upper_bounds_ndarray),
-                   self.capacity * sizeof(float64_t))
 
     cdef int _resize(self, intp_t capacity) except -1 nogil:
         """Resize all inner arrays to `capacity`, if `capacity` == -1, then
@@ -928,9 +890,6 @@ cdef class Tree:
 
         safe_realloc(&self.nodes, capacity)
         safe_realloc(&self.value, capacity * self.value_stride)
-        if self.record_node_boundaries:
-            safe_realloc(&self.lower_bounds, capacity)
-            safe_realloc(&self.upper_bounds, capacity)
 
         if capacity > self.capacity:
             # value memory is initialised to 0 to enable classifier argmax
@@ -939,13 +898,6 @@ cdef class Tree:
                    sizeof(float64_t))
             # node memory is initialised to 0 to ensure deterministic pickle (padding in Node struct)
             memset(<void*>(self.nodes + self.capacity), 0, (capacity - self.capacity) * sizeof(Node))
-
-            if self.record_node_boundaries:
-                # node boundaries are initialised to 0 to ensure deterministic pickle
-                memset(<void*>(self.lower_bounds + self.capacity), 0,
-                       (capacity - self.capacity) * sizeof(float64_t))
-                memset(<void*>(self.upper_bounds + self.capacity), 0,
-                       (capacity - self.capacity) * sizeof(float64_t))
 
         # if capacity smaller than node_count, adjust the counter
         if capacity < self.node_count:
@@ -958,9 +910,7 @@ cdef class Tree:
                           intp_t feature, float64_t threshold, float64_t impurity,
                           intp_t n_node_samples,
                           float64_t weighted_n_node_samples,
-                          uint8_t missing_go_to_left,
-                          float64_t lower_bound,
-                          float64_t upper_bound) except -1 nogil:
+                          uint8_t missing_go_to_left) except -1 nogil:
         """Add a node to the tree.
 
         The new node registers itself as the child of its parent.
@@ -995,10 +945,6 @@ cdef class Tree:
             node.feature = feature
             node.threshold = threshold
             node.missing_go_to_left = missing_go_to_left
-
-        if self.record_node_boundaries:
-            self.lower_bounds[node_id] = lower_bound
-            self.upper_bounds[node_id] = upper_bound
 
         self.node_count += 1
 
@@ -1374,36 +1320,6 @@ cdef class Tree:
                                    <cnp.dtype> NODE_DTYPE, 1, shape,
                                    strides, <void*> self.nodes,
                                    cnp.NPY_ARRAY_DEFAULT, None)
-        Py_INCREF(self)
-        if PyArray_SetBaseObject(arr, <PyObject*> self) < 0:
-            raise ValueError("Can't initialize array.")
-        return arr
-
-    cdef cnp.ndarray _get_lower_bounds_ndarray(self):
-        """Wraps lower bounds as a NumPy array.
-
-        The array keeps a reference to this Tree, which manages the underlying
-        memory.
-        """
-        cdef cnp.npy_intp shape[1]
-        shape[0] = <cnp.npy_intp> self.node_count
-        cdef cnp.ndarray arr
-        arr = cnp.PyArray_SimpleNewFromData(1, shape, cnp.NPY_DOUBLE, self.lower_bounds)
-        Py_INCREF(self)
-        if PyArray_SetBaseObject(arr, <PyObject*> self) < 0:
-            raise ValueError("Can't initialize array.")
-        return arr
-
-    cdef cnp.ndarray _get_upper_bounds_ndarray(self):
-        """Wraps upper bounds as a NumPy array.
-
-        The array keeps a reference to this Tree, which manages the underlying
-        memory.
-        """
-        cdef cnp.npy_intp shape[1]
-        shape[0] = <cnp.npy_intp> self.node_count
-        cdef cnp.ndarray arr
-        arr = cnp.PyArray_SimpleNewFromData(1, shape, cnp.NPY_DOUBLE, self.upper_bounds)
         Py_INCREF(self)
         if PyArray_SetBaseObject(arr, <PyObject*> self) < 0:
             raise ValueError("Can't initialize array.")
@@ -1996,10 +1912,6 @@ cdef void _build_pruned_tree(
         float64_t* orig_value_ptr
         float64_t* new_value_ptr
 
-        bint record_node_boundaries = tree.record_node_boundaries and orig_tree.record_node_boundaries
-        float64_t lower_bound
-        float64_t upper_bound
-
         stack[BuildPrunedRecord] prune_stack
         BuildPrunedRecord stack_record
 
@@ -2028,18 +1940,10 @@ cdef void _build_pruned_tree(
                 rc = -2
                 break
 
-            if record_node_boundaries:
-                lower_bound = orig_tree.lower_bounds[orig_node_id]
-                upper_bound = orig_tree.lower_bounds[orig_node_id]
-            else:
-                lower_bound = -INFINITY
-                upper_bound = INFINITY
-
             new_node_id = tree._add_node(
                 parent, is_left, is_leaf, node.feature, node.threshold,
                 node.impurity, node.n_node_samples,
-                node.weighted_n_node_samples, node.missing_go_to_left,
-                lower_bound, upper_bound)
+                node.weighted_n_node_samples, node.missing_go_to_left)
 
             if new_node_id == INTPTR_MAX:
                 rc = -1

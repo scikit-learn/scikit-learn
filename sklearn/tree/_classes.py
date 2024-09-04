@@ -227,7 +227,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         sample_weight=None,
         check_input=True,
         missing_values_in_feature_mask=None,
-        record_node_boundaries=False,
     ):
         random_state = check_random_state(self.random_state)
 
@@ -432,19 +431,13 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             )
 
         if is_classifier(self):
-            self.tree_ = Tree(
-                self.n_features_in_,
-                self.n_classes_,
-                self.n_outputs_,
-                record_node_boundaries=record_node_boundaries,
-            )
+            self.tree_ = Tree(self.n_features_in_, self.n_classes_, self.n_outputs_)
         else:
             self.tree_ = Tree(
                 self.n_features_in_,
                 # TODO: tree shouldn't need this in this case
                 np.array([1] * self.n_outputs_, dtype=np.intp),
                 self.n_outputs_,
-                record_node_boundaries=record_node_boundaries,
             )
 
         # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
@@ -474,7 +467,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]
 
-        self._prune_tree(record_node_boundaries=record_node_boundaries)
+        self._prune_tree()
 
         return self
 
@@ -605,7 +598,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         X = self._validate_X_predict(X, check_input)
         return self.tree_.decision_path(X)
 
-    def _prune_tree(self, record_node_boundaries=False):
+    def _prune_tree(self):
         """Prune tree using Minimal Cost-Complexity Pruning."""
         check_is_fitted(self)
 
@@ -615,19 +608,13 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         # build pruned tree
         if is_classifier(self):
             n_classes = np.atleast_1d(self.n_classes_)
-            pruned_tree = Tree(
-                self.n_features_in_,
-                n_classes,
-                self.n_outputs_,
-                record_node_boundaries=record_node_boundaries,
-            )
+            pruned_tree = Tree(self.n_features_in_, n_classes, self.n_outputs_)
         else:
             pruned_tree = Tree(
                 self.n_features_in_,
                 # TODO: the tree shouldn't need this param
                 np.array([1] * self.n_outputs_, dtype=np.intp),
                 self.n_outputs_,
-                record_node_boundaries=record_node_boundaries,
             )
         _build_pruned_tree_ccp(pruned_tree, self.tree_, self.ccp_alpha)
 
