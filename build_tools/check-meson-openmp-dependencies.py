@@ -1,5 +1,5 @@
 """
-Script checking that OpenMP dependencies are cgrrectly defined in meson.build files.
+Check that OpenMP dependencies are correctly defined in meson.build files.
 
 This is based on trying to make sure the the following two things match:
 - the Cython files using OpenMP (based on a git grep regex)
