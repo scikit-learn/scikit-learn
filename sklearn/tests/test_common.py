@@ -37,7 +37,6 @@ from sklearn.experimental import (
     enable_iterative_imputer,  # noqa
 )
 from sklearn.linear_model import LogisticRegression, Ridge
-from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.manifold import TSNE, Isomap, LocallyLinearEmbedding
 from sklearn.model_selection import (
     GridSearchCV,
@@ -71,7 +70,6 @@ from sklearn.utils.estimator_checks import (
     _construct_instance,
     _get_check_estimator_ids,
     _set_checking_parameters,
-    check_class_weight_balanced_linear_classifier,
     check_dataframe_column_names_consistency,
     check_estimator,
     check_get_feature_names_out_error,
@@ -172,27 +170,6 @@ def test_estimators(estimator, check, request):
 def test_check_estimator_generate_only():
     all_instance_gen_checks = check_estimator(LogisticRegression(), generate_only=True)
     assert isgenerator(all_instance_gen_checks)
-
-
-def _tested_linear_classifiers():
-    classifiers = all_estimators(type_filter="classifier")
-
-    with warnings.catch_warnings(record=True):
-        for name, clazz in classifiers:
-            required_parameters = getattr(clazz, "_required_parameters", [])
-            if len(required_parameters):
-                # FIXME
-                continue
-
-            if "class_weight" in clazz().get_params().keys() and issubclass(
-                clazz, LinearClassifierMixin
-            ):
-                yield name, clazz
-
-
-@pytest.mark.parametrize("name, Classifier", _tested_linear_classifiers())
-def test_class_weight_balanced_linear_classifiers(name, Classifier):
-    check_class_weight_balanced_linear_classifier(name, Classifier)
 
 
 @pytest.mark.xfail(_IS_WASM, reason="importlib not supported for Pyodide packages")
