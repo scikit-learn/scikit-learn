@@ -167,7 +167,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
         tags = super().__sklearn_tags__()
         tags.array_api_support = True
         tags.input_tags.two_d_array = False
-        tags.input_tags.one_d_labels = True
+        tags.target_tags.one_d_labels = True
         return tags
 
 
@@ -422,7 +422,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.two_d_array = False
-        tags.input_tags.one_d_labels = True
+        tags.target_tags.one_d_labels = True
         return tags
 
 
@@ -959,5 +959,5 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.two_d_array = False
-        tags.input_tags.two_d_labels = True
+        tags.target_tags.two_d_labels = True
         return tags

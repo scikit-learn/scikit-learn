@@ -339,7 +339,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         tags = super().__sklearn_tags__()
         tags._skip_test = True
         tags.input_tags.two_d_array = False
-        tags.input_tags.one_d_labels = True
+        tags.target_tags.one_d_labels = True
         return tags
 
 

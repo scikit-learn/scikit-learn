@@ -12,41 +12,35 @@ class InputTags:
 
     Parameters
     ----------
-    one_d_array : bool (default=False)
+    one_d_array : bool, default=False
         Whether the input can be a 1D array.
 
-    two_d_array : bool (default=True)
+    two_d_array : bool, default=True
         Whether the input can be a 2D array. Note that most common
         tests currently run only if this flag is set to ``True``.
 
-    three_d_array : bool (default=False)
+    three_d_array : bool, default=False
         Whether the input can be a 3D array.
 
-    one_d_labels : bool (default=False)
-        Whether the input is a 1D labels(y).
-
-    two_d_labels : bool (default=False)
-        Whether the input is a 2D labels(y).
-
-    sparse : bool (default=False)
+    sparse : bool, default=False
         Whether the input can be a sparse matrix.
 
-    categorical : bool (default=False)
+    categorical : bool, default=False
         Whether the input can be categorical.
 
-    string : bool (default=False)
+    string : bool, default=False
         Whether the input can be an array-like of strings.
 
-    dict : bool (default=False)
+    dict : bool, default=False
         Whether the input can be a dictionary.
 
-    positive_only : bool (default=False)
+    positive_only : bool, default=False
         Whether the estimator requires positive X.
 
-    allow_nan : bool (default=False)
-        Whether the estimator supports data with missing values encoded as np.nan.
+    allow_nan : bool, default=False
+        Whether the estimator supports data with missing values encoded as `np.nan`.
 
-    pairwise : bool (default=False)
+    pairwise : bool, default=False
         This boolean attribute indicates whether the data (`X`),
         :term:`fit` and similar methods consists of pairwise measures
         over samples rather than a feature representation for each
@@ -64,8 +58,6 @@ class InputTags:
     one_d_array: bool = False
     two_d_array: bool = True
     three_d_array: bool = False
-    one_d_labels: bool = False
-    two_d_labels: bool = False
     sparse: bool = False
     categorical: bool = False
     string: bool = False
@@ -87,20 +79,28 @@ class TargetTags:
         for estimators inheriting from `~sklearn.base.RegressorMixin`
         and `~sklearn.base.ClassifierMixin`.
 
-    positive_only : bool (default=False)
+    one_d_labels : bool, default=False
+        Whether the input is a 1D labels (y).
+
+    two_d_labels : bool, default=False
+        Whether the input is a 2D labels (y).
+
+    positive_only : bool, default=False
         Whether the estimator requires a positive y (only applicable
         for regression).
 
-    multi_output : bool (default=False)
+    multi_output : bool, default=False
         Whether a regressor supports multi-target outputs or a classifier supports
         multi-class multi-output.
 
-    single_output : bool (default=True)
+    single_output : bool, default=True
         Whether the target can be single-output. This can be ``False`` if the
         estimator supports only multi-output cases.
     """
 
     required: bool
+    one_d_labels: bool = False
+    two_d_labels: bool = False
     positive_only: bool = False
     multi_output: bool = False
     single_output: bool = True
@@ -112,7 +112,7 @@ class TransformerTags:
 
     Parameters
     ----------
-    preserves_dtype : list[object] (default=[np.float64])
+    preserves_dtype : list[str], default=["float64"]
         Applies only on transformers. It corresponds to the data types
         which will be preserved such that `X_trans.dtype` is the same
         as `X.dtype` after calling `transformer.transform(X)`. If this
@@ -132,20 +132,20 @@ class ClassifierTags:
 
     Parameters
     ----------
-    poor_score : bool (default=False)
+    poor_score : bool, default=False
         Whether the estimator fails to provide a "reasonable" test-set
         score, which currently for classification is an accuracy of
         0.83 on ``make_blobs(n_samples=300, random_state=0)``. The
-        datasets and values are based on current estimators in sklearn
+        datasets and values are based on current estimators in scikit-learn
         and might be replaced by something more systematic.
 
-    multi_class : bool (default=True)
+    multi_class : bool, default=True
         Whether the classifier can handle multi-class
         classification. Note that all classifiers support binary
         classification. Therefore this flag indicates whether the
         classifier is a binary-classifier-only or not.
 
-    multi_label : bool (default=False)
+    multi_label : bool, default=False
         Whether the classifier supports multi-label output.
     """
 
@@ -160,15 +160,15 @@ class RegressorTags:
 
     Parameters
     ----------
-    poor_score : bool (default=False)
+    poor_score : bool, default=False
         Whether the estimator fails to provide a "reasonable" test-set
         score, which currently for regression is an R2 of 0.5 on
         ``make_regression(n_samples=200, n_features=10,
         n_informative=1, bias=5.0, noise=20, random_state=42)``. The
-        dataset and values are based on current estimators in sklearn
+        dataset and values are based on current estimators in scikit-learn
         and might be replaced by something more systematic.
 
-    multi_label : bool (default=False)
+    multi_label : bool, default=False
         Whether the regressor supports multilabel output.
     """
 
@@ -185,34 +185,34 @@ class Tags:
     target_tags : :class:`TargetTags`
         The target(y) tags.
 
-    transformer_tags : :class:`TransformerTags`
+    transformer_tags : :class:`TransformerTags` or None
         The transformer tags.
 
-    classifier_tags : :class:`ClassifierTags`
+    classifier_tags : :class:`ClassifierTags` or None
         The classifier tags.
 
-    regressor_tags : :class:`RegressorTags`
+    regressor_tags : :class:`RegressorTags` or None
         The regressor tags.
 
-    array_api_support : bool (default=False)
+    array_api_support : bool, default=False
         Whether the estimator supports Array API compatible inputs.
 
-    no_validation : bool (default=False)
+    no_validation : bool, default=False
         Whether the estimator skips input-validation. This is only meant for
         stateless and dummy transformers!
 
-    non_deterministic : bool (default=False)
+    non_deterministic : bool, default=False
         Whether the estimator is not deterministic given a fixed ``random_state``.
 
-    requires_fit : bool (default=True)
+    requires_fit : bool, default=True
         Whether the estimator requires to be fitted before calling one of
         `transform`, `predict`, `predict_proba`, or `decision_function`.
 
-    _skip_test : bool (default=False)
+    _skip_test : bool, default=False
         Whether to skip common tests entirely. Don't use this unless
         you have a *very good* reason.
 
-    _xfail_checks : dict[str, str] (default={})
+    _xfail_checks : dict[str, str], default={}
         Dictionary ``{check_name: reason}`` of common checks that will
         be marked as `XFAIL` for pytest, when using
         :func:`~sklearn.utils.estimator_checks.parametrize_with_checks`. These
@@ -249,15 +249,16 @@ def default_tags(estimator) -> Tags:
     If the estimator is a classifier or a regressor, ``target_tags.required``
     will be set to ``True``, otherwise it will be set to ``False``.
 
-    ``transformer_tags`` will be set to ``TransformerTags()`` if the estimator
-    has a ``transform`` or ``fit_transform`` method, otherwise it will be set
+    ``transformer_tags`` will be set to :class:`~.sklearn.utils. TransformerTags` if the
+    estimator has a ``transform`` or ``fit_transform`` method, otherwise it will be set
     to ``None``.
 
-    ``classifier_tags`` will be set to ``ClassifierTags()`` if the estimator is
+    ``classifier_tags`` will be set to :class:`~.sklearn.utils.ClassifierTags` if the
+    estimator is a classifier, otherwise it will be set to ``None``.
     a classifier, otherwise it will be set to ``None``.
 
-    ``regressor_tags`` will be set to ``RegressorTags()`` if the estimator is a
-    regressor, otherwise it will be set to ``None``.
+    ``regressor_tags`` will be set to :class:`~.sklearn.utils.RegressorTags` if the
+    estimator is a regressor, otherwise it will be set to ``None``.
 
     Parameters
     ----------
@@ -305,7 +306,7 @@ def get_tags(estimator) -> Tags:
 
     Returns
     -------
-    tags : Tags
+    tags : :class:`~.sklearn.utils.Tags`
         The estimator tags.
     """
     if hasattr(estimator, "__sklearn_tags__"):

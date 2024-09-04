@@ -3144,8 +3144,7 @@ def check_regressors_no_decision_function(name, regressor_orig):
 def check_class_weight_classifiers(name, classifier_orig):
     if get_tags(classifier_orig).classifier_tags.multi_class:
         problems = [2, 3]
-    else:
-        # binary only
+    else:  # binary classification only
         problems = [2]
 
     for n_centers in problems:
@@ -4392,7 +4391,7 @@ def check_param_validation(name, estimator_orig):
             )
 
             with raises(InvalidParameterError, match=match, err_msg=err_msg):
-                if tags.input_tags.one_d_labels or tags.input_tags.two_d_labels:
+                if tags.target_tags.one_d_labels or tags.target_tags.two_d_labels:
                     # The estimator is a label transformer and take only `y`
                     getattr(estimator, method)(y)
                 else:
@@ -4427,7 +4426,7 @@ def check_param_validation(name, estimator_orig):
                 )
 
                 with raises(InvalidParameterError, match=match, err_msg=err_msg):
-                    if tags.input_tags.one_d_labels or tags.input_tags.two_d_labels:
+                    if tags.target_tags.one_d_labels or tags.target_tags.two_d_labels:
                         # The estimator is a label transformer and take only `y`
                         getattr(estimator, method)(y)
                     else:
