@@ -57,7 +57,7 @@ jobs:
 
       # The Pyodide JavaScript library is needed to run the tests in WASM
       - name: Install Pyodide
-        run: npm install pyodide@${{ env.PYODIDE_VERSION }}
+        run: npm install pyodide@0.27.0-alpha.2
 
       - name: Set up Pyodide virtual environment and test scikit-learn for Pyodide
         env:
