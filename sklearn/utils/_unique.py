@@ -29,6 +29,19 @@ def attach_unique(*ys, return_tuple=False):
     """Attach unique values of ys to ys and return the results.
 
     The result is a view of y, and the metadata (unique) is not attached to y.
+
+    Parameters
+    ----------
+    *ys : array-like
+        Input data arrays.
+
+    return_tuple : bool, default=False
+        If True, always return a tuple even if there is only one array.
+
+    Returns
+    -------
+    ys : tuple of array-like or array-like
+        Input data with unique values attached.
     """
     res = tuple(_attach_unique(y) for y in ys)
     if len(res) == 1 and not return_tuple:
@@ -63,6 +76,19 @@ def cached_unique(*ys, xp=None):
     This function does NOT cache the values in y, i.e. it doesn't change y.
 
     Call `attach_unique` to attach the unique values to y.
+
+    Parameters
+    ----------
+    *ys : array-like
+        Input data arrays.
+
+    xp : array-like, default=None
+        Array namespace.
+
+    Returns
+    -------
+    res : tuple of array-like or array-like
+        Unique values of ys.
     """
     res = tuple(_cached_unique(y, xp=xp) for y in ys)
     if len(res) == 1:
