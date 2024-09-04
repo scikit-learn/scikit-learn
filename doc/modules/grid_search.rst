@@ -205,7 +205,7 @@ here the number of samples.
    :align: center
 
 We here briefly describe the main parameters, but each parameter and their
-interactions are described in more details in the dropdown section below. The
+interactions are described more in detail in the dropdown section below. The
 ``factor`` (> 1) parameter controls the rate at which the resources grow, and
 the rate at which the number of candidates decreases. In each iteration, the
 number of resources per candidate is multiplied by ``factor`` and the number
@@ -381,7 +381,6 @@ The sections below dive into technical aspects of successive halving.
   Note that it is not possible to budget on a parameter that is part of the
   parameter grid.
 
-.. _exhausting_the_resources:
 
 .. dropdown:: Exhausting the available resources
 
@@ -438,9 +437,16 @@ The sections below dive into technical aspects of successive halving.
 
 .. _aggressive_elimination:
 
-.. dropdown:: Aggressive elimination of candidates
+Aggressive elimination of candidates
+------------------------------------
 
-  Ideally, we want the last iteration to evaluate ``factor`` candidates . We
+Using the ``aggressive_elimination`` parameter, you can force the search
+process to end up with less than ``factor`` candidates at the last
+iteration.
+
+.. dropdown:: Code example of aggressive elimination
+
+  Ideally, we want the last iteration to evaluate ``factor`` candidates. We
   then just have to pick the best one. When the number of available resources is
   small with respect to the number of candidates, the last iteration may have to
   evaluate more than ``factor`` candidates::
@@ -466,10 +472,8 @@ The sections below dive into technical aspects of successive halving.
   has to stop at the second iteration which evaluates more than ``factor=2``
   candidates.
 
-  Using the ``aggressive_elimination`` parameter, you can force the search
-  process to end up with less than ``factor`` candidates at the last
-  iteration. To do this, the process will eliminate as many candidates as
-  necessary using ``min_resources`` resources::
+  When using ``aggressive_elimination``, the process will eliminate as many
+  candidates as necessary using ``min_resources`` resources::
 
       >>> sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
       ...                            factor=2,
@@ -487,16 +491,17 @@ The sections below dive into technical aspects of successive halving.
 
 .. _successive_halving_cv_results:
 
-.. dropdown:: Analyzing results with the `cv_results_` attribute
+Analyzing results with the `cv_results_` attribute
+--------------------------------------------------
 
-  The ``cv_results_`` attribute contains useful information for analyzing the
-  results of a search. It can be converted to a pandas dataframe with ``df =
-  pd.DataFrame(est.cv_results_)``. The ``cv_results_`` attribute of
-  :class:`HalvingGridSearchCV` and :class:`HalvingRandomSearchCV` is similar
-  to that of :class:`GridSearchCV` and :class:`RandomizedSearchCV`, with
-  additional information related to the successive halving process.
+The ``cv_results_`` attribute contains useful information for analyzing the
+results of a search. It can be converted to a pandas dataframe with ``df =
+pd.DataFrame(est.cv_results_)``. The ``cv_results_`` attribute of
+:class:`HalvingGridSearchCV` and :class:`HalvingRandomSearchCV` is similar
+to that of :class:`GridSearchCV` and :class:`RandomizedSearchCV`, with
+additional information related to the successive halving process.
 
-  Here is an example with some of the columns of a (truncated) dataframe:
+.. dropdown:: Example of a (truncated) output dataframe:
 
   ====  ======  ===============  =================  ========================================================================================
     ..    iter      n_resources    mean_test_score  params
