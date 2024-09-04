@@ -8,12 +8,10 @@ General tests for all estimators in sklearn.
 import os
 import pkgutil
 import re
-import sys
 import warnings
 from functools import partial
 from inspect import isgenerator, signature
-from itertools import chain, product
-from pathlib import Path
+from itertools import chain
 
 import numpy as np
 import pytest
@@ -28,25 +26,16 @@ from sklearn.cluster import (
     MeanShift,
     SpectralClustering,
 )
-from sklearn.compose import ColumnTransformer
 from sklearn.datasets import make_blobs
-from sklearn.decomposition import PCA
 from sklearn.exceptions import ConvergenceWarning, FitFailedWarning
-
-# make it possible to discover experimental estimators when calling `all_estimators`
 from sklearn.experimental import (
     enable_halving_search_cv,  # noqa
     enable_iterative_imputer,  # noqa
 )
-from sklearn.linear_model import LogisticRegression, Ridge
-from sklearn.linear_model._base import LinearClassifierMixin
+
+# make it possible to discover experimental estimators when calling `all_estimators`
+from sklearn.linear_model import LogisticRegression
 from sklearn.manifold import TSNE, Isomap, LocallyLinearEmbedding
-from sklearn.model_selection import (
-    GridSearchCV,
-    HalvingGridSearchCV,
-    HalvingRandomSearchCV,
-    RandomizedSearchCV,
-)
 from sklearn.neighbors import (
     KNeighborsClassifier,
     KNeighborsRegressor,
@@ -54,7 +43,7 @@ from sklearn.neighbors import (
     RadiusNeighborsClassifier,
     RadiusNeighborsRegressor,
 )
-from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import (
     FunctionTransformer,
     MinMaxScaler,
@@ -64,16 +53,19 @@ from sklearn.preprocessing import (
 from sklearn.semi_supervised import LabelPropagation, LabelSpreading
 from sklearn.utils import all_estimators
 from sklearn.utils._tags import _DEFAULT_TAGS, _safe_tags
+from sklearn.utils._test_common.instance_generator import (
+    _generate_column_transformer_instances,
+    _generate_pipeline,
+    _generate_search_cv_instances,
+    _get_check_estimator_ids,
+    _set_checking_parameters,
+    _tested_estimators,
+)
 from sklearn.utils._testing import (
     SkipTest,
     ignore_warnings,
-    set_random_state,
 )
 from sklearn.utils.estimator_checks import (
-    _construct_instance,
-    _get_check_estimator_ids,
-    _set_checking_parameters,
-    check_class_weight_balanced_linear_classifier,
     check_dataframe_column_names_consistency,
     check_estimator,
     check_get_feature_names_out_error,
@@ -141,26 +133,6 @@ def test_get_check_estimator_ids(val, expected):
     assert _get_check_estimator_ids(val) == expected
 
 
-def _tested_estimators(type_filter=None):
-    for name, Estimator in all_estimators(type_filter=type_filter):
-        try:
-            estimator = _construct_instance(Estimator)
-        except SkipTest:
-            continue
-
-        yield estimator
-
-
-def _generate_pipeline():
-    for final_estimator in [Ridge(), LogisticRegression()]:
-        yield Pipeline(
-            steps=[
-                ("scaler", StandardScaler()),
-                ("final_estimator", final_estimator),
-            ]
-        )
-
-
 @parametrize_with_checks(list(chain(_tested_estimators(), _generate_pipeline())))
 def test_estimators(estimator, check, request):
     # Common tests for estimator instances
@@ -176,54 +148,11 @@ def test_check_estimator_generate_only():
     assert isgenerator(all_instance_gen_checks)
 
 
-def test_setup_py_check():
-    pytest.importorskip("setuptools")
-    # Smoke test `python setup.py check` command run at the root of the
-    # scikit-learn source tree.
-    cwd = os.getcwd()
-    setup_path = Path(sklearn.__file__).parent.parent
-    setup_filename = os.path.join(setup_path, "setup.py")
-    if not os.path.exists(setup_filename):
-        pytest.skip("setup.py not available")
-    try:
-        os.chdir(setup_path)
-        old_argv = sys.argv
-        sys.argv = ["setup.py", "check"]
-
-        with warnings.catch_warnings():
-            # The configuration spits out warnings when not finding
-            # Blas/Atlas development headers
-            warnings.simplefilter("ignore", UserWarning)
-            with open("setup.py") as f:
-                exec(f.read(), dict(__name__="__main__"))
-    finally:
-        sys.argv = old_argv
-        os.chdir(cwd)
-
-
-def _tested_linear_classifiers():
-    classifiers = all_estimators(type_filter="classifier")
-
-    with warnings.catch_warnings(record=True):
-        for name, clazz in classifiers:
-            required_parameters = getattr(clazz, "_required_parameters", [])
-            if len(required_parameters):
-                # FIXME
-                continue
-
-            if "class_weight" in clazz().get_params().keys() and issubclass(
-                clazz, LinearClassifierMixin
-            ):
-                yield name, clazz
-
-
-@pytest.mark.parametrize("name, Classifier", _tested_linear_classifiers())
-def test_class_weight_balanced_linear_classifiers(name, Classifier):
-    check_class_weight_balanced_linear_classifier(name, Classifier)
-
-
 @pytest.mark.xfail(_IS_WASM, reason="importlib not supported for Pyodide packages")
-@ignore_warnings
+@pytest.mark.filterwarnings(
+    "ignore:Since version 1.0, it is not needed to import "
+    "enable_hist_gradient_boosting anymore"
+)
 def test_import_all_consistency():
     sklearn_path = [os.path.dirname(sklearn.__file__)]
     # Smoke test to check that any name in a __all__ list is actually defined
@@ -235,7 +164,7 @@ def test_import_all_consistency():
     for modname in submods + ["sklearn"]:
         if ".tests." in modname:
             continue
-        # Avoid test suite depending on setuptools
+        # Avoid test suite depending on build dependencies, for example Cython
         if "sklearn._build_utils" in modname:
             continue
         package = __import__(modname, fromlist="dummy")
@@ -247,7 +176,7 @@ def test_import_all_consistency():
 
 def test_root_import_all_completeness():
     sklearn_path = [os.path.dirname(sklearn.__file__)]
-    EXCEPTIONS = ("utils", "tests", "base", "setup", "conftest")
+    EXCEPTIONS = ("utils", "tests", "base", "conftest")
     for _, modname, _ in pkgutil.walk_packages(
         path=sklearn_path, onerror=lambda _: None
     ):
@@ -288,9 +217,9 @@ def test_all_tests_are_importable():
     assert missing_tests == [], (
         "{0} do not have `tests` subpackages. "
         "Perhaps they require "
-        "__init__.py or an add_subpackage directive "
+        "__init__.py or a meson.build "
         "in the parent "
-        "setup.py".format(missing_tests)
+        "directory".format(missing_tests)
     )
 
 
@@ -304,60 +233,6 @@ def test_class_support_removed():
 
     with pytest.raises(TypeError, match=msg):
         parametrize_with_checks([LogisticRegression])
-
-
-def _generate_column_transformer_instances():
-    yield ColumnTransformer(
-        transformers=[
-            ("trans1", StandardScaler(), [0, 1]),
-        ]
-    )
-
-
-def _generate_search_cv_instances():
-    for SearchCV, (Estimator, param_grid) in product(
-        [
-            GridSearchCV,
-            HalvingGridSearchCV,
-            RandomizedSearchCV,
-            HalvingGridSearchCV,
-        ],
-        [
-            (Ridge, {"alpha": [0.1, 1.0]}),
-            (LogisticRegression, {"C": [0.1, 1.0]}),
-        ],
-    ):
-        init_params = signature(SearchCV).parameters
-        extra_params = (
-            {"min_resources": "smallest"} if "min_resources" in init_params else {}
-        )
-        search_cv = SearchCV(
-            Estimator(), param_grid, cv=2, error_score="raise", **extra_params
-        )
-        set_random_state(search_cv)
-        yield search_cv
-
-    for SearchCV, (Estimator, param_grid) in product(
-        [
-            GridSearchCV,
-            HalvingGridSearchCV,
-            RandomizedSearchCV,
-            HalvingRandomSearchCV,
-        ],
-        [
-            (Ridge, {"ridge__alpha": [0.1, 1.0]}),
-            (LogisticRegression, {"logisticregression__C": [0.1, 1.0]}),
-        ],
-    ):
-        init_params = signature(SearchCV).parameters
-        extra_params = (
-            {"min_resources": "smallest"} if "min_resources" in init_params else {}
-        )
-        search_cv = SearchCV(
-            make_pipeline(PCA(), Estimator()), param_grid, cv=2, **extra_params
-        ).set_params(error_score="raise")
-        set_random_state(search_cv)
-        yield search_cv
 
 
 @parametrize_with_checks(list(_generate_search_cv_instances()))

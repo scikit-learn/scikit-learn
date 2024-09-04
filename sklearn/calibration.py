@@ -24,7 +24,7 @@ from .base import (
     clone,
 )
 from .isotonic import IsotonicRegression
-from .model_selection import check_cv, cross_val_predict
+from .model_selection import LeaveOneOut, check_cv, cross_val_predict
 from .preprocessing import LabelEncoder, label_binarize
 from .svm import LinearSVC
 from .utils import (
@@ -84,6 +84,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     `estimator` if it exists, else on :term:`predict_proba`.
 
     Read more in the :ref:`User Guide <calibration>`.
+    In order to learn more on the CalibratedClassifierCV class, see the
+    following calibration examples:
+    :ref:`sphx_glr_auto_examples_calibration_plot_calibration.py`,
+    :ref:`sphx_glr_auto_examples_calibration_plot_calibration_curve.py`, and
+    :ref:`sphx_glr_auto_examples_calibration_plot_calibration_multiclass.py`.
 
     Parameters
     ----------
@@ -389,6 +394,13 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     f"Requesting {n_folds}-fold "
                     "cross-validation but provided less than "
                     f"{n_folds} examples for at least one class."
+                )
+            if isinstance(self.cv, LeaveOneOut):
+                raise ValueError(
+                    "LeaveOneOut cross-validation does not allow"
+                    "all classes to be present in test splits. "
+                    "Please use a cross-validation generator that allows "
+                    "all classes to appear in every test and train split."
                 )
             cv = check_cv(self.cv, y, classifier=True)
 
@@ -1039,6 +1051,9 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
 
     Read more about calibration in the :ref:`User Guide <calibration>` and
     more about the scikit-learn visualization API in :ref:`visualizations`.
+
+    For an example on how to use the visualization, see
+    :ref:`sphx_glr_auto_examples_calibration_plot_calibration_curve.py`.
 
     .. versionadded:: 1.0
 

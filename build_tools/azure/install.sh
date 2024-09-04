@@ -24,6 +24,9 @@ setup_ccache() {
         done
         export PATH="${CCACHE_LINKS_DIR}:${PATH}"
         ccache -M 256M
+
+        # Zeroing statistics so that ccache statistics are shown only for this build
+        ccache -z
     fi
 }
 
@@ -36,7 +39,7 @@ pre_python_environment_install() {
     elif [[ "$DISTRIB" == "debian-32" ]]; then
         apt-get update
         apt-get install -y python3-dev python3-numpy python3-scipy \
-                python3-matplotlib libatlas3-base libatlas-base-dev \
+                python3-matplotlib libopenblas-dev \
                 python3-virtualenv python3-pandas ccache git
 
     # TODO for now we use CPython 3.13 from Ubuntu deadsnakes PPA. When CPython
@@ -76,22 +79,23 @@ python_environment_install_and_activate() {
         python3.13t -m venv $VIRTUALENV
         source $VIRTUALENV/bin/activate
         pip install -r "${LOCK_FILE}"
-        # TODO for now need pip 24.1b1 to find free-threaded wheels
-        pip install -U --pre pip
+        # TODO you need pip>=24.1 to find free-threaded wheels. This may be
+        # removed when the underlying Ubuntu image has pip>=24.1.
+        pip install 'pip>=24.1'
         # TODO When there are CPython 3.13 free-threaded wheels for numpy,
         # scipy and cython move them to
         # build_tools/azure/cpython_free_threaded_requirements.txt. For now we
         # install them from scientific-python-nightly-wheels
         dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
         dev_packages="numpy scipy Cython"
-        pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url $dev_packages
+        pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url $dev_packages --only-binary :all:
     fi
 
     if [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
         echo "Installing development dependency wheels"
         dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
         dev_packages="numpy scipy pandas Cython"
-        pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url $dev_packages
+        pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url $dev_packages --only-binary :all:
 
         check_packages_dev_version $dev_packages
 
@@ -105,10 +109,6 @@ python_environment_install_and_activate() {
 scikit_learn_install() {
     setup_ccache
     show_installed_libraries
-
-    # Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
-    # workers with 2 cores when building the compiled extensions of scikit-learn.
-    export SKLEARN_BUILD_PARALLEL=3
 
     if [[ "$UNAMESTR" == "Darwin" && "$SKLEARN_TEST_NO_OPENMP" == "true" ]]; then
         # Without openmp, we use the system clang. Here we use /usr/bin/ar
@@ -128,9 +128,7 @@ scikit_learn_install() {
         export LDFLAGS="$LDFLAGS -Wl,--sysroot=/"
     fi
 
-    if [[ "$BUILD_WITH_SETUPTOOLS" == "true" ]]; then
-        python setup.py develop
-    elif [[ "$PIP_BUILD_ISOLATION" == "true" ]]; then
+    if [[ "$PIP_BUILD_ISOLATION" == "true" ]]; then
         # Check that pip can automatically build scikit-learn with the build
         # dependencies specified in pyproject.toml using an isolated build
         # environment:
@@ -141,12 +139,6 @@ scikit_learn_install() {
            # otherwise Meson detects a MINGW64 platform and use MINGW64
            # toolchain
            ADDITIONAL_PIP_OPTIONS='-Csetup-args=--vsenv'
-        fi
-        # TODO Always add --check-build-dependencies when all CI builds have
-        # pip >= 22.1.1. At the time of writing, two CI builds (debian32_atlas and
-        # ubuntu_atlas) have an older pip
-        if pip install --help | grep check-build-dependencies; then
-            ADDITIONAL_PIP_OPTIONS="$ADDITIONAL_PIP_OPTIONS --check-build-dependencies"
         fi
         # Use the pre-installed build dependencies and build directly in the
         # current environment.

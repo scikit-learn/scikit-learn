@@ -6,7 +6,7 @@
 #
 cython==3.0.10
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
-exceptiongroup==1.2.1
+exceptiongroup==1.2.2
     # via pytest
 execnet==2.1.1
     # via pytest-xdist
@@ -14,7 +14,7 @@ iniconfig==2.0.0
     # via pytest
 joblib==1.2.0
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
-meson==1.4.1
+meson==1.5.1
     # via meson-python
 meson-python==0.16.0
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
@@ -29,7 +29,7 @@ pluggy==1.5.0
     # via pytest
 pyproject-metadata==0.8.0
     # via meson-python
-pytest==8.2.2
+pytest==8.3.2
     # via
     #   -r build_tools/azure/ubuntu_atlas_requirements.txt
     #   pytest-xdist
