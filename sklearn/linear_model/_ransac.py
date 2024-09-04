@@ -251,6 +251,9 @@ class RANSACRegressor(
     0.9885...
     >>> reg.predict(X[:1,])
     array([-31.9417...])
+
+    For a more detailed example, see
+    :ref:`sphx_glr_auto_examples_linear_model_plot_ransac.py`
     """  # noqa: E501
 
     _parameter_constraints: dict = {
@@ -715,11 +718,11 @@ class RANSACRegressor(
         )
         return router
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_sample_weights_invariance": (
+                "zero sample_weight is not equivalent to removing samples"
+            ),
         }
+        return tags

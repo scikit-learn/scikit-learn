@@ -22,6 +22,7 @@ from sklearn.experimental import (
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils import all_estimators
+from sklearn.utils._test_common.instance_generator import _construct_instance
 from sklearn.utils._testing import (
     _get_func_name,
     check_docstring_parameters,
@@ -29,7 +30,6 @@ from sklearn.utils._testing import (
 )
 from sklearn.utils.deprecation import _is_deprecated
 from sklearn.utils.estimator_checks import (
-    _construct_instance,
     _enforce_estimator_tags_X,
     _enforce_estimator_tags_y,
 )
@@ -265,11 +265,11 @@ def test_fit_docstring_attributes(name, Estimator):
         y = _enforce_estimator_tags_y(est, y)
         X = _enforce_estimator_tags_X(est, X)
 
-    if "1dlabels" in est._get_tags()["X_types"]:
+    if est.__sklearn_tags__().target_tags.one_d_labels:
         est.fit(y)
-    elif "2dlabels" in est._get_tags()["X_types"]:
+    elif est.__sklearn_tags__().target_tags.two_d_labels:
         est.fit(np.c_[y, y])
-    elif "3darray" in est._get_tags()["X_types"]:
+    elif est.__sklearn_tags__().input_tags.three_d_array:
         est.fit(X[np.newaxis, ...], y)
     else:
         est.fit(X, y)

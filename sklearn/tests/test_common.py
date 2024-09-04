@@ -11,7 +11,7 @@ import re
 import warnings
 from functools import partial
 from inspect import isgenerator, signature
-from itertools import chain, product
+from itertools import chain
 
 import numpy as np
 import pytest
@@ -26,25 +26,16 @@ from sklearn.cluster import (
     MeanShift,
     SpectralClustering,
 )
-from sklearn.compose import ColumnTransformer
 from sklearn.datasets import make_blobs
-from sklearn.decomposition import PCA
 from sklearn.exceptions import ConvergenceWarning, FitFailedWarning
-
-# make it possible to discover experimental estimators when calling `all_estimators`
 from sklearn.experimental import (
     enable_halving_search_cv,  # noqa
     enable_iterative_imputer,  # noqa
 )
-from sklearn.linear_model import LogisticRegression, Ridge
-from sklearn.linear_model._base import LinearClassifierMixin
+
+# make it possible to discover experimental estimators when calling `all_estimators`
+from sklearn.linear_model import LogisticRegression
 from sklearn.manifold import TSNE, Isomap, LocallyLinearEmbedding
-from sklearn.model_selection import (
-    GridSearchCV,
-    HalvingGridSearchCV,
-    HalvingRandomSearchCV,
-    RandomizedSearchCV,
-)
 from sklearn.neighbors import (
     KNeighborsClassifier,
     KNeighborsRegressor,
@@ -52,7 +43,7 @@ from sklearn.neighbors import (
     RadiusNeighborsClassifier,
     RadiusNeighborsRegressor,
 )
-from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import (
     FunctionTransformer,
     MinMaxScaler,
@@ -61,17 +52,20 @@ from sklearn.preprocessing import (
 )
 from sklearn.semi_supervised import LabelPropagation, LabelSpreading
 from sklearn.utils import all_estimators
-from sklearn.utils._tags import _DEFAULT_TAGS, _safe_tags
+from sklearn.utils._tags import get_tags
+from sklearn.utils._test_common.instance_generator import (
+    _generate_column_transformer_instances,
+    _generate_pipeline,
+    _generate_search_cv_instances,
+    _get_check_estimator_ids,
+    _set_checking_parameters,
+    _tested_estimators,
+)
 from sklearn.utils._testing import (
     SkipTest,
     ignore_warnings,
-    set_random_state,
 )
 from sklearn.utils.estimator_checks import (
-    _construct_instance,
-    _get_check_estimator_ids,
-    _set_checking_parameters,
-    check_class_weight_balanced_linear_classifier,
     check_dataframe_column_names_consistency,
     check_estimator,
     check_get_feature_names_out_error,
@@ -139,26 +133,6 @@ def test_get_check_estimator_ids(val, expected):
     assert _get_check_estimator_ids(val) == expected
 
 
-def _tested_estimators(type_filter=None):
-    for name, Estimator in all_estimators(type_filter=type_filter):
-        try:
-            estimator = _construct_instance(Estimator)
-        except SkipTest:
-            continue
-
-        yield estimator
-
-
-def _generate_pipeline():
-    for final_estimator in [Ridge(), LogisticRegression()]:
-        yield Pipeline(
-            steps=[
-                ("scaler", StandardScaler()),
-                ("final_estimator", final_estimator),
-            ]
-        )
-
-
 @parametrize_with_checks(list(chain(_tested_estimators(), _generate_pipeline())))
 def test_estimators(estimator, check, request):
     # Common tests for estimator instances
@@ -172,27 +146,6 @@ def test_estimators(estimator, check, request):
 def test_check_estimator_generate_only():
     all_instance_gen_checks = check_estimator(LogisticRegression(), generate_only=True)
     assert isgenerator(all_instance_gen_checks)
-
-
-def _tested_linear_classifiers():
-    classifiers = all_estimators(type_filter="classifier")
-
-    with warnings.catch_warnings(record=True):
-        for name, clazz in classifiers:
-            required_parameters = getattr(clazz, "_required_parameters", [])
-            if len(required_parameters):
-                # FIXME
-                continue
-
-            if "class_weight" in clazz().get_params().keys() and issubclass(
-                clazz, LinearClassifierMixin
-            ):
-                yield name, clazz
-
-
-@pytest.mark.parametrize("name, Classifier", _tested_linear_classifiers())
-def test_class_weight_balanced_linear_classifiers(name, Classifier):
-    check_class_weight_balanced_linear_classifier(name, Classifier)
 
 
 @pytest.mark.xfail(_IS_WASM, reason="importlib not supported for Pyodide packages")
@@ -282,60 +235,6 @@ def test_class_support_removed():
         parametrize_with_checks([LogisticRegression])
 
 
-def _generate_column_transformer_instances():
-    yield ColumnTransformer(
-        transformers=[
-            ("trans1", StandardScaler(), [0, 1]),
-        ]
-    )
-
-
-def _generate_search_cv_instances():
-    for SearchCV, (Estimator, param_grid) in product(
-        [
-            GridSearchCV,
-            HalvingGridSearchCV,
-            RandomizedSearchCV,
-            HalvingGridSearchCV,
-        ],
-        [
-            (Ridge, {"alpha": [0.1, 1.0]}),
-            (LogisticRegression, {"C": [0.1, 1.0]}),
-        ],
-    ):
-        init_params = signature(SearchCV).parameters
-        extra_params = (
-            {"min_resources": "smallest"} if "min_resources" in init_params else {}
-        )
-        search_cv = SearchCV(
-            Estimator(), param_grid, cv=2, error_score="raise", **extra_params
-        )
-        set_random_state(search_cv)
-        yield search_cv
-
-    for SearchCV, (Estimator, param_grid) in product(
-        [
-            GridSearchCV,
-            HalvingGridSearchCV,
-            RandomizedSearchCV,
-            HalvingRandomSearchCV,
-        ],
-        [
-            (Ridge, {"ridge__alpha": [0.1, 1.0]}),
-            (LogisticRegression, {"logisticregression__C": [0.1, 1.0]}),
-        ],
-    ):
-        init_params = signature(SearchCV).parameters
-        extra_params = (
-            {"min_resources": "smallest"} if "min_resources" in init_params else {}
-        )
-        search_cv = SearchCV(
-            make_pipeline(PCA(), Estimator()), param_grid, cv=2, **extra_params
-        ).set_params(error_score="raise")
-        set_random_state(search_cv)
-        yield search_cv
-
-
 @parametrize_with_checks(list(_generate_search_cv_instances()))
 def test_search_cv(estimator, check, request):
     # Common tests for SearchCV instances
@@ -357,14 +256,29 @@ def test_search_cv(estimator, check, request):
 )
 def test_valid_tag_types(estimator):
     """Check that estimator tags are valid."""
-    tags = _safe_tags(estimator)
+    from dataclasses import fields
 
-    for name, tag in tags.items():
-        correct_tags = type(_DEFAULT_TAGS[name])
-        if name == "_xfail_checks":
-            # _xfail_checks can be a dictionary
-            correct_tags = (correct_tags, dict)
-        assert isinstance(tag, correct_tags)
+    from ..utils._tags import default_tags
+
+    def check_field_types(tags, defaults):
+        if tags is None:
+            return
+        tags_fields = fields(tags)
+        for field in tags_fields:
+            correct_tags = type(getattr(defaults, field.name))
+            if field.name == "_xfail_checks":
+                # _xfail_checks can be a dictionary
+                correct_tags = (correct_tags, dict)
+            assert isinstance(getattr(tags, field.name), correct_tags)
+
+    tags = get_tags(estimator)
+    defaults = default_tags(estimator)
+    check_field_types(tags, defaults)
+    check_field_types(tags.input_tags, defaults.input_tags)
+    check_field_types(tags.target_tags, defaults.target_tags)
+    check_field_types(tags.classifier_tags, defaults.classifier_tags)
+    check_field_types(tags.regressor_tags, defaults.regressor_tags)
+    check_field_types(tags.transformer_tags, defaults.transformer_tags)
 
 
 @pytest.mark.parametrize(

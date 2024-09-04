@@ -7,7 +7,7 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy import optimize, sparse, stats
-from scipy.special import boxcox
+from scipy.special import boxcox, inv_boxcox
 
 from ..base import (
     BaseEstimator,
@@ -569,8 +569,10 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         X /= self.scale_
         return X
 
-    def _more_tags(self):
-        return {"allow_nan": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        return tags
 
 
 @validate_params(
@@ -1107,8 +1109,11 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                 X += self.mean_
         return X
 
-    def _more_tags(self):
-        return {"allow_nan": True, "preserves_dtype": [np.float64, np.float32]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
 
 
 class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
@@ -1335,8 +1340,10 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             X *= self.scale_
         return X
 
-    def _more_tags(self):
-        return {"allow_nan": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        return tags
 
 
 @validate_params(
@@ -1706,8 +1713,10 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                 X += self.center_
         return X
 
-    def _more_tags(self):
-        return {"allow_nan": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        return tags
 
 
 @validate_params(
@@ -2103,8 +2112,11 @@ class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         )
         return normalize(X, norm=self.norm, axis=1, copy=False)
 
-    def _more_tags(self):
-        return {"stateless": True, "array_api_support": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.requires_fit = False
+        tags.array_api_support = True
+        return tags
 
 
 @validate_params(
@@ -2305,8 +2317,10 @@ class Binarizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         )
         return binarize(X, threshold=self.threshold, copy=False)
 
-    def _more_tags(self):
-        return {"stateless": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.requires_fit = False
+        return tags
 
 
 class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
@@ -2463,8 +2477,11 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         # implement get_feature_names_out for this class.
         return self.n_features_in_
 
-    def _more_tags(self):
-        return {"pairwise": True, "array_api_support": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.pairwise = True
+        tags.array_api_support = True
+        return tags
 
 
 @validate_params(
@@ -2961,8 +2978,10 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
         return self._transform(X, inverse=True)
 
-    def _more_tags(self):
-        return {"allow_nan": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        return tags
 
 
 @validate_params(
@@ -3376,7 +3395,7 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             X = self._scaler.inverse_transform(X)
 
         inv_fun = {
-            "box-cox": self._box_cox_inverse_tranform,
+            "box-cox": inv_boxcox,
             "yeo-johnson": self._yeo_johnson_inverse_transform,
         }[self.method]
         for i, lmbda in enumerate(self.lambdas_):
@@ -3384,17 +3403,6 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                 X[:, i] = inv_fun(X[:, i], lmbda)
 
         return X
-
-    def _box_cox_inverse_tranform(self, x, lmbda):
-        """Return inverse-transformed input x following Box-Cox inverse
-        transform with parameter lambda.
-        """
-        if lmbda == 0:
-            x_inv = np.exp(x)
-        else:
-            x_inv = (x * lmbda + 1) ** (1 / lmbda)
-
-        return x_inv
 
     def _yeo_johnson_inverse_transform(self, x, lmbda):
         """Return inverse-transformed input x following Yeo-Johnson inverse
@@ -3532,8 +3540,10 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         return X
 
-    def _more_tags(self):
-        return {"allow_nan": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        return tags
 
 
 @validate_params(
