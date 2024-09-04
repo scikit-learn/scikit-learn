@@ -313,14 +313,14 @@ def _logistic_regression_path(
         w0 = np.zeros(n_features + int(fit_intercept), dtype=X.dtype)
         mask = y == pos_class
         y_bin = np.ones(y.shape, dtype=X.dtype)
-        if solver in ["lbfgs", "newton-cg", "newton-cholesky"]:
+        if solver == "liblinear":
+            mask_classes = np.array([-1, 1])
+            y_bin[~mask] = -1.0
+        else:
             # HalfBinomialLoss, used for those solvers, represents y in [0, 1] instead
             # of in [-1, 1].
             mask_classes = np.array([0, 1])
             y_bin[~mask] = 0.0
-        else:
-            mask_classes = np.array([-1, 1])
-            y_bin[~mask] = -1.0
 
         # for compute_class_weight
         if class_weight == "balanced":
@@ -2265,14 +2265,14 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         )
         return router
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_sample_weights_invariance": (
+                "zero sample_weight is not equivalent to removing samples"
+            ),
         }
+        return tags
 
     def _get_scorer(self):
         """Get the scorer based on the scoring method specified.

@@ -317,9 +317,6 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
         else:
             self.intercept_ = 0.0
 
-    def _more_tags(self):
-        return {"requires_y": True}
-
 
 # XXX Should this derive from LinearModel? It should be a mixin, not an ABC.
 # Maybe the n_features checking can be moved to LinearModel.
@@ -544,7 +541,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     >>> reg.coef_
     array([1., 2.])
     >>> reg.intercept_
-    3.0...
+    np.float64(3.0...)
     >>> reg.predict(np.array([[3, 5]]))
     array([16.])
     """
@@ -609,7 +606,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         has_sw = sample_weight is not None
         if has_sw:
             sample_weight = _check_sample_weight(
-                sample_weight, X, dtype=X.dtype, only_non_negative=True
+                sample_weight, X, dtype=X.dtype, ensure_non_negative=True
             )
 
         # Note that neither _rescale_data nor the rest of the fit method of

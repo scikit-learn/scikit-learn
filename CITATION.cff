@@ -1,0 +1,48 @@
+cff-version: 1.2.0
+title: scikit-learn
+type: software
+authors:
+  - name: "The scikit-learn developers"
+message: "If you use scikit-learn in a scientific publication, we would appreciate citations to the following paper:"
+preferred-citation:
+  type: article
+  title: "Scikit-learn: Machine Learning in Python"
+  authors:
+  - family-names: "Pedregosa"
+    given-names: "Fabian"
+  - family-names: "Varoquaux"
+    given-names: "Gaël"
+  - family-names: "Gramfort"
+    given-names: "Alexandre"
+  - family-names: "Michel"
+    given-names: "Vincent"
+  - family-names: "Thirion"
+    given-names: "Bertrand"
+  - family-names: "Grisel"
+    given-names: "Olivier"
+  - family-names: "Blondel"
+    given-names: "Mathieu"
+  - family-names: "Prettenhofer"
+    given-names: "Peter"
+  - family-names: "Weiss"
+    given-names: "Ron"
+  - family-names: "Dubourg"
+    given-names: "Vincent"
+  - family-names: "Vanderplas"
+    given-names: "Jake"
+  - family-names: "Passos"
+    given-names: "Alexandre"
+  - family-names: "Cournapeau"
+    given-names: "David"
+  - family-names: "Brucher"
+    given-names: "Matthieu"
+  - family-names: "Perrot"
+    given-names: "Matthieu"
+  - family-names: "Duchesnay"
+    given-names: "Édouard"
+  journal: "Journal of Machine Learning Research"
+  volume: 12
+  start: 2825
+  end: 2830
+  year: 2011
+  url: "https://jmlr.csail.mit.edu/papers/v12/pedregosa11a.html"

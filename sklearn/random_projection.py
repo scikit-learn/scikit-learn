@@ -118,7 +118,7 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
     --------
     >>> from sklearn.random_projection import johnson_lindenstrauss_min_dim
     >>> johnson_lindenstrauss_min_dim(1e6, eps=0.5)
-    663
+    np.int64(663)
 
     >>> johnson_lindenstrauss_min_dim(1e6, eps=[0.5, 0.1, 0.01])
     array([    663,   11841, 1112658])
@@ -456,10 +456,10 @@ class BaseRandomProjection(
         inverse_components = self._compute_inverse_components()
         return X @ inverse_components.T
 
-    def _more_tags(self):
-        return {
-            "preserves_dtype": [np.float64, np.float32],
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
 
 
 class GaussianRandomProjection(BaseRandomProjection):
@@ -735,7 +735,7 @@ class SparseRandomProjection(BaseRandomProjection):
     (25, 2759)
     >>> # very few components are non-zero
     >>> np.mean(transformer.components_ != 0)
-    0.0182...
+    np.float64(0.0182...)
     """
 
     _parameter_constraints: dict = {

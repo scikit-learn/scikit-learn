@@ -8,6 +8,7 @@ from ._tree cimport Node
 from ..neighbors._quad_tree cimport Cell
 from ..utils._typedefs cimport float32_t, float64_t, intp_t, uint8_t, int32_t, uint32_t
 
+
 cdef enum:
     # Max value for our rand_r replacement (near the bottom).
     # We don't use RAND_MAX because it's different across platforms and

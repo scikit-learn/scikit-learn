@@ -218,7 +218,7 @@ class KernelDensity(BaseEstimator):
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(
-                sample_weight, X, dtype=np.float64, only_non_negative=True
+                sample_weight, X, dtype=np.float64, ensure_non_negative=True
             )
             normalized_sample_weight = sample_weight / sample_weight.sum()
             n_effective_samples = 1 / np.sum(normalized_sample_weight**2)
@@ -389,11 +389,9 @@ class KernelDensity(BaseEstimator):
             )
             return data[i] + X * correction[:, np.newaxis]
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "sample_weight must have positive values"
-                ),
-            }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_sample_weights_invariance": "sample_weight must have positive values"
         }
+        return tags

@@ -9,7 +9,7 @@ import numpy as np
 from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone
 from ..exceptions import NotFittedError
 from ..utils._param_validation import HasMethods, Interval, Options
-from ..utils._tags import _safe_tags
+from ..utils._tags import get_tags
 from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -219,7 +219,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     >>> selector.estimator_.coef_
     array([[-0.3252...,  0.8345...,  0.4976...]])
     >>> selector.threshold_
-    0.55249...
+    np.float64(0.55249...)
     >>> selector.get_support()
     array([False,  True, False])
     >>> selector.transform(X)
@@ -518,5 +518,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         )
         return router
 
-    def _more_tags(self):
-        return {"allow_nan": _safe_tags(self.estimator, key="allow_nan")}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = get_tags(self.estimator).input_tags.allow_nan
+        return tags
