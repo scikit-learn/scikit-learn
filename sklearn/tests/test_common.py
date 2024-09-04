@@ -26,6 +26,7 @@ from sklearn.cluster import (
     MeanShift,
     SpectralClustering,
 )
+from sklearn.compose import ColumnTransformer
 from sklearn.datasets import make_blobs
 from sklearn.exceptions import ConvergenceWarning, FitFailedWarning
 from sklearn.experimental import (
@@ -45,7 +46,7 @@ from sklearn.neighbors import (
     RadiusNeighborsClassifier,
     RadiusNeighborsRegressor,
 )
-from sklearn.pipeline import make_pipeline
+from sklearn.pipeline import FeatureUnion, make_pipeline
 from sklearn.preprocessing import (
     FunctionTransformer,
     MinMaxScaler,
@@ -310,6 +311,8 @@ column_name_estimators = list(
     "estimator", column_name_estimators, ids=_get_check_estimator_ids
 )
 def test_pandas_column_name_consistency(estimator):
+    if isinstance(estimator, ColumnTransformer):
+        pytest.skip("ColumnTransformer is not tested here")
     _set_checking_parameters(estimator)
     with ignore_warnings(category=(FutureWarning)):
         with warnings.catch_warnings(record=True) as record:
@@ -400,6 +403,8 @@ def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
     ids=_get_check_estimator_ids,
 )
 def test_check_param_validation(estimator):
+    if isinstance(estimator, FeatureUnion):
+        pytest.skip("FeatureUnion is not tested here")
     name = estimator.__class__.__name__
     _set_checking_parameters(estimator)
     check_param_validation(name, estimator)

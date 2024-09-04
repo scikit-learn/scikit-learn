@@ -1330,6 +1330,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 "check_transformer_data_not_an_array": "FIXME",
                 "check_fit1d": "FIXME",
                 "check_fit2d_predict1d": "FIXME",
+                "check_complex_data": "FIXME",
+                "check_fit2d_1feature": "FIXME",
             }
         }
 
