@@ -236,11 +236,11 @@ jobs:
         not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]'))
       )
     matrix:
-      debian_atlas_32bit:
-        DOCKER_CONTAINER: 'i386/debian:12'
+      debian_32bit:
+        DOCKER_CONTAINER: 'i386/debian:trixie'
         DISTRIB: 'debian-32'
         COVERAGE: "true"
-        LOCK_FILE: './build_tools/azure/debian_atlas_32bit_lock.txt'
+        LOCK_FILE: './build_tools/azure/debian_32bit_lock.txt'
         # disable pytest xdist due to unknown bug with 32-bit container
         PYTEST_XDIST_VERSION: 'none'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '4'  # non-default seed
