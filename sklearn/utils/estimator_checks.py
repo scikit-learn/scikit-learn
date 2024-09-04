@@ -33,6 +33,7 @@ from ..datasets import (
     make_regression,
 )
 from ..exceptions import DataConversionWarning, NotFittedError, SkipTestWarning
+from ..linear_model._base import LinearClassifierMixin
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 from ..metrics.pairwise import linear_kernel, pairwise_distances, rbf_kernel
 from ..model_selection import ShuffleSplit, train_test_split
@@ -181,6 +182,15 @@ def _yield_classifier_checks(classifier):
     yield check_non_transformer_estimators_n_iter
     # test if predict_proba is a monotonic transformation of decision_function
     yield check_decision_proba_consistency
+
+    if isinstance(classifier, LinearClassifierMixin):
+        if "class_weight" in classifier.get_params().keys():
+            yield check_class_weight_balanced_linear_classifier
+    if (
+        isinstance(classifier, LinearClassifierMixin)
+        and "class_weight" in classifier.get_params().keys()
+    ):
+        yield check_class_weight_balanced_linear_classifier
 
 
 @ignore_warnings(category=FutureWarning)
@@ -344,7 +354,7 @@ def _yield_all_checks(estimator, legacy: bool):
         yield check
 
     if not legacy:
-        return
+        return  # pragma: no cover
 
     for check in _yield_checks(estimator):
         yield check
@@ -435,13 +445,15 @@ def _should_be_skipped_or_marked(estimator, check):
     return False, "placeholder reason that will never be used"
 
 
-def parametrize_with_checks(estimators, legacy=True):
+def parametrize_with_checks(estimators, *, legacy=True):
     """Pytest specific decorator for parametrizing estimator checks.
 
     Checks are categorised into the following groups:
 
-        - API checks: a set of checks to ensure API compatibility with scikit-learn
-        - legacy: a set of checks which gradually will be grouped into other categories
+        - API checks: a set of checks to ensure API compatibility with scikit-learn.
+          Refer to https://scikit-learn.org/dev/developers/develop.html a requirement of
+          scikit-learn estimators.
+        - legacy: a set of checks which gradually will be grouped into other categories.
 
     The `id` of each check is set to be a pprint version of the estimator
     and the name of the check with its keyword arguments.
@@ -460,8 +472,9 @@ def parametrize_with_checks(estimators, legacy=True):
 
         .. versionadded:: 0.24
 
-    legacy : bool (default=True)
-        Whether to include legacy checks.
+    legacy : bool, default=True
+        Whether to include legacy checks. Over time we remove checks from this category
+        and move them into their specific category.
 
         .. versionadded:: 1.6
 
@@ -507,7 +520,7 @@ def parametrize_with_checks(estimators, legacy=True):
     )
 
 
-def check_estimator(estimator=None, generate_only=False, legacy=True):
+def check_estimator(estimator=None, generate_only=False, *, legacy=True):
     """Check if estimator adheres to scikit-learn conventions.
 
     This function will run an extensive test-suite for input validation,
@@ -528,8 +541,10 @@ def check_estimator(estimator=None, generate_only=False, legacy=True):
 
     Checks are categorised into the following groups:
 
-        - API checks: a set of checks to ensure API compatibility with scikit-learn
-        - legacy: a set of checks which gradually will be grouped into other categories
+        - API checks: a set of checks to ensure API compatibility with scikit-learn.
+          Refer to https://scikit-learn.org/dev/developers/develop.html a requirement of
+          scikit-learn estimators.
+        - legacy: a set of checks which gradually will be grouped into other categories.
 
     Parameters
     ----------
@@ -548,8 +563,9 @@ def check_estimator(estimator=None, generate_only=False, legacy=True):
 
         .. versionadded:: 0.22
 
-    legacy : bool (default=True)
-        Whether to include legacy checks.
+    legacy : bool, default=True
+        Whether to include legacy checks. Over time we remove checks from this category
+        and move them into their specific category.
 
         .. versionadded:: 1.6
 
@@ -1326,7 +1342,7 @@ def _apply_on_subsets(func, X):
     result_by_batch = [func(batch.reshape(1, n_features)) for batch in X]
 
     # func can output tuple (e.g. score_samples)
-    if type(result_full) == tuple:
+    if isinstance(result_full, tuple):
         result_full = result_full[0]
         result_by_batch = list(map(lambda x: x[0], result_by_batch))
 
@@ -3017,13 +3033,13 @@ def check_class_weight_balanced_classifiers(
 
 
 @ignore_warnings(category=FutureWarning)
-def check_class_weight_balanced_linear_classifier(name, Classifier):
+def check_class_weight_balanced_linear_classifier(name, estimator_orig):
     """Test class weights with non-contiguous class labels."""
     # this is run on classes, not instances, though this should be changed
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-0.8, -1.0], [1.0, 1.0], [1.0, 0.0]])
     y = np.array([1, 1, 1, -1, -1])
 
-    classifier = Classifier()
+    classifier = clone(estimator_orig)
 
     if hasattr(classifier, "n_iter"):
         # This is a very small dataset, default n_iter are likely to prevent

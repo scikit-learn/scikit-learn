@@ -188,8 +188,6 @@ TEST_PARAMS = {
     GraphicalLassoCV: dict(max_iter=5, cv=3),
     GraphicalLasso: dict(max_iter=5),
     GridSearchCV: dict(cv=3),
-    HalvingGridSearchCV: dict(cv=3),
-    HalvingRandomSearchCV: dict(cv=3),
     HDBSCAN: dict(min_samples=1),
     # The default min_samples_leaf (20) isn't appropriate for small
     # datasets (only very shallow trees are built) that the checks use.
@@ -288,8 +286,8 @@ TEST_PARAMS = {
 
 
 def _set_checking_parameters(estimator):
-    # set parameters to speed up some estimators and
-    # avoid deprecated behaviour
+    """Set the parameters of an estimator instance to speed-up tests and avoid
+    deprecation warnings in common test."""
     if type(estimator) in TEST_PARAMS:
         test_params = TEST_PARAMS[type(estimator)]
         estimator.set_params(**test_params)
@@ -306,6 +304,9 @@ def _tested_estimators(type_filter=None):
 
 
 def _generate_pipeline():
+    """Generator of simple pipeline to check compliance of the
+    :class:`~sklearn.pipeline.Pipeline` class.
+    """
     for final_estimator in [Ridge(), LogisticRegression()]:
         yield Pipeline(
             steps=[
@@ -319,15 +320,28 @@ INIT_PARAMS = {
     SelfTrainingClassifier: dict(estimator=LogisticRegression(C=1)),
     CalibratedClassifierCV: dict(estimator=LogisticRegression(C=1)),
     ClassifierChain: dict(base_estimator=LogisticRegression(C=1)),
-    ColumnTransformer: dict(transformers=[("trans1", StandardScaler(), [0])]),
+    ColumnTransformer: dict(
+        transformers=[
+            ("trans1", StandardScaler(), [0, 1]),
+        ]
+    ),
     FeatureUnion: dict(transformer_list=[("trans1", StandardScaler())]),
     FixedThresholdClassifier: dict(estimator=LogisticRegression(C=1)),
     GridSearchCV: dict(estimator=LogisticRegression(C=1), param_grid={"C": [1.0]}),
     HalvingGridSearchCV: dict(
-        estimator=LogisticRegression(C=1), param_grid={"C": [1.0]}
+        estimator=Ridge(),
+        min_resources="smallest",
+        param_grid={"alpha": [0.1, 1.0]},
+        random_state=0,
+        cv=2,
+        error_score="raise",
     ),
     HalvingRandomSearchCV: dict(
-        estimator=LogisticRegression(C=1), param_distributions={"C": [1.0]}
+        estimator=LogisticRegression(),
+        param_distributions={"C": [0.1, 1.0]},
+        min_resources="smallest",
+        cv=2,
+        error_score="raise",
     ),
     MultiOutputClassifier: dict(estimator=LogisticRegression(C=1)),
     MultiOutputRegressor: dict(estimator=Ridge()),
@@ -430,15 +444,8 @@ def _get_check_estimator_ids(obj):
             return re.sub(r"\s", "", str(obj))
 
 
-def _generate_column_transformer_instances():
-    yield ColumnTransformer(
-        transformers=[
-            ("trans1", StandardScaler(), [0, 1]),
-        ]
-    )
-
-
 def _generate_search_cv_instances():
+    """Generator of `SearchCV` instances to check their compliance with scikit-learn."""
     for SearchCV, (Estimator, param_grid) in product(
         [
             GridSearchCV,

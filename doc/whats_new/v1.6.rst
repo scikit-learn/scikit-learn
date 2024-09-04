@@ -46,10 +46,14 @@ See :ref:`array_api` for more details.
 - :func:`sklearn.metrics.pairwise.chi2_kernel` :pr:`29267` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.metrics.pairwise.cosine_distances` :pr:`29265` by :user:`Emily Chen <EmilyXinyi>`;
 - :func:`sklearn.metrics.pairwise.cosine_similarity` :pr:`29014` by :user:`Edoardo Abati <EdAbati>`;
+- :func:`sklearn.metrics.pairwise.euclidean_distances` :pr:`29433` by :user:`Omar Salman <OmarManzoor>`;
+- :func:`sklearn.metrics.pairwise.linear_kernel` :pr:`29475` by :user:`Omar Salman <OmarManzoor>`;
 - :func:`sklearn.metrics.pairwise.paired_cosine_distances` :pr:`29112` by :user:`Edoardo Abati <EdAbati>`.
 - :func:`sklearn.metrics.pairwise.paired_euclidean_distances` :pr:`29389` by :user:`Emily Chen <EmilyXinyi>`;
-- :func:`sklearn.metrics.pairwise.euclidean_distances` :pr:`29433` by :user:`Omar Salman <OmarManzoor>`;
-- :func:`sklearn.metrics.pairwise.rbf_kernel` :pr:`29433` by :user:`Omar Salman <OmarManzoor>`.
+- :func:`sklearn.metrics.pairwise.polynomial_kernel` :pr:`29475` by :user:`Omar Salman <OmarManzoor>`;
+- :func:`sklearn.metrics.pairwise.rbf_kernel` :pr:`29433` by :user:`Omar Salman <OmarManzoor>`;
+- :func:`sklearn.metrics.pairwise.sigmoid_kernel` :pr:`29475` by :user:`Omar Salman <OmarManzoor>`.
+
 
 **Classes:**
 
@@ -167,6 +171,12 @@ Changelog
 - |Enhancement| :func:`sklearn.compose.ColumnTransformer` `verbose_feature_names_out`
   now accepts string format or callable to generate feature names. :pr:`28934` by
   :user:`Marc Bresson <MarcBresson>`.
+
+:mod:`sklearn.cross_decomposition`
+..................................
+
+- |Fix| :class:`cross_decomposition.PLSRegression` properly raises an error when
+  `n_components` is larger than `n_samples`. :pr:`29710` by `Thomas Fan`_.
 
 :mod:`sklearn.datasets`
 .......................
@@ -287,6 +297,10 @@ Changelog
 - |Enhancement| The HTML representation of :class:`preprocessing.FunctionTransformer`
   will show the function name in the label.
   :pr:`29158` by :user:`Yao Xiao <Charlie-XIAO>`.
+
+- |Fix| :class:`preprocessing.PowerTransformer` now uses `scipy.special.inv_boxcox`
+  to output `nan` if the input of BoxCox's inverse is invalid.
+  :pr:`27875` by :user:`Xuefeng Xu <xuefeng-xu>`.
 
 :mod:`sklearn.semi_supervised`
 ..............................
