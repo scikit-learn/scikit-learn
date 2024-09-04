@@ -87,7 +87,6 @@ class BaseThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator
           error.
     """
 
-    _required_parameters = ["estimator"]
     _parameter_constraints: dict = {
         "estimator": [
             HasMethods(["fit", "predict_proba"]),

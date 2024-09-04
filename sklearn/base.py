@@ -1314,31 +1314,13 @@ class OutlierMixin:
 class MetaEstimatorMixin:
     """Mixin class for all meta estimators in scikit-learn.
 
-    This mixin defines the following functionality:
+    This mixin is empty, and only exists to indicate that the estimator is a
+    meta-estimator.
 
-    - define `_required_parameters` that specify the mandatory `estimator` parameter.
-
-    Examples
-    --------
-    >>> from sklearn.base import MetaEstimatorMixin
-    >>> from sklearn.datasets import load_iris
-    >>> from sklearn.linear_model import LogisticRegression
-    >>> class MyEstimator(MetaEstimatorMixin):
-    ...     def __init__(self, *, estimator=None):
-    ...         self.estimator = estimator
-    ...     def fit(self, X, y=None):
-    ...         if self.estimator is None:
-    ...             self.estimator_ = LogisticRegression()
-    ...         else:
-    ...             self.estimator_ = self.estimator
-    ...         return self
-    >>> X, y = load_iris(return_X_y=True)
-    >>> estimator = MyEstimator().fit(X, y)
-    >>> estimator.estimator_
-    LogisticRegression()
+    .. versionchanged:: 1.6
+        The `_required_parameters` is now removed and is unnecessary since tests are
+        refactored and don't use this anymore.
     """
-
-    _required_parameters = ["estimator"]
 
 
 class MultiOutputMixin:

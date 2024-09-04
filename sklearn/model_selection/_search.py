@@ -1531,8 +1531,6 @@ class GridSearchCV(BaseSearchCV):
      'std_fit_time', 'std_score_time', 'std_test_score']
     """
 
-    _required_parameters = ["estimator", "param_grid"]
-
     _parameter_constraints: dict = {
         **BaseSearchCV._parameter_constraints,
         "param_grid": [dict, list],
@@ -1911,8 +1909,6 @@ class RandomizedSearchCV(BaseSearchCV):
     >>> search.best_params_
     {'C': np.float64(2...), 'penalty': 'l1'}
     """
-
-    _required_parameters = ["estimator", "param_distributions"]
 
     _parameter_constraints: dict = {
         **BaseSearchCV._parameter_constraints,

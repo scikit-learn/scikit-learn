@@ -672,8 +672,6 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
     {'max_depth': None, 'min_samples_split': 10, 'n_estimators': 9}
     """
 
-    _required_parameters = ["estimator", "param_grid"]
-
     _parameter_constraints: dict = {
         **BaseSuccessiveHalving._parameter_constraints,
         "param_grid": [dict, list],
@@ -1021,8 +1019,6 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
     >>> search.best_params_  # doctest: +SKIP
     {'max_depth': None, 'min_samples_split': 10, 'n_estimators': 9}
     """
-
-    _required_parameters = ["estimator", "param_distributions"]
 
     _parameter_constraints: dict = {
         **BaseSuccessiveHalving._parameter_constraints,

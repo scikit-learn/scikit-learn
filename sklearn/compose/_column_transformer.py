@@ -285,8 +285,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`.
     """
 
-    _required_parameters = ["transformers"]
-
     _parameter_constraints: dict = {
         "transformers": [list, Hidden(tuple)],
         "remainder": [

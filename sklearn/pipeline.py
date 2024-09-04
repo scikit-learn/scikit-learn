@@ -152,8 +152,6 @@ class Pipeline(_BaseComposition):
     """
 
     # BaseEstimator interface
-    _required_parameters = ["steps"]
-
     _parameter_constraints: dict = {
         "steps": [list, Hidden(tuple)],
         "memory": [None, str, HasMethods(["cache"])],
@@ -1425,8 +1423,6 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     For a more detailed example of usage, see
     :ref:`sphx_glr_auto_examples_compose_plot_feature_union.py`.
     """
-
-    _required_parameters = ["transformer_list"]
 
     def __init__(
         self,
