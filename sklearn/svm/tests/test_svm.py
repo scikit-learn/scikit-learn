@@ -1201,7 +1201,11 @@ def test_svc_ovr_tie_breaking(SVCClass):
     Related issue: https://github.com/scikit-learn/scikit-learn/issues/8277
     """
     if SVCClass.__name__ == "NuSVC" and _IS_32BIT:
-        pytest.skip("Unstable test on 32bit OS")
+        # XXX: known failure to be investigated. Either the code needs to be
+        # fixed or the test itself might need to be made less sensitive to
+        # random changes in test data and rounding errors more generally.
+        # https://github.com/scikit-learn/scikit-learn/issues/29633
+        pytest.xfail("Failing test on 32bit OS")
 
     X, y = make_blobs(random_state=0, n_samples=20, n_features=2)
 
