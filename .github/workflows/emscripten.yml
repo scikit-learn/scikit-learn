@@ -42,7 +42,7 @@ jobs:
           actions-cache-folder: emsdk-cache
 
       - name: Install pyodide-build
-        run: pip install pyodide-build
+        run: pip install pyodide-build pyodide-cli
 
       - name: Build scikit-learn for Pyodide
         run: pyodide build
