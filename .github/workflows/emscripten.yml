@@ -55,10 +55,6 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      # # The Pyodide JavaScript library is needed to run the tests in WASM
-      # - name: Install Pyodide
-      #   run: npm install pyodide@0.27.0-alpha.2
-
       - name: Set up Pyodide virtual environment and test scikit-learn for Pyodide
         env:
           SKLEARN_SKIP_OPENMP_TEST: "true"
@@ -67,6 +63,7 @@ jobs:
           set -e -x
 
           # Set up Pyodide virtual environment
+          pyodide xbuildenv install ${{ env.PYODIDE_VERSION }}
           pyodide venv .venv-pyodide
 
           # Activate the virtual environment and install the built scikit-learn wheel
@@ -77,6 +74,9 @@ jobs:
           # package instead of the installed one
           cd doc
           pip install pytest
+
+          # The Pyodide JavaScript library is needed to run the tests in WASM
+          npm install pyodide@0.27.0-alpha.2
 
           # Try importing sklearn to see if the build is successful
           python -c "import sklearn; print(sklearn.__version__)"
