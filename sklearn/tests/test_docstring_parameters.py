@@ -22,6 +22,7 @@ from sklearn.experimental import (
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils import all_estimators
+from sklearn.utils._test_common.instance_generator import _construct_instance
 from sklearn.utils._testing import (
     _get_func_name,
     check_docstring_parameters,
@@ -29,7 +30,6 @@ from sklearn.utils._testing import (
 )
 from sklearn.utils.deprecation import _is_deprecated
 from sklearn.utils.estimator_checks import (
-    _construct_instance,
     _enforce_estimator_tags_X,
     _enforce_estimator_tags_y,
 )
