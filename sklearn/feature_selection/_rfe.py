@@ -22,6 +22,7 @@ from ..utils._metadata_requests import (
     process_routing,
 )
 from ..utils._param_validation import HasMethods, Interval, RealNotInt
+from ..utils._tags import get_tags
 from ..utils.metaestimators import _safe_split, available_if
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
@@ -531,17 +532,14 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         check_is_fitted(self)
         return self.estimator_.predict_log_proba(self.transform(X))
 
-    def _more_tags(self):
-        tags = {
-            "poor_score": True,
-            "requires_y": True,
-            "allow_nan": True,
-        }
-
-        # Adjust allow_nan if estimator explicitly defines `allow_nan`.
-        if hasattr(self.estimator, "_get_tags"):
-            tags["allow_nan"] = self.estimator._get_tags()["allow_nan"]
-
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        if tags.classifier_tags is not None:
+            tags.classifier_tags.poor_score = True
+        if tags.regressor_tags is not None:
+            tags.regressor_tags.poor_score = True
+        tags.target_tags.required = True
+        tags.input_tags.allow_nan = get_tags(self.estimator).input_tags.allow_nan
         return tags
 
     def get_metadata_routing(self):

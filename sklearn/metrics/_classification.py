@@ -1727,14 +1727,18 @@ def precision_recall_fscore_support(
         "assigned" 0 samples. For multilabel targets, labels are column indices.
         By default, all labels in `y_true` and `y_pred` are used in sorted order.
 
+        .. versionchanged:: 0.17
+           Parameter `labels` improved for multiclass problem.
+
     pos_label : int, float, bool or str, default=1
         The class to report if `average='binary'` and the data is binary,
         otherwise this parameter is ignored.
         For multiclass or multilabel targets, set `labels=[pos_label]` and
         `average != 'binary'` to report metrics for one label only.
 
-    average : {'binary', 'micro', 'macro', 'samples', 'weighted'}, \
-            default=None
+    average : {'micro', 'macro', 'samples', 'weighted', 'binary'} or None, \
+            default='binary'
+        This parameter is required for multiclass/multilabel targets.
         If ``None``, the metrics for each class are returned. Otherwise, this
         determines the type of averaging performed on the data:
 

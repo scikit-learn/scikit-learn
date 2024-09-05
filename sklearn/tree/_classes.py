@@ -176,7 +176,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     def _support_missing_values(self, X):
         return (
             not issparse(X)
-            and self._get_tags()["allow_nan"]
+            and self.__sklearn_tags__().input_tags.allow_nan
             and self.monotonic_cst is None
         )
 
@@ -1071,7 +1071,8 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
             return proba
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
         # XXX: nan is only support for dense arrays, but we set this for common test to
         # pass, specifically: check_estimators_nan_inf
         allow_nan = self.splitter in ("best", "random") and self.criterion in {
@@ -1079,7 +1080,9 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             "log_loss",
             "entropy",
         }
-        return {"multilabel": True, "allow_nan": allow_nan}
+        tags.classifier_tags.multi_label = True
+        tags.input_tags.allow_nan = allow_nan
+        return tags
 
 
 class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
@@ -1402,7 +1405,8 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         )
         return averaged_predictions
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
         # XXX: nan is only support for dense arrays, but we set this for common test to
         # pass, specifically: check_estimators_nan_inf
         allow_nan = self.splitter in ("best", "random") and self.criterion in {
@@ -1410,7 +1414,8 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             "friedman_mse",
             "poisson",
         }
-        return {"allow_nan": allow_nan}
+        tags.input_tags.allow_nan = allow_nan
+        return tags
 
 
 class ExtraTreeClassifier(DecisionTreeClassifier):
@@ -1686,7 +1691,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             monotonic_cst=monotonic_cst,
         )
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
         # XXX: nan is only supported for dense arrays, but we set this for the
         # common test to pass, specifically: check_estimators_nan_inf
         allow_nan = self.splitter == "random" and self.criterion in {
@@ -1694,7 +1700,9 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             "log_loss",
             "entropy",
         }
-        return {"multilabel": True, "allow_nan": allow_nan}
+        tags.classifier_tags.multi_label = True
+        tags.input_tags.allow_nan = allow_nan
+        return tags
 
 
 class ExtraTreeRegressor(DecisionTreeRegressor):
@@ -1940,7 +1948,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             monotonic_cst=monotonic_cst,
         )
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
         # XXX: nan is only supported for dense arrays, but we set this for the
         # common test to pass, specifically: check_estimators_nan_inf
         allow_nan = self.splitter == "random" and self.criterion in {
@@ -1948,4 +1957,5 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             "friedman_mse",
             "poisson",
         }
-        return {"allow_nan": allow_nan}
+        tags.input_tags.allow_nan: allow_nan
+        return tags

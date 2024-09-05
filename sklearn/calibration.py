@@ -84,6 +84,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     `estimator` if it exists, else on :term:`predict_proba`.
 
     Read more in the :ref:`User Guide <calibration>`.
+    In order to learn more on the CalibratedClassifierCV class, see the
+    following calibration examples:
+    :ref:`sphx_glr_auto_examples_calibration_plot_calibration.py`,
+    :ref:`sphx_glr_auto_examples_calibration_plot_calibration_curve.py`, and
+    :ref:`sphx_glr_auto_examples_calibration_plot_calibration_multiclass.py`.
 
     Parameters
     ----------
@@ -535,16 +540,16 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         )
         return router
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "Due to the cross-validation and sample ordering, removing a sample"
-                    " is not strictly equal to putting is weight to zero. Specific unit"
-                    " tests are added for CalibratedClassifierCV specifically."
-                ),
-            }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_sample_weights_invariance": (
+                "Due to the cross-validation and sample ordering, removing a sample"
+                " is not strictly equal to putting is weight to zero. Specific unit"
+                " tests are added for CalibratedClassifierCV specifically."
+            ),
         }
+        return tags
 
 
 def _fit_classifier_calibrator_pair(
@@ -1046,6 +1051,9 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
 
     Read more about calibration in the :ref:`User Guide <calibration>` and
     more about the scikit-learn visualization API in :ref:`visualizations`.
+
+    For an example on how to use the visualization, see
+    :ref:`sphx_glr_auto_examples_calibration_plot_calibration_curve.py`.
 
     .. versionadded:: 1.0
 
