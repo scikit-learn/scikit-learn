@@ -2,6 +2,7 @@ import numpy as np
 from numpy.testing import assert_array_equal
 
 from sklearn.utils._unique import attach_unique, cached_unique
+from sklearn.utils.validation import check_array
 
 
 def test_attach_unique_attaches_unique_to_array():
@@ -42,3 +43,12 @@ def test_attach_unique_return_tuple():
     arr_single = attach_unique(arr, return_tuple=False)
     assert isinstance(arr_single, np.ndarray)
     assert_array_equal(arr_single, arr)
+
+
+def test_check_array_keeps_unique():
+    """Test that check_array keeps the unique metadata."""
+    arr = np.array([[1, 2, 2, 3, 4, 4, 5]])
+    arr_ = attach_unique(arr)
+    arr_ = check_array(arr_)
+    assert_array_equal(arr_.dtype.metadata["unique"], np.array([1, 2, 3, 4, 5]))
+    assert_array_equal(arr_, arr)
