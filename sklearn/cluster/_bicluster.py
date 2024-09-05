@@ -193,19 +193,19 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
         labels = model.labels_
         return centroid, labels
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_estimators_dtypes": "raises nan error",
-                "check_fit2d_1sample": "_scale_normalize fails",
-                "check_fit2d_1feature": "raises apply_along_axis error",
-                "check_estimator_sparse_matrix": "does not fail gracefully",
-                "check_estimator_sparse_array": "does not fail gracefully",
-                "check_methods_subset_invariance": "empty array passed inside",
-                "check_dont_overwrite_parameters": "empty array passed inside",
-                "check_fit2d_predict1d": "empty array passed inside",
-            }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_estimators_dtypes": "raises nan error",
+            "check_fit2d_1sample": "_scale_normalize fails",
+            "check_fit2d_1feature": "raises apply_along_axis error",
+            "check_estimator_sparse_matrix": "does not fail gracefully",
+            "check_estimator_sparse_array": "does not fail gracefully",
+            "check_methods_subset_invariance": "empty array passed inside",
+            "check_dont_overwrite_parameters": "empty array passed inside",
+            "check_fit2d_predict1d": "empty array passed inside",
         }
+        return tags
 
 
 class SpectralCoclustering(BaseSpectral):

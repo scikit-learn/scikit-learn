@@ -666,5 +666,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         return theta_opt, func_min
 
-    def _more_tags(self):
-        return {"requires_fit": False}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.requires_fit = False
+        return tags

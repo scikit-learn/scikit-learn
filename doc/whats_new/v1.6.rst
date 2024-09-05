@@ -31,6 +31,11 @@ Changes impacting many modules
   :func:`utils.validation.check_array` and :func:`utils.validation.check_X_y`.
   :pr:`29696` by `Adrin Jalali`_.
 
+- |Enhancement| `__sklearn_tags__` was introduced for setting tags in estimators.
+  More details in :ref:`estimator_tags`.
+  :pr:`22606` by `Thomas Fan`_ and :pr:`29677` by `Adrin Jalali`_.
+
+
 Support for Array API
 ---------------------
 

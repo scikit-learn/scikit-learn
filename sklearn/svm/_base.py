@@ -86,7 +86,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         ],
         "coef0": [Interval(Real, None, None, closed="neither")],
         "tol": [Interval(Real, 0.0, None, closed="neither")],
-        "C": [Interval(Real, 0.0, None, closed="neither")],
+        "C": [Interval(Real, 0.0, None, closed="right")],
         "nu": [Interval(Real, 0.0, 1.0, closed="right")],
         "epsilon": [Interval(Real, 0.0, None, closed="left")],
         "shrinking": ["boolean"],
@@ -143,9 +143,11 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         self.max_iter = max_iter
         self.random_state = random_state
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
         # Used by cross_val_score.
-        return {"pairwise": self.kernel == "precomputed"}
+        tags.input_tags.pairwise = self.kernel == "precomputed"
+        return tags
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):

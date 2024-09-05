@@ -21,7 +21,7 @@ from ..utils._array_api import _asarray_with_order, _is_numpy_namespace, get_nam
 from ..utils.deprecation import _deprecate_force_all_finite
 from ..utils.fixes import ComplexWarning, _preserve_dia_indices_dtype
 from ._isfinite import FiniteStatus, cy_isfinite
-from ._tags import _safe_tags
+from ._tags import get_tags
 from .fixes import _object_dtype_isnan
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
@@ -2847,7 +2847,7 @@ def validate_data(
         validated.
     """
     _check_feature_names(_estimator, X, reset=reset)
-    tags = _safe_tags(_estimator)
+    tags = get_tags(_estimator)
     if y is None and tags["requires_y"]:
         raise ValueError(
             f"This {_estimator.__class__.__name__} estimator "

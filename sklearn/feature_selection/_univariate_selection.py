@@ -578,8 +578,10 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
     def _check_params(self, X, y):
         pass
 
-    def _more_tags(self):
-        return {"requires_y": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.required = True
+        return tags
 
 
 ######################################################################
@@ -684,8 +686,10 @@ class SelectPercentile(_BaseFilter):
             mask[kept_ties] = True
         return mask
 
-    def _more_tags(self):
-        return {"requires_y": False}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.required = False
+        return tags
 
 
 class SelectKBest(_BaseFilter):
@@ -793,8 +797,10 @@ class SelectKBest(_BaseFilter):
             mask[np.argsort(scores, kind="mergesort")[-self.k :]] = 1
             return mask
 
-    def _more_tags(self):
-        return {"requires_y": False}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.required = False
+        return tags
 
 
 class SelectFpr(_BaseFilter):
@@ -1145,8 +1151,10 @@ class GenericUnivariateSelect(_BaseFilter):
 
         return selector
 
-    def _more_tags(self):
-        return {"preserves_dtype": [np.float64, np.float32]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
 
     def _check_params(self, X, y):
         self._make_selector()._check_params(X, y)
