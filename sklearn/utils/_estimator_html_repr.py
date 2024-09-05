@@ -468,7 +468,7 @@ class _HTMLDocumentationLinkMixin:
     If the default values for `_doc_link_module`, `_doc_link_template` are not suitable,
     then you can override them and provide a method to generate the URL parameters:
     >>> from sklearn.base import BaseEstimator
-    >>> doc_link_template = "https://website.com/{single_param}.html"
+    >>> doc_link_template = "https://address.local/{single_param}.html"
     >>> def url_param_generator(estimator):
     ...     return {"single_param": estimator.__class__.__name__}
     >>> class MyEstimator(BaseEstimator):
@@ -477,7 +477,7 @@ class _HTMLDocumentationLinkMixin:
     ...     _doc_link_url_param_generator = url_param_generator
     >>> estimator = MyEstimator()
     >>> estimator._get_doc_link()
-    'https://website.com/MyEstimator.html'
+    'https://address.local/MyEstimator.html'
 
     If instead of overriding the attributes inside the class definition, you want to
     override a class instance, you can use `types.MethodType` to bind the method to the
@@ -488,7 +488,7 @@ class _HTMLDocumentationLinkMixin:
     >>> estimator._doc_link_url_param_generator = types.MethodType(
     ...     url_param_generator, estimator)
     >>> estimator._get_doc_link()
-    'https://website.com/BaseEstimator.html'
+    'https://address.local/BaseEstimator.html'
     """
 
     _doc_link_module = "sklearn"
