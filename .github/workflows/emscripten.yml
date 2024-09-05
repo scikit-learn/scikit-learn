@@ -77,7 +77,7 @@ jobs:
 
           # Change to a different directory to avoid importing the local scikit-learn
           # package instead of the installed one
-          cd doc
+          cd maint_tools
           pip install pytest
 
           # The Pyodide JavaScript library is needed to run the tests in WASM
