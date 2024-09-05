@@ -1373,15 +1373,14 @@ class SGDClassifier(BaseSGDClassifier):
         """
         return np.log(self.predict_proba(X))
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            },
-            "preserves_dtype": [np.float64, np.float32],
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_sample_weights_invariance": (
+                "zero sample_weight is not equivalent to removing samples"
+            ),
         }
+        return tags
 
 
 class BaseSGDRegressor(RegressorMixin, BaseSGD):
@@ -2057,15 +2056,14 @@ class SGDRegressor(BaseSGDRegressor):
             average=average,
         )
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            },
-            "preserves_dtype": [np.float64, np.float32],
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_sample_weights_invariance": (
+                "zero sample_weight is not equivalent to removing samples"
+            ),
         }
+        return tags
 
 
 class SGDOneClassSVM(BaseSGD, OutlierMixin):
@@ -2637,12 +2635,11 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         y[y == 0] = -1  # for consistency with outlier detectors
         return y
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                )
-            },
-            "preserves_dtype": [np.float64, np.float32],
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_sample_weights_invariance": (
+                "zero sample_weight is not equivalent to removing samples"
+            ),
         }
+        return tags

@@ -523,141 +523,44 @@ Estimator Tags
 
     The estimator tags are experimental and the API is subject to change.
 
-Scikit-learn introduced estimator tags in version 0.21. These are annotations
-of estimators that allow programmatic inspection of their capabilities, such as
-sparse matrix support, supported output types and supported methods. The
-estimator tags are a dictionary returned by the method ``_get_tags()``. These
+.. note::
+
+    Scikit-learn introduced estimator tags in version 0.21 as a
+    private API and mostly used in tests. However, these tags expanded
+    over time and many third party developers also need to use
+    them. Therefore in version 1.6 the API for the tags were revamped
+    and exposed as public API.
+
+The estimator tags are annotations of estimators that allow
+programmatic inspection of their capabilities, such as sparse matrix
+support, supported output types and supported methods. The estimator
+tags are an instance of :class:`~sklearn.utils.Tags` returned by the
+method :meth:`~sklearn.base.BaseEstimator.__sklearn_tags__()`. These
 tags are used in the common checks run by the
-:func:`~sklearn.utils.estimator_checks.check_estimator` function and the
-:func:`~sklearn.utils.estimator_checks.parametrize_with_checks` decorator.
-Tags determine which checks to run and what input data is appropriate. Tags
-can depend on estimator parameters or even system architecture and can in
-general only be determined at runtime.
+:func:`~sklearn.utils.estimator_checks.check_estimator` function and
+the :func:`~sklearn.utils.estimator_checks.parametrize_with_checks`
+decorator. Tags determine which checks to run and what input data is
+appropriate. Tags can depend on estimator parameters or even system
+architecture and can in general only be determined at runtime and
+are therefore instance attributes rather than class attributes. See
+:class:`~sklearn.utils.Tags` for more information about individual
+tags.
 
-The current set of estimator tags are:
-
-allow_nan (default=False)
-    whether the estimator supports data with missing values encoded as np.nan
-
-array_api_support (default=False)
-    whether the estimator supports Array API compatible inputs.
-
-binary_only (default=False)
-    whether estimator supports binary classification but lacks multi-class
-    classification support.
-
-multilabel (default=False)
-    whether the estimator supports multilabel output
-
-multioutput (default=False)
-    whether a regressor supports multi-target outputs or a classifier supports
-    multi-class multi-output.
-
-multioutput_only (default=False)
-    whether estimator supports only multi-output classification or regression.
-
-no_validation (default=False)
-    whether the estimator skips input-validation. This is only meant for
-    stateless and dummy transformers!
-
-non_deterministic (default=False)
-    whether the estimator is not deterministic given a fixed ``random_state``
-
-pairwise (default=False)
-    This boolean attribute indicates whether the data (`X`) :term:`fit` and
-    similar methods consists of pairwise measures over samples rather than a
-    feature representation for each sample.  It is usually `True` where an
-    estimator has a `metric` or `affinity` or `kernel` parameter with value
-    'precomputed'. Its primary purpose is to support a :term:`meta-estimator`
-    or a cross validation procedure that extracts a sub-sample of data intended
-    for a pairwise estimator, where the data needs to be indexed on both axes.
-    Specifically, this tag is used by
-    `sklearn.utils.metaestimators._safe_split` to slice rows and
-    columns.
-
-preserves_dtype (default=``[np.float64]``)
-    applies only on transformers. It corresponds to the data types which will
-    be preserved such that `X_trans.dtype` is the same as `X.dtype` after
-    calling `transformer.transform(X)`. If this list is empty, then the
-    transformer is not expected to preserve the data type. The first value in
-    the list is considered as the default data type, corresponding to the data
-    type of the output when the input data type is not going to be preserved.
-
-poor_score (default=False)
-    whether the estimator fails to provide a "reasonable" test-set score, which
-    currently for regression is an R2 of 0.5 on ``make_regression(n_samples=200,
-    n_features=10, n_informative=1, bias=5.0, noise=20, random_state=42)``, and
-    for classification an accuracy of 0.83 on
-    ``make_blobs(n_samples=300, random_state=0)``. These datasets and values
-    are based on current estimators in sklearn and might be replaced by
-    something more systematic.
-
-requires_fit (default=True)
-    whether the estimator requires to be fitted before calling one of
-    `transform`, `predict`, `predict_proba`, or `decision_function`.
-
-requires_positive_X (default=False)
-    whether the estimator requires positive X.
-
-requires_y (default=False)
-    whether the estimator requires y to be passed to `fit`, `fit_predict` or
-    `fit_transform` methods. The tag is True for estimators inheriting from
-    `~sklearn.base.RegressorMixin` and `~sklearn.base.ClassifierMixin`.
-
-requires_positive_y (default=False)
-    whether the estimator requires a positive y (only applicable for regression).
-
-_skip_test (default=False)
-    whether to skip common tests entirely. Don't use this unless you have a
-    *very good* reason.
-
-_xfail_checks (default=False)
-    dictionary ``{check_name: reason}`` of common checks that will be marked
-    as `XFAIL` for pytest, when using
-    :func:`~sklearn.utils.estimator_checks.parametrize_with_checks`. These
-    checks will be simply ignored and not run by
-    :func:`~sklearn.utils.estimator_checks.check_estimator`, but a
-    `SkipTestWarning` will be raised.
-    Don't use this unless there is a *very good* reason for your estimator
-    not to pass the check.
-    Also note that the usage of this tag is highly subject to change because
-    we are trying to make it more flexible: be prepared for breaking changes
-    in the future.
-
-stateless (default=False)
-    whether the estimator needs access to data for fitting. Even though an
-    estimator is stateless, it might still need a call to ``fit`` for
-    initialization.
-
-X_types (default=['2darray'])
-    Supported input types for X as list of strings. Tests are currently only
-    run if '2darray' is contained in the list, signifying that the estimator
-    takes continuous 2d numpy arrays as input. The default value is
-    ['2darray']. Other possible types are ``'string'``, ``'sparse'``,
-    ``'categorical'``, ``dict``, ``'1dlabels'`` and ``'2dlabels'``. The goal is
-    that in the future the supported input type will determine the data used
-    during testing, in particular for ``'string'``, ``'sparse'`` and
-    ``'categorical'`` data. For now, the test for sparse data do not make use
-    of the ``'sparse'`` tag.
-
-It is unlikely that the default values for each tag will suit the needs of your
-specific estimator. Additional tags can be created or default tags can be
-overridden by defining a `_more_tags()` method which returns a dict with the
-desired overridden tags or new tags. For example::
+It is unlikely that the default values for each tag will suit the
+needs of your specific estimator. You can change the default values by
+defining a `__sklearn_tags__()` method which returns the new values
+for your estimator's tags. For example::
 
     class MyMultiOutputEstimator(BaseEstimator):
 
-        def _more_tags(self):
-            return {'multioutput_only': True,
-                    'non_deterministic': True}
+        def __sklearn_tags__(self):
+            tags = super().__sklearn_tags__()
+            tags.target_tags.single_output = False
+            tags.non_deterministic = True
+            return tags
 
-Any tag that is not in `_more_tags()` will just fall-back to the default values
-documented above.
-
-Even if it is not recommended, it is possible to override the method
-`_get_tags()`. Note however that **all tags must be present in the dict**. If
-any of the keys documented above is not present in the output of `_get_tags()`,
-an error will occur.
+You can create a new subclass of :class:`~sklearn.utils.Tags` if you wish
+to add new tags to the existing set.
 
 In addition to the tags, estimators also need to declare any non-optional
 parameters to ``__init__`` in the ``_required_parameters`` class attribute,

@@ -908,8 +908,11 @@ class HashingVectorizer(
             alternate_sign=self.alternate_sign,
         )
 
-    def _more_tags(self):
-        return {"X_types": ["string"]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.string = True
+        tags.input_tags.two_d_array = False
+        return tags
 
 
 def _document_frequency(X):
@@ -1465,8 +1468,11 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             dtype=object,
         )
 
-    def _more_tags(self):
-        return {"X_types": ["string"]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.string = True
+        tags.input_tags.two_d_array = False
+        return tags
 
 
 def _make_int_array():
@@ -1703,13 +1709,13 @@ class TfidfTransformer(
 
         return X
 
-    def _more_tags(self):
-        return {
-            "X_types": ["2darray", "sparse"],
-            # FIXME: np.float16 could be preserved if _inplace_csr_row_normalize_l2
-            # accepted it.
-            "preserves_dtype": [np.float64, np.float32],
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        # FIXME: np.float16 could be preserved if _inplace_csr_row_normalize_l2
+        # accepted it.
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
 
 
 class TfidfVectorizer(CountVectorizer):
@@ -2109,5 +2115,9 @@ class TfidfVectorizer(CountVectorizer):
         X = super().transform(raw_documents)
         return self._tfidf.transform(X, copy=False)
 
-    def _more_tags(self):
-        return {"X_types": ["string"], "_skip_test": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.string = True
+        tags.input_tags.two_d_array = False
+        tags._skip_test = True
+        return tags

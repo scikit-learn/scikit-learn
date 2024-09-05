@@ -407,8 +407,7 @@ General Concepts
         likelihoods.
 
     estimator tags
-        A proposed feature (e.g. :issue:`8022`) by which the capabilities of an
-        estimator are described through a set of semantic tags.  This would
+        Estimator tags describe certain capabilities of an estimator.  This would
         enable some runtime behaviors based on estimator inspection, but it
         also allows each estimator to be tested for appropriate invariances
         while being excepted from other :term:`common tests`.
