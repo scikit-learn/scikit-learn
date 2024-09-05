@@ -61,7 +61,7 @@ enhance the functionality of scikit-learn's estimators.
   It incorporates multiple modeling libraries under one API, and
   the objects that EvalML creates use an sklearn-compatible API.
 
-- `MLJAR AutoML <https://github.com/mljar/supervised>`_
+- `MLJAR AutoML <https://github.com/mljar/mljar-supervised>`_
   Python package for AutoML on Tabular Data with Feature Engineering, 
   Hyper-Parameters Tuning, Explanations and Automatic Documentation.
 
