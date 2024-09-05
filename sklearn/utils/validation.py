@@ -2848,7 +2848,7 @@ def validate_data(
     """
     _check_feature_names(_estimator, X, reset=reset)
     tags = get_tags(_estimator)
-    if y is None and tags["requires_y"]:
+    if y is None and tags.target_tags.required:
         raise ValueError(
             f"This {_estimator.__class__.__name__} estimator "
             "requires y to be passed, but the target y is None."
