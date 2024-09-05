@@ -178,7 +178,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        validate_data(self, X, cast_to_ndarray=False)
+        validate_data(self, X, skip_check_array=True)
 
         self._strategy = self.strategy
 
@@ -562,7 +562,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        validate_data(self, X, cast_to_ndarray=False)
+        validate_data(self, X, skip_check_array=True)
 
         y = check_array(y, ensure_2d=False, input_name="y")
         if len(y) == 0:

@@ -110,7 +110,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
             dtype=None,
             accept_sparse="csr",
             ensure_all_finite=not get_tags(self).input_tags.allow_nan,
-            cast_to_ndarray=not preserve_X,
+            skip_check_array=preserve_X,
             reset=False,
         )
         return self._transform(X)

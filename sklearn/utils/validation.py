@@ -2768,7 +2768,7 @@ def validate_data(
     y="no_validation",
     reset=True,
     validate_separately=False,
-    cast_to_ndarray=True,
+    skip_check_array=False,
     **check_params,
 ):
     """Validate input data and set or check feature names and counts of the input.
@@ -2827,10 +2827,10 @@ def validate_data(
         `estimator=self` is automatically added to these dicts to generate
         more informative error message in case of invalid input data.
 
-    cast_to_ndarray : bool, default=True
-        Cast `X` and `y` to ndarray with checks in `check_params`. If
-        `False`, `X` and `y` are unchanged and only `feature_names_in_` and
-        `n_features_in_` are checked.
+    skip_check_array : bool, default=False
+        If `True`, `X` and `y` are unchanged and only `feature_names_in_` and
+        `n_features_in_` are checked. Otherwise, :func:`~sklearn.utils.check_array`
+        is called on `X` and `y`.
 
     **check_params : kwargs
         Parameters passed to :func:`sklearn.utils.check_array` or
@@ -2863,7 +2863,7 @@ def validate_data(
     default_check_params = {"estimator": _estimator}
     check_params = {**default_check_params, **check_params}
 
-    if not cast_to_ndarray:
+    if skip_check_array:
         if not no_val_X and no_val_y:
             out = X
         elif no_val_X and not no_val_y:
