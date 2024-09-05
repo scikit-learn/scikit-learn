@@ -20,7 +20,7 @@ def _attach_unique(y):
     except (AttributeError, TypeError):
         pass
 
-    unique = np.unique_values(y)
+    unique = np.unique(y)
     unique_dtype = np.dtype(y.dtype, metadata={"unique": unique})
     return y.view(dtype=unique_dtype)
 
