@@ -12,6 +12,7 @@ import numpy as np
 import pytest
 
 import sklearn
+from sklearn import metrics
 from sklearn.datasets import make_classification
 
 # make it possible to discover experimental estimators when calling `all_estimators`
@@ -20,7 +21,6 @@ from sklearn.experimental import (
     enable_iterative_imputer,  # noqa
 )
 from sklearn.linear_model import LogisticRegression
-from sklearn import metrics
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils import all_estimators
 from sklearn.utils._testing import (
