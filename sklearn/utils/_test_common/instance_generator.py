@@ -149,148 +149,205 @@ CROSS_DECOMPOSITION = ["PLSCanonical", "PLSRegression", "CCA", "PLSSVD"]
 
 # The following dictionary is to indicate constructor arguments suitable for the test
 # suite, which uses very small datasets, and is intended to run rather quickly.
-TEST_PARAMS = {
-    AdaBoostClassifier: dict(n_estimators=5),
-    AdaBoostRegressor: dict(n_estimators=5),
-    AffinityPropagation: dict(max_iter=5),
-    AgglomerativeClustering: dict(n_clusters=2),
-    ARDRegression: dict(max_iter=5),
-    BaggingClassifier: dict(n_estimators=5),
-    BaggingRegressor: dict(n_estimators=5),
-    BayesianGaussianMixture: dict(n_init=2, max_iter=5),
-    BayesianRidge: dict(max_iter=5),
-    BernoulliRBM: dict(n_iter=5, batch_size=10),
-    Birch: dict(n_clusters=2),
-    BisectingKMeans: dict(n_init=2, n_clusters=2, max_iter=5),
-    CalibratedClassifierCV: dict(cv=3),
-    CCA: dict(n_components=1, max_iter=5),
-    ClassifierChain: dict(cv=3),
-    DictionaryLearning: dict(max_iter=20, transform_algorithm="lasso_lars"),
+INIT_PARAMS = {
+    AdaBoostClassifier: {"n_estimators": 5},
+    AdaBoostRegressor: {"n_estimators": 5},
+    AffinityPropagation: {"max_iter": 5},
+    AgglomerativeClustering: {"n_clusters": 2},
+    ARDRegression: {"max_iter": 5},
+    BaggingClassifier: {"n_estimators": 5},
+    BaggingRegressor: {"n_estimators": 5},
+    BayesianGaussianMixture: {"n_init": 2, "max_iter": 5},
+    BayesianRidge: {"max_iter": 5},
+    BernoulliRBM: {"n_iter": 5, "batch_size": 10},
+    Birch: {"n_clusters": 2},
+    BisectingKMeans: {"n_init": 2, "n_clusters": 2, "max_iter": 5},
+    CalibratedClassifierCV: {"estimator": LogisticRegression(C=1), "cv": 3},
+    CCA: {"n_components": 1, "max_iter": 5},
+    ClassifierChain: {"base_estimator": LogisticRegression(C=1), "cv": 3},
+    ColumnTransformer: {"transformers": [("trans1", StandardScaler(), [0, 1])]},
+    DictionaryLearning: {"max_iter": 20, "transform_algorithm": "lasso_lars"},
     # the default strategy prior would output constant predictions and fail
     # for check_classifiers_predictions
-    DummyClassifier: dict(strategy="stratified"),
-    ElasticNetCV: dict(max_iter=5, cv=3),
-    ElasticNet: dict(max_iter=5),
-    ExtraTreesClassifier: dict(n_estimators=5),
-    ExtraTreesRegressor: dict(n_estimators=5),
-    FactorAnalysis: dict(max_iter=5),
-    FastICA: dict(max_iter=5),
-    FeatureAgglomeration: dict(n_clusters=2),
-    GammaRegressor: dict(max_iter=5),
-    GaussianMixture: dict(n_init=2, max_iter=5),
+    DummyClassifier: {"strategy": "stratified"},
+    ElasticNetCV: {"max_iter": 5, "cv": 3},
+    ElasticNet: {"max_iter": 5},
+    ExtraTreesClassifier: {"n_estimators": 5},
+    ExtraTreesRegressor: {"n_estimators": 5},
+    FactorAnalysis: {"max_iter": 5},
+    FastICA: {"max_iter": 5},
+    FeatureAgglomeration: {"n_clusters": 2},
+    FeatureUnion: {"transformer_list": [("trans1", StandardScaler())]},
+    FixedThresholdClassifier: {"estimator": LogisticRegression(C=1)},
+    GammaRegressor: {"max_iter": 5},
+    GaussianMixture: {"n_init": 2, "max_iter": 5},
     # Due to the jl lemma and often very few samples, the number
     # of components of the random matrix projection will be probably
     # greater than the number of features.
     # So we impose a smaller number (avoid "auto" mode)
-    GaussianRandomProjection: dict(n_components=2),
-    GradientBoostingClassifier: dict(n_estimators=5),
-    GradientBoostingRegressor: dict(n_estimators=5),
-    GraphicalLassoCV: dict(max_iter=5, cv=3),
-    GraphicalLasso: dict(max_iter=5),
-    GridSearchCV: dict(cv=3),
-    HDBSCAN: dict(min_samples=1),
+    GaussianRandomProjection: {"n_components": 2},
+    GradientBoostingClassifier: {"n_estimators": 5},
+    GradientBoostingRegressor: {"n_estimators": 5},
+    GraphicalLassoCV: {"max_iter": 5, "cv": 3},
+    GraphicalLasso: {"max_iter": 5},
+    GridSearchCV: {
+        "estimator": LogisticRegression(C=1),
+        "param_grid": {"C": [1.0]},
+        "cv": 3,
+    },
+    HalvingGridSearchCV: {
+        "estimator": Ridge(),
+        "min_resources": "smallest",
+        "param_grid": {"alpha": [0.1, 1.0]},
+        "random_state": 0,
+        "cv": 2,
+        "error_score": "raise",
+    },
+    HalvingRandomSearchCV: {
+        "estimator": Ridge(),
+        "param_distributions": {"alpha": [0.1, 1.0]},
+        "min_resources": "smallest",
+        "cv": 2,
+        "error_score": "raise",
+        "random_state": 0,
+    },
+    HDBSCAN: {"min_samples": 1},
     # The default min_samples_leaf (20) isn't appropriate for small
     # datasets (only very shallow trees are built) that the checks use.
-    HistGradientBoostingClassifier: dict(max_iter=5, min_samples_leaf=5),
-    HistGradientBoostingRegressor: dict(max_iter=5, min_samples_leaf=5),
-    HuberRegressor: dict(max_iter=5),
-    IncrementalPCA: dict(batch_size=10),
-    IsolationForest: dict(n_estimators=5),
-    KMeans: dict(n_init=2, n_clusters=2, max_iter=5),
-    LabelPropagation: dict(max_iter=5),
-    LabelSpreading: dict(max_iter=5),
-    LarsCV: dict(max_iter=5, cv=3),
-    LassoCV: dict(max_iter=5, cv=3),
-    Lasso: dict(max_iter=5),
-    LassoLarsCV: dict(max_iter=5, cv=3),
-    LassoLars: dict(max_iter=5),
+    HistGradientBoostingClassifier: {"max_iter": 5, "min_samples_leaf": 5},
+    HistGradientBoostingRegressor: {"max_iter": 5, "min_samples_leaf": 5},
+    HuberRegressor: {"max_iter": 5},
+    IncrementalPCA: {"batch_size": 10},
+    IsolationForest: {"n_estimators": 5},
+    KMeans: {"n_init": 2, "n_clusters": 2, "max_iter": 5},
+    LabelPropagation: {"max_iter": 5},
+    LabelSpreading: {"max_iter": 5},
+    LarsCV: {"max_iter": 5, "cv": 3},
+    LassoCV: {"max_iter": 5, "cv": 3},
+    LassoLarsCV: {"max_iter": 5, "cv": 3},
     # Noise variance estimation does not work when `n_samples < n_features`.
     # We need to provide the noise variance explicitly.
-    LassoLarsIC: dict(max_iter=5, noise_variance=1.0),
-    LatentDirichletAllocation: dict(max_iter=5, batch_size=10),
-    LinearSVR: dict(max_iter=20),
-    LinearSVC: dict(max_iter=20),
-    LocallyLinearEmbedding: dict(max_iter=5),
-    LogisticRegressionCV: dict(max_iter=5, cv=3),
-    LogisticRegression: dict(max_iter=5),
-    MDS: dict(n_init=2, max_iter=5),
+    LassoLarsIC: {"max_iter": 5, "noise_variance": 1.0},
+    LassoLars: {"max_iter": 5},
+    Lasso: {"max_iter": 5},
+    LatentDirichletAllocation: {"max_iter": 5, "batch_size": 10},
+    LinearSVC: {"max_iter": 20},
+    LinearSVR: {"max_iter": 20},
+    LocallyLinearEmbedding: {"max_iter": 5},
+    LogisticRegressionCV: {"max_iter": 5, "cv": 3},
+    LogisticRegression: {"max_iter": 5},
+    MDS: {"n_init": 2, "max_iter": 5},
     # In the case of check_fit2d_1sample, bandwidth is set to None and
     # is thus estimated. De facto it is 0.0 as a single sample is provided
     # and this makes the test fails. Hence we give it a placeholder value.
-    MeanShift: dict(max_iter=5, bandwidth=1.0),
-    MiniBatchDictionaryLearning: dict(batch_size=10, max_iter=5),
-    MiniBatchKMeans: dict(n_init=2, n_clusters=2, max_iter=5, batch_size=10),
-    MiniBatchNMF: dict(batch_size=10, max_iter=20, fresh_restarts=True),
-    MiniBatchSparsePCA: dict(max_iter=5, batch_size=10),
-    MLPClassifier: dict(max_iter=100),
-    MLPRegressor: dict(max_iter=100),
-    MultiTaskElasticNetCV: dict(max_iter=5, cv=3),
-    MultiTaskElasticNet: dict(max_iter=5),
-    MultiTaskLassoCV: dict(max_iter=5, cv=3),
-    MultiTaskLasso: dict(max_iter=5),
-    NeighborhoodComponentsAnalysis: dict(max_iter=5),
-    NMF: dict(max_iter=500),
-    NuSVC: dict(max_iter=-1),
-    NuSVR: dict(max_iter=-1),
-    OneClassSVM: dict(max_iter=-1),
-    OneHotEncoder: dict(handle_unknown="ignore"),
-    OrthogonalMatchingPursuitCV: dict(cv=3),
-    PassiveAggressiveClassifier: dict(max_iter=5),
-    PassiveAggressiveRegressor: dict(max_iter=5),
-    Perceptron: dict(max_iter=5),
-    PLSCanonical: dict(n_components=1, max_iter=5),
-    PLSRegression: dict(n_components=1, max_iter=5),
-    PLSSVD: dict(n_components=1),
-    PoissonRegressor: dict(max_iter=5),
-    RandomForestClassifier: dict(n_estimators=5),
-    RandomForestRegressor: dict(n_estimators=5),
-    RandomizedSearchCV: dict(n_iter=5, cv=3),
-    RandomTreesEmbedding: dict(n_estimators=5),
-    RANSACRegressor: dict(max_trials=10),
-    RegressorChain: dict(cv=3),
-    RFECV: dict(cv=3),
+    MeanShift: {"max_iter": 5, "bandwidth": 1.0},
+    MiniBatchDictionaryLearning: {"batch_size": 10, "max_iter": 5},
+    MiniBatchKMeans: {"n_init": 2, "n_clusters": 2, "max_iter": 5, "batch_size": 10},
+    MiniBatchNMF: {"batch_size": 10, "max_iter": 20, "fresh_restarts": True},
+    MiniBatchSparsePCA: {"max_iter": 5, "batch_size": 10},
+    MLPClassifier: {"max_iter": 100},
+    MLPRegressor: {"max_iter": 100},
+    MultiOutputClassifier: {"estimator": LogisticRegression(C=1)},
+    MultiOutputRegressor: {"estimator": Ridge()},
+    MultiTaskElasticNetCV: {"max_iter": 5, "cv": 3},
+    MultiTaskElasticNet: {"max_iter": 5},
+    MultiTaskLassoCV: {"max_iter": 5, "cv": 3},
+    MultiTaskLasso: {"max_iter": 5},
+    NeighborhoodComponentsAnalysis: {"max_iter": 5},
+    NMF: {"max_iter": 500},
+    NuSVC: {"max_iter": -1},
+    NuSVR: {"max_iter": -1},
+    OneClassSVM: {"max_iter": -1},
+    OneHotEncoder: {"handle_unknown": "ignore"},
+    OneVsOneClassifier: {"estimator": LogisticRegression(C=1)},
+    OneVsRestClassifier: {"estimator": LogisticRegression(C=1)},
+    OrthogonalMatchingPursuitCV: {"cv": 3},
+    OutputCodeClassifier: {"estimator": LogisticRegression(C=1)},
+    PassiveAggressiveClassifier: {"max_iter": 5},
+    PassiveAggressiveRegressor: {"max_iter": 5},
+    Perceptron: {"max_iter": 5},
+    Pipeline: {"steps": [("scaler", StandardScaler()), ("est", Ridge())]},
+    PLSCanonical: {"n_components": 1, "max_iter": 5},
+    PLSRegression: {"n_components": 1, "max_iter": 5},
+    PLSSVD: {"n_components": 1},
+    PoissonRegressor: {"max_iter": 5},
+    RandomForestClassifier: {"n_estimators": 5},
+    RandomForestRegressor: {"n_estimators": 5},
+    RandomizedSearchCV: {
+        "estimator": LogisticRegression(C=1),
+        "param_distributions": {"C": [1.0]},
+        "n_iter": 5,
+        "cv": 3,
+    },
+    RandomTreesEmbedding: {"n_estimators": 5},
+    # `RANSACRegressor` will raise an error with any model other
+    # than `LinearRegression` if we don't fix `min_samples` parameter.
+    # For common test, we can enforce using `LinearRegression` that
+    # is the default estimator in `RANSACRegressor` instead of `Ridge`.
+    RANSACRegressor: {"estimator": LinearRegression(), "max_trials": 10},
+    RegressorChain: {"base_estimator": Ridge(), "cv": 3},
+    RFECV: {"estimator": LogisticRegression(C=1), "cv": 3},
+    RFE: {"estimator": LogisticRegression(C=1)},
     # be tolerant of noisy datasets (not actually speed)
-    SelectFdr: dict(alpha=0.5),
+    SelectFdr: {"alpha": 0.5},
+    # Increases coverage because SGDRegressor has partial_fit
+    SelectFromModel: {"estimator": SGDRegressor(random_state=0)},
     # SelectKBest has a default of k=10
     # which is more feature than we have in most case.
-    SelectKBest: dict(k=1),
-    SelfTrainingClassifier: dict(max_iter=5),
-    SequentialFeatureSelector: dict(cv=3),
-    SGDClassifier: dict(max_iter=5),
-    SGDOneClassSVM: dict(max_iter=5),
-    SGDRegressor: dict(max_iter=5),
-    SparsePCA: dict(max_iter=5),
+    SelectKBest: {"k": 1},
+    SelfTrainingClassifier: {"estimator": LogisticRegression(C=1), "max_iter": 5},
+    SequentialFeatureSelector: {"estimator": LogisticRegression(C=1), "cv": 3},
+    SGDClassifier: {"max_iter": 5},
+    SGDOneClassSVM: {"max_iter": 5},
+    SGDRegressor: {"max_iter": 5},
+    SparsePCA: {"max_iter": 5},
     # Due to the jl lemma and often very few samples, the number
     # of components of the random matrix projection will be probably
     # greater than the number of features.
     # So we impose a smaller number (avoid "auto" mode)
-    SparseRandomProjection: dict(n_components=2),
-    SpectralBiclustering: dict(n_init=2, n_best=1, n_clusters=2),
-    SpectralClustering: dict(n_init=2, n_clusters=2),
-    SpectralCoclustering: dict(n_init=2, n_clusters=2),
+    SparseRandomProjection: {"n_components": 2},
+    SpectralBiclustering: {"n_init": 2, "n_best": 1, "n_clusters": 2},
+    SpectralClustering: {"n_init": 2, "n_clusters": 2},
+    SpectralCoclustering: {"n_init": 2, "n_clusters": 2},
     # Default "auto" parameter can lead to different ordering of eigenvalues on
     # windows: #24105
-    SpectralEmbedding: dict(eigen_tol=1e-5),
-    StackingClassifier: dict(cv=3),
-    StackingRegressor: dict(cv=3),
-    SVC: dict(max_iter=-1),
-    SVR: dict(max_iter=-1),
-    TargetEncoder: dict(cv=3),
-    TheilSenRegressor: dict(max_iter=5, max_subpopulation=100),
+    SpectralEmbedding: {"eigen_tol": 1e-05},
+    StackingClassifier: {
+        "estimators": [
+            ("est1", DecisionTreeClassifier(max_depth=3, random_state=0)),
+            ("est2", DecisionTreeClassifier(max_depth=3, random_state=1)),
+        ],
+        "cv": 3,
+    },
+    StackingRegressor: {
+        "estimators": [
+            ("est1", DecisionTreeRegressor(max_depth=3, random_state=0)),
+            ("est2", DecisionTreeRegressor(max_depth=3, random_state=1)),
+        ],
+        "cv": 3,
+    },
+    SVC: {"max_iter": -1},
+    SVR: {"max_iter": -1},
+    TargetEncoder: {"cv": 3},
+    TheilSenRegressor: {"max_iter": 5, "max_subpopulation": 100},
     # TruncatedSVD doesn't run with n_components = n_features
-    TruncatedSVD: dict(n_iter=5, n_components=1),
-    TSNE: dict(perplexity=2),
-    TunedThresholdClassifierCV: dict(cv=3),
-    TweedieRegressor: dict(max_iter=5),
+    TruncatedSVD: {"n_iter": 5, "n_components": 1},
+    TSNE: {"perplexity": 2},
+    TunedThresholdClassifierCV: {"estimator": LogisticRegression(C=1), "cv": 3},
+    TweedieRegressor: {"max_iter": 5},
+    VotingClassifier: {
+        "estimators": [
+            ("est1", DecisionTreeClassifier(max_depth=3, random_state=0)),
+            ("est2", DecisionTreeClassifier(max_depth=3, random_state=1)),
+        ]
+    },
+    VotingRegressor: {
+        "estimators": [
+            ("est1", DecisionTreeRegressor(max_depth=3, random_state=0)),
+            ("est2", DecisionTreeRegressor(max_depth=3, random_state=1)),
+        ]
+    },
 }
-
-
-def _set_checking_parameters(estimator):
-    """Set the parameters of an estimator instance to speed-up tests and avoid
-    deprecation warnings in common test."""
-    if type(estimator) in TEST_PARAMS:
-        test_params = TEST_PARAMS[type(estimator)]
-        estimator.set_params(**test_params)
 
 
 def _tested_estimators(type_filter=None):
@@ -315,81 +372,6 @@ def _generate_pipeline():
             ]
         )
 
-
-INIT_PARAMS = {
-    SelfTrainingClassifier: dict(estimator=LogisticRegression(C=1)),
-    CalibratedClassifierCV: dict(estimator=LogisticRegression(C=1)),
-    ClassifierChain: dict(base_estimator=LogisticRegression(C=1)),
-    ColumnTransformer: dict(
-        transformers=[
-            ("trans1", StandardScaler(), [0, 1]),
-        ]
-    ),
-    FeatureUnion: dict(transformer_list=[("trans1", StandardScaler())]),
-    FixedThresholdClassifier: dict(estimator=LogisticRegression(C=1)),
-    GridSearchCV: dict(estimator=LogisticRegression(C=1), param_grid={"C": [1.0]}),
-    HalvingGridSearchCV: dict(
-        estimator=Ridge(),
-        min_resources="smallest",
-        param_grid={"alpha": [0.1, 1.0]},
-        random_state=0,
-        cv=2,
-        error_score="raise",
-    ),
-    HalvingRandomSearchCV: dict(
-        estimator=Ridge(),
-        param_distributions={"alpha": [0.1, 1.0]},
-        min_resources="smallest",
-        cv=2,
-        error_score="raise",
-        random_state=0,
-    ),
-    MultiOutputClassifier: dict(estimator=LogisticRegression(C=1)),
-    MultiOutputRegressor: dict(estimator=Ridge()),
-    OneVsOneClassifier: dict(estimator=LogisticRegression(C=1)),
-    OneVsRestClassifier: dict(estimator=LogisticRegression(C=1)),
-    OutputCodeClassifier: dict(estimator=LogisticRegression(C=1)),
-    Pipeline: dict(steps=[("scaler", StandardScaler()), ("est", Ridge())]),
-    RandomizedSearchCV: dict(
-        estimator=LogisticRegression(C=1), param_distributions={"C": [1.0]}
-    ),
-    # `RANSACRegressor` will raise an error with any model other
-    # than `LinearRegression` if we don't fix `min_samples` parameter.
-    # For common test, we can enforce using `LinearRegression` that
-    # is the default estimator in `RANSACRegressor` instead of `Ridge`.
-    RANSACRegressor: dict(estimator=LinearRegression()),
-    RegressorChain: dict(base_estimator=Ridge()),
-    RFECV: dict(estimator=LogisticRegression(C=1)),
-    RFE: dict(estimator=LogisticRegression(C=1)),
-    # Increases coverage because SGDRegressor has partial_fit
-    SelectFromModel: dict(estimator=SGDRegressor(random_state=0)),
-    SequentialFeatureSelector: dict(estimator=LogisticRegression(C=1)),
-    StackingClassifier: dict(
-        estimators=[
-            ("est1", DecisionTreeClassifier(max_depth=3, random_state=0)),
-            ("est2", DecisionTreeClassifier(max_depth=3, random_state=1)),
-        ]
-    ),
-    StackingRegressor: dict(
-        estimators=[
-            ("est1", DecisionTreeRegressor(max_depth=3, random_state=0)),
-            ("est2", DecisionTreeRegressor(max_depth=3, random_state=1)),
-        ]
-    ),
-    TunedThresholdClassifierCV: dict(estimator=LogisticRegression(C=1)),
-    VotingClassifier: dict(
-        estimators=[
-            ("est1", DecisionTreeClassifier(max_depth=3, random_state=0)),
-            ("est2", DecisionTreeClassifier(max_depth=3, random_state=1)),
-        ]
-    ),
-    VotingRegressor: dict(
-        estimators=[
-            ("est1", DecisionTreeRegressor(max_depth=3, random_state=0)),
-            ("est2", DecisionTreeRegressor(max_depth=3, random_state=1)),
-        ]
-    ),
-}
 
 SKIPPED_ESTIMATORS = [SparseCoder]
 

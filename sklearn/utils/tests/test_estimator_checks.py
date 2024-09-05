@@ -30,7 +30,6 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.svm import SVC, NuSVC
 from sklearn.utils import _array_api, all_estimators, deprecated
 from sklearn.utils._param_validation import Interval, StrOptions
-from sklearn.utils._test_common.instance_generator import _set_checking_parameters
 from sklearn.utils._testing import (
     MinimalClassifier,
     MinimalRegressor,
@@ -745,7 +744,6 @@ def test_check_estimator_clones():
         # without fitting
         with ignore_warnings(category=ConvergenceWarning):
             est = Estimator()
-            _set_checking_parameters(est)
             set_random_state(est)
             old_hash = joblib.hash(est)
             check_estimator(est)
@@ -754,7 +752,6 @@ def test_check_estimator_clones():
         # with fitting
         with ignore_warnings(category=ConvergenceWarning):
             est = Estimator()
-            _set_checking_parameters(est)
             set_random_state(est)
             est.fit(iris.data + 10, iris.target)
             old_hash = joblib.hash(est)
