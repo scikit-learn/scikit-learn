@@ -1786,3 +1786,45 @@ def test_simple_imputer_constant_fill_value_casting():
         )
         X_trans = imputer.fit_transform(X_float32)
         assert X_trans.dtype == X_float32.dtype
+
+
+def test_iterative_imputer_no_empty_features():
+    """Check the behavior of the iterative imputer.
+    When the input matrix contains no empty features, it should return
+    the same result regardless of whether `keep_empty_features`.
+    """
+    rng = np.random.RandomState(0)
+    X = _sparse_random_matrix(10, 10, density=0.95, random_state=rng).toarray()
+    X[X == 0] = np.nan
+    # X = np.array([[np.nan, 0, 1], [2, np.nan, 3], [4, 5, np.nan]])
+
+    imputer_false = IterativeImputer(keep_empty_features=False)
+    X_imputed_false = imputer_false.fit_transform(X)
+
+    imputer_true = IterativeImputer(keep_empty_features=True)
+    X_imputed_true = imputer_true.fit_transform(X)
+
+    assert_array_equal(X_imputed_false, X_imputed_true)
+
+
+def test_iterative_imputer_with_empty_features():
+    """Check the behavior of the iterative imputer.
+    When the input matrix contains empty features, it should return
+    the same values for the non-empty features regardless of 
+    `keep_empty_features`. Additionally, the empty features
+    should become 0s when `keep_empty_features` is set to True.
+    """
+    rng = np.random.RandomState(0)
+    X = _sparse_random_matrix(10, 10, density=0.95, random_state=rng).toarray()
+    X[X == 0] = np.nan
+    X[:, 0] = np.nan
+    # X = np.array([[np.nan, np.nan, 0, 1], [np.nan, 2, np.nan, 3], [np.nan, 4, 5, np.nan]])
+
+    imputer_false = IterativeImputer(keep_empty_features=False)
+    X_imputed_false = imputer_false.fit_transform(X)
+
+    imputer_true = IterativeImputer(keep_empty_features=True)
+    X_imputed_true = imputer_true.fit_transform(X)
+
+    assert_allclose(X_imputed_false, X_imputed_true[:, 1:])
+    assert_allclose(X_imputed_true[:, 0], np.zeros(X.shape[0]))
