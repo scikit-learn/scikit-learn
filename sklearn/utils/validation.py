@@ -2796,17 +2796,15 @@ def validate_data(
     y : array-like of shape (n_samples,), default='no_validation'
         The targets.
 
-        - If `None`, :func:`~sklearn.utils.validation.check_array` is called on `X`. If
+        - If `None`, :func:`~sklearn.utils.check_array` is called on `X`. If
           the estimator's `requires_y` tag is True, then an error will be raised.
-        - If `'no_validation'`, :func:`~sklearn.utils.validation.check_array` is called
+        - If `'no_validation'`, :func:`~sklearn.utils.check_array` is called
           on `X` and the estimator's `requires_y` tag is ignored. This is a default
           placeholder and is never meant to be explicitly set. In that case `X` must be
           passed.
-        - Otherwise, only `y` with :func:`~sklearn.utils.validation._check_y` or both
-          `X` and `y` are checked with either
-          :func:`~sklearn.utils.validation.check_array` or
-          :func:`~sklearn.utils.validation.check_X_y` depending on
-          `validate_separately`.
+        - Otherwise, only `y` with `_check_y` or both `X` and `y` are checked with
+          either :func:`~sklearn.utils.check_array` or
+          :func:`~sklearn.utils.check_X_y` depending on `validate_separately`.
 
     reset : bool, default=True
         Whether to reset the `n_features_in_` attribute.
