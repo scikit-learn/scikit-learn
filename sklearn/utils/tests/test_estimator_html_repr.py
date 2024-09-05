@@ -1,6 +1,7 @@
 import html
 import locale
 import re
+import types
 from contextlib import closing
 from io import StringIO
 from unittest.mock import patch
@@ -443,7 +444,9 @@ def test_html_documentation_link_mixin_sklearn(mock_version):
         ("prefix.mypackage.mymodule.submodule", "prefix.mypackage.mymodule.submodule"),
     ],
 )
-def test_html_documentation_link_mixin_get_doc_link(module_path, expected_module):
+def test_html_documentation_link_mixin_get_doc_link_instance(
+    module_path, expected_module
+):
     """Check the behaviour of the `_get_doc_link` with various parameter."""
 
     class FooBar(_HTMLDocumentationLinkMixin):
@@ -459,6 +462,32 @@ def test_html_documentation_link_mixin_get_doc_link(module_path, expected_module
     assert est._get_doc_link() == f"https://website.com/{expected_module}.FooBar.html"
 
 
+@pytest.mark.parametrize(
+    "module_path,expected_module",
+    [
+        ("prefix.mymodule", "prefix.mymodule"),
+        ("prefix._mymodule", "prefix"),
+        ("prefix.mypackage._mymodule", "prefix.mypackage"),
+        ("prefix.mypackage._mymodule.submodule", "prefix.mypackage"),
+        ("prefix.mypackage.mymodule.submodule", "prefix.mypackage.mymodule.submodule"),
+    ],
+)
+def test_html_documentation_link_mixin_get_doc_link_class(module_path, expected_module):
+    """Check the behaviour of the `_get_doc_link` when `_doc_link_module` and
+    `_doc_link_template` are defined at the class level and not at the instance
+    level."""
+
+    class FooBar(_HTMLDocumentationLinkMixin):
+        _doc_link_module = "prefix"
+        _doc_link_template = (
+            "https://website.com/{estimator_module}.{estimator_name}.html"
+        )
+
+    FooBar.__module__ = module_path
+    est = FooBar()
+    assert est._get_doc_link() == f"https://website.com/{expected_module}.FooBar.html"
+
+
 def test_html_documentation_link_mixin_get_doc_link_out_of_library():
     """Check the behaviour of the `_get_doc_link` with various parameter."""
     mixin = _HTMLDocumentationLinkMixin()
@@ -469,7 +498,7 @@ def test_html_documentation_link_mixin_get_doc_link_out_of_library():
     assert mixin._get_doc_link() == ""
 
 
-def test_html_documentation_link_mixin_doc_link_url_param_generator():
+def test_html_documentation_link_mixin_doc_link_url_param_generator_instance():
     mixin = _HTMLDocumentationLinkMixin()
     # we can bypass the generation by providing our own callable
     mixin._doc_link_template = (
@@ -482,9 +511,28 @@ def test_html_documentation_link_mixin_doc_link_url_param_generator():
             "another_variable": "value_2",
         }
 
-    mixin._doc_link_url_param_generator = url_param_generator
+    mixin._doc_link_url_param_generator = types.MethodType(url_param_generator, mixin)
 
     assert mixin._get_doc_link() == "https://website.com/value_1.value_2.html"
+
+
+def test_html_documentation_link_mixin_doc_link_url_param_generator_class():
+    # we can bypass the generation by providing our own callable
+
+    def url_param_generator(estimator):
+        return {
+            "my_own_variable": "value_1",
+            "another_variable": "value_2",
+        }
+
+    class FooBar(_HTMLDocumentationLinkMixin):
+        _doc_link_template = (
+            "https://website.com/{my_own_variable}.{another_variable}.html"
+        )
+        _doc_link_url_param_generator = url_param_generator
+
+    estimator = FooBar()
+    assert estimator._get_doc_link() == "https://website.com/value_1.value_2.html"
 
 
 @pytest.fixture

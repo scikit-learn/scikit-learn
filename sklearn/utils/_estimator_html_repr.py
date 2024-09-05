@@ -427,15 +427,31 @@ class _HTMLDocumentationLinkMixin:
     Examples
     --------
     If the default values for `_doc_link_module`, `_doc_link_template` are not suitable,
-    then you can override them:
+    then you can override them and provide a method to generate the URL parameters:
     >>> from sklearn.base import BaseEstimator
-    >>> estimator = BaseEstimator()
-    >>> estimator._doc_link_template = "https://website.com/{single_param}.html"
+    >>> doc_link_template = "https://address.local/{single_param}.html"
     >>> def url_param_generator(estimator):
     ...     return {"single_param": estimator.__class__.__name__}
-    >>> estimator._doc_link_url_param_generator = url_param_generator
+    >>> class MyEstimator(BaseEstimator):
+    ...     # use "builtins" since it is the associated module when declaring
+    ...     # the class in a docstring
+    ...     _doc_link_module = "builtins"
+    ...     _doc_link_template = doc_link_template
+    ...     _doc_link_url_param_generator = url_param_generator
+    >>> estimator = MyEstimator()
     >>> estimator._get_doc_link()
-    'https://website.com/BaseEstimator.html'
+    'https://address.local/MyEstimator.html'
+
+    If instead of overriding the attributes inside the class definition, you want to
+    override a class instance, you can use `types.MethodType` to bind the method to the
+    instance:
+    >>> import types
+    >>> estimator = BaseEstimator()
+    >>> estimator._doc_link_template = doc_link_template
+    >>> estimator._doc_link_url_param_generator = types.MethodType(
+    ...     url_param_generator, estimator)
+    >>> estimator._get_doc_link()
+    'https://address.local/BaseEstimator.html'
     """
 
     _doc_link_module = "sklearn"
@@ -491,6 +507,4 @@ class _HTMLDocumentationLinkMixin:
             return self._doc_link_template.format(
                 estimator_module=estimator_module, estimator_name=estimator_name
             )
-        return self._doc_link_template.format(
-            **self._doc_link_url_param_generator(self)
-        )
+        return self._doc_link_template.format(**self._doc_link_url_param_generator())
