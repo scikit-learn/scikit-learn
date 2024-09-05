@@ -45,6 +45,13 @@ Changelog
   transform output is set to `pandas` or `polars`, since it isn't a transformer.
   :pr:`29401` by :user:`Stefanie Senger <StefanieSenger>`.
 
+:mod:`sklearn.impute`
+.....................
+
+- |Fix| Fixed :class:`impute.IterativeImputer` to make sure that it does not skip
+  the iterative process when `keep_empty_features` is set to `True`.
+  :pr:`29779` by :user:`Arif Qodari <arifqodari>`.
+
 :mod:`sklearn.svm`
 ..................
 
