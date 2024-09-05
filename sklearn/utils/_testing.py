@@ -631,17 +631,17 @@ def _diff_key(line):
     return None
 
 
-def _get_diff_msg(str_grouped_dict):
-    """Get message showing the difference between type/desc strings of all objects.
+def _get_diff_msg(docstrings_grouped):
+    """Get message showing the difference between type/desc docstrings of all objects.
 
-    `str_grouped_dict` keys should be the type/desc strings and values are a list
-    of objects with that string. Objects with the same type/desc string are
+    `docstrings_grouped` keys should be the type/desc docstrings and values are a list
+    of objects with that docstring. Objects with the same type/desc docstring are
     thus grouped together.
     """
     msg_diff = ""
     ref_str = ""
     ref_group = []
-    for docstring, group in str_grouped_dict.items():
+    for docstring, group in docstrings_grouped.items():
         if not ref_str and not ref_group:
             ref_str += docstring
             ref_group.extend(group)
@@ -667,19 +667,22 @@ def _get_diff_msg(str_grouped_dict):
     return msg_diff
 
 
-def _check_grouped_dict(grouped_dict, type_or_desc, section, n_objects):
-    """Helper to check only one type/desc key in grouped_dict.
+def _check_consistency_items(items_docs, type_or_desc, section, n_objects):
+    """Helper to check docstring consistency of all `items_docs`.
 
     If item is not present in all objects, checking is skipped and warning raised.
     """
     skipped = []
-    for item_name, str_grouped_dict in grouped_dict.items():
+    for item_name, docstrings_grouped in items_docs.items():
         # If item not found in all objects, skip
-        if sum(map(len, str_grouped_dict.values())) < n_objects:
+        if sum([len(objs) for objs in docstrings_grouped.values()]) < n_objects:
             skipped.append(item_name)
-        elif len(str_grouped_dict.keys()) > 1:
-            msg_diff = _get_diff_msg(str_grouped_dict)
-            obj_groups = " and ".join(str(group) for group in str_grouped_dict.values())
+        # If more than one key, docstrings not consistent between objects
+        elif len(docstrings_grouped.keys()) > 1:
+            msg_diff = _get_diff_msg(docstrings_grouped)
+            obj_groups = " and ".join(
+                str(group) for group in docstrings_grouped.values()
+            )
             msg = textwrap.fill(
                 f"The {type_or_desc} of {section[:-1]} '{item_name}' is inconsistent "
                 f"between {obj_groups}:"
@@ -697,8 +700,8 @@ def assert_docstring_consistency(
     objects,
     include_params=False,
     exclude_params=None,
-    include_attribs=False,
-    exclude_attribs=None,
+    include_attrs=False,
+    exclude_attrs=None,
     include_returns=False,
     exclude_returns=None,
 ):
@@ -726,14 +729,14 @@ def assert_docstring_consistency(
         List of parameters to be excluded. If None, no parameters are excluded.
         Can only be set if `include_params` is True.
 
-    include_attribs : list of str or bool, default=False
+    include_attrs : list of str or bool, default=False
         List of attributes to be included. If True, all attributes are included,
         if False, checking is skipped for attributes.
-        Can only be set if `exclude_attribs` is None.
+        Can only be set if `exclude_attrs` is None.
 
-    exclude_attribs : list of str or None, default=None
+    exclude_attrs : list of str or None, default=None
         List of attributes to be excluded. If None, no attributes are excluded.
-        Can only be set if `include_attribs` is True.
+        Can only be set if `include_attrs` is True.
 
     include_returns : list of str or bool, default=False
         List of returns to be included. If True, all returns are included,
@@ -758,30 +761,31 @@ def assert_docstring_consistency(
     from numpydoc import docscrape
 
     Args = namedtuple("args", ["include", "exclude", "arg_name"])
-    section_dict = {
-        "Parameters": Args(include_params, exclude_params, "params"),
-        "Attributes": Args(include_attribs, exclude_attribs, "attribs"),
-        "Returns": Args(include_returns, exclude_returns, "returns"),
-    }
-    for section in list(section_dict):
-        args = section_dict[section]
-        if args.exclude and args.include is not True:
-            raise TypeError(
-                f"The 'exclude_{args.arg_name}' argument can be set only when the "
-                f"'include_{args.arg_name}' argument is True."
-            )
-        if args.include is False:
-            del section_dict[section]
 
-    doc_dict = dict()
+    def _create_args(include, exclude, arg_name, section_name):
+        if exclude and include is not True:
+            raise TypeError(
+                f"The 'exclude_{arg_name}' argument can be set only when the "
+                f"'include_{arg_name}' argument is True."
+            )
+        if include is False:
+            return {}
+        return {section_name: Args(include, exclude, arg_name)}
+
+    section_args = {
+        **_create_args(include_params, exclude_params, "params", "Parameters"),
+        **_create_args(include_attrs, exclude_attrs, "attrs", "Attributes"),
+        **_create_args(include_returns, exclude_returns, "returns", "Returns"),
+    }
+
+    objects_doc = dict()
     for obj in objects:
         if (
             inspect.isdatadescriptor(obj)
             or inspect.isfunction(obj)
             or inspect.isclass(obj)
         ):
-            doc = docscrape.NumpyDocString(inspect.getdoc(obj))
-            doc_dict[obj.__name__] = doc
+            objects_doc[obj.__name__] = docscrape.NumpyDocString(inspect.getdoc(obj))
         else:
             raise TypeError(
                 "All 'objects' must be one of: function, class or descriptor, "
@@ -789,21 +793,21 @@ def assert_docstring_consistency(
             )
 
     n_objects = len(objects)
-    for section, args in section_dict.items():
-        type_dd = defaultdict(lambda: defaultdict(list))
-        desc_dd = defaultdict(lambda: defaultdict(list))
-        for obj_name, obj_doc in doc_dict.items():
+    for section, args in section_args.items():
+        type_items = defaultdict(lambda: defaultdict(list))
+        desc_items = defaultdict(lambda: defaultdict(list))
+        for obj_name, obj_doc in objects_doc.items():
             for item_name, type_def, desc in obj_doc[section]:
                 if _check_item_included(item_name, args):
                     # Normalize white space
                     type_def = " ".join(type_def.strip().split())
                     desc = " ".join(chain.from_iterable(line.split() for line in desc))
                     # Use string type/desc as key, to group consistent objs together
-                    type_dd[item_name][type_def].append(obj_name)
-                    desc_dd[item_name][desc].append(obj_name)
+                    type_items[item_name][type_def].append(obj_name)
+                    desc_items[item_name][desc].append(obj_name)
 
-        _check_grouped_dict(type_dd, "type specification", section, n_objects)
-        _check_grouped_dict(desc_dd, "description", section, n_objects)
+        _check_consistency_items(type_items, "type specification", section, n_objects)
+        _check_consistency_items(desc_items, "description", section, n_objects)
 
 
 def assert_run_python_script_without_output(source_code, pattern=".+", timeout=60):

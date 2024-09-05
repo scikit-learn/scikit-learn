@@ -20,13 +20,7 @@ from sklearn.experimental import (
     enable_iterative_imputer,  # noqa
 )
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import (
-    f1_score,
-    fbeta_score,
-    precision_recall_fscore_support,
-    precision_score,
-    recall_score,
-)
+from sklearn import metrics
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils import all_estimators
 from sklearn.utils._testing import (
@@ -330,7 +324,7 @@ def _get_all_fitted_attributes(estimator):
     return [k for k in fit_attr if k.endswith("_") and not k.startswith("_")]
 
 
-def test_prfs_docstring_consistency():
+def test_precision_recall_f_score_docstring_consistency():
     """Check docstrings parameters of related metrics are consistent."""
     pytest.importorskip(
         "numpydoc",
@@ -338,11 +332,11 @@ def test_prfs_docstring_consistency():
     )
     assert_docstring_consistency(
         [
-            precision_recall_fscore_support,
-            f1_score,
-            fbeta_score,
-            precision_score,
-            recall_score,
+            metrics.precision_recall_fscore_support,
+            metrics.f1_score,
+            metrics.fbeta_score,
+            metrics.precision_score,
+            metrics.recall_score,
         ],
         include_params=True,
         # "average" - in `recall_score` we have an additional line: 'Weighted recall
