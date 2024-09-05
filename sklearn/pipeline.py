@@ -1878,14 +1878,14 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         return router
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_estimators_overwrite_params": "FIXME",
-                "check_estimators_nan_inf": "FIXME",
-                "check_dont_overwrite_parameters": "FIXME",
-            }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_estimators_overwrite_params": "FIXME",
+            "check_estimators_nan_inf": "FIXME",
+            "check_dont_overwrite_parameters": "FIXME",
         }
+        return tags
 
 
 def make_union(*transformers, n_jobs=None, verbose=False):

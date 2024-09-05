@@ -1318,20 +1318,20 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         return router
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_estimators_empty_data_messages": "FIXME",
-                "check_estimators_nan_inf": "FIXME",
-                "check_estimator_sparse_array": "FIXME",
-                "check_estimator_sparse_matrix": "FIXME",
-                "check_transformer_data_not_an_array": "FIXME",
-                "check_fit1d": "FIXME",
-                "check_fit2d_predict1d": "FIXME",
-                "check_complex_data": "FIXME",
-                "check_fit2d_1feature": "FIXME",
-            }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_estimators_empty_data_messages": "FIXME",
+            "check_estimators_nan_inf": "FIXME",
+            "check_estimator_sparse_array": "FIXME",
+            "check_estimator_sparse_matrix": "FIXME",
+            "check_transformer_data_not_an_array": "FIXME",
+            "check_fit1d": "FIXME",
+            "check_fit2d_predict1d": "FIXME",
+            "check_complex_data": "FIXME",
+            "check_fit2d_1feature": "FIXME",
         }
+        return tags
 
 
 def _check_X(X):
