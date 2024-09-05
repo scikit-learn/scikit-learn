@@ -1,9 +1,7 @@
 """Truncated SVD for sparse matrices, aka latent semantic analysis (LSA)."""
 
-# Author: Lars Buitinck
-#         Olivier Grisel <olivier.grisel@ensta.org>
-#         Michael Becker <mike@beckerfuffle.com>
-# License: 3-clause BSD.
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Integral, Real
 
@@ -312,8 +310,10 @@ class TruncatedSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
         X = check_array(X)
         return np.dot(X, self.components_)
 
-    def _more_tags(self):
-        return {"preserves_dtype": [np.float64, np.float32]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
 
     @property
     def _n_features_out(self):

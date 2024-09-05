@@ -1,6 +1,7 @@
 """Bisecting K-means clustering."""
 
-# Author: Michal Krawczyk <mkrwczyk.1@gmail.com>
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 
@@ -526,5 +527,7 @@ class BisectingKMeans(_BaseKMeans):
 
         return labels
 
-    def _more_tags(self):
-        return {"preserves_dtype": [np.float64, np.float32]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags

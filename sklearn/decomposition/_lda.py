@@ -8,8 +8,9 @@ This implementation is modified from Matthew D. Hoffman's onlineldavb code
 Link: https://github.com/blei-lab/onlineldavb
 """
 
-# Author: Chyi-Kwei Yau
-# Author: Matthew D. Hoffman (original onlineldavb implementation)
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from numbers import Integral, Real
 
 import numpy as np
@@ -545,11 +546,11 @@ class LatentDirichletAllocation(
         self.n_batch_iter_ += 1
         return
 
-    def _more_tags(self):
-        return {
-            "preserves_dtype": [np.float64, np.float32],
-            "requires_positive_X": True,
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.positive_only = True
+        tags.transformer_tags.preserves_dtype = ["float32", "float64"]
+        return tags
 
     def _check_non_neg_array(self, X, reset_n_features, whom):
         """check X format

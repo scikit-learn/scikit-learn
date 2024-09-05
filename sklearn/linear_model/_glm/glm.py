@@ -1,5 +1,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
+
 """
 Generalized Linear Models with Exponential Dispersion Family
 """
@@ -437,17 +438,19 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         )
         return 1 - (deviance + constant) / (deviance_null + constant)
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
         try:
             # Create instance of BaseLoss if fit wasn't called yet. This is necessary as
             # TweedieRegressor might set the used loss during fit different from
             # self._base_loss.
             base_loss = self._get_loss()
-            return {"requires_positive_y": not base_loss.in_y_true_range(-1.0)}
+            tags.target_tags.positive_only = not base_loss.in_y_true_range(-1.0)
         except (ValueError, AttributeError, TypeError):
             # This happens when the link or power parameter of TweedieRegressor is
             # invalid. We fallback on the default tags in that case.
-            return {}
+            pass  # pragma: no cover
+        return tags
 
     def _get_loss(self):
         """This is only necessary because of the link and power arguments of the
@@ -552,11 +555,11 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
     >>> clf.fit(X, y)
     PoissonRegressor()
     >>> clf.score(X, y)
-    0.990...
+    np.float64(0.990...)
     >>> clf.coef_
     array([0.121..., 0.158...])
     >>> clf.intercept_
-    2.088...
+    np.float64(2.088...)
     >>> clf.predict([[1, 1], [3, 4]])
     array([10.676..., 21.875...])
     """
@@ -684,11 +687,11 @@ class GammaRegressor(_GeneralizedLinearRegressor):
     >>> clf.fit(X, y)
     GammaRegressor()
     >>> clf.score(X, y)
-    0.773...
+    np.float64(0.773...)
     >>> clf.coef_
     array([0.072..., 0.066...])
     >>> clf.intercept_
-    2.896...
+    np.float64(2.896...)
     >>> clf.predict([[1, 0], [2, 8]])
     array([19.483..., 35.795...])
     """
@@ -846,11 +849,11 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
     >>> clf.fit(X, y)
     TweedieRegressor()
     >>> clf.score(X, y)
-    0.839...
+    np.float64(0.839...)
     >>> clf.coef_
     array([0.599..., 0.299...])
     >>> clf.intercept_
-    1.600...
+    np.float64(1.600...)
     >>> clf.predict([[1, 1], [3, 4]])
     array([2.500..., 4.599...])
     """

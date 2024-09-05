@@ -10,6 +10,9 @@ Authors: Shane Grigsby <refuge@rocktalus.com>
 License: BSD 3 clause
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import warnings
 from numbers import Integral, Real
 
@@ -324,7 +327,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
             Returns a fitted instance of self.
         """
         dtype = bool if self.metric in PAIRWISE_BOOLEAN_FUNCTIONS else float
-        if dtype == bool and X.dtype != bool:
+        if dtype is bool and X.dtype != bool:
             msg = (
                 "Data will be converted to boolean for"
                 f" metric {self.metric}, to avoid this warning,"

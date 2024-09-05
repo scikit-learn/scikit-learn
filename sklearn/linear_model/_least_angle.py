@@ -1643,7 +1643,7 @@ class LarsCV(Lars):
     >>> reg.score(X, y)
     0.9996...
     >>> reg.alpha_
-    0.2961...
+    np.float64(0.2961...)
     >>> reg.predict(X[:1,])
     array([154.3996...])
     """
@@ -1688,8 +1688,10 @@ class LarsCV(Lars):
             fit_path=True,
         )
 
-    def _more_tags(self):
-        return {"multioutput": False}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.multi_output = False
+        return tags
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, **params):
@@ -1983,7 +1985,7 @@ class LassoLarsCV(LarsCV):
     >>> reg.score(X, y)
     0.9993...
     >>> reg.alpha_
-    0.3972...
+    np.float64(0.3972...)
     >>> reg.predict(X[:1,])
     array([-78.4831...])
     """
@@ -2210,8 +2212,10 @@ class LassoLarsIC(LassoLars):
         self.fit_path = True
         self.noise_variance = noise_variance
 
-    def _more_tags(self):
-        return {"multioutput": False}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.multi_output = False
+        return tags
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, copy_X=None):

@@ -2,6 +2,9 @@
 This file contains preprocessing tools based on polynomials.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import collections
 from itertools import chain, combinations
 from itertools import combinations_with_replacement as combinations_w_r
@@ -1162,12 +1165,12 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             indices = [j for j in range(XBS.shape[1]) if (j + 1) % n_splines != 0]
             return XBS[:, indices]
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_estimators_pickle": (
-                    "Current Scipy implementation of _bsplines does not"
-                    "support const memory views."
-                ),
-            }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_estimators_pickle": (
+                "Current Scipy implementation of _bsplines does not"
+                "support const memory views."
+            ),
         }
+        return tags

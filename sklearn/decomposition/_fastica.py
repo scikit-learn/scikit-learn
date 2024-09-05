@@ -605,7 +605,7 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
                 # Faster when num_samples >> n_features
                 d, u = linalg.eigh(XT.dot(X))
                 sort_indices = np.argsort(d)[::-1]
-                eps = np.finfo(d.dtype).eps
+                eps = np.finfo(d.dtype).eps * 10
                 degenerate_idx = d < eps
                 if np.any(degenerate_idx):
                     warnings.warn(
@@ -790,5 +790,7 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         """Number of transformed output features."""
         return self.components_.shape[0]
 
-    def _more_tags(self):
-        return {"preserves_dtype": [np.float32, np.float64]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags

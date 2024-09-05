@@ -10,6 +10,9 @@ that our model achieves best performance when we select around 10% of features.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Load some data to play with
 # ---------------------------

@@ -50,7 +50,7 @@ from .metrics.pairwise import pairwise_distances_argmin
 from .preprocessing import LabelBinarizer
 from .utils import check_random_state
 from .utils._param_validation import HasMethods, Interval
-from .utils._tags import _safe_tags
+from .utils._tags import get_tags
 from .utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -124,7 +124,7 @@ class _ConstantPredictor(BaseEstimator):
 
     def fit(self, X, y):
         check_params = dict(
-            force_all_finite=False, dtype=None, ensure_2d=False, accept_sparse=True
+            ensure_all_finite=False, dtype=None, ensure_2d=False, accept_sparse=True
         )
         self._validate_data(
             X, y, reset=True, validate_separately=(check_params, check_params)
@@ -136,7 +136,7 @@ class _ConstantPredictor(BaseEstimator):
         check_is_fitted(self)
         self._validate_data(
             X,
-            force_all_finite=False,
+            ensure_all_finite=False,
             dtype=None,
             accept_sparse=True,
             ensure_2d=False,
@@ -149,7 +149,7 @@ class _ConstantPredictor(BaseEstimator):
         check_is_fitted(self)
         self._validate_data(
             X,
-            force_all_finite=False,
+            ensure_all_finite=False,
             dtype=None,
             accept_sparse=True,
             ensure_2d=False,
@@ -162,7 +162,7 @@ class _ConstantPredictor(BaseEstimator):
         check_is_fitted(self)
         self._validate_data(
             X,
-            force_all_finite=False,
+            ensure_all_finite=False,
             dtype=None,
             accept_sparse=True,
             ensure_2d=False,
@@ -589,9 +589,11 @@ class OneVsRestClassifier(
         """Number of classes."""
         return len(self.classes_)
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
-        return {"pairwise": _safe_tags(self.estimator, key="pairwise")}
+        tags = super().__sklearn_tags__()
+        tags.input_tags.pairwise = get_tags(self.estimator).input_tags.pairwise
+        return tags
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.
@@ -786,7 +788,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         # We need to validate the data because we do a safe_indexing later.
         X, y = self._validate_data(
-            X, y, accept_sparse=["csr", "csc"], force_all_finite=False
+            X, y, accept_sparse=["csr", "csc"], ensure_all_finite=False
         )
         check_classification_targets(y)
 
@@ -817,7 +819,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         self.estimators_ = estimators_indices[0]
 
-        pairwise = self._get_tags()["pairwise"]
+        pairwise = self.__sklearn_tags__().input_tags.pairwise
         self.pairwise_indices_ = estimators_indices[1] if pairwise else None
 
         return self
@@ -889,7 +891,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             X,
             y,
             accept_sparse=["csr", "csc"],
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=first_call,
         )
         check_classification_targets(y)
@@ -962,7 +964,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         X = self._validate_data(
             X,
             accept_sparse=True,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
 
@@ -988,9 +990,11 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         """Number of classes."""
         return len(self.classes_)
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
-        return {"pairwise": _safe_tags(self.estimator, key="pairwise")}
+        tags = super().__sklearn_tags__()
+        tags.input_tags.pairwise = get_tags(self.estimator).input_tags.pairwise
+        return tags
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.

@@ -150,10 +150,10 @@ class _BaseSparsePCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         """Number of transformed output features."""
         return self.components_.shape[0]
 
-    def _more_tags(self):
-        return {
-            "preserves_dtype": [np.float64, np.float32],
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
 
 
 class SparsePCA(_BaseSparsePCA):
@@ -267,7 +267,7 @@ class SparsePCA(_BaseSparsePCA):
     (200, 5)
     >>> # most values in the components_ are zero (sparsity)
     >>> np.mean(transformer.components_ == 0)
-    0.9666...
+    np.float64(0.9666...)
     """
 
     _parameter_constraints: dict = {
@@ -473,7 +473,7 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
     (200, 5)
     >>> # most values in the components_ are zero (sparsity)
     >>> np.mean(transformer.components_ == 0)
-    0.9...
+    np.float64(0.9...)
     """
 
     _parameter_constraints: dict = {
