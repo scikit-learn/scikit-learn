@@ -102,11 +102,6 @@ enhance the functionality of scikit-learn's estimators.
   custom matplotlib visualizers for scikit-learn estimators to support visual feature
   analysis, model selection, evaluation, and diagnostics.
 
-- `supertree <https://github.com/mljar/supertree>`_
-  Python package designed to visualize decision trees in an interactive 
-  and user-friendly way within Jupyter Notebooks, Jupyter Lab, 
-  Google Colab, and any other notebooks that support HTML rendering.
-
 **Model selection**
 
 - `scikit-optimize <https://scikit-optimize.github.io/>`_
