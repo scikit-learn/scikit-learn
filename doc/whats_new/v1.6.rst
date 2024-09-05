@@ -25,6 +25,12 @@ Version 1.6.0
 Changes impacting many modules
 ------------------------------
 
+- |API| :func:`utils.validation.validate_data` is introduced and replaces previously
+  private `base.BaseEstimator._validate_data` method. This is intended for third party
+  estimator developers, who should use this function in most cases instead of
+  :func:`utils.validation.check_array` and :func:`utils.validation.check_X_y`.
+  :pr:`29696` by `Adrin Jalali`_.
+
 - |Enhancement| `__sklearn_tags__` was introduced for setting tags in estimators.
   More details in :ref:`estimator_tags`.
   :pr:`22606` by `Thomas Fan`_ and :pr:`29677` by `Adrin Jalali`_.

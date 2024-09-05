@@ -19,7 +19,7 @@ from ..utils._array_api import _convert_to_numpy, get_namespace
 from ..utils._param_validation import Interval, RealNotInt, StrOptions
 from ..utils.extmath import fast_logdet, randomized_svd, stable_cumsum, svd_flip
 from ..utils.sparsefuncs import _implicit_column_offset, mean_variance_axis
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, validate_data
 from ._base import _BasePCA
 
 
@@ -502,7 +502,8 @@ class PCA(_BasePCA):
         # the input data contrary to the other solvers.
         # The copy will happen
         # later, only if needed, once the solver negotiation below is done.
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             dtype=[xp.float64, xp.float32],
             force_writeable=True,
@@ -815,7 +816,7 @@ class PCA(_BasePCA):
         """
         check_is_fitted(self)
         xp, _ = get_namespace(X)
-        X = self._validate_data(X, dtype=[xp.float64, xp.float32], reset=False)
+        X = validate_data(self, X, dtype=[xp.float64, xp.float32], reset=False)
         Xr = X - self.mean_
         n_features = X.shape[1]
         precision = self.get_precision()

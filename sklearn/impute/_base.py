@@ -17,7 +17,13 @@ from ..utils._missing import is_pandas_na, is_scalar_nan
 from ..utils._param_validation import MissingValues, StrOptions
 from ..utils.fixes import _mode
 from ..utils.sparsefuncs import _get_median
-from ..utils.validation import FLOAT_DTYPES, _check_feature_names_in, check_is_fitted
+from ..utils.validation import (
+    FLOAT_DTYPES,
+    _check_feature_names_in,
+    _check_n_features,
+    check_is_fitted,
+    validate_data,
+)
 
 
 def _check_inputs_dtype(X, missing_values):
@@ -330,7 +336,8 @@ class SimpleImputer(_BaseImputer):
             ensure_all_finite = True
 
         try:
-            X = self._validate_data(
+            X = validate_data(
+                self,
                 X,
                 reset=in_fit,
                 accept_sparse="csc",
@@ -899,7 +906,8 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             ensure_all_finite = True
         else:
             ensure_all_finite = "allow-nan"
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             reset=in_fit,
             accept_sparse=("csc", "csr"),
@@ -960,7 +968,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             X = self._validate_input(X, in_fit=True)
         else:
             # only create `n_features_in_` in the precomputed case
-            self._check_n_features(X, reset=True)
+            _check_n_features(self, X, reset=True)
 
         self._n_features = X.shape[1]
 

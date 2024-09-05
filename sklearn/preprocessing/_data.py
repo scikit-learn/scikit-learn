@@ -35,6 +35,7 @@ from ..utils.validation import (
     _check_sample_weight,
     check_is_fitted,
     check_random_state,
+    validate_data,
 )
 from ._encoders import OneHotEncoder
 
@@ -481,7 +482,8 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         xp, _ = get_namespace(X)
 
         first_pass = not hasattr(self, "n_samples_seen_")
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             reset=first_pass,
             dtype=_array_api.supported_float_dtypes(xp),
@@ -525,7 +527,8 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         xp, _ = get_namespace(X)
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             copy=self.copy,
             dtype=_array_api.supported_float_dtypes(xp),
@@ -911,7 +914,8 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             Fitted scaler.
         """
         first_call = not hasattr(self, "n_samples_seen_")
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=("csr", "csc"),
             dtype=FLOAT_DTYPES,
@@ -1042,7 +1046,8 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         check_is_fitted(self)
 
         copy = copy if copy is not None else self.copy
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             reset=False,
             accept_sparse="csr",
@@ -1251,7 +1256,8 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         xp, _ = get_namespace(X)
 
         first_pass = not hasattr(self, "n_samples_seen_")
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             reset=first_pass,
             accept_sparse=("csr", "csc"),
@@ -1292,7 +1298,8 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
         xp, _ = get_namespace(X)
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=("csr", "csc"),
             copy=self.copy,
@@ -1599,7 +1606,8 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         """
         # at fit, convert sparse matrices to csc for optimized computation of
         # the quantiles
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse="csc",
             dtype=FLOAT_DTYPES,
@@ -1660,7 +1668,8 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             Transformed array.
         """
         check_is_fitted(self)
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=("csr", "csc"),
             copy=self.copy,
@@ -2086,7 +2095,7 @@ class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
-        self._validate_data(X, accept_sparse="csr")
+        validate_data(self, X, accept_sparse="csr")
         return self
 
     def transform(self, X, copy=None):
@@ -2107,8 +2116,8 @@ class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             Transformed array.
         """
         copy = copy if copy is not None else self.copy
-        X = self._validate_data(
-            X, accept_sparse="csr", force_writeable=True, copy=copy, reset=False
+        X = validate_data(
+            self, X, accept_sparse="csr", force_writeable=True, copy=copy, reset=False
         )
         return normalize(X, norm=self.norm, axis=1, copy=False)
 
@@ -2284,7 +2293,7 @@ class Binarizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
-        self._validate_data(X, accept_sparse="csr")
+        validate_data(self, X, accept_sparse="csr")
         return self
 
     def transform(self, X, copy=None):
@@ -2308,7 +2317,8 @@ class Binarizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         copy = copy if copy is not None else self.copy
         # TODO: This should be refactored because binarize also calls
         # check_array
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=["csr", "csc"],
             force_writeable=True,
@@ -2419,7 +2429,7 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         """
         xp, _ = get_namespace(K)
 
-        K = self._validate_data(K, dtype=_array_api.supported_float_dtypes(xp))
+        K = validate_data(self, K, dtype=_array_api.supported_float_dtypes(xp))
 
         if K.shape[0] != K.shape[1]:
             raise ValueError(
@@ -2452,7 +2462,8 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
 
         xp, _ = get_namespace(K)
 
-        K = self._validate_data(
+        K = validate_data(
+            self,
             K,
             copy=copy,
             force_writeable=True,
@@ -2878,7 +2889,8 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
     def _check_inputs(self, X, in_fit, accept_sparse_negative=False, copy=False):
         """Check inputs before fit and transform."""
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             reset=in_fit,
             accept_sparse="csc",
@@ -3512,7 +3524,8 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         check_shape : bool, default=False
             If True, check that n_features matches the length of self.lambdas_
         """
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             ensure_2d=True,
             dtype=FLOAT_DTYPES,
