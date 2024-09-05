@@ -27,6 +27,7 @@ from .utils.validation import (
     check_array,
     check_consistent_length,
     check_is_fitted,
+    validate_data,
 )
 
 
@@ -177,7 +178,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        self._validate_data(X, cast_to_ndarray=False)
+        validate_data(self, X, skip_check_array=True)
 
         self._strategy = self.strategy
 
@@ -561,7 +562,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        self._validate_data(X, cast_to_ndarray=False)
+        validate_data(self, X, skip_check_array=True)
 
         y = check_array(y, ensure_2d=False, input_name="y")
         if len(y) == 0:

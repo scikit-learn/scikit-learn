@@ -25,7 +25,7 @@ from ..utils import check_array, check_consistent_length
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import svd_flip
 from ..utils.fixes import parse_version, sp_version
-from ..utils.validation import FLOAT_DTYPES, check_is_fitted
+from ..utils.validation import FLOAT_DTYPES, check_is_fitted, validate_data
 
 __all__ = ["PLSCanonical", "PLSRegression", "PLSSVD"]
 
@@ -262,7 +262,8 @@ class _PLS(
         y = _deprecate_Y_when_required(y, Y)
 
         check_consistent_length(X, y)
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             dtype=np.float64,
             force_writeable=True,
@@ -432,7 +433,7 @@ class _PLS(
         y = _deprecate_Y_when_optional(y, Y)
 
         check_is_fitted(self)
-        X = self._validate_data(X, copy=copy, dtype=FLOAT_DTYPES, reset=False)
+        X = validate_data(self, X, copy=copy, dtype=FLOAT_DTYPES, reset=False)
         # Normalize
         X -= self._x_mean
         X /= self._x_std
@@ -527,7 +528,7 @@ class _PLS(
         space.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, copy=copy, dtype=FLOAT_DTYPES, reset=False)
+        X = validate_data(self, X, copy=copy, dtype=FLOAT_DTYPES, reset=False)
         # Only center X but do not scale it since the coefficients are already scaled
         X -= self._x_mean
         Ypred = X @ self.coef_.T + self.intercept_
@@ -1069,7 +1070,8 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         """
         y = _deprecate_Y_when_required(y, Y)
         check_consistent_length(X, y)
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             dtype=np.float64,
             force_writeable=True,
@@ -1143,7 +1145,7 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         """
         y = _deprecate_Y_when_optional(y, Y)
         check_is_fitted(self)
-        X = self._validate_data(X, dtype=np.float64, reset=False)
+        X = validate_data(self, X, dtype=np.float64, reset=False)
         Xr = (X - self._x_mean) / self._x_std
         x_scores = np.dot(Xr, self.x_weights_)
         if y is not None:

@@ -25,7 +25,7 @@ from ..neighbors import NearestNeighbors
 from ..utils import check_array, check_random_state, gen_batches
 from ..utils._param_validation import Interval, validate_params
 from ..utils.parallel import Parallel, delayed
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, validate_data
 
 
 @validate_params(
@@ -480,7 +480,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
         self : object
                Fitted instance.
         """
-        X = self._validate_data(X)
+        X = validate_data(self, X)
         bandwidth = self.bandwidth
         if bandwidth is None:
             bandwidth = estimate_bandwidth(X, n_jobs=self.n_jobs)
@@ -571,6 +571,6 @@ class MeanShift(ClusterMixin, BaseEstimator):
             Index of the cluster each sample belongs to.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
         with config_context(assume_finite=True):
             return pairwise_distances_argmin(X, self.cluster_centers_)

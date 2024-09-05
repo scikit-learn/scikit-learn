@@ -20,7 +20,7 @@ from ..utils import (
 from ..utils._chunking import get_chunk_n_rows
 from ..utils._param_validation import Interval, RealNotInt, StrOptions
 from ..utils.parallel import Parallel, delayed
-from ..utils.validation import _num_samples, check_is_fitted
+from ..utils.validation import _num_samples, check_is_fitted, validate_data
 from ._bagging import BaseBagging
 from ._base import _partition_estimators
 
@@ -315,8 +315,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
         self : object
             Fitted estimator.
         """
-        X = self._validate_data(
-            X, accept_sparse=["csc"], dtype=tree_dtype, ensure_all_finite=False
+        X = validate_data(
+            self, X, accept_sparse=["csc"], dtype=tree_dtype, ensure_all_finite=False
         )
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
@@ -517,7 +517,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
                 model.score(X)
         """
         # Check data
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse="csr",
             dtype=tree_dtype,

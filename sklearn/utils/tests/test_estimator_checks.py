@@ -66,7 +66,12 @@ from sklearn.utils.estimator_checks import (
 )
 from sklearn.utils.fixes import CSR_CONTAINERS, SPARRAY_PRESENT
 from sklearn.utils.metaestimators import available_if
-from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
+from sklearn.utils.validation import (
+    check_array,
+    check_is_fitted,
+    check_X_y,
+    validate_data,
+)
 
 
 class CorrectNotFittedError(ValueError):
@@ -90,7 +95,7 @@ class ChangesDict(BaseEstimator):
         self.key = key
 
     def fit(self, X, y=None):
-        X, y = self._validate_data(X, y)
+        X, y = validate_data(self, X, y)
         return self
 
     def predict(self, X):
@@ -105,7 +110,7 @@ class SetsWrongAttribute(BaseEstimator):
 
     def fit(self, X, y=None):
         self.wrong_attribute = 0
-        X, y = self._validate_data(X, y)
+        X, y = validate_data(self, X, y)
         return self
 
 
@@ -115,14 +120,14 @@ class ChangesWrongAttribute(BaseEstimator):
 
     def fit(self, X, y=None):
         self.wrong_attribute = 1
-        X, y = self._validate_data(X, y)
+        X, y = validate_data(self, X, y)
         return self
 
 
 class ChangesUnderscoreAttribute(BaseEstimator):
     def fit(self, X, y=None):
         self._good_attribute = 1
-        X, y = self._validate_data(X, y)
+        X, y = validate_data(self, X, y)
         return self
 
 
@@ -139,7 +144,7 @@ class RaisesErrorInSetParams(BaseEstimator):
         return super().set_params(**kwargs)
 
     def fit(self, X, y=None):
-        X, y = self._validate_data(X, y)
+        X, y = validate_data(self, X, y)
         return self
 
 
@@ -148,7 +153,7 @@ class HasMutableParameters(BaseEstimator):
         self.p = p
 
     def fit(self, X, y=None):
-        X, y = self._validate_data(X, y)
+        X, y = validate_data(self, X, y)
         return self
 
 
@@ -160,7 +165,7 @@ class HasImmutableParameters(BaseEstimator):
         self.r = r
 
     def fit(self, X, y=None):
-        X, y = self._validate_data(X, y)
+        X, y = validate_data(self, X, y)
         return self
 
 
@@ -177,7 +182,7 @@ class ModifiesValueInsteadOfRaisingError(BaseEstimator):
         return super().set_params(**kwargs)
 
     def fit(self, X, y=None):
-        X, y = self._validate_data(X, y)
+        X, y = validate_data(self, X, y)
         return self
 
 
@@ -196,13 +201,13 @@ class ModifiesAnotherValue(BaseEstimator):
         return super().set_params(**kwargs)
 
     def fit(self, X, y=None):
-        X, y = self._validate_data(X, y)
+        X, y = validate_data(self, X, y)
         return self
 
 
 class NoCheckinPredict(BaseBadClassifier):
     def fit(self, X, y):
-        X, y = self._validate_data(X, y)
+        X, y = validate_data(self, X, y)
         return self
 
 
@@ -212,7 +217,7 @@ class NoSparseClassifier(BaseBadClassifier):
         self.raise_for_type = raise_for_type
 
     def fit(self, X, y):
-        X, y = self._validate_data(X, y, accept_sparse=["csr", "csc"])
+        X, y = validate_data(self, X, y, accept_sparse=["csr", "csc"])
         if self.raise_for_type == "sparse_array":
             correct_type = isinstance(X, sp.sparray)
         elif self.raise_for_type == "sparse_matrix":
@@ -228,7 +233,7 @@ class NoSparseClassifier(BaseBadClassifier):
 
 class CorrectNotFittedErrorClassifier(BaseBadClassifier):
     def fit(self, X, y):
-        X, y = self._validate_data(X, y)
+        X, y = validate_data(self, X, y)
         self.coef_ = np.ones(X.shape[1])
         return self
 
@@ -241,8 +246,8 @@ class CorrectNotFittedErrorClassifier(BaseBadClassifier):
 class NoSampleWeightPandasSeriesType(BaseEstimator):
     def fit(self, X, y, sample_weight=None):
         # Convert data
-        X, y = self._validate_data(
-            X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
+        X, y = validate_data(
+            self, X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
         )
         # Function is only called after we verify that pandas is installed
         from pandas import Series
@@ -282,7 +287,7 @@ class BadBalancedWeightsClassifier(BaseBadClassifier):
 
 class BadTransformerWithoutMixin(BaseEstimator):
     def fit(self, X, y=None):
-        X = self._validate_data(X)
+        X = validate_data(self, X)
         return self
 
     def transform(self, X):
@@ -293,8 +298,8 @@ class BadTransformerWithoutMixin(BaseEstimator):
 class NotInvariantPredict(BaseEstimator):
     def fit(self, X, y):
         # Convert data
-        X, y = self._validate_data(
-            X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
+        X, y = validate_data(
+            self, X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
         )
         return self
 
@@ -308,8 +313,8 @@ class NotInvariantPredict(BaseEstimator):
 
 class NotInvariantSampleOrder(BaseEstimator):
     def fit(self, X, y):
-        X, y = self._validate_data(
-            X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
+        X, y = validate_data(
+            self, X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
         )
         # store the original X to check for sample order later
         self._X = X
@@ -373,7 +378,8 @@ class LargeSparseNotSupportedClassifier(BaseEstimator):
         self.raise_for_type = raise_for_type
 
     def fit(self, X, y):
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse=("csr", "csc", "coo"),
@@ -403,7 +409,7 @@ class SparseTransformer(BaseEstimator):
         self.sparse_container = sparse_container
 
     def fit(self, X, y=None):
-        self.X_shape_ = self._validate_data(X).shape
+        self.X_shape_ = validate_data(self, X).shape
         return self
 
     def fit_transform(self, X, y=None):
@@ -463,7 +469,7 @@ class TaggedBinaryClassifier(UntaggedBinaryClassifier):
 
 class RequiresPositiveXRegressor(LinearRegression):
     def fit(self, X, y):
-        X, y = self._validate_data(X, y, multi_output=True)
+        X, y = validate_data(self, X, y, multi_output=True)
         if (X < 0).any():
             raise ValueError("negative X values not supported!")
         return super().fit(X, y)
@@ -476,7 +482,7 @@ class RequiresPositiveXRegressor(LinearRegression):
 
 class RequiresPositiveYRegressor(LinearRegression):
     def fit(self, X, y):
-        X, y = self._validate_data(X, y, multi_output=True)
+        X, y = validate_data(self, X, y, multi_output=True)
         if (y <= 0).any():
             raise ValueError("negative y values not supported!")
         return super().fit(X, y)
@@ -499,12 +505,12 @@ class PoorScoreLogisticRegression(LogisticRegression):
 
 class PartialFitChecksName(BaseEstimator):
     def fit(self, X, y):
-        self._validate_data(X, y)
+        validate_data(self, X, y)
         return self
 
     def partial_fit(self, X, y):
         reset = not hasattr(self, "_fitted")
-        self._validate_data(X, y, reset=reset)
+        validate_data(self, X, y, reset=reset)
         self._fitted = True
         return self
 

@@ -23,7 +23,12 @@ from ..utils.metadata_routing import (
     _raise_for_params,
     process_routing,
 )
-from ..utils.validation import FLOAT_DTYPES, _check_feature_names_in, check_is_fitted
+from ..utils.validation import (
+    FLOAT_DTYPES,
+    _check_feature_names_in,
+    check_is_fitted,
+    validate_data,
+)
 from ._base import SimpleImputer, _BaseImputer, _check_inputs_dtype
 
 _ImputerTriplet = namedtuple(
@@ -618,7 +623,8 @@ class IterativeImputer(_BaseImputer):
         else:
             ensure_all_finite = True
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             dtype=FLOAT_DTYPES,
             order="F",

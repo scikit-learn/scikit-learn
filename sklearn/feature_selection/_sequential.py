@@ -21,7 +21,7 @@ from ..utils._metadata_requests import (
 )
 from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
 from ..utils._tags import get_tags
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, validate_data
 from ._base import SelectorMixin
 
 
@@ -228,7 +228,8 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         """
         _raise_for_params(params, self, "fit")
         tags = self.__sklearn_tags__()
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse="csc",
             ensure_min_features=2,
