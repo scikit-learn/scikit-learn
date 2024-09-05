@@ -42,7 +42,7 @@ def attach_unique(*ys, return_tuple=False):
 
     Parameters
     ----------
-    *ys : array-like
+    *ys : sequence of array-like
         Input data arrays.
 
     return_tuple : bool, default=False
@@ -89,11 +89,13 @@ def cached_unique(*ys, xp=None):
 
     Parameters
     ----------
-    *ys : array-like
+    *ys : sequence of array-like
         Input data arrays.
 
-    xp : array-like, default=None
-        Array namespace.
+    xp : module, default=None
+        Precomputed array namespace module. When passed, typically from a caller
+        that has already performed inspection of its own inputs, skips array
+        namespace inspection.
 
     Returns
     -------
