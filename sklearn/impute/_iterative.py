@@ -408,22 +408,16 @@ class IterativeImputer(_BaseImputer):
 
         missing_row_mask = mask_missing_values[:, feat_idx]
         if fit_mode:
-            if np.sum(missing_row_mask) == mask_missing_values.shape[0]:
-                # if all values at feat_idx are completely missing
-                # use imputed values from the initial imputation result
-                X_train = _safe_indexing(X_filled, neighbor_feat_idx, axis=1)
-                y_train = _safe_indexing(X_filled, feat_idx, axis=1)
-            else:
-                X_train = _safe_indexing(
-                    _safe_indexing(X_filled, neighbor_feat_idx, axis=1),
-                    ~missing_row_mask,
-                    axis=0,
-                )
-                y_train = _safe_indexing(
-                    _safe_indexing(X_filled, feat_idx, axis=1),
-                    ~missing_row_mask,
-                    axis=0,
-                )
+            X_train = _safe_indexing(
+                _safe_indexing(X_filled, neighbor_feat_idx, axis=1),
+                ~missing_row_mask,
+                axis=0,
+            )
+            y_train = _safe_indexing(
+                _safe_indexing(X_filled, feat_idx, axis=1),
+                ~missing_row_mask,
+                axis=0,
+            )
             estimator.fit(X_train, y_train, **params)
 
         # if no missing values, don't predict
@@ -646,17 +640,21 @@ class IterativeImputer(_BaseImputer):
         else:
             X_filled = self.initial_imputer_.transform(X)
 
-        valid_mask = np.flatnonzero(
-            np.logical_not(np.isnan(self.initial_imputer_.statistics_))
-        )
-
         if not self.keep_empty_features:
+            valid_mask = np.flatnonzero(
+                np.logical_not(np.isnan(self.initial_imputer_.statistics_))
+            )
+
             # drop empty features
             Xt = X[:, valid_mask]
             mask_missing_values = mask_missing_values[:, valid_mask]
         else:
-            # keep the initial imputation result including empty features
+            # mark empty features as not missing and keep the original
+            # imputation
+            is_empty_feature = np.all(mask_missing_values, axis=0)
+            mask_missing_values[:, is_empty_feature] = False
             Xt = X
+            Xt[:, is_empty_feature] = X_filled[:, is_empty_feature]
 
         return Xt, X_filled, mask_missing_values, X_missing_mask
 
