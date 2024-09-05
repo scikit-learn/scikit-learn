@@ -360,7 +360,7 @@ def _yield_all_checks(estimator, dataframe: bool, legacy: bool):
             yield check
 
     if not legacy:
-        return
+        return  # pragma: no cover
 
     for check in _yield_checks(estimator):
         yield check
@@ -4550,11 +4550,11 @@ def _check_dataframe_column_names_consistency(name, estimator_orig):
     assert_array_equal(estimator.feature_names_in_, names)
 
     # Only check sklearn estimators for feature_names_in_ in docstring
-    module_name = estimator_orig.__module__
+    module_name = estimator.__module__
     if (
         module_name.startswith("sklearn.")
         and not ("test_" in module_name or module_name.endswith("_testing"))
-        and ("feature_names_in_" not in (estimator_orig.__doc__))
+        and ("feature_names_in_" not in (estimator.__doc__))
     ):
         raise ValueError(
             f"Estimator {name} does not document its feature_names_in_ attribute"
@@ -4638,7 +4638,8 @@ def _check_dataframe_column_names_consistency(name, estimator_orig):
             estimator.partial_fit(X_bad, y)
 
 
-def check_pandas_column_name_consistency(name, estimator):
+def check_pandas_column_name_consistency(name, estimator_orig):
+    estimator = clone(estimator_orig)
     _set_checking_parameters(estimator)
 
     # NOTE: When running `check_dataframe_column_names_consistency` on a meta-estimator
