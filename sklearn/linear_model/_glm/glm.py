@@ -438,17 +438,19 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         )
         return 1 - (deviance + constant) / (deviance_null + constant)
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
         try:
             # Create instance of BaseLoss if fit wasn't called yet. This is necessary as
             # TweedieRegressor might set the used loss during fit different from
             # self._base_loss.
             base_loss = self._get_loss()
-            return {"requires_positive_y": not base_loss.in_y_true_range(-1.0)}
+            tags.target_tags.positive_only = not base_loss.in_y_true_range(-1.0)
         except (ValueError, AttributeError, TypeError):
             # This happens when the link or power parameter of TweedieRegressor is
             # invalid. We fallback on the default tags in that case.
-            return {}
+            pass  # pragma: no cover
+        return tags
 
     def _get_loss(self):
         """This is only necessary because of the link and power arguments of the
