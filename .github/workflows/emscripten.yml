@@ -62,6 +62,8 @@ jobs:
         env:
           SKLEARN_SKIP_OPENMP_TEST: "true"
           SKLEARN_SKIP_NETWORK_TESTS: 1
+          PYTHONVERBOSE: 1
+          PYTHONDEBUG: 1
         run: |
           set -e -x
 
