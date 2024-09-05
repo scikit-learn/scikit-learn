@@ -30,6 +30,8 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.svm import SVC, NuSVC
 from sklearn.utils import _array_api, all_estimators, deprecated
 from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils._tags import default_tags
+from sklearn.utils._test_common.instance_generator import _set_checking_parameters
 from sklearn.utils._testing import (
     MinimalClassifier,
     MinimalRegressor,
@@ -40,7 +42,6 @@ from sklearn.utils._testing import (
 )
 from sklearn.utils.estimator_checks import (
     _NotAnArray,
-    _set_checking_parameters,
     _yield_all_checks,
     check_array_api_input,
     check_class_weight_balanced_linear_classifier,
@@ -51,7 +52,6 @@ from sklearn.utils.estimator_checks import (
     check_dataframe_column_names_consistency,
     check_decision_proba_consistency,
     check_estimator,
-    check_estimator_get_tags_default_keys,
     check_estimators_unfitted,
     check_fit_check_is_fitted,
     check_fit_score_takes_y,
@@ -455,14 +455,9 @@ class UntaggedBinaryClassifier(SGDClassifier):
 
 class TaggedBinaryClassifier(UntaggedBinaryClassifier):
     # Toy classifier that only supports binary classification.
-    def _more_tags(self):
-        return {"binary_only": True}
-
-
-class EstimatorMissingDefaultTags(BaseEstimator):
-    def _get_tags(self):
-        tags = super()._get_tags().copy()
-        del tags["allow_nan"]
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.classifier_tags.multi_class = False
         return tags
 
 
@@ -473,8 +468,10 @@ class RequiresPositiveXRegressor(LinearRegression):
             raise ValueError("negative X values not supported!")
         return super().fit(X, y)
 
-    def _more_tags(self):
-        return {"requires_positive_X": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.positive_only = True
+        return tags
 
 
 class RequiresPositiveYRegressor(LinearRegression):
@@ -484,16 +481,20 @@ class RequiresPositiveYRegressor(LinearRegression):
             raise ValueError("negative y values not supported!")
         return super().fit(X, y)
 
-    def _more_tags(self):
-        return {"requires_positive_y": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.positive_only = True
+        return tags
 
 
 class PoorScoreLogisticRegression(LogisticRegression):
     def decision_function(self, X):
         return super().decision_function(X) + 1
 
-    def _more_tags(self):
-        return {"poor_score": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.classifier_tags.poor_score = True
+        return tags
 
 
 class PartialFitChecksName(BaseEstimator):
@@ -847,20 +848,6 @@ def test_check_regressor_data_not_an_array():
         )
 
 
-def test_check_estimator_get_tags_default_keys():
-    estimator = EstimatorMissingDefaultTags()
-    err_msg = (
-        r"EstimatorMissingDefaultTags._get_tags\(\) is missing entries"
-        r" for the following default tags: {'allow_nan'}"
-    )
-    with raises(AssertionError, match=err_msg):
-        check_estimator_get_tags_default_keys(estimator.__class__.__name__, estimator)
-
-    # noop check when _get_tags is not available
-    estimator = MinimalTransformer()
-    check_estimator_get_tags_default_keys(estimator.__class__.__name__, estimator)
-
-
 def test_check_dataframe_column_names_consistency():
     err_msg = "Estimator does not have a feature_names_in_"
     with raises(ValueError, match=err_msg):
@@ -884,8 +871,10 @@ class _BaseMultiLabelClassifierMock(ClassifierMixin, BaseEstimator):
     def fit(self, X, y):
         return self
 
-    def _more_tags(self):
-        return {"multilabel": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.classifier_tags.multi_label = True
+        return tags
 
 
 def test_check_classifiers_multilabel_output_format_predict():
@@ -1128,7 +1117,7 @@ def test_check_class_weight_balanced_linear_classifier():
     msg = "Classifier estimator_name is not computing class_weight=balanced properly"
     with raises(AssertionError, match=msg):
         check_class_weight_balanced_linear_classifier(
-            "estimator_name", BadBalancedWeightsClassifier
+            "estimator_name", BadBalancedWeightsClassifier()
         )
 
 
@@ -1210,15 +1199,17 @@ def test_non_deterministic_estimator_skip_tests():
     # check estimators with non_deterministic tag set to True
     # will skip certain tests, refer to issue #22313 for details
     for est in [MinimalTransformer, MinimalRegressor, MinimalClassifier]:
-        all_tests = list(_yield_all_checks(est()))
+        all_tests = list(_yield_all_checks(est(), legacy=True))
         assert check_methods_sample_order_invariance in all_tests
         assert check_methods_subset_invariance in all_tests
 
         class Estimator(est):
-            def _more_tags(self):
-                return {"non_deterministic": True}
+            def __sklearn_tags__(self):
+                tags = default_tags(self)
+                tags.non_deterministic = True
+                return tags
 
-        all_tests = list(_yield_all_checks(Estimator()))
+        all_tests = list(_yield_all_checks(Estimator(), legacy=True))
         assert check_methods_sample_order_invariance not in all_tests
         assert check_methods_subset_invariance not in all_tests
 
@@ -1285,3 +1276,24 @@ def test_decision_proba_tie_ranking():
     """
     estimator = SGDClassifier(loss="log_loss")
     check_decision_proba_consistency("SGDClassifier", estimator)
+
+
+def test_yield_all_checks_legacy():
+    # Test that _yield_all_checks with legacy=True returns more checks.
+    estimator = MinimalClassifier()
+
+    legacy_checks = list(_yield_all_checks(estimator, legacy=True))
+    non_legacy_checks = list(_yield_all_checks(estimator, legacy=False))
+
+    assert len(legacy_checks) > len(non_legacy_checks)
+
+    def get_check_name(check):
+        try:
+            return check.__name__
+        except AttributeError:
+            return check.func.__name__
+
+    # Check that all non-legacy checks are included in legacy checks
+    non_legacy_check_names = {get_check_name(check) for check in non_legacy_checks}
+    legacy_check_names = {get_check_name(check) for check in legacy_checks}
+    assert non_legacy_check_names.issubset(legacy_check_names)

@@ -210,18 +210,18 @@ class BaseThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator
         check_is_fitted(self, "estimator_")
         return self.estimator_.decision_function(X)
 
-    def _more_tags(self):
-        return {
-            "binary_only": True,
-            "_xfail_checks": {
-                "check_classifiers_train": "Threshold at probability 0.5 does not hold",
-                "check_sample_weights_invariance": (
-                    "Due to the cross-validation and sample ordering, removing a sample"
-                    " is not strictly equal to putting is weight to zero. Specific unit"
-                    " tests are added for TunedThresholdClassifierCV specifically."
-                ),
-            },
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.classifier_tags.multi_class = False
+        tags._xfail_checks = {
+            "check_classifiers_train": "Threshold at probability 0.5 does not hold",
+            "check_sample_weights_invariance": (
+                "Due to the cross-validation and sample ordering, removing a sample"
+                " is not strictly equal to putting is weight to zero. Specific unit"
+                " tests are added for TunedThresholdClassifierCV specifically."
+            ),
         }
+        return tags
 
 
 class FixedThresholdClassifier(BaseThresholdClassifier):
