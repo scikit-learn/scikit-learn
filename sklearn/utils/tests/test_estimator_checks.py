@@ -32,6 +32,7 @@ from sklearn.utils import _array_api, all_estimators, deprecated
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils._tags import default_tags
 from sklearn.utils._test_common._api_checks import (
+    check_estimators_unfitted,
     check_fit_score_takes_y,
     check_no_attributes_set_in_init,
 )
@@ -56,7 +57,6 @@ from sklearn.utils.estimator_checks import (
     check_dataframe_column_names_consistency,
     check_decision_proba_consistency,
     check_estimator,
-    check_estimators_unfitted,
     check_fit_check_is_fitted,
     check_methods_sample_order_invariance,
     check_methods_subset_invariance,

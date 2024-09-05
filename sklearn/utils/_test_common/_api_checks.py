@@ -11,13 +11,21 @@ import numpy as np
 
 from sklearn import clone
 from sklearn.datasets import make_blobs
+from sklearn.exceptions import NotFittedError
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.utils._test_common._common import (
     _enforce_estimator_tags_X,
     _enforce_estimator_tags_y,
     _is_public_parameter,
+    _regression_dataset,
 )
-from sklearn.utils._testing import _get_args, ignore_warnings, set_random_state
+from sklearn.utils._testing import (
+    _get_args,
+    create_memmap_backed_data,
+    ignore_warnings,
+    raises,
+    set_random_state,
+)
 
 
 @ignore_warnings(category=FutureWarning)
@@ -185,3 +193,40 @@ def check_dont_overwrite_parameters(name, estimator_orig):
         " or ended with _, but"
         " %s changed" % ", ".join(attrs_changed_by_fit)
     )
+
+
+@ignore_warnings(category=FutureWarning)
+def check_estimators_fit_returns_self(name, estimator_orig, readonly_memmap=False):
+    """Check if self is returned when calling fit."""
+    X, y = make_blobs(random_state=0, n_samples=21)
+    X = _enforce_estimator_tags_X(estimator_orig, X)
+
+    estimator = clone(estimator_orig)
+    y = _enforce_estimator_tags_y(estimator, y)
+
+    if readonly_memmap:
+        X, y = create_memmap_backed_data([X, y])
+
+    set_random_state(estimator)
+    assert estimator.fit(X, y) is estimator
+
+
+@ignore_warnings
+def check_estimators_unfitted(name, estimator_orig):
+    """Check that predict raises an exception in an unfitted estimator.
+
+    Unfitted estimators should raise a NotFittedError.
+    """
+    # Common test for Regressors, Classifiers and Outlier detection estimators
+    X, y = _regression_dataset()
+
+    estimator = clone(estimator_orig)
+    for method in (
+        "decision_function",
+        "predict",
+        "predict_proba",
+        "predict_log_proba",
+    ):
+        if hasattr(estimator, method):
+            with raises(NotFittedError):
+                getattr(estimator, method)(X)

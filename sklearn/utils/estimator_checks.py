@@ -58,7 +58,9 @@ from ._tags import Tags, get_tags
 from ._test_common._api_checks import (
     check_dont_overwrite_parameters,
     check_estimators_do_not_raise_errors_in_init_or_set_params,
+    check_estimators_fit_returns_self,
     check_estimators_overwrite_params,
+    check_estimators_unfitted,
     check_fit_score_takes_y,
     check_no_attributes_set_in_init,
 )
@@ -66,6 +68,7 @@ from ._test_common._common import (
     _enforce_estimator_tags_X,
     _enforce_estimator_tags_y,
     _is_pairwise_metric,
+    _regression_dataset,
 )
 from ._test_common.instance_generator import (
     CROSS_DECOMPOSITION,
@@ -88,14 +91,17 @@ from ._testing import (
 from .fixes import SPARSE_ARRAY_PRESENT
 from .validation import _num_samples, check_is_fitted, has_fit_parameter
 
-REGRESSION_DATASET = None
-
 
 def _yield_api_checks(estimator):
+    tags = get_tags(estimator)
     yield check_no_attributes_set_in_init
     yield check_fit_score_takes_y
     yield check_estimators_overwrite_params
     yield check_estimators_do_not_raise_errors_in_init_or_set_params
+    yield check_dont_overwrite_parameters
+    yield check_estimators_fit_returns_self
+    if tags.requires_fit:
+        yield check_estimators_unfitted
 
 
 def _yield_checks(estimator):
@@ -113,7 +119,6 @@ def _yield_checks(estimator):
             yield check_sample_weights_not_overwritten
             yield partial(check_sample_weights_invariance, kind="ones")
             yield partial(check_sample_weights_invariance, kind="zeros")
-    yield check_estimators_fit_returns_self
     yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
 
     # Check that all estimator yield informative messages when
@@ -180,8 +185,6 @@ def _yield_classifier_checks(classifier):
         yield check_supervised_y_no_nan
         if tags.target_tags.single_output:
             yield check_supervised_y_2d
-    if tags.requires_fit:
-        yield check_estimators_unfitted
     if "class_weight" in classifier.get_params().keys():
         yield check_class_weight_classifiers
 
@@ -258,8 +261,6 @@ def _yield_regressor_checks(regressor):
     if name != "CCA":
         # check that the regressor handles int input
         yield check_regressors_int
-    if tags.requires_fit:
-        yield check_estimators_unfitted
     yield check_non_transformer_estimators_n_iter
 
 
@@ -322,9 +323,6 @@ def _yield_outliers_checks(estimator):
         yield partial(check_outliers_train, readonly_memmap=True)
         # test outlier detectors can handle non-array data
         yield check_classifier_data_not_an_array
-        # test if NotFittedError is raised
-        if get_tags(estimator).requires_fit:
-            yield check_estimators_unfitted
     yield check_non_transformer_estimators_n_iter
 
 
@@ -392,7 +390,6 @@ def _yield_all_checks(estimator, legacy: bool):
     yield check_get_params_invariance
     yield check_set_params
     yield check_dict_unchanged
-    yield check_dont_overwrite_parameters
     yield check_fit_idempotent
     yield check_fit_check_is_fitted
     if not tags.no_validation:
@@ -622,22 +619,6 @@ def check_estimator(estimator=None, generate_only=False, *, legacy=True):
             # SkipTest is thrown when pandas can't be imported, or by checks
             # that are in the xfail_checks tag
             warnings.warn(str(exception), SkipTestWarning)
-
-
-def _regression_dataset():
-    global REGRESSION_DATASET
-    if REGRESSION_DATASET is None:
-        X, y = make_regression(
-            n_samples=200,
-            n_features=10,
-            n_informative=1,
-            bias=5.0,
-            noise=20,
-            random_state=42,
-        )
-        X = StandardScaler().fit_transform(X)
-        REGRESSION_DATASET = X, y
-    return REGRESSION_DATASET
 
 
 class _NotAnArray:
@@ -2592,43 +2573,6 @@ def check_get_feature_names_out_error(name, estimator_orig):
     )
     with raises(NotFittedError, err_msg=err_msg):
         estimator.get_feature_names_out()
-
-
-@ignore_warnings(category=FutureWarning)
-def check_estimators_fit_returns_self(name, estimator_orig, readonly_memmap=False):
-    """Check if self is returned when calling fit."""
-    X, y = make_blobs(random_state=0, n_samples=21)
-    X = _enforce_estimator_tags_X(estimator_orig, X)
-
-    estimator = clone(estimator_orig)
-    y = _enforce_estimator_tags_y(estimator, y)
-
-    if readonly_memmap:
-        X, y = create_memmap_backed_data([X, y])
-
-    set_random_state(estimator)
-    assert estimator.fit(X, y) is estimator
-
-
-@ignore_warnings
-def check_estimators_unfitted(name, estimator_orig):
-    """Check that predict raises an exception in an unfitted estimator.
-
-    Unfitted estimators should raise a NotFittedError.
-    """
-    # Common test for Regressors, Classifiers and Outlier detection estimators
-    X, y = _regression_dataset()
-
-    estimator = clone(estimator_orig)
-    for method in (
-        "decision_function",
-        "predict",
-        "predict_proba",
-        "predict_log_proba",
-    ):
-        if hasattr(estimator, method):
-            with raises(NotFittedError):
-                getattr(estimator, method)(X)
 
 
 @ignore_warnings(category=FutureWarning)

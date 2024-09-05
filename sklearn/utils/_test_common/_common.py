@@ -5,9 +5,29 @@
 
 import numpy as np
 
+from sklearn.datasets import make_regression
 from sklearn.metrics import pairwise_distances
 from sklearn.metrics.pairwise import linear_kernel
+from sklearn.preprocessing import StandardScaler
 from sklearn.utils import get_tags
+
+REGRESSION_DATASET = None
+
+
+def _regression_dataset():
+    global REGRESSION_DATASET
+    if REGRESSION_DATASET is None:
+        X, y = make_regression(
+            n_samples=200,
+            n_features=10,
+            n_informative=1,
+            bias=5.0,
+            noise=20,
+            random_state=42,
+        )
+        X = StandardScaler().fit_transform(X)
+        REGRESSION_DATASET = X, y
+    return REGRESSION_DATASET
 
 
 def _enforce_estimator_tags_X(estimator, X, kernel=linear_kernel):
