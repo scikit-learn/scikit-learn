@@ -2819,8 +2819,9 @@ def validate_data(
 
     validate_separately : False or tuple of dicts, default=False
         Only used if `y` is not `None`.
-        If `False`, call `check_X_y()`. Else, it must be a tuple of kwargs
-        to be used for calling `check_array()` on `X` and `y` respectively.
+        If `False`, call :func:`~sklearn.utils.check_X_y`. Else, it must be a tuple of
+        kwargs to be used for calling :func:`~sklearn.utils.check_array` on `X` and `y`
+        respectively.
 
         `estimator=self` is automatically added to these dicts to generate
         more informative error message in case of invalid input data.
