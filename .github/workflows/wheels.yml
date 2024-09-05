@@ -65,6 +65,10 @@ jobs:
           - os: windows-latest
             python: 312
             platform_id: win_amd64
+          - os: windows-latest
+            python: 313
+            platform_id: win_amd64
+            prerelease_pythons: True
 
           # Linux 64 bit manylinux2014
           - os: ubuntu-latest
@@ -87,6 +91,12 @@ jobs:
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
           - os: ubuntu-latest
+            python: 313
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux2014
+            # TODO: remove next line when Python 3.13 is released
+            prerelease_pythons: True
+          - os: ubuntu-latest
             python: 313t
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
@@ -107,6 +117,11 @@ jobs:
           - os: macos-12
             python: 312
             platform_id: macosx_x86_64
+          - os: macos-12
+            python: 313
+            platform_id: macosx_x86_64
+            # TODO: remove next line when Python 3.13 is released
+            prerelease_pythons: True
 
           # MacOS arm64
           - os: macos-14
@@ -121,6 +136,11 @@ jobs:
           - os: macos-14
             python: 312
             platform_id: macosx_arm64
+          - os: macos-14
+            python: 313
+            platform_id: macosx_arm64
+            # TODO: remove next line when Python 3.13 is released
+            prerelease_pythons: True
 
     steps:
       - name: Checkout scikit-learn
