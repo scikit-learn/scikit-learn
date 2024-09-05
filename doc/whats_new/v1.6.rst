@@ -277,6 +277,10 @@ Changelog
   :pr:`29210` by :user:`Marc Torrellas Socastro <marctorsoc>` and
   :user:`Stefanie Senger <StefanieSenger>`.
 
+- |Efficiency| :func:`sklearn.metrics.classification_report` is now faster by caching
+  classification labels.
+  :pr:`29738` by `Adrin Jalali`_.
+
 - |API| scoring="neg_max_error" should be used instead of
   scoring="max_error" which is now deprecated.
   :pr:`29462` by :user:`Farid "Freddie" Taba <artificialfintelligence>`.
