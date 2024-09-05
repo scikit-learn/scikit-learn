@@ -45,6 +45,13 @@ Changelog
   transform output is set to `pandas` or `polars`, since it isn't a transformer.
   :pr:`29401` by :user:`Stefanie Senger <StefanieSenger>`.
 
+:mod:`sklearn.svm`
+..................
+
+- |Fix| Fixed a regression in :class:`svm.SVC` and :class:`svm.SVR` such that we accept
+  `C=float("inf")`.
+  :pr:`29780` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 .. _changes_1_5_1:
 
 Version 1.5.1
