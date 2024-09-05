@@ -456,10 +456,10 @@ class BaseRandomProjection(
         inverse_components = self._compute_inverse_components()
         return X @ inverse_components.T
 
-    def _more_tags(self):
-        return {
-            "preserves_dtype": [np.float64, np.float32],
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
 
 
 class GaussianRandomProjection(BaseRandomProjection):

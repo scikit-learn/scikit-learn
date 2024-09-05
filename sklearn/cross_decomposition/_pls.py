@@ -553,8 +553,11 @@ class _PLS(
         """
         return self.fit(X, y).transform(X, y)
 
-    def _more_tags(self):
-        return {"poor_score": True, "requires_y": False}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.regressor_tags.poor_score = True
+        tags.target_tags.required = False
+        return tags
 
 
 class PLSRegression(_PLS):

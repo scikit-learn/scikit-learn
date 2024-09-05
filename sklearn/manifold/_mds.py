@@ -569,8 +569,10 @@ class MDS(BaseEstimator):
         self.random_state = random_state
         self.normalized_stress = normalized_stress
 
-    def _more_tags(self):
-        return {"pairwise": self.dissimilarity == "precomputed"}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.pairwise = self.dissimilarity == "precomputed"
+        return tags
 
     def fit(self, X, y=None, init=None):
         """

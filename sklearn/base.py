@@ -20,9 +20,7 @@ from .utils._estimator_html_repr import _HTMLDocumentationLinkMixin, estimator_h
 from .utils._metadata_requests import _MetadataRequester, _routing_enabled
 from .utils._param_validation import validate_parameter_constraints
 from .utils._set_output import _SetOutputMixin
-from .utils._tags import (
-    _DEFAULT_TAGS,
-)
+from .utils._tags import default_tags
 from .utils.fixes import _IS_32BIT
 from .utils.validation import (
     _check_feature_names_in,
@@ -385,19 +383,8 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         except AttributeError:
             self.__dict__.update(state)
 
-    def _more_tags(self):
-        return _DEFAULT_TAGS
-
-    def _get_tags(self):
-        collected_tags = {}
-        for base_class in reversed(inspect.getmro(self.__class__)):
-            if hasattr(base_class, "_more_tags"):
-                # need the if because mixins might not have _more_tags
-                # but might do redundant work in estimators
-                # (i.e. calling more tags on BaseEstimator multiple times)
-                more_tags = base_class._more_tags(self)
-                collected_tags.update(more_tags)
-        return collected_tags
+    def __sklearn_tags__(self):
+        return default_tags(self)
 
     def _check_n_features(self, X, reset):
         """Set the `n_features_in_` attribute, or check against it.
@@ -607,7 +594,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         """
         self._check_feature_names(X, reset=reset)
 
-        if y is None and self._get_tags()["requires_y"]:
+        if y is None and self.__sklearn_tags__().target_tags.required:
             raise ValueError(
                 f"This {self.__class__.__name__} estimator "
                 "requires y to be passed, but the target y is None."
@@ -763,9 +750,6 @@ class ClassifierMixin:
 
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
 
-    def _more_tags(self):
-        return {"requires_y": True}
-
 
 class RegressorMixin:
     """Mixin class for all regression estimators in scikit-learn.
@@ -848,9 +832,6 @@ class RegressorMixin:
         y_pred = self.predict(X)
         return r2_score(y, y_pred, sample_weight=sample_weight)
 
-    def _more_tags(self):
-        return {"requires_y": True}
-
 
 class ClusterMixin:
     """Mixin class for all cluster estimators in scikit-learn.
@@ -900,8 +881,11 @@ class ClusterMixin:
         self.fit(X, **kwargs)
         return self.labels_
 
-    def _more_tags(self):
-        return {"preserves_dtype": []}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        if tags.transformer_tags is not None:
+            tags.transformer_tags.preserves_dtype = []
+        return tags
 
 
 class BiclusterMixin:
@@ -1344,18 +1328,21 @@ class MetaEstimatorMixin:
 class MultiOutputMixin:
     """Mixin to mark estimators that support multioutput."""
 
-    def _more_tags(self):
-        return {"multioutput": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.multi_output = True
+        return tags
 
 
 class _UnstableArchMixin:
     """Mark estimators that are non-determinstic on 32bit or PowerPC"""
 
-    def _more_tags(self):
-        return {
-            "non_deterministic": _IS_32BIT
-            or platform.machine().startswith(("ppc", "powerpc"))
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.non_deterministic = _IS_32BIT or platform.machine().startswith(
+            ("ppc", "powerpc")
+        )
+        return tags
 
 
 def is_classifier(estimator):

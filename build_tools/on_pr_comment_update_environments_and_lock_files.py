@@ -65,7 +65,8 @@ def main():
     execute_command(
         "git reset build_tools/on_pr_comment_update_environments_and_lock_files.py"
     )
-    execute_command(f'git commit -m "{marker}Update lock files"')
+    # Using --allow-empty to handle cases where the lock-file has not changed
+    execute_command(f'git commit --allow-empty -m "{marker}Update lock files"')
     execute_command("git push")
 
 
