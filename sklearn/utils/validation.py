@@ -2777,7 +2777,7 @@ def validate_data(
     validation. This mutates the estimator and sets the `n_features_in_` and
     `feature_names_in_` attributes if `reset=True`.
 
-    ..versionadded:: 1.6
+    .. versionadded:: 1.6
 
     Parameters
     ----------
@@ -2796,29 +2796,33 @@ def validate_data(
     y : array-like of shape (n_samples,), default='no_validation'
         The targets.
 
-        - If `None`, `check_array` is called on `X`. If the estimator's
-          requires_y tag is True, then an error will be raised.
-        - If `'no_validation'`, `check_array` is called on `X` and the
-          estimator's requires_y tag is ignored. This is a default
-          placeholder and is never meant to be explicitly set. In that case
-          `X` must be passed.
-        - Otherwise, only `y` with `_check_y` or both `X` and `y` are
-          checked with either `check_array` or `check_X_y` depending on
+        - If `None`, :func:`~sklearn.utils.validation.check_array` is called on `X`. If
+          the estimator's `requires_y` tag is True, then an error will be raised.
+        - If `'no_validation'`, :func:`~sklearn.utils.validation.check_array` is called
+          on `X` and the estimator's `requires_y` tag is ignored. This is a default
+          placeholder and is never meant to be explicitly set. In that case `X` must be
+          passed.
+        - Otherwise, only `y` with :func:`~sklearn.utils.validation._check_y` or both
+          `X` and `y` are checked with either
+          :func:`~sklearn.utils.validation.check_array` or
+          :func:`~sklearn.utils.validation.check_X_y` depending on
           `validate_separately`.
 
     reset : bool, default=True
         Whether to reset the `n_features_in_` attribute.
         If False, the input will be checked for consistency with data
         provided when reset was last True.
+
         .. note::
-           It is recommended to call reset=True in `fit` and in the first
+
+           It is recommended to call `reset=True` in `fit` and in the first
            call to `partial_fit`. All other methods that validate `X`
            should set `reset=False`.
 
     validate_separately : False or tuple of dicts, default=False
-        Only used if y is not None.
-        If False, call validate_X_y(). Else, it must be a tuple of kwargs
-        to be used for calling check_array() on X and y respectively.
+        Only used if `y` is not `None`.
+        If `False`, call `check_X_y()`. Else, it must be a tuple of kwargs
+        to be used for calling `check_array()` on `X` and `y` respectively.
 
         `estimator=self` is automatically added to these dicts to generate
         more informative error message in case of invalid input data.
