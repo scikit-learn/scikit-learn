@@ -30,6 +30,16 @@ def attach_unique(*ys, return_tuple=False):
 
     The result is a view of y, and the metadata (unique) is not attached to y.
 
+    IMPORTANT: The output of this function should NEVER be returned in functions.
+    This is to avoid this pattern:
+
+    .. code:: python
+
+        y = np.array([1, 2, 3])
+        y = attach_unique(y)
+        y[1] = -1
+        # now np.unique(y) will be different from cached_unique(y)
+
     Parameters
     ----------
     *ys : array-like
