@@ -42,6 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
     apiKey: SKLEARN_ALGOLIA_API_KEY,
     indexName: SKLEARN_ALGOLIA_INDEX_NAME,
     placeholder: "Search the docs ...",
+    searchParameters: { attributesToHighlight: ["hierarchy.lvl0"] },
     // Redirect to the search page with the corresponding query
     resultsFooterComponent: ({ state }) => ({
       type: "a",
