@@ -4644,9 +4644,9 @@ def check_pandas_column_name_consistency(name, estimator):
     # NOTE: When running `check_dataframe_column_names_consistency` on a meta-estimator
     # that delegates validation to a base estimator, the check is testing that the base
     # estimator is checking for column name consistency.
-    test_estimator_params = SINGLE_TEST_PARAMS[check_pandas_column_name_consistency]
+    test_estimator_params = SINGLE_TEST_PARAMS["check_pandas_column_name_consistency"]
     if type(estimator) in test_estimator_params:
-        estimator.set_params(test_estimator_params[type(estimator)])
+        estimator.set_params(**test_estimator_params[type(estimator)])
 
     with ignore_warnings(category=(FutureWarning)):
         with warnings.catch_warnings(record=True) as record:
