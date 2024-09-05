@@ -13,7 +13,7 @@ from scipy.sparse import csc_matrix, issparse
 from ..base import TransformerMixin
 from ..utils import _safe_indexing, check_array, safe_sqr
 from ..utils._set_output import _get_output_config
-from ..utils._tags import _safe_tags
+from ..utils._tags import get_tags
 from ..utils.validation import _check_feature_names_in, _is_pandas_df, check_is_fitted
 
 
@@ -97,13 +97,13 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         output_config_dense = _get_output_config("transform", estimator=self)["dense"]
         preserve_X = output_config_dense != "default" and _is_pandas_df(X)
 
-        # note: we use _safe_tags instead of _get_tags because this is a
+        # note: we use get_tags instead of __sklearn_tags__ because this is a
         # public Mixin.
         X = self._validate_data(
             X,
             dtype=None,
             accept_sparse="csr",
-            ensure_all_finite=not _safe_tags(self, key="allow_nan"),
+            ensure_all_finite=not get_tags(self).input_tags.allow_nan,
             cast_to_ndarray=not preserve_X,
             reset=False,
         )

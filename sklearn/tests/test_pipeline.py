@@ -1616,7 +1616,7 @@ def test_pipeline_get_tags_none(passthrough):
     # Non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/18815
     pipe = make_pipeline(passthrough, SVC())
-    assert not pipe._get_tags()["pairwise"]
+    assert not pipe.__sklearn_tags__().input_tags.pairwise
 
 
 # FIXME: Replace this test with a full `check_estimator` once we have API only

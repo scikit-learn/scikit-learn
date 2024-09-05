@@ -478,8 +478,10 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         self.affinity = affinity
         self.random_state = random_state
 
-    def _more_tags(self):
-        return {"pairwise": self.affinity == "precomputed"}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.pairwise = self.affinity == "precomputed"
+        return tags
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):

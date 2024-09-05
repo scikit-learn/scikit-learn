@@ -284,7 +284,10 @@ html_theme_options = {
         "**": ["page-toc", "sourcelink", "sg_download_links", "sg_launcher_links"]
     },
     "show_version_warning_banner": True,
-    "announcement": None,
+    "announcement": (
+        '<a href="https://forms.gle/zUXvWjGUN1nWhJ2V6">Help us make '
+        "<code>scikit-learn</code> better! The 2024 user survey is now live.</a>"
+    ),
 }
 
 # Add any paths that contain custom themes here, relative to this directory.

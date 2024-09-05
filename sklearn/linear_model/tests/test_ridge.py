@@ -48,6 +48,7 @@ from sklearn.utils._array_api import (
     yield_namespace_device_dtype_combinations,
     yield_namespaces,
 )
+from sklearn.utils._test_common.instance_generator import _get_check_estimator_ids
 from sklearn.utils._testing import (
     assert_allclose,
     assert_almost_equal,
@@ -57,7 +58,6 @@ from sklearn.utils._testing import (
 )
 from sklearn.utils.estimator_checks import (
     _array_api_for_tests,
-    _get_check_estimator_ids,
     check_array_api_input_and_values,
 )
 from sklearn.utils.fixes import (
@@ -1020,7 +1020,7 @@ def _test_ridge_cv(sparse_container):
     ridge_cv.predict(X)
 
     assert len(ridge_cv.coef_.shape) == 1
-    assert type(ridge_cv.intercept_) == np.float64
+    assert type(ridge_cv.intercept_) is np.float64
 
     cv = KFold(5)
     ridge_cv.set_params(cv=cv)
@@ -1028,7 +1028,7 @@ def _test_ridge_cv(sparse_container):
     ridge_cv.predict(X)
 
     assert len(ridge_cv.coef_.shape) == 1
-    assert type(ridge_cv.intercept_) == np.float64
+    assert type(ridge_cv.intercept_) is np.float64
 
 
 @pytest.mark.parametrize(

@@ -1033,5 +1033,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         labels[missing_index] = _OUTLIER_ENCODING["missing"]["label"]
         return labels
 
-    def _more_tags(self):
-        return {"allow_nan": self.metric != "precomputed"}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = self.metric != "precomputed"
+        return tags
