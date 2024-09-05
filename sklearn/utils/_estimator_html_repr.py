@@ -472,6 +472,8 @@ class _HTMLDocumentationLinkMixin:
     >>> def url_param_generator(estimator):
     ...     return {"single_param": estimator.__class__.__name__}
     >>> class MyEstimator(BaseEstimator):
+    ...     # use "builtins" since it is the associated module when declaring
+    ...     # the class in a docstring
     ...     _doc_link_module = "builtins"
     ...     _doc_link_template = doc_link_template
     ...     _doc_link_url_param_generator = url_param_generator
