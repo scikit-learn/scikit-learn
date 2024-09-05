@@ -561,8 +561,8 @@ Lock files
 
 CIs use lock files to build environments with specific versions of dependencies. When a
 PR needs to modify the dependencies or their versions, the lock files should be updated
-accordingly. This can be done by adding a comment directly in the GitHub Pull Request
-(PR) discussion:
+accordingly. This can be done by adding the following comment directly in the GitHub
+Pull Request (PR) discussion:
 
 .. code-block:: text
 
