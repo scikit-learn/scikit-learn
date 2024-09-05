@@ -291,7 +291,9 @@ class _PLS(
         # With PLSRegression n_components is bounded by the rank of (X.T X) see
         # Wegelin page 25. With CCA and PLSCanonical, n_components is bounded
         # by the rank of X and the rank of Y: see Wegelin page 12
-        rank_upper_bound = p if self.deflation_mode == "regression" else min(n, p, q)
+        rank_upper_bound = (
+            min(n, p) if self.deflation_mode == "regression" else min(n, p, q)
+        )
         if n_components > rank_upper_bound:
             raise ValueError(
                 f"`n_components` upper bound is {rank_upper_bound}. "
@@ -551,8 +553,11 @@ class _PLS(
         """
         return self.fit(X, y).transform(X, y)
 
-    def _more_tags(self):
-        return {"poor_score": True, "requires_y": False}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.regressor_tags.poor_score = True
+        tags.target_tags.required = False
+        return tags
 
 
 class PLSRegression(_PLS):

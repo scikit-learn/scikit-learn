@@ -20,6 +20,14 @@ Version 1.5.2
 
 **release date of 1.5.2**
 
+Changes impacting many modules
+------------------------------
+
+- |Fix| Fixed performance regression in a few Cython modules in
+  `sklearn._loss`, `sklearn.manifold`, `sklearn.metrics` and `sklearn.utils`,
+  which were built without OpenMP support.
+  :pr:`29694` by :user:`Loïc Estèvce <lesteve>`.
+
 Changelog
 ---------
 
@@ -36,6 +44,13 @@ Changelog
 - |Fix| Fixed :class:`compose.TransformedTargetRegressor` not to raise `UserWarning` if
   transform output is set to `pandas` or `polars`, since it isn't a transformer.
   :pr:`29401` by :user:`Stefanie Senger <StefanieSenger>`.
+
+:mod:`sklearn.svm`
+..................
+
+- |Fix| Fixed a regression in :class:`svm.SVC` and :class:`svm.SVR` such that we accept
+  `C=float("inf")`.
+  :pr:`29780` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 .. _changes_1_5_1:
 

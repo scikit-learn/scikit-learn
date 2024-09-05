@@ -16,11 +16,7 @@ from scipy.spatial import distance
 from .. import config_context
 from ..exceptions import DataConversionWarning
 from ..preprocessing import normalize
-from ..utils import (
-    check_array,
-    gen_batches,
-    gen_even_slices,
-)
+from ..utils import check_array, gen_batches, gen_even_slices
 from ..utils._array_api import (
     _fill_or_add_to_diagonal,
     _find_matching_floating_dtype,
@@ -1169,7 +1165,11 @@ def cosine_distances(X, Y=None):
     # TODO: remove the xp.asarray calls once the following is fixed:
     # https://github.com/data-apis/array-api-compat/issues/177
     device_ = device(S)
-    S = xp.clip(S, xp.asarray(0.0, device=device_), xp.asarray(2.0, device=device_))
+    S = xp.clip(
+        S,
+        xp.asarray(0.0, device=device_, dtype=S.dtype),
+        xp.asarray(2.0, device=device_, dtype=S.dtype),
+    )
     if X is Y or Y is None:
         # Ensure that distances between vectors and themselves are set to 0.0.
         # This may not be the case due to floating point rounding errors.
@@ -1537,6 +1537,7 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     array([[0.76..., 0.76...],
            [0.87..., 0.93...]])
     """
+    xp, _ = get_namespace(X, Y)
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
         gamma = 1.0 / X.shape[1]
@@ -1544,7 +1545,8 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     K = safe_sparse_dot(X, Y.T, dense_output=True)
     K *= gamma
     K += coef0
-    np.tanh(K, K)  # compute tanh in-place
+    # compute tanh in-place for numpy
+    K = _modify_in_place_if_numpy(xp, xp.tanh, K, out=K)
     return K
 
 
@@ -2436,7 +2438,7 @@ def pairwise_distances(
 
         dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else "infer_float"
 
-        if dtype == bool and (X.dtype != bool or (Y is not None and Y.dtype != bool)):
+        if dtype is bool and (X.dtype != bool or (Y is not None and Y.dtype != bool)):
             msg = "Data was converted to boolean for metric %s" % metric
             warnings.warn(msg, DataConversionWarning)
 
