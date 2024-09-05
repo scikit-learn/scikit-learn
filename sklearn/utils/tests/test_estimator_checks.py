@@ -31,6 +31,10 @@ from sklearn.svm import SVC, NuSVC
 from sklearn.utils import _array_api, all_estimators, deprecated
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils._tags import default_tags
+from sklearn.utils._test_common._api_checks import (
+    check_fit_score_takes_y,
+    check_no_attributes_set_in_init,
+)
 from sklearn.utils._test_common.instance_generator import _set_checking_parameters
 from sklearn.utils._testing import (
     MinimalClassifier,
@@ -54,10 +58,8 @@ from sklearn.utils.estimator_checks import (
     check_estimator,
     check_estimators_unfitted,
     check_fit_check_is_fitted,
-    check_fit_score_takes_y,
     check_methods_sample_order_invariance,
     check_methods_subset_invariance,
-    check_no_attributes_set_in_init,
     check_outlier_contamination,
     check_outlier_corruption,
     check_regressor_data_not_an_array,
