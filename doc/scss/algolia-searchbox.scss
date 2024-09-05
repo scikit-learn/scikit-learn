@@ -48,6 +48,7 @@
 
   &.DocSearch-Container {
     z-index: 1050; // Make it above the header
+    cursor: auto; // Revert the cursor: pointer effect by [role="button"]
 
     // This is 100vh minus `--docsearch-modal-height` divided by 2; note that on mobile
     // devices the modal takes full height so we do not force top margin in that case
