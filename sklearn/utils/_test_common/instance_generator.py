@@ -25,7 +25,6 @@ from sklearn.cluster import (
     SpectralClustering,
     SpectralCoclustering,
 )
-from sklearn.compose import ColumnTransformer
 from sklearn.covariance import GraphicalLasso, GraphicalLassoCV
 from sklearn.cross_decomposition import CCA, PLSSVD, PLSCanonical, PLSRegression
 from sklearn.decomposition import (
@@ -296,8 +295,8 @@ SINGLE_TEST_PARAMS = {
 
 
 def _set_checking_parameters(estimator):
-    # set parameters to speed up some estimators and
-    # avoid deprecated behaviour
+    """Set the parameters of an estimator instance to speed-up tests and avoid
+    deprecation warnings in common test."""
     if type(estimator) in TEST_PARAMS:
         test_params = TEST_PARAMS[type(estimator)]
         estimator.set_params(**test_params)
@@ -314,6 +313,9 @@ def _tested_estimators(type_filter=None):
 
 
 def _generate_pipeline():
+    """Generator of simple pipeline to check compliance of the
+    :class:`~sklearn.pipeline.Pipeline` class.
+    """
     for final_estimator in [Ridge(), LogisticRegression()]:
         yield Pipeline(
             steps=[
@@ -406,15 +408,8 @@ def _get_check_estimator_ids(obj):
             return re.sub(r"\s", "", str(obj))
 
 
-def _generate_column_transformer_instances():
-    yield ColumnTransformer(
-        transformers=[
-            ("trans1", StandardScaler(), [0, 1]),
-        ]
-    )
-
-
 def _generate_search_cv_instances():
+    """Generator of `SearchCV` instances to check their compliance with scikit-learn."""
     for SearchCV, (Estimator, param_grid) in product(
         [
             GridSearchCV,

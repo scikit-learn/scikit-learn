@@ -8,7 +8,6 @@ General tests for all estimators in sklearn.
 import os
 import pkgutil
 import re
-import warnings
 from functools import partial
 from inspect import isgenerator, signature
 from itertools import chain
@@ -30,8 +29,11 @@ from sklearn.datasets import make_blobs
 from sklearn.exceptions import ConvergenceWarning, FitFailedWarning
 
 # make it possible to discover experimental estimators when calling `all_estimators`
+from sklearn.experimental import (
+    enable_halving_search_cv,  # noqa
+    enable_iterative_imputer,  # noqa
+)
 from sklearn.linear_model import LogisticRegression
-from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.manifold import TSNE, Isomap, LocallyLinearEmbedding
 from sklearn.neighbors import (
     KNeighborsClassifier,
@@ -49,9 +51,8 @@ from sklearn.preprocessing import (
 )
 from sklearn.semi_supervised import LabelPropagation, LabelSpreading
 from sklearn.utils import all_estimators
-from sklearn.utils._tags import _DEFAULT_TAGS, _safe_tags
+from sklearn.utils._tags import get_tags
 from sklearn.utils._test_common.instance_generator import (
-    _generate_column_transformer_instances,
     _generate_pipeline,
     _generate_search_cv_instances,
     _get_check_estimator_ids,
@@ -63,7 +64,6 @@ from sklearn.utils._testing import (
     ignore_warnings,
 )
 from sklearn.utils.estimator_checks import (
-    check_class_weight_balanced_linear_classifier,
     check_estimator,
     check_get_feature_names_out_error,
     check_global_output_transform_pandas,
@@ -142,27 +142,6 @@ def test_estimators(estimator, check, request):
 def test_check_estimator_generate_only():
     all_instance_gen_checks = check_estimator(LogisticRegression(), generate_only=True)
     assert isgenerator(all_instance_gen_checks)
-
-
-def _tested_linear_classifiers():
-    classifiers = all_estimators(type_filter="classifier")
-
-    with warnings.catch_warnings(record=True):
-        for name, clazz in classifiers:
-            required_parameters = getattr(clazz, "_required_parameters", [])
-            if len(required_parameters):
-                # FIXME
-                continue
-
-            if "class_weight" in clazz().get_params().keys() and issubclass(
-                clazz, LinearClassifierMixin
-            ):
-                yield name, clazz
-
-
-@pytest.mark.parametrize("name, Classifier", _tested_linear_classifiers())
-def test_class_weight_balanced_linear_classifiers(name, Classifier):
-    check_class_weight_balanced_linear_classifier(name, Classifier)
 
 
 @pytest.mark.xfail(_IS_WASM, reason="importlib not supported for Pyodide packages")
@@ -273,14 +252,29 @@ def test_search_cv(estimator, check, request):
 )
 def test_valid_tag_types(estimator):
     """Check that estimator tags are valid."""
-    tags = _safe_tags(estimator)
+    from dataclasses import fields
 
-    for name, tag in tags.items():
-        correct_tags = type(_DEFAULT_TAGS[name])
-        if name == "_xfail_checks":
-            # _xfail_checks can be a dictionary
-            correct_tags = (correct_tags, dict)
-        assert isinstance(tag, correct_tags)
+    from ..utils._tags import default_tags
+
+    def check_field_types(tags, defaults):
+        if tags is None:
+            return
+        tags_fields = fields(tags)
+        for field in tags_fields:
+            correct_tags = type(getattr(defaults, field.name))
+            if field.name == "_xfail_checks":
+                # _xfail_checks can be a dictionary
+                correct_tags = (correct_tags, dict)
+            assert isinstance(getattr(tags, field.name), correct_tags)
+
+    tags = get_tags(estimator)
+    defaults = default_tags(estimator)
+    check_field_types(tags, defaults)
+    check_field_types(tags.input_tags, defaults.input_tags)
+    check_field_types(tags.target_tags, defaults.target_tags)
+    check_field_types(tags.classifier_tags, defaults.classifier_tags)
+    check_field_types(tags.regressor_tags, defaults.regressor_tags)
+    check_field_types(tags.transformer_tags, defaults.transformer_tags)
 
 
 # TODO: As more modules support get_feature_names_out they should be removed
@@ -358,7 +352,6 @@ def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
     chain(
         _tested_estimators(),
         _generate_pipeline(),
-        _generate_column_transformer_instances(),
         _generate_search_cv_instances(),
     ),
     ids=_get_check_estimator_ids,
