@@ -29,15 +29,13 @@ from sklearn.cluster import (
 from sklearn.compose import ColumnTransformer
 from sklearn.datasets import make_blobs
 from sklearn.exceptions import ConvergenceWarning, FitFailedWarning
+
+# make it possible to discover experimental estimators when calling `all_estimators`
 from sklearn.experimental import (
     enable_halving_search_cv,  # noqa
     enable_iterative_imputer,  # noqa
 )
-
-# make it possible to discover experimental estimators when calling `all_estimators`
 from sklearn.linear_model import LogisticRegression
-
-# make it possible to discover experimental estimators when calling `all_estimators`
 from sklearn.manifold import TSNE, Isomap, LocallyLinearEmbedding
 from sklearn.neighbors import (
     KNeighborsClassifier,
