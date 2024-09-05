@@ -2832,8 +2832,8 @@ def validate_data(
         `n_features_in_` are checked.
 
     **check_params : kwargs
-        Parameters passed to :func:`sklearn.utils.check_array` or
-        :func:`sklearn.utils.check_X_y`. Ignored if validate_separately
+        Parameters passed to :func:`~sklearn.utils.check_array` or
+        :func:`~sklearn.utils.check_X_y`. Ignored if validate_separately
         is not False.
 
         `estimator=self` is automatically added to these params to generate
