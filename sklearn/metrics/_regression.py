@@ -783,8 +783,7 @@ def root_mean_squared_log_error(
     >>> root_mean_squared_log_error(y_true, y_pred)
     0.199...
     """
-    input_arrays = [y_true, y_pred]
-    xp, _ = get_namespace(*input_arrays)
+    xp, _ = get_namespace(y_true, y_pred)
     dtype = _find_matching_floating_dtype(y_true, y_pred, xp=xp)
 
     _, y_true, y_pred, multioutput = _check_reg_targets(
