@@ -11,7 +11,7 @@ from joblib import effective_n_jobs
 
 from ..base import BaseEstimator, MetaEstimatorMixin, clone, is_classifier, is_regressor
 from ..utils import Bunch, check_random_state
-from ..utils._tags import _safe_tags
+from ..utils._tags import get_tags
 from ..utils._user_interface import _print_elapsed_time
 from ..utils.metadata_routing import _routing_enabled
 from ..utils.metaestimators import _BaseComposition
@@ -291,10 +291,11 @@ class _BaseHeterogeneousEnsemble(
         """
         return super()._get_params("estimators", deep=deep)
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
         try:
             allow_nan = all(
-                _safe_tags(est[1])["allow_nan"] if est[1] != "drop" else True
+                get_tags(est[1]).input_tags.allow_nan if est[1] != "drop" else True
                 for est in self.estimators
             )
         except Exception:
@@ -302,4 +303,6 @@ class _BaseHeterogeneousEnsemble(
             # fail. In this case, we assume that `allow_nan` is False but the parameter
             # validation will raise an error during `fit`.
             allow_nan = False
-        return {"preserves_dtype": [], "allow_nan": allow_nan}
+        tags.input_tags.allow_nan = allow_nan
+        tags.transformer_tags.preserves_dtype = []
+        return tags
