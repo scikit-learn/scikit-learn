@@ -14,7 +14,7 @@ cp $WHEEL_PATH $WHEEL_NAME
 # Dot the Python version for identyfing the base Docker image
 PYTHON_VERSION=$(echo ${PYTHON_VERSION:0:1}.${PYTHON_VERSION:1:2})
 
-if [[ "$CIBW_PRERELEASE_PYTHONS" == "True" ]]; then
+if [[ "$CIBW_PRERELEASE_PYTHONS" =~ [tT]rue ]]; then
     PYTHON_VERSION="$PYTHON_VERSION-rc"
 fi
 # Build a minimal Windows Docker image for testing the wheels
