@@ -1124,8 +1124,8 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     induced.
 
     :class:`~sklearn.ensemble.HistGradientBoostingClassifier` is a much faster
-    variant of this algorithm for intermediate datasets (`n_samples >= 10_000`) and
-    supports monotonicity constraints.
+    variant of this algorithm already for intermediate datasets (`n_samples >= 10_000`)
+    and supports monotonicity constraints.
 
     Read more in the :ref:`User Guide <gradient_boosting>`.
 
@@ -1728,8 +1728,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     loss function.
 
     :class:`~sklearn.ensemble.HistGradientBoostingRegressor` is a much faster
-    variant of this algorithm for intermediate datasets (`n_samples >= 10_000`) and
-    supports monotonic constraints.
+    variant of this algorithm already for intermediate datasets (`n_samples >= 10_000`)
+    and supports monotonic constraints.
 
     Read more in the :ref:`User Guide <gradient_boosting>`.
 
