@@ -1123,9 +1123,9 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     classification is a special case where only a single regression tree is
     induced.
 
-    :class:`~sklearn.ensemble.HistGradientBoostingClassifier` is a much faster
-    variant of this algorithm already for intermediate datasets (`n_samples >= 10_000`)
-    and supports monotonicity constraints.
+    :class:`~sklearn.ensemble.HistGradientBoostingClassifier` is a much faster variant
+    of this algorithm for intermediate and large datasets (`n_samples >= 10_000`) and
+    supports monotonic constraints.
 
     Read more in the :ref:`User Guide <gradient_boosting>`.
 
@@ -1727,9 +1727,9 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     each stage a regression tree is fit on the negative gradient of the given
     loss function.
 
-    :class:`~sklearn.ensemble.HistGradientBoostingRegressor` is a much faster
-    variant of this algorithm already for intermediate datasets (`n_samples >= 10_000`)
-    and supports monotonic constraints.
+    :class:`~sklearn.ensemble.HistGradientBoostingRegressor` is a much faster variant
+    of this algorithm for intermediate and large datasets (`n_samples >= 10_000`) and
+    supports monotonic constraints.
 
     Read more in the :ref:`User Guide <gradient_boosting>`.
 
