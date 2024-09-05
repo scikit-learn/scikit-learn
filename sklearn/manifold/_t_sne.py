@@ -1208,5 +1208,7 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         """Number of transformed output features."""
         return self.embedding_.shape[1]
 
-    def _more_tags(self):
-        return {"pairwise": self.metric == "precomputed"}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.pairwise = self.metric == "precomputed"
+        return tags
