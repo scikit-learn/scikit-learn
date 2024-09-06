@@ -887,7 +887,8 @@ def test_multimetric_scorer_exception_handling(raise_exc):
     X, y = make_classification(
         n_samples=50, n_features=2, n_redundant=0, random_state=0
     )
-    y *= -1  # neg_mean_squared_log_error fails if y contains negative values
+    # neg_mean_squared_log_error fails if y contains values less than or equal to -1
+    y *= -1
 
     clf = DecisionTreeClassifier().fit(X, y)
 
