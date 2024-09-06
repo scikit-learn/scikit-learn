@@ -53,7 +53,7 @@ def test_input_data_dimension(pyplot):
 
 
 def test_check_boundary_response_method_error():
-    """Check that we raise an error for the cases not supported by
+    """Check error raised for multi-output multi-class classifiers by
     `_check_boundary_response_method`.
     """
 
@@ -64,16 +64,6 @@ def test_check_boundary_response_method_error():
     with pytest.raises(ValueError, match=err_msg):
         _check_boundary_response_method(MultiLabelClassifier(), "predict", None)
 
-    class MulticlassClassifier:
-        classes_ = [0, 1, 2]
-
-    err_msg = "Multiclass classifiers are only supported when `response_method` is"
-    for response_method in ("predict_proba", "decision_function"):
-        with pytest.raises(ValueError, match=err_msg):
-            _check_boundary_response_method(
-                MulticlassClassifier(), response_method, None
-            )
-
 
 @pytest.mark.parametrize(
     "estimator, response_method, class_of_interest, expected_prediction_method",
@@ -81,7 +71,7 @@ def test_check_boundary_response_method_error():
         (DecisionTreeRegressor(), "predict", None, "predict"),
         (DecisionTreeRegressor(), "auto", None, "predict"),
         (LogisticRegression().fit(*load_iris_2d_scaled()), "predict", None, "predict"),
-        (LogisticRegression().fit(*load_iris_2d_scaled()), "auto", None, "predict"),
+        (LogisticRegression().fit(*load_iris_2d_scaled()), "auto", None, ['decision_function', 'predict_proba', 'predict']),
         (
             LogisticRegression().fit(*load_iris_2d_scaled()),
             "predict_proba",
@@ -121,23 +111,7 @@ def test_check_boundary_response_method(
     assert prediction_method == expected_prediction_method
 
 
-@pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
-def test_multiclass_error(pyplot, response_method):
-    """Check multiclass errors."""
-    X, y = make_classification(n_classes=3, n_informative=3, random_state=0)
-    X = X[:, [0, 1]]
-    lr = LogisticRegression().fit(X, y)
-
-    msg = (
-        "Multiclass classifiers are only supported when `response_method` is 'predict'"
-        " or 'auto'"
-    )
-    with pytest.raises(ValueError, match=msg):
-        DecisionBoundaryDisplay.from_estimator(lr, X, response_method=response_method)
-
-
-@pytest.mark.parametrize("response_method", ["auto", "predict"])
-def test_multiclass(pyplot, response_method):
+def test_multiclass(pyplot):
     """Check multiclass gives expected results."""
     grid_resolution = 10
     eps = 1.0
@@ -146,7 +120,7 @@ def test_multiclass(pyplot, response_method):
     lr = LogisticRegression(random_state=0).fit(X, y)
 
     disp = DecisionBoundaryDisplay.from_estimator(
-        lr, X, response_method=response_method, grid_resolution=grid_resolution, eps=1.0
+        lr, X, response_method="predict", grid_resolution=grid_resolution, eps=1.0
     )
 
     x0_min, x0_max = X[:, 0].min() - eps, X[:, 0].max() + eps
@@ -575,18 +549,6 @@ def test_class_of_interest_multiclass(pyplot, response_method):
             X,
             response_method=response_method,
             class_of_interest=class_of_interest_idx,
-        )
-
-    # TODO: remove this test when we handle multiclass with class_of_interest=None
-    # by showing the max of the decision function or the max of the predicted
-    # probabilities.
-    err_msg = "Multiclass classifiers are only supported"
-    with pytest.raises(ValueError, match=err_msg):
-        DecisionBoundaryDisplay.from_estimator(
-            estimator,
-            X,
-            response_method=response_method,
-            class_of_interest=None,
         )
 
 

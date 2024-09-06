@@ -48,16 +48,7 @@ def _check_boundary_response_method(estimator, response_method, class_of_interes
         msg = "Multi-label and multi-output multi-class classifiers are not supported"
         raise ValueError(msg)
 
-    if has_classes and len(estimator.classes_) > 2:
-        if response_method not in {"auto", "predict"} and class_of_interest is None:
-            msg = (
-                "Multiclass classifiers are only supported when `response_method` is "
-                "'predict' or 'auto'. Else you must provide `class_of_interest` to "
-                "plot the decision boundary of a specific class."
-            )
-            raise ValueError(msg)
-        prediction_method = "predict" if response_method == "auto" else response_method
-    elif response_method == "auto":
+    if response_method == "auto":
         if is_regressor(estimator):
             prediction_method = "predict"
         else:
@@ -88,8 +79,19 @@ class DecisionBoundaryDisplay:
     xx1 : ndarray of shape (grid_resolution, grid_resolution)
         Second output of :func:`meshgrid <numpy.meshgrid>`.
 
-    response : ndarray of shape (grid_resolution, grid_resolution)
+    response : ndarray of shape (grid_resolution, grid_resolution) or \
+        (grid_resolution, grid_resolution, n_classes)
         Values of the response function.
+
+    multiclass_cmap : list[str, Colormap] default=None
+        Colormap to use for each class when plotting all classes of multiclass
+        problem and `response.shape.ndim==3`. Ignored in all other cases.
+        Length of list should be equal to `response.shape[-1]`. Each
+        element in list will be passed to the `cmap` parameter of the
+        `plot_method`.
+        If None, single color colormaps will be generated from 'viridis' colors.
+
+        .. versionadded:: 1.6
 
     xlabel : str, default=None
         Default label to place on x axis.
@@ -99,10 +101,10 @@ class DecisionBoundaryDisplay:
 
     Attributes
     ----------
-    surface_ : matplotlib `QuadContourSet` or `QuadMesh`
-        If `plot_method` is 'contour' or 'contourf', `surface_` is a
+    surface_ : matplotlib `QuadContourSet` or `QuadMesh` or list of such objects
+        If `plot_method` is 'contour' or 'contourf', `surface_` is
         :class:`QuadContourSet <matplotlib.contour.QuadContourSet>`. If
-        `plot_method` is 'pcolormesh', `surface_` is a
+        `plot_method` is 'pcolormesh', `surface_` is
         :class:`QuadMesh <matplotlib.collections.QuadMesh>`.
 
     ax_ : matplotlib Axes
@@ -142,14 +144,24 @@ class DecisionBoundaryDisplay:
     >>> plt.show()
     """
 
-    def __init__(self, *, xx0, xx1, response, xlabel=None, ylabel=None):
+    def __init__(
+        self, *, xx0, xx1, response, multiclass_cmap=None, xlabel=None, ylabel=None
+    ):
         self.xx0 = xx0
         self.xx1 = xx1
         self.response = response
+        self.multiclass_cmap = multiclass_cmap
         self.xlabel = xlabel
         self.ylabel = ylabel
 
-    def plot(self, plot_method="contourf", ax=None, xlabel=None, ylabel=None, **kwargs):
+    def plot(
+        self,
+        plot_method="contourf",
+        ax=None,
+        xlabel=None,
+        ylabel=None,
+        **kwargs,
+    ):
         """Plot visualization.
 
         Parameters
@@ -180,6 +192,7 @@ class DecisionBoundaryDisplay:
             Object that stores computed values.
         """
         check_matplotlib_support("DecisionBoundaryDisplay.plot")
+        import matplotlib as mpl  # noqa
         import matplotlib.pyplot as plt  # noqa
 
         if plot_method not in ("contourf", "contour", "pcolormesh"):
@@ -191,7 +204,31 @@ class DecisionBoundaryDisplay:
             _, ax = plt.subplots()
 
         plot_func = getattr(ax, plot_method)
-        self.surface_ = plot_func(self.xx0, self.xx1, self.response, **kwargs)
+        if self.response.ndim == 2:
+            self.surface_ = plot_func(self.xx0, self.xx1, self.response, **kwargs)
+        else:  # self.response.ndim == 3
+            multiclass_cmap = self.multiclass_cmap
+            # create the colormap for each class when `multiclass_cmap` is None
+            if multiclass_cmap is None:
+                viridis = mpl.colormaps["viridis"].resampled(self.response.shape[-1])
+                multiclass_cmap = []
+                for class_idx, primary_color in enumerate(viridis.colors):
+                    r, g, b, _ = primary_color
+                    cmap = mpl.colors.LinearSegmentedColormap.from_list(
+                        f"colormap_{class_idx}", [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)]
+                    )
+                    multiclass_cmap.append(cmap)
+
+            self.surface_ = []
+            for class_idx, cmap in enumerate(multiclass_cmap):
+                response = np.ma.array(
+                    self.response[:, :, class_idx],
+                    mask=~(self.response.argmax(axis=2) == class_idx),
+                )
+                print(f"class_idx {class_idx}\n{response}")
+                self.surface_.append(
+                    plot_func(self.xx0, self.xx1, response, cmap=cmap, **kwargs)
+                )
 
         if xlabel is not None or not ax.get_xlabel():
             xlabel = self.xlabel if xlabel is None else xlabel
@@ -215,6 +252,7 @@ class DecisionBoundaryDisplay:
         plot_method="contourf",
         response_method="auto",
         class_of_interest=None,
+        multiclass_cmap=None,
         xlabel=None,
         ylabel=None,
         ax=None,
@@ -254,17 +292,31 @@ class DecisionBoundaryDisplay:
             :term:`decision_function`, :term:`predict` as the target response.
             If set to 'auto', the response method is tried in the following order:
             :term:`decision_function`, :term:`predict_proba`, :term:`predict`.
-            For multiclass problems, :term:`predict` is selected when
-            `response_method="auto"`.
+
+            .. versionchanged:: 1.6
+                For multiclass problems, 'auto' no longer defaults to 'predict'.
 
         class_of_interest : int, float, bool or str, default=None
-            The class considered when plotting the decision. If None,
-            `estimator.classes_[1]` is considered as the positive class
-            for binary classifiers. Must have an explicit value for
-            multiclass classifiers when `response_method` is 'predict_proba'
-            or 'decision_function'.
+            The class to be plotted when `response_method` is 'predict_proba'
+            or 'decision_function'. If None, `estimator.classes_[1]` is considered
+            the positive class for binary classifiers. For multiclass
+            classifiers, if None, all classes will be represented in the
+            decision boundary plot; the class with the highest response value
+            at each point is plotted, with opacity equal to the response
+            value. The color of each class can be set via `multiclass_cmap`.
 
             .. versionadded:: 1.4
+
+        multiclass_cmap : list[str, Colormap] default=None
+            Colormap to use for each class when plotting multiclass
+            'predict_proba' or 'decision_function' and `class_of_interest` is
+            None. Ignored in all other cases.
+            Length of list should be equal to the number of classes. Each
+            element in list will be passed to the `cmap` parameter of the
+            `plot_method`.
+            If None, single color colormaps will be generated from 'viridis' colors.
+
+            .. versionadded:: 1.6
 
         xlabel : str, default=None
             The label used for the x-axis. If `None`, an attempt is made to
@@ -343,6 +395,18 @@ class DecisionBoundaryDisplay:
                 f"n_features must be equal to 2. Got {num_features} instead."
             )
 
+        if (
+            response_method in ("predict_proba", "decision_function", "auto")
+            and multiclass_cmap is not None
+            and hasattr(estimator, "classes_")
+            and (n_classes := len(estimator.classes_) > 2)
+        ):
+            if len(multiclass_cmap) != n_classes:
+                raise ValueError(
+                    "'multiclass_cmap' must be of the same length as "
+                    f"'estimator.classes_': {n_classes}, got: {len(multiclass_cmap)}."
+                )
+
         x0, x1 = _safe_indexing(X, 0, axis=1), _safe_indexing(X, 1, axis=1)
 
         x0_min, x0_max = x0.min() - eps, x0.max() + eps
@@ -390,15 +454,20 @@ class DecisionBoundaryDisplay:
             encoder.classes_ = estimator.classes_
             response = encoder.transform(response)
 
-        if response.ndim != 1:
+        if response.ndim == 1:
+            response = response.reshape(*xx0.shape)
+        else:
             if is_regressor(estimator):
                 raise ValueError("Multi-output regressors are not supported")
 
-            # For the multiclass case, `_get_response_values` returns the response
-            # as-is. Thus, we have a column per class and we need to select the column
-            # corresponding to the positive class.
-            col_idx = np.flatnonzero(estimator.classes_ == class_of_interest)[0]
-            response = response[:, col_idx]
+            if class_of_interest is not None:
+                # For the multiclass case, `_get_response_values` returns the response
+                # as-is. Thus, we have a column per class and we need to select the column
+                # corresponding to the positive class.
+                col_idx = np.flatnonzero(estimator.classes_ == class_of_interest)[0]
+                response = response[:, col_idx].reshape(*xx0.shape)
+            else:
+                response = response.reshape(*xx0.shape, response.shape[-1])
 
         if xlabel is None:
             xlabel = X.columns[0] if hasattr(X, "columns") else ""
@@ -409,7 +478,8 @@ class DecisionBoundaryDisplay:
         display = cls(
             xx0=xx0,
             xx1=xx1,
-            response=response.reshape(xx0.shape),
+            response=response,
+            multiclass_cmap=multiclass_cmap,
             xlabel=xlabel,
             ylabel=ylabel,
         )
