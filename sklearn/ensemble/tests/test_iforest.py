@@ -387,7 +387,7 @@ def test_iforest_predict_parallel(global_random_seed, contamination, n_jobs):
     )
     clf_parallel.fit(X)
     with parallel_backend("threading", n_jobs=n_jobs):
-        pred_paralell = clf_parallel.predict(X)
+        pred_parallel = clf_parallel.predict(X)
 
     # assert the same results as non-parallel
-    assert_array_equal(pred, pred_paralell)
+    assert_array_equal(pred, pred_parallel)
