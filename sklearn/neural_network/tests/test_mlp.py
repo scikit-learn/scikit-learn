@@ -13,11 +13,7 @@ from io import StringIO
 import joblib
 import numpy as np
 import pytest
-from numpy.testing import (
-    assert_allclose,
-    assert_almost_equal,
-    assert_array_equal,
-)
+from numpy.testing import assert_allclose, assert_almost_equal, assert_array_equal
 
 from sklearn.datasets import (
     load_digits,
@@ -965,3 +961,28 @@ def test_mlp_partial_fit_after_fit(MLPEstimator):
     msg = "partial_fit does not support early_stopping=True"
     with pytest.raises(ValueError, match=msg):
         mlp.partial_fit(X_iris, y_iris)
+
+
+def test_diverging_model():
+    """Test that a diverging model does not raise errors"""
+    mlp = MLPRegressor(
+        hidden_layer_sizes=100,
+        activation="identity",
+        solver="sgd",
+        alpha=0.00009,
+        learning_rate="constant",
+        learning_rate_init=1,
+        shuffle=True,
+        max_iter=200,
+        early_stopping=True,
+        n_iter_no_change=10,
+    )
+
+    msg = (
+        "Solver produced non-finite parameter weights. The input data may contain large"
+        " values and need to be preprocessed."
+    )
+    with pytest.raises(ValueError, match=msg):
+        mlp.fit(X_iris, y_iris)
+
+    assert mlp.validation_scores_[-1] == np.inf
