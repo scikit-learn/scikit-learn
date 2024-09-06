@@ -36,7 +36,7 @@ from ..exceptions import DataConversionWarning, NotFittedError, SkipTestWarning
 from ..linear_model._base import LinearClassifierMixin
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 from ..metrics.pairwise import linear_kernel, pairwise_distances, rbf_kernel
-from ..model_selection import ShuffleSplit, train_test_split, LeaveOneGroupOut
+from ..model_selection import LeaveOneGroupOut, ShuffleSplit, train_test_split
 from ..model_selection._validation import _safe_split
 from ..pipeline import make_pipeline
 from ..preprocessing import StandardScaler, scale
