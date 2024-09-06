@@ -17,6 +17,7 @@ from ..metrics import euclidean_distances
 from ..utils import check_array, check_random_state, check_symmetric
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.parallel import Parallel, delayed
+from ..utils.validation import validate_data
 
 
 def _smacof_single(
@@ -626,7 +627,7 @@ class MDS(BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
             X transformed in the new space.
         """
-        X = self._validate_data(X)
+        X = validate_data(self, X)
         if X.shape[0] == X.shape[1] and self.dissimilarity != "precomputed":
             warnings.warn(
                 "The MDS API has changed. ``fit`` now constructs an"

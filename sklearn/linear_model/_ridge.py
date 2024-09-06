@@ -48,7 +48,7 @@ from ..utils.metadata_routing import (
     process_routing,
 )
 from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.validation import _check_sample_weight, check_is_fitted
+from ..utils.validation import _check_sample_weight, check_is_fitted, validate_data
 from ._base import LinearClassifierMixin, LinearModel, _preprocess_data, _rescale_data
 from ._sag import sag_solver
 
@@ -1236,7 +1236,8 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         """
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), self.solver)
         xp, _ = get_namespace(X, y, sample_weight)
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse=_accept_sparse,
@@ -1287,7 +1288,8 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
             The binarized version of `y`.
         """
         accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), solver)
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse=accept_sparse,
@@ -2085,7 +2087,8 @@ class _RidgeGCV(LinearModel):
         -------
         self : object
         """
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse=["csr", "csc", "coo"],

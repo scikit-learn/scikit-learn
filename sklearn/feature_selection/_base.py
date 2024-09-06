@@ -14,7 +14,12 @@ from ..base import TransformerMixin
 from ..utils import _safe_indexing, check_array, safe_sqr
 from ..utils._set_output import _get_output_config
 from ..utils._tags import get_tags
-from ..utils.validation import _check_feature_names_in, _is_pandas_df, check_is_fitted
+from ..utils.validation import (
+    _check_feature_names_in,
+    _is_pandas_df,
+    check_is_fitted,
+    validate_data,
+)
 
 
 class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
@@ -99,12 +104,13 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
 
         # note: we use get_tags instead of __sklearn_tags__ because this is a
         # public Mixin.
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             dtype=None,
             accept_sparse="csr",
             ensure_all_finite=not get_tags(self).input_tags.allow_nan,
-            cast_to_ndarray=not preserve_X,
+            skip_check_array=preserve_X,
             reset=False,
         )
         return self._transform(X)

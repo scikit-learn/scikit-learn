@@ -12,19 +12,20 @@ from scipy.sparse import issparse
 
 from ..utils._array_api import get_namespace
 from ..utils.fixes import VisibleDeprecationWarning
+from ._unique import attach_unique, cached_unique
 from .validation import _assert_all_finite, check_array
 
 
-def _unique_multiclass(y):
-    xp, is_array_api_compliant = get_namespace(y)
+def _unique_multiclass(y, xp=None):
+    xp, is_array_api_compliant = get_namespace(y, xp=xp)
     if hasattr(y, "__array__") or is_array_api_compliant:
-        return xp.unique_values(xp.asarray(y))
+        return cached_unique(xp.asarray(y), xp=xp)
     else:
         return set(y)
 
 
-def _unique_indicator(y):
-    xp, _ = get_namespace(y)
+def _unique_indicator(y, xp=None):
+    xp, _ = get_namespace(y, xp=xp)
     return xp.arange(
         check_array(y, input_name="y", accept_sparse=["csr", "csc", "coo"]).shape[1]
     )
@@ -69,8 +70,9 @@ def unique_labels(*ys):
     >>> unique_labels([1, 2, 10], [5, 11])
     array([ 1,  2,  5, 10, 11])
     """
+    ys = attach_unique(*ys, return_tuple=True)
     xp, is_array_api_compliant = get_namespace(*ys)
-    if not ys:
+    if len(ys) == 0:
         raise ValueError("No argument has been passed.")
     # Check that we don't mix label format
 
@@ -104,10 +106,12 @@ def unique_labels(*ys):
 
     if is_array_api_compliant:
         # array_api does not allow for mixed dtypes
-        unique_ys = xp.concat([_unique_labels(y) for y in ys])
+        unique_ys = xp.concat([_unique_labels(y, xp=xp) for y in ys])
         return xp.unique_values(unique_ys)
 
-    ys_labels = set(chain.from_iterable((i for i in _unique_labels(y)) for y in ys))
+    ys_labels = set(
+        chain.from_iterable((i for i in _unique_labels(y, xp=xp)) for y in ys)
+    )
     # Check that we don't mix string type with number type
     if len(set(isinstance(label, str) for label in ys_labels)) > 1:
         raise ValueError("Mix of label input types (string and number)")
@@ -187,7 +191,7 @@ def is_multilabel(y):
             and (y.dtype.kind in "biu" or _is_integral_float(labels))  # bool, int, uint
         )
     else:
-        labels = xp.unique_values(y)
+        labels = cached_unique(y, xp=xp)
 
         return labels.shape[0] < 3 and (
             xp.isdtype(y.dtype, ("bool", "signed integer", "unsigned integer"))
@@ -400,7 +404,7 @@ def type_of_target(y, input_name=""):
     # Check multiclass
     if issparse(first_row_or_val):
         first_row_or_val = first_row_or_val.data
-    if xp.unique_values(y).shape[0] > 2 or (y.ndim == 2 and len(first_row_or_val) > 1):
+    if cached_unique(y).shape[0] > 2 or (y.ndim == 2 and len(first_row_or_val) > 1):
         # [1, 2, 3] or [[1., 2., 3]] or [[1, 2]]
         return "multiclass" + suffix
     else:
