@@ -674,8 +674,8 @@ class ScoreCutModelSelector:
     >>> fitted = search.fit(X, y)
     >>> ss = ScoreCutModelSelector(fitted.cv_results_)
     >>> bounds = ss.fit(StandardErrorSlicer(sigma=1))
-    Min: 0.884825465639171
-    Max: 0.9148526525904792
+    Min: 0.8852284795355508
+    Max: 0.9155607498052106
     >>> favorability_rules = {
     ...     'reduce_dim__n_components': (True, 2.0), # Lower is simpler and
     ...                                              # more favorable
@@ -1219,14 +1219,14 @@ def promote(score_slice_fn: Callable, favorability_rank_fn: Callable) -> Callabl
     ...     favorability_rank_fn=FavorabilityRanker(favorability_rules)),
     ... )
     >>> fitted = search.fit(X, y)
-    Min: 0.9026227177726542
-    Max: 0.9304475391137588
+    Min: 0.9027370688017495
+    Max: 0.9303362831016859
     Original best index: 27
     Original best params: {'classify__C': 1, 'reduce_dim__n_components': 18}
-    Original best score: 0.9165351284432065
+    Original best score: 0.9165366759517177
     Promoted best index: 33
     Promoted best params: {'classify__C': 10, 'reduce_dim__n_components': 16}
-    Promoted best score: 0.9048529866914269
+    Promoted best score: 0.9065212008666048
     >>> fitted.best_params_
     {'classify__C': 10, 'reduce_dim__n_components': 16}
     """
