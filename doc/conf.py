@@ -710,7 +710,7 @@ for sub_sg_dir in (Path(".") / sg_examples_dir).iterdir():
 carousel_thumbs = {"sphx_glr_plot_classifier_comparison_001.png": 600}
 
 
-# enable experimental modulew so that experimental estimators can be
+# enable experimental modules so that experimental estimators can be
 # discovered properly by sphinx
 from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.experimental import enable_halving_search_cv  # noqa
