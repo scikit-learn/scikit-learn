@@ -294,7 +294,7 @@ def _locally_linear_embedding(
 
     elif method == "modified":
         if n_neighbors < n_components:
-            raise ValueError("Modified LLE requires n_neighbors >= n_components.")
+            raise ValueError("modified LLE requires n_neighbors >= n_components")
 
         neighbors = nbrs.kneighbors(n_neighbors=n_neighbors, return_distance=False)
 
