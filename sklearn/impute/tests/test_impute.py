@@ -1788,7 +1788,8 @@ def test_simple_imputer_constant_fill_value_casting():
         assert X_trans.dtype == X_float32.dtype
 
 
-def test_iterative_imputer_no_empty_features():
+@pytest.mark.parametrize("initial_strategy", ["mean", "median", "most_frequent", "constant"])
+def test_iterative_imputer_no_empty_features(initial_strategy):
     """Check the behavior of the iterative imputer.
     When the input matrix contains no empty features, it should return
     the same result regardless of whether `keep_empty_features`.
@@ -1797,16 +1798,17 @@ def test_iterative_imputer_no_empty_features():
     X = _sparse_random_matrix(10, 10, density=0.95, random_state=rng).toarray()
     X[X == 0] = np.nan
 
-    imputer_false = IterativeImputer(keep_empty_features=False)
+    imputer_false = IterativeImputer(initial_strategy=initial_strategy, fill_value=1, keep_empty_features=False)
     X_imputed_false = imputer_false.fit_transform(X)
 
-    imputer_true = IterativeImputer(keep_empty_features=True)
+    imputer_true = IterativeImputer(initial_strategy=initial_strategy, fill_value=1, keep_empty_features=True)
     X_imputed_true = imputer_true.fit_transform(X)
 
     assert_array_equal(X_imputed_false, X_imputed_true)
 
 
-def test_iterative_imputer_with_empty_features():
+@pytest.mark.parametrize("initial_strategy", ["mean", "median", "most_frequent", "constant"])
+def test_iterative_imputer_with_empty_features(initial_strategy):
     """Check the behavior of the iterative imputer.
     When the input matrix contains empty features, it should return
     the same values for the non-empty features regardless of
@@ -1818,11 +1820,15 @@ def test_iterative_imputer_with_empty_features():
     X[X == 0] = np.nan
     X[:, 0] = np.nan
 
-    imputer_false = IterativeImputer(keep_empty_features=False)
+    imputer_false = IterativeImputer(initial_strategy=initial_strategy, fill_value=1, keep_empty_features=False)
     X_imputed_false = imputer_false.fit_transform(X)
 
-    imputer_true = IterativeImputer(keep_empty_features=True)
+    imputer_true = IterativeImputer(initial_strategy=initial_strategy, fill_value=1, keep_empty_features=True)
     X_imputed_true = imputer_true.fit_transform(X)
 
-    assert_allclose(X_imputed_false, X_imputed_true[:, 1:])
-    assert_allclose(X_imputed_true[:, 0], np.zeros(X.shape[0]))
+    if initial_strategy == "constant":
+        assert_allclose(X_imputed_false, X_imputed_true, rtol=1e-4)
+        assert_allclose(X_imputed_true[:, 0], np.ones(X.shape[0]))
+    else:
+        assert_allclose(X_imputed_false, X_imputed_true[:, 1:], rtol=1e-4)
+        assert_allclose(X_imputed_true[:, 0], np.zeros(X.shape[0]))
