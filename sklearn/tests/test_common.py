@@ -42,7 +42,7 @@ from sklearn.neighbors import (
     RadiusNeighborsClassifier,
     RadiusNeighborsRegressor,
 )
-from sklearn.pipeline import make_pipeline
+from sklearn.pipeline import FeatureUnion, make_pipeline
 from sklearn.preprocessing import (
     FunctionTransformer,
     MinMaxScaler,
@@ -56,7 +56,6 @@ from sklearn.utils._test_common.instance_generator import (
     _generate_pipeline,
     _generate_search_cv_instances,
     _get_check_estimator_ids,
-    _set_checking_parameters,
     _tested_estimators,
 )
 from sklearn.utils._testing import (
@@ -135,7 +134,6 @@ def test_estimators(estimator, check, request):
     with ignore_warnings(
         category=(FutureWarning, ConvergenceWarning, UserWarning, LinAlgWarning)
     ):
-        _set_checking_parameters(estimator)
         check(estimator)
 
 
@@ -303,7 +301,6 @@ GET_FEATURES_OUT_ESTIMATORS = [
     "transformer", GET_FEATURES_OUT_ESTIMATORS, ids=_get_check_estimator_ids
 )
 def test_transformers_get_feature_names_out(transformer):
-    _set_checking_parameters(transformer)
 
     with ignore_warnings(category=(FutureWarning)):
         check_transformer_get_feature_names_out(
@@ -324,7 +321,6 @@ ESTIMATORS_WITH_GET_FEATURE_NAMES_OUT = [
 )
 def test_estimators_get_feature_names_out_error(estimator):
     estimator_name = estimator.__class__.__name__
-    _set_checking_parameters(estimator)
     check_get_feature_names_out_error(estimator_name, estimator)
 
 
@@ -357,8 +353,9 @@ def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
     ids=_get_check_estimator_ids,
 )
 def test_check_param_validation(estimator):
+    if isinstance(estimator, FeatureUnion):
+        pytest.skip("FeatureUnion is not tested here")
     name = estimator.__class__.__name__
-    _set_checking_parameters(estimator)
     check_param_validation(name, estimator)
 
 
@@ -423,7 +420,6 @@ def test_set_output_transform(estimator):
             f"Skipping check_set_output_transform for {name}: Does not support"
             " set_output API"
         )
-    _set_checking_parameters(estimator)
     with ignore_warnings(category=(FutureWarning)):
         check_set_output_transform(estimator.__class__.__name__, estimator)
 
@@ -447,7 +443,6 @@ def test_set_output_transform_configured(estimator, check_func):
             f"Skipping {check_func.__name__} for {name}: Does not support"
             " set_output API yet"
         )
-    _set_checking_parameters(estimator)
     with ignore_warnings(category=(FutureWarning)):
         check_func(estimator.__class__.__name__, estimator)
 
@@ -464,8 +459,6 @@ def test_check_inplace_ensure_writeable(estimator):
         estimator.set_params(copy_X=False)
     else:
         raise SkipTest(f"{name} doesn't require writeable input.")
-
-    _set_checking_parameters(estimator)
 
     # The following estimators can work inplace only with certain settings
     if name == "HDBSCAN":

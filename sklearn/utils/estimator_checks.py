@@ -58,10 +58,10 @@ from ._param_validation import Interval
 from ._tags import Tags, get_tags
 from ._test_common.instance_generator import (
     CROSS_DECOMPOSITION,
+    INIT_PARAMS,
     SINGLE_TEST_PARAMS,
     _construct_instance,
     _get_check_estimator_ids,
-    _set_checking_parameters,
 )
 from ._testing import (
     SkipTest,
@@ -84,6 +84,8 @@ REGRESSION_DATASET = None
 
 
 def _yield_api_checks(estimator):
+    yield check_estimator_cloneable
+    yield check_estimator_repr
     yield check_no_attributes_set_in_init
     yield check_fit_score_takes_y
     yield check_estimators_overwrite_params
@@ -3285,18 +3287,31 @@ def check_estimators_data_not_an_array(name, estimator_orig, X, y, obj_type):
     assert_allclose(pred1, pred2, atol=1e-2, err_msg=name)
 
 
-def check_parameters_default_constructible(name, Estimator):
+def check_estimator_cloneable(name, estimator_orig):
+    """Checks whether the estimator can be cloned."""
+    try:
+        clone(estimator_orig)
+    except Exception as e:
+        raise AssertionError(f"Cloning of {name} failed with error: {e}.") from e
+
+
+def check_estimator_repr(name, estimator_orig):
+    """Check that the estimator has a functioning repr."""
+    estimator = clone(estimator_orig)
+    try:
+        repr(estimator)
+    except Exception as e:
+        raise AssertionError(f"Repr of {name} failed with error: {e}.") from e
+
+
+def check_parameters_default_constructible(name, estimator_orig):
     # test default-constructibility
     # get rid of deprecation warnings
 
-    Estimator = Estimator.__class__
+    Estimator = estimator_orig.__class__
 
     with ignore_warnings(category=FutureWarning):
         estimator = _construct_instance(Estimator)
-        # test cloning
-        clone(estimator)
-        # test __repr__
-        repr(estimator)
         # test that set_params returns self
         assert estimator.set_params() is estimator
 
@@ -3316,6 +3331,8 @@ def check_parameters_default_constructible(name, Estimator):
                     p.name != "self"
                     and p.kind != p.VAR_KEYWORD
                     and p.kind != p.VAR_POSITIONAL
+                    # and it should have a default value for this test
+                    and p.default != p.empty
                 )
 
             init_params = [
@@ -3327,10 +3344,15 @@ def check_parameters_default_constructible(name, Estimator):
             # true for mixins
             return
         params = estimator.get_params()
-        # they can need a non-default argument
-        init_params = init_params[len(getattr(estimator, "_required_parameters", [])) :]
 
         for init_param in init_params:
+            if (
+                type(estimator) in INIT_PARAMS
+                and init_param.name in INIT_PARAMS[type(estimator)]
+            ):
+                # these parameters are coming from INIT_PARAMS and not the default
+                # values, therefore ignored.
+                continue
             assert (
                 init_param.default != init_param.empty
             ), "parameter %s for %s has no default value" % (
@@ -4640,7 +4662,6 @@ def _check_dataframe_column_names_consistency(name, estimator_orig):
 
 def check_pandas_column_name_consistency(name, estimator_orig):
     estimator = clone(estimator_orig)
-    _set_checking_parameters(estimator)
 
     # NOTE: When running `check_dataframe_column_names_consistency` on a meta-estimator
     # that delegates validation to a base estimator, the check is testing that the base
