@@ -279,8 +279,8 @@ INIT_PARAMS = {
     ),
     RandomTreesEmbedding: dict(n_estimators=5),
     # `RANSACRegressor` will raise an error with any model other
-    # than `LinearRegression` if we don't fix `min_samples` parameter.
-    # For common test, we can enforce using `LinearRegression` that
+    # than `LinearRegression` if we don't fix the `min_samples` parameter.
+    # For common tests, we can enforce using `LinearRegression` that
     # is the default estimator in `RANSACRegressor` instead of `Ridge`.
     RANSACRegressor: dict(estimator=LinearRegression(), max_trials=10),
     RegressorChain: dict(base_estimator=Ridge(), cv=3),
