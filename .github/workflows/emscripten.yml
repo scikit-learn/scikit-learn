@@ -45,7 +45,7 @@ jobs:
           actions-cache-folder: emsdk-cache
 
       - name: Install pyodide-build
-        run: pip install pyodide-build pyodide-cli
+        run: pip install pyodide-build
 
       - name: Build scikit-learn for Pyodide
         run: pyodide build
@@ -62,8 +62,6 @@ jobs:
         env:
           SKLEARN_SKIP_OPENMP_TEST: "true"
           SKLEARN_SKIP_NETWORK_TESTS: 1
-          PYTHONVERBOSE: 1
-          PYTHONDEBUG: 1
         run: |
           set -e -x
 
@@ -80,14 +78,9 @@ jobs:
           cd maint_tools
           pip install pytest
 
-          # The Pyodide JavaScript library is needed to run the tests in WASM
-          npm install pyodide@0.27.0-alpha.2
-
           # Try importing sklearn to see if the build is successful
           python -c "import sklearn; print(sklearn.__version__)"
 
           # Don't use the cache provider plugin, as it doesn't work with Pyodide
           # right now: https://github.com/pypa/cibuildwheel/issues/1966
-          # Try testing without pyargs
-          # pytest -svra -p no:cacheprovider --pyargs sklearn --durations 20 --showlocals
-          pytest -svra -p no:cacheprovider --durations 20 --showlocals ../sklearn
+          pytest -svra -p no:cacheprovider --pyargs sklearn --durations 20 --showlocals
