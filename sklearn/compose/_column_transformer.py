@@ -39,7 +39,9 @@ from ..utils.metadata_routing import (
 from ..utils.metaestimators import _BaseComposition
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
+    _check_feature_names,
     _check_feature_names_in,
+    _check_n_features,
     _get_feature_names,
     _is_pandas_df,
     _num_samples,
@@ -984,11 +986,11 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             sparse matrices.
         """
         _raise_for_params(params, self, "fit_transform")
-        self._check_feature_names(X, reset=True)
+        _check_feature_names(self, X, reset=True)
 
         X = _check_X(X)
         # set n_features_in_ attribute
-        self._check_n_features(X, reset=True)
+        _check_n_features(self, X, reset=True)
         self._validate_transformers()
         n_samples = _num_samples(X)
 
@@ -1093,7 +1095,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         else:
             # ndarray was used for fitting or transforming, thus we only
             # check that n_features_in_ is consistent
-            self._check_n_features(X, reset=False)
+            _check_n_features(self, X, reset=False)
 
         if _routing_enabled():
             routed_params = process_routing(self, "transform", **params)

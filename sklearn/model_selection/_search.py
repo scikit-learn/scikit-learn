@@ -510,7 +510,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         **params : dict
             Parameters to be passed to the underlying scorer(s).
 
-            ..versionadded:: 1.4
+            .. versionadded:: 1.4
                 Only available if `enable_metadata_routing=True`. See
                 :ref:`Metadata Routing User Guide <metadata_routing>` for more
                 details.
