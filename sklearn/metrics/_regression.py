@@ -217,16 +217,11 @@ def mean_absolute_error(
             multioutput = None
 
     # Average across the outputs (if needed).
-    mean_absolute_error = _average(output_errors, weights=multioutput)
-
-    # Since `y_pred.ndim <= 2` and `y_true.ndim <= 2`, the second call to _average
-    # should always return a scalar array that we convert to a Python float to
+    # The second call to `_average` should always return
+    # a scalar array that we convert to a Python float to
     # consistently return the same eager evaluated value.
-    if size(mean_absolute_error) != 1:
-        raise ValueError(
-            "Expected Mean Absolute Error to be a scalar, "
-            f"got shape {mean_absolute_error.shape}"
-        )
+    # Therefore, `axis=None`.
+    mean_absolute_error = _average(output_errors, axis=None, weights=multioutput)
 
     return float(mean_absolute_error)
 
@@ -421,16 +416,11 @@ def mean_absolute_percentage_error(
             multioutput = None
 
     # Average across the outputs (if needed).
-    mean_absolute_percentage_error = _average(output_errors, weights=multioutput)
-
-    # Since `y_pred.ndim <= 2` and `y_true.ndim <= 2`, the second call to _average
-    # should always return a scalar array that we convert to a Python float to
+    # The second call to `_average` should always return
+    # a scalar array that we convert to a Python float to
     # consistently return the same eager evaluated value.
-    if size(mean_absolute_percentage_error) != 1:
-        raise ValueError(
-            "Expected Mean Absolute Percentage Error to be a scalar, "
-            f"got shape {mean_absolute_percentage_error.shape}"
-        )
+    # Therefore, `axis=None`.
+    mean_absolute_percentage_error = _average(output_errors, axis=None, weights=multioutput)
 
     return float(mean_absolute_percentage_error)
 
@@ -542,16 +532,11 @@ def mean_squared_error(
             multioutput = None
 
     # Average across the outputs (if needed).
-    mean_squared_error = _average(output_errors, weights=multioutput)
-
-    # Since `y_pred.ndim <= 2` and `y_true.ndim <= 2`, the second call to _average
-    # should always return a scalar array that we convert to a Python float to
+    # The second call to `_average` should always return
+    # a scalar array that we convert to a Python float to
     # consistently return the same eager evaluated value.
-    if size(mean_squared_error) != 1:
-        raise ValueError(
-            "Expected Mean Squared Error to be a scalar, "
-            f"got shape {mean_squared_error.shape}"
-        )
+    # Therefore, `axis=None`.
+    mean_squared_error = _average(output_errors, axis=None, weights=multioutput)
 
     return float(mean_squared_error)
 
@@ -631,16 +616,11 @@ def root_mean_squared_error(
             multioutput = None
 
     # Average across the outputs (if needed).
-    root_mean_squared_error = _average(output_errors, weights=multioutput)
-
-    # Since `y_pred.ndim <= 2` and `y_true.ndim <= 2`, the second call to _average
-    # should always return a scalar array that we convert to a Python float to
+    # The second call to `_average` should always return
+    # a scalar array that we convert to a Python float to
     # consistently return the same eager evaluated value.
-    if size(root_mean_squared_error) != 1:
-        raise ValueError(
-            "Expected Root Mean Squared Error to be a scalar, "
-            f"got shape {root_mean_squared_error.shape}"
-        )
+    # Therefore, `axis=None`.
+    root_mean_squared_error = _average(output_errors, axis=None, weights=multioutput)
 
     return float(root_mean_squared_error)
 
