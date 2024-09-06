@@ -18,11 +18,11 @@ from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import MaxAbsScaler, StandardScaler
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.utils import all_estimators
-from sklearn.utils._testing import set_random_state
-from sklearn.utils.estimator_checks import (
+from sklearn.utils._test_common._common import (
     _enforce_estimator_tags_X,
     _enforce_estimator_tags_y,
 )
+from sklearn.utils._testing import set_random_state
 from sklearn.utils.validation import check_is_fitted
 
 

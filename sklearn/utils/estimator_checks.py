@@ -12,7 +12,6 @@ from functools import partial, wraps
 from inspect import signature
 from numbers import Integral, Real
 
-import joblib
 import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
@@ -35,7 +34,7 @@ from ..datasets import (
 from ..exceptions import DataConversionWarning, NotFittedError, SkipTestWarning
 from ..linear_model._base import LinearClassifierMixin
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
-from ..metrics.pairwise import linear_kernel, pairwise_distances, rbf_kernel
+from ..metrics.pairwise import rbf_kernel
 from ..model_selection import ShuffleSplit, train_test_split
 from ..model_selection._validation import _safe_split
 from ..pipeline import make_pipeline
@@ -56,6 +55,21 @@ from . import shuffle
 from ._missing import is_scalar_nan
 from ._param_validation import Interval
 from ._tags import Tags, get_tags
+from ._test_common._api_checks import (
+    check_dont_overwrite_parameters,
+    check_estimators_do_not_raise_errors_in_init_or_set_params,
+    check_estimators_fit_returns_self,
+    check_estimators_overwrite_params,
+    check_estimators_unfitted,
+    check_fit_score_takes_y,
+    check_no_attributes_set_in_init,
+)
+from ._test_common._common import (
+    _enforce_estimator_tags_X,
+    _enforce_estimator_tags_y,
+    _is_pairwise_metric,
+    _regression_dataset,
+)
 from ._test_common.instance_generator import (
     CROSS_DECOMPOSITION,
     _construct_instance,
@@ -64,7 +78,6 @@ from ._test_common.instance_generator import (
 from ._testing import (
     SkipTest,
     _array_api_for_tests,
-    _get_args,
     assert_allclose,
     assert_allclose_dense_sparse,
     assert_array_almost_equal,
@@ -78,13 +91,17 @@ from ._testing import (
 from .fixes import SPARSE_ARRAY_PRESENT
 from .validation import _num_samples, check_is_fitted, has_fit_parameter
 
-REGRESSION_DATASET = None
-
 
 def _yield_api_checks(estimator):
+    tags = get_tags(estimator)
     yield check_no_attributes_set_in_init
     yield check_fit_score_takes_y
     yield check_estimators_overwrite_params
+    yield check_estimators_do_not_raise_errors_in_init_or_set_params
+    yield check_dont_overwrite_parameters
+    yield check_estimators_fit_returns_self
+    if tags.requires_fit:
+        yield check_estimators_unfitted
 
 
 def _yield_checks(estimator):
@@ -102,7 +119,6 @@ def _yield_checks(estimator):
             yield check_sample_weights_not_overwritten
             yield partial(check_sample_weights_invariance, kind="ones")
             yield partial(check_sample_weights_invariance, kind="zeros")
-    yield check_estimators_fit_returns_self
     yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
 
     # Check that all estimator yield informative messages when
@@ -169,8 +185,6 @@ def _yield_classifier_checks(classifier):
         yield check_supervised_y_no_nan
         if tags.target_tags.single_output:
             yield check_supervised_y_2d
-    if tags.requires_fit:
-        yield check_estimators_unfitted
     if "class_weight" in classifier.get_params().keys():
         yield check_class_weight_classifiers
 
@@ -186,6 +200,10 @@ def _yield_classifier_checks(classifier):
         and "class_weight" in classifier.get_params().keys()
     ):
         yield check_class_weight_balanced_linear_classifier
+
+
+# Legacy Checks
+# =============
 
 
 @ignore_warnings(category=FutureWarning)
@@ -243,8 +261,6 @@ def _yield_regressor_checks(regressor):
     if name != "CCA":
         # check that the regressor handles int input
         yield check_regressors_int
-    if tags.requires_fit:
-        yield check_estimators_unfitted
     yield check_non_transformer_estimators_n_iter
 
 
@@ -307,9 +323,6 @@ def _yield_outliers_checks(estimator):
         yield partial(check_outliers_train, readonly_memmap=True)
         # test outlier detectors can handle non-array data
         yield check_classifier_data_not_an_array
-        # test if NotFittedError is raised
-        if get_tags(estimator).requires_fit:
-            yield check_estimators_unfitted
     yield check_non_transformer_estimators_n_iter
 
 
@@ -377,7 +390,6 @@ def _yield_all_checks(estimator, legacy: bool):
     yield check_get_params_invariance
     yield check_set_params
     yield check_dict_unchanged
-    yield check_dont_overwrite_parameters
     yield check_fit_idempotent
     yield check_fit_check_is_fitted
     if not tags.no_validation:
@@ -609,22 +621,6 @@ def check_estimator(estimator=None, generate_only=False, *, legacy=True):
             warnings.warn(str(exception), SkipTestWarning)
 
 
-def _regression_dataset():
-    global REGRESSION_DATASET
-    if REGRESSION_DATASET is None:
-        X, y = make_regression(
-            n_samples=200,
-            n_features=10,
-            n_informative=1,
-            bias=5.0,
-            noise=20,
-            random_state=42,
-        )
-        X = StandardScaler().fit_transform(X)
-        REGRESSION_DATASET = X, y
-    return REGRESSION_DATASET
-
-
 class _NotAnArray:
     """An object that is convertible to an array.
 
@@ -644,24 +640,6 @@ class _NotAnArray:
         if func.__name__ == "may_share_memory":
             return True
         raise TypeError("Don't want to call array_function {}!".format(func.__name__))
-
-
-def _is_pairwise_metric(estimator):
-    """Returns True if estimator accepts pairwise metric.
-
-    Parameters
-    ----------
-    estimator : object
-        Estimator object to test.
-
-    Returns
-    -------
-    out : bool
-        True if _pairwise is set to True and False otherwise.
-    """
-    metric = getattr(estimator, "metric", None)
-
-    return bool(metric == "precomputed")
 
 
 def _generate_sparse_data(X_csr):
@@ -1249,67 +1227,6 @@ def check_dict_unchanged(name, estimator_orig):
             )
 
 
-def _is_public_parameter(attr):
-    return not (attr.startswith("_") or attr.endswith("_"))
-
-
-@ignore_warnings(category=FutureWarning)
-def check_dont_overwrite_parameters(name, estimator_orig):
-    # check that fit method only changes or sets private attributes
-    if hasattr(estimator_orig.__init__, "deprecated_original"):
-        # to not check deprecated classes
-        return
-    estimator = clone(estimator_orig)
-    rnd = np.random.RandomState(0)
-    X = 3 * rnd.uniform(size=(20, 3))
-    X = _enforce_estimator_tags_X(estimator_orig, X)
-    y = X[:, 0].astype(int)
-    y = _enforce_estimator_tags_y(estimator, y)
-
-    if hasattr(estimator, "n_components"):
-        estimator.n_components = 1
-    if hasattr(estimator, "n_clusters"):
-        estimator.n_clusters = 1
-
-    set_random_state(estimator, 1)
-    dict_before_fit = estimator.__dict__.copy()
-    estimator.fit(X, y)
-
-    dict_after_fit = estimator.__dict__
-
-    public_keys_after_fit = [
-        key for key in dict_after_fit.keys() if _is_public_parameter(key)
-    ]
-
-    attrs_added_by_fit = [
-        key for key in public_keys_after_fit if key not in dict_before_fit.keys()
-    ]
-
-    # check that fit doesn't add any public attribute
-    assert not attrs_added_by_fit, (
-        "Estimator adds public attribute(s) during"
-        " the fit method."
-        " Estimators are only allowed to add private attributes"
-        " either started with _ or ended"
-        " with _ but %s added" % ", ".join(attrs_added_by_fit)
-    )
-
-    # check that fit doesn't change any public attribute
-    attrs_changed_by_fit = [
-        key
-        for key in public_keys_after_fit
-        if (dict_before_fit[key] is not dict_after_fit[key])
-    ]
-
-    assert not attrs_changed_by_fit, (
-        "Estimator changes public attribute(s) during"
-        " the fit method. Estimators are only allowed"
-        " to change attributes started"
-        " or ended with _, but"
-        " %s changed" % ", ".join(attrs_changed_by_fit)
-    )
-
-
 @ignore_warnings(category=FutureWarning)
 def check_fit2d_predict1d(name, estimator_orig):
     # check by fitting a 2d array and predicting with a 1d array
@@ -1715,36 +1632,6 @@ def check_pipeline_consistency(name, estimator_orig):
             result = func(X, y)
             result_pipe = func_pipeline(X, y)
             assert_allclose_dense_sparse(result, result_pipe)
-
-
-@ignore_warnings
-def check_fit_score_takes_y(name, estimator_orig):
-    # check that all estimators accept an optional y
-    # in fit and score so they can be used in pipelines
-    rnd = np.random.RandomState(0)
-    n_samples = 30
-    X = rnd.uniform(size=(n_samples, 3))
-    X = _enforce_estimator_tags_X(estimator_orig, X)
-    y = np.arange(n_samples) % 3
-    estimator = clone(estimator_orig)
-    y = _enforce_estimator_tags_y(estimator, y)
-    set_random_state(estimator)
-
-    funcs = ["fit", "score", "partial_fit", "fit_predict", "fit_transform"]
-    for func_name in funcs:
-        func = getattr(estimator, func_name, None)
-        if func is not None:
-            func(X, y)
-            args = [p.name for p in signature(func).parameters.values()]
-            if args[0] == "self":
-                # available_if makes methods into functions
-                # with an explicit "self", so need to shift arguments
-                args = args[1:]
-            assert args[1] in ["y", "Y"], (
-                "Expected y or Y as second argument for method "
-                "%s of %s. Got arguments: %r."
-                % (func_name, type(estimator).__name__, args)
-            )
 
 
 @ignore_warnings
@@ -2689,43 +2576,6 @@ def check_get_feature_names_out_error(name, estimator_orig):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_estimators_fit_returns_self(name, estimator_orig, readonly_memmap=False):
-    """Check if self is returned when calling fit."""
-    X, y = make_blobs(random_state=0, n_samples=21)
-    X = _enforce_estimator_tags_X(estimator_orig, X)
-
-    estimator = clone(estimator_orig)
-    y = _enforce_estimator_tags_y(estimator, y)
-
-    if readonly_memmap:
-        X, y = create_memmap_backed_data([X, y])
-
-    set_random_state(estimator)
-    assert estimator.fit(X, y) is estimator
-
-
-@ignore_warnings
-def check_estimators_unfitted(name, estimator_orig):
-    """Check that predict raises an exception in an unfitted estimator.
-
-    Unfitted estimators should raise a NotFittedError.
-    """
-    # Common test for Regressors, Classifiers and Outlier detection estimators
-    X, y = _regression_dataset()
-
-    estimator = clone(estimator_orig)
-    for method in (
-        "decision_function",
-        "predict",
-        "predict_proba",
-        "predict_log_proba",
-    ):
-        if hasattr(estimator, method):
-            with raises(NotFittedError):
-                getattr(estimator, method)(X)
-
-
-@ignore_warnings(category=FutureWarning)
 def check_supervised_y_2d(name, estimator_orig):
     tags = get_tags(estimator_orig)
     rnd = np.random.RandomState(0)
@@ -3074,73 +2924,6 @@ def check_class_weight_balanced_linear_classifier(name, estimator_orig):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_estimators_overwrite_params(name, estimator_orig):
-    X, y = make_blobs(random_state=0, n_samples=21)
-    X = _enforce_estimator_tags_X(estimator_orig, X, kernel=rbf_kernel)
-    estimator = clone(estimator_orig)
-    y = _enforce_estimator_tags_y(estimator, y)
-
-    set_random_state(estimator)
-
-    # Make a physical copy of the original estimator parameters before fitting.
-    params = estimator.get_params()
-    original_params = deepcopy(params)
-
-    # Fit the model
-    estimator.fit(X, y)
-
-    # Compare the state of the model parameters with the original parameters
-    new_params = estimator.get_params()
-    for param_name, original_value in original_params.items():
-        new_value = new_params[param_name]
-
-        # We should never change or mutate the internal state of input
-        # parameters by default. To check this we use the joblib.hash function
-        # that introspects recursively any subobjects to compute a checksum.
-        # The only exception to this rule of immutable constructor parameters
-        # is possible RandomState instance but in this check we explicitly
-        # fixed the random_state params recursively to be integer seeds.
-        assert joblib.hash(new_value) == joblib.hash(original_value), (
-            "Estimator %s should not change or mutate "
-            " the parameter %s from %s to %s during fit."
-            % (name, param_name, original_value, new_value)
-        )
-
-
-@ignore_warnings(category=FutureWarning)
-def check_no_attributes_set_in_init(name, estimator_orig):
-    """Check setting during init."""
-    try:
-        # Clone fails if the estimator does not store
-        # all parameters as an attribute during init
-        estimator = clone(estimator_orig)
-    except AttributeError:
-        raise AttributeError(
-            f"Estimator {name} should store all parameters as an attribute during init."
-        )
-
-    if hasattr(type(estimator).__init__, "deprecated_original"):
-        return
-
-    init_params = _get_args(type(estimator).__init__)
-    parents_init_params = [
-        param
-        for params_parent in (_get_args(parent) for parent in type(estimator).__mro__)
-        for param in params_parent
-    ]
-
-    # Test for no setting apart from parameters during init
-    invalid_attr = set(vars(estimator)) - set(init_params) - set(parents_init_params)
-    # Ignore private attributes
-    invalid_attr = set([attr for attr in invalid_attr if not attr.startswith("_")])
-    assert not invalid_attr, (
-        "Estimator %s should not set any attribute apart"
-        " from parameters during init. Found attributes %s."
-        % (name, sorted(invalid_attr))
-    )
-
-
-@ignore_warnings(category=FutureWarning)
 def check_sparsify_coefficients(name, estimator_orig):
     X = np.array(
         [
@@ -3359,53 +3142,6 @@ def check_parameters_default_constructible(name, Estimator):
                     assert param_value is init_param.default, failure_text
                 else:
                     assert param_value == init_param.default, failure_text
-
-
-def _enforce_estimator_tags_y(estimator, y):
-    # Estimators with a `requires_positive_y` tag only accept strictly positive
-    # data
-    tags = get_tags(estimator)
-    if tags.target_tags.positive_only:
-        # Create strictly positive y. The minimal increment above 0 is 1, as
-        # y could be of integer dtype.
-        y += 1 + abs(y.min())
-    if (
-        tags.classifier_tags is not None
-        and not tags.classifier_tags.multi_class
-        and y.size > 0
-    ):
-        y = np.where(y == y.flat[0], y, y.flat[0] + 1)
-    # Estimators in mono_output_task_error raise ValueError if y is of 1-D
-    # Convert into a 2-D y for those estimators.
-    if tags.target_tags.multi_output and not tags.target_tags.single_output:
-        return np.reshape(y, (-1, 1))
-    return y
-
-
-def _enforce_estimator_tags_X(estimator, X, kernel=linear_kernel):
-    # Estimators with `1darray` in `X_types` tag only accept
-    # X of shape (`n_samples`,)
-    if get_tags(estimator).input_tags.one_d_array:
-        X = X[:, 0]
-    # Estimators with a `requires_positive_X` tag only accept
-    # strictly positive data
-    if get_tags(estimator).input_tags.positive_only:
-        X = X - X.min()
-    if get_tags(estimator).input_tags.categorical:
-        dtype = np.float64 if get_tags(estimator).input_tags.allow_nan else np.int32
-        X = np.round((X - X.min())).astype(dtype)
-
-    if estimator.__class__.__name__ == "SkewedChi2Sampler":
-        # SkewedChi2Sampler requires X > -skewdness in transform
-        X = X - X.min()
-
-    # Pairwise estimators only accept
-    # X of shape (`n_samples`, `n_samples`)
-    if _is_pairwise_metric(estimator):
-        X = pairwise_distances(X, metric="euclidean")
-    elif get_tags(estimator).input_tags.pairwise:
-        X = kernel(X, X)
-    return X
 
 
 @ignore_warnings(category=FutureWarning)
