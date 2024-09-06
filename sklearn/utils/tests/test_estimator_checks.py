@@ -1312,7 +1312,7 @@ def test_check_estimator_cloneable_error():
 
 
 def test_estimator_repr_error():
-    """Check that the right error is raised when the estimator does not do a repr."""
+    """Check that the right error is raised when the estimator does not have a repr."""
 
     class NotRepr(BaseEstimator):
         def __repr__(self):
