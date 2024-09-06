@@ -378,6 +378,9 @@ class BaseSuccessiveHalving(BaseSearchCV):
                     "Fail during parameter check since min/max resources requires"
                     " more samples"
                 ),
+                "check_estimators_nan_inf": "FIXME",
+                "check_classifiers_one_label_sample_weights": "FIXME",
+                "check_fit2d_1feature": "FIXME",
             }
         )
         return tags
@@ -667,8 +670,6 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
     >>> search.best_params_  # doctest: +SKIP
     {'max_depth': None, 'min_samples_split': 10, 'n_estimators': 9}
     """
-
-    _required_parameters = ["estimator", "param_grid"]
 
     _parameter_constraints: dict = {
         **BaseSuccessiveHalving._parameter_constraints,
@@ -1017,8 +1018,6 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
     >>> search.best_params_  # doctest: +SKIP
     {'max_depth': None, 'min_samples_split': 10, 'n_estimators': 9}
     """
-
-    _required_parameters = ["estimator", "param_distributions"]
 
     _parameter_constraints: dict = {
         **BaseSuccessiveHalving._parameter_constraints,

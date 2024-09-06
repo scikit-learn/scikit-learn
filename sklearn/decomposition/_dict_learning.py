@@ -1279,8 +1279,6 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
            [ 0.,  1.,  1.,  0.,  0.]])
     """
 
-    _required_parameters = ["dictionary"]
-
     def __init__(
         self,
         dictionary,

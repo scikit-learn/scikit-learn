@@ -9,7 +9,6 @@ from inspect import isfunction, signature
 from itertools import product
 
 from sklearn import config_context
-from sklearn.base import RegressorMixin
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.cluster import (
     HDBSCAN,
@@ -39,6 +38,7 @@ from sklearn.decomposition import (
     MiniBatchDictionaryLearning,
     MiniBatchNMF,
     MiniBatchSparsePCA,
+    SparseCoder,
     SparsePCA,
     TruncatedSVD,
 )
@@ -60,10 +60,13 @@ from sklearn.ensemble import (
     RandomTreesEmbedding,
     StackingClassifier,
     StackingRegressor,
+    VotingClassifier,
+    VotingRegressor,
 )
 from sklearn.exceptions import SkipTestWarning
 from sklearn.experimental import enable_halving_search_cv  # noqa
 from sklearn.feature_selection import (
+    RFE,
     RFECV,
     SelectFdr,
     SelectFromModel,
@@ -106,16 +109,27 @@ from sklearn.linear_model import (
 from sklearn.manifold import MDS, TSNE, LocallyLinearEmbedding, SpectralEmbedding
 from sklearn.mixture import BayesianGaussianMixture, GaussianMixture
 from sklearn.model_selection import (
+    FixedThresholdClassifier,
     GridSearchCV,
     HalvingGridSearchCV,
     HalvingRandomSearchCV,
     RandomizedSearchCV,
     TunedThresholdClassifierCV,
 )
-from sklearn.multioutput import ClassifierChain, RegressorChain
+from sklearn.multiclass import (
+    OneVsOneClassifier,
+    OneVsRestClassifier,
+    OutputCodeClassifier,
+)
+from sklearn.multioutput import (
+    ClassifierChain,
+    MultiOutputClassifier,
+    MultiOutputRegressor,
+    RegressorChain,
+)
 from sklearn.neighbors import NeighborhoodComponentsAnalysis
 from sklearn.neural_network import BernoulliRBM, MLPClassifier, MLPRegressor
-from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.pipeline import FeatureUnion, Pipeline, make_pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler, TargetEncoder
 from sklearn.random_projection import (
     GaussianRandomProjection,
@@ -135,7 +149,7 @@ CROSS_DECOMPOSITION = ["PLSCanonical", "PLSRegression", "CCA", "PLSSVD"]
 
 # The following dictionary is to indicate constructor arguments suitable for the test
 # suite, which uses very small datasets, and is intended to run rather quickly.
-TEST_PARAMS = {
+INIT_PARAMS = {
     AdaBoostClassifier: dict(n_estimators=5),
     AdaBoostRegressor: dict(n_estimators=5),
     AffinityPropagation: dict(max_iter=5),
@@ -148,9 +162,10 @@ TEST_PARAMS = {
     BernoulliRBM: dict(n_iter=5, batch_size=10),
     Birch: dict(n_clusters=2),
     BisectingKMeans: dict(n_init=2, n_clusters=2, max_iter=5),
-    CalibratedClassifierCV: dict(cv=3),
+    CalibratedClassifierCV: dict(estimator=LogisticRegression(C=1), cv=3),
     CCA: dict(n_components=1, max_iter=5),
-    ClassifierChain: dict(cv=3),
+    ClassifierChain: dict(base_estimator=LogisticRegression(C=1), cv=3),
+    ColumnTransformer: dict(transformers=[("trans1", StandardScaler(), [0, 1])]),
     DictionaryLearning: dict(max_iter=20, transform_algorithm="lasso_lars"),
     # the default strategy prior would output constant predictions and fail
     # for check_classifiers_predictions
@@ -162,6 +177,8 @@ TEST_PARAMS = {
     FactorAnalysis: dict(max_iter=5),
     FastICA: dict(max_iter=5),
     FeatureAgglomeration: dict(n_clusters=2),
+    FeatureUnion: dict(transformer_list=[("trans1", StandardScaler())]),
+    FixedThresholdClassifier: dict(estimator=LogisticRegression(C=1)),
     GammaRegressor: dict(max_iter=5),
     GaussianMixture: dict(n_init=2, max_iter=5),
     # Due to the jl lemma and often very few samples, the number
@@ -173,9 +190,25 @@ TEST_PARAMS = {
     GradientBoostingRegressor: dict(n_estimators=5),
     GraphicalLassoCV: dict(max_iter=5, cv=3),
     GraphicalLasso: dict(max_iter=5),
-    GridSearchCV: dict(cv=3),
-    HalvingGridSearchCV: dict(cv=3),
-    HalvingRandomSearchCV: dict(cv=3),
+    GridSearchCV: dict(
+        estimator=LogisticRegression(C=1), param_grid={"C": [1.0]}, cv=3
+    ),
+    HalvingGridSearchCV: dict(
+        estimator=Ridge(),
+        min_resources="smallest",
+        param_grid={"alpha": [0.1, 1.0]},
+        random_state=0,
+        cv=2,
+        error_score="raise",
+    ),
+    HalvingRandomSearchCV: dict(
+        estimator=Ridge(),
+        param_distributions={"alpha": [0.1, 1.0]},
+        min_resources="smallest",
+        cv=2,
+        error_score="raise",
+        random_state=0,
+    ),
     HDBSCAN: dict(min_samples=1),
     # The default min_samples_leaf (20) isn't appropriate for small
     # datasets (only very shallow trees are built) that the checks use.
@@ -196,8 +229,8 @@ TEST_PARAMS = {
     # We need to provide the noise variance explicitly.
     LassoLarsIC: dict(max_iter=5, noise_variance=1.0),
     LatentDirichletAllocation: dict(max_iter=5, batch_size=10),
-    LinearSVR: dict(max_iter=20),
     LinearSVC: dict(max_iter=20),
+    LinearSVR: dict(max_iter=20),
     LocallyLinearEmbedding: dict(max_iter=5),
     LogisticRegressionCV: dict(max_iter=5, cv=3),
     LogisticRegression: dict(max_iter=5),
@@ -212,6 +245,8 @@ TEST_PARAMS = {
     MiniBatchSparsePCA: dict(max_iter=5, batch_size=10),
     MLPClassifier: dict(max_iter=100),
     MLPRegressor: dict(max_iter=100),
+    MultiOutputClassifier: dict(estimator=LogisticRegression(C=1)),
+    MultiOutputRegressor: dict(estimator=Ridge()),
     MultiTaskElasticNetCV: dict(max_iter=5, cv=3),
     MultiTaskElasticNet: dict(max_iter=5),
     MultiTaskLassoCV: dict(max_iter=5, cv=3),
@@ -222,28 +257,44 @@ TEST_PARAMS = {
     NuSVR: dict(max_iter=-1),
     OneClassSVM: dict(max_iter=-1),
     OneHotEncoder: dict(handle_unknown="ignore"),
+    OneVsOneClassifier: dict(estimator=LogisticRegression(C=1)),
+    OneVsRestClassifier: dict(estimator=LogisticRegression(C=1)),
     OrthogonalMatchingPursuitCV: dict(cv=3),
+    OutputCodeClassifier: dict(estimator=LogisticRegression(C=1)),
     PassiveAggressiveClassifier: dict(max_iter=5),
     PassiveAggressiveRegressor: dict(max_iter=5),
     Perceptron: dict(max_iter=5),
+    Pipeline: dict(steps=[("scaler", StandardScaler()), ("est", Ridge())]),
     PLSCanonical: dict(n_components=1, max_iter=5),
     PLSRegression: dict(n_components=1, max_iter=5),
     PLSSVD: dict(n_components=1),
     PoissonRegressor: dict(max_iter=5),
     RandomForestClassifier: dict(n_estimators=5),
     RandomForestRegressor: dict(n_estimators=5),
-    RandomizedSearchCV: dict(n_iter=5, cv=3),
+    RandomizedSearchCV: dict(
+        estimator=LogisticRegression(C=1),
+        param_distributions={"C": [1.0]},
+        n_iter=5,
+        cv=3,
+    ),
     RandomTreesEmbedding: dict(n_estimators=5),
-    RANSACRegressor: dict(max_trials=10),
-    RegressorChain: dict(cv=3),
-    RFECV: dict(cv=3),
+    # `RANSACRegressor` will raise an error with any model other
+    # than `LinearRegression` if we don't fix the `min_samples` parameter.
+    # For common tests, we can enforce using `LinearRegression` that
+    # is the default estimator in `RANSACRegressor` instead of `Ridge`.
+    RANSACRegressor: dict(estimator=LinearRegression(), max_trials=10),
+    RegressorChain: dict(base_estimator=Ridge(), cv=3),
+    RFECV: dict(estimator=LogisticRegression(C=1), cv=3),
+    RFE: dict(estimator=LogisticRegression(C=1)),
     # be tolerant of noisy datasets (not actually speed)
     SelectFdr: dict(alpha=0.5),
+    # Increases coverage because SGDRegressor has partial_fit
+    SelectFromModel: dict(estimator=SGDRegressor(random_state=0)),
     # SelectKBest has a default of k=10
     # which is more feature than we have in most case.
     SelectKBest: dict(k=1),
-    SelfTrainingClassifier: dict(max_iter=5),
-    SequentialFeatureSelector: dict(cv=3),
+    SelfTrainingClassifier: dict(estimator=LogisticRegression(C=1), max_iter=5),
+    SequentialFeatureSelector: dict(estimator=LogisticRegression(C=1), cv=3),
     SGDClassifier: dict(max_iter=5),
     SGDOneClassSVM: dict(max_iter=5),
     SGDRegressor: dict(max_iter=5),
@@ -258,9 +309,21 @@ TEST_PARAMS = {
     SpectralCoclustering: dict(n_init=2, n_clusters=2),
     # Default "auto" parameter can lead to different ordering of eigenvalues on
     # windows: #24105
-    SpectralEmbedding: dict(eigen_tol=1e-5),
-    StackingClassifier: dict(cv=3),
-    StackingRegressor: dict(cv=3),
+    SpectralEmbedding: dict(eigen_tol=1e-05),
+    StackingClassifier: dict(
+        estimators=[
+            ("est1", DecisionTreeClassifier(max_depth=3, random_state=0)),
+            ("est2", DecisionTreeClassifier(max_depth=3, random_state=1)),
+        ],
+        cv=3,
+    ),
+    StackingRegressor: dict(
+        estimators=[
+            ("est1", DecisionTreeRegressor(max_depth=3, random_state=0)),
+            ("est2", DecisionTreeRegressor(max_depth=3, random_state=1)),
+        ],
+        cv=3,
+    ),
     SVC: dict(max_iter=-1),
     SVR: dict(max_iter=-1),
     TargetEncoder: dict(cv=3),
@@ -268,17 +331,21 @@ TEST_PARAMS = {
     # TruncatedSVD doesn't run with n_components = n_features
     TruncatedSVD: dict(n_iter=5, n_components=1),
     TSNE: dict(perplexity=2),
-    TunedThresholdClassifierCV: dict(cv=3),
+    TunedThresholdClassifierCV: dict(estimator=LogisticRegression(C=1), cv=3),
     TweedieRegressor: dict(max_iter=5),
+    VotingClassifier: dict(
+        estimators=[
+            ("est1", DecisionTreeClassifier(max_depth=3, random_state=0)),
+            ("est2", DecisionTreeClassifier(max_depth=3, random_state=1)),
+        ]
+    ),
+    VotingRegressor: dict(
+        estimators=[
+            ("est1", DecisionTreeRegressor(max_depth=3, random_state=0)),
+            ("est2", DecisionTreeRegressor(max_depth=3, random_state=1)),
+        ]
+    ),
 }
-
-
-def _set_checking_parameters(estimator):
-    """Set the parameters of an estimator instance to speed-up tests and avoid
-    deprecation warnings in common test."""
-    if type(estimator) in TEST_PARAMS:
-        test_params = TEST_PARAMS[type(estimator)]
-        estimator.set_params(**test_params)
 
 
 def _tested_estimators(type_filter=None):
@@ -304,48 +371,19 @@ def _generate_pipeline():
         )
 
 
+SKIPPED_ESTIMATORS = [SparseCoder]
+
+
 def _construct_instance(Estimator):
     """Construct Estimator instance if possible."""
-    required_parameters = getattr(Estimator, "_required_parameters", [])
-    if len(required_parameters):
-        if required_parameters in (["estimator"], ["base_estimator"]):
-            # `RANSACRegressor` will raise an error with any model other
-            # than `LinearRegression` if we don't fix `min_samples` parameter.
-            # For common test, we can enforce using `LinearRegression` that
-            # is the default estimator in `RANSACRegressor` instead of `Ridge`.
-            if issubclass(Estimator, RANSACRegressor):
-                estimator = Estimator(LinearRegression())
-            elif issubclass(Estimator, RegressorMixin):
-                estimator = Estimator(Ridge())
-            elif issubclass(Estimator, SelectFromModel):
-                # Increases coverage because SGDRegressor has partial_fit
-                estimator = Estimator(SGDRegressor(random_state=0))
-            else:
-                estimator = Estimator(LogisticRegression(C=1))
-        elif required_parameters in (["estimators"],):
-            # Heterogeneous ensemble classes (i.e. stacking, voting)
-            if issubclass(Estimator, RegressorMixin):
-                estimator = Estimator(
-                    estimators=[
-                        ("est1", DecisionTreeRegressor(max_depth=3, random_state=0)),
-                        ("est2", DecisionTreeRegressor(max_depth=3, random_state=1)),
-                    ]
-                )
-            else:
-                estimator = Estimator(
-                    estimators=[
-                        ("est1", DecisionTreeClassifier(max_depth=3, random_state=0)),
-                        ("est2", DecisionTreeClassifier(max_depth=3, random_state=1)),
-                    ]
-                )
-        else:
-            msg = (
-                f"Can't instantiate estimator {Estimator.__name__} "
-                f"parameters {required_parameters}"
-            )
-            # raise additional warning to be shown by pytest
-            warnings.warn(msg, SkipTestWarning)
-            raise SkipTest(msg)
+    if Estimator in SKIPPED_ESTIMATORS:
+        msg = f"Can't instantiate estimator {Estimator.__name__}"
+        # raise additional warning to be shown by pytest
+        warnings.warn(msg, SkipTestWarning)
+        raise SkipTest(msg)
+
+    if Estimator in INIT_PARAMS:
+        estimator = Estimator(**INIT_PARAMS[Estimator])
     else:
         estimator = Estimator()
     return estimator
@@ -385,16 +423,6 @@ def _get_check_estimator_ids(obj):
     if hasattr(obj, "get_params"):
         with config_context(print_changed_only=True):
             return re.sub(r"\s", "", str(obj))
-
-
-def _generate_column_transformer_instances():
-    """Generate a `ColumnTransformer` instance to check its compliance with
-    scikit-learn."""
-    yield ColumnTransformer(
-        transformers=[
-            ("trans1", StandardScaler(), [0, 1]),
-        ]
-    )
 
 
 def _generate_search_cv_instances():
