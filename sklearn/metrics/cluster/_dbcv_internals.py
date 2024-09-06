@@ -265,20 +265,19 @@ def _distances_between_points(
     if no_coredist:
         return distance_matrix, None
 
-    else:
-        core_distances = _all_points_core_distance(distance_matrix.copy(), d=d)
-        core_dist_matrix = np.tile(core_distances, (core_distances.shape[0], 1))
-        stacked_distances = np.dstack(
-            [distance_matrix, core_dist_matrix, core_dist_matrix.T]
+    core_distances = _all_points_core_distance(distance_matrix.copy(), d=d)
+    core_dist_matrix = np.tile(core_distances, (core_distances.shape[0], 1))
+    stacked_distances = np.dstack(
+        [distance_matrix, core_dist_matrix, core_dist_matrix.T]
+    )
+
+    if print_max_raw_to_coredist_ratio:
+        print(
+            "Max raw distance to coredistance ratio: "
+            + str(_max_ratio(stacked_distances))
         )
 
-        if print_max_raw_to_coredist_ratio:
-            print(
-                "Max raw distance to coredistance ratio: "
-                + str(_max_ratio(stacked_distances))
-            )
-
-        return stacked_distances.max(axis=-1), core_distances
+    return stacked_distances.max(axis=-1), core_distances
 
 
 def _all_points_core_distance(distance_matrix, d=2):
