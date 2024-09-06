@@ -562,15 +562,6 @@ for your estimator's tags. For example::
 You can create a new subclass of :class:`~sklearn.utils.Tags` if you wish
 to add new tags to the existing set.
 
-In addition to the tags, estimators also need to declare any non-optional
-parameters to ``__init__`` in the ``_required_parameters`` class attribute,
-which is a list or tuple.  If ``_required_parameters`` is only
-``["estimator"]`` or ``["base_estimator"]``, then the estimator will be
-instantiated with an instance of ``LogisticRegression`` (or
-``RidgeRegression`` if the estimator is a regressor) in the tests. The choice
-of these two models is somewhat idiosyncratic but both should provide robust
-closed-form solutions.
-
 .. _developer_api_set_output:
 
 Developer API for `set_output`
