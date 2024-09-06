@@ -1313,6 +1313,7 @@ def test_enet_cv_sample_weight_correctness(
     We fit the same model twice, once with weighted training data, once with repeated
     data points in the training data and check that both models converge to the
     same solution.
+
     Since this model uses an internal cross-validation scheme to tune the alpha
     regularization parameter, we make sure that the repetitions only occur within
     a specific CV group. Data points belonging to other CV groups stay
@@ -1335,11 +1336,11 @@ def test_enet_cv_sample_weight_correctness(
 
     sw = np.ones_like(y_with_weights)
     sw[:n_samples_per_cv] = rng.randint(0, 5, size=n_samples_per_cv)
-    groups_with_weights = np.r_[
+    groups_with_weights = np.concatenate([
         np.full(n_samples_per_cv, 0),
         np.full(n_samples_per_cv, 1),
         np.full(n_samples_per_cv, 2),
-    ]
+    ])
     splits_with_weights = list(
         LeaveOneGroupOut().split(X_with_weights, groups=groups_with_weights)
     )
