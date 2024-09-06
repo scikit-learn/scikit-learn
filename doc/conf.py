@@ -281,7 +281,14 @@ html_theme_options = {
     # In particular, "**" specifies the default for all pages
     # Use :html_theme.sidebar_secondary.remove: for file-wide removal
     "secondary_sidebar_items": {
-        "**": ["page-toc", "sourcelink", "sg_download_links", "sg_launcher_links"]
+        "**": [
+            "page-toc",
+            "sourcelink",
+            # Sphinx-Gallery-specific sidebar components
+            # https://sphinx-gallery.github.io/stable/advanced.html#using-sphinx-gallery-sidebar-components
+            "sg_download_links",
+            "sg_launcher_links",
+        ],
     },
     "show_version_warning_banner": True,
     "announcement": (
