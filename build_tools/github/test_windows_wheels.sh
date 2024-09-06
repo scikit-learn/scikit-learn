@@ -3,13 +3,7 @@
 set -e
 set -x
 
-echo number of args: $#
 PYTHON_VERSION=$1
-shift
-TEST_REQUIRES=$*
-
-echo CIBW_TEST_REQUIRES: $CIBW_TEST_REQUIRES
-
 
 if [[ "$PYTHON_VERSION" == "313" ]]; then
     # TODO: remove when pandas has a release with python 3.13 wheels
@@ -25,7 +19,7 @@ fi
 
 docker container run \
     --rm scikit-learn/minimal-windows \
-    powershell -Command "python -m pip install $TEST_REQUIRES"
+    powershell -Command "python -m pip install $CIBW_TEST_REQUIRES"
 
 docker container run \
     --rm scikit-learn/minimal-windows \

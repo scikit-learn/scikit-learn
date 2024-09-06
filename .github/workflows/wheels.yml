@@ -195,9 +195,10 @@ jobs:
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir}
           CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }}
           CIBW_BEFORE_TEST: bash {project}/build_tools/wheels/cibw_before_test.sh
-          CIBW_TEST_REQUIRES: pytest pandas
+          # TODO remove when pandas has python 3.13 wheels
+          CIBW_TEST_REQUIRES: ${{ matrix.python != "313" && "pytest pandas" || "pytest" }}
           CIBW_TEST_COMMAND: bash {project}/build_tools/wheels/test_wheels.sh
-          CIBW_TEST_COMMAND_WINDOWS: bash {project}/build_tools/github/test_windows_wheels.sh ${{ matrix.python }} ${{ env.CIBW_TEST_REQUIRES }}
+          CIBW_TEST_COMMAND_WINDOWS: bash {project}/build_tools/github/test_windows_wheels.sh ${{ matrix.python }}
           CIBW_BUILD_VERBOSITY: 1
 
         run: bash build_tools/wheels/build_wheels.sh
