@@ -444,7 +444,6 @@ class FavorabilityRanker:
     >>> ranks = fr(params)
     >>> ranks
     [17, 5, 14, 2, 11, 8, 16, 4, 13, 1, 10, 18, 6, 7, 15, 3, 12, 9]
-    # doctest: +NORMALIZE_WHITESPACE
     """
 
     def __init__(
@@ -624,7 +623,7 @@ class FavorabilityRanker:
                 "`params` must be either a list of dictionaries or a single dictionary"
             )
 
-        return [x + 1 for x in np.argsort(favorability_scores, kind="stable")]
+        return [int(x + 1) for x in np.argsort(favorability_scores, kind="stable")]
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.favorability_rules})"
@@ -677,7 +676,6 @@ class ScoreCutModelSelector:
     >>> bounds = ss.fit(StandardErrorSlicer(sigma=1))
     Min: 0.884825465639171
     Max: 0.9148526525904792
-    # doctest: +ELLIPSIS
     >>> favorability_rules = {
     ...     'reduce_dim__n_components': (True, 2.0), # Lower is simpler and
     ...                                              # more favorable
@@ -691,7 +689,6 @@ class ScoreCutModelSelector:
     Promoted best index: 3
     Promoted best params: {'reduce_dim__n_components': 12}
     Promoted best score: 0.8926121943670691
-    # doctest: +ELLIPSIS
     >>> favorable_index
     3
     """
@@ -1230,7 +1227,6 @@ def promote(score_slice_fn: Callable, favorability_rank_fn: Callable) -> Callabl
     Promoted best index: 33
     Promoted best params: {'classify__C': 10, 'reduce_dim__n_components': 16}
     Promoted best score: 0.9048529866914269
-    # doctest: +ELLIPSIS
     >>> fitted.best_params_
     {'classify__C': 10, 'reduce_dim__n_components': 16}
     """
