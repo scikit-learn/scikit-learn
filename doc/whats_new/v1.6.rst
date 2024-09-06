@@ -25,6 +25,12 @@ Version 1.6.0
 Changes impacting many modules
 ------------------------------
 
+- |API| :func:`utils.validation.validate_data` is introduced and replaces previously
+  private `base.BaseEstimator._validate_data` method. This is intended for third party
+  estimator developers, who should use this function in most cases instead of
+  :func:`utils.validation.check_array` and :func:`utils.validation.check_X_y`.
+  :pr:`29696` by `Adrin Jalali`_.
+
 - |Enhancement| `__sklearn_tags__` was introduced for setting tags in estimators.
   More details in :ref:`estimator_tags`.
   :pr:`22606` by `Thomas Fan`_ and :pr:`29677` by `Adrin Jalali`_.
@@ -247,6 +253,10 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
+- |Fix| :class:`linear_model.LogisticRegressionCV` corrects sample weight handling
+  for the calculation of test scores.
+  :pr:`29419` by :user:`Shruti Nath <snath-xoc>`.
+
 - |API| Deprecates `copy_X` in :class:`linear_model.TheilSenRegressor` as the parameter
   has no effect. `copy_X` will be removed in 1.8.
   :pr:`29105` by :user:`Adam Li <adam2392>`.
@@ -270,6 +280,10 @@ Changelog
   division by zero, the metric is undefined and this value is returned.
   :pr:`29210` by :user:`Marc Torrellas Socastro <marctorsoc>` and
   :user:`Stefanie Senger <StefanieSenger>`.
+
+- |Efficiency| :func:`sklearn.metrics.classification_report` is now faster by caching
+  classification labels.
+  :pr:`29738` by `Adrin Jalali`_.
 
 - |API| scoring="neg_max_error" should be used instead of
   scoring="max_error" which is now deprecated.

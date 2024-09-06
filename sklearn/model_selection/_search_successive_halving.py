@@ -12,7 +12,7 @@ from ..metrics._scorer import get_scorer_names
 from ..utils import resample
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import _num_samples
+from ..utils.validation import _num_samples, validate_data
 from . import ParameterGrid, ParameterSampler
 from ._search import BaseSearchCV
 from ._split import _yields_constant_splits, check_cv
@@ -161,7 +161,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 magic_factor = 2
                 self.min_resources_ = n_splits * magic_factor
                 if is_classifier(self.estimator):
-                    y = self._validate_data(X="no_validation", y=y)
+                    y = validate_data(self, X="no_validation", y=y)
                     check_classification_targets(y)
                     n_classes = np.unique(y).shape[0]
                     self.min_resources_ *= n_classes
@@ -378,6 +378,9 @@ class BaseSuccessiveHalving(BaseSearchCV):
                     "Fail during parameter check since min/max resources requires"
                     " more samples"
                 ),
+                "check_estimators_nan_inf": "FIXME",
+                "check_classifiers_one_label_sample_weights": "FIXME",
+                "check_fit2d_1feature": "FIXME",
             }
         )
         return tags
@@ -667,8 +670,6 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
     >>> search.best_params_  # doctest: +SKIP
     {'max_depth': None, 'min_samples_split': 10, 'n_estimators': 9}
     """
-
-    _required_parameters = ["estimator", "param_grid"]
 
     _parameter_constraints: dict = {
         **BaseSuccessiveHalving._parameter_constraints,
@@ -1017,8 +1018,6 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
     >>> search.best_params_  # doctest: +SKIP
     {'max_depth': None, 'min_samples_split': 10, 'n_estimators': 9}
     """
-
-    _required_parameters = ["estimator", "param_distributions"]
 
     _parameter_constraints: dict = {
         **BaseSuccessiveHalving._parameter_constraints,

@@ -14,7 +14,7 @@ from ..exceptions import ConvergenceWarning
 from ..metrics import euclidean_distances, pairwise_distances_argmin
 from ..utils import check_random_state
 from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, validate_data
 
 
 def _equal_similarities_and_preferences(S, preference):
@@ -504,10 +504,10 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             Returns the instance itself.
         """
         if self.affinity == "precomputed":
-            X = self._validate_data(X, copy=self.copy, force_writeable=True)
+            X = validate_data(self, X, copy=self.copy, force_writeable=True)
             self.affinity_matrix_ = X
         else:  # self.affinity == "euclidean"
-            X = self._validate_data(X, accept_sparse="csr")
+            X = validate_data(self, X, accept_sparse="csr")
             self.affinity_matrix_ = -euclidean_distances(X, squared=True)
 
         if self.affinity_matrix_.shape[0] != self.affinity_matrix_.shape[1]:
@@ -559,7 +559,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             Cluster labels.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, reset=False, accept_sparse="csr")
+        X = validate_data(self, X, reset=False, accept_sparse="csr")
         if not hasattr(self, "cluster_centers_"):
             raise ValueError(
                 "Predict method is not supported when affinity='precomputed'."
