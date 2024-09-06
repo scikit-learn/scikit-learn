@@ -76,6 +76,8 @@ jobs:
           # Change to a different directory to avoid importing the local scikit-learn
           # package instead of the installed one
           cd maint_tools
+          # TODO: Cython shouldn't be required here, move sklearn/_build_utils/tempita.py
+          # to something like build_tools/tempita.py and remove dependence on Cython
           pip install pytest cython
 
           # Try importing sklearn to see if the build is successful
