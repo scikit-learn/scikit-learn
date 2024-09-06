@@ -811,11 +811,13 @@ def test_logistic_regression_sample_weights(problem, solver, global_random_seed)
     elif problem == "cv":
         LR = LogisticRegressionCV
         # We weight the first fold 2 times more.
-        groups_weighted = np.concatenate([
-            np.full(n_samples_per_cv_group, 0),
-            np.full(n_samples_per_cv_group, 1),
-            np.full(n_samples_per_cv_group, 2),
-        ])
+        groups_weighted = np.concatenate(
+            [
+                np.full(n_samples_per_cv_group, 0),
+                np.full(n_samples_per_cv_group, 1),
+                np.full(n_samples_per_cv_group, 2),
+            ]
+        )
         splits_weighted = list(LeaveOneGroupOut().split(X, groups=groups_weighted))
         kw_weighted.update({"Cs": 100, "cv": splits_weighted})
 
