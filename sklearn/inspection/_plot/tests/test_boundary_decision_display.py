@@ -71,7 +71,12 @@ def test_check_boundary_response_method_error():
         (DecisionTreeRegressor(), "predict", None, "predict"),
         (DecisionTreeRegressor(), "auto", None, "predict"),
         (LogisticRegression().fit(*load_iris_2d_scaled()), "predict", None, "predict"),
-        (LogisticRegression().fit(*load_iris_2d_scaled()), "auto", None, ['decision_function', 'predict_proba', 'predict']),
+        (
+            LogisticRegression().fit(*load_iris_2d_scaled()),
+            "auto",
+            None,
+            ["decision_function", "predict_proba", "predict"],
+        ),
         (
             LogisticRegression().fit(*load_iris_2d_scaled()),
             "predict_proba",

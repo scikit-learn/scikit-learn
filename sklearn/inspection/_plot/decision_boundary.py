@@ -302,8 +302,8 @@ class DecisionBoundaryDisplay:
             the positive class for binary classifiers. For multiclass
             classifiers, if None, all classes will be represented in the
             decision boundary plot; the class with the highest response value
-            at each point is plotted, with opacity equal to the response
-            value. The color of each class can be set via `multiclass_cmap`.
+            at each point is plotted. The color of each class can be set via
+            `multiclass_cmap`.
 
             .. versionadded:: 1.4
 
@@ -462,8 +462,8 @@ class DecisionBoundaryDisplay:
 
             if class_of_interest is not None:
                 # For the multiclass case, `_get_response_values` returns the response
-                # as-is. Thus, we have a column per class and we need to select the column
-                # corresponding to the positive class.
+                # as-is. Thus, we have a column per class and we need to select the
+                # column corresponding to the positive class.
                 col_idx = np.flatnonzero(estimator.classes_ == class_of_interest)[0]
                 response = response[:, col_idx].reshape(*xx0.shape)
             else:
