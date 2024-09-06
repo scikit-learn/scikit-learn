@@ -80,6 +80,8 @@ else:
     # It is necessary to do this prior to importing show_versions as the
     # later is linked to the OpenMP runtime to make it possible to introspect
     # it and importing it first would fail if the OpenMP dll cannot be found.
+    import importlib as _importlib
+
     from . import (
         __check_build,  # noqa: F401
         _distributor_init,  # noqa: F401
@@ -87,7 +89,7 @@ else:
     from .base import clone
     from .utils._show_versions import show_versions
 
-    __all__ = [
+    _submodules = [
         "calibration",
         "cluster",
         "covariance",
@@ -125,6 +127,9 @@ else:
         "discriminant_analysis",
         "impute",
         "compose",
+    ]
+
+    __all__ = _submodules + [
         # Non-modules:
         "clone",
         "get_config",
@@ -140,6 +145,18 @@ else:
         _BUILT_WITH_MESON = True
     except ModuleNotFoundError:
         pass
+
+    def __dir__():
+        return __all__
+
+    def __getattr__(name):
+        if name in _submodules:
+            return _importlib.import_module(f"sklearn.{name}")
+        else:
+            try:
+                return globals()[name]
+            except KeyError:
+                raise AttributeError(f"Module 'sklearn' has no attribute '{name}'")
 
 
 def setup_module(module):
