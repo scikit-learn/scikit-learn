@@ -648,6 +648,12 @@ class IterativeImputer(_BaseImputer):
             # drop empty features
             Xt = X[:, valid_mask]
             mask_missing_values = mask_missing_values[:, valid_mask]
+
+            if in_fit:
+                is_empty_feature = np.all(mask_missing_values, axis=0)
+                mask_missing_values[:, is_empty_feature] = False
+                Xt[:, is_empty_feature] = X_filled[:, is_empty_feature]
+
         else:
             # mark empty features as not missing and keep the original
             # imputation
