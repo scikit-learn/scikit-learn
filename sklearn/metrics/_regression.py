@@ -221,9 +221,7 @@ def mean_absolute_error(
     # a scalar array that we convert to a Python float to
     # consistently return the same eager evaluated value.
     # Therefore, `axis=None`.
-    mean_absolute_error = _average(
-        output_errors, axis=None, weights=multioutput
-    )
+    mean_absolute_error = _average(output_errors, axis=None, weights=multioutput)
 
     return float(mean_absolute_error)
 
@@ -540,9 +538,7 @@ def mean_squared_error(
     # a scalar array that we convert to a Python float to
     # consistently return the same eager evaluated value.
     # Therefore, `axis=None`.
-    mean_squared_error = _average(
-        output_errors, axis=None, weights=multioutput
-    )
+    mean_squared_error = _average(output_errors, axis=None, weights=multioutput)
 
     return float(mean_squared_error)
 
@@ -626,9 +622,7 @@ def root_mean_squared_error(
     # a scalar array that we convert to a Python float to
     # consistently return the same eager evaluated value.
     # Therefore, `axis=None`.
-    root_mean_squared_error = _average(
-        output_errors, axis=None, weights=multioutput
-    )
+    root_mean_squared_error = _average(output_errors, axis=None, weights=multioutput)
 
     return float(root_mean_squared_error)
 
