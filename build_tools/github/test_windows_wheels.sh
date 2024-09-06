@@ -24,8 +24,8 @@ if [[ "$PYTHON_VERSION" == "313" ]]; then
 fi
 
 docker container run \
-        --rm scikit-learn/minimal-windows \
-        powershell -Command "python -m pip install $TEST_REQUIRES"
+    --rm scikit-learn/minimal-windows \
+    powershell -Command "python -m pip install $TEST_REQUIRES"
 
 docker container run \
     --rm scikit-learn/minimal-windows \
