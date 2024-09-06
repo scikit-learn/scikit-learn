@@ -8,3 +8,12 @@ if [[ $FREE_THREADED_BUILD == "True" ]]; then
     # TODO: remove when numpy, scipy and pandas have releases with free-threaded wheels
     python -m pip install --pre --extra-index https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy scipy pandas --only-binary :all:
 fi
+
+env
+if [[ "$CIBW_BUILD" == cp313-* ]]; then
+    # TODO: remove when pandas has a release with python 3.13 wheels
+    # First install numpy release
+    python -m pip install numpy --only-binary :all:
+    # Then install pandas-dev
+    python -m pip install --pre --extra-index https://pypi.anaconda.org/scientific-python-nightly-wheels/simple pandas --only-binary :all:
+fi
