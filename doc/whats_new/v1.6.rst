@@ -35,6 +35,8 @@ Changes impacting many modules
   More details in :ref:`estimator_tags`.
   :pr:`22606` by `Thomas Fan`_ and :pr:`29677` by `Adrin Jalali`_.
 
+- |Enhancement| Scikit-learn classes and functions can be imported from the root
+  `sklearn` module. :pr:`29793` by `Thomas Fan`_.
 
 Support for Array API
 ---------------------
