@@ -31,7 +31,6 @@ from sklearn.svm import SVC, NuSVC
 from sklearn.utils import _array_api, all_estimators, deprecated
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils._tags import default_tags
-from sklearn.utils._test_common.instance_generator import _set_checking_parameters
 from sklearn.utils._testing import (
     MinimalClassifier,
     MinimalRegressor,
@@ -52,6 +51,8 @@ from sklearn.utils.estimator_checks import (
     check_dataframe_column_names_consistency,
     check_decision_proba_consistency,
     check_estimator,
+    check_estimator_cloneable,
+    check_estimator_repr,
     check_estimators_unfitted,
     check_fit_check_is_fitted,
     check_fit_score_takes_y,
@@ -752,7 +753,6 @@ def test_check_estimator_clones():
         # without fitting
         with ignore_warnings(category=ConvergenceWarning):
             est = Estimator()
-            _set_checking_parameters(est)
             set_random_state(est)
             old_hash = joblib.hash(est)
             check_estimator(est)
@@ -761,7 +761,6 @@ def test_check_estimator_clones():
         # with fitting
         with ignore_warnings(category=ConvergenceWarning):
             est = Estimator()
-            _set_checking_parameters(est)
             set_random_state(est)
             est.fit(iris.data + 10, iris.target)
             old_hash = joblib.hash(est)
@@ -1303,3 +1302,29 @@ def test_yield_all_checks_legacy():
     non_legacy_check_names = {get_check_name(check) for check in non_legacy_checks}
     legacy_check_names = {get_check_name(check) for check in legacy_checks}
     assert non_legacy_check_names.issubset(legacy_check_names)
+
+
+def test_check_estimator_cloneable_error():
+    """Check that the right error is raised when the estimator is not cloneable."""
+
+    class NotCloneable(BaseEstimator):
+        def __sklearn_clone__(self):
+            raise NotImplementedError("This estimator is not cloneable.")
+
+    estimator = NotCloneable()
+    msg = "Cloning of .* failed with error"
+    with raises(AssertionError, match=msg):
+        check_estimator_cloneable("NotCloneable", estimator)
+
+
+def test_estimator_repr_error():
+    """Check that the right error is raised when the estimator does not have a repr."""
+
+    class NotRepr(BaseEstimator):
+        def __repr__(self):
+            raise NotImplementedError("This estimator does not have a repr.")
+
+    estimator = NotRepr()
+    msg = "Repr of .* failed with error"
+    with raises(AssertionError, match=msg):
+        check_estimator_repr("NotRepr", estimator)
