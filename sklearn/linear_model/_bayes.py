@@ -16,7 +16,7 @@ from ..base import RegressorMixin, _fit_context
 from ..utils import _safe_indexing
 from ..utils._param_validation import Interval
 from ..utils.extmath import fast_logdet
-from ..utils.validation import _check_sample_weight
+from ..utils.validation import _check_sample_weight, validate_data
 from ._base import LinearModel, _preprocess_data, _rescale_data
 
 ###############################################################################
@@ -235,8 +235,13 @@ class BayesianRidge(RegressorMixin, LinearModel):
         self : object
             Returns the instance itself.
         """
-        X, y = self._validate_data(
-            X, y, dtype=[np.float64, np.float32], force_writeable=True, y_numeric=True
+        X, y = validate_data(
+            self,
+            X,
+            y,
+            dtype=[np.float64, np.float32],
+            force_writeable=True,
+            y_numeric=True,
         )
         dtype = X.dtype
 
@@ -621,7 +626,8 @@ class ARDRegression(RegressorMixin, LinearModel):
         self : object
             Fitted estimator.
         """
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             dtype=[np.float64, np.float32],

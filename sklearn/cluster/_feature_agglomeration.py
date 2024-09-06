@@ -13,7 +13,7 @@ from scipy.sparse import issparse
 from ..base import TransformerMixin
 from ..utils import metadata_routing
 from ..utils.deprecation import _deprecate_Xt_in_inverse_transform
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, validate_data
 
 ###############################################################################
 # Mixin class for feature agglomeration.
@@ -47,7 +47,7 @@ class AgglomerationTransform(TransformerMixin):
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
         if self.pooling_func == np.mean and not issparse(X):
             size = np.bincount(self.labels_)
             n_samples = X.shape[0]

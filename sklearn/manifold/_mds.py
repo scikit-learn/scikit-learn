@@ -17,6 +17,7 @@ from ..metrics import euclidean_distances
 from ..utils import check_array, check_random_state, check_symmetric
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.parallel import Parallel, delayed
+from ..utils.validation import validate_data
 
 
 def _smacof_single(
@@ -569,8 +570,10 @@ class MDS(BaseEstimator):
         self.random_state = random_state
         self.normalized_stress = normalized_stress
 
-    def _more_tags(self):
-        return {"pairwise": self.dissimilarity == "precomputed"}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.pairwise = self.dissimilarity == "precomputed"
+        return tags
 
     def fit(self, X, y=None, init=None):
         """
@@ -624,7 +627,7 @@ class MDS(BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
             X transformed in the new space.
         """
-        X = self._validate_data(X)
+        X = validate_data(self, X)
         if X.shape[0] == X.shape[1] and self.dissimilarity != "precomputed":
             warnings.warn(
                 "The MDS API has changed. ``fit`` now constructs an"

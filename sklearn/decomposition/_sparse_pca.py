@@ -17,7 +17,7 @@ from ..linear_model import ridge_regression
 from ..utils import check_random_state
 from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils.extmath import svd_flip
-from ..utils.validation import check_array, check_is_fitted
+from ..utils.validation import check_array, check_is_fitted, validate_data
 from ._dict_learning import MiniBatchDictionaryLearning, dict_learning
 
 
@@ -78,7 +78,7 @@ class _BaseSparsePCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
             Returns the instance itself.
         """
         random_state = check_random_state(self.random_state)
-        X = self._validate_data(X)
+        X = validate_data(self, X)
 
         self.mean_ = X.mean(axis=0)
         X = X - self.mean_
@@ -113,7 +113,7 @@ class _BaseSparsePCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
         X = X - self.mean_
 
         U = ridge_regression(
@@ -150,10 +150,10 @@ class _BaseSparsePCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         """Number of transformed output features."""
         return self.components_.shape[0]
 
-    def _more_tags(self):
-        return {
-            "preserves_dtype": [np.float64, np.float32],
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
 
 
 class SparsePCA(_BaseSparsePCA):
