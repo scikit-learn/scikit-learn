@@ -704,8 +704,11 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             # compute validation score, use that for stopping
             try:
                 val_score = self._score(X_val, y_val)
-            except ValueError:
-                val_score = np.inf
+            except ValueError as e:
+                if str(e) == "Input contains NaN.":
+                    val_score = np.inf
+                else:
+                    raise e
 
             self.validation_scores_.append(val_score)
 
