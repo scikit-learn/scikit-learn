@@ -5,6 +5,9 @@ selecting models from ``GridSearchCV``, ``RandomizedSearchCV``, or
 and favorability criteria.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import itertools
 import warnings
 from functools import partial

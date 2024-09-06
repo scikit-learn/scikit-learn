@@ -6,36 +6,19 @@ Balance model complexity and cross-validated score
 This example balances model complexity and cross-validated score by finding the most
 accurate model, while minimizing the number of PCA components [1].
 
-Based on the handwritten digits dataset and a Support Vector Classifier estimator,
-the first figure shows the trade-off between cross-validated score and the number of
-PCA components, when using a 1 standard-error rule to constrain model selection with
-`GridSearchCV`. Under these constraints, the balanced case is when n_components=12 and
-accuracy=0.90, which falls into the range within 1 standard error of the best accuracy
-score.
-
-Based on the Diabetes dataset and a Gradient Boosted Regressor, the second figure
-shows the trade-off between cross-validated score and the number of tree estimators,
-when using a signed rank sum rule with an alpha-level of 0.05 to constrain model
-selection with `RandomizedSearchCV`. Under these constraints, the balanced case is when
-n_estimators=150 and R2=0.41, which is "not significantly different" from the best R2
-score, but is nevertheless a more parsimonious model.
-
-As an exploratory analysis that follows from the second example, we can observe that
-the balanced case lends to less test-set deviance when compared to that of the more
-complex highest-scoring case.
-
 [1] Hastie, T., Tibshirani, R.,, Friedman, J. (2001). Model Assessment and
-    Selection. The Elements of Statistical Learning (pp. 219-260). New York,
-    NY, USA: Springer New York Inc..
+Selection. The Elements of Statistical Learning (pp. 219-260). New York,
+NY, USA: Springer New York Inc..
 
 """
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+from copy import deepcopy
+
 import matplotlib.pyplot as plt
 import numpy as np
-from copy import deepcopy
 
 from sklearn import datasets
 from sklearn.decomposition import PCA
@@ -53,6 +36,15 @@ from sklearn.model_selection import (
 )
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
+
+"""
+Based on the handwritten digits dataset and a Support Vector Classifier estimator,
+the first figure shows the trade-off between cross-validated score and the number of
+PCA components, when using a 1 standard-error rule to constrain model selection with
+`GridSearchCV`. Under these constraints, the balanced case is when n_components=12 and
+accuracy=0.90, which falls into the range within 1 standard error of the best accuracy
+score.
+"""
 
 # 1-SE rule - Digits dataset - GridSearchCV - PCA - LinearSVC - Classification
 X, y = datasets.load_digits(return_X_y=True)
@@ -109,6 +101,18 @@ plt.legend(loc="upper left")
 
 plt.show()
 
+"""
+Based on the Diabetes dataset and a Gradient Boosted Regressor, the second figure
+shows the trade-off between cross-validated score and the number of tree estimators,
+when using a signed rank sum rule with an alpha-level of 0.05 to constrain model
+selection with `RandomizedSearchCV`. Under these constraints, the balanced case is when
+n_estimators=150 and R2=0.41, which is "not significantly different" from the best R2
+score, but is nevertheless a more parsimonious model.
+
+As an exploratory analysis that follows from the second example, we can observe that
+the balanced case lends to less test-set deviance when compared to that of the more
+complex highest-scoring case.
+"""
 # Signed Rank - Diabetes dataset - RandomizedSearchCV - GradientBoostingRegressor -
 # Regression
 plt.close("all")
