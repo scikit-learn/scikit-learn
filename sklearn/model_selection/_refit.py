@@ -1229,7 +1229,7 @@ def promote(score_slice_fn: Callable, favorability_rank_fn: Callable) -> Callabl
     Original best score: 0.9165366759517177
     Promoted best index: 33
     Promoted best params: {'classify__C': 10, 'reduce_dim__n_components': 16}
-    Promoted best score: 0.9059656453110492
+    Promoted best score: 0.9065212008666048
     >>> fitted.best_params_
     {'classify__C': 10, 'reduce_dim__n_components': 16}
     """
