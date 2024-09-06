@@ -236,6 +236,15 @@ Changelog
   computing the mean value for uniform weights.
   :pr:`29135` by :user:`Xuefeng Xu <xuefeng-xu>`.
 
+:mod:`sklearn.inspection`
+.........................
+
+- |Enhancement| :class:`inspection.DecisionBoundaryDisplay` now supports
+  plotting all classes for multi-class problems when `response_method` is
+  'decision_function' or 'predict_proba'.
+  :pr:`29797` by :user:`Lucy Liu <lucyleeow>`.
+
+
 :mod:`sklearn.linear_model`
 ...........................
 
