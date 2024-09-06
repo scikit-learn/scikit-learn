@@ -1336,11 +1336,13 @@ def test_enet_cv_sample_weight_correctness(
 
     sw = np.ones_like(y_with_weights)
     sw[:n_samples_per_cv] = rng.randint(0, 5, size=n_samples_per_cv)
-    groups_with_weights = np.concatenate([
-        np.full(n_samples_per_cv, 0),
-        np.full(n_samples_per_cv, 1),
-        np.full(n_samples_per_cv, 2),
-    ])
+    groups_with_weights = np.concatenate(
+        [
+            np.full(n_samples_per_cv, 0),
+            np.full(n_samples_per_cv, 1),
+            np.full(n_samples_per_cv, 2),
+        ]
+    )
     splits_with_weights = list(
         LeaveOneGroupOut().split(X_with_weights, groups=groups_with_weights)
     )
