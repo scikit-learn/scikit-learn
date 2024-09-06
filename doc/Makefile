@@ -59,13 +59,17 @@ clean:
 	-rm -rf api/*.rst
 	@echo "Removed api/*.rst"
 
+setup:
+	# seems this change can be deleted:
+	python -c "from sklearn.experimental import enable_halving_search_cv; from sklearn.experimental import enable_iterative_imputer"
+
 # Default to SPHINX_NUMJOBS=1 for full documentation build. Using
 # SPHINX_NUMJOBS!=1 may actually slow down the build, or cause weird issues in
 # the CI (job stalling or EOFError), see
 # https://github.com/scikit-learn/scikit-learn/pull/25836 or
 # https://github.com/scikit-learn/scikit-learn/pull/25809
 html: SPHINX_NUMJOBS ?= 1
-html:
+html: setup
 	# These two lines make the build a bit more lengthy, and the
 	# the embedding of images more robust
 	rm -rf $(BUILDDIR)/html/_images
