@@ -1369,7 +1369,6 @@ def test_enet_cv_sample_weight_correctness(
     )
     reg_with_repetitions.fit(X_with_repetitions, y_with_repetitions)
 
-    # ensure that we chose meaningful alphas, i.e. not boundaries
     assert_allclose(reg_with_weights.mse_path_, reg_with_repetitions.mse_path_)
     assert_allclose(reg_with_weights.alphas_, reg_with_repetitions.alphas_)
     assert reg_with_weights.alpha_ == pytest.approx(reg_with_repetitions.alpha_)

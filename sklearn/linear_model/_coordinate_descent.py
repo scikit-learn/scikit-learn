@@ -156,8 +156,7 @@ def _alpha_grid(
         )
         if sample_weight is not None:
             if y.ndim > 1:
-                yw = y * np.broadcast_to(sample_weight.reshape(-1, 1), y.shape)
-
+                yw = y * sample_weight.reshape(-1, 1)
             else:
                 yw = y * sample_weight
         else:
