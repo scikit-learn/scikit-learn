@@ -36,7 +36,7 @@ from ..exceptions import DataConversionWarning, NotFittedError, SkipTestWarning
 from ..linear_model._base import LinearClassifierMixin
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 from ..metrics.pairwise import linear_kernel, pairwise_distances, rbf_kernel
-from ..model_selection import ShuffleSplit, train_test_split
+from ..model_selection import LeaveOneGroupOut, ShuffleSplit, train_test_split
 from ..model_selection._validation import _safe_split
 from ..pipeline import make_pipeline
 from ..preprocessing import StandardScaler, scale
@@ -1107,6 +1107,26 @@ def check_sample_weights_invariance(name, estimator_orig, kind="ones"):
         )
     else:  # pragma: no cover
         raise ValueError
+
+    # when the estimator has an internal CV scheme
+    # we only use weights / repetitions in a specific CV group (here group=0)
+    if "cv" in estimator_orig.get_params():
+        groups2 = np.hstack(
+            [np.full_like(y2, 0), np.full_like(y1, 1), np.full_like(y1, 2)]
+        )
+        sw2 = np.hstack([sw2, np.ones_like(y1), np.ones_like(y1)])
+        X2 = np.vstack([X2, X1, X1])
+        y2 = np.hstack([y2, y1, y1])
+        splits2 = list(LeaveOneGroupOut().split(X2, groups=groups2))
+        estimator2.set_params(cv=splits2)
+
+        groups1 = np.hstack(
+            [np.full_like(y1, 0), np.full_like(y1, 1), np.full_like(y1, 2)]
+        )
+        X1 = np.vstack([X1, X1, X1])
+        y1 = np.hstack([y1, y1, y1])
+        splits1 = list(LeaveOneGroupOut().split(X1, groups=groups1))
+        estimator1.set_params(cv=splits1)
 
     y1 = _enforce_estimator_tags_y(estimator1, y1)
     y2 = _enforce_estimator_tags_y(estimator2, y2)
