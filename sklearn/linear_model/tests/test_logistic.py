@@ -811,11 +811,11 @@ def test_logistic_regression_sample_weights(problem, solver, global_random_seed)
     elif problem == "cv":
         LR = LogisticRegressionCV
         # We weight the first fold 2 times more.
-        groups_weighted = np.r_[
+        groups_weighted = np.concatenate([
             np.full(n_samples_per_cv_group, 0),
             np.full(n_samples_per_cv_group, 1),
             np.full(n_samples_per_cv_group, 2),
-        ]
+        ])
         splits_weighted = list(LeaveOneGroupOut().split(X, groups=groups_weighted))
         kw_weighted.update({"Cs": 100, "cv": splits_weighted})
 
@@ -829,7 +829,8 @@ def test_logistic_regression_sample_weights(problem, solver, global_random_seed)
     clf_sw_repeated = LR(solver=solver, **kw_repeated)
 
     if solver == "lbfgs":
-        # lbfgs has convergence issues on the data
+        # lbfgs has convergence issues on the data but this should not impact
+        # the quality of the results.
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", ConvergenceWarning)
             clf_sw_weighted.fit(X, y, sample_weight=sw)
@@ -848,9 +849,9 @@ def test_logistic_regression_sample_weights(problem, solver, global_random_seed)
     "solver", ("lbfgs", "newton-cg", "newton-cholesky", "sag", "saga")
 )
 def test_logistic_regression_solver_class_weights(solver, global_random_seed):
-    # Test that passing class_weight as [1,2] is the same as
+    # Test that passing class_weight as [1, 2] is the same as
     # passing class weight = [1,1] but adjusting sample weights
-    # to be 2 for all instances of class 2
+    # to be 2 for all instances of class 1.
 
     X, y = make_classification(
         n_samples=300,
