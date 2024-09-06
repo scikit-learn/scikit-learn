@@ -1,7 +1,7 @@
-""" Dictionary learning.
-"""
-# Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
-# License: BSD 3 clause
+"""Dictionary learning."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import itertools
 import sys
@@ -24,7 +24,7 @@ from ..utils import check_array, check_random_state, gen_batches, gen_even_slice
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.extmath import randomized_svd, row_norms, svd_flip
 from ..utils.parallel import Parallel, delayed
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, validate_data
 
 
 def _check_positive_coding(method, positive):
@@ -847,7 +847,7 @@ def dict_learning_online(
     We can check the level of sparsity of `U`:
 
     >>> np.mean(U == 0)
-    0.53...
+    np.float64(0.53...)
 
     We can compare the average squared euclidean norm of the reconstruction
     error of the sparse coded signal relative to the squared euclidean norm of
@@ -855,7 +855,7 @@ def dict_learning_online(
 
     >>> X_hat = U @ V
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
-    0.05...
+    np.float64(0.05...)
     """
     # TODO(1.6): remove in 1.6
     if max_iter is None:
@@ -1049,7 +1049,7 @@ def dict_learning(
     We can check the level of sparsity of `U`:
 
     >>> np.mean(U == 0)
-    0.6...
+    np.float64(0.6...)
 
     We can compare the average squared euclidean norm of the reconstruction
     error of the sparse coded signal relative to the squared euclidean norm of
@@ -1057,7 +1057,7 @@ def dict_learning(
 
     >>> X_hat = U @ V
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
-    0.01...
+    np.float64(0.01...)
     """
     estimator = DictionaryLearning(
         n_components=n_components,
@@ -1110,7 +1110,7 @@ class _BaseSparseCoding(ClassNamePrefixFeaturesOutMixin, TransformerMixin):
     def _transform(self, X, dictionary):
         """Private method allowing to accommodate both DictionaryLearning and
         SparseCoder."""
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
 
         if hasattr(self, "alpha") and self.transform_alpha is None:
             transform_alpha = self.alpha
@@ -1347,11 +1347,11 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         """
         return super()._transform(X, self.dictionary)
 
-    def _more_tags(self):
-        return {
-            "requires_fit": False,
-            "preserves_dtype": [np.float64, np.float32],
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.requires_fit = False
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
 
     @property
     def n_components_(self):
@@ -1551,7 +1551,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     We can check the level of sparsity of `X_transformed`:
 
     >>> np.mean(X_transformed == 0)
-    0.52...
+    np.float64(0.52...)
 
     We can compare the average squared euclidean norm of the reconstruction
     error of the sparse coded signal relative to the squared euclidean norm of
@@ -1559,7 +1559,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     >>> X_hat = X_transformed @ dict_learner.components_
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
-    0.05...
+    np.float64(0.05...)
     """
 
     _parameter_constraints: dict = {
@@ -1671,7 +1671,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         method = "lasso_" + self.fit_algorithm
 
         random_state = check_random_state(self.random_state)
-        X = self._validate_data(X)
+        X = validate_data(self, X)
 
         if self.n_components is None:
             n_components = X.shape[1]
@@ -1706,10 +1706,10 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         """Number of transformed output features."""
         return self.components_.shape[0]
 
-    def _more_tags(self):
-        return {
-            "preserves_dtype": [np.float64, np.float32],
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
 
 
 class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
@@ -1914,7 +1914,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     We can check the level of sparsity of `X_transformed`:
 
     >>> np.mean(X_transformed == 0) > 0.5
-    True
+    np.True_
 
     We can compare the average squared euclidean norm of the reconstruction
     error of the sparse coded signal relative to the squared euclidean norm of
@@ -1922,7 +1922,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     >>> X_hat = X_transformed @ dict_learner.components_
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
-    0.052...
+    np.float64(0.052...)
     """
 
     _parameter_constraints: dict = {
@@ -2177,8 +2177,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(
-            X, dtype=[np.float64, np.float32], order="C", copy=False
+        X = validate_data(
+            self, X, dtype=[np.float64, np.float32], order="C", copy=False
         )
 
         self._check_params(X)
@@ -2274,8 +2274,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         """
         has_components = hasattr(self, "components_")
 
-        X = self._validate_data(
-            X, dtype=[np.float64, np.float32], order="C", reset=not has_components
+        X = validate_data(
+            self, X, dtype=[np.float64, np.float32], order="C", reset=not has_components
         )
 
         if not has_components:
@@ -2304,7 +2304,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         """Number of transformed output features."""
         return self.components_.shape[0]
 
-    def _more_tags(self):
-        return {
-            "preserves_dtype": [np.float64, np.float32],
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags

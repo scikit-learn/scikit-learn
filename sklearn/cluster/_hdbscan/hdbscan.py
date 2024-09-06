@@ -2,6 +2,10 @@
 HDBSCAN: Hierarchical Density-Based Spatial Clustering
          of Applications with Noise
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Authors: Leland McInnes <leland.mcinnes@gmail.com>
 #          Steve Astels <sastels@gmail.com>
 #          John Healy <jchealy@gmail.com>
@@ -44,9 +48,14 @@ from scipy.sparse import csgraph, issparse
 from ...base import BaseEstimator, ClusterMixin, _fit_context
 from ...metrics import pairwise_distances
 from ...metrics._dist_metrics import DistanceMetric
+from ...metrics.pairwise import _VALID_METRICS
 from ...neighbors import BallTree, KDTree, NearestNeighbors
 from ...utils._param_validation import Interval, StrOptions
-from ...utils.validation import _allclose_dense_sparse, _assert_all_finite
+from ...utils.validation import (
+    _allclose_dense_sparse,
+    _assert_all_finite,
+    validate_data,
+)
 from ._linkage import (
     MST_edge_dtype,
     make_single_linkage,
@@ -439,8 +448,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         as noise.
 
     min_samples : int, default=None
-        The number of samples in a neighborhood for a point
-        to be considered as a core point. This includes the point itself.
+        The parameter `k` used to calculate the distance between a point
+        `x_p` and its k-th nearest neighbor.
         When `None`, defaults to `min_cluster_size`.
 
     cluster_selection_epsilon : float, default=0.0
@@ -646,7 +655,10 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             None,
             Interval(Integral, left=1, right=None, closed="left"),
         ],
-        "metric": [StrOptions(FAST_METRICS | {"precomputed"}), callable],
+        "metric": [
+            StrOptions(FAST_METRICS | set(_VALID_METRICS) | {"precomputed"}),
+            callable,
+        ],
         "metric_params": [dict, None],
         "alpha": [Interval(Real, left=0, right=None, closed="neither")],
         # TODO(1.6): Remove "kdtree" and "balltree"  option
@@ -726,10 +738,11 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         self._metric_params = self.metric_params or {}
         if self.metric != "precomputed":
             # Non-precomputed matrices may contain non-finite values.
-            X = self._validate_data(
+            X = validate_data(
+                self,
                 X,
                 accept_sparse=["csr", "lil"],
-                force_all_finite=False,
+                ensure_all_finite=False,
                 dtype=np.float64,
             )
             self._raw_data = X
@@ -761,10 +774,12 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 X = X[finite_index]
         elif issparse(X):
             # Handle sparse precomputed distance matrices separately
-            X = self._validate_data(
+            X = validate_data(
+                self,
                 X,
                 accept_sparse=["csr", "lil"],
                 dtype=np.float64,
+                force_writeable=True,
             )
         else:
             # Only non-sparse, precomputed distance matrices are handled here
@@ -772,7 +787,9 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
             # Perform data validation after removing infinite values (numpy.inf)
             # from the given distance matrix.
-            X = self._validate_data(X, force_all_finite=False, dtype=np.float64)
+            X = validate_data(
+                self, X, ensure_all_finite=False, dtype=np.float64, force_writeable=True
+            )
             if np.isnan(X).any():
                 # TODO: Support np.nan in Cython implementation for precomputed
                 # dense HDBSCAN
@@ -1022,5 +1039,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         labels[missing_index] = _OUTLIER_ENCODING["missing"]["label"]
         return labels
 
-    def _more_tags(self):
-        return {"allow_nan": self.metric != "precomputed"}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = self.metric != "precomputed"
+        return tags

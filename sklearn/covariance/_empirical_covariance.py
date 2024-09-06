@@ -3,11 +3,8 @@ Maximum likelihood covariance estimator.
 
 """
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Gael Varoquaux <gael.varoquaux@normalesup.org>
-#         Virgile Fritsch <virgile.fritsch@inria.fr>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # avoid division truncation
 import warnings
@@ -21,6 +18,7 @@ from ..metrics.pairwise import pairwise_distances
 from ..utils import check_array
 from ..utils._param_validation import validate_params
 from ..utils.extmath import fast_logdet
+from ..utils.validation import validate_data
 
 
 @validate_params(
@@ -93,7 +91,7 @@ def empirical_covariance(X, *, assume_centered=False):
            [0.25, 0.25, 0.25],
            [0.25, 0.25, 0.25]])
     """
-    X = check_array(X, ensure_2d=False, force_all_finite=False)
+    X = check_array(X, ensure_2d=False, ensure_all_finite=False)
 
     if X.ndim == 1:
         X = np.reshape(X, (1, -1))
@@ -245,7 +243,7 @@ class EmpiricalCovariance(BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(X)
+        X = validate_data(self, X)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:
@@ -278,7 +276,7 @@ class EmpiricalCovariance(BaseEstimator):
             The log-likelihood of `X_test` with `self.location_` and `self.covariance_`
             as estimators of the Gaussian model mean and covariance matrix respectively.
         """
-        X_test = self._validate_data(X_test, reset=False)
+        X_test = validate_data(self, X_test, reset=False)
         # compute empirical covariance of the test set
         test_cov = empirical_covariance(X_test - self.location_, assume_centered=True)
         # compute log likelihood
@@ -352,7 +350,7 @@ class EmpiricalCovariance(BaseEstimator):
         dist : ndarray of shape (n_samples,)
             Squared Mahalanobis distances of the observations.
         """
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
 
         precision = self.get_precision()
         with config_context(assume_finite=True):

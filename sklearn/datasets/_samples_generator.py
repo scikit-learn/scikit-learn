@@ -2,9 +2,8 @@
 Generate samples of synthetic data sets.
 """
 
-# Authors: B. Thirion, G. Varoquaux, A. Gramfort, V. Michel, O. Grisel,
-#          G. Louppe, J. Nothman
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import array
 import numbers
@@ -205,7 +204,7 @@ def make_classification(
     >>> y.shape
     (100,)
     >>> list(y[:5])
-    [0, 0, 1, 1, 0]
+    [np.int64(0), np.int64(0), np.int64(1), np.int64(1), np.int64(0)]
     """
     generator = check_random_state(random_state)
 
@@ -221,9 +220,7 @@ def make_classification(
         msg = "n_classes({}) * n_clusters_per_class({}) must be"
         msg += " smaller or equal 2**n_informative({})={}"
         raise ValueError(
-            msg.format(
-                n_classes, n_clusters_per_class, n_informative, 2**n_informative
-            )
+            msg.format(n_classes, n_clusters_per_class, n_informative, 2**n_informative)
         )
 
     if weights is not None:
@@ -559,7 +556,8 @@ def make_hastie_10_2(n_samples=12000, *, random_state=None):
     >>> y.shape
     (24000,)
     >>> list(y[:5])
-    [-1.0, 1.0, -1.0, 1.0, -1.0]
+    [np.float64(-1.0), np.float64(1.0), np.float64(-1.0), np.float64(1.0),
+    np.float64(-1.0)]
     """
     rs = check_random_state(random_state)
 
@@ -799,7 +797,7 @@ def make_circles(
     >>> y.shape
     (100,)
     >>> list(y[:5])
-    [1, 1, 1, 0, 0]
+    [np.int64(1), np.int64(1), np.int64(1), np.int64(0), np.int64(0)]
     """
     if isinstance(n_samples, numbers.Integral):
         n_samples_out = n_samples // 2
@@ -1171,7 +1169,7 @@ def make_friedman1(n_samples=100, n_features=10, *, noise=0.0, random_state=None
     >>> y.shape
     (100,)
     >>> list(y[:3])
-    [16.8..., 5.8..., 9.4...]
+    [np.float64(16.8...), np.float64(5.8...), np.float64(9.4...)]
     """
     generator = check_random_state(random_state)
 
@@ -1253,7 +1251,7 @@ def make_friedman2(n_samples=100, *, noise=0.0, random_state=None):
     >>> y.shape
     (100,)
     >>> list(y[:3])
-    [1229.4..., 27.0..., 65.6...]
+    [np.float64(1229.4...), np.float64(27.0...), np.float64(65.6...)]
     """
     generator = check_random_state(random_state)
 
@@ -1337,7 +1335,7 @@ def make_friedman3(n_samples=100, *, noise=0.0, random_state=None):
     >>> y.shape
     (100,)
     >>> list(y[:3])
-    [1.5..., 0.9..., 0.4...]
+    [np.float64(1.5...), np.float64(0.9...), np.float64(0.4...)]
     """
     generator = check_random_state(random_state)
 
@@ -1468,7 +1466,6 @@ def make_low_rank_matrix(
         "n_features": [Interval(Integral, 1, None, closed="left")],
         "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left")],
         "random_state": ["random_state"],
-        "data_transposed": ["boolean", Hidden(StrOptions({"deprecated"}))],
     },
     prefer_skip_nested_validation=True,
 )
@@ -1479,13 +1476,12 @@ def make_sparse_coded_signal(
     n_features,
     n_nonzero_coefs,
     random_state=None,
-    data_transposed="deprecated",
 ):
     """Generate a signal as a sparse combination of dictionary elements.
 
-    Returns a matrix `Y = DX`, such that `D` is of shape `(n_features, n_components)`,
-    `X` is of shape `(n_components, n_samples)` and each column of `X` has exactly
-    `n_nonzero_coefs` non-zero elements.
+    Returns matrices `Y`, `D` and `X` such that `Y = XD` where `X` is of shape
+    `(n_samples, n_components)`, `D` is of shape `(n_components, n_features)`, and
+    each row of `X` has exactly `n_nonzero_coefs` non-zero elements.
 
     Read more in the :ref:`User Guide <sample_generators>`.
 
@@ -1508,33 +1504,17 @@ def make_sparse_coded_signal(
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    data_transposed : bool, default=False
-        By default, Y, D and X are not transposed.
-
-        .. versionadded:: 1.1
-
-        .. versionchanged:: 1.3
-            Default value changed from True to False.
-
-        .. deprecated:: 1.3
-            `data_transposed` is deprecated and will be removed in 1.5.
-
     Returns
     -------
-    data : ndarray of shape (n_features, n_samples) or (n_samples, n_features)
-        The encoded signal (Y). The shape is `(n_samples, n_features)` if
-        `data_transposed` is False, otherwise it's `(n_features, n_samples)`.
+    data : ndarray of shape (n_samples, n_features)
+        The encoded signal (Y).
 
-    dictionary : ndarray of shape (n_features, n_components) or \
-            (n_components, n_features)
-        The dictionary with normalized components (D). The shape is
-        `(n_components, n_features)` if `data_transposed` is False, otherwise it's
-        `(n_features, n_components)`.
+    dictionary : ndarray of shape (n_components, n_features)
+        The dictionary with normalized components (D).
 
-    code : ndarray of shape (n_components, n_samples) or (n_samples, n_components)
+    code : ndarray of shape (n_samples, n_components)
         The sparse code such that each column of this matrix has exactly
-        n_nonzero_coefs non-zero items (X). The shape is `(n_samples, n_components)`
-        if `data_transposed` is False, otherwise it's `(n_components, n_samples)`.
+        n_nonzero_coefs non-zero items (X).
 
     Examples
     --------
@@ -1570,19 +1550,8 @@ def make_sparse_coded_signal(
     # encode signal
     Y = np.dot(D, X)
 
-    # TODO(1.5) remove data_transposed
-    # raise warning if data_transposed is not passed explicitly
-    if data_transposed != "deprecated":
-        warnings.warn(
-            "data_transposed was deprecated in version 1.3 and will be removed in 1.5.",
-            FutureWarning,
-        )
-    else:
-        data_transposed = False
-
-    # transpose if needed
-    if not data_transposed:
-        Y, D, X = Y.T, D.T, X.T
+    # Transpose to have shapes consistent with the rest of the API
+    Y, D, X = Y.T, D.T, X.T
 
     return map(np.squeeze, (Y, D, X))
 
@@ -2081,7 +2050,7 @@ def make_gaussian_quantiles(
     >>> y.shape
     (100,)
     >>> list(y[:5])
-    [2, 0, 1, 0, 2]
+    [np.int64(2), np.int64(0), np.int64(1), np.int64(0), np.int64(2)]
     """
     if n_samples < n_classes:
         raise ValueError("n_samples must be at least n_classes")

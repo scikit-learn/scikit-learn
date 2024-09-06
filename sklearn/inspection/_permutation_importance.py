@@ -1,5 +1,8 @@
 """Permutation importance for estimators."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numbers
 
 import numpy as np
@@ -263,7 +266,7 @@ def permutation_importance(
     array([0.2211..., 0.       , 0.       ])
     """
     if not hasattr(X, "iloc"):
-        X = check_array(X, force_all_finite="allow-nan", dtype=None)
+        X = check_array(X, ensure_all_finite="allow-nan", dtype=None)
 
     # Precompute random seed from the random state to be used
     # to get a fresh independent RandomState instance for each

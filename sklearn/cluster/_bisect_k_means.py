@@ -1,5 +1,7 @@
 """Bisecting K-means clustering."""
-# Author: Michal Krawczyk <mkrwczyk.1@gmail.com>
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 
@@ -10,7 +12,12 @@ from ..base import _fit_context
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils._param_validation import Integral, Interval, StrOptions
 from ..utils.extmath import row_norms
-from ..utils.validation import _check_sample_weight, check_is_fitted, check_random_state
+from ..utils.validation import (
+    _check_sample_weight,
+    check_is_fitted,
+    check_random_state,
+    validate_data,
+)
 from ._k_means_common import _inertia_dense, _inertia_sparse
 from ._kmeans import (
     _BaseKMeans,
@@ -376,7 +383,8 @@ class BisectingKMeans(_BaseKMeans):
         self
             Fitted estimator.
         """
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse="csr",
             dtype=[np.float64, np.float32],
@@ -525,5 +533,7 @@ class BisectingKMeans(_BaseKMeans):
 
         return labels
 
-    def _more_tags(self):
-        return {"preserves_dtype": [np.float64, np.float32]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags

@@ -1,8 +1,7 @@
 """Univariate features selection."""
 
-# Authors: V. Michel, B. Thirion, G. Varoquaux, A. Gramfort, E. Duchesnay.
-#          L. Buitinck, A. Joly
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 import warnings
@@ -17,7 +16,7 @@ from ..preprocessing import LabelBinarizer
 from ..utils import as_float_array, check_array, check_X_y, safe_mask, safe_sqr
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import row_norms, safe_sparse_dot
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, validate_data
 from ._base import SelectorMixin
 
 
@@ -557,10 +556,10 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
             Returns the instance itself.
         """
         if y is None:
-            X = self._validate_data(X, accept_sparse=["csr", "csc"])
+            X = validate_data(self, X, accept_sparse=["csr", "csc"])
         else:
-            X, y = self._validate_data(
-                X, y, accept_sparse=["csr", "csc"], multi_output=True
+            X, y = validate_data(
+                self, X, y, accept_sparse=["csr", "csc"], multi_output=True
             )
 
         self._check_params(X, y)
@@ -579,8 +578,10 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
     def _check_params(self, X, y):
         pass
 
-    def _more_tags(self):
-        return {"requires_y": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.required = True
+        return tags
 
 
 ######################################################################
@@ -685,8 +686,10 @@ class SelectPercentile(_BaseFilter):
             mask[kept_ties] = True
         return mask
 
-    def _more_tags(self):
-        return {"requires_y": False}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.required = False
+        return tags
 
 
 class SelectKBest(_BaseFilter):
@@ -794,8 +797,10 @@ class SelectKBest(_BaseFilter):
             mask[np.argsort(scores, kind="mergesort")[-self.k :]] = 1
             return mask
 
-    def _more_tags(self):
-        return {"requires_y": False}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.required = False
+        return tags
 
 
 class SelectFpr(_BaseFilter):
@@ -1146,8 +1151,10 @@ class GenericUnivariateSelect(_BaseFilter):
 
         return selector
 
-    def _more_tags(self):
-        return {"preserves_dtype": [np.float64, np.float32]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
 
     def _check_params(self, X, y):
         self._make_selector()._check_params(X, y)

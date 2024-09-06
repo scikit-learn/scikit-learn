@@ -2,8 +2,8 @@
 The :mod:`sklearn.pls` module implements Partial Least Squares (PLS).
 """
 
-# Author: Edouard Duchesnay <edouard.duchesnay@cea.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from abc import ABCMeta, abstractmethod
@@ -25,7 +25,7 @@ from ..utils import check_array, check_consistent_length
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import svd_flip
 from ..utils.fixes import parse_version, sp_version
-from ..utils.validation import FLOAT_DTYPES, check_is_fitted
+from ..utils.validation import FLOAT_DTYPES, check_is_fitted, validate_data
 
 __all__ = ["PLSCanonical", "PLSRegression", "PLSSVD"]
 
@@ -262,11 +262,21 @@ class _PLS(
         y = _deprecate_Y_when_required(y, Y)
 
         check_consistent_length(X, y)
-        X = self._validate_data(
-            X, dtype=np.float64, copy=self.copy, ensure_min_samples=2
+        X = validate_data(
+            self,
+            X,
+            dtype=np.float64,
+            force_writeable=True,
+            copy=self.copy,
+            ensure_min_samples=2,
         )
         y = check_array(
-            y, input_name="y", dtype=np.float64, copy=self.copy, ensure_2d=False
+            y,
+            input_name="y",
+            dtype=np.float64,
+            force_writeable=True,
+            copy=self.copy,
+            ensure_2d=False,
         )
         if y.ndim == 1:
             self._predict_1d = True
@@ -282,7 +292,9 @@ class _PLS(
         # With PLSRegression n_components is bounded by the rank of (X.T X) see
         # Wegelin page 25. With CCA and PLSCanonical, n_components is bounded
         # by the rank of X and the rank of Y: see Wegelin page 12
-        rank_upper_bound = p if self.deflation_mode == "regression" else min(n, p, q)
+        rank_upper_bound = (
+            min(n, p) if self.deflation_mode == "regression" else min(n, p, q)
+        )
         if n_components > rank_upper_bound:
             raise ValueError(
                 f"`n_components` upper bound is {rank_upper_bound}. "
@@ -388,7 +400,7 @@ class _PLS(
             pinv2(np.dot(self.y_loadings_.T, self.y_weights_), check_finite=False),
         )
         self.coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
-        self.coef_ = (self.coef_ * self._y_std).T
+        self.coef_ = (self.coef_ * self._y_std).T / self._x_std
         self.intercept_ = self._y_mean
         self._n_features_out = self.x_rotations_.shape[1]
         return self
@@ -421,7 +433,7 @@ class _PLS(
         y = _deprecate_Y_when_optional(y, Y)
 
         check_is_fitted(self)
-        X = self._validate_data(X, copy=copy, dtype=FLOAT_DTYPES, reset=False)
+        X = validate_data(self, X, copy=copy, dtype=FLOAT_DTYPES, reset=False)
         # Normalize
         X -= self._x_mean
         X /= self._x_std
@@ -516,10 +528,9 @@ class _PLS(
         space.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, copy=copy, dtype=FLOAT_DTYPES, reset=False)
-        # Normalize
+        X = validate_data(self, X, copy=copy, dtype=FLOAT_DTYPES, reset=False)
+        # Only center X but do not scale it since the coefficients are already scaled
         X -= self._x_mean
-        X /= self._x_std
         Ypred = X @ self.coef_.T + self.intercept_
         return Ypred.ravel() if self._predict_1d else Ypred
 
@@ -543,8 +554,11 @@ class _PLS(
         """
         return self.fit(X, y).transform(X, y)
 
-    def _more_tags(self):
-        return {"poor_score": True, "requires_y": False}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.regressor_tags.poor_score = True
+        tags.target_tags.required = False
+        return tags
 
 
 class PLSRegression(_PLS):
@@ -1056,11 +1070,21 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         """
         y = _deprecate_Y_when_required(y, Y)
         check_consistent_length(X, y)
-        X = self._validate_data(
-            X, dtype=np.float64, copy=self.copy, ensure_min_samples=2
+        X = validate_data(
+            self,
+            X,
+            dtype=np.float64,
+            force_writeable=True,
+            copy=self.copy,
+            ensure_min_samples=2,
         )
         y = check_array(
-            y, input_name="y", dtype=np.float64, copy=self.copy, ensure_2d=False
+            y,
+            input_name="y",
+            dtype=np.float64,
+            force_writeable=True,
+            copy=self.copy,
+            ensure_2d=False,
         )
         if y.ndim == 1:
             y = y.reshape(-1, 1)
@@ -1121,7 +1145,7 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         """
         y = _deprecate_Y_when_optional(y, Y)
         check_is_fitted(self)
-        X = self._validate_data(X, dtype=np.float64, reset=False)
+        X = validate_data(self, X, dtype=np.float64, reset=False)
         Xr = (X - self._x_mean) / self._x_std
         x_scores = np.dot(Xr, self.x_weights_)
         if y is not None:

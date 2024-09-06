@@ -1,7 +1,8 @@
-"""
-The :mod:`sklearn.ensemble` module includes ensemble-based methods for
-classification, regression and anomaly detection.
-"""
+"""Ensemble-based methods for classification, regression and anomaly detection."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from ._bagging import BaggingClassifier, BaggingRegressor
 from ._base import BaseEnsemble
 from ._forest import (

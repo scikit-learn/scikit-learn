@@ -2,8 +2,8 @@
 Testing for Multi-layer Perceptron module (sklearn.neural_network)
 """
 
-# Author: Issam H. Laradji
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import re
 import sys
@@ -709,7 +709,6 @@ def test_adaptive_learning_rate():
     assert 1e-6 > clf._optimizer.learning_rate
 
 
-@ignore_warnings(category=RuntimeWarning)
 def test_warm_start():
     X = X_iris
     y = y_iris
@@ -732,8 +731,7 @@ def test_warm_start():
         message = (
             "warm_start can only be used where `y` has the same "
             "classes as in the previous call to fit."
-            " Previously got [0 1 2], `y` has %s"
-            % np.unique(y_i)
+            " Previously got [0 1 2], `y` has %s" % np.unique(y_i)
         )
         with pytest.raises(ValueError, match=re.escape(message)):
             clf.fit(X, y_i)
@@ -776,7 +774,7 @@ def test_n_iter_no_change():
         assert max_iter > clf.n_iter_
 
 
-@ignore_warnings(category=ConvergenceWarning)
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_n_iter_no_change_inf():
     # test n_iter_no_change using binary data set
     # the fitting process should go to max_iter iterations

@@ -30,12 +30,12 @@ complex highest-scoring case.
 
 """
 
-# Authors: Wenhao Zhang <wenhaoz@ucla.edu>, Derek Alexander <dpysalexander@gmail.com>
-
-from copy import deepcopy
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np
+from copy import deepcopy
 
 from sklearn import datasets
 from sklearn.decomposition import PCA
@@ -61,7 +61,7 @@ param_grid = {"reduce_dim__n_components": [6, 8, 10, 12, 14]}
 pipe = Pipeline(
     [
         ("reduce_dim", PCA(random_state=42)),
-        ("classify", LinearSVC(random_state=42, C=0.01, dual="auto")),
+        ("classify", LinearSVC(random_state=42, C=0.01)),
     ]
 )
 favorability_rules = {

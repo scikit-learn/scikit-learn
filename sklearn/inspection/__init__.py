@@ -1,5 +1,7 @@
-"""The :mod:`sklearn.inspection` module includes tools for model inspection."""
+"""Tools for model inspection."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from ._partial_dependence import partial_dependence
 from ._permutation_importance import permutation_importance

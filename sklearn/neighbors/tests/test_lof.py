@@ -1,6 +1,5 @@
-# Authors: Nicolas Goix <nicolas.goix@telecom-paristech.fr>
-#          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import re
 from math import sqrt
@@ -359,3 +358,37 @@ def test_lof_dtype_equivalence(algorithm, novelty, contamination):
             y_pred_32 = getattr(lof_32, method)(X_32)
             y_pred_64 = getattr(lof_64, method)(X_64)
             assert_allclose(y_pred_32, y_pred_64, atol=0.0002)
+
+
+def test_lof_duplicate_samples():
+    """
+    Check that LocalOutlierFactor raises a warning when duplicate values
+    in the training data cause inaccurate results.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/27839
+    """
+
+    rng = np.random.default_rng(0)
+
+    x = rng.permutation(
+        np.hstack(
+            [
+                [0.1] * 1000,  # constant values
+                np.linspace(0.1, 0.3, num=3000),
+                rng.random(500) * 100,  # the clear outliers
+            ]
+        )
+    )
+    X = x.reshape(-1, 1)
+
+    error_msg = (
+        "Duplicate values are leading to incorrect results. "
+        "Increase the number of neighbors for more accurate results."
+    )
+
+    lof = neighbors.LocalOutlierFactor(n_neighbors=5, contamination=0.1)
+
+    # Catch the warning
+    with pytest.warns(UserWarning, match=re.escape(error_msg)):
+        lof.fit_predict(X)

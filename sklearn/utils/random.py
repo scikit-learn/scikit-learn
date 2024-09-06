@@ -1,10 +1,8 @@
-"""
-The mod:`sklearn.utils.random` module includes utilities for random sampling.
-"""
+"""Utilities for random sampling."""
 
-# Author: Hamzeh Alsalhi <ha258@cornell.edu>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import array
 
 import numpy as np

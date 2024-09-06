@@ -22,11 +22,12 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC, SVR, LinearSVR
 from sklearn.utils import check_random_state
+from sklearn.utils._tags import default_tags
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.fixes import CSR_CONTAINERS
 
 
-class MockClassifier:
+class MockClassifier(ClassifierMixin):
     """
     Dummy classifier to test recursive feature elimination
     """
@@ -37,10 +38,11 @@ class MockClassifier:
     def fit(self, X, y):
         assert len(X) == len(y)
         self.coef_ = np.ones(X.shape[1], dtype=np.float64)
+        self.classes_ = sorted(set(y))
         return self
 
     def predict(self, T):
-        return T.shape[0]
+        return np.ones(T.shape[0])
 
     predict_proba = predict
     decision_function = predict
@@ -55,8 +57,10 @@ class MockClassifier:
     def set_params(self, **params):
         return self
 
-    def _more_tags(self):
-        return {"allow_nan": True}
+    def __sklearn_tags__(self):
+        tags = default_tags(self)
+        tags.input_tags.allow_nan = True
+        return tags
 
 
 def test_rfe_features_importance():
@@ -464,7 +468,7 @@ def test_rfe_wrapped_estimator(importance_getter, selector, expected_n_features)
     # Non-regression test for
     # https://github.com/scikit-learn/scikit-learn/issues/15312
     X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
-    estimator = LinearSVR(dual="auto", random_state=0)
+    estimator = LinearSVR(random_state=0)
 
     log_estimator = TransformedTargetRegressor(
         regressor=estimator, func=np.log, inverse_func=np.exp
@@ -486,7 +490,7 @@ def test_rfe_wrapped_estimator(importance_getter, selector, expected_n_features)
 @pytest.mark.parametrize("Selector", [RFE, RFECV])
 def test_rfe_importance_getter_validation(importance_getter, err_type, Selector):
     X, y = make_friedman1(n_samples=50, n_features=10, random_state=42)
-    estimator = LinearSVR(dual="auto")
+    estimator = LinearSVR()
     log_estimator = TransformedTargetRegressor(
         regressor=estimator, func=np.log, inverse_func=np.exp
     )
@@ -649,3 +653,53 @@ def test_rfe_estimator_attribute_error():
         rfe.fit(iris.data, iris.target).decision_function(iris.data)
     assert isinstance(exec_info.value.__cause__, AttributeError)
     assert inner_msg in str(exec_info.value.__cause__)
+
+
+@pytest.mark.parametrize(
+    "ClsRFE, param", [(RFE, "n_features_to_select"), (RFECV, "min_features_to_select")]
+)
+def test_rfe_n_features_to_select_warning(ClsRFE, param):
+    """Check if the correct warning is raised when trying to initialize a RFE
+    object with a n_features_to_select attribute larger than the number of
+    features present in the X variable that is passed to the fit method
+    """
+    X, y = make_classification(n_features=20, random_state=0)
+
+    with pytest.warns(UserWarning, match=f"{param}=21 > n_features=20"):
+        # Create RFE/RFECV with n_features_to_select/min_features_to_select
+        # larger than the number of features present in the X variable
+        clsrfe = ClsRFE(estimator=LogisticRegression(), **{param: 21})
+        clsrfe.fit(X, y)
+
+
+def test_rfe_with_sample_weight():
+    """Test that `RFE` works correctly with sample weights."""
+    X, y = make_classification(random_state=0)
+    n_samples = X.shape[0]
+
+    # Assign the first half of the samples with twice the weight
+    sample_weight = np.ones_like(y)
+    sample_weight[: n_samples // 2] = 2
+
+    # Duplicate the first half of the data samples to replicate the effect
+    # of sample weights for comparison
+    X2 = np.concatenate([X, X[: n_samples // 2]], axis=0)
+    y2 = np.concatenate([y, y[: n_samples // 2]])
+
+    estimator = SVC(kernel="linear")
+
+    rfe_sw = RFE(estimator=estimator, step=0.1)
+    rfe_sw.fit(X, y, sample_weight=sample_weight)
+
+    rfe = RFE(estimator=estimator, step=0.1)
+    rfe.fit(X2, y2)
+
+    assert_array_equal(rfe_sw.ranking_, rfe.ranking_)
+
+    # Also verify that when sample weights are not doubled the results
+    # are different from the duplicated data
+    rfe_sw_2 = RFE(estimator=estimator, step=0.1)
+    sample_weight_2 = np.ones_like(y)
+    rfe_sw_2.fit(X, y, sample_weight=sample_weight_2)
+
+    assert not np.array_equal(rfe_sw_2.ranking_, rfe.ranking_)
