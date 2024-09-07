@@ -27,6 +27,7 @@ from .utils.validation import (
     check_array,
     check_consistent_length,
     check_is_fitted,
+    validate_data,
 )
 
 
@@ -177,7 +178,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        self._validate_data(X, cast_to_ndarray=False)
+        validate_data(self, X, skip_check_array=True)
 
         self._strategy = self.strategy
 
@@ -420,15 +421,15 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         else:
             return [np.log(p) for p in proba]
 
-    def _more_tags(self):
-        return {
-            "poor_score": True,
-            "no_validation": True,
-            "_xfail_checks": {
-                "check_methods_subset_invariance": "fails for the predict method",
-                "check_methods_sample_order_invariance": "fails for the predict method",
-            },
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.classifier_tags.poor_score = True
+        tags.no_validation = True
+        tags._xfail_checks = {
+            "check_methods_subset_invariance": "fails for the predict method",
+            "check_methods_sample_order_invariance": "fails for the predict method",
         }
+        return tags
 
     def score(self, X, y, sample_weight=None):
         """Return the mean accuracy on the given test data and labels.
@@ -561,7 +562,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        self._validate_data(X, cast_to_ndarray=False)
+        validate_data(self, X, skip_check_array=True)
 
         y = check_array(y, ensure_2d=False, input_name="y")
         if len(y) == 0:
@@ -663,8 +664,11 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         return (y, y_std) if return_std else y
 
-    def _more_tags(self):
-        return {"poor_score": True, "no_validation": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.regressor_tags.poor_score = True
+        tags.no_validation = True
+        return tags
 
     def score(self, X, y, sample_weight=None):
         """Return the coefficient of determination R^2 of the prediction.

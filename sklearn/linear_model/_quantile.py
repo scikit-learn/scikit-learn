@@ -13,7 +13,7 @@ from ..exceptions import ConvergenceWarning
 from ..utils import _safe_indexing
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.fixes import parse_version, sp_version
-from ..utils.validation import _check_sample_weight
+from ..utils.validation import _check_sample_weight, validate_data
 from ._base import LinearModel
 
 
@@ -159,7 +159,8 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         self : object
             Returns self.
         """
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse=["csc", "csr", "coo"],

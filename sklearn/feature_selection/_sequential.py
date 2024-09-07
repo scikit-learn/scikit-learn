@@ -20,8 +20,8 @@ from ..utils._metadata_requests import (
     process_routing,
 )
 from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
-from ..utils._tags import _safe_tags
-from ..utils.validation import check_is_fitted
+from ..utils._tags import get_tags
+from ..utils.validation import check_is_fitted, validate_data
 from ._base import SelectorMixin
 
 
@@ -227,12 +227,13 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             Returns the instance itself.
         """
         _raise_for_params(params, self, "fit")
-        tags = self._get_tags()
-        X = self._validate_data(
+        tags = self.__sklearn_tags__()
+        X = validate_data(
+            self,
             X,
             accept_sparse="csc",
             ensure_min_features=2,
-            ensure_all_finite=not tags.get("allow_nan", True),
+            ensure_all_finite=not tags.input_tags.allow_nan,
         )
         n_features = X.shape[1]
 
@@ -325,10 +326,10 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         check_is_fitted(self)
         return self.support_
 
-    def _more_tags(self):
-        return {
-            "allow_nan": _safe_tags(self.estimator, key="allow_nan"),
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = get_tags(self.estimator).input_tags.allow_nan
+        return tags
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.

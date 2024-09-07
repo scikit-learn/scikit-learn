@@ -1169,6 +1169,14 @@ API_REFERENCE = {
                     "safe_mask",
                     "safe_sqr",
                     "shuffle",
+                    "Tags",
+                    "InputTags",
+                    "TargetTags",
+                    "ClassifierTags",
+                    "RegressorTags",
+                    "TransformerTags",
+                    "default_tags",
+                    "get_tags",
                 ],
             },
             {
@@ -1185,6 +1193,7 @@ API_REFERENCE = {
                     "validation.check_symmetric",
                     "validation.column_or_1d",
                     "validation.has_fit_parameter",
+                    "validation.validate_data",
                 ],
             },
             {
