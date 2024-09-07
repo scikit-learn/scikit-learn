@@ -829,7 +829,7 @@ def test_metadata_is_routed_correctly_to_scorer(metaestimator):
         method = getattr(instance, method_name)
         method_kwargs = {"sample_weight": sample_weight}
         if "fit" not in method_name:
-            instance.fit(X, y, **method_kwargs)
+            instance.fit(X, y)
         method(X, y, **method_kwargs)
 
         assert registry
