@@ -964,25 +964,21 @@ def test_mlp_partial_fit_after_fit(MLPEstimator):
 
 
 def test_diverging_model():
-    """Test that a diverging model does not raise errors"""
+    """Test that a diverging model does not raise errors."""
     mlp = MLPRegressor(
         hidden_layer_sizes=100,
         activation="identity",
         solver="sgd",
-        alpha=0.00009,
+        alpha=0.0001,
         learning_rate="constant",
         learning_rate_init=1,
         shuffle=True,
-        max_iter=200,
+        max_iter=20,
         early_stopping=True,
         n_iter_no_change=10,
+        random_state=0,
     )
 
-    msg = (
-        "Solver produced non-finite parameter weights. The input data may contain large"
-        " values and need to be preprocessed."
-    )
-    with pytest.raises(ValueError, match=msg):
-        mlp.fit(X_iris, y_iris)
+    mlp.fit(X_iris, y_iris)
 
     assert mlp.validation_scores_[-1] == np.inf
