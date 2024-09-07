@@ -443,17 +443,34 @@ class Pipeline(_BaseComposition):
                 method="transform", params=all_params.keys()
             )
         }
-        transformed_params = dict()
+        transformed_params = dict()  # this is to be returned
         transformed_cache = dict()  # used to transform each param once
+        # `step_params` is the output of `process_routing`, so it has a dict for each
+        # method (e.g. fit, transform, predict), which are the args to be passed to
+        # those methods. We need to transforme the parameters which are in the
+        # `transform_input`, before returning these dicts.
         for method, method_params in step_params.items():
             transformed_params[method] = Bunch()
             for param_name, param_value in method_params.items():
+                # An example of `(param_name, param_value)` is
+                # `('sample_weight', array([0.5, 0.5, ...]))`
                 if param_name in self.transform_input:
-                    # transform the parameter
+                    # This parameter now needs to be transformed by the sub_pipeline, to
+                    # this step. We cache these computations to avoid repeating them.
                     if param_name not in transformed_cache:
-                        transformed_cache[param_name] = sub_pipeline.transform(
-                            param_value, **transform_params
-                        )
+                        # If the parameter is a tuple, transform each element of the
+                        # tuple. This is needed to support the pattern present in
+                        # `lightgbm` and `xgboost` where users can pass multiple
+                        # validation sets.
+                        if isinstance(param_value, tuple):
+                            transformed_cache[param_name] = tuple(
+                                sub_pipeline.transform(element, **transform_params)
+                                for element in param_value
+                            )
+                        else:
+                            transformed_cache[param_name] = sub_pipeline.transform(
+                                param_value, **transform_params
+                            )
                     transformed_params[method][param_name] = transformed_cache[
                         param_name
                     ]

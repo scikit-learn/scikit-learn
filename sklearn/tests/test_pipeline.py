@@ -13,7 +13,13 @@ import joblib
 import numpy as np
 import pytest
 
-from sklearn.base import BaseEstimator, TransformerMixin, clone, is_classifier
+from sklearn.base import (
+    BaseEstimator,
+    ClassifierMixin,
+    TransformerMixin,
+    clone,
+    is_classifier,
+)
 from sklearn.cluster import KMeans
 from sklearn.datasets import load_iris
 from sklearn.decomposition import PCA, TruncatedSVD
@@ -1905,6 +1911,44 @@ def test_transform_input_no_slep6():
     msg = "The `transform_input` parameter can only be set if metadata"
     with pytest.raises(ValueError, match=msg):
         make_pipeline(DummyTransf(), transform_input=["blah"]).fit(X, y)
+
+
+@pytest.mark.usefixtures("enable_slep006")
+def test_transform_tuple_input():
+    """Test that if metadata is a tuple of arrays, both arrays are transformed."""
+
+    class Estimator(ClassifierMixin, BaseEstimator):
+        def fit(self, X, y, X_val=None, y_val=None):
+            assert isinstance(X_val, tuple)
+            assert isinstance(y_val, tuple)
+            # Here we make sure that each X_val is transformed by the transformer
+            assert_array_equal(X_val[0], np.array([[2, 3]]))
+            assert_array_equal(y_val[0], np.array([0, 1]))
+            assert_array_equal(X_val[1], np.array([[11, 12]]))
+            assert_array_equal(y_val[1], np.array([1, 2]))
+            return self
+
+    class Transformer(TransformerMixin, BaseEstimator):
+        def fit(self, X, y):
+            return self
+
+        def transform(self, X):
+            return X + 1
+
+    X = np.array([[1, 2]])
+    y = np.array([0, 1])
+    X_val0 = np.array([[1, 2]])
+    y_val0 = np.array([0, 1])
+    X_val1 = np.array([[10, 11]])
+    y_val1 = np.array([1, 2])
+    pipe = Pipeline(
+        [
+            ("transformer", Transformer()),
+            ("estimator", Estimator().set_fit_request(X_val=True, y_val=True)),
+        ],
+        transform_input=["X_val"],
+    )
+    pipe.fit(X, y, X_val=(X_val0, X_val1), y_val=(y_val0, y_val1))
 
 
 # end of transform_input tests
