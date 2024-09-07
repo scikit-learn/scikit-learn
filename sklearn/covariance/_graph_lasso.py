@@ -35,6 +35,7 @@ from ..utils.validation import (
     _is_arraylike_not_scalar,
     check_random_state,
     check_scalar,
+    validate_data,
 )
 from . import EmpiricalCovariance, empirical_covariance, log_likelihood
 
@@ -556,7 +557,7 @@ class GraphicalLasso(BaseGraphicalLasso):
             Returns the instance itself.
         """
         # Covariance does not make sense for a single feature
-        X = self._validate_data(X, ensure_min_features=2, ensure_min_samples=2)
+        X = validate_data(self, X, ensure_min_features=2, ensure_min_samples=2)
 
         if self.covariance == "precomputed":
             emp_cov = X.copy()
@@ -962,7 +963,7 @@ class GraphicalLassoCV(BaseGraphicalLasso):
         # Covariance does not make sense for a single feature
         _raise_for_params(params, self, "fit")
 
-        X = self._validate_data(X, ensure_min_features=2)
+        X = validate_data(self, X, ensure_min_features=2)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:
