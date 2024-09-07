@@ -73,6 +73,7 @@ from sklearn.feature_selection import (
     SelectKBest,
     SequentialFeatureSelector,
 )
+from sklearn.frozen import FrozenEstimator
 from sklearn.linear_model import (
     ARDRegression,
     BayesianRidge,
@@ -371,7 +372,7 @@ def _generate_pipeline():
         )
 
 
-SKIPPED_ESTIMATORS = [SparseCoder]
+SKIPPED_ESTIMATORS = [SparseCoder, FrozenEstimator]
 
 
 def _construct_instance(Estimator):

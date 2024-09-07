@@ -3,7 +3,8 @@
 
 from ..base import BaseEstimator
 from ..exceptions import NotFittedError
-from ..utils._available_if import available_if
+from ..utils import get_tags
+from ..utils.metaestimators import available_if
 from ..utils.validation import check_is_fitted
 
 
@@ -66,7 +67,9 @@ class FrozenEstimator(BaseEstimator):
     >>> clf = LogisticRegression(random_state=0).fit(X, y)
     >>> frozen_clf = FrozenEstimator(clf)
     >>> frozen_clf.fit(X, y)  # No-op
+    FrozenEstimator(estimator=LogisticRegression(random_state=0))
     >>> frozen_clf.predict(X)  # Predictions from `clf.predict`
+    array(...)
     """
 
     _required_parameters = ["estimator"]
@@ -174,7 +177,7 @@ class FrozenEstimator(BaseEstimator):
         # fit_transform only transforms the data
         return self.estimator.predict(X, *args, **kwargs)
 
-    def _more_tags(self):
-        return {
-            "_skip_test": True,
-        }
+    def __sklearn_tags__(self):
+        tags = get_tags(self.estimator)
+        tags._skip_test = True
+        return tags

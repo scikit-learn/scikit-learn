@@ -15,13 +15,14 @@ from sklearn.base import (
     is_regressor,
 )
 from sklearn.cluster import KMeans
+from sklearn.compose import make_column_transformer
 from sklearn.datasets import make_classification, make_regression
 from sklearn.exceptions import UnsetMetadataPassedError
 from sklearn.frozen import FrozenEstimator
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import RobustScaler, StandardScaler
 
 REGRESSION_DATASET = make_regression()
 CLASSIFICATION_DATASET = make_classification()
@@ -37,6 +38,13 @@ CLASSIFICATION_DATASET = make_classification()
         (StandardScaler(), REGRESSION_DATASET),
         (KMeans(), REGRESSION_DATASET),
         (LocalOutlierFactor(), REGRESSION_DATASET),
+        (
+            make_column_transformer(
+                (StandardScaler(), [0]),
+                (RobustScaler(), [1]),
+            ),
+            REGRESSION_DATASET,
+        ),
     ],
 )
 def test_frozen_methods(estimator, dataset):
@@ -119,7 +127,10 @@ def test_composite_fit():
 
     class Estimator(BaseEstimator):
         def fit(self, X, y):
-            self._counter = 1
+            try:
+                self._fit_counter += 1
+            except AttributeError:
+                self._fit_counter = 1
             return self
 
         def predict(self, X):
@@ -128,12 +139,10 @@ def test_composite_fit():
         def transform(self, X):
             return X
 
-        def fit_transform(self, X, y):
-            self._counter += 1
+        def fit_transform(self, X, y=None):
             return X
 
-        def fit_predict(self, X):
-            self._counter += 1
+        def fit_predict(self, X, y=None):
             return np.ones(len(X))
 
     X, y = CLASSIFICATION_DATASET
@@ -143,4 +152,4 @@ def test_composite_fit():
     frozen.fit_predict(X, y)
     frozen.fit_transform(X, y)
 
-    assert frozen._counter == 1
+    assert frozen._fit_counter == 1
