@@ -45,6 +45,13 @@ Changelog
   transform output is set to `pandas` or `polars`, since it isn't a transformer.
   :pr:`29401` by :user:`Stefanie Senger <StefanieSenger>`.
 
+:mod:`sklearn.neural_network`
+......................
+
+- |Fix| :class:`sklearn.neural_network._multilayer_perceptron.BaseMultilayerPerceptron`
+  does no longer crash when the model diverges and that early_stopping is enabled.
+  :pr:`29773` by :user:`Marc Bresson <MarcBresson>`.
+
 :mod:`sklearn.svm`
 ..................
 
