@@ -28,7 +28,8 @@ from ..model_selection._search_successive_halving import (
     HalvingRandomSearchCV,
 )
 
-# use settattr to avoid mypy errors when monkeypatching
+# setting the halving estimators as attributes of the module `model_selection` to enable
+# their use; using settattr we also avoid mypy errors when monkeypatching
 setattr(model_selection, "HalvingRandomSearchCV", HalvingRandomSearchCV)
 setattr(model_selection, "HalvingGridSearchCV", HalvingGridSearchCV)
 
