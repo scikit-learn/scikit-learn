@@ -1,7 +1,7 @@
 """Polynomial chaos regression"""
 
-# Authors: Pieterjan Robbe
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # import statements
 from warnings import warn
@@ -517,7 +517,7 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         Returns
         -------
         sensitivity_indices : array-like (n_outputs, n_features)
-            The main-effectt Sobol  sensitivity indices for all input features.
+            The main-effectt Sobol sensitivity indices for all input features.
         """
         check_is_fitted(self)
         return np.vstack([self.joint_sens(i) for i in range(self.n_features_in_)]).T
