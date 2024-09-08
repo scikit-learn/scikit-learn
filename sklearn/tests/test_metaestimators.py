@@ -12,7 +12,6 @@ from sklearn.ensemble import BaggingClassifier
 from sklearn.exceptions import NotFittedError
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import RFE, RFECV
-from sklearn.frozen import FrozenEstimator
 from sklearn.linear_model import LogisticRegression, Ridge
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.pipeline import Pipeline, make_pipeline
@@ -207,11 +206,7 @@ def _generate_meta_estimator_instances_with_pipeline():
     for _, Estimator in sorted(all_estimators()):
         sig = set(signature(Estimator).parameters)
 
-        if Estimator is FrozenEstimator:
-            X, y = make_classification(random_state=0)
-            yield Estimator(make_pipeline(StandardScaler(), Ridge()).fit(X, y))
-
-        elif "estimator" in sig or "base_estimator" in sig or "regressor" in sig:
+        if "estimator" in sig or "base_estimator" in sig or "regressor" in sig:
             if is_regressor(Estimator):
                 estimator = make_pipeline(TfidfVectorizer(), Ridge())
                 param_grid = {"ridge__alpha": [0.1, 1.0]}
@@ -267,6 +262,7 @@ DATA_VALIDATION_META_ESTIMATORS_TO_IGNORE = [
     "BaggingClassifier",
     "BaggingRegressor",
     "ClassifierChain",  # data validation is necessary
+    "FrozenEstimator",  # this estimator cannot be tested like others.
     "IterativeImputer",
     "OneVsOneClassifier",  # input validation can't be avoided
     "RANSACRegressor",
