@@ -35,6 +35,7 @@ from ..utils._metadata_requests import (
 )
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.parallel import Parallel, delayed
+from ..utils.validation import validate_data
 from ._base import LinearModel, LinearRegression, _preprocess_data
 
 SOLVE_TRIANGULAR_ARGS = {"check_finite": False}
@@ -1177,8 +1178,8 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             Returns an instance of self.
         """
-        X, y = self._validate_data(
-            X, y, force_writeable=True, y_numeric=True, multi_output=True
+        X, y = validate_data(
+            self, X, y, force_writeable=True, y_numeric=True, multi_output=True
         )
 
         alpha = getattr(self, "alpha", 0.0)
@@ -1688,8 +1689,10 @@ class LarsCV(Lars):
             fit_path=True,
         )
 
-    def _more_tags(self):
-        return {"multioutput": False}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.multi_output = False
+        return tags
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, **params):
@@ -1720,7 +1723,7 @@ class LarsCV(Lars):
         """
         _raise_for_params(params, self, "fit")
 
-        X, y = self._validate_data(X, y, force_writeable=True, y_numeric=True)
+        X, y = validate_data(self, X, y, force_writeable=True, y_numeric=True)
         X = as_float_array(X, copy=self.copy_X)
         y = as_float_array(y, copy=self.copy_X)
 
@@ -2210,8 +2213,10 @@ class LassoLarsIC(LassoLars):
         self.fit_path = True
         self.noise_variance = noise_variance
 
-    def _more_tags(self):
-        return {"multioutput": False}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.multi_output = False
+        return tags
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, copy_X=None):
@@ -2237,7 +2242,7 @@ class LassoLarsIC(LassoLars):
         """
         if copy_X is None:
             copy_X = self.copy_X
-        X, y = self._validate_data(X, y, force_writeable=True, y_numeric=True)
+        X, y = validate_data(self, X, y, force_writeable=True, y_numeric=True)
 
         X, y, Xmean, ymean, Xstd = _preprocess_data(
             X, y, fit_intercept=self.fit_intercept, copy=copy_X

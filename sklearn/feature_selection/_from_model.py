@@ -9,7 +9,7 @@ import numpy as np
 from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone
 from ..exceptions import NotFittedError
 from ..utils._param_validation import HasMethods, Interval, Options
-from ..utils._tags import _safe_tags
+from ..utils._tags import get_tags
 from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -17,7 +17,12 @@ from ..utils.metadata_routing import (
     process_routing,
 )
 from ..utils.metaestimators import available_if
-from ..utils.validation import _num_features, check_is_fitted, check_scalar
+from ..utils.validation import (
+    _check_feature_names,
+    _num_features,
+    check_is_fitted,
+    check_scalar,
+)
 from ._base import SelectorMixin, _get_feature_importances
 
 
@@ -390,7 +395,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         if hasattr(self.estimator_, "feature_names_in_"):
             self.feature_names_in_ = self.estimator_.feature_names_in_
         else:
-            self._check_feature_names(X, reset=True)
+            _check_feature_names(self, X, reset=True)
 
         return self
 
@@ -476,7 +481,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         if hasattr(self.estimator_, "feature_names_in_"):
             self.feature_names_in_ = self.estimator_.feature_names_in_
         else:
-            self._check_feature_names(X, reset=first_call)
+            _check_feature_names(self, X, reset=first_call)
 
         return self
 
@@ -518,5 +523,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         )
         return router
 
-    def _more_tags(self):
-        return {"allow_nan": _safe_tags(self.estimator, key="allow_nan")}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = get_tags(self.estimator).input_tags.allow_nan
+        return tags
