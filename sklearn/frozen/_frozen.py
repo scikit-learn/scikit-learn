@@ -22,23 +22,6 @@ def _estimator_has(attr):
     return check
 
 
-def _estimator_fitted():
-    """Check that final_estimator has `attr`.
-
-    Used together with `available_if`.
-    """
-
-    def check(self):
-        # raise original `AttributeError` if `attr` does not exist
-        try:
-            check_is_fitted(self)
-            return True
-        except NotFittedError:
-            return False
-
-    return check
-
-
 class FrozenEstimator(BaseEstimator):
     """Frozen estimator.
 
@@ -82,11 +65,21 @@ class FrozenEstimator(BaseEstimator):
         return self.estimator.__getitem__(*args, **kwargs)
 
     def __getattr__(self, name):
-        # `estimator`'s attributes are now accessible
+        # `estimator`'s attributes are now accessible except `fit_predict` and
+        # `fit_transform`
+        if name in ["fit_predict", "fit_transform"]:
+            raise AttributeError(f"{name} is not available for frozen estimators.")
         return getattr(self.estimator, name)
 
     def __sklearn_clone__(self):
         return self
+
+    def __sklearn_is_fitted__(self):
+        try:
+            check_is_fitted(self.estimator)
+            return True
+        except NotFittedError:
+            return False
 
     def fit(self, X, y, *args, **kwargs):
         """No-op.
@@ -116,66 +109,6 @@ class FrozenEstimator(BaseEstimator):
         """
         check_is_fitted(self.estimator)
         return self
-
-    @available_if(_estimator_has("fit_transform") and _estimator_fitted())
-    def fit_transform(self, X, y=None, *args, **kwargs):
-        """Call `estimator.transform`.
-
-        As a frozen estimator, the call to `fit` is skipped.
-
-        Parameters
-        ----------
-        X : object
-            Input data.
-
-        y : object
-            Ignored.
-
-        *args : tuple
-            Additional positional arguments. Ignored, but present for API compatibility
-            with `self.estimator`.
-
-        **kwargs : dict
-            Additional keyword arguments. Ignored, but present for API compatibility
-            with `self.estimator`.
-
-        Returns
-        -------
-        X_transformed : object
-            Transformed data.
-        """
-        # fit_transform only transforms the data
-        return self.estimator.transform(X, *args, **kwargs)
-
-    @available_if(_estimator_has("fit_predict") and _estimator_fitted())
-    def fit_predict(self, X, y=None, *args, **kwargs):
-        """Call `estimator.predict`.
-
-        As a frozen estimator, the call to `fit` is skipped.
-
-        Parameters
-        ----------
-        X : object
-            Input data.
-
-        y : object
-            Ignored.
-
-        *args : tuple
-            Additional positional arguments. Ignored, but present for API compatibility
-            with `self.estimator`.
-
-        **kwargs : dict
-            Additional keyword arguments. Ignored, but present for API compatibility
-            with `self.estimator`.
-
-        Returns
-        -------
-        y_pred : object
-            Predictions from `self.estimator.predict`.
-        """
-        # fit_transform only transforms the data
-        return self.estimator.predict(X, *args, **kwargs)
 
     def __sklearn_tags__(self):
         tags = get_tags(self.estimator)

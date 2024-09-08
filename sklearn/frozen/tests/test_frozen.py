@@ -9,6 +9,7 @@ from numpy.testing import assert_array_equal
 
 from sklearn.base import (
     BaseEstimator,
+    clone,
     is_classifier,
     is_clusterer,
     is_outlier_detector,
@@ -17,12 +18,13 @@ from sklearn.base import (
 from sklearn.cluster import KMeans
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import make_classification, make_regression
-from sklearn.exceptions import UnsetMetadataPassedError
+from sklearn.exceptions import NotFittedError, UnsetMetadataPassedError
 from sklearn.frozen import FrozenEstimator
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import RobustScaler, StandardScaler
+from sklearn.utils.validation import check_is_fitted
 
 REGRESSION_DATASET = make_regression()
 CLASSIFICATION_DATASET = make_classification()
@@ -140,16 +142,43 @@ def test_composite_fit():
             return X
 
         def fit_transform(self, X, y=None):
+            self.fit(X, y)
             return X
 
         def fit_predict(self, X, y=None):
+            self.fit(X, y)
             return np.ones(len(X))
 
     X, y = CLASSIFICATION_DATASET
     est = Estimator().fit(X, y)
     frozen = FrozenEstimator(est)
 
-    frozen.fit_predict(X, y)
-    frozen.fit_transform(X, y)
+    with pytest.raises(AttributeError):
+        frozen.fit_predict(X, y)
+    with pytest.raises(AttributeError):
+        frozen.fit_transform(X, y)
 
     assert frozen._fit_counter == 1
+
+
+def test_clone_frozen():
+    """Test that cloning a frozen estimator keeps the frozen state."""
+    X, y = REGRESSION_DATASET
+    estimator = LinearRegression().fit(X, y)
+    frozen = FrozenEstimator(estimator)
+    cloned = clone(frozen)
+    assert cloned.estimator is estimator
+
+
+def test_check_is_fitted():
+    """Test that check_is_fitted works on frozen estimators."""
+    X, y = REGRESSION_DATASET
+
+    estimator = LinearRegression()
+    frozen = FrozenEstimator(estimator)
+    with pytest.raises(NotFittedError):
+        check_is_fitted(frozen)
+
+    estimator = LinearRegression().fit(X, y)
+    frozen = FrozenEstimator(estimator)
+    check_is_fitted(frozen)
