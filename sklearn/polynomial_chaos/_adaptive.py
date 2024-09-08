@@ -1,5 +1,8 @@
 """Adaptive strategies for Polynomial Chaos Expansions.
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 In Polynomial Chaos expansions, the choice of the basis is crucial, as it
 determines the accuracy of the resulting estimator. However, for problems with
 a large number of features, the required number of basis terms to reach a

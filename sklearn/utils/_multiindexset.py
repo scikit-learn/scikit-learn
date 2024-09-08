@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 """Utilities for constructing multiindex sets.
 
 A multiindex is a tuple `(i, j, k, ...)` where the integers `i`, `j` and `k`,

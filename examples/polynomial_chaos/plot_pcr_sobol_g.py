@@ -23,6 +23,9 @@ distribution, and the coefficients :math:`a_j` are nonnegative.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Let's fix the random seed for reproducibility.
 import numpy as np

@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 r"""Utilities for orthogonal polynomials.
 
 An orthogonal polynomial sequence is a family of polynomials such that any two

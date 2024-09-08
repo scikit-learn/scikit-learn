@@ -22,6 +22,9 @@ usually chosen as :math:`a = 7` and :math:`b = 0.1`.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Let's fix the random seed for reproducibility.
 import numpy as np

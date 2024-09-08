@@ -15,6 +15,9 @@ data. The model is taken from [Storlie2009]_.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Let's fix the random seed for reproducibility.
 import numpy as np
