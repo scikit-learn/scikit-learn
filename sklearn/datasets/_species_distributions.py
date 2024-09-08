@@ -237,6 +237,9 @@ def fetch_species_distributions(
            (b'microryzomys_minutus', -67.8   , -16.2667),
            (b'microryzomys_minutus', -67.9833, -15.9   )],
           dtype=[('species', 'S22'), ('dd long', '<f4'), ('dd lat', '<f4')])
+
+    For a more extended example,
+    see :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`
     """
     data_home = get_data_home(data_home)
     if not exists(data_home):

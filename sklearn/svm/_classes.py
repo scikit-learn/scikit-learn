@@ -1701,6 +1701,9 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     array([-1,  1,  1,  1, -1])
     >>> clf.score_samples(X)
     array([1.7798..., 2.0547..., 2.0556..., 2.0561..., 1.7332...])
+
+    For a more extended example,
+    see :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`
     """
 
     _impl = "one_class"
