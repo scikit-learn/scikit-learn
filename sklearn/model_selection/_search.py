@@ -21,7 +21,7 @@ from numpy.ma import MaskedArray
 from scipy.stats import rankdata
 
 from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone, is_classifier
-from ..exceptions import NotFittedError, ConvergenceWarning
+from ..exceptions import ConvergenceWarning, NotFittedError
 from ..metrics import check_scoring
 from ..metrics._scorer import (
     _check_multimetric_scoring,
@@ -337,7 +337,7 @@ class ParameterSampler:
                             params[k] = v.rvs(random_state=rng)
                         else:
                             params[k] = v[rng.randint(len(v))]
-            
+
                     param_tuple = tuple(sorted(params.items()))
                     is_new_param_combination = param_tuple not in self.param_history
                     if is_new_param_combination:
@@ -347,11 +347,13 @@ class ParameterSampler:
                         break
                 else:
                     warnings.warn(
-                        "The total space of possible combination of parameters is smaller "
-                        f"or really close to the number of iterations provided ({self.n_iter})."
-                        "Search stoped before reaching that number."
-                        "For exhaustive searches, GridSearch may be a better option ",
-                        ConvergenceWarning)
+                        "The total space of possible combination of parameters "
+                        "is smaller or really close to the number of iterations "
+                        f"provided ({self.n_iter}). Search stoped before reaching "
+                        "that number.For exhaustive searches, GridSearch may be "
+                        " a better option ",
+                        ConvergenceWarning,
+                    )
 
     def __len__(self):
         """Number of points that will be sampled."""
