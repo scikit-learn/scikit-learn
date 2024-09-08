@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numpy as np
 
 from ..base import BaseEstimator, ClassifierMixin
@@ -332,8 +335,12 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
             score = 0.0
         return score
 
-    def _more_tags(self):
-        return {"_skip_test": True, "X_types": ["1dlabel"]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._skip_test = True
+        tags.input_tags.two_d_array = False
+        tags.target_tags.one_d_labels = True
+        return tags
 
 
 # Deactivate key validation for CheckingClassifier because we want to be able to
@@ -365,8 +372,10 @@ class NoSampleWeightWrapper(BaseEstimator):
     def predict_proba(self, X):
         return self.est.predict_proba(X)
 
-    def _more_tags(self):
-        return {"_skip_test": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._skip_test = True
+        return tags
 
 
 def _check_response(method):

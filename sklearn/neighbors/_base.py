@@ -2,6 +2,7 @@
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
+
 import itertools
 import numbers
 import warnings
@@ -29,7 +30,7 @@ from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.fixes import parse_version, sp_base_version
 from ..utils.multiclass import check_classification_targets
 from ..utils.parallel import Parallel, delayed
-from ..utils.validation import _to_object_array, check_is_fitted, check_non_negative
+from ..utils.validation import _to_object_array, check_is_fitted, validate_data
 from ._ball_tree import BallTree
 from ._kd_tree import KDTree
 
@@ -166,8 +167,7 @@ def _check_precomputed(X):
         case only non-zero elements may be considered neighbors.
     """
     if not issparse(X):
-        X = check_array(X)
-        check_non_negative(X, whom="precomputed distance matrix.")
+        X = check_array(X, ensure_non_negative=True, input_name="X")
         return X
     else:
         graph = X
@@ -178,8 +178,12 @@ def _check_precomputed(X):
             "its handling of explicit zeros".format(graph.format)
         )
     copied = graph.format != "csr"
-    graph = check_array(graph, accept_sparse="csr")
-    check_non_negative(graph, whom="precomputed distance matrix.")
+    graph = check_array(
+        graph,
+        accept_sparse="csr",
+        ensure_non_negative=True,
+        input_name="precomputed distance matrix",
+    )
     graph = sort_graph_by_row_values(graph, copy=not copied, warn_when_not_sorted=True)
 
     return graph
@@ -465,10 +469,10 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 )
 
     def _fit(self, X, y=None):
-        if self._get_tags()["requires_y"]:
+        if self.__sklearn_tags__().target_tags.required:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
-                X, y = self._validate_data(
-                    X, y, accept_sparse="csr", multi_output=True, order="C"
+                X, y = validate_data(
+                    self, X, y, accept_sparse="csr", multi_output=True, order="C"
                 )
 
             if is_classifier(self):
@@ -509,7 +513,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         else:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
-                X = self._validate_data(X, accept_sparse="csr", order="C")
+                X = validate_data(self, X, accept_sparse="csr", order="C")
 
         self._check_algorithm_metric()
         if self.metric_params is None:
@@ -685,9 +689,11 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         return self
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
         # For cross-validation routines to split data correctly
-        return {"pairwise": self.metric == "precomputed"}
+        tags.input_tags.pairwise = self.metric == "precomputed"
+        return tags
 
 
 class KNeighborsMixin:
@@ -808,7 +814,7 @@ class KNeighborsMixin:
             if self.metric == "precomputed":
                 X = _check_precomputed(X)
             else:
-                X = self._validate_data(X, accept_sparse="csr", reset=False, order="C")
+                X = validate_data(self, X, accept_sparse="csr", reset=False, order="C")
 
         n_samples_fit = self.n_samples_fit_
         if n_neighbors > n_samples_fit:
@@ -1144,7 +1150,7 @@ class RadiusNeighborsMixin:
             if self.metric == "precomputed":
                 X = _check_precomputed(X)
             else:
-                X = self._validate_data(X, accept_sparse="csr", reset=False, order="C")
+                X = validate_data(self, X, accept_sparse="csr", reset=False, order="C")
 
         if radius is None:
             radius = self.radius

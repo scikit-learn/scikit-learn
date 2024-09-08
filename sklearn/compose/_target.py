@@ -17,18 +17,13 @@ from ..utils._metadata_requests import (
     process_routing,
 )
 from ..utils._param_validation import HasMethods
-from ..utils._tags import _safe_tags
-from ..utils.metadata_routing import (
-    _RoutingNotSupportedMixin,
-)
+from ..utils._tags import get_tags
 from ..utils.validation import check_is_fitted
 
 __all__ = ["TransformedTargetRegressor"]
 
 
-class TransformedTargetRegressor(
-    _RoutingNotSupportedMixin, RegressorMixin, BaseEstimator
-):
+class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     """Meta-estimator to regress on a transformed target.
 
     Useful for applying a non-linear transformation to the target `y` in
@@ -198,6 +193,10 @@ class TransformedTargetRegressor(
                 validate=True,
                 check_inverse=self.check_inverse,
             )
+            # We are transforming the target here and not the features, so we set the
+            # output of FunctionTransformer() to be a numpy array (default) and to not
+            # depend on the global configuration:
+            self.transformer_.set_output(transform="default")
         # XXX: sample_weight is not currently passed to the
         # transformer. However, if transformer starts using sample_weight, the
         # code should be modified accordingly. At the time to consider the
@@ -263,7 +262,7 @@ class TransformedTargetRegressor(
             y,
             input_name="y",
             accept_sparse=False,
-            force_all_finite=True,
+            ensure_all_finite=True,
             ensure_2d=False,
             dtype="numeric",
             allow_nd=True,
@@ -353,13 +352,12 @@ class TransformedTargetRegressor(
 
         return pred_trans
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
         regressor = self._get_regressor()
-
-        return {
-            "poor_score": True,
-            "multioutput": _safe_tags(regressor, key="multioutput"),
-        }
+        tags = super().__sklearn_tags__()
+        tags.regressor_tags.poor_score = True
+        tags.target_tags.multi_output = get_tags(regressor).target_tags.multi_output
+        return tags
 
     @property
     def n_features_in_(self):

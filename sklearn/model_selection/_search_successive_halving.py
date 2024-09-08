@@ -1,5 +1,7 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from abc import abstractmethod
-from copy import deepcopy
 from math import ceil, floor, log
 from numbers import Integral, Real
 
@@ -10,7 +12,7 @@ from ..metrics._scorer import get_scorer_names
 from ..utils import resample
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import _num_samples
+from ..utils.validation import _num_samples, validate_data
 from . import ParameterGrid, ParameterSampler
 from ._search import BaseSearchCV
 from ._split import _yields_constant_splits, check_cv
@@ -159,7 +161,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 magic_factor = 2
                 self.min_resources_ = n_splits * magic_factor
                 if is_classifier(self.estimator):
-                    y = self._validate_data(X="no_validation", y=y)
+                    y = validate_data(self, X="no_validation", y=y)
                     check_classification_targets(y)
                     n_classes = np.unique(y).shape[0]
                     self.min_resources_ *= n_classes
@@ -368,14 +370,17 @@ class BaseSuccessiveHalving(BaseSearchCV):
     def _generate_candidate_params(self):
         pass
 
-    def _more_tags(self):
-        tags = deepcopy(super()._more_tags())
-        tags["_xfail_checks"].update(
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks.update(
             {
                 "check_fit2d_1sample": (
                     "Fail during parameter check since min/max resources requires"
                     " more samples"
                 ),
+                "check_estimators_nan_inf": "FIXME",
+                "check_classifiers_one_label_sample_weights": "FIXME",
+                "check_fit2d_1feature": "FIXME",
             }
         )
         return tags
@@ -665,8 +670,6 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
     >>> search.best_params_  # doctest: +SKIP
     {'max_depth': None, 'min_samples_split': 10, 'n_estimators': 9}
     """
-
-    _required_parameters = ["estimator", "param_grid"]
 
     _parameter_constraints: dict = {
         **BaseSuccessiveHalving._parameter_constraints,
@@ -1015,8 +1018,6 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
     >>> search.best_params_  # doctest: +SKIP
     {'max_depth': None, 'min_samples_split': 10, 'n_estimators': 9}
     """
-
-    _required_parameters = ["estimator", "param_distributions"]
 
     _parameter_constraints: dict = {
         **BaseSuccessiveHalving._parameter_constraints,

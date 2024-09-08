@@ -33,6 +33,7 @@ from ..utils.validation import (
     _check_sample_weight,
     _is_arraylike_not_scalar,
     check_is_fitted,
+    validate_data,
 )
 from ._k_means_common import (
     CHUNK_SIZE,
@@ -940,7 +941,8 @@ class _BaseKMeans(
             )
 
     def _check_test_data(self, X):
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse="csr",
             reset=False,
@@ -1175,14 +1177,14 @@ class _BaseKMeans(
         )
         return -scores
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            },
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_sample_weights_invariance": (
+                "zero sample_weight is not equivalent to removing samples"
+            ),
         }
+        return tags
 
 
 class KMeans(_BaseKMeans):
@@ -1453,7 +1455,8 @@ class KMeans(_BaseKMeans):
         self : object
             Fitted estimator.
         """
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse="csr",
             dtype=[np.float64, np.float32],
@@ -2062,7 +2065,8 @@ class MiniBatchKMeans(_BaseKMeans):
         self : object
             Fitted estimator.
         """
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse="csr",
             dtype=[np.float64, np.float32],
@@ -2218,7 +2222,8 @@ class MiniBatchKMeans(_BaseKMeans):
         """
         has_centers = hasattr(self, "cluster_centers_")
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse="csr",
             dtype=[np.float64, np.float32],

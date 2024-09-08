@@ -1,5 +1,8 @@
 """Configure global settings and get information about the working environment."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Machine learning module for Python
 # ==================================
 #

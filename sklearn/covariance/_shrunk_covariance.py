@@ -18,6 +18,7 @@ import numpy as np
 from ..base import _fit_context
 from ..utils import check_array
 from ..utils._param_validation import Interval, validate_params
+from ..utils.validation import validate_data
 from . import EmpiricalCovariance, empirical_covariance
 
 
@@ -268,7 +269,7 @@ class ShrunkCovariance(EmpiricalCovariance):
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(X)
+        X = validate_data(self, X)
         # Not calling the parent object to fit, to avoid a potential
         # matrix inversion when setting the precision
         if self.assume_centered:
@@ -335,7 +336,7 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     >>> X = rng.multivariate_normal(mean=[0, 0], cov=real_cov, size=50)
     >>> shrinkage_coefficient = ledoit_wolf_shrinkage(X)
     >>> shrinkage_coefficient
-    0.23...
+    np.float64(0.23...)
     """
     X = check_array(X)
     # for only one feature, the result is the same whatever the shrinkage
@@ -452,7 +453,7 @@ def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
     array([[0.44..., 0.16...],
            [0.16..., 0.80...]])
     >>> shrinkage
-    0.23...
+    np.float64(0.23...)
     """
     estimator = LedoitWolf(
         assume_centered=assume_centered,
@@ -594,7 +595,7 @@ class LedoitWolf(EmpiricalCovariance):
         """
         # Not calling the parent object to fit, to avoid computing the
         # covariance matrix (and potentially the precision)
-        X = self._validate_data(X)
+        X = validate_data(self, X)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:
@@ -672,7 +673,7 @@ def oas(X, *, assume_centered=False):
     array([[0.7533..., 0.2763...],
            [0.2763..., 0.3964...]])
     >>> shrinkage
-    0.0195...
+    np.float64(0.0195...)
     """
     estimator = OAS(
         assume_centered=assume_centered,
@@ -778,7 +779,7 @@ class OAS(EmpiricalCovariance):
     array([[ 1.7833..., -1.2431... ],
            [-1.2431...,  3.3889...]])
     >>> oas.shrinkage_
-    0.0195...
+    np.float64(0.0195...)
     """
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -798,7 +799,7 @@ class OAS(EmpiricalCovariance):
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(X)
+        X = validate_data(self, X)
         # Not calling the parent object to fit, to avoid computing the
         # covariance matrix (and potentially the precision)
         if self.assume_centered:

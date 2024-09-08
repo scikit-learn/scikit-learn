@@ -39,7 +39,7 @@ _datasets_pair_pyx = custom_target(
 _datasets_pair = py.extension_module(
   '_datasets_pair',
   _datasets_pair_pyx,
-  dependencies: [np_dep, openmp_dep],
+  dependencies: [np_dep],
   override_options: ['cython_language=cpp'],
   cython_args: cython_args,
   subdir: 'sklearn/metrics/_pairwise_distances_reduction',
@@ -94,7 +94,7 @@ _middle_term_computer_pyx = custom_target(
 _middle_term_computer = py.extension_module(
   '_middle_term_computer',
   _middle_term_computer_pyx,
-  dependencies: [np_dep, openmp_dep],
+  dependencies: [np_dep],
   override_options: ['cython_language=cpp'],
   cython_args: cython_args,
   subdir: 'sklearn/metrics/_pairwise_distances_reduction',
@@ -172,7 +172,7 @@ _argkmin_classmode_pyx = custom_target(
 _argkmin_classmode = py.extension_module(
   '_argkmin_classmode',
   _argkmin_classmode_pyx,
-  dependencies: [np_dep],
+  dependencies: [np_dep, openmp_dep],
   override_options: ['cython_language=cpp'],
   cython_args: cython_args,
   # XXX: for some reason -fno-sized-deallocation is needed otherwise there is
@@ -199,7 +199,7 @@ _radius_neighbors_classmode_pyx = custom_target(
 _radius_neighbors_classmode = py.extension_module(
   '_radius_neighbors_classmode',
   _radius_neighbors_classmode_pyx,
-  dependencies: [np_dep],
+  dependencies: [np_dep, openmp_dep],
   override_options: ['cython_language=cpp'],
   cython_args: cython_args,
   subdir: 'sklearn/metrics/_pairwise_distances_reduction',

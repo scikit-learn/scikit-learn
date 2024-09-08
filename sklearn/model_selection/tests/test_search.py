@@ -61,12 +61,20 @@ from sklearn.model_selection import (
     StratifiedShuffleSplit,
     train_test_split,
 )
-from sklearn.model_selection._search import BaseSearchCV
+from sklearn.model_selection._search import (
+    BaseSearchCV,
+    _yield_masked_array_for_each_param,
+)
 from sklearn.model_selection.tests.common import OneTimeSplitter
 from sklearn.naive_bayes import ComplementNB
 from sklearn.neighbors import KernelDensity, KNeighborsClassifier, LocalOutlierFactor
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.preprocessing import (
+    OneHotEncoder,
+    OrdinalEncoder,
+    SplineTransformer,
+    StandardScaler,
+)
 from sklearn.svm import SVC, LinearSVC
 from sklearn.tests.metadata_routing_common import (
     ConsumingScorer,
@@ -85,7 +93,6 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
-    ignore_warnings,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS
 from sklearn.utils.validation import _num_samples
@@ -265,7 +272,6 @@ def test_SearchCV_with_fit_params(SearchCV):
     searcher.fit(X, y, spam=np.ones(10), eggs=np.zeros(10))
 
 
-@ignore_warnings
 def test_grid_search_no_score():
     # Test grid-search on classifier that has no score function.
     clf = LinearSVC(random_state=0)
@@ -615,7 +621,7 @@ class BrokenClassifier(BaseEstimator):
         return np.zeros(X.shape[0])
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.UndefinedMetricWarning")
 def test_refit():
     # Regression test for bug in refitting
     # Simulates re-fitting a broken estimator; this used to break with
@@ -804,7 +810,6 @@ def test_y_as_list():
     assert hasattr(grid_search, "cv_results_")
 
 
-@ignore_warnings
 def test_pandas_input():
     # check cross_val_score doesn't destroy pandas dataframe
     types = [(MockDataFrame, MockDataFrame)]
@@ -1410,7 +1415,7 @@ def test_search_cv_results_none_param():
         assert_array_equal(grid_search.cv_results_["param_random_state"], [0, None])
 
 
-@ignore_warnings()
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.FitFailedWarning")
 def test_search_cv_timing():
     svc = LinearSVC(random_state=0)
 
@@ -2270,13 +2275,15 @@ def test_search_cv_pairwise_property_delegated_to_base_estimator(pairwise):
     """
 
     class TestEstimator(BaseEstimator):
-        def _more_tags(self):
-            return {"pairwise": pairwise}
+        def __sklearn_tags__(self):
+            tags = super().__sklearn_tags__()
+            tags.input_tags.pairwise = pairwise
+            return tags
 
     est = TestEstimator()
     attr_message = "BaseSearchCV pairwise tag must match estimator"
     cv = GridSearchCV(est, {"n_neighbors": [10]})
-    assert pairwise == cv._get_tags()["pairwise"], attr_message
+    assert pairwise == cv.__sklearn_tags__().input_tags.pairwise, attr_message
 
 
 def test_search_cv__pairwise_property_delegated_to_base_estimator():
@@ -2292,8 +2299,10 @@ def test_search_cv__pairwise_property_delegated_to_base_estimator():
         def __init__(self, pairwise=True):
             self.pairwise = pairwise
 
-        def _more_tags(self):
-            return {"pairwise": self.pairwise}
+        def __sklearn_tags__(self):
+            tags = super().__sklearn_tags__()
+            tags.input_tags.pairwise = self.pairwise
+            return tags
 
     est = EstimatorPairwise()
     attr_message = "BaseSearchCV _pairwise property must match estimator"
@@ -2301,7 +2310,9 @@ def test_search_cv__pairwise_property_delegated_to_base_estimator():
     for _pairwise_setting in [True, False]:
         est.set_params(pairwise=_pairwise_setting)
         cv = GridSearchCV(est, {"n_neighbors": [10]})
-        assert _pairwise_setting == cv._get_tags()["pairwise"], attr_message
+        assert (
+            _pairwise_setting == cv.__sklearn_tags__().input_tags.pairwise
+        ), attr_message
 
 
 def test_search_cv_pairwise_property_equivalence_of_precomputed():
@@ -2724,6 +2735,37 @@ def test_search_with_estimators_issue_29157():
     assert grid_search.cv_results_["param_enc__enc"].dtype == object
 
 
+def test_cv_results_multi_size_array():
+    """Check that GridSearchCV works with params that are arrays of different sizes.
+
+    Non-regression test for #29277.
+    """
+    n_features = 10
+    X, y = make_classification(n_features=10)
+
+    spline_reg_pipe = make_pipeline(
+        SplineTransformer(extrapolation="periodic"),
+        LogisticRegression(),
+    )
+
+    n_knots_list = [n_features * i for i in [10, 11, 12]]
+    knots_list = [
+        np.linspace(0, np.pi * 2, n_knots).reshape((-1, n_features))
+        for n_knots in n_knots_list
+    ]
+    spline_reg_pipe_cv = GridSearchCV(
+        estimator=spline_reg_pipe,
+        param_grid={
+            "splinetransformer__knots": knots_list,
+        },
+    )
+
+    spline_reg_pipe_cv.fit(X, y)
+    assert (
+        spline_reg_pipe_cv.cv_results_["param_splinetransformer__knots"].dtype == object
+    )
+
+
 @pytest.mark.parametrize(
     "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
 )
@@ -2744,6 +2786,81 @@ def test_array_api_search_cv_classifier(SearchCV, array_namespace, device, dtype
             LinearDiscriminantAnalysis(),
             {"tol": [1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7]},
             cv=2,
+            error_score="raise",
         )
         searcher.fit(X_xp, y_xp)
         searcher.score(X_xp, y_xp)
+
+
+# Construct these outside the tests so that the same object is used
+# for both input and `expected`
+one_hot_encoder = OneHotEncoder()
+ordinal_encoder = OrdinalEncoder()
+
+# If we construct this directly via `MaskedArray`, the list of tuples
+# gets auto-converted to a 2D array.
+ma_with_tuples = np.ma.MaskedArray(np.empty(2), mask=True, dtype=object)
+ma_with_tuples[0] = (1, 2)
+ma_with_tuples[1] = (3, 4)
+
+
+@pytest.mark.parametrize(
+    ("candidate_params", "expected"),
+    [
+        pytest.param(
+            [{"foo": 1}, {"foo": 2}],
+            [
+                ("param_foo", np.ma.MaskedArray(np.array([1, 2]))),
+            ],
+            id="simple numeric, single param",
+        ),
+        pytest.param(
+            [{"foo": 1, "bar": 3}, {"foo": 2, "bar": 4}, {"foo": 3}],
+            [
+                ("param_foo", np.ma.MaskedArray(np.array([1, 2, 3]))),
+                (
+                    "param_bar",
+                    np.ma.MaskedArray(np.array([3, 4, 0]), mask=[False, False, True]),
+                ),
+            ],
+            id="simple numeric, one param is missing in one round",
+        ),
+        pytest.param(
+            [{"foo": [[1], [2], [3]]}, {"foo": [[1], [2]]}],
+            [
+                (
+                    "param_foo",
+                    np.ma.MaskedArray([[[1], [2], [3]], [[1], [2]]], dtype=object),
+                ),
+            ],
+            id="lists of different lengths",
+        ),
+        pytest.param(
+            [{"foo": (1, 2)}, {"foo": (3, 4)}],
+            [
+                (
+                    "param_foo",
+                    ma_with_tuples,
+                ),
+            ],
+            id="lists tuples",
+        ),
+        pytest.param(
+            [{"foo": ordinal_encoder}, {"foo": one_hot_encoder}],
+            [
+                (
+                    "param_foo",
+                    np.ma.MaskedArray([ordinal_encoder, one_hot_encoder], dtype=object),
+                ),
+            ],
+            id="estimators",
+        ),
+    ],
+)
+def test_yield_masked_array_for_each_param(candidate_params, expected):
+    result = list(_yield_masked_array_for_each_param(candidate_params))
+    for (key, value), (expected_key, expected_value) in zip(result, expected):
+        assert key == expected_key
+        assert value.dtype == expected_value.dtype
+        np.testing.assert_array_equal(value, expected_value)
+        np.testing.assert_array_equal(value.mask, expected_value.mask)

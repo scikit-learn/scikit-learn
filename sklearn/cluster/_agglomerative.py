@@ -8,6 +8,9 @@ Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
 License: BSD 3 clause
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import warnings
 from heapq import heapify, heappop, heappush, heappushpop
 from numbers import Integral, Real
@@ -35,7 +38,7 @@ from ..utils._param_validation import (
     validate_params,
 )
 from ..utils.graph import _fix_connected_components
-from ..utils.validation import check_memory
+from ..utils.validation import check_memory, validate_data
 
 # mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
 from . import _hierarchical_fast as _hierarchical  # type: ignore
@@ -986,7 +989,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         self : object
             Returns the fitted instance.
         """
-        X = self._validate_data(X, ensure_min_samples=2)
+        X = validate_data(self, X, ensure_min_samples=2)
         return self._fit(X)
 
     def _fit(self, X):
@@ -996,7 +999,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         ----------
         X : ndarray of shape (n_samples, n_features) or (n_samples, n_samples)
             Training instances to cluster, or distances between instances if
-            ``affinity='precomputed'``.
+            ``metric='precomputed'``.
 
         Returns
         -------
@@ -1335,7 +1338,7 @@ class FeatureAgglomeration(
         self : object
             Returns the transformer.
         """
-        X = self._validate_data(X, ensure_min_features=2)
+        X = validate_data(self, X, ensure_min_features=2)
         super()._fit(X.T)
         self._n_features_out = self.n_clusters_
         return self

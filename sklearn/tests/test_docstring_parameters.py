@@ -12,6 +12,7 @@ import numpy as np
 import pytest
 
 import sklearn
+from sklearn import metrics
 from sklearn.datasets import make_classification
 
 # make it possible to discover experimental estimators when calling `all_estimators`
@@ -22,18 +23,18 @@ from sklearn.experimental import (
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils import all_estimators
+from sklearn.utils._test_common.instance_generator import _construct_instance
 from sklearn.utils._testing import (
     _get_func_name,
+    assert_docstring_consistency,
     check_docstring_parameters,
     ignore_warnings,
 )
 from sklearn.utils.deprecation import _is_deprecated
 from sklearn.utils.estimator_checks import (
-    _construct_instance,
     _enforce_estimator_tags_X,
     _enforce_estimator_tags_y,
 )
-from sklearn.utils.fixes import parse_version, sp_version
 
 # walk_packages() ignores DeprecationWarnings, now we need to ignore
 # FutureWarnings
@@ -71,10 +72,6 @@ _METHODS_IGNORE_NONE_Y = [
 ]
 
 
-# numpydoc 0.8.0's docscrape tool raises because of collections.abc under
-# Python 3.7
-@pytest.mark.filterwarnings("ignore::FutureWarning")
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_docstring_parameters():
     # Test module docstring formatting
 
@@ -177,7 +174,7 @@ def _construct_sparse_coder(Estimator):
     return Estimator(dictionary=dictionary)
 
 
-@ignore_warnings(category=sklearn.exceptions.ConvergenceWarning)
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 # TODO(1.6): remove "@pytest.mark.filterwarnings" as SAMME.R will be removed
 # and substituted with the SAMME algorithm as a default
 @pytest.mark.filterwarnings("ignore:The SAMME.R algorithm")
@@ -228,10 +225,6 @@ def test_fit_docstring_attributes(name, Estimator):
     if Estimator.__name__ in ("NMF", "MiniBatchNMF"):
         est.set_params(n_components="auto")
 
-    if Estimator.__name__ == "QuantileRegressor":
-        solver = "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
-        est.set_params(solver=solver)
-
     # Low max iter to speed up tests: we are only interested in checking the existence
     # of fitted attributes. This should be invariant to whether it has converged or not.
     if "max_iter" in est.get_params():
@@ -274,11 +267,11 @@ def test_fit_docstring_attributes(name, Estimator):
         y = _enforce_estimator_tags_y(est, y)
         X = _enforce_estimator_tags_X(est, X)
 
-    if "1dlabels" in est._get_tags()["X_types"]:
+    if est.__sklearn_tags__().target_tags.one_d_labels:
         est.fit(y)
-    elif "2dlabels" in est._get_tags()["X_types"]:
+    elif est.__sklearn_tags__().target_tags.two_d_labels:
         est.fit(np.c_[y, y])
-    elif "3darray" in est._get_tags()["X_types"]:
+    elif est.__sklearn_tags__().input_tags.three_d_array:
         est.fit(X[np.newaxis, ...], y)
     else:
         est.fit(X, y)
@@ -329,3 +322,26 @@ def _get_all_fitted_attributes(estimator):
             fit_attr.append(name)
 
     return [k for k in fit_attr if k.endswith("_") and not k.startswith("_")]
+
+
+def test_precision_recall_f_score_docstring_consistency():
+    """Check docstrings parameters of related metrics are consistent."""
+    pytest.importorskip(
+        "numpydoc",
+        reason="numpydoc is required to test the docstrings",
+    )
+    assert_docstring_consistency(
+        [
+            metrics.precision_recall_fscore_support,
+            metrics.f1_score,
+            metrics.fbeta_score,
+            metrics.precision_score,
+            metrics.recall_score,
+        ],
+        include_params=True,
+        # "average" - in `recall_score` we have an additional line: 'Weighted recall
+        # is equal to accuracy.'.
+        # "zero_division" - the reason for zero division differs between f scores,
+        # precison and recall.
+        exclude_params=["average", "zero_division"],
+    )

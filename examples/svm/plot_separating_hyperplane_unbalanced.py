@@ -25,6 +25,9 @@ unbalanced classes.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib.lines as mlines
 import matplotlib.pyplot as plt
 
