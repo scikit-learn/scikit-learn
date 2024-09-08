@@ -31,6 +31,7 @@ from ..utils.validation import (
     check_is_fitted,
     check_X_y,
     column_or_1d,
+    validate_data,
 )
 from ._adaptive import BasisIncrementStrategy
 
@@ -399,7 +400,7 @@ class PolynomialChaosRegressor(BaseEstimator, RegressorMixin):
         check_is_fitted(self)
 
         # check input features
-        X = self._validate_data(X, reset=False, ensure_2d=True)
+        X = validate_data(self, X, reset=False, ensure_2d=True)
 
         # scale features
         X_scaled = np.zeros_like(X)

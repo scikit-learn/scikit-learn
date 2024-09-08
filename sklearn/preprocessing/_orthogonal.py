@@ -20,6 +20,7 @@ from ..utils.validation import (
     _check_feature_names_in,
     check_array,
     check_is_fitted,
+    validate_data,
 )
 
 
@@ -233,7 +234,7 @@ class OrthogonalPolynomialFeatures(BaseEstimator, TransformerMixin):
         """
 
         # check input data
-        _, n_features = self._validate_data(X).shape
+        _, n_features = validate_data(self, X).shape
 
         # check polynomial
         polynomials = self.polynomial
@@ -303,7 +304,7 @@ class OrthogonalPolynomialFeatures(BaseEstimator, TransformerMixin):
 
         # check if fit has been called
         check_is_fitted(self)
-        X = self._validate_data(X, reset=False, accept_sparse=False, ensure_2d=True)
+        X = validate_data(self, X, reset=False, accept_sparse=False, ensure_2d=True)
         n_samples, n_features = X.shape
 
         # compute the 1d polynomial features
