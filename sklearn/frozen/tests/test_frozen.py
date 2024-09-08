@@ -182,3 +182,25 @@ def test_check_is_fitted():
     estimator = LinearRegression().fit(X, y)
     frozen = FrozenEstimator(estimator)
     check_is_fitted(frozen)
+
+
+def test_frozen_tags():
+    """Test that frozen estimators have the same tags as the original estimator
+    except for the skip_test tag."""
+
+    class Estimator(BaseEstimator):
+        def __sklearn_tags__(self):
+            tags = super().__sklearn_tags__()
+            tags.input_tags.categorical = True
+            return tags
+
+    estimator = Estimator()
+    frozen = FrozenEstimator(estimator)
+    frozen_tags = frozen.__sklearn_tags__()
+    estimator_tags = estimator.__sklearn_tags__()
+
+    assert frozen_tags._skip_test is True
+    assert estimator_tags._skip_test is False
+
+    assert estimator_tags.input_tags.categorical is True
+    assert frozen_tags.input_tags.categorical is True

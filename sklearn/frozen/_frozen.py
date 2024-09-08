@@ -1,6 +1,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+from copy import deepcopy
+
 from ..base import BaseEstimator
 from ..exceptions import NotFittedError
 from ..utils import get_tags
@@ -111,6 +113,6 @@ class FrozenEstimator(BaseEstimator):
         return self
 
     def __sklearn_tags__(self):
-        tags = get_tags(self.estimator)
+        tags = deepcopy(get_tags(self.estimator))
         tags._skip_test = True
         return tags
