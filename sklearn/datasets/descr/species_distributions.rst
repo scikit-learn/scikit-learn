@@ -34,3 +34,7 @@ The dataset is provided by Phillips et. al. (2006).
 * `"Maximum entropy modeling of species geographic distributions"
   <http://rob.schapire.net/papers/ecolmod.pdf>`_ S. J. Phillips,
   R. P. Anderson, R. E. Schapire - Ecological Modelling, 190:231-259, 2006.
+
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`
