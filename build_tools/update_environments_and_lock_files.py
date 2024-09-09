@@ -160,7 +160,7 @@ build_metadata_list = [
         "tag": "main-ci",
         "folder": "build_tools/azure",
         "platform": "linux-64",
-        "channels": ["conda-forge"],
+        "channel": "conda-forge",
         "conda_dependencies": common_dependencies + ["ccache", "polars"],
         "package_constraints": {
             "python": "3.9",
