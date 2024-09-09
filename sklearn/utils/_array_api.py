@@ -534,10 +534,11 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     -------
     namespace : module
         Namespace shared by array objects. If any of the `arrays` are not arrays,
-        the namespace defaults to NumPy.
+        the namespace defaults to the NumPy namespace.
 
     is_array_api_compliant : bool
-        True if the arrays are containers that implement the Array API spec.
+        True if the arrays are containers that implement the array API spec (see
+        https://data-apis.org/array-api/latest/API_specification/).
         Always False when array_api_dispatch=False.
     """
     array_api_dispatch = get_config()["array_api_dispatch"]
@@ -1049,3 +1050,18 @@ def _modify_in_place_if_numpy(xp, func, *args, out=None, **kwargs):
     else:
         out = func(*args, **kwargs)
     return out
+
+
+def _trapezoid(y, x=None, dx=1.0, axis=None):
+    """Partial (one-dimensional) port of scipy.trapezoid to support the Array API."""
+    xp, _, device = get_namespace_and_device(x, y)
+
+    if size(y) < 2:
+        return xp.asarray(0, device=device, dtype=y.dtype)
+
+    if x is None:
+        d = dx
+    else:
+        d = xp.subtract(x[1:], x[:-1])
+
+    return xp.sum(d * (y[:-1] + y[1:]) / 2.0)

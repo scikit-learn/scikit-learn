@@ -4,6 +4,7 @@ from functools import partial
 
 import numpy
 import pytest
+import scipy.integrate
 from numpy.testing import assert_allclose
 
 from sklearn._config import config_context
@@ -23,6 +24,7 @@ from sklearn.utils._array_api import (
     _nanmin,
     _NumPyAPIWrapper,
     _ravel,
+    _trapezoid,
     device,
     get_namespace,
     get_namespace_and_device,
@@ -606,3 +608,35 @@ def test_fill_or_add_to_diagonal(array_namespace, device_, dtype_name, wrap):
     _fill_or_add_to_diagonal(array_xp, value=1, xp=xp, add_value=False, wrap=wrap)
     numpy.fill_diagonal(array_np, val=1, wrap=wrap)
     assert_array_equal(_convert_to_numpy(array_xp, xp=xp), array_np)
+
+
+@pytest.mark.parametrize(
+    "x,y",
+    [
+        ([], []),
+        ([1], [2]),
+        (2.0, [-1.0, 2.0, 1.0]),
+        ([1.0, 3.0, 4.0], [-1.0, 2.0, 1.0]),
+    ],
+)
+@pytest.mark.parametrize(
+    "array_namespace, device_, dtype_name", yield_namespace_device_dtype_combinations()
+)
+def test_trapezoid(x, y, array_namespace, device_, dtype_name):
+    xp = _array_api_for_tests(array_namespace, device_)
+    x_in = numpy.asarray(x, dtype=dtype_name)
+    x_in = xp.asarray(x_in, device=device_)
+
+    y_in = numpy.asarray(y, dtype=dtype_name)
+    y_in = xp.asarray(y_in, device=device_)
+
+    with config_context(array_api_dispatch=True):
+        if isinstance(x, float):
+            result = _trapezoid(y_in, dx=x)
+            expected = scipy.integrate.trapezoid(y, dx=x)
+        else:
+            result = _trapezoid(y_in, x_in)
+            expected = scipy.integrate.trapezoid(y, x=x)
+
+    result = _convert_to_numpy(result, xp)
+    assert_allclose(result, expected, atol=_atol_for_type(dtype_name))

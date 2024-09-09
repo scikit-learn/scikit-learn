@@ -16,7 +16,6 @@ from functools import partial
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.integrate import trapezoid
 from scipy.sparse import csr_matrix, issparse
 from scipy.stats import rankdata
 
@@ -28,6 +27,7 @@ from ..utils import (
     check_consistent_length,
     column_or_1d,
 )
+from ..utils._array_api import _trapezoid, get_namespace
 from ..utils._encode import _encode, _unique
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.extmath import stable_cumsum
@@ -79,6 +79,8 @@ def auc(x, y):
     >>> metrics.auc(fpr, tpr)
     np.float64(0.75)
     """
+    xp, _ = get_namespace(x, y)
+
     check_consistent_length(x, y)
     x = column_or_1d(x)
     y = column_or_1d(y)
@@ -90,19 +92,14 @@ def auc(x, y):
         )
 
     direction = 1
-    dx = np.diff(x)
-    if np.any(dx < 0):
-        if np.all(dx <= 0):
+    dx = xp.subtract(x[1:], x[:-1])
+    if xp.any(dx < 0):
+        if xp.all(dx <= 0):
             direction = -1
         else:
             raise ValueError("x is neither increasing nor decreasing : {}.".format(x))
 
-    area = direction * trapezoid(y, x)
-    if isinstance(area, np.memmap):
-        # Reductions such as .sum used internally in trapezoid do not return a
-        # scalar by default for numpy.memmap instances contrary to
-        # regular numpy.ndarray instances.
-        area = area.dtype.type(area)
+    area = direction * _trapezoid(y, x)
     return area
 
 

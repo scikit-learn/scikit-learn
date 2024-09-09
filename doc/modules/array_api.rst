@@ -140,6 +140,7 @@ Tools
 -----
 
 - :func:`model_selection.train_test_split`
+- :func:`utils.check_consistent_length`
 
 Coverage is expected to grow over time. Please follow the dedicated `meta-issue on GitHub
 <https://github.com/scikit-learn/scikit-learn/issues/22352>`_ to track progress.
