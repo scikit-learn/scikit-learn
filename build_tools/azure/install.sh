@@ -38,7 +38,7 @@ pre_python_environment_install() {
 
     elif [[ "$DISTRIB" == "debian-32" ]]; then
         apt-get update
-        apt-get install -y python3-dev python3-numpy python3-scipy \
+        apt-get install -y python3-dev python3-setuptools python3-numpy python3-scipy \
                 python3-matplotlib libopenblas-dev \
                 python3-virtualenv python3-pandas ccache git
 
