@@ -478,8 +478,8 @@ def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=
              [1., 0.]])
 
       >>> X_sparse
-      <3x2 sparse matrix of type '<... 'numpy.float64'>'
-          with 4 stored elements in Compressed Sparse Row format>
+      <Compressed Sparse Row sparse matrix of dtype 'float64'
+          with 4 stored elements and shape (3, 2)>
 
       >>> X_sparse.toarray()
       array([[1., 0.],
@@ -616,8 +616,8 @@ def shuffle(*arrays, random_state=None, n_samples=None):
              [1., 0.]])
 
       >>> X_sparse
-      <3x2 sparse matrix of type '<... 'numpy.float64'>'
-          with 3 stored elements in Compressed Sparse Row format>
+      <Compressed Sparse Row sparse matrix of dtype 'float64'
+          with 3 stored elements and shape (3, 2)>
 
       >>> X_sparse.toarray()
       array([[0., 0.],
