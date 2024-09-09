@@ -13,7 +13,6 @@ from io import StringIO
 import joblib
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose, assert_almost_equal, assert_array_equal
 
 from sklearn.datasets import (
     load_digits,
@@ -25,7 +24,12 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.metrics import roc_auc_score
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 from sklearn.preprocessing import LabelBinarizer, MinMaxScaler, scale
-from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
+)
 from sklearn.utils.fixes import CSR_CONTAINERS
 
 ACTIVATION_TYPES = ["identity", "logistic", "tanh", "relu"]
@@ -963,8 +967,12 @@ def test_mlp_partial_fit_after_fit(MLPEstimator):
         mlp.partial_fit(X_iris, y_iris)
 
 
-def test_diverging_model():
-    """Test that a diverging model does not raise errors."""
+def test_mlp_diverging_loss():
+    """Test that a diverging model does not raise errors when early stopping is enabled.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/29504
+    """
     mlp = MLPRegressor(
         hidden_layer_sizes=100,
         activation="identity",
