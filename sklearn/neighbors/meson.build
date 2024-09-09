@@ -2,7 +2,7 @@ _binary_tree_pxi = custom_target(
   '_binary_tree_pxi',
   output: '_binary_tree.pxi',
   input: '_binary_tree.pxi.tp',
-  command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
+  command: [tempita, '@INPUT@', '-o', '@OUTDIR@'],
 )
 
 # .pyx is generated so this is needed to make Cython compilation work. The pxi
@@ -20,7 +20,7 @@ foreach name: name_list
     name + '_pyx',
     output: name + '.pyx',
     input: name + '.pyx.tp',
-    command: [py, tempita, '@INPUT@', '-o', '@OUTDIR@'],
+    command: [tempita, '@INPUT@', '-o', '@OUTDIR@'],
     # TODO in principle this should go in py.exension_module below. This is
     # temporary work-around for dependency issue with .pyx.tp files. For more
     # details, see https://github.com/mesonbuild/meson/issues/13212
