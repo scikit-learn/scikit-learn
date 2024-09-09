@@ -67,12 +67,19 @@ link to it from your website, or simply star to say "I use it":
 
 .. raw:: html
 
+<<<<<<< HEAD
   <p>
     <object
       data="https://img.shields.io/github/stars/scikit-learn/scikit-learn?style=for-the-badge&logo=github"
       type="image/svg+xml">
     </object>
   </p>
+=======
+  <a class="github-button" href="https://github.com/scikit-learn/scikit-learn"
+  data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star
+  scikit-learn/scikit-learn on GitHub">Star</a>
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+>>>>>>> 34db65a3ad (DOC use pydata-sphinx-theme for the website (#29038))
 
 In case a contribution/issue involves changes to the API principles
 or changes to dependencies or supported versions, it must be backed by a
@@ -751,6 +758,7 @@ We are glad to accept any sort of documentation:
 
   * Add one or two snippets of code in "Example" section to show how it can be used.
 
+.. dropdown:: Guidelines for writing references
 
 .. dropdown:: Guidelines for writing the user guide and other reStructuredText documents
 
@@ -786,7 +794,7 @@ We are glad to accept any sort of documentation:
   * Too much information makes it difficult for users to access the content they
     are interested in. Use dropdowns to factorize it by using the following syntax
 
-    .. code-block:: rst
+          .. _my-section:
 
       .. dropdown:: Dropdown title
 
