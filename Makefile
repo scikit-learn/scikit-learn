@@ -26,6 +26,8 @@ inplace:
 dev-meson:
 	pip install --verbose --no-build-isolation --editable . --config-settings editable-verbose=true
 
+clean: clean-meson
+
 clean-meson:
 	pip uninstall -y scikit-learn
 
