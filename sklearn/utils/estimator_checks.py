@@ -103,8 +103,8 @@ def _yield_checks(estimator):
             # We skip pairwise because the data is not pairwise
             yield check_sample_weights_shape
             yield check_sample_weights_not_overwritten
-            yield partial(check_sample_weights_invariance, kind="ones")
-            yield partial(check_sample_weights_invariance, kind="zeros")
+            yield check_unit_sample_weights
+            yield check_sample_weights_invariance
     yield check_estimators_fit_returns_self
     yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
 
@@ -1053,17 +1053,15 @@ def check_sample_weights_shape(name, estimator_orig):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_sample_weights_invariance(name, estimator_orig, kind="ones"):
-    # For kind="ones" check that the estimators yield same results for
+def check_unit_sample_weights(name, estimator_orig):
+    # check that the estimators yield same results for
     # unit weights and no weights
-    # For kind="zeros" check that setting sample_weight to 0 is equivalent
-    # to removing corresponding samples.
     estimator1 = clone(estimator_orig)
     estimator2 = clone(estimator_orig)
     set_random_state(estimator1, random_state=0)
     set_random_state(estimator2, random_state=0)
 
-    X1 = np.array(
+    X = np.array(
         [
             [1, 3],
             [1, 3],
@@ -1084,60 +1082,104 @@ def check_sample_weights_invariance(name, estimator_orig, kind="ones"):
         ],
         dtype=np.float64,
     )
-    y1 = np.array([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2], dtype=int)
+    y = np.array([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2], dtype=int)
+    y = _enforce_estimator_tags_y(estimator_orig, y)
+    sw = np.ones(shape=len(y))
 
-    if kind == "ones":
-        X2 = X1
-        y2 = y1
-        sw2 = np.ones(shape=len(y1))
-        err_msg = (
-            f"For {name} sample_weight=None is not equivalent to sample_weight=ones"
-        )
-    elif kind == "zeros":
-        # Construct a dataset that is very different to (X, y) if weights
-        # are disregarded, but identical to (X, y) given weights.
-        X2 = np.vstack([X1, X1 + 1])
-        y2 = np.hstack([y1, 3 - y1])
-        sw2 = np.ones(shape=len(y1) * 2)
-        sw2[len(y1) :] = 0
-        X2, y2, sw2 = shuffle(X2, y2, sw2, random_state=0)
+    estimator1.fit(X, y=y, sample_weight=None)
+    estimator2.fit(X, y=y, sample_weight=sw)
 
-        err_msg = (
-            f"For {name}, a zero sample_weight is not equivalent to removing the sample"
-        )
-    else:  # pragma: no cover
-        raise ValueError
+    err_msg = f"For {name} sample_weight=None is not equivalent to sample_weight=ones"
+    for method in ["predict", "predict_proba", "decision_function", "transform"]:
+        if hasattr(estimator_orig, method):
+            X_pred1 = getattr(estimator1, method)(X)
+            X_pred2 = getattr(estimator2, method)(X)
+            assert_allclose_dense_sparse(X_pred1, X_pred2, err_msg=err_msg)
+
+
+@ignore_warnings(category=FutureWarning)
+def check_sample_weights_invariance(name, estimator_orig):
+    # check that setting sample_weight to zero / integer is equivalent
+    # to removing / repeating corresponding samples.
+    estimator_weighted = clone(estimator_orig)
+    estimator_repeated = clone(estimator_orig)
+    set_random_state(estimator_weighted, random_state=0)
+    set_random_state(estimator_repeated, random_state=0)
+
+    X = np.array(
+        [
+            [1, 3],
+            [1, 3],
+            [1, 3],
+            [1, 3],
+            [2, 1],
+            [2, 1],
+            [2, 1],
+            [2, 1],
+            [3, 3],
+            [3, 3],
+            [3, 3],
+            [3, 3],
+            [4, 1],
+            [4, 1],
+            [4, 1],
+            [4, 1],
+        ],
+        dtype=np.float64,
+    )
+    y = np.array([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2], dtype=int)
+
+    # Construct a dataset that is very different to (X, y) if weights
+    # are disregarded, but identical to (X, y) for nonzero weights.
+    X_weigthed = np.vstack([X, X + 1])
+    y_weighted = np.hstack([y, 3 - y])
+    # random integers and zero weights
+    rng = np.random.RandomState(0)
+    sw = rng.randint(1, 4, size=len(y_weighted))
+    sw[len(y) :] = 0
+    # repeat samples according to weights
+    X_repeated = X_weigthed.repeat(repeats=sw, axis=0)
+    y_repeated = y_weighted.repeat(repeats=sw)
+
+    X_weigthed, y_weighted, sw = shuffle(X_weigthed, y_weighted, sw, random_state=0)
 
     # when the estimator has an internal CV scheme
     # we only use weights / repetitions in a specific CV group (here group=0)
     if "cv" in estimator_orig.get_params():
-        groups2 = np.hstack(
-            [np.full_like(y2, 0), np.full_like(y1, 1), np.full_like(y1, 2)]
+        groups_weighted = np.hstack(
+            [np.full_like(y_weighted, 0), np.full_like(y, 1), np.full_like(y, 2)]
         )
-        sw2 = np.hstack([sw2, np.ones_like(y1), np.ones_like(y1)])
-        X2 = np.vstack([X2, X1, X1])
-        y2 = np.hstack([y2, y1, y1])
-        splits2 = list(LeaveOneGroupOut().split(X2, groups=groups2))
-        estimator2.set_params(cv=splits2)
-
-        groups1 = np.hstack(
-            [np.full_like(y1, 0), np.full_like(y1, 1), np.full_like(y1, 2)]
+        sw = np.hstack([sw, np.ones_like(y), np.ones_like(y)])
+        X_weigthed = np.vstack([X_weigthed, X, X])
+        y_weighted = np.hstack([y_weighted, y, y])
+        splits_weighted = list(
+            LeaveOneGroupOut().split(X_weigthed, groups=groups_weighted)
         )
-        X1 = np.vstack([X1, X1, X1])
-        y1 = np.hstack([y1, y1, y1])
-        splits1 = list(LeaveOneGroupOut().split(X1, groups=groups1))
-        estimator1.set_params(cv=splits1)
+        estimator_weighted.set_params(cv=splits_weighted)
 
-    y1 = _enforce_estimator_tags_y(estimator1, y1)
-    y2 = _enforce_estimator_tags_y(estimator2, y2)
+        groups_repeated = np.hstack(
+            [np.full_like(y_repeated, 0), np.full_like(y, 1), np.full_like(y, 2)]
+        )
+        X_repeated = np.vstack([X_repeated, X, X])
+        y_repeated = np.hstack([y_repeated, y, y])
+        splits_repeated = list(
+            LeaveOneGroupOut().split(X_repeated, groups=groups_repeated)
+        )
+        estimator_repeated.set_params(cv=splits_repeated)
 
-    estimator1.fit(X1, y=y1, sample_weight=None)
-    estimator2.fit(X2, y=y2, sample_weight=sw2)
+    y_weighted = _enforce_estimator_tags_y(estimator_weighted, y_weighted)
+    y_repeated = _enforce_estimator_tags_y(estimator_repeated, y_repeated)
 
+    estimator_repeated.fit(X_repeated, y=y_repeated, sample_weight=None)
+    estimator_weighted.fit(X_weigthed, y=y_weighted, sample_weight=sw)
+
+    err_msg = (
+        f"For {name}, sample_weight is not equivalent to removing/repeating the sample"
+    )
     for method in ["predict", "predict_proba", "decision_function", "transform"]:
         if hasattr(estimator_orig, method):
-            X_pred1 = getattr(estimator1, method)(X1)
-            X_pred2 = getattr(estimator2, method)(X1)
+            X_pred1 = getattr(estimator_repeated, method)(X)
+            X_pred2 = getattr(estimator_weighted, method)(X)
             assert_allclose_dense_sparse(X_pred1, X_pred2, err_msg=err_msg)
 
 
