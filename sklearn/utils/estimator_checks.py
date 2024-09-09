@@ -59,8 +59,9 @@ from ._tags import Tags, get_tags
 from ._test_common.instance_generator import (
     CROSS_DECOMPOSITION,
     INIT_PARAMS,
-    _construct_instance,
+    _construct_instances,
     _get_check_estimator_ids,
+    _yield_instances_for_check,
 )
 from ._testing import (
     SkipTest,
@@ -508,10 +509,14 @@ def parametrize_with_checks(estimators, *, legacy=True):
 
     def checks_generator():
         for estimator in estimators:
+            # First check that the estimator is cloneable which is needed for the rest
+            # of the checks to run
             name = type(estimator).__name__
+            yield estimator, partial(check_estimator_cloneable, name)
             for check in _yield_all_checks(estimator, legacy=legacy):
-                check = partial(check, name)
-                yield _maybe_mark_xfail(estimator, check, pytest)
+                check_with_name = partial(check, name)
+                for check_instance in _yield_instances_for_check(check, estimator):
+                    yield _maybe_mark_xfail(check_instance, check_with_name, pytest)
 
     return pytest.mark.parametrize(
         "estimator, check", checks_generator(), ids=_get_check_estimator_ids
@@ -596,9 +601,13 @@ def check_estimator(estimator=None, generate_only=False, *, legacy=True):
     name = type(estimator).__name__
 
     def checks_generator():
+        # we first need to check if the estimator is cloneable for the rest of the tests
+        # to run
+        yield estimator, partial(check_estimator_cloneable, name)
         for check in _yield_all_checks(estimator, legacy=legacy):
             check = _maybe_skip(estimator, check)
-            yield estimator, partial(check, name)
+            for check_instance in _yield_instances_for_check(check, estimator):
+                yield check_instance, partial(check, name)
 
     if generate_only:
         return checks_generator()
@@ -3303,7 +3312,10 @@ def check_parameters_default_constructible(name, estimator_orig):
     Estimator = estimator_orig.__class__
 
     with ignore_warnings(category=FutureWarning):
-        estimator = _construct_instance(Estimator)
+        # TODO(devtools): this test is flawed because _construct_instances doesn't
+        # construct with default parameters for sklearn estimators, while it does
+        # for third party estimators.
+        estimator = next(_construct_instances(Estimator))
         # test that set_params returns self
         assert estimator.set_params() is estimator
 

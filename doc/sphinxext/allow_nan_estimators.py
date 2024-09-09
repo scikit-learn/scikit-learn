@@ -4,7 +4,7 @@ from docutils import nodes
 from docutils.parsers.rst import Directive
 
 from sklearn.utils import all_estimators
-from sklearn.utils._test_common.instance_generator import _construct_instance
+from sklearn.utils._test_common.instance_generator import _construct_instances
 from sklearn.utils._testing import SkipTest
 
 
@@ -19,7 +19,10 @@ class AllowNanEstimators(Directive):
         lst = nodes.bullet_list()
         for name, est_class in all_estimators(type_filter=estimator_type):
             with suppress(SkipTest):
-                est = _construct_instance(est_class)
+                # Here we generate the text only for one instance. This directive
+                # should not be used for meta-estimators where tags depend on the
+                # sub-estimator.
+                est = next(_construct_instances(est_class))
 
             if est.__sklearn_tags__().input_tags.allow_nan:
                 module_name = ".".join(est_class.__module__.split(".")[:2])

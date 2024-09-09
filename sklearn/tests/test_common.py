@@ -28,7 +28,7 @@ from sklearn.cluster import (
 )
 from sklearn.compose import ColumnTransformer
 from sklearn.datasets import make_blobs
-from sklearn.exceptions import ConvergenceWarning, FitFailedWarning
+from sklearn.exceptions import ConvergenceWarning
 
 # make it possible to discover experimental estimators when calling `all_estimators`
 from sklearn.experimental import (
@@ -55,8 +55,6 @@ from sklearn.semi_supervised import LabelPropagation, LabelSpreading
 from sklearn.utils import all_estimators
 from sklearn.utils._tags import get_tags
 from sklearn.utils._test_common.instance_generator import (
-    _generate_pipeline,
-    _generate_search_cv_instances,
     _get_check_estimator_ids,
     _tested_estimators,
 )
@@ -132,7 +130,7 @@ def test_get_check_estimator_ids(val, expected):
     assert _get_check_estimator_ids(val) == expected
 
 
-@parametrize_with_checks(list(chain(_tested_estimators(), _generate_pipeline())))
+@parametrize_with_checks(list(_tested_estimators()))
 def test_estimators(estimator, check, request):
     # Common tests for estimator instances
     with ignore_warnings(
@@ -233,22 +231,6 @@ def test_class_support_removed():
         parametrize_with_checks([LogisticRegression])
 
 
-@parametrize_with_checks(list(_generate_search_cv_instances()))
-def test_search_cv(estimator, check, request):
-    # Common tests for SearchCV instances
-    # We have a separate test because those meta-estimators can accept a
-    # wide range of base estimators (classifiers, regressors, pipelines)
-    with ignore_warnings(
-        category=(
-            FutureWarning,
-            ConvergenceWarning,
-            UserWarning,
-            FitFailedWarning,
-        )
-    ):
-        check(estimator)
-
-
 @pytest.mark.parametrize(
     "estimator", _tested_estimators(), ids=_get_check_estimator_ids
 )
@@ -311,7 +293,6 @@ column_name_estimators = list(
     chain(
         _tested_estimators(),
         [make_pipeline(LogisticRegression(C=1))],
-        list(_generate_search_cv_instances()),
         _estimators_that_predict_in_fit(),
     )
 )
@@ -401,13 +382,7 @@ def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
 
 
 @pytest.mark.parametrize(
-    "estimator",
-    chain(
-        _tested_estimators(),
-        _generate_pipeline(),
-        _generate_search_cv_instances(),
-    ),
-    ids=_get_check_estimator_ids,
+    "estimator", list(_tested_estimators()), ids=_get_check_estimator_ids
 )
 def test_check_param_validation(estimator):
     if isinstance(estimator, FeatureUnion):
