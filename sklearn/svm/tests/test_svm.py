@@ -36,6 +36,7 @@ from sklearn.svm import (  # type: ignore
 )
 from sklearn.svm._classes import _validate_dual_parameter
 from sklearn.utils import check_random_state, shuffle
+from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.fixes import _IS_32BIT, CSR_CONTAINERS, LIL_CONTAINERS
 from sklearn.utils.validation import _num_samples
 
