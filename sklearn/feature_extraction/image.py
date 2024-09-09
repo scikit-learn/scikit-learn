@@ -237,6 +237,9 @@ def grid_to_graph(
     >>> mask[[1, 2], [1, 2], :] = True
     >>> graph = grid_to_graph(*shape_img, mask=mask)
     >>> print(graph)
+    <COOrdinate sparse matrix of dtype 'int64'
+      with 2 stored elements and shape (2, 2)>
+      Coords	Values
       (0, 0)    1
       (1, 1)    1
     """
