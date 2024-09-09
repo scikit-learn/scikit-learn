@@ -93,7 +93,7 @@ Reference Steps
 
       .. code-block:: markdown
 
-        * [ ] Update news and what's new date in release branch
+        * [ ] Update news and what's new date in main branch
         * [ ] Backport news and what's new date in release branch
         {%- if key == "rc" %}
         * [ ] Update the sklearn dev0 version in main branch
