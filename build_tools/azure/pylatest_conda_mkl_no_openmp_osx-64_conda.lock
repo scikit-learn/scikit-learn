@@ -17,7 +17,7 @@ https://repo.anaconda.com/pkgs/main/noarch/tzdata-2024a-h04d1e81_0.conda#452af53
 https://repo.anaconda.com/pkgs/main/osx-64/xz-5.4.6-h6c40b1e_1.conda#b40d69768d28133d8be1843def4f82f5
 https://repo.anaconda.com/pkgs/main/osx-64/zlib-1.2.13-h4b97444_1.conda#38e35f7c817fac0973034bfce6706ec2
 https://repo.anaconda.com/pkgs/main/osx-64/ccache-3.7.9-hf120daa_0.conda#a01515a32e721c51d631283f991bc8ea
-https://repo.anaconda.com/pkgs/main/osx-64/expat-2.6.2-hcec6c5f_0.conda#c748234dd7e242784198ab038372cb0c
+https://repo.anaconda.com/pkgs/main/osx-64/expat-2.6.3-h6d0c2b6_0.conda#7cfb1a4651369640118e6ee80198e682
 https://repo.anaconda.com/pkgs/main/osx-64/intel-openmp-2023.1.0-ha357a0b_43548.conda#ba8a89ffe593eb88e4c01334753c40c3
 https://repo.anaconda.com/pkgs/main/osx-64/lerc-3.0-he9d5cce_0.conda#aec2c3dbef836849c9260f05be04f3db
 https://repo.anaconda.com/pkgs/main/osx-64/libbrotlidec-1.0.9-h6c40b1e_8.conda#6338cd7779e614fc16d835990e627e04
@@ -26,7 +26,7 @@ https://repo.anaconda.com/pkgs/main/osx-64/libgfortran5-11.3.0-h9dfd629_28.conda
 https://repo.anaconda.com/pkgs/main/osx-64/libpng-1.6.39-h6c40b1e_0.conda#a3c824835f53ad27aeb86d2b55e47804
 https://repo.anaconda.com/pkgs/main/osx-64/lz4-c-1.9.4-hcec6c5f_1.conda#aee0efbb45220e1985533dbff48551f8
 https://repo.anaconda.com/pkgs/main/osx-64/ninja-base-1.10.2-haf03e11_5.conda#c857c13129710a61395270656905c4a2
-https://repo.anaconda.com/pkgs/main/osx-64/openssl-3.0.14-h46256e1_0.conda#d722280df65b3308e1b8b1b7777a3305
+https://repo.anaconda.com/pkgs/main/osx-64/openssl-3.0.15-h46256e1_0.conda#3286ae31653124afad386b813a5d17da
 https://repo.anaconda.com/pkgs/main/osx-64/readline-8.2-hca72f7f_0.conda#971667436260e523f6f7355fdfa238bf
 https://repo.anaconda.com/pkgs/main/osx-64/tbb-2021.8.0-ha357a0b_0.conda#fb48530a3eea681c11dafb95b3387c0f
 https://repo.anaconda.com/pkgs/main/osx-64/tk-8.6.14-h4d00af3_0.conda#a2c03940c2ae54614301ec82e6a98d75
@@ -51,7 +51,7 @@ https://repo.anaconda.com/pkgs/main/osx-64/ninja-1.10.2-hecd8cb5_5.conda#a0043b3
 https://repo.anaconda.com/pkgs/main/osx-64/openjpeg-2.5.2-hbf2204d_0.conda#8463f11309271a93d615450382761470
 https://repo.anaconda.com/pkgs/main/osx-64/packaging-24.1-py312hecd8cb5_0.conda#6130dafc4d26d55e93ceab460d2a72b5
 https://repo.anaconda.com/pkgs/main/osx-64/pluggy-1.0.0-py312hecd8cb5_1.conda#647fada22f1697691fdee90b52c99bcb
-https://repo.anaconda.com/pkgs/main/osx-64/pyparsing-3.0.9-py312hecd8cb5_0.conda#d85cf2b81c6d9326a57a6418e14db258
+https://repo.anaconda.com/pkgs/main/osx-64/pyparsing-3.1.2-py312hecd8cb5_0.conda#645e2108165e45a3a385f0e11d1748a1
 https://repo.anaconda.com/pkgs/main/noarch/python-tzdata-2023.3-pyhd3eb1b0_0.conda#479c037de0186d114b9911158427624e
 https://repo.anaconda.com/pkgs/main/osx-64/pytz-2024.1-py312hecd8cb5_0.conda#2b28ec0e0d07f5c0c701f75200b1e8b6
 https://repo.anaconda.com/pkgs/main/osx-64/setuptools-72.1.0-py312hecd8cb5_0.conda#dff219f3528a6e8ad235c48a29cd6dbe
@@ -70,8 +70,8 @@ https://repo.anaconda.com/pkgs/main/osx-64/pytest-cov-4.1.0-py312hecd8cb5_1.cond
 https://repo.anaconda.com/pkgs/main/osx-64/pytest-xdist-3.5.0-py312hecd8cb5_0.conda#d1ecfb3691cceecb1f16bcfdf0b67bb5
 https://repo.anaconda.com/pkgs/main/osx-64/bottleneck-1.3.7-py312h32608ca_0.conda#f96a01eba5ea542cf9c7cc8d77447627
 https://repo.anaconda.com/pkgs/main/osx-64/contourpy-1.2.0-py312ha357a0b_0.conda#57d384ad07152375b40a6293f79e3f0c
-https://repo.anaconda.com/pkgs/main/osx-64/matplotlib-3.8.4-py312hecd8cb5_0.conda#6886c230c2ec2f47621b5cca4c7d493a
-https://repo.anaconda.com/pkgs/main/osx-64/matplotlib-base-3.8.4-py312h7f12edd_0.conda#a4eee14a4dcaa89b306ca33d2d479fa4
+https://repo.anaconda.com/pkgs/main/osx-64/matplotlib-3.9.2-py312hecd8cb5_0.conda#4a0c6fbe79aefa058fddc09690772afa
+https://repo.anaconda.com/pkgs/main/osx-64/matplotlib-base-3.9.2-py312ha7ebc0d_0.conda#a5396c401f535238325577ab702ac32a
 https://repo.anaconda.com/pkgs/main/osx-64/mkl_fft-1.3.8-py312h6c40b1e_0.conda#d59d01b940493f2b6a84aac922fd0c76
 https://repo.anaconda.com/pkgs/main/osx-64/mkl_random-1.2.4-py312ha357a0b_0.conda#c1ea9c8eee79a5af3399f3c31be0e9c6
 https://repo.anaconda.com/pkgs/main/osx-64/numpy-1.26.4-py312hac873b0_0.conda#3150bac1e382156f82a153229e1ebd06
