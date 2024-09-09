@@ -517,7 +517,7 @@ profiling and Cython optimizations.
    sections.
 
 Continuous Integration (CI)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+---------------------------
 
 * Azure pipelines are used for testing scikit-learn on Linux, Mac and Windows,
   with different dependencies and settings.
@@ -526,12 +526,17 @@ Continuous Integration (CI)
   source distributions.
 * Cirrus CI is used to build on ARM.
 
+.. _commit_markers:
+
+Commit message markers
+^^^^^^^^^^^^^^^^^^^^^^
+
 Please note that if one of the following markers appear in the latest commit
 message, the following actions are taken.
 
 ====================== ===================
 Commit Message Marker  Action Taken by CI
----------------------- -------------------
+====================== ===================
 [ci skip]              CI is skipped completely
 [cd build]             CD is run (wheels and source distribution are built)
 [cd build gh]          CD is run only for GitHub Actions
@@ -551,10 +556,40 @@ Commit Message Marker  Action Taken by CI
 Note that, by default, the documentation is built but only the examples
 that are directly modified by the pull request are executed.
 
+Lock files
+^^^^^^^^^^
+
+CIs use lock files to build environments with specific versions of dependencies. When a
+PR needs to modify the dependencies or their versions, the lock files should be updated
+accordingly. This can be done by commenting in the PR:
+
+.. code-block:: text
+
+  @scikit-learn-bot update lock-files
+
+A bot will push a commit to your PR branch with the updated lock files in a few minutes.
+Make sure to tick the *Allow edits from maintainers* checkbox located at the bottom of
+the right sidebar of the PR. You can also specify the options `--select-build`,
+`--skip-build`, and `--select-tag` as in a command line. Use `--help` on the script
+`build_tools/update_environments_and_lock_files.py` for more information. For example,
+
+.. code-block:: text
+
+  @scikit-learn-bot update lock-files --select-tag main-ci --skip-build doc
+
+The bot will automatically add :ref:`commit message markers <commit_markers>` to the
+commit for certain tags. If you want to add more markers manually, you can do so using
+the `--commit-marker` option. For example, the following comment will trigger the bot to
+update documentation-related lock files and add the `[doc build]` marker to the commit:
+
+.. code-block:: text
+
+  @scikit-learn-bot update lock-files --select-build doc --commit-marker "[doc build]"
+
 .. _stalled_pull_request:
 
 Stalled pull requests
-^^^^^^^^^^^^^^^^^^^^^
+---------------------
 
 As contributing a feature can be a lengthy process, some
 pull requests appear inactive but unfinished. In such a case, taking
@@ -586,7 +621,7 @@ them over is a great service for the project. A good etiquette to take over is:
   old one.
 
 Stalled and Unclaimed Issues
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------------
 
 Generally speaking, issues which are up for grabs will have a
 `"help wanted" <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`_.
@@ -920,8 +955,8 @@ To build the documentation, you need to be in the ``doc`` folder:
 
     cd doc
 
-In the vast majority of cases, you only need to generate the full web site,
-without the example gallery:
+In the vast majority of cases, you only need to generate the web site without
+the example gallery:
 
 .. prompt:: bash
 
@@ -936,13 +971,14 @@ To also generate the example gallery you can use:
 
     make html
 
-This will run all the examples, which takes a while. If you only want to generate a few
-examples, which is particularly useful if you are modifying only a few examples, you can
-use:
+This will run all the examples, which takes a while. You can also run only a few examples based on their file names.
+Here is a way to run all examples with filenames containing `plot_calibration`:
 
 .. prompt:: bash
 
-    EXAMPLES_PATTERN=your_regex_goes_here make html
+    EXAMPLES_PATTERN="plot_calibration" make html
+
+You can use regular expressions for more advanced use cases.
 
 Set the environment variable `NO_MATHJAX=1` if you intend to view the documentation in
 an offline setting. To build the PDF manual, run:

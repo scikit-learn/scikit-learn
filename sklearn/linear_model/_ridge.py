@@ -48,7 +48,7 @@ from ..utils.metadata_routing import (
     process_routing,
 )
 from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.validation import _check_sample_weight, check_is_fitted
+from ..utils.validation import _check_sample_weight, check_is_fitted, validate_data
 from ._base import LinearClassifierMixin, LinearModel, _preprocess_data, _rescale_data
 from ._sag import sag_solver
 
@@ -570,9 +570,9 @@ def ridge_regression(
     >>> y = 2.0 * X[:, 0] - 1.0 * X[:, 1] + 0.1 * rng.standard_normal(100)
     >>> coef, intercept = ridge_regression(X, y, alpha=1.0, return_intercept=True)
     >>> list(coef)
-    [1.9..., -1.0..., -0.0..., -0.0...]
+    [np.float64(1.9...), np.float64(-1.0...), np.float64(-0.0...), np.float64(-0.0...)]
     >>> intercept
-    -0.0...
+    np.float64(-0.0...)
     """
     return _ridge_regression(
         X,
@@ -1236,7 +1236,8 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         """
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), self.solver)
         xp, _ = get_namespace(X, y, sample_weight)
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse=_accept_sparse,
@@ -1247,8 +1248,10 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         )
         return super().fit(X, y, sample_weight=sample_weight)
 
-    def _more_tags(self):
-        return {"array_api_support": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.array_api_support = True
+        return tags
 
 
 class _RidgeClassifierMixin(LinearClassifierMixin):
@@ -1285,7 +1288,8 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
             The binarized version of `y`.
         """
         accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), solver)
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse=accept_sparse,
@@ -1334,8 +1338,10 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         """Classes labels."""
         return self._label_binarizer.classes_
 
-    def _more_tags(self):
-        return {"multilabel": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.classifier_tags.multi_label = True
+        return tags
 
 
 class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
@@ -2081,7 +2087,8 @@ class _RidgeGCV(LinearModel):
         -------
         self : object
         """
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse=["csr", "csc", "coo"],
@@ -2249,6 +2256,12 @@ class _RidgeGCV(LinearModel):
                 )
 
         return _score
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        # Required since this is neither a RegressorMixin nor a ClassifierMixin
+        tags.target_tags.required = True
+        return tags
 
 
 class _BaseRidgeCV(LinearModel):
@@ -2669,6 +2682,15 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         super().fit(X, y, sample_weight=sample_weight, **params)
         return self
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_sample_weights_invariance": (
+                "GridSearchCV does not forward the weights to the scorer by default."
+            ),
+        }
+        return tags
+
 
 class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
     """Ridge classifier with built-in cross-validation.
@@ -2878,13 +2900,3 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         target = Y if self.cv is None else y
         super().fit(X, target, sample_weight=sample_weight, **params)
         return self
-
-    def _more_tags(self):
-        return {
-            "multilabel": True,
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            },
-        }

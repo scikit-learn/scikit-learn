@@ -93,7 +93,6 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
-    ignore_warnings,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS
 from sklearn.utils.validation import _num_samples
@@ -273,7 +272,6 @@ def test_SearchCV_with_fit_params(SearchCV):
     searcher.fit(X, y, spam=np.ones(10), eggs=np.zeros(10))
 
 
-@ignore_warnings
 def test_grid_search_no_score():
     # Test grid-search on classifier that has no score function.
     clf = LinearSVC(random_state=0)
@@ -623,7 +621,7 @@ class BrokenClassifier(BaseEstimator):
         return np.zeros(X.shape[0])
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.UndefinedMetricWarning")
 def test_refit():
     # Regression test for bug in refitting
     # Simulates re-fitting a broken estimator; this used to break with
@@ -812,7 +810,6 @@ def test_y_as_list():
     assert hasattr(grid_search, "cv_results_")
 
 
-@ignore_warnings
 def test_pandas_input():
     # check cross_val_score doesn't destroy pandas dataframe
     types = [(MockDataFrame, MockDataFrame)]
@@ -1418,7 +1415,7 @@ def test_search_cv_results_none_param():
         assert_array_equal(grid_search.cv_results_["param_random_state"], [0, None])
 
 
-@ignore_warnings()
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.FitFailedWarning")
 def test_search_cv_timing():
     svc = LinearSVC(random_state=0)
 
@@ -2278,13 +2275,15 @@ def test_search_cv_pairwise_property_delegated_to_base_estimator(pairwise):
     """
 
     class TestEstimator(BaseEstimator):
-        def _more_tags(self):
-            return {"pairwise": pairwise}
+        def __sklearn_tags__(self):
+            tags = super().__sklearn_tags__()
+            tags.input_tags.pairwise = pairwise
+            return tags
 
     est = TestEstimator()
     attr_message = "BaseSearchCV pairwise tag must match estimator"
     cv = GridSearchCV(est, {"n_neighbors": [10]})
-    assert pairwise == cv._get_tags()["pairwise"], attr_message
+    assert pairwise == cv.__sklearn_tags__().input_tags.pairwise, attr_message
 
 
 def test_search_cv__pairwise_property_delegated_to_base_estimator():
@@ -2300,8 +2299,10 @@ def test_search_cv__pairwise_property_delegated_to_base_estimator():
         def __init__(self, pairwise=True):
             self.pairwise = pairwise
 
-        def _more_tags(self):
-            return {"pairwise": self.pairwise}
+        def __sklearn_tags__(self):
+            tags = super().__sklearn_tags__()
+            tags.input_tags.pairwise = self.pairwise
+            return tags
 
     est = EstimatorPairwise()
     attr_message = "BaseSearchCV _pairwise property must match estimator"
@@ -2309,7 +2310,9 @@ def test_search_cv__pairwise_property_delegated_to_base_estimator():
     for _pairwise_setting in [True, False]:
         est.set_params(pairwise=_pairwise_setting)
         cv = GridSearchCV(est, {"n_neighbors": [10]})
-        assert _pairwise_setting == cv._get_tags()["pairwise"], attr_message
+        assert (
+            _pairwise_setting == cv.__sklearn_tags__().input_tags.pairwise
+        ), attr_message
 
 
 def test_search_cv_pairwise_property_equivalence_of_precomputed():
@@ -2783,6 +2786,7 @@ def test_array_api_search_cv_classifier(SearchCV, array_namespace, device, dtype
             LinearDiscriminantAnalysis(),
             {"tol": [1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7]},
             cv=2,
+            error_score="raise",
         )
         searcher.fit(X_xp, y_xp)
         searcher.score(X_xp, y_xp)

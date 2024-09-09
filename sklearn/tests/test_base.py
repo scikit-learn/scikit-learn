@@ -34,9 +34,8 @@ from sklearn.utils._set_output import _get_output_config
 from sklearn.utils._testing import (
     _convert_container,
     assert_array_equal,
-    assert_no_warnings,
-    ignore_warnings,
 )
+from sklearn.utils.validation import _check_n_features, validate_data
 
 
 #############################################################################
@@ -60,23 +59,28 @@ class T(BaseEstimator):
 
 
 class NaNTag(BaseEstimator):
-    def _more_tags(self):
-        return {"allow_nan": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = True
+        return tags
 
 
 class NoNaNTag(BaseEstimator):
-    def _more_tags(self):
-        return {"allow_nan": False}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = False
+        return tags
 
 
 class OverrideTag(NaNTag):
-    def _more_tags(self):
-        return {"allow_nan": False}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = False
+        return tags
 
 
 class DiamondOverwriteTag(NaNTag, NoNaNTag):
-    def _more_tags(self):
-        return dict()
+    pass
 
 
 class InheritDiamondOverwriteTag(DiamondOverwriteTag):
@@ -327,8 +331,8 @@ def test_set_params():
 
     # we don't currently catch if the things in pipeline are estimators
     # bad_pipeline = Pipeline([("bad", NoEstimator())])
-    # assert_raises(AttributeError, bad_pipeline.set_params,
-    #               bad__stupid_param=True)
+    # with pytest.raises(AttributeError):
+    #    bad_pipeline.set_params(bad__stupid_param=True)
 
 
 def test_set_params_passes_all_parameters():
@@ -472,7 +476,10 @@ def test_pickle_version_warning_is_not_raised_with_matching_version():
     tree = DecisionTreeClassifier().fit(iris.data, iris.target)
     tree_pickle = pickle.dumps(tree)
     assert b"_sklearn_version" in tree_pickle
-    tree_restored = assert_no_warnings(pickle.loads, tree_pickle)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        tree_restored = pickle.loads(tree_pickle)
 
     # test that we can predict with the restored decision tree classifier
     score_of_original = tree.score(iris.data, iris.target)
@@ -542,7 +549,11 @@ def test_pickle_version_no_warning_is_issued_with_non_sklearn_estimator():
     try:
         module_backup = TreeNoVersion.__module__
         TreeNoVersion.__module__ = "notsklearn"
-        assert_no_warnings(pickle.loads, tree_pickle_noversion)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+
+            pickle.loads(tree_pickle_noversion)
     finally:
         TreeNoVersion.__module__ = module_backup
 
@@ -600,12 +611,11 @@ class SingleInheritanceEstimator(BaseEstimator):
         self._attribute_not_pickled = None
 
     def __getstate__(self):
-        data = self.__dict__.copy()
-        data["_attribute_not_pickled"] = None
-        return data
+        state = super().__getstate__()
+        state["_attribute_not_pickled"] = None
+        return state
 
 
-@ignore_warnings(category=(UserWarning))
 def test_pickling_works_when_getstate_is_overwritten_in_the_child_class():
     estimator = SingleInheritanceEstimator()
     estimator._attribute_not_pickled = "this attribute should not be pickled"
@@ -621,17 +631,17 @@ def test_tag_inheritance():
 
     nan_tag_est = NaNTag()
     no_nan_tag_est = NoNaNTag()
-    assert nan_tag_est._get_tags()["allow_nan"]
-    assert not no_nan_tag_est._get_tags()["allow_nan"]
+    assert nan_tag_est.__sklearn_tags__().input_tags.allow_nan
+    assert not no_nan_tag_est.__sklearn_tags__().input_tags.allow_nan
 
     redefine_tags_est = OverrideTag()
-    assert not redefine_tags_est._get_tags()["allow_nan"]
+    assert not redefine_tags_est.__sklearn_tags__().input_tags.allow_nan
 
     diamond_tag_est = DiamondOverwriteTag()
-    assert diamond_tag_est._get_tags()["allow_nan"]
+    assert diamond_tag_est.__sklearn_tags__().input_tags.allow_nan
 
     inherit_diamond_tag_est = InheritDiamondOverwriteTag()
-    assert inherit_diamond_tag_est._get_tags()["allow_nan"]
+    assert inherit_diamond_tag_est.__sklearn_tags__().input_tags.allow_nan
 
 
 def test_raises_on_get_params_non_attribute():
@@ -679,25 +689,25 @@ def test_n_features_in_validation():
     """Check that `_check_n_features` validates data when reset=False"""
     est = MyEstimator()
     X_train = [[1, 2, 3], [4, 5, 6]]
-    est._check_n_features(X_train, reset=True)
+    _check_n_features(est, X_train, reset=True)
 
     assert est.n_features_in_ == 3
 
     msg = "X does not contain any features, but MyEstimator is expecting 3 features"
     with pytest.raises(ValueError, match=msg):
-        est._check_n_features("invalid X", reset=False)
+        _check_n_features(est, "invalid X", reset=False)
 
 
 def test_n_features_in_no_validation():
     """Check that `_check_n_features` does not validate data when
     n_features_in_ is not defined."""
     est = MyEstimator()
-    est._check_n_features("invalid X", reset=True)
+    _check_n_features(est, "invalid X", reset=True)
 
     assert not hasattr(est, "n_features_in_")
 
     # does not raise
-    est._check_n_features("invalid X", reset=False)
+    _check_n_features(est, "invalid X", reset=False)
 
 
 def test_feature_names_in():
@@ -709,11 +719,11 @@ def test_feature_names_in():
 
     class NoOpTransformer(TransformerMixin, BaseEstimator):
         def fit(self, X, y=None):
-            self._validate_data(X)
+            validate_data(self, X)
             return self
 
         def transform(self, X):
-            self._validate_data(X, reset=False)
+            validate_data(self, X, reset=False)
             return X
 
     # fit on dataframe saves the feature names
@@ -778,8 +788,8 @@ def test_feature_names_in():
         trans.transform(df_mixed)
 
 
-def test_validate_data_cast_to_ndarray():
-    """Check cast_to_ndarray option of _validate_data."""
+def test_validate_data_skip_check_array():
+    """Check skip_check_array option of _validate_data."""
 
     pd = pytest.importorskip("pandas")
     iris = datasets.load_iris()
@@ -790,33 +800,33 @@ def test_validate_data_cast_to_ndarray():
         pass
 
     no_op = NoOpTransformer()
-    X_np_out = no_op._validate_data(df, cast_to_ndarray=True)
+    X_np_out = validate_data(no_op, df, skip_check_array=False)
     assert isinstance(X_np_out, np.ndarray)
     assert_allclose(X_np_out, df.to_numpy())
 
-    X_df_out = no_op._validate_data(df, cast_to_ndarray=False)
+    X_df_out = validate_data(no_op, df, skip_check_array=True)
     assert X_df_out is df
 
-    y_np_out = no_op._validate_data(y=y, cast_to_ndarray=True)
+    y_np_out = validate_data(no_op, y=y, skip_check_array=False)
     assert isinstance(y_np_out, np.ndarray)
     assert_allclose(y_np_out, y.to_numpy())
 
-    y_series_out = no_op._validate_data(y=y, cast_to_ndarray=False)
+    y_series_out = validate_data(no_op, y=y, skip_check_array=True)
     assert y_series_out is y
 
-    X_np_out, y_np_out = no_op._validate_data(df, y, cast_to_ndarray=True)
+    X_np_out, y_np_out = validate_data(no_op, df, y, skip_check_array=False)
     assert isinstance(X_np_out, np.ndarray)
     assert_allclose(X_np_out, df.to_numpy())
     assert isinstance(y_np_out, np.ndarray)
     assert_allclose(y_np_out, y.to_numpy())
 
-    X_df_out, y_series_out = no_op._validate_data(df, y, cast_to_ndarray=False)
+    X_df_out, y_series_out = validate_data(no_op, df, y, skip_check_array=True)
     assert X_df_out is df
     assert y_series_out is y
 
     msg = "Validation should be done on X, y or both."
     with pytest.raises(ValueError, match=msg):
-        no_op._validate_data()
+        validate_data(no_op)
 
 
 def test_clone_keeps_output_config():
@@ -893,11 +903,11 @@ def test_dataframe_protocol(constructor_name, minversion):
 
     class NoOpTransformer(TransformerMixin, BaseEstimator):
         def fit(self, X, y=None):
-            self._validate_data(X)
+            validate_data(self, X)
             return self
 
         def transform(self, X):
-            return self._validate_data(X, reset=False)
+            return validate_data(self, X, reset=False)
 
     no_op = NoOpTransformer()
     no_op.fit(df)

@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import warnings
 from collections import namedtuple
 from numbers import Integral, Real
@@ -20,7 +23,12 @@ from ..utils.metadata_routing import (
     _raise_for_params,
     process_routing,
 )
-from ..utils.validation import FLOAT_DTYPES, _check_feature_names_in, check_is_fitted
+from ..utils.validation import (
+    FLOAT_DTYPES,
+    _check_feature_names_in,
+    check_is_fitted,
+    validate_data,
+)
 from ._base import SimpleImputer, _BaseImputer, _check_inputs_dtype
 
 _ImputerTriplet = namedtuple(
@@ -611,16 +619,17 @@ class IterativeImputer(_BaseImputer):
             number of features.
         """
         if is_scalar_nan(self.missing_values):
-            force_all_finite = "allow-nan"
+            ensure_all_finite = "allow-nan"
         else:
-            force_all_finite = True
+            ensure_all_finite = True
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             dtype=FLOAT_DTYPES,
             order="F",
             reset=in_fit,
-            force_all_finite=force_all_finite,
+            ensure_all_finite=ensure_all_finite,
         )
         _check_inputs_dtype(X, self.missing_values)
 
@@ -677,7 +686,7 @@ class IterativeImputer(_BaseImputer):
         limit = limit_bound if limit is None else limit
         if np.isscalar(limit):
             limit = np.full(n_features, limit)
-        limit = check_array(limit, force_all_finite=False, copy=False, ensure_2d=False)
+        limit = check_array(limit, ensure_all_finite=False, copy=False, ensure_2d=False)
         if not limit.shape[0] == n_features:
             raise ValueError(
                 f"'{limit_type}_value' should be of "

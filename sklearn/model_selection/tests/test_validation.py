@@ -586,10 +586,10 @@ def check_cross_validate_multi_metric(clf, X, y, scores, cv):
             )
 
             # Make sure all the arrays are of np.ndarray type
-            assert type(cv_results["test_r2"]) == np.ndarray
-            assert type(cv_results["test_neg_mean_squared_error"]) == np.ndarray
-            assert type(cv_results["fit_time"]) == np.ndarray
-            assert type(cv_results["score_time"]) == np.ndarray
+            assert isinstance(cv_results["test_r2"], np.ndarray)
+            assert isinstance(cv_results["test_neg_mean_squared_error"], np.ndarray)
+            assert isinstance(cv_results["fit_time"], np.ndarray)
+            assert isinstance(cv_results["score_time"], np.ndarray)
 
             # Ensure all the times are within sane limits
             assert np.all(cv_results["fit_time"] >= 0)
@@ -620,7 +620,6 @@ def test_cross_val_score_predict_groups():
             cross_val_predict(estimator=clf, X=X, y=y, cv=cv)
 
 
-@pytest.mark.filterwarnings("ignore: Using or importing the ABCs from")
 def test_cross_val_score_pandas():
     # check cross_val_score doesn't destroy pandas dataframe
     types = [(MockDataFrame, MockDataFrame)]
@@ -1116,8 +1115,6 @@ def test_cross_val_predict_input_types(coo_container):
     assert_array_equal(predictions.shape, (150,))
 
 
-@pytest.mark.filterwarnings("ignore: Using or importing the ABCs from")
-# python3.7 deprecation warnings in pandas via matplotlib :-/
 def test_cross_val_predict_pandas():
     # check cross_val_score doesn't destroy pandas dataframe
     types = [(MockDataFrame, MockDataFrame)]
@@ -2074,7 +2071,6 @@ def test_score_memmap():
                 sleep(1.0)
 
 
-@pytest.mark.filterwarnings("ignore: Using or importing the ABCs from")
 def test_permutation_test_score_pandas():
     # check permutation_test_score doesn't destroy pandas dataframe
     types = [(MockDataFrame, MockDataFrame)]

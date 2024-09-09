@@ -9,10 +9,11 @@ regression with large design matrix), this approach gives very
 significant speedups.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # This is a modified file from scipy.optimize
 # Original authors: Travis Oliphant, Eric Jones
-# Modifications by Gael Varoquaux, Mathieu Blondel and Tom Dupre la Tour
-# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 
