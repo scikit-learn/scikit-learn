@@ -203,15 +203,15 @@ def mean_absolute_error(
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> mean_absolute_error(y_true, y_pred)
-    0.5
+    np.float64(0.5)
     >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> mean_absolute_error(y_true, y_pred)
-    0.75
+    np.float64(0.75)
     >>> mean_absolute_error(y_true, y_pred, multioutput='raw_values')
     array([0.5, 1. ])
     >>> mean_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    0.85...
+    np.float64(0.85...)
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
@@ -382,19 +382,19 @@ def mean_absolute_percentage_error(
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> mean_absolute_percentage_error(y_true, y_pred)
-    0.3273...
+    np.float64(0.3273...)
     >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> mean_absolute_percentage_error(y_true, y_pred)
-    0.5515...
+    np.float64(0.5515...)
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    0.6198...
+    np.float64(0.6198...)
     >>> # the value when some element of the y_true is zero is arbitrarily high because
     >>> # of the division by epsilon
     >>> y_true = [1., 0., 2.4, 7.]
     >>> y_pred = [1.2, 0.1, 2.4, 8.]
     >>> mean_absolute_percentage_error(y_true, y_pred)
-    112589990684262.48
+    np.float64(112589990684262.48)
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
@@ -477,15 +477,15 @@ def mean_squared_error(
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> mean_squared_error(y_true, y_pred)
-    0.375
+    np.float64(0.375)
     >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
     >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
     >>> mean_squared_error(y_true, y_pred)
-    0.708...
+    np.float64(0.708...)
     >>> mean_squared_error(y_true, y_pred, multioutput='raw_values')
     array([0.41666667, 1.        ])
     >>> mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    0.825...
+    np.float64(0.825...)
     """
     # TODO(1.6): remove
     if squared != "deprecated":
@@ -660,15 +660,15 @@ def mean_squared_log_error(
     >>> y_true = [3, 5, 2.5, 7]
     >>> y_pred = [2.5, 5, 4, 8]
     >>> mean_squared_log_error(y_true, y_pred)
-    0.039...
+    np.float64(0.039...)
     >>> y_true = [[0.5, 1], [1, 2], [7, 6]]
     >>> y_pred = [[0.5, 2], [1, 2.5], [8, 8]]
     >>> mean_squared_log_error(y_true, y_pred)
-    0.044...
+    np.float64(0.044...)
     >>> mean_squared_log_error(y_true, y_pred, multioutput='raw_values')
     array([0.00462428, 0.08377444])
     >>> mean_squared_log_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    0.060...
+    np.float64(0.060...)
     """
     # TODO(1.6): remove
     if squared != "deprecated":
@@ -1361,7 +1361,7 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
     >>> y_true = [2, 0, 1, 4]
     >>> y_pred = [0.5, 0.5, 2., 2.]
     >>> mean_tweedie_deviance(y_true, y_pred, power=1)
-    1.4260...
+    np.float64(1.4260...)
     """
     y_type, y_true, y_pred, _ = _check_reg_targets(
         y_true, y_pred, None, dtype=[np.float64, np.float32]
@@ -1437,7 +1437,7 @@ def mean_poisson_deviance(y_true, y_pred, *, sample_weight=None):
     >>> y_true = [2, 0, 1, 4]
     >>> y_pred = [0.5, 0.5, 2., 2.]
     >>> mean_poisson_deviance(y_true, y_pred)
-    1.4260...
+    np.float64(1.4260...)
     """
     return mean_tweedie_deviance(y_true, y_pred, sample_weight=sample_weight, power=1)
 
@@ -1481,7 +1481,7 @@ def mean_gamma_deviance(y_true, y_pred, *, sample_weight=None):
     >>> y_true = [2, 0.5, 1, 4]
     >>> y_pred = [0.5, 0.5, 2., 2.]
     >>> mean_gamma_deviance(y_true, y_pred)
-    1.0568...
+    np.float64(1.0568...)
     """
     return mean_tweedie_deviance(y_true, y_pred, sample_weight=sample_weight, power=2)
 
@@ -1567,13 +1567,13 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     >>> y_true = [0.5, 1, 2.5, 7]
     >>> y_pred = [1, 1, 5, 3.5]
     >>> d2_tweedie_score(y_true, y_pred)
-    0.285...
+    np.float64(0.285...)
     >>> d2_tweedie_score(y_true, y_pred, power=1)
-    0.487...
+    np.float64(0.487...)
     >>> d2_tweedie_score(y_true, y_pred, power=2)
-    0.630...
+    np.float64(0.630...)
     >>> d2_tweedie_score(y_true, y_true, power=2)
-    1.0
+    np.float64(1.0)
     """
     y_type, y_true, y_pred, _ = _check_reg_targets(
         y_true, y_pred, None, dtype=[np.float64, np.float32]
