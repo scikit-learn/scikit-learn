@@ -32,7 +32,7 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
@@ -117,7 +117,7 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -198,7 +198,7 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -232,7 +232,7 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Download artifacts
         uses: actions/download-artifact@v4
