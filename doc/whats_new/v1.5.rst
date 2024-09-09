@@ -45,6 +45,22 @@ Changelog
   transform output is set to `pandas` or `polars`, since it isn't a transformer.
   :pr:`29401` by :user:`Stefanie Senger <StefanieSenger>`.
 
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Increase rank defficiency threshold in the whitening step of
+  :class:`decomposition.FastICA` with `whiten_solver="eigh"` to improve the
+  platform-agnosticity of the estimator.
+  :pr:`29612` by :user:`Olivier Grisel <ogrisel>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fix a regression in :func:`metrics.accuracy_score` and in
+  :func:`metrics.zero_one_loss` causing an error for Array API dispatch with multilabel
+  inputs.
+  :pr:`29336` by :user:`Edoardo Abati <EdAbati>`.
+
 :mod:`sklearn.svm`
 ..................
 
@@ -87,11 +103,10 @@ Changelog
   instead of implicitly converting those inputs as regular NumPy arrays.
   :pr:`29119` by :user:`Olivier Grisel`.
 
-- |Fix| Fix a regression in :func:`metrics.accuracy_score` and in
+- |Fix| Fix a regression in
   :func:`metrics.zero_one_loss` causing an error for Array API dispatch with multilabel
   inputs.
-  :pr:`29269` by :user:`Yaroslav Korobko <Tialo>` and
-  :pr:`29336` by :user:`Edoardo Abati <EdAbati>`.
+  :pr:`29269` by :user:`Yaroslav Korobko <Tialo>`.
 
 :mod:`sklearn.model_selection`
 ..............................
