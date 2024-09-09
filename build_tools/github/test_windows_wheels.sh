@@ -23,10 +23,6 @@ docker container run \
 
 docker container run \
     --rm scikit-learn/minimal-windows \
-    powershell -Command "python -m pip install  -c 'import sklearn; sklearn.show_versions()'"
-
-docker container run \
-    --rm scikit-learn/minimal-windows \
     powershell -Command "python -c 'import sklearn; sklearn.show_versions()'"
 
 docker container run \
