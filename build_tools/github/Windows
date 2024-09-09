@@ -3,7 +3,6 @@ ARG PYTHON_VERSION
 FROM winamd64/python:$PYTHON_VERSION-windowsservercore
 
 ARG WHEEL_NAME
-ARG CIBW_TEST_REQUIRES
 
 # Copy and install the Windows wheel
 COPY $WHEEL_NAME $WHEEL_NAME

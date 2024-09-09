@@ -25,4 +25,16 @@ docker exec $container_id \
 
 docker exec $container_id \
     -e SKLEARN_SKIP_NETWORK_TESTS=1 \
-    powershell -Command "pytest --pyargs sklearn"
+    powershell -Command "which python"
+
+docker exec $container_id \
+    -e SKLEARN_SKIP_NETWORK_TESTS=1 \
+    powershell -Command "which pytest"
+
+docker exec $container_id \
+    -e SKLEARN_SKIP_NETWORK_TESTS=1 \
+    powershell -Command "python -m pip list"
+
+docker exec $container_id \
+    -e SKLEARN_SKIP_NETWORK_TESTS=1 \
+    powershell -Command "python -m pytest --pyargs sklearn"
