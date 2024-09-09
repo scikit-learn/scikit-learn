@@ -24,8 +24,7 @@ docker exec $container_id \
     powershell -Command "python -c 'import sklearn; sklearn.show_versions()'"
 
 docker exec $container_id \
-    -e SKLEARN_SKIP_NETWORK_TESTS=1 \
-    powershell -Command "python -m pip list"
+    powershell -Command "python -m pip list" || echo pip list failed
 
 docker exec $container_id \
     -e SKLEARN_SKIP_NETWORK_TESTS=1 \
