@@ -16,6 +16,7 @@ from ..metrics.pairwise import KERNEL_PARAMS, pairwise_kernels
 from ..neighbors import NearestNeighbors, kneighbors_graph
 from ..utils import as_float_array, check_random_state
 from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils.validation import validate_data
 from ._kmeans import k_means
 
 
@@ -685,7 +686,8 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         self : object
             A fitted instance of the estimator.
         """
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=["csr", "csc", "coo"],
             dtype=np.float64,
@@ -788,11 +790,10 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         """
         return super().fit_predict(X, y)
 
-    def _more_tags(self):
-        return {
-            "pairwise": self.affinity
-            in [
-                "precomputed",
-                "precomputed_nearest_neighbors",
-            ]
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.pairwise = self.affinity in [
+            "precomputed",
+            "precomputed_nearest_neighbors",
+        ]
+        return tags

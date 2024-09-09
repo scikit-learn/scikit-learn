@@ -21,7 +21,7 @@ from ..exceptions import NotFittedError
 from ..preprocessing import normalize
 from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
 from ..utils.fixes import _IS_32BIT
-from ..utils.validation import FLOAT_DTYPES, check_array, check_is_fitted
+from ..utils.validation import FLOAT_DTYPES, check_array, check_is_fitted, validate_data
 from ._hash import FeatureHasher
 from ._stop_words import ENGLISH_STOP_WORDS
 
@@ -908,8 +908,11 @@ class HashingVectorizer(
             alternate_sign=self.alternate_sign,
         )
 
-    def _more_tags(self):
-        return {"X_types": ["string"]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.string = True
+        tags.input_tags.two_d_array = False
+        return tags
 
 
 def _document_frequency(X):
@@ -1465,8 +1468,11 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             dtype=object,
         )
 
-    def _more_tags(self):
-        return {"X_types": ["string"]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.string = True
+        tags.input_tags.two_d_array = False
+        return tags
 
 
 def _make_int_array():
@@ -1638,8 +1644,8 @@ class TfidfTransformer(
         # large sparse data is not supported for 32bit platforms because
         # _document_frequency uses np.bincount which works on arrays of
         # dtype NPY_INTP which is int32 for 32bit platforms. See #20923
-        X = self._validate_data(
-            X, accept_sparse=("csr", "csc"), accept_large_sparse=not _IS_32BIT
+        X = validate_data(
+            self, X, accept_sparse=("csr", "csc"), accept_large_sparse=not _IS_32BIT
         )
         if not sp.issparse(X):
             X = sp.csr_matrix(X)
@@ -1679,7 +1685,8 @@ class TfidfTransformer(
             Tf-idf-weighted document-term matrix.
         """
         check_is_fitted(self)
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse="csr",
             dtype=[np.float64, np.float32],
@@ -1703,13 +1710,13 @@ class TfidfTransformer(
 
         return X
 
-    def _more_tags(self):
-        return {
-            "X_types": ["2darray", "sparse"],
-            # FIXME: np.float16 could be preserved if _inplace_csr_row_normalize_l2
-            # accepted it.
-            "preserves_dtype": [np.float64, np.float32],
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        # FIXME: np.float16 could be preserved if _inplace_csr_row_normalize_l2
+        # accepted it.
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
 
 
 class TfidfVectorizer(CountVectorizer):
@@ -2109,5 +2116,9 @@ class TfidfVectorizer(CountVectorizer):
         X = super().transform(raw_documents)
         return self._tfidf.transform(X, copy=False)
 
-    def _more_tags(self):
-        return {"X_types": ["string"], "_skip_test": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.string = True
+        tags.input_tags.two_d_array = False
+        tags._skip_test = True
+        return tags
