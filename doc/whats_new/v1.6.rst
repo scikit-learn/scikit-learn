@@ -261,6 +261,11 @@ Changelog
   has no effect. `copy_X` will be removed in 1.8.
   :pr:`29105` by :user:`Adam Li <adam2392>`.
 
+- |Fix| :class:`linear_model.LassoCV` and :class:`linear_model.ElasticNetCV` now
+  take sample weights into accounts to define the search grid for the internally tuned
+  `alpha` hyper-parameter. :pr:`29442` by :user:`John Hopfensperger <s-banach> and
+  :user:`Shruti Nath <snath-xoc>`.
+
 :mod:`sklearn.manifold`
 .......................
 
