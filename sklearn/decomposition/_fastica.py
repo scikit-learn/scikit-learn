@@ -23,7 +23,7 @@ from ..base import (
 from ..exceptions import ConvergenceWarning
 from ..utils import as_float_array, check_array, check_random_state
 from ..utils._param_validation import Interval, Options, StrOptions, validate_params
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, validate_data
 
 __all__ = ["fastica", "FastICA"]
 
@@ -560,8 +560,12 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         S : ndarray of shape (n_samples, n_components) or None
             Sources matrix. `None` if `compute_sources` is `False`.
         """
-        XT = self._validate_data(
-            X, copy=self.whiten, dtype=[np.float64, np.float32], ensure_min_samples=2
+        XT = validate_data(
+            self,
+            X,
+            copy=self.whiten,
+            dtype=[np.float64, np.float32],
+            ensure_min_samples=2,
         ).T
         fun_args = {} if self.fun_args is None else self.fun_args
         random_state = check_random_state(self.random_state)
@@ -752,8 +756,12 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = self._validate_data(
-            X, copy=(copy and self.whiten), dtype=[np.float64, np.float32], reset=False
+        X = validate_data(
+            self,
+            X,
+            copy=(copy and self.whiten),
+            dtype=[np.float64, np.float32],
+            reset=False,
         )
         if self.whiten:
             X -= self.mean_

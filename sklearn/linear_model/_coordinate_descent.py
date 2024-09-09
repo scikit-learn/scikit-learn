@@ -35,6 +35,7 @@ from ..utils.validation import (
     check_random_state,
     column_or_1d,
     has_fit_parameter,
+    validate_data,
 )
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
@@ -973,7 +974,8 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         # when bypassing checks
         if check_input:
             X_copied = self.copy_X and self.fit_intercept
-            X, y = self._validate_data(
+            X, y = validate_data(
+                self,
                 X,
                 y,
                 accept_sparse="csc",
@@ -1612,8 +1614,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 copy=False,
                 accept_large_sparse=False,
             )
-            X, y = self._validate_data(
-                X, y, validate_separately=(check_X_params, check_y_params)
+            X, y = validate_data(
+                self, X, y, validate_separately=(check_X_params, check_y_params)
             )
             if sparse.issparse(X):
                 if hasattr(reference_to_old_X, "data") and not np.may_share_memory(
@@ -1637,8 +1639,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 force_writeable=True,
                 copy=copy_X,
             )
-            X, y = self._validate_data(
-                X, y, validate_separately=(check_X_params, check_y_params)
+            X, y = validate_data(
+                self, X, y, validate_separately=(check_X_params, check_y_params)
             )
             copy_X = False
 
@@ -2599,8 +2601,8 @@ class MultiTaskElasticNet(Lasso):
             copy=self.copy_X and self.fit_intercept,
         )
         check_y_params = dict(ensure_2d=False, order="F")
-        X, y = self._validate_data(
-            X, y, validate_separately=(check_X_params, check_y_params)
+        X, y = validate_data(
+            self, X, y, validate_separately=(check_X_params, check_y_params)
         )
         check_consistent_length(X, y)
         y = y.astype(X.dtype)

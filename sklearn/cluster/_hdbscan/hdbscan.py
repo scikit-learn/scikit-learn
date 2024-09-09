@@ -51,7 +51,11 @@ from ...metrics._dist_metrics import DistanceMetric
 from ...metrics.pairwise import _VALID_METRICS
 from ...neighbors import BallTree, KDTree, NearestNeighbors
 from ...utils._param_validation import Interval, StrOptions
-from ...utils.validation import _allclose_dense_sparse, _assert_all_finite
+from ...utils.validation import (
+    _allclose_dense_sparse,
+    _assert_all_finite,
+    validate_data,
+)
 from ._linkage import (
     MST_edge_dtype,
     make_single_linkage,
@@ -734,7 +738,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         self._metric_params = self.metric_params or {}
         if self.metric != "precomputed":
             # Non-precomputed matrices may contain non-finite values.
-            X = self._validate_data(
+            X = validate_data(
+                self,
                 X,
                 accept_sparse=["csr", "lil"],
                 ensure_all_finite=False,
@@ -769,7 +774,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 X = X[finite_index]
         elif issparse(X):
             # Handle sparse precomputed distance matrices separately
-            X = self._validate_data(
+            X = validate_data(
+                self,
                 X,
                 accept_sparse=["csr", "lil"],
                 dtype=np.float64,
@@ -781,8 +787,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
             # Perform data validation after removing infinite values (numpy.inf)
             # from the given distance matrix.
-            X = self._validate_data(
-                X, ensure_all_finite=False, dtype=np.float64, force_writeable=True
+            X = validate_data(
+                self, X, ensure_all_finite=False, dtype=np.float64, force_writeable=True
             )
             if np.isnan(X).any():
                 # TODO: Support np.nan in Cython implementation for precomputed

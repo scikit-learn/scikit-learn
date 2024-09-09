@@ -16,11 +16,14 @@ from ..utils._set_output import (
 from ..utils.metaestimators import available_if
 from ..utils.validation import (
     _allclose_dense_sparse,
+    _check_feature_names,
     _check_feature_names_in,
+    _check_n_features,
     _get_feature_names,
     _is_pandas_df,
     _is_polars_df,
     check_array,
+    validate_data,
 )
 
 
@@ -177,13 +180,13 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
     def _check_input(self, X, *, reset):
         if self.validate:
-            return self._validate_data(X, accept_sparse=self.accept_sparse, reset=reset)
+            return validate_data(self, X, accept_sparse=self.accept_sparse, reset=reset)
         elif reset:
             # Set feature_names_in_ and n_features_in_ even if validate=False
             # We run this only when reset==True to store the attributes but not
             # validate them, because validate=False
-            self._check_n_features(X, reset=reset)
-            self._check_feature_names(X, reset=reset)
+            _check_n_features(self, X, reset=reset)
+            _check_feature_names(self, X, reset=reset)
         return X
 
     def _check_inverse_transform(self, X):
