@@ -33,7 +33,7 @@ from ..utils._param_validation import (
     StrOptions,
     validate_params,
 )
-from ..utils.validation import check_memory
+from ..utils.validation import check_memory, validate_data
 
 
 class OPTICS(ClusterMixin, BaseEstimator):
@@ -327,7 +327,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
             Returns a fitted instance of self.
         """
         dtype = bool if self.metric in PAIRWISE_BOOLEAN_FUNCTIONS else float
-        if dtype == bool and X.dtype != bool:
+        if dtype is bool and X.dtype != bool:
             msg = (
                 "Data will be converted to boolean for"
                 f" metric {self.metric}, to avoid this warning,"
@@ -335,7 +335,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
             )
             warnings.warn(msg, DataConversionWarning)
 
-        X = self._validate_data(X, dtype=dtype, accept_sparse="csr")
+        X = validate_data(self, X, dtype=dtype, accept_sparse="csr")
         if self.metric == "precomputed" and issparse(X):
             X = X.copy()  # copy to avoid in-place modification
             with warnings.catch_warnings():

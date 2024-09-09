@@ -35,6 +35,7 @@ from ..utils.validation import (
     check_random_state,
     column_or_1d,
     has_fit_parameter,
+    validate_data,
 )
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
@@ -98,6 +99,7 @@ def _alpha_grid(
     eps=1e-3,
     n_alphas=100,
     copy_X=True,
+    sample_weight=None,
 ):
     """Compute the grid of alpha values for elastic net parameter search
 
@@ -132,6 +134,8 @@ def _alpha_grid(
 
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
+
+    sample_weight : ndarray of shape (n_samples,), default=None
     """
     if l1_ratio == 0:
         raise ValueError(
@@ -140,43 +144,39 @@ def _alpha_grid(
             "your estimator with the appropriate `alphas=` "
             "argument."
         )
-    n_samples = len(y)
-
-    sparse_center = False
-    if Xy is None:
-        X_sparse = sparse.issparse(X)
-        sparse_center = X_sparse and fit_intercept
-        X = check_array(
-            X, accept_sparse="csc", copy=(copy_X and fit_intercept and not X_sparse)
+    if Xy is not None:
+        Xyw = Xy
+    else:
+        X, y, X_offset, _, _ = _preprocess_data(
+            X,
+            y,
+            fit_intercept=fit_intercept,
+            copy=copy_X,
+            sample_weight=sample_weight,
+            check_input=False,
         )
-        if not X_sparse:
-            # X can be touched inplace thanks to the above line
-            X, y, _, _, _ = _preprocess_data(
-                X, y, fit_intercept=fit_intercept, copy=False
-            )
-        Xy = safe_sparse_dot(X.T, y, dense_output=True)
+        if sample_weight is not None:
+            if y.ndim > 1:
+                yw = y * sample_weight.reshape(-1, 1)
+            else:
+                yw = y * sample_weight
+        else:
+            yw = y
+        if sparse.issparse(X):
+            Xyw = safe_sparse_dot(X.T, yw, dense_output=True) - np.sum(yw) * X_offset
+        else:
+            Xyw = np.dot(X.T, yw)
 
-        if sparse_center:
-            # Workaround to find alpha_max for sparse matrices.
-            # since we should not destroy the sparsity of such matrices.
-            _, _, X_offset, _, X_scale = _preprocess_data(
-                X, y, fit_intercept=fit_intercept
-            )
-            mean_dot = X_offset * np.sum(y)
+    if Xyw.ndim == 1:
+        Xyw = Xyw[:, np.newaxis]
+    if sample_weight is not None:
+        n_samples = sample_weight.sum()
+    else:
+        n_samples = X.shape[0]
+    alpha_max = np.sqrt(np.sum(Xyw**2, axis=1)).max() / (n_samples * l1_ratio)
 
-    if Xy.ndim == 1:
-        Xy = Xy[:, np.newaxis]
-
-    if sparse_center:
-        if fit_intercept:
-            Xy -= mean_dot[:, np.newaxis]
-
-    alpha_max = np.sqrt(np.sum(Xy**2, axis=1)).max() / (n_samples * l1_ratio)
-
-    if alpha_max <= np.finfo(float).resolution:
-        alphas = np.empty(n_alphas)
-        alphas.fill(np.finfo(float).resolution)
-        return alphas
+    if alpha_max <= np.finfo(np.float64).resolution:
+        return np.full(n_alphas, np.finfo(np.float64).resolution)
 
     return np.geomspace(alpha_max, alpha_max * eps, num=n_alphas)
 
@@ -973,7 +973,8 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         # when bypassing checks
         if check_input:
             X_copied = self.copy_X and self.fit_intercept
-            X, y = self._validate_data(
+            X, y = validate_data(
+                self,
                 X,
                 y,
                 accept_sparse="csc",
@@ -1612,8 +1613,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 copy=False,
                 accept_large_sparse=False,
             )
-            X, y = self._validate_data(
-                X, y, validate_separately=(check_X_params, check_y_params)
+            X, y = validate_data(
+                self, X, y, validate_separately=(check_X_params, check_y_params)
             )
             if sparse.issparse(X):
                 if hasattr(reference_to_old_X, "data") and not np.may_share_memory(
@@ -1637,8 +1638,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 force_writeable=True,
                 copy=copy_X,
             )
-            X, y = self._validate_data(
-                X, y, validate_separately=(check_X_params, check_y_params)
+            X, y = validate_data(
+                self, X, y, validate_separately=(check_X_params, check_y_params)
             )
             copy_X = False
 
@@ -1702,6 +1703,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                     eps=self.eps,
                     n_alphas=self.n_alphas,
                     copy_X=self.copy_X,
+                    sample_weight=sample_weight,
                 )
                 for l1_ratio in l1_ratios
             ]
@@ -1832,16 +1834,16 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         self.n_iter_ = model.n_iter_
         return self
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
         # Note: check_sample_weights_invariance(kind='ones') should work, but
         # currently we can only mark a whole test as xfail.
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            }
+        tags._xfail_checks = {
+            "check_sample_weights_invariance": (
+                "zero sample_weight is not equivalent to removing samples"
+            ),
         }
+        return tags
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.
@@ -2080,8 +2082,50 @@ class LassoCV(RegressorMixin, LinearModelCV):
     def _is_multitask(self):
         return False
 
-    def _more_tags(self):
-        return {"multioutput": False}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.multi_output = False
+        return tags
+
+    def fit(self, X, y, sample_weight=None, **params):
+        """Fit Lasso model with coordinate descent.
+
+        Fit is on grid of alphas and best alpha estimated by cross-validation.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training data. Pass directly as Fortran-contiguous data
+            to avoid unnecessary memory duplication. If y is mono-output,
+            X can be sparse. Note that large sparse matrices and arrays
+            requiring `int64` indices are not accepted.
+
+        y : array-like of shape (n_samples,)
+            Target values.
+
+        sample_weight : float or array-like of shape (n_samples,), \
+                default=None
+            Sample weights used for fitting and evaluation of the weighted
+            mean squared error of each cv-fold. Note that the cross validated
+            MSE that is finally used to find the best model is the unweighted
+            mean over the (weighted) MSEs of each test fold.
+
+        **params : dict, default=None
+            Parameters to be passed to the CV splitter.
+
+            .. versionadded:: 1.4
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
+
+        Returns
+        -------
+        self : object
+            Returns an instance of fitted model.
+        """
+        return super().fit(X, y, sample_weight=sample_weight, **params)
 
 
 class ElasticNetCV(RegressorMixin, LinearModelCV):
@@ -2319,8 +2363,50 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     def _is_multitask(self):
         return False
 
-    def _more_tags(self):
-        return {"multioutput": False}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.multi_output = False
+        return tags
+
+    def fit(self, X, y, sample_weight=None, **params):
+        """Fit ElasticNet model with coordinate descent.
+
+        Fit is on grid of alphas and best alpha estimated by cross-validation.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training data. Pass directly as Fortran-contiguous data
+            to avoid unnecessary memory duplication. If y is mono-output,
+            X can be sparse. Note that large sparse matrices and arrays
+            requiring `int64` indices are not accepted.
+
+        y : array-like of shape (n_samples,)
+            Target values.
+
+        sample_weight : float or array-like of shape (n_samples,), \
+                default=None
+            Sample weights used for fitting and evaluation of the weighted
+            mean squared error of each cv-fold. Note that the cross validated
+            MSE that is finally used to find the best model is the unweighted
+            mean over the (weighted) MSEs of each test fold.
+
+        **params : dict, default=None
+            Parameters to be passed to the CV splitter.
+
+            .. versionadded:: 1.4
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
+
+        Returns
+        -------
+        self : object
+            Returns an instance of fitted model.
+        """
+        return super().fit(X, y, sample_weight=sample_weight, **params)
 
 
 ###############################################################################
@@ -2515,8 +2601,8 @@ class MultiTaskElasticNet(Lasso):
             copy=self.copy_X and self.fit_intercept,
         )
         check_y_params = dict(ensure_2d=False, order="F")
-        X, y = self._validate_data(
-            X, y, validate_separately=(check_X_params, check_y_params)
+        X, y = validate_data(
+            self, X, y, validate_separately=(check_X_params, check_y_params)
         )
         check_consistent_length(X, y)
         y = y.astype(X.dtype)
@@ -2572,8 +2658,11 @@ class MultiTaskElasticNet(Lasso):
         # return self for chaining fit and predict calls
         return self
 
-    def _more_tags(self):
-        return {"multioutput_only": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.multi_output = True
+        tags.target_tags.single_output = False
+        return tags
 
 
 class MultiTaskLasso(MultiTaskElasticNet):
@@ -2939,11 +3028,14 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     def _is_multitask(self):
         return True
 
-    def _more_tags(self):
-        return {"multioutput_only": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.multi_output = True
+        tags.target_tags.single_output = False
+        return tags
 
     # This is necessary as LinearModelCV now supports sample_weight while
-    # MultiTaskElasticNet does not (yet).
+    # MultiTaskElasticNetCV does not (yet).
     def fit(self, X, y, **params):
         """Fit MultiTaskElasticNet model with coordinate descent.
 
@@ -3177,11 +3269,14 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     def _is_multitask(self):
         return True
 
-    def _more_tags(self):
-        return {"multioutput_only": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.multi_output = True
+        tags.target_tags.single_output = False
+        return tags
 
     # This is necessary as LinearModelCV now supports sample_weight while
-    # MultiTaskElasticNet does not (yet).
+    # MultiTaskLassoCV does not (yet).
     def fit(self, X, y, **params):
         """Fit MultiTaskLasso model with coordinate descent.
 

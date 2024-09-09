@@ -20,6 +20,14 @@ Version 1.5.2
 
 **release date of 1.5.2**
 
+Changes impacting many modules
+------------------------------
+
+- |Fix| Fixed performance regression in a few Cython modules in
+  `sklearn._loss`, `sklearn.manifold`, `sklearn.metrics` and `sklearn.utils`,
+  which were built without OpenMP support.
+  :pr:`29694` by :user:`Loïc Estèvce <lesteve>`.
+
 Changelog
 ---------
 
@@ -36,6 +44,29 @@ Changelog
 - |Fix| Fixed :class:`compose.TransformedTargetRegressor` not to raise `UserWarning` if
   transform output is set to `pandas` or `polars`, since it isn't a transformer.
   :pr:`29401` by :user:`Stefanie Senger <StefanieSenger>`.
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Increase rank defficiency threshold in the whitening step of
+  :class:`decomposition.FastICA` with `whiten_solver="eigh"` to improve the
+  platform-agnosticity of the estimator.
+  :pr:`29612` by :user:`Olivier Grisel <ogrisel>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fix a regression in :func:`metrics.accuracy_score` and in
+  :func:`metrics.zero_one_loss` causing an error for Array API dispatch with multilabel
+  inputs.
+  :pr:`29336` by :user:`Edoardo Abati <EdAbati>`.
+
+:mod:`sklearn.svm`
+..................
+
+- |Fix| Fixed a regression in :class:`svm.SVC` and :class:`svm.SVR` such that we accept
+  `C=float("inf")`.
+  :pr:`29780` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 .. _changes_1_5_1:
 
@@ -72,11 +103,10 @@ Changelog
   instead of implicitly converting those inputs as regular NumPy arrays.
   :pr:`29119` by :user:`Olivier Grisel`.
 
-- |Fix| Fix a regression in :func:`metrics.accuracy_score` and in
+- |Fix| Fix a regression in
   :func:`metrics.zero_one_loss` causing an error for Array API dispatch with multilabel
   inputs.
-  :pr:`29269` by :user:`Yaroslav Korobko <Tialo>` and
-  :pr:`29336` by :user:`Edoardo Abati <EdAbati>`.
+  :pr:`29269` by :user:`Yaroslav Korobko <Tialo>`.
 
 :mod:`sklearn.model_selection`
 ..............................

@@ -83,6 +83,7 @@ from sklearn.utils.validation import (
     check_scalar,
     column_or_1d,
     has_fit_parameter,
+    validate_data,
 )
 
 
@@ -1350,7 +1351,7 @@ def test_check_scalar_invalid(
             include_boundaries=include_boundaries,
         )
     assert str(raised_error.value) == str(err_msg)
-    assert type(raised_error.value) == type(err_msg)
+    assert isinstance(raised_error.value, type(err_msg))
 
 
 _psd_cases_valid = {
@@ -1888,7 +1889,7 @@ def test_get_feature_names_invalid_dtypes(names, dtypes):
 
 class PassthroughTransformer(BaseEstimator):
     def fit(self, X, y=None):
-        self._validate_data(X, reset=True)
+        validate_data(self, X, reset=True)
         return self
 
     def transform(self, X):
