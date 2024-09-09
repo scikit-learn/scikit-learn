@@ -42,8 +42,6 @@ if m_dep.found()
   add_project_link_arguments('-lm', language : 'c')
 endif
 
-tempita = find_program('sklearn/_build_utils/tempita.py')
-
 py = import('python').find_installation(pure: false)
 
 # Copy all the .py files to the install dir, rather than using
