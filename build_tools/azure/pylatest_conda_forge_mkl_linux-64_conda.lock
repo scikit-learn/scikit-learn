@@ -210,10 +210,17 @@ https://conda.anaconda.org/conda-forge/noarch/array-api-strict-1.1.1-pyhd8ed1ab_
 https://conda.anaconda.org/conda-forge/linux-64/contourpy-1.2.1-py311h9547e67_0.conda#74ad0ae64f1ef565e27eda87fa749e84
 https://conda.anaconda.org/conda-forge/linux-64/libarrow-12.0.1-hb87d912_8_cpu.conda#3f3b11398fe79b578e3c44dd00a44e4a
 https://conda.anaconda.org/conda-forge/linux-64/pandas-2.2.2-py311h14de704_1.conda#84e2dd379d4edec4dd6382861486104d
+<<<<<<< HEAD
 https://conda.anaconda.org/conda-forge/linux-64/polars-0.20.31-py311h00856b1_0.conda#4f1cc2c95c25fe838acabfa8dc0d48ff
 https://conda.anaconda.org/conda-forge/linux-64/pyqt-5.15.9-py311hf0fb5b6_5.conda#ec7e45bc76d9d0b69a74a2075932b8e8
 https://conda.anaconda.org/conda-forge/linux-64/pytorch-1.13.1-cpu_py311h410fd25_1.conda#ddd2fadddf89e3dc3d541a2537fce010
 https://conda.anaconda.org/conda-forge/linux-64/scipy-1.13.1-py311h517d4fd_0.conda#764b0e055f59dbd7d114d32b8c6e55e6
+=======
+https://conda.anaconda.org/conda-forge/linux-64/polars-0.20.26-py311h00856b1_1.conda#4d1715777d0485d6e455b64f72794aa4
+https://conda.anaconda.org/conda-forge/linux-64/pyqt-5.15.9-py311hf0fb5b6_5.conda#ec7e45bc76d9d0b69a74a2075932b8e8
+https://conda.anaconda.org/conda-forge/linux-64/pytorch-1.13.1-cpu_py311h410fd25_1.conda#ddd2fadddf89e3dc3d541a2537fce010
+https://conda.anaconda.org/conda-forge/linux-64/scipy-1.13.0-py311h517d4fd_1.conda#a86b8bea39e292a23b2cf9a750f49ea1
+>>>>>>> d03c351780 (:lock: :robot: CI Update lock files for main CI build(s) :lock: :robot: (#29053))
 https://conda.anaconda.org/conda-forge/linux-64/matplotlib-base-3.8.4-py311ha4ca890_2.conda#0848e2084cbb57014f232f48568561af
 https://conda.anaconda.org/conda-forge/linux-64/pyamg-5.1.0-py311h5510f57_1.conda#734865cccfb0a27b433ea31bd178d0e3
 https://conda.anaconda.org/conda-forge/linux-64/pyarrow-12.0.1-py311h39c9aba_8_cpu.conda#587370a25bb2c50cce90909ce20d38b8

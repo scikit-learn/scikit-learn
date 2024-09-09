@@ -91,7 +91,11 @@ https://conda.anaconda.org/conda-forge/noarch/pytest-8.2.2-pyhd8ed1ab_0.conda#0f
 https://conda.anaconda.org/conda-forge/noarch/python-dateutil-2.9.0-pyhd8ed1ab_0.conda#2cf4264fffb9e6eff6031c5b6884d61c
 https://conda.anaconda.org/conda-forge/win-64/sip-6.7.12-py39h99910a6_0.conda#0cc5774390ada632ed7975203057c91c
 https://conda.anaconda.org/conda-forge/win-64/tbb-2021.12.0-hc790b64_1.conda#e98333643abc739ebea1bac97a479828
+<<<<<<< HEAD
 https://conda.anaconda.org/conda-forge/win-64/fonttools-4.53.0-py39ha55e580_0.conda#7c4625b8a1013dd22e924f1fa9fbc605
+=======
+https://conda.anaconda.org/conda-forge/win-64/fonttools-4.51.0-py39ha55989b_0.conda#5d19302bab29e347116b743e793aa7d6
+>>>>>>> d03c351780 (:lock: :robot: CI Update lock files for main CI build(s) :lock: :robot: (#29053))
 https://conda.anaconda.org/conda-forge/win-64/glib-2.80.2-h0df6a38_0.conda#a728ca6f04c33ecb0f39eeda5fbd0e23
 https://conda.anaconda.org/conda-forge/noarch/importlib-resources-6.4.0-pyhd8ed1ab_0.conda#dcbadab7a68738a028e195ab68ab2d2e
 https://conda.anaconda.org/conda-forge/noarch/meson-python-0.16.0-pyh0c530f3_0.conda#e16f0dbf502da873be9f9adb0dc52547

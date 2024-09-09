@@ -34,9 +34,14 @@ https://conda.anaconda.org/conda-forge/osx-64/gmp-6.3.0-h73e2aa4_1.conda#92f8d74
 https://conda.anaconda.org/conda-forge/osx-64/isl-0.26-imath32_h2e86a7b_101.conda#d06222822a9144918333346f145b68c6
 https://conda.anaconda.org/conda-forge/osx-64/lerc-4.0.0-hb486fe8_0.tar.bz2#f9d6a4c82889d5ecedec1d90eb673c55
 https://conda.anaconda.org/conda-forge/osx-64/libgfortran5-13.2.0-h2873a65_3.conda#e4fb4d23ec2870ff3c40d10afe305aec
+<<<<<<< HEAD
 https://conda.anaconda.org/conda-forge/osx-64/libpng-1.6.43-h92b6c6a_0.conda#65dcddb15965c9de2c0365cb14910532
 https://conda.anaconda.org/conda-forge/osx-64/libsqlite-3.45.3-h92b6c6a_0.conda#68e462226209f35182ef66eda0f794ff
 https://conda.anaconda.org/conda-forge/osx-64/libxml2-2.12.7-h3e169fe_1.conda#ddb63049aa7bd9f08f2cdc5a1c144d1a
+=======
+https://conda.anaconda.org/conda-forge/osx-64/libhwloc-2.10.0-default_h456cccd_1001.conda#d2dc768b14cdf226a30a8eab15641305
+https://conda.anaconda.org/conda-forge/osx-64/libllvm16-16.0.6-hbedff68_3.conda#8fd56c0adc07a37f93bd44aa61a97c90
+>>>>>>> d03c351780 (:lock: :robot: CI Update lock files for main CI build(s) :lock: :robot: (#29053))
 https://conda.anaconda.org/conda-forge/osx-64/ninja-1.12.1-h3c5361c_0.conda#a0ebabd021c8191aeb82793fe43cfdcb
 https://conda.anaconda.org/conda-forge/osx-64/sigtool-0.1.3-h88f4db0_0.tar.bz2#fbfb84b9de9a6939cb165c02c69b1865
 https://conda.anaconda.org/conda-forge/osx-64/tapi-1100.0.11-h9ce4665_0.tar.bz2#f9ff42ccf809a21ba6f8607f8de36108
@@ -112,12 +117,21 @@ https://conda.anaconda.org/conda-forge/osx-64/blas-devel-3.9.0-20_osx64_mkl.cond
 https://conda.anaconda.org/conda-forge/osx-64/compiler-rt-16.0.6-ha38d28d_2.conda#3b9e8c5c63b8e86234f499490acd85c2
 https://conda.anaconda.org/conda-forge/osx-64/contourpy-1.2.1-py312h9230928_0.conda#079df34ce7c71259cfdd394645370891
 https://conda.anaconda.org/conda-forge/osx-64/pandas-2.2.2-py312h1171441_1.conda#240737937f1f046b0e03ecc11ac4ec98
+<<<<<<< HEAD
 https://conda.anaconda.org/conda-forge/osx-64/scipy-1.13.1-py312hb9702fa_0.conda#46cb49e67c33f8340a09e49e69adf195
 https://conda.anaconda.org/conda-forge/osx-64/blas-2.120-mkl.conda#b041a7677a412f3d925d8208936cb1e2
 https://conda.anaconda.org/conda-forge/osx-64/clang_impl_osx-64-16.0.6-h8787910_16.conda#c50c939d1bf9785561220b2cfbb98cb9
 https://conda.anaconda.org/conda-forge/osx-64/matplotlib-base-3.8.4-py312hb6d62fa_2.conda#6c5cf505d118f4b58961191fd5e0d030
 https://conda.anaconda.org/conda-forge/osx-64/pyamg-5.1.0-py312h44e70fa_1.conda#ffbfe3b3d5e9675541ee516badfb7729
 https://conda.anaconda.org/conda-forge/osx-64/clang_osx-64-16.0.6-hb91bd55_16.conda#b5dacba087761db21ba9eb69b2c1718b
+=======
+https://conda.anaconda.org/conda-forge/osx-64/scipy-1.13.0-py312h741d2f9_1.conda#c416453a8ea3b38d823fe8dcecdb6a12
+https://conda.anaconda.org/conda-forge/osx-64/blas-2.120-mkl.conda#b041a7677a412f3d925d8208936cb1e2
+https://conda.anaconda.org/conda-forge/osx-64/clang_impl_osx-64-16.0.6-h8787910_14.conda#fc1a7d3f1bf236f63c58bab6e36844cb
+https://conda.anaconda.org/conda-forge/osx-64/matplotlib-base-3.8.4-py312hb6d62fa_2.conda#6c5cf505d118f4b58961191fd5e0d030
+https://conda.anaconda.org/conda-forge/osx-64/pyamg-5.1.0-py312h44e70fa_1.conda#ffbfe3b3d5e9675541ee516badfb7729
+https://conda.anaconda.org/conda-forge/osx-64/clang_osx-64-16.0.6-hb91bd55_14.conda#3d0d9c725912bb0cb4cd301d2a5d31d7
+>>>>>>> d03c351780 (:lock: :robot: CI Update lock files for main CI build(s) :lock: :robot: (#29053))
 https://conda.anaconda.org/conda-forge/osx-64/matplotlib-3.8.4-py312hb401068_2.conda#456c057a3e2dcac3d02f4b9d25e277f5
 https://conda.anaconda.org/conda-forge/osx-64/c-compiler-1.7.0-h282daa2_1.conda#d27411cb82bc1b76b9f487da6ae97f1d
 https://conda.anaconda.org/conda-forge/osx-64/clangxx_impl_osx-64-16.0.6-h6d92fbe_16.conda#55fb2d5cbc9ec490347b1f797536fba8
