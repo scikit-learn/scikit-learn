@@ -62,7 +62,11 @@ https://repo.anaconda.com/pkgs/main/linux-64/pip-24.0-py39h06a4308_0.conda#7f8ce
 # pip tomli @ https://files.pythonhosted.org/packages/97/75/10a9ebee3fd790d20926a90a2547f0bf78f371b2f13aa822c759680ca7b9/tomli-2.0.1-py3-none-any.whl#sha256=939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc
 # pip tzdata @ https://files.pythonhosted.org/packages/65/58/f9c9e6be752e9fcb8b6a0ee9fb87e6e7a1f6bcab2cdc73f02bb7ba91ada0/tzdata-2024.1-py2.py3-none-any.whl#sha256=9068bc196136463f5245e51efda838afa15aaeca9903f49050dfa2679db4d252
 # pip urllib3 @ https://files.pythonhosted.org/packages/a2/73/a68704750a7679d0b6d3ad7aa8d4da8e14e151ae82e6fee774e6e0d05ec8/urllib3-2.2.1-py3-none-any.whl#sha256=450b20ec296a467077128bff42b73080516e71b56ff59a60a02bef2232c4fa9d
+<<<<<<< HEAD
 # pip zipp @ https://files.pythonhosted.org/packages/20/38/f5c473fe9b90c8debdd29ea68d5add0289f1936d6f923b6b9cc0b931194c/zipp-3.19.2-py3-none-any.whl#sha256=f091755f667055f2d02b32c53771a7a6c8b47e1fdbc4b72a8b9072b3eef8015c
+=======
+# pip zipp @ https://files.pythonhosted.org/packages/da/55/a03fd7240714916507e1fcf7ae355bd9d9ed2e6db492595f1a67f61681be/zipp-3.18.2-py3-none-any.whl#sha256=dce197b859eb796242b0622af1b8beb0a722d52aa2f57133ead08edd5bf5374e
+>>>>>>> d03c351780 (:lock: :robot: CI Update lock files for main CI build(s) :lock: :robot: (#29053))
 # pip contourpy @ https://files.pythonhosted.org/packages/31/a2/2f12e3a6e45935ff694654b710961b03310b0e1ec997ee9f416d3c873f87/contourpy-1.2.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=e1d59258c3c67c865435d8fbeb35f8c59b8bef3d6f46c1f29f6123556af28445
 # pip coverage @ https://files.pythonhosted.org/packages/07/e0/0e30ca5c6c5bcae86df9583c30807ff26e0b991e76f266b81224410663e4/coverage-7.5.3-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=2e079c9ec772fedbade9d7ebc36202a1d9ef7291bc9b3a024ca395c4d52853d7
 # pip imageio @ https://files.pythonhosted.org/packages/a3/b6/39c7dad203d9984225f47e0aa39ac3ba3a47c77a02d0ef2a7be691855a06/imageio-2.34.1-py3-none-any.whl#sha256=408c1d4d62f72c9e8347e7d1ca9bc11d8673328af3913868db3b828e28b40a4c

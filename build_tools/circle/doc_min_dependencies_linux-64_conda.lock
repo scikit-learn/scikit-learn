@@ -125,7 +125,11 @@ https://conda.anaconda.org/conda-forge/noarch/docutils-0.21.2-pyhd8ed1ab_0.conda
 https://conda.anaconda.org/conda-forge/noarch/exceptiongroup-1.2.0-pyhd8ed1ab_2.conda#8d652ea2ee8eaee02ed8dc820bc794aa
 https://conda.anaconda.org/conda-forge/noarch/execnet-2.1.1-pyhd8ed1ab_0.conda#15dda3cdbf330abfe9f555d22f66db46
 https://conda.anaconda.org/conda-forge/linux-64/fontconfig-2.14.2-h14ed4e7_0.conda#0f69b688f52ff6da70bccb7ff7001d1d
+<<<<<<< HEAD
 https://conda.anaconda.org/conda-forge/noarch/fsspec-2024.6.0-pyhff2d567_0.conda#ad6af3f92e71b1579ac2362b6cf29105
+=======
+https://conda.anaconda.org/conda-forge/noarch/fsspec-2024.5.0-pyhff2d567_0.conda#d73e9932511ef7670b2cc0ebd9dfbd30
+>>>>>>> d03c351780 (:lock: :robot: CI Update lock files for main CI build(s) :lock: :robot: (#29053))
 https://conda.anaconda.org/conda-forge/linux-64/gfortran-12.3.0-h915e2ae_7.conda#8efa768f7f74085629f3e1090e7f0569
 https://conda.anaconda.org/conda-forge/linux-64/gfortran_linux-64-12.3.0-h5877db1_4.conda#aa5735fc506449d6bc2ec27bc066364e
 https://conda.anaconda.org/conda-forge/linux-64/glib-tools-2.80.2-hb6ce0ca_0.conda#a965aeaf060289528a3fbe09326edae2
@@ -210,9 +214,15 @@ https://conda.anaconda.org/conda-forge/noarch/meson-python-0.16.0-pyh0c530f3_0.c
 https://conda.anaconda.org/conda-forge/linux-64/mkl-devel-2024.1.0-ha770c72_693.conda#7f422e2cf549a3fb920c95288393870d
 https://conda.anaconda.org/conda-forge/linux-64/pyqt5-sip-12.12.2-py39h3d6467e_5.conda#93aff412f3e49fdb43361c0215cbd72d
 https://conda.anaconda.org/conda-forge/noarch/pytest-xdist-3.5.0-pyhd8ed1ab_0.conda#d5f595da2daead898ca958ac62f0307b
+<<<<<<< HEAD
 https://conda.anaconda.org/conda-forge/noarch/requests-2.32.3-pyhd8ed1ab_0.conda#5ede4753180c7a550a443c430dc8ab52
 https://conda.anaconda.org/conda-forge/noarch/dask-core-2024.5.2-pyhd8ed1ab_0.conda#1a57a819915e1c169b74933720b138f2
 https://conda.anaconda.org/conda-forge/linux-64/gst-plugins-base-1.24.4-h9ad1361_0.conda#147cce520ec59367549fd0d96d404213
+=======
+https://conda.anaconda.org/conda-forge/noarch/requests-2.31.0-pyhd8ed1ab_0.conda#a30144e4156cdbb236f99ebb49828f8b
+https://conda.anaconda.org/conda-forge/noarch/dask-core-2024.5.1-pyhd8ed1ab_0.conda#d4f60ccc5421472d2583efd9ce39d8b1
+https://conda.anaconda.org/conda-forge/linux-64/gst-plugins-base-1.24.3-h9ad1361_0.conda#8fb0e954c616bb0f9389efac4b4ed44b
+>>>>>>> d03c351780 (:lock: :robot: CI Update lock files for main CI build(s) :lock: :robot: (#29053))
 https://conda.anaconda.org/conda-forge/linux-64/libcblas-3.9.0-22_linux64_mkl.conda#d6f942423116553f068b2f2d93ffea2e
 https://conda.anaconda.org/conda-forge/linux-64/liblapack-3.9.0-22_linux64_mkl.conda#4edf2e7ce63920e4f539d12e32fb478e
 https://conda.anaconda.org/conda-forge/noarch/pooch-1.6.0-pyhd8ed1ab_0.tar.bz2#6429e1d1091c51f626b5dcfdd38bf429
