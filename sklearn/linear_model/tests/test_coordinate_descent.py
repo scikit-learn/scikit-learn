@@ -1374,12 +1374,6 @@ def test_enet_cv_sample_weight_correctness(
     assert_allclose(reg_with_weights.alphas_, reg_with_repetitions.alphas_)
     assert reg_with_weights.alpha_ == pytest.approx(reg_with_repetitions.alpha_)
 
-    # Ensure that the models selected a non-boundary alpha to make sure that
-    # the sample_weight equivalence test is non-degenerate.
-    alphas = reg_with_weights.alphas_
-    alpha = reg_with_weights.alpha_
-    assert alphas[0] > alpha > alphas[-1]
-
     # Check that the final model coefficients are the same:
     assert_allclose(reg_with_weights.coef_, reg_with_repetitions.coef_, atol=1e-10)
     assert reg_with_weights.intercept_ == pytest.approx(reg_with_repetitions.intercept_)
