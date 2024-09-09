@@ -28,7 +28,9 @@ class FrozenEstimator(BaseEstimator):
     """Frozen estimator.
 
     This meta-estimator takes an estimator and freezes it, in the sense that calling
-    `.fit` on it has no effect.
+    `.fit` on it has no effect, and `fit_predict` and `fit_transform` are disabled.
+    All other methods are delegated to the original estimator and original estimator's
+    attributes are accessible as well.
 
     This is particularly useful when you have a fit or a pre-trained model as a
     transformer in a pipeline, and you'd like `pipeline.fit` to have no effect on this
