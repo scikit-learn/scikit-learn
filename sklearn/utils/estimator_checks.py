@@ -59,7 +59,7 @@ from ._tags import Tags, get_tags
 from ._test_common.instance_generator import (
     CROSS_DECOMPOSITION,
     INIT_PARAMS,
-    _construct_instances,
+    _construct_instance,
     _get_check_estimator_ids,
     _yield_instances_for_check,
 )
@@ -3315,7 +3315,7 @@ def check_parameters_default_constructible(name, estimator_orig):
         # TODO(devtools): this test is flawed because _construct_instances doesn't
         # construct with default parameters for sklearn estimators, while it does
         # for third party estimators.
-        estimator = next(_construct_instances(Estimator))
+        estimator = _construct_instance(Estimator)
         # test that set_params returns self
         assert estimator.set_params() is estimator
 
