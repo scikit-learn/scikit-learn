@@ -53,13 +53,6 @@ Changelog
   platform-agnosticity of the estimator.
   :pr:`29612` by :user:`Olivier Grisel <ogrisel>`.
 
-:mod:`sklearn.impute`
-.....................
-
-- |Fix| Fixed :class:`impute.IterativeImputer` to make sure that it does not skip
-  the iterative process when `keep_empty_features` is set to `True`.
-  :pr:`29779` by :user:`Arif Qodari <arifqodari>`.
-
 :mod:`sklearn.metrics`
 ......................
 
