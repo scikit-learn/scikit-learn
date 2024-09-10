@@ -43,7 +43,7 @@ class FrozenEstimator(BaseEstimator):
 
     See Also
     --------
-    None: No siimlar entry in the scikit-learn documentation.
+    None: No similar entry in the scikit-learn documentation.
 
     Examples
     --------
