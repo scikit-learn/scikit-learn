@@ -2210,7 +2210,7 @@ class _RidgeGCV(LinearModel):
         return self
 
     def _get_scorer(self):
-        return check_scoring(self, scoring=self.scoring, allow_none=True)
+        return check_scoring(estimator=self, scoring=self.scoring, allow_none=True)
 
     def _score_without_scorer(self, squared_errors):
         """Performs scoring using squared errors when the scorer is None."""
@@ -2338,7 +2338,8 @@ class _BaseRidgeCV(LinearModel):
         """
         _raise_for_params(params, self, "fit")
         cv = self.cv
-        scorer = self._get_scorer()
+        if cv is not None:
+            scorer = self._get_scorer()
 
         # TODO(1.7): Remove in 1.7
         # Also change `store_cv_results` default back to False
@@ -2405,7 +2406,7 @@ class _BaseRidgeCV(LinearModel):
             estimator = _RidgeGCV(
                 alphas,
                 fit_intercept=self.fit_intercept,
-                scoring=scorer,
+                scoring=None,
                 gcv_mode=self.gcv_mode,
                 store_cv_results=self._store_cv_results,
                 is_clf=is_classifier(self),
@@ -2486,7 +2487,7 @@ class _BaseRidgeCV(LinearModel):
         return router
 
     def _get_scorer(self):
-        scorer = check_scoring(self, scoring=self.scoring, allow_none=True)
+        scorer = check_scoring(estimator=self, scoring=self.scoring, allow_none=True)
         if self.scoring is None:
             # This estimator passes an array of 1s as sample_weight even if
             # sample_weight is not provided by the user. Therefore we need to
