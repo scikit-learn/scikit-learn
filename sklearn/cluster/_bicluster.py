@@ -362,6 +362,15 @@ class SpectralCoclustering(BaseSpectral):
             [self.column_labels_ == c for c in range(self.n_clusters)]
         )
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            # ValueError: Found array with 0 feature(s) (shape=(23, 0))
+            # while a minimum of 1 is required.
+            "check_dict_unchanged": "FIXME",
+        }
+        return tags
+
 
 class SpectralBiclustering(BaseSpectral):
     """Spectral biclustering (Kluger, 2003).

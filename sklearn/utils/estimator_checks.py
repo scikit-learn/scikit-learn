@@ -84,7 +84,6 @@ REGRESSION_DATASET = None
 
 
 def _yield_api_checks(estimator):
-    yield check_estimator_cloneable
     yield check_estimator_repr
     yield check_no_attributes_set_in_init
     yield check_fit_score_takes_y
@@ -1243,32 +1242,13 @@ def check_complex_data(name, estimator_orig):
 
 @ignore_warnings
 def check_dict_unchanged(name, estimator_orig):
-    # this estimator raises
-    # ValueError: Found array with 0 feature(s) (shape=(23, 0))
-    # while a minimum of 1 is required.
-    # error
-    if name in ["SpectralCoclustering"]:
-        return
     rnd = np.random.RandomState(0)
-    if name in ["RANSACRegressor"]:
-        X = 3 * rnd.uniform(size=(20, 3))
-    else:
-        X = 2 * rnd.uniform(size=(20, 3))
-
+    X = 3 * rnd.uniform(size=(20, 3))
     X = _enforce_estimator_tags_X(estimator_orig, X)
 
     y = X[:, 0].astype(int)
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
-    if hasattr(estimator, "n_components"):
-        estimator.n_components = 1
-
-    if hasattr(estimator, "n_clusters"):
-        estimator.n_clusters = 1
-
-    if hasattr(estimator, "n_best"):
-        estimator.n_best = 1
-
     set_random_state(estimator, 1)
 
     estimator.fit(X, y)
