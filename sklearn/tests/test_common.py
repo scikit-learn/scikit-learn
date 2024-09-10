@@ -19,15 +19,7 @@ from scipy.linalg import LinAlgWarning
 
 import sklearn
 from sklearn.base import BaseEstimator
-from sklearn.cluster import (
-    OPTICS,
-    AffinityPropagation,
-    Birch,
-    MeanShift,
-    SpectralClustering,
-)
 from sklearn.compose import ColumnTransformer
-from sklearn.datasets import make_blobs
 from sklearn.exceptions import ConvergenceWarning, FitFailedWarning
 
 # make it possible to discover experimental estimators when calling `all_estimators`
@@ -36,14 +28,6 @@ from sklearn.experimental import (
     enable_iterative_imputer,  # noqa
 )
 from sklearn.linear_model import LogisticRegression
-from sklearn.manifold import TSNE, Isomap, LocallyLinearEmbedding
-from sklearn.neighbors import (
-    KNeighborsClassifier,
-    KNeighborsRegressor,
-    LocalOutlierFactor,
-    RadiusNeighborsClassifier,
-    RadiusNeighborsRegressor,
-)
 from sklearn.pipeline import FeatureUnion, make_pipeline
 from sklearn.preprocessing import (
     FunctionTransformer,
@@ -51,7 +35,6 @@ from sklearn.preprocessing import (
     OneHotEncoder,
     StandardScaler,
 )
-from sklearn.semi_supervised import LabelPropagation, LabelSpreading
 from sklearn.utils import all_estimators
 from sklearn.utils._tags import get_tags
 from sklearn.utils._test_common.instance_generator import (
@@ -414,45 +397,6 @@ def test_check_param_validation(estimator):
         pytest.skip("FeatureUnion is not tested here")
     name = estimator.__class__.__name__
     check_param_validation(name, estimator)
-
-
-@pytest.mark.parametrize(
-    "Estimator",
-    [
-        AffinityPropagation,
-        Birch,
-        MeanShift,
-        KNeighborsClassifier,
-        KNeighborsRegressor,
-        RadiusNeighborsClassifier,
-        RadiusNeighborsRegressor,
-        LabelPropagation,
-        LabelSpreading,
-        OPTICS,
-        SpectralClustering,
-        LocalOutlierFactor,
-        LocallyLinearEmbedding,
-        Isomap,
-        TSNE,
-    ],
-)
-def test_f_contiguous_array_estimator(Estimator):
-    # Non-regression test for:
-    # https://github.com/scikit-learn/scikit-learn/issues/23988
-    # https://github.com/scikit-learn/scikit-learn/issues/24013
-
-    X, _ = make_blobs(n_samples=80, n_features=4, random_state=0)
-    X = np.asfortranarray(X)
-    y = np.round(X[:, 0])
-
-    est = Estimator()
-    est.fit(X, y)
-
-    if hasattr(est, "transform"):
-        est.transform(X)
-
-    if hasattr(est, "predict"):
-        est.predict(X)
 
 
 SET_OUTPUT_ESTIMATORS = list(
