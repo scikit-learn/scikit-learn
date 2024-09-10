@@ -8,7 +8,6 @@ from functools import partial
 from inspect import isfunction
 
 from sklearn import config_context
-from sklearn.base import clone
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.cluster import (
     HDBSCAN,
@@ -459,18 +458,6 @@ INIT_PARAMS = {
 }
 
 
-# This dictionary stores parameters for specific checks. It also enables running the
-# same check with multiple instances of the same estimator with different parameters.
-# The special key "*" allows to apply the parameters to all checks.
-CHECK_PARAMS = {
-    Pipeline: {"*": []},
-    GridSearchCV: {"*": []},
-    HalvingGridSearchCV: {"*": []},
-    RandomizedSearchCV: {"*": []},
-    HalvingRandomSearchCV: {"*": []},
-}
-
-
 def _tested_estimators(type_filter=None):
     for name, Estimator in all_estimators(type_filter=type_filter):
         try:
@@ -484,7 +471,11 @@ SKIPPED_ESTIMATORS = [SparseCoder]
 
 
 def _construct_instances(Estimator):
-    """Construct Estimator instance if possible."""
+    """Construct Estimator instances if possible.
+
+    If parameter sets in INIT_PARAMS are provided, use them. If there are a list
+    of parameter sets, return one instance for each set.
+    """
     if Estimator in SKIPPED_ESTIMATORS:
         msg = f"Can't instantiate estimator {Estimator.__name__}"
         # raise additional warning to be shown by pytest
@@ -492,10 +483,15 @@ def _construct_instances(Estimator):
         raise SkipTest(msg)
 
     if Estimator in INIT_PARAMS:
-        estimator = Estimator(**INIT_PARAMS[Estimator])
+        param_sets = INIT_PARAMS[Estimator]
+        if not isinstance(param_sets, list):
+            param_sets = [param_sets]
+        for params in param_sets:
+            est = Estimator(**params)
+            est._init_params_set_by_construct_instance = params
+            yield est
     else:
-        estimator = Estimator()
-    return estimator
+        yield Estimator()
 
 
 def _get_check_estimator_ids(obj):
@@ -532,30 +528,3 @@ def _get_check_estimator_ids(obj):
     if hasattr(obj, "get_params"):
         with config_context(print_changed_only=True):
             return re.sub(r"\s", "", str(obj))
-
-
-def _yield_instances_for_check(check, estimator_orig):
-    """Yield instances for a check.
-
-    For most estimators, this is a no-op.
-
-    For estimators which have an entry in CHECK_PARAMS, this will yield
-    an estimator for each parameter set in CHECK_PARAMS[estimator].
-    """
-    if type(estimator_orig) not in CHECK_PARAMS:
-        return (estimator_orig,)
-
-    check_params = CHECK_PARAMS[type(estimator_orig)]
-
-    if "*" not in check_params and check not in check_params:
-        return (estimator_orig,)
-
-    if "*" in check_params:
-        param_set = check_params["*"]
-    else:
-        param_set = check_params[check]
-
-    for params in param_set:
-        estimator = clone(estimator_orig)
-        estimator.set_params(**params)
-        yield estimator

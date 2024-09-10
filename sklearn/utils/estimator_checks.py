@@ -58,10 +58,7 @@ from ._param_validation import Interval
 from ._tags import Tags, get_tags
 from ._test_common.instance_generator import (
     CROSS_DECOMPOSITION,
-    INIT_PARAMS,
-    _construct_instances,
     _get_check_estimator_ids,
-    _yield_instances_for_check,
 )
 from ._testing import (
     SkipTest,
@@ -509,14 +506,10 @@ def parametrize_with_checks(estimators, *, legacy=True):
 
     def checks_generator():
         for estimator in estimators:
-            # First check that the estimator is cloneable which is needed for the rest
-            # of the checks to run
             name = type(estimator).__name__
-            yield estimator, partial(check_estimator_cloneable, name)
             for check in _yield_all_checks(estimator, legacy=legacy):
-                check_with_name = partial(check, name)
-                for check_instance in _yield_instances_for_check(check, estimator):
-                    yield _maybe_mark_xfail(check_instance, check_with_name, pytest)
+                check = partial(check, name)
+                yield _maybe_mark_xfail(estimator, check, pytest)
 
     return pytest.mark.parametrize(
         "estimator, check", checks_generator(), ids=_get_check_estimator_ids
@@ -601,13 +594,9 @@ def check_estimator(estimator=None, generate_only=False, *, legacy=True):
     name = type(estimator).__name__
 
     def checks_generator():
-        # we first need to check if the estimator is cloneable for the rest of the tests
-        # to run
-        yield estimator, partial(check_estimator_cloneable, name)
         for check in _yield_all_checks(estimator, legacy=legacy):
             check = _maybe_skip(estimator, check)
-            for check_instance in _yield_instances_for_check(check, estimator):
-                yield check_instance, partial(check, name)
+            yield estimator, partial(check, name)
 
     if generate_only:
         return checks_generator()
@@ -3310,13 +3299,11 @@ def check_parameters_default_constructible(name, estimator_orig):
     # get rid of deprecation warnings
 
     Estimator = estimator_orig.__class__
+    estimator = clone(estimator_orig)
 
     with ignore_warnings(category=FutureWarning):
-        # TODO(devtools): this test is flawed because _construct_instances doesn't
-        # construct with default parameters for sklearn estimators, while it does
-        # for third party estimators.
-        estimator = next(_construct_instances(Estimator))
         # test that set_params returns self
+        # TODO(devtools): this should be a separate check.
         assert estimator.set_params() is estimator
 
         # test if init does nothing but set parameters
@@ -3329,7 +3316,7 @@ def check_parameters_default_constructible(name, estimator_orig):
 
         try:
 
-            def param_filter(p):
+            def param_default_value(p):
                 """Identify hyper parameters of an estimator."""
                 return (
                     p.name != "self"
@@ -3339,30 +3326,48 @@ def check_parameters_default_constructible(name, estimator_orig):
                     and p.default != p.empty
                 )
 
-            init_params = [
-                p for p in signature(init).parameters.values() if param_filter(p)
+            def param_required(p):
+                """Identify hyper parameters of an estimator."""
+                return (
+                    p.name != "self"
+                    and p.kind != p.VAR_KEYWORD
+                    # technically VAR_POSITIONAL is also required, but we don't have a
+                    # nice way to check for it. We assume there's no VAR_POSITIONAL in
+                    # the constructor parameters.
+                    #
+                    # TODO(devtools): seaprate check that constructor doesn't have
+                    # *args.
+                    and p.kind != p.VAR_POSITIONAL
+                    # these are parameters that don't have a default value and are
+                    # required to construct the estimator.
+                    and p.default == p.empty
+                )
+
+            required_params_names = [
+                p.name for p in signature(init).parameters.values() if param_required(p)
+            ]
+
+            default_value_params = [
+                p for p in signature(init).parameters.values() if param_default_value(p)
             ]
 
         except (TypeError, ValueError):
             # init is not a python function.
             # true for mixins
             return
+
+        # here we construct an instance of the estimator using only the required
+        # parameters.
+        old_params = estimator.get_params()
+        init_params = {
+            param: old_params[param]
+            for param in old_params
+            if param in required_params_names
+        }
+        estimator = Estimator(**init_params)
         params = estimator.get_params()
 
-        for init_param in init_params:
-            if (
-                type(estimator) in INIT_PARAMS
-                and init_param.name in INIT_PARAMS[type(estimator)]
-            ):
-                # these parameters are coming from INIT_PARAMS and not the default
-                # values, therefore ignored.
-                continue
-            assert (
-                init_param.default != init_param.empty
-            ), "parameter %s for %s has no default value" % (
-                init_param.name,
-                type(estimator).__name__,
-            )
+        for init_param in default_value_params:
             allowed_types = {
                 str,
                 int,
