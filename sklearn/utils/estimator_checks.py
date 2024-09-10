@@ -1108,22 +1108,22 @@ def check_sample_weights_invariance(name, estimator_orig):
 
     X = np.array(
         [
-            [1, 3],
-            [1, 3],
-            [1, 3],
-            [1, 3],
-            [2, 1],
-            [2, 1],
-            [2, 1],
-            [2, 1],
-            [3, 3],
-            [3, 3],
-            [3, 3],
-            [3, 3],
+            [1, 4],
+            [1, 5],
+            [2, 4],
+            [2, 5],
+            [3, 1],
+            [3, 2],
             [4, 1],
-            [4, 1],
-            [4, 1],
-            [4, 1],
+            [4, 2],
+            [5, 4],
+            [5, 5],
+            [6, 4],
+            [6, 5],
+            [7, 1],
+            [7, 2],
+            [8, 1],
+            [8, 2],
         ],
         dtype=np.float64,
     )
@@ -1173,13 +1173,14 @@ def check_sample_weights_invariance(name, estimator_orig):
     estimator_repeated.fit(X_repeated, y=y_repeated, sample_weight=None)
     estimator_weighted.fit(X_weigthed, y=y_weighted, sample_weight=sw)
 
-    err_msg = (
-        f"For {name}, sample_weight is not equivalent to removing/repeating the sample"
-    )
     for method in ["predict", "predict_proba", "decision_function", "transform"]:
         if hasattr(estimator_orig, method):
             X_pred1 = getattr(estimator_repeated, method)(X)
             X_pred2 = getattr(estimator_weighted, method)(X)
+            err_msg = (
+                f"For {name}.{method} sample_weight is not equivalent "
+                "to removing/repeating the sample"
+            )
             assert_allclose_dense_sparse(X_pred1, X_pred2, err_msg=err_msg)
 
 
