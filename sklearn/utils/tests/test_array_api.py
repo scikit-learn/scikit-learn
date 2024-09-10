@@ -96,11 +96,11 @@ def test_get_namespace_array_api(monkeypatch):
 
         monkeypatch.setattr("os.environ.get", mock_getenv)
         assert os.environ.get("SCIPY_ARRAY_API") != "1"
-        with pytest.warns(
-            UserWarning,
-            match="enabling SciPy's own support for array API to function properly. ",
+        with pytest.raises(
+            RuntimeError,
+            match="scipy's own support is not enabled.",
         ):
-            xp_out, is_array_api_compliant = get_namespace(X_xp)
+            get_namespace(X_xp)
 
 
 @pytest.mark.parametrize("array_api", ["numpy", "array_api_strict"])
@@ -566,7 +566,6 @@ def test_get_namespace_and_device():
 def test_count_nonzero(
     array_namespace, device_, dtype_name, csr_container, axis, sample_weight_type
 ):
-
     from sklearn.utils.sparsefuncs import count_nonzero as sparse_count_nonzero
 
     xp = _array_api_for_tests(array_namespace, device_)

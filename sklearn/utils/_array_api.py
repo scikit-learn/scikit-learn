@@ -6,7 +6,6 @@
 import itertools
 import math
 import os
-import warnings
 from functools import wraps
 
 import numpy
@@ -120,15 +119,11 @@ def _check_array_api_dispatch(array_api_dispatch):
             )
 
         if os.environ.get("SCIPY_ARRAY_API") != "1":
-            warnings.warn(
-                (
-                    "Some scikit-learn array API features might rely on enabling "
-                    "SciPy's own support for array API to function properly. "
-                    "Please set the SCIPY_ARRAY_API=1 environment variable "
-                    "before importing sklearn or scipy. More details at: "
-                    "https://docs.scipy.org/doc/scipy/dev/api-dev/array_api.html"
-                ),
-                UserWarning,
+            raise RuntimeError(
+                "Scikit-learn array API support was enabled but scipy's own support is "
+                "not enabled. Please set the SCIPY_ARRAY_API=1 environment variable "
+                "before importing sklearn or scipy. More details at: "
+                "https://docs.scipy.org/doc/scipy/dev/api-dev/array_api.html"
             )
 
 
@@ -208,7 +203,11 @@ def _is_numpy_namespace(xp):
 
 def _union1d(a, b, xp):
     if _is_numpy_namespace(xp):
-        return xp.asarray(numpy.union1d(a, b))
+        # avoid circular import
+        from ._unique import cached_unique
+
+        a_unique, b_unique = cached_unique(a, b, xp=xp)
+        return xp.asarray(numpy.union1d(a_unique, b_unique))
     assert a.ndim == b.ndim == 1
     return xp.unique_values(xp.concat([xp.unique_values(a), xp.unique_values(b)]))
 

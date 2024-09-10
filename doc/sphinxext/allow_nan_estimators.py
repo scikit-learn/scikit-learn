@@ -4,8 +4,8 @@ from docutils import nodes
 from docutils.parsers.rst import Directive
 
 from sklearn.utils import all_estimators
+from sklearn.utils._test_common.instance_generator import _construct_instance
 from sklearn.utils._testing import SkipTest
-from sklearn.utils.estimator_checks import _construct_instance
 
 
 class AllowNanEstimators(Directive):
@@ -21,7 +21,7 @@ class AllowNanEstimators(Directive):
             with suppress(SkipTest):
                 est = _construct_instance(est_class)
 
-            if est._get_tags().get("allow_nan"):
+            if est.__sklearn_tags__().input_tags.allow_nan:
                 module_name = ".".join(est_class.__module__.split(".")[:2])
                 class_title = f"{est_class.__name__}"
                 class_url = f"./generated/{module_name}.{class_title}.html"
