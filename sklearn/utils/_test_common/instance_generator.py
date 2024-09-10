@@ -488,7 +488,6 @@ def _construct_instances(Estimator):
             param_sets = [param_sets]
         for params in param_sets:
             est = Estimator(**params)
-            est._init_params_set_by_construct_instance = params
             yield est
     else:
         yield Estimator()
