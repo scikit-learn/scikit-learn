@@ -51,7 +51,7 @@ py = import('python').find_installation(pure: false)
 # Exclude the _build_utils directory, which is not needed at runtime
 install_subdir('sklearn',
   install_dir: py.get_install_dir(),
-  exclude_directories: ['sklearn/_build_utils']
+  exclude_directories: ['_build_utils']
 )
 
 subdir('sklearn')
