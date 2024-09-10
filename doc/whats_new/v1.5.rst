@@ -676,29 +676,38 @@ Changelog
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.4, including:
 
-101AlexMartin, Abdulaziz Aloqeely, Adam J. Stewart, Adam Li, Adarsh Wase, Adrin
-Jalali, Advik Sinha, Akash Srivastava, Akihiro Kuno, Alan Guedes, Alexis
-IMBERT, Ana Paula Gomes, Anderson Nelson, Andrei Dzis, Arnaud Capitaine, Arturo
-Amor, Aswathavicky, Bharat Raghunathan, Brendan Lu, Bruno, Cemlyn, Christian
-Lorentzen, Christian Veenhuis, Cindy Liang, Claudio Salvatore Arcidiacono,
-Connor Boyle, Conrad Stevens, crispinlogan, davidleon123, DerWeh, Dipan Banik,
-Duarte São José, DUONG, Eddie Bergman, Edoardo Abati, Egehan Gunduz, Emad
-Izadifar, Erich Schubert, Filip Karlo Došilović, Franck Charras, Gael
-Varoquaux, Gönül Aycı, Guillaume Lemaitre, Gyeongjae Choi, Harmanan Kohli,
-Hong Xiang Yue, Ian Faust, itsaphel, Ivan Wiryadi, Jack Bowyer, Javier Marin
-Tur, Jérémie du Boisberranger, Jérôme Dockès, Jiawei Zhang, Joel Nothman,
-Johanna Bayer, John Cant, John Hopfensperger, jpcars, jpienaar-tuks, Julian
-Libiseller-Egger, Julien Jerphanion, KanchiMoe, Kaushik Amar Das, keyber,
-Koustav Ghosh, kraktus, Krsto Proroković, ldwy4, LeoGrin, lihaitao, Linus
-Sommer, Loic Esteve, Lucy Liu, Lukas Geiger, manasimj, Manuel Labbé, Manuel
-Morales, Marco Edward Gorelli, Maren Westermann, Marija Vlajic, Mark Elliot,
-Mateusz Sokół, Mavs, Michael Higgins, Michael Mayer, miguelcsilva, Miki
-Watanabe, Mohammed Hamdy, myenugula, Nathan Goldbaum, Naziya Mahimkar, Neto,
-Olivier Grisel, Omar Salman, Patrick Wang, Pierre de Fréminville, Priyash
-Shah, Puneeth K, Rahil Parikh, raisadz, Raj Pulapakura, Ralf Gommers, Ralph
-Urlus, Randolf Scholz, Reshama Shaikh, Richard Barnes, Rodrigo Romero, Saad
-Mahmood, Salim Dohri, Sandip Dutta, SarahRemus, scikit-learn-bot, Shaharyar
-Choudhry, Shubham, sperret6, Stefanie Senger, Suha Siddiqui, Thanh Lam DANG,
-thebabush, Thomas J. Fan, Thomas Lazarus, Thomas Li, Tialo, Tim Head, Tuhin
-Sharma, VarunChaduvula, Vineet Joshi, virchan, Waël Boukhobza, Weyb, Will
-Dean, Xavier Beltran, Xiao Yuan, Xuefeng Xu, Yao Xiao
+101AlexMartin, Abdulaziz Aloqeely, Adam J. Stewart, Adam Li, Adarsh Wase,
+Adeyemi Biola, Aditi Juneja, Adrin Jalali, Advik Sinha, Aisha, Akash
+Srivastava, Akihiro Kuno, Alan Guedes, Alberto Torres, Alexis IMBERT, alexqiao,
+Ana Paula Gomes, Anderson Nelson, Andrei Dzis, Arif Qodari, Arnaud Capitaine,
+Arturo Amor, Aswathavicky, Audrey Flanders, awwwyan, baggiponte, Bharat
+Raghunathan, bme-git, brdav, Brendan Lu, Brigitta Sipőcz, Bruno, Cailean
+Carter, Cemlyn, Christian Lorentzen, Christian Veenhuis, Cindy Liang, Claudio
+Salvatore Arcidiacono, Connor Boyle, Conrad Stevens, crispinlogan, David
+Matthew Cherney, Davide Chicco, davidleon123, dependabot[bot], DerWeh, dinga92,
+Dipan Banik, Drew Craeton, Duarte São José, DUONG, Eddie Bergman, Edoardo
+Abati, Egehan Gunduz, Emad Izadifar, EmilyXinyi, Erich Schubert, Evelyn, Filip
+Karlo Došilović, Franck Charras, Gael Varoquaux, Gönül Aycı, Guillaume
+Lemaitre, Gyeongjae Choi, Harmanan Kohli, Hong Xiang Yue, Ian Faust, Ilya
+Komarov, itsaphel, Ivan Wiryadi, Jack Bowyer, Javier Marin Tur, Jérémie du
+Boisberranger, Jérôme Dockès, Jiawei Zhang, João Morais, Joe Cainey, Joel
+Nothman, Johanna Bayer, John Cant, John Enblom, John Hopfensperger, jpcars,
+jpienaar-tuks, Julian Chan, Julian Libiseller-Egger, Julien Jerphanion,
+KanchiMoe, Kaushik Amar Das, keyber, Koustav Ghosh, kraktus, Krsto Proroković,
+Lars, ldwy4, LeoGrin, lihaitao, Linus Sommer, Loic Esteve, Lucy Liu, Lukas
+Geiger, m-maggi, manasimj, Manuel Labbé, Manuel Morales, Marco Edward Gorelli,
+Marco Wolsza, Maren Westermann, Marija Vlajic, Mark Elliot, Martin Helm,
+Mateusz Sokół, mathurinm, Mavs, Michael Dawson, Michael Higgins, Michael Mayer,
+miguelcsilva, Miki Watanabe, Mohammed Hamdy, myenugula, Nathan Goldbaum, Naziya
+Mahimkar, nbrown-ScottLogic, Neto, Nithish Bolleddula, notPlancha, Olivier
+Grisel, Omar Salman, ParsifalXu, Patrick Wang, Pierre de Fréminville, Piotr,
+Priyank Shroff, Priyansh Gupta, Priyash Shah, Puneeth K, Rahil Parikh, raisadz,
+Raj Pulapakura, Ralf Gommers, Ralph Urlus, Randolf Scholz, renaissance0ne,
+Reshama Shaikh, Richard Barnes, Robert Pollak, Roberto Rosati, Rodrigo Romero,
+rwelsch427, Saad Mahmood, Salim Dohri, Sandip Dutta, SarahRemus,
+scikit-learn-bot, Shaharyar Choudhry, Shubham, sperret6, Stefanie Senger,
+Steffen Schneider, Suha Siddiqui, Thanh Lam DANG, thebabush, Thomas, Thomas J.
+Fan, Thomas Lazarus, Tialo, Tim Head, Tuhin Sharma, Tushar Parimi,
+VarunChaduvula, Vineet Joshi, virchan, Waël Boukhobza, Weyb, Will Dean, Xavier
+Beltran, Xiao Yuan, Xuefeng Xu, Yao Xiao, yareyaredesuyo, Ziad Amerr, Štěpán
+Sršeň
