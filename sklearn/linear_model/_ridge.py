@@ -2147,9 +2147,6 @@ class _RidgeGCV(LinearModel):
 
         for i, alpha in enumerate(np.atleast_1d(self.alphas)):
             G_inverse_diag, c = solve(float(alpha), y, sqrt_sw, X_mean, *decomposition)
-            # I need to change this check to determine if the original input into
-            # RidgeCV.scoring was None. I am not sure how I can reach this info
-            # without adding a new param to this public method or to get_scorer.
             if self.scoring is None:
                 squared_errors = (c / G_inverse_diag) ** 2
                 alpha_score = self._score_without_scorer(squared_errors=squared_errors)
@@ -2399,6 +2396,9 @@ class _BaseRidgeCV(LinearModel):
                 routed_params = Bunch(scorer=Bunch(score={}))
                 if sample_weight is not None:
                     routed_params.scorer.score["sample_weight"] = sample_weight
+
+            if not _routing_enabled():
+                scorer = None
 
             estimator = _RidgeGCV(
                 alphas,
