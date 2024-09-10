@@ -3292,9 +3292,6 @@ def check_parameters_default_constructible(name, estimator_orig):
     Estimator = estimator_orig.__class__
 
     with ignore_warnings(category=FutureWarning):
-        # TODO(devtools): this test is flawed because _construct_instances doesn't
-        # construct with default parameters for sklearn estimators, while it does
-        # for third party estimators.
         estimator = _construct_instance(Estimator)
         # test that set_params returns self
         assert estimator.set_params() is estimator

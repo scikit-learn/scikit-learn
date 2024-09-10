@@ -566,6 +566,7 @@ def _yield_instances_for_check(check, estimator_orig):
     For estimators which have an entry in CHECK_PARAMS, this will yield
     an estimator for each parameter set in CHECK_PARAMS[estimator].
     """
+    # TODO(devtools): enable this behavior for third party estimators as well
     if type(estimator_orig) not in CHECK_PARAMS:
         yield estimator_orig
         return
