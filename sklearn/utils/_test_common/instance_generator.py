@@ -5,8 +5,7 @@
 import re
 import warnings
 from functools import partial
-from inspect import isfunction, signature
-from itertools import product
+from inspect import isfunction
 
 from sklearn import clone, config_context
 from sklearn.calibration import CalibratedClassifierCV
@@ -143,7 +142,7 @@ from sklearn.multioutput import (
 )
 from sklearn.neighbors import NeighborhoodComponentsAnalysis
 from sklearn.neural_network import BernoulliRBM, MLPClassifier, MLPRegressor
-from sklearn.pipeline import FeatureUnion, Pipeline, make_pipeline
+from sklearn.pipeline import FeatureUnion, Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler, TargetEncoder
 from sklearn.random_projection import (
     GaussianRandomProjection,
@@ -157,7 +156,7 @@ from sklearn.semi_supervised import (
 from sklearn.svm import SVC, SVR, LinearSVC, LinearSVR, NuSVC, NuSVR, OneClassSVM
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import all_estimators
-from sklearn.utils._testing import SkipTest, set_random_state
+from sklearn.utils._testing import SkipTest
 
 CROSS_DECOMPOSITION = ["PLSCanonical", "PLSRegression", "CCA", "PLSSVD"]
 
@@ -204,25 +203,102 @@ INIT_PARAMS = {
     GradientBoostingRegressor: dict(n_estimators=5),
     GraphicalLassoCV: dict(max_iter=5, cv=3),
     GraphicalLasso: dict(max_iter=5),
-    GridSearchCV: dict(
-        estimator=LogisticRegression(C=1), param_grid={"C": [1.0]}, cv=3
-    ),
-    HalvingGridSearchCV: dict(
-        estimator=Ridge(),
-        min_resources="smallest",
-        param_grid={"alpha": [0.1, 1.0]},
-        random_state=0,
-        cv=2,
-        error_score="raise",
-    ),
-    HalvingRandomSearchCV: dict(
-        estimator=Ridge(),
-        param_distributions={"alpha": [0.1, 1.0]},
-        min_resources="smallest",
-        cv=2,
-        error_score="raise",
-        random_state=0,
-    ),
+    GridSearchCV: [
+        dict(
+            cv=2,
+            error_score="raise",
+            estimator=Ridge(),
+            param_grid={"alpha": [0.1, 1.0]},
+        ),
+        dict(
+            cv=2,
+            error_score="raise",
+            estimator=LogisticRegression(),
+            param_grid={"C": [0.1, 1.0]},
+        ),
+        dict(
+            cv=2,
+            error_score="raise",
+            estimator=Pipeline(steps=[("pca", PCA()), ("ridge", Ridge())]),
+            param_grid={"ridge__alpha": [0.1, 1.0]},
+        ),
+        dict(
+            cv=2,
+            error_score="raise",
+            estimator=Pipeline(
+                steps=[("pca", PCA()), ("logisticregression", LogisticRegression())]
+            ),
+            param_grid={"logisticregression__C": [0.1, 1.0]},
+        ),
+    ],
+    HalvingGridSearchCV: [
+        dict(
+            cv=2,
+            error_score="raise",
+            estimator=Ridge(),
+            min_resources="smallest",
+            param_grid={"alpha": [0.1, 1.0]},
+            random_state=0,
+        ),
+        dict(
+            cv=2,
+            error_score="raise",
+            estimator=LogisticRegression(),
+            min_resources="smallest",
+            param_grid={"C": [0.1, 1.0]},
+            random_state=0,
+        ),
+        dict(
+            cv=2,
+            error_score="raise",
+            estimator=Pipeline(steps=[("pca", PCA()), ("ridge", Ridge())]),
+            min_resources="smallest",
+            param_grid={"ridge__alpha": [0.1, 1.0]},
+            random_state=0,
+        ),
+        dict(
+            cv=2,
+            error_score="raise",
+            estimator=Pipeline(
+                steps=[("pca", PCA()), ("logisticregression", LogisticRegression())]
+            ),
+            min_resources="smallest",
+            param_grid={"logisticregression__C": [0.1, 1.0]},
+            random_state=0,
+        ),
+    ],
+    HalvingRandomSearchCV: [
+        dict(
+            cv=2,
+            error_score="raise",
+            estimator=Ridge(),
+            param_distributions={"alpha": [0.1, 1.0]},
+            random_state=0,
+        ),
+        dict(
+            cv=2,
+            error_score="raise",
+            estimator=LogisticRegression(),
+            param_distributions={"C": [0.1, 1.0]},
+            random_state=0,
+        ),
+        dict(
+            cv=2,
+            error_score="raise",
+            estimator=Pipeline(steps=[("pca", PCA()), ("ridge", Ridge())]),
+            param_distributions={"ridge__alpha": [0.1, 1.0]},
+            random_state=0,
+        ),
+        dict(
+            cv=2,
+            error_score="raise",
+            estimator=Pipeline(
+                steps=[("pca", PCA()), ("logisticregression", LogisticRegression())]
+            ),
+            param_distributions={"logisticregression__C": [0.1, 1.0]},
+            random_state=0,
+        ),
+    ],
     HDBSCAN: dict(min_samples=1),
     # The default min_samples_leaf (20) isn't appropriate for small
     # datasets (only very shallow trees are built) that the checks use.
@@ -278,19 +354,53 @@ INIT_PARAMS = {
     PassiveAggressiveClassifier: dict(max_iter=5),
     PassiveAggressiveRegressor: dict(max_iter=5),
     Perceptron: dict(max_iter=5),
-    Pipeline: dict(steps=[("scaler", StandardScaler()), ("est", Ridge())]),
+    Pipeline: [
+        {"steps": [("scaler", StandardScaler()), ("final_estimator", Ridge())]},
+        {
+            "steps": [
+                ("scaler", StandardScaler()),
+                ("final_estimator", LogisticRegression()),
+            ]
+        },
+    ],
     PLSCanonical: dict(n_components=1, max_iter=5),
     PLSRegression: dict(n_components=1, max_iter=5),
     PLSSVD: dict(n_components=1),
     PoissonRegressor: dict(max_iter=5),
     RandomForestClassifier: dict(n_estimators=5),
     RandomForestRegressor: dict(n_estimators=5),
-    RandomizedSearchCV: dict(
-        estimator=LogisticRegression(C=1),
-        param_distributions={"C": [1.0]},
-        n_iter=5,
-        cv=3,
-    ),
+    RandomizedSearchCV: [
+        dict(
+            cv=2,
+            error_score="raise",
+            estimator=Ridge(),
+            param_distributions={"alpha": [0.1, 1.0]},
+            random_state=0,
+        ),
+        dict(
+            cv=2,
+            error_score="raise",
+            estimator=LogisticRegression(),
+            param_distributions={"C": [0.1, 1.0]},
+            random_state=0,
+        ),
+        dict(
+            cv=2,
+            error_score="raise",
+            estimator=Pipeline(steps=[("pca", PCA()), ("ridge", Ridge())]),
+            param_distributions={"ridge__alpha": [0.1, 1.0]},
+            random_state=0,
+        ),
+        dict(
+            cv=2,
+            error_score="raise",
+            estimator=Pipeline(
+                steps=[("pca", PCA()), ("logisticregression", LogisticRegression())]
+            ),
+            param_distributions={"logisticregression__C": [0.1, 1.0]},
+            random_state=0,
+        ),
+    ],
     RandomTreesEmbedding: dict(n_estimators=5),
     # `RANSACRegressor` will raise an error with any model other
     # than `LinearRegression` if we don't fix the `min_samples` parameter.
@@ -437,31 +547,21 @@ CHECK_PARAMS: dict = {
 def _tested_estimators(type_filter=None):
     for name, Estimator in all_estimators(type_filter=type_filter):
         try:
-            estimator = _construct_instance(Estimator)
+            for estimator in _construct_instances(Estimator):
+                yield estimator
         except SkipTest:
             continue
-
-        yield estimator
-
-
-def _generate_pipeline():
-    """Generator of simple pipeline to check compliance of the
-    :class:`~sklearn.pipeline.Pipeline` class.
-    """
-    for final_estimator in [Ridge(), LogisticRegression()]:
-        yield Pipeline(
-            steps=[
-                ("scaler", StandardScaler()),
-                ("final_estimator", final_estimator),
-            ]
-        )
 
 
 SKIPPED_ESTIMATORS = [SparseCoder]
 
 
-def _construct_instance(Estimator):
-    """Construct Estimator instance if possible."""
+def _construct_instances(Estimator):
+    """Construct Estimator instances if possible.
+
+    If parameter sets in INIT_PARAMS are provided, use them. If there are a list
+    of parameter sets, return one instance for each set.
+    """
     if Estimator in SKIPPED_ESTIMATORS:
         msg = f"Can't instantiate estimator {Estimator.__name__}"
         # raise additional warning to be shown by pytest
@@ -469,10 +569,14 @@ def _construct_instance(Estimator):
         raise SkipTest(msg)
 
     if Estimator in INIT_PARAMS:
-        estimator = Estimator(**INIT_PARAMS[Estimator])
+        param_sets = INIT_PARAMS[Estimator]
+        if not isinstance(param_sets, list):
+            param_sets = [param_sets]
+        for params in param_sets:
+            est = Estimator(**params)
+            yield est
     else:
-        estimator = Estimator()
-    return estimator
+        yield Estimator()
 
 
 def _get_check_estimator_ids(obj):
@@ -509,53 +613,6 @@ def _get_check_estimator_ids(obj):
     if hasattr(obj, "get_params"):
         with config_context(print_changed_only=True):
             return re.sub(r"\s", "", str(obj))
-
-
-def _generate_search_cv_instances():
-    """Generator of `SearchCV` instances to check their compliance with scikit-learn."""
-    for SearchCV, (Estimator, param_grid) in product(
-        [
-            GridSearchCV,
-            HalvingGridSearchCV,
-            RandomizedSearchCV,
-            HalvingGridSearchCV,
-        ],
-        [
-            (Ridge, {"alpha": [0.1, 1.0]}),
-            (LogisticRegression, {"C": [0.1, 1.0]}),
-        ],
-    ):
-        init_params = signature(SearchCV).parameters
-        extra_params = (
-            {"min_resources": "smallest"} if "min_resources" in init_params else {}
-        )
-        search_cv = SearchCV(
-            Estimator(), param_grid, cv=2, error_score="raise", **extra_params
-        )
-        set_random_state(search_cv)
-        yield search_cv
-
-    for SearchCV, (Estimator, param_grid) in product(
-        [
-            GridSearchCV,
-            HalvingGridSearchCV,
-            RandomizedSearchCV,
-            HalvingRandomSearchCV,
-        ],
-        [
-            (Ridge, {"ridge__alpha": [0.1, 1.0]}),
-            (LogisticRegression, {"logisticregression__C": [0.1, 1.0]}),
-        ],
-    ):
-        init_params = signature(SearchCV).parameters
-        extra_params = (
-            {"min_resources": "smallest"} if "min_resources" in init_params else {}
-        )
-        search_cv = SearchCV(
-            make_pipeline(PCA(), Estimator()), param_grid, cv=2, **extra_params
-        ).set_params(error_score="raise")
-        set_random_state(search_cv)
-        yield search_cv
 
 
 def _yield_instances_for_check(check, estimator_orig):
