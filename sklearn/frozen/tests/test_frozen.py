@@ -135,19 +135,13 @@ def test_composite_fit():
                 self._fit_counter = 1
             return self
 
-        def predict(self, X):
-            return np.ones(len(X))
-
-        def transform(self, X):
-            return X
-
         def fit_transform(self, X, y=None):
-            self.fit(X, y)
-            return X
+            # only here to test that it doesn't get called
+            ...  # pragma: no cover
 
         def fit_predict(self, X, y=None):
-            self.fit(X, y)
-            return np.ones(len(X))
+            # only here to test that it doesn't get called
+            ...  # pragma: no cover
 
     X, y = CLASSIFICATION_DATASET
     est = Estimator().fit(X, y)
