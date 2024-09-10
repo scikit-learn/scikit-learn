@@ -2137,8 +2137,6 @@ class _RidgeGCV(LinearModel):
 
         X_mean, *decomposition = decompose(X, y, sqrt_sw)
 
-        scorer = self._get_scorer()
-
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
         n_alphas = 1 if np.ndim(self.alphas) == 0 else len(self.alphas)
 
@@ -2149,7 +2147,10 @@ class _RidgeGCV(LinearModel):
 
         for i, alpha in enumerate(np.atleast_1d(self.alphas)):
             G_inverse_diag, c = solve(float(alpha), y, sqrt_sw, X_mean, *decomposition)
-            if scorer is None:
+            # I need to change this check to determine if the original input into
+            # RidgeCV.scoring was None. I am not sure how I can reach this info
+            # without adding a new param to this public method or to get_scorer.
+            if self.scoring is None:
                 squared_errors = (c / G_inverse_diag) ** 2
                 alpha_score = self._score_without_scorer(squared_errors=squared_errors)
                 if self.store_cv_results:
@@ -2164,7 +2165,7 @@ class _RidgeGCV(LinearModel):
                     predictions=predictions,
                     y=y,
                     n_y=n_y,
-                    scorer=scorer,
+                    scorer=self.scoring,
                     score_params=score_params,
                 )
 
@@ -2208,9 +2209,6 @@ class _RidgeGCV(LinearModel):
             self.cv_results_ = self.cv_results_.reshape(cv_results_shape)
 
         return self
-
-    def _get_scorer(self):
-        return check_scoring(estimator=self, scoring=self.scoring, allow_none=True)
 
     def _score_without_scorer(self, squared_errors):
         """Performs scoring using squared errors when the scorer is None."""
@@ -2338,8 +2336,7 @@ class _BaseRidgeCV(LinearModel):
         """
         _raise_for_params(params, self, "fit")
         cv = self.cv
-        if cv is not None:
-            scorer = self._get_scorer()
+        scorer = self._get_scorer()
 
         # TODO(1.7): Remove in 1.7
         # Also change `store_cv_results` default back to False
@@ -2406,7 +2403,7 @@ class _BaseRidgeCV(LinearModel):
             estimator = _RidgeGCV(
                 alphas,
                 fit_intercept=self.fit_intercept,
-                scoring=self._get_scorer(),
+                scoring=scorer,
                 gcv_mode=self.gcv_mode,
                 store_cv_results=self._store_cv_results,
                 is_clf=is_classifier(self),
@@ -2488,7 +2485,7 @@ class _BaseRidgeCV(LinearModel):
 
     def _get_scorer(self):
         scorer = check_scoring(estimator=self, scoring=self.scoring, allow_none=True)
-        if self.scoring is None:
+        if _routing_enabled() and self.scoring is None:
             # This estimator passes an array of 1s as sample_weight even if
             # sample_weight is not provided by the user. Therefore we need to
             # always request it. But we don't set it if it's passed explicitly
