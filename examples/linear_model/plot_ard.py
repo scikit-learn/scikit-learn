@@ -19,7 +19,8 @@ non-linear relationship between `X` and `y`.
 
 """
 
-# Author: Arturo Amor <david-arturo.amor-quiroz@inria.fr>
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Models robustness to recover the ground truth weights

@@ -710,7 +710,7 @@ def test_parallel_pairwise_distances_diagonal(metric, global_dtype):
     assert_allclose(np.diag(distances), 0, atol=1e-10)
 
 
-@ignore_warnings
+@pytest.mark.filterwarnings("ignore:Could not adhere to working_memory config")
 def test_pairwise_distances_chunked(global_dtype):
     # Test the pairwise_distance helper function.
     rng = np.random.RandomState(0)
@@ -1637,3 +1637,17 @@ def test_sparse_manhattan_readonly_dataset(csr_container):
     Parallel(n_jobs=2, max_nbytes=0)(
         delayed(manhattan_distances)(m1, m2) for m1, m2 in zip(matrices1, matrices2)
     )
+
+
+# TODO(1.8): remove
+def test_force_all_finite_rename_warning():
+    X = np.random.uniform(size=(10, 10))
+    Y = np.random.uniform(size=(10, 10))
+
+    msg = "'force_all_finite' was renamed to 'ensure_all_finite'"
+
+    with pytest.warns(FutureWarning, match=msg):
+        check_pairwise_arrays(X, Y, force_all_finite=True)
+
+    with pytest.warns(FutureWarning, match=msg):
+        pairwise_distances(X, Y, force_all_finite=True)

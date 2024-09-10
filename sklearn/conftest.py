@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import builtins
 import platform
 import sys
@@ -206,7 +209,10 @@ def pytest_collection_modifyitems(config, items):
         )
         skip_doctests = True
 
-    if np_base_version >= parse_version("2"):
+    if np_base_version < parse_version("2"):
+        # TODO: configure numpy to output scalar arrays as regular Python scalars
+        # once possible to improve readability of the tests docstrings.
+        # https://numpy.org/neps/nep-0051-scalar-representation.html#implementation
         reason = "Due to NEP 51 numpy scalar repr has changed in numpy 2"
         skip_doctests = True
 

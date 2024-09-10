@@ -116,7 +116,6 @@ def _split(splitter, X, y, groups):
         return splitter.split(X, y)
 
 
-@ignore_warnings
 def test_cross_validator_with_default_params():
     n_samples = 4
     n_unique_groups = 4
@@ -184,10 +183,10 @@ def test_cross_validator_with_default_params():
         # Test if the cross-validator works as expected even if
         # the data is 1d
         np.testing.assert_equal(
-            list(cv.split(X, y, groups)), list(cv.split(X_1d, y, groups))
+            list(_split(cv, X, y, groups)), list(_split(cv, X_1d, y, groups))
         )
         # Test that train, test indices returned are integers
-        for train, test in cv.split(X, y, groups):
+        for train, test in _split(cv, X, y, groups):
             assert np.asarray(train).dtype.kind == "i"
             assert np.asarray(test).dtype.kind == "i"
 

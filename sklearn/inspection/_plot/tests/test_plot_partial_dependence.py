@@ -17,14 +17,6 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.utils._testing import _convert_container
 
-# TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
-pytestmark = pytest.mark.filterwarnings(
-    (
-        "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
-        "matplotlib.*"
-    ),
-)
-
 
 @pytest.fixture(scope="module")
 def diabetes():

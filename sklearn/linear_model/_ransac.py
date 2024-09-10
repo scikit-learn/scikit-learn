@@ -38,6 +38,7 @@ from ..utils.validation import (
     _deprecate_positional_args,
     check_is_fitted,
     has_fit_parameter,
+    validate_data,
 )
 from ._base import LinearRegression
 
@@ -251,6 +252,9 @@ class RANSACRegressor(
     0.9885...
     >>> reg.predict(X[:1,])
     array([-31.9417...])
+
+    For a more detailed example, see
+    :ref:`sphx_glr_auto_examples_linear_model_plot_ransac.py`
     """  # noqa: E501
 
     _parameter_constraints: dict = {
@@ -363,10 +367,10 @@ class RANSACRegressor(
         # because that would allow y to be csr. Delay expensive finiteness
         # check to the estimator's own input validation.
         _raise_for_params(fit_params, self, "fit")
-        check_X_params = dict(accept_sparse="csr", force_all_finite=False)
+        check_X_params = dict(accept_sparse="csr", ensure_all_finite=False)
         check_y_params = dict(ensure_2d=False)
-        X, y = self._validate_data(
-            X, y, validate_separately=(check_X_params, check_y_params)
+        X, y = validate_data(
+            self, X, y, validate_separately=(check_X_params, check_y_params)
         )
         check_consistent_length(X, y)
 
@@ -628,9 +632,10 @@ class RANSACRegressor(
             Returns predicted values.
         """
         check_is_fitted(self)
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
-            force_all_finite=False,
+            ensure_all_finite=False,
             accept_sparse=True,
             reset=False,
         )
@@ -676,9 +681,10 @@ class RANSACRegressor(
             Score of the prediction.
         """
         check_is_fitted(self)
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
-            force_all_finite=False,
+            ensure_all_finite=False,
             accept_sparse=True,
             reset=False,
         )
@@ -715,11 +721,11 @@ class RANSACRegressor(
         )
         return router
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_sample_weights_invariance": (
+                "zero sample_weight is not equivalent to removing samples"
+            ),
         }
+        return tags

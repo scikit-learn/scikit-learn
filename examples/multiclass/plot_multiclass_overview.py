@@ -20,6 +20,9 @@ multiclass classifier by fitting a set of binary classifiers (the
 will review them.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # The Yeast UCI dataset
 # ---------------------

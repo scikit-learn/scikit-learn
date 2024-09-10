@@ -24,7 +24,7 @@ from .base import (
     clone,
 )
 from .isotonic import IsotonicRegression
-from .model_selection import check_cv, cross_val_predict
+from .model_selection import LeaveOneOut, check_cv, cross_val_predict
 from .preprocessing import LabelEncoder, label_binarize
 from .svm import LinearSVC
 from .utils import (
@@ -89,6 +89,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     :ref:`sphx_glr_auto_examples_calibration_plot_calibration_multiclass.py`.
 
     Read more in the :ref:`User Guide <calibration>`.
+    In order to learn more on the CalibratedClassifierCV class, see the
+    following calibration examples:
+    :ref:`sphx_glr_auto_examples_calibration_plot_calibration.py`,
+    :ref:`sphx_glr_auto_examples_calibration_plot_calibration_curve.py`, and
+    :ref:`sphx_glr_auto_examples_calibration_plot_calibration_multiclass.py`.
 
     Parameters
     ----------
@@ -400,6 +405,13 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     "cross-validation but provided less than "
                     f"{n_folds} examples for at least one class."
                 )
+            if isinstance(self.cv, LeaveOneOut):
+                raise ValueError(
+                    "LeaveOneOut cross-validation does not allow"
+                    "all classes to be present in test splits. "
+                    "Please use a cross-validation generator that allows "
+                    "all classes to appear in every test and train split."
+                )
             cv = check_cv(self.cv, y, classifier=True)
 
             if self.ensemble:
@@ -537,17 +549,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             )
         )
         return router
-
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "Due to the cross-validation and sample ordering, removing a sample"
-                    " is not strictly equal to putting is weight to zero. Specific unit"
-                    " tests are added for CalibratedClassifierCV specifically."
-                ),
-            }
-        }
 
 
 def _fit_classifier_calibrator_pair(
@@ -1049,6 +1050,9 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
 
     Read more about calibration in the :ref:`User Guide <calibration>` and
     more about the scikit-learn visualization API in :ref:`visualizations`.
+
+    For an example on how to use the visualization, see
+    :ref:`sphx_glr_auto_examples_calibration_plot_calibration_curve.py`.
 
     .. versionadded:: 1.0
 

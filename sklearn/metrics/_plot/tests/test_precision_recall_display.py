@@ -18,12 +18,6 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
 
-# TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
-pytestmark = pytest.mark.filterwarnings(
-    "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
-    "matplotlib.*"
-)
-
 
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])

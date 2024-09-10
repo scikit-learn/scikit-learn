@@ -12,6 +12,9 @@ of the predictions can be parallelized within multiple jobs.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Loading the data and model fitting
 # ----------------------------------
