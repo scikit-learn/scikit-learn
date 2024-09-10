@@ -2397,7 +2397,7 @@ class _BaseRidgeCV(LinearModel):
                 if sample_weight is not None:
                     routed_params.scorer.score["sample_weight"] = sample_weight
 
-            if not _routing_enabled() and self.scoring is None:
+            if self.scoring is None:
                 scorer = None
 
             estimator = _RidgeGCV(
