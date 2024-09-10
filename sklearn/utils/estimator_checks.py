@@ -143,6 +143,8 @@ def _yield_checks(estimator):
         for check in _yield_array_api_checks(estimator):
             yield check
 
+    yield check_f_contiguous_array_estimator
+
 
 def _yield_classifier_checks(classifier):
     tags = get_tags(classifier)
@@ -919,6 +921,28 @@ def check_estimator_sparse_matrix(name, estimator_orig):
 def check_estimator_sparse_array(name, estimator_orig):
     if SPARSE_ARRAY_PRESENT:
         _check_estimator_sparse_container(name, estimator_orig, sparse.csr_array)
+
+
+def check_f_contiguous_array_estimator(name, estimator_orig):
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/23988
+    # https://github.com/scikit-learn/scikit-learn/issues/24013
+    estimator = clone(estimator_orig)
+
+    rng = np.random.RandomState(0)
+    X = 3 * rng.uniform(size=(20, 3))
+    X = _enforce_estimator_tags_X(estimator_orig, X)
+    X = np.asfortranarray(X)
+    y = X[:, 0].astype(int)
+    y = _enforce_estimator_tags_y(estimator_orig, y)
+
+    estimator.fit(X, y)
+
+    if hasattr(estimator, "transform"):
+        estimator.transform(X)
+
+    if hasattr(estimator, "predict"):
+        estimator.predict(X)
 
 
 @ignore_warnings(category=FutureWarning)
