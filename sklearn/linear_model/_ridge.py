@@ -2406,7 +2406,7 @@ class _BaseRidgeCV(LinearModel):
             estimator = _RidgeGCV(
                 alphas,
                 fit_intercept=self.fit_intercept,
-                scoring=None,
+                scoring=self._get_scorer(),
                 gcv_mode=self.gcv_mode,
                 store_cv_results=self._store_cv_results,
                 is_clf=is_classifier(self),
