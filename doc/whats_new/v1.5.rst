@@ -18,7 +18,7 @@ For a short description of the main highlights of the release, please refer to
 Version 1.5.2
 =============
 
-**release date of 1.5.2**
+**September 2024**
 
 Changes impacting many modules
 ------------------------------
