@@ -364,11 +364,13 @@ class SpectralCoclustering(BaseSpectral):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            # ValueError: Found array with 0 feature(s) (shape=(23, 0))
-            # while a minimum of 1 is required.
-            "check_dict_unchanged": "FIXME",
-        }
+        tags._xfail_checks.update(
+            {
+                # ValueError: Found array with 0 feature(s) (shape=(23, 0))
+                # while a minimum of 1 is required.
+                "check_dict_unchanged": "FIXME",
+            }
+        )
         return tags
 
 
