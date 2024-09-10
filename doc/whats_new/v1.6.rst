@@ -200,14 +200,6 @@ Changelog
   and automatic retries in case of HTTP errors. :pr:`29354` by :user:`Olivier
   Grisel <ogrisel>`.
 
-:mod:`sklearn.decomposition`
-............................
-
-- |Fix| Increase rank defficiency threshold in the whitening step of
-  :class:`decomposition.FastICA` with `whiten_solver="eigh"` to improve the
-  platform-agnosticity of the estimator. :pr:`29612` by :user:`Olivier Grisel
-  <ogrisel>`.
-
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
