@@ -363,6 +363,9 @@ class SpectralCoclustering(BaseSpectral):
         )
 
 
+4
+
+
 class SpectralBiclustering(BaseSpectral):
     """Spectral biclustering (Kluger, 2003).
 
