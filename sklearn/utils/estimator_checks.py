@@ -3335,8 +3335,8 @@ def check_parameters_default_constructible(name, estimator_orig):
                     # nice way to check for it. We assume there's no VAR_POSITIONAL in
                     # the constructor parameters.
                     #
-                    # TODO(devtools): seaprate check that constructor doesn't have
-                    # *args.
+                    # TODO(devtools): separately check that the constructor doesn't 
+                    # have *args.
                     and p.kind != p.VAR_POSITIONAL
                     # these are parameters that don't have a default value and are
                     # required to construct the estimator.
