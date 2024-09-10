@@ -135,9 +135,8 @@ more details.
 
 - |Fix| Metadata is routed correctly to grouped CV splitters via
   :class:`linear_model.RidgeCV` and :class:`linear_model.RidgeClassifierCV` and
-  :class:`exceptions.UnsetMetadataPassedError` is fixed for
-  :class:`linear_model.RidgeClassifierCV` with default scoring. :pr:`29634` by
-  :user:`Stefanie Senger <StefanieSenger>`.
+  `UnsetMetadataPassedError` is fixed for :class:`linear_model.RidgeClassifierCV` with
+  default scoring. :pr:`29634` by :user:`Stefanie Senger <StefanieSenger>`.
 
 Dropping support for building with setuptools
 ---------------------------------------------
