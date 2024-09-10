@@ -121,7 +121,7 @@ enhance the functionality of scikit-learn's estimators.
 
 - `BiocSklearn <https://bioconductor.org/packages/BiocSklearn>`_
   Exposes a small number of dimension reduction facilities as an illustration
-  of the basilisk protocol for interfacing python with R.  Intended as a 
+  of the basilisk protocol for interfacing python with R. Intended as a 
   springboard for more complete interop.
 
 
