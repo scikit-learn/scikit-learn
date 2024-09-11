@@ -224,7 +224,7 @@ https://conda.anaconda.org/conda-forge/linux-64/pillow-10.4.0-py39h16a7006_0.con
 https://conda.anaconda.org/conda-forge/noarch/pip-24.2-pyh8b19718_1.conda#6c78fbb8ddfd64bcb55b5cbafd2d2c43
 https://conda.anaconda.org/conda-forge/noarch/plotly-5.14.0-pyhd8ed1ab_0.conda#6a7bcc42ef58dd6cf3da9333ea102433
 https://conda.anaconda.org/conda-forge/noarch/pyproject-metadata-0.8.0-pyhd8ed1ab_0.conda#573fe09d7bd0cd4bcc210d8369b5ca47
-https://conda.anaconda.org/conda-forge/noarch/pytest-8.3.2-pyhd8ed1ab_0.conda#e010a224b90f1f623a917c35addbb924
+https://conda.anaconda.org/conda-forge/noarch/pytest-8.3.3-pyhd8ed1ab_0.conda#c03d61f31f38fdb9facf70c29958bf7a
 https://conda.anaconda.org/conda-forge/noarch/python-dateutil-2.9.0-pyhd8ed1ab_0.conda#2cf4264fffb9e6eff6031c5b6884d61c
 https://conda.anaconda.org/conda-forge/linux-64/sip-6.7.12-py39h3d6467e_0.conda#e667a3ab0df62c54e60e1843d2e6defb
 https://conda.anaconda.org/conda-forge/linux-64/tbb-2021.13.0-h84d6215_0.conda#ee6f7fd1e76061ef1fa307d41fa86a96
@@ -243,7 +243,7 @@ https://conda.anaconda.org/conda-forge/linux-64/zstandard-0.23.0-py39h08a7858_1.
 https://conda.anaconda.org/conda-forge/noarch/dask-core-2024.8.0-pyhd8ed1ab_0.conda#bf68bf9ff9a18f1b17aa8c817225aee0
 https://conda.anaconda.org/conda-forge/linux-64/gst-plugins-base-1.24.7-h0a52356_0.conda#d368425fbd031a2f8e801a40c3415c72
 https://conda.anaconda.org/conda-forge/linux-64/libblas-3.9.0-23_linux64_mkl.conda#5bdaf561cf48f95093dedaa665083874
-https://conda.anaconda.org/conda-forge/linux-64/libsystemd0-256.5-hb6d7363_0.conda#3b3912077a5515b2a39bda92008bc2c3
+https://conda.anaconda.org/conda-forge/linux-64/libsystemd0-256.6-h2774228_0.conda#38eaed5a0dd9a737af1a4bd96338d88d
 https://conda.anaconda.org/conda-forge/linux-64/mkl-devel-2024.1.0-ha770c72_693.conda#7f422e2cf549a3fb920c95288393870d
 https://conda.anaconda.org/conda-forge/noarch/urllib3-2.2.2-pyhd8ed1ab_1.conda#e804c43f58255e977093a2298e442bb8
 https://conda.anaconda.org/conda-forge/linux-64/libcblas-3.9.0-23_linux64_mkl.conda#e0219f401906533e26346d8634ef35f4
