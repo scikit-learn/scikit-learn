@@ -86,6 +86,7 @@ def _yield_api_checks(estimator):
     yield check_no_attributes_set_in_init
     yield check_fit_score_takes_y
     yield check_estimators_overwrite_params
+    yield check_do_not_raise_errors_in_init_or_set_params
 
 
 def _yield_checks(estimator):
@@ -4717,3 +4718,19 @@ def check_inplace_ensure_writeable(name, estimator_orig):
 
     assert not X.flags.writeable
     assert_allclose(X, X_copy)
+
+
+def check_do_not_raise_errors_in_init_or_set_params(name, estimator_orig):
+    """Check that init or set_param does not raise errors."""
+    Estimator = type(estimator_orig)
+    params = signature(Estimator).parameters
+
+    smoke_test_values = [-1, 3.0, "helloworld", np.array([1.0, 4.0]), [1], {}, []]
+    for value in smoke_test_values:
+        new_params = {key: value for key in params}
+
+        # Does not raise
+        est = Estimator(**new_params)
+
+        # Also do does not raise
+        est.set_params(**new_params)

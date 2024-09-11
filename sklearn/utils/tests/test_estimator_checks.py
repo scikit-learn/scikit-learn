@@ -64,6 +64,7 @@ from sklearn.utils.estimator_checks import (
     check_outlier_corruption,
     check_regressor_data_not_an_array,
     check_requires_y_none,
+    check_set_params,
     set_random_state,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS, SPARRAY_PRESENT
@@ -591,9 +592,9 @@ def test_check_estimator():
     # check that values returned by get_params match set_params
     msg = "get_params result does not match what was passed to set_params"
     with raises(AssertionError, match=msg):
-        check_estimator(ModifiesValueInsteadOfRaisingError())
+        check_set_params("test", ModifiesValueInsteadOfRaisingError())
     with warnings.catch_warnings(record=True) as records:
-        check_estimator(RaisesErrorInSetParams())
+        check_set_params("test", RaisesErrorInSetParams())
     assert UserWarning in [rec.category for rec in records]
 
     with raises(AssertionError, match=msg):
