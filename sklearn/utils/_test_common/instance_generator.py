@@ -474,7 +474,8 @@ INIT_PARAMS = {
 # This dictionary stores parameters for specific checks. It also enables running the
 # same check with multiple instances of the same estimator with different parameters.
 # The special key "*" allows to apply the parameters to all checks.
-CHECK_PARAMS: dict = {
+# TODO(devtools): allow third-party developers to pass test specific params to checks
+PER_ESTIMATOR_CHECK_PARAMS: dict = {
     # TODO(devtools): check that function names here exist in checks for the estimator
     # TODO(devtools): write a test for the same thing with tags._xfail_checks
     AgglomerativeClustering: {"check_dict_unchanged": dict(n_clusters=1)},
@@ -620,15 +621,15 @@ def _yield_instances_for_check(check, estimator_orig):
 
     For most estimators, this is a no-op.
 
-    For estimators which have an entry in CHECK_PARAMS, this will yield
-    an estimator for each parameter set in CHECK_PARAMS[estimator].
+    For estimators which have an entry in PER_ESTIMATOR_CHECK_PARAMS, this will yield
+    an estimator for each parameter set in PER_ESTIMATOR_CHECK_PARAMS[estimator].
     """
     # TODO(devtools): enable this behavior for third party estimators as well
-    if type(estimator_orig) not in CHECK_PARAMS:
+    if type(estimator_orig) not in PER_ESTIMATOR_CHECK_PARAMS:
         yield estimator_orig
         return
 
-    check_params = CHECK_PARAMS[type(estimator_orig)]
+    check_params = PER_ESTIMATOR_CHECK_PARAMS[type(estimator_orig)]
 
     try:
         check_name = check.__name__
