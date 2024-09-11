@@ -3976,30 +3976,8 @@ def check_estimator_get_tags_default_keys(name, estimator_orig):
 
 def check_estimator_tags_renamed(name, estimator_orig):
     help = """{tags_func}() was removed in 1.6. Please use __sklearn_tags__ instead.
-Use the following template to migrate if you wish to support multiple versions of
-scikit-learn:
-
-import sklearn
-from packaging import version
-from sklearn.base import BaseEstimator
-from sklearn.utils.metaestimators import available_if
-
-def check_version(estimator):
-    return version.parse(sklearn.__version__) < version.parse("1.6.dev")
-
-class MyEstimator(BaseEstimator):
-    ...
-
-    @available_if(check_version)
-    def {tags_func}(self):
-        tags = dict(key=value, ...)
-        return tags
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags.some_key = False
-        return tags
-    ...
+You can implement both __sklearn_tags__() and {tags_func}() to support multiple
+scikit-learn versions.
 """
 
     if not hasattr(estimator_orig, "__sklearn_tags__"):
