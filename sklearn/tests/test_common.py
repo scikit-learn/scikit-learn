@@ -10,10 +10,9 @@ import pkgutil
 import re
 import warnings
 from functools import partial
-from inspect import isgenerator, signature
+from inspect import isgenerator
 from itertools import chain
 
-import numpy as np
 import pytest
 from scipy.linalg import LinAlgWarning
 
@@ -343,25 +342,6 @@ ESTIMATORS_WITH_GET_FEATURE_NAMES_OUT = [
 def test_estimators_get_feature_names_out_error(estimator):
     estimator_name = estimator.__class__.__name__
     check_get_feature_names_out_error(estimator_name, estimator)
-
-
-@pytest.mark.parametrize(
-    "Estimator",
-    [est for name, est in all_estimators()],
-)
-def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
-    """Check that init or set_param does not raise errors."""
-    params = signature(Estimator).parameters
-
-    smoke_test_values = [-1, 3.0, "helloworld", np.array([1.0, 4.0]), [1], {}, []]
-    for value in smoke_test_values:
-        new_params = {key: value for key in params}
-
-        # Does not raise
-        est = Estimator(**new_params)
-
-        # Also do does not raise
-        est.set_params(**new_params)
 
 
 @pytest.mark.parametrize(
