@@ -83,13 +83,16 @@ class DecisionBoundaryDisplay:
         (grid_resolution, grid_resolution, n_classes)
         Values of the response function.
 
-    multiclass_cmap : list[str, Colormap] default=None
-        Colormap to use for each class when plotting all classes of multiclass
+    multiclass_colors : list[str], str, default=None
+        Specifies how to color each class when plotting all classes of multiclass
         problem and `response.shape.ndim==3`. Ignored in all other cases.
-        Length of list should be equal to `response.shape[-1]`. Each
-        element in list will be passed to the `cmap` parameter of the
-        `plot_method`.
-        If None, single color colormaps will be generated from 'viridis' colors.
+        Either list, of length `response.shape[-1]`, of Matplotlib `color
+        <https://matplotlib.org/stable/users/explain/colors/colors.html#colors-def>`_
+        strings or name of :class:`matplotlib.colors.Colormap`.
+        Single color colormaps will be generated from the colors in the list or
+        single colors taken from the colormap and passed to the `cmap` parameter of
+        the `plot_method`.
+        If None, 'viridis' colors will be used.
 
         .. versionadded:: 1.6
 
@@ -145,12 +148,12 @@ class DecisionBoundaryDisplay:
     """
 
     def __init__(
-        self, *, xx0, xx1, response, multiclass_cmap=None, xlabel=None, ylabel=None
+        self, *, xx0, xx1, response, multiclass_colors=None, xlabel=None, ylabel=None
     ):
         self.xx0 = xx0
         self.xx1 = xx1
         self.response = response
-        self.multiclass_cmap = multiclass_cmap
+        self.multiclass_colors = multiclass_colors
         self.xlabel = xlabel
         self.ylabel = ylabel
 
@@ -207,20 +210,27 @@ class DecisionBoundaryDisplay:
         if self.response.ndim == 2:
             self.surface_ = plot_func(self.xx0, self.xx1, self.response, **kwargs)
         else:  # self.response.ndim == 3
-            multiclass_cmap = self.multiclass_cmap
-            # create the colormap for each class when `multiclass_cmap` is None
-            if multiclass_cmap is None:
-                viridis = mpl.colormaps["viridis"].resampled(self.response.shape[-1])
-                multiclass_cmap = []
-                for class_idx, primary_color in enumerate(viridis.colors):
+            colors = self.multiclass_colors
+            multiclass_cmaps = []
+            if isinstance(colors, str) or colors is None:
+                cmap = "viridis" if colors is None else colors
+                cmap = mpl.colormaps[cmap].resampled(self.response.shape[-1])
+                for class_idx, primary_color in enumerate(cmap.colors):
                     r, g, b, _ = primary_color
-                    cmap = mpl.colors.LinearSegmentedColormap.from_list(
+                    class_cmap = mpl.colors.LinearSegmentedColormap.from_list(
                         f"colormap_{class_idx}", [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)]
                     )
-                    multiclass_cmap.append(cmap)
+                    multiclass_cmaps.append(class_cmap)
+            else:
+                for class_idx, class_color in enumerate(colors):
+                    r, g, b, _ = mpl.colors.to_rgba(class_color)
+                    class_cmap = mpl.colors.LinearSegmentedColormap.from_list(
+                        f"colormap_{class_idx}", [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)]
+                    )
+                    multiclass_cmaps.append(class_cmap)
 
             self.surface_ = []
-            for class_idx, cmap in enumerate(multiclass_cmap):
+            for class_idx, cmap in enumerate(multiclass_cmaps):
                 response = np.ma.array(
                     self.response[:, :, class_idx],
                     mask=~(self.response.argmax(axis=2) == class_idx),
@@ -252,7 +262,7 @@ class DecisionBoundaryDisplay:
         plot_method="contourf",
         response_method="auto",
         class_of_interest=None,
-        multiclass_cmap=None,
+        multiclass_colors=None,
         xlabel=None,
         ylabel=None,
         ax=None,
@@ -303,18 +313,21 @@ class DecisionBoundaryDisplay:
             classifiers, if None, all classes will be represented in the
             decision boundary plot; the class with the highest response value
             at each point is plotted. The color of each class can be set via
-            `multiclass_cmap`.
+            `multiclass_colors`.
 
             .. versionadded:: 1.4
 
-        multiclass_cmap : list[str, Colormap] default=None
-            Colormap to use for each class when plotting multiclass
+        multiclass_colors : list[str, Colormap] default=None
+            Specifies how to color each class whenplotting multiclass
             'predict_proba' or 'decision_function' and `class_of_interest` is
             None. Ignored in all other cases.
-            Length of list should be equal to the number of classes. Each
-            element in list will be passed to the `cmap` parameter of the
-            `plot_method`.
-            If None, single color colormaps will be generated from 'viridis' colors.
+            Either list, of `estimator.classes_` length, of Matplotlib `color
+            <https://matplotlib.org/stable/users/explain/colors/colors.html#colors-def>`_
+            strings or name of :class:`matplotlib.colors.Colormap`.
+            Single color colormaps will be generated from the colors in the list or
+            colors taken from the colormap, and passed to the `cmap` parameter of
+            the `plot_method`.
+            If None, 'viridis' colors will be used.
 
             .. versionadded:: 1.6
 
@@ -369,6 +382,7 @@ class DecisionBoundaryDisplay:
         """
         check_matplotlib_support(f"{cls.__name__}.from_estimator")
         check_is_fitted(estimator)
+        import matplotlib as mpl  # noqa
 
         if not grid_resolution > 1:
             raise ValueError(
@@ -397,15 +411,30 @@ class DecisionBoundaryDisplay:
 
         if (
             response_method in ("predict_proba", "decision_function", "auto")
-            and multiclass_cmap is not None
+            and multiclass_colors is not None
             and hasattr(estimator, "classes_")
             and (n_classes := len(estimator.classes_)) > 2
         ):
-            if len(multiclass_cmap) != n_classes:
-                raise ValueError(
-                    "'multiclass_cmap' must be of the same length as "
-                    f"'estimator.classes_': {n_classes}, got: {len(multiclass_cmap)}."
-                )
+            if isinstance(multiclass_colors, list):
+                if len(multiclass_colors) != n_classes:
+                    raise ValueError(
+                        "When 'multiclass_colors' is a list, it must be of the same "
+                        f"length as 'estimator.classes_' ({n_classes}), got: "
+                        f"{len(multiclass_colors)}."
+                    )
+                elif not any(
+                    mpl.colors.is_color_like(col) for col in multiclass_colors
+                ):
+                    raise ValueError(
+                        "When 'multiclass_colors' is a list, it can only contain valid"
+                        f" Matplotlib color names. Got: {multiclass_colors}"
+                    )
+            if isinstance(multiclass_colors, str):
+                if multiclass_colors not in mpl.pyplot.colormaps():
+                    raise ValueError(
+                        "When 'multiclass_colors' is a string, it must be a valid "
+                        f"Matplotlib colormap. Got: {multiclass_colors}"
+                    )
 
         x0, x1 = _safe_indexing(X, 0, axis=1), _safe_indexing(X, 1, axis=1)
 
@@ -479,7 +508,7 @@ class DecisionBoundaryDisplay:
             xx0=xx0,
             xx1=xx1,
             response=response,
-            multiclass_cmap=multiclass_cmap,
+            multiclass_colors=multiclass_colors,
             xlabel=xlabel,
             ylabel=ylabel,
         )
