@@ -53,6 +53,7 @@ from sklearn.utils.estimator_checks import (
     check_estimator,
     check_estimator_cloneable,
     check_estimator_repr,
+    check_estimator_tags_renamed,
     check_estimators_unfitted,
     check_fit_check_is_fitted,
     check_fit_score_takes_y,
@@ -1328,3 +1329,25 @@ def test_estimator_repr_error():
     msg = "Repr of .* failed with error"
     with raises(AssertionError, match=msg):
         check_estimator_repr("NotRepr", estimator)
+
+
+def test_check_estimator_tags_renamed():
+    class BadEstimator:
+        def _more_tags(self):
+            return None
+
+    class OkayEstimator:
+        def __sklearn_tags__(self):
+            return None
+
+        def _more_tags(self):
+            return None
+
+    msg = "was removed in 1.6. Please use __sklearn_tags__ instead."
+    with raises(AssertionError, match=msg):
+        check_estimator_tags_renamed("BadEstimator", BadEstimator())
+
+    # This shouldn't fail since we allow both __sklearn_tags__ and _more_tags
+    # to exist so that third party estimators can easily support multiple sklearn
+    # versions.
+    check_estimator_tags_renamed("OkayEstimator", OkayEstimator())

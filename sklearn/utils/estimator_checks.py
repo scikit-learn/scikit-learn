@@ -3974,7 +3974,7 @@ def check_estimator_get_tags_default_keys(name, estimator_orig):
 
 
 def check_estimator_tags_renamed(name, estimator_orig):
-    help = """_more_tags() was removed in 1.6. Please use __sklearn_tags__ instead.
+    help = """{tags_func}() was removed in 1.6. Please use __sklearn_tags__ instead.
 Use the following template to migrate if you wish to support multiple versions of
 scikit-learn:
 
