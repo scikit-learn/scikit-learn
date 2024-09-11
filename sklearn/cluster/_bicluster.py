@@ -15,7 +15,7 @@ from ..base import BaseEstimator, BiclusterMixin, _fit_context
 from ..utils import check_random_state, check_scalar
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import make_nonnegative, randomized_svd, safe_sparse_dot
-from ..utils.validation import assert_all_finite
+from ..utils.validation import assert_all_finite, validate_data
 from ._kmeans import KMeans, MiniBatchKMeans
 
 __all__ = ["SpectralCoclustering", "SpectralBiclustering"]
@@ -131,7 +131,7 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
         self : object
             SpectralBiclustering instance.
         """
-        X = self._validate_data(X, accept_sparse="csr", dtype=np.float64)
+        X = validate_data(self, X, accept_sparse="csr", dtype=np.float64)
         self._check_parameters(X.shape[0])
         self._fit(X)
         return self

@@ -34,6 +34,7 @@ from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
 from ..utils.validation import (
     check_is_fitted,
     check_non_negative,
+    validate_data,
 )
 from ._cdnmf_fast import _update_cdnmf_fast
 
@@ -1644,8 +1645,8 @@ class NMF(_BaseNMF):
         W : ndarray of shape (n_samples, n_components)
             Transformed data.
         """
-        X = self._validate_data(
-            X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32]
+        X = validate_data(
+            self, X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32]
         )
 
         with config_context(assume_finite=True):
@@ -1774,7 +1775,8 @@ class NMF(_BaseNMF):
             Transformed data.
         """
         check_is_fitted(self)
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=("csr", "csc"),
             dtype=[np.float64, np.float32],
@@ -2232,8 +2234,8 @@ class MiniBatchNMF(_BaseNMF):
         W : ndarray of shape (n_samples, n_components)
             Transformed data.
         """
-        X = self._validate_data(
-            X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32]
+        X = validate_data(
+            self, X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32]
         )
 
         with config_context(assume_finite=True):
@@ -2361,8 +2363,12 @@ class MiniBatchNMF(_BaseNMF):
             Transformed data.
         """
         check_is_fitted(self)
-        X = self._validate_data(
-            X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32], reset=False
+        X = validate_data(
+            self,
+            X,
+            accept_sparse=("csr", "csc"),
+            dtype=[np.float64, np.float32],
+            reset=False,
         )
 
         W = self._solve_W(X, self.components_, self._transform_max_iter)
@@ -2403,7 +2409,8 @@ class MiniBatchNMF(_BaseNMF):
         """
         has_components = hasattr(self, "components_")
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=("csr", "csc"),
             dtype=[np.float64, np.float32],

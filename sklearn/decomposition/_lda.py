@@ -27,7 +27,7 @@ from ..base import (
 from ..utils import check_random_state, gen_batches, gen_even_slices
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.parallel import Parallel, delayed
-from ..utils.validation import check_is_fitted, check_non_negative
+from ..utils.validation import check_is_fitted, check_non_negative, validate_data
 from ._online_lda_fast import (
     _dirichlet_expectation_1d as cy_dirichlet_expectation_1d,
 )
@@ -564,7 +564,8 @@ class LatentDirichletAllocation(
         """
         dtype = [np.float64, np.float32] if reset_n_features else self.components_.dtype
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             reset=reset_n_features,
             accept_sparse="csr",

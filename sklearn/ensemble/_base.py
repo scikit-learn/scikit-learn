@@ -4,7 +4,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from abc import ABCMeta, abstractmethod
-from typing import List
 
 import numpy as np
 from joblib import effective_n_jobs
@@ -106,9 +105,6 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         The collection of fitted base estimators.
     """
 
-    # overwrite _required_parameters from MetaEstimatorMixin
-    _required_parameters: List[str] = []
-
     @abstractmethod
     def __init__(
         self,
@@ -199,8 +195,6 @@ class _BaseHeterogeneousEnsemble(
         training data. If an estimator has been set to `'drop'`, it will not
         appear in `estimators_`.
     """
-
-    _required_parameters = ["estimators"]
 
     @property
     def named_estimators(self):

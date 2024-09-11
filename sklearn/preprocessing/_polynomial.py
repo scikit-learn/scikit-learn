@@ -25,6 +25,7 @@ from ..utils.validation import (
     _check_feature_names_in,
     _check_sample_weight,
     check_is_fitted,
+    validate_data,
 )
 from ._csr_polynomial_expansion import (
     _calc_expanded_nnz,
@@ -323,7 +324,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
-        _, n_features = self._validate_data(X, accept_sparse=True).shape
+        _, n_features = validate_data(self, X, accept_sparse=True).shape
 
         if isinstance(self.degree, Integral):
             if self.degree == 0 and not self.include_bias:
@@ -433,8 +434,13 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = self._validate_data(
-            X, order="F", dtype=FLOAT_DTYPES, reset=False, accept_sparse=("csr", "csc")
+        X = validate_data(
+            self,
+            X,
+            order="F",
+            dtype=FLOAT_DTYPES,
+            reset=False,
+            accept_sparse=("csr", "csc"),
         )
 
         n_samples, n_features = X.shape
@@ -833,7 +839,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             reset=True,
             accept_sparse=False,
@@ -961,7 +968,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, reset=False, accept_sparse=False, ensure_2d=True)
+        X = validate_data(self, X, reset=False, accept_sparse=False, ensure_2d=True)
 
         n_samples, n_features = X.shape
         n_splines = self.bsplines_[0].c.shape[1]

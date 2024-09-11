@@ -16,6 +16,7 @@ from ..preprocessing._data import _handle_zeros_in_scale
 from ..utils import check_random_state
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.optimize import _check_optimize_result
+from ..utils.validation import validate_data
 from .kernels import RBF, Kernel
 from .kernels import ConstantKernel as C
 
@@ -247,7 +248,8 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             dtype, ensure_2d = "numeric", True
         else:
             dtype, ensure_2d = None, False
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             multi_output=True,
@@ -404,7 +406,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         else:
             dtype, ensure_2d = None, False
 
-        X = self._validate_data(X, ensure_2d=ensure_2d, dtype=dtype, reset=False)
+        X = validate_data(self, X, ensure_2d=ensure_2d, dtype=dtype, reset=False)
 
         if not hasattr(self, "X_train_"):  # Unfitted;predict based on GP prior
             if self.kernel is None:

@@ -36,7 +36,7 @@ from ..exceptions import DataConversionWarning, NotFittedError, SkipTestWarning
 from ..linear_model._base import LinearClassifierMixin
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 from ..metrics.pairwise import linear_kernel, pairwise_distances, rbf_kernel
-from ..model_selection import ShuffleSplit, train_test_split
+from ..model_selection import LeaveOneGroupOut, ShuffleSplit, train_test_split
 from ..model_selection._validation import _safe_split
 from ..pipeline import make_pipeline
 from ..preprocessing import StandardScaler, scale
@@ -58,7 +58,6 @@ from ._param_validation import Interval
 from ._tags import Tags, get_tags
 from ._test_common.instance_generator import (
     CROSS_DECOMPOSITION,
-    _construct_instance,
     _get_check_estimator_ids,
 )
 from ._testing import (
@@ -82,9 +81,12 @@ REGRESSION_DATASET = None
 
 
 def _yield_api_checks(estimator):
+    yield check_estimator_cloneable
+    yield check_estimator_repr
     yield check_no_attributes_set_in_init
     yield check_fit_score_takes_y
     yield check_estimators_overwrite_params
+    yield check_do_not_raise_errors_in_init_or_set_params
 
 
 def _yield_checks(estimator):
@@ -141,6 +143,8 @@ def _yield_checks(estimator):
     if tags.array_api_support:
         for check in _yield_array_api_checks(estimator):
             yield check
+
+    yield check_f_contiguous_array_estimator
 
 
 def _yield_classifier_checks(classifier):
@@ -920,6 +924,28 @@ def check_estimator_sparse_array(name, estimator_orig):
         _check_estimator_sparse_container(name, estimator_orig, sparse.csr_array)
 
 
+def check_f_contiguous_array_estimator(name, estimator_orig):
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/23988
+    # https://github.com/scikit-learn/scikit-learn/issues/24013
+    estimator = clone(estimator_orig)
+
+    rng = np.random.RandomState(0)
+    X = 3 * rng.uniform(size=(20, 3))
+    X = _enforce_estimator_tags_X(estimator_orig, X)
+    X = np.asfortranarray(X)
+    y = X[:, 0].astype(int)
+    y = _enforce_estimator_tags_y(estimator_orig, y)
+
+    estimator.fit(X, y)
+
+    if hasattr(estimator, "transform"):
+        estimator.transform(X)
+
+    if hasattr(estimator, "predict"):
+        estimator.predict(X)
+
+
 @ignore_warnings(category=FutureWarning)
 def check_sample_weights_pandas_series(name, estimator_orig):
     # check that estimators will accept a 'sample_weight' parameter of
@@ -1104,6 +1130,26 @@ def check_sample_weights_invariance(name, estimator_orig, kind="ones"):
         )
     else:  # pragma: no cover
         raise ValueError
+
+    # when the estimator has an internal CV scheme
+    # we only use weights / repetitions in a specific CV group (here group=0)
+    if "cv" in estimator_orig.get_params():
+        groups2 = np.hstack(
+            [np.full_like(y2, 0), np.full_like(y1, 1), np.full_like(y1, 2)]
+        )
+        sw2 = np.hstack([sw2, np.ones_like(y1), np.ones_like(y1)])
+        X2 = np.vstack([X2, X1, X1])
+        y2 = np.hstack([y2, y1, y1])
+        splits2 = list(LeaveOneGroupOut().split(X2, groups=groups2))
+        estimator2.set_params(cv=splits2)
+
+        groups1 = np.hstack(
+            [np.full_like(y1, 0), np.full_like(y1, 1), np.full_like(y1, 2)]
+        )
+        X1 = np.vstack([X1, X1, X1])
+        y1 = np.hstack([y1, y1, y1])
+        splits1 = list(LeaveOneGroupOut().split(X1, groups=groups1))
+        estimator1.set_params(cv=splits1)
 
     y1 = _enforce_estimator_tags_y(estimator1, y1)
     y2 = _enforce_estimator_tags_y(estimator2, y2)
@@ -3256,19 +3302,33 @@ def check_estimators_data_not_an_array(name, estimator_orig, X, y, obj_type):
     assert_allclose(pred1, pred2, atol=1e-2, err_msg=name)
 
 
-def check_parameters_default_constructible(name, Estimator):
+def check_estimator_cloneable(name, estimator_orig):
+    """Checks whether the estimator can be cloned."""
+    try:
+        clone(estimator_orig)
+    except Exception as e:
+        raise AssertionError(f"Cloning of {name} failed with error: {e}.") from e
+
+
+def check_estimator_repr(name, estimator_orig):
+    """Check that the estimator has a functioning repr."""
+    estimator = clone(estimator_orig)
+    try:
+        repr(estimator)
+    except Exception as e:
+        raise AssertionError(f"Repr of {name} failed with error: {e}.") from e
+
+
+def check_parameters_default_constructible(name, estimator_orig):
     # test default-constructibility
     # get rid of deprecation warnings
 
-    Estimator = Estimator.__class__
+    Estimator = estimator_orig.__class__
+    estimator = clone(estimator_orig)
 
     with ignore_warnings(category=FutureWarning):
-        estimator = _construct_instance(Estimator)
-        # test cloning
-        clone(estimator)
-        # test __repr__
-        repr(estimator)
         # test that set_params returns self
+        # TODO(devtools): this should be a separate check.
         assert estimator.set_params() is estimator
 
         # test if init does nothing but set parameters
@@ -3281,33 +3341,58 @@ def check_parameters_default_constructible(name, Estimator):
 
         try:
 
-            def param_filter(p):
+            def param_default_value(p):
                 """Identify hyper parameters of an estimator."""
                 return (
                     p.name != "self"
                     and p.kind != p.VAR_KEYWORD
                     and p.kind != p.VAR_POSITIONAL
+                    # and it should have a default value for this test
+                    and p.default != p.empty
                 )
 
-            init_params = [
-                p for p in signature(init).parameters.values() if param_filter(p)
+            def param_required(p):
+                """Identify hyper parameters of an estimator."""
+                return (
+                    p.name != "self"
+                    and p.kind != p.VAR_KEYWORD
+                    # technically VAR_POSITIONAL is also required, but we don't have a
+                    # nice way to check for it. We assume there's no VAR_POSITIONAL in
+                    # the constructor parameters.
+                    #
+                    # TODO(devtools): separately check that the constructor doesn't
+                    # have *args.
+                    and p.kind != p.VAR_POSITIONAL
+                    # these are parameters that don't have a default value and are
+                    # required to construct the estimator.
+                    and p.default == p.empty
+                )
+
+            required_params_names = [
+                p.name for p in signature(init).parameters.values() if param_required(p)
+            ]
+
+            default_value_params = [
+                p for p in signature(init).parameters.values() if param_default_value(p)
             ]
 
         except (TypeError, ValueError):
             # init is not a python function.
             # true for mixins
             return
-        params = estimator.get_params()
-        # they can need a non-default argument
-        init_params = init_params[len(getattr(estimator, "_required_parameters", [])) :]
 
-        for init_param in init_params:
-            assert (
-                init_param.default != init_param.empty
-            ), "parameter %s for %s has no default value" % (
-                init_param.name,
-                type(estimator).__name__,
-            )
+        # here we construct an instance of the estimator using only the required
+        # parameters.
+        old_params = estimator.get_params()
+        init_params = {
+            param: old_params[param]
+            for param in old_params
+            if param in required_params_names
+        }
+        estimator = Estimator(**init_params)
+        params = estimator.get_params()
+
+        for init_param in default_value_params:
             allowed_types = {
                 str,
                 int,
@@ -4605,3 +4690,19 @@ def check_inplace_ensure_writeable(name, estimator_orig):
 
     assert not X.flags.writeable
     assert_allclose(X, X_copy)
+
+
+def check_do_not_raise_errors_in_init_or_set_params(name, estimator_orig):
+    """Check that init or set_param does not raise errors."""
+    Estimator = type(estimator_orig)
+    params = signature(Estimator).parameters
+
+    smoke_test_values = [-1, 3.0, "helloworld", np.array([1.0, 4.0]), [1], {}, []]
+    for value in smoke_test_values:
+        new_params = {key: value for key in params}
+
+        # Does not raise
+        est = Estimator(**new_params)
+
+        # Also do does not raise
+        est.set_params(**new_params)
