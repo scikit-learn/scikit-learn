@@ -2269,15 +2269,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         )
         return router
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_sample_weights_invariance": (
-                "zero sample_weight is not equivalent to removing samples"
-            ),
-        }
-        return tags
-
     def _get_scorer(self):
         """Get the scorer based on the scoring method specified.
         The default scoring method is `accuracy`.
