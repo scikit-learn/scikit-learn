@@ -39,7 +39,9 @@ from ..utils.metadata_routing import (
 from ..utils.metaestimators import _BaseComposition
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
+    _check_feature_names,
     _check_feature_names_in,
+    _check_n_features,
     _get_feature_names,
     _is_pandas_df,
     _num_samples,
@@ -284,8 +286,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     For a more detailed example of usage, see
     :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`.
     """
-
-    _required_parameters = ["transformers"]
 
     _parameter_constraints: dict = {
         "transformers": [list, Hidden(tuple)],
@@ -986,11 +986,11 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             sparse matrices.
         """
         _raise_for_params(params, self, "fit_transform")
-        self._check_feature_names(X, reset=True)
+        _check_feature_names(self, X, reset=True)
 
         X = _check_X(X)
         # set n_features_in_ attribute
-        self._check_n_features(X, reset=True)
+        _check_n_features(self, X, reset=True)
         self._validate_transformers()
         n_samples = _num_samples(X)
 
@@ -1095,7 +1095,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         else:
             # ndarray was used for fitting or transforming, thus we only
             # check that n_features_in_ is consistent
-            self._check_n_features(X, reset=False)
+            _check_n_features(self, X, reset=False)
 
         if _routing_enabled():
             routed_params = process_routing(self, "transform", **params)
@@ -1319,6 +1319,21 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             router.add(method_mapping=method_mapping, **{name: step})
 
         return router
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_estimators_empty_data_messages": "FIXME",
+            "check_estimators_nan_inf": "FIXME",
+            "check_estimator_sparse_array": "FIXME",
+            "check_estimator_sparse_matrix": "FIXME",
+            "check_transformer_data_not_an_array": "FIXME",
+            "check_fit1d": "FIXME",
+            "check_fit2d_predict1d": "FIXME",
+            "check_complex_data": "FIXME",
+            "check_fit2d_1feature": "FIXME",
+        }
+        return tags
 
 
 def _check_X(X):

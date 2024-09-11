@@ -114,7 +114,7 @@ details.sd-dropdown {
 /* Tabs (sphinx-design) */
 
 .sd-tab-set {
-  --tab-caption-width: 0%;  // No tab caption by default
+  --tab-caption-width: 0%; // No tab caption by default
   margin-top: 1.5rem;
 
   &::before {
@@ -155,6 +155,18 @@ details.sd-dropdown {
     transform: unset;
     border: 2px solid var(--pst-color-primary);
   }
+}
+
+/* Download/laucher links and top hint (sphinx-gallery) */
+
+// https://sphinx-gallery.github.io/stable/advanced.html#using-sphinx-gallery-sidebar-components
+.sphx-glr-download-link-note,
+.binder-badge,
+.lite-badge,
+.sphx-glr-download-jupyter,
+.sphx-glr-download-python,
+.sphx-glr-download-zip {
+  display: none;
 }
 
 /* scikit-learn buttons */

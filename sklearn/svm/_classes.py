@@ -9,7 +9,7 @@ from ..base import BaseEstimator, OutlierMixin, RegressorMixin, _fit_context
 from ..linear_model._base import LinearClassifierMixin, LinearModel, SparseCoefMixin
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import _num_samples
+from ..utils.validation import _num_samples, validate_data
 from ._base import BaseLibSVM, BaseSVC, _fit_liblinear, _get_liblinear_solver_type
 
 
@@ -302,7 +302,8 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self : object
             An instance of the estimator.
         """
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse="csr",
@@ -348,14 +349,14 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
         return self
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_sample_weights_invariance": (
+                "zero sample_weight is not equivalent to removing samples"
+            ),
         }
+        return tags
 
 
 class LinearSVR(RegressorMixin, LinearModel):
@@ -569,7 +570,8 @@ class LinearSVR(RegressorMixin, LinearModel):
         self : object
             An instance of the estimator.
         """
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse="csr",
@@ -607,14 +609,14 @@ class LinearSVR(RegressorMixin, LinearModel):
 
         return self
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_sample_weights_invariance": (
+                "zero sample_weight is not equivalent to removing samples"
+            ),
         }
+        return tags
 
 
 class SVC(BaseSVC):
@@ -888,14 +890,14 @@ class SVC(BaseSVC):
             random_state=random_state,
         )
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_sample_weights_invariance": (
+                "zero sample_weight is not equivalent to removing samples"
+            ),
         }
+        return tags
 
 
 class NuSVC(BaseSVC):
@@ -1158,21 +1160,21 @@ class NuSVC(BaseSVC):
             random_state=random_state,
         )
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_methods_subset_invariance": (
-                    "fails for the decision_function method"
-                ),
-                "check_class_weight_classifiers": "class_weight is ignored.",
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-                "check_classifiers_one_label_sample_weights": (
-                    "specified nu is infeasible for the fit."
-                ),
-            }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_methods_subset_invariance": (
+                "fails for the decision_function method"
+            ),
+            "check_class_weight_classifiers": "class_weight is ignored.",
+            "check_sample_weights_invariance": (
+                "zero sample_weight is not equivalent to removing samples"
+            ),
+            "check_classifiers_one_label_sample_weights": (
+                "specified nu is infeasible for the fit."
+            ),
         }
+        return tags
 
 
 class SVR(RegressorMixin, BaseLibSVM):
@@ -1366,14 +1368,14 @@ class SVR(RegressorMixin, BaseLibSVM):
             random_state=None,
         )
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_sample_weights_invariance": (
+                "zero sample_weight is not equivalent to removing samples"
+            ),
         }
+        return tags
 
 
 class NuSVR(RegressorMixin, BaseLibSVM):
@@ -1560,14 +1562,14 @@ class NuSVR(RegressorMixin, BaseLibSVM):
             random_state=None,
         )
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_sample_weights_invariance": (
+                "zero sample_weight is not equivalent to removing samples"
+            ),
         }
+        return tags
 
 
 class OneClassSVM(OutlierMixin, BaseLibSVM):
@@ -1823,11 +1825,11 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         y = super().predict(X)
         return np.asarray(y, dtype=np.intp)
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_sample_weights_invariance": (
+                "zero sample_weight is not equivalent to removing samples"
+            ),
         }
+        return tags
