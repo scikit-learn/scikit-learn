@@ -4001,10 +4001,13 @@ class MyEstimator(BaseEstimator):
     ...
 """
 
-    assert not hasattr(estimator_orig, "_more_tags"), help.format(
-        tags_func="_more_tags"
-    )
-    assert not hasattr(estimator_orig, "_get_tags"), help.format(tags_func="_get_tags")
+    if not hasattr(estimator_orig, "__sklearn_tags__"):
+        assert not hasattr(estimator_orig, "_more_tags"), help.format(
+            tags_func="_more_tags"
+        )
+        assert not hasattr(estimator_orig, "_get_tags"), help.format(
+            tags_func="_get_tags"
+        )
 
 
 def check_dataframe_column_names_consistency(name, estimator_orig):
