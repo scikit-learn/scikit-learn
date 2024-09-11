@@ -14,8 +14,8 @@ import pytest
 import sklearn
 from sklearn import metrics
 from sklearn.datasets import make_classification
-
 from sklearn.ensemble import StackingClassifier, StackingRegressor
+
 # make it possible to discover experimental estimators when calling `all_estimators`
 from sklearn.experimental import (
     enable_halving_search_cv,  # noqa
