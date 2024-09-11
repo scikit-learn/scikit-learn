@@ -399,7 +399,7 @@ class DecisionBoundaryDisplay:
             response_method in ("predict_proba", "decision_function", "auto")
             and multiclass_cmap is not None
             and hasattr(estimator, "classes_")
-            and (n_classes := len(estimator.classes_) > 2)
+            and (n_classes := len(estimator.classes_)) > 2
         ):
             if len(multiclass_cmap) != n_classes:
                 raise ValueError(
