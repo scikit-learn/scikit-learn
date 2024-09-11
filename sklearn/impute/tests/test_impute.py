@@ -1794,9 +1794,13 @@ def test_iterative_imputer_no_empty_features(strategy):
     When the input matrix contains no empty features, it should return
     the same result regardless of whether `keep_empty_features`.
     """
-    rng = np.random.RandomState(0)
-    X = _sparse_random_matrix(10, 10, density=0.95, random_state=rng).toarray()
-    X[X == 0] = np.nan
+    X = np.array(
+        [
+            [np.nan, 0, 1],
+            [2, np.nan, 3],
+            [4, 5, np.nan]
+        ]
+    )
 
     imputer_drop_empty_features = IterativeImputer(
         initial_strategy=strategy, fill_value=1, keep_empty_features=False
@@ -1820,10 +1824,13 @@ def test_iterative_imputer_with_empty_features(strategy):
     `keep_empty_features`. Additionally, the empty features
     should become 0s when `keep_empty_features` is set to True.
     """
-    rng = np.random.RandomState(0)
-    X = _sparse_random_matrix(10, 10, density=0.95, random_state=rng).toarray()
-    X[X == 0] = np.nan
-    X[:, 0] = np.nan
+    X = np.array(
+        [
+            [np.nan, np.nan, 0, 1],
+            [np.nan, 2, np.nan, 3],
+            [np.nan, 4, 5, np.nan]
+        ]
+    )
 
     imputer_drop_empty_features = IterativeImputer(
         initial_strategy=strategy, fill_value=1, keep_empty_features=False
