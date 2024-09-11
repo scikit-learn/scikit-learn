@@ -83,11 +83,17 @@ REGRESSION_DATASET = None
 
 
 def _yield_api_checks(estimator):
+    tags = get_tags(estimator)
     yield check_estimator_cloneable
     yield check_estimator_repr
     yield check_no_attributes_set_in_init
     yield check_fit_score_takes_y
     yield check_estimators_overwrite_params
+    yield check_dont_overwrite_parameters
+    yield check_estimators_fit_returns_self
+    yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
+    if tags.requires_fit:
+        yield check_estimators_unfitted
 
 
 def _yield_checks(estimator):
@@ -105,8 +111,6 @@ def _yield_checks(estimator):
             yield check_sample_weights_not_overwritten
             yield partial(check_sample_weights_invariance, kind="ones")
             yield partial(check_sample_weights_invariance, kind="zeros")
-    yield check_estimators_fit_returns_self
-    yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
 
     # Check that all estimator yield informative messages when
     # trained on empty datasets
@@ -172,8 +176,6 @@ def _yield_classifier_checks(classifier):
         yield check_supervised_y_no_nan
         if tags.target_tags.single_output:
             yield check_supervised_y_2d
-    if tags.requires_fit:
-        yield check_estimators_unfitted
     if "class_weight" in classifier.get_params().keys():
         yield check_class_weight_classifiers
 
@@ -246,8 +248,6 @@ def _yield_regressor_checks(regressor):
     if name != "CCA":
         # check that the regressor handles int input
         yield check_regressors_int
-    if tags.requires_fit:
-        yield check_estimators_unfitted
     yield check_non_transformer_estimators_n_iter
 
 
@@ -310,9 +310,6 @@ def _yield_outliers_checks(estimator):
         yield partial(check_outliers_train, readonly_memmap=True)
         # test outlier detectors can handle non-array data
         yield check_classifier_data_not_an_array
-        # test if NotFittedError is raised
-        if get_tags(estimator).requires_fit:
-            yield check_estimators_unfitted
     yield check_non_transformer_estimators_n_iter
 
 
@@ -380,7 +377,6 @@ def _yield_all_checks(estimator, legacy: bool):
     yield check_get_params_invariance
     yield check_set_params
     yield check_dict_unchanged
-    yield check_dont_overwrite_parameters
     yield check_fit_idempotent
     yield check_fit_check_is_fitted
     if not tags.no_validation:
