@@ -2985,3 +2985,12 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         """
         check_is_fitted(self)
         return self.one_hot_encoder_.transform(self.apply(X))
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_sample_weights_invariance": (
+                "sample_weight is not equivalent to removing/repeating samples."
+            ),
+        }
+        return tags

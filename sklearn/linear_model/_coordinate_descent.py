@@ -1834,15 +1834,6 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         self.n_iter_ = model.n_iter_
         return self
 
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_sample_weights_invariance": (
-                "zero sample_weight is not equivalent to removing samples"
-            ),
-        }
-        return tags
-
     def get_metadata_routing(self):
         """Get metadata routing of this object.
 
