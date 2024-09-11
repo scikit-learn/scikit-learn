@@ -54,7 +54,10 @@ from sklearn.utils._testing import (
     ignore_warnings,
     skip_if_32bit,
 )
-from sklearn.utils.estimator_checks import check_sample_weights_invariance
+from sklearn.utils.estimator_checks import (
+    check_sample_weights_invariance,
+    check_unit_sample_weights,
+)
 from sklearn.utils.fixes import (
     _IS_32BIT,
     COO_CONTAINERS,
@@ -2026,10 +2029,8 @@ def test_decision_tree_regressor_sample_weight_consistency(criterion):
     """Test that the impact of sample_weight is consistent."""
     tree_params = dict(criterion=criterion)
     tree = DecisionTreeRegressor(**tree_params, random_state=42)
-    for kind in ["zeros", "ones"]:
-        check_sample_weights_invariance(
-            "DecisionTreeRegressor_" + criterion, tree, kind="zeros"
-        )
+    check_unit_sample_weights("DecisionTreeRegressor_" + criterion, tree)
+    check_sample_weights_invariance("DecisionTreeRegressor_" + criterion, tree)
 
     rng = np.random.RandomState(0)
     n_samples, n_features = 10, 5
