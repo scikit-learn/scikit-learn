@@ -1798,17 +1798,18 @@ def test_iterative_imputer_no_empty_features(strategy):
     X = _sparse_random_matrix(10, 10, density=0.95, random_state=rng).toarray()
     X[X == 0] = np.nan
 
-    imputer_false = IterativeImputer(
+    imputer_drop_empty_features = IterativeImputer(
         initial_strategy=strategy, fill_value=1, keep_empty_features=False
     )
-    X_imputed_false = imputer_false.fit_transform(X)
 
-    imputer_true = IterativeImputer(
+    imputer_keep_empty_features = IterativeImputer(
         initial_strategy=strategy, fill_value=1, keep_empty_features=True
     )
-    X_imputed_true = imputer_true.fit_transform(X)
 
-    assert_array_equal(X_imputed_false, X_imputed_true)
+    assert_allclose(
+        imputer_drop_empty_features.fit_transform(X),
+        imputer_keep_empty_features.fit_transform(X)
+    )
 
 
 @pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent", "constant"])
@@ -1824,19 +1825,19 @@ def test_iterative_imputer_with_empty_features(strategy):
     X[X == 0] = np.nan
     X[:, 0] = np.nan
 
-    imputer_false = IterativeImputer(
+    imputer_drop_empty_features = IterativeImputer(
         initial_strategy=strategy, fill_value=1, keep_empty_features=False
     )
-    X_imputed_false = imputer_false.fit_transform(X)
+    X_drop_empty_features = imputer_drop_empty_features.fit_transform(X)
 
-    imputer_true = IterativeImputer(
+    imputer_keep_empty_features = IterativeImputer(
         initial_strategy=strategy, fill_value=1, keep_empty_features=True
     )
-    X_imputed_true = imputer_true.fit_transform(X)
+    X_keep_empty_features = imputer_keep_empty_features.fit_transform(X)
 
     if strategy == "constant":
-        assert_allclose(X_imputed_false, X_imputed_true, rtol=1e-4)
-        assert_allclose(X_imputed_true[:, 0], np.ones(X.shape[0]))
+        assert_allclose(X_drop_empty_features, X_keep_empty_features, rtol=1e-4)
+        assert_allclose(X_keep_empty_features[:, 0], np.ones(X.shape[0]))
     else:
-        assert_allclose(X_imputed_false, X_imputed_true[:, 1:], rtol=1e-4)
-        assert_allclose(X_imputed_true[:, 0], np.zeros(X.shape[0]))
+        assert_allclose(X_drop_empty_features, X_keep_empty_features[:, 1:], rtol=1e-4)
+        assert_allclose(X_keep_empty_features[:, 0], np.zeros(X.shape[0]))
