@@ -123,7 +123,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         despine : bool, default=False
             Whether to remove the top and right spines from the plot.
 
-            .. versionadded:: 1.3
+            .. versionadded:: 1.6
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
@@ -260,7 +260,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         despine : bool, default=False
             Whether to remove the top and right spines from the plot.
 
-            .. versionadded:: 1.3
+            .. versionadded:: 1.6
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
@@ -383,7 +383,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         despine : bool, default=False
             Whether to remove the top and right spines from the plot.
 
-            .. versionadded:: 1.3
+            .. versionadded:: 1.6
 
         **kwargs : dict
             Additional keywords arguments passed to matplotlib `plot` function.
