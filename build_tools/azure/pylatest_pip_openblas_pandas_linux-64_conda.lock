@@ -14,7 +14,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/bzip2-1.0.8-h5eee18b_6.conda#f21a3f
 https://repo.anaconda.com/pkgs/main/linux-64/libffi-3.4.4-h6a678d5_1.conda#70646cc713f0c43926cfdcfe9b695fe0
 https://repo.anaconda.com/pkgs/main/linux-64/libuuid-1.41.5-h5eee18b_0.conda#4a6a2354414c9080327274aa514e5299
 https://repo.anaconda.com/pkgs/main/linux-64/ncurses-6.4-h6a678d5_0.conda#5558eec6e2191741a92f832ea826251c
-https://repo.anaconda.com/pkgs/main/linux-64/openssl-3.0.14-h5eee18b_0.conda#37b6dad6aa49000a4230a9f0cad172f6
+https://repo.anaconda.com/pkgs/main/linux-64/openssl-3.0.15-h5eee18b_0.conda#019e501b69841c6d4aeaef3b8619a678
 https://repo.anaconda.com/pkgs/main/linux-64/xz-5.4.6-h5eee18b_1.conda#1562802f843297ee776a50b9329597ed
 https://repo.anaconda.com/pkgs/main/linux-64/zlib-1.2.13-h5eee18b_1.conda#92e42d8310108b0a440fb2e60b2b2a25
 https://repo.anaconda.com/pkgs/main/linux-64/ccache-3.7.9-hfe4627d_0.conda#bef6fc681c273bb7bd0c67d1a591365e
@@ -40,12 +40,12 @@ https://repo.anaconda.com/pkgs/main/linux-64/pip-24.2-py311h06a4308_0.conda#eff3
 # pip imagesize @ https://files.pythonhosted.org/packages/ff/62/85c4c919272577931d407be5ba5d71c20f0b616d31a0befe0ae45bb79abd/imagesize-1.4.1-py2.py3-none-any.whl#sha256=0d8d18d08f840c19d0ee7ca1fd82490fdc3729b7ac93f49870406ddde8ef8d8b
 # pip iniconfig @ https://files.pythonhosted.org/packages/ef/a6/62565a6e1cf69e10f5727360368e451d4b7f58beeac6173dc9db836a5b46/iniconfig-2.0.0-py3-none-any.whl#sha256=b6a85871a79d2e3b22d2d1b94ac2824226a63c6b741c88f7ae975f18b6778374
 # pip joblib @ https://files.pythonhosted.org/packages/91/29/df4b9b42f2be0b623cbd5e2140cafcaa2bef0759a00b7b70104dcfe2fb51/joblib-1.4.2-py3-none-any.whl#sha256=06d478d5674cbc267e7496a410ee875abd68e4340feff4490bcb7afb88060ae6
-# pip kiwisolver @ https://files.pythonhosted.org/packages/17/ba/17a706b232308e65f57deeccae503c268292e6a091313f6ce833a23093ea/kiwisolver-1.4.5-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=040c1aebeda72197ef477a906782b5ab0d387642e93bda547336b8957c61022e
+# pip kiwisolver @ https://files.pythonhosted.org/packages/a7/4b/2db7af3ed3af7c35f388d5f53c28e155cd402a55432d800c543dc6deb731/kiwisolver-1.4.7-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=18077b53dc3bb490e330669a99920c5e6a496889ae8c63b58fbc57c3d7f33a18
 # pip markupsafe @ https://files.pythonhosted.org/packages/97/18/c30da5e7a0e7f4603abfc6780574131221d9148f323752c2755d48abad30/MarkupSafe-2.1.5-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=b91c037585eba9095565a3556f611e3cbfaa42ca1e865f7b8015fe5c7336d5a5
 # pip meson @ https://files.pythonhosted.org/packages/b7/33/513a9ca4fd5892463abb38592105b78fd425214f7983033633e2e48cbd30/meson-1.5.1-py3-none-any.whl#sha256=5531e24e6cfd6000bf1c712793cf28dff032841370b1a3b941a894e4fde46e5a
 # pip networkx @ https://files.pythonhosted.org/packages/38/e9/5f72929373e1a0e8d142a130f3f97e6ff920070f87f91c4e13e40e0fba5a/networkx-3.3-py3-none-any.whl#sha256=28575580c6ebdaf4505b22c6256a2b9de86b316dc63ba9e93abde3d78dfdbcf2
 # pip ninja @ https://files.pythonhosted.org/packages/6d/92/8d7aebd4430ab5ff65df2bfee6d5745f95c004284db2d8ca76dcbfd9de47/ninja-1.11.1.1-py2.py3-none-manylinux1_x86_64.manylinux_2_5_x86_64.whl#sha256=84502ec98f02a037a169c4b0d5d86075eaf6afc55e1879003d6cab51ced2ea4b
-# pip numpy @ https://files.pythonhosted.org/packages/7b/93/831b4c5b4355210827b3de34f539297e1833c39a68c26a8b454d8cf9f5ed/numpy-2.1.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=f5ebbf9fbdabed208d4ecd2e1dfd2c0741af2f876e7ae522c2537d404ca895c3
+# pip numpy @ https://files.pythonhosted.org/packages/d9/37/108d692f7e2544b9ae972c7bfa06c26717871c273ccec86470bc3132b04d/numpy-2.1.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=d51fc141ddbe3f919e91a096ec739f49d686df8af254b2053ba21a910ae518bf
 # pip packaging @ https://files.pythonhosted.org/packages/08/aa/cc0199a5f0ad350994d660967a8efb233fe0416e4639146c089643407ce6/packaging-24.1-py3-none-any.whl#sha256=5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124
 # pip pillow @ https://files.pythonhosted.org/packages/ba/e5/8c68ff608a4203085158cff5cc2a3c534ec384536d9438c405ed6370d080/pillow-10.4.0-cp311-cp311-manylinux_2_28_x86_64.whl#sha256=76a911dfe51a36041f2e756b00f96ed84677cdeb75d25c767f296c1c1eda1319
 # pip pluggy @ https://files.pythonhosted.org/packages/88/5f/e351af9a41f866ac3f1fac4ca0613908d9a41741cfcf2228f4ad853b697d/pluggy-1.5.0-py3-none-any.whl#sha256=44e1ad92c8ca002de6377e165f3e0f1be63266ab4d554740532335b9d75ea669

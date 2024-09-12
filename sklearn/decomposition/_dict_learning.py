@@ -24,7 +24,7 @@ from ..utils import check_array, check_random_state, gen_batches, gen_even_slice
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.extmath import randomized_svd, row_norms, svd_flip
 from ..utils.parallel import Parallel, delayed
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, validate_data
 
 
 def _check_positive_coding(method, positive):
@@ -1110,7 +1110,7 @@ class _BaseSparseCoding(ClassNamePrefixFeaturesOutMixin, TransformerMixin):
     def _transform(self, X, dictionary):
         """Private method allowing to accommodate both DictionaryLearning and
         SparseCoder."""
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
 
         if hasattr(self, "alpha") and self.transform_alpha is None:
             transform_alpha = self.alpha
@@ -1279,8 +1279,6 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
            [ 0.,  1.,  1.,  0.,  0.]])
     """
 
-    _required_parameters = ["dictionary"]
-
     def __init__(
         self,
         dictionary,
@@ -1347,11 +1345,11 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         """
         return super()._transform(X, self.dictionary)
 
-    def _more_tags(self):
-        return {
-            "requires_fit": False,
-            "preserves_dtype": [np.float64, np.float32],
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.requires_fit = False
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
 
     @property
     def n_components_(self):
@@ -1671,7 +1669,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         method = "lasso_" + self.fit_algorithm
 
         random_state = check_random_state(self.random_state)
-        X = self._validate_data(X)
+        X = validate_data(self, X)
 
         if self.n_components is None:
             n_components = X.shape[1]
@@ -1706,10 +1704,10 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         """Number of transformed output features."""
         return self.components_.shape[0]
 
-    def _more_tags(self):
-        return {
-            "preserves_dtype": [np.float64, np.float32],
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
 
 
 class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
@@ -2177,8 +2175,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(
-            X, dtype=[np.float64, np.float32], order="C", copy=False
+        X = validate_data(
+            self, X, dtype=[np.float64, np.float32], order="C", copy=False
         )
 
         self._check_params(X)
@@ -2274,8 +2272,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         """
         has_components = hasattr(self, "components_")
 
-        X = self._validate_data(
-            X, dtype=[np.float64, np.float32], order="C", reset=not has_components
+        X = validate_data(
+            self, X, dtype=[np.float64, np.float32], order="C", reset=not has_components
         )
 
         if not has_components:
@@ -2304,7 +2302,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         """Number of transformed output features."""
         return self.components_.shape[0]
 
-    def _more_tags(self):
-        return {
-            "preserves_dtype": [np.float64, np.float32],
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags

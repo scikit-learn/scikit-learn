@@ -20,7 +20,7 @@ from .utils._set_output import (
     _get_container_adapter,
     _safe_set_output,
 )
-from .utils._tags import _safe_tags
+from .utils._tags import get_tags
 from .utils._user_interface import _print_elapsed_time
 from .utils.deprecation import _deprecate_Xt_in_inverse_transform
 from .utils.metadata_routing import (
@@ -152,8 +152,6 @@ class Pipeline(_BaseComposition):
     """
 
     # BaseEstimator interface
-    _required_parameters = ["steps"]
-
     _parameter_constraints: dict = {
         "steps": [list, Hidden(tuple)],
         "memory": [None, str, HasMethods(["cache"])],
@@ -1014,29 +1012,30 @@ class Pipeline(_BaseComposition):
         """The classes labels. Only exist if the last step is a classifier."""
         return self.steps[-1][1].classes_
 
-    def _more_tags(self):
-        tags = {
-            "_xfail_checks": {
-                "check_dont_overwrite_parameters": (
-                    "Pipeline changes the `steps` parameter, which it shouldn't."
-                    "Therefore this test is x-fail until we fix this."
-                ),
-                "check_estimators_overwrite_params": (
-                    "Pipeline changes the `steps` parameter, which it shouldn't."
-                    "Therefore this test is x-fail until we fix this."
-                ),
-            }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_dont_overwrite_parameters": (
+                "Pipeline changes the `steps` parameter, which it shouldn't."
+                "Therefore this test is x-fail until we fix this."
+            ),
+            "check_estimators_overwrite_params": (
+                "Pipeline changes the `steps` parameter, which it shouldn't."
+                "Therefore this test is x-fail until we fix this."
+            ),
         }
 
         try:
-            tags["pairwise"] = _safe_tags(self.steps[0][1], "pairwise")
+            tags.input_tags.pairwise = get_tags(self.steps[0][1]).input_tags.pairwise
         except (ValueError, AttributeError, TypeError):
             # This happens when the `steps` is not a list of (name, estimator)
             # tuples and `fit` is not called yet to validate the steps.
             pass
 
         try:
-            tags["multioutput"] = _safe_tags(self.steps[-1][1], "multioutput")
+            tags.target_tags.multi_output = get_tags(
+                self.steps[-1][1]
+            ).target_tags.multi_output
         except (ValueError, AttributeError, TypeError):
             # This happens when the `steps` is not a list of (name, estimator)
             # tuples and `fit` is not called yet to validate the steps.
@@ -1425,8 +1424,6 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     For a more detailed example of usage, see
     :ref:`sphx_glr_auto_examples_compose_plot_feature_union.py`.
     """
-
-    _required_parameters = ["transformer_list"]
 
     def __init__(
         self,
@@ -1880,6 +1877,15 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             )
 
         return router
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_estimators_overwrite_params": "FIXME",
+            "check_estimators_nan_inf": "FIXME",
+            "check_dont_overwrite_parameters": "FIXME",
+        }
+        return tags
 
 
 def make_union(*transformers, n_jobs=None, verbose=False):
