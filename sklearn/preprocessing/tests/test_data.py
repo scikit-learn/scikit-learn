@@ -2109,7 +2109,7 @@ def test_cv_pipeline_precomputed():
     pipeline = Pipeline([("kernel_centerer", kcent), ("svr", SVR())])
 
     # did the pipeline set the pairwise attribute?
-    assert pipeline._get_tags()["pairwise"]
+    assert pipeline.__sklearn_tags__().input_tags.pairwise
 
     # test cross-validation, score should be almost perfect
     # NB: this test is pretty vacuous -- it's mainly to test integration

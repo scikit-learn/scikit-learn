@@ -18,6 +18,7 @@ import numpy as np
 from ..base import _fit_context
 from ..utils import check_array
 from ..utils._param_validation import Interval, validate_params
+from ..utils.validation import validate_data
 from . import EmpiricalCovariance, empirical_covariance
 
 
@@ -268,7 +269,7 @@ class ShrunkCovariance(EmpiricalCovariance):
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(X)
+        X = validate_data(self, X)
         # Not calling the parent object to fit, to avoid a potential
         # matrix inversion when setting the precision
         if self.assume_centered:
@@ -594,7 +595,7 @@ class LedoitWolf(EmpiricalCovariance):
         """
         # Not calling the parent object to fit, to avoid computing the
         # covariance matrix (and potentially the precision)
-        X = self._validate_data(X)
+        X = validate_data(self, X)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:
@@ -798,7 +799,7 @@ class OAS(EmpiricalCovariance):
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(X)
+        X = validate_data(self, X)
         # Not calling the parent object to fit, to avoid computing the
         # covariance matrix (and potentially the precision)
         if self.assume_centered:
