@@ -59,6 +59,7 @@ from ._tags import Tags, get_tags
 from ._test_common.instance_generator import (
     CROSS_DECOMPOSITION,
     _get_check_estimator_ids,
+    _yield_instances_for_check,
 )
 from ._testing import (
     SkipTest,
@@ -81,7 +82,6 @@ REGRESSION_DATASET = None
 
 
 def _yield_api_checks(estimator):
-    yield check_estimator_cloneable
     yield check_estimator_repr
     yield check_no_attributes_set_in_init
     yield check_fit_score_takes_y
@@ -509,10 +509,14 @@ def parametrize_with_checks(estimators, *, legacy=True):
 
     def checks_generator():
         for estimator in estimators:
+            # First check that the estimator is cloneable which is needed for the rest
+            # of the checks to run
             name = type(estimator).__name__
+            yield estimator, partial(check_estimator_cloneable, name)
             for check in _yield_all_checks(estimator, legacy=legacy):
-                check = partial(check, name)
-                yield _maybe_mark_xfail(estimator, check, pytest)
+                check_with_name = partial(check, name)
+                for check_instance in _yield_instances_for_check(check, estimator):
+                    yield _maybe_mark_xfail(check_instance, check_with_name, pytest)
 
     return pytest.mark.parametrize(
         "estimator, check", checks_generator(), ids=_get_check_estimator_ids
@@ -597,9 +601,13 @@ def check_estimator(estimator=None, generate_only=False, *, legacy=True):
     name = type(estimator).__name__
 
     def checks_generator():
+        # we first need to check if the estimator is cloneable for the rest of the tests
+        # to run
+        yield estimator, partial(check_estimator_cloneable, name)
         for check in _yield_all_checks(estimator, legacy=legacy):
             check = _maybe_skip(estimator, check)
-            yield estimator, partial(check, name)
+            for check_instance in _yield_instances_for_check(check, estimator):
+                yield check_instance, partial(check, name)
 
     if generate_only:
         return checks_generator()
@@ -1257,32 +1265,13 @@ def check_complex_data(name, estimator_orig):
 
 @ignore_warnings
 def check_dict_unchanged(name, estimator_orig):
-    # this estimator raises
-    # ValueError: Found array with 0 feature(s) (shape=(23, 0))
-    # while a minimum of 1 is required.
-    # error
-    if name in ["SpectralCoclustering"]:
-        return
     rnd = np.random.RandomState(0)
-    if name in ["RANSACRegressor"]:
-        X = 3 * rnd.uniform(size=(20, 3))
-    else:
-        X = 2 * rnd.uniform(size=(20, 3))
-
+    X = 3 * rnd.uniform(size=(20, 3))
     X = _enforce_estimator_tags_X(estimator_orig, X)
 
     y = X[:, 0].astype(int)
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
-    if hasattr(estimator, "n_components"):
-        estimator.n_components = 1
-
-    if hasattr(estimator, "n_clusters"):
-        estimator.n_clusters = 1
-
-    if hasattr(estimator, "n_best"):
-        estimator.n_best = 1
-
     set_random_state(estimator, 1)
 
     estimator.fit(X, y)
