@@ -1798,11 +1798,13 @@ def test_iterative_imputer_no_empty_features(strategy):
 
 @pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent", "constant"])
 def test_iterative_imputer_with_empty_features(strategy):
-    """Check the behavior of the iterative imputer.
-    When the input matrix contains empty features, it should return
-    the same values for the non-empty features regardless of
-    `keep_empty_features`. Additionally, the empty features
-    should become 0s when `keep_empty_features` is set to True.
+    """Check the behaviour of `keep_empty_features` in the presence of empty features.
+
+    With `keep_empty_features=True`, the empty feature will be imputed with the value
+    defined by the intial imputation.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/29375
     """
     X_train = np.array(
         [[np.nan, np.nan, 0, 1], [np.nan, 2, np.nan, 3], [np.nan, 4, 5, np.nan]]
