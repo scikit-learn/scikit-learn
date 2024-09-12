@@ -392,6 +392,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             self.coefs_.append(coef_init)
             self.intercepts_.append(intercept_init)
 
+        self._best_coefs = [c.copy() for c in self.coefs_]
+        self._best_intercepts = [i.copy() for i in self.intercepts_]
+
         if self.solver in _STOCHASTIC_SOLVERS:
             self.loss_curve_ = []
             self._no_improvement_count = 0
