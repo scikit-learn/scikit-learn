@@ -7,7 +7,7 @@ import warnings
 from functools import partial
 from inspect import isfunction
 
-from sklearn import config_context
+from sklearn import clone, config_context
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.cluster import (
     HDBSCAN,
@@ -33,6 +33,7 @@ from sklearn.decomposition import (
     FactorAnalysis,
     FastICA,
     IncrementalPCA,
+    KernelPCA,
     LatentDirichletAllocation,
     MiniBatchDictionaryLearning,
     MiniBatchNMF,
@@ -41,6 +42,7 @@ from sklearn.decomposition import (
     SparsePCA,
     TruncatedSVD,
 )
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import (
     AdaBoostClassifier,
@@ -71,6 +73,12 @@ from sklearn.feature_selection import (
     SelectFromModel,
     SelectKBest,
     SequentialFeatureSelector,
+)
+from sklearn.kernel_approximation import (
+    Nystroem,
+    PolynomialCountSketch,
+    RBFSampler,
+    SkewedChi2Sampler,
 )
 from sklearn.linear_model import (
     ARDRegression,
@@ -105,7 +113,13 @@ from sklearn.linear_model import (
     TheilSenRegressor,
     TweedieRegressor,
 )
-from sklearn.manifold import MDS, TSNE, LocallyLinearEmbedding, SpectralEmbedding
+from sklearn.manifold import (
+    MDS,
+    TSNE,
+    Isomap,
+    LocallyLinearEmbedding,
+    SpectralEmbedding,
+)
 from sklearn.mixture import BayesianGaussianMixture, GaussianMixture
 from sklearn.model_selection import (
     FixedThresholdClassifier,
@@ -457,6 +471,79 @@ INIT_PARAMS = {
     ),
 }
 
+# This dictionary stores parameters for specific checks. It also enables running the
+# same check with multiple instances of the same estimator with different parameters.
+# The special key "*" allows to apply the parameters to all checks.
+# TODO(devtools): allow third-party developers to pass test specific params to checks
+PER_ESTIMATOR_CHECK_PARAMS: dict = {
+    # TODO(devtools): check that function names here exist in checks for the estimator
+    # TODO(devtools): write a test for the same thing with tags._xfail_checks
+    AgglomerativeClustering: {"check_dict_unchanged": dict(n_clusters=1)},
+    BayesianGaussianMixture: {"check_dict_unchanged": dict(max_iter=5, n_init=2)},
+    BernoulliRBM: {"check_dict_unchanged": dict(n_components=1, n_iter=5)},
+    Birch: {"check_dict_unchanged": dict(n_clusters=1)},
+    BisectingKMeans: {"check_dict_unchanged": dict(max_iter=5, n_clusters=1, n_init=2)},
+    CCA: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
+    DictionaryLearning: {
+        "check_dict_unchanged": dict(
+            max_iter=20, n_components=1, transform_algorithm="lasso_lars"
+        )
+    },
+    FactorAnalysis: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
+    FastICA: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
+    FeatureAgglomeration: {"check_dict_unchanged": dict(n_clusters=1)},
+    GaussianMixture: {"check_dict_unchanged": dict(max_iter=5, n_init=2)},
+    GaussianRandomProjection: {"check_dict_unchanged": dict(n_components=1)},
+    IncrementalPCA: {"check_dict_unchanged": dict(batch_size=10, n_components=1)},
+    Isomap: {"check_dict_unchanged": dict(n_components=1)},
+    KMeans: {"check_dict_unchanged": dict(max_iter=5, n_clusters=1, n_init=2)},
+    KernelPCA: {"check_dict_unchanged": dict(n_components=1)},
+    LatentDirichletAllocation: {
+        "check_dict_unchanged": dict(batch_size=10, max_iter=5, n_components=1)
+    },
+    LinearDiscriminantAnalysis: {"check_dict_unchanged": dict(n_components=1)},
+    LocallyLinearEmbedding: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
+    MDS: {"check_dict_unchanged": dict(max_iter=5, n_components=1, n_init=2)},
+    MiniBatchDictionaryLearning: {
+        "check_dict_unchanged": dict(batch_size=10, max_iter=5, n_components=1)
+    },
+    MiniBatchKMeans: {
+        "check_dict_unchanged": dict(batch_size=10, max_iter=5, n_clusters=1, n_init=2)
+    },
+    MiniBatchNMF: {
+        "check_dict_unchanged": dict(
+            batch_size=10, fresh_restarts=True, max_iter=20, n_components=1
+        )
+    },
+    MiniBatchSparsePCA: {
+        "check_dict_unchanged": dict(batch_size=10, max_iter=5, n_components=1)
+    },
+    NMF: {"check_dict_unchanged": dict(max_iter=500, n_components=1)},
+    NeighborhoodComponentsAnalysis: {
+        "check_dict_unchanged": dict(max_iter=5, n_components=1)
+    },
+    Nystroem: {"check_dict_unchanged": dict(n_components=1)},
+    PCA: {"check_dict_unchanged": dict(n_components=1)},
+    PLSCanonical: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
+    PLSRegression: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
+    PLSSVD: {"check_dict_unchanged": dict(n_components=1)},
+    PolynomialCountSketch: {"check_dict_unchanged": dict(n_components=1)},
+    RBFSampler: {"check_dict_unchanged": dict(n_components=1)},
+    SkewedChi2Sampler: {"check_dict_unchanged": dict(n_components=1)},
+    SparsePCA: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
+    SparseRandomProjection: {"check_dict_unchanged": dict(n_components=1)},
+    SpectralBiclustering: {
+        "check_dict_unchanged": dict(n_best=1, n_clusters=1, n_components=1, n_init=2)
+    },
+    SpectralClustering: {
+        "check_dict_unchanged": dict(n_clusters=1, n_components=1, n_init=2)
+    },
+    SpectralCoclustering: {"check_dict_unchanged": dict(n_clusters=1, n_init=2)},
+    SpectralEmbedding: {"check_dict_unchanged": dict(eigen_tol=1e-05, n_components=1)},
+    TSNE: {"check_dict_unchanged": dict(n_components=1, perplexity=2)},
+    TruncatedSVD: {"check_dict_unchanged": dict(n_components=1)},
+}
+
 
 def _tested_estimators(type_filter=None):
     for name, Estimator in all_estimators(type_filter=type_filter):
@@ -527,3 +614,38 @@ def _get_check_estimator_ids(obj):
     if hasattr(obj, "get_params"):
         with config_context(print_changed_only=True):
             return re.sub(r"\s", "", str(obj))
+
+
+def _yield_instances_for_check(check, estimator_orig):
+    """Yield instances for a check.
+
+    For most estimators, this is a no-op.
+
+    For estimators which have an entry in PER_ESTIMATOR_CHECK_PARAMS, this will yield
+    an estimator for each parameter set in PER_ESTIMATOR_CHECK_PARAMS[estimator].
+    """
+    # TODO(devtools): enable this behavior for third party estimators as well
+    if type(estimator_orig) not in PER_ESTIMATOR_CHECK_PARAMS:
+        yield estimator_orig
+        return
+
+    check_params = PER_ESTIMATOR_CHECK_PARAMS[type(estimator_orig)]
+
+    try:
+        check_name = check.__name__
+    except AttributeError:
+        # partial tests
+        check_name = check.func.__name__
+
+    if check_name not in check_params:
+        yield estimator_orig
+        return
+
+    param_set = check_params[check_name]
+    if isinstance(param_set, dict):
+        param_set = [param_set]
+
+    for params in param_set:
+        estimator = clone(estimator_orig)
+        estimator.set_params(**params)
+        yield estimator
