@@ -1,0 +1,59 @@
+# Workflow to update lock files in a PR, triggered by specific PR comments
+name: Update lock files in PR
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+
+jobs:
+  update-lock-files:
+    if: >-
+      github.repository == 'scikit-learn/scikit-learn'
+      && github.event.issue.pull_request
+      && startsWith(github.event.comment.body, '@scikit-learn-bot update lock-files')
+    runs-on: ubuntu-latest
+
+    steps:
+      # There is no direct way to get the HEAD information directly from issue_comment
+      # event, so we use the GitHub CLI to get the PR head ref and repository
+      - name: Get pull request HEAD information
+        id: pr-head-info
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pr_info=$(gh pr view ${{ github.event.issue.number }} --repo ${{ github.repository }} --json headRefName,headRepository,headRepositoryOwner)
+          pr_head_ref=$(echo "$pr_info" | jq -r '.headRefName')
+          pr_head_repository=$(echo "$pr_info" | jq -r '.headRepositoryOwner.login + "/" + .headRepository.name')
+          echo "pr_head_ref=$pr_head_ref" >> $GITHUB_OUTPUT
+          echo "pr_head_repository=$pr_head_repository" >> $GITHUB_OUTPUT
+
+      - name: Check out the PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.pr-head-info.outputs.pr_head_ref }}
+          repository: ${{ steps.pr-head-info.outputs.pr_head_repository }}
+
+      # We overwrite all the scripts we are going to use in this workflow with their
+      # versions on main; since this workflow has the write permissions this is to avoid
+      # malicious changes to these scripts in PRs to be executed
+      - name: Download scripts from main
+        run: |
+          curl https://raw.githubusercontent.com/${{ github.repository }}/main/build_tools/shared.sh --retry 5 -o ./build_tools/shared.sh
+          curl https://raw.githubusercontent.com/${{ github.repository }}/main/build_tools/update_environments_and_lock_files.py --retry 5 -o ./build_tools/update_environments_and_lock_files.py
+          curl https://raw.githubusercontent.com/${{ github.repository }}/main/build_tools/on_pr_comment_update_environments_and_lock_files.py --retry 5 -o ./build_tools/on_pr_comment_update_environments_and_lock_files.py
+
+      - name: Update lock files
+        env:
+          COMMENT: ${{ github.event.comment.body }}
+        # We download the lock files update scripts from main, since this workflow is
+        # run from main itself
+        run: |
+          source build_tools/shared.sh
+          source $CONDA/bin/activate
+          conda install -n base conda conda-libmamba-solver -y
+          conda config --set solver libmamba
+          conda install -c conda-forge "$(get_dep conda-lock min)" -y
+
+          python build_tools/on_pr_comment_update_environments_and_lock_files.py

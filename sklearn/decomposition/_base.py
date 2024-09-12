@@ -1,12 +1,7 @@
 """Principal Component Analysis Base Classes"""
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Olivier Grisel <olivier.grisel@ensta.org>
-#         Mathieu Blondel <mathieu@mblondel.org>
-#         Denis A. Engemann <denis-alexander.engemann@inria.fr>
-#         Kyle Kastner <kastnerkyle@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from abc import ABCMeta, abstractmethod
 
@@ -14,8 +9,8 @@ import numpy as np
 from scipy import linalg
 
 from ..base import BaseEstimator, ClassNamePrefixFeaturesOutMixin, TransformerMixin
-from ..utils._array_api import _add_to_diagonal, device, get_namespace
-from ..utils.validation import check_is_fitted
+from ..utils._array_api import _fill_or_add_to_diagonal, device, get_namespace
+from ..utils.validation import check_is_fitted, validate_data
 
 
 class _BasePCA(
@@ -49,10 +44,10 @@ class _BasePCA(
         exp_var_diff = xp.where(
             exp_var > self.noise_variance_,
             exp_var_diff,
-            xp.asarray(0.0, device=device(exp_var)),
+            xp.asarray(0.0, device=device(exp_var), dtype=exp_var.dtype),
         )
         cov = (components_.T * exp_var_diff) @ components_
-        _add_to_diagonal(cov, self.noise_variance_, xp)
+        _fill_or_add_to_diagonal(cov, self.noise_variance_, xp)
         return cov
 
     def get_precision(self):
@@ -94,10 +89,10 @@ class _BasePCA(
             xp.asarray(0.0, device=device(exp_var)),
         )
         precision = components_ @ components_.T / self.noise_variance_
-        _add_to_diagonal(precision, 1.0 / exp_var_diff, xp)
+        _fill_or_add_to_diagonal(precision, 1.0 / exp_var_diff, xp)
         precision = components_.T @ linalg_inv(precision) @ components_
         precision /= -(self.noise_variance_**2)
-        _add_to_diagonal(precision, 1.0 / self.noise_variance_, xp)
+        _fill_or_add_to_diagonal(precision, 1.0 / self.noise_variance_, xp)
         return precision
 
     @abstractmethod
@@ -126,7 +121,7 @@ class _BasePCA(
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
@@ -136,16 +131,37 @@ class _BasePCA(
             Projection of X in the first principal components, where `n_samples`
             is the number of samples and `n_components` is the number of the components.
         """
-        xp, _ = get_namespace(X)
+        xp, _ = get_namespace(X, self.components_, self.explained_variance_)
 
         check_is_fitted(self)
 
-        X = self._validate_data(X, dtype=[xp.float64, xp.float32], reset=False)
-        if self.mean_ is not None:
-            X = X - self.mean_
+        X = validate_data(
+            self,
+            X,
+            dtype=[xp.float64, xp.float32],
+            accept_sparse=("csr", "csc"),
+            reset=False,
+        )
+        return self._transform(X, xp=xp, x_is_centered=False)
+
+    def _transform(self, X, xp, x_is_centered=False):
         X_transformed = X @ self.components_.T
+        if not x_is_centered:
+            # Apply the centering after the projection.
+            # For dense X this avoids copying or mutating the data passed by
+            # the caller.
+            # For sparse X it keeps sparsity and avoids having to wrap X into
+            # a linear operator.
+            X_transformed -= xp.reshape(self.mean_, (1, -1)) @ self.components_.T
         if self.whiten:
-            X_transformed /= xp.sqrt(self.explained_variance_)
+            # For some solvers (such as "arpack" and "covariance_eigh"), on
+            # rank deficient data, some components can have a variance
+            # arbitrarily close to zero, leading to non-finite results when
+            # whitening. To avoid this problem we clip the variance below.
+            scale = xp.sqrt(self.explained_variance_)
+            min_scale = xp.finfo(scale.dtype).eps
+            scale[scale < min_scale] = min_scale
+            X_transformed /= scale
         return X_transformed
 
     def inverse_transform(self, X):

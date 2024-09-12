@@ -8,10 +8,14 @@ https://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.da
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import errno
 import logging
 import os
 from gzip import GzipFile
+from numbers import Integral, Real
 from os.path import exists, join
 
 import joblib
@@ -19,7 +23,7 @@ import numpy as np
 
 from ..utils import Bunch, check_random_state
 from ..utils import shuffle as shuffle_method
-from ..utils._param_validation import StrOptions, validate_params
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from . import get_data_home
 from ._base import (
     RemoteFileMetadata,
@@ -50,13 +54,15 @@ logger = logging.getLogger(__name__)
 @validate_params(
     {
         "subset": [StrOptions({"SA", "SF", "http", "smtp"}), None],
-        "data_home": [str, None],
+        "data_home": [str, os.PathLike, None],
         "shuffle": ["boolean"],
         "random_state": ["random_state"],
         "percent10": ["boolean"],
         "download_if_missing": ["boolean"],
         "return_X_y": ["boolean"],
         "as_frame": ["boolean"],
+        "n_retries": [Interval(Integral, 1, None, closed="left")],
+        "delay": [Interval(Real, 0.0, None, closed="neither")],
     },
     prefer_skip_nested_validation=True,
 )
@@ -70,6 +76,8 @@ def fetch_kddcup99(
     download_if_missing=True,
     return_X_y=False,
     as_frame=False,
+    n_retries=3,
+    delay=1.0,
 ):
     """Load the kddcup99 dataset (classification).
 
@@ -92,7 +100,7 @@ def fetch_kddcup99(
         To return the corresponding classical subsets of kddcup 99.
         If None, return the entire kddcup 99 dataset.
 
-    data_home : str, default=None
+    data_home : str or path-like, default=None
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
@@ -127,6 +135,16 @@ def fetch_kddcup99(
 
         .. versionadded:: 0.24
 
+    n_retries : int, default=3
+        Number of retries when HTTP errors are encountered.
+
+        .. versionadded:: 1.5
+
+    delay : float, default=1.0
+        Number of seconds between retries.
+
+        .. versionadded:: 1.5
+
     Returns
     -------
     data : :class:`~sklearn.utils.Bunch`
@@ -160,6 +178,8 @@ def fetch_kddcup99(
         data_home=data_home,
         percent10=percent10,
         download_if_missing=download_if_missing,
+        n_retries=n_retries,
+        delay=delay,
     )
 
     data = kddcup99.data
@@ -243,7 +263,9 @@ def fetch_kddcup99(
     )
 
 
-def _fetch_brute_kddcup99(data_home=None, download_if_missing=True, percent10=True):
+def _fetch_brute_kddcup99(
+    data_home=None, download_if_missing=True, percent10=True, n_retries=3, delay=1.0
+):
     """Load the kddcup99 dataset, downloading it if necessary.
 
     Parameters
@@ -258,6 +280,12 @@ def _fetch_brute_kddcup99(data_home=None, download_if_missing=True, percent10=Tr
 
     percent10 : bool, default=True
         Whether to load only 10 percent of the data.
+
+    n_retries : int, default=3
+        Number of retries when HTTP errors are encountered.
+
+    delay : float, default=1.0
+        Number of seconds between retries.
 
     Returns
     -------
@@ -354,7 +382,7 @@ def _fetch_brute_kddcup99(data_home=None, download_if_missing=True, percent10=Tr
     elif download_if_missing:
         _mkdirp(kddcup_dir)
         logger.info("Downloading %s" % archive.url)
-        _fetch_remote(archive, dirname=kddcup_dir)
+        _fetch_remote(archive, dirname=kddcup_dir, n_retries=n_retries, delay=delay)
         DT = np.dtype(dt)
         logger.debug("extracting archive")
         archive_path = join(kddcup_dir, archive.filename)

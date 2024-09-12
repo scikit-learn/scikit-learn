@@ -62,8 +62,8 @@ def mutual_reachability_graph(
         `CSR` format.
 
     min_samples : int, default=5
-        The number of points in a neighbourhood for a point to be considered
-        a core point.
+        The parameter `k` used to calculate the distance between a point
+        `x_p` and its k-th nearest neighbor.
 
     max_distance : float, default=0.0
         The distance which `np.inf` is replaced with. When the true mutual-

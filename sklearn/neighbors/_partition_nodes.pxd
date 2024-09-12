@@ -2,7 +2,7 @@ from cython cimport floating
 from ..utils._typedefs cimport float64_t, intp_t
 
 cdef int partition_node_indices(
-        floating *data,
+        const floating *data,
         intp_t *node_indices,
         intp_t split_dim,
         intp_t split_index,

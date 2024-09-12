@@ -19,14 +19,6 @@ Interoperability and framework enhancements
 These tools adapt scikit-learn for use with other technologies or otherwise
 enhance the functionality of scikit-learn's estimators.
 
-**Data formats**
-
-- `sklearn_pandas <https://github.com/paulgb/sklearn-pandas/>`_ bridge for
-  scikit-learn pipelines and pandas data frame with dedicated transformers.
-
-- `sklearn_xarray <https://github.com/phausamann/sklearn-xarray/>`_ provides
-  compatibility of scikit-learn estimators with xarray data structures.
-
 **Auto-ML**
 
 - `auto-sklearn <https://github.com/automl/auto-sklearn/>`_
@@ -48,18 +40,15 @@ enhance the functionality of scikit-learn's estimators.
   transforming temporal and relational datasets into feature matrices for
   machine learning.
 
-- `Neuraxle <https://github.com/Neuraxio/Neuraxle>`_
-  A library for building neat pipelines, providing the right abstractions to
-  both ease research, development, and deployment of machine learning
-  applications. Compatible with deep learning frameworks and scikit-learn API,
-  it can stream minibatches, use data checkpoints, build funky pipelines, and
-  serialize models with custom per-step savers.
-
 - `EvalML <https://github.com/alteryx/evalml>`_
   EvalML is an AutoML library which builds, optimizes, and evaluates
   machine learning pipelines using domain-specific objective functions.
   It incorporates multiple modeling libraries under one API, and
   the objects that EvalML creates use an sklearn-compatible API.
+
+- `MLJAR AutoML <https://github.com/mljar/mljar-supervised>`_
+  Python package for AutoML on Tabular Data with Feature Engineering, 
+  Hyper-Parameters Tuning, Explanations and Automatic Documentation.
 
 **Experimentation and model registry frameworks**
 
@@ -85,10 +74,6 @@ enhance the functionality of scikit-learn's estimators.
 - `dtreeviz <https://github.com/parrt/dtreeviz/>`_ A python library for
   decision tree visualization and model interpretation.
 
-- `eli5 <https://github.com/TeamHG-Memex/eli5/>`_ A library for
-  debugging/inspecting machine learning models and explaining their
-  predictions.
-
 - `sklearn-evaluation <https://github.com/ploomber/sklearn-evaluation>`_
   Machine learning model evaluation made easy: plots, tables, HTML reports,
   experiment tracking and Jupyter notebook analysis. Visual analysis, model
@@ -97,17 +82,6 @@ enhance the functionality of scikit-learn's estimators.
 - `yellowbrick <https://github.com/DistrictDataLabs/yellowbrick>`_ A suite of
   custom matplotlib visualizers for scikit-learn estimators to support visual feature
   analysis, model selection, evaluation, and diagnostics.
-
-**Model selection**
-
-- `scikit-optimize <https://scikit-optimize.github.io/>`_
-  A library to minimize (very) expensive and noisy black-box functions. It
-  implements several methods for sequential model-based optimization, and
-  includes a replacement for ``GridSearchCV`` or ``RandomizedSearchCV`` to do
-  cross-validated parameter search using any of these strategies.
-
-- `sklearn-deap <https://github.com/rsteca/sklearn-deap>`_ Use evolutionary
-  algorithms instead of gridsearch in scikit-learn.
 
 **Model export for production**
 
@@ -124,21 +98,9 @@ enhance the functionality of scikit-learn's estimators.
   into PMML with the help of `JPMML-SkLearn <https://github.com/jpmml/jpmml-sklearn>`_
   library.
 
-- `sklearn-porter <https://github.com/nok/sklearn-porter>`_
-  Transpile trained scikit-learn models to C, Java, Javascript and others.
-
-- `m2cgen <https://github.com/BayesWitnesses/m2cgen>`_
-  A lightweight library which allows to transpile trained machine learning
-  models including many scikit-learn estimators into a native code of C, Java,
-  Go, R, PHP, Dart, Haskell, Rust and many other programming languages.
-
 - `treelite <https://treelite.readthedocs.io>`_
   Compiles tree-based ensemble models into C code for minimizing prediction
   latency.
-
-- `micromlgen <https://github.com/eloquentarduino/micromlgen>`_
-  MicroML brings Machine Learning algorithms to microcontrollers.
-  Supports several scikit-learn classifiers by transpiling them to C code.
 
 - `emlearn <https://emlearn.org>`_
   Implements scikit-learn estimators in C99 for embedded devices and microcontrollers.
@@ -154,6 +116,13 @@ enhance the functionality of scikit-learn's estimators.
   estimators under ``scikit-learn-intelex`` would give different results than
   ``scikit-learn`` itself. If you encounter issues while using this project,
   make sure you report potential issues in their respective repositories.
+
+**Interface to R with genomic applications**
+
+- `BiocSklearn <https://bioconductor.org/packages/BiocSklearn>`_
+  Exposes a small number of dimension reduction facilities as an illustration
+  of the basilisk protocol for interfacing python with R. Intended as a 
+  springboard for more complete interop.
 
 
 Other estimators and tasks
@@ -202,17 +171,8 @@ Note scikit-learn own modern gradient boosting estimators
 - `HMMLearn <https://github.com/hmmlearn/hmmlearn>`_ Implementation of hidden
   markov models that was previously part of scikit-learn.
 
-- `PyStruct <https://pystruct.github.io>`_ General conditional random fields
-  and structured prediction.
-
 - `pomegranate <https://github.com/jmschrei/pomegranate>`_ Probabilistic modelling
   for Python, with an emphasis on hidden Markov models.
-
-- `sklearn-crfsuite <https://github.com/TeamHG-Memex/sklearn-crfsuite>`_
-  Linear-chain conditional random fields
-  (`CRFsuite <http://www.chokkan.org/software/crfsuite/>`_ wrapper with
-  sklearn-like API).
-
 
 **Deep neural networks etc.**
 
@@ -228,6 +188,14 @@ Note scikit-learn own modern gradient boosting estimators
 - `Flower <https://flower.dev/>`_ A friendly federated learning framework with a
   unified approach that can federate any workload, any ML framework, and any programming language.
 
+**Privacy Preserving Machine Learning**
+
+- `Concrete ML <https://github.com/zama-ai/concrete-ml/>`_ A privacy preserving
+  ML framework built on top of `Concrete
+  <https://github.com/zama-ai/concrete>`_, with bindings to traditional ML
+  frameworks, thanks to fully homomorphic encryption. APIs of so-called
+  Concrete ML built-in models are very close to scikit-learn APIs.
+
 **Broad scope**
 
 - `mlxtend <https://github.com/rasbt/mlxtend>`_ Includes a number of additional
@@ -238,13 +206,6 @@ Note scikit-learn own modern gradient boosting estimators
 
 **Other regression and classification**
 
-- `ML-Ensemble <https://mlens.readthedocs.io/>`_ Generalized
-  ensemble learning (stacking, blending, subsemble, deep ensembles,
-  etc.).
-
-- `lightning <https://github.com/scikit-learn-contrib/lightning>`_ Fast
-  state-of-the-art linear model solvers (SDCA, AdaGrad, SVRG, SAG, etc...).
-
 - `py-earth <https://github.com/scikit-learn-contrib/py-earth>`_ Multivariate
   adaptive regression splines
 
@@ -253,12 +214,6 @@ Note scikit-learn own modern gradient boosting estimators
 
 - `scikit-multilearn <https://github.com/scikit-multilearn/scikit-multilearn>`_
   Multi-label classification with focus on label space manipulation.
-
-- `seglearn <https://github.com/dmbee/seglearn>`_ Time series and sequence
-  learning using sliding window segmentation.
-
-- `fastFM <https://github.com/ibayer/fastFM>`_ Fast factorization machine
-  implementation compatible with scikit-learn
 
 **Decomposition and clustering**
 
@@ -277,10 +232,6 @@ Note scikit-learn own modern gradient boosting estimators
 - `hdbscan <https://github.com/scikit-learn-contrib/hdbscan>`_ HDBSCAN and Robust Single
   Linkage clustering algorithms for robust variable density clustering.
   As of scikit-learn version 1.3.0, there is :class:`~sklearn.cluster.HDBSCAN`.
-
-- `spherecluster <https://github.com/clara-labs/spherecluster>`_ Spherical
-  K-means and mixture of von Mises Fisher clustering routines for data on the
-  unit hypersphere.
 
 **Pre-processing**
 
@@ -340,9 +291,6 @@ Recommendation Engine packages
 
 - `lightfm <https://github.com/lyst/lightfm>`_ A Python/Cython
   implementation of a hybrid recommender system.
-
-- `OpenRec <https://github.com/ylongqi/openrec>`_ TensorFlow-based
-  neural-network inspired recommendation algorithms.
 
 - `Surprise Lib <https://surpriselib.com/>`_ Library for explicit feedback
   datasets.

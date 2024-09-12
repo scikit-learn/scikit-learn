@@ -40,10 +40,8 @@ of the results_.
 
 """
 
-# Author:  Raghav RV <rvraghav93@gmail.com>
-#          Guillaume Lemaitre <g.lemaitre58@gmail.com>
-#          Thomas Unterthiner
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib as mpl
 import numpy as np
@@ -102,11 +100,15 @@ distributions = [
     ),
     (
         "Data after quantile transformation (uniform pdf)",
-        QuantileTransformer(output_distribution="uniform").fit_transform(X),
+        QuantileTransformer(
+            output_distribution="uniform", random_state=42
+        ).fit_transform(X),
     ),
     (
         "Data after quantile transformation (gaussian pdf)",
-        QuantileTransformer(output_distribution="normal").fit_transform(X),
+        QuantileTransformer(
+            output_distribution="normal", random_state=42
+        ).fit_transform(X),
     ),
     ("Data after sample-wise L2 normalizing", Normalizer().fit_transform(X)),
 ]
@@ -265,6 +267,8 @@ def make_plot(item_idx):
 make_plot(0)
 
 # %%
+# .. _plot_all_scaling_standard_scaler_section:
+#
 # StandardScaler
 # --------------
 #
@@ -285,6 +289,8 @@ make_plot(0)
 make_plot(1)
 
 # %%
+# .. _plot_all_scaling_minmax_scaler_section:
+#
 # MinMaxScaler
 # ------------
 #
@@ -301,6 +307,8 @@ make_plot(1)
 make_plot(2)
 
 # %%
+# .. _plot_all_scaling_max_abs_scaler_section:
+#
 # MaxAbsScaler
 # ------------
 #
@@ -318,6 +326,8 @@ make_plot(2)
 make_plot(3)
 
 # %%
+# .. _plot_all_scaling_robust_scaler_section:
+#
 # RobustScaler
 # ------------
 #
@@ -335,6 +345,8 @@ make_plot(3)
 make_plot(4)
 
 # %%
+# .. _plot_all_scaling_power_transformer_section:
+#
 # PowerTransformer
 # ----------------
 #
@@ -353,6 +365,8 @@ make_plot(5)
 make_plot(6)
 
 # %%
+# .. _plot_all_scaling_quantile_transformer_section:
+#
 # QuantileTransformer (uniform output)
 # ------------------------------------
 #
@@ -384,6 +398,8 @@ make_plot(7)
 make_plot(8)
 
 # %%
+# .. _plot_all_scaling_normalizer_section:
+#
 # Normalizer
 # ----------
 #

@@ -206,9 +206,9 @@ def test_nodes_values(monotonic_cst, seed):
 
 @pytest.mark.parametrize("use_feature_names", (True, False))
 def test_predictions(global_random_seed, use_feature_names):
-    # Train a model with a POS constraint on the first feature and a NEG
-    # constraint on the second feature, and make sure the constraints are
-    # respected by checking the predictions.
+    # Train a model with a POS constraint on the first non-categorical feature
+    # and a NEG constraint on the second non-categorical feature, and make sure
+    # the constraints are respected by checking the predictions.
     # test adapted from lightgbm's test_monotone_constraint(), itself inspired
     # by https://xgboost.readthedocs.io/en/latest/tutorials/monotonic.html
 
@@ -216,9 +216,16 @@ def test_predictions(global_random_seed, use_feature_names):
 
     n_samples = 1000
     f_0 = rng.rand(n_samples)  # positive correlation with y
-    f_1 = rng.rand(n_samples)  # negative correslation with y
-    X = np.c_[f_0, f_1]
-    columns_name = ["f_0", "f_1"]
+    f_1 = rng.rand(n_samples)  # negative correlation with y
+
+    # extra categorical features, no correlation with y,
+    # to check the correctness of monotonicity constraint remapping, see issue #28898
+    f_a = rng.randint(low=0, high=9, size=n_samples)
+    f_b = rng.randint(low=0, high=9, size=n_samples)
+    f_c = rng.randint(low=0, high=9, size=n_samples)
+
+    X = np.c_[f_a, f_0, f_b, f_1, f_c]
+    columns_name = ["f_a", "f_0", "f_b", "f_1", "f_c"]
     constructor_name = "dataframe" if use_feature_names else "array"
     X = _convert_container(X, constructor_name, columns_name=columns_name)
 
@@ -227,10 +234,14 @@ def test_predictions(global_random_seed, use_feature_names):
 
     if use_feature_names:
         monotonic_cst = {"f_0": +1, "f_1": -1}
+        categorical_features = ["f_a", "f_b", "f_c"]
     else:
-        monotonic_cst = [+1, -1]
+        monotonic_cst = [0, +1, 0, -1, 0]
+        categorical_features = [0, 2, 4]
 
-    gbdt = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst)
+    gbdt = HistGradientBoostingRegressor(
+        monotonic_cst=monotonic_cst, categorical_features=categorical_features
+    )
     gbdt.fit(X, y)
 
     linspace = np.linspace(0, 1, 100)
@@ -247,26 +258,26 @@ def test_predictions(global_random_seed, use_feature_names):
     # The constraint does not guanrantee that
     # x0 < x0' => f(x0, x1) < f(x0', x1')
 
-    # First feature (POS)
+    # First non-categorical feature (POS)
     # assert pred is all increasing when f_0 is all increasing
-    X = np.c_[linspace, constant]
+    X = np.c_[constant, linspace, constant, constant, constant]
     X = _convert_container(X, constructor_name, columns_name=columns_name)
     pred = gbdt.predict(X)
     assert is_increasing(pred)
     # assert pred actually follows the variations of f_0
-    X = np.c_[sin, constant]
+    X = np.c_[constant, sin, constant, constant, constant]
     X = _convert_container(X, constructor_name, columns_name=columns_name)
     pred = gbdt.predict(X)
     assert np.all((np.diff(pred) >= 0) == (np.diff(sin) >= 0))
 
-    # Second feature (NEG)
+    # Second non-categorical feature (NEG)
     # assert pred is all decreasing when f_1 is all increasing
-    X = np.c_[constant, linspace]
+    X = np.c_[constant, constant, constant, linspace, constant]
     X = _convert_container(X, constructor_name, columns_name=columns_name)
     pred = gbdt.predict(X)
     assert is_decreasing(pred)
     # assert pred actually follows the inverse variations of f_1
-    X = np.c_[constant, sin]
+    X = np.c_[constant, constant, constant, sin, constant]
     X = _convert_container(X, constructor_name, columns_name=columns_name)
     pred = gbdt.predict(X)
     assert ((np.diff(pred) <= 0) == (np.diff(sin) >= 0)).all()

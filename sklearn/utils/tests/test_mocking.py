@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose, assert_array_equal
+from numpy.testing import assert_array_equal
 from scipy import sparse
 
 from sklearn.datasets import load_iris
@@ -10,6 +10,7 @@ from sklearn.utils._mocking import (
     _MockEstimatorOnOffPrediction,
 )
 from sklearn.utils._testing import _convert_container
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 
 @pytest.fixture
@@ -89,7 +90,7 @@ def test_checking_classifier(iris, input_type):
     assert clf.n_features_in_ == 4
 
     y_pred = clf.predict(X)
-    assert_array_equal(y_pred, np.zeros(y_pred.size, dtype=int))
+    assert all(pred in clf.classes_ for pred in y_pred)
 
     assert clf.score(X) == pytest.approx(0)
     clf.set_params(foo_param=10)
@@ -97,13 +98,10 @@ def test_checking_classifier(iris, input_type):
 
     y_proba = clf.predict_proba(X)
     assert y_proba.shape == (150, 3)
-    assert_allclose(y_proba[:, 0], 1)
-    assert_allclose(y_proba[:, 1:], 0)
+    assert np.logical_and(y_proba >= 0, y_proba <= 1).all()
 
     y_decision = clf.decision_function(X)
     assert y_decision.shape == (150, 3)
-    assert_allclose(y_decision[:, 0], 1)
-    assert_allclose(y_decision[:, 1:], 0)
 
     # check the shape in case of binary classification
     first_2_classes = np.logical_or(y == 0, y == 1)
@@ -113,17 +111,16 @@ def test_checking_classifier(iris, input_type):
 
     y_proba = clf.predict_proba(X)
     assert y_proba.shape == (100, 2)
-    assert_allclose(y_proba[:, 0], 1)
-    assert_allclose(y_proba[:, 1], 0)
+    assert np.logical_and(y_proba >= 0, y_proba <= 1).all()
 
     y_decision = clf.decision_function(X)
     assert y_decision.shape == (100,)
-    assert_allclose(y_decision, 0)
 
 
-def test_checking_classifier_with_params(iris):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_checking_classifier_with_params(iris, csr_container):
     X, y = iris
-    X_sparse = sparse.csr_matrix(X)
+    X_sparse = csr_container(X)
 
     clf = CheckingClassifier(check_X=sparse.issparse)
     with pytest.raises(AssertionError):
@@ -134,7 +131,7 @@ def test_checking_classifier_with_params(iris):
         check_X=check_array, check_X_params={"accept_sparse": False}
     )
     clf.fit(X, y)
-    with pytest.raises(TypeError, match="A sparse matrix was passed"):
+    with pytest.raises(TypeError, match="Sparse data was passed"):
         clf.fit(X_sparse, y)
 
 

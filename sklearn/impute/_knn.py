@@ -1,6 +1,5 @@
-# Authors: Ashim Bhattarai <ashimb9@gmail.com>
-#          Thomas J Fan <thomasjpfan@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Integral
 
@@ -10,10 +9,15 @@ from ..base import _fit_context
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import _NAN_METRICS
 from ..neighbors._base import _get_weights
-from ..utils import is_scalar_nan
 from ..utils._mask import _get_mask
+from ..utils._missing import is_scalar_nan
 from ..utils._param_validation import Hidden, Interval, StrOptions
-from ..utils.validation import FLOAT_DTYPES, _check_feature_names_in, check_is_fitted
+from ..utils.validation import (
+    FLOAT_DTYPES,
+    _check_feature_names_in,
+    check_is_fitted,
+    validate_data,
+)
 from ._base import _BaseImputer
 
 
@@ -56,9 +60,9 @@ class KNNImputer(_BaseImputer):
 
         - 'nan_euclidean'
         - callable : a user-defined function which conforms to the definition
-          of ``_pairwise_callable(X, Y, metric, **kwds)``. The function
-          accepts two arrays, X and Y, and a `missing_values` keyword in
-          `kwds` and returns a scalar distance value.
+          of ``func_metric(x, y, *, missing_values=np.nan)``. `x` and `y`
+          corresponds to a row (i.e. 1-D arrays) of `X` and `Y`, respectively.
+          The callable should returns a scalar distance value.
 
     copy : bool, default=True
         If True, a copy of X will be created. If False, imputation will
@@ -105,10 +109,11 @@ class KNNImputer(_BaseImputer):
 
     References
     ----------
-    * Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown, Trevor
+    * `Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown, Trevor
       Hastie, Robert Tibshirani, David Botstein and Russ B. Altman, Missing
       value estimation methods for DNA microarrays, BIOINFORMATICS Vol. 17
       no. 6, 2001 Pages 520-525.
+      <https://academic.oup.com/bioinformatics/article/17/6/520/272365>`_
 
     Examples
     --------
@@ -121,6 +126,9 @@ class KNNImputer(_BaseImputer):
            [3. , 4. , 3. ],
            [5.5, 6. , 5. ],
            [8. , 8. , 7. ]])
+
+    For a more detailed example see
+    :ref:`sphx_glr_auto_examples_impute_plot_missing_values.py`.
     """
 
     _parameter_constraints: dict = {
@@ -191,6 +199,9 @@ class KNNImputer(_BaseImputer):
         # fill nans with zeros
         if weight_matrix is not None:
             weight_matrix[np.isnan(weight_matrix)] = 0.0
+        else:
+            weight_matrix = np.ones_like(donors_dist)
+            weight_matrix[np.isnan(donors_dist)] = 0.0
 
         # Retrieve donor values and calculate kNN average
         donors = fit_X_col.take(donors_idx)
@@ -219,15 +230,16 @@ class KNNImputer(_BaseImputer):
         """
         # Check data integrity and calling arguments
         if not is_scalar_nan(self.missing_values):
-            force_all_finite = True
+            ensure_all_finite = True
         else:
-            force_all_finite = "allow-nan"
+            ensure_all_finite = "allow-nan"
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=False,
             dtype=FLOAT_DTYPES,
-            force_all_finite=force_all_finite,
+            ensure_all_finite=ensure_all_finite,
             copy=self.copy,
         )
 
@@ -256,14 +268,16 @@ class KNNImputer(_BaseImputer):
 
         check_is_fitted(self)
         if not is_scalar_nan(self.missing_values):
-            force_all_finite = True
+            ensure_all_finite = True
         else:
-            force_all_finite = "allow-nan"
-        X = self._validate_data(
+            ensure_all_finite = "allow-nan"
+        X = validate_data(
+            self,
             X,
             accept_sparse=False,
             dtype=FLOAT_DTYPES,
-            force_all_finite=force_all_finite,
+            force_writeable=True,
+            ensure_all_finite=ensure_all_finite,
             copy=self.copy,
             reset=False,
         )
@@ -275,7 +289,7 @@ class KNNImputer(_BaseImputer):
         X_indicator = super()._transform_indicator(mask)
 
         # Removes columns where the training data is all nan
-        if not np.any(mask):
+        if not np.any(mask[:, valid_mask]):
             # No missing values in X
             if self.keep_empty_features:
                 Xc = X
@@ -289,7 +303,7 @@ class KNNImputer(_BaseImputer):
             # of columns, regardless of whether missing values exist in X or not.
             return super()._concatenate_indicator(Xc, X_indicator)
 
-        row_missing_idx = np.flatnonzero(mask.any(axis=1))
+        row_missing_idx = np.flatnonzero(mask[:, valid_mask].any(axis=1))
 
         non_missing_fix_X = np.logical_not(mask_fit_X)
 
@@ -356,7 +370,7 @@ class KNNImputer(_BaseImputer):
             self._fit_X,
             metric=self.metric,
             missing_values=self.missing_values,
-            force_all_finite=force_all_finite,
+            ensure_all_finite=ensure_all_finite,
             reduce_func=process_chunk,
         )
         for chunk in gen:

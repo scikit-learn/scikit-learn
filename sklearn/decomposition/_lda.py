@@ -8,8 +8,9 @@ This implementation is modified from Matthew D. Hoffman's onlineldavb code
 Link: https://github.com/blei-lab/onlineldavb
 """
 
-# Author: Chyi-Kwei Yau
-# Author: Matthew D. Hoffman (original onlineldavb implementation)
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from numbers import Integral, Real
 
 import numpy as np
@@ -26,7 +27,7 @@ from ..base import (
 from ..utils import check_random_state, gen_batches, gen_even_slices
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.parallel import Parallel, delayed
-from ..utils.validation import check_is_fitted, check_non_negative
+from ..utils.validation import check_is_fitted, check_non_negative, validate_data
 from ._online_lda_fast import (
     _dirichlet_expectation_1d as cy_dirichlet_expectation_1d,
 )
@@ -194,15 +195,14 @@ class LatentDirichletAllocation(
         In general, if the data size is large, the online update will be much
         faster than the batch update.
 
-        Valid options::
+        Valid options:
 
-            'batch': Batch variational Bayes method. Use all training data in
-                each EM update.
-                Old `components_` will be overwritten in each iteration.
-            'online': Online variational Bayes method. In each EM update, use
-                mini-batch of training data to update the ``components_``
-                variable incrementally. The learning rate is controlled by the
-                ``learning_decay`` and the ``learning_offset`` parameters.
+        - 'batch': Batch variational Bayes method. Use all training data in each EM
+          update. Old `components_` will be overwritten in each iteration.
+        - 'online': Online variational Bayes method. In each EM update, use mini-batch
+          of training data to update the ``components_`` variable incrementally. The
+          learning rate is controlled by the ``learning_decay`` and the
+          ``learning_offset`` parameters.
 
         .. versionchanged:: 0.20
             The default learning method is now ``"batch"``.
@@ -240,8 +240,7 @@ class LatentDirichletAllocation(
         Total number of documents. Only used in the :meth:`partial_fit` method.
 
     perp_tol : float, default=1e-1
-        Perplexity tolerance in batch learning. Only used when
-        ``evaluate_every`` is greater than 0.
+        Perplexity tolerance. Only used when ``evaluate_every`` is greater than 0.
 
     mean_change_tol : float, default=1e-3
         Stopping tolerance for updating document topic distribution in E-step.
@@ -547,11 +546,11 @@ class LatentDirichletAllocation(
         self.n_batch_iter_ += 1
         return
 
-    def _more_tags(self):
-        return {
-            "preserves_dtype": [np.float64, np.float32],
-            "requires_positive_X": True,
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.positive_only = True
+        tags.transformer_tags.preserves_dtype = ["float32", "float64"]
+        return tags
 
     def _check_non_neg_array(self, X, reset_n_features, whom):
         """check X format
@@ -565,7 +564,8 @@ class LatentDirichletAllocation(
         """
         dtype = [np.float64, np.float32] if reset_n_features else self.components_.dtype
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             reset=reset_n_features,
             accept_sparse="csr",

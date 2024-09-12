@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import scipy as sp
 
 from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
@@ -265,7 +268,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             sample_weight=sample_weight,
         )
 
-        viz = DetCurveDisplay(
+        viz = cls(
             fpr=fpr,
             fnr=fnr,
             estimator_name=name,

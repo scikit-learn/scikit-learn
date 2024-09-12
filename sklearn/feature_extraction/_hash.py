@@ -1,5 +1,5 @@
-# Author: Lars Buitinck
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from itertools import chain
 from numbers import Integral
@@ -33,6 +33,9 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
     CountVectorizer, intended for large-scale (online) learning and situations
     where memory is tight, e.g. when running prediction code on embedded
     devices.
+
+    For an efficiency comparison of the different feature extractors, see
+    :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
 
     Read more in the :ref:`User Guide <feature_hashing>`.
 
@@ -190,5 +193,11 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
 
         return X
 
-    def _more_tags(self):
-        return {"X_types": [self.input_type]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.two_d_array = False
+        if self.input_type == "string":
+            tags.input_tags.string = True
+        elif self.input_type == "dict":
+            tags.input_tags.dict = True
+        return tags

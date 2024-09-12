@@ -2,6 +2,17 @@
 
 .. currentmodule:: sklearn
 
+.. _release_notes_0_23:
+
+============
+Version 0.23
+============
+
+For a short description of the main highlights of the release, please refer to
+:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_0_23_0.py`.
+
+.. include:: changelog_legend.inc
+
 .. _changes_0_23_2:
 
 Version 0.23.2
@@ -152,12 +163,6 @@ Version 0.23.0
 
 **May 12 2020**
 
-For a short description of the main highlights of the release, please
-refer to
-:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_0_23_0.py`.
-
-
-.. include:: changelog_legend.inc
 
 Enforcing keyword-only arguments
 --------------------------------
@@ -589,7 +594,7 @@ Changelog
   or 'd'). :pr:`16159` by :user:`Rick Mackenbach <Rick-Mackenbach>` and
   `Thomas Fan`_.
 
-- |API| From version 0.25, :func:`metrics.pairwise.pairwise_distances` will no
+- |API| From version 0.25, :func:`metrics.pairwise_distances` will no
   longer automatically compute the ``VI`` parameter for Mahalanobis distance
   and the ``V`` parameter for seuclidean distance if ``Y`` is passed. The user
   will be expected to compute this parameter on the training data of their
@@ -784,7 +789,7 @@ Miscellaneous
 .............
 
 - |MajorFeature| Adds a HTML representation of estimators to be shown in
-  a jupyter notebook or lab. This visualization is acitivated by setting the
+  a jupyter notebook or lab. This visualization is activated by setting the
   `display` option in :func:`sklearn.set_config`. :pr:`14180` by
   `Thomas Fan`_.
 
@@ -811,8 +816,7 @@ Miscellaneous
   always possible to quickly inspect the parameters of any estimator using
   `est.get_params(deep=False)`. :pr:`17061` by `Nicolas Hug`_.
 
-Code and Documentation Contributors
------------------------------------
+.. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of the
 project since version 0.22, including:

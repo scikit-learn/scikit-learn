@@ -1,4 +1,8 @@
 """Unsupervised nearest neighbors learner"""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from ..base import _fit_context
 from ._base import KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin
 
@@ -55,7 +59,7 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
         between those vectors. This works for Scipy's metrics, but is less
         efficient than passing the metric name as a string.
 
-    p : float, default=2
+    p : float (positive), default=2
         Parameter for the Minkowski metric from
         sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance

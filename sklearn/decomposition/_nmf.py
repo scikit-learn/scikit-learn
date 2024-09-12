@@ -1,10 +1,7 @@
-""" Non-negative matrix factorization.
-"""
-# Author: Vlad Niculae
-#         Lars Buitinck
-#         Mathieu Blondel <mathieu@mblondel.org>
-#         Tom Dupre la Tour
-# License: BSD 3 clause
+"""Non-negative matrix factorization."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import itertools
 import time
@@ -32,10 +29,12 @@ from ..utils._param_validation import (
     StrOptions,
     validate_params,
 )
+from ..utils.deprecation import _deprecate_Xt_in_inverse_transform
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
 from ..utils.validation import (
     check_is_fitted,
     check_non_negative,
+    validate_data,
 )
 from ._cdnmf_fast import _update_cdnmf_fast
 
@@ -1139,9 +1138,9 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
     """Base class for NMF and MiniBatchNMF."""
 
     # This prevents ``set_split_inverse_transform`` to be generated for the
-    # non-standard ``W`` arg on ``inverse_transform``.
-    # TODO: remove when W is removed in v1.5 for inverse_transform
-    __metadata_request__inverse_transform = {"W": metadata_routing.UNUSED}
+    # non-standard ``Xt`` arg on ``inverse_transform``.
+    # TODO(1.7): remove when Xt is removed in v1.7 for inverse_transform
+    __metadata_request__inverse_transform = {"Xt": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         "n_components": [
@@ -1310,55 +1309,43 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
         self.fit_transform(X, **params)
         return self
 
-    def inverse_transform(self, Xt=None, W=None):
+    def inverse_transform(self, X=None, *, Xt=None):
         """Transform data back to its original space.
 
         .. versionadded:: 0.18
 
         Parameters
         ----------
+        X : {ndarray, sparse matrix} of shape (n_samples, n_components)
+            Transformed data matrix.
+
         Xt : {ndarray, sparse matrix} of shape (n_samples, n_components)
             Transformed data matrix.
 
-        W : deprecated
-            Use `Xt` instead.
-
-            .. deprecated:: 1.3
+            .. deprecated:: 1.5
+                `Xt` was deprecated in 1.5 and will be removed in 1.7. Use `X` instead.
 
         Returns
         -------
         X : ndarray of shape (n_samples, n_features)
             Returns a data matrix of the original shape.
         """
-        if Xt is None and W is None:
-            raise TypeError("Missing required positional argument: Xt")
 
-        if W is not None and Xt is not None:
-            raise ValueError("Please provide only `Xt`, and not `W`.")
-
-        if W is not None:
-            warnings.warn(
-                (
-                    "Input argument `W` was renamed to `Xt` in v1.3 and will be removed"
-                    " in v1.5."
-                ),
-                FutureWarning,
-            )
-            Xt = W
+        X = _deprecate_Xt_in_inverse_transform(X, Xt)
 
         check_is_fitted(self)
-        return Xt @ self.components_
+        return X @ self.components_
 
     @property
     def _n_features_out(self):
         """Number of transformed output features."""
         return self.components_.shape[0]
 
-    def _more_tags(self):
-        return {
-            "requires_positive_X": True,
-            "preserves_dtype": [np.float64, np.float32],
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.positive_only = True
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
 
 
 class NMF(_BaseNMF):
@@ -1658,8 +1645,8 @@ class NMF(_BaseNMF):
         W : ndarray of shape (n_samples, n_components)
             Transformed data.
         """
-        X = self._validate_data(
-            X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32]
+        X = validate_data(
+            self, X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32]
         )
 
         with config_context(assume_finite=True):
@@ -1714,8 +1701,6 @@ class NMF(_BaseNMF):
         n_iter_ : int
             Actual number of iterations.
         """
-        check_non_negative(X, "NMF (input X)")
-
         # check parameters
         self._check_params(X)
 
@@ -1769,8 +1754,7 @@ class NMF(_BaseNMF):
         if n_iter == self.max_iter and self.tol > 0:
             warnings.warn(
                 "Maximum number of iterations %d reached. Increase "
-                "it to improve convergence."
-                % self.max_iter,
+                "it to improve convergence." % self.max_iter,
                 ConvergenceWarning,
             )
 
@@ -1791,8 +1775,13 @@ class NMF(_BaseNMF):
             Transformed data.
         """
         check_is_fitted(self)
-        X = self._validate_data(
-            X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32], reset=False
+        X = validate_data(
+            self,
+            X,
+            accept_sparse=("csr", "csc"),
+            dtype=[np.float64, np.float32],
+            reset=False,
+            ensure_non_negative=True,
         )
 
         with config_context(assume_finite=True):
@@ -2245,8 +2234,8 @@ class MiniBatchNMF(_BaseNMF):
         W : ndarray of shape (n_samples, n_components)
             Transformed data.
         """
-        X = self._validate_data(
-            X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32]
+        X = validate_data(
+            self, X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32]
         )
 
         with config_context(assume_finite=True):
@@ -2374,8 +2363,12 @@ class MiniBatchNMF(_BaseNMF):
             Transformed data.
         """
         check_is_fitted(self)
-        X = self._validate_data(
-            X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32], reset=False
+        X = validate_data(
+            self,
+            X,
+            accept_sparse=("csr", "csc"),
+            dtype=[np.float64, np.float32],
+            reset=False,
         )
 
         W = self._solve_W(X, self.components_, self._transform_max_iter)
@@ -2416,7 +2409,8 @@ class MiniBatchNMF(_BaseNMF):
         """
         has_components = hasattr(self, "components_")
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=("csr", "csc"),
             dtype=[np.float64, np.float32],

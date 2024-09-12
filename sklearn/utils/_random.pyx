@@ -1,6 +1,6 @@
-# Author: Arnaud Joly
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 """
 Random utility function
 =======================
@@ -11,16 +11,25 @@ The module contains:
     * Fast rand_r alternative based on xor shifts
 """
 import numpy as np
-cimport numpy as cnp
-cnp.import_array()
-
 from . import check_random_state
 
-cdef UINT32_t DEFAULT_SEED = 1
+from ._typedefs cimport intp_t
 
 
-cpdef _sample_without_replacement_check_input(cnp.int_t n_population,
-                                              cnp.int_t n_samples):
+cdef uint32_t DEFAULT_SEED = 1
+
+
+# Compatibility type to always accept the default int type used by NumPy, both
+# before and after NumPy 2. On Windows, `long` does not always match `inp_t`.
+# See the comments in the `sample_without_replacement` Python function for more
+# details.
+ctypedef fused default_int:
+    intp_t
+    long
+
+
+cpdef _sample_without_replacement_check_input(default_int n_population,
+                                              default_int n_samples):
     """ Check that input are consistent for sample_without_replacement"""
     if n_population < 0:
         raise ValueError('n_population should be greater than 0, got %s.'
@@ -33,8 +42,8 @@ cpdef _sample_without_replacement_check_input(cnp.int_t n_population,
 
 
 cpdef _sample_without_replacement_with_tracking_selection(
-        cnp.int_t n_population,
-        cnp.int_t n_samples,
+        default_int n_population,
+        default_int n_samples,
         random_state=None):
     r"""Sample integers without replacement.
 
@@ -76,9 +85,9 @@ cpdef _sample_without_replacement_with_tracking_selection(
     """
     _sample_without_replacement_check_input(n_population, n_samples)
 
-    cdef cnp.int_t i
-    cdef cnp.int_t j
-    cdef cnp.int_t[::1] out = np.empty((n_samples, ), dtype=int)
+    cdef default_int i
+    cdef default_int j
+    cdef default_int[::1] out = np.empty((n_samples, ), dtype=int)
 
     rng = check_random_state(random_state)
     rng_randint = rng.randint
@@ -97,8 +106,8 @@ cpdef _sample_without_replacement_with_tracking_selection(
     return np.asarray(out)
 
 
-cpdef _sample_without_replacement_with_pool(cnp.int_t n_population,
-                                            cnp.int_t n_samples,
+cpdef _sample_without_replacement_with_pool(default_int n_population,
+                                            default_int n_samples,
                                             random_state=None):
     """Sample integers without replacement.
 
@@ -131,10 +140,10 @@ cpdef _sample_without_replacement_with_pool(cnp.int_t n_population,
     """
     _sample_without_replacement_check_input(n_population, n_samples)
 
-    cdef cnp.int_t i
-    cdef cnp.int_t j
-    cdef cnp.int_t[::1] out = np.empty((n_samples,), dtype=int)
-    cdef cnp.int_t[::1] pool = np.empty((n_population,), dtype=int)
+    cdef default_int i
+    cdef default_int j
+    cdef default_int[::1] out = np.empty((n_samples,), dtype=int)
+    cdef default_int[::1] pool = np.empty((n_population,), dtype=int)
 
     rng = check_random_state(random_state)
     rng_randint = rng.randint
@@ -154,8 +163,8 @@ cpdef _sample_without_replacement_with_pool(cnp.int_t n_population,
 
 
 cpdef _sample_without_replacement_with_reservoir_sampling(
-    cnp.int_t n_population,
-    cnp.int_t n_samples,
+    default_int n_population,
+    default_int n_samples,
     random_state=None
 ):
     """Sample integers without replacement.
@@ -191,9 +200,9 @@ cpdef _sample_without_replacement_with_reservoir_sampling(
     """
     _sample_without_replacement_check_input(n_population, n_samples)
 
-    cdef cnp.int_t i
-    cdef cnp.int_t j
-    cdef cnp.int_t[::1] out = np.empty((n_samples, ), dtype=int)
+    cdef default_int i
+    cdef default_int j
+    cdef default_int[::1] out = np.empty((n_samples, ), dtype=int)
 
     rng = check_random_state(random_state)
     rng_randint = rng.randint
@@ -213,10 +222,53 @@ cpdef _sample_without_replacement_with_reservoir_sampling(
     return np.asarray(out)
 
 
-cpdef sample_without_replacement(cnp.int_t n_population,
-                                 cnp.int_t n_samples,
+cdef _sample_without_replacement(default_int n_population,
+                                 default_int n_samples,
                                  method="auto",
                                  random_state=None):
+    """Sample integers without replacement.
+
+    Private function for the implementation, see sample_without_replacement
+    documentation for more details.
+    """
+    _sample_without_replacement_check_input(n_population, n_samples)
+
+    all_methods = ("auto", "tracking_selection", "reservoir_sampling", "pool")
+
+    ratio = <double> n_samples / n_population if n_population != 0.0 else 1.0
+
+    # Check ratio and use permutation unless ratio < 0.01 or ratio > 0.99
+    if method == "auto" and ratio > 0.01 and ratio < 0.99:
+        rng = check_random_state(random_state)
+        return rng.permutation(n_population)[:n_samples]
+
+    if method == "auto" or method == "tracking_selection":
+        # TODO the pool based method can also be used.
+        #      however, it requires special benchmark to take into account
+        #      the memory requirement of the array vs the set.
+
+        # The value 0.2 has been determined through benchmarking.
+        if ratio < 0.2:
+            return _sample_without_replacement_with_tracking_selection(
+                n_population, n_samples, random_state)
+        else:
+            return _sample_without_replacement_with_reservoir_sampling(
+                n_population, n_samples, random_state)
+
+    elif method == "reservoir_sampling":
+        return _sample_without_replacement_with_reservoir_sampling(
+            n_population, n_samples, random_state)
+
+    elif method == "pool":
+        return _sample_without_replacement_with_pool(n_population, n_samples,
+                                                     random_state)
+    else:
+        raise ValueError('Expected a method name in %s, got %s. '
+                         % (all_methods, method))
+
+
+def sample_without_replacement(
+        object n_population, object n_samples, method="auto", random_state=None):
     """Sample integers without replacement.
 
     Select n_samples integers from the set [0, n_population) without
@@ -266,44 +318,38 @@ cpdef sample_without_replacement(cnp.int_t n_population,
     out : ndarray of shape (n_samples,)
         The sampled subsets of integer. The subset of selected integer might
         not be randomized, see the method argument.
+
+    Examples
+    --------
+    >>> from sklearn.utils.random import sample_without_replacement
+    >>> sample_without_replacement(10, 5, random_state=42)
+    array([8, 1, 5, 0, 7])
     """
-    _sample_without_replacement_check_input(n_population, n_samples)
+    cdef:
+        intp_t n_pop_intp, n_samples_intp
+        long n_pop_long, n_samples_long
 
-    all_methods = ("auto", "tracking_selection", "reservoir_sampling", "pool")
-
-    ratio = <double> n_samples / n_population if n_population != 0.0 else 1.0
-
-    # Check ratio and use permutation unless ratio < 0.01 or ratio > 0.99
-    if method == "auto" and ratio > 0.01 and ratio < 0.99:
-        rng = check_random_state(random_state)
-        return rng.permutation(n_population)[:n_samples]
-
-    if method == "auto" or method == "tracking_selection":
-        # TODO the pool based method can also be used.
-        #      however, it requires special benchmark to take into account
-        #      the memory requirement of the array vs the set.
-
-        # The value 0.2 has been determined through benchmarking.
-        if ratio < 0.2:
-            return _sample_without_replacement_with_tracking_selection(
-                n_population, n_samples, random_state)
-        else:
-            return _sample_without_replacement_with_reservoir_sampling(
-                n_population, n_samples, random_state)
-
-    elif method == "reservoir_sampling":
-        return _sample_without_replacement_with_reservoir_sampling(
-            n_population, n_samples, random_state)
-
-    elif method == "pool":
-        return _sample_without_replacement_with_pool(n_population, n_samples,
-                                                     random_state)
+    # On most platforms `np.int_ is np.intp`.  However, before NumPy 2 the
+    # default integer `np.int_` was a long which is 32bit on 64bit windows
+    # while `intp` is 64bit on 64bit platforms and 32bit on 32bit ones.
+    if np.int_ is np.intp:
+        # Branch always taken on NumPy >=2 (or when not on 64bit windows).
+        # Cython has different rules for conversion of values to integers.
+        # For NumPy <1.26.2 AND Cython 3, this first branch requires `int()`
+        # called explicitly to allow e.g. floats.
+        n_pop_intp = int(n_population)
+        n_samples_intp = int(n_samples)
+        return _sample_without_replacement(
+                n_pop_intp, n_samples_intp, method, random_state)
     else:
-        raise ValueError('Expected a method name in %s, got %s. '
-                         % (all_methods, method))
+        # Branch taken on 64bit windows with Numpy<2.0 where `long` is 32bit
+        n_pop_long = n_population
+        n_samples_long = n_samples
+        return _sample_without_replacement(
+                n_pop_long, n_samples_long, method, random_state)
 
 
 def _our_rand_r_py(seed):
     """Python utils to test the our_rand_r function"""
-    cdef UINT32_t my_seed = seed
+    cdef uint32_t my_seed = seed
     return our_rand_r(&my_seed)

@@ -34,9 +34,8 @@ influences the selected value of `C`. The question that arises is "How do we
 optimally adjust C to account for the different amount of training samples?"
 """
 
-# Author: Andreas Mueller <amueller@ais.uni-bonn.de>
-#         Jaques Grobler <jaques.grobler@inria.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Data generation

@@ -1,13 +1,7 @@
-"""
-Linear Discriminant Analysis and Quadratic Discriminant Analysis
-"""
+"""Linear and quadratic discriminant analysis."""
 
-# Authors: Clemens Brunner
-#          Martin Billinger
-#          Matthieu Perrot
-#          Mathieu Blondel
-
-# License: BSD 3-Clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Integral, Real
@@ -30,7 +24,7 @@ from .utils._array_api import _expit, device, get_namespace, size
 from .utils._param_validation import HasMethods, Interval, StrOptions
 from .utils.extmath import softmax
 from .utils.multiclass import check_classification_targets, unique_labels
-from .utils.validation import check_is_fitted
+from .utils.validation import check_is_fitted, validate_data
 
 __all__ = ["LinearDiscriminantAnalysis", "QuadraticDiscriminantAnalysis"]
 
@@ -193,7 +187,11 @@ class LinearDiscriminantAnalysis(
     `transform` method.
 
     .. versionadded:: 0.17
-       *LinearDiscriminantAnalysis*.
+
+    For a comparison between
+    :class:`~sklearn.discriminant_analysis.LinearDiscriminantAnalysis`
+    and :class:`~sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`, see
+    :ref:`sphx_glr_auto_examples_classification_plot_lda_qda.py`.
 
     Read more in the :ref:`User Guide <lda_qda>`.
 
@@ -222,6 +220,9 @@ class LinearDiscriminantAnalysis(
         This should be left to None if `covariance_estimator` is used.
         Note that shrinkage works only with 'lsqr' and 'eigen' solvers.
 
+        For a usage example, see
+        :ref:`sphx_glr_auto_examples_classification_plot_lda.py`.
+
     priors : array-like of shape (n_classes,), default=None
         The class prior probabilities. By default, the class proportions are
         inferred from the training data.
@@ -231,6 +232,9 @@ class LinearDiscriminantAnalysis(
         dimensionality reduction. If None, will be set to
         min(n_classes - 1, n_features). This parameter only affects the
         `transform` method.
+
+        For a usage example, see
+        :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_lda.py`.
 
     store_covariance : bool, default=False
         If True, explicitly compute the weighted within-class covariance
@@ -514,7 +518,7 @@ class LinearDiscriminantAnalysis(
         std = xp.std(Xc, axis=0)
         # avoid division by zero in normalization
         std[std == 0] = 1.0
-        fac = xp.asarray(1.0 / (n_samples - n_classes))
+        fac = xp.asarray(1.0 / (n_samples - n_classes), dtype=X.dtype)
 
         # 2) Within variance scaling
         X = xp.sqrt(fac) * (Xc / std)
@@ -578,8 +582,8 @@ class LinearDiscriminantAnalysis(
         """
         xp, _ = get_namespace(X)
 
-        X, y = self._validate_data(
-            X, y, ensure_min_samples=2, dtype=[xp.float64, xp.float32]
+        X, y = validate_data(
+            self, X, y, ensure_min_samples=2, dtype=[xp.float64, xp.float32]
         )
         self.classes_ = unique_labels(y)
         n_samples, _ = X.shape
@@ -671,7 +675,7 @@ class LinearDiscriminantAnalysis(
             )
         check_is_fitted(self)
         xp, _ = get_namespace(X)
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
 
         if self.solver == "svd":
             X_new = (X - self.xbar_) @ self.scalings_
@@ -697,7 +701,7 @@ class LinearDiscriminantAnalysis(
         xp, is_array_api_compliant = get_namespace(X)
         decision = self.decision_function(X)
         if size(self.classes_) == 2:
-            proba = _expit(decision)
+            proba = _expit(decision, xp)
             return xp.stack([1 - proba, proba], axis=1)
         else:
             return softmax(decision)
@@ -751,8 +755,10 @@ class LinearDiscriminantAnalysis(
         # Only override for the doc
         return super().decision_function(X)
 
-    def _more_tags(self):
-        return {"array_api_support": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.array_api_support = True
+        return tags
 
 
 class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
@@ -765,7 +771,11 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     The model fits a Gaussian density to each class.
 
     .. versionadded:: 0.17
-       *QuadraticDiscriminantAnalysis*
+
+    For a comparison between
+    :class:`~sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`
+    and :class:`~sklearn.discriminant_analysis.LinearDiscriminantAnalysis`, see
+    :ref:`sphx_glr_auto_examples_classification_plot_lda_qda.py`.
 
     Read more in the :ref:`User Guide <lda_qda>`.
 
@@ -787,11 +797,11 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         .. versionadded:: 0.17
 
     tol : float, default=1.0e-4
-        Absolute threshold for a singular value to be considered significant,
-        used to estimate the rank of `Xk` where `Xk` is the centered matrix
-        of samples in class k. This parameter does not affect the
-        predictions. It only controls a warning that is raised when features
-        are considered to be colinear.
+        Absolute threshold for the covariance matrix to be considered rank
+        deficient after applying some regularization (see `reg_param`) to each
+        `Sk` where `Sk` represents covariance matrix for k-th class. This
+        parameter does not affect the predictions. It controls when a warning
+        is raised if the covariance matrix is not full rank.
 
         .. versionadded:: 0.17
 
@@ -896,7 +906,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        X, y = self._validate_data(X, y)
+        X, y = validate_data(self, X, y)
         check_classification_targets(y)
         self.classes_, y = np.unique(y, return_inverse=True)
         n_samples, n_features = X.shape
@@ -930,11 +940,16 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
             Xgc = Xg - meang
             # Xgc = U * S * V.T
             _, S, Vt = np.linalg.svd(Xgc, full_matrices=False)
-            rank = np.sum(S > self.tol)
-            if rank < n_features:
-                warnings.warn("Variables are collinear")
             S2 = (S**2) / (len(Xg) - 1)
             S2 = ((1 - self.reg_param) * S2) + self.reg_param
+            rank = np.sum(S2 > self.tol)
+            if rank < n_features:
+                warnings.warn(
+                    f"The covariance matrix of class {ind} is not full rank. "
+                    "Increasing the value of parameter `reg_param` might help"
+                    " reducing the collinearity.",
+                    linalg.LinAlgWarning,
+                )
             if self.store_covariance or store_covariance:
                 # cov = V * (S^2 / (n-1)) * V.T
                 cov.append(np.dot(S2 * Vt.T, Vt))
@@ -951,7 +966,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         # return log posterior, see eq (4.12) p. 110 of the ESL.
         check_is_fitted(self)
 
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
         norm2 = []
         for i in range(len(self.classes_)):
             R = self.rotations_[i]

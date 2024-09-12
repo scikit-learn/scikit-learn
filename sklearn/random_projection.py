@@ -1,11 +1,11 @@
-"""Random Projection transformers.
+"""Random projection transformers.
 
-Random Projections are a simple and computationally efficient way to
+Random projections are a simple and computationally efficient way to
 reduce the dimensionality of the data by trading a controlled amount
 of accuracy (as additional variance) for faster processing times and
 smaller model sizes.
 
-The dimensions and distribution of Random Projections matrices are
+The dimensions and distribution of random projections matrices are
 controlled so as to preserve the pairwise distances between any two
 samples of the dataset.
 
@@ -20,11 +20,10 @@ The main theoretical result behind the efficiency of random projection is the
   much lower dimension in such a way that distances between the points are
   nearly preserved. The map used for the embedding is at least Lipschitz,
   and can even be taken to be an orthogonal projection.
-
 """
-# Authors: Olivier Grisel <olivier.grisel@ensta.org>,
-#          Arnaud Joly <a.joly@ulg.ac.be>
-# License: BSD 3 clause
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from abc import ABCMeta, abstractmethod
@@ -45,7 +44,7 @@ from .utils import check_random_state
 from .utils._param_validation import Interval, StrOptions, validate_params
 from .utils.extmath import safe_sparse_dot
 from .utils.random import sample_without_replacement
-from .utils.validation import check_array, check_is_fitted
+from .utils.validation import check_array, check_is_fitted, validate_data
 
 __all__ = [
     "SparseRandomProjection",
@@ -119,7 +118,7 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
     --------
     >>> from sklearn.random_projection import johnson_lindenstrauss_min_dim
     >>> johnson_lindenstrauss_min_dim(1e6, eps=0.5)
-    663
+    np.int64(663)
 
     >>> johnson_lindenstrauss_min_dim(1e6, eps=[0.5, 0.1, 0.01])
     array([    663,   11841, 1112658])
@@ -379,8 +378,8 @@ class BaseRandomProjection(
         self : object
             BaseRandomProjection class instance.
         """
-        X = self._validate_data(
-            X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
+        X = validate_data(
+            self, X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
         )
 
         n_samples, n_features = X.shape
@@ -457,10 +456,10 @@ class BaseRandomProjection(
         inverse_components = self._compute_inverse_components()
         return X @ inverse_components.T
 
-    def _more_tags(self):
-        return {
-            "preserves_dtype": [np.float64, np.float32],
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
 
 
 class GaussianRandomProjection(BaseRandomProjection):
@@ -597,8 +596,12 @@ class GaussianRandomProjection(BaseRandomProjection):
             Projected array.
         """
         check_is_fitted(self)
-        X = self._validate_data(
-            X, accept_sparse=["csr", "csc"], reset=False, dtype=[np.float64, np.float32]
+        X = validate_data(
+            self,
+            X,
+            accept_sparse=["csr", "csc"],
+            reset=False,
+            dtype=[np.float64, np.float32],
         )
 
         return X @ self.components_.T
@@ -736,7 +739,7 @@ class SparseRandomProjection(BaseRandomProjection):
     (25, 2759)
     >>> # very few components are non-zero
     >>> np.mean(transformer.components_ != 0)
-    0.0182...
+    np.float64(0.0182...)
     """
 
     _parameter_constraints: dict = {
@@ -803,8 +806,12 @@ class SparseRandomProjection(BaseRandomProjection):
             `dense_output = False`.
         """
         check_is_fitted(self)
-        X = self._validate_data(
-            X, accept_sparse=["csr", "csc"], reset=False, dtype=[np.float64, np.float32]
+        X = validate_data(
+            self,
+            X,
+            accept_sparse=["csr", "csc"],
+            reset=False,
+            dtype=[np.float64, np.float32],
         )
 
         return safe_sparse_dot(X, self.components_.T, dense_output=self.dense_output)

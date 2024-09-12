@@ -4,6 +4,7 @@ Tests for LinearModelLoss
 Note that correctness of losses (which compose LinearModelLoss) is already well
 covered in the _loss module.
 """
+
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose

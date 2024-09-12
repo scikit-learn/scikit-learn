@@ -1,4 +1,4 @@
-# License: BSD 3 clause
+# SPDX-License-Identifier: BSD-3-Clause
 
 import inspect
 
@@ -59,7 +59,7 @@ from sklearn.linear_model import (
             ),
             marks=pytest.mark.xfail(reason="Missing importance sampling scheme"),
         ),
-        LogisticRegressionCV(),
+        LogisticRegressionCV(tol=1e-6),
         MultiTaskElasticNet(),
         MultiTaskElasticNetCV(),
         MultiTaskLasso(),

@@ -1,6 +1,10 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numpy as np
 
-from . import check_consistent_length, check_matplotlib_support
+from . import check_consistent_length
+from ._optional_dependencies import check_matplotlib_support
 from ._response import _get_response_values_binary
 from .multiclass import type_of_target
 from .validation import _check_pos_label_consistency

@@ -59,12 +59,12 @@ The choice of neighbors search algorithm is controlled through the keyword
 from the training data.  For a discussion of the strengths and weaknesses
 of each option, see `Nearest Neighbor Algorithms`_.
 
-    .. warning::
+.. warning::
 
-        Regarding the Nearest Neighbors algorithms, if two
-        neighbors :math:`k+1` and :math:`k` have identical distances
-        but different labels, the result will depend on the ordering of the
-        training data.
+    Regarding the Nearest Neighbors algorithms, if two
+    neighbors :math:`k+1` and :math:`k` have identical distances
+    but different labels, the result will depend on the ordering of the
+    training data.
 
 Finding the Nearest Neighbors
 -----------------------------
@@ -136,7 +136,7 @@ have the same interface; we'll show an example of using the KD Tree here:
 Refer to the :class:`KDTree` and :class:`BallTree` class documentation
 for more information on the options available for nearest neighbors searches,
 including specification of query strategies, distance metrics, etc. For a list
-of valid metrics use :meth:`KDTree.valid_metrics` and :meth:`BallTree.valid_metrics`:
+of valid metrics use `KDTree.valid_metrics` and `BallTree.valid_metrics`:
 
     >>> from sklearn.neighbors import KDTree, BallTree
     >>> KDTree.valid_metrics
@@ -192,10 +192,10 @@ distance can be supplied to compute the weights.
 
 .. centered:: |classification_1|
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_neighbors_plot_classification.py`: an example of
-    classification using nearest neighbors.
+* :ref:`sphx_glr_auto_examples_neighbors_plot_classification.py`: an example of
+  classification using nearest neighbors.
 
 .. _regression:
 
@@ -241,13 +241,13 @@ the lower half of those faces.
    :align: center
 
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_neighbors_plot_regression.py`: an example of regression
-    using nearest neighbors.
+* :ref:`sphx_glr_auto_examples_neighbors_plot_regression.py`: an example of regression
+  using nearest neighbors.
 
-  * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`: an example of
-    multi-output regression using nearest neighbors.
+* :ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`:
+  an example of multi-output regression using nearest neighbors.
 
 
 Nearest Neighbor Algorithms
@@ -305,11 +305,11 @@ keyword ``algorithm = 'kd_tree'``, and are computed using the class
 :class:`KDTree`.
 
 
-.. topic:: References:
+.. dropdown:: References
 
-   * `"Multidimensional binary search trees used for associative searching"
-     <https://dl.acm.org/citation.cfm?doid=361002.361007>`_,
-     Bentley, J.L., Communications of the ACM (1975)
+  * `"Multidimensional binary search trees used for associative searching"
+    <https://dl.acm.org/citation.cfm?doid=361002.361007>`_,
+    Bentley, J.L., Communications of the ACM (1975)
 
 
 .. _ball_tree:
@@ -343,143 +343,142 @@ neighbors searches are specified using the keyword ``algorithm = 'ball_tree'``,
 and are computed using the class :class:`BallTree`.
 Alternatively, the user can work with the :class:`BallTree` class directly.
 
-.. topic:: References:
 
-   * `"Five Balltree Construction Algorithms"
-     <https://citeseerx.ist.psu.edu/doc_view/pid/17ac002939f8e950ffb32ec4dc8e86bdd8cb5ff1>`_,
-     Omohundro, S.M., International Computer Science Institute
-     Technical Report (1989)
+.. dropdown:: References
 
-Choice of Nearest Neighbors Algorithm
--------------------------------------
-The optimal algorithm for a given dataset is a complicated choice, and
-depends on a number of factors:
+  * `"Five Balltree Construction Algorithms"
+    <https://citeseerx.ist.psu.edu/doc_view/pid/17ac002939f8e950ffb32ec4dc8e86bdd8cb5ff1>`_,
+    Omohundro, S.M., International Computer Science Institute
+    Technical Report (1989)
 
-* number of samples :math:`N` (i.e. ``n_samples``) and dimensionality
-  :math:`D` (i.e. ``n_features``).
+.. dropdown:: Choice of Nearest Neighbors Algorithm
 
-  * *Brute force* query time grows as :math:`O[D N]`
-  * *Ball tree* query time grows as approximately :math:`O[D \log(N)]`
-  * *KD tree* query time changes with :math:`D` in a way that is difficult
-    to precisely characterise.  For small :math:`D` (less than 20 or so)
-    the cost is approximately :math:`O[D\log(N)]`, and the KD tree
-    query can be very efficient.
-    For larger :math:`D`, the cost increases to nearly :math:`O[DN]`, and
-    the overhead due to the tree
-    structure can lead to queries which are slower than brute force.
+  The optimal algorithm for a given dataset is a complicated choice, and
+  depends on a number of factors:
 
-  For small data sets (:math:`N` less than 30 or so), :math:`\log(N)` is
-  comparable to :math:`N`, and brute force algorithms can be more efficient
-  than a tree-based approach.  Both :class:`KDTree` and :class:`BallTree`
-  address this through providing a *leaf size* parameter: this controls the
-  number of samples at which a query switches to brute-force.  This allows both
-  algorithms to approach the efficiency of a brute-force computation for small
-  :math:`N`.
+  * number of samples :math:`N` (i.e. ``n_samples``) and dimensionality
+    :math:`D` (i.e. ``n_features``).
 
-* data structure: *intrinsic dimensionality* of the data and/or *sparsity*
-  of the data. Intrinsic dimensionality refers to the dimension
-  :math:`d \le D` of a manifold on which the data lies, which can be linearly
-  or non-linearly embedded in the parameter space. Sparsity refers to the
-  degree to which the data fills the parameter space (this is to be
-  distinguished from the concept as used in "sparse" matrices.  The data
-  matrix may have no zero entries, but the **structure** can still be
-  "sparse" in this sense).
+    * *Brute force* query time grows as :math:`O[D N]`
+    * *Ball tree* query time grows as approximately :math:`O[D \log(N)]`
+    * *KD tree* query time changes with :math:`D` in a way that is difficult
+      to precisely characterise.  For small :math:`D` (less than 20 or so)
+      the cost is approximately :math:`O[D\log(N)]`, and the KD tree
+      query can be very efficient.
+      For larger :math:`D`, the cost increases to nearly :math:`O[DN]`, and
+      the overhead due to the tree
+      structure can lead to queries which are slower than brute force.
 
-  * *Brute force* query time is unchanged by data structure.
-  * *Ball tree* and *KD tree* query times can be greatly influenced
-    by data structure.  In general, sparser data with a smaller intrinsic
-    dimensionality leads to faster query times.  Because the KD tree
-    internal representation is aligned with the parameter axes, it will not
-    generally show as much improvement as ball tree for arbitrarily
-    structured data.
+    For small data sets (:math:`N` less than 30 or so), :math:`\log(N)` is
+    comparable to :math:`N`, and brute force algorithms can be more efficient
+    than a tree-based approach.  Both :class:`KDTree` and :class:`BallTree`
+    address this through providing a *leaf size* parameter: this controls the
+    number of samples at which a query switches to brute-force.  This allows both
+    algorithms to approach the efficiency of a brute-force computation for small
+    :math:`N`.
 
-  Datasets used in machine learning tend to be very structured, and are
-  very well-suited for tree-based queries.
+  * data structure: *intrinsic dimensionality* of the data and/or *sparsity*
+    of the data. Intrinsic dimensionality refers to the dimension
+    :math:`d \le D` of a manifold on which the data lies, which can be linearly
+    or non-linearly embedded in the parameter space. Sparsity refers to the
+    degree to which the data fills the parameter space (this is to be
+    distinguished from the concept as used in "sparse" matrices.  The data
+    matrix may have no zero entries, but the **structure** can still be
+    "sparse" in this sense).
 
-* number of neighbors :math:`k` requested for a query point.
+    * *Brute force* query time is unchanged by data structure.
+    * *Ball tree* and *KD tree* query times can be greatly influenced
+      by data structure.  In general, sparser data with a smaller intrinsic
+      dimensionality leads to faster query times.  Because the KD tree
+      internal representation is aligned with the parameter axes, it will not
+      generally show as much improvement as ball tree for arbitrarily
+      structured data.
 
-  * *Brute force* query time is largely unaffected by the value of :math:`k`
-  * *Ball tree* and *KD tree* query time will become slower as :math:`k`
-    increases.  This is due to two effects: first, a larger :math:`k` leads
-    to the necessity to search a larger portion of the parameter space.
-    Second, using :math:`k > 1` requires internal queueing of results
-    as the tree is traversed.
+    Datasets used in machine learning tend to be very structured, and are
+    very well-suited for tree-based queries.
 
-  As :math:`k` becomes large compared to :math:`N`, the ability to prune
-  branches in a tree-based query is reduced.  In this situation, Brute force
-  queries can be more efficient.
+  * number of neighbors :math:`k` requested for a query point.
 
-* number of query points.  Both the ball tree and the KD Tree
-  require a construction phase.  The cost of this construction becomes
-  negligible when amortized over many queries.  If only a small number of
-  queries will be performed, however, the construction can make up
-  a significant fraction of the total cost.  If very few query points
-  will be required, brute force is better than a tree-based method.
+    * *Brute force* query time is largely unaffected by the value of :math:`k`
+    * *Ball tree* and *KD tree* query time will become slower as :math:`k`
+      increases.  This is due to two effects: first, a larger :math:`k` leads
+      to the necessity to search a larger portion of the parameter space.
+      Second, using :math:`k > 1` requires internal queueing of results
+      as the tree is traversed.
 
-Currently, ``algorithm = 'auto'`` selects ``'brute'`` if any of the following
-conditions are verified:
+    As :math:`k` becomes large compared to :math:`N`, the ability to prune
+    branches in a tree-based query is reduced.  In this situation, Brute force
+    queries can be more efficient.
 
-* input data is sparse
-* ``metric = 'precomputed'``
-* :math:`D > 15`
-* :math:`k >= N/2`
-* ``effective_metric_`` isn't in the ``VALID_METRICS`` list for either
-  ``'kd_tree'`` or ``'ball_tree'``
+  * number of query points.  Both the ball tree and the KD Tree
+    require a construction phase.  The cost of this construction becomes
+    negligible when amortized over many queries.  If only a small number of
+    queries will be performed, however, the construction can make up
+    a significant fraction of the total cost.  If very few query points
+    will be required, brute force is better than a tree-based method.
 
-Otherwise, it selects the first out of ``'kd_tree'`` and ``'ball_tree'`` that
-has ``effective_metric_`` in its ``VALID_METRICS`` list. This heuristic is
-based on the following assumptions:
+  Currently, ``algorithm = 'auto'`` selects ``'brute'`` if any of the following
+  conditions are verified:
 
-* the number of query points is at least the same order as the number of
-  training points
-* ``leaf_size`` is close to its default value of ``30``
-* when :math:`D > 15`, the intrinsic dimensionality of the data is generally
-  too high for tree-based methods
+  * input data is sparse
+  * ``metric = 'precomputed'``
+  * :math:`D > 15`
+  * :math:`k >= N/2`
+  * ``effective_metric_`` isn't in the ``VALID_METRICS`` list for either
+    ``'kd_tree'`` or ``'ball_tree'``
 
-Effect of ``leaf_size``
------------------------
-As noted above, for small sample sizes a brute force search can be more
-efficient than a tree-based query.  This fact is accounted for in the ball
-tree and KD tree by internally switching to brute force searches within
-leaf nodes.  The level of this switch can be specified with the parameter
-``leaf_size``.  This parameter choice has many effects:
+  Otherwise, it selects the first out of ``'kd_tree'`` and ``'ball_tree'`` that
+  has ``effective_metric_`` in its ``VALID_METRICS`` list. This heuristic is
+  based on the following assumptions:
 
-**construction time**
-  A larger ``leaf_size`` leads to a faster tree construction time, because
-  fewer nodes need to be created
+  * the number of query points is at least the same order as the number of
+    training points
+  * ``leaf_size`` is close to its default value of ``30``
+  * when :math:`D > 15`, the intrinsic dimensionality of the data is generally
+    too high for tree-based methods
 
-**query time**
-  Both a large or small ``leaf_size`` can lead to suboptimal query cost.
-  For ``leaf_size`` approaching 1, the overhead involved in traversing
-  nodes can significantly slow query times.  For ``leaf_size`` approaching
-  the size of the training set, queries become essentially brute force.
-  A good compromise between these is ``leaf_size = 30``, the default value
-  of the parameter.
+.. dropdown:: Effect of ``leaf_size``
 
-**memory**
-  As ``leaf_size`` increases, the memory required to store a tree structure
-  decreases.  This is especially important in the case of ball tree, which
-  stores a :math:`D`-dimensional centroid for each node.  The required
-  storage space for :class:`BallTree` is approximately ``1 / leaf_size`` times
-  the size of the training set.
+  As noted above, for small sample sizes a brute force search can be more
+  efficient than a tree-based query.  This fact is accounted for in the ball
+  tree and KD tree by internally switching to brute force searches within
+  leaf nodes.  The level of this switch can be specified with the parameter
+  ``leaf_size``.  This parameter choice has many effects:
 
-``leaf_size`` is not referenced for brute force queries.
+  **construction time**
+    A larger ``leaf_size`` leads to a faster tree construction time, because
+    fewer nodes need to be created
 
-Valid Metrics for Nearest Neighbor Algorithms
----------------------------------------------
+  **query time**
+    Both a large or small ``leaf_size`` can lead to suboptimal query cost.
+    For ``leaf_size`` approaching 1, the overhead involved in traversing
+    nodes can significantly slow query times.  For ``leaf_size`` approaching
+    the size of the training set, queries become essentially brute force.
+    A good compromise between these is ``leaf_size = 30``, the default value
+    of the parameter.
 
-For a list of available metrics, see the documentation of the
-:class:`~sklearn.metrics.DistanceMetric` class and the metrics listed in
-`sklearn.metrics.pairwise.PAIRWISE_DISTANCE_FUNCTIONS`. Note that the "cosine"
-metric uses :func:`~sklearn.metrics.pairwise.cosine_distances`.
+  **memory**
+    As ``leaf_size`` increases, the memory required to store a tree structure
+    decreases.  This is especially important in the case of ball tree, which
+    stores a :math:`D`-dimensional centroid for each node.  The required
+    storage space for :class:`BallTree` is approximately ``1 / leaf_size`` times
+    the size of the training set.
 
-A list of valid metrics for any of the above algorithms can be obtained by using their
-``valid_metric`` attribute. For example, valid metrics for ``KDTree`` can be generated by:
+  ``leaf_size`` is not referenced for brute force queries.
 
-    >>> from sklearn.neighbors import KDTree
-    >>> print(sorted(KDTree.valid_metrics))
-    ['chebyshev', 'cityblock', 'euclidean', 'infinity', 'l1', 'l2', 'manhattan', 'minkowski', 'p']
+.. dropdown:: Valid Metrics for Nearest Neighbor Algorithms
 
+  For a list of available metrics, see the documentation of the
+  :class:`~sklearn.metrics.DistanceMetric` class and the metrics listed in
+  `sklearn.metrics.pairwise.PAIRWISE_DISTANCE_FUNCTIONS`. Note that the "cosine"
+  metric uses :func:`~sklearn.metrics.pairwise.cosine_distances`.
+
+  A list of valid metrics for any of the above algorithms can be obtained by using their
+  ``valid_metric`` attribute. For example, valid metrics for ``KDTree`` can be generated by:
+
+      >>> from sklearn.neighbors import KDTree
+      >>> print(sorted(KDTree.valid_metrics))
+      ['chebyshev', 'cityblock', 'euclidean', 'infinity', 'l1', 'l2', 'manhattan', 'minkowski', 'p']
 
 .. _nearest_centroid_classifier:
 
@@ -532,10 +531,10 @@ the model from 0.81 to 0.82.
 
 .. centered:: |nearest_centroid_1| |nearest_centroid_2|
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_neighbors_plot_nearest_centroid.py`: an example of
-    classification using nearest centroid with different shrink thresholds.
+* :ref:`sphx_glr_auto_examples_neighbors_plot_nearest_centroid.py`: an example of
+  classification using nearest centroid with different shrink thresholds.
 
 .. _neighbors_transformer:
 
@@ -620,17 +619,17 @@ implementation with special data types. The precomputed neighbors
   include one extra neighbor in a custom nearest neighbors estimator, since
   unnecessary neighbors will be filtered by following estimators.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_neighbors_approximate_nearest_neighbors.py`:
-    an example of pipelining :class:`KNeighborsTransformer` and
-    :class:`~sklearn.manifold.TSNE`. Also proposes two custom nearest neighbors
-    estimators based on external packages.
+* :ref:`sphx_glr_auto_examples_neighbors_approximate_nearest_neighbors.py`:
+  an example of pipelining :class:`KNeighborsTransformer` and
+  :class:`~sklearn.manifold.TSNE`. Also proposes two custom nearest neighbors
+  estimators based on external packages.
 
-  * :ref:`sphx_glr_auto_examples_neighbors_plot_caching_nearest_neighbors.py`:
-    an example of pipelining :class:`KNeighborsTransformer` and
-    :class:`KNeighborsClassifier` to enable caching of the neighbors graph
-    during a hyper-parameter grid-search.
+* :ref:`sphx_glr_auto_examples_neighbors_plot_caching_nearest_neighbors.py`:
+  an example of pipelining :class:`KNeighborsTransformer` and
+  :class:`KNeighborsClassifier` to enable caching of the neighbors graph
+  during a hyper-parameter grid-search.
 
 .. _nca:
 
@@ -754,11 +753,11 @@ by each method. Each data sample belongs to one of 10 classes.
 .. centered:: |nca_dim_reduction_1| |nca_dim_reduction_2| |nca_dim_reduction_3|
 
 
-.. topic:: Examples:
+.. rubric:: Examples
 
- * :ref:`sphx_glr_auto_examples_neighbors_plot_nca_classification.py`
- * :ref:`sphx_glr_auto_examples_neighbors_plot_nca_dim_reduction.py`
- * :ref:`sphx_glr_auto_examples_manifold_plot_lle_digits.py`
+* :ref:`sphx_glr_auto_examples_neighbors_plot_nca_classification.py`
+* :ref:`sphx_glr_auto_examples_neighbors_plot_nca_dim_reduction.py`
+* :ref:`sphx_glr_auto_examples_manifold_plot_lle_digits.py`
 
 .. _nca_mathematical_formulation:
 
@@ -791,18 +790,16 @@ space:
   p_{i j} = \frac{\exp(-||L x_i - L x_j||^2)}{\sum\limits_{k \ne
             i} {\exp{-(||L x_i - L x_k||^2)}}} , \quad p_{i i} = 0
 
+.. dropdown:: Mahalanobis distance
 
-Mahalanobis distance
-^^^^^^^^^^^^^^^^^^^^
+  NCA can be seen as learning a (squared) Mahalanobis distance metric:
 
-NCA can be seen as learning a (squared) Mahalanobis distance metric:
+  .. math::
 
-.. math::
+      || L(x_i - x_j)||^2 = (x_i - x_j)^TM(x_i - x_j),
 
-    || L(x_i - x_j)||^2 = (x_i - x_j)^TM(x_i - x_j),
-
-where :math:`M = L^T L` is a symmetric positive semi-definite matrix of size
-``(n_features, n_features)``.
+  where :math:`M = L^T L` is a symmetric positive semi-definite matrix of size
+  ``(n_features, n_features)``.
 
 
 Implementation
@@ -835,12 +832,12 @@ complexity equals ``n_components * n_features * n_samples_test``. There is no
 added space complexity in the operation.
 
 
-.. topic:: References:
+.. rubric:: References
 
-    .. [1] `"Neighbourhood Components Analysis"
-      <http://www.cs.nyu.edu/~roweis/papers/ncanips.pdf>`_,
-      J. Goldberger, S. Roweis, G. Hinton, R. Salakhutdinov, Advances in
-      Neural Information Processing Systems, Vol. 17, May 2005, pp. 513-520.
+.. [1] `"Neighbourhood Components Analysis"
+  <http://www.cs.nyu.edu/~roweis/papers/ncanips.pdf>`_,
+  J. Goldberger, S. Roweis, G. Hinton, R. Salakhutdinov, Advances in
+  Neural Information Processing Systems, Vol. 17, May 2005, pp. 513-520.
 
-    `Wikipedia entry on Neighborhood Components Analysis
-    <https://en.wikipedia.org/wiki/Neighbourhood_components_analysis>`_
+* `Wikipedia entry on Neighborhood Components Analysis
+  <https://en.wikipedia.org/wiki/Neighbourhood_components_analysis>`_

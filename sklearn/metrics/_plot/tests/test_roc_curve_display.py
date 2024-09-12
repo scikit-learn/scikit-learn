@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
+from scipy.integrate import trapezoid
 
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import load_breast_cancer, load_iris
@@ -293,7 +294,7 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
     roc_auc_limit = 0.95679
 
     assert display.roc_auc == pytest.approx(roc_auc_limit)
-    assert np.trapz(display.tpr, display.fpr) == pytest.approx(roc_auc_limit)
+    assert trapezoid(display.tpr, display.fpr) == pytest.approx(roc_auc_limit)
 
     if constructor_name == "from_estimator":
         display = RocCurveDisplay.from_estimator(
@@ -311,7 +312,7 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
         )
 
     assert display.roc_auc == pytest.approx(roc_auc_limit)
-    assert np.trapz(display.tpr, display.fpr) == pytest.approx(roc_auc_limit)
+    assert np.trapezoid(display.tpr, display.fpr) == pytest.approx(roc_auc_limit)
 
 
 @pytest.mark.parametrize("despine", [True, False])

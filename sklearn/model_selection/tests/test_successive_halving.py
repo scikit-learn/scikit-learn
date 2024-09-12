@@ -732,7 +732,7 @@ def test_groups_support(Est):
     X, y = make_classification(n_samples=50, n_classes=2, random_state=0)
     groups = rng.randint(0, 3, 50)
 
-    clf = LinearSVC(dual="auto", random_state=0)
+    clf = LinearSVC(random_state=0)
     grid = {"C": [1]}
 
     group_cvs = [
@@ -826,7 +826,15 @@ def test_halving_random_search_list_of_dicts():
     cv_results = search.cv_results_
     # Check results structure
     check_cv_results_keys(cv_results, param_keys, score_keys, n_candidates, extra_keys)
-    check_cv_results_array_types(search, param_keys, score_keys)
+    expected_cv_results_kinds = {
+        "param_C": "f",
+        "param_degree": "i",
+        "param_gamma": "f",
+        "param_kernel": "O",
+    }
+    check_cv_results_array_types(
+        search, param_keys, score_keys, expected_cv_results_kinds
+    )
 
     assert all(
         (
