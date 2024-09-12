@@ -90,7 +90,7 @@ class DecisionBoundaryDisplay:
         <https://matplotlib.org/stable/users/explain/colors/colors.html#colors-def>`_
         strings or name of :class:`matplotlib.colors.Colormap`.
         Single color colormaps will be generated from the colors in the list or
-        single colors taken from the colormap and passed to the `cmap` parameter of
+        colors taken from the colormap and passed to the `cmap` parameter of
         the `plot_method`.
         If None, 'viridis' colors will be used.
 
@@ -318,7 +318,7 @@ class DecisionBoundaryDisplay:
             .. versionadded:: 1.4
 
         multiclass_colors : list[str, Colormap] default=None
-            Specifies how to color each class whenplotting multiclass
+            Specifies how to color each class when plotting multiclass
             'predict_proba' or 'decision_function' and `class_of_interest` is
             None. Ignored in all other cases.
             Either list, of `estimator.classes_` length, of Matplotlib `color
