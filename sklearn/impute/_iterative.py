@@ -646,27 +646,28 @@ class IterativeImputer(_BaseImputer):
         else:
             X_filled = self.initial_imputer_.transform(X)
 
+        if in_fit:
+            self._is_empty_feature = np.all(mask_missing_values, axis=0)
+
         if not self.keep_empty_features:
-            valid_mask = np.flatnonzero(
-                np.logical_not(np.isnan(self.initial_imputer_.statistics_))
-            )
-
             # drop empty features
-            Xt = X[:, valid_mask]
-            mask_missing_values = mask_missing_values[:, valid_mask]
+            Xt = X[:, ~self._is_empty_feature]
+            mask_missing_values = mask_missing_values[:, ~self._is_empty_feature]
 
-            if in_fit:
-                is_empty_feature = np.all(mask_missing_values, axis=0)
-                mask_missing_values[:, is_empty_feature] = False
-                Xt[:, is_empty_feature] = X_filled[:, is_empty_feature]
+            if self.initial_imputer_.get_params()["strategy"] == "constant":
+                # The constant strategy has a specific behavior and preserve empty
+                # features even with ``keep_empty_features=False``. We need to drop
+                # the column for consistency.
+                # TODO: remove this `if` branch once the following issue is addressed:
+                # https://github.com/scikit-learn/scikit-learn/issues/29827
+                X_filled = X_filled[:, ~self._is_empty_feature]
 
         else:
             # mark empty features as not missing and keep the original
             # imputation
-            is_empty_feature = np.all(mask_missing_values, axis=0)
-            mask_missing_values[:, is_empty_feature] = False
+            mask_missing_values[:, self._is_empty_feature] = False
             Xt = X
-            Xt[:, is_empty_feature] = X_filled[:, is_empty_feature]
+            Xt[:, self._is_empty_feature] = X_filled[:, self._is_empty_feature]
 
         return Xt, X_filled, mask_missing_values, X_missing_mask
 
