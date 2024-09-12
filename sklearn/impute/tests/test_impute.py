@@ -1800,19 +1800,25 @@ def test_iterative_imputer_with_empty_features(strategy):
     `keep_empty_features`. Additionally, the empty features
     should become 0s when `keep_empty_features` is set to True.
     """
-    X = np.array(
+    X_train = np.array(
         [[np.nan, np.nan, 0, 1], [np.nan, 2, np.nan, 3], [np.nan, 4, 5, np.nan]]
     )
+    X_test = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])
 
     imputer_drop_empty_features = IterativeImputer(
         initial_strategy=strategy, fill_value=0, keep_empty_features=False
     )
-    X_imputed_drop_empty_features = imputer_drop_empty_features.fit_transform(X)
+    X_train_drop_empty_features = imputer_drop_empty_features.fit_transform(X_train)
+    X_test_drop_empty_features = imputer_drop_empty_features.transform(X_test)
 
     imputer_keep_empty_features = IterativeImputer(
         initial_strategy=strategy, fill_value=0, keep_empty_features=True
     )
-    X_imputed_keep_empty_features = imputer_keep_empty_features.fit_transform(X)
+    X_train_keep_empty_features = imputer_keep_empty_features.fit_transform(X_train)
+    X_test_keep_empty_features = imputer_keep_empty_features.transform(X_test)
 
-    assert_allclose(X_imputed_drop_empty_features, X_imputed_keep_empty_features[:, 1:])
-    assert_allclose(X_imputed_keep_empty_features[:, 0], 0)
+    assert_allclose(X_train_drop_empty_features, X_train_keep_empty_features[:, 1:])
+    assert_allclose(X_train_keep_empty_features[:, 0], 0)
+
+    assert X_train_drop_empty_features.shape[1] == X_test_drop_empty_features.shape[1]
+    assert X_train_keep_empty_features.shape[1] == X_test_keep_empty_features.shape[1]
