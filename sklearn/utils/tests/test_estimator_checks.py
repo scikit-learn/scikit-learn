@@ -1333,20 +1333,26 @@ def test_estimator_repr_error():
 
 
 def test_check_estimator_tags_renamed():
-    class BadEstimator:
+    class BadEstimator1:
         def _more_tags(self):
-            return None
+            return None  # pragma: no cover
+
+    class BadEstimator2:
+        def _get_tags(self):
+            return None  # pragma: no cover
 
     class OkayEstimator:
         def __sklearn_tags__(self):
-            return None
+            return None  # pragma: no cover
 
         def _more_tags(self):
-            return None
+            return None  # pragma: no cover
 
     msg = "was removed in 1.6. Please use __sklearn_tags__ instead."
     with raises(AssertionError, match=msg):
-        check_estimator_tags_renamed("BadEstimator", BadEstimator())
+        check_estimator_tags_renamed("BadEstimator1", BadEstimator1())
+    with raises(AssertionError, match=msg):
+        check_estimator_tags_renamed("BadEstimator2", BadEstimator2())
 
     # This shouldn't fail since we allow both __sklearn_tags__ and _more_tags
     # to exist so that third party estimators can easily support multiple sklearn
