@@ -241,7 +241,7 @@ Changelog
 
 - |Enhancement| :class:`inspection.DecisionBoundaryDisplay` now supports
   plotting all classes for multi-class problems when `response_method` is
-  'decision_function' or 'predict_proba'.
+  'decision_function', 'predict_proba' or 'auto'.
   :pr:`29797` by :user:`Lucy Liu <lucyleeow>`.
 
 :mod:`sklearn.linear_model`
