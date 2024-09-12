@@ -340,10 +340,8 @@ class WilcoxonSlicer(BaseScoreSlicer):
         if len(surviving_ranks) == 1:
             surviving_ranks = [best_score_idx]
             warnings.warn(
-                (
-                    "The average performance of all cross-validated models is "
-                    "significantly different from that of the best-performing model."
-                ),
+                "The average performance of all cross-validated models is "
+                "significantly different from that of the best-performing model.",
                 UserWarning,
             )
 
@@ -676,21 +674,21 @@ class ScoreCutModelSelector:
     >>> fitted = search.fit(X, y)
     >>> ss = ScoreCutModelSelector(fitted.cv_results_)
     >>> bounds = ss.fit(StandardErrorSlicer(sigma=1))
-    Min: 0.8852284795355508
-    Max: 0.9155607498052106
+    Min: 0.8852
+    Max: 0.9156
     >>> favorability_rules = {
-    ...     'reduce_dim__n_components': (True, 2.0), # Lower is simpler and
-    ...                                              # more favorable
-    ...     'classify__C': (False, 1.0) # Lower is more complex and
-    ...                                 # less favorable
+    ...     'reduce_dim__n_components': (True, 2.0),  # Lower is simpler and
+    ...                                               # more favorable
+    ...     'classify__C': (False, 1.0)  # Lower is more complex and
+    ...                                  # less favorable
     ... }
     >>> favorable_index = ss.transform(FavorabilityRanker(favorability_rules))
     Original best index: 4
     Original best params: {'reduce_dim__n_components': 14}
-    Original best score: 0.9003946146703807
+    Original best score: 0.9004
     Promoted best index: 3
     Promoted best params: {'reduce_dim__n_components': 12}
-    Promoted best score: 0.8926121943670691
+    Promoted best score: 0.8926
     >>> favorable_index
     3
     """
@@ -1062,7 +1060,7 @@ class ScoreCutModelSelector:
         }
 
         self.min_cut_, self.max_cut_ = score_slice_fn(**fit_params)
-        print(f"Min: {self.min_cut_}\nMax: {self.max_cut_}")
+        print(f"Min: {self.min_cut_:.4f}\nMax: {self.max_cut_:.4f}")
 
         cv_results_constrained = self.cv_results_.copy()
         (
@@ -1120,10 +1118,11 @@ class ScoreCutModelSelector:
             f"Original best index: {self._best_score_idx}\nOriginal best "
             f"params: {self.cv_results_['params'][self._best_score_idx]}\nOriginal "
             "best score: "
-            f"{self.cv_results_['mean_test_score'][self._best_score_idx]}\nPromoted "
-            f"best index: {self.favorable_best_index_}\nPromoted best params: "
-            f"{self.favorable_best_params_}\nPromoted best "
-            f"score: {self.favorable_best_score_}"
+            f"{self.cv_results_['mean_test_score'][self._best_score_idx]:.4f}"
+            "\nPromoted best index: "
+            f"{self.favorable_best_index_}\nPromoted best params: "
+            f"{self.favorable_best_params_}\nPromoted best score: "
+            f"{self.favorable_best_score_:.4f}"
         )
 
         return self.favorable_best_index_
@@ -1222,14 +1221,14 @@ def promote(score_slice_fn: Callable, favorability_rank_fn: Callable) -> Callabl
     ...     favorability_rank_fn=FavorabilityRanker(favorability_rules)),
     ... )
     >>> fitted = search.fit(X, y)
-    Min: 0.9027370688017495
-    Max: 0.9303362831016859
+    Min: 0.9027
+    Max: 0.9303
     Original best index: 27
     Original best params: {'classify__C': 1, 'reduce_dim__n_components': 18}
-    Original best score: 0.9165366759517177
+    Original best score: 0.9165
     Promoted best index: 33
     Promoted best params: {'classify__C': 10, 'reduce_dim__n_components': 16}
-    Promoted best score: 0.9065212008666048
+    Promoted best score: 0.9065
     >>> fitted.best_params_
     {'classify__C': 10, 'reduce_dim__n_components': 16}
     """
