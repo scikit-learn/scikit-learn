@@ -312,7 +312,7 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
         )
 
     assert display.roc_auc == pytest.approx(roc_auc_limit)
-    assert np.trapezoid(display.tpr, display.fpr) == pytest.approx(roc_auc_limit)
+    assert trapezoid(display.tpr, display.fpr) == pytest.approx(roc_auc_limit)
 
 
 @pytest.mark.parametrize("despine", [True, False])
