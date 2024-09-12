@@ -15,7 +15,7 @@ from ..base import BaseEstimator, ClusterMixin, _fit_context
 from ..metrics.pairwise import _VALID_METRICS
 from ..neighbors import NearestNeighbors
 from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.validation import _check_sample_weight
+from ..utils.validation import _check_sample_weight, validate_data
 from ._dbscan_inner import dbscan_inner
 
 
@@ -389,7 +389,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         self : object
             Returns a fitted instance of self.
         """
-        X = self._validate_data(X, accept_sparse="csr")
+        X = validate_data(self, X, accept_sparse="csr")
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)

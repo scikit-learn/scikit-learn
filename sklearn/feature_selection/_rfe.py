@@ -29,6 +29,7 @@ from ..utils.validation import (
     _check_method_params,
     _deprecate_positional_args,
     check_is_fitted,
+    validate_data,
 )
 from ._base import SelectorMixin, _get_feature_importances
 
@@ -299,7 +300,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         # step_score is not exposed to users and is used when implementing RFECV
         # self.step_scores_ will not be calculated when calling _fit through fit
 
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse="csc",
@@ -808,7 +810,7 @@ class RFECV(RFE):
             Parameters passed to the ``fit`` method of the estimator,
             the scorer, and the CV splitter.
 
-            ..versionadded:: 1.6
+            .. versionadded:: 1.6
                 Only available if `enable_metadata_routing=True`,
                 which can be set by using
                 ``sklearn.set_config(enable_metadata_routing=True)``.
@@ -821,7 +823,8 @@ class RFECV(RFE):
             Fitted estimator.
         """
         _raise_for_params(params, self, "fit")
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse="csr",
@@ -938,7 +941,7 @@ class RFECV(RFE):
         **score_params : dict
             Parameters to pass to the `score` method of the underlying scorer.
 
-            ..versionadded:: 1.6
+            .. versionadded:: 1.6
                 Only available if `enable_metadata_routing=True`,
                 which can be set by using
                 ``sklearn.set_config(enable_metadata_routing=True)``.

@@ -22,7 +22,7 @@ from ...utils import check_array
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils._param_validation import Hidden, Interval, StrOptions
 from ...utils.optimize import _check_optimize_result
-from ...utils.validation import _check_sample_weight, check_is_fitted
+from ...utils.validation import _check_sample_weight, check_is_fitted, validate_data
 from .._linear_loss import LinearModelLoss
 from ._newton_solver import NewtonCholeskySolver, NewtonSolver
 
@@ -187,7 +187,8 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         self : object
             Fitted model.
         """
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse=["csc", "csr"],
@@ -335,7 +336,8 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             Returns predicted values of linear predictor.
         """
         check_is_fitted(self)
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=["csr", "csc", "coo"],
             dtype=[np.float64, np.float32],

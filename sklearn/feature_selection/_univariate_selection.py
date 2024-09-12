@@ -16,7 +16,7 @@ from ..preprocessing import LabelBinarizer
 from ..utils import as_float_array, check_array, check_X_y, safe_mask, safe_sqr
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import row_norms, safe_sparse_dot
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, validate_data
 from ._base import SelectorMixin
 
 
@@ -556,10 +556,10 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
             Returns the instance itself.
         """
         if y is None:
-            X = self._validate_data(X, accept_sparse=["csr", "csc"])
+            X = validate_data(self, X, accept_sparse=["csr", "csc"])
         else:
-            X, y = self._validate_data(
-                X, y, accept_sparse=["csr", "csc"], multi_output=True
+            X, y = validate_data(
+                self, X, y, accept_sparse=["csr", "csc"], multi_output=True
             )
 
         self._check_params(X, y)

@@ -18,7 +18,7 @@ from ..utils.sparsefuncs import _implicit_column_offset, _implicit_vstack
 from ..utils.sparsefuncs import (
     incr_mean_variance_axis as _sparse_incremental_mean_and_var,
 )
-from ..utils.validation import check_random_state
+from ..utils.validation import check_random_state, validate_data
 from ._base import _BasePCA
 
 
@@ -262,7 +262,8 @@ class IncrementalPCA(_BasePCA):
         self.explained_variance_ratio_ = None
         self.noise_variance_ = None
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=["csr", "csc"],
             copy=self.copy,
@@ -310,7 +311,8 @@ class IncrementalPCA(_BasePCA):
         first_pass = not hasattr(self, "components_")
 
         if check_input:
-            X = self._validate_data(
+            X = validate_data(
+                self,
                 X,
                 accept_sparse=["csr", "csc"],
                 copy=self.copy,

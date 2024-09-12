@@ -24,14 +24,10 @@ from .utils._tags import default_tags
 from .utils.fixes import _IS_32BIT
 from .utils.validation import (
     _check_feature_names_in,
-    _check_y,
     _generate_get_feature_names_out,
-    _get_feature_names,
     _is_fitted,
-    _num_features,
     check_array,
     check_is_fitted,
-    check_X_y,
 )
 
 
@@ -386,262 +382,6 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
     def __sklearn_tags__(self):
         return default_tags(self)
 
-    def _check_n_features(self, X, reset):
-        """Set the `n_features_in_` attribute, or check against it.
-
-        Parameters
-        ----------
-        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
-            The input samples.
-        reset : bool
-            If True, the `n_features_in_` attribute is set to `X.shape[1]`.
-            If False and the attribute exists, then check that it is equal to
-            `X.shape[1]`. If False and the attribute does *not* exist, then
-            the check is skipped.
-            .. note::
-               It is recommended to call reset=True in `fit` and in the first
-               call to `partial_fit`. All other methods that validate `X`
-               should set `reset=False`.
-        """
-        try:
-            n_features = _num_features(X)
-        except TypeError as e:
-            if not reset and hasattr(self, "n_features_in_"):
-                raise ValueError(
-                    "X does not contain any features, but "
-                    f"{self.__class__.__name__} is expecting "
-                    f"{self.n_features_in_} features"
-                ) from e
-            # If the number of features is not defined and reset=True,
-            # then we skip this check
-            return
-
-        if reset:
-            self.n_features_in_ = n_features
-            return
-
-        if not hasattr(self, "n_features_in_"):
-            # Skip this check if the expected number of expected input features
-            # was not recorded by calling fit first. This is typically the case
-            # for stateless transformers.
-            return
-
-        if n_features != self.n_features_in_:
-            raise ValueError(
-                f"X has {n_features} features, but {self.__class__.__name__} "
-                f"is expecting {self.n_features_in_} features as input."
-            )
-
-    def _check_feature_names(self, X, *, reset):
-        """Set or check the `feature_names_in_` attribute.
-
-        .. versionadded:: 1.0
-
-        Parameters
-        ----------
-        X : {ndarray, dataframe} of shape (n_samples, n_features)
-            The input samples.
-
-        reset : bool
-            Whether to reset the `feature_names_in_` attribute.
-            If False, the input will be checked for consistency with
-            feature names of data provided when reset was last True.
-            .. note::
-               It is recommended to call `reset=True` in `fit` and in the first
-               call to `partial_fit`. All other methods that validate `X`
-               should set `reset=False`.
-        """
-
-        if reset:
-            feature_names_in = _get_feature_names(X)
-            if feature_names_in is not None:
-                self.feature_names_in_ = feature_names_in
-            elif hasattr(self, "feature_names_in_"):
-                # Delete the attribute when the estimator is fitted on a new dataset
-                # that has no feature names.
-                delattr(self, "feature_names_in_")
-            return
-
-        fitted_feature_names = getattr(self, "feature_names_in_", None)
-        X_feature_names = _get_feature_names(X)
-
-        if fitted_feature_names is None and X_feature_names is None:
-            # no feature names seen in fit and in X
-            return
-
-        if X_feature_names is not None and fitted_feature_names is None:
-            warnings.warn(
-                f"X has feature names, but {self.__class__.__name__} was fitted without"
-                " feature names"
-            )
-            return
-
-        if X_feature_names is None and fitted_feature_names is not None:
-            warnings.warn(
-                "X does not have valid feature names, but"
-                f" {self.__class__.__name__} was fitted with feature names"
-            )
-            return
-
-        # validate the feature names against the `feature_names_in_` attribute
-        if len(fitted_feature_names) != len(X_feature_names) or np.any(
-            fitted_feature_names != X_feature_names
-        ):
-            message = (
-                "The feature names should match those that were passed during fit.\n"
-            )
-            fitted_feature_names_set = set(fitted_feature_names)
-            X_feature_names_set = set(X_feature_names)
-
-            unexpected_names = sorted(X_feature_names_set - fitted_feature_names_set)
-            missing_names = sorted(fitted_feature_names_set - X_feature_names_set)
-
-            def add_names(names):
-                output = ""
-                max_n_names = 5
-                for i, name in enumerate(names):
-                    if i >= max_n_names:
-                        output += "- ...\n"
-                        break
-                    output += f"- {name}\n"
-                return output
-
-            if unexpected_names:
-                message += "Feature names unseen at fit time:\n"
-                message += add_names(unexpected_names)
-
-            if missing_names:
-                message += "Feature names seen at fit time, yet now missing:\n"
-                message += add_names(missing_names)
-
-            if not missing_names and not unexpected_names:
-                message += (
-                    "Feature names must be in the same order as they were in fit.\n"
-                )
-
-            raise ValueError(message)
-
-    def _validate_data(
-        self,
-        X="no_validation",
-        y="no_validation",
-        reset=True,
-        validate_separately=False,
-        cast_to_ndarray=True,
-        **check_params,
-    ):
-        """Validate input data and set or check the `n_features_in_` attribute.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix, dataframe} of shape \
-                (n_samples, n_features), default='no validation'
-            The input samples.
-            If `'no_validation'`, no validation is performed on `X`. This is
-            useful for meta-estimator which can delegate input validation to
-            their underlying estimator(s). In that case `y` must be passed and
-            the only accepted `check_params` are `multi_output` and
-            `y_numeric`.
-
-        y : array-like of shape (n_samples,), default='no_validation'
-            The targets.
-
-            - If `None`, `check_array` is called on `X`. If the estimator's
-              requires_y tag is True, then an error will be raised.
-            - If `'no_validation'`, `check_array` is called on `X` and the
-              estimator's requires_y tag is ignored. This is a default
-              placeholder and is never meant to be explicitly set. In that case
-              `X` must be passed.
-            - Otherwise, only `y` with `_check_y` or both `X` and `y` are
-              checked with either `check_array` or `check_X_y` depending on
-              `validate_separately`.
-
-        reset : bool, default=True
-            Whether to reset the `n_features_in_` attribute.
-            If False, the input will be checked for consistency with data
-            provided when reset was last True.
-            .. note::
-               It is recommended to call reset=True in `fit` and in the first
-               call to `partial_fit`. All other methods that validate `X`
-               should set `reset=False`.
-
-        validate_separately : False or tuple of dicts, default=False
-            Only used if y is not None.
-            If False, call validate_X_y(). Else, it must be a tuple of kwargs
-            to be used for calling check_array() on X and y respectively.
-
-            `estimator=self` is automatically added to these dicts to generate
-            more informative error message in case of invalid input data.
-
-        cast_to_ndarray : bool, default=True
-            Cast `X` and `y` to ndarray with checks in `check_params`. If
-            `False`, `X` and `y` are unchanged and only `feature_names_in_` and
-            `n_features_in_` are checked.
-
-        **check_params : kwargs
-            Parameters passed to :func:`sklearn.utils.check_array` or
-            :func:`sklearn.utils.check_X_y`. Ignored if validate_separately
-            is not False.
-
-            `estimator=self` is automatically added to these params to generate
-            more informative error message in case of invalid input data.
-
-        Returns
-        -------
-        out : {ndarray, sparse matrix} or tuple of these
-            The validated input. A tuple is returned if both `X` and `y` are
-            validated.
-        """
-        self._check_feature_names(X, reset=reset)
-
-        if y is None and self.__sklearn_tags__().target_tags.required:
-            raise ValueError(
-                f"This {self.__class__.__name__} estimator "
-                "requires y to be passed, but the target y is None."
-            )
-
-        no_val_X = isinstance(X, str) and X == "no_validation"
-        no_val_y = y is None or isinstance(y, str) and y == "no_validation"
-
-        if no_val_X and no_val_y:
-            raise ValueError("Validation should be done on X, y or both.")
-
-        default_check_params = {"estimator": self}
-        check_params = {**default_check_params, **check_params}
-
-        if not cast_to_ndarray:
-            if not no_val_X and no_val_y:
-                out = X
-            elif no_val_X and not no_val_y:
-                out = y
-            else:
-                out = X, y
-        elif not no_val_X and no_val_y:
-            out = check_array(X, input_name="X", **check_params)
-        elif no_val_X and not no_val_y:
-            out = _check_y(y, **check_params)
-        else:
-            if validate_separately:
-                # We need this because some estimators validate X and y
-                # separately, and in general, separately calling check_array()
-                # on X and y isn't equivalent to just calling check_X_y()
-                # :(
-                check_X_params, check_y_params = validate_separately
-                if "estimator" not in check_X_params:
-                    check_X_params = {**default_check_params, **check_X_params}
-                X = check_array(X, input_name="X", **check_X_params)
-                if "estimator" not in check_y_params:
-                    check_y_params = {**default_check_params, **check_y_params}
-                y = check_array(y, input_name="y", **check_y_params)
-            else:
-                X, y = check_X_y(X, y, **check_params)
-            out = X, y
-
-        if not no_val_X and check_params.get("ensure_2d", True):
-            self._check_n_features(X, reset=reset)
-
-        return out
-
     def _validate_params(self):
         """Validate types and values of constructor parameters
 
@@ -984,7 +724,6 @@ class BiclusterMixin:
         Works with sparse matrices. Only works if ``rows_`` and
         ``columns_`` attributes exist.
         """
-        from .utils.validation import check_array
 
         data = check_array(data, accept_sparse="csr")
         row_ind, col_ind = self.get_indices(i)
@@ -1298,9 +1037,12 @@ class OutlierMixin:
 class MetaEstimatorMixin:
     """Mixin class for all meta estimators in scikit-learn.
 
-    This mixin defines the following functionality:
+    This mixin is empty, and only exists to indicate that the estimator is a
+    meta-estimator.
 
-    - define `_required_parameters` that specify the mandatory `estimator` parameter.
+    .. versionchanged:: 1.6
+        The `_required_parameters` is now removed and is unnecessary since tests are
+        refactored and don't use this anymore.
 
     Examples
     --------
@@ -1321,8 +1063,6 @@ class MetaEstimatorMixin:
     >>> estimator.estimator_
     LogisticRegression()
     """
-
-    _required_parameters = ["estimator"]
 
 
 class MultiOutputMixin:

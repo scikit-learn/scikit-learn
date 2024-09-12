@@ -17,6 +17,7 @@ from ..utils.validation import (
     _check_sample_weight,
     check_array,
     check_is_fitted,
+    validate_data,
 )
 from ._encoders import OneHotEncoder
 
@@ -221,7 +222,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(X, dtype="numeric")
+        X = validate_data(self, X, dtype="numeric")
 
         if self.dtype in (np.float64, np.float32):
             output_dtype = self.dtype
@@ -368,7 +369,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         # check input and attribute dtypes
         dtype = (np.float64, np.float32) if self.dtype is None else self.dtype
-        Xt = self._validate_data(X, copy=True, dtype=dtype, reset=False)
+        Xt = validate_data(self, X, copy=True, dtype=dtype, reset=False)
 
         bin_edges = self.bin_edges_
         for jj in range(Xt.shape[1]):

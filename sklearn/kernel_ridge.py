@@ -11,7 +11,7 @@ from .base import BaseEstimator, MultiOutputMixin, RegressorMixin, _fit_context
 from .linear_model._ridge import _solve_cholesky_kernel
 from .metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS, pairwise_kernels
 from .utils._param_validation import Interval, StrOptions
-from .utils.validation import _check_sample_weight, check_is_fitted
+from .utils.validation import _check_sample_weight, check_is_fitted, validate_data
 
 
 class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
@@ -194,8 +194,8 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
             Returns the instance itself.
         """
         # Convert data
-        X, y = self._validate_data(
-            X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
+        X, y = validate_data(
+            self, X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
         )
         if sample_weight is not None and not isinstance(sample_weight, float):
             sample_weight = _check_sample_weight(sample_weight, X)
@@ -234,6 +234,6 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
             Returns predicted values.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse=("csr", "csc"), reset=False)
+        X = validate_data(self, X, accept_sparse=("csr", "csc"), reset=False)
         K = self._get_kernel(X, self.X_fit_)
         return np.dot(K, self.dual_coef_)
