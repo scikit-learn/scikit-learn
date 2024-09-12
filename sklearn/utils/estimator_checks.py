@@ -3975,12 +3975,18 @@ def check_estimator_get_tags_default_keys(name, estimator_orig):
 
 
 def check_estimator_tags_renamed(name, estimator_orig):
-    assert not hasattr(estimator_orig, "_more_tags"), (
-        "_more_tags() was removed in 1.6. " "Please use __sklearn_tags__ instead.",
-    )
-    assert not hasattr(estimator_orig, "_get_tags"), (
-        "_get_tags() was removed in 1.6. " "Please use __sklearn_tags__ instead."
-    )
+    help = """{tags_func}() was removed in 1.6. Please use __sklearn_tags__ instead.
+You can implement both __sklearn_tags__() and {tags_func}() to support multiple
+scikit-learn versions.
+"""
+
+    if not hasattr(estimator_orig, "__sklearn_tags__"):
+        assert not hasattr(estimator_orig, "_more_tags"), help.format(
+            tags_func="_more_tags"
+        )
+        assert not hasattr(estimator_orig, "_get_tags"), help.format(
+            tags_func="_get_tags"
+        )
 
 
 def check_dataframe_column_names_consistency(name, estimator_orig):
