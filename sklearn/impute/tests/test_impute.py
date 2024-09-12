@@ -1513,24 +1513,6 @@ def test_most_frequent(expected, array, dtype, extra_value, n_repeat):
     )
 
 
-@pytest.mark.parametrize(
-    "initial_strategy", ["mean", "median", "most_frequent", "constant"]
-)
-def test_iterative_imputer_keep_empty_features(initial_strategy):
-    """Check the behaviour of the iterative imputer with different initial strategy
-    and keeping empty features (i.e. features containing only missing values).
-    """
-    X = np.array([[1, np.nan, 2], [3, np.nan, np.nan]])
-
-    imputer = IterativeImputer(
-        initial_strategy=initial_strategy, keep_empty_features=True
-    )
-    X_imputed = imputer.fit_transform(X)
-    assert_allclose(X_imputed[:, 1], 0)
-    X_imputed = imputer.transform(X)
-    assert_allclose(X_imputed[:, 1], 0)
-
-
 def test_iterative_imputer_constant_fill_value():
     """Check that we propagate properly the parameter `fill_value`."""
     X = np.array([[-1, 2, 3, -1], [4, -1, 5, -1], [6, 7, -1, -1], [8, 9, 0, -1]])
@@ -1825,12 +1807,12 @@ def test_iterative_imputer_with_empty_features(strategy):
     imputer_drop_empty_features = IterativeImputer(
         initial_strategy=strategy, fill_value=0, keep_empty_features=False
     )
+    X_imputed_drop_empty_features = imputer_drop_empty_features.fit_transform(X)
 
     imputer_keep_empty_features = IterativeImputer(
         initial_strategy=strategy, fill_value=0, keep_empty_features=True
     )
+    X_imputed_keep_empty_features = imputer_keep_empty_features.fit_transform(X)
 
-    assert_allclose(
-        imputer_drop_empty_features.fit_transform(X),
-        imputer_keep_empty_features.fit_transform(X)[:, 1:],
-    )
+    assert_allclose(X_imputed_drop_empty_features, X_imputed_keep_empty_features[:, 1:])
+    assert_allclose(X_imputed_keep_empty_features[:, 0], 0)
