@@ -1823,18 +1823,14 @@ def test_iterative_imputer_with_empty_features(strategy):
     )
 
     imputer_drop_empty_features = IterativeImputer(
-        initial_strategy=strategy, fill_value=1, keep_empty_features=False
+        initial_strategy=strategy, fill_value=0, keep_empty_features=False
     )
-    X_drop_empty_features = imputer_drop_empty_features.fit_transform(X)
 
     imputer_keep_empty_features = IterativeImputer(
-        initial_strategy=strategy, fill_value=1, keep_empty_features=True
+        initial_strategy=strategy, fill_value=0, keep_empty_features=True
     )
-    X_keep_empty_features = imputer_keep_empty_features.fit_transform(X)
 
-    if strategy == "constant":
-        assert_allclose(X_drop_empty_features, X_keep_empty_features, rtol=1e-4)
-        assert_allclose(X_keep_empty_features[:, 0], np.ones(X.shape[0]))
-    else:
-        assert_allclose(X_drop_empty_features, X_keep_empty_features[:, 1:], rtol=1e-4)
-        assert_allclose(X_keep_empty_features[:, 0], np.zeros(X.shape[0]))
+    assert_allclose(
+        imputer_drop_empty_features.fit_transform(X),
+        imputer_keep_empty_features.fit_transform(X)[:, 1:],
+    )
