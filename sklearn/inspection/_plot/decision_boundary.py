@@ -235,7 +235,6 @@ class DecisionBoundaryDisplay:
                     self.response[:, :, class_idx],
                     mask=~(self.response.argmax(axis=2) == class_idx),
                 )
-                print(f"class_idx {class_idx}\n{response}")
                 self.surface_.append(
                     plot_func(self.xx0, self.xx1, response, cmap=cmap, **kwargs)
                 )
