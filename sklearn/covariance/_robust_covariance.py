@@ -19,6 +19,7 @@ from ..base import _fit_context
 from ..utils import check_array, check_random_state
 from ..utils._param_validation import Interval
 from ..utils.extmath import fast_logdet
+from ..utils.validation import validate_data
 from ._empirical_covariance import EmpiricalCovariance, empirical_covariance
 
 
@@ -739,7 +740,7 @@ class MinCovDet(EmpiricalCovariance):
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(X, ensure_min_samples=2, estimator="MinCovDet")
+        X = validate_data(self, X, ensure_min_samples=2, estimator="MinCovDet")
         random_state = check_random_state(self.random_state)
         n_samples, n_features = X.shape
         # check that the empirical covariance is full rank

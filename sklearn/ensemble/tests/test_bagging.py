@@ -941,7 +941,7 @@ def test_bagging_get_estimators_indices():
 )
 def test_bagging_allow_nan_tag(bagging, expected_allow_nan):
     """Check that bagging inherits allow_nan tag."""
-    assert bagging._get_tags()["allow_nan"] == expected_allow_nan
+    assert bagging.__sklearn_tags__().input_tags.allow_nan == expected_allow_nan
 
 
 @pytest.mark.parametrize(

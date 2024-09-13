@@ -1,5 +1,4 @@
 import os
-import re
 from functools import partial
 
 import numpy
@@ -31,6 +30,7 @@ from sklearn.utils._array_api import (
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
+    SkipTest,
     _array_api_for_tests,
     assert_array_equal,
     skip_if_array_api_compat_not_configured,
@@ -96,11 +96,11 @@ def test_get_namespace_array_api(monkeypatch):
 
         monkeypatch.setattr("os.environ.get", mock_getenv)
         assert os.environ.get("SCIPY_ARRAY_API") != "1"
-        with pytest.warns(
-            UserWarning,
-            match="enabling SciPy's own support for array API to function properly. ",
+        with pytest.raises(
+            RuntimeError,
+            match="scipy's own support is not enabled.",
         ):
-            xp_out, is_array_api_compliant = get_namespace(X_xp)
+            get_namespace(X_xp)
 
 
 @pytest.mark.parametrize("array_api", ["numpy", "array_api_strict"])
@@ -238,20 +238,10 @@ def test_average_raises_with_invalid_parameters(
         _average(array_in, axis=axis, weights=weights)
 
 
-def test_device_raises_if_no_input():
-    err_msg = re.escape(
-        "At least one input array expected after filtering with remove_none=True, "
-        "remove_types=[str]. Got none. Original types: []."
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        device()
+def test_device_none_if_no_input():
+    assert device() is None
 
-    err_msg = re.escape(
-        "At least one input array expected after filtering with remove_none=True, "
-        "remove_types=[str]. Got none. Original types: [NoneType, str]."
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        device(None, "name")
+    assert device(None, "name") is None
 
 
 def test_device_inspection():
@@ -540,13 +530,13 @@ def test_get_namespace_and_device():
     some_numpy_array = numpy.arange(3)
 
     # When dispatch is disabled, get_namespace_and_device should return the
-    # default NumPy wrapper namespace and no device. Our code will handle such
+    # default NumPy wrapper namespace and "cpu" device. Our code will handle such
     # inputs via the usual __array__ interface without attempting to dispatch
     # via the array API.
     namespace, is_array_api, device = get_namespace_and_device(some_torch_tensor)
     assert namespace is get_namespace(some_numpy_array)[0]
     assert not is_array_api
-    assert device is None
+    assert device.type == "cpu"
 
     # Otherwise, expose the torch namespace and device via array API compat
     # wrapper.
@@ -566,7 +556,6 @@ def test_get_namespace_and_device():
 def test_count_nonzero(
     array_namespace, device_, dtype_name, csr_container, axis, sample_weight_type
 ):
-
     from sklearn.utils.sparsefuncs import count_nonzero as sparse_count_nonzero
 
     xp = _array_api_for_tests(array_namespace, device_)
@@ -606,3 +595,17 @@ def test_fill_or_add_to_diagonal(array_namespace, device_, dtype_name, wrap):
     _fill_or_add_to_diagonal(array_xp, value=1, xp=xp, add_value=False, wrap=wrap)
     numpy.fill_diagonal(array_np, val=1, wrap=wrap)
     assert_array_equal(_convert_to_numpy(array_xp, xp=xp), array_np)
+
+
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+@pytest.mark.parametrize("dispatch", [True, False])
+def test_sparse_device(csr_container, dispatch):
+    a, b = csr_container(numpy.array([[1]])), csr_container(numpy.array([[2]]))
+    try:
+        with config_context(array_api_dispatch=dispatch):
+            assert device(a, b) is None
+            assert device(a, numpy.array([1])) == "cpu"
+            assert get_namespace_and_device(a, b)[2] is None
+            assert get_namespace_and_device(a, numpy.array([1]))[2] == "cpu"
+    except ImportError:
+        raise SkipTest("array_api_compat is not installed")

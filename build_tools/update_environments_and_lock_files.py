@@ -389,7 +389,7 @@ build_metadata_list = [
         },
     },
     {
-        "name": "debian_atlas_32bit",
+        "name": "debian_32bit",
         "type": "pip",
         "tag": "main-ci",
         "folder": "build_tools/azure",
@@ -402,16 +402,9 @@ build_metadata_list = [
             "ninja",
             "meson-python",
         ],
-        "package_constraints": {
-            "joblib": "min",
-            "threadpoolctl": "3.1.0",
-            "pytest": "min",
-            "pytest-cov": "min",
-            # no pytest-xdist because it causes issue on 32bit
-            "cython": "min",
-        },
-        # same Python version as in debian-32 build
-        "python_version": "3.11.2",
+        # Python version from the python3 APT package in the debian-32 docker
+        # image.
+        "python_version": "3.12.5",
     },
     {
         "name": "ubuntu_atlas",

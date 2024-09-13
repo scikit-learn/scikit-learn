@@ -44,7 +44,7 @@ from .utils import check_random_state
 from .utils._param_validation import Interval, StrOptions, validate_params
 from .utils.extmath import safe_sparse_dot
 from .utils.random import sample_without_replacement
-from .utils.validation import check_array, check_is_fitted
+from .utils.validation import check_array, check_is_fitted, validate_data
 
 __all__ = [
     "SparseRandomProjection",
@@ -378,8 +378,8 @@ class BaseRandomProjection(
         self : object
             BaseRandomProjection class instance.
         """
-        X = self._validate_data(
-            X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
+        X = validate_data(
+            self, X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
         )
 
         n_samples, n_features = X.shape
@@ -456,10 +456,10 @@ class BaseRandomProjection(
         inverse_components = self._compute_inverse_components()
         return X @ inverse_components.T
 
-    def _more_tags(self):
-        return {
-            "preserves_dtype": [np.float64, np.float32],
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
 
 
 class GaussianRandomProjection(BaseRandomProjection):
@@ -596,8 +596,12 @@ class GaussianRandomProjection(BaseRandomProjection):
             Projected array.
         """
         check_is_fitted(self)
-        X = self._validate_data(
-            X, accept_sparse=["csr", "csc"], reset=False, dtype=[np.float64, np.float32]
+        X = validate_data(
+            self,
+            X,
+            accept_sparse=["csr", "csc"],
+            reset=False,
+            dtype=[np.float64, np.float32],
         )
 
         return X @ self.components_.T
@@ -802,8 +806,12 @@ class SparseRandomProjection(BaseRandomProjection):
             `dense_output = False`.
         """
         check_is_fitted(self)
-        X = self._validate_data(
-            X, accept_sparse=["csr", "csc"], reset=False, dtype=[np.float64, np.float32]
+        X = validate_data(
+            self,
+            X,
+            accept_sparse=["csr", "csc"],
+            reset=False,
+            dtype=[np.float64, np.float32],
         )
 
         return safe_sparse_dot(X, self.components_.T, dense_output=self.dense_output)
