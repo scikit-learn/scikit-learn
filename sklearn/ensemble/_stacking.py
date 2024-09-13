@@ -558,7 +558,8 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         .. versionadded:: 1.0
 
     final_estimator_ : estimator
-        The final classifier, fitted on the output of `estimators_`.
+        The classifier fit on the output of `estimators_` and responsible for
+        final predictions.
 
     stack_method_ : list of str
         The method used by each base estimator.
@@ -956,7 +957,8 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         .. versionadded:: 1.0
 
     final_estimator_ : estimator
-        The final regressor, fitted on the output of `estimators_`.
+        The regressor fit on the output of `estimators_` and responsible for
+        final predictions.
 
     stack_method_ : list of str
         The method used by each base estimator.
