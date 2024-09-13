@@ -79,6 +79,8 @@ See :ref:`array_api` for more details.
   :class:`model_selection.HalvingRandomSearchCV` now support Array API
   compatible inputs when their base estimators do. :pr:`27096` by :user:`Tim
   Head <betatim>` and :user:`Olivier Grisel <ogrisel>`.
+- :class:`preprocessing.MinMaxScaler` with `clip=True` :pr:`29751` by
+  :user:`Shreekant Nandiyawar <Shree7676>`
 
 **Other**
 
