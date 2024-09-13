@@ -23,7 +23,7 @@ from sklearn.experimental import (
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils import all_estimators
-from sklearn.utils._test_common.instance_generator import _construct_instance
+from sklearn.utils._test_common.instance_generator import _construct_instances
 from sklearn.utils._testing import (
     _get_func_name,
     assert_docstring_consistency,
@@ -202,7 +202,9 @@ def test_fit_docstring_attributes(name, Estimator):
     elif Estimator.__name__ == "SparseCoder":
         est = _construct_sparse_coder(Estimator)
     else:
-        est = _construct_instance(Estimator)
+        # TODO(devtools): use _tested_estimators instead of all_estimators in the
+        # decorator
+        est = next(_construct_instances(Estimator))
 
     if Estimator.__name__ == "SelectKBest":
         est.set_params(k=2)
