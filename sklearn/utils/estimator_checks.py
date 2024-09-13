@@ -58,9 +58,8 @@ from ._param_validation import Interval
 from ._tags import Tags, get_tags
 from ._test_common.instance_generator import (
     CROSS_DECOMPOSITION,
-    INIT_PARAMS,
-    _construct_instance,
     _get_check_estimator_ids,
+    _yield_instances_for_check,
 )
 from ._testing import (
     SkipTest,
@@ -83,11 +82,11 @@ REGRESSION_DATASET = None
 
 
 def _yield_api_checks(estimator):
-    yield check_estimator_cloneable
     yield check_estimator_repr
     yield check_no_attributes_set_in_init
     yield check_fit_score_takes_y
     yield check_estimators_overwrite_params
+    yield check_do_not_raise_errors_in_init_or_set_params
 
 
 def _yield_checks(estimator):
@@ -144,6 +143,8 @@ def _yield_checks(estimator):
     if tags.array_api_support:
         for check in _yield_array_api_checks(estimator):
             yield check
+
+    yield check_f_contiguous_array_estimator
 
 
 def _yield_classifier_checks(classifier):
@@ -508,10 +509,14 @@ def parametrize_with_checks(estimators, *, legacy=True):
 
     def checks_generator():
         for estimator in estimators:
+            # First check that the estimator is cloneable which is needed for the rest
+            # of the checks to run
             name = type(estimator).__name__
+            yield estimator, partial(check_estimator_cloneable, name)
             for check in _yield_all_checks(estimator, legacy=legacy):
-                check = partial(check, name)
-                yield _maybe_mark_xfail(estimator, check, pytest)
+                check_with_name = partial(check, name)
+                for check_instance in _yield_instances_for_check(check, estimator):
+                    yield _maybe_mark_xfail(check_instance, check_with_name, pytest)
 
     return pytest.mark.parametrize(
         "estimator, check", checks_generator(), ids=_get_check_estimator_ids
@@ -596,9 +601,13 @@ def check_estimator(estimator=None, generate_only=False, *, legacy=True):
     name = type(estimator).__name__
 
     def checks_generator():
+        # we first need to check if the estimator is cloneable for the rest of the tests
+        # to run
+        yield estimator, partial(check_estimator_cloneable, name)
         for check in _yield_all_checks(estimator, legacy=legacy):
             check = _maybe_skip(estimator, check)
-            yield estimator, partial(check, name)
+            for check_instance in _yield_instances_for_check(check, estimator):
+                yield check_instance, partial(check, name)
 
     if generate_only:
         return checks_generator()
@@ -923,6 +932,28 @@ def check_estimator_sparse_array(name, estimator_orig):
         _check_estimator_sparse_container(name, estimator_orig, sparse.csr_array)
 
 
+def check_f_contiguous_array_estimator(name, estimator_orig):
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/23988
+    # https://github.com/scikit-learn/scikit-learn/issues/24013
+    estimator = clone(estimator_orig)
+
+    rng = np.random.RandomState(0)
+    X = 3 * rng.uniform(size=(20, 3))
+    X = _enforce_estimator_tags_X(estimator_orig, X)
+    X = np.asfortranarray(X)
+    y = X[:, 0].astype(int)
+    y = _enforce_estimator_tags_y(estimator_orig, y)
+
+    estimator.fit(X, y)
+
+    if hasattr(estimator, "transform"):
+        estimator.transform(X)
+
+    if hasattr(estimator, "predict"):
+        estimator.predict(X)
+
+
 @ignore_warnings(category=FutureWarning)
 def check_sample_weights_pandas_series(name, estimator_orig):
     # check that estimators will accept a 'sample_weight' parameter of
@@ -1234,32 +1265,13 @@ def check_complex_data(name, estimator_orig):
 
 @ignore_warnings
 def check_dict_unchanged(name, estimator_orig):
-    # this estimator raises
-    # ValueError: Found array with 0 feature(s) (shape=(23, 0))
-    # while a minimum of 1 is required.
-    # error
-    if name in ["SpectralCoclustering"]:
-        return
     rnd = np.random.RandomState(0)
-    if name in ["RANSACRegressor"]:
-        X = 3 * rnd.uniform(size=(20, 3))
-    else:
-        X = 2 * rnd.uniform(size=(20, 3))
-
+    X = 3 * rnd.uniform(size=(20, 3))
     X = _enforce_estimator_tags_X(estimator_orig, X)
 
     y = X[:, 0].astype(int)
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
-    if hasattr(estimator, "n_components"):
-        estimator.n_components = 1
-
-    if hasattr(estimator, "n_clusters"):
-        estimator.n_clusters = 1
-
-    if hasattr(estimator, "n_best"):
-        estimator.n_best = 1
-
     set_random_state(estimator, 1)
 
     estimator.fit(X, y)
@@ -3301,10 +3313,11 @@ def check_parameters_default_constructible(name, estimator_orig):
     # get rid of deprecation warnings
 
     Estimator = estimator_orig.__class__
+    estimator = clone(estimator_orig)
 
     with ignore_warnings(category=FutureWarning):
-        estimator = _construct_instance(Estimator)
         # test that set_params returns self
+        # TODO(devtools): this should be a separate check.
         assert estimator.set_params() is estimator
 
         # test if init does nothing but set parameters
@@ -3317,7 +3330,7 @@ def check_parameters_default_constructible(name, estimator_orig):
 
         try:
 
-            def param_filter(p):
+            def param_default_value(p):
                 """Identify hyper parameters of an estimator."""
                 return (
                     p.name != "self"
@@ -3327,30 +3340,48 @@ def check_parameters_default_constructible(name, estimator_orig):
                     and p.default != p.empty
                 )
 
-            init_params = [
-                p for p in signature(init).parameters.values() if param_filter(p)
+            def param_required(p):
+                """Identify hyper parameters of an estimator."""
+                return (
+                    p.name != "self"
+                    and p.kind != p.VAR_KEYWORD
+                    # technically VAR_POSITIONAL is also required, but we don't have a
+                    # nice way to check for it. We assume there's no VAR_POSITIONAL in
+                    # the constructor parameters.
+                    #
+                    # TODO(devtools): separately check that the constructor doesn't
+                    # have *args.
+                    and p.kind != p.VAR_POSITIONAL
+                    # these are parameters that don't have a default value and are
+                    # required to construct the estimator.
+                    and p.default == p.empty
+                )
+
+            required_params_names = [
+                p.name for p in signature(init).parameters.values() if param_required(p)
+            ]
+
+            default_value_params = [
+                p for p in signature(init).parameters.values() if param_default_value(p)
             ]
 
         except (TypeError, ValueError):
             # init is not a python function.
             # true for mixins
             return
+
+        # here we construct an instance of the estimator using only the required
+        # parameters.
+        old_params = estimator.get_params()
+        init_params = {
+            param: old_params[param]
+            for param in old_params
+            if param in required_params_names
+        }
+        estimator = Estimator(**init_params)
         params = estimator.get_params()
 
-        for init_param in init_params:
-            if (
-                type(estimator) in INIT_PARAMS
-                and init_param.name in INIT_PARAMS[type(estimator)]
-            ):
-                # these parameters are coming from INIT_PARAMS and not the default
-                # values, therefore ignored.
-                continue
-            assert (
-                init_param.default != init_param.empty
-            ), "parameter %s for %s has no default value" % (
-                init_param.name,
-                type(estimator).__name__,
-            )
+        for init_param in default_value_params:
             allowed_types = {
                 str,
                 int,
@@ -3933,12 +3964,18 @@ def check_estimator_get_tags_default_keys(name, estimator_orig):
 
 
 def check_estimator_tags_renamed(name, estimator_orig):
-    assert not hasattr(estimator_orig, "_more_tags"), (
-        "_more_tags() was removed in 1.6. " "Please use __sklearn_tags__ instead.",
-    )
-    assert not hasattr(estimator_orig, "_get_tags"), (
-        "_get_tags() was removed in 1.6. " "Please use __sklearn_tags__ instead."
-    )
+    help = """{tags_func}() was removed in 1.6. Please use __sklearn_tags__ instead.
+You can implement both __sklearn_tags__() and {tags_func}() to support multiple
+scikit-learn versions.
+"""
+
+    if not hasattr(estimator_orig, "__sklearn_tags__"):
+        assert not hasattr(estimator_orig, "_more_tags"), help.format(
+            tags_func="_more_tags"
+        )
+        assert not hasattr(estimator_orig, "_get_tags"), help.format(
+            tags_func="_get_tags"
+        )
 
 
 def check_dataframe_column_names_consistency(name, estimator_orig):
@@ -4648,3 +4685,19 @@ def check_inplace_ensure_writeable(name, estimator_orig):
 
     assert not X.flags.writeable
     assert_allclose(X, X_copy)
+
+
+def check_do_not_raise_errors_in_init_or_set_params(name, estimator_orig):
+    """Check that init or set_param does not raise errors."""
+    Estimator = type(estimator_orig)
+    params = signature(Estimator).parameters
+
+    smoke_test_values = [-1, 3.0, "helloworld", np.array([1.0, 4.0]), [1], {}, []]
+    for value in smoke_test_values:
+        new_params = {key: value for key in params}
+
+        # Does not raise
+        est = Estimator(**new_params)
+
+        # Also do does not raise
+        est.set_params(**new_params)
