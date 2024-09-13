@@ -90,7 +90,7 @@ def _yield_api_checks(estimator):
     yield check_estimators_overwrite_params
     yield check_dont_overwrite_parameters
     yield check_estimators_fit_returns_self
-    yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
+    yield check_readonly_memmap_input
     if tags.requires_fit:
         yield check_estimators_unfitted
     yield check_do_not_raise_errors_in_init_or_set_params
@@ -2721,7 +2721,7 @@ def check_get_feature_names_out_error(name, estimator_orig):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_estimators_fit_returns_self(name, estimator_orig, readonly_memmap=False):
+def check_estimators_fit_returns_self(name, estimator_orig):
     """Check if self is returned when calling fit."""
     X, y = make_blobs(random_state=0, n_samples=21)
     X = _enforce_estimator_tags_X(estimator_orig, X)
@@ -2729,10 +2729,26 @@ def check_estimators_fit_returns_self(name, estimator_orig, readonly_memmap=Fals
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
 
-    if readonly_memmap:
-        X, y = create_memmap_backed_data([X, y])
+    set_random_state(estimator)
+    assert estimator.fit(X, y) is estimator
+
+
+@ignore_warnings(category=FutureWarning)
+def check_readonly_memmap_input(name, estimator_orig):
+    """Check that the estimator can handle readonly memmap backed data.
+
+    This is particularly needed to support joblib parallelisation.
+    """
+    X, y = make_blobs(random_state=0, n_samples=21)
+    X = _enforce_estimator_tags_X(estimator_orig, X)
+
+    estimator = clone(estimator_orig)
+    y = _enforce_estimator_tags_y(estimator, y)
+
+    X, y = create_memmap_backed_data([X, y])
 
     set_random_state(estimator)
+    # This should not raise an error and should return self
     assert estimator.fit(X, y) is estimator
 
 
@@ -2742,6 +2758,15 @@ def check_estimators_unfitted(name, estimator_orig):
 
     Unfitted estimators should raise a NotFittedError.
     """
+    err_msg = (
+        "Estimator should raise a NotFittedError when calling `{method}` before fit. "
+        "Either call `check_is_fitted(self)` at the beginning of `{method}` or "
+        "set `tags.requires_fit=False` on estimator tags to disable this check.\n"
+        "- `check_is_fitted`: https://scikit-learn.org/dev/modules/generated/sklearn."
+        "utils.validation.check_is_fitted.html\n"
+        "- Estimator Tags: https://scikit-learn.org/dev/developers/develop."
+        "html#estimator-tags"
+    )
     # Common test for Regressors, Classifiers and Outlier detection estimators
     X, y = _regression_dataset()
 
@@ -2753,7 +2778,7 @@ def check_estimators_unfitted(name, estimator_orig):
         "predict_log_proba",
     ):
         if hasattr(estimator, method):
-            with raises(NotFittedError):
+            with raises(NotFittedError, err_msg=err_msg.format(method=method)):
                 getattr(estimator, method)(X)
 
 
