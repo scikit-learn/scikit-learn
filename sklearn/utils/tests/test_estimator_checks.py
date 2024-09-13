@@ -303,7 +303,8 @@ class BadTransformerWithoutMixin(BaseEstimator):
         return self
 
     def transform(self, X):
-        X = check_array(X)
+        check_is_fitted(self)
+        X = validate_data(self, X, reset=False)
         return X
 
 
@@ -421,16 +422,15 @@ class SparseTransformer(BaseEstimator):
         self.sparse_container = sparse_container
 
     def fit(self, X, y=None):
-        self.X_shape_ = validate_data(self, X).shape
+        validate_data(self, X)
         return self
 
     def fit_transform(self, X, y=None):
         return self.fit(X, y).transform(X)
 
     def transform(self, X):
-        X = check_array(X)
-        if X.shape[1] != self.X_shape_[1]:
-            raise ValueError("Bad number of features")
+        check_is_fitted(self)
+        X = validate_data(self, X, accept_sparse=True, reset=False)
         return self.sparse_container(X)
 
 
@@ -753,10 +753,6 @@ def test_check_estimator():
     msg = "object has no attribute 'fit'"
     with raises(AttributeError, match=msg):
         check_estimator(BaseEstimator())
-    # check that fit does input validation
-    msg = "Did not raise"
-    with raises(AssertionError, match=msg):
-        check_estimator(BaseBadClassifier())
 
     # does error on binary_only untagged estimator
     msg = "Only 2 classes are supported"

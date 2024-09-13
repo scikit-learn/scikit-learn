@@ -3939,8 +3939,16 @@ def check_n_features_in_after_fitting(name, estimator_orig):
         y = rng.randint(low=0, high=2, size=n_samples)
     y = _enforce_estimator_tags_y(estimator, y)
 
+    err_msg = (
+        "`{name}.fit()` does not set the `n_features_in_` attribute. "
+        "You might want to use `sklearn.utils.validation.validate_data` instead "
+        "of `check_array` in `{name}.fit()` which takes care of setting the "
+        "attribute.".format(name=name)
+    )
+
     estimator.fit(X, y)
-    assert estimator.n_features_in_ == X.shape[1]
+    assert hasattr(estimator, "n_features_in_"), err_msg
+    assert estimator.n_features_in_ == X.shape[1], err_msg
 
     # check methods will check n_features_in_
     check_methods = [
@@ -3952,6 +3960,27 @@ def check_n_features_in_after_fitting(name, estimator_orig):
     ]
     X_bad = X[:, [1]]
 
+    err_msg = (
+        "`{name}.{method}()` does not check for consistency between input number "
+        "of features with {name}.fit(), via the `n_features_in_` attribute. "
+        "You might want to use `sklearn.utils.validation.validate_data` instead "
+        "of `check_array` in `{name}.fit()` and {name}.{method}()`. This can be done "
+        "like the following:\n\n"
+        "from sklearn.utils.validation import validate_data\n"
+        "...\n"
+        "class MyEstimator(BaseEstimator):\n"
+        "    ...\n"
+        "    def fit(self, X, y):\n"
+        "        X, y = validate_data(self, X, y, ...)\n"
+        "        ...\n"
+        "        return self\n"
+        "...\n"
+        "    def {method}(self, X):\n"
+        "        X = validate_data(self, X, ..., reset=False)\n"
+        "        ...\n"
+        "        return X\n"
+    )
+
     msg = f"X has 1 features, but \\w+ is expecting {X.shape[1]} features as input"
     for method in check_methods:
         if not hasattr(estimator, method):
@@ -3961,7 +3990,9 @@ def check_n_features_in_after_fitting(name, estimator_orig):
         if method == "score":
             callable_method = partial(callable_method, y=y)
 
-        with raises(ValueError, match=msg):
+        with raises(
+            ValueError, match=msg, err_msg=err_msg.format(name=name, method=method)
+        ):
             callable_method(X_bad)
 
     # partial_fit will check in the second call
