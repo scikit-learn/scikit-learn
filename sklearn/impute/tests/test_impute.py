@@ -1797,7 +1797,15 @@ def test_iterative_imputer_no_empty_features(strategy):
 
 
 @pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent", "constant"])
-def test_iterative_imputer_with_empty_features(strategy):
+@pytest.mark.parametrize(
+    "X_test",
+    [
+        np.array([[1, 2, 3, 4], [5, 6, 7, 8]]),  # without empty feature
+        np.array([[np.nan, 2, 3, 4], [np.nan, 6, 7, 8]]),  # empty feature at column 0
+        np.array([[1, 2, 3, np.nan], [5, 6, 7, np.nan]]),  # empty feature at column 3
+    ],
+)
+def test_iterative_imputer_with_empty_features(strategy, X_test):
     """Check the behaviour of `keep_empty_features` in the presence of empty features.
 
     With `keep_empty_features=True`, the empty feature will be imputed with the value
@@ -1809,7 +1817,6 @@ def test_iterative_imputer_with_empty_features(strategy):
     X_train = np.array(
         [[np.nan, np.nan, 0, 1], [np.nan, 2, np.nan, 3], [np.nan, 4, 5, np.nan]]
     )
-    X_test = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])
 
     imputer_drop_empty_features = IterativeImputer(
         initial_strategy=strategy, fill_value=0, keep_empty_features=False
