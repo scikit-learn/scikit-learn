@@ -477,7 +477,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         * integer, to specify the number of folds in a (Stratified) KFold,
         * An object to be used as a cross-validation generator,
         * An iterable yielding train, test splits,
-        * "prefit", to assume the `estimators` are prefit. In this case, the
+        * `"prefit"`, to assume the `estimators` are prefit. In this case, the
           estimators will not be refitted.
 
         For integer/None inputs, if the estimator is a classifier and y is
@@ -558,7 +558,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         .. versionadded:: 1.0
 
     final_estimator_ : estimator
-        The classifier which predicts given the output of `estimators_`.
+        The final classifier, fitted on the output of `estimators_`.
 
     stack_method_ : list of str
         The method used by each base estimator.
@@ -890,7 +890,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         * integer, to specify the number of folds in a (Stratified) KFold,
         * An object to be used as a cross-validation generator,
         * An iterable yielding train, test splits,
-        * "prefit", to assume the `estimators` are prefit. In this case, the
+        * `"prefit"`, to assume the `estimators` are prefit. In this case, the
           estimators will not be refitted.
 
         For integer/None inputs, if the estimator is a classifier and y is
@@ -956,7 +956,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         .. versionadded:: 1.0
 
     final_estimator_ : estimator
-        The regressor to stack the base estimators fitted.
+        The final regressor, fitted on the output of `estimators_`.
 
     stack_method_ : list of str
         The method used by each base estimator.
