@@ -165,6 +165,25 @@ def test_input_validation_errors(pyplot, kwargs, error_msg, fitted_clf):
         DecisionBoundaryDisplay.from_estimator(fitted_clf, X, **kwargs)
 
 
+@pytest.mark.parametrize(
+    "kwargs, error_msg",
+    [
+        ({"multiclass_colors": "not_cmap"}, "it must be a valid Matplotlib colormap"),
+        ({"multiclass_colors": ["red", "green"]}, "it must be of the same length"),
+        (
+            {"multiclass_colors": ["red", "green", "not color"]},
+            "it can only contain valid Matplotlib color names",
+        ),
+    ],
+)
+def test_input_validation_errors_multiclass_colors(pyplot, kwargs, error_msg):
+    """Check input validation for `multiclass_colors` in `from_estimator`."""
+    X, y = load_iris_2d_scaled()
+    clf = LogisticRegression().fit(X, y)
+    with pytest.raises(ValueError, match=error_msg):
+        DecisionBoundaryDisplay.from_estimator(clf, X, **kwargs)
+
+
 def test_display_plot_input_error(pyplot, fitted_clf):
     """Check input validation for `plot`."""
     disp = DecisionBoundaryDisplay.from_estimator(fitted_clf, X, grid_resolution=5)
@@ -554,6 +573,73 @@ def test_class_of_interest_multiclass(pyplot, response_method):
             X,
             response_method=response_method,
             class_of_interest=class_of_interest_idx,
+        )
+
+
+@pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
+def test_multiclass_plot_max_class(pyplot, response_method):
+    """Check plot correct when plotting max multiclass class."""
+    X, y = load_iris_2d_scaled()
+    clf = LogisticRegression().fit(X, y)
+
+    disp = DecisionBoundaryDisplay.from_estimator(
+        clf,
+        X,
+        response_method=response_method,
+    )
+
+    grid = np.concatenate([disp.xx0.reshape(-1, 1), disp.xx1.reshape(-1, 1)], axis=1)
+    response = getattr(clf, response_method)(grid)
+    assert_allclose(response.reshape(*disp.response.shape), disp.response)
+
+
+@pytest.mark.parametrize("multiclass_colors", ["plasma", ["red", "green", "blue"],])
+@pytest.mark.parametrize("plot_method", ["contourf", "contour", "pcolormesh"])
+def test_multiclass_colors_cmap(pyplot, plot_method, multiclass_colors):
+    """Check correct cmap used  for all `multiclass_colors` inputs."""
+    import matplotlib as mpl
+
+    X, y = load_iris_2d_scaled()
+    clf = LogisticRegression().fit(X, y)
+
+    disp = DecisionBoundaryDisplay.from_estimator(
+        clf,
+        X,
+        plot_method=plot_method,
+        multiclass_colors=multiclass_colors,
+    )
+
+    cmaps = []
+    if multiclass_colors == "plasma":
+        cmap = mpl.colormaps[multiclass_colors].resampled(len(clf.classes_))
+        for class_idx, primary_color in enumerate(cmap.colors):
+            r, g, b, _ = primary_color
+            class_cmap = mpl.colors.LinearSegmentedColormap.from_list(
+                f"colormap_{class_idx}", [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)]
+            )
+            cmaps.append(class_cmap)
+    else:
+        for class_idx, class_color in enumerate(multiclass_colors):
+            r, g, b, _ = mpl.colors.to_rgba(class_color)
+            class_cmap = mpl.colors.LinearSegmentedColormap.from_list(
+                f"colormap_{class_idx}", [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)]
+            )
+            cmaps.append(class_cmap)
+
+    for idx, quad in enumerate(disp.surface_):
+        assert quad.cmap == cmaps[idx]
+
+
+def test_multiclass_plot_max_class_cmap_kwarg():
+    """Check `cmap` kwarg ignored when using plotting max multiclass class."""
+    X, y = load_iris_2d_scaled()
+    clf = LogisticRegression().fit(X, y)
+
+    with pytest.warns(UserWarning, match="'cmap' kwarg ignored"):
+        DecisionBoundaryDisplay.from_estimator(
+            clf,
+            X,
+            cmap="viridis",
         )
 
 

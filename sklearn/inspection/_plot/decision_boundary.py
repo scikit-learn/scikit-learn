@@ -1,6 +1,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import warnings
+
 import numpy as np
 
 from ...base import is_regressor
@@ -235,6 +237,14 @@ class DecisionBoundaryDisplay:
                     self.response[:, :, class_idx],
                     mask=~(self.response.argmax(axis=2) == class_idx),
                 )
+                # `cmap` should not be in kwargs
+                if "cmap" in kwargs:
+                    del kwargs["cmap"]
+                    warnings.warn(
+                        "Plotting max class of multiclass 'decision_function' or "
+                        "'predict_proba', thus 'multiclass_colors' used and "
+                        "'cmap' kwarg ignored."
+                    )
                 self.surface_.append(
                     plot_func(self.xx0, self.xx1, response, cmap=cmap, **kwargs)
                 )
@@ -421,8 +431,8 @@ class DecisionBoundaryDisplay:
                         f"length as 'estimator.classes_' ({n_classes}), got: "
                         f"{len(multiclass_colors)}."
                     )
-                elif not any(
-                    mpl.colors.is_color_like(col) for col in multiclass_colors
+                elif any(
+                    not mpl.colors.is_color_like(col) for col in multiclass_colors
                 ):
                     raise ValueError(
                         "When 'multiclass_colors' is a list, it can only contain valid"
