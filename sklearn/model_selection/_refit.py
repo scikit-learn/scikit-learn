@@ -654,7 +654,7 @@ class ScoreCutModelSelector:
     >>> from sklearn.datasets import load_digits
     >>> from sklearn.model_selection import GridSearchCV
     >>> from sklearn.decomposition import PCA
-    >>> from sklearn.svm import LinearSVC
+    >>> from sklearn.svm import SVC
     >>> from sklearn.pipeline import Pipeline
     >>> from sklearn.model_selection import ScoreCutModelSelector, \
         StandardErrorSlicer, FavorabilityRanker
@@ -663,7 +663,7 @@ class ScoreCutModelSelector:
     >>> X, y = load_digits(return_X_y=True)
     >>> pipe = Pipeline([
     ...      ("reduce_dim", PCA(random_state=42)),
-    ...      ("classify", LinearSVC(dual='auto', random_state=42, C=0.01)),
+    ...      ("classify", SVC(kernel='linear', random_state=42, C=0.01)),
     ... ])
     >>> param_grid = {"reduce_dim__n_components": [6, 8, 10, 12, 14]}
     >>> search = GridSearchCV(
@@ -674,8 +674,8 @@ class ScoreCutModelSelector:
     >>> fitted = search.fit(X, y)
     >>> ss = ScoreCutModelSelector(fitted.cv_results_)
     >>> bounds = ss.fit(StandardErrorSlicer(sigma=1))
-    Min: 0.8852
-    Max: 0.9156
+    Min: 0.9225
+    Max: 0.9462
     >>> favorability_rules = {
     ...     'reduce_dim__n_components': (True, 2.0),  # Lower is simpler and
     ...                                               # more favorable
@@ -685,12 +685,12 @@ class ScoreCutModelSelector:
     >>> favorable_index = ss.transform(FavorabilityRanker(favorability_rules))
     Original best index: 4
     Original best params: {'reduce_dim__n_components': 14}
-    Original best score: 0.9004
-    Promoted best index: 3
-    Promoted best params: {'reduce_dim__n_components': 12}
-    Promoted best score: 0.8926
+    Original best score: 0.9344
+    Promoted best index: 2
+    Promoted best params: {'reduce_dim__n_components': 10}
+    Promoted best score: 0.9255
     >>> favorable_index
-    3
+    2
     """
 
     def __init__(self, cv_results_: Dict):
@@ -1194,7 +1194,7 @@ def promote(score_slice_fn: Callable, favorability_rank_fn: Callable) -> Callabl
     >>> from sklearn.datasets import load_digits
     >>> from sklearn.model_selection import GridSearchCV
     >>> from sklearn.decomposition import PCA
-    >>> from sklearn.svm import LinearSVC
+    >>> from sklearn.svm import SVC
     >>> from sklearn.pipeline import Pipeline
     >>> from sklearn.model_selection import promote, StandardErrorSlicer, \
         FavorabilityRanker
@@ -1203,9 +1203,9 @@ def promote(score_slice_fn: Callable, favorability_rank_fn: Callable) -> Callabl
     >>> X, y = load_digits(return_X_y=True)
     >>> pipe = Pipeline([
     ...      ("reduce_dim", PCA(random_state=42)),
-    ...      ("classify", LinearSVC(dual='auto', random_state=42)),
+    ...      ("classify", SVC(kernel='linear', random_state=42)),
     ... ])
-    >>> param_grid = {"reduce_dim__n_components": [6, 8, 10, 12, 14, 16, 18],
+    >>> param_grid = {"reduce_dim__n_components": [18, 24, 30, 36],
     ... "classify__C": [0.0001, 0.001, 0.01, 1, 10]}
     >>> favorability_rules = {
     ...     'reduce_dim__n_components': (True, 1.0),  # Lower is simpler and
@@ -1221,16 +1221,16 @@ def promote(score_slice_fn: Callable, favorability_rank_fn: Callable) -> Callabl
     ...     favorability_rank_fn=FavorabilityRanker(favorability_rules)),
     ... )
     >>> fitted = search.fit(X, y)
-    Min: 0.9027
-    Max: 0.9303
-    Original best index: 27
-    Original best params: {'classify__C': 1, 'reduce_dim__n_components': 18}
-    Original best score: 0.9165
-    Promoted best index: 33
-    Promoted best params: {'classify__C': 10, 'reduce_dim__n_components': 16}
-    Promoted best score: 0.9060
+    Min: 0.9401
+    Max: 0.9620
+    Original best index: 7
+    Original best params: {'classify__C': 0.001, 'reduce_dim__n_components': 36}
+    Original best score: 0.9510
+    Promoted best index: 17
+    Promoted best params: {'classify__C': 10, 'reduce_dim__n_components': 24}
+    Promoted best score: 0.9455
     >>> fitted.best_params_
-    {'classify__C': 10, 'reduce_dim__n_components': 16}
+    {'classify__C': 10, 'reduce_dim__n_components': 24}
     """
     if not callable(score_slice_fn) or not callable(favorability_rank_fn):
         raise TypeError(
