@@ -593,7 +593,13 @@ def test_multiclass_plot_max_class(pyplot, response_method):
     assert_allclose(response.reshape(*disp.response.shape), disp.response)
 
 
-@pytest.mark.parametrize("multiclass_colors", ["plasma", ["red", "green", "blue"],])
+@pytest.mark.parametrize(
+    "multiclass_colors",
+    [
+        "plasma",
+        ["red", "green", "blue"],
+    ],
+)
 @pytest.mark.parametrize("plot_method", ["contourf", "contour", "pcolormesh"])
 def test_multiclass_colors_cmap(pyplot, plot_method, multiclass_colors):
     """Check correct cmap used  for all `multiclass_colors` inputs."""
