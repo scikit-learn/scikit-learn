@@ -117,6 +117,13 @@ enhance the functionality of scikit-learn's estimators.
   ``scikit-learn`` itself. If you encounter issues while using this project,
   make sure you report potential issues in their respective repositories.
 
+**Interface to R with genomic applications**
+
+- `BiocSklearn <https://bioconductor.org/packages/BiocSklearn>`_
+  Exposes a small number of dimension reduction facilities as an illustration
+  of the basilisk protocol for interfacing python with R. Intended as a 
+  springboard for more complete interop.
+
 
 Other estimators and tasks
 --------------------------

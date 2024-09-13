@@ -93,7 +93,7 @@ Reference Steps
 
       .. code-block:: markdown
 
-        * [ ] Update news and what's new date in release branch
+        * [ ] Update news and what's new date in main branch
         * [ ] Backport news and what's new date in release branch
         {%- if key == "rc" %}
         * [ ] Update the sklearn dev0 version in main branch
@@ -152,7 +152,7 @@ Reference Steps
       process.
     {% endif %}
 
-    - In the `{{ version_short }}.X` branch, change the version number `__version__` in
+    - In the release branch, change the version number `__version__` in
       `sklearn/__init__.py` to `{{ version_full }}`.
 
     {% if key != "rc" %}
@@ -172,7 +172,7 @@ Reference Steps
           sed "s/;/, /g;s/, $//" |
           fold -s
 
-      Then cherry-pick it in the `{{ version_short }}.X` release branch.
+      Then cherry-pick it in the release branch.
 
     - In the `main` branch, edit `doc/templates/index.html` to change the "News" section
       in the landing page, along with the month of the release.
@@ -180,7 +180,7 @@ Reference Steps
       Do not forget to remove old entries (two years or three releases ago) and update
       the "On-going development" entry.
       {%- endif %}
-      Then cherry-pick it in the `{{ version_short }}.X` release branch.
+      Then cherry-pick it in the release branch.
     {% endif %}
 
     - Trigger the wheel builder with the `[cd build]` commit marker. See also the
