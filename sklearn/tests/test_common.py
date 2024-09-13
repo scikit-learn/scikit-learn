@@ -71,7 +71,6 @@ from sklearn.utils.estimator_checks import (
     check_global_output_transform_pandas,
     check_global_set_output_transform_polars,
     check_inplace_ensure_writeable,
-    check_n_features_in_after_fitting,
     check_param_validation,
     check_set_output_transform,
     check_set_output_transform_pandas,
@@ -277,13 +276,6 @@ def test_valid_tag_types(estimator):
     check_field_types(tags.classifier_tags, defaults.classifier_tags)
     check_field_types(tags.regressor_tags, defaults.regressor_tags)
     check_field_types(tags.transformer_tags, defaults.transformer_tags)
-
-
-@pytest.mark.parametrize(
-    "estimator", _tested_estimators(), ids=_get_check_estimator_ids
-)
-def test_check_n_features_in_after_fitting(estimator):
-    check_n_features_in_after_fitting(estimator.__class__.__name__, estimator)
 
 
 def _estimators_that_predict_in_fit():

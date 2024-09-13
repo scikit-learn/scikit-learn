@@ -90,6 +90,10 @@ def _yield_api_checks(estimator):
     yield check_estimators_overwrite_params
 
 
+def _yield_dataframe_checks(estimator):
+    yield check_n_features_in_after_fitting
+
+
 def _yield_checks(estimator):
     name = estimator.__class__.__name__
     tags = get_tags(estimator)
@@ -330,7 +334,7 @@ def _yield_array_api_checks(estimator):
         )
 
 
-def _yield_all_checks(estimator, legacy: bool):
+def _yield_all_checks(estimator, dataframe: bool, legacy: bool):
     name = estimator.__class__.__name__
     tags = get_tags(estimator)
     if not tags.input_tags.two_d_array:
@@ -350,6 +354,10 @@ def _yield_all_checks(estimator, legacy: bool):
 
     for check in _yield_api_checks(estimator):
         yield check
+
+    if dataframe:
+        for check in _yield_dataframe_checks(estimator):
+            yield check
 
     if not legacy:
         return  # pragma: no cover
@@ -443,7 +451,7 @@ def _should_be_skipped_or_marked(estimator, check):
     return False, "placeholder reason that will never be used"
 
 
-def parametrize_with_checks(estimators, *, legacy=True):
+def parametrize_with_checks(estimators, *, dataframe: bool = True, legacy: bool = True):
     """Pytest specific decorator for parametrizing estimator checks.
 
     Checks are categorised into the following groups:
@@ -469,6 +477,14 @@ def parametrize_with_checks(estimators, *, legacy=True):
            classes was removed in 0.24. Pass an instance instead.
 
         .. versionadded:: 0.24
+
+
+    dataframe : bool, default=True
+        Whether to included checks related to inspecting feature counts and feature
+        names. Theese checks might include `polars` or `pandas` to be installed, and are
+        automatically skipped if otherwise.
+
+        .. versionadded:: 1.6
 
     legacy : bool, default=True
         Whether to include legacy checks. Over time we remove checks from this category
@@ -509,7 +525,9 @@ def parametrize_with_checks(estimators, *, legacy=True):
     def checks_generator():
         for estimator in estimators:
             name = type(estimator).__name__
-            for check in _yield_all_checks(estimator, legacy=legacy):
+            for check in _yield_all_checks(
+                estimator, dataframe=dataframe, legacy=legacy
+            ):
                 check = partial(check, name)
                 yield _maybe_mark_xfail(estimator, check, pytest)
 
@@ -518,7 +536,9 @@ def parametrize_with_checks(estimators, *, legacy=True):
     )
 
 
-def check_estimator(estimator=None, generate_only=False, *, legacy=True):
+def check_estimator(
+    estimator=None, generate_only=False, *, dataframe: bool = True, legacy: bool = True
+):
     """Check if estimator adheres to scikit-learn conventions.
 
     This function will run an extensive test-suite for input validation,
@@ -561,6 +581,13 @@ def check_estimator(estimator=None, generate_only=False, *, legacy=True):
 
         .. versionadded:: 0.22
 
+    dataframe : bool, default=True
+        Whether to included checks related to inspecting feature counts and feature
+        names. Theese checks might include `polars` or `pandas` to be installed, and are
+        automatically skipped if otherwise.
+
+        .. versionadded:: 1.6
+
     legacy : bool, default=True
         Whether to include legacy checks. Over time we remove checks from this category
         and move them into their specific category.
@@ -596,7 +623,7 @@ def check_estimator(estimator=None, generate_only=False, *, legacy=True):
     name = type(estimator).__name__
 
     def checks_generator():
-        for check in _yield_all_checks(estimator, legacy=legacy):
+        for check in _yield_all_checks(estimator, dataframe=dataframe, legacy=legacy):
             check = _maybe_skip(estimator, check)
             yield estimator, partial(check, name)
 
