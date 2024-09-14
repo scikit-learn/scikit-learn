@@ -2275,8 +2275,8 @@ def test_metadata_routing_with_default_scoring(metaestimator):
 )
 def test_set_score_request_with_default_scoring(metaestimator, make_dataset):
     """Test that `set_score_request` is set within `RidgeCV.fit()` and
-    `RidgeClassifierCV.fit()` when using the default scoring. Regression test for the
-    fix in PR #29634."""
+    `RidgeClassifierCV.fit()` when using the default scoring and no
+    UnsetMetadataPassedError is raised. Regression test for the fix in PR #29634."""
     X, y = make_dataset(n_samples=100, n_features=5, random_state=42)
     metaestimator.fit(X, y, sample_weight=np.ones(X.shape[0]))
 
