@@ -154,9 +154,8 @@ class GaussianNB(_BaseNB):
 
     Can perform online updates to model parameters via :meth:`partial_fit`.
     For details on algorithm used to update feature means and variance online,
-    see Stanford CS tech report STAN-CS-79-773 by Chan, Golub, and LeVeque:
-
-        http://i.stanford.edu/pub/cstr/reports/cs/tr/79/773/CS-TR-79-773.pdf
+    see `Stanford CS tech report STAN-CS-79-773 by Chan, Golub, and LeVeque
+    <http://i.stanford.edu/pub/cstr/reports/cs/tr/79/773/CS-TR-79-773.pdf>`_.
 
     Read more in the :ref:`User Guide <gaussian_naive_bayes>`.
 

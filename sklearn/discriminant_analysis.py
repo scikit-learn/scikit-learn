@@ -561,11 +561,8 @@ class LinearDiscriminantAnalysis(
     def fit(self, X, y):
         """Fit the Linear Discriminant Analysis model.
 
-           .. versionchanged:: 0.19
-              *store_covariance* has been moved to main constructor.
-
-           .. versionchanged:: 0.19
-              *tol* has been moved to main constructor.
+        .. versionchanged:: 0.19
+            `store_covariance` and `tol` has been moved to main constructor.
 
         Parameters
         ----------
@@ -885,12 +882,12 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     def fit(self, X, y):
         """Fit the model according to the given training data and parameters.
 
-            .. versionchanged:: 0.19
-               ``store_covariances`` has been moved to main constructor as
-               ``store_covariance``
+        .. versionchanged:: 0.19
+            ``store_covariances`` has been moved to main constructor as
+            ``store_covariance``.
 
-            .. versionchanged:: 0.19
-               ``tol`` has been moved to main constructor.
+        .. versionchanged:: 0.19
+            ``tol`` has been moved to main constructor.
 
         Parameters
         ----------

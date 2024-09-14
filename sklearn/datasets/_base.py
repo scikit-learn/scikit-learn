@@ -157,7 +157,7 @@ def load_files(
     """Load text files with categories as subfolder names.
 
     Individual samples are assumed to be files stored a two levels folder
-    structure such as the following:
+    structure such as the following::
 
         container_folder/
             category_1_folder/

@@ -273,7 +273,7 @@ def rand_score(labels_true, labels_pred):
     assigned in the same or different clusters in the predicted and
     true clusterings [1]_ [2]_.
 
-    The raw RI score [3]_ is:
+    The raw RI score [3]_ is::
 
         RI = (number of agreeing pairs) / (number of pairs)
 
