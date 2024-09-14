@@ -638,9 +638,8 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     >>> len(er.estimators_)
     2
 
-    For a detailed example of utilizing
-    :class:`~sklearn.ensemble.VotingRegressor`
-    For a more detailed example, refer to :ref:sphx_glr_auto_examples_ensemble_plot_voting_regressor.py.
+    For a more detailed example, refer to
+    :ref:`sphx_glr_auto_examples_ensemble_plot_voting_regressor.py`.
     """
 
     def __init__(self, estimators, *, weights=None, n_jobs=None, verbose=False):
