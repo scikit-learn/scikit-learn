@@ -884,7 +884,7 @@ def test_metadata_is_routed_correctly_to_splitter(metaestimator):
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
 def test_metadata_routed_to_group_splitter(metaestimator):
     """Test that groups are routed correctly if group splitter of CV estimator is used
-    within cross_validate. Regression test for issue #29634 to test that
+    within cross_validate. Regression test for issue described in PR #29634 to test that
     `ValueError: The 'groups' parameter should not be None.` is not raised."""
 
     if "cv_routing_methods" not in metaestimator:
