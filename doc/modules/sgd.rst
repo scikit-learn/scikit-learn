@@ -195,6 +195,8 @@ algorithm, available as a solver in :class:`LogisticRegression`.
 - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_iris.py`
 - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_weighted_samples.py`
 - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_comparison.py`
+- :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_loss_functions.py`
+- :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_penalties.py`
 - :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane_unbalanced.py`
   (See the Note in the example)
 
@@ -287,6 +289,10 @@ variant can be several orders of magnitude faster.
 As :class:`SGDClassifier` and :class:`SGDRegressor`, :class:`SGDOneClassSVM`
 supports averaged SGD. Averaging can be enabled by setting ``average=True``.
 
+.. rubric:: Examples
+
+- :ref:`sphx_glr_auto_examples_linear_model_plot_sgdocsvm_vs_ocsvm.py`
+
 Stochastic Gradient Descent for sparse data
 ===========================================
 
@@ -337,6 +343,9 @@ when the criterion does not improve ``n_iter_no_change`` times in a row. The
 improvement is evaluated with absolute tolerance ``tol``, and the algorithm
 stops in any case after a maximum number of iteration ``max_iter``.
 
+.. rubric:: Examples
+
+- :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_early_stopping.py`
 
 Tips on Practical Use
 =====================
