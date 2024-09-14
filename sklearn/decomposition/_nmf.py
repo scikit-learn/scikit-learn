@@ -934,9 +934,13 @@ def non_negative_factorization(
     .. math::
 
         L(W, H) &= 0.5 * ||X - WH||_{loss}^2
+
                 &+ alpha\\_W * l1\\_ratio * n\\_features * ||vec(W)||_1
+
                 &+ alpha\\_H * l1\\_ratio * n\\_samples * ||vec(H)||_1
+
                 &+ 0.5 * alpha\\_W * (1 - l1\\_ratio) * n\\_features * ||W||_{Fro}^2
+
                 &+ 0.5 * alpha\\_H * (1 - l1\\_ratio) * n\\_samples * ||H||_{Fro}^2,
 
     where :math:`||A||_{Fro}^2 = \\sum_{i,j} A_{ij}^2` (Frobenius norm) and
@@ -1353,9 +1357,13 @@ class NMF(_BaseNMF):
     .. math::
 
         L(W, H) &= 0.5 * ||X - WH||_{loss}^2
+
                 &+ alpha\\_W * l1\\_ratio * n\\_features * ||vec(W)||_1
+
                 &+ alpha\\_H * l1\\_ratio * n\\_samples * ||vec(H)||_1
+
                 &+ 0.5 * alpha\\_W * (1 - l1\\_ratio) * n\\_features * ||W||_{Fro}^2
+
                 &+ 0.5 * alpha\\_H * (1 - l1\\_ratio) * n\\_samples * ||H||_{Fro}^2,
 
     where :math:`||A||_{Fro}^2 = \\sum_{i,j} A_{ij}^2` (Frobenius norm) and
@@ -1791,9 +1799,13 @@ class MiniBatchNMF(_BaseNMF):
     .. math::
 
         L(W, H) &= 0.5 * ||X - WH||_{loss}^2
+
                 &+ alpha\\_W * l1\\_ratio * n\\_features * ||vec(W)||_1
+
                 &+ alpha\\_H * l1\\_ratio * n\\_samples * ||vec(H)||_1
+
                 &+ 0.5 * alpha\\_W * (1 - l1\\_ratio) * n\\_features * ||W||_{Fro}^2
+
                 &+ 0.5 * alpha\\_H * (1 - l1\\_ratio) * n\\_samples * ||H||_{Fro}^2,
 
     where :math:`||A||_{Fro}^2 = \\sum_{i,j} A_{ij}^2` (Frobenius norm) and

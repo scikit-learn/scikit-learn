@@ -461,11 +461,15 @@ def nan_euclidean_distances(
     where Y=X is assumed if Y=None. When calculating the distance between a
     pair of samples, this formulation ignores feature coordinates with a
     missing value in either sample and scales up the weight of the remaining
-    coordinates::
+    coordinates:
+
+    .. code-block:: text
 
         dist(x,y) = sqrt(weight * sq. distance from present coordinates)
 
-    where::
+    where:
+
+    .. code-block:: text
 
         weight = Total # of coordinates / # of present coordinates
 
@@ -1630,7 +1634,9 @@ def rbf_kernel(X, Y=None, gamma=None):
 def laplacian_kernel(X, Y=None, gamma=None):
     """Compute the laplacian kernel between X and Y.
 
-    The laplacian kernel is defined as::
+    The laplacian kernel is defined as:
+
+    .. code-block:: text
 
         K(x, y) = exp(-gamma ||x-y||_1)
 
@@ -1685,7 +1691,9 @@ def cosine_similarity(X, Y=None, dense_output=True):
     """Compute cosine similarity between samples in X and Y.
 
     Cosine similarity, or the cosine kernel, computes similarity as the
-    normalized dot product of X and Y::
+    normalized dot product of X and Y:
+
+    .. code-block:: text
 
         K(X, Y) = <X, Y> / (||X||*||Y||)
 
@@ -1750,7 +1758,9 @@ def additive_chi2_kernel(X, Y=None):
     and Y have to be non-negative. This kernel is most commonly applied to
     histograms.
 
-    The chi-squared kernel is given by::
+    The chi-squared kernel is given by:
+
+    .. code-block:: text
 
         k(x, y) = -Sum [(x - y)^2 / (x + y)]
 
@@ -1837,7 +1847,9 @@ def chi2_kernel(X, Y=None, gamma=1.0):
     and Y have to be non-negative. This kernel is most commonly applied to
     histograms.
 
-    The chi-squared kernel is given by::
+    The chi-squared kernel is given by:
+
+    .. code-block:: text
 
         k(x, y) = exp(-gamma Sum [(x - y)^2 / (x + y)])
 
