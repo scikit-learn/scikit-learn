@@ -165,9 +165,6 @@ build_metadata_list = [
             # TODO: release scipy constraint when 1.13 is available in the "default"
             # channel.
             "scipy": "<1.12",
-            # TODO temporary to avoid a timeout in the no-OpenMP build, see
-            # https://github.com/scikit-learn/scikit-learn/pull/29486#issuecomment-2242359516
-            "meson": "<1.5",
         },
         # TODO: put cython, threadpoolctl and meson-python back to conda
         # dependencies when required version is available on the main channel
