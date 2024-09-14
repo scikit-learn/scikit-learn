@@ -40,6 +40,8 @@ from sklearn.linear_model import (
     RidgeClassifierCV,
     RidgeCV,
 )
+from sklearn.metrics._regression import mean_squared_error
+from sklearn.metrics._scorer import make_scorer
 from sklearn.model_selection import (
     FixedThresholdClassifier,
     GridSearchCV,
@@ -882,7 +884,8 @@ def test_metadata_is_routed_correctly_to_splitter(metaestimator):
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
 def test_metadata_routed_to_group_splitter(metaestimator):
     """Test that groups are routed correctly if group splitter of CV estimator is used
-    within cross_validate."""
+    within cross_validate. Regression test for issue #29634 to test that
+    `ValueError: The 'groups' parameter should not be None.` is not raised."""
 
     if "cv_routing_methods" not in metaestimator:
         # This test is only for metaestimators accepting a CV splitter
@@ -902,4 +905,5 @@ def test_metadata_routed_to_group_splitter(metaestimator):
         y_,
         params={"groups": groups},
         cv=GroupKFold(n_splits=2),
+        scoring=make_scorer(mean_squared_error, response_method="predict"),
     )
