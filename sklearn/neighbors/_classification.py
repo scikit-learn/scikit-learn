@@ -8,7 +8,9 @@ from numbers import Integral
 
 import numpy as np
 
+from sklearn.neighbors._ball_tree import BallTree
 from sklearn.neighbors._base import _check_precomputed
+from sklearn.neighbors._kd_tree import KDTree
 
 from ..base import ClassifierMixin, _fit_context
 from ..metrics._pairwise_distances_reduction import (
@@ -253,6 +255,9 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
             Class labels for each data sample.
         """
         check_is_fitted(self, "_fit_method")
+        if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
+            X = validate_data(self, X, accept_sparse="csr", order="C", reset=False)
+
         if self.weights == "uniform":
             if self._fit_method == "brute" and ArgKminClassMode.is_usable_for(
                 X, self._fit_X, self.metric

@@ -87,9 +87,6 @@ def _yield_api_checks(estimator):
     yield check_fit_score_takes_y
     yield check_estimators_overwrite_params
     yield check_do_not_raise_errors_in_init_or_set_params
-
-
-def _yield_dataframe_checks(estimator):
     yield check_n_features_in_after_fitting
 
 
@@ -335,7 +332,7 @@ def _yield_array_api_checks(estimator):
         )
 
 
-def _yield_all_checks(estimator, dataframe: bool, legacy: bool):
+def _yield_all_checks(estimator, legacy: bool):
     name = estimator.__class__.__name__
     tags = get_tags(estimator)
     if not tags.input_tags.two_d_array:
@@ -355,10 +352,6 @@ def _yield_all_checks(estimator, dataframe: bool, legacy: bool):
 
     for check in _yield_api_checks(estimator):
         yield check
-
-    if dataframe:
-        for check in _yield_dataframe_checks(estimator):
-            yield check
 
     if not legacy:
         return  # pragma: no cover
@@ -452,7 +445,7 @@ def _should_be_skipped_or_marked(estimator, check):
     return False, "placeholder reason that will never be used"
 
 
-def parametrize_with_checks(estimators, *, dataframe: bool = True, legacy: bool = True):
+def parametrize_with_checks(estimators, *, legacy: bool = True):
     """Pytest specific decorator for parametrizing estimator checks.
 
     Checks are categorised into the following groups:
@@ -529,9 +522,7 @@ def parametrize_with_checks(estimators, *, dataframe: bool = True, legacy: bool 
             # of the checks to run
             name = type(estimator).__name__
             yield estimator, partial(check_estimator_cloneable, name)
-            for check in _yield_all_checks(
-                estimator, dataframe=dataframe, legacy=legacy
-            ):
+            for check in _yield_all_checks(estimator, legacy=legacy):
                 check_with_name = partial(check, name)
                 for check_instance in _yield_instances_for_check(check, estimator):
                     yield _maybe_mark_xfail(check_instance, check_with_name, pytest)
@@ -541,9 +532,7 @@ def parametrize_with_checks(estimators, *, dataframe: bool = True, legacy: bool 
     )
 
 
-def check_estimator(
-    estimator=None, generate_only=False, *, dataframe: bool = True, legacy: bool = True
-):
+def check_estimator(estimator=None, generate_only=False, *, legacy: bool = True):
     """Check if estimator adheres to scikit-learn conventions.
 
     This function will run an extensive test-suite for input validation,
@@ -631,7 +620,7 @@ def check_estimator(
         # we first need to check if the estimator is cloneable for the rest of the tests
         # to run
         yield estimator, partial(check_estimator_cloneable, name)
-        for check in _yield_all_checks(estimator, dataframe=dataframe, legacy=legacy):
+        for check in _yield_all_checks(estimator, legacy=legacy):
             check = _maybe_skip(estimator, check)
             for check_instance in _yield_instances_for_check(check, estimator):
                 yield check_instance, partial(check, name)
