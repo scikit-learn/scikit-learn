@@ -1,5 +1,11 @@
 """
-Logistic Regression
+Logistic Regression(aka logit,MaxEnt) classifier.
+
+For a detailed example of how to use logistic reression,see:
+:ref:`sphx_glr_auto_examples_linear_model_plot_logistic.py`
+
+For more information, refer to the user guide:
+https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
 """
 
 # Authors: The scikit-learn developers
