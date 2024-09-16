@@ -3,7 +3,6 @@
 set -e
 set -x
 
-# Note: build_wheels.sh has the same branch (only for NumPy 2.0 transition)
 if [[ "$GITHUB_EVENT_NAME" == "schedule" \
         || "$GITHUB_EVENT_NAME" == "workflow_dispatch" \
         || "$CIRRUS_CRON" == "nightly" ]]; then

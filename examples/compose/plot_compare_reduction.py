@@ -20,9 +20,8 @@ fitting of a transformer is costly.
 
 """
 
-# Authors: Robert McGibbon
-#          Joel Nothman
-#          Guillaume Lemaitre
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Illustration of ``Pipeline`` and ``GridSearchCV``

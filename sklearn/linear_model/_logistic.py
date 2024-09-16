@@ -2,13 +2,8 @@
 Logistic Regression
 """
 
-# Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
-#         Fabian Pedregosa <f@bianp.net>
-#         Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
-#         Manoj Kumar <manojkumarsivaraj334@gmail.com>
-#         Lars Buitinck
-#         Simon Wu <s8wu@uwaterloo.ca>
-#         Arthur Mensch <arthur.mensch@m4x.org
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numbers
 import warnings
@@ -49,6 +44,7 @@ from ..utils.validation import (
     _check_method_params,
     _check_sample_weight,
     check_is_fitted,
+    validate_data,
 )
 from ._base import BaseEstimator, LinearClassifierMixin, SparseCoefMixin
 from ._glm.glm import NewtonCholeskySolver
@@ -318,14 +314,14 @@ def _logistic_regression_path(
         w0 = np.zeros(n_features + int(fit_intercept), dtype=X.dtype)
         mask = y == pos_class
         y_bin = np.ones(y.shape, dtype=X.dtype)
-        if solver in ["lbfgs", "newton-cg", "newton-cholesky"]:
+        if solver == "liblinear":
+            mask_classes = np.array([-1, 1])
+            y_bin[~mask] = -1.0
+        else:
             # HalfBinomialLoss, used for those solvers, represents y in [0, 1] instead
             # of in [-1, 1].
             mask_classes = np.array([0, 1])
             y_bin[~mask] = 0.0
-        else:
-            mask_classes = np.array([-1, 1])
-            y_bin[~mask] = -1.0
 
         # for compute_class_weight
         if class_weight == "balanced":
@@ -741,9 +737,11 @@ def _log_reg_scoring_path(
     y_train = y[train]
     y_test = y[test]
 
+    sw_train, sw_test = None, None
     if sample_weight is not None:
         sample_weight = _check_sample_weight(sample_weight, X)
-        sample_weight = sample_weight[train]
+        sw_train = sample_weight[train]
+        sw_test = sample_weight[test]
 
     coefs, Cs, n_iter = _logistic_regression_path(
         X_train,
@@ -764,7 +762,7 @@ def _log_reg_scoring_path(
         random_state=random_state,
         check_input=False,
         max_squared_sum=max_squared_sum,
-        sample_weight=sample_weight,
+        sample_weight=sw_train,
     )
 
     log_reg = LogisticRegression(solver=solver, multi_class=multi_class)
@@ -798,12 +796,11 @@ def _log_reg_scoring_path(
             log_reg.intercept_ = 0.0
 
         if scoring is None:
-            scores.append(log_reg.score(X_test, y_test))
+            scores.append(log_reg.score(X_test, y_test, sample_weight=sw_test))
         else:
             score_params = score_params or {}
             score_params = _check_method_params(X=X, params=score_params, indices=test)
             scores.append(scoring(log_reg, X_test, y_test, **score_params))
-
     return coefs, Cs, np.array(scores), n_iter
 
 
@@ -1220,7 +1217,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         else:
             _dtype = [np.float64, np.float32]
 
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse="csr",
@@ -1865,7 +1863,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
             l1_ratios_ = [None]
 
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse="csr",
@@ -2269,15 +2268,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             )
         )
         return router
-
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            }
-        }
 
     def _get_scorer(self):
         """Get the scorer based on the scoring method specified.

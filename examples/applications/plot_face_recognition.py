@@ -12,6 +12,9 @@ The dataset used in this example is a preprocessed excerpt of the
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 from time import time
 

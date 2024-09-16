@@ -1279,7 +1279,7 @@ class LeaveOneGroupOut(GroupsConsumerMixin, BaseCrossValidator):
 
     Provides train/test indices to split data such that each training set is
     comprised of all samples except ones belonging to one specific group.
-    Arbitrary domain specific group information is provided an array integers
+    Arbitrary domain specific group information is provided as an array of integers
     that encodes the group of each sample.
 
     For instance the groups could be the year of collection of the samples
@@ -1932,8 +1932,9 @@ class ShuffleSplit(_UnsupportedGroupCVMixin, BaseShuffleSplit):
     Yields indices to split data into training and test sets.
 
     Note: contrary to other cross-validation strategies, random splits
-    do not guarantee that all folds will be different, although this is
-    still very likely for sizeable datasets.
+    do not guarantee that test sets across all folds will be mutually exclusive,
+    and might include overlapping samples. However, this is still very likely for
+    sizeable datasets.
 
     Read more in the :ref:`User Guide <ShuffleSplit>`.
 
@@ -2040,17 +2041,22 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
     For instance the groups could be the year of collection of the samples
     and thus allow for cross-validation against time-based splits.
 
-    The difference between LeavePGroupsOut and GroupShuffleSplit is that
+    The difference between :class:`LeavePGroupsOut` and ``GroupShuffleSplit`` is that
     the former generates splits using all subsets of size ``p`` unique groups,
-    whereas GroupShuffleSplit generates a user-determined number of random
+    whereas ``GroupShuffleSplit`` generates a user-determined number of random
     test splits, each with a user-determined fraction of unique groups.
 
     For example, a less computationally intensive alternative to
     ``LeavePGroupsOut(p=10)`` would be
     ``GroupShuffleSplit(test_size=10, n_splits=100)``.
 
+    Contrary to other cross-validation strategies, the random splits
+    do not guarantee that test sets across all folds will be mutually exclusive,
+    and might include overlapping samples. However, this is still very likely for
+    sizeable datasets.
+
     Note: The parameters ``test_size`` and ``train_size`` refer to groups, and
-    not to samples, as in ShuffleSplit.
+    not to samples as in :class:`ShuffleSplit`.
 
     Read more in the :ref:`User Guide <group_shuffle_split>`.
 
@@ -2063,14 +2069,12 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
     n_splits : int, default=5
         Number of re-shuffling & splitting iterations.
 
-    test_size : float, int, default=0.2
+    test_size : float, int, default=None
         If float, should be between 0.0 and 1.0 and represent the proportion
         of groups to include in the test split (rounded up). If int,
         represents the absolute number of test groups. If None, the value is
-        set to the complement of the train size.
-        The default will change in version 0.21. It will remain 0.2 only
-        if ``train_size`` is unspecified, otherwise it will complement
-        the specified ``train_size``.
+        set to the complement of the train size. If ``train_size`` is also None,
+        it will be set to 0.2.
 
     train_size : float or int, default=None
         If float, should be between 0.0 and 1.0 and represent the
@@ -2178,13 +2182,14 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
     Provides train/test indices to split data in train/test sets.
 
-    This cross-validation object is a merge of StratifiedKFold and
-    ShuffleSplit, which returns stratified randomized folds. The folds
+    This cross-validation object is a merge of :class:`StratifiedKFold` and
+    :class:`ShuffleSplit`, which returns stratified randomized folds. The folds
     are made by preserving the percentage of samples for each class.
 
-    Note: like the ShuffleSplit strategy, stratified random splits
-    do not guarantee that all folds will be different, although this is
-    still very likely for sizeable datasets.
+    Note: like the :class:`ShuffleSplit` strategy, stratified random splits
+    do not guarantee that test sets across all folds will be mutually exclusive,
+    and might include overlapping samples. However, this is still very likely for
+    sizeable datasets.
 
     Read more in the :ref:`User Guide <stratified_shuffle_split>`.
 
@@ -2935,7 +2940,7 @@ def _build_repr(self):
                 value = getattr(self, key, None)
                 if value is None and hasattr(self, "cvargs"):
                     value = self.cvargs.get(key, None)
-            if len(w) and w[0].category == FutureWarning:
+            if len(w) and w[0].category is FutureWarning:
                 # if the parameter is deprecated, don't show it
                 continue
         finally:

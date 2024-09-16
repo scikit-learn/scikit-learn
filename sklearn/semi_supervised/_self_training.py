@@ -15,7 +15,7 @@ from ..utils.metadata_routing import (
     process_routing,
 )
 from ..utils.metaestimators import available_if
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, validate_data
 
 __all__ = ["SelfTrainingClassifier"]
 
@@ -282,8 +282,12 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
         # we need row slicing support for sparse matrices, but costly finiteness check
         # can be delegated to the base estimator.
-        X, y = self._validate_data(
-            X, y, accept_sparse=["csr", "csc", "lil", "dok"], force_all_finite=False
+        X, y = validate_data(
+            self,
+            X,
+            y,
+            accept_sparse=["csr", "csc", "lil", "dok"],
+            ensure_all_finite=False,
         )
 
         if y.dtype.kind in ["U", "S"]:
@@ -412,10 +416,11 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         else:
             routed_params = Bunch(estimator=Bunch(predict={}))
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=True,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
         return self.estimator_.predict(X, **routed_params.estimator.predict)
@@ -454,10 +459,11 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         else:
             routed_params = Bunch(estimator=Bunch(predict_proba={}))
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=True,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
         return self.estimator_.predict_proba(X, **routed_params.estimator.predict_proba)
@@ -496,10 +502,11 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         else:
             routed_params = Bunch(estimator=Bunch(decision_function={}))
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=True,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
         return self.estimator_.decision_function(
@@ -540,10 +547,11 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         else:
             routed_params = Bunch(estimator=Bunch(predict_log_proba={}))
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=True,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
         return self.estimator_.predict_log_proba(
@@ -586,10 +594,11 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         else:
             routed_params = Bunch(estimator=Bunch(score={}))
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=True,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
         return self.estimator_.score(X, y, **routed_params.estimator.score)

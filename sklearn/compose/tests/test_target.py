@@ -10,7 +10,7 @@ from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import LinearRegression, OrthogonalMatchingPursuit
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
-from sklearn.utils._testing import assert_allclose, assert_no_warnings
+from sklearn.utils._testing import assert_allclose
 
 friedman = datasets.make_friedman1(random_state=0)
 
@@ -66,17 +66,17 @@ def test_transform_target_regressor_invertible():
     )
     with pytest.warns(
         UserWarning,
-        match=(
-            "The provided functions or"
-            " transformer are not strictly inverse of each other."
-        ),
+        match=(r"The provided functions.* are not strictly inverse of each other"),
     ):
         regr.fit(X, y)
     regr = TransformedTargetRegressor(
         regressor=LinearRegression(), func=np.sqrt, inverse_func=np.log
     )
     regr.set_params(check_inverse=False)
-    assert_no_warnings(regr.fit, X, y)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        regr.fit(X, y)
 
 
 def _check_standard_scaled(y, y_pred):

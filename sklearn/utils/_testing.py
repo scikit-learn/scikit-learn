@@ -2,6 +2,7 @@
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
+
 import atexit
 import contextlib
 import functools
@@ -13,14 +14,17 @@ import re
 import shutil
 import sys
 import tempfile
+import textwrap
 import unittest
 import warnings
+from collections import defaultdict, namedtuple
 from collections.abc import Iterable
 from dataclasses import dataclass
+from difflib import context_diff
 from functools import wraps
 from inspect import signature
+from itertools import chain, groupby
 from subprocess import STDOUT, CalledProcessError, TimeoutExpired, check_output
-from unittest import TestCase
 
 import joblib
 import numpy as np
@@ -28,11 +32,9 @@ import scipy as sp
 from numpy.testing import assert_allclose as np_assert_allclose
 from numpy.testing import (
     assert_almost_equal,
-    assert_approx_equal,
     assert_array_almost_equal,
     assert_array_equal,
     assert_array_less,
-    assert_no_warnings,
 )
 
 import sklearn
@@ -52,29 +54,16 @@ from sklearn.utils.validation import (
 )
 
 __all__ = [
-    "assert_raises",
-    "assert_raises_regexp",
     "assert_array_equal",
     "assert_almost_equal",
     "assert_array_almost_equal",
     "assert_array_less",
-    "assert_approx_equal",
     "assert_allclose",
     "assert_run_python_script_without_output",
-    "assert_no_warnings",
     "SkipTest",
 ]
 
-_dummy = TestCase("__init__")
-assert_raises = _dummy.assertRaises
 SkipTest = unittest.case.SkipTest
-assert_dict_equal = _dummy.assertDictEqual
-
-assert_raises_regex = _dummy.assertRaisesRegex
-# assert_raises_regexp is deprecated in Python 3.4 in favor of
-# assert_raises_regex but lets keep the backward compat in scikit-learn with
-# the old name for now
-assert_raises_regexp = assert_raises_regex
 
 
 def ignore_warnings(obj=None, category=Warning):
@@ -176,48 +165,6 @@ class _IgnoreWarnings:
         self._module.filters = self._filters
         self._module.showwarning = self._showwarning
         self.log[:] = []
-
-
-def assert_raise_message(exceptions, message, function, *args, **kwargs):
-    """Helper function to test the message raised in an exception.
-
-    Given an exception, a callable to raise the exception, and
-    a message string, tests that the correct exception is raised and
-    that the message is a substring of the error thrown. Used to test
-    that the specific message thrown during an exception is correct.
-
-    Parameters
-    ----------
-    exceptions : exception or tuple of exception
-        An Exception object.
-
-    message : str
-        The error message or a substring of the error message.
-
-    function : callable
-        Callable object to raise error.
-
-    *args : the positional arguments to `function`.
-
-    **kwargs : the keyword arguments to `function`.
-    """
-    try:
-        function(*args, **kwargs)
-    except exceptions as e:
-        error_message = str(e)
-        if message not in error_message:
-            raise AssertionError(
-                "Error message does not include the expected"
-                " string: %r. Observed error message: %r" % (message, error_message)
-            )
-    else:
-        # concatenate exception names
-        if isinstance(exceptions, tuple):
-            names = " or ".join(e.__name__ for e in exceptions)
-        else:
-            names = exceptions.__name__
-
-        raise AssertionError("%s not raised by %s" % (names, function.__name__))
 
 
 def assert_allclose(
@@ -662,6 +609,207 @@ def check_docstring_parameters(func, doc=None, ignore=None):
     return incorrect
 
 
+def _check_item_included(item_name, args):
+    """Helper to check if item should be included in checking."""
+    if args.include is not True and item_name not in args.include:
+        return False
+    if args.exclude is not None and item_name in args.exclude:
+        return False
+    return True
+
+
+def _diff_key(line):
+    """Key for grouping output from `context_diff`."""
+    if line.startswith("  "):
+        return "  "
+    elif line.startswith("- "):
+        return "- "
+    elif line.startswith("+ "):
+        return "+ "
+    elif line.startswith("! "):
+        return "! "
+    return None
+
+
+def _get_diff_msg(docstrings_grouped):
+    """Get message showing the difference between type/desc docstrings of all objects.
+
+    `docstrings_grouped` keys should be the type/desc docstrings and values are a list
+    of objects with that docstring. Objects with the same type/desc docstring are
+    thus grouped together.
+    """
+    msg_diff = ""
+    ref_str = ""
+    ref_group = []
+    for docstring, group in docstrings_grouped.items():
+        if not ref_str and not ref_group:
+            ref_str += docstring
+            ref_group.extend(group)
+        diff = list(
+            context_diff(
+                ref_str.split(),
+                docstring.split(),
+                fromfile=str(ref_group),
+                tofile=str(group),
+                n=8,
+            )
+        )
+        # Add header
+        msg_diff += "".join((diff[:3]))
+        # Group consecutive 'diff' words to shorten error message
+        for start, group in groupby(diff[3:], key=_diff_key):
+            if start is None:
+                msg_diff += "\n" + "\n".join(group)
+            else:
+                msg_diff += "\n" + start + " ".join(word[2:] for word in group)
+        # Add new lines at end of diff, to separate comparisons
+        msg_diff += "\n\n"
+    return msg_diff
+
+
+def _check_consistency_items(items_docs, type_or_desc, section, n_objects):
+    """Helper to check docstring consistency of all `items_docs`.
+
+    If item is not present in all objects, checking is skipped and warning raised.
+    """
+    skipped = []
+    for item_name, docstrings_grouped in items_docs.items():
+        # If item not found in all objects, skip
+        if sum([len(objs) for objs in docstrings_grouped.values()]) < n_objects:
+            skipped.append(item_name)
+        # If more than one key, docstrings not consistent between objects
+        elif len(docstrings_grouped.keys()) > 1:
+            msg_diff = _get_diff_msg(docstrings_grouped)
+            obj_groups = " and ".join(
+                str(group) for group in docstrings_grouped.values()
+            )
+            msg = textwrap.fill(
+                f"The {type_or_desc} of {section[:-1]} '{item_name}' is inconsistent "
+                f"between {obj_groups}:"
+            )
+            msg += msg_diff
+            raise AssertionError(msg)
+    if skipped:
+        warnings.warn(
+            f"Checking was skipped for {section}: {skipped} as they were "
+            "not found in all objects."
+        )
+
+
+def assert_docstring_consistency(
+    objects,
+    include_params=False,
+    exclude_params=None,
+    include_attrs=False,
+    exclude_attrs=None,
+    include_returns=False,
+    exclude_returns=None,
+):
+    """Check consistency between docstring parameters/attributes/returns of objects.
+
+    Checks if parameters/attributes/returns have the same type specification and
+    description (ignoring whitespace) across `objects`. Intended to be used for
+    related classes/functions/data descriptors.
+
+    Entries that do not appear across all `objects` are ignored.
+
+    Parameters
+    ----------
+    objects : list of {classes, functions, data descriptors}
+        Objects to check.
+        Objects may be classes, functions or data descriptors with docstrings that
+        can be parsed by numpydoc.
+
+    include_params : list of str or bool, default=False
+        List of parameters to be included. If True, all parameters are included,
+        if False, checking is skipped for parameters.
+        Can only be set if `exclude_params` is None.
+
+    exclude_params : list of str or None, default=None
+        List of parameters to be excluded. If None, no parameters are excluded.
+        Can only be set if `include_params` is True.
+
+    include_attrs : list of str or bool, default=False
+        List of attributes to be included. If True, all attributes are included,
+        if False, checking is skipped for attributes.
+        Can only be set if `exclude_attrs` is None.
+
+    exclude_attrs : list of str or None, default=None
+        List of attributes to be excluded. If None, no attributes are excluded.
+        Can only be set if `include_attrs` is True.
+
+    include_returns : list of str or bool, default=False
+        List of returns to be included. If True, all returns are included,
+        if False, checking is skipped for returns.
+        Can only be set if `exclude_returns` is None.
+
+    exclude_returns : list of str or None, default=None
+        List of returns to be excluded. If None, no returns are excluded.
+        Can only be set if `include_returns` is True.
+
+    Examples
+    --------
+    >>> from sklearn.metrics import (mean_absolute_error, mean_squared_error,
+    ... median_absolute_error)
+    >>> from sklearn.utils.testing import assert_docstring_consistency
+    ... # doctest: +SKIP
+    >>> assert_docstring_consistency([mean_absolute_error, mean_squared_error],
+    ... include_params=['y_true', 'y_pred', 'sample_weight'])  # doctest: +SKIP
+    >>> assert_docstring_consistency([median_absolute_error, mean_squared_error],
+    ... include_params=True)  # doctest: +SKIP
+    """
+    from numpydoc import docscrape
+
+    Args = namedtuple("args", ["include", "exclude", "arg_name"])
+
+    def _create_args(include, exclude, arg_name, section_name):
+        if exclude and include is not True:
+            raise TypeError(
+                f"The 'exclude_{arg_name}' argument can be set only when the "
+                f"'include_{arg_name}' argument is True."
+            )
+        if include is False:
+            return {}
+        return {section_name: Args(include, exclude, arg_name)}
+
+    section_args = {
+        **_create_args(include_params, exclude_params, "params", "Parameters"),
+        **_create_args(include_attrs, exclude_attrs, "attrs", "Attributes"),
+        **_create_args(include_returns, exclude_returns, "returns", "Returns"),
+    }
+
+    objects_doc = dict()
+    for obj in objects:
+        if (
+            inspect.isdatadescriptor(obj)
+            or inspect.isfunction(obj)
+            or inspect.isclass(obj)
+        ):
+            objects_doc[obj.__name__] = docscrape.NumpyDocString(inspect.getdoc(obj))
+        else:
+            raise TypeError(
+                "All 'objects' must be one of: function, class or descriptor, "
+                f"got a: {type(obj)}."
+            )
+
+    n_objects = len(objects)
+    for section, args in section_args.items():
+        type_items = defaultdict(lambda: defaultdict(list))
+        desc_items = defaultdict(lambda: defaultdict(list))
+        for obj_name, obj_doc in objects_doc.items():
+            for item_name, type_def, desc in obj_doc[section]:
+                if _check_item_included(item_name, args):
+                    # Normalize white space
+                    type_def = " ".join(type_def.strip().split())
+                    desc = " ".join(chain.from_iterable(line.split() for line in desc))
+                    # Use string type/desc as key, to group consistent objs together
+                    type_items[item_name][type_def].append(obj_name)
+                    desc_items[item_name][desc].append(obj_name)
+
+        _check_consistency_items(type_items, "type specification", section, n_objects)
+        _check_consistency_items(desc_items, "description", section, n_objects)
+
+
 def assert_run_python_script_without_output(source_code, pattern=".+", timeout=60):
     """Utility to check assertions in an independent Python subprocess.
 
@@ -1081,7 +1229,7 @@ def _array_api_for_tests(array_namespace, device):
                 "MPS is not available because the current PyTorch install was not "
                 "built with MPS enabled."
             )
-    elif array_namespace in {"cupy", "cupy.array_api"}:  # pragma: nocover
+    elif array_namespace == "cupy":  # pragma: nocover
         import cupy
 
         if cupy.cuda.runtime.getDeviceCount() == 0:
