@@ -2011,7 +2011,6 @@ def check_array_api_metric_pairwise(metric, array_namespace, device, dtype_name)
 
 
 array_api_metric_checkers = {
-    # classification
     accuracy_score: [
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
@@ -2032,7 +2031,6 @@ array_api_metric_checkers = {
         check_array_api_multiclass_classification_metric,
         check_array_api_multilabel_classification_metric,
     ],
-    # regression
     mean_tweedie_deviance: [check_array_api_regression_metric],
     partial(mean_tweedie_deviance, power=-0.5): [check_array_api_regression_metric],
     partial(mean_tweedie_deviance, power=1.5): [check_array_api_regression_metric],
@@ -2052,7 +2050,6 @@ array_api_metric_checkers = {
     d2_tweedie_score: [
         check_array_api_regression_metric,
     ],
-    # pairwise
     paired_cosine_distances: [check_array_api_metric_pairwise],
     mean_poisson_deviance: [check_array_api_regression_metric],
     additive_chi2_kernel: [check_array_api_metric_pairwise],
