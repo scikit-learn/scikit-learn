@@ -450,10 +450,10 @@ def parametrize_with_checks(estimators, *, legacy: bool = True):
 
     Checks are categorised into the following groups:
 
-        - API checks: a set of checks to ensure API compatibility with scikit-learn.
-          Refer to https://scikit-learn.org/dev/developers/develop.html a requirement of
-          scikit-learn estimators.
-        - legacy: a set of checks which gradually will be grouped into other categories.
+    - API checks: a set of checks to ensure API compatibility with scikit-learn.
+      Refer to https://scikit-learn.org/dev/developers/develop.html a requirement of
+      scikit-learn estimators.
+    - legacy: a set of checks which gradually will be grouped into other categories.
 
     The `id` of each check is set to be a pprint version of the estimator
     and the name of the check with its keyword arguments.
@@ -546,10 +546,10 @@ def check_estimator(estimator=None, generate_only=False, *, legacy: bool = True)
 
     Checks are categorised into the following groups:
 
-        - API checks: a set of checks to ensure API compatibility with scikit-learn.
-          Refer to https://scikit-learn.org/dev/developers/develop.html a requirement of
-          scikit-learn estimators.
-        - legacy: a set of checks which gradually will be grouped into other categories.
+    - API checks: a set of checks to ensure API compatibility with scikit-learn.
+      Refer to https://scikit-learn.org/dev/developers/develop.html a requirement of
+      scikit-learn estimators.
+    - legacy: a set of checks which gradually will be grouped into other categories.
 
     Parameters
     ----------

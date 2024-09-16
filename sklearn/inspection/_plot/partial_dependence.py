@@ -38,7 +38,7 @@ class PartialDependenceDisplay:
     :ref:`sphx_glr_auto_examples_miscellaneous_plot_partial_dependence_visualization_api.py`
     and the :ref:`User Guide <partial_dependence>`.
 
-        .. versionadded:: 0.22
+    .. versionadded:: 0.22
 
     Parameters
     ----------
@@ -478,10 +478,10 @@ class PartialDependenceDisplay:
             - ``kind='average'`` results in the traditional PD plot;
             - ``kind='individual'`` results in the ICE plot.
 
-           Note that the fast `method='recursion'` option is only available for
-           `kind='average'` and `sample_weights=None`. Computing individual
-           dependencies and doing weighted averages requires using the slower
-           `method='brute'`.
+            Note that the fast `method='recursion'` option is only available for
+            `kind='average'` and `sample_weights=None`. Computing individual
+            dependencies and doing weighted averages requires using the slower
+            `method='brute'`.
 
         centered : bool, default=False
             If `True`, the ICE and PD lines will start at the origin of the
