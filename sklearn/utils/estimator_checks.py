@@ -1129,17 +1129,12 @@ def check_sample_weights_invariance(name, estimator_orig):
     set_random_state(estimator_repeated, random_state=0)
 
     rng = np.random.RandomState(0)
-    X = rng.randint(0, 10, size=(100, 3), dtype=np.float64)
-    y = rng.randint(1, 3, size=100)
- 
-
-    # Construct a dataset that is very different to (X, y) if weights
-    # are disregarded, but identical to (X, y) for nonzero weights.
-    X_weigthed = X  # we can give them this
-    y_weighted = y  # name directly
+    X = rng.rand(30, 2)
+    y = rng.randint(1, 3, size=30)
     # random integers (including zero) weights
-    rng = np.random.RandomState(0)
-    sw = rng.randint(0, 4, size=len(y_weighted))
+    sw = rng.randint(0, 4, size=30)
+    X_weigthed = X
+    y_weighted = y
     # repeat samples according to weights
     X_repeated = X_weigthed.repeat(repeats=sw, axis=0)
     y_repeated = y_weighted.repeat(repeats=sw)
