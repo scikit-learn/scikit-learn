@@ -473,13 +473,6 @@ def parametrize_with_checks(estimators, *, legacy: bool = True):
         .. versionadded:: 0.24
 
 
-    dataframe : bool, default=True
-        Whether to included checks related to inspecting feature counts and feature
-        names. Theese checks might include `polars` or `pandas` to be installed, and are
-        automatically skipped if otherwise.
-
-        .. versionadded:: 1.6
-
     legacy : bool, default=True
         Whether to include legacy checks. Over time we remove checks from this category
         and move them into their specific category.
@@ -574,13 +567,6 @@ def check_estimator(estimator=None, generate_only=False, *, legacy: bool = True)
         `check(estimator)`.
 
         .. versionadded:: 0.22
-
-    dataframe : bool, default=True
-        Whether to included checks related to inspecting feature counts and feature
-        names. Theese checks might include `polars` or `pandas` to be installed, and are
-        automatically skipped if otherwise.
-
-        .. versionadded:: 1.6
 
     legacy : bool, default=True
         Whether to include legacy checks. Over time we remove checks from this category
@@ -2026,13 +2012,15 @@ def check_estimators_partial_fit_n_features(name, estimator_orig):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_classifier_multioutput(name, estimator):
+def check_classifier_multioutput(name, estimator_orig):
     n_samples, n_labels, n_classes = 42, 5, 3
-    tags = get_tags(estimator)
-    estimator = clone(estimator)
+    tags = get_tags(estimator_orig)
+    estimator = clone(estimator_orig)
     X, y = make_multilabel_classification(
         random_state=42, n_samples=n_samples, n_labels=n_labels, n_classes=n_classes
     )
+    X = _enforce_estimator_tags_X(estimator, X)
+    y = _enforce_estimator_tags_y(estimator, y)
     estimator.fit(X, y)
     y_pred = estimator.predict(X)
 
@@ -2191,13 +2179,16 @@ def check_clusterer_compute_labels_predict(name, clusterer_orig):
 def check_classifiers_one_label(name, classifier_orig):
     error_string_fit = "Classifier can't train when only one class is present."
     error_string_predict = "Classifier can't predict when only one class is present."
+    classifier = clone(classifier_orig)
     rnd = np.random.RandomState(0)
     X_train = rnd.uniform(size=(10, 3))
+    X_train = _enforce_estimator_tags_X(classifier, X_train)
     X_test = rnd.uniform(size=(10, 3))
+    X_test = _enforce_estimator_tags_X(classifier, X_test)
     y = np.ones(10)
+    y = _enforce_estimator_tags_y(classifier, y)
     # catch deprecation warnings
     with ignore_warnings(category=FutureWarning):
-        classifier = clone(classifier_orig)
         with raises(
             ValueError, match="class", may_pass=True, err_msg=error_string_fit
         ) as cm:
@@ -2522,6 +2513,7 @@ def check_classifiers_multilabel_representation_invariance(name, classifier_orig
 
     X_train, y_train = X[:80], y[:80]
     X_test = X[80:]
+    X_train, X_test = _enforce_estimator_tags_X(classifier_orig, X_train, X_test=X_test)
 
     y_train_list_of_lists = y_train.tolist()
     y_train_list_of_arrays = list(y_train)
@@ -2569,6 +2561,7 @@ def check_classifiers_multilabel_output_format_predict(name, classifier_orig):
 
     X_train, X_test = X[:-test_size], X[-test_size:]
     y_train, y_test = y[:-test_size], y[-test_size:]
+    X_train, X_test = _enforce_estimator_tags_X(classifier_orig, X_train, X_test=X_test)
     classifier.fit(X_train, y_train)
 
     response_method_name = "predict"
@@ -2614,6 +2607,7 @@ def check_classifiers_multilabel_output_format_predict_proba(name, classifier_or
 
     X_train, X_test = X[:-test_size], X[-test_size:]
     y_train = y[:-test_size]
+    X_train, X_test = _enforce_estimator_tags_X(classifier_orig, X_train, X_test=X_test)
     classifier.fit(X_train, y_train)
 
     response_method_name = "predict_proba"
@@ -2698,6 +2692,7 @@ def check_classifiers_multilabel_output_format_decision_function(name, classifie
 
     X_train, X_test = X[:-test_size], X[-test_size:]
     y_train = y[:-test_size]
+    X_train, X_test = _enforce_estimator_tags_X(classifier_orig, X_train, X_test=X_test)
     classifier.fit(X_train, y_train)
 
     response_method_name = "decision_function"
@@ -3472,30 +3467,46 @@ def _enforce_estimator_tags_y(estimator, y):
     return y
 
 
-def _enforce_estimator_tags_X(estimator, X, kernel=linear_kernel):
+def _enforce_estimator_tags_X(estimator, X, X_test=None, kernel=linear_kernel):
     # Estimators with `1darray` in `X_types` tag only accept
     # X of shape (`n_samples`,)
     if get_tags(estimator).input_tags.one_d_array:
         X = X[:, 0]
+        if X_test is not None:
+            X_test = X_test[:, 0]
     # Estimators with a `requires_positive_X` tag only accept
     # strictly positive data
     if get_tags(estimator).input_tags.positive_only:
         X = X - X.min()
+        if X_test is not None:
+            X_test = X_test - X_test.min()
     if get_tags(estimator).input_tags.categorical:
         dtype = np.float64 if get_tags(estimator).input_tags.allow_nan else np.int32
         X = np.round((X - X.min())).astype(dtype)
+        if X_test is not None:
+            X_test = np.round((X_test - X_test.min())).astype(dtype)
 
     if estimator.__class__.__name__ == "SkewedChi2Sampler":
         # SkewedChi2Sampler requires X > -skewdness in transform
         X = X - X.min()
+        if X_test is not None:
+            X_test = X_test - X_test.min()
+
+    X_res = X
 
     # Pairwise estimators only accept
     # X of shape (`n_samples`, `n_samples`)
     if _is_pairwise_metric(estimator):
-        X = pairwise_distances(X, metric="euclidean")
+        X_res = pairwise_distances(X, metric="euclidean")
+        if X_test is not None:
+            X_test = pairwise_distances(X_test, X, metric="euclidean")
     elif get_tags(estimator).input_tags.pairwise:
-        X = kernel(X, X)
-    return X
+        X_res = kernel(X, X)
+        if X_test is not None:
+            X_test = kernel(X_test, X)
+    if X_test is not None:
+        return X_res, X_test
+    return X_res
 
 
 @ignore_warnings(category=FutureWarning)

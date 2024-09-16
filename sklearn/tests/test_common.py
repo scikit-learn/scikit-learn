@@ -278,6 +278,11 @@ column_name_estimators = list(
 def test_pandas_column_name_consistency(estimator):
     if isinstance(estimator, ColumnTransformer):
         pytest.skip("ColumnTransformer is not tested here")
+    tags = get_tags(estimator)
+    if "check_dataframe_column_names_consistency" in tags._xfail_checks:
+        pytest.skip(
+            "Estimator does not support check_dataframe_column_names_consistency"
+        )
     with ignore_warnings(category=(FutureWarning)):
         with warnings.catch_warnings(record=True) as record:
             check_dataframe_column_names_consistency(

@@ -7,12 +7,9 @@ import warnings
 
 import numpy as np
 
-from sklearn.neighbors import BallTree, KDTree
-
 from ..base import RegressorMixin, _fit_context
 from ..metrics import DistanceMetric
 from ..utils._param_validation import StrOptions
-from ..utils.validation import validate_data
 from ._base import KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin, _get_weights
 
 
@@ -198,6 +195,13 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         tags = super().__sklearn_tags__()
         # For cross-validation routines to split data correctly
         tags.input_tags.pairwise = self.metric == "precomputed"
+        if tags.input_tags.pairwise:
+            tags._xfail_checks.update(
+                {
+                    "check_n_features_in_after_fitting": "FIXME",
+                    "check_dataframe_column_names_consistency": "FIXME",
+                }
+            )
         return tags
 
     @_fit_context(
@@ -238,8 +242,6 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         y : ndarray of shape (n_queries,) or (n_queries, n_outputs), dtype=int
             Target values.
         """
-        if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
-            X = validate_data(self, X, accept_sparse="csr", order="C", reset=False)
         if self.weights == "uniform":
             # In that case, we do not need the distances to perform
             # the weighting so we do not compute them.
