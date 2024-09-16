@@ -1128,37 +1128,18 @@ def check_sample_weights_invariance(name, estimator_orig):
     set_random_state(estimator_weighted, random_state=0)
     set_random_state(estimator_repeated, random_state=0)
 
-    X = np.array(
-        [
-            [1, 4],
-            [1, 5],
-            [2, 4],
-            [2, 5],
-            [3, 1],
-            [3, 2],
-            [4, 1],
-            [4, 2],
-            [5, 4],
-            [5, 5],
-            [6, 4],
-            [6, 5],
-            [7, 1],
-            [7, 2],
-            [8, 1],
-            [8, 2],
-        ],
-        dtype=np.float64,
-    )
-    y = np.array([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2], dtype=int)
+    rng = np.random.RandomState(0)
+    X = rng.randint(0, 10, size=(100, 3), dtype=np.float64)
+    y = rng.randint(1, 3, size=100)
+ 
 
     # Construct a dataset that is very different to (X, y) if weights
     # are disregarded, but identical to (X, y) for nonzero weights.
-    X_weigthed = np.vstack([X, X + 1])
-    y_weighted = np.hstack([y, 3 - y])
-    # random integers and zero weights
+    X_weigthed = X  # we can give them this
+    y_weighted = y  # name directly
+    # random integers (including zero) weights
     rng = np.random.RandomState(0)
-    sw = rng.randint(1, 4, size=len(y_weighted))
-    sw[len(y) :] = 0
+    sw = rng.randint(0, 4, size=len(y_weighted))
     # repeat samples according to weights
     X_repeated = X_weigthed.repeat(repeats=sw, axis=0)
     y_repeated = y_weighted.repeat(repeats=sw)
