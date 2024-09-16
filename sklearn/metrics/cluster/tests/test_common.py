@@ -10,6 +10,7 @@ from sklearn.metrics.cluster import (
     calinski_harabasz_score,
     completeness_score,
     davies_bouldin_score,
+    dbcv_score,
     fowlkes_mallows_score,
     homogeneity_score,
     mutual_info_score,
@@ -49,6 +50,7 @@ UNSUPERVISED_METRICS = {
     "silhouette_manhattan": partial(silhouette_score, metric="manhattan"),
     "calinski_harabasz_score": calinski_harabasz_score,
     "davies_bouldin_score": davies_bouldin_score,
+    "dbcv_score": dbcv_score,
 }
 
 # Lists of metrics with common properties
@@ -166,7 +168,9 @@ def test_format_invariance(metric_name):
             np.array([str(x) + "-a" for x in y.tolist()], dtype=object),
             "array of strs",
         )
-        yield y - 1, "including negative ints"
+        # workaround: shift values of `-1` to avoid failures for density based metrics
+        # which may intentionally not uphold format invariance for noise points
+        yield [x - 2 if x != 1 else x - 100 for x in y], "including negative ints"
         yield y + 1, "strictly positive ints"
 
     if metric_name in SUPERVISED_METRICS:

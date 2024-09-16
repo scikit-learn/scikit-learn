@@ -5,6 +5,7 @@
 
 
 import functools
+from collections import Counter
 from numbers import Integral
 
 import numpy as np
@@ -19,6 +20,11 @@ from ...utils._param_validation import (
     validate_params,
 )
 from ..pairwise import _VALID_METRICS, pairwise_distances, pairwise_distances_chunked
+from ._dbcv_internals import (
+    _density_separation,
+    _distances_between_points,
+    _internal_minimum_spanning_tree,
+)
 
 
 def check_number_of_labels(n_labels, n_samples):
@@ -462,3 +468,197 @@ def davies_bouldin_score(X, labels):
     combined_intra_dists = intra_dists[:, None] + intra_dists
     scores = np.max(combined_intra_dists / centroid_distances, axis=1)
     return np.mean(scores)
+
+
+@validate_params(
+    {
+        "X": ["array-like"],
+        "labels": ["array-like"],
+        "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
+        "d": [None, int],
+        "per_cluster_scores": ["boolean"],
+        "strict_cluster_size_validation": ["boolean"],
+        "mst_raw_dist": ["boolean"],
+        "verbose": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
+def dbcv_score(
+    X,
+    labels,
+    metric="euclidean",
+    d=None,
+    per_cluster_scores=False,
+    strict_cluster_size_validation=False,
+    mst_raw_dist=False,
+    verbose=False,
+    **kwd_args,
+):
+    """
+    Compute the density based cluster validity index for a clustering.
+
+    Contrary to alternative, more widely used unsupervised clustering
+    metrics, it does not implicitly assume clusters of spherical shape.
+    This is accomplished by circumventing the need for calculating
+    cluster centroids as part of its mathematical definition. Instead,
+    it evaluates the quality of clusters based on the concepts of
+    density separation (highest density area between clusters) and
+    density sparseness (lowest density area within a cluster).
+    These concepts are propped up on the underlying construct of
+    minimum spanning trees, much like the HDBSCAN clustering algorithm.
+    The metric also accounts for noise points as part of its definition.
+    This implementation assumes such points to be labeled with -1.
+
+    The best value that can be returned is 1 and the worst value is -1.
+
+    Parameters
+    ----------
+    X : array-like (n_samples, n_samples) if metric == "precomputed", or \
+        (n_samples, n_features) otherwise
+        An array of pairwise distances between samples, or a feature array.
+
+    labels : array (n_samples)
+        The label array output by the clustering, providing an integral
+        cluster label to each data point, with -1 for noise points.
+
+    metric : str or callable, default='euclidean'
+        The metric used to compute distances for the clustering (and
+        to be re-used in computing distances for mr distance). If
+        set to `precomputed` then X is assumed to be the precomputed
+        distance matrix between samples.
+
+    d : int or None, default=None
+        The number of features (dimension) of the dataset. This need only
+        be set in the case of metric being set to `precomputed`, where
+        the ambient dimension of the data is unknown to the function.
+
+    per_cluster_scores : bool, default=False
+        Whether to return the validity index for individual clusters.
+        Defaults to False with the function returning a single float
+        value for the whole clustering.
+
+    strict_cluster_size_validation : bool, default=False
+        If True, fail fast on cluster sizes for which DBCV is undefined.
+
+    mst_raw_dist : bool, default=False
+        If True, the MST's are constructed solely via 'raw' distances
+        (depending on the given metric, e.g. euclidean distances)
+        instead of using mutual reachability distances.
+        Thus setting this parameter to True avoids using 'all-points-core-distances'.
+
+    verbose : bool, default=False
+        If True additional, informational messages are ommitted via stdout.
+        They specifically relate to the subcomponents from which the mutual
+        reachability distances emerge.
+
+    **kwd_args :
+        Extra arguments to pass to the distance computation for other
+        metrics, such as minkowski, mahanalobis etc.
+
+    Returns
+    -------
+    validity_index : float
+        The density based cluster validity index for the clustering. This
+        is a numeric value between -1 and 1, with higher values indicating
+        a 'better' clustering.
+
+    labels_to_scores : dictionary
+        The cluster validity index of each individual cluster, retrievable by label.
+        The overall validity index is the weighted average of these values.
+        Only returned if per_cluster_scores is set to True.
+
+    References
+    ----------
+    .. [1] `Moulavi, D., Jaskowiak, P.A., Campello, R.J., Zimek, A. and Sander, J.,
+    2014. Density-Based Clustering Validation. In SDM (pp. 839-847).
+    <https://www.dbs.ifi.lmu.de/~zimek/publications/SDM2014/DBCV.pdf>`_
+    """
+
+    X, labels = check_X_y(X, labels)
+    if strict_cluster_size_validation:
+        for label, count in Counter(labels).items():
+            if count > 1 or str(label) == "-1":
+                continue
+
+            raise ValueError("DBCV is not defined for clusters of size 1.")
+
+    le = LabelEncoder()
+    labels = le.fit_transform(labels)
+    cluster_ids = [i for i in range(len(le.classes_)) if str(le.classes_[i]) != "-1"]
+    check_number_of_labels(len(cluster_ids), len(labels))
+    n_labels = len(le.classes_)
+
+    core_distances = {}
+    density_sparseness = {}
+    mst_nodes = {}
+    mst_edges = {}
+
+    density_sep = np.full((n_labels, n_labels), np.inf, dtype=np.float64)
+    labels_to_scores = {}
+
+    for cluster_id in cluster_ids:
+        distances_for_mst, core_distances[cluster_id] = _distances_between_points(
+            X,
+            labels,
+            cluster_id,
+            metric,
+            d,
+            no_coredist=mst_raw_dist,
+            print_max_raw_to_coredist_ratio=verbose,
+            **kwd_args,
+        )
+
+        mst_nodes[cluster_id], mst_edges[cluster_id] = _internal_minimum_spanning_tree(
+            distances_for_mst
+        )
+        density_sparseness[cluster_id] = mst_edges[cluster_id].T[2].max()
+
+    for cluster_id in cluster_ids:
+        internal_nodes_i = mst_nodes[cluster_id]
+        for j in cluster_ids[cluster_ids.index(cluster_id) + 1 :]:
+            internal_nodes_j = mst_nodes[j]
+            density_sep[cluster_id, j] = _density_separation(
+                X,
+                labels,
+                cluster_id,
+                j,
+                internal_nodes_i,
+                internal_nodes_j,
+                core_distances[cluster_id],
+                core_distances[j],
+                metric=metric,
+                no_coredist=mst_raw_dist,
+                **kwd_args,
+            )
+            density_sep[j, cluster_id] = density_sep[cluster_id, j]
+
+    result = 0
+
+    for cluster_id in cluster_ids:
+        min_density_sep = density_sep[cluster_id].min()
+        if min_density_sep == 0.0:
+            raise ValueError(
+                "Aborting aggregation of scores of subcomponents: "
+                "the density separation between cluster "
+                f"{le.classes_[cluster_id]} and cluster "
+                f"{le.classes_[density_sep[cluster_id].argmin()]} "
+                "is zero, leading to an overall score which is undefined."
+            )
+
+        labels_to_scores[le.classes_[cluster_id]] = (
+            min_density_sep - density_sparseness[cluster_id]
+        ) / max(min_density_sep, density_sparseness[cluster_id])
+
+        if verbose:
+            print(f"Minimum density separation: {min_density_sep:.3f}")
+            print(f"Density sparseness: {density_sparseness[cluster_id]:.3f}")
+
+        cluster_size = np.sum(labels == cluster_id)
+        result += (cluster_size / float(X.shape[0])) * labels_to_scores[
+            le.classes_[cluster_id]
+        ]
+
+    if per_cluster_scores:
+        return result, labels_to_scores
+    else:
+        return result
