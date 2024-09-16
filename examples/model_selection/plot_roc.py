@@ -211,7 +211,7 @@ print(f"Micro-averaged One-vs-Rest ROC AUC score:\n{roc_auc['micro']:.2f}")
 #
 # Obtaining the macro-average requires computing the metric independently for
 # each class and then taking the average over them, hence treating all classes
-# equally a priority. We first aggregate the true/false positive rates per class:
+# equally a priori. We first aggregate the true/false positive rates per class:
 #
 # :math:`TPR=\frac{1}{C}\sum_{c}\frac{TP_c}{TP_c + FN_c}` ;
 #
