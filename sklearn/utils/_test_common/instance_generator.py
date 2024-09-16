@@ -484,6 +484,20 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     Birch: {"check_dict_unchanged": dict(n_clusters=1)},
     BisectingKMeans: {"check_dict_unchanged": dict(max_iter=5, n_clusters=1, n_init=2)},
     CCA: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
+    DecisionTreeRegressor: {
+        "check_sample_weights_invariance": [
+            dict(criterion="squared_error"),
+            dict(criterion="absolute_error"),
+            dict(criterion="friedman_mse"),
+            dict(criterion="poisson"),
+        ],
+        "check_unit_sample_weights": [
+            dict(criterion="squared_error"),
+            dict(criterion="absolute_error"),
+            dict(criterion="friedman_mse"),
+            dict(criterion="poisson"),
+        ],
+    },
     DictionaryLearning: {
         "check_dict_unchanged": dict(
             max_iter=20, n_components=1, transform_algorithm="lasso_lars"
