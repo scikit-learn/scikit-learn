@@ -313,6 +313,15 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
                 "feature_importances_ attribute"
             ) from e
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_sample_weights_invariance": (
+                "sample_weight is not equivalent to removing/repeating samples."
+            ),
+        }
+        return tags
+
 
 def _samme_proba(estimator, n_classes, X):
     """Calculate algorithm 4, step 2, equation c) of Zhu et al [1].

@@ -1556,6 +1556,15 @@ class RandomForestClassifier(ForestClassifier):
         self.monotonic_cst = monotonic_cst
         self.ccp_alpha = ccp_alpha
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_sample_weights_invariance": (
+                "sample_weight is not equivalent to removing/repeating samples."
+            ),
+        }
+        return tags
+
 
 class RandomForestRegressor(ForestRegressor):
     """
@@ -1914,6 +1923,15 @@ class RandomForestRegressor(ForestRegressor):
         self.min_impurity_decrease = min_impurity_decrease
         self.ccp_alpha = ccp_alpha
         self.monotonic_cst = monotonic_cst
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_sample_weights_invariance": (
+                "sample_weight is not equivalent to removing/repeating samples."
+            ),
+        }
+        return tags
 
 
 class ExtraTreesClassifier(ForestClassifier):

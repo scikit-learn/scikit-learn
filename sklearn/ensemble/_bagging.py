@@ -643,6 +643,11 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.allow_nan = get_tags(self._get_estimator()).input_tags.allow_nan
+        tags._xfail_checks = {
+            "check_sample_weights_invariance": (
+                "sample_weight is not equivalent to removing/repeating samples."
+            ),
+        }
         return tags
 
 
