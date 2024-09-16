@@ -79,6 +79,8 @@ See :ref:`array_api` for more details.
   :class:`model_selection.HalvingRandomSearchCV` now support Array API
   compatible inputs when their base estimators do. :pr:`27096` by :user:`Tim
   Head <betatim>` and :user:`Olivier Grisel <ogrisel>`.
+- :class:`preprocessing.MinMaxScaler` with `clip=True` :pr:`29751` by
+  :user:`Shreekant Nandiyawar <Shree7676>`
 
 **Other**
 
@@ -185,6 +187,12 @@ Changelog
 - |Enhancement| :func:`sklearn.compose.ColumnTransformer` `verbose_feature_names_out`
   now accepts string format or callable to generate feature names. :pr:`28934` by
   :user:`Marc Bresson <MarcBresson>`.
+
+:mod:`sklearn.covariance`
+.........................
+
+- |Efficiency| :class:`covariance.MinCovDet` fitting is now slightly faster.
+  :pr:`29835` by :user:`Antony Lee <anntzer>`.
 
 :mod:`sklearn.cross_decomposition`
 ..................................
