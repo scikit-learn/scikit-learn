@@ -710,6 +710,8 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     The standard score of a sample `x` is calculated as:
 
+    .. code-block:: text
+
         z = (x - u) / s
 
     where `u` is the mean of the training samples or zero if `with_mean=False`,
