@@ -1691,6 +1691,21 @@ class _IdentityClassifier(LinearClassifierMixin):
 class _RidgeGCV(LinearModel):
     """Ridge regression with built-in Leave-one-out Cross-Validation.
 
+    Let's briefly describe the advantage of this formulation.
+
+    Using a naive grid-search approach with a leave-one-out cross-validation requires to
+    fit `n_samples` models to compute the prediction error for each sample. Finally, one
+    needs to repeat this process for each alpha in the grid.
+
+    Here, the prediction error for each sample is computed by solving a **single**
+    linear system (in other words a single model) via a matrix factorization (i.e.
+    eigendecomposition or SVD) solving the problem stated in the Notes section. Finally,
+    we need to repeat this process for each alpha in the grid. The detailed complexity
+    is further discussed in Sect. 4 in [1].
+
+    See the Notes section and references for more details regarding the formulation
+    and the linear system that is solved.
+
     This class is not intended to be used directly. Use RidgeCV instead.
 
     Notes
@@ -1725,8 +1740,8 @@ class _RidgeGCV(LinearModel):
 
     References
     ----------
-    http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf
-    https://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
+    [1] http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf
+    [2] https://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
 
     def __init__(
