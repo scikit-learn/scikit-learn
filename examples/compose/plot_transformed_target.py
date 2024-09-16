@@ -18,7 +18,7 @@ print(__doc__)
 
 # %%
 # Synthetic example
-# -----------------
+# #################
 #
 # A synthetic random regression dataset is generated. The targets ``y`` are
 # modified by:
@@ -123,7 +123,7 @@ plt.tight_layout()
 
 # %%
 # Real-world data set
-# -------------------
+# ###################
 #
 # In a similar manner, the Ames housing data set is used to show the impact
 # of transforming the targets before learning a model. In this example, the

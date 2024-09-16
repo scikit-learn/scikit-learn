@@ -92,7 +92,7 @@ plt.show()
 
 # %%
 # Caching transformers within a ``Pipeline``
-# ------------------------------------------
+# ##########################################
 #
 # It is sometimes worthwhile storing the state of a specific transformer
 # since it could be used again. Using a pipeline in ``GridSearchCV`` triggers
