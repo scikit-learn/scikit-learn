@@ -1957,9 +1957,9 @@ def precision_recall_fscore_support(
 
     if average is not None:
         assert average != "binary" or precision.shape[0] == 1
-        precision = float(_nanaverage(precision, weights=weights))
-        recall = float(_nanaverage(recall, weights=weights))
-        f_score = float(_nanaverage(f_score, weights=weights))
+        precision = _nanaverage(precision, weights=weights)
+        recall = _nanaverage(recall, weights=weights)
+        f_score = _nanaverage(f_score, weights=weights)
         true_sum = None  # return no support
 
     return precision, recall, f_score, true_sum
