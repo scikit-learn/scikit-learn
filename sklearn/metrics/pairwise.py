@@ -463,15 +463,20 @@ def nan_euclidean_distances(
     missing value in either sample and scales up the weight of the remaining
     coordinates:
 
+    .. code-block:: text
+
         dist(x,y) = sqrt(weight * sq. distance from present coordinates)
-        where,
+
+    where:
+
+    .. code-block:: text
+
         weight = Total # of coordinates / # of present coordinates
 
-    For example, the distance between ``[3, na, na, 6]`` and ``[1, na, 4, 5]``
-    is:
+    For example, the distance between ``[3, na, na, 6]`` and ``[1, na, 4, 5]`` is:
 
-        .. math::
-            \\sqrt{\\frac{4}{2}((3-1)^2 + (6-5)^2)}
+    .. math::
+        \\sqrt{\\frac{4}{2}((3-1)^2 + (6-5)^2)}
 
     If all the coordinates are missing or if there are no common present
     coordinates then NaN is returned for that pair.
@@ -728,7 +733,7 @@ def pairwise_distances_argmin_min(
     is closest (according to the specified distance). The minimal distances are
     also returned.
 
-    This is mostly equivalent to calling:
+    This is mostly equivalent to calling::
 
         (pairwise_distances(X, Y=Y, metric=metric).argmin(axis=axis),
          pairwise_distances(X, Y=Y, metric=metric).min(axis=axis))
@@ -874,7 +879,7 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
     This function computes for each row in X, the index of the row of Y which
     is closest (according to the specified distance).
 
-    This is mostly equivalent to calling:
+    This is mostly equivalent to calling::
 
         pairwise_distances(X, Y=Y, metric=metric).argmin(axis=axis)
 
@@ -1443,6 +1448,8 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
     """
     Compute the polynomial kernel between X and Y.
 
+    .. code-block:: text
+
         K(X, Y) = (gamma <X, Y> + coef0) ^ degree
 
     Read more in the :ref:`User Guide <polynomial_kernel>`.
@@ -1505,6 +1512,8 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
 def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     """Compute the sigmoid kernel between X and Y.
 
+    .. code-block:: text
+
         K(X, Y) = tanh(gamma <X, Y> + coef0)
 
     Read more in the :ref:`User Guide <sigmoid_kernel>`.
@@ -1565,6 +1574,8 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
 def rbf_kernel(X, Y=None, gamma=None):
     """Compute the rbf (gaussian) kernel between X and Y.
 
+    .. code-block:: text
+
         K(x, y) = exp(-gamma ||x-y||^2)
 
     for each pair of rows x in X and y in Y.
@@ -1623,7 +1634,9 @@ def rbf_kernel(X, Y=None, gamma=None):
 def laplacian_kernel(X, Y=None, gamma=None):
     """Compute the laplacian kernel between X and Y.
 
-    The laplacian kernel is defined as::
+    The laplacian kernel is defined as:
+
+    .. code-block:: text
 
         K(x, y) = exp(-gamma ||x-y||_1)
 
@@ -1679,6 +1692,8 @@ def cosine_similarity(X, Y=None, dense_output=True):
 
     Cosine similarity, or the cosine kernel, computes similarity as the
     normalized dot product of X and Y:
+
+    .. code-block:: text
 
         K(X, Y) = <X, Y> / (||X||*||Y||)
 
@@ -1743,7 +1758,9 @@ def additive_chi2_kernel(X, Y=None):
     and Y have to be non-negative. This kernel is most commonly applied to
     histograms.
 
-    The chi-squared kernel is given by::
+    The chi-squared kernel is given by:
+
+    .. code-block:: text
 
         k(x, y) = -Sum [(x - y)^2 / (x + y)]
 
@@ -1830,7 +1847,9 @@ def chi2_kernel(X, Y=None, gamma=1.0):
     and Y have to be non-negative. This kernel is most commonly applied to
     histograms.
 
-    The chi-squared kernel is given by::
+    The chi-squared kernel is given by:
+
+    .. code-block:: text
 
         k(x, y) = exp(-gamma Sum [(x - y)^2 / (x + y)])
 

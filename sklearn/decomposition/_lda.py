@@ -726,8 +726,8 @@ class LatentDirichletAllocation(
     def transform(self, X):
         """Transform data X according to the fitted model.
 
-           .. versionchanged:: 0.18
-              *doc_topic_distr* is now normalized
+        .. versionchanged:: 0.18
+            `doc_topic_distr` is now normalized.
 
         Parameters
         ----------
