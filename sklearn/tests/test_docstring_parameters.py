@@ -366,7 +366,7 @@ def test_precision_recall_f_score_docstring_consistency():
         ``'samples'``:
             Calculate metrics for each instance, and find their average \(only
             meaningful for multilabel classification where this differs from
-            :func:`accuracy_score`\)\."""
+            :func:`accuracy_score`\)\."""  # noqa E501
     assert_docstring_consistency(
         metrics_to_check,
         include_params=["average"],
