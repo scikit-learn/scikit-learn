@@ -250,7 +250,7 @@ class DecisionBoundaryDisplay:
                         "'cmap' kwarg ignored."
                     )
                 self.surface_.append(
-                    plot_func(self.xx0, self.xx1, response, cmap=cmap, **kwargs)
+                    plot_func(self.xx0, self.xx1, response, cmap=cmap, **safe_kwargs)
                 )
 
         if xlabel is not None or not ax.get_xlabel():
