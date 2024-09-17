@@ -83,10 +83,10 @@ plt.show()
 # %%
 # The limitations of MDI is not a problem for this dataset because:
 #
-#  1. All features are (ordered) numeric and will thus not suffer the
-#     cardinality bias
-#  2. We are only interested to represent knowledge of the forest acquired
-#     on the training set.
+# 1. All features are (ordered) numeric and will thus not suffer the
+#    cardinality bias
+# 2. We are only interested to represent knowledge of the forest acquired
+#    on the training set.
 #
 # If these two conditions are not met, it is recommended to instead use
 # the :func:`~sklearn.inspection.permutation_importance`.
