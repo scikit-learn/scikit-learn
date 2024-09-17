@@ -2252,6 +2252,16 @@ def test_ridge_cv_values_deprecated():
         ridge.cv_values_
 
 
+def test_ridge_cv_multioutput_sample_weight():
+    """Check that `RidgeCV` works properly with multioutput and sample_weight
+    when `scoring != None`."""
+    X, y = make_regression(n_targets=2, random_state=42)
+    sample_weight = np.ones(shape=(X.shape[0],))
+
+    ridge_cv = RidgeCV(scoring="neg_mean_squared_error")
+    ridge_cv.fit(X, y, sample_weight=sample_weight)
+
+
 # Metadata Routing Tests
 # ======================
 
