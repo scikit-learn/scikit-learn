@@ -188,6 +188,12 @@ Changelog
   now accepts string format or callable to generate feature names. :pr:`28934` by
   :user:`Marc Bresson <MarcBresson>`.
 
+:mod:`sklearn.covariance`
+.........................
+
+- |Efficiency| :class:`covariance.MinCovDet` fitting is now slightly faster.
+  :pr:`29835` by :user:`Antony Lee <anntzer>`.
+
 :mod:`sklearn.cross_decomposition`
 ..................................
 
