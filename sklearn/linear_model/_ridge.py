@@ -2163,6 +2163,9 @@ class _RidgeGCV(LinearModel):
                 else:
                     predictions /= sqrt_sw
                     unscaled_y = y / sqrt_sw
+                predictions += y_offset
+                unscaled_y += y_offset
+
                 if self.store_cv_results:
                     self.cv_results_[:, i] = predictions.ravel()
 

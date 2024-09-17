@@ -859,7 +859,9 @@ def test_ridge_loo_cv_asym_scoring():
     loo_ridge.fit(X, y)
     gcv_ridge.fit(X, y)
 
-    assert gcv_ridge.alpha_ == pytest.approx(loo_ridge.alpha_)
+    assert gcv_ridge.alpha_ == pytest.approx(
+        loo_ridge.alpha_
+    ), f"gcv_ridge.alpha_: {gcv_ridge.alpha_}, loo_ridge.alpha_: {loo_ridge.alpha_}"
     assert_allclose(gcv_ridge.coef_, loo_ridge.coef_, rtol=1e-3)
     assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_, rtol=1e-3)
 
