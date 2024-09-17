@@ -92,8 +92,8 @@ class DecisionBoundaryDisplay:
         Possible inputs:
 
         * list, of length `response.shape[-1]`, of Matplotlib `color
-        <https://matplotlib.org/stable/users/explain/colors/colors.html#colors-def>`_
-        strings
+          <https://matplotlib.org/stable/users/explain/colors/colors.html#colors-def>`_
+          strings
         * string name of :class:`matplotlib.colors.Colormap`
         * None, 'viridis' colormap is used to sample colors
 
@@ -337,8 +337,8 @@ class DecisionBoundaryDisplay:
             Possible inputs:
 
             * list, of length `response.shape[-1]`, of Matplotlib `color
-            <https://matplotlib.org/stable/users/explain/colors/colors.html#colors-def>`_
-            strings
+              <https://matplotlib.org/stable/users/explain/colors/colors.html#colors-def>`_
+              strings
             * string name of :class:`matplotlib.colors.Colormap`
             * None, 'viridis' colormap is used to sample colors
 
