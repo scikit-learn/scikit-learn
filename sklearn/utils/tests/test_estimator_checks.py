@@ -27,6 +27,7 @@ from sklearn.linear_model import (
 )
 from sklearn.mixture import GaussianMixture
 from sklearn.neighbors import KNeighborsRegressor
+from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC, NuSVC
 from sklearn.utils import _array_api, all_estimators, deprecated
 from sklearn.utils._param_validation import Interval, StrOptions
@@ -74,6 +75,7 @@ from sklearn.utils.estimator_checks import (
     check_requires_y_none,
     check_sample_weights_pandas_series,
     check_set_params,
+    parametrize_with_checks,
     set_random_state,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS, SPARRAY_PRESENT
@@ -1421,3 +1423,14 @@ def test_check_estimator_tags_renamed():
     # to exist so that third party estimators can easily support multiple sklearn
     # versions.
     check_estimator_tags_renamed("OkayEstimator", OkayEstimator())
+
+
+# Test that set_output doesn't make the tests to fail.
+@parametrize_with_checks(
+    [
+        StandardScaler().set_output(transform="pandas"),
+        StandardScaler().set_output(transform="polars"),
+    ]
+)
+def test_estimator_with_set_output(estimator, check):
+    check(estimator)
