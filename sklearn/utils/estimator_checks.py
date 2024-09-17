@@ -1185,8 +1185,9 @@ def check_sample_weights_invariance(name, estimator_orig):
             X_pred1 = getattr(estimator_repeated, method)(X)
             X_pred2 = getattr(estimator_weighted, method)(X)
             err_msg = (
-                f"For {name}.{method} sample_weight is not equivalent "
-                "to removing/repeating the sample"
+                f"Comparing the output of {name}.{method} revealed that fitting "
+                "with `sample_weight` is not equivalent to fitting with removed "
+                "or repeated data points."
             )
             assert_allclose_dense_sparse(X_pred1, X_pred2, err_msg=err_msg)
 
