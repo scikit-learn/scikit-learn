@@ -311,6 +311,14 @@ Changelog
   is called without a `y` argument
   :pr:`29402` by :user:`Anurag Varma <Anurag-Varma>`.
 
+:mod:`sklearn.multioutput`
+..............................
+
+- |Enhancement| :class:`multioutput.ClassifierChain` and
+  :class:`multioutput.RegressorChain` now accept `X` containing `nan`,
+  if `base_estimator` can handle `nan` values.
+  :pr:`29876` by :user:`Yaroslav Korobko <Tialo>`.
+
 :mod:`sklearn.neighbors`
 ........................
 
