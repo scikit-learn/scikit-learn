@@ -11,16 +11,8 @@ number of features selected with cross-validation.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-# %%
 # Data generation
 # ---------------
-#
-# We build a classification task using 3 informative features. The introduction
-# of 2 additional redundant (i.e. correlated) features has the effect that the
-# selected features vary depending on the cross-validation fold. The remaining
-# features are non-informative as they are drawn at random.
-
-
 from sklearn.datasets import make_classification
 
 X, y = make_classification(
@@ -42,7 +34,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import StratifiedKFold
 
 min_features_to_select = 1
-clf = LogisticRegression(solver='liblinear', random_state=0)
+clf = LogisticRegression(solver="liblinear", random_state=0)
 cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=0)
 
 try:
@@ -73,7 +65,7 @@ try:
         x=cv_results["n_features"],
         y=cv_results["mean_test_score"],
         yerr=cv_results["std_test_score"],
-        fmt='-o',
+        fmt="-o",
         capsize=5,
     )
     plt.title("Recursive Feature Elimination \nwith correlated features")
