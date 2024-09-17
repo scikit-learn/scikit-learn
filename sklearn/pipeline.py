@@ -3,6 +3,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import warnings
 from collections import Counter, defaultdict
 from itertools import chain, islice
 
@@ -35,6 +36,18 @@ from .utils.parallel import Parallel, delayed
 from .utils.validation import check_is_fitted, check_memory
 
 __all__ = ["Pipeline", "FeatureUnion", "make_pipeline", "make_union"]
+
+
+def _check_is_fitted(pipeline):
+    try:
+        check_is_fitted(pipeline)
+    except NotFittedError:
+        warnings.warn(
+            "This Pipeline instance is not fitted yet. Call 'fit' with "
+            "appropriate arguments before using transform. This will raise "
+            "an error in 1.8.",
+            FutureWarning,
+        )
 
 
 def _final_estimator_has(attr):
@@ -575,6 +588,7 @@ class Pipeline(_BaseComposition):
         y_pred : ndarray
             Result of calling `predict` on the final estimator.
         """
+        _check_is_fitted(self)
         Xt = X
 
         if not _routing_enabled():
@@ -687,6 +701,7 @@ class Pipeline(_BaseComposition):
         y_proba : ndarray of shape (n_samples, n_classes)
             Result of calling `predict_proba` on the final estimator.
         """
+        _check_is_fitted(self)
         Xt = X
 
         if not _routing_enabled():
@@ -732,6 +747,7 @@ class Pipeline(_BaseComposition):
         y_score : ndarray of shape (n_samples, n_classes)
             Result of calling `decision_function` on the final estimator.
         """
+        _check_is_fitted(self)
         _raise_for_params(params, self, "decision_function")
 
         # not branching here since params is only available if
@@ -767,6 +783,7 @@ class Pipeline(_BaseComposition):
         y_score : ndarray of shape (n_samples,)
             Result of calling `score_samples` on the final estimator.
         """
+        _check_is_fitted(self)
         Xt = X
         for _, _, transformer in self._iter(with_final=False):
             Xt = transformer.transform(Xt)
@@ -811,6 +828,7 @@ class Pipeline(_BaseComposition):
         y_log_proba : ndarray of shape (n_samples, n_classes)
             Result of calling `predict_log_proba` on the final estimator.
         """
+        _check_is_fitted(self)
         Xt = X
 
         if not _routing_enabled():
@@ -864,6 +882,7 @@ class Pipeline(_BaseComposition):
         Xt : ndarray of shape (n_samples, n_transformed_features)
             Transformed data.
         """
+        _check_is_fitted(self)
         _raise_for_params(params, self, "transform")
 
         # not branching here since params is only available if
@@ -916,6 +935,7 @@ class Pipeline(_BaseComposition):
             Inverse transformed data, that is, data in the original feature
             space.
         """
+        _check_is_fitted(self)
         _raise_for_params(params, self, "inverse_transform")
 
         X = _deprecate_Xt_in_inverse_transform(X, Xt)
@@ -965,6 +985,7 @@ class Pipeline(_BaseComposition):
         score : float
             Result of calling `score` on the final estimator.
         """
+        _check_is_fitted(self)
         Xt = X
         if not _routing_enabled():
             for _, name, transform in self._iter(with_final=False):
@@ -1060,12 +1081,24 @@ class Pipeline(_BaseComposition):
 
     def __sklearn_is_fitted__(self):
         """Indicate whether pipeline has been fit."""
+
+        # First find the last step that is not 'passthrough'
+        last_step = None
+        for _, estimator in reversed(self.steps):
+            if estimator != "passthrough":
+                last_step = estimator
+                break
+
+        if last_step is None:
+            # All steps are 'passthrough', so the pipeline is considered fitted
+            return True
+
         try:
             # check if the last step of the pipeline is fitted
             # we only check the last step since if the last step is fit, it
             # means the previous steps should also be fit. This is faster than
             # checking if every step of the pipeline is fit.
-            check_is_fitted(self.steps[-1][1])
+            check_is_fitted(last_step)
             return True
         except NotFittedError:
             return False
