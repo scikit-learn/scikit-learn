@@ -46,8 +46,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import StratifiedKFold
 
 min_features_to_select = 1  # Minimum number of features to consider
-clf = LogisticRegression()
-cv = StratifiedKFold(5)
+clf = LogisticRegression(solver='liblinear', random_state=0)
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=0)
 
 rfecv = RFECV(
     estimator=clf,
