@@ -722,6 +722,13 @@ class PLSRegression(_PLS):
         self.y_scores_ = self._y_scores
         return self
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks.update(
+            {"check_non_transformer_estimators_n_iter": "Test doesn't apply."}
+        )
+        return tags
+
 
 class PLSCanonical(_PLS):
     """Partial Least Squares transformer and regressor.
@@ -855,6 +862,13 @@ class PLSCanonical(_PLS):
             copy=copy,
         )
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks.update(
+            {"check_non_transformer_estimators_n_iter": "Test doesn't apply."}
+        )
+        return tags
+
 
 class CCA(_PLS):
     """Canonical Correlation Analysis, also known as "Mode B" PLS.
@@ -964,6 +978,13 @@ class CCA(_PLS):
             tol=tol,
             copy=copy,
         )
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks.update(
+            {"check_non_transformer_estimators_n_iter": "Test doesn't apply."}
+        )
+        return tags
 
 
 class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
@@ -1176,3 +1197,10 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             `(X_transformed, Y_transformed)` otherwise.
         """
         return self.fit(X, y).transform(X, y)
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks.update(
+            {"check_non_transformer_estimators_n_iter": "Test doesn't apply."}
+        )
+        return tags

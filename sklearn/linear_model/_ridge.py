@@ -1251,6 +1251,13 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.array_api_support = True
+        tags._xfail_checks.update(
+            {
+                "check_non_transformer_estimators_n_iter": (
+                    "n_iter_ cannot be easily accessed."
+                )
+            }
+        )
         return tags
 
 
@@ -1567,6 +1574,17 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
 
         super().fit(X, Y, sample_weight=sample_weight)
         return self
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks.update(
+            {
+                "check_non_transformer_estimators_n_iter": (
+                    "n_iter_ cannot be easily accessed."
+                )
+            }
+        )
+        return tags
 
 
 def _check_gcv_mode(X, gcv_mode):
