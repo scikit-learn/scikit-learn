@@ -1691,11 +1691,11 @@ class _IdentityClassifier(LinearClassifierMixin):
 class _RidgeGCV(LinearModel):
     """Ridge regression with built-in Leave-one-out Cross-Validation.
 
-    Let's briefly describe the advantage of this formulation.
-
-    Using a naive grid-search approach with a leave-one-out cross-validation requires to
-    fit `n_samples` models to compute the prediction error for each sample. Finally, one
-    needs to repeat this process for each alpha in the grid.
+    _RidgeGCV uses a Generalized Cross-Validation for model selection. 
+    
+    It's an efficient approximation of leave-one-out cross-validation (LOO-CV), where instead of computing multiple models by excluding one data point at a time, it uses an algebraic shortcut to approximate the LOO-CV error, making it faster and computationally more efficient.
+    
+    Using a naive grid-search approach with a leave-one-out cross-validation in contrast requires to fit `n_samples` models to compute the prediction error for each sample and then to repeat this process for each alpha in the grid.
 
     Here, the prediction error for each sample is computed by solving a **single**
     linear system (in other words a single model) via a matrix factorization (i.e.
