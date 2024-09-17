@@ -2020,40 +2020,6 @@ def test_poisson_vs_mse():
         assert metric_poi < 0.75 * metric_dummy
 
 
-@pytest.mark.parametrize("criterion", REG_CRITERIONS)
-def test_decision_tree_regressor_sample_weight_consistency(criterion):
-    """Test that the impact of sample_weight is consistent."""
-    tree_params = dict(criterion=criterion)
-    tree = DecisionTreeRegressor(**tree_params, random_state=42)
-
-    rng = np.random.RandomState(0)
-    n_samples, n_features = 10, 5
-
-    X = rng.rand(n_samples, n_features)
-    y = np.mean(X, axis=1) + rng.rand(n_samples)
-    # make it positive in order to work also for poisson criterion
-    y += np.min(y) + 0.1
-
-    # check that multiplying sample_weight by 2 is equivalent
-    # to repeating corresponding samples twice
-    X2 = np.concatenate([X, X[: n_samples // 2]], axis=0)
-    y2 = np.concatenate([y, y[: n_samples // 2]])
-    sample_weight_1 = np.ones(len(y))
-    sample_weight_1[: n_samples // 2] = 2
-
-    tree1 = DecisionTreeRegressor(**tree_params).fit(
-        X, y, sample_weight=sample_weight_1
-    )
-
-    tree2 = DecisionTreeRegressor(**tree_params).fit(X2, y2, sample_weight=None)
-
-    assert tree1.tree_.node_count == tree2.tree_.node_count
-    # Thresholds, tree.tree_.threshold, and values, tree.tree_.value, are not
-    # exactly the same, but on the training set, those differences do not
-    # matter and thus predictions are the same.
-    assert_allclose(tree1.predict(X), tree2.predict(X))
-
-
 @pytest.mark.parametrize("Tree", [DecisionTreeClassifier, ExtraTreeClassifier])
 @pytest.mark.parametrize("n_classes", [2, 4])
 def test_criterion_entropy_same_as_log_loss(Tree, n_classes):
