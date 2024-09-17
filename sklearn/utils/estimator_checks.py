@@ -2020,7 +2020,6 @@ def check_classifier_multioutput(name, estimator_orig):
         random_state=42, n_samples=n_samples, n_labels=n_labels, n_classes=n_classes
     )
     X = _enforce_estimator_tags_X(estimator, X)
-    y = _enforce_estimator_tags_y(estimator, y)
     estimator.fit(X, y)
     y_pred = estimator.predict(X)
 
@@ -2182,11 +2181,9 @@ def check_classifiers_one_label(name, classifier_orig):
     classifier = clone(classifier_orig)
     rnd = np.random.RandomState(0)
     X_train = rnd.uniform(size=(10, 3))
-    X_train = _enforce_estimator_tags_X(classifier, X_train)
     X_test = rnd.uniform(size=(10, 3))
-    X_test = _enforce_estimator_tags_X(classifier, X_test)
+    X_train, X_test = _enforce_estimator_tags_X(classifier, X_train, X_test=X_test)
     y = np.ones(10)
-    y = _enforce_estimator_tags_y(classifier, y)
     # catch deprecation warnings
     with ignore_warnings(category=FutureWarning):
         with raises(
@@ -3473,24 +3470,24 @@ def _enforce_estimator_tags_X(estimator, X, X_test=None, kernel=linear_kernel):
     if get_tags(estimator).input_tags.one_d_array:
         X = X[:, 0]
         if X_test is not None:
-            X_test = X_test[:, 0]
+            X_test = X_test[:, 0]  # pragma: no cover
     # Estimators with a `requires_positive_X` tag only accept
     # strictly positive data
     if get_tags(estimator).input_tags.positive_only:
         X = X - X.min()
         if X_test is not None:
-            X_test = X_test - X_test.min()
+            X_test = X_test - X_test.min()  # pragma: no cover
     if get_tags(estimator).input_tags.categorical:
         dtype = np.float64 if get_tags(estimator).input_tags.allow_nan else np.int32
         X = np.round((X - X.min())).astype(dtype)
         if X_test is not None:
-            X_test = np.round((X_test - X_test.min())).astype(dtype)
+            X_test = np.round((X_test - X_test.min())).astype(dtype)  # pragma: no cover
 
     if estimator.__class__.__name__ == "SkewedChi2Sampler":
         # SkewedChi2Sampler requires X > -skewdness in transform
         X = X - X.min()
         if X_test is not None:
-            X_test = X_test - X_test.min()
+            X_test = X_test - X_test.min()  # pragma: no cover
 
     X_res = X
 
@@ -3499,11 +3496,13 @@ def _enforce_estimator_tags_X(estimator, X, X_test=None, kernel=linear_kernel):
     if _is_pairwise_metric(estimator):
         X_res = pairwise_distances(X, metric="euclidean")
         if X_test is not None:
-            X_test = pairwise_distances(X_test, X, metric="euclidean")
+            X_test = pairwise_distances(
+                X_test, X, metric="euclidean"
+            )  # pragma: no cover
     elif get_tags(estimator).input_tags.pairwise:
         X_res = kernel(X, X)
         if X_test is not None:
-            X_test = kernel(X_test, X)
+            X_test = kernel(X_test, X)  # pragma: no cover
     if X_test is not None:
         return X_res, X_test
     return X_res
