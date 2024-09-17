@@ -641,7 +641,11 @@ def test_multiclass_plot_max_class_cmap_kwarg():
     X, y = load_iris_2d_scaled()
     clf = LogisticRegression().fit(X, y)
 
-    with pytest.warns(UserWarning, match="'cmap' kwarg ignored"):
+    msg = (
+        "Plotting max class of multiclass 'decision_function' or 'predict_proba', "
+        "thus 'multiclass_colors' used and 'cmap' kwarg ignored."
+    )
+    with pytest.warns(UserWarning, match=msg):
         DecisionBoundaryDisplay.from_estimator(
             clf,
             X,

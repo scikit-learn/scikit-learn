@@ -85,16 +85,21 @@ class DecisionBoundaryDisplay:
         (grid_resolution, grid_resolution, n_classes)
         Values of the response function.
 
-    multiclass_colors : list[str], str, default=None
+    multiclass_colors : list of str or str, default=None
         Specifies how to color each class when plotting all classes of multiclass
-        problem and `response.shape.ndim==3`. Ignored in all other cases.
-        Either list, of length `response.shape[-1]`, of Matplotlib `color
+        problem. Ignored for binary problems and multiclass problems when plotting a
+        single prediction value per point.
+        Possible inputs:
+
+        * list, of length `response.shape[-1]`, of Matplotlib `color
         <https://matplotlib.org/stable/users/explain/colors/colors.html#colors-def>`_
-        strings or name of :class:`matplotlib.colors.Colormap`.
+        strings
+        * string name of :class:`matplotlib.colors.Colormap`
+        * None, 'viridis' colormap is used to sample colors
+
         Single color colormaps will be generated from the colors in the list or
         colors taken from the colormap and passed to the `cmap` parameter of
         the `plot_method`.
-        If None, 'viridis' colors will be used.
 
         .. versionadded:: 1.6
 
@@ -159,14 +164,7 @@ class DecisionBoundaryDisplay:
         self.xlabel = xlabel
         self.ylabel = ylabel
 
-    def plot(
-        self,
-        plot_method="contourf",
-        ax=None,
-        xlabel=None,
-        ylabel=None,
-        **kwargs,
-    ):
+    def plot(self, plot_method="contourf", ax=None, xlabel=None, ylabel=None, **kwargs):
         """Plot visualization.
 
         Parameters
@@ -212,19 +210,24 @@ class DecisionBoundaryDisplay:
         if self.response.ndim == 2:
             self.surface_ = plot_func(self.xx0, self.xx1, self.response, **kwargs)
         else:  # self.response.ndim == 3
-            colors = self.multiclass_colors
             multiclass_cmaps = []
-            if isinstance(colors, str) or colors is None:
-                cmap = "viridis" if colors is None else colors
+            if (
+                isinstance(self.multiclass_colors, str)
+                or self.multiclass_colors is None
+            ):
+                cmap = (
+                    "viridis"
+                    if self.multiclass_colors is None
+                    else self.multiclass_colors
+                )
                 cmap = mpl.colormaps[cmap].resampled(self.response.shape[-1])
-                for class_idx, primary_color in enumerate(cmap.colors):
-                    r, g, b, _ = primary_color
+                for class_idx, (r, g, b, _) in enumerate(cmap.colors):
                     class_cmap = mpl.colors.LinearSegmentedColormap.from_list(
                         f"colormap_{class_idx}", [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)]
                     )
                     multiclass_cmaps.append(class_cmap)
             else:
-                for class_idx, class_color in enumerate(colors):
+                for class_idx, class_color in enumerate(self.multiclass_colors):
                     r, g, b, _ = mpl.colors.to_rgba(class_color)
                     class_cmap = mpl.colors.LinearSegmentedColormap.from_list(
                         f"colormap_{class_idx}", [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)]
@@ -238,8 +241,9 @@ class DecisionBoundaryDisplay:
                     mask=~(self.response.argmax(axis=2) == class_idx),
                 )
                 # `cmap` should not be in kwargs
-                if "cmap" in kwargs:
-                    del kwargs["cmap"]
+                safe_kwargs = kwargs.copy()
+                if "cmap" in safe_kwargs:
+                    del safe_kwargs["cmap"]
                     warnings.warn(
                         "Plotting max class of multiclass 'decision_function' or "
                         "'predict_proba', thus 'multiclass_colors' used and "
@@ -326,17 +330,21 @@ class DecisionBoundaryDisplay:
 
             .. versionadded:: 1.4
 
-        multiclass_colors : list[str, Colormap] default=None
+        multiclass_colors : list of str, or str, default=None
             Specifies how to color each class when plotting multiclass
             'predict_proba' or 'decision_function' and `class_of_interest` is
             None. Ignored in all other cases.
-            Either list, of `estimator.classes_` length, of Matplotlib `color
+            Possible inputs:
+
+            * list, of length `response.shape[-1]`, of Matplotlib `color
             <https://matplotlib.org/stable/users/explain/colors/colors.html#colors-def>`_
-            strings or name of :class:`matplotlib.colors.Colormap`.
+            strings
+            * string name of :class:`matplotlib.colors.Colormap`
+            * None, 'viridis' colormap is used to sample colors
+
             Single color colormaps will be generated from the colors in the list or
             colors taken from the colormap, and passed to the `cmap` parameter of
             the `plot_method`.
-            If None, 'viridis' colors will be used.
 
             .. versionadded:: 1.6
 
