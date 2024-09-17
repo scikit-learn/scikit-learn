@@ -444,7 +444,7 @@ _ = ax.set(
 # For example, metrics such as F1 score, precision, or recall might be more
 # appropriate, depending on the business context or problem you are addressing.
 # It is also essential to select an appropriate averaging method (micro vs. macro)
-# depending on the problem at hand:
+# depending on the desired outcome:
 #
 # - Micro-averaging aggregates metrics across all instances, treating each
 #   individual instance equally, regardless of its class. This approach is useful
