@@ -2254,6 +2254,55 @@ def test_ridge_cv_values_deprecated():
         ridge.cv_values_
 
 
+@pytest.mark.parametrize("with_sample_weight", [False, True])
+@pytest.mark.parametrize("fit_intercept", [False, True])
+def test_ridge_cv_results_predictions(with_sample_weight, fit_intercept):
+    """Check that the predictions stored in `cv_results_` are on the original scale.
+
+    The GCV approach works on scaled data: centered by an offset and scaled by the
+    squared root of the sample weights. Thus, previous to compute scores, the
+    predictions need to be scaled back to the original scale. Those predictions are the
+    one stored in `cv_results_`.
+
+    In this test, we check that the internal predictions stored in `cv_results_` are
+    equivalent to a naive LOO-CV grid-search with a `Ridge` estimator.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/13998
+    """
+    X, y = make_regression(n_samples=100, n_features=10, random_state=0)
+    sample_weight = np.ones(shape=(X.shape[0],))
+    if with_sample_weight:
+        sample_weight[::2] = 0.5
+
+    alphas = (0.1, 1.0, 10.0)
+
+    # scoring should be set to store predictions and not the squared error
+    ridge_cv = RidgeCV(
+        alphas=alphas,
+        scoring="neg_mean_squared_error",
+        fit_intercept=fit_intercept,
+        store_cv_results=True,
+    )
+    ridge_cv.fit(X, y, sample_weight=sample_weight)
+
+    # manual grid-search with a `Ridge` estimator
+    cv = LeaveOneOut()
+    results = np.transpose(
+        [
+            [
+                Ridge(alpha=alpha, fit_intercept=fit_intercept)
+                .fit(X[train_idx], y[train_idx], sample_weight[train_idx])
+                .predict(X[test_idx])
+                .squeeze()
+                for train_idx, test_idx in cv.split(X, y)
+            ]
+            for alpha in alphas
+        ]
+    )
+    assert_allclose(ridge_cv.cv_results_, results)
+
+
 # Metadata Routing Tests
 # ======================
 
