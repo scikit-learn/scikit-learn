@@ -685,7 +685,6 @@ def _check_consistency_items(
             not_matched = []
             for docstring, group in docstrings_grouped.items():
                 if not re.search(description_regex, docstring):
-                    print(docstring)
                     not_matched.extend(group)
             if not_matched:
                 msg = textwrap.fill(
