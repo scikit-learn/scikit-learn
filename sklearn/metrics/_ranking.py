@@ -73,9 +73,9 @@ def auc(x, y):
     --------
     >>> import numpy as np
     >>> from sklearn import metrics
-    >>> y = np.array([1, 1, 2, 2])
-    >>> pred = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> fpr, tpr, thresholds = metrics.roc_curve(y, pred, pos_label=2)
+    >>> y_true = np.array([1, 1, 2, 2])
+    >>> y_score = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> fpr, tpr, thresholds = metrics.roc_curve(y_true, y_score, pos_label=2)
     >>> metrics.auc(fpr, tpr)
     np.float64(0.75)
     """
@@ -985,7 +985,7 @@ def precision_recall_curve(
         warnings.warn(
             (
                 "probas_pred was deprecated in version 1.5 and will be removed in 1.7."
-                "Please use ``y_score`` instead."
+                "Please use `y_score` instead."
             ),
             FutureWarning,
         )
