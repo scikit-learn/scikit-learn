@@ -45,6 +45,7 @@ from sklearn.utils.estimator_checks import (
     check_array_api_input,
     check_class_weight_balanced_linear_classifier,
     check_classifier_data_not_an_array,
+    check_classifier_not_supporting_multiclass,
     check_classifiers_multilabel_output_format_decision_function,
     check_classifiers_multilabel_output_format_predict,
     check_classifiers_multilabel_output_format_predict_proba,
@@ -1421,3 +1422,21 @@ def test_check_estimator_tags_renamed():
     # to exist so that third party estimators can easily support multiple sklearn
     # versions.
     check_estimator_tags_renamed("OkayEstimator", OkayEstimator())
+
+
+def test_check_classifier_not_supporting_multiclass():
+    """Check that when the estimator has the wrong tags.classifier_tags.multi_class
+    set, the test fails."""
+
+    class BadEstimator(BaseEstimator):
+        def __sklearn_tags__(self):
+            tags = super().__sklearn_tags__()
+            tags.classifier_tags.multi_class = False
+            return tags
+
+        def fit(self, X, y):
+            return self
+
+    msg = "The estimator tag tags.classifier_tags.multi_class is False "
+    with raises(AssertionError, match=msg):
+        check_classifier_not_supporting_multiclass("BadEstimator", BadEstimator())

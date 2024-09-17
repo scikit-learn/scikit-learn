@@ -191,6 +191,9 @@ def _yield_classifier_checks(classifier):
     ):
         yield check_class_weight_balanced_linear_classifier
 
+    if not tags.classifier_tags.multi_class:
+        yield check_classifier_not_supporting_multiclass
+
 
 @ignore_warnings(category=FutureWarning)
 def check_supervised_y_no_nan(name, estimator_orig):
@@ -4701,3 +4704,28 @@ def check_do_not_raise_errors_in_init_or_set_params(name, estimator_orig):
 
         # Also do does not raise
         est.set_params(**new_params)
+
+
+def check_classifier_not_supporting_multiclass(name, estimator_orig):
+    """Check that if the classifier has tags.classifier_tags.multi_class=False,
+    then it should raise a ValueError when calling fit with a multiclass dataset.
+    """
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+
+    X, y = make_classification(
+        n_samples=100,
+        n_classes=3,
+        n_informative=3,
+        n_clusters_per_class=1,
+        random_state=0,
+    )
+    err_msg = (
+        f"The estimator tag tags.classifier_tags.multi_class is False for {name} "
+        "which means it does not support multiclass classification. However, it does "
+        "not raise the right ValueError when calling fit with a multiclass dataset."
+    )
+    with raises(
+        ValueError, match="Only binary classification is supported.", err_msg=err_msg
+    ):
+        estimator.fit(X, y)
