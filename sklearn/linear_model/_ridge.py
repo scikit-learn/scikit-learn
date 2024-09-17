@@ -1691,11 +1691,17 @@ class _IdentityClassifier(LinearClassifierMixin):
 class _RidgeGCV(LinearModel):
     """Ridge regression with built-in Leave-one-out Cross-Validation.
 
-    _RidgeGCV uses a Generalized Cross-Validation for model selection. 
-    
-    It's an efficient approximation of leave-one-out cross-validation (LOO-CV), where instead of computing multiple models by excluding one data point at a time, it uses an algebraic shortcut to approximate the LOO-CV error, making it faster and computationally more efficient.
-    
-    Using a naive grid-search approach with a leave-one-out cross-validation in contrast requires to fit `n_samples` models to compute the prediction error for each sample and then to repeat this process for each alpha in the grid.
+    This class is not intended to be used directly. Use RidgeCV instead.
+
+    `_RidgeGCV` uses a Generalized Cross-Validation for model selection. It's an
+    efficient approximation of leave-one-out cross-validation (LOO-CV), where instead of
+    computing multiple models by excluding one data point at a time, it uses an
+    algebraic shortcut to approximate the LOO-CV error, making it faster and
+    computationally more efficient.
+
+    Using a naive grid-search approach with a leave-one-out cross-validation in contrast
+    requires to fit `n_samples` models to compute the prediction error for each sample
+    and then to repeat this process for each alpha in the grid.
 
     Here, the prediction error for each sample is computed by solving a **single**
     linear system (in other words a single model) via a matrix factorization (i.e.
@@ -1703,10 +1709,11 @@ class _RidgeGCV(LinearModel):
     we need to repeat this process for each alpha in the grid. The detailed complexity
     is further discussed in Sect. 4 in [1].
 
+    This algebraic approach is only applicable for regularized least squares
+    problems. It could potentially be extended to kernel ridge regression.
+
     See the Notes section and references for more details regarding the formulation
     and the linear system that is solved.
-
-    This class is not intended to be used directly. Use RidgeCV instead.
 
     Notes
     -----
