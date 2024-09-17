@@ -2252,14 +2252,30 @@ def test_ridge_cv_values_deprecated():
         ridge.cv_values_
 
 
-def test_ridge_cv_multioutput_sample_weight():
+def test_ridge_cv_multioutput_sample_weight(global_random_seed):
     """Check that `RidgeCV` works properly with multioutput and sample_weight
-    when `scoring != None`."""
-    X, y = make_regression(n_targets=2, random_state=42)
+    when `scoring != None`.
+
+    We check the error reported by the RidgeCV is close to a naive LOO-CV using a
+    Ridge estimator.
+    """
+    X, y = make_regression(n_targets=2, random_state=global_random_seed)
     sample_weight = np.ones(shape=(X.shape[0],))
 
-    ridge_cv = RidgeCV(scoring="neg_mean_squared_error")
+    ridge_cv = RidgeCV(scoring="neg_mean_squared_error", store_cv_results=True)
     ridge_cv.fit(X, y, sample_weight=sample_weight)
+
+    cv = LeaveOneOut()
+    ridge = Ridge(alpha=ridge_cv.alpha_)
+    y_pred_loo = np.squeeze(
+        [
+            ridge.fit(X[train], y[train], sample_weight=sample_weight[train]).predict(
+                X[test]
+            )
+            for train, test in cv.split(X)
+        ]
+    )
+    assert_allclose(ridge_cv.best_score_, -mean_squared_error(y, y_pred_loo))
 
 
 # Metadata Routing Tests
