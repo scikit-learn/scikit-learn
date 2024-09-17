@@ -22,12 +22,14 @@ from ..utils._metadata_requests import (
     process_routing,
 )
 from ..utils._param_validation import HasMethods, Interval, RealNotInt
+from ..utils._tags import get_tags
 from ..utils.metaestimators import _safe_split, available_if
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
     _check_method_params,
     _deprecate_positional_args,
     check_is_fitted,
+    validate_data,
 )
 from ._base import SelectorMixin, _get_feature_importances
 
@@ -267,19 +269,15 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             The target values.
 
         **fit_params : dict
-            - If `enable_metadata_routing=False` (default):
+            - If `enable_metadata_routing=False` (default): Parameters directly passed
+              to the ``fit`` method of the underlying estimator.
 
-                Parameters directly passed to the ``fit`` method of the
-                underlying estimator.
+            - If `enable_metadata_routing=True`: Parameters safely routed to the ``fit``
+              method of the underlying estimator.
 
-            - If `enable_metadata_routing=True`:
-
-                Parameters safely routed to the ``fit`` method of the
-                underlying estimator.
-
-                .. versionchanged:: 1.6
-                    See :ref:`Metadata Routing User Guide <metadata_routing>`
-                    for more details.
+            .. versionchanged:: 1.6
+                See :ref:`Metadata Routing User Guide <metadata_routing>`
+                for more details.
 
         Returns
         -------
@@ -298,7 +296,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         # step_score is not exposed to users and is used when implementing RFECV
         # self.step_scores_ will not be calculated when calling _fit through fit
 
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse="csc",
@@ -435,21 +434,17 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             The target values.
 
         **score_params : dict
-            - If `enable_metadata_routing=False` (default):
+            - If `enable_metadata_routing=False` (default): Parameters directly passed
+              to the ``score`` method of the underlying estimator.
 
-                Parameters directly passed to the ``score`` method of the
-                underlying estimator.
+            - If `enable_metadata_routing=True`: Parameters safely routed to the `score`
+              method of the underlying estimator.
 
-                .. versionadded:: 1.0
+            .. versionadded:: 1.0
 
-            - If `enable_metadata_routing=True`:
-
-                Parameters safely routed to the `score` method of the
-                underlying estimator.
-
-                .. versionchanged:: 1.6
-                    See :ref:`Metadata Routing User Guide <metadata_routing>`
-                    for more details.
+            .. versionchanged:: 1.6
+                See :ref:`Metadata Routing User Guide <metadata_routing>`
+                for more details.
 
         Returns
         -------
@@ -531,17 +526,14 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         check_is_fitted(self)
         return self.estimator_.predict_log_proba(self.transform(X))
 
-    def _more_tags(self):
-        tags = {
-            "poor_score": True,
-            "requires_y": True,
-            "allow_nan": True,
-        }
-
-        # Adjust allow_nan if estimator explicitly defines `allow_nan`.
-        if hasattr(self.estimator, "_get_tags"):
-            tags["allow_nan"] = self.estimator._get_tags()["allow_nan"]
-
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        if tags.classifier_tags is not None:
+            tags.classifier_tags.poor_score = True
+        if tags.regressor_tags is not None:
+            tags.regressor_tags.poor_score = True
+        tags.target_tags.required = True
+        tags.input_tags.allow_nan = get_tags(self.estimator).input_tags.allow_nan
         return tags
 
     def get_metadata_routing(self):
@@ -810,7 +802,7 @@ class RFECV(RFE):
             Parameters passed to the ``fit`` method of the estimator,
             the scorer, and the CV splitter.
 
-            ..versionadded:: 1.6
+            .. versionadded:: 1.6
                 Only available if `enable_metadata_routing=True`,
                 which can be set by using
                 ``sklearn.set_config(enable_metadata_routing=True)``.
@@ -823,7 +815,8 @@ class RFECV(RFE):
             Fitted estimator.
         """
         _raise_for_params(params, self, "fit")
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse="csr",
@@ -940,7 +933,7 @@ class RFECV(RFE):
         **score_params : dict
             Parameters to pass to the `score` method of the underlying scorer.
 
-            ..versionadded:: 1.6
+            .. versionadded:: 1.6
                 Only available if `enable_metadata_routing=True`,
                 which can be set by using
                 ``sklearn.set_config(enable_metadata_routing=True)``.

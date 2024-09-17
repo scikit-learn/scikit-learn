@@ -10,7 +10,7 @@ from scipy import linalg
 
 from ..base import BaseEstimator, ClassNamePrefixFeaturesOutMixin, TransformerMixin
 from ..utils._array_api import _fill_or_add_to_diagonal, device, get_namespace
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, validate_data
 
 
 class _BasePCA(
@@ -135,8 +135,12 @@ class _BasePCA(
 
         check_is_fitted(self)
 
-        X = self._validate_data(
-            X, dtype=[xp.float64, xp.float32], accept_sparse=("csr", "csc"), reset=False
+        X = validate_data(
+            self,
+            X,
+            dtype=[xp.float64, xp.float32],
+            accept_sparse=("csr", "csc"),
+            reset=False,
         )
         return self._transform(X, xp=xp, x_is_centered=False)
 
