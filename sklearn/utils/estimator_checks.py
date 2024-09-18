@@ -1091,11 +1091,17 @@ def check_sample_weights_invariance(name, estimator_orig):
     set_random_state(estimator_weighted, random_state=0)
     set_random_state(estimator_repeated, random_state=0)
 
-    rng = np.random.RandomState(0)
-    X = rng.rand(30, 2)
-    y = rng.randint(1, 3, size=30)
-    # random integers (including zero) weights
-    sw = rng.randint(0, 4, size=30)
+    rng = np.random.RandomState(42)
+    n_samples = 15
+    X = rng.rand(n_samples, 2)
+    y = rng.randint(0, 2, size=n_samples)
+    # Use random integers (including zero) as weights.
+    sw = rng.randint(0, 5, size=n_samples)
+    # Check that at least one data point has zero weight
+    assert np.isin(0, sw)
+    # Check that all classes are represented for nonzero weights
+    assert np.all(np.isin(np.unique(y), y[sw > 0]))
+
     X_weigthed = X
     y_weighted = y
     # repeat samples according to weights
