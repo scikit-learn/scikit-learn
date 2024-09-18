@@ -756,22 +756,12 @@ def filter_search_index(app, exception):
 issues_github_path = "scikit-learn/scikit-learn"
 
 
-def enable_sklearn_experimental_features(app):
-    """Enable experimental modules so that experimental estimators can be discovered
-    properly by sphinx"""
-    from sklearn.experimental import enable_halving_search_cv  # noqa
-    from sklearn.experimental import enable_iterative_imputer  # noqa
-
-
 def disable_plot_gallery_for_linkcheck(app):
     if app.builder.name == "linkcheck":
         sphinx_gallery_conf["plot_gallery"] = "False"
 
 
 def setup(app):
-    # unsucessful experiment, to prevent ImportErrors when gallery build in parallel,
-    # delete later:
-    app.connect("builder-inited", enable_sklearn_experimental_features)
     # do not run the examples when using linkcheck by using a small priority
     # (default priority is 500 and sphinx-gallery using builder-inited event too)
     app.connect("builder-inited", disable_plot_gallery_for_linkcheck, priority=50)
