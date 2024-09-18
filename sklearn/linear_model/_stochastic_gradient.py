@@ -1378,7 +1378,7 @@ class SGDClassifier(BaseSGDClassifier):
         tags = super().__sklearn_tags__()
         tags._xfail_checks = {
             "check_sample_weights_invariance": (
-                "zero sample_weight is not equivalent to removing samples"
+                "sample_weight is not equivalent to removing/repeating samples."
             ),
         }
         return tags
@@ -2062,7 +2062,7 @@ class SGDRegressor(BaseSGDRegressor):
         tags = super().__sklearn_tags__()
         tags._xfail_checks = {
             "check_sample_weights_invariance": (
-                "zero sample_weight is not equivalent to removing samples"
+                "sample_weight is not equivalent to removing/repeating samples."
             ),
         }
         return tags
@@ -2642,7 +2642,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         tags = super().__sklearn_tags__()
         tags._xfail_checks = {
             "check_sample_weights_invariance": (
-                "zero sample_weight is not equivalent to removing samples"
+                "sample_weight is not equivalent to removing/repeating samples."
             ),
         }
         return tags
