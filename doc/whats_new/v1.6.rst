@@ -257,6 +257,11 @@ Changelog
   for the calculation of test scores.
   :pr:`29419` by :user:`Shruti Nath <snath-xoc>`.
 
+- |Fix| :class:`linear_model.RidgeCV` supports properly custom multioutput scorers by
+  letting the scorer managing the multioutput averaging. Previously, the predictions
+  and true targets where both squeezed to a 1d array before computing the error.
+  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 - |API| Deprecates `copy_X` in :class:`linear_model.TheilSenRegressor` as the parameter
   has no effect. `copy_X` will be removed in 1.8.
   :pr:`29105` by :user:`Adam Li <adam2392>`.

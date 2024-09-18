@@ -2278,6 +2278,35 @@ def test_ridge_cv_multioutput_sample_weight(global_random_seed):
     assert_allclose(ridge_cv.best_score_, -mean_squared_error(y, y_pred_loo))
 
 
+def test_ridge_cv_custom_multioutput_scorer():
+    """Check that `RidgeCV` works properly with a custom multioutput scorer."""
+    X, y = make_regression(n_targets=2, random_state=0)
+
+    def custom_error(y_true, y_pred):
+        errors = (y_true - y_pred) ** 2
+        mean_errors = np.mean(errors, axis=0)
+        if mean_errors.ndim == 1:
+            # case of multioutput
+            return -np.average(mean_errors, weights=[2, 1])
+        # single output
+        return -mean_errors
+
+    def custom_multioutput_scorer(estimator, X, y):
+        """Multioutput score that give twice more importance to the second target."""
+        return -custom_error(y, estimator.predict(X))
+
+    ridge_cv = RidgeCV(scoring=custom_multioutput_scorer)
+    ridge_cv.fit(X, y)
+
+    cv = LeaveOneOut()
+    ridge = Ridge(alpha=ridge_cv.alpha_)
+    y_pred_loo = np.squeeze(
+        [ridge.fit(X[train], y[train]).predict(X[test]) for train, test in cv.split(X)]
+    )
+
+    assert_allclose(ridge_cv.best_score_, -custom_error(y, y_pred_loo))
+
+
 # Metadata Routing Tests
 # ======================
 
