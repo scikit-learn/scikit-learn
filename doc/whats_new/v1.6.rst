@@ -208,6 +208,10 @@ Changelog
   and automatic retries in case of HTTP errors. :pr:`29354` by :user:`Olivier
   Grisel <ogrisel>`.
 
+- |Enhancement| Allow :func:`datasets.make_spd_matrix` to generate several
+  matrices at once adding parameter n_samples.
+  :pr:`26437` by :user:`Quentin Barthélemy <qbarthelemy>`.
+
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
