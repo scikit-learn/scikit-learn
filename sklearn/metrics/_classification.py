@@ -1375,9 +1375,9 @@ def f1_score(
     >>> y_true_empty = [0, 0, 0, 0, 0, 0]
     >>> y_pred_empty = [0, 0, 0, 0, 0, 0]
     >>> f1_score(y_true_empty, y_pred_empty)
-    np.float64(0.0...)
+    0.0...
     >>> f1_score(y_true_empty, y_pred_empty, zero_division=1.0)
-    np.float64(1.0...)
+    1.0...
     >>> f1_score(y_true_empty, y_pred_empty, zero_division=np.nan)
     nan...
 
@@ -1566,17 +1566,17 @@ def fbeta_score(
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
     >>> fbeta_score(y_true, y_pred, average='macro', beta=0.5)
-    np.float64(0.23...)
+    0.23...
     >>> fbeta_score(y_true, y_pred, average='micro', beta=0.5)
-    np.float64(0.33...)
+    0.33...
     >>> fbeta_score(y_true, y_pred, average='weighted', beta=0.5)
-    np.float64(0.23...)
+    0.23...
     >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)
     array([0.71..., 0.        , 0.        ])
     >>> y_pred_empty = [0, 0, 0, 0, 0, 0]
     >>> fbeta_score(y_true, y_pred_empty,
     ...             average="macro", zero_division=np.nan, beta=0.5)
-    np.float64(0.12...)
+    0.12...
     """
 
     _, _, f, _ = precision_recall_fscore_support(
@@ -1878,11 +1878,11 @@ def precision_recall_fscore_support(
     >>> y_true = np.array(['cat', 'dog', 'pig', 'cat', 'dog', 'pig'])
     >>> y_pred = np.array(['cat', 'pig', 'dog', 'cat', 'cat', 'dog'])
     >>> precision_recall_fscore_support(y_true, y_pred, average='macro')
-    (np.float64(0.22...), np.float64(0.33...), np.float64(0.26...), None)
+    (0.22..., 0.33..., 0.26..., None)
     >>> precision_recall_fscore_support(y_true, y_pred, average='micro')
-    (np.float64(0.33...), np.float64(0.33...), np.float64(0.33...), None)
+    (0.33..., 0.33..., 0.33..., None)
     >>> precision_recall_fscore_support(y_true, y_pred, average='weighted')
-    (np.float64(0.22...), np.float64(0.33...), np.float64(0.26...), None)
+    (0.22..., 0.33..., 0.26..., None)
 
     It is possible to compute per-label precisions, recalls, F1-scores and
     supports instead of averaging:
@@ -1957,9 +1957,9 @@ def precision_recall_fscore_support(
 
     if average is not None:
         assert average != "binary" or precision.shape[0] == 1
-        precision = _nanaverage(precision, weights=weights)
-        recall = _nanaverage(recall, weights=weights)
-        f_score = _nanaverage(f_score, weights=weights)
+        precision = float(_nanaverage(precision, weights=weights))
+        recall = float(_nanaverage(recall, weights=weights))
+        f_score = float(_nanaverage(f_score, weights=weights))
         true_sum = None  # return no support
 
     return precision, recall, f_score, true_sum
@@ -2289,11 +2289,11 @@ def precision_score(
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
     >>> precision_score(y_true, y_pred, average='macro')
-    np.float64(0.22...)
+    0.22...
     >>> precision_score(y_true, y_pred, average='micro')
-    np.float64(0.33...)
+    0.33...
     >>> precision_score(y_true, y_pred, average='weighted')
-    np.float64(0.22...)
+    0.22...
     >>> precision_score(y_true, y_pred, average=None)
     array([0.66..., 0.        , 0.        ])
     >>> y_pred = [0, 0, 0, 0, 0, 0]
@@ -2470,11 +2470,11 @@ def recall_score(
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
     >>> recall_score(y_true, y_pred, average='macro')
-    np.float64(0.33...)
+    0.33...
     >>> recall_score(y_true, y_pred, average='micro')
-    np.float64(0.33...)
+    0.33...
     >>> recall_score(y_true, y_pred, average='weighted')
-    np.float64(0.33...)
+    0.33...
     >>> recall_score(y_true, y_pred, average=None)
     array([1., 0., 0.])
     >>> y_true = [0, 0, 0, 0, 0, 0]
