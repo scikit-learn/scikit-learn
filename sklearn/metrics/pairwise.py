@@ -1105,6 +1105,7 @@ def manhattan_distances(X, Y=None):
     array([[0., 2.],
            [4., 4.]])
     """
+    xp, _, device_ = get_namespace_and_device(X, Y)
     X, Y = check_pairwise_arrays(X, Y)
 
     if issparse(X) or issparse(Y):
@@ -1114,9 +1115,9 @@ def manhattan_distances(X, Y=None):
         Y.sum_duplicates()
         D = np.zeros((X.shape[0], Y.shape[0]))
         _sparse_manhattan(X.data, X.indices, X.indptr, Y.data, Y.indices, Y.indptr, D)
-        return D
+        return xp.asarray(D, device=device_)
 
-    return distance.cdist(X, Y, "cityblock")
+    return xp.asarray(distance.cdist(X, Y, "cityblock"), device=device_)
 
 
 @validate_params(
@@ -1670,12 +1671,14 @@ def laplacian_kernel(X, Y=None, gamma=None):
     array([[0.71..., 0.51...],
            [0.51..., 0.71...]])
     """
+    xp, _ = get_namespace(X, Y)
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
         gamma = 1.0 / X.shape[1]
 
     K = -gamma * manhattan_distances(X, Y)
-    np.exp(K, K)  # exponentiate K in-place
+    # exponentiate K in-place for numpy
+    K = _modify_in_place_if_numpy(xp, xp.exp, K, out=K)
     return K
 
 
