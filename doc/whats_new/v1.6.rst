@@ -257,10 +257,10 @@ Changelog
   for the calculation of test scores.
   :pr:`29419` by :user:`Shruti Nath <snath-xoc>`.
 
-- |Fix| :class:`linear_model.RidgeCV` now properly use predictions the same scale as the
-  target seen during `fit`. Those predictions are stored in `cv_results_` when when
+- |Fix| :class:`linear_model.RidgeCV` now properly uses predictions on the same scale as
+  the target seen during `fit`. These predictions are stored in `cv_results_` when
   `scoring != None`. Previously, the predictions were rescaled by the square root of the
-  sample weights and offset by the mean of the target leading to an incorrect estimate
+  sample weights and offset by the mean of the target, leading to an incorrect estimate
   of the score.
   :pr:`29842` by :user:`Guillaume Lemaitre <glemaitre>`,
   :user:`Jérôme Dockes <jeromedockes>` and

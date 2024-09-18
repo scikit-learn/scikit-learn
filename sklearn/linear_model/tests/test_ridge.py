@@ -2261,12 +2261,12 @@ def test_ridge_cv_results_predictions(with_sample_weight, fit_intercept, n_targe
     """Check that the predictions stored in `cv_results_` are on the original scale.
 
     The GCV approach works on scaled data: centered by an offset and scaled by the
-    squared root of the sample weights. Thus, previous to compute scores, the
-    predictions need to be scaled back to the original scale. Those predictions are the
-    ones stored in `cv_results_` in `RidgeCV`.
+    square root of the sample weights. Thus, prior to computing scores, the
+    predictions need to be scaled back to the original scale. These predictions are
+    the ones stored in `cv_results_` in `RidgeCV`.
 
     In this test, we check that the internal predictions stored in `cv_results_` are
-    equivalent to a naive LOO-CV grid-search with a `Ridge` estimator.
+    equivalent to a naive LOO-CV grid search with a `Ridge` estimator.
 
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/13998
