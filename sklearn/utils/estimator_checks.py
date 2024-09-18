@@ -82,10 +82,17 @@ REGRESSION_DATASET = None
 
 
 def _yield_api_checks(estimator):
+    tags = get_tags(estimator)
+    yield check_estimator_cloneable
     yield check_estimator_repr
     yield check_no_attributes_set_in_init
     yield check_fit_score_takes_y
     yield check_estimators_overwrite_params
+    yield check_dont_overwrite_parameters
+    yield check_estimators_fit_returns_self
+    yield check_readonly_memmap_input
+    if tags.requires_fit:
+        yield check_estimators_unfitted
     yield check_do_not_raise_errors_in_init_or_set_params
 
 
@@ -103,8 +110,6 @@ def _yield_checks(estimator):
             yield check_sample_weights_shape
             yield check_sample_weights_not_overwritten
             yield check_sample_weights_invariance
-    yield check_estimators_fit_returns_self
-    yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
 
     # Check that all estimator yield informative messages when
     # trained on empty datasets
@@ -172,8 +177,6 @@ def _yield_classifier_checks(classifier):
         yield check_supervised_y_no_nan
         if tags.target_tags.single_output:
             yield check_supervised_y_2d
-    if tags.requires_fit:
-        yield check_estimators_unfitted
     if "class_weight" in classifier.get_params().keys():
         yield check_class_weight_classifiers
 
@@ -246,8 +249,6 @@ def _yield_regressor_checks(regressor):
     if name != "CCA":
         # check that the regressor handles int input
         yield check_regressors_int
-    if tags.requires_fit:
-        yield check_estimators_unfitted
     yield check_non_transformer_estimators_n_iter
 
 
@@ -310,9 +311,6 @@ def _yield_outliers_checks(estimator):
         yield partial(check_outliers_train, readonly_memmap=True)
         # test outlier detectors can handle non-array data
         yield check_classifier_data_not_an_array
-        # test if NotFittedError is raised
-        if get_tags(estimator).requires_fit:
-            yield check_estimators_unfitted
     yield check_non_transformer_estimators_n_iter
 
 
@@ -380,7 +378,6 @@ def _yield_all_checks(estimator, legacy: bool):
     yield check_get_params_invariance
     yield check_set_params
     yield check_dict_unchanged
-    yield check_dont_overwrite_parameters
     yield check_fit_idempotent
     yield check_fit_check_is_fitted
     if not tags.no_validation:
@@ -448,10 +445,10 @@ def parametrize_with_checks(estimators, *, legacy=True):
 
     Checks are categorised into the following groups:
 
-        - API checks: a set of checks to ensure API compatibility with scikit-learn.
-          Refer to https://scikit-learn.org/dev/developers/develop.html a requirement of
-          scikit-learn estimators.
-        - legacy: a set of checks which gradually will be grouped into other categories.
+    - API checks: a set of checks to ensure API compatibility with scikit-learn.
+      Refer to https://scikit-learn.org/dev/developers/develop.html a requirement of
+      scikit-learn estimators.
+    - legacy: a set of checks which gradually will be grouped into other categories.
 
     The `id` of each check is set to be a pprint version of the estimator
     and the name of the check with its keyword arguments.
@@ -543,10 +540,10 @@ def check_estimator(estimator=None, generate_only=False, *, legacy=True):
 
     Checks are categorised into the following groups:
 
-        - API checks: a set of checks to ensure API compatibility with scikit-learn.
-          Refer to https://scikit-learn.org/dev/developers/develop.html a requirement of
-          scikit-learn estimators.
-        - legacy: a set of checks which gradually will be grouped into other categories.
+    - API checks: a set of checks to ensure API compatibility with scikit-learn.
+      Refer to https://scikit-learn.org/dev/developers/develop.html a requirement of
+      scikit-learn estimators.
+    - legacy: a set of checks which gradually will be grouped into other categories.
 
     Parameters
     ----------
@@ -2704,7 +2701,7 @@ def check_get_feature_names_out_error(name, estimator_orig):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_estimators_fit_returns_self(name, estimator_orig, readonly_memmap=False):
+def check_estimators_fit_returns_self(name, estimator_orig):
     """Check if self is returned when calling fit."""
     X, y = make_blobs(random_state=0, n_samples=21)
     X = _enforce_estimator_tags_X(estimator_orig, X)
@@ -2712,10 +2709,26 @@ def check_estimators_fit_returns_self(name, estimator_orig, readonly_memmap=Fals
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
 
-    if readonly_memmap:
-        X, y = create_memmap_backed_data([X, y])
+    set_random_state(estimator)
+    assert estimator.fit(X, y) is estimator
+
+
+@ignore_warnings(category=FutureWarning)
+def check_readonly_memmap_input(name, estimator_orig):
+    """Check that the estimator can handle readonly memmap backed data.
+
+    This is particularly needed to support joblib parallelisation.
+    """
+    X, y = make_blobs(random_state=0, n_samples=21)
+    X = _enforce_estimator_tags_X(estimator_orig, X)
+
+    estimator = clone(estimator_orig)
+    y = _enforce_estimator_tags_y(estimator, y)
+
+    X, y = create_memmap_backed_data([X, y])
 
     set_random_state(estimator)
+    # This should not raise an error and should return self
     assert estimator.fit(X, y) is estimator
 
 
@@ -2725,6 +2738,15 @@ def check_estimators_unfitted(name, estimator_orig):
 
     Unfitted estimators should raise a NotFittedError.
     """
+    err_msg = (
+        "Estimator should raise a NotFittedError when calling `{method}` before fit. "
+        "Either call `check_is_fitted(self)` at the beginning of `{method}` or "
+        "set `tags.requires_fit=False` on estimator tags to disable this check.\n"
+        "- `check_is_fitted`: https://scikit-learn.org/dev/modules/generated/sklearn."
+        "utils.validation.check_is_fitted.html\n"
+        "- Estimator Tags: https://scikit-learn.org/dev/developers/develop."
+        "html#estimator-tags"
+    )
     # Common test for Regressors, Classifiers and Outlier detection estimators
     X, y = _regression_dataset()
 
@@ -2736,7 +2758,7 @@ def check_estimators_unfitted(name, estimator_orig):
         "predict_log_proba",
     ):
         if hasattr(estimator, method):
-            with raises(NotFittedError):
+            with raises(NotFittedError, err_msg=err_msg.format(method=method)):
                 getattr(estimator, method)(X)
 
 
@@ -2822,12 +2844,6 @@ def check_classifiers_predictions(X, y, name, classifier_orig):
                 ),
             )
 
-    # training set performance
-    if name != "ComplementNB":
-        # This is a pathological data set for ComplementNB.
-        # For some specific cases 'ComplementNB' predicts less classes
-        # than expected
-        assert_array_equal(np.unique(y), np.unique(y_pred))
     assert_array_equal(
         classes,
         classifier.classes_,

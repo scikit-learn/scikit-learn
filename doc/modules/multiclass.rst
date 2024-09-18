@@ -531,34 +531,34 @@ output for each sample.
 
 The following regressors natively support multioutput regression:
 
-  - :class:`cross_decomposition.CCA`
-  - :class:`tree.DecisionTreeRegressor`
-  - :class:`dummy.DummyRegressor`
-  - :class:`linear_model.ElasticNet`
-  - :class:`tree.ExtraTreeRegressor`
-  - :class:`ensemble.ExtraTreesRegressor`
-  - :class:`gaussian_process.GaussianProcessRegressor`
-  - :class:`neighbors.KNeighborsRegressor`
-  - :class:`kernel_ridge.KernelRidge`
-  - :class:`linear_model.Lars`
-  - :class:`linear_model.Lasso`
-  - :class:`linear_model.LassoLars`
-  - :class:`linear_model.LinearRegression`
-  - :class:`multioutput.MultiOutputRegressor`
-  - :class:`linear_model.MultiTaskElasticNet`
-  - :class:`linear_model.MultiTaskElasticNetCV`
-  - :class:`linear_model.MultiTaskLasso`
-  - :class:`linear_model.MultiTaskLassoCV`
-  - :class:`linear_model.OrthogonalMatchingPursuit`
-  - :class:`cross_decomposition.PLSCanonical`
-  - :class:`cross_decomposition.PLSRegression`
-  - :class:`linear_model.RANSACRegressor`
-  - :class:`neighbors.RadiusNeighborsRegressor`
-  - :class:`ensemble.RandomForestRegressor`
-  - :class:`multioutput.RegressorChain`
-  - :class:`linear_model.Ridge`
-  - :class:`linear_model.RidgeCV`
-  - :class:`compose.TransformedTargetRegressor`
+- :class:`cross_decomposition.CCA`
+- :class:`tree.DecisionTreeRegressor`
+- :class:`dummy.DummyRegressor`
+- :class:`linear_model.ElasticNet`
+- :class:`tree.ExtraTreeRegressor`
+- :class:`ensemble.ExtraTreesRegressor`
+- :class:`gaussian_process.GaussianProcessRegressor`
+- :class:`neighbors.KNeighborsRegressor`
+- :class:`kernel_ridge.KernelRidge`
+- :class:`linear_model.Lars`
+- :class:`linear_model.Lasso`
+- :class:`linear_model.LassoLars`
+- :class:`linear_model.LinearRegression`
+- :class:`multioutput.MultiOutputRegressor`
+- :class:`linear_model.MultiTaskElasticNet`
+- :class:`linear_model.MultiTaskElasticNetCV`
+- :class:`linear_model.MultiTaskLasso`
+- :class:`linear_model.MultiTaskLassoCV`
+- :class:`linear_model.OrthogonalMatchingPursuit`
+- :class:`cross_decomposition.PLSCanonical`
+- :class:`cross_decomposition.PLSRegression`
+- :class:`linear_model.RANSACRegressor`
+- :class:`neighbors.RadiusNeighborsRegressor`
+- :class:`ensemble.RandomForestRegressor`
+- :class:`multioutput.RegressorChain`
+- :class:`linear_model.Ridge`
+- :class:`linear_model.RidgeCV`
+- :class:`compose.TransformedTargetRegressor`
 
 Target format
 -------------

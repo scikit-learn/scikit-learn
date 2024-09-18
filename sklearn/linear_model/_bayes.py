@@ -66,13 +66,13 @@ class BayesianRidge(RegressorMixin, LinearModel):
         Initial value for alpha (precision of the noise).
         If not set, alpha_init is 1/Var(y).
 
-            .. versionadded:: 0.22
+        .. versionadded:: 0.22
 
     lambda_init : float, default=None
         Initial value for lambda (precision of the weights).
         If not set, lambda_init is 1.
 
-            .. versionadded:: 0.22
+        .. versionadded:: 0.22
 
     compute_score : bool, default=False
         If True, compute the log marginal likelihood at each iteration of the
