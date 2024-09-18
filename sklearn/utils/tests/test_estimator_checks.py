@@ -1437,6 +1437,6 @@ def test_check_classifier_not_supporting_multiclass():
         def fit(self, X, y):
             return self
 
-    msg = "The estimator tag tags.classifier_tags.multi_class is False "
+    msg = "The estimator tag `tags.classifier_tags.multi_class` is False"
     with raises(AssertionError, match=msg):
         check_classifier_not_supporting_multiclass("BadEstimator", BadEstimator())

@@ -4721,9 +4721,17 @@ def check_classifier_not_supporting_multiclass(name, estimator_orig):
         random_state=0,
     )
     err_msg = (
-        f"The estimator tag tags.classifier_tags.multi_class is False for {name} "
+        f"The estimator tag `tags.classifier_tags.multi_class` is False for {name} "
         "which means it does not support multiclass classification. However, it does "
-        "not raise the right ValueError when calling fit with a multiclass dataset."
+        "not raise the right `ValueError` when calling fit with a multiclass dataset, "
+        "including the error message 'Only binary classification is supported.' This "
+        "can be achieved by the following pattern:\n\n"
+        "y_type = type_of_target(y, input_name='y')\n"
+        "if y_type != 'binary':\n"
+        "    raise ValueError(\n"
+        "        'Only binary classification is supported. The type of the target ' \n"
+        "        f'is {y_type}.'\n"
+        ")"
     )
     with raises(
         ValueError, match="Only binary classification is supported.", err_msg=err_msg
