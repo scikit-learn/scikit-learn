@@ -361,9 +361,8 @@ Changelog
 :mod:`sklearn.utils.check_estimators`
 .....................................
 
-- |API| the :func:`check_estimators.check_sample_weights_invariance` test is split
-  into :func:`check_estimators.check_unit_sample_weights`
-  and :func:`check_estimators.check_sample_weights_invariance`
+- |API| the :func:`check_estimators.check_sample_weights_invariance` now uses
+  zero/integer weights
   :pr:`29818` by :user:`Antoine Baker <antoinebaker>`
 
 .. rubric:: Code and documentation contributors

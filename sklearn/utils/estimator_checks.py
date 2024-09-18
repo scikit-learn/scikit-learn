@@ -102,7 +102,6 @@ def _yield_checks(estimator):
             # We skip pairwise because the data is not pairwise
             yield check_sample_weights_shape
             yield check_sample_weights_not_overwritten
-            yield check_unit_sample_weights
             yield check_sample_weights_invariance
     yield check_estimators_fit_returns_self
     yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
@@ -1081,51 +1080,6 @@ def check_sample_weights_shape(name, estimator_orig):
 
     with raises(ValueError):
         estimator.fit(X, y, sample_weight=np.ones((len(y), 2)))
-
-
-@ignore_warnings(category=FutureWarning)
-def check_unit_sample_weights(name, estimator_orig):
-    # check that the estimators yield same results for
-    # unit weights and no weights
-    estimator1 = clone(estimator_orig)
-    estimator2 = clone(estimator_orig)
-    set_random_state(estimator1, random_state=0)
-    set_random_state(estimator2, random_state=0)
-
-    X = np.array(
-        [
-            [1, 3],
-            [1, 3],
-            [1, 3],
-            [1, 3],
-            [2, 1],
-            [2, 1],
-            [2, 1],
-            [2, 1],
-            [3, 3],
-            [3, 3],
-            [3, 3],
-            [3, 3],
-            [4, 1],
-            [4, 1],
-            [4, 1],
-            [4, 1],
-        ],
-        dtype=np.float64,
-    )
-    y = np.array([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2], dtype=int)
-    y = _enforce_estimator_tags_y(estimator_orig, y)
-    sw = np.ones(shape=len(y))
-
-    estimator1.fit(X, y=y, sample_weight=None)
-    estimator2.fit(X, y=y, sample_weight=sw)
-
-    err_msg = f"For {name} sample_weight=None is not equivalent to sample_weight=ones"
-    for method in ["predict", "predict_proba", "decision_function", "transform"]:
-        if hasattr(estimator_orig, method):
-            X_pred1 = getattr(estimator1, method)(X)
-            X_pred2 = getattr(estimator2, method)(X)
-            assert_allclose_dense_sparse(X_pred1, X_pred2, err_msg=err_msg)
 
 
 @ignore_warnings(category=FutureWarning)
