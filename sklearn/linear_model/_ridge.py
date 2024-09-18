@@ -2270,12 +2270,7 @@ class _RidgeGCV(LinearModel):
                     ]
                 )
             else:
-                _score = scorer(
-                    identity_estimator,
-                    predictions.ravel(),
-                    y.ravel(),
-                    **score_params,
-                )
+                _score = scorer(identity_estimator, predictions, y, **score_params)
 
         return _score
 
