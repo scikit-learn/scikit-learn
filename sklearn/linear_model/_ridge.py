@@ -2129,6 +2129,7 @@ class _RidgeGCV(LinearModel):
 
         self.alphas = np.asarray(self.alphas)
 
+        unscaled_y = y
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X,
             y,
@@ -2178,13 +2179,21 @@ class _RidgeGCV(LinearModel):
                     self.cv_results_[:, i] = squared_errors.ravel()
             else:
                 predictions = y - (c / G_inverse_diag)
+                # Rescale predictions back to original scale
+                if sample_weight is not None:  # avoid the unecessary division by ones
+                    if predictions.ndim > 1:
+                        predictions /= sqrt_sw[:, None]
+                    else:
+                        predictions /= sqrt_sw
+                predictions += y_offset
+
                 if self.store_cv_results:
                     self.cv_results_[:, i] = predictions.ravel()
 
                 score_params = score_params or {}
                 alpha_score = self._score(
                     predictions=predictions,
-                    y=y,
+                    y=unscaled_y,
                     n_y=n_y,
                     scorer=scorer,
                     score_params=score_params,

@@ -859,7 +859,9 @@ def test_ridge_loo_cv_asym_scoring():
     loo_ridge.fit(X, y)
     gcv_ridge.fit(X, y)
 
-    assert gcv_ridge.alpha_ == pytest.approx(loo_ridge.alpha_)
+    assert gcv_ridge.alpha_ == pytest.approx(
+        loo_ridge.alpha_
+    ), f"{gcv_ridge.alpha_=}, {loo_ridge.alpha_=}"
     assert_allclose(gcv_ridge.coef_, loo_ridge.coef_, rtol=1e-3)
     assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_, rtol=1e-3)
 
@@ -2252,6 +2254,52 @@ def test_ridge_cv_values_deprecated():
         ridge.cv_values_
 
 
+@pytest.mark.parametrize("with_sample_weight", [False, True])
+@pytest.mark.parametrize("fit_intercept", [False, True])
+@pytest.mark.parametrize("n_targets", [1, 2])
+def test_ridge_cv_results_predictions(with_sample_weight, fit_intercept, n_targets):
+    """Check that the predictions stored in `cv_results_` are on the original scale.
+
+    The GCV approach works on scaled data: centered by an offset and scaled by the
+    squared root of the sample weights. Thus, previous to compute scores, the
+    predictions need to be scaled back to the original scale. Those predictions are the
+    ones stored in `cv_results_` in `RidgeCV`.
+
+    In this test, we check that the internal predictions stored in `cv_results_` are
+    equivalent to a naive LOO-CV grid-search with a `Ridge` estimator.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/13998
+    """
+    X, y = make_regression(
+        n_samples=100, n_features=10, n_targets=n_targets, random_state=0
+    )
+    sample_weight = np.ones(shape=(X.shape[0],))
+    if with_sample_weight:
+        sample_weight[::2] = 0.5
+
+    alphas = (0.1, 1.0, 10.0)
+
+    # scoring should be set to store predictions and not the squared error
+    ridge_cv = RidgeCV(
+        alphas=alphas,
+        scoring="neg_mean_squared_error",
+        fit_intercept=fit_intercept,
+        store_cv_results=True,
+    )
+    ridge_cv.fit(X, y, sample_weight=sample_weight)
+
+    # manual grid-search with a `Ridge` estimator
+    predictions = np.empty(shape=(*y.shape, len(alphas)))
+    cv = LeaveOneOut()
+    for alpha_idx, alpha in enumerate(alphas):
+        for idx, (train_idx, test_idx) in enumerate(cv.split(X, y)):
+            ridge = Ridge(alpha=alpha, fit_intercept=fit_intercept)
+            ridge.fit(X[train_idx], y[train_idx], sample_weight[train_idx])
+            predictions[idx, ..., alpha_idx] = ridge.predict(X[test_idx])
+    assert_allclose(ridge_cv.cv_results_, predictions)
+
+
 def test_ridge_cv_multioutput_sample_weight(global_random_seed):
     """Check that `RidgeCV` works properly with multioutput and sample_weight
     when `scoring != None`.
@@ -2288,8 +2336,9 @@ def test_ridge_cv_custom_multioutput_scorer():
         if mean_errors.ndim == 1:
             # case of multioutput
             return -np.average(mean_errors, weights=[2, 1])
-        # single output
-        return -mean_errors
+        # single output - this part of the code should not be reached in the case of
+        # multioutput scoring
+        return -mean_errors  # pragma: no cover
 
     def custom_multioutput_scorer(estimator, X, y):
         """Multioutput score that give twice more importance to the second target."""
