@@ -861,7 +861,7 @@ def test_ridge_loo_cv_asym_scoring():
 
     assert gcv_ridge.alpha_ == pytest.approx(
         loo_ridge.alpha_
-    ), f"gcv_ridge.alpha_: {gcv_ridge.alpha_}, loo_ridge.alpha_: {loo_ridge.alpha_}"
+    ), f"{gcv_ridge.alpha_=}, {loo_ridge.alpha_=}"
     assert_allclose(gcv_ridge.coef_, loo_ridge.coef_, rtol=1e-3)
     assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_, rtol=1e-3)
 
@@ -2263,7 +2263,7 @@ def test_ridge_cv_results_predictions(with_sample_weight, fit_intercept, n_targe
     The GCV approach works on scaled data: centered by an offset and scaled by the
     squared root of the sample weights. Thus, previous to compute scores, the
     predictions need to be scaled back to the original scale. Those predictions are the
-    one stored in `cv_results_`.
+    ones stored in `cv_results_`.
 
     In this test, we check that the internal predictions stored in `cv_results_` are
     equivalent to a naive LOO-CV grid-search with a `Ridge` estimator.

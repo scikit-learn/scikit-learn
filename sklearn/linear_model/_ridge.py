@@ -2179,7 +2179,7 @@ class _RidgeGCV(LinearModel):
                     self.cv_results_[:, i] = squared_errors.ravel()
             else:
                 predictions = y - (c / G_inverse_diag)
-                # represent the predictions in the original scale
+                # Rescale predictions back to original scale
                 if predictions.ndim > 1:
                     predictions /= sqrt_sw[:, None]
                 else:
