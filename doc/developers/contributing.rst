@@ -556,12 +556,15 @@ Commit Message Marker  Action Taken by CI
 Note that, by default, the documentation is built but only the examples
 that are directly modified by the pull request are executed.
 
-Lock files
-^^^^^^^^^^
+.. _build_lock_files:
+
+Build lock files
+^^^^^^^^^^^^^^^^
 
 CIs use lock files to build environments with specific versions of dependencies. When a
 PR needs to modify the dependencies or their versions, the lock files should be updated
-accordingly. This can be done by commenting in the PR:
+accordingly. This can be done by adding the following comment directly in the GitHub
+Pull Request (PR) discussion:
 
 .. code-block:: text
 
@@ -585,6 +588,49 @@ update documentation-related lock files and add the `[doc build]` marker to the 
 .. code-block:: text
 
   @scikit-learn-bot update lock-files --select-build doc --commit-marker "[doc build]"
+
+Resolve conflicts in lock files
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When there are conflicts between the lock files in a user's branch and the `main`
+branch, the `main` branch must take precedence in defining the lock files. Only after
+this is resolved, the changes from the user's PR can be reapplied on top of the updated
+lock files. Therefore, conflicts should not be resolved directly on the GitHub PR
+interface. Instead, follow these steps:
+
+Merge `upstream/main` into your local branch:
+
+.. prompt:: bash
+
+  git pull upstream main --no-rebase
+
+Resolve conflicts, prioritizing the `upstream/main` branch. Be careful not to modify any
+files marked with `# DO NOT EDIT`. These files are auto-generated and will be updated
+in a later step.
+
+After resolving conflicts, add the changed files and proceed with the merge:
+
+.. prompt:: bash
+
+  git add path/to/modified/files
+  git merge --continue
+
+Re-generate the environment and lock files. This can be done using one of the following
+methods:
+
+- Use the scikit-learn-bot to update the lock files as described in the :ref:`build lock
+  files section <build_lock_files>`, or:
+
+- Run the python script to update the lock files manually:
+
+  .. prompt:: bash
+
+    python build_tools/update_environments_and_lock_files.py
+
+  In order to run this script you might need to add `conda-lock` and `pip-tools` to your
+  environment as described on top of the file.
+
+Now you can add, merge and push the re-generated lock files back to your remote branch.
 
 .. _stalled_pull_request:
 
