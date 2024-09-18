@@ -1,4 +1,5 @@
 .. -*- mode: rst -*-
+test
 
 |Azure| |CirrusCI| |Codecov| |CircleCI| |Nightly wheels| |Black| |PythonVersion| |PyPi| |DOI| |Benchmark|
 
