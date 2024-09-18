@@ -1069,8 +1069,8 @@ class SGDClassifier(BaseSGDClassifier):
           training loss by tol or fail to increase validation score by tol if
           `early_stopping` is `True`, the current learning rate is divided by 5.
 
-            .. versionadded:: 0.20
-                Added 'adaptive' option
+        .. versionadded:: 0.20
+            Added 'adaptive' option.
 
     eta0 : float, default=0.0
         The initial learning rate for the 'constant', 'invscaling' or
@@ -1883,8 +1883,8 @@ class SGDRegressor(BaseSGDRegressor):
           training loss by tol or fail to increase validation score by tol if
           early_stopping is True, the current learning rate is divided by 5.
 
-            .. versionadded:: 0.20
-                Added 'adaptive' option
+        .. versionadded:: 0.20
+            Added 'adaptive' option.
 
     eta0 : float, default=0.01
         The initial learning rate for the 'constant', 'invscaling' or
