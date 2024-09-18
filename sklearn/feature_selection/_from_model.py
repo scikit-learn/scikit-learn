@@ -17,7 +17,12 @@ from ..utils.metadata_routing import (
     process_routing,
 )
 from ..utils.metaestimators import available_if
-from ..utils.validation import _num_features, check_is_fitted, check_scalar
+from ..utils.validation import (
+    _check_feature_names,
+    _num_features,
+    check_is_fitted,
+    check_scalar,
+)
 from ._base import SelectorMixin, _get_feature_importances
 
 
@@ -347,19 +352,16 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             classification, real numbers in regression).
 
         **fit_params : dict
-            - If `enable_metadata_routing=False` (default):
+            - If `enable_metadata_routing=False` (default): Parameters directly passed
+              to the `fit` method of the sub-estimator. They are ignored if
+              `prefit=True`.
 
-                Parameters directly passed to the `fit` method of the
-                sub-estimator. They are ignored if `prefit=True`.
+            - If `enable_metadata_routing=True`: Parameters safely routed to the `fit`
+              method of the sub-estimator. They are ignored if `prefit=True`.
 
-            - If `enable_metadata_routing=True`:
-
-                Parameters safely routed to the `fit` method of the
-                sub-estimator. They are ignored if `prefit=True`.
-
-                .. versionchanged:: 1.4
-                    See :ref:`Metadata Routing User Guide <metadata_routing>` for
-                    more details.
+            .. versionchanged:: 1.4
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
 
         Returns
         -------
@@ -390,7 +392,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         if hasattr(self.estimator_, "feature_names_in_"):
             self.feature_names_in_ = self.estimator_.feature_names_in_
         else:
-            self._check_feature_names(X, reset=True)
+            _check_feature_names(self, X, reset=True)
 
         return self
 
@@ -423,20 +425,17 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             classification, real numbers in regression).
 
         **partial_fit_params : dict
-            - If `enable_metadata_routing=False` (default):
+            - If `enable_metadata_routing=False` (default): Parameters directly passed
+              to the `partial_fit` method of the sub-estimator.
 
-                Parameters directly passed to the `partial_fit` method of the
-                sub-estimator.
+            - If `enable_metadata_routing=True`: Parameters passed to the `partial_fit`
+              method of the sub-estimator. They are ignored if `prefit=True`.
 
-            - If `enable_metadata_routing=True`:
+            .. versionchanged:: 1.4
 
-                Parameters passed to the `partial_fit` method of the
-                sub-estimator. They are ignored if `prefit=True`.
-
-                .. versionchanged:: 1.4
-                    `**partial_fit_params` are routed to the sub-estimator, if
-                    `enable_metadata_routing=True` is set via
-                    :func:`~sklearn.set_config`, which allows for aliasing.
+                `**partial_fit_params` are routed to the sub-estimator, if
+                `enable_metadata_routing=True` is set via
+                :func:`~sklearn.set_config`, which allows for aliasing.
 
                 See :ref:`Metadata Routing User Guide <metadata_routing>` for
                 more details.
@@ -476,7 +475,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         if hasattr(self.estimator_, "feature_names_in_"):
             self.feature_names_in_ = self.estimator_.feature_names_in_
         else:
-            self._check_feature_names(X, reset=first_call)
+            _check_feature_names(self, X, reset=first_call)
 
         return self
 

@@ -74,6 +74,7 @@ from ..utils.validation import (
     _check_sample_weight,
     _num_samples,
     check_is_fitted,
+    validate_data,
 )
 from ._base import BaseEnsemble, _partition_estimators
 
@@ -356,7 +357,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         if issparse(y):
             raise ValueError("sparse multilabel-indicator for y is not supported.")
 
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             multi_output=True,
@@ -634,7 +636,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         else:
             ensure_all_finite = True
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             dtype=DTYPE,
             accept_sparse="csr",

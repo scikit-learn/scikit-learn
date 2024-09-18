@@ -38,7 +38,7 @@ from ..utils._param_validation import (
     validate_params,
 )
 from ..utils.graph import _fix_connected_components
-from ..utils.validation import check_memory
+from ..utils.validation import check_memory, validate_data
 
 # mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
 from . import _hierarchical_fast as _hierarchical  # type: ignore
@@ -989,7 +989,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         self : object
             Returns the fitted instance.
         """
-        X = self._validate_data(X, ensure_min_samples=2)
+        X = validate_data(self, X, ensure_min_samples=2)
         return self._fit(X)
 
     def _fit(self, X):
@@ -1338,7 +1338,7 @@ class FeatureAgglomeration(
         self : object
             Returns the transformer.
         """
-        X = self._validate_data(X, ensure_min_features=2)
+        X = validate_data(self, X, ensure_min_features=2)
         super()._fit(X.T)
         self._n_features_out = self.n_clusters_
         return self

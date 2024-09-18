@@ -283,13 +283,15 @@ There are three ways to specify multiple scoring metrics for the ``scoring``
 parameter:
 
 - As an iterable of string metrics::
-      >>> scoring = ['accuracy', 'precision']
+
+    >>> scoring = ['accuracy', 'precision']
 
 - As a ``dict`` mapping the scorer name to the scoring function::
-      >>> from sklearn.metrics import accuracy_score
-      >>> from sklearn.metrics import make_scorer
-      >>> scoring = {'accuracy': make_scorer(accuracy_score),
-      ...            'prec': 'precision'}
+
+    >>> from sklearn.metrics import accuracy_score
+    >>> from sklearn.metrics import make_scorer
+    >>> scoring = {'accuracy': make_scorer(accuracy_score),
+    ...            'prec': 'precision'}
 
   Note that the dict values can either be scorer functions or one of the
   predefined metric strings.
@@ -1278,12 +1280,12 @@ function:
     >>> matthews_corrcoef(y_true, y_pred)
     -0.33...
 
-.. topic:: References:
+.. rubric:: References
 
-  .. [WikipediaMCC2021] Wikipedia contributors. Phi coefficient.
-     Wikipedia, The Free Encyclopedia. April 21, 2021, 12:21 CEST.
-     Available at: https://en.wikipedia.org/wiki/Phi_coefficient
-     Accessed April 21, 2021.
+.. [WikipediaMCC2021] Wikipedia contributors. Phi coefficient.
+   Wikipedia, The Free Encyclopedia. April 21, 2021, 12:21 CEST.
+   Available at: https://en.wikipedia.org/wiki/Phi_coefficient
+   Accessed April 21, 2021.
 
 .. _multilabel_confusion_matrix:
 
@@ -2487,13 +2489,13 @@ relative percentage error with respect to actual output.
 
 .. note::
 
-    The MAPE formula here represents a relative error and outputs a value in the 
-    range [0, 1]. It is not a percentage in the range [0, 100] and a value of 100 
+    The MAPE formula here represents a relative error and outputs a value in the
+    range [0, 1]. It is not a percentage in the range [0, 100] and a value of 100
     does not mean 100% but 1e2. The motivation for the MAPE formula here to be in
-    the range [0, 1] is to be consistent with other error metrics in scikit-learn 
+    the range [0, 1] is to be consistent with other error metrics in scikit-learn
     such as `accuracy_score`.
-    
-    To obtain the mean absolute percentage error as per the Wikipedia formula, 
+
+    To obtain the mean absolute percentage error as per the Wikipedia formula,
     multiply the `mean_absolute_percentage_error` computed here by 100.
 
 .. dropdown:: References

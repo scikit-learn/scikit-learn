@@ -27,7 +27,7 @@ from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import softmax
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import check_random_state
-from ..utils.validation import check_array, check_is_fitted
+from ..utils.validation import check_array, check_is_fitted, validate_data
 
 
 class NeighborhoodComponentsAnalysis(
@@ -239,7 +239,7 @@ class NeighborhoodComponentsAnalysis(
             Fitted estimator.
         """
         # Validate the inputs X and y, and converts y to numerical classes.
-        X, y = self._validate_data(X, y, ensure_min_samples=2)
+        X, y = validate_data(self, X, y, ensure_min_samples=2)
         check_classification_targets(y)
         y = LabelEncoder().fit_transform(y)
 
@@ -361,7 +361,7 @@ class NeighborhoodComponentsAnalysis(
         """
 
         check_is_fitted(self)
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
 
         return np.dot(X, self.components_.T)
 
