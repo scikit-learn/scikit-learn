@@ -2180,10 +2180,11 @@ class _RidgeGCV(LinearModel):
             else:
                 predictions = y - (c / G_inverse_diag)
                 # Rescale predictions back to original scale
-                if predictions.ndim > 1:
-                    predictions /= sqrt_sw[:, None]
-                else:
-                    predictions /= sqrt_sw
+                if sample_weight is not None:  # avoid the unecessary division by ones
+                    if predictions.ndim > 1:
+                        predictions /= sqrt_sw[:, None]
+                    else:
+                        predictions /= sqrt_sw
                 predictions += y_offset
 
                 if self.store_cv_results:

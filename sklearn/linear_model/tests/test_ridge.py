@@ -2263,7 +2263,7 @@ def test_ridge_cv_results_predictions(with_sample_weight, fit_intercept, n_targe
     The GCV approach works on scaled data: centered by an offset and scaled by the
     squared root of the sample weights. Thus, previous to compute scores, the
     predictions need to be scaled back to the original scale. Those predictions are the
-    ones stored in `cv_results_`.
+    ones stored in `cv_results_` in `RidgeCV`.
 
     In this test, we check that the internal predictions stored in `cv_results_` are
     equivalent to a naive LOO-CV grid-search with a `Ridge` estimator.
