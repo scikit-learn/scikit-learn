@@ -465,6 +465,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        # TODO: fix sample_weight handling of this estimator, see meta-issue #162298
         tags._xfail_checks = {
             "check_sample_weights_invariance": (
                 "sample_weight is not equivalent to removing/repeating samples."
