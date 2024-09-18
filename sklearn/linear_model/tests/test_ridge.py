@@ -2256,7 +2256,8 @@ def test_ridge_cv_values_deprecated():
 
 @pytest.mark.parametrize("with_sample_weight", [False, True])
 @pytest.mark.parametrize("fit_intercept", [False, True])
-def test_ridge_cv_results_predictions(with_sample_weight, fit_intercept):
+@pytest.mark.parametrize("n_targets", [1, 2])
+def test_ridge_cv_results_predictions(with_sample_weight, fit_intercept, n_targets):
     """Check that the predictions stored in `cv_results_` are on the original scale.
 
     The GCV approach works on scaled data: centered by an offset and scaled by the
@@ -2270,7 +2271,9 @@ def test_ridge_cv_results_predictions(with_sample_weight, fit_intercept):
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/13998
     """
-    X, y = make_regression(n_samples=100, n_features=10, random_state=0)
+    X, y = make_regression(
+        n_samples=100, n_features=10, n_targets=n_targets, random_state=0
+    )
     sample_weight = np.ones(shape=(X.shape[0],))
     if with_sample_weight:
         sample_weight[::2] = 0.5
@@ -2287,20 +2290,40 @@ def test_ridge_cv_results_predictions(with_sample_weight, fit_intercept):
     ridge_cv.fit(X, y, sample_weight=sample_weight)
 
     # manual grid-search with a `Ridge` estimator
+    predictions = np.empty(shape=(*y.shape, len(alphas)))
     cv = LeaveOneOut()
-    results = np.transpose(
+    for alpha_idx, alpha in enumerate(alphas):
+        for idx, (train_idx, test_idx) in enumerate(cv.split(X, y)):
+            ridge = Ridge(alpha=alpha, fit_intercept=fit_intercept)
+            ridge.fit(X[train_idx], y[train_idx], sample_weight[train_idx])
+            predictions[idx, ..., alpha_idx] = ridge.predict(X[test_idx])
+    assert_allclose(ridge_cv.cv_results_, predictions)
+
+
+def test_ridge_cv_multioutput_sample_weight(global_random_seed):
+    """Check that `RidgeCV` works properly with multioutput and sample_weight
+    when `scoring != None`.
+
+    We check the error reported by the RidgeCV is close to a naive LOO-CV using a
+    Ridge estimator.
+    """
+    X, y = make_regression(n_targets=2, random_state=global_random_seed)
+    sample_weight = np.ones(shape=(X.shape[0],))
+
+    ridge_cv = RidgeCV(scoring="neg_mean_squared_error", store_cv_results=True)
+    ridge_cv.fit(X, y, sample_weight=sample_weight)
+
+    cv = LeaveOneOut()
+    ridge = Ridge(alpha=ridge_cv.alpha_)
+    y_pred_loo = np.squeeze(
         [
-            [
-                Ridge(alpha=alpha, fit_intercept=fit_intercept)
-                .fit(X[train_idx], y[train_idx], sample_weight[train_idx])
-                .predict(X[test_idx])
-                .squeeze()
-                for train_idx, test_idx in cv.split(X, y)
-            ]
-            for alpha in alphas
+            ridge.fit(X[train], y[train], sample_weight=sample_weight[train]).predict(
+                X[test]
+            )
+            for train, test in cv.split(X)
         ]
     )
-    assert_allclose(ridge_cv.cv_results_, results)
+    assert_allclose(ridge_cv.best_score_, -mean_squared_error(y, y_pred_loo))
 
 
 # Metadata Routing Tests
