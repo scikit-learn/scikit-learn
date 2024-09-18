@@ -361,8 +361,8 @@ Changelog
 :mod:`sklearn.utils.check_estimators`
 .....................................
 
-- |API| the :func:`check_estimators.check_sample_weights_invariance` now uses
-  zero/integer weights
+- |API| :func:`check_estimators.check_sample_weights_invariance` now uses
+  integer (including zero) weights.
   :pr:`29818` by :user:`Antoine Baker <antoinebaker>`
 
 .. rubric:: Code and documentation contributors
