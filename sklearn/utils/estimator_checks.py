@@ -3486,19 +3486,23 @@ def check_non_transformer_estimators_n_iter(name, estimator_orig):
     # Test that estimators that are not transformers with a parameter
     # max_iter, return the attribute of n_iter_ at least 1.
 
+    if not hasattr(estimator_orig, "max_iter"):
+        return
+
     estimator = clone(estimator_orig)
-    if hasattr(estimator, "max_iter"):
-        iris = load_iris()
-        X, y_ = iris.data, iris.target
-        y_ = _enforce_estimator_tags_y(estimator, y_)
+    iris = load_iris()
+    X, y_ = iris.data, iris.target
+    y_ = _enforce_estimator_tags_y(estimator, y_)
+    set_random_state(estimator, 0)
+    X = _enforce_estimator_tags_X(estimator_orig, X)
 
-        set_random_state(estimator, 0)
+    estimator.fit(X, y_)
 
-        X = _enforce_estimator_tags_X(estimator_orig, X)
-
-        estimator.fit(X, y_)
-
-        assert np.all(estimator.n_iter_ >= 1)
+    assert np.all(np.asarray(estimator.n_iter_) >= 1), (
+        "Estimators with a `max_iter` parameter, should expose an `n_iter_` attribute,"
+        " indicating the number of iterations that were executed. The values in the "
+        "`n_iter_` attribute should be greater or equal to 1."
+    )
 
 
 @ignore_warnings(category=FutureWarning)
