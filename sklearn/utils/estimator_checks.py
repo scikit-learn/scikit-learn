@@ -1230,7 +1230,13 @@ def check_dtype_object(name, estimator_orig):
     if hasattr(estimator, "transform"):
         estimator.transform(X)
 
-    with raises(Exception, match="Unknown label type", may_pass=True):
+    err_msg = (
+        "y with unknown label type is passed, but an error with no proper message "
+        "is raised. You can use `type_of_target(..., raise_unknown=True)` to check "
+        "and raise the right error, or include 'Unknown label type' in the error "
+        "message."
+    )
+    with raises(Exception, match="Unknown label type", may_pass=True, err_msg=err_msg):
         estimator.fit(X, y.astype(object))
 
     if not tags.input_tags.string:

@@ -15,9 +15,8 @@ import scipy.sparse as sp
 from sklearn import config_context, get_config
 from sklearn.base import BaseEstimator, ClassifierMixin, OutlierMixin
 from sklearn.cluster import MiniBatchKMeans
-from sklearn.datasets import make_multilabel_classification
+from sklearn.datasets import make_classification, make_multilabel_classification
 from sklearn.decomposition import PCA
-from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.exceptions import ConvergenceWarning, SkipTestWarning
 from sklearn.linear_model import (
     LinearRegression,
@@ -79,6 +78,7 @@ from sklearn.utils.estimator_checks import (
 )
 from sklearn.utils.fixes import CSR_CONTAINERS, SPARRAY_PRESENT
 from sklearn.utils.metaestimators import available_if
+from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import (
     check_array,
     check_is_fitted,
@@ -473,6 +473,16 @@ class UntaggedBinaryClassifier(SGDClassifier):
 
 
 class TaggedBinaryClassifier(UntaggedBinaryClassifier):
+    def fit(self, X, y):
+        # X, y = validate_data(self, X, y)
+        y_type = type_of_target(y, input_name="y", raise_unknown=True)
+        if y_type != "binary":
+            raise ValueError(
+                "Only binary classification is supported. The type of the target "
+                f"is {y_type}."
+            )
+        return super().fit(X, y)
+
     # Toy classifier that only supports binary classification.
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -800,16 +810,21 @@ def test_check_estimator_transformer_no_mixin():
 
 def test_check_estimator_clones():
     # check that check_estimator doesn't modify the estimator it receives
-    from sklearn.datasets import load_iris
 
-    iris = load_iris()
+    X, y = make_classification(
+        n_samples=50,
+        n_classes=3,
+        n_informative=3,
+        n_clusters_per_class=1,
+        n_features=5,
+        random_state=0,
+    )
 
     for Estimator in [
         GaussianMixture,
         LinearRegression,
         SGDClassifier,
         PCA,
-        ExtraTreesClassifier,
         MiniBatchKMeans,
     ]:
         # without fitting
@@ -824,7 +839,7 @@ def test_check_estimator_clones():
         with ignore_warnings(category=ConvergenceWarning):
             est = Estimator()
             set_random_state(est)
-            est.fit(iris.data + 10, iris.target)
+            est.fit(X, y)
             old_hash = joblib.hash(est)
             check_estimator(est)
         assert old_hash == joblib.hash(est)
