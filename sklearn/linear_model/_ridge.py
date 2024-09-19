@@ -1693,6 +1693,28 @@ class _RidgeGCV(LinearModel):
 
     This class is not intended to be used directly. Use RidgeCV instead.
 
+    `_RidgeGCV` uses a Generalized Cross-Validation for model selection. It's an
+    efficient approximation of leave-one-out cross-validation (LOO-CV), where instead of
+    computing multiple models by excluding one data point at a time, it uses an
+    algebraic shortcut to approximate the LOO-CV error, making it faster and
+    computationally more efficient.
+
+    Using a naive grid-search approach with a leave-one-out cross-validation in contrast
+    requires to fit `n_samples` models to compute the prediction error for each sample
+    and then to repeat this process for each alpha in the grid.
+
+    Here, the prediction error for each sample is computed by solving a **single**
+    linear system (in other words a single model) via a matrix factorization (i.e.
+    eigendecomposition or SVD) solving the problem stated in the Notes section. Finally,
+    we need to repeat this process for each alpha in the grid. The detailed complexity
+    is further discussed in Sect. 4 in [1].
+
+    This algebraic approach is only applicable for regularized least squares
+    problems. It could potentially be extended to kernel ridge regression.
+
+    See the Notes section and references for more details regarding the formulation
+    and the linear system that is solved.
+
     Notes
     -----
 
@@ -1725,8 +1747,8 @@ class _RidgeGCV(LinearModel):
 
     References
     ----------
-    http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf
-    https://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
+    [1] http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf
+    [2] https://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
 
     def __init__(
@@ -2107,6 +2129,7 @@ class _RidgeGCV(LinearModel):
 
         self.alphas = np.asarray(self.alphas)
 
+        unscaled_y = y
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X,
             y,
@@ -2156,13 +2179,21 @@ class _RidgeGCV(LinearModel):
                     self.cv_results_[:, i] = squared_errors.ravel()
             else:
                 predictions = y - (c / G_inverse_diag)
+                # Rescale predictions back to original scale
+                if sample_weight is not None:  # avoid the unecessary division by ones
+                    if predictions.ndim > 1:
+                        predictions /= sqrt_sw[:, None]
+                    else:
+                        predictions /= sqrt_sw
+                predictions += y_offset
+
                 if self.store_cv_results:
                     self.cv_results_[:, i] = predictions.ravel()
 
                 score_params = score_params or {}
                 alpha_score = self._score(
                     predictions=predictions,
-                    y=y,
+                    y=unscaled_y,
                     n_y=n_y,
                     scorer=scorer,
                     score_params=score_params,
@@ -2248,12 +2279,7 @@ class _RidgeGCV(LinearModel):
                     ]
                 )
             else:
-                _score = scorer(
-                    identity_estimator,
-                    predictions.ravel(),
-                    y.ravel(),
-                    **score_params,
-                )
+                _score = scorer(identity_estimator, predictions, y, **score_params)
 
         return _score
 
