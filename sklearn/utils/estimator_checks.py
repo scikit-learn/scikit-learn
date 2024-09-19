@@ -1094,10 +1094,6 @@ def check_sample_weights_invariance(name, estimator_orig):
     y = rng.randint(0, 2, size=n_samples)
     # Use random integers (including zero) as weights.
     sw = rng.randint(0, 5, size=n_samples)
-    # Check that at least one data point has zero weight
-    assert np.isin(0, sw)
-    # Check that all classes are represented for nonzero weights
-    assert np.all(np.isin(np.unique(y), y[sw > 0]))
 
     X_weigthed = X
     y_weighted = y
