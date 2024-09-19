@@ -257,6 +257,11 @@ Changelog
   for the calculation of test scores.
   :pr:`29419` by :user:`Shruti Nath <snath-xoc>`.
 
+- |Fix| :class:`linear_model.RidgeCV` now properly supports custom multioutput scorers
+  by letting the scorer manage the multioutput averaging. Previously, the predictions
+  and true targets were both squeezed to a 1D array before computing the error.
+  :pr:`29884` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 - |Fix| :class:`linear_model.RidgeCV` now properly uses predictions on the same scale as
   the target seen during `fit`. These predictions are stored in `cv_results_` when
   `scoring != None`. Previously, the predictions were rescaled by the square root of the
