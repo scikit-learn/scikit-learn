@@ -571,7 +571,6 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             dict(quantile=0.75),
             dict(solver="highs-ds"),
             dict(solver="highs-ipm"),
-            dict(solver="revised simplex"),
         ]
     },
     RBFSampler: {"check_dict_unchanged": dict(n_components=1)},
