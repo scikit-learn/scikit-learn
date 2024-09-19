@@ -4737,6 +4737,8 @@ def check_do_not_raise_errors_in_init_or_set_params(name, estimator_orig):
 def check_classifier_not_supporting_multiclass(name, estimator_orig):
     """Check that if the classifier has tags.classifier_tags.multi_class=False,
     then it should raise a ValueError when calling fit with a multiclass dataset.
+
+    This test is not yielded if the tag is not False.
     """
     estimator = clone(estimator_orig)
     set_random_state(estimator)

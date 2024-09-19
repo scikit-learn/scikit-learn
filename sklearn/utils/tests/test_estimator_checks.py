@@ -1436,11 +1436,8 @@ def test_check_classifier_not_supporting_multiclass():
     set, the test fails."""
 
     class BadEstimator(BaseEstimator):
-        def __sklearn_tags__(self):
-            tags = super().__sklearn_tags__()
-            tags.classifier_tags.multi_class = False
-            return tags
-
+        # we don't actually need to define the tag here since we're running the test
+        # manually.
         def fit(self, X, y):
             return self
 
