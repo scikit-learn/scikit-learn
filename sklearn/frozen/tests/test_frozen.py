@@ -198,3 +198,18 @@ def test_frozen_tags():
 
     assert estimator_tags.input_tags.categorical is True
     assert frozen_tags.input_tags.categorical is True
+
+
+def test_frozen_params():
+    """Test that FrozenEstimator only exposes the estimator parameter."""
+    est = LogisticRegression()
+    frozen = FrozenEstimator(est)
+
+    with pytest.raises(ValueError, match="You cannot set parameters of the inner"):
+        frozen.set_params(estimator__C=1)
+
+    assert frozen.get_params() == {"estimator": est}
+
+    other_est = LocalOutlierFactor()
+    frozen.set_params(estimator=other_est)
+    assert frozen.get_params() == {"estimator": other_est}

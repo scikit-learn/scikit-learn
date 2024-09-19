@@ -114,6 +114,19 @@ class FrozenEstimator(BaseEstimator):
         check_is_fitted(self.estimator)
         return self
 
+    def set_params(self, **kwargs):
+        estimator = kwargs.pop("estimator", None)
+        if estimator is not None:
+            self.estimator = estimator
+        if kwargs:
+            raise ValueError(
+                "You cannot set parameters of the inner estimator in a frozen "
+                "estimator."
+            )
+
+    def get_params(self, deep=True):
+        return {"estimator": self.estimator}
+
     def __sklearn_tags__(self):
         tags = deepcopy(get_tags(self.estimator))
         tags._skip_test = True
