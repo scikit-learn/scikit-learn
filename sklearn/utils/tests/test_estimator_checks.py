@@ -15,7 +15,10 @@ import scipy.sparse as sp
 from sklearn import config_context, get_config
 from sklearn.base import BaseEstimator, ClassifierMixin, OutlierMixin
 from sklearn.cluster import MiniBatchKMeans
-from sklearn.datasets import make_classification, make_multilabel_classification
+from sklearn.datasets import (
+    load_iris,
+    make_multilabel_classification,
+)
 from sklearn.decomposition import PCA
 from sklearn.exceptions import ConvergenceWarning, SkipTestWarning
 from sklearn.linear_model import (
@@ -811,14 +814,7 @@ def test_check_estimator_transformer_no_mixin():
 def test_check_estimator_clones():
     # check that check_estimator doesn't modify the estimator it receives
 
-    X, y = make_classification(
-        n_samples=50,
-        n_classes=3,
-        n_informative=3,
-        n_clusters_per_class=1,
-        n_features=5,
-        random_state=0,
-    )
+    iris = load_iris()
 
     for Estimator in [
         GaussianMixture,
@@ -839,7 +835,7 @@ def test_check_estimator_clones():
         with ignore_warnings(category=ConvergenceWarning):
             est = Estimator()
             set_random_state(est)
-            est.fit(X, y)
+            est.fit(iris.data, iris.target)
             old_hash = joblib.hash(est)
             check_estimator(est)
         assert old_hash == joblib.hash(est)

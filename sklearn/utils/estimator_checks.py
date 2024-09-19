@@ -4754,7 +4754,7 @@ def check_classifier_not_supporting_multiclass(name, estimator_orig):
         "not raise the right `ValueError` when calling fit with a multiclass dataset, "
         "including the error message 'Only binary classification is supported.' This "
         "can be achieved by the following pattern:\n\n"
-        "y_type = type_of_target(y, input_name='y')\n"
+        "y_type = type_of_target(y, input_name='y', raise_unknown=True)\n"
         "if y_type != 'binary':\n"
         "    raise ValueError(\n"
         "        'Only binary classification is supported. The type of the target ' \n"
