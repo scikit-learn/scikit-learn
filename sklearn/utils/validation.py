@@ -1664,9 +1664,10 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     :ref:`sphx_glr_auto_examples_developing_estimators_sklearn_is_fitted.py`
     for an example on how to use the API.
 
-    This fuction will pass if an estimator is stateless. An estimator can indicate it's
-    stateless by setting the `requires_fit` tag. See :ref:`estimator_tags` for more
-    information.
+    If no `attributes` are passed, this fuction will pass if an estimator is stateless.
+    An estimator can indicate it's stateless by setting the `requires_fit` tag. See
+    :ref:`estimator_tags` for more information. Note that the `requires_fit` tag
+    is ignored if `attributes` are passed.
 
     Parameters
     ----------
@@ -1730,7 +1731,7 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
 
     tags = get_tags(estimator)
 
-    if not tags.requires_fit:
+    if not tags.requires_fit and attributes is None:
         return
 
     if not _is_fitted(estimator, attributes, all_or_any):
