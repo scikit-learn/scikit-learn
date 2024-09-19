@@ -3657,7 +3657,13 @@ def check_classifiers_regression_target(name, estimator_orig):
 
     X = _enforce_estimator_tags_X(estimator_orig, X)
     e = clone(estimator_orig)
-    msg = "Unknown label type: "
+    err_msg = (
+        "When a classifier is passed a continuous target, it should raise a ValueError"
+        " with a message containing 'Unknown label type: ' or a message indicating that"
+        " a continuous target is passed and the message should include the word"
+        " 'continuous'"
+    )
+    msg = "Unknown label type: |continuous"
     if not get_tags(e).no_validation:
         with raises(ValueError, match=msg):
             e.fit(X, y)
