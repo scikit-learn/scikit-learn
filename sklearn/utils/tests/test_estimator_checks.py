@@ -11,7 +11,6 @@ from numbers import Integral, Real
 import joblib
 import numpy as np
 import scipy.sparse as sp
-from pytest import importorskip
 
 from sklearn import config_context, get_config
 from sklearn.base import BaseEstimator, ClassifierMixin, OutlierMixin
@@ -1435,5 +1434,9 @@ def test_check_estimator_tags_renamed():
 )
 def test_estimator_with_set_output(estimator, check):
     lib = estimator._sklearn_output_config["transform"]
+    # doing a local import since this file shouldn't depend on pytest,
+    # however, getting here means pytest is running this test.
+    from pytest import importorskip
+
     importorskip(lib)
     check(estimator)
