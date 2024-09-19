@@ -16,7 +16,7 @@ PYTHON_VERSION=$(echo ${PYTHON_VERSION:0:1}.${PYTHON_VERSION:1:2})
 PYTHON_DOCKER_IMAGE_PART=$PYTHON_VERSION
 
 if [[ "$CIBW_PRERELEASE_PYTHONS" =~ [tT]rue ]]; then
-    PYTHON_DOCKER_IMAGE_PART="${PYTHON_DOCKER_IMAGE_TAG}-rc"
+    PYTHON_DOCKER_IMAGE_PART="${PYTHON_DOCKER_IMAGE_PART}-rc"
 fi
 
 # We could have all of the following logic in a Dockerfile but it's a lot
