@@ -115,6 +115,21 @@ class FrozenEstimator(BaseEstimator):
         return self
 
     def set_params(self, **kwargs):
+        """Set the parameters of this estimator.
+
+        The only valud key here is `estimator`. You cannot set the parameters of the
+        inner estimator.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Estimator parameters.
+
+        Returns
+        -------
+        self : FrozenEstimator
+            This estimator.
+        """
         estimator = kwargs.pop("estimator", None)
         if estimator is not None:
             self.estimator = estimator
@@ -125,6 +140,21 @@ class FrozenEstimator(BaseEstimator):
             )
 
     def get_params(self, deep=True):
+        """Get parameters for this estimator.
+
+        Returns a `{"estimator": estimator}` dict. The parameters of the inner
+        estimator are not included.
+
+        Parameters
+        ----------
+        deep : bool, default=True
+            Ignored.
+
+        Returns
+        -------
+        params : dict
+            Parameter names mapped to their values.
+        """
         return {"estimator": self.estimator}
 
     def __sklearn_tags__(self):
