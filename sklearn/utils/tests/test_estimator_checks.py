@@ -1434,9 +1434,8 @@ def test_check_estimator_tags_renamed():
 )
 def test_estimator_with_set_output(estimator, check):
     lib = estimator._sklearn_output_config["transform"]
-    # doing a local import since this file shouldn't depend on pytest,
-    # however, getting here means pytest is running this test.
-    from pytest import importorskip
-
-    importorskip(lib)
+    try:
+        importlib.__import__(lib)
+    except ImportError:
+        raise SkipTest(f"Library {lib} is not installed")
     check(estimator)
