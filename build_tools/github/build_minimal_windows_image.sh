@@ -13,15 +13,16 @@ cp $WHEEL_PATH $WHEEL_NAME
 
 # Dot the Python version for identifying the base Docker image
 PYTHON_VERSION=$(echo ${PYTHON_VERSION:0:1}.${PYTHON_VERSION:1:2})
+PYTHON_DOCKER_IMAGE_PART=$PYTHON_VERSION
 
 if [[ "$CIBW_PRERELEASE_PYTHONS" =~ [tT]rue ]]; then
-    PYTHON_VERSION="$PYTHON_VERSION-rc"
+    PYTHON_DOCKER_IMAGE_PART="${PYTHON_DOCKER_IMAGE_TAG}-rc"
 fi
 
 # We could have all of the following logic in a Dockerfile but it's a lot
 # easier to do it in bash rather than figure out how to do it in Powershell
 # inside the Dockerfile ...
-DOCKER_IMAGE="winamd64/python:$PYTHON_VERSION-windowsservercore"
+DOCKER_IMAGE="winamd64/python:${PYTHON_DOCKER_IMAGE_PART}-windowsservercore"
 MNT_FOLDER="C:/mnt"
 CONTAINER_ID=$(docker run -it -v "$(cygpath -w $PWD):$MNT_FOLDER" -d $DOCKER_IMAGE)
 
