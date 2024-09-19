@@ -22,13 +22,14 @@ fi
 # easier to do it in bash rather than figure out how to do it in Powershell
 # inside the Dockerfile ...
 DOCKER_IMAGE="winamd64/python:$PYTHON_VERSION-windowsservercore"
-container_id=$(docker run -it -v $PWD:/mnt -d $DOCKER_IMAGE)
+MNT_FOLDER="C:\mnt"
+container_id=$(docker run -it -v "$(cygpath -w $PWD):$MNT_FOLDER" -d $DOCKER_IMAGE)
 
 function exec_inside_container() {
     docker exec $container_id powershell -Command $1
 }
 
-exec_inside_container "python -m pip install /mnt/$WHEEL_NAME"
+exec_inside_container "python -m pip install $MNT_FOLDER/$WHEEL_NAME"
 
 if [[ "$PYTHON_VERSION" == "3.13" ]]; then
     # TODO: remove when pandas has a release with python 3.13 wheels
