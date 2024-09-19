@@ -22,11 +22,11 @@ fi
 # easier to do it in bash rather than figure out how to do it in Powershell
 # inside the Dockerfile ...
 DOCKER_IMAGE="winamd64/python:$PYTHON_VERSION-windowsservercore"
-MNT_FOLDER="C:\mnt"
-container_id=$(docker run -it -v "$(cygpath -w $PWD):$MNT_FOLDER" -d $DOCKER_IMAGE)
+MNT_FOLDER="C:/mnt"
+CONTAINER_ID=$(docker run -it -v "$(cygpath -w $PWD):$MNT_FOLDER" -d $DOCKER_IMAGE)
 
 function exec_inside_container() {
-    docker exec $container_id powershell -Command $1
+    docker exec $CONTAINER_ID powershell -Command $1
 }
 
 exec_inside_container "python -m pip install $MNT_FOLDER/$WHEEL_NAME"
@@ -41,5 +41,7 @@ fi
 
 exec_inside_container "python -m pip install $CIBW_TEST_REQUIRES"
 
-# Save container state to scikit-learn/minimal-windows image
-docker commit $container_id scikit-learn/minimal-windows
+# Save container state to scikit-learn/minimal-windows image. On Windows the
+# container needs to be stopped first.
+docker stop $CONTAINER_ID
+docker commit $CONTAINER_ID scikit-learn/minimal-windows
