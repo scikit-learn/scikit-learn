@@ -428,6 +428,7 @@ redirects = {
     "contents": "index",
     "preface": "index",
     "modules/classes": "api/index",
+    "tutorial/machine_learning_map/index": "machine_learning_map",
     "auto_examples/feature_selection/plot_permutation_test_for_classification": (
         "auto_examples/model_selection/plot_permutation_tests_for_classification"
     ),
