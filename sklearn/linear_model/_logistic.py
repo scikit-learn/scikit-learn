@@ -1458,6 +1458,18 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         """
         return np.log(self.predict_proba(X))
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        # TODO: investigate failure with the newton-cholesky solver,
+        # see meta-issue #162298
+        if self.solver == "newton-cholesky":
+            tags._xfail_checks = {
+                "check_sample_weights_invariance": (
+                    "sample_weight is not equivalent to removing/repeating samples."
+                ),
+            }
+        return tags
+
 
 class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstimator):
     """Logistic Regression CV (aka logit, MaxEnt) classifier.
