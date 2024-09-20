@@ -12,8 +12,7 @@ WHEEL_NAME=$(basename $WHEEL_PATH)
 cp $WHEEL_PATH $WHEEL_NAME
 
 # Dot the Python version for identifying the base Docker image
-PYTHON_VERSION=$(echo ${PYTHON_VERSION:0:1}.${PYTHON_VERSION:1:2})
-PYTHON_DOCKER_IMAGE_PART=$PYTHON_VERSION
+PYTHON_DOCKER_IMAGE_PART=$(echo ${PYTHON_VERSION:0:1}.${PYTHON_VERSION:1:2})
 
 if [[ "$CIBW_PRERELEASE_PYTHONS" =~ [tT]rue ]]; then
     PYTHON_DOCKER_IMAGE_PART="${PYTHON_DOCKER_IMAGE_PART}-rc"
@@ -32,7 +31,7 @@ function exec_inside_container() {
 
 exec_inside_container "python -m pip install $MNT_FOLDER/$WHEEL_NAME"
 
-if [[ "$PYTHON_VERSION" == "3.13" ]]; then
+if [[ "$PYTHON_VERSION" == "313" ]]; then
     # TODO: remove when pandas has a release with python 3.13 wheels
     # First install numpy release
     exec_inside_container "python -m pip install numpy"
