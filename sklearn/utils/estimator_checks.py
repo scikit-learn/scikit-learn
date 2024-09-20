@@ -1090,7 +1090,7 @@ def check_sample_weights_invariance(name, estimator_orig):
 
     rng = np.random.RandomState(42)
     n_samples = 15
-    X = rng.rand(n_samples, 2)
+    X = rng.rand(n_samples, n_samples * 2)
     y = rng.randint(0, 2, size=n_samples)
     # Use random integers (including zero) as weights.
     sw = rng.randint(0, 5, size=n_samples)
@@ -1133,7 +1133,7 @@ def check_sample_weights_invariance(name, estimator_orig):
     estimator_repeated.fit(X_repeated, y=y_repeated, sample_weight=None)
     estimator_weighted.fit(X_weigthed, y=y_weighted, sample_weight=sw)
 
-    for method in ["predict", "predict_proba", "decision_function", "transform"]:
+    for method in ["predict_proba", "decision_function", "predict", "transform"]:
         if hasattr(estimator_orig, method):
             X_pred1 = getattr(estimator_repeated, method)(X)
             X_pred2 = getattr(estimator_weighted, method)(X)
