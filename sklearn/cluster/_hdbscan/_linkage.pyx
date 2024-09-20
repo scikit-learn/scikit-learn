@@ -210,11 +210,10 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_data_matrix(
                     new_reachability = mutual_reachability_distance
                     source_node = current_node
                     new_node = j
-                continue
 
             # If the node j is closer to another node already in the tree, we
             # make their edge the current MST candidate edge.
-            if next_node_min_reach < new_reachability:
+            elif next_node_min_reach < new_reachability:
                 new_reachability = next_node_min_reach
                 source_node = next_node_source
                 new_node = j
