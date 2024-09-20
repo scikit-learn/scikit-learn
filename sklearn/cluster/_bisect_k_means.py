@@ -211,7 +211,7 @@ class BisectingKMeans(_BaseKMeans):
            [10., 1.]])
 
     For a comparison between BisectingKMeans and K-Means refer to example
-    :ref:`sphx_glr_auto_examples_cluster_plot_bisect_kmeans`.
+    :ref:`sphx_glr_auto_examples_cluster_plot_bisect_kmeans.py`.
     """
 
     _parameter_constraints: dict = {
