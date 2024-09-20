@@ -209,7 +209,7 @@ class BisectingKMeans(_BaseKMeans):
     array([[ 2., 1.],
            [10., 9.],
            [10., 1.]])
-    
+
     For a comparison between BisectingKMeans and K-Means refer to example
     :ref:`sphx_glr_auto_examples_cluster_plot_bisect_kmeans`.
     """
