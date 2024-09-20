@@ -1416,7 +1416,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         tags.input_tags.allow_nan = True
         # TODO: replace by a statistical test, see meta-issue #162298
         tags._xfail_checks = {
-            "check_sample_weights_invariance": (
+            "check_sample_weight_equivalence": (
                 "sample_weight is not equivalent to removing/repeating samples."
             ),
         }

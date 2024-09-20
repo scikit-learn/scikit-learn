@@ -361,7 +361,8 @@ Changelog
 :mod:`sklearn.utils.check_estimators`
 .....................................
 
-- |API| :func:`check_estimators.check_sample_weights_invariance` now uses
+- |API| :func:`check_estimators.check_sample_weights_invariance` replaced by
+  :func:`check_estimators.check_sample_weight_equivalence` which uses
   integer (including zero) weights.
   :pr:`29818` by :user:`Antoine Baker <antoinebaker>`
 

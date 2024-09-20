@@ -691,7 +691,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         # this is is not the case and a different choice of solver could fix
         # this problem.
         tags._xfail_checks = {
-            "check_sample_weights_invariance": (
+            "check_sample_weight_equivalence": (
                 "sample_weight is not equivalent to removing/repeating samples."
             ),
         }

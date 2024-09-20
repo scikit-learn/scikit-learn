@@ -109,7 +109,7 @@ def _yield_checks(estimator):
             # We skip pairwise because the data is not pairwise
             yield check_sample_weights_shape
             yield check_sample_weights_not_overwritten
-            yield check_sample_weights_invariance
+            yield check_sample_weight_equivalence
 
     # Check that all estimator yield informative messages when
     # trained on empty datasets
@@ -1080,7 +1080,7 @@ def check_sample_weights_shape(name, estimator_orig):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_sample_weights_invariance(name, estimator_orig):
+def check_sample_weight_equivalence(name, estimator_orig):
     # check that setting sample_weight to zero / integer is equivalent
     # to removing / repeating corresponding samples.
     estimator_weighted = clone(estimator_orig)

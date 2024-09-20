@@ -487,7 +487,7 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     BisectingKMeans: {"check_dict_unchanged": dict(max_iter=5, n_clusters=1, n_init=2)},
     CCA: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     DecisionTreeRegressor: {
-        "check_sample_weights_invariance": [
+        "check_sample_weight_equivalence": [
             dict(criterion="squared_error"),
             dict(criterion="absolute_error"),
             dict(criterion="friedman_mse"),
@@ -495,7 +495,7 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
         ]
     },
     DecisionTreeClassifier: {
-        "check_sample_weights_invariance": [
+        "check_sample_weight_equivalence": [
             dict(criterion="gini"),
             dict(criterion="log_loss"),
             dict(criterion="entropy"),
@@ -510,7 +510,7 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     FastICA: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     FeatureAgglomeration: {"check_dict_unchanged": dict(n_clusters=1)},
     GammaRegressor: {
-        "check_sample_weights_invariance": [
+        "check_sample_weight_equivalence": [
             dict(solver="newton-cholesky"),
             dict(solver="lbfgs"),
         ]
@@ -527,7 +527,7 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     LinearDiscriminantAnalysis: {"check_dict_unchanged": dict(n_components=1)},
     LocallyLinearEmbedding: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     LogisticRegression: {
-        "check_sample_weights_invariance": [
+        "check_sample_weight_equivalence": [
             dict(solver="lbfgs"),
             dict(solver="liblinear"),
             dict(solver="newton-cg"),
@@ -559,14 +559,14 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     PLSRegression: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     PLSSVD: {"check_dict_unchanged": dict(n_components=1)},
     PoissonRegressor: {
-        "check_sample_weights_invariance": [
+        "check_sample_weight_equivalence": [
             dict(solver="newton-cholesky"),
             dict(solver="lbfgs"),
         ]
     },
     PolynomialCountSketch: {"check_dict_unchanged": dict(n_components=1)},
     QuantileRegressor: {
-        "check_sample_weights_invariance": [
+        "check_sample_weight_equivalence": [
             dict(quantile=0.5),
             dict(quantile=0.75),
             dict(solver="highs-ds"),
@@ -575,7 +575,7 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     },
     RBFSampler: {"check_dict_unchanged": dict(n_components=1)},
     Ridge: {
-        "check_sample_weights_invariance": [
+        "check_sample_weight_equivalence": [
             dict(solver="svd"),
             dict(solver="cholesky"),
             dict(solver="sparse_cg"),
@@ -584,7 +584,7 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
         ]
     },
     RidgeClassifier: {
-        "check_sample_weights_invariance": [
+        "check_sample_weight_equivalence": [
             dict(solver="svd"),
             dict(solver="cholesky"),
             dict(solver="sparse_cg"),
@@ -606,7 +606,7 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     TSNE: {"check_dict_unchanged": dict(n_components=1, perplexity=2)},
     TruncatedSVD: {"check_dict_unchanged": dict(n_components=1)},
     TweedieRegressor: {
-        "check_sample_weights_invariance": [
+        "check_sample_weight_equivalence": [
             dict(solver="newton-cholesky"),
             dict(solver="lbfgs"),
         ]

@@ -645,7 +645,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         tags.input_tags.allow_nan = get_tags(self._get_estimator()).input_tags.allow_nan
         # TODO: replace by a statistical test, see meta-issue #162298
         tags._xfail_checks = {
-            "check_sample_weights_invariance": (
+            "check_sample_weight_equivalence": (
                 "sample_weight is not equivalent to removing/repeating samples."
             ),
         }

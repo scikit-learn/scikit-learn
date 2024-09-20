@@ -1464,7 +1464,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         # see meta-issue #162298
         if self.solver == "newton-cholesky":
             tags._xfail_checks = {
-                "check_sample_weights_invariance": (
+                "check_sample_weight_equivalence": (
                     "sample_weight is not equivalent to removing/repeating samples."
                 ),
             }
