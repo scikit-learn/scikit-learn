@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
+
 from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
 from .._ranking import auc, roc_curve
 
