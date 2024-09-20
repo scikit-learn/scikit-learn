@@ -120,6 +120,9 @@ scikit_learn_install() {
         # brings in openmp so that you end up having the omp.h include inside
         # the conda environment.
         find $CONDA_PREFIX -name omp.h -delete -print
+        # meson 1.5 detects OpenMP installed with brew and OpenMP is installed
+        # with brew in CI runner
+        brew uninstall --ignore-dependencies libomp
     fi
 
     if [[ "$UNAMESTR" == "Linux" ]]; then
