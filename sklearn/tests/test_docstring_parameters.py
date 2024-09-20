@@ -14,6 +14,7 @@ import pytest
 import sklearn
 from sklearn import metrics
 from sklearn.datasets import make_classification
+from sklearn.ensemble import StackingClassifier, StackingRegressor
 
 # make it possible to discover experimental estimators when calling `all_estimators`
 from sklearn.experimental import (
@@ -29,6 +30,7 @@ from sklearn.utils._testing import (
     assert_docstring_consistency,
     check_docstring_parameters,
     ignore_warnings,
+    skip_if_no_numpydoc,
 )
 from sklearn.utils.deprecation import _is_deprecated
 from sklearn.utils.estimator_checks import (
@@ -326,12 +328,9 @@ def _get_all_fitted_attributes(estimator):
     return [k for k in fit_attr if k.endswith("_") and not k.startswith("_")]
 
 
+@skip_if_no_numpydoc
 def test_precision_recall_f_score_docstring_consistency():
     """Check docstrings parameters of related metrics are consistent."""
-    pytest.importorskip(
-        "numpydoc",
-        reason="numpydoc is required to test the docstrings",
-    )
     metrics_to_check = [
         metrics.precision_recall_fscore_support,
         metrics.f1_score,
@@ -371,4 +370,15 @@ def test_precision_recall_f_score_docstring_consistency():
         metrics_to_check,
         include_params=["average"],
         description_regex=" ".join(description_regex.split()),
+    )
+
+
+@skip_if_no_numpydoc
+def test_stacking_classifier_regressor_docstring_consistency():
+    """Check docstrings parameters stacking estimators are consistent."""
+    assert_docstring_consistency(
+        [StackingClassifier, StackingRegressor],
+        include_params=["cv", "n_jobs", "passthrough", "verbose"],
+        include_attrs=True,
+        exclude_attrs=["final_estimator_"],
     )
