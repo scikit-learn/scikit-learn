@@ -367,6 +367,11 @@ Changelog
   calling :func:`utils.validation.check_non_negative`.
   :pr:`29540` by :user:`Tamara Atanasoska <tamaraatanasoska>`.
 
+- |Enhancement| :func:`utils.validation.check_is_fitted` now passes on stateless
+  estimators. An estimator can indicate it's stateless by setting the `requires_fit`
+  tag. See :ref:`estimator_tags` for more information.
+  :pr:`29880` by `Adrin Jalali`_.
+
 - |API| the `assert_all_finite` parameter of functions :func:`utils.check_array`,
   :func:`utils.check_X_y`, :func:`utils.as_float_array` is renamed into
   `ensure_all_finite`. `force_all_finite` will be removed in 1.8.
