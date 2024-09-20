@@ -68,9 +68,9 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     >>> import matplotlib.pyplot as plt
     >>> import numpy as np
     >>> from sklearn import metrics
-    >>> y = np.array([0, 0, 1, 1])
-    >>> pred = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> fpr, tpr, thresholds = metrics.roc_curve(y, pred)
+    >>> y_true = np.array([0, 0, 1, 1])
+    >>> y_score = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> fpr, tpr, thresholds = metrics.roc_curve(y_true, y_score)
     >>> roc_auc = metrics.auc(fpr, tpr)
     >>> display = metrics.RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc,
     ...                                   estimator_name='example estimator')
@@ -333,7 +333,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             .. deprecated:: 1.6
                 `y_pred` is deprecated and will be removed in 1.8. Use
                 `y_score` instead.
- 
+
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
@@ -413,7 +413,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
                 FutureWarning,
             )
             y_score = y_pred
-        
+
         pos_label_validated, name = cls._validate_from_predictions_params(
             y_true, y_score, sample_weight=sample_weight, pos_label=pos_label, name=name
         )
