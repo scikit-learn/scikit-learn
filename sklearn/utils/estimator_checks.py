@@ -1091,7 +1091,7 @@ def check_sample_weights_invariance(name, estimator_orig):
     rng = np.random.RandomState(42)
     n_samples = 15
     X = rng.rand(n_samples, n_samples * 2)
-    y = rng.randint(0, 2, size=n_samples)
+    y = rng.randint(0, 3, size=n_samples)
     # Use random integers (including zero) as weights.
     sw = rng.randint(0, 5, size=n_samples)
 
