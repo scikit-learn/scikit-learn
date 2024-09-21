@@ -122,6 +122,10 @@ feature, code or documentation improvement).
     install` command once, `sklearn` will automatically be rebuilt when
     importing `sklearn`.
 
+    Note that `--config-settings` is only supported in `pip` version 23.1 or
+    later. To upgrade `pip` to a compatible version, run `pip install -U pip` or
+    `pip install pip==23.1`.
+
 Dependencies
 ------------
 
