@@ -220,7 +220,7 @@ class DecisionBoundaryDisplay:
                     if self.multiclass_colors is None
                     else self.multiclass_colors
                 )
-                cmap = mpl.pyplot.get_cmap(cmap, self.response.shape[-1])
+                cmap = plt.get_cmap(cmap, self.response.shape[-1])
                 for class_idx, (r, g, b, _) in enumerate(cmap.colors):
                     class_cmap = mpl.colors.LinearSegmentedColormap.from_list(
                         f"colormap_{class_idx}", [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)]

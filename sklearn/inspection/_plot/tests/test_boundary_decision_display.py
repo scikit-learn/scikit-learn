@@ -633,6 +633,8 @@ def test_multiclass_colors_cmap(pyplot, plot_method, multiclass_colors):
             cmaps.append(class_cmap)
 
     for idx, quad in enumerate(disp.surface_):
+        print(f'quad: {quad.cmap._segmentdata}')
+        print(f'test cmap: {cmaps[idx]._segmentdata}')
         assert quad.cmap == cmaps[idx]
 
 
