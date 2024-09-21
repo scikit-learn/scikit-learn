@@ -14,6 +14,7 @@ __all__ = [
     "UndefinedMetricWarning",
     "PositiveSpectrumWarning",
     "UnsetMetadataPassedError",
+    "InconsistentVersionWarning",
 ]
 
 
