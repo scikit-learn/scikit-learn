@@ -602,7 +602,6 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
     For a more extended example, see:
     :ref: `sphx_glr_auto_examples_cluster_plot_coin_segmentation.py`.
-
     """
 
     _parameter_constraints: dict = {
