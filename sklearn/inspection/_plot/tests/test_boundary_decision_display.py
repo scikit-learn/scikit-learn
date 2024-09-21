@@ -617,7 +617,7 @@ def test_multiclass_colors_cmap(pyplot, plot_method, multiclass_colors):
 
     cmaps = []
     if multiclass_colors == "plasma":
-        cmap = mpl.colormaps[multiclass_colors].resampled(len(clf.classes_))
+        cmap = mpl.pyplot.get_cmap(multiclass_colors, len(clf.classes_))
         for class_idx, primary_color in enumerate(cmap.colors):
             r, g, b, _ = primary_color
             class_cmap = mpl.colors.LinearSegmentedColormap.from_list(
