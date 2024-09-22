@@ -251,8 +251,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             # resample gives a list of resmpaled [X, sample_weight]
             # if sample_weight provided
             if sample_weight is not None:
-                X = X[0]
                 sample_weight = X[1]
+                X = X[0]
 
         n_features = X.shape[1]
         n_bins = self._validate_n_bins(n_features)
