@@ -18,6 +18,7 @@ from ..exceptions import DataConversionWarning
 from ..preprocessing import normalize
 from ..utils import check_array, gen_batches, gen_even_slices
 from ..utils._array_api import (
+    _convert_to_numpy,
     _fill_or_add_to_diagonal,
     _find_matching_floating_dtype,
     _is_numpy_namespace,
@@ -1117,7 +1118,19 @@ def manhattan_distances(X, Y=None):
         _sparse_manhattan(X.data, X.indices, X.indptr, Y.data, Y.indices, Y.indptr, D)
         return xp.asarray(D, device=device_)
 
-    return xp.asarray(distance.cdist(X, Y, "cityblock"), device=device_)
+    # Note: the _convert_to_numpy functions are used to support the array api
+    # for manhattan distances for now, as the scipy cdist function for
+    # manhattan distance does not currently provide array api support.
+    # TODO: remove the calls to _convert_to_numpy if scipy provides array api
+    #   support for manhattan distance in the future or else investigate with
+    #   developing our own custom functionality using the array api
+    #   specification.
+    return xp.asarray(
+        distance.cdist(
+            _convert_to_numpy(X, xp=xp), _convert_to_numpy(Y, xp=xp), "cityblock"
+        ),
+        device=device_,
+    )
 
 
 @validate_params(
