@@ -567,15 +567,20 @@ def resample(
     arrays = [a.tocsr() if issparse(a) else a for a in arrays]
     resampled_arrays = [_safe_indexing(a, indices) for a in arrays]
 
-    resampled_weights = None
     if sample_weight is not None:
         resampled_weights = _safe_indexing(sample_weight, indices)
 
     if len(resampled_arrays) == 1:
         # syntactic sugar for the unit argument case
-        return resampled_arrays[0], resampled_weights
+        if sample_weight is not None:
+            return [resampled_arrays[0], resampled_weights]
+        else:
+            return resampled_arrays[0]
     else:
-        return resampled_arrays, resampled_weights
+        if sample_weight is not None:
+            return [resampled_arrays, resampled_weights]
+        else:
+            return resampled_arrays
 
 
 def shuffle(*arrays, random_state=None, n_samples=None):
