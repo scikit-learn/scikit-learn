@@ -11,8 +11,10 @@ from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import resample
 from ..utils._param_validation import Interval, Options, StrOptions
 from ..utils.deprecation import _deprecate_Xt_in_inverse_transform
+from ..utils.stats import _weighted_percentile
 from ..utils.validation import (
     _check_feature_names_in,
+    _check_sample_weight,
     check_array,
     check_is_fitted,
     validate_data,
@@ -238,15 +240,19 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         if self.subsample is not None and n_samples > self.subsample:
             # Take a subsample of `X`
-            X = resample(
+            X, sample_weight = resample(
                 X,
                 replace=False,
                 n_samples=self.subsample,
                 random_state=self.random_state,
+                sample_weight=sample_weight,
             )
 
         n_features = X.shape[1]
         n_bins = self._validate_n_bins(n_features)
+
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         bin_edges = np.zeros(n_features, dtype=object)
         for jj in range(n_features):
@@ -266,8 +272,16 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
             elif self.strategy == "quantile":
                 quantiles = np.linspace(0, 100, n_bins[jj] + 1)
-                bin_edges[jj] = np.asarray(np.percentile(column, quantiles))
-
+                if sample_weight is None:
+                    bin_edges[jj] = np.asarray(np.percentile(column, quantiles))
+                else:
+                    bin_edges[jj] = np.asarray(
+                        [
+                            _weighted_percentile(column, sample_weight, q)
+                            for q in quantiles
+                        ],
+                        dtype=np.float64,
+                    )
             elif self.strategy == "kmeans":
                 from ..cluster import KMeans  # fixes import loops
 
@@ -278,7 +292,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 # 1D k-means procedure
                 km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1)
                 centers = km.fit(
-                    column[:, None],
+                    column[:, None], sample_weight=sample_weight
                 ).cluster_centers_[:, 0]
                 # Must sort, centers may be unsorted even with sorted init
                 centers.sort()
