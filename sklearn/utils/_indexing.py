@@ -527,20 +527,9 @@ def resample(
         )
 
     check_consistent_length(*arrays)
-
-    if sample_weight is not None:
-        stratify = None
-        replace = True
-
     if stratify is None:
         if replace:
-            if sample_weight is None:
-                indices = random_state.randint(0, n_samples, size=(max_n_samples,))
-            else:
-                sample_weight /= np.sum(sample_weight)
-                indices = random_state.randint(
-                    np.arange(n_samples), size=(max_n_samples,), p=sample_weight
-                )
+            indices = random_state.randint(0, n_samples, size=(max_n_samples,))
         else:
             indices = np.arange(n_samples)
             random_state.shuffle(indices)
@@ -577,11 +566,16 @@ def resample(
     # convert sparse matrices to CSR for row-based indexing
     arrays = [a.tocsr() if issparse(a) else a for a in arrays]
     resampled_arrays = [_safe_indexing(a, indices) for a in arrays]
+
+    resampled_weights = None
+    if sample_weight is not None:
+        resampled_weights = _safe_indexing(sample_weight, indices)
+
     if len(resampled_arrays) == 1:
         # syntactic sugar for the unit argument case
-        return resampled_arrays[0]
+        return resampled_arrays[0], resampled_weights
     else:
-        return resampled_arrays
+        return resampled_arrays, resampled_weights
 
 
 def shuffle(*arrays, random_state=None, n_samples=None):
