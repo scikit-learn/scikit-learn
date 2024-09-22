@@ -417,7 +417,14 @@ def _get_column_indices_interchange(X_interchange, key, key_dtype):
     },
     prefer_skip_nested_validation=True,
 )
-def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=None):
+def resample(
+    *arrays,
+    replace=True,
+    n_samples=None,
+    random_state=None,
+    stratify=None,
+    sample_weight=None,
+):
     """Resample arrays or sparse matrices in a consistent way.
 
     The default strategy implements one step of the bootstrapping
@@ -521,9 +528,19 @@ def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=
 
     check_consistent_length(*arrays)
 
+    if sample_weight is not None:
+        stratify = None
+        replace = True
+
     if stratify is None:
         if replace:
-            indices = random_state.randint(0, n_samples, size=(max_n_samples,))
+            if sample_weight is None:
+                indices = random_state.randint(0, n_samples, size=(max_n_samples,))
+            else:
+                sample_weight /= np.sum(sample_weight)
+                indices = random_state.randint(
+                    np.arange(n_samples), size=(max_n_samples,), p=sample_weight
+                )
         else:
             indices = np.arange(n_samples)
             random_state.shuffle(indices)
