@@ -540,17 +540,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         )
         return router
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "Due to the cross-validation and sample ordering, removing a sample"
-                    " is not strictly equal to putting is weight to zero. Specific unit"
-                    " tests are added for CalibratedClassifierCV specifically."
-                ),
-            }
-        }
-
 
 def _fit_classifier_calibrator_pair(
     estimator,

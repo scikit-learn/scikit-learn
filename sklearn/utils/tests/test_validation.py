@@ -83,6 +83,7 @@ from sklearn.utils.validation import (
     check_scalar,
     column_or_1d,
     has_fit_parameter,
+    validate_data,
 )
 
 
@@ -891,6 +892,21 @@ def test_check_is_fitted_with_is_fitted():
     with pytest.raises(NotFittedError):
         check_is_fitted(Estimator())
     check_is_fitted(Estimator().fit())
+
+
+def test_check_is_fitted_stateless():
+    """Check that check_is_fitted passes for stateless estimators."""
+
+    class StatelessEstimator(BaseEstimator):
+        def fit(self, **kwargs):
+            return self  # pragma: no cover
+
+        def __sklearn_tags__(self):
+            tags = super().__sklearn_tags__()
+            tags.requires_fit = False
+            return tags
+
+    check_is_fitted(StatelessEstimator())
 
 
 def test_check_is_fitted():
@@ -1888,7 +1904,7 @@ def test_get_feature_names_invalid_dtypes(names, dtypes):
 
 class PassthroughTransformer(BaseEstimator):
     def fit(self, X, y=None):
-        self._validate_data(X, reset=True)
+        validate_data(self, X, reset=True)
         return self
 
     def transform(self, X):
@@ -2197,6 +2213,16 @@ def test_check_array_writeable_df():
     # df is backed by a read-only array, a copy is made
     assert not np.may_share_memory(out, df)
     assert out.flags.writeable
+
+
+@skip_if_array_api_compat_not_configured
+def test_check_array_on_sparse_inputs_with_array_api_enabled():
+    X_sp = sp.csr_array([[0, 1, 0], [1, 0, 1]])
+    with config_context(array_api_dispatch=True):
+        assert sp.issparse(check_array(X_sp, accept_sparse=True))
+
+        with pytest.raises(TypeError):
+            check_array(X_sp)
 
 
 # TODO(1.8): remove

@@ -22,7 +22,7 @@ from ..utils import check_array, check_random_state
 from ..utils._arpack import _init_arpack_v0
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import stable_cumsum
-from ..utils.validation import FLOAT_DTYPES, check_is_fitted
+from ..utils.validation import FLOAT_DTYPES, check_is_fitted, validate_data
 
 
 def barycenter_weights(X, Y, indices, reg=1e-3):
@@ -789,7 +789,7 @@ class LocallyLinearEmbedding(
         )
 
         random_state = check_random_state(self.random_state)
-        X = self._validate_data(X, dtype=float)
+        X = validate_data(self, X, dtype=float)
         self.nbrs_.fit(X)
         self.embedding_, self.reconstruction_error_ = _locally_linear_embedding(
             X=self.nbrs_,
@@ -868,7 +868,7 @@ class LocallyLinearEmbedding(
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
         ind = self.nbrs_.kneighbors(
             X, n_neighbors=self.n_neighbors, return_distance=False
         )

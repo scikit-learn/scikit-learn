@@ -22,6 +22,20 @@ Version 1.6.0
 
 **In Development**
 
+Changes impacting many modules
+------------------------------
+
+- |API| :func:`utils.validation.validate_data` is introduced and replaces previously
+  private `base.BaseEstimator._validate_data` method. This is intended for third party
+  estimator developers, who should use this function in most cases instead of
+  :func:`utils.validation.check_array` and :func:`utils.validation.check_X_y`.
+  :pr:`29696` by `Adrin Jalali`_.
+
+- |Enhancement| `__sklearn_tags__` was introduced for setting tags in estimators.
+  More details in :ref:`estimator_tags`.
+  :pr:`22606` by `Thomas Fan`_ and :pr:`29677` by `Adrin Jalali`_.
+
+
 Support for Array API
 ---------------------
 
@@ -65,6 +79,8 @@ See :ref:`array_api` for more details.
   :class:`model_selection.HalvingRandomSearchCV` now support Array API
   compatible inputs when their base estimators do. :pr:`27096` by :user:`Tim
   Head <betatim>` and :user:`Olivier Grisel <ogrisel>`.
+- :class:`preprocessing.MinMaxScaler` with `clip=True` :pr:`29751` by
+  :user:`Shreekant Nandiyawar <Shree7676>`
 
 **Other**
 
@@ -172,6 +188,12 @@ Changelog
   now accepts string format or callable to generate feature names. :pr:`28934` by
   :user:`Marc Bresson <MarcBresson>`.
 
+:mod:`sklearn.covariance`
+.........................
+
+- |Efficiency| :class:`covariance.MinCovDet` fitting is now slightly faster.
+  :pr:`29835` by :user:`Antony Lee <anntzer>`.
+
 :mod:`sklearn.cross_decomposition`
 ..................................
 
@@ -185,14 +207,6 @@ Changelog
   from the web. It handles local caching, integrity checks with SHA256 digests
   and automatic retries in case of HTTP errors. :pr:`29354` by :user:`Olivier
   Grisel <ogrisel>`.
-
-:mod:`sklearn.decomposition`
-............................
-
-- |Fix| Increase rank defficiency threshold in the whitening step of
-  :class:`decomposition.FastICA` with `whiten_solver="eigh"` to improve the
-  platform-agnosticity of the estimator. :pr:`29612` by :user:`Olivier Grisel
-  <ogrisel>`.
 
 :mod:`sklearn.discriminant_analysis`
 ....................................
@@ -239,9 +253,32 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
+- |Fix| :class:`linear_model.LogisticRegressionCV` corrects sample weight handling
+  for the calculation of test scores.
+  :pr:`29419` by :user:`Shruti Nath <snath-xoc>`.
+
+- |Fix| :class:`linear_model.RidgeCV` now properly supports custom multioutput scorers
+  by letting the scorer manage the multioutput averaging. Previously, the predictions
+  and true targets were both squeezed to a 1D array before computing the error.
+  :pr:`29884` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| :class:`linear_model.RidgeCV` now properly uses predictions on the same scale as
+  the target seen during `fit`. These predictions are stored in `cv_results_` when
+  `scoring != None`. Previously, the predictions were rescaled by the square root of the
+  sample weights and offset by the mean of the target, leading to an incorrect estimate
+  of the score.
+  :pr:`29842` by :user:`Guillaume Lemaitre <glemaitre>`,
+  :user:`Jérôme Dockes <jeromedockes>` and
+  :user:`Hanmin Qin <qinhanmin2014>`.
+
 - |API| Deprecates `copy_X` in :class:`linear_model.TheilSenRegressor` as the parameter
   has no effect. `copy_X` will be removed in 1.8.
   :pr:`29105` by :user:`Adam Li <adam2392>`.
+
+- |Fix| :class:`linear_model.LassoCV` and :class:`linear_model.ElasticNetCV` now
+  take sample weights into accounts to define the search grid for the internally tuned
+  `alpha` hyper-parameter. :pr:`29442` by :user:`John Hopfensperger <s-banach> and
+  :user:`Shruti Nath <snath-xoc>`.
 
 :mod:`sklearn.manifold`
 .......................
@@ -262,6 +299,10 @@ Changelog
   division by zero, the metric is undefined and this value is returned.
   :pr:`29210` by :user:`Marc Torrellas Socastro <marctorsoc>` and
   :user:`Stefanie Senger <StefanieSenger>`.
+
+- |Efficiency| :func:`sklearn.metrics.classification_report` is now faster by caching
+  classification labels.
+  :pr:`29738` by `Adrin Jalali`_.
 
 - |API| scoring="neg_max_error" should be used instead of
   scoring="max_error" which is now deprecated.
@@ -325,6 +366,16 @@ Changelog
   to check for negative values in the passed array, until now only available through
   calling :func:`utils.validation.check_non_negative`.
   :pr:`29540` by :user:`Tamara Atanasoska <tamaraatanasoska>`.
+
+- |FIX| :func:`utils.estimator_checks.parametrize_with_checks` and
+  :func:`utils.estimator_checks.check_estimator` now support estimators that
+  have `set_output` called on them.
+  :pr:`29869` by `Adrin Jalali`_.
+
+- |Enhancement| :func:`utils.validation.check_is_fitted` now passes on stateless
+  estimators. An estimator can indicate it's stateless by setting the `requires_fit`
+  tag. See :ref:`estimator_tags` for more information.
+  :pr:`29880` by `Adrin Jalali`_.
 
 - |API| the `assert_all_finite` parameter of functions :func:`utils.check_array`,
   :func:`utils.check_X_y`, :func:`utils.as_float_array` is renamed into
