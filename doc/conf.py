@@ -436,6 +436,7 @@ redirects = {
     "contents": "index",
     "preface": "index",
     "modules/classes": "api/index",
+    "tutorial/machine_learning_map/index": "machine_learning_map",
     "auto_examples/feature_selection/plot_permutation_test_for_classification": (
         "auto_examples/model_selection/plot_permutation_tests_for_classification"
     ),
@@ -462,7 +463,6 @@ redirects = {
     "auto_examples/exercises/plot_cv_digits.py": (
         "auto_examples/model_selection/plot_nested_cross_validation_iris.py"
     ),
-    "tutorial/machine_learning_map/index.html": "machine_learning_map/index.html",
 }
 html_context["redirects"] = redirects
 for old_link in redirects:
