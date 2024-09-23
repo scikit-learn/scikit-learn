@@ -15,7 +15,7 @@ from ..base import (
 )
 from ..linear_model import ridge_regression
 from ..utils import check_random_state
-from ..utils._param_validation import Hidden, Interval, StrOptions
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_array, check_is_fitted, validate_data
 from ._dict_learning import MiniBatchDictionaryLearning, dict_learning
