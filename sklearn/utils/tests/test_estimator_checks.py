@@ -832,7 +832,7 @@ def test_check_estimator_clones():
 def test_check_estimators_unfitted():
     # check that a ValueError/AttributeError is raised when calling predict
     # on an unfitted estimator
-    msg = "Did not raise"
+    msg = "Estimator should raise a NotFittedError when calling"
     with raises(AssertionError, match=msg):
         check_estimators_unfitted("estimator", NoSparseClassifier())
 
