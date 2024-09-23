@@ -3956,7 +3956,7 @@ def check_n_features_in_after_fitting(name, estimator_orig):
     ]
     X_bad = X[:, [1]]
 
-    err_msg = """
+    err_msg = """\
         `{name}.{method}()` does not check for consistency between input number
         of features with {name}.fit(), via the `n_features_in_` attribute.
         You might want to use `sklearn.utils.validation.validate_data` instead
