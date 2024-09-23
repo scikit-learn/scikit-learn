@@ -5,6 +5,7 @@
 
 import pickle
 import re
+import textwrap
 import warnings
 from contextlib import nullcontext
 from copy import deepcopy
@@ -3959,26 +3960,27 @@ def check_n_features_in_after_fitting(name, estimator_orig):
     ]
     X_bad = X[:, [1]]
 
-    err_msg = (
-        "`{name}.{method}()` does not check for consistency between input number "
-        "of features with {name}.fit(), via the `n_features_in_` attribute. "
-        "You might want to use `sklearn.utils.validation.validate_data` instead "
-        "of `check_array` in `{name}.fit()` and {name}.{method}()`. This can be done "
-        "like the following:\n\n"
-        "from sklearn.utils.validation import validate_data\n"
-        "...\n"
-        "class MyEstimator(BaseEstimator):\n"
-        "    ...\n"
-        "    def fit(self, X, y):\n"
-        "        X, y = validate_data(self, X, y, ...)\n"
-        "        ...\n"
-        "        return self\n"
-        "...\n"
-        "    def {method}(self, X):\n"
-        "        X = validate_data(self, X, ..., reset=False)\n"
-        "        ...\n"
-        "        return X\n"
-    )
+    err_msg = """
+        `{name}.{method}()` does not check for consistency between input number
+        of features with {name}.fit(), via the `n_features_in_` attribute.
+        You might want to use `sklearn.utils.validation.validate_data` instead
+        of `check_array` in `{name}.fit()` and {name}.{method}()`. This can be done
+        like the following:
+        from sklearn.utils.validation import validate_data
+        ...
+        class MyEstimator(BaseEstimator):
+            ...
+            def fit(self, X, y):
+                X, y = validate_data(self, X, y, ...)
+                ...
+                return self
+            ...
+            def {method}(self, X):
+                X = validate_data(self, X, ..., reset=False)
+                ...
+            return X
+    """
+    err_msg = textwrap.dedent(err_msg)
 
     msg = f"X has 1 features, but \\w+ is expecting {X.shape[1]} features as input"
     for method in check_methods:
