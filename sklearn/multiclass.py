@@ -226,9 +226,9 @@ class OneVsRestClassifier(
 
     Read more in the :ref:`User Guide <ovr_classification>`.
 
-    For a example on how to compare classification probability using SVM, L1
+    For an example on how to compare classification probability using SVM, L1
     and L2 penalized logistic regression (multinomial multiclass),
-    a One-Vs-Rest with logistic regression, and GPC see:
+    One-Vs-Rest with logistic regression, and GPC see:
     :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`
 
     Parameters
