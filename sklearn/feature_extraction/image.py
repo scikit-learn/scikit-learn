@@ -22,6 +22,8 @@ __all__ = [
     "reconstruct_from_patches_2d",
 ]
 
+from ..utils.validation import validate_data
+
 ###############################################################################
 # From an image to a graph
 
@@ -234,6 +236,9 @@ def grid_to_graph(
     >>> mask[[1, 2], [1, 2], :] = True
     >>> graph = grid_to_graph(*shape_img, mask=mask)
     >>> print(graph)
+    <COOrdinate sparse matrix of dtype 'int64'
+      with 2 stored elements and shape (2, 2)>
+      Coords	Values
       (0, 0)    1
       (1, 1)    1
     """
@@ -627,7 +632,8 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
             `n_patches` is either `n_samples * max_patches` or the total
             number of patches that can be extracted.
         """
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X=X,
             ensure_2d=False,
             allow_nd=True,
@@ -671,5 +677,9 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
             )
         return patches
 
-    def _more_tags(self):
-        return {"X_types": ["3darray"], "stateless": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.two_d_array = False
+        tags.input_tags.three_d_array = True
+        tags.requires_fit = False
+        return tags

@@ -4,6 +4,7 @@ This module defines export functions for decision trees.
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
+
 from collections.abc import Iterable
 from io import StringIO
 from numbers import Integral

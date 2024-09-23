@@ -114,7 +114,7 @@ def fast_logdet(A):
     >>> from sklearn.utils.extmath import fast_logdet
     >>> a = np.array([[5, 1], [2, 8]])
     >>> fast_logdet(a)
-    3.6375861597263857
+    np.float64(3.6375861597263857)
     """
     xp, _ = get_namespace(A)
     sign, ld = xp.linalg.slogdet(A)
@@ -178,6 +178,7 @@ def safe_sparse_dot(a, b, *, dense_output=False):
            [11, 25, 39],
            [17, 39, 61]])
     """
+    xp, _ = get_namespace(a, b)
     if a.ndim > 2 or b.ndim > 2:
         if sparse.issparse(a):
             # sparse is always 2D. Implies b is 3D+
@@ -193,7 +194,12 @@ def safe_sparse_dot(a, b, *, dense_output=False):
             ret = a_2d @ b
             ret = ret.reshape(*a.shape[:-1], b.shape[1])
         else:
-            ret = np.dot(a, b)
+            # Alternative for `np.dot` when dealing with a or b having
+            # more than 2 dimensions, that works with the array api.
+            # If b is 1-dim then the last axis for b is taken otherwise
+            # if b is >= 2-dim then the second to last axis is taken.
+            b_axis = -1 if b.ndim == 1 else -2
+            ret = xp.tensordot(a, b, axes=[-1, b_axis])
     else:
         ret = a @ b
 

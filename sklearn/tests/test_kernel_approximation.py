@@ -200,9 +200,9 @@ def test_additive_chi2_sampler_exceptions():
     transformer = AdditiveChi2Sampler()
     X_neg = X.copy()
     X_neg[0, 0] = -1
-    with pytest.raises(ValueError, match="X in AdditiveChi2Sampler.fit"):
+    with pytest.raises(ValueError, match="X in AdditiveChi2Sampler"):
         transformer.fit(X_neg)
-    with pytest.raises(ValueError, match="X in AdditiveChi2Sampler.transform"):
+    with pytest.raises(ValueError, match="X in AdditiveChi2Sampler"):
         transformer.fit(X)
         transformer.transform(X_neg)
 

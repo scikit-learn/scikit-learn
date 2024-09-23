@@ -2,6 +2,7 @@
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
+
 import itertools
 
 from ..base import ClassNamePrefixFeaturesOutMixin, TransformerMixin, _fit_context
@@ -479,12 +480,12 @@ class KNeighborsTransformer(
         """
         return self.fit(X).transform(X)
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_methods_sample_order_invariance": "check is not applicable."
-            }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_methods_sample_order_invariance": "check is not applicable."
         }
+        return tags
 
 
 class RadiusNeighborsTransformer(
@@ -709,9 +710,9 @@ class RadiusNeighborsTransformer(
         """
         return self.fit(X).transform(X)
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_methods_sample_order_invariance": "check is not applicable."
-            }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_methods_sample_order_invariance": "check is not applicable."
         }
+        return tags

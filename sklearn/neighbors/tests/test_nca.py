@@ -19,6 +19,7 @@ from sklearn.metrics import pairwise_distances
 from sklearn.neighbors import NeighborhoodComponentsAnalysis
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import check_random_state
+from sklearn.utils.validation import validate_data
 
 rng = check_random_state(0)
 # load and shuffle iris dataset
@@ -70,7 +71,7 @@ def test_toy_example_collapse_points():
             # Initialize a fake NCA and variables needed to compute the loss:
             self.fake_nca = NeighborhoodComponentsAnalysis()
             self.fake_nca.n_iter_ = np.inf
-            self.X, y = self.fake_nca._validate_data(X, y, ensure_min_samples=2)
+            self.X, y = validate_data(self.fake_nca, X, y, ensure_min_samples=2)
             y = LabelEncoder().fit_transform(y)
             self.same_class_mask = y[:, np.newaxis] == y[np.newaxis, :]
 
@@ -487,7 +488,7 @@ def test_expected_transformation_shape():
             # function:
             self.fake_nca = NeighborhoodComponentsAnalysis()
             self.fake_nca.n_iter_ = np.inf
-            self.X, y = self.fake_nca._validate_data(X, y, ensure_min_samples=2)
+            self.X, y = validate_data(self.fake_nca, X, y, ensure_min_samples=2)
             y = LabelEncoder().fit_transform(y)
             self.same_class_mask = y[:, np.newaxis] == y[np.newaxis, :]
 

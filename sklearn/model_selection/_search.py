@@ -31,7 +31,7 @@ from ..metrics._scorer import (
 from ..utils import Bunch, check_random_state
 from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._param_validation import HasMethods, Interval, StrOptions
-from ..utils._tags import _safe_tags
+from ..utils._tags import get_tags
 from ..utils.deprecation import _deprecate_Xt_in_inverse_transform
 from ..utils.metadata_routing import (
     MetadataRouter,
@@ -479,15 +479,16 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     def _estimator_type(self):
         return self.estimator._estimator_type
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
         # allows cross-validation to see 'precomputed' metrics
-        return {
-            "pairwise": _safe_tags(self.estimator, "pairwise"),
-            "_xfail_checks": {
-                "check_supervised_y_2d": "DataConversionWarning not caught"
-            },
-            "array_api_support": _safe_tags(self.estimator, "array_api_support"),
+        tags.input_tags.pairwise = get_tags(self.estimator).input_tags.pairwise
+        tags._xfail_checks = {
+            "check_supervised_y_2d": "DataConversionWarning not caught",
+            "check_requires_y_none": "Doesn't fail gracefully",
         }
+        tags.array_api_support = get_tags(self.estimator).array_api_support
+        return tags
 
     def score(self, X, y=None, **params):
         """Return the score on the given data, if the estimator has been refit.
@@ -509,7 +510,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         **params : dict
             Parameters to be passed to the underlying scorer(s).
 
-            ..versionadded:: 1.4
+            .. versionadded:: 1.4
                 Only available if `enable_metadata_routing=True`. See
                 :ref:`Metadata Routing User Guide <metadata_routing>` for more
                 details.
@@ -890,9 +891,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         Parameters
         ----------
 
-        X : array-like of shape (n_samples, n_features)
-            Training vector, where `n_samples` is the number of samples and
-            `n_features` is the number of features.
+        X : array-like of shape (n_samples, n_features) or (n_samples, n_samples)
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features. For precomputed kernel or
+            distance matrix, the expected shape of X is (n_samples, n_samples).
 
         y : array-like of shape (n_samples, n_output) \
             or (n_samples,), default=None
@@ -1328,16 +1330,11 @@ class GridSearchCV(BaseSearchCV):
         explosion of memory consumption when more jobs get dispatched
         than CPUs can process. This parameter can be:
 
-            - None, in which case all the jobs are immediately
-              created and spawned. Use this for lightweight and
-              fast-running jobs, to avoid delays due to on-demand
-              spawning of the jobs
-
-            - An int, giving the exact number of total jobs that are
-              spawned
-
-            - A str, giving an expression as a function of n_jobs,
-              as in '2*n_jobs'
+        - None, in which case all the jobs are immediately created and spawned. Use
+          this for lightweight and fast-running jobs, to avoid delays due to on-demand
+          spawning of the jobs
+        - An int, giving the exact number of total jobs that are spawned
+        - A str, giving an expression as a function of n_jobs, as in '2*n_jobs'
 
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
@@ -1530,8 +1527,6 @@ class GridSearchCV(BaseSearchCV):
      'std_fit_time', 'std_score_time', 'std_test_score']
     """
 
-    _required_parameters = ["estimator", "param_grid"]
-
     _parameter_constraints: dict = {
         **BaseSearchCV._parameter_constraints,
         "param_grid": [dict, list],
@@ -1709,16 +1704,11 @@ class RandomizedSearchCV(BaseSearchCV):
         explosion of memory consumption when more jobs get dispatched
         than CPUs can process. This parameter can be:
 
-            - None, in which case all the jobs are immediately
-              created and spawned. Use this for lightweight and
-              fast-running jobs, to avoid delays due to on-demand
-              spawning of the jobs
-
-            - An int, giving the exact number of total jobs that are
-              spawned
-
-            - A str, giving an expression as a function of n_jobs,
-              as in '2*n_jobs'
+        - None, in which case all the jobs are immediately created and spawned. Use
+          this for lightweight and fast-running jobs, to avoid delays due to on-demand
+          spawning of the jobs
+        - An int, giving the exact number of total jobs that are spawned
+        - A str, giving an expression as a function of n_jobs, as in '2*n_jobs'
 
     random_state : int, RandomState instance or None, default=None
         Pseudo random number generator state used for random uniform sampling
@@ -1908,10 +1898,8 @@ class RandomizedSearchCV(BaseSearchCV):
     >>> clf = RandomizedSearchCV(logistic, distributions, random_state=0)
     >>> search = clf.fit(iris.data, iris.target)
     >>> search.best_params_
-    {'C': 2..., 'penalty': 'l1'}
+    {'C': np.float64(2...), 'penalty': 'l1'}
     """
-
-    _required_parameters = ["estimator", "param_distributions"]
 
     _parameter_constraints: dict = {
         **BaseSearchCV._parameter_constraints,
