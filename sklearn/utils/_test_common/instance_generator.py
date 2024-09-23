@@ -498,6 +498,7 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     Isomap: {"check_dict_unchanged": dict(n_components=1)},
     KMeans: {"check_dict_unchanged": dict(max_iter=5, n_clusters=1, n_init=2)},
     KernelPCA: {"check_dict_unchanged": dict(n_components=1)},
+    LassoLars: {"check_non_transformer_estimators_n_iter": dict(alpha=0.0)},
     LatentDirichletAllocation: {
         "check_dict_unchanged": dict(batch_size=10, max_iter=5, n_components=1)
     },
