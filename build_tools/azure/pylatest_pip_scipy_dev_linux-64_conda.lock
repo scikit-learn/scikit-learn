@@ -23,7 +23,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/readline-8.2-h5eee18b_0.conda#be421
 https://repo.anaconda.com/pkgs/main/linux-64/tk-8.6.14-h39e8969_0.conda#78dbc5e3c69143ebc037fc5d5b22e597
 https://repo.anaconda.com/pkgs/main/linux-64/sqlite-3.45.3-h5eee18b_0.conda#acf93d6aceb74d6110e20b44cc45939e
 https://repo.anaconda.com/pkgs/main/linux-64/python-3.12.5-h5148396_1.conda#62df68f35307f5e4b7a1eaccd6ea4c97
-https://repo.anaconda.com/pkgs/main/linux-64/setuptools-72.1.0-py312h06a4308_0.conda#bab64ac5186aa07014788baf1fbe3ca9
+https://repo.anaconda.com/pkgs/main/linux-64/setuptools-75.1.0-py312h06a4308_0.conda#c96d08a405d335f2b0200c0f281b1fdc
 https://repo.anaconda.com/pkgs/main/linux-64/wheel-0.44.0-py312h06a4308_0.conda#6d495438dd44e8f16b1a05d0a8648644
 https://repo.anaconda.com/pkgs/main/linux-64/pip-24.2-py312h06a4308_0.conda#798cbea8112672434d0cd7551f8fc4b9
 # pip alabaster @ https://files.pythonhosted.org/packages/7e/b3/6b4067be973ae96ba0d615946e314c5ae35f9f993eca561b356540bb0c2b/alabaster-1.0.0-py3-none-any.whl#sha256=fc6786402dc3fcb2de3cabd5fe455a2db534b371124f1f21de8731783dec828b
@@ -37,10 +37,10 @@ https://repo.anaconda.com/pkgs/main/linux-64/pip-24.2-py312h06a4308_0.conda#798c
 # pip imagesize @ https://files.pythonhosted.org/packages/ff/62/85c4c919272577931d407be5ba5d71c20f0b616d31a0befe0ae45bb79abd/imagesize-1.4.1-py2.py3-none-any.whl#sha256=0d8d18d08f840c19d0ee7ca1fd82490fdc3729b7ac93f49870406ddde8ef8d8b
 # pip iniconfig @ https://files.pythonhosted.org/packages/ef/a6/62565a6e1cf69e10f5727360368e451d4b7f58beeac6173dc9db836a5b46/iniconfig-2.0.0-py3-none-any.whl#sha256=b6a85871a79d2e3b22d2d1b94ac2824226a63c6b741c88f7ae975f18b6778374
 # pip markupsafe @ https://files.pythonhosted.org/packages/0a/0d/2454f072fae3b5a137c119abf15465d1771319dfe9e4acbb31722a0fff91/MarkupSafe-2.1.5-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=f5dfb42c4604dddc8e4305050aa6deb084540643ed5804d7455b5df8fe16f5e5
-# pip meson @ https://files.pythonhosted.org/packages/b7/33/513a9ca4fd5892463abb38592105b78fd425214f7983033633e2e48cbd30/meson-1.5.1-py3-none-any.whl#sha256=5531e24e6cfd6000bf1c712793cf28dff032841370b1a3b941a894e4fde46e5a
+# pip meson @ https://files.pythonhosted.org/packages/55/a6/47b9353c331318a13eb050887eacfd61eb075746285f9baf7ef7de6ae235/meson-1.5.2-py3-none-any.whl#sha256=77706e2368a00d789c097632ccf4fc39251fba56d03e1e1b262559a3c7a08f5b
 # pip ninja @ https://files.pythonhosted.org/packages/6d/92/8d7aebd4430ab5ff65df2bfee6d5745f95c004284db2d8ca76dcbfd9de47/ninja-1.11.1.1-py2.py3-none-manylinux1_x86_64.manylinux_2_5_x86_64.whl#sha256=84502ec98f02a037a169c4b0d5d86075eaf6afc55e1879003d6cab51ced2ea4b
 # pip packaging @ https://files.pythonhosted.org/packages/08/aa/cc0199a5f0ad350994d660967a8efb233fe0416e4639146c089643407ce6/packaging-24.1-py3-none-any.whl#sha256=5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124
-# pip platformdirs @ https://files.pythonhosted.org/packages/69/e6/7c8e8c326903bd97c6c0c47e0a3c5de815faaae986cab7defdeddf5fddcd/platformdirs-4.3.3-py3-none-any.whl#sha256=50a5450e2e84f44539718293cbb1da0a0885c9d14adf21b77bae4e66fc99d9b5
+# pip platformdirs @ https://files.pythonhosted.org/packages/3c/a6/bc1012356d8ece4d66dd75c4b9fc6c1f6650ddd5991e421177d9f8f671be/platformdirs-4.3.6-py3-none-any.whl#sha256=73e575e1408ab8103900836b97580d5307456908a03e92031bab39e4554cc3fb
 # pip pluggy @ https://files.pythonhosted.org/packages/88/5f/e351af9a41f866ac3f1fac4ca0613908d9a41741cfcf2228f4ad853b697d/pluggy-1.5.0-py3-none-any.whl#sha256=44e1ad92c8ca002de6377e165f3e0f1be63266ab4d554740532335b9d75ea669
 # pip pygments @ https://files.pythonhosted.org/packages/f7/3f/01c8b82017c199075f8f788d0d906b9ffbbc5a47dc9918a945e13d5a2bda/pygments-2.18.0-py3-none-any.whl#sha256=b8e6aca0523f3ab76fee51799c488e38782ac06eafcf95e7ba832985c8e7b13a
 # pip six @ https://files.pythonhosted.org/packages/d9/5a/e7c31adbe875f2abbb91bd84cf2dc52d792b5a01506781dbcf25c91daf11/six-1.16.0-py2.py3-none-any.whl#sha256=8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254
