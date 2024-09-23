@@ -75,7 +75,6 @@ from sklearn.utils.estimator_checks import (
     check_requires_y_none,
     check_sample_weights_pandas_series,
     check_set_params,
-    parametrize_with_checks,
     set_random_state,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS, SPARRAY_PRESENT
@@ -1426,16 +1425,13 @@ def test_check_estimator_tags_renamed():
 
 
 # Test that set_output doesn't make the tests to fail.
-@parametrize_with_checks(
-    [
-        StandardScaler().set_output(transform="pandas"),
-        StandardScaler().set_output(transform="polars"),
-    ]
-)
-def test_estimator_with_set_output(estimator, check):
-    lib = estimator._sklearn_output_config["transform"]
-    try:
-        importlib.__import__(lib)
-    except ImportError:
-        raise SkipTest(f"Library {lib} is not installed")
-    check(estimator)
+def test_estimator_with_set_output():
+    # Doing this since pytest is not available for this file.
+    for lib in ["pandas", "polars"]:
+        try:
+            importlib.__import__(lib)
+        except ImportError:
+            raise SkipTest(f"Library {lib} is not installed")
+
+        estimator = StandardScaler().set_output(transform=lib)
+        check_estimator(estimator)
