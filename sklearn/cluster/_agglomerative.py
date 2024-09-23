@@ -803,9 +803,6 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         .. versionadded:: 1.2
 
-        .. versionchanged:: 1.6
-           `metric=None` is no longer valid.
-
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
