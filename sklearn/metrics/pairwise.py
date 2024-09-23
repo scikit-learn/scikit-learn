@@ -1120,11 +1120,9 @@ def manhattan_distances(X, Y=None):
 
     # Note: the _convert_to_numpy functions are used to support the array api
     # for manhattan distances for now, as the scipy cdist function for
-    # manhattan distance does not currently provide array api support.
-    # TODO: remove the calls to _convert_to_numpy if scipy provides array api
-    #   support for manhattan distance in the future or else investigate with
-    #   developing our own custom functionality using the array api
-    #   specification.
+    # manhattan distance does not provide array api support.
+    # TODO: investigate with developing our own custom functionality for
+    #  computing the manhattan distance using the array api specification.
     return xp.asarray(
         distance.cdist(
             _convert_to_numpy(X, xp=xp), _convert_to_numpy(Y, xp=xp), "cityblock"
