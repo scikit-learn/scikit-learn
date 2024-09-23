@@ -492,13 +492,11 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         :class:`~sklearn.neighbors.BallTree`, then it resolves to use the
         `"brute"` algorithm.
 
-        .. deprecated:: 1.4
-           The `'kdtree'` option was deprecated in version 1.4,
-           and will be renamed to `'kd_tree'` in 1.6.
+        .. versionchanged:: 1.6
+           The `'kdtree'` option was renamed to `'kd_tree'`.
 
-        .. deprecated:: 1.4
-           The `'balltree'` option was deprecated in version 1.4,
-           and will be renamed to `'ball_tree'` in 1.6.
+        .. versionchanged:: 1.6
+           The `'balltree'` option was renamed to `'ball_tree'`.
 
     leaf_size : int, default=40
         Leaf size for trees responsible for fast nearest neighbour queries when
@@ -661,13 +659,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         ],
         "metric_params": [dict, None],
         "alpha": [Interval(Real, left=0, right=None, closed="neither")],
-        # TODO(1.6): Remove "kdtree" and "balltree"  option
-        "algorithm": [
-            StrOptions(
-                {"auto", "brute", "kd_tree", "ball_tree", "kdtree", "balltree"},
-                deprecated={"kdtree", "balltree"},
-            ),
-        ],
+        "algorithm": [StrOptions({"auto", "brute", "kd_tree", "ball_tree"})],
         "leaf_size": [Interval(Integral, left=1, right=None, closed="left")],
         "n_jobs": [Integral, None],
         "cluster_selection_method": [StrOptions({"eom", "leaf"})],
@@ -805,30 +797,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 f"min_samples ({self._min_samples}) must be at most the number of"
                 f" samples in X ({X.shape[0]})"
             )
-
-        # TODO(1.6): Remove
-        if self.algorithm == "kdtree":
-            warn(
-                (
-                    "`algorithm='kdtree'`has been deprecated in 1.4 and will be renamed"
-                    " to'kd_tree'`in 1.6. To keep the past behaviour, set"
-                    " `algorithm='kd_tree'`."
-                ),
-                FutureWarning,
-            )
-            self.algorithm = "kd_tree"
-
-        # TODO(1.6): Remove
-        if self.algorithm == "balltree":
-            warn(
-                (
-                    "`algorithm='balltree'`has been deprecated in 1.4 and will be"
-                    " renamed to'ball_tree'`in 1.6. To keep the past behaviour, set"
-                    " `algorithm='ball_tree'`."
-                ),
-                FutureWarning,
-            )
-            self.algorithm = "ball_tree"
 
         mst_func = None
         kwargs = dict(
