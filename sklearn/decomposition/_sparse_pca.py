@@ -368,9 +368,6 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
 
         .. versionadded:: 1.2
 
-        .. versionchanged:: 1.6
-           `max_iter=None` is no longer valid.
-
     callback : callable, default=None
         Callable that gets invoked every five iterations.
 

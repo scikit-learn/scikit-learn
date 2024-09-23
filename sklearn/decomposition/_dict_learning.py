@@ -728,9 +728,6 @@ def dict_learning_online(
 
         .. versionadded:: 1.1
 
-        .. versionchanged:: 1.6
-           `max_iter=None` is no longer valid.
-
     return_code : bool, default=True
         Whether to also return the code U or just the dictionary `V`.
 
@@ -1728,9 +1725,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         stopping independently of any early stopping criterion heuristics.
 
         .. versionadded:: 1.1
-
-        .. versionchanged:: 1.6
-           `max_iter=None` is no longer valid.
 
     fit_algorithm : {'lars', 'cd'}, default='lars'
         The algorithm used:
