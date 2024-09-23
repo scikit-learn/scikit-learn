@@ -135,6 +135,10 @@ more details.
   now support metadata routing.
   :pr:`29312` by :user:`Omar Salman <OmarManzoor>`.
 
+- |Fix| Many method arguments which shouldn't be included in the routing mechanism are
+  now excluded and the `set_{method}_request` methods are not generated for them.
+  :pr:`29920` by `Adrin Jalali`_.
+
 Dropping support for building with setuptools
 ---------------------------------------------
 
