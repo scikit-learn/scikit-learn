@@ -842,7 +842,7 @@ class LocallyLinearEmbedding(
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
-            Returns the instance itself.
+            Feature space coordinates of training points.
         """
         self._fit_transform(X)
         return self.transform(X)
