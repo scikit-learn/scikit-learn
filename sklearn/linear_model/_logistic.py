@@ -830,7 +830,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     Read more in the :ref:`User Guide <logistic_regression>`.
 
     For an example on how to compare classification probability with
-    :class:`~sklearn.svm.LinearDiscriminantAnalysis`, 
+    :class:`~sklearn.svm.LinearDiscriminantAnalysis`,
     :class:`~sklearn.multiclass.OneVsRestClassifier`,
     :class:`~sklearn.linear_model.LogisticRegression` and
     :class:`~sklearn.gaussian_process.GaussianProcessClassifier`

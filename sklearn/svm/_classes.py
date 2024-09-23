@@ -641,7 +641,7 @@ class SVC(BaseSVC):
     :ref:`sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py`
 
     For an example on how to compare classification probability with
-    :class:`~sklearn.svm.LinearDiscriminantAnalysis`, 
+    :class:`~sklearn.svm.LinearDiscriminantAnalysis`,
     :class:`~sklearn.multiclass.OneVsRestClassifier`,
     :class:`~sklearn.linear_model.LogisticRegression` and
     :class:`~sklearn.gaussian_process.GaussianProcessClassifier`

@@ -227,7 +227,7 @@ class OneVsRestClassifier(
     Read more in the :ref:`User Guide <ovr_classification>`.
 
     For an example on how to compare classification probability with
-    :class:`~sklearn.svm.LinearDiscriminantAnalysis`, 
+    :class:`~sklearn.svm.LinearDiscriminantAnalysis`,
     :class:`~sklearn.multiclass.OneVsRestClassifier`,
     :class:`~sklearn.linear_model.LogisticRegression` and
     :class:`~sklearn.gaussian_process.GaussianProcessClassifier`
