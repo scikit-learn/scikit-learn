@@ -601,9 +601,9 @@ def check_estimator(estimator=None, generate_only=False, *, legacy=True):
         # to run
         yield estimator, partial(check_estimator_cloneable, name)
         for check in _yield_all_checks(estimator, legacy=legacy):
-            check = _maybe_skip(estimator, check)
             for check_instance in _yield_instances_for_check(check, estimator):
-                yield check_instance, partial(check, name)
+                maybe_skipped_check = _maybe_skip(check_instance, check)
+                yield check_instance, partial(maybe_skipped_check, name)
 
     if generate_only:
         return checks_generator()
