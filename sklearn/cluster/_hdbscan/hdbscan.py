@@ -492,12 +492,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         :class:`~sklearn.neighbors.BallTree`, then it resolves to use the
         `"brute"` algorithm.
 
-        .. versionchanged:: 1.6
-           The `'kdtree'` option was renamed to `'kd_tree'`.
-
-        .. versionchanged:: 1.6
-           The `'balltree'` option was renamed to `'ball_tree'`.
-
     leaf_size : int, default=40
         Leaf size for trees responsible for fast nearest neighbour queries when
         a KDTree or a BallTree are used as core-distance algorithms. A large
