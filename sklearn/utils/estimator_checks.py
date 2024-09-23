@@ -40,6 +40,7 @@ from ..model_selection import LeaveOneGroupOut, ShuffleSplit, train_test_split
 from ..model_selection._validation import _safe_split
 from ..pipeline import make_pipeline
 from ..preprocessing import StandardScaler, scale
+from ..utils import _safe_indexing
 from ..utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
@@ -1458,8 +1459,8 @@ def check_methods_sample_order_invariance(name, estimator_orig):
 
         if hasattr(estimator, method):
             assert_allclose_dense_sparse(
-                getattr(estimator, method)(X)[idx],
-                getattr(estimator, method)(X[idx]),
+                _safe_indexing(getattr(estimator, method)(X), idx),
+                getattr(estimator, method)(_safe_indexing(X, idx)),
                 atol=1e-9,
                 err_msg=msg,
             )
@@ -1804,6 +1805,9 @@ def check_estimators_dtypes(name, estimator_orig):
 def check_transformer_preserve_dtypes(name, transformer_orig):
     # check that dtype are preserved meaning if input X is of some dtype
     # X_transformed should be from the same dtype.
+    transformer = clone(transformer_orig)
+    if hasattr(transformer, "set_output"):
+        transformer.set_output(transform="default")
     X, y = make_blobs(
         n_samples=30,
         centers=[[0, 0, 0], [1, 1, 1]],
@@ -1815,7 +1819,6 @@ def check_transformer_preserve_dtypes(name, transformer_orig):
 
     for dtype in get_tags(transformer_orig).transformer_tags.preserves_dtype:
         X_cast = X.astype(dtype)
-        transformer = clone(transformer_orig)
         set_random_state(transformer)
         X_trans1 = transformer.fit_transform(X_cast, y)
         X_trans2 = transformer.fit(X_cast, y).transform(X_cast)
@@ -3777,7 +3780,9 @@ def check_fit_idempotent(name, estimator_orig):
     for method in check_methods:
         if hasattr(estimator, method):
             new_result = getattr(estimator, method)(X_test)
-            if np.issubdtype(new_result.dtype, np.floating):
+            if hasattr(new_result, "dtype") and np.issubdtype(
+                new_result.dtype, np.floating
+            ):
                 tol = 2 * np.finfo(new_result.dtype).eps
             else:
                 tol = 2 * np.finfo(np.float64).eps
