@@ -224,8 +224,6 @@ class OneVsRestClassifier(
     multilabel classification, which involves training one binary classifier
     independently for each label.
 
-    Read more in the :ref:`User Guide <ovr_classification>`.
-
     For an example on how to compare classification probability with
     :class:`~sklearn.svm.SVC`,
     :class:`~sklearn.multiclass.OneVsRestClassifier`,
@@ -233,6 +231,8 @@ class OneVsRestClassifier(
     :class:`~sklearn.gaussian_process.GaussianProcessClassifier`
     see:
     :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`.
+
+    Read more in the :ref:`User Guide <ovr_classification>`.
 
     Parameters
     ----------

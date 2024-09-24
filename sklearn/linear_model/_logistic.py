@@ -827,8 +827,6 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     the L2 penalty. The Elastic-Net regularization is only supported by the
     'saga' solver.
 
-    Read more in the :ref:`User Guide <logistic_regression>`.
-
     For an example on how to compare classification probability with
     :class:`~sklearn.svm.SVC`,
     :class:`~sklearn.multiclass.OneVsRestClassifier`,
@@ -836,6 +834,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     :class:`~sklearn.gaussian_process.GaussianProcessClassifier`
     see:
     :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`.
+
+    Read more in the :ref:`User Guide <logistic_regression>`.
 
     Parameters
     ----------
