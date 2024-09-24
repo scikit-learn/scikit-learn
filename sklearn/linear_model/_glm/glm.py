@@ -453,14 +453,6 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             # invalid. We fallback on the default tags in that case.
             pass  # pragma: no cover
 
-        # TODO: investigate failure with the newton-cholesky solver,
-        # see meta-issue #162298
-        if self.solver == "newton-cholesky":
-            tags._xfail_checks = {
-                "check_sample_weight_equivalence": (
-                    "sample_weight is not equivalent to removing/repeating samples."
-                ),
-            }
         return tags
 
     def _get_loss(self):
