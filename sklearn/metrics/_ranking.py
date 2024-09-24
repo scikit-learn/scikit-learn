@@ -985,7 +985,7 @@ def precision_recall_curve(
         warnings.warn(
             (
                 "probas_pred was deprecated in version 1.5 and will be removed in 1.7."
-                "Please use `y_score` instead."
+                "Please use ``y_score`` instead."
             ),
             FutureWarning,
         )

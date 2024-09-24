@@ -331,10 +331,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             class, confidence values, or non-thresholded measure of decisions
             (as returned by “decision_function” on some classifiers).
 
-            .. deprecated:: 1.6
-                `y_pred` is deprecated and will be removed in 1.8. Use
-                `y_score` instead.
-
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
@@ -366,6 +362,15 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             the chance level line.
 
             .. versionadded:: 1.3
+
+        y_pred : array-like of shape (n_samples,)
+            Target scores, can either be probability estimates of the positive
+            class, confidence values, or non-thresholded measure of decisions
+            (as returned by “decision_function” on some classifiers).
+
+            .. deprecated:: 1.6
+                `y_pred` is deprecated and will be removed in 1.8. Use
+                `y_score` instead.
 
         **kwargs : dict
             Additional keywords arguments passed to matplotlib `plot` function.
@@ -405,7 +410,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
                 "`y_pred` and `y_score` cannot be both specified. Please use `y_score`"
                 " only as `y_pred` is deprecated in v1.6 and will be removed in v1.8."
             )
-        if y_score is None:
+        if y_pred is not None and y_pred != "deprecated":
             warnings.warn(
                 (
                     "y_pred was deprecated in version 1.6 and will be removed in 1.8. "
