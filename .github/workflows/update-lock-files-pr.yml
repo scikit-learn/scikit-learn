@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: write
+  statuses: write
 
 jobs:
   update-lock-files:
@@ -23,11 +24,29 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          pr_info=$(gh pr view ${{ github.event.issue.number }} --repo ${{ github.repository }} --json headRefName,headRepository,headRepositoryOwner)
+          pr_info=$(gh pr view ${{ github.event.issue.number }} --repo ${{ github.repository }} --json headRefName,headRefOid,headRepository,headRepositoryOwner)
           pr_head_ref=$(echo "$pr_info" | jq -r '.headRefName')
+          pr_head_sha=$(echo "$pr_info" | jq -r '.headRefOid')
           pr_head_repository=$(echo "$pr_info" | jq -r '.headRepositoryOwner.login + "/" + .headRepository.name')
           echo "pr_head_ref=$pr_head_ref" >> $GITHUB_OUTPUT
+          echo "pr_head_sha=$pr_head_sha" >> $GITHUB_OUTPUT
           echo "pr_head_repository=$pr_head_repository" >> $GITHUB_OUTPUT
+
+      # Set the status of the latest commit in the PR to indicate that the update is in progress
+      # https://docs.github.com/en/rest/commits/statuses?apiVersion=2022-11-28#create-a-commit-status
+      - name: Set pending status
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            /repos/${{ github.repository }}/statuses/${{ steps.pr-head-info.outputs.pr_head_sha }} \
+            -f "state=pending" \
+            -f "target_url=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            -f "description=Updating lock files..." \
+            -f "context=update-lock-files-pr"
 
       - name: Check out the PR branch
         uses: actions/checkout@v4
@@ -57,3 +76,18 @@ jobs:
           conda install -c conda-forge "$(get_dep conda-lock min)" -y
 
           python build_tools/on_pr_comment_update_environments_and_lock_files.py
+
+      - name: Set completion status
+        if: ${{ always() }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            /repos/${{ github.repository }}/statuses/${{ steps.pr-head-info.outputs.pr_head_sha }} \
+            -f "state=${{ job.status == 'success' && 'success' || 'error' }}" \
+            -f "target_url=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            -f "description=Lock files ${{ job.status == 'success' && 'updated' || 'failed to update' }}." \
+            -f "context=update-lock-files-pr"

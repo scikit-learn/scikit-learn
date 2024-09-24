@@ -97,13 +97,13 @@ class RANSACRegressor(
     estimator : object, default=None
         Base estimator object which implements the following methods:
 
-         * `fit(X, y)`: Fit model to given training data and target values.
-         * `score(X, y)`: Returns the mean accuracy on the given test data,
-           which is used for the stop criterion defined by `stop_score`.
-           Additionally, the score is used to decide which of two equally
-           large consensus sets is chosen as the better one.
-         * `predict(X)`: Returns predicted values using the linear model,
-           which is used to compute residual error using loss function.
+        * `fit(X, y)`: Fit model to given training data and target values.
+        * `score(X, y)`: Returns the mean accuracy on the given test data,
+          which is used for the stop criterion defined by `stop_score`.
+          Additionally, the score is used to decide which of two equally
+          large consensus sets is chosen as the better one.
+        * `predict(X)`: Returns predicted values using the linear model,
+          which is used to compute residual error using loss function.
 
         If `estimator` is None, then
         :class:`~sklearn.linear_model.LinearRegression` is used for
