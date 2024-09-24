@@ -51,7 +51,6 @@ from sklearn.utils.estimator_checks import (
     check_global_output_transform_pandas,
     check_global_set_output_transform_polars,
     check_inplace_ensure_writeable,
-    check_n_features_in_after_fitting,
     check_param_validation,
     check_set_output_transform,
     check_set_output_transform_pandas,
@@ -243,13 +242,6 @@ def test_valid_tag_types(estimator):
     check_field_types(tags.transformer_tags, defaults.transformer_tags)
 
 
-@pytest.mark.parametrize(
-    "estimator", _tested_estimators(), ids=_get_check_estimator_ids
-)
-def test_check_n_features_in_after_fitting(estimator):
-    check_n_features_in_after_fitting(estimator.__class__.__name__, estimator)
-
-
 def _estimators_that_predict_in_fit():
     for estimator in _tested_estimators():
         est_params = set(estimator.get_params())
@@ -286,6 +278,11 @@ column_name_estimators = list(
 def test_pandas_column_name_consistency(estimator):
     if isinstance(estimator, ColumnTransformer):
         pytest.skip("ColumnTransformer is not tested here")
+    tags = get_tags(estimator)
+    if "check_dataframe_column_names_consistency" in tags._xfail_checks:
+        pytest.skip(
+            "Estimator does not support check_dataframe_column_names_consistency"
+        )
     with ignore_warnings(category=(FutureWarning)):
         with warnings.catch_warnings(record=True) as record:
             check_dataframe_column_names_consistency(
