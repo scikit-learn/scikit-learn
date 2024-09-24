@@ -356,6 +356,9 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             "check_sample_weight_equivalence": (
                 "sample_weight is not equivalent to removing/repeating samples."
             ),
+            "check_non_transformer_estimators_n_iter": (
+                "n_iter_ cannot be easily accessed."
+            ),
         }
         return tags
 
