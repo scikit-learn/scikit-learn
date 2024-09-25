@@ -213,3 +213,6 @@ This project uses a Support Vector Machine (SVM) model to classify text
 data into various categories based on sentiment analysis using the 20 
 Newsgroups dataset. The pipeline is built with TF-IDF vectorizer and SVM 
 classifier from the scikit-learn library.
+
+Amazing feature
+
