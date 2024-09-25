@@ -204,3 +204,12 @@ Citation
 ~~~~~~~~
 
 If you use scikit-learn in a scientific publication, we would appreciate citations: https://scikit-learn.org/stable/about.html#citing-scikit-learn
+
+--------------- New feature ------------------
+Project Title: Sentiment Analysis using SVM
+
+Overview:
+This project uses a Support Vector Machine (SVM) model to classify text 
+data into various categories based on sentiment analysis using the 20 
+Newsgroups dataset. The pipeline is built with TF-IDF vectorizer and SVM 
+classifier from the scikit-learn library.
