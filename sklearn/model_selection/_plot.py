@@ -200,7 +200,11 @@ class LearningCurveDisplay(_BaseCurveDisplay):
     >>> display.plot()
     <...>
     >>> plt.show()
+
+    For a detailed example on how to use class :class:`~sklearn.model_selection.LearningCurveDisplay` see :
+    :ref:`sphx_glr_auto_examples_model_selection_plot_learning_curve.py`
     """
+    
 
     def __init__(self, *, train_sizes, train_scores, test_scores, score_name=None):
         self.train_sizes = train_sizes

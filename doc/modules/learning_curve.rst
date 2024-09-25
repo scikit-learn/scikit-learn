@@ -188,5 +188,6 @@ to :func:`learning_curve` to generate and plot the learning curve:
       LearningCurveDisplay.from_estimator(
          SVC(kernel="linear"), X, y, train_sizes=[50, 80, 110], cv=5)
 
-For a detailed example of using learning curves, see 
-:ref:`sphx_glr_auto_examples_model_selection_plot_learning_curve.py`.
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_model_selection_plot_learning_curve.py`: A detailed example on using learning curves.
