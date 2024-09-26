@@ -29,11 +29,6 @@ per class; and linear transformations of the feature space.
 near-equal-size classes separated by concentric hyperspheres.
 :func:`make_hastie_10_2` generates a similar binary, 10-dimensional problem.
 
-.. image:: ../auto_examples/datasets/images/sphx_glr_plot_random_dataset_001.png
-   :target: ../auto_examples/datasets/plot_random_dataset.html
-   :scale: 50
-   :align: center
-
 :func:`make_circles` and :func:`make_moons` generate 2d binary classification
 datasets that are challenging to certain algorithms (e.g. centroid-based
 clustering or linear classification), including optional Gaussian noise.
