@@ -48,7 +48,7 @@ from ._feature_agglomeration import AgglomerationTransform
 # For non fully-connected graphs
 
 
-def _fix_connectivity(X, connectivity, metric='euclidean'):
+def _fix_connectivity(X, connectivity, metric="euclidean"):
     """
     Fixes the connectivity matrix.
 
