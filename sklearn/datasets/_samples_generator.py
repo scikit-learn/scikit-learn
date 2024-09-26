@@ -210,39 +210,39 @@ def make_classification(
 
         >>> import matplotlib.pyplot as plt
         >>> from sklearn.datasets import make_classification
-        >>> plt.figure(figsize=(8, 8))
+        >>> _ = plt.figure(figsize=(8, 8))
         >>> plt.subplots_adjust(bottom=0.05, top=0.9, left=0.05, right=0.95)
-        >>> plt.subplot(221)
-        >>> plt.title(
+        >>> _ = plt.subplot(221)
+        >>> _ = plt.title(
         ...     "One informative feature, one cluster per class", fontsize="small"
         ... )
         >>> X1, Y1 = make_classification(
         ...     n_features=2, n_redundant=0, n_informative=1, n_clusters_per_class=1
         ... )
-        >>> plt.scatter(X1[:, 0], X1[:, 1], marker="o", c=Y1, s=25, edgecolor="k")
-        >>> plt.subplot(222)
-        >>> plt.title(
+        >>> _ = plt.scatter(X1[:, 0], X1[:, 1], marker="o", c=Y1, s=25, edgecolor="k")
+        >>> _ = plt.subplot(222)
+        >>> _ = plt.title(
         ...     "Two informative features, one cluster per class", fontsize="small"
         ... )
         >>> X1, Y1 = make_classification(
         ...     n_features=2, n_redundant=0, n_informative=2, n_clusters_per_class=1
         ... )
-        >>> plt.scatter(X1[:, 0], X1[:, 1], marker="o", c=Y1, s=25, edgecolor="k")
-        >>> plt.subplot(223)
-        >>> plt.title(
+        >>> _ = plt.scatter(X1[:, 0], X1[:, 1], marker="o", c=Y1, s=25, edgecolor="k")
+        >>> _ = plt.subplot(223)
+        >>> _ = plt.title(
         ...     "Two informative features, two clusters per class", fontsize="small"
         ... )
         >>> X2, Y2 = make_classification(n_features=2, n_redundant=0, n_informative=2)
-        >>> plt.scatter(X2[:, 0], X2[:, 1], marker="o", c=Y2, s=25, edgecolor="k")
-        >>> plt.subplot(224)
-        >>> plt.title(
+        >>> _ = plt.scatter(X2[:, 0], X2[:, 1], marker="o", c=Y2, s=25, edgecolor="k")
+        >>> _ = plt.subplot(224)
+        >>> _ = plt.title(
         ...     "Multi-class, two informative features, one cluster", fontsize="small"
         ... )
         >>> X1, Y1 = make_classification(
         ...     n_features=2, n_redundant=0, n_informative=2, n_clusters_per_class=1,
         ...     n_classes=3
         ... )
-        >>> plt.scatter(X1[:, 0], X1[:, 1], marker="o", c=Y1, s=25, edgecolor="k")
+        >>> _ = plt.scatter(X1[:, 0], X1[:, 1], marker="o", c=Y1, s=25, edgecolor="k")
         >>> plt.show()
     """
     generator = check_random_state(random_state)
@@ -1061,9 +1061,9 @@ def make_blobs(
 
         >>> import matplotlib.pyplot as plt
         >>> from sklearn.datasets import make_blobs
-        >>> plt.title("Three blobs", fontsize="small")
+        >>> _ = plt.title("Three blobs", fontsize="small")
         >>> X1, Y1 = make_blobs(n_features=2, centers=3)
-        >>> plt.scatter(X1[:, 0], X1[:, 1], marker="o", c=Y1, s=25, edgecolor="k")
+        >>> _ = plt.scatter(X1[:, 0], X1[:, 1], marker="o", c=Y1, s=25, edgecolor="k")
         >>> plt.show()
     """
     generator = check_random_state(random_state)
@@ -2098,9 +2098,9 @@ def make_gaussian_quantiles(
 
         >>> import matplotlib.pyplot as plt
         >>> from sklearn.datasets import make_gaussian_quantiles
-        >>> plt.title("Gaussian divided into three quantiles", fontsize="small")
+        >>> _ = plt.title("Gaussian divided into three quantiles", fontsize="small")
         >>> X1, Y1 = make_gaussian_quantiles(n_features=2, n_classes=3)
-        >>> plt.scatter(X1[:, 0], X1[:, 1], marker="o", c=Y1, s=25, edgecolor="k")
+        >>> _ = plt.scatter(X1[:, 0], X1[:, 1], marker="o", c=Y1, s=25, edgecolor="k")
         >>> plt.show()
     """
     if n_samples < n_classes:
