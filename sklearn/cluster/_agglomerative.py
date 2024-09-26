@@ -48,7 +48,7 @@ from ._feature_agglomeration import AgglomerationTransform
 # For non fully-connected graphs
 
 
-def _fix_connectivity(X, connectivity, affinity):
+def _fix_connectivity(X, connectivity, metric='euclidean'):
     """
     Fixes the connectivity matrix.
 
@@ -70,10 +70,11 @@ def _fix_connectivity(X, connectivity, affinity):
         be symmetric and only the upper triangular half is used.
         Default is `None`, i.e, the Ward algorithm is unstructured.
 
-    affinity : {"euclidean", "precomputed"}, default="euclidean"
-        Which affinity to use. At the moment `precomputed` and
-        ``euclidean`` are supported. `euclidean` uses the
-        negative squared Euclidean distance between points.
+    metric : str or callable, default="euclidean"
+        Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
+        "manhattan", "cosine", or "precomputed". If linkage is "ward", only
+        "euclidean" is accepted. If "precomputed", a distance matrix is
+        needed as input for the fit method.
 
     Returns
     -------
@@ -117,7 +118,7 @@ def _fix_connectivity(X, connectivity, affinity):
             graph=connectivity,
             n_connected_components=n_connected_components,
             component_labels=labels,
-            metric=affinity,
+            metric=metric,
             mode="connectivity",
         )
 
@@ -324,7 +325,7 @@ def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
             return children_, 1, n_samples, None
 
     connectivity, n_connected_components = _fix_connectivity(
-        X, connectivity, affinity="euclidean"
+        X, connectivity, metric="euclidean"
     )
     if n_clusters is None:
         n_nodes = 2 * n_samples - 1
@@ -433,7 +434,7 @@ def linkage_tree(
     connectivity=None,
     n_clusters=None,
     linkage="complete",
-    affinity="euclidean",
+    metric="euclidean",
     return_distance=False,
 ):
     """Linkage agglomerative clustering based on a Feature matrix.
@@ -474,9 +475,12 @@ def linkage_tree(
             - "single" uses the minimum of the distances between all
               observations of the two sets.
 
-    affinity : str or callable, default='euclidean'
-        Which metric to use. Can be 'euclidean', 'manhattan', or any
-        distance known to paired distance (see metric.pairwise).
+    metric : str or callable, default='euclidean'
+        Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
+        "manhattan", "cosine", or "precomputed". If set to `None` then
+        "euclidean" is used. If linkage is "ward", only "euclidean" is
+        accepted. If "precomputed", a distance matrix is needed as input for
+        the fit method.
 
     return_distance : bool, default=False
         Whether or not to return the distances between the clusters.
@@ -529,8 +533,8 @@ def linkage_tree(
             % (linkage_choices.keys(), linkage)
         ) from e
 
-    if affinity == "cosine" and np.any(~np.any(X, axis=1)):
-        raise ValueError("Cosine affinity cannot be used when X contains zero vectors")
+    if metric == "cosine" and np.any(~np.any(X, axis=1)):
+        raise ValueError("Cosine metric cannot be used when X contains zero vectors")
 
     if connectivity is None:
         from scipy.cluster import hierarchy  # imports PIL
@@ -548,7 +552,7 @@ def linkage_tree(
                 stacklevel=2,
             )
 
-        if affinity == "precomputed":
+        if metric == "precomputed":
             # for the linkage function of hierarchy to work on precomputed
             # data, provide as first argument an ndarray of the shape returned
             # by sklearn.metrics.pairwise_distances.
@@ -558,23 +562,23 @@ def linkage_tree(
                 )
             i, j = np.triu_indices(X.shape[0], k=1)
             X = X[i, j]
-        elif affinity == "l2":
+        elif metric == "l2":
             # Translate to something understood by scipy
-            affinity = "euclidean"
-        elif affinity in ("l1", "manhattan"):
-            affinity = "cityblock"
-        elif callable(affinity):
-            X = affinity(X)
+            metric = "euclidean"
+        elif metric in ("l1", "manhattan"):
+            metric = "cityblock"
+        elif callable(metric):
+            X = metric(X)
             i, j = np.triu_indices(X.shape[0], k=1)
             X = X[i, j]
         if (
             linkage == "single"
-            and affinity != "precomputed"
-            and not callable(affinity)
-            and affinity in METRIC_MAPPING64
+            and metric != "precomputed"
+            and not callable(metric)
+            and metric in METRIC_MAPPING64
         ):
             # We need the fast cythonized metric from neighbors
-            dist_metric = DistanceMetric.get_metric(affinity)
+            dist_metric = DistanceMetric.get_metric(metric)
 
             # The Cython routines used require contiguous arrays
             X = np.ascontiguousarray(X, dtype=np.double)
@@ -586,7 +590,7 @@ def linkage_tree(
             # Convert edge list into standard hierarchical clustering format
             out = _hierarchical.single_linkage_label(mst)
         else:
-            out = hierarchy.linkage(X, method=linkage, metric=affinity)
+            out = hierarchy.linkage(X, method=linkage, metric=metric)
         children_ = out[:, :2].astype(int, copy=False)
 
         if return_distance:
@@ -595,7 +599,7 @@ def linkage_tree(
         return children_, 1, n_samples, None
 
     connectivity, n_connected_components = _fix_connectivity(
-        X, connectivity, affinity=affinity
+        X, connectivity, metric=metric
     )
     connectivity = connectivity.tocoo()
     # Put the diagonal to zero
@@ -605,13 +609,13 @@ def linkage_tree(
     connectivity.data = connectivity.data[diag_mask]
     del diag_mask
 
-    if affinity == "precomputed":
+    if metric == "precomputed":
         distances = X[connectivity.row, connectivity.col].astype(np.float64, copy=False)
     else:
         # FIXME We compute all the distances, while we could have only computed
         # the "interesting" distances
         distances = paired_distances(
-            X[connectivity.row], X[connectivity.col], metric=affinity
+            X[connectivity.row], X[connectivity.col], metric=metric
         )
     connectivity.data = distances
 
@@ -799,7 +803,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
         "manhattan", "cosine", or "precomputed". If linkage is "ward", only
         "euclidean" is accepted. If "precomputed", a distance matrix is needed
-        as input for the fit method.
+        as input for the fit method. When `connectivity=None`,
+        `linkage="single"` and `affinity!=precomputed` any valiid pairwise
+        distance metric works.
 
         .. versionadded:: 1.2
 
@@ -1070,7 +1076,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         kwargs = {}
         if self.linkage != "ward":
             kwargs["linkage"] = self.linkage
-            kwargs["affinity"] = self._metric
+            kwargs["metric"] = self._metric
 
         distance_threshold = self.distance_threshold
 
@@ -1119,7 +1125,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         X : array-like of shape (n_samples, n_features) or \
                 (n_samples, n_samples)
             Training instances to cluster, or distances between instances if
-            ``affinity='precomputed'``.
+            ``metric='precomputed'``.
 
         y : Ignored
             Not used, present here for API consistency by convention.

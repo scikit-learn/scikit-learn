@@ -68,12 +68,12 @@ def test_linkage_misc():
     # test hierarchical clustering on a precomputed distances matrix
     dis = cosine_distances(X)
 
-    res = linkage_tree(dis, affinity="precomputed")
-    assert_array_equal(res[0], linkage_tree(X, affinity="cosine")[0])
+    res = linkage_tree(dis, metric="precomputed")
+    assert_array_equal(res[0], linkage_tree(X, metric="cosine")[0])
 
     # test hierarchical clustering on a precomputed distances matrix
-    res = linkage_tree(X, affinity=manhattan_distances)
-    assert_array_equal(res[0], linkage_tree(X, affinity="manhattan")[0])
+    res = linkage_tree(X, metric=manhattan_distances)
+    assert_array_equal(res[0], linkage_tree(X, metric="manhattan")[0])
 
 
 def test_structured_linkage_tree():
@@ -139,11 +139,11 @@ def test_height_linkage_tree():
 
 def test_zero_cosine_linkage_tree():
     # Check that zero vectors in X produce an error when
-    # 'cosine' affinity is used
+    # 'cosine' metric is used
     X = np.array([[0, 1], [0, 0]])
-    msg = "Cosine affinity cannot be used when X contains zero vectors"
+    msg = "Cosine metric cannot be used when X contains zero vectors"
     with pytest.raises(ValueError, match=msg):
-        linkage_tree(X, affinity="cosine")
+        linkage_tree(X, metric="cosine")
 
 
 @pytest.mark.parametrize("n_clusters, distance_threshold", [(None, 0.5), (10, None)])
@@ -255,7 +255,7 @@ def test_agglomerative_clustering(global_random_seed, lil_container):
             normalized_mutual_info_score(clustering2.labels_, clustering.labels_), 1
         )
 
-    # Test that using a distance matrix (affinity = 'precomputed') has same
+    # Test that using a distance matrix (metric = 'precomputed') has same
     # results (with connectivity constraints)
     clustering = AgglomerativeClustering(
         n_clusters=10, connectivity=connectivity, linkage="complete"
@@ -698,8 +698,8 @@ def test_n_components():
         assert ignore_warnings(linkage_func)(X, connectivity=connectivity)[1] == 5
 
 
-def test_affinity_passed_to_fix_connectivity():
-    # Test that the affinity parameter is actually passed to the pairwise
+def test_metric_passed_to_fix_connectivity():
+    # Test that the metric parameter is actually passed to the pairwise
     # function
 
     size = 2
@@ -709,7 +709,7 @@ def test_affinity_passed_to_fix_connectivity():
 
     connectivity = grid_to_graph(n_x=size, n_y=size, mask=mask, return_as=np.ndarray)
 
-    class FakeAffinity:
+    class FakeMetric:
         def __init__(self):
             self.counter = 0
 
@@ -717,9 +717,9 @@ def test_affinity_passed_to_fix_connectivity():
             self.counter += 1
             return self.counter
 
-    fa = FakeAffinity()
+    fa = FakeMetric()
 
-    linkage_tree(X, connectivity=connectivity, affinity=fa.increment)
+    linkage_tree(X, connectivity=connectivity, metric=fa.increment)
 
     assert fa.counter == 3
 
@@ -839,7 +839,7 @@ def test_dist_threshold_invalid_parameters():
 
 
 def test_invalid_shape_precomputed_dist_matrix():
-    # Check that an error is raised when affinity='precomputed'
+    # Check that an error is raised when metric='precomputed'
     # and a non square matrix is passed (PR #16257).
     rng = np.random.RandomState(0)
     X = rng.rand(5, 3)
@@ -852,7 +852,7 @@ def test_invalid_shape_precomputed_dist_matrix():
 
 def test_precomputed_connectivity_metric_with_2_connected_components():
     """Check that connecting components works when connectivity and
-    affinity are both precomputed and the number of connected components is
+    metric are both precomputed and the number of connected components is
     greater than 1. Non-regression test for #16151.
     """
 
