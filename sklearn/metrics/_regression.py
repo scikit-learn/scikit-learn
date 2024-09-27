@@ -217,13 +217,12 @@ def mean_absolute_error(
             multioutput = None
 
     # Average across the outputs (if needed).
+    # The second call to `_average` should always return
+    # a scalar array that we convert to a Python float to
+    # consistently return the same eager evaluated value.
+    # Therefore, `axis=None`.
     mean_absolute_error = _average(output_errors, weights=multioutput)
 
-    # Since `y_pred.ndim <= 2` and `y_true.ndim <= 2`, the second call to _average
-    # should always return a scalar array that we convert to a Python float to
-    # consistently return the same eager evaluated value, irrespective of the
-    # Array API implementation.
-    assert mean_absolute_error.shape == ()
     return float(mean_absolute_error)
 
 
@@ -416,8 +415,13 @@ def mean_absolute_percentage_error(
             # pass None as weights to _average: uniform mean
             multioutput = None
 
+    # Average across the outputs (if needed).
+    # The second call to `_average` should always return
+    # a scalar array that we convert to a Python float to
+    # consistently return the same eager evaluated value.
+    # Therefore, `axis=None`.
     mean_absolute_percentage_error = _average(output_errors, weights=multioutput)
-    assert mean_absolute_percentage_error.shape == ()
+
     return float(mean_absolute_percentage_error)
 
 
@@ -524,12 +528,16 @@ def mean_squared_error(
         if multioutput == "raw_values":
             return output_errors
         elif multioutput == "uniform_average":
-            # pass None as weights to np.average: uniform mean
+            # pass None as weights to _average: uniform mean
             multioutput = None
 
-    # See comment in mean_absolute_error
+    # Average across the outputs (if needed).
+    # The second call to `_average` should always return
+    # a scalar array that we convert to a Python float to
+    # consistently return the same eager evaluated value.
+    # Therefore, `axis=None`.
     mean_squared_error = _average(output_errors, weights=multioutput)
-    assert mean_squared_error.shape == ()
+
     return float(mean_squared_error)
 
 
@@ -585,13 +593,16 @@ def root_mean_squared_error(
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> root_mean_squared_error(y_true, y_pred)
-    np.float64(0.612...)
+    0.612...
     >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
     >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
     >>> root_mean_squared_error(y_true, y_pred)
-    np.float64(0.822...)
+    0.822...
     """
-    output_errors = np.sqrt(
+
+    xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
+
+    output_errors = xp.sqrt(
         mean_squared_error(
             y_true, y_pred, sample_weight=sample_weight, multioutput="raw_values"
         )
@@ -601,10 +612,17 @@ def root_mean_squared_error(
         if multioutput == "raw_values":
             return output_errors
         elif multioutput == "uniform_average":
-            # pass None as weights to np.average: uniform mean
+            # pass None as weights to _average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    # Average across the outputs (if needed).
+    # The second call to `_average` should always return
+    # a scalar array that we convert to a Python float to
+    # consistently return the same eager evaluated value.
+    # Therefore, `axis=None`.
+    root_mean_squared_error = _average(output_errors, weights=multioutput)
+
+    return float(root_mean_squared_error)
 
 
 @validate_params(
@@ -700,20 +718,22 @@ def mean_squared_log_error(
                 y_true, y_pred, sample_weight=sample_weight, multioutput=multioutput
             )
 
-    y_type, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput
-    )
-    check_consistent_length(y_true, y_pred, sample_weight)
+    xp, _ = get_namespace(y_true, y_pred)
+    dtype = _find_matching_floating_dtype(y_true, y_pred, xp=xp)
 
-    if (y_true < 0).any() or (y_pred < 0).any():
+    _, y_true, y_pred, _ = _check_reg_targets(
+        y_true, y_pred, multioutput, dtype=dtype, xp=xp
+    )
+
+    if xp.any(y_true <= -1) or xp.any(y_pred <= -1):
         raise ValueError(
             "Mean Squared Logarithmic Error cannot be used when "
-            "targets contain negative values."
+            "targets contain values less than or equal to -1."
         )
 
     return mean_squared_error(
-        np.log1p(y_true),
-        np.log1p(y_pred),
+        xp.log1p(y_true),
+        xp.log1p(y_pred),
         sample_weight=sample_weight,
         multioutput=multioutput,
     )
@@ -773,20 +793,24 @@ def root_mean_squared_log_error(
     >>> y_true = [3, 5, 2.5, 7]
     >>> y_pred = [2.5, 5, 4, 8]
     >>> root_mean_squared_log_error(y_true, y_pred)
-    np.float64(0.199...)
+    0.199...
     """
-    _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
-    check_consistent_length(y_true, y_pred, sample_weight)
+    xp, _ = get_namespace(y_true, y_pred)
+    dtype = _find_matching_floating_dtype(y_true, y_pred, xp=xp)
 
-    if (y_true < 0).any() or (y_pred < 0).any():
+    _, y_true, y_pred, multioutput = _check_reg_targets(
+        y_true, y_pred, multioutput, dtype=dtype, xp=xp
+    )
+
+    if xp.any(y_true <= -1) or xp.any(y_pred <= -1):
         raise ValueError(
             "Root Mean Squared Logarithmic Error cannot be used when "
-            "targets contain negative values."
+            "targets contain values less than or equal to -1."
         )
 
     return root_mean_squared_error(
-        np.log1p(y_true),
-        np.log1p(y_pred),
+        xp.log1p(y_true),
+        xp.log1p(y_pred),
         sample_weight=sample_weight,
         multioutput=multioutput,
     )

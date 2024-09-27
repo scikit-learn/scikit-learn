@@ -894,6 +894,21 @@ def test_check_is_fitted_with_is_fitted():
     check_is_fitted(Estimator().fit())
 
 
+def test_check_is_fitted_stateless():
+    """Check that check_is_fitted passes for stateless estimators."""
+
+    class StatelessEstimator(BaseEstimator):
+        def fit(self, **kwargs):
+            return self  # pragma: no cover
+
+        def __sklearn_tags__(self):
+            tags = super().__sklearn_tags__()
+            tags.requires_fit = False
+            return tags
+
+    check_is_fitted(StatelessEstimator())
+
+
 def test_check_is_fitted():
     # Check is TypeError raised when non estimator instance passed
     with pytest.raises(TypeError):

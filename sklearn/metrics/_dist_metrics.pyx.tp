@@ -89,7 +89,7 @@ cdef class DistanceMetric:
            [5.65...,  8.48...]
            [1.41...,  4.24...]])
 
-    Available Metrics
+    .. rubric:: Available Metrics
 
     The following lists the string metric identifiers and the associated
     distance metric classes:
@@ -134,13 +134,13 @@ cdef class DistanceMetric:
     is evaluated to "True".  In the listings below, the following
     abbreviations are used:
 
-     - N  : number of dimensions
-     - NTT : number of dims in which both values are True
-     - NTF : number of dims in which the first value is True, second is False
-     - NFT : number of dims in which the first value is False, second is True
-     - NFF : number of dims in which both values are False
-     - NNEQ : number of non-equal dimensions, NNEQ = NTF + NFT
-     - NNZ : number of nonzero dimensions, NNZ = NTF + NFT + NTT
+    - N: number of dimensions
+    - NTT: number of dims in which both values are True
+    - NTF: number of dims in which the first value is True, second is False
+    - NFT: number of dims in which the first value is False, second is True
+    - NFF: number of dims in which both values are False
+    - NNEQ: number of non-equal dimensions, NNEQ = NTF + NFT
+    - NNZ: number of nonzero dimensions, NNZ = NTF + NFT + NTT
 
     =================  =======================  ===============================
     identifier         class name               distance function
@@ -327,13 +327,13 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
     is evaluated to "True".  In the listings below, the following
     abbreviations are used:
 
-     - N  : number of dimensions
-     - NTT : number of dims in which both values are True
-     - NTF : number of dims in which the first value is True, second is False
-     - NFT : number of dims in which the first value is False, second is True
-     - NFF : number of dims in which both values are False
-     - NNEQ : number of non-equal dimensions, NNEQ = NTF + NFT
-     - NNZ : number of nonzero dimensions, NNZ = NTF + NFT + NTT
+    - N: number of dimensions
+    - NTT: number of dims in which both values are True
+    - NTF: number of dims in which the first value is True, second is False
+    - NFT: number of dims in which the first value is False, second is True
+    - NFF: number of dims in which both values are False
+    - NNEQ: number of non-equal dimensions, NNEQ = NTF + NFT
+    - NNZ: number of nonzero dimensions, NNZ = NTF + NFT + NTT
 
     =================  =======================  ===============================
     identifier         class name               distance function
