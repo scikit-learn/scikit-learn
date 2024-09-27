@@ -342,6 +342,27 @@ def test_large_variance_y():
     assert_allclose(y_pred_std, y_pred_std_gpy, rtol=0.15, atol=0)
 
 
+def test_gaussian_process_regressor_std_scaling():
+    # Test that the standard deviations predicted by GaussianProcessRegressor scale correctly 
+    # between multiple outputs, both with and without output normalization.
+    x = np.array([[0.], [0.5], [1.]])
+    y = np.hstack((x**2, 10*x**2))
+    
+    # With output normalization
+    gpr = GaussianProcessRegressor(normalize_y=True)
+    gpr.fit(x, y)
+    std = gpr.predict(np.array([[0.25]]), return_std=True)[1][0]
+
+    assert_almost_equal(std[0], std[1]/10, decimal=9)
+
+    # Without output normalization
+    gpr = GaussianProcessRegressor(normalize_y=False)
+    gpr.fit(x, y)
+    std = gpr.predict(np.array([[0.25]]), return_std=True)[1][0]
+
+    assert_almost_equal(std[0], std[1]/10, decimal=9)
+
+
 def test_y_multioutput():
     # Test that GPR can deal with multi-dimensional target values
     y_2d = np.vstack((y, y * 2)).T
@@ -350,24 +371,38 @@ def test_y_multioutput():
     # of 1d GP and that second dimension is twice as large
     kernel = RBF(length_scale=1.0)
 
-    gpr = GaussianProcessRegressor(kernel=kernel, optimizer=None, normalize_y=False)
-    gpr.fit(X, y)
+    for normalize_y in [False, True]:
+        gpr = GaussianProcessRegressor(kernel=kernel, optimizer=None, normalize_y=normalize_y)
+        gpr.fit(X, y)
 
-    gpr_2d = GaussianProcessRegressor(kernel=kernel, optimizer=None, normalize_y=False)
-    gpr_2d.fit(X, y_2d)
+        gpr_2d = GaussianProcessRegressor(kernel=kernel, optimizer=None, normalize_y=normalize_y)
+        gpr_2d.fit(X, y_2d)
 
-    y_pred_1d, y_std_1d = gpr.predict(X2, return_std=True)
-    y_pred_2d, y_std_2d = gpr_2d.predict(X2, return_std=True)
-    _, y_cov_1d = gpr.predict(X2, return_cov=True)
-    _, y_cov_2d = gpr_2d.predict(X2, return_cov=True)
+        y_pred_1d, y_std_1d = gpr.predict(X2, return_std=True)
+        y_pred_2d, y_std_2d = gpr_2d.predict(X2, return_std=True)
+        _, y_cov_1d = gpr.predict(X2, return_cov=True)
+        _, y_cov_2d = gpr_2d.predict(X2, return_cov=True)
 
-    assert_almost_equal(y_pred_1d, y_pred_2d[:, 0])
-    assert_almost_equal(y_pred_1d, y_pred_2d[:, 1] / 2)
+        assert_almost_equal(y_pred_1d, y_pred_2d[:, 0])
+        assert_almost_equal(y_pred_1d, y_pred_2d[:, 1] / 2)
 
-    # Standard deviation and covariance do not depend on output
-    for target in range(y_2d.shape[1]):
-        assert_almost_equal(y_std_1d, y_std_2d[..., target])
-        assert_almost_equal(y_cov_1d, y_cov_2d[..., target])
+        # Standard deviation and covariance should scale with the output
+        for target in range(y_2d.shape[1]):
+            if target == 0:
+                # First target should match the single-output GPR
+                assert_almost_equal(y_std_1d, y_std_2d[:, target])
+            elif target == 1:
+                # Second target should have twice the std of the first one
+                assert_almost_equal(y_std_1d, y_std_2d[:, target] / 2)
+
+        # Add covariance checks here
+        for target in range(y_2d.shape[1]):
+            if target == 0:
+                # First target should match the single-output GPR covariance
+                assert_almost_equal(y_cov_1d, y_cov_2d[..., target])
+            elif target == 1:
+                # Second target should have four times the covariance of the first one
+                assert_almost_equal(y_cov_1d, y_cov_2d[..., target] / 4)
 
     y_sample_1d = gpr.sample_y(X2, n_samples=10)
     y_sample_2d = gpr_2d.sample_y(X2, n_samples=10)
@@ -386,6 +421,7 @@ def test_y_multioutput():
         gpr_2d.fit(X, np.vstack((y, y)).T)
 
         assert_almost_equal(gpr.kernel_.theta, gpr_2d.kernel_.theta, 4)
+
 
 
 @pytest.mark.parametrize("kernel", non_fixed_kernels)

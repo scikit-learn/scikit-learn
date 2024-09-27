@@ -265,18 +265,16 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 f"`n_targets`. Got {n_targets_seen} != {self.n_targets}."
             )
 
-        # Normalize target value
+        # Always compute the mean and standard deviation
+        self._y_train_mean = np.mean(y, axis=0)
+        self._y_train_std = _handle_zeros_in_scale(np.std(y, axis=0), copy=False)
+
+        # Normalize target value only if normalize_y is True
         if self.normalize_y:
-            self._y_train_mean = np.mean(y, axis=0)
-            self._y_train_std = _handle_zeros_in_scale(np.std(y, axis=0), copy=False)
-
-            # Remove mean and make unit variance
             y = (y - self._y_train_mean) / self._y_train_std
-
         else:
-            shape_y_stats = (y.shape[1],) if y.ndim == 2 else 1
-            self._y_train_mean = np.zeros(shape=shape_y_stats)
-            self._y_train_std = np.ones(shape=shape_y_stats)
+            self._y_train_mean = np.zeros_like(self._y_train_mean)
+
 
         if np.iterable(self.alpha) and self.alpha.shape[0] != y.shape[0]:
             if self.alpha.shape[0] == 1:
@@ -440,8 +438,10 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             K_trans = self.kernel_(X, self.X_train_)
             y_mean = K_trans @ self.alpha_
 
-            # undo normalisation
-            y_mean = self._y_train_std * y_mean + self._y_train_mean
+            # Conditionally undo the normalization
+            if self.normalize_y:
+                y_mean = self._y_train_std * y_mean + self._y_train_mean
+            
 
             # if y_mean has shape (n_samples, 1), reshape to (n_samples,)
             if y_mean.ndim > 1 and y_mean.shape[1] == 1:
