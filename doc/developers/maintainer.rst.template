@@ -4,6 +4,8 @@ Maintainer Information
 Releasing
 ---------
 
+TEST!
+
 This section is about preparing a major/minor release, a release candidate (RC), or a
 bug-fix release. We follow `PEP440 <https://www.python.org/dev/peps/pep-0440/>`_ for
 the version scheme and to indicate different types of releases. Our convention is to
