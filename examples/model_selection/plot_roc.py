@@ -453,5 +453,5 @@ _ = ax.set(
 #
 # - Macro-averaging calculates metrics for each class independently and then
 #   averages them, giving equal weight to each class. This is particularly useful
-#   for imbalanced datasets, as it ensures that performance on under-represented
-#   classes is given the same importance as the more frequent classes.
+#   when you want under-represented to be considered as important as highly
+#   populated classes.
