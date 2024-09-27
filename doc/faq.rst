@@ -205,6 +205,7 @@ Do you plan to implement transform for target ``y`` in a pipeline?
 Currently transform only works for features ``X`` in a pipeline. There's a
 long-standing discussion about not being able to transform ``y`` in a pipeline.
 Follow on GitHub issue :issue:`4143`. Meanwhile, you can check out
+:class:`~compose.TransformedTargetClassifier`, 
 :class:`~compose.TransformedTargetRegressor`,
 `pipegraph <https://github.com/mcasl/PipeGraph>`_,
 and `imbalanced-learn <https://github.com/scikit-learn-contrib/imbalanced-learn>`_.
