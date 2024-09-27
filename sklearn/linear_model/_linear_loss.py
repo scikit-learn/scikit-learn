@@ -459,9 +459,13 @@ class LinearModelLoss:
         if sample_weight is None:
             negative_hessian_proportion = np.mean(hess_pointwise < 0)
         else:
-            negative_hessian_proportion = (
-                np.sum(sample_weight * (hess_pointwise < 0)) / sw_sum
-            )
+            sw = sample_weight
+            # For multinomial loss, hess_pointwise.shape = (n_samples, n_classes).
+            # We need to reshape sample_weight for broadcasting.
+            if hess_pointwise.ndim == 2:
+                sw = sample_weight[:, np.newaxis]
+            negative_hessian_proportion = np.sum(sw * (hess_pointwise < 0)) / sw_sum
+        negative_hessian_proportion = np.mean(hess_pointwise < 0)
         hessian_warning = negative_hessian_proportion > 0.25
         hess_pointwise = np.abs(hess_pointwise)
 
