@@ -232,11 +232,10 @@ def type_of_target(y, input_name=""):
     Note that this type is the most specific type that can be inferred.
     For example:
 
-        * ``binary`` is more specific but compatible with ``multiclass``.
-        * ``multiclass`` of integers is more specific but compatible with
-          ``continuous``.
-        * ``multilabel-indicator`` is more specific but compatible with
-          ``multiclass-multioutput``.
+    * ``binary`` is more specific but compatible with ``multiclass``.
+    * ``multiclass`` of integers is more specific but compatible with ``continuous``.
+    * ``multilabel-indicator`` is more specific but compatible with
+      ``multiclass-multioutput``.
 
     Parameters
     ----------
