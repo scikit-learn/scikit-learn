@@ -458,6 +458,17 @@ class SimpleImputer(_BaseImputer):
         statistics = np.empty(X.shape[1])
 
         if strategy == "constant":
+            # TODO(1.8): Remove
+            if not self.keep_empty_features and any(
+                [all(missing_mask[:, i].data) for i in range(missing_mask.shape[1])]
+            ):
+                warnings.warn(
+                    "When `keep_empty_features` is False and `constant` is set the "
+                    "column filled with missing values will be removed in 1.8. "
+                    "To keep the same behaviour, set `keep_empty_features` to True",
+                    FutureWarning,
+                )
+
             # for constant strategy, self.statistics_ is used to store
             # fill_value in each column
             statistics.fill(fill_value)
@@ -548,6 +559,15 @@ class SimpleImputer(_BaseImputer):
 
         # Constant
         elif strategy == "constant":
+            # TODO(1.8): Remove
+            if not self.keep_empty_features and ma.getmask(masked_X).all(axis=0).any():
+                warnings.warn(
+                    "When `keep_empty_features` is False and `constant` is set the "
+                    "column filled with missing values will be removed in 1.8. "
+                    "To keep the same behaviour, set `keep_empty_features` to True",
+                    FutureWarning,
+                )
+
             # for constant strategy, self.statistcs_ is used to store
             # fill_value in each column
             return np.full(X.shape[1], fill_value, dtype=X.dtype)

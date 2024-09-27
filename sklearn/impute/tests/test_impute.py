@@ -1669,6 +1669,12 @@ def test_imputer_transform_preserves_numeric_dtype(dtype_test):
 
 @pytest.mark.parametrize("array_type", ["array", "sparse"])
 @pytest.mark.parametrize("keep_empty_features", [True, False])
+# TODO(1.8): Remove
+@pytest.mark.filterwarnings(
+    "ignore:When `keep_empty_features` is false and `constant` is set the "
+    "column filled with missing values will be removed in 1.8. "
+    "to keep the same behaviour, set `keep_empty_features` to True"
+)
 def test_simple_imputer_constant_keep_empty_features(array_type, keep_empty_features):
     """Check the behaviour of `keep_empty_features` with `strategy='constant'.
     For backward compatibility, a column full of missing values will always be
@@ -1685,6 +1691,35 @@ def test_simple_imputer_constant_keep_empty_features(array_type, keep_empty_feat
 
     for method in ["fit_transform", "transform"]:
         X_imputed = getattr(imputer, method)(X)
+        assert X_imputed.shape == X.shape
+        constant_feature = (
+            X_imputed[:, 0].toarray() if array_type == "sparse" else X_imputed[:, 0]
+        )
+        assert_array_equal(constant_feature, fill_value)
+
+
+@pytest.mark.parametrize("array_type", ["array", "sparse"])
+@pytest.mark.parametrize("keep_empty_features", [True, False])
+def test_simple_imputer_constant_keep_empty_features_no_warning(
+    array_type, keep_empty_features
+):
+    """Check the behaviour of `keep_empty_features` with `strategy='constant'.
+    For backward compatibility, a column full of missing values will always be
+    fill and never dropped.
+    """
+    X = np.array([[10, 2], [np.nan, 3], [np.nan, 6]])
+    X = _convert_container(X, array_type)
+    fill_value = 10
+    imputer = SimpleImputer(
+        strategy="constant",
+        fill_value=fill_value,
+        keep_empty_features=keep_empty_features,
+    )
+
+    for method in ["fit_transform", "transform"]:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            X_imputed = getattr(imputer, method)(X)
         assert X_imputed.shape == X.shape
         constant_feature = (
             X_imputed[:, 0].toarray() if array_type == "sparse" else X_imputed[:, 0]
