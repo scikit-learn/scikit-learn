@@ -216,6 +216,10 @@ def spectral_clustering(
 
     Read more in the :ref:`User Guide <spectral_clustering>`.
 
+    See
+    :ref:`sphx_glr_auto_examples_cluster_plot_coin_segmentation.py`
+    for an example on how to use the API.
+
     Parameters
     ----------
     affinity : {array-like, sparse matrix} of shape (n_samples, n_samples)
