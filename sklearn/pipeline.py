@@ -1196,6 +1196,10 @@ def make_pipeline(*steps, memory=None, verbose=False):
     require, and does not permit, naming the estimators. Instead, their names
     will be set to the lowercase of their types automatically.
 
+    See
+    :ref:`sphx_glr_auto_examples_feature_selection_plot_feature_selection_pipeline.py`
+    for an example on how to use the API.
+
     Parameters
     ----------
     *steps : list of Estimator objects
