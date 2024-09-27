@@ -1337,7 +1337,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
 def _check_X(X):
     """Use check_array only when necessary, e.g. on lists and other non-array-likes."""
-    if isinstance(X, np.ndarray) or hasattr(X, "__dataframe__") or sparse.issparse(X):
+    if (hasattr(X, "__array__") and hasattr(X, "shape")) or hasattr(X, "__dataframe__") or sparse.issparse(X):
         return X
     return check_array(X, ensure_all_finite="allow-nan", dtype=object)
 
