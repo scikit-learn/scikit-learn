@@ -447,6 +447,9 @@ redirects = {
     "auto_examples/model_selection/grid_search_text_feature_extraction.py": (
         "auto_examples/model_selection/plot_grid_search_text_feature_extraction.py"
     ),
+    "auto_examples/model_selection/plot_validation_curve.py": (
+        "auto_examples/model_selection/plot_train_error_vs_test_error.py"
+    ),
     "auto_examples/miscellaneous/plot_changed_only_pprint_parameter": (
         "auto_examples/miscellaneous/plot_estimator_representation"
     ),
