@@ -313,6 +313,13 @@ Changelog
   is renamed into `ensure_all_finite`. `force_all_finite` will be removed in 1.8.
   :pr:`29404` by :user:`Jérémie du Boisberranger <jeremiedb>`.
 
+- |Enhancement| :meth:`metrics.RocCurveDisplay.from_estimator`,
+  :meth:`metrics.RocCurveDisplay.from_predictions`,
+  :meth:`metrics.PrecisionRecallDisplay.from_estimator`, and
+  :meth:`metrics.PrecisionRecallDisplay.from_predictions` now accept a new keyword
+  `despine` to remove the top and right spines of the plot in order to make it clearer.
+  :pr:`26367` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
