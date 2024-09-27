@@ -368,6 +368,10 @@ def adjusted_rand_score(labels_true, labels_pred):
 
         adjusted_rand_score(a, b) == adjusted_rand_score(b, a)
 
+    See
+    :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`
+    for an example on how to use the API.
+
     Read more in the :ref:`User Guide <adjusted_rand_score>`.
 
     Parameters
