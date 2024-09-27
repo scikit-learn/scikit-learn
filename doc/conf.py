@@ -448,7 +448,7 @@ redirects = {
         "auto_examples/model_selection/plot_grid_search_text_feature_extraction.py"
     ),
     "auto_examples/datasets/plot_digits_last_image.py": (
-        "auto_examples/datasets/plot_iris_dataset.py"
+        "auto_examples/exercises/plot_digits_classification_exercises.py"
     ),
     "auto_examples/miscellaneous/plot_changed_only_pprint_parameter": (
         "auto_examples/miscellaneous/plot_estimator_representation"
