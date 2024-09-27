@@ -277,12 +277,12 @@ Changelog
 
 - |Fix| :class:`linear_model.LassoCV` and :class:`linear_model.ElasticNetCV` now
   take sample weights into accounts to define the search grid for the internally tuned
-  `alpha` hyper-parameter. :pr:`29442` by :user:`John Hopfensperger <s-banach> and
+  `alpha` hyper-parameter. :pr:`29442` by :user:`John Hopfensperger <s-banach>` and
   :user:`Shruti Nath <snath-xoc>`.
 
 - |Fix| The Hessian warning in :class:`linear_model._linear_loss.LinearModelLoss` is now
   sample weight aware.
-  :pr:`29818` by :user:`Antoine Baker <antoinebaker>`
+  :pr:`29818` by :user:`Antoine Baker <antoinebaker>`.
 
 :mod:`sklearn.manifold`
 .......................
@@ -392,7 +392,7 @@ Changelog
 - |API| :func:`check_estimators.check_sample_weights_invariance` replaced by
   :func:`check_estimators.check_sample_weight_equivalence` which uses
   integer (including zero) weights.
-  :pr:`29818` by :user:`Antoine Baker <antoinebaker>`
+  :pr:`29818` by :user:`Antoine Baker <antoinebaker>`.
 
 .. rubric:: Code and documentation contributors
 
