@@ -86,3 +86,45 @@ plt.plot(coef_, label="Estimated coef")
 plt.legend()
 plt.subplots_adjust(0.09, 0.04, 0.94, 0.94, 0.26, 0.26)
 plt.show()
+
+# %%
+# Plotting Validation Curves
+#-------------------------------------------------------------
+#In this plot, you can see the training and validation scores
+#of the ElasticNet model for different values of regularization
+#parameter alpha. As can be inferred from the plot, for very low values
+#of alpha (close to zero), the regularization is weak, meaning the model 
+#fits the training data very closely, leading to high training scores but lower
+#validation scores. This is a case of overfitting, where the model captures 
+#noise in the training data rather than the underlying pattern.
+#
+#Using the ``ValidationCurveDisplay`` class helps by automating the plotting of training 
+#and validation scores across a range of alpha values, eliminating the need for 
+# manual iteration and plotting, and providing a clear, consistent visualization 
+# of model performance.
+
+
+from sklearn.model_selection import ValidationCurveDisplay
+
+# Define the range of alphas (regularization strength) to explore
+alphas = np.logspace(-5, 1, 60)
+
+# Use the ValidationCurveDisplay to automatically plot the train and test scores
+disp = ValidationCurveDisplay.from_estimator(
+    enet,               # ElasticNet model
+    X_train,            # Training data
+    y_train,            # Training target
+    param_name="alpha", # Hyperparameter to vary
+    param_range=alphas, # Range of alpha values
+    scoring="r2",       # Scoring metric, R^2 in this case
+    n_jobs=-1,          # Use all available CPUs
+    score_type="both",  # Plot both training and test scores
+)
+
+# Customize the display
+disp.ax_.set_title("Validation Curve for ElasticNet (R^2 Score)")
+disp.ax_.set_xlabel(r"alpha (regularization strength)")
+disp.ax_.set_ylabel("R^2 Score")
+disp.ax_.set_ylim(0.0, 1.1)
+
+plt.show()
