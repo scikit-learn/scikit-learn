@@ -70,6 +70,10 @@ def kneighbors_graph(
 
     Read more in the :ref:`User Guide <unsupervised_neighbors>`.
 
+    See
+    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
+    for an example on how to use the API.
+
     Parameters
     ----------
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
