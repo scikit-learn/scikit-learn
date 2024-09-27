@@ -180,6 +180,8 @@ class RegressorTags:
 class Tags:
     """Tags for the estimator.
 
+    See :ref:`estimator_tags` for more information.
+
     Parameters
     ----------
     target_tags : :class:`TargetTags`
