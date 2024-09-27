@@ -1656,13 +1656,18 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
 
     Checks if the estimator is fitted by verifying the presence of
     fitted attributes (ending with a trailing underscore) and otherwise
-    raises a NotFittedError with the given message.
+    raises a :class:`~sklearn.exceptions.NotFittedError` with the given message.
 
     If an estimator does not set any attributes with a trailing underscore, it
     can define a ``__sklearn_is_fitted__`` method returning a boolean to
     specify if the estimator is fitted or not. See
     :ref:`sphx_glr_auto_examples_developing_estimators_sklearn_is_fitted.py`
     for an example on how to use the API.
+
+    If no `attributes` are passed, this fuction will pass if an estimator is stateless.
+    An estimator can indicate it's stateless by setting the `requires_fit` tag. See
+    :ref:`estimator_tags` for more information. Note that the `requires_fit` tag
+    is ignored if `attributes` are passed.
 
     Parameters
     ----------
@@ -1723,6 +1728,11 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
 
     if not hasattr(estimator, "fit"):
         raise TypeError("%s is not an estimator instance." % (estimator))
+
+    tags = get_tags(estimator)
+
+    if not tags.requires_fit and attributes is None:
+        return
 
     if not _is_fitted(estimator, attributes, all_or_any):
         raise NotFittedError(msg % {"name": type(estimator).__name__})
