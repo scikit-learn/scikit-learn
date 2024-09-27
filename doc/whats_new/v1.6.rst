@@ -280,6 +280,10 @@ Changelog
   `alpha` hyper-parameter. :pr:`29442` by :user:`John Hopfensperger <s-banach> and
   :user:`Shruti Nath <snath-xoc>`.
 
+- |Fix| The Hessian warning in :class:`linear_model._linear_loss.LinearModelLoss` is now
+  sample weight aware.
+  :pr:`29818` by :user:`Antoine Baker <antoinebaker>`
+
 :mod:`sklearn.manifold`
 .......................
 
