@@ -89,19 +89,19 @@ plt.show()
 
 # %%
 # Plotting Validation Curves
-#-------------------------------------------------------------
-#In this plot, you can see the training and validation scores
-#of the ElasticNet model for different values of regularization
-#parameter alpha. As can be inferred from the plot, for very low values
-#of alpha (close to zero), the regularization is weak, meaning the model 
-#fits the training data very closely, leading to high training scores but lower
-#validation scores. This is a case of overfitting, where the model captures 
-#noise in the training data rather than the underlying pattern.
+# -------------------------------------------------------------
+# In this plot, you can see the training and validation scores
+# of the ElasticNet model for different values of regularization
+# parameter alpha. As can be inferred from the plot, for very low values
+# of alpha (close to zero), the regularization is weak, meaning the model
+# fits the training data very closely, leading to high training scores but lower
+# validation scores. This is a case of overfitting, where the model captures
+# noise in the training data rather than the underlying pattern.
 #
-#Using the ``ValidationCurveDisplay`` class helps by automating the plotting of training 
-#and validation scores across a range of alpha values, eliminating the need for 
-# manual iteration and plotting, and providing a clear, consistent visualization 
-# of model performance.
+# Using the ``ValidationCurveDisplay`` class helps by automating the plotting of
+# trainingand validation scores across a range of alpha values, eliminating the
+# need for manual iteration and plotting, and providing a clear, consistent
+# visualization of model performance.
 
 
 from sklearn.model_selection import ValidationCurveDisplay
@@ -111,13 +111,13 @@ alphas = np.logspace(-5, 1, 60)
 
 # Use the ValidationCurveDisplay to automatically plot the train and test scores
 disp = ValidationCurveDisplay.from_estimator(
-    enet,               # ElasticNet model
-    X_train,            # Training data
-    y_train,            # Training target
-    param_name="alpha", # Hyperparameter to vary
-    param_range=alphas, # Range of alpha values
-    scoring="r2",       # Scoring metric, R^2 in this case
-    n_jobs=-1,          # Use all available CPUs
+    enet,  # ElasticNet model
+    X_train,  # Training data
+    y_train,  # Training target
+    param_name="alpha",  # Hyperparameter to vary
+    param_range=alphas,  # Range of alpha values
+    scoring="r2",  # Scoring metric, R^2 in this case
+    n_jobs=-1,  # Use all available CPUs
     score_type="both",  # Plot both training and test scores
 )
 
