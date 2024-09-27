@@ -931,22 +931,19 @@ def non_negative_factorization(
 
     The objective function is:
 
-        .. math::
+    .. math::
 
-            L(W, H) &= 0.5 * ||X - WH||_{loss}^2
+        L(W, H) &= 0.5 * ||X - WH||_{loss}^2
 
-            &+ alpha\\_W * l1\\_ratio * n\\_features * ||vec(W)||_1
+                &+ alpha\\_W * l1\\_ratio * n\\_features * ||vec(W)||_1
 
-            &+ alpha\\_H * l1\\_ratio * n\\_samples * ||vec(H)||_1
+                &+ alpha\\_H * l1\\_ratio * n\\_samples * ||vec(H)||_1
 
-            &+ 0.5 * alpha\\_W * (1 - l1\\_ratio) * n\\_features * ||W||_{Fro}^2
+                &+ 0.5 * alpha\\_W * (1 - l1\\_ratio) * n\\_features * ||W||_{Fro}^2
 
-            &+ 0.5 * alpha\\_H * (1 - l1\\_ratio) * n\\_samples * ||H||_{Fro}^2
+                &+ 0.5 * alpha\\_H * (1 - l1\\_ratio) * n\\_samples * ||H||_{Fro}^2,
 
-    Where:
-
-    :math:`||A||_{Fro}^2 = \\sum_{i,j} A_{ij}^2` (Frobenius norm)
-
+    where :math:`||A||_{Fro}^2 = \\sum_{i,j} A_{ij}^2` (Frobenius norm) and
     :math:`||vec(A)||_1 = \\sum_{i,j} abs(A_{ij})` (Elementwise L1 norm)
 
     The generic norm :math:`||X - WH||_{loss}^2` may represent
@@ -1357,23 +1354,20 @@ class NMF(_BaseNMF):
 
     The objective function is:
 
-        .. math::
+    .. math::
 
-            L(W, H) &= 0.5 * ||X - WH||_{loss}^2
+        L(W, H) &= 0.5 * ||X - WH||_{loss}^2
 
-            &+ alpha\\_W * l1\\_ratio * n\\_features * ||vec(W)||_1
+                &+ alpha\\_W * l1\\_ratio * n\\_features * ||vec(W)||_1
 
-            &+ alpha\\_H * l1\\_ratio * n\\_samples * ||vec(H)||_1
+                &+ alpha\\_H * l1\\_ratio * n\\_samples * ||vec(H)||_1
 
-            &+ 0.5 * alpha\\_W * (1 - l1\\_ratio) * n\\_features * ||W||_{Fro}^2
+                &+ 0.5 * alpha\\_W * (1 - l1\\_ratio) * n\\_features * ||W||_{Fro}^2
 
-            &+ 0.5 * alpha\\_H * (1 - l1\\_ratio) * n\\_samples * ||H||_{Fro}^2
+                &+ 0.5 * alpha\\_H * (1 - l1\\_ratio) * n\\_samples * ||H||_{Fro}^2,
 
-    Where:
-
-    :math:`||A||_{Fro}^2 = \\sum_{i,j} A_{ij}^2` (Frobenius norm)
-
-    :math:`||vec(A)||_1 = \\sum_{i,j} abs(A_{ij})` (Elementwise L1 norm)
+    where :math:`||A||_{Fro}^2 = \\sum_{i,j} A_{ij}^2` (Frobenius norm) and
+    :math:`||vec(A)||_1 = \\sum_{i,j} abs(A_{ij})` (Elementwise L1 norm).
 
     The generic norm :math:`||X - WH||_{loss}` may represent
     the Frobenius norm or another supported beta-divergence loss.
@@ -1802,23 +1796,20 @@ class MiniBatchNMF(_BaseNMF):
 
     The objective function is:
 
-        .. math::
+    .. math::
 
-            L(W, H) &= 0.5 * ||X - WH||_{loss}^2
+        L(W, H) &= 0.5 * ||X - WH||_{loss}^2
 
-            &+ alpha\\_W * l1\\_ratio * n\\_features * ||vec(W)||_1
+                &+ alpha\\_W * l1\\_ratio * n\\_features * ||vec(W)||_1
 
-            &+ alpha\\_H * l1\\_ratio * n\\_samples * ||vec(H)||_1
+                &+ alpha\\_H * l1\\_ratio * n\\_samples * ||vec(H)||_1
 
-            &+ 0.5 * alpha\\_W * (1 - l1\\_ratio) * n\\_features * ||W||_{Fro}^2
+                &+ 0.5 * alpha\\_W * (1 - l1\\_ratio) * n\\_features * ||W||_{Fro}^2
 
-            &+ 0.5 * alpha\\_H * (1 - l1\\_ratio) * n\\_samples * ||H||_{Fro}^2
+                &+ 0.5 * alpha\\_H * (1 - l1\\_ratio) * n\\_samples * ||H||_{Fro}^2,
 
-    Where:
-
-    :math:`||A||_{Fro}^2 = \\sum_{i,j} A_{ij}^2` (Frobenius norm)
-
-    :math:`||vec(A)||_1 = \\sum_{i,j} abs(A_{ij})` (Elementwise L1 norm)
+    where :math:`||A||_{Fro}^2 = \\sum_{i,j} A_{ij}^2` (Frobenius norm) and
+    :math:`||vec(A)||_1 = \\sum_{i,j} abs(A_{ij})` (Elementwise L1 norm).
 
     The generic norm :math:`||X - WH||_{loss}^2` may represent
     the Frobenius norm or another supported beta-divergence loss.
