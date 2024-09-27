@@ -67,6 +67,8 @@ See :ref:`array_api` for more details.
 - :func:`sklearn.metrics.pairwise.polynomial_kernel` :pr:`29475` by :user:`Omar Salman <OmarManzoor>`;
 - :func:`sklearn.metrics.pairwise.rbf_kernel` :pr:`29433` by :user:`Omar Salman <OmarManzoor>`;
 - :func:`sklearn.metrics.pairwise.sigmoid_kernel` :pr:`29475` by :user:`Omar Salman <OmarManzoor>`.
+- :func:`sklearn.cluster.linkage_tree` :pr:`29935` by :user:`Sean Moiselle <Sean-Jay-M>`;
+- :func:`sklearn.cluster.ward_tree` :pr:`29935` by :user:`Sean Moiselle <Sean-Jay-M>`.
 
 
 **Classes:**
@@ -80,7 +82,9 @@ See :ref:`array_api` for more details.
   compatible inputs when their base estimators do. :pr:`27096` by :user:`Tim
   Head <betatim>` and :user:`Olivier Grisel <ogrisel>`.
 - :class:`preprocessing.MinMaxScaler` with `clip=True` :pr:`29751` by
-  :user:`Shreekant Nandiyawar <Shree7676>`
+  :user:`Shreekant Nandiyawar <Shree7676>`.
+- :class:`cluster.AgglomerativeClustering` deprecates `affinity` keyword
+  :pr:`29935` by :user:`Sean Moiselle <Sean-Jay-M>`.
 
 **Other**
 
