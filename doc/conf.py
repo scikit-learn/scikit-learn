@@ -462,7 +462,6 @@ redirects = {
     "auto_examples/exercises/plot_cv_digits.py": (
         "auto_examples/model_selection/plot_nested_cross_validation_iris.py"
     ),
-    "tutorial/machine_learning_map/index.html": "machine_learning_map/index.html",
     "auto_examples/cluster/plot_agglomerative_clustering.py": (
         "auto_examples/model_selection/plot_agglomerative_clustering_metrics.py"
     ),
