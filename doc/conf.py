@@ -450,6 +450,9 @@ redirects = {
     "auto_examples/model_selection/plot_validation_curve.py": (
         "auto_examples/model_selection/plot_train_error_vs_test_error.py"
     ),
+    "auto_examples/datasets/plot_digits_last_image.py": (
+        "auto_examples/exercises/plot_digits_classification_exercises.py"
+    ),
     "auto_examples/miscellaneous/plot_changed_only_pprint_parameter": (
         "auto_examples/miscellaneous/plot_estimator_representation"
     ),
