@@ -464,13 +464,13 @@ redirects = {
         "auto_examples/model_selection/plot_nested_cross_validation_iris.py"
     ),
     "auto_examples/cluster/plot_agglomerative_clustering.py": (
-        "auto_examples/model_selection/plot_agglomerative_clustering_metrics.py"
+        "auto_examples/cluster/plot_agglomerative_clustering_metrics.py"
     ),
     "auto_examples/cluster/plot_digits_agglomeration.py": (
-        "auto_examples/model_selection/plot_feature_agglomeration_vs_univariate_selection.py"
+        "auto_examples/cluster/plot_feature_agglomeration_vs_univariate_selection.py"
     ),
     "auto_examples/cluster/plot_cluster_iris.py": (
-        "auto_examples/model_selection/plot_kmeans_digits.py"
+        "auto_examples/cluster/plot_kmeans_digits.py"
     ),
 }
 html_context["redirects"] = redirects
