@@ -475,7 +475,7 @@ on a classifier, but not otherwise. Similarly, scorers for average precision
 that take a continuous prediction need to call ``decision_function`` for classifiers,
 but ``predict`` for regressors. This distinction between classifiers and regressors
 is implemented using the ``_estimator_type`` attribute, which takes a string value.
-This value should have the following values to work as expected:
+This attribute should have the following values to work as expected:
 
 - ``"classifier"`` for classifiers
 - ``"regressor"`` for regressors
