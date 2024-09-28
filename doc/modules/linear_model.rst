@@ -504,7 +504,7 @@ The objective function to minimize is in this case
     \frac{\alpha(1-\rho)}{2} ||w||_2 ^ 2}
 
 
-.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_lasso_lars_elasticnet_path_001.png
+.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_lasso_lars_elasticnet_path_002.png
    :target: ../auto_examples/linear_model/plot_lasso_lasso_lars_elasticnet_path.html
    :align: center
    :scale: 50%
@@ -609,8 +609,8 @@ algorithm, and unlike the implementation based on coordinate descent,
 this yields the exact solution, which is piecewise linear as a
 function of the norm of its coefficients.
 
-.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_lars_001.png
-   :target: ../auto_examples/linear_model/plot_lasso_lars.html
+.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_lasso_lars_elasticnet_path_001.png
+   :target: ../auto_examples/linear_model/plot_lasso_lasso_lars_elasticnet_path.html
    :align: center
    :scale: 50%
 
