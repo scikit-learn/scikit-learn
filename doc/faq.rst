@@ -183,9 +183,9 @@ example of working with heterogeneous (e.g. categorical and numeric) data.
 
 Note that recently, :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
 :class:`~sklearn.ensemble.HistGradientBoostingRegressor` gained native support for
-categorical features through the option `categorical_features="from_dtype"` that
-relies on inferring which columns of the data are categorical based on the
-:class:`pandas.CategoricalDtype` dtype and :class:`polars.datatypes.Categorical` dtype.
+categorical features through the option `categorical_features="from_dtype"`. This
+option relies on inferring which columns of the data are categorical based on the
+:class:`pandas.CategoricalDtype` and :class:`polars.datatypes.Categorical` dtypes.
 
 Does scikit-learn work natively with various types of dataframes?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
