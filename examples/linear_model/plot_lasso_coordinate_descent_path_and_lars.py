@@ -1,13 +1,21 @@
 """
 =====================
-Lasso and Elastic Net
+Lasso, Elastic Net, and Lasso Path Using LARS
 =====================
-
+This examples demonstrates how to compute and visualize
 Lasso and elastic net (L1 and L2 penalisation) implemented using a
-coordinate descent.
+coordinate descent. The coefficients can be forced to be positive.
+The paths are computed using ``lasso_path`` and ``enet_path``, showing
+the relationship between the regularization parameter (alpha) and the
+coefficients.
+The results are visualized using three plots:
+- Compare Lasso and Elastic-Net
+- Compare Lasso with positive Lasso
+- Elastic-Net with positive Elastic-Net
 
-The coefficients can be forced to be positive.
-
+Each plot shows how the model coefficients vary as the regularization
+strength changes, offering insight into the behavior of these models
+under different constraints
 """
 
 # Authors: The scikit-learn developers
@@ -80,5 +88,38 @@ plt.xlabel("alpha")
 plt.ylabel("coefficients")
 plt.title("Elastic-Net and positive Elastic-Net")
 plt.legend((l1[-1], l2[-1]), ("Elastic-Net", "positive Elastic-Net"), loc="lower right")
+plt.axis("tight")
+plt.show()
+
+# %%
+# Lasso Path Using LARS
+# --------------------------------------------
+# Computes Lasso Path along the regularization parameter using the LARS
+# algorithm on the diabetes dataset. Each color represents a different
+# feature of the coefficient vector, and this is displayed as a function
+# of the regularization parameter.
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+from sklearn import datasets, linear_model
+
+X, y = datasets.load_diabetes(return_X_y=True)
+
+print("Computing regularization path using the LARS ...")
+_, _, coefs = linear_model.lars_path(X, y, method="lasso", verbose=True)
+
+xx = np.sum(np.abs(coefs.T), axis=1)
+xx /= xx[-1]
+
+plt.plot(xx, coefs.T)
+ymin, ymax = plt.ylim()
+plt.vlines(xx, ymin, ymax, linestyle="dashed")
+plt.xlabel("|coef| / max|coef|")
+plt.ylabel("Coefficients")
+plt.title("LASSO Path")
 plt.axis("tight")
 plt.show()
