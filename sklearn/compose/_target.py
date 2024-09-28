@@ -16,9 +16,9 @@ from ..utils._metadata_requests import (
     _routing_enabled,
     process_routing,
 )
-from ..utils.metaestimators import available_if
 from ..utils._param_validation import HasMethods
 from ..utils._tags import get_tags
+from ..utils.metaestimators import available_if
 from ..utils.validation import check_is_fitted
 
 __all__ = ["TransformedTargetClassifier", "TransformedTargetRegressor"]
@@ -263,7 +263,7 @@ class BaseTransformedTargetEstimator(BaseEstimator):
             pred_trans = pred_trans.squeeze(axis=1)
 
         return pred_trans
-    
+
     def __sklearn_tags__(self):
         estimator = self._get_estimator()
         tags = super().__sklearn_tags__()
@@ -448,7 +448,7 @@ class TransformedTargetClassifier(ClassifierMixin, BaseTransformedTargetEstimato
         """
         check_is_fitted(self)
         return self.estimator_.predict_proba(X)
-    
+
     @available_if(_estimator_has("decision_function"))
     def decision_function(self, X):
         """Average of the decision functions of the base classifiers.
@@ -469,8 +469,8 @@ class TransformedTargetClassifier(ClassifierMixin, BaseTransformedTargetEstimato
         """
         check_is_fitted(self)
         return self.estimator_.decision_function(X)
-    
-    
+
+
 class TransformedTargetRegressor(RegressorMixin, BaseTransformedTargetEstimator):
     """Meta-estimator to regress on a transformed target.
 
