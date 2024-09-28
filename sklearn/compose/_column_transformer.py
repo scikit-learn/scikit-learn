@@ -1332,6 +1332,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             "check_fit2d_predict1d": "FIXME",
             "check_complex_data": "FIXME",
             "check_fit2d_1feature": "FIXME",
+            "check_pandas_column_name_consistency": "FIXME",
         }
         return tags
 

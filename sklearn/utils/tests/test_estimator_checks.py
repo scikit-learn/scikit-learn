@@ -41,6 +41,7 @@ from sklearn.utils._testing import (
     raises,
 )
 from sklearn.utils.estimator_checks import (
+    _check_dataframe_column_names_consistency,
     _NotAnArray,
     _yield_all_checks,
     check_array_api_input,
@@ -50,7 +51,6 @@ from sklearn.utils.estimator_checks import (
     check_classifiers_multilabel_output_format_predict,
     check_classifiers_multilabel_output_format_predict_proba,
     check_classifiers_one_label_sample_weights,
-    check_dataframe_column_names_consistency,
     check_decision_proba_consistency,
     check_dict_unchanged,
     check_dont_overwrite_parameters,
@@ -918,17 +918,17 @@ def test_check_regressor_data_not_an_array():
 def test_check_dataframe_column_names_consistency():
     err_msg = "Estimator does not have a feature_names_in_"
     with raises(ValueError, match=err_msg):
-        check_dataframe_column_names_consistency("estimator_name", BaseBadClassifier())
-    check_dataframe_column_names_consistency("estimator_name", PartialFitChecksName())
+        _check_dataframe_column_names_consistency("estimator_name", BaseBadClassifier())
+    _check_dataframe_column_names_consistency("estimator_name", PartialFitChecksName())
 
     lr = LogisticRegression()
-    check_dataframe_column_names_consistency(lr.__class__.__name__, lr)
+    _check_dataframe_column_names_consistency(lr.__class__.__name__, lr)
     lr.__doc__ = "Docstring that does not document the estimator's attributes"
     err_msg = (
         "Estimator LogisticRegression does not document its feature_names_in_ attribute"
     )
     with raises(ValueError, match=err_msg):
-        check_dataframe_column_names_consistency(lr.__class__.__name__, lr)
+        _check_dataframe_column_names_consistency(lr.__class__.__name__, lr)
 
 
 class _BaseMultiLabelClassifierMock(ClassifierMixin, BaseEstimator):
@@ -1266,7 +1266,7 @@ def test_non_deterministic_estimator_skip_tests():
     # check estimators with non_deterministic tag set to True
     # will skip certain tests, refer to issue #22313 for details
     for est in [MinimalTransformer, MinimalRegressor, MinimalClassifier]:
-        all_tests = list(_yield_all_checks(est(), legacy=True))
+        all_tests = list(_yield_all_checks(est(), dataframe=True, legacy=True))
         assert check_methods_sample_order_invariance in all_tests
         assert check_methods_subset_invariance in all_tests
 
@@ -1276,7 +1276,7 @@ def test_non_deterministic_estimator_skip_tests():
                 tags.non_deterministic = True
                 return tags
 
-        all_tests = list(_yield_all_checks(Estimator(), legacy=True))
+        all_tests = list(_yield_all_checks(Estimator(), dataframe=True, legacy=True))
         assert check_methods_sample_order_invariance not in all_tests
         assert check_methods_subset_invariance not in all_tests
 
@@ -1345,14 +1345,14 @@ def test_decision_proba_tie_ranking():
     check_decision_proba_consistency("SGDClassifier", estimator)
 
 
-def test_yield_all_checks_legacy():
-    # Test that _yield_all_checks with legacy=True returns more checks.
+def test_yield_all_checks_api():
+    # Test that _yield_all_checks with API only returns less checks.
     estimator = MinimalClassifier()
 
-    legacy_checks = list(_yield_all_checks(estimator, legacy=True))
-    non_legacy_checks = list(_yield_all_checks(estimator, legacy=False))
+    all_checks = list(_yield_all_checks(estimator, dataframe=True, legacy=True))
+    api_only_checks = list(_yield_all_checks(estimator, dataframe=False, legacy=False))
 
-    assert len(legacy_checks) > len(non_legacy_checks)
+    assert len(all_checks) > len(api_only_checks)
 
     def get_check_name(check):
         try:
@@ -1361,9 +1361,9 @@ def test_yield_all_checks_legacy():
             return check.func.__name__
 
     # Check that all non-legacy checks are included in legacy checks
-    non_legacy_check_names = {get_check_name(check) for check in non_legacy_checks}
-    legacy_check_names = {get_check_name(check) for check in legacy_checks}
-    assert non_legacy_check_names.issubset(legacy_check_names)
+    api_only_check_names = {get_check_name(check) for check in api_only_checks}
+    all_check_names = {get_check_name(check) for check in all_checks}
+    assert api_only_check_names.issubset(all_check_names)
 
 
 def test_check_estimator_cloneable_error():

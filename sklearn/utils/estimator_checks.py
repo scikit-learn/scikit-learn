@@ -99,6 +99,11 @@ def _yield_api_checks(estimator):
     yield check_n_features_in_after_fitting
 
 
+def _yield_dataframe_checks(estimator):
+    yield check_n_features_in_after_fitting
+    yield check_pandas_column_name_consistency
+
+
 def _yield_checks(estimator):
     name = estimator.__class__.__name__
     tags = get_tags(estimator)
@@ -331,7 +336,7 @@ def _yield_array_api_checks(estimator):
         )
 
 
-def _yield_all_checks(estimator, legacy: bool):
+def _yield_all_checks(estimator, dataframe: bool, legacy: bool):
     name = estimator.__class__.__name__
     tags = get_tags(estimator)
     if not tags.input_tags.two_d_array:
@@ -351,6 +356,10 @@ def _yield_all_checks(estimator, legacy: bool):
 
     for check in _yield_api_checks(estimator):
         yield check
+
+    if dataframe:
+        for check in _yield_dataframe_checks(estimator):
+            yield check
 
     if not legacy:
         return  # pragma: no cover
@@ -443,7 +452,7 @@ def _should_be_skipped_or_marked(estimator, check):
     return False, "placeholder reason that will never be used"
 
 
-def parametrize_with_checks(estimators, *, legacy: bool = True):
+def parametrize_with_checks(estimators, *, dataframe: bool = True, legacy: bool = True):
     """Pytest specific decorator for parametrizing estimator checks.
 
     Checks are categorised into the following groups:
@@ -470,6 +479,12 @@ def parametrize_with_checks(estimators, *, legacy: bool = True):
 
         .. versionadded:: 0.24
 
+    dataframe : bool, default=True
+        Whether to included checks related to inspecting feature counts and feature
+        names. Theese checks might include `polars` or `pandas` to be installed, and are
+        automatically skipped if otherwise.
+
+        .. versionadded:: 1.6
 
     legacy : bool, default=True
         Whether to include legacy checks. Over time we remove checks from this category
@@ -513,7 +528,9 @@ def parametrize_with_checks(estimators, *, legacy: bool = True):
             # of the checks to run
             name = type(estimator).__name__
             yield estimator, partial(check_estimator_cloneable, name)
-            for check in _yield_all_checks(estimator, legacy=legacy):
+            for check in _yield_all_checks(
+                estimator, dataframe=dataframe, legacy=legacy
+            ):
                 check_with_name = partial(check, name)
                 for check_instance in _yield_instances_for_check(check, estimator):
                     yield _maybe_mark_xfail(check_instance, check_with_name, pytest)
@@ -523,7 +540,9 @@ def parametrize_with_checks(estimators, *, legacy: bool = True):
     )
 
 
-def check_estimator(estimator=None, generate_only=False, *, legacy: bool = True):
+def check_estimator(
+    estimator=None, generate_only=False, *, dataframe: bool = True, legacy: bool = True
+):
     """Check if estimator adheres to scikit-learn conventions.
 
     This function will run an extensive test-suite for input validation,
@@ -566,6 +585,13 @@ def check_estimator(estimator=None, generate_only=False, *, legacy: bool = True)
 
         .. versionadded:: 0.22
 
+    dataframe : bool, default=True
+        Whether to included checks related to inspecting feature counts and feature
+        names. Theese checks might include `polars` or `pandas` to be installed, and are
+        automatically skipped if otherwise.
+
+        .. versionadded:: 1.6
+
     legacy : bool, default=True
         Whether to include legacy checks. Over time we remove checks from this category
         and move them into their specific category.
@@ -604,7 +630,7 @@ def check_estimator(estimator=None, generate_only=False, *, legacy: bool = True)
         # we first need to check if the estimator is cloneable for the rest of the tests
         # to run
         yield estimator, partial(check_estimator_cloneable, name)
-        for check in _yield_all_checks(estimator, legacy=legacy):
+        for check in _yield_all_checks(estimator, dataframe=dataframe, legacy=legacy):
             check = _maybe_skip(estimator, check)
             for check_instance in _yield_instances_for_check(check, estimator):
                 yield check_instance, partial(check, name)
@@ -4038,147 +4064,6 @@ scikit-learn versions.
         )
 
 
-def check_dataframe_column_names_consistency(name, estimator_orig):
-    try:
-        import pandas as pd
-    except ImportError:
-        raise SkipTest(
-            "pandas is not installed: not checking column name consistency for pandas"
-        )
-
-    tags = get_tags(estimator_orig)
-    is_supported_X_types = tags.input_tags.two_d_array or tags.input_tags.categorical
-
-    if not is_supported_X_types or tags.no_validation:
-        return
-
-    rng = np.random.RandomState(0)
-
-    estimator = clone(estimator_orig)
-    set_random_state(estimator)
-
-    X_orig = rng.normal(size=(150, 8))
-
-    X_orig = _enforce_estimator_tags_X(estimator, X_orig)
-    n_samples, n_features = X_orig.shape
-
-    names = np.array([f"col_{i}" for i in range(n_features)])
-    X = pd.DataFrame(X_orig, columns=names, copy=False)
-
-    if is_regressor(estimator):
-        y = rng.normal(size=n_samples)
-    else:
-        y = rng.randint(low=0, high=2, size=n_samples)
-    y = _enforce_estimator_tags_y(estimator, y)
-
-    # Check that calling `fit` does not raise any warnings about feature names.
-    with warnings.catch_warnings():
-        warnings.filterwarnings(
-            "error",
-            message="X does not have valid feature names",
-            category=UserWarning,
-            module="sklearn",
-        )
-        estimator.fit(X, y)
-
-    if not hasattr(estimator, "feature_names_in_"):
-        raise ValueError(
-            "Estimator does not have a feature_names_in_ "
-            "attribute after fitting with a dataframe"
-        )
-    assert isinstance(estimator.feature_names_in_, np.ndarray)
-    assert estimator.feature_names_in_.dtype == object
-    assert_array_equal(estimator.feature_names_in_, names)
-
-    # Only check sklearn estimators for feature_names_in_ in docstring
-    module_name = estimator_orig.__module__
-    if (
-        module_name.startswith("sklearn.")
-        and not ("test_" in module_name or module_name.endswith("_testing"))
-        and ("feature_names_in_" not in (estimator_orig.__doc__))
-    ):
-        raise ValueError(
-            f"Estimator {name} does not document its feature_names_in_ attribute"
-        )
-
-    check_methods = []
-    for method in (
-        "predict",
-        "transform",
-        "decision_function",
-        "predict_proba",
-        "score",
-        "score_samples",
-        "predict_log_proba",
-    ):
-        if not hasattr(estimator, method):
-            continue
-
-        callable_method = getattr(estimator, method)
-        if method == "score":
-            callable_method = partial(callable_method, y=y)
-        check_methods.append((method, callable_method))
-
-    for _, method in check_methods:
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                "error",
-                message="X does not have valid feature names",
-                category=UserWarning,
-                module="sklearn",
-            )
-            method(X)  # works without UserWarning for valid features
-
-    invalid_names = [
-        (names[::-1], "Feature names must be in the same order as they were in fit."),
-        (
-            [f"another_prefix_{i}" for i in range(n_features)],
-            (
-                "Feature names unseen at fit time:\n- another_prefix_0\n-"
-                " another_prefix_1\n"
-            ),
-        ),
-        (
-            names[:3],
-            f"Feature names seen at fit time, yet now missing:\n- {min(names[3:])}\n",
-        ),
-    ]
-    params = {
-        key: value
-        for key, value in estimator.get_params().items()
-        if "early_stopping" in key
-    }
-    early_stopping_enabled = any(value is True for value in params.values())
-
-    for invalid_name, additional_message in invalid_names:
-        X_bad = pd.DataFrame(X, columns=invalid_name, copy=False)
-
-        expected_msg = re.escape(
-            "The feature names should match those that were passed during fit.\n"
-            f"{additional_message}"
-        )
-        for name, method in check_methods:
-            with raises(
-                ValueError, match=expected_msg, err_msg=f"{name} did not raise"
-            ):
-                method(X_bad)
-
-        # partial_fit checks on second call
-        # Do not call partial fit if early_stopping is on
-        if not hasattr(estimator, "partial_fit") or early_stopping_enabled:
-            continue
-
-        estimator = clone(estimator_orig)
-        if is_classifier(estimator):
-            classes = np.unique(y)
-            estimator.partial_fit(X, y, classes=classes)
-        else:
-            estimator.partial_fit(X, y)
-
-        with raises(ValueError, match=expected_msg):
-            estimator.partial_fit(X_bad, y)
-
-
 def check_transformer_get_feature_names_out(name, transformer_orig):
     tags = get_tags(transformer_orig)
     if not tags.input_tags.two_d_array or tags.no_validation:
@@ -4745,6 +4630,162 @@ def check_inplace_ensure_writeable(name, estimator_orig):
 
     assert not X.flags.writeable
     assert_allclose(X, X_copy)
+
+
+# Dataframe / Feature Names inspection tests
+# ==========================================
+def _check_dataframe_column_names_consistency(name, estimator_orig):
+    try:
+        import pandas as pd
+    except ImportError:
+        raise SkipTest(
+            "pandas is not installed: not checking column name consistency for pandas"
+        )
+
+    tags = get_tags(estimator_orig)
+    is_supported_X_types = tags.input_tags.two_d_array or tags.input_tags.categorical
+
+    if not is_supported_X_types or tags.no_validation:
+        return
+
+    rng = np.random.RandomState(0)
+
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+
+    X_orig = rng.normal(size=(150, 8))
+
+    X_orig = _enforce_estimator_tags_X(estimator, X_orig)
+    n_samples, n_features = X_orig.shape
+
+    names = np.array([f"col_{i}" for i in range(n_features)])
+    X = pd.DataFrame(X_orig, columns=names, copy=False)
+
+    if is_regressor(estimator):
+        y = rng.normal(size=n_samples)
+    else:
+        y = rng.randint(low=0, high=2, size=n_samples)
+    y = _enforce_estimator_tags_y(estimator, y)
+
+    # Check that calling `fit` does not raise any warnings about feature names.
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "error",
+            message="X does not have valid feature names",
+            category=UserWarning,
+            module="sklearn",
+        )
+        estimator.fit(X, y)
+
+    if not hasattr(estimator, "feature_names_in_"):
+        raise ValueError(
+            "Estimator does not have a feature_names_in_ "
+            "attribute after fitting with a dataframe"
+        )
+    assert isinstance(estimator.feature_names_in_, np.ndarray)
+    assert estimator.feature_names_in_.dtype == object
+    assert_array_equal(estimator.feature_names_in_, names)
+
+    # Only check sklearn estimators for feature_names_in_ in docstring
+    module_name = estimator.__module__
+    if (
+        module_name.startswith("sklearn.")
+        and not ("test_" in module_name or module_name.endswith("_testing"))
+        and ("feature_names_in_" not in (estimator.__doc__))
+    ):
+        raise ValueError(
+            f"Estimator {name} does not document its feature_names_in_ attribute"
+        )
+
+    check_methods = []
+    for method in (
+        "predict",
+        "transform",
+        "decision_function",
+        "predict_proba",
+        "score",
+        "score_samples",
+        "predict_log_proba",
+    ):
+        if not hasattr(estimator, method):
+            continue
+
+        callable_method = getattr(estimator, method)
+        if method == "score":
+            callable_method = partial(callable_method, y=y)
+        check_methods.append((method, callable_method))
+
+    for _, method in check_methods:
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "error",
+                message="X does not have valid feature names",
+                category=UserWarning,
+                module="sklearn",
+            )
+            method(X)  # works without UserWarning for valid features
+
+    invalid_names = [
+        (names[::-1], "Feature names must be in the same order as they were in fit."),
+        (
+            [f"another_prefix_{i}" for i in range(n_features)],
+            (
+                "Feature names unseen at fit time:\n- another_prefix_0\n-"
+                " another_prefix_1\n"
+            ),
+        ),
+        (
+            names[:3],
+            f"Feature names seen at fit time, yet now missing:\n- {min(names[3:])}\n",
+        ),
+    ]
+    params = {
+        key: value
+        for key, value in estimator.get_params().items()
+        if "early_stopping" in key
+    }
+    early_stopping_enabled = any(value is True for value in params.values())
+
+    for invalid_name, additional_message in invalid_names:
+        X_bad = pd.DataFrame(X, columns=invalid_name, copy=False)
+
+        expected_msg = re.escape(
+            "The feature names should match those that were passed during fit.\n"
+            f"{additional_message}"
+        )
+        for name, method in check_methods:
+            with raises(
+                ValueError, match=expected_msg, err_msg=f"{name} did not raise"
+            ):
+                method(X_bad)
+
+        # partial_fit checks on second call
+        # Do not call partial fit if early_stopping is on
+        if not hasattr(estimator, "partial_fit") or early_stopping_enabled:
+            continue
+
+        estimator = clone(estimator_orig)
+        if is_classifier(estimator):
+            classes = np.unique(y)
+            estimator.partial_fit(X, y, classes=classes)
+        else:
+            estimator.partial_fit(X, y)
+
+        with raises(ValueError, match=expected_msg):
+            estimator.partial_fit(X_bad, y)
+
+
+@ignore_warnings(category=(FutureWarning))
+def check_pandas_column_name_consistency(name, estimator_orig):
+    estimator = clone(estimator_orig)
+
+    # NOTE: When running `check_dataframe_column_names_consistency` on a meta-estimator
+    # that delegates validation to a base estimator, the check is testing that the base
+    # estimator is checking for column name consistency.
+    with warnings.catch_warnings(record=True) as record:
+        _check_dataframe_column_names_consistency(name, estimator)
+    for warning in record:
+        assert "was fitted without feature names" not in str(warning.message)
 
 
 def check_do_not_raise_errors_in_init_or_set_params(name, estimator_orig):

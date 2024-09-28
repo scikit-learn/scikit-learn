@@ -485,6 +485,8 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     # TODO(devtools): check that function names here exist in checks for the estimator
     # TODO(devtools): write a test for the same thing with tags._xfail_checks
     AgglomerativeClustering: {"check_dict_unchanged": dict(n_clusters=1)},
+    BaggingClassifier: {"check_pandas_column_name_consistency": dict(oob_score=True)},
+    BaggingRegressor: {"check_pandas_column_name_consistency": dict(oob_score=True)},
     BayesianGaussianMixture: {"check_dict_unchanged": dict(max_iter=5, n_init=2)},
     BernoulliRBM: {"check_dict_unchanged": dict(n_components=1, n_iter=5)},
     Birch: {"check_dict_unchanged": dict(n_clusters=1)},
@@ -495,11 +497,33 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             max_iter=20, n_components=1, transform_algorithm="lasso_lars"
         )
     },
+    ExtraTreesClassifier: {
+        "check_pandas_column_name_consistency": dict(bootstrap=True, oob_score=True)
+    },
+    ExtraTreesRegressor: {
+        "check_pandas_column_name_consistency": dict(bootstrap=True, oob_score=True)
+    },
     FactorAnalysis: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     FastICA: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     FeatureAgglomeration: {"check_dict_unchanged": dict(n_clusters=1)},
     GaussianMixture: {"check_dict_unchanged": dict(max_iter=5, n_init=2)},
     GaussianRandomProjection: {"check_dict_unchanged": dict(n_components=1)},
+    GradientBoostingClassifier: {
+        "check_pandas_column_name_consistency": dict(n_iter_no_change=1)
+    },
+    GradientBoostingRegressor: {
+        "check_pandas_column_name_consistency": dict(n_iter_no_change=1)
+    },
+    HistGradientBoostingClassifier: {
+        "check_pandas_column_name_consistency": dict(
+            early_stopping=True, n_iter_no_change=1
+        )
+    },
+    HistGradientBoostingRegressor: {
+        "check_pandas_column_name_consistency": dict(
+            early_stopping=True, n_iter_no_change=1
+        )
+    },
     IncrementalPCA: {"check_dict_unchanged": dict(batch_size=10, n_components=1)},
     Isomap: {"check_dict_unchanged": dict(n_components=1)},
     KMeans: {"check_dict_unchanged": dict(max_iter=5, n_clusters=1, n_init=2)},
@@ -525,17 +549,58 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     MiniBatchSparsePCA: {
         "check_dict_unchanged": dict(batch_size=10, max_iter=5, n_components=1)
     },
+    MLPClassifier: {
+        "check_pandas_column_name_consistency": dict(
+            early_stopping=True, n_iter_no_change=1
+        )
+    },
+    MLPRegressor: {
+        "check_pandas_column_name_consistency": dict(
+            early_stopping=True, n_iter_no_change=1
+        )
+    },
     NMF: {"check_dict_unchanged": dict(max_iter=500, n_components=1)},
     NeighborhoodComponentsAnalysis: {
         "check_dict_unchanged": dict(max_iter=5, n_components=1)
     },
     Nystroem: {"check_dict_unchanged": dict(n_components=1)},
+    PassiveAggressiveClassifier: {
+        "check_pandas_column_name_consistency": dict(
+            early_stopping=True, n_iter_no_change=1
+        )
+    },
+    PassiveAggressiveRegressor: {
+        "check_pandas_column_name_consistency": dict(
+            early_stopping=True, n_iter_no_change=1
+        )
+    },
     PCA: {"check_dict_unchanged": dict(n_components=1)},
+    Perceptron: {
+        "check_pandas_column_name_consistency": dict(
+            early_stopping=True, n_iter_no_change=1
+        )
+    },
     PLSCanonical: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     PLSRegression: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     PLSSVD: {"check_dict_unchanged": dict(n_components=1)},
     PolynomialCountSketch: {"check_dict_unchanged": dict(n_components=1)},
+    RandomForestClassifier: {
+        "check_pandas_column_name_consistency": dict(oob_score=True)
+    },
+    RandomForestRegressor: {
+        "check_pandas_column_name_consistency": dict(oob_score=True)
+    },
     RBFSampler: {"check_dict_unchanged": dict(n_components=1)},
+    SGDClassifier: {
+        "check_pandas_column_name_consistency": dict(
+            early_stopping=True, n_iter_no_change=1
+        )
+    },
+    SGDRegressor: {
+        "check_pandas_column_name_consistency": dict(
+            early_stopping=True, n_iter_no_change=1
+        )
+    },
     SkewedChi2Sampler: {"check_dict_unchanged": dict(n_components=1)},
     SparsePCA: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     SparseRandomProjection: {"check_dict_unchanged": dict(n_components=1)},

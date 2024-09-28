@@ -7,10 +7,9 @@ from numbers import Real
 import numpy as np
 
 from ..base import OutlierMixin, _fit_context
-from ..utils import check_array
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.metaestimators import available_if
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, validate_data
 from ._base import KNeighborsMixin, NeighborsBase
 
 __all__ = ["LocalOutlierFactor"]
@@ -471,13 +470,14 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
             The lower, the more abnormal.
         """
         check_is_fitted(self)
-        X = check_array(X, accept_sparse="csr")
+        # not replacing X since we need to pass raw X to kneighbors
+        X_validated = validate_data(self, X, reset=False, accept_sparse="csr")
 
         distances_X, neighbors_indices_X = self.kneighbors(
             X, n_neighbors=self.n_neighbors_
         )
 
-        if X.dtype == np.float32:
+        if X_validated.dtype == np.float32:
             distances_X = distances_X.astype(X.dtype, copy=False)
 
         X_lrd = self._local_reachability_density(
