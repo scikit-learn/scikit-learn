@@ -138,7 +138,7 @@ class BaseTransformedTarget(BaseEstimator):
         # BaseTransformedTarget.estimator/transformer are not validated yet.
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y, **fit_params):
+    def fit(self, X, y, **params):
         """Fit the model according to the given training data.
 
         Parameters
@@ -150,7 +150,7 @@ class BaseTransformedTarget(BaseEstimator):
         y : array-like of shape (n_samples,)
             Target values.
 
-        **fit_params : dict
+        **params : dict
             - If `enable_metadata_routing=False` (default): Parameters directly passed
               to the `fit` method of the underlying estimator.
 
@@ -205,9 +205,9 @@ class BaseTransformedTarget(BaseEstimator):
 
         self.estimator_ = self._get_estimator(get_clone=True)
         if _routing_enabled():
-            routed_params = process_routing(self, "fit", **fit_params)
+            routed_params = process_routing(self, "fit", **params)
         else:
-            routed_params = Bunch(estimator=Bunch(fit=fit_params))
+            routed_params = Bunch(estimator=Bunch(fit=params))
 
         self.estimator_.fit(X, y_trans, **routed_params.estimator.fit)
 
@@ -221,7 +221,7 @@ class BaseTransformedTarget(BaseEstimator):
 
         return self
 
-    def predict(self, X, **predict_params):
+    def predict(self, X, **params):
         """Predict using the base estimator, applying inverse.
 
         The estimator is used to predict and the `inverse_func` or
@@ -232,7 +232,7 @@ class BaseTransformedTarget(BaseEstimator):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Samples.
 
-        **predict_params : dict of str -> object
+        **params : dict of str -> object
             - If `enable_metadata_routing=False` (default): Parameters directly passed
               to the `predict` method of the underlying estimator.
 
@@ -250,9 +250,9 @@ class BaseTransformedTarget(BaseEstimator):
         """
         check_is_fitted(self)
         if _routing_enabled():
-            routed_params = process_routing(self, "predict", **predict_params)
+            routed_params = process_routing(self, "predict", **params)
         else:
-            routed_params = Bunch(estimator=Bunch(predict=predict_params))
+            routed_params = Bunch(estimator=Bunch(predict=params))
 
         pred = self.estimator_.predict(X, **routed_params.estimator.predict)
         if pred.ndim == 1:
@@ -296,28 +296,6 @@ class BaseTransformedTarget(BaseEstimator):
             ) from nfe
 
         return self.estimator_.n_features_in_
-
-    def get_metadata_routing(self):
-        """Get metadata routing of this object.
-
-        Please check :ref:`User Guide <metadata_routing>` on how the routing
-        mechanism works.
-
-        .. versionadded:: 1.6
-
-        Returns
-        -------
-        routing : MetadataRouter
-            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
-            routing information.
-        """
-        router = MetadataRouter(owner=self.__class__.__name__).add(
-            estimator=self._get_estimator(),
-            method_mapping=MethodMapping()
-            .add(caller="fit", callee="fit")
-            .add(caller="predict", callee="predict"),
-        )
-        return router
 
 
 class TransformedTargetClassifier(ClassifierMixin, BaseTransformedTarget):
@@ -433,7 +411,7 @@ class TransformedTargetClassifier(ClassifierMixin, BaseTransformedTarget):
         return clone(self.estimator) if get_clone else self.estimator
 
     @available_if(_estimator_has("predict_proba"))
-    def predict_proba(self, X):
+    def predict_proba(self, X, **params):
         """Predict class probabilities for X.
 
         Parameters
@@ -442,6 +420,17 @@ class TransformedTargetClassifier(ClassifierMixin, BaseTransformedTarget):
             The training input samples. Sparse matrices are accepted only if
             they are supported by the base estimator.
 
+        **params : dict of str -> object
+            - If `enable_metadata_routing=False` (default): Parameters directly passed
+              to the `predict` method of the underlying estimator.
+
+            - If `enable_metadata_routing=True`: Parameters safely routed to the
+              `predict` method of the underlying estimator.
+
+            .. versionchanged:: 1.6
+                See :ref:`Metadata Routing User Guide <metadata_routing>`
+                for more details.
+
         Returns
         -------
         p : ndarray of shape (n_samples, n_classes)
@@ -449,10 +438,15 @@ class TransformedTargetClassifier(ClassifierMixin, BaseTransformedTarget):
             classes corresponds to that in the attribute :term:`classes_`.
         """
         check_is_fitted(self)
-        return self.estimator_.predict_proba(X)
+        if _routing_enabled():
+            routed_params = process_routing(self, "predict_proba", **params)
+        else:
+            routed_params = Bunch(estimator=Bunch(predict_proba=params))
+
+        return self.estimator_.predict_proba(X, **routed_params.estimator.predict_proba)
 
     @available_if(_estimator_has("predict_log_proba"))
-    def predict_log_proba(self, X):
+    def predict_log_proba(self, X, **params):
         """Predict class log-probabilities for X.
 
         Parameters
@@ -461,6 +455,17 @@ class TransformedTargetClassifier(ClassifierMixin, BaseTransformedTarget):
             The training input samples. Sparse matrices are accepted only if
             they are supported by the base estimator.
 
+        **params : dict of str -> object
+            - If `enable_metadata_routing=False` (default): Parameters directly passed
+              to the `predict` method of the underlying estimator.
+
+            - If `enable_metadata_routing=True`: Parameters safely routed to the
+              `predict` method of the underlying estimator.
+
+            .. versionchanged:: 1.6
+                See :ref:`Metadata Routing User Guide <metadata_routing>`
+                for more details.
+
         Returns
         -------
         p : ndarray of shape (n_samples, n_classes)
@@ -468,10 +473,17 @@ class TransformedTargetClassifier(ClassifierMixin, BaseTransformedTarget):
             classes corresponds to that in the attribute :term:`classes_`.
         """
         check_is_fitted(self)
-        return self.estimator_.predict_log_proba(X)
+        if _routing_enabled():
+            routed_params = process_routing(self, "predict_log_proba", **params)
+        else:
+            routed_params = Bunch(estimator=Bunch(predict_log_proba=params))
+
+        return self.estimator_.predict_log_proba(
+            X, **routed_params.estimator.predict_log_proba
+        )
 
     @available_if(_estimator_has("decision_function"))
-    def decision_function(self, X):
+    def decision_function(self, X, **params):
         """Average of the decision functions of the base classifiers.
 
         Parameters
@@ -479,6 +491,17 @@ class TransformedTargetClassifier(ClassifierMixin, BaseTransformedTarget):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The training input samples. Sparse matrices are accepted only if
             they are supported by the base estimator.
+
+        **params : dict of str -> object
+            - If `enable_metadata_routing=False` (default): Parameters directly passed
+              to the `predict` method of the underlying estimator.
+
+            - If `enable_metadata_routing=True`: Parameters safely routed to the
+              `predict` method of the underlying estimator.
+
+            .. versionchanged:: 1.6
+                See :ref:`Metadata Routing User Guide <metadata_routing>`
+                for more details.
 
         Returns
         -------
@@ -489,7 +512,39 @@ class TransformedTargetClassifier(ClassifierMixin, BaseTransformedTarget):
             cases with ``k == 1``, otherwise ``k==n_classes``.
         """
         check_is_fitted(self)
-        return self.estimator_.decision_function(X)
+        if _routing_enabled():
+            routed_params = process_routing(self, "decision_function", **params)
+        else:
+            routed_params = Bunch(estimator=Bunch(decision_function=params))
+
+        return self.estimator_.decision_function(
+            X, **routed_params.estimator.decision_function
+        )
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.6
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self.__class__.__name__).add(
+            estimator=self._get_estimator(),
+            method_mapping=MethodMapping()
+            .add(caller="fit", callee="fit")
+            .add(caller="predict", callee="predict")
+            .add(callee="predict_proba", caller="predict_proba")
+            .add(callee="decision_function", caller="decision_function")
+            .add(callee="predict_log_proba", caller="predict_log_proba"),
+        )
+        return router
 
 
 class TransformedTargetRegressor(RegressorMixin, BaseTransformedTarget):
@@ -677,3 +732,25 @@ class TransformedTargetRegressor(RegressorMixin, BaseTransformedTarget):
             return LinearRegression()
 
         return clone(estimator_) if get_clone else estimator_
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.6
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self.__class__.__name__).add(
+            estimator=self._get_estimator(),
+            method_mapping=MethodMapping()
+            .add(caller="fit", callee="fit")
+            .add(caller="predict", callee="predict"),
+        )
+        return router
