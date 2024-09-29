@@ -475,6 +475,7 @@ redirects = {
     "auto_examples/linear_model/plot_lasso_coordinate_descent_path.py": (
         "auto_examples/linear_model/plot_lasso_lasso_lars_elasticnet_path.py"
     ),
+    "auto_examples/linear_model/plot_ols_3d": ("auto_examples/linear_model/plot_ols"),
 }
 html_context["redirects"] = redirects
 for old_link in redirects:
