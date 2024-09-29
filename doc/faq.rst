@@ -203,8 +203,8 @@ for an example of working with heterogeneous (e.g. categorical and numeric) data
 Do you plan to implement transform for target ``y`` in a pipeline?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Only the features `X` can be transformed in a pipeline and scikit-learn will 
-not support arbitrary transformation of ``y`` in a pipeline. However, please 
-check out :class:`~compose.TransformedTargetClassifier` and 
+not support arbitrary transformation of the target ``y`` in a pipeline. However, 
+please check out :class:`~compose.TransformedTargetClassifier` and 
 :class:`~compose.TransformedTargetRegressor` for the case where ``y``
 has an invertible transformation applied before training
 and inverted after prediction. For use cases where ``y`` should be transformed 
