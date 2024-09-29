@@ -55,7 +55,10 @@ See :ref:`array_api` for more details.
 - :func:`sklearn.metrics.mean_gamma_deviance` :pr:`29239` by :user:`Emily Chen <EmilyXinyi>`;
 - :func:`sklearn.metrics.mean_poisson_deviance` :pr:`29227` by :user:`Emily Chen <EmilyXinyi>`;
 - :func:`sklearn.metrics.mean_squared_error` :pr:`29142` by :user:`Yaroslav Korobko <Tialo>`;
+- :func:`sklearn.metrics.mean_squared_log_error` :pr:`29709` by :user:`Virgil Chan <virchan>`;
 - :func:`sklearn.metrics.mean_tweedie_deviance` :pr:`28106` by :user:`Thomas Li <lithomas1>`;
+- :func:`sklearn.metrics.root_mean_squared_error` :pr:`29709` by :user:`Virgil Chan <virchan>`;
+- :func:`sklearn.metrics.root_mean_squared_log_error` :pr:`29709` by :user:`Virgil Chan <virchan>`;
 - :func:`sklearn.metrics.pairwise.additive_chi2_kernel` :pr:`29144` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.metrics.pairwise.chi2_kernel` :pr:`29267` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.metrics.pairwise.cosine_distances` :pr:`29265` by :user:`Emily Chen <EmilyXinyi>`;
@@ -312,6 +315,19 @@ Changelog
   :func:`metrics.pairwise.check_pairwise_arrays` and :func:`metrics.pairwise_distances`
   is renamed into `ensure_all_finite`. `force_all_finite` will be removed in 1.8.
   :pr:`29404` by :user:`Jérémie du Boisberranger <jeremiedb>`.
+
+- |Fix| the functions :func:`metrics.mean_squared_log_error` and
+  :func:`metrics.root_mean_squared_log_error` now check whether
+  the inputs are within the correct domain for the function
+  :math:`y=\log(1+x)`, rather than :math:`y=\log(x)`.
+  :pr:`29709` by :user:`Virgil Chan <virchan>`.
+
+- |Fix| the functions :func:`metrics.mean_absolute_error`,
+  :func:`metrics.mean_absolute_percentage_error`, :func:`metrics.mean_squared_error`
+  and :func:`metrics.root_mean_squared_error` now explicitly check whether a scalar
+  will be returned when `multioutput=uniform_average`.
+  :pr:`29709` by :user:`Virgil Chan <virchan>`.
+
 
 :mod:`sklearn.model_selection`
 ..............................
