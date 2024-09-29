@@ -427,3 +427,19 @@ def test_example_docstring():
     tt.fit(X, y)
     assert tt.score(X, y) == 1.0
     np.allclose(tt.estimator_.coef_, np.array([[0.95826546]]))
+
+
+# TODO(1.8): remove in 1.8
+def test_deprecation_warning_regressor():
+    X_train = np.arange(4).reshape(-1, 1)
+    y_train = np.arange(4)
+
+    warn_msg = "`regressor` has been deprecated in 1.6 and will be removed"
+    with pytest.warns(FutureWarning, match=warn_msg):
+        TransformedTargetRegressor(regressor=LinearRegression()).fit(X_train, y_train)
+
+    error_msg = "You must pass only one estimator to TransformedTargetRegressor."
+    with pytest.raises(ValueError, match=error_msg):
+        TransformedTargetRegressor(
+            regressor=LinearRegression(), estimator=LinearRegression()
+        ).fit(X_train, y_train)
