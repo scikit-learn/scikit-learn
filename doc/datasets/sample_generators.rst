@@ -47,47 +47,20 @@ Gaussian clusters per class; and linear transformations of the feature space.
    import matplotlib.pyplot as plt
    from sklearn.datasets import make_classification
 
-   fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(8, 8), sharey=True, sharex=True)
+   fig, axs = plt.subplots(1, 3, figsize=(12, 4), sharey=True, sharex=True)
+   titles = ["Two classes,\none informative feature,\none cluster per class",
+             "Two classes,\ntwo informative features,\ntwo clusters per class",
+             "Three classes,\ntwo informative features,\none cluster per class"]
+   params = [
+       {"n_informative": 1, "n_clusters_per_class": 1, "n_classes": 2},
+       {"n_informative": 2, "n_clusters_per_class": 2, "n_classes": 2},
+       {"n_informative": 2, "n_clusters_per_class": 1, "n_classes": 3}
+   ]
 
-   X, Y = make_classification(
-         n_features=2,
-         n_redundant=0,
-         n_informative=1,
-         n_clusters_per_class=1,
-         random_state=0,
-   )
-   axs[0, 0].scatter(X[:, 0], X[:, 1], c=Y)
-   axs[0, 0].set_title("One informative feature,\none cluster per class")
-
-   X, Y = make_classification(
-         n_features=2,
-         n_redundant=0,
-         n_informative=2,
-         n_clusters_per_class=1,
-         random_state=1,
-   )
-   axs[0, 1].scatter(X[:, 0], X[:, 1], c=Y)
-   axs[0, 1].set_title("Two informative features,\none cluster per class")
-
-   X, Y = make_classification(
-         n_features=2,
-         n_redundant=0,
-         n_informative=2,
-         random_state=2,
-   )
-   axs[1, 0].scatter(X[:, 0], X[:, 1], c=Y)
-   axs[1, 0].set_title("Two informative features,\ntwo clusters per class")
-
-   X, Y = make_classification(
-         n_features=2,
-         n_redundant=0,
-         n_informative=2,
-         n_clusters_per_class=1,
-         n_classes=3,
-         random_state=3,
-   )
-   axs[1, 1].scatter(X[:, 0], X[:, 1], c=Y)
-   axs[1, 1].set_title("Multi-class, two informative\nfeatures, one cluster")
+   for i, param in enumerate(params):
+       X, Y = make_classification(n_features=2, n_redundant=0, random_state=1, **param)
+       axs[i].scatter(X[:, 0], X[:, 1], c=Y)
+       axs[i].set_title(titles[i])
 
    plt.tight_layout()
    plt.show()
