@@ -466,6 +466,12 @@ redirects = {
     "auto_examples/exercises/plot_cv_digits.py": (
         "auto_examples/model_selection/plot_nested_cross_validation_iris.py"
     ),
+    "auto_examples/linear_model/plot_lasso_lars.py": (
+        "auto_examples/linear_model/plot_lasso_lasso_lars_elasticnet_path.py"
+    ),
+    "auto_examples/linear_model/plot_lasso_coordinate_descent_path.py": (
+        "auto_examples/linear_model/plot_lasso_lasso_lars_elasticnet_path.py"
+    ),
 }
 html_context["redirects"] = redirects
 for old_link in redirects:
