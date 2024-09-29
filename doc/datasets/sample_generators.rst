@@ -31,7 +31,9 @@ near-equal-size classes separated by concentric hyperspheres.
 
 .. plot::
    :context: close-figs
+   :scale: 50
    :align: center
+   :include-source: False
 
       import matplotlib.pyplot as plt
 

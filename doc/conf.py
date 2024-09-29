@@ -450,8 +450,8 @@ redirects = {
     "auto_examples/datasets/plot_digits_last_image.py": (
         "auto_examples/exercises/plot_digits_classification_exercises.py"
     ),
-    "auto_examples/datasets/plot_random_dataset.py": (
-        "auto_examples/classification/plot_classifier_comparison.py"
+    "auto_examples/datasets/plot_random_dataset": (
+        "auto_examples/classification/plot_classifier_comparison"
     ),
     "auto_examples/miscellaneous/plot_changed_only_pprint_parameter": (
         "auto_examples/miscellaneous/plot_estimator_representation"
