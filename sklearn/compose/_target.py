@@ -269,10 +269,16 @@ class BaseTransformedTarget(BaseEstimator):
         return pred_trans
 
     def __sklearn_tags__(self):
-        estimator = self._get_estimator()
         tags = super().__sklearn_tags__()
-        tags.estimator_tags.poor_score = True
-        tags.target_tags.multi_output = get_tags(estimator).target_tags.multi_output
+
+        estimator = self._get_estimator()
+        estimator_tags = get_tags(estimator)
+        if estimator_tags.classifier_tags is not None:
+            tags.classifier_tags.poor_score = True
+        if estimator_tags.regressor_tags is not None:
+            tags.regressor_tags.poor_score = True
+
+        tags.target_tags.multi_output = estimator_tags.target_tags.multi_output
         return tags
 
     @property
@@ -392,7 +398,7 @@ class TransformedTargetClassifier(ClassifierMixin, BaseTransformedTarget):
     See Also
     --------
     TransformedTargetRegressor : Meta-estimator to regress on a
-    transformed target.
+        transformed target.
     sklearn.preprocessing.FunctionTransformer : Construct a transformer from an
         arbitrary callable.
 
@@ -573,7 +579,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseTransformedTarget):
     See Also
     --------
     TransformedTargetRegressor : Meta-estimator to classify
-    based on a transformed target.
+        based on a transformed target.
     sklearn.preprocessing.FunctionTransformer : Construct a transformer from an
         arbitrary callable.
 
