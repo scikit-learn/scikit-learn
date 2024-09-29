@@ -5,7 +5,7 @@ import pytest
 
 from sklearn import config_context, datasets
 from sklearn.base import BaseEstimator, TransformerMixin, clone
-from sklearn.compose import TransformedTargetClassifier, TransformedTargetRegressor
+from sklearn.compose import TransformedTargetRegressor
 from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import LinearRegression, OrthogonalMatchingPursuit
 from sklearn.pipeline import Pipeline
@@ -410,3 +410,19 @@ def test_transform_target_regressor_not_warns_with_global_output_set(output_form
             TransformedTargetRegressor(
                 estimator=LinearRegression(), func=np.log, inverse_func=np.exp
             ).fit(X, y)
+
+
+# TODO: Remove
+@pytest.mark.xfail
+def test_example_docstring():
+    import numpy as np
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.compose import TransformedTargetClassifier
+    from sklearn.preprocessing import LabelEncoder
+    tt = TransformedTargetClassifier(estimator=LogisticRegression(),
+                                    transformer=LabelEncoder())
+    X = np.arange(4).reshape(-1, 1)
+    y = np.array(["c_1", "c_1", "c_2", "c_2"])
+    tt.fit(X, y)
+    assert tt.score(X, y) == 1.0
+    np.allclose(tt.estimator_.coef_, np.array([[0.95826546]]))

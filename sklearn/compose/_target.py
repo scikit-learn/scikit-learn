@@ -7,7 +7,7 @@ import numpy as np
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin, _fit_context, clone
 from ..exceptions import NotFittedError
-from ..linear_model import LinearRegression
+from ..linear_model import LinearRegression, LogisticRegression
 from ..preprocessing import FunctionTransformer
 from ..utils import Bunch, _safe_indexing, check_array
 from ..utils._metadata_requests import (
@@ -43,7 +43,7 @@ def _estimator_has(attr):
     return check
 
 
-class BaseTransformedTargetEstimator(BaseEstimator):
+class BaseTransformedTarget(BaseEstimator):
     """Base class for transformed target meta-estimator.
 
     Warning: This class should not be used directly. Use derived classes
@@ -121,6 +121,8 @@ class BaseTransformedTargetEstimator(BaseEstimator):
             idx_selected = slice(None, None, max(1, y.shape[0] // 10))
             y_sel = _safe_indexing(y, idx_selected)
             y_sel_t = self.transformer_.transform(y_sel)
+
+            # TODO: Replace with array_equal in classification case
             if not np.allclose(y_sel, self.transformer_.inverse_transform(y_sel_t)):
                 warnings.warn(
                     (
@@ -133,7 +135,7 @@ class BaseTransformedTargetEstimator(BaseEstimator):
                 )
 
     @_fit_context(
-        # BaseTransformedTargetEstimator.estimator/transformer are not validated yet.
+        # BaseTransformedTarget.estimator/transformer are not validated yet.
         prefer_skip_nested_validation=False
     )
     def fit(self, X, y, **fit_params):
@@ -169,6 +171,8 @@ class BaseTransformedTargetEstimator(BaseEstimator):
                 f"This {self.__class__.__name__} estimator "
                 "requires y to be passed, but the target y is None."
             )
+        
+        # TODO: Replace with validate_data?
         y = check_array(
             y,
             input_name="y",
@@ -218,9 +222,9 @@ class BaseTransformedTargetEstimator(BaseEstimator):
         return self
 
     def predict(self, X, **predict_params):
-        """Predict using the base regressor, applying inverse.
+        """Predict using the base estimator, applying inverse.
 
-        The regressor is used to predict and the `inverse_func` or
+        The estimator is used to predict and the `inverse_func` or
         `inverse_transform` is applied before returning the prediction.
 
         Parameters
@@ -230,10 +234,10 @@ class BaseTransformedTargetEstimator(BaseEstimator):
 
         **predict_params : dict of str -> object
             - If `enable_metadata_routing=False` (default): Parameters directly passed
-              to the `predict` method of the underlying regressor.
+              to the `predict` method of the underlying estimator.
 
             - If `enable_metadata_routing=True`: Parameters safely routed to the
-              `predict` method of the underlying regressor.
+              `predict` method of the underlying estimator.
 
             .. versionchanged:: 1.6
                 See :ref:`Metadata Routing User Guide <metadata_routing>`
@@ -309,20 +313,14 @@ class BaseTransformedTargetEstimator(BaseEstimator):
         )
         return router
 
-    def _get_estimator(self, get_clone=False):
-        if self.estimator is None:
-            return LinearRegression()
 
-        return clone(self.estimator) if get_clone else self.estimator
+class TransformedTargetClassifier(ClassifierMixin, BaseTransformedTarget):
+    """Meta-estimator to classify based on a transformed target.
 
-
-class TransformedTargetClassifier(ClassifierMixin, BaseTransformedTargetEstimator):
-    """Meta-estimator to classify on a transformed target.
-
-    Useful for applying a non-linear transformation to the target `y` in
-    regression problems. This transformation can be given as a Transformer
-    such as the :class:`~sklearn.preprocessing.QuantileTransformer` or as a
-    function and its inverse such as `np.log` and `np.exp`.
+    Useful for applying a transformation to the target `y` in
+    classification problems. This transformation can be given as a Transformer
+    such as the :class:`~sklearn.preprocessing.LabelEncoder` or as a
+    function.
 
     The computation during :meth:`fit` is::
 
@@ -340,7 +338,7 @@ class TransformedTargetClassifier(ClassifierMixin, BaseTransformedTargetEstimato
 
         transformer.inverse_transform(classifier.predict(X))
 
-    Read more in the :ref:`User Guide <transformed_target_classifier>`.
+    Read more in the :ref:`User Guide <transformed_target_classifier>`. TODO
 
     Parameters
     ----------
@@ -348,7 +346,7 @@ class TransformedTargetClassifier(ClassifierMixin, BaseTransformedTargetEstimato
         Classifier object such as derived from
         :class:`~sklearn.base.ClassifierMixin`. This classifier will
         automatically be cloned each time prior to fitting. If `estimator is
-        None`, :class:`~sklearn.linear_model.LinearRegression` is created and used.
+        None`, :class:`~sklearn.linear_model.LogisticRegression` is created and used.
 
     transformer : object, default=None
         Estimator object such as derived from
@@ -393,6 +391,9 @@ class TransformedTargetClassifier(ClassifierMixin, BaseTransformedTargetEstimato
 
     See Also
     --------
+    sklearn.compose.TransformedTargetRegressor : Meta-estimator to regress on a 
+    transformed target.
+
     sklearn.preprocessing.FunctionTransformer : Construct a transformer from an
         arbitrary callable.
 
@@ -405,34 +406,30 @@ class TransformedTargetClassifier(ClassifierMixin, BaseTransformedTargetEstimato
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.linear_model import LinearRegression
+    >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.compose import TransformedTargetClassifier
     >>> from sklearn.preprocessing import LabelEncoder
     >>> tt = TransformedTargetClassifier(estimator=LogisticRegression(),
     ...                                 transformer=LabelEncoder())
     >>> X = np.arange(4).reshape(-1, 1)
-    >>> y = np.exp(2 * X).ravel()
+    >>> y = np.array["c_1", "c_1", "c_2", "c_2"]
     >>> tt.fit(X, y)
     TransformedTargetClassifier(...)
     >>> tt.score(X, y)
     1.0
     >>> tt.estimator_.coef_
-    array([2.])
-
-    For a more detailed example use case refer to
-    :ref:`sphx_glr_auto_examples_compose_plot_transformed_target.py`.
+    array([[0.95826546]])
     """
 
-    # TODO: Docs
+    def _get_estimator(self, get_clone=False):
+        if self.estimator is None:
+            return LogisticRegression()
+
+        return clone(self.estimator) if get_clone else self.estimator
+    
+    @available_if(_estimator_has("predict_proba"))
     def predict_proba(self, X):
         """Predict class probabilities for X.
-
-        The predicted class probabilities of an input sample is computed as
-        the mean predicted class probabilities of the base estimators in the
-        ensemble. If base estimators do not implement a ``predict_proba``
-        method, then it resorts to voting and the predicted class probabilities
-        of an input sample represents the proportion of estimators predicting
-        each class.
 
         Parameters
         ----------
@@ -448,6 +445,25 @@ class TransformedTargetClassifier(ClassifierMixin, BaseTransformedTargetEstimato
         """
         check_is_fitted(self)
         return self.estimator_.predict_proba(X)
+
+    @available_if(_estimator_has("predict_log_proba"))
+    def predict_log_proba(self, X):
+        """Predict class log-probabilities for X.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The training input samples. Sparse matrices are accepted only if
+            they are supported by the base estimator.
+
+        Returns
+        -------
+        p : ndarray of shape (n_samples, n_classes)
+            The class log-probabilities of the input samples. The order of the
+            classes corresponds to that in the attribute :term:`classes_`.
+        """
+        check_is_fitted(self)
+        return self.estimator_.predict_log_proba(X)
 
     @available_if(_estimator_has("decision_function"))
     def decision_function(self, X):
@@ -471,7 +487,7 @@ class TransformedTargetClassifier(ClassifierMixin, BaseTransformedTargetEstimato
         return self.estimator_.decision_function(X)
 
 
-class TransformedTargetRegressor(RegressorMixin, BaseTransformedTargetEstimator):
+class TransformedTargetRegressor(RegressorMixin, BaseTransformedTarget):
     """Meta-estimator to regress on a transformed target.
 
     Useful for applying a non-linear transformation to the target `y` in
@@ -557,6 +573,9 @@ class TransformedTargetRegressor(RegressorMixin, BaseTransformedTargetEstimator)
 
     See Also
     --------
+    sklearn.compose.TransformedTargetRegressor : Meta-estimator to classify 
+    based on a transformed target
+        
     sklearn.preprocessing.FunctionTransformer : Construct a transformer from an
         arbitrary callable.
 
@@ -585,3 +604,9 @@ class TransformedTargetRegressor(RegressorMixin, BaseTransformedTargetEstimator)
     For a more detailed example use case refer to
     :ref:`sphx_glr_auto_examples_compose_plot_transformed_target.py`.
     """
+
+    def _get_estimator(self, get_clone=False):
+        if self.estimator is None:
+            return LinearRegression()
+
+        return clone(self.estimator) if get_clone else self.estimator
