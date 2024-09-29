@@ -2,10 +2,12 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 # See _splitter.pyx for details.
+
+from ..utils._typedefs cimport (
+    float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t
+)
 from ._criterion cimport Criterion
 from ._tree cimport ParentInfo
-
-from ..utils._typedefs cimport float32_t, float64_t, intp_t, int8_t, int32_t, uint8_t, uint32_t
 
 
 cdef struct SplitRecord:

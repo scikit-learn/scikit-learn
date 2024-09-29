@@ -4,6 +4,9 @@ These include PCA, NMF, ICA, and more. Most of the algorithms of this module can
 regarded as dimensionality reduction techniques.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from ..utils.extmath import randomized_svd
 from ._dict_learning import (
     DictionaryLearning,

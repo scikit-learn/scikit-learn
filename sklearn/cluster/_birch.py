@@ -21,7 +21,7 @@ from ..metrics import pairwise_distances_argmin
 from ..metrics.pairwise import euclidean_distances
 from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils.extmath import row_norms
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, validate_data
 from . import AgglomerativeClustering
 
 
@@ -537,7 +537,8 @@ class Birch(
                 FutureWarning,
             )
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse="csr",
             reset=first_call,
@@ -663,7 +664,7 @@ class Birch(
             Labelled data.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
+        X = validate_data(self, X, accept_sparse="csr", reset=False)
         return self._predict(X)
 
     def _predict(self, X):
@@ -694,7 +695,7 @@ class Birch(
             Transformed data.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
+        X = validate_data(self, X, accept_sparse="csr", reset=False)
         with config_context(assume_finite=True):
             return euclidean_distances(X, self.subcluster_centers_)
 
@@ -735,5 +736,7 @@ class Birch(
         if compute_labels:
             self.labels_ = self._predict(X)
 
-    def _more_tags(self):
-        return {"preserves_dtype": [np.float64, np.float32]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags

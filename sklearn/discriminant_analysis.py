@@ -24,7 +24,7 @@ from .utils._array_api import _expit, device, get_namespace, size
 from .utils._param_validation import HasMethods, Interval, StrOptions
 from .utils.extmath import softmax
 from .utils.multiclass import check_classification_targets, unique_labels
-from .utils.validation import check_is_fitted
+from .utils.validation import check_is_fitted, validate_data
 
 __all__ = ["LinearDiscriminantAnalysis", "QuadraticDiscriminantAnalysis"]
 
@@ -561,11 +561,8 @@ class LinearDiscriminantAnalysis(
     def fit(self, X, y):
         """Fit the Linear Discriminant Analysis model.
 
-           .. versionchanged:: 0.19
-              *store_covariance* has been moved to main constructor.
-
-           .. versionchanged:: 0.19
-              *tol* has been moved to main constructor.
+        .. versionchanged:: 0.19
+            `store_covariance` and `tol` has been moved to main constructor.
 
         Parameters
         ----------
@@ -582,8 +579,8 @@ class LinearDiscriminantAnalysis(
         """
         xp, _ = get_namespace(X)
 
-        X, y = self._validate_data(
-            X, y, ensure_min_samples=2, dtype=[xp.float64, xp.float32]
+        X, y = validate_data(
+            self, X, y, ensure_min_samples=2, dtype=[xp.float64, xp.float32]
         )
         self.classes_ = unique_labels(y)
         n_samples, _ = X.shape
@@ -675,7 +672,7 @@ class LinearDiscriminantAnalysis(
             )
         check_is_fitted(self)
         xp, _ = get_namespace(X)
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
 
         if self.solver == "svd":
             X_new = (X - self.xbar_) @ self.scalings_
@@ -755,8 +752,10 @@ class LinearDiscriminantAnalysis(
         # Only override for the doc
         return super().decision_function(X)
 
-    def _more_tags(self):
-        return {"array_api_support": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.array_api_support = True
+        return tags
 
 
 class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
@@ -883,12 +882,12 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     def fit(self, X, y):
         """Fit the model according to the given training data and parameters.
 
-            .. versionchanged:: 0.19
-               ``store_covariances`` has been moved to main constructor as
-               ``store_covariance``
+        .. versionchanged:: 0.19
+            ``store_covariances`` has been moved to main constructor as
+            ``store_covariance``.
 
-            .. versionchanged:: 0.19
-               ``tol`` has been moved to main constructor.
+        .. versionchanged:: 0.19
+            ``tol`` has been moved to main constructor.
 
         Parameters
         ----------
@@ -904,7 +903,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        X, y = self._validate_data(X, y)
+        X, y = validate_data(self, X, y)
         check_classification_targets(y)
         self.classes_, y = np.unique(y, return_inverse=True)
         n_samples, n_features = X.shape
@@ -964,7 +963,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         # return log posterior, see eq (4.12) p. 110 of the ESL.
         check_is_fitted(self)
 
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
         norm2 = []
         for i in range(len(self.classes_)):
             R = self.rotations_[i]

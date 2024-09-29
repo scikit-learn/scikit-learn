@@ -14,6 +14,9 @@ The final 2 plots use :func:`~sklearn.datasets.make_blobs` and
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib.pyplot as plt
 
 from sklearn.datasets import make_blobs, make_classification, make_gaussian_quantiles

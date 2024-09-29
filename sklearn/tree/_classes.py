@@ -29,9 +29,11 @@ from ..utils._param_validation import Hidden, Interval, RealNotInt, StrOptions
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import (
     _assert_all_finite_element_wise,
+    _check_n_features,
     _check_sample_weight,
     assert_all_finite,
     check_is_fitted,
+    validate_data,
 )
 from . import _criterion, _splitter, _tree
 from ._criterion import Criterion
@@ -176,7 +178,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     def _support_missing_values(self, X):
         return (
             not issparse(X)
-            and self._get_tags()["allow_nan"]
+            and self.__sklearn_tags__().input_tags.allow_nan
             and self.monotonic_cst is None
         )
 
@@ -238,11 +240,11 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             # _compute_missing_values_in_feature_mask will check for finite values and
             # compute the missing mask if the tree supports missing values
             check_X_params = dict(
-                dtype=DTYPE, accept_sparse="csc", force_all_finite=False
+                dtype=DTYPE, accept_sparse="csc", ensure_all_finite=False
             )
             check_y_params = dict(ensure_2d=False, dtype=None)
-            X, y = self._validate_data(
-                X, y, validate_separately=(check_X_params, check_y_params)
+            X, y = validate_data(
+                self, X, y, validate_separately=(check_X_params, check_y_params)
             )
 
             missing_values_in_feature_mask = (
@@ -475,15 +477,16 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         """Validate the training data on predict (probabilities)."""
         if check_input:
             if self._support_missing_values(X):
-                force_all_finite = "allow-nan"
+                ensure_all_finite = "allow-nan"
             else:
-                force_all_finite = True
-            X = self._validate_data(
+                ensure_all_finite = True
+            X = validate_data(
+                self,
                 X,
                 dtype=DTYPE,
                 accept_sparse="csr",
                 reset=False,
-                force_all_finite=force_all_finite,
+                ensure_all_finite=ensure_all_finite,
             )
             if issparse(X) and (
                 X.indices.dtype != np.intc or X.indptr.dtype != np.intc
@@ -491,7 +494,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 raise ValueError("No support for np.int64 index based sparse matrices")
         else:
             # The number of features is checked regardless of `check_input`
-            self._check_n_features(X, reset=False)
+            _check_n_features(self, X, reset=False)
         return X
 
     def predict(self, X, check_input=True):
@@ -743,17 +746,19 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     max_features : int, float or {"sqrt", "log2"}, default=None
         The number of features to consider when looking for the best split:
 
-            - If int, then consider `max_features` features at each split.
-            - If float, then `max_features` is a fraction and
-              `max(1, int(max_features * n_features_in_))` features are considered at
-              each split.
-            - If "sqrt", then `max_features=sqrt(n_features)`.
-            - If "log2", then `max_features=log2(n_features)`.
-            - If None, then `max_features=n_features`.
+        - If int, then consider `max_features` features at each split.
+        - If float, then `max_features` is a fraction and
+          `max(1, int(max_features * n_features_in_))` features are considered at
+          each split.
+        - If "sqrt", then `max_features=sqrt(n_features)`.
+        - If "log2", then `max_features=log2(n_features)`.
+        - If None, then `max_features=n_features`.
 
-        Note: the search for a split does not stop until at least one
-        valid partition of the node samples is found, even if it requires to
-        effectively inspect more than ``max_features`` features.
+        .. note::
+
+            The search for a split does not stop until at least one
+            valid partition of the node samples is found, even if it requires to
+            effectively inspect more than ``max_features`` features.
 
     random_state : int, RandomState instance or None, default=None
         Controls the randomness of the estimator. The features are always
@@ -815,7 +820,9 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
-        :ref:`minimal_cost_complexity_pruning` for details.
+        :ref:`minimal_cost_complexity_pruning` for details. See
+        :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
+        for an example of such pruning.
 
         .. versionadded:: 0.22
 
@@ -1071,7 +1078,8 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
             return proba
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
         # XXX: nan is only support for dense arrays, but we set this for common test to
         # pass, specifically: check_estimators_nan_inf
         allow_nan = self.splitter in ("best", "random") and self.criterion in {
@@ -1079,7 +1087,9 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             "log_loss",
             "entropy",
         }
-        return {"multilabel": True, "allow_nan": allow_nan}
+        tags.classifier_tags.multi_label = True
+        tags.input_tags.allow_nan = allow_nan
+        return tags
 
 
 class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
@@ -1201,7 +1211,9 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
-        :ref:`minimal_cost_complexity_pruning` for details.
+        :ref:`minimal_cost_complexity_pruning` for details. See
+        :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
+        for an example of such pruning.
 
         .. versionadded:: 0.22
 
@@ -1402,7 +1414,8 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         )
         return averaged_predictions
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
         # XXX: nan is only support for dense arrays, but we set this for common test to
         # pass, specifically: check_estimators_nan_inf
         allow_nan = self.splitter in ("best", "random") and self.criterion in {
@@ -1410,7 +1423,8 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             "friedman_mse",
             "poisson",
         }
-        return {"allow_nan": allow_nan}
+        tags.input_tags.allow_nan = allow_nan
+        return tags
 
 
 class ExtraTreeClassifier(DecisionTreeClassifier):
@@ -1545,7 +1559,9 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
-        :ref:`minimal_cost_complexity_pruning` for details.
+        :ref:`minimal_cost_complexity_pruning` for details. See
+        :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
+        for an example of such pruning.
 
         .. versionadded:: 0.22
 
@@ -1686,7 +1702,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             monotonic_cst=monotonic_cst,
         )
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
         # XXX: nan is only supported for dense arrays, but we set this for the
         # common test to pass, specifically: check_estimators_nan_inf
         allow_nan = self.splitter == "random" and self.criterion in {
@@ -1694,7 +1711,9 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             "log_loss",
             "entropy",
         }
-        return {"multilabel": True, "allow_nan": allow_nan}
+        tags.classifier_tags.multi_label = True
+        tags.input_tags.allow_nan = allow_nan
+        return tags
 
 
 class ExtraTreeRegressor(DecisionTreeRegressor):
@@ -1820,7 +1839,9 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
-        :ref:`minimal_cost_complexity_pruning` for details.
+        :ref:`minimal_cost_complexity_pruning` for details. See
+        :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
+        for an example of such pruning.
 
         .. versionadded:: 0.22
 
@@ -1940,7 +1961,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             monotonic_cst=monotonic_cst,
         )
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
         # XXX: nan is only supported for dense arrays, but we set this for the
         # common test to pass, specifically: check_estimators_nan_inf
         allow_nan = self.splitter == "random" and self.criterion in {
@@ -1948,4 +1970,5 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             "friedman_mse",
             "poisson",
         }
-        return {"allow_nan": allow_nan}
+        tags.input_tags.allow_nan: allow_nan
+        return tags

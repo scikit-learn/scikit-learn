@@ -39,6 +39,7 @@ from sklearn.tree._tree import (
     NODE_DTYPE,
     TREE_LEAF,
     TREE_UNDEFINED,
+    _build_pruned_tree_py,
     _check_n_classes,
     _check_node_ndarray,
     _check_value_ndarray,
@@ -2783,3 +2784,52 @@ def test_classification_tree_missing_values_toy():
         (tree.tree_.children_left == -1) & (tree.tree_.n_node_samples == 1)
     )
     assert_allclose(tree.tree_.impurity[leaves_idx], 0.0)
+
+
+def test_build_pruned_tree_py():
+    """Test pruning a tree with the Python caller of the Cythonized prune tree."""
+    tree = DecisionTreeClassifier(random_state=0, max_depth=1)
+    tree.fit(iris.data, iris.target)
+
+    n_classes = np.atleast_1d(tree.n_classes_)
+    pruned_tree = CythonTree(tree.n_features_in_, n_classes, tree.n_outputs_)
+
+    # only keep the root note
+    leave_in_subtree = np.zeros(tree.tree_.node_count, dtype=np.uint8)
+    leave_in_subtree[0] = 1
+    _build_pruned_tree_py(pruned_tree, tree.tree_, leave_in_subtree)
+
+    assert tree.tree_.node_count == 3
+    assert pruned_tree.node_count == 1
+    with pytest.raises(AssertionError):
+        assert_array_equal(tree.tree_.value, pruned_tree.value)
+    assert_array_equal(tree.tree_.value[0], pruned_tree.value[0])
+
+    # now keep all the leaves
+    pruned_tree = CythonTree(tree.n_features_in_, n_classes, tree.n_outputs_)
+    leave_in_subtree = np.zeros(tree.tree_.node_count, dtype=np.uint8)
+    leave_in_subtree[1:] = 1
+
+    # Prune the tree
+    _build_pruned_tree_py(pruned_tree, tree.tree_, leave_in_subtree)
+    assert tree.tree_.node_count == 3
+    assert pruned_tree.node_count == 3, pruned_tree.node_count
+    assert_array_equal(tree.tree_.value, pruned_tree.value)
+
+
+def test_build_pruned_tree_infinite_loop():
+    """Test pruning a tree does not result in an infinite loop."""
+
+    # Create a tree with root and two children
+    tree = DecisionTreeClassifier(random_state=0, max_depth=1)
+    tree.fit(iris.data, iris.target)
+    n_classes = np.atleast_1d(tree.n_classes_)
+    pruned_tree = CythonTree(tree.n_features_in_, n_classes, tree.n_outputs_)
+
+    # only keeping one child as a leaf results in an improper tree
+    leave_in_subtree = np.zeros(tree.tree_.node_count, dtype=np.uint8)
+    leave_in_subtree[1] = 1
+    with pytest.raises(
+        ValueError, match="Node has reached a leaf in the original tree"
+    ):
+        _build_pruned_tree_py(pruned_tree, tree.tree_, leave_in_subtree)
