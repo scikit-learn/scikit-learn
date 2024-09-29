@@ -476,7 +476,7 @@ redirects = {
         "auto_examples/linear_model/plot_lasso_lasso_lars_elasticnet_path.py"
     ),
     "auto_examples/ensemble/plot_forest_importances_faces": (
-        "auto_examples/inspection/plot_permutation_importance"
+        "auto_examples/ensemble/plot_forest_importances"
     ),
 }
 html_context["redirects"] = redirects
