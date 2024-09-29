@@ -50,7 +50,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS
-from sklearn.utils.validation import check_is_fitted
+from sklearn.utils.validation import _check_feature_names, check_is_fitted
 
 iris = load_iris()
 
@@ -1351,7 +1351,7 @@ def test_make_pipeline_memory():
 
 class FeatureNameSaver(BaseEstimator):
     def fit(self, X, y=None):
-        self._check_feature_names(X, reset=True)
+        _check_feature_names(self, X, reset=True)
         return self
 
     def transform(self, X, y=None):
@@ -1616,7 +1616,7 @@ def test_pipeline_get_tags_none(passthrough):
     # Non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/18815
     pipe = make_pipeline(passthrough, SVC())
-    assert not pipe._get_tags()["pairwise"]
+    assert not pipe.__sklearn_tags__().input_tags.pairwise
 
 
 # FIXME: Replace this test with a full `check_estimator` once we have API only
@@ -1822,8 +1822,8 @@ class SimpleEstimator(BaseEstimator):
     # This class is used in this section for testing routing in the pipeline.
     # This class should have every set_{method}_request
     def fit(self, X, y, sample_weight=None, prop=None):
-        assert sample_weight is not None
-        assert prop is not None
+        assert sample_weight is not None, sample_weight
+        assert prop is not None, prop
         return self
 
     def fit_transform(self, X, y, sample_weight=None, prop=None):

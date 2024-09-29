@@ -480,6 +480,17 @@ def test_n_components_upper_bounds(Estimator):
         est.fit(X, Y)
 
 
+def test_n_components_upper_PLSRegression():
+    """Check the validation of `n_components` upper bounds for PLSRegression."""
+    rng = np.random.RandomState(0)
+    X = rng.randn(20, 64)
+    Y = rng.randn(20, 3)
+    est = PLSRegression(n_components=30)
+    err_msg = "`n_components` upper bound is 20. Got 30 instead. Reduce `n_components`."
+    with pytest.raises(ValueError, match=err_msg):
+        est.fit(X, Y)
+
+
 @pytest.mark.parametrize("n_samples, n_features", [(100, 10), (100, 200)])
 def test_singular_value_helpers(n_samples, n_features, global_random_seed):
     # Make sure SVD and power method give approximately the same results

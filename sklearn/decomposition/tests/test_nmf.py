@@ -16,7 +16,6 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
-    ignore_warnings,
 )
 from sklearn.utils.extmath import squared_norm
 from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
@@ -108,7 +107,10 @@ def test_initialize_variants():
 
 
 # ignore UserWarning raised when both solver='mu' and init='nndsvd'
-@ignore_warnings(category=UserWarning)
+@pytest.mark.filterwarnings(
+    r"ignore:The multiplicative update \('mu'\) solver cannot update zeros present in"
+    r" the initialization"
+)
 @pytest.mark.parametrize(
     ["Estimator", "solver"],
     [[NMF, {"solver": "cd"}], [NMF, {"solver": "mu"}], [MiniBatchNMF, {}]],
@@ -502,7 +504,7 @@ def test_special_sparse_dot(csr_container):
     assert_array_equal(WH_safe.shape, X_csr.shape)
 
 
-@ignore_warnings(category=ConvergenceWarning)
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_nmf_multiplicative_update_sparse(csr_container):
     # Compare sparse and dense input in multiplicative update NMF
@@ -708,7 +710,7 @@ def test_nmf_regularization(Estimator, solver):
     ) ** 2.0 + (linalg.norm(H_regul)) ** 2.0
 
 
-@ignore_warnings(category=ConvergenceWarning)
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("solver", ("cd", "mu"))
 def test_nmf_decreasing(solver):
     # test that the objective function is decreasing at each iteration
