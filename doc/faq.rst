@@ -202,17 +202,16 @@ for an example of working with heterogeneous (e.g. categorical and numeric) data
 
 Do you plan to implement transform for target ``y`` in a pipeline?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-scikit-learn will not support arbitrary transformation of ``y`` in a pipeline.
-However, you can check out :class:`~compose.TransformedTargetClassifier`, 
-:class:`~compose.TransformedTargetRegressor`,
-and `imbalanced-learn <https://github.com/scikit-learn-contrib/imbalanced-learn>`_.
-Note that scikit-learn solved for the case where ``y``
+Only the features `X` can be transformed in a pipeline and scikit-learn will 
+not support arbitrary transformation of ``y`` in a pipeline. However, please 
+check out :class:`~compose.TransformedTargetClassifier` and 
+:class:`~compose.TransformedTargetRegressor` for the case where ``y``
 has an invertible transformation applied before training
-and inverted after prediction. scikit-learn intends to solve for
-use cases where ``y`` should be transformed at training time
-and not at test time, for resampling and similar uses, like at
+and inverted after prediction. For use cases where ``y`` should be transformed 
+at training time and not at test time, such as resampling and similar uses, have
+a look at
 `imbalanced-learn <https://github.com/scikit-learn-contrib/imbalanced-learn>`_.
-In general, these use cases can be solved
+In general, other use cases can be solved
 with a custom meta estimator rather than a :class:`~pipeline.Pipeline`.
 
 Why are there so many different estimators for linear models?
