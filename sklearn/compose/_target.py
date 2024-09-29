@@ -365,6 +365,9 @@ class TransformedTargetClassifier(ClassifierMixin, BaseTransformedTarget):
     transformer_ : object
         Transformer used in :meth:`fit` and :meth:`predict`.
 
+    classes_ : ndarray of shape (n_classes,)
+        The class labels.
+        
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying estimator exposes such an attribute when fit.

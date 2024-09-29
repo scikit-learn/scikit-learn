@@ -427,6 +427,7 @@ def test_example_docstring():
     tt.fit(X, y)
     assert tt.score(X, y) == 1.0
     np.allclose(tt.estimator_.coef_, np.array([[0.95826546]]))
+    assert hasattr(tt, "classes_")
 
 
 # TODO(1.8): remove in 1.8
