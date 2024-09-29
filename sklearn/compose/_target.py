@@ -171,7 +171,7 @@ class BaseTransformedTarget(BaseEstimator):
                 f"This {self.__class__.__name__} estimator "
                 "requires y to be passed, but the target y is None."
             )
-        
+
         # TODO: Replace with validate_data?
         y = check_array(
             y,
@@ -391,7 +391,7 @@ class TransformedTargetClassifier(ClassifierMixin, BaseTransformedTarget):
 
     See Also
     --------
-    sklearn.compose.TransformedTargetRegressor : Meta-estimator to regress on a 
+    sklearn.compose.TransformedTargetRegressor : Meta-estimator to regress on a
     transformed target.
 
     sklearn.preprocessing.FunctionTransformer : Construct a transformer from an
@@ -426,7 +426,7 @@ class TransformedTargetClassifier(ClassifierMixin, BaseTransformedTarget):
             return LogisticRegression()
 
         return clone(self.estimator) if get_clone else self.estimator
-    
+
     @available_if(_estimator_has("predict_proba"))
     def predict_proba(self, X):
         """Predict class probabilities for X.
@@ -573,9 +573,9 @@ class TransformedTargetRegressor(RegressorMixin, BaseTransformedTarget):
 
     See Also
     --------
-    sklearn.compose.TransformedTargetRegressor : Meta-estimator to classify 
+    sklearn.compose.TransformedTargetRegressor : Meta-estimator to classify
     based on a transformed target
-        
+
     sklearn.preprocessing.FunctionTransformer : Construct a transformer from an
         arbitrary callable.
 

@@ -5,11 +5,15 @@ import pytest
 
 from sklearn import config_context, datasets
 from sklearn.base import BaseEstimator, TransformerMixin, clone
-from sklearn.compose import TransformedTargetRegressor
+from sklearn.compose import TransformedTargetClassifier, TransformedTargetRegressor
 from sklearn.dummy import DummyRegressor
-from sklearn.linear_model import LinearRegression, OrthogonalMatchingPursuit
+from sklearn.linear_model import (
+    LinearRegression,
+    LogisticRegression,
+    OrthogonalMatchingPursuit,
+)
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import FunctionTransformer, StandardScaler
+from sklearn.preprocessing import FunctionTransformer, LabelEncoder, StandardScaler
 from sklearn.utils._testing import assert_allclose
 
 friedman = datasets.make_friedman1(random_state=0)
@@ -415,12 +419,9 @@ def test_transform_target_regressor_not_warns_with_global_output_set(output_form
 # TODO: Remove
 @pytest.mark.xfail
 def test_example_docstring():
-    import numpy as np
-    from sklearn.linear_model import LogisticRegression
-    from sklearn.compose import TransformedTargetClassifier
-    from sklearn.preprocessing import LabelEncoder
-    tt = TransformedTargetClassifier(estimator=LogisticRegression(),
-                                    transformer=LabelEncoder())
+    tt = TransformedTargetClassifier(
+        estimator=LogisticRegression(), transformer=LabelEncoder()
+    )
     X = np.arange(4).reshape(-1, 1)
     y = np.array(["c_1", "c_1", "c_2", "c_2"])
     tt.fit(X, y)
