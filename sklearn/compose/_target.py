@@ -391,9 +391,8 @@ class TransformedTargetClassifier(ClassifierMixin, BaseTransformedTarget):
 
     See Also
     --------
-    sklearn.compose.TransformedTargetRegressor : Meta-estimator to regress on a
+    TransformedTargetRegressor : Meta-estimator to regress on a
     transformed target.
-
     sklearn.preprocessing.FunctionTransformer : Construct a transformer from an
         arbitrary callable.
 
@@ -573,9 +572,8 @@ class TransformedTargetRegressor(RegressorMixin, BaseTransformedTarget):
 
     See Also
     --------
-    sklearn.compose.TransformedTargetRegressor : Meta-estimator to classify
-    based on a transformed target
-
+    TransformedTargetRegressor : Meta-estimator to classify
+    based on a transformed target.
     sklearn.preprocessing.FunctionTransformer : Construct a transformer from an
         arbitrary callable.
 
