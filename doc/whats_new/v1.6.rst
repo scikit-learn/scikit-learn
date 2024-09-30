@@ -280,8 +280,10 @@ Changelog
   `alpha` hyper-parameter. :pr:`29442` by :user:`John Hopfensperger <s-banach>` and
   :user:`Shruti Nath <snath-xoc>`.
 
-- |Fix| The Hessian warning in :class:`linear_model._linear_loss.LinearModelLoss` is now
-  sample weight aware.
+- |Fix| :class:`linear_model.LogisticRegression`, :class:`linear_model.PoissonRegressor`,
+  :class:`linear_model.GammaRegressor`, :class:`linear_model.TweedieRegressor`
+  now take sample weights into account to decide when to fall back to `solver='lbfgs'`
+  whenever `solver='newton-cholesky'` becomes numerically unstable.
   :pr:`29818` by :user:`Antoine Baker <antoinebaker>`.
 
 :mod:`sklearn.manifold`
