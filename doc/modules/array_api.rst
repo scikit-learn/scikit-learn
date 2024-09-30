@@ -128,9 +128,9 @@ Metrics
 - :func:`sklearn.metrics.pairwise.cosine_similarity`
 - :func:`sklearn.metrics.pairwise.cosine_distances`
 - :func:`sklearn.metrics.pairwise.euclidean_distances` (see :ref:`device_support_for_float64`)
-- :func:`sklearn.metrics.pairwise.laplacian_kernel`
+- :func:`sklearn.metrics.pairwise.laplacian_kernel` (see :ref:`_array_api_support_for_convenience`)
 - :func:`sklearn.metrics.pairwise.linear_kernel`
-- :func:`sklearn.metrics.pairwise.manhattan_distances`
+- :func:`sklearn.metrics.pairwise.manhattan_distances` (see :ref:`_array_api_support_for_convenience`)
 - :func:`sklearn.metrics.pairwise.paired_cosine_distances`
 - :func:`sklearn.metrics.pairwise.paired_euclidean_distances`
 - :func:`sklearn.metrics.pairwise.polynomial_kernel`
@@ -221,3 +221,13 @@ certain combinations of array namespaces and devices, such as `PyTorch on MPS`
 scikit-learn will revert to using the `float32` data type instead. This can result in
 different behavior (typically numerically unstable results) compared to not using array
 API dispatching or using a device with `float64` support.
+
+.. _array_api_support_for_convenience:
+
+Note on functions supporting array api only for convenience
+-----------------------------------------------------------
+
+Certain functions within scikit-learn only support the array api for convenience
+purposes but internally the arrays are converted to numpy arrays for performing
+the required underlying computations and then converted back to the array
+namespace under consideration (e.g., :func:`metrics.pairwise.manhattan_distances`).

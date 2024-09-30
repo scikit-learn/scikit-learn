@@ -1128,6 +1128,7 @@ def manhattan_distances(X, Y=None):
             _convert_to_numpy(X, xp=xp), _convert_to_numpy(Y, xp=xp), "cityblock"
         ),
         device=device_,
+        dtype=_max_precision_float_dtype(xp=xp, device=device_),
     )
 
 
