@@ -159,6 +159,8 @@ def load_files(
     Individual samples are assumed to be files stored a two levels folder
     structure such as the following:
 
+    .. code-block:: text
+
         container_folder/
             category_1_folder/
                 file_1.txt
@@ -636,6 +638,11 @@ def load_iris(*, return_X_y=False, as_frame=False):
 
     Read more in the :ref:`User Guide <iris_dataset>`.
 
+    .. versionchanged:: 0.20
+        Fixed two wrong data points according to Fisher's paper.
+        The new version is the same as in R, but not as in the UCI
+        Machine Learning Repository.
+
     Parameters
     ----------
     return_X_y : bool, default=False
@@ -687,13 +694,6 @@ def load_iris(*, return_X_y=False, as_frame=False):
         (n_samples,) containing the target samples.
 
         .. versionadded:: 0.18
-
-    Notes
-    -----
-        .. versionchanged:: 0.20
-            Fixed two wrong data points according to Fisher's paper.
-            The new version is the same as in R, but not as in the UCI
-            Machine Learning Repository.
 
     Examples
     --------

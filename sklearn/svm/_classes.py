@@ -355,6 +355,9 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             "check_sample_weights_invariance": (
                 "zero sample_weight is not equivalent to removing samples"
             ),
+            "check_non_transformer_estimators_n_iter": (
+                "n_iter_ cannot be easily accessed."
+            ),
         }
         return tags
 

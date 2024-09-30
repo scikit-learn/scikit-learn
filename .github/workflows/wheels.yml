@@ -65,6 +65,11 @@ jobs:
           - os: windows-latest
             python: 312
             platform_id: win_amd64
+          - os: windows-latest
+            python: 313
+            platform_id: win_amd64
+            # TODO: remove next line when Python 3.13 is released
+            prerelease_pythons: True
 
           # Linux 64 bit manylinux2014
           - os: ubuntu-latest
@@ -87,11 +92,13 @@ jobs:
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
           - os: ubuntu-latest
+            python: 313
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux2014
+          - os: ubuntu-latest
             python: 313t
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
-            # TODO: remove next line when Python 3.13 is released
-            prerelease_pythons: True
             free_threaded_support: True
 
           # MacOS x86_64
@@ -107,6 +114,9 @@ jobs:
           - os: macos-12
             python: 312
             platform_id: macosx_x86_64
+          - os: macos-12
+            python: 313
+            platform_id: macosx_x86_64
 
           # MacOS arm64
           - os: macos-14
@@ -120,6 +130,9 @@ jobs:
             platform_id: macosx_arm64
           - os: macos-14
             python: 312
+            platform_id: macosx_arm64
+          - os: macos-14
+            python: 313
             platform_id: macosx_arm64
 
     steps:
@@ -176,6 +189,10 @@ jobs:
           CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }}
           CIBW_BEFORE_TEST: bash {project}/build_tools/wheels/cibw_before_test.sh
           CIBW_TEST_REQUIRES: pytest pandas
+          # On Windows, we use a custom Docker image and CIBW_TEST_REQUIRES_WINDOWS
+          # does not make sense because it would install dependencies in the host
+          # rather than inside the Docker image
+          CIBW_TEST_REQUIRES_WINDOWS: ""
           CIBW_TEST_COMMAND: bash {project}/build_tools/wheels/test_wheels.sh
           CIBW_TEST_COMMAND_WINDOWS: bash {project}/build_tools/github/test_windows_wheels.sh ${{ matrix.python }}
           CIBW_BUILD_VERBOSITY: 1

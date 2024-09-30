@@ -32,11 +32,6 @@ appropriate to describe the dataset, or when features are correlated.
 We will use data from the `"Current Population Survey"
 <https://www.openml.org/d/534>`_ from 1985 to predict wage as a function of
 various features such as experience, age, or education.
-
-.. contents::
-   :local:
-   :depth: 1
-
 """
 
 # Authors: The scikit-learn developers
@@ -98,7 +93,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 # at the pairwise relationships between them. Only numerical
 # variables will be used. In the following plot, each dot represents a sample.
 #
-#   .. _marginal_dependencies:
+# .. _marginal_dependencies:
 
 train_dataset = X_train.copy()
 train_dataset.insert(0, "WAGE", y_train)
