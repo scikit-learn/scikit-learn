@@ -4,7 +4,7 @@
 @EXPLICIT
 https://repo.anaconda.com/pkgs/main/linux-64/_libgcc_mutex-0.1-main.conda#c3473ff8bdb3d124ed5ff11ec380d6f9
 https://repo.anaconda.com/pkgs/main/linux-64/ca-certificates-2024.7.2-h06a4308_0.conda#5c6799c01e9be4c7ba294f6530b2d562
-https://repo.anaconda.com/pkgs/main/linux-64/ld_impl_linux-64-2.38-h1181459_1.conda#68eedfd9c06f2b0e6888d8db345b7f5b
+https://repo.anaconda.com/pkgs/main/linux-64/ld_impl_linux-64-2.40-h12ee557_0.conda#ee672b5f635340734f58d618b7bca024
 https://repo.anaconda.com/pkgs/main/noarch/tzdata-2024a-h04d1e81_0.conda#452af53adae0a5b06eb5d05c707b2f25
 https://repo.anaconda.com/pkgs/main/linux-64/libgomp-11.2.0-h1234567_1.conda#b372c0eea9b60732fdae4b817a63c8cd
 https://repo.anaconda.com/pkgs/main/linux-64/libstdcxx-ng-11.2.0-h1234567_1.conda#57623d10a70e09e1d048c2b2b6f4e2dd
@@ -35,7 +35,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/pip-24.2-py311h06a4308_0.conda#eff3
 # pip cython @ https://files.pythonhosted.org/packages/93/03/e330b241ad8aa12bb9d98b58fb76d4eb7dcbe747479aab5c29fce937b9e7/Cython-3.0.11-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=3999fb52d3328a6a5e8c63122b0a8bd110dfcdb98dda585a3def1426b991cba7
 # pip docutils @ https://files.pythonhosted.org/packages/8f/d7/9322c609343d929e75e7e5e6255e614fcc67572cfd083959cdef3b7aad79/docutils-0.21.2-py3-none-any.whl#sha256=dafca5b9e384f0e419294eb4d2ff9fa826435bf15f15b7bd45723e8ad76811b2
 # pip execnet @ https://files.pythonhosted.org/packages/43/09/2aea36ff60d16dd8879bdb2f5b3ee0ba8d08cbbdcdfe870e695ce3784385/execnet-2.1.1-py3-none-any.whl#sha256=26dee51f1b80cebd6d0ca8e74dd8745419761d3bef34163928cbebbdc4749fdc
-# pip fonttools @ https://files.pythonhosted.org/packages/a4/22/0a0ad59d9367997fd74a00ad2e88d10559122e09f105e94d34c155aecc0a/fonttools-4.53.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=bee32ea8765e859670c4447b0817514ca79054463b6b79784b08a8df3a4d78e3
+# pip fonttools @ https://files.pythonhosted.org/packages/96/13/748b7f7239893ff0796de11074b0ad8aa4c3da2d9f4d79a128b0b16147f3/fonttools-4.54.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=82834962b3d7c5ca98cb56001c33cf20eb110ecf442725dc5fdf36d16ed1ab07
 # pip idna @ https://files.pythonhosted.org/packages/76/c6/c88e154df9c4e1a2a66ccf0005a88dfb2650c1dffb6f5ce603dfbd452ce3/idna-3.10-py3-none-any.whl#sha256=946d195a0d259cbba61165e88e65941f16e9b36ea6ddb97f00452bae8b1287d3
 # pip imagesize @ https://files.pythonhosted.org/packages/ff/62/85c4c919272577931d407be5ba5d71c20f0b616d31a0befe0ae45bb79abd/imagesize-1.4.1-py2.py3-none-any.whl#sha256=0d8d18d08f840c19d0ee7ca1fd82490fdc3729b7ac93f49870406ddde8ef8d8b
 # pip iniconfig @ https://files.pythonhosted.org/packages/ef/a6/62565a6e1cf69e10f5727360368e451d4b7f58beeac6173dc9db836a5b46/iniconfig-2.0.0-py3-none-any.whl#sha256=b6a85871a79d2e3b22d2d1b94ac2824226a63c6b741c88f7ae975f18b6778374
@@ -62,7 +62,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/pip-24.2-py311h06a4308_0.conda#eff3
 # pip sphinxcontrib-serializinghtml @ https://files.pythonhosted.org/packages/52/a7/d2782e4e3f77c8450f727ba74a8f12756d5ba823d81b941f1b04da9d033a/sphinxcontrib_serializinghtml-2.0.0-py3-none-any.whl#sha256=6e2cb0eef194e10c27ec0023bfeb25badbbb5868244cf5bc5bdc04e4464bf331
 # pip tabulate @ https://files.pythonhosted.org/packages/40/44/4a5f08c96eb108af5cb50b41f76142f0afa346dfa99d5296fe7202a11854/tabulate-0.9.0-py3-none-any.whl#sha256=024ca478df22e9340661486f85298cff5f6dcdba14f3813e8830015b9ed1948f
 # pip threadpoolctl @ https://files.pythonhosted.org/packages/4b/2c/ffbf7a134b9ab11a67b0cf0726453cedd9c5043a4fe7a35d1cefa9a1bcfb/threadpoolctl-3.5.0-py3-none-any.whl#sha256=56c1e26c150397e58c4926da8eeee87533b1e32bef131bd4bf6a2f45f3185467
-# pip tzdata @ https://files.pythonhosted.org/packages/65/58/f9c9e6be752e9fcb8b6a0ee9fb87e6e7a1f6bcab2cdc73f02bb7ba91ada0/tzdata-2024.1-py2.py3-none-any.whl#sha256=9068bc196136463f5245e51efda838afa15aaeca9903f49050dfa2679db4d252
+# pip tzdata @ https://files.pythonhosted.org/packages/a6/ab/7e5f53c3b9d14972843a647d8d7a853969a58aecc7559cb3267302c94774/tzdata-2024.2-py2.py3-none-any.whl#sha256=a48093786cdcde33cad18c2555e8532f34422074448fbc874186f0abd79565cd
 # pip urllib3 @ https://files.pythonhosted.org/packages/ce/d9/5f4c13cecde62396b0d3fe530a50ccea91e7dfc1ccf0e09c228841bb5ba8/urllib3-2.2.3-py3-none-any.whl#sha256=ca899ca043dcb1bafa3e262d73aa25c465bfb49e0bd9dd5d59f1d0acba2f8fac
 # pip array-api-strict @ https://files.pythonhosted.org/packages/08/06/aba69bce257fd1cda0d1db616c12728af0f46878a5cc1923fcbb94201947/array_api_strict-2.0.1-py3-none-any.whl#sha256=f74cbf0d0c182fcb45c5ee7f28f9c7b77e6281610dfbbdd63be60b1a5a7872b3
 # pip contourpy @ https://files.pythonhosted.org/packages/03/33/003065374f38894cdf1040cef474ad0546368eea7e3a51d48b8a423961f8/contourpy-1.3.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=637f674226be46f6ba372fd29d9523dd977a291f66ab2a74fbeb5530bb3f445d
