@@ -316,7 +316,12 @@ def mean_pinball_loss(
         # pass None as weights to _average: uniform mean
         multioutput = None
 
-    return _average(output_errors, weights=multioutput)
+    # Average across the outputs (if needed).
+    # The second call to `_average` should always return
+    # a scalar array that we convert to a Python float to
+    # consistently return the same eager evaluated value.
+    # Therefore, `axis=None`.
+    return float(_average(output_errors, weights=multioutput))
 
 
 @validate_params(
@@ -850,7 +855,12 @@ def median_absolute_error(
             # pass None as weights to _average: uniform mean
             multioutput = None
 
-    return _average(output_errors, weights=multioutput)
+    # Average across the outputs (if needed).
+    # The second call to `_average` should always return
+    # a scalar array that we convert to a Python float to
+    # consistently return the same eager evaluated value.
+    # Therefore, `axis=None`.
+    return float(_average(output_errors, weights=multioutput))
 
 
 def _assemble_r2_explained_variance(
@@ -1749,7 +1759,12 @@ def d2_pinball_score(
     else:
         avg_weights = multioutput
 
-    return _average(output_scores, weights=avg_weights)
+    # Average across the outputs (if needed).
+    # The second call to `_average` should always return
+    # a scalar array that we convert to a Python float to
+    # consistently return the same eager evaluated value.
+    # Therefore, `axis=None`.
+    return float(_average(output_scores, weights=avg_weights))
 
 
 @validate_params(
