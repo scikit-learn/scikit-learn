@@ -721,7 +721,9 @@ class SVC(BaseSVC):
         (n_samples, n_classes * (n_classes - 1) / 2). However, note that
         internally, one-vs-one ('ovo') is always used as a multi-class strategy
         to train models; an ovr matrix is only constructed from the ovo matrix.
-        The parameter is ignored for binary classification.
+        The parameter is ignored for binary classification. See
+        :ref:`sphx_glr_auto_examples_svm_plot_svm_tie_breaking.py` for an
+        example of its usage with the ``break_ties`` parameter.
 
         .. versionchanged:: 0.19
             decision_function_shape is 'ovr' by default.
@@ -737,7 +739,9 @@ class SVC(BaseSVC):
         :term:`predict` will break ties according to the confidence values of
         :term:`decision_function`; otherwise the first class among the tied
         classes is returned. Please note that breaking ties comes at a
-        relatively high computational cost compared to a simple predict.
+        relatively high computational cost compared to a simple predict. See
+        :ref:`sphx_glr_auto_examples_svm_plot_svm_tie_breaking.py` for an
+        example of its usage with ``decision_function_shape='ovr'``.
 
         .. versionadded:: 0.22
 
@@ -984,7 +988,9 @@ class NuSVC(BaseSVC):
         one-vs-one ('ovo') decision function of libsvm which has shape
         (n_samples, n_classes * (n_classes - 1) / 2). However, one-vs-one
         ('ovo') is always used as multi-class strategy. The parameter is
-        ignored for binary classification.
+        ignored for binary classification. See
+        :ref:`sphx_glr_auto_examples_svm_plot_svm_tie_breaking.py` for an
+        example of its usage with the ``break_ties`` parameter.
 
         .. versionchanged:: 0.19
             decision_function_shape is 'ovr' by default.
@@ -1001,6 +1007,8 @@ class NuSVC(BaseSVC):
         :term:`decision_function`; otherwise the first class among the tied
         classes is returned. Please note that breaking ties comes at a
         relatively high computational cost compared to a simple predict.
+        See :ref:`sphx_glr_auto_examples_svm_plot_svm_tie_breaking.py` for an
+        example of its usage with ``decision_function_shape='ovr'``.
 
         .. versionadded:: 0.22
 
