@@ -130,7 +130,7 @@ Metrics
 - :func:`sklearn.metrics.pairwise.euclidean_distances` (see :ref:`device_support_for_float64`)
 - :func:`sklearn.metrics.pairwise.laplacian_kernel` (see :ref:`array_api_support_for_convenience`)
 - :func:`sklearn.metrics.pairwise.linear_kernel`
-- :func:`sklearn.metrics.pairwise.manhattan_distances` (see :ref:`_array_api_support_for_convenience`)
+- :func:`sklearn.metrics.pairwise.manhattan_distances` (see :ref:`array_api_support_for_convenience`)
 - :func:`sklearn.metrics.pairwise.paired_cosine_distances`
 - :func:`sklearn.metrics.pairwise.paired_euclidean_distances`
 - :func:`sklearn.metrics.pairwise.polynomial_kernel`
