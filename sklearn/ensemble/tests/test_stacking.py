@@ -1,7 +1,7 @@
 """Test the stacking classifier and regressor."""
 
-# Authors: Guillaume Lemaitre <g.lemaitre58@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import re
 from unittest.mock import Mock
@@ -973,13 +973,21 @@ def test_metadata_routing_for_stacking_estimators(Estimator, Child, prop, prop_v
         assert len(registry)
         for sub_est in registry:
             check_recorded_metadata(
-                obj=sub_est, method="fit", split_params=(prop), **{prop: prop_value}
+                obj=sub_est,
+                method="fit",
+                parent="fit",
+                split_params=(prop),
+                **{prop: prop_value},
             )
     # access final_estimator:
     registry = est.final_estimator_.registry
     assert len(registry)
     check_recorded_metadata(
-        obj=registry[-1], method="predict", split_params=(prop), **{prop: prop_value}
+        obj=registry[-1],
+        method="predict",
+        parent="predict",
+        split_params=(prop),
+        **{prop: prop_value},
     )
 
 

@@ -17,16 +17,16 @@ times in the new data set, while samples with lower weights are less likely to
 be selected. This ensures that subsequent iterations of the algorithm focus on
 the difficult-to-classify samples.
 
-.. topic:: References:
+.. rubric:: References
 
-    .. [1] :doi:`J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class adaboost."
-           Statistics and its Interface 2.3 (2009): 349-360.
-           <10.4310/SII.2009.v2.n3.a8>`
+.. [1] :doi:`J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class adaboost."
+    Statistics and its Interface 2.3 (2009): 349-360.
+    <10.4310/SII.2009.v2.n3.a8>`
 
 """
 
-# Noel Dawe <noel.dawe@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Creating the dataset
@@ -231,16 +231,16 @@ fig.tight_layout()
 # decision. Indeed, this exactly is the formulation of updating the base
 # estimators' weights after each iteration in AdaBoost.
 #
-# |details-start| Mathematical details |details-split|
+# .. dropdown:: Mathematical details
 #
-# The weight associated with a weak learner trained at the stage :math:`m` is
-# inversely associated with its misclassification error such that:
+#    The weight associated with a weak learner trained at the stage :math:`m` is
+#    inversely associated with its misclassification error such that:
 #
-# .. math:: \alpha^{(m)} = \log \frac{1 - err^{(m)}}{err^{(m)}} + \log (K - 1),
+#    .. math:: \alpha^{(m)} = \log \frac{1 - err^{(m)}}{err^{(m)}} + \log (K - 1),
 #
-# where :math:`\alpha^{(m)}` and :math:`err^{(m)}` are the weight and the error
-# of the :math:`m` th weak learner, respectively, and :math:`K` is the number of
-# classes in our classification problem. |details-end|
+#    where :math:`\alpha^{(m)}` and :math:`err^{(m)}` are the weight and the error
+#    of the :math:`m` th weak learner, respectively, and :math:`K` is the number of
+#    classes in our classification problem.
 #
 # Another interesting observation boils down to the fact that the first weak
 # learners of the model make fewer errors than later weak learners of the

@@ -1,9 +1,3 @@
-.. Places parent toc into the sidebar
-
-:parenttoc: True
-
-.. include:: includes/big_toc_css.rst
-
 .. _visualizations:
 
 ==============
@@ -63,12 +57,12 @@ the previously computed roc curve again by using the `plot` method of the
 Notice that we pass `alpha=0.8` to the plot functions to adjust the alpha
 values of the curves.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-    * :ref:`sphx_glr_auto_examples_miscellaneous_plot_roc_curve_visualization_api.py`
-    * :ref:`sphx_glr_auto_examples_miscellaneous_plot_partial_dependence_visualization_api.py`
-    * :ref:`sphx_glr_auto_examples_miscellaneous_plot_display_object_visualization.py`
-    * :ref:`sphx_glr_auto_examples_calibration_plot_compare_calibration.py`
+* :ref:`sphx_glr_auto_examples_miscellaneous_plot_roc_curve_visualization_api.py`
+* :ref:`sphx_glr_auto_examples_miscellaneous_plot_partial_dependence_visualization_api.py`
+* :ref:`sphx_glr_auto_examples_miscellaneous_plot_display_object_visualization.py`
+* :ref:`sphx_glr_auto_examples_calibration_plot_compare_calibration.py`
 
 Available Plotting Utilities
 ============================
