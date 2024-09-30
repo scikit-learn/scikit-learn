@@ -26,7 +26,6 @@ from ._classification import (
     recall_score,
     zero_one_loss,
 )
-from ._decision_threshold import decision_threshold_curve
 from ._dist_metrics import DistanceMetric
 from ._plot.confusion_matrix import ConfusionMatrixDisplay
 from ._plot.det_curve import DetCurveDisplay
@@ -67,6 +66,7 @@ from ._regression import (
     root_mean_squared_log_error,
 )
 from ._scorer import check_scoring, get_scorer, get_scorer_names, make_scorer
+from ._decision_threshold import decision_threshold_curve
 from .cluster import (
     adjusted_mutual_info_score,
     adjusted_rand_score,
