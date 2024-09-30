@@ -18,9 +18,9 @@ def sandwich_dot(X, W):
     # most.
     # While a dedicated Cython routine could exploit the symmetry, it is very hard to
     # beat BLAS GEMM, even thought the latter cannot exploit the symmetry, unless one
-    # pays the price of a taking square roots and implements
+    # pays the price of taking square roots and implements
     #    sqrtWX = sqrt(W)[: None] * X
-    #    return np.dot(sqrtWX.T, sqrtWX)
+    #    return sqrtWX.T @ sqrtWX
     # which (might) detect the symmetry and use BLAS SYRK under the hood.
     n_samples = X.shape[0]
     if sparse.issparse(X):
@@ -31,7 +31,7 @@ def sandwich_dot(X, W):
         # np.einsum may use less memory but the following, using BLAS matrix
         # multiplication (gemm), is by far faster.
         WX = W[:, None] * X
-        return np.dot(X.T, WX)
+        return X.T @ WX
 
 
 class LinearModelLoss:
