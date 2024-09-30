@@ -1043,7 +1043,7 @@ class OneHotEncoder(_BaseEncoder):
         X_int, X_mask = self._transform(
             X,
             handle_unknown=handle_unknown,
-            force_all_finite="allow-nan",
+            ensure_all_finite="allow-nan",
             warn_on_unknown=warn_on_unknown,
         )
 
