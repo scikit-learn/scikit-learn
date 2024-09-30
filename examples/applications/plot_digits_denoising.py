@@ -21,8 +21,8 @@ We will use USPS digits dataset to reproduce presented in Sect. 4 of [1]_.
 
 """
 
-# Authors: Guillaume Lemaitre <guillaume.lemaitre@inria.fr>
-# Licence: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Load the dataset via OpenML

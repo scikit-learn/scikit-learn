@@ -1370,7 +1370,7 @@ will not necessarily be close to zero.::
   - **Bounded range**: Lower values indicate different labelings, similar
     clusterings have a high (adjusted or unadjusted) Rand index, 1.0 is the
     perfect match score. The score range is [0, 1] for the unadjusted Rand index
-    and [-1, 1] for the adjusted Rand index.
+    and [-0.5, 1] for the adjusted Rand index.
 
   - **No assumption is made on the cluster structure**: The (adjusted or
     unadjusted) Rand index can be used to compare all kinds of clustering
@@ -1443,6 +1443,8 @@ will not necessarily be close to zero.::
 
   * `Wikipedia entry for the Rand index
     <https://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index>`_
+
+  * :doi:`Minimum adjusted Rand index for two clusterings of a given size, 2022, J. E. Chacón and A. I. Rastrojo <10.1007/s11634-022-00491-w>`
 
 
 .. _mutual_info_score:
@@ -1789,20 +1791,25 @@ homogeneous but not complete::
 Fowlkes-Mallows scores
 ----------------------
 
-The Fowlkes-Mallows index (:func:`sklearn.metrics.fowlkes_mallows_score`) can be
-used when the ground truth class assignments of the samples is known. The
-Fowlkes-Mallows score FMI is defined as the geometric mean of the
-pairwise precision and recall:
+The original Fowlkes-Mallows index (FMI) was intended to measure the similarity
+between two clustering results, which is inherently an unsupervised comparison.
+The supervised adaptation of the Fowlkes-Mallows index
+(as implemented in :func:`sklearn.metrics.fowlkes_mallows_score`) can be used
+when the ground truth class assignments of the samples are known.
+The FMI is defined as the geometric mean of the pairwise precision and recall:
 
 .. math:: \text{FMI} = \frac{\text{TP}}{\sqrt{(\text{TP} + \text{FP}) (\text{TP} + \text{FN})}}
 
-Where ``TP`` is the number of **True Positive** (i.e. the number of pair
-of points that belong to the same clusters in both the true labels and the
-predicted labels), ``FP`` is the number of **False Positive** (i.e. the number
-of pair of points that belong to the same clusters in the true labels and not
-in the predicted labels) and ``FN`` is the number of **False Negative** (i.e. the
-number of pair of points that belongs in the same clusters in the predicted
-labels and not in the true labels).
+In the above formula:
+
+* ``TP`` (**True Positive**): The number of pairs of points that are clustered together
+  both in the true labels and in the predicted labels.
+
+* ``FP`` (**False Positive**): The number of pairs of points that are clustered together
+  in the predicted labels but not in the true labels.
+
+* ``FN`` (**False Negative**): The number of pairs of points that are clustered together
+  in the true labels but not in the predicted labels.
 
 The score ranges from 0 to 1. A high value indicates a good similarity
 between two clusters.

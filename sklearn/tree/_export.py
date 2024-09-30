@@ -4,6 +4,7 @@ This module defines export functions for decision trees.
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
+
 from collections.abc import Iterable
 from io import StringIO
 from numbers import Integral
@@ -259,7 +260,12 @@ class _BaseTreeExporter:
             self.colors["rgb"] = _color_brew(tree.n_classes[0])
             if tree.n_outputs != 1:
                 # Find max and min impurities for multi-output
-                self.colors["bounds"] = (np.min(-tree.impurity), np.max(-tree.impurity))
+                # The next line uses -max(impurity) instead of min(-impurity)
+                # and -min(impurity) instead of max(-impurity) on purpose, in
+                # order to avoid what looks like an issue with SIMD on non
+                # memory aligned arrays on 32bit OS. For more details see
+                # https://github.com/scikit-learn/scikit-learn/issues/27506.
+                self.colors["bounds"] = (-np.max(tree.impurity), -np.min(tree.impurity))
             elif tree.n_classes[0] == 1 and len(np.unique(tree.value)) != 1:
                 # Find max and min values in leaf nodes for regression
                 self.colors["bounds"] = (np.min(tree.value), np.max(tree.value))

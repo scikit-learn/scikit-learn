@@ -14,11 +14,10 @@ from numpy.testing import (
 )
 
 from sklearn import base, datasets, linear_model, metrics, svm
-from sklearn.datasets import make_blobs, make_classification
+from sklearn.datasets import make_blobs, make_classification, make_regression
 from sklearn.exceptions import (
     ConvergenceWarning,
     NotFittedError,
-    UndefinedMetricWarning,
 )
 from sklearn.metrics import f1_score
 from sklearn.metrics.pairwise import rbf_kernel
@@ -36,8 +35,7 @@ from sklearn.svm import (  # type: ignore
 )
 from sklearn.svm._classes import _validate_dual_parameter
 from sklearn.utils import check_random_state, shuffle
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils.fixes import CSR_CONTAINERS, LIL_CONTAINERS
+from sklearn.utils.fixes import _IS_32BIT, CSR_CONTAINERS, LIL_CONTAINERS
 from sklearn.utils.validation import _num_samples
 
 # toy sample
@@ -641,7 +639,6 @@ def test_negative_weight_equal_coeffs(Estimator, sample_weight):
     assert coef[0] == pytest.approx(coef[1], rel=1e-3)
 
 
-@ignore_warnings(category=UndefinedMetricWarning)
 def test_auto_weight():
     # Test class weights for imbalanced data
     from sklearn.linear_model import LogisticRegression
@@ -1055,7 +1052,7 @@ def test_unfitted():
 
 
 # ignore convergence warnings from max_iter=1
-@ignore_warnings
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_consistent_proba():
     a = svm.SVC(probability=True, max_iter=1, random_state=0)
     proba_1 = a.fit(X, Y).predict_proba(X)
@@ -1203,6 +1200,13 @@ def test_svc_ovr_tie_breaking(SVCClass):
     """Test if predict breaks ties in OVR mode.
     Related issue: https://github.com/scikit-learn/scikit-learn/issues/8277
     """
+    if SVCClass.__name__ == "NuSVC" and _IS_32BIT:
+        # XXX: known failure to be investigated. Either the code needs to be
+        # fixed or the test itself might need to be made less sensitive to
+        # random changes in test data and rounding errors more generally.
+        # https://github.com/scikit-learn/scikit-learn/issues/29633
+        pytest.xfail("Failing test on 32bit OS")
+
     X, y = make_blobs(random_state=0, n_samples=20, n_features=2)
 
     xs = np.linspace(X[:, 0].min(), X[:, 0].max(), 100)
@@ -1416,3 +1420,21 @@ def test_dual_auto_edge_cases():
         "auto", "squared_hinge", "l1", "ovr", np.asarray(X).T
     )
     assert dual is False  # only supports False
+
+
+@pytest.mark.parametrize(
+    "Estimator, make_dataset",
+    [(svm.SVC, make_classification), (svm.SVR, make_regression)],
+)
+@pytest.mark.parametrize("C_inf", [np.inf, float("inf")])
+def test_svm_with_infinite_C(Estimator, make_dataset, C_inf, global_random_seed):
+    """Check that we can pass `C=inf` that is equivalent to a very large C value.
+
+    Non-regression test for
+    https://github.com/scikit-learn/scikit-learn/issues/29772
+    """
+    X, y = make_dataset(random_state=global_random_seed)
+    estimator_C_inf = Estimator(C=C_inf).fit(X, y)
+    estimator_C_large = Estimator(C=1e10).fit(X, y)
+
+    assert_allclose(estimator_C_large.predict(X), estimator_C_inf.predict(X))

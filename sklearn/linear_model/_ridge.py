@@ -48,7 +48,7 @@ from ..utils.metadata_routing import (
     process_routing,
 )
 from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.validation import _check_sample_weight, check_is_fitted
+from ..utils.validation import _check_sample_weight, check_is_fitted, validate_data
 from ._base import LinearClassifierMixin, LinearModel, _preprocess_data, _rescale_data
 from ._sag import sag_solver
 
@@ -570,9 +570,9 @@ def ridge_regression(
     >>> y = 2.0 * X[:, 0] - 1.0 * X[:, 1] + 0.1 * rng.standard_normal(100)
     >>> coef, intercept = ridge_regression(X, y, alpha=1.0, return_intercept=True)
     >>> list(coef)
-    [1.9..., -1.0..., -0.0..., -0.0...]
+    [np.float64(1.9...), np.float64(-1.0...), np.float64(-0.0...), np.float64(-0.0...)]
     >>> intercept
-    -0.0...
+    np.float64(-0.0...)
     """
     return _ridge_regression(
         X,
@@ -1236,7 +1236,8 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         """
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), self.solver)
         xp, _ = get_namespace(X, y, sample_weight)
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse=_accept_sparse,
@@ -1247,8 +1248,17 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         )
         return super().fit(X, y, sample_weight=sample_weight)
 
-    def _more_tags(self):
-        return {"array_api_support": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.array_api_support = True
+        tags._xfail_checks.update(
+            {
+                "check_non_transformer_estimators_n_iter": (
+                    "n_iter_ cannot be easily accessed."
+                )
+            }
+        )
+        return tags
 
 
 class _RidgeClassifierMixin(LinearClassifierMixin):
@@ -1285,7 +1295,8 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
             The binarized version of `y`.
         """
         accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), solver)
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse=accept_sparse,
@@ -1334,8 +1345,10 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         """Classes labels."""
         return self._label_binarizer.classes_
 
-    def _more_tags(self):
-        return {"multilabel": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.classifier_tags.multi_label = True
+        return tags
 
 
 class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
@@ -1562,6 +1575,17 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         super().fit(X, Y, sample_weight=sample_weight)
         return self
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks.update(
+            {
+                "check_non_transformer_estimators_n_iter": (
+                    "n_iter_ cannot be easily accessed."
+                )
+            }
+        )
+        return tags
+
 
 def _check_gcv_mode(X, gcv_mode):
     if gcv_mode in ["eigen", "svd"]:
@@ -1687,6 +1711,28 @@ class _RidgeGCV(LinearModel):
 
     This class is not intended to be used directly. Use RidgeCV instead.
 
+    `_RidgeGCV` uses a Generalized Cross-Validation for model selection. It's an
+    efficient approximation of leave-one-out cross-validation (LOO-CV), where instead of
+    computing multiple models by excluding one data point at a time, it uses an
+    algebraic shortcut to approximate the LOO-CV error, making it faster and
+    computationally more efficient.
+
+    Using a naive grid-search approach with a leave-one-out cross-validation in contrast
+    requires to fit `n_samples` models to compute the prediction error for each sample
+    and then to repeat this process for each alpha in the grid.
+
+    Here, the prediction error for each sample is computed by solving a **single**
+    linear system (in other words a single model) via a matrix factorization (i.e.
+    eigendecomposition or SVD) solving the problem stated in the Notes section. Finally,
+    we need to repeat this process for each alpha in the grid. The detailed complexity
+    is further discussed in Sect. 4 in [1].
+
+    This algebraic approach is only applicable for regularized least squares
+    problems. It could potentially be extended to kernel ridge regression.
+
+    See the Notes section and references for more details regarding the formulation
+    and the linear system that is solved.
+
     Notes
     -----
 
@@ -1719,8 +1765,8 @@ class _RidgeGCV(LinearModel):
 
     References
     ----------
-    http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf
-    https://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
+    [1] http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf
+    [2] https://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
 
     def __init__(
@@ -2081,7 +2127,8 @@ class _RidgeGCV(LinearModel):
         -------
         self : object
         """
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse=["csr", "csc", "coo"],
@@ -2100,6 +2147,7 @@ class _RidgeGCV(LinearModel):
 
         self.alphas = np.asarray(self.alphas)
 
+        unscaled_y = y
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X,
             y,
@@ -2149,13 +2197,21 @@ class _RidgeGCV(LinearModel):
                     self.cv_results_[:, i] = squared_errors.ravel()
             else:
                 predictions = y - (c / G_inverse_diag)
+                # Rescale predictions back to original scale
+                if sample_weight is not None:  # avoid the unecessary division by ones
+                    if predictions.ndim > 1:
+                        predictions /= sqrt_sw[:, None]
+                    else:
+                        predictions /= sqrt_sw
+                predictions += y_offset
+
                 if self.store_cv_results:
                     self.cv_results_[:, i] = predictions.ravel()
 
                 score_params = score_params or {}
                 alpha_score = self._score(
                     predictions=predictions,
-                    y=y,
+                    y=unscaled_y,
                     n_y=n_y,
                     scorer=scorer,
                     score_params=score_params,
@@ -2241,14 +2297,15 @@ class _RidgeGCV(LinearModel):
                     ]
                 )
             else:
-                _score = scorer(
-                    identity_estimator,
-                    predictions.ravel(),
-                    y.ravel(),
-                    **score_params,
-                )
+                _score = scorer(identity_estimator, predictions, y, **score_params)
 
         return _score
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        # Required since this is neither a RegressorMixin nor a ClassifierMixin
+        tags.target_tags.required = True
+        return tags
 
 
 class _BaseRidgeCV(LinearModel):
@@ -2669,6 +2726,15 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         super().fit(X, y, sample_weight=sample_weight, **params)
         return self
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_sample_weights_invariance": (
+                "GridSearchCV does not forward the weights to the scorer by default."
+            ),
+        }
+        return tags
+
 
 class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
     """Ridge classifier with built-in cross-validation.
@@ -2878,13 +2944,3 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         target = Y if self.cv is None else y
         super().fit(X, target, sample_weight=sample_weight, **params)
         return self
-
-    def _more_tags(self):
-        return {
-            "multilabel": True,
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            },
-        }
