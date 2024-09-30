@@ -8,6 +8,9 @@ Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
 License: BSD 3 clause
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import warnings
 from heapq import heapify, heappop, heappush, heappushpop
 from numbers import Integral, Real
@@ -35,7 +38,7 @@ from ..utils._param_validation import (
     validate_params,
 )
 from ..utils.graph import _fix_connected_components
-from ..utils.validation import check_memory
+from ..utils.validation import check_memory, validate_data
 
 # mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
 from . import _hierarchical_fast as _hierarchical  # type: ignore
@@ -755,8 +758,7 @@ def _hc_cut(n_clusters, children, n_leaves):
     if n_clusters > n_leaves:
         raise ValueError(
             "Cannot extract more clusters than samples: "
-            "%s clusters where given for a tree with %s leaves."
-            % (n_clusters, n_leaves)
+            f"{n_clusters} clusters were given for a tree with {n_leaves} leaves."
         )
     # In this function, we store nodes as a heap to avoid recomputing
     # the max of the nodes: the first element is always the smallest
@@ -817,6 +819,10 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         the data into a connectivity matrix, such as derived from
         `kneighbors_graph`. Default is ``None``, i.e, the
         hierarchical clustering algorithm is unstructured.
+
+        For an example of connectivity matrix using
+        :class:`~sklearn.neighbors.kneighbors_graph`, see
+        :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`.
 
     compute_full_tree : 'auto' or bool, default='auto'
         Stop early the construction of the tree at ``n_clusters``. This is
@@ -983,7 +989,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         self : object
             Returns the fitted instance.
         """
-        X = self._validate_data(X, ensure_min_samples=2)
+        X = validate_data(self, X, ensure_min_samples=2)
         return self._fit(X)
 
     def _fit(self, X):
@@ -993,7 +999,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         ----------
         X : ndarray of shape (n_samples, n_features) or (n_samples, n_samples)
             Training instances to cluster, or distances between instances if
-            ``affinity='precomputed'``.
+            ``metric='precomputed'``.
 
         Returns
         -------
@@ -1332,7 +1338,7 @@ class FeatureAgglomeration(
         self : object
             Returns the transformer.
         """
-        X = self._validate_data(X, ensure_min_features=2)
+        X = validate_data(self, X, ensure_min_features=2)
         super()._fit(X.T)
         self._n_features_out = self.n_clusters_
         return self

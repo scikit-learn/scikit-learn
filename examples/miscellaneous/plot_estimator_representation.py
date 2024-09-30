@@ -7,6 +7,9 @@ This example illustrates different ways estimators and pipelines can be
 displayed.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from sklearn.compose import make_column_transformer
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression

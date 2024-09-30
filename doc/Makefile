@@ -47,9 +47,17 @@ help:
 
 clean:
 	-rm -rf $(BUILDDIR)/*
+	@echo "Removed $(BUILDDIR)/*"
 	-rm -rf auto_examples/
+	@echo "Removed auto_examples/"
 	-rm -rf generated/*
+	@echo "Removed generated/"
 	-rm -rf modules/generated/
+	@echo "Removed modules/generated/"
+	-rm -rf css/styles/
+	@echo "Removed css/styles/"
+	-rm -rf api/*.rst
+	@echo "Removed api/*.rst"
 
 # Default to SPHINX_NUMJOBS=1 for full documentation build. Using
 # SPHINX_NUMJOBS!=1 may actually slow down the build, or cause weird issues in

@@ -10,8 +10,8 @@ The quantity that we use is the daily variation in quote price: quotes
 that are linked tend to fluctuate in relation to each other during a day.
 """
 
-# Author: Gael Varoquaux gael.varoquaux@normalesup.org
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Retrieve the data from Internet
