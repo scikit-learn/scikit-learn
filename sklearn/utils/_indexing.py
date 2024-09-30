@@ -567,6 +567,7 @@ def resample(
     arrays = [a.tocsr() if issparse(a) else a for a in arrays]
     resampled_arrays = [_safe_indexing(a, indices) for a in arrays]
 
+    resampled_weights = None
     if sample_weight is not None:
         resampled_weights = _safe_indexing(sample_weight, indices)
 
