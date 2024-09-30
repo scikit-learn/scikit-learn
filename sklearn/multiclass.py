@@ -319,6 +319,9 @@ class OneVsRestClassifier(
     >>> clf = OneVsRestClassifier(SVC()).fit(X, y)
     >>> clf.predict([[-19, -20], [9, 9], [-5, 5]])
     array([2, 0, 1])
+    
+    For a comaprison of the OneVsRestClassifier with other classifiers see:
+    :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`.
     """
 
     _parameter_constraints = {
