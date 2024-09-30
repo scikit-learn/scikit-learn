@@ -795,6 +795,19 @@ def _nanmax(X, axis=None, xp=None):
         return X
 
 
+def _nanmean(X, axis=None, xp=None):
+    # TODO: refactor once nan-aware reductions are standardized:
+    # https://github.com/data-apis/array-api/issues/621
+    xp, _ = get_namespace(X, xp=xp)
+    if _is_numpy_namespace(xp):
+        return xp.asarray(numpy.nanmean(X, axis=axis))
+    else:
+        mask = xp.isnan(X)
+        total = xp.sum(xp.where(mask, xp.asarray(0.0, device=device(X)), X), axis=axis)
+        count = xp.sum(xp.astype(xp.logical_not(mask), X.dtype), axis=axis)
+        return total / count
+
+
 def _asarray_with_order(
     array, dtype=None, order=None, copy=None, *, xp=None, device=None
 ):
@@ -1055,3 +1068,18 @@ def _modify_in_place_if_numpy(xp, func, *args, out=None, **kwargs):
     else:
         out = func(*args, **kwargs)
     return out
+
+
+def _bincount(xp, array, weights=None, minlength=None):
+    # TODO: update if bincount is ever adopted in a future version of the standard:
+    # https://github.com/data-apis/array-api/issues/812
+    if hasattr(xp, "bincount"):
+        return xp.bincount(array, weights=weights, minlength=minlength)
+
+    array_np = _convert_to_numpy(array, xp=xp)
+    if weights is not None:
+        weights_np = _convert_to_numpy(weights, xp=xp)
+    else:
+        weights_np = None
+    bin_out = numpy.bincount(array_np, weights=weights_np, minlength=minlength)
+    return xp.asarray(bin_out, device=device(array))
