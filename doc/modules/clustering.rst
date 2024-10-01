@@ -629,7 +629,9 @@ clusters with only one sample. See the `Wikipedia page
 The :class:`AgglomerativeClustering` object performs a hierarchical clustering
 using a bottom up approach: each observation starts in its own cluster, and
 clusters are successively merged together. The linkage criteria determines the
-metric used for the merge strategy:
+metric used for the merge strategy, you can see how several metrics
+(cosine, euclidian, cityblock) work on agglomerative clustering metrics:
+* :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering_metrics.py`
 
 - **Ward** minimizes the sum of squared differences within all clusters. It is a
   variance-minimizing approach and in this sense is similar to the k-means
