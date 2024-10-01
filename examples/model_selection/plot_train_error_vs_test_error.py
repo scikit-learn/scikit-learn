@@ -58,36 +58,6 @@ enet.set_params(alpha=alpha_optim)
 coef_ = enet.fit(X, y).coef_
 
 # %%
-# Plot results functions
-# ----------------------
-
-import matplotlib.pyplot as plt
-
-plt.subplot(2, 1, 1)
-plt.semilogx(alphas, train_errors, label="Train")
-plt.semilogx(alphas, test_errors, label="Test")
-plt.vlines(
-    alpha_optim,
-    plt.ylim()[0],
-    np.max(test_errors),
-    color="k",
-    linewidth=3,
-    label="Optimum on test",
-)
-plt.legend(loc="lower right")
-plt.ylim([0, 1.2])
-plt.xlabel("Regularization parameter")
-plt.ylabel("Performance")
-
-# Show estimated coef_ vs true coef
-plt.subplot(2, 1, 2)
-plt.plot(coef, label="True coef")
-plt.plot(coef_, label="Estimated coef")
-plt.legend()
-plt.subplots_adjust(0.09, 0.04, 0.94, 0.94, 0.26, 0.26)
-plt.show()
-
-# %%
 # Plotting Validation Curves
 # -------------------------------------------------------------
 # In this plot, you can see the training and validation scores
@@ -103,28 +73,51 @@ plt.show()
 # need for manual iteration and plotting, and providing a clear, consistent
 # visualization of model performance.
 
+import matplotlib.pyplot as plt
 
 from sklearn.model_selection import ValidationCurveDisplay
 
-# Define the range of alphas (regularization strength) to explore
 alphas = np.logspace(-5, 1, 60)
 
-# Use the ValidationCurveDisplay to automatically plot the train and test scores
 disp = ValidationCurveDisplay.from_estimator(
-    enet,  # ElasticNet model
-    X_train,  # Training data
-    y_train,  # Training target
-    param_name="alpha",  # Hyperparameter to vary
-    param_range=alphas,  # Range of alpha values
-    scoring="r2",  # Scoring metric, R^2 in this case
-    n_jobs=-1,  # Use all available CPUs
-    score_type="both",  # Plot both training and test scores
+    enet,
+    X_train,
+    y_train,
+    param_name="alpha",
+    param_range=alphas,
+    scoring="r2",
+    n_jobs=2,
+    score_type="both",
 )
 
-# Customize the display
 disp.ax_.set_title("Validation Curve for ElasticNet (R^2 Score)")
 disp.ax_.set_xlabel(r"alpha (regularization strength)")
 disp.ax_.set_ylabel("R^2 Score")
-disp.ax_.set_ylim(0.0, 1.1)
+disp.ax_.set_ylim(-1.0, 1.2)
+disp.ax_.vlines(
+    alpha_optim,
+    disp.ax_.get_ylim()[0],
+    np.max(test_errors),
+    color="k",
+    linewidth=3,
+    label="Optimum on test",
+)
+disp.ax_.legend(loc="lower right")
 
+plt.show()
+
+# %%
+# Plotting Performance Comparison Curves
+# -------------------------------------------------------------
+# This plot compares the true coefficients (coef) with the estimated coefficients (coef_)
+# from the model. It visually helps     assess how well the model has captured the
+# underlying patterns in the data.
+
+plt.plot(coef, label="True coef")
+plt.plot(coef_, label="Estimated coef")
+plt.legend()
+plt.title("True vs Estimated Coefficients")
+plt.xlabel("Feature Index")
+plt.ylabel("Coefficient Value")
+plt.subplots_adjust(0.09, 0.04, 0.94, 0.94, 0.26, 0.26)
 plt.show()

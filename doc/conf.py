@@ -448,7 +448,7 @@ redirects = {
         "auto_examples/model_selection/plot_grid_search_text_feature_extraction.py"
     ),
     "auto_examples/model_selection/plot_validation_curve.py": (
-        "auto_examples/model_selection/plot_train_error_vs_test_error_and_validation_curve.py"
+        "auto_examples/model_selection/plot_train_error_vs_test_error.py"
     ),
     "auto_examples/datasets/plot_digits_last_image.py": (
         "auto_examples/exercises/plot_digits_classification_exercises.py"
