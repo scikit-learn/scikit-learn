@@ -307,6 +307,11 @@ Changelog
   classification labels.
   :pr:`29738` by `Adrin Jalali`_.
 
+- |Enhancement| `silhouette_samples`, `silhouette_score`, `calinski_harabasz_score`,
+  and `davies_bouldin_score` now return sensible value for edge cases instead
+  of raising an error. :pr:`28528` by :user:`Rafikg <rafikg>` and
+  :user:`Filip Karlo Došilović <fkdosilovic>`.
+
 - |API| scoring="neg_max_error" should be used instead of
   scoring="max_error" which is now deprecated.
   :pr:`29462` by :user:`Farid "Freddie" Taba <artificialfintelligence>`.
