@@ -139,9 +139,8 @@ for idx, cluster in enumerate(best_idx):
         continue
 
     # categories
-    counter = Counter()
-    for i in cluster_docs:
-        counter[document_names[i]] += 1
+    counter = Counter(document_names[doc] for doc in cluster_docs)
+
     cat_string = ", ".join(
         f"{(c / n_rows * 100):.0f}% {name}" for name, c in counter.most_common(3)
     )
