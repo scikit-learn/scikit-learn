@@ -603,7 +603,7 @@ def test_multiclass_plot_max_class(pyplot, response_method):
 )
 @pytest.mark.parametrize("plot_method", ["contourf", "contour", "pcolormesh"])
 def test_multiclass_colors_cmap(pyplot, plot_method, multiclass_colors):
-    """Check correct cmap used  for all `multiclass_colors` inputs."""
+    """Check correct cmap used for all `multiclass_colors` inputs."""
     import matplotlib as mpl
 
     pytest.mark.skipif(
@@ -623,20 +623,15 @@ def test_multiclass_colors_cmap(pyplot, plot_method, multiclass_colors):
 
     cmaps = []
     if multiclass_colors == "plasma":
-        cmap = mpl.pyplot.get_cmap(multiclass_colors, len(clf.classes_))
-        for class_idx, primary_color in enumerate(cmap.colors):
-            r, g, b, _ = primary_color
-            class_cmap = mpl.colors.LinearSegmentedColormap.from_list(
-                f"colormap_{class_idx}", [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)]
-            )
-            cmaps.append(class_cmap)
+        colors = mpl.pyplot.get_cmap(multiclass_colors, len(clf.classes_)).colors
     else:
-        for class_idx, class_color in enumerate(multiclass_colors):
-            r, g, b, _ = mpl.colors.to_rgba(class_color)
-            class_cmap = mpl.colors.LinearSegmentedColormap.from_list(
-                f"colormap_{class_idx}", [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)]
-            )
-            cmaps.append(class_cmap)
+        colors = [mpl.colors.to_rgba(color) for color in multiclass_colors]
+
+    for class_idx, (r, g, b, _) in enumerate(colors):
+        class_cmap = mpl.colors.LinearSegmentedColormap.from_list(
+            f"colormap_{class_idx}", [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)]
+        )
+        cmaps.append(class_cmap)
 
     for idx, quad in enumerate(disp.surface_):
         assert quad.cmap == cmaps[idx]

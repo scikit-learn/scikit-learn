@@ -221,18 +221,15 @@ class DecisionBoundaryDisplay:
                     else self.multiclass_colors
                 )
                 cmap = plt.get_cmap(cmap, self.response.shape[-1])
-                for class_idx, (r, g, b, _) in enumerate(cmap.colors):
-                    class_cmap = mpl.colors.LinearSegmentedColormap.from_list(
-                        f"colormap_{class_idx}", [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)]
-                    )
-                    multiclass_cmaps.append(class_cmap)
+                colors = cmap.colors
             else:
-                for class_idx, class_color in enumerate(self.multiclass_colors):
-                    r, g, b, _ = mpl.colors.to_rgba(class_color)
-                    class_cmap = mpl.colors.LinearSegmentedColormap.from_list(
-                        f"colormap_{class_idx}", [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)]
-                    )
-                    multiclass_cmaps.append(class_cmap)
+                colors = [mpl.colors.to_rgba(color) for color in self.multiclass_colors]
+
+            for class_idx, (r, g, b, _) in enumerate(colors):
+                class_cmap = mpl.colors.LinearSegmentedColormap.from_list(
+                    f"colormap_{class_idx}", [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)]
+                )
+                multiclass_cmaps.append(class_cmap)
 
             self.surface_ = []
             for class_idx, cmap in enumerate(multiclass_cmaps):
