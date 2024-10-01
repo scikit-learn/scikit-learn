@@ -18,6 +18,9 @@ leaves to 1 and the other feature values to 0.
 The resulting transformer has then learned a supervised, sparse,
 high-dimensional categorical embedding of the data.
 
+For a more extended example see
+:ref:`sphx_glr_auto_examples_ensemble_plot_feature_transformation.py` 
+
 """
 
 # Authors: The scikit-learn developers
