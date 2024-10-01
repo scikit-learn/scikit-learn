@@ -28,8 +28,7 @@ Notes
 -----
 
 For an example of using this dataset, see
-:ref:`examples/applications/plot_species_distribution_modeling.py
-<sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py>`.
+:ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`.
 """
 
 # Authors: The scikit-learn developers
