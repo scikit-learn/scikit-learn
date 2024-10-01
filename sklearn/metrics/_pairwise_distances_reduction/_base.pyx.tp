@@ -135,7 +135,6 @@ cdef class BaseDistancesReduction{{name_suffix}}:
     def __init__(
         self,
         DatasetsPair{{name_suffix}} datasets_pair,
-        PrecomputedDistanceMatrix{{name_suffix}} precomputed=None,
         chunk_size=None,
         strategy=None,
      ):
