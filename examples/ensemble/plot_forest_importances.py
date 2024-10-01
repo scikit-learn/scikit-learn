@@ -60,7 +60,6 @@ X_train, X_test, y_train, y_test = train_test_split(
 feature_names = [f"feature {i}" for i in range(X.shape[1])]
 forest = RandomForestClassifier(random_state=0)
 forest.fit(X_train, y_train)
-
 # %%
 # Feature importance based on mean decrease in impurity
 # -----------------------------------------------------
@@ -76,12 +75,14 @@ forest.fit(X_train, y_train)
 
 start_time = time.time()
 importances = forest.feature_importances_
-std = np.std([tree.feature_importances_ for tree in forest.estimators_], axis=0)
+std = np.std(
+    [tree.feature_importances_ for tree in forest.estimators_], 
+    axis=0
+)
 elapsed_time = time.time() - start_time
 
 print("Elapsed time to compute the importances: "
-    f"{elapsed_time:.3f} seconds"
-)
+      f"{elapsed_time:.3f} seconds")
 
 # %%
 # Let's plot the impurity-based importance.
@@ -111,8 +112,7 @@ result = permutation_importance(
 )
 elapsed_time = time.time() - start_time
 print(f"Elapsed time to compute the importances: "
-    f"{elapsed_time:.3f} seconds"
-)
+      f"{elapsed_time:.3f} seconds")
 
 forest_importances = pd.Series(result.importances_mean, index=feature_names)
 
