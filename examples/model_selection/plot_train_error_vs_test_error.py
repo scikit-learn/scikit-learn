@@ -109,8 +109,8 @@ plt.show()
 # %%
 # Plotting Performance Comparison Curves
 # -------------------------------------------------------------
-# This plot compares the true coefficients (coef) with the estimated coefficients (coef_)
-# from the model. It visually helps     assess how well the model has captured the
+# This plot compares the true coefficients (coef) with the estimated coefficients
+# (coef_) from the model. It visually helps assess how well the model has captured the
 # underlying patterns in the data.
 
 plt.plot(coef, label="True coef")
