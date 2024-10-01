@@ -17,6 +17,13 @@ For a more extended example see
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import time
+
+import matplotlib.pyplot as plt
+
+from sklearn.datasets import fetch_olivetti_faces
+from sklearn.ensemble import RandomForestClassifier
+
 # %%
 # Loading the data and model fitting
 # ----------------------------------
@@ -26,7 +33,7 @@ For a more extended example see
 # method is that it cannot be evaluated on a separate test set. For this
 # example, we are interested in representing the information learned from
 # the full dataset. Also, we'll set the number of cores to use for the tasks.
-from sklearn.datasets import fetch_olivetti_faces
+
 
 # %%
 # We select the number of cores to use to perform parallel fitting of
@@ -46,7 +53,7 @@ y = y[mask]
 
 # %%
 # A random forest classifier will be fitted to compute the feature importances.
-from sklearn.ensemble import RandomForestClassifier
+
 
 forest = RandomForestClassifier(n_estimators=750, n_jobs=n_jobs, random_state=42)
 
@@ -63,16 +70,16 @@ forest.fit(X, y)
 #     Impurity-based feature importances can be misleading for **high
 #     cardinality** features (many unique values). See
 #     :ref:`permutation_importance` as an alternative.
-import time
 
-import matplotlib.pyplot as plt
 
 start_time = time.time()
 img_shape = data.images[0].shape
 importances = forest.feature_importances_
 elapsed_time = time.time() - start_time
 
-print(f"Elapsed time to compute the importances: {elapsed_time:.3f} seconds")
+print(
+    f"Elapsed time to compute the importances: {elapsed_time:.3f} seconds"
+    )
 imp_reshaped = importances.reshape(img_shape)
 plt.matshow(imp_reshaped, cmap=plt.cm.hot)
 plt.title("Pixel importances using impurity values")
