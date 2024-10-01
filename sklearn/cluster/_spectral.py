@@ -292,6 +292,12 @@ def spectral_clustering(
         .. versionchanged:: 1.1
            Added new labeling method 'cluster_qr'.
 
+        For a more extended example, see:
+        :ref: `sphx_glr_auto_examples_cluster_plot_coin_segmentation.py`.
+
+        This example demonstrates spectral clustering on an image to 
+        segment it into regions based on voxel-to-voxel differences.
+
     verbose : bool, default=False
         Verbosity mode.
 
@@ -599,9 +605,6 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
     >>> clustering
     SpectralClustering(assign_labels='discretize', n_clusters=2,
         random_state=0)
-
-    For a more extended example, see:
-    :ref: `sphx_glr_auto_examples_cluster_plot_coin_segmentation.py`.
     """
 
     _parameter_constraints: dict = {
