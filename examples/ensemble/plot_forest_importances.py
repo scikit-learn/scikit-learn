@@ -21,14 +21,14 @@ For a more extended example see
 
 import time
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 
 from sklearn.datasets import make_classification
-from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.inspection import permutation_importance
+from sklearn.model_selection import train_test_split
 
 # %%
 # Data generation and model fitting
@@ -49,9 +49,7 @@ X, y = make_classification(
     random_state=0,
     shuffle=False,
 )
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, stratify=y, random_state=42
-)
+X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=42)
 
 # %%
 # A random forest classifier will be fitted to compute the feature importances.
@@ -75,14 +73,10 @@ forest.fit(X_train, y_train)
 
 start_time = time.time()
 importances = forest.feature_importances_
-std = np.std(
-    [tree.feature_importances_ for tree in forest.estimators_], 
-    axis=0
-)
+std = np.std([tree.feature_importances_ for tree in forest.estimators_], axis=0)
 elapsed_time = time.time() - start_time
 
-print("Elapsed time to compute the importances: "
-      f"{elapsed_time:.3f} seconds")
+print("Elapsed time to compute the importances: " f"{elapsed_time:.3f} seconds")
 
 # %%
 # Let's plot the impurity-based importance.
@@ -111,8 +105,7 @@ result = permutation_importance(
     forest, X_test, y_test, n_repeats=10, random_state=42, n_jobs=2
 )
 elapsed_time = time.time() - start_time
-print(f"Elapsed time to compute the importances: "
-      f"{elapsed_time:.3f} seconds")
+print(f"Elapsed time to compute the importances: " f"{elapsed_time:.3f} seconds")
 
 forest_importances = pd.Series(result.importances_mean, index=feature_names)
 
