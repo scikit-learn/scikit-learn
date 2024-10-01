@@ -10,6 +10,8 @@ dataset. The hotter the pixel, the more important it is.
 The code below also illustrates how the construction and the computation
 of the predictions can be parallelized within multiple jobs.
 
+For a more extended example see
+:ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`
 """
 
 # Authors: The scikit-learn developers
