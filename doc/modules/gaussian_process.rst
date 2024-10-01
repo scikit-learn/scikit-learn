@@ -154,6 +154,10 @@ predictions. Moreover, note that :class:`GaussianProcessClassifier` does not
 as discussed above is based on solving several binary classification tasks
 internally, which are combined using one-versus-rest or one-versus-one.
 
+.. rubric:: Examples
+
+   :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`
+
 GPC examples
 ============
 
@@ -217,10 +221,6 @@ assigning different length-scales to the two feature dimensions.
 .. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpc_iris_001.png
    :target: ../auto_examples/gaussian_process/plot_gpc_iris.html
    :align: center
-
-.. rubric:: Examples
-
-   :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`
 
 .. _gp_kernels:
 
