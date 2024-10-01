@@ -56,7 +56,7 @@ X_full_train, X_test, y_full_train, y_test = train_test_split(
 )
 X_train_ensemble, X_train_linear, y_train_ensemble, y_train_linear = (
     train_test_split(
-        X_full_train, 
+        X_full_train,
         y_full_train,
         test_size=0.5,
         random_state=10
