@@ -21,6 +21,7 @@ from sklearn.utils._testing import (
     assert_allclose,
     assert_array_equal,
 )
+from sklearn.utils.fixes import parse_version
 
 X, y = make_classification(
     n_informative=1,
@@ -605,6 +606,11 @@ def test_multiclass_colors_cmap(pyplot, plot_method, multiclass_colors):
     """Check correct cmap used  for all `multiclass_colors` inputs."""
     import matplotlib as mpl
 
+    pytest.mark.skipif(
+        parse_version(mpl.__version__) < parse_version("3.5"),
+        reason="Matplotlib <3.5 did not implement `__eq__` for `Colormap`",
+    )
+
     X, y = load_iris_2d_scaled()
     clf = LogisticRegression().fit(X, y)
 
@@ -633,8 +639,6 @@ def test_multiclass_colors_cmap(pyplot, plot_method, multiclass_colors):
             cmaps.append(class_cmap)
 
     for idx, quad in enumerate(disp.surface_):
-        qq = quad.cmap._segmentdata
-        testcc = cmaps[idx]._segmentdata
         assert quad.cmap == cmaps[idx]
 
 
