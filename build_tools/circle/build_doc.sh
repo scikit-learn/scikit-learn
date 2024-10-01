@@ -198,7 +198,8 @@ set +o pipefail
 
 affected_doc_paths() {
     files=$(git diff --name-only origin/main...$CIRCLE_SHA1)
-    echo "$files" | grep ^doc/.*\.rst | sed 's/^doc\/\(.*\)\.rst$/\1.html/'
+    # use sed to replace files ending by .rst or .rst.template by .html
+    echo "$files" | grep ^doc/.*\.rst | sed 's/^doc\/\(.*\)\.rst$/\1.html/; s/^doc\/\(.*\)\.rst\.template$/\1.html/'
     echo "$files" | grep ^examples/.*.py | sed 's/^\(.*\)\.py$/auto_\1.html/'
     sklearn_files=$(echo "$files" | grep '^sklearn/')
     if [ -n "$sklearn_files" ]
@@ -235,7 +236,7 @@ then
     echo "$affected"
     (
     echo '<html><body><ul>'
-    echo "$affected" | sed 's|.*|<li><a href="&">&</a> [<a href="https://scikit-learn.org/dev/&">dev</a>, <a href="https://scikit-learn.org/stable/&">stable</a>]</li>|' | sed 's/rst.template/html/g'
+    echo "$affected" | sed 's|.*|<li><a href="&">&</a> [<a href="https://scikit-learn.org/dev/&">dev</a>, <a href="https://scikit-learn.org/stable/&">stable</a>]</li>|'
     echo '</ul><p>General: <a href="index.html">Home</a> | <a href="api/index.html">API Reference</a> | <a href="auto_examples/index.html">Examples</a></p>'
     echo '<strong>Sphinx Warnings in affected files</strong><ul>'
     echo "$warnings" | sed 's/\/home\/circleci\/project\//<li>/g'
