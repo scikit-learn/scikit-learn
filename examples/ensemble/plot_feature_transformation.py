@@ -55,12 +55,18 @@ X_full_train, X_test, y_full_train, y_test = train_test_split(
     X, y, test_size=0.5, random_state=10
 )
 X_train_ensemble, X_train_linear, y_train_ensemble, y_train_linear = (
-    train_test_split(X_full_train, y_full_train, test_size=0.5, random_state=10)
+    train_test_split(
+        X_full_train, 
+        y_full_train,
+        test_size=0.5,
+        random_state=10
+    )
 )
 
 # %%
 # For each of the ensemble methods, we will use 10 estimators and a maximum
 # depth of 3 levels.
+
 
 n_estimators = 10
 max_depth = 3
@@ -68,6 +74,7 @@ max_depth = 3
 # %%
 # First, we will start by training the random forest and gradient boosting on
 # the separated training set
+
 
 random_forest = RandomForestClassifier(
     n_estimators=n_estimators, max_depth=max_depth, random_state=10
@@ -88,6 +95,7 @@ _ = gradient_boosting.fit(X_train_ensemble, y_train_ensemble)
 # The :class:`~sklearn.ensemble.RandomTreesEmbedding` is an unsupervised method
 # and thus does not required to be trained independently.
 
+
 random_tree_embedding = RandomTreesEmbedding(
     n_estimators=n_estimators, max_depth=max_depth, random_state=0
 )
@@ -99,6 +107,7 @@ random_tree_embedding = RandomTreesEmbedding(
 # The random trees embedding can be directly pipelined with the logistic
 # regression because it is a standard scikit-learn transformer.
 
+
 rt_model = make_pipeline(
     random_tree_embedding, LogisticRegression(max_iter=1000)
 )
@@ -109,6 +118,7 @@ rt_model.fit(X_train_linear, y_train_linear)
 # regression. However, the feature transformation will happen by calling the
 # method `apply`. The pipeline in scikit-learn expects a call to `transform`.
 # Therefore, we wrapped the call to `apply` within a `FunctionTransformer`.
+
 
 def rf_apply(X, model):
     return model.apply(X)
@@ -127,6 +137,8 @@ rf_model.fit(X_train_linear, y_train_linear)
 
 
 # %%
+
+
 def gbdt_apply(X, model):
     return model.apply(X)[:, :, 0]
 
@@ -144,6 +156,7 @@ gbdt_model.fit(X_train_linear, y_train_linear)
 
 # %%
 # We can finally show the different ROC curves for all the models.
+
 
 _, ax = plt.subplots()
 
@@ -163,6 +176,8 @@ for name, pipeline in models:
 _ = ax.set_title("ROC curve")
 
 # %%
+
+
 _, ax = plt.subplots()
 for name, pipeline in models:
     model_displays[name].plot(ax=ax)
