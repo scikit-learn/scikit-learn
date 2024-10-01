@@ -169,8 +169,8 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
 
         assert_all_finite(u)
         assert_all_finite(vt)
-        u = u[:, n_discard:]
-        vt = vt[n_discard:]
+        u = u[:, n_discard:] if u.ndim > 2 else u
+        vt = vt[n_discard:] if vt.ndim > 2 else vt
         return u, vt.T
 
     def _k_means(self, data, n_clusters):
@@ -201,9 +201,6 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
             "check_fit2d_1feature": "raises apply_along_axis error",
             "check_estimator_sparse_matrix": "does not fail gracefully",
             "check_estimator_sparse_array": "does not fail gracefully",
-            "check_methods_subset_invariance": "empty array passed inside",
-            "check_dont_overwrite_parameters": "empty array passed inside",
-            "check_fit2d_predict1d": "empty array passed inside",
         }
         return tags
 
@@ -361,17 +358,6 @@ class SpectralCoclustering(BaseSpectral):
         self.columns_ = np.vstack(
             [self.column_labels_ == c for c in range(self.n_clusters)]
         )
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags._xfail_checks.update(
-            {
-                # ValueError: Found array with 0 feature(s) (shape=(23, 0))
-                # while a minimum of 1 is required.
-                "check_dict_unchanged": "FIXME",
-            }
-        )
-        return tags
 
 
 class SpectralBiclustering(BaseSpectral):
