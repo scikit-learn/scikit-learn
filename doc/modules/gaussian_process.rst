@@ -94,7 +94,6 @@ the API of standard scikit-learn estimators, :class:`GaussianProcessRegressor`:
 * :ref:`sphx_glr_auto_examples_gaussian_process_plot_gpr_noisy.py`
 * :ref:`sphx_glr_auto_examples_gaussian_process_plot_compare_gpr_krr.py`
 * :ref:`sphx_glr_auto_examples_gaussian_process_plot_gpr_co2.py`
-* :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`
 
 .. _gpc:
 
@@ -219,6 +218,9 @@ assigning different length-scales to the two feature dimensions.
    :target: ../auto_examples/gaussian_process/plot_gpc_iris.html
    :align: center
 
+.. rubric:: Examples
+
+   :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`
 
 .. _gp_kernels:
 
