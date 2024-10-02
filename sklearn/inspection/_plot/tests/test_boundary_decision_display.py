@@ -21,7 +21,6 @@ from sklearn.utils._testing import (
     assert_allclose,
     assert_array_equal,
 )
-from sklearn.utils.fixes import parse_version
 
 X, y = make_classification(
     n_informative=1,
