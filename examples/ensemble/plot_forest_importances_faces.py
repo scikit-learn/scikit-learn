@@ -76,7 +76,7 @@ img_shape = data.images[0].shape
 importances = forest.feature_importances_
 elapsed_time = time.time() - start_time
 
-print("Elapsed time to compute the importances: " 
+print("Elapsed time to compute the importances: "
       f"{elapsed_time:.3f} seconds")
 imp_reshaped = importances.reshape(img_shape)
 plt.matshow(imp_reshaped, cmap=plt.cm.hot)
