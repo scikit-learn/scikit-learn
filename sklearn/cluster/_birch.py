@@ -369,6 +369,10 @@ class Birch(
 
     Read more in the :ref:`User Guide <birch>`.
 
+    See
+    :ref:`sphx_glr_auto_examples_cluster_plot_birch_vs_minibatchkmeans.py`
+    for an example on how to use the API.
+
     .. versionadded:: 0.16
 
     Parameters
