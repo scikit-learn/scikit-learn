@@ -447,6 +447,12 @@ redirects = {
     "auto_examples/model_selection/grid_search_text_feature_extraction.py": (
         "auto_examples/model_selection/plot_grid_search_text_feature_extraction.py"
     ),
+    "auto_examples/datasets/plot_digits_last_image.py": (
+        "auto_examples/exercises/plot_digits_classification_exercises.py"
+    ),
+    "auto_examples/datasets/plot_random_dataset": (
+        "auto_examples/classification/plot_classifier_comparison"
+    ),
     "auto_examples/miscellaneous/plot_changed_only_pprint_parameter": (
         "auto_examples/miscellaneous/plot_estimator_representation"
     ),
@@ -462,6 +468,12 @@ redirects = {
     ),
     "auto_examples/exercises/plot_cv_digits.py": (
         "auto_examples/model_selection/plot_nested_cross_validation_iris.py"
+    ),
+    "auto_examples/linear_model/plot_lasso_lars.py": (
+        "auto_examples/linear_model/plot_lasso_lasso_lars_elasticnet_path.py"
+    ),
+    "auto_examples/linear_model/plot_lasso_coordinate_descent_path.py": (
+        "auto_examples/linear_model/plot_lasso_lasso_lars_elasticnet_path.py"
     ),
 }
 html_context["redirects"] = redirects

@@ -2587,7 +2587,7 @@ The best possible score is 1.0, lower values are worse.
 .. topic:: Link to :ref:`r2_score`
 
     The difference between the explained variance score and the :ref:`r2_score`
-    is that when the explained variance score does not account for
+    is that the explained variance score does not account for
     systematic offset in the prediction. For this reason, the
     :ref:`r2_score` should be preferred in general.
 

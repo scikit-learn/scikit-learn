@@ -411,6 +411,14 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.classifier_tags.multi_label = True
+        tags.input_tags.pairwise = self.metric == "precomputed"
+        if tags.input_tags.pairwise:
+            tags._xfail_checks.update(
+                {
+                    "check_n_features_in_after_fitting": "FIXME",
+                    "check_dataframe_column_names_consistency": "FIXME",
+                }
+            )
         return tags
 
 
