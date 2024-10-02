@@ -606,11 +606,6 @@ def test_multiclass_colors_cmap(pyplot, plot_method, multiclass_colors):
     """Check correct cmap used for all `multiclass_colors` inputs."""
     import matplotlib as mpl
 
-    pytest.mark.skipif(
-        parse_version(mpl.__version__) < parse_version("3.5"),
-        reason="Matplotlib <3.5 did not implement `__eq__` for `Colormap`",
-    )
-
     X, y = load_iris_2d_scaled()
     clf = LogisticRegression().fit(X, y)
 
@@ -634,7 +629,7 @@ def test_multiclass_colors_cmap(pyplot, plot_method, multiclass_colors):
         cmaps.append(class_cmap)
 
     for idx, quad in enumerate(disp.surface_):
-        assert quad.cmap == cmaps[idx]
+        assert_array_equal(quad.cmap._lut, cmaps[idx]._lut)
 
 
 def test_multiclass_plot_max_class_cmap_kwarg():
