@@ -99,6 +99,7 @@ def _alpha_grid(
     eps=1e-3,
     n_alphas=100,
     copy_X=True,
+    sample_weight=None,
 ):
     """Compute the grid of alpha values for elastic net parameter search
 
@@ -133,6 +134,8 @@ def _alpha_grid(
 
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
+
+    sample_weight : ndarray of shape (n_samples,), default=None
     """
     if l1_ratio == 0:
         raise ValueError(
@@ -141,43 +144,39 @@ def _alpha_grid(
             "your estimator with the appropriate `alphas=` "
             "argument."
         )
-    n_samples = len(y)
-
-    sparse_center = False
-    if Xy is None:
-        X_sparse = sparse.issparse(X)
-        sparse_center = X_sparse and fit_intercept
-        X = check_array(
-            X, accept_sparse="csc", copy=(copy_X and fit_intercept and not X_sparse)
+    if Xy is not None:
+        Xyw = Xy
+    else:
+        X, y, X_offset, _, _ = _preprocess_data(
+            X,
+            y,
+            fit_intercept=fit_intercept,
+            copy=copy_X,
+            sample_weight=sample_weight,
+            check_input=False,
         )
-        if not X_sparse:
-            # X can be touched inplace thanks to the above line
-            X, y, _, _, _ = _preprocess_data(
-                X, y, fit_intercept=fit_intercept, copy=False
-            )
-        Xy = safe_sparse_dot(X.T, y, dense_output=True)
+        if sample_weight is not None:
+            if y.ndim > 1:
+                yw = y * sample_weight.reshape(-1, 1)
+            else:
+                yw = y * sample_weight
+        else:
+            yw = y
+        if sparse.issparse(X):
+            Xyw = safe_sparse_dot(X.T, yw, dense_output=True) - np.sum(yw) * X_offset
+        else:
+            Xyw = np.dot(X.T, yw)
 
-        if sparse_center:
-            # Workaround to find alpha_max for sparse matrices.
-            # since we should not destroy the sparsity of such matrices.
-            _, _, X_offset, _, X_scale = _preprocess_data(
-                X, y, fit_intercept=fit_intercept
-            )
-            mean_dot = X_offset * np.sum(y)
+    if Xyw.ndim == 1:
+        Xyw = Xyw[:, np.newaxis]
+    if sample_weight is not None:
+        n_samples = sample_weight.sum()
+    else:
+        n_samples = X.shape[0]
+    alpha_max = np.sqrt(np.sum(Xyw**2, axis=1)).max() / (n_samples * l1_ratio)
 
-    if Xy.ndim == 1:
-        Xy = Xy[:, np.newaxis]
-
-    if sparse_center:
-        if fit_intercept:
-            Xy -= mean_dot[:, np.newaxis]
-
-    alpha_max = np.sqrt(np.sum(Xy**2, axis=1)).max() / (n_samples * l1_ratio)
-
-    if alpha_max <= np.finfo(float).resolution:
-        alphas = np.empty(n_alphas)
-        alphas.fill(np.finfo(float).resolution)
-        return alphas
+    if alpha_max <= np.finfo(np.float64).resolution:
+        return np.full(n_alphas, np.finfo(np.float64).resolution)
 
     return np.geomspace(alpha_max, alpha_max * eps, num=n_alphas)
 
@@ -318,8 +317,8 @@ def lasso_path(
     Notes
     -----
     For an example, see
-    :ref:`examples/linear_model/plot_lasso_coordinate_descent_path.py
-    <sphx_glr_auto_examples_linear_model_plot_lasso_coordinate_descent_path.py>`.
+    :ref:`examples/linear_model/plot_lasso_lasso_lars_elasticnet_path.py
+    <sphx_glr_auto_examples_linear_model_plot_lasso_lasso_lars_elasticnet_path.py>`.
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
@@ -523,8 +522,8 @@ def enet_path(
     Notes
     -----
     For an example, see
-    :ref:`examples/linear_model/plot_lasso_coordinate_descent_path.py
-    <sphx_glr_auto_examples_linear_model_plot_lasso_coordinate_descent_path.py>`.
+    :ref:`examples/linear_model/plot_lasso_lasso_lars_elasticnet_path.py
+    <sphx_glr_auto_examples_linear_model_plot_lasso_lasso_lars_elasticnet_path.py>`.
 
     Examples
     --------
@@ -1704,6 +1703,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                     eps=self.eps,
                     n_alphas=self.n_alphas,
                     copy_X=self.copy_X,
+                    sample_weight=sample_weight,
                 )
                 for l1_ratio in l1_ratios
             ]
@@ -2015,9 +2015,8 @@ class LassoCV(RegressorMixin, LinearModelCV):
     To avoid unnecessary memory duplication the `X` argument of the `fit`
     method should be directly passed as a Fortran-contiguous numpy array.
 
-     For an example, see
-     :ref:`examples/linear_model/plot_lasso_model_selection.py
-     <sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py>`.
+    For an example, see :ref:`examples/linear_model/plot_lasso_model_selection.py
+    <sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py>`.
 
     :class:`LassoCV` leads to different results than a hyperparameter
     search using :class:`~sklearn.model_selection.GridSearchCV` with a
