@@ -2397,6 +2397,7 @@ class _BaseRidgeCV(LinearModel):
                 if sample_weight is not None:
                     routed_params.scorer.score["sample_weight"] = sample_weight
 
+            # reset `scorer` variable to original user-intend if no scoring is passed
             if self.scoring is None:
                 scorer = None
 
