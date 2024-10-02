@@ -417,7 +417,6 @@ def test_transform_target_regressor_not_warns_with_global_output_set(output_form
 
 
 # TODO: Remove
-@pytest.mark.xfail
 def test_example_docstring():
     tt = TransformedTargetClassifier(
         estimator=LogisticRegression(), transformer=LabelEncoder()

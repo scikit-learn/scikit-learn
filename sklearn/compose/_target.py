@@ -122,17 +122,7 @@ class BaseTransformedTarget(BaseEstimator):
             y_sel = _safe_indexing(y, idx_selected)
             y_sel_t = self.transformer_.transform(y_sel)
 
-            # TODO: Replace with array_equal in classification case
-            if not np.allclose(y_sel, self.transformer_.inverse_transform(y_sel_t)):
-                warnings.warn(
-                    (
-                        "The provided functions or transformer are"
-                        " not strictly inverse of each other. If"
-                        " you are sure you want to proceed regardless"
-                        ", set 'check_inverse=False'"
-                    ),
-                    UserWarning,
-                )
+            self._check_inverse(y_sel, y_sel_t)
 
     @_fit_context(
         # BaseTransformedTarget.estimator/transformer are not validated yet.
@@ -172,27 +162,12 @@ class BaseTransformedTarget(BaseEstimator):
                 "requires y to be passed, but the target y is None."
             )
 
-        # TODO: Replace with validate_data?
-        y = check_array(
-            y,
-            input_name="y",
-            accept_sparse=False,
-            ensure_all_finite=True,
-            ensure_2d=False,
-            dtype="numeric",
-            allow_nd=True,
-        )
+        y_2d = self._validate_y(y)
 
         # store the number of dimension of the target to predict an array of
         # similar shape at predict
         self._training_dim = y.ndim
 
-        # transformers are designed to modify X which is 2d dimensional, we
-        # need to modify y accordingly.
-        if y.ndim == 1:
-            y_2d = y.reshape(-1, 1)
-        else:
-            y_2d = y
         self._fit_transformer(y_2d)
 
         # transform y and convert back to 1d array if needed
@@ -279,6 +254,7 @@ class BaseTransformedTarget(BaseEstimator):
             tags.regressor_tags.poor_score = True
 
         tags.target_tags.multi_output = estimator_tags.target_tags.multi_output
+        tags.target_tags.required = True
         return tags
 
     @property
@@ -322,7 +298,7 @@ class TransformedTargetClassifier(ClassifierMixin, BaseTransformedTarget):
 
         transformer.inverse_transform(classifier.predict(X))
 
-    Read more in the :ref:`User Guide <transformed_target_classifier>`. TODO
+    Read more in the :ref:`User Guide <transformed_target_classifier>`. # TODO
 
     Parameters
     ----------
@@ -367,7 +343,7 @@ class TransformedTargetClassifier(ClassifierMixin, BaseTransformedTarget):
 
     classes_ : ndarray of shape (n_classes,)
         The class labels.
-        
+
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying estimator exposes such an attribute when fit.
@@ -406,6 +382,40 @@ class TransformedTargetClassifier(ClassifierMixin, BaseTransformedTarget):
     >>> tt.estimator_.coef_
     array([[0.95826546]])
     """
+
+    def _validate_y(self, y):
+        y = check_array(
+            y,
+            input_name="y",
+            accept_sparse=False,
+            ensure_all_finite=True,
+            ensure_2d=False,
+            dtype=None,
+            allow_nd=True,
+        )
+
+        # transformers are designed to modify X which is 2d dimensional,
+        # but not label transformers as they modify y which is 1d
+        # we check the input tags and modify y accordingly
+        requires_2d_input = get_tags(self.transformer).input_tags.two_d_array
+        if requires_2d_input and y.ndim == 1:
+            y_2d = y.reshape(-1, 1)
+        else:
+            y_2d = y
+
+        return y_2d
+
+    def _check_inverse(self, y, y_t):
+        if not np.array_equal(y, self.transformer_.inverse_transform(y_t)):
+            warnings.warn(
+                (
+                    "The provided functions or transformer are"
+                    " not strictly inverse of each other. If"
+                    " you are sure you want to proceed regardless"
+                    ", set 'check_inverse=False'"
+                ),
+                UserWarning,
+            )
 
     def _get_estimator(self, get_clone=False):
         if self.estimator is None:
@@ -686,6 +696,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseTransformedTarget):
         ],
     }
 
+    # TODO(1.8) remove
     def __init__(
         self,
         estimator=None,
@@ -704,8 +715,39 @@ class TransformedTargetRegressor(RegressorMixin, BaseTransformedTarget):
             check_inverse=check_inverse,
         )
 
-        # TODO(1.8) remove
         self.regressor = regressor
+
+    def _validate_y(self, y):
+        y = check_array(
+            y,
+            input_name="y",
+            accept_sparse=False,
+            ensure_all_finite=True,
+            ensure_2d=False,
+            dtype="numeric",
+            allow_nd=True,
+        )
+
+        # transformers are designed to modify X which is 2d dimensional, we
+        # need to modify y accordingly.
+        if y.ndim == 1:
+            y_2d = y.reshape(-1, 1)
+        else:
+            y_2d = y
+
+        return y_2d
+
+    def _check_inverse(self, y, y_t):
+        if not np.allclose(y, self.transformer_.inverse_transform(y_t)):
+            warnings.warn(
+                (
+                    "The provided functions or transformer are"
+                    " not strictly inverse of each other. If"
+                    " you are sure you want to proceed regardless"
+                    ", set 'check_inverse=False'"
+                ),
+                UserWarning,
+            )
 
     def _get_estimator(self, get_clone=False):
         # TODO(1.8): remove
