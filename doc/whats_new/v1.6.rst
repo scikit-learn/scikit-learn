@@ -193,7 +193,7 @@ Changelog
   :pr:`29952` by :user:`Guillaume Tauzin <gtauzin>`.
 
 - |Feature| Added the :class:`compose.TransformedTargetClassifier` which
-  transforms the target y before fitting a regression model. The predictions
+  transforms the target y before fitting a classification model. The predictions
   are mapped back to the original space via an inverse transform.
   :pr:`29952` by :user:`Guillaume Tauzin <gtauzin>`.
 
