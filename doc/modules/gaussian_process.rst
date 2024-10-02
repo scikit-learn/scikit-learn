@@ -222,6 +222,7 @@ assigning different length-scales to the two feature dimensions.
    :target: ../auto_examples/gaussian_process/plot_gpc_iris.html
    :align: center
 
+
 .. _gp_kernels:
 
 Kernels for Gaussian Processes
