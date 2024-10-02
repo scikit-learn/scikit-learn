@@ -45,8 +45,8 @@ X, y = make_classification(n_samples=80_000, random_state=10)
 X_full_train, X_test, y_full_train, y_test = train_test_split(
     X, y, test_size=0.5, random_state=10
 )
-X_train_ensemble, X_train_linear, y_train_ensemble, y_train_linear = (
-    train_test_split(X_full_train, y_full_train, test_size=0.5, random_state=10)
+X_train_ensemble, X_train_linear, y_train_ensemble, y_train_linear = train_test_split(
+    X_full_train, y_full_train, test_size=0.5, random_state=10
 )
 
 # %%
@@ -101,10 +101,7 @@ random_tree_embedding = RandomTreesEmbedding(
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
 
-rt_model = make_pipeline(
-    random_tree_embedding,
-    LogisticRegression(max_iter=1000)
-)
+rt_model = make_pipeline(random_tree_embedding, LogisticRegression(max_iter=1000))
 rt_model.fit(X_train_linear, y_train_linear)
 
 # %%
@@ -120,9 +117,7 @@ def rf_apply(X, model):
     return model.apply(X)
 
 
-rf_leaves_yielder = FunctionTransformer(
-    rf_apply, kw_args={"model": random_forest}
-)
+rf_leaves_yielder = FunctionTransformer(rf_apply, kw_args={"model": random_forest})
 
 rf_model = make_pipeline(
     rf_leaves_yielder,
