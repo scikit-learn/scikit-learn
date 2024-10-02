@@ -332,6 +332,10 @@ Changelog
 :mod:`sklearn.model_selection`
 ..............................
 
+- |Enhancement| :class:`model_selection.GroupKFold` now has the ability to shuffle groups
+  into different folds when `shuffle=True`.
+  :pr:`28519` by :user:`Zachary Vealey <zvealey>`.
+
 - |Enhancement| Add the parameter `prefit` to
   :class:`model_selection.FixedThresholdClassifier` allowing the use of a pre-fitted
   estimator without re-fitting it.
