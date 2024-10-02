@@ -156,7 +156,7 @@ internally, which are combined using one-versus-rest or one-versus-one.
 
 .. rubric:: Examples
 
-   :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`
+* :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`
 
 GPC examples
 ============
