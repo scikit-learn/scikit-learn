@@ -2473,7 +2473,7 @@ class _BaseRidgeCV(LinearModel):
             MetadataRouter(owner=self.__class__.__name__)
             .add_self_request(self)
             .add(
-                scorer=self._get_scorer(),
+                scorer=self.scoring,
                 method_mapping=MethodMapping().add(caller="fit", callee="score"),
             )
             .add(
