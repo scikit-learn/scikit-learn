@@ -1721,6 +1721,9 @@ def test_neighbors_metrics(
             assert_array_equal(ball_tree_idx, kd_tree_idx)
 
 
+# Some scipy metrics are deprecated (depending on the scipy version) but we
+# still want to test them.
+@ignore_warnings(category=DeprecationWarning)
 @pytest.mark.parametrize(
     "metric", sorted(set(neighbors.VALID_METRICS["brute"]) - set(["precomputed"]))
 )
@@ -2243,6 +2246,9 @@ def test_auto_algorithm(X, metric, metric_params, expected_algo):
     assert model._fit_method == expected_algo
 
 
+# Some scipy metrics are deprecated (depending on the scipy version) but we
+# still want to test them.
+@ignore_warnings(category=DeprecationWarning)
 @pytest.mark.parametrize(
     "metric", sorted(set(neighbors.VALID_METRICS["brute"]) - set(["precomputed"]))
 )
