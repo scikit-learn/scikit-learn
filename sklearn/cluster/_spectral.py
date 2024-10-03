@@ -289,14 +289,11 @@ def spectral_clustering(
         has no tuning parameters and is not an iterative method, yet may outperform
         k-means and discretization in terms of both quality and speed.
 
-        .. versionchanged:: 1.1
-           Added new labeling method 'cluster_qr'.
-
-        For a more extended example, see:
+        For a detailed comparison of clustering strategies, refer to:
         :ref: `sphx_glr_auto_examples_cluster_plot_coin_segmentation.py`.
 
-        This example demonstrates spectral clustering on an image to 
-        segment it into regions based on voxel-to-voxel differences.
+        .. versionchanged:: 1.1
+           Added new labeling method 'cluster_qr'.
 
     verbose : bool, default=False
         Verbosity mode.
