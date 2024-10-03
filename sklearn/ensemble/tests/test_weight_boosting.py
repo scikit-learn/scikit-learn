@@ -195,7 +195,6 @@ def test_gridsearch():
     parameters = {
         "n_estimators": (1, 2),
         "estimator__max_depth": (1, 2),
-        "algorithm": ("SAMME", "SAMME.R"),
     }
     clf = GridSearchCV(boost, parameters)
     clf.fit(iris.data, iris.target)
