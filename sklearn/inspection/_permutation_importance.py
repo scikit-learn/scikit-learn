@@ -146,6 +146,7 @@ def permutation_importance(
     random_state=None,
     sample_weight=None,
     max_samples=1.0,
+    n_features=None,
 ):
     """Permutation importance for feature evaluation [BRE]_.
 
@@ -229,6 +230,12 @@ def permutation_importance(
 
         .. versionadded:: 1.0
 
+    n_features : int or None, default=None
+        Number of features to include in the analysis, chosen randomly.
+        If None, all features will be included.
+
+        .. versionadded:: 1.0
+
     Returns
     -------
     result : :class:`~sklearn.utils.Bunch` or dict of such instances
@@ -276,6 +283,13 @@ def permutation_importance(
     random_state = check_random_state(random_state)
     random_seed = random_state.randint(np.iinfo(np.int32).max + 1)
 
+    if n_features is not None:
+        if n_features > X.shape[1]:
+            raise ValueError(f"n_features must be <= the number of features in X ({X.shape[1]}).")
+        feature_indices = random_state.choice(X.shape[1], size=n_features, replace=False)
+    else:
+        feature_indices = np.arange(X.shape[1])
+
     if not isinstance(max_samples, numbers.Integral):
         max_samples = int(max_samples * X.shape[0])
     elif max_samples > X.shape[0]:
@@ -296,7 +310,7 @@ def permutation_importance(
             scorer,
             max_samples,
         )
-        for col_idx in range(X.shape[1])
+        for col_idx in feature_indices
     )
 
     if isinstance(baseline_score, dict):
