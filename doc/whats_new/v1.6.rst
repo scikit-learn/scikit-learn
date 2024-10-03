@@ -246,6 +246,12 @@ Changelog
   right child node as the tree is traversed.
   :pr:`28268` by :user:`Adam Li <adam2392>`.
 
+- |MajorFeature| :class:`ensemble.RandomForestClassifier`, :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier`, and :class:`ensemble.ExtraTreesRegressor`
+  now support splitting on categorical features using the `categorical_features`
+  parameter.
+  :pr:`29437` by :user:`Adam Li <adam2392>`.
+
 :mod:`sklearn.impute`
 .....................
 
@@ -374,6 +380,11 @@ Changelog
   randomly moving all of the samples to the left, or right child node as the tree is
   traversed.
   :pr:`27966` by :user:`Adam Li <adam2392>`.
+
+- |Enhancement| :class:`tree.DecisionTreeClassifier`, :class:`tree.DecisionTreeRegressor`,
+  :class:`tree.ExtraTreeClassifier`, and :class:`tree.ExtraTreeRegressor` now support
+  splitting on categorical features using the `categorical_features` parameter.
+  :pr:`29437` by :user:`Adam Li <adam2392>`.
 
 :mod:`sklearn.utils`
 ....................
