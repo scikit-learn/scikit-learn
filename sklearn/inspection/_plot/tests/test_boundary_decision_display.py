@@ -628,6 +628,8 @@ def test_multiclass_colors_cmap(pyplot, plot_method, multiclass_colors):
         cmaps.append(class_cmap)
 
     for idx, quad in enumerate(disp.surface_):
+        quad.cmap._init()
+        cmaps[idx]._init()
         assert_array_equal(quad.cmap._lut, cmaps[idx]._lut)
 
 
