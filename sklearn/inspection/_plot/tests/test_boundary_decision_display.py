@@ -628,9 +628,12 @@ def test_multiclass_colors_cmap(pyplot, plot_method, multiclass_colors):
         cmaps.append(class_cmap)
 
     for idx, quad in enumerate(disp.surface_):
+        # Ensure `_lut` (look-up table) is equal
         quad.cmap._init()
         cmaps[idx]._init()
         assert_array_equal(quad.cmap._lut, cmaps[idx]._lut)
+        # Ensure name is the same
+        assert quad.cmap.name ==  cmaps[idx].name
 
 
 def test_multiclass_plot_max_class_cmap_kwarg():
