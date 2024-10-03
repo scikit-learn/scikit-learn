@@ -538,3 +538,28 @@ def test_permutation_importance_max_samples_error():
 
     with pytest.raises(ValueError, match=err_msg):
         permutation_importance(clf, X, y, max_samples=5)
+
+
+def test_permutation_importance_n_features():
+    """Check you only get back `n_features` importances when `n_features`
+    param is defined.
+    """
+    X, y = make_regression(n_samples=500, n_features=10, random_state=0)
+
+    X = scale(X)
+    y = scale(y)
+
+    lr = LinearRegression().fit(X, y)
+
+    n_repeats_test = 50
+    n_features_test = 5
+
+    results = permutation_importance(
+        lr,
+        X,
+        y,
+        n_repeats=n_repeats_test,
+        scoring="neg_mean_squared_error",
+        n_features=n_features_test,
+    )
+    assert results.importances.shape == (n_features_test, n_repeats_test)
