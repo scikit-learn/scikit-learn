@@ -132,13 +132,13 @@ Reference Steps
         * [ ] Upload the wheels and source tarball to PyPI
         * [ ] Update news and what's new date in main branch
         * [ ] Backport news and what's new date in release branch
+        {%- if key == "final" %}
+        * [ ] Update symlink for stable in https://github.com/scikit-learn/scikit-learn.github.io
+        {%- endif %}
         {%- if key != "rc" %}
         * [ ] Publish to https://github.com/scikit-learn/scikit-learn/releases
         {%- endif %}
         * [ ] Announce on mailing list and on Twitter, and LinkedIn
-        {%- if key == "final" %}
-        * [ ] Update symlink for stable in https://github.com/scikit-learn/scikit-learn.github.io
-        {%- endif %}
         {%- if key != "rc" %}
         * [ ] Update SECURITY.md in main branch
         {%- endif %}
@@ -202,6 +202,12 @@ Reference Steps
         git tag -a {{ version_full }}  # in the {{ version_short }}.X branch
         git push git@github.com:scikit-learn/scikit-learn.git {{ version_full }}
 
+      .. warning::
+
+        Don't use the github interface for publishing the release as a way to create the
+        tag because it will automatically send notifications to all users that follow
+        the repo even though the website isn't updated and wheels aren't uploaded yet.
+
     - Confirm that the bot has detected the tag on the conda-forge feedstock repository
       https://github.com/conda-forge/scikit-learn-feedstock. If not, submit a PR for the
       release, targeting the `{% if key == "rc" %}rc{% else %}main{% endif %}` branch.
@@ -223,7 +229,7 @@ Reference Steps
           rm -r dist
           python -m pip install -U wheelhouse_uploader twine
           python -m wheelhouse_uploader fetch \
-            --version 0.99.0rc1 --local-folder dist scikit-learn \
+            --version {{ version_full }} --local-folder dist scikit-learn \
             https://pypi.anaconda.org/scikit-learn-wheels-staging/simple/scikit-learn/
 
         These commands will download all the binary packages accumulated in the `staging
@@ -290,6 +296,13 @@ Reference Steps
         git add stable versionwarning.js
         git commit -m "Update stable to point to {{ version_short }}"
         git push origin main
+    {% endif %}
+
+    {% if key != "rc" %}
+    - Publish the release at https://github.com/scikit-learn/scikit-learn/releases and
+      announce it on the mailing list and social networks. Remember to add a link to the
+      changelog in the release note. Ideally, only perform this step once the package
+      is available both on PyPI and conda-forge and once the website is up to date.
     {% endif %}
 
     {% if key != "rc" %}
