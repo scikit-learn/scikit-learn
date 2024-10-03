@@ -231,10 +231,10 @@ def permutation_importance(
         .. versionadded:: 1.0
 
     n_features : int or None, default=None
-        Number of features to include in the analysis, chosen randomly.
+        Number of features to include, chosen randomly.
         If None, all features will be included.
 
-        .. versionadded:: 1.0
+        .. versionadded:: 1.7
 
     Returns
     -------
