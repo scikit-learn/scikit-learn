@@ -285,8 +285,12 @@ def permutation_importance(
 
     if n_features is not None:
         if n_features > X.shape[1]:
-            raise ValueError(f"n_features must be <= the number of features in X ({X.shape[1]}).")
-        feature_indices = random_state.choice(X.shape[1], size=n_features, replace=False)
+            raise ValueError(
+                f"n_features must be <= the number of features in X ({X.shape[1]})."
+            )
+        feature_indices = random_state.choice(
+            X.shape[1], size=n_features, replace=False
+        )
     else:
         feature_indices = np.arange(X.shape[1])
 
