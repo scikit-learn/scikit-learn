@@ -28,7 +28,7 @@ import numpy as np
 
 from ..base import is_regressor
 from ..utils import Bunch
-from ..utils._param_validation import HasMethods, StrOptions, validate_params
+from ..utils._param_validation import HasMethods, Hidden, StrOptions, validate_params
 from ..utils._response import _get_response_values
 from ..utils.metadata_routing import (
     MetadataRequest,
@@ -620,12 +620,15 @@ def _get_response_method_name(response_method):
             list,
             tuple,
             StrOptions({"predict", "predict_proba", "decision_function"}),
+            Hidden(StrOptions({"default"})),
         ],
         "greater_is_better": ["boolean"],
     },
     prefer_skip_nested_validation=True,
 )
-def make_scorer(score_func, *, response_method=None, greater_is_better=True, **kwargs):
+def make_scorer(
+    score_func, *, response_method="default", greater_is_better=True, **kwargs
+):
     """Make a scorer from a performance metric or loss function.
 
     A scorer is a wrapper around an arbitrary metric or loss function that is called
@@ -692,11 +695,12 @@ def make_scorer(score_func, *, response_method=None, greater_is_better=True, **k
 
     if response_method is None:
         warnings.warn(
-            "The default value of response_method will change from None to 'predict' "
-            "in version 1.8 and None wont be a valid option anymore. Set "
-            "response_method='predict' to avoid this warning.",
+            "response_method=None is deprecated in version 1.6 and will be removed "
+            "in version 1.8. Leave it to its default value to avoid this warning.",
             FutureWarning,
         )
+        response_method = "predict"
+    elif response_method == "default":
         response_method = "predict"
 
     return _Scorer(score_func, sign, kwargs, response_method)

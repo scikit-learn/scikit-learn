@@ -1,5 +1,6 @@
 import numbers
 import pickle
+import warnings
 from copy import deepcopy
 from functools import partial
 from unittest.mock import Mock
@@ -1624,8 +1625,11 @@ def test_curve_scorer_pos_label(global_random_seed):
 
 # TODO(1.8): remove
 def test_make_scorer_reponse_method_default_warning():
-    with pytest.warns(
-        FutureWarning,
-        match="The default value of response_method will change from None to 'predict'",
-    ):
+    with pytest.warns(FutureWarning, match="response_method=None is deprecated"):
+        make_scorer(accuracy_score, response_method=None)
+
+    # No warning is raised if response_method is left to its default value
+    # because the future default value has the same effect as the current one.
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
         make_scorer(accuracy_score)
