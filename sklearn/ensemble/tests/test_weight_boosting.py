@@ -86,7 +86,7 @@ def test_oneclass_adaboost_proba():
     # In response to issue #7501
     # https://github.com/scikit-learn/scikit-learn/issues/7501
     y_t = np.ones(len(X))
-    clf = AdaBoostClassifier(algorithm="SAMME").fit(X, y_t)
+    clf = AdaBoostClassifier().fit(X, y_t)
     assert_array_almost_equal(clf.predict_proba(X), np.ones((len(X), 1)))
 
 
@@ -269,10 +269,10 @@ def test_estimator():
 
     # XXX doesn't work with y_class because RF doesn't support classes_
     # Shouldn't AdaBoost run a LabelBinarizer?
-    clf = AdaBoostClassifier(RandomForestClassifier(), algorithm="SAMME")
+    clf = AdaBoostClassifier(RandomForestClassifier())
     clf.fit(X, y_regr)
 
-    clf = AdaBoostClassifier(SVC(), algorithm="SAMME")
+    clf = AdaBoostClassifier(SVC())
     clf.fit(X, y_class)
 
     from sklearn.ensemble import RandomForestRegressor
@@ -286,14 +286,14 @@ def test_estimator():
     # Check that an empty discrete ensemble fails in fit, not predict.
     X_fail = [[1, 1], [1, 1], [1, 1], [1, 1]]
     y_fail = ["foo", "bar", 1, 2]
-    clf = AdaBoostClassifier(SVC(), algorithm="SAMME")
+    clf = AdaBoostClassifier(SVC())
     with pytest.raises(ValueError, match="worse than random"):
         clf.fit(X_fail, y_fail)
 
 
 def test_sample_weights_infinite():
     msg = "Sample weights have reached infinite values"
-    clf = AdaBoostClassifier(n_estimators=30, learning_rate=23.0, algorithm="SAMME")
+    clf = AdaBoostClassifier(n_estimators=30, learning_rate=23.0)
     with pytest.warns(UserWarning, match=msg):
         clf.fit(iris.data, iris.target)
 
@@ -338,14 +338,12 @@ def test_sparse_classification(sparse_container, expected_internal_type):
     sparse_classifier = AdaBoostClassifier(
         estimator=CustomSVC(probability=True),
         random_state=1,
-        algorithm="SAMME",
     ).fit(X_train_sparse, y_train)
 
     # Trained on dense format
     dense_classifier = AdaBoostClassifier(
         estimator=CustomSVC(probability=True),
         random_state=1,
-        algorithm="SAMME",
     ).fit(X_train, y_train)
 
     # predict
@@ -493,9 +491,7 @@ def test_multidimensional_X():
     yc = rng.choice([0, 1], 51)
     yr = rng.randn(51)
 
-    boost = AdaBoostClassifier(
-        DummyClassifier(strategy="most_frequent"), algorithm="SAMME"
-    )
+    boost = AdaBoostClassifier(DummyClassifier(strategy="most_frequent"))
     boost.fit(X, yc)
     boost.predict(X)
     boost.predict_proba(X)
@@ -595,9 +591,7 @@ def test_adaboost_numerically_stable_feature_importance_with_small_weights():
     y = rng.choice([0, 1], size=1000)
     sample_weight = np.ones_like(y) * 1e-263
     tree = DecisionTreeClassifier(max_depth=10, random_state=12)
-    ada_model = AdaBoostClassifier(
-        estimator=tree, n_estimators=20, algorithm="SAMME", random_state=12
-    )
+    ada_model = AdaBoostClassifier(estimator=tree, n_estimators=20, random_state=12)
     ada_model.fit(X, y, sample_weight=sample_weight)
     assert np.isnan(ada_model.feature_importances_).sum() == 0
 
