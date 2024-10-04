@@ -85,6 +85,10 @@ class BisectingKMeans(_BaseKMeans):
 
     Read more in the :ref:`User Guide <bisect_k_means>`.
 
+    See
+    :ref:`sphx_glr_auto_examples_cluster_plot_bisect_kmeans.py`
+    for an example on how to use the API.
+
     .. versionadded:: 1.1
 
     Parameters
