@@ -937,7 +937,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         .. seealso::
            Refer to the :ref:`User Guide <Logistic_regression>` for more
            information regarding :class:`LogisticRegression` and more specifically the
-           :ref:`Table <Logistic_regression_solvers>`
+           :ref:`Table <logistic_regression_solvers>`
            summarizing solver/penalty supports.
 
         .. versionadded:: 0.17
