@@ -60,6 +60,7 @@ from sklearn.utils.fixes import (
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
     _allclose_dense_sparse,
+    _bin_and_check_balance,
     _check_feature_names_in,
     _check_method_params,
     _check_psd_eigenvalues,
@@ -85,6 +86,52 @@ from sklearn.utils.validation import (
     has_fit_parameter,
     validate_data,
 )
+
+
+def test_bin_and_check_balance_balanced():
+    y = np.array([1, 2, 1, 2, 1, 2])
+    assert np.all(_bin_and_check_balance(y, n_bins=2) >= 0)
+
+
+def test_bin_and_check_balance_unbalanced():
+    y = np.array([1, 1, 1, 2, 2, 2, 2, 2])
+    assert not np.all(_bin_and_check_balance(y, n_bins=2))
+
+
+def test_bin_and_check_balance_with_nan():
+    y = np.array([1, 2, 1, np.nan, 2, np.nan])
+    with pytest.raises(ValueError, match="Input y contains NaN"):
+        _bin_and_check_balance(y, n_bins=2)
+
+
+def test_bin_and_check_balance_with_negative_values():
+    y = np.array([-3, -2, -3, -2, -3, -2])
+    assert np.all(_bin_and_check_balance(y, n_bins=2) >= 0)
+
+
+def test_bin_and_check_balance_constant_values():
+    y = np.array([1, 1, 1, 1, 1])
+    with pytest.raises(ValueError, match="y has only one unique value"):
+        _bin_and_check_balance(y, n_bins=2)
+
+
+def test_bin_and_check_balance_high_n_bins():
+    y = np.array([1, 2, 3])
+    with pytest.raises(
+        ValueError,
+        match="n_bins should be less than or equal to the number of unique y values",
+    ):
+        _bin_and_check_balance(y, n_bins=4)
+
+
+def test_bin_and_check_balance_large_data():
+    y = np.random.uniform(0, 100, 1000)
+    assert np.all(_bin_and_check_balance(y, n_bins=10) >= 0)
+
+
+def test_bin_and_check_balance_custom_n_bins():
+    y = np.array([1, 2, 1, 2, 1, 2])
+    assert np.all(_bin_and_check_balance(y, n_bins=2) >= 0)
 
 
 def test_make_rng():

@@ -324,6 +324,63 @@ def _use_interchange_protocol(X):
     return not _is_pandas_df(X) and hasattr(X, "__dataframe__")
 
 
+def _bin_and_check_balance(y, n_bins):
+    """
+    Bin continuous target values into `n_bins` equal-sized intervals and
+    check for balance.
+
+    Parameters
+    ----------
+    y : array-like
+        Continuous target values to be binned.
+
+    n_bins : int
+        The number of bins to divide `y` into.
+
+    Returns
+    -------
+    y_binned : array-like
+        The binned version of `y`, where each element is assigned to its
+        corresponding bin.
+
+    Raises
+    ------
+    ValueError
+        If any bin contains fewer than 2 elements, leading to unbalanced splits.
+    """
+    # Check for NaN values
+    if np.isnan(y).any():
+        raise ValueError("Input y contains NaN")
+
+    # Check if y has only one unique value
+    if len(np.unique(y)) == 1:
+        raise ValueError("y has only one unique value")
+
+    if len(np.unique(y)) < n_bins:
+        raise ValueError(
+            "n_bins should be less than or equal to the number of unique y values"
+        )
+
+    # Calculate percentiles
+    percentiles = np.percentile(y, np.linspace(0, 100, n_bins + 1))
+
+    # Bin the data manually
+    y_binned = np.digitize(y, percentiles[1:-1], right=True)
+
+    # Count the number of elements in each bin
+    bin_counts = np.bincount(y_binned)
+
+    # Check if any bin has fewer than 2 elements
+    if np.any(bin_counts < 2):
+        raise ValueError(
+            f"The number of bins ({n_bins}) is too high. "
+            f"Some bins have fewer than 2 elements. "
+            "Please reduce the number of bins to proceed with stratification."
+        )
+
+    return y_binned
+
+
 def _num_features(X):
     """Return the number of features in an array-like X.
 

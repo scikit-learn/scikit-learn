@@ -33,7 +33,12 @@ from ..utils._param_validation import Interval, RealNotInt, validate_params
 from ..utils.extmath import _approximate_mode
 from ..utils.metadata_routing import _MetadataRequester
 from ..utils.multiclass import type_of_target
-from ..utils.validation import _num_samples, check_array, column_or_1d
+from ..utils.validation import (
+    _bin_and_check_balance,
+    _num_samples,
+    check_array,
+    column_or_1d,
+)
 
 __all__ = [
     "BaseCrossValidator",
@@ -2720,6 +2725,8 @@ def check_cv(cv=5, y=None, *, classifier=False):
         "random_state": ["random_state"],
         "shuffle": ["boolean"],
         "stratify": ["array-like", None],
+        "balance_regression": ["boolean"],
+        "n_bins": [Interval(numbers.Integral, 2, None, closed="left")],
     },
     prefer_skip_nested_validation=True,
 )
@@ -2730,6 +2737,8 @@ def train_test_split(
     random_state=None,
     shuffle=True,
     stratify=None,
+    balance_regression=False,
+    n_bins=10,
 ):
     """Split arrays or matrices into random train and test subsets.
 
@@ -2772,6 +2781,16 @@ def train_test_split(
         If not None, data is split in a stratified fashion, using this as
         the class labels.
         Read more in the :ref:`User Guide <stratification>`.
+
+    balance_regression : bool, default=False
+        If True, balances the regression dataset by binning the `y` values
+        into equal intervals
+        to maintain distribution between the splits.
+
+    n_bins : int, default=10
+        The number of bins to use when binning continuous `y` values
+        for regression balancing. Only used
+        if `balance_regression=True`.
 
     Returns
     -------
@@ -2836,6 +2855,13 @@ def train_test_split(
         test = np.arange(n_train, n_train + n_test)
 
     else:
+        if balance_regression:
+            y = arrays[-1]
+            unique_y = np.unique(y)
+            if len(unique_y) < n_bins:
+                raise ValueError("n_bins must be <= unique y values")
+            stratify = _bin_and_check_balance(y, n_bins)
+
         if stratify is not None:
             CVClass = StratifiedShuffleSplit
         else:

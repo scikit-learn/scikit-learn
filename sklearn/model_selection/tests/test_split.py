@@ -116,6 +116,56 @@ def _split(splitter, X, y, groups):
         return splitter.split(X, y)
 
 
+def test_train_test_split_balanced_regression():
+    X = np.array([[i] for i in range(1000)])
+    y = np.hstack((np.ones(500), np.zeros(500)))
+
+    _, _, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42, balance_regression=True
+    )
+
+    assert np.isclose(
+        np.sum(y_train == 1) / len(y_train),
+        np.sum(y_test == 1) / len(y_test),
+        atol=1e-6,
+    )
+
+
+def test_train_test_split_balanced_regression_uneven():
+    X = np.array([[i] for i in range(1000)])
+    y = np.hstack((np.ones(800), np.zeros(200)))
+
+    _, _, y_train, y_test = train_test_split(
+        X, y, test_size=0.3, random_state=42, balance_regression=True
+    )
+
+    assert np.isclose(
+        np.sum(y_train == 1) / len(y_train),
+        np.sum(y_test == 1) / len(y_test),
+        atol=1e-6,
+    )
+
+
+def test_train_test_split_balanced_regression_single_class():
+    X = np.array([[i] for i in range(1000)])
+    y = np.ones(1000)
+
+    with pytest.raises(ValueError, match="The least populated class"):
+        train_test_split(X, y, test_size=0.2, balance_regression=True)
+
+
+def test_train_test_split_balanced_regression_random():
+    X = np.array([[i] for i in range(1000)])
+    y = np.random.randint(0, 2, 1000)
+
+    X_train, X_test, _, _ = train_test_split(
+        X, y, test_size=0.25, random_state=42, balance_regression=True
+    )
+
+    assert len(X_train) == 750
+    assert len(X_test) == 250
+
+
 def test_cross_validator_with_default_params():
     n_samples = 4
     n_unique_groups = 4
