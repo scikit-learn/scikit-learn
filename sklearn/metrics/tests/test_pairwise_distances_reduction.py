@@ -101,7 +101,23 @@ def assert_same_distances_for_common_neighbors(
                 f" dist_a={dist_a} vs dist_b={dist_b} (with atol={atol} and"
                 f" rtol={rtol})"
             ) from e
+            
+def assert_array_precomputed(precomputed: np.ndarray) -> None:
+    """Ensure input is a numpy array."""
+    assert isinstance(precomputed, np.ndarray), "Input must be a numpy array."
 
+def assert_dtype_precomputed(precomputed: np.ndarray) -> None:
+    """Ensure input is of type float32 or float64."""
+    assert precomputed.dtype in [np.float32, np.float64], "Array must be of type float32 or float64."
+
+def assert_not_empty_precomputed(precomputed: np.ndarray) -> None:
+    """Ensure array is not empty."""
+    assert precomputed.size > 0, "Precomputed matrix should not be empty."
+
+def assert_nan_precomputed(precomputed: np.ndarray) -> None:
+    """Ensure array contains no NaN or Inf values."""
+    assert not np.isnan(precomputed).any(), "Precomputed matrix contains NaN values."
+    
 def assert_size_for_precomputed(precomputed: np.ndarray, n_samples_X: int, n_samples_Y: int) -> None:
     """
     Check the shape of the precomputed distance matrix.
@@ -139,64 +155,6 @@ def assert_size_for_precomputed(precomputed: np.ndarray, n_samples_X: int, n_sam
         f"Expected: ({n_samples_X}, {n_samples_Y}), "
         f"Got: {precomputed.shape}"
     )
-
-def assert_size_for_precomputed(precomputed: np.ndarray, n_samples_X: int, n_samples_Y: int) -> None:
-    """
-    Check the shape of the precomputed distance matrix.
-
-    Parameters:
-    precomputed (np.ndarray): The precomputed distance matrix.
-    n_samples_X (int): The expected number of samples for X.
-    n_samples_Y (int): The expected number of samples for Y.
-
-    Raises:
-    AssertionError: If the shape of the precomputed matrix is not correct.
-    """
-    assert isinstance(precomputed, np.ndarray), "Input must be a numpy array."
-    assert precomputed.shape == (n_samples_X, n_samples_Y), (
-        f"Incorrect dimensions for precomputed matrix. "
-        f"Expected: ({n_samples_X}, {n_samples_Y}), "
-        f"Got: {precomputed.shape}"
-    )
-
-def assert_size_for_precomputed(precomputed: np.ndarray, n_samples_X: int, n_samples_Y: int) -> None:
-    """
-    Check the shape of the precomputed distance matrix.
-
-    Parameters:
-    precomputed (np.ndarray): The precomputed distance matrix.
-    n_samples_X (int): The expected number of samples for X.
-    n_samples_Y (int): The expected number of samples for Y.
-
-    Raises:
-    AssertionError: If the shape of the precomputed matrix is not correct.
-    """
-    assert isinstance(precomputed, np.ndarray), "Input must be a numpy array."
-    assert precomputed.shape == (n_samples_X, n_samples_Y), (
-        f"Incorrect dimensions for precomputed matrix. "
-        f"Expected: ({n_samples_X}, {n_samples_Y}), "
-        f"Got: {precomputed.shape}"
-    )
-
-def assert_size_for_precomputed(precomputed: np.ndarray, n_samples_X: int, n_samples_Y: int) -> None:
-    """
-    Check the shape of the precomputed distance matrix.
-
-    Parameters:
-    precomputed (np.ndarray): The precomputed distance matrix.
-    n_samples_X (int): The expected number of samples for X.
-    n_samples_Y (int): The expected number of samples for Y.
-
-    Raises:
-    AssertionError: If the shape of the precomputed matrix is not correct.
-    """
-    assert isinstance(precomputed, np.ndarray), "Input must be a numpy array."
-    assert precomputed.shape == (n_samples_X, n_samples_Y), (
-        f"Incorrect dimensions for precomputed matrix. "
-        f"Expected: ({n_samples_X}, {n_samples_Y}), "
-        f"Got: {precomputed.shape}"
-    )
-
     
 def assert_no_missing_neighbors(
     query_idx,
