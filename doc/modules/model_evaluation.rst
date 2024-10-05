@@ -2460,6 +2460,9 @@ percentage deviation (MAPD), is an evaluation metric for regression problems.
 The idea of this metric is to be sensitive to relative errors. It is for example
 not changed by a global scaling of the target variable.
 
+For example, if the true value is 1 and the predicted value is 2, the MAPE will be 1 (or 100% error). 
+Similarly, if the true value is 1 and the predicted value is 3, the MAPE will be 2 (or 200% error).
+
 If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample
 and :math:`y_i` is the corresponding true value, then the mean absolute percentage
 error (MAPE) estimated over :math:`n_{\text{samples}}` is defined as
