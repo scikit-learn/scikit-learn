@@ -140,7 +140,11 @@ from sklearn.multioutput import (
     MultiOutputRegressor,
     RegressorChain,
 )
-from sklearn.neighbors import NeighborhoodComponentsAnalysis
+from sklearn.neighbors import (
+    KNeighborsClassifier,
+    KNeighborsRegressor,
+    NeighborhoodComponentsAnalysis,
+)
 from sklearn.neural_network import BernoulliRBM, MLPClassifier, MLPRegressor
 from sklearn.pipeline import FeatureUnion, Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler, TargetEncoder
@@ -308,6 +312,8 @@ INIT_PARAMS = {
     IncrementalPCA: dict(batch_size=10),
     IsolationForest: dict(n_estimators=5),
     KMeans: dict(n_init=2, n_clusters=2, max_iter=5),
+    KNeighborsClassifier: [dict(n_neighbors=2), dict(metric="precomputed")],
+    KNeighborsRegressor: [dict(n_neighbors=2), dict(metric="precomputed")],
     LabelPropagation: dict(max_iter=5),
     LabelSpreading: dict(max_iter=5),
     LarsCV: dict(max_iter=5, cv=3),
@@ -448,8 +454,8 @@ INIT_PARAMS = {
         ],
         cv=3,
     ),
-    SVC: dict(max_iter=-1),
-    SVR: dict(max_iter=-1),
+    SVC: [dict(max_iter=-1), dict(kernel="precomputed")],
+    SVR: [dict(max_iter=-1), dict(kernel="precomputed")],
     TargetEncoder: dict(cv=3),
     TheilSenRegressor: dict(max_iter=5, max_subpopulation=100),
     # TruncatedSVD doesn't run with n_components = n_features
@@ -498,6 +504,7 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     Isomap: {"check_dict_unchanged": dict(n_components=1)},
     KMeans: {"check_dict_unchanged": dict(max_iter=5, n_clusters=1, n_init=2)},
     KernelPCA: {"check_dict_unchanged": dict(n_components=1)},
+    LassoLars: {"check_non_transformer_estimators_n_iter": dict(alpha=0.0)},
     LatentDirichletAllocation: {
         "check_dict_unchanged": dict(batch_size=10, max_iter=5, n_components=1)
     },

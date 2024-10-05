@@ -245,29 +245,33 @@ def test_regression_metrics_at_limits():
         assert_almost_equal(s([1, 1], [1, 1]), 1.0)
         assert_almost_equal(s([1, 1], [1, 1], force_finite=False), np.nan)
     msg = (
-        "Mean Squared Logarithmic Error cannot be used when targets "
-        "contain negative values."
+        "Mean Squared Logarithmic Error cannot be used when "
+        "targets contain values less than or equal to -1."
     )
     with pytest.raises(ValueError, match=msg):
         mean_squared_log_error([-1.0], [-1.0])
     msg = (
-        "Mean Squared Logarithmic Error cannot be used when targets "
-        "contain negative values."
+        "Mean Squared Logarithmic Error cannot be used when "
+        "targets contain values less than or equal to -1."
     )
     with pytest.raises(ValueError, match=msg):
         mean_squared_log_error([1.0, 2.0, 3.0], [1.0, -2.0, 3.0])
     msg = (
-        "Mean Squared Logarithmic Error cannot be used when targets "
-        "contain negative values."
+        "Mean Squared Logarithmic Error cannot be used when "
+        "targets contain values less than or equal to -1."
     )
     with pytest.raises(ValueError, match=msg):
         mean_squared_log_error([1.0, -2.0, 3.0], [1.0, 2.0, 3.0])
     msg = (
-        "Root Mean Squared Logarithmic Error cannot be used when targets "
-        "contain negative values."
+        "Mean Squared Logarithmic Error cannot be used when "
+        "targets contain values less than or equal to -1."
     )
     with pytest.raises(ValueError, match=msg):
         root_mean_squared_log_error([1.0, -2.0, 3.0], [1.0, 2.0, 3.0])
+    msg = (
+        "Root Mean Squared Logarithmic Error cannot be used when "
+        "targets contain values less than or equal to -1."
+    )
 
     # Tweedie deviance error
     power = -1.2

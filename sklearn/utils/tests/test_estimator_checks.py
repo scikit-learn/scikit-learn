@@ -27,6 +27,7 @@ from sklearn.linear_model import (
 )
 from sklearn.mixture import GaussianMixture
 from sklearn.neighbors import KNeighborsRegressor
+from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC, NuSVC
 from sklearn.utils import _array_api, all_estimators, deprecated
 from sklearn.utils._param_validation import Interval, StrOptions
@@ -303,7 +304,8 @@ class BadTransformerWithoutMixin(BaseEstimator):
         return self
 
     def transform(self, X):
-        X = check_array(X)
+        check_is_fitted(self)
+        X = validate_data(self, X, reset=False)
         return X
 
 
@@ -421,16 +423,15 @@ class SparseTransformer(BaseEstimator):
         self.sparse_container = sparse_container
 
     def fit(self, X, y=None):
-        self.X_shape_ = validate_data(self, X).shape
+        validate_data(self, X)
         return self
 
     def fit_transform(self, X, y=None):
         return self.fit(X, y).transform(X)
 
     def transform(self, X):
-        X = check_array(X)
-        if X.shape[1] != self.X_shape_[1]:
-            raise ValueError("Bad number of features")
+        check_is_fitted(self)
+        X = validate_data(self, X, accept_sparse=True, reset=False)
         return self.sparse_container(X)
 
 
@@ -1417,3 +1418,16 @@ def test_check_estimator_tags_renamed():
     # to exist so that third party estimators can easily support multiple sklearn
     # versions.
     check_estimator_tags_renamed("OkayEstimator", OkayEstimator())
+
+
+# Test that set_output doesn't make the tests to fail.
+def test_estimator_with_set_output():
+    # Doing this since pytest is not available for this file.
+    for lib in ["pandas", "polars"]:
+        try:
+            importlib.__import__(lib)
+        except ImportError:
+            raise SkipTest(f"Library {lib} is not installed")
+
+        estimator = StandardScaler().set_output(transform=lib)
+        check_estimator(estimator)

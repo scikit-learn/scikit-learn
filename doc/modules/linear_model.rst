@@ -504,8 +504,8 @@ The objective function to minimize is in this case
     \frac{\alpha(1-\rho)}{2} ||w||_2 ^ 2}
 
 
-.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_coordinate_descent_path_001.png
-   :target: ../auto_examples/linear_model/plot_lasso_coordinate_descent_path.html
+.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_lasso_lars_elasticnet_path_002.png
+   :target: ../auto_examples/linear_model/plot_lasso_lasso_lars_elasticnet_path.html
    :align: center
    :scale: 50%
 
@@ -515,7 +515,7 @@ The class :class:`ElasticNetCV` can be used to set the parameters
 .. rubric:: Examples
 
 * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
-* :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_coordinate_descent_path.py`
+* :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_lasso_lars_elasticnet_path.py`
 * :ref:`sphx_glr_auto_examples_linear_model_plot_elastic_net_precomputed_gram_matrix_with_weighted_samples.py`
 
 .. dropdown:: References
@@ -609,8 +609,8 @@ algorithm, and unlike the implementation based on coordinate descent,
 this yields the exact solution, which is piecewise linear as a
 function of the norm of its coefficients.
 
-.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_lars_001.png
-   :target: ../auto_examples/linear_model/plot_lasso_lars.html
+.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_lasso_lars_elasticnet_path_001.png
+   :target: ../auto_examples/linear_model/plot_lasso_lasso_lars_elasticnet_path.html
    :align: center
    :scale: 50%
 
@@ -625,7 +625,7 @@ function of the norm of its coefficients.
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_lars.py`
+* :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_lasso_lars_elasticnet_path.py`
 
 The Lars algorithm provides the full path of the coefficients along
 the regularization parameter almost for free, thus a common operation

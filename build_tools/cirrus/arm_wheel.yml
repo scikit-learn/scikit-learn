@@ -28,6 +28,11 @@ linux_arm64_wheel_task:
         CIBW_TEST_SKIP: "*_aarch64"
     - env:
         CIBW_BUILD: cp312-manylinux_aarch64
+    - env:
+        CIBW_BUILD: cp313-manylinux_aarch64
+        # TODO remove next line when Python 3.13 is relased and add
+        # CIBW_TEST_SKIP for Python 3.12 above
+        CIBW_TEST_SKIP: "*_aarch64"
 
   cibuildwheel_script:
     - apt install -y python3 python-is-python3
