@@ -1259,6 +1259,9 @@ class FeatureAgglomeration(
     >>> X_reduced = agglo.transform(X)
     >>> X_reduced.shape
     (1797, 32)
+
+    For a comparison between FeatureAgglomeration and univariate feature selection refer to example
+    :ref:`sphx_glr_auto_examples_cluster_plot_feature_agglomeration_vs_univariate_selection.py`.
     """
 
     _parameter_constraints: dict = {
