@@ -66,6 +66,7 @@ from ._regression import (
     root_mean_squared_log_error,
 )
 from ._scorer import check_scoring, get_scorer, get_scorer_names, make_scorer
+from ._decision_threshold import decision_threshold_curve
 from .cluster import (
     adjusted_mutual_info_score,
     adjusted_rand_score,
@@ -117,6 +118,7 @@ __all__ = [
     "d2_log_loss_score",
     "d2_pinball_score",
     "dcg_score",
+    "decision_threshold_curve",
     "davies_bouldin_score",
     "DetCurveDisplay",
     "det_curve",

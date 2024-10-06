@@ -28,6 +28,7 @@ import numpy as np
 
 from ..base import is_regressor
 from ..utils import Bunch
+from ..utils._encode import _unique
 from ..utils._param_validation import HasMethods, Hidden, StrOptions, validate_params
 from ..utils._response import _get_response_values
 from ..utils.metadata_routing import (
@@ -1132,11 +1133,12 @@ class _CurveScorer(_BaseScorer):
         uniformly distributed between the minimum and maximum predicted scores. If an
         array-like, it will be used as the thresholds.
 
-    response_method : str
-        The method to call on the estimator to get the response values.
+    response_method : str, default=None
+        The method to call on the estimator to get the response values. If value is set
+        to `None`, then
     """
 
-    def __init__(self, score_func, sign, kwargs, thresholds, response_method):
+    def __init__(self, score_func, sign, kwargs, thresholds, response_method=None):
         super().__init__(
             score_func=score_func,
             sign=sign,
@@ -1146,18 +1148,67 @@ class _CurveScorer(_BaseScorer):
         self._thresholds = thresholds
 
     @classmethod
-    def from_scorer(cls, scorer, response_method, thresholds):
+    def from_scorer(cls, scorer, thresholds, response_method=None):
         """Create a continuous scorer from a normal scorer."""
         instance = cls(
             score_func=scorer._score_func,
             sign=scorer._sign,
-            response_method=response_method,
             thresholds=thresholds,
+            response_method=response_method,
             kwargs=scorer._kwargs,
         )
         # transfer the metadata request
         instance._metadata_request = scorer._get_metadata_request()
         return instance
+
+    # TODO(Carlo): Create tests for this functions.
+    def _score_given_prediction(
+        self, y_score, y_true, classes=None, pos_label=None, **kwargs
+    ):
+        """Calculate the scores for given prediction values and true labels.
+
+        Parameters
+        ----------
+        y_score : array-like of shape (n_samples,)
+            Predicted target scores.
+
+        y_true : array-like of shape (n_samples,)
+            Gold standard target values.
+
+        classes: TODO(Carlo)
+            ...
+
+        **kwargs : dict
+            Other parameters passed to the scorer.
+
+        Returns
+        -------
+        score_thresholds : ndarray of shape (thresholds,)
+            The scores associated with each threshold.
+
+        potential_thresholds : ndarray of shape (thresholds,)
+            The potential thresholds used to compute the scores.
+        """
+        if classes is None:
+            classes = _unique(y_true)
+        pos_label = self._get_pos_label()
+        scoring_kwargs = {**self._kwargs, **kwargs}
+        if isinstance(self._thresholds, Integral):
+            potential_thresholds = np.linspace(
+                np.min(y_score), np.max(y_score), self._thresholds
+            )
+        else:
+            potential_thresholds = np.asarray(self._thresholds)
+        score_thresholds = [
+            self._sign
+            * self._score_func(
+                y_true,
+                _threshold_scores_to_class_labels(y_score, th, classes, pos_label),
+                **scoring_kwargs,
+            )
+            for th in potential_thresholds
+        ]
+        return np.array(score_thresholds), potential_thresholds
 
     def _score(self, method_caller, estimator, X, y_true, **kwargs):
         """Evaluate predicted target values for X relative to y_true.
@@ -1189,27 +1240,18 @@ class _CurveScorer(_BaseScorer):
         potential_thresholds : ndarray of shape (thresholds,)
             The potential thresholds used to compute the scores.
         """
-        pos_label = self._get_pos_label()
+        if self._response_method is None:
+            raise ValueError(
+                "If response_method is set to `None`, you can't use this method. "
+                "Use `_score_given_prediction` instead."
+            )
         y_score = method_caller(
-            estimator, self._response_method, X, pos_label=pos_label
+            estimator, self._response_method, X, pos_label=self._get_pos_label()
+        )
+        classes = estimator.classes_
+
+        scores, potential_thresholds = self._score_given_prediction(
+            y_score, y_true, classes, **kwargs
         )
 
-        scoring_kwargs = {**self._kwargs, **kwargs}
-        if isinstance(self._thresholds, Integral):
-            potential_thresholds = np.linspace(
-                np.min(y_score), np.max(y_score), self._thresholds
-            )
-        else:
-            potential_thresholds = np.asarray(self._thresholds)
-        score_thresholds = [
-            self._sign
-            * self._score_func(
-                y_true,
-                _threshold_scores_to_class_labels(
-                    y_score, th, estimator.classes_, pos_label
-                ),
-                **scoring_kwargs,
-            )
-            for th in potential_thresholds
-        ]
-        return np.array(score_thresholds), potential_thresholds
+        return scores, potential_thresholds
