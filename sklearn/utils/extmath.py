@@ -482,6 +482,9 @@ def randomized_svd(
     .. [3] An implementation of a randomized algorithm for principal component
       analysis A. Szlam et al. 2014
 
+    See:ref:`sphx_glr_auto_examples_applications_wikipedia_principal_eigenvector.py`
+    for an example on how to use the API. 
+
     Examples
     --------
     >>> import numpy as np
