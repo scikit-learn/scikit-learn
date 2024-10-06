@@ -5,7 +5,7 @@ from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 
-from ..cap_curve import CumulativeAccuracyDisplay
+from ..cap_curve import CapCurveDisplay
 
 
 @pytest.fixture
@@ -38,7 +38,7 @@ def test_cumulative_accuracy_display_from_predictions(
     _, X_test, _, y_test = binary_classification_dataset
     y_scores = np.random.rand(len(y_test))
 
-    cap_display = CumulativeAccuracyDisplay.from_predictions(
+    cap_display = CapCurveDisplay.from_predictions(
         y_test,
         y_scores,
         normalize_scale=normalize_scale,
@@ -50,6 +50,9 @@ def test_cumulative_accuracy_display_from_predictions(
     assert hasattr(cap_display, "line_"), "The display must have a line attribute"
     assert hasattr(cap_display, "ax_"), "The display must have an ax attribute"
     assert hasattr(cap_display, "figure_"), "The display must have a figure attribute"
+    assert hasattr(
+        cap_display, "y_true_cumulative"
+    ), "The display must have a y_true_cumulative attribute"
     if plot_chance_level:
         assert (
             cap_display.chance_level_ is not None
@@ -66,7 +69,7 @@ def test_cumulative_accuracy_display_from_estimator(
 ):
     _, X_test, _, y_test = binary_classification_dataset
 
-    cap_display = CumulativeAccuracyDisplay.from_estimator(
+    cap_display = CapCurveDisplay.from_estimator(
         logistic_regression_model,
         X_test,
         y_test,
@@ -79,6 +82,9 @@ def test_cumulative_accuracy_display_from_estimator(
     assert hasattr(cap_display, "line_"), "The display must have a line attribute"
     assert hasattr(cap_display, "ax_"), "The display must have an ax attribute"
     assert hasattr(cap_display, "figure_"), "The display must have a figure attribute"
+    assert hasattr(
+        cap_display, "y_true_cumulative"
+    ), "The display must have a y_true_cumulative attribute"
     if plot_chance_level:
         assert (
             cap_display.chance_level_ is not None

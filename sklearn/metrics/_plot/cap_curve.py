@@ -1,22 +1,27 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numpy as np
+
+from sklearn.base import is_classifier
 
 from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
 
 
-class CumulativeAccuracyDisplay(_BinaryClassifierCurveDisplayMixin):
+class CapCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     """Cumulative Accuracy Profile (CAP) Curve visualization.
 
     It is recommended to use
-    :func:`~sklearn.metrics.CumulativeAccuracyDisplay.from_estimator` or
-    :func:`~sklearn.metrics.CumulativeAccuracyDisplay.from_predictions` to create
-    a :class:`~sklearn.metrics.CumulativeAccuracyDisplay`. All parameters are
+    :func:`~sklearn.metrics.CapCurveDisplay.from_estimator` or
+    :func:`~sklearn.metrics.CapCurveDisplay.from_predictions` to create
+    a :class:`~sklearn.metrics.CapCurveDisplay`. All parameters are
     stored as attributes.
 
     Read more in the :ref:`User Guide <visualizations>`.
 
     Parameters
     ----------
-    cumulative_true_positives : ndarray
+    y_true_cumulative : ndarray
         Cumulative number of true positives.
 
     cumulative_total : ndarray
@@ -44,13 +49,13 @@ class CumulativeAccuracyDisplay(_BinaryClassifierCurveDisplayMixin):
     def __init__(
         self,
         *,
-        cumulative_true_positives,
+        y_true_cumulative,
         cumulative_total,
         estimator_name=None,
         pos_label=None,
     ):
         self.estimator_name = estimator_name
-        self.cumulative_true_positives = cumulative_true_positives
+        self.y_true_cumulative = y_true_cumulative
         self.cumulative_total = cumulative_total
         self.pos_label = pos_label
 
@@ -58,9 +63,9 @@ class CumulativeAccuracyDisplay(_BinaryClassifierCurveDisplayMixin):
         self,
         ax=None,
         *,
-        normalize_scale=False,
+        normalize_scale=True,
         name=None,
-        plot_chance_level=False,
+        plot_chance_level=True,
         chance_level_kw=None,
         **kwargs,
     ):
@@ -82,25 +87,28 @@ class CumulativeAccuracyDisplay(_BinaryClassifierCurveDisplayMixin):
 
         Returns
         -------
-        display : :class:`~sklearn.metrics.CumulativeAccuracyDisplay`
+        display : :class:`~sklearn.metrics.CapCurveDisplay`
             Object that stores computed values.
         """
 
         self.ax_, self.figure_, name = self._validate_plot_params(ax=ax, name=name)
 
         if normalize_scale:
-            self.cumulative_true_positives = (
-                self.cumulative_true_positives / self.cumulative_true_positives[-1]
-            )
+            self.y_true_cumulative = self.y_true_cumulative / self.y_true_cumulative[-1]
             self.cumulative_total = self.cumulative_total / self.cumulative_total[-1]
-            self.ax_.set_xlim(0, 1)
-            self.ax_.set_ylim(0, 1)
+            self.ax_.set_xlim(-0.01, 1.01)
+            self.ax_.set_ylim(-0.01, 1.01)
+        else:
+            x_max = self.cumulative_total[-1]
+            y_max = self.y_true_cumulative[-1]
+            self.ax_.set_xlim(0, x_max * 1.05)
+            self.ax_.set_ylim(0, y_max * 1.05)
 
         line_kwargs = {"label": name} if name is not None else {}
         line_kwargs.update(**kwargs)
 
         chance_level_line_kw = {
-            "label": "Random Prediction",
+            "label": "Change level",
             "color": "k",
             "linestyle": "--",
         }
@@ -108,7 +116,7 @@ class CumulativeAccuracyDisplay(_BinaryClassifierCurveDisplayMixin):
             chance_level_line_kw.update(**chance_level_kw)
 
         (self.line_,) = self.ax_.plot(
-            self.cumulative_total, self.cumulative_true_positives, **line_kwargs
+            self.cumulative_total, self.y_true_cumulative, **line_kwargs
         )
 
         if plot_chance_level:
@@ -135,7 +143,7 @@ class CumulativeAccuracyDisplay(_BinaryClassifierCurveDisplayMixin):
         *,
         sample_weight=None,
         pos_label=None,
-        normalize_scale=False,
+        normalize_scale=True,
         plot_chance_level=False,
         name=None,
         ax=None,
@@ -143,8 +151,7 @@ class CumulativeAccuracyDisplay(_BinaryClassifierCurveDisplayMixin):
     ):
         """Plot the Cumulative Accuracy Profile.
 
-        This is also known as a Gain or Lift Curve for classification, and a Lorenz
-        curve for regression with a positively valued target.
+        This is also known as a (cumulative) gain curve.
 
         Parameters
         ----------
@@ -176,10 +183,9 @@ class CumulativeAccuracyDisplay(_BinaryClassifierCurveDisplayMixin):
 
         Returns
         -------
-        display : :class:`~sklearn.metrics.CumulativeAccuracyDisplay`
+        display : :class:`~sklearn.metrics.CapCurveDisplay`
             Object that stores computed values.
         """
-        # validate and prepare data
         if pos_label is None:
             pos_label = 1
         if sample_weight is None:
@@ -194,11 +200,11 @@ class CumulativeAccuracyDisplay(_BinaryClassifierCurveDisplayMixin):
         sample_weight_sorted = sample_weight[sorted_indices]
 
         # compute cumulative sums for true positives and all cases
-        cumulative_true_positives = np.cumsum(y_true_sorted * sample_weight_sorted)
+        y_true_cumulative = np.cumsum(y_true_sorted * sample_weight_sorted)
         cumulative_total = np.cumsum(sample_weight_sorted)
 
         viz = cls(
-            cumulative_true_positives=cumulative_true_positives,
+            y_true_cumulative=y_true_cumulative,
             cumulative_total=cumulative_total,
             estimator_name=name,
             pos_label=pos_label,
@@ -222,7 +228,7 @@ class CumulativeAccuracyDisplay(_BinaryClassifierCurveDisplayMixin):
         sample_weight=None,
         response_method="auto",
         pos_label=None,
-        normalize_scale=False,
+        normalize_scale=True,
         plot_chance_level=False,
         name=None,
         ax=None,
@@ -230,14 +236,14 @@ class CumulativeAccuracyDisplay(_BinaryClassifierCurveDisplayMixin):
     ):
         """Create the Cumulative Accuracy Profile.
 
-        This is also known as a Gain or Lift Curve for classification, and a Lorenz
-        curve for regression with a positively valued target.
+        This is also known as a (cumulative) gain curve.
 
         Parameters
         ----------
-        estimator : estimator instance
-            Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline`
-            in which the last estimator is a classifier.
+        estimator : BaseEstimator
+            A fitted estimator object implementing :term:`predict`,
+            :term:`predict_proba`, or :term:`decision_function`.
+            Multiclass classifiers are not supported.
 
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Input values.
@@ -251,12 +257,13 @@ class CumulativeAccuracyDisplay(_BinaryClassifierCurveDisplayMixin):
         response_method : {'predict_proba', 'decision_function', 'auto'} \
                 default='auto'
             Specifies whether to use :term:`predict_proba` or
-            :term:`decision_function` as the target response. If set to 'auto',
-            :term:`predict_proba` is tried first and if it does not exist
-            :term:`decision_function` is tried next.
+            :term:`decision_function` as the target response. For regressors
+            this parameter is ignored and the response is always the output of
+            :term:`predict`. By default, :term:`predict_proba` is tried first
+            and we revert to :term:`decision_function` if it doesn't exist.
 
         pos_label : int, float, bool or str, default=None
-            The class considered as the positive class when computing metrics.
+            The class considered as the positive class when computing CAP.
             By default, `estimators.classes_[1]` is considered as the positive class.
 
         name : str, default=None
@@ -270,11 +277,10 @@ class CumulativeAccuracyDisplay(_BinaryClassifierCurveDisplayMixin):
 
         Returns
         -------
-        display : :class:`~sklearn.metrics.CumulativeAccuracyDisplay`
+        display : :class:`~sklearn.metrics.CapCurveDisplay`
             The CAP Curve display.
         """
 
-        # validate and prepare the prediction scores
         if response_method == "auto":
             if hasattr(estimator, "predict_proba"):
                 response_method = "predict_proba"
@@ -286,11 +292,11 @@ class CumulativeAccuracyDisplay(_BinaryClassifierCurveDisplayMixin):
                     " method."
                 )
 
-        if response_method == "predict_proba":
+        if not is_classifier(estimator):
+            y_pred = estimator.predict(X)
+        elif response_method == "predict_proba":
             probabilities = estimator.predict_proba(X)
-
-            # assuming positive class is the second column
-            if pos_label is None:
+            if pos_label is None:  # assuming positive class is the second column
                 pos_label = 1
             class_index = np.where(estimator.classes_ == pos_label)[0][0]
             y_pred = probabilities[:, class_index]
