@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
@@ -32,10 +33,16 @@ def logistic_regression_model(binary_classification_dataset):
 
 @pytest.mark.parametrize("normalize_scale", [True, False])
 @pytest.mark.parametrize("plot_chance_level", [True, False])
+@pytest.mark.parametrize("name", ["Logistic Regression", None])
+@pytest.mark.parametrize("chance_level_kw", [{"color": "red", "lw": 3}, None])
 def test_cumulative_accuracy_display_from_predictions(
-    binary_classification_dataset, normalize_scale, plot_chance_level
+    binary_classification_dataset,
+    normalize_scale,
+    plot_chance_level,
+    name,
+    chance_level_kw,
 ):
-    _, X_test, _, y_test = binary_classification_dataset
+    _, _, _, y_test = binary_classification_dataset
     y_scores = np.random.rand(len(y_test))
 
     cap_display = CapCurveDisplay.from_predictions(
@@ -43,7 +50,8 @@ def test_cumulative_accuracy_display_from_predictions(
         y_scores,
         normalize_scale=normalize_scale,
         plot_chance_level=plot_chance_level,
-        name="Test Classifier",
+        name=name,
+        chance_level_kw=chance_level_kw,
     )
 
     assert cap_display is not None
@@ -58,14 +66,24 @@ def test_cumulative_accuracy_display_from_predictions(
             cap_display.chance_level_ is not None
         ), "Chance level line should be present"
 
+    # Matplotlib raises a warning when opening a large number
+    # of figures without closing them.
+    plt.close()
 
+
+@pytest.mark.parametrize(
+    "response_method", ["auto", "predict_proba", "decision_function"]
+)
 @pytest.mark.parametrize("normalize_scale", [True, False])
 @pytest.mark.parametrize("plot_chance_level", [True, False])
+@pytest.mark.parametrize("name", ["Logistic Regression", None])
 def test_cumulative_accuracy_display_from_estimator(
     logistic_regression_model,
     binary_classification_dataset,
     normalize_scale,
     plot_chance_level,
+    name,
+    response_method,
 ):
     _, X_test, _, y_test = binary_classification_dataset
 
@@ -75,7 +93,8 @@ def test_cumulative_accuracy_display_from_estimator(
         y_test,
         normalize_scale=normalize_scale,
         plot_chance_level=plot_chance_level,
-        name="Logistic Regression",
+        name=name,
+        response_method=response_method,
     )
 
     assert cap_display is not None
@@ -89,3 +108,20 @@ def test_cumulative_accuracy_display_from_estimator(
         assert (
             cap_display.chance_level_ is not None
         ), "Chance level line should be present"
+
+    # Matplotlib raises a warning when opening a large number
+    # of figures without closing them.
+    plt.close()
+
+
+def test_invalid_response_method(
+    logistic_regression_model,
+    binary_classification_dataset,
+):
+    with pytest.raises(ValueError):
+
+        _, X_test, _, y_test = binary_classification_dataset
+
+        _ = CapCurveDisplay.from_estimator(
+            logistic_regression_model, X_test, y_test, response_method="invalid input"
+        )

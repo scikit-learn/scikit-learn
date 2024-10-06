@@ -78,9 +78,19 @@ class CapCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is created.
 
+        normalize_scale : bool, default=True
+            Whether to normalize values between 0 and 1 for the plot.
+
         name : str, default=None
             Name of CAP Curve for labeling. If `None`, use `estimator_name` if
             not `None`, otherwise no labeling is shown.
+
+        plot_chance_level : bool, default=True
+            Whether to plot the chance level.
+
+        chance_level_kw : dict, default=None
+            Keyword arguments to be passed to matplotlib's `plot` for rendering
+            the chance level line.
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
@@ -93,22 +103,22 @@ class CapCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         self.ax_, self.figure_, name = self._validate_plot_params(ax=ax, name=name)
 
+        x_max = self.cumulative_total[-1]
+        y_max = self.y_true_cumulative[-1]
         if normalize_scale:
-            self.y_true_cumulative = self.y_true_cumulative / self.y_true_cumulative[-1]
-            self.cumulative_total = self.cumulative_total / self.cumulative_total[-1]
+            self.cumulative_total = self.cumulative_total / x_max
+            self.y_true_cumulative = self.y_true_cumulative / y_max
             self.ax_.set_xlim(-0.01, 1.01)
             self.ax_.set_ylim(-0.01, 1.01)
         else:
-            x_max = self.cumulative_total[-1]
-            y_max = self.y_true_cumulative[-1]
-            self.ax_.set_xlim(0, x_max * 1.05)
-            self.ax_.set_ylim(0, y_max * 1.05)
+            self.ax_.set_xlim(0, x_max)
+            self.ax_.set_ylim(0, y_max)
 
         line_kwargs = {"label": name} if name is not None else {}
         line_kwargs.update(**kwargs)
 
         chance_level_line_kw = {
-            "label": "Change level",
+            "label": "Chance level",
             "color": "k",
             "linestyle": "--",
         }
@@ -120,8 +130,12 @@ class CapCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         )
 
         if plot_chance_level:
+            if normalize_scale:
+                x_vals, y_vals = (0, 1), (0, 1)
+            else:
+                x_vals, y_vals = (0, x_max), (0, y_max)
             (self.chance_level_,) = self.ax_.plot(
-                (0, 1), (0, 1), **chance_level_line_kw
+                x_vals, y_vals, **chance_level_line_kw
             )
         else:
             self.chance_level_ = None
@@ -144,7 +158,7 @@ class CapCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         sample_weight=None,
         pos_label=None,
         normalize_scale=True,
-        plot_chance_level=False,
+        plot_chance_level=True,
         name=None,
         ax=None,
         **kwargs,
@@ -170,6 +184,9 @@ class CapCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             The label of the positive class. When `pos_label=None`, if `y_true`
             is in {-1, 1} or {0, 1}, `pos_label` is set to 1, otherwise an
             error will be raised.
+
+        normalize_scale : bool, default=True
+            Whether to normalize values between 0 and 1 for the plot.
 
         name : str, default=None
             Name of CAP curve for labeling. If `None`, name will be set to
@@ -229,7 +246,7 @@ class CapCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         response_method="auto",
         pos_label=None,
         normalize_scale=True,
-        plot_chance_level=False,
+        plot_chance_level=True,
         name=None,
         ax=None,
         **kwargs,
@@ -265,6 +282,9 @@ class CapCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         pos_label : int, float, bool or str, default=None
             The class considered as the positive class when computing CAP.
             By default, `estimators.classes_[1]` is considered as the positive class.
+
+        normalize_scale : bool, default=True
+            Whether to normalize values between 0 and 1 for the plot.
 
         name : str, default=None
             Name of CAP Curve for labeling. If `None`, use the name of the estimator.
@@ -302,6 +322,11 @@ class CapCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             y_pred = probabilities[:, class_index]
         elif response_method == "decision_function":
             y_pred = estimator.decision_function(X)
+        else:
+            raise ValueError(
+                "response_method must be in: "
+                "{'predict_proba', 'decision_function', 'auto'}."
+            )
 
         if name is None:
             name = estimator.__class__.__name__
