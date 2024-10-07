@@ -1663,7 +1663,10 @@ class TfidfTransformer(
             # log+1 instead of log makes sure terms with zero idf don't get
             # suppressed entirely.
             # `np.log` preserves the dtype of `df` and thus `dtype`.
-            self.idf_ = np.log(n_samples / df) + 1.0
+            self.idf_ = np.full_like(df, fill_value=n_samples, dtype=dtype)
+            self.idf_ /= df
+            np.log(self.idf_, out=self.idf_)
+            self.idf_ += 1.0
 
         return self
 
