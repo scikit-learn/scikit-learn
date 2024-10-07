@@ -107,8 +107,6 @@ dataset. Each curve shows how a particular coefficient :math:`w_i` changes as
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from itertools import cycle
-
 import matplotlib.pyplot as plt
 
 from sklearn.datasets import load_diabetes
@@ -183,7 +181,9 @@ plt.axis("tight")
 plt.figure(4)
 for coef_lars, coef_positive_lars in zip(coefs_lars, coefs_positive_lars):
     l1 = plt.semilogx(alphas_lars, coef_lars, c='#0072B2')
-    l2 = plt.semilogx(alphas_positive_lars, coef_positive_lars, linestyle="--", c='#D55E00')
+    l2 = plt.semilogx(
+        alphas_positive_lars, coef_positive_lars, linestyle="--", c='#D55E00'
+    )
 
 plt.xlabel("alpha")
 plt.ylabel("coefficients")
