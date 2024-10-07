@@ -9,8 +9,9 @@ Probability calibration
 
 When performing classification you often want not only to predict the class
 label, but also obtain a probability of the respective label. This probability
-gives you some kind of confidence on the prediction. Some models can give you
-poor estimates of the class probabilities and some even do not support
+gives you some kind of confidence on the prediction.
+See :ref:`sphx_glr_auto_examples_calibration_plot_calibration_curve.py`
+Some models can give you poor estimates of the class probabilities and some even do not support
 probability prediction (e.g., some instances of
 :class:`~sklearn.linear_model.SGDClassifier`).
 The calibration module allows you to better calibrate
@@ -54,6 +55,7 @@ In scikit-learn, this is accomplished by binning the predictions such that the x
 represents the average predicted probability in each bin.
 The y-axis is then the *fraction of positives* given the predictions of that bin, i.e.
 the proportion of samples whose class is the positive class (in each bin).
+See :ref:`sphx_glr_auto_examples_calibration_plot_compare_calibration.py`
 
 The top calibration curve plot is created with
 :func:`CalibrationDisplay.from_estimator`, which uses :func:`calibration_curve` to
@@ -129,7 +131,8 @@ Calibrating a classifier
 Calibrating a classifier consists of fitting a regressor (called a
 *calibrator*) that maps the output of the classifier (as given by
 :term:`decision_function` or :term:`predict_proba`) to a calibrated probability
-in [0, 1]. Denoting the output of the classifier for a given sample by :math:`f_i`,
+in [0, 1]. See :ref:`sphx_glr_auto_examples_calibration_plot_calibration.py`
+Denoting the output of the classifier for a given sample by :math:`f_i`,
 the calibrator tries to predict the conditional event probability
 :math:`P(y_i = 1 | f_i)`.
 
@@ -268,8 +271,8 @@ Multiclass support
 Both isotonic and sigmoid regressors only
 support 1-dimensional data (e.g., binary classification output) but are
 extended for multiclass classification if the `base_estimator` supports
-multiclass predictions. For multiclass predictions,
-:class:`CalibratedClassifierCV` calibrates for
+multiclass predictions. See :ref:`sphx_glr_auto_examples_calibration_plot_calibration_multiclass.py`
+For multiclass predictions, :class:`CalibratedClassifierCV` calibrates for
 each class separately in a :ref:`ovr_classification` fashion [5]_. When
 predicting
 probabilities, the calibrated probabilities for each class
