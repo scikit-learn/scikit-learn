@@ -107,6 +107,9 @@ class Mult(BaseEstimator):
     def __init__(self, mult=1):
         self.mult = mult
 
+    def __sklearn_is_fitted__(self):
+        return True
+
     def fit(self, X, y):
         return self
 
@@ -133,6 +136,7 @@ class FitParamT(BaseEstimator):
 
     def fit(self, X, y, should_succeed=False):
         self.successful = should_succeed
+        self.fitted_ = True
 
     def predict(self, X):
         return self.successful
@@ -160,6 +164,9 @@ class DummyTransf(Transf):
 
 class DummyEstimatorParams(BaseEstimator):
     """Mock classifier that takes params on predict"""
+
+    def __sklearn_is_fitted__(self):
+        return True
 
     def fit(self, X, y):
         return self
@@ -1814,6 +1821,54 @@ def test_pipeline_inverse_transform_Xt_deprecation():
         pipe.inverse_transform(Xt=X)
 
 
+# TODO(1.8): remove this test
+def test_pipeline_warns_not_fitted():
+    class StatelessEstimator(BaseEstimator):
+        def fit(self, X, y):
+            return self
+
+        def transform(self, X):
+            return X
+
+        def predict(self, X):
+            return np.ones(len(X))
+
+        def predict_proba(self, X):
+            return np.ones(len(X))
+
+        def predict_log_proba(self, X):
+            return np.zeros(len(X))
+
+        def decision_function(self, X):
+            return np.ones(len(X))
+
+        def score(self, X, y):
+            return 1
+
+        def score_samples(self, X):
+            return np.ones(len(X))
+
+        def inverse_transform(self, X):
+            return X
+
+    pipe = Pipeline([("estimator", StatelessEstimator())])
+    METHODS = [
+        "predict",
+        "predict_proba",
+        "predict_log_proba",
+        "decision_function",
+        "score",
+        "score_samples",
+        "transform",
+        "inverse_transform",
+    ]
+    for method in METHODS:
+        with pytest.warns(
+            FutureWarning, match="This Pipeline instance is not fitted yet."
+        ):
+            getattr(pipe, method)([[1]])
+
+
 # Test that metadata is routed correctly for pipelines and FeatureUnion
 # =====================================================================
 
@@ -1821,6 +1876,9 @@ def test_pipeline_inverse_transform_Xt_deprecation():
 class SimpleEstimator(BaseEstimator):
     # This class is used in this section for testing routing in the pipeline.
     # This class should have every set_{method}_request
+    def __sklearn_is_fitted__(self):
+        return True
+
     def fit(self, X, y, sample_weight=None, prop=None):
         assert sample_weight is not None, sample_weight
         assert prop is not None, prop
