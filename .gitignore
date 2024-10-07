@@ -93,33 +93,5 @@ jupyterlite_contents
 
 # file recognised by vscode IDEs containing env variables
 .env
-results/har_2024_10_07__10_57_15_results.csv
-results/pendigits_2024_10_07__10_57_00_results.csv
-data/openml/openml.org/api/v1/json/data/32.gz
-data/openml/openml.org/api/v1/json/data/554.gz
-data/openml/openml.org/api/v1/json/data/1478.gz
-data/openml/openml.org/api/v1/json/data/features/32.gz
-data/openml/openml.org/api/v1/json/data/features/1478.gz
-data/openml/openml.org/api/v1/json/data/list/data_name/har/limit/2/data_version/1.gz
-data/openml/openml.org/api/v1/json/data/list/data_name/mnist_784/limit/2/data_version/1.gz
-data/openml/openml.org/api/v1/json/data/list/data_name/pendigits/limit/2/data_version/1.gz
-data/openml/openml.org/api/v1/json/data/qualities/32.gz
-data/openml/openml.org/api/v1/json/data/qualities/1478.gz
-data/openml/openml.org/data/v1/download/32.gz
-data/openml/openml.org/data/v1/download/1589271.gz
-results/har_2024_10_07__17_17_20_results.csv
-results/har_2024_10_07__17_37_00_results.csv
-results/pendigits_2024_10_07__16_38_07_results.csv
-results/pendigits_2024_10_07__16_39_18_results.csv
-results/pendigits_2024_10_07__17_06_59_results.csv
-results/pendigits_2024_10_07__17_10_41_results.csv
-results/pendigits_2024_10_07__17_17_17_results.csv
-results/pendigits_2024_10_07__17_21_09_results.csv
-results/pendigits_2024_10_07__17_21_39_results.csv
-results/pendigits_2024_10_07__17_28_56_results.csv
-results/pendigits_2024_10_07__17_35_32_results.csv
-results/pendigits_2024_10_07__17_36_58_results.csv
-results/pendigits_2024_10_07__17_48_56_results.csv
-data/openml/openml.org/api/v1/json/data/features/554.gz
-data/openml/openml.org/api/v1/json/data/qualities/554.gz
-data/openml/openml.org/data/v1/download/52667.gz
+results/
+data/

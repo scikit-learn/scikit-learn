@@ -113,13 +113,9 @@ def evaluate(kms, X, labels, num_iters, n_clusters, batch_size, n_runs=50):
         print(f"Evaluating {name}")
         scores = defaultdict(list)
         for seed in tqdm(range(n_runs)):
-            rng = np.random.default_rng(seed) #set random seed
-            
-        
             km.random_state=seed
             t0 = time.time()
-            init_centroids = None
-            km.fit(X, init_centroids)
+            km.fit(X)
             
             # include the time it took to construct the kernel matrix in the training time
             train_times.append(time.time() - t0)
@@ -411,7 +407,7 @@ result_files = []
 # make parameters global
 
 n_runs = 10
-n_iters = [10]
+n_iters = [20]
 # Define parameter ranges
 batch_size_values = [1024]
 #taus = [50, 100, 200, 300]
@@ -422,9 +418,9 @@ if mode == "run":
     skip_full = False
     dataset_names = [
             "pendigits",
-            #"har",
-            #"mnist_784",
-            #"letter"
+            "har",
+            "mnist_784",
+            "letter"
         ]
     print("Running on datasets:", dataset_names)
     for dataset_name in dataset_names:
@@ -453,20 +449,20 @@ if mode == "run":
         for num_iters, n_clusters, batch_size in product(n_iters, n_clusters_values, batch_size_values):
             print("#"*20)
             
-            mbk_newlr = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters, new_lr=True)
-            mbk_oldlr = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters, new_lr=False)
+            mbk_newlr = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters,max_no_improvement=None, reassignment_ratio = 0, new_lr=True)
+            mbk_oldlr = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters,max_no_improvement=None, reassignment_ratio = 0, new_lr=False)
+            mbk_newlr_default = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters, new_lr=True)
+            mbk_oldlr_default = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters, new_lr=False)
 
             mbks = {
-                    "4.$\\beta$-MiniBatch": mbk_newlr,
-                    "5.MiniBatch": mbk_oldlr,
-                    #"2.$\\beta$-MiniBatch Kernel": mbkk_newlr,
-                    #"3.MiniBatch Kernel": mbkk_oldlr,
+                    "1.new lr MiniBatch": mbk_newlr,
+                    "2.MiniBatch": mbk_oldlr,
+                    "3.default new lr MiniBatch": mbk_newlr_default,
+                    "4.default MiniBatch": mbk_oldlr_default,
                     }
             
             temp_evals = evaluate(mbks,X, Y, num_iters, n_clusters, batch_size, n_runs)
             
-
-
         
 
         # Convert evaluations to DataFrame

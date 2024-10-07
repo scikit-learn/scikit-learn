@@ -101,7 +101,7 @@ cdef void update_center_dense(
         if new_lr:
             alpha = sqrt(wsum/b)
             for feature_idx in range(n_features):
-                centers_new[cluster_idx, feature_idx] *= (1-alpha)
+                centers_new[cluster_idx, feature_idx] = (1-alpha)*centers_old[cluster_idx, feature_idx]
             for k in range(n_indices):
                 sample_idx = indices[k]
                 for feature_idx in range(n_features):
