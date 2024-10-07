@@ -63,7 +63,7 @@ from sklearn.linear_model import enet_path, lars_path, lasso_path
 
 # %%
 # The Diabetes Dataset
-# ------------------
+# --------------------
 #
 # We use the diabetes dataset :func:`~sklearn.datasets.load_diabetes` to plot
 # the regression coefficients for Lasso and Elastic Net.
@@ -73,7 +73,7 @@ X /= X.std(axis=0)  # Standardize data (easier to set the l1_ratio parameter)
 
 # %%
 # Scikit-learn provides the following functions to compute multiple
-# :math:`w` values for various :math:`\\alpha` values efficiently:
+# :math:`w` values for various :math:`\alpha` values efficiently:
 #
 # - :func:`~sklearn.linear_model.lasso_path`
 # - :func:`~sklearn.linear_model.lars_path`
@@ -101,9 +101,9 @@ alphas_lars, _, coefs_lars = lars_path(X, y, method="lasso")
 # %%
 # The Lasso-LARS model uses the Least Angle Regression (LARS) algorithm
 # (see [1]_) to compute the Lasso solution in
-# :math:`\\min \\left\\{
-# n_{\\operatorname{sample}}-1,n_{\\operatorname{feature}}
-# \\right\\}`
+# :math:`\min \left\{
+# n_{\operatorname{sample}}-1,n_{\operatorname{feature}}
+# \right\}`
 # steps. This provides an efficient algorithm for computing the entire Lasso path, and
 # is implemented as :func:`~sklearn.linear_model.LassoLars`
 # and :func:`~sklearn.linear_model.lars_path`.
@@ -111,13 +111,11 @@ alphas_lars, _, coefs_lars = lars_path(X, y, method="lasso")
 # We now present the visualisation of the regularization path for the diabetes dataset.
 # Each model is represented by 10 curves, corresponding to the number of features in the
 # dataset. Each curve shows how a particular coefficient :math:`w_i` changes as
-# :math:`\\alpha` increases.
+# :math:`\alpha` increases.
 #
 # Lasso vs Lasso-LARS
 # -------------------
 # In the "Lasso vs LARS Paths" visual,
-#
-# .. _marginal_dependencies:
 
 plt.figure(1)
 for coef_lasso, coef_lars in zip(coefs_lasso, coefs_lars):
@@ -129,6 +127,7 @@ plt.ylabel("coefficients")
 plt.title("Lasso vs LARS Paths")
 plt.legend((l1[-1], l2[-1]), ("Lasso", "LARS"), loc="lower right")
 plt.axis("tight")
+_ = plt.show()
 
 # %%
 # the Lasso and LARS paths appear identical because both models solve
@@ -137,8 +136,6 @@ plt.axis("tight")
 # Lasso vs Elastic-Net
 # --------------------
 # The "Lasso vs Elastic-Net Paths" visual is more notable.
-#
-# .. _marginal_dependencies:
 
 plt.figure(2)
 for coef_l, coef_e in zip(coefs_lasso, coefs_enet):
@@ -150,12 +147,13 @@ plt.ylabel("coefficients")
 plt.title("Lasso vs Elastic-Net Paths")
 plt.legend((l1[-1], l2[-1]), ("Lasso", "Elastic-Net"), loc="lower right")
 plt.axis("tight")
+_ = plt.show()
 
 # %%
 # Elastic Net's coefficients tend to have smaller absolute values than those of Lasso.
 # Additionally, Elastic Net maintains more non-zero coefficients than Lasso towards the
-# end. This demonstrates how the :math:`\\ell^1`-norm constraint encourages sparsity in
-# the solution, while combining it with the :math:`\\ell^2`-norm provides a balanced
+# end. This demonstrates how the :math:`\ell^1`-norm constraint encourages sparsity in
+# the solution, while combining it with the :math:`\ell^2`-norm provides a balanced
 # compromise.
 #
 # .. rubric:: References
