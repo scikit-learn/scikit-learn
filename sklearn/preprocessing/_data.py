@@ -9,6 +9,8 @@ import numpy as np
 from scipy import optimize, sparse, stats
 from scipy.special import boxcox, inv_boxcox
 
+from sklearn.utils import metadata_routing
+
 from ..base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
@@ -2421,6 +2423,10 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
            [  0.,  14., -14.],
            [ -5., -14.,  19.]])
     """
+
+    # X is called K in these methods.
+    __metadata_request__transform = {"K": metadata_routing.UNUSED}
+    __metadata_request__fit = {"K": metadata_routing.UNUSED}
 
     def fit(self, K, y=None):
         """Fit KernelCenterer.
