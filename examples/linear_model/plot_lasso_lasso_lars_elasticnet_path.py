@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 """
 ========================================
 Lasso, Lasso-LARS, and Elastic Net paths
@@ -101,11 +104,7 @@ dataset. Each curve shows how a particular coefficient :math:`w_i` changes as
 .. [1] "The Elements of Statistical Learning", Hastie T., Tibshirani R.,
        Friedman J., Algorithm 3.2, p. 74, 2008.
 
-
 """
-
-# Authors: The scikit-learn developers
-# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 
