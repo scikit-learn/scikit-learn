@@ -12,6 +12,9 @@ This exercise is used in the :ref:`clf_tut` part of the
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from sklearn import datasets, linear_model, neighbors
 
 X_digits, y_digits = datasets.load_digits(return_X_y=True)

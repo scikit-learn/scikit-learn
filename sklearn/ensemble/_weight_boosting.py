@@ -16,12 +16,8 @@ The module structure is the following:
   (AdaBoost.R2) for regression problems.
 """
 
-# Authors: Noel Dawe <noel@dawe.me>
-#          Gilles Louppe <g.louppe@gmail.com>
-#          Hamzeh Alsalhi <ha258@cornell.edu>
-#          Arnaud Joly <arnaud.v.joly@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from abc import ABCMeta, abstractmethod
@@ -51,6 +47,7 @@ from ..utils.validation import (
     _num_samples,
     check_is_fitted,
     has_fit_parameter,
+    validate_data,
 )
 from ._base import BaseEnsemble
 
@@ -95,7 +92,8 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
 
     def _check_X(self, X):
         # Only called to validate X in non-fit methods, therefore reset=False
-        return self._validate_data(
+        return validate_data(
+            self,
             X,
             accept_sparse=["csr", "csc"],
             ensure_2d=True,
@@ -130,7 +128,8 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
             Fitted estimator.
         """
         _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse=["csr", "csc"],
@@ -141,7 +140,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         )
 
         sample_weight = _check_sample_weight(
-            sample_weight, X, np.float64, copy=True, only_non_negative=True
+            sample_weight, X, np.float64, copy=True, ensure_non_negative=True
         )
         sample_weight /= sample_weight.sum()
 

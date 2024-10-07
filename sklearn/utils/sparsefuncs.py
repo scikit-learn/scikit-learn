@@ -1,10 +1,8 @@
 """A collection of utilities to work with sparse matrices and arrays."""
 
-# Authors: Manoj Kumar
-#          Thomas Unterthiner
-#          Giorgio Patrini
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numpy as np
 import scipy.sparse as sp
 from scipy.sparse.linalg import LinearOperator

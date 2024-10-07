@@ -92,7 +92,7 @@ Scoring                                Function                                 
 
 **Regression**
 'explained_variance'                   :func:`metrics.explained_variance_score`
-'max_error'                            :func:`metrics.max_error`
+'neg_max_error'                        :func:`metrics.max_error`
 'neg_mean_absolute_error'              :func:`metrics.mean_absolute_error`
 'neg_mean_squared_error'               :func:`metrics.mean_squared_error`
 'neg_root_mean_squared_error'          :func:`metrics.root_mean_squared_error`
@@ -283,13 +283,15 @@ There are three ways to specify multiple scoring metrics for the ``scoring``
 parameter:
 
 - As an iterable of string metrics::
-      >>> scoring = ['accuracy', 'precision']
+
+    >>> scoring = ['accuracy', 'precision']
 
 - As a ``dict`` mapping the scorer name to the scoring function::
-      >>> from sklearn.metrics import accuracy_score
-      >>> from sklearn.metrics import make_scorer
-      >>> scoring = {'accuracy': make_scorer(accuracy_score),
-      ...            'prec': 'precision'}
+
+    >>> from sklearn.metrics import accuracy_score
+    >>> from sklearn.metrics import make_scorer
+    >>> scoring = {'accuracy': make_scorer(accuracy_score),
+    ...            'prec': 'precision'}
 
   Note that the dict values can either be scorer functions or one of the
   predefined metric strings.
@@ -605,7 +607,7 @@ The function :func:`cohen_kappa_score` computes `Cohen's kappa
 This measure is intended to compare labelings by different human annotators,
 not a classifier versus a ground truth.
 
-The kappa score (see docstring) is a number between -1 and 1.
+The kappa score is a number between -1 and 1.
 Scores above .8 are generally considered good agreement;
 zero or lower means no agreement (practically random labels).
 
@@ -614,9 +616,9 @@ but not for multilabel problems (except by manually computing a per-label score)
 and not for more than two annotators.
 
   >>> from sklearn.metrics import cohen_kappa_score
-  >>> y_true = [2, 0, 2, 2, 0, 1]
-  >>> y_pred = [0, 0, 2, 2, 0, 2]
-  >>> cohen_kappa_score(y_true, y_pred)
+  >>> labeling1 = [2, 0, 2, 2, 0, 1]
+  >>> labeling2 = [0, 0, 2, 2, 0, 2]
+  >>> cohen_kappa_score(labeling1, labeling2)
   0.4285714285714286
 
 .. _confusion_matrix:
@@ -1267,6 +1269,7 @@ When there are more than two labels, the value of the MCC will no longer range
 between -1 and +1. Instead the minimum value will be somewhere between -1 and 0
 depending on the number and distribution of ground true labels. The maximum
 value is always +1.
+For additional information, see [WikipediaMCC2021]_.
 
 Here is a small example illustrating the usage of the :func:`matthews_corrcoef`
 function:
@@ -1276,6 +1279,13 @@ function:
     >>> y_pred = [+1, -1, +1, +1]
     >>> matthews_corrcoef(y_true, y_pred)
     -0.33...
+
+.. rubric:: References
+
+.. [WikipediaMCC2021] Wikipedia contributors. Phi coefficient.
+   Wikipedia, The Free Encyclopedia. April 21, 2021, 12:21 CEST.
+   Available at: https://en.wikipedia.org/wiki/Phi_coefficient
+   Accessed April 21, 2021.
 
 .. _multilabel_confusion_matrix:
 
@@ -2477,6 +2487,22 @@ the small magnitude values and only reflected the error in prediction of highest
 magnitude value. But that problem is resolved in case of MAPE because it calculates
 relative percentage error with respect to actual output.
 
+.. note::
+
+    The MAPE formula here represents a relative error and outputs a value in the
+    range [0, 1]. It is not a percentage in the range [0, 100] and a value of 100
+    does not mean 100% but 1e2. The motivation for the MAPE formula here to be in
+    the range [0, 1] is to be consistent with other error metrics in scikit-learn
+    such as `accuracy_score`.
+
+    To obtain the mean absolute percentage error as per the Wikipedia formula,
+    multiply the `mean_absolute_percentage_error` computed here by 100.
+
+.. dropdown:: References
+
+  * `Wikipedia entry for Mean Absolute Percentage Error
+    <https://en.wikipedia.org/wiki/Mean_absolute_percentage_error>`_
+
 .. _median_absolute_error:
 
 Median absolute error
@@ -2561,7 +2587,7 @@ The best possible score is 1.0, lower values are worse.
 .. topic:: Link to :ref:`r2_score`
 
     The difference between the explained variance score and the :ref:`r2_score`
-    is that when the explained variance score does not account for
+    is that the explained variance score does not account for
     systematic offset in the prediction. For this reason, the
     :ref:`r2_score` should be preferred in general.
 

@@ -8,54 +8,54 @@
  * want them to show up in that case.
  */
 
-function addToggleAllButtons() {
+document.addEventListener("DOMContentLoaded", () => {
   // Get all sphinx-design dropdowns
   const allDropdowns = document.querySelectorAll("details.sd-dropdown");
-
-  function collapseAll() {
-    // Function to collapse all dropdowns on the page
-    console.log("[SK] Collapsing all dropdowns...");
-    allDropdowns.forEach((dropdown) => {
-      dropdown.removeAttribute("open");
-    });
-  }
-
-  function expandAll() {
-    // Function to expand all dropdowns on the page
-    console.log("[SK] Expanding all dropdowns...");
-    allDropdowns.forEach((dropdown) => {
-      dropdown.setAttribute("open", "");
-    });
-  }
-
-  const buttonConfigs = new Map([
-    ["up", { desc: "Collapse", action: collapseAll }],
-    ["down", { desc: "Expand", action: expandAll }],
-  ]);
 
   allDropdowns.forEach((dropdown) => {
     // Get the summary element of the dropdown, where we will place the buttons
     const summaryTitle = dropdown.querySelector("summary.sd-summary-title");
-    for (const [direction, config] of buttonConfigs) {
-      // Button with icon inside
-      var newButton = document.createElement("button");
-      var newIcon = document.createElement("i");
-      newIcon.classList.add("fa-solid", `fa-angles-${direction}`);
-      newButton.appendChild(newIcon);
-      // Class for styling; `sd-summary-up/down` is implemented by sphinx-design;
-      // `sk-toggle-all` is implemented by us
-      newButton.classList.add(`sd-summary-${direction}`, `sk-toggle-all`);
-      // Bootstrap tooltip configurations
-      newButton.setAttribute("data-bs-toggle", "tooltip");
-      newButton.setAttribute("data-bs-placement", "top");
-      newButton.setAttribute("data-bs-offset", "0,10");
-      newButton.setAttribute("data-bs-title", `${config.desc} all dropdowns`);
-      // Assign the collapse/expand action to the button
-      newButton.onclick = config.action;
-      // Append the button to the summary element
-      summaryTitle.appendChild(newButton);
-    }
-  });
-}
 
-document.addEventListener("DOMContentLoaded", addToggleAllButtons);
+    // The state marker with the toggle all icon inside
+    const newStateMarker = document.createElement("span");
+    const newIcon = document.createElement("i");
+    newIcon.classList.add("fa-solid", "fa-angles-right");
+    newStateMarker.appendChild(newIcon);
+
+    // Classes for styling; `sd-summary-state-marker` and `sd-summary-chevron-right` are
+    // implemented by sphinx-design; `sk-toggle-all` is implemented by us
+    newStateMarker.classList.add(
+      "sd-summary-state-marker",
+      "sd-summary-chevron-right",
+      "sk-toggle-all"
+    );
+
+    // Bootstrap tooltip configurations
+    newStateMarker.setAttribute("data-bs-toggle", "tooltip");
+    newStateMarker.setAttribute("data-bs-placement", "top");
+    newStateMarker.setAttribute("data-bs-offset", "0,10");
+    newStateMarker.setAttribute("data-bs-title", "Toggle all dropdowns");
+
+    // Assign the collapse/expand action to the state marker
+    newStateMarker.addEventListener("click", () => {
+      if (dropdown.open) {
+        console.log("[SK] Collapsing all dropdowns...");
+        allDropdowns.forEach((node) => {
+          if (node !== dropdown) {
+            node.removeAttribute("open");
+          }
+        });
+      } else {
+        console.log("[SK] Expanding all dropdowns...");
+        allDropdowns.forEach((node) => {
+          if (node !== dropdown) {
+            node.setAttribute("open", "");
+          }
+        });
+      }
+    });
+
+    // Append the state marker to the summary element
+    summaryTitle.insertBefore(newStateMarker, summaryTitle.lastElementChild);
+  });
+});

@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from sklearn.base import clone
+from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.datasets import (
     load_breast_cancer,
     load_iris,
@@ -17,15 +17,14 @@ from sklearn.metrics import (
     f1_score,
     fbeta_score,
     make_scorer,
-    recall_score,
 )
+from sklearn.metrics._scorer import _CurveScorer
 from sklearn.model_selection import (
     FixedThresholdClassifier,
     StratifiedShuffleSplit,
     TunedThresholdClassifierCV,
 )
 from sklearn.model_selection._classification_threshold import (
-    _CurveScorer,
     _fit_and_score_over_thresholds,
 )
 from sklearn.pipeline import make_pipeline
@@ -38,97 +37,6 @@ from sklearn.utils._testing import (
     assert_allclose,
     assert_array_equal,
 )
-
-
-def test_curve_scorer():
-    """Check the behaviour of the `_CurveScorer` class."""
-    X, y = make_classification(random_state=0)
-    estimator = LogisticRegression().fit(X, y)
-    curve_scorer = _CurveScorer(
-        balanced_accuracy_score,
-        sign=1,
-        response_method="predict_proba",
-        thresholds=10,
-        kwargs={},
-    )
-    scores, thresholds = curve_scorer(estimator, X, y)
-
-    assert thresholds.shape == scores.shape
-    # check that the thresholds are probabilities with extreme values close to 0 and 1.
-    # they are not exactly 0 and 1 because they are the extremum of the
-    # `estimator.predict_proba(X)` values.
-    assert 0 <= thresholds.min() <= 0.01
-    assert 0.99 <= thresholds.max() <= 1
-    # balanced accuracy should be between 0.5 and 1 when it is not adjusted
-    assert 0.5 <= scores.min() <= 1
-
-    # check that passing kwargs to the scorer works
-    curve_scorer = _CurveScorer(
-        balanced_accuracy_score,
-        sign=1,
-        response_method="predict_proba",
-        thresholds=10,
-        kwargs={"adjusted": True},
-    )
-    scores, thresholds = curve_scorer(estimator, X, y)
-
-    # balanced accuracy should be between 0.5 and 1 when it is not adjusted
-    assert 0 <= scores.min() <= 0.5
-
-    # check that we can inverse the sign of the score when dealing with `neg_*` scorer
-    curve_scorer = _CurveScorer(
-        balanced_accuracy_score,
-        sign=-1,
-        response_method="predict_proba",
-        thresholds=10,
-        kwargs={"adjusted": True},
-    )
-    scores, thresholds = curve_scorer(estimator, X, y)
-
-    assert all(scores <= 0)
-
-
-def test_curve_scorer_pos_label(global_random_seed):
-    """Check that we propagate properly the `pos_label` parameter to the scorer."""
-    n_samples = 30
-    X, y = make_classification(
-        n_samples=n_samples, weights=[0.9, 0.1], random_state=global_random_seed
-    )
-    estimator = LogisticRegression().fit(X, y)
-
-    curve_scorer = _CurveScorer(
-        recall_score,
-        sign=1,
-        response_method="predict_proba",
-        thresholds=10,
-        kwargs={"pos_label": 1},
-    )
-    scores_pos_label_1, thresholds_pos_label_1 = curve_scorer(estimator, X, y)
-
-    curve_scorer = _CurveScorer(
-        recall_score,
-        sign=1,
-        response_method="predict_proba",
-        thresholds=10,
-        kwargs={"pos_label": 0},
-    )
-    scores_pos_label_0, thresholds_pos_label_0 = curve_scorer(estimator, X, y)
-
-    # Since `pos_label` is forwarded to the curve_scorer, the thresholds are not equal.
-    assert not (thresholds_pos_label_1 == thresholds_pos_label_0).all()
-    # The min-max range for the thresholds is defined by the probabilities of the
-    # `pos_label` class (the column of `predict_proba`).
-    y_pred = estimator.predict_proba(X)
-    assert thresholds_pos_label_0.min() == pytest.approx(y_pred.min(axis=0)[0])
-    assert thresholds_pos_label_0.max() == pytest.approx(y_pred.max(axis=0)[0])
-    assert thresholds_pos_label_1.min() == pytest.approx(y_pred.min(axis=0)[1])
-    assert thresholds_pos_label_1.max() == pytest.approx(y_pred.max(axis=0)[1])
-
-    # The recall cannot be negative and `pos_label=1` should have a higher recall
-    # since there is less samples to be considered.
-    assert 0.0 < scores_pos_label_0.min() < scores_pos_label_1.min()
-    assert scores_pos_label_0.max() == pytest.approx(1.0)
-    assert scores_pos_label_1.max() == pytest.approx(1.0)
 
 
 def test_fit_and_score_over_thresholds_curve_scorers():
@@ -682,3 +590,43 @@ def test_fixed_threshold_classifier_metadata_routing():
     classifier_default_threshold = FixedThresholdClassifier(estimator=clone(classifier))
     classifier_default_threshold.fit(X, y, sample_weight=sample_weight)
     assert_allclose(classifier_default_threshold.estimator_.coef_, classifier.coef_)
+
+
+class ClassifierLoggingFit(ClassifierMixin, BaseEstimator):
+    """Classifier that logs the number of `fit` calls."""
+
+    def __init__(self, fit_calls=0):
+        self.fit_calls = fit_calls
+
+    def fit(self, X, y, **fit_params):
+        self.fit_calls += 1
+        self.is_fitted_ = True
+        return self
+
+    def predict_proba(self, X):
+        return np.ones((X.shape[0], 2), np.float64)  # pragma: nocover
+
+
+def test_fixed_threshold_classifier_prefit():
+    """Check the behaviour of the `FixedThresholdClassifier` with the `prefit`
+    parameter."""
+    X, y = make_classification(random_state=0)
+
+    estimator = ClassifierLoggingFit()
+    model = FixedThresholdClassifier(estimator=estimator, prefit=True)
+    with pytest.raises(NotFittedError):
+        model.fit(X, y)
+
+    # check that we don't clone the classifier when `prefit=True`.
+    estimator.fit(X, y)
+    model.fit(X, y)
+    assert estimator.fit_calls == 1
+    assert model.estimator_ is estimator
+
+    # check that we clone the classifier when `prefit=False`.
+    estimator = ClassifierLoggingFit()
+    model = FixedThresholdClassifier(estimator=estimator, prefit=False)
+    model.fit(X, y)
+    assert estimator.fit_calls == 0
+    assert model.estimator_.fit_calls == 1
+    assert model.estimator_ is not estimator

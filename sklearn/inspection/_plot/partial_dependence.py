@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numbers
 from itertools import chain
 from math import ceil
@@ -35,7 +38,7 @@ class PartialDependenceDisplay:
     :ref:`sphx_glr_auto_examples_miscellaneous_plot_partial_dependence_visualization_api.py`
     and the :ref:`User Guide <partial_dependence>`.
 
-        .. versionadded:: 0.22
+    .. versionadded:: 0.22
 
     Parameters
     ----------
@@ -475,10 +478,10 @@ class PartialDependenceDisplay:
             - ``kind='average'`` results in the traditional PD plot;
             - ``kind='individual'`` results in the ICE plot.
 
-           Note that the fast `method='recursion'` option is only available for
-           `kind='average'` and `sample_weights=None`. Computing individual
-           dependencies and doing weighted averages requires using the slower
-           `method='brute'`.
+            Note that the fast `method='recursion'` option is only available for
+            `kind='average'` and `sample_weights=None`. Computing individual
+            dependencies and doing weighted averages requires using the slower
+            `method='brute'`.
 
         centered : bool, default=False
             If `True`, the ICE and PD lines will start at the origin of the
@@ -540,7 +543,7 @@ class PartialDependenceDisplay:
         # Use check_array only on lists and other non-array-likes / sparse. Do not
         # convert DataFrame into a NumPy array.
         if not (hasattr(X, "__array__") or sparse.issparse(X)):
-            X = check_array(X, force_all_finite="allow-nan", dtype=object)
+            X = check_array(X, ensure_all_finite="allow-nan", dtype=object)
         n_features = X.shape[1]
 
         feature_names = _check_feature_names(X, feature_names)
