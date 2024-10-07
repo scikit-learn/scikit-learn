@@ -7,6 +7,7 @@ import numpy as np
 
 from ...utils import _safe_indexing, check_random_state
 from ...utils._optional_dependencies import check_matplotlib_support
+from ...utils._plotting import _validate_style_kwargs
 
 
 class PredictionErrorDisplay:
@@ -142,18 +143,16 @@ class PredictionErrorDisplay:
         default_scatter_kwargs = {"color": "tab:blue", "alpha": 0.8}
         default_line_kwargs = {"color": "black", "alpha": 0.7, "linestyle": "--"}
 
+        scatter_kwargs = _validate_style_kwargs(
+            default_style_kwargs=default_scatter_kwargs,
+            user_style_kwargs=scatter_kwargs,
+        )
+        line_kwargs = _validate_style_kwargs(
+            default_style_kwargs=default_line_kwargs, user_style_kwargs=line_kwargs
+        )
+
         scatter_kwargs = {**default_scatter_kwargs, **scatter_kwargs}
         line_kwargs = {**default_line_kwargs, **line_kwargs}
-
-        # Matplotlib raises an error when both 'color' and 'c',
-        # or 'linestyle' and 'ls' are specified. To avoid this,
-        # we automatically save only the one specified by the user.
-        for style_kwargs in [scatter_kwargs, line_kwargs]:
-            invalid_to_valid_kw = {"ls": "linestyle", "c": "color"}
-            for invalid_kw, valid_kw in invalid_to_valid_kw.items():
-                if invalid_kw in style_kwargs:
-                    style_kwargs[valid_kw] = style_kwargs[invalid_kw]
-                    del style_kwargs[invalid_kw]
 
         if ax is None:
             _, ax = plt.subplots()

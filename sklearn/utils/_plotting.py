@@ -100,3 +100,33 @@ def _interval_max_min_ratio(data):
     """
     diff = np.diff(np.sort(data))
     return diff.max() / diff.min()
+
+
+def _validate_style_kwargs(default_style_kwargs, user_style_kwargs):
+    """Create valid style kwargs by avoiding matplotlib aliases error.
+
+    Matplotlib raises an error when both 'color' and 'c',
+    or 'linestyle' and 'ls' are specified. To avoid this,
+    we automatically keep only the one specified by the user.
+    """
+
+    invalid_to_valid_kw = {
+        "ls": "linestyle",
+        "c": "color",
+        "ec": "edgecolor",
+        "fc": "facecolor",
+        "lw": "linewidth",
+        "mec": "markeredgecolor",
+        "mfcalt": "markerfacecoloralt",
+        "ms": "markersize",
+    }
+
+    valid_style_kwargs = default_style_kwargs.copy()
+
+    for key in user_style_kwargs.keys():
+        if key in invalid_to_valid_kw:
+            valid_style_kwargs[invalid_to_valid_kw[key]] = user_style_kwargs[key]
+        else:
+            valid_style_kwargs[key] = user_style_kwargs[key]
+
+    return valid_style_kwargs
