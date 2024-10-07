@@ -1569,6 +1569,7 @@ def _mini_batch_step(
     reassignment_ratio=0.01,
     verbose=False,
     n_threads=1,
+    new_lr=False
 ):
     """Incremental update of the centers for the Minibatch K-Means algorithm.
 
@@ -1641,6 +1642,7 @@ def _mini_batch_step(
             weight_sums,
             labels,
             n_threads,
+            new_lr
         )
 
     # Reassign clusters that have very low weight
@@ -1897,6 +1899,7 @@ class MiniBatchKMeans(_BaseKMeans):
         init_size=None,
         n_init="auto",
         reassignment_ratio=0.01,
+        new_lr=False #greg
     ):
         super().__init__(
             n_clusters=n_clusters,
@@ -1908,6 +1911,7 @@ class MiniBatchKMeans(_BaseKMeans):
             n_init=n_init,
         )
 
+        self.new_lr = new_lr #greg
         self.max_no_improvement = max_no_improvement
         self.batch_size = batch_size
         self.compute_labels = compute_labels
@@ -2161,6 +2165,7 @@ class MiniBatchKMeans(_BaseKMeans):
                     reassignment_ratio=self.reassignment_ratio,
                     verbose=self.verbose,
                     n_threads=self._n_threads,
+                    new_lr=self.new_lr
                 )
 
                 if self._tol > 0.0:

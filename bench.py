@@ -411,9 +411,9 @@ result_files = []
 # make parameters global
 
 n_runs = 10
-n_iters = [200]
+n_iters = [10]
 # Define parameter ranges
-batch_size_values = [256,512,1024,2048]
+batch_size_values = [1024]
 #taus = [50, 100, 200, 300]
 
 
@@ -422,9 +422,9 @@ if mode == "run":
     skip_full = False
     dataset_names = [
             "pendigits",
-            "har",
-            "mnist_784",
-            "letter"
+            #"har",
+            #"mnist_784",
+            #"letter"
         ]
     print("Running on datasets:", dataset_names)
     for dataset_name in dataset_names:
@@ -453,8 +453,8 @@ if mode == "run":
         for num_iters, n_clusters, batch_size in product(n_iters, n_clusters_values, batch_size_values):
             print("#"*20)
             
-            mbk_newlr = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters)#, new_lr=True)
-            mbk_oldlr = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters)#, new_lr=False)
+            mbk_newlr = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters, new_lr=True)
+            mbk_oldlr = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters, new_lr=False)
 
             mbks = {
                     "4.$\\beta$-MiniBatch": mbk_newlr,
