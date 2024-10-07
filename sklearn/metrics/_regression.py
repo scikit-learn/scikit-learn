@@ -24,7 +24,7 @@ from ..utils._array_api import (
     get_namespace_and_device,
     size,
 )
-from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import (
     _check_sample_weight,
@@ -431,7 +431,6 @@ def mean_absolute_percentage_error(
         "y_pred": ["array-like"],
         "sample_weight": ["array-like", None],
         "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
-        "squared": [Hidden(StrOptions({"deprecated"})), "boolean"],
     },
     prefer_skip_nested_validation=True,
 )
@@ -441,7 +440,6 @@ def mean_squared_error(
     *,
     sample_weight=None,
     multioutput="uniform_average",
-    squared="deprecated",
 ):
     """Mean squared error regression loss.
 
@@ -469,14 +467,6 @@ def mean_squared_error(
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
 
-    squared : bool, default=True
-        If True returns MSE value, if False returns RMSE value.
-
-        .. deprecated:: 1.4
-           `squared` is deprecated in 1.4 and will be removed in 1.6.
-           Use :func:`~sklearn.metrics.root_mean_squared_error`
-           instead to calculate the root mean squared error.
-
     Returns
     -------
     loss : float or array of floats
@@ -499,26 +489,10 @@ def mean_squared_error(
     >>> mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.825...
     """
-    # TODO(1.6): remove
-    if squared != "deprecated":
-        warnings.warn(
-            (
-                "'squared' is deprecated in version 1.4 and "
-                "will be removed in 1.6. To calculate the "
-                "root mean squared error, use the function"
-                "'root_mean_squared_error'."
-            ),
-            FutureWarning,
-        )
-        if not squared:
-            return root_mean_squared_error(
-                y_true, y_pred, sample_weight=sample_weight, multioutput=multioutput
-            )
-
     xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
     dtype = _find_matching_floating_dtype(y_true, y_pred, xp=xp)
 
-    y_type, y_true, y_pred, multioutput = _check_reg_targets(
+    _, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput, dtype=dtype, xp=xp
     )
     check_consistent_length(y_true, y_pred, sample_weight)
@@ -631,7 +605,6 @@ def root_mean_squared_error(
         "y_pred": ["array-like"],
         "sample_weight": ["array-like", None],
         "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
-        "squared": [Hidden(StrOptions({"deprecated"})), "boolean"],
     },
     prefer_skip_nested_validation=True,
 )
@@ -641,7 +614,6 @@ def mean_squared_log_error(
     *,
     sample_weight=None,
     multioutput="uniform_average",
-    squared="deprecated",
 ):
     """Mean squared logarithmic error regression loss.
 
@@ -671,15 +643,6 @@ def mean_squared_log_error(
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
 
-    squared : bool, default=True
-        If True returns MSLE (mean squared log error) value.
-        If False returns RMSLE (root mean squared log error) value.
-
-        .. deprecated:: 1.4
-           `squared` is deprecated in 1.4 and will be removed in 1.6.
-           Use :func:`~sklearn.metrics.root_mean_squared_log_error`
-           instead to calculate the root mean squared logarithmic error.
-
     Returns
     -------
     loss : float or ndarray of floats
@@ -702,22 +665,6 @@ def mean_squared_log_error(
     >>> mean_squared_log_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.060...
     """
-    # TODO(1.6): remove
-    if squared != "deprecated":
-        warnings.warn(
-            (
-                "'squared' is deprecated in version 1.4 and "
-                "will be removed in 1.6. To calculate the "
-                "root mean squared logarithmic error, use the function"
-                "'root_mean_squared_log_error'."
-            ),
-            FutureWarning,
-        )
-        if not squared:
-            return root_mean_squared_log_error(
-                y_true, y_pred, sample_weight=sample_weight, multioutput=multioutput
-            )
-
     xp, _ = get_namespace(y_true, y_pred)
     dtype = _find_matching_floating_dtype(y_true, y_pred, xp=xp)
 

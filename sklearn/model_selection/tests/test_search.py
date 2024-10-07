@@ -2864,3 +2864,11 @@ def test_yield_masked_array_for_each_param(candidate_params, expected):
         assert value.dtype == expected_value.dtype
         np.testing.assert_array_equal(value, expected_value)
         np.testing.assert_array_equal(value.mask, expected_value.mask)
+
+
+def test_yield_masked_array_no_runtime_warning():
+    # non-regression test for https://github.com/scikit-learn/scikit-learn/issues/29929
+    candidate_params = [{"param": i} for i in range(1000)]
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        list(_yield_masked_array_for_each_param(candidate_params))
