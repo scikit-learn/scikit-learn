@@ -18,6 +18,7 @@ from math import ceil, floor
 import numpy as np
 from scipy.special import comb
 
+from ..preprocessing import KBinsDiscretizer
 from ..utils import (
     _safe_indexing,
     check_random_state,
@@ -29,7 +30,7 @@ from ..utils._array_api import (
     ensure_common_namespace_device,
     get_namespace,
 )
-from ..utils._param_validation import Interval, RealNotInt, validate_params
+from ..utils._param_validation import Interval, RealNotInt, StrOptions, validate_params
 from ..utils.extmath import _approximate_mode
 from ..utils.metadata_routing import _MetadataRequester
 from ..utils.multiclass import type_of_target
@@ -50,6 +51,7 @@ __all__ = [
     "StratifiedKFold",
     "StratifiedGroupKFold",
     "StratifiedShuffleSplit",
+    "StratifiedShuffleSplitRegression",
     "PredefinedSplit",
     "train_test_split",
     "check_cv",
@@ -2461,6 +2463,63 @@ def _validate_shuffle_split(n_samples, test_size, train_size, default_test_size=
     return n_train, n_test
 
 
+class StratifiedShuffleSplitRegression(StratifiedShuffleSplit):
+    """
+    Stratified Shuffle Split for regression problems using KBinsDiscretizer
+    to discretize continuous targets into bins for stratification.
+
+    Parameters:
+    -----------
+    n_bins : int (default=5)
+        The number of bins to discretize continuous target values.
+
+    strategy : str (default='uniform')
+        Strategy used to define the widths of the bins.
+        Supported values are:
+        - 'uniform': All bins have identical widths.
+        - 'quantile': Bins have the same number of points.
+        - 'kmeans': Bins are formed using k-means clustering.
+
+    **kwargs : dict
+        Additional parameters passed to the parent class StratifiedShuffleSplit.
+    """
+
+    def __init__(self, n_bins=5, strategy="uniform", **kwargs):
+        super().__init__(**kwargs)
+        self.n_bins = n_bins
+        self.strategy = strategy
+        self.binner = KBinsDiscretizer(
+            n_bins=n_bins, encode="ordinal", strategy=strategy
+        )
+
+    def split(self, X, y, groups=None):
+        """
+        Split the data into stratified train/test sets based on discretized bins.
+
+        Parameters:
+        -----------
+        X : array-like of shape (n_samples, n_features)
+            Training data, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
+        y : array-like of shape (n_samples,)
+            Continuous target variable (for regression).
+
+        groups : Ignored, for compatibility with the parent class.
+
+        Yields:
+        -------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+        """
+        y_binned = self.binner.fit_transform(y.reshape(-1, 1)).ravel()
+
+        return super().split(X, y_binned, groups)
+
+
 class PredefinedSplit(BaseCrossValidator):
     """Predefined split cross-validator.
 
@@ -2720,6 +2779,13 @@ def check_cv(cv=5, y=None, *, classifier=False):
         "random_state": ["random_state"],
         "shuffle": ["boolean"],
         "stratify": ["array-like", None],
+        "stratify_regression": ["boolean"],
+        "n_bins": [
+            Interval(numbers.Integral, 2, None, closed="left"),
+        ],
+        "strategy": [
+            StrOptions({"uniform", "quantile", "kmeans"}),
+        ],
     },
     prefer_skip_nested_validation=True,
 )
@@ -2730,6 +2796,9 @@ def train_test_split(
     random_state=None,
     shuffle=True,
     stratify=None,
+    stratify_regression=False,
+    n_bins=5,
+    strategy="uniform",
 ):
     """Split arrays or matrices into random train and test subsets.
 
@@ -2772,6 +2841,15 @@ def train_test_split(
         If not None, data is split in a stratified fashion, using this as
         the class labels.
         Read more in the :ref:`User Guide <stratification>`.
+
+    stratify_regression : bool, default=False
+        Use StratifiedShuffleSplitForRegression for regression problems.
+
+    n_bins : int, default=5
+        Number of bins for stratifying continuous target variables.
+
+    strategy : str, default='uniform'
+        Method for defining bin widths in regression stratification.
 
     Returns
     -------
