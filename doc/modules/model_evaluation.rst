@@ -2463,6 +2463,9 @@ MAPE outputs a relative error measure, and it does not have an upper bound.
    predicted value is 3, the MAPE will be 2 (or 200% error).
    Read more in :ref:`User Guide <mean_absolute_percentage_error>`.
 
+For example, if the true value is 1 and the predicted value is 2, the MAPE will be 1 (or 100% error). 
+Similarly, if the true value is 1 and the predicted value is 3, the MAPE will be 2 (or 200% error).
+
 If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample
 and :math:`y_i` is the corresponding true value, then the mean absolute percentage
 error (MAPE) estimated over :math:`n_{\text{samples}}` is defined as
@@ -2590,7 +2593,7 @@ The best possible score is 1.0, lower values are worse.
 .. topic:: Link to :ref:`r2_score`
 
     The difference between the explained variance score and the :ref:`r2_score`
-    is that when the explained variance score does not account for
+    is that the explained variance score does not account for
     systematic offset in the prediction. For this reason, the
     :ref:`r2_score` should be preferred in general.
 
