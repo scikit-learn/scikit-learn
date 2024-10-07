@@ -7,10 +7,9 @@ from .extmath import stable_cumsum
 
 
 def _weighted_percentile(array, sample_weight, percentile=50):
-    """Compute weighted percentile
+    """Selects the lower value at a given weighted percentile.
 
-    Computes lower weighted percentile. If `array` is a 2D array, the
-    `percentile` is computed along the axis 0.
+     If `array` is a 2D array, the `percentile` is computed along the axis 0.
 
         .. versionchanged:: 0.24
             Accepts 2D `array`.
@@ -29,8 +28,8 @@ def _weighted_percentile(array, sample_weight, percentile=50):
 
     Returns
     -------
-    percentile : int if `array` 1D, ndarray if `array` 2D
-        Weighted percentile.
+    value : int if `array` 1D, ndarray if `array` 2D
+        Lower value at a given weighted percentile.
     """
     n_dim = array.ndim
     if n_dim == 0:
