@@ -6,7 +6,9 @@ Computational Performance
 =========================
 
 For some applications the performance (mainly latency and throughput at
-prediction time) of estimators is crucial. It may also be of interest to
+prediction time) of estimators is crucial.
+See this example :ref:`sphx_glr_auto_examples_applications_plot_prediction_latency.py`
+It may also be of interest to
 consider the training throughput but this is often less important in a
 production setup (where it often takes place offline).
 
