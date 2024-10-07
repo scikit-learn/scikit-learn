@@ -147,8 +147,8 @@ alphas_positive_enet, coefs_positive_enet, _ = enet_path(
 
 plt.figure(1)
 for coef_lasso, coef_lars in zip(coefs_lasso, coefs_lars):
-    l1 = plt.semilogx(alphas_lasso, coef_lasso, c='#0072B2')
-    l2 = plt.semilogx(alphas_lars, coef_lars, linestyle="--", c='#D55E00')
+    l1 = plt.semilogx(alphas_lasso, coef_lasso, c="#0072B2")
+    l2 = plt.semilogx(alphas_lars, coef_lars, linestyle="--", c="#D55E00")
 
 plt.xlabel("alpha")
 plt.ylabel("coefficients")
@@ -158,8 +158,8 @@ plt.axis("tight")
 
 plt.figure(2)
 for coef_l, coef_e in zip(coefs_lasso, coefs_enet):
-    l1 = plt.semilogx(alphas_lasso, coef_l, c='#0072B2')
-    l2 = plt.semilogx(alphas_enet, coef_e, linestyle="--", c='#D55E00')
+    l1 = plt.semilogx(alphas_lasso, coef_l, c="#0072B2")
+    l2 = plt.semilogx(alphas_enet, coef_e, linestyle="--", c="#D55E00")
 
 plt.xlabel("alpha")
 plt.ylabel("coefficients")
@@ -169,8 +169,8 @@ plt.axis("tight")
 
 plt.figure(3)
 for coef_l, coef_pl in zip(coefs_lasso, coefs_positive_lasso):
-    l1 = plt.semilogy(alphas_lasso, coef_l, c='#0072B2')
-    l2 = plt.semilogy(alphas_positive_lasso, coef_pl, linestyle="--", c='#D55E00')
+    l1 = plt.semilogy(alphas_lasso, coef_l, c="#0072B2")
+    l2 = plt.semilogy(alphas_positive_lasso, coef_pl, linestyle="--", c="#D55E00")
 
 plt.xlabel("alpha")
 plt.ylabel("coefficients")
@@ -180,9 +180,9 @@ plt.axis("tight")
 
 plt.figure(4)
 for coef_lars, coef_positive_lars in zip(coefs_lars, coefs_positive_lars):
-    l1 = plt.semilogx(alphas_lars, coef_lars, c='#0072B2')
+    l1 = plt.semilogx(alphas_lars, coef_lars, c="#0072B2")
     l2 = plt.semilogx(
-        alphas_positive_lars, coef_positive_lars, linestyle="--", c='#D55E00'
+        alphas_positive_lars, coef_positive_lars, linestyle="--", c="#D55E00"
     )
 
 plt.xlabel("alpha")
@@ -193,8 +193,8 @@ plt.axis("tight")
 
 plt.figure(5)
 for coef_e, coef_pe in zip(coefs_enet, coefs_positive_enet):
-    l1 = plt.semilogx(alphas_enet, coef_e, c='#0072B2')
-    l2 = plt.semilogx(alphas_positive_enet, coef_pe, linestyle="--", c='#D55E00')
+    l1 = plt.semilogx(alphas_enet, coef_e, c="#0072B2")
+    l2 = plt.semilogx(alphas_positive_enet, coef_pe, linestyle="--", c="#D55E00")
 
 plt.xlabel("alpha")
 plt.ylabel("coefficients")
