@@ -1,7 +1,7 @@
 """Bagging meta-estimator."""
 
-# Author: Gilles Louppe <g.louppe@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 import itertools
@@ -24,7 +24,7 @@ from ..utils import (
 )
 from ..utils._mask import indices_to_mask
 from ..utils._param_validation import HasMethods, Interval, RealNotInt
-from ..utils._tags import _safe_tags
+from ..utils._tags import get_tags
 from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -43,6 +43,7 @@ from ..utils.validation import (
     _deprecate_positional_args,
     check_is_fitted,
     has_fit_parameter,
+    validate_data,
 )
 from ._base import BaseEnsemble, _partition_estimators
 
@@ -386,12 +387,13 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         _raise_for_params(fit_params, self, "fit")
 
         # Convert data (X is required to be 2d and indexable)
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse=["csr", "csc"],
             dtype=None,
-            force_all_finite=False,
+            ensure_all_finite=False,
             multi_output=True,
         )
 
@@ -638,8 +640,10 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
     def _get_estimator(self):
         """Resolve which estimator to return."""
 
-    def _more_tags(self):
-        return {"allow_nan": _safe_tags(self._get_estimator(), "allow_nan")}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = get_tags(self._get_estimator()).input_tags.allow_nan
+        return tags
 
 
 class BaggingClassifier(ClassifierMixin, BaseBagging):
@@ -937,11 +941,12 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         """
         check_is_fitted(self)
         # Check data
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=["csr", "csc"],
             dtype=None,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
 
@@ -987,11 +992,12 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         check_is_fitted(self)
         if hasattr(self.estimator_, "predict_log_proba"):
             # Check data
-            X = self._validate_data(
+            X = validate_data(
+                self,
                 X,
                 accept_sparse=["csr", "csc"],
                 dtype=None,
-                force_all_finite=False,
+                ensure_all_finite=False,
                 reset=False,
             )
 
@@ -1042,11 +1048,12 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         check_is_fitted(self)
 
         # Check data
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=["csr", "csc"],
             dtype=None,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
 
@@ -1275,11 +1282,12 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         """
         check_is_fitted(self)
         # Check data
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=["csr", "csc"],
             dtype=None,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
 

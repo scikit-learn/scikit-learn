@@ -101,8 +101,8 @@ tree = DecisionTreeClassifier(random_state=0).fit(X, y)
 tree.predict(X)
 
 # %%
-# New display `model_selection.ValidationCurveDisplay`
-# ----------------------------------------------------
+# New display :class:`~model_selection.ValidationCurveDisplay`
+# ------------------------------------------------------------
 # :class:`model_selection.ValidationCurveDisplay` is now available to plot results
 # from :func:`model_selection.validation_curve`.
 from sklearn.datasets import make_classification
@@ -141,8 +141,8 @@ gbdt = HistGradientBoostingRegressor(loss="gamma")
 cross_val_score(gbdt, X, y).mean()
 
 # %%
-# Grouping infrequent categories in :class:`preprocessing.OrdinalEncoder`
-# -----------------------------------------------------------------------
+# Grouping infrequent categories in :class:`~preprocessing.OrdinalEncoder`
+# ------------------------------------------------------------------------
 # Similarly to :class:`preprocessing.OneHotEncoder`, the class
 # :class:`preprocessing.OrdinalEncoder` now supports aggregating infrequent categories
 # into a single output for each feature. The parameters to enable the gathering of

@@ -33,6 +33,7 @@ from sklearn.tests.metadata_routing_common import (
     _Registry,
     check_recorded_metadata,
 )
+from sklearn.utils._indexing import _safe_indexing
 from sklearn.utils._testing import (
     _convert_container,
     assert_allclose_dense_sparse,
@@ -1865,6 +1866,72 @@ def test_verbose_feature_names_out_true(transformers, remainder, expected_names)
     assert_array_equal(names, expected_names)
 
 
+def _feature_names_out_callable_name_clash(trans_name: str, feat_name: str):
+    return f"{trans_name[:2]}++{feat_name}"
+
+
+def _feature_names_out_callable_upper(trans_name: str, feat_name: str):
+    return f"{trans_name.upper()}={feat_name.upper()}"
+
+
+@pytest.mark.parametrize(
+    "transformers, remainder, verbose_feature_names_out, expected_names",
+    [
+        (
+            [
+                ("bycol1", TransWithNames(), ["d", "c"]),
+                ("bycol2", "passthrough", ["d"]),
+            ],
+            "passthrough",
+            _feature_names_out_callable_name_clash,
+            ["by++d", "by++c", "by++d", "re++a", "re++b"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(), ["d", "c"]),
+                ("bycol2", "passthrough", ["d"]),
+            ],
+            "drop",
+            "{feature_name}-{transformer_name}",
+            ["d-bycol1", "c-bycol1", "d-bycol2"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(), ["d", "c"]),
+                ("bycol2", "passthrough", slice("c", "d")),
+            ],
+            "passthrough",
+            _feature_names_out_callable_upper,
+            [
+                "BYCOL1=D",
+                "BYCOL1=C",
+                "BYCOL2=C",
+                "BYCOL2=D",
+                "REMAINDER=A",
+                "REMAINDER=B",
+            ],
+        ),
+    ],
+)
+def test_verbose_feature_names_out_callable_or_str(
+    transformers, remainder, verbose_feature_names_out, expected_names
+):
+    """Check feature_names_out for verbose_feature_names_out=True (default)"""
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame([[1, 2, 3, 4]], columns=["a", "b", "c", "d"])
+    ct = ColumnTransformer(
+        transformers,
+        remainder=remainder,
+        verbose_feature_names_out=verbose_feature_names_out,
+    )
+    ct.fit(df)
+
+    names = ct.get_feature_names_out()
+    assert isinstance(names, np.ndarray)
+    assert names.dtype == object
+    assert_array_equal(names, expected_names)
+
+
 @pytest.mark.parametrize(
     "transformers, remainder, expected_names",
     [
@@ -2521,8 +2588,12 @@ def test_column_transformer_column_renaming(dataframe_lib):
             ("A", "passthrough", ["x1", "x2", "x3"]),
             ("B", FunctionTransformer(), ["x1", "x2"]),
             ("C", StandardScaler(), ["x1", "x3"]),
-            # special case of empty transformer
-            ("D", FunctionTransformer(lambda x: x[[]]), ["x1", "x2", "x3"]),
+            # special case of a transformer returning 0-columns, e.g feature selector
+            (
+                "D",
+                FunctionTransformer(lambda x: _safe_indexing(x, [], axis=1)),
+                ["x1", "x2", "x3"],
+            ),
         ],
         verbose_feature_names_out=True,
     ).set_output(transform=dataframe_lib)
@@ -2551,8 +2622,12 @@ def test_column_transformer_error_with_duplicated_columns(dataframe_lib):
             ("A", "passthrough", ["x1", "x2", "x3"]),
             ("B", FunctionTransformer(), ["x1", "x2"]),
             ("C", StandardScaler(), ["x1", "x3"]),
-            # special case of empty transformer
-            ("D", FunctionTransformer(lambda x: x[[]]), ["x1", "x2", "x3"]),
+            # special case of a transformer returning 0-columns, e.g feature selector
+            (
+                "D",
+                FunctionTransformer(lambda x: _safe_indexing(x, [], axis=1)),
+                ["x1", "x2", "x3"],
+            ),
         ],
         verbose_feature_names_out=False,
     ).set_output(transform=dataframe_lib)
@@ -2631,7 +2706,7 @@ def test_metadata_routing_for_column_transformer(method):
     )
 
     if method == "transform":
-        trs.fit(X, y)
+        trs.fit(X, y, sample_weight=sample_weight, metadata=metadata)
         trs.transform(X, sample_weight=sample_weight, metadata=metadata)
     else:
         getattr(trs, method)(X, y, sample_weight=sample_weight, metadata=metadata)
@@ -2639,7 +2714,11 @@ def test_metadata_routing_for_column_transformer(method):
     assert len(registry)
     for _trs in registry:
         check_recorded_metadata(
-            obj=_trs, method=method, sample_weight=sample_weight, metadata=metadata
+            obj=_trs,
+            method=method,
+            parent=method,
+            sample_weight=sample_weight,
+            metadata=metadata,
         )
 
 

@@ -230,10 +230,7 @@ NodeData = np.asarray(<NodeData_t[:1]>(&nd_tmp)).dtype
 ######################################################################
 # Define doc strings, substituting the appropriate class name using
 # the DOC_DICT variable defined in the pyx files.
-CLASS_DOC = """
-{BinaryTree}(X, leaf_size=40, metric='minkowski', **kwargs)
-
-{BinaryTree} for fast generalized N-point problems
+CLASS_DOC = """{BinaryTree} for fast generalized N-point problems
 
 Read more in the :ref:`User Guide <unsupervised_neighbors>`.
 

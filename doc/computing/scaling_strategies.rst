@@ -1,7 +1,3 @@
-.. Places parent toc into the sidebar
-
-:parenttoc: True
-
 .. _scaling_strategies:
 
 Strategies to scale computationally: bigger data

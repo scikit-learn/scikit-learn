@@ -1,7 +1,7 @@
-"""
-The :mod:`sklearn.metrics` module includes score functions, performance metrics
-and pairwise metrics and distance computations.
-"""
+"""Score functions, performance metrics, pairwise metrics and distance computations."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from . import cluster
 from ._classification import (
