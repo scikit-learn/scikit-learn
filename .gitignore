@@ -93,3 +93,17 @@ jupyterlite_contents
 
 # file recognised by vscode IDEs containing env variables
 .env
+results/har_2024_10_07__10_57_15_results.csv
+results/pendigits_2024_10_07__10_57_00_results.csv
+data/openml/openml.org/api/v1/json/data/32.gz
+data/openml/openml.org/api/v1/json/data/554.gz
+data/openml/openml.org/api/v1/json/data/1478.gz
+data/openml/openml.org/api/v1/json/data/features/32.gz
+data/openml/openml.org/api/v1/json/data/features/1478.gz
+data/openml/openml.org/api/v1/json/data/list/data_name/har/limit/2/data_version/1.gz
+data/openml/openml.org/api/v1/json/data/list/data_name/mnist_784/limit/2/data_version/1.gz
+data/openml/openml.org/api/v1/json/data/list/data_name/pendigits/limit/2/data_version/1.gz
+data/openml/openml.org/api/v1/json/data/qualities/32.gz
+data/openml/openml.org/api/v1/json/data/qualities/1478.gz
+data/openml/openml.org/data/v1/download/32.gz
+data/openml/openml.org/data/v1/download/1589271.gz
