@@ -145,6 +145,16 @@ class PredictionErrorDisplay:
         scatter_kwargs = {**default_scatter_kwargs, **scatter_kwargs}
         line_kwargs = {**default_line_kwargs, **line_kwargs}
 
+        # Matplotlib raises an error when both 'color' and 'c',
+        # or 'linestyle' and 'ls' are specified. To avoid this,
+        # we automatically save only the one specified by the user.
+        for style_kwargs in [scatter_kwargs, line_kwargs]:
+            invalid_to_valid_kw = {"ls": "linestyle", "c": "color"}
+            for invalid_kw, valid_kw in invalid_to_valid_kw.items():
+                if invalid_kw in style_kwargs:
+                    style_kwargs[valid_kw] = style_kwargs[invalid_kw]
+                    del style_kwargs[invalid_kw]
+
         if ax is None:
             _, ax = plt.subplots()
 
