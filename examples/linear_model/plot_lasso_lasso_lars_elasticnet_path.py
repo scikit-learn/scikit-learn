@@ -4,31 +4,104 @@ Lasso, Lasso-LARS, and Elastic Net paths
 ========================================
 
 This example shows how to compute the "paths" of coefficients along the Lasso,
-Lasso-LARS, and Elastic Net regularization paths. In other words, it shows the
-relationship between the regularization parameter (alpha) and the coefficients.
+Lasso-LARS, and Elastic Net regularization paths. It illustrates the
+relationship between the regularization parameter :math:`\\alpha`
+and the coefficients :math:`w`.
 
-Lasso and Lasso-LARS impose a sparsity constraint on the coefficients,
-encouraging some of them to be zero. Elastic Net is a generalization of
-Lasso that adds an L2 penalty term to the L1 penalty term. This allows for
-some coefficients to be non-zero while still encouraging sparsity.
+When performing linear regression on a given dataset
+:math:`(X, y)`, regularization terms can be added to
+control the model's complexity.
+Scikit-learn provides the following regularization techniques:
 
-Lasso and Elastic Net use a coordinate descent method to compute the paths, while
-Lasso-LARS uses the LARS algorithm to compute the paths.
+- :func:`~sklearn.linear_model.Lasso`
+- :func:`~sklearn.linear_model.LassoLars`
+- :func:`~sklearn.linear_model.ElasticNet` with default `l1_ratio=0.5`
 
-The paths are computed using :func:`~sklearn.linear_model.lasso_path`,
-:func:`~sklearn.linear_model.lars_path`, and :func:`~sklearn.linear_model.enet_path`.
+Mathematically, these are formulated by minimising the constrained
+least-squares penalty:
 
-The results show different comparison plots:
+.. math::
 
-- Compare Lasso and Lasso-LARS
-- Compare Lasso and Elastic Net
-- Compare Lasso with positive Lasso
-- Compare LARS and Positive LARS
-- Compare Elastic Net and positive Elastic Net
+    \\min_{w} \\frac{1}{2n_{\\operatorname{sample}}}
+    \\vert \\vert Xw - y \\vert \\vert^2_2 +
+    \\left\\{
+    \\begin{array}{cl}
+    \\alpha \\vert \\vert w \\vert \\vert_1 & \\mbox{Lasso(-LARS)} \\\\
+    \\frac{\\alpha}{2} \\vert \\vert w \\vert \\vert_1  +
+    \\frac{\\alpha}{4} \\vert \\vert w \\vert \\vert^2_2& \\mbox{Elastic Net} \\\\
+    \\end{array}
+    \\right.
 
-Each plot shows how the model coefficients vary as the regularization strength changes,
-offering insight into the behavior of these models
-under different constraints.
+Thus, the Lasso model includes the :math:`\\ell^1`-norm of the regression
+coefficients in the penalty, while the Elastic Net model
+incorporates both :math:`\\ell^1`- and :math:`\\ell^2`-norms.
+
+Any solution to this optimisation problem depends on :math:`\\alpha`.
+For example, in Lasso, a large :math:`\\alpha` forces the least-squares
+penalty to stay small, which in turn keeps the norm
+:math:`\\vert \\vert w \\vert \\vert_1`
+small. Conversely, a smaller :math:`\\alpha` allows the norm
+:math:`\\vert \\vert w \\vert \\vert_1`
+to grow larger.
+
+This suggests that the regression coefficients :math:`w` evolve as
+:math:`\\alpha` increases, and we are interested in knowing
+:math:`w` across a range of :math:`\\alpha` values. This is known
+as the **regularization path**: a list of :math:`w` values corresponding to
+different :math:`\\alpha` values, ranging from small to large.
+In this example, we plot the regularization paths to show how the sizes of the
+coefficients change as the regularization parameter increases.
+
+We use the diabetes dataset :func:`~sklearn.datasets.load_diabetes` to plot
+the regression coefficients for Lasso and Elastic Net. Scikit-learn provides the
+following functions to compute multiple :math:`w` values for various
+:math:`\\alpha` values efficiently:
+
+- :func:`~sklearn.linear_model.lasso_path`
+- :func:`~sklearn.linear_model.lars_path`
+- :func:`~sklearn.linear_model.enet_path`
+
+The :func:`~sklearn.linear_model.lasso_path` and
+:func:`~sklearn.linear_model.enet_path` functions compute
+:math:`w` with coordinate decent: for each entry of :math:`w`,
+the function solves for it optimal value while keeping the others
+fixed. Since the algorithm iterates until convergence,
+Lasso doesn't operate in a fixed number of steps based solely
+on the dataset's size, which can make it take longer to run.
+In contrast, the Lasso-LARS model computes the Lasso solution in fewer steps.
+
+The Lasso-LARS model uses the Least Angle Regression (LARS) algorithm
+(see [1]_) to compute the Lasso solution in
+:math:`\\min \\left\\{
+n_{\\operatorname{sample}}-1,n_{\\operatorname{feature}}
+\\right\\}`
+steps. This provides an efficient algorithm for computing the entire Lasso path, and
+is implemented as :func:`~sklearn.linear_model.LassoLars`
+and :func:`~sklearn.linear_model.lars_path`.
+
+We now present the visualisation of the regularization path for the diabetes dataset.
+Each model is represented by 10 curves, corresponding to the number of features in the
+dataset. Each curve shows how a particular coefficient :math:`w_i` changes as
+:math:`\\alpha` increases.
+
+- In the "Lasso vs LARS Paths" visual, the Lasso and LARS paths appear identical because
+  both models solve the same constrained problem. However, LARS reaches the solution
+  faster than Lasso.
+
+- The "Lasso vs Elastic-Net Paths" visual is more notable. Elastic Net's coefficients
+  tend to have smaller absolute values than those of Lasso. Additionally, Elastic Net
+  maintains more non-zero coefficients than Lasso towards the end. This demonstrates
+  how the :math:`\\ell^1`-norm constraint encourages sparsity in the solution, while
+  combining it with the :math:`\\ell^2`-norm provides a balanced compromise.
+
+
+
+.. rubric:: References
+
+.. [1] "The Elements of Statistical Learning", Hastie T., Tibshirani R.,
+       Friedman J., Algorithm 3.2, p. 74, 2008.
+
+
 """
 
 # Authors: The scikit-learn developers
@@ -75,62 +148,57 @@ alphas_positive_enet, coefs_positive_enet, _ = enet_path(
 # Display results
 
 plt.figure(1)
-colors = cycle(["b", "r", "g", "c", "k"])
-for coef_lasso, coef_lars, c in zip(coefs_lasso, coefs_lars, colors):
-    l1 = plt.semilogx(alphas_lasso, coef_lasso, c=c)
-    l2 = plt.semilogx(alphas_lars, coef_lars, linestyle="--", c=c)
+for coef_lasso, coef_lars in zip(coefs_lasso, coefs_lars):
+    l1 = plt.semilogx(alphas_lasso, coef_lasso, c='#0072B2')
+    l2 = plt.semilogx(alphas_lars, coef_lars, linestyle="--", c='#D55E00')
 
 plt.xlabel("alpha")
 plt.ylabel("coefficients")
-plt.title("Lasso and LARS Paths")
+plt.title("Lasso vs LARS Paths")
 plt.legend((l1[-1], l2[-1]), ("Lasso", "LARS"), loc="lower right")
 plt.axis("tight")
 
 plt.figure(2)
-colors = cycle(["b", "r", "g", "c", "k"])
-for coef_l, coef_e, c in zip(coefs_lasso, coefs_enet, colors):
-    l1 = plt.semilogx(alphas_lasso, coef_l, c=c)
-    l2 = plt.semilogx(alphas_enet, coef_e, linestyle="--", c=c)
+for coef_l, coef_e in zip(coefs_lasso, coefs_enet):
+    l1 = plt.semilogx(alphas_lasso, coef_l, c='#0072B2')
+    l2 = plt.semilogx(alphas_enet, coef_e, linestyle="--", c='#D55E00')
 
 plt.xlabel("alpha")
 plt.ylabel("coefficients")
-plt.title("Lasso and Elastic-Net Paths")
+plt.title("Lasso vs Elastic-Net Paths")
 plt.legend((l1[-1], l2[-1]), ("Lasso", "Elastic-Net"), loc="lower right")
 plt.axis("tight")
 
-
 plt.figure(3)
-for coef_l, coef_pl, c in zip(coefs_lasso, coefs_positive_lasso, colors):
-    l1 = plt.semilogy(alphas_lasso, coef_l, c=c)
-    l2 = plt.semilogy(alphas_positive_lasso, coef_pl, linestyle="--", c=c)
+for coef_l, coef_pl in zip(coefs_lasso, coefs_positive_lasso):
+    l1 = plt.semilogy(alphas_lasso, coef_l, c='#0072B2')
+    l2 = plt.semilogy(alphas_positive_lasso, coef_pl, linestyle="--", c='#D55E00')
 
 plt.xlabel("alpha")
 plt.ylabel("coefficients")
-plt.title("Lasso and positive Lasso")
+plt.title("Lasso vs Positive Lasso Paths")
 plt.legend((l1[-1], l2[-1]), ("Lasso", "positive Lasso"), loc="lower right")
 plt.axis("tight")
 
-
 plt.figure(4)
-colors = cycle(["b", "r", "g", "c", "k"])
-for coef_lars, coef_positive_lars, c in zip(coefs_lars, coefs_positive_lars, colors):
-    l1 = plt.semilogx(alphas_lars, coef_lars, c=c)
-    l2 = plt.semilogx(alphas_positive_lars, coef_positive_lars, linestyle="--", c=c)
+for coef_lars, coef_positive_lars in zip(coefs_lars, coefs_positive_lars):
+    l1 = plt.semilogx(alphas_lars, coef_lars, c='#0072B2')
+    l2 = plt.semilogx(alphas_positive_lars, coef_positive_lars, linestyle="--", c='#D55E00')
 
 plt.xlabel("alpha")
 plt.ylabel("coefficients")
-plt.title("LARS and Positive LARS")
+plt.title("LARS vs Positive LARS Paths")
 plt.legend((l1[-1], l2[-1]), ("LARS", "Positive LARS"), loc="lower right")
 plt.axis("tight")
 
 plt.figure(5)
-for coef_e, coef_pe, c in zip(coefs_enet, coefs_positive_enet, colors):
-    l1 = plt.semilogx(alphas_enet, coef_e, c=c)
-    l2 = plt.semilogx(alphas_positive_enet, coef_pe, linestyle="--", c=c)
+for coef_e, coef_pe in zip(coefs_enet, coefs_positive_enet):
+    l1 = plt.semilogx(alphas_enet, coef_e, c='#0072B2')
+    l2 = plt.semilogx(alphas_positive_enet, coef_pe, linestyle="--", c='#D55E00')
 
 plt.xlabel("alpha")
 plt.ylabel("coefficients")
-plt.title("Elastic-Net and positive Elastic-Net")
+plt.title("Elastic-Net vs Positive Elastic-Net Paths")
 plt.legend((l1[-1], l2[-1]), ("Elastic-Net", "positive Elastic-Net"), loc="lower right")
 plt.axis("tight")
 plt.show()
