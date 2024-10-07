@@ -1662,9 +1662,11 @@ class TfidfTransformer(
 
             # log+1 instead of log makes sure terms with zero idf don't get
             # suppressed entirely.
-            # `np.log` preserves the dtype of `df` and thus `dtype`.
+            # Force the dtype of `idf_` to be the same as `df`. In NumPy < 2, the dtype
+            # was depending on the value of `n_samples`.
             self.idf_ = np.full_like(df, fill_value=n_samples, dtype=dtype)
             self.idf_ /= df
+            # `np.log` preserves the dtype of `df` and thus `dtype`.
             np.log(self.idf_, out=self.idf_)
             self.idf_ += 1.0
 

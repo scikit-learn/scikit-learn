@@ -251,7 +251,7 @@ Changelog
 
 - |Fix| :class:`feature_extraction.text.TfidfVectorizer` now correctly preserves the
   `dtype` of `idf_` based on the input data.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`30022` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.impute`
 .....................
