@@ -143,6 +143,16 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         }
 
         if chance_level_kw is not None:
+
+            # Matplotlib raises an error when both 'color' and 'c',
+            # or 'linestyle' and 'ls' are specified. To avoid this,
+            # we automatically save only the one specified by the user.
+            invalid_to_valid_kw = {"ls": "linestyle", "c": "color"}
+            for invalid_kw, valid_kw in invalid_to_valid_kw.items():
+                if invalid_kw in chance_level_kw:
+                    chance_level_kw[valid_kw] = chance_level_kw[invalid_kw]
+                    del chance_level_kw[invalid_kw]
+
             chance_level_line_kw.update(**chance_level_kw)
 
         (self.line_,) = self.ax_.plot(self.fpr, self.tpr, **line_kwargs)
