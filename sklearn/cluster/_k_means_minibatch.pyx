@@ -77,7 +77,7 @@ cdef void update_center_dense(
         int n_indices
         int k, sample_idx, feature_idx
 
-        floating wsum = 0
+        floating wsum = 0, temp=0
 
 
     # indices = np.where(labels == cluster_idx)[0]
@@ -101,11 +101,27 @@ cdef void update_center_dense(
         if new_lr:
             alpha = sqrt(wsum/b)
             for feature_idx in range(n_features):
-                centers_new[cluster_idx, feature_idx] = (1-alpha)*centers_old[cluster_idx, feature_idx]
+                centers_new[cluster_idx, feature_idx] = centers_old[cluster_idx, feature_idx]* (1-alpha) * (wsum/alpha)
+            
+            #temp = 0
             for k in range(n_indices):
                 sample_idx = indices[k]
-                for feature_idx in range(n_features):
-                    centers_new[cluster_idx, feature_idx] += alpha* X[sample_idx, feature_idx]* sample_weight[sample_idx] /wsum     
+                for feature_idx in range(n_features):         
+                    centers_new[cluster_idx, feature_idx] += X[sample_idx, feature_idx] * sample_weight[sample_idx]
+
+            for feature_idx in range(n_features):
+                centers_new[cluster_idx, feature_idx] *= (alpha/wsum)
+                #temp = (temp/ wsum - centers_new[cluster_idx, feature_idx]) * alpha 
+                #centers_new[cluster_idx, feature_idx] += temp
+                    #centers_new[cluster_idx, feature_idx] += alpha * X[sample_idx, feature_idx] * sample_weight[sample_idx] / wsum
+
+
+            # for feature_idx in range(n_features):
+            #     centers_new[cluster_idx, feature_idx] = (1-alpha)*centers_old[cluster_idx, feature_idx]
+            # for k in range(n_indices):
+            #     sample_idx = indices[k]
+            #     for feature_idx in range(n_features):
+            #         centers_new[cluster_idx, feature_idx] += alpha* X[sample_idx, feature_idx]* sample_weight[sample_idx] /wsum     
         else:
             # Undo the previous count-based scaling for this cluster center
             for feature_idx in range(n_features):
@@ -115,7 +131,6 @@ cdef void update_center_dense(
             for k in range(n_indices):
                 sample_idx = indices[k]
                 for feature_idx in range(n_features):
-                    #old
                     centers_new[cluster_idx, feature_idx] += X[sample_idx, feature_idx] * sample_weight[sample_idx]
 
             # Update the count statistics for this center

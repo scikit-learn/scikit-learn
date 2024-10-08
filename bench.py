@@ -228,7 +228,7 @@ def plot_results_bars(df, ax1, set_labels=True):
     df_comb = df
     #ax2.set_ylabel('Time (s) log scale')
     #set ax2 to log scale
-    ax2.set_yscale('log')
+    #ax2.set_yscale('log')
     #ax1.set_ylabel('Score')
 
     
@@ -261,7 +261,7 @@ result_files = []
 
 # make parameters global
 
-n_runs = 10
+n_runs = 5
 n_iters = [5]
 # Define parameter ranges
 batch_size_values = [1024]
@@ -302,16 +302,16 @@ for dataset_name in dataset_names:
     for num_iters, n_clusters, batch_size in product(n_iters, n_clusters_values, batch_size_values):
         print("#"*20)
         
-        #mbk_newlr = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters,max_no_improvement=None, reassignment_ratio = 0, new_lr=True)
-        #mbk_oldlr = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters,max_no_improvement=None, reassignment_ratio = 0, new_lr=False)
-        mbk_newlr_default = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters, new_lr=True)
-        mbk_oldlr_default = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters, new_lr=False)
+        mbk_newlr = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters,max_no_improvement=None, reassignment_ratio = 0, new_lr=True)
+        mbk_oldlr = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters,max_no_improvement=None, reassignment_ratio = 0, new_lr=False)
+        #mbk_newlr_default = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters, new_lr=True)
+        #mbk_oldlr_default = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters, new_lr=False)
 
         mbks = {
-                #"1.new lr MiniBatch": mbk_newlr,
-                #"2.MiniBatch": mbk_oldlr,
-                "3.default new lr MiniBatch": mbk_newlr_default,
-                "4.default MiniBatch": mbk_oldlr_default,
+                "1.new lr MiniBatch": mbk_newlr,
+                "2.MiniBatch": mbk_oldlr,
+                #"3.default new lr MiniBatch": mbk_newlr_default,
+                #"4.default MiniBatch": mbk_oldlr_default,
                 }
         
         evaluations += evaluate(mbks,X, Y, num_iters, n_clusters, batch_size, n_runs)
