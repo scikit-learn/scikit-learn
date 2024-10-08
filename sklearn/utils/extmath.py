@@ -373,6 +373,12 @@ def randomized_svd(
     This method solves the fixed-rank approximation problem described in [1]_
     (problem (1.5), p5).
 
+    Refer to
+    :ref:`sphx_glr_auto_examples_applications_wikipedia_principal_eigenvector.py`
+    for a typical example where power iteration algorithm is used to rank webpages.
+    This algorithm is also known to be used as a building block in the Google PageRank
+    algorithm.
+
     Parameters
     ----------
     M : {ndarray, sparse matrix}
@@ -481,9 +487,6 @@ def randomized_svd(
 
     .. [3] An implementation of a randomized algorithm for principal component
       analysis A. Szlam et al. 2014
-
-    See:ref:`sphx_glr_auto_examples_applications_wikipedia_principal_eigenvector.py`
-    for an example on how to use the API.
 
     Examples
     --------
