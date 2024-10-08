@@ -12,7 +12,7 @@ from numbers import Integral
 
 import numpy as np
 import scipy.sparse as sp
-from scipy import linalg, optimize, sparse
+from scipy import optimize, sparse
 from scipy.sparse.linalg import lsqr
 from scipy.special import expit
 
@@ -525,7 +525,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     Notes
     -----
     From the implementation point of view, this is just plain Ordinary
-    Least Squares (scipy.linalg.lstsq) or Non Negative Least Squares
+    Least Squares (numpy.linalg.lstsq) or Non Negative Least Squares
     (scipy.optimize.nnls) wrapped as a predictor object.
 
     Examples
@@ -673,7 +673,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                 )
                 self.coef_ = np.vstack([out[0] for out in outs])
         else:
-            self.coef_, _, self.rank_, self.singular_ = linalg.lstsq(X, y)
+            self.coef_, _, self.rank_, self.singular_ = np.linalg.lstsq(X, y)
             self.coef_ = self.coef_.T
 
         if y.ndim == 1:

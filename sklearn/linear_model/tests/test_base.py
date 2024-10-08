@@ -704,7 +704,7 @@ def test_linear_regression_sample_weight_consistency(
     It is very similar to test_enet_sample_weight_consistency.
     """
     rng = np.random.RandomState(global_random_seed)
-    n_samples, n_features = 10, 5
+    n_samples, n_features = 10, 15
 
     X = rng.rand(n_samples, n_features)
     y = rng.rand(n_samples)
@@ -754,17 +754,11 @@ def test_linear_regression_sample_weight_consistency(
     if fit_intercept:
         intercept_0 = reg.intercept_
     reg.fit(X[:-5], y[:-5], sample_weight=sample_weight[:-5])
-    if fit_intercept and sparse_container is None:
-        # FIXME: https://github.com/scikit-learn/scikit-learn/issues/26164
-        # This often fails, e.g. when calling
-        # SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all" pytest \
-        # sklearn/linear_model/tests/test_base.py\
-        # ::test_linear_regression_sample_weight_consistency
-        pass
-    else:
-        assert_allclose(reg.coef_, coef_0, rtol=1e-5)
-        if fit_intercept:
-            assert_allclose(reg.intercept_, intercept_0)
+    # TODO: see if it fixes
+    # https://github.com/scikit-learn/scikit-learn/issues/26164
+    assert_allclose(reg.coef_, coef_0, rtol=1e-5)
+    if fit_intercept:
+        assert_allclose(reg.intercept_, intercept_0)
 
     # 5) check that multiplying sample_weight by 2 is equivalent to repeating
     # corresponding samples twice
