@@ -1362,9 +1362,6 @@ class KMeans(_BaseKMeans):
     For examples of common problems with K-Means and how to address them see
     :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_assumptions.py`.
 
-    For an example of how to use K-Means to perform color quantization see
-    :ref:`sphx_glr_auto_examples_cluster_plot_color_quantization.py`.
-
     For a demonstration of how K-Means can be used to cluster text documents see
     :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`.
 

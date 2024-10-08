@@ -236,11 +236,6 @@ computing cluster centers and values of inertia. For example, assigning a
 weight of 2 to a sample is equivalent to adding a duplicate of that sample
 to the dataset :math:`X`.
 
-K-means can be used for vector quantization. This is achieved using the
-``transform`` method of a trained model of :class:`KMeans`. For an example of
-performing vector quantization on an image refer to
-:ref:`sphx_glr_auto_examples_cluster_plot_color_quantization.py`.
-
 .. rubric:: Examples
 
 * :ref:`sphx_glr_auto_examples_cluster_plot_cluster_iris.py`: Example usage of
