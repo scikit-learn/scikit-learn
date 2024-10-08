@@ -375,8 +375,8 @@ def randomized_svd(
 
     Refer to
     :ref:`sphx_glr_auto_examples_applications_wikipedia_principal_eigenvector.py`
-    for a typical example where power iteration algorithm is used to rank webpages.
-    This algorithm is also known to be used as a building block in the Google PageRank
+    for a typical example where the power iteration algorithm is used to rank web pages.
+    This algorithm is also known to be used as a building block in Google's PageRank
     algorithm.
 
     Parameters
