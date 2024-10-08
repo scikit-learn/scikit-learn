@@ -189,5 +189,6 @@ to :func:`learning_curve` to generate and plot the learning curve:
          SVC(kernel="linear"), X, y, train_sizes=[50, 80, 110], cv=5)
 
 .. rubric:: Examples
-   
-* :ref:`sphx_glr_auto_examples_model_selection_plot_learning_curve.py`
+
+* See :ref:`sphx_glr_auto_examples_model_selection_plot_learning_curve.py` for an
+  example of using learning curves to check the scalability of a predictive model.
