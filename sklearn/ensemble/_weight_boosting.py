@@ -375,7 +375,7 @@ class AdaBoostClassifier(
         Values must be in the range `(0.0, inf)`.
 
     algorithm : {'SAMME'}, default='SAMME'
-        If 'SAMME' then use the SAMME discrete boosting algorithm.
+        Use the SAMME discrete boosting algorithm.
 
         .. deprecated:: 1.6
             `algorithm` is deprecated and will be removed in version 1.8. This
