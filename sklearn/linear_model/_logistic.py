@@ -1,5 +1,11 @@
 """
-Logistic Regression
+Logistic Regression(aka logit,MaxEnt) classifier.
+
+For a detailed example of how to use logistic reression,see:
+:ref:`sphx_glr_auto_examples_linear_model_plot_logistic.py`
+
+For more information, refer to the user guide:
+https://scikit-learn.org/regressionstable/modules/linear_model.html#logistic-
 """
 
 # Authors: The scikit-learn developers
@@ -807,7 +813,7 @@ def _log_reg_scoring_path(
 class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     """
     Logistic Regression (aka logit, MaxEnt) classifier.
-
+    
     In the multiclass case, the training algorithm uses the one-vs-rest (OvR)
     scheme if the 'multi_class' option is set to 'ovr', and uses the
     cross-entropy loss if the 'multi_class' option is set to 'multinomial'.
@@ -828,6 +834,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     'saga' solver.
 
     Read more in the :ref:`User Guide <logistic_regression>`.
+    https://scikit-learn.org/regressionstable/modules/linear_model.html#logistic-
 
     Parameters
     ----------
