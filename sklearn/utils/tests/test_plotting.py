@@ -113,4 +113,7 @@ def test_inverval_max_min_ratio(data, lower_bound, upper_bound):
 )
 def test_validate_style_kwargs(default_kwargs, user_kwargs, expected):
     result = _validate_style_kwargs(default_kwargs, user_kwargs)
-    assert result == expected, f"{result} != {expected}"
+    assert result == expected, (
+        "The validation of style keywords does not provide the expected results: "
+        f"Got{result} instead of {expected}."
+    )
