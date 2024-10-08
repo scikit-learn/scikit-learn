@@ -120,7 +120,12 @@ def _validate_style_kwargs(default_style_kwargs, user_style_kwargs):
         "mfcalt": "markerfacecoloralt",
         "ms": "markersize",
     }
-
+    for invalid_key, valid_key in invalid_to_valid_kw.items():
+        if invalid_key in user_style_kwargs and valid_key in user_style_kwargs:
+            raise TypeError(
+                f"Got both {invalid_key} and {valid_key}, which are aliases of one "
+                "another"
+            )
     valid_style_kwargs = default_style_kwargs.copy()
 
     for key in user_style_kwargs.keys():
