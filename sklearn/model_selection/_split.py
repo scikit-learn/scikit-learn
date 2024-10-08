@@ -2915,11 +2915,20 @@ def train_test_split(
 
     else:
         if stratify is not None:
-            CVClass = StratifiedShuffleSplit
+            cv_params = {
+                "test_size": n_test,
+                "train_size": n_train,
+                "random_state": random_state,
+            }
+            if stratify_regression:
+                CVClass = StratifiedShuffleSplitRegression
+                cv_params.update({"n_bins": n_bins, "strategy": strategy})
+            else:
+                CVClass = StratifiedShuffleSplit
         else:
             CVClass = ShuffleSplit
 
-        cv = CVClass(test_size=n_test, train_size=n_train, random_state=random_state)
+        cv = CVClass(**cv_params)
 
         train, test = next(cv.split(X=arrays[0], y=stratify))
 
