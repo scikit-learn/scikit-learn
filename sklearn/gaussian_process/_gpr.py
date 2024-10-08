@@ -31,12 +31,12 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     In addition to standard scikit-learn estimator API,
     :class:`GaussianProcessRegressor`:
 
-       * allows prediction without prior fitting (based on the GP prior)
-       * provides an additional method `sample_y(X)`, which evaluates samples
-         drawn from the GPR (prior or posterior) at given inputs
-       * exposes a method `log_marginal_likelihood(theta)`, which can be used
-         externally for other ways of selecting hyperparameters, e.g., via
-         Markov chain Monte Carlo.
+    * allows prediction without prior fitting (based on the GP prior)
+    * provides an additional method `sample_y(X)`, which evaluates samples
+      drawn from the GPR (prior or posterior) at given inputs
+    * exposes a method `log_marginal_likelihood(theta)`, which can be used
+      externally for other ways of selecting hyperparameters, e.g., via
+      Markov chain Monte Carlo.
 
     To learn the difference between a point-estimate approach vs. a more
     Bayesian modelling approach, refer to the example entitled

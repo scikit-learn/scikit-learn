@@ -22,6 +22,7 @@ from sklearn.utils._testing import (
     ignore_warnings,
     raises,
     set_random_state,
+    skip_if_no_numpydoc,
     turn_warnings_into_errors,
 )
 from sklearn.utils.deprecation import deprecated
@@ -399,12 +400,8 @@ class MockMetaEstimator:
         """Incorrect docstring but should not be tested"""
 
 
+@skip_if_no_numpydoc
 def test_check_docstring_parameters():
-    pytest.importorskip(
-        "numpydoc",
-        reason="numpydoc is required to test the docstrings",
-        minversion="1.2.0",
-    )
     incorrect = check_docstring_parameters(f_ok)
     assert incorrect == []
     incorrect = check_docstring_parameters(f_ok, ignore=["b"])
@@ -608,16 +605,14 @@ def f_three(a, b):  # pragma: no cover
     pass
 
 
+@skip_if_no_numpydoc
 def test_assert_docstring_consistency_object_type():
     """Check error raised when `objects` incorrect type."""
-    pytest.importorskip(
-        "numpydoc",
-        reason="numpydoc is required to test the docstrings",
-    )
     with pytest.raises(TypeError, match="All 'objects' must be one of"):
         assert_docstring_consistency(["string", f_one])
 
 
+@skip_if_no_numpydoc
 @pytest.mark.parametrize(
     "objects, kwargs, error",
     [
@@ -635,14 +630,11 @@ def test_assert_docstring_consistency_object_type():
 )
 def test_assert_docstring_consistency_arg_checks(objects, kwargs, error):
     """Check `assert_docstring_consistency` argument checking correct."""
-    pytest.importorskip(
-        "numpydoc",
-        reason="numpydoc is required to test the docstrings",
-    )
     with pytest.raises(TypeError, match=error):
         assert_docstring_consistency(objects, **kwargs)
 
 
+@skip_if_no_numpydoc
 @pytest.mark.parametrize(
     "objects, kwargs, error, warn",
     [
@@ -691,10 +683,6 @@ def test_assert_docstring_consistency_arg_checks(objects, kwargs, error):
 )
 def test_assert_docstring_consistency(objects, kwargs, error, warn):
     """Check `assert_docstring_consistency` gives correct results."""
-    pytest.importorskip(
-        "numpydoc",
-        reason="numpydoc is required to test the docstrings",
-    )
     if error:
         with pytest.raises(AssertionError, match=error):
             assert_docstring_consistency(objects, **kwargs)
@@ -745,12 +733,9 @@ def f_six(labels):  # pragma: no cover
     pass
 
 
+@skip_if_no_numpydoc
 def test_assert_docstring_consistency_error_msg():
     """Check `assert_docstring_consistency` difference message."""
-    pytest.importorskip(
-        "numpydoc.docscrape",
-        reason="numpydoc is required to test the docstrings",
-    )
     msg = r"""The description of Parameter 'labels' is inconsistent between
 \['f_four'\] and \['f_five'\] and \['f_six'\]:
 

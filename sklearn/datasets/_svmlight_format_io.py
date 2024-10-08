@@ -85,8 +85,7 @@ def load_svmlight_file(
 
     This implementation is written in Cython and is reasonably fast.
     However, a faster API-compatible loader is also available at:
-
-      https://github.com/mblondel/svmlight-loader
+    https://github.com/mblondel/svmlight-loader
 
     Parameters
     ----------
