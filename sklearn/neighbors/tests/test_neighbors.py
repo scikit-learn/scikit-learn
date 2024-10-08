@@ -1721,6 +1721,7 @@ def test_neighbors_metrics(
             assert_array_equal(ball_tree_idx, kd_tree_idx)
 
 
+# TODO: Remove ignore_warnings when minimum supported SciPy version is 1.17
 # Some scipy metrics are deprecated (depending on the scipy version) but we
 # still want to test them.
 @ignore_warnings(category=DeprecationWarning)
