@@ -83,11 +83,7 @@ def test_inverval_max_min_ratio(data, lower_bound, upper_bound):
         (
             {"label": "xxx", "color": "k","linestyle": "--"},
             {"ls": "-."},
-            {
-                "label": "Chance level (AUC = 0.5)",
-                "color": "k",
-                "linestyle": "-.",
-            },
+            {"label": "xxx", "color": "k", "linestyle": "-."},
         ),
         ({}, {}, {}),
         (
