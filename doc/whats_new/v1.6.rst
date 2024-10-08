@@ -404,7 +404,7 @@ Changelog
 - |Feature| Added :class:`StratifiedShuffleSplitRegression` to support stratified
   splitting for regression problems. New parameters `stratify_regression`, `n_bins`,
   and `strategy` added to :func:`train_test_split` for stratifying continuous target variables.
-  :pr:`30011` by :user:`Pablo Salinas Rodríguez <pablitosalinero>`.
+  :pr:`30033` by :user:`Pablo Salinas Rodríguez <pablitosalinero>`.
 
 
 .. rubric:: Code and documentation contributors
