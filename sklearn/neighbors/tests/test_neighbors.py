@@ -2247,6 +2247,7 @@ def test_auto_algorithm(X, metric, metric_params, expected_algo):
     assert model._fit_method == expected_algo
 
 
+# TODO: Remove ignore_warnings when minimum supported SciPy version is 1.17
 # Some scipy metrics are deprecated (depending on the scipy version) but we
 # still want to test them.
 @ignore_warnings(category=DeprecationWarning)
