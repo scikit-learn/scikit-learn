@@ -16,18 +16,14 @@ from scipy.spatial import distance
 from .. import config_context
 from ..exceptions import DataConversionWarning
 from ..preprocessing import normalize
-from ..utils import (
-    check_array,
-    gen_batches,
-    gen_even_slices,
-)
+from ..utils import check_array, gen_batches, gen_even_slices
 from ..utils._array_api import (
-    _clip,
     _fill_or_add_to_diagonal,
     _find_matching_floating_dtype,
     _is_numpy_namespace,
     _max_precision_float_dtype,
     _modify_in_place_if_numpy,
+    device,
     get_namespace,
     get_namespace_and_device,
 )
@@ -467,15 +463,20 @@ def nan_euclidean_distances(
     missing value in either sample and scales up the weight of the remaining
     coordinates:
 
+    .. code-block:: text
+
         dist(x,y) = sqrt(weight * sq. distance from present coordinates)
-        where,
+
+    where:
+
+    .. code-block:: text
+
         weight = Total # of coordinates / # of present coordinates
 
-    For example, the distance between ``[3, na, na, 6]`` and ``[1, na, 4, 5]``
-    is:
+    For example, the distance between ``[3, na, na, 6]`` and ``[1, na, 4, 5]`` is:
 
-        .. math::
-            \\sqrt{\\frac{4}{2}((3-1)^2 + (6-5)^2)}
+    .. math::
+        \\sqrt{\\frac{4}{2}((3-1)^2 + (6-5)^2)}
 
     If all the coordinates are missing or if there are no common present
     coordinates then NaN is returned for that pair.
@@ -732,7 +733,7 @@ def pairwise_distances_argmin_min(
     is closest (according to the specified distance). The minimal distances are
     also returned.
 
-    This is mostly equivalent to calling:
+    This is mostly equivalent to calling::
 
         (pairwise_distances(X, Y=Y, metric=metric).argmin(axis=axis),
          pairwise_distances(X, Y=Y, metric=metric).min(axis=axis))
@@ -878,7 +879,7 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
     This function computes for each row in X, the index of the row of Y which
     is closest (according to the specified distance).
 
-    This is mostly equivalent to calling:
+    This is mostly equivalent to calling::
 
         pairwise_distances(X, Y=Y, metric=metric).argmin(axis=axis)
 
@@ -1166,7 +1167,14 @@ def cosine_distances(X, Y=None):
     S = cosine_similarity(X, Y)
     S *= -1
     S += 1
-    S = _clip(S, 0, 2, xp)
+    # TODO: remove the xp.asarray calls once the following is fixed:
+    # https://github.com/data-apis/array-api-compat/issues/177
+    device_ = device(S)
+    S = xp.clip(
+        S,
+        xp.asarray(0.0, device=device_, dtype=S.dtype),
+        xp.asarray(2.0, device=device_, dtype=S.dtype),
+    )
     if X is Y or Y is None:
         # Ensure that distances between vectors and themselves are set to 0.0.
         # This may not be the case due to floating point rounding errors.
@@ -1440,6 +1448,8 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
     """
     Compute the polynomial kernel between X and Y.
 
+    .. code-block:: text
+
         K(X, Y) = (gamma <X, Y> + coef0) ^ degree
 
     Read more in the :ref:`User Guide <polynomial_kernel>`.
@@ -1502,6 +1512,8 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
 def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     """Compute the sigmoid kernel between X and Y.
 
+    .. code-block:: text
+
         K(X, Y) = tanh(gamma <X, Y> + coef0)
 
     Read more in the :ref:`User Guide <sigmoid_kernel>`.
@@ -1534,6 +1546,7 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     array([[0.76..., 0.76...],
            [0.87..., 0.93...]])
     """
+    xp, _ = get_namespace(X, Y)
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
         gamma = 1.0 / X.shape[1]
@@ -1541,7 +1554,8 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     K = safe_sparse_dot(X, Y.T, dense_output=True)
     K *= gamma
     K += coef0
-    np.tanh(K, K)  # compute tanh in-place
+    # compute tanh in-place for numpy
+    K = _modify_in_place_if_numpy(xp, xp.tanh, K, out=K)
     return K
 
 
@@ -1559,6 +1573,8 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
 )
 def rbf_kernel(X, Y=None, gamma=None):
     """Compute the rbf (gaussian) kernel between X and Y.
+
+    .. code-block:: text
 
         K(x, y) = exp(-gamma ||x-y||^2)
 
@@ -1618,7 +1634,9 @@ def rbf_kernel(X, Y=None, gamma=None):
 def laplacian_kernel(X, Y=None, gamma=None):
     """Compute the laplacian kernel between X and Y.
 
-    The laplacian kernel is defined as::
+    The laplacian kernel is defined as:
+
+    .. code-block:: text
 
         K(x, y) = exp(-gamma ||x-y||_1)
 
@@ -1674,6 +1692,8 @@ def cosine_similarity(X, Y=None, dense_output=True):
 
     Cosine similarity, or the cosine kernel, computes similarity as the
     normalized dot product of X and Y:
+
+    .. code-block:: text
 
         K(X, Y) = <X, Y> / (||X||*||Y||)
 
@@ -1738,7 +1758,9 @@ def additive_chi2_kernel(X, Y=None):
     and Y have to be non-negative. This kernel is most commonly applied to
     histograms.
 
-    The chi-squared kernel is given by::
+    The chi-squared kernel is given by:
+
+    .. code-block:: text
 
         k(x, y) = -Sum [(x - y)^2 / (x + y)]
 
@@ -1825,7 +1847,9 @@ def chi2_kernel(X, Y=None, gamma=1.0):
     and Y have to be non-negative. This kernel is most commonly applied to
     histograms.
 
-    The chi-squared kernel is given by::
+    The chi-squared kernel is given by:
+
+    .. code-block:: text
 
         k(x, y) = exp(-gamma Sum [(x - y)^2 / (x + y)])
 
@@ -1935,7 +1959,7 @@ def _dist_wrapper(dist_func, dist_matrix, slice_, *args, **kwargs):
 
 def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     """Break the pairwise matrix in n_jobs even slices
-    and compute them in parallel."""
+    and compute them using multithreading."""
 
     if Y is None:
         Y = X
@@ -2330,8 +2354,8 @@ def pairwise_distances(
 
     n_jobs : int, default=None
         The number of jobs to use for the computation. This works by breaking
-        down the pairwise matrix into n_jobs even slices and computing them in
-        parallel.
+        down the pairwise matrix into n_jobs even slices and computing them
+        using multithreading.
 
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -2433,7 +2457,7 @@ def pairwise_distances(
 
         dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else "infer_float"
 
-        if dtype == bool and (X.dtype != bool or (Y is not None and Y.dtype != bool)):
+        if dtype is bool and (X.dtype != bool or (Y is not None and Y.dtype != bool)):
             msg = "Data was converted to boolean for metric %s" % metric
             warnings.warn(msg, DataConversionWarning)
 
@@ -2594,8 +2618,8 @@ def pairwise_kernels(
 
     n_jobs : int, default=None
         The number of jobs to use for the computation. This works by breaking
-        down the pairwise matrix into n_jobs even slices and computing them in
-        parallel.
+        down the pairwise matrix into n_jobs even slices and computing them
+        using multithreading.
 
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`

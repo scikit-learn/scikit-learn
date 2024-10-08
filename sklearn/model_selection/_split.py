@@ -1932,8 +1932,9 @@ class ShuffleSplit(_UnsupportedGroupCVMixin, BaseShuffleSplit):
     Yields indices to split data into training and test sets.
 
     Note: contrary to other cross-validation strategies, random splits
-    do not guarantee that all folds will be different, although this is
-    still very likely for sizeable datasets.
+    do not guarantee that test sets across all folds will be mutually exclusive,
+    and might include overlapping samples. However, this is still very likely for
+    sizeable datasets.
 
     Read more in the :ref:`User Guide <ShuffleSplit>`.
 
@@ -2048,6 +2049,11 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
     For example, a less computationally intensive alternative to
     ``LeavePGroupsOut(p=10)`` would be
     ``GroupShuffleSplit(test_size=10, n_splits=100)``.
+
+    Contrary to other cross-validation strategies, the random splits
+    do not guarantee that test sets across all folds will be mutually exclusive,
+    and might include overlapping samples. However, this is still very likely for
+    sizeable datasets.
 
     Note: The parameters ``test_size`` and ``train_size`` refer to groups, and
     not to samples as in :class:`ShuffleSplit`.
@@ -2176,13 +2182,14 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
     Provides train/test indices to split data in train/test sets.
 
-    This cross-validation object is a merge of StratifiedKFold and
-    ShuffleSplit, which returns stratified randomized folds. The folds
+    This cross-validation object is a merge of :class:`StratifiedKFold` and
+    :class:`ShuffleSplit`, which returns stratified randomized folds. The folds
     are made by preserving the percentage of samples for each class.
 
-    Note: like the ShuffleSplit strategy, stratified random splits
-    do not guarantee that all folds will be different, although this is
-    still very likely for sizeable datasets.
+    Note: like the :class:`ShuffleSplit` strategy, stratified random splits
+    do not guarantee that test sets across all folds will be mutually exclusive,
+    and might include overlapping samples. However, this is still very likely for
+    sizeable datasets.
 
     Read more in the :ref:`User Guide <stratified_shuffle_split>`.
 
@@ -2933,7 +2940,7 @@ def _build_repr(self):
                 value = getattr(self, key, None)
                 if value is None and hasattr(self, "cvargs"):
                     value = self.cvargs.get(key, None)
-            if len(w) and w[0].category == FutureWarning:
+            if len(w) and w[0].category is FutureWarning:
                 # if the parameter is deprecated, don't show it
                 continue
         finally:

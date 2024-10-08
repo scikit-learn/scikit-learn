@@ -66,7 +66,7 @@ from ..tree import (
 from ..tree._tree import DOUBLE, DTYPE
 from ..utils import check_random_state, compute_sample_weight
 from ..utils._param_validation import Interval, RealNotInt, StrOptions
-from ..utils._tags import _safe_tags
+from ..utils._tags import get_tags
 from ..utils.multiclass import check_classification_targets, type_of_target
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
@@ -74,6 +74,7 @@ from ..utils.validation import (
     _check_sample_weight,
     _num_samples,
     check_is_fitted,
+    validate_data,
 )
 from ._base import BaseEnsemble, _partition_estimators
 
@@ -356,7 +357,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         if issparse(y):
             raise ValueError("sparse multilabel-indicator for y is not supported.")
 
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             multi_output=True,
@@ -634,7 +636,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         else:
             ensure_all_finite = True
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             dtype=DTYPE,
             accept_sparse="csr",
@@ -710,11 +713,13 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         """
         return [sample_indices for sample_indices in self._get_estimators_indices()]
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
         # Only the criterion is required to determine if the tree supports
         # missing values
         estimator = type(self.estimator)(criterion=self.criterion)
-        return {"allow_nan": _safe_tags(estimator, key="allow_nan")}
+        tags.input_tags.allow_nan = get_tags(estimator).input_tags.allow_nan
+        return tags
 
 
 def _accumulate_prediction(predict, X, out, lock):
@@ -995,8 +1000,10 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
 
             return proba
 
-    def _more_tags(self):
-        return {"multilabel": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.classifier_tags.multi_label = True
+        return tags
 
 
 class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
@@ -1159,8 +1166,10 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
 
         return averaged_predictions
 
-    def _more_tags(self):
-        return {"multilabel": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.regressor_tags.multi_label = True
+        return tags
 
 
 class RandomForestClassifier(ForestClassifier):
@@ -1336,7 +1345,9 @@ class RandomForestClassifier(ForestClassifier):
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
-        :ref:`minimal_cost_complexity_pruning` for details.
+        :ref:`minimal_cost_complexity_pruning` for details. See
+        :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
+        for an example of such pruning.
 
         .. versionadded:: 0.22
 
@@ -1712,7 +1723,9 @@ class RandomForestRegressor(ForestRegressor):
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
-        :ref:`minimal_cost_complexity_pruning` for details.
+        :ref:`minimal_cost_complexity_pruning` for details. See
+        :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
+        for an example of such pruning.
 
         .. versionadded:: 0.22
 
@@ -2077,7 +2090,9 @@ class ExtraTreesClassifier(ForestClassifier):
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
-        :ref:`minimal_cost_complexity_pruning` for details.
+        :ref:`minimal_cost_complexity_pruning` for details. See
+        :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
+        for an example of such pruning.
 
         .. versionadded:: 0.22
 
@@ -2436,7 +2451,9 @@ class ExtraTreesRegressor(ForestRegressor):
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
-        :ref:`minimal_cost_complexity_pruning` for details.
+        :ref:`minimal_cost_complexity_pruning` for details. See
+        :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
+        for an example of such pruning.
 
         .. versionadded:: 0.22
 
