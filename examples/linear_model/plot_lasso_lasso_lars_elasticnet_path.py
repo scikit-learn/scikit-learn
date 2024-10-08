@@ -18,7 +18,7 @@ Scikit-learn provides the following regularization techniques:
 
 - :func:`~sklearn.linear_model.Lasso`
 - :func:`~sklearn.linear_model.LassoLars`
-- :func:`~sklearn.linear_model.ElasticNet` with default `l1_ratio=0.5`
+- :func:`~sklearn.linear_model.ElasticNet`
 
 Mathematically, these are formulated by minimising the constrained
 least-squares penalty:
