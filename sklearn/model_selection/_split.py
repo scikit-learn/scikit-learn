@@ -2849,7 +2849,13 @@ def train_test_split(
         Number of bins for stratifying continuous target variables.
 
     strategy : str, default='uniform'
-        Method for defining bin widths in regression stratification.
+        Method for defining bin widths when stratifying continuous target variables
+        in regression. Available options are:
+
+        - 'uniform': Divides the data into bins of equal width based on the range
+            of values.
+        - 'quantile': Divides the data into bins with an equal number of samples.
+        - 'kmeans': Uses the k-means algorithm to cluster values into different bins.
 
     Returns
     -------
