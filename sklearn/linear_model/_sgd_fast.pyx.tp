@@ -577,12 +577,6 @@ def _plain_sgd{{name_suffix}}(
                     (1 - l1_ratio) * 0.5 * w.norm() ** 2 +
                     l1_ratio * w.l1norm()
                 )
-                if verbose > 0:
-                    with gil:
-                        print("Norm: %.2f, NNZs: %d, Bias: %.6f, T: %d, "
-                            "Avg. loss: %f, Objective: %f"
-                            % (w.norm(), np.nonzero(weights)[0].shape[0],
-                                intercept, count, sumloss / train_count, objective))
                 if tol > -INFINITY and objective > best_objective - tol:
                     no_improvement_count += 1
                 else:
