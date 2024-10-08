@@ -333,6 +333,7 @@ def mean_absolute_percentage_error(
     Note that we are not using the common "percentage" definition: the percentage
     in the range [0, 100] is converted to a relative value in the range [0, 1]
     by dividing by 100. Thus, an error of 200% corresponds to a relative error of 2.
+
     Read more in the :ref:`User Guide <mean_absolute_percentage_error>`.
 
     .. versionadded:: 0.24
