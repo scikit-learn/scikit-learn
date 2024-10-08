@@ -590,6 +590,39 @@ Here is a visualization of the cross-validation behavior.
    :align: center
    :scale: 75%
 
+.. _stratified_shuffle_split_regression:
+
+Stratified Shuffle Split for Regression
+---------------------------------------
+
+:class:`StratifiedShuffleSplitRegression` is a variation of *StratifiedShuffleSplit* 
+designed for regression tasks. It uses `KBinsDiscretizer` to stratify continuous 
+target variables into bins, ensuring that both training and test sets maintain 
+similar distributions of the target variable.
+
+Parameters
+----------
+n_splits : int, default=5
+    Number of re-shuffling & splitting iterations.
+test_size : float or int, default=None
+    Proportion or absolute number of test samples.
+train_size : float or int, default=None
+    Proportion or absolute number of train samples.
+random_state : int, RandomState instance or None, default=None
+    Seed for random number generator.
+n_bins : int, default=5
+    Number of bins for discretizing continuous targets.
+strategy : {'uniform', 'quantile', 'kmeans'}, default='uniform'
+    Strategy to define the binning technique.
+
+Example
+-------
+>>> from sklearn.model_selection import StratifiedShuffleSplitRegression
+>>> X, y = datasets.make_regression(n_samples=100, n_features=2, noise=0.1)
+>>> sssr = StratifiedShuffleSplitRegression(n_splits=5, test_size=0.2)
+>>> for train_idx, test_idx in sssr.split(X, y):
+>>>     print(f"Train indices: {train_idx}, Test indices: {test_idx}")
+
 .. _predefined_split:
 
 Predefined fold-splits / Validation-sets
