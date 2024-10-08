@@ -329,10 +329,6 @@ def mean_absolute_percentage_error(
     y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
 ):
     """Mean absolute percentage error (MAPE) regression loss.
-    MAPE output is a relative measure of error that does not have an upper bound,
-    unlike typical percentages. It can return values greater than 1 (e.g., 2 
-    representing a 200% error). For example, an error of 1 represents a 100% 
-    deviation from the true value.
 
     Note that we are not using the common "percentage" definition: the percentage
     in the range [0, 100] is converted to a relative value in the range [0, 1]
