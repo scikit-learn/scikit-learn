@@ -143,13 +143,8 @@ class PredictionErrorDisplay:
         default_scatter_kwargs = {"color": "tab:blue", "alpha": 0.8}
         default_line_kwargs = {"color": "black", "alpha": 0.7, "linestyle": "--"}
 
-        scatter_kwargs = _validate_style_kwargs(
-            default_style_kwargs=default_scatter_kwargs,
-            user_style_kwargs=scatter_kwargs,
-        )
-        line_kwargs = _validate_style_kwargs(
-            default_style_kwargs=default_line_kwargs, user_style_kwargs=line_kwargs
-        )
+        scatter_kwargs = _validate_style_kwargs(default_scatter_kwargs, scatter_kwargs)
+        line_kwargs = _validate_style_kwargs(default_line_kwargs, line_kwargs)
 
         scatter_kwargs = {**default_scatter_kwargs, **scatter_kwargs}
         line_kwargs = {**default_line_kwargs, **line_kwargs}
