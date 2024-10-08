@@ -2468,20 +2468,33 @@ class StratifiedShuffleSplitRegression(StratifiedShuffleSplit):
     Stratified Shuffle Split for regression problems using KBinsDiscretizer
     to discretize continuous targets into bins for stratification.
 
-    Parameters:
-    -----------
-    n_bins : int (default=5)
+    This class is useful for stratifying continuous target variables by
+    discretizing them into bins and ensuring each bin is equally represented
+    in both the training and testing sets.
+
+    Parameters
+    ----------
+    n_bins : int, default=5
         The number of bins to discretize continuous target values.
 
-    strategy : str (default='uniform')
-        Strategy used to define the widths of the bins.
-        Supported values are:
+    strategy : str, default='uniform'
+        Strategy used to define the widths of the bins. Supported values:
         - 'uniform': All bins have identical widths.
         - 'quantile': Bins have the same number of points.
         - 'kmeans': Bins are formed using k-means clustering.
 
     **kwargs : dict
         Additional parameters passed to the parent class StratifiedShuffleSplit.
+
+    Examples
+    --------
+    >>> from sklearn.model_selection import StratifiedShuffleSplitRegression
+    >>> import numpy as np
+    >>> X = np.random.randn(100, 5)
+    >>> y = np.random.randn(100)
+    >>> sssr = StratifiedShuffleSplitRegression(n_bins=3, strategy="quantile")
+    >>> for train_idx, test_idx in sssr.split(X, y):
+    ...     print(f"Train: {train_idx}, Test: {test_idx}")
     """
 
     def __init__(self, n_bins=5, strategy="uniform", **kwargs):
@@ -2494,26 +2507,37 @@ class StratifiedShuffleSplitRegression(StratifiedShuffleSplit):
 
     def split(self, X, y, groups=None):
         """
-        Split the data into stratified train/test sets based on discretized bins.
+        Generate indices to split data into training and test sets based on
+        discretized bins.
 
-        Parameters:
-        -----------
+        This method stratifies continuous target variables by first binning them
+        and then applying the split in a stratified manner.
+
+        Parameters
+        ----------
         X : array-like of shape (n_samples, n_features)
-            Training data, where `n_samples` is the number of samples and
-            `n_features` is the number of features.
+            The input data used for training, where `n_samples` is the number
+            of samples and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Continuous target variable (for regression).
 
-        groups : Ignored, for compatibility with the parent class.
+        groups : object, default=None
+            Always ignored, kept for compatibility.
 
-        Yields:
-        -------
+        Yields
+        ------
         train : ndarray
-            The training set indices for that split.
+            The indices for the training set.
 
         test : ndarray
-            The testing set indices for that split.
+            The indices for the test set.
+
+        Notes
+        -----
+        The bins are created using the KBinsDiscretizer based on the `strategy`
+        parameter. The results can vary across different runs unless `random_state`
+        is set.
         """
         y_binned = self.binner.fit_transform(y.reshape(-1, 1)).ravel()
 
