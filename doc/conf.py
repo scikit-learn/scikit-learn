@@ -444,11 +444,11 @@ redirects = {
     "auto_examples/linear_model/plot_bayesian_ridge": (
         "auto_examples/linear_model/plot_ard"
     ),
-    "auto_examples/model_selection/grid_search_text_feature_extraction.py": (
-        "auto_examples/model_selection/plot_grid_search_text_feature_extraction.py"
+    "auto_examples/model_selection/grid_search_text_feature_extraction": (
+        "auto_examples/model_selection/plot_grid_search_text_feature_extraction"
     ),
-    "auto_examples/datasets/plot_digits_last_image.py": (
-        "auto_examples/exercises/plot_digits_classification_exercises.py"
+    "auto_examples/datasets/plot_digits_last_image": (
+        "auto_examples/exercises/plot_digits_classification_exercises"
     ),
     "auto_examples/datasets/plot_random_dataset": (
         "auto_examples/classification/plot_classifier_comparison"
@@ -466,14 +466,14 @@ redirects = {
     "auto_examples/decomposition/plot_pca_3d": (
         "auto_examples/decomposition/plot_pca_iris"
     ),
-    "auto_examples/exercises/plot_cv_digits.py": (
-        "auto_examples/model_selection/plot_nested_cross_validation_iris.py"
+    "auto_examples/exercises/plot_cv_digits": (
+        "auto_examples/model_selection/plot_nested_cross_validation_iris"
     ),
-    "auto_examples/linear_model/plot_lasso_lars.py": (
-        "auto_examples/linear_model/plot_lasso_lasso_lars_elasticnet_path.py"
+    "auto_examples/linear_model/plot_lasso_lars": (
+        "auto_examples/linear_model/plot_lasso_lasso_lars_elasticnet_path"
     ),
-    "auto_examples/linear_model/plot_lasso_coordinate_descent_path.py": (
-        "auto_examples/linear_model/plot_lasso_lasso_lars_elasticnet_path.py"
+    "auto_examples/linear_model/plot_lasso_coordinate_descent_path": (
+        "auto_examples/linear_model/plot_lasso_lasso_lars_elasticnet_path"
     ),
 }
 html_context["redirects"] = redirects
