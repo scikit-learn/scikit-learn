@@ -2914,12 +2914,12 @@ def train_test_split(
         test = np.arange(n_train, n_train + n_test)
 
     else:
+        cv_params = {
+            "test_size": n_test,
+            "train_size": n_train,
+            "random_state": random_state,
+        }
         if stratify is not None:
-            cv_params = {
-                "test_size": n_test,
-                "train_size": n_train,
-                "random_state": random_state,
-            }
             if stratify_regression:
                 CVClass = StratifiedShuffleSplitRegression
                 cv_params.update({"n_bins": n_bins, "strategy": strategy})
