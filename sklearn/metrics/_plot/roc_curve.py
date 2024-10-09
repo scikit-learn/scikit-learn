@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
 from .._ranking import auc, roc_curve
 

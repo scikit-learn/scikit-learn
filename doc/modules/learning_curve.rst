@@ -187,3 +187,8 @@ to :func:`learning_curve` to generate and plot the learning curve:
       X, y = shuffle(X, y, random_state=0)
       LearningCurveDisplay.from_estimator(
          SVC(kernel="linear"), X, y, train_sizes=[50, 80, 110], cv=5)
+
+.. rubric:: Examples
+
+* See :ref:`sphx_glr_auto_examples_model_selection_plot_learning_curve.py` for an
+  example of using learning curves to check the scalability of a predictive model.

@@ -1,12 +1,8 @@
 """Base and mixin classes for nearest neighbors."""
 
-# Authors: Jake Vanderplas <vanderplas@astro.washington.edu>
-#          Fabian Pedregosa <fabian.pedregosa@inria.fr>
-#          Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Sparseness support by Lars Buitinck
-#          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
-#
-# License: BSD 3 clause (C) INRIA, University of Amsterdam
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import itertools
 import numbers
 import warnings
@@ -34,7 +30,7 @@ from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.fixes import parse_version, sp_base_version
 from ..utils.multiclass import check_classification_targets
 from ..utils.parallel import Parallel, delayed
-from ..utils.validation import _to_object_array, check_is_fitted, check_non_negative
+from ..utils.validation import _to_object_array, check_is_fitted, validate_data
 from ._ball_tree import BallTree
 from ._kd_tree import KDTree
 
@@ -52,11 +48,13 @@ SCIPY_METRICS = [
     "rogerstanimoto",
     "russellrao",
     "seuclidean",
-    "sokalmichener",
     "sokalsneath",
     "sqeuclidean",
     "yule",
 ]
+if sp_base_version < parse_version("1.17"):
+    # Deprecated in SciPy 1.15 and removed in SciPy 1.17
+    SCIPY_METRICS += ["sokalmichener"]
 if sp_base_version < parse_version("1.11"):
     # Deprecated in SciPy 1.9 and removed in SciPy 1.11
     SCIPY_METRICS += ["kulsinski"]
@@ -171,8 +169,7 @@ def _check_precomputed(X):
         case only non-zero elements may be considered neighbors.
     """
     if not issparse(X):
-        X = check_array(X)
-        check_non_negative(X, whom="precomputed distance matrix.")
+        X = check_array(X, ensure_non_negative=True, input_name="X")
         return X
     else:
         graph = X
@@ -183,8 +180,12 @@ def _check_precomputed(X):
             "its handling of explicit zeros".format(graph.format)
         )
     copied = graph.format != "csr"
-    graph = check_array(graph, accept_sparse="csr")
-    check_non_negative(graph, whom="precomputed distance matrix.")
+    graph = check_array(
+        graph,
+        accept_sparse="csr",
+        ensure_non_negative=True,
+        input_name="precomputed distance matrix",
+    )
     graph = sort_graph_by_row_values(graph, copy=not copied, warn_when_not_sorted=True)
 
     return graph
@@ -470,10 +471,10 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 )
 
     def _fit(self, X, y=None):
-        if self._get_tags()["requires_y"]:
+        if self.__sklearn_tags__().target_tags.required:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
-                X, y = self._validate_data(
-                    X, y, accept_sparse="csr", multi_output=True, order="C"
+                X, y = validate_data(
+                    self, X, y, accept_sparse="csr", multi_output=True, order="C"
                 )
 
             if is_classifier(self):
@@ -514,7 +515,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         else:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
-                X = self._validate_data(X, accept_sparse="csr", order="C")
+                X = validate_data(self, X, accept_sparse="csr", order="C")
 
         self._check_algorithm_metric()
         if self.metric_params is None:
@@ -690,18 +691,11 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         return self
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
         # For cross-validation routines to split data correctly
-        return {"pairwise": self.metric == "precomputed"}
-
-
-def _tree_query_parallel_helper(tree, *args, **kwargs):
-    """Helper for the Parallel calls in KNeighborsMixin.kneighbors.
-
-    The Cython method tree.query is not directly picklable by cloudpickle
-    under PyPy.
-    """
-    return tree.query(*args, **kwargs)
+        tags.input_tags.pairwise = self.metric == "precomputed"
+        return tags
 
 
 class KNeighborsMixin:
@@ -822,7 +816,7 @@ class KNeighborsMixin:
             if self.metric == "precomputed":
                 X = _check_precomputed(X)
             else:
-                X = self._validate_data(X, accept_sparse="csr", reset=False, order="C")
+                X = validate_data(self, X, accept_sparse="csr", reset=False, order="C")
 
         n_samples_fit = self.n_samples_fit_
         if n_neighbors > n_samples_fit:
@@ -901,9 +895,7 @@ class KNeighborsMixin:
                     "or set algorithm='brute'" % self._fit_method
                 )
             chunked_results = Parallel(n_jobs, prefer="threads")(
-                delayed(_tree_query_parallel_helper)(
-                    self._tree, X[s], n_neighbors, return_distance
-                )
+                delayed(self._tree.query)(X[s], n_neighbors, return_distance)
                 for s in gen_even_slices(X.shape[0], n_jobs)
             )
         else:
@@ -1028,15 +1020,6 @@ class KNeighborsMixin:
         )
 
         return kneighbors_graph
-
-
-def _tree_query_radius_parallel_helper(tree, *args, **kwargs):
-    """Helper for the Parallel calls in RadiusNeighborsMixin.radius_neighbors.
-
-    The Cython method tree.query_radius is not directly picklable by
-    cloudpickle under PyPy.
-    """
-    return tree.query_radius(*args, **kwargs)
 
 
 class RadiusNeighborsMixin:
@@ -1169,7 +1152,7 @@ class RadiusNeighborsMixin:
             if self.metric == "precomputed":
                 X = _check_precomputed(X)
             else:
-                X = self._validate_data(X, accept_sparse="csr", reset=False, order="C")
+                X = validate_data(self, X, accept_sparse="csr", reset=False, order="C")
 
         if radius is None:
             radius = self.radius
@@ -1256,11 +1239,9 @@ class RadiusNeighborsMixin:
                 )
 
             n_jobs = effective_n_jobs(self.n_jobs)
-            delayed_query = delayed(_tree_query_radius_parallel_helper)
+            delayed_query = delayed(self._tree.query_radius)
             chunked_results = Parallel(n_jobs, prefer="threads")(
-                delayed_query(
-                    self._tree, X[s], radius, return_distance, sort_results=sort_results
-                )
+                delayed_query(X[s], radius, return_distance, sort_results=sort_results)
                 for s in gen_even_slices(X.shape[0], n_jobs)
             )
             if return_distance:
