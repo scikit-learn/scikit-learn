@@ -1154,7 +1154,6 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         if name is not None:
             default_line_kwargs["label"] = name
         line_kwargs = _validate_style_kwargs(default_line_kwargs, kwargs)
-        # line_kwargs.update(**kwargs)
 
         ref_line_label = "Perfectly calibrated"
         existing_ref_line = ref_line_label in self.ax_.get_legend_handles_labels()[1]
