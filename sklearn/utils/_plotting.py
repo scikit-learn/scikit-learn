@@ -103,12 +103,24 @@ def _interval_max_min_ratio(data):
 
 
 def _validate_style_kwargs(default_style_kwargs, user_style_kwargs):
-    """Create valid style kwargs by avoiding matplotlib aliases error.
+    """Create valid style kwargs by avoiding Matplotlib alias errors.
 
-    Matplotlib raises an error when, for example, ‘color’ and ‘c’,
-    or 'linestyle' and 'ls', are specified. To avoid this,
-    we automatically keep only the one specified by the user
-    and we raise an error if the user specifies both.
+    Matplotlib raises an error when, for example, 'color' and 'c', or 'linestyle' and
+    'ls', are specified together. To avoid this, we automatically keep only the one
+    specified by the user and raise an error if the user specifies both.
+
+    Parameters
+    ----------
+    default_style_kwargs : dict
+        The Matplotlib style kwargs used by default in the scikit-learn display.
+    user_style_kwargs : dict
+        The user-defined Matplotlib style kwargs.
+
+    Returns
+    -------
+    valid_style_kwargs : dict
+        The validated style kwargs taking into account both default and user-defined
+        Matplotlib style kwargs.
     """
 
     invalid_to_valid_kw = {
