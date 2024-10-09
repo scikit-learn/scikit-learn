@@ -35,6 +35,12 @@ Changes impacting many modules
   More details in :ref:`estimator_tags`.
   :pr:`22606` by `Thomas Fan`_ and :pr:`29677` by `Adrin Jalali`_.
 
+- |Fix| Classes :class:`metrics.ConfusionMatrixDisplay`,
+  :class:`metrics.ROCCurveDisplay`, :class:`calibration.CalibrationDisplay`,
+  :class:`metrics.PrecisionRecallDisplay`, :class:`metrics.PredictionErrorDisplay` and
+  :class:`inspection.PartialDependenceDisplay` now properly handle Matplotlib aliases
+  for style parameters (e.g., `c` and `color`, `ls` and `linestyle`, etc).
+  :pr:`30023` by :user:`Joseph Barbier <JosephBARBIERDARNAL>`.
 
 Support for Array API
 ---------------------

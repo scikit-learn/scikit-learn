@@ -81,7 +81,7 @@ def test_inverval_max_min_ratio(data, lower_bound, upper_bound):
             {"color": "red", "linestyle": "dashed"},
         ),
         (
-            {"label": "xxx", "color": "k","linestyle": "--"},
+            {"label": "xxx", "color": "k", "linestyle": "--"},
             {"ls": "-."},
             {"label": "xxx", "color": "k", "linestyle": "-."},
         ),
