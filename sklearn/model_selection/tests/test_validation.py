@@ -586,10 +586,10 @@ def check_cross_validate_multi_metric(clf, X, y, scores, cv):
             )
 
             # Make sure all the arrays are of np.ndarray type
-            assert type(cv_results["test_r2"]) == np.ndarray
-            assert type(cv_results["test_neg_mean_squared_error"]) == np.ndarray
-            assert type(cv_results["fit_time"]) == np.ndarray
-            assert type(cv_results["score_time"]) == np.ndarray
+            assert isinstance(cv_results["test_r2"], np.ndarray)
+            assert isinstance(cv_results["test_neg_mean_squared_error"], np.ndarray)
+            assert isinstance(cv_results["fit_time"], np.ndarray)
+            assert isinstance(cv_results["score_time"], np.ndarray)
 
             # Ensure all the times are within sane limits
             assert np.all(cv_results["fit_time"] >= 0)
@@ -2482,14 +2482,10 @@ def test_cross_validate_return_indices(global_random_seed):
 # ======================================================
 
 
-# TODO(1.6): remove `cross_validate` and `cross_val_predict` from this test in 1.6 and
-# `learning_curve` and `validation_curve` in 1.8
+# TODO(1.8): remove `learning_curve`, `validation_curve` and `permutation_test_score`.
 @pytest.mark.parametrize(
     "func, extra_args",
     [
-        (cross_validate, {}),
-        (cross_val_score, {}),
-        (cross_val_predict, {}),
         (learning_curve, {}),
         (permutation_test_score, {}),
         (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),

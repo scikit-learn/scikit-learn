@@ -8,9 +8,11 @@ linux_arm64_wheel_task:
     memory: 4G
   env:
     CIBW_ENVIRONMENT: SKLEARN_SKIP_NETWORK_TESTS=1
-    CIBW_TEST_COMMAND: bash {project}/build_tools/wheels/test_wheels.sh
+    CIBW_BEFORE_BUILD: bash {project}/build_tools/wheels/cibw_before_build.sh {project}
+    CIBW_TEST_COMMAND: bash {project}/build_tools/wheels/test_wheels.sh {project}
     CIBW_TEST_REQUIRES: pytest pandas threadpoolctl pytest-xdist
     CIBW_BUILD_VERBOSITY: 1
+    RUNNER_OS: Linux
     # Upload tokens have been encrypted via the CirrusCI interface:
     # https://cirrus-ci.org/guide/writing-tasks/#encrypted-variables
     # See `maint_tools/update_tracking_issue.py` for details on the permissions the token requires.
@@ -28,6 +30,11 @@ linux_arm64_wheel_task:
         CIBW_TEST_SKIP: "*_aarch64"
     - env:
         CIBW_BUILD: cp312-manylinux_aarch64
+    - env:
+        CIBW_BUILD: cp313-manylinux_aarch64
+        # TODO remove next line when Python 3.13 is relased and add
+        # CIBW_TEST_SKIP for Python 3.12 above
+        CIBW_TEST_SKIP: "*_aarch64"
 
   cibuildwheel_script:
     - apt install -y python3 python-is-python3
