@@ -1000,7 +1000,14 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = validate_data(self, X, reset=False, accept_sparse=False, ensure_2d=True, ensure_all_finite=False)
+        X = validate_data(
+            self,
+            X,
+            reset=False,
+            accept_sparse=False,
+            ensure_2d=True,
+            ensure_all_finite=False,
+        )
 
         n_samples, n_features = X.shape
         n_splines = self.bsplines_[0].c.shape[1]
