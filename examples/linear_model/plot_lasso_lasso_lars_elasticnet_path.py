@@ -18,7 +18,7 @@ Scikit-learn provides the following regularization techniques:
 
 - :func:`~sklearn.linear_model.Lasso`
 - :func:`~sklearn.linear_model.LassoLars`
-- :func:`~sklearn.linear_model.ElasticNet`
+- :func:`~sklearn.linear_model.ElasticNet` with `l1_ratio=0.8`
 
 Mathematically, these are formulated by minimising the constrained
 least-squares penalty:
@@ -30,8 +30,8 @@ least-squares penalty:
     \\left\\{
     \\begin{array}{cl}
     \\alpha \\vert \\vert w \\vert \\vert_1 & \\mbox{Lasso(-LARS)} \\\\
-    \\frac{\\alpha}{2} \\vert \\vert w \\vert \\vert_1  +
-    \\frac{\\alpha}{4} \\vert \\vert w \\vert \\vert^2_2& \\mbox{Elastic Net} \\\\
+    \\frac{4\\alpha}{5} \\vert \\vert w \\vert \\vert_1  +
+    \\frac{\\alpha}{10} \\vert \\vert w \\vert \\vert^2_2& \\mbox{Elastic Net} \\\\
     \\end{array}
     \\right.
 
@@ -77,7 +77,7 @@ X /= X.std(axis=0)  # Standardize data (easier to set the l1_ratio parameter)
 #
 # - :func:`~sklearn.linear_model.lasso_path`
 # - :func:`~sklearn.linear_model.lars_path`
-# - :func:`~sklearn.linear_model.enet_path`
+# - :func:`~sklearn.linear_model.enet_path` with `l1_ratio=0.8`
 #
 
 eps = 5e-3  # the smaller it is the longer is the path
