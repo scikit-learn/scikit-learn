@@ -1423,22 +1423,19 @@ class PartialDependenceDisplay:
                     default_ice_lines_kws = {}
                     default_pd_lines_kws = {}
 
-                line_kw = _validate_style_kwargs(default_line_kws, line_kw)
-                ice_lines_kw = _validate_style_kwargs(
-                    default_ice_lines_kws, ice_lines_kw
-                )
-                pd_line_kw = _validate_style_kwargs(default_pd_lines_kws, pd_line_kw)
+                default_ice_lines_kws = {**default_line_kws, **default_ice_lines_kws}
+                default_pd_lines_kws = {**default_line_kws, **default_pd_lines_kws}
 
-                ice_lines_kw = {
-                    **line_kw,
-                    **ice_lines_kw,
-                }
+                line_kw = _validate_style_kwargs(default_line_kws, line_kw)
+
+                ice_lines_kw = _validate_style_kwargs(
+                    _validate_style_kwargs(default_ice_lines_kws, line_kw), ice_lines_kw
+                )
                 del ice_lines_kw["label"]
 
-                pd_line_kw = {
-                    **line_kw,
-                    **pd_line_kw,
-                }
+                pd_line_kw = _validate_style_kwargs(
+                    _validate_style_kwargs(default_pd_lines_kws, line_kw), pd_line_kw
+                )
 
                 default_bar_kws = {"color": "C0"}
                 bar_kw = _validate_style_kwargs(default_bar_kws, bar_kw)
