@@ -261,10 +261,10 @@ result_files = []
 
 # make parameters global
 
-n_runs = 5
-n_iters = [5]
+n_runs = 10
+n_iters = [100]
 # Define parameter ranges
-batch_size_values = [1024]
+batch_size_values = [1024]#[128,256,512,1024,2048]
 #taus = [50, 100, 200, 300]
 
 to_plot = []
@@ -273,7 +273,8 @@ dataset_names = [
         "pendigits",
         "har",
         "mnist_784",
-        "letter"
+        "letter",
+        #"EMNIST_Balanced",
     ]
 print("Running on datasets:", dataset_names)
 for dataset_name in dataset_names:

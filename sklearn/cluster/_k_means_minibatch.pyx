@@ -45,16 +45,18 @@ def _minibatch_update_dense(
         int n_samples = X.shape[0]
         int n_clusters = centers_old.shape[0]
         int cluster_idx
-
+        floating b=0.0 #greg
         int *indices
 
+    if new_lr:
+        for sample_idx in range(n_samples):
+            b+= sample_weight[sample_idx]
     with nogil, parallel(num_threads=n_threads):
         indices = <int*> malloc(n_samples * sizeof(int))
-
         for cluster_idx in prange(n_clusters, schedule="static"):
             update_center_dense(cluster_idx, X, sample_weight,
                                 centers_old, centers_new, weight_sums, labels,
-                                indices, new_lr) #greg
+                                indices, b, new_lr) #greg
 
         free(indices)
 
@@ -68,12 +70,13 @@ cdef void update_center_dense(
         floating[::1] weight_sums,           # INOUT
         const int[::1] labels,               # IN
         int *indices,                        # TMP
+        floating b,                          #greg new param
         bint new_lr=True) noexcept nogil:    #greg new param    
     """Update of a single center for dense MinibatchKMeans"""
     cdef:
         int n_samples = sample_weight.shape[0]
         int n_features = centers_old.shape[1]
-        floating alpha, b #greg
+        floating alpha #greg
         int n_indices
         int k, sample_idx, feature_idx
 
@@ -83,13 +86,7 @@ cdef void update_center_dense(
     # indices = np.where(labels == cluster_idx)[0]
     k = 0
     
-    
-    #greg
-    if new_lr:
-        b= 0.0
     for sample_idx in range(n_samples):
-        #greg
-        b+= sample_weight[sample_idx]
         if labels[sample_idx] == cluster_idx:
             indices[k] = sample_idx
             wsum += sample_weight[sample_idx]
@@ -102,8 +99,7 @@ cdef void update_center_dense(
             alpha = sqrt(wsum/b)
             for feature_idx in range(n_features):
                 centers_new[cluster_idx, feature_idx] = centers_old[cluster_idx, feature_idx]* (1-alpha) * (wsum/alpha)
-            
-            #temp = 0
+
             for k in range(n_indices):
                 sample_idx = indices[k]
                 for feature_idx in range(n_features):         
@@ -111,17 +107,7 @@ cdef void update_center_dense(
 
             for feature_idx in range(n_features):
                 centers_new[cluster_idx, feature_idx] *= (alpha/wsum)
-                #temp = (temp/ wsum - centers_new[cluster_idx, feature_idx]) * alpha 
-                #centers_new[cluster_idx, feature_idx] += temp
-                    #centers_new[cluster_idx, feature_idx] += alpha * X[sample_idx, feature_idx] * sample_weight[sample_idx] / wsum
-
-
-            # for feature_idx in range(n_features):
-            #     centers_new[cluster_idx, feature_idx] = (1-alpha)*centers_old[cluster_idx, feature_idx]
-            # for k in range(n_indices):
-            #     sample_idx = indices[k]
-            #     for feature_idx in range(n_features):
-            #         centers_new[cluster_idx, feature_idx] += alpha* X[sample_idx, feature_idx]* sample_weight[sample_idx] /wsum     
+   
         else:
             # Undo the previous count-based scaling for this cluster center
             for feature_idx in range(n_features):
