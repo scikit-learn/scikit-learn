@@ -3,7 +3,7 @@
 # input_hash: 8a4a203136d97ff3b2c8657fce2dd2228215bfbf9c1cfbe271e401f934bdf1a7
 @EXPLICIT
 https://repo.anaconda.com/pkgs/main/linux-64/_libgcc_mutex-0.1-main.conda#c3473ff8bdb3d124ed5ff11ec380d6f9
-https://repo.anaconda.com/pkgs/main/linux-64/ca-certificates-2024.7.2-h06a4308_0.conda#5c6799c01e9be4c7ba294f6530b2d562
+https://repo.anaconda.com/pkgs/main/linux-64/ca-certificates-2024.9.24-h06a4308_0.conda#e4369d7b4b0707ee0765794d14710e2e
 https://repo.anaconda.com/pkgs/main/linux-64/ld_impl_linux-64-2.40-h12ee557_0.conda#ee672b5f635340734f58d618b7bca024
 https://repo.anaconda.com/pkgs/main/noarch/tzdata-2024a-h04d1e81_0.conda#452af53adae0a5b06eb5d05c707b2f25
 https://repo.anaconda.com/pkgs/main/linux-64/libgomp-11.2.0-h1234567_1.conda#b372c0eea9b60732fdae4b817a63c8cd
@@ -22,7 +22,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/ccache-3.7.9-hfe4627d_0.conda#bef6f
 https://repo.anaconda.com/pkgs/main/linux-64/readline-8.2-h5eee18b_0.conda#be42180685cce6e6b0329201d9f48efb
 https://repo.anaconda.com/pkgs/main/linux-64/tk-8.6.14-h39e8969_0.conda#78dbc5e3c69143ebc037fc5d5b22e597
 https://repo.anaconda.com/pkgs/main/linux-64/sqlite-3.45.3-h5eee18b_0.conda#acf93d6aceb74d6110e20b44cc45939e
-https://repo.anaconda.com/pkgs/main/linux-64/python-3.12.5-h5148396_1.conda#62df68f35307f5e4b7a1eaccd6ea4c97
+https://repo.anaconda.com/pkgs/main/linux-64/python-3.12.7-h5148396_0.conda#268d2cb6563a9bcb77afd31721d330c2
 https://repo.anaconda.com/pkgs/main/linux-64/setuptools-75.1.0-py312h06a4308_0.conda#c96d08a405d335f2b0200c0f281b1fdc
 https://repo.anaconda.com/pkgs/main/linux-64/wheel-0.44.0-py312h06a4308_0.conda#6d495438dd44e8f16b1a05d0a8648644
 https://repo.anaconda.com/pkgs/main/linux-64/pip-24.2-py312h06a4308_0.conda#798cbea8112672434d0cd7551f8fc4b9
