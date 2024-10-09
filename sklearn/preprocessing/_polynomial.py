@@ -865,7 +865,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             accept_sparse=False,
             ensure_min_samples=2,
             ensure_2d=True,
-            force_all_finite=False,
+            ensure_all_finite=False,
         )
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
