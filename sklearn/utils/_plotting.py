@@ -105,9 +105,10 @@ def _interval_max_min_ratio(data):
 def _validate_style_kwargs(default_style_kwargs, user_style_kwargs):
     """Create valid style kwargs by avoiding matplotlib aliases error.
 
-    Matplotlib raises an error when both 'color' and 'c',
-    or 'linestyle' and 'ls' are specified. To avoid this,
-    we automatically keep only the one specified by the user.
+    Matplotlib raises an error when, for example, ‘color’ and ‘c’,
+    or 'linestyle' and 'ls', are specified. To avoid this,
+    we automatically keep only the one specified by the user
+    and we raise an error if the user specifies both.
     """
 
     invalid_to_valid_kw = {

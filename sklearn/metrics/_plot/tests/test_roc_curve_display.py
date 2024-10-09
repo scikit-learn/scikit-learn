@@ -126,8 +126,8 @@ def test_roc_curve_display_plotting(
     "chance_level_kw",
     [
         None,
-        {"linewidth": 1, "color": "red", "linestyle": "-", "label": "DummyEstimator"},
-        {"linewidth": 1, "c": "red", "ls": "-", "label": "DummyEstimator"},
+        {"lw": 1, "color": "red", "linestyle": "-", "label": "DummyEstimator"},
+        {"lw": 1, "c": "red", "ls": "-", "label": "DummyEstimator"},
     ],
 )
 @pytest.mark.parametrize(

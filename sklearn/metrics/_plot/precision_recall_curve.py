@@ -3,7 +3,10 @@
 
 from collections import Counter
 
-from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
+from ...utils._plotting import (
+    _BinaryClassifierCurveDisplayMixin,
+    _validate_style_kwargs,
+)
 from .._ranking import average_precision_score, precision_recall_curve
 
 
@@ -214,13 +217,18 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
                     "to automatically set prevalence_pos_label"
                 )
 
-            chance_level_line_kw = {
+            default_chance_level_line_kw = {
                 "label": f"Chance level (AP = {self.prevalence_pos_label:0.2f})",
                 "color": "k",
                 "linestyle": "--",
             }
-            if chance_level_kw is not None:
-                chance_level_line_kw.update(chance_level_kw)
+
+            if chance_level_kw is None:
+                chance_level_kw = {}
+
+            chance_level_line_kw = _validate_style_kwargs(
+                default_chance_level_line_kw, chance_level_kw
+            )
 
             (self.chance_level_,) = self.ax_.plot(
                 (0, 1),
