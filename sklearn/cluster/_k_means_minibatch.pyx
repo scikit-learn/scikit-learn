@@ -93,9 +93,14 @@ cdef void update_center_dense(
             k += 1
     n_indices = k
 
+    
     if wsum > 0:
         #greg
+        
         if new_lr:
+            #greg: added. needed for other logic
+            weight_sums[cluster_idx] += wsum
+            
             alpha = sqrt(wsum/b)
             for feature_idx in range(n_features):
                 centers_new[cluster_idx, feature_idx] = centers_old[cluster_idx, feature_idx]* (1-alpha) * (wsum/alpha)
@@ -118,10 +123,9 @@ cdef void update_center_dense(
                 sample_idx = indices[k]
                 for feature_idx in range(n_features):
                     centers_new[cluster_idx, feature_idx] += X[sample_idx, feature_idx] * sample_weight[sample_idx]
-
+            
             # Update the count statistics for this center
             weight_sums[cluster_idx] += wsum
-
             # Rescale to compute mean of all points (old and new)
             alpha = 1 / weight_sums[cluster_idx]
             for feature_idx in range(n_features):
