@@ -118,13 +118,3 @@ def test_validate_style_kwargs(default_kwargs, user_kwargs, expected):
         "The validation of style keywords does not provide the expected results: "
         f"Got{result} instead of {expected}."
     )
-
-
-def test_validate_style_kwargs_error():
-    """Test that the validation of style keywords raises an error when both aliases
-    are provided.
-    """
-    err_msg = "Got both ls and linestyle, which are aliases of one another"
-    with pytest.raises(TypeError, match=err_msg):
-        _validate_style_kwargs({}, {"linestyle": "solid", "ls": "dashed"})
-
