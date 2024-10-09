@@ -181,14 +181,17 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         """
         self.ax_, self.figure_, name = self._validate_plot_params(ax=ax, name=name)
 
-        line_kwargs = {"drawstyle": "steps-post"}
+        default_line_kwargs = {"drawstyle": "steps-post"}
         if self.average_precision is not None and name is not None:
-            line_kwargs["label"] = f"{name} (AP = {self.average_precision:0.2f})"
+            default_line_kwargs["label"] = (
+                f"{name} (AP = {self.average_precision:0.2f})"
+            )
         elif self.average_precision is not None:
-            line_kwargs["label"] = f"AP = {self.average_precision:0.2f}"
+            default_line_kwargs["label"] = f"AP = {self.average_precision:0.2f}"
         elif name is not None:
-            line_kwargs["label"] = name
-        line_kwargs.update(**kwargs)
+            default_line_kwargs["label"] = name
+
+        line_kwargs = _validate_style_kwargs(default_line_kwargs, kwargs)
 
         (self.line_,) = self.ax_.plot(self.recall, self.precision, **line_kwargs)
 

@@ -132,15 +132,15 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         """
         self.ax_, self.figure_, name = self._validate_plot_params(ax=ax, name=name)
 
-        line_kwargs = {}
+        default_line_kwargs = {}
         if self.roc_auc is not None and name is not None:
-            line_kwargs["label"] = f"{name} (AUC = {self.roc_auc:0.2f})"
+            default_line_kwargs["label"] = f"{name} (AUC = {self.roc_auc:0.2f})"
         elif self.roc_auc is not None:
-            line_kwargs["label"] = f"AUC = {self.roc_auc:0.2f}"
+            default_line_kwargs["label"] = f"AUC = {self.roc_auc:0.2f}"
         elif name is not None:
-            line_kwargs["label"] = name
+            default_line_kwargs["label"] = name
 
-        line_kwargs.update(**kwargs)
+        line_kwargs = _validate_style_kwargs(default_line_kwargs, kwargs)
 
         default_chance_level_line_kw = {
             "label": "Chance level (AUC = 0.5)",
