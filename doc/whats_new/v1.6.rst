@@ -251,6 +251,10 @@ Changelog
   right child node as the tree is traversed.
   :pr:`28268` by :user:`Adam Li <adam2392>`.
 
+- |API| The parameter `algorithm` of :class:`ensemble.AdaBoostClassifier` is deprecated
+  and will be removed in 1.8.
+  :pr:`29997` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.impute`
 .....................
 
