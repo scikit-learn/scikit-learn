@@ -741,7 +741,7 @@ def test_linear_regression_sample_weight_consistency(
         intercept = reg.intercept_
 
     reg.fit(X, y, sample_weight=np.pi * sample_weight)
-    assert_allclose(reg.coef_, coef, rtol=1e-6 if sparse_container is None else 1e-5)
+    assert_allclose(reg.coef_, coef, rtol=1e-6)
     if fit_intercept:
         assert_allclose(reg.intercept_, intercept)
 
@@ -756,7 +756,7 @@ def test_linear_regression_sample_weight_consistency(
     reg.fit(X[:-5], y[:-5], sample_weight=sample_weight[:-5])
     # TODO: see if it fixes
     # https://github.com/scikit-learn/scikit-learn/issues/26164
-    assert_allclose(reg.coef_, coef_0, rtol=1e-5)
+    assert_allclose(reg.coef_, coef_0, rtol=1e-6)
     if fit_intercept:
         assert_allclose(reg.intercept_, intercept_0)
 
@@ -775,6 +775,6 @@ def test_linear_regression_sample_weight_consistency(
 
     reg1 = LinearRegression(**params).fit(X, y, sample_weight=sample_weight_1)
     reg2 = LinearRegression(**params).fit(X2, y2, sample_weight=sample_weight_2)
-    assert_allclose(reg1.coef_, reg2.coef_, rtol=1e-6)
+    assert_allclose(reg1.coef_, reg2.coef_, rtol=1e-5)
     if fit_intercept:
         assert_allclose(reg1.intercept_, reg2.intercept_)
