@@ -2488,13 +2488,40 @@ class StratifiedShuffleSplitRegression(StratifiedShuffleSplit):
 
     Examples
     --------
-    >>> from sklearn.model_selection import StratifiedShuffleSplitRegression
     >>> import numpy as np
-    >>> X = np.random.randn(100, 5)
-    >>> y = np.random.randn(100)
-    >>> sssr = StratifiedShuffleSplitRegression(n_bins=3, strategy="quantile")
-    >>> for train_idx, test_idx in sssr.split(X, y):
-    ...     print(f"Train: {train_idx}, Test: {test_idx}")
+    >>> from sklearn.model_selection import StratifiedShuffleSplitRegression
+    >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4], [1, 2], [3, 4]])
+    >>> y = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
+    >>> sss = StratifiedShuffleSplitRegression(
+    >>>         n_splits=5,
+    >>>         test_size=0.5,
+    >>>         n_bins=2,
+    >>>         random_state=0
+    >>> )
+    >>> y_binned = np.floor(y / y.max() * 10).astype(int)
+    >>> sss.get_n_splits(X, y_binned)
+    5
+    >>> print(sss)
+    StratifiedShuffleSplitRegression(n_bins=2, strategy='uniform')
+    >>> for i, (train_index, test_index) in enumerate(sss.split(X, y_binned)):
+    ...     print(f"Fold {i}:")
+    ...     print(f"  Train: index={train_index}")
+    ...     print(f"  Test:  index={test_index}")
+    Fold 0:
+      Train: index=[5 2 3]
+      Test:  index=[4 1 0]
+    Fold 1:
+      Train: index=[5 1 4]
+      Test:  index=[0 2 3]
+    Fold 2:
+      Train: index=[5 0 2]
+      Test:  index=[4 3 1]
+    Fold 3:
+      Train: index=[4 1 0]
+      Test:  index=[2 3 5]
+    Fold 4:
+      Train: index=[0 5 1]
+      Test:  index=[3 4 2]
     """
 
     def __init__(self, n_bins=5, strategy="uniform", **kwargs):
