@@ -2,7 +2,7 @@
 
 import re
 import warnings
-from itertools import combinations, combinations_with_replacement, permutations
+from itertools import chain, combinations, combinations_with_replacement, permutations
 
 import numpy as np
 import pytest
@@ -2065,3 +2065,87 @@ def test_stratified_splitter_without_y(cv):
     msg = "missing 1 required positional argument: 'y'"
     with pytest.raises(TypeError, match=msg):
         cv.split(X)
+
+
+@pytest.mark.parametrize(
+    "folds,n_groups,group_size",
+    [
+        (333, 333, 1),
+        (2, 41, 5),
+        (3, 5, 16),
+    ],
+)
+def test_group_kfold_is_stable_with_ties(folds, n_groups, group_size):
+    """Verify groups are assigned based on a stable sort, with ties."""
+    groups = np.repeat(np.arange(n_groups), group_size)
+    X = np.arange(n_groups * group_size)
+    gkf = GroupKFold(folds)
+
+    split = [a for a in gkf.split(X, groups=groups)]
+    for i, (_, test) in enumerate(split):
+        # GroupKFold reverses sort, expect groups dealt in reverse
+        expected = X[groups[::-1] % folds == i]
+        assert_array_equal(test, expected)
+
+
+def test_group_kfold_with_no_ties():
+    """Verify groups are assigned based on a stable sort, without ties."""
+    groups = np.array(list(chain.from_iterable([[i] * i for i in range(1, 10)])))
+    X = np.arange(len(groups))
+    gkf = GroupKFold(2)
+
+    expected = [
+        [
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+        ],
+        [
+            0,
+            1,
+            2,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            36,
+            37,
+            38,
+            39,
+            40,
+            41,
+            42,
+            43,
+            44,
+        ],
+    ]
+
+    split = [a for a in gkf.split(X, groups=groups)]
+    for i, (train, _) in enumerate(split):
+        assert_array_equal(train, np.array(expected[i]))
