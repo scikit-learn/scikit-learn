@@ -289,6 +289,9 @@ def spectral_clustering(
         has no tuning parameters and is not an iterative method, yet may outperform
         k-means and discretization in terms of both quality and speed.
 
+        For a detailed comparison of clustering strategies, refer to:
+        :ref:`sphx_glr_auto_examples_cluster_plot_coin_segmentation.py`.
+
         .. versionchanged:: 1.1
            Added new labeling method 'cluster_qr'.
 
