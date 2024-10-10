@@ -58,6 +58,10 @@
     <p>Adam Li</p>
     </div>
     <div>
+    <a href='https://github.com/lucyleeow'><img src='https://avatars.githubusercontent.com/u/23182829?v=4' class='avatar' /></a> <br />
+    <p>Lucy Liu</p>
+    </div>
+    <div>
     <a href='https://github.com/lorentzenchr'><img src='https://avatars.githubusercontent.com/u/15324633?v=4' class='avatar' /></a> <br />
     <p>Christian Lorentzen</p>
     </div>
