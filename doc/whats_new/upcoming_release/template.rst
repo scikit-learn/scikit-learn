@@ -15,7 +15,6 @@
 {{ section }}
 {{ underline * section|length }}
 {% endif %}
-
 {% for category, content in content_per_category.items() %}
 {% for text, issue_links in content.items() %}
 {# TODO for later we can generate tags like |Fix|, |API|, etc ... but need to special case top-level section
