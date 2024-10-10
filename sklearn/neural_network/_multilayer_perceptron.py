@@ -766,7 +766,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         # Input validation would remove feature names, so we disable it
         y_pred = self._predict(X, check_input=False)
 
-        if np.isnan(y_pred).any():
+        if np.isnan(y_pred).any() or np.isinf(y_pred).any():
             return np.nan
 
         return score_function(y, y_pred)
