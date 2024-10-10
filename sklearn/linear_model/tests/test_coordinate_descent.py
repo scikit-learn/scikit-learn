@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 from scipy import interpolate, sparse
 
-from sklearn.base import clone, is_classifier
+from sklearn.base import clone, config_context, is_classifier
 from sklearn.datasets import load_diabetes, make_regression
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import (
@@ -1638,11 +1638,11 @@ def test_cv_estimators_reject_params_with_no_routing_enabled(EstimatorCV):
         estimator.fit(X, y, groups=groups)
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
     "MultiTaskEstimatorCV",
     [MultiTaskElasticNetCV, MultiTaskLassoCV],
 )
+@config_context(enable_metadata_routing=True)
 def test_multitask_cv_estimators_with_sample_weight(MultiTaskEstimatorCV):
     """Check that for :class:`MultiTaskElasticNetCV` and
     class:`MultiTaskLassoCV` if `sample_weight` is passed and the
