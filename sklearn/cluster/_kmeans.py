@@ -1631,7 +1631,7 @@ def _mini_batch_step(
     # Update centers according to the labels
     if sp.issparse(X):
         _minibatch_update_sparse(
-            X, sample_weight, centers, centers_new, weight_sums, labels, n_threads
+            X, sample_weight, centers, centers_new, weight_sums, labels, n_threads, new_lr
         )
     else:
         _minibatch_update_dense(

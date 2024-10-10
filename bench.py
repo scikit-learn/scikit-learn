@@ -4,7 +4,7 @@ from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.datasets import make_blobs, make_moons
 import matplotlib.pyplot as plt
 #from sklearn.cluster import MiniBatchKMeans
-from sklearn.datasets import fetch_openml
+from sklearn.datasets import fetch_openml, fetch_20newsgroups
 from collections import defaultdict
 from time import time
 from tqdm import tqdm
@@ -19,11 +19,27 @@ import os
 from itertools import product
 from copy import deepcopy
 import argparse
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+from sklearn.decomposition._truncated_svd import TruncatedSVD
 
 
 
 # MARK: -Load and preprocess data
 def load_and_preprocess_data(dataset, n_sample=None):
+    if dataset == "20newsgroups":
+       #newsgroups = fetch_20newsgroups(subset='train', categories=['sci.space', 'rec.sport.hockey'])
+        newsgroups = fetch_20newsgroups(subset='train')
+        vectorizer = TfidfVectorizer()
+        X = vectorizer.fit_transform(newsgroups.data)  # This creates a sparse matrix
+        y = newsgroups.target
+        
+        n_components = 100  # You can adjust this number based on your needs
+
+        # Apply Truncated SVD to the sparse matrix X
+        svd = TruncatedSVD(n_components=n_components)
+        X = svd.fit_transform(X)
+        return X, y, 0, 0, 0
     try:
         X,y = fetch_openml(name=dataset, version=1, as_frame=False, return_X_y=True,data_home="data/",cache=True,parser="auto")
     except Exception as e:
@@ -120,11 +136,11 @@ def evaluate(kms, X, labels, num_iters, n_clusters, batch_size, n_runs=50):
             # include the time it took to construct the kernel matrix in the training time
             train_times.append(time.time() - t0)
             scores["NMI"].append(metrics.normalized_mutual_info_score(labels, km.labels_))
-            #scores["Homogeneity"].append(metrics.homogeneity_score(labels, km.labels_))
-            #scores["Completeness"].append(metrics.completeness_score(labels, km.labels_))
-            #scores["V-measure"].append(metrics.v_measure_score(labels, km.labels_))
+            # scores["Homogeneity"].append(metrics.homogeneity_score(labels, km.labels_))
+            # scores["Completeness"].append(metrics.completeness_score(labels, km.labels_))
+            # scores["V-measure"].append(metrics.v_measure_score(labels, km.labels_))
             scores["ARI"].append(metrics.adjusted_rand_score(labels, km.labels_))
-            #scores["Silhouette Coefficient"].append(metrics.silhouette_score(X, km.labels_, sample_size=2000))
+            # scores["Silhouette Coefficient"].append(metrics.silhouette_score(X, km.labels_, sample_size=2000))
     
         train_times = np.asarray(train_times)
 
@@ -202,7 +218,7 @@ def plot_results(to_plot):
             if i == 0:
                 ax1.set_ylabel('Score')
             if i == num_res - 1:
-                ax2.set_ylabel('Time (s) log scale')
+                ax2.set_ylabel('Time (s)')
             ax.set_title(f"{name} (batch size: {b})")
     
     fig.legend(loc='lower center', bbox_to_anchor=(0.5, 1.04),ncol=5, fontsize=34)
@@ -216,7 +232,7 @@ def plot_results(to_plot):
 
 
 def plot_results_bars(df, ax1, set_labels=True):
-    metric_names = ["ARI", "NMI"]
+    metric_names = ["ARI", "NMI"]#["Homogeneity", "Completeness", "V-measure", "ARI", "Silhouette Coefficient", "NMI"]
     time_metric = "train_time"
     sorted(df['estimator'].unique())
     ax2 = ax1.twinx()  # Create a second y-axis to plot the train_time
@@ -235,12 +251,14 @@ def plot_results_bars(df, ax1, set_labels=True):
     for i, metric in enumerate(metric_names + [time_metric]):
         metric_mean = metric + "_mean"
         metric_std = metric + "_std"
+
         for j, name in enumerate(sorted(df['estimator'].unique())):
             position = positions[i] + j * bar_width-0.5
             ax = ax1
             if metric == time_metric:
                 ax = ax2
             alg_name = name[2:]
+
             ax.bar(position, df_comb[df_comb['estimator'] == name][metric_mean].iloc[0], bar_width,
                     color=colors[j], label=(alg_name) if i == 0 and set_labels else "", yerr=df_comb[df_comb['estimator'] == name][metric_std].iloc[0],
                     capsize=5, hatch=hatches[j], edgecolor='black', linewidth=1)
@@ -261,8 +279,8 @@ result_files = []
 
 # make parameters global
 
-n_runs = 10
-n_iters = [100]
+n_runs = 5
+n_iters = [20]
 # Define parameter ranges
 batch_size_values = [1024]#[128,256,512,1024,2048]
 #taus = [50, 100, 200, 300]
@@ -270,11 +288,12 @@ batch_size_values = [1024]#[128,256,512,1024,2048]
 to_plot = []
 
 dataset_names = [
-        "pendigits",
-        "har",
-        "mnist_784",
-        "letter",
-        #"EMNIST_Balanced",
+        "20newsgroups"
+        # "pendigits",
+        # "har",
+        # "mnist_784",
+        # "letter",
+        # "EMNIST_Balanced",
     ]
 print("Running on datasets:", dataset_names)
 for dataset_name in dataset_names:
@@ -303,21 +322,21 @@ for dataset_name in dataset_names:
     for num_iters, n_clusters, batch_size in product(n_iters, n_clusters_values, batch_size_values):
         print("#"*20)
         
-        tol=0.1
-        #mbk_newlr = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters,max_no_improvement=None, reassignment_ratio = 0, new_lr=True)
-        #mbk_oldlr = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters,max_no_improvement=None, reassignment_ratio = 0, new_lr=False)
-        #mbk_newlr_default = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters, new_lr=True)
-        #mbk_oldlr_default = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters, new_lr=False)
-        mbk_newlr_tol = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters,max_no_improvement=None, tol=tol, new_lr=True)
-        mbk_oldlr_tol = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters,max_no_improvement=None, tol=tol, new_lr=False)
+        tol=1
+        mbk_newlr = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters,max_no_improvement=None, reassignment_ratio = 0, new_lr=True)
+        mbk_oldlr = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters,max_no_improvement=None, reassignment_ratio = 0, new_lr=False)
+        # mbk_newlr_default = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters, new_lr=True)
+        # mbk_oldlr_default = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters, new_lr=False)
+        # mbk_newlr_tol = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters,max_no_improvement=None, tol=tol, new_lr=True)
+        # mbk_oldlr_tol = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters,max_no_improvement=None, tol=tol, new_lr=False)
 
         mbks = {
-                #"1.new lr MiniBatch": mbk_newlr,
-                #"2.MiniBatch": mbk_oldlr,
-                #"3.default new lr MiniBatch": mbk_newlr_default,
-                #"4.default MiniBatch": mbk_oldlr_default,
-                "5.default new lr MiniBatch": mbk_newlr_tol,
-                "6.default MiniBatch": mbk_oldlr_tol,
+                "1.new lr MiniBatch": mbk_newlr,
+                "2.MiniBatch": mbk_oldlr,
+                # "3.default new lr MiniBatch": mbk_newlr_default,
+                # "4.default MiniBatch": mbk_oldlr_default,
+                # "5.default new lr MiniBatch": mbk_newlr_tol,
+                # "6.default MiniBatch": mbk_oldlr_tol,
                 
                 }
         

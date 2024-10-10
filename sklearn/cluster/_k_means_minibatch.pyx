@@ -143,7 +143,8 @@ def _minibatch_update_sparse(
         floating[:, ::1] centers_new,        # OUT
         floating[::1] weight_sums,           # INOUT
         const int[::1] labels,               # IN
-        int n_threads):
+        int n_threads,
+        bint new_lr=True):                   #greg new param):
     """Update of the centers for sparse MiniBatchKMeans.
 
     Parameters
@@ -178,16 +179,19 @@ def _minibatch_update_sparse(
         int n_samples = X.shape[0]
         int n_clusters = centers_old.shape[0]
         int cluster_idx
-
+        floating b=0.0 #greg
         int *indices
 
+    if new_lr:
+        for sample_idx in range(n_samples):
+            b+= sample_weight[sample_idx]
     with nogil, parallel(num_threads=n_threads):
         indices = <int*> malloc(n_samples * sizeof(int))
 
         for cluster_idx in prange(n_clusters, schedule="static"):
             update_center_sparse(cluster_idx, X_data, X_indices, X_indptr,
                                  sample_weight, centers_old, centers_new,
-                                 weight_sums, labels, indices)
+                                 weight_sums, labels, indices, b, new_lr) #greg
 
         free(indices)
 
@@ -202,7 +206,9 @@ cdef void update_center_sparse(
         floating[:, ::1] centers_new,        # OUT
         floating[::1] weight_sums,           # INOUT
         const int[::1] labels,               # IN
-        int *indices) noexcept nogil:        # TMP
+        int *indices,
+        floating b,                          #greg new param
+        bint new_lr=True) noexcept nogil:                 #greg new param)        # TMP
     """Update of a single center for sparse MinibatchKMeans"""
     cdef:
         int n_samples = sample_weight.shape[0]
@@ -223,23 +229,40 @@ cdef void update_center_sparse(
     n_indices = k
 
     if wsum > 0:
-        # Undo the previous count-based scaling for this cluster center:
-        for feature_idx in range(n_features):
-            centers_new[cluster_idx, feature_idx] = centers_old[cluster_idx, feature_idx] * weight_sums[cluster_idx]
+        if new_lr:
+            #greg: added. needed for other logic
+            weight_sums[cluster_idx] += wsum
+            
+            alpha = sqrt(wsum/b)
+            for feature_idx in range(n_features):
+                centers_new[cluster_idx, feature_idx] = centers_old[cluster_idx, feature_idx]* (1-alpha) * (wsum/alpha)
 
-        # Update cluster with new point members
-        for k in range(n_indices):
-            sample_idx = indices[k]
-            for feature_idx in range(X_indptr[sample_idx], X_indptr[sample_idx + 1]):
-                centers_new[cluster_idx, X_indices[feature_idx]] += X_data[feature_idx] * sample_weight[sample_idx]
+            for k in range(n_indices):
+                sample_idx = indices[k]
+                for feature_idx in range(X_indptr[sample_idx], X_indptr[sample_idx + 1]):        
+                    centers_new[cluster_idx, X_indices[feature_idx]] += X_data[feature_idx] * sample_weight[sample_idx]
 
-        # Update the count statistics for this center
-        weight_sums[cluster_idx] += wsum
+            for feature_idx in range(n_features):
+                centers_new[cluster_idx, feature_idx] *= (alpha/wsum)
 
-        # Rescale to compute mean of all points (old and new)
-        alpha = 1 / weight_sums[cluster_idx]
-        for feature_idx in range(n_features):
-            centers_new[cluster_idx, feature_idx] *= alpha
+        else:
+            # Undo the previous count-based scaling for this cluster center:
+            for feature_idx in range(n_features):
+                centers_new[cluster_idx, feature_idx] = centers_old[cluster_idx, feature_idx] * weight_sums[cluster_idx]
+
+            # Update cluster with new point members
+            for k in range(n_indices):
+                sample_idx = indices[k]
+                for feature_idx in range(X_indptr[sample_idx], X_indptr[sample_idx + 1]):
+                    centers_new[cluster_idx, X_indices[feature_idx]] += X_data[feature_idx] * sample_weight[sample_idx]
+
+            # Update the count statistics for this center
+            weight_sums[cluster_idx] += wsum
+
+            # Rescale to compute mean of all points (old and new)
+            alpha = 1 / weight_sums[cluster_idx]
+            for feature_idx in range(n_features):
+                centers_new[cluster_idx, feature_idx] *= alpha
     else:
         # No sample was assigned to this cluster in this batch of data
         for feature_idx in range(n_features):
