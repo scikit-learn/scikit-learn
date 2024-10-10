@@ -82,19 +82,4 @@ def _weighted_percentile(array, sample_weight, percentile=50):
     percentile_in_sorted = sorted_idx[percentile_idx, col_indices]
     values = array[percentile_in_sorted, col_indices]
 
-    value_nan_mask = np.isnan(values)
-    all_nan_column_mask = np.all(np.isnan(array), axis=0)
-
-    # Percentiles that point to nan values are redirected to the next lower value if
-    # not the whole column is all nans and unless we have reached the lowest index (0)
-    # in `sortex_idx`:
-    while (partial_nan_column_mask := value_nan_mask & ~all_nan_column_mask).any() and (
-        percentile_idx[partial_nan_column_mask] > 0
-    ).any():
-        percentile_idx[partial_nan_column_mask] = np.maximum(
-            percentile_idx[partial_nan_column_mask] - 1, 0
-        )
-        percentile_in_sorted = sorted_idx[percentile_idx, col_indices]
-        values = array[percentile_in_sorted, col_indices]
-
     return values[0] if n_dim == 1 else values
