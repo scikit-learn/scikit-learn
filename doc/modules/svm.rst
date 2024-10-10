@@ -112,6 +112,7 @@ properties of these support vectors can be found in attributes
 
 * :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane.py`
 * :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`
+* :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`
 
 .. _svm_multi_class:
 
