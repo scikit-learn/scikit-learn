@@ -252,3 +252,53 @@ package = "sklearn"  # name of your package
 "Documentation" = [
   "spin.cmds.meson.docs"
 ]
+
+[tool.towncrier]
+    package = "sklearn"
+    filename = "doc/whats_new/notes-towncrier.rst"
+    directory = "doc/whats_new/upcoming_release"
+    underlines = "=-^" # TODO adjust maybe
+    template = "doc/whats_new/upcoming_release/template.rst"
+    title_format = "Version {version} ({project_date})"
+    all_bullets = false
+
+    [[tool.towncrier.type]]
+        directory = "feature"
+        name = "New Features"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "api"
+        name = "API Changes"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "bugfix"
+        name = "Bug Fixes"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "perf"
+        name = "Performance Improvements"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "other"
+        name = "Other Changes and Additions"
+        showcontent = true
+
+    [[tool.towncrier.section]]
+        name = ""
+        path = ""
+
+    [[tool.towncrier.section]]
+        name = "sklearn.linear_model"
+        path = "linear_model"
+
+    [[tool.towncrier.section]]
+        name = "sklearn.tree"
+        path = "tree"
+
+    [[tool.towncrier.section]]
+        name = "sklearn.utils"
+        path = "utils"
