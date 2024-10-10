@@ -1,6 +1,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import warnings
+
 from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
 from .._ranking import auc, roc_curve
 
@@ -67,9 +69,9 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     >>> import matplotlib.pyplot as plt
     >>> import numpy as np
     >>> from sklearn import metrics
-    >>> y = np.array([0, 0, 1, 1])
-    >>> pred = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> fpr, tpr, thresholds = metrics.roc_curve(y, pred)
+    >>> y_true = np.array([0, 0, 1, 1])
+    >>> y_score = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> fpr, tpr, thresholds = metrics.roc_curve(y_true, y_score)
     >>> roc_auc = metrics.auc(fpr, tpr)
     >>> display = metrics.RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc,
     ...                                   estimator_name='example estimator')
@@ -275,7 +277,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         <...>
         >>> plt.show()
         """
-        y_pred, pos_label, name = cls._validate_and_get_response_values(
+        y_score, pos_label, name = cls._validate_and_get_response_values(
             estimator,
             X,
             y,
@@ -286,7 +288,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         return cls.from_predictions(
             y_true=y,
-            y_pred=y_pred,
+            y_score=y_score,
             sample_weight=sample_weight,
             drop_intermediate=drop_intermediate,
             name=name,
@@ -301,7 +303,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     def from_predictions(
         cls,
         y_true,
-        y_pred,
+        y_score,
         *,
         sample_weight=None,
         drop_intermediate=True,
@@ -310,6 +312,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         ax=None,
         plot_chance_level=False,
         chance_level_kw=None,
+        y_pred="deprecated",
         **kwargs,
     ):
         """Plot ROC curve given the true and predicted values.
@@ -323,7 +326,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         y_true : array-like of shape (n_samples,)
             True labels.
 
-        y_pred : array-like of shape (n_samples,)
+        y_score : array-like of shape (n_samples,)
             Target scores, can either be probability estimates of the positive
             class, confidence values, or non-thresholded measure of decisions
             (as returned by “decision_function” on some classifiers).
@@ -360,6 +363,15 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
             .. versionadded:: 1.3
 
+        y_pred : array-like of shape (n_samples,)
+            Target scores, can either be probability estimates of the positive
+            class, confidence values, or non-thresholded measure of decisions
+            (as returned by “decision_function” on some classifiers).
+
+            .. deprecated:: 1.6
+                `y_pred` is deprecated and will be removed in 1.8. Use
+                `y_score` instead.
+
         **kwargs : dict
             Additional keywords arguments passed to matplotlib `plot` function.
 
@@ -386,19 +398,35 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> X_train, X_test, y_train, y_test = train_test_split(
         ...     X, y, random_state=0)
         >>> clf = SVC(random_state=0).fit(X_train, y_train)
-        >>> y_pred = clf.decision_function(X_test)
+        >>> y_score = clf.decision_function(X_test)
         >>> RocCurveDisplay.from_predictions(
-        ...    y_test, y_pred)
+        ...    y_test, y_score)
         <...>
         >>> plt.show()
         """
+        # TODO(1.8): Remove y_pred support and use y_score only
+        if y_score is not None and not isinstance(y_pred, str):
+            raise ValueError(
+                "`y_pred` and `y_score` cannot be both specified. Please use `y_score`"
+                " only as `y_pred` is deprecated in v1.6 and will be removed in v1.8."
+            )
+        if y_pred is not None and y_pred != "deprecated":
+            warnings.warn(
+                (
+                    "y_pred was deprecated in version 1.6 and will be removed in 1.8. "
+                    "Please use ``y_score`` instead."
+                ),
+                FutureWarning,
+            )
+            y_score = y_pred
+
         pos_label_validated, name = cls._validate_from_predictions_params(
-            y_true, y_pred, sample_weight=sample_weight, pos_label=pos_label, name=name
+            y_true, y_score, sample_weight=sample_weight, pos_label=pos_label, name=name
         )
 
         fpr, tpr, _ = roc_curve(
             y_true,
-            y_pred,
+            y_score,
             pos_label=pos_label,
             sample_weight=sample_weight,
             drop_intermediate=drop_intermediate,
