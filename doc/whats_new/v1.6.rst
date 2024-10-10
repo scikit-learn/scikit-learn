@@ -261,6 +261,10 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
+- |Fix| :class:`linear_model.LinearRegression` sets the `cond` parameter when
+  calling the `scipy.linalg.lstsq` solver.
+  :pr:`30040` by :user:`Antoine Baker <antoinebaker>`.
+
 - |Fix| :class:`linear_model.LogisticRegressionCV` corrects sample weight handling
   for the calculation of test scores.
   :pr:`29419` by :user:`Shruti Nath <snath-xoc>`.
