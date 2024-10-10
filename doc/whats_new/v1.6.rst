@@ -364,6 +364,10 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
+- |Enhancement| Added `warn` option to `handle_unknown` parameter in
+  :class:`preprocessing.OneHotEncoder`.
+  :pr:`28637` by :user:`Gleb Levitski <glevv>`.
+
 - |Enhancement| The HTML representation of :class:`preprocessing.FunctionTransformer`
   will show the function name in the label.
   :pr:`29158` by :user:`Yao Xiao <Charlie-XIAO>`.
