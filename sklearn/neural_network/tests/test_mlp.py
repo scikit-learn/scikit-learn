@@ -989,4 +989,6 @@ def test_mlp_diverging_loss():
 
     mlp.fit(X_iris, y_iris)
 
-    assert mlp.validation_scores_[-1] == np.inf
+    # In python, float("nan") != float("nan")
+    assert str(mlp.validation_scores_[-1]) == str(np.nan)
+    assert isinstance(mlp.validation_scores_[-1], float)
