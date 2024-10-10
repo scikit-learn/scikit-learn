@@ -541,8 +541,7 @@ def test_permutation_importance_max_samples_error():
 
 
 def test_permutation_importance_feature_indices():
-    """Check you only get back len(feature_indices) importances.
-    """
+    """Check you only get back len(feature_indices) importances."""
     X, y = make_regression(n_samples=500, n_features=10, random_state=0)
 
     lr = LinearRegression().fit(X, y)
@@ -558,15 +557,11 @@ def test_permutation_importance_feature_indices():
         scoring="neg_mean_squared_error",
         feature_indices=feature_indices_test,
     )
-    assert results.importances.shape == (
-        len(feature_indices_test),
-        n_repeats_test
-    )
+    assert results.importances.shape == (len(feature_indices_test),n_repeats_test)
 
 
 def test_permutation_importance_feature_indices_out_of_range_error():
-    """Check you get error when feature_indices are out of range.
-    """
+    """Check you get error when feature_indices are out of range."""
     n_features = 10
 
     X, y = make_regression(n_samples=500, n_features=n_features, random_state=0)
