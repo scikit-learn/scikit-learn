@@ -380,6 +380,7 @@ def test_minibatch_kmeans_verbose():
 
 @pytest.mark.parametrize("algorithm", ["lloyd", "elkan"])
 @pytest.mark.parametrize("tol", [1e-2, 0])
+@pytest.mark.parallel_threads(1)
 def test_kmeans_verbose(algorithm, tol, capsys):
     # Check verbose mode of KMeans for better coverage.
     X = np.random.RandomState(0).normal(size=(5000, 10))
