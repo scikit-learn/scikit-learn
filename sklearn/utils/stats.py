@@ -7,9 +7,9 @@ from .extmath import stable_cumsum
 
 
 def _weighted_percentile(array, sample_weight, percentile=50):
-    """Compute the lower value at a given weighted percentile.
+    """Compute the lower value(s) at a given weighted percentile.
 
-    If `array` is a 2D array, the `value` is selected along axis 0.
+    If `array` is a 2D array, the `values` are selected along axis 0.
 
         .. versionchanged:: 0.24
             Accepts 2D `array`.
@@ -30,12 +30,12 @@ def _weighted_percentile(array, sample_weight, percentile=50):
         `(array.shape[0],)`.
 
     percentile: int or float, default=50
-        Percentile to compute. Must be value between 0 and 100.
+        Percentile to compute. Must be between 0 and 100.
 
     Returns
     -------
-    value : int if `array` 1D, ndarray if `array` 2D
-        Lower value at a given weighted percentile.
+    values : int if `array` 1D, ndarray if `array` 2D
+        Lower value(s) at a given weighted percentile.
     """
     n_dim = array.ndim
     if n_dim == 0:
@@ -80,17 +80,17 @@ def _weighted_percentile(array, sample_weight, percentile=50):
 
     col_indices = np.arange(array.shape[1])
     percentile_in_sorted = sorted_idx[percentile_idx, col_indices]
-    value = array[percentile_in_sorted, col_indices]
+    values = array[percentile_in_sorted, col_indices]
 
     # Percentiles that point to nan values are redirected to the next lower
-    # value unless we have reached the lowest index (0) in `sortex_idx`:
-    while (percentile_isnan_mask := np.isnan(value)).any() and (
+    # value(s) unless we have reached the lowest index (0) in `sortex_idx`:
+    while (percentile_isnan_mask := np.isnan(values)).any() and (
         percentile_idx[percentile_isnan_mask] > 0
     ).any():
         percentile_idx[percentile_isnan_mask] = np.maximum(
             percentile_idx[percentile_isnan_mask] - 1, 0
         )
         percentile_in_sorted = sorted_idx[percentile_idx, col_indices]
-        value = array[percentile_in_sorted, col_indices]
+        values = array[percentile_in_sorted, col_indices]
 
-    return value[0] if n_dim == 1 else value
+    return values[0] if n_dim == 1 else values
