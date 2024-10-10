@@ -1610,7 +1610,7 @@ def _mini_batch_step(
         model will take longer to converge, but should converge in a
         better clustering.
 
-    adaptive_lr : bool, default=False
+    adaptive_lr : bool
         If True, use the adaptive learning rate.
 
     verbose : bool, default=False
@@ -1634,7 +1634,7 @@ def _mini_batch_step(
     # Update centers according to the labels
     if sp.issparse(X):
         _minibatch_update_sparse(
-            X, sample_weight, centers, centers_new, weight_sums, labels, n_threads, adaptive_lr
+            X, sample_weight, centers, centers_new, weight_sums, labels, adaptive_lr, n_threads
         )
     else:
         _minibatch_update_dense(
@@ -1644,9 +1644,9 @@ def _mini_batch_step(
             centers_new,
             weight_sums,
             labels,
-            n_threads,
-            adaptive_lr
-        )
+            adaptive_lr,
+            n_threads        
+            )
 
     # Reassign clusters that have very low weight
     if random_reassign and reassignment_ratio > 0:
@@ -2177,9 +2177,9 @@ class MiniBatchKMeans(_BaseKMeans):
                     random_state=random_state,
                     random_reassign=self._random_reassign(),
                     reassignment_ratio=self.reassignment_ratio,
+                    adaptive_lr=self.adaptive_lr,
                     verbose=self.verbose,
-                    n_threads=self._n_threads,
-                    adaptive_lr=self.adaptive_lr
+                    n_threads=self._n_threads
                 )
 
                 if self._tol > 0.0:
@@ -2299,8 +2299,9 @@ class MiniBatchKMeans(_BaseKMeans):
                 random_state=self._random_state,
                 random_reassign=self._random_reassign(),
                 reassignment_ratio=self.reassignment_ratio,
+                adaptive_lr=self.adaptive_lr,
                 verbose=self.verbose,
-                n_threads=self._n_threads,
+                n_threads=self._n_threads
             )
 
         if self.compute_labels:
