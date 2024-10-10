@@ -886,6 +886,7 @@ API_REFERENCE = {
                     "StratifiedGroupKFold",
                     "StratifiedKFold",
                     "StratifiedShuffleSplit",
+                    "StratifiedShuffleSplitRegression",
                     "TimeSeriesSplit",
                     "check_cv",
                     "train_test_split",

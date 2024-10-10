@@ -22,6 +22,7 @@ from sklearn.datasets import (
     make_blobs,
     make_classification,
     make_multilabel_classification,
+    make_regression,
 )
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.dummy import DummyClassifier
@@ -59,6 +60,7 @@ from sklearn.model_selection import (
     RandomizedSearchCV,
     StratifiedKFold,
     StratifiedShuffleSplit,
+    StratifiedShuffleSplitRegression,
     train_test_split,
 )
 from sklearn.model_selection._search import (
@@ -353,6 +355,28 @@ def test_grid_search_groups():
         gs = GridSearchCV(clf, grid, cv=cv)
         # Should not raise an error
         gs.fit(X, y)
+
+
+def test_grid_search_stratified_regression():
+    # Create a regression dataset
+    X, y = make_regression(n_samples=16, random_state=0)
+
+    # Initialize a regressor and grid for tuning
+    reg = Ridge(random_state=0)
+    grid = {"alpha": [0.1, 1.0, 10.0]}
+
+    # Create the StratifiedShuffleSplitRegression for cross-validation
+    stratified_cv = StratifiedShuffleSplitRegression(
+        n_splits=5, test_size=0.2, n_bins=3, random_state=42
+    )
+
+    # Ensure that GridSearchCV works with StratifiedShuffleSplitRegression
+    gs = GridSearchCV(reg, grid, cv=stratified_cv)
+    gs.fit(X, y)
+
+    # Check if the grid search has been completed correctly
+    assert gs.best_estimator_ is not None
+    assert gs.best_score_ is not None
 
 
 def test_classes__property():

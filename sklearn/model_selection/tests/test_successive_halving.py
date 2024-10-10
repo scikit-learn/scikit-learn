@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from scipy.stats import expon, norm, randint
 
-from sklearn.datasets import make_classification
+from sklearn.datasets import make_classification, make_regression
 from sklearn.dummy import DummyClassifier
 from sklearn.experimental import enable_halving_search_cv  # noqa
 from sklearn.model_selection import (
@@ -18,6 +18,7 @@ from sklearn.model_selection import (
     ShuffleSplit,
     StratifiedKFold,
     StratifiedShuffleSplit,
+    StratifiedShuffleSplitRegression,
 )
 from sklearn.model_selection._search_successive_halving import (
     _SubsampleMetaSplitter,
@@ -27,7 +28,7 @@ from sklearn.model_selection.tests.test_search import (
     check_cv_results_array_types,
     check_cv_results_keys,
 )
-from sklearn.svm import SVC, LinearSVC
+from sklearn.svm import SVC, SVR, LinearSVC
 
 
 class FastClassifier(DummyClassifier):
@@ -753,6 +754,22 @@ def test_groups_support(Est):
         gs = Est(clf, grid, cv=cv)
         # Should not raise an error
         gs.fit(X, y)
+
+
+@pytest.mark.parametrize("Est", (HalvingGridSearchCV, HalvingRandomSearchCV))
+def test_stratified_regression_support(Est):
+    X, y = make_regression(n_samples=50, n_features=5, random_state=0)
+
+    svr = SVR(kernel="linear", C=1.0, epsilon=0.1)
+    grid = {"C": [0.1, 1.0, 10.0], "epsilon": [0.01, 0.1, 1.0]}
+
+    stratified_cv = StratifiedShuffleSplitRegression(
+        n_splits=3, test_size=0.2, random_state=0
+    )
+
+    gs = Est(svr, grid, cv=stratified_cv, random_state=0)
+
+    gs.fit(X, y)
 
 
 @pytest.mark.parametrize("SearchCV", [HalvingRandomSearchCV, HalvingGridSearchCV])
