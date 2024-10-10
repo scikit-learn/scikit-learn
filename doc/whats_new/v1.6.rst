@@ -261,6 +261,10 @@ Changelog
 - |Fix| :class:`impute.KNNImputer` excludes samples with nan distances when
   computing the mean value for uniform weights.
   :pr:`29135` by :user:`Xuefeng Xu <xuefeng-xu>`.
+- |Fix| When `min_value` and `max_value` are array-like and some features are dropped due to
+  `keep_empty_features = False`, :class:`impute.IterativeImputer` no longer raises an error and
+  now indexes correctly.
+  :pr:`29451` by :user:`Guntitat Sawadwuthikul <gunsodo>`.
 
 :mod:`sklearn.linear_model`
 ...........................

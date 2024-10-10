@@ -1013,6 +1013,7 @@ def test_iterative_imputer_min_max_array_like(min_value, max_value, correct_outp
         (100, 0, "min_value >= max_value."),
         (np.inf, -np.inf, "min_value >= max_value."),
         ([-5, 5], [100, 200, 0], "_value' should be of shape"),
+        ([-5, 5, 5], [100, 200], "_value' should be of shape"),
     ],
 )
 def test_iterative_imputer_catch_min_max_error(min_value, max_value, err_msg):
@@ -1544,6 +1545,61 @@ def test_iterative_imputer_constant_fill_value():
     )
     imputer.fit_transform(X)
     assert_array_equal(imputer.initial_imputer_.statistics_, fill_value)
+
+
+def test_iterative_imputer_min_max_value_remove_empty():
+    """Check that we properly apply the empty feature mask to `min_value` and
+    `max_value`.
+
+    Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/29355
+    """
+    # Intentionally make column 2 as a missing column, then the bound of the imputed
+    # value of column 3 should be (4, 5)
+    X = np.array(
+        [
+            [1, 2, np.nan, np.nan],
+            [4, 5, np.nan, 6],
+            [7, 8, np.nan, np.nan],
+            [10, 11, np.nan, 12],
+        ]
+    )
+    min_value = [-np.inf, -np.inf, -np.inf, 4]
+    max_value = [np.inf, np.inf, np.inf, 5]
+
+    X_imputed = IterativeImputer(
+        min_value=min_value,
+        max_value=max_value,
+        keep_empty_features=False,
+    ).fit_transform(X)
+
+    X_without_missing_column = np.delete(X, 2, axis=1)
+    assert X_imputed.shape == X_without_missing_column.shape
+    assert np.min(X_imputed[np.isnan(X_without_missing_column)]) == 4
+    assert np.max(X_imputed[np.isnan(X_without_missing_column)]) == 5
+
+    # Intentionally make column 3 as a missing column, then the bound of the imputed
+    # value of column 2 should be (3.5, 6)
+    X = np.array(
+        [
+            [1, 2, np.nan, np.nan],
+            [4, 5, 6, np.nan],
+            [7, 8, np.nan, np.nan],
+            [10, 11, 12, np.nan],
+        ]
+    )
+    min_value = [-np.inf, -np.inf, 3.5, -np.inf]
+    max_value = [np.inf, np.inf, 6, np.inf]
+
+    X_imputed = IterativeImputer(
+        min_value=min_value,
+        max_value=max_value,
+        keep_empty_features=False,
+    ).fit_transform(X)
+
+    X_without_missing_column = np.delete(X, 3, axis=1)
+    assert X_imputed.shape == X_without_missing_column.shape
+    assert np.min(X_imputed[np.isnan(X_without_missing_column)]) == 3.5
+    assert np.max(X_imputed[np.isnan(X_without_missing_column)]) == 6
 
 
 @pytest.mark.parametrize("keep_empty_features", [True, False])
