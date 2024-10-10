@@ -299,8 +299,28 @@ package = "sklearn"  # name of your package
         showcontent = true
 
     [[tool.towncrier.section]]
+        name = "Security"
+        path = "security"
+
+    [[tool.towncrier.section]]
+        name = "Changed models"
+        path = "changed-models"
+
+    [[tool.towncrier.section]]
+        name = "Changes impacting many modules"
+        path = "many-modules"
+
+    [[tool.towncrier.section]]
+        name = "Support for Array API"
+        path = "array-api"
+
+    [[tool.towncrier.section]]
+        name = "Metadata routing"
+        path = "metadata-routing"
+
+    [[tool.towncrier.section]]
         name = ""
-        path = ""
+        path = "custom-top-level"
 
     [[tool.towncrier.section]]
         name = ":mod:`sklearn/cluster`"
