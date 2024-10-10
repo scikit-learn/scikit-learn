@@ -118,3 +118,13 @@ def test_validate_style_kwargs(default_kwargs, user_kwargs, expected):
         "The validation of style keywords does not provide the expected results: "
         f"Got{result} instead of {expected}."
     )
+
+
+@pytest.mark.parametrize(
+    "default_kwargs, user_kwargs",
+    [({}, {"ls": 2, "linestyle": 3}), ({}, {"c": "r", "color": "blue"})],
+)
+def test_validate_style_kwargs_error(default_kwargs, user_kwargs):
+    """Check that `validate_style_kwargs` raises TypeError"""
+    with pytest.raises(TypeError):
+        _validate_style_kwargs(default_kwargs, user_kwargs)
