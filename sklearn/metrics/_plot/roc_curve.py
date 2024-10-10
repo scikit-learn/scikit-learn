@@ -155,8 +155,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             default_chance_level_line_kw, chance_level_kw
         )
 
-        default_chance_level_line_kw.update(**chance_level_kw)
-
         (self.line_,) = self.ax_.plot(self.fpr, self.tpr, **line_kwargs)
         info_pos_label = (
             f" (Positive label: {self.pos_label})" if self.pos_label is not None else ""
@@ -173,13 +171,11 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         )
 
         if plot_chance_level:
-            (self.chance_level_,) = self.ax_.plot(
-                (0, 1), (0, 1), **default_chance_level_line_kw
-            )
+            (self.chance_level_,) = self.ax_.plot((0, 1), (0, 1), **chance_level_kw)
         else:
             self.chance_level_ = None
 
-        if "label" in line_kwargs or "label" in default_chance_level_line_kw:
+        if "label" in line_kwargs or "label" in chance_level_kw:
             self.ax_.legend(loc="lower right")
 
         return self
