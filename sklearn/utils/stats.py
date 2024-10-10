@@ -78,9 +78,9 @@ def _weighted_percentile(array, sample_weight, percentile=50):
         lambda x: np.clip(x, 0, max_idx), axis=0, arr=percentile_idx
     )
 
-    col_index = np.arange(array.shape[1])
-    percentile_in_sorted = sorted_idx[percentile_idx, col_index]
-    value = array[percentile_in_sorted, col_index]
+    col_indices = np.arange(array.shape[1])
+    percentile_in_sorted = sorted_idx[percentile_idx, col_indices]
+    value = array[percentile_in_sorted, col_indices]
 
     # Percentiles that point to nan values are redirected to the next lower
     # value unless we have reached the lowest index (0) in `sortex_idx`:
@@ -90,7 +90,7 @@ def _weighted_percentile(array, sample_weight, percentile=50):
         percentile_idx[percentile_isnan_mask] = np.maximum(
             percentile_idx[percentile_isnan_mask] - 1, 0
         )
-        percentile_in_sorted = sorted_idx[percentile_idx, col_index]
-        value = array[percentile_in_sorted, col_index]
+        percentile_in_sorted = sorted_idx[percentile_idx, col_indices]
+        value = array[percentile_in_sorted, col_indices]
 
     return value[0] if n_dim == 1 else value
