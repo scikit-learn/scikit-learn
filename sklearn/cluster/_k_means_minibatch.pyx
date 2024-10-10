@@ -1,8 +1,7 @@
 from cython cimport floating
 from cython.parallel cimport parallel, prange
 from libc.stdlib cimport malloc, free
-from libc.math cimport sqrt #greg
-from libc.stdio cimport printf #greg
+from libc.math cimport sqrt 
 
 
 def _minibatch_update_dense(
@@ -12,8 +11,8 @@ def _minibatch_update_dense(
         floating[:, ::1] centers_new,        # OUT
         floating[::1] weight_sums,           # INOUT
         const int[::1] labels,               # IN
-        int n_threads,
-        bint new_lr=True):                   #greg new param
+        bint adaptive_lr,                    # IN
+        int n_threads):                      # IN
     """Update of the centers for dense MiniBatchKMeans.
 
     Parameters
@@ -38,6 +37,9 @@ def _minibatch_update_dense(
     labels : ndarray of shape (n_samples,), dtype=int
         labels assignment.
 
+    adaptive_lr : bool (default: False)
+        Whether to use the adaptive learning rate or not.
+
     n_threads : int
         The number of threads to be used by openmp.
     """
@@ -45,10 +47,10 @@ def _minibatch_update_dense(
         int n_samples = X.shape[0]
         int n_clusters = centers_old.shape[0]
         int cluster_idx
-        floating b=0.0 #greg
+        floating b=0.0
         int *indices
 
-    if new_lr:
+    if adaptive_lr:
         for sample_idx in range(n_samples):
             b+= sample_weight[sample_idx]
     with nogil, parallel(num_threads=n_threads):
@@ -56,7 +58,7 @@ def _minibatch_update_dense(
         for cluster_idx in prange(n_clusters, schedule="static"):
             update_center_dense(cluster_idx, X, sample_weight,
                                 centers_old, centers_new, weight_sums, labels,
-                                indices, b, new_lr) #greg
+                                indices, b, adaptive_lr)
 
         free(indices)
 
@@ -70,13 +72,13 @@ cdef void update_center_dense(
         floating[::1] weight_sums,           # INOUT
         const int[::1] labels,               # IN
         int *indices,                        # TMP
-        floating b,                          #greg new param
-        bint new_lr=True) noexcept nogil:    #greg new param    
+        floating b,                          # IN
+        bint adaptive_lr) noexcept nogil:    # IN    
     """Update of a single center for dense MinibatchKMeans"""
     cdef:
         int n_samples = sample_weight.shape[0]
         int n_features = centers_old.shape[1]
-        floating alpha #greg
+        floating alpha
         int n_indices
         int k, sample_idx, feature_idx
 
@@ -94,22 +96,24 @@ cdef void update_center_dense(
     n_indices = k
 
     
-    if wsum > 0:
-        #greg
-        
-        if new_lr:
-            #greg: added. needed for other logic
+    if wsum > 0:        
+        if adaptive_lr:
+            """
+            perform the minibatch update for the current cluster using
+            C_new = C_old *(1-alpha) + alpha*cm(B_j)
+
+            where alpha = sqrt(b_j/b) is the learning rate from https://arxiv.org/abs/2304.00419,
+            b is the weight of the batch, b_j is the weight of the batch w.r.t. the current cluster,
+            and cm(B_j) is the center of mass of the batch w.r.t. the current cluster.
+            """
             weight_sums[cluster_idx] += wsum
-            
             alpha = sqrt(wsum/b)
             for feature_idx in range(n_features):
                 centers_new[cluster_idx, feature_idx] = centers_old[cluster_idx, feature_idx]* (1-alpha) * (wsum/alpha)
-
             for k in range(n_indices):
                 sample_idx = indices[k]
                 for feature_idx in range(n_features):         
                     centers_new[cluster_idx, feature_idx] += X[sample_idx, feature_idx] * sample_weight[sample_idx]
-
             for feature_idx in range(n_features):
                 centers_new[cluster_idx, feature_idx] *= (alpha/wsum)
    
@@ -143,8 +147,8 @@ def _minibatch_update_sparse(
         floating[:, ::1] centers_new,        # OUT
         floating[::1] weight_sums,           # INOUT
         const int[::1] labels,               # IN
-        int n_threads,
-        bint new_lr=True):                   #greg new param):
+        bint adaptive_lr,                    # IN
+        int n_threads):                      # IN
     """Update of the centers for sparse MiniBatchKMeans.
 
     Parameters
@@ -169,6 +173,9 @@ def _minibatch_update_sparse(
     labels : ndarray of shape (n_samples,), dtype=int
         labels assignment.
 
+    adaptive_lr : bool (default: False)
+        Whether to use the adaptive learning rate or not.
+
     n_threads : int
         The number of threads to be used by openmp.
     """
@@ -179,10 +186,10 @@ def _minibatch_update_sparse(
         int n_samples = X.shape[0]
         int n_clusters = centers_old.shape[0]
         int cluster_idx
-        floating b=0.0 #greg
+        floating b=0.0
         int *indices
 
-    if new_lr:
+    if adaptive_lr:
         for sample_idx in range(n_samples):
             b+= sample_weight[sample_idx]
     with nogil, parallel(num_threads=n_threads):
@@ -191,8 +198,7 @@ def _minibatch_update_sparse(
         for cluster_idx in prange(n_clusters, schedule="static"):
             update_center_sparse(cluster_idx, X_data, X_indices, X_indptr,
                                  sample_weight, centers_old, centers_new,
-                                 weight_sums, labels, indices, b, new_lr) #greg
-
+                                 weight_sums, labels, indices, b, adaptive_lr)
         free(indices)
 
 
@@ -206,9 +212,9 @@ cdef void update_center_sparse(
         floating[:, ::1] centers_new,        # OUT
         floating[::1] weight_sums,           # INOUT
         const int[::1] labels,               # IN
-        int *indices,
-        floating b,                          #greg new param
-        bint new_lr=True) noexcept nogil:                 #greg new param)        # TMP
+        int *indices,                        # TMP
+        floating b,                          # IN
+        bint adaptive_lr) noexcept nogil:    # IN
     """Update of a single center for sparse MinibatchKMeans"""
     cdef:
         int n_samples = sample_weight.shape[0]
@@ -229,22 +235,25 @@ cdef void update_center_sparse(
     n_indices = k
 
     if wsum > 0:
-        if new_lr:
-            #greg: added. needed for other logic
+        if adaptive_lr:
+            """
+            perform the minibatch update for the current cluster using
+            C_new = C_old *(1-alpha) + alpha*cm(B_j)
+
+            where alpha = sqrt(b_j/b) is the learning rate from https://arxiv.org/abs/2304.00419,
+            b is the weight of the batch, b_j is the weight of the batch w.r.t. the current cluster,
+            and cm(B_j) is the center of mass of the batch w.r.t. the current cluster.
+            """
             weight_sums[cluster_idx] += wsum
-            
             alpha = sqrt(wsum/b)
             for feature_idx in range(n_features):
                 centers_new[cluster_idx, feature_idx] = centers_old[cluster_idx, feature_idx]* (1-alpha) * (wsum/alpha)
-
             for k in range(n_indices):
                 sample_idx = indices[k]
                 for feature_idx in range(X_indptr[sample_idx], X_indptr[sample_idx + 1]):        
                     centers_new[cluster_idx, X_indices[feature_idx]] += X_data[feature_idx] * sample_weight[sample_idx]
-
             for feature_idx in range(n_features):
                 centers_new[cluster_idx, feature_idx] *= (alpha/wsum)
-
         else:
             # Undo the previous count-based scaling for this cluster center:
             for feature_idx in range(n_features):
