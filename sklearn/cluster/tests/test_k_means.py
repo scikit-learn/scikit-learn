@@ -542,6 +542,7 @@ def test_minibatch_kmeans_init_size():
 
 
 @pytest.mark.parametrize("tol, max_no_improvement", [(1e-4, None), (0, 10)])
+@pytest.mark.parallel_threads(1)
 def test_minibatch_declared_convergence(capsys, tol, max_no_improvement):
     # Check convergence detection based on ewa batch inertia or on
     # small center change.
@@ -858,6 +859,7 @@ def test_kmeans_init_fitted_centers(input_data):
     assert_allclose(km1.cluster_centers_, km2.cluster_centers_)
 
 
+@pytest.mark.parallel_threads(1)
 def test_kmeans_warns_less_centers_than_unique_points(global_random_seed):
     # Check KMeans when the number of found clusters is smaller than expected
     X = np.asarray([[0, 0], [0, 1], [1, 0], [1, 0]])  # last point is duplicated
@@ -1349,6 +1351,7 @@ def test_sample_weight_zero(init, global_random_seed):
 
 @pytest.mark.parametrize("array_constr", data_containers, ids=data_containers_ids)
 @pytest.mark.parametrize("algorithm", ["lloyd", "elkan"])
+@pytest.mark.parallel_threads(1)
 def test_relocating_with_duplicates(algorithm, array_constr):
     """Check that kmeans stops when there are more centers than non-duplicate samples
 
