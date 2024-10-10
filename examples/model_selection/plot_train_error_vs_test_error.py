@@ -58,31 +58,66 @@ enet.set_params(alpha=alpha_optim)
 coef_ = enet.fit(X, y).coef_
 
 # %%
-# Plot results functions
-# ----------------------
+# Plotting Validation Curves
+# -------------------------------------------------------------
+# In this plot, you can see the training and validation scores
+# of the ElasticNet model for different values of regularization
+# parameter alpha. As can be inferred from the plot, for very low values
+# of alpha (close to zero), the regularization is weak, meaning the model
+# fits the training data very closely, leading to high training scores but lower
+# validation scores. This is a case of overfitting, where the model captures
+# noise in the training data rather than the underlying pattern.
+#
+# Using the ``ValidationCurveDisplay`` class helps by automating the plotting of
+# trainingand validation scores across a range of alpha values, eliminating the
+# need for manual iteration and plotting, and providing a clear, consistent
+# visualization of model performance.
 
 import matplotlib.pyplot as plt
 
-plt.subplot(2, 1, 1)
-plt.semilogx(alphas, train_errors, label="Train")
-plt.semilogx(alphas, test_errors, label="Test")
-plt.vlines(
+from sklearn.model_selection import ValidationCurveDisplay
+
+alphas = np.logspace(-5, 1, 60)
+
+disp = ValidationCurveDisplay.from_estimator(
+    enet,
+    X_train,
+    y_train,
+    param_name="alpha",
+    param_range=alphas,
+    scoring="r2",
+    n_jobs=2,
+    score_type="both",
+)
+
+disp.ax_.set_title("Validation Curve for ElasticNet (R^2 Score)")
+disp.ax_.set_xlabel(r"alpha (regularization strength)")
+disp.ax_.set_ylabel("R^2 Score")
+disp.ax_.set_ylim(-1.0, 1.2)
+disp.ax_.vlines(
     alpha_optim,
-    plt.ylim()[0],
+    disp.ax_.get_ylim()[0],
     np.max(test_errors),
     color="k",
     linewidth=3,
     label="Optimum on test",
 )
-plt.legend(loc="lower right")
-plt.ylim([0, 1.2])
-plt.xlabel("Regularization parameter")
-plt.ylabel("Performance")
+disp.ax_.legend(loc="lower right")
 
-# Show estimated coef_ vs true coef
-plt.subplot(2, 1, 2)
+plt.show()
+
+# %%
+# Plotting Performance Comparison Curves
+# -------------------------------------------------------------
+# This plot compares the true coefficients (coef) with the estimated coefficients
+# (coef_) from the model. It visually helps assess how well the model has captured the
+# underlying patterns in the data.
+
 plt.plot(coef, label="True coef")
 plt.plot(coef_, label="Estimated coef")
 plt.legend()
+plt.title("True vs Estimated Coefficients")
+plt.xlabel("Feature Index")
+plt.ylabel("Coefficient Value")
 plt.subplots_adjust(0.09, 0.04, 0.94, 0.94, 0.26, 0.26)
 plt.show()
