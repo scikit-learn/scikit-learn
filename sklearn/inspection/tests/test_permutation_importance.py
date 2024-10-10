@@ -540,19 +540,15 @@ def test_permutation_importance_max_samples_error():
         permutation_importance(clf, X, y, max_samples=5)
 
 
-def test_permutation_importance_n_features():
-    """Check you only get back `n_features` importances when `n_features`
-    param is defined.
+def test_permutation_importance_feature_indices():
+    """Check you only get back len(feature_indices) importances.
     """
     X, y = make_regression(n_samples=500, n_features=10, random_state=0)
 
-    X = scale(X)
-    y = scale(y)
-
     lr = LinearRegression().fit(X, y)
 
-    n_repeats_test = 50
-    n_features_test = 5
+    n_repeats_test = 10
+    feature_indices_test = [0, 1, 2, 3, 9]
 
     results = permutation_importance(
         lr,
@@ -560,6 +556,31 @@ def test_permutation_importance_n_features():
         y,
         n_repeats=n_repeats_test,
         scoring="neg_mean_squared_error",
-        n_features=n_features_test,
+        feature_indices=feature_indices_test,
     )
-    assert results.importances.shape == (n_features_test, n_repeats_test)
+    assert results.importances.shape == (
+        len(feature_indices_test),
+        n_repeats_test
+    )
+
+
+def test_permutation_importance_feature_indices_out_of_range_error():
+    """Check you get error when feature_indices are out of range.
+    """
+    n_features = 10
+
+    X, y = make_regression(n_samples=500, n_features=n_features, random_state=0)
+
+    lr = LinearRegression().fit(X, y)
+
+    feature_indices_test = range(n_features + 1)
+
+    err_msg = r"feature_indices must be within [0, n_features)"
+
+    with pytest.raises(ValueError, match=err_msg):
+        permutation_importance(
+            lr,
+            X,
+            y,
+            feature_indices=feature_indices_test,
+        )

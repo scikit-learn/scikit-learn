@@ -132,6 +132,7 @@ def _create_importances_bunch(baseline_score, permuted_score):
             Interval(Integral, 1, None, closed="left"),
             Interval(RealNotInt, 0, 1, closed="right"),
         ],
+        "feature_indices": ["array-like", None],
     },
     prefer_skip_nested_validation=True,
 )
@@ -146,7 +147,7 @@ def permutation_importance(
     random_state=None,
     sample_weight=None,
     max_samples=1.0,
-    n_features=None,
+    feature_indices=None,
 ):
     """Permutation importance for feature evaluation [BRE]_.
 
@@ -230,9 +231,8 @@ def permutation_importance(
 
         .. versionadded:: 1.0
 
-    n_features : int or None, default=None
-        Number of features to include, chosen randomly.
-        If None, all features will be included.
+    feature_indices : a list of feature indices to calculate permutation importance 
+        for only these features. If None, all features will be used.
 
         .. versionadded:: 1.7
 
@@ -283,14 +283,16 @@ def permutation_importance(
     random_state = check_random_state(random_state)
     random_seed = random_state.randint(np.iinfo(np.int32).max + 1)
 
-    if n_features is not None:
-        if n_features > X.shape[1]:
-            raise ValueError(
-                f"n_features must be <= the number of features in X ({X.shape[1]})."
-            )
-        feature_indices = random_state.choice(
-            X.shape[1], size=n_features, replace=False
+    if feature_indices is not None:
+        feature_indices = check_array(
+            feature_indices, ensure_2d=False, ensure_min_features=0, dtype=None
         )
+        if feature_indices.ndim != 1:
+            raise ValueError("feature_indices must be 1D array-like")
+        if not np.issubdtype(feature_indices.dtype, np.integer):
+            raise ValueError("feature_indices must be array-like of integers")
+        if np.any(feature_indices < 0) or np.any(feature_indices >= X.shape[1]):
+            raise ValueError("feature_indices must be within [0, n_features]")
     else:
         feature_indices = np.arange(X.shape[1])
 
