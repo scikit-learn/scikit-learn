@@ -2360,13 +2360,29 @@ def test_ridge_cv_custom_multioutput_scorer():
 # ======================
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize("metaestimator", [RidgeCV, RidgeClassifierCV])
+@config_context(enable_metadata_routing=True)
 def test_metadata_routing_with_default_scoring(metaestimator):
     """Test that `RidgeCV` or `RidgeClassifierCV` with default `scoring`
     argument (`None`), don't enter into `RecursionError` when metadata is routed.
     """
     metaestimator().get_metadata_routing()
+
+
+@pytest.mark.parametrize(
+    "metaestimator, make_dataset",
+    [
+        (RidgeCV(), make_regression),
+        (RidgeClassifierCV(), make_classification),
+    ],
+)
+@config_context(enable_metadata_routing=True)
+def test_set_score_request_with_default_scoring(metaestimator, make_dataset):
+    """Test that `set_score_request` is set within `RidgeCV.fit()` and
+    `RidgeClassifierCV.fit()` when using the default scoring and no
+    UnsetMetadataPassedError is raised. Regression test for the fix in PR #29634."""
+    X, y = make_dataset(n_samples=100, n_features=5, random_state=42)
+    metaestimator.fit(X, y, sample_weight=np.ones(X.shape[0]))
 
 
 # End of Metadata Routing Tests
