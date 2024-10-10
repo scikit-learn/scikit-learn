@@ -231,7 +231,7 @@ def permutation_importance(
 
         .. versionadded:: 1.0
 
-    feature_indices : a list of feature indices to calculate permutation importance 
+    feature_indices : a list of feature indices to calculate permutation importance
         for only these features. If None, all features will be used.
 
         .. versionadded:: 1.7
