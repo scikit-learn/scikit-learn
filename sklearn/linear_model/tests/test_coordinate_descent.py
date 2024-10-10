@@ -1224,7 +1224,7 @@ def test_enet_sample_weight_consistency(
     """Test that the impact of sample_weight is consistent.
 
     Note that this test is stricter than the common test
-    check_sample_weights_invariance alone and also tests sparse X.
+    check_sample_weight_equivalence alone and also tests sparse X.
     """
     rng = np.random.RandomState(global_random_seed)
     n_samples, n_features = 10, 5

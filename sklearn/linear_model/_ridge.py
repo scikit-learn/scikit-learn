@@ -2740,7 +2740,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags._xfail_checks = {
-            "check_sample_weights_invariance": (
+            "check_sample_weight_equivalence": (
                 "GridSearchCV does not forward the weights to the scorer by default."
             ),
         }
