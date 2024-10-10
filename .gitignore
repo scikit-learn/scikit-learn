@@ -60,8 +60,8 @@ examples/cluster/joblib
 reuters/
 benchmarks/bench_covertype_data/
 benchmarks/HIGGS.csv.gz
-benchmarks/minibatch_results/
 bench_pca_solvers.csv
+benchmarks/minibatch_results/
 
 *.prefs
 .pydevproject
@@ -94,9 +94,3 @@ jupyterlite_contents
 
 # file recognised by vscode IDEs containing env variables
 .env
-
-
-
-#
-results/
-data/

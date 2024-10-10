@@ -1794,16 +1794,8 @@ class MiniBatchKMeans(_BaseKMeans):
         size.
 
     adaptive_lr : bool, default=False
-        If True, use the adaptive learning rate described in the `paper <https://arxiv.org/abs/2304.00419>`_.
-        This performs the minibatch update for each current cluster using
-        .. math::
-
-            C_{new} = C_{old} \cdot (1 - \alpha) + \alpha \cdot cm(B_j)    
-        where :math:`\alpha = \sqrt{\frac{b_j}{b}}` is the learning rate from `the paper <https://arxiv.org/abs/2304.00419>`_,
-        :math:`b` is the weight of the batch, :math:`b_j` is the weight of the batch with respect to the current cluster,
-        and :math:`cm(B_j)` is the center of mass of the batch with respect to the current cluster.
-
-    
+        If True, use the adaptive learning rate described in this `paper <https://arxiv.org/abs/2304.00419>`_.
+        This can be more effective than the standard learning rate when the input is dense.
     Attributes
     ----------
 

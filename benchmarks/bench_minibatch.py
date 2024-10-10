@@ -30,10 +30,11 @@ def load_and_preprocess_data(dataset, n_sample=None):
         svd = TruncatedSVD(n_components=n_components)
         X = svd.fit_transform(X)
         return X, y
-    try:
-        X,y = fetch_openml(name=dataset, version=1, as_frame=False, return_X_y=True,data_home=None,cache=True,parser="auto")
-    except Exception as e:
-        raise Exception(f"Could not load dataset {dataset}. Error: {e}")
+    else:
+        try:
+            X,y = fetch_openml(name=dataset, version=1, as_frame=False, return_X_y=True,data_home=None,cache=True,parser="auto")
+        except Exception as e:
+            raise Exception(f"Could not load dataset {dataset}. Error: {e}")
     normalize = False
     if dataset == "pendigits":
         normalize = True
@@ -178,18 +179,18 @@ def plot_results_bars(df, ax1, set_labels=True):
 result_files = []
 
 
-n_runs = 5
-n_iters = [20]
+n_runs = 10
+n_iters = [100]
 batch_size_values = [1024]
 
 to_plot = []
 
 dataset_names = [
-        "20newsgroups"
         "pendigits",
         "har",
         "mnist_784",
         "letter",
+        "20newsgroups",
     ]
 print("Running on datasets:", dataset_names)
 for dataset_name in dataset_names:
@@ -210,8 +211,8 @@ for dataset_name in dataset_names:
     for num_iters, n_clusters, batch_size in product(n_iters, n_clusters_values, batch_size_values):
         print("#"*20)
         tol=1
-        mbk_newlr = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters,max_no_improvement=None, reassignment_ratio = 0, new_lr=True)
-        mbk_oldlr = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters,max_no_improvement=None, reassignment_ratio = 0, new_lr=False)
+        mbk_newlr = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters, adaptive_lr=True)
+        mbk_oldlr = MiniBatchKMeans(n_clusters=n_clusters, batch_size=batch_size, max_iter=num_iters, adaptive_lr=False)
         mbks = {
                 "1.new lr MiniBatch": mbk_newlr,
                 "2.MiniBatch": mbk_oldlr,
