@@ -226,3 +226,4 @@ gaussian_process.kernel_
 # amplitude of ~0.2 ppm with a length scale of ~0.12 years and a white-noise
 # contribution of ~0.04 ppm. Thus, the overall noise level is very small,
 # indicating that the data can be very well explained by the model.
+plt.show()
