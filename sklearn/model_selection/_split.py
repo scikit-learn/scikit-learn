@@ -2492,15 +2492,10 @@ class StratifiedShuffleSplitRegression(StratifiedShuffleSplit):
     >>> from sklearn.model_selection import StratifiedShuffleSplitRegression
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
-    >>> sss = StratifiedShuffleSplitRegression(
-    ...     n_splits=5,
-    ...     test_size=0.5,
-    ...     n_bins=2,
-    ...     random_state=0
-    >>> )
+    >>> sss = StratifiedShuffleSplitRegression(train_size=0.5, n_bins=2, random_state=0)
     >>> y_binned = np.floor(y / y.max() * 10).astype(int)
     >>> sss.get_n_splits(X, y_binned)
-    5
+    10
     >>> print(sss)
     StratifiedShuffleSplitRegression(n_bins=2, strategy='uniform')
     >>> for i, (train_index, test_index) in enumerate(sss.split(X, y_binned)):
@@ -2522,6 +2517,21 @@ class StratifiedShuffleSplitRegression(StratifiedShuffleSplit):
     Fold 4:
       Train: index=[0 5 1]
       Test:  index=[3 4 2]
+    Fold 5:
+      Train: index=[2 3 4]
+      Test:  index=[0 5 1]
+    Fold 6:
+      Train: index=[3 1 5]
+      Test:  index=[4 0 2]
+    Fold 7:
+      Train: index=[4 1 2]
+      Test:  index=[0 5 3]
+    Fold 8:
+      Train: index=[2 0 3]
+      Test:  index=[4 5 1]
+    Fold 9:
+      Train: index=[5 0 2]
+      Test:  index=[3 4 1]
     """
 
     def __init__(self, n_bins=5, strategy="uniform", **kwargs):
