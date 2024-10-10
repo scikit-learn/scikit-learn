@@ -425,6 +425,7 @@ def check_verbosity(
     ],
 )
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+@pytest.mark.parallel_threads(1)
 def test_verbosity(
     verbose, evaluate_every, expected_lines, expected_perplexities, csr_container
 ):
