@@ -264,28 +264,38 @@ package = "sklearn"  # name of your package
     all_bullets = false
 
     [[tool.towncrier.type]]
+        directory = "major-feature"
+        name = ""
+        showcontent = true
+
+    [[tool.towncrier.type]]
         directory = "feature"
-        name = "New Features"
+        name = ""
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "efficiency"
+        name = ""
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "enhancement"
+        name = ""
         showcontent = true
 
     [[tool.towncrier.type]]
         directory = "api"
-        name = "API Changes"
+        name = ""
         showcontent = true
 
     [[tool.towncrier.type]]
-        directory = "bugfix"
-        name = "Bug Fixes"
-        showcontent = true
-
-    [[tool.towncrier.type]]
-        directory = "perf"
-        name = "Performance Improvements"
+        directory = "fix"
+        name = ""
         showcontent = true
 
     [[tool.towncrier.type]]
         directory = "other"
-        name = "Other Changes and Additions"
+        name = ""
         showcontent = true
 
     [[tool.towncrier.section]]

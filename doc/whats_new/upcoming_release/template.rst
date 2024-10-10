@@ -7,9 +7,7 @@
 {{ top_underline * ((versiondata.version + versiondata.date)|length + 3)}}
 {% endif %}
 {% endif %}
-
 {% set underline = underlines[0] %}
-
 {% for section, content_per_category in sections.items() %}
 {% if content_per_category %}
 {{ section }}
