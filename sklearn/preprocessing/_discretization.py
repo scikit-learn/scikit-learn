@@ -198,7 +198,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         self.random_state = random_state
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y=None, sample_weight=None):
+    def fit(self, X, y=None, sample_weight=None, use_weights_in_resampling=True):
         """
         Fit the estimator.
 
@@ -242,22 +242,23 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             # Take a subsample of `X`
             X = resample(
                 X,
-                replace=False,
+                replace=True,
                 n_samples=self.subsample,
                 random_state=self.random_state,
                 sample_weight=sample_weight,
+                use_weights_in_resampling=use_weights_in_resampling,
             )
 
             # resample gives a list of resmpaled [X, sample_weight]
             # if sample_weight provided
-            if sample_weight is not None:
+            if sample_weight is not None and not use_weights_in_resampling:
                 sample_weight = X[1]
                 X = X[0]
 
         n_features = X.shape[1]
         n_bins = self._validate_n_bins(n_features)
 
-        if sample_weight is not None:
+        if sample_weight is not None and not use_weights_in_resampling:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         bin_edges = np.zeros(n_features, dtype=object)
@@ -278,7 +279,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
             elif self.strategy == "quantile":
                 quantiles = np.linspace(0, 100, n_bins[jj] + 1)
-                if sample_weight is None:
+                if use_weights_in_resampling or sample_weight is None:
                     bin_edges[jj] = np.asarray(np.percentile(column, quantiles))
                 else:
                     bin_edges[jj] = np.asarray(
@@ -296,10 +297,16 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 init = (uniform_edges[1:] + uniform_edges[:-1])[:, None] * 0.5
 
                 # 1D k-means procedure
-                km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1)
-                centers = km.fit(
-                    column[:, None], sample_weight=sample_weight
-                ).cluster_centers_[:, 0]
+                if use_weights_in_resampling:
+                    km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1)
+                    centers = km.fit(
+                        column[:, None],
+                    ).cluster_centers_[:, 0]
+                else:
+                    km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1)
+                    centers = km.fit(
+                        column[:, None], sample_weight=sample_weight
+                    ).cluster_centers_[:, 0]
                 # Must sort, centers may be unsorted even with sorted init
                 centers.sort()
                 bin_edges[jj] = (centers[1:] + centers[:-1]) * 0.5

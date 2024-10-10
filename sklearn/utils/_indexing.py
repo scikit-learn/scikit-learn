@@ -424,6 +424,7 @@ def resample(
     random_state=None,
     stratify=None,
     sample_weight=None,
+    use_weights_in_resampling=False,
 ):
     """Resample arrays or sparse matrices in a consistent way.
 
@@ -529,7 +530,16 @@ def resample(
     check_consistent_length(*arrays)
     if stratify is None:
         if replace:
-            indices = random_state.randint(0, n_samples, size=(max_n_samples,))
+            if sample_weight is not None and use_weights_in_resampling:
+
+                sample_weight = sample_weight / sample_weight.sum()
+                indices = random_state.choice(
+                    np.arange(n_samples), size=(max_n_samples,), p=sample_weight
+                )
+            else:
+                indices = random_state.choice(
+                    np.arange(n_samples), size=(max_n_samples,)
+                )
         else:
             indices = np.arange(n_samples)
             random_state.shuffle(indices)
@@ -567,18 +577,17 @@ def resample(
     arrays = [a.tocsr() if issparse(a) else a for a in arrays]
     resampled_arrays = [_safe_indexing(a, indices) for a in arrays]
 
-    resampled_weights = None
-    if sample_weight is not None:
+    if sample_weight is not None and not use_weights_in_resampling:
         resampled_weights = _safe_indexing(sample_weight, indices)
 
     if len(resampled_arrays) == 1:
         # syntactic sugar for the unit argument case
-        if sample_weight is not None:
+        if sample_weight is not None and not use_weights_in_resampling:
             return [resampled_arrays[0], resampled_weights]
         else:
             return resampled_arrays[0]
     else:
-        if sample_weight is not None:
+        if sample_weight is not None and not use_weights_in_resampling:
             return [resampled_arrays, resampled_weights]
         else:
             return resampled_arrays
