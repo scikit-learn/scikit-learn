@@ -262,6 +262,10 @@ Changelog
   computing the mean value for uniform weights.
   :pr:`29135` by :user:`Xuefeng Xu <xuefeng-xu>`.
 
+- |Fix| Fixed :class:`impute.IterativeImputer` to make sure that it does not skip
+  the iterative process when `keep_empty_features` is set to `True`.
+  :pr:`29779` by :user:`Arif Qodari <arifqodari>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
