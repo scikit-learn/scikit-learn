@@ -525,7 +525,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     Notes
     -----
     From the implementation point of view, this is just plain Ordinary
-    Least Squares (numpy.linalg.lstsq) or Non Negative Least Squares
+    Least Squares (scipy.linalg.lstsq) or Non Negative Least Squares
     (scipy.optimize.nnls) wrapped as a predictor object.
 
     Examples
