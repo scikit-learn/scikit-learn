@@ -2169,7 +2169,7 @@ def test_ridge_sample_weight_consistency(
         tol=1e-12,
     )
 
-    # 1) sample_weight=np.ones(..) should be equivalent to sample_weight=None
+    # 1) sample_weight=np.ones(..) should be equivalent to sample_weight=None,
     # a special case of check_sample_weight_equivalence(name, reg), but we also
     # test with sparse input.
     reg = Ridge(**params).fit(X, y, sample_weight=None)
