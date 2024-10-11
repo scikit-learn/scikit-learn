@@ -10,7 +10,7 @@
 
 {% set underline = underlines[0] %}
 {% for section, content_per_category in sections.items() %}
-{% if content_per_category %}
+{% if content_per_category and section %}
 {{ section }}
 {{ underline * section|length }}
 {% endif %}
