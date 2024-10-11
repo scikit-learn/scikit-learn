@@ -338,3 +338,23 @@ def test_y_score_and_y_pred_deprecation():
     )
     assert_allclose(display.fpr, [0, 0.5, 0.5, 1])
     assert_allclose(display.tpr, [0, 0, 1, 1])
+
+
+def test_y_pred_deprecation_warning():
+    y_true = np.array([0, 1, 1, 0])
+    y_pred = np.array([0.1, 0.4, 0.35, 0.8])
+
+    with pytest.warns(FutureWarning, match="y_pred was deprecated in version 1.6"):
+        display = RocCurveDisplay.from_predictions(y_true, y_pred=y_pred)
+
+    assert_allclose(display.fpr, [0, 0.5, 0.5, 1])
+    assert_allclose(display.tpr, [0, 0, 1, 1])
+
+    # Test that y_score is used when y_pred is "deprecated"
+    y_score = np.array([0.2, 0.3, 0.5, 0.1])
+    display = RocCurveDisplay.from_predictions(
+        y_true, y_score=y_score, y_pred="deprecated"
+    )
+    assert_allclose(display.fpr, [0, 0.5, 0.5, 1])
+    assert_allclose(display.tpr, [0, 0, 1, 1])
+    assert np.array_equal(display.y_score, y_score)
