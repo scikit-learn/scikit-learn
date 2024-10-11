@@ -1805,6 +1805,7 @@ class MiniBatchKMeans(_BaseKMeans):
             `paper <https://arxiv.org/abs/2304.00419>`_.
         This can be more effective than the standard learning rate \
             when the input is dense.
+    
     Attributes
     ----------
 
