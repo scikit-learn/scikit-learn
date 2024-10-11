@@ -13,6 +13,8 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
 
+import warnings
+
 
 @pytest.fixture(scope="module")
 def data():
@@ -313,3 +315,41 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
 
     assert display.roc_auc == pytest.approx(roc_auc_limit)
     assert trapezoid(display.tpr, display.fpr) == pytest.approx(roc_auc_limit)
+
+
+# TODO(1.8): remove
+def test_y_pred_and_y_score_both_specified():
+    with pytest.raises(
+        ValueError, match="`y_pred` and `y_score` cannot be both specified"
+    ):
+        RocCurveDisplay.from_predictions(
+            y_true=np.array([0, 1, 1, 0]),
+            y_pred=np.array([0.1, 0.4, 0.35, 0.8]),
+            y_score=np.array([0.2, 0.3, 0.5, 0.1]),
+        )
+
+
+def test_y_pred_deprecation_warning():
+    with pytest.warns(FutureWarning, match="y_pred was deprecated in version 1.6"):
+        RocCurveDisplay.from_predictions(
+            y_true=np.array([0, 1, 1, 0]), y_pred=np.array([0.1, 0.4, 0.35, 0.8])
+        )
+
+
+def test_y_pred_deprecated_value():
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        display = RocCurveDisplay.from_predictions(
+            y_true=np.array([0, 1, 1, 0]),
+            y_pred="deprecated",
+            y_score=np.array([0.1, 0.4, 0.35, 0.8]),
+        )
+    assert np.array_equal(display.y_score, np.array([0.1, 0.4, 0.35, 0.8]))
+
+
+def test_y_score_used_when_y_pred_not_specified():
+    y_score = np.array([0.1, 0.4, 0.35, 0.8])
+    display = RocCurveDisplay.from_predictions(
+        y_true=np.array([0, 1, 1, 0]), y_score=y_score
+    )
+    assert np.array_equal(display.y_score, y_score)
