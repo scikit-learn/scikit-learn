@@ -2170,7 +2170,7 @@ def test_ridge_sample_weight_consistency(
     )
 
     # 1) sample_weight=np.ones(..) should be equivalent to sample_weight=None
-    # same check as check_sample_weight_equivalence(name, reg, kind="ones"), but we also
+    # a special case of check_sample_weight_equivalence(name, reg), but we also
     # test with sparse input.
     reg = Ridge(**params).fit(X, y, sample_weight=None)
     coef = reg.coef_.copy()
@@ -2182,8 +2182,8 @@ def test_ridge_sample_weight_consistency(
     if fit_intercept:
         assert_allclose(reg.intercept_, intercept)
 
-    # 2) setting elements of sample_weight to 0 is equivalent to removing these samples
-    # same check as check_sample_weight_equivalence(name, reg), but we
+    # 2) setting elements of sample_weight to 0 is equivalent to removing these samples,
+    # another special case of check_sample_weight_equivalence(name, reg), but we
     # also test with sparse input
     sample_weight = rng.uniform(low=0.01, high=2, size=X.shape[0])
     sample_weight[-5:] = 0

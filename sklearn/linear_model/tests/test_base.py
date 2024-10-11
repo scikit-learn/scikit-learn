@@ -718,7 +718,7 @@ def test_linear_regression_sample_weight_consistency(
         intercept = reg.intercept_
 
     # 1) sample_weight=np.ones(..) must be equivalent to sample_weight=None
-    # same check as check_sample_weight_equivalence(name, reg, kind="ones"), but we also
+    # a special case of check_sample_weight_equivalence(name, reg), but we also
     # test with sparse input.
     sample_weight = np.ones_like(y)
     reg.fit(X, y, sample_weight=sample_weight)
