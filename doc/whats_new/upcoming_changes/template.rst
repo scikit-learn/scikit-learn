@@ -9,9 +9,11 @@
 {% endif %}
 
 {% set underline = underlines[0] %}
-{% for section, content_per_category in sections.items() if content_per_category and section %}
+{% for section, content_per_category in sections.items() if content_per_category %}
+{% if section != 'custom-top-level' %}
 {{ section }}
 {{ underline * section|length }}
+{% endif %}
 {# We loop over definitions because, contrary to content_per_category, it follow the category order as defined in pyproject.toml #}
 {% for category in definitions if category in content_per_category %}
 {% set content = content_per_category[category] %}

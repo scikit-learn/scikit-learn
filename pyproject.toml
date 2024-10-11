@@ -319,7 +319,7 @@ package = "sklearn"  # name of your package
         path = "metadata-routing"
 
     [[tool.towncrier.section]]
-        name = ""
+        name = "custom-top-level"
         path = "custom-top-level"
 
     [[tool.towncrier.section]]
