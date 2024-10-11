@@ -324,108 +324,104 @@ package = "sklearn"  # name of your package
 
     [[tool.towncrier.section]]
         name = ":mod:`sklearn/cluster`"
-        path = "cluster"
+        path = "sklearn.cluster"
 
     [[tool.towncrier.section]]
         name = ":mod:`sklearn/compose`"
-        path = "compose"
+        path = "sklearn.compose"
 
     [[tool.towncrier.section]]
         name = ":mod:`sklearn/covariance`"
-        path = "covariance"
+        path = "sklearn.covariance"
 
     [[tool.towncrier.section]]
         name = ":mod:`sklearn/cross_decomposition`"
-        path = "cross_decomposition"
+        path = "sklearn.cross_decomposition"
 
     [[tool.towncrier.section]]
         name = ":mod:`sklearn/datasets`"
-        path = "datasets"
+        path = "sklearn.datasets"
 
     [[tool.towncrier.section]]
         name = ":mod:`sklearn/decomposition`"
-        path = "decomposition"
+        path = "sklearn.decomposition"
 
     [[tool.towncrier.section]]
         name = ":mod:`sklearn/ensemble`"
-        path = "ensemble"
+        path = "sklearn.ensemble"
 
     [[tool.towncrier.section]]
         name = ":mod:`sklearn/experimental`"
-        path = "experimental"
+        path = "sklearn.experimental"
 
     [[tool.towncrier.section]]
         name = ":mod:`sklearn/externals`"
-        path = "externals"
+        path = "sklearn.externals"
 
     [[tool.towncrier.section]]
         name = ":mod:`sklearn/feature_extraction`"
-        path = "feature_extraction"
+        path = "sklearn.feature_extraction"
 
     [[tool.towncrier.section]]
         name = ":mod:`sklearn/feature_selection`"
-        path = "feature_selection"
+        path = "sklearn.feature_selection"
 
     [[tool.towncrier.section]]
         name = ":mod:`sklearn/gaussian_process`"
-        path = "gaussian_process"
+        path = "sklearn.gaussian_process"
 
     [[tool.towncrier.section]]
         name = ":mod:`sklearn/impute`"
-        path = "impute"
+        path = "sklearn.impute"
 
     [[tool.towncrier.section]]
         name = ":mod:`sklearn/inspection`"
-        path = "inspection"
+        path = "sklearn.inspection"
 
     [[tool.towncrier.section]]
         name = ":mod:`sklearn/linear_model`"
-        path = "linear_model"
+        path = "sklearn.linear_model"
 
     [[tool.towncrier.section]]
         name = ":mod:`sklearn/manifold`"
-        path = "manifold"
+        path = "sklearn.manifold"
 
     [[tool.towncrier.section]]
         name = ":mod:`sklearn/metrics`"
-        path = "metrics"
+        path = "sklearn.metrics"
 
     [[tool.towncrier.section]]
         name = ":mod:`sklearn/mixture`"
-        path = "mixture"
+        path = "sklearn.mixture"
 
     [[tool.towncrier.section]]
         name = ":mod:`sklearn/model_selection`"
-        path = "model_selection"
+        path = "sklearn.model_selection"
 
     [[tool.towncrier.section]]
         name = ":mod:`sklearn/neighbors`"
-        path = "neighbors"
+        path = "sklearn.neighbors"
 
     [[tool.towncrier.section]]
         name = ":mod:`sklearn/neural_network`"
-        path = "neural_network"
+        path = "sklearn.neural_network"
 
     [[tool.towncrier.section]]
         name = ":mod:`sklearn/preprocessing`"
-        path = "preprocessing"
+        path = "sklearn.preprocessing"
 
     [[tool.towncrier.section]]
         name = ":mod:`sklearn/semi_supervised`"
-        path = "semi_supervised"
+        path = "sklearn.semi_supervised"
 
     [[tool.towncrier.section]]
         name = ":mod:`sklearn/svm`"
-        path = "svm"
-
-    [[tool.towncrier.section]]
-        name = ":mod:`sklearn/tests`"
-        path = "tests"
+        path = "sklearn.svm"
 
     [[tool.towncrier.section]]
         name = ":mod:`sklearn/tree`"
-        path = "tree"
+        path = "sklearn.tree"
 
     [[tool.towncrier.section]]
         name = ":mod:`sklearn/utils`"
-        path = "utils"
+        path = "sklearn.utils"
