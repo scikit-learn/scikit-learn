@@ -316,9 +316,9 @@ Changelog
   is renamed into `ensure_all_finite`. `force_all_finite` will be removed in 1.8.
   :pr:`29404` by :user:`Jérémie du Boisberranger <jeremiedb>`.
 
-- |API| In :func:`sklearn.metrics.RocCurveDisplay.from_predictions`, 
-  the argument `y_pred` has been renamed to `y_score` to better reflect its purpose. 
-  `y_pred` will be removed in 1.8. 
+- |API| In :func:`sklearn.metrics.RocCurveDisplay.from_predictions`,
+  the argument `y_pred` has been renamed to `y_score` to better reflect its purpose.
+  `y_pred` will be removed in 1.8.
   :pr:`29865` by :user:`Bagus Tris Atmaja <bagustris>`.
 
 - |Fix| the functions :func:`metrics.mean_squared_log_error` and
@@ -332,8 +332,6 @@ Changelog
   and :func:`metrics.root_mean_squared_error` now explicitly check whether a scalar
   will be returned when `multioutput=uniform_average`.
   :pr:`29709` by :user:`Virgil Chan <virchan>`.
-
-
 
 :mod:`sklearn.model_selection`
 ..............................
