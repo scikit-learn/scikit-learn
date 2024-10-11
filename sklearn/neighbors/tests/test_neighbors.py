@@ -24,7 +24,12 @@ from sklearn.metrics.tests.test_pairwise_distances_reduction import (
     assert_compatible_argkmin_results,
     assert_compatible_radius_results,
 )
-from sklearn.model_selection import cross_val_score, train_test_split
+from sklearn.model_selection import (
+    LeaveOneOut,
+    cross_val_predict,
+    cross_val_score,
+    train_test_split,
+)
 from sklearn.neighbors import (
     VALID_METRICS_SPARSE,
     KNeighborsRegressor,
@@ -2390,3 +2395,39 @@ def test_KNeighborsClassifier_raise_on_all_zero_weights():
 
     with pytest.raises(ValueError, match=msg):
         est.predict_proba([[1.1, 1.1]])
+
+
+def test_neighbor_classifiers_loocv():
+    """Check that `predict` and related functions work fine with X=None"""
+    X, y = datasets.make_blobs(n_samples=500, centers=5, n_features=2, random_state=0)
+
+    models = [
+        neighbors.KNeighborsClassifier(n_neighbors=10),
+        neighbors.RadiusNeighborsClassifier(radius=5.0),
+    ]
+
+    for knn in models:
+        loocv = cross_val_score(knn, X, y, cv=LeaveOneOut())
+
+        knn.fit(X, y)
+
+        assert np.all(loocv == (knn.predict(None) == y))
+        assert np.mean(loocv) == knn.score(None, y)
+        assert knn.score(None, y) < knn.score(X, y)
+
+
+def test_neighbor_regressors_loocv():
+    """Check that `predict` and related functions work fine with X=None"""
+    X, y = datasets.load_diabetes(return_X_y=True)
+
+    models = [
+        neighbors.KNeighborsClassifier(n_neighbors=10),
+        neighbors.RadiusNeighborsClassifier(radius=0.5),
+    ]
+
+    for knn in models:
+        loocv = cross_val_predict(knn, X, y, cv=LeaveOneOut())
+
+        knn.fit(X, y)
+
+        assert np.all(loocv == knn.predict(None))
