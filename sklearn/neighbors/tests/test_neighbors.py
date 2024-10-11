@@ -2426,6 +2426,8 @@ def test_neighbor_regressors_loocv():
     ]
 
     for knn in models:
+        # Only checking cross_val_predict and not cross_val_score because
+        # cross_val_score does not work with LeaveOneOut() for a regressor
         loocv = cross_val_predict(knn, X, y, cv=LeaveOneOut())
 
         knn.fit(X, y)
