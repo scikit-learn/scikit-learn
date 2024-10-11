@@ -16,12 +16,11 @@
 {% endif %}
 {% for category, content in content_per_category.items() %}
 {% for text, issue_links in content.items() %}
-{# TODO for later we can generate tags like |Fix|, |API|, etc ... but need to special case top-level section
-|{{ definitions[category]['name'] }}| {{ text }} {{ issue_links|join(', ') }}
-#}
-{# TODO I don't really understand how you can have multiple issue_links but this is a list so need join
-#}
-{{ text }} {{ issue_links|join(', ') }}
+{% set tag = definitions[category]['name'] %}
+{# TODO a bit hacky replace first space with tag like |Fix|, is there a cleaner way? #}
+{% set text_with_tag = text if category == 'other' else text.replace(' ', ' ' + tag + ' ', 1) %}
+{# TODO I don't really understand how you can have multiple issue_links but this is a list so need to join #}
+{{ text_with_tag }} {{ issue_links|join(', ') }}
 
 {% endfor %}
 {% endfor %}

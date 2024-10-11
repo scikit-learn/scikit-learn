@@ -265,32 +265,32 @@ package = "sklearn"  # name of your package
 
     [[tool.towncrier.type]]
         directory = "major-feature"
-        name = ""
+        name = "|MajorFeature|"
         showcontent = true
 
     [[tool.towncrier.type]]
         directory = "feature"
-        name = ""
+        name = "|Feature|"
         showcontent = true
 
     [[tool.towncrier.type]]
         directory = "efficiency"
-        name = ""
+        name = "|Efficiency|"
         showcontent = true
 
     [[tool.towncrier.type]]
         directory = "enhancement"
-        name = ""
+        name = "|Enhancement|"
         showcontent = true
 
     [[tool.towncrier.type]]
         directory = "api"
-        name = ""
+        name = "|API|"
         showcontent = true
 
     [[tool.towncrier.type]]
         directory = "fix"
-        name = ""
+        name = "|Fix|"
         showcontent = true
 
     [[tool.towncrier.type]]
