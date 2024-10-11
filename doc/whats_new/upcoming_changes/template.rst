@@ -19,8 +19,8 @@
 {% set content = content_per_category[category] %}
 {% for text, issue_links in content.items() %}
 {% set tag = definitions[category]['name'] %}
-{# TODO a bit hacky replace first space with tag like |Fix|, is there a cleaner way? #}
-{% set text_with_tag = text if category == 'other' else text.replace(' ', ' ' + tag + ' ', 1) %}
+{# If category != 'other' add tag like |Fix| or |Feature|. This assumes the text is formatted as a bullet point #}
+{% set text_with_tag = text if category == 'other' else '{0} {1}{2}'.format(text[0], tag, text[1:]) %}
 {# issue_links is a list so need to join. For our purposes, issue_links is always of length 1 #}
 {{ text_with_tag }} {{ issue_links|join(', ') }}
 
