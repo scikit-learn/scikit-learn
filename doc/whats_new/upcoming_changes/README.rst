@@ -7,15 +7,18 @@ This directory contains "news fragments" which are short files that contain a
 small **ReST**-formatted text that will be added to the next what's new page.
 
 Each file should be named like ``<PULL REQUEST>.<TYPE>.rst``, where
-``<PULL REQUEST>`` is a pull request number, and ``<TYPE>`` is one of (see
-`https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/changelog_legend.inc`_
-for more details about their meaning):
+``<PULL REQUEST>`` is a pull request number, and ``<TYPE>`` is one of:
 
 * ``major-feature``
 * ``feature``
 * ``efficiency``
+* ``enhancement``
 * ``fix``
 * ``api``
+
+See `this
+<https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/changelog_legend.inc>`_
+for more details about the meaning of each type.
 
 If the change concerns a sub-package, the file should go in the sub-directory
 relative to this sub-package, for example ``sklearn.linear_model`` or
