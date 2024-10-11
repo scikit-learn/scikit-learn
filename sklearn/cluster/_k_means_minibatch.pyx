@@ -1,7 +1,7 @@
 from cython cimport floating
 from cython.parallel cimport parallel, prange
 from libc.stdlib cimport malloc, free
-from libc.math cimport sqrt 
+from libc.math cimport sqrt
 
 
 def _minibatch_update_dense(
@@ -73,7 +73,7 @@ cdef void update_center_dense(
         const int[::1] labels,               # IN
         int *indices,                        # TMP
         floating b,                          # IN
-        bint adaptive_lr) noexcept nogil:    # IN    
+        bint adaptive_lr) noexcept nogil:    # IN
     """Update of a single center for dense MinibatchKMeans"""
     cdef:
         int n_samples = sample_weight.shape[0]
@@ -82,12 +82,10 @@ cdef void update_center_dense(
         int n_indices
         int k, sample_idx, feature_idx
 
-        floating wsum = 0, temp=0
-
-
+        floating wsum = 0
     # indices = np.where(labels == cluster_idx)[0]
     k = 0
-    
+
     for sample_idx in range(n_samples):
         if labels[sample_idx] == cluster_idx:
             indices[k] = sample_idx
@@ -95,8 +93,7 @@ cdef void update_center_dense(
             k += 1
     n_indices = k
 
-    
-    if wsum > 0:        
+    if wsum > 0:
         if adaptive_lr:
             """
             perform the minibatch update for the current cluster using
@@ -112,11 +109,10 @@ cdef void update_center_dense(
                 centers_new[cluster_idx, feature_idx] = centers_old[cluster_idx, feature_idx]* (1-alpha) * (wsum/alpha)
             for k in range(n_indices):
                 sample_idx = indices[k]
-                for feature_idx in range(n_features):         
+                for feature_idx in range(n_features):
                     centers_new[cluster_idx, feature_idx] += X[sample_idx, feature_idx] * sample_weight[sample_idx]
             for feature_idx in range(n_features):
                 centers_new[cluster_idx, feature_idx] *= (alpha/wsum)
-   
         else:
             # Undo the previous count-based scaling for this cluster center
             for feature_idx in range(n_features):
@@ -127,7 +123,7 @@ cdef void update_center_dense(
                 sample_idx = indices[k]
                 for feature_idx in range(n_features):
                     centers_new[cluster_idx, feature_idx] += X[sample_idx, feature_idx] * sample_weight[sample_idx]
-            
+
             # Update the count statistics for this center
             weight_sums[cluster_idx] += wsum
             # Rescale to compute mean of all points (old and new)
@@ -250,7 +246,7 @@ cdef void update_center_sparse(
                 centers_new[cluster_idx, feature_idx] = centers_old[cluster_idx, feature_idx]* (1-alpha) * (wsum/alpha)
             for k in range(n_indices):
                 sample_idx = indices[k]
-                for feature_idx in range(X_indptr[sample_idx], X_indptr[sample_idx + 1]):        
+                for feature_idx in range(X_indptr[sample_idx], X_indptr[sample_idx + 1]):
                     centers_new[cluster_idx, X_indices[feature_idx]] += X_data[feature_idx] * sample_weight[sample_idx]
             for feature_idx in range(n_features):
                 centers_new[cluster_idx, feature_idx] *= (alpha/wsum)
