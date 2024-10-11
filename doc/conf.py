@@ -179,6 +179,7 @@ exclude_patterns = [
     "templates",
     "includes",
     "**/sg_execution_times.rst",
+    "whats_new/upcoming_changes",
 ]
 
 # The reST default role (used for this markup: `text`) to use for all

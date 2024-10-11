@@ -1,5 +1,3 @@
-:orphan:
-
 Changelog
 =========
 
@@ -28,10 +26,10 @@ formatted as a bullet point.
 So for example: ``28268.feature.rst`` would be added to the
 ``sklearn.ensemble`` folder and would have the content::
 
-    - :class:`ensemble.ExtraTreesClassifier` and
-      :class:`ensemble.ExtraTreesRegressor` now supports missing values in the
-      data matrix `X`. Missing-values are handled by randomly moving all of the
-      samples to the left, or right child node as the tree is traversed.
+    - :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor`
+      now supports missing values in the data matrix `X`. Missing-values are
+      handled by randomly moving all of the samples to the left, or right child
+      node as the tree is traversed.
       :user:`Adam Li <adam2392>`
 
 If you are unsure what pull request type to use, don't hesitate to ask in your
