@@ -284,13 +284,13 @@ package = "sklearn"  # name of your package
         showcontent = true
 
     [[tool.towncrier.type]]
-        directory = "api"
-        name = "|API|"
+        directory = "fix"
+        name = "|Fix|"
         showcontent = true
 
     [[tool.towncrier.type]]
-        directory = "fix"
-        name = "|Fix|"
+        directory = "api"
+        name = "|API|"
         showcontent = true
 
     [[tool.towncrier.type]]
