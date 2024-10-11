@@ -1,0 +1,5 @@
+- |Enhancement| The verbosity of :class:`ensemble.HistGradientBoostingClassifier`
+  and :class:`ensemble.HistGradientBoostingRegressor` got a more granular control. Now,
+  `verbose = 1` prints only summary messages, `verbose >= 2` prints the full
+  information as before.
+  :pr:`28179` by :user:`Christian Lorentzen <lorentzenchr>`.

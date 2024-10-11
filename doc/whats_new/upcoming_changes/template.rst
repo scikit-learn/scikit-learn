@@ -14,7 +14,14 @@
 {{ section }}
 {{ underline * section|length }}
 {% endif %}
-{% for category, content in content_per_category.items() %}
+{# content_per_category does not respect the category order in definitions so need reordering ... #}
+{% set ordered_content_per_category = dict() %}
+{% for cat in definitions %}
+{% if cat in content_per_category %}
+{% set _ = ordered_content_per_category.update({cat: content_per_category[cat]}) %}
+{% endif %}
+{% endfor %}
+{% for category, content in ordered_content_per_category.items() %}
 {% for text, issue_links in content.items() %}
 {% set tag = definitions[category]['name'] %}
 {# TODO a bit hacky replace first space with tag like |Fix|, is there a cleaner way? #}
