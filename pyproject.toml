@@ -256,10 +256,10 @@ package = "sklearn"  # name of your package
 [tool.towncrier]
     package = "sklearn"
     filename = "doc/whats_new/notes-towncrier.rst"
-    directory = "doc/whats_new/upcoming_release"
+    directory = "doc/whats_new/upcoming_changes"
     underlines = "=-^" # TODO adjust maybe
     issue_format = ":pr:`{issue}`"
-    template = "doc/whats_new/upcoming_release/template.rst"
+    template = "doc/whats_new/upcoming_changes/template.rst"
     title_format = "Version {version} ({project_date})"
     all_bullets = false
 
