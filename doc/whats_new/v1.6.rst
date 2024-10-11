@@ -251,12 +251,20 @@ Changelog
   right child node as the tree is traversed.
   :pr:`28268` by :user:`Adam Li <adam2392>`.
 
+- |API| The parameter `algorithm` of :class:`ensemble.AdaBoostClassifier` is deprecated
+  and will be removed in 1.8.
+  :pr:`29997` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.impute`
 .....................
 
 - |Fix| :class:`impute.KNNImputer` excludes samples with nan distances when
   computing the mean value for uniform weights.
   :pr:`29135` by :user:`Xuefeng Xu <xuefeng-xu>`.
+
+- |Fix| Fixed :class:`impute.IterativeImputer` to make sure that it does not skip
+  the iterative process when `keep_empty_features` is set to `True`.
+  :pr:`29779` by :user:`Arif Qodari <arifqodari>`.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -355,6 +363,10 @@ Changelog
 
 :mod:`sklearn.preprocessing`
 ............................
+
+- |Enhancement| Added `warn` option to `handle_unknown` parameter in
+  :class:`preprocessing.OneHotEncoder`.
+  :pr:`28637` by :user:`Gleb Levitski <glevv>`.
 
 - |Enhancement| The HTML representation of :class:`preprocessing.FunctionTransformer`
   will show the function name in the label.
