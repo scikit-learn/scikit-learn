@@ -263,7 +263,7 @@ Changelog
 
 - |Fix| :class:`linear_model.LinearRegression` replaces the `scipy.linalg.lstsq`
   solver by `numpy.linalg.lstsq` and sets the `rcond` parameter.
-  :pr:`30040` by :user:`Antoine Baker <antoinebaker>`.
+  :pr:`30030` by :user:`Antoine Baker <antoinebaker>`.
 
 - |Fix| :class:`linear_model.LogisticRegressionCV` corrects sample weight handling
   for the calculation of test scores.
