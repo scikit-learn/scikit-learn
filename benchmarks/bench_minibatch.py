@@ -1,19 +1,19 @@
-import numpy as np
-from sklearn.datasets import make_moons
-import matplotlib.pyplot as plt
-from sklearn.datasets import fetch_openml, fetch_20newsgroups
-from collections import defaultdict
-from time import time
-from sklearn import metrics
-from datetime import datetime
-from sklearn.preprocessing import StandardScaler
-from sklearn.cluster import MiniBatchKMeans
-import pandas as pd
-import time
 import os
+import time
+from collections import defaultdict
+from datetime import datetime
 from itertools import product
-from sklearn.feature_extraction.text import TfidfVectorizer
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+from sklearn import metrics
+from sklearn.cluster import MiniBatchKMeans
+from sklearn.datasets import fetch_20newsgroups, fetch_openml
 from sklearn.decomposition._truncated_svd import TruncatedSVD
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.preprocessing import StandardScaler
 
 
 # MARK: -Load and preprocess data
@@ -70,7 +70,8 @@ def evaluate(kms, X, labels, num_iters, n_clusters, batch_size, n_runs=50):
             km.random_state = seed
             t0 = time.time()
             km.fit(X)
-            # include the time it took to construct the kernel matrix in the training time
+            # include the time it took to construct the kernel matrix in
+            # the training time
             train_times.append(time.time() - t0)
             scores["NMI"].append(
                 metrics.normalized_mutual_info_score(labels, km.labels_)
@@ -94,7 +95,8 @@ def evaluate(kms, X, labels, num_iters, n_clusters, batch_size, n_runs=50):
         evaluations.append(evaluation)
 
         print(
-            f"\n {name}, num_iters: {num_iters}, n_clusters: {n_clusters}, batch size: {batch_size}"
+            f"\n {name}, num_iters: {num_iters}, n_clusters: {n_clusters},\
+                 batch size: {batch_size}"
         )
         for score_name, score_values in scores.items():
             mean_score, std_score = np.mean(score_values), np.std(score_values)
@@ -151,7 +153,7 @@ def plot_results(to_plot):
 
     plt.tight_layout()
     # write to results directory
-    plt.savefig(f"minibatch_results/results.png", bbox_inches="tight")
+    plt.savefig("minibatch_results/results.png", bbox_inches="tight")
 
 
 def plot_results_bars(df, ax1, set_labels=True):

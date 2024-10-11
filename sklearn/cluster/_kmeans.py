@@ -1801,8 +1801,10 @@ class MiniBatchKMeans(_BaseKMeans):
         size.
 
     adaptive_lr : bool, default=False
-        If True, use the adaptive learning rate described in this `paper <https://arxiv.org/abs/2304.00419>`_.
-        This can be more effective than the standard learning rate when the input is dense.
+        If True, use the adaptive learning rate described in this \
+            `paper <https://arxiv.org/abs/2304.00419>`_.
+        This can be more effective than the standard learning rate \
+            when the input is dense.
     Attributes
     ----------
 
