@@ -2183,7 +2183,7 @@ def test_ridge_sample_weight_consistency(
         assert_allclose(reg.intercept_, intercept)
 
     # 2) setting elements of sample_weight to 0 is equivalent to removing these samples
-    # same check as check_sample_weight_equivalence(name, reg, kind="zeros"), but we
+    # same check as check_sample_weight_equivalence(name, reg), but we
     # also test with sparse input
     sample_weight = rng.uniform(low=0.01, high=2, size=X.shape[0])
     sample_weight[-5:] = 0
