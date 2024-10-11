@@ -1634,7 +1634,14 @@ def _mini_batch_step(
     # Update centers according to the labels
     if sp.issparse(X):
         _minibatch_update_sparse(
-            X, sample_weight, centers, centers_new, weight_sums, labels, adaptive_lr, n_threads
+            X,
+            sample_weight,
+            centers,
+            centers_new,
+            weight_sums,
+            labels,
+            adaptive_lr,
+            n_threads,
         )
     else:
         _minibatch_update_dense(
@@ -1645,8 +1652,8 @@ def _mini_batch_step(
             weight_sums,
             labels,
             adaptive_lr,
-            n_threads        
-            )
+            n_threads,
+        )
 
     # Reassign clusters that have very low weight
     if random_reassign and reassignment_ratio > 0:
@@ -1906,7 +1913,7 @@ class MiniBatchKMeans(_BaseKMeans):
         init_size=None,
         n_init="auto",
         reassignment_ratio=0.01,
-        adaptive_lr=False
+        adaptive_lr=False,
     ):
         super().__init__(
             n_clusters=n_clusters,
@@ -2171,7 +2178,7 @@ class MiniBatchKMeans(_BaseKMeans):
                     reassignment_ratio=self.reassignment_ratio,
                     adaptive_lr=self.adaptive_lr,
                     verbose=self.verbose,
-                    n_threads=self._n_threads
+                    n_threads=self._n_threads,
                 )
 
                 if self._tol > 0.0:
@@ -2293,7 +2300,7 @@ class MiniBatchKMeans(_BaseKMeans):
                 reassignment_ratio=self.reassignment_ratio,
                 adaptive_lr=self.adaptive_lr,
                 verbose=self.verbose,
-                n_threads=self._n_threads
+                n_threads=self._n_threads,
             )
 
         if self.compute_labels:
