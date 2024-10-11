@@ -323,6 +323,14 @@ package = "sklearn"  # name of your package
         path = "custom-top-level"
 
     [[tool.towncrier.section]]
+        name = ":mod:`sklearn.base`"
+        path = "sklearn.base"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.calibration`"
+        path = "sklearn.calibration"
+
+    [[tool.towncrier.section]]
         name = ":mod:`sklearn.cluster`"
         path = "sklearn.cluster"
 
@@ -347,8 +355,20 @@ package = "sklearn"  # name of your package
         path = "sklearn.decomposition"
 
     [[tool.towncrier.section]]
+        name = ":mod:`sklearn.discriminant_analysis`"
+        path = "sklearn.discriminant_analysis"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.dummy`"
+        path = "sklearn.dummy"
+
+    [[tool.towncrier.section]]
         name = ":mod:`sklearn.ensemble`"
         path = "sklearn.ensemble"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.exceptions`"
+        path = "sklearn.exceptions"
 
     [[tool.towncrier.section]]
         name = ":mod:`sklearn.feature_extraction`"
@@ -371,6 +391,18 @@ package = "sklearn"  # name of your package
         path = "sklearn.inspection"
 
     [[tool.towncrier.section]]
+        name = ":mod:`sklearn.isotonic`"
+        path = "sklearn.isotonic"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.kernel_approximation`"
+        path = "sklearn.kernel_approximation"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.kernel_ridge`"
+        path = "sklearn.kernel_ridge"
+
+    [[tool.towncrier.section]]
         name = ":mod:`sklearn.linear_model`"
         path = "sklearn.linear_model"
 
@@ -391,6 +423,18 @@ package = "sklearn"  # name of your package
         path = "sklearn.model_selection"
 
     [[tool.towncrier.section]]
+        name = ":mod:`sklearn.multiclass`"
+        path = "sklearn.multiclass"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.multioutput`"
+        path = "sklearn.multioutput"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.naive_bayes`"
+        path = "sklearn.naive_bayes"
+
+    [[tool.towncrier.section]]
         name = ":mod:`sklearn.neighbors`"
         path = "sklearn.neighbors"
 
@@ -399,8 +443,16 @@ package = "sklearn"  # name of your package
         path = "sklearn.neural_network"
 
     [[tool.towncrier.section]]
+        name = ":mod:`sklearn.pipeline`"
+        path = "sklearn.pipeline"
+
+    [[tool.towncrier.section]]
         name = ":mod:`sklearn.preprocessing`"
         path = "sklearn.preprocessing"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.random_projection`"
+        path = "sklearn.random_projection"
 
     [[tool.towncrier.section]]
         name = ":mod:`sklearn.semi_supervised`"
