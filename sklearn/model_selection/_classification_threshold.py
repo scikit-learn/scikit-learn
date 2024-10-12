@@ -391,10 +391,14 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
             return_response_method_used=True,
         )
 
-        if self.threshold == "auto":
-            decision_threshold = 0.5 if response_method_used == "predict_proba" else 0.0
+        # Check if the estimator is TunedThresholdClassifierCV
+        if isinstance(self.estimator_, TunedThresholdClassifierCV):
+            decision_threshold = self.estimator_.best_threshold_
         else:
-            decision_threshold = self.threshold
+            if self.threshold == "auto":
+                decision_threshold = 0.5 if response_method_used == "predict_proba" else 0.0
+            else:
+                decision_threshold = self.threshold
 
         return _threshold_scores_to_class_labels(
             y_score, decision_threshold, self.classes_, self.pos_label
