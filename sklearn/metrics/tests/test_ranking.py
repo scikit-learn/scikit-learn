@@ -354,23 +354,6 @@ def test_roc_curve_toydata():
     assert_array_almost_equal(fpr, [0, 1])
     assert_almost_equal(roc_auc, 0.5)
 
-    y_true = [0, 0]
-    y_score = [0.25, 0.75]
-    # assert UndefinedMetricWarning because of no positive sample in y_true
-    expected_message = (
-        "No positive samples in y_true, true positive value should be meaningless"
-    )
-    with pytest.warns(UndefinedMetricWarning, match=expected_message):
-        tpr, fpr, _ = roc_curve(y_true, y_score)
-    # should raise a warning since only one class is present
-    expected_message = (
-        "Only one class present in y_true. ROC AUC score is not defined in that case."
-    )
-    with pytest.warns(UndefinedMetricWarning, match=expected_message):
-        roc_auc_score(y_true, y_score)
-    assert_array_almost_equal(tpr, [0.0, 0.5, 1.0])
-    assert_array_almost_equal(fpr, [np.nan, np.nan, np.nan])
-
     y_true = [1, 1]
     y_score = [0.25, 0.75]
     # assert UndefinedMetricWarning because of no negative sample in y_true
@@ -379,10 +362,26 @@ def test_roc_curve_toydata():
     )
     with pytest.warns(UndefinedMetricWarning, match=expected_message):
         tpr, fpr, _ = roc_curve(y_true, y_score)
+    y_true = [0, 0]
+    y_score = [0.25, 0.75]
+    # assert UndefinedMetricWarning because of no positive sample in y_true
+    expected_message = (
+        "No positive samples in y_true, true positive value should be meaningless"
+    )
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
+        tpr, fpr, _ = roc_curve(y_true, y_score)
+
     # should raise a warning since only one class is present
     expected_message = (
-        "Only one class present in y_true. ROC AUC score is not defined in that case."
+        "Only one class is present in y_true. "
+        "ROC AUC score is not defined in that case."
     )
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
+        roc_auc_score(y_true, y_score)
+    assert_array_almost_equal(tpr, [0.0, 0.5, 1.0])
+    assert_array_almost_equal(fpr, [np.nan, np.nan, np.nan])
+
+    # should raise a warning since only one class is present
     with pytest.warns(UndefinedMetricWarning, match=expected_message):
         roc_auc_score(y_true, y_score)
     assert_array_almost_equal(tpr, [np.nan, np.nan, np.nan])
@@ -820,7 +819,8 @@ def test_auc_score_non_binary_class():
     # y_true contains only one class value
     y_true = np.zeros(10, dtype="int")
     warn_message = (
-        "Only one class present in y_true. ROC AUC score is not defined in that case."
+        "Only one class is present in y_true. "
+        "ROC AUC score is not defined in that case."
     )
     with pytest.warns(UndefinedMetricWarning, match=warn_message):
         roc_auc_score(y_true, y_pred)
@@ -1325,8 +1325,8 @@ def test_det_curve_perfect_scores(y_true):
     [
         ([0, 1], [0, 0.5, 1], "inconsistent numbers of samples"),
         ([0, 1, 1], [0, 0.5], "inconsistent numbers of samples"),
-        ([0, 0, 0], [0, 0.5, 1], "Only one class present in y_true"),
-        ([1, 1, 1], [0, 0.5, 1], "Only one class present in y_true"),
+        ([0, 0, 0], [0, 0.5, 1], "Only one class is present in y_true"),
+        ([1, 1, 1], [0, 0.5, 1], "Only one class is present in y_true"),
         (
             ["cancer", "cancer", "not cancer"],
             [0.2, 0.3, 0.8],

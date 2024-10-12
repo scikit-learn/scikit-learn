@@ -843,7 +843,7 @@ def test_format_invariance_with_1d_vectors(name):
         ):
             if "roc_auc" in name:
                 # for consistency between the `roc_cuve` and `roc_auc_score`
-                # 0.0 is returned and and `UndefinedMetricWarning` is raised
+                # 0.0 is returned and an `UndefinedMetricWarning` is raised
                 with pytest.warns(UndefinedMetricWarning):
                     assert metric(y1_row, y2_row) == pytest.approx(0.0)
             else:

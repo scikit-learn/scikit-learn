@@ -347,7 +347,7 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
 
     if len(np.unique(y_true)) != 2:
         raise ValueError(
-            "Only one class present in y_true. Detection error "
+            "Only one class is present in y_true. Detection error "
             "tradeoff curve is not defined in that case."
         )
 
@@ -374,7 +374,7 @@ def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
     if len(np.unique(y_true)) != 2:
         warnings.warn(
             (
-                "Only one class present in y_true. ROC AUC score "
+                "Only one class is present in y_true. ROC AUC score "
                 "is not defined in that case. The score is set to "
                 "0.0."
             ),
