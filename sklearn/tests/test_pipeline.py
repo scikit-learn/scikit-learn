@@ -13,6 +13,7 @@ import joblib
 import numpy as np
 import pytest
 
+from sklearn import config_context
 from sklearn.base import BaseEstimator, TransformerMixin, clone, is_classifier
 from sklearn.cluster import KMeans
 from sklearn.datasets import load_iris
@@ -1872,9 +1873,9 @@ class SimpleEstimator(BaseEstimator):
         return X - 1
 
 
-@pytest.mark.usefixtures("enable_slep006")
 # split and partial_fit not relevant for pipelines
 @pytest.mark.parametrize("method", sorted(set(METHODS) - {"split", "partial_fit"}))
+@config_context(enable_metadata_routing=True)
 def test_metadata_routing_for_pipeline(method):
     """Test that metadata is routed correctly for pipelines."""
 
@@ -1939,11 +1940,11 @@ def test_metadata_routing_for_pipeline(method):
     )
 
 
-@pytest.mark.usefixtures("enable_slep006")
 # split and partial_fit not relevant for pipelines
 # sorted is here needed to make `pytest -nX` work. W/o it, tests are collected
 # in different orders between workers and that makes it fail.
 @pytest.mark.parametrize("method", sorted(set(METHODS) - {"split", "partial_fit"}))
+@config_context(enable_metadata_routing=True)
 def test_metadata_routing_error_for_pipeline(method):
     """Test that metadata is not routed for pipelines when not requested."""
     X, y = [[1]], [1]
@@ -1980,7 +1981,7 @@ def test_routing_passed_metadata_not_supported(method):
         getattr(pipe, method)([[1]], sample_weight=[1], prop="a")
 
 
-@pytest.mark.usefixtures("enable_slep006")
+@config_context(enable_metadata_routing=True)
 def test_pipeline_with_estimator_with_len():
     """Test that pipeline works with estimators that have a `__len__` method."""
     pipe = Pipeline(
@@ -1990,8 +1991,8 @@ def test_pipeline_with_estimator_with_len():
     pipe.predict([[1]])
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize("last_step", [None, "passthrough"])
+@config_context(enable_metadata_routing=True)
 def test_pipeline_with_no_last_step(last_step):
     """Test that the pipeline works when there is not last step.
 
@@ -2001,7 +2002,7 @@ def test_pipeline_with_no_last_step(last_step):
     assert pipe.fit([[1]], [1]).transform([[1], [2], [3]]) == [[1], [2], [3]]
 
 
-@pytest.mark.usefixtures("enable_slep006")
+@config_context(enable_metadata_routing=True)
 def test_feature_union_metadata_routing_error():
     """Test that the right error is raised when metadata is not requested."""
     X = np.array([[0, 1], [2, 2], [4, 6]])
@@ -2042,7 +2043,7 @@ def test_feature_union_metadata_routing_error():
         ).transform(X, sample_weight=sample_weight, metadata=metadata)
 
 
-@pytest.mark.usefixtures("enable_slep006")
+@config_context(enable_metadata_routing=True)
 def test_feature_union_get_metadata_routing_without_fit():
     """Test that get_metadata_routing() works regardless of the Child's
     consumption of any metadata."""
@@ -2050,7 +2051,7 @@ def test_feature_union_get_metadata_routing_without_fit():
     feature_union.get_metadata_routing()
 
 
-@pytest.mark.usefixtures("enable_slep006")
+@config_context(enable_metadata_routing=True)
 @pytest.mark.parametrize(
     "transformer", [ConsumingTransformer, ConsumingNoFitTransformTransformer]
 )
