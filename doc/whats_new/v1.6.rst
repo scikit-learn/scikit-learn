@@ -293,8 +293,14 @@ Changelog
 
 - |Fix| :class:`linear_model.LassoCV` and :class:`linear_model.ElasticNetCV` now
   take sample weights into accounts to define the search grid for the internally tuned
-  `alpha` hyper-parameter. :pr:`29442` by :user:`John Hopfensperger <s-banach> and
+  `alpha` hyper-parameter. :pr:`29442` by :user:`John Hopfensperger <s-banach>` and
   :user:`Shruti Nath <snath-xoc>`.
+
+- |Fix| :class:`linear_model.LogisticRegression`, :class:`linear_model.PoissonRegressor`,
+  :class:`linear_model.GammaRegressor`, :class:`linear_model.TweedieRegressor`
+  now take sample weights into account to decide when to fall back to `solver='lbfgs'`
+  whenever `solver='newton-cholesky'` becomes numerically unstable.
+  :pr:`29818` by :user:`Antoine Baker <antoinebaker>`.
 
 :mod:`sklearn.manifold`
 .......................
@@ -414,6 +420,14 @@ Changelog
   :func:`utils.check_X_y`, :func:`utils.as_float_array` is renamed into
   `ensure_all_finite`. `force_all_finite` will be removed in 1.8.
   :pr:`29404` by :user:`Jérémie du Boisberranger <jeremiedb>`.
+
+:mod:`sklearn.utils.check_estimators`
+.....................................
+
+- |API| :func:`check_estimators.check_sample_weights_invariance` replaced by
+  :func:`check_estimators.check_sample_weight_equivalence` which uses
+  integer (including zero) weights.
+  :pr:`29818` by :user:`Antoine Baker <antoinebaker>`.
 
 .. rubric:: Code and documentation contributors
 
