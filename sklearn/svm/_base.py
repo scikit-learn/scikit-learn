@@ -1183,7 +1183,7 @@ def _fit_liblinear(
                 " in the data, but the data contains only one"
                 " class: %r" % classes_[0]
             )
-        if sample_weight is not None and class_weight is None:
+        if sample_weight is not None and class_weight == "balanced":
 
             class_weight_ = compute_class_weight(
                 class_weight, classes=classes_, y=np.repeat(y, sample_weight, axis=0)
