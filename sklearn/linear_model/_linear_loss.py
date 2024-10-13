@@ -293,19 +293,34 @@ class LinearModelLoss:
 
         grad_pointwise /= sw_sum
 
-        if not self.base_loss.is_multiclass:
-            grad = np.empty_like(coef, dtype=weights.dtype)
-            grad[:n_features] = X.T @ grad_pointwise + l2_reg_strength * weights
-            if self.fit_intercept:
-                grad[-1] = grad_pointwise.sum()
-        else:
-            grad = np.empty((n_classes, n_dof), dtype=weights.dtype, order="F")
-            # grad_pointwise.shape = (n_samples, n_classes)
-            grad[:, :n_features] = grad_pointwise.T @ X + l2_reg_strength * weights
-            if self.fit_intercept:
-                grad[:, -1] = grad_pointwise.sum(axis=0)
-            if coef.ndim == 1:
-                grad = grad.ravel(order="F")
+        # NOTE there are other instances of
+        # grad_pointwise.T @ X + l2_reg_strength * weights
+        # in this class. It might be necessary to adapt similar error
+        # handling for these instances as well.
+        with np.errstate(all="raise"):
+            try:
+                if not self.base_loss.is_multiclass:
+                    grad = np.empty_like(coef, dtype=weights.dtype)
+                    grad[:n_features] = X.T @ grad_pointwise + l2_reg_strength * weights
+                    if self.fit_intercept:
+                        grad[-1] = grad_pointwise.sum()
+                else:
+                    grad = np.empty((n_classes, n_dof), dtype=weights.dtype, order="F")
+                    # grad_pointwise.shape = (n_samples, n_classes)
+                    grad[:, :n_features] = (
+                        grad_pointwise.T @ X + l2_reg_strength * weights
+                    )
+                    if self.fit_intercept:
+                        grad[:, -1] = grad_pointwise.sum(axis=0)
+                    if coef.ndim == 1:
+                        grad = grad.ravel(order="F")
+            except FloatingPointError as e:
+                raise ValueError(
+                    "Overflow in gradient computation detected. "
+                    "Scale the data as shown in:\n"
+                    "    https://scikit-learn.org/stable/modules/"
+                    "preprocessing.html, or select a different solver."
+                ) from e
 
         return loss, grad
 
