@@ -212,6 +212,9 @@ def test_pairwise_distances_for_sparse_data(
         pairwise_distances(X, Y_sparse, metric="minkowski")
 
 
+# Some scipy metrics are deprecated (depending on the scipy version) but we
+# still want to test them.
+@ignore_warnings(category=DeprecationWarning)
 @pytest.mark.parametrize("metric", PAIRWISE_BOOLEAN_FUNCTIONS)
 def test_pairwise_boolean_distance(metric):
     # test that we convert to boolean arrays for boolean distances

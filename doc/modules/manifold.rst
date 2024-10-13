@@ -108,6 +108,10 @@ from the data itself, without the use of predetermined classifications.
 * See :ref:`sphx_glr_auto_examples_manifold_plot_compare_methods.py` for an example of
   dimensionality reduction on a toy "S-curve" dataset.
 
+* See :ref:`sphx_glr_auto_examples_applications_plot_stock_market.py` for an example of
+  using manifold learning to map the stock market structure based on historical stock
+  prices.
+
 The manifold learning implementations available in scikit-learn are
 summarized below
 

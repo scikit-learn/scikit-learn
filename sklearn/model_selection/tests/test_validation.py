@@ -13,6 +13,7 @@ import numpy as np
 import pytest
 from scipy.sparse import issparse
 
+from sklearn import config_context
 from sklearn.base import BaseEstimator, clone
 from sklearn.cluster import KMeans
 from sklearn.datasets import (
@@ -2482,14 +2483,10 @@ def test_cross_validate_return_indices(global_random_seed):
 # ======================================================
 
 
-# TODO(1.6): remove `cross_validate` and `cross_val_predict` from this test in 1.6 and
-# `learning_curve` and `validation_curve` in 1.8
+# TODO(1.8): remove `learning_curve`, `validation_curve` and `permutation_test_score`.
 @pytest.mark.parametrize(
     "func, extra_args",
     [
-        (cross_validate, {}),
-        (cross_val_score, {}),
-        (cross_val_predict, {}),
         (learning_curve, {}),
         (permutation_test_score, {}),
         (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
@@ -2515,7 +2512,6 @@ def test_fit_param_deprecation(func, extra_args):
         )
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
     "func, extra_args",
     [
@@ -2527,6 +2523,7 @@ def test_fit_param_deprecation(func, extra_args):
         (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
     ],
 )
+@config_context(enable_metadata_routing=True)
 def test_groups_with_routing_validation(func, extra_args):
     """Check that we raise an error if `groups` are passed to the cv method instead
     of `params` when metadata routing is enabled.
@@ -2541,7 +2538,6 @@ def test_groups_with_routing_validation(func, extra_args):
         )
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
     "func, extra_args",
     [
@@ -2553,6 +2549,7 @@ def test_groups_with_routing_validation(func, extra_args):
         (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
     ],
 )
+@config_context(enable_metadata_routing=True)
 def test_passed_unrequested_metadata(func, extra_args):
     """Check that we raise an error when passing metadata that is not
     requested."""
@@ -2567,7 +2564,6 @@ def test_passed_unrequested_metadata(func, extra_args):
         )
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
     "func, extra_args",
     [
@@ -2579,6 +2575,7 @@ def test_passed_unrequested_metadata(func, extra_args):
         (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
     ],
 )
+@config_context(enable_metadata_routing=True)
 def test_validation_functions_routing(func, extra_args):
     """Check that the respective cv method is properly dispatching the metadata
     to the consumer."""
@@ -2671,7 +2668,7 @@ def test_validation_functions_routing(func, extra_args):
         )
 
 
-@pytest.mark.usefixtures("enable_slep006")
+@config_context(enable_metadata_routing=True)
 def test_learning_curve_exploit_incremental_learning_routing():
     """Test that learning_curve routes metadata to the estimator correctly while
     partial_fitting it with `exploit_incremental_learning=True`."""

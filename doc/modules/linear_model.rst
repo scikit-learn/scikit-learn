@@ -1000,6 +1000,8 @@ logistic regression, see also `log-linear model
   | `ElasticNet`   | :math:`\frac{1 - \rho}{2}\|W\|_F^2 + \rho \|W\|_{1,1}`                           |
   +----------------+----------------------------------------------------------------------------------+
 
+.. _logistic_regression_solvers:
+
 Solvers
 -------
 

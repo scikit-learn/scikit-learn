@@ -48,11 +48,13 @@ SCIPY_METRICS = [
     "rogerstanimoto",
     "russellrao",
     "seuclidean",
-    "sokalmichener",
     "sokalsneath",
     "sqeuclidean",
     "yule",
 ]
+if sp_base_version < parse_version("1.17"):
+    # Deprecated in SciPy 1.15 and removed in SciPy 1.17
+    SCIPY_METRICS += ["sokalmichener"]
 if sp_base_version < parse_version("1.11"):
     # Deprecated in SciPy 1.9 and removed in SciPy 1.11
     SCIPY_METRICS += ["kulsinski"]

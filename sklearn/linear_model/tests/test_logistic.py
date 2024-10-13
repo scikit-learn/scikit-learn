@@ -2163,7 +2163,7 @@ def test_liblinear_not_stuck():
         clf.fit(X_prep, y)
 
 
-@pytest.mark.usefixtures("enable_slep006")
+@config_context(enable_metadata_routing=True)
 def test_lr_cv_scores_differ_when_sample_weight_is_requested():
     """Test that `sample_weight` is correctly passed to the scorer in
     `LogisticRegressionCV.fit` and `LogisticRegressionCV.score` by

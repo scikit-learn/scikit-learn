@@ -363,7 +363,7 @@ line
 
 .. topic:: Learning Git
 
-    The `Git documentation <https://git-scm.com/documentation>`_ and
+    The `Git documentation <https://git-scm.com/doc>`_ and
     http://try.github.io are excellent resources to get started with git,
     and understanding all of the commands shown here.
 

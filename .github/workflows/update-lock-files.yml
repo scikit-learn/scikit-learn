@@ -6,10 +6,6 @@ on:
   schedule:
     - cron: '0 5 * * 1'
 
-# In order to add the "CUDA CI" label we need to have write permissions for PRs
-permissions:
-  pull-requests: write
-
 jobs:
   update_lock_files:
     if: github.repository == 'scikit-learn/scikit-learn'
@@ -46,7 +42,7 @@ jobs:
 
       - name: Create Pull Request
         id: cpr
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.BOT_GITHUB_TOKEN }}
           push-to-fork: scikit-learn-bot/scikit-learn
@@ -66,7 +62,7 @@ jobs:
       - name: Trigger additional tests
         if: steps.cpr.outputs.pull-request-number != '' && matrix.name == 'array-api'
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
         run: |
           gh pr edit ${{steps.cpr.outputs.pull-request-number}} --add-label "CUDA CI"
 

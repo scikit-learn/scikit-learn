@@ -2139,7 +2139,7 @@ def test_ridge_sample_weight_consistency(
     """Test that the impact of sample_weight is consistent.
 
     Note that this test is stricter than the common test
-    check_sample_weights_invariance alone.
+    check_sample_weight_equivalence alone.
     """
     # filter out solver that do not support sparse input
     if sparse_container is not None:
@@ -2169,8 +2169,8 @@ def test_ridge_sample_weight_consistency(
         tol=1e-12,
     )
 
-    # 1) sample_weight=np.ones(..) should be equivalent to sample_weight=None
-    # same check as check_sample_weights_invariance(name, reg, kind="ones"), but we also
+    # 1) sample_weight=np.ones(..) should be equivalent to sample_weight=None,
+    # a special case of check_sample_weight_equivalence(name, reg), but we also
     # test with sparse input.
     reg = Ridge(**params).fit(X, y, sample_weight=None)
     coef = reg.coef_.copy()
@@ -2182,8 +2182,8 @@ def test_ridge_sample_weight_consistency(
     if fit_intercept:
         assert_allclose(reg.intercept_, intercept)
 
-    # 2) setting elements of sample_weight to 0 is equivalent to removing these samples
-    # same check as check_sample_weights_invariance(name, reg, kind="zeros"), but we
+    # 2) setting elements of sample_weight to 0 is equivalent to removing these samples,
+    # another special case of check_sample_weight_equivalence(name, reg), but we
     # also test with sparse input
     sample_weight = rng.uniform(low=0.01, high=2, size=X.shape[0])
     sample_weight[-5:] = 0
@@ -2360,13 +2360,29 @@ def test_ridge_cv_custom_multioutput_scorer():
 # ======================
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize("metaestimator", [RidgeCV, RidgeClassifierCV])
+@config_context(enable_metadata_routing=True)
 def test_metadata_routing_with_default_scoring(metaestimator):
     """Test that `RidgeCV` or `RidgeClassifierCV` with default `scoring`
     argument (`None`), don't enter into `RecursionError` when metadata is routed.
     """
     metaestimator().get_metadata_routing()
+
+
+@pytest.mark.parametrize(
+    "metaestimator, make_dataset",
+    [
+        (RidgeCV(), make_regression),
+        (RidgeClassifierCV(), make_classification),
+    ],
+)
+@config_context(enable_metadata_routing=True)
+def test_set_score_request_with_default_scoring(metaestimator, make_dataset):
+    """Test that `set_score_request` is set within `RidgeCV.fit()` and
+    `RidgeClassifierCV.fit()` when using the default scoring and no
+    UnsetMetadataPassedError is raised. Regression test for the fix in PR #29634."""
+    X, y = make_dataset(n_samples=100, n_features=5, random_state=42)
+    metaestimator.fit(X, y, sample_weight=np.ones(X.shape[0]))
 
 
 # End of Metadata Routing Tests

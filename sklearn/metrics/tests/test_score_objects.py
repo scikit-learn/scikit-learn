@@ -1211,8 +1211,8 @@ def test_scorer_set_score_request_raises(name):
         scorer.set_score_request()
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize("name", get_scorer_names(), ids=get_scorer_names())
+@config_context(enable_metadata_routing=True)
 def test_scorer_metadata_request(name):
     """Testing metadata requests for scorers.
 
@@ -1262,7 +1262,7 @@ def test_scorer_metadata_request(name):
     assert list(routed_params.scorer.score.keys()) == ["sample_weight"]
 
 
-@pytest.mark.usefixtures("enable_slep006")
+@config_context(enable_metadata_routing=True)
 def test_metadata_kwarg_conflict():
     """This test makes sure the right warning is raised if the user passes
     some metadata both as a constructor to make_scorer, and during __call__.
@@ -1285,7 +1285,7 @@ def test_metadata_kwarg_conflict():
         scorer(lr, X, y, labels=lr.classes_)
 
 
-@pytest.mark.usefixtures("enable_slep006")
+@config_context(enable_metadata_routing=True)
 def test_PassthroughScorer_set_score_request():
     """Test that _PassthroughScorer.set_score_request adds the correct metadata request
     on itself and doesn't change its estimator's routing."""
@@ -1320,7 +1320,7 @@ def test_PassthroughScorer_set_score_request_raises_without_routing_enabled():
         scorer.set_score_request(sample_weight="my_weights")
 
 
-@pytest.mark.usefixtures("enable_slep006")
+@config_context(enable_metadata_routing=True)
 def test_multimetric_scoring_metadata_routing():
     # Test that _MultimetricScorer properly routes metadata.
     def score1(y_true, y_pred):

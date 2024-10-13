@@ -39,10 +39,7 @@ X = np.concatenate((X1, X2))
 y = np.concatenate((y1, -y2 + 1))
 
 # Create and fit an AdaBoosted decision tree
-bdt = AdaBoostClassifier(
-    DecisionTreeClassifier(max_depth=1), algorithm="SAMME", n_estimators=200
-)
-
+bdt = AdaBoostClassifier(DecisionTreeClassifier(max_depth=1), n_estimators=200)
 bdt.fit(X, y)
 
 plot_colors = "br"

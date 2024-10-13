@@ -43,11 +43,9 @@ def test_initialize_nn_output():
         assert not ((W < 0).any() or (H < 0).any())
 
 
-# TODO(1.6): remove the warning filter for `n_components`
 @pytest.mark.filterwarnings(
     r"ignore:The multiplicative update \('mu'\) solver cannot update zeros present in"
     r" the initialization",
-    "ignore:The default value of `n_components` will change",
 )
 def test_parameter_checking():
     # Here we only check for invalid parameter values that are not already
@@ -270,8 +268,6 @@ def test_nmf_inverse_transform(solver):
     assert_array_almost_equal(A, A_new, decimal=2)
 
 
-# TODO(1.6): remove the warning filter
-@pytest.mark.filterwarnings("ignore:The default value of `n_components` will change")
 def test_mbnmf_inverse_transform():
     # Test that MiniBatchNMF.transform followed by MiniBatchNMF.inverse_transform
     # is close to the identity
@@ -349,8 +345,6 @@ def test_nmf_sparse_transform(Estimator, solver, csc_container):
     assert_allclose(A_fit_tr, A_tr, atol=1e-1)
 
 
-# TODO(1.6): remove the warning filter
-@pytest.mark.filterwarnings("ignore:The default value of `n_components` will change")
 @pytest.mark.parametrize("init", ["random", "nndsvd"])
 @pytest.mark.parametrize("solver", ("cd", "mu"))
 @pytest.mark.parametrize("alpha_W", (0.0, 1.0))
@@ -621,8 +615,6 @@ def test_nmf_negative_beta_loss(csr_container):
         _assert_nmf_no_nan(X_csr, beta_loss)
 
 
-# TODO(1.6): remove the warning filter
-@pytest.mark.filterwarnings("ignore:The default value of `n_components` will change")
 @pytest.mark.parametrize("beta_loss", [-0.5, 0.0])
 def test_minibatch_nmf_negative_beta_loss(beta_loss):
     """Check that an error is raised if beta_loss < 0 and X contains zeros."""
@@ -779,8 +771,6 @@ def test_nmf_underflow():
     assert_almost_equal(res, ref)
 
 
-# TODO(1.6): remove the warning filter
-@pytest.mark.filterwarnings("ignore:The default value of `n_components` will change")
 @pytest.mark.parametrize(
     "dtype_in, dtype_out",
     [
@@ -812,8 +802,6 @@ def test_nmf_dtype_match(Estimator, solver, dtype_in, dtype_out):
     assert nmf.components_.dtype == dtype_out
 
 
-# TODO(1.6): remove the warning filter
-@pytest.mark.filterwarnings("ignore:The default value of `n_components` will change")
 @pytest.mark.parametrize(
     ["Estimator", "solver"],
     [[NMF, {"solver": "cd"}], [NMF, {"solver": "mu"}], [MiniBatchNMF, {}]],
@@ -830,8 +818,6 @@ def test_nmf_float32_float64_consistency(Estimator, solver):
     assert_allclose(W32, W64, atol=1e-5)
 
 
-# TODO(1.6): remove the warning filter
-@pytest.mark.filterwarnings("ignore:The default value of `n_components` will change")
 @pytest.mark.parametrize("Estimator", [NMF, MiniBatchNMF])
 def test_nmf_custom_init_dtype_error(Estimator):
     # Check that an error is raise if custom H and/or W don't have the same
@@ -921,8 +907,6 @@ def test_feature_names_out():
     assert_array_equal([f"nmf{i}" for i in range(3)], names)
 
 
-# TODO(1.6): remove the warning filter
-@pytest.mark.filterwarnings("ignore:The default value of `n_components` will change")
 def test_minibatch_nmf_verbose():
     # Check verbose mode of MiniBatchNMF for better coverage.
     A = np.random.RandomState(0).random_sample((100, 10))
@@ -992,17 +976,6 @@ def test_nmf_non_negative_factorization_n_components_auto():
     )
     assert H.shape == H_init.shape
     assert W.shape == W_init.shape
-
-
-# TODO(1.6): remove
-def test_nmf_n_components_default_value_warning():
-    rng = np.random.RandomState(0)
-    X = rng.random_sample((6, 5))
-    H = rng.random_sample((2, 5))
-    with pytest.warns(
-        FutureWarning, match="The default value of `n_components` will change from"
-    ):
-        non_negative_factorization(X, H=H)
 
 
 def test_nmf_n_components_auto_no_h_update():

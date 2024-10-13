@@ -11,7 +11,6 @@ import numpy as np
 from scipy import linalg, sparse
 
 from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.deprecation import deprecated
 from ._array_api import _is_numpy_namespace, device, get_namespace
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array, check_random_state
@@ -373,6 +372,12 @@ def randomized_svd(
 
     This method solves the fixed-rank approximation problem described in [1]_
     (problem (1.5), p5).
+
+    Refer to
+    :ref:`sphx_glr_auto_examples_applications_wikipedia_principal_eigenvector.py`
+    for a typical example where the power iteration algorithm is used to rank web pages.
+    This algorithm is also known to be used as a building block in Google's PageRank
+    algorithm.
 
     Parameters
     ----------
@@ -903,46 +908,6 @@ def svd_flip(u, v, u_based_decision=True):
             u *= signs[np.newaxis, :]
         v *= signs[:, np.newaxis]
     return u, v
-
-
-# TODO(1.6): remove
-@deprecated(  # type: ignore
-    "The function `log_logistic` is deprecated and will be removed in 1.6. "
-    "Use `-np.logaddexp(0, -x)` instead."
-)
-def log_logistic(X, out=None):
-    """Compute the log of the logistic function, ``log(1 / (1 + e ** -x))``.
-
-    This implementation is numerically stable and uses `-np.logaddexp(0, -x)`.
-
-    For the ordinary logistic function, use ``scipy.special.expit``.
-
-    Parameters
-    ----------
-    X : array-like of shape (M, N) or (M,)
-        Argument to the logistic function.
-
-    out : array-like of shape (M, N) or (M,), default=None
-        Preallocated output array.
-
-    Returns
-    -------
-    out : ndarray of shape (M, N) or (M,)
-        Log of the logistic function evaluated at every point in x.
-
-    Notes
-    -----
-    See the blog post describing this implementation:
-    http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression/
-    """
-    X = check_array(X, dtype=np.float64, ensure_2d=False)
-
-    if out is None:
-        out = np.empty_like(X)
-
-    np.logaddexp(0, -X, out=out)
-    out *= -1
-    return out
 
 
 def softmax(X, copy=True):
