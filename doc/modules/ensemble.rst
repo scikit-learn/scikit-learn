@@ -1709,7 +1709,7 @@ learners::
     >>> from sklearn.ensemble import AdaBoostClassifier
 
     >>> X, y = load_iris(return_X_y=True)
-    >>> clf = AdaBoostClassifier(n_estimators=100, algorithm="SAMME",)
+    >>> clf = AdaBoostClassifier(n_estimators=100)
     >>> scores = cross_val_score(clf, X, y, cv=5)
     >>> scores.mean()
     0.9...

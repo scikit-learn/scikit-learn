@@ -5,11 +5,9 @@
 import re
 import warnings
 from functools import partial
-from inspect import isfunction, signature
-from itertools import product
+from inspect import isfunction
 
-from sklearn import config_context
-from sklearn.base import RegressorMixin
+from sklearn import clone, config_context
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.cluster import (
     HDBSCAN,
@@ -35,13 +33,16 @@ from sklearn.decomposition import (
     FactorAnalysis,
     FastICA,
     IncrementalPCA,
+    KernelPCA,
     LatentDirichletAllocation,
     MiniBatchDictionaryLearning,
     MiniBatchNMF,
     MiniBatchSparsePCA,
+    SparseCoder,
     SparsePCA,
     TruncatedSVD,
 )
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import (
     AdaBoostClassifier,
@@ -60,15 +61,24 @@ from sklearn.ensemble import (
     RandomTreesEmbedding,
     StackingClassifier,
     StackingRegressor,
+    VotingClassifier,
+    VotingRegressor,
 )
 from sklearn.exceptions import SkipTestWarning
 from sklearn.experimental import enable_halving_search_cv  # noqa
 from sklearn.feature_selection import (
+    RFE,
     RFECV,
     SelectFdr,
     SelectFromModel,
     SelectKBest,
     SequentialFeatureSelector,
+)
+from sklearn.kernel_approximation import (
+    Nystroem,
+    PolynomialCountSketch,
+    RBFSampler,
+    SkewedChi2Sampler,
 )
 from sklearn.linear_model import (
     ARDRegression,
@@ -95,27 +105,50 @@ from sklearn.linear_model import (
     PassiveAggressiveRegressor,
     Perceptron,
     PoissonRegressor,
+    QuantileRegressor,
     RANSACRegressor,
     Ridge,
+    RidgeClassifier,
     SGDClassifier,
     SGDOneClassSVM,
     SGDRegressor,
     TheilSenRegressor,
     TweedieRegressor,
 )
-from sklearn.manifold import MDS, TSNE, LocallyLinearEmbedding, SpectralEmbedding
+from sklearn.manifold import (
+    MDS,
+    TSNE,
+    Isomap,
+    LocallyLinearEmbedding,
+    SpectralEmbedding,
+)
 from sklearn.mixture import BayesianGaussianMixture, GaussianMixture
 from sklearn.model_selection import (
+    FixedThresholdClassifier,
     GridSearchCV,
     HalvingGridSearchCV,
     HalvingRandomSearchCV,
     RandomizedSearchCV,
     TunedThresholdClassifierCV,
 )
-from sklearn.multioutput import ClassifierChain, RegressorChain
-from sklearn.neighbors import NeighborhoodComponentsAnalysis
+from sklearn.multiclass import (
+    OneVsOneClassifier,
+    OneVsRestClassifier,
+    OutputCodeClassifier,
+)
+from sklearn.multioutput import (
+    ClassifierChain,
+    MultiOutputClassifier,
+    MultiOutputRegressor,
+    RegressorChain,
+)
+from sklearn.neighbors import (
+    KNeighborsClassifier,
+    KNeighborsRegressor,
+    NeighborhoodComponentsAnalysis,
+)
 from sklearn.neural_network import BernoulliRBM, MLPClassifier, MLPRegressor
-from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.pipeline import FeatureUnion, Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler, TargetEncoder
 from sklearn.random_projection import (
     GaussianRandomProjection,
@@ -129,13 +162,13 @@ from sklearn.semi_supervised import (
 from sklearn.svm import SVC, SVR, LinearSVC, LinearSVR, NuSVC, NuSVR, OneClassSVM
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import all_estimators
-from sklearn.utils._testing import SkipTest, set_random_state
+from sklearn.utils._testing import SkipTest
 
 CROSS_DECOMPOSITION = ["PLSCanonical", "PLSRegression", "CCA", "PLSSVD"]
 
 # The following dictionary is to indicate constructor arguments suitable for the test
 # suite, which uses very small datasets, and is intended to run rather quickly.
-TEST_PARAMS = {
+INIT_PARAMS = {
     AdaBoostClassifier: dict(n_estimators=5),
     AdaBoostRegressor: dict(n_estimators=5),
     AffinityPropagation: dict(max_iter=5),
@@ -148,13 +181,14 @@ TEST_PARAMS = {
     BernoulliRBM: dict(n_iter=5, batch_size=10),
     Birch: dict(n_clusters=2),
     BisectingKMeans: dict(n_init=2, n_clusters=2, max_iter=5),
-    CalibratedClassifierCV: dict(cv=3),
+    CalibratedClassifierCV: dict(estimator=LogisticRegression(C=1), cv=3),
     CCA: dict(n_components=1, max_iter=5),
-    ClassifierChain: dict(cv=3),
+    ClassifierChain: dict(base_estimator=LogisticRegression(C=1), cv=3),
+    ColumnTransformer: dict(transformers=[("trans1", StandardScaler(), [0, 1])]),
     DictionaryLearning: dict(max_iter=20, transform_algorithm="lasso_lars"),
     # the default strategy prior would output constant predictions and fail
     # for check_classifiers_predictions
-    DummyClassifier: dict(strategy="stratified"),
+    DummyClassifier: [dict(strategy="stratified"), dict(strategy="most_frequent")],
     ElasticNetCV: dict(max_iter=5, cv=3),
     ElasticNet: dict(max_iter=5),
     ExtraTreesClassifier: dict(n_estimators=5),
@@ -162,6 +196,8 @@ TEST_PARAMS = {
     FactorAnalysis: dict(max_iter=5),
     FastICA: dict(max_iter=5),
     FeatureAgglomeration: dict(n_clusters=2),
+    FeatureUnion: dict(transformer_list=[("trans1", StandardScaler())]),
+    FixedThresholdClassifier: dict(estimator=LogisticRegression(C=1)),
     GammaRegressor: dict(max_iter=5),
     GaussianMixture: dict(n_init=2, max_iter=5),
     # Due to the jl lemma and often very few samples, the number
@@ -173,9 +209,102 @@ TEST_PARAMS = {
     GradientBoostingRegressor: dict(n_estimators=5),
     GraphicalLassoCV: dict(max_iter=5, cv=3),
     GraphicalLasso: dict(max_iter=5),
-    GridSearchCV: dict(cv=3),
-    HalvingGridSearchCV: dict(cv=3),
-    HalvingRandomSearchCV: dict(cv=3),
+    GridSearchCV: [
+        dict(
+            cv=2,
+            error_score="raise",
+            estimator=Ridge(),
+            param_grid={"alpha": [0.1, 1.0]},
+        ),
+        dict(
+            cv=2,
+            error_score="raise",
+            estimator=LogisticRegression(),
+            param_grid={"C": [0.1, 1.0]},
+        ),
+        dict(
+            cv=2,
+            error_score="raise",
+            estimator=Pipeline(steps=[("pca", PCA()), ("ridge", Ridge())]),
+            param_grid={"ridge__alpha": [0.1, 1.0]},
+        ),
+        dict(
+            cv=2,
+            error_score="raise",
+            estimator=Pipeline(
+                steps=[("pca", PCA()), ("logisticregression", LogisticRegression())]
+            ),
+            param_grid={"logisticregression__C": [0.1, 1.0]},
+        ),
+    ],
+    HalvingGridSearchCV: [
+        dict(
+            cv=2,
+            error_score="raise",
+            estimator=Ridge(),
+            min_resources="smallest",
+            param_grid={"alpha": [0.1, 1.0]},
+            random_state=0,
+        ),
+        dict(
+            cv=2,
+            error_score="raise",
+            estimator=LogisticRegression(),
+            min_resources="smallest",
+            param_grid={"C": [0.1, 1.0]},
+            random_state=0,
+        ),
+        dict(
+            cv=2,
+            error_score="raise",
+            estimator=Pipeline(steps=[("pca", PCA()), ("ridge", Ridge())]),
+            min_resources="smallest",
+            param_grid={"ridge__alpha": [0.1, 1.0]},
+            random_state=0,
+        ),
+        dict(
+            cv=2,
+            error_score="raise",
+            estimator=Pipeline(
+                steps=[("pca", PCA()), ("logisticregression", LogisticRegression())]
+            ),
+            min_resources="smallest",
+            param_grid={"logisticregression__C": [0.1, 1.0]},
+            random_state=0,
+        ),
+    ],
+    HalvingRandomSearchCV: [
+        dict(
+            cv=2,
+            error_score="raise",
+            estimator=Ridge(),
+            param_distributions={"alpha": [0.1, 1.0]},
+            random_state=0,
+        ),
+        dict(
+            cv=2,
+            error_score="raise",
+            estimator=LogisticRegression(),
+            param_distributions={"C": [0.1, 1.0]},
+            random_state=0,
+        ),
+        dict(
+            cv=2,
+            error_score="raise",
+            estimator=Pipeline(steps=[("pca", PCA()), ("ridge", Ridge())]),
+            param_distributions={"ridge__alpha": [0.1, 1.0]},
+            random_state=0,
+        ),
+        dict(
+            cv=2,
+            error_score="raise",
+            estimator=Pipeline(
+                steps=[("pca", PCA()), ("logisticregression", LogisticRegression())]
+            ),
+            param_distributions={"logisticregression__C": [0.1, 1.0]},
+            random_state=0,
+        ),
+    ],
     HDBSCAN: dict(min_samples=1),
     # The default min_samples_leaf (20) isn't appropriate for small
     # datasets (only very shallow trees are built) that the checks use.
@@ -185,6 +314,8 @@ TEST_PARAMS = {
     IncrementalPCA: dict(batch_size=10),
     IsolationForest: dict(n_estimators=5),
     KMeans: dict(n_init=2, n_clusters=2, max_iter=5),
+    KNeighborsClassifier: [dict(n_neighbors=2), dict(metric="precomputed")],
+    KNeighborsRegressor: [dict(n_neighbors=2), dict(metric="precomputed")],
     LabelPropagation: dict(max_iter=5),
     LabelSpreading: dict(max_iter=5),
     LarsCV: dict(max_iter=5, cv=3),
@@ -196,8 +327,8 @@ TEST_PARAMS = {
     # We need to provide the noise variance explicitly.
     LassoLarsIC: dict(max_iter=5, noise_variance=1.0),
     LatentDirichletAllocation: dict(max_iter=5, batch_size=10),
-    LinearSVR: dict(max_iter=20),
     LinearSVC: dict(max_iter=20),
+    LinearSVR: dict(max_iter=20),
     LocallyLinearEmbedding: dict(max_iter=5),
     LogisticRegressionCV: dict(max_iter=5, cv=3),
     LogisticRegression: dict(max_iter=5),
@@ -212,6 +343,8 @@ TEST_PARAMS = {
     MiniBatchSparsePCA: dict(max_iter=5, batch_size=10),
     MLPClassifier: dict(max_iter=100),
     MLPRegressor: dict(max_iter=100),
+    MultiOutputClassifier: dict(estimator=LogisticRegression(C=1)),
+    MultiOutputRegressor: dict(estimator=Ridge()),
     MultiTaskElasticNetCV: dict(max_iter=5, cv=3),
     MultiTaskElasticNet: dict(max_iter=5),
     MultiTaskLassoCV: dict(max_iter=5, cv=3),
@@ -222,28 +355,78 @@ TEST_PARAMS = {
     NuSVR: dict(max_iter=-1),
     OneClassSVM: dict(max_iter=-1),
     OneHotEncoder: dict(handle_unknown="ignore"),
+    OneVsOneClassifier: dict(estimator=LogisticRegression(C=1)),
+    OneVsRestClassifier: dict(estimator=LogisticRegression(C=1)),
     OrthogonalMatchingPursuitCV: dict(cv=3),
+    OutputCodeClassifier: dict(estimator=LogisticRegression(C=1)),
     PassiveAggressiveClassifier: dict(max_iter=5),
     PassiveAggressiveRegressor: dict(max_iter=5),
     Perceptron: dict(max_iter=5),
+    Pipeline: [
+        {"steps": [("scaler", StandardScaler()), ("final_estimator", Ridge())]},
+        {
+            "steps": [
+                ("scaler", StandardScaler()),
+                ("final_estimator", LogisticRegression()),
+            ]
+        },
+    ],
     PLSCanonical: dict(n_components=1, max_iter=5),
     PLSRegression: dict(n_components=1, max_iter=5),
     PLSSVD: dict(n_components=1),
     PoissonRegressor: dict(max_iter=5),
     RandomForestClassifier: dict(n_estimators=5),
     RandomForestRegressor: dict(n_estimators=5),
-    RandomizedSearchCV: dict(n_iter=5, cv=3),
+    RandomizedSearchCV: [
+        dict(
+            cv=2,
+            error_score="raise",
+            estimator=Ridge(),
+            param_distributions={"alpha": [0.1, 1.0]},
+            random_state=0,
+        ),
+        dict(
+            cv=2,
+            error_score="raise",
+            estimator=LogisticRegression(),
+            param_distributions={"C": [0.1, 1.0]},
+            random_state=0,
+        ),
+        dict(
+            cv=2,
+            error_score="raise",
+            estimator=Pipeline(steps=[("pca", PCA()), ("ridge", Ridge())]),
+            param_distributions={"ridge__alpha": [0.1, 1.0]},
+            random_state=0,
+        ),
+        dict(
+            cv=2,
+            error_score="raise",
+            estimator=Pipeline(
+                steps=[("pca", PCA()), ("logisticregression", LogisticRegression())]
+            ),
+            param_distributions={"logisticregression__C": [0.1, 1.0]},
+            random_state=0,
+        ),
+    ],
     RandomTreesEmbedding: dict(n_estimators=5),
-    RANSACRegressor: dict(max_trials=10),
-    RegressorChain: dict(cv=3),
-    RFECV: dict(cv=3),
+    # `RANSACRegressor` will raise an error with any model other
+    # than `LinearRegression` if we don't fix the `min_samples` parameter.
+    # For common tests, we can enforce using `LinearRegression` that
+    # is the default estimator in `RANSACRegressor` instead of `Ridge`.
+    RANSACRegressor: dict(estimator=LinearRegression(), max_trials=10),
+    RegressorChain: dict(base_estimator=Ridge(), cv=3),
+    RFECV: dict(estimator=LogisticRegression(C=1), cv=3),
+    RFE: dict(estimator=LogisticRegression(C=1)),
     # be tolerant of noisy datasets (not actually speed)
     SelectFdr: dict(alpha=0.5),
+    # Increases coverage because SGDRegressor has partial_fit
+    SelectFromModel: dict(estimator=SGDRegressor(random_state=0)),
     # SelectKBest has a default of k=10
     # which is more feature than we have in most case.
     SelectKBest: dict(k=1),
-    SelfTrainingClassifier: dict(max_iter=5),
-    SequentialFeatureSelector: dict(cv=3),
+    SelfTrainingClassifier: dict(estimator=LogisticRegression(C=1), max_iter=5),
+    SequentialFeatureSelector: dict(estimator=LogisticRegression(C=1), cv=3),
     SGDClassifier: dict(max_iter=5),
     SGDOneClassSVM: dict(max_iter=5),
     SGDRegressor: dict(max_iter=5),
@@ -258,97 +441,219 @@ TEST_PARAMS = {
     SpectralCoclustering: dict(n_init=2, n_clusters=2),
     # Default "auto" parameter can lead to different ordering of eigenvalues on
     # windows: #24105
-    SpectralEmbedding: dict(eigen_tol=1e-5),
-    StackingClassifier: dict(cv=3),
-    StackingRegressor: dict(cv=3),
-    SVC: dict(max_iter=-1),
-    SVR: dict(max_iter=-1),
+    SpectralEmbedding: dict(eigen_tol=1e-05),
+    StackingClassifier: dict(
+        estimators=[
+            ("est1", DecisionTreeClassifier(max_depth=3, random_state=0)),
+            ("est2", DecisionTreeClassifier(max_depth=3, random_state=1)),
+        ],
+        cv=3,
+    ),
+    StackingRegressor: dict(
+        estimators=[
+            ("est1", DecisionTreeRegressor(max_depth=3, random_state=0)),
+            ("est2", DecisionTreeRegressor(max_depth=3, random_state=1)),
+        ],
+        cv=3,
+    ),
+    SVC: [dict(max_iter=-1), dict(kernel="precomputed")],
+    SVR: [dict(max_iter=-1), dict(kernel="precomputed")],
     TargetEncoder: dict(cv=3),
     TheilSenRegressor: dict(max_iter=5, max_subpopulation=100),
     # TruncatedSVD doesn't run with n_components = n_features
     TruncatedSVD: dict(n_iter=5, n_components=1),
     TSNE: dict(perplexity=2),
-    TunedThresholdClassifierCV: dict(cv=3),
+    TunedThresholdClassifierCV: dict(estimator=LogisticRegression(C=1), cv=3),
     TweedieRegressor: dict(max_iter=5),
+    VotingClassifier: dict(
+        estimators=[
+            ("est1", DecisionTreeClassifier(max_depth=3, random_state=0)),
+            ("est2", DecisionTreeClassifier(max_depth=3, random_state=1)),
+        ]
+    ),
+    VotingRegressor: dict(
+        estimators=[
+            ("est1", DecisionTreeRegressor(max_depth=3, random_state=0)),
+            ("est2", DecisionTreeRegressor(max_depth=3, random_state=1)),
+        ]
+    ),
 }
 
-
-def _set_checking_parameters(estimator):
-    """Set the parameters of an estimator instance to speed-up tests and avoid
-    deprecation warnings in common test."""
-    if type(estimator) in TEST_PARAMS:
-        test_params = TEST_PARAMS[type(estimator)]
-        estimator.set_params(**test_params)
+# This dictionary stores parameters for specific checks. It also enables running the
+# same check with multiple instances of the same estimator with different parameters.
+# The special key "*" allows to apply the parameters to all checks.
+# TODO(devtools): allow third-party developers to pass test specific params to checks
+PER_ESTIMATOR_CHECK_PARAMS: dict = {
+    # TODO(devtools): check that function names here exist in checks for the estimator
+    # TODO(devtools): write a test for the same thing with tags._xfail_checks
+    AgglomerativeClustering: {"check_dict_unchanged": dict(n_clusters=1)},
+    BayesianGaussianMixture: {"check_dict_unchanged": dict(max_iter=5, n_init=2)},
+    BernoulliRBM: {"check_dict_unchanged": dict(n_components=1, n_iter=5)},
+    Birch: {"check_dict_unchanged": dict(n_clusters=1)},
+    BisectingKMeans: {"check_dict_unchanged": dict(max_iter=5, n_clusters=1, n_init=2)},
+    CCA: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
+    DecisionTreeRegressor: {
+        "check_sample_weight_equivalence": [
+            dict(criterion="squared_error"),
+            dict(criterion="absolute_error"),
+            dict(criterion="friedman_mse"),
+            dict(criterion="poisson"),
+        ]
+    },
+    DecisionTreeClassifier: {
+        "check_sample_weight_equivalence": [
+            dict(criterion="gini"),
+            dict(criterion="log_loss"),
+            dict(criterion="entropy"),
+        ]
+    },
+    DictionaryLearning: {
+        "check_dict_unchanged": dict(
+            max_iter=20, n_components=1, transform_algorithm="lasso_lars"
+        )
+    },
+    FactorAnalysis: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
+    FastICA: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
+    FeatureAgglomeration: {"check_dict_unchanged": dict(n_clusters=1)},
+    GammaRegressor: {
+        "check_sample_weight_equivalence": [
+            dict(solver="newton-cholesky"),
+            dict(solver="lbfgs"),
+        ]
+    },
+    GaussianMixture: {"check_dict_unchanged": dict(max_iter=5, n_init=2)},
+    GaussianRandomProjection: {"check_dict_unchanged": dict(n_components=1)},
+    IncrementalPCA: {"check_dict_unchanged": dict(batch_size=10, n_components=1)},
+    Isomap: {"check_dict_unchanged": dict(n_components=1)},
+    KMeans: {"check_dict_unchanged": dict(max_iter=5, n_clusters=1, n_init=2)},
+    KernelPCA: {"check_dict_unchanged": dict(n_components=1)},
+    LassoLars: {"check_non_transformer_estimators_n_iter": dict(alpha=0.0)},
+    LatentDirichletAllocation: {
+        "check_dict_unchanged": dict(batch_size=10, max_iter=5, n_components=1)
+    },
+    LinearDiscriminantAnalysis: {"check_dict_unchanged": dict(n_components=1)},
+    LocallyLinearEmbedding: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
+    LogisticRegression: {
+        "check_sample_weight_equivalence": [
+            dict(solver="lbfgs"),
+            dict(solver="liblinear"),
+            dict(solver="newton-cg"),
+            dict(solver="newton-cholesky"),
+        ]
+    },
+    MDS: {"check_dict_unchanged": dict(max_iter=5, n_components=1, n_init=2)},
+    MiniBatchDictionaryLearning: {
+        "check_dict_unchanged": dict(batch_size=10, max_iter=5, n_components=1)
+    },
+    MiniBatchKMeans: {
+        "check_dict_unchanged": dict(batch_size=10, max_iter=5, n_clusters=1, n_init=2)
+    },
+    MiniBatchNMF: {
+        "check_dict_unchanged": dict(
+            batch_size=10, fresh_restarts=True, max_iter=20, n_components=1
+        )
+    },
+    MiniBatchSparsePCA: {
+        "check_dict_unchanged": dict(batch_size=10, max_iter=5, n_components=1)
+    },
+    NMF: {"check_dict_unchanged": dict(max_iter=500, n_components=1)},
+    NeighborhoodComponentsAnalysis: {
+        "check_dict_unchanged": dict(max_iter=5, n_components=1)
+    },
+    Nystroem: {"check_dict_unchanged": dict(n_components=1)},
+    PCA: {"check_dict_unchanged": dict(n_components=1)},
+    PLSCanonical: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
+    PLSRegression: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
+    PLSSVD: {"check_dict_unchanged": dict(n_components=1)},
+    PoissonRegressor: {
+        "check_sample_weight_equivalence": [
+            dict(solver="newton-cholesky"),
+            dict(solver="lbfgs"),
+        ]
+    },
+    PolynomialCountSketch: {"check_dict_unchanged": dict(n_components=1)},
+    QuantileRegressor: {
+        "check_sample_weight_equivalence": [
+            dict(quantile=0.5),
+            dict(quantile=0.75),
+            dict(solver="highs-ds"),
+            dict(solver="highs-ipm"),
+        ]
+    },
+    RBFSampler: {"check_dict_unchanged": dict(n_components=1)},
+    Ridge: {
+        "check_sample_weight_equivalence": [
+            dict(solver="svd"),
+            dict(solver="cholesky"),
+            dict(solver="sparse_cg"),
+            dict(solver="lsqr"),
+            dict(solver="lbfgs", positive=True),
+        ]
+    },
+    RidgeClassifier: {
+        "check_sample_weight_equivalence": [
+            dict(solver="svd"),
+            dict(solver="cholesky"),
+            dict(solver="sparse_cg"),
+            dict(solver="lsqr"),
+            dict(solver="lbfgs", positive=True),
+        ]
+    },
+    SkewedChi2Sampler: {"check_dict_unchanged": dict(n_components=1)},
+    SparsePCA: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
+    SparseRandomProjection: {"check_dict_unchanged": dict(n_components=1)},
+    SpectralBiclustering: {
+        "check_dict_unchanged": dict(n_best=1, n_clusters=1, n_components=1, n_init=2)
+    },
+    SpectralClustering: {
+        "check_dict_unchanged": dict(n_clusters=1, n_components=1, n_init=2)
+    },
+    SpectralCoclustering: {"check_dict_unchanged": dict(n_clusters=1, n_init=2)},
+    SpectralEmbedding: {"check_dict_unchanged": dict(eigen_tol=1e-05, n_components=1)},
+    TSNE: {"check_dict_unchanged": dict(n_components=1, perplexity=2)},
+    TruncatedSVD: {"check_dict_unchanged": dict(n_components=1)},
+    TweedieRegressor: {
+        "check_sample_weight_equivalence": [
+            dict(solver="newton-cholesky"),
+            dict(solver="lbfgs"),
+        ]
+    },
+}
 
 
 def _tested_estimators(type_filter=None):
     for name, Estimator in all_estimators(type_filter=type_filter):
         try:
-            estimator = _construct_instance(Estimator)
+            for estimator in _construct_instances(Estimator):
+                yield estimator
         except SkipTest:
             continue
 
-        yield estimator
+
+SKIPPED_ESTIMATORS = [SparseCoder]
 
 
-def _generate_pipeline():
-    """Generator of simple pipeline to check compliance of the
-    :class:`~sklearn.pipeline.Pipeline` class.
+def _construct_instances(Estimator):
+    """Construct Estimator instances if possible.
+
+    If parameter sets in INIT_PARAMS are provided, use them. If there are a list
+    of parameter sets, return one instance for each set.
     """
-    for final_estimator in [Ridge(), LogisticRegression()]:
-        yield Pipeline(
-            steps=[
-                ("scaler", StandardScaler()),
-                ("final_estimator", final_estimator),
-            ]
-        )
+    if Estimator in SKIPPED_ESTIMATORS:
+        msg = f"Can't instantiate estimator {Estimator.__name__}"
+        # raise additional warning to be shown by pytest
+        warnings.warn(msg, SkipTestWarning)
+        raise SkipTest(msg)
 
-
-def _construct_instance(Estimator):
-    """Construct Estimator instance if possible."""
-    required_parameters = getattr(Estimator, "_required_parameters", [])
-    if len(required_parameters):
-        if required_parameters in (["estimator"], ["base_estimator"]):
-            # `RANSACRegressor` will raise an error with any model other
-            # than `LinearRegression` if we don't fix `min_samples` parameter.
-            # For common test, we can enforce using `LinearRegression` that
-            # is the default estimator in `RANSACRegressor` instead of `Ridge`.
-            if issubclass(Estimator, RANSACRegressor):
-                estimator = Estimator(LinearRegression())
-            elif issubclass(Estimator, RegressorMixin):
-                estimator = Estimator(Ridge())
-            elif issubclass(Estimator, SelectFromModel):
-                # Increases coverage because SGDRegressor has partial_fit
-                estimator = Estimator(SGDRegressor(random_state=0))
-            else:
-                estimator = Estimator(LogisticRegression(C=1))
-        elif required_parameters in (["estimators"],):
-            # Heterogeneous ensemble classes (i.e. stacking, voting)
-            if issubclass(Estimator, RegressorMixin):
-                estimator = Estimator(
-                    estimators=[
-                        ("est1", DecisionTreeRegressor(max_depth=3, random_state=0)),
-                        ("est2", DecisionTreeRegressor(max_depth=3, random_state=1)),
-                    ]
-                )
-            else:
-                estimator = Estimator(
-                    estimators=[
-                        ("est1", DecisionTreeClassifier(max_depth=3, random_state=0)),
-                        ("est2", DecisionTreeClassifier(max_depth=3, random_state=1)),
-                    ]
-                )
-        else:
-            msg = (
-                f"Can't instantiate estimator {Estimator.__name__} "
-                f"parameters {required_parameters}"
-            )
-            # raise additional warning to be shown by pytest
-            warnings.warn(msg, SkipTestWarning)
-            raise SkipTest(msg)
+    if Estimator in INIT_PARAMS:
+        param_sets = INIT_PARAMS[Estimator]
+        if not isinstance(param_sets, list):
+            param_sets = [param_sets]
+        for params in param_sets:
+            est = Estimator(**params)
+            yield est
     else:
-        estimator = Estimator()
-    return estimator
+        yield Estimator()
 
 
 def _get_check_estimator_ids(obj):
@@ -387,58 +692,36 @@ def _get_check_estimator_ids(obj):
             return re.sub(r"\s", "", str(obj))
 
 
-def _generate_column_transformer_instances():
-    """Generate a `ColumnTransformer` instance to check its compliance with
-    scikit-learn."""
-    yield ColumnTransformer(
-        transformers=[
-            ("trans1", StandardScaler(), [0, 1]),
-        ]
-    )
+def _yield_instances_for_check(check, estimator_orig):
+    """Yield instances for a check.
 
+    For most estimators, this is a no-op.
 
-def _generate_search_cv_instances():
-    """Generator of `SearchCV` instances to check their compliance with scikit-learn."""
-    for SearchCV, (Estimator, param_grid) in product(
-        [
-            GridSearchCV,
-            HalvingGridSearchCV,
-            RandomizedSearchCV,
-            HalvingGridSearchCV,
-        ],
-        [
-            (Ridge, {"alpha": [0.1, 1.0]}),
-            (LogisticRegression, {"C": [0.1, 1.0]}),
-        ],
-    ):
-        init_params = signature(SearchCV).parameters
-        extra_params = (
-            {"min_resources": "smallest"} if "min_resources" in init_params else {}
-        )
-        search_cv = SearchCV(
-            Estimator(), param_grid, cv=2, error_score="raise", **extra_params
-        )
-        set_random_state(search_cv)
-        yield search_cv
+    For estimators which have an entry in PER_ESTIMATOR_CHECK_PARAMS, this will yield
+    an estimator for each parameter set in PER_ESTIMATOR_CHECK_PARAMS[estimator].
+    """
+    # TODO(devtools): enable this behavior for third party estimators as well
+    if type(estimator_orig) not in PER_ESTIMATOR_CHECK_PARAMS:
+        yield estimator_orig
+        return
 
-    for SearchCV, (Estimator, param_grid) in product(
-        [
-            GridSearchCV,
-            HalvingGridSearchCV,
-            RandomizedSearchCV,
-            HalvingRandomSearchCV,
-        ],
-        [
-            (Ridge, {"ridge__alpha": [0.1, 1.0]}),
-            (LogisticRegression, {"logisticregression__C": [0.1, 1.0]}),
-        ],
-    ):
-        init_params = signature(SearchCV).parameters
-        extra_params = (
-            {"min_resources": "smallest"} if "min_resources" in init_params else {}
-        )
-        search_cv = SearchCV(
-            make_pipeline(PCA(), Estimator()), param_grid, cv=2, **extra_params
-        ).set_params(error_score="raise")
-        set_random_state(search_cv)
-        yield search_cv
+    check_params = PER_ESTIMATOR_CHECK_PARAMS[type(estimator_orig)]
+
+    try:
+        check_name = check.__name__
+    except AttributeError:
+        # partial tests
+        check_name = check.func.__name__
+
+    if check_name not in check_params:
+        yield estimator_orig
+        return
+
+    param_set = check_params[check_name]
+    if isinstance(param_set, dict):
+        param_set = [param_set]
+
+    for params in param_set:
+        estimator = clone(estimator_orig)
+        estimator.set_params(**params)
+        yield estimator

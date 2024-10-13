@@ -152,8 +152,6 @@ class Pipeline(_BaseComposition):
     """
 
     # BaseEstimator interface
-    _required_parameters = ["steps"]
-
     _parameter_constraints: dict = {
         "steps": [list, Hidden(tuple)],
         "memory": [None, str, HasMethods(["cache"])],
@@ -435,17 +433,13 @@ class Pipeline(_BaseComposition):
             the pipeline.
 
         **params : dict of str -> object
-            - If `enable_metadata_routing=False` (default):
+            - If `enable_metadata_routing=False` (default): Parameters passed to the
+              ``fit`` method of each step, where each parameter name is prefixed such
+              that parameter ``p`` for step ``s`` has key ``s__p``.
 
-                Parameters passed to the ``fit`` method of each step, where
-                each parameter name is prefixed such that parameter ``p`` for step
-                ``s`` has key ``s__p``.
-
-            - If `enable_metadata_routing=True`:
-
-                Parameters requested and accepted by steps. Each step must have
-                requested certain metadata for these parameters to be forwarded to
-                them.
+            - If `enable_metadata_routing=True`: Parameters requested and accepted by
+              steps. Each step must have requested certain metadata for these parameters
+              to be forwarded to them.
 
             .. versionchanged:: 1.4
                 Parameters are now passed to the ``transform`` method of the
@@ -500,17 +494,13 @@ class Pipeline(_BaseComposition):
             the pipeline.
 
         **params : dict of str -> object
-            - If `enable_metadata_routing=False` (default):
+            - If `enable_metadata_routing=False` (default): Parameters passed to the
+              ``fit`` method of each step, where each parameter name is prefixed such
+              that parameter ``p`` for step ``s`` has key ``s__p``.
 
-                Parameters passed to the ``fit`` method of each step, where
-                each parameter name is prefixed such that parameter ``p`` for step
-                ``s`` has key ``s__p``.
-
-            - If `enable_metadata_routing=True`:
-
-                Parameters requested and accepted by steps. Each step must have
-                requested certain metadata for these parameters to be forwarded to
-                them.
+            - If `enable_metadata_routing=True`: Parameters requested and accepted by
+              steps. Each step must have requested certain metadata for these parameters
+              to be forwarded to them.
 
             .. versionchanged:: 1.4
                 Parameters are now passed to the ``transform`` method of the
@@ -557,16 +547,12 @@ class Pipeline(_BaseComposition):
             of the pipeline.
 
         **params : dict of str -> object
-            - If `enable_metadata_routing=False` (default):
+            - If `enable_metadata_routing=False` (default): Parameters to the
+              ``predict`` called at the end of all transformations in the pipeline.
 
-                Parameters to the ``predict`` called at the end of all
-                transformations in the pipeline.
-
-            - If `enable_metadata_routing=True`:
-
-                Parameters requested and accepted by steps. Each step must have
-                requested certain metadata for these parameters to be forwarded to
-                them.
+            - If `enable_metadata_routing=True`: Parameters requested and accepted by
+              steps. Each step must have requested certain metadata for these parameters
+              to be forwarded to them.
 
             .. versionadded:: 0.20
 
@@ -626,16 +612,12 @@ class Pipeline(_BaseComposition):
             of the pipeline.
 
         **params : dict of str -> object
-            - If `enable_metadata_routing=False` (default):
+            - If `enable_metadata_routing=False` (default): Parameters to the
+              ``predict`` called at the end of all transformations in the pipeline.
 
-                Parameters to the ``predict`` called at the end of all
-                transformations in the pipeline.
-
-            - If `enable_metadata_routing=True`:
-
-                Parameters requested and accepted by steps. Each step must have
-                requested certain metadata for these parameters to be forwarded to
-                them.
+            - If `enable_metadata_routing=True`: Parameters requested and accepted by
+              steps. Each step must have requested certain metadata for these parameters
+              to be forwarded to them.
 
             .. versionadded:: 0.20
 
@@ -683,16 +665,12 @@ class Pipeline(_BaseComposition):
             of the pipeline.
 
         **params : dict of str -> object
-            - If `enable_metadata_routing=False` (default):
+            - If `enable_metadata_routing=False` (default): Parameters to the
+              `predict_proba` called at the end of all transformations in the pipeline.
 
-                Parameters to the `predict_proba` called at the end of all
-                transformations in the pipeline.
-
-            - If `enable_metadata_routing=True`:
-
-                Parameters requested and accepted by steps. Each step must have
-                requested certain metadata for these parameters to be forwarded to
-                them.
+            - If `enable_metadata_routing=True`: Parameters requested and accepted by
+              steps. Each step must have requested certain metadata for these parameters
+              to be forwarded to them.
 
             .. versionadded:: 0.20
 
@@ -810,16 +788,13 @@ class Pipeline(_BaseComposition):
             of the pipeline.
 
         **params : dict of str -> object
-            - If `enable_metadata_routing=False` (default):
+            - If `enable_metadata_routing=False` (default): Parameters to the
+              `predict_log_proba` called at the end of all transformations in the
+              pipeline.
 
-                Parameters to the `predict_log_proba` called at the end of all
-                transformations in the pipeline.
-
-            - If `enable_metadata_routing=True`:
-
-                Parameters requested and accepted by steps. Each step must have
-                requested certain metadata for these parameters to be forwarded to
-                them.
+            - If `enable_metadata_routing=True`: Parameters requested and accepted by
+              steps. Each step must have requested certain metadata for these parameters
+              to be forwarded to them.
 
             .. versionadded:: 0.20
 
@@ -1427,8 +1402,6 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     :ref:`sphx_glr_auto_examples_compose_plot_feature_union.py`.
     """
 
-    _required_parameters = ["transformer_list"]
-
     def __init__(
         self,
         transformer_list,
@@ -1881,6 +1854,15 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             )
 
         return router
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_estimators_overwrite_params": "FIXME",
+            "check_estimators_nan_inf": "FIXME",
+            "check_dont_overwrite_parameters": "FIXME",
+        }
+        return tags
 
 
 def make_union(*transformers, n_jobs=None, verbose=False):

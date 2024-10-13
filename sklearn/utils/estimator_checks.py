@@ -5,6 +5,7 @@
 
 import pickle
 import re
+import textwrap
 import warnings
 from contextlib import nullcontext
 from copy import deepcopy
@@ -36,10 +37,11 @@ from ..exceptions import DataConversionWarning, NotFittedError, SkipTestWarning
 from ..linear_model._base import LinearClassifierMixin
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 from ..metrics.pairwise import linear_kernel, pairwise_distances, rbf_kernel
-from ..model_selection import ShuffleSplit, train_test_split
+from ..model_selection import LeaveOneGroupOut, ShuffleSplit, train_test_split
 from ..model_selection._validation import _safe_split
 from ..pipeline import make_pipeline
 from ..preprocessing import StandardScaler, scale
+from ..utils import _safe_indexing
 from ..utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
@@ -58,8 +60,8 @@ from ._param_validation import Interval
 from ._tags import Tags, get_tags
 from ._test_common.instance_generator import (
     CROSS_DECOMPOSITION,
-    _construct_instance,
     _get_check_estimator_ids,
+    _yield_instances_for_check,
 )
 from ._testing import (
     SkipTest,
@@ -82,9 +84,19 @@ REGRESSION_DATASET = None
 
 
 def _yield_api_checks(estimator):
+    tags = get_tags(estimator)
+    yield check_estimator_cloneable
+    yield check_estimator_repr
     yield check_no_attributes_set_in_init
     yield check_fit_score_takes_y
     yield check_estimators_overwrite_params
+    yield check_dont_overwrite_parameters
+    yield check_estimators_fit_returns_self
+    yield check_readonly_memmap_input
+    if tags.requires_fit:
+        yield check_estimators_unfitted
+    yield check_do_not_raise_errors_in_init_or_set_params
+    yield check_n_features_in_after_fitting
 
 
 def _yield_checks(estimator):
@@ -100,10 +112,7 @@ def _yield_checks(estimator):
             # We skip pairwise because the data is not pairwise
             yield check_sample_weights_shape
             yield check_sample_weights_not_overwritten
-            yield partial(check_sample_weights_invariance, kind="ones")
-            yield partial(check_sample_weights_invariance, kind="zeros")
-    yield check_estimators_fit_returns_self
-    yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
+            yield check_sample_weight_equivalence
 
     # Check that all estimator yield informative messages when
     # trained on empty datasets
@@ -142,6 +151,8 @@ def _yield_checks(estimator):
         for check in _yield_array_api_checks(estimator):
             yield check
 
+    yield check_f_contiguous_array_estimator
+
 
 def _yield_classifier_checks(classifier):
     tags = get_tags(classifier)
@@ -169,8 +180,6 @@ def _yield_classifier_checks(classifier):
         yield check_supervised_y_no_nan
         if tags.target_tags.single_output:
             yield check_supervised_y_2d
-    if tags.requires_fit:
-        yield check_estimators_unfitted
     if "class_weight" in classifier.get_params().keys():
         yield check_class_weight_classifiers
 
@@ -243,8 +252,6 @@ def _yield_regressor_checks(regressor):
     if name != "CCA":
         # check that the regressor handles int input
         yield check_regressors_int
-    if tags.requires_fit:
-        yield check_estimators_unfitted
     yield check_non_transformer_estimators_n_iter
 
 
@@ -269,7 +276,6 @@ def _yield_transformer_checks(transformer):
         "Isomap",
         "KernelPCA",
         "LocallyLinearEmbedding",
-        "RandomizedLasso",
         "LogisticRegressionCV",
         "BisectingKMeans",
     ]
@@ -307,9 +313,6 @@ def _yield_outliers_checks(estimator):
         yield partial(check_outliers_train, readonly_memmap=True)
         # test outlier detectors can handle non-array data
         yield check_classifier_data_not_an_array
-        # test if NotFittedError is raised
-        if get_tags(estimator).requires_fit:
-            yield check_estimators_unfitted
     yield check_non_transformer_estimators_n_iter
 
 
@@ -377,7 +380,6 @@ def _yield_all_checks(estimator, legacy: bool):
     yield check_get_params_invariance
     yield check_set_params
     yield check_dict_unchanged
-    yield check_dont_overwrite_parameters
     yield check_fit_idempotent
     yield check_fit_check_is_fitted
     if not tags.no_validation:
@@ -440,15 +442,15 @@ def _should_be_skipped_or_marked(estimator, check):
     return False, "placeholder reason that will never be used"
 
 
-def parametrize_with_checks(estimators, *, legacy=True):
+def parametrize_with_checks(estimators, *, legacy: bool = True):
     """Pytest specific decorator for parametrizing estimator checks.
 
     Checks are categorised into the following groups:
 
-        - API checks: a set of checks to ensure API compatibility with scikit-learn.
-          Refer to https://scikit-learn.org/dev/developers/develop.html a requirement of
-          scikit-learn estimators.
-        - legacy: a set of checks which gradually will be grouped into other categories.
+    - API checks: a set of checks to ensure API compatibility with scikit-learn.
+      Refer to https://scikit-learn.org/dev/developers/develop.html a requirement of
+      scikit-learn estimators.
+    - legacy: a set of checks which gradually will be grouped into other categories.
 
     The `id` of each check is set to be a pprint version of the estimator
     and the name of the check with its keyword arguments.
@@ -466,6 +468,7 @@ def parametrize_with_checks(estimators, *, legacy=True):
            classes was removed in 0.24. Pass an instance instead.
 
         .. versionadded:: 0.24
+
 
     legacy : bool, default=True
         Whether to include legacy checks. Over time we remove checks from this category
@@ -505,17 +508,21 @@ def parametrize_with_checks(estimators, *, legacy=True):
 
     def checks_generator():
         for estimator in estimators:
+            # First check that the estimator is cloneable which is needed for the rest
+            # of the checks to run
             name = type(estimator).__name__
+            yield estimator, partial(check_estimator_cloneable, name)
             for check in _yield_all_checks(estimator, legacy=legacy):
-                check = partial(check, name)
-                yield _maybe_mark_xfail(estimator, check, pytest)
+                check_with_name = partial(check, name)
+                for check_instance in _yield_instances_for_check(check, estimator):
+                    yield _maybe_mark_xfail(check_instance, check_with_name, pytest)
 
     return pytest.mark.parametrize(
         "estimator, check", checks_generator(), ids=_get_check_estimator_ids
     )
 
 
-def check_estimator(estimator=None, generate_only=False, *, legacy=True):
+def check_estimator(estimator=None, generate_only=False, *, legacy: bool = True):
     """Check if estimator adheres to scikit-learn conventions.
 
     This function will run an extensive test-suite for input validation,
@@ -536,10 +543,10 @@ def check_estimator(estimator=None, generate_only=False, *, legacy=True):
 
     Checks are categorised into the following groups:
 
-        - API checks: a set of checks to ensure API compatibility with scikit-learn.
-          Refer to https://scikit-learn.org/dev/developers/develop.html a requirement of
-          scikit-learn estimators.
-        - legacy: a set of checks which gradually will be grouped into other categories.
+    - API checks: a set of checks to ensure API compatibility with scikit-learn.
+      Refer to https://scikit-learn.org/dev/developers/develop.html a requirement of
+      scikit-learn estimators.
+    - legacy: a set of checks which gradually will be grouped into other categories.
 
     Parameters
     ----------
@@ -593,9 +600,13 @@ def check_estimator(estimator=None, generate_only=False, *, legacy=True):
     name = type(estimator).__name__
 
     def checks_generator():
+        # we first need to check if the estimator is cloneable for the rest of the tests
+        # to run
+        yield estimator, partial(check_estimator_cloneable, name)
         for check in _yield_all_checks(estimator, legacy=legacy):
-            check = _maybe_skip(estimator, check)
-            yield estimator, partial(check, name)
+            for check_instance in _yield_instances_for_check(check, estimator):
+                maybe_skipped_check = _maybe_skip(check_instance, check)
+                yield check_instance, partial(maybe_skipped_check, name)
 
     if generate_only:
         return checks_generator()
@@ -920,6 +931,28 @@ def check_estimator_sparse_array(name, estimator_orig):
         _check_estimator_sparse_container(name, estimator_orig, sparse.csr_array)
 
 
+def check_f_contiguous_array_estimator(name, estimator_orig):
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/23988
+    # https://github.com/scikit-learn/scikit-learn/issues/24013
+    estimator = clone(estimator_orig)
+
+    rng = np.random.RandomState(0)
+    X = 3 * rng.uniform(size=(20, 3))
+    X = _enforce_estimator_tags_X(estimator_orig, X)
+    X = np.asfortranarray(X)
+    y = X[:, 0].astype(int)
+    y = _enforce_estimator_tags_y(estimator_orig, y)
+
+    estimator.fit(X, y)
+
+    if hasattr(estimator, "transform"):
+        estimator.transform(X)
+
+    if hasattr(estimator, "predict"):
+        estimator.predict(X)
+
+
 @ignore_warnings(category=FutureWarning)
 def check_sample_weights_pandas_series(name, estimator_orig):
     # check that estimators will accept a 'sample_weight' parameter of
@@ -1050,71 +1083,68 @@ def check_sample_weights_shape(name, estimator_orig):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_sample_weights_invariance(name, estimator_orig, kind="ones"):
-    # For kind="ones" check that the estimators yield same results for
-    # unit weights and no weights
-    # For kind="zeros" check that setting sample_weight to 0 is equivalent
-    # to removing corresponding samples.
-    estimator1 = clone(estimator_orig)
-    estimator2 = clone(estimator_orig)
-    set_random_state(estimator1, random_state=0)
-    set_random_state(estimator2, random_state=0)
+def check_sample_weight_equivalence(name, estimator_orig):
+    # check that setting sample_weight to zero / integer is equivalent
+    # to removing / repeating corresponding samples.
+    estimator_weighted = clone(estimator_orig)
+    estimator_repeated = clone(estimator_orig)
+    set_random_state(estimator_weighted, random_state=0)
+    set_random_state(estimator_repeated, random_state=0)
 
-    X1 = np.array(
-        [
-            [1, 3],
-            [1, 3],
-            [1, 3],
-            [1, 3],
-            [2, 1],
-            [2, 1],
-            [2, 1],
-            [2, 1],
-            [3, 3],
-            [3, 3],
-            [3, 3],
-            [3, 3],
-            [4, 1],
-            [4, 1],
-            [4, 1],
-            [4, 1],
-        ],
-        dtype=np.float64,
-    )
-    y1 = np.array([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2], dtype=int)
+    rng = np.random.RandomState(42)
+    n_samples = 15
+    X = rng.rand(n_samples, n_samples * 2)
+    y = rng.randint(0, 3, size=n_samples)
+    # Use random integers (including zero) as weights.
+    sw = rng.randint(0, 5, size=n_samples)
 
-    if kind == "ones":
-        X2 = X1
-        y2 = y1
-        sw2 = np.ones(shape=len(y1))
-        err_msg = (
-            f"For {name} sample_weight=None is not equivalent to sample_weight=ones"
+    X_weigthed = X
+    y_weighted = y
+    # repeat samples according to weights
+    X_repeated = X_weigthed.repeat(repeats=sw, axis=0)
+    y_repeated = y_weighted.repeat(repeats=sw)
+
+    X_weigthed, y_weighted, sw = shuffle(X_weigthed, y_weighted, sw, random_state=0)
+
+    # when the estimator has an internal CV scheme
+    # we only use weights / repetitions in a specific CV group (here group=0)
+    if "cv" in estimator_orig.get_params():
+        groups_weighted = np.hstack(
+            [np.full_like(y_weighted, 0), np.full_like(y, 1), np.full_like(y, 2)]
         )
-    elif kind == "zeros":
-        # Construct a dataset that is very different to (X, y) if weights
-        # are disregarded, but identical to (X, y) given weights.
-        X2 = np.vstack([X1, X1 + 1])
-        y2 = np.hstack([y1, 3 - y1])
-        sw2 = np.ones(shape=len(y1) * 2)
-        sw2[len(y1) :] = 0
-        X2, y2, sw2 = shuffle(X2, y2, sw2, random_state=0)
-
-        err_msg = (
-            f"For {name}, a zero sample_weight is not equivalent to removing the sample"
+        sw = np.hstack([sw, np.ones_like(y), np.ones_like(y)])
+        X_weigthed = np.vstack([X_weigthed, X, X])
+        y_weighted = np.hstack([y_weighted, y, y])
+        splits_weighted = list(
+            LeaveOneGroupOut().split(X_weigthed, groups=groups_weighted)
         )
-    else:  # pragma: no cover
-        raise ValueError
+        estimator_weighted.set_params(cv=splits_weighted)
 
-    y1 = _enforce_estimator_tags_y(estimator1, y1)
-    y2 = _enforce_estimator_tags_y(estimator2, y2)
+        groups_repeated = np.hstack(
+            [np.full_like(y_repeated, 0), np.full_like(y, 1), np.full_like(y, 2)]
+        )
+        X_repeated = np.vstack([X_repeated, X, X])
+        y_repeated = np.hstack([y_repeated, y, y])
+        splits_repeated = list(
+            LeaveOneGroupOut().split(X_repeated, groups=groups_repeated)
+        )
+        estimator_repeated.set_params(cv=splits_repeated)
 
-    estimator1.fit(X1, y=y1, sample_weight=None)
-    estimator2.fit(X2, y=y2, sample_weight=sw2)
+    y_weighted = _enforce_estimator_tags_y(estimator_weighted, y_weighted)
+    y_repeated = _enforce_estimator_tags_y(estimator_repeated, y_repeated)
 
-    for method in ["predict", "predict_proba", "decision_function", "transform"]:
+    estimator_repeated.fit(X_repeated, y=y_repeated, sample_weight=None)
+    estimator_weighted.fit(X_weigthed, y=y_weighted, sample_weight=sw)
+
+    for method in ["predict_proba", "decision_function", "predict", "transform"]:
         if hasattr(estimator_orig, method):
-            X_pred1 = getattr(estimator1, method)(X1)
-            X_pred2 = getattr(estimator2, method)(X1)
+            X_pred1 = getattr(estimator_repeated, method)(X)
+            X_pred2 = getattr(estimator_weighted, method)(X)
+            err_msg = (
+                f"Comparing the output of {name}.{method} revealed that fitting "
+                "with `sample_weight` is not equivalent to fitting with removed "
+                "or repeated data points."
+            )
             assert_allclose_dense_sparse(X_pred1, X_pred2, err_msg=err_msg)
 
 
@@ -1211,32 +1241,13 @@ def check_complex_data(name, estimator_orig):
 
 @ignore_warnings
 def check_dict_unchanged(name, estimator_orig):
-    # this estimator raises
-    # ValueError: Found array with 0 feature(s) (shape=(23, 0))
-    # while a minimum of 1 is required.
-    # error
-    if name in ["SpectralCoclustering"]:
-        return
     rnd = np.random.RandomState(0)
-    if name in ["RANSACRegressor"]:
-        X = 3 * rnd.uniform(size=(20, 3))
-    else:
-        X = 2 * rnd.uniform(size=(20, 3))
-
+    X = 3 * rnd.uniform(size=(20, 3))
     X = _enforce_estimator_tags_X(estimator_orig, X)
 
     y = X[:, 0].astype(int)
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
-    if hasattr(estimator, "n_components"):
-        estimator.n_components = 1
-
-    if hasattr(estimator, "n_clusters"):
-        estimator.n_clusters = 1
-
-    if hasattr(estimator, "n_best"):
-        estimator.n_best = 1
-
     set_random_state(estimator, 1)
 
     estimator.fit(X, y)
@@ -1427,8 +1438,8 @@ def check_methods_sample_order_invariance(name, estimator_orig):
 
         if hasattr(estimator, method):
             assert_allclose_dense_sparse(
-                getattr(estimator, method)(X)[idx],
-                getattr(estimator, method)(X[idx]),
+                _safe_indexing(getattr(estimator, method)(X), idx),
+                getattr(estimator, method)(_safe_indexing(X, idx)),
                 atol=1e-9,
                 err_msg=msg,
             )
@@ -1773,6 +1784,9 @@ def check_estimators_dtypes(name, estimator_orig):
 def check_transformer_preserve_dtypes(name, transformer_orig):
     # check that dtype are preserved meaning if input X is of some dtype
     # X_transformed should be from the same dtype.
+    transformer = clone(transformer_orig)
+    if hasattr(transformer, "set_output"):
+        transformer.set_output(transform="default")
     X, y = make_blobs(
         n_samples=30,
         centers=[[0, 0, 0], [1, 1, 1]],
@@ -1784,7 +1798,6 @@ def check_transformer_preserve_dtypes(name, transformer_orig):
 
     for dtype in get_tags(transformer_orig).transformer_tags.preserves_dtype:
         X_cast = X.astype(dtype)
-        transformer = clone(transformer_orig)
         set_random_state(transformer)
         X_trans1 = transformer.fit_transform(X_cast, y)
         X_trans2 = transformer.fit(X_cast, y).transform(X_cast)
@@ -1975,13 +1988,14 @@ def check_estimators_partial_fit_n_features(name, estimator_orig):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_classifier_multioutput(name, estimator):
+def check_classifier_multioutput(name, estimator_orig):
     n_samples, n_labels, n_classes = 42, 5, 3
-    tags = get_tags(estimator)
-    estimator = clone(estimator)
+    tags = get_tags(estimator_orig)
+    estimator = clone(estimator_orig)
     X, y = make_multilabel_classification(
         random_state=42, n_samples=n_samples, n_labels=n_labels, n_classes=n_classes
     )
+    X = _enforce_estimator_tags_X(estimator, X)
     estimator.fit(X, y)
     y_pred = estimator.predict(X)
 
@@ -2140,13 +2154,14 @@ def check_clusterer_compute_labels_predict(name, clusterer_orig):
 def check_classifiers_one_label(name, classifier_orig):
     error_string_fit = "Classifier can't train when only one class is present."
     error_string_predict = "Classifier can't predict when only one class is present."
+    classifier = clone(classifier_orig)
     rnd = np.random.RandomState(0)
     X_train = rnd.uniform(size=(10, 3))
     X_test = rnd.uniform(size=(10, 3))
+    X_train, X_test = _enforce_estimator_tags_X(classifier, X_train, X_test=X_test)
     y = np.ones(10)
     # catch deprecation warnings
     with ignore_warnings(category=FutureWarning):
-        classifier = clone(classifier_orig)
         with raises(
             ValueError, match="class", may_pass=True, err_msg=error_string_fit
         ) as cm:
@@ -2471,6 +2486,7 @@ def check_classifiers_multilabel_representation_invariance(name, classifier_orig
 
     X_train, y_train = X[:80], y[:80]
     X_test = X[80:]
+    X_train, X_test = _enforce_estimator_tags_X(classifier_orig, X_train, X_test=X_test)
 
     y_train_list_of_lists = y_train.tolist()
     y_train_list_of_arrays = list(y_train)
@@ -2518,6 +2534,7 @@ def check_classifiers_multilabel_output_format_predict(name, classifier_orig):
 
     X_train, X_test = X[:-test_size], X[-test_size:]
     y_train, y_test = y[:-test_size], y[-test_size:]
+    X_train, X_test = _enforce_estimator_tags_X(classifier_orig, X_train, X_test=X_test)
     classifier.fit(X_train, y_train)
 
     response_method_name = "predict"
@@ -2563,6 +2580,7 @@ def check_classifiers_multilabel_output_format_predict_proba(name, classifier_or
 
     X_train, X_test = X[:-test_size], X[-test_size:]
     y_train = y[:-test_size]
+    X_train, X_test = _enforce_estimator_tags_X(classifier_orig, X_train, X_test=X_test)
     classifier.fit(X_train, y_train)
 
     response_method_name = "predict_proba"
@@ -2647,6 +2665,7 @@ def check_classifiers_multilabel_output_format_decision_function(name, classifie
 
     X_train, X_test = X[:-test_size], X[-test_size:]
     y_train = y[:-test_size]
+    X_train, X_test = _enforce_estimator_tags_X(classifier_orig, X_train, X_test=X_test)
     classifier.fit(X_train, y_train)
 
     response_method_name = "decision_function"
@@ -2689,7 +2708,7 @@ def check_get_feature_names_out_error(name, estimator_orig):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_estimators_fit_returns_self(name, estimator_orig, readonly_memmap=False):
+def check_estimators_fit_returns_self(name, estimator_orig):
     """Check if self is returned when calling fit."""
     X, y = make_blobs(random_state=0, n_samples=21)
     X = _enforce_estimator_tags_X(estimator_orig, X)
@@ -2697,10 +2716,26 @@ def check_estimators_fit_returns_self(name, estimator_orig, readonly_memmap=Fals
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
 
-    if readonly_memmap:
-        X, y = create_memmap_backed_data([X, y])
+    set_random_state(estimator)
+    assert estimator.fit(X, y) is estimator
+
+
+@ignore_warnings(category=FutureWarning)
+def check_readonly_memmap_input(name, estimator_orig):
+    """Check that the estimator can handle readonly memmap backed data.
+
+    This is particularly needed to support joblib parallelisation.
+    """
+    X, y = make_blobs(random_state=0, n_samples=21)
+    X = _enforce_estimator_tags_X(estimator_orig, X)
+
+    estimator = clone(estimator_orig)
+    y = _enforce_estimator_tags_y(estimator, y)
+
+    X, y = create_memmap_backed_data([X, y])
 
     set_random_state(estimator)
+    # This should not raise an error and should return self
     assert estimator.fit(X, y) is estimator
 
 
@@ -2710,6 +2745,15 @@ def check_estimators_unfitted(name, estimator_orig):
 
     Unfitted estimators should raise a NotFittedError.
     """
+    err_msg = (
+        "Estimator should raise a NotFittedError when calling `{method}` before fit. "
+        "Either call `check_is_fitted(self)` at the beginning of `{method}` or "
+        "set `tags.requires_fit=False` on estimator tags to disable this check.\n"
+        "- `check_is_fitted`: https://scikit-learn.org/dev/modules/generated/sklearn."
+        "utils.validation.check_is_fitted.html\n"
+        "- Estimator Tags: https://scikit-learn.org/dev/developers/develop."
+        "html#estimator-tags"
+    )
     # Common test for Regressors, Classifiers and Outlier detection estimators
     X, y = _regression_dataset()
 
@@ -2721,7 +2765,7 @@ def check_estimators_unfitted(name, estimator_orig):
         "predict_log_proba",
     ):
         if hasattr(estimator, method):
-            with raises(NotFittedError):
+            with raises(NotFittedError, err_msg=err_msg.format(method=method)):
                 getattr(estimator, method)(X)
 
 
@@ -2807,12 +2851,6 @@ def check_classifiers_predictions(X, y, name, classifier_orig):
                 ),
             )
 
-    # training set performance
-    if name != "ComplementNB":
-        # This is a pathological data set for ComplementNB.
-        # For some specific cases 'ComplementNB' predicts less classes
-        # than expected
-        assert_array_equal(np.unique(y), np.unique(y_pred))
     assert_array_equal(
         classes,
         classifier.classes_,
@@ -3256,19 +3294,33 @@ def check_estimators_data_not_an_array(name, estimator_orig, X, y, obj_type):
     assert_allclose(pred1, pred2, atol=1e-2, err_msg=name)
 
 
-def check_parameters_default_constructible(name, Estimator):
+def check_estimator_cloneable(name, estimator_orig):
+    """Checks whether the estimator can be cloned."""
+    try:
+        clone(estimator_orig)
+    except Exception as e:
+        raise AssertionError(f"Cloning of {name} failed with error: {e}.") from e
+
+
+def check_estimator_repr(name, estimator_orig):
+    """Check that the estimator has a functioning repr."""
+    estimator = clone(estimator_orig)
+    try:
+        repr(estimator)
+    except Exception as e:
+        raise AssertionError(f"Repr of {name} failed with error: {e}.") from e
+
+
+def check_parameters_default_constructible(name, estimator_orig):
     # test default-constructibility
     # get rid of deprecation warnings
 
-    Estimator = Estimator.__class__
+    Estimator = estimator_orig.__class__
+    estimator = clone(estimator_orig)
 
     with ignore_warnings(category=FutureWarning):
-        estimator = _construct_instance(Estimator)
-        # test cloning
-        clone(estimator)
-        # test __repr__
-        repr(estimator)
         # test that set_params returns self
+        # TODO(devtools): this should be a separate check.
         assert estimator.set_params() is estimator
 
         # test if init does nothing but set parameters
@@ -3281,33 +3333,58 @@ def check_parameters_default_constructible(name, Estimator):
 
         try:
 
-            def param_filter(p):
+            def param_default_value(p):
                 """Identify hyper parameters of an estimator."""
                 return (
                     p.name != "self"
                     and p.kind != p.VAR_KEYWORD
                     and p.kind != p.VAR_POSITIONAL
+                    # and it should have a default value for this test
+                    and p.default != p.empty
                 )
 
-            init_params = [
-                p for p in signature(init).parameters.values() if param_filter(p)
+            def param_required(p):
+                """Identify hyper parameters of an estimator."""
+                return (
+                    p.name != "self"
+                    and p.kind != p.VAR_KEYWORD
+                    # technically VAR_POSITIONAL is also required, but we don't have a
+                    # nice way to check for it. We assume there's no VAR_POSITIONAL in
+                    # the constructor parameters.
+                    #
+                    # TODO(devtools): separately check that the constructor doesn't
+                    # have *args.
+                    and p.kind != p.VAR_POSITIONAL
+                    # these are parameters that don't have a default value and are
+                    # required to construct the estimator.
+                    and p.default == p.empty
+                )
+
+            required_params_names = [
+                p.name for p in signature(init).parameters.values() if param_required(p)
+            ]
+
+            default_value_params = [
+                p for p in signature(init).parameters.values() if param_default_value(p)
             ]
 
         except (TypeError, ValueError):
             # init is not a python function.
             # true for mixins
             return
-        params = estimator.get_params()
-        # they can need a non-default argument
-        init_params = init_params[len(getattr(estimator, "_required_parameters", [])) :]
 
-        for init_param in init_params:
-            assert (
-                init_param.default != init_param.empty
-            ), "parameter %s for %s has no default value" % (
-                init_param.name,
-                type(estimator).__name__,
-            )
+        # here we construct an instance of the estimator using only the required
+        # parameters.
+        old_params = estimator.get_params()
+        init_params = {
+            param: old_params[param]
+            for param in old_params
+            if param in required_params_names
+        }
+        estimator = Estimator(**init_params)
+        params = estimator.get_params()
+
+        for init_param in default_value_params:
             allowed_types = {
                 str,
                 int,
@@ -3382,30 +3459,48 @@ def _enforce_estimator_tags_y(estimator, y):
     return y
 
 
-def _enforce_estimator_tags_X(estimator, X, kernel=linear_kernel):
+def _enforce_estimator_tags_X(estimator, X, X_test=None, kernel=linear_kernel):
     # Estimators with `1darray` in `X_types` tag only accept
     # X of shape (`n_samples`,)
     if get_tags(estimator).input_tags.one_d_array:
         X = X[:, 0]
+        if X_test is not None:
+            X_test = X_test[:, 0]  # pragma: no cover
     # Estimators with a `requires_positive_X` tag only accept
     # strictly positive data
     if get_tags(estimator).input_tags.positive_only:
         X = X - X.min()
+        if X_test is not None:
+            X_test = X_test - X_test.min()  # pragma: no cover
     if get_tags(estimator).input_tags.categorical:
         dtype = np.float64 if get_tags(estimator).input_tags.allow_nan else np.int32
         X = np.round((X - X.min())).astype(dtype)
+        if X_test is not None:
+            X_test = np.round((X_test - X_test.min())).astype(dtype)  # pragma: no cover
 
     if estimator.__class__.__name__ == "SkewedChi2Sampler":
         # SkewedChi2Sampler requires X > -skewdness in transform
         X = X - X.min()
+        if X_test is not None:
+            X_test = X_test - X_test.min()  # pragma: no cover
+
+    X_res = X
 
     # Pairwise estimators only accept
     # X of shape (`n_samples`, `n_samples`)
     if _is_pairwise_metric(estimator):
-        X = pairwise_distances(X, metric="euclidean")
+        X_res = pairwise_distances(X, metric="euclidean")
+        if X_test is not None:
+            X_test = pairwise_distances(
+                X_test, X, metric="euclidean"
+            )  # pragma: no cover
     elif get_tags(estimator).input_tags.pairwise:
-        X = kernel(X, X)
-    return X
+        X_res = kernel(X, X)
+        if X_test is not None:
+            X_test = kernel(X_test, X)  # pragma: no cover
+    if X_test is not None:
+        return X_res, X_test
+    return X_res
 
 
 @ignore_warnings(category=FutureWarning)
@@ -3413,42 +3508,23 @@ def check_non_transformer_estimators_n_iter(name, estimator_orig):
     # Test that estimators that are not transformers with a parameter
     # max_iter, return the attribute of n_iter_ at least 1.
 
-    # These models are dependent on external solvers like
-    # libsvm and accessing the iter parameter is non-trivial.
-    # SelfTrainingClassifier does not perform an iteration if all samples are
-    # labeled, hence n_iter_ = 0 is valid.
-    not_run_check_n_iter = [
-        "Ridge",
-        "RidgeClassifier",
-        "RandomizedLasso",
-        "LogisticRegressionCV",
-        "LinearSVC",
-        "LogisticRegression",
-        "SelfTrainingClassifier",
-    ]
-
-    # Tested in test_transformer_n_iter
-    not_run_check_n_iter += CROSS_DECOMPOSITION
-    if name in not_run_check_n_iter:
+    if not hasattr(estimator_orig, "max_iter"):
         return
 
-    # LassoLars stops early for the default alpha=1.0 the iris dataset.
-    if name == "LassoLars":
-        estimator = clone(estimator_orig).set_params(alpha=0.0)
-    else:
-        estimator = clone(estimator_orig)
-    if hasattr(estimator, "max_iter"):
-        iris = load_iris()
-        X, y_ = iris.data, iris.target
-        y_ = _enforce_estimator_tags_y(estimator, y_)
+    estimator = clone(estimator_orig)
+    iris = load_iris()
+    X, y_ = iris.data, iris.target
+    y_ = _enforce_estimator_tags_y(estimator, y_)
+    set_random_state(estimator, 0)
+    X = _enforce_estimator_tags_X(estimator_orig, X)
 
-        set_random_state(estimator, 0)
+    estimator.fit(X, y_)
 
-        X = _enforce_estimator_tags_X(estimator_orig, X)
-
-        estimator.fit(X, y_)
-
-        assert np.all(estimator.n_iter_ >= 1)
+    assert np.all(np.asarray(estimator.n_iter_) >= 1), (
+        "Estimators with a `max_iter` parameter, should expose an `n_iter_` attribute,"
+        " indicating the number of iterations that were executed. The values in the "
+        "`n_iter_` attribute should be greater or equal to 1."
+    )
 
 
 @ignore_warnings(category=FutureWarning)
@@ -3707,7 +3783,9 @@ def check_fit_idempotent(name, estimator_orig):
     for method in check_methods:
         if hasattr(estimator, method):
             new_result = getattr(estimator, method)(X_test)
-            if np.issubdtype(new_result.dtype, np.floating):
+            if hasattr(new_result, "dtype") and np.issubdtype(
+                new_result.dtype, np.floating
+            ):
                 tol = 2 * np.finfo(new_result.dtype).eps
             else:
                 tol = 2 * np.finfo(np.float64).eps
@@ -3838,8 +3916,16 @@ def check_n_features_in_after_fitting(name, estimator_orig):
         y = rng.randint(low=0, high=2, size=n_samples)
     y = _enforce_estimator_tags_y(estimator, y)
 
+    err_msg = (
+        "`{name}.fit()` does not set the `n_features_in_` attribute. "
+        "You might want to use `sklearn.utils.validation.validate_data` instead "
+        "of `check_array` in `{name}.fit()` which takes care of setting the "
+        "attribute.".format(name=name)
+    )
+
     estimator.fit(X, y)
-    assert estimator.n_features_in_ == X.shape[1]
+    assert hasattr(estimator, "n_features_in_"), err_msg
+    assert estimator.n_features_in_ == X.shape[1], err_msg
 
     # check methods will check n_features_in_
     check_methods = [
@@ -3851,6 +3937,28 @@ def check_n_features_in_after_fitting(name, estimator_orig):
     ]
     X_bad = X[:, [1]]
 
+    err_msg = """\
+        `{name}.{method}()` does not check for consistency between input number
+        of features with {name}.fit(), via the `n_features_in_` attribute.
+        You might want to use `sklearn.utils.validation.validate_data` instead
+        of `check_array` in `{name}.fit()` and {name}.{method}()`. This can be done
+        like the following:
+        from sklearn.utils.validation import validate_data
+        ...
+        class MyEstimator(BaseEstimator):
+            ...
+            def fit(self, X, y):
+                X, y = validate_data(self, X, y, ...)
+                ...
+                return self
+            ...
+            def {method}(self, X):
+                X = validate_data(self, X, ..., reset=False)
+                ...
+            return X
+    """
+    err_msg = textwrap.dedent(err_msg)
+
     msg = f"X has 1 features, but \\w+ is expecting {X.shape[1]} features as input"
     for method in check_methods:
         if not hasattr(estimator, method):
@@ -3860,7 +3968,9 @@ def check_n_features_in_after_fitting(name, estimator_orig):
         if method == "score":
             callable_method = partial(callable_method, y=y)
 
-        with raises(ValueError, match=msg):
+        with raises(
+            ValueError, match=msg, err_msg=err_msg.format(name=name, method=method)
+        ):
             callable_method(X_bad)
 
     # partial_fit will check in the second call
@@ -3890,12 +4000,18 @@ def check_estimator_get_tags_default_keys(name, estimator_orig):
 
 
 def check_estimator_tags_renamed(name, estimator_orig):
-    assert not hasattr(estimator_orig, "_more_tags"), (
-        "_more_tags() was removed in 1.6. " "Please use __sklearn_tags__ instead.",
-    )
-    assert not hasattr(estimator_orig, "_get_tags"), (
-        "_get_tags() was removed in 1.6. " "Please use __sklearn_tags__ instead."
-    )
+    help = """{tags_func}() was removed in 1.6. Please use __sklearn_tags__ instead.
+You can implement both __sklearn_tags__() and {tags_func}() to support multiple
+scikit-learn versions.
+"""
+
+    if not hasattr(estimator_orig, "__sklearn_tags__"):
+        assert not hasattr(estimator_orig, "_more_tags"), help.format(
+            tags_func="_more_tags"
+        )
+        assert not hasattr(estimator_orig, "_get_tags"), help.format(
+            tags_func="_get_tags"
+        )
 
 
 def check_dataframe_column_names_consistency(name, estimator_orig):
@@ -4605,3 +4721,19 @@ def check_inplace_ensure_writeable(name, estimator_orig):
 
     assert not X.flags.writeable
     assert_allclose(X, X_copy)
+
+
+def check_do_not_raise_errors_in_init_or_set_params(name, estimator_orig):
+    """Check that init or set_param does not raise errors."""
+    Estimator = type(estimator_orig)
+    params = signature(Estimator).parameters
+
+    smoke_test_values = [-1, 3.0, "helloworld", np.array([1.0, 4.0]), [1], {}, []]
+    for value in smoke_test_values:
+        new_params = {key: value for key in params}
+
+        # Does not raise
+        est = Estimator(**new_params)
+
+        # Also do does not raise
+        est.set_params(**new_params)

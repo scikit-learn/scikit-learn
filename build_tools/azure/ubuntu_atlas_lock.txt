@@ -14,7 +14,7 @@ iniconfig==2.0.0
     # via pytest
 joblib==1.2.0
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
-meson==1.5.1
+meson==1.5.2
     # via meson-python
 meson-python==0.16.0
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
@@ -29,7 +29,7 @@ pluggy==1.5.0
     # via pytest
 pyproject-metadata==0.8.0
     # via meson-python
-pytest==8.3.2
+pytest==8.3.3
     # via
     #   -r build_tools/azure/ubuntu_atlas_requirements.txt
     #   pytest-xdist
@@ -37,7 +37,7 @@ pytest-xdist==3.6.1
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
 threadpoolctl==3.1.0
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
-tomli==2.0.1
+tomli==2.0.2
     # via
     #   meson-python
     #   pytest
