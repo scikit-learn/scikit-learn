@@ -1069,8 +1069,8 @@ class SGDClassifier(BaseSGDClassifier):
           training loss by tol or fail to increase validation score by tol if
           `early_stopping` is `True`, the current learning rate is divided by 5.
 
-            .. versionadded:: 0.20
-                Added 'adaptive' option
+        .. versionadded:: 0.20
+            Added 'adaptive' option.
 
     eta0 : float, default=0.0
         The initial learning rate for the 'constant', 'invscaling' or
@@ -1376,9 +1376,10 @@ class SGDClassifier(BaseSGDClassifier):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        # TODO: replace by a statistical test, see meta-issue #162298
         tags._xfail_checks = {
-            "check_sample_weights_invariance": (
-                "zero sample_weight is not equivalent to removing samples"
+            "check_sample_weight_equivalence": (
+                "sample_weight is not equivalent to removing/repeating samples."
             ),
         }
         return tags
@@ -1883,8 +1884,8 @@ class SGDRegressor(BaseSGDRegressor):
           training loss by tol or fail to increase validation score by tol if
           early_stopping is True, the current learning rate is divided by 5.
 
-            .. versionadded:: 0.20
-                Added 'adaptive' option
+        .. versionadded:: 0.20
+            Added 'adaptive' option.
 
     eta0 : float, default=0.01
         The initial learning rate for the 'constant', 'invscaling' or
@@ -2060,9 +2061,10 @@ class SGDRegressor(BaseSGDRegressor):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        # TODO: replace by a statistical test, see meta-issue #162298
         tags._xfail_checks = {
-            "check_sample_weights_invariance": (
-                "zero sample_weight is not equivalent to removing samples"
+            "check_sample_weight_equivalence": (
+                "sample_weight is not equivalent to removing/repeating samples."
             ),
         }
         return tags
@@ -2640,9 +2642,10 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        # TODO: replace by a statistical test, see meta-issue #162298
         tags._xfail_checks = {
-            "check_sample_weights_invariance": (
-                "zero sample_weight is not equivalent to removing samples"
+            "check_sample_weight_equivalence": (
+                "sample_weight is not equivalent to removing/repeating samples."
             ),
         }
         return tags

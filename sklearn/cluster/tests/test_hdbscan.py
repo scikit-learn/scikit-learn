@@ -546,26 +546,6 @@ def test_labelling_thresholding():
     assert sum(num_noise) == sum(labels == -1)
 
 
-# TODO(1.6): Remove
-def test_hdbscan_warning_on_deprecated_algorithm_name():
-    # Test that warning message is shown when algorithm='kdtree'
-    msg = (
-        "`algorithm='kdtree'`has been deprecated in 1.4 and will be renamed"
-        " to'kd_tree'`in 1.6. To keep the past behaviour, set `algorithm='kd_tree'`."
-    )
-    with pytest.warns(FutureWarning, match=msg):
-        HDBSCAN(algorithm="kdtree").fit(X)
-
-    # Test that warning message is shown when algorithm='balltree'
-    msg = (
-        "`algorithm='balltree'`has been deprecated in 1.4 and will be renamed"
-        " to'ball_tree'`in 1.6. To keep the past behaviour, set"
-        " `algorithm='ball_tree'`."
-    )
-    with pytest.warns(FutureWarning, match=msg):
-        HDBSCAN(algorithm="balltree").fit(X)
-
-
 @pytest.mark.parametrize("store_centers", ["centroid", "medoid"])
 def test_hdbscan_error_precomputed_and_store_centers(store_centers):
     """Check that we raise an error if the centers are requested together with
