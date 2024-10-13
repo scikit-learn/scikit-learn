@@ -269,19 +269,15 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             The target values.
 
         **fit_params : dict
-            - If `enable_metadata_routing=False` (default):
+            - If `enable_metadata_routing=False` (default): Parameters directly passed
+              to the ``fit`` method of the underlying estimator.
 
-                Parameters directly passed to the ``fit`` method of the
-                underlying estimator.
+            - If `enable_metadata_routing=True`: Parameters safely routed to the ``fit``
+              method of the underlying estimator.
 
-            - If `enable_metadata_routing=True`:
-
-                Parameters safely routed to the ``fit`` method of the
-                underlying estimator.
-
-                .. versionchanged:: 1.6
-                    See :ref:`Metadata Routing User Guide <metadata_routing>`
-                    for more details.
+            .. versionchanged:: 1.6
+                See :ref:`Metadata Routing User Guide <metadata_routing>`
+                for more details.
 
         Returns
         -------
@@ -438,21 +434,17 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             The target values.
 
         **score_params : dict
-            - If `enable_metadata_routing=False` (default):
+            - If `enable_metadata_routing=False` (default): Parameters directly passed
+              to the ``score`` method of the underlying estimator.
 
-                Parameters directly passed to the ``score`` method of the
-                underlying estimator.
+            - If `enable_metadata_routing=True`: Parameters safely routed to the `score`
+              method of the underlying estimator.
 
-                .. versionadded:: 1.0
+            .. versionadded:: 1.0
 
-            - If `enable_metadata_routing=True`:
-
-                Parameters safely routed to the `score` method of the
-                underlying estimator.
-
-                .. versionchanged:: 1.6
-                    See :ref:`Metadata Routing User Guide <metadata_routing>`
-                    for more details.
+            .. versionchanged:: 1.6
+                See :ref:`Metadata Routing User Guide <metadata_routing>`
+                for more details.
 
         Returns
         -------

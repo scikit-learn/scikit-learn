@@ -79,6 +79,14 @@ def _check_params_groups_deprecation(fit_params, params, groups, version):
 
     params = {} if params is None else params
 
+    _check_groups_routing_disabled(groups)
+
+    return params
+
+
+# TODO(SLEP6): To be removed when set_config(enable_metadata_routing=False) is not
+# possible.
+def _check_groups_routing_disabled(groups):
     if groups is not None and _routing_enabled():
         raise ValueError(
             "`groups` can only be passed if metadata routing is not enabled via"
@@ -86,8 +94,6 @@ def _check_params_groups_deprecation(fit_params, params, groups, version):
             " enabled, pass `groups` alongside other metadata via the `params` argument"
             " instead."
         )
-
-    return params
 
 
 @validate_params(
@@ -107,7 +113,6 @@ def _check_params_groups_deprecation(fit_params, params, groups, version):
         "cv": ["cv_object"],
         "n_jobs": [Integral, None],
         "verbose": ["verbose"],
-        "fit_params": [dict, None],
         "params": [dict, None],
         "pre_dispatch": [Integral, str],
         "return_train_score": ["boolean"],
@@ -127,7 +132,6 @@ def cross_validate(
     cv=None,
     n_jobs=None,
     verbose=0,
-    fit_params=None,
     params=None,
     pre_dispatch="2*n_jobs",
     return_train_score=False,
@@ -211,13 +215,6 @@ def cross_validate(
     verbose : int, default=0
         The verbosity level.
 
-    fit_params : dict, default=None
-        Parameters to pass to the fit method of the estimator.
-
-        .. deprecated:: 1.4
-            This parameter is deprecated and will be removed in version 1.6. Use
-            ``params`` instead.
-
     params : dict, default=None
         Parameters to pass to the underlying estimator's ``fit``, the scorer,
         and the CV splitter.
@@ -230,11 +227,8 @@ def cross_validate(
         explosion of memory consumption when more jobs get dispatched
         than CPUs can process. This parameter can be:
 
-            - An int, giving the exact number of total jobs that are
-              spawned
-
-            - A str, giving an expression as a function of n_jobs,
-              as in '2*n_jobs'
+        - An int, giving the exact number of total jobs that are spawned
+        - A str, giving an expression as a function of n_jobs, as in '2*n_jobs'
 
     return_train_score : bool, default=False
         Whether to include train scores.
@@ -274,34 +268,34 @@ def cross_validate(
         A dict of arrays containing the score/time arrays for each scorer is
         returned. The possible keys for this ``dict`` are:
 
-            ``test_score``
-                The score array for test scores on each cv split.
-                Suffix ``_score`` in ``test_score`` changes to a specific
-                metric like ``test_r2`` or ``test_auc`` if there are
-                multiple scoring metrics in the scoring parameter.
-            ``train_score``
-                The score array for train scores on each cv split.
-                Suffix ``_score`` in ``train_score`` changes to a specific
-                metric like ``train_r2`` or ``train_auc`` if there are
-                multiple scoring metrics in the scoring parameter.
-                This is available only if ``return_train_score`` parameter
-                is ``True``.
-            ``fit_time``
-                The time for fitting the estimator on the train
-                set for each cv split.
-            ``score_time``
-                The time for scoring the estimator on the test set for each
-                cv split. (Note time for scoring on the train set is not
-                included even if ``return_train_score`` is set to ``True``
-            ``estimator``
-                The estimator objects for each cv split.
-                This is available only if ``return_estimator`` parameter
-                is set to ``True``.
-            ``indices``
-                The train/test positional indices for each cv split. A dictionary
-                is returned where the keys are either `"train"` or `"test"`
-                and the associated values are a list of integer-dtyped NumPy
-                arrays with the indices. Available only if `return_indices=True`.
+        ``test_score``
+            The score array for test scores on each cv split.
+            Suffix ``_score`` in ``test_score`` changes to a specific
+            metric like ``test_r2`` or ``test_auc`` if there are
+            multiple scoring metrics in the scoring parameter.
+        ``train_score``
+            The score array for train scores on each cv split.
+            Suffix ``_score`` in ``train_score`` changes to a specific
+            metric like ``train_r2`` or ``train_auc`` if there are
+            multiple scoring metrics in the scoring parameter.
+            This is available only if ``return_train_score`` parameter
+            is ``True``.
+        ``fit_time``
+            The time for fitting the estimator on the train
+            set for each cv split.
+        ``score_time``
+            The time for scoring the estimator on the test set for each
+            cv split. (Note time for scoring on the train set is not
+            included even if ``return_train_score`` is set to ``True``
+        ``estimator``
+            The estimator objects for each cv split.
+            This is available only if ``return_estimator`` parameter
+            is set to ``True``.
+        ``indices``
+            The train/test positional indices for each cv split. A dictionary
+            is returned where the keys are either `"train"` or `"test"`
+            and the associated values are a list of integer-dtyped NumPy
+            arrays with the indices. Available only if `return_indices=True`.
 
     See Also
     --------
@@ -344,7 +338,7 @@ def cross_validate(
     >>> print(scores['train_r2'])
     [0.28009951 0.3908844  0.22784907]
     """
-    params = _check_params_groups_deprecation(fit_params, params, groups, "1.6")
+    _check_groups_routing_disabled(groups)
 
     X, y = indexable(X, y)
 
@@ -542,7 +536,6 @@ def _warn_or_raise_about_fit_failures(results, error_score):
         "cv": ["cv_object"],
         "n_jobs": [Integral, None],
         "verbose": ["verbose"],
-        "fit_params": [dict, None],
         "params": [dict, None],
         "pre_dispatch": [Integral, str, None],
         "error_score": [StrOptions({"raise"}), Real],
@@ -559,7 +552,6 @@ def cross_val_score(
     cv=None,
     n_jobs=None,
     verbose=0,
-    fit_params=None,
     params=None,
     pre_dispatch="2*n_jobs",
     error_score=np.nan,
@@ -632,13 +624,6 @@ def cross_val_score(
     verbose : int, default=0
         The verbosity level.
 
-    fit_params : dict, default=None
-        Parameters to pass to the fit method of the estimator.
-
-        .. deprecated:: 1.4
-            This parameter is deprecated and will be removed in version 1.6. Use
-            ``params`` instead.
-
     params : dict, default=None
         Parameters to pass to the underlying estimator's ``fit``, the scorer,
         and the CV splitter.
@@ -651,16 +636,11 @@ def cross_val_score(
         explosion of memory consumption when more jobs get dispatched
         than CPUs can process. This parameter can be:
 
-            - ``None``, in which case all the jobs are immediately
-              created and spawned. Use this for lightweight and
-              fast-running jobs, to avoid delays due to on-demand
-              spawning of the jobs
-
-            - An int, giving the exact number of total jobs that are
-              spawned
-
-            - A str, giving an expression as a function of n_jobs,
-              as in '2*n_jobs'
+        - ``None``, in which case all the jobs are immediately created and spawned. Use
+          this for lightweight and fast-running jobs, to avoid delays due to on-demand
+          spawning of the jobs
+        - An int, giving the exact number of total jobs that are spawned
+        - A str, giving an expression as a function of n_jobs, as in '2*n_jobs'
 
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
@@ -708,7 +688,6 @@ def cross_val_score(
         cv=cv,
         n_jobs=n_jobs,
         verbose=verbose,
-        fit_params=fit_params,
         params=params,
         pre_dispatch=pre_dispatch,
         error_score=error_score,
@@ -1032,7 +1011,6 @@ def _score(estimator, X_test, y_test, scorer, score_params, error_score="raise")
         "cv": ["cv_object"],
         "n_jobs": [Integral, None],
         "verbose": ["verbose"],
-        "fit_params": [dict, None],
         "params": [dict, None],
         "pre_dispatch": [Integral, str, None],
         "method": [
@@ -1057,7 +1035,6 @@ def cross_val_predict(
     cv=None,
     n_jobs=None,
     verbose=0,
-    fit_params=None,
     params=None,
     pre_dispatch="2*n_jobs",
     method="predict",
@@ -1131,13 +1108,6 @@ def cross_val_predict(
     verbose : int, default=0
         The verbosity level.
 
-    fit_params : dict, default=None
-        Parameters to pass to the fit method of the estimator.
-
-        .. deprecated:: 1.4
-            This parameter is deprecated and will be removed in version 1.6. Use
-            ``params`` instead.
-
     params : dict, default=None
         Parameters to pass to the underlying estimator's ``fit`` and the CV
         splitter.
@@ -1150,16 +1120,11 @@ def cross_val_predict(
         explosion of memory consumption when more jobs get dispatched
         than CPUs can process. This parameter can be:
 
-            - None, in which case all the jobs are immediately
-              created and spawned. Use this for lightweight and
-              fast-running jobs, to avoid delays due to on-demand
-              spawning of the jobs
-
-            - An int, giving the exact number of total jobs that are
-              spawned
-
-            - A str, giving an expression as a function of n_jobs,
-              as in '2*n_jobs'
+        - None, in which case all the jobs are immediately created and spawned. Use
+          this for lightweight and fast-running jobs, to avoid delays due to on-demand
+          spawning of the jobs
+        - An int, giving the exact number of total jobs that are spawned
+        - A str, giving an expression as a function of n_jobs, as in '2*n_jobs'
 
     method : {'predict', 'predict_proba', 'predict_log_proba', \
               'decision_function'}, default='predict'
@@ -1170,13 +1135,13 @@ def cross_val_predict(
     predictions : ndarray
         This is the result of calling `method`. Shape:
 
-            - When `method` is 'predict' and in special case where `method` is
-              'decision_function' and the target is binary: (n_samples,)
-            - When `method` is one of {'predict_proba', 'predict_log_proba',
-              'decision_function'} (unless special case above):
-              (n_samples, n_classes)
-            - If `estimator` is :term:`multioutput`, an extra dimension
-              'n_outputs' is added to the end of each shape above.
+        - When `method` is 'predict' and in special case where `method` is
+          'decision_function' and the target is binary: (n_samples,)
+        - When `method` is one of {'predict_proba', 'predict_log_proba',
+          'decision_function'} (unless special case above):
+          (n_samples, n_classes)
+        - If `estimator` is :term:`multioutput`, an extra dimension
+          'n_outputs' is added to the end of each shape above.
 
     See Also
     --------
@@ -1203,7 +1168,7 @@ def cross_val_predict(
     >>> lasso = linear_model.Lasso()
     >>> y_pred = cross_val_predict(lasso, X, y, cv=3)
     """
-    params = _check_params_groups_deprecation(fit_params, params, groups, "1.6")
+    _check_groups_routing_disabled(groups)
     X, y = indexable(X, y)
 
     if _routing_enabled():
@@ -1611,16 +1576,14 @@ def permutation_test_score(
         Parameters to pass to the `fit` method of the estimator, the scorer
         and the cv splitter.
 
-            - If `enable_metadata_routing=False` (default):
-              Parameters directly passed to the `fit` method of the estimator.
+        - If `enable_metadata_routing=False` (default): Parameters directly passed to
+          the `fit` method of the estimator.
 
-            - If `enable_metadata_routing=True`:
-              Parameters safely routed to the `fit` method of the estimator,
-              `cv` object and `scorer`.
-              See :ref:`Metadata Routing User Guide <metadata_routing>` for more
-              details.
+        - If `enable_metadata_routing=True`: Parameters safely routed to the `fit`
+          method of the estimator, `cv` object and `scorer`. See :ref:`Metadata Routing
+          User Guide <metadata_routing>` for more details.
 
-            .. versionadded:: 1.6
+        .. versionadded:: 1.6
 
     Returns
     -------
@@ -1644,10 +1607,9 @@ def permutation_test_score(
     -----
     This function implements Test 1 in:
 
-        Ojala and Garriga. `Permutation Tests for Studying Classifier
-        Performance
-        <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_. The
-        Journal of Machine Learning Research (2010) vol. 11
+    Ojala and Garriga. `Permutation Tests for Studying Classifier Performance
+    <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_. The
+    Journal of Machine Learning Research (2010) vol. 11
 
     Examples
     --------
@@ -1952,15 +1914,14 @@ def learning_curve(
     params : dict, default=None
         Parameters to pass to the `fit` method of the estimator and to the scorer.
 
-            - If `enable_metadata_routing=False` (default):
-              Parameters directly passed to the `fit` method of the estimator.
+        - If `enable_metadata_routing=False` (default): Parameters directly passed to
+          the `fit` method of the estimator.
 
-            - If `enable_metadata_routing=True`:
-              Parameters safely routed to the `fit` method of the estimator.
-              See :ref:`Metadata Routing User Guide <metadata_routing>` for more
-              details.
+        - If `enable_metadata_routing=True`: Parameters safely routed to the `fit`
+          method of the estimator. See :ref:`Metadata Routing User Guide
+          <metadata_routing>` for more details.
 
-            .. versionadded:: 1.6
+        .. versionadded:: 1.6
 
     Returns
     -------
@@ -2434,15 +2395,14 @@ def validation_curve(
     params : dict, default=None
         Parameters to pass to the estimator, scorer and cross-validation object.
 
-            - If `enable_metadata_routing=False` (default):
-              Parameters directly passed to the `fit` method of the estimator.
+        - If `enable_metadata_routing=False` (default): Parameters directly passed to
+          the `fit` method of the estimator.
 
-            - If `enable_metadata_routing=True`:
-              Parameters safely routed to the `fit` method of the estimator, to the
-              scorer and to the cross-validation object. See :ref:`Metadata Routing User
-              Guide <metadata_routing>` for more details.
+        - If `enable_metadata_routing=True`: Parameters safely routed to the `fit`
+          method of the estimator, to the scorer and to the cross-validation object.
+          See :ref:`Metadata Routing User Guide <metadata_routing>` for more details.
 
-            .. versionadded:: 1.6
+        .. versionadded:: 1.6
 
     Returns
     -------

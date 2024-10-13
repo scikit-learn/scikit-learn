@@ -422,7 +422,7 @@ def _yield_masked_array_for_each_param(candidate_params):
 
         # Use one MaskedArray and mask all the places where the param is not
         # applicable for that candidate (which may not contain all the params).
-        ma = MaskedArray(np.empty(n_candidates), mask=True, dtype=arr_dtype)
+        ma = MaskedArray(np.empty(n_candidates, dtype=arr_dtype), mask=True)
         for index, value in param_result.items():
             # Setting the value at an index unmasks that index
             ma[index] = value
@@ -906,9 +906,13 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             and the CV splitter.
 
             If a fit parameter is an array-like whose length is equal to
-            `num_samples` then it will be split across CV groups along with `X`
-            and `y`. For example, the :term:`sample_weight` parameter is split
-            because `len(sample_weights) = len(X)`.
+            `num_samples` then it will be split by cross-validation along with
+            `X` and `y`. For example, the :term:`sample_weight` parameter is
+            split because `len(sample_weights) = len(X)`. However, this behavior
+            does not apply to `groups` which is passed to the splitter configured
+            via the `cv` parameter of the constructor. Thus, `groups` is used
+            *to perform the split* and determines which samples are
+            assigned to the each side of the a split.
 
         Returns
         -------
@@ -1330,16 +1334,11 @@ class GridSearchCV(BaseSearchCV):
         explosion of memory consumption when more jobs get dispatched
         than CPUs can process. This parameter can be:
 
-            - None, in which case all the jobs are immediately
-              created and spawned. Use this for lightweight and
-              fast-running jobs, to avoid delays due to on-demand
-              spawning of the jobs
-
-            - An int, giving the exact number of total jobs that are
-              spawned
-
-            - A str, giving an expression as a function of n_jobs,
-              as in '2*n_jobs'
+        - None, in which case all the jobs are immediately created and spawned. Use
+          this for lightweight and fast-running jobs, to avoid delays due to on-demand
+          spawning of the jobs
+        - An int, giving the exact number of total jobs that are spawned
+        - A str, giving an expression as a function of n_jobs, as in '2*n_jobs'
 
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
@@ -1709,16 +1708,11 @@ class RandomizedSearchCV(BaseSearchCV):
         explosion of memory consumption when more jobs get dispatched
         than CPUs can process. This parameter can be:
 
-            - None, in which case all the jobs are immediately
-              created and spawned. Use this for lightweight and
-              fast-running jobs, to avoid delays due to on-demand
-              spawning of the jobs
-
-            - An int, giving the exact number of total jobs that are
-              spawned
-
-            - A str, giving an expression as a function of n_jobs,
-              as in '2*n_jobs'
+        - None, in which case all the jobs are immediately created and spawned. Use
+          this for lightweight and fast-running jobs, to avoid delays due to on-demand
+          spawning of the jobs
+        - An int, giving the exact number of total jobs that are spawned
+        - A str, giving an expression as a function of n_jobs, as in '2*n_jobs'
 
     random_state : int, RandomState instance or None, default=None
         Pseudo random number generator state used for random uniform sampling

@@ -555,6 +555,9 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     regressors, each on the whole dataset. Then it averages the individual
     predictions to form a final prediction.
 
+    For a detailed example, refer to
+    :ref:`sphx_glr_auto_examples_ensemble_plot_voting_regressor.py`.
+
     Read more in the :ref:`User Guide <voting_regressor>`.
 
     .. versionadded:: 0.21

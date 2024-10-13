@@ -803,10 +803,6 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         .. versionadded:: 1.2
 
-        .. deprecated:: 1.4
-           `metric=None` is deprecated in 1.4 and will be removed in 1.6.
-           Let `metric` be the default value (i.e. `"euclidean"`) instead.
-
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
@@ -939,7 +935,6 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         "metric": [
             StrOptions(set(_VALID_METRICS) | {"precomputed"}),
             callable,
-            Hidden(None),
         ],
         "memory": [str, HasMethods("cache"), None],
         "connectivity": ["array-like", "sparse matrix", callable, None],
@@ -1008,20 +1003,6 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         """
         memory = check_memory(self.memory)
 
-        # TODO(1.6): remove in 1.6
-        if self.metric is None:
-            warnings.warn(
-                (
-                    "`metric=None` is deprecated in version 1.4 and will be removed in "
-                    "version 1.6. Let `metric` be the default value "
-                    "(i.e. `'euclidean'`) instead."
-                ),
-                FutureWarning,
-            )
-            self._metric = "euclidean"
-        else:
-            self._metric = self.metric
-
         if not ((self.n_clusters is None) ^ (self.distance_threshold is None)):
             raise ValueError(
                 "Exactly one of n_clusters and "
@@ -1034,9 +1015,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
                 "compute_full_tree must be True if distance_threshold is set."
             )
 
-        if self.linkage == "ward" and self._metric != "euclidean":
+        if self.linkage == "ward" and self.metric != "euclidean":
             raise ValueError(
-                f"{self._metric} was provided as metric. Ward can only "
+                f"{self.metric} was provided as metric. Ward can only "
                 "work with euclidean distances."
             )
 
@@ -1070,7 +1051,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         kwargs = {}
         if self.linkage != "ward":
             kwargs["linkage"] = self.linkage
-            kwargs["affinity"] = self._metric
+            kwargs["affinity"] = self.metric
 
         distance_threshold = self.distance_threshold
 
@@ -1138,6 +1119,11 @@ class FeatureAgglomeration(
     """Agglomerate features.
 
     Recursively merges pair of clusters of features.
+
+    Refer to
+    :ref:`sphx_glr_auto_examples_cluster_plot_feature_agglomeration_vs_univariate_selection.py`
+    for an example comparison of :class:`FeatureAgglomeration` strategy with a
+    univariate feature selection strategy (based on ANOVA).
 
     Read more in the :ref:`User Guide <hierarchical_clustering>`.
 
