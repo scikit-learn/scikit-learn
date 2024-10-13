@@ -354,24 +354,7 @@ def test_roc_curve_toydata():
     assert_array_almost_equal(fpr, [0, 1])
     assert_almost_equal(roc_auc, 0.5)
 
-    y_true = [1, 1]
-    y_score = [0.25, 0.75]
-    # assert UndefinedMetricWarning because of no negative sample in y_true
-    expected_message = (
-        "No negative samples in y_true, false positive value should be meaningless"
-    )
-    with pytest.warns(UndefinedMetricWarning, match=expected_message):
-        tpr, fpr, _ = roc_curve(y_true, y_score)
-    assert_array_almost_equal(tpr, [np.nan, np.nan, np.nan])
-    assert_array_almost_equal(fpr, [0.0, 0.5, 1.0])
-    expected_message = (
-        "Only one class is present in y_true. "
-        "ROC AUC score is not defined in that case."
-    )
-    # should raise a warning since only one class is present
-    with pytest.warns(UndefinedMetricWarning, match=expected_message):
-        roc_auc_score(y_true, y_score)
-
+    # case with no positive samples
     y_true = [0, 0]
     y_score = [0.25, 0.75]
     # assert UndefinedMetricWarning because of no positive sample in y_true
@@ -386,7 +369,24 @@ def test_roc_curve_toydata():
         "Only one class is present in y_true. "
         "ROC AUC score is not defined in that case."
     )
-    # should raise a warning since only one class is present
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
+        roc_auc_score(y_true, y_score)
+
+    # case with no negative samples
+    y_true = [1, 1]
+    y_score = [0.25, 0.75]
+    # assert UndefinedMetricWarning because of no negative sample in y_true
+    expected_message = (
+        "No negative samples in y_true, false positive value should be meaningless"
+    )
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
+        tpr, fpr, _ = roc_curve(y_true, y_score)
+    assert_array_almost_equal(tpr, [np.nan, np.nan, np.nan])
+    assert_array_almost_equal(fpr, [0.0, 0.5, 1.0])
+    expected_message = (
+        "Only one class is present in y_true. "
+        "ROC AUC score is not defined in that case."
+    )
     with pytest.warns(UndefinedMetricWarning, match=expected_message):
         roc_auc_score(y_true, y_score)
 
