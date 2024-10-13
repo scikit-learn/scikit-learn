@@ -7,18 +7,19 @@ from .extmath import stable_cumsum
 
 
 def _weighted_percentile(array, sample_weight, percentile=50):
-    """Compute the lower value(s) at a given weighted percentile.
+    """Compute the lower weighted percentile value(s).
 
     If `array` is a 2D array, the `values` are selected along axis 0.
+
+    `NaN` values are ignored by setting their weights to 0. If `array` is 2D, this
+    is done in a column-isolated manner: a `NaN` in the second column, does not impact
+    the percentile value computed for the first column even if `sample_weight` is 1D.
 
         .. versionchanged:: 0.24
             Accepts 2D `array`.
 
         .. versionchanged:: 1.6
-            Supports handling of `NaN` values. For `NaN` inputs, their corresponding
-            weights are set to 0 in `sample_weight`.
-            Percentiles that point to `NaN` values are redirected to the next lower
-            value if it exists.
+            Supports handling of `NaN` values.
 
     Parameters
     ----------
@@ -30,12 +31,12 @@ def _weighted_percentile(array, sample_weight, percentile=50):
         `(array.shape[0],)`.
 
     percentile: int or float, default=50
-        Percentile to compute. Must be between 0 and 100.
+        The level (or rank) of the percentile to compute. Must be between 0 and 100.
 
     Returns
     -------
-    values : int if `array` 1D, ndarray if `array` 2D
-        Lower value(s) at a given weighted percentile.
+    percentile : int if `array` 1D, ndarray if `array` 2D
+        Value of weighted percentile at the requested level.
     """
     n_dim = array.ndim
     if n_dim == 0:

@@ -139,11 +139,8 @@ def test_weighted_percentile_nan_filtered():
         assert_array_equal(expected_results, results)
 
 
-def test_weighted_percentile_nan_redirected():
-    """Test that _weighted_percentile redirects percentiles, that are nans to the next
-    lower value if there is one. Since the function sorts the indices to nan values to
-    the end of every column using np.argsort(), we have to set the percentile rather
-    high in order to test this."""
+def test_weighted_percentile_all_nan_column():
+    """Check that nans are ignored in general, except for all NaN columns."""
 
     array = np.array(
         [
