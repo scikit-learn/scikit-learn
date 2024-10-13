@@ -112,10 +112,10 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=None):
     sklearn.neighbors.kneighbors_graph
     sklearn.neighbors.radius_neighbors_graph
     """
-    knn = NearestNeighbors(n_neighbors=n_neighbors + 1, n_jobs=n_jobs).fit(X)
+    knn = NearestNeighbors(n_neighbors=n_neighbors, n_jobs=n_jobs).fit(X)
     X = knn._fit_X
     n_samples = knn.n_samples_fit_
-    ind = knn.kneighbors(X, return_distance=False)[:, 1:]
+    ind = knn.kneighbors(return_distance=False)
     data = barycenter_weights(X, X, ind, reg=reg)
     indptr = np.arange(0, n_samples * n_neighbors + 1, n_neighbors)
     return csr_matrix((data.ravel(), ind.ravel(), indptr), shape=(n_samples, n_samples))
@@ -212,19 +212,18 @@ def _locally_linear_embedding(
     random_state=None,
     n_jobs=None,
 ):
-    nbrs = NearestNeighbors(n_neighbors=n_neighbors + 1, n_jobs=n_jobs)
-    nbrs.fit(X)
+    nbrs = NearestNeighbors(n_neighbors=n_neighbors, n_jobs=n_jobs).fit(X)
     X = nbrs._fit_X
 
     N, d_in = X.shape
 
     if n_components > d_in:
         raise ValueError(
-            "output dimension must be less than or equal to input dimension"
+            "Output dimension must be less than or equal to input dimension."
         )
     if n_neighbors >= N:
         raise ValueError(
-            "Expected n_neighbors <= n_samples,  but n_samples = %d, n_neighbors = %d"
+            "Expected n_neighbors < n_samples,  but n_samples = %d, n_neighbors = %d."
             % (N, n_neighbors)
         )
 
@@ -250,15 +249,12 @@ def _locally_linear_embedding(
 
         if n_neighbors <= n_components + dp:
             raise ValueError(
-                "for method='hessian', n_neighbors must be "
+                "For method='hessian', n_neighbors must be "
                 "greater than "
-                "[n_components * (n_components + 3) / 2]"
+                "[n_components * (n_components + 3) / 2]."
             )
 
-        neighbors = nbrs.kneighbors(
-            X, n_neighbors=n_neighbors + 1, return_distance=False
-        )
-        neighbors = neighbors[:, 1:]
+        neighbors = nbrs.kneighbors(n_neighbors=n_neighbors, return_distance=False)
 
         Yi = np.empty((n_neighbors, 1 + n_components + dp), dtype=np.float64)
         Yi[:, 0] = 1
@@ -300,10 +296,7 @@ def _locally_linear_embedding(
         if n_neighbors < n_components:
             raise ValueError("modified LLE requires n_neighbors >= n_components")
 
-        neighbors = nbrs.kneighbors(
-            X, n_neighbors=n_neighbors + 1, return_distance=False
-        )
-        neighbors = neighbors[:, 1:]
+        neighbors = nbrs.kneighbors(n_neighbors=n_neighbors, return_distance=False)
 
         # find the eigenvectors and eigenvalues of each local covariance
         # matrix. We want V[i] to be a [n_neighbors x n_neighbors] matrix,
@@ -400,10 +393,7 @@ def _locally_linear_embedding(
             M[i, i] += s_i
 
     elif method == "ltsa":
-        neighbors = nbrs.kneighbors(
-            X, n_neighbors=n_neighbors + 1, return_distance=False
-        )
-        neighbors = neighbors[:, 1:]
+        neighbors = nbrs.kneighbors(n_neighbors=n_neighbors, return_distance=False)
 
         M = M_container_constructor((N, N), dtype=np.float64)
 
