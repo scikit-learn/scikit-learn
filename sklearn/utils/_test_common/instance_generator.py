@@ -105,8 +105,10 @@ from sklearn.linear_model import (
     PassiveAggressiveRegressor,
     Perceptron,
     PoissonRegressor,
+    QuantileRegressor,
     RANSACRegressor,
     Ridge,
+    RidgeClassifier,
     SGDClassifier,
     SGDOneClassSVM,
     SGDRegressor,
@@ -490,6 +492,21 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     Birch: {"check_dict_unchanged": dict(n_clusters=1)},
     BisectingKMeans: {"check_dict_unchanged": dict(max_iter=5, n_clusters=1, n_init=2)},
     CCA: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
+    DecisionTreeRegressor: {
+        "check_sample_weight_equivalence": [
+            dict(criterion="squared_error"),
+            dict(criterion="absolute_error"),
+            dict(criterion="friedman_mse"),
+            dict(criterion="poisson"),
+        ]
+    },
+    DecisionTreeClassifier: {
+        "check_sample_weight_equivalence": [
+            dict(criterion="gini"),
+            dict(criterion="log_loss"),
+            dict(criterion="entropy"),
+        ]
+    },
     DictionaryLearning: {
         "check_dict_unchanged": dict(
             max_iter=20, n_components=1, transform_algorithm="lasso_lars"
@@ -498,6 +515,12 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     FactorAnalysis: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     FastICA: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     FeatureAgglomeration: {"check_dict_unchanged": dict(n_clusters=1)},
+    GammaRegressor: {
+        "check_sample_weight_equivalence": [
+            dict(solver="newton-cholesky"),
+            dict(solver="lbfgs"),
+        ]
+    },
     GaussianMixture: {"check_dict_unchanged": dict(max_iter=5, n_init=2)},
     GaussianRandomProjection: {"check_dict_unchanged": dict(n_components=1)},
     IncrementalPCA: {"check_dict_unchanged": dict(batch_size=10, n_components=1)},
@@ -510,6 +533,14 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     },
     LinearDiscriminantAnalysis: {"check_dict_unchanged": dict(n_components=1)},
     LocallyLinearEmbedding: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
+    LogisticRegression: {
+        "check_sample_weight_equivalence": [
+            dict(solver="lbfgs"),
+            dict(solver="liblinear"),
+            dict(solver="newton-cg"),
+            dict(solver="newton-cholesky"),
+        ]
+    },
     MDS: {"check_dict_unchanged": dict(max_iter=5, n_components=1, n_init=2)},
     MiniBatchDictionaryLearning: {
         "check_dict_unchanged": dict(batch_size=10, max_iter=5, n_components=1)
@@ -534,8 +565,40 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     PLSCanonical: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     PLSRegression: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     PLSSVD: {"check_dict_unchanged": dict(n_components=1)},
+    PoissonRegressor: {
+        "check_sample_weight_equivalence": [
+            dict(solver="newton-cholesky"),
+            dict(solver="lbfgs"),
+        ]
+    },
     PolynomialCountSketch: {"check_dict_unchanged": dict(n_components=1)},
+    QuantileRegressor: {
+        "check_sample_weight_equivalence": [
+            dict(quantile=0.5),
+            dict(quantile=0.75),
+            dict(solver="highs-ds"),
+            dict(solver="highs-ipm"),
+        ]
+    },
     RBFSampler: {"check_dict_unchanged": dict(n_components=1)},
+    Ridge: {
+        "check_sample_weight_equivalence": [
+            dict(solver="svd"),
+            dict(solver="cholesky"),
+            dict(solver="sparse_cg"),
+            dict(solver="lsqr"),
+            dict(solver="lbfgs", positive=True),
+        ]
+    },
+    RidgeClassifier: {
+        "check_sample_weight_equivalence": [
+            dict(solver="svd"),
+            dict(solver="cholesky"),
+            dict(solver="sparse_cg"),
+            dict(solver="lsqr"),
+            dict(solver="lbfgs", positive=True),
+        ]
+    },
     SkewedChi2Sampler: {"check_dict_unchanged": dict(n_components=1)},
     SparsePCA: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     SparseRandomProjection: {"check_dict_unchanged": dict(n_components=1)},
@@ -549,6 +612,12 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     SpectralEmbedding: {"check_dict_unchanged": dict(eigen_tol=1e-05, n_components=1)},
     TSNE: {"check_dict_unchanged": dict(n_components=1, perplexity=2)},
     TruncatedSVD: {"check_dict_unchanged": dict(n_components=1)},
+    TweedieRegressor: {
+        "check_sample_weight_equivalence": [
+            dict(solver="newton-cholesky"),
+            dict(solver="lbfgs"),
+        ]
+    },
 }
 
 
