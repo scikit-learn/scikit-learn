@@ -375,6 +375,13 @@ Changelog
   when duplicate values in the training data lead to inaccurate outlier detection.
   :pr:`28773` by :user:`Henrique Caroço <HenriqueProj>`.
 
+:mod:`sklearn.neural_network`
+.............................
+
+- |Fix| :class:`neural_network.MLPRegressor` does no longer crash when the model
+  diverges and that `early_stopping` is enabled. :pr:`29773` by
+  :user:`Marc Bresson <MarcBresson>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
