@@ -1327,7 +1327,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             "check_estimators_nan_inf": "FIXME",
             "check_estimator_sparse_array": "FIXME",
             "check_estimator_sparse_matrix": "FIXME",
-            "check_transformer_data_not_an_array": "FIXME",
             "check_fit1d": "FIXME",
             "check_fit2d_predict1d": "FIXME",
             "check_complex_data": "FIXME",
@@ -1338,7 +1337,11 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
 def _check_X(X):
     """Use check_array only when necessary, e.g. on lists and other non-array-likes."""
-    if hasattr(X, "__array__") or hasattr(X, "__dataframe__") or sparse.issparse(X):
+    if (
+        (hasattr(X, "__array__") and hasattr(X, "shape"))
+        or hasattr(X, "__dataframe__")
+        or sparse.issparse(X)
+    ):
         return X
     return check_array(X, ensure_all_finite="allow-nan", dtype=object)
 

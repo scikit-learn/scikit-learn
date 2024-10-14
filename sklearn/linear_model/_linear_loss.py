@@ -518,7 +518,9 @@ class LinearModelLoss:
             # For non-canonical link functions and far away from the optimum, the
             # pointwise hessian can be negative. We take care that 75% of the hessian
             # entries are positive.
-            hessian_warning = np.mean(hess_pointwise <= 0) > 0.25
+            hessian_warning = (
+                np.average(hess_pointwise <= 0, weights=sample_weight) > 0.25
+            )
             hess_pointwise = np.abs(hess_pointwise)
 
             grad[:n_features] = X.T @ grad_pointwise + l2_reg_strength * weights

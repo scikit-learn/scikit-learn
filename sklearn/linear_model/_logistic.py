@@ -808,12 +808,6 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     """
     Logistic Regression (aka logit, MaxEnt) classifier.
 
-    In the multiclass case, the training algorithm uses the one-vs-rest (OvR)
-    scheme if the 'multi_class' option is set to 'ovr', and uses the
-    cross-entropy loss if the 'multi_class' option is set to 'multinomial'.
-    (Currently the 'multinomial' option is supported only by the 'lbfgs',
-    'sag', 'saga' and 'newton-cg' solvers.)
-
     This class implements regularized logistic regression using the
     'liblinear' library, 'newton-cg', 'sag', 'saga' and 'lbfgs' solvers. **Note
     that regularization is applied by default**. It can handle both dense
@@ -826,6 +820,11 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     supports both L1 and L2 regularization, with a dual formulation only for
     the L2 penalty. The Elastic-Net regularization is only supported by the
     'saga' solver.
+
+    For :term:`multiclass` problems, only 'newton-cg', 'sag', 'saga' and 'lbfgs'
+    handle multinomial loss. 'liblinear' and 'newton-cholesky' only handle binary
+    classification but can be extended to handle multiclass by using
+    :class:`~sklearn.multiclass.OneVsRestClassifier`.
 
     Read more in the :ref:`User Guide <logistic_regression>`.
 
@@ -904,11 +903,11 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
         - For small datasets, 'liblinear' is a good choice, whereas 'sag'
           and 'saga' are faster for large ones;
-        - For multiclass problems, all solvers except 'liblinear' minimize the full
-          multinomial loss;
+        - For :term:`multiclass` problems, all solvers except 'liblinear' minimize the
+          full multinomial loss;
         - 'liblinear' can only handle binary classification by default. To apply a
-          one-versus-rest scheme for the multiclass setting one can wrapt it with the
-          `OneVsRestClassifier`.
+          one-versus-rest scheme for the multiclass setting one can wrap it with the
+          :class:`~sklearn.multiclass.OneVsRestClassifier`.
         - 'newton-cholesky' is a good choice for
           `n_samples` >> `n_features * n_classes`, especially with one-hot encoded
           categorical features with rare categories. Be aware that the memory usage
@@ -936,9 +935,9 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            a scaler from :mod:`sklearn.preprocessing`.
 
         .. seealso::
-           Refer to the User Guide for more information regarding
-           :class:`LogisticRegression` and more specifically the
-           :ref:`Table <Logistic_regression>`
+           Refer to the :ref:`User Guide <Logistic_regression>` for more
+           information regarding :class:`LogisticRegression` and more specifically the
+           :ref:`Table <logistic_regression_solvers>`
            summarizing solver/penalty supports.
 
         .. versionadded:: 0.17
@@ -1546,8 +1545,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         - 'liblinear' might be slower in :class:`LogisticRegressionCV`
           because it does not handle warm-starting.
         - 'liblinear' can only handle binary classification by default. To apply a
-          one-versus-rest scheme for the multiclass setting one can wrapt it with the
-          `OneVsRestClassifier`.
+          one-versus-rest scheme for the multiclass setting one can wrap it with the
+          :class:`~sklearn.multiclass.OneVsRestClassifier`.
         - 'newton-cholesky' is a good choice for
           `n_samples` >> `n_features * n_classes`, especially with one-hot encoded
           categorical features with rare categories. Be aware that the memory usage

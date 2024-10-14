@@ -138,6 +138,11 @@ more details.
   now support metadata routing.
   :pr:`29312` by :user:`Omar Salman <OmarManzoor>`.
 
+- |Fix| Metadata is routed correctly to grouped CV splitters via
+  :class:`linear_model.RidgeCV` and :class:`linear_model.RidgeClassifierCV` and
+  `UnsetMetadataPassedError` is fixed for :class:`linear_model.RidgeClassifierCV` with
+  default scoring. :pr:`29634` by :user:`Stefanie Senger <StefanieSenger>`.
+
 Dropping support for building with setuptools
 ---------------------------------------------
 
@@ -246,12 +251,20 @@ Changelog
   right child node as the tree is traversed.
   :pr:`28268` by :user:`Adam Li <adam2392>`.
 
+- |API| The parameter `algorithm` of :class:`ensemble.AdaBoostClassifier` is deprecated
+  and will be removed in 1.8.
+  :pr:`29997` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.impute`
 .....................
 
 - |Fix| :class:`impute.KNNImputer` excludes samples with nan distances when
   computing the mean value for uniform weights.
   :pr:`29135` by :user:`Xuefeng Xu <xuefeng-xu>`.
+
+- |Fix| Fixed :class:`impute.IterativeImputer` to make sure that it does not skip
+  the iterative process when `keep_empty_features` is set to `True`.
+  :pr:`29779` by :user:`Arif Qodari <arifqodari>`.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -286,8 +299,14 @@ Changelog
 
 - |Fix| :class:`linear_model.LassoCV` and :class:`linear_model.ElasticNetCV` now
   take sample weights into accounts to define the search grid for the internally tuned
-  `alpha` hyper-parameter. :pr:`29442` by :user:`John Hopfensperger <s-banach> and
+  `alpha` hyper-parameter. :pr:`29442` by :user:`John Hopfensperger <s-banach>` and
   :user:`Shruti Nath <snath-xoc>`.
+
+- |Fix| :class:`linear_model.LogisticRegression`, :class:`linear_model.PoissonRegressor`,
+  :class:`linear_model.GammaRegressor`, :class:`linear_model.TweedieRegressor`
+  now take sample weights into account to decide when to fall back to `solver='lbfgs'`
+  whenever `solver='newton-cholesky'` becomes numerically unstable.
+  :pr:`29818` by :user:`Antoine Baker <antoinebaker>`.
 
 :mod:`sklearn.manifold`
 .......................
@@ -312,6 +331,10 @@ Changelog
 - |Efficiency| :func:`sklearn.metrics.classification_report` is now faster by caching
   classification labels.
   :pr:`29738` by `Adrin Jalali`_.
+
+- |Fix| :func:`metrics.roc_auc_score` will now correctly return 0.0 and
+  warn user if only one class is present in the labels.
+  :pr:`27412` by :user:`Gleb Levitski <glevv>`.
 
 - |API| scoring="neg_max_error" should be used instead of
   scoring="max_error" which is now deprecated.
@@ -356,6 +379,10 @@ Changelog
 
 :mod:`sklearn.preprocessing`
 ............................
+
+- |Enhancement| Added `warn` option to `handle_unknown` parameter in
+  :class:`preprocessing.OneHotEncoder`.
+  :pr:`28637` by :user:`Gleb Levitski <glevv>`.
 
 - |Enhancement| The HTML representation of :class:`preprocessing.FunctionTransformer`
   will show the function name in the label.
@@ -403,6 +430,14 @@ Changelog
   :func:`utils.check_X_y`, :func:`utils.as_float_array` is renamed into
   `ensure_all_finite`. `force_all_finite` will be removed in 1.8.
   :pr:`29404` by :user:`Jérémie du Boisberranger <jeremiedb>`.
+
+:mod:`sklearn.utils.check_estimators`
+.....................................
+
+- |API| :func:`check_estimators.check_sample_weights_invariance` replaced by
+  :func:`check_estimators.check_sample_weight_equivalence` which uses
+  integer (including zero) weights.
+  :pr:`29818` by :user:`Antoine Baker <antoinebaker>`.
 
 .. rubric:: Code and documentation contributors
 
