@@ -351,6 +351,10 @@ Changelog
   will be returned when `multioutput=uniform_average`.
   :pr:`29709` by :user:`Virgil Chan <virchan>`.
 
+- |API| The default value of the `response_method` parameter of
+  :func:`metrics.make_scorer` will change from `None` to `"predict"` and `None` will be
+  removed in 1.8. In the mean time, `None` is equivalent to `"predict"`.
+  :pr:`30001` by :user:`Jérémie du Boisberranger <jeremiedb>`.
 
 :mod:`sklearn.model_selection`
 ..............................
