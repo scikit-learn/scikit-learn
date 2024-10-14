@@ -257,7 +257,6 @@ package = "sklearn"  # name of your package
     package = "sklearn"
     filename = "doc/whats_new/notes-towncrier.rst"
     directory = "doc/whats_new/upcoming_changes"
-    underlines = "=-^" # TODO adjust maybe
     issue_format = ":pr:`{issue}`"
     template = "doc/whats_new/upcoming_changes/towncrier_template.rst.jinja2"
     title_format = "Version {version} ({project_date})"
