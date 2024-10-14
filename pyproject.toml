@@ -259,7 +259,7 @@ package = "sklearn"  # name of your package
     directory = "doc/whats_new/upcoming_changes"
     underlines = "=-^" # TODO adjust maybe
     issue_format = ":pr:`{issue}`"
-    template = "doc/whats_new/upcoming_changes/template.rst"
+    template = "doc/whats_new/upcoming_changes/towncrier_template.rst.jinja2"
     title_format = "Version {version} ({project_date})"
     all_bullets = false
 
