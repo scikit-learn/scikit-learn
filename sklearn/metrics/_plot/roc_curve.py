@@ -92,6 +92,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         name=None,
         plot_chance_level=False,
         chance_level_kw=None,
+        despine=False,
         **kwargs,
     ):
         """Plot visualization.
@@ -118,6 +119,11 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             the chance level line.
 
             .. versionadded:: 1.3
+
+        despine : bool, default=False
+            Whether to remove the top and right spines from the plot.
+
+            .. versionadded:: 1.6
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
@@ -170,7 +176,13 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         else:
             self.chance_level_ = None
 
-        if "label" in line_kwargs or "label" in chance_level_line_kw:
+        if despine:
+            for s in ["top", "right"]:
+                self.ax_.spines[s].set_visible(False)
+            for s in ["bottom", "left"]:
+                self.ax_.spines[s].set_bounds(0, 1)
+
+        if "label" in line_kwargs or plot_chance_level:
             self.ax_.legend(loc="lower right")
 
         return self
@@ -190,6 +202,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         ax=None,
         plot_chance_level=False,
         chance_level_kw=None,
+        despine=False,
         **kwargs,
     ):
         """Create a ROC Curve display from an estimator.
@@ -244,6 +257,11 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
             .. versionadded:: 1.3
 
+        despine : bool, default=False
+            Whether to remove the top and right spines from the plot.
+
+            .. versionadded:: 1.6
+
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
 
@@ -294,6 +312,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             pos_label=pos_label,
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kw,
+            despine=despine,
             **kwargs,
         )
 
@@ -310,6 +329,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         ax=None,
         plot_chance_level=False,
         chance_level_kw=None,
+        despine=False,
         **kwargs,
     ):
         """Plot ROC curve given the true and predicted values.
@@ -359,6 +379,11 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             the chance level line.
 
             .. versionadded:: 1.3
+
+        despine : bool, default=False
+            Whether to remove the top and right spines from the plot.
+
+            .. versionadded:: 1.6
 
         **kwargs : dict
             Additional keywords arguments passed to matplotlib `plot` function.
@@ -418,5 +443,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             name=name,
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kw,
+            despine=despine,
             **kwargs,
         )
