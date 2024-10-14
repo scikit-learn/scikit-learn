@@ -102,22 +102,22 @@ jobs:
             free_threaded_support: True
 
           # MacOS x86_64
-          - os: macos-12
+          - os: macos-13
             python: 39
             platform_id: macosx_x86_64
-          - os: macos-12
+          - os: macos-13
             python: 310
             platform_id: macosx_x86_64
-          - os: macos-12
+          - os: macos-13
             python: 311
             platform_id: macosx_x86_64
-          - os: macos-12
+          - os: macos-13
             python: 312
             platform_id: macosx_x86_64
-          - os: macos-12
+          - os: macos-13
             python: 313
             platform_id: macosx_x86_64
-          - os: macos-12
+          - os: macos-13
             python: 313t
             platform_id: macosx_x86_64
             free_threaded_support: True
