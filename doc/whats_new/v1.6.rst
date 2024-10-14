@@ -255,6 +255,13 @@ Changelog
   and will be removed in 1.8.
   :pr:`29997` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+:mod:`sklearn.feature_extraction.text`
+......................................
+
+- |Fix| :class:`feature_extraction.text.TfidfVectorizer` now correctly preserves the
+  `dtype` of `idf_` based on the input data.
+  :pr:`30022` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.impute`
 .....................
 
