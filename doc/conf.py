@@ -447,6 +447,9 @@ redirects = {
     "auto_examples/model_selection/grid_search_text_feature_extraction": (
         "auto_examples/model_selection/plot_grid_search_text_feature_extraction"
     ),
+    "auto_examples/model_selection/plot_validation_curve": (
+        "auto_examples/model_selection/plot_train_error_vs_test_error"
+    ),
     "auto_examples/datasets/plot_digits_last_image": (
         "auto_examples/exercises/plot_digits_classification_exercises"
     ),
@@ -474,6 +477,12 @@ redirects = {
     ),
     "auto_examples/linear_model/plot_lasso_coordinate_descent_path": (
         "auto_examples/linear_model/plot_lasso_lasso_lars_elasticnet_path"
+    ),
+    "auto_examples/cluster/plot_color_quantization": (
+        "auto_examples/cluster/plot_face_compress"
+    ),
+    "auto_examples/cluster/plot_cluster_iris": (
+        "auto_examples/cluster/plot_kmeans_assumptions"
     ),
 }
 html_context["redirects"] = redirects
