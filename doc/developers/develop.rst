@@ -480,11 +480,11 @@ This attribute should have the following values to work as expected:
 - ``"classifier"`` for classifiers
 - ``"regressor"`` for regressors
 - ``"clusterer"`` for clustering methods
-- ``"outlier_detector"`` for outlier detectors.
-- ``"DensityEstimator"`` for density estimators.
+- ``"outlier_detector"`` for outlier detectors
+- ``"DensityEstimator"`` for density estimators
 
-Inheriting from ``ClassifierMixin``, ``RegressorMixin``, ``ClusterMixin``,
-``DensityEstimator`` or ``OutlierMixin``,
+Inheriting from :class:`~base.ClassifierMixin`, :class:`~base.RegressorMixin`, :class:`~base.ClusterMixin`,
+:class:`~base.OutlierMixin` or :class:`~base.DensityMixin`,
 will set the attribute automatically.  When a meta-estimator needs to distinguish
 among estimator types, instead of checking ``_estimator_type`` directly, helpers
 like :func:`base.is_classifier` should be used.
