@@ -477,7 +477,7 @@ class KFold(_UnsupportedGroupCVMixin, _BaseKFold):
     >>> kf.get_n_splits(X)
     2
     >>> print(kf)
-    KFold(n_splits=2, random_state=None, shuffle=False)
+    KFold(n_splits=2, shuffle=False, random_state=None)
     >>> for i, (train_index, test_index) in enumerate(kf.split(X)):
     ...     print(f"Fold {i}:")
     ...     print(f"  Train: index={train_index}")
@@ -701,7 +701,7 @@ class StratifiedKFold(_BaseKFold):
     >>> skf.get_n_splits(X, y)
     2
     >>> print(skf)
-    StratifiedKFold(n_splits=2, random_state=None, shuffle=False)
+    StratifiedKFold(n_splits=2, shuffle=False, random_state=None)
     >>> for i, (train_index, test_index) in enumerate(skf.split(X, y)):
     ...     print(f"Fold {i}:")
     ...     print(f"  Train: index={train_index}")
@@ -909,7 +909,7 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
     >>> sgkf.get_n_splits(X, y)
     3
     >>> print(sgkf)
-    StratifiedGroupKFold(n_splits=3, random_state=None, shuffle=False)
+    StratifiedGroupKFold(n_splits=2, shuffle=False, random_state=None)
     >>> for i, (train_index, test_index) in enumerate(sgkf.split(X, y, groups)):
     ...     print(f"Fold {i}:")
     ...     print(f"  Train: index={train_index}")
@@ -1663,7 +1663,7 @@ class RepeatedKFold(_UnsupportedGroupCVMixin, _RepeatedSplits):
     >>> rkf.get_n_splits(X, y)
     4
     >>> print(rkf)
-    RepeatedKFold(n_repeats=2, n_splits=2, random_state=2652124)
+    RepeatedKFold(n_splits=2, n_repeats=2, random_state=2652124)
     >>> for i, (train_index, test_index) in enumerate(rkf.split(X)):
     ...     print(f"Fold {i}:")
     ...     print(f"  Train: index={train_index}")
@@ -1731,7 +1731,7 @@ class RepeatedStratifiedKFold(_UnsupportedGroupCVMixin, _RepeatedSplits):
     >>> rskf.get_n_splits(X, y)
     4
     >>> print(rskf)
-    RepeatedStratifiedKFold(n_repeats=2, n_splits=2, random_state=36851234)
+    RepeatedStratifiedKFold(n_splits=2, n_repeats=2, random_state=36851234)
     >>> for i, (train_index, test_index) in enumerate(rskf.split(X, y)):
     ...     print(f"Fold {i}:")
     ...     print(f"  Train: index={train_index}")
@@ -1975,7 +1975,7 @@ class ShuffleSplit(_UnsupportedGroupCVMixin, BaseShuffleSplit):
     >>> rs.get_n_splits(X)
     5
     >>> print(rs)
-    ShuffleSplit(n_splits=5, random_state=0, test_size=0.25, train_size=None)
+    ShuffleSplit(n_splits=5, test_size=0.25, train_size=None, random_state=0)
     >>> for i, (train_index, test_index) in enumerate(rs.split(X)):
     ...     print(f"Fold {i}:")
     ...     print(f"  Train: index={train_index}")
@@ -2100,7 +2100,7 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
     >>> gss.get_n_splits()
     2
     >>> print(gss)
-    GroupShuffleSplit(n_splits=2, random_state=42, test_size=None, train_size=0.7)
+    GroupShuffleSplit(n_splits=2, test_size=None, train_size=0.7, random_state=42)
     >>> for i, (train_index, test_index) in enumerate(gss.split(X, y, groups)):
     ...     print(f"Fold {i}:")
     ...     print(f"  Train: index={train_index}, group={groups[train_index]}")
@@ -2230,7 +2230,8 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     >>> sss.get_n_splits(X, y)
     5
     >>> print(sss)
-    StratifiedShuffleSplit(n_splits=5, random_state=0, ...)
+    StratifiedShuffleSplit(n_splits=5, test_size=0.5, train_size=None,
+            random_state=0)
     >>> for i, (train_index, test_index) in enumerate(sss.split(X, y)):
     ...     print(f"Fold {i}:")
     ...     print(f"  Train: index={train_index}")
