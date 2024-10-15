@@ -225,6 +225,11 @@ class SimpleImputer(_BaseImputer):
 
         .. versionadded:: 1.2
 
+        .. versionchanged:: 1.6
+        Currently, when `keep_empty_feature=False` and `strategy="constant"`,
+        empty features are not dropped. This behaviour will change in version
+        1.8. Set `keep_empty_feature=True` to preserve this behaviour.
+
     Attributes
     ----------
     statistics_ : array of shape (n_features,)
@@ -458,14 +463,16 @@ class SimpleImputer(_BaseImputer):
         statistics = np.empty(X.shape[1])
 
         if strategy == "constant":
-            # TODO(1.8): Remove
+            # TODO(1.8): Remove FutureWarning and add `np.nan` as a statistic
+            # for empty features to drop them later.
             if not self.keep_empty_features and any(
                 [all(missing_mask[:, i].data) for i in range(missing_mask.shape[1])]
             ):
                 warnings.warn(
-                    "When `keep_empty_features` is False and `constant` is set the "
-                    "column filled with missing values will be removed in 1.8. "
-                    "To keep the same behaviour, set `keep_empty_features` to True",
+                    "Currently, when `keep_empty_feature=False` and "
+                    '`strategy="constant"`, empty features are not dropped. '
+                    "This behaviour will change in version 1.8. Set "
+                    "`keep_empty_feature=True` to preserve this behaviour.",
                     FutureWarning,
                 )
 
@@ -559,12 +566,14 @@ class SimpleImputer(_BaseImputer):
 
         # Constant
         elif strategy == "constant":
-            # TODO(1.8): Remove
+            # TODO(1.8): Remove FutureWarning and add `np.nan` as a statistic
+            # for empty features to drop them later.
             if not self.keep_empty_features and ma.getmask(masked_X).all(axis=0).any():
                 warnings.warn(
-                    "When `keep_empty_features` is False and `constant` is set the "
-                    "column filled with missing values will be removed in 1.8. "
-                    "To keep the same behaviour, set `keep_empty_features` to True",
+                    "Currently, when `keep_empty_feature=False` and "
+                    '`strategy="constant"`, empty features are not dropped. '
+                    "This behaviour will change in version 1.8. Set "
+                    "`keep_empty_feature=True` to preserve this behaviour.",
                     FutureWarning,
                 )
 

@@ -410,18 +410,24 @@ def test_imputation_constant_error_invalid_type(X_data, missing_value):
         imputer.fit_transform(X)
 
 
+# TODO (1.8): check that `keep_empty_features=False` drop the
+# empty features due to the behaviour change.
 def test_imputation_constant_integer():
     # Test imputation using the constant strategy on integers
     X = np.array([[-1, 2, 3, -1], [4, -1, 5, -1], [6, 7, -1, -1], [8, 9, 0, -1]])
 
     X_true = np.array([[0, 2, 3, 0], [4, 0, 5, 0], [6, 7, 0, 0], [8, 9, 0, 0]])
 
-    imputer = SimpleImputer(missing_values=-1, strategy="constant", fill_value=0)
+    imputer = SimpleImputer(
+        missing_values=-1, strategy="constant", fill_value=0, keep_empty_features=True
+    )
     X_trans = imputer.fit_transform(X)
 
     assert_array_equal(X_trans, X_true)
 
 
+# TODO (1.8): check that `keep_empty_features=False` drop the
+# empty features due to the behaviour change.
 @pytest.mark.parametrize("array_constructor", CSR_CONTAINERS + [np.asarray])
 def test_imputation_constant_float(array_constructor):
     # Test imputation using the constant strategy on floats
@@ -442,12 +448,16 @@ def test_imputation_constant_float(array_constructor):
 
     X_true = array_constructor(X_true)
 
-    imputer = SimpleImputer(strategy="constant", fill_value=-1)
+    imputer = SimpleImputer(
+        strategy="constant", fill_value=-1, keep_empty_features=True
+    )
     X_trans = imputer.fit_transform(X)
 
     assert_allclose_dense_sparse(X_trans, X_true)
 
 
+# TODO (1.8): check that `keep_empty_features=False` drop the
+# empty features due to the behaviour change.
 @pytest.mark.parametrize("marker", [None, np.nan, "NAN", "", 0])
 def test_imputation_constant_object(marker):
     # Test imputation using the constant strategy on objects
@@ -472,13 +482,18 @@ def test_imputation_constant_object(marker):
     )
 
     imputer = SimpleImputer(
-        missing_values=marker, strategy="constant", fill_value="missing"
+        missing_values=marker,
+        strategy="constant",
+        fill_value="missing",
+        keep_empty_features=True,
     )
     X_trans = imputer.fit_transform(X)
 
     assert_array_equal(X_trans, X_true)
 
 
+# TODO (1.8): check that `keep_empty_features=False` drop the
+# empty features due to the behaviour change.
 @pytest.mark.parametrize("dtype", [object, "category"])
 def test_imputation_constant_pandas(dtype):
     # Test imputation using the constant strategy on pandas df
@@ -498,7 +513,7 @@ def test_imputation_constant_pandas(dtype):
         dtype=object,
     )
 
-    imputer = SimpleImputer(strategy="constant")
+    imputer = SimpleImputer(strategy="constant", keep_empty_features=True)
     X_trans = imputer.fit_transform(df)
 
     assert_array_equal(X_trans, X_true)
@@ -1531,6 +1546,8 @@ def test_iterative_imputer_keep_empty_features(initial_strategy):
     assert_allclose(X_imputed[:, 1], 0)
 
 
+# TODO (1.8): check that `keep_empty_features=False` drop the
+# empty features due to the behaviour change.
 def test_iterative_imputer_constant_fill_value():
     """Check that we propagate properly the parameter `fill_value`."""
     X = np.array([[-1, 2, 3, -1], [4, -1, 5, -1], [6, 7, -1, -1], [8, 9, 0, -1]])
@@ -1541,6 +1558,7 @@ def test_iterative_imputer_constant_fill_value():
         initial_strategy="constant",
         fill_value=fill_value,
         max_iter=0,
+        keep_empty_features=True,
     )
     imputer.fit_transform(X)
     assert_array_equal(imputer.initial_imputer_.statistics_, fill_value)
@@ -1669,12 +1687,6 @@ def test_imputer_transform_preserves_numeric_dtype(dtype_test):
 
 @pytest.mark.parametrize("array_type", ["array", "sparse"])
 @pytest.mark.parametrize("keep_empty_features", [True, False])
-# TODO(1.8): Remove
-@pytest.mark.filterwarnings(
-    "ignore:When `keep_empty_features` is false and `constant` is set the "
-    "column filled with missing values will be removed in 1.8. "
-    "to keep the same behaviour, set `keep_empty_features` to True"
-)
 def test_simple_imputer_constant_keep_empty_features(array_type, keep_empty_features):
     """Check the behaviour of `keep_empty_features` with `strategy='constant'.
     For backward compatibility, a column full of missing values will always be
@@ -1690,35 +1702,12 @@ def test_simple_imputer_constant_keep_empty_features(array_type, keep_empty_feat
     )
 
     for method in ["fit_transform", "transform"]:
-        X_imputed = getattr(imputer, method)(X)
-        assert X_imputed.shape == X.shape
-        constant_feature = (
-            X_imputed[:, 0].toarray() if array_type == "sparse" else X_imputed[:, 0]
-        )
-        assert_array_equal(constant_feature, fill_value)
-
-
-@pytest.mark.parametrize("array_type", ["array", "sparse"])
-@pytest.mark.parametrize("keep_empty_features", [True, False])
-def test_simple_imputer_constant_keep_empty_features_no_warning(
-    array_type, keep_empty_features
-):
-    """Check the behaviour of `keep_empty_features` with `strategy='constant'.
-    For backward compatibility, a column full of missing values will always be
-    fill and never dropped.
-    """
-    X = np.array([[10, 2], [np.nan, 3], [np.nan, 6]])
-    X = _convert_container(X, array_type)
-    fill_value = 10
-    imputer = SimpleImputer(
-        strategy="constant",
-        fill_value=fill_value,
-        keep_empty_features=keep_empty_features,
-    )
-
-    for method in ["fit_transform", "transform"]:
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")
+        # TODO(1.8): Remove the condition and still call getattr(imputer, method)(X)
+        if method.startswith("fit") and not keep_empty_features:
+            warn_msg = '`strategy="constant"`, empty features are not dropped. '
+            with pytest.warns(FutureWarning, match=warn_msg):
+                X_imputed = getattr(imputer, method)(X)
+        else:
             X_imputed = getattr(imputer, method)(X)
         assert X_imputed.shape == X.shape
         constant_feature = (
