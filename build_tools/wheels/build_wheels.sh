@@ -39,7 +39,7 @@ if [[ $(uname) == "Darwin" ]]; then
     fi
 
     conda create -n build $OPENMP_URL
-    PREFIX="$CONDA_HOME/envs/build"
+    PREFIX="$HOME/miniconda3/envs/build"
 
     export CC=/usr/bin/clang
     export CXX=/usr/bin/clang++
