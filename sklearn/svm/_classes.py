@@ -723,9 +723,7 @@ class SVC(BaseSVC):
         (n_samples, n_classes * (n_classes - 1) / 2). However, note that
         internally, one-vs-one ('ovo') is always used as a multi-class strategy
         to train models; an ovr matrix is only constructed from the ovo matrix.
-        The parameter is ignored for binary classification. See
-        :ref:`sphx_glr_auto_examples_svm_plot_svm_tie_breaking.py` for an
-        example of its usage with the ``break_ties`` parameter.
+        The parameter is ignored for binary classification.
 
         .. versionchanged:: 0.19
             decision_function_shape is 'ovr' by default.
