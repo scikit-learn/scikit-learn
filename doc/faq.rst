@@ -181,21 +181,33 @@ discussed in :ref:`preprocessing_categorical_features`.
 See also :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py` for an
 example of working with heterogeneous (e.g. categorical and numeric) data.
 
-Why does scikit-learn not directly work with, for example, :class:`pandas.DataFrame`?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Note that recently, :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
+:class:`~sklearn.ensemble.HistGradientBoostingRegressor` gained native support for
+categorical features through the option `categorical_features="from_dtype"`. This
+option relies on inferring which columns of the data are categorical based on the
+:class:`pandas.CategoricalDtype` and :class:`polars.datatypes.Categorical` dtypes.
 
-The homogeneous NumPy and SciPy data objects currently expected are most
-efficient to process for most operations. Extensive work would also be needed
-to support Pandas categorical types. Restricting input to homogeneous
-types therefore reduces maintenance cost and encourages usage of efficient
-data structures.
+Does scikit-learn work natively with various types of dataframes?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Note however that :class:`~sklearn.compose.ColumnTransformer` makes it
-convenient to handle heterogeneous pandas dataframes by mapping homogeneous subsets of
-dataframe columns selected by name or dtype to dedicated scikit-learn transformers.
-Therefore :class:`~sklearn.compose.ColumnTransformer` are often used in the first
-step of scikit-learn pipelines when dealing
-with heterogeneous dataframes (see :ref:`pipeline` for more details).
+Scikit-learn has limited support for :class:`pandas.DataFrame` and
+:class:`polars.DataFrame`. Scikit-learn estimators can accept both these dataframe types
+as input, and scikit-learn transformers can output dataframes using the `set_output`
+API. For more details, refer to
+:ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`.
+
+However, the internal computations in scikit-learn estimators rely on numerical
+operations that are more efficiently performed on homogeneous data structures such as
+NumPy arrays or SciPy sparse matrices. As a result, most scikit-learn estimators will
+internally convert dataframe inputs into these homogeneous data structures. Similarly,
+dataframe outputs are generated from these homogeneous data structures.
+
+Also note that :class:`~sklearn.compose.ColumnTransformer` makes it convenient to handle
+heterogeneous pandas dataframes by mapping homogeneous subsets of dataframe columns
+selected by name or dtype to dedicated scikit-learn transformers. Therefore
+:class:`~sklearn.compose.ColumnTransformer` are often used in the first step of
+scikit-learn pipelines when dealing with heterogeneous dataframes (see :ref:`pipeline`
+for more details).
 
 See also :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`
 for an example of working with heterogeneous (e.g. categorical and numeric) data.
