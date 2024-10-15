@@ -2882,7 +2882,7 @@ def _pprint(params, offset=0, printer=repr):
     params_list = list()
     this_line_length = offset
     line_sep = ",\n" + (1 + offset // 2) * " "
-    for i, (k, v) in enumerate(sorted(params.items())):
+    for i, (k, v) in enumerate(params.items()):
         if isinstance(v, float):
             # use str for representing floating point numbers
             # this way we get consistent representation across
@@ -2944,7 +2944,6 @@ def _build_repr(self):
         finally:
             warnings.filters.pop(0)
         params[key] = value
-
     return "%s(%s)" % (class_name, _pprint(params, offset=len(class_name)))
 
 
