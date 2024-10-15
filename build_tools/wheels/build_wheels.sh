@@ -38,8 +38,8 @@ if [[ $(uname) == "Darwin" ]]; then
         OPENMP_URL="https://anaconda.org/conda-forge/llvm-openmp/11.1.0/download/osx-64/llvm-openmp-11.1.0-hda6cdc1_1.tar.bz2"
     fi
 
-    conda create -n build $OPENMP_URL
-    PREFIX="$HOME/miniconda3/envs/build"
+    sudo conda create -n build $OPENMP_URL
+    PREFIX="$CONDA_HOME/envs/build"
 
     export CC=/usr/bin/clang
     export CXX=/usr/bin/clang++
