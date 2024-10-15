@@ -144,7 +144,7 @@ def test_cross_validator_with_default_params():
     lolo_repr = "LeaveOneGroupOut()"
     lopo_repr = "LeavePGroupsOut(n_groups=2)"
     ss_repr = (
-        "ShuffleSplit(n_splits=5, test_size=0.25, train_size=None, random_state=0)"
+        "ShuffleSplit(n_splits=10, test_size=None, train_size=None, random_state=0)"
     )
     ps_repr = "PredefinedSplit(test_fold=array([1, 1, 2, 2]))"
     sgkf_repr = "StratifiedGroupKFold(n_splits=2, shuffle=False, random_state=None)"

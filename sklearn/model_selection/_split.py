@@ -909,7 +909,7 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
     >>> sgkf.get_n_splits(X, y)
     3
     >>> print(sgkf)
-    StratifiedGroupKFold(n_splits=2, shuffle=False, random_state=None)
+    StratifiedGroupKFold(n_splits=3, shuffle=False, random_state=None)
     >>> for i, (train_index, test_index) in enumerate(sgkf.split(X, y, groups)):
     ...     print(f"Fold {i}:")
     ...     print(f"  Train: index={train_index}")
@@ -1117,7 +1117,7 @@ class TimeSeriesSplit(_BaseKFold):
     >>> y = np.array([1, 2, 3, 4, 5, 6])
     >>> tscv = TimeSeriesSplit()
     >>> print(tscv)
-    TimeSeriesSplit(gap=0, max_train_size=None, n_splits=5, test_size=None)
+    TimeSeriesSplit(n_splits=5, max_train_size=None, test_size=None, gap=0)
     >>> for i, (train_index, test_index) in enumerate(tscv.split(X)):
     ...     print(f"Fold {i}:")
     ...     print(f"  Train: index={train_index}")
