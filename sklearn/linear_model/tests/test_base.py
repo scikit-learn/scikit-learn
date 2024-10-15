@@ -700,7 +700,7 @@ def test_linear_regression_sample_weight_consistency(
     """Test that the impact of sample_weight is consistent.
 
     Note that this test is stricter than the common test
-    check_sample_weights_invariance alone and also tests sparse X.
+    check_sample_weight_equivalence alone and also tests sparse X.
     It is very similar to test_enet_sample_weight_consistency.
     """
     rng = np.random.RandomState(global_random_seed)
@@ -717,8 +717,8 @@ def test_linear_regression_sample_weight_consistency(
     if fit_intercept:
         intercept = reg.intercept_
 
-    # 1) sample_weight=np.ones(..) must be equivalent to sample_weight=None
-    # same check as check_sample_weights_invariance(name, reg, kind="ones"), but we also
+    # 1) sample_weight=np.ones(..) must be equivalent to sample_weight=None,
+    # a special case of check_sample_weight_equivalence(name, reg), but we also
     # test with sparse input.
     sample_weight = np.ones_like(y)
     reg.fit(X, y, sample_weight=sample_weight)
