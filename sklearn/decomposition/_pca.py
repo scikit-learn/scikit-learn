@@ -152,7 +152,7 @@ class PCA(_BasePCA):
         number of components such that the amount of variance that needs to be
         explained is greater than the percentage specified by n_components.
 
-        If ``svd_solver == 'arpack'``, the number of components must be
+        If ``svd_solver in {'arpack', 'lobpcg'}``, the number of components must be
         strictly less than the minimum of n_features and n_samples.
 
         Hence, the None case results in::
@@ -174,7 +174,7 @@ class PCA(_BasePCA):
         improve the predictive accuracy of the downstream estimators by
         making their data respect some hard-wired assumptions.
 
-    svd_solver : {'auto', 'full', 'covariance_eigh', 'arpack', 'randomized'},\
+    svd_solver : {'auto', 'full', 'covariance_eigh', 'arpack', 'lobpcg', 'randomized'},\
             default='auto'
         "auto" :
             The solver is selected by a default 'auto' policy is based on `X.shape` and
@@ -200,7 +200,8 @@ class PCA(_BasePCA):
             therefore less numerical stable (e.g. on input data with a large
             range of singular values).
         "arpack" :
-            Run SVD truncated to `n_components` calling ARPACK solver via
+        "lobpcg" :
+            Run SVD truncated to `n_components` calling ARPACK or LOBPCG solver via
             `scipy.sparse.linalg.svds`. It requires strictly
             `0 < n_components < min(X.shape)`
         "randomized" :
@@ -332,7 +333,7 @@ class PCA(_BasePCA):
     <http://www.miketipping.com/papers/met-mppca.pdf>`_
     via the score and score_samples methods.
 
-    For svd_solver == 'arpack', refer to `scipy.sparse.linalg.svds`.
+    For ``svd_solver in {'arpack', 'lobpcg'}``, refer to `scipy.sparse.linalg.svds`.
 
     For svd_solver == 'randomized', see:
     :doi:`Halko, N., Martinsson, P. G., and Tropp, J. A. (2011).
@@ -386,7 +387,9 @@ class PCA(_BasePCA):
         "copy": ["boolean"],
         "whiten": ["boolean"],
         "svd_solver": [
-            StrOptions({"auto", "full", "covariance_eigh", "arpack", "randomized"})
+            StrOptions(
+                {"auto", "full", "covariance_eigh", "arpack", "lobpcg", "randomized"}
+            )
         ],
         "tol": [Interval(Real, 0, None, closed="left")],
         "iterated_power": [
@@ -485,15 +488,18 @@ class PCA(_BasePCA):
         xp, is_array_api_compliant = get_namespace(X)
 
         # Raise an error for sparse input and unsupported svd_solver
-        if issparse(X) and self.svd_solver not in ["auto", "arpack", "covariance_eigh"]:
+        if (
+            issparse(X)
+            and self.svd_solver not in {"auto", "arpack", "lobpcg", "covariance_eigh"}
+        ):
             raise TypeError(
-                'PCA only support sparse inputs with the "arpack" and'
+                'PCA only support sparse inputs with the "arpack", "lobpcg", and'
                 f' "covariance_eigh" solvers, while "{self.svd_solver}" was passed. See'
                 " TruncatedSVD for a possible alternative."
             )
-        if self.svd_solver == "arpack" and is_array_api_compliant:
+        if self.svd_solver in {"arpack", "lobpcg"} and is_array_api_compliant:
             raise ValueError(
-                "PCA with svd_solver='arpack' is not supported for Array API inputs."
+                f"PCA with {self.svd_solver=} is not supported for Array API inputs."
             )
 
         # Validate the data, without ever forcing a copy as any solver that
@@ -516,7 +522,7 @@ class PCA(_BasePCA):
             self._fit_svd_solver = "arpack"
 
         if self.n_components is None:
-            if self._fit_svd_solver != "arpack":
+            if self._fit_svd_solver not in {"arpack", "lobpcg"}:
                 n_components = min(X.shape)
             else:
                 n_components = min(X.shape) - 1
@@ -540,7 +546,7 @@ class PCA(_BasePCA):
         # Call different fits for either full or truncated SVD
         if self._fit_svd_solver in ("full", "covariance_eigh"):
             return self._fit_full(X, n_components, xp, is_array_api_compliant)
-        elif self._fit_svd_solver in ["arpack", "randomized"]:
+        elif self._fit_svd_solver in {"arpack", "lobpcg", "randomized"}:
             return self._fit_truncated(X, n_components, xp)
 
     def _fit_full(self, X, n_components, xp, is_array_api_compliant):
@@ -704,7 +710,7 @@ class PCA(_BasePCA):
         return U, S, Vt, X, x_is_centered, xp
 
     def _fit_truncated(self, X, n_components, xp):
-        """Fit the model by computing truncated SVD (by ARPACK or randomized)
+        """Fit the model by computing truncated SVD (by ARPACK, LOBPCG or randomized)
         on X.
         """
         n_samples, n_features = X.shape
@@ -722,7 +728,10 @@ class PCA(_BasePCA):
                 "svd_solver='%s'"
                 % (n_components, min(n_samples, n_features), svd_solver)
             )
-        elif svd_solver == "arpack" and n_components == min(n_samples, n_features):
+        elif (
+            svd_solver in {"arpack", "lobpcg"}
+            and n_components == min(n_samples, n_features)
+        ):
             raise ValueError(
                 "n_components=%r must be strictly less than "
                 "min(n_samples, n_features)=%r with "
@@ -745,9 +754,11 @@ class PCA(_BasePCA):
             X_centered -= self.mean_
             x_is_centered = not self.copy
 
-        if svd_solver == "arpack":
+        if svd_solver in {"arpack", "lobpcg"}:
             v0 = _init_arpack_v0(min(X.shape), random_state)
-            U, S, Vt = svds(X_centered, k=n_components, tol=self.tol, v0=v0)
+            U, S, Vt = svds(
+                X_centered, k=n_components, tol=self.tol, v0=v0, solver=svd_solver
+            )
             # svds doesn't abide by scipy.linalg.svd/randomized_svd
             # conventions, so reverse its outputs.
             S = S[::-1]

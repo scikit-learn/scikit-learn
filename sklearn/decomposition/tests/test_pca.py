@@ -25,7 +25,7 @@ from sklearn.utils.estimator_checks import (
 from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 
 iris = datasets.load_iris()
-PCA_SOLVERS = ["full", "covariance_eigh", "arpack", "randomized", "auto"]
+PCA_SOLVERS = ["full", "covariance_eigh", "arpack", "lobpcg", "randomized", "auto"]
 
 # `SPARSE_M` and `SPARSE_N` could be larger, but be aware:
 # * SciPy's generation of random sparse matrix can be costly
@@ -73,7 +73,7 @@ def test_pca(svd_solver, n_components):
 @pytest.mark.parametrize("density", [0.01, 0.1, 0.30])
 @pytest.mark.parametrize("n_components", [1, 2, 10])
 @pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
-@pytest.mark.parametrize("svd_solver", ["arpack", "covariance_eigh"])
+@pytest.mark.parametrize("svd_solver", ["arpack", "lobpcg", "covariance_eigh"])
 @pytest.mark.parametrize("scale", [1, 10, 100])
 def test_pca_sparse(
     global_random_seed, svd_solver, sparse_container, n_components, density, scale
@@ -429,7 +429,7 @@ def test_pca_explained_variance_empirical(X, svd_solver):
     assert_allclose(pca.explained_variance_, expected_result, rtol=5e-3)
 
 
-@pytest.mark.parametrize("svd_solver", ["arpack", "randomized"])
+@pytest.mark.parametrize("svd_solver", ["arpack", "lobpcg", "randomized"])
 def test_pca_singular_values_consistency(svd_solver):
     rng = np.random.RandomState(0)
     n_samples, n_features = 100, 80
@@ -564,6 +564,7 @@ def test_pca_validation(svd_solver, data, n_components, err_msg):
     [
         ("full", min(iris.data.shape)),
         ("arpack", min(iris.data.shape) - 1),
+        ("lobpcg", min(iris.data.shape) - 1),
         ("randomized", min(iris.data.shape)),
     ],
 )
@@ -719,7 +720,7 @@ def test_pca_sanity_noise_variance(svd_solver):
     assert np.all((pca.explained_variance_ - pca.noise_variance_) >= 0)
 
 
-@pytest.mark.parametrize("svd_solver", ["arpack", "randomized"])
+@pytest.mark.parametrize("svd_solver", ["arpack", "lobpcg", "randomized"])
 def test_pca_score_consistency_solvers(svd_solver):
     # Check the consistency of score between solvers
     X, _ = datasets.load_digits(return_X_y=True)
