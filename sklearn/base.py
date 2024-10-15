@@ -215,8 +215,8 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
                     " %s with constructor %s doesn't "
                     " follow this convention." % (cls, init_signature)
                 )
-        # Extract and sort argument names excluding 'self'
-        return sorted([p.name for p in parameters])
+        # Extract argument names excluding 'self'
+        return [p.name for p in parameters]
 
     def get_params(self, deep=True):
         """

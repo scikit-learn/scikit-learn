@@ -2920,13 +2920,11 @@ def _build_repr(self):
     if init is object.__init__:
         args = []
     else:
-        args = sorted(
-            [
-                p.name
-                for p in init_signature.parameters.values()
-                if p.name != "self" and p.kind != p.VAR_KEYWORD
-            ]
-        )
+        args = [
+            p.name
+            for p in init_signature.parameters.values()
+            if p.name != "self" and p.kind != p.VAR_KEYWORD
+        ]
     class_name = self.__class__.__name__
     params = dict()
     for key in args:

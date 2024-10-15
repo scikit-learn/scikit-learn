@@ -1164,7 +1164,7 @@ def test_repeated_cv_value_errors():
 def test_repeated_cv_repr(RepeatedCV):
     n_splits, n_repeats = 2, 6
     repeated_cv = RepeatedCV(n_splits=n_splits, n_repeats=n_repeats)
-    repeated_cv_repr = "{}(n_repeats=6, n_splits=2, random_state=None)".format(
+    repeated_cv_repr = "{}(n_splits=2, n_repeats=6, random_state=None)".format(
         repeated_cv.__class__.__name__
     )
     assert repeated_cv_repr == repr(repeated_cv)
