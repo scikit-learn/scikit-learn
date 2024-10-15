@@ -132,6 +132,21 @@ def _validate_style_kwargs(default_style_kwargs, user_style_kwargs):
         "mec": "markeredgecolor",
         "mfcalt": "markerfacecoloralt",
         "ms": "markersize",
+        "mew": "markeredgewidth",
+        "mfc": "markerfacecolor",
+        "aa": "antialiased",
+        "ds": "drawstyle",
+        "font": "fontproperties",
+        "family": "fontfamily",
+        "name": "fontname",
+        "size": "fontsize",
+        "stretch": "fontstretch",
+        "style": "fontstyle",
+        "variant": "fontvariant",
+        "weight": "fontweight",
+        "ha": "horizontalalignment",
+        "va": "verticalalignment",
+        "ma": "multialignment",
     }
     for invalid_key, valid_key in invalid_to_valid_kw.items():
         if invalid_key in user_style_kwargs and valid_key in user_style_kwargs:
