@@ -255,6 +255,13 @@ Changelog
   and will be removed in 1.8.
   :pr:`29997` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+:mod:`sklearn.feature_extraction.text`
+......................................
+
+- |Fix| :class:`feature_extraction.text.TfidfVectorizer` now correctly preserves the
+  `dtype` of `idf_` based on the input data.
+  :pr:`30022` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.impute`
 .....................
 
@@ -326,6 +333,10 @@ Changelog
   classification labels.
   :pr:`29738` by `Adrin Jalali`_.
 
+- |Fix| :func:`metrics.roc_auc_score` will now correctly return 0.0 and
+  warn user if only one class is present in the labels.
+  :pr:`27412` by :user:`Gleb Levitski <glevv>`.
+
 - |API| scoring="neg_max_error" should be used instead of
   scoring="max_error" which is now deprecated.
   :pr:`29462` by :user:`Farid "Freddie" Taba <artificialfintelligence>`.
@@ -347,6 +358,10 @@ Changelog
   will be returned when `multioutput=uniform_average`.
   :pr:`29709` by :user:`Virgil Chan <virchan>`.
 
+- |API| The default value of the `response_method` parameter of
+  :func:`metrics.make_scorer` will change from `None` to `"predict"` and `None` will be
+  removed in 1.8. In the mean time, `None` is equivalent to `"predict"`.
+  :pr:`30001` by :user:`Jérémie du Boisberranger <jeremiedb>`.
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -366,6 +381,13 @@ Changelog
 - |Fix| :class:`neighbors.LocalOutlierFactor` raises a warning in the `fit` method
   when duplicate values in the training data lead to inaccurate outlier detection.
   :pr:`28773` by :user:`Henrique Caroço <HenriqueProj>`.
+
+:mod:`sklearn.neural_network`
+.............................
+
+- |Fix| :class:`neural_network.MLPRegressor` does no longer crash when the model
+  diverges and that `early_stopping` is enabled. :pr:`29773` by
+  :user:`Marc Bresson <MarcBresson>`.
 
 :mod:`sklearn.preprocessing`
 ............................
