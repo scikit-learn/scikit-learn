@@ -484,6 +484,9 @@ redirects = {
     "auto_examples/cluster/plot_cluster_iris": (
         "auto_examples/cluster/plot_kmeans_assumptions"
     ),
+    "auto_examples/ensemble/plot_forest_importances_faces": (
+        "auto_examples/ensemble/plot_forest_importances"
+    ),
 }
 html_context["redirects"] = redirects
 for old_link in redirects:
