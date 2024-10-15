@@ -11,7 +11,7 @@ from sklearn.cluster._bicluster import (
     _log_normalize,
     _scale_normalize,
 )
-from sklearn.datasets import make_biclusters, make_checkerboard
+from sklearn.datasets import make_biclusters, make_checkerboard, make_classification
 from sklearn.metrics import consensus_score, v_measure_score
 from sklearn.model_selection import ParameterGrid
 from sklearn.utils._testing import (
@@ -130,6 +130,24 @@ def test_spectral_biclustering(global_random_seed, csr_container):
                 assert consensus_score(model.biclusters_, (rows, cols)) == 1
 
                 _test_shape_indices(model)
+
+
+@pytest.mark.parametrize("est", (SpectralBiclustering(), SpectralCoclustering()))
+def test_non_regression(est):
+    X, _ = make_classification()
+    est.fit(X)
+
+
+@pytest.mark.parametrize("est", (SpectralBiclustering(), SpectralCoclustering()))
+def test_one_cluster(est):
+    X, _, _ = make_biclusters((3, 3), 1, random_state=0)
+    est.n_clusters = 1
+    est.fit(X)
+
+    assert est.row_labels_.shape == (1, X.shape[0])
+    assert est.column_labels_.shape == (1, X.shape[1])
+    assert est.rows_.shape == (X.shape[0],)
+    assert est.columns_.shape == (X.shape[1],)
 
 
 def _do_scale_test(scaled):
