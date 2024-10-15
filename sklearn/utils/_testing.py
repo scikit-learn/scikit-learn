@@ -681,7 +681,7 @@ def _get_diff_msg(docstrings_grouped):
 
 
 def _check_consistency_items(
-    items_docs, type_or_desc, section, n_objects, description_regex=""
+    items_docs, type_or_desc, section, n_objects, descr_regex_pattern=""
 ):
     """Helper to check docstring consistency of all `items_docs`.
 
@@ -694,15 +694,15 @@ def _check_consistency_items(
         if sum([len(objs) for objs in docstrings_grouped.values()]) < n_objects:
             skipped.append(item_name)
         # If regex provided, match to all descriptions
-        elif type_or_desc == "description" and description_regex:
+        elif type_or_desc == "description" and descr_regex_pattern:
             not_matched = []
             for docstring, group in docstrings_grouped.items():
-                if not re.search(description_regex, docstring):
+                if not re.search(descr_regex_pattern, docstring):
                     not_matched.extend(group)
             if not_matched:
                 msg = textwrap.fill(
                     f"The description of {section[:-1]} '{item_name}' in {not_matched}"
-                    f" does not match 'description_regex': {description_regex} "
+                    f" does not match 'descr_regex_pattern': {descr_regex_pattern} "
                 )
                 raise AssertionError(msg)
         # Otherwise, if more than one key, docstrings not consistent between objects
@@ -732,7 +732,7 @@ def assert_docstring_consistency(
     exclude_attrs=None,
     include_returns=False,
     exclude_returns=None,
-    description_regex="",
+    descr_regex_pattern=None,
 ):
     """Check consistency between docstring parameters/attributes/returns of objects.
 
@@ -776,20 +776,24 @@ def assert_docstring_consistency(
         List of returns to be excluded. If None, no returns are excluded.
         Can only be set if `include_returns` is True.
 
-    description_regex : str, default=""
-        Regular expression to match to all descriptions. If empty string, will
-        revert to comparing descriptions between objects.
+    descr_regex_pattern : str, default=None
+        Regular expression to match to all descriptions of included
+        parameters/attributes/returns. If None, will revert to default behavior
+        of comparing descriptions between objects.
 
     Examples
     --------
-    >>> from sklearn.metrics import (mean_absolute_error, mean_squared_error,
-    ... median_absolute_error)
+    >>> from sklearn.metrics import (accuracy_score, classification_report,
+    ... mean_absolute_error, mean_squared_error, median_absolute_error)
     >>> from sklearn.utils.testing import assert_docstring_consistency
     ... # doctest: +SKIP
     >>> assert_docstring_consistency([mean_absolute_error, mean_squared_error],
     ... include_params=['y_true', 'y_pred', 'sample_weight'])  # doctest: +SKIP
     >>> assert_docstring_consistency([median_absolute_error, mean_squared_error],
     ... include_params=True)  # doctest: +SKIP
+    >>> assert_docstring_consistency([accuracy_score, classification_report],
+    ... include_params=["y_true"],
+    ... descr_regex_pattern=r"Ground truth \(correct\) (labels|target values)")
     """
     from numpydoc.docscrape import NumpyDocString
 
@@ -845,7 +849,7 @@ def assert_docstring_consistency(
             "description",
             section,
             n_objects,
-            description_regex=description_regex,
+            descr_regex_pattern=descr_regex_pattern,
         )
 
 

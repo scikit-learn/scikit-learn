@@ -342,7 +342,7 @@ def test_precision_recall_f_score_docstring_consistency():
         metrics_to_check,
         include_params=True,
         # "zero_division" - the reason for zero division differs between f scores,
-        # precison and recall.
+        # precision and recall.
         exclude_params=["average", "zero_division"],
     )
     description_regex = r"""This parameter is required for multiclass/multilabel targets\.
