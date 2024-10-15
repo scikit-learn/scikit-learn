@@ -41,7 +41,7 @@ __all__ = ["Pipeline", "FeatureUnion", "make_pipeline", "make_union"]
 
 @contextmanager
 def _handle_warnings(estimator):
-    """A context manager to make sure a NotFittedError is raised, if a subestimator
+    """A context manager to make sure a NotFittedError is raised, if a sub-estimator
     raises the error.
 
     Otherwise, we raise a warning if the pipeline is not fitted, with the deprecation.
@@ -59,8 +59,9 @@ def _handle_warnings(estimator):
     except NotFittedError:
         warnings.warn(
             "This Pipeline instance is not fitted yet. Call 'fit' with "
-            "appropriate arguments before using transform. This will raise "
-            "an error in 1.8.",
+            "appropriate arguments before using other methods such as transform, "
+            "predict, etc. This will raise an error in 1.8 instead of the current "
+            "warning.",
             FutureWarning,
         )
 
@@ -603,6 +604,7 @@ class Pipeline(_BaseComposition):
         y_pred : ndarray
             Result of calling `predict` on the final estimator.
         """
+        # TODO(1.8): Remove the context manager and use check_is_fitted(self)
         with _handle_warnings(self):
             Xt = X
 
@@ -718,6 +720,7 @@ class Pipeline(_BaseComposition):
         y_proba : ndarray of shape (n_samples, n_classes)
             Result of calling `predict_proba` on the final estimator.
         """
+        # TODO(1.8): Remove the context manager and use check_is_fitted(self)
         with _handle_warnings(self):
             Xt = X
 
@@ -764,6 +767,7 @@ class Pipeline(_BaseComposition):
         y_score : ndarray of shape (n_samples, n_classes)
             Result of calling `decision_function` on the final estimator.
         """
+        # TODO(1.8): Remove the context manager and use check_is_fitted(self)
         with _handle_warnings(self):
             _raise_for_params(params, self, "decision_function")
 
@@ -801,6 +805,7 @@ class Pipeline(_BaseComposition):
         y_score : ndarray of shape (n_samples,)
             Result of calling `score_samples` on the final estimator.
         """
+        # TODO(1.8): Remove the context manager and use check_is_fitted(self)
         with _handle_warnings(self):
             Xt = X
             for _, _, transformer in self._iter(with_final=False):
@@ -846,6 +851,7 @@ class Pipeline(_BaseComposition):
         y_log_proba : ndarray of shape (n_samples, n_classes)
             Result of calling `predict_log_proba` on the final estimator.
         """
+        # TODO(1.8): Remove the context manager and use check_is_fitted(self)
         with _handle_warnings(self):
             Xt = X
 
@@ -900,6 +906,7 @@ class Pipeline(_BaseComposition):
         Xt : ndarray of shape (n_samples, n_transformed_features)
             Transformed data.
         """
+        # TODO(1.8): Remove the context manager and use check_is_fitted(self)
         with _handle_warnings(self):
             _raise_for_params(params, self, "transform")
 
@@ -953,6 +960,7 @@ class Pipeline(_BaseComposition):
             Inverse transformed data, that is, data in the original feature
             space.
         """
+        # TODO(1.8): Remove the context manager and use check_is_fitted(self)
         with _handle_warnings(self):
             _raise_for_params(params, self, "inverse_transform")
 
@@ -1005,6 +1013,7 @@ class Pipeline(_BaseComposition):
         score : float
             Result of calling `score` on the final estimator.
         """
+        # TODO(1.8): Remove the context manager and use check_is_fitted(self)
         with _handle_warnings(self):
             Xt = X
             if not _routing_enabled():
@@ -1102,7 +1111,13 @@ class Pipeline(_BaseComposition):
         return self.steps[0][1].feature_names_in_
 
     def __sklearn_is_fitted__(self):
-        """Indicate whether pipeline has been fit."""
+        """Indicate whether pipeline has been fit.
+
+        This is done by checking whether the last non-`passthrough` step of the
+        pipeline is fitted.
+
+        An empty pipeline is considered fitted.
+        """
 
         # First find the last step that is not 'passthrough'
         last_step = None

@@ -1821,11 +1821,31 @@ def test_pipeline_inverse_transform_Xt_deprecation():
         pipe.inverse_transform(Xt=X)
 
 
-# TODO(1.8): remove this test
-def test_pipeline_warns_not_fitted():
+# TODO(1.8): change warning to checking for NotFittedError
+@pytest.mark.parametrize(
+    "method",
+    [
+        "predict",
+        "predict_proba",
+        "predict_log_proba",
+        "decision_function",
+        "score",
+        "score_samples",
+        "transform",
+        "inverse_transform",
+    ],
+)
+def test_pipeline_warns_not_fitted(method):
     class StatelessEstimator(BaseEstimator):
+        """Stateless estimator that doesn't check if it's fitted.
+
+        Stateless estimators that don't require fit, should properly set the
+        `requires_fit` flag and implement a `__sklearn_check_is_fitted__` returning
+        `True`.
+        """
+
         def fit(self, X, y):
-            return self
+            return self  # pragma: no cover
 
         def transform(self, X):
             return X
@@ -1852,21 +1872,8 @@ def test_pipeline_warns_not_fitted():
             return X
 
     pipe = Pipeline([("estimator", StatelessEstimator())])
-    METHODS = [
-        "predict",
-        "predict_proba",
-        "predict_log_proba",
-        "decision_function",
-        "score",
-        "score_samples",
-        "transform",
-        "inverse_transform",
-    ]
-    for method in METHODS:
-        with pytest.warns(
-            FutureWarning, match="This Pipeline instance is not fitted yet."
-        ):
-            getattr(pipe, method)([[1]])
+    with pytest.warns(FutureWarning, match="This Pipeline instance is not fitted yet."):
+        getattr(pipe, method)([[1]])
 
 
 # Test that metadata is routed correctly for pipelines and FeatureUnion
