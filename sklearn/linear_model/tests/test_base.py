@@ -692,10 +692,11 @@ def test_fused_types_make_dataset(csr_container):
     assert_array_equal(yi_64, yicsr_64)
 
 
+@pytest.mark.parametrize("X_shape", [(10, 5), (10, 20), (100, 100)])
 @pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
 @pytest.mark.parametrize("fit_intercept", [False, True])
 def test_linear_regression_sample_weight_consistency(
-    sparse_container, fit_intercept, global_random_seed
+    X_shape, sparse_container, fit_intercept, global_random_seed
 ):
     """Test that the impact of sample_weight is consistent.
 
@@ -704,7 +705,7 @@ def test_linear_regression_sample_weight_consistency(
     It is very similar to test_enet_sample_weight_consistency.
     """
     rng = np.random.RandomState(global_random_seed)
-    n_samples, n_features = 10, 5
+    n_samples, n_features = X_shape
 
     X = rng.rand(n_samples, n_features)
     y = rng.rand(n_samples)
