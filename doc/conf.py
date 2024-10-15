@@ -444,8 +444,17 @@ redirects = {
     "auto_examples/linear_model/plot_bayesian_ridge": (
         "auto_examples/linear_model/plot_ard"
     ),
-    "auto_examples/model_selection/grid_search_text_feature_extraction.py": (
-        "auto_examples/model_selection/plot_grid_search_text_feature_extraction.py"
+    "auto_examples/model_selection/grid_search_text_feature_extraction": (
+        "auto_examples/model_selection/plot_grid_search_text_feature_extraction"
+    ),
+    "auto_examples/model_selection/plot_validation_curve": (
+        "auto_examples/model_selection/plot_train_error_vs_test_error"
+    ),
+    "auto_examples/datasets/plot_digits_last_image": (
+        "auto_examples/exercises/plot_digits_classification_exercises"
+    ),
+    "auto_examples/datasets/plot_random_dataset": (
+        "auto_examples/classification/plot_classifier_comparison"
     ),
     "auto_examples/miscellaneous/plot_changed_only_pprint_parameter": (
         "auto_examples/miscellaneous/plot_estimator_representation"
@@ -460,8 +469,20 @@ redirects = {
     "auto_examples/decomposition/plot_pca_3d": (
         "auto_examples/decomposition/plot_pca_iris"
     ),
-    "auto_examples/exercises/plot_cv_digits.py": (
-        "auto_examples/model_selection/plot_nested_cross_validation_iris.py"
+    "auto_examples/exercises/plot_cv_digits": (
+        "auto_examples/model_selection/plot_nested_cross_validation_iris"
+    ),
+    "auto_examples/linear_model/plot_lasso_lars": (
+        "auto_examples/linear_model/plot_lasso_lasso_lars_elasticnet_path"
+    ),
+    "auto_examples/linear_model/plot_lasso_coordinate_descent_path": (
+        "auto_examples/linear_model/plot_lasso_lasso_lars_elasticnet_path"
+    ),
+    "auto_examples/cluster/plot_color_quantization": (
+        "auto_examples/cluster/plot_face_compress"
+    ),
+    "auto_examples/cluster/plot_cluster_iris": (
+        "auto_examples/cluster/plot_kmeans_assumptions"
     ),
 }
 html_context["redirects"] = redirects
