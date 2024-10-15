@@ -478,6 +478,12 @@ redirects = {
     "auto_examples/linear_model/plot_lasso_coordinate_descent_path": (
         "auto_examples/linear_model/plot_lasso_lasso_lars_elasticnet_path"
     ),
+    "auto_examples/cluster/plot_color_quantization": (
+        "auto_examples/cluster/plot_face_compress"
+    ),
+    "auto_examples/cluster/plot_cluster_iris": (
+        "auto_examples/cluster/plot_kmeans_assumptions"
+    ),
 }
 html_context["redirects"] = redirects
 for old_link in redirects:

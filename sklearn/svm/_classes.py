@@ -351,7 +351,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # TODO: replace by a statistical test when _dual=True, see meta-issue #162298
+        # TODO: replace by a statistical test when _dual=True, see meta-issue #16298
         tags._xfail_checks = {
             "check_sample_weight_equivalence": (
                 "sample_weight is not equivalent to removing/repeating samples."
@@ -615,7 +615,7 @@ class LinearSVR(RegressorMixin, LinearModel):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # TODO: replace by a statistical test, see meta-issue #162298
+        # TODO: replace by a statistical test, see meta-issue #16298
         tags._xfail_checks = {
             "check_sample_weight_equivalence": (
                 "sample_weight is not equivalent to removing/repeating samples."
@@ -900,7 +900,7 @@ class SVC(BaseSVC):
         tags._xfail_checks = {
             # TODO: fix sample_weight handling of this estimator when probability=False
             # TODO: replace by a statistical test when probability=True
-            # see meta-issue #162298
+            # see meta-issue #16298
             "check_sample_weight_equivalence": (
                 "sample_weight is not equivalent to removing/repeating samples."
             ),
@@ -1177,7 +1177,7 @@ class NuSVC(BaseSVC):
             "check_class_weight_classifiers": "class_weight is ignored.",
             # TODO: fix sample_weight handling of this estimator when probability=False
             # TODO: replace by a statistical test when probability=True
-            # see meta-issue #162298
+            # see meta-issue #16298
             "check_sample_weight_equivalence": (
                 "sample_weight is not equivalent to removing/repeating samples."
             ),
@@ -1381,7 +1381,7 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # TODO: fix sample_weight handling of this estimator, see meta-issue #162298
+        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
         tags._xfail_checks = {
             "check_sample_weight_equivalence": (
                 "sample_weight is not equivalent to removing/repeating samples."
@@ -1576,7 +1576,7 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # TODO: fix sample_weight handling of this estimator, see meta-issue #162298
+        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
         tags._xfail_checks = {
             "check_sample_weight_equivalence": (
                 "sample_weight is not equivalent to removing/repeating samples."
@@ -1840,7 +1840,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # TODO: fix sample_weight handling of this estimator, see meta-issue #162298
+        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
         tags._xfail_checks = {
             "check_sample_weight_equivalence": (
                 "sample_weight is not equivalent to removing/repeating samples."

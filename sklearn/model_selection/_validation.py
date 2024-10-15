@@ -2414,7 +2414,7 @@ def validation_curve(
 
     Notes
     -----
-    See :ref:`sphx_glr_auto_examples_model_selection_plot_validation_curve.py`
+    See :ref:`sphx_glr_auto_examples_model_selection_plot_train_error_vs_test_error.py`
 
     Examples
     --------
