@@ -369,7 +369,7 @@ def test_precision_recall_f_score_docstring_consistency():
     assert_docstring_consistency(
         metrics_to_check,
         include_params=["average"],
-        description_regex=" ".join(description_regex.split()),
+        descr_regex_pattern=" ".join(description_regex.split()),
     )
 
 
