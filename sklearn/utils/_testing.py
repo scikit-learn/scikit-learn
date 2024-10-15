@@ -734,7 +734,7 @@ def assert_docstring_consistency(
     exclude_returns=None,
     descr_regex_pattern=None,
 ):
-    """Check consistency between docstring parameters/attributes/returns of objects.
+    r"""Check consistency between docstring parameters/attributes/returns of objects.
 
     Checks if parameters/attributes/returns have the same type specification and
     description (ignoring whitespace) across `objects`. Intended to be used for
