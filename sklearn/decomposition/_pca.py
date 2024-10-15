@@ -488,10 +488,12 @@ class PCA(_BasePCA):
         xp, is_array_api_compliant = get_namespace(X)
 
         # Raise an error for sparse input and unsupported svd_solver
-        if (
-            issparse(X)
-            and self.svd_solver not in {"auto", "arpack", "lobpcg", "covariance_eigh"}
-        ):
+        if issparse(X) and self.svd_solver not in {
+            "auto",
+            "arpack",
+            "lobpcg",
+            "covariance_eigh",
+        }:
             raise TypeError(
                 'PCA only support sparse inputs with the "arpack", "lobpcg", and'
                 f' "covariance_eigh" solvers, while "{self.svd_solver}" was passed. See'
@@ -728,9 +730,8 @@ class PCA(_BasePCA):
                 "svd_solver='%s'"
                 % (n_components, min(n_samples, n_features), svd_solver)
             )
-        elif (
-            svd_solver in {"arpack", "lobpcg"}
-            and n_components == min(n_samples, n_features)
+        elif svd_solver in {"arpack", "lobpcg"} and n_components == min(
+            n_samples, n_features
         ):
             raise ValueError(
                 "n_components=%r must be strictly less than "
