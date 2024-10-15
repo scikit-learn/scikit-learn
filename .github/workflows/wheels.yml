@@ -156,7 +156,7 @@ jobs:
           python-version: "3.11" # update once build dependencies are available
 
       - uses: conda-incubator/setup-miniconda@v3
-        if: ${{ matrix.platform_id == 'macosx_arm64' }}
+        if: ${{ startsWith(matrix.platform_id, 'macosx') }}
 
       - name: Build and test wheels
         env:
