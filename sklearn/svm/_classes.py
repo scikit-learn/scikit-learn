@@ -991,9 +991,7 @@ class NuSVC(BaseSVC):
         one-vs-one ('ovo') decision function of libsvm which has shape
         (n_samples, n_classes * (n_classes - 1) / 2). However, one-vs-one
         ('ovo') is always used as multi-class strategy. The parameter is
-        ignored for binary classification. See
-        :ref:`sphx_glr_auto_examples_svm_plot_svm_tie_breaking.py` for an
-        example of its usage with the ``break_ties`` parameter.
+        ignored for binary classification.
 
         .. versionchanged:: 0.19
             decision_function_shape is 'ovr' by default.
