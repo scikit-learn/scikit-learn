@@ -38,7 +38,7 @@ If you are unsure how to name the news fragment or which folder to use, don't
 hesitate to ask in your pull request!
 
 You can install `towncrier` and run `towncrier create` to help you
-create a news fragment. You can also run `towncrier --draft --version 1.6` if
+create a news fragment. You can also run `towncrier build --draft --version 1.6` if
 you want to get a preview of how your change will look in the final release
 notes.
 
