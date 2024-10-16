@@ -167,17 +167,27 @@ plt.show()
 #   class 1 from the combined classes 0 and 2.
 # - This binary approach can lead to simpler decision boundaries but may not capture
 #   complex relationships between all classes simultaneously.
+# - There is no possible interpretation of the conditional class probabilities.
 #
 # For multinomial logistic regression:
 #
 # - All hyperplanes are determined simultaneously, considering the relationships between
 #   all classes at once.
+# - The loss minimized by the model is a proper scoring rule, which means that the model
+#   is optimized to estimate the conditional class probabilities that are, therefore,
+#   meaningful.
 # - Each hyperplane represents the decision boundary where the probability of one class
 #   becomes higher than the others, based on the overall probability distribution.
 # - This approach can capture more nuanced relationships between classes, potentially
 #   leading to more accurate classification in multi-class problems.
 #
 # The difference in hyperplanes, especially for class 1, highlights how these methods
-# can produce different decision boundaries despite similar overall accuracy. The choice
-# between one-vs-rest and multinomial logistic regression can depend on the specific
-# dataset and the nature of the classification problem.
+# can produce different decision boundaries despite similar overall accuracy.
+#
+# In practice, using multinomial logistic regression is recommended since it minimizes a
+# well-formulated loss function, leading to better-calibrated class probabilities and
+# thus more interpretable results. When it comes to decision boundaries, one should
+# formulate a utility function to transform the class probabilities into a meaningful
+# quantity for the problem at hand. One-vs-rest allows for different decision boundaries
+# but does not allow for fine-grained control over the trade-off between the classes as
+# a utility function would.
