@@ -25,14 +25,14 @@ def _estimator_has(attr):
 
 
 class FrozenEstimator(BaseEstimator):
-    """Frozen estimator.
+    """Estimator that wraps a fitted estimator to prevent re-fitting.
 
     This meta-estimator takes an estimator and freezes it, in the sense that calling
-    `.fit` on it has no effect, and `fit_predict` and `fit_transform` are disabled.
+    `fit` on it has no effect. `fit_predict` and `fit_transform` are also disabled.
     All other methods are delegated to the original estimator and original estimator's
     attributes are accessible as well.
 
-    This is particularly useful when you have a fit or a pre-trained model as a
+    This is particularly useful when you have a fitted or a pre-trained model as a
     transformer in a pipeline, and you'd like `pipeline.fit` to have no effect on this
     step.
 
@@ -59,13 +59,14 @@ class FrozenEstimator(BaseEstimator):
     array(...)
     """
 
-    _required_parameters = ["estimator"]
-
     def __init__(self, estimator):
         self.estimator = estimator
 
     @available_if(_estimator_has("__getitem__"))
     def __getitem__(self, *args, **kwargs):
+        """__getitem__ is defined in :class:`~sklearn.pipeline.Pipeline` and \
+            :class:`~sklearn.compose.ColumnTransformer`.
+        """
         return self.estimator.__getitem__(*args, **kwargs)
 
     def __getattr__(self, name):
@@ -88,7 +89,7 @@ class FrozenEstimator(BaseEstimator):
     def fit(self, X, y, *args, **kwargs):
         """No-op.
 
-        As a frozen estimator, calling fit has no effect.
+        As a frozen estimator, calling `fit` has no effect.
 
         Parameters
         ----------
@@ -117,7 +118,7 @@ class FrozenEstimator(BaseEstimator):
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
 
-        The only valud key here is `estimator`. You cannot set the parameters of the
+        The only valid key here is `estimator`. You cannot set the parameters of the
         inner estimator.
 
         Parameters
@@ -136,6 +137,8 @@ class FrozenEstimator(BaseEstimator):
         if kwargs:
             raise ValueError(
                 "You cannot set parameters of the inner estimator in a frozen "
+                "estimator since calling `fit` has no effect. You can use "
+                "`frozenestimator.estimator.set_params` to set parameters of the inner "
                 "estimator."
             )
 

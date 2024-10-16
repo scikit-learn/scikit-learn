@@ -24,53 +24,59 @@ from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import RobustScaler, StandardScaler
+from sklearn.utils._testing import set_random_state
 from sklearn.utils.validation import check_is_fitted
 
-REGRESSION_DATASET = make_regression()
-CLASSIFICATION_DATASET = make_classification()
+
+@pytest.fixture
+def regression_dataset():
+    return make_regression()
+
+
+@pytest.fixture
+def classification_dataset():
+    return make_classification()
 
 
 @pytest.mark.parametrize(
     "estimator, dataset",
     [
-        (LinearRegression(), REGRESSION_DATASET),
-        (LogisticRegression(), CLASSIFICATION_DATASET),
-        (make_pipeline(StandardScaler(), LinearRegression()), REGRESSION_DATASET),
-        (make_pipeline(StandardScaler(), LogisticRegression()), CLASSIFICATION_DATASET),
-        (StandardScaler(), REGRESSION_DATASET),
-        (KMeans(), REGRESSION_DATASET),
-        (LocalOutlierFactor(), REGRESSION_DATASET),
+        (LinearRegression(), "regression_dataset"),
+        (LogisticRegression(), "classification_dataset"),
+        (make_pipeline(StandardScaler(), LinearRegression()), "regression_dataset"),
+        (
+            make_pipeline(StandardScaler(), LogisticRegression()),
+            "classification_dataset",
+        ),
+        (StandardScaler(), "regression_dataset"),
+        (KMeans(), "regression_dataset"),
+        (LocalOutlierFactor(), "regression_dataset"),
         (
             make_column_transformer(
                 (StandardScaler(), [0]),
                 (RobustScaler(), [1]),
             ),
-            REGRESSION_DATASET,
+            "regression_dataset",
         ),
     ],
 )
-def test_frozen_methods(estimator, dataset):
+@pytest.mark.parametrize(
+    "method",
+    ["predict", "predict_proba", "predict_log_proba", "decision_function", "transform"],
+)
+def test_frozen_methods(estimator, dataset, request, method):
     """Test that frozen.fit doesn't do anything, and that all other methods are
     exposed by the frozen estimator and return the same values as the estimator.
     """
-    X, y = dataset
+    X, y = request.getfixturevalue(dataset)
+    set_random_state(estimator)
     estimator.fit(X, y)
     frozen = FrozenEstimator(estimator)
     # this should be no-op
     frozen.fit([[1]], [1])
 
-    methods = [
-        "predict",
-        "predict_proba",
-        "predict_log_proba",
-        "decision_function",
-        "transform",
-    ]
-    for method in methods:
-        if hasattr(estimator, method):
-            assert_array_equal(
-                getattr(estimator, method)(X), getattr(frozen, method)(X)
-            )
+    if hasattr(estimator, method):
+        assert_array_equal(getattr(estimator, method)(X), getattr(frozen, method)(X))
 
     assert is_classifier(estimator) == is_classifier(frozen)
     assert is_regressor(estimator) == is_regressor(frozen)
@@ -79,7 +85,7 @@ def test_frozen_methods(estimator, dataset):
 
 
 @pytest.mark.usefixtures("enable_slep006")
-def test_frozen_metadata_routing():
+def test_frozen_metadata_routing(regression_dataset):
     """Test that metadata routing works with frozen estimators."""
 
     class ConsumesMetadata(BaseEstimator):
@@ -97,7 +103,7 @@ def test_frozen_metadata_routing():
                 assert metadata is not None
             return np.ones(len(X))
 
-    X, y = REGRESSION_DATASET
+    X, y = regression_dataset
     pipeline = make_pipeline(
         ConsumesMetadata(on_fit=True, on_predict=True)
         .set_fit_request(metadata=True)
@@ -124,7 +130,7 @@ def test_frozen_metadata_routing():
         frozen.predict(X, metadata="test")
 
 
-def test_composite_fit():
+def test_composite_fit(classification_dataset):
     """Test that calling fit_transform and fit_predict doesn't call fit."""
 
     class Estimator(BaseEstimator):
@@ -143,7 +149,7 @@ def test_composite_fit():
             # only here to test that it doesn't get called
             ...  # pragma: no cover
 
-    X, y = CLASSIFICATION_DATASET
+    X, y = classification_dataset
     est = Estimator().fit(X, y)
     frozen = FrozenEstimator(est)
 
@@ -155,18 +161,18 @@ def test_composite_fit():
     assert frozen._fit_counter == 1
 
 
-def test_clone_frozen():
+def test_clone_frozen(regression_dataset):
     """Test that cloning a frozen estimator keeps the frozen state."""
-    X, y = REGRESSION_DATASET
+    X, y = regression_dataset
     estimator = LinearRegression().fit(X, y)
     frozen = FrozenEstimator(estimator)
     cloned = clone(frozen)
     assert cloned.estimator is estimator
 
 
-def test_check_is_fitted():
+def test_check_is_fitted(regression_dataset):
     """Test that check_is_fitted works on frozen estimators."""
-    X, y = REGRESSION_DATASET
+    X, y = regression_dataset
 
     estimator = LinearRegression()
     frozen = FrozenEstimator(estimator)
