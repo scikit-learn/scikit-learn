@@ -252,7 +252,7 @@ def type_of_target(y, input_name="", raise_unknown=False):
         If `True`, raise an error when the type of target returned by
         :func:`~sklearn.utils.multiclass.type_of_target` is `"unknown"`.
 
-        .. versionadded: 1.6
+        .. versionadded:: 1.6
 
     Returns
     -------
