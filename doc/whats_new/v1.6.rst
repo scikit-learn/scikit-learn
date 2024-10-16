@@ -375,6 +375,10 @@ Changelog
   is called without a `y` argument
   :pr:`29402` by :user:`Anurag Varma <Anurag-Varma>`.
 
+- |Fix| Make GroupKFold use a stable sort to ensure reproducability with ties in group size. 
+  This may result in different groupings than previous versions, but will now be reproducible across different machines and runs.
+  :pr:`29496` by :user:`Jake Blitch <blitchj>`.
+
 :mod:`sklearn.neighbors`
 ........................
 

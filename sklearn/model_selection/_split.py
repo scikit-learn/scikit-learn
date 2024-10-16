@@ -610,7 +610,7 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
         n_samples_per_group = np.bincount(groups)
 
         # Distribute the most frequent groups first
-        indices = np.argsort(n_samples_per_group)[::-1]
+        indices = np.argsort(n_samples_per_group, kind="stable")[::-1]
         n_samples_per_group = n_samples_per_group[indices]
 
         # Total weight of each fold
