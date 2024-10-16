@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
 
+from sklearn import config_context
 from sklearn.base import (
     BaseEstimator,
     clone,
@@ -84,7 +85,7 @@ def test_frozen_methods(estimator, dataset, request, method):
     assert is_outlier_detector(estimator) == is_outlier_detector(frozen)
 
 
-@pytest.mark.usefixtures("enable_slep006")
+@config_context(enable_metadata_routing=True)
 def test_frozen_metadata_routing(regression_dataset):
     """Test that metadata routing works with frozen estimators."""
 
