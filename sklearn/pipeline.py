@@ -1198,7 +1198,7 @@ def make_pipeline(*steps, memory=None, verbose=False):
 
     See
     :ref:`sphx_glr_auto_examples_feature_selection_plot_feature_selection_pipeline.py`
-    for an example on how to use the API.
+    for an example of how to create a feature selection pipeline for SVM.
 
     Parameters
     ----------
