@@ -1438,7 +1438,7 @@ def test_check_classifier_not_supporting_multiclass():
 
     class BadEstimator(BaseEstimator):
         # we don't actually need to define the tag here since we're running the test
-        # manually.
+        # manually, and BaseEstimator defaults to multi_output=False.
         def fit(self, X, y):
             return self
 
