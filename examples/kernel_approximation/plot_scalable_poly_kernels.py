@@ -21,8 +21,8 @@ approximating the accuracy of a kernelized classifier in a scalable manner.
 
 """
 
-# Author: Daniel Lopez-Sanchez <lope@usal.es>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Preparing the data

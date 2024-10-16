@@ -18,27 +18,26 @@ geospatial coordinates.
 
 The two species are:
 
- - `"Bradypus variegatus"
-   <https://www.iucnredlist.org/species/3038/47437046>`_ ,
-   the Brown-throated Sloth.
+- `"Bradypus variegatus"
+  <https://www.iucnredlist.org/species/3038/47437046>`_ ,
+  the Brown-throated Sloth.
 
- - `"Microryzomys minutus"
-   <http://www.iucnredlist.org/details/13408/0>`_ ,
-   also known as the Forest Small Rice Rat, a rodent that lives in Peru,
-   Colombia, Ecuador, Peru, and Venezuela.
+- `"Microryzomys minutus"
+  <http://www.iucnredlist.org/details/13408/0>`_ ,
+  also known as the Forest Small Rice Rat, a rodent that lives in Peru,
+  Colombia, Ecuador, Peru, and Venezuela.
 
 References
 ----------
 
- * `"Maximum entropy modeling of species geographic distributions"
-   <http://rob.schapire.net/papers/ecolmod.pdf>`_
-   S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
-   190:231-259, 2006.
+- `"Maximum entropy modeling of species geographic distributions"
+  <http://rob.schapire.net/papers/ecolmod.pdf>`_
+  S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
+  190:231-259, 2006.
 """  # noqa: E501
 
-# Author: Jake Vanderplas <jakevdp@cs.washington.edu>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np

@@ -28,14 +28,11 @@ Notes
 -----
 
 For an example of using this dataset, see
-:ref:`examples/applications/plot_species_distribution_modeling.py
-<sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py>`.
+:ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`.
 """
 
-# Authors: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#          Jake Vanderplas <vanderplas@astro.washington.edu>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import logging
 from io import BytesIO
@@ -219,8 +216,7 @@ def fetch_species_distributions(
       Colombia, Ecuador, Peru, and Venezuela.
 
     - For an example of using this dataset with scikit-learn, see
-      :ref:`examples/applications/plot_species_distribution_modeling.py
-      <sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py>`.
+      :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`.
 
     References
     ----------

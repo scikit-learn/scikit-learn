@@ -13,11 +13,8 @@ criterion, namely AIC or BIC.
 In what follows, we will discuss in details the different strategies.
 """
 
-# Author: Olivier Grisel
-#         Gael Varoquaux
-#         Alexandre Gramfort
-#         Guillaume Lemaitre
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Dataset

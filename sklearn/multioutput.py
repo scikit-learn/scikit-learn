@@ -5,13 +5,8 @@ a base estimator to be provided in their constructor. The meta-estimator
 extends single output estimators to multioutput estimators.
 """
 
-# Author: Tim Head <betatim@gmail.com>
-# Author: Hugo Bowne-Anderson <hugobowne@gmail.com>
-# Author: Chris Rivera <chris.richard.rivera@gmail.com>
-# Author: Michael Williamson
-# Author: James Ashton Nichols <james.ashton.nichols@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 from abc import ABCMeta, abstractmethod
@@ -49,6 +44,7 @@ from .utils.validation import (
     _check_response_method,
     check_is_fitted,
     has_fit_parameter,
+    validate_data,
 )
 
 __all__ = [
@@ -159,7 +155,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
 
         first_time = not hasattr(self, "estimators_")
 
-        y = self._validate_data(X="no_validation", y=y, multi_output=True)
+        y = validate_data(self, X="no_validation", y=y, multi_output=True)
 
         if y.ndim == 1:
             raise ValueError(
@@ -243,7 +239,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         if not hasattr(self.estimator, "fit"):
             raise ValueError("The base estimator should implement a fit method")
 
-        y = self._validate_data(X="no_validation", y=y, multi_output=True)
+        y = validate_data(self, X="no_validation", y=y, multi_output=True)
 
         if is_classifier(self):
             check_classification_targets(y)
@@ -313,8 +309,11 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
 
         return np.asarray(y).T
 
-    def _more_tags(self):
-        return {"multioutput_only": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.single_output = False
+        tags.target_tags.multi_output = True
+        return tags
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.
@@ -614,9 +613,11 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         y_pred = self.predict(X)
         return np.mean(np.all(y == y_pred, axis=1))
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
         # FIXME
-        return {"_skip_test": True}
+        tags._skip_test = True
+        return tags
 
 
 def _available_if_base_estimator_has(attr):
@@ -659,7 +660,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
     def _get_predictions(self, X, *, output_method):
         """Get predictions for each model in the chain."""
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse=True, reset=False)
+        X = validate_data(self, X, accept_sparse=True, reset=False)
         Y_output_chain = np.zeros((X.shape[0], len(self.estimators_)))
         Y_feature_chain = np.zeros((X.shape[0], len(self.estimators_)))
 
@@ -718,7 +719,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         self : object
             Returns a fitted instance.
         """
-        X, Y = self._validate_data(X, Y, multi_output=True, accept_sparse=True)
+        X, Y = validate_data(self, X, Y, multi_output=True, accept_sparse=True)
 
         random_state = check_random_state(self.random_state)
         self.order_ = self.order
@@ -1099,8 +1100,13 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         )
         return router
 
-    def _more_tags(self):
-        return {"_skip_test": True, "multioutput_only": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        # FIXME
+        tags._skip_test = True
+        tags.target_tags.single_output = False
+        tags.target_tags.multi_output = True
+        return tags
 
 
 class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
@@ -1248,5 +1254,8 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         )
         return router
 
-    def _more_tags(self):
-        return {"multioutput_only": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.single_output = False
+        tags.target_tags.multi_output = True
+        return tags

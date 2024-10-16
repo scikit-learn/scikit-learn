@@ -25,7 +25,6 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
-    ignore_warnings,
 )
 
 
@@ -1365,7 +1364,6 @@ def test_elasticnet_convergence(klass):
             assert_almost_equal(cd.coef_, sgd.coef_, decimal=2, err_msg=err_msg)
 
 
-@ignore_warnings
 @pytest.mark.parametrize("klass", [SGDRegressor, SparseSGDRegressor])
 def test_partial_fit(klass):
     third = X.shape[0] // 3
@@ -1912,56 +1910,6 @@ def test_gradient_squared_hinge():
     _test_loss_common(loss, cases)
 
 
-def test_loss_log():
-    # Test Log (logistic loss)
-    loss = sgd_fast.Log()
-    cases = [
-        # (p, y, expected_loss, expected_dloss)
-        (1.0, 1.0, np.log(1.0 + np.exp(-1.0)), -1.0 / (np.exp(1.0) + 1.0)),
-        (1.0, -1.0, np.log(1.0 + np.exp(1.0)), 1.0 / (np.exp(-1.0) + 1.0)),
-        (-1.0, -1.0, np.log(1.0 + np.exp(-1.0)), 1.0 / (np.exp(1.0) + 1.0)),
-        (-1.0, 1.0, np.log(1.0 + np.exp(1.0)), -1.0 / (np.exp(-1.0) + 1.0)),
-        (0.0, 1.0, np.log(2), -0.5),
-        (0.0, -1.0, np.log(2), 0.5),
-        (17.9, -1.0, 17.9, 1.0),
-        (-17.9, 1.0, 17.9, -1.0),
-    ]
-    _test_loss_common(loss, cases)
-    assert_almost_equal(loss.py_dloss(18.1, 1.0), np.exp(-18.1) * -1.0, 16)
-    assert_almost_equal(loss.py_loss(18.1, 1.0), np.exp(-18.1), 16)
-    assert_almost_equal(loss.py_dloss(-18.1, -1.0), np.exp(-18.1) * 1.0, 16)
-    assert_almost_equal(loss.py_loss(-18.1, 1.0), 18.1, 16)
-
-
-def test_loss_squared_loss():
-    # Test SquaredLoss
-    loss = sgd_fast.SquaredLoss()
-    cases = [
-        # (p, y, expected_loss, expected_dloss)
-        (0.0, 0.0, 0.0, 0.0),
-        (1.0, 1.0, 0.0, 0.0),
-        (1.0, 0.0, 0.5, 1.0),
-        (0.5, -1.0, 1.125, 1.5),
-        (-2.5, 2.0, 10.125, -4.5),
-    ]
-    _test_loss_common(loss, cases)
-
-
-def test_loss_huber():
-    # Test Huber
-    loss = sgd_fast.Huber(0.1)
-    cases = [
-        # (p, y, expected_loss, expected_dloss)
-        (0.0, 0.0, 0.0, 0.0),
-        (0.1, 0.0, 0.005, 0.1),
-        (0.0, 0.1, 0.005, -0.1),
-        (3.95, 4.0, 0.00125, -0.05),
-        (5.0, 2.0, 0.295, 0.1),
-        (-1.0, 5.0, 0.595, -0.1),
-    ]
-    _test_loss_common(loss, cases)
-
-
 def test_loss_modified_huber():
     # (p, y, expected_loss, expected_dloss)
     loss = sgd_fast.ModifiedHuber()
@@ -2214,19 +2162,6 @@ def test_sgd_numerical_consistency(SGDEstimator):
     sgd_32.fit(X_32, Y_32)
 
     assert_allclose(sgd_64.coef_, sgd_32.coef_)
-
-
-# TODO(1.6): remove
-@pytest.mark.parametrize("Estimator", [SGDClassifier, SGDOneClassSVM])
-def test_loss_attribute_deprecation(Estimator):
-    # Check that we raise the proper deprecation warning if accessing
-    # `loss_function_`.
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
-    est = Estimator().fit(X, y)
-
-    with pytest.warns(FutureWarning, match="`loss_function_` was deprecated"):
-        est.loss_function_
 
 
 # TODO(1.7): remove

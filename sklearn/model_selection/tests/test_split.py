@@ -86,6 +86,12 @@ GROUP_SPLITTER_NAMES = set(splitter.__class__.__name__ for splitter in GROUP_SPL
 
 ALL_SPLITTERS = NO_GROUP_SPLITTERS + GROUP_SPLITTERS  # type: ignore
 
+SPLITTERS_REQUIRING_TARGET = [
+    StratifiedKFold(),
+    StratifiedShuffleSplit(),
+    RepeatedStratifiedKFold(),
+]
+
 X = np.ones(10)
 y = np.arange(10) // 2
 test_groups = (
@@ -110,7 +116,6 @@ def _split(splitter, X, y, groups):
         return splitter.split(X, y)
 
 
-@ignore_warnings
 def test_cross_validator_with_default_params():
     n_samples = 4
     n_unique_groups = 4
@@ -178,10 +183,10 @@ def test_cross_validator_with_default_params():
         # Test if the cross-validator works as expected even if
         # the data is 1d
         np.testing.assert_equal(
-            list(cv.split(X, y, groups)), list(cv.split(X_1d, y, groups))
+            list(_split(cv, X, y, groups)), list(_split(cv, X_1d, y, groups))
         )
         # Test that train, test indices returned are integers
-        for train, test in cv.split(X, y, groups):
+        for train, test in _split(cv, X, y, groups):
             assert np.asarray(train).dtype.kind == "i"
             assert np.asarray(test).dtype.kind == "i"
 
@@ -769,7 +774,6 @@ def test_group_shuffle_split_default_test_size(train_size, exp_train, exp_test):
     assert len(X_test) == exp_test
 
 
-@ignore_warnings
 def test_stratified_shuffle_split_init():
     X = np.arange(7)
     y = np.asarray([0, 1, 1, 1, 2, 2, 2])
@@ -1147,7 +1151,6 @@ def test_leave_one_p_group_out_error_on_fewer_number_of_groups():
         next(LeavePGroupsOut(n_groups=3).split(X, y, groups))
 
 
-@ignore_warnings
 def test_repeated_cv_value_errors():
     # n_repeats is not integer or <= 0
     for cv in (RepeatedKFold, RepeatedStratifiedKFold):
@@ -1419,7 +1422,6 @@ def test_train_test_split_32bit_overflow():
     assert y_train.size + y_test.size == big_number
 
 
-@ignore_warnings
 def test_train_test_split_pandas():
     # check train_test_split doesn't destroy pandas dataframe
     types = [MockDataFrame]
@@ -2054,3 +2056,12 @@ def test_no_group_splitters_warns_with_groups(cv):
 
     with pytest.warns(UserWarning, match=msg):
         cv.split(X, y, groups=groups)
+
+
+@pytest.mark.parametrize(
+    "cv", SPLITTERS_REQUIRING_TARGET, ids=[str(cv) for cv in SPLITTERS_REQUIRING_TARGET]
+)
+def test_stratified_splitter_without_y(cv):
+    msg = "missing 1 required positional argument: 'y'"
+    with pytest.raises(TypeError, match=msg):
+        cv.split(X)

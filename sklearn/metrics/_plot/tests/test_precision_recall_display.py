@@ -2,6 +2,7 @@ from collections import Counter
 
 import numpy as np
 import pytest
+from scipy.integrate import trapezoid
 
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import load_breast_cancer, make_classification
@@ -16,13 +17,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
-from sklearn.utils.fixes import trapezoid
-
-# TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
-pytestmark = pytest.mark.filterwarnings(
-    "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
-    "matplotlib.*"
-)
 
 
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])

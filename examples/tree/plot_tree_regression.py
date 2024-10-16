@@ -14,6 +14,9 @@ We can see that if the maximum depth of the tree (controlled by the
 details of the training data and learn from the noise, i.e. they overfit.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Import the necessary modules and libraries
 import matplotlib.pyplot as plt
 import numpy as np

@@ -698,7 +698,6 @@ class DummyClassifierWithFitParams(DummyClassifier):
         return super().fit(X, y, sample_weight)
 
 
-@pytest.mark.filterwarnings("ignore:`n_features_in_` is deprecated")
 @pytest.mark.parametrize(
     "estimator, dataset",
     [
