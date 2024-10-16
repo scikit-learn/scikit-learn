@@ -24,7 +24,7 @@ from ..utils._array_api import (
     get_namespace_and_device,
     size,
 )
-from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import (
     _check_sample_weight,
@@ -217,13 +217,12 @@ def mean_absolute_error(
             multioutput = None
 
     # Average across the outputs (if needed).
+    # The second call to `_average` should always return
+    # a scalar array that we convert to a Python float to
+    # consistently return the same eager evaluated value.
+    # Therefore, `axis=None`.
     mean_absolute_error = _average(output_errors, weights=multioutput)
 
-    # Since `y_pred.ndim <= 2` and `y_true.ndim <= 2`, the second call to _average
-    # should always return a scalar array that we convert to a Python float to
-    # consistently return the same eager evaluated value, irrespective of the
-    # Array API implementation.
-    assert mean_absolute_error.shape == ()
     return float(mean_absolute_error)
 
 
@@ -331,12 +330,11 @@ def mean_absolute_percentage_error(
 ):
     """Mean absolute percentage error (MAPE) regression loss.
 
-    Note here that the output is not a percentage in the range [0, 100]
-    and a value of 100 does not mean 100% but 1e2. Furthermore, the output
-    can be arbitrarily high when `y_true` is small (which is specific to the
-    metric) or when `abs(y_true - y_pred)` is large (which is common for most
-    regression metrics). Read more in the
-    :ref:`User Guide <mean_absolute_percentage_error>`.
+    Note that we are not using the common "percentage" definition: the percentage
+    in the range [0, 100] is converted to a relative value in the range [0, 1]
+    by dividing by 100. Thus, an error of 200% corresponds to a relative error of 2.
+
+    Read more in the :ref:`User Guide <mean_absolute_percentage_error>`.
 
     .. versionadded:: 0.24
 
@@ -416,8 +414,13 @@ def mean_absolute_percentage_error(
             # pass None as weights to _average: uniform mean
             multioutput = None
 
+    # Average across the outputs (if needed).
+    # The second call to `_average` should always return
+    # a scalar array that we convert to a Python float to
+    # consistently return the same eager evaluated value.
+    # Therefore, `axis=None`.
     mean_absolute_percentage_error = _average(output_errors, weights=multioutput)
-    assert mean_absolute_percentage_error.shape == ()
+
     return float(mean_absolute_percentage_error)
 
 
@@ -427,7 +430,6 @@ def mean_absolute_percentage_error(
         "y_pred": ["array-like"],
         "sample_weight": ["array-like", None],
         "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
-        "squared": [Hidden(StrOptions({"deprecated"})), "boolean"],
     },
     prefer_skip_nested_validation=True,
 )
@@ -437,7 +439,6 @@ def mean_squared_error(
     *,
     sample_weight=None,
     multioutput="uniform_average",
-    squared="deprecated",
 ):
     """Mean squared error regression loss.
 
@@ -465,14 +466,6 @@ def mean_squared_error(
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
 
-    squared : bool, default=True
-        If True returns MSE value, if False returns RMSE value.
-
-        .. deprecated:: 1.4
-           `squared` is deprecated in 1.4 and will be removed in 1.6.
-           Use :func:`~sklearn.metrics.root_mean_squared_error`
-           instead to calculate the root mean squared error.
-
     Returns
     -------
     loss : float or array of floats
@@ -495,26 +488,10 @@ def mean_squared_error(
     >>> mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.825...
     """
-    # TODO(1.6): remove
-    if squared != "deprecated":
-        warnings.warn(
-            (
-                "'squared' is deprecated in version 1.4 and "
-                "will be removed in 1.6. To calculate the "
-                "root mean squared error, use the function"
-                "'root_mean_squared_error'."
-            ),
-            FutureWarning,
-        )
-        if not squared:
-            return root_mean_squared_error(
-                y_true, y_pred, sample_weight=sample_weight, multioutput=multioutput
-            )
-
     xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
     dtype = _find_matching_floating_dtype(y_true, y_pred, xp=xp)
 
-    y_type, y_true, y_pred, multioutput = _check_reg_targets(
+    _, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput, dtype=dtype, xp=xp
     )
     check_consistent_length(y_true, y_pred, sample_weight)
@@ -524,12 +501,16 @@ def mean_squared_error(
         if multioutput == "raw_values":
             return output_errors
         elif multioutput == "uniform_average":
-            # pass None as weights to np.average: uniform mean
+            # pass None as weights to _average: uniform mean
             multioutput = None
 
-    # See comment in mean_absolute_error
+    # Average across the outputs (if needed).
+    # The second call to `_average` should always return
+    # a scalar array that we convert to a Python float to
+    # consistently return the same eager evaluated value.
+    # Therefore, `axis=None`.
     mean_squared_error = _average(output_errors, weights=multioutput)
-    assert mean_squared_error.shape == ()
+
     return float(mean_squared_error)
 
 
@@ -585,13 +566,16 @@ def root_mean_squared_error(
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> root_mean_squared_error(y_true, y_pred)
-    np.float64(0.612...)
+    0.612...
     >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
     >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
     >>> root_mean_squared_error(y_true, y_pred)
-    np.float64(0.822...)
+    0.822...
     """
-    output_errors = np.sqrt(
+
+    xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
+
+    output_errors = xp.sqrt(
         mean_squared_error(
             y_true, y_pred, sample_weight=sample_weight, multioutput="raw_values"
         )
@@ -601,10 +585,17 @@ def root_mean_squared_error(
         if multioutput == "raw_values":
             return output_errors
         elif multioutput == "uniform_average":
-            # pass None as weights to np.average: uniform mean
+            # pass None as weights to _average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    # Average across the outputs (if needed).
+    # The second call to `_average` should always return
+    # a scalar array that we convert to a Python float to
+    # consistently return the same eager evaluated value.
+    # Therefore, `axis=None`.
+    root_mean_squared_error = _average(output_errors, weights=multioutput)
+
+    return float(root_mean_squared_error)
 
 
 @validate_params(
@@ -613,7 +604,6 @@ def root_mean_squared_error(
         "y_pred": ["array-like"],
         "sample_weight": ["array-like", None],
         "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
-        "squared": [Hidden(StrOptions({"deprecated"})), "boolean"],
     },
     prefer_skip_nested_validation=True,
 )
@@ -623,7 +613,6 @@ def mean_squared_log_error(
     *,
     sample_weight=None,
     multioutput="uniform_average",
-    squared="deprecated",
 ):
     """Mean squared logarithmic error regression loss.
 
@@ -653,15 +642,6 @@ def mean_squared_log_error(
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
 
-    squared : bool, default=True
-        If True returns MSLE (mean squared log error) value.
-        If False returns RMSLE (root mean squared log error) value.
-
-        .. deprecated:: 1.4
-           `squared` is deprecated in 1.4 and will be removed in 1.6.
-           Use :func:`~sklearn.metrics.root_mean_squared_log_error`
-           instead to calculate the root mean squared logarithmic error.
-
     Returns
     -------
     loss : float or ndarray of floats
@@ -684,36 +664,22 @@ def mean_squared_log_error(
     >>> mean_squared_log_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.060...
     """
-    # TODO(1.6): remove
-    if squared != "deprecated":
-        warnings.warn(
-            (
-                "'squared' is deprecated in version 1.4 and "
-                "will be removed in 1.6. To calculate the "
-                "root mean squared logarithmic error, use the function"
-                "'root_mean_squared_log_error'."
-            ),
-            FutureWarning,
-        )
-        if not squared:
-            return root_mean_squared_log_error(
-                y_true, y_pred, sample_weight=sample_weight, multioutput=multioutput
-            )
+    xp, _ = get_namespace(y_true, y_pred)
+    dtype = _find_matching_floating_dtype(y_true, y_pred, xp=xp)
 
-    y_type, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput
+    _, y_true, y_pred, _ = _check_reg_targets(
+        y_true, y_pred, multioutput, dtype=dtype, xp=xp
     )
-    check_consistent_length(y_true, y_pred, sample_weight)
 
-    if (y_true < 0).any() or (y_pred < 0).any():
+    if xp.any(y_true <= -1) or xp.any(y_pred <= -1):
         raise ValueError(
             "Mean Squared Logarithmic Error cannot be used when "
-            "targets contain negative values."
+            "targets contain values less than or equal to -1."
         )
 
     return mean_squared_error(
-        np.log1p(y_true),
-        np.log1p(y_pred),
+        xp.log1p(y_true),
+        xp.log1p(y_pred),
         sample_weight=sample_weight,
         multioutput=multioutput,
     )
@@ -773,20 +739,24 @@ def root_mean_squared_log_error(
     >>> y_true = [3, 5, 2.5, 7]
     >>> y_pred = [2.5, 5, 4, 8]
     >>> root_mean_squared_log_error(y_true, y_pred)
-    np.float64(0.199...)
+    0.199...
     """
-    _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
-    check_consistent_length(y_true, y_pred, sample_weight)
+    xp, _ = get_namespace(y_true, y_pred)
+    dtype = _find_matching_floating_dtype(y_true, y_pred, xp=xp)
 
-    if (y_true < 0).any() or (y_pred < 0).any():
+    _, y_true, y_pred, multioutput = _check_reg_targets(
+        y_true, y_pred, multioutput, dtype=dtype, xp=xp
+    )
+
+    if xp.any(y_true <= -1) or xp.any(y_pred <= -1):
         raise ValueError(
             "Root Mean Squared Logarithmic Error cannot be used when "
-            "targets contain negative values."
+            "targets contain values less than or equal to -1."
         )
 
     return root_mean_squared_error(
-        np.log1p(y_true),
-        np.log1p(y_pred),
+        xp.log1p(y_true),
+        xp.log1p(y_pred),
         sample_weight=sample_weight,
         multioutput=multioutput,
     )
