@@ -786,13 +786,15 @@ def assert_docstring_consistency(
     >>> from sklearn.metrics import (accuracy_score, classification_report,
     ... mean_absolute_error, mean_squared_error, median_absolute_error)
     >>> from sklearn.utils._testing import assert_docstring_consistency
+    ... # doctest: +SKIP
     >>> assert_docstring_consistency([mean_absolute_error, mean_squared_error],
-    ... include_params=['y_true', 'y_pred', 'sample_weight'])
+    ... include_params=['y_true', 'y_pred', 'sample_weight'])  # doctest: +SKIP
     >>> assert_docstring_consistency([median_absolute_error, mean_squared_error],
     ... include_params=True)  # doctest: +SKIP
     >>> assert_docstring_consistency([accuracy_score, classification_report],
     ... include_params=["y_true"],
     ... descr_regex_pattern=r"Ground truth \(correct\) (labels|target values)")
+    ... # doctest: +SKIP
     """
     from numpydoc.docscrape import NumpyDocString
 
