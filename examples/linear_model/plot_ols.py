@@ -1,9 +1,9 @@
 """
-=====================================
-Simple Ordinary Least Squares Example
-=====================================
+==============================
+Ordinary Least Squares Example
+==============================
 
-This example shows how to use the simplest ordinary least squares (OLS) model
+This example shows how to use the ordinary least squares (OLS) model
 called :class:`~sklearn.linear_model.LinearRegression` in scikit-learn.
 
 For this purpose, we use a single feature from the diabetes dataset and try to
@@ -34,7 +34,9 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=20, shuffle=
 # Linear regression model
 # -----------------------
 #
-# We create a linear regression model and fit it on the training data.
+# We create a linear regression model and fit it on the training data. Note that by
+# default, an intercept is added to the model. We can control this behavior by setting
+# the `fit_intercept` parameter.
 from sklearn.linear_model import LinearRegression
 
 regressor = LinearRegression().fit(X_train, y_train)
@@ -56,15 +58,22 @@ print(f"Coefficient of determination: {r2_score(y_test, y_pred):.2f}")
 # Plotting the results
 # --------------------
 #
-# Finally, we visualize the results on the test set.
+# Finally, we visualize the results on the train and test data.
 import matplotlib.pyplot as plt
 
-fig, ax = plt.subplots()
+fig, ax = plt.subplots(ncols=2, figsize=(10, 5), sharex=True, sharey=True)
 
-ax.scatter(X_test, y_test, label="Data points")
-ax.plot(X_test, y_pred, linewidth=3, color="tab:orange", label="Model predictions")
-ax.set(xlabel="Feature", ylabel="Target", title="Linear Regression")
-ax.legend()
+ax[0].scatter(X_train, y_train, label="Train data points")
+ax[0].plot(X_train, regressor.predict(X_train), linewidth=3, color="tab:orange", label="Model predictions")
+ax[0].set(xlabel="Feature", ylabel="Target", title="Train set")
+ax[0].legend()
+
+ax[1].scatter(X_test, y_test, label="Test data points")
+ax[1].plot(X_test, y_pred, linewidth=3, color="tab:orange", label="Model predictions")
+ax[1].set(xlabel="Feature", ylabel="Target", title="Test set")
+ax[1].legend()
+
+fig.suptitle("Linear Regression")
 
 plt.show()
 
@@ -72,9 +81,13 @@ plt.show()
 # Conclusion
 # ----------
 #
-# This example shows how to use the simplest linear model called
-# :class:`~sklearn.linear_model.LinearRegression` in scikit-learn. For this purpose, we
-# use a single feature from the diabetes dataset and try to predict the diabetes
-# progression using this linear model. We therefore load the diabetes dataset and split
-# it into training and test sets.
+# The trained model corresponds to the estimator that minimizes the mean squared error
+# between the predicted and the true target values on the training data. This means that
+# there is no other model that fits the training data better in terms of squared error.
+# We therefore obtain an estimator of the conditional mean of the target given the
+# data.
 #
+# Note that in higher dimensions, minimizing only the squared error might lead to
+# overfitting. Therefore, regularization techniques are commonly used to prevent this
+# issue, such as those implemented in :class:`~sklearn.linear_model.Ridge` or
+# :class:`~sklearn.linear_model.Lasso`.
