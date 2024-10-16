@@ -50,8 +50,8 @@ def _handle_warnings(estimator):
     """
     try:
         yield
-    except NotFittedError:
-        check_is_fitted(estimator)
+    except NotFittedError as exc:
+        raise NotFittedError("Pipeline is not fitted yet.") from exc
 
     # we only get here if the above didn't raise
     try:
