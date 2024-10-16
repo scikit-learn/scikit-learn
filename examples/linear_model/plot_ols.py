@@ -88,10 +88,8 @@ plt.show()
 # ----------
 #
 # The trained model corresponds to the estimator that minimizes the mean squared error
-# between the predicted and the true target values on the training data. This means that
-# there is no other model that fits the training data better in terms of squared error.
-# We therefore obtain an estimator of the conditional mean of the target given the
-# data.
+# between the predicted and the true target values on the training data. We therefore
+# obtain an estimator of the conditional mean of the target given the data.
 #
 # Note that in higher dimensions, minimizing only the squared error might lead to
 # overfitting. Therefore, regularization techniques are commonly used to prevent this
