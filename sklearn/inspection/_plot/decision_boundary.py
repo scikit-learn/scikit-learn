@@ -82,20 +82,20 @@ class DecisionBoundaryDisplay:
         Second output of :func:`meshgrid <numpy.meshgrid>`.
 
     response : ndarray of shape (grid_resolution, grid_resolution) or \
-        (grid_resolution, grid_resolution, n_classes)
+            (grid_resolution, grid_resolution, n_classes)
         Values of the response function.
 
     multiclass_colors : list of str or str, default=None
         Specifies how to color each class when plotting all classes of multiclass
         problem. Ignored for binary problems and multiclass problems when plotting a
         single prediction value per point.
-        Possible inputs:
+        Possible inputs are:
 
-        * list, of length `response.shape[-1]`, of Matplotlib `color
+        * list: list of Matplotlib `color
           <https://matplotlib.org/stable/users/explain/colors/colors.html#colors-def>`_
-          strings
-        * string name of :class:`matplotlib.colors.Colormap`
-        * None, 'viridis' colormap is used to sample colors
+          strings, of length `n_classes`
+        * str: name of :class:`matplotlib.colors.Colormap`
+        * None: 'viridis' colormap is used to sample colors
 
         Single color colormaps will be generated from the colors in the list or
         colors taken from the colormap and passed to the `cmap` parameter of
@@ -210,7 +210,6 @@ class DecisionBoundaryDisplay:
         if self.response.ndim == 2:
             self.surface_ = plot_func(self.xx0, self.xx1, self.response, **kwargs)
         else:  # self.response.ndim == 3
-            multiclass_cmaps = []
             if (
                 isinstance(self.multiclass_colors, str)
                 or self.multiclass_colors is None
@@ -225,11 +224,12 @@ class DecisionBoundaryDisplay:
             else:
                 colors = [mpl.colors.to_rgba(color) for color in self.multiclass_colors]
 
-            for class_idx, (r, g, b, _) in enumerate(colors):
-                class_cmap = mpl.colors.LinearSegmentedColormap.from_list(
+            multiclass_cmaps = [
+                mpl.colors.LinearSegmentedColormap.from_list(
                     f"colormap_{class_idx}", [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)]
                 )
-                multiclass_cmaps.append(class_cmap)
+                for class_idx, (r, g, b, _) in enumerate(colors)
+            ]
 
             self.surface_ = []
             for class_idx, cmap in enumerate(multiclass_cmaps):
@@ -331,13 +331,13 @@ class DecisionBoundaryDisplay:
             Specifies how to color each class when plotting multiclass
             'predict_proba' or 'decision_function' and `class_of_interest` is
             None. Ignored in all other cases.
-            Possible inputs:
+            Possible inputs are:
 
-            * list, of length `response.shape[-1]`, of Matplotlib `color
-              <https://matplotlib.org/stable/users/explain/colors/colors.html#colors-def>`_
-              strings
-            * string name of :class:`matplotlib.colors.Colormap`
-            * None, 'viridis' colormap is used to sample colors
+            * list: list of Matplotlib `color
+            <https://matplotlib.org/stable/users/explain/colors/colors.html#colors-def>`_
+            strings, of length `n_classes`
+            * str: name of :class:`matplotlib.colors.Colormap`
+            * None: 'viridis' colormap is used to sample colors
 
             Single color colormaps will be generated from the colors in the list or
             colors taken from the colormap, and passed to the `cmap` parameter of

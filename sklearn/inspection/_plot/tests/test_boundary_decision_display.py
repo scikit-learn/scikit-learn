@@ -21,6 +21,7 @@ from sklearn.utils._testing import (
     assert_allclose,
     assert_array_equal,
 )
+from sklearn.utils.fixes import parse_version
 
 X, y = make_classification(
     n_informative=1,
@@ -116,8 +117,8 @@ def test_check_boundary_response_method(
     assert prediction_method == expected_prediction_method
 
 
-def test_multiclass(pyplot):
-    """Check multiclass gives expected results."""
+def test_multiclass_predict(pyplot):
+    """Check multiclass `response=predict` gives expected results."""
     grid_resolution = 10
     eps = 1.0
     X, y = make_classification(n_classes=3, n_informative=3, random_state=0)
@@ -592,6 +593,8 @@ def test_multiclass_plot_max_class(pyplot, response_method):
     response = getattr(clf, response_method)(grid)
     assert_allclose(response.reshape(*disp.response.shape), disp.response)
 
+    assert len(disp.surface_) == len(clf.classes_)
+
 
 @pytest.mark.parametrize(
     "multiclass_colors",
@@ -615,25 +618,28 @@ def test_multiclass_colors_cmap(pyplot, plot_method, multiclass_colors):
         multiclass_colors=multiclass_colors,
     )
 
-    cmaps = []
     if multiclass_colors == "plasma":
         colors = mpl.pyplot.get_cmap(multiclass_colors, len(clf.classes_)).colors
     else:
         colors = [mpl.colors.to_rgba(color) for color in multiclass_colors]
 
-    for class_idx, (r, g, b, _) in enumerate(colors):
-        class_cmap = mpl.colors.LinearSegmentedColormap.from_list(
+    cmaps = [
+        mpl.colors.LinearSegmentedColormap.from_list(
             f"colormap_{class_idx}", [(1.0, 1.0, 1.0, 1.0), (r, g, b, 1.0)]
         )
-        cmaps.append(class_cmap)
+        for class_idx, (r, g, b, _) in enumerate(colors)
+    ]
 
     for idx, quad in enumerate(disp.surface_):
-        # Ensure `_lut` (look-up table) is equal
-        quad.cmap._init()
-        cmaps[idx]._init()
-        assert_array_equal(quad.cmap._lut, cmaps[idx]._lut)
-        # Ensure name is the same
-        assert quad.cmap.name == cmaps[idx].name
+        if parse_version(mpl.__version__) >= parse_version("3.5"):
+            assert quad.cmap == cmaps[idx]
+        # TODO: remove once min mpl version >=3.5
+        else:
+            # Ensure lut (look-up table) bounds are equal
+            assert_array_equal(quad.cmap.get_over(), cmaps[idx].get_over())
+            assert_array_equal(quad.cmap.get_under(), cmaps[idx].get_under())
+            # Ensure name is the same
+            assert quad.cmap.name == cmaps[idx].name
 
 
 def test_multiclass_plot_max_class_cmap_kwarg():
@@ -646,11 +652,7 @@ def test_multiclass_plot_max_class_cmap_kwarg():
         "thus 'multiclass_colors' used and 'cmap' kwarg ignored."
     )
     with pytest.warns(UserWarning, match=msg):
-        DecisionBoundaryDisplay.from_estimator(
-            clf,
-            X,
-            cmap="viridis",
-        )
+        DecisionBoundaryDisplay.from_estimator(clf, X, cmap="viridis")
 
 
 def test_subclass_named_constructors_return_type_is_subclass(pyplot):
