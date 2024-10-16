@@ -64,7 +64,13 @@ import matplotlib.pyplot as plt
 fig, ax = plt.subplots(ncols=2, figsize=(10, 5), sharex=True, sharey=True)
 
 ax[0].scatter(X_train, y_train, label="Train data points")
-ax[0].plot(X_train, regressor.predict(X_train), linewidth=3, color="tab:orange", label="Model predictions")
+ax[0].plot(
+    X_train,
+    regressor.predict(X_train),
+    linewidth=3,
+    color="tab:orange",
+    label="Model predictions",
+)
 ax[0].set(xlabel="Feature", ylabel="Target", title="Train set")
 ax[0].legend()
 
