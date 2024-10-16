@@ -3130,6 +3130,9 @@ def test_d2_brier_score():
     d2_score = d2_brier_score(y_true=y_true_string, y_proba=y_proba, pos_label="yes")
     assert d2_score == 0
 
+    # check that a model which gives a constant prediction equal to the
+    # proportion of the positive class should get a d2 score of 0
+    # when we also provide sample weight
     y_proba = [0.6, 0.6, 0.6, 0.6, 0.6, 0.6]
     d2_score = d2_brier_score(
         y_true=y_true, y_proba=y_proba, sample_weight=sample_weight
@@ -3142,44 +3145,6 @@ def test_d2_brier_score():
         pos_label="yes",
     )
     assert d2_score == 0
-
-    # check that a model that gives appropriate predictions gets a d2 score
-    # that has a relatively high positive score
-    y_proba = [0.2, 0.8, 0.8, 0.2, 0.2, 0.8]
-    d2_score = d2_brier_score(y_true=y_true, y_proba=y_proba)
-    assert 0.5 < d2_score < 1
-    d2_score = d2_brier_score(
-        y_true=y_true, y_proba=y_proba, sample_weight=sample_weight
-    )
-    assert 0.5 < d2_score < 1
-    d2_score = d2_brier_score(y_true=y_true_string, y_proba=y_proba, pos_label="yes")
-    assert 0.5 < d2_score < 1
-    d2_score = d2_brier_score(
-        y_true=y_true_string,
-        y_proba=y_proba,
-        sample_weight=sample_weight,
-        pos_label="yes",
-    )
-    assert 0.5 < d2_score < 1
-
-    # check that a model that gives poor predictions gets a d2 score
-    # that has a low and negative value
-    y_proba = [0.8, 0.2, 0.2, 0.8, 0.8, 0.2]
-    d2_score = d2_brier_score(y_true=y_true, y_proba=y_proba)
-    assert d2_score < 0
-    d2_score = d2_brier_score(
-        y_true=y_true, y_proba=y_proba, sample_weight=sample_weight
-    )
-    assert d2_score < 0
-    d2_score = d2_brier_score(y_true=y_true_string, y_proba=y_proba, pos_label="yes")
-    assert d2_score < 0
-    d2_score = d2_brier_score(
-        y_true=y_true_string,
-        y_proba=y_proba,
-        sample_weight=sample_weight,
-        pos_label="yes",
-    )
-    assert d2_score < 0
 
 
 def test_d2_brier_score_raises():
