@@ -1,0 +1,3 @@
+- Added `warn` option to `handle_unknown` parameter in
+  :class:`preprocessing.OneHotEncoder`.
+  :user:`Gleb Levitski <glevv>`.
