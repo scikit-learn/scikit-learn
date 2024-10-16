@@ -13,6 +13,20 @@
 {% if section != 'custom-top-level' %}
 {{ section }}
 {{ underline * section|length }}
+
+{% endif %}
+{# section-specific description #}
+{% if section == 'Support for Array API' %}
+Additional estimators and functions have been updated to include support for all
+`Array API <https://data-apis.org/array-api/latest/>`_ compliant inputs.
+
+See :ref:`array_api` for more details.
+
+{% endif %}
+{% if section == 'Metadata routing' %}
+Refer to the :ref:`Metadata Routing User Guide <metadata_routing>` for
+more details.
+
 {% endif %}
 {# We loop over definitions because, contrary to content_per_category, it follow the category order as defined in pyproject.toml #}
 {% for category in definitions if category in content_per_category %}
