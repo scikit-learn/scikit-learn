@@ -2,4 +2,4 @@
   :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` by parallelizing the initial search
   for bin thresholds.
-  :user:`Christian Lorentzen <lorentzenchr>`.
+  By :user:`Christian Lorentzen <lorentzenchr>` in

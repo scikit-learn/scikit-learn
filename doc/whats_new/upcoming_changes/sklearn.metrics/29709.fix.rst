@@ -5,4 +5,4 @@
   :func:`metrics.mean_absolute_percentage_error`, :func:`metrics.mean_squared_error`
   and :func:`metrics.root_mean_squared_error` now explicitly check whether a scalar
   will be returned when `multioutput=uniform_average`.
-  :user:`Virgil Chan <virchan>`.
+  By :user:`Virgil Chan <virchan>` in

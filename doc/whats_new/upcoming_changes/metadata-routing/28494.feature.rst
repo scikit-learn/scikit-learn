@@ -4,4 +4,4 @@
   In addition, the `predict`, `predict_proba`, `predict_log_proba`, `score`
   and `decision_function` methods also accept ``**params`` which are
   passed to the underlying estimators via their respective methods.
-  :user:`Adam Li <adam2392>`.
+  By :user:`Adam Li <adam2392>` in

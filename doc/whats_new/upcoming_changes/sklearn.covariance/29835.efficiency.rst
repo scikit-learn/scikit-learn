@@ -1,2 +1,2 @@
 - :class:`covariance.MinCovDet` fitting is now slightly faster.
-  :user:`Antony Lee <anntzer>`.
+  By :user:`Antony Lee <anntzer>` in

@@ -1,3 +1,3 @@
 - Added a function :func:`base.is_clusterer` which determines whether a given
   estimator is of category clusterer.
-  :user:`Christian Veenhuis <ChVeen>`.
+  By :user:`Christian Veenhuis <ChVeen>` in

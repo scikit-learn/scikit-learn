@@ -2,4 +2,4 @@
   :class:`linear_model.RidgeCV` and :class:`linear_model.RidgeClassifierCV` and
   `UnsetMetadataPassedError` is fixed for :class:`linear_model.RidgeClassifierCV` with
   default scoring.
-  :user:`Stefanie Senger <StefanieSenger>`.
+  By :user:`Stefanie Senger <StefanieSenger>` in

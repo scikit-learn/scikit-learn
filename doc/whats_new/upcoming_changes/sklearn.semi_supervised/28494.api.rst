@@ -1,3 +1,3 @@
 - :class:`semi_supervised.SelfTrainingClassifier`
   deprecated the `base_estimator` parameter in favor of `estimator`.
-  :user:`Adam Li <adam2392>`.
+  By :user:`Adam Li <adam2392>` in

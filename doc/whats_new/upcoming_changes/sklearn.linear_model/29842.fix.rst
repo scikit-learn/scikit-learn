@@ -3,6 +3,6 @@
   `scoring != None`. Previously, the predictions were rescaled by the square root of the
   sample weights and offset by the mean of the target, leading to an incorrect estimate
   of the score.
-  :user:`Guillaume Lemaitre <glemaitre>`,
+  By :user:`Guillaume Lemaitre <glemaitre>`,
   :user:`Jérôme Dockes <jeromedockes>` and
-  :user:`Hanmin Qin <qinhanmin2014>`.
+  :user:`Hanmin Qin <qinhanmin2014>` in

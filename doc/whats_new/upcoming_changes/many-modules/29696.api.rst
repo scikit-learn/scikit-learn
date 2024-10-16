@@ -2,4 +2,4 @@
   private `base.BaseEstimator._validate_data` method. This is intended for third party
   estimator developers, who should use this function in most cases instead of
   :func:`utils.validation.check_array` and :func:`utils.validation.check_X_y`.
-  :user:`Adrin Jalali <adrinjalali>`.
+  By :user:`Adrin Jalali <adrinjalali>` in

@@ -1,4 +1,3 @@
 - :func:`sklearn.metrics.classification_report` is now faster by caching
   classification labels.
-  :user:`Adrin Jalali <adrinjalali>`.
-
+  By :user:`Adrin Jalali <adrinjalali>` in
