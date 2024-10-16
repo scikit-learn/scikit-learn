@@ -251,7 +251,7 @@ def type_of_target(y, input_name="", raise_unknown=False):
     raise_unknown : bool, default=False
         If True, raise an error when the target type is unknown.
 
-        .. versionadded: 1.6
+        .. versionadded:: 1.6
 
     Returns
     -------
