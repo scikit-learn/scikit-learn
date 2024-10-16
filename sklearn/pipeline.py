@@ -389,7 +389,7 @@ class Pipeline(_BaseComposition):
                 fit_params_steps[step]["fit_predict"][param] = pval
             return fit_params_steps
 
-    def _get_step_params(self, *, step_idx, step_params, all_params):
+    def _get_metadate_for_step(self, *, step_idx, step_params, all_params):
         """Get params (metadata) for step `name`.
 
         This transforms the metadata up to this step if required, which is
@@ -507,7 +507,7 @@ class Pipeline(_BaseComposition):
             else:
                 cloned_transformer = clone(transformer)
             # Fit or load from cache the current transformer
-            step_params = self._get_step_params(
+            step_params = self._get_metadate_for_step(
                 step_idx=step_idx,
                 step_params=routed_params[name],
                 all_params=raw_params,
@@ -582,7 +582,7 @@ class Pipeline(_BaseComposition):
         Xt = self._fit(X, y, routed_params, raw_params=params)
         with _print_elapsed_time("Pipeline", self._log_message(len(self.steps) - 1)):
             if self._final_estimator != "passthrough":
-                last_step_params = self._get_step_params(
+                last_step_params = self._get_metadate_for_step(
                     step_idx=len(self) - 1,
                     step_params=routed_params[self.steps[-1][0]],
                     all_params=params,
@@ -649,7 +649,7 @@ class Pipeline(_BaseComposition):
         with _print_elapsed_time("Pipeline", self._log_message(len(self.steps) - 1)):
             if last_step == "passthrough":
                 return Xt
-            last_step_params = self._get_step_params(
+            last_step_params = self._get_metadate_for_step(
                 step_idx=len(self) - 1,
                 step_params=routed_params[self.steps[-1][0]],
                 all_params=params,
