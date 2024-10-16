@@ -1,0 +1,1 @@
+- :func:`sklearn.metrics.mean_absolute_error` by :user:`Edoardo Abati <EdAbati>` in

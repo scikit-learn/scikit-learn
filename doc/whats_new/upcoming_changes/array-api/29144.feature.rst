@@ -1,0 +1,2 @@
+- :func:`sklearn.metrics.pairwise.additive_chi2_kernel` by
+  :user:`Yaroslav Korobko <Tialo>` in

@@ -1,0 +1,4 @@
+- :func:`sklearn.metrics.pairwise.linear_kernel`,
+  :func:`sklearn.metrics.pairwise.sigmoid_kernel`, and
+  :func:`sklearn.metrics.pairwise.polynomial_kernel` by
+  :user:`Omar Salman <OmarManzoor>` in
