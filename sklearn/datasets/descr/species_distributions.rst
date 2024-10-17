@@ -9,9 +9,9 @@ South America. The two species are:
 - `"Bradypus variegatus" <http://www.iucnredlist.org/details/3038/0>`_ ,
   the Brown-throated Sloth.
 
- - `"Microryzomys minutus" <http://www.iucnredlist.org/details/13408/0>`_ ,
-   also known as the Forest Small Rice Rat, a rodent that lives in Peru,
-   Colombia, Ecuador, Peru, and Venezuela.
+- `"Microryzomys minutus" <http://www.iucnredlist.org/details/13408/0>`_ ,
+  also known as the Forest Small Rice Rat, a rodent that lives in Peru,
+  Colombia, Ecuador, Peru, and Venezuela.
 
 The dataset is not a typical dataset since a :class:`~sklearn.datasets.base.Bunch`
 containing the attributes `data` and `target` is not returned. Instead, we have

@@ -275,6 +275,8 @@ def rand_score(labels_true, labels_pred):
 
     The raw RI score [3]_ is:
 
+    .. code-block:: text
+
         RI = (number of agreeing pairs) / (number of pairs)
 
     Read more in the :ref:`User Guide <rand_score>`.

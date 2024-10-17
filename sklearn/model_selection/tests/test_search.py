@@ -2593,7 +2593,6 @@ def test_inverse_transform_Xt_deprecation(SearchCV):
 # ======================
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
     "SearchCV, param_search",
     [
@@ -2601,6 +2600,7 @@ def test_inverse_transform_Xt_deprecation(SearchCV):
         (RandomizedSearchCV, "param_distributions"),
     ],
 )
+@config_context(enable_metadata_routing=True)
 def test_multi_metric_search_forwards_metadata(SearchCV, param_search):
     """Test that *SearchCV forwards metadata correctly when passed multiple metrics."""
     X, y = make_classification(random_state=42)
@@ -2864,3 +2864,11 @@ def test_yield_masked_array_for_each_param(candidate_params, expected):
         assert value.dtype == expected_value.dtype
         np.testing.assert_array_equal(value, expected_value)
         np.testing.assert_array_equal(value.mask, expected_value.mask)
+
+
+def test_yield_masked_array_no_runtime_warning():
+    # non-regression test for https://github.com/scikit-learn/scikit-learn/issues/29929
+    candidate_params = [{"param": i} for i in range(1000)]
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        list(_yield_masked_array_for_each_param(candidate_params))

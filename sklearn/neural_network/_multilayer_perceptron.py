@@ -392,6 +392,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             self.coefs_.append(coef_init)
             self.intercepts_.append(intercept_init)
 
+        self._best_coefs = [c.copy() for c in self.coefs_]
+        self._best_intercepts = [i.copy() for i in self.intercepts_]
+
         if self.solver in _STOCHASTIC_SOLVERS:
             self.loss_curve_ = []
             self._no_improvement_count = 0
@@ -701,8 +704,10 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
     def _update_no_improvement_count(self, early_stopping, X_val, y_val):
         if early_stopping:
-            # compute validation score, use that for stopping
-            self.validation_scores_.append(self._score(X_val, y_val))
+            # compute validation score (can be NaN), use that for stopping
+            val_score = self._score(X_val, y_val)
+
+            self.validation_scores_.append(val_score)
 
             if self.verbose:
                 print("Validation score: %f" % self.validation_scores_[-1])
@@ -755,6 +760,16 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                 " optimizers. %s is not stochastic." % self.solver
             )
         return True
+
+    def _score_with_function(self, X, y, score_function):
+        """Private score method without input validation."""
+        # Input validation would remove feature names, so we disable it
+        y_pred = self._predict(X, check_input=False)
+
+        if np.isnan(y_pred).any() or np.isinf(y_pred).any():
+            return np.nan
+
+        return score_function(y, y_pred)
 
 
 class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
@@ -1171,9 +1186,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         return self._label_binarizer.inverse_transform(y_pred)
 
     def _score(self, X, y):
-        """Private score method without input validation"""
-        # Input validation would remove feature names, so we disable it
-        return accuracy_score(y, self._predict(X, check_input=False))
+        return super()._score_with_function(X, y, score_function=accuracy_score)
 
     @available_if(lambda est: est._check_solver())
     @_fit_context(prefer_skip_nested_validation=True)
@@ -1613,10 +1626,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         return y_pred
 
     def _score(self, X, y):
-        """Private score method without input validation"""
-        # Input validation would remove feature names, so we disable it
-        y_pred = self._predict(X, check_input=False)
-        return r2_score(y, y_pred)
+        return super()._score_with_function(X, y, score_function=r2_score)
 
     def _validate_input(self, X, y, incremental, reset):
         X, y = validate_data(
