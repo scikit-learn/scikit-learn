@@ -1,3 +1,4 @@
+import pytest
 from threadpoolctl import threadpool_info
 
 from sklearn.utils._show_versions import _get_deps_info, _get_sys_info, show_versions
@@ -27,6 +28,7 @@ def test_get_deps_info():
     assert "joblib" in deps_info
 
 
+@pytest.mark.parallel_threads(1)
 def test_show_versions(capsys):
     with ignore_warnings():
         show_versions()
