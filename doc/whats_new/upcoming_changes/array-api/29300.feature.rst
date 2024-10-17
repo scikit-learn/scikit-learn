@@ -1,2 +1,2 @@
 - :func:`sklearn.metrics.mean_absolute_percentage_error` by
-  :user:`Emily Chen <EmilyXinyi>` in
+  :user:`Emily Chen <EmilyXinyi>`

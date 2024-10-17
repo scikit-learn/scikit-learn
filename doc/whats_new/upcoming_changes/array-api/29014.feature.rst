@@ -1,1 +1,1 @@
-- :func:`sklearn.metrics.pairwise.cosine_similarity` by :user:`Edoardo Abati <EdAbati>` in
+- :func:`sklearn.metrics.pairwise.cosine_similarity` by :user:`Edoardo Abati <EdAbati>`

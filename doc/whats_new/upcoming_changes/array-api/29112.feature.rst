@@ -1,1 +1,1 @@
-- :func:`sklearn.metrics.pairwise.paired_cosine_distances` by :user:`Edoardo Abati <EdAbati>` in
+- :func:`sklearn.metrics.pairwise.paired_cosine_distances` by :user:`Edoardo Abati <EdAbati>`

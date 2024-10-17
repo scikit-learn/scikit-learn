@@ -1,1 +1,1 @@
-- :func:`sklearn.metrics.mean_squared_error` by :user:`Yaroslav Korobko <Tialo>` in
+- :func:`sklearn.metrics.mean_squared_error` by :user:`Yaroslav Korobko <Tialo>`

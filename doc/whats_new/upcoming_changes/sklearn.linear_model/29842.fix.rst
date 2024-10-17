@@ -5,4 +5,4 @@
   of the score.
   By :user:`Guillaume Lemaitre <glemaitre>`,
   :user:`Jérôme Dockes <jeromedockes>` and
-  :user:`Hanmin Qin <qinhanmin2014>` in
+  :user:`Hanmin Qin <qinhanmin2014>`
