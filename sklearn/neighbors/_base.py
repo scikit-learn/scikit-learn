@@ -1,11 +1,8 @@
 """Base and mixin classes for nearest neighbors."""
-# Authors: Jake Vanderplas <vanderplas@astro.washington.edu>
-#          Fabian Pedregosa <fabian.pedregosa@inria.fr>
-#          Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Sparseness support by Lars Buitinck
-#          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
-#
-# License: BSD 3 clause (C) INRIA, University of Amsterdam
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import itertools
 import numbers
 import warnings
@@ -19,14 +16,13 @@ from scipy.sparse import csr_matrix, issparse
 
 from ..base import BaseEstimator, MultiOutputMixin, is_classifier
 from ..exceptions import DataConversionWarning, EfficiencyWarning
-from ..metrics import pairwise_distances_chunked
+from ..metrics import DistanceMetric, pairwise_distances_chunked
 from ..metrics._pairwise_distances_reduction import (
     ArgKmin,
     RadiusNeighbors,
 )
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import (
-    _to_object_array,
     check_array,
     gen_even_slices,
 )
@@ -34,7 +30,7 @@ from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.fixes import parse_version, sp_base_version
 from ..utils.multiclass import check_classification_targets
 from ..utils.parallel import Parallel, delayed
-from ..utils.validation import check_is_fitted, check_non_negative
+from ..utils.validation import _to_object_array, check_is_fitted, validate_data
 from ._ball_tree import BallTree
 from ._kd_tree import KDTree
 
@@ -52,11 +48,13 @@ SCIPY_METRICS = [
     "rogerstanimoto",
     "russellrao",
     "seuclidean",
-    "sokalmichener",
     "sokalsneath",
     "sqeuclidean",
     "yule",
 ]
+if sp_base_version < parse_version("1.17"):
+    # Deprecated in SciPy 1.15 and removed in SciPy 1.17
+    SCIPY_METRICS += ["sokalmichener"]
 if sp_base_version < parse_version("1.11"):
     # Deprecated in SciPy 1.9 and removed in SciPy 1.11
     SCIPY_METRICS += ["kulsinski"]
@@ -171,8 +169,7 @@ def _check_precomputed(X):
         case only non-zero elements may be considered neighbors.
     """
     if not issparse(X):
-        X = check_array(X)
-        check_non_negative(X, whom="precomputed distance matrix.")
+        X = check_array(X, ensure_non_negative=True, input_name="X")
         return X
     else:
         graph = X
@@ -183,8 +180,12 @@ def _check_precomputed(X):
             "its handling of explicit zeros".format(graph.format)
         )
     copied = graph.format != "csr"
-    graph = check_array(graph, accept_sparse="csr")
-    check_non_negative(graph, whom="precomputed distance matrix.")
+    graph = check_array(
+        graph,
+        accept_sparse="csr",
+        ensure_non_negative=True,
+        input_name="precomputed distance matrix",
+    )
     graph = sort_graph_by_row_values(graph, copy=not copied, warn_when_not_sorted=True)
 
     return graph
@@ -224,6 +225,20 @@ def sort_graph_by_row_values(graph, copy=False, warn_when_not_sorted=True):
     graph : sparse matrix of shape (n_samples, n_samples)
         Distance matrix to other samples, where only non-zero elements are
         considered neighbors. Matrix is in CSR format.
+
+    Examples
+    --------
+    >>> from scipy.sparse import csr_matrix
+    >>> from sklearn.neighbors import sort_graph_by_row_values
+    >>> X = csr_matrix(
+    ...     [[0., 3., 1.],
+    ...      [3., 0., 2.],
+    ...      [1., 2., 0.]])
+    >>> X.data
+    array([3., 1., 3., 2., 1., 2.])
+    >>> X_ = sort_graph_by_row_values(X)
+    >>> X_.data
+    array([1., 3., 2., 3., 1., 2.])
     """
     if graph.format == "csr" and _is_sorted_by_data(graph):
         return graph
@@ -414,7 +429,11 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if self.algorithm == "auto":
             if self.metric == "precomputed":
                 alg_check = "brute"
-            elif callable(self.metric) or self.metric in VALID_METRICS["ball_tree"]:
+            elif (
+                callable(self.metric)
+                or self.metric in VALID_METRICS["ball_tree"]
+                or isinstance(self.metric, DistanceMetric)
+            ):
                 alg_check = "ball_tree"
             else:
                 alg_check = "brute"
@@ -427,10 +446,11 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 raise ValueError(
                     "kd_tree does not support callable metric '%s'"
                     "Function call overhead will result"
-                    "in very poor performance."
-                    % self.metric
+                    "in very poor performance." % self.metric
                 )
-        elif self.metric not in VALID_METRICS[alg_check]:
+        elif self.metric not in VALID_METRICS[alg_check] and not isinstance(
+            self.metric, DistanceMetric
+        ):
             raise ValueError(
                 "Metric '%s' not valid. Use "
                 "sorted(sklearn.neighbors.VALID_METRICS['%s']) "
@@ -451,10 +471,10 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 )
 
     def _fit(self, X, y=None):
-        if self._get_tags()["requires_y"]:
+        if self.__sklearn_tags__().target_tags.required:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
-                X, y = self._validate_data(
-                    X, y, accept_sparse="csr", multi_output=True, order="C"
+                X, y = validate_data(
+                    self, X, y, accept_sparse="csr", multi_output=True, order="C"
                 )
 
             if is_classifier(self):
@@ -495,7 +515,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         else:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
-                X = self._validate_data(X, accept_sparse="csr", order="C")
+                X = validate_data(self, X, accept_sparse="csr", order="C")
 
         self._check_algorithm_metric()
         if self.metric_params is None:
@@ -563,9 +583,11 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             if self.algorithm not in ("auto", "brute"):
                 warnings.warn("cannot use tree with sparse input: using brute force")
 
-            if self.effective_metric_ not in VALID_METRICS_SPARSE[
-                "brute"
-            ] and not callable(self.effective_metric_):
+            if (
+                self.effective_metric_ not in VALID_METRICS_SPARSE["brute"]
+                and not callable(self.effective_metric_)
+                and not isinstance(self.effective_metric_, DistanceMetric)
+            ):
                 raise ValueError(
                     "Metric '%s' not valid for sparse input. "
                     "Use sorted(sklearn.neighbors."
@@ -669,18 +691,11 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         return self
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
         # For cross-validation routines to split data correctly
-        return {"pairwise": self.metric == "precomputed"}
-
-
-def _tree_query_parallel_helper(tree, *args, **kwargs):
-    """Helper for the Parallel calls in KNeighborsMixin.kneighbors.
-
-    The Cython method tree.query is not directly picklable by cloudpickle
-    under PyPy.
-    """
-    return tree.query(*args, **kwargs)
+        tags.input_tags.pairwise = self.metric == "precomputed"
+        return tags
 
 
 class KNeighborsMixin:
@@ -801,13 +816,19 @@ class KNeighborsMixin:
             if self.metric == "precomputed":
                 X = _check_precomputed(X)
             else:
-                X = self._validate_data(X, accept_sparse="csr", reset=False, order="C")
+                X = validate_data(self, X, accept_sparse="csr", reset=False, order="C")
 
         n_samples_fit = self.n_samples_fit_
         if n_neighbors > n_samples_fit:
+            if query_is_train:
+                n_neighbors -= 1  # ok to modify inplace because an error is raised
+                inequality_str = "n_neighbors < n_samples_fit"
+            else:
+                inequality_str = "n_neighbors <= n_samples_fit"
             raise ValueError(
-                "Expected n_neighbors <= n_samples, "
-                " but n_samples = %d, n_neighbors = %d" % (n_samples_fit, n_neighbors)
+                f"Expected {inequality_str}, but "
+                f"n_neighbors = {n_neighbors}, n_samples_fit = {n_samples_fit}, "
+                f"n_samples = {X.shape[0]}"  # include n_samples for common tests
             )
 
         n_jobs = effective_n_jobs(self.n_jobs)
@@ -871,13 +892,10 @@ class KNeighborsMixin:
             if issparse(X):
                 raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
-                    "or set algorithm='brute'"
-                    % self._fit_method
+                    "or set algorithm='brute'" % self._fit_method
                 )
             chunked_results = Parallel(n_jobs, prefer="threads")(
-                delayed(_tree_query_parallel_helper)(
-                    self._tree, X[s], n_neighbors, return_distance
-                )
+                delayed(self._tree.query)(X[s], n_neighbors, return_distance)
                 for s in gen_even_slices(X.shape[0], n_jobs)
             )
         else:
@@ -1002,15 +1020,6 @@ class KNeighborsMixin:
         )
 
         return kneighbors_graph
-
-
-def _tree_query_radius_parallel_helper(tree, *args, **kwargs):
-    """Helper for the Parallel calls in RadiusNeighborsMixin.radius_neighbors.
-
-    The Cython method tree.query_radius is not directly picklable by
-    cloudpickle under PyPy.
-    """
-    return tree.query_radius(*args, **kwargs)
 
 
 class RadiusNeighborsMixin:
@@ -1143,7 +1152,7 @@ class RadiusNeighborsMixin:
             if self.metric == "precomputed":
                 X = _check_precomputed(X)
             else:
-                X = self._validate_data(X, accept_sparse="csr", reset=False, order="C")
+                X = validate_data(self, X, accept_sparse="csr", reset=False, order="C")
 
         if radius is None:
             radius = self.radius
@@ -1226,16 +1235,13 @@ class RadiusNeighborsMixin:
             if issparse(X):
                 raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
-                    "or set algorithm='brute'"
-                    % self._fit_method
+                    "or set algorithm='brute'" % self._fit_method
                 )
 
             n_jobs = effective_n_jobs(self.n_jobs)
-            delayed_query = delayed(_tree_query_radius_parallel_helper)
+            delayed_query = delayed(self._tree.query_radius)
             chunked_results = Parallel(n_jobs, prefer="threads")(
-                delayed_query(
-                    self._tree, X[s], radius, return_distance, sort_results=sort_results
-                )
+                delayed_query(X[s], radius, return_distance, sort_results=sort_results)
                 for s in gen_even_slices(X.shape[0], n_jobs)
             )
             if return_distance:

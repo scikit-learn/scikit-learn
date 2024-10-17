@@ -1,6 +1,5 @@
-# Author: Wei Xue <xuewei4d@gmail.com>
-#         Thierry Guillemot <thierry.guillemot.work@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import copy
 import itertools
@@ -8,11 +7,13 @@ import re
 import sys
 import warnings
 from io import StringIO
+from unittest.mock import Mock
 
 import numpy as np
 import pytest
 from scipy import linalg, stats
 
+import sklearn
 from sklearn.cluster import KMeans
 from sklearn.covariance import EmpiricalCovariance
 from sklearn.datasets import make_spd_matrix
@@ -33,7 +34,6 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
-    ignore_warnings,
 )
 from sklearn.utils.extmath import fast_logdet
 
@@ -681,9 +681,9 @@ def test_gaussian_mixture_fit_convergence_warning():
             covariance_type=covar_type,
         )
         msg = (
-            f"Initialization {max_iter} did not converge. Try different init "
-            "parameters, or increase max_iter, tol or check for degenerate"
-            " data."
+            "Best performing initialization did not converge. "
+            "Try different init parameters, or increase max_iter, "
+            "tol, or check for degenerate data."
         )
         with pytest.warns(ConvergenceWarning, match=msg):
             g.fit(X)
@@ -878,7 +878,7 @@ def test_warm_start(seed):
     assert h.converged_
 
 
-@ignore_warnings(category=ConvergenceWarning)
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_convergence_detected_with_warm_start():
     # We check that convergence is detected when warm_start=True
     rng = np.random.RandomState(0)
@@ -1115,7 +1115,7 @@ def test_sample():
             assert X_s.shape == (sample_size, n_features)
 
 
-@ignore_warnings(category=ConvergenceWarning)
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_init():
     # We check that by increasing the n_init number we have a better solution
     for random_state in range(15):
@@ -1387,3 +1387,34 @@ def test_gaussian_mixture_single_component_stable():
     X = rng.multivariate_normal(np.zeros(2), np.identity(2), size=3)
     gm = GaussianMixture(n_components=1)
     gm.fit(X).sample()
+
+
+def test_gaussian_mixture_all_init_does_not_estimate_gaussian_parameters(
+    monkeypatch,
+    global_random_seed,
+):
+    """When all init parameters are provided, the Gaussian parameters
+    are not estimated.
+
+    Non-regression test for gh-26015.
+    """
+
+    mock = Mock(side_effect=_estimate_gaussian_parameters)
+    monkeypatch.setattr(
+        sklearn.mixture._gaussian_mixture, "_estimate_gaussian_parameters", mock
+    )
+
+    rng = np.random.RandomState(global_random_seed)
+    rand_data = RandomData(rng)
+
+    gm = GaussianMixture(
+        n_components=rand_data.n_components,
+        weights_init=rand_data.weights,
+        means_init=rand_data.means,
+        precisions_init=rand_data.precisions["full"],
+        random_state=rng,
+    )
+    gm.fit(rand_data.X["full"])
+    # The initial gaussian parameters are not estimated. They are estimated for every
+    # m_step.
+    assert mock.call_count == gm.n_iter_

@@ -1,5 +1,6 @@
-# Authors: Andrew nystrom <awnystrom@gmail.com>
-#          Meekail Zain <zainmeekail@gmail.com>
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from ..utils._typedefs cimport uint8_t, int64_t, intp_t
 
 ctypedef uint8_t FLAG_t
@@ -166,7 +167,7 @@ cpdef void _csr_polynomial_expansion(
     INDEX_B_t[:] result_indptr,     # OUT
     FLAG_t interaction_only,
     FLAG_t degree
-) nogil:
+):
     """
     Perform a second or third degree polynomial or interaction expansion on a
     compressed sparse row (CSR) matrix. The method used only takes products of

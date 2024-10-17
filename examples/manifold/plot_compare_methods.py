@@ -20,7 +20,8 @@ representation of the data in the low-dimensional space.
 
 """
 
-# Author: Jake Vanderplas -- <vanderplas@astro.washington.edu>
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Dataset preparation
@@ -182,7 +183,7 @@ plot_2d(S_scaling, S_color, "Multidimensional scaling")
 # Read more in the :ref:`User Guide <spectral_embedding>`.
 
 spectral = manifold.SpectralEmbedding(
-    n_components=n_components, n_neighbors=n_neighbors
+    n_components=n_components, n_neighbors=n_neighbors, random_state=42
 )
 S_spectral = spectral.fit_transform(S_points)
 
@@ -202,7 +203,7 @@ t_sne = manifold.TSNE(
     n_components=n_components,
     perplexity=30,
     init="random",
-    n_iter=250,
+    max_iter=250,
     random_state=0,
 )
 S_t_sne = t_sne.fit_transform(S_points)

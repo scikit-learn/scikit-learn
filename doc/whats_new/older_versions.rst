@@ -2,6 +2,10 @@
 
 .. currentmodule:: sklearn
 
+==============
+Older Versions
+==============
+
 .. _changes_0_12.1:
 
 Version 0.12.1
@@ -40,14 +44,14 @@ Changelog
 People
 ------
 
- *  14  `Peter Prettenhofer`_
- *  12  `Gael Varoquaux`_
- *  10  `Andreas Müller`_
- *   5  `Lars Buitinck`_
- *   3  :user:`Virgile Fritsch <VirgileFritsch>`
- *   1  `Alexandre Gramfort`_
- *   1  `Gilles Louppe`_
- *   1  `Mathieu Blondel`_
+*  14  `Peter Prettenhofer`_
+*  12  `Gael Varoquaux`_
+*  10  `Andreas Müller`_
+*   5  `Lars Buitinck`_
+*   3  :user:`Virgile Fritsch <VirgileFritsch>`
+*   1  `Alexandre Gramfort`_
+*   1  `Gilles Louppe`_
+*   1  `Mathieu Blondel`_
 
 .. _changes_0_12:
 
@@ -194,53 +198,53 @@ API changes summary
 
 People
 ------
- * 267  `Andreas Müller`_
- *  94  `Gilles Louppe`_
- *  89  `Gael Varoquaux`_
- *  79  `Peter Prettenhofer`_
- *  60  `Mathieu Blondel`_
- *  57  `Alexandre Gramfort`_
- *  52  `Vlad Niculae`_
- *  45  `Lars Buitinck`_
- *  44  Nelle Varoquaux
- *  37  `Jaques Grobler`_
- *  30  Alexis Mignon
- *  30  Immanuel Bayer
- *  27  `Olivier Grisel`_
- *  16  Subhodeep Moitra
- *  13  Yannick Schwartz
- *  12  :user:`@kernc <kernc>`
- *  11  :user:`Virgile Fritsch <VirgileFritsch>`
- *   9  Daniel Duckworth
- *   9  `Fabian Pedregosa`_
- *   9  `Robert Layton`_
- *   8  John Benediktsson
- *   7  Marko Burjek
- *   5  `Nicolas Pinto`_
- *   4  Alexandre Abraham
- *   4  `Jake Vanderplas`_
- *   3  `Brian Holt`_
- *   3  `Edouard Duchesnay`_
- *   3  Florian Hoenig
- *   3  flyingimmidev
- *   2  Francois Savard
- *   2  Hannes Schulz
- *   2  Peter Welinder
- *   2  `Yaroslav Halchenko`_
- *   2  Wei Li
- *   1  Alex Companioni
- *   1  Brandyn A. White
- *   1  Bussonnier Matthias
- *   1  Charles-Pierre Astolfi
- *   1  Dan O'Huiginn
- *   1  David Cournapeau
- *   1  Keith Goodman
- *   1  Ludwig Schwardt
- *   1  Olivier Hervieu
- *   1  Sergio Medina
- *   1  Shiqiao Du
- *   1  Tim Sheerman-Chase
- *   1  buguen
+* 267  `Andreas Müller`_
+*  94  `Gilles Louppe`_
+*  89  `Gael Varoquaux`_
+*  79  `Peter Prettenhofer`_
+*  60  `Mathieu Blondel`_
+*  57  `Alexandre Gramfort`_
+*  52  `Vlad Niculae`_
+*  45  `Lars Buitinck`_
+*  44  Nelle Varoquaux
+*  37  `Jaques Grobler`_
+*  30  Alexis Mignon
+*  30  Immanuel Bayer
+*  27  `Olivier Grisel`_
+*  16  Subhodeep Moitra
+*  13  Yannick Schwartz
+*  12  :user:`@kernc <kernc>`
+*  11  :user:`Virgile Fritsch <VirgileFritsch>`
+*   9  Daniel Duckworth
+*   9  `Fabian Pedregosa`_
+*   9  `Robert Layton`_
+*   8  John Benediktsson
+*   7  Marko Burjek
+*   5  `Nicolas Pinto`_
+*   4  Alexandre Abraham
+*   4  `Jake Vanderplas`_
+*   3  `Brian Holt`_
+*   3  `Edouard Duchesnay`_
+*   3  Florian Hoenig
+*   3  flyingimmidev
+*   2  Francois Savard
+*   2  Hannes Schulz
+*   2  Peter Welinder
+*   2  `Yaroslav Halchenko`_
+*   2  Wei Li
+*   1  Alex Companioni
+*   1  Brandyn A. White
+*   1  Bussonnier Matthias
+*   1  Charles-Pierre Astolfi
+*   1  Dan O'Huiginn
+*   1  David Cournapeau
+*   1  Keith Goodman
+*   1  Ludwig Schwardt
+*   1  Olivier Hervieu
+*   1  Sergio Medina
+*   1  Shiqiao Du
+*   1  Tim Sheerman-Chase
+*   1  buguen
 
 
 
@@ -431,54 +435,55 @@ API changes summary
 
 People
 ------
-   * 282  `Andreas Müller`_
-   * 239  `Peter Prettenhofer`_
-   * 198  `Gael Varoquaux`_
-   * 129  `Olivier Grisel`_
-   * 114  `Mathieu Blondel`_
-   * 103  Clay Woolam
-   *  96  `Lars Buitinck`_
-   *  88  `Jaques Grobler`_
-   *  82  `Alexandre Gramfort`_
-   *  50  `Bertrand Thirion`_
-   *  42  `Robert Layton`_
-   *  28  flyingimmidev
-   *  26  `Jake Vanderplas`_
-   *  26  Shiqiao Du
-   *  21  `Satrajit Ghosh`_
-   *  17  `David Marek`_
-   *  17  `Gilles Louppe`_
-   *  14  `Vlad Niculae`_
-   *  11  Yannick Schwartz
-   *  10  `Fabian Pedregosa`_
-   *   9  fcostin
-   *   7  Nick Wilson
-   *   5  Adrien Gaidon
-   *   5  `Nicolas Pinto`_
-   *   4  `David Warde-Farley`_
-   *   5  Nelle Varoquaux
-   *   5  Emmanuelle Gouillart
-   *   3  Joonas Sillanpää
-   *   3  Paolo Losi
-   *   2  Charles McCarthy
-   *   2  Roy Hyunjin Han
-   *   2  Scott White
-   *   2  ibayer
-   *   1  Brandyn White
-   *   1  Carlos Scheidegger
-   *   1  Claire Revillet
-   *   1  Conrad Lee
-   *   1  `Edouard Duchesnay`_
-   *   1  Jan Hendrik Metzen
-   *   1  Meng Xinfan
-   *   1  `Rob Zinkov`_
-   *   1  Shiqiao
-   *   1  Udi Weinsberg
-   *   1  Virgile Fritsch
-   *   1  Xinfan Meng
-   *   1  Yaroslav Halchenko
-   *   1  jansoe
-   *   1  Leon Palafox
+
+* 282  `Andreas Müller`_
+* 239  `Peter Prettenhofer`_
+* 198  `Gael Varoquaux`_
+* 129  `Olivier Grisel`_
+* 114  `Mathieu Blondel`_
+* 103  Clay Woolam
+*  96  `Lars Buitinck`_
+*  88  `Jaques Grobler`_
+*  82  `Alexandre Gramfort`_
+*  50  `Bertrand Thirion`_
+*  42  `Robert Layton`_
+*  28  flyingimmidev
+*  26  `Jake Vanderplas`_
+*  26  Shiqiao Du
+*  21  `Satrajit Ghosh`_
+*  17  `David Marek`_
+*  17  `Gilles Louppe`_
+*  14  `Vlad Niculae`_
+*  11  Yannick Schwartz
+*  10  `Fabian Pedregosa`_
+*   9  fcostin
+*   7  Nick Wilson
+*   5  Adrien Gaidon
+*   5  `Nicolas Pinto`_
+*   4  `David Warde-Farley`_
+*   5  Nelle Varoquaux
+*   5  Emmanuelle Gouillart
+*   3  Joonas Sillanpää
+*   3  Paolo Losi
+*   2  Charles McCarthy
+*   2  Roy Hyunjin Han
+*   2  Scott White
+*   2  ibayer
+*   1  Brandyn White
+*   1  Carlos Scheidegger
+*   1  Claire Revillet
+*   1  Conrad Lee
+*   1  `Edouard Duchesnay`_
+*   1  Jan Hendrik Metzen
+*   1  Meng Xinfan
+*   1  `Rob Zinkov`_
+*   1  Shiqiao
+*   1  Udi Weinsberg
+*   1  Virgile Fritsch
+*   1  Xinfan Meng
+*   1  Yaroslav Halchenko
+*   1  jansoe
+*   1  Leon Palafox
 
 
 .. _changes_0_10:
@@ -634,37 +639,37 @@ People
 
 The following people contributed to scikit-learn since last release:
 
-   * 246  `Andreas Müller`_
-   * 242  `Olivier Grisel`_
-   * 220  `Gilles Louppe`_
-   * 183  `Brian Holt`_
-   * 166  `Gael Varoquaux`_
-   * 144  `Lars Buitinck`_
-   *  73  `Vlad Niculae`_
-   *  65  `Peter Prettenhofer`_
-   *  64  `Fabian Pedregosa`_
-   *  60  Robert Layton
-   *  55  `Mathieu Blondel`_
-   *  52  `Jake Vanderplas`_
-   *  44  Noel Dawe
-   *  38  `Alexandre Gramfort`_
-   *  24  :user:`Virgile Fritsch <VirgileFritsch>`
-   *  23  `Satrajit Ghosh`_
-   *   3  Jan Hendrik Metzen
-   *   3  Kenneth C. Arnold
-   *   3  Shiqiao Du
-   *   3  Tim Sheerman-Chase
-   *   3  `Yaroslav Halchenko`_
-   *   2  Bala Subrahmanyam Varanasi
-   *   2  DraXus
-   *   2  Michael Eickenberg
-   *   1  Bogdan Trach
-   *   1  Félix-Antoine Fortin
-   *   1  Juan Manuel Caicedo Carvajal
-   *   1  Nelle Varoquaux
-   *   1  `Nicolas Pinto`_
-   *   1  Tiziano Zito
-   *   1  Xinfan Meng
+* 246  `Andreas Müller`_
+* 242  `Olivier Grisel`_
+* 220  `Gilles Louppe`_
+* 183  `Brian Holt`_
+* 166  `Gael Varoquaux`_
+* 144  `Lars Buitinck`_
+*  73  `Vlad Niculae`_
+*  65  `Peter Prettenhofer`_
+*  64  `Fabian Pedregosa`_
+*  60  Robert Layton
+*  55  `Mathieu Blondel`_
+*  52  `Jake Vanderplas`_
+*  44  Noel Dawe
+*  38  `Alexandre Gramfort`_
+*  24  :user:`Virgile Fritsch <VirgileFritsch>`
+*  23  `Satrajit Ghosh`_
+*   3  Jan Hendrik Metzen
+*   3  Kenneth C. Arnold
+*   3  Shiqiao Du
+*   3  Tim Sheerman-Chase
+*   3  `Yaroslav Halchenko`_
+*   2  Bala Subrahmanyam Varanasi
+*   2  DraXus
+*   2  Michael Eickenberg
+*   1  Bogdan Trach
+*   1  Félix-Antoine Fortin
+*   1  Juan Manuel Caicedo Carvajal
+*   1  Nelle Varoquaux
+*   1  `Nicolas Pinto`_
+*   1  Tiziano Zito
+*   1  Xinfan Meng
 
 
 
@@ -993,20 +998,20 @@ People that made this release possible preceded by number of commits:
 - 25  `Peter Prettenhofer`_
 - 22  `Nicolas Pinto`_
 - 11  :user:`Virgile Fritsch <VirgileFritsch>`
-   -  7  Lars Buitinck
-   -  6  Vincent Michel
-   -  5  `Bertrand Thirion`_
-   -  4  Thouis (Ray) Jones
-   -  4  Vincent Schut
-   -  3  Jan Schlüter
-   -  2  Julien Miotte
-   -  2  `Matthieu Perrot`_
-   -  2  Yann Malet
-   -  2  `Yaroslav Halchenko`_
-   -  1  Amit Aides
-   -  1  `Andreas Müller`_
-   -  1  Feth Arezki
-   -  1  Meng Xinfan
+-  7  Lars Buitinck
+-  6  Vincent Michel
+-  5  `Bertrand Thirion`_
+-  4  Thouis (Ray) Jones
+-  4  Vincent Schut
+-  3  Jan Schlüter
+-  2  Julien Miotte
+-  2  `Matthieu Perrot`_
+-  2  Yann Malet
+-  2  `Yaroslav Halchenko`_
+-  1  Amit Aides
+-  1  `Andreas Müller`_
+-  1  Feth Arezki
+-  1  Meng Xinfan
 
 
 .. _changes_0_7:
@@ -1119,7 +1124,7 @@ Changelog
 ---------
 
 - New `stochastic gradient
-  <http://scikit-learn.org/stable/modules/sgd.html>`_ descent
+  <https://scikit-learn.org/stable/modules/sgd.html>`_ descent
   module by Peter Prettenhofer. The module comes with complete
   documentation and examples.
 
@@ -1148,7 +1153,6 @@ Changelog
   datasets was created. These include:
   :ref:`sphx_glr_auto_examples_applications_plot_face_recognition.py`,
   :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`,
-  :ref:`sphx_glr_auto_examples_applications_svm_gui.py`,
   :ref:`sphx_glr_auto_examples_applications_wikipedia_principal_eigenvector.py` and
   others.
 
@@ -1175,31 +1179,31 @@ People
 
 People that made this release possible preceded by number of commits:
 
-   * 207  `Olivier Grisel`_
+* 207  `Olivier Grisel`_
 
-   * 167 `Fabian Pedregosa`_
+* 167 `Fabian Pedregosa`_
 
-   * 97 `Peter Prettenhofer`_
+* 97 `Peter Prettenhofer`_
 
-   * 68 `Alexandre Gramfort`_
+* 68 `Alexandre Gramfort`_
 
-   * 59  `Mathieu Blondel`_
+* 59  `Mathieu Blondel`_
 
-   * 55  `Gael Varoquaux`_
+* 55  `Gael Varoquaux`_
 
-   * 33  Vincent Dubourg
+* 33  Vincent Dubourg
 
-   * 21  `Ron Weiss`_
+* 21  `Ron Weiss`_
 
-   * 9  Bertrand Thirion
+* 9  Bertrand Thirion
 
-   * 3  `Alexandre Passos`_
+* 3  `Alexandre Passos`_
 
-   * 3  Anne-Laure Fouque
+* 3  Anne-Laure Fouque
 
-   * 2  Ronan Amicel
+* 2  Ronan Amicel
 
-   * 1 `Christian Osendorfer`_
+* 1 `Christian Osendorfer`_
 
 
 
@@ -1251,9 +1255,9 @@ Documentation
 - Improved documentation for many modules, now separating
   narrative documentation from the class reference. As an example,
   see `documentation for the SVM module
-  <http://scikit-learn.org/stable/modules/svm.html>`_ and the
+  <https://scikit-learn.org/stable/modules/svm.html>`_ and the
   complete `class reference
-  <http://scikit-learn.org/stable/modules/classes.html>`_.
+  <https://scikit-learn.org/stable/modules/classes.html>`_.
 
 Fixes
 -----
@@ -1275,7 +1279,7 @@ Examples
   :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
 
 - Many more examples. `See here
-  <http://scikit-learn.org/stable/auto_examples/index.html>`_
+  <https://scikit-learn.org/stable/auto_examples/index.html>`_
   the full list of examples.
 
 
@@ -1304,20 +1308,20 @@ Authors
 The following is a list of authors for this release, preceded by
 number of commits:
 
-     * 262  Fabian Pedregosa
-     * 240  Gael Varoquaux
-     * 149  Alexandre Gramfort
-     * 116  Olivier Grisel
-     *  40  Vincent Michel
-     *  38  Ron Weiss
-     *  23  Matthieu Perrot
-     *  10  Bertrand Thirion
-     *   7  Yaroslav Halchenko
-     *   9  VirgileFritsch
-     *   6  Edouard Duchesnay
-     *   4  Mathieu Blondel
-     *   1  Ariel Rokem
-     *   1  Matthieu Brucher
+* 262  Fabian Pedregosa
+* 240  Gael Varoquaux
+* 149  Alexandre Gramfort
+* 116  Olivier Grisel
+*  40  Vincent Michel
+*  38  Ron Weiss
+*  23  Matthieu Perrot
+*  10  Bertrand Thirion
+*   7  Yaroslav Halchenko
+*   9  VirgileFritsch
+*   6  Edouard Duchesnay
+*   4  Mathieu Blondel
+*   1  Ariel Rokem
+*   1  Matthieu Brucher
 
 Version 0.4
 ===========
@@ -1368,13 +1372,13 @@ Authors
 The committer list for this release is the following (preceded by number
 of commits):
 
-    * 143  Fabian Pedregosa
-    * 35  Alexandre Gramfort
-    * 34  Olivier Grisel
-    * 11  Gael Varoquaux
-    *  5  Yaroslav Halchenko
-    *  2  Vincent Michel
-    *  1  Chris Filo Gorgolewski
+* 143  Fabian Pedregosa
+* 35  Alexandre Gramfort
+* 34  Olivier Grisel
+* 11  Gael Varoquaux
+*  5  Yaroslav Halchenko
+*  2  Vincent Michel
+*  1  Chris Filo Gorgolewski
 
 
 Earlier versions

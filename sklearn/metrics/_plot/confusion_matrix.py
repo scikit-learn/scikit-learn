@@ -1,9 +1,12 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from itertools import product
 
 import numpy as np
 
 from ...base import is_classifier
-from ...utils import check_matplotlib_support
+from ...utils._optional_dependencies import check_matplotlib_support
 from ...utils.multiclass import unique_labels
 from .. import confusion_matrix
 

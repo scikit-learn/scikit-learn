@@ -1,11 +1,8 @@
-# Author: Arnaud Joly, Joel Nothman, Hamzeh Alsalhi
-#
-# License: BSD 3 clause
-"""
-Multi-class / multi-label utility function
-==========================================
+"""Utilities to handle multiclass/multioutput target in classifiers."""
 
-"""
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import warnings
 from collections.abc import Sequence
 from itertools import chain
@@ -14,19 +11,22 @@ import numpy as np
 from scipy.sparse import issparse
 
 from ..utils._array_api import get_namespace
+from ..utils.fixes import VisibleDeprecationWarning
+from ._unique import attach_unique, cached_unique
 from .validation import _assert_all_finite, check_array
 
 
-def _unique_multiclass(y):
-    xp, is_array_api_compliant = get_namespace(y)
+def _unique_multiclass(y, xp=None):
+    xp, is_array_api_compliant = get_namespace(y, xp=xp)
     if hasattr(y, "__array__") or is_array_api_compliant:
-        return xp.unique_values(xp.asarray(y))
+        return cached_unique(xp.asarray(y), xp=xp)
     else:
         return set(y)
 
 
-def _unique_indicator(y):
-    return np.arange(
+def _unique_indicator(y, xp=None):
+    xp, _ = get_namespace(y, xp=xp)
+    return xp.arange(
         check_array(y, input_name="y", accept_sparse=["csr", "csc", "coo"]).shape[1]
     )
 
@@ -70,8 +70,9 @@ def unique_labels(*ys):
     >>> unique_labels([1, 2, 10], [5, 11])
     array([ 1,  2,  5, 10, 11])
     """
+    ys = attach_unique(*ys, return_tuple=True)
     xp, is_array_api_compliant = get_namespace(*ys)
-    if not ys:
+    if len(ys) == 0:
         raise ValueError("No argument has been passed.")
     # Check that we don't mix label format
 
@@ -105,10 +106,12 @@ def unique_labels(*ys):
 
     if is_array_api_compliant:
         # array_api does not allow for mixed dtypes
-        unique_ys = xp.concat([_unique_labels(y) for y in ys])
+        unique_ys = xp.concat([_unique_labels(y, xp=xp) for y in ys])
         return xp.unique_values(unique_ys)
 
-    ys_labels = set(chain.from_iterable((i for i in _unique_labels(y)) for y in ys))
+    ys_labels = set(
+        chain.from_iterable((i for i in _unique_labels(y, xp=xp)) for y in ys)
+    )
     # Check that we don't mix string type with number type
     if len(set(isinstance(label, str) for label in ys_labels)) > 1:
         raise ValueError("Mix of label input types (string and number)")
@@ -117,7 +120,10 @@ def unique_labels(*ys):
 
 
 def _is_integral_float(y):
-    return y.dtype.kind == "f" and np.all(y.astype(int) == y)
+    xp, is_array_api_compliant = get_namespace(y)
+    return xp.isdtype(y.dtype, "real floating") and bool(
+        xp.all(xp.astype((xp.astype(y, xp.int64)), y.dtype) == y)
+    )
 
 
 def is_multilabel(y):
@@ -155,16 +161,16 @@ def is_multilabel(y):
         check_y_kwargs = dict(
             accept_sparse=True,
             allow_nd=True,
-            force_all_finite=False,
+            ensure_all_finite=False,
             ensure_2d=False,
             ensure_min_samples=0,
             ensure_min_features=0,
         )
         with warnings.catch_warnings():
-            warnings.simplefilter("error", np.VisibleDeprecationWarning)
+            warnings.simplefilter("error", VisibleDeprecationWarning)
             try:
                 y = check_array(y, dtype=None, **check_y_kwargs)
-            except (np.VisibleDeprecationWarning, ValueError) as e:
+            except (VisibleDeprecationWarning, ValueError) as e:
                 if str(e).startswith("Complex data not supported"):
                     raise
 
@@ -185,10 +191,11 @@ def is_multilabel(y):
             and (y.dtype.kind in "biu" or _is_integral_float(labels))  # bool, int, uint
         )
     else:
-        labels = xp.unique_values(y)
+        labels = cached_unique(y, xp=xp)
 
-        return len(labels) < 3 and (
-            y.dtype.kind in "biu" or _is_integral_float(labels)  # bool, int, uint
+        return labels.shape[0] < 3 and (
+            xp.isdtype(y.dtype, ("bool", "signed integer", "unsigned integer"))
+            or _is_integral_float(labels)
         )
 
 
@@ -225,11 +232,10 @@ def type_of_target(y, input_name=""):
     Note that this type is the most specific type that can be inferred.
     For example:
 
-        * ``binary`` is more specific but compatible with ``multiclass``.
-        * ``multiclass`` of integers is more specific but compatible with
-          ``continuous``.
-        * ``multilabel-indicator`` is more specific but compatible with
-          ``multiclass-multioutput``.
+    * ``binary`` is more specific but compatible with ``multiclass``.
+    * ``multiclass`` of integers is more specific but compatible with ``continuous``.
+    * ``multilabel-indicator`` is more specific but compatible with
+      ``multiclass-multioutput``.
 
     Parameters
     ----------
@@ -317,18 +323,18 @@ def type_of_target(y, input_name=""):
     check_y_kwargs = dict(
         accept_sparse=True,
         allow_nd=True,
-        force_all_finite=False,
+        ensure_all_finite=False,
         ensure_2d=False,
         ensure_min_samples=0,
         ensure_min_features=0,
     )
 
     with warnings.catch_warnings():
-        warnings.simplefilter("error", np.VisibleDeprecationWarning)
+        warnings.simplefilter("error", VisibleDeprecationWarning)
         if not issparse(y):
             try:
                 y = check_array(y, dtype=None, **check_y_kwargs)
-            except (np.VisibleDeprecationWarning, ValueError) as e:
+            except (VisibleDeprecationWarning, ValueError) as e:
                 if str(e).startswith("Complex data not supported"):
                     raise
 
@@ -336,12 +342,24 @@ def type_of_target(y, input_name=""):
                 # see NEP 34
                 y = check_array(y, dtype=object, **check_y_kwargs)
 
-    # The old sequence of sequences format
     try:
+        # TODO(1.7): Change to ValueError when byte labels is deprecated.
+        # labels in bytes format
+        first_row_or_val = y[[0], :] if issparse(y) else y[0]
+        if isinstance(first_row_or_val, bytes):
+            warnings.warn(
+                (
+                    "Support for labels represented as bytes is deprecated in v1.5 and"
+                    " will error in v1.7. Convert the labels to a string or integer"
+                    " format."
+                ),
+                FutureWarning,
+            )
+        # The old sequence of sequences format
         if (
-            not hasattr(y[0], "__array__")
-            and isinstance(y[0], Sequence)
-            and not isinstance(y[0], str)
+            not hasattr(first_row_or_val, "__array__")
+            and isinstance(first_row_or_val, Sequence)
+            and not isinstance(first_row_or_val, str)
         ):
             raise ValueError(
                 "You appear to be using a legacy multi-label data"
@@ -383,8 +401,9 @@ def type_of_target(y, input_name=""):
             return "continuous" + suffix
 
     # Check multiclass
-    first_row = y[0] if not issparse(y) else y.getrow(0).data
-    if xp.unique_values(y).shape[0] > 2 or (y.ndim == 2 and len(first_row) > 1):
+    if issparse(first_row_or_val):
+        first_row_or_val = first_row_or_val.data
+    if cached_unique(y).shape[0] > 2 or (y.ndim == 2 and len(first_row_or_val) > 1):
         # [1, 2, 3] or [[1., 2., 3]] or [[1, 2]]
         return "multiclass" + suffix
     else:

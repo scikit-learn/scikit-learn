@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from collections import Counter
 
 from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
@@ -192,7 +195,13 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
         xlabel = "Recall" + info_pos_label
         ylabel = "Precision" + info_pos_label
-        self.ax_.set(xlabel=xlabel, ylabel=ylabel)
+        self.ax_.set(
+            xlabel=xlabel,
+            xlim=(-0.01, 1.01),
+            ylabel=ylabel,
+            ylim=(-0.01, 1.01),
+            aspect="equal",
+        )
 
         if plot_chance_level:
             if self.prevalence_pos_label is None:
@@ -480,7 +489,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         class_count = Counter(y_true)
         prevalence_pos_label = class_count[pos_label] / sum(class_count.values())
 
-        viz = PrecisionRecallDisplay(
+        viz = cls(
             precision=precision,
             recall=recall,
             average_precision=average_precision,

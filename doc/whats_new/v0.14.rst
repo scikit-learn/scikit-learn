@@ -2,6 +2,10 @@
 
 .. currentmodule:: sklearn
 
+============
+Version 0.14
+============
+
 .. _changes_0_14:
 
 Version 0.14
@@ -297,91 +301,91 @@ People
 ------
 List of contributors for release 0.14 by number of commits.
 
- * 277  Gilles Louppe
- * 245  Lars Buitinck
- * 187  Andreas Mueller
- * 124  Arnaud Joly
- * 112  Jaques Grobler
- * 109  Gael Varoquaux
- * 107  Olivier Grisel
- * 102  Noel Dawe
- *  99  Kemal Eren
- *  79  Joel Nothman
- *  75  Jake VanderPlas
- *  73  Nelle Varoquaux
- *  71  Vlad Niculae
- *  65  Peter Prettenhofer
- *  64  Alexandre Gramfort
- *  54  Mathieu Blondel
- *  38  Nicolas Trésegnie
- *  35  eustache
- *  27  Denis Engemann
- *  25  Yann N. Dauphin
- *  19  Justin Vincent
- *  17  Robert Layton
- *  15  Doug Coleman
- *  14  Michael Eickenberg
- *  13  Robert Marchman
- *  11  Fabian Pedregosa
- *  11  Philippe Gervais
- *  10  Jim Holmström
- *  10  Tadej Janež
- *  10  syhw
- *   9  Mikhail Korobov
- *   9  Steven De Gryze
- *   8  sergeyf
- *   7  Ben Root
- *   7  Hrishikesh Huilgolkar
- *   6  Kyle Kastner
- *   6  Martin Luessi
- *   6  Rob Speer
- *   5  Federico Vaggi
- *   5  Raul Garreta
- *   5  Rob Zinkov
- *   4  Ken Geis
- *   3  A. Flaxman
- *   3  Denton Cockburn
- *   3  Dougal Sutherland
- *   3  Ian Ozsvald
- *   3  Johannes Schönberger
- *   3  Robert McGibbon
- *   3  Roman Sinayev
- *   3  Szabo Roland
- *   2  Diego Molla
- *   2  Imran Haque
- *   2  Jochen Wersdörfer
- *   2  Sergey Karayev
- *   2  Yannick Schwartz
- *   2  jamestwebber
- *   1  Abhijeet Kolhe
- *   1  Alexander Fabisch
- *   1  Bastiaan van den Berg
- *   1  Benjamin Peterson
- *   1  Daniel Velkov
- *   1  Fazlul Shahriar
- *   1  Felix Brockherde
- *   1  Félix-Antoine Fortin
- *   1  Harikrishnan S
- *   1  Jack Hale
- *   1  JakeMick
- *   1  James McDermott
- *   1  John Benediktsson
- *   1  John Zwinck
- *   1  Joshua Vredevoogd
- *   1  Justin Pati
- *   1  Kevin Hughes
- *   1  Kyle Kelley
- *   1  Matthias Ekman
- *   1  Miroslav Shubernetskiy
- *   1  Naoki Orii
- *   1  Norbert Crombach
- *   1  Rafael Cunha de Almeida
- *   1  Rolando Espinoza La fuente
- *   1  Seamus Abshere
- *   1  Sergey Feldman
- *   1  Sergio Medina
- *   1  Stefano Lattarini
- *   1  Steve Koch
- *   1  Sturla Molden
- *   1  Thomas Jarosch
- *   1  Yaroslav Halchenko
+* 277  Gilles Louppe
+* 245  Lars Buitinck
+* 187  Andreas Mueller
+* 124  Arnaud Joly
+* 112  Jaques Grobler
+* 109  Gael Varoquaux
+* 107  Olivier Grisel
+* 102  Noel Dawe
+*  99  Kemal Eren
+*  79  Joel Nothman
+*  75  Jake VanderPlas
+*  73  Nelle Varoquaux
+*  71  Vlad Niculae
+*  65  Peter Prettenhofer
+*  64  Alexandre Gramfort
+*  54  Mathieu Blondel
+*  38  Nicolas Trésegnie
+*  35  eustache
+*  27  Denis Engemann
+*  25  Yann N. Dauphin
+*  19  Justin Vincent
+*  17  Robert Layton
+*  15  Doug Coleman
+*  14  Michael Eickenberg
+*  13  Robert Marchman
+*  11  Fabian Pedregosa
+*  11  Philippe Gervais
+*  10  Jim Holmström
+*  10  Tadej Janež
+*  10  syhw
+*   9  Mikhail Korobov
+*   9  Steven De Gryze
+*   8  sergeyf
+*   7  Ben Root
+*   7  Hrishikesh Huilgolkar
+*   6  Kyle Kastner
+*   6  Martin Luessi
+*   6  Rob Speer
+*   5  Federico Vaggi
+*   5  Raul Garreta
+*   5  Rob Zinkov
+*   4  Ken Geis
+*   3  A. Flaxman
+*   3  Denton Cockburn
+*   3  Dougal Sutherland
+*   3  Ian Ozsvald
+*   3  Johannes Schönberger
+*   3  Robert McGibbon
+*   3  Roman Sinayev
+*   3  Szabo Roland
+*   2  Diego Molla
+*   2  Imran Haque
+*   2  Jochen Wersdörfer
+*   2  Sergey Karayev
+*   2  Yannick Schwartz
+*   2  jamestwebber
+*   1  Abhijeet Kolhe
+*   1  Alexander Fabisch
+*   1  Bastiaan van den Berg
+*   1  Benjamin Peterson
+*   1  Daniel Velkov
+*   1  Fazlul Shahriar
+*   1  Felix Brockherde
+*   1  Félix-Antoine Fortin
+*   1  Harikrishnan S
+*   1  Jack Hale
+*   1  JakeMick
+*   1  James McDermott
+*   1  John Benediktsson
+*   1  John Zwinck
+*   1  Joshua Vredevoogd
+*   1  Justin Pati
+*   1  Kevin Hughes
+*   1  Kyle Kelley
+*   1  Matthias Ekman
+*   1  Miroslav Shubernetskiy
+*   1  Naoki Orii
+*   1  Norbert Crombach
+*   1  Rafael Cunha de Almeida
+*   1  Rolando Espinoza La fuente
+*   1  Seamus Abshere
+*   1  Sergey Feldman
+*   1  Sergio Medina
+*   1  Stefano Lattarini
+*   1  Steve Koch
+*   1  Sturla Molden
+*   1  Thomas Jarosch
+*   1  Yaroslav Halchenko

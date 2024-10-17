@@ -1,20 +1,14 @@
 """Nearest Neighbor Regression."""
 
-# Authors: Jake Vanderplas <vanderplas@astro.washington.edu>
-#          Fabian Pedregosa <fabian.pedregosa@inria.fr>
-#          Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Sparseness support by Lars Buitinck
-#          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
-#          Empty radius support by Andreas Bjerre-Nielsen
-#
-# License: BSD 3 clause (C) INRIA, University of Amsterdam,
-#                           University of Copenhagen
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 
 import numpy as np
 
 from ..base import RegressorMixin, _fit_context
+from ..metrics import DistanceMetric
 from ..utils._param_validation import StrOptions
 from ._base import KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin, _get_weights
 
@@ -48,6 +42,10 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
 
         Uniform weights are used by default.
 
+        See the following example for a demonstration of the impact of
+        different weighting schemes on predictions:
+        :ref:`sphx_glr_auto_examples_neighbors_plot_regression.py`.
+
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         Algorithm used to compute the nearest neighbors:
 
@@ -71,7 +69,7 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
-    metric : str or callable, default='minkowski'
+    metric : str, DistanceMetric object or callable, default='minkowski'
         Metric to use for distance computation. Default is "minkowski", which
         results in the standard Euclidean distance when p = 2. See the
         documentation of `scipy.spatial.distance
@@ -88,6 +86,9 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         vectors as inputs and must return one value indicating the distance
         between those vectors. This works for Scipy's metrics, but is less
         efficient than passing the metric name as a string.
+
+        If metric is a DistanceMetric object, it will be passed directly to
+        the underlying computation routines.
 
     metric_params : dict, default=None
         Additional keyword arguments for the metric function.
@@ -164,6 +165,7 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         **NeighborsBase._parameter_constraints,
         "weights": [StrOptions({"uniform", "distance"}), callable, None],
     }
+    _parameter_constraints["metric"].append(DistanceMetric)
     _parameter_constraints.pop("radius")
 
     def __init__(
@@ -189,9 +191,18 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         )
         self.weights = weights
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
         # For cross-validation routines to split data correctly
-        return {"pairwise": self.metric == "precomputed"}
+        tags.input_tags.pairwise = self.metric == "precomputed"
+        if tags.input_tags.pairwise:
+            tags._xfail_checks.update(
+                {
+                    "check_n_features_in_after_fitting": "FIXME",
+                    "check_dataframe_column_names_consistency": "FIXME",
+                }
+            )
+        return tags
 
     @_fit_context(
         # KNeighborsRegressor.metric is not validated yet

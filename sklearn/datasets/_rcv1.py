@@ -5,12 +5,13 @@ The dataset page is available at
     http://jmlr.csail.mit.edu/papers/volume5/lewis04a/
 """
 
-# Author: Tom Dupre la Tour
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import logging
 from gzip import GzipFile
-from os import makedirs, remove
+from numbers import Integral, Real
+from os import PathLike, makedirs, remove
 from os.path import exists, join
 
 import joblib
@@ -19,7 +20,7 @@ import scipy.sparse as sp
 
 from ..utils import Bunch
 from ..utils import shuffle as shuffle_
-from ..utils._param_validation import StrOptions, validate_params
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from . import get_data_home
 from ._base import RemoteFileMetadata, _fetch_remote, _pkl_filepath, load_descr
 from ._svmlight_format_io import load_svmlight_files
@@ -74,12 +75,14 @@ logger = logging.getLogger(__name__)
 
 @validate_params(
     {
-        "data_home": [str, None],
+        "data_home": [str, PathLike, None],
         "subset": [StrOptions({"train", "test", "all"})],
         "download_if_missing": ["boolean"],
         "random_state": ["random_state"],
         "shuffle": ["boolean"],
         "return_X_y": ["boolean"],
+        "n_retries": [Interval(Integral, 1, None, closed="left")],
+        "delay": [Interval(Real, 0.0, None, closed="neither")],
     },
     prefer_skip_nested_validation=True,
 )
@@ -91,6 +94,8 @@ def fetch_rcv1(
     random_state=None,
     shuffle=False,
     return_X_y=False,
+    n_retries=3,
+    delay=1.0,
 ):
     """Load the RCV1 multilabel dataset (classification).
 
@@ -111,7 +116,7 @@ def fetch_rcv1(
 
     Parameters
     ----------
-    data_home : str, default=None
+    data_home : str or path-like, default=None
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
@@ -140,6 +145,16 @@ def fetch_rcv1(
 
         .. versionadded:: 0.20
 
+    n_retries : int, default=3
+        Number of retries when HTTP errors are encountered.
+
+        .. versionadded:: 1.5
+
+    delay : float, default=1.0
+        Number of seconds between retries.
+
+        .. versionadded:: 1.5
+
     Returns
     -------
     dataset : :class:`~sklearn.utils.Bunch`
@@ -163,6 +178,15 @@ def fetch_rcv1(
         described above. Returned only if `return_X_y` is True.
 
         .. versionadded:: 0.20
+
+    Examples
+    --------
+    >>> from sklearn.datasets import fetch_rcv1
+    >>> rcv1 = fetch_rcv1()
+    >>> rcv1.data.shape
+    (804414, 47236)
+    >>> rcv1.target.shape
+    (804414, 103)
     """
     N_SAMPLES = 804414
     N_FEATURES = 47236
@@ -185,7 +209,9 @@ def fetch_rcv1(
         files = []
         for each in XY_METADATA:
             logger.info("Downloading %s" % each.url)
-            file_path = _fetch_remote(each, dirname=rcv1_dir)
+            file_path = _fetch_remote(
+                each, dirname=rcv1_dir, n_retries=n_retries, delay=delay
+            )
             files.append(GzipFile(filename=file_path))
 
         Xy = load_svmlight_files(files, n_features=N_FEATURES)
@@ -211,7 +237,9 @@ def fetch_rcv1(
         not exists(sample_topics_path) or not exists(topics_path)
     ):
         logger.info("Downloading %s" % TOPICS_METADATA.url)
-        topics_archive_path = _fetch_remote(TOPICS_METADATA, dirname=rcv1_dir)
+        topics_archive_path = _fetch_remote(
+            TOPICS_METADATA, dirname=rcv1_dir, n_retries=n_retries, delay=delay
+        )
 
         # parse the target file
         n_cat = -1

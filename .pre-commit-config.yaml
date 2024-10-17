@@ -5,18 +5,18 @@ repos:
     -   id: check-yaml
     -   id: end-of-file-fixer
     -   id: trailing-whitespace
--   repo: https://github.com/psf/black
-    rev: 23.3.0
-    hooks:
-    -   id: black
 -   repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
-    rev: v0.0.272
+    rev: v0.5.1
     hooks:
     -   id: ruff
-        args: ["--fix", "--show-source"]
+        args: ["--fix", "--output-format=full"]
+-   repo: https://github.com/psf/black
+    rev: 24.3.0
+    hooks:
+    -   id: black
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.3.0
+    rev: v1.9.0
     hooks:
      -  id: mypy
         files: sklearn/
@@ -27,3 +27,10 @@ repos:
     # TODO: add the double-quote-cython-strings hook when it's usability has improved:
     # possibility to pass a directory and use it as a check instead of auto-formatter.
     -   id: cython-lint
+-   repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v2.7.1
+    hooks:
+    -   id: prettier
+        files: ^doc/scss/|^doc/js/scripts/
+        exclude: ^doc/js/scripts/vendor/
+        types_or: ["scss", "javascript"]

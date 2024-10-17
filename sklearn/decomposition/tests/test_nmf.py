@@ -5,9 +5,7 @@ from io import StringIO
 
 import numpy as np
 import pytest
-import scipy.sparse as sp
 from scipy import linalg
-from scipy.sparse import csc_matrix
 
 from sklearn.base import clone
 from sklearn.decomposition import NMF, MiniBatchNMF, non_negative_factorization
@@ -18,9 +16,9 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
-    ignore_warnings,
 )
 from sklearn.utils.extmath import squared_norm
+from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 
 
 @pytest.mark.parametrize(
@@ -33,7 +31,7 @@ def test_convergence_warning(Estimator, solver):
     )
     A = np.ones((2, 2))
     with pytest.warns(ConvergenceWarning, match=convergence_warning):
-        Estimator(max_iter=1, **solver).fit(A)
+        Estimator(max_iter=1, n_components="auto", **solver).fit(A)
 
 
 def test_initialize_nn_output():
@@ -45,11 +43,9 @@ def test_initialize_nn_output():
         assert not ((W < 0).any() or (H < 0).any())
 
 
-# TODO(1.6): remove the warning filter for `n_components`
 @pytest.mark.filterwarnings(
     r"ignore:The multiplicative update \('mu'\) solver cannot update zeros present in"
     r" the initialization",
-    "ignore:The default value of `n_components` will change",
 )
 def test_parameter_checking():
     # Here we only check for invalid parameter values that are not already
@@ -109,7 +105,10 @@ def test_initialize_variants():
 
 
 # ignore UserWarning raised when both solver='mu' and init='nndsvd'
-@ignore_warnings(category=UserWarning)
+@pytest.mark.filterwarnings(
+    r"ignore:The multiplicative update \('mu'\) solver cannot update zeros present in"
+    r" the initialization"
+)
 @pytest.mark.parametrize(
     ["Estimator", "solver"],
     [[NMF, {"solver": "cd"}], [NMF, {"solver": "mu"}], [MiniBatchNMF, {}]],
@@ -269,8 +268,6 @@ def test_nmf_inverse_transform(solver):
     assert_array_almost_equal(A, A_new, decimal=2)
 
 
-# TODO(1.6): remove the warning filter
-@pytest.mark.filterwarnings("ignore:The default value of `n_components` will change")
 def test_mbnmf_inverse_transform():
     # Test that MiniBatchNMF.transform followed by MiniBatchNMF.inverse_transform
     # is close to the identity
@@ -299,16 +296,15 @@ def test_n_components_greater_n_features(Estimator):
     ["Estimator", "solver"],
     [[NMF, {"solver": "cd"}], [NMF, {"solver": "mu"}], [MiniBatchNMF, {}]],
 )
+@pytest.mark.parametrize("sparse_container", CSC_CONTAINERS + CSR_CONTAINERS)
 @pytest.mark.parametrize("alpha_W", (0.0, 1.0))
 @pytest.mark.parametrize("alpha_H", (0.0, 1.0, "same"))
-def test_nmf_sparse_input(Estimator, solver, alpha_W, alpha_H):
+def test_nmf_sparse_input(Estimator, solver, sparse_container, alpha_W, alpha_H):
     # Test that sparse matrices are accepted as input
-    from scipy.sparse import csc_matrix
-
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(10, 10))
     A[:, 2 * np.arange(5)] = 0
-    A_sparse = csc_matrix(A)
+    A_sparse = sparse_container(A)
 
     est1 = Estimator(
         n_components=5,
@@ -335,12 +331,13 @@ def test_nmf_sparse_input(Estimator, solver, alpha_W, alpha_H):
     ["Estimator", "solver"],
     [[NMF, {"solver": "cd"}], [NMF, {"solver": "mu"}], [MiniBatchNMF, {}]],
 )
-def test_nmf_sparse_transform(Estimator, solver):
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
+def test_nmf_sparse_transform(Estimator, solver, csc_container):
     # Test that transform works on sparse data.  Issue #2124
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(3, 2))
     A[1, 1] = 0
-    A = csc_matrix(A)
+    A = csc_container(A)
 
     model = Estimator(random_state=0, n_components=2, max_iter=400, **solver)
     A_fit_tr = model.fit_transform(A)
@@ -348,8 +345,6 @@ def test_nmf_sparse_transform(Estimator, solver):
     assert_allclose(A_fit_tr, A_tr, atol=1e-1)
 
 
-# TODO(1.6): remove the warning filter
-@pytest.mark.filterwarnings("ignore:The default value of `n_components` will change")
 @pytest.mark.parametrize("init", ["random", "nndsvd"])
 @pytest.mark.parametrize("solver", ("cd", "mu"))
 @pytest.mark.parametrize("alpha_W", (0.0, 1.0))
@@ -451,7 +446,8 @@ def _beta_divergence_dense(X, W, H, beta):
     return res
 
 
-def test_beta_divergence():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_beta_divergence(csr_container):
     # Compare _beta_divergence with the reference _beta_divergence_dense
     n_samples = 20
     n_features = 10
@@ -462,7 +458,7 @@ def test_beta_divergence():
     rng = np.random.mtrand.RandomState(42)
     X = rng.randn(n_samples, n_features)
     np.clip(X, 0, None, out=X)
-    X_csr = sp.csr_matrix(X)
+    X_csr = csr_container(X)
     W, H = nmf._initialize_nmf(X, n_components, init="random", random_state=42)
 
     for beta in beta_losses:
@@ -474,7 +470,8 @@ def test_beta_divergence():
         assert_almost_equal(ref, loss_csr, decimal=7)
 
 
-def test_special_sparse_dot():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_special_sparse_dot(csr_container):
     # Test the function that computes np.dot(W, H), only where X is non zero.
     n_samples = 10
     n_features = 5
@@ -482,7 +479,7 @@ def test_special_sparse_dot():
     rng = np.random.mtrand.RandomState(42)
     X = rng.randn(n_samples, n_features)
     np.clip(X, 0, None, out=X)
-    X_csr = sp.csr_matrix(X)
+    X_csr = csr_container(X)
 
     W = np.abs(rng.randn(n_samples, n_components))
     H = np.abs(rng.randn(n_components, n_features))
@@ -501,8 +498,9 @@ def test_special_sparse_dot():
     assert_array_equal(WH_safe.shape, X_csr.shape)
 
 
-@ignore_warnings(category=ConvergenceWarning)
-def test_nmf_multiplicative_update_sparse():
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_nmf_multiplicative_update_sparse(csr_container):
     # Compare sparse and dense input in multiplicative update NMF
     # Also test continuity of the results with respect to beta_loss parameter
     n_samples = 20
@@ -516,7 +514,7 @@ def test_nmf_multiplicative_update_sparse():
     rng = np.random.mtrand.RandomState(1337)
     X = rng.randn(n_samples, n_features)
     X = np.abs(X)
-    X_csr = sp.csr_matrix(X)
+    X_csr = csr_container(X)
     W0, H0 = nmf._initialize_nmf(X, n_components, init="random", random_state=42)
 
     for beta_loss in (-1.2, 0, 0.2, 1.0, 2.0, 2.5):
@@ -580,7 +578,8 @@ def test_nmf_multiplicative_update_sparse():
         assert_allclose(H1, H3, atol=1e-4)
 
 
-def test_nmf_negative_beta_loss():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_nmf_negative_beta_loss(csr_container):
     # Test that an error is raised if beta_loss < 0 and X contains zeros.
     # Test that the output has not NaN values when the input contains zeros.
     n_samples = 6
@@ -590,7 +589,7 @@ def test_nmf_negative_beta_loss():
     rng = np.random.mtrand.RandomState(42)
     X = rng.randn(n_samples, n_features)
     np.clip(X, 0, None, out=X)
-    X_csr = sp.csr_matrix(X)
+    X_csr = csr_container(X)
 
     def _assert_nmf_no_nan(X, beta_loss):
         W, H, _ = non_negative_factorization(
@@ -616,8 +615,6 @@ def test_nmf_negative_beta_loss():
         _assert_nmf_no_nan(X_csr, beta_loss)
 
 
-# TODO(1.6): remove the warning filter
-@pytest.mark.filterwarnings("ignore:The default value of `n_components` will change")
 @pytest.mark.parametrize("beta_loss", [-0.5, 0.0])
 def test_minibatch_nmf_negative_beta_loss(beta_loss):
     """Check that an error is raised if beta_loss < 0 and X contains zeros."""
@@ -705,7 +702,7 @@ def test_nmf_regularization(Estimator, solver):
     ) ** 2.0 + (linalg.norm(H_regul)) ** 2.0
 
 
-@ignore_warnings(category=ConvergenceWarning)
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("solver", ("cd", "mu"))
 def test_nmf_decreasing(solver):
     # test that the objective function is decreasing at each iteration
@@ -774,8 +771,6 @@ def test_nmf_underflow():
     assert_almost_equal(res, ref)
 
 
-# TODO(1.6): remove the warning filter
-@pytest.mark.filterwarnings("ignore:The default value of `n_components` will change")
 @pytest.mark.parametrize(
     "dtype_in, dtype_out",
     [
@@ -807,8 +802,6 @@ def test_nmf_dtype_match(Estimator, solver, dtype_in, dtype_out):
     assert nmf.components_.dtype == dtype_out
 
 
-# TODO(1.6): remove the warning filter
-@pytest.mark.filterwarnings("ignore:The default value of `n_components` will change")
 @pytest.mark.parametrize(
     ["Estimator", "solver"],
     [[NMF, {"solver": "cd"}], [NMF, {"solver": "mu"}], [MiniBatchNMF, {}]],
@@ -825,8 +818,6 @@ def test_nmf_float32_float64_consistency(Estimator, solver):
     assert_allclose(W32, W64, atol=1e-5)
 
 
-# TODO(1.6): remove the warning filter
-@pytest.mark.filterwarnings("ignore:The default value of `n_components` will change")
 @pytest.mark.parametrize("Estimator", [NMF, MiniBatchNMF])
 def test_nmf_custom_init_dtype_error(Estimator):
     # Check that an error is raise if custom H and/or W don't have the same
@@ -916,8 +907,6 @@ def test_feature_names_out():
     assert_array_equal([f"nmf{i}" for i in range(3)], names)
 
 
-# TODO(1.6): remove the warning filter
-@pytest.mark.filterwarnings("ignore:The default value of `n_components` will change")
 def test_minibatch_nmf_verbose():
     # Check verbose mode of MiniBatchNMF for better coverage.
     A = np.random.RandomState(0).random_sample((100, 10))
@@ -930,30 +919,31 @@ def test_minibatch_nmf_verbose():
         sys.stdout = old_stdout
 
 
-# TODO(1.5): remove this test
-def test_NMF_inverse_transform_W_deprecation():
-    rng = np.random.mtrand.RandomState(42)
+# TODO(1.7): remove this test
+@pytest.mark.parametrize("Estimator", [NMF, MiniBatchNMF])
+def test_NMF_inverse_transform_Xt_deprecation(Estimator):
+    rng = np.random.RandomState(42)
     A = np.abs(rng.randn(6, 5))
-    est = NMF(
+    est = Estimator(
         n_components=3,
         init="random",
         random_state=0,
         tol=1e-6,
     )
-    Xt = est.fit_transform(A)
+    X = est.fit_transform(A)
 
     with pytest.raises(TypeError, match="Missing required positional argument"):
         est.inverse_transform()
 
-    with pytest.raises(ValueError, match="Please provide only"):
-        est.inverse_transform(Xt=Xt, W=Xt)
+    with pytest.raises(TypeError, match="Cannot use both X and Xt. Use X only"):
+        est.inverse_transform(X=X, Xt=X)
 
     with warnings.catch_warnings(record=True):
         warnings.simplefilter("error")
-        est.inverse_transform(Xt)
+        est.inverse_transform(X)
 
-    with pytest.warns(FutureWarning, match="Input argument `W` was renamed to `Xt`"):
-        est.inverse_transform(W=Xt)
+    with pytest.warns(FutureWarning, match="Xt was renamed X in version 1.5"):
+        est.inverse_transform(Xt=X)
 
 
 @pytest.mark.parametrize("Estimator", [NMF, MiniBatchNMF])
@@ -986,17 +976,6 @@ def test_nmf_non_negative_factorization_n_components_auto():
     )
     assert H.shape == H_init.shape
     assert W.shape == W_init.shape
-
-
-# TODO(1.6): remove
-def test_nmf_n_components_default_value_warning():
-    rng = np.random.RandomState(0)
-    X = rng.random_sample((6, 5))
-    H = rng.random_sample((2, 5))
-    with pytest.warns(
-        FutureWarning, match="The default value of `n_components` will change from"
-    ):
-        non_negative_factorization(X, H=H)
 
 
 def test_nmf_n_components_auto_no_h_update():

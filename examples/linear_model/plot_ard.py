@@ -5,8 +5,8 @@ Comparing Linear Bayesian Regressors
 
 This example compares two different bayesian regressors:
 
- - a :ref:`automatic_relevance_determination`
- - a :ref:`bayesian_ridge_regression`
+- a :ref:`automatic_relevance_determination`
+- a :ref:`bayesian_ridge_regression`
 
 In the first part, we use an :ref:`ordinary_least_squares` (OLS) model as a
 baseline for comparing the models' coefficients with respect to the true
@@ -19,7 +19,8 @@ non-linear relationship between `X` and `y`.
 
 """
 
-# Author: Arturo Amor <david-arturo.amor-quiroz@inria.fr>
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Models robustness to recover the ground truth weights
@@ -58,8 +59,8 @@ import pandas as pd
 from sklearn.linear_model import ARDRegression, BayesianRidge, LinearRegression
 
 olr = LinearRegression().fit(X, y)
-brr = BayesianRidge(compute_score=True, n_iter=30).fit(X, y)
-ard = ARDRegression(compute_score=True, n_iter=30).fit(X, y)
+brr = BayesianRidge(compute_score=True, max_iter=30).fit(X, y)
+ard = ARDRegression(compute_score=True, max_iter=30).fit(X, y)
 df = pd.DataFrame(
     {
         "Weights of true generative process": true_weights,
@@ -117,7 +118,7 @@ _ = plt.title("Models log-likelihood")
 
 # %%
 # Indeed, both models minimize the log-likelihood up to an arbitrary cutoff
-# defined by the `n_iter` parameter.
+# defined by the `max_iter` parameter.
 #
 # Bayesian regressions with polynomial feature expansion
 # ======================================================

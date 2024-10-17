@@ -1,13 +1,15 @@
-# cython: language_level=3
-
-# Fused types for y_true, y_pred, raw_prediction
-ctypedef fused Y_DTYPE_C:
+# Fused types for input like y_true, raw_prediction, sample_weights.
+ctypedef fused floating_in:
     double
     float
 
 
-# Fused types for gradient and hessian
-ctypedef fused G_DTYPE_C:
+# Fused types for output like gradient and hessian
+# We use a different fused types for input (floating_in) and output (floating_out), such
+# that input and output can have different dtypes in the same function call. A single
+# fused type can only take on one single value (type) for all arguments in one function
+# call.
+ctypedef fused floating_out:
     double
     float
 
@@ -87,3 +89,13 @@ cdef class CyExponentialLoss(CyLossFunction):
     cdef double cy_loss(self, double y_true, double raw_prediction) noexcept nogil
     cdef double cy_gradient(self, double y_true, double raw_prediction) noexcept nogil
     cdef double_pair cy_grad_hess(self, double y_true, double raw_prediction) noexcept nogil
+
+
+cdef class CyHalfMultinomialLoss():
+    cdef void cy_gradient(
+        self,
+        const floating_in y_true,
+        const floating_in[::1] raw_prediction,
+        const floating_in sample_weight,
+        floating_out[::1] gradient_out,
+    ) noexcept nogil

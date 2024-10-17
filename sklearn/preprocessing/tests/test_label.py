@@ -1,15 +1,8 @@
 import numpy as np
 import pytest
-from scipy.sparse import (
-    coo_matrix,
-    csc_matrix,
-    csr_matrix,
-    dok_matrix,
-    issparse,
-    lil_matrix,
-)
+from scipy.sparse import issparse
 
-from sklearn import datasets
+from sklearn import config_context, datasets
 from sklearn.preprocessing._label import (
     LabelBinarizer,
     LabelEncoder,
@@ -18,9 +11,24 @@ from sklearn.preprocessing._label import (
     _inverse_binarize_thresholding,
     label_binarize,
 )
-from sklearn.utils import _to_object_array
-from sklearn.utils._testing import assert_array_equal, ignore_warnings
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    get_namespace,
+    yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._testing import (
+    _array_api_for_tests,
+    assert_array_equal,
+)
+from sklearn.utils.fixes import (
+    COO_CONTAINERS,
+    CSC_CONTAINERS,
+    CSR_CONTAINERS,
+    DOK_CONTAINERS,
+    LIL_CONTAINERS,
+)
 from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.validation import _to_object_array
 
 iris = datasets.load_iris()
 
@@ -134,7 +142,6 @@ def test_label_binarizer_pandas_nullable(dtype, unique_first):
     assert_array_equal(y_out, [[1], [0]])
 
 
-@ignore_warnings
 def test_label_binarizer_errors():
     # Check that invalid arguments yield ValueError
     one_class = np.array([0, 0, 0, 0])
@@ -169,31 +176,11 @@ def test_label_binarizer_errors():
     with pytest.raises(ValueError, match=err_msg):
         lb.fit(input_labels)
 
-    # Fail on y_type
-    err_msg = "foo format is not supported"
-    with pytest.raises(ValueError, match=err_msg):
-        _inverse_binarize_thresholding(
-            y=csr_matrix([[1, 2], [2, 1]]),
-            output_type="foo",
-            classes=[1, 2],
-            threshold=0,
-        )
-
     # Sequence of seq type should raise ValueError
     y_seq_of_seqs = [[], [1, 2], [3], [0, 1, 3], [2]]
     err_msg = "You appear to be using a legacy multi-label data representation"
     with pytest.raises(ValueError, match=err_msg):
         LabelBinarizer().fit_transform(y_seq_of_seqs)
-
-    # Fail on the number of classes
-    err_msg = "The number of class is not equal to the number of dimension of y."
-    with pytest.raises(ValueError, match=err_msg):
-        _inverse_binarize_thresholding(
-            y=csr_matrix([[1, 2], [2, 1]]),
-            output_type="foo",
-            classes=[1, 2, 3],
-            threshold=0,
-        )
 
     # Fail on the dimension of 'binary'
     err_msg = "output_type='binary', but y.shape"
@@ -211,6 +198,29 @@ def test_label_binarizer_errors():
         LabelBinarizer().fit(np.array([[1, 3], [2, 1]]))
     with pytest.raises(ValueError, match=err_msg):
         label_binarize(np.array([[1, 3], [2, 1]]), classes=[1, 2, 3])
+
+
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_label_binarizer_sparse_errors(csr_container):
+    # Fail on y_type
+    err_msg = "foo format is not supported"
+    with pytest.raises(ValueError, match=err_msg):
+        _inverse_binarize_thresholding(
+            y=csr_container([[1, 2], [2, 1]]),
+            output_type="foo",
+            classes=[1, 2],
+            threshold=0,
+        )
+
+    # Fail on the number of classes
+    err_msg = "The number of class is not equal to the number of dimension of y."
+    with pytest.raises(ValueError, match=err_msg):
+        _inverse_binarize_thresholding(
+            y=csr_container([[1, 2], [2, 1]]),
+            output_type="foo",
+            classes=[1, 2, 3],
+            threshold=0,
+        )
 
 
 @pytest.mark.parametrize(
@@ -350,8 +360,16 @@ def test_sparse_output_multilabel_binarizer():
             assert_array_equal([1, 2, 3], mlb.classes_)
             assert mlb.inverse_transform(got) == inverse
 
+
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_sparse_output_multilabel_binarizer_errors(csr_container):
+    inp = iter([iter((2, 3)), iter((1,)), {1, 2}])
+    mlb = MultiLabelBinarizer(sparse_output=False)
+    mlb.fit(inp)
     with pytest.raises(ValueError):
-        mlb.inverse_transform(csr_matrix(np.array([[0, 1, 1], [2, 0, 0], [1, 1, 0]])))
+        mlb.inverse_transform(
+            csr_container(np.array([[0, 1, 1], [2, 0, 0], [1, 1, 0]]))
+        )
 
 
 def test_multilabel_binarizer():
@@ -620,25 +638,24 @@ def test_label_binarize_multiclass():
         )
 
 
-def test_label_binarize_multilabel():
+@pytest.mark.parametrize(
+    "arr_type",
+    [np.array]
+    + COO_CONTAINERS
+    + CSC_CONTAINERS
+    + CSR_CONTAINERS
+    + DOK_CONTAINERS
+    + LIL_CONTAINERS,
+)
+def test_label_binarize_multilabel(arr_type):
     y_ind = np.array([[0, 1, 0], [1, 1, 1], [0, 0, 0]])
     classes = [0, 1, 2]
     pos_label = 2
     neg_label = 0
     expected = pos_label * y_ind
-    y_sparse = [
-        sparse_matrix(y_ind)
-        for sparse_matrix in [
-            coo_matrix,
-            csc_matrix,
-            csr_matrix,
-            dok_matrix,
-            lil_matrix,
-        ]
-    ]
+    y = arr_type(y_ind)
 
-    for y in [y_ind] + y_sparse:
-        check_binarized_results(y, classes, pos_label, neg_label, expected)
+    check_binarized_results(y, classes, pos_label, neg_label, expected)
 
     with pytest.raises(ValueError):
         label_binarize(
@@ -655,9 +672,10 @@ def test_invalid_input_label_binarize():
         label_binarize([[1, 3]], classes=[1, 2, 3])
 
 
-def test_inverse_binarize_multiclass():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_inverse_binarize_multiclass(csr_container):
     got = _inverse_binarize_multiclass(
-        csr_matrix([[0, 1, 0], [-1, 0, -1], [0, 0, 0]]), np.arange(3)
+        csr_container([[0, 1, 0], [-1, 0, -1], [0, 0, 0]]), np.arange(3)
     )
     assert_array_equal(got, np.array([1, 1, 0]))
 
@@ -686,3 +704,42 @@ def test_label_encoders_do_not_have_set_output(encoder):
     y_encoded_with_kwarg = encoder.fit_transform(y=["a", "b", "c"])
     y_encoded_positional = encoder.fit_transform(["a", "b", "c"])
     assert_array_equal(y_encoded_with_kwarg, y_encoded_positional)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize(
+    "y",
+    [
+        np.array([2, 1, 3, 1, 3]),
+        np.array([1, 1, 4, 5, -1, 0]),
+        np.array([3, 5, 9, 5, 9, 3]),
+    ],
+)
+def test_label_encoder_array_api_compliance(y, array_namespace, device, dtype):
+    xp = _array_api_for_tests(array_namespace, device)
+    xp_y = xp.asarray(y, device=device)
+    with config_context(array_api_dispatch=True):
+        xp_label = LabelEncoder()
+        np_label = LabelEncoder()
+        xp_label = xp_label.fit(xp_y)
+        xp_transformed = xp_label.transform(xp_y)
+        xp_inv_transformed = xp_label.inverse_transform(xp_transformed)
+        np_label = np_label.fit(y)
+        np_transformed = np_label.transform(y)
+        assert get_namespace(xp_transformed)[0].__name__ == xp.__name__
+        assert get_namespace(xp_inv_transformed)[0].__name__ == xp.__name__
+        assert get_namespace(xp_label.classes_)[0].__name__ == xp.__name__
+        assert_array_equal(_convert_to_numpy(xp_transformed, xp), np_transformed)
+        assert_array_equal(_convert_to_numpy(xp_inv_transformed, xp), y)
+        assert_array_equal(_convert_to_numpy(xp_label.classes_, xp), np_label.classes_)
+
+        xp_label = LabelEncoder()
+        np_label = LabelEncoder()
+        xp_transformed = xp_label.fit_transform(xp_y)
+        np_transformed = np_label.fit_transform(y)
+        assert get_namespace(xp_transformed)[0].__name__ == xp.__name__
+        assert get_namespace(xp_label.classes_)[0].__name__ == xp.__name__
+        assert_array_equal(_convert_to_numpy(xp_transformed, xp), np_transformed)
+        assert_array_equal(_convert_to_numpy(xp_label.classes_, xp), np_label.classes_)

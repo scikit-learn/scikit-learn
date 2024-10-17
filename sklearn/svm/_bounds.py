@@ -1,6 +1,7 @@
 """Determination of parameter bounds"""
-# Author: Paolo Losi
-# License: BSD 3 clause
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Real
 
@@ -61,6 +62,14 @@ def l1_min_c(X, y, *, loss="squared_hinge", fit_intercept=True, intercept_scalin
     -------
     l1_min_c : float
         Minimum value for C.
+
+    Examples
+    --------
+    >>> from sklearn.svm import l1_min_c
+    >>> from sklearn.datasets import make_classification
+    >>> X, y = make_classification(n_samples=100, n_features=20, random_state=42)
+    >>> print(f"{l1_min_c(X, y, loss='squared_hinge', fit_intercept=True):.4f}")
+    0.0044
     """
 
     X = check_array(X, accept_sparse="csc")

@@ -1,5 +1,6 @@
-# Authors: Rob Zinkov, Mathieu Blondel
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from numbers import Real
 
 from ..base import _fit_context
@@ -24,7 +25,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     max_iter : int, default=1000
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
-        :meth:`PassiveAggressive.partial_fit` method.
+        :meth:`~sklearn.linear_model.PassiveAggressiveClassifier.partial_fit` method.
 
         .. versionadded:: 0.19
 
@@ -35,11 +36,11 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         .. versionadded:: 0.19
 
     early_stopping : bool, default=False
-        Whether to use early stopping to terminate training when validation.
+        Whether to use early stopping to terminate training when validation
         score is not improving. If set to True, it will automatically set aside
         a stratified fraction of training data as validation and terminate
-        training when validation score is not improving by at least tol for
-        n_iter_no_change consecutive epochs.
+        training when validation score is not improving by at least `tol` for
+        `n_iter_no_change` consecutive epochs.
 
         .. versionadded:: 0.20
 
@@ -141,9 +142,6 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     t_ : int
         Number of weight updates performed during training.
         Same as ``(n_iter_ * n_samples + 1)``.
-
-    loss_function_ : callable
-        Loss function used by the algorithm.
 
     See Also
     --------
@@ -331,7 +329,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     max_iter : int, default=1000
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
-        :meth:`partial_fit` method.
+        :meth:`~sklearn.linear_model.PassiveAggressiveRegressor.partial_fit` method.
 
         .. versionadded:: 0.19
 

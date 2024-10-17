@@ -7,12 +7,15 @@ import numpy as np
 
 
 ctypedef fused testing_type_t:
-    uint8_t
-    intp_t
     float32_t
     float64_t
+    int8_t
     int32_t
     int64_t
+    intp_t
+    uint8_t
+    uint32_t
+    uint64_t
 
 
 def testing_make_array_from_typed_val(testing_type_t val):

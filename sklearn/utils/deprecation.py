@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import functools
 import warnings
 
@@ -14,10 +17,11 @@ class deprecated:
     and the docstring. Note: to use this with the default value for extra, put
     in an empty of parentheses:
 
+    Examples
+    --------
     >>> from sklearn.utils import deprecated
     >>> deprecated()
     <sklearn.utils.deprecation.deprecated object at ...>
-
     >>> @deprecated()
     ... def some_function(): pass
 
@@ -43,8 +47,8 @@ class deprecated:
         if isinstance(obj, type):
             return self._decorate_class(obj)
         elif isinstance(obj, property):
-            # Note that this is only triggered properly if the `property`
-            # decorator comes before the `deprecated` decorator, like so:
+            # Note that this is only triggered properly if the `deprecated`
+            # decorator is placed before the `property` decorator, like so:
             #
             # @deprecated(msg)
             # @property
@@ -96,7 +100,7 @@ class deprecated:
         msg = self.extra
 
         @property
-        @functools.wraps(prop)
+        @functools.wraps(prop.fget)
         def wrapped(*args, **kwargs):
             warnings.warn(msg, category=FutureWarning)
             return prop.fget(*args, **kwargs)
@@ -113,3 +117,47 @@ def _is_deprecated(func):
         [c.cell_contents for c in closures if isinstance(c.cell_contents, str)]
     )
     return is_deprecated
+
+
+# TODO: remove in 1.7
+def _deprecate_Xt_in_inverse_transform(X, Xt):
+    """Helper to deprecate the `Xt` argument in favor of `X` in inverse_transform."""
+    if X is not None and Xt is not None:
+        raise TypeError("Cannot use both X and Xt. Use X only.")
+
+    if X is None and Xt is None:
+        raise TypeError("Missing required positional argument: X.")
+
+    if Xt is not None:
+        warnings.warn(
+            "Xt was renamed X in version 1.5 and will be removed in 1.7.",
+            FutureWarning,
+        )
+        return Xt
+
+    return X
+
+
+# TODO(1.8): remove force_all_finite and change the default value of ensure_all_finite
+# to True (remove None without deprecation).
+def _deprecate_force_all_finite(force_all_finite, ensure_all_finite):
+    """Helper to deprecate force_all_finite in favor of ensure_all_finite."""
+    if force_all_finite != "deprecated":
+        warnings.warn(
+            "'force_all_finite' was renamed to 'ensure_all_finite' in 1.6 and will be "
+            "removed in 1.8.",
+            FutureWarning,
+        )
+
+        if ensure_all_finite is not None:
+            raise ValueError(
+                "'force_all_finite' and 'ensure_all_finite' cannot be used together. "
+                "Pass `ensure_all_finite` only."
+            )
+
+        return force_all_finite
+
+    if ensure_all_finite is None:
+        return True
+
+    return ensure_all_finite
