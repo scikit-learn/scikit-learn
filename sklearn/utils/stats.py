@@ -7,7 +7,7 @@ from .extmath import stable_cumsum
 
 
 def _weighted_percentile(array, sample_weight, percentile=50):
-    """Compute the lower weighted percentile value(s).
+    """Compute the weighted percentile with method 'inverted_cdf'.
 
     If `array` is a 2D array, the `values` are selected along axis 0.
 
@@ -31,12 +31,12 @@ def _weighted_percentile(array, sample_weight, percentile=50):
         `(array.shape[0],)`.
 
     percentile: int or float, default=50
-        The level (or rank) of the percentile to compute. Must be between 0 and 100.
+        The probability level of the percentile to compute, in percent. Must be between 0 and 100.
 
     Returns
     -------
     percentile : int if `array` 1D, ndarray if `array` 2D
-        Value of weighted percentile at the requested level.
+        Weighted percentile at the requested level.
     """
     n_dim = array.ndim
     if n_dim == 0:
