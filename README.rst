@@ -75,7 +75,7 @@ scikit-learn requires:
 
 =======
 
-**Scikit-learn 0.20 was the last version to support Python 2.7 and Python 3.4.**
+**Scikit-learn version 0.20 was the last version to support Python 2.7 and Python 3.4.**
 scikit-learn 1.0 and later require Python 3.7 or newer.
 scikit-learn 1.1 and later require Python 3.8 or newer.
 
