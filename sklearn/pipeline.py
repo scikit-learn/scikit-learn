@@ -297,6 +297,10 @@ class Pipeline(_BaseComposition):
         Pipeline. This copy is shallow: modifying (or fitting) estimators in
         the sub-pipeline will affect the larger pipeline and vice-versa.
         However, replacing a value in `step` will not affect a copy.
+
+        See
+        :ref:`sphx_glr_auto_examples_feature_selection_plot_feature_selection_pipeline.py`
+        for an example of how to use slicing to inspect part of a pipeline.
         """
         if isinstance(ind, slice):
             if ind.step not in (1, None):
@@ -1195,10 +1199,6 @@ def make_pipeline(*steps, memory=None, verbose=False):
     This is a shorthand for the :class:`Pipeline` constructor; it does not
     require, and does not permit, naming the estimators. Instead, their names
     will be set to the lowercase of their types automatically.
-
-    See
-    :ref:`sphx_glr_auto_examples_feature_selection_plot_feature_selection_pipeline.py`
-    for an example of how to create a feature selection pipeline for SVM.
 
     Parameters
     ----------
