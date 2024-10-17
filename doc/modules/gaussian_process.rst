@@ -154,10 +154,6 @@ predictions. Moreover, note that :class:`GaussianProcessClassifier` does not
 as discussed above is based on solving several binary classification tasks
 internally, which are combined using one-versus-rest or one-versus-one.
 
-.. rubric:: Examples
-
-* :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`
-
 GPC examples
 ============
 
