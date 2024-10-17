@@ -245,29 +245,33 @@ def test_regression_metrics_at_limits():
         assert_almost_equal(s([1, 1], [1, 1]), 1.0)
         assert_almost_equal(s([1, 1], [1, 1], force_finite=False), np.nan)
     msg = (
-        "Mean Squared Logarithmic Error cannot be used when targets "
-        "contain negative values."
+        "Mean Squared Logarithmic Error cannot be used when "
+        "targets contain values less than or equal to -1."
     )
     with pytest.raises(ValueError, match=msg):
         mean_squared_log_error([-1.0], [-1.0])
     msg = (
-        "Mean Squared Logarithmic Error cannot be used when targets "
-        "contain negative values."
+        "Mean Squared Logarithmic Error cannot be used when "
+        "targets contain values less than or equal to -1."
     )
     with pytest.raises(ValueError, match=msg):
         mean_squared_log_error([1.0, 2.0, 3.0], [1.0, -2.0, 3.0])
     msg = (
-        "Mean Squared Logarithmic Error cannot be used when targets "
-        "contain negative values."
+        "Mean Squared Logarithmic Error cannot be used when "
+        "targets contain values less than or equal to -1."
     )
     with pytest.raises(ValueError, match=msg):
         mean_squared_log_error([1.0, -2.0, 3.0], [1.0, 2.0, 3.0])
     msg = (
-        "Root Mean Squared Logarithmic Error cannot be used when targets "
-        "contain negative values."
+        "Mean Squared Logarithmic Error cannot be used when "
+        "targets contain values less than or equal to -1."
     )
     with pytest.raises(ValueError, match=msg):
         root_mean_squared_log_error([1.0, -2.0, 3.0], [1.0, 2.0, 3.0])
+    msg = (
+        "Root Mean Squared Logarithmic Error cannot be used when "
+        "targets contain values less than or equal to -1."
+    )
 
     # Tweedie deviance error
     power = -1.2
@@ -622,50 +626,3 @@ def test_pinball_loss_relation_with_mae():
         mean_absolute_error(y_true, y_pred)
         == mean_pinball_loss(y_true, y_pred, alpha=0.5) * 2
     )
-
-
-# TODO(1.6): remove this test
-@pytest.mark.parametrize("metric", [mean_squared_error, mean_squared_log_error])
-def test_mean_squared_deprecation_squared(metric):
-    """Check the deprecation warning of the squared parameter"""
-    depr_msg = "'squared' is deprecated in version 1.4 and will be removed in 1.6."
-    y_true, y_pred = np.arange(10), np.arange(1, 11)
-    with pytest.warns(FutureWarning, match=depr_msg):
-        metric(y_true, y_pred, squared=False)
-
-
-# TODO(1.6): remove this test
-@pytest.mark.filterwarnings("ignore:'squared' is deprecated")
-@pytest.mark.parametrize(
-    "old_func, new_func",
-    [
-        (mean_squared_error, root_mean_squared_error),
-        (mean_squared_log_error, root_mean_squared_log_error),
-    ],
-)
-def test_rmse_rmsle_parameter(old_func, new_func):
-    # Check that the new rmse/rmsle function is equivalent to
-    # the old mse/msle + squared=False function.
-    y_true = np.array([[1, 0, 0, 1], [0, 1, 1, 1], [1, 1, 0, 1]])
-    y_pred = np.array([[0, 0, 0, 1], [1, 0, 1, 1], [0, 0, 0, 1]])
-    y_true = np.array([[0.5, 1], [1, 2], [7, 6]])
-    y_pred = np.array([[0.5, 2], [1, 2.5], [8, 8]])
-    sw = np.arange(len(y_true))
-
-    expected = old_func(y_true, y_pred, squared=False)
-    actual = new_func(y_true, y_pred)
-    assert_allclose(expected, actual)
-
-    expected = old_func(y_true, y_pred, sample_weight=sw, squared=False)
-    actual = new_func(y_true, y_pred, sample_weight=sw)
-    assert_allclose(expected, actual)
-
-    expected = old_func(y_true, y_pred, multioutput="raw_values", squared=False)
-    actual = new_func(y_true, y_pred, multioutput="raw_values")
-    assert_allclose(expected, actual)
-
-    expected = old_func(
-        y_true, y_pred, sample_weight=sw, multioutput="raw_values", squared=False
-    )
-    actual = new_func(y_true, y_pred, sample_weight=sw, multioutput="raw_values")
-    assert_allclose(expected, actual)

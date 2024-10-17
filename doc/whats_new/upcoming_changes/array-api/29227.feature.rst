@@ -1,0 +1,1 @@
+- :func:`sklearn.metrics.mean_poisson_deviance` by :user:`Emily Chen <EmilyXinyi>`
