@@ -40,13 +40,17 @@ from sklearn.linear_model import (
     RidgeClassifierCV,
     RidgeCV,
 )
+from sklearn.metrics._regression import mean_squared_error
+from sklearn.metrics._scorer import make_scorer
 from sklearn.model_selection import (
     FixedThresholdClassifier,
     GridSearchCV,
+    GroupKFold,
     HalvingGridSearchCV,
     HalvingRandomSearchCV,
     RandomizedSearchCV,
     TunedThresholdClassifierCV,
+    cross_validate,
 )
 from sklearn.multiclass import (
     OneVsOneClassifier,
@@ -83,14 +87,7 @@ y_multi = rng.randint(0, 3, size=(N, 3))
 classes_multi = [np.unique(y_multi[:, i]) for i in range(y_multi.shape[1])]
 metadata = rng.randint(0, 10, size=N)
 sample_weight = rng.rand(N)
-groups = np.array([0, 1] * (len(y) // 2))
-
-
-@pytest.fixture(autouse=True)
-def enable_slep006():
-    """Enable SLEP006 for all tests."""
-    with config_context(enable_metadata_routing=True):
-        yield
+groups = rng.randint(0, 10, size=len(y))
 
 
 METAESTIMATORS: list = [
@@ -587,6 +584,7 @@ def set_requests(estimator, *, method_mapping, methods, metadata_name, value=Tru
 
 
 @pytest.mark.parametrize("estimator", UNSUPPORTED_ESTIMATORS)
+@config_context(enable_metadata_routing=True)
 def test_unsupported_estimators_get_metadata_routing(estimator):
     """Test that get_metadata_routing is not implemented on meta-estimators for
     which we haven't implemented routing yet."""
@@ -595,6 +593,7 @@ def test_unsupported_estimators_get_metadata_routing(estimator):
 
 
 @pytest.mark.parametrize("estimator", UNSUPPORTED_ESTIMATORS)
+@config_context(enable_metadata_routing=True)
 def test_unsupported_estimators_fit_with_metadata(estimator):
     """Test that fit raises NotImplementedError when metadata routing is
     enabled and a metadata is passed on meta-estimators for which we haven't
@@ -608,6 +607,7 @@ def test_unsupported_estimators_fit_with_metadata(estimator):
             raise NotImplementedError
 
 
+@config_context(enable_metadata_routing=True)
 def test_registry_copy():
     # test that _Registry is not copied into a new instance.
     a = _Registry()
@@ -618,11 +618,12 @@ def test_registry_copy():
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
+@config_context(enable_metadata_routing=True)
 def test_default_request(metaestimator):
     # Check that by default request is empty and the right type
-    cls = metaestimator["metaestimator"]
+    metaestimator_class = metaestimator["metaestimator"]
     kwargs, *_ = get_init_args(metaestimator, sub_estimator_consumes=True)
-    instance = cls(**kwargs)
+    instance = metaestimator_class(**kwargs)
     if "cv_name" in metaestimator:
         # Our GroupCV splitters request groups by default, which we should
         # ignore in this test.
@@ -634,6 +635,7 @@ def test_default_request(metaestimator):
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
+@config_context(enable_metadata_routing=True)
 def test_error_on_missing_requests_for_sub_estimator(metaestimator):
     # Test that a UnsetMetadataPassedError is raised when the sub-estimator's
     # requests are not set
@@ -642,7 +644,7 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
         # sub-estimator, e.g. MyMetaEstimator(estimator=MySubEstimator())
         return
 
-    cls = metaestimator["metaestimator"]
+    metaestimator_class = metaestimator["metaestimator"]
     X = metaestimator["X"]
     y = metaestimator["y"]
     routing_methods = metaestimator["estimator_routing_methods"]
@@ -656,7 +658,7 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
                 scorer.set_score_request(**{key: True})
             val = {"sample_weight": sample_weight, "metadata": metadata}[key]
             method_kwargs = {key: val}
-            instance = cls(**kwargs)
+            instance = metaestimator_class(**kwargs)
             msg = (
                 f"[{key}] are passed but are not explicitly set as requested or not"
                 f" requested for {estimator.__class__.__name__}.{method_name}"
@@ -692,6 +694,7 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
+@config_context(enable_metadata_routing=True)
 def test_setting_request_on_sub_estimator_removes_error(metaestimator):
     # When the metadata is explicitly requested on the sub-estimator, there
     # should be no errors.
@@ -700,7 +703,7 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
         # sub-estimator, e.g. MyMetaEstimator(estimator=MySubEstimator())
         return
 
-    cls = metaestimator["metaestimator"]
+    metaestimator_class = metaestimator["metaestimator"]
     X = metaestimator["X"]
     y = metaestimator["y"]
     routing_methods = metaestimator["estimator_routing_methods"]
@@ -730,7 +733,7 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
                 metadata_name=key,
             )
 
-            instance = cls(**kwargs)
+            instance = metaestimator_class(**kwargs)
             method = getattr(instance, method_name)
             extra_method_args = metaestimator.get("method_args", {}).get(
                 method_name, {}
@@ -761,6 +764,7 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
+@config_context(enable_metadata_routing=True)
 def test_non_consuming_estimator_works(metaestimator):
     # Test that when a non-consuming estimator is given, the meta-estimator
     # works w/o setting any requests.
@@ -775,7 +779,7 @@ def test_non_consuming_estimator_works(metaestimator):
         if is_classifier(estimator) and method_name == "partial_fit":
             estimator.set_partial_fit_request(classes=True)
 
-    cls = metaestimator["metaestimator"]
+    metaestimator_class = metaestimator["metaestimator"]
     X = metaestimator["X"]
     y = metaestimator["y"]
     routing_methods = metaestimator["estimator_routing_methods"]
@@ -784,7 +788,7 @@ def test_non_consuming_estimator_works(metaestimator):
         kwargs, (estimator, _), (_, _), (_, _) = get_init_args(
             metaestimator, sub_estimator_consumes=False
         )
-        instance = cls(**kwargs)
+        instance = metaestimator_class(**kwargs)
         set_request(estimator, method_name)
         method = getattr(instance, method_name)
         extra_method_args = metaestimator.get("method_args", {}).get(method_name, {})
@@ -799,6 +803,7 @@ def test_non_consuming_estimator_works(metaestimator):
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
+@config_context(enable_metadata_routing=True)
 def test_metadata_is_routed_correctly_to_scorer(metaestimator):
     """Test that any requested metadata is correctly routed to the underlying
     scorers in CV estimators.
@@ -807,7 +812,7 @@ def test_metadata_is_routed_correctly_to_scorer(metaestimator):
         # This test only makes sense for CV estimators
         return
 
-    cls = metaestimator["metaestimator"]
+    metaestimator_class = metaestimator["metaestimator"]
     routing_methods = metaestimator["scorer_routing_methods"]
     method_mapping = metaestimator.get("method_mapping", {})
 
@@ -825,7 +830,7 @@ def test_metadata_is_routed_correctly_to_scorer(metaestimator):
                 methods=[method_name],
                 metadata_name="sample_weight",
             )
-        instance = cls(**kwargs)
+        instance = metaestimator_class(**kwargs)
         method = getattr(instance, method_name)
         method_kwargs = {"sample_weight": sample_weight}
         if "fit" not in method_name:
@@ -844,6 +849,7 @@ def test_metadata_is_routed_correctly_to_scorer(metaestimator):
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
+@config_context(enable_metadata_routing=True)
 def test_metadata_is_routed_correctly_to_splitter(metaestimator):
     """Test that any requested metadata is correctly routed to the underlying
     splitters in CV estimators.
@@ -852,7 +858,7 @@ def test_metadata_is_routed_correctly_to_splitter(metaestimator):
         # This test is only for metaestimators accepting a CV splitter
         return
 
-    cls = metaestimator["metaestimator"]
+    metaestimator_class = metaestimator["metaestimator"]
     routing_methods = metaestimator["cv_routing_methods"]
     X_ = metaestimator["X"]
     y_ = metaestimator["y"]
@@ -866,7 +872,7 @@ def test_metadata_is_routed_correctly_to_splitter(metaestimator):
         if scorer:
             scorer.set_score_request(sample_weight=False, metadata=False)
         cv.set_split_request(groups=True, metadata=True)
-        instance = cls(**kwargs)
+        instance = metaestimator_class(**kwargs)
         method_kwargs = {"groups": groups, "metadata": metadata}
         method = getattr(instance, method_name)
         method(X_, y_, **method_kwargs)
@@ -875,3 +881,32 @@ def test_metadata_is_routed_correctly_to_splitter(metaestimator):
             check_recorded_metadata(
                 obj=_splitter, method="split", parent=method_name, **method_kwargs
             )
+
+
+@pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
+@config_context(enable_metadata_routing=True)
+def test_metadata_routed_to_group_splitter(metaestimator):
+    """Test that groups are routed correctly if group splitter of CV estimator is used
+    within cross_validate. Regression test for issue described in PR #29634 to test that
+    `ValueError: The 'groups' parameter should not be None.` is not raised."""
+
+    if "cv_routing_methods" not in metaestimator:
+        # This test is only for metaestimators accepting a CV splitter
+        return
+
+    metaestimator_class = metaestimator["metaestimator"]
+    X_ = metaestimator["X"]
+    y_ = metaestimator["y"]
+
+    kwargs, *_ = get_init_args(metaestimator, sub_estimator_consumes=True)
+    # remove `ConsumingSplitter` from kwargs, so 'cv' param isn't passed twice:
+    kwargs.pop("cv", None)
+    instance = metaestimator_class(cv=GroupKFold(n_splits=2), **kwargs)
+    cross_validate(
+        instance,
+        X_,
+        y_,
+        params={"groups": groups},
+        cv=GroupKFold(n_splits=2),
+        scoring=make_scorer(mean_squared_error, response_method="predict"),
+    )

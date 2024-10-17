@@ -62,18 +62,21 @@ def test_get_namespace_ndarray_creation_device():
 def test_get_namespace_ndarray_with_dispatch():
     """Test get_namespace on NumPy ndarrays."""
     array_api_compat = pytest.importorskip("array_api_compat")
+    if parse_version(array_api_compat.__version__) < parse_version("1.9"):
+        pytest.skip(
+            reason="array_api_compat was temporarily reporting NumPy as API compliant "
+            "and this test would fail"
+        )
 
     X_np = numpy.asarray([[1, 2, 3]])
 
     with config_context(array_api_dispatch=True):
         xp_out, is_array_api_compliant = get_namespace(X_np)
         assert is_array_api_compliant
-        if np_version >= parse_version("2.0.0"):
-            # NumPy 2.0+ is an array API compliant library.
-            assert xp_out is numpy
-        else:
-            # Older NumPy versions require the compatibility layer.
-            assert xp_out is array_api_compat.numpy
+
+        # In the future, NumPy should become API compliant library and we should have
+        # assert xp_out is numpy
+        assert xp_out is array_api_compat.numpy
 
 
 @skip_if_array_api_compat_not_configured
