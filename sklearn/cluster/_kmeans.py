@@ -1841,7 +1841,6 @@ class MiniBatchKMeans(_BaseKMeans):
     See :ref:`sphx_glr_auto_examples_cluster_plot_birch_vs_minibatchkmeans.py` for a
     comparison with :class:`~sklearn.cluster.BIRCH`.
 
-
     Examples
     --------
     >>> from sklearn.cluster import MiniBatchKMeans
