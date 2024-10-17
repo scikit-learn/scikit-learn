@@ -1,0 +1,4 @@
+- The `assert_all_finite` parameter of functions
+  :func:`metrics.pairwise.check_pairwise_arrays` and :func:`metrics.pairwise_distances`
+  is renamed into `ensure_all_finite`. `force_all_finite` will be removed in 1.8.
+  By :user:`Jérémie du Boisberranger <jeremiedb>`

@@ -2489,11 +2489,11 @@ relative percentage error with respect to actual output.
 
 .. note::
 
-    The MAPE formula here represents a relative error and outputs a value in the
-    range [0, 1]. It is not a percentage in the range [0, 100] and a value of 100
-    does not mean 100% but 1e2. The motivation for the MAPE formula here to be in
-    the range [0, 1] is to be consistent with other error metrics in scikit-learn
-    such as `accuracy_score`.
+    The MAPE formula here does not represent the common "percentage" definition: the
+    percentage in the range [0, 100] is converted to a relative value in the range [0,
+    1] by dividing by 100. Thus, an error of 200% corresponds to a relative error of 2.
+    The motivation here is to have a range of values that is more consistent with other
+    error metrics in scikit-learn, such as `accuracy_score`.
 
     To obtain the mean absolute percentage error as per the Wikipedia formula,
     multiply the `mean_absolute_percentage_error` computed here by 100.
@@ -2587,7 +2587,7 @@ The best possible score is 1.0, lower values are worse.
 .. topic:: Link to :ref:`r2_score`
 
     The difference between the explained variance score and the :ref:`r2_score`
-    is that when the explained variance score does not account for
+    is that the explained variance score does not account for
     systematic offset in the prediction. For this reason, the
     :ref:`r2_score` should be preferred in general.
 

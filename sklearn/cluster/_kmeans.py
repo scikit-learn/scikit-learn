@@ -1179,9 +1179,10 @@ class _BaseKMeans(
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        # TODO: replace by a statistical test, see meta-issue #16298
         tags._xfail_checks = {
-            "check_sample_weights_invariance": (
-                "zero sample_weight is not equivalent to removing samples"
+            "check_sample_weight_equivalence": (
+                "sample_weight is not equivalent to removing/repeating samples."
             ),
         }
         return tags
@@ -1361,9 +1362,6 @@ class KMeans(_BaseKMeans):
 
     For examples of common problems with K-Means and how to address them see
     :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_assumptions.py`.
-
-    For an example of how to use K-Means to perform color quantization see
-    :ref:`sphx_glr_auto_examples_cluster_plot_color_quantization.py`.
 
     For a demonstration of how K-Means can be used to cluster text documents see
     :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`.
