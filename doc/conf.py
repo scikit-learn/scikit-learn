@@ -292,10 +292,7 @@ html_theme_options = {
         ],
     },
     "show_version_warning_banner": True,
-    "announcement": (
-        '<a href="https://forms.gle/zUXvWjGUN1nWhJ2V6">Help us make '
-        "<code>scikit-learn</code> better! The 2024 user survey is now live.</a>"
-    ),
+    "announcement": None,
 }
 
 # Add any paths that contain custom themes here, relative to this directory.
