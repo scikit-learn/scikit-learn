@@ -1,5 +1,6 @@
 import numbers
 import pickle
+import warnings
 from copy import deepcopy
 from functools import partial
 from unittest.mock import Mock
@@ -1428,84 +1429,6 @@ def test_make_scorer_repr(scorer, expected_repr):
     assert repr(scorer) == expected_repr
 
 
-# TODO(1.6): rework this test after the deprecation of `needs_proba` and
-# `needs_threshold`
-@pytest.mark.filterwarnings("ignore:.*needs_proba.*:FutureWarning")
-@pytest.mark.parametrize(
-    "params, err_type, err_msg",
-    [
-        # response_method should not be set if needs_* are set
-        (
-            {"response_method": "predict_proba", "needs_proba": True},
-            ValueError,
-            "You cannot set both `response_method`",
-        ),
-        (
-            {"response_method": "predict_proba", "needs_threshold": True},
-            ValueError,
-            "You cannot set both `response_method`",
-        ),
-        # cannot set both needs_proba and needs_threshold
-        (
-            {"needs_proba": True, "needs_threshold": True},
-            ValueError,
-            "You cannot set both `needs_proba` and `needs_threshold`",
-        ),
-    ],
-)
-def test_make_scorer_error(params, err_type, err_msg):
-    """Check that `make_scorer` raises errors if the parameter used."""
-    with pytest.raises(err_type, match=err_msg):
-        make_scorer(lambda y_true, y_pred: 1, **params)
-
-
-# TODO(1.6): remove the following test
-@pytest.mark.parametrize(
-    "deprecated_params, new_params, warn_msg",
-    [
-        (
-            {"needs_proba": True},
-            {"response_method": "predict_proba"},
-            "The `needs_threshold` and `needs_proba` parameter are deprecated",
-        ),
-        (
-            {"needs_proba": True, "needs_threshold": False},
-            {"response_method": "predict_proba"},
-            "The `needs_threshold` and `needs_proba` parameter are deprecated",
-        ),
-        (
-            {"needs_threshold": True},
-            {"response_method": ("decision_function", "predict_proba")},
-            "The `needs_threshold` and `needs_proba` parameter are deprecated",
-        ),
-        (
-            {"needs_threshold": True, "needs_proba": False},
-            {"response_method": ("decision_function", "predict_proba")},
-            "The `needs_threshold` and `needs_proba` parameter are deprecated",
-        ),
-        (
-            {"needs_threshold": False, "needs_proba": False},
-            {"response_method": "predict"},
-            "The `needs_threshold` and `needs_proba` parameter are deprecated",
-        ),
-    ],
-)
-def test_make_scorer_deprecation(deprecated_params, new_params, warn_msg):
-    """Check that we raise a deprecation warning when using `needs_proba` or
-    `needs_threshold`."""
-    X, y = make_classification(n_samples=150, n_features=10, random_state=0)
-    classifier = LogisticRegression().fit(X, y)
-
-    # check deprecation of needs_proba
-    with pytest.warns(FutureWarning, match=warn_msg):
-        deprecated_roc_auc_scorer = make_scorer(roc_auc_score, **deprecated_params)
-    roc_auc_scorer = make_scorer(roc_auc_score, **new_params)
-
-    assert deprecated_roc_auc_scorer(classifier, X, y) == pytest.approx(
-        roc_auc_scorer(classifier, X, y)
-    )
-
-
 @pytest.mark.parametrize("pass_estimator", [True, False])
 def test_get_scorer_multimetric(pass_estimator):
     """Check that check_scoring is compatible with multi-metric configurations."""
@@ -1698,3 +1621,15 @@ def test_curve_scorer_pos_label(global_random_seed):
     assert 0.0 < scores_pos_label_0.min() < scores_pos_label_1.min()
     assert scores_pos_label_0.max() == pytest.approx(1.0)
     assert scores_pos_label_1.max() == pytest.approx(1.0)
+
+
+# TODO(1.8): remove
+def test_make_scorer_reponse_method_default_warning():
+    with pytest.warns(FutureWarning, match="response_method=None is deprecated"):
+        make_scorer(accuracy_score, response_method=None)
+
+    # No warning is raised if response_method is left to its default value
+    # because the future default value has the same effect as the current one.
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
+        make_scorer(accuracy_score)
