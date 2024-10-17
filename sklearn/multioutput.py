@@ -660,7 +660,9 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
     def _get_predictions(self, X, *, output_method):
         """Get predictions for each model in the chain."""
         check_is_fitted(self)
-        X = validate_data(self, X, accept_sparse=True, reset=False)
+        X = validate_data(
+            self, X, accept_sparse=True, reset=False, ensure_all_finite="allow-nan"
+        )
         Y_output_chain = np.zeros((X.shape[0], len(self.estimators_)))
         Y_feature_chain = np.zeros((X.shape[0], len(self.estimators_)))
 
@@ -719,7 +721,14 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         self : object
             Returns a fitted instance.
         """
-        X, Y = validate_data(self, X, Y, multi_output=True, accept_sparse=True)
+        X, Y = validate_data(
+            self,
+            X,
+            Y,
+            multi_output=True,
+            accept_sparse=True,
+            ensure_all_finite="allow-nan",
+        )
 
         random_state = check_random_state(self.random_state)
         self.order_ = self.order
