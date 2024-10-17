@@ -1,0 +1,7 @@
+Dropping support for building with setuptools
+---------------------------------------------
+
+From scikit-learn 1.6 onwards, support for building with setuptools has been
+removed. Meson is the only supported way to build scikit-learn, see
+:ref:`Building from source <install_bleeding_edge>` for more details.
+By :user:`Loïc Estève <lesteve>`

@@ -662,6 +662,9 @@ class RFECV(RFE):
         by the number of features used (i.e., the first element of the array
         represents the models that used the least number of features, while the
         last element represents the models that used all available features).
+
+        .. versionadded:: 1.0
+
         This dictionary contains the following keys:
 
         split(k)_test_score : ndarray of shape (n_subsets_of_features,)
@@ -676,7 +679,7 @@ class RFECV(RFE):
         n_features : ndarray of shape (n_subsets_of_features,)
             Number of features used at each step.
 
-        .. versionadded:: 1.0
+            .. versionadded:: 1.5
 
     n_features_ : int
         The number of selected features with cross-validation.

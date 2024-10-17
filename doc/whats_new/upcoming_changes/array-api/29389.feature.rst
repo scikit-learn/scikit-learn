@@ -1,0 +1,1 @@
+- :func:`sklearn.metrics.pairwise.paired_euclidean_distances` by :user:`Emily Chen <EmilyXinyi>`

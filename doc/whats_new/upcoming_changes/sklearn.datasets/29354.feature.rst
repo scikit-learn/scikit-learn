@@ -1,0 +1,4 @@
+- :func:`datasets.fetch_file` allows downloading arbitrary data-file
+  from the web. It handles local caching, integrity checks with SHA256 digests
+  and automatic retries in case of HTTP errors.
+  By :user:`Olivier Grisel <ogrisel>`
