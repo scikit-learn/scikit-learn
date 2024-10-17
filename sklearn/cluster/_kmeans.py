@@ -1838,6 +1838,9 @@ class MiniBatchKMeans(_BaseKMeans):
     always match. One solution is to set `reassignment_ratio=0`, which
     prevents reassignments of clusters that are too small.
 
+    See :ref:`sphx_glr_auto_examples_cluster_plot_birch_vs_minibatchkmeans.py` for a
+    comparison with :class:`~sklearn.cluster.BIRCH`.
+
     Examples
     --------
     >>> from sklearn.cluster import MiniBatchKMeans
