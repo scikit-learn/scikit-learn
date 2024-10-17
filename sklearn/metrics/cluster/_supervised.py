@@ -15,7 +15,7 @@ from numbers import Real
 import numpy as np
 from scipy import sparse as sp
 
-from ...utils._array_api import _max_precision_float_dtype, get_namespace_and_device
+from ...utils._array_api import _max_precision_float_dtype, get_namespace_and_device, _convert_to_numpy
 from ...utils._param_validation import Interval, StrOptions, validate_params
 from ...utils.multiclass import type_of_target
 from ...utils.validation import check_array, check_consistent_length
@@ -155,6 +155,8 @@ def contingency_matrix(
 
     classes, class_idx = xp.unique_inverse(labels_true)
     clusters, cluster_idx = xp.unique_inverse(labels_pred)
+    class_idx = _convert_to_numpy(class_idx, xp)
+    cluster_idx = _convert_to_numpy(cluster_idx, xp)
     n_classes = classes.shape[0]
     n_clusters = clusters.shape[0]
     # Using coo_matrix to accelerate simple histogram calculation,
