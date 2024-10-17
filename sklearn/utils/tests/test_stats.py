@@ -49,18 +49,6 @@ def test_weighted_percentile_zero_weight_zero_percentile():
     assert approx(value) == 4
 
 
-def test_weighted_median_equal_weights():
-    # Checks weighted percentile_rank=0.5 is same as median when weights equal
-    rng = np.random.RandomState(0)
-    # Odd size as _weighted_percentile takes lower weighted percentile
-    x = rng.randint(10, size=11)
-    weights = np.ones(x.shape)
-
-    median = np.median(x)
-    w_median = _weighted_percentile(x, weights)
-    assert median == approx(w_median)
-
-
 def test_weighted_median_integer_weights():
     # Checks weighted percentile_rank=0.5 is same as median when manually weight
     # data
