@@ -1057,7 +1057,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         kwargs = {}
         if self.linkage != "ward":
             kwargs["linkage"] = self.linkage
-            kwargs["metric"] = self.metric
+            kwargs["affinity"] = self.metric
 
         distance_threshold = self.distance_threshold
 
