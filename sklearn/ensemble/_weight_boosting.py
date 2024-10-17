@@ -858,6 +858,16 @@ class AdaBoostClassifier(
         """
         return np.log(self.predict_proba(X))
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        # TODO: replace by a statistical test, see meta-issue #16298
+        tags._xfail_checks = {
+            "check_sample_weight_equivalence": (
+                "sample_weight is not equivalent to removing/repeating samples."
+            ),
+        }
+        return tags
+
 
 class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoosting):
     """An AdaBoost regressor.
@@ -1031,7 +1041,6 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
             `random_state` attribute.
             Controls also the bootstrap of the weights used to train the weak
             learner.
-            replacement.
 
         Returns
         -------
@@ -1167,3 +1176,13 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
 
         for i, _ in enumerate(self.estimators_, 1):
             yield self._get_median_predict(X, limit=i)
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        # TODO: replace by a statistical test, see meta-issue #16298
+        tags._xfail_checks = {
+            "check_sample_weight_equivalence": (
+                "sample_weight is not equivalent to removing/repeating samples."
+            ),
+        }
+        return tags
