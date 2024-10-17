@@ -40,7 +40,7 @@ __all__ = ["Pipeline", "FeatureUnion", "make_pipeline", "make_union"]
 
 
 @contextmanager
-def _handle_warnings(estimator):
+def _raise_or_warn_if_not_fitted(estimator):
     """A context manager to make sure a NotFittedError is raised, if a sub-estimator
     raises the error.
 
@@ -605,7 +605,7 @@ class Pipeline(_BaseComposition):
             Result of calling `predict` on the final estimator.
         """
         # TODO(1.8): Remove the context manager and use check_is_fitted(self)
-        with _handle_warnings(self):
+        with _raise_or_warn_if_not_fitted(self):
             Xt = X
 
             if not _routing_enabled():
@@ -721,7 +721,7 @@ class Pipeline(_BaseComposition):
             Result of calling `predict_proba` on the final estimator.
         """
         # TODO(1.8): Remove the context manager and use check_is_fitted(self)
-        with _handle_warnings(self):
+        with _raise_or_warn_if_not_fitted(self):
             Xt = X
 
             if not _routing_enabled():
@@ -768,7 +768,7 @@ class Pipeline(_BaseComposition):
             Result of calling `decision_function` on the final estimator.
         """
         # TODO(1.8): Remove the context manager and use check_is_fitted(self)
-        with _handle_warnings(self):
+        with _raise_or_warn_if_not_fitted(self):
             _raise_for_params(params, self, "decision_function")
 
             # not branching here since params is only available if
@@ -806,7 +806,7 @@ class Pipeline(_BaseComposition):
             Result of calling `score_samples` on the final estimator.
         """
         # TODO(1.8): Remove the context manager and use check_is_fitted(self)
-        with _handle_warnings(self):
+        with _raise_or_warn_if_not_fitted(self):
             Xt = X
             for _, _, transformer in self._iter(with_final=False):
                 Xt = transformer.transform(Xt)
@@ -852,7 +852,7 @@ class Pipeline(_BaseComposition):
             Result of calling `predict_log_proba` on the final estimator.
         """
         # TODO(1.8): Remove the context manager and use check_is_fitted(self)
-        with _handle_warnings(self):
+        with _raise_or_warn_if_not_fitted(self):
             Xt = X
 
             if not _routing_enabled():
@@ -907,7 +907,7 @@ class Pipeline(_BaseComposition):
             Transformed data.
         """
         # TODO(1.8): Remove the context manager and use check_is_fitted(self)
-        with _handle_warnings(self):
+        with _raise_or_warn_if_not_fitted(self):
             _raise_for_params(params, self, "transform")
 
             # not branching here since params is only available if
@@ -961,7 +961,7 @@ class Pipeline(_BaseComposition):
             space.
         """
         # TODO(1.8): Remove the context manager and use check_is_fitted(self)
-        with _handle_warnings(self):
+        with _raise_or_warn_if_not_fitted(self):
             _raise_for_params(params, self, "inverse_transform")
 
             X = _deprecate_Xt_in_inverse_transform(X, Xt)
@@ -1014,7 +1014,7 @@ class Pipeline(_BaseComposition):
             Result of calling `score` on the final estimator.
         """
         # TODO(1.8): Remove the context manager and use check_is_fitted(self)
-        with _handle_warnings(self):
+        with _raise_or_warn_if_not_fitted(self):
             Xt = X
             if not _routing_enabled():
                 for _, name, transform in self._iter(with_final=False):
