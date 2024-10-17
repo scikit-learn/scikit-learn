@@ -240,6 +240,7 @@ API_REFERENCE = {
                     "fetch_20newsgroups_vectorized",
                     "fetch_california_housing",
                     "fetch_covtype",
+                    "fetch_file",
                     "fetch_kddcup99",
                     "fetch_lfw_pairs",
                     "fetch_lfw_people",

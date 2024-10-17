@@ -269,19 +269,15 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             The target values.
 
         **fit_params : dict
-            - If `enable_metadata_routing=False` (default):
+            - If `enable_metadata_routing=False` (default): Parameters directly passed
+              to the ``fit`` method of the underlying estimator.
 
-                Parameters directly passed to the ``fit`` method of the
-                underlying estimator.
+            - If `enable_metadata_routing=True`: Parameters safely routed to the ``fit``
+              method of the underlying estimator.
 
-            - If `enable_metadata_routing=True`:
-
-                Parameters safely routed to the ``fit`` method of the
-                underlying estimator.
-
-                .. versionchanged:: 1.6
-                    See :ref:`Metadata Routing User Guide <metadata_routing>`
-                    for more details.
+            .. versionchanged:: 1.6
+                See :ref:`Metadata Routing User Guide <metadata_routing>`
+                for more details.
 
         Returns
         -------
@@ -438,21 +434,17 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             The target values.
 
         **score_params : dict
-            - If `enable_metadata_routing=False` (default):
+            - If `enable_metadata_routing=False` (default): Parameters directly passed
+              to the ``score`` method of the underlying estimator.
 
-                Parameters directly passed to the ``score`` method of the
-                underlying estimator.
+            - If `enable_metadata_routing=True`: Parameters safely routed to the `score`
+              method of the underlying estimator.
 
-                .. versionadded:: 1.0
+            .. versionadded:: 1.0
 
-            - If `enable_metadata_routing=True`:
-
-                Parameters safely routed to the `score` method of the
-                underlying estimator.
-
-                .. versionchanged:: 1.6
-                    See :ref:`Metadata Routing User Guide <metadata_routing>`
-                    for more details.
+            .. versionchanged:: 1.6
+                See :ref:`Metadata Routing User Guide <metadata_routing>`
+                for more details.
 
         Returns
         -------
@@ -670,6 +662,9 @@ class RFECV(RFE):
         by the number of features used (i.e., the first element of the array
         represents the models that used the least number of features, while the
         last element represents the models that used all available features).
+
+        .. versionadded:: 1.0
+
         This dictionary contains the following keys:
 
         split(k)_test_score : ndarray of shape (n_subsets_of_features,)
@@ -684,7 +679,7 @@ class RFECV(RFE):
         n_features : ndarray of shape (n_subsets_of_features,)
             Number of features used at each step.
 
-        .. versionadded:: 1.0
+            .. versionadded:: 1.5
 
     n_features_ : int
         The number of selected features with cross-validation.

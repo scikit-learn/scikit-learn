@@ -6,11 +6,11 @@
 import itertools
 import math
 import os
-import warnings
 from functools import wraps
 
 import numpy
 import scipy
+import scipy.sparse as sp
 import scipy.special as special
 
 from .._config import get_config
@@ -120,15 +120,11 @@ def _check_array_api_dispatch(array_api_dispatch):
             )
 
         if os.environ.get("SCIPY_ARRAY_API") != "1":
-            warnings.warn(
-                (
-                    "Some scikit-learn array API features might rely on enabling "
-                    "SciPy's own support for array API to function properly. "
-                    "Please set the SCIPY_ARRAY_API=1 environment variable "
-                    "before importing sklearn or scipy. More details at: "
-                    "https://docs.scipy.org/doc/scipy/dev/api-dev/array_api.html"
-                ),
-                UserWarning,
+            raise RuntimeError(
+                "Scikit-learn array API support was enabled but scipy's own support is "
+                "not enabled. Please set the SCIPY_ARRAY_API=1 environment variable "
+                "before importing sklearn or scipy. More details at: "
+                "https://docs.scipy.org/doc/scipy/dev/api-dev/array_api.html"
             )
 
 
@@ -167,7 +163,9 @@ def device(*array_list, remove_none=True, remove_types=(str,)):
         *array_list, remove_none=remove_none, remove_types=remove_types
     )
 
-    # Note that _remove_non_arrays ensures that array_list is not empty.
+    if not array_list:
+        return None
+
     device_ = _single_array_device(array_list[0])
 
     # Note: here we cannot simply use a Python `set` as it requires
@@ -456,6 +454,8 @@ def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
 
     Raise ValueError if no arrays are left after filtering.
 
+    Sparse arrays are always filtered out.
+
     Parameters
     ----------
     *arrays : array objects
@@ -470,7 +470,8 @@ def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
     Returns
     -------
     filtered_arrays : list
-        List of arrays with None and typoe
+        List of arrays filtered as requested. An empty list is returned if no input
+        passes the filters.
     """
     filtered_arrays = []
     remove_types = tuple(remove_types)
@@ -479,14 +480,10 @@ def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
             continue
         if isinstance(array, remove_types):
             continue
+        if sp.issparse(array):
+            continue
         filtered_arrays.append(array)
 
-    if not filtered_arrays:
-        raise ValueError(
-            f"At least one input array expected after filtering with {remove_none=}, "
-            f"remove_types=[{', '.join(t.__name__ for t in remove_types)}]. Got none. "
-            f"Original types: [{', '.join(type(a).__name__ for a in arrays)}]."
-        )
     return filtered_arrays
 
 
@@ -495,6 +492,8 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
 
     Introspect `arrays` arguments and return their common Array API compatible
     namespace object, if any.
+
+    Note that sparse arrays are filtered by default.
 
     See: https://numpy.org/neps/nep-0047-array-api-standard.html
 
@@ -513,6 +512,9 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     Otherwise an instance of the `_NumPyAPIWrapper` compatibility wrapper is
     always returned irrespective of the fact that arrays implement the
     `__array_namespace__` protocol or not.
+
+    Note that if no arrays pass the set filters, ``_NUMPY_API_WRAPPER_INSTANCE, False``
+    is returned.
 
     Parameters
     ----------
@@ -551,8 +553,13 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
         return xp, True
 
     arrays = _remove_non_arrays(
-        *arrays, remove_none=remove_none, remove_types=remove_types
+        *arrays,
+        remove_none=remove_none,
+        remove_types=remove_types,
     )
+
+    if not arrays:
+        return _NUMPY_API_WRAPPER_INSTANCE, False
 
     _check_array_api_dispatch(array_api_dispatch)
 
@@ -596,20 +603,19 @@ def get_namespace_and_device(*array_list, remove_none=True, remove_types=(str,))
         `device` object (see the "Device Support" section of the array API spec).
     """
     array_list = _remove_non_arrays(
-        *array_list, remove_none=remove_none, remove_types=remove_types
+        *array_list,
+        remove_none=remove_none,
+        remove_types=remove_types,
     )
 
     skip_remove_kwargs = dict(remove_none=False, remove_types=[])
 
     xp, is_array_api = get_namespace(*array_list, **skip_remove_kwargs)
+    arrays_device = device(*array_list, **skip_remove_kwargs)
     if is_array_api:
-        return (
-            xp,
-            is_array_api,
-            device(*array_list, **skip_remove_kwargs),
-        )
+        return xp, is_array_api, arrays_device
     else:
-        return xp, False, None
+        return xp, False, arrays_device
 
 
 def _expit(X, xp=None):
