@@ -26,7 +26,7 @@ jobs:
           fi
 
       - name: Check changelog entry
-        if: steps.tests_changed.check_changelog == 'true'
+        if: steps.tests_changed.outputs.check_changelog == 'true'
         uses: scientific-python/action-towncrier-changelog@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
