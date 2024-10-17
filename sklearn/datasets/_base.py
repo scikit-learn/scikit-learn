@@ -707,7 +707,7 @@ def load_iris(*, return_X_y=False, as_frame=False):
     >>> list(data.target_names)
     [np.str_('setosa'), np.str_('versicolor'), np.str_('virginica')]
 
-    See :ref:`sphx_glr_auto_examples_datasets_plot_iris_dataset.py` for a more
+    See :ref:`sphx_glr_auto_examples_decomposition_plot_pca_iris.py` for a more
     detailed example of how to work with the iris dataset.
     """
     data_file_name = "iris.csv"

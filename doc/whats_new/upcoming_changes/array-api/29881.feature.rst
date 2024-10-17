@@ -1,0 +1,3 @@
+- :func:`sklearn.metrics.pairwise.laplacian_kernel` and
+  :func:`sklearn.metrics.pairwise.manhattan_distances` by
+  :user:`Omar Salman <OmarManzoor>`

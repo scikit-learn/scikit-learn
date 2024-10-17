@@ -422,7 +422,7 @@ def _yield_masked_array_for_each_param(candidate_params):
 
         # Use one MaskedArray and mask all the places where the param is not
         # applicable for that candidate (which may not contain all the params).
-        ma = MaskedArray(np.empty(n_candidates), mask=True, dtype=arr_dtype)
+        ma = MaskedArray(np.empty(n_candidates, dtype=arr_dtype), mask=True)
         for index, value in param_result.items():
             # Setting the value at an index unmasks that index
             ma[index] = value

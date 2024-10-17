@@ -808,12 +808,6 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     """
     Logistic Regression (aka logit, MaxEnt) classifier.
 
-    In the multiclass case, the training algorithm uses the one-vs-rest (OvR)
-    scheme if the 'multi_class' option is set to 'ovr', and uses the
-    cross-entropy loss if the 'multi_class' option is set to 'multinomial'.
-    (Currently the 'multinomial' option is supported only by the 'lbfgs',
-    'sag', 'saga' and 'newton-cg' solvers.)
-
     This class implements regularized logistic regression using the
     'liblinear' library, 'newton-cg', 'sag', 'saga' and 'lbfgs' solvers. **Note
     that regularization is applied by default**. It can handle both dense
@@ -826,6 +820,11 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     supports both L1 and L2 regularization, with a dual formulation only for
     the L2 penalty. The Elastic-Net regularization is only supported by the
     'saga' solver.
+
+    For :term:`multiclass` problems, only 'newton-cg', 'sag', 'saga' and 'lbfgs'
+    handle multinomial loss. 'liblinear' and 'newton-cholesky' only handle binary
+    classification but can be extended to handle multiclass by using
+    :class:`~sklearn.multiclass.OneVsRestClassifier`.
 
     Read more in the :ref:`User Guide <logistic_regression>`.
 
@@ -904,11 +903,11 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
         - For small datasets, 'liblinear' is a good choice, whereas 'sag'
           and 'saga' are faster for large ones;
-        - For multiclass problems, only 'newton-cg', 'sag', 'saga' and
+        - For :term:`multiclass` problems, only 'newton-cg', 'sag', 'saga' and
           'lbfgs' handle multinomial loss;
         - 'liblinear' and 'newton-cholesky' can only handle binary classification
           by default. To apply a one-versus-rest scheme for the multiclass setting
-          one can wrapt it with the `OneVsRestClassifier`.
+          one can wrap it with the :class:`~sklearn.multiclass.OneVsRestClassifier`.
         - 'newton-cholesky' is a good choice for `n_samples` >> `n_features`,
           especially with one-hot encoded categorical features with rare
           categories. Be aware that the memory usage of this solver has a quadratic
@@ -936,9 +935,9 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            a scaler from :mod:`sklearn.preprocessing`.
 
         .. seealso::
-           Refer to the User Guide for more information regarding
-           :class:`LogisticRegression` and more specifically the
-           :ref:`Table <Logistic_regression>`
+           Refer to the :ref:`User Guide <Logistic_regression>` for more
+           information regarding :class:`LogisticRegression` and more specifically the
+           :ref:`Table <logistic_regression_solvers>`
            summarizing solver/penalty supports.
 
         .. versionadded:: 0.17
@@ -1096,6 +1095,9 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            [9.7...e-01, 2.8...e-02, ...e-08]])
     >>> clf.score(X, y)
     0.97...
+
+    For a comaprison of the LogisticRegression with other classifiers see:
+    :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`.
     """
 
     _parameter_constraints: dict = {
@@ -1550,7 +1552,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
           because it does not handle warm-starting.
         - 'liblinear' and 'newton-cholesky' can only handle binary classification
           by default. To apply a one-versus-rest scheme for the multiclass setting
-          one can wrapt it with the `OneVsRestClassifier`.
+          one can wrap it with the :class:`~sklearn.multiclass.OneVsRestClassifier`.
         - 'newton-cholesky' is a good choice for `n_samples` >> `n_features`,
           especially with one-hot encoded categorical features with rare
           categories. Be aware that the memory usage of this solver has a quadratic
