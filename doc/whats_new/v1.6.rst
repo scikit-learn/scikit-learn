@@ -273,6 +273,14 @@ Changelog
   the iterative process when `keep_empty_features` is set to `True`.
   :pr:`29779` by :user:`Arif Qodari <arifqodari>`.
 
+:mod:`sklearn.inspection`
+.........................
+
+- |Enhancement| :class:`inspection.DecisionBoundaryDisplay` now supports
+  plotting all classes for multi-class problems when `response_method` is
+  'decision_function', 'predict_proba' or 'auto'.
+  :pr:`29797` by :user:`Lucy Liu <lucyleeow>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
