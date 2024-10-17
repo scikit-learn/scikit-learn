@@ -6,7 +6,7 @@ on:
 
 jobs:
   changelog_checker:
-    name: Check if towncrier changelog entry is correct
+    name: A reviewer will let you know if it is required or can be bypassed
     runs-on: ubuntu-latest
     steps:
     - uses: scientific-python/action-towncrier-changelog@v1
