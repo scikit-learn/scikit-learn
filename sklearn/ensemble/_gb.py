@@ -1312,7 +1312,9 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed.
         Values must be in the range `[0.0, inf)`.
-        See :ref:`minimal_cost_complexity_pruning` for details.
+        See :ref:`minimal_cost_complexity_pruning` for details. See
+        :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
+        for an example of such pruning.
 
         .. versionadded:: 0.22
 
@@ -1723,6 +1725,16 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
                 "loss=%r does not support predict_proba" % self.loss
             ) from e
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        # TODO: investigate failure see meta-issue #16298
+        tags._xfail_checks = {
+            "check_sample_weight_equivalence": (
+                "sample_weight is not equivalent to removing/repeating samples."
+            ),
+        }
+        return tags
+
 
 class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     """Gradient Boosting for regression.
@@ -1924,7 +1936,9 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed.
         Values must be in the range `[0.0, inf)`.
-        See :ref:`minimal_cost_complexity_pruning` for details.
+        See :ref:`minimal_cost_complexity_pruning` for details. See
+        :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
+        for an example of such pruning.
 
         .. versionadded:: 0.22
 
@@ -2177,3 +2191,13 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         leaves = super().apply(X)
         leaves = leaves.reshape(X.shape[0], self.estimators_.shape[0])
         return leaves
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        # TODO: investigate failure see meta-issue #16298
+        tags._xfail_checks = {
+            "check_sample_weight_equivalence": (
+                "sample_weight is not equivalent to removing/repeating samples."
+            ),
+        }
+        return tags
