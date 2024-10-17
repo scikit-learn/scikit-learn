@@ -1357,9 +1357,6 @@ class KMeans(_BaseKMeans):
     array([[10.,  2.],
            [ 1.,  2.]])
 
-    For a more detailed example of K-Means using the iris dataset see
-    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_iris.py`.
-
     For examples of common problems with K-Means and how to address them see
     :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_assumptions.py`.
 
@@ -1368,6 +1365,9 @@ class KMeans(_BaseKMeans):
 
     For a comparison between K-Means and MiniBatchKMeans refer to example
     :ref:`sphx_glr_auto_examples_cluster_plot_mini_batch_kmeans.py`.
+
+    For a comparison between K-Means and BisectingKMeans refer to example
+    :ref:`sphx_glr_auto_examples_cluster_plot_bisect_kmeans.py`.
     """
 
     _parameter_constraints: dict = {
