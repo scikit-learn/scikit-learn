@@ -369,10 +369,6 @@ class Birch(
 
     Read more in the :ref:`User Guide <birch>`.
 
-    See
-    :ref:`sphx_glr_auto_examples_cluster_plot_birch_vs_minibatchkmeans.py`
-    for an example on how to use the API.
-
     .. versionadded:: 0.16
 
     Parameters
@@ -464,6 +460,9 @@ class Birch(
     to it and the linear sum, squared sum and the number of samples of that
     subcluster are updated. This is done recursively till the properties of
     the leaf node are updated.
+
+    See :ref:`sphx_glr_auto_examples_cluster_plot_birch_vs_minibatchkmeans.py` for a
+    comparison with :class:`~sklearn.cluster.MiniBatchKMeans`.
 
     References
     ----------
