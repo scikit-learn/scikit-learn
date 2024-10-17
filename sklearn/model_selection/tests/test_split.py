@@ -29,6 +29,7 @@ from sklearn.model_selection import (
     StratifiedGroupKFold,
     StratifiedKFold,
     StratifiedShuffleSplit,
+    StratifiedShuffleSplitRegression,
     TimeSeriesSplit,
     check_cv,
     cross_val_score,
@@ -70,6 +71,7 @@ NO_GROUP_SPLITTERS = [
     LeavePOut(p=2),
     ShuffleSplit(),
     StratifiedShuffleSplit(test_size=0.5),
+    StratifiedShuffleSplitRegression(test_size=0.5),
     PredefinedSplit([1, 1, 2, 2]),
     RepeatedKFold(),
     RepeatedStratifiedKFold(),
@@ -89,6 +91,7 @@ ALL_SPLITTERS = NO_GROUP_SPLITTERS + GROUP_SPLITTERS  # type: ignore
 SPLITTERS_REQUIRING_TARGET = [
     StratifiedKFold(),
     StratifiedShuffleSplit(),
+    StratifiedShuffleSplitRegression(),
     RepeatedStratifiedKFold(),
 ]
 
@@ -742,7 +745,10 @@ def test_shuffle_split():
         assert_array_equal(t3[1], t4[1])
 
 
-@pytest.mark.parametrize("split_class", [ShuffleSplit, StratifiedShuffleSplit])
+@pytest.mark.parametrize(
+    "split_class",
+    [ShuffleSplit, StratifiedShuffleSplit, StratifiedShuffleSplitRegression],
+)
 @pytest.mark.parametrize(
     "train_size, exp_train, exp_test", [(None, 9, 1), (8, 8, 2), (0.8, 8, 2)]
 )
@@ -799,6 +805,21 @@ def test_stratified_shuffle_split_init():
         next(StratifiedShuffleSplit(test_size=2).split(X, y))
 
 
+def test_stratified_shuffle_split_regression_bins():
+    X = np.arange(10).reshape(-1, 1)  # 10 samples with 1 feature
+    y = np.array([1, 2, 2, 3, 3, 4, 4, 5, 6, 6])  # Continuous target variable
+
+    # That error is raised if the test set size is smaller than the number of bins
+    with pytest.raises(ValueError):
+        cv = StratifiedShuffleSplitRegression(n_bins=2, test_size=0.1)
+        next(cv.split(X, y))  # Use next to trigger the error
+
+    # That error is raised if the train set size is smaller than the number of bins
+    with pytest.raises(ValueError):
+        cv = StratifiedShuffleSplitRegression(n_bins=5, test_size=0.3, train_size=2)
+        next(cv.split(X, y))  # Use next to trigger the error
+
+
 def test_stratified_shuffle_split_respects_test_size():
     y = np.array([0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2])
     test_size = 5
@@ -807,6 +828,21 @@ def test_stratified_shuffle_split_respects_test_size():
         6, test_size=test_size, train_size=train_size, random_state=0
     ).split(np.ones(len(y)), y)
     for train, test in sss:
+        assert len(train) == train_size
+        assert len(test) == test_size
+
+
+def test_stratified_shuffle_split_regression_respects_test_size():
+    y = np.array(
+        [0.1, 1.2, 2.3, 3.4, 0.5, 1.6, 2.7, 3.8, 0.9, 1.0, 2.1, 3.2, 0.3, 1.4, 2.5]
+    )
+    test_size = 5
+    train_size = 10
+    sssr = StratifiedShuffleSplitRegression(
+        n_splits=6, test_size=test_size, train_size=train_size, random_state=0
+    ).split(np.ones(len(y)), y)
+
+    for train, test in sssr:
         assert len(train) == train_size
         assert len(test) == test_size
 
@@ -846,6 +882,76 @@ def test_stratified_shuffle_split_iter():
             assert len(train) == train_size
             assert len(test) == test_size
             assert_array_equal(np.intersect1d(train, test), [])
+
+
+def test_stratified_shuffle_split_regression_iter():
+    # Example continuous target values for regression problems
+    ys = [
+        np.array([1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8, 9.9, 10.1]),
+        np.array([0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5]),
+        np.linspace(1, 100, 50),  # Increased sample size to 50
+        np.random.normal(50, 10, 100),  # Normal distribution with more samples
+    ]
+
+    for y in ys:
+        # Instantiate StratifiedShuffleSplitRegression with fewer bins
+        sss = StratifiedShuffleSplitRegression(
+            n_splits=5,
+            test_size=0.33,
+            random_state=0,
+            n_bins=3,  # Reduced number of bins to 3
+        )
+
+        X = np.ones((len(y), 1))  # Dummy feature matrix
+
+        # Calculate expected train and test sizes based on test_size parameter
+        test_size = int(
+            np.ceil(0.33 * len(y))
+        )  # 33% of the data goes into the test set
+        train_size = len(y) - test_size  # Remaining data goes into the training set
+
+        for train_idx, test_idx in sss.split(X, y):
+            # Ensure there is no overlap between train and test indices
+            assert (
+                len(np.intersect1d(train_idx, test_idx)) == 0
+            ), "There is an overlap between training and test sets"
+
+            # Check that the sizes of the training and test sets are correct
+            assert (
+                len(train_idx) == train_size
+            ), f"Train size mismatch: {len(train_idx)} != {train_size}"
+            assert (
+                len(test_idx) == test_size
+            ), f"Test size mismatch: {len(test_idx)} != {test_size}"
+
+            # Convert continuous target values (y) into bins for stratification
+            bin_train = np.histogram(y[train_idx], bins=3)[0]
+            bin_test = np.histogram(y[test_idx], bins=3)[0]
+
+            # Ensure the bin proportions are similar between train and test sets
+            train_proportions = bin_train / float(len(train_idx))
+            test_proportions = bin_test / float(len(test_idx))
+
+            # Relaxed tolerance for comparison
+            assert_array_almost_equal(
+                train_proportions,
+                test_proportions,
+                decimal=0,
+                err_msg="Proportions in bins between train and test sets do not match",
+            )
+
+            # Check that the total size is correct (train + test = total samples)
+            assert len(train_idx) + len(test_idx) == len(
+                y
+            ), "Train and test sizes do not sum to the total number of samples"
+
+            # Ensure each bin has at least 1 sample in both training and test sets
+            assert np.all(
+                bin_train >= 1
+            ), "Each bin in the training set must have at least 1 sample"
+            assert np.all(
+                bin_test >= 1
+            ), "Each bin in the test set must have at least 1 sample"
 
 
 def test_stratified_shuffle_split_even():
@@ -900,6 +1006,65 @@ def test_stratified_shuffle_split_even():
         assert_counts_are_ok(test_counts, ex_test_p)
 
 
+def test_stratified_shuffle_split_regression_even():
+    # Ensuring samples are drawn evenly across splits
+    n_folds = 5
+    n_splits = 1000
+
+    def assert_counts_are_ok(idx_counts, p):
+        # Assert that the distribution of counts per index is close to binomial
+        threshold = 0.05 / n_splits
+        bf = stats.binom(n_splits, p)
+        for count in idx_counts:
+            prob = bf.pmf(count)
+            assert (
+                prob > threshold
+            ), "An index is not drawn with chance corresponding to even draws"
+
+    for n_samples in (10, 30):
+        # Ensure that n_bins does not exceed half of the samples
+        n_bins = min(2, n_samples // 5)
+
+        # Create a continuous target variable for regression
+        y = np.linspace(1, 100, n_samples)  # Values between 1 and 100
+
+        splits = StratifiedShuffleSplitRegression(
+            n_splits=n_splits, test_size=1.0 / n_folds, random_state=0, n_bins=n_bins
+        )
+
+        train_counts = [0] * n_samples
+        test_counts = [0] * n_samples
+        n_splits_actual = 0
+
+        for train_idx, test_idx in splits.split(X=np.ones((n_samples, 1)), y=y):
+            n_splits_actual += 1
+            for counter, ids in [(train_counts, train_idx), (test_counts, test_idx)]:
+                for idx in ids:
+                    counter[idx] += 1
+
+        # Ensure the actual number of splits matches the intended number
+        assert n_splits_actual == n_splits
+
+        # Calculate expected train and test sizes
+        n_train, n_test = n_samples - int(np.ceil(n_samples / n_folds)), int(
+            np.ceil(n_samples / n_folds)
+        )
+
+        # Ensure the length of training and test sets matches expectations
+        assert len(train_idx) == n_train
+        assert len(test_idx) == n_test
+
+        # Ensure no overlap between training and test sets
+        assert len(set(train_idx).intersection(test_idx)) == 0
+
+        # Check that the stratified split maintains even distribution
+        ex_test_p = float(n_test) / n_samples
+        ex_train_p = float(n_train) / n_samples
+
+        assert_counts_are_ok(train_counts, ex_train_p)
+        assert_counts_are_ok(test_counts, ex_test_p)
+
+
 def test_stratified_shuffle_split_overlap_train_test_bug():
     # See https://github.com/scikit-learn/scikit-learn/issues/6121 for
     # the original bug report
@@ -915,6 +1080,27 @@ def test_stratified_shuffle_split_overlap_train_test_bug():
 
     # complete partition
     assert_array_equal(np.union1d(train, test), np.arange(len(y)))
+
+
+def test_stratified_shuffle_split_regression_no_overlap():
+    # Test to ensure there is no overlap between train and test
+    y = np.linspace(1, 2500, 100)  # Continuous target values for regression
+    X = np.ones((len(y), 1))  # Dummy feature matrix
+
+    splits = StratifiedShuffleSplitRegression(
+        n_splits=5, test_size=0.2, random_state=42, n_bins=5
+    )
+
+    for train_idx, test_idx in splits.split(X, y):
+        # Ensure no overlap between train and test indices
+        assert (
+            len(set(train_idx).intersection(test_idx)) == 0
+        ), "Train and test indices overlap"
+
+        # Ensure that all samples are either in train or test set
+        assert len(train_idx) + len(test_idx) == len(
+            y
+        ), "Train and test indices do not cover all samples"
 
 
 def test_stratified_shuffle_split_multilabel():
@@ -1996,6 +2182,7 @@ def test_random_state_shuffle_false(Klass):
         (ShuffleSplit(random_state=123), True),
         (GroupShuffleSplit(random_state=123), True),
         (StratifiedShuffleSplit(random_state=123), True),
+        (StratifiedShuffleSplitRegression(random_state=123), True),
         (GroupKFold(), True),
         (TimeSeriesSplit(), True),
         (LeaveOneOut(), True),
@@ -2016,6 +2203,11 @@ def test_random_state_shuffle_false(Klass):
         (GroupShuffleSplit(random_state=np.random.RandomState(0)), False),
         (StratifiedShuffleSplit(random_state=None), False),
         (StratifiedShuffleSplit(random_state=np.random.RandomState(0)), False),
+        (StratifiedShuffleSplitRegression(random_state=None), False),
+        (
+            StratifiedShuffleSplitRegression(random_state=np.random.RandomState(0)),
+            False,
+        ),
     ],
 )
 def test_yields_constant_splits(cv, expected):

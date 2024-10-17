@@ -443,6 +443,14 @@ Changelog
   `ensure_all_finite`. `force_all_finite` will be removed in 1.8.
   :pr:`29404` by :user:`Jérémie du Boisberranger <jeremiedb>`.
 
+:mod:`sklearn.model_selection`
+..............................
+
+- |Feature| Added :class:`StratifiedShuffleSplitRegression` to support stratified
+  splitting for regression problems. New parameters `stratify_regression`, `n_bins`,
+  and `strategy` added to :func:`train_test_split` for stratifying continuous target variables.
+  :pr:`30033` by :user:`Pablo Salinas Rodríguez <pablitosalinero>`.
+
 :mod:`sklearn.utils.check_estimators`
 .....................................
 
