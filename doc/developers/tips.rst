@@ -218,12 +218,6 @@ PR-WIP: Regression test needed
 
     Please add a [non-regression test](https://en.wikipedia.org/wiki/Non-regression_testing) that would fail at main but pass in this PR.
 
-PR-WIP: PEP8
-
-::
-
-    You have some [PEP8](https://www.python.org/dev/peps/pep-0008/) violations, whose details you can see in the Circle CI `lint` job. It might be worth configuring your code editor to check for such errors on the fly, so you can catch them before committing.
-
 PR-MRG: Patience
 
 ::
