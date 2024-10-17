@@ -13,6 +13,7 @@ import numpy as np
 import pytest
 from scipy.sparse import issparse
 
+from sklearn import config_context
 from sklearn.base import BaseEstimator, clone
 from sklearn.cluster import KMeans
 from sklearn.datasets import (
@@ -586,10 +587,10 @@ def check_cross_validate_multi_metric(clf, X, y, scores, cv):
             )
 
             # Make sure all the arrays are of np.ndarray type
-            assert type(cv_results["test_r2"]) == np.ndarray
-            assert type(cv_results["test_neg_mean_squared_error"]) == np.ndarray
-            assert type(cv_results["fit_time"]) == np.ndarray
-            assert type(cv_results["score_time"]) == np.ndarray
+            assert isinstance(cv_results["test_r2"], np.ndarray)
+            assert isinstance(cv_results["test_neg_mean_squared_error"], np.ndarray)
+            assert isinstance(cv_results["fit_time"], np.ndarray)
+            assert isinstance(cv_results["score_time"], np.ndarray)
 
             # Ensure all the times are within sane limits
             assert np.all(cv_results["fit_time"] >= 0)
@@ -620,7 +621,6 @@ def test_cross_val_score_predict_groups():
             cross_val_predict(estimator=clf, X=X, y=y, cv=cv)
 
 
-@pytest.mark.filterwarnings("ignore: Using or importing the ABCs from")
 def test_cross_val_score_pandas():
     # check cross_val_score doesn't destroy pandas dataframe
     types = [(MockDataFrame, MockDataFrame)]
@@ -862,7 +862,7 @@ def test_permutation_test_score_allow_nans():
     permutation_test_score(p, X, y)
 
 
-def test_permutation_test_score_fit_params():
+def test_permutation_test_score_params():
     X = np.arange(100).reshape(10, 10)
     y = np.array([0] * 5 + [1] * 5)
     clf = CheckingClassifier(expected_sample_weight=True)
@@ -873,8 +873,8 @@ def test_permutation_test_score_fit_params():
 
     err_msg = r"sample_weight.shape == \(1,\), expected \(8,\)!"
     with pytest.raises(ValueError, match=err_msg):
-        permutation_test_score(clf, X, y, fit_params={"sample_weight": np.ones(1)})
-    permutation_test_score(clf, X, y, fit_params={"sample_weight": np.ones(10)})
+        permutation_test_score(clf, X, y, params={"sample_weight": np.ones(1)})
+    permutation_test_score(clf, X, y, params={"sample_weight": np.ones(10)})
 
 
 def test_cross_val_score_allow_nans():
@@ -1116,8 +1116,6 @@ def test_cross_val_predict_input_types(coo_container):
     assert_array_equal(predictions.shape, (150,))
 
 
-@pytest.mark.filterwarnings("ignore: Using or importing the ABCs from")
-# python3.7 deprecation warnings in pandas via matplotlib :-/
 def test_cross_val_predict_pandas():
     # check cross_val_score doesn't destroy pandas dataframe
     types = [(MockDataFrame, MockDataFrame)]
@@ -2074,7 +2072,6 @@ def test_score_memmap():
                 sleep(1.0)
 
 
-@pytest.mark.filterwarnings("ignore: Using or importing the ABCs from")
 def test_permutation_test_score_pandas():
     # check permutation_test_score doesn't destroy pandas dataframe
     types = [(MockDataFrame, MockDataFrame)]
@@ -2486,15 +2483,12 @@ def test_cross_validate_return_indices(global_random_seed):
 # ======================================================
 
 
-# TODO(1.6): remove `cross_validate` and `cross_val_predict` from this test in 1.6 and
-# `learning_curve` and `validation_curve` in 1.8
+# TODO(1.8): remove `learning_curve`, `validation_curve` and `permutation_test_score`.
 @pytest.mark.parametrize(
     "func, extra_args",
     [
-        (cross_validate, {}),
-        (cross_val_score, {}),
-        (cross_val_predict, {}),
         (learning_curve, {}),
+        (permutation_test_score, {}),
         (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
     ],
 )
@@ -2518,7 +2512,6 @@ def test_fit_param_deprecation(func, extra_args):
         )
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
     "func, extra_args",
     [
@@ -2526,9 +2519,11 @@ def test_fit_param_deprecation(func, extra_args):
         (cross_val_score, {}),
         (cross_val_predict, {}),
         (learning_curve, {}),
+        (permutation_test_score, {}),
         (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
     ],
 )
+@config_context(enable_metadata_routing=True)
 def test_groups_with_routing_validation(func, extra_args):
     """Check that we raise an error if `groups` are passed to the cv method instead
     of `params` when metadata routing is enabled.
@@ -2543,7 +2538,6 @@ def test_groups_with_routing_validation(func, extra_args):
         )
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
     "func, extra_args",
     [
@@ -2551,9 +2545,11 @@ def test_groups_with_routing_validation(func, extra_args):
         (cross_val_score, {}),
         (cross_val_predict, {}),
         (learning_curve, {}),
+        (permutation_test_score, {}),
         (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
     ],
 )
+@config_context(enable_metadata_routing=True)
 def test_passed_unrequested_metadata(func, extra_args):
     """Check that we raise an error when passing metadata that is not
     requested."""
@@ -2568,7 +2564,6 @@ def test_passed_unrequested_metadata(func, extra_args):
         )
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
     "func, extra_args",
     [
@@ -2576,9 +2571,11 @@ def test_passed_unrequested_metadata(func, extra_args):
         (cross_val_score, {}),
         (cross_val_predict, {}),
         (learning_curve, {}),
+        (permutation_test_score, {}),
         (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
     ],
 )
+@config_context(enable_metadata_routing=True)
 def test_validation_functions_routing(func, extra_args):
     """Check that the respective cv method is properly dispatching the metadata
     to the consumer."""
@@ -2609,6 +2606,7 @@ def test_validation_functions_routing(func, extra_args):
         cross_val_score: dict(scoring=scorer),
         learning_curve: dict(scoring=scorer),
         validation_curve: dict(scoring=scorer),
+        permutation_test_score: dict(scoring=scorer),
         cross_val_predict: dict(),
     }
 
@@ -2670,7 +2668,7 @@ def test_validation_functions_routing(func, extra_args):
         )
 
 
-@pytest.mark.usefixtures("enable_slep006")
+@config_context(enable_metadata_routing=True)
 def test_learning_curve_exploit_incremental_learning_routing():
     """Test that learning_curve routes metadata to the estimator correctly while
     partial_fitting it with `exploit_incremental_learning=True`."""

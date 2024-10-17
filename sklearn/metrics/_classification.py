@@ -41,6 +41,7 @@ from ..utils._param_validation import (
     StrOptions,
     validate_params,
 )
+from ..utils._unique import attach_unique
 from ..utils.extmath import _nanaverage
 from ..utils.multiclass import type_of_target, unique_labels
 from ..utils.sparsefuncs import count_nonzero
@@ -216,6 +217,7 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     """
     xp, _, device = get_namespace_and_device(y_true, y_pred, sample_weight)
     # Compute accuracy for each possible representation
+    y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
     if y_type.startswith("multilabel"):
@@ -325,8 +327,9 @@ def confusion_matrix(
 
     >>> tn, fp, fn, tp = confusion_matrix([0, 1, 0, 1], [1, 1, 1, 0]).ravel()
     >>> (tn, fp, fn, tp)
-    (0, 2, 1, 1)
+    (np.int64(0), np.int64(2), np.int64(1), np.int64(1))
     """
+    y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type not in ("binary", "multiclass"):
         raise ValueError("%s is not supported" % y_type)
@@ -516,6 +519,7 @@ def multilabel_confusion_matrix(
            [[2, 1],
             [1, 2]]])
     """
+    y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
@@ -741,7 +745,7 @@ def cohen_kappa_score(
     >>> y1 = ["negative", "positive", "negative", "neutral", "positive"]
     >>> y2 = ["negative", "positive", "negative", "neutral", "negative"]
     >>> cohen_kappa_score(y1, y2)
-    0.6875
+    np.float64(0.6875)
     """
     confusion = confusion_matrix(y1, y2, labels=labels, sample_weight=sample_weight)
     n_classes = confusion.shape[0]
@@ -921,19 +925,19 @@ def jaccard_score(
     In the binary case:
 
     >>> jaccard_score(y_true[0], y_pred[0])
-    0.6666...
+    np.float64(0.6666...)
 
     In the 2D comparison case (e.g. image similarity):
 
     >>> jaccard_score(y_true, y_pred, average="micro")
-    0.6
+    np.float64(0.6)
 
     In the multilabel case:
 
     >>> jaccard_score(y_true, y_pred, average='samples')
-    0.5833...
+    np.float64(0.5833...)
     >>> jaccard_score(y_true, y_pred, average='macro')
-    0.6666...
+    np.float64(0.6666...)
     >>> jaccard_score(y_true, y_pred, average=None)
     array([0.5, 0.5, 1. ])
 
@@ -1052,8 +1056,9 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     >>> y_true = [+1, +1, +1, -1]
     >>> y_pred = [+1, -1, +1, +1]
     >>> matthews_corrcoef(y_true, y_pred)
-    -0.33...
+    np.float64(-0.33...)
     """
+    y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
     if y_type not in {"binary", "multiclass"}:
@@ -1320,11 +1325,11 @@ def f1_score(
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
     >>> f1_score(y_true, y_pred, average='macro')
-    0.26...
+    np.float64(0.26...)
     >>> f1_score(y_true, y_pred, average='micro')
-    0.33...
+    np.float64(0.33...)
     >>> f1_score(y_true, y_pred, average='weighted')
-    0.26...
+    np.float64(0.26...)
     >>> f1_score(y_true, y_pred, average=None)
     array([0.8, 0. , 0. ])
 
@@ -1332,9 +1337,9 @@ def f1_score(
     >>> y_true_empty = [0, 0, 0, 0, 0, 0]
     >>> y_pred_empty = [0, 0, 0, 0, 0, 0]
     >>> f1_score(y_true_empty, y_pred_empty)
-    0.0...
+    np.float64(0.0...)
     >>> f1_score(y_true_empty, y_pred_empty, zero_division=1.0)
-    1.0...
+    np.float64(1.0...)
     >>> f1_score(y_true_empty, y_pred_empty, zero_division=np.nan)
     nan...
 
@@ -1523,17 +1528,17 @@ def fbeta_score(
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
     >>> fbeta_score(y_true, y_pred, average='macro', beta=0.5)
-    0.23...
+    np.float64(0.23...)
     >>> fbeta_score(y_true, y_pred, average='micro', beta=0.5)
-    0.33...
+    np.float64(0.33...)
     >>> fbeta_score(y_true, y_pred, average='weighted', beta=0.5)
-    0.23...
+    np.float64(0.23...)
     >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)
     array([0.71..., 0.        , 0.        ])
     >>> y_pred_empty = [0, 0, 0, 0, 0, 0]
     >>> fbeta_score(y_true, y_pred_empty,
     ...             average="macro", zero_division=np.nan, beta=0.5)
-    0.12...
+    np.float64(0.12...)
     """
 
     _, _, f, _ = precision_recall_fscore_support(
@@ -1612,6 +1617,7 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
     if average not in average_options and average != "binary":
         raise ValueError("average has to be one of " + str(average_options))
 
+    y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     # Convert to Python primitive type to avoid NumPy type / Python str
     # comparison. See https://github.com/numpy/numpy/issues/6784
@@ -1727,14 +1733,18 @@ def precision_recall_fscore_support(
         "assigned" 0 samples. For multilabel targets, labels are column indices.
         By default, all labels in `y_true` and `y_pred` are used in sorted order.
 
+        .. versionchanged:: 0.17
+           Parameter `labels` improved for multiclass problem.
+
     pos_label : int, float, bool or str, default=1
         The class to report if `average='binary'` and the data is binary,
         otherwise this parameter is ignored.
         For multiclass or multilabel targets, set `labels=[pos_label]` and
         `average != 'binary'` to report metrics for one label only.
 
-    average : {'binary', 'micro', 'macro', 'samples', 'weighted'}, \
-            default=None
+    average : {'micro', 'macro', 'samples', 'weighted', 'binary'} or None, \
+            default='binary'
+        This parameter is required for multiclass/multilabel targets.
         If ``None``, the metrics for each class are returned. Otherwise, this
         determines the type of averaging performed on the data:
 
@@ -1824,11 +1834,11 @@ def precision_recall_fscore_support(
     >>> y_true = np.array(['cat', 'dog', 'pig', 'cat', 'dog', 'pig'])
     >>> y_pred = np.array(['cat', 'pig', 'dog', 'cat', 'cat', 'dog'])
     >>> precision_recall_fscore_support(y_true, y_pred, average='macro')
-    (0.22..., 0.33..., 0.26..., None)
+    (np.float64(0.22...), np.float64(0.33...), np.float64(0.26...), None)
     >>> precision_recall_fscore_support(y_true, y_pred, average='micro')
-    (0.33..., 0.33..., 0.33..., None)
+    (np.float64(0.33...), np.float64(0.33...), np.float64(0.33...), None)
     >>> precision_recall_fscore_support(y_true, y_pred, average='weighted')
-    (0.22..., 0.33..., 0.26..., None)
+    (np.float64(0.22...), np.float64(0.33...), np.float64(0.26...), None)
 
     It is possible to compute per-label precisions, recalls, F1-scores and
     supports instead of averaging:
@@ -2009,15 +2019,15 @@ def class_likelihood_ratios(
     >>> import numpy as np
     >>> from sklearn.metrics import class_likelihood_ratios
     >>> class_likelihood_ratios([0, 1, 0, 1, 0], [1, 1, 0, 0, 0])
-    (1.5, 0.75)
+    (np.float64(1.5), np.float64(0.75))
     >>> y_true = np.array(["non-cat", "cat", "non-cat", "cat", "non-cat"])
     >>> y_pred = np.array(["cat", "cat", "non-cat", "non-cat", "non-cat"])
     >>> class_likelihood_ratios(y_true, y_pred)
-    (1.33..., 0.66...)
+    (np.float64(1.33...), np.float64(0.66...))
     >>> y_true = np.array(["non-zebra", "zebra", "non-zebra", "zebra", "non-zebra"])
     >>> y_pred = np.array(["zebra", "zebra", "non-zebra", "non-zebra", "non-zebra"])
     >>> class_likelihood_ratios(y_true, y_pred)
-    (1.5, 0.75)
+    (np.float64(1.5), np.float64(0.75))
 
     To avoid ambiguities, use the notation `labels=[negative_class,
     positive_class]`
@@ -2025,9 +2035,9 @@ def class_likelihood_ratios(
     >>> y_true = np.array(["non-cat", "cat", "non-cat", "cat", "non-cat"])
     >>> y_pred = np.array(["cat", "cat", "non-cat", "non-cat", "non-cat"])
     >>> class_likelihood_ratios(y_true, y_pred, labels=["non-cat", "cat"])
-    (1.5, 0.75)
+    (np.float64(1.5), np.float64(0.75))
     """
-
+    y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type != "binary":
         raise ValueError(
@@ -2234,11 +2244,11 @@ def precision_score(
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
     >>> precision_score(y_true, y_pred, average='macro')
-    0.22...
+    np.float64(0.22...)
     >>> precision_score(y_true, y_pred, average='micro')
-    0.33...
+    np.float64(0.33...)
     >>> precision_score(y_true, y_pred, average='weighted')
-    0.22...
+    np.float64(0.22...)
     >>> precision_score(y_true, y_pred, average=None)
     array([0.66..., 0.        , 0.        ])
     >>> y_pred = [0, 0, 0, 0, 0, 0]
@@ -2415,11 +2425,11 @@ def recall_score(
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
     >>> recall_score(y_true, y_pred, average='macro')
-    0.33...
+    np.float64(0.33...)
     >>> recall_score(y_true, y_pred, average='micro')
-    0.33...
+    np.float64(0.33...)
     >>> recall_score(y_true, y_pred, average='weighted')
-    0.33...
+    np.float64(0.33...)
     >>> recall_score(y_true, y_pred, average=None)
     array([1., 0., 0.])
     >>> y_true = [0, 0, 0, 0, 0, 0]
@@ -2525,7 +2535,7 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
     >>> y_true = [0, 1, 0, 0, 1, 0]
     >>> y_pred = [0, 1, 0, 0, 0, 1]
     >>> balanced_accuracy_score(y_true, y_pred)
-    0.625
+    np.float64(0.625)
     """
     C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
     with np.errstate(divide="ignore", invalid="ignore"):
@@ -2677,6 +2687,7 @@ def classification_report(
     <BLANKLINE>
     """
 
+    y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
 
     if labels is None:
@@ -2865,7 +2876,7 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
     >>> hamming_loss(np.array([[0, 1], [1, 1]]), np.zeros((2, 2)))
     0.75
     """
-
+    y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
 
@@ -3113,7 +3124,7 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     >>> pred_decision
     array([-2.18...,  2.36...,  0.09...])
     >>> hinge_loss([-1, 1, 1], pred_decision)
-    0.30...
+    np.float64(0.30...)
 
     In the multiclass case:
 
@@ -3127,7 +3138,7 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     >>> pred_decision = est.decision_function([[-1], [2], [3]])
     >>> y_true = [0, 2, 3]
     >>> hinge_loss(y_true, pred_decision, labels=labels)
-    0.56...
+    np.float64(0.56...)
     """
     check_consistent_length(y_true, pred_decision, sample_weight)
     pred_decision = check_array(pred_decision, ensure_2d=False)
@@ -3273,13 +3284,13 @@ def brier_score_loss(
     >>> y_true_categorical = np.array(["spam", "ham", "ham", "spam"])
     >>> y_prob = np.array([0.1, 0.9, 0.8, 0.3])
     >>> brier_score_loss(y_true, y_prob)
-    0.037...
+    np.float64(0.037...)
     >>> brier_score_loss(y_true, 1-y_prob, pos_label=0)
-    0.037...
+    np.float64(0.037...)
     >>> brier_score_loss(y_true_categorical, y_prob, pos_label="ham")
-    0.037...
+    np.float64(0.037...)
     >>> brier_score_loss(y_true, np.array(y_prob) > 0.5)
-    0.0
+    np.float64(0.0)
     """
     # TODO(1.7): remove in 1.7 and reset y_proba to be required
     # Note: validate params will raise an error if y_prob is not array-like,

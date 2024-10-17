@@ -65,10 +65,10 @@ def check_increasing(x, y):
     >>> from sklearn.isotonic import check_increasing
     >>> x, y = [1, 2, 3, 4, 5], [2, 4, 6, 8, 10]
     >>> check_increasing(x, y)
-    True
+    np.True_
     >>> y = [10, 8, 6, 4, 2]
     >>> check_increasing(x, y)
-    False
+    np.False_
     """
 
     # Calculate Spearman rho estimate and set return accordingly.
@@ -504,5 +504,8 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         if hasattr(self, "X_thresholds_") and hasattr(self, "y_thresholds_"):
             self._build_f(self.X_thresholds_, self.y_thresholds_)
 
-    def _more_tags(self):
-        return {"X_types": ["1darray"]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.one_d_array = True
+        tags.input_tags.two_d_array = False
+        return tags

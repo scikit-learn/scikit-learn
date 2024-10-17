@@ -413,7 +413,6 @@ def test_check_classification_targets():
                 check_classification_targets(example)
 
 
-# @ignore_warnings
 def test_type_of_target():
     for group, group_examples in EXAMPLES.items():
         for example in group_examples:

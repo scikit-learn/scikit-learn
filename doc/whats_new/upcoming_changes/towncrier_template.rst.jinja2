@@ -1,0 +1,43 @@
+{% if render_title %}
+{% if versiondata.name %}
+{{ versiondata.name }} {{ versiondata.version }} ({{ versiondata.date }})
+{{ top_underline * ((versiondata.name + versiondata.version + versiondata.date)|length + 4)}}
+{% else %}
+{{ versiondata.version }} ({{ versiondata.date }})
+{{ top_underline * ((versiondata.version + versiondata.date)|length + 3)}}
+{% endif %}
+{% endif %}
+
+{% set underline = underlines[0] %}
+{% for section, content_per_category in sections.items() if content_per_category %}
+{% if section != 'custom-top-level' %}
+{{ section }}
+{{ underline * section|length }}
+
+{% endif %}
+{# section-specific description #}
+{% if section == 'Support for Array API' %}
+Additional estimators and functions have been updated to include support for all
+`Array API <https://data-apis.org/array-api/latest/>`_ compliant inputs.
+
+See :ref:`array_api` for more details.
+
+{% endif %}
+{% if section == 'Metadata routing' %}
+Refer to the :ref:`Metadata Routing User Guide <metadata_routing>` for
+more details.
+
+{% endif %}
+{# We loop over definitions because, contrary to content_per_category, it follow the category order as defined in pyproject.toml #}
+{% for category in definitions if category in content_per_category %}
+{% set content = content_per_category[category] %}
+{% for text, issue_links in content.items() %}
+{% set tag = definitions[category]['name'] %}
+{# If category != 'other' add tag like |Fix| or |Feature|. This assumes the text is formatted as a bullet point #}
+{% set text_with_tag = text if category == 'other' else '{0} {1}{2}'.format(text[0], tag, text[1:]) %}
+{# issue_links is a list so need to join. For our purposes, issue_links is always of length 1 #}
+{{ text_with_tag }} {{ issue_links|join(', ') }}
+
+{% endfor %}
+{% endfor %}
+{% endfor %}
