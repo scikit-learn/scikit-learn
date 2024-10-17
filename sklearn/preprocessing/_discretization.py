@@ -462,3 +462,13 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         # ordinal encoding
         return input_features
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
+        tags._xfail_checks = {
+            "check_sample_weight_equivalence": (
+                "sample_weight is not equivalent to removing/repeating samples."
+            ),
+        }
+        return tags

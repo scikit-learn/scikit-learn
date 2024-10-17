@@ -3,7 +3,10 @@
 
 from collections import Counter
 
-from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
+from ...utils._plotting import (
+    _BinaryClassifierCurveDisplayMixin,
+    _validate_style_kwargs,
+)
 from .._ranking import average_precision_score, precision_recall_curve
 
 
@@ -178,14 +181,17 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         """
         self.ax_, self.figure_, name = self._validate_plot_params(ax=ax, name=name)
 
-        line_kwargs = {"drawstyle": "steps-post"}
+        default_line_kwargs = {"drawstyle": "steps-post"}
         if self.average_precision is not None and name is not None:
-            line_kwargs["label"] = f"{name} (AP = {self.average_precision:0.2f})"
+            default_line_kwargs["label"] = (
+                f"{name} (AP = {self.average_precision:0.2f})"
+            )
         elif self.average_precision is not None:
-            line_kwargs["label"] = f"AP = {self.average_precision:0.2f}"
+            default_line_kwargs["label"] = f"AP = {self.average_precision:0.2f}"
         elif name is not None:
-            line_kwargs["label"] = name
-        line_kwargs.update(**kwargs)
+            default_line_kwargs["label"] = name
+
+        line_kwargs = _validate_style_kwargs(default_line_kwargs, kwargs)
 
         (self.line_,) = self.ax_.plot(self.recall, self.precision, **line_kwargs)
 
@@ -214,13 +220,18 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
                     "to automatically set prevalence_pos_label"
                 )
 
-            chance_level_line_kw = {
+            default_chance_level_line_kw = {
                 "label": f"Chance level (AP = {self.prevalence_pos_label:0.2f})",
                 "color": "k",
                 "linestyle": "--",
             }
-            if chance_level_kw is not None:
-                chance_level_line_kw.update(chance_level_kw)
+
+            if chance_level_kw is None:
+                chance_level_kw = {}
+
+            chance_level_line_kw = _validate_style_kwargs(
+                default_chance_level_line_kw, chance_level_kw
+            )
 
             (self.chance_level_,) = self.ax_.plot(
                 (0, 1),

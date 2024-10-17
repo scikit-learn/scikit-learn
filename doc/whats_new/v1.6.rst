@@ -17,6 +17,7 @@ Version 1.6
 
 .. _changes_1_6:
 
+<<<<<<< HEAD
 Version 1.6.0
 =============
 
@@ -366,6 +367,8 @@ Changelog
   `ensure_all_finite`. `force_all_finite` will be removed in 1.8.
   :pr:`29404` by :user:`Jérémie du Boisberranger <jeremiedb>`.
 
+=======
+>>>>>>> origin/main
 .. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
