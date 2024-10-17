@@ -262,6 +262,14 @@ Changelog
   `dtype` of `idf_` based on the input data.
   :pr:`30022` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.frozen`
+.....................
+
+- |Feature| :class:`~sklearn.frozen.FrozenEstimator` is now introduced which allows
+  freezing an estimator. This means calling `.fit` on it has no effect, and doing a
+  `clone(frozenestimator)` returns the same estimator instead of an unfitted clone.
+  :pr:`29705` by `Adrin Jalali`_.
+
 :mod:`sklearn.impute`
 .....................
 

@@ -86,6 +86,7 @@ __all__ = [
     "externals",
     "feature_extraction",
     "feature_selection",
+    "frozen",
     "gaussian_process",
     "inspection",
     "isotonic",

@@ -460,6 +460,16 @@ API_REFERENCE = {
             },
         ],
     },
+    "sklearn.frozen": {
+        "short_summary": "Frozen estimators.",
+        "description": None,
+        "sections": [
+            {
+                "title": None,
+                "autosummary": ["FrozenEstimator"],
+            },
+        ],
+    },
     "sklearn.gaussian_process": {
         "short_summary": "Gaussian processes.",
         "description": _get_guide("gaussian_process"),
