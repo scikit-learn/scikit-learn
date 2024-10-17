@@ -50,7 +50,7 @@ def test_weighted_percentile_zero_weight_zero_percentile():
 
 
 def test_weighted_median_equal_weights():
-    # Checks weighted percentile=0.5 is same as median when weights equal
+    # Checks weighted percentile_rank=0.5 is same as median when weights equal
     rng = np.random.RandomState(0)
     # Odd size as _weighted_percentile takes lower weighted percentile
     x = rng.randint(10, size=11)
@@ -62,7 +62,7 @@ def test_weighted_median_equal_weights():
 
 
 def test_weighted_median_integer_weights():
-    # Checks weighted percentile=0.5 is same as median when manually weight
+    # Checks weighted percentile_rank=0.5 is same as median when manually weight
     # data
     rng = np.random.RandomState(0)
     x = rng.randint(20, size=10)
@@ -156,9 +156,9 @@ def test_weighted_percentile_all_nan_column():
         ]
     )
     weights = np.ones_like(array)
-    percentile = 90
+    percentile_rank = 90
 
-    values = _weighted_percentile(array, weights, percentile)
+    values = _weighted_percentile(array, weights, percentile_rank)
 
     # The percentile of the second column should be `5` even though there are many nan
     # values present; the percentile of the first column can only be nan, since there

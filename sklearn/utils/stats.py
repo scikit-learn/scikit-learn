@@ -6,14 +6,16 @@ import numpy as np
 from .extmath import stable_cumsum
 
 
-def _weighted_percentile(array, sample_weight, percentile=50):
+def _weighted_percentile(array, sample_weight, percentile_rank=50):
     """Compute the weighted percentile with method 'inverted_cdf'.
+
+    When the percentile lies between two values, the function returns the lower value.
 
     If `array` is a 2D array, the `values` are selected along axis 0.
 
     `NaN` values are ignored by setting their weights to 0. If `array` is 2D, this
     is done in a column-isolated manner: a `NaN` in the second column, does not impact
-    the percentile value computed for the first column even if `sample_weight` is 1D.
+    the percentile computed for the first column even if `sample_weight` is 1D.
 
         .. versionchanged:: 0.24
             Accepts 2D `array`.
@@ -30,13 +32,14 @@ def _weighted_percentile(array, sample_weight, percentile=50):
         Weights for each value in `array`. Must be same shape as `array` or of shape
         `(array.shape[0],)`.
 
-    percentile: int or float, default=50
-        The probability level of the percentile to compute, in percent. Must be between 0 and 100.
+    percentile_rank: int or float, default=50
+        The probability level of the percentile to compute, in percent. Must be between
+        0 and 100.
 
     Returns
     -------
     percentile : int if `array` 1D, ndarray if `array` 2D
-        Weighted percentile at the requested level.
+        Weighted percentile at the requested probability level.
     """
     n_dim = array.ndim
     if n_dim == 0:
@@ -57,9 +60,10 @@ def _weighted_percentile(array, sample_weight, percentile=50):
     # Compute the weighted cumulative distribution function (CDF) based on
     # `sample_weight` and scale `percentile` along it:
     weight_cdf = stable_cumsum(sorted_weights, axis=0)
-    adjusted_percentile = percentile / 100 * weight_cdf[-1]
+    adjusted_percentile = percentile_rank / 100 * weight_cdf[-1]
 
-    # For percentile=0, ignore leading observations with sample_weight=0; see PR #20528
+    # For percentile_rank=0, ignore leading observations with sample_weight=0; see PR
+    # #20528
     mask = adjusted_percentile == 0
     adjusted_percentile[mask] = np.nextafter(
         adjusted_percentile[mask], adjusted_percentile[mask] + 1
@@ -81,6 +85,6 @@ def _weighted_percentile(array, sample_weight, percentile=50):
 
     col_indices = np.arange(array.shape[1])
     percentile_in_sorted = sorted_idx[percentile_idx, col_indices]
-    values = array[percentile_in_sorted, col_indices]
+    result = array[percentile_in_sorted, col_indices]
 
-    return values[0] if n_dim == 1 else values
+    return result[0] if n_dim == 1 else result
