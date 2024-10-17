@@ -417,7 +417,15 @@ def _get_column_indices_interchange(X_interchange, key, key_dtype):
     },
     prefer_skip_nested_validation=True,
 )
-def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=None):
+def resample(
+    *arrays,
+    replace=True,
+    n_samples=None,
+    random_state=None,
+    stratify=None,
+    sample_weight=None,
+    use_weights_in_resampling=False,
+):
     """Resample arrays or sparse matrices in a consistent way.
 
     The default strategy implements one step of the bootstrapping
@@ -520,10 +528,18 @@ def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=
         )
 
     check_consistent_length(*arrays)
-
     if stratify is None:
         if replace:
-            indices = random_state.randint(0, n_samples, size=(max_n_samples,))
+            if sample_weight is not None and use_weights_in_resampling:
+
+                sample_weight = sample_weight / sample_weight.sum()
+                indices = random_state.choice(
+                    np.arange(n_samples), size=(max_n_samples,), p=sample_weight
+                )
+            else:
+                indices = random_state.choice(
+                    np.arange(n_samples), size=(max_n_samples,)
+                )
         else:
             indices = np.arange(n_samples)
             random_state.shuffle(indices)
@@ -560,11 +576,21 @@ def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=
     # convert sparse matrices to CSR for row-based indexing
     arrays = [a.tocsr() if issparse(a) else a for a in arrays]
     resampled_arrays = [_safe_indexing(a, indices) for a in arrays]
+
+    if sample_weight is not None and not use_weights_in_resampling:
+        resampled_weights = _safe_indexing(sample_weight, indices)
+
     if len(resampled_arrays) == 1:
         # syntactic sugar for the unit argument case
-        return resampled_arrays[0]
+        if sample_weight is not None and not use_weights_in_resampling:
+            return [resampled_arrays[0], resampled_weights]
+        else:
+            return resampled_arrays[0]
     else:
-        return resampled_arrays
+        if sample_weight is not None and not use_weights_in_resampling:
+            return [resampled_arrays, resampled_weights]
+        else:
+            return resampled_arrays
 
 
 def shuffle(*arrays, random_state=None, n_samples=None):
