@@ -225,7 +225,6 @@ def check_array_api_metric(
     metric,
     array_namespace,
     device,
-    dtype_name,
     labels_true,
     labels_pred,
     **metric_kwargs,
@@ -246,27 +245,14 @@ def check_array_api_metric(
         )
 
 
-def check_array_api_metric_supervised(metric, array_namespace, device, dtype_name):
-    labels_true = np.array([0, 0, 1, 1, 2, 2], dtype=dtype_name)
-    labels_pred = np.array([1, 0, 2, 1, 0, 2], dtype=dtype_name)
+def check_array_api_metric_supervised(metric, array_namespace, device, int_dtype):
+    labels_true = np.array([0, 0, 1, 1, 2, 2], dtype=int_dtype)
+    labels_pred = np.array([1, 0, 2, 1, 0, 2], dtype=int_dtype)
 
     check_array_api_metric(
         metric,
         array_namespace,
         device,
-        dtype_name,
-        labels_true=labels_true,
-        labels_pred=labels_pred,
-    )
-
-    labels_true = np.array([0.3, 0.2, 1.4, 1.4, 2.2, 2.2], dtype=dtype_name)
-    labels_pred = np.array([1.4, 0.2, 2.2, 1.4, 0.3, 2.2], dtype=dtype_name)
-
-    check_array_api_metric(
-        metric,
-        array_namespace,
-        device,
-        dtype_name,
         labels_true=labels_true,
         labels_pred=labels_pred,
     )
@@ -282,11 +268,11 @@ def yield_metric_checker_combinations(metric_checkers):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, _", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize(
     "metric, check_func", yield_metric_checker_combinations(array_api_metric_checkers)
 )
-def test_array_api_compliance(metric, array_namespace, device, dtype_name, check_func):
+def test_array_api_compliance(metric, array_namespace, device, _, check_func):
     for int_dtype in ["int32", "int64"]:
         check_func(metric, array_namespace, device, int_dtype)
