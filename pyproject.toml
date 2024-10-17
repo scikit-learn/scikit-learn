@@ -255,11 +255,9 @@ package = "sklearn"  # name of your package
 
 [tool.changelog-bot]
     [tool.changelog-bot.towncrier_changelog]
-        enabled = true  # default is false
-        verify_pr_number = true  # default is false
-        changelog_skip_label = "Do Not Add Changelog"  # this one will error if set and there is a changelog
-        changelog_noop_label = "No Changelog Needed" # this one always skips
-        whatsnew_label = "Needs Changelog"
+        enabled = true
+        verify_pr_number = true
+        changelog_noop_label = "No Changelog Needed"
         whatsnew_pattern = 'doc/whatsnew/upcoming_changes/[^/]+/\d+\.[^.]+\.rst'
 
 [tool.towncrier]

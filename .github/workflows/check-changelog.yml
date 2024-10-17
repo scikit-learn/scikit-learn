@@ -1,11 +1,13 @@
-name: Check PR changelog
-
+name: Check Changelog
+# This check makes sure that the changelog is properly updated
+# when a PR introduces a change in a test file.
+# To bypass this check, label the PR with "No Changelog Needed".
 on:
   pull_request:
     types: [opened, synchronize, labeled, unlabeled]
 
 jobs:
-  changelog_checker:
+  check:
     name: A reviewer will let you know if it is required or can be bypassed
     runs-on: ubuntu-latest
     steps:
