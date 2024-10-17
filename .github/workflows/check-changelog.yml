@@ -22,7 +22,7 @@ jobs:
           # Changelog should be updated only if tests have been modified
           if [[ "$changed_files" =~ tests ]]
           then
-            echo check_changelog=true" >> $GITHUB_OUTPUT
+            echo "check_changelog=true" >> $GITHUB_OUTPUT
           fi
 
       - name: Check changelog entry
