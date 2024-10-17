@@ -1363,6 +1363,9 @@ class KMeans(_BaseKMeans):
     For examples of common problems with K-Means and how to address them see
     :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_assumptions.py`.
 
+    See :ref:`sphx_glr_auto_examples_cluster_plot_bisect_kmeans.py` for a comparison
+    with :class:`~sklearn.cluster.BisectingKMeans`.
+
     For a demonstration of how K-Means can be used to cluster text documents see
     :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`.
 

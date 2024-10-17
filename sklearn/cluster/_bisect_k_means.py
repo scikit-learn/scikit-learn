@@ -85,10 +85,6 @@ class BisectingKMeans(_BaseKMeans):
 
     Read more in the :ref:`User Guide <bisect_k_means>`.
 
-    See
-    :ref:`sphx_glr_auto_examples_cluster_plot_bisect_kmeans.py`
-    for an example on how to use the API.
-
     .. versionadded:: 1.1
 
     Parameters
@@ -196,6 +192,10 @@ class BisectingKMeans(_BaseKMeans):
     -----
     It might be inefficient when n_cluster is less than 3, due to unnecessary
     calculations for that case.
+
+    See :ref:`sphx_glr_auto_examples_cluster_plot_bisect_kmeans.py` for a comparison
+    with :class:`~sklearn.cluster.KMeans`.
+
 
     Examples
     --------
