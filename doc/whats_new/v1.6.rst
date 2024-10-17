@@ -363,6 +363,9 @@ Changelog
   removed in 1.8. In the mean time, `None` is equivalent to `"predict"`.
   :pr:`30001` by :user:`Jérémie du Boisberranger <jeremiedb>`.
 
+- |Feature| :func:`metrics.d2_brier_score` has been added which calculates
+  the D^2 for the brier score. :pr:`28971` by :user:`Omar Salman <OmarManzoor>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
