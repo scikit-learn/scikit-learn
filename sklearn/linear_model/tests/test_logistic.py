@@ -12,7 +12,7 @@ from numpy.testing import (
     assert_array_equal,
 )
 from scipy import sparse
-from scipy.linalg import svd
+from scipy.linalg import LinAlgWarning, svd
 
 from sklearn import config_context
 from sklearn._loss import HalfMultinomialLoss
@@ -2374,3 +2374,43 @@ def test_multi_class_deprecated():
     lrCV = LogisticRegressionCV(multi_class="multinomial")
     with pytest.warns(FutureWarning, match=msg):
         lrCV.fit(X, y)
+
+
+def test_newton_cholesky_fallback_to_lbfgs(global_random_seed):
+    # Wide data matrix should lead to a rank-deficient Hessian matrix
+    # hence make the Newton-Cholesky solver raise a warning and fallback to
+    # lbfgs.
+    X, y = make_classification(
+        n_samples=10, n_features=11, random_state=global_random_seed
+    )
+    C = 1e20  # very high C to nearly disable regularization
+
+    # Check that LBFGS can converge without any warning on this problem.
+    lr_lbfgs = LogisticRegression(solver="lbfgs", C=C)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        lr_lbfgs.fit(X, y)
+
+    n_iter_lbgs = lr_lbfgs.n_iter_[0]
+    assert n_iter_lbgs >= 1
+
+    # Check that the Newton-Cholesky solver raises a warning and falls back to
+    # LBFGS. This should also converges in the same number of iterations as the
+    # previous call since the Newton-Cholesky solver should trigger the
+    # fallback before completing the first iteration.
+    lr_nc = LogisticRegression(solver="newton-cholesky", C=C)
+    with pytest.warns(LinAlgWarning, match="ill-conditioned Hessian matrix"):
+        lr_nc.fit(X, y)
+
+    assert lr_nc.n_iter_[0] == n_iter_lbgs
+
+    # Trying to fit the same model again with a small iteration budget should
+    # therefore raise a ConvergenceWarning:
+    lr_nc_limited = LogisticRegression(
+        solver="newton-cholesky", C=C, max_iter=n_iter_lbgs - 1
+    )
+    with pytest.warns(LinAlgWarning, match="ill-conditioned Hessian matrix"):
+        with pytest.warns(ConvergenceWarning, match="lbfgs failed to converge"):
+            lr_nc_limited.fit(X, y)
+
+    lr_nc_limited.n_iter_[0] == n_iter_lbgs - 1
