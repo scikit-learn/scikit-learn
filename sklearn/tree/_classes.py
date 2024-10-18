@@ -1126,6 +1126,9 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
 
+        For an example of how ``max_depth`` influences the model, see
+        :ref:`sphx_glr_auto_examples_tree_plot_tree_regression.py`.
+
     min_samples_split : int or float, default=2
         The minimum number of samples required to split an internal node:
 
