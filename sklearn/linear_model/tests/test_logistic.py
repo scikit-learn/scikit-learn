@@ -2391,8 +2391,8 @@ def test_newton_cholesky_fallback_to_lbfgs(global_random_seed):
         warnings.simplefilter("error")
         lr_lbfgs.fit(X, y)
 
-    n_iter_lbgs = lr_lbfgs.n_iter_[0]
-    assert n_iter_lbgs >= 1
+    n_iter_lbfgs = lr_lbfgs.n_iter_[0]
+    assert n_iter_lbfgs >= 1
 
     # Check that the Newton-Cholesky solver raises a warning and falls back to
     # LBFGS. This should converge with the same number of iterations as the
@@ -2402,15 +2402,15 @@ def test_newton_cholesky_fallback_to_lbfgs(global_random_seed):
     with pytest.warns(LinAlgWarning, match="ill-conditioned Hessian matrix"):
         lr_nc.fit(X, y)
 
-    assert lr_nc.n_iter_[0] == n_iter_lbgs
+    assert lr_nc.n_iter_[0] == n_iter_lbfgs
 
     # Trying to fit the same model again with a small iteration budget should
     # therefore raise a ConvergenceWarning:
     lr_nc_limited = LogisticRegression(
-        solver="newton-cholesky", C=C, max_iter=n_iter_lbgs - 1
+        solver="newton-cholesky", C=C, max_iter=n_iter_lbfgs - 1
     )
     with pytest.warns(LinAlgWarning, match="ill-conditioned Hessian matrix"):
         with pytest.warns(ConvergenceWarning, match="lbfgs failed to converge"):
             lr_nc_limited.fit(X, y)
 
-    lr_nc_limited.n_iter_[0] == n_iter_lbgs - 1
+    lr_nc_limited.n_iter_[0] == n_iter_lbfgs - 1
