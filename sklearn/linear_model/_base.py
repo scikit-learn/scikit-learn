@@ -681,6 +681,22 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         self._set_intercept(X_offset, y_offset, X_scale)
         return self
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        # TODO: investigate failure see meta-issue #16298
+        #
+        # Note: this model should converge to the minimum norm solution of the
+        # least squares problem and as result be numerically stable enough when
+        # running the equivalence check even if n_features > n_samples. Maybe
+        # this is is not the case and a different choice of solver could fix
+        # this problem.
+        tags._xfail_checks = {
+            "check_sample_weight_equivalence": (
+                "sample_weight is not equivalent to removing/repeating samples."
+            ),
+        }
+        return tags
+
 
 def _check_precomputed_gram_matrix(
     X, precompute, X_offset, X_scale, rtol=None, atol=1e-5

@@ -38,7 +38,7 @@ from .utils._param_validation import (
     StrOptions,
     validate_params,
 )
-from .utils._plotting import _BinaryClassifierCurveDisplayMixin
+from .utils._plotting import _BinaryClassifierCurveDisplayMixin, _validate_style_kwargs
 from .utils._response import _get_response_values, _process_predict_proba
 from .utils.metadata_routing import (
     MetadataRouter,
@@ -1150,10 +1150,10 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             f"(Positive class: {self.pos_label})" if self.pos_label is not None else ""
         )
 
-        line_kwargs = {"marker": "s", "linestyle": "-"}
+        default_line_kwargs = {"marker": "s", "linestyle": "-"}
         if name is not None:
-            line_kwargs["label"] = name
-        line_kwargs.update(**kwargs)
+            default_line_kwargs["label"] = name
+        line_kwargs = _validate_style_kwargs(default_line_kwargs, kwargs)
 
         ref_line_label = "Perfectly calibrated"
         existing_ref_line = ref_line_label in self.ax_.get_legend_handles_labels()[1]

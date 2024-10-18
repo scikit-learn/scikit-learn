@@ -112,8 +112,7 @@ def _yield_checks(estimator):
             # We skip pairwise because the data is not pairwise
             yield check_sample_weights_shape
             yield check_sample_weights_not_overwritten
-            yield partial(check_sample_weights_invariance, kind="ones")
-            yield partial(check_sample_weights_invariance, kind="zeros")
+            yield check_sample_weight_equivalence
 
     # Check that all estimator yield informative messages when
     # trained on empty datasets
@@ -196,6 +195,9 @@ def _yield_classifier_checks(classifier):
         and "class_weight" in classifier.get_params().keys()
     ):
         yield check_class_weight_balanced_linear_classifier
+
+    if not tags.classifier_tags.multi_class:
+        yield check_classifier_not_supporting_multiclass
 
 
 @ignore_warnings(category=FutureWarning)
@@ -605,9 +607,9 @@ def check_estimator(estimator=None, generate_only=False, *, legacy: bool = True)
         # to run
         yield estimator, partial(check_estimator_cloneable, name)
         for check in _yield_all_checks(estimator, legacy=legacy):
-            check = _maybe_skip(estimator, check)
             for check_instance in _yield_instances_for_check(check, estimator):
-                yield check_instance, partial(check, name)
+                maybe_skipped_check = _maybe_skip(check_instance, check)
+                yield check_instance, partial(maybe_skipped_check, name)
 
     if generate_only:
         return checks_generator()
@@ -1084,91 +1086,68 @@ def check_sample_weights_shape(name, estimator_orig):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_sample_weights_invariance(name, estimator_orig, kind="ones"):
-    # For kind="ones" check that the estimators yield same results for
-    # unit weights and no weights
-    # For kind="zeros" check that setting sample_weight to 0 is equivalent
-    # to removing corresponding samples.
-    estimator1 = clone(estimator_orig)
-    estimator2 = clone(estimator_orig)
-    set_random_state(estimator1, random_state=0)
-    set_random_state(estimator2, random_state=0)
+def check_sample_weight_equivalence(name, estimator_orig):
+    # check that setting sample_weight to zero / integer is equivalent
+    # to removing / repeating corresponding samples.
+    estimator_weighted = clone(estimator_orig)
+    estimator_repeated = clone(estimator_orig)
+    set_random_state(estimator_weighted, random_state=0)
+    set_random_state(estimator_repeated, random_state=0)
 
-    X1 = np.array(
-        [
-            [1, 3],
-            [1, 3],
-            [1, 3],
-            [1, 3],
-            [2, 1],
-            [2, 1],
-            [2, 1],
-            [2, 1],
-            [3, 3],
-            [3, 3],
-            [3, 3],
-            [3, 3],
-            [4, 1],
-            [4, 1],
-            [4, 1],
-            [4, 1],
-        ],
-        dtype=np.float64,
-    )
-    y1 = np.array([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2], dtype=int)
+    rng = np.random.RandomState(42)
+    n_samples = 15
+    X = rng.rand(n_samples, n_samples * 2)
+    y = rng.randint(0, 3, size=n_samples)
+    # Use random integers (including zero) as weights.
+    sw = rng.randint(0, 5, size=n_samples)
 
-    if kind == "ones":
-        X2 = X1
-        y2 = y1
-        sw2 = np.ones(shape=len(y1))
-        err_msg = (
-            f"For {name} sample_weight=None is not equivalent to sample_weight=ones"
-        )
-    elif kind == "zeros":
-        # Construct a dataset that is very different to (X, y) if weights
-        # are disregarded, but identical to (X, y) given weights.
-        X2 = np.vstack([X1, X1 + 1])
-        y2 = np.hstack([y1, 3 - y1])
-        sw2 = np.ones(shape=len(y1) * 2)
-        sw2[len(y1) :] = 0
-        X2, y2, sw2 = shuffle(X2, y2, sw2, random_state=0)
+    X_weigthed = X
+    y_weighted = y
+    # repeat samples according to weights
+    X_repeated = X_weigthed.repeat(repeats=sw, axis=0)
+    y_repeated = y_weighted.repeat(repeats=sw)
 
-        err_msg = (
-            f"For {name}, a zero sample_weight is not equivalent to removing the sample"
-        )
-    else:  # pragma: no cover
-        raise ValueError
+    X_weigthed, y_weighted, sw = shuffle(X_weigthed, y_weighted, sw, random_state=0)
 
     # when the estimator has an internal CV scheme
     # we only use weights / repetitions in a specific CV group (here group=0)
     if "cv" in estimator_orig.get_params():
-        groups2 = np.hstack(
-            [np.full_like(y2, 0), np.full_like(y1, 1), np.full_like(y1, 2)]
+        groups_weighted = np.hstack(
+            [np.full_like(y_weighted, 0), np.full_like(y, 1), np.full_like(y, 2)]
         )
-        sw2 = np.hstack([sw2, np.ones_like(y1), np.ones_like(y1)])
-        X2 = np.vstack([X2, X1, X1])
-        y2 = np.hstack([y2, y1, y1])
-        splits2 = list(LeaveOneGroupOut().split(X2, groups=groups2))
-        estimator2.set_params(cv=splits2)
-
-        groups1 = np.hstack(
-            [np.full_like(y1, 0), np.full_like(y1, 1), np.full_like(y1, 2)]
+        sw = np.hstack([sw, np.ones_like(y), np.ones_like(y)])
+        X_weigthed = np.vstack([X_weigthed, X, X])
+        y_weighted = np.hstack([y_weighted, y, y])
+        splits_weighted = list(
+            LeaveOneGroupOut().split(X_weigthed, groups=groups_weighted)
         )
-        X1 = np.vstack([X1, X1, X1])
-        y1 = np.hstack([y1, y1, y1])
-        splits1 = list(LeaveOneGroupOut().split(X1, groups=groups1))
-        estimator1.set_params(cv=splits1)
+        estimator_weighted.set_params(cv=splits_weighted)
 
-    y1 = _enforce_estimator_tags_y(estimator1, y1)
-    y2 = _enforce_estimator_tags_y(estimator2, y2)
+        groups_repeated = np.hstack(
+            [np.full_like(y_repeated, 0), np.full_like(y, 1), np.full_like(y, 2)]
+        )
+        X_repeated = np.vstack([X_repeated, X, X])
+        y_repeated = np.hstack([y_repeated, y, y])
+        splits_repeated = list(
+            LeaveOneGroupOut().split(X_repeated, groups=groups_repeated)
+        )
+        estimator_repeated.set_params(cv=splits_repeated)
 
-    estimator1.fit(X1, y=y1, sample_weight=None)
-    estimator2.fit(X2, y=y2, sample_weight=sw2)
+    y_weighted = _enforce_estimator_tags_y(estimator_weighted, y_weighted)
+    y_repeated = _enforce_estimator_tags_y(estimator_repeated, y_repeated)
 
-    for method in ["predict", "predict_proba", "decision_function", "transform"]:
+    estimator_repeated.fit(X_repeated, y=y_repeated, sample_weight=None)
+    estimator_weighted.fit(X_weigthed, y=y_weighted, sample_weight=sw)
+
+    for method in ["predict_proba", "decision_function", "predict", "transform"]:
         if hasattr(estimator_orig, method):
-            X_pred1 = getattr(estimator1, method)(X1)
-            X_pred2 = getattr(estimator2, method)(X1)
+            X_pred1 = getattr(estimator_repeated, method)(X)
+            X_pred2 = getattr(estimator_weighted, method)(X)
+            err_msg = (
+                f"Comparing the output of {name}.{method} revealed that fitting "
+                "with `sample_weight` is not equivalent to fitting with removed "
+                "or repeated data points."
+            )
             assert_allclose_dense_sparse(X_pred1, X_pred2, err_msg=err_msg)
 
 
@@ -1230,7 +1209,13 @@ def check_dtype_object(name, estimator_orig):
     if hasattr(estimator, "transform"):
         estimator.transform(X)
 
-    with raises(Exception, match="Unknown label type", may_pass=True):
+    err_msg = (
+        "y with unknown label type is passed, but an error with no proper message "
+        "is raised. You can use `type_of_target(..., raise_unknown=True)` to check "
+        "and raise the right error, or include 'Unknown label type' in the error "
+        "message."
+    )
+    with raises(Exception, match="Unknown label type", may_pass=True, err_msg=err_msg):
         estimator.fit(X, y.astype(object))
 
     if not tags.input_tags.string:
@@ -3658,9 +3643,15 @@ def check_classifiers_regression_target(name, estimator_orig):
 
     X = _enforce_estimator_tags_X(estimator_orig, X)
     e = clone(estimator_orig)
-    msg = "Unknown label type: "
+    err_msg = (
+        "When a classifier is passed a continuous target, it should raise a ValueError"
+        " with a message containing 'Unknown label type: ' or a message indicating that"
+        " a continuous target is passed and the message should include the word"
+        " 'continuous'"
+    )
+    msg = "Unknown label type: |continuous"
     if not get_tags(e).no_validation:
-        with raises(ValueError, match=msg):
+        with raises(ValueError, match=msg, err_msg=err_msg):
             e.fit(X, y)
 
 
@@ -4761,3 +4752,43 @@ def check_do_not_raise_errors_in_init_or_set_params(name, estimator_orig):
 
         # Also do does not raise
         est.set_params(**new_params)
+
+
+def check_classifier_not_supporting_multiclass(name, estimator_orig):
+    """Check that if the classifier has tags.classifier_tags.multi_class=False,
+    then it should raise a ValueError when calling fit with a multiclass dataset.
+
+    This test is not yielded if the tag is not False.
+    """
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+
+    X, y = make_classification(
+        n_samples=100,
+        n_classes=3,
+        n_informative=3,
+        n_clusters_per_class=1,
+        random_state=0,
+    )
+    err_msg = """\
+        The estimator tag `tags.classifier_tags.multi_class` is False for {name}
+        which means it does not support multiclass classification. However, it does
+        not raise the right `ValueError` when calling fit with a multiclass dataset,
+        including the error message 'Only binary classification is supported.' This
+        can be achieved by the following pattern:
+
+        y_type = type_of_target(y, input_name='y', raise_unknown=True)
+        if y_type != 'binary':
+            raise ValueError(
+                'Only binary classification is supported. The type of the target '
+                f'is {{y_type}}.'
+        )
+    """.format(
+        name=name
+    )
+    err_msg = textwrap.dedent(err_msg)
+
+    with raises(
+        ValueError, match="Only binary classification is supported.", err_msg=err_msg
+    ):
+        estimator.fit(X, y)
