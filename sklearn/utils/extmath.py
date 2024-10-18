@@ -537,7 +537,7 @@ def randomized_svd(
     if is_array_api_compliant:
         Uhat, s, Vt = xp.linalg.svd(B, full_matrices=False)
     else:
-        # When when array_api_dispatch is disabled, rely on scipy.linalg
+        # When array_api_dispatch is disabled, rely on scipy.linalg
         # instead of numpy.linalg to avoid introducing a behavior change w.r.t.
         # previous versions of scikit-learn.
         Uhat, s, Vt = linalg.svd(
