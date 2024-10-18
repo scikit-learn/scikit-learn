@@ -15,9 +15,11 @@ import scipy.sparse as sp
 from sklearn import config_context, get_config
 from sklearn.base import BaseEstimator, ClassifierMixin, OutlierMixin
 from sklearn.cluster import MiniBatchKMeans
-from sklearn.datasets import make_multilabel_classification
+from sklearn.datasets import (
+    load_iris,
+    make_multilabel_classification,
+)
 from sklearn.decomposition import PCA
-from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.exceptions import ConvergenceWarning, SkipTestWarning
 from sklearn.linear_model import (
     LinearRegression,
@@ -46,6 +48,7 @@ from sklearn.utils.estimator_checks import (
     check_array_api_input,
     check_class_weight_balanced_linear_classifier,
     check_classifier_data_not_an_array,
+    check_classifier_not_supporting_multiclass,
     check_classifiers_multilabel_output_format_decision_function,
     check_classifiers_multilabel_output_format_predict,
     check_classifiers_multilabel_output_format_predict_proba,
@@ -79,6 +82,7 @@ from sklearn.utils.estimator_checks import (
 )
 from sklearn.utils.fixes import CSR_CONTAINERS, SPARRAY_PRESENT
 from sklearn.utils.metaestimators import available_if
+from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import (
     check_array,
     check_is_fitted,
@@ -473,6 +477,15 @@ class UntaggedBinaryClassifier(SGDClassifier):
 
 
 class TaggedBinaryClassifier(UntaggedBinaryClassifier):
+    def fit(self, X, y):
+        y_type = type_of_target(y, input_name="y", raise_unknown=True)
+        if y_type != "binary":
+            raise ValueError(
+                "Only binary classification is supported. The type of the target "
+                f"is {y_type}."
+            )
+        return super().fit(X, y)
+
     # Toy classifier that only supports binary classification.
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -800,7 +813,6 @@ def test_check_estimator_transformer_no_mixin():
 
 def test_check_estimator_clones():
     # check that check_estimator doesn't modify the estimator it receives
-    from sklearn.datasets import load_iris
 
     iris = load_iris()
 
@@ -809,7 +821,6 @@ def test_check_estimator_clones():
         LinearRegression,
         SGDClassifier,
         PCA,
-        ExtraTreesClassifier,
         MiniBatchKMeans,
     ]:
         # without fitting
@@ -824,7 +835,7 @@ def test_check_estimator_clones():
         with ignore_warnings(category=ConvergenceWarning):
             est = Estimator()
             set_random_state(est)
-            est.fit(iris.data + 10, iris.target)
+            est.fit(iris.data, iris.target)
             old_hash = joblib.hash(est)
             check_estimator(est)
         assert old_hash == joblib.hash(est)
@@ -1418,6 +1429,21 @@ def test_check_estimator_tags_renamed():
     # to exist so that third party estimators can easily support multiple sklearn
     # versions.
     check_estimator_tags_renamed("OkayEstimator", OkayEstimator())
+
+
+def test_check_classifier_not_supporting_multiclass():
+    """Check that when the estimator has the wrong tags.classifier_tags.multi_class
+    set, the test fails."""
+
+    class BadEstimator(BaseEstimator):
+        # we don't actually need to define the tag here since we're running the test
+        # manually, and BaseEstimator defaults to multi_output=False.
+        def fit(self, X, y):
+            return self
+
+    msg = "The estimator tag `tags.classifier_tags.multi_class` is False"
+    with raises(AssertionError, match=msg):
+        check_classifier_not_supporting_multiclass("BadEstimator", BadEstimator())
 
 
 # Test that set_output doesn't make the tests to fail.
