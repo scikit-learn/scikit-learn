@@ -169,13 +169,13 @@ def test_prior(kernel):
 
 
 @pytest.mark.parametrize("kernel", kernels)
-def test_sample_statistics(kernel):
+def test_sample_statistics_svd(kernel):
     # Test that statistics of samples drawn from GP are correct.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
 
     y_mean, y_cov = gpr.predict(X2, return_cov=True)
 
-    samples = gpr.sample_y(X2, 300000)
+    samples = gpr.sample_y(X2, 300000, sample_method="svd")
 
     # More digits accuracy would require many more samples
     assert_almost_equal(y_mean, np.mean(samples, 1), 1)
@@ -185,7 +185,23 @@ def test_sample_statistics(kernel):
         1,
     )
 
+@pytest.mark.parametrize("kernel", kernels)
+def test_sample_statistics_cholesky(kernel):
+    # Test that statistics of samples drawn from GP are correct.
+    gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
 
+    y_mean, y_cov = gpr.predict(X2, return_cov=True)
+
+    samples = gpr.sample_y(X2, 300000, sample_method="cholesky")
+
+    # More digits accuracy would require many more samples
+    assert_almost_equal(y_mean, np.mean(samples, 1), 1)
+    assert_almost_equal(
+        np.diag(y_cov) / np.diag(y_cov).max(),
+        np.var(samples, 1) / np.diag(y_cov).max(),
+        1,
+    )
+    
 def test_no_optimizer():
     # Test that kernel parameters are unmodified when optimizer is None.
     kernel = RBF(1.0)
