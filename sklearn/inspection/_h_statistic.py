@@ -10,7 +10,9 @@ from scipy import sparse
 
 from ..base import is_classifier, is_regressor
 from ..utils import Bunch, check_array
-from ..utils._indexing import _get_column_indices, _safe_assign, _safe_indexing
+from ..utils._indexing import (
+    resample, _get_column_indices, _safe_assign, _safe_indexing
+)
 from ..utils._param_validation import (
     HasMethods,
     Integral,
@@ -19,7 +21,7 @@ from ..utils._param_validation import (
     validate_params,
 )
 from ..utils.random import sample_without_replacement
-from ..utils.validation import _check_sample_weight, check_is_fitted
+from ..utils.validation import _check_sample_weight, check_is_fitted, _num_samples
 
 
 def _calculate_pd_brute_fast(
@@ -113,9 +115,9 @@ def _calculate_pd_over_data(
         "X": ["array-like", "sparse matrix"],
         "features": ["array-like", list, None],
         "sample_weight": ["array-like", None],
-        "n_max": [Interval(Integral, 1, None, closed="left")],
-        "random_state": ["random_state"],
+        "subsample": [Interval(Integral, 1, None, closed="left")],
         "eps": [Interval(Real, 0, None, closed="left")],
+        "random_state": ["random_state"],
     },
     prefer_skip_nested_validation=True,
 )
@@ -125,9 +127,9 @@ def h_statistic(
     features=None,
     *,
     sample_weight=None,
-    n_max=500,
-    random_state=None,
+    subsample=500,
     eps=1e-10,
+    random_state=None,
 ):
     """Friedman and Popescu's H-statistic of pairwise interaction strength.
 
@@ -149,10 +151,14 @@ def h_statistic(
 
     The computational complexity of the function is `O(p^2 n^2)`,
     where `p` denotes the number of features considered. The size of `n` is
-    automatically controlled via `n_max=500`, while it is the user's responsibility
+    automatically controlled via `subsample=500`, while it is the user's responsibility
     to select only a subset of *important* features. It is crucial to focus on important
     features because for weak predictors, the denominator might be small, and
     even a weak interaction could result in a high Friedman's H, sometimes exceeding 1.
+
+    Read more in the :ref:`User Guide <h_statistic>`.
+
+    .. versionadded:: 1.6
 
     Parameters
     ----------
@@ -169,15 +175,17 @@ def h_statistic(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights used in calculating partial dependencies.
 
-    n_max : int, default=500
-        The number of rows to draw without replacement from X (and `sample_weight`).
+    subsample : int, default=500
+        Maximum number of samples drawn without replacement for computational
+        efficiency. Reducing the number of samples improves speed but increases
+        variance of the estimate.
+
+    eps : float, default=1e-10
+        Threshold below which numerator values are set to 0.
 
     random_state : int, RandomState instance, default=None
         Pseudo-random number generator used for subsampling via `n_max`.
         See :term:`Glossary <random_state>`.
-
-    eps : float, default=1e-10
-        Threshold below which numerator values are set to 0.
 
     Returns
     -------
@@ -260,17 +268,16 @@ def h_statistic(
     if not (hasattr(X, "__array__") or sparse.issparse(X)):
         X = check_array(X, force_all_finite="allow-nan", dtype=object)
 
-    if sample_weight is not None:
-        sample_weight = _check_sample_weight(sample_weight, X)
+    sample_weight = _check_sample_weight(sample_weight, X)
 
     # Usually, the data is too large and we need subsampling
-    if X.shape[0] > n_max:
-        row_indices = sample_without_replacement(
-            n_population=X.shape[0], n_samples=n_max, random_state=random_state
+    if _num_samples(X) > subsample:
+        X, sample_weight = resample(
+            *(X, sample_weight),
+            replace=False,
+            n_samples=subsample,
+            random_state=random_state,
         )
-        X = _safe_indexing(X, row_indices, axis=0)
-        if sample_weight is not None:
-            sample_weight = _safe_indexing(sample_weight, row_indices, axis=0)
 
     if features is None:
         features = feature_indices = np.arange(X.shape[1])
