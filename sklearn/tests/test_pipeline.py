@@ -1484,6 +1484,7 @@ parameter_grid_test_verbose = (
 
 
 @pytest.mark.parametrize("est, pattern, method", parameter_grid_test_verbose)
+@pytest.mark.parallel_threads(1)
 def test_verbose(est, method, pattern, capsys):
     func = getattr(est, method)
 
