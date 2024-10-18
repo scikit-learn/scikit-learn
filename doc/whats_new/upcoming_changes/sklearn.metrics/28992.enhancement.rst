@@ -1,0 +1,4 @@
+- :func:`sklearn.metrics.check_scoring` now accepts `raise_exc` to specify
+  whether to raise an exception if a subset of the scorers in multimetric scoring fails
+  or to return an error code.
+  By :user:`Stefanie Senger <StefanieSenger>`

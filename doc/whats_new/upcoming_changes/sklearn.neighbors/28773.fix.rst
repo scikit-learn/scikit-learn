@@ -1,0 +1,3 @@
+- :class:`neighbors.LocalOutlierFactor` raises a warning in the `fit` method
+  when duplicate values in the training data lead to inaccurate outlier detection.
+  By :user:`Henrique Caroço <HenriqueProj>`

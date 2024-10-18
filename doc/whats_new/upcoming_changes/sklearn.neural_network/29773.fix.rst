@@ -1,0 +1,3 @@
+- :class:`neural_network.MLPRegressor` does no longer crash when the model
+  diverges and that `early_stopping` is enabled.
+  By :user:`Marc Bresson <MarcBresson>`

@@ -1,0 +1,6 @@
+- :class:`model_selection.GridSearchCV`,
+  :class:`model_selection.RandomizedSearchCV`,
+  :class:`model_selection.HalvingGridSearchCV` and
+  :class:`model_selection.HalvingRandomSearchCV` now support Array API
+  compatible inputs when their base estimators do.
+  By :user:`Tim Head <betatim>` and :user:`Olivier Grisel <ogrisel>`

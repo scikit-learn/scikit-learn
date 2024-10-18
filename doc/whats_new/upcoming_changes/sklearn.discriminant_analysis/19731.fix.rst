@@ -1,0 +1,4 @@
+- :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`
+  will now cause `LinAlgWarning` in case of collinear variables. These errors
+  can be silenced using the `reg_param` attribute.
+  By :user:`Alihan Zihna <azihna>`

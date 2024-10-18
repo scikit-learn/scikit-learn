@@ -254,6 +254,7 @@ class MockClassifier:
                 P.shape[0],
                 P.shape[1],
             )
+        self.fitted_ = True
         return self
 
     def predict(self, T):

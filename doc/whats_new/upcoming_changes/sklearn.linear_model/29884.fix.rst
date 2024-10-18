@@ -1,0 +1,4 @@
+- :class:`linear_model.RidgeCV` now properly supports custom multioutput scorers
+  by letting the scorer manage the multioutput averaging. Previously, the predictions
+  and true targets were both squeezed to a 1D array before computing the error.
+  By :user:`Guillaume Lemaitre <glemaitre>`

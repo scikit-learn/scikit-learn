@@ -1,0 +1,4 @@
+- :func:`utils.validation.check_is_fitted` now passes on stateless
+  estimators. An estimator can indicate it's stateless by setting the `requires_fit`
+  tag. See :ref:`estimator_tags` for more information.
+  By :user:`Adrin Jalali <adrinjalali>`

@@ -1,0 +1,7 @@
+Dropping official support for PyPy
+----------------------------------
+
+Due to limited maintainer resources and small number of users, official PyPy
+support has been dropped. Some parts of scikit-learn may still work but PyPy is
+not tested anymore in the scikit-learn Continuous Integration.
+By :user:`Loïc Estève <lesteve>`

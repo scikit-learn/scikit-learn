@@ -9,7 +9,7 @@ https://conda.anaconda.org/conda-forge/noarch/font-ttf-source-code-pro-2.038-h77
 https://conda.anaconda.org/conda-forge/noarch/font-ttf-ubuntu-0.83-h77eed37_3.conda#49023d73832ef61042f6a237cb2687e7
 https://conda.anaconda.org/conda-forge/linux-aarch64/ld_impl_linux-aarch64-2.43-h80caac9_1.conda#5019b8e4dd2433395270cc0838ad4065
 https://conda.anaconda.org/conda-forge/linux-aarch64/libglvnd-1.7.0-hd24410f_1.conda#32763e24bc6e5ed4de4a4a1598448d5b
-https://conda.anaconda.org/conda-forge/linux-aarch64/llvm-openmp-19.1.0-h17cf362_0.conda#4c339394e1e0b32e5d73799889ffba33
+https://conda.anaconda.org/conda-forge/linux-aarch64/llvm-openmp-19.1.1-h013ceaa_0.conda#43688b271ba778c057f9606141ad7d12
 https://conda.anaconda.org/conda-forge/linux-aarch64/python_abi-3.9-5_cp39.conda#2d2843f11ec622f556137d72d9c72d89
 https://conda.anaconda.org/conda-forge/noarch/tzdata-2024b-hc8b5060_0.conda#8ac3367aafb1cc0a068483c580af8015
 https://conda.anaconda.org/conda-forge/linux-aarch64/_openmp_mutex-4.5-2_kmp_llvm.tar.bz2#98a1185182fec3c434069fa74e6473d6
@@ -118,7 +118,7 @@ https://conda.anaconda.org/conda-forge/linux-aarch64/openblas-0.3.27-pthreads_hd
 https://conda.anaconda.org/conda-forge/linux-aarch64/openjpeg-2.5.2-h0d9d63b_0.conda#fd2898519e839d5ceb778343f39a3176
 https://conda.anaconda.org/conda-forge/noarch/packaging-24.1-pyhd8ed1ab_0.conda#cbe1bb1f21567018ce595d9c2be0f0db
 https://conda.anaconda.org/conda-forge/noarch/pluggy-1.5.0-pyhd8ed1ab_0.conda#d3483c8fc2dc2cc3f5cf43e26d60cabf
-https://conda.anaconda.org/conda-forge/noarch/pyparsing-3.1.4-pyhd8ed1ab_0.conda#4d91352a50949d049cf9714c8563d433
+https://conda.anaconda.org/conda-forge/noarch/pyparsing-3.2.0-pyhd8ed1ab_1.conda#035c17fbf099f50ff60bf2eb303b0a83
 https://conda.anaconda.org/conda-forge/noarch/setuptools-75.1.0-pyhd8ed1ab_0.conda#d5cd48392c67fb6849ba459c2c2b671f
 https://conda.anaconda.org/conda-forge/noarch/six-1.16.0-pyh6c4a22f_0.tar.bz2#e5f25f8dbc060e9a8d912e432202afc2
 https://conda.anaconda.org/conda-forge/noarch/threadpoolctl-3.5.0-pyhc1e730c_0.conda#df68d78237980a159bd7149f33c0e8fd
@@ -139,14 +139,14 @@ https://conda.anaconda.org/conda-forge/linux-aarch64/harfbuzz-9.0.0-hbf49d6b_1.c
 https://conda.anaconda.org/conda-forge/noarch/importlib_resources-6.4.5-pyhd8ed1ab_0.conda#c808991d29b9838fb4d96ce8267ec9ec
 https://conda.anaconda.org/conda-forge/noarch/joblib-1.4.2-pyhd8ed1ab_0.conda#25df261d4523d9f9783bcdb7208d872f
 https://conda.anaconda.org/conda-forge/linux-aarch64/libcblas-3.9.0-24_linuxaarch64_openblas.conda#fe7560187584eaae4f115d471b62c09c
-https://conda.anaconda.org/conda-forge/linux-aarch64/libclang-cpp19.1-19.1.0-default_he324ac1_0.conda#34b002efc052d1507fb5540dc92057a9
-https://conda.anaconda.org/conda-forge/linux-aarch64/libclang13-19.1.0-default_h4390ef5_0.conda#5c88149c8f4473a4ee4060f1e5c9561d
+https://conda.anaconda.org/conda-forge/linux-aarch64/libclang-cpp19.1-19.1.1-default_he324ac1_0.conda#1619188f849e218ae50c46014ecb4667
+https://conda.anaconda.org/conda-forge/linux-aarch64/libclang13-19.1.1-default_h4390ef5_0.conda#b6f9600270f710d641e235f8820c4cb3
 https://conda.anaconda.org/conda-forge/linux-aarch64/liblapack-3.9.0-24_linuxaarch64_openblas.conda#a5ed3c9636f97ac4078cc96e7d79614c
 https://conda.anaconda.org/conda-forge/noarch/meson-1.5.2-pyhd8ed1ab_0.conda#9e677e9cfb20529c3db797105cca1cf9
 https://conda.anaconda.org/conda-forge/linux-aarch64/openldap-2.6.8-h50f9a67_0.conda#6f6627099ae614fe176e162e6eeae240
 https://conda.anaconda.org/conda-forge/linux-aarch64/pillow-10.4.0-py39hdd07614_1.conda#afbd47ba6cc5d95ea3b9c1f1f5064dac
 https://conda.anaconda.org/conda-forge/noarch/pip-24.2-pyh8b19718_1.conda#6c78fbb8ddfd64bcb55b5cbafd2d2c43
-https://conda.anaconda.org/conda-forge/noarch/pyproject-metadata-0.8.0-pyhd8ed1ab_0.conda#573fe09d7bd0cd4bcc210d8369b5ca47
+https://conda.anaconda.org/conda-forge/noarch/pyproject-metadata-0.8.1-pyh2cfa8aa_0.conda#c503dd01a15639101d4e38c0f0da6249
 https://conda.anaconda.org/conda-forge/noarch/pytest-8.3.3-pyhd8ed1ab_0.conda#c03d61f31f38fdb9facf70c29958bf7a
 https://conda.anaconda.org/conda-forge/noarch/python-dateutil-2.9.0-pyhd8ed1ab_0.conda#2cf4264fffb9e6eff6031c5b6884d61c
 https://conda.anaconda.org/conda-forge/linux-aarch64/xorg-libxtst-1.2.5-h57736b2_3.conda#c05698071b5c8e0da82a282085845860

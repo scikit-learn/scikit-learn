@@ -1,0 +1,4 @@
+- :func:`utils.estimator_checks.parametrize_with_checks` and
+  :func:`utils.estimator_checks.check_estimator` now support estimators that
+  have `set_output` called on them.
+  By :user:`Adrin Jalali <adrinjalali>`

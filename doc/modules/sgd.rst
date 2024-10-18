@@ -287,6 +287,10 @@ variant can be several orders of magnitude faster.
 As :class:`SGDClassifier` and :class:`SGDRegressor`, :class:`SGDOneClassSVM`
 supports averaged SGD. Averaging can be enabled by setting ``average=True``.
 
+.. rubric:: Examples
+
+- :ref:`sphx_glr_auto_examples_linear_model_plot_sgdocsvm_vs_ocsvm.py`
+
 Stochastic Gradient Descent for sparse data
 ===========================================
 
@@ -337,6 +341,8 @@ when the criterion does not improve ``n_iter_no_change`` times in a row. The
 improvement is evaluated with absolute tolerance ``tol``, and the algorithm
 stops in any case after a maximum number of iteration ``max_iter``.
 
+See :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_early_stopping.py` for an
+example of the effects of early stopping.
 
 Tips on Practical Use
 =====================

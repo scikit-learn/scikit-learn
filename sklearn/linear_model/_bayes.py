@@ -432,7 +432,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # TODO: fix sample_weight handling of this estimator, see meta-issue #162298
+        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
         tags._xfail_checks = {
             "check_sample_weight_equivalence": (
                 "sample_weight is not equivalent to removing/repeating samples."

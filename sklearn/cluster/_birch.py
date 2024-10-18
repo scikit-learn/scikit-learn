@@ -461,6 +461,9 @@ class Birch(
     subcluster are updated. This is done recursively till the properties of
     the leaf node are updated.
 
+    See :ref:`sphx_glr_auto_examples_cluster_plot_birch_vs_minibatchkmeans.py` for a
+    comparison with :class:`~sklearn.cluster.MiniBatchKMeans`.
+
     References
     ----------
     * Tian Zhang, Raghu Ramakrishnan, Maron Livny

@@ -1,0 +1,4 @@
+- The `copy` parameter of :class:`cluster.Birch` was deprecated in 1.6 and will be
+  removed in 1.8. It has no effect as the estimator does not perform in-place operations
+  on the input data.
+  By :user:`Yao Xiao <Charlie-XIAO>`

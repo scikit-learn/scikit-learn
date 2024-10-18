@@ -27,7 +27,7 @@ packaging==24.1
     #   pytest
 pluggy==1.5.0
     # via pytest
-pyproject-metadata==0.8.0
+pyproject-metadata==0.8.1
     # via meson-python
 pytest==8.3.3
     # via

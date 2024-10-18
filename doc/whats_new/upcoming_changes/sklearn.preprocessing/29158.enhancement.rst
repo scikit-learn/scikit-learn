@@ -1,0 +1,3 @@
+- The HTML representation of :class:`preprocessing.FunctionTransformer`
+  will show the function name in the label.
+  By :user:`Yao Xiao <Charlie-XIAO>`

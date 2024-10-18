@@ -1,0 +1,4 @@
+- The `assert_all_finite` parameter of functions :func:`utils.check_array`,
+  :func:`utils.check_X_y`, :func:`utils.as_float_array` is renamed into
+  `ensure_all_finite`. `force_all_finite` will be removed in 1.8.
+  By :user:`Jérémie du Boisberranger <jeremiedb>`

@@ -475,9 +475,16 @@ on a classifier, but not otherwise. Similarly, scorers for average precision
 that take a continuous prediction need to call ``decision_function`` for classifiers,
 but ``predict`` for regressors. This distinction between classifiers and regressors
 is implemented using the ``_estimator_type`` attribute, which takes a string value.
-It should be ``"classifier"`` for classifiers and ``"regressor"`` for
-regressors and ``"clusterer"`` for clustering methods, to work as expected.
-Inheriting from ``ClassifierMixin``, ``RegressorMixin`` or ``ClusterMixin``
+This attribute should have the following values to work as expected:
+
+- ``"classifier"`` for classifiers
+- ``"regressor"`` for regressors
+- ``"clusterer"`` for clustering methods
+- ``"outlier_detector"`` for outlier detectors
+- ``"DensityEstimator"`` for density estimators
+
+Inheriting from :class:`~base.ClassifierMixin`, :class:`~base.RegressorMixin`, :class:`~base.ClusterMixin`,
+:class:`~base.OutlierMixin` or :class:`~base.DensityMixin`,
 will set the attribute automatically.  When a meta-estimator needs to distinguish
 among estimator types, instead of checking ``_estimator_type`` directly, helpers
 like :func:`base.is_classifier` should be used.

@@ -1,0 +1,3 @@
+- :func:`sklearn.metrics.mean_squared_log_error` and
+  :func:`sklearn.metrics.root_mean_squared_log_error`
+  by :user:`Virgil Chan <virchan>`

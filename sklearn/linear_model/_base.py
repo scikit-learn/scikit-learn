@@ -683,7 +683,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # TODO: investigate failure see meta-issue #162298
+        # TODO: investigate failure see meta-issue #16298
         #
         # Note: this model should converge to the minimum norm solution of the
         # least squares problem and as result be numerically stable enough when

@@ -44,6 +44,11 @@ jobs:
   build_wheels:
     name: Build wheel for cp${{ matrix.python }}-${{ matrix.platform_id }}-${{ matrix.manylinux_image }}
     runs-on: ${{ matrix.os }}
+
+    # For conda-incubator/setup-miniconda to work
+    defaults:
+      run:
+        shell: bash -el {0}
     needs: check_build_trigger
     if: needs.check_build_trigger.outputs.build
 
@@ -102,22 +107,22 @@ jobs:
             free_threaded_support: True
 
           # MacOS x86_64
-          - os: macos-12
+          - os: macos-13
             python: 39
             platform_id: macosx_x86_64
-          - os: macos-12
+          - os: macos-13
             python: 310
             platform_id: macosx_x86_64
-          - os: macos-12
+          - os: macos-13
             python: 311
             platform_id: macosx_x86_64
-          - os: macos-12
+          - os: macos-13
             python: 312
             platform_id: macosx_x86_64
-          - os: macos-12
+          - os: macos-13
             python: 313
             platform_id: macosx_x86_64
-          - os: macos-12
+          - os: macos-13
             python: 313t
             platform_id: macosx_x86_64
             free_threaded_support: True
@@ -152,33 +157,8 @@ jobs:
         with:
           python-version: "3.11" # update once build dependencies are available
 
-      - name: Install conda for macos arm64
-        if: ${{ matrix.platform_id == 'macosx_arm64' }}
-        run: |
-          set -ex
-          # macos arm64 runners do not have conda installed. Thus we much install conda manually
-          EXPECTED_SHA="dd832d8a65a861b5592b2cf1d55f26031f7c1491b30321754443931e7b1e6832"
-          MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/download/23.11.0-0/Mambaforge-23.11.0-0-MacOSX-arm64.sh"
-          curl -L --retry 10 $MINIFORGE_URL -o miniforge.sh
-
-          # Check SHA
-          file_sha=$(shasum -a 256 miniforge.sh | awk '{print $1}')
-          if [ "$EXPECTED_SHA" != "$file_sha" ]; then
-              echo "SHA values did not match!"
-              exit 1
-          fi
-
-          # Install miniforge
-          MINIFORGE_PATH=$HOME/miniforge
-          bash ./miniforge.sh -b -p $MINIFORGE_PATH
-          echo "$MINIFORGE_PATH/bin" >> $GITHUB_PATH
-          echo "CONDA_HOME=$MINIFORGE_PATH" >> $GITHUB_ENV
-
-      - name: Set conda environment for non-macos arm64 environments
-        if: ${{ matrix.platform_id != 'macosx_arm64' }}
-        run: |
-          # Non-macos arm64 envrionments already have conda installed
-          echo "CONDA_HOME=/usr/local/miniconda" >> $GITHUB_ENV
+      - uses: conda-incubator/setup-miniconda@v3
+        if: ${{ startsWith(matrix.platform_id, 'macosx') }}
 
       - name: Build and test wheels
         env:
