@@ -262,3 +262,13 @@ def test_n_features_in_(est):
     assert not hasattr(est, "n_features_in_")
     est.fit(X)
     assert est.n_features_in_ == 3
+
+
+@pytest.mark.parametrize("est", (SpectralBiclustering(), SpectralCoclustering()))
+def test_inf_values_handling_in_(est):
+    X = np.array([[1, 1, 2, 0, 0], [0, 1, 0, 1, 0], [0, 0, 1, 0, 0], [1, 2, 0, 2, 0]])
+
+    try:
+        est.fit(X)
+    except ValueError:
+        pytest.fail("test raised a ValueError because X contains infs or NaNs")
