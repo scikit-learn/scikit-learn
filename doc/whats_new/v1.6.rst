@@ -48,7 +48,6 @@ See :ref:`array_api` for more details.
 
 - :func:`sklearn.metrics.cluster.entropy` :pr:`29141` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.metrics.d2_absolute_error_score` :pr:`29978` by :user:`Virgil Chan <virchan>`;
-- :func:`sklearn.metrics.d2_pinball_score` :pr:`29978` by :user:`Virgil Chan <virchan>`;
 - :func:`sklearn.metrics.d2_tweedie_score` :pr:`29207` by :user:`Emily Chen <EmilyXinyi>`;
 - :func:`sklearn.metrics.explained_variance_score` :pr:`29978` by :user:`Virgil Chan <virchan>`;
 - :func:`sklearn.metrics.max_error` :pr:`29212` by :user:`Edoardo Abati <EdAbati>`;
@@ -61,7 +60,6 @@ See :ref:`array_api` for more details.
 - :func:`sklearn.metrics.mean_squared_log_error` :pr:`29709` by :user:`Virgil Chan <virchan>`;
 - :func:`sklearn.metrics.mean_tweedie_deviance` :pr:`28106` by :user:`Thomas Li <lithomas1>`;
 - :func:`sklearn.metrics.mean_pinball_loss` :pr:`29978` by :user:`Virgil Chan <virchan>`;
-- :func:`sklearn.metrics.median_absolute_error` :pr:`29978` by :user:`Virgil Chan <virchan>`;
 - :func:`sklearn.metrics.root_mean_squared_error` :pr:`29709` by :user:`Virgil Chan <virchan>`;
 - :func:`sklearn.metrics.root_mean_squared_log_error` :pr:`29709` by :user:`Virgil Chan <virchan>`;
 - :func:`sklearn.metrics.pairwise.additive_chi2_kernel` :pr:`29144` by :user:`Yaroslav Korobko <Tialo>`;
