@@ -2421,8 +2421,8 @@ def test_neighbor_regressors_loocv():
     X, y = datasets.load_diabetes(return_X_y=True)
 
     models = [
-        neighbors.KNeighborsClassifier(n_neighbors=10),
-        neighbors.RadiusNeighborsClassifier(radius=0.5),
+        neighbors.KNeighborsRegressor(n_neighbors=10),
+        neighbors.RadiusNeighborsRegressor(radius=0.5),
     ]
 
     for knn in models:
