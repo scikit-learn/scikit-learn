@@ -27,6 +27,7 @@ from ..utils._param_validation import (
     StrOptions,
     validate_params,
 )
+from ..utils._response import _get_response_values
 from ..utils.extmath import cartesian
 from ..utils.validation import _check_sample_weight, check_is_fitted
 from ._pd_utils import _check_feature_names, _get_feature_index
@@ -261,31 +262,10 @@ def _partial_dependence_brute(
     predictions = []
     averaged_predictions = []
 
-    # define the prediction_method (predict, predict_proba, decision_function).
-    if is_regressor(est):
-        prediction_method = est.predict
-    else:
-        predict_proba = getattr(est, "predict_proba", None)
-        decision_function = getattr(est, "decision_function", None)
-        if response_method == "auto":
-            # try predict_proba, then decision_function if it doesn't exist
-            prediction_method = predict_proba or decision_function
-        else:
-            prediction_method = (
-                predict_proba
-                if response_method == "predict_proba"
-                else decision_function
-            )
-        if prediction_method is None:
-            if response_method == "auto":
-                raise ValueError(
-                    "The estimator has no predict_proba and no "
-                    "decision_function method."
-                )
-            elif response_method == "predict_proba":
-                raise ValueError("The estimator has no predict_proba method.")
-            else:
-                raise ValueError("The estimator has no decision_function method.")
+    if response_method == "auto":
+        response_method = (
+            "predict" if is_regressor(est) else ["predict_proba", "decision_function"]
+        )
 
     X_eval = X.copy()
     for new_values in grid:
@@ -299,7 +279,7 @@ def _partial_dependence_brute(
             # (n_points, 1) for the regressors in cross_decomposition (I think)
             # (n_points, 2) for binary classification
             # (n_points, n_classes) for multiclass classification
-            pred = prediction_method(X_eval)
+            pred, _ = _get_response_values(est, X_eval, response_method=response_method)
 
             predictions.append(pred)
             # average over samples
