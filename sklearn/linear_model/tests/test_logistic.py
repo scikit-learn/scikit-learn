@@ -2395,9 +2395,9 @@ def test_newton_cholesky_fallback_to_lbfgs(global_random_seed):
     assert n_iter_lbgs >= 1
 
     # Check that the Newton-Cholesky solver raises a warning and falls back to
-    # LBFGS. This should also converges in the same number of iterations as the
-    # previous call since the Newton-Cholesky solver should trigger the
-    # fallback before completing the first iteration.
+    # LBFGS. This should converge with the same number of iterations as the
+    # above call of lbfgs since the Newton-Cholesky triggers the fallback
+    # before completing the first iteration, for the problem setting at hand.
     lr_nc = LogisticRegression(solver="newton-cholesky", C=C)
     with pytest.warns(LinAlgWarning, match="ill-conditioned Hessian matrix"):
         lr_nc.fit(X, y)
