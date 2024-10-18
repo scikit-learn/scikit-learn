@@ -1,0 +1,3 @@
+- Added function :func:`inspection.h_statistic` to
+  calculate Friedman and Popescu's H-Statistic of pairwise interaction strength.
+  By :user:`Michael Mayer <mayer79>`
