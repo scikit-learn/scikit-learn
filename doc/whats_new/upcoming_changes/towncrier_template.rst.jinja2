@@ -8,16 +8,14 @@
 {% endif %}
 {% endif %}
 
-{% set months = {
+{% set month_names = {
     '01': 'January', '02': 'February', '03': 'March', '04': 'April',
     '05': 'May', '06': 'June', '07': 'July', '08': 'August',
     '09': 'September', '10': 'October', '11': 'November', '12': 'December'
 } %}
-{% set date_parts = versiondata.date.split('-') %}
-{% set year = date_parts[0] %}
-{% set month = date_parts[1] %}
-{% set date_release_lexical = months[month] + ' ' + year %}
-**{{ date_release_lexical }}**
+{% set year, month, _ = versiondata.date.split('-') %}
+{% set release_date = month_names[month] + ' ' + year %}
+**{{ release_date }}**
 
 {% set underline = underlines[0] %}
 {% for section, content_per_category in sections.items() if content_per_category %}
