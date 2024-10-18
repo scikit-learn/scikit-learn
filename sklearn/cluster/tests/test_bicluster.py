@@ -132,7 +132,7 @@ def test_spectral_biclustering(global_random_seed, csr_container):
                 _test_shape_indices(model)
 
 
-@pytest.mark.parametrize("est", (SpectralBiclustering(), SpectralCoclustering()))
+@pytest.mark.parametrize("est", (SpectralBiclustering(n_clusters=1), SpectralCoclustering(n_clusters=1)))
 def test_non_regression(est):
     X, _ = make_classification()
     est.fit(X)
