@@ -51,6 +51,46 @@ def _final_estimator_has(attr):
     return check
 
 
+def _cached_transform(
+    sub_pipeline, *, cache, param_name, param_value, transform_params
+):
+    """Transform a parameter value using a sub-pipeline and cache the result.
+
+    Parameters
+    ----------
+    sub_pipeline : Pipeline
+        The sub-pipeline to be used for transformation.
+    cache : dict
+        The cache dictionary to store the transformed values.
+    param_name : str
+        The name of the parameter to be transformed.
+    param_value : object
+        The value of the parameter to be transformed.
+    transform_params : dict
+        The metadata to be used for transformation. This passed to the
+        `transform` method of the sub-pipeline.
+
+    Returns
+    -------
+    transformed_value : object
+        The transformed value of the parameter.
+    """
+    if param_name not in cache:
+        # If the parameter is a tuple, transform each element of the
+        # tuple. This is needed to support the pattern present in
+        # `lightgbm` and `xgboost` where users can pass multiple
+        # validation sets.
+        if isinstance(param_value, tuple):
+            cache[param_name] = tuple(
+                sub_pipeline.transform(element, **transform_params)
+                for element in param_value
+            )
+        else:
+            cache[param_name] = sub_pipeline.transform(param_value, **transform_params)
+
+    return cache[param_name]
+
+
 class Pipeline(_BaseComposition):
     """
     A sequence of data transformers with an optional final predictor.
@@ -455,23 +495,13 @@ class Pipeline(_BaseComposition):
                 if param_name in self.transform_input:
                     # This parameter now needs to be transformed by the sub_pipeline, to
                     # this step. We cache these computations to avoid repeating them.
-                    if param_name not in transformed_cache:
-                        # If the parameter is a tuple, transform each element of the
-                        # tuple. This is needed to support the pattern present in
-                        # `lightgbm` and `xgboost` where users can pass multiple
-                        # validation sets.
-                        if isinstance(param_value, tuple):
-                            transformed_cache[param_name] = tuple(
-                                sub_pipeline.transform(element, **transform_params)
-                                for element in param_value
-                            )
-                        else:
-                            transformed_cache[param_name] = sub_pipeline.transform(
-                                param_value, **transform_params
-                            )
-                    transformed_params[method][param_name] = transformed_cache[
-                        param_name
-                    ]
+                    transformed_params[method][param_name] = _cached_transform(
+                        sub_pipeline,
+                        cache=transformed_cache,
+                        param_name=param_name,
+                        param_value=param_value,
+                        transform_params=transform_params,
+                    )
                 else:
                     transformed_params[method][param_name] = param_value
         return transformed_params

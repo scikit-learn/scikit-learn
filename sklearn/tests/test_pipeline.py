@@ -1905,6 +1905,39 @@ def test_transform_input_pipeline(method):
     )
 
 
+@config_context(enable_metadata_routing=True)
+def test_transform_input_explicit_value_check():
+    """Test that the right transformed values are passed to `fit`."""
+
+    class Transformer(TransformerMixin, BaseEstimator):
+        def fit(self, X, y):
+            return self
+
+        def transform(self, X):
+            return X + 1
+
+    class Estimator(ClassifierMixin, BaseEstimator):
+        def fit(self, X, y, X_val=None, y_val=None):
+            assert_array_equal(X, np.array([[1, 2]]))
+            assert_array_equal(y, np.array([0, 1]))
+            assert_array_equal(X_val, np.array([[2, 3]]))
+            assert_array_equal(y_val, np.array([0, 1]))
+            return self
+
+    X = np.array([[0, 1]])
+    y = np.array([0, 1])
+    X_val = np.array([[1, 2]])
+    y_val = np.array([0, 1])
+    pipe = Pipeline(
+        [
+            ("transformer", Transformer()),
+            ("estimator", Estimator().set_fit_request(X_val=True, y_val=True)),
+        ],
+        transform_input=["X_val"],
+    )
+    pipe.fit(X, y, X_val=X_val, y_val=y_val)
+
+
 def test_transform_input_no_slep6():
     """Make sure the right error is raised if slep6 is not enabled."""
     X = np.array([[1, 2], [3, 4]])
