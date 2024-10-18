@@ -184,7 +184,7 @@ def h_statistic(
         Threshold below which numerator values are set to 0.
 
     random_state : int, RandomState instance, default=None
-        Pseudo-random number generator used for subsampling via `n_max`.
+        Pseudo-random number generator used for subsampling via `subsample`.
         See :term:`Glossary <random_state>`.
 
     Returns
@@ -287,16 +287,16 @@ def h_statistic(
         ).ravel()
 
     # CALCULATIONS
-    pd_univariate = []
-    for idx in feature_indices:
-        xxx = _calculate_pd_over_data(
+    pd_univariate = [
+        _calculate_pd_over_data(
             pred_fun,
             X=X,
             feature_indices=[idx],
             sample_weight=sample_weight,
             reduce_binary=reduce_binary,
         )
-        pd_univariate.append(xxx)
+        for idx in feature_indices
+    ]
 
     n_features = len(features)
     n_pairs = int(n_features * (n_features - 1) / 2)
