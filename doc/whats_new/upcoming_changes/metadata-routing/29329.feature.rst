@@ -1,0 +1,3 @@
+- :func:`model_selection.validation_curve` now supports metadata routing for
+  the `fit` method of its estimator and for its underlying CV splitter and scorer.
+  By :user:`Stefanie Senger <StefanieSenger>`

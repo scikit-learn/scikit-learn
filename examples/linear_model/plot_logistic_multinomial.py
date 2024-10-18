@@ -9,8 +9,8 @@ are represented by the dashed lines.
 
 """
 
-# Authors: Tom Dupre la Tour <tom.dupre-la-tour@m4x.org>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np

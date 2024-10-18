@@ -176,9 +176,6 @@ conda activate $CONDA_ENV_NAME
 
 show_installed_libraries
 
-# Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
-# workers with 2 cores when building the compiled extensions of scikit-learn.
-export SKLEARN_BUILD_PARALLEL=3
 pip install -e . --no-build-isolation
 
 echo "ccache build summary:"
@@ -201,7 +198,8 @@ set +o pipefail
 
 affected_doc_paths() {
     files=$(git diff --name-only origin/main...$CIRCLE_SHA1)
-    echo "$files" | grep ^doc/.*\.rst | sed 's/^doc\/\(.*\)\.rst$/\1.html/'
+    # use sed to replace files ending by .rst or .rst.template by .html
+    echo "$files" | grep ^doc/.*\.rst | sed 's/^doc\/\(.*\)\.rst$/\1.html/; s/^doc\/\(.*\)\.rst\.template$/\1.html/'
     echo "$files" | grep ^examples/.*.py | sed 's/^\(.*\)\.py$/auto_\1.html/'
     sklearn_files=$(echo "$files" | grep '^sklearn/')
     if [ -n "$sklearn_files" ]

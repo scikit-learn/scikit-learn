@@ -29,7 +29,7 @@ show_installed_libraries(){
 activate_environment() {
     if [[ "$DISTRIB" =~ ^conda.* ]]; then
         source activate $VIRTUALENV
-    elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" || "$DISTRIB" == "pip-nogil" ]]; then
+    elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" || "$DISTRIB" == "pip-free-threaded" ]]; then
         source $VIRTUALENV/bin/activate
     fi
 }

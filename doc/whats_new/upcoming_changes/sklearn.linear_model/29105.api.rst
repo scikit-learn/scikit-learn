@@ -1,0 +1,3 @@
+- Deprecates `copy_X` in :class:`linear_model.TheilSenRegressor` as the parameter
+  has no effect. `copy_X` will be removed in 1.8.
+  By :user:`Adam Li <adam2392>`

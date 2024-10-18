@@ -41,6 +41,9 @@ bike sharing dataset. The example is inspired by [1]_.
        The Annals of Applied Statistics, 2(3), 916-954, 2008.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Bike sharing dataset preprocessing
 # ----------------------------------

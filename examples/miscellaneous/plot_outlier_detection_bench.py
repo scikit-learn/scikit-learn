@@ -18,9 +18,8 @@ and displayed using :class:`~sklearn.metrics.RocCurveDisplay`.
 2. The performance is assessed in terms of the ROC-AUC.
 """
 
-# Author: Pharuj Rajborirug <pharuj.ra@kmitl.ac.th>
-#         Arturo Amor <david-arturo.amor-quiroz@inria.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Dataset preprocessing and model training
