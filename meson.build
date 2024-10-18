@@ -42,12 +42,16 @@ if m_dep.found()
   add_project_link_arguments('-lm', language : 'c')
 endif
 
-tempita = files('sklearn/_build_utils/tempita.py')
+tempita = find_program('sklearn/_build_utils/tempita.py')
 
 py = import('python').find_installation(pure: false)
 
 # Copy all the .py files to the install dir, rather than using
-# py.install_sources and needing to list them explicitely one by one
-install_subdir('sklearn', install_dir: py.get_install_dir())
+# py.install_sources and needing to list them explicitly one by one
+# Exclude the _build_utils directory, which is not needed at runtime
+install_subdir('sklearn',
+  install_dir: py.get_install_dir(),
+  exclude_directories: ['_build_utils']
+)
 
 subdir('sklearn')
