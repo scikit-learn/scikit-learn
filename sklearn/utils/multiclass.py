@@ -311,7 +311,7 @@ def type_of_target(y, input_name="", raise_unknown=False):
         """
         if raise_unknown:
             input = input_name if input_name else "data"
-            raise ValueError(f"Unknown label type for {input}: {repr(y)}")
+            raise ValueError(f"Unknown label type for {input}: {y!r}")
         else:
             return "unknown"
 

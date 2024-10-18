@@ -478,7 +478,6 @@ class UntaggedBinaryClassifier(SGDClassifier):
 
 class TaggedBinaryClassifier(UntaggedBinaryClassifier):
     def fit(self, X, y):
-        # X, y = validate_data(self, X, y)
         y_type = type_of_target(y, input_name="y", raise_unknown=True)
         if y_type != "binary":
             raise ValueError(

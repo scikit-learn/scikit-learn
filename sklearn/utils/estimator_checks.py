@@ -3651,7 +3651,7 @@ def check_classifiers_regression_target(name, estimator_orig):
     )
     msg = "Unknown label type: |continuous"
     if not get_tags(e).no_validation:
-        with raises(ValueError, match=msg):
+        with raises(ValueError, match=msg, err_msg=err_msg):
             e.fit(X, y)
 
 
@@ -4770,19 +4770,24 @@ def check_classifier_not_supporting_multiclass(name, estimator_orig):
         n_clusters_per_class=1,
         random_state=0,
     )
-    err_msg = (
-        f"The estimator tag `tags.classifier_tags.multi_class` is False for {name} "
-        "which means it does not support multiclass classification. However, it does "
-        "not raise the right `ValueError` when calling fit with a multiclass dataset, "
-        "including the error message 'Only binary classification is supported.' This "
-        "can be achieved by the following pattern:\n\n"
-        "y_type = type_of_target(y, input_name='y', raise_unknown=True)\n"
-        "if y_type != 'binary':\n"
-        "    raise ValueError(\n"
-        "        'Only binary classification is supported. The type of the target ' \n"
-        "        f'is {y_type}.'\n"
-        ")"
+    err_msg = """\
+        The estimator tag `tags.classifier_tags.multi_class` is False for {name}
+        which means it does not support multiclass classification. However, it does
+        not raise the right `ValueError` when calling fit with a multiclass dataset,
+        including the error message 'Only binary classification is supported.' This
+        can be achieved by the following pattern:
+
+        y_type = type_of_target(y, input_name='y', raise_unknown=True)
+        if y_type != 'binary':
+            raise ValueError(
+                'Only binary classification is supported. The type of the target '
+                f'is {{y_type}}.'
+        )
+    """.format(
+        name=name
     )
+    err_msg = textwrap.dedent(err_msg)
+
     with raises(
         ValueError, match="Only binary classification is supported.", err_msg=err_msg
     ):
