@@ -2381,9 +2381,9 @@ def test_newton_cholesky_fallback_to_lbfgs(global_random_seed):
     # hence make the Newton-Cholesky solver raise a warning and fallback to
     # lbfgs.
     X, y = make_classification(
-        n_samples=10, n_features=11, random_state=global_random_seed
+        n_samples=10, n_features=20, random_state=global_random_seed
     )
-    C = 1e20  # very high C to nearly disable regularization
+    C = 1e30  # very high C to nearly disable regularization
 
     # Check that LBFGS can converge without any warning on this problem.
     lr_lbfgs = LogisticRegression(solver="lbfgs", C=C)
