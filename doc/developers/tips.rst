@@ -234,7 +234,7 @@ PR-MRG: Add to what's new
 
 ::
 
-    Please add an entry to the change log at `doc/whats_new/v*.rst`. Like the other entries there, please reference this pull request with `:pr:` and credit yourself (and other contributors if applicable) with `:user:`.
+    Please add an entry to the future changelog by adding an RST fragment into the module associated with your change located in `doc/whats_new/upcoming_changes`. Refer to the following [README](https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md) for full instructions.
 
 PR: Don't change unrelated
 
