@@ -1825,25 +1825,25 @@ def d2_absolute_error_score(
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> d2_absolute_error_score(y_true, y_pred)
-    0.764...
+    np.float64(0.764...)
     >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> d2_absolute_error_score(y_true, y_pred, multioutput='uniform_average')
-    0.691...
+    np.float64(0.691...)
     >>> d2_absolute_error_score(y_true, y_pred, multioutput='raw_values')
     array([0.8125    , 0.57142857])
     >>> y_true = [1, 2, 3]
     >>> y_pred = [1, 2, 3]
     >>> d2_absolute_error_score(y_true, y_pred)
-    1.0
+    np.float64(1.0)
     >>> y_true = [1, 2, 3]
     >>> y_pred = [2, 2, 2]
     >>> d2_absolute_error_score(y_true, y_pred)
-    0.0
+    np.float64(0.0)
     >>> y_true = [1, 2, 3]
     >>> y_pred = [3, 2, 1]
     >>> d2_absolute_error_score(y_true, y_pred)
-    -1.0
+    np.float64(-1.0)
     """
     return d2_pinball_score(
         y_true, y_pred, sample_weight=sample_weight, alpha=0.5, multioutput=multioutput
