@@ -16,7 +16,7 @@ from ..preprocessing import LabelEncoder
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.multiclass import check_classification_targets
 from ..utils.sparsefuncs import csc_median_axis_0
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, validate_data
 
 
 class NearestCentroid(ClassifierMixin, BaseEstimator):
@@ -129,9 +129,9 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         # If X is sparse and the metric is "manhattan", store it in a csc
         # format is easier to calculate the median.
         if self.metric == "manhattan":
-            X, y = self._validate_data(X, y, accept_sparse=["csc"])
+            X, y = validate_data(self, X, y, accept_sparse=["csc"])
         else:
-            X, y = self._validate_data(X, y, accept_sparse=["csr", "csc"])
+            X, y = validate_data(self, X, y, accept_sparse=["csr", "csc"])
         is_X_sparse = sp.issparse(X)
         if is_X_sparse and self.shrink_threshold:
             raise ValueError("threshold shrinking not supported for sparse input")
@@ -211,7 +211,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
+        X = validate_data(self, X, accept_sparse="csr", reset=False)
         return self.classes_[
             pairwise_distances_argmin(X, self.centroids_, metric=self.metric)
         ]

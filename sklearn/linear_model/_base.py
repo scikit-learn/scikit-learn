@@ -41,7 +41,7 @@ from ..utils._seq_dataset import (
 from ..utils.extmath import safe_sparse_dot
 from ..utils.parallel import Parallel, delayed
 from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.validation import _check_sample_weight, check_is_fitted
+from ..utils.validation import _check_sample_weight, check_is_fitted, validate_data
 
 # TODO: bayesian_ridge_regression and bayesian_regression_ard
 # should be squashed into its respective objects.
@@ -273,7 +273,7 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
     def _decision_function(self, X):
         check_is_fitted(self)
 
-        X = self._validate_data(X, accept_sparse=["csr", "csc", "coo"], reset=False)
+        X = validate_data(self, X, accept_sparse=["csr", "csc", "coo"], reset=False)
         coef_ = self.coef_
         if coef_.ndim == 1:
             return X @ coef_ + self.intercept_
@@ -317,9 +317,6 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
         else:
             self.intercept_ = 0.0
 
-    def _more_tags(self):
-        return {"requires_y": True}
-
 
 # XXX Should this derive from LinearModel? It should be a mixin, not an ABC.
 # Maybe the n_features checking can be moved to LinearModel.
@@ -351,7 +348,7 @@ class LinearClassifierMixin(ClassifierMixin):
         check_is_fitted(self)
         xp, _ = get_namespace(X)
 
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
+        X = validate_data(self, X, accept_sparse="csr", reset=False)
         scores = safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
         return xp.reshape(scores, (-1,)) if scores.shape[1] == 1 else scores
 
@@ -597,7 +594,8 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
         accept_sparse = False if self.positive else ["csr", "csc", "coo"]
 
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse=accept_sparse,
@@ -682,6 +680,22 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             self.coef_ = np.ravel(self.coef_)
         self._set_intercept(X_offset, y_offset, X_scale)
         return self
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        # TODO: investigate failure see meta-issue #16298
+        #
+        # Note: this model should converge to the minimum norm solution of the
+        # least squares problem and as result be numerically stable enough when
+        # running the equivalence check even if n_features > n_samples. Maybe
+        # this is is not the case and a different choice of solver could fix
+        # this problem.
+        tags._xfail_checks = {
+            "check_sample_weight_equivalence": (
+                "sample_weight is not equivalent to removing/repeating samples."
+            ),
+        }
+        return tags
 
 
 def _check_precomputed_gram_matrix(
