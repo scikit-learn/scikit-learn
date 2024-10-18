@@ -1349,6 +1349,14 @@ class using a perceptron loss and a constant learning rate. Refer to
 :ref:`mathematical section <sgd_mathematical_formulation>` of the SGD procedure
 for more details.
 
+|details-start|
+**References**
+|details-split|
+
+  * Rosenblatt, `The perceptron, a perceiving and recognizing automaton <https://blogs.umass.edu/brain-wars/files/2016/03/rosenblatt-1957.pdf>`_, 1957.
+
+|details-end|
+
 .. _passive_aggressive:
 
 Passive Aggressive Algorithms
