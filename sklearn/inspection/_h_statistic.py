@@ -11,10 +11,10 @@ from scipy import sparse
 from ..base import is_classifier, is_regressor
 from ..utils import Bunch, check_array
 from ..utils._indexing import (
-    resample,
     _get_column_indices,
     _safe_assign,
     _safe_indexing,
+    resample,
 )
 from ..utils._param_validation import (
     HasMethods,
@@ -23,8 +23,7 @@ from ..utils._param_validation import (
     Real,
     validate_params,
 )
-from ..utils.random import sample_without_replacement
-from ..utils.validation import _check_sample_weight, check_is_fitted, _num_samples
+from ..utils.validation import _check_sample_weight, _num_samples, check_is_fitted
 
 
 def _calculate_pd_brute_fast(
