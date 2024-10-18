@@ -825,15 +825,15 @@ def median_absolute_error(
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> median_absolute_error(y_true, y_pred)
-    0.5
+    np.float64(0.5)
     >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> median_absolute_error(y_true, y_pred)
-    0.75
+    np.float64(0.75)
     >>> median_absolute_error(y_true, y_pred, multioutput='raw_values')
     array([0.5, 1. ])
     >>> median_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    0.85
+    np.float64(0.85)
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
@@ -1682,13 +1682,13 @@ def d2_pinball_score(
     >>> y_true = [1, 2, 3]
     >>> y_pred = [1, 3, 3]
     >>> d2_pinball_score(y_true, y_pred)
-    0.5
+    np.float64(0.5)
     >>> d2_pinball_score(y_true, y_pred, alpha=0.9)
-    0.772...
+    np.float64(0.772...)
     >>> d2_pinball_score(y_true, y_pred, alpha=0.1)
-    -1.045...
+    np.float64(-1.045...)
     >>> d2_pinball_score(y_true, y_true, alpha=0.1)
-    1.0
+    np.float64(1.0)
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
