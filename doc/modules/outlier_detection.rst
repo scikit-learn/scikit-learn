@@ -255,6 +255,60 @@ This strategy is illustrated below.
 * Rousseeuw, P.J., Van Driessen, K. "A fast algorithm for the minimum
   covariance determinant estimator" Technometrics 41(3), 212 (1999)
 
+.. _nearest_neighbor_outlier_detection:
+
+Nearest Neighbor Outlier Detection
+----------------------------------
+A classic, yet often effective, method to detect outliers in data is to
+use the distance(s) to the k-nearest neighbors.
+
+The :class:`neighbors.NearestNeighborOutlierDetection` algorithm computes a score
+using the distances to the k nearest neighbors.
+
+Either only the distance to the kth nearest neighbor (standard), or the sum of
+distances to the k nearest neighbors (called the "weight") can be used.
+Low values indicate a more dense region and hence normality, while high values
+indicate low density and outliers.
+
+The number k of neighbors considered, (alias parameter n_neighbors) is typically
+chosen 1) greater than the minimum number of objects a cluster has to contain,
+so that other objects can be local outliers relative to this cluster, and 2)
+smaller than the maximum number of close by objects that can potentially be
+local outliers.
+In practice, such information is generally not available, and taking
+n_neighbors=10 (or even 1 or 2) appears to work well in general.
+When the proportion of outliers is high (i.e. greater than 10 \%, as in the
+example below), n_neighbors should be greater (n_neighbors=35 in the example
+below).
+
+In contrast to the more intricate LOF and LoOP methods below, this method
+does not compare the densities of neighbors, but only uses this single
+"global" density estimate for ranking. If the data set has regions of
+varying density, and outliers close to these regions, these so-called
+"local" methods may work better.
+
+When applying kNN for outlier detection, there are no ``predict``,
+``decision_function`` and ``score_samples`` methods but only a ``fit_predict``
+method. The scores of abnormality of the training samples are accessible
+through the ``negative_outlier_factor_`` attribute.
+Note that ``predict``, ``decision_function`` and ``score_samples`` can be used
+on new unseen data when kNN is applied for novelty detection, i.e. when the
+``novelty`` parameter is set to ``True``, but the result of ``predict`` may
+differ from that of ``fit_predict``.
+This arises from the simple observation that for ``fit_predict``, the
+data point itself is not included when finding the nearest neighbors,
+but when using the same data set for ``predict`` again, each sample
+will be its own nearest neighbor now.
+
+.. topic:: References:
+
+    * Ramaswamy, S., Rastogi, R., & Shim, K. (2000).
+      "Efficient algorithms for mining outliers from large data sets."
+      In Proc. ACM SIGMOD 2000 (pp. 427-438).
+    * Angiulli, F., & Pizzuti, C. (2002). "Fast outlier detection in high dimensional spaces."
+      In Proc. PKDD 2002 (pp. 15-27)
+
+
 .. _isolation_forest:
 
 Isolation Forest
@@ -419,3 +473,53 @@ Novelty detection with Local Outlier Factor is illustrated below.
     :target: ../auto_examples/neighbors/plot_lof_novelty_detection.html
     :align: center
     :scale: 75%
+
+.. _local_outlier_probabilities:
+
+Local Outlier Probabilties
+--------------------------
+A variant of LOF that produces scores scaled from 0 to 1 are the Local
+Outlier Probabilities (LoOP).
+
+The :class:`neighbors.LocalOutlierProbabilities` (LoOP) algorithm computes a
+score (called local outlier probabilities) reflecting a kind of probability that
+observations are abnormal.
+
+Similar to the local outlier factor LOF it compares the local density of a point
+with the densities of its neighbors, and considers samples of a substantially
+lower density to be outliers, but it uses the quadratic mean distance.
+A half-gaussian distibution is assumed on the factors exceeding 1,
+and the Gaussian error function is used to transform this value into a
+probability-like value between 0 and 1.
+
+Similar to LOF, the number of neighbors (parameter n_neighbors) often works
+well with small values such as 10 to 20, but if the proportion of outliers
+is high, increasing the value may help.
+
+The n_lambda parameter (originally just lambda, but this is a reserved key word in
+python) controls the number of standard deviations in the Gaussian assumption.
+It usually does not need to be changed, but increasing the value makes the detector
+produce smaller probabilities, at the benefit of increased contrast among the most
+anomalous objects, while decreasing the value will cause less objects to be close
+to 0, and hence allow better discrimination amongst normal objects.
+
+As with LOF, there are no ``predict``, ``decision_function`` and ``score_samples``
+methods but only a ``fit_predict`` method. The scores of abnormality of the training
+samples are accessible through the ``negative_outlier_probabilities_`` attribute
+(for consistency with the semantics of other scikit-learn classes, the values are negative).
+The ``predict``, ``decision_function`` and ``score_samples`` can be used
+on new unseen data when LoOP is applied for novelty detection, i.e. when the
+``novelty`` parameter is set to ``True``, but the result of ``predict`` may
+differ from that of ``fit_predict``.
+
+
+.. topic:: References:
+   *  Kriegel, H. P., Kröger, P., Schubert, E., & Zimek, A. (2009).
+      `LoOP: local outlier probabilities.
+      <https://www.dbs.ifi.lmu.de/Publikationen/Papers/LoOP1649.pdf>`_
+      Proc. CIKM (pp. 1649-1652).
+   *  Schubert, E., Zimek, A., & Kriegel, H. P. (2014).
+      `Local outlier detection reconsidered: a generalized view on locality
+      with applications to spatial, video, and network outlier detection.
+      <https://link.springer.com/article/10.1007/s10618-012-0300-z>`_
+      Data mining and knowledge discovery, 28, 190-237.
