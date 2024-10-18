@@ -71,14 +71,19 @@ def _calculate_pd_over_data(
     grid = _safe_indexing(X, feature_indices, axis=1)
 
     # np.unique() fails for mixed type and sparse objects
+    # TODO: check closer the AxisError and when it is available
+    possible_error_types = (
+        (TypeError, np.AxisError) if hasattr(np, "AxisError") else (TypeError,)
+    )
     try:
         ax = 0 if grid.shape[1] > 1 else None  # np.unique works better in 1 dim
         _, ix, ix_reconstruct = np.unique(
             grid, return_index=True, return_inverse=True, axis=ax
         )
+        ix, ix_reconstruct = ix.squeeze(), ix_reconstruct.squeeze()  # squeeze to 1D
         grid = _safe_indexing(grid, ix, axis=0)
         compressed_grid = True
-    except (TypeError, np.AxisError):
+    except possible_error_types:
         compressed_grid = False
 
     pd_values = _calculate_pd_brute_fast(
@@ -277,15 +282,14 @@ def h_statistic(
     # CALCULATIONS
     pd_univariate = []
     for idx in feature_indices:
-        pd_univariate.append(
-            _calculate_pd_over_data(
-                pred_fun,
-                X=X,
-                feature_indices=[idx],
-                sample_weight=sample_weight,
-                reduce_binary=reduce_binary,
-            )
+        xxx = _calculate_pd_over_data(
+            pred_fun,
+            X=X,
+            feature_indices=[idx],
+            sample_weight=sample_weight,
+            reduce_binary=reduce_binary,
         )
+        pd_univariate.append(xxx)
 
     n_features = len(features)
     n_pairs = int(n_features * (n_features - 1) / 2)
