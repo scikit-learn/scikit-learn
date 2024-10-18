@@ -2,6 +2,9 @@
 ========================
 Decision Tree Regression
 ========================
+In this example, we demonstrate the effect of changing the maximum depth of a
+decision tree on how it fits to the data. We perform this once on a 1D regression
+task and once on a multi-output regression task.
 """
 
 # Authors: The scikit-learn developers
@@ -21,16 +24,10 @@ Decision Tree Regression
 # `max_depth` parameter) is set too high, the decision trees learn too fine
 # details of the training data and learn from the noise, i.e. they overfit.
 #
-# Necessary Imports
-# -----------------
-import matplotlib.pyplot as plt
-import numpy as np
-
-from sklearn.tree import DecisionTreeRegressor
-
-# %%
 # Create a random 1D dataset
 # --------------------------
+import numpy as np
+
 rng = np.random.RandomState(1)
 X = np.sort(5 * rng.rand(80, 1), axis=0)
 y = np.sin(X).ravel()
@@ -40,6 +37,8 @@ y[::5] += 3 * (0.5 - rng.rand(16))
 # Fit regression model
 # --------------------
 # Here we fit two models with different maximum depths
+from sklearn.tree import DecisionTreeRegressor
+
 regr_1 = DecisionTreeRegressor(max_depth=2)
 regr_2 = DecisionTreeRegressor(max_depth=5)
 regr_1.fit(X, y)
@@ -56,6 +55,8 @@ y_2 = regr_2.predict(X_test)
 # %%
 # Plot the results
 # ----------------
+import matplotlib.pyplot as plt
+
 plt.figure()
 plt.scatter(X, y, s=20, edgecolor="black", c="darkorange", label="data")
 plt.plot(X_test, y_1, color="cornflowerblue", label="max_depth=2", linewidth=2)
