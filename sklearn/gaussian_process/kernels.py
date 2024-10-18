@@ -432,7 +432,8 @@ class Kernel(metaclass=ABCMeta):
 
     def _check_bounds_params(self):
         """Called after fitting to warn if bounds may have been too tight."""
-        list_close = np.isclose(self.bounds, np.atleast_2d(self.theta).T)
+        opt = np.exp(np.atleast_2d(self.theta).T)
+        list_close = np.isclose(self.bounds, opt)
         idx = 0
         for hyp in self.hyperparameters:
             if hyp.fixed:
@@ -441,21 +442,21 @@ class Kernel(metaclass=ABCMeta):
                 if list_close[idx, 0]:
                     warnings.warn(
                         "The optimal value found for "
-                        "dimension %s of parameter %s is "
+                        "dimension %s of parameter %s (=%s) is "
                         "close to the specified lower "
                         "bound %s. Decreasing the bound and"
                         " calling fit again may find a "
-                        "better value." % (dim, hyp.name, hyp.bounds[dim][0]),
+                        "better value." % (dim, hyp.name, opt[0], hyp.bounds[dim][0]),
                         ConvergenceWarning,
                     )
                 elif list_close[idx, 1]:
                     warnings.warn(
                         "The optimal value found for "
-                        "dimension %s of parameter %s is "
+                        "dimension %s of parameter %s (=%s) is "
                         "close to the specified upper "
                         "bound %s. Increasing the bound and"
                         " calling fit again may find a "
-                        "better value." % (dim, hyp.name, hyp.bounds[dim][1]),
+                        "better value." % (dim, hyp.name, opt[1], hyp.bounds[dim][1]),
                         ConvergenceWarning,
                     )
                 idx += 1
