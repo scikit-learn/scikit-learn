@@ -1,0 +1,5 @@
+- :class:`linear_model.LogisticRegression` and and other linear models that
+  accept `solver="newton-cholesky"` now report the correct number of iterations
+  when they fall back to the `"lbfgs"` solver because of a rank deficient
+  Hessian matrix.
+  By :user:`Olivier Grisel <ogrisel>`
