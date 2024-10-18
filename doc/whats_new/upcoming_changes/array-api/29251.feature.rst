@@ -1,0 +1,1 @@
+- :func:`sklearn.metrics.cluster.contingency_matrix` by :user:`Yaroslav Korobko <Tialo>`
