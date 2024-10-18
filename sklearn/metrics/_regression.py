@@ -835,32 +835,24 @@ def median_absolute_error(
     >>> median_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.85
     """
-    xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
-    dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
-
-    _, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput, dtype=dtype, xp=xp
+    y_type, y_true, y_pred, multioutput = _check_reg_targets(
+        y_true, y_pred, multioutput
     )
     if sample_weight is None:
-        output_errors = xp.median(xp.abs(y_pred - y_true), axis=0)
+        output_errors = np.median(np.abs(y_pred - y_true), axis=0)
     else:
-        sample_weight = _check_sample_weight(sample_weight, y_pred, dtype=dtype)
+        sample_weight = _check_sample_weight(sample_weight, y_pred)
         output_errors = _weighted_percentile(
-            xp.abs(y_pred - y_true), sample_weight=sample_weight
+            np.abs(y_pred - y_true), sample_weight=sample_weight
         )
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
             return output_errors
         elif multioutput == "uniform_average":
-            # pass None as weights to _average: uniform mean
+            # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    # Average across the outputs (if needed).
-    # The second call to `_average` should always return
-    # a scalar array that we convert to a Python float to
-    # consistently return the same eager evaluated value.
-    # Therefore, `axis=None`.
-    return float(_average(output_errors, weights=multioutput))
+    return np.average(output_errors, weights=multioutput)
 
 
 def _assemble_r2_explained_variance(
@@ -1698,13 +1690,9 @@ def d2_pinball_score(
     >>> d2_pinball_score(y_true, y_true, alpha=0.1)
     1.0
     """
-    xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
-    dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
-
-    _, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput, dtype=dtype, xp=xp
+    y_type, y_true, y_pred, multioutput = _check_reg_targets(
+        y_true, y_pred, multioutput
     )
-
     check_consistent_length(y_true, y_pred, sample_weight)
 
     if _num_samples(y_pred) < 2:
@@ -1721,12 +1709,12 @@ def d2_pinball_score(
     )
 
     if sample_weight is None:
-        y_quantile = xp.tile(
-            xp.percentile(y_true, q=alpha * 100, axis=0), (len(y_true), 1)
+        y_quantile = np.tile(
+            np.percentile(y_true, q=alpha * 100, axis=0), (len(y_true), 1)
         )
     else:
         sample_weight = _check_sample_weight(sample_weight, y_true)
-        y_quantile = xp.tile(
+        y_quantile = np.tile(
             _weighted_percentile(
                 y_true, sample_weight=sample_weight, percentile=alpha * 100
             ),
@@ -1744,7 +1732,7 @@ def d2_pinball_score(
     nonzero_numerator = numerator != 0
     nonzero_denominator = denominator != 0
     valid_score = nonzero_numerator & nonzero_denominator
-    output_scores = xp.ones(y_true.shape[1])
+    output_scores = np.ones(y_true.shape[1])
 
     output_scores[valid_score] = 1 - (numerator[valid_score] / denominator[valid_score])
     output_scores[nonzero_numerator & ~nonzero_denominator] = 0.0
@@ -1754,17 +1742,12 @@ def d2_pinball_score(
             # return scores individually
             return output_scores
         else:  # multioutput == "uniform_average"
-            # pass None as weights to _average: uniform mean
+            # passing None as weights to np.average results in uniform mean
             avg_weights = None
     else:
         avg_weights = multioutput
 
-    # Average across the outputs (if needed).
-    # The second call to `_average` should always return
-    # a scalar array that we convert to a Python float to
-    # consistently return the same eager evaluated value.
-    # Therefore, `axis=None`.
-    return float(_average(output_scores, weights=avg_weights))
+    return np.average(output_scores, weights=avg_weights)
 
 
 @validate_params(
