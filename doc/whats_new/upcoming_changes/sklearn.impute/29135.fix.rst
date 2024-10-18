@@ -1,0 +1,3 @@
+- :class:`impute.KNNImputer` excludes samples with nan distances when
+  computing the mean value for uniform weights.
+  By :user:`Xuefeng Xu <xuefeng-xu>`
