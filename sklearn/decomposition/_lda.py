@@ -751,7 +751,7 @@ class LatentDirichletAllocation(
             doc_topic_distr /= doc_topic_distr.sum(axis=1)[:, np.newaxis]
         return doc_topic_distr
 
-    def fit_transform(self, X, y=None, normalize=True):
+    def fit_transform(self, X, y=None, *, normalize=True):
         """
         Fit to data, then transform it.
 
