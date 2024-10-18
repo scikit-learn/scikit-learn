@@ -66,6 +66,8 @@ CRITERIA_CLF = {
     "gini": _criterion.Gini,
     "log_loss": _criterion.Entropy,
     "entropy": _criterion.Entropy,
+    "fuzzy_extropy":  _criterion.FuzzyEntropy
+
 }
 CRITERIA_REG = {
     "squared_error": _criterion.MSE,

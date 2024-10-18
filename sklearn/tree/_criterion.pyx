@@ -607,6 +607,51 @@ cdef class ClassificationCriterion(Criterion):
 
         return self._check_monotonicity(monotonic_cst, lower_bound, upper_bound, value_left, value_right)
 
+cdef class FuzzyExtropy(ClassificationCriterion):
+
+    cdef float64_t node_impurity(self) noexcept nogil:
+        cdef float64_t extropy = 0.0
+        cdef float64_t count_k
+        cdef intp_t k
+        cdef intp_t c
+
+        for k in range(self.n_outputs):
+            for c in range(self.n_classes[k]):
+                count_k = self.sum_total[k, c]
+                if count_k > 0.0:
+                    count_k /= self.weighted_n_node_samples
+                    if count_k < 1.0:
+                        extropy -= (1.0 - count_k) * log(1.0 - count_k)
+
+        return extropy / self.n_outputs
+
+    cdef void children_impurity(self, float64_t* impurity_left,
+                                float64_t* impurity_right) noexcept nogil:
+        cdef float64_t extropy_left = 0.0
+        cdef float64_t extropy_right = 0.0
+        cdef float64_t count_k
+        cdef intp_t k
+        cdef intp_t c
+
+        for k in range(self.n_outputs):
+            for c in range(self.n_classes[k]):
+                # Calculate extropy for the left child
+                count_k = self.sum_left[k, c]
+                if count_k > 0.0:
+                    count_k /= self.weighted_n_left
+                    if count_k < 1.0:
+                        extropy_left -= (1.0 - count_k) * log(1.0 - count_k)
+
+                # Calculate extropy for the right child
+                count_k = self.sum_right[k, c]
+                if count_k > 0.0:
+                    count_k /= self.weighted_n_right
+                    if count_k < 1.0:
+                        extropy_right -= (1.0 - count_k) * log(1.0 - count_k)
+
+        impurity_left[0] = extropy_left / self.n_outputs
+        impurity_right[0] = extropy_right / self.n_outputs
+
 
 cdef class Entropy(ClassificationCriterion):
     r"""Cross Entropy impurity criterion.
