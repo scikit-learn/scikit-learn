@@ -310,7 +310,7 @@ def mean_pinball_loss(
     )
     check_consistent_length(y_true, y_pred, sample_weight)
     diff = y_true - y_pred
-    sign = (diff >= 0).astype(dtype)
+    sign = xp.astype(diff >= 0, dtype=dtype)
     loss = alpha * sign * diff - (1 - alpha) * (1 - sign) * diff
     output_errors = _average(loss, weights=sample_weight, axis=0)
 
