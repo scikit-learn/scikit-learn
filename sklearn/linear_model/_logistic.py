@@ -2,13 +2,8 @@
 Logistic Regression
 """
 
-# Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
-#         Fabian Pedregosa <f@bianp.net>
-#         Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
-#         Manoj Kumar <manojkumarsivaraj334@gmail.com>
-#         Lars Buitinck
-#         Simon Wu <s8wu@uwaterloo.ca>
-#         Arthur Mensch <arthur.mensch@m4x.org
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numbers
 import warnings
@@ -49,6 +44,7 @@ from ..utils.validation import (
     _check_method_params,
     _check_sample_weight,
     check_is_fitted,
+    validate_data,
 )
 from ._base import BaseEstimator, LinearClassifierMixin, SparseCoefMixin
 from ._glm.glm import NewtonCholeskySolver
@@ -318,14 +314,14 @@ def _logistic_regression_path(
         w0 = np.zeros(n_features + int(fit_intercept), dtype=X.dtype)
         mask = y == pos_class
         y_bin = np.ones(y.shape, dtype=X.dtype)
-        if solver in ["lbfgs", "newton-cg", "newton-cholesky"]:
+        if solver == "liblinear":
+            mask_classes = np.array([-1, 1])
+            y_bin[~mask] = -1.0
+        else:
             # HalfBinomialLoss, used for those solvers, represents y in [0, 1] instead
             # of in [-1, 1].
             mask_classes = np.array([0, 1])
             y_bin[~mask] = 0.0
-        else:
-            mask_classes = np.array([-1, 1])
-            y_bin[~mask] = -1.0
 
         # for compute_class_weight
         if class_weight == "balanced":
@@ -636,7 +632,7 @@ def _log_reg_scoring_path(
         values are chosen in a logarithmic scale between 1e-4 and 1e4.
 
     scoring : callable
-        A string (see model evaluation documentation) or
+        A string (see :ref:`scoring_parameter`) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``. For a list of scoring functions
         that can be used, look at :mod:`sklearn.metrics`.
@@ -741,9 +737,11 @@ def _log_reg_scoring_path(
     y_train = y[train]
     y_test = y[test]
 
+    sw_train, sw_test = None, None
     if sample_weight is not None:
         sample_weight = _check_sample_weight(sample_weight, X)
-        sample_weight = sample_weight[train]
+        sw_train = sample_weight[train]
+        sw_test = sample_weight[test]
 
     coefs, Cs, n_iter = _logistic_regression_path(
         X_train,
@@ -764,7 +762,7 @@ def _log_reg_scoring_path(
         random_state=random_state,
         check_input=False,
         max_squared_sum=max_squared_sum,
-        sample_weight=sample_weight,
+        sample_weight=sw_train,
     )
 
     log_reg = LogisticRegression(solver=solver, multi_class=multi_class)
@@ -798,24 +796,17 @@ def _log_reg_scoring_path(
             log_reg.intercept_ = 0.0
 
         if scoring is None:
-            scores.append(log_reg.score(X_test, y_test))
+            scores.append(log_reg.score(X_test, y_test, sample_weight=sw_test))
         else:
             score_params = score_params or {}
             score_params = _check_method_params(X=X, params=score_params, indices=test)
             scores.append(scoring(log_reg, X_test, y_test, **score_params))
-
     return coefs, Cs, np.array(scores), n_iter
 
 
 class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     """
     Logistic Regression (aka logit, MaxEnt) classifier.
-
-    In the multiclass case, the training algorithm uses the one-vs-rest (OvR)
-    scheme if the 'multi_class' option is set to 'ovr', and uses the
-    cross-entropy loss if the 'multi_class' option is set to 'multinomial'.
-    (Currently the 'multinomial' option is supported only by the 'lbfgs',
-    'sag', 'saga' and 'newton-cg' solvers.)
 
     This class implements regularized logistic regression using the
     'liblinear' library, 'newton-cg', 'sag', 'saga' and 'lbfgs' solvers. **Note
@@ -829,6 +820,11 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     supports both L1 and L2 regularization, with a dual formulation only for
     the L2 penalty. The Elastic-Net regularization is only supported by the
     'saga' solver.
+
+    For :term:`multiclass` problems, only 'newton-cg', 'sag', 'saga' and 'lbfgs'
+    handle multinomial loss. 'liblinear' and 'newton-cholesky' only handle binary
+    classification but can be extended to handle multiclass by using
+    :class:`~sklearn.multiclass.OneVsRestClassifier`.
 
     Read more in the :ref:`User Guide <logistic_regression>`.
 
@@ -907,11 +903,11 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
         - For small datasets, 'liblinear' is a good choice, whereas 'sag'
           and 'saga' are faster for large ones;
-        - For multiclass problems, only 'newton-cg', 'sag', 'saga' and
+        - For :term:`multiclass` problems, only 'newton-cg', 'sag', 'saga' and
           'lbfgs' handle multinomial loss;
         - 'liblinear' and 'newton-cholesky' can only handle binary classification
           by default. To apply a one-versus-rest scheme for the multiclass setting
-          one can wrapt it with the `OneVsRestClassifier`.
+          one can wrap it with the :class:`~sklearn.multiclass.OneVsRestClassifier`.
         - 'newton-cholesky' is a good choice for `n_samples` >> `n_features`,
           especially with one-hot encoded categorical features with rare
           categories. Be aware that the memory usage of this solver has a quadratic
@@ -939,9 +935,9 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            a scaler from :mod:`sklearn.preprocessing`.
 
         .. seealso::
-           Refer to the User Guide for more information regarding
-           :class:`LogisticRegression` and more specifically the
-           :ref:`Table <Logistic_regression>`
+           Refer to the :ref:`User Guide <Logistic_regression>` for more
+           information regarding :class:`LogisticRegression` and more specifically the
+           :ref:`Table <logistic_regression_solvers>`
            summarizing solver/penalty supports.
 
         .. versionadded:: 0.17
@@ -1099,6 +1095,9 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            [9.7...e-01, 2.8...e-02, ...e-08]])
     >>> clf.score(X, y)
     0.97...
+
+    For a comaprison of the LogisticRegression with other classifiers see:
+    :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`.
     """
 
     _parameter_constraints: dict = {
@@ -1220,7 +1219,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         else:
             _dtype = [np.float64, np.float32]
 
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse="csr",
@@ -1403,7 +1403,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         the softmax function is used to find the predicted probability of
         each class.
         Else use a one-vs-rest approach, i.e. calculate the probability
-        of each class assuming it to be positive using the logistic function.
+        of each class assuming it to be positive using the logistic function
         and normalize these values across all the classes.
 
         Parameters
@@ -1459,6 +1459,17 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             model, where classes are ordered as they are in ``self.classes_``.
         """
         return np.log(self.predict_proba(X))
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks.update(
+            {
+                "check_non_transformer_estimators_n_iter": (
+                    "n_iter_ cannot be easily accessed."
+                )
+            }
+        )
+        return tags
 
 
 class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstimator):
@@ -1521,7 +1532,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            solver.
 
     scoring : str or callable, default=None
-        A string (see model evaluation documentation) or
+        A string (see :ref:`scoring_parameter`) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``. For a list of scoring functions
         that can be used, look at :mod:`sklearn.metrics`. The
@@ -1541,7 +1552,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
           because it does not handle warm-starting.
         - 'liblinear' and 'newton-cholesky' can only handle binary classification
           by default. To apply a one-versus-rest scheme for the multiclass setting
-          one can wrapt it with the `OneVsRestClassifier`.
+          one can wrap it with the :class:`~sklearn.multiclass.OneVsRestClassifier`.
         - 'newton-cholesky' is a good choice for `n_samples` >> `n_features`,
           especially with one-hot encoded categorical features with rare
           categories. Be aware that the memory usage of this solver has a quadratic
@@ -1865,7 +1876,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
             l1_ratios_ = [None]
 
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse="csr",
@@ -2269,15 +2281,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             )
         )
         return router
-
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            }
-        }
 
     def _get_scorer(self):
         """Get the scorer based on the scoring method specified.

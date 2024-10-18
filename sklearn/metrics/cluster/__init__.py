@@ -5,6 +5,9 @@
   model itself.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from ._bicluster import consensus_score
 from ._supervised import (
     adjusted_mutual_info_score,

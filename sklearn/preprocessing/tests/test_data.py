@@ -1,8 +1,5 @@
-# Authors:
-#
-#          Giorgio Patrini
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import re
 import warnings
@@ -43,6 +40,7 @@ from sklearn.utils import gen_batches, shuffle
 from sklearn.utils._array_api import (
     yield_namespace_device_dtype_combinations,
 )
+from sklearn.utils._test_common.instance_generator import _get_check_estimator_ids
 from sklearn.utils._testing import (
     _convert_container,
     assert_allclose,
@@ -54,7 +52,6 @@ from sklearn.utils._testing import (
     skip_if_32bit,
 )
 from sklearn.utils.estimator_checks import (
-    _get_check_estimator_ids,
     check_array_api_input_and_values,
 )
 from sklearn.utils.fixes import (
@@ -704,6 +701,7 @@ def test_standard_check_array_of_inverse_transform():
     [
         MaxAbsScaler(),
         MinMaxScaler(),
+        MinMaxScaler(clip=True),
         KernelCenterer(),
         Normalizer(norm="l1"),
         Normalizer(norm="l2"),
@@ -2112,7 +2110,7 @@ def test_cv_pipeline_precomputed():
     pipeline = Pipeline([("kernel_centerer", kcent), ("svr", SVR())])
 
     # did the pipeline set the pairwise attribute?
-    assert pipeline._get_tags()["pairwise"]
+    assert pipeline.__sklearn_tags__().input_tags.pairwise
 
     # test cross-validation, score should be almost perfect
     # NB: this test is pretty vacuous -- it's mainly to test integration
@@ -2332,6 +2330,11 @@ def test_optimization_power_transformer(method, lmbda):
     n_samples = 20000
     X = rng.normal(loc=0, scale=1, size=(n_samples, 1))
 
+    if method == "box-cox":
+        # For box-cox, means that lmbda * y + 1 > 0 or y > - 1 / lmbda
+        # Clip the data here to make sure the inequality is valid.
+        X = np.clip(X, -1 / lmbda + 1e-5, None)
+
     pt = PowerTransformer(method=method, standardize=False)
     pt.lambdas_ = [lmbda]
     X_inv = pt.inverse_transform(X)
@@ -2342,6 +2345,14 @@ def test_optimization_power_transformer(method, lmbda):
     assert_almost_equal(0, np.linalg.norm(X - X_inv_trans) / n_samples, decimal=2)
     assert_almost_equal(0, X_inv_trans.mean(), decimal=1)
     assert_almost_equal(1, X_inv_trans.std(), decimal=1)
+
+
+def test_invserse_box_cox():
+    # output nan if the input is invalid
+    pt = PowerTransformer(method="box-cox", standardize=False)
+    pt.lambdas_ = [0.5]
+    X_inv = pt.inverse_transform([[-2.1]])
+    assert np.isnan(X_inv)
 
 
 def test_yeo_johnson_darwin_example():

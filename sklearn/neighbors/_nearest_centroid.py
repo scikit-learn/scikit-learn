@@ -2,12 +2,8 @@
 Nearest Centroid Classification
 """
 
-# Author: Robert Layton <robertlayton@gmail.com>
-#         Olivier Grisel <olivier.grisel@ensta.org>
-#         Andreas W. Kempa-Liehr <a.kempa-liehr@auckland.ac.nz>
-#         Matthew Ning <mhn@bu.edu>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Real
@@ -26,7 +22,7 @@ from ..utils._available_if import available_if
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.multiclass import check_classification_targets
 from ..utils.sparsefuncs import csc_median_axis_0
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, validate_data
 
 
 class NearestCentroid(
@@ -130,6 +126,9 @@ class NearestCentroid(
     NearestCentroid()
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
+
+    For a more detailed example see:
+    :ref:`sphx_glr_auto_examples_neighbors_plot_nearest_centroid.py`
     """
 
     _parameter_constraints: dict = {
@@ -171,9 +170,9 @@ class NearestCentroid(
         # If X is sparse and the metric is "manhattan", store it in a csc
         # format is easier to calculate the median.
         if self.metric == "manhattan":
-            X, y = self._validate_data(X, y, accept_sparse=["csc"])
+            X, y = validate_data(self, X, y, accept_sparse=["csc"])
         else:
-            X, y = self._validate_data(X, y, accept_sparse=["csr", "csc"])
+            X, y = validate_data(self, X, y, accept_sparse=["csr", "csc"])
         is_X_sparse = sp.issparse(X)
         check_classification_targets(y)
 
