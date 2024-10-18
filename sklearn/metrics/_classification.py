@@ -2578,6 +2578,7 @@ def classification_report(
     sample_weight=None,
     digits=2,
     output_dict=False,
+    rename_label=False,
     zero_division="warn",
 ):
     """Build a text report showing the main classification metrics.
@@ -2610,6 +2611,9 @@ def classification_report(
         If True, return output as dict.
 
         .. versionadded:: 0.20
+
+    rename_label : bool, default=False
+        if True, rename label's name and add ``class`` before that.
 
     zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
         Sets the value to return when there is a zero division. If set to
@@ -2696,6 +2700,12 @@ def classification_report(
     else:
         labels = np.asarray(labels)
         labels_given = True
+
+    if rename_label:
+        if target_names is None:
+            target_names = np.array(["class " + label for label in labels])
+        else:
+            target_names = np.array(["class " + tn for tn in target_names])
 
     # labelled micro average
     micro_is_accuracy = (y_type == "multiclass" or y_type == "binary") and (
