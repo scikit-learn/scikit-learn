@@ -229,7 +229,7 @@ def test_gradient():
             # analytically compute the gradients
             def loss_grad_fun(t):
                 return mlp._loss_grad_lbfgs(
-                    t, X, Y, activations, deltas, coef_grads, intercept_grads
+                    t, X, Y, None, activations, deltas, coef_grads, intercept_grads
                 )
 
             [value, grad] = loss_grad_fun(theta)
