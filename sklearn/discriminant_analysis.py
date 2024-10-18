@@ -1,12 +1,7 @@
 """Linear and quadratic discriminant analysis."""
 
-# Authors: Clemens Brunner
-#          Martin Billinger
-#          Matthieu Perrot
-#          Mathieu Blondel
-#          Matthew Ning <mhn@bu.edu>
-
-# License: BSD 3-Clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Integral, Real
@@ -229,9 +224,7 @@ class DiscriminantAnalysisPredictionMixin:
             Probability estimate of the sample for each class in the
             model, where classes are ordered as they are in `self.classes_`.
         """
-        scores = self._decision_function(X)
-        likelihood = np.exp(scores - scores.max(axis=1)[:, np.newaxis])
-        return likelihood / likelihood.sum(axis=1)[:, np.newaxis]
+        return np.exp(self.predict_log_proba(X))
 
     def predict_log_proba(self, X):
         """Estimate log class probabilities.
@@ -246,7 +239,11 @@ class DiscriminantAnalysisPredictionMixin:
         y_log_proba : ndarray of shape (n_samples, n_classes)
             Estimated log probabilities.
         """
-        return np.log(self.predict_proba(X))
+        scores = self._decision_function(X)
+        log_likelihood = scores - scores.max(axis=1)[:, np.newaxis]
+        return log_likelihood - np.log(
+            np.exp(log_likelihood).sum(axis=1)[:, np.newaxis]
+        )
 
 
 class LinearDiscriminantAnalysis(
@@ -828,9 +825,9 @@ class LinearDiscriminantAnalysis(
 
         Returns
         -------
-        C : ndarray of shape (n_samples,) or (n_samples, n_classes)
+        y_scores : ndarray of shape (n_samples,) or (n_samples, n_classes)
             Decision function values related to each class, per sample.
-            In the two-class case, the shape is (n_samples,), giving the
+            In the two-class case, the shape is `(n_samples,)`, giving the
             log likelihood ratio of the positive class.
         """
         # Only override for the doc

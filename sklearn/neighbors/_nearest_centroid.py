@@ -2,12 +2,8 @@
 Nearest Centroid Classification
 """
 
-# Author: Robert Layton <robertlayton@gmail.com>
-#         Olivier Grisel <olivier.grisel@ensta.org>
-#         Andreas W. Kempa-Liehr <a.kempa-liehr@auckland.ac.nz>
-#         Matthew Ning <mhn@bu.edu>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Real
@@ -60,7 +56,7 @@ class NearestCentroid(
         Threshold for shrinking centroids to remove features.
 
     priors : {"uniform", "empirical"} or array-like of shape (n_classes,), \
-    default="uniform"
+        default="uniform"
         The class prior probabilities. By default, the class proportions are
         inferred from the training data.
 
@@ -86,12 +82,15 @@ class NearestCentroid(
         .. versionadded:: 1.0
 
     deviations_ : ndarray of shape (n_classes, n_features)
-        Deviation of each class using soft thresholding.
+        Deviations (or shrinkages) of the centroids of each class from the
+        overall centroid. Equal to eq. (18.4) if shrink_threshold = None,
+        else (18.5) p. 653 of the ESL. Can be used to identify features used
+        for classification.
 
         .. versionadded:: 1.6
 
     within_class_std_dev_ : ndarray of shape (n_features,)
-        Within-class standard deviation with unshrunked centroids.
+        Pooled or within-class standard deviation of input data.
 
         .. versionadded:: 1.6
 
@@ -292,6 +291,7 @@ class NearestCentroid(
             return super().predict(X)
 
     def _decision_function(self, X):
+        # return discriminant scores, see eq. (18.2) p. 652 of the ESL.
         check_is_fitted(self, "centroids_")
 
         X_normalized = self._validate_data(

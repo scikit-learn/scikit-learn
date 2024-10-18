@@ -7,7 +7,6 @@ import pytest
 
 from sklearn import datasets
 from sklearn.neighbors import NearestCentroid
-from sklearn.utils import check_random_state
 from sklearn.utils._testing import (
     assert_allclose,
     assert_array_almost_equal,
@@ -19,8 +18,6 @@ from sklearn.utils.fixes import CSR_CONTAINERS
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
 y = [-1, -1, -1, 1, 1, 1]
 T = [[-1, -1], [2, 2], [3, 2]]
-T_nan = np.asarray([[-1, -1], [2, 2], [3, 2]], dtype=np.float64)
-T_nan[0][0] = float("nan")
 true_result = [-1, 1, 1]
 true_result_prior1 = [-1, 1, 1]
 
@@ -87,37 +84,6 @@ def test_classification_toy(csr_container):
     clf = NearestCentroid()
     clf.fit(X_csr.tocoo(), y)
     assert_array_equal(clf.predict(T_csr.tolil()), true_result)
-
-
-@pytest.mark.parametrize("n_classes", [2, 3])
-def test_predict_proba(n_classes):
-    # Fit and predict probability estimates
-    # compare with results from pamr package
-    def generate_dataset(n_samples, centers, covariances, random_state=None):
-        """Generate a multivariate normal data given some centers and
-        covariances"""
-        rng = check_random_state(random_state)
-        X = np.vstack(
-            [
-                rng.multivariate_normal(mean, cov, size=n_samples // len(centers))
-                for mean, cov in zip(centers, covariances)
-            ]
-        )
-        y = np.hstack(
-            [[clazz] * (n_samples // len(centers)) for clazz in range(len(centers))]
-        )
-        return X, y
-
-    blob_centers = np.array([[0, 0], [-10, 40], [-30, 30]])[:n_classes]
-    blob_stds = np.array([[[10, 10], [10, 100]]] * len(blob_centers))
-    X, y = generate_dataset(
-        n_samples=90000, centers=blob_centers, covariances=blob_stds, random_state=42
-    )
-    clf = NearestCentroid().fit(X, y)
-    probabilities = clf.predict_proba(X)
-    assert probabilities.shape == (X.shape[0], n_classes)
-    assert_array_almost_equal(probabilities.sum(axis=1), np.ones(X.shape[0]))
-    assert 0 <= probabilities.all() <= 1
 
 
 def test_iris():

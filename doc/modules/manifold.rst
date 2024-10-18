@@ -7,16 +7,14 @@
 Manifold learning
 =================
 
-.. rst-class:: quote
-
-                 | Look for the bare necessities
-                 | The simple bare necessities
-                 | Forget about your worries and your strife
-                 | I mean the bare necessities
-                 | Old Mother Nature's recipes
-                 | That bring the bare necessities of life
-                 |
-                 |             -- Baloo's song [The Jungle Book]
+| Look for the bare necessities
+| The simple bare necessities
+| Forget about your worries and your strife
+| I mean the bare necessities
+| Old Mother Nature's recipes
+| That bring the bare necessities of life
+|
+|             -- Baloo's song [The Jungle Book]
 
 
 
@@ -109,6 +107,10 @@ from the data itself, without the use of predetermined classifications.
 
 * See :ref:`sphx_glr_auto_examples_manifold_plot_compare_methods.py` for an example of
   dimensionality reduction on a toy "S-curve" dataset.
+
+* See :ref:`sphx_glr_auto_examples_applications_plot_stock_market.py` for an example of
+  using manifold learning to map the stock market structure based on historical stock
+  prices.
 
 The manifold learning implementations available in scikit-learn are
 summarized below
@@ -293,22 +295,22 @@ It requires ``n_neighbors > n_components * (n_components + 3) / 2``.
 
 The HLLE algorithm comprises three stages:
 
-  1. **Nearest Neighbors Search**.  Same as standard LLE
+1. **Nearest Neighbors Search**.  Same as standard LLE
 
-  2. **Weight Matrix Construction**. Approximately
-     :math:`O[D N k^3] + O[N d^6]`.  The first term reflects a similar
-     cost to that of standard LLE.  The second term comes from a QR
-     decomposition of the local hessian estimator.
+2. **Weight Matrix Construction**. Approximately
+   :math:`O[D N k^3] + O[N d^6]`.  The first term reflects a similar
+   cost to that of standard LLE.  The second term comes from a QR
+   decomposition of the local hessian estimator.
 
-  3. **Partial Eigenvalue Decomposition**. Same as standard LLE
+3. **Partial Eigenvalue Decomposition**. Same as standard LLE.
 
-  The overall complexity of standard HLLE is
-  :math:`O[D \log(k) N \log(N)] + O[D N k^3] + O[N d^6] + O[d N^2]`.
+The overall complexity of standard HLLE is
+:math:`O[D \log(k) N \log(N)] + O[D N k^3] + O[N d^6] + O[d N^2]`.
 
-  * :math:`N` : number of training data points
-  * :math:`D` : input dimension
-  * :math:`k` : number of nearest neighbors
-  * :math:`d` : output dimension
+* :math:`N` : number of training data points
+* :math:`D` : input dimension
+* :math:`k` : number of nearest neighbors
+* :math:`d` : output dimension
 
 .. rubric:: References
 

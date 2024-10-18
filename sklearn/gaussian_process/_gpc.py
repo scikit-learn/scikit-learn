@@ -1,8 +1,7 @@
 """Gaussian processes classification."""
 
-# Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Integral
 from operator import itemgetter
@@ -18,7 +17,7 @@ from ..preprocessing import LabelEncoder
 from ..utils import check_random_state
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.optimize import _check_optimize_result
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, validate_data
 from .kernels import RBF, CompoundKernel, Kernel
 from .kernels import ConstantKernel as C
 
@@ -642,6 +641,9 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
     >>> gpc.predict_proba(X[:2,:])
     array([[0.83548752, 0.03228706, 0.13222543],
            [0.79064206, 0.06525643, 0.14410151]])
+
+    For a comaprison of the GaussianProcessClassifier with other classifiers see:
+    :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`.
     """
 
     _parameter_constraints: dict = {
@@ -700,12 +702,12 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
             raise ValueError("kernel cannot be a CompoundKernel")
 
         if self.kernel is None or self.kernel.requires_vector_input:
-            X, y = self._validate_data(
-                X, y, multi_output=False, ensure_2d=True, dtype="numeric"
+            X, y = validate_data(
+                self, X, y, multi_output=False, ensure_2d=True, dtype="numeric"
             )
         else:
-            X, y = self._validate_data(
-                X, y, multi_output=False, ensure_2d=False, dtype=None
+            X, y = validate_data(
+                self, X, y, multi_output=False, ensure_2d=False, dtype=None
             )
 
         self.base_estimator_ = _BinaryGaussianProcessClassifierLaplace(
@@ -770,9 +772,9 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         check_is_fitted(self)
 
         if self.kernel is None or self.kernel.requires_vector_input:
-            X = self._validate_data(X, ensure_2d=True, dtype="numeric", reset=False)
+            X = validate_data(self, X, ensure_2d=True, dtype="numeric", reset=False)
         else:
-            X = self._validate_data(X, ensure_2d=False, dtype=None, reset=False)
+            X = validate_data(self, X, ensure_2d=False, dtype=None, reset=False)
 
         return self.base_estimator_.predict(X)
 
@@ -800,9 +802,9 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
             )
 
         if self.kernel is None or self.kernel.requires_vector_input:
-            X = self._validate_data(X, ensure_2d=True, dtype="numeric", reset=False)
+            X = validate_data(self, X, ensure_2d=True, dtype="numeric", reset=False)
         else:
-            X = self._validate_data(X, ensure_2d=False, dtype=None, reset=False)
+            X = validate_data(self, X, ensure_2d=False, dtype=None, reset=False)
 
         return self.base_estimator_.predict_proba(X)
 

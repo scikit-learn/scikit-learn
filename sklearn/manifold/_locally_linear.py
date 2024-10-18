@@ -1,14 +1,13 @@
 """Locally Linear Embedding"""
 
-# Author: Fabian Pedregosa -- <fabian.pedregosa@inria.fr>
-#         Jake Vanderplas  -- <vanderplas@astro.washington.edu>
-# License: BSD 3 clause (C) INRIA 2011
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Integral, Real
 
 import numpy as np
 from scipy.linalg import eigh, qr, solve, svd
-from scipy.sparse import csr_matrix, eye
+from scipy.sparse import csr_matrix, eye, lil_matrix
 from scipy.sparse.linalg import eigsh
 
 from ..base import (
@@ -23,7 +22,7 @@ from ..utils import check_array, check_random_state
 from ..utils._arpack import _init_arpack_v0
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import stable_cumsum
-from ..utils.validation import FLOAT_DTYPES, check_is_fitted
+from ..utils.validation import FLOAT_DTYPES, check_is_fitted, validate_data
 
 
 def barycenter_weights(X, Y, indices, reg=1e-3):
@@ -230,6 +229,7 @@ def _locally_linear_embedding(
         )
 
     M_sparse = eigen_solver != "dense"
+    M_container_constructor = lil_matrix if M_sparse else np.zeros
 
     if method == "standard":
         W = barycenter_kneighbors_graph(
@@ -240,10 +240,10 @@ def _locally_linear_embedding(
         # depending on the solver, we'll do this differently
         if M_sparse:
             M = eye(*W.shape, format=W.format) - W
-            M = (M.T * M).tocsr()
+            M = M.T * M
         else:
             M = (W.T * W - W.T - W).toarray()
-            M.flat[:: M.shape[0] + 1] += 1  # W = W - I = W - I
+            M.flat[:: M.shape[0] + 1] += 1  # M = W' W - W' - W + I
 
     elif method == "hessian":
         dp = n_components * (n_components + 1) // 2
@@ -263,7 +263,7 @@ def _locally_linear_embedding(
         Yi = np.empty((n_neighbors, 1 + n_components + dp), dtype=np.float64)
         Yi[:, 0] = 1
 
-        M = np.zeros((N, N), dtype=np.float64)
+        M = M_container_constructor((N, N), dtype=np.float64)
 
         use_svd = n_neighbors > d_in
 
@@ -295,9 +295,6 @@ def _locally_linear_embedding(
 
             nbrs_x, nbrs_y = np.meshgrid(neighbors[i], neighbors[i])
             M[nbrs_x, nbrs_y] += np.dot(w, w.T)
-
-        if M_sparse:
-            M = csr_matrix(M)
 
     elif method == "modified":
         if n_neighbors < n_components:
@@ -362,7 +359,8 @@ def _locally_linear_embedding(
 
         # Now calculate M.
         # This is the [N x N] matrix whose null space is the desired embedding
-        M = np.zeros((N, N), dtype=np.float64)
+        M = M_container_constructor((N, N), dtype=np.float64)
+
         for i in range(N):
             s_i = s_range[i]
 
@@ -398,11 +396,8 @@ def _locally_linear_embedding(
             M[nbrs_x, nbrs_y] += np.dot(Wi, Wi.T)
             Wi_sum1 = Wi.sum(1)
             M[i, neighbors[i]] -= Wi_sum1
-            M[neighbors[i], i] -= Wi_sum1
+            M[neighbors[i], [i]] -= Wi_sum1
             M[i, i] += s_i
-
-        if M_sparse:
-            M = csr_matrix(M)
 
     elif method == "ltsa":
         neighbors = nbrs.kneighbors(
@@ -410,7 +405,7 @@ def _locally_linear_embedding(
         )
         neighbors = neighbors[:, 1:]
 
-        M = np.zeros((N, N))
+        M = M_container_constructor((N, N), dtype=np.float64)
 
         use_svd = n_neighbors > d_in
 
@@ -433,7 +428,11 @@ def _locally_linear_embedding(
 
             nbrs_x, nbrs_y = np.meshgrid(neighbors[i], neighbors[i])
             M[nbrs_x, nbrs_y] -= GiGiT
-            M[neighbors[i], neighbors[i]] += 1
+
+            M[neighbors[i], neighbors[i]] += np.ones(shape=n_neighbors)
+
+    if M_sparse:
+        M = M.tocsr()
 
     return null_space(
         M,
@@ -790,7 +789,7 @@ class LocallyLinearEmbedding(
         )
 
         random_state = check_random_state(self.random_state)
-        X = self._validate_data(X, dtype=float)
+        X = validate_data(self, X, dtype=float)
         self.nbrs_.fit(X)
         self.embedding_, self.reconstruction_error_ = _locally_linear_embedding(
             X=self.nbrs_,
@@ -869,7 +868,7 @@ class LocallyLinearEmbedding(
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
         ind = self.nbrs_.kneighbors(
             X, n_neighbors=self.n_neighbors, return_distance=False
         )
