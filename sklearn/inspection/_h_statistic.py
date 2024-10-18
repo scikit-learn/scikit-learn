@@ -11,7 +11,10 @@ from scipy import sparse
 from ..base import is_classifier, is_regressor
 from ..utils import Bunch, check_array
 from ..utils._indexing import (
-    resample, _get_column_indices, _safe_assign, _safe_indexing
+    resample,
+    _get_column_indices,
+    _safe_assign,
+    _safe_indexing,
 )
 from ..utils._param_validation import (
     HasMethods,
