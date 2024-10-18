@@ -4,17 +4,29 @@ Testing for the nearest centroid module.
 
 import numpy as np
 import pytest
-from numpy.testing import assert_array_equal
 
 from sklearn import datasets
 from sklearn.neighbors import NearestCentroid
+from sklearn.utils import check_random_state
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
 from sklearn.utils.fixes import CSR_CONTAINERS
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
 y = [-1, -1, -1, 1, 1, 1]
 T = [[-1, -1], [2, 2], [3, 2]]
+T_nan = np.asarray([[-1, -1], [2, 2], [3, 2]], dtype=np.float64)
+T_nan[0][0] = float("nan")
 true_result = [-1, 1, 1]
+true_result_prior1 = [-1, 1, 1]
+
+true_discriminant_scores = [-32, 64, 80]
+true_proba = [[1, 1.26642e-14], [1.60381e-28, 1], [1.80485e-35, 1]]
+
 
 # also load the iris dataset
 # and randomly permute it
@@ -31,9 +43,30 @@ def test_classification_toy(csr_container):
     X_csr = csr_container(X)
     T_csr = csr_container(T)
 
+    # Check classification on a toy dataset, including sparse versions.
     clf = NearestCentroid()
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
+    assert_array_almost_equal(clf.decision_function(T), true_discriminant_scores)
+    assert_array_almost_equal(clf.predict_proba(T), true_proba)
+
+    # Test uniform priors
+    clf = NearestCentroid(priors="uniform")
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(T), true_result)
+    assert_array_almost_equal(clf.decision_function(T), true_discriminant_scores)
+    assert_array_almost_equal(clf.predict_proba(T), true_proba)
+
+    clf = NearestCentroid(priors="empirical")
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(T), true_result)
+    assert_array_almost_equal(clf.decision_function(T), true_discriminant_scores)
+    assert_array_almost_equal(clf.predict_proba(T), true_proba)
+
+    # Test custom priors
+    clf = NearestCentroid(priors=[0.25, 0.75])
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(T), true_result_prior1)
 
     # Same test, but with a sparse matrix to fit and test.
     clf = NearestCentroid()
@@ -54,6 +87,37 @@ def test_classification_toy(csr_container):
     clf = NearestCentroid()
     clf.fit(X_csr.tocoo(), y)
     assert_array_equal(clf.predict(T_csr.tolil()), true_result)
+
+
+@pytest.mark.parametrize("n_classes", [2, 3])
+def test_predict_proba(n_classes):
+    # Fit and predict probability estimates
+    # compare with results from pamr package
+    def generate_dataset(n_samples, centers, covariances, random_state=None):
+        """Generate a multivariate normal data given some centers and
+        covariances"""
+        rng = check_random_state(random_state)
+        X = np.vstack(
+            [
+                rng.multivariate_normal(mean, cov, size=n_samples // len(centers))
+                for mean, cov in zip(centers, covariances)
+            ]
+        )
+        y = np.hstack(
+            [[clazz] * (n_samples // len(centers)) for clazz in range(len(centers))]
+        )
+        return X, y
+
+    blob_centers = np.array([[0, 0], [-10, 40], [-30, 30]])[:n_classes]
+    blob_stds = np.array([[[10, 10], [10, 100]]] * len(blob_centers))
+    X, y = generate_dataset(
+        n_samples=90000, centers=blob_centers, covariances=blob_stds, random_state=42
+    )
+    clf = NearestCentroid().fit(X, y)
+    probabilities = clf.predict_proba(X)
+    assert probabilities.shape == (X.shape[0], n_classes)
+    assert_array_almost_equal(probabilities.sum(axis=1), np.ones(X.shape[0]))
+    assert 0 <= probabilities.all() <= 1
 
 
 def test_iris():
@@ -158,4 +222,50 @@ def test_features_zero_var():
 
     clf = NearestCentroid(shrink_threshold=0.1)
     with pytest.raises(ValueError):
+        clf.fit(X, y)
+
+
+def test_negative_priors_error():
+    """Check that we raise an error when the user-defined priors are negative."""
+    clf = NearestCentroid(priors=[-2, 4])
+    with pytest.raises(ValueError, match="priors must be non-negative"):
+        clf.fit(X, y)
+
+
+def test_warn_non_normalized_priors():
+    """Check that we raise a warning and normalize the user-defined priors when they
+    don't sum to 1.
+    """
+    priors = [2, 4]
+    clf = NearestCentroid(priors=priors)
+    with pytest.warns(
+        UserWarning,
+        match="The priors do not sum to 1. Normalizing such that it sums to one.",
+    ):
+        clf.fit(X, y)
+
+    assert_allclose(clf.class_prior_, np.asarray(priors) / np.asarray(priors).sum())
+
+
+@pytest.mark.parametrize(
+    "response_method", ["decision_function", "predict_proba", "predict_log_proba"]
+)
+def test_method_not_available_with_manhattan(response_method):
+    """Check that we raise an AttributeError with Manhattan metric when trying
+    to call a non-thresholded response method.
+    """
+    clf = NearestCentroid(metric="manhattan").fit(X, y)
+    with pytest.raises(AttributeError):
+        getattr(clf, response_method)(T)
+
+
+@pytest.mark.parametrize("array_constructor", [np.array] + CSR_CONTAINERS)
+def test_error_zero_variances(array_constructor):
+    """Check that we raise an error when the variance for all features is zero."""
+    X = np.ones((len(y), 2))
+    X[:, 1] *= 2
+    X = array_constructor(X)
+
+    clf = NearestCentroid()
+    with pytest.raises(ValueError, match="All features have zero variance"):
         clf.fit(X, y)
