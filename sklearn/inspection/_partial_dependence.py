@@ -272,20 +272,17 @@ def _partial_dependence_brute(
         for i, variable in enumerate(features):
             _safe_assign(X_eval, new_values[i], column_indexer=variable)
 
-        try:
-            # Note: predictions is of shape
-            # (n_points,) for non-multioutput regressors
-            # (n_points, n_tasks) for multioutput regressors
-            # (n_points, 1) for the regressors in cross_decomposition (I think)
-            # (n_points, 2) for binary classification
-            # (n_points, n_classes) for multiclass classification
-            pred, _ = _get_response_values(est, X_eval, response_method=response_method)
+        # Note: predictions is of shape
+        # (n_points,) for non-multioutput regressors
+        # (n_points, n_tasks) for multioutput regressors
+        # (n_points, 1) for the regressors in cross_decomposition (I think)
+        # (n_points, 2) for binary classification
+        # (n_points, n_classes) for multiclass classification
+        pred, _ = _get_response_values(est, X_eval, response_method=response_method)
 
-            predictions.append(pred)
-            # average over samples
-            averaged_predictions.append(np.average(pred, axis=0, weights=sample_weight))
-        except NotFittedError as e:
-            raise ValueError("'estimator' parameter must be a fitted estimator") from e
+        predictions.append(pred)
+        # average over samples
+        averaged_predictions.append(np.average(pred, axis=0, weights=sample_weight))
 
     n_samples = X.shape[0]
 
