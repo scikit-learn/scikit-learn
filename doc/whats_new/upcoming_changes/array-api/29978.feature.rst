@@ -1,0 +1,3 @@
+- :func:`sklearn.metrics.explained_variance_score` and
+  :func:`sklearn.metrics.mean_pinball_loss`
+  by :user:`Virgil Chan <virchan>`
