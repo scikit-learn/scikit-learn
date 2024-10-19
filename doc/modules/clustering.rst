@@ -1223,8 +1223,8 @@ clusters (labels) and the samples are mapped to the global label of the nearest 
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_cluster_plot_birch_vs_minibatchkmeans.py` as an instance
-  of computational time required by these two methods.
+* :ref:`sphx_glr_auto_examples_cluster_plot_birch_vs_minibatchkmeans.py`: A comparison
+  of computational run times between the two estimators.
 
 .. dropdown:: Algorithm description
 
