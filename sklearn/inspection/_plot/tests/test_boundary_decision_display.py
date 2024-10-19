@@ -608,6 +608,11 @@ def test_multiclass_colors_cmap(pyplot, plot_method, multiclass_colors):
     """Check correct cmap used for all `multiclass_colors` inputs."""
     import matplotlib as mpl
 
+    if parse_version(mpl.__version__) >= parse_version("3.5"):
+        pytest.skip(
+            "Matplotlib >= 3.5 is needed for `==` to check equivalence of colormaps"
+        )
+
     X, y = load_iris_2d_scaled()
     clf = LogisticRegression().fit(X, y)
 
@@ -631,15 +636,7 @@ def test_multiclass_colors_cmap(pyplot, plot_method, multiclass_colors):
     ]
 
     for idx, quad in enumerate(disp.surface_):
-        if parse_version(mpl.__version__) >= parse_version("3.5"):
-            assert quad.cmap == cmaps[idx]
-        # TODO: remove once min mpl version >=3.5
-        else:
-            # Ensure lut (look-up table) bounds are equal
-            assert_array_equal(quad.cmap.get_over(), cmaps[idx].get_over())
-            assert_array_equal(quad.cmap.get_under(), cmaps[idx].get_under())
-            # Ensure name is the same
-            assert quad.cmap.name == cmaps[idx].name
+        assert quad.cmap == cmaps[idx]
 
 
 def test_multiclass_plot_max_class_cmap_kwarg():
