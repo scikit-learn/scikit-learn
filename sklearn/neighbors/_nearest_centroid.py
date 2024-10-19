@@ -22,7 +22,7 @@ from ..utils._available_if import available_if
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.multiclass import check_classification_targets
 from ..utils.sparsefuncs import csc_median_axis_0
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, validate_data
 
 
 class NearestCentroid(
@@ -170,9 +170,9 @@ class NearestCentroid(
         # If X is sparse and the metric is "manhattan", store it in a csc
         # format is easier to calculate the median.
         if self.metric == "manhattan":
-            X, y = self._validate_data(X, y, accept_sparse=["csc"])
+            X, y = validate_data(self, X, y, accept_sparse=["csc"])
         else:
-            X, y = self._validate_data(X, y, accept_sparse=["csr", "csc"])
+            X, y = validate_data(self, X, y, accept_sparse=["csr", "csc"])
         is_X_sparse = sp.issparse(X)
         check_classification_targets(y)
 
@@ -282,8 +282,8 @@ class NearestCentroid(
         """
         check_is_fitted(self)
         if np.isclose(self.class_prior_, 1 / len(self.classes_)).all():
-            # `_validate_data` is called here since we are not calling `super()`
-            X = self._validate_data(X, accept_sparse="csr", reset=False)
+            # `validate_data` is called here since we are not calling `super()`
+            X = validate_data(self, X, accept_sparse="csr", reset=False)
             return self.classes_[
                 pairwise_distances_argmin(X, self.centroids_, metric=self.metric)
             ]
@@ -294,8 +294,8 @@ class NearestCentroid(
         # return discriminant scores, see eq. (18.2) p. 652 of the ESL.
         check_is_fitted(self, "centroids_")
 
-        X_normalized = self._validate_data(
-            X, copy=True, reset=False, accept_sparse="csr", dtype=np.float64
+        X_normalized = validate_data(
+            self, X, copy=True, reset=False, accept_sparse="csr", dtype=np.float64
         )
 
         discriminant_score = np.empty(
