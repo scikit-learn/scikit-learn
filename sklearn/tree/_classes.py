@@ -939,7 +939,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
     _parameter_constraints: dict = {
         **BaseDecisionTree._parameter_constraints,
-        "criterion": [StrOptions({"gini", "entropy", "log_loss"}), Hidden(Criterion)],
+        "criterion": [StrOptions({"gini", "entropy", "log_loss","fuzzy_extropy"}), Hidden(Criterion)],
         "class_weight": [dict, list, StrOptions({"balanced"}), None],
     }
 
@@ -1087,7 +1087,8 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         allow_nan = self.splitter in ("best", "random") and self.criterion in {
             "gini",
             "log_loss",
-            "entropy",
+            "entropy", 
+            "fuzzy_extropy"
         }
         tags.classifier_tags.multi_label = True
         tags.input_tags.allow_nan = allow_nan
@@ -1714,7 +1715,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         allow_nan = self.splitter == "random" and self.criterion in {
             "gini",
             "log_loss",
-            "entropy",
+            "entropy", 
+            "fuzzy_extropy"
         }
         tags.classifier_tags.multi_label = True
         tags.input_tags.allow_nan = allow_nan
