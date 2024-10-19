@@ -475,9 +475,16 @@ on a classifier, but not otherwise. Similarly, scorers for average precision
 that take a continuous prediction need to call ``decision_function`` for classifiers,
 but ``predict`` for regressors. This distinction between classifiers and regressors
 is implemented using the ``_estimator_type`` attribute, which takes a string value.
-It should be ``"classifier"`` for classifiers and ``"regressor"`` for
-regressors and ``"clusterer"`` for clustering methods, to work as expected.
-Inheriting from ``ClassifierMixin``, ``RegressorMixin`` or ``ClusterMixin``
+This attribute should have the following values to work as expected:
+
+- ``"classifier"`` for classifiers
+- ``"regressor"`` for regressors
+- ``"clusterer"`` for clustering methods
+- ``"outlier_detector"`` for outlier detectors
+- ``"DensityEstimator"`` for density estimators
+
+Inheriting from :class:`~base.ClassifierMixin`, :class:`~base.RegressorMixin`, :class:`~base.ClusterMixin`,
+:class:`~base.OutlierMixin` or :class:`~base.DensityMixin`,
 will set the attribute automatically.  When a meta-estimator needs to distinguish
 among estimator types, instead of checking ``_estimator_type`` directly, helpers
 like :func:`base.is_classifier` should be used.
@@ -561,15 +568,6 @@ for your estimator's tags. For example::
 
 You can create a new subclass of :class:`~sklearn.utils.Tags` if you wish
 to add new tags to the existing set.
-
-In addition to the tags, estimators also need to declare any non-optional
-parameters to ``__init__`` in the ``_required_parameters`` class attribute,
-which is a list or tuple.  If ``_required_parameters`` is only
-``["estimator"]`` or ``["base_estimator"]``, then the estimator will be
-instantiated with an instance of ``LogisticRegression`` (or
-``RidgeRegression`` if the estimator is a regressor) in the tests. The choice
-of these two models is somewhat idiosyncratic but both should provide robust
-closed-form solutions.
 
 .. _developer_api_set_output:
 

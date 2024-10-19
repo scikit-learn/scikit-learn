@@ -863,7 +863,10 @@ class OneToOneFeatureMixin:
         feature_names_out : ndarray of str objects
             Same as input features.
         """
-        check_is_fitted(self, "n_features_in_")
+        # Note that passing attributes="n_features_in_" forces check_is_fitted
+        # to check if the attribute is present. Otherwise it will pass on
+        # stateless estimators (requires_fit=False)
+        check_is_fitted(self, attributes="n_features_in_")
         return _check_feature_names_in(self, input_features)
 
 
@@ -1037,9 +1040,12 @@ class OutlierMixin:
 class MetaEstimatorMixin:
     """Mixin class for all meta estimators in scikit-learn.
 
-    This mixin defines the following functionality:
+    This mixin is empty, and only exists to indicate that the estimator is a
+    meta-estimator.
 
-    - define `_required_parameters` that specify the mandatory `estimator` parameter.
+    .. versionchanged:: 1.6
+        The `_required_parameters` is now removed and is unnecessary since tests are
+        refactored and don't use this anymore.
 
     Examples
     --------
@@ -1060,8 +1066,6 @@ class MetaEstimatorMixin:
     >>> estimator.estimator_
     LogisticRegression()
     """
-
-    _required_parameters = ["estimator"]
 
 
 class MultiOutputMixin:

@@ -7,7 +7,7 @@ Two scenarios where this script can be useful:
 - make sure that the latest versions of all the dependencies are used in the CI.
   There is a scheduled workflow that does this, see
   .github/workflows/update-lock-files.yml. This is still useful to run this
-  script when when the automated PR fails and for example some packages need to
+  script when the automated PR fails and for example some packages need to
   be pinned. You can add the pins to this script, run it, and open a PR with
   the changes.
 - bump minimum dependencies in sklearn/_min_dependencies.py. Running this
@@ -165,9 +165,6 @@ build_metadata_list = [
             # TODO: release scipy constraint when 1.13 is available in the "default"
             # channel.
             "scipy": "<1.12",
-            # TODO temporary to avoid a timeout in the no-OpenMP build, see
-            # https://github.com/scikit-learn/scikit-learn/pull/29486#issuecomment-2242359516
-            "meson": "<1.5",
         },
         # TODO: put cython, threadpoolctl and meson-python back to conda
         # dependencies when required version is available on the main channel

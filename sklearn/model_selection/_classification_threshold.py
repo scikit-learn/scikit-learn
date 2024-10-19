@@ -87,7 +87,6 @@ class BaseThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator
           error.
     """
 
-    _required_parameters = ["estimator"]
     _parameter_constraints: dict = {
         "estimator": [
             HasMethods(["fit", "predict_proba"]),
@@ -215,7 +214,7 @@ class BaseThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator
         tags.classifier_tags.multi_class = False
         tags._xfail_checks = {
             "check_classifiers_train": "Threshold at probability 0.5 does not hold",
-            "check_sample_weights_invariance": (
+            "check_sample_weight_equivalence": (
                 "Due to the cross-validation and sample ordering, removing a sample"
                 " is not strictly equal to putting is weight to zero. Specific unit"
                 " tests are added for TunedThresholdClassifierCV specifically."
