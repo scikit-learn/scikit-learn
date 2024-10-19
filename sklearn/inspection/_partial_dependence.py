@@ -259,29 +259,46 @@ def _partial_dependence_brute(
         in the `grid`.
     """
     predictions = []
-    averaged_predictions = []
 
     if response_method == "auto":
         response_method = (
             "predict" if is_regressor(est) else ["predict_proba", "decision_function"]
         )
 
-    X_eval = X.copy()
-    for new_values in grid:
-        for i, variable in enumerate(features):
-            _safe_assign(X_eval, new_values[i], column_indexer=variable)
+    # max memory of 1 GB
+    max_memory_bytes = 1_024 * 1_048_576
+    if hasattr(X, "nbytes"):
+        X_size_bytes = X.nbytes
+    else:  # pandas DataFrame
+        X_size_bytes = X.memory_usage(deep=True).sum()
+    total_memory_bytes = X_size_bytes + len(grid)
+    step_size = int(len(grid) // max(1, total_memory_bytes / max_memory_bytes))
 
-        # Note: predictions is of shape
-        # (n_points,) for non-multioutput regressors
-        # (n_points, n_tasks) for multioutput regressors
-        # (n_points, 1) for the regressors in cross_decomposition (I think)
-        # (n_points, 2) for binary classification
-        # (n_points, n_classes) for multiclass classification
+    for batch_start in range(0, len(grid), step_size):
+        batch_end = batch_start + step_size
+        batch_indices = np.arange(batch_start, batch_end)
+        X_eval = _safe_indexing(
+            X, indices=np.tile(np.arange(X.shape[0]), step_size), axis=0
+        )
+        grid_eval = _safe_indexing(
+            grid, indices=np.repeat(batch_indices, X.shape[0]), axis=0
+        )
+        _safe_assign(X_eval, values=grid_eval, column_indexer=features)
+
         pred, _ = _get_response_values(est, X_eval, response_method=response_method)
-
         predictions.append(pred)
-        # average over samples
-        averaged_predictions.append(np.average(pred, axis=0, weights=sample_weight))
+
+    # Note: predictions is of shape
+    # (n_points,) for non-multioutput regressors
+    # (n_points, n_tasks) for multioutput regressors
+    # (n_points, 1) for the regressors in cross_decomposition (I think)
+    # (n_points, 2) for binary classification
+    # (n_points, n_classes) for multiclass classification
+    predictions = np.concatenate(predictions, axis=0)
+    predictions = predictions.reshape(len(grid), predictions.shape[0] // len(grid), -1)
+
+    # average over samples
+    averaged_predictions = np.average(predictions, axis=1, weights=sample_weight)
 
     n_samples = X.shape[0]
 
@@ -290,7 +307,7 @@ def _partial_dependence_brute(
     #   already correct in those cases)
     # - n_tasks for multi-output regression
     # - n_classes for multiclass classification.
-    predictions = np.array(predictions).T
+    predictions = predictions.T
     if is_regressor(est) and predictions.ndim == 2:
         # non-multioutput regression, shape is (n_instances, n_points,)
         predictions = predictions.reshape(n_samples, -1)
@@ -305,7 +322,7 @@ def _partial_dependence_brute(
     #   already correct in those cases)
     # - n_tasks for multi-output regression
     # - n_classes for multiclass classification.
-    averaged_predictions = np.array(averaged_predictions).T
+    averaged_predictions = averaged_predictions.T
     if is_regressor(est) and averaged_predictions.ndim == 1:
         # non-multioutput regression, shape is (n_points,)
         averaged_predictions = averaged_predictions.reshape(1, -1)
