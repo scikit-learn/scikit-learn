@@ -265,29 +265,31 @@ def _partial_dependence_brute(
         is the number of instances in `X`, and `n_points` is the number of points
         in the `grid`.
     """
-    predictions = []
-
     if response_method == "auto":
         response_method = (
             "predict" if is_regressor(est) else ["predict_proba", "decision_function"]
         )
 
+    n_samples, n_points = X.shape[0], len(grid)
     max_memory_bytes = max_memory_mb * 1_048_576
     if hasattr(X, "nbytes"):
         X_size_bytes = X.nbytes
     else:  # pandas DataFrame
         X_size_bytes = X.memory_usage(deep=True).sum()
-    total_memory_bytes = X_size_bytes + len(grid)
-    step_size = int(len(grid) // max(1, total_memory_bytes / max_memory_bytes))
+    total_memory_bytes = X_size_bytes * n_points
+    step_size = int(n_points // max(1, total_memory_bytes / max_memory_bytes))
 
-    for batch_start in range(0, len(grid), step_size):
-        batch_end = batch_start + step_size
+    predictions = []
+    for batch_start in range(0, n_points, step_size):
+        # compute the effective step size that is smaller for the last batch
+        effective_step_size = min(step_size, n_points - batch_start)
+        batch_end = batch_start + effective_step_size
         batch_indices = np.arange(batch_start, batch_end)
         X_eval = _safe_indexing(
-            X, indices=np.tile(np.arange(X.shape[0]), step_size), axis=0
+            X, indices=np.tile(np.arange(n_samples), effective_step_size), axis=0
         )
         grid_eval = _safe_indexing(
-            grid, indices=np.repeat(batch_indices, X.shape[0]), axis=0
+            grid, indices=np.repeat(batch_indices, n_samples), axis=0
         )
         _safe_assign(X_eval, values=grid_eval, column_indexer=features)
 
@@ -301,24 +303,22 @@ def _partial_dependence_brute(
     # (n_points, 2) for binary classification
     # (n_points, n_classes) for multiclass classification
     predictions = np.concatenate(predictions, axis=0)
-    predictions = predictions.reshape(len(grid), predictions.shape[0] // len(grid), -1)
+    predictions = predictions.reshape(n_points, n_samples, -1)
 
     # average over samples
     averaged_predictions = np.average(predictions, axis=1, weights=sample_weight)
 
-    n_samples = X.shape[0]
-
-    # reshape to (n_targets, n_instances, n_points) where n_targets is:
+    # reshape to (n_targets, n_samples, n_points) where n_targets is:
     # - 1 for non-multioutput regression and binary classification (shape is
     #   already correct in those cases)
     # - n_tasks for multi-output regression
     # - n_classes for multiclass classification.
     predictions = predictions.T
     if is_regressor(est) and predictions.ndim == 2:
-        # non-multioutput regression, shape is (n_instances, n_points,)
+        # non-multioutput regression, shape is (n_samples, n_points,)
         predictions = predictions.reshape(n_samples, -1)
     elif is_classifier(est) and predictions.shape[0] == 2:
-        # Binary classification, shape is (2, n_instances, n_points).
+        # Binary classification, shape is (2, n_samples, n_points).
         # we output the effect of **positive** class
         predictions = predictions[1]
         predictions = predictions.reshape(n_samples, -1)
