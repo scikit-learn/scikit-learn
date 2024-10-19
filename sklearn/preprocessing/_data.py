@@ -4,6 +4,7 @@
 
 import warnings
 from numbers import Integral, Real
+from typing import Union
 
 import numpy as np
 from scipy import optimize, sparse, stats
@@ -38,7 +39,6 @@ from ..utils.validation import (
     validate_data,
 )
 from ._encoders import OneHotEncoder
-from typing import Union
 
 BOUNDS_THRESHOLD = 1e-7
 
