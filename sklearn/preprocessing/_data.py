@@ -38,6 +38,7 @@ from ..utils.validation import (
     validate_data,
 )
 from ._encoders import OneHotEncoder
+from typing import Union
 
 BOUNDS_THRESHOLD = 1e-7
 
@@ -283,6 +284,7 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     return X
 
 
+
 class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Transform features by scaling each feature to a given range.
 
@@ -405,7 +407,7 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     def __init__(
         self,
-        feature_range: tuple[float | int, float | int] = (0, 1),
+        feature_range: tuple[Union[float, int], Union[float, int]] = (0, 1),
         *,
         copy: bool = True,
         clip: bool = False,
