@@ -284,7 +284,6 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     return X
 
 
-
 class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Transform features by scaling each feature to a given range.
 
