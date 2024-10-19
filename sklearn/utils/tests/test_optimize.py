@@ -28,7 +28,7 @@ def test_newton_cg(global_random_seed):
         return grad(x), lambda x: A.T.dot(A.dot(x))
 
     assert_array_almost_equal(
-        _newton_cg(grad_hess, func, grad, x0, tol=1e-10)[0],
+        _newton_cg(grad_hess, func, grad, x0, tol=1e-7)[0],
         fmin_ncg(f=func, x0=x0, fprime=grad, fhess_p=hess),
     )
 
