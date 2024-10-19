@@ -23,6 +23,7 @@ from ..utils._param_validation import (
     HasMethods,
     Integral,
     Interval,
+    Real,
     StrOptions,
     validate_params,
 )
@@ -240,7 +241,7 @@ def _partial_dependence_brute(
         model output. If `None`, then samples are equally weighted. Note that
         `sample_weight` does not change the individual predictions.
 
-    max_memory_mb: int, default=1_024
+    max_memory_mb: float, default=1_024
         When `method="brute"`, it defines the maximum amount of memory in MB allowed
         when creating the matrix combining the grid of points and the original dataset.
         Larger values allow for bigger batches, reducing overheads, and thus allowing
@@ -277,7 +278,7 @@ def _partial_dependence_brute(
     else:  # pandas DataFrame
         X_size_bytes = X.memory_usage(deep=True).sum()
     total_memory_bytes = X_size_bytes * n_points
-    step_size = int(n_points // max(1, total_memory_bytes / max_memory_bytes))
+    step_size = max(1, int(n_points // max(1, total_memory_bytes / max_memory_bytes)))
 
     predictions = []
     for batch_start in range(0, n_points, step_size):
@@ -358,7 +359,7 @@ def _partial_dependence_brute(
         "grid_resolution": [Interval(Integral, 1, None, closed="left")],
         "method": [StrOptions({"auto", "recursion", "brute"})],
         "kind": [StrOptions({"average", "individual", "both"})],
-        "max_memory_mb": [Interval(Integral, 1, None, closed="left")],
+        "max_memory_mb": [Interval(Real, 0, None, closed="neither")],
     },
     prefer_skip_nested_validation=True,
 )
@@ -508,7 +509,7 @@ def partial_dependence(
 
         .. versionadded:: 0.24
 
-    max_memory_mb: int, default=1_024
+    max_memory_mb: float, default=1_024
         When `method="brute"`, it defines the maximum amount of memory in MB allowed
         when creating the matrix combining the grid of points and the original dataset.
         Larger values allow for bigger batches, reducing overheads, and thus allowing
