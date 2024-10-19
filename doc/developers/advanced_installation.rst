@@ -52,7 +52,7 @@ feature, code or documentation improvement).
 
    .. prompt:: bash $
 
-     git clone git://github.com/scikit-learn/scikit-learn.git  # add --depth 1 if your connection is slow
+     git clone git@github.com:scikit-learn/scikit-learn.git  # add --depth 1 if your connection is slow
      cd scikit-learn
 
    If you plan on submitting a pull-request, you should clone from your fork
@@ -99,7 +99,6 @@ feature, code or documentation improvement).
 
      pip install --editable . \
         --verbose --no-build-isolation \
-        --check-build-dependencies \
         --config-settings editable-verbose=true
 
 #. Check that the installed scikit-learn has a version number ending with
@@ -122,6 +121,9 @@ feature, code or documentation improvement).
     what is taking so long. Bonus: this means you only have to run the `pip
     install` command once, `sklearn` will automatically be rebuilt when
     importing `sklearn`.
+
+    Note that `--config-settings` is only supported in `pip` version 23.1 or
+    later. To upgrade `pip` to a compatible version, run `pip install -U pip`.
 
 Dependencies
 ------------

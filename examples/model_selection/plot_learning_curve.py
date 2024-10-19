@@ -13,6 +13,9 @@ models by looking at their computational cost and not only at their statistical
 accuracy.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # Learning Curve
 # ==============

@@ -1,0 +1,4 @@
+- :func:`sklearn.metrics.pairwise.euclidean_distances` and
+  :func:`sklearn.metrics.pairwise.rbf_kernel` now supports Array API compatible
+  inputs.
+  By :user:`Omar Salman <OmarManzoor>`

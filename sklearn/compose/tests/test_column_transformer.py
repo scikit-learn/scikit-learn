@@ -13,6 +13,7 @@ import pytest
 from numpy.testing import assert_allclose
 from scipy import sparse
 
+from sklearn import config_context
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.compose import (
     ColumnTransformer,
@@ -1866,6 +1867,72 @@ def test_verbose_feature_names_out_true(transformers, remainder, expected_names)
     assert_array_equal(names, expected_names)
 
 
+def _feature_names_out_callable_name_clash(trans_name: str, feat_name: str):
+    return f"{trans_name[:2]}++{feat_name}"
+
+
+def _feature_names_out_callable_upper(trans_name: str, feat_name: str):
+    return f"{trans_name.upper()}={feat_name.upper()}"
+
+
+@pytest.mark.parametrize(
+    "transformers, remainder, verbose_feature_names_out, expected_names",
+    [
+        (
+            [
+                ("bycol1", TransWithNames(), ["d", "c"]),
+                ("bycol2", "passthrough", ["d"]),
+            ],
+            "passthrough",
+            _feature_names_out_callable_name_clash,
+            ["by++d", "by++c", "by++d", "re++a", "re++b"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(), ["d", "c"]),
+                ("bycol2", "passthrough", ["d"]),
+            ],
+            "drop",
+            "{feature_name}-{transformer_name}",
+            ["d-bycol1", "c-bycol1", "d-bycol2"],
+        ),
+        (
+            [
+                ("bycol1", TransWithNames(), ["d", "c"]),
+                ("bycol2", "passthrough", slice("c", "d")),
+            ],
+            "passthrough",
+            _feature_names_out_callable_upper,
+            [
+                "BYCOL1=D",
+                "BYCOL1=C",
+                "BYCOL2=C",
+                "BYCOL2=D",
+                "REMAINDER=A",
+                "REMAINDER=B",
+            ],
+        ),
+    ],
+)
+def test_verbose_feature_names_out_callable_or_str(
+    transformers, remainder, verbose_feature_names_out, expected_names
+):
+    """Check feature_names_out for verbose_feature_names_out=True (default)"""
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame([[1, 2, 3, 4]], columns=["a", "b", "c", "d"])
+    ct = ColumnTransformer(
+        transformers,
+        remainder=remainder,
+        verbose_feature_names_out=verbose_feature_names_out,
+    )
+    ct.fit(df)
+
+    names = ct.get_feature_names_out()
+    assert isinstance(names, np.ndarray)
+    assert names.dtype == object
+    assert_array_equal(names, expected_names)
+
+
 @pytest.mark.parametrize(
     "transformers, remainder, expected_names",
     [
@@ -2619,8 +2686,8 @@ def test_routing_passed_metadata_not_supported(method):
         getattr(trs, method)([[1]], sample_weight=[1], prop="a")
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize("method", ["transform", "fit_transform", "fit"])
+@config_context(enable_metadata_routing=True)
 def test_metadata_routing_for_column_transformer(method):
     """Test that metadata is routed correctly for column transformer."""
     X = np.array([[0, 1, 2], [2, 4, 6]]).T
@@ -2656,7 +2723,7 @@ def test_metadata_routing_for_column_transformer(method):
         )
 
 
-@pytest.mark.usefixtures("enable_slep006")
+@config_context(enable_metadata_routing=True)
 def test_metadata_routing_no_fit_transform():
     """Test metadata routing when the sub-estimator doesn't implement
     ``fit_transform``."""
@@ -2691,8 +2758,8 @@ def test_metadata_routing_no_fit_transform():
     trs.fit_transform(X, y, sample_weight=sample_weight, metadata=metadata)
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize("method", ["transform", "fit_transform", "fit"])
+@config_context(enable_metadata_routing=True)
 def test_metadata_routing_error_for_column_transformer(method):
     """Test that the right error is raised when metadata is not requested."""
     X = np.array([[0, 1, 2], [2, 4, 6]]).T
@@ -2712,7 +2779,7 @@ def test_metadata_routing_error_for_column_transformer(method):
             getattr(trs, method)(X, y, sample_weight=sample_weight, metadata=metadata)
 
 
-@pytest.mark.usefixtures("enable_slep006")
+@config_context(enable_metadata_routing=True)
 def test_get_metadata_routing_works_without_fit():
     # Regression test for https://github.com/scikit-learn/scikit-learn/issues/28186
     # Make sure ct.get_metadata_routing() works w/o having called fit.
@@ -2720,7 +2787,7 @@ def test_get_metadata_routing_works_without_fit():
     ct.get_metadata_routing()
 
 
-@pytest.mark.usefixtures("enable_slep006")
+@config_context(enable_metadata_routing=True)
 def test_remainder_request_always_present():
     # Test that remainder request is always present.
     ct = ColumnTransformer(
@@ -2733,7 +2800,7 @@ def test_remainder_request_always_present():
     assert router.consumes("fit", ["metadata"]) == set(["metadata"])
 
 
-@pytest.mark.usefixtures("enable_slep006")
+@config_context(enable_metadata_routing=True)
 def test_unused_transformer_request_present():
     # Test that the request of a transformer is always present even when not
     # used due to no selected columns.

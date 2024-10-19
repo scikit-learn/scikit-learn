@@ -284,11 +284,11 @@ of shape ``(n_samples, n_outputs)`` then the resulting estimator will:
   ``predict_proba``.
 
 The use of multi-output trees for regression is demonstrated in
-:ref:`sphx_glr_auto_examples_tree_plot_tree_regression_multioutput.py`. In this example, the input
+:ref:`sphx_glr_auto_examples_tree_plot_tree_regression.py`. In this example, the input
 X is a single real value and the outputs Y are the sine and cosine of X.
 
-.. figure:: ../auto_examples/tree/images/sphx_glr_plot_tree_regression_multioutput_001.png
-   :target: ../auto_examples/tree/plot_tree_regression_multioutput.html
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_tree_regression_002.png
+   :target: ../auto_examples/tree/plot_tree_regression.html
    :scale: 75
    :align: center
 
@@ -304,7 +304,6 @@ the lower half of those faces.
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_tree_plot_tree_regression_multioutput.py`
 * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`
 
 .. rubric:: References
@@ -552,17 +551,18 @@ Mean Squared Error:
 
     H(Q_m) = \frac{1}{n_m} \sum_{y \in Q_m} (y - \bar{y}_m)^2
 
-Half Poisson deviance:
+Mean Poisson deviance:
 
 .. math::
 
-    H(Q_m) = \frac{1}{n_m} \sum_{y \in Q_m} (y \log\frac{y}{\bar{y}_m}
+    H(Q_m) = \frac{2}{n_m} \sum_{y \in Q_m} (y \log\frac{y}{\bar{y}_m}
     - y + \bar{y}_m)
 
 Setting `criterion="poisson"` might be a good choice if your target is a count
 or a frequency (count per some unit). In any case, :math:`y >= 0` is a
 necessary condition to use this criterion. Note that it fits much slower than
-the MSE criterion.
+the MSE criterion. For performance reasons the actual implementation minimizes
+the half mean poisson deviance, i.e. the mean poisson deviance divided by 2.
 
 Mean Absolute Error:
 
@@ -579,10 +579,20 @@ Note that it fits much slower than the MSE criterion.
 Missing Values Support
 ======================
 
-:class:`DecisionTreeClassifier` and :class:`DecisionTreeRegressor`
-have built-in support for missing values when `splitter='best'` and criterion is
+:class:`DecisionTreeClassifier`, :class:`DecisionTreeRegressor`
+have built-in support for missing values using `splitter='best'`, where
+the splits are determined in a greedy fashion.
+:class:`ExtraTreeClassifier`, and :class:`ExtraTreeRegressor` have built-in
+support for missing values for `splitter='random'`, where the splits
+are determined randomly. For more details on how the splitter differs on
+non-missing values, see the :ref:`Forest section <forest>`.
+
+The criterion supported when there are missing-values are
 `'gini'`, `'entropy`', or `'log_loss'`, for classification or
 `'squared_error'`, `'friedman_mse'`, or `'poisson'` for regression.
+
+First we will describe how :class:`DecisionTreeClassifier`, :class:`DecisionTreeRegressor`
+handle missing-values in the data.
 
 For each potential threshold on the non-missing data, the splitter will evaluate
 the split with all the missing values going to the left node or the right node.
@@ -633,6 +643,22 @@ Decisions are made as follows:
     >>> X_test = np.array([np.nan]).reshape(-1, 1)
     >>> tree.predict(X_test)
     array([1])
+
+:class:`ExtraTreeClassifier`, and :class:`ExtraTreeRegressor` handle missing values
+in a slightly different way. When splitting a node, a random threshold will be chosen
+to split the non-missing values on. Then the non-missing values will be sent to the
+left and right child based on the randomly selected threshold, while the missing
+values will also be randomly sent to the left or right child. This is repeated for
+every feature considered at each split. The best split among these is chosen.
+
+During prediction, the treatment of missing-values is the same as that of the
+decision tree:
+
+- By default when predicting, the samples with missing values are classified
+  with the class used in the split found during training.
+
+- If no missing values are seen during training for a given feature, then during
+  prediction missing values are mapped to the child with the most samples.
 
 .. _minimal_cost_complexity_pruning:
 
