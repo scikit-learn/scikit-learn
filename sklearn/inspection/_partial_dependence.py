@@ -698,7 +698,12 @@ def partial_dependence(
 
     if method == "brute":
         averaged_predictions, predictions = _partial_dependence_brute(
-            estimator, grid, features_indices, X, response_method, sample_weight,
+            estimator,
+            grid,
+            features_indices,
+            X,
+            response_method,
+            sample_weight,
             max_memory_mb,
         )
 
