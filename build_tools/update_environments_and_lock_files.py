@@ -7,7 +7,7 @@ Two scenarios where this script can be useful:
 - make sure that the latest versions of all the dependencies are used in the CI.
   There is a scheduled workflow that does this, see
   .github/workflows/update-lock-files.yml. This is still useful to run this
-  script when when the automated PR fails and for example some packages need to
+  script when the automated PR fails and for example some packages need to
   be pinned. You can add the pins to this script, run it, and open a PR with
   the changes.
 - bump minimum dependencies in sklearn/_min_dependencies.py. Running this

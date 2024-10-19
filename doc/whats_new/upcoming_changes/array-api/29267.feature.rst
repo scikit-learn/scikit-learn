@@ -1,0 +1,3 @@
+- :func:`sklearn.metrics.pairwise.chi2_kernel` now supports Array API
+  compatible inputs.
+  By :user:`Yaroslav Korobko <Tialo>`
