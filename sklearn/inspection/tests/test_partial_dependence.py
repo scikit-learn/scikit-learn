@@ -945,15 +945,17 @@ def test_partial_dependence_max_memory_mb():
         est,
         features=[target_variable],
         X=X,
+        grid_resolution=100,
         method="brute",
         kind="both",
         max_memory_mb=1e-8,
     )
-    # large `max_memory_mb` allows to use a batch of 200 points
+    # large `max_memory_mb` allows to use a batch of 100 points
     pd_large_batch = partial_dependence(
         est,
         features=[target_variable],
         X=X,
+        grid_resolution=100,
         method="brute",
         kind="both",
         max_memory_mb=1e8,
