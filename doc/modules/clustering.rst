@@ -1221,6 +1221,11 @@ If ``n_clusters`` is set to None, the subclusters from the leaves are directly
 read off, otherwise a global clustering step labels these subclusters into global
 clusters (labels) and the samples are mapped to the global label of the nearest subcluster.
 
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_cluster_plot_birch_vs_minibatchkmeans.py` as an instance
+  of computational time required by these two methods.
+
 .. dropdown:: Algorithm description
 
   - A new sample is inserted into the root of the CF Tree which is a CF Node. It
@@ -1250,9 +1255,6 @@ clusters (labels) and the samples are mapped to the global label of the nearest 
   - If the number of instances of data needs to be reduced, or if one wants a
     large number of subclusters either as a preprocessing step or otherwise,
     BIRCH is more useful than MiniBatchKMeans.
-  - See :ref:`sphx_glr_auto_examples_cluster_plot_birch_vs_minibatchkmeans.py` as an example
-    of computational time required by these two methods applied to a synthetic dataset
-    having 25,000 samples and 2 features.
 
   .. image:: ../auto_examples/cluster/images/sphx_glr_plot_birch_vs_minibatchkmeans_001.png
     :target: ../auto_examples/cluster/plot_birch_vs_minibatchkmeans.html
