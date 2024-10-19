@@ -1,5 +1,6 @@
-- Add `max_memory_mb` parameter to `partial_dependence` to control the memory
-  footprint during the computation of partial dependence when `method="brute"`.
-  A large value allows for bigger batches, reducing overheads, and thus
-  allowing some computation speed-up at the cost of a larger memory footprint.
+- Add `max_memory_mb` parameter to :func:`inspect.partial_dependence` and
+  :class:`inspect.PartialDependenceDisplay` to control the memory footprint
+  during the computation of partial dependence when `method="brute"`. A large
+  value allows for bigger batches, reducing overheads, and thus allowing some
+  computation speed-up at the cost of a larger memory footprint.
   By :user:`Guillaume Lemaitre <glemaitre>`
