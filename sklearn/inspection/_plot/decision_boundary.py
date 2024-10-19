@@ -331,6 +331,7 @@ class DecisionBoundaryDisplay:
             Specifies how to color each class when plotting multiclass
             'predict_proba' or 'decision_function' and `class_of_interest` is
             None. Ignored in all other cases.
+
             Possible inputs are:
 
             * list: list of Matplotlib `color
