@@ -19,19 +19,6 @@ Version 1.6
 
 .. rubric:: Code and documentation contributors
 
-:mod:`sklearn.neighbors`
-........................
-
-- |Enhancement| Add :meth:`neighbors.NearestCentroid.decision_function`,
-  :meth:`neighbors.NearestCentroid.predict_proba` and
-  :meth:`neighbors.NearestCentroid.predict_log_proba`
-  to the :class:`neighbors.NearestCentroid` estimator class.
-  :pr:`26689` by :user:`Matthew Ning <NoPenguinsLand>`.
-
-- |Enhancement| Support the case when `X` is sparse and `shrinking_threshold`
-  is not `None` in :class:`neighbors.NearestCentroid`.
-  :pr:`26689` by :user:`Matthew Ning <NoPenguinsLand>`.
-
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.5, including:
 
