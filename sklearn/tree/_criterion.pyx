@@ -638,7 +638,7 @@ cdef class FuzzyExtropy(ClassificationCriterion):
     """
 
     cdef float64_t node_impurity(self) noexcept nogil:
-        ""Evaluate the impurity of the current node.
+        """Evaluate the impurity of the current node.
 
         Evaluate the fuzzy-extropy criterion as impurity of the current node,
         i.e. the impurity of sample_indices[start:end]. The smaller the impurity the
