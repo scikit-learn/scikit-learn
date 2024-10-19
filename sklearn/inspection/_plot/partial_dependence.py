@@ -485,7 +485,7 @@ class PartialDependenceDisplay:
             dependencies and doing weighted averages requires using the slower
             `method='brute'`.
 
-        max_memory_mb: int, default=1_024
+        max_memory_mb : float, default=1_024
             When `method="brute"`, it defines the maximum amount of memory in MB allowed
             when creating the matrix combining the grid of points and the original
             dataset. Larger values allow for bigger batches, reducing overheads, and

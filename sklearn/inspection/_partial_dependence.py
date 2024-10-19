@@ -241,7 +241,7 @@ def _partial_dependence_brute(
         model output. If `None`, then samples are equally weighted. Note that
         `sample_weight` does not change the individual predictions.
 
-    max_memory_mb: float, default=1_024
+    max_memory_mb : float, default=1_024
         When `method="brute"`, it defines the maximum amount of memory in MB allowed
         when creating the matrix combining the grid of points and the original dataset.
         Larger values allow for bigger batches, reducing overheads, and thus allowing
@@ -509,7 +509,7 @@ def partial_dependence(
 
         .. versionadded:: 0.24
 
-    max_memory_mb: float, default=1_024
+    max_memory_mb : float, default=1_024
         When `method="brute"`, it defines the maximum amount of memory in MB allowed
         when creating the matrix combining the grid of points and the original dataset.
         Larger values allow for bigger batches, reducing overheads, and thus allowing
