@@ -487,10 +487,10 @@ class PartialDependenceDisplay:
 
         max_memory_mb: int, default=1_024
             When `method="brute"`, it defines the maximum amount of memory in MB allowed
-            when creating the matrix combining the grid of points and the original dataset.
-            Larger values allow for bigger batches, reducing overheads, and thus allowing
-            some computation speed-up at the cost of a larger memory footprint. By default,
-            this matrix should not exceed 1 GB.
+            when creating the matrix combining the grid of points and the original
+            dataset. Larger values allow for bigger batches, reducing overheads, and
+            thus allowing some computation speed-up at the cost of a larger memory
+            footprint. By default, this matrix should not exceed 1 GB.
 
             .. versionadded:: 1.6
 
