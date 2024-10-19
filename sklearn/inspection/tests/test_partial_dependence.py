@@ -1,6 +1,7 @@
 """
 Testing for the partial dependence module.
 """
+import time
 
 import numpy as np
 import pytest
@@ -941,6 +942,7 @@ def test_partial_dependence_max_memory_mb():
     est = RandomForestRegressor(n_jobs=3).fit(X, y)
 
     # small `max_memory_mb` forces to use a batch of one point
+    start = time.time()
     pd_small_batch = partial_dependence(
         est,
         features=[target_variable],
@@ -950,7 +952,10 @@ def test_partial_dependence_max_memory_mb():
         kind="both",
         max_memory_mb=1e-8,
     )
+    end = time.time()
+    elapsed_small_batch = end - start
     # large `max_memory_mb` allows to use a batch of 100 points
+    start = time.time()
     pd_large_batch = partial_dependence(
         est,
         features=[target_variable],
@@ -960,6 +965,10 @@ def test_partial_dependence_max_memory_mb():
         kind="both",
         max_memory_mb=1e8,
     )
+    end = time.time()
+    elapsed_large_batch = end - start
 
+    # check that the computation with a small batch is slower
+    assert elapsed_small_batch > elapsed_large_batch
     assert_allclose(pd_small_batch["average"], pd_large_batch["average"])
     assert_allclose(pd_small_batch["individual"], pd_large_batch["individual"])
