@@ -269,6 +269,7 @@ class PartialDependenceDisplay:
         contour_kw=None,
         ax=None,
         kind="average",
+        max_memory_mb=1_024,
         centered=False,
         subsample=1000,
         random_state=None,
@@ -483,6 +484,15 @@ class PartialDependenceDisplay:
             `kind='average'` and `sample_weights=None`. Computing individual
             dependencies and doing weighted averages requires using the slower
             `method='brute'`.
+
+        max_memory_mb: int, default=1_024
+            When `method="brute"`, it defines the maximum amount of memory in MB allowed
+            when creating the matrix combining the grid of points and the original dataset.
+            Larger values allow for bigger batches, reducing overheads, and thus allowing
+            some computation speed-up at the cost of a larger memory footprint. By default,
+            this matrix should not exceed 1 GB.
+
+            .. versionadded:: 1.6
 
         centered : bool, default=False
             If `True`, the ICE and PD lines will start at the origin of the
@@ -717,6 +727,7 @@ class PartialDependenceDisplay:
                 grid_resolution=grid_resolution,
                 percentiles=percentiles,
                 kind=kind_plot,
+                max_memory_mb=max_memory_mb,
             )
             for kind_plot, fxs in zip(kind_, features)
         )
