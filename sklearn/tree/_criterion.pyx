@@ -607,9 +607,43 @@ cdef class ClassificationCriterion(Criterion):
 
         return self._check_monotonicity(monotonic_cst, lower_bound, upper_bound, value_left, value_right)
 
+
 cdef class FuzzyExtropy(ClassificationCriterion):
+    r"""
+    Fuzzy Extropy impurity criterion.
+
+    This criterion handles cases where the target is a classification problem taking 
+    values 0, 1, ..., K-2, K-1. If node m represents a region Rm with Nm observations, 
+    then let:
+
+        p_i = 1 / Nm ∑_{x_i in Rm} I(y_i = class k)
+
+    be the probability (proportion) of class k observations in node m, where p_i 
+    represents the probability of an instance belonging to a particular class.
+
+    The Fuzzy Extropy is defined as:
+
+        J(X) = -∑_{i=1}^n (1 - p_i) * log(1 - p_i)
+
+    Where:
+    - n is the number of classes (K),
+    - p_i is the probability of class i in the node.
+
+    This criterion measures the fuzziness or uncertainty of the classification 
+    outcomes in a decision node. It differs from traditional entropy by focusing 
+    on the complement probabilities (1 - p_i) rather than p_i directly. As the 
+    probability distribution becomes more uniform, the extropy increases, 
+    indicating higher uncertainty. Conversely, when one class dominates (high p_i), 
+    the extropy value decreases, signaling less uncertainty.
+    """
 
     cdef float64_t node_impurity(self) noexcept nogil:
+        ""Evaluate the impurity of the current node.
+
+        Evaluate the fuzzy-extropy criterion as impurity of the current node,
+        i.e. the impurity of sample_indices[start:end]. The smaller the impurity the
+        better.
+        """
         cdef float64_t extropy = 0.0
         cdef float64_t count_k
         cdef intp_t k
@@ -627,6 +661,18 @@ cdef class FuzzyExtropy(ClassificationCriterion):
 
     cdef void children_impurity(self, float64_t* impurity_left,
                                 float64_t* impurity_right) noexcept nogil:
+        """Evaluate the impurity in children nodes.
+
+        i.e. the impurity of the left child (sample_indices[start:pos]) and the
+        impurity the right child (sample_indices[pos:end]).
+
+        Parameters
+        ----------
+        impurity_left : float64_t pointer
+            The memory address to save the impurity of the left node
+        impurity_right : float64_t pointer
+            The memory address to save the impurity of the right node
+        """
         cdef float64_t extropy_left = 0.0
         cdef float64_t extropy_right = 0.0
         cdef float64_t count_k
