@@ -403,7 +403,16 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         "clip": ["boolean"],
     }
 
-    def __init__(self, feature_range=(0, 1), *, copy=True, clip=False):
+    def __init__(
+        self,
+        feature_range: tuple[float | int, float | int] = (0, 1),
+        *,
+        copy: bool = True,
+        clip: bool = False
+    ):
+        assert isinstance(feature_range, tuple), f"feature_range must be a tuple, got: {type(feature_range)}"
+        assert isinstance(copy, bool), f"copy must be a bool, got: {type(copy)}"
+        assert isinstance(clip, bool), f"clip must be a bool, got: {type(clip)}"
         self.feature_range = feature_range
         self.copy = copy
         self.clip = clip
