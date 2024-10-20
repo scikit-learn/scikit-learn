@@ -24,7 +24,12 @@ from sklearn.metrics.tests.test_pairwise_distances_reduction import (
     assert_compatible_argkmin_results,
     assert_compatible_radius_results,
 )
-from sklearn.model_selection import cross_val_score, train_test_split
+from sklearn.model_selection import (
+    LeaveOneOut,
+    cross_val_predict,
+    cross_val_score,
+    train_test_split,
+)
 from sklearn.neighbors import (
     VALID_METRICS_SPARSE,
     KNeighborsRegressor,
@@ -2390,3 +2395,41 @@ def test_KNeighborsClassifier_raise_on_all_zero_weights():
 
     with pytest.raises(ValueError, match=msg):
         est.predict_proba([[1.1, 1.1]])
+
+
+@pytest.mark.parametrize(
+    "nn_model",
+    [
+        neighbors.KNeighborsClassifier(n_neighbors=10),
+        neighbors.RadiusNeighborsClassifier(radius=5.0),
+    ],
+)
+def test_neighbor_classifiers_loocv(nn_model):
+    """Check that `predict` and related functions work fine with X=None"""
+    X, y = datasets.make_blobs(n_samples=500, centers=5, n_features=2, random_state=0)
+
+    loocv = cross_val_score(nn_model, X, y, cv=LeaveOneOut())
+    nn_model.fit(X, y)
+
+    assert np.all(loocv == (nn_model.predict(None) == y))
+    assert np.mean(loocv) == nn_model.score(None, y)
+    assert nn_model.score(None, y) < nn_model.score(X, y)
+
+
+@pytest.mark.parametrize(
+    "nn_model",
+    [
+        neighbors.KNeighborsRegressor(n_neighbors=10),
+        neighbors.RadiusNeighborsRegressor(radius=0.5),
+    ],
+)
+def test_neighbor_regressors_loocv(nn_model):
+    """Check that `predict` and related functions work fine with X=None"""
+    X, y = datasets.load_diabetes(return_X_y=True)
+
+    # Only checking cross_val_predict and not cross_val_score because
+    # cross_val_score does not work with LeaveOneOut() for a regressor
+    loocv = cross_val_predict(nn_model, X, y, cv=LeaveOneOut())
+    nn_model.fit(X, y)
+
+    assert np.all(loocv == nn_model.predict(None))
