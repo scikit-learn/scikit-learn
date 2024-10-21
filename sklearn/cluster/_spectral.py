@@ -401,6 +401,9 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <spectral_clustering>`.
 
+    For a comparison of Spectral clustering with other clustering algorithms, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
+
     Parameters
     ----------
     n_clusters : int, default=8
