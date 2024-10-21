@@ -1,15 +1,21 @@
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
-from sklearn.datasets import make_classification, make_regression
 import numpy as np
 import pytest
 
-from sklearn.ensemble import HistGradientBoostingRegressor
-from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.datasets import make_classification, make_regression
+from sklearn.ensemble import (
+    HistGradientBoostingClassifier,
+    HistGradientBoostingRegressor,
+)
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.ensemble._hist_gradient_boosting.utils import get_equivalent_estimator
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
 
 
+# TODO(1.8) remove the filterwarnings decorator
+@pytest.mark.filterwarnings(
+    "ignore:'force_all_finite' was renamed to 'ensure_all_finite':FutureWarning"
+)
 @pytest.mark.parametrize("seed", range(5))
 @pytest.mark.parametrize(
     "loss",
@@ -116,6 +122,10 @@ def test_same_predictions_regression(
         assert np.mean(np.isclose(pred_lightgbm, pred_sklearn, rtol=1e-4)) > 1 - 0.01
 
 
+# TODO(1.8) remove the filterwarnings decorator
+@pytest.mark.filterwarnings(
+    "ignore:'force_all_finite' was renamed to 'ensure_all_finite':FutureWarning"
+)
 @pytest.mark.parametrize("seed", range(5))
 @pytest.mark.parametrize("min_samples_leaf", (1, 20))
 @pytest.mark.parametrize(
@@ -180,7 +190,6 @@ def test_same_predictions_classification(
     np.testing.assert_almost_equal(acc_lightgbm, acc_sklearn)
 
     if max_leaf_nodes < 10 and n_samples >= 1000:
-
         pred_lightgbm = est_lightgbm.predict(X_test)
         pred_sklearn = est_sklearn.predict(X_test)
         assert np.mean(pred_sklearn == pred_lightgbm) > 0.89
@@ -190,6 +199,10 @@ def test_same_predictions_classification(
         np.testing.assert_almost_equal(acc_lightgbm, acc_sklearn, decimal=2)
 
 
+# TODO(1.8) remove the filterwarnings decorator
+@pytest.mark.filterwarnings(
+    "ignore:'force_all_finite' was renamed to 'ensure_all_finite':FutureWarning"
+)
 @pytest.mark.parametrize("seed", range(5))
 @pytest.mark.parametrize("min_samples_leaf", (1, 20))
 @pytest.mark.parametrize(
@@ -263,7 +276,6 @@ def test_same_predictions_multiclass_classification(
     np.testing.assert_allclose(acc_lightgbm, acc_sklearn, rtol=0, atol=5e-2)
 
     if max_leaf_nodes < 10 and n_samples >= 1000:
-
         pred_lightgbm = est_lightgbm.predict(X_test)
         pred_sklearn = est_sklearn.predict(X_test)
         assert np.mean(pred_sklearn == pred_lightgbm) > 0.89

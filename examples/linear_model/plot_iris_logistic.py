@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 =========================================================
 Logistic Regression 3-class Classifier
@@ -11,14 +10,14 @@ are colored according to their labels.
 
 """
 
-# Code source: Gaël Varoquaux
-# Modified for documentation by Jaques Grobler
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
-from sklearn.linear_model import LogisticRegression
+
 from sklearn import datasets
 from sklearn.inspection import DecisionBoundaryDisplay
+from sklearn.linear_model import LogisticRegression
 
 # import some data to play with
 iris = datasets.load_iris()

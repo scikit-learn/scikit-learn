@@ -23,16 +23,19 @@ classifier when the averaged probability is calculated.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from itertools import product
 
 import matplotlib.pyplot as plt
 
 from sklearn import datasets
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import SVC
 from sklearn.ensemble import VotingClassifier
 from sklearn.inspection import DecisionBoundaryDisplay
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
 
 # Loading some example data
 iris = datasets.load_iris()

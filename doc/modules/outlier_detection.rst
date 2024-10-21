@@ -123,19 +123,19 @@ refer to the example
 :ref:`sphx_glr_auto_examples_miscellaneous_plot_anomaly_comparison.py` and the
 sections hereunder.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * See :ref:`sphx_glr_auto_examples_miscellaneous_plot_anomaly_comparison.py`
-    for a comparison of the :class:`svm.OneClassSVM`, the
-    :class:`ensemble.IsolationForest`, the
-    :class:`neighbors.LocalOutlierFactor` and
-    :class:`covariance.EllipticEnvelope`.
+* See :ref:`sphx_glr_auto_examples_miscellaneous_plot_anomaly_comparison.py`
+  for a comparison of the :class:`svm.OneClassSVM`, the
+  :class:`ensemble.IsolationForest`, the
+  :class:`neighbors.LocalOutlierFactor` and
+  :class:`covariance.EllipticEnvelope`.
 
-  * See :ref:`sphx_glr_auto_examples_miscellaneous_plot_outlier_detection_bench.py`
-    for an example showing how to evaluate outlier detection estimators,
-    the :class:`neighbors.LocalOutlierFactor` and the
-    :class:`ensemble.IsolationForest`, using ROC curves from
-    :class:`metrics.RocCurveDisplay`.
+* See :ref:`sphx_glr_auto_examples_miscellaneous_plot_outlier_detection_bench.py`
+  for an example showing how to evaluate outlier detection estimators,
+  the :class:`neighbors.LocalOutlierFactor` and the
+  :class:`ensemble.IsolationForest`, using ROC curves from
+  :class:`metrics.RocCurveDisplay`.
 
 Novelty Detection
 =================
@@ -167,18 +167,18 @@ implementation. The `nu` parameter, also known as the margin of
 the One-Class SVM, corresponds to the probability of finding a new,
 but regular, observation outside the frontier.
 
-.. topic:: References:
+.. rubric:: References
 
-    * `Estimating the support of a high-dimensional distribution
-      <https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-99-87.pdf>`_
-      Schölkopf, Bernhard, et al. Neural computation 13.7 (2001): 1443-1471.
+* `Estimating the support of a high-dimensional distribution
+  <https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-99-87.pdf>`_
+  Schölkopf, Bernhard, et al. Neural computation 13.7 (2001): 1443-1471.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-   * See :ref:`sphx_glr_auto_examples_svm_plot_oneclass.py` for visualizing the
-     frontier learned around some data by a
-     :class:`svm.OneClassSVM` object.
-   * :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`
+* See :ref:`sphx_glr_auto_examples_svm_plot_oneclass.py` for visualizing the
+  frontier learned around some data by a :class:`svm.OneClassSVM` object.
+
+* :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`
 
 .. figure:: ../auto_examples/svm/images/sphx_glr_plot_oneclass_001.png
    :target: ../auto_examples/svm/plot_oneclass.html
@@ -196,11 +196,11 @@ approximate the solution of a kernelized :class:`svm.OneClassSVM` whose
 complexity is at best quadratic in the number of samples. See section
 :ref:`sgd_online_one_class_svm` for more details.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * See :ref:`sphx_glr_auto_examples_linear_model_plot_sgdocsvm_vs_ocsvm.py`
-    for an illustration of the approximation of a kernelized One-Class SVM
-    with the `linear_model.SGDOneClassSVM` combined with kernel approximation.
+* See :ref:`sphx_glr_auto_examples_linear_model_plot_sgdocsvm_vs_ocsvm.py`
+  for an illustration of the approximation of a kernelized One-Class SVM
+  with the `linear_model.SGDOneClassSVM` combined with kernel approximation.
 
 
 Outlier Detection
@@ -238,18 +238,22 @@ This strategy is illustrated below.
    :align: center
    :scale: 75%
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-   * See :ref:`sphx_glr_auto_examples_covariance_plot_mahalanobis_distances.py` for
-     an illustration of the difference between using a standard
-     (:class:`covariance.EmpiricalCovariance`) or a robust estimate
-     (:class:`covariance.MinCovDet`) of location and covariance to
-     assess the degree of outlyingness of an observation.
+* See :ref:`sphx_glr_auto_examples_covariance_plot_mahalanobis_distances.py` for
+  an illustration of the difference between using a standard
+  (:class:`covariance.EmpiricalCovariance`) or a robust estimate
+  (:class:`covariance.MinCovDet`) of location and covariance to
+  assess the degree of outlyingness of an observation.
 
-.. topic:: References:
+* See :ref:`sphx_glr_auto_examples_applications_plot_outlier_detection_wine.py`
+  for an example of robust covariance estimation on a real data set.
 
-    * Rousseeuw, P.J., Van Driessen, K. "A fast algorithm for the minimum
-      covariance determinant estimator" Technometrics 41(3), 212 (1999)
+
+.. rubric:: References
+
+* Rousseeuw, P.J., Van Driessen, K. "A fast algorithm for the minimum
+  covariance determinant estimator" Technometrics 41(3), 212 (1999)
 
 .. _isolation_forest:
 
@@ -299,22 +303,22 @@ allows you to add more trees to an already fitted model::
   >>> clf.set_params(n_estimators=20)  # add 10 more trees  # doctest: +SKIP
   >>> clf.fit(X)  # fit the added trees  # doctest: +SKIP
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-   * See :ref:`sphx_glr_auto_examples_ensemble_plot_isolation_forest.py` for
-     an illustration of the use of IsolationForest.
+* See :ref:`sphx_glr_auto_examples_ensemble_plot_isolation_forest.py` for
+  an illustration of the use of IsolationForest.
 
-   * See :ref:`sphx_glr_auto_examples_miscellaneous_plot_anomaly_comparison.py`
-     for a comparison of :class:`ensemble.IsolationForest` with
-     :class:`neighbors.LocalOutlierFactor`,
-     :class:`svm.OneClassSVM` (tuned to perform like an outlier detection
-     method), :class:`linear_model.SGDOneClassSVM`, and a covariance-based
-     outlier detection with :class:`covariance.EllipticEnvelope`.
+* See :ref:`sphx_glr_auto_examples_miscellaneous_plot_anomaly_comparison.py`
+  for a comparison of :class:`ensemble.IsolationForest` with
+  :class:`neighbors.LocalOutlierFactor`,
+  :class:`svm.OneClassSVM` (tuned to perform like an outlier detection
+  method), :class:`linear_model.SGDOneClassSVM`, and a covariance-based
+  outlier detection with :class:`covariance.EllipticEnvelope`.
 
-.. topic:: References:
+.. rubric:: References
 
-    * Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation forest."
-      Data Mining, 2008. ICDM'08. Eighth IEEE International Conference on.
+* Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation forest."
+  Data Mining, 2008. ICDM'08. Eighth IEEE International Conference on.
 
 .. _local_outlier_factor:
 
@@ -370,20 +374,20 @@ This strategy is illustrated below.
    :align: center
    :scale: 75%
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-   * See :ref:`sphx_glr_auto_examples_neighbors_plot_lof_outlier_detection.py`
-     for an illustration of the use of :class:`neighbors.LocalOutlierFactor`.
+* See :ref:`sphx_glr_auto_examples_neighbors_plot_lof_outlier_detection.py`
+  for an illustration of the use of :class:`neighbors.LocalOutlierFactor`.
 
-   * See :ref:`sphx_glr_auto_examples_miscellaneous_plot_anomaly_comparison.py`
-     for a comparison with other anomaly detection methods.
+* See :ref:`sphx_glr_auto_examples_miscellaneous_plot_anomaly_comparison.py`
+  for a comparison with other anomaly detection methods.
 
-.. topic:: References:
+.. rubric:: References
 
-   *  Breunig, Kriegel, Ng, and Sander (2000)
-      `LOF: identifying density-based local outliers.
-      <https://www.dbs.ifi.lmu.de/Publikationen/Papers/LOF.pdf>`_
-      Proc. ACM SIGMOD
+* Breunig, Kriegel, Ng, and Sander (2000)
+  `LOF: identifying density-based local outliers.
+  <https://www.dbs.ifi.lmu.de/Publikationen/Papers/LOF.pdf>`_
+  Proc. ACM SIGMOD
 
 .. _novelty_with_lof:
 
@@ -411,7 +415,7 @@ Note that ``fit_predict`` is not available in this case to avoid inconsistencies
 
 Novelty detection with Local Outlier Factor is illustrated below.
 
-  .. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_lof_novelty_detection_001.png
-     :target: ../auto_examples/neighbors/plot_lof_novelty_detection.html
-     :align: center
-     :scale: 75%
+.. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_lof_novelty_detection_001.png
+    :target: ../auto_examples/neighbors/plot_lof_novelty_detection.html
+    :align: center
+    :scale: 75%

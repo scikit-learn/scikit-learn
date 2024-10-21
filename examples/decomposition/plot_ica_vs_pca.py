@@ -29,8 +29,8 @@ identify the directions of largest non-Gaussianity (lower right).
 
 """
 
-# Authors: Alexandre Gramfort, Gael Varoquaux
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Generate sample data
@@ -54,8 +54,6 @@ S_pca_ = pca.fit(X).transform(X)
 ica = FastICA(random_state=rng, whiten="arbitrary-variance")
 S_ica_ = ica.fit(X).transform(X)  # Estimate the sources
 
-S_ica_ /= S_ica_.std(axis=0)
-
 
 # %%
 # Plot results
@@ -69,8 +67,7 @@ def plot_samples(S, axis_list=None):
     )
     if axis_list is not None:
         for axis, color, label in axis_list:
-            axis /= axis.std()
-            x_axis, y_axis = axis
+            x_axis, y_axis = axis / axis.std()
             plt.quiver(
                 (0, 0),
                 (0, 0),
@@ -83,10 +80,11 @@ def plot_samples(S, axis_list=None):
                 label=label,
             )
 
-    plt.hlines(0, -3, 3)
-    plt.vlines(0, -3, 3)
-    plt.xlim(-3, 3)
+    plt.hlines(0, -5, 5, color="black", linewidth=0.5)
+    plt.vlines(0, -3, 3, color="black", linewidth=0.5)
+    plt.xlim(-5, 5)
     plt.ylim(-3, 3)
+    plt.gca().set_aspect("equal")
     plt.xlabel("x")
     plt.ylabel("y")
 
@@ -99,13 +97,13 @@ plt.title("True Independent Sources")
 axis_list = [(pca.components_.T, "orange", "PCA"), (ica.mixing_, "red", "ICA")]
 plt.subplot(2, 2, 2)
 plot_samples(X / np.std(X), axis_list=axis_list)
-legend = plt.legend(loc="lower right")
+legend = plt.legend(loc="upper left")
 legend.set_zorder(100)
 
 plt.title("Observations")
 
 plt.subplot(2, 2, 3)
-plot_samples(S_pca_ / np.std(S_pca_, axis=0))
+plot_samples(S_pca_ / np.std(S_pca_))
 plt.title("PCA recovered signals")
 
 plt.subplot(2, 2, 4)
@@ -113,4 +111,5 @@ plot_samples(S_ica_ / np.std(S_ica_))
 plt.title("ICA recovered signals")
 
 plt.subplots_adjust(0.09, 0.04, 0.94, 0.94, 0.26, 0.36)
+plt.tight_layout()
 plt.show()

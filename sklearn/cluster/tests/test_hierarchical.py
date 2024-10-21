@@ -2,52 +2,53 @@
 Several basic tests for hierarchical clustering procedures
 
 """
-# Authors: Vincent Michel, 2010, Gael Varoquaux 2012,
-#          Matteo Visconti di Oleggio Castello 2014
-# License: BSD 3 clause
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import itertools
-from tempfile import mkdtemp
 import shutil
-import pytest
 from functools import partial
+from tempfile import mkdtemp
 
 import numpy as np
-from scipy import sparse
+import pytest
 from scipy.cluster import hierarchy
 from scipy.sparse.csgraph import connected_components
 
-from sklearn.metrics.cluster import adjusted_rand_score
-from sklearn.metrics.tests.test_dist_metrics import METRICS_DEFAULT_PARAMS
-from sklearn.utils._testing import assert_almost_equal, create_memmap_backed_data
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import ignore_warnings
-
-from sklearn.cluster import ward_tree
-from sklearn.cluster import AgglomerativeClustering, FeatureAgglomeration
+from sklearn.cluster import AgglomerativeClustering, FeatureAgglomeration, ward_tree
 from sklearn.cluster._agglomerative import (
-    _hc_cut,
     _TREE_BUILDERS,
-    linkage_tree,
     _fix_connectivity,
+    _hc_cut,
+    linkage_tree,
 )
+from sklearn.cluster._hierarchical_fast import (
+    average_merge,
+    max_merge,
+    mst_linkage_core,
+)
+from sklearn.datasets import make_circles, make_moons
 from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.metrics import DistanceMetric
+from sklearn.metrics.cluster import adjusted_rand_score, normalized_mutual_info_score
 from sklearn.metrics.pairwise import (
     PAIRED_DISTANCES,
     cosine_distances,
     manhattan_distances,
     pairwise_distances,
 )
-from sklearn.metrics.cluster import normalized_mutual_info_score
+from sklearn.metrics.tests.test_dist_metrics import METRICS_DEFAULT_PARAMS
 from sklearn.neighbors import kneighbors_graph
-from sklearn.cluster._hierarchical_fast import (
-    average_merge,
-    max_merge,
-    mst_linkage_core,
-)
 from sklearn.utils._fast_dict import IntFloatDict
-from sklearn.utils._testing import assert_array_equal
-from sklearn.datasets import make_moons, make_circles
+from sklearn.utils._testing import (
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    create_memmap_backed_data,
+    ignore_warnings,
+)
+from sklearn.utils.fixes import LIL_CONTAINERS
 
 
 def test_linkage_misc():
@@ -176,7 +177,8 @@ def test_agglomerative_clustering_distances(
         assert not hasattr(clustering, "distances_")
 
 
-def test_agglomerative_clustering(global_random_seed):
+@pytest.mark.parametrize("lil_container", LIL_CONTAINERS)
+def test_agglomerative_clustering(global_random_seed, lil_container):
     # Check that we obtain the correct number of clusters with
     # agglomerative clustering.
     rng = np.random.RandomState(global_random_seed)
@@ -218,7 +220,7 @@ def test_agglomerative_clustering(global_random_seed):
         # Check that we raise a TypeError on dense matrices
         clustering = AgglomerativeClustering(
             n_clusters=10,
-            connectivity=sparse.lil_matrix(connectivity.toarray()[:10, :10]),
+            connectivity=lil_container(connectivity.toarray()[:10, :10]),
             linkage=linkage,
         )
         with pytest.raises(ValueError):
@@ -395,8 +397,6 @@ def test_vector_scikit_single_vs_scipy_single(global_random_seed):
     assess_same_labelling(cut, cut_scipy)
 
 
-# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize("metric_param_grid", METRICS_DEFAULT_PARAMS)
 def test_mst_linkage_core_memory_mapped(metric_param_grid):
     """The MST-LINKAGE-CORE algorithm must work on mem-mapped dataset.
@@ -850,7 +850,7 @@ def test_invalid_shape_precomputed_dist_matrix():
         AgglomerativeClustering(metric="precomputed", linkage="complete").fit(X)
 
 
-def test_precomputed_connectivity_affinity_with_2_connected_components():
+def test_precomputed_connectivity_metric_with_2_connected_components():
     """Check that connecting components works when connectivity and
     affinity are both precomputed and the number of connected components is
     greater than 1. Non-regression test for #16151.
@@ -873,7 +873,7 @@ def test_precomputed_connectivity_affinity_with_2_connected_components():
 
     X_dist = pairwise_distances(X)
     clusterer_precomputed = AgglomerativeClustering(
-        affinity="precomputed", connectivity=connectivity_matrix, linkage="complete"
+        metric="precomputed", connectivity=connectivity_matrix, linkage="complete"
     )
     msg = "Completing it to avoid stopping the tree early"
     with pytest.warns(UserWarning, match=msg):
@@ -887,26 +887,3 @@ def test_precomputed_connectivity_affinity_with_2_connected_components():
 
     assert_array_equal(clusterer.labels_, clusterer_precomputed.labels_)
     assert_array_equal(clusterer.children_, clusterer_precomputed.children_)
-
-
-# TODO(1.4): Remove
-def test_deprecate_affinity():
-    rng = np.random.RandomState(42)
-    X = rng.randn(50, 10)
-
-    af = AgglomerativeClustering(affinity="euclidean")
-    msg = (
-        "Attribute `affinity` was deprecated in version 1.2 and will be removed in 1.4."
-        " Use `metric` instead"
-    )
-    with pytest.warns(FutureWarning, match=msg):
-        af.fit(X)
-    with pytest.warns(FutureWarning, match=msg):
-        af.fit_predict(X)
-
-    af = AgglomerativeClustering(metric="euclidean", affinity="euclidean")
-    msg = "Both `affinity` and `metric` attributes were set. Attribute"
-    with pytest.raises(ValueError, match=msg):
-        af.fit(X)
-    with pytest.raises(ValueError, match=msg):
-        af.fit_predict(X)

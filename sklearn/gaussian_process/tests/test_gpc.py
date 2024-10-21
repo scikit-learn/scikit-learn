@@ -1,25 +1,25 @@
-"""Testing for Gaussian process classification """
+"""Testing for Gaussian process classification"""
 
-# Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
-import numpy as np
 
+import numpy as np
+import pytest
 from scipy.optimize import approx_fprime
 
-import pytest
-
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import (
     RBF,
     CompoundKernel,
-    ConstantKernel as C,
     WhiteKernel,
 )
+from sklearn.gaussian_process.kernels import (
+    ConstantKernel as C,
+)
 from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
-from sklearn.exceptions import ConvergenceWarning
-
 from sklearn.utils._testing import assert_almost_equal, assert_array_equal
 
 
@@ -218,8 +218,7 @@ def test_warning_bounds():
 
         assert issubclass(record[0].category, ConvergenceWarning)
         assert (
-            record[0].message.args[0]
-            == "The optimal value found for "
+            record[0].message.args[0] == "The optimal value found for "
             "dimension 0 of parameter "
             "k1__noise_level is close to the "
             "specified upper bound 0.001. "
@@ -229,8 +228,7 @@ def test_warning_bounds():
 
         assert issubclass(record[1].category, ConvergenceWarning)
         assert (
-            record[1].message.args[0]
-            == "The optimal value found for "
+            record[1].message.args[0] == "The optimal value found for "
             "dimension 0 of parameter "
             "k2__length_scale is close to the "
             "specified lower bound 1000.0. "
@@ -250,8 +248,7 @@ def test_warning_bounds():
 
         assert issubclass(record[0].category, ConvergenceWarning)
         assert (
-            record[0].message.args[0]
-            == "The optimal value found for "
+            record[0].message.args[0] == "The optimal value found for "
             "dimension 0 of parameter "
             "length_scale is close to the "
             "specified upper bound 100.0. "
@@ -261,8 +258,7 @@ def test_warning_bounds():
 
         assert issubclass(record[1].category, ConvergenceWarning)
         assert (
-            record[1].message.args[0]
-            == "The optimal value found for "
+            record[1].message.args[0] == "The optimal value found for "
             "dimension 1 of parameter "
             "length_scale is close to the "
             "specified upper bound 100.0. "

@@ -1,18 +1,18 @@
-# Authors: Manoj Kumar mks542@nyu.edu
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Integral, Real
-import numpy as np
 
+import numpy as np
 from scipy import optimize
 
-from ..base import BaseEstimator, RegressorMixin
-from ._base import LinearModel
-from ..utils import axis0_safe_slice
+from ..base import BaseEstimator, RegressorMixin, _fit_context
+from ..utils._mask import axis0_safe_slice
 from ..utils._param_validation import Interval
-from ..utils.validation import _check_sample_weight
 from ..utils.extmath import safe_sparse_dot
 from ..utils.optimize import _check_optimize_result
+from ..utils.validation import _check_sample_weight, validate_data
+from ._base import LinearModel
 
 
 def _huber_loss_and_gradient(w, X, y, epsilon, alpha, sample_weight=None):
@@ -273,6 +273,7 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         self.fit_intercept = fit_intercept
         self.tol = tol
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
 
@@ -293,8 +294,8 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         self : object
             Fitted `HuberRegressor` estimator.
         """
-        self._validate_params()
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             copy=False,

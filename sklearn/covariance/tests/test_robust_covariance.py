@@ -1,19 +1,14 @@
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Gael Varoquaux <gael.varoquaux@normalesup.org>
-#         Virgile Fritsch <virgile.fritsch@inria.fr>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import itertools
 
 import numpy as np
 import pytest
 
-from sklearn.utils._testing import assert_array_almost_equal
-
 from sklearn import datasets
-from sklearn.covariance import empirical_covariance, MinCovDet
-from sklearn.covariance import fast_mcd
+from sklearn.covariance import MinCovDet, empirical_covariance, fast_mcd
+from sklearn.utils._testing import assert_array_almost_equal
 
 X = datasets.load_iris().data
 X_1d = X[:, 0]
@@ -58,7 +53,6 @@ def test_mcd_class_on_invalid_input():
 def launch_mcd_on_dataset(
     n_samples, n_features, n_outliers, tol_loc, tol_cov, tol_support, seed
 ):
-
     rand_gen = np.random.RandomState(seed)
     data = rand_gen.randn(n_samples, n_features)
     # add some outliers

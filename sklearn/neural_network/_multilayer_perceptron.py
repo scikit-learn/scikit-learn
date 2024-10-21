@@ -1,44 +1,46 @@
-"""Multi-layer Perceptron
-"""
+"""Multi-layer Perceptron"""
 
-# Authors: Issam H. Laradji <issam.laradji@gmail.com>
-#          Andreas Mueller
-#          Jiyuan Qian
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-from numbers import Integral, Real
-import numpy as np
-
-from abc import ABCMeta, abstractmethod
 import warnings
+from abc import ABCMeta, abstractmethod
 from itertools import chain
+from numbers import Integral, Real
 
+import numpy as np
 import scipy.optimize
 
 from ..base import (
     BaseEstimator,
     ClassifierMixin,
     RegressorMixin,
+    _fit_context,
+    is_classifier,
 )
-from ..base import is_classifier
-from ._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
-from ._stochastic_optimizers import SGDOptimizer, AdamOptimizer
+from ..exceptions import ConvergenceWarning
 from ..metrics import accuracy_score, r2_score
 from ..model_selection import train_test_split
 from ..preprocessing import LabelBinarizer
-from ..utils import gen_batches, check_random_state
-from ..utils import shuffle
-from ..utils import _safe_indexing
-from ..utils import column_or_1d
-from ..exceptions import ConvergenceWarning
+from ..utils import (
+    _safe_indexing,
+    check_random_state,
+    column_or_1d,
+    gen_batches,
+    shuffle,
+)
+from ..utils._param_validation import Interval, Options, StrOptions
 from ..utils.extmath import safe_sparse_dot
-from ..utils.validation import check_is_fitted
-from ..utils.multiclass import _check_partial_fit_first_call, unique_labels
-from ..utils.multiclass import type_of_target
-from ..utils.optimize import _check_optimize_result
 from ..utils.metaestimators import available_if
-from ..utils._param_validation import StrOptions, Options, Interval
-
+from ..utils.multiclass import (
+    _check_partial_fit_first_call,
+    type_of_target,
+    unique_labels,
+)
+from ..utils.optimize import _check_optimize_result
+from ..utils.validation import check_is_fitted, validate_data
+from ._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
+from ._stochastic_optimizers import AdamOptimizer, SGDOptimizer
 
 _STOCHASTIC_SOLVERS = ["sgd", "adam"]
 
@@ -199,7 +201,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             The decision function of the samples for each class in the model.
         """
         if check_input:
-            X = self._validate_data(X, accept_sparse=["csr", "csc"], reset=False)
+            X = validate_data(self, X, accept_sparse=["csr", "csc"], reset=False)
 
         # Initialize first layer
         activation = X
@@ -360,7 +362,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         return loss, coef_grads, intercept_grads
 
     def _initialize(self, y, layer_units, dtype):
-        # set all attributes, allocate weights etc for first call
+        # set all attributes, allocate weights etc. for first call
         # Initialize parameters
         self.n_iter_ = 0
         self.t_ = 0
@@ -389,6 +391,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             )
             self.coefs_.append(coef_init)
             self.intercepts_.append(intercept_init)
+
+        self._best_coefs = [c.copy() for c in self.coefs_]
+        self._best_intercepts = [i.copy() for i in self.intercepts_]
 
         if self.solver in _STOCHASTIC_SOLVERS:
             self.loss_curve_ = []
@@ -553,7 +558,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         layer_units,
         incremental,
     ):
-
         params = self.coefs_ + self.intercepts_
         if not incremental or not hasattr(self, "_optimizer"):
             if self.solver == "sgd":
@@ -697,12 +701,13 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             # restore best weights
             self.coefs_ = self._best_coefs
             self.intercepts_ = self._best_intercepts
-            self.validation_scores_ = self.validation_scores_
 
     def _update_no_improvement_count(self, early_stopping, X_val, y_val):
         if early_stopping:
-            # compute validation score, use that for stopping
-            self.validation_scores_.append(self._score(X_val, y_val))
+            # compute validation score (can be NaN), use that for stopping
+            val_score = self._score(X_val, y_val)
+
+            self.validation_scores_.append(val_score)
 
             if self.verbose:
                 print("Validation score: %f" % self.validation_scores_[-1])
@@ -728,6 +733,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             if self.loss_curve_[-1] < self.best_loss_:
                 self.best_loss_ = self.loss_curve_[-1]
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit the model to data matrix X and target(s) y.
 
@@ -745,18 +751,25 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         self : object
             Returns a trained MLP model.
         """
-        self._validate_params()
-
         return self._fit(X, y, incremental=False)
 
     def _check_solver(self):
         if self.solver not in _STOCHASTIC_SOLVERS:
             raise AttributeError(
                 "partial_fit is only available for stochastic"
-                " optimizers. %s is not stochastic."
-                % self.solver
+                " optimizers. %s is not stochastic." % self.solver
             )
         return True
+
+    def _score_with_function(self, X, y, score_function):
+        """Private score method without input validation."""
+        # Input validation would remove feature names, so we disable it
+        y_pred = self._predict(X, check_input=False)
+
+        if np.isnan(y_pred).any() or np.isinf(y_pred).any():
+            return np.nan
+
+        return score_function(y, y_pred)
 
 
 class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
@@ -798,6 +811,9 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         - 'adam' refers to a stochastic gradient-based optimizer proposed
           by Kingma, Diederik, and Jimmy Ba
 
+        For a comparison between Adam optimizer and SGD, see
+        :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_training_curves.py`.
+
         Note: The default solver 'adam' works pretty well on relatively
         large datasets (with thousands of training samples or more) in terms of
         both training time and validation score.
@@ -807,6 +823,9 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     alpha : float, default=0.0001
         Strength of the L2 regularization term. The L2 regularization term
         is divided by the sample size when added to the loss.
+
+        For an example usage and visualization of varying regularization, see
+        :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_alpha.py`.
 
     batch_size : int, default='auto'
         Size of minibatches for stochastic optimizers.
@@ -884,7 +903,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         Whether to use early stopping to terminate training when validation
         score is not improving. If set to true, it will automatically set
         aside 10% of training data as validation and terminate training when
-        validation score is not improving by at least tol for
+        validation score is not improving by at least ``tol`` for
         ``n_iter_no_change`` consecutive epochs. The split is stratified,
         except in a multilabel setting.
         If early stopping is False, then the training stops when the training
@@ -933,7 +952,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
     best_loss_ : float or None
         The minimum loss reached by the solver throughout fitting.
-        If `early_stopping=True`, this attribute is set ot `None`. Refer to
+        If `early_stopping=True`, this attribute is set to `None`. Refer to
         the `best_validation_score_` fitted attribute instead.
 
     loss_curve_ : list of shape (`n_iter_`,)
@@ -1087,7 +1106,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         )
 
     def _validate_input(self, X, y, incremental, reset):
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse=["csr", "csc"],
@@ -1166,11 +1186,10 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         return self._label_binarizer.inverse_transform(y_pred)
 
     def _score(self, X, y):
-        """Private score method without input validation"""
-        # Input validation would remove feature names, so we disable it
-        return accuracy_score(y, self._predict(X, check_input=False))
+        return super()._score_with_function(X, y, score_function=accuracy_score)
 
     @available_if(lambda est: est._check_solver())
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y, classes=None):
         """Update the model with a single iteration over the given data.
 
@@ -1195,9 +1214,6 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         self : object
             Trained MLP model.
         """
-        if not hasattr(self, "coefs_"):
-            self._validate_params()
-
         if _check_partial_fit_first_call(self, classes):
             self._label_binarizer = LabelBinarizer()
             if type_of_target(y).startswith("multilabel"):
@@ -1250,8 +1266,10 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         else:
             return y_pred
 
-    def _more_tags(self):
-        return {"multilabel": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.classifier_tags.multi_label = True
+        return tags
 
 
 class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
@@ -1292,6 +1310,9 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
         - 'adam' refers to a stochastic gradient-based optimizer proposed by
           Kingma, Diederik, and Jimmy Ba
+
+        For a comparison between Adam optimizer and SGD, see
+        :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_training_curves.py`.
 
         Note: The default solver 'adam' works pretty well on relatively
         large datasets (with thousands of training samples or more) in terms of
@@ -1605,13 +1626,11 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         return y_pred
 
     def _score(self, X, y):
-        """Private score method without input validation"""
-        # Input validation would remove feature names, so we disable it
-        y_pred = self._predict(X, check_input=False)
-        return r2_score(y, y_pred)
+        return super()._score_with_function(X, y, score_function=r2_score)
 
     def _validate_input(self, X, y, incremental, reset):
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse=["csr", "csc"],
@@ -1625,6 +1644,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         return X, y
 
     @available_if(lambda est: est._check_solver)
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y):
         """Update the model with a single iteration over the given data.
 
@@ -1641,7 +1661,4 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         self : object
             Trained MLP model.
         """
-        if not hasattr(self, "coefs_"):
-            self._validate_params()
-
         return self._fit(X, y, incremental=True)

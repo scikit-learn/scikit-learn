@@ -8,11 +8,14 @@ measurement encoded with a dictionary
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.linear_model import OrthogonalMatchingPursuit
-from sklearn.linear_model import OrthogonalMatchingPursuitCV
+
 from sklearn.datasets import make_sparse_coded_signal
+from sklearn.linear_model import OrthogonalMatchingPursuit, OrthogonalMatchingPursuitCV
 
 n_components, n_features = 512, 100
 n_nonzero_coefs = 17

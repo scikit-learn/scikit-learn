@@ -32,18 +32,16 @@ appropriate to describe the dataset, or when features are correlated.
 We will use data from the `"Current Population Survey"
 <https://www.openml.org/d/534>`_ from 1985 to predict wage as a function of
 various features such as experience, age, or education.
-
-.. contents::
-   :local:
-   :depth: 1
-
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
-import numpy as np
-import scipy as sp
-import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import scipy as sp
 import seaborn as sns
 
 # %%
@@ -53,10 +51,9 @@ import seaborn as sns
 # We fetch the data from `OpenML <http://openml.org/>`_.
 # Note that setting the parameter `as_frame` to True will retrieve the data
 # as a pandas dataframe.
-
 from sklearn.datasets import fetch_openml
 
-survey = fetch_openml(data_id=534, as_frame=True, parser="pandas")
+survey = fetch_openml(data_id=534, as_frame=True)
 
 # %%
 # Then, we identify features `X` and targets `y`: the column WAGE is our
@@ -96,7 +93,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 # at the pairwise relationships between them. Only numerical
 # variables will be used. In the following plot, each dot represents a sample.
 #
-#   .. _marginal_dependencies:
+# .. _marginal_dependencies:
 
 train_dataset = X_train.copy()
 train_dataset.insert(0, "WAGE", y_train)
@@ -154,9 +151,9 @@ preprocessor = make_column_transformer(
 # To describe the dataset as a linear model we use a ridge regressor
 # with a very small regularization and to model the logarithm of the WAGE.
 
-from sklearn.pipeline import make_pipeline
-from sklearn.linear_model import Ridge
 from sklearn.compose import TransformedTargetRegressor
+from sklearn.linear_model import Ridge
+from sklearn.pipeline import make_pipeline
 
 model = make_pipeline(
     preprocessor,
@@ -178,8 +175,7 @@ model.fit(X_train, y_train)
 # on the test set and computing,
 # for example, the median absolute error of the model.
 
-from sklearn.metrics import median_absolute_error
-from sklearn.metrics import PredictionErrorDisplay
+from sklearn.metrics import PredictionErrorDisplay, median_absolute_error
 
 mae_train = median_absolute_error(y_train, model.predict(X_train))
 y_pred = model.predict(X_test)
@@ -308,6 +304,34 @@ plt.subplots_adjust(left=0.3)
 # Also, AGE, EXPERIENCE and EDUCATION are the three variables that most
 # influence the model.
 #
+# Interpreting coefficients: being cautious about causality
+# ---------------------------------------------------------
+#
+# Linear models are a great tool for measuring statistical association, but we
+# should be cautious when making statements about causality, after all
+# correlation doesn't always imply causation. This is particularly difficult in
+# the social sciences because the variables we observe only function as proxies
+# for the underlying causal process.
+#
+# In our particular case we can think of the EDUCATION of an individual as a
+# proxy for their professional aptitude, the real variable we're interested in
+# but can't observe. We'd certainly like to think that staying in school for
+# longer would increase technical competency, but it's also quite possible that
+# causality goes the other way too. That is, those who are technically
+# competent tend to stay in school for longer.
+#
+# An employer is unlikely to care which case it is (or if it's a mix of both),
+# as long as they remain convinced that a person with more EDUCATION is better
+# suited for the job, they will be happy to pay out a higher WAGE.
+#
+# This confounding of effects becomes problematic when thinking about some
+# form of intervention e.g. government subsidies of university degrees or
+# promotional material encouraging individuals to take up higher education.
+# The usefulness of these measures could end up being overstated, especially if
+# the degree of confounding is strong. Our model predicts a :math:`0.054699`
+# increase in hourly wage for each year of education. The actual causal effect
+# might be lower because of this confounding.
+#
 # Checking the variability of the coefficients
 # --------------------------------------------
 #
@@ -319,8 +343,7 @@ plt.subplots_adjust(left=0.3)
 # their robustness is not guaranteed, and they should probably be interpreted
 # with caution.
 
-from sklearn.model_selection import cross_validate
-from sklearn.model_selection import RepeatedKFold
+from sklearn.model_selection import RepeatedKFold, cross_validate
 
 cv = RepeatedKFold(n_splits=5, n_repeats=5, random_state=0)
 cv_model = cross_validate(
@@ -745,6 +768,9 @@ plt.subplots_adjust(left=0.3)
 # * Coefficients must be scaled to the same unit of measure to retrieve
 #   feature importance. Scaling them with the standard-deviation of the
 #   feature is a useful proxy.
+# * Interpreting causality is difficult when there are confounding effects. If
+#   the relationship between two variables is also affected by something
+#   unobserved, we should be careful when making conclusions about causality.
 # * Coefficients in multivariate linear models represent the dependency
 #   between a given feature and the target, **conditional** on the other
 #   features.

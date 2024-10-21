@@ -14,10 +14,8 @@ namely the Pareto distribution.
 
 """
 
-# Authors: David Dale <dale.david@mail.ru>
-#          Christian Lorentzen <lorentzen.ch@gmail.com>
-#          Guillaume Lemaitre <glemaitre58@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Dataset generation
@@ -93,7 +91,7 @@ _ = axs[1, 1].set_xlabel("Residuals")
 # In this asymmetric setting, the median or different quantiles give additional
 # insights. On top of that, median estimation is much more robust to outliers
 # and heavy tailed distributions. But note that extreme quantiles are estimated
-# by very view data points. 95% quantile are more or less estimated by the 5%
+# by very few data points. 95% quantile are more or less estimated by the 5%
 # largest values and thus also a bit sensitive outliers.
 #
 # In the remainder of this tutorial, we will show how
@@ -111,11 +109,6 @@ _ = axs[1, 1].set_xlabel("Residuals")
 #
 # We will use the quantiles at 5% and 95% to find the outliers in the training
 # sample beyond the central 90% interval.
-from sklearn.utils.fixes import sp_version, parse_version
-
-# This is line is to avoid incompatibility if older SciPy version.
-# You should use `solver="highs"` with recent version of SciPy.
-solver = "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
 
 # %%
 from sklearn.linear_model import QuantileRegressor
@@ -124,7 +117,7 @@ quantiles = [0.05, 0.5, 0.95]
 predictions = {}
 out_bounds_predictions = np.zeros_like(y_true_mean, dtype=np.bool_)
 for quantile in quantiles:
-    qr = QuantileRegressor(quantile=quantile, alpha=0, solver=solver)
+    qr = QuantileRegressor(quantile=quantile, alpha=0)
     y_pred = qr.fit(X, y_normal).predict(X)
     predictions[quantile] = y_pred
 
@@ -186,7 +179,7 @@ quantiles = [0.05, 0.5, 0.95]
 predictions = {}
 out_bounds_predictions = np.zeros_like(y_true_mean, dtype=np.bool_)
 for quantile in quantiles:
-    qr = QuantileRegressor(quantile=quantile, alpha=0, solver=solver)
+    qr = QuantileRegressor(quantile=quantile, alpha=0)
     y_pred = qr.fit(X, y_pareto).predict(X)
     predictions[quantile] = y_pred
 
@@ -253,11 +246,10 @@ _ = plt.title("Quantiles of asymmetric Pareto distributed target")
 # distributed target to make it more interesting as mean and median are not
 # equal.
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_absolute_error
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 linear_regression = LinearRegression()
-quantile_regression = QuantileRegressor(quantile=0.5, alpha=0, solver=solver)
+quantile_regression = QuantileRegressor(quantile=0.5, alpha=0)
 
 y_pred_lr = linear_regression.fit(X, y_pareto).predict(X)
 y_pred_qr = quantile_regression.fit(X, y_pareto).predict(X)
@@ -283,7 +275,7 @@ print(
 # while MSE is the loss minimized
 # :class:`~sklearn.linear_model.LinearRegression`.
 #
-# We can make a similar evaluation but looking at the test error obtained by
+# We can make a similar evaluation by looking at the test error obtained by
 # cross-validation.
 from sklearn.model_selection import cross_validate
 

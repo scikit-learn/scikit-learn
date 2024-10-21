@@ -3,25 +3,31 @@ Maximum likelihood covariance estimator.
 
 """
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Gael Varoquaux <gael.varoquaux@normalesup.org>
-#         Virgile Fritsch <virgile.fritsch@inria.fr>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # avoid division truncation
 import warnings
+
 import numpy as np
 from scipy import linalg
 
 from .. import config_context
-from ..base import BaseEstimator
+from ..base import BaseEstimator, _fit_context
+from ..metrics.pairwise import pairwise_distances
 from ..utils import check_array
 from ..utils._param_validation import validate_params
 from ..utils.extmath import fast_logdet
-from ..metrics.pairwise import pairwise_distances
+from ..utils.validation import validate_data
 
 
+@validate_params(
+    {
+        "emp_cov": [np.ndarray],
+        "precision": [np.ndarray],
+    },
+    prefer_skip_nested_validation=True,
+)
 def log_likelihood(emp_cov, precision):
     """Compute the sample mean of the log_likelihood under a covariance model.
 
@@ -53,7 +59,8 @@ def log_likelihood(emp_cov, precision):
     {
         "X": ["array-like"],
         "assume_centered": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def empirical_covariance(X, *, assume_centered=False):
     """Compute the Maximum likelihood covariance estimator.
@@ -84,7 +91,7 @@ def empirical_covariance(X, *, assume_centered=False):
            [0.25, 0.25, 0.25],
            [0.25, 0.25, 0.25]])
     """
-    X = np.asarray(X)
+    X = check_array(X, ensure_2d=False, ensure_all_finite=False)
 
     if X.ndim == 1:
         X = np.reshape(X, (1, -1))
@@ -218,6 +225,7 @@ class EmpiricalCovariance(BaseEstimator):
             precision = linalg.pinvh(self.covariance_, check_finite=False)
         return precision
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the maximum likelihood covariance estimator to X.
 
@@ -235,8 +243,7 @@ class EmpiricalCovariance(BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-        X = self._validate_data(X)
+        X = validate_data(self, X)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:
@@ -269,7 +276,7 @@ class EmpiricalCovariance(BaseEstimator):
             The log-likelihood of `X_test` with `self.location_` and `self.covariance_`
             as estimators of the Gaussian model mean and covariance matrix respectively.
         """
-        X_test = self._validate_data(X_test, reset=False)
+        X_test = validate_data(self, X_test, reset=False)
         # compute empirical covariance of the test set
         test_cov = empirical_covariance(X_test - self.location_, assume_centered=True)
         # compute log likelihood
@@ -343,7 +350,7 @@ class EmpiricalCovariance(BaseEstimator):
         dist : ndarray of shape (n_samples,)
             Squared Mahalanobis distances of the observations.
         """
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
 
         precision = self.get_precision()
         with config_context(assume_finite=True):

@@ -2,9 +2,6 @@
 External Resources, Videos and Talks
 ===========================================
 
-For written tutorials, see the :ref:`Tutorial section <tutorial_menu>` of
-the documentation.
-
 New to Scientific Python?
 ==========================
 For those that are still new to the scientific Python ecosystem, we highly
@@ -37,40 +34,38 @@ Videos
   <http://videolectures.net/icml2010_varaquaux_scik/>`_ by `Gael Varoquaux`_ at
   ICML 2010
 
-    A three minute video from a very early stage of scikit-learn, explaining the
-    basic idea and approach we are following.
+  A three minute video from a very early stage of scikit-learn, explaining the
+  basic idea and approach we are following.
 
 - `Introduction to statistical learning with scikit-learn <https://archive.org/search.php?query=scikit-learn>`_
   by `Gael Varoquaux`_ at SciPy 2011
 
-    An extensive tutorial, consisting of four sessions of one hour.
-    The tutorial covers the basics of machine learning,
-    many algorithms and how to apply them using scikit-learn. The
-    material corresponding is now in the scikit-learn documentation
-    section :ref:`stat_learn_tut_index`.
+  An extensive tutorial, consisting of four sessions of one hour.
+  The tutorial covers the basics of machine learning,
+  many algorithms and how to apply them using scikit-learn.
 
 - `Statistical Learning for Text Classification with scikit-learn and NLTK
   <https://pyvideo.org/video/417/pycon-2011--statistical-machine-learning-for-text>`_
   (and `slides <https://www.slideshare.net/ogrisel/statistical-machine-learning-for-text-classification-with-scikitlearn-and-nltk>`_)
   by `Olivier Grisel`_ at PyCon 2011
 
-    Thirty minute introduction to text classification. Explains how to
-    use NLTK and scikit-learn to solve real-world text classification
-    tasks and compares against cloud-based solutions.
+  Thirty minute introduction to text classification. Explains how to
+  use NLTK and scikit-learn to solve real-world text classification
+  tasks and compares against cloud-based solutions.
 
 - `Introduction to Interactive Predictive Analytics in Python with scikit-learn <https://www.youtube.com/watch?v=Zd5dfooZWG4>`_
   by `Olivier Grisel`_ at PyCon 2012
 
-    3-hours long introduction to prediction tasks using scikit-learn.
+  3-hours long introduction to prediction tasks using scikit-learn.
 
 - `scikit-learn - Machine Learning in Python <https://www.youtube.com/watch?v=cHZONQ2-x7I>`_
   by `Jake Vanderplas`_ at the 2012 PyData workshop at Google
 
-    Interactive demonstration of some scikit-learn features. 75 minutes.
+  Interactive demonstration of some scikit-learn features. 75 minutes.
 
 - `scikit-learn tutorial <https://www.youtube.com/watch?v=cHZONQ2-x7I>`_ by `Jake Vanderplas`_ at PyData NYC 2012
 
-    Presentation using the online tutorial, 45 minutes.
+  Presentation using the online tutorial, 45 minutes.
 
 
 .. _Gael Varoquaux: https://gael-varoquaux.info

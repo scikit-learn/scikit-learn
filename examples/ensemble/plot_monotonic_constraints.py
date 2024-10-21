@@ -19,12 +19,16 @@ This example was inspired by the `XGBoost documentation
 <https://xgboost.readthedocs.io/en/latest/tutorials/monotonic.html>`_.
 
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
+import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.inspection import PartialDependenceDisplay
-import numpy as np
-import matplotlib.pyplot as plt
-
 
 rng = np.random.RandomState(0)
 
@@ -93,7 +97,7 @@ plt.show()
 # Using feature names to specify monotonic constraints
 # ----------------------------------------------------
 #
-# Note that if the training data has feature names, it's possible to specifiy the
+# Note that if the training data has feature names, it's possible to specify the
 # monotonic constraints by passing a dictionary:
 import pandas as pd
 

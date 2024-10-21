@@ -1,20 +1,8 @@
-.. Places parent toc into the sidebar
-
-:parenttoc: True
-
-.. title:: User guide: contents
-
 .. _user_guide:
 
 ==========
 User Guide
 ==========
-
-.. include:: includes/big_toc_css.rst
-
-.. nice layout in the toc
-
-.. include:: tune_toc.rst
 
 .. toctree::
    :numbered:
@@ -31,3 +19,14 @@ User Guide
    model_persistence.rst
    common_pitfalls.rst
    dispatching.rst
+   machine_learning_map.rst
+   presentations.rst
+
+Under Development
+-----------------
+
+.. toctree::
+   :numbered:
+   :maxdepth: 1
+
+   metadata_routing.rst

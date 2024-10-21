@@ -1,50 +1,53 @@
-# Authors: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import pytest
 import numpy as np
+import pytest
 from numpy.testing import assert_allclose
-from scipy import sparse
 
 from sklearn.base import BaseEstimator, clone
-from sklearn.dummy import DummyClassifier
-from sklearn.model_selection import LeaveOneOut, train_test_split
-
-from sklearn.utils._testing import (
-    assert_array_almost_equal,
-    assert_almost_equal,
-    assert_array_equal,
+from sklearn.calibration import (
+    CalibratedClassifierCV,
+    CalibrationDisplay,
+    _CalibratedClassifier,
+    _sigmoid_calibration,
+    _SigmoidCalibration,
+    calibration_curve,
 )
-from sklearn.utils.extmath import softmax
-from sklearn.exceptions import NotFittedError
-from sklearn.datasets import make_classification, make_blobs, load_iris
-from sklearn.preprocessing import LabelEncoder
-from sklearn.model_selection import KFold, cross_val_predict
-from sklearn.naive_bayes import MultinomialNB
+from sklearn.datasets import load_iris, make_blobs, make_classification
+from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import (
     RandomForestClassifier,
     VotingClassifier,
 )
-from sklearn.linear_model import LogisticRegression, LinearRegression
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.svm import LinearSVC
-from sklearn.pipeline import Pipeline, make_pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.isotonic import IsotonicRegression
+from sklearn.exceptions import NotFittedError
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.impute import SimpleImputer
+from sklearn.isotonic import IsotonicRegression
+from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.metrics import brier_score_loss
-from sklearn.calibration import (
-    _CalibratedClassifier,
-    _SigmoidCalibration,
-    _sigmoid_calibration,
-    CalibratedClassifierCV,
-    CalibrationDisplay,
-    calibration_curve,
+from sklearn.model_selection import (
+    KFold,
+    LeaveOneOut,
+    check_cv,
+    cross_val_predict,
+    cross_val_score,
+    train_test_split,
 )
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.svm import LinearSVC
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._mocking import CheckingClassifier
-from sklearn.utils._testing import _convert_container
-
+from sklearn.utils._testing import (
+    _convert_container,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
+from sklearn.utils.extmath import softmax
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 N_SAMPLES = 200
 
@@ -55,9 +58,10 @@ def data():
     return X, y
 
 
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
 @pytest.mark.parametrize("ensemble", [True, False])
-def test_calibration(data, method, ensemble):
+def test_calibration(data, method, csr_container, ensemble):
     # Test calibration objects with isotonic and sigmoid
     n_samples = N_SAMPLES // 2
     X, y = data
@@ -70,7 +74,7 @@ def test_calibration(data, method, ensemble):
     X_test, y_test = X[n_samples:], y[n_samples:]
 
     # Naive-Bayes
-    clf = MultinomialNB(force_alpha=True).fit(X_train, y_train, sample_weight=sw_train)
+    clf = MultinomialNB().fit(X_train, y_train, sample_weight=sw_train)
     prob_pos_clf = clf.predict_proba(X_test)[:, 1]
 
     cal_clf = CalibratedClassifierCV(clf, cv=y.size + 1, ensemble=ensemble)
@@ -80,7 +84,7 @@ def test_calibration(data, method, ensemble):
     # Naive Bayes with calibration
     for this_X_train, this_X_test in [
         (X_train, X_test),
-        (sparse.csr_matrix(X_train), sparse.csr_matrix(X_test)),
+        (csr_container(X_train), csr_container(X_test)),
     ]:
         cal_clf = CalibratedClassifierCV(clf, method=method, cv=5, ensemble=ensemble)
         # Note that this fit overwrites the fit on the entire training
@@ -140,6 +144,20 @@ def test_calibration_cv_splitter(data, ensemble):
     calib_clf.fit(X, y)
     expected_n_clf = splits if ensemble else 1
     assert len(calib_clf.calibrated_classifiers_) == expected_n_clf
+
+
+def test_calibration_cv_nfold(data):
+    # Check error raised when number of examples per class less than nfold
+    X, y = data
+
+    kfold = KFold(n_splits=101)
+    calib_clf = CalibratedClassifierCV(cv=kfold, ensemble=True)
+    with pytest.raises(ValueError, match="Requesting 101-fold cross-validation"):
+        calib_clf.fit(X, y)
+
+    calib_clf = CalibratedClassifierCV(cv=LeaveOneOut(), ensemble=True)
+    with pytest.raises(ValueError, match="LeaveOneOut cross-validation does"):
+        calib_clf.fit(X, y)
 
 
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
@@ -281,7 +299,8 @@ def test_calibration_zero_probability():
     assert_allclose(probas, 1.0 / clf.n_classes_)
 
 
-def test_calibration_prefit():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_calibration_prefit(csr_container):
     """Test calibration for prefitted classifiers"""
     n_samples = 50
     X, y = make_classification(n_samples=3 * n_samples, n_features=6, random_state=42)
@@ -299,7 +318,7 @@ def test_calibration_prefit():
     X_test, y_test = X[2 * n_samples :], y[2 * n_samples :]
 
     # Naive-Bayes
-    clf = MultinomialNB(force_alpha=True)
+    clf = MultinomialNB()
     # Check error if clf not prefit
     unfit_clf = CalibratedClassifierCV(clf, cv="prefit")
     with pytest.raises(NotFittedError):
@@ -311,7 +330,7 @@ def test_calibration_prefit():
     # Naive Bayes with calibration
     for this_X_calib, this_X_test in [
         (X_calib, X_test),
-        (sparse.csr_matrix(X_calib), sparse.csr_matrix(X_test)),
+        (csr_container(X_calib), csr_container(X_test)),
     ]:
         for method in ["isotonic", "sigmoid"]:
             cal_clf = CalibratedClassifierCV(clf, method=method, cv="prefit")
@@ -418,45 +437,47 @@ def test_calibration_nan_imputer(ensemble):
 
 @pytest.mark.parametrize("ensemble", [True, False])
 def test_calibration_prob_sum(ensemble):
-    # Test that sum of probabilities is 1. A non-regression test for
-    # issue #7796
-    num_classes = 2
-    X, y = make_classification(n_samples=10, n_features=5, n_classes=num_classes)
+    # Test that sum of probabilities is (max) 1. A non-regression test for
+    # issue #7796 - when test has fewer classes than train
+    X, _ = make_classification(n_samples=10, n_features=5, n_classes=2)
+    y = [1, 1, 1, 1, 1, 0, 0, 0, 0, 0]
     clf = LinearSVC(C=1.0, random_state=7)
+    # In the first and last fold, test will have 1 class while train will have 2
     clf_prob = CalibratedClassifierCV(
-        clf, method="sigmoid", cv=LeaveOneOut(), ensemble=ensemble
+        clf, method="sigmoid", cv=KFold(n_splits=3), ensemble=ensemble
     )
     clf_prob.fit(X, y)
-
-    probs = clf_prob.predict_proba(X)
-    assert_array_almost_equal(probs.sum(axis=1), np.ones(probs.shape[0]))
+    assert_allclose(clf_prob.predict_proba(X).sum(axis=1), 1.0)
 
 
 @pytest.mark.parametrize("ensemble", [True, False])
 def test_calibration_less_classes(ensemble):
     # Test to check calibration works fine when train set in a test-train
     # split does not contain all classes
-    # Since this test uses LOO, at each iteration train set will not contain a
-    # class label
-    X = np.random.randn(10, 5)
-    y = np.arange(10)
-    clf = LinearSVC(C=1.0, random_state=7)
+    # In 1st split, train is missing class 0
+    # In 3rd split, train is missing class 3
+    X = np.random.randn(12, 5)
+    y = [0, 0, 0, 1] + [1, 1, 2, 2] + [2, 3, 3, 3]
+    clf = DecisionTreeClassifier(random_state=7)
     cal_clf = CalibratedClassifierCV(
-        clf, method="sigmoid", cv=LeaveOneOut(), ensemble=ensemble
+        clf, method="sigmoid", cv=KFold(3), ensemble=ensemble
     )
     cal_clf.fit(X, y)
 
-    for i, calibrated_classifier in enumerate(cal_clf.calibrated_classifiers_):
-        proba = calibrated_classifier.predict_proba(X)
-        if ensemble:
+    if ensemble:
+        classes = np.arange(4)
+        for calib_i, class_i in zip([0, 2], [0, 3]):
+            proba = cal_clf.calibrated_classifiers_[calib_i].predict_proba(X)
             # Check that the unobserved class has proba=0
-            assert_array_equal(proba[:, i], np.zeros(len(y)))
+            assert_array_equal(proba[:, class_i], np.zeros(len(y)))
             # Check for all other classes proba>0
-            assert np.all(proba[:, :i] > 0)
-            assert np.all(proba[:, i + 1 :] > 0)
-        else:
-            # Check `proba` are all 1/n_classes
-            assert np.allclose(proba, 1 / proba.shape[0])
+            assert np.all(proba[:, classes != class_i] > 0)
+
+    # When `ensemble=False`, `cross_val_predict` is used to compute predictions
+    # to fit only one `calibrated_classifiers_`
+    else:
+        proba = cal_clf.calibrated_classifiers_[0].predict_proba(X)
+        assert_array_almost_equal(proba.sum(axis=1), np.ones(proba.shape[0]))
 
 
 @pytest.mark.parametrize(
@@ -472,6 +493,8 @@ def test_calibration_accepts_ndarray(X):
 
     class MockTensorClassifier(BaseEstimator):
         """A toy estimator that accepts tensor inputs"""
+
+        _estimator_type = "classifier"
 
         def fit(self, X, y):
             self.classes_ = np.unique(y)
@@ -593,42 +616,6 @@ def iris_data():
 def iris_data_binary(iris_data):
     X, y = iris_data
     return X[y < 2], y[y < 2]
-
-
-def test_calibration_display_validation(pyplot, iris_data, iris_data_binary):
-    X, y = iris_data
-    X_binary, y_binary = iris_data_binary
-
-    reg = LinearRegression().fit(X, y)
-    msg = "Expected 'estimator' to be a binary classifier. Got LinearRegression"
-    with pytest.raises(ValueError, match=msg):
-        CalibrationDisplay.from_estimator(reg, X, y)
-
-    clf = LinearSVC().fit(X_binary, y_binary)
-    msg = "has none of the following attributes: predict_proba."
-    with pytest.raises(AttributeError, match=msg):
-        CalibrationDisplay.from_estimator(clf, X, y)
-
-    clf = LogisticRegression()
-    with pytest.raises(NotFittedError):
-        CalibrationDisplay.from_estimator(clf, X, y)
-
-
-@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
-def test_calibration_display_non_binary(pyplot, iris_data, constructor_name):
-    X, y = iris_data
-    clf = DecisionTreeClassifier()
-    clf.fit(X, y)
-    y_prob = clf.predict_proba(X)
-
-    if constructor_name == "from_estimator":
-        msg = "to be a binary classifier. Got 3 classes instead."
-        with pytest.raises(ValueError, match=msg):
-            CalibrationDisplay.from_estimator(clf, X, y)
-    else:
-        msg = "The target y is not binary. Got multiclass type of target."
-        with pytest.raises(ValueError, match=msg):
-            CalibrationDisplay.from_predictions(y, y_prob)
 
 
 @pytest.mark.parametrize("n_bins", [5, 10])
@@ -812,6 +799,25 @@ def test_calibration_curve_pos_label(dtype_y_str):
     assert_allclose(prob_true, [0, 0, 0.5, 1])
 
 
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"c": "red", "lw": 2, "ls": "-."},
+        {"color": "red", "linewidth": 2, "linestyle": "-."},
+    ],
+)
+def test_calibration_display_kwargs(pyplot, iris_data_binary, kwargs):
+    """Check that matplotlib aliases are handled."""
+    X, y = iris_data_binary
+
+    lr = LogisticRegression().fit(X, y)
+    viz = CalibrationDisplay.from_estimator(lr, X, y, **kwargs)
+
+    assert viz.line_.get_color() == "red"
+    assert viz.line_.get_linewidth() == 2
+    assert viz.line_.get_linestyle() == "-."
+
+
 @pytest.mark.parametrize("pos_label, expected_pos_label", [(None, 1), (0, 0), (1, 1)])
 def test_calibration_display_pos_label(
     pyplot, iris_data_binary, pos_label, expected_pos_label
@@ -921,7 +927,7 @@ def test_calibration_with_fit_params(fit_params_type, data):
         np.ones(N_SAMPLES),
     ],
 )
-def test_calibration_with_sample_weight_base_estimator(sample_weight, data):
+def test_calibration_with_sample_weight_estimator(sample_weight, data):
     """Tests that sample_weight is passed to the underlying base
     estimator.
     """
@@ -932,7 +938,7 @@ def test_calibration_with_sample_weight_base_estimator(sample_weight, data):
     pc_clf.fit(X, y, sample_weight=sample_weight)
 
 
-def test_calibration_without_sample_weight_base_estimator(data):
+def test_calibration_without_sample_weight_estimator(data):
     """Check that even if the estimator doesn't support
     sample_weight, fitting with sample_weight still works.
 
@@ -954,71 +960,6 @@ def test_calibration_without_sample_weight_base_estimator(data):
         pc_clf.fit(X, y, sample_weight=sample_weight)
 
 
-@pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
-@pytest.mark.parametrize("ensemble", [True, False])
-def test_calibrated_classifier_cv_zeros_sample_weights_equivalence(method, ensemble):
-    """Check that passing removing some sample from the dataset `X` is
-    equivalent to passing a `sample_weight` with a factor 0."""
-    X, y = load_iris(return_X_y=True)
-    # Scale the data to avoid any convergence issue
-    X = StandardScaler().fit_transform(X)
-    # Only use 2 classes and select samples such that 2-fold cross-validation
-    # split will lead to an equivalence with a `sample_weight` of 0
-    X = np.vstack((X[:40], X[50:90]))
-    y = np.hstack((y[:40], y[50:90]))
-    sample_weight = np.zeros_like(y)
-    sample_weight[::2] = 1
-
-    estimator = LogisticRegression()
-    calibrated_clf_without_weights = CalibratedClassifierCV(
-        estimator,
-        method=method,
-        ensemble=ensemble,
-        cv=2,
-    )
-    calibrated_clf_with_weights = clone(calibrated_clf_without_weights)
-
-    calibrated_clf_with_weights.fit(X, y, sample_weight=sample_weight)
-    calibrated_clf_without_weights.fit(X[::2], y[::2])
-
-    # Check that the underlying fitted estimators have the same coefficients
-    for est_with_weights, est_without_weights in zip(
-        calibrated_clf_with_weights.calibrated_classifiers_,
-        calibrated_clf_without_weights.calibrated_classifiers_,
-    ):
-        assert_allclose(
-            est_with_weights.estimator.coef_,
-            est_without_weights.estimator.coef_,
-        )
-
-    # Check that the predictions are the same
-    y_pred_with_weights = calibrated_clf_with_weights.predict_proba(X)
-    y_pred_without_weights = calibrated_clf_without_weights.predict_proba(X)
-
-    assert_allclose(y_pred_with_weights, y_pred_without_weights)
-
-
-# TODO(1.4): Remove
-def test_calibrated_classifier_error_base_estimator(data):
-    """Check that we raise an error is a user set both `base_estimator` and
-    `estimator`."""
-    calibrated_classifier = CalibratedClassifierCV(
-        base_estimator=LogisticRegression(), estimator=LogisticRegression()
-    )
-    with pytest.raises(ValueError, match="Both `base_estimator` and `estimator`"):
-        calibrated_classifier.fit(*data)
-
-
-# TODO(1.4): Remove
-def test_calibrated_classifier_deprecation_base_estimator(data):
-    """Check that we raise a warning regarding the deprecation of
-    `base_estimator`."""
-    calibrated_classifier = CalibratedClassifierCV(base_estimator=LogisticRegression())
-    warn_msg = "`base_estimator` was renamed to `estimator`"
-    with pytest.warns(FutureWarning, match=warn_msg):
-        calibrated_classifier.fit(*data)
-
-
 def test_calibration_with_non_sample_aligned_fit_param(data):
     """Check that CalibratedClassifierCV does not enforce sample alignment
     for fit parameters."""
@@ -1031,3 +972,121 @@ def test_calibration_with_non_sample_aligned_fit_param(data):
     CalibratedClassifierCV(estimator=TestClassifier()).fit(
         *data, fit_param=np.ones(len(data[1]) + 1)
     )
+
+
+def test_calibrated_classifier_cv_works_with_large_confidence_scores(
+    global_random_seed,
+):
+    """Test that :class:`CalibratedClassifierCV` works with large confidence
+    scores when using the `sigmoid` method, particularly with the
+    :class:`SGDClassifier`.
+
+    Non-regression test for issue #26766.
+    """
+    prob = 0.67
+    n = 1000
+    random_noise = np.random.default_rng(global_random_seed).normal(size=n)
+
+    y = np.array([1] * int(n * prob) + [0] * (n - int(n * prob)))
+    X = 1e5 * y.reshape((-1, 1)) + random_noise
+
+    # Check that the decision function of SGDClassifier produces predicted
+    # values that are quite large, for the data under consideration.
+    cv = check_cv(cv=None, y=y, classifier=True)
+    indices = cv.split(X, y)
+    for train, test in indices:
+        X_train, y_train = X[train], y[train]
+        X_test = X[test]
+        sgd_clf = SGDClassifier(loss="squared_hinge", random_state=global_random_seed)
+        sgd_clf.fit(X_train, y_train)
+        predictions = sgd_clf.decision_function(X_test)
+        assert (predictions > 1e4).any()
+
+    # Compare the CalibratedClassifierCV using the sigmoid method with the
+    # CalibratedClassifierCV using the isotonic method. The isotonic method
+    # is used for comparison because it is numerically stable.
+    clf_sigmoid = CalibratedClassifierCV(
+        SGDClassifier(loss="squared_hinge", random_state=global_random_seed),
+        method="sigmoid",
+    )
+    score_sigmoid = cross_val_score(clf_sigmoid, X, y, scoring="roc_auc")
+
+    # The isotonic method is used for comparison because it is numerically
+    # stable.
+    clf_isotonic = CalibratedClassifierCV(
+        SGDClassifier(loss="squared_hinge", random_state=global_random_seed),
+        method="isotonic",
+    )
+    score_isotonic = cross_val_score(clf_isotonic, X, y, scoring="roc_auc")
+
+    # The AUC score should be the same because it is invariant under
+    # strictly monotonic conditions
+    assert_allclose(score_sigmoid, score_isotonic)
+
+
+def test_sigmoid_calibration_max_abs_prediction_threshold(global_random_seed):
+    random_state = np.random.RandomState(seed=global_random_seed)
+    n = 100
+    y = random_state.randint(0, 2, size=n)
+
+    # Check that for small enough predictions ranging from -2 to 2, the
+    # threshold value has no impact on the outcome
+    predictions_small = random_state.uniform(low=-2, high=2, size=100)
+
+    # Using a threshold lower than the maximum absolute value of the
+    # predictions enables internal re-scaling by max(abs(predictions_small)).
+    threshold_1 = 0.1
+    a1, b1 = _sigmoid_calibration(
+        predictions=predictions_small,
+        y=y,
+        max_abs_prediction_threshold=threshold_1,
+    )
+
+    # Using a larger threshold disables rescaling.
+    threshold_2 = 10
+    a2, b2 = _sigmoid_calibration(
+        predictions=predictions_small,
+        y=y,
+        max_abs_prediction_threshold=threshold_2,
+    )
+
+    # Using default threshold of 30 also disables the scaling.
+    a3, b3 = _sigmoid_calibration(
+        predictions=predictions_small,
+        y=y,
+    )
+
+    # Depends on the tolerance of the underlying quasy-newton solver which is
+    # not too strict by default.
+    atol = 1e-6
+    assert_allclose(a1, a2, atol=atol)
+    assert_allclose(a2, a3, atol=atol)
+    assert_allclose(b1, b2, atol=atol)
+    assert_allclose(b2, b3, atol=atol)
+
+
+def test_float32_predict_proba(data):
+    """Check that CalibratedClassifierCV works with float32 predict proba.
+
+    Non-regression test for gh-28245.
+    """
+
+    class DummyClassifer32(DummyClassifier):
+        def predict_proba(self, X):
+            return super().predict_proba(X).astype(np.float32)
+
+    model = DummyClassifer32()
+    calibrator = CalibratedClassifierCV(model)
+    # Does not raise an error
+    calibrator.fit(*data)
+
+
+def test_error_less_class_samples_than_folds():
+    """Check that CalibratedClassifierCV works with string targets.
+
+    non-regression test for issue #28841.
+    """
+    X = np.random.normal(size=(20, 3))
+    y = ["a"] * 10 + ["b"] * 10
+
+    CalibratedClassifierCV(cv=3).fit(X, y)

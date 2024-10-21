@@ -2,6 +2,7 @@ import re
 from pprint import PrettyPrinter
 
 import numpy as np
+import pytest
 
 from sklearn.utils._pprint import _EstimatorPrettyPrinter
 from sklearn.linear_model import LogisticRegressionCV
@@ -12,7 +13,8 @@ from sklearn import config_context
 
 
 # Ignore flake8 (lots of line too long issues)
-# flake8: noqa
+# ruff: noqa
+
 
 # Constructors excerpted to test pprinting
 class LogisticRegression(BaseEstimator):
@@ -345,6 +347,24 @@ RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estima
     assert rfe.__repr__() == expected
 
 
+@pytest.mark.parametrize(
+    ("print_changed_only", "expected"),
+    [
+        (True, "RFE(estimator=RFE(...))"),
+        (
+            False,
+            "RFE(estimator=RFE(...), n_features_to_select=None, step=1, verbose=0)",
+        ),
+    ],
+)
+def test_print_estimator_max_depth(print_changed_only, expected):
+    with config_context(print_changed_only=print_changed_only):
+        pp = _EstimatorPrettyPrinter(depth=1)
+
+        rfe = RFE(RFE(RFE(RFE(RFE(LogisticRegression())))))
+        assert pp.pformat(rfe) == expected
+
+
 def test_gridsearch(print_changed_only_false):
     # render a gridsearch
     param_grid = [
@@ -438,7 +458,6 @@ GridSearchCV(cv=3, error_score='raise-deprecating',
 
 
 def test_n_max_elements_to_show(print_changed_only_false):
-
     n_max_elements_to_show = 30
     pp = _EstimatorPrettyPrinter(
         compact=True,

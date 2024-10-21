@@ -1,0 +1,3 @@
+- :class:`preprocessing.PowerTransformer` now uses `scipy.special.inv_boxcox`
+  to output `nan` if the input of BoxCox's inverse is invalid.
+  By :user:`Xuefeng Xu <xuefeng-xu>`

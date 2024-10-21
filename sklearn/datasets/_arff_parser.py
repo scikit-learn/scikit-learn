@@ -1,4 +1,8 @@
 """Implementation of ARFF parsers: via LIAC-ARFF and pandas."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import itertools
 import re
 from collections import OrderedDict
@@ -8,14 +12,11 @@ from typing import List
 import numpy as np
 import scipy as sp
 
-
 from ..externals import _arff
 from ..externals._arff import ArffSparseDataType
-from ..utils import (
-    _chunk_generator,
-    check_pandas_support,
-    get_chunk_n_rows,
-)
+from ..utils._chunking import chunk_generator, get_chunk_n_rows
+from ..utils._optional_dependencies import check_pandas_support
+from ..utils.fixes import pd_fillna
 
 
 def _split_sparse_columns(
@@ -187,7 +188,7 @@ def _liac_arff_parser(
 
         # calculate chunksize
         first_row = next(arff_container["data"])
-        first_df = pd.DataFrame([first_row], columns=columns_names)
+        first_df = pd.DataFrame([first_row], columns=columns_names, copy=False)
 
         row_bytes = first_df.memory_usage(deep=True).sum()
         chunksize = get_chunk_n_rows(row_bytes)
@@ -195,9 +196,20 @@ def _liac_arff_parser(
         # read arff data with chunks
         columns_to_keep = [col for col in columns_names if col in columns_to_select]
         dfs = [first_df[columns_to_keep]]
-        for data in _chunk_generator(arff_container["data"], chunksize):
-            dfs.append(pd.DataFrame(data, columns=columns_names)[columns_to_keep])
+        for data in chunk_generator(arff_container["data"], chunksize):
+            dfs.append(
+                pd.DataFrame(data, columns=columns_names, copy=False)[columns_to_keep]
+            )
+        # dfs[0] contains only one row, which may not have enough data to infer to
+        # column's dtype. Here we use `dfs[1]` to configure the dtype in dfs[0]
+        if len(dfs) >= 2:
+            dfs[0] = dfs[0].astype(dfs[1].dtypes)
+
+        # liac-arff parser does not depend on NumPy and uses None to represent
+        # missing values. To be consistent with the pandas parser, we replace
+        # None with np.nan.
         frame = pd.concat(dfs, ignore_index=True)
+        frame = pd_fillna(pd, frame)
         del dfs, first_df
 
         # cast the columns frame
@@ -380,6 +392,7 @@ def _pandas_arff_parser(
         "header": None,
         "index_col": False,  # always force pandas to not use the first column as index
         "na_values": ["?"],  # missing values are represented by `?`
+        "keep_default_na": False,  # only `?` is a missing value given the ARFF specs
         "comment": "%",  # skip line starting by `%` since they are comments
         "quotechar": '"',  # delimiter to use for quoted strings
         "skipinitialspace": True,  # skip spaces after delimiter to follow ARFF specs
@@ -427,7 +440,7 @@ def _pandas_arff_parser(
     categorical_columns = [
         name
         for name, dtype in frame.dtypes.items()
-        if pd.api.types.is_categorical_dtype(dtype)
+        if isinstance(dtype, pd.CategoricalDtype)
     ]
     for col in categorical_columns:
         frame[col] = frame[col].cat.rename_categories(strip_single_quotes)
@@ -442,7 +455,7 @@ def _pandas_arff_parser(
     categories = {
         name: dtype.categories.tolist()
         for name, dtype in frame.dtypes.items()
-        if pd.api.types.is_categorical_dtype(dtype)
+        if isinstance(dtype, pd.CategoricalDtype)
     }
     return X, y, None, categories
 

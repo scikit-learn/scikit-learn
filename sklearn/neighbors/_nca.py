@@ -2,26 +2,32 @@
 Neighborhood Component Analysis
 """
 
-# Authors: William de Vazelhes <wdevazelhes@gmail.com>
-#          John Chiotellis <ioannis.chiotellis@in.tum.de>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-from warnings import warn
-from numbers import Integral, Real
-import numpy as np
 import sys
 import time
+from numbers import Integral, Real
+from warnings import warn
+
+import numpy as np
 from scipy.optimize import minimize
-from ..utils.extmath import softmax
-from ..metrics import pairwise_distances
-from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
-from ..preprocessing import LabelEncoder
+
+from ..base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
 from ..decomposition import PCA
+from ..exceptions import ConvergenceWarning
+from ..metrics import pairwise_distances
+from ..preprocessing import LabelEncoder
+from ..utils._param_validation import Interval, StrOptions
+from ..utils.extmath import softmax
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import check_random_state
-from ..utils.validation import check_is_fitted, check_array
-from ..utils._param_validation import Interval, StrOptions
-from ..exceptions import ConvergenceWarning
+from ..utils.validation import check_array, check_is_fitted, validate_data
 
 
 class NeighborhoodComponentsAnalysis(
@@ -50,8 +56,8 @@ class NeighborhoodComponentsAnalysis(
 
         - `'auto'`
             Depending on `n_components`, the most reasonable initialization
-            will be chosen. If `n_components <= n_classes` we use `'lda'`, as
-            it uses labels information. If not, but
+            is chosen. If `n_components <= min(n_features, n_classes - 1)`
+            we use `'lda'`, as it uses labels information. If not, but
             `n_components < min(n_features, n_samples)`, we use `'pca'`, as
             it projects data in meaningful directions (those of higher
             variance). Otherwise, we just use `'identity'`.
@@ -215,6 +221,7 @@ class NeighborhoodComponentsAnalysis(
         self.verbose = verbose
         self.random_state = random_state
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit the model according to the given training data.
 
@@ -231,10 +238,8 @@ class NeighborhoodComponentsAnalysis(
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         # Validate the inputs X and y, and converts y to numerical classes.
-        X, y = self._validate_data(X, y, ensure_min_samples=2)
+        X, y = validate_data(self, X, y, ensure_min_samples=2)
         check_classification_targets(y)
         y = LabelEncoder().fit_transform(y)
 
@@ -317,7 +322,6 @@ class NeighborhoodComponentsAnalysis(
 
         # Reshape the solution found by the optimizer
         self.components_ = opt_result.x.reshape(-1, X.shape[1])
-        self._n_features_out = self.components_.shape[1]
 
         # Stop timer
         t_train = time.time() - t_train
@@ -357,7 +361,7 @@ class NeighborhoodComponentsAnalysis(
         """
 
         check_is_fitted(self)
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
 
         return np.dot(X, self.components_.T)
 
@@ -515,5 +519,12 @@ class NeighborhoodComponentsAnalysis(
 
         return sign * loss, sign * gradient.ravel()
 
-    def _more_tags(self):
-        return {"requires_y": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.required = True
+        return tags
+
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]

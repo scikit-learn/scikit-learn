@@ -1,18 +1,24 @@
 """Matrix factorization with Sparse PCA."""
-# Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
-# License: BSD 3 clause
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Integral, Real
 
 import numpy as np
 
-from ..utils import check_random_state
-from ..utils.extmath import svd_flip
-from ..utils._param_validation import Hidden, Interval, StrOptions
-from ..utils.validation import check_array, check_is_fitted
+from ..base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
 from ..linear_model import ridge_regression
-from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
-from ._dict_learning import dict_learning, MiniBatchDictionaryLearning
+from ..utils import check_random_state
+from ..utils._param_validation import Interval, StrOptions
+from ..utils.extmath import svd_flip
+from ..utils.validation import check_array, check_is_fitted, validate_data
+from ._dict_learning import MiniBatchDictionaryLearning, dict_learning
 
 
 class _BaseSparsePCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
@@ -53,6 +59,7 @@ class _BaseSparsePCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         self.verbose = verbose
         self.random_state = random_state
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the model from data in X.
 
@@ -70,9 +77,8 @@ class _BaseSparsePCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         random_state = check_random_state(self.random_state)
-        X = self._validate_data(X)
+        X = validate_data(self, X)
 
         self.mean_ = X.mean(axis=0)
         X = X - self.mean_
@@ -107,7 +113,7 @@ class _BaseSparsePCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
         X = X - self.mean_
 
         U = ridge_regression(
@@ -144,10 +150,10 @@ class _BaseSparsePCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         """Number of transformed output features."""
         return self.components_.shape[0]
 
-    def _more_tags(self):
-        return {
-            "preserves_dtype": [np.float64, np.float32],
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags
 
 
 class SparsePCA(_BaseSparsePCA):
@@ -261,7 +267,7 @@ class SparsePCA(_BaseSparsePCA):
     (200, 5)
     >>> # most values in the components_ are zero (sparsity)
     >>> np.mean(transformer.components_ == 0)
-    0.9666...
+    np.float64(0.9666...)
     """
 
     _parameter_constraints: dict = {
@@ -319,7 +325,7 @@ class SparsePCA(_BaseSparsePCA):
             return_n_iter=True,
         )
         # flip eigenvectors' sign to enforce deterministic output
-        code, dictionary = svd_flip(code, dictionary, u_based_decision=False)
+        code, dictionary = svd_flip(code, dictionary, u_based_decision=True)
         self.components_ = code.T
         components_norm = np.linalg.norm(self.components_, axis=1)[:, np.newaxis]
         components_norm[components_norm == 0] = 1
@@ -337,6 +343,9 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
     the data.  The amount of sparseness is controllable by the coefficient
     of the L1 penalty, given by the parameter alpha.
 
+    For an example comparing sparse PCA to PCA, see
+    :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`
+
     Read more in the :ref:`User Guide <SparsePCA>`.
 
     Parameters
@@ -353,17 +362,9 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
         Amount of ridge shrinkage to apply in order to improve
         conditioning when calling the transform method.
 
-    n_iter : int, default=100
-        Number of iterations to perform for each mini batch.
-
-        .. deprecated:: 1.2
-           `n_iter` is deprecated in 1.2 and will be removed in 1.4. Use
-           `max_iter` instead.
-
-    max_iter : int, default=None
+    max_iter : int, default=1_000
         Maximum number of iterations over the complete dataset before
         stopping independently of any early stopping criterion heuristics.
-        If `max_iter` is not `None`, `n_iter` is ignored.
 
         .. versionadded:: 1.2
 
@@ -401,7 +402,7 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
 
     tol : float, default=1e-3
         Control early stopping based on the norm of the differences in the
-        dictionary between 2 steps. Used only if `max_iter` is not None.
+        dictionary between 2 steps.
 
         To disable early stopping based on changes in the dictionary, set
         `tol` to 0.0.
@@ -410,8 +411,7 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
 
     max_no_improvement : int or None, default=10
         Control early stopping based on the consecutive number of mini batches
-        that does not yield an improvement on the smoothed cost function. Used only if
-        `max_iter` is not None.
+        that does not yield an improvement on the smoothed cost function.
 
         To disable convergence detection based on cost function, set
         `max_no_improvement` to `None`.
@@ -469,16 +469,12 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
     (200, 5)
     >>> # most values in the components_ are zero (sparsity)
     >>> np.mean(transformer.components_ == 0)
-    0.9...
+    np.float64(0.9...)
     """
 
     _parameter_constraints: dict = {
         **_BaseSparsePCA._parameter_constraints,
-        "max_iter": [Interval(Integral, 0, None, closed="left"), None],
-        "n_iter": [
-            Interval(Integral, 0, None, closed="left"),
-            Hidden(StrOptions({"deprecated"})),
-        ],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
         "callback": [None, callable],
         "batch_size": [Interval(Integral, 1, None, closed="left")],
         "shuffle": ["boolean"],
@@ -491,8 +487,7 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
         *,
         alpha=1,
         ridge_alpha=0.01,
-        n_iter="deprecated",
-        max_iter=None,
+        max_iter=1_000,
         callback=None,
         batch_size=3,
         verbose=False,
@@ -514,7 +509,6 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
             verbose=verbose,
             random_state=random_state,
         )
-        self.n_iter = n_iter
         self.callback = callback
         self.batch_size = batch_size
         self.shuffle = shuffle
@@ -527,7 +521,6 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
         est = MiniBatchDictionaryLearning(
             n_components=n_components,
             alpha=self.alpha,
-            n_iter=self.n_iter,
             max_iter=self.max_iter,
             dict_init=None,
             batch_size=self.batch_size,
@@ -541,7 +534,9 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
             callback=self.callback,
             tol=self.tol,
             max_no_improvement=self.max_no_improvement,
-        ).fit(X.T)
+        )
+        est.set_output(transform="default")
+        est.fit(X.T)
 
         self.components_, self.n_iter_ = est.transform(X.T).T, est.n_iter_
 

@@ -165,7 +165,7 @@ cdef void _ger(BLAS_Order order, int m, int n, floating alpha,
             dger(&n, &m, &alpha, <double *> y, &incy, <double *> x, &incx, A, &lda)
     else:
         if floating is float:
-            sger(&m, &n, &alpha, <float *> x, &incx,<float *> y, &incy, A, &lda)
+            sger(&m, &n, &alpha, <float *> x, &incx, <float *> y, &incy, A, &lda)
         else:
             dger(&m, &n, &alpha, <double *> x, &incx, <double *> y, &incy, A, &lda)
 
