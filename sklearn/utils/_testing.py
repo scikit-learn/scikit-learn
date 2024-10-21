@@ -38,6 +38,13 @@ from numpy.testing import (
 )
 
 import sklearn
+from sklearn.utils import (
+    ClassifierTags,
+    RegressorTags,
+    Tags,
+    TargetTags,
+    TransformerTags,
+)
 from sklearn.utils._array_api import _check_array_api_dispatch
 from sklearn.utils.fixes import (
     _IS_32BIT,
@@ -1127,6 +1134,12 @@ class MinimalClassifier:
 
         return accuracy_score(y, self.predict(X))
 
+    def __sklearn_tags__(self):
+        return Tags(
+            classifier_tags=ClassifierTags(),
+            target_tags=TargetTags(required=True),
+        )
+
 
 class MinimalRegressor:
     """Minimal regressor implementation without inheriting from BaseEstimator.
@@ -1167,6 +1180,12 @@ class MinimalRegressor:
 
         return r2_score(y, self.predict(X))
 
+    def __sklearn_tags__(self):
+        return Tags(
+            regressor_tags=RegressorTags(),
+            target_tags=TargetTags(required=True),
+        )
+
 
 class MinimalTransformer:
     """Minimal transformer implementation without inheriting from
@@ -1202,6 +1221,12 @@ class MinimalTransformer:
 
     def fit_transform(self, X, y=None):
         return self.fit(X, y).transform(X, y)
+
+    def __sklearn_tags__(self):
+        return Tags(
+            transformer_tags=TransformerTags(),
+            target_tags=TargetTags(required=False),
+        )
 
 
 def _array_api_for_tests(array_namespace, device):

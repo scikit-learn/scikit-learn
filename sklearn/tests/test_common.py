@@ -35,7 +35,13 @@ from sklearn.preprocessing import (
     StandardScaler,
 )
 from sklearn.utils import all_estimators
-from sklearn.utils._tags import get_tags
+from sklearn.utils._tags import (
+    ClassifierTags,
+    RegressorTags,
+    Tags,
+    TransformerTags,
+    get_tags,
+)
 from sklearn.utils._test_common.instance_generator import (
     _get_check_estimator_ids,
     _tested_estimators,
@@ -219,21 +225,28 @@ def test_valid_tag_types(estimator):
     """Check that estimator tags are valid."""
     from dataclasses import fields
 
-    from ..utils._tags import default_tags
-
     def check_field_types(tags, defaults):
         if tags is None:
             return
         tags_fields = fields(tags)
         for field in tags_fields:
-            correct_tags = type(getattr(defaults, field.name))
+            correct_tag_type = type(getattr(defaults, field.name))
+            given_tag = getattr(tags, field.name)
+            if given_tag is None and isinstance(
+                correct_tag_type, (TransformerTags, ClassifierTags, RegressorTags)
+            ):
+                continue
             if field.name == "_xfail_checks":
                 # _xfail_checks can be a dictionary
-                correct_tags = (correct_tags, dict)
-            assert isinstance(getattr(tags, field.name), correct_tags)
+                correct_tag_type = (correct_tag_type, dict)
+            assert isinstance(given_tag, correct_tag_type)
 
     tags = get_tags(estimator)
-    defaults = default_tags(estimator)
+    defaults = Tags(
+        regressor_tags=RegressorTags(),
+        classifier_tags=ClassifierTags(),
+        transformer_tags=TransformerTags(),
+    )
     check_field_types(tags, defaults)
     check_field_types(tags.input_tags, defaults.input_tags)
     check_field_types(tags.target_tags, defaults.target_tags)

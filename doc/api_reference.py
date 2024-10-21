@@ -1166,7 +1166,6 @@ API_REFERENCE = {
                     "ClassifierTags",
                     "RegressorTags",
                     "TransformerTags",
-                    "default_tags",
                     "get_tags",
                 ],
             },

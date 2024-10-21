@@ -20,7 +20,14 @@ from .utils._estimator_html_repr import _HTMLDocumentationLinkMixin, estimator_h
 from .utils._metadata_requests import _MetadataRequester, _routing_enabled
 from .utils._param_validation import validate_parameter_constraints
 from .utils._set_output import _SetOutputMixin
-from .utils._tags import default_tags
+from .utils._tags import (
+    ClassifierTags,
+    RegressorTags,
+    Tags,
+    TargetTags,
+    TransformerTags,
+    get_tags,
+)
 from .utils.fixes import _IS_32BIT
 from .utils.validation import (
     _check_feature_names_in,
@@ -380,7 +387,13 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
             self.__dict__.update(state)
 
     def __sklearn_tags__(self):
-        return default_tags(self)
+        return Tags(
+            estimator_type=None,
+            target_tags=TargetTags(required=True),
+            transformer_tags=None,
+            regressor_tags=None,
+            classifier_tags=None,
+        )
 
     def _validate_params(self):
         """Validate types and values of constructor parameters
@@ -432,9 +445,10 @@ class ClassifierMixin:
 
     This mixin defines the following functionality:
 
-    - `_estimator_type` class attribute defaulting to `"classifier"`;
+    - set estimator type to `"classifier"`;
     - `score` method that default to :func:`~sklearn.metrics.accuracy_score`.
-    - enforce that `fit` requires `y` to be passed through the `requires_y` tag.
+    - enforce that `fit` requires `y` to be passed through the `requires_y` tag,
+      which is done by setting the classifier type tag.
 
     Read more in the :ref:`User Guide <rolling_your_own_estimator>`.
 
@@ -460,7 +474,15 @@ class ClassifierMixin:
     0.66...
     """
 
+    # TODO(1.8): Remove this attribute
     _estimator_type = "classifier"
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.estimator_type = "classifier"
+        tags.classifier_tags = ClassifierTags()
+        tags.target_tags = TargetTags(required=True)
+        return tags
 
     def score(self, X, y, sample_weight=None):
         """
@@ -496,9 +518,10 @@ class RegressorMixin:
 
     This mixin defines the following functionality:
 
-    - `_estimator_type` class attribute defaulting to `"regressor"`;
+    - set estimator type to `"regressor"`;
     - `score` method that default to :func:`~sklearn.metrics.r2_score`.
-    - enforce that `fit` requires `y` to be passed through the `requires_y` tag.
+    - enforce that `fit` requires `y` to be passed through the `requires_y` tag,
+      which is done by setting the regressor type tag.
 
     Read more in the :ref:`User Guide <rolling_your_own_estimator>`.
 
@@ -524,7 +547,15 @@ class RegressorMixin:
     0.0
     """
 
+    # TODO(1.8): Remove this attribute
     _estimator_type = "regressor"
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.estimator_type = "regressor"
+        tags.regressor_tags = RegressorTags()
+        tags.target_tags = TargetTags(required=True)
+        return tags
 
     def score(self, X, y, sample_weight=None):
         """Return the coefficient of determination of the prediction.
@@ -576,7 +607,7 @@ class RegressorMixin:
 class ClusterMixin:
     """Mixin class for all cluster estimators in scikit-learn.
 
-    - `_estimator_type` class attribute defaulting to `"clusterer"`;
+    - set estimator type to `"clusterer"`;
     - `fit_predict` method returning the cluster labels associated to each sample.
 
     Examples
@@ -592,7 +623,15 @@ class ClusterMixin:
     array([1, 1, 1])
     """
 
+    # TODO(1.8): Remove this attribute
     _estimator_type = "clusterer"
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.estimator_type = "clusterer"
+        if tags.transformer_tags is not None:
+            tags.transformer_tags.preserves_dtype = []
+        return tags
 
     def fit_predict(self, X, y=None, **kwargs):
         """
@@ -620,12 +659,6 @@ class ClusterMixin:
         # method is possible for a given clustering algorithm
         self.fit(X, **kwargs)
         return self.labels_
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        if tags.transformer_tags is not None:
-            tags.transformer_tags.preserves_dtype = []
-        return tags
 
 
 class BiclusterMixin:
@@ -762,6 +795,11 @@ class TransformerMixin(_SetOutputMixin):
     >>> transformer.fit_transform(X)
     array([1, 1, 1])
     """
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags = TransformerTags()
+        return tags
 
     def fit_transform(self, X, y=None, **fit_params):
         """
@@ -963,7 +1001,7 @@ class OutlierMixin:
 
     This mixin defines the following functionality:
 
-    - `_estimator_type` class attribute defaulting to `outlier_detector`;
+    - set estimator type to `"outlier_detector"`;
     - `fit_predict` method that default to `fit` and `predict`.
 
     Examples
@@ -982,7 +1020,13 @@ class OutlierMixin:
     array([1., 1., 1.])
     """
 
+    # TODO(1.8): Remove this attribute
     _estimator_type = "outlier_detector"
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.estimator_type = "outlier_detector"
+        return tags
 
     def fit_predict(self, X, y=None, **kwargs):
         """Perform fit on X and returns labels for X.
@@ -1116,7 +1160,15 @@ def is_classifier(estimator):
     >>> is_classifier(kmeans)
     False
     """
-    return getattr(estimator, "_estimator_type", None) == "classifier"
+    # TODO(1.8): Remove this check
+    if isinstance(estimator, type):
+        raise FutureWarning(
+            f"passing a class to {print(inspect.stack()[0][3])} is deprecated and "
+            "will be removed in 1.8. Use an instance of the class instead."
+        )
+        return getattr(estimator, "_estimator_type", None) == "classifier"
+
+    return get_tags(estimator).estimator_type == "classifier"
 
 
 def is_regressor(estimator):
@@ -1147,7 +1199,15 @@ def is_regressor(estimator):
     >>> is_regressor(kmeans)
     False
     """
-    return getattr(estimator, "_estimator_type", None) == "regressor"
+    # TODO(1.8): Remove this check
+    if isinstance(estimator, type):
+        raise FutureWarning(
+            f"passing a class to {print(inspect.stack()[0][3])} is deprecated and "
+            "will be removed in 1.8. Use an instance of the class instead."
+        )
+        return getattr(estimator, "_estimator_type", None) == "regressor"
+
+    return get_tags(estimator).estimator_type == "regressor"
 
 
 def is_clusterer(estimator):
@@ -1180,7 +1240,15 @@ def is_clusterer(estimator):
     >>> is_clusterer(kmeans)
     True
     """
-    return getattr(estimator, "_estimator_type", None) == "clusterer"
+    # TODO(1.8): Remove this check
+    if isinstance(estimator, type):
+        raise FutureWarning(
+            f"passing a class to {print(inspect.stack()[0][3])} is deprecated and "
+            "will be removed in 1.8. Use an instance of the class instead."
+        )
+        return getattr(estimator, "_estimator_type", None) == "clusterer"
+
+    return get_tags(estimator).estimator_type == "clusterer"
 
 
 def is_outlier_detector(estimator):
@@ -1196,7 +1264,15 @@ def is_outlier_detector(estimator):
     out : bool
         True if estimator is an outlier detector and False otherwise.
     """
-    return getattr(estimator, "_estimator_type", None) == "outlier_detector"
+    # TODO(1.8): Remove this check
+    if isinstance(estimator, type):
+        raise FutureWarning(
+            f"passing a class to {print(inspect.stack()[0][3])} is deprecated and "
+            "will be removed in 1.8. Use an instance of the class instead."
+        )
+        return getattr(estimator, "_estimator_type", None) == "outlier_detector"
+
+    return get_tags(estimator).estimator_type == "outlier_detector"
 
 
 def _fit_context(*, prefer_skip_nested_validation):

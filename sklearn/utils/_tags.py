@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass, field
 
 # Authors: The scikit-learn developers
@@ -184,6 +185,14 @@ class Tags:
 
     Parameters
     ----------
+    estimator_type : str or None
+        The type of the estimator. Can be one of:
+        - "classifier"
+        - "regressor"
+        - "transformer"
+        - "clusterer"
+        - "outlier_detector"
+
     target_tags : :class:`TargetTags`
         The target(y) tags.
 
@@ -230,6 +239,7 @@ class Tags:
         The input data(X) tags.
     """
 
+    estimator_type: str | None
     target_tags: TargetTags
     transformer_tags: TransformerTags | None
     classifier_tags: ClassifierTags | None
@@ -243,6 +253,7 @@ class Tags:
     input_tags: InputTags = field(default_factory=InputTags)
 
 
+# TODO(1.8): Remove this function
 def default_tags(estimator) -> Tags:
     """Get the default tags for an estimator.
 
@@ -272,19 +283,20 @@ def default_tags(estimator) -> Tags:
     tags : Tags
         The default tags for the estimator.
     """
-    from ..base import is_classifier, is_regressor
-
-    target_required = is_classifier(estimator) or is_regressor(estimator)
+    est_is_classifier = getattr(estimator, "_estimator_type", None) == "classifier"
+    est_is_regressor = getattr(estimator, "_estimator_type", None) == "regressor"
+    target_required = est_is_classifier or est_is_regressor
 
     return Tags(
+        estimator_type=getattr(estimator, "_estimator_type", None),
         target_tags=TargetTags(required=target_required),
         transformer_tags=(
             TransformerTags()
             if hasattr(estimator, "transform") or hasattr(estimator, "fit_transform")
             else None
         ),
-        classifier_tags=ClassifierTags() if is_classifier(estimator) else None,
-        regressor_tags=RegressorTags() if is_regressor(estimator) else None,
+        classifier_tags=ClassifierTags() if est_is_classifier else None,
+        regressor_tags=RegressorTags() if est_is_regressor else None,
     )
 
 
@@ -314,6 +326,16 @@ def get_tags(estimator) -> Tags:
     if hasattr(estimator, "__sklearn_tags__"):
         tags = estimator.__sklearn_tags__()
     else:
+        warnings.warn(
+            f"Estimator {estimator} has no __sklearn_tags__ attribute, which is "
+            "defined in `sklearn.base.BaseEstimator`. This will raise an error in "
+            "scikit-learn 1.8. Please define the __sklearn_tags__ method, or inherit "
+            "from `sklearn.base.BaseEstimator` and other appropriate mixins such as "
+            "`sklearn.base.TransformerMixin`, `sklearn.base.ClassifierMixin`, "
+            "`sklearn.base.RegressorMixin`, and `sklearn.base.ClusterMixin`, and "
+            "`sklearn.base.OutlierMixin`.",
+            category=FutureWarning,
+        )
         tags = default_tags(estimator)
 
     return tags
