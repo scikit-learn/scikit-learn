@@ -298,9 +298,9 @@ It requires ``n_neighbors > n_components * (n_components + 3) / 2``.
   1. **Nearest Neighbors Search**.  Same as standard LLE
 
   2. **Weight Matrix Construction**. Approximately
-    :math:`O[D N k^3] + O[N d^6]`.  The first term reflects a similar
-    cost to that of standard LLE.  The second term comes from a QR
-    decomposition of the local hessian estimator.
+     :math:`O[D N k^3] + O[N d^6]`.  The first term reflects a similar
+     cost to that of standard LLE.  The second term comes from a QR
+     decomposition of the local hessian estimator.
 
   3. **Partial Eigenvalue Decomposition**. Same as standard LLE.
 
