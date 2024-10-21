@@ -2415,6 +2415,4 @@ def test_newton_cholesky_fallback_to_lbfgs(global_random_seed):
             lr_nc_limited.fit(X, y)
             n_iter_nc_limited = lr_nc_limited.n_iter_[0]
 
-    # XXX: Is this a one-off error? Shouln't it be equal to
-    # lr_nc_limited.max_iter instead?
     assert n_iter_nc_limited == lr_nc_limited.max_iter - 1
