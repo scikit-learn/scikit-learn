@@ -477,7 +477,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         * integer, to specify the number of folds in a (Stratified) KFold,
         * An object to be used as a cross-validation generator,
         * An iterable yielding train, test splits,
-        * `"prefit"` to assume the `estimators` are prefit. In this case, the
+        * `"prefit"`, to assume the `estimators` are prefit. In this case, the
           estimators will not be refitted.
 
         For integer/None inputs, if the estimator is a classifier and y is
@@ -517,9 +517,9 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
           will raise an error.
 
     n_jobs : int, default=None
-        The number of jobs to run in parallel all `estimators` `fit`.
+        The number of jobs to run in parallel for `fit` of all `estimators`.
         `None` means 1 unless in a `joblib.parallel_backend` context. -1 means
-        using all processors. See Glossary for more details.
+        using all processors. See :term:`Glossary <n_jobs>` for more details.
 
     passthrough : bool, default=False
         When False, only the predictions of estimators will be used as
@@ -547,7 +547,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
-        underlying classifier exposes such an attribute when fit.
+        underlying estimator exposes such an attribute when fit.
 
         .. versionadded:: 0.24
 
@@ -558,7 +558,8 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         .. versionadded:: 1.0
 
     final_estimator_ : estimator
-        The classifier which predicts given the output of `estimators_`.
+        The classifier fit on the output of `estimators_` and responsible for
+        final predictions.
 
     stack_method_ : list of str
         The method used by each base estimator.
@@ -889,8 +890,9 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         * None, to use the default 5-fold cross validation,
         * integer, to specify the number of folds in a (Stratified) KFold,
         * An object to be used as a cross-validation generator,
-        * An iterable yielding train, test splits.
-        * "prefit" to assume the `estimators` are prefit, and skip cross validation
+        * An iterable yielding train, test splits,
+        * `"prefit"`, to assume the `estimators` are prefit. In this case, the
+          estimators will not be refitted.
 
         For integer/None inputs, if the estimator is a classifier and y is
         either binary or multiclass,
@@ -920,7 +922,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
     n_jobs : int, default=None
         The number of jobs to run in parallel for `fit` of all `estimators`.
         `None` means 1 unless in a `joblib.parallel_backend` context. -1 means
-        using all processors. See Glossary for more details.
+        using all processors. See :term:`Glossary <n_jobs>` for more details.
 
     passthrough : bool, default=False
         When False, only the predictions of estimators will be used as
@@ -933,7 +935,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
 
     Attributes
     ----------
-    estimators_ : list of estimator
+    estimators_ : list of estimators
         The elements of the `estimators` parameter, having been fitted on the
         training data. If an estimator has been set to `'drop'`, it
         will not appear in `estimators_`. When `cv="prefit"`, `estimators_`
@@ -944,7 +946,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
-        underlying regressor exposes such an attribute when fit.
+        underlying estimator exposes such an attribute when fit.
 
         .. versionadded:: 0.24
 
@@ -955,7 +957,8 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         .. versionadded:: 1.0
 
     final_estimator_ : estimator
-        The regressor to stacked the base estimators fitted.
+        The regressor fit on the output of `estimators_` and responsible for
+        final predictions.
 
     stack_method_ : list of str
         The method used by each base estimator.
