@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 # SPDX-License-Identifier: BSD-3-Clause
 
 
-@dataclass
+@dataclass(slots=True)
 class InputTags:
     """Tags for the input data.
 
@@ -67,7 +67,7 @@ class InputTags:
     pairwise: bool = False
 
 
-@dataclass
+@dataclass(slots=True)
 class TargetTags:
     """Tags for the target data.
 
@@ -106,7 +106,7 @@ class TargetTags:
     single_output: bool = True
 
 
-@dataclass
+@dataclass(slots=True)
 class TransformerTags:
     """Tags for the transformer.
 
@@ -126,7 +126,7 @@ class TransformerTags:
     preserves_dtype: list[str] = field(default_factory=lambda: ["float64"])
 
 
-@dataclass
+@dataclass(slots=True)
 class ClassifierTags:
     """Tags for the classifier.
 
@@ -154,7 +154,7 @@ class ClassifierTags:
     multi_label: bool = False
 
 
-@dataclass
+@dataclass(slots=True)
 class RegressorTags:
     """Tags for the regressor.
 
@@ -176,7 +176,7 @@ class RegressorTags:
     multi_label: bool = False
 
 
-@dataclass
+@dataclass(slots=True)
 class Tags:
     """Tags for the estimator.
 
