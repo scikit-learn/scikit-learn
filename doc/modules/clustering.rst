@@ -226,9 +226,9 @@ random initialization, as shown in the reference. For a detailed example of
 comaparing different initialization schemes, refer to
 :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py`.
 
-K-means++ can also be called independently to select seeds for other clustering
-algorithms, see:ref:`sphx_glr_auto_examples_cluster_plot_kmeans_plusplus.py`
-for details and example usage.
+K-means++ can also be called independently to select seeds for other
+clustering algorithms, see :func:`sklearn.cluster.kmeans_plusplus` for details
+and example usage.
 
 The algorithm supports sample weights, which can be given by a parameter
 ``sample_weight``. This allows to assign more weight to some samples when
@@ -240,6 +240,9 @@ to the dataset :math:`X`.
 
 * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`: Document clustering
   using :class:`KMeans` and :class:`MiniBatchKMeans` based on sparse data
+
+* :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_plusplus.py`: Using K-means++
+to select seeds for other clustering algorithms.
 
 Low-level parallelism
 ---------------------

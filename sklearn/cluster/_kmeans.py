@@ -1366,14 +1366,8 @@ class KMeans(_BaseKMeans):
     For a comparison between K-Means and MiniBatchKMeans refer to example
     :ref:`sphx_glr_auto_examples_cluster_plot_mini_batch_kmeans.py`.
 
-    For a demonstration of how K-Means can be used for generating initial seeds
-    for clustering :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_plusplus.py`.
-
     For a comparison between K-Means and BisectingKMeans refer to example
     :ref:`sphx_glr_auto_examples_cluster_plot_bisect_kmeans.py`.
-
-    For a demonstration of how K-Means can be used for generating initial seeds
-    for clustering :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_plusplus.py`.
     """
 
     _parameter_constraints: dict = {
