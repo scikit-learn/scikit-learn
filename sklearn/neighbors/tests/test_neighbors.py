@@ -2410,7 +2410,7 @@ def test_neighbor_classifiers_loocv(nn_model, algorithm):
 
     Calling predict with X=None computes a prediction for each training point
     from the labels of its neighbors (without the label of the data point being
-    predicting upon). This is therefore mathematically equivalent to
+    predicted upon). This is therefore mathematically equivalent to
     leave-one-out cross-validation without having do any retraining (rebuilding
     a KD-tree or Ball-tree index) or any data reshuffling.
     """
