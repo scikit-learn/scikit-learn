@@ -3,7 +3,6 @@ import re
 import warnings
 from functools import partial
 
-from metrics.pairwise import _precompute_metric_params
 import numpy as np
 import pytest
 from scipy.spatial.distance import cdist
@@ -117,7 +116,8 @@ def assert_not_empty_precomputed(precomputed: np.ndarray) -> None:
 def assert_nan_precomputed(precomputed: np.ndarray) -> None:
     """Ensure array contains no NaN or Inf values."""
     assert not np.isnan(precomputed).any(), "Precomputed matrix contains NaN values."
-    
+    assert not np.isinf(precomputed).any(), "Precomputed matrix contains Inf values."
+
 def assert_size_for_precomputed(precomputed: np.ndarray, n_samples_X: int, n_samples_Y: int) -> None:
     """
     Check the shape of the precomputed distance matrix.
@@ -541,7 +541,7 @@ def test_assert_compatible_argkmin_results():
 
 
 @pytest.mark.parametrize("check_sorted", [True, False])
-def test_assert_compatible_radius_results(check_sorted):
+def test_assert_compatible_radius_results(check_sorted: bool):
     atol = 1e-7
     rtol = 0.0
     tols = dict(atol=atol, rtol=rtol)
@@ -1173,8 +1173,8 @@ def test_radius_neighbors_classmode_factory_method_wrong_usages():
 @pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_chunk_size_agnosticism(
     global_random_seed,
-    Dispatcher,
-    dtype,
+    Dispatcher: ArgKmin | RadiusNeighbors,
+    dtype: np.float64[np._64Bit] | np.float32[np._32Bit],
     n_features=100,
 ):
     """Check that results do not depend on the chunk size."""
@@ -1223,8 +1223,8 @@ def test_chunk_size_agnosticism(
 @pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_n_threads_agnosticism(
     global_random_seed,
-    Dispatcher,
-    dtype,
+    Dispatcher: ArgKmin | RadiusNeighbors,
+    dtype: np.float64[np._64Bit] | np.float32[np._32Bit],
     n_features=100,
 ):
     """Check that results do not depend on the number of threads."""
@@ -1280,9 +1280,9 @@ def test_n_threads_agnosticism(
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_format_agnosticism(
     global_random_seed,
-    Dispatcher,
-    dtype,
-    csr_container,
+    Dispatcher: ArgKmin | RadiusNeighbors,
+    dtype: np.float64[np._64Bit] | np.float32[np._32Bit],
+    csr_container: Any,
 ):
     """Check that results do not depend on the format (dense, sparse) of the input."""
     rng = np.random.RandomState(global_random_seed)
@@ -1488,9 +1488,9 @@ def test_pairwise_distances_argkmin(
 @pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_pairwise_distances_radius_neighbors(
     global_random_seed,
-    metric,
-    strategy,
-    dtype,
+    metric: str,
+    strategy: Literal['parallel_on_X'] | Literal['parallel_on_Y'],
+    dtype: np.float64[np._64Bit] | np.float32[np._32Bit],
     n_queries=5,
     n_samples=100,
 ):
@@ -1602,8 +1602,8 @@ def test_memmap_backed_data(
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_sqeuclidean_row_norms(
     global_random_seed,
-    dtype,
-    csr_container,
+    dtype: np.float64[np._64Bit] | np.float32[np._32Bit],
+    csr_container: Any,
 ):
     rng = np.random.RandomState(global_random_seed)
     spread = 100
@@ -1661,7 +1661,7 @@ def test_argkmin_classmode_strategy_consistent():
 
 
 @pytest.mark.parametrize("outlier_label", [None, 0, 3, 6, 9])
-def test_radius_neighbors_classmode_strategy_consistent(outlier_label):
+def test_radius_neighbors_classmode_strategy_consistent(outlier_label: None | Literal[0] | Literal[3] | Literal[6] | Literal[9]):
     rng = np.random.RandomState(1)
     X = rng.rand(100, 10)
     Y = rng.rand(100, 10)
