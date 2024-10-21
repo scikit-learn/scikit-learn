@@ -71,6 +71,11 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric", xp=None):
     dtype : str or list, default="numeric"
         the dtype argument passed to check_array.
 
+    xp : module, default=None
+        Precomputed array namespace module. When passed, typically from a caller
+        that has already performed inspection of its own inputs, skips array
+        namespace inspection.
+
     Returns
     -------
     type_true : one of {'continuous', continuous-multioutput'}
