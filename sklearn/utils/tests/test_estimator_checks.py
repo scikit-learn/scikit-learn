@@ -13,7 +13,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn import config_context, get_config
-from sklearn.base import BaseEstimator, ClassifierMixin, OutlierMixin
+from sklearn.base import BaseEstimator, ClassifierMixin, OutlierMixin, TransformerMixin
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.datasets import (
     load_iris,
@@ -421,7 +421,7 @@ class LargeSparseNotSupportedClassifier(BaseEstimator):
         return self
 
 
-class SparseTransformer(BaseEstimator):
+class SparseTransformer(TransformerMixin, BaseEstimator):
     def __init__(self, sparse_container=None):
         self.sparse_container = sparse_container
 

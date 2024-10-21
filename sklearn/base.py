@@ -389,7 +389,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
     def __sklearn_tags__(self):
         return Tags(
             estimator_type=None,
-            target_tags=TargetTags(required=True),
+            target_tags=TargetTags(required=False),
             transformer_tags=None,
             regressor_tags=None,
             classifier_tags=None,
@@ -481,7 +481,7 @@ class ClassifierMixin:
         tags = super().__sklearn_tags__()
         tags.estimator_type = "classifier"
         tags.classifier_tags = ClassifierTags()
-        tags.target_tags = TargetTags(required=True)
+        tags.target_tags.required = True
         return tags
 
     def score(self, X, y, sample_weight=None):
@@ -554,7 +554,7 @@ class RegressorMixin:
         tags = super().__sklearn_tags__()
         tags.estimator_type = "regressor"
         tags.regressor_tags = RegressorTags()
-        tags.target_tags = TargetTags(required=True)
+        tags.target_tags.required = True
         return tags
 
     def score(self, X, y, sample_weight=None):
@@ -871,8 +871,8 @@ class OneToOneFeatureMixin:
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.base import OneToOneFeatureMixin
-    >>> class MyEstimator(OneToOneFeatureMixin):
+    >>> from sklearn.base import OneToOneFeatureMixin, BaseEstimator
+    >>> class MyEstimator(OneToOneFeatureMixin, BaseEstimator):
     ...     def fit(self, X, y=None):
     ...         self.n_features_in_ = X.shape[1]
     ...         return self
@@ -923,8 +923,8 @@ class ClassNamePrefixFeaturesOutMixin:
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.base import ClassNamePrefixFeaturesOutMixin
-    >>> class MyEstimator(ClassNamePrefixFeaturesOutMixin):
+    >>> from sklearn.base import ClassNamePrefixFeaturesOutMixin, BaseEstimator
+    >>> class MyEstimator(ClassNamePrefixFeaturesOutMixin, BaseEstimator):
     ...     def fit(self, X, y=None):
     ...         self._n_features_out = X.shape[1]
     ...         return self
@@ -961,7 +961,7 @@ class DensityMixin:
 
     This mixin defines the following functionality:
 
-    - `_estimator_type` class attribute defaulting to `"DensityEstimator"`;
+    - sets estimator type to `"density_estimator"`;
     - `score` method that default that do no-op.
 
     Examples
@@ -976,7 +976,13 @@ class DensityMixin:
     True
     """
 
+    # TODO(1.8): Remove this attribute
     _estimator_type = "DensityEstimator"
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.estimator_type = "density_estimator"
+        return tags
 
     def score(self, X, y=None):
         """Return the score of the model on the data `X`.

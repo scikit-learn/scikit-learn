@@ -1096,8 +1096,6 @@ class MinimalClassifier:
     * within a `SearchCV` in `test_search.py`.
     """
 
-    _estimator_type = "classifier"
-
     def __init__(self, param=None):
         self.param = param
 
@@ -1136,7 +1134,10 @@ class MinimalClassifier:
 
     def __sklearn_tags__(self):
         return Tags(
+            estimator_type="classifier",
             classifier_tags=ClassifierTags(),
+            regressor_tags=None,
+            transformer_tags=None,
             target_tags=TargetTags(required=True),
         )
 
@@ -1150,8 +1151,6 @@ class MinimalRegressor:
     * within a `Pipeline` in `test_pipeline.py`;
     * within a `SearchCV` in `test_search.py`.
     """
-
-    _estimator_type = "regressor"
 
     def __init__(self, param=None):
         self.param = param
@@ -1182,7 +1181,10 @@ class MinimalRegressor:
 
     def __sklearn_tags__(self):
         return Tags(
+            estimator_type="regressor",
+            classifier_tags=None,
             regressor_tags=RegressorTags(),
+            transformer_tags=None,
             target_tags=TargetTags(required=True),
         )
 
@@ -1224,6 +1226,9 @@ class MinimalTransformer:
 
     def __sklearn_tags__(self):
         return Tags(
+            estimator_type="transformer",
+            classifier_tags=None,
+            regressor_tags=None,
             transformer_tags=TransformerTags(),
             target_tags=TargetTags(required=False),
         )

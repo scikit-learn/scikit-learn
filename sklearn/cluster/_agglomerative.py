@@ -1114,7 +1114,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
 
 class FeatureAgglomeration(
-    ClassNamePrefixFeaturesOutMixin, AgglomerativeClustering, AgglomerationTransform
+    ClassNamePrefixFeaturesOutMixin, AgglomerationTransform, AgglomerativeClustering
 ):
     """Agglomerate features.
 

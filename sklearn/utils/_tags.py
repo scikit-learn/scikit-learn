@@ -192,6 +192,7 @@ class Tags:
         - "transformer"
         - "clusterer"
         - "outlier_detector"
+        - "density_estimator"
 
     target_tags : :class:`TargetTags`
         The target(y) tags.

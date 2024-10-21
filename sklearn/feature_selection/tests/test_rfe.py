@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_almost_equal, assert_array_equal
 
-from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.base import BaseEstimator, ClassifierMixin, is_classifier
 from sklearn.compose import TransformedTargetRegressor
 from sklearn.cross_decomposition import CCA, PLSCanonical, PLSRegression
 from sklearn.datasets import load_iris, make_classification, make_friedman1
@@ -324,7 +324,7 @@ def test_rfecv_cv_results_size(global_random_seed):
 
 def test_rfe_estimator_tags():
     rfe = RFE(SVC(kernel="linear"))
-    assert rfe._estimator_type == "classifier"
+    assert is_classifier(rfe)
     # make sure that cross-validation is stratified
     iris = load_iris()
     score = cross_val_score(rfe, iris.data, iris.target)
