@@ -168,8 +168,6 @@ class Pipeline(_BaseComposition):
         them. Requirement is defined via :ref:`metadata routing <metadata_routing>`.
         For instance, this can be used to pass a validation set through the pipeline.
 
-        See the example TBD for more details.
-
         You can only set this if metadata routing is enabled, which you
         can enable using ``sklearn.set_config(enable_metadata_routing=True)``.
 
@@ -1451,8 +1449,6 @@ def make_pipeline(*steps, memory=None, transform_input=None, verbose=False):
         to be transformed by the steps of the pipeline up to the step which requires
         them. Requirement is defined via :ref:`metadata routing <metadata_routing>`.
         This can be used to pass a validation set through the pipeline for instance.
-
-        See the example TBD for more details.
 
         You can only set this if metadata routing is enabled, which you
         can enable using ``sklearn.set_config(enable_metadata_routing=True)``.
