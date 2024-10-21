@@ -137,8 +137,6 @@ def _preprocess_data(
     If `fit_intercept=False`, no centering is performed and `X_offset`, `y_offset`
     are set to zero.
 
-    This function also makes y.dtype systematically consistent with X.dtype.
-
     Note that it is always possible to use the solution to the (penalized) least
     squares problem on centered data to build the solution to the original
     problem with or without intercept by setting the intercept a posteriori as
