@@ -431,5 +431,5 @@ else:
 # TODO: Remove when python>=3.10 is the minimum supported version
 def _dataclass_args():
     if sys.version_info < (3, 10):
-        return ()
+        return {}
     return {"slots": True}
