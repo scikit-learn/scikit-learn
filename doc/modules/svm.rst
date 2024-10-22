@@ -112,6 +112,7 @@ properties of these support vectors can be found in attributes
 
 * :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane.py`
 * :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`
+* :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`
 
 .. _svm_multi_class:
 
@@ -125,7 +126,8 @@ classifiers are constructed and each one trains data from two classes.
 To provide a consistent interface with other classifiers, the
 ``decision_function_shape`` option allows to monotonically transform the
 results of the "one-versus-one" classifiers to a "one-vs-rest" decision
-function of shape ``(n_samples, n_classes)``.
+function of shape ``(n_samples, n_classes)``, which is the default setting
+of the parameter (default='ovr').
 
     >>> X = [[0], [1], [2], [3]]
     >>> Y = [0, 1, 2, 3]

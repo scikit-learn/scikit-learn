@@ -9,9 +9,8 @@ significance of a cross-validated score using permutations.
 
 """
 
-# Authors:  Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#           Lucy Liu
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Dataset

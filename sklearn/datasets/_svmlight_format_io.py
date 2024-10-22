@@ -10,10 +10,8 @@ This format is used as the default format for both svmlight and the
 libsvm command line programs.
 """
 
-# Authors: Mathieu Blondel <mathieu@mblondel.org>
-#          Lars Buitinck
-#          Olivier Grisel <olivier.grisel@ensta.org>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import os.path
 from contextlib import closing
@@ -25,22 +23,10 @@ import scipy.sparse as sp
 from .. import __version__
 from ..utils import check_array
 from ..utils._param_validation import HasMethods, Interval, StrOptions, validate_params
-from ..utils.fixes import _IS_PYPY
-
-if not _IS_PYPY:
-    from ._svmlight_format_fast import (
-        _dump_svmlight_file,
-        _load_svmlight_file,
-    )
-else:
-
-    def _load_svmlight_file(*args, **kwargs):
-        raise NotImplementedError(
-            "load_svmlight_file is currently not "
-            "compatible with PyPy (see "
-            "https://github.com/scikit-learn/scikit-learn/issues/11543 "
-            "for the status updates)."
-        )
+from ._svmlight_format_fast import (
+    _dump_svmlight_file,
+    _load_svmlight_file,
+)
 
 
 @validate_params(
@@ -99,8 +85,7 @@ def load_svmlight_file(
 
     This implementation is written in Cython and is reasonably fast.
     However, a faster API-compatible loader is also available at:
-
-      https://github.com/mblondel/svmlight-loader
+    https://github.com/mblondel/svmlight-loader
 
     Parameters
     ----------

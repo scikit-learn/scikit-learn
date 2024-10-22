@@ -279,7 +279,7 @@ from the two resulting mixtures.
 
   .. rubric:: Pros
 
-  :Automatic selection: when ``weight_concentration_prior`` is small enough and
+  :Automatic selection: When ``weight_concentration_prior`` is small enough and
     ``n_components`` is larger than what is found necessary by the model, the
     Variational Bayesian mixture model has a natural tendency to set some mixture
     weights values close to zero. This makes it possible to let the model choose
@@ -288,26 +288,26 @@ from the two resulting mixtures.
     active components is very application specific and is typically ill-defined
     in a data exploration setting.
 
-  :Less sensitivity to the number of parameters: unlike finite models, which will
+  :Less sensitivity to the number of parameters: Unlike finite models, which will
     almost always use all components as much as they can, and hence will produce
     wildly different solutions for different numbers of components, the
     variational inference with a Dirichlet process prior
     (``weight_concentration_prior_type='dirichlet_process'``) won't change much
     with changes to the parameters, leading to more stability and less tuning.
 
-  :Regularization: due to the incorporation of prior information,
+  :Regularization: Due to the incorporation of prior information,
     variational solutions have less pathological special cases than
     expectation-maximization solutions.
 
   .. rubric:: Cons
 
-  :Speed: the extra parametrization necessary for variational inference makes
+  :Speed: The extra parametrization necessary for variational inference makes
     inference slower, although not by much.
 
-  :Hyperparameters: this algorithm needs an extra hyperparameter
+  :Hyperparameters: This algorithm needs an extra hyperparameter
     that might need experimental tuning via cross-validation.
 
-  :Bias: there are many implicit biases in the inference algorithms (and also in
+  :Bias: There are many implicit biases in the inference algorithms (and also in
     the Dirichlet process if used), and whenever there is a mismatch between
     these biases and the data it might be possible to fit better models using a
     finite mixture.

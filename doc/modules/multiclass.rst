@@ -172,6 +172,9 @@ Valid :term:`multiclass` representations for
     >>> from scipy import sparse
     >>> y_sparse = sparse.csr_matrix(y_dense)
     >>> print(y_sparse)
+    <Compressed Sparse Row sparse matrix of dtype 'int64'
+    	with 4 stored elements and shape (4, 3)>
+      Coords	Values
       (0, 0)	1
       (1, 2)	1
       (2, 0)	1
@@ -225,6 +228,7 @@ in which cell [i, j] indicates the presence of label j in sample i.
 .. rubric:: Examples
 
 * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multilabel.py`
+* :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`
 
 .. _ovo_classification:
 
@@ -377,6 +381,9 @@ An example of the same ``y`` in sparse matrix form:
 
   >>> y_sparse = sparse.csr_matrix(y)
   >>> print(y_sparse)
+  <Compressed Sparse Row sparse matrix of dtype 'int64'
+    with 4 stored elements and shape (3, 4)>
+    Coords	Values
     (0, 0)	1
     (0, 3)	1
     (1, 2)	1
@@ -525,34 +532,34 @@ output for each sample.
 
 The following regressors natively support multioutput regression:
 
-  - :class:`cross_decomposition.CCA`
-  - :class:`tree.DecisionTreeRegressor`
-  - :class:`dummy.DummyRegressor`
-  - :class:`linear_model.ElasticNet`
-  - :class:`tree.ExtraTreeRegressor`
-  - :class:`ensemble.ExtraTreesRegressor`
-  - :class:`gaussian_process.GaussianProcessRegressor`
-  - :class:`neighbors.KNeighborsRegressor`
-  - :class:`kernel_ridge.KernelRidge`
-  - :class:`linear_model.Lars`
-  - :class:`linear_model.Lasso`
-  - :class:`linear_model.LassoLars`
-  - :class:`linear_model.LinearRegression`
-  - :class:`multioutput.MultiOutputRegressor`
-  - :class:`linear_model.MultiTaskElasticNet`
-  - :class:`linear_model.MultiTaskElasticNetCV`
-  - :class:`linear_model.MultiTaskLasso`
-  - :class:`linear_model.MultiTaskLassoCV`
-  - :class:`linear_model.OrthogonalMatchingPursuit`
-  - :class:`cross_decomposition.PLSCanonical`
-  - :class:`cross_decomposition.PLSRegression`
-  - :class:`linear_model.RANSACRegressor`
-  - :class:`neighbors.RadiusNeighborsRegressor`
-  - :class:`ensemble.RandomForestRegressor`
-  - :class:`multioutput.RegressorChain`
-  - :class:`linear_model.Ridge`
-  - :class:`linear_model.RidgeCV`
-  - :class:`compose.TransformedTargetRegressor`
+- :class:`cross_decomposition.CCA`
+- :class:`tree.DecisionTreeRegressor`
+- :class:`dummy.DummyRegressor`
+- :class:`linear_model.ElasticNet`
+- :class:`tree.ExtraTreeRegressor`
+- :class:`ensemble.ExtraTreesRegressor`
+- :class:`gaussian_process.GaussianProcessRegressor`
+- :class:`neighbors.KNeighborsRegressor`
+- :class:`kernel_ridge.KernelRidge`
+- :class:`linear_model.Lars`
+- :class:`linear_model.Lasso`
+- :class:`linear_model.LassoLars`
+- :class:`linear_model.LinearRegression`
+- :class:`multioutput.MultiOutputRegressor`
+- :class:`linear_model.MultiTaskElasticNet`
+- :class:`linear_model.MultiTaskElasticNetCV`
+- :class:`linear_model.MultiTaskLasso`
+- :class:`linear_model.MultiTaskLassoCV`
+- :class:`linear_model.OrthogonalMatchingPursuit`
+- :class:`cross_decomposition.PLSCanonical`
+- :class:`cross_decomposition.PLSRegression`
+- :class:`linear_model.RANSACRegressor`
+- :class:`neighbors.RadiusNeighborsRegressor`
+- :class:`ensemble.RandomForestRegressor`
+- :class:`multioutput.RegressorChain`
+- :class:`linear_model.Ridge`
+- :class:`linear_model.RidgeCV`
+- :class:`compose.TransformedTargetRegressor`
 
 Target format
 -------------
