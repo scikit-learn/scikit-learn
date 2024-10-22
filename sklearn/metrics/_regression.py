@@ -24,7 +24,7 @@ from ..utils._array_api import (
     get_namespace_and_device,
     size,
 )
-from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import (
     _check_sample_weight,
@@ -70,6 +70,11 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric", xp=None):
 
     dtype : str or list, default="numeric"
         the dtype argument passed to check_array.
+
+    xp : module, default=None
+        Precomputed array namespace module. When passed, typically from a caller
+        that has already performed inspection of its own inputs, skips array
+        namespace inspection.
 
     Returns
     -------
@@ -330,12 +335,11 @@ def mean_absolute_percentage_error(
 ):
     """Mean absolute percentage error (MAPE) regression loss.
 
-    Note here that the output is not a percentage in the range [0, 100]
-    and a value of 100 does not mean 100% but 1e2. Furthermore, the output
-    can be arbitrarily high when `y_true` is small (which is specific to the
-    metric) or when `abs(y_true - y_pred)` is large (which is common for most
-    regression metrics). Read more in the
-    :ref:`User Guide <mean_absolute_percentage_error>`.
+    Note that we are not using the common "percentage" definition: the percentage
+    in the range [0, 100] is converted to a relative value in the range [0, 1]
+    by dividing by 100. Thus, an error of 200% corresponds to a relative error of 2.
+
+    Read more in the :ref:`User Guide <mean_absolute_percentage_error>`.
 
     .. versionadded:: 0.24
 
@@ -399,7 +403,7 @@ def mean_absolute_percentage_error(
     dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
 
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput
+        y_true, y_pred, multioutput, dtype=dtype, xp=xp
     )
     check_consistent_length(y_true, y_pred, sample_weight)
     epsilon = xp.asarray(xp.finfo(xp.float64).eps, dtype=dtype)
@@ -431,7 +435,6 @@ def mean_absolute_percentage_error(
         "y_pred": ["array-like"],
         "sample_weight": ["array-like", None],
         "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
-        "squared": [Hidden(StrOptions({"deprecated"})), "boolean"],
     },
     prefer_skip_nested_validation=True,
 )
@@ -441,7 +444,6 @@ def mean_squared_error(
     *,
     sample_weight=None,
     multioutput="uniform_average",
-    squared="deprecated",
 ):
     """Mean squared error regression loss.
 
@@ -469,14 +471,6 @@ def mean_squared_error(
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
 
-    squared : bool, default=True
-        If True returns MSE value, if False returns RMSE value.
-
-        .. deprecated:: 1.4
-           `squared` is deprecated in 1.4 and will be removed in 1.6.
-           Use :func:`~sklearn.metrics.root_mean_squared_error`
-           instead to calculate the root mean squared error.
-
     Returns
     -------
     loss : float or array of floats
@@ -499,26 +493,10 @@ def mean_squared_error(
     >>> mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.825...
     """
-    # TODO(1.6): remove
-    if squared != "deprecated":
-        warnings.warn(
-            (
-                "'squared' is deprecated in version 1.4 and "
-                "will be removed in 1.6. To calculate the "
-                "root mean squared error, use the function"
-                "'root_mean_squared_error'."
-            ),
-            FutureWarning,
-        )
-        if not squared:
-            return root_mean_squared_error(
-                y_true, y_pred, sample_weight=sample_weight, multioutput=multioutput
-            )
-
     xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
     dtype = _find_matching_floating_dtype(y_true, y_pred, xp=xp)
 
-    y_type, y_true, y_pred, multioutput = _check_reg_targets(
+    _, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput, dtype=dtype, xp=xp
     )
     check_consistent_length(y_true, y_pred, sample_weight)
@@ -631,7 +609,6 @@ def root_mean_squared_error(
         "y_pred": ["array-like"],
         "sample_weight": ["array-like", None],
         "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
-        "squared": [Hidden(StrOptions({"deprecated"})), "boolean"],
     },
     prefer_skip_nested_validation=True,
 )
@@ -641,7 +618,6 @@ def mean_squared_log_error(
     *,
     sample_weight=None,
     multioutput="uniform_average",
-    squared="deprecated",
 ):
     """Mean squared logarithmic error regression loss.
 
@@ -671,15 +647,6 @@ def mean_squared_log_error(
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
 
-    squared : bool, default=True
-        If True returns MSLE (mean squared log error) value.
-        If False returns RMSLE (root mean squared log error) value.
-
-        .. deprecated:: 1.4
-           `squared` is deprecated in 1.4 and will be removed in 1.6.
-           Use :func:`~sklearn.metrics.root_mean_squared_log_error`
-           instead to calculate the root mean squared logarithmic error.
-
     Returns
     -------
     loss : float or ndarray of floats
@@ -702,22 +669,6 @@ def mean_squared_log_error(
     >>> mean_squared_log_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.060...
     """
-    # TODO(1.6): remove
-    if squared != "deprecated":
-        warnings.warn(
-            (
-                "'squared' is deprecated in version 1.4 and "
-                "will be removed in 1.6. To calculate the "
-                "root mean squared logarithmic error, use the function"
-                "'root_mean_squared_log_error'."
-            ),
-            FutureWarning,
-        )
-        if not squared:
-            return root_mean_squared_log_error(
-                y_true, y_pred, sample_weight=sample_weight, multioutput=multioutput
-            )
-
     xp, _ = get_namespace(y_true, y_pred)
     dtype = _find_matching_floating_dtype(y_true, y_pred, xp=xp)
 
@@ -1307,7 +1258,7 @@ def max_error(y_true, y_pred):
     np.int64(1)
     """
     xp, _ = get_namespace(y_true, y_pred)
-    y_type, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred, None)
+    y_type, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred, None, xp=xp)
     if y_type == "continuous-multioutput":
         raise ValueError("Multioutput not supported in max_error")
     return xp.max(xp.abs(y_true - y_pred))
@@ -1406,7 +1357,7 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
     """
     xp, _ = get_namespace(y_true, y_pred)
     y_type, y_true, y_pred, _ = _check_reg_targets(
-        y_true, y_pred, None, dtype=[xp.float64, xp.float32]
+        y_true, y_pred, None, dtype=[xp.float64, xp.float32], xp=xp
     )
     if y_type == "continuous-multioutput":
         raise ValueError("Multioutput not supported in mean_tweedie_deviance")

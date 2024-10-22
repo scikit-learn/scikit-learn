@@ -3,6 +3,7 @@ import pytest
 from numpy.testing import assert_allclose
 from scipy.integrate import trapezoid
 
+from sklearn import clone
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import load_breast_cancer, load_iris
 from sklearn.exceptions import NotFittedError
@@ -16,7 +17,11 @@ from sklearn.utils import shuffle
 
 @pytest.fixture(scope="module")
 def data():
-    return load_iris(return_X_y=True)
+    X, y = load_iris(return_X_y=True)
+    # Avoid introducing test dependencies by mistake.
+    X.flags.writeable = False
+    y.flags.writeable = False
+    return X, y
 
 
 @pytest.fixture(scope="module")
@@ -124,7 +129,11 @@ def test_roc_curve_display_plotting(
 @pytest.mark.parametrize("plot_chance_level", [True, False])
 @pytest.mark.parametrize(
     "chance_level_kw",
-    [None, {"linewidth": 1, "color": "red", "label": "DummyEstimator"}],
+    [
+        None,
+        {"linewidth": 1, "color": "red", "linestyle": "-", "label": "DummyEstimator"},
+        {"lw": 1, "c": "red", "ls": "-", "label": "DummyEstimator"},
+    ],
 )
 @pytest.mark.parametrize(
     "constructor_name",
@@ -185,8 +194,18 @@ def test_roc_curve_chance_level_line(
         assert display.chance_level_.get_label() == "Chance level (AUC = 0.5)"
     elif plot_chance_level:
         assert display.chance_level_.get_label() == chance_level_kw["label"]
-        assert display.chance_level_.get_color() == chance_level_kw["color"]
-        assert display.chance_level_.get_linewidth() == chance_level_kw["linewidth"]
+        if "c" in chance_level_kw:
+            assert display.chance_level_.get_color() == chance_level_kw["c"]
+        else:
+            assert display.chance_level_.get_color() == chance_level_kw["color"]
+        if "lw" in chance_level_kw:
+            assert display.chance_level_.get_linewidth() == chance_level_kw["lw"]
+        else:
+            assert display.chance_level_.get_linewidth() == chance_level_kw["linewidth"]
+        if "ls" in chance_level_kw:
+            assert display.chance_level_.get_linestyle() == chance_level_kw["ls"]
+        else:
+            assert display.chance_level_.get_linestyle() == chance_level_kw["linestyle"]
 
 
 @pytest.mark.parametrize(
@@ -203,6 +222,8 @@ def test_roc_curve_chance_level_line(
 def test_roc_curve_display_complex_pipeline(pyplot, data_binary, clf, constructor_name):
     """Check the behaviour with complex pipeline."""
     X, y = data_binary
+
+    clf = clone(clf)
 
     if constructor_name == "from_estimator":
         with pytest.raises(NotFittedError):

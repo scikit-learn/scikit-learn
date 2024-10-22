@@ -1,0 +1,5 @@
+- :func:`sklearn.metrics.pairwise.linear_kernel`,
+  :func:`sklearn.metrics.pairwise.sigmoid_kernel`, and
+  :func:`sklearn.metrics.pairwise.polynomial_kernel` now supports Array API
+  compatible inputs.
+  By :user:`Omar Salman <OmarManzoor>`
