@@ -2,7 +2,7 @@
 #
 
 # You can set these variables from the command line.
-SPHINXOPTS    = -T
+SPHINXOPTS   ?= -T
 SPHINXBUILD  ?= sphinx-build
 PAPER         =
 BUILDDIR      = _build
@@ -66,6 +66,7 @@ clean:
 # https://github.com/scikit-learn/scikit-learn/pull/25809
 html: SPHINX_NUMJOBS ?= 1
 html:
+	@echo $(ALLSPHINXOPTS)
 	# These two lines make the build a bit more lengthy, and the
 	# the embedding of images more robust
 	rm -rf $(BUILDDIR)/html/_images
