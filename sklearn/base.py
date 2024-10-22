@@ -445,7 +445,7 @@ class ClassifierMixin:
 
     This mixin defines the following functionality:
 
-    - set estimator type to `"classifier"`;
+    - set estimator type to `"classifier"` through the `estimator_type` tag;
     - `score` method that default to :func:`~sklearn.metrics.accuracy_score`.
     - enforce that `fit` requires `y` to be passed through the `requires_y` tag,
       which is done by setting the classifier type tag.
@@ -518,7 +518,7 @@ class RegressorMixin:
 
     This mixin defines the following functionality:
 
-    - set estimator type to `"regressor"`;
+    - set estimator type to `"regressor"` through the `estimator_type` tag;
     - `score` method that default to :func:`~sklearn.metrics.r2_score`.
     - enforce that `fit` requires `y` to be passed through the `requires_y` tag,
       which is done by setting the regressor type tag.
@@ -607,7 +607,7 @@ class RegressorMixin:
 class ClusterMixin:
     """Mixin class for all cluster estimators in scikit-learn.
 
-    - set estimator type to `"clusterer"`;
+    - set estimator type to `"clusterer"` through the `estimator_type` tag;
     - `fit_predict` method returning the cluster labels associated to each sample.
 
     Examples
@@ -961,7 +961,7 @@ class DensityMixin:
 
     This mixin defines the following functionality:
 
-    - sets estimator type to `"density_estimator"`;
+    - sets estimator type to `"density_estimator"` through the `estimator_type` tag;
     - `score` method that default that do no-op.
 
     Examples
@@ -1007,7 +1007,7 @@ class OutlierMixin:
 
     This mixin defines the following functionality:
 
-    - set estimator type to `"outlier_detector"`;
+    - set estimator type to `"outlier_detector"` through the `estimator_type` tag;
     - `fit_predict` method that default to `fit` and `predict`.
 
     Examples
