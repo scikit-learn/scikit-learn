@@ -14,7 +14,7 @@ dependencies:
   - matplotlib
   - pandas
   - pyamg
-  - pytest<8
+  - pytest
   - pytest-xdist
   - pillow
   - pip
@@ -33,7 +33,11 @@ dependencies:
   - polars
   - pooch
   - sphinxext-opengraph
+  - sphinx-remove-toctrees
+  - sphinx-design
+  - pydata-sphinx-theme
   - pip
   - pip:
     - jupyterlite-sphinx
     - jupyterlite-pyodide-kernel
+    - sphinxcontrib-sass

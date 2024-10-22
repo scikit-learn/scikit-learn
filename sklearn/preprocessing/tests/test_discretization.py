@@ -478,3 +478,23 @@ def test_kbinsdiscretizer_subsample(strategy, global_random_seed):
     assert_allclose(
         kbd_subsampling.bin_edges_[0], kbd_no_subsampling.bin_edges_[0], rtol=1e-2
     )
+
+
+# TODO(1.7): remove this test
+def test_KBD_inverse_transform_Xt_deprecation():
+    X = np.arange(10)[:, None]
+    kbd = KBinsDiscretizer()
+    X = kbd.fit_transform(X)
+
+    with pytest.raises(TypeError, match="Missing required positional argument"):
+        kbd.inverse_transform()
+
+    with pytest.raises(TypeError, match="Cannot use both X and Xt. Use X only"):
+        kbd.inverse_transform(X=X, Xt=X)
+
+    with warnings.catch_warnings(record=True):
+        warnings.simplefilter("error")
+        kbd.inverse_transform(X)
+
+    with pytest.warns(FutureWarning, match="Xt was renamed X in version 1.5"):
+        kbd.inverse_transform(Xt=X)

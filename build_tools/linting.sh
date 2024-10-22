@@ -89,7 +89,7 @@ else
 fi
 
 # Check for joblib.delayed and joblib.Parallel imports
-
+# TODO(1.7): remove ":!sklearn/utils/_joblib.py"
 echo -e "### Checking for joblib imports ###\n"
 joblib_status=0
 joblib_delayed_import="$(git grep -l -A 10 -E "joblib import.+delayed" -- "*.py" ":!sklearn/utils/_joblib.py" ":!sklearn/utils/parallel.py")"

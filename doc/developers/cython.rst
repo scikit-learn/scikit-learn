@@ -97,8 +97,6 @@ Tips for performance
 
 * Inline methods and function when it makes sense
 
-* Make sure your Cython compilation units `use NumPy recent C API <https://github.com/scikit-learn/scikit-learn/blob/62a017efa047e9581ae7df8bbaa62cf4c0544ee4/setup.py#L64-L70>`_.
-
 * In doubt, read the generated C or C++ code if you can: "The fewer C instructions and indirections
   for a line of Cython code, the better" is a good rule of thumb.
 
@@ -141,3 +139,16 @@ must be ``cimported`` from this module and not from the OpenMP library directly:
 
 The parallel loop, `prange`, is already protected by cython and can be used directly
 from `cython.parallel`.
+
+Types
+~~~~~
+
+Cython code requires to use explicit types. This is one of the reasons you get a
+performance boost. In order to avoid code duplication, we have a central place
+for the most used types in
+`sklearn/utils/_typedefs.pyd <https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/utils/_typedefs.pyd>`_.
+Ideally you start by having a look there and `cimport` types you need, for example
+
+.. code-block:: cython
+
+    from sklear.utils._typedefs cimport float32, float64

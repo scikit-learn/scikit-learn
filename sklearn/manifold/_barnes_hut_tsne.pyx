@@ -10,6 +10,7 @@ cimport numpy as cnp
 from libc.stdio cimport printf
 from libc.math cimport log
 from libc.stdlib cimport malloc, free
+from libc.time cimport clock, clock_t
 from cython.parallel cimport prange, parallel
 
 from ..neighbors._quad_tree cimport _QuadTree
@@ -18,9 +19,6 @@ cnp.import_array()
 
 
 cdef char* EMPTY_STRING = ""
-
-cdef extern from "math.h":
-    float fabsf(float x) nogil
 
 # Smallest strictly positive value that can be represented by floating
 # point numbers for different precision levels. This is useful to avoid
@@ -35,13 +33,6 @@ cdef float FLOAT64_EPS = np.finfo(np.float64).eps
 # and remove them at compile time
 cdef enum:
     DEBUGFLAG = 0
-
-cdef extern from "time.h":
-    # Declare only what is necessary from `tm` structure.
-    ctypedef long clock_t
-    clock_t clock() nogil
-    double CLOCKS_PER_SEC
-
 
 cdef float compute_gradient(float[:] val_P,
                             float[:, :] pos_reference,

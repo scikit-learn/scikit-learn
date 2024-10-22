@@ -13,7 +13,7 @@ visualized and understood.
 
 import argparse
 import gc
-from datetime import datetime
+from timeit import default_timer
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -52,9 +52,9 @@ def bench_isotonic_regression(Y):
     """
     gc.collect()
 
-    tstart = datetime.now()
+    tstart = default_timer()
     isotonic_regression(Y)
-    return (datetime.now() - tstart).total_seconds()
+    return default_timer() - tstart
 
 
 if __name__ == "__main__":

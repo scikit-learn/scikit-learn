@@ -1,7 +1,5 @@
-# Author: Henry Lin <hlin117@gmail.com>
-#         Tom Dupré la Tour
-
-# License: BSD
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 import warnings
@@ -12,12 +10,14 @@ import numpy as np
 from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import resample
 from ..utils._param_validation import Interval, Options, StrOptions
+from ..utils.deprecation import _deprecate_Xt_in_inverse_transform
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import (
     _check_feature_names_in,
     _check_sample_weight,
     check_array,
     check_is_fitted,
+    validate_data,
 )
 from ._encoders import OneHotEncoder
 
@@ -213,7 +213,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         sample_weight : ndarray of shape (n_samples,)
             Contains weight values to be associated with each sample.
-            Only possible when `strategy` is set to `"quantile"`.
+            Cannot be used when `strategy` is set to `"uniform"`.
 
             .. versionadded:: 1.3
 
@@ -222,7 +222,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(X, dtype="numeric")
+        X = validate_data(self, X, dtype="numeric")
 
         if self.dtype in (np.float64, np.float32):
             output_dtype = self.dtype
@@ -369,7 +369,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         # check input and attribute dtypes
         dtype = (np.float64, np.float32) if self.dtype is None else self.dtype
-        Xt = self._validate_data(X, copy=True, dtype=dtype, reset=False)
+        Xt = validate_data(self, X, copy=True, dtype=dtype, reset=False)
 
         bin_edges = self.bin_edges_
         for jj in range(Xt.shape[1]):
@@ -389,7 +389,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             self._encoder.dtype = dtype_init
         return Xt_enc
 
-    def inverse_transform(self, Xt):
+    def inverse_transform(self, X=None, *, Xt=None):
         """
         Transform discretized data back to original feature space.
 
@@ -398,20 +398,28 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
+        X : array-like of shape (n_samples, n_features)
+            Transformed data in the binned space.
+
         Xt : array-like of shape (n_samples, n_features)
             Transformed data in the binned space.
+
+            .. deprecated:: 1.5
+                `Xt` was deprecated in 1.5 and will be removed in 1.7. Use `X` instead.
 
         Returns
         -------
         Xinv : ndarray, dtype={np.float32, np.float64}
             Data in the original feature space.
         """
+        X = _deprecate_Xt_in_inverse_transform(X, Xt)
+
         check_is_fitted(self)
 
         if "onehot" in self.encode:
-            Xt = self._encoder.inverse_transform(Xt)
+            X = self._encoder.inverse_transform(X)
 
-        Xinv = check_array(Xt, copy=True, dtype=(np.float64, np.float32))
+        Xinv = check_array(X, copy=True, dtype=(np.float64, np.float32))
         n_features = self.n_bins_.shape[0]
         if Xinv.shape[1] != n_features:
             raise ValueError(
@@ -454,3 +462,13 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         # ordinal encoding
         return input_features
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
+        tags._xfail_checks = {
+            "check_sample_weight_equivalence": (
+                "sample_weight is not equivalent to removing/repeating samples."
+            ),
+        }
+        return tags

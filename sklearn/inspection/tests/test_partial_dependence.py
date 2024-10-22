@@ -268,7 +268,9 @@ def test_partial_dependence_helpers(est, method, target_feature):
     # into account with the recursion method, for technical reasons. We set
     # the mean to 0 to that this 'bug' doesn't have any effect.
     y = y - y.mean()
-    est.fit(X, y)
+
+    # Clone is necessary to make the test thread-safe.
+    est = clone(est).fit(X, y)
 
     # target feature will be set to .5 and then to 123
     features = np.array([target_feature], dtype=np.intp)
@@ -381,7 +383,7 @@ def test_recursion_decision_function(est, target_feature):
     X, y = make_classification(n_classes=2, n_clusters_per_class=1, random_state=1)
     assert np.mean(y) == 0.5  # make sure the init estimator predicts 0 anyway
 
-    est.fit(X, y)
+    est = clone(est).fit(X, y)
 
     preds_1 = partial_dependence(
         est,
@@ -429,7 +431,7 @@ def test_partial_dependence_easy_target(est, power):
     X = rng.normal(size=(n_samples, 5))
     y = X[:, target_variable] ** power
 
-    est.fit(X, y)
+    est = clone(est).fit(X, y)
 
     pdp = partial_dependence(
         est, features=[target_variable], X=X, grid_resolution=1000, kind="average"
@@ -480,7 +482,6 @@ class NoPredictProbaNoDecisionFunction(ClassifierMixin, BaseEstimator):
         return self
 
 
-@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize(
     "estimator, params, err_msg",
     [
@@ -527,7 +528,7 @@ class NoPredictProbaNoDecisionFunction(ClassifierMixin, BaseEstimator):
 )
 def test_partial_dependence_error(estimator, params, err_msg):
     X, y = make_classification(random_state=0)
-    estimator.fit(X, y)
+    estimator = clone(estimator).fit(X, y)
 
     with pytest.raises(ValueError, match=err_msg):
         partial_dependence(estimator, X, **params)
@@ -539,7 +540,7 @@ def test_partial_dependence_error(estimator, params, err_msg):
 @pytest.mark.parametrize("features", [-1, 10000])
 def test_partial_dependence_unknown_feature_indices(estimator, features):
     X, y = make_classification(random_state=0)
-    estimator.fit(X, y)
+    estimator = clone(estimator).fit(X, y)
 
     err_msg = "all features must be in"
     with pytest.raises(ValueError, match=err_msg):
@@ -553,7 +554,7 @@ def test_partial_dependence_unknown_feature_string(estimator):
     pd = pytest.importorskip("pandas")
     X, y = make_classification(random_state=0)
     df = pd.DataFrame(X)
-    estimator.fit(df, y)
+    estimator = clone(estimator).fit(df, y)
 
     features = ["random"]
     err_msg = "A given column is not a column of the dataframe"
@@ -567,7 +568,7 @@ def test_partial_dependence_unknown_feature_string(estimator):
 def test_partial_dependence_X_list(estimator):
     # check that array-like objects are accepted
     X, y = make_classification(random_state=0)
-    estimator.fit(X, y)
+    estimator = clone(estimator).fit(X, y)
     partial_dependence(estimator, list(X), [0], kind="average")
 
 
@@ -689,7 +690,7 @@ def test_partial_dependence_dataframe(estimator, preprocessor, features):
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame(scale(iris.data), columns=iris.feature_names)
 
-    pipe = make_pipeline(preprocessor, estimator)
+    pipe = make_pipeline(preprocessor, clone(estimator))
     pipe.fit(df, iris.target)
     pdp_pipe = partial_dependence(
         pipe, df, features=features, grid_resolution=10, kind="average"
@@ -838,7 +839,7 @@ def test_partial_dependence_non_null_weight_idx(estimator, non_null_weight_idx):
     preprocessor = make_column_transformer(
         (StandardScaler(), [0, 2]), (RobustScaler(), [1, 3])
     )
-    pipe = make_pipeline(preprocessor, estimator).fit(X, y)
+    pipe = make_pipeline(preprocessor, clone(estimator)).fit(X, y)
 
     sample_weight = np.zeros_like(y)
     sample_weight[non_null_weight_idx] = 1

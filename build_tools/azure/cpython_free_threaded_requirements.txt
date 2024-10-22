@@ -1,0 +1,14 @@
+# To generate cpython_free_threaded_lock.txt, use the following command:
+# docker run -v $PWD:/scikit-learn -it ubuntu bash -c 'export DEBIAN_FRONTEND=noninteractive; apt-get -yq update; apt-get install software-properties-common ccache -y; add-apt-repository --yes ppa:deadsnakes/nightly; apt-get update -y; apt-get install -y --no-install-recommends python3.13-dev python3.13-venv python3.13-nogil; python3.13t -m venv /venvs/myenv; source /venvs/myenv/bin/activate; pip install pip-tools; pip-compile /scikit-learn/build_tools/azure/cpython_free_threaded_requirements.txt -o /scikit-learn/build_tools/azure/cpython_free_threaded_lock.txt'
+
+# The reason behind it is that you need python-3.13t to generate the pip lock
+# file. For pure Python wheel this does not really matter. But when there are
+# cython, numpy and scipy releases that have a CPython 3.13 free-threaded
+# wheel, we can add them here and this is important that the Python 3.13
+# free-threaded wheel is picked up in the lock-file
+joblib
+threadpoolctl
+pytest
+pytest-xdist
+ninja
+meson-python

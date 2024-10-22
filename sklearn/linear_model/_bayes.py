@@ -2,8 +2,8 @@
 Various bayesian regression
 """
 
-# Authors: V. Michel, F. Pedregosa, A. Gramfort
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from math import log
 from numbers import Integral, Real
@@ -16,7 +16,7 @@ from ..base import RegressorMixin, _fit_context
 from ..utils import _safe_indexing
 from ..utils._param_validation import Interval
 from ..utils.extmath import fast_logdet
-from ..utils.validation import _check_sample_weight
+from ..utils.validation import _check_sample_weight, validate_data
 from ._base import LinearModel, _preprocess_data, _rescale_data
 
 ###############################################################################
@@ -31,6 +31,9 @@ class BayesianRidge(RegressorMixin, LinearModel):
     lambda (precision of the weights) and alpha (precision of the noise).
 
     Read more in the :ref:`User Guide <bayesian_regression>`.
+    For an intuitive visualization of how the sinusoid is approximated by
+    a polynomial using different pairs of initial values, see
+    :ref:`sphx_glr_auto_examples_linear_model_plot_bayesian_ridge_curvefit.py`.
 
     Parameters
     ----------
@@ -63,13 +66,13 @@ class BayesianRidge(RegressorMixin, LinearModel):
         Initial value for alpha (precision of the noise).
         If not set, alpha_init is 1/Var(y).
 
-            .. versionadded:: 0.22
+        .. versionadded:: 0.22
 
     lambda_init : float, default=None
         Initial value for lambda (precision of the weights).
         If not set, lambda_init is 1.
 
-            .. versionadded:: 0.22
+        .. versionadded:: 0.22
 
     compute_score : bool, default=False
         If True, compute the log marginal likelihood at each iteration of the
@@ -232,7 +235,14 @@ class BayesianRidge(RegressorMixin, LinearModel):
         self : object
             Returns the instance itself.
         """
-        X, y = self._validate_data(X, y, dtype=[np.float64, np.float32], y_numeric=True)
+        X, y = validate_data(
+            self,
+            X,
+            y,
+            dtype=[np.float64, np.float32],
+            force_writeable=True,
+            y_numeric=True,
+        )
         dtype = X.dtype
 
         if sample_weight is not None:
@@ -419,6 +429,16 @@ class BayesianRidge(RegressorMixin, LinearModel):
         )
 
         return score
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
+        tags._xfail_checks = {
+            "check_sample_weight_equivalence": (
+                "sample_weight is not equivalent to removing/repeating samples."
+            ),
+        }
+        return tags
 
 
 ###############################################################################
@@ -616,8 +636,14 @@ class ARDRegression(RegressorMixin, LinearModel):
         self : object
             Fitted estimator.
         """
-        X, y = self._validate_data(
-            X, y, dtype=[np.float64, np.float32], y_numeric=True, ensure_min_samples=2
+        X, y = validate_data(
+            self,
+            X,
+            y,
+            dtype=[np.float64, np.float32],
+            force_writeable=True,
+            y_numeric=True,
+            ensure_min_samples=2,
         )
         dtype = X.dtype
 

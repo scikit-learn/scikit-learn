@@ -40,11 +40,10 @@ on whether the data are centered, so one may want to use the
 same mean vector as the training set. If not, both should be centered
 by the user, and ``assume_centered=True`` should be used.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-   * See :ref:`sphx_glr_auto_examples_covariance_plot_covariance_estimation.py` for
-     an example on how to fit an :class:`EmpiricalCovariance` object
-     to data.
+* See :ref:`sphx_glr_auto_examples_covariance_plot_covariance_estimation.py` for
+  an example on how to fit an :class:`EmpiricalCovariance` object to data.
 
 
 .. _shrunk_covariance:
@@ -84,11 +83,10 @@ Tr}\hat{\Sigma}}{p}\rm Id`.
 Choosing the amount of shrinkage, :math:`\alpha` amounts to setting a
 bias/variance trade-off, and is discussed below.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-   * See :ref:`sphx_glr_auto_examples_covariance_plot_covariance_estimation.py` for
-     an example on how to fit a :class:`ShrunkCovariance` object
-     to data.
+* See :ref:`sphx_glr_auto_examples_covariance_plot_covariance_estimation.py` for
+  an example on how to fit a :class:`ShrunkCovariance` object to data.
 
 
 Ledoit-Wolf shrinkage
@@ -121,18 +119,18 @@ fitting a :class:`LedoitWolf` object to the same sample.
     Since the population covariance is already a multiple of the identity
     matrix, the Ledoit-Wolf solution is indeed a reasonable estimate.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-   * See :ref:`sphx_glr_auto_examples_covariance_plot_covariance_estimation.py` for
-     an example on how to fit a :class:`LedoitWolf` object to data and
-     for visualizing the performances of the Ledoit-Wolf estimator in
-     terms of likelihood.
+* See :ref:`sphx_glr_auto_examples_covariance_plot_covariance_estimation.py` for
+  an example on how to fit a :class:`LedoitWolf` object to data and
+  for visualizing the performances of the Ledoit-Wolf estimator in
+  terms of likelihood.
 
-.. topic:: References:
+.. rubric:: References
 
-    .. [1] O. Ledoit and M. Wolf, "A Well-Conditioned Estimator for Large-Dimensional
-           Covariance Matrices", Journal of Multivariate Analysis, Volume 88, Issue 2,
-           February 2004, pages 365-411.
+.. [1] O. Ledoit and M. Wolf, "A Well-Conditioned Estimator for Large-Dimensional
+       Covariance Matrices", Journal of Multivariate Analysis, Volume 88, Issue 2,
+       February 2004, pages 365-411.
 
 .. _oracle_approximating_shrinkage:
 
@@ -158,22 +156,21 @@ object to the same sample.
    Bias-variance trade-off when setting the shrinkage: comparing the
    choices of Ledoit-Wolf and OAS estimators
 
-.. topic:: References:
+.. rubric:: References
 
-    .. [2] :arxiv:`"Shrinkage algorithms for MMSE covariance estimation.",
-           Chen, Y., Wiesel, A., Eldar, Y. C., & Hero, A. O.
-           IEEE Transactions on Signal Processing, 58(10), 5016-5029, 2010.
-           <0907.4698>`
+.. [2] :arxiv:`"Shrinkage algorithms for MMSE covariance estimation.",
+       Chen, Y., Wiesel, A., Eldar, Y. C., & Hero, A. O.
+       IEEE Transactions on Signal Processing, 58(10), 5016-5029, 2010.
+       <0907.4698>`
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-   * See :ref:`sphx_glr_auto_examples_covariance_plot_covariance_estimation.py` for
-     an example on how to fit an :class:`OAS` object
-     to data.
+* See :ref:`sphx_glr_auto_examples_covariance_plot_covariance_estimation.py` for
+  an example on how to fit an :class:`OAS` object to data.
 
-   * See :ref:`sphx_glr_auto_examples_covariance_plot_lw_vs_oas.py` to visualize the
-     Mean Squared Error difference between a :class:`LedoitWolf` and
-     an :class:`OAS` estimator of the covariance.
+* See :ref:`sphx_glr_auto_examples_covariance_plot_lw_vs_oas.py` to visualize the
+  Mean Squared Error difference between a :class:`LedoitWolf` and
+  an :class:`OAS` estimator of the covariance.
 
 
 .. figure:: ../auto_examples/covariance/images/sphx_glr_plot_lw_vs_oas_001.png
@@ -254,20 +251,20 @@ problem is the GLasso algorithm, from the Friedman 2008 Biostatistics
 paper. It is the same algorithm as in the R ``glasso`` package.
 
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-   * :ref:`sphx_glr_auto_examples_covariance_plot_sparse_cov.py`: example on synthetic
-     data showing some recovery of a structure, and comparing to other
-     covariance estimators.
+* :ref:`sphx_glr_auto_examples_covariance_plot_sparse_cov.py`: example on synthetic
+  data showing some recovery of a structure, and comparing to other
+  covariance estimators.
 
-   * :ref:`sphx_glr_auto_examples_applications_plot_stock_market.py`: example on real
-     stock market data, finding which symbols are most linked.
+* :ref:`sphx_glr_auto_examples_applications_plot_stock_market.py`: example on real
+  stock market data, finding which symbols are most linked.
 
-.. topic:: References:
+.. rubric:: References
 
-   * Friedman et al, `"Sparse inverse covariance estimation with the
-     graphical lasso" <https://biostatistics.oxfordjournals.org/content/9/3/432.short>`_,
-     Biostatistics 9, pp 432, 2008
+* Friedman et al, `"Sparse inverse covariance estimation with the
+  graphical lasso" <https://biostatistics.oxfordjournals.org/content/9/3/432.short>`_,
+  Biostatistics 9, pp 432, 2008
 
 .. _robust_covariance:
 
@@ -313,24 +310,24 @@ the same time.
 Raw estimates can be accessed as ``raw_location_`` and ``raw_covariance_``
 attributes of a :class:`MinCovDet` robust covariance estimator object.
 
-.. topic:: References:
+.. rubric:: References
 
-    .. [3] P. J. Rousseeuw. Least median of squares regression.
-           J. Am Stat Ass, 79:871, 1984.
-    .. [4] A Fast Algorithm for the Minimum Covariance Determinant Estimator,
-           1999, American Statistical Association and the American Society
-           for Quality, TECHNOMETRICS.
+.. [3] P. J. Rousseeuw. Least median of squares regression.
+       J. Am Stat Ass, 79:871, 1984.
+.. [4] A Fast Algorithm for the Minimum Covariance Determinant Estimator,
+       1999, American Statistical Association and the American Society
+       for Quality, TECHNOMETRICS.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-   * See :ref:`sphx_glr_auto_examples_covariance_plot_robust_vs_empirical_covariance.py` for
-     an example on how to fit a :class:`MinCovDet` object to data and see how
-     the estimate remains accurate despite the presence of outliers.
+* See :ref:`sphx_glr_auto_examples_covariance_plot_robust_vs_empirical_covariance.py` for
+  an example on how to fit a :class:`MinCovDet` object to data and see how
+  the estimate remains accurate despite the presence of outliers.
 
-   * See :ref:`sphx_glr_auto_examples_covariance_plot_mahalanobis_distances.py` to
-     visualize the difference between :class:`EmpiricalCovariance` and
-     :class:`MinCovDet` covariance estimators in terms of Mahalanobis distance
-     (so we get a better estimate of the precision matrix too).
+* See :ref:`sphx_glr_auto_examples_covariance_plot_mahalanobis_distances.py` to
+  visualize the difference between :class:`EmpiricalCovariance` and
+  :class:`MinCovDet` covariance estimators in terms of Mahalanobis distance
+  (so we get a better estimate of the precision matrix too).
 
 .. |robust_vs_emp| image:: ../auto_examples/covariance/images/sphx_glr_plot_robust_vs_empirical_covariance_001.png
    :target: ../auto_examples/covariance/plot_robust_vs_empirical_covariance.html

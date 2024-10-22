@@ -1,8 +1,7 @@
 """Incremental Principal Components Analysis."""
 
-# Author: Kyle Kastner <kastnerkyle@gmail.com>
-#         Giorgio Patrini
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Integral
 
@@ -13,6 +12,7 @@ from ..base import _fit_context
 from ..utils import gen_batches
 from ..utils._param_validation import Interval
 from ..utils.extmath import _incremental_mean_and_var, svd_flip
+from ..utils.validation import validate_data
 from ._base import _BasePCA
 
 
@@ -224,11 +224,13 @@ class IncrementalPCA(_BasePCA):
         self.explained_variance_ratio_ = None
         self.noise_variance_ = None
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=["csr", "csc", "lil"],
             copy=self.copy,
             dtype=[np.float64, np.float32],
+            force_writeable=True,
         )
         n_samples, n_features = X.shape
 
@@ -277,8 +279,13 @@ class IncrementalPCA(_BasePCA):
                     "sparse input. Either convert data to dense "
                     "or use IncrementalPCA.fit to do so in batches."
                 )
-            X = self._validate_data(
-                X, copy=self.copy, dtype=[np.float64, np.float32], reset=first_pass
+            X = validate_data(
+                self,
+                X,
+                copy=self.copy,
+                dtype=[np.float64, np.float32],
+                force_writeable=True,
+                reset=first_pass,
             )
         n_samples, n_features = X.shape
         if first_pass:
