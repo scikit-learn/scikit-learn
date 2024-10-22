@@ -182,8 +182,9 @@ def _check_reg_targets_and_floating_dtype(
         just the corresponding argument if ``multioutput`` is a
         correct keyword.
 
-    dtype : str or list, default="numeric"
-        the dtype argument passed to check_array.
+    dtype : str
+        If there are no floating point input arrays (all integral inputs for
+        instance), return the default floating point dtype for the namespace.
     """
     dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
 
