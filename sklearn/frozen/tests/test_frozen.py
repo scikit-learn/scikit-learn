@@ -97,6 +97,7 @@ def test_frozen_metadata_routing(regression_dataset):
         def fit(self, X, y, metadata=None):
             if self.on_fit:
                 assert metadata is not None
+            self.fitted_ = True
             return self
 
         def predict(self, X, metadata=None):
