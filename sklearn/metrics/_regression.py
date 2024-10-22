@@ -162,7 +162,7 @@ def _check_reg_targets_and_floating_dtype(
 
     Returns
     -------
-    type_true : one of {'continuous', continuous-multioutput'}
+    type_true : one of {'continuous', 'continuous-multioutput'}
         The type of the true target data, as output by
         'utils.multiclass.type_of_target'.
 
