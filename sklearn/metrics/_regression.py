@@ -175,8 +175,8 @@ def _check_reg_targets_and_floating_dtype(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    multioutput : array-like of shape (n_outputs) or string in ['raw_values',
-        uniform_average', 'variance_weighted'] or None
+    multioutput : array-like of shape (n_outputs) or string in ['raw_values', \
+        'uniform_average', 'variance_weighted'] or None
         Custom output weights if ``multioutput`` is array-like or
         just the corresponding argument if ``multioutput`` is a
         correct keyword.
