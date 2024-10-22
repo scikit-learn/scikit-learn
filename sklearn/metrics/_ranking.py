@@ -808,7 +808,7 @@ def binary_classification_curve(y_true, y_score, pos_label=None, sample_weight=N
 
     thresholds : ndarray of shape (n_thresholds,)
         Decreasing score values.
-    
+
     Examples
     -------
     >>> import numpy as np
