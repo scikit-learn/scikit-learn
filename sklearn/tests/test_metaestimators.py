@@ -200,7 +200,7 @@ def test_metaestimator_delegation():
 
 def _get_instance_with_pipeline(meta_estimator, init_params):
     """Given a single meta-estimator instance, generate an instance with a pipeline"""
-    if ("estimator", "base_estimator", "regressor") & init_params:
+    if {"estimator", "base_estimator", "regressor"} & init_params:
         if is_regressor(meta_estimator):
             estimator = make_pipeline(TfidfVectorizer(), Ridge())
             param_grid = {"ridge__alpha": [0.1, 1.0]}
@@ -208,7 +208,7 @@ def _get_instance_with_pipeline(meta_estimator, init_params):
             estimator = make_pipeline(TfidfVectorizer(), LogisticRegression())
             param_grid = {"logisticregression__C": [0.1, 1.0]}
 
-        if ("param_grid", "param_distributions") & init_params:
+        if {"param_grid", "param_distributions"} & init_params:
             # SearchCV estimators
             extra_params = {"n_iter": 2} if "n_iter" in init_params else {}
             return type(meta_estimator)(estimator, param_grid, **extra_params)
@@ -254,19 +254,19 @@ def _generate_meta_estimator_instances_with_pipeline():
         sig = set(signature(Estimator).parameters)
 
         if (
-            not (
+            not {
                 "estimator",
                 "base_estimator",
                 "regressor",
                 "transformer_list",
                 "estimators",
-            )
+            }
             & sig
         ):
             continue
 
         for meta_estimator in _construct_instances(Estimator):
-            yield _generate_meta_estimator_instances_with_pipeline(meta_estimator)
+            yield _get_instance_with_pipeline(meta_estimator, sig)
 
 
 # TODO: remove data validation for the following estimators
