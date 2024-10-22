@@ -31,13 +31,6 @@ if not meson.is_cross_build()
     error('scikit-learn requires Cython>=' + cython_min_version + ', got ' + cython.version() + ' instead')
   endif
 
-  meson_python_version = run_command(py,
-    ['-c', 'import mesonpy; print(mesonpy.__version__)'], check: true).stdout().strip()
-  meson_python_min_version = run_command(py, ['_min_dependencies.py', 'meson-python'], check: true).stdout().strip()
-  if not meson_python_version.version_compare('>=' + meson_python_min_version)
-    error('scikit-learn requires meson-python>=' + meson_python_min_version + ', got ' + meson_python_version + ' instead')
-  endif
-
   numpy_version = run_command(py,
     ['-c', 'import numpy; print(numpy.__version__)'], check: true).stdout().strip()
   numpy_min_version = run_command(py, ['_min_dependencies.py', 'numpy'], check: true).stdout().strip()
@@ -51,6 +44,20 @@ if not meson.is_cross_build()
   if not scipy_version.version_compare('>=' + scipy_min_version)
     error('scikit-learn requires scipy>=' + scipy_min_version + ', got ' + scipy_version + ' instead')
   endif
+
+  # meson-python is required only when going through pip. Using meson directly
+  # should not check meson-python version.
+  meson_python_version_command_result = run_command(py,
+    ['-c', 'import mesonpy; print(mesonpy.__version__)'], check: false)
+  meson_python_installed = meson_python_version_command_result.returncode() == 0
+  if meson_python_installed
+    meson_python_version = meson_python_version_command_result.stdout().strip()
+    meson_python_min_version = run_command(py, ['_min_dependencies.py', 'meson-python'], check: true).stdout().strip()
+    if not meson_python_version.version_compare('>=' + meson_python_min_version)
+      error('scikit-learn requires meson-python>=' + meson_python_min_version + ', got ' + meson_python_version + ' instead')
+    endif
+  endif
+
 endif
 
 # Adapted from scipy, each project seems to have its own tweaks for this. One

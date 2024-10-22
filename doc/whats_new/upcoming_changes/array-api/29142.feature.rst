@@ -1,0 +1,3 @@
+- :func:`sklearn.metrics.mean_squared_error` now supports Array API compatible
+  inputs.
+  By :user:`Yaroslav Korobko <Tialo>`

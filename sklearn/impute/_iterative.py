@@ -23,7 +23,12 @@ from ..utils.metadata_routing import (
     _raise_for_params,
     process_routing,
 )
-from ..utils.validation import FLOAT_DTYPES, _check_feature_names_in, check_is_fitted
+from ..utils.validation import (
+    FLOAT_DTYPES,
+    _check_feature_names_in,
+    check_is_fitted,
+    validate_data,
+)
 from ._base import SimpleImputer, _BaseImputer, _check_inputs_dtype
 
 _ImputerTriplet = namedtuple(
@@ -614,16 +619,17 @@ class IterativeImputer(_BaseImputer):
             number of features.
         """
         if is_scalar_nan(self.missing_values):
-            force_all_finite = "allow-nan"
+            ensure_all_finite = "allow-nan"
         else:
-            force_all_finite = True
+            ensure_all_finite = True
 
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             dtype=FLOAT_DTYPES,
             order="F",
             reset=in_fit,
-            force_all_finite=force_all_finite,
+            ensure_all_finite=ensure_all_finite,
         )
         _check_inputs_dtype(X, self.missing_values)
 
@@ -640,19 +646,28 @@ class IterativeImputer(_BaseImputer):
         else:
             X_filled = self.initial_imputer_.transform(X)
 
-        valid_mask = np.flatnonzero(
-            np.logical_not(np.isnan(self.initial_imputer_.statistics_))
-        )
+        if in_fit:
+            self._is_empty_feature = np.all(mask_missing_values, axis=0)
 
         if not self.keep_empty_features:
             # drop empty features
-            Xt = X[:, valid_mask]
-            mask_missing_values = mask_missing_values[:, valid_mask]
+            Xt = X[:, ~self._is_empty_feature]
+            mask_missing_values = mask_missing_values[:, ~self._is_empty_feature]
+
+            if self.initial_imputer_.get_params()["strategy"] == "constant":
+                # The constant strategy has a specific behavior and preserve empty
+                # features even with ``keep_empty_features=False``. We need to drop
+                # the column for consistency.
+                # TODO: remove this `if` branch once the following issue is addressed:
+                # https://github.com/scikit-learn/scikit-learn/issues/29827
+                X_filled = X_filled[:, ~self._is_empty_feature]
+
         else:
             # mark empty features as not missing and keep the original
             # imputation
-            mask_missing_values[:, valid_mask] = True
+            mask_missing_values[:, self._is_empty_feature] = False
             Xt = X
+            Xt[:, self._is_empty_feature] = X_filled[:, self._is_empty_feature]
 
         return Xt, X_filled, mask_missing_values, X_missing_mask
 
@@ -680,7 +695,7 @@ class IterativeImputer(_BaseImputer):
         limit = limit_bound if limit is None else limit
         if np.isscalar(limit):
             limit = np.full(n_features, limit)
-        limit = check_array(limit, force_all_finite=False, copy=False, ensure_2d=False)
+        limit = check_array(limit, ensure_all_finite=False, copy=False, ensure_2d=False)
         if not limit.shape[0] == n_features:
             raise ValueError(
                 f"'{limit_type}_value' should be of "

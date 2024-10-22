@@ -6,10 +6,11 @@
 import itertools
 import math
 import os
-import warnings
 from functools import wraps
 
 import numpy
+import scipy
+import scipy.sparse as sp
 import scipy.special as special
 
 from .._config import get_config
@@ -42,7 +43,6 @@ def yield_namespaces(include_numpy_namespaces=True):
         # array_api_strict.Array instances always have a dummy "device" attribute.
         "array_api_strict",
         "cupy",
-        "cupy.array_api",
         "torch",
     ]:
         if not include_numpy_namespaces and array_namespace in _NUMPY_NAMESPACE_NAMES:
@@ -105,19 +105,26 @@ def _check_array_api_dispatch(array_api_dispatch):
         min_numpy_version = "1.21"
         if numpy_version < parse_version(min_numpy_version):
             raise ImportError(
-                f"NumPy must be {min_numpy_version} or newer to dispatch array using"
-                " the API specification"
+                f"NumPy must be {min_numpy_version} or newer (found"
+                f" {numpy.__version__}) to dispatch array using"
+                " the array API specification"
             )
+
+        scipy_version = parse_version(scipy.__version__)
+        min_scipy_version = "1.14.0"
+        if scipy_version < parse_version(min_scipy_version):
+            raise ImportError(
+                f"SciPy must be {min_scipy_version} or newer"
+                " (found {scipy.__version__}) to dispatch array using"
+                " the array API specification"
+            )
+
         if os.environ.get("SCIPY_ARRAY_API") != "1":
-            warnings.warn(
-                (
-                    "Some scikit-learn array API features might rely on enabling "
-                    "SciPy's own support for array API to function properly. "
-                    "Please set the SCIPY_ARRAY_API=1 environment variable "
-                    "before importing sklearn or scipy. More details at: "
-                    "https://docs.scipy.org/doc/scipy/dev/api-dev/array_api.html"
-                ),
-                UserWarning,
+            raise RuntimeError(
+                "Scikit-learn array API support was enabled but scipy's own support is "
+                "not enabled. Please set the SCIPY_ARRAY_API=1 environment variable "
+                "before importing sklearn or scipy. More details at: "
+                "https://docs.scipy.org/doc/scipy/dev/api-dev/array_api.html"
             )
 
 
@@ -156,7 +163,9 @@ def device(*array_list, remove_none=True, remove_types=(str,)):
         *array_list, remove_none=remove_none, remove_types=remove_types
     )
 
-    # Note that _remove_non_arrays ensures that array_list is not empty.
+    if not array_list:
+        return None
+
     device_ = _single_array_device(array_list[0])
 
     # Note: here we cannot simply use a Python `set` as it requires
@@ -197,7 +206,11 @@ def _is_numpy_namespace(xp):
 
 def _union1d(a, b, xp):
     if _is_numpy_namespace(xp):
-        return xp.asarray(numpy.union1d(a, b))
+        # avoid circular import
+        from ._unique import cached_unique
+
+        a_unique, b_unique = cached_unique(a, b, xp=xp)
+        return xp.asarray(numpy.union1d(a_unique, b_unique))
     assert a.ndim == b.ndim == 1
     return xp.unique_values(xp.concat([xp.unique_values(a), xp.unique_values(b)]))
 
@@ -230,7 +243,7 @@ def _isdtype_single(dtype, kind, *, xp):
         elif kind == "real floating":
             return dtype in supported_float_dtypes(xp)
         elif kind == "complex floating":
-            # Some name spaces do not have complex, such as cupy.array_api
+            # Some name spaces might not have support for complex dtypes.
             complex_dtypes = set()
             if hasattr(xp, "complex64"):
                 complex_dtypes.add(xp.complex64)
@@ -290,42 +303,6 @@ def ensure_common_namespace_device(reference, *arrays):
         return [xp.asarray(a, device=device_) for a in arrays]
     else:
         return arrays
-
-
-class _ArrayAPIWrapper:
-    """sklearn specific Array API compatibility wrapper
-
-    This wrapper makes it possible for scikit-learn maintainers to
-    deal with discrepancies between different implementations of the
-    Python Array API standard and its evolution over time.
-
-    The Python Array API standard specification:
-    https://data-apis.org/array-api/latest/
-
-    Documentation of the NumPy implementation:
-    https://numpy.org/neps/nep-0047-array-api-standard.html
-    """
-
-    def __init__(self, array_namespace):
-        self._namespace = array_namespace
-
-    def __getattr__(self, name):
-        return getattr(self._namespace, name)
-
-    def __eq__(self, other):
-        return self._namespace == other._namespace
-
-    def isdtype(self, dtype, kind):
-        return isdtype(dtype, kind, xp=self._namespace)
-
-    def maximum(self, x1, x2):
-        # TODO: Remove when `maximum` is made compatible in `array_api_compat`,
-        #  based on the `2023.12` specification.
-        #  https://github.com/data-apis/array-api-compat/issues/127
-        x1_np = _convert_to_numpy(x1, xp=self._namespace)
-        x2_np = _convert_to_numpy(x2, xp=self._namespace)
-        x_max = numpy.maximum(x1_np, x2_np)
-        return self._namespace.asarray(x_max, device=device(x1, x2))
 
 
 def _check_device_cpu(device):  # noqa
@@ -477,6 +454,8 @@ def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
 
     Raise ValueError if no arrays are left after filtering.
 
+    Sparse arrays are always filtered out.
+
     Parameters
     ----------
     *arrays : array objects
@@ -491,7 +470,8 @@ def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
     Returns
     -------
     filtered_arrays : list
-        List of arrays with None and typoe
+        List of arrays filtered as requested. An empty list is returned if no input
+        passes the filters.
     """
     filtered_arrays = []
     remove_types = tuple(remove_types)
@@ -500,14 +480,10 @@ def _remove_non_arrays(*arrays, remove_none=True, remove_types=(str,)):
             continue
         if isinstance(array, remove_types):
             continue
+        if sp.issparse(array):
+            continue
         filtered_arrays.append(array)
 
-    if not filtered_arrays:
-        raise ValueError(
-            f"At least one input array expected after filtering with {remove_none=}, "
-            f"remove_types=[{', '.join(t.__name__ for t in remove_types)}]. Got none. "
-            f"Original types: [{', '.join(type(a).__name__ for a in arrays)}]."
-        )
     return filtered_arrays
 
 
@@ -516,6 +492,8 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
 
     Introspect `arrays` arguments and return their common Array API compatible
     namespace object, if any.
+
+    Note that sparse arrays are filtered by default.
 
     See: https://numpy.org/neps/nep-0047-array-api-standard.html
 
@@ -534,6 +512,9 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     Otherwise an instance of the `_NumPyAPIWrapper` compatibility wrapper is
     always returned irrespective of the fact that arrays implement the
     `__array_namespace__` protocol or not.
+
+    Note that if no arrays pass the set filters, ``_NUMPY_API_WRAPPER_INSTANCE, False``
+    is returned.
 
     Parameters
     ----------
@@ -572,8 +553,13 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
         return xp, True
 
     arrays = _remove_non_arrays(
-        *arrays, remove_none=remove_none, remove_types=remove_types
+        *arrays,
+        remove_none=remove_none,
+        remove_types=remove_types,
     )
+
+    if not arrays:
+        return _NUMPY_API_WRAPPER_INSTANCE, False
 
     _check_array_api_dispatch(array_api_dispatch)
 
@@ -584,11 +570,6 @@ def get_namespace(*arrays, remove_none=True, remove_types=(str,), xp=None):
     import array_api_compat
 
     namespace, is_array_api_compliant = array_api_compat.get_namespace(*arrays), True
-
-    # These namespaces need additional wrapping to smooth out small differences
-    # between implementations
-    if namespace.__name__ in {"cupy.array_api"}:
-        namespace = _ArrayAPIWrapper(namespace)
 
     if namespace.__name__ == "array_api_strict" and hasattr(
         namespace, "set_array_api_strict_flags"
@@ -622,20 +603,19 @@ def get_namespace_and_device(*array_list, remove_none=True, remove_types=(str,))
         `device` object (see the "Device Support" section of the array API spec).
     """
     array_list = _remove_non_arrays(
-        *array_list, remove_none=remove_none, remove_types=remove_types
+        *array_list,
+        remove_none=remove_none,
+        remove_types=remove_types,
     )
 
     skip_remove_kwargs = dict(remove_none=False, remove_types=[])
 
     xp, is_array_api = get_namespace(*array_list, **skip_remove_kwargs)
+    arrays_device = device(*array_list, **skip_remove_kwargs)
     if is_array_api:
-        return (
-            xp,
-            is_array_api,
-            device(*array_list, **skip_remove_kwargs),
-        )
+        return xp, is_array_api, arrays_device
     else:
-        return xp, False, None
+        return xp, False, arrays_device
 
 
 def _expit(X, xp=None):
@@ -815,19 +795,6 @@ def _nanmax(X, axis=None, xp=None):
         return X
 
 
-def _clip(S, min_val, max_val, xp):
-    # TODO: remove this method and change all usage once we move to array api 2023.12
-    # https://data-apis.org/array-api/2023.12/API_specification/generated/array_api.clip.html#clip
-    if _is_numpy_namespace(xp):
-        return numpy.clip(S, min_val, max_val)
-    else:
-        min_arr = xp.asarray(min_val, dtype=S.dtype)
-        max_arr = xp.asarray(max_val, dtype=S.dtype)
-        S = xp.where(S < min_arr, min_arr, S)
-        S = xp.where(S > max_arr, max_arr, S)
-        return S
-
-
 def _asarray_with_order(
     array, dtype=None, order=None, copy=None, *, xp=None, device=None
 ):
@@ -878,8 +845,6 @@ def _convert_to_numpy(array, xp):
 
     if xp_name in {"array_api_compat.torch", "torch"}:
         return array.cpu().numpy()
-    elif xp_name == "cupy.array_api":
-        return array._array.get()
     elif xp_name in {"array_api_compat.cupy", "cupy"}:  # pragma: nocover
         return array.get()
 

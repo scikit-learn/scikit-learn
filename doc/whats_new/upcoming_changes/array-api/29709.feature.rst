@@ -1,0 +1,4 @@
+- :func:`sklearn.metrics.mean_squared_log_error` and
+  :func:`sklearn.metrics.root_mean_squared_log_error`
+  now supports Array API compatible inputs.
+  By :user:`Virgil Chan <virchan>`
