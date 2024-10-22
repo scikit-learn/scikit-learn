@@ -1168,9 +1168,10 @@ def is_classifier(estimator):
     """
     # TODO(1.8): Remove this check
     if isinstance(estimator, type):
-        raise FutureWarning(
+        warnings.warn(
             f"passing a class to {print(inspect.stack()[0][3])} is deprecated and "
-            "will be removed in 1.8. Use an instance of the class instead."
+            "will be removed in 1.8. Use an instance of the class instead.",
+            FutureWarning,
         )
         return getattr(estimator, "_estimator_type", None) == "classifier"
 
@@ -1207,9 +1208,10 @@ def is_regressor(estimator):
     """
     # TODO(1.8): Remove this check
     if isinstance(estimator, type):
-        raise FutureWarning(
+        warnings.warn(
             f"passing a class to {print(inspect.stack()[0][3])} is deprecated and "
-            "will be removed in 1.8. Use an instance of the class instead."
+            "will be removed in 1.8. Use an instance of the class instead.",
+            FutureWarning,
         )
         return getattr(estimator, "_estimator_type", None) == "regressor"
 
@@ -1248,9 +1250,10 @@ def is_clusterer(estimator):
     """
     # TODO(1.8): Remove this check
     if isinstance(estimator, type):
-        raise FutureWarning(
+        warnings.warn(
             f"passing a class to {print(inspect.stack()[0][3])} is deprecated and "
-            "will be removed in 1.8. Use an instance of the class instead."
+            "will be removed in 1.8. Use an instance of the class instead.",
+            FutureWarning,
         )
         return getattr(estimator, "_estimator_type", None) == "clusterer"
 
@@ -1272,9 +1275,10 @@ def is_outlier_detector(estimator):
     """
     # TODO(1.8): Remove this check
     if isinstance(estimator, type):
-        raise FutureWarning(
+        warnings.warn(
             f"passing a class to {print(inspect.stack()[0][3])} is deprecated and "
-            "will be removed in 1.8. Use an instance of the class instead."
+            "will be removed in 1.8. Use an instance of the class instead.",
+            FutureWarning,
         )
         return getattr(estimator, "_estimator_type", None) == "outlier_detector"
 
