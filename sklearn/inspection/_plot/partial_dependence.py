@@ -256,6 +256,7 @@ class PartialDependenceDisplay:
         n_cols=3,
         grid_resolution=100,
         percentiles=(0.05, 0.95),
+        custom_values=None,
         method="auto",
         n_jobs=None,
         verbose=0,
@@ -268,7 +269,6 @@ class PartialDependenceDisplay:
         centered=False,
         subsample=1000,
         random_state=None,
-        custom_values=None,
     ):
         """Partial dependence (PD) and individual conditional expectation (ICE) plots.
 
@@ -398,6 +398,14 @@ class PartialDependenceDisplay:
             The lower and upper percentile used to create the extreme values
             for the PDP axes. Must be in [0, 1].
 
+        custom_values : dict
+            A dictionary mapping the index of an element of `features` to an
+            array of values where the partial dependence should be calculated
+            for that feature. Setting a range of values for a feature overrides
+            `grid_resolution` and `percentiles`.
+
+            .. versionadded:: 1.6
+
         method : str, default='auto'
             The method used to calculate the averaged predictions:
 
@@ -500,14 +508,6 @@ class PartialDependenceDisplay:
             Controls the randomness of the selected samples when subsamples is not
             `None` and `kind` is either `'both'` or `'individual'`.
             See :term:`Glossary <random_state>` for details.
-
-        custom_values : dict
-            A dictionary mapping the index of an element of `features` to an
-            array of values where the partial dependence should be calculated
-            for that feature. Setting a range of values for a feature overrides
-            `grid_resolution` and `percentiles`.
-
-            .. versionadded:: 1.5
 
         Returns
         -------

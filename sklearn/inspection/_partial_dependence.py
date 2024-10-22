@@ -409,10 +409,10 @@ def partial_dependence(
     feature_names=None,
     response_method="auto",
     percentiles=(0.05, 0.95),
+    custom_values=None,
     grid_resolution=100,
     method="auto",
     kind="average",
-    custom_values=None,
 ):
     """Partial dependence of ``features``.
 
@@ -499,6 +499,14 @@ def partial_dependence(
         The lower and upper percentile used to create the extreme values
         for the grid. Must be in [0, 1].
 
+    custom_values : dict
+        A dictionary mapping the index of an element of `features` to an array
+        of values where the partial dependence should be calculated
+        for that feature. Setting a range of values for a feature overrides
+        `grid_resolution` and `percentiles`.
+
+        .. versionadded:: 1.6
+
     grid_resolution : int, default=100
         The number of equally spaced points on the grid, for each target
         feature.
@@ -544,14 +552,6 @@ def partial_dependence(
         `method='brute'`.
 
         .. versionadded:: 0.24
-
-    custom_values : dict
-        A dictionary mapping the index of an element of `features` to an array
-        of values where the partial dependence should be calculated
-        for that feature. Setting a range of values for a feature overrides
-        `grid_resolution` and `percentiles`.
-
-        .. versionadded:: 1.5
 
     Returns
     -------
