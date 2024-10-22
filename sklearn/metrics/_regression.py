@@ -727,6 +727,10 @@ def mean_squared_log_error(
     """
     xp, _ = get_namespace(y_true, y_pred)
 
+    _, y_true, y_pred, _, _, _ = _check_reg_targets_and_floating_dtype(
+        y_true, y_pred, sample_weight, multioutput, xp=xp
+    )
+
     if xp.any(y_true <= -1) or xp.any(y_pred <= -1):
         raise ValueError(
             "Mean Squared Logarithmic Error cannot be used when "
@@ -798,6 +802,10 @@ def root_mean_squared_log_error(
     0.199...
     """
     xp, _ = get_namespace(y_true, y_pred)
+
+    _, y_true, y_pred, _, _, _ = _check_reg_targets_and_floating_dtype(
+        y_true, y_pred, sample_weight, multioutput, xp=xp
+    )
 
     if xp.any(y_true <= -1) or xp.any(y_pred <= -1):
         raise ValueError(
