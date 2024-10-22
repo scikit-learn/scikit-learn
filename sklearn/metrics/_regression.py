@@ -150,7 +150,6 @@ def _check_reg_targets_and_floating_dtype(
     y_pred : array-like
 
     sample_weight : array-like of shape (n_samples,)
-        Sample weights.
 
     multioutput : array-like or string in ['raw_values', uniform_average',
         'variance_weighted'] or None
