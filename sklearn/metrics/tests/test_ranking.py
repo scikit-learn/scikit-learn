@@ -1,3 +1,4 @@
+import math
 import re
 
 import numpy as np
@@ -390,7 +391,7 @@ def test_roc_curve_toydata():
     )
     with pytest.warns(UndefinedMetricWarning, match=expected_message):
         auc = roc_auc_score(y_true, y_score)
-    assert_almost_equal(auc, np.nan)
+    assert math.isnan(auc)
 
     # Multi-label classification task
     y_true = np.array([[0, 1], [0, 1]])
