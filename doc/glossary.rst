@@ -66,6 +66,7 @@ General Concepts
         It excludes:
 
         * a :term:`sparse matrix`
+        * a sparse array
         * an iterator
         * a generator
 
@@ -285,7 +286,26 @@ General Concepts
         Note that in this case, the precision can be platform dependent.
         The `numeric` dtype refers to accepting both `integer` and `floating`.
 
-        TODO: Mention efficiency and precision issues; casting policy.
+        When it comes to choosing between 64-bit dtype (i.e. `np.float64` and
+        `np.int64`) and 32-bit dtype (i.e. `np.float32` and `np.int32`), it
+        boils down to a trade-off between efficiency and precision. The 64-bit
+        types offer more accurate results due to their lower floating-point
+        error, but demand more computational resources, resulting in slower
+        operations and increased memory usage. In contrast, 32-bit types
+        promise enhanced operation speed and reduced memory consumption, but
+        introduce a larger floating-point error. The efficiency improvement are
+        dependent on lower level optimization such as like vectorization,
+        single instruction multiple dispatch (SIMD), or cache optimization but
+        crucially on the compatibility of the algorithm in use.
+
+        Specifically, the choice of precision should account for whether the
+        employed algorithm can effectively leverage `np.float32`. Some
+        algorithms, especially certain minimization methods, are exclusively
+        coded for `np.float64`, meaning that even if `np.float32` is passed, it
+        triggers an automatic conversion back to `np.float64`. This not only
+        negates the intended computational savings but also introduces
+        additional overhead, making operations with `np.float32` unexpectedly
+        slower and more memory-intensive due to this extra conversion step.
 
     duck typing
         We try to apply `duck typing
@@ -387,8 +407,7 @@ General Concepts
         likelihoods.
 
     estimator tags
-        A proposed feature (e.g. :issue:`8022`) by which the capabilities of an
-        estimator are described through a set of semantic tags.  This would
+        Estimator tags describe certain capabilities of an estimator.  This would
         enable some runtime behaviors based on estimator inspection, but it
         also allows each estimator to be tested for appropriate invariances
         while being excepted from other :term:`common tests`.

@@ -1,4 +1,5 @@
 import io
+import re
 import warnings
 from itertools import product
 
@@ -400,9 +401,11 @@ def test_imputation_constant_error_invalid_type(X_data, missing_value):
     X = np.full((3, 5), X_data, dtype=float)
     X[0, 0] = missing_value
 
-    with pytest.raises(ValueError, match="imputing numerical"):
+    fill_value = "x"
+    err_msg = f"fill_value={fill_value!r} (of type {type(fill_value)!r}) cannot be cast"
+    with pytest.raises(ValueError, match=re.escape(err_msg)):
         imputer = SimpleImputer(
-            missing_values=missing_value, strategy="constant", fill_value="x"
+            missing_values=missing_value, strategy="constant", fill_value=fill_value
         )
         imputer.fit_transform(X)
 
@@ -1510,24 +1513,6 @@ def test_most_frequent(expected, array, dtype, extra_value, n_repeat):
     )
 
 
-@pytest.mark.parametrize(
-    "initial_strategy", ["mean", "median", "most_frequent", "constant"]
-)
-def test_iterative_imputer_keep_empty_features(initial_strategy):
-    """Check the behaviour of the iterative imputer with different initial strategy
-    and keeping empty features (i.e. features containing only missing values).
-    """
-    X = np.array([[1, np.nan, 2], [3, np.nan, np.nan]])
-
-    imputer = IterativeImputer(
-        initial_strategy=initial_strategy, keep_empty_features=True
-    )
-    X_imputed = imputer.fit_transform(X)
-    assert_allclose(X_imputed[:, 1], 0)
-    X_imputed = imputer.transform(X)
-    assert_allclose(X_imputed[:, 1], 0)
-
-
 def test_iterative_imputer_constant_fill_value():
     """Check that we propagate properly the parameter `fill_value`."""
     X = np.array([[-1, 2, 3, -1], [4, -1, 5, -1], [6, 7, -1, -1], [8, 9, 0, -1]])
@@ -1744,3 +1729,109 @@ def test_imputation_custom(csc_container):
     imputer = SimpleImputer(missing_values=np.nan, strategy=np.min)
     X_trans = imputer.fit_transform(csc_container(X))
     assert_array_equal(X_trans.toarray(), X_true)
+
+
+def test_simple_imputer_constant_fill_value_casting():
+    """Check that we raise a proper error message when we cannot cast the fill value
+    to the input data type. Otherwise, check that the casting is done properly.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/28309
+    """
+    # cannot cast fill_value at fit
+    fill_value = 1.5
+    X_int64 = np.array([[1, 2, 3], [2, 3, 4]], dtype=np.int64)
+    imputer = SimpleImputer(
+        strategy="constant", fill_value=fill_value, missing_values=2
+    )
+    err_msg = f"fill_value={fill_value!r} (of type {type(fill_value)!r}) cannot be cast"
+    with pytest.raises(ValueError, match=re.escape(err_msg)):
+        imputer.fit(X_int64)
+
+    # cannot cast fill_value at transform
+    X_float64 = np.array([[1, 2, 3], [2, 3, 4]], dtype=np.float64)
+    imputer.fit(X_float64)
+    err_msg = (
+        f"The dtype of the filling value (i.e. {imputer.statistics_.dtype!r}) "
+        "cannot be cast"
+    )
+    with pytest.raises(ValueError, match=re.escape(err_msg)):
+        imputer.transform(X_int64)
+
+    # check that no error is raised when having the same kind of dtype
+    fill_value_list = [np.float64(1.5), 1.5, 1]
+    X_float32 = X_float64.astype(np.float32)
+
+    for fill_value in fill_value_list:
+        imputer = SimpleImputer(
+            strategy="constant", fill_value=fill_value, missing_values=2
+        )
+        X_trans = imputer.fit_transform(X_float32)
+        assert X_trans.dtype == X_float32.dtype
+
+
+@pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent", "constant"])
+def test_iterative_imputer_no_empty_features(strategy):
+    """Check the behaviour of `keep_empty_features` with no empty features.
+
+    With no-empty features, we should get the same imputation whatever the
+    parameter `keep_empty_features`.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/29375
+    """
+    X = np.array([[np.nan, 0, 1], [2, np.nan, 3], [4, 5, np.nan]])
+
+    imputer_drop_empty_features = IterativeImputer(
+        initial_strategy=strategy, fill_value=1, keep_empty_features=False
+    )
+
+    imputer_keep_empty_features = IterativeImputer(
+        initial_strategy=strategy, fill_value=1, keep_empty_features=True
+    )
+
+    assert_allclose(
+        imputer_drop_empty_features.fit_transform(X),
+        imputer_keep_empty_features.fit_transform(X),
+    )
+
+
+@pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent", "constant"])
+@pytest.mark.parametrize(
+    "X_test",
+    [
+        np.array([[1, 2, 3, 4], [5, 6, 7, 8]]),  # without empty feature
+        np.array([[np.nan, 2, 3, 4], [np.nan, 6, 7, 8]]),  # empty feature at column 0
+        np.array([[1, 2, 3, np.nan], [5, 6, 7, np.nan]]),  # empty feature at column 3
+    ],
+)
+def test_iterative_imputer_with_empty_features(strategy, X_test):
+    """Check the behaviour of `keep_empty_features` in the presence of empty features.
+
+    With `keep_empty_features=True`, the empty feature will be imputed with the value
+    defined by the initial imputation.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/29375
+    """
+    X_train = np.array(
+        [[np.nan, np.nan, 0, 1], [np.nan, 2, np.nan, 3], [np.nan, 4, 5, np.nan]]
+    )
+
+    imputer_drop_empty_features = IterativeImputer(
+        initial_strategy=strategy, fill_value=0, keep_empty_features=False
+    )
+    X_train_drop_empty_features = imputer_drop_empty_features.fit_transform(X_train)
+    X_test_drop_empty_features = imputer_drop_empty_features.transform(X_test)
+
+    imputer_keep_empty_features = IterativeImputer(
+        initial_strategy=strategy, fill_value=0, keep_empty_features=True
+    )
+    X_train_keep_empty_features = imputer_keep_empty_features.fit_transform(X_train)
+    X_test_keep_empty_features = imputer_keep_empty_features.transform(X_test)
+
+    assert_allclose(X_train_drop_empty_features, X_train_keep_empty_features[:, 1:])
+    assert_allclose(X_train_keep_empty_features[:, 0], 0)
+
+    assert X_train_drop_empty_features.shape[1] == X_test_drop_empty_features.shape[1]
+    assert X_train_keep_empty_features.shape[1] == X_test_keep_empty_features.shape[1]

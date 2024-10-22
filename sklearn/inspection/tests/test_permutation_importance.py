@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from joblib import parallel_backend
 from numpy.testing import assert_allclose
 
 from sklearn.compose import ColumnTransformer
@@ -22,7 +23,6 @@ from sklearn.metrics import (
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import KBinsDiscretizer, OneHotEncoder, StandardScaler, scale
-from sklearn.utils import parallel_backend
 from sklearn.utils._testing import _convert_container
 
 
@@ -437,9 +437,7 @@ def test_permutation_importance_sample_weight():
     # the second half of the samples approaches to infinity, the ratio of
     # the two features importance should equal to 2 on expectation (when using
     # mean absolutes error as the loss function).
-    w = np.hstack(
-        [np.repeat(10.0**10, n_half_samples), np.repeat(1.0, n_half_samples)]
-    )
+    w = np.hstack([np.repeat(10.0**10, n_half_samples), np.repeat(1.0, n_half_samples)])
     lr.fit(x, y, w)
     pi = permutation_importance(
         lr,

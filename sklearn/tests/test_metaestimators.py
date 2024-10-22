@@ -1,4 +1,5 @@
 """Common tests for metaestimators"""
+
 import functools
 from inspect import signature
 
@@ -39,6 +40,10 @@ class DelegatorData:
         self.skip_methods = skip_methods
 
 
+# For the following meta estimators we check for the existence of relevant
+# methods only if the sub estimator also contains them. Any methods that
+# are implemented in the meta estimator themselves and are not dependent
+# on the sub estimator are specified in the `skip_methods` parameter.
 DELEGATING_METAESTIMATORS = [
     DelegatorData("Pipeline", lambda est: Pipeline([("est", est)])),
     DelegatorData(
@@ -54,7 +59,9 @@ DELEGATING_METAESTIMATORS = [
         skip_methods=["score"],
     ),
     DelegatorData("RFE", RFE, skip_methods=["transform", "inverse_transform"]),
-    DelegatorData("RFECV", RFECV, skip_methods=["transform", "inverse_transform"]),
+    DelegatorData(
+        "RFECV", RFECV, skip_methods=["transform", "inverse_transform", "score"]
+    ),
     DelegatorData(
         "BaggingClassifier",
         BaggingClassifier,

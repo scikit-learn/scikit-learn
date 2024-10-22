@@ -17,14 +17,6 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.utils._testing import _convert_container
 
-# TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
-pytestmark = pytest.mark.filterwarnings(
-    (
-        "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
-        "matplotlib.*"
-    ),
-)
-
 
 @pytest.fixture(scope="module")
 def diabetes():
@@ -134,7 +126,6 @@ def test_plot_partial_dependence(
     assert ax.get_ylabel() == diabetes.feature_names[2]
 
 
-@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize(
     "kind, centered, subsample, shape",
     [
@@ -184,7 +175,6 @@ def test_plot_partial_dependence_kind(
         assert all([ln._y[0] != 0.0 for ln in disp.lines_.ravel() if ln is not None])
 
 
-@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize(
     "input_type, feature_names_type",
     [
@@ -334,7 +324,6 @@ def test_plot_partial_dependence_custom_axes(
     assert ax.get_ylabel() == "bmi"
 
 
-@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize(
     "kind, lines", [("average", 1), ("individual", 50), ("both", 51)]
 )
@@ -392,7 +381,6 @@ def test_plot_partial_dependence_passing_numpy_axes(
     assert len(disp2.axes_[0, 1].get_lines()) == 2 * lines
 
 
-@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize("nrows, ncols", [(2, 2), (3, 1)])
 @pytest.mark.parametrize("use_custom_values", [True, False])
 def test_plot_partial_dependence_incorrent_num_axes(
@@ -627,7 +615,6 @@ def test_plot_partial_dependence_multiclass(use_custom_values, pyplot):
 multioutput_regression_data = make_regression(n_samples=50, n_targets=2, random_state=0)
 
 
-@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize("target", [0, 1])
 @pytest.mark.parametrize("use_custom_values", [True, False])
 def test_plot_partial_dependence_multioutput(use_custom_values, pyplot, target):
@@ -667,7 +654,6 @@ def test_plot_partial_dependence_multioutput(use_custom_values, pyplot, target):
         assert ax.get_xlabel() == f"x{i}"
 
 
-@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 def test_plot_partial_dependence_dataframe(pyplot, clf_diabetes, diabetes):
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame(diabetes.data, columns=diabetes.feature_names)
@@ -686,7 +672,6 @@ def test_plot_partial_dependence_dataframe(pyplot, clf_diabetes, diabetes):
 dummy_classification_data = make_classification(random_state=0)
 
 
-@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize(
     "data, params, err_msg",
     [
@@ -780,7 +765,6 @@ def test_plot_partial_dependence_error(pyplot, data, params, err_msg):
         PartialDependenceDisplay.from_estimator(estimator, X, **params)
 
 
-@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize(
     "params, err_msg",
     [
@@ -1160,7 +1144,6 @@ def test_partial_dependence_kind_error(
         )
 
 
-@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize(
     "line_kw, pd_line_kw, ice_lines_kw, expected_colors",
     [
@@ -1170,6 +1153,10 @@ def test_partial_dependence_kind_error(
         ({"color": "r"}, {"color": "g"}, None, ("g", "r")),
         ({"color": "r"}, None, None, ("r", "r")),
         ({"color": "r"}, {"linestyle": "--"}, {"linestyle": "-."}, ("r", "r")),
+        ({"c": "r"}, None, None, ("r", "r")),
+        ({"c": "r", "ls": "-."}, {"color": "g"}, {"color": "b"}, ("g", "b")),
+        ({"c": "r"}, {"c": "g"}, {"c": "b"}, ("g", "b")),
+        ({"c": "r"}, {"ls": "--"}, {"ls": "-."}, ("r", "r")),
     ],
 )
 def test_plot_partial_dependence_lines_kw(
@@ -1199,16 +1186,26 @@ def test_plot_partial_dependence_lines_kw(
     )
 
     line = disp.lines_[0, 0, -1]
-    assert line.get_color() == expected_colors[0]
-    if pd_line_kw is not None and "linestyle" in pd_line_kw:
-        assert line.get_linestyle() == pd_line_kw["linestyle"]
+    assert line.get_color() == expected_colors[0], (
+        f"{line.get_color()}!={expected_colors[0]}\n" f"{line_kw} and {pd_line_kw}"
+    )
+    if pd_line_kw is not None:
+        if "linestyle" in pd_line_kw:
+            assert line.get_linestyle() == pd_line_kw["linestyle"]
+        elif "ls" in pd_line_kw:
+            assert line.get_linestyle() == pd_line_kw["ls"]
     else:
         assert line.get_linestyle() == "--"
 
     line = disp.lines_[0, 0, 0]
-    assert line.get_color() == expected_colors[1]
-    if ice_lines_kw is not None and "linestyle" in ice_lines_kw:
-        assert line.get_linestyle() == ice_lines_kw["linestyle"]
+    assert (
+        line.get_color() == expected_colors[1]
+    ), f"{line.get_color()}!={expected_colors[1]}"
+    if ice_lines_kw is not None:
+        if "linestyle" in ice_lines_kw:
+            assert line.get_linestyle() == ice_lines_kw["linestyle"]
+        elif "ls" in ice_lines_kw:
+            assert line.get_linestyle() == ice_lines_kw["ls"]
     else:
         assert line.get_linestyle() == "-"
 

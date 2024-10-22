@@ -1,10 +1,7 @@
-"""Multi-layer Perceptron
-"""
+"""Multi-layer Perceptron"""
 
-# Authors: Issam H. Laradji <issam.laradji@gmail.com>
-#          Andreas Mueller
-#          Jiyuan Qian
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from abc import ABCMeta, abstractmethod
@@ -41,7 +38,7 @@ from ..utils.multiclass import (
     unique_labels,
 )
 from ..utils.optimize import _check_optimize_result
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, validate_data
 from ._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
 from ._stochastic_optimizers import AdamOptimizer, SGDOptimizer
 
@@ -204,7 +201,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             The decision function of the samples for each class in the model.
         """
         if check_input:
-            X = self._validate_data(X, accept_sparse=["csr", "csc"], reset=False)
+            X = validate_data(self, X, accept_sparse=["csr", "csc"], reset=False)
 
         # Initialize first layer
         activation = X
@@ -394,6 +391,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             )
             self.coefs_.append(coef_init)
             self.intercepts_.append(intercept_init)
+
+        self._best_coefs = [c.copy() for c in self.coefs_]
+        self._best_intercepts = [i.copy() for i in self.intercepts_]
 
         if self.solver in _STOCHASTIC_SOLVERS:
             self.loss_curve_ = []
@@ -704,8 +704,10 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
     def _update_no_improvement_count(self, early_stopping, X_val, y_val):
         if early_stopping:
-            # compute validation score, use that for stopping
-            self.validation_scores_.append(self._score(X_val, y_val))
+            # compute validation score (can be NaN), use that for stopping
+            val_score = self._score(X_val, y_val)
+
+            self.validation_scores_.append(val_score)
 
             if self.verbose:
                 print("Validation score: %f" % self.validation_scores_[-1])
@@ -755,10 +757,19 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         if self.solver not in _STOCHASTIC_SOLVERS:
             raise AttributeError(
                 "partial_fit is only available for stochastic"
-                " optimizers. %s is not stochastic."
-                % self.solver
+                " optimizers. %s is not stochastic." % self.solver
             )
         return True
+
+    def _score_with_function(self, X, y, score_function):
+        """Private score method without input validation."""
+        # Input validation would remove feature names, so we disable it
+        y_pred = self._predict(X, check_input=False)
+
+        if np.isnan(y_pred).any() or np.isinf(y_pred).any():
+            return np.nan
+
+        return score_function(y, y_pred)
 
 
 class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
@@ -800,6 +811,9 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         - 'adam' refers to a stochastic gradient-based optimizer proposed
           by Kingma, Diederik, and Jimmy Ba
 
+        For a comparison between Adam optimizer and SGD, see
+        :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_training_curves.py`.
+
         Note: The default solver 'adam' works pretty well on relatively
         large datasets (with thousands of training samples or more) in terms of
         both training time and validation score.
@@ -809,6 +823,9 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     alpha : float, default=0.0001
         Strength of the L2 regularization term. The L2 regularization term
         is divided by the sample size when added to the loss.
+
+        For an example usage and visualization of varying regularization, see
+        :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_alpha.py`.
 
     batch_size : int, default='auto'
         Size of minibatches for stochastic optimizers.
@@ -1089,7 +1106,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         )
 
     def _validate_input(self, X, y, incremental, reset):
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse=["csr", "csc"],
@@ -1168,9 +1186,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         return self._label_binarizer.inverse_transform(y_pred)
 
     def _score(self, X, y):
-        """Private score method without input validation"""
-        # Input validation would remove feature names, so we disable it
-        return accuracy_score(y, self._predict(X, check_input=False))
+        return super()._score_with_function(X, y, score_function=accuracy_score)
 
     @available_if(lambda est: est._check_solver())
     @_fit_context(prefer_skip_nested_validation=True)
@@ -1250,8 +1266,10 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         else:
             return y_pred
 
-    def _more_tags(self):
-        return {"multilabel": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.classifier_tags.multi_label = True
+        return tags
 
 
 class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
@@ -1292,6 +1310,9 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
         - 'adam' refers to a stochastic gradient-based optimizer proposed by
           Kingma, Diederik, and Jimmy Ba
+
+        For a comparison between Adam optimizer and SGD, see
+        :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_training_curves.py`.
 
         Note: The default solver 'adam' works pretty well on relatively
         large datasets (with thousands of training samples or more) in terms of
@@ -1605,13 +1626,11 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         return y_pred
 
     def _score(self, X, y):
-        """Private score method without input validation"""
-        # Input validation would remove feature names, so we disable it
-        y_pred = self._predict(X, check_input=False)
-        return r2_score(y, y_pred)
+        return super()._score_with_function(X, y, score_function=r2_score)
 
     def _validate_input(self, X, y, incremental, reset):
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse=["csr", "csc"],

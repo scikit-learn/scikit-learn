@@ -2,11 +2,9 @@
 Least Angle Regression algorithm. See the documentation on the
 Generalized Linear Model for a complete discussion.
 """
-# Author: Fabian Pedregosa <fabian.pedregosa@inria.fr>
-#         Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Gael Varoquaux
-#
-# License: BSD 3 clause
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import sys
 import warnings
@@ -37,6 +35,7 @@ from ..utils._metadata_requests import (
 )
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.parallel import Parallel, delayed
+from ..utils.validation import validate_data
 from ._base import LinearModel, LinearRegression, _preprocess_data
 
 SOLVE_TRIANGULAR_ARGS = {"check_finite": False}
@@ -78,14 +77,14 @@ def lars_path(
     return_n_iter=False,
     positive=False,
 ):
-    """Compute Least Angle Regression or Lasso path using the LARS algorithm [1].
+    """Compute Least Angle Regression or Lasso path using the LARS algorithm.
 
     The optimization objective for the case method='lasso' is::
 
     (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
     in the case of method='lar', the objective function is only known in
-    the form of an implicit equation (see discussion in [1]).
+    the form of an implicit equation (see discussion in [1]_).
 
     Read more in the :ref:`User Guide <least_angle_regression>`.
 
@@ -98,8 +97,7 @@ def lars_path(
     y : None or ndarray of shape (n_samples,)
         Input targets.
 
-    Xy : array-like of shape (n_features,) or (n_features, n_targets), \
-            default=None
+    Xy : array-like of shape (n_features,), default=None
         `Xy = X.T @ y` that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
 
@@ -190,6 +188,25 @@ def lars_path(
 
     .. [3] `Wikipedia entry on the Lasso
            <https://en.wikipedia.org/wiki/Lasso_(statistics)>`_
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import lars_path
+    >>> from sklearn.datasets import make_regression
+    >>> X, y, true_coef = make_regression(
+    ...    n_samples=100, n_features=5, n_informative=2, coef=True, random_state=0
+    ... )
+    >>> true_coef
+    array([ 0.        ,  0.        ,  0.        , 97.9..., 45.7...])
+    >>> alphas, _, estimated_coef = lars_path(X, y)
+    >>> alphas.shape
+    (3,)
+    >>> estimated_coef
+    array([[ 0.     ,  0.     ,  0.     ],
+           [ 0.     ,  0.     ,  0.     ],
+           [ 0.     ,  0.     ,  0.     ],
+           [ 0.     , 46.96..., 97.99...],
+           [ 0.     ,  0.     , 45.70...]])
     """
     if X is None and Gram is not None:
         raise ValueError(
@@ -249,20 +266,20 @@ def lars_path_gram(
     return_n_iter=False,
     positive=False,
 ):
-    """The lars_path in the sufficient stats mode [1].
+    """The lars_path in the sufficient stats mode.
 
     The optimization objective for the case method='lasso' is::
 
     (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
-    in the case of method='lars', the objective function is only known in
-    the form of an implicit equation (see discussion in [1])
+    in the case of method='lar', the objective function is only known in
+    the form of an implicit equation (see discussion in [1]_).
 
     Read more in the :ref:`User Guide <least_angle_regression>`.
 
     Parameters
     ----------
-    Xy : ndarray of shape (n_features,) or (n_features, n_targets)
+    Xy : ndarray of shape (n_features,)
         `Xy = X.T @ y`.
 
     Gram : ndarray of shape (n_features, n_features)
@@ -352,6 +369,25 @@ def lars_path_gram(
 
     .. [3] `Wikipedia entry on the Lasso
            <https://en.wikipedia.org/wiki/Lasso_(statistics)>`_
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import lars_path_gram
+    >>> from sklearn.datasets import make_regression
+    >>> X, y, true_coef = make_regression(
+    ...    n_samples=100, n_features=5, n_informative=2, coef=True, random_state=0
+    ... )
+    >>> true_coef
+    array([ 0.        ,  0.        ,  0.        , 97.9..., 45.7...])
+    >>> alphas, _, estimated_coef = lars_path_gram(X.T @ y, X.T @ X, n_samples=100)
+    >>> alphas.shape
+    (3,)
+    >>> estimated_coef
+    array([[ 0.     ,  0.     ,  0.     ],
+           [ 0.     ,  0.     ,  0.     ],
+           [ 0.     ,  0.     ,  0.     ],
+           [ 0.     , 46.96..., 97.99...],
+           [ 0.     ,  0.     , 45.70...]])
     """
     return _lars_path_solver(
         X=None,
@@ -395,7 +431,7 @@ def _lars_path_solver(
 
     (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
-    in the case of method='lars', the objective function is only known in
+    in the case of method='lar', the objective function is only known in
     the form of an implicit equation (see discussion in [1])
 
     Read more in the :ref:`User Guide <least_angle_regression>`.
@@ -409,8 +445,7 @@ def _lars_path_solver(
     y : None or ndarray of shape (n_samples,)
         Input targets.
 
-    Xy : array-like of shape (n_features,) or (n_features, n_targets), \
-            default=None
+    Xy : array-like of shape (n_features,), default=None
         `Xy = np.dot(X.T, y)` that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
 
@@ -1143,7 +1178,9 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             Returns an instance of self.
         """
-        X, y = self._validate_data(X, y, y_numeric=True, multi_output=True)
+        X, y = validate_data(
+            self, X, y, force_writeable=True, y_numeric=True, multi_output=True
+        )
 
         alpha = getattr(self, "alpha", 0.0)
         if hasattr(self, "n_nonzero_coefs"):
@@ -1607,7 +1644,7 @@ class LarsCV(Lars):
     >>> reg.score(X, y)
     0.9996...
     >>> reg.alpha_
-    0.2961...
+    np.float64(0.2961...)
     >>> reg.predict(X[:1,])
     array([154.3996...])
     """
@@ -1652,8 +1689,10 @@ class LarsCV(Lars):
             fit_path=True,
         )
 
-    def _more_tags(self):
-        return {"multioutput": False}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.multi_output = False
+        return tags
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, **params):
@@ -1684,7 +1723,7 @@ class LarsCV(Lars):
         """
         _raise_for_params(params, self, "fit")
 
-        X, y = self._validate_data(X, y, y_numeric=True)
+        X, y = validate_data(self, X, y, force_writeable=True, y_numeric=True)
         X = as_float_array(X, copy=self.copy_X)
         y = as_float_array(y, copy=self.copy_X)
 
@@ -1701,8 +1740,7 @@ class LarsCV(Lars):
         if hasattr(Gram, "__array__"):
             warnings.warn(
                 'Parameter "precompute" cannot be an array in '
-                '%s. Automatically switch to "auto" instead.'
-                % self.__class__.__name__
+                '%s. Automatically switch to "auto" instead.' % self.__class__.__name__
             )
             Gram = "auto"
 
@@ -1785,7 +1823,7 @@ class LarsCV(Lars):
         """
         router = MetadataRouter(owner=self.__class__.__name__).add(
             splitter=check_cv(self.cv),
-            method_mapping=MethodMapping().add(callee="split", caller="fit"),
+            method_mapping=MethodMapping().add(caller="fit", callee="split"),
         )
         return router
 
@@ -1948,7 +1986,7 @@ class LassoLarsCV(LarsCV):
     >>> reg.score(X, y)
     0.9993...
     >>> reg.alpha_
-    0.3972...
+    np.float64(0.3972...)
     >>> reg.predict(X[:1,])
     array([-78.4831...])
     """
@@ -2175,8 +2213,10 @@ class LassoLarsIC(LassoLars):
         self.fit_path = True
         self.noise_variance = noise_variance
 
-    def _more_tags(self):
-        return {"multioutput": False}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.multi_output = False
+        return tags
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, copy_X=None):
@@ -2202,7 +2242,7 @@ class LassoLarsIC(LassoLars):
         """
         if copy_X is None:
             copy_X = self.copy_X
-        X, y = self._validate_data(X, y, y_numeric=True)
+        X, y = validate_data(self, X, y, force_writeable=True, y_numeric=True)
 
         X, y, Xmean, ymean, Xstd = _preprocess_data(
             X, y, fit_intercept=self.fit_intercept, copy=copy_X

@@ -21,7 +21,14 @@ particular, we will evaluate:
 We will work with the Ames Iowa Housing dataset which consists of numerical
 and categorical features, where the houses' sales prices is the target.
 
+See :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py` for an
+example showcasing some other features of
+:class:`~ensemble.HistGradientBoostingRegressor`.
+
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Load Ames Housing dataset
