@@ -151,7 +151,7 @@ def _check_reg_targets_and_floating_dtype(
 
     sample_weight : array-like of shape (n_samples,)
 
-    multioutput : array-like or string in ['raw_values', uniform_average',
+    multioutput : array-like or string in ['raw_values', 'uniform_average', \
         'variance_weighted'] or None
         None is accepted due to backward compatibility of r2_score().
 
