@@ -58,6 +58,10 @@ __ALL__ = [
 def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric", xp=None):
     """Check that y_true and y_pred belong to the same regression task.
 
+    To reduce redundancy when calling `_find_matching_floating_dtype`,
+    please use `_check_reg_targets_and_floating_dtype` instead.
+
+
     Parameters
     ----------
     y_true : array-like
