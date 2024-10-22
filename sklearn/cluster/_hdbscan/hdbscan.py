@@ -433,9 +433,9 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     This allows HDBSCAN to find clusters of varying densities (unlike
     :class:`~sklearn.cluster.DBSCAN`), and be more robust to parameter selection.
     Read more in the :ref:`User Guide <hdbscan>`.
-    
+
     For an example of how to use HDBSCAN, as well as a comaprison to
-    :class:`~sklearn.cluster.DBSCAN`, please see the 
+    :class:`~sklearn.cluster.DBSCAN`, please see the
     :ref:`sphx_glr_auto_examples_cluster_plot_hdbscan.py`
 
     For a comparison of HDBSCAN with other clustering algorithms, see
