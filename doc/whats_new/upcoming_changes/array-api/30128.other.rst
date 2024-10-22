@@ -1,3 +1,0 @@
-- Introduce a new function `_check_reg_targets_and_floating_dtype` to
-  streamline regression task and floating type checks for regression metrics.
-  By :user:`Virgil Chan <virchan>`

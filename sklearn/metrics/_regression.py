@@ -1313,7 +1313,7 @@ def max_error(y_true, y_pred):
     np.int64(1)
     """
     xp, _ = get_namespace(y_true, y_pred)
-    y_type, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred, None)
+    y_type, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred, None, xp=xp)
     if y_type == "continuous-multioutput":
         raise ValueError("Multioutput not supported in max_error")
     return xp.max(xp.abs(y_true - y_pred))
