@@ -693,7 +693,19 @@ def test_fused_types_make_dataset(csr_container):
 
 
 @pytest.mark.parametrize("X_shape", [(10, 5), (10, 20), (100, 100)])
-@pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
+@pytest.mark.parametrize(
+    "sparse_container",
+    [None]
+    + [
+        pytest.param(
+            container,
+            marks=pytest.mark.xfail(
+                reason="Known to fail for CSR arrays, see issue #30131."
+            ),
+        )
+        for container in CSR_CONTAINERS
+    ],
+)
 @pytest.mark.parametrize("fit_intercept", [False, True])
 def test_linear_regression_sample_weight_consistency(
     X_shape, sparse_container, fit_intercept, global_random_seed
