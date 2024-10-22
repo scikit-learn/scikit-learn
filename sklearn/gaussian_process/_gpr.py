@@ -1,8 +1,7 @@
 """Gaussian processes regression."""
 
-# Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-# Modified by: Pete Green <p.l.green@liverpool.ac.uk>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Integral, Real
@@ -17,6 +16,7 @@ from ..preprocessing._data import _handle_zeros_in_scale
 from ..utils import check_random_state
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.optimize import _check_optimize_result
+from ..utils.validation import validate_data
 from .kernels import RBF, Kernel
 from .kernels import ConstantKernel as C
 
@@ -31,12 +31,12 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     In addition to standard scikit-learn estimator API,
     :class:`GaussianProcessRegressor`:
 
-       * allows prediction without prior fitting (based on the GP prior)
-       * provides an additional method `sample_y(X)`, which evaluates samples
-         drawn from the GPR (prior or posterior) at given inputs
-       * exposes a method `log_marginal_likelihood(theta)`, which can be used
-         externally for other ways of selecting hyperparameters, e.g., via
-         Markov chain Monte Carlo.
+    * allows prediction without prior fitting (based on the GP prior)
+    * provides an additional method `sample_y(X)`, which evaluates samples
+      drawn from the GPR (prior or posterior) at given inputs
+    * exposes a method `log_marginal_likelihood(theta)`, which can be used
+      externally for other ways of selecting hyperparameters, e.g., via
+      Markov chain Monte Carlo.
 
     To learn the difference between a point-estimate approach vs. a more
     Bayesian modelling approach, refer to the example entitled
@@ -248,7 +248,8 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             dtype, ensure_2d = "numeric", True
         else:
             dtype, ensure_2d = None, False
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             multi_output=True,
@@ -405,7 +406,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         else:
             dtype, ensure_2d = None, False
 
-        X = self._validate_data(X, ensure_2d=ensure_2d, dtype=dtype, reset=False)
+        X = validate_data(self, X, ensure_2d=ensure_2d, dtype=dtype, reset=False)
 
         if not hasattr(self, "X_train_"):  # Unfitted;predict based on GP prior
             if self.kernel is None:
@@ -665,5 +666,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         return theta_opt, func_min
 
-    def _more_tags(self):
-        return {"requires_fit": False}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.requires_fit = False
+        return tags

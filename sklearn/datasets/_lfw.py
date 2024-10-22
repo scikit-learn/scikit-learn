@@ -6,8 +6,8 @@ over the internet, all details are available on the official website:
     http://vis-www.cs.umass.edu/lfw/
 """
 
-# Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import logging
 from numbers import Integral, Real
@@ -515,7 +515,7 @@ def fetch_lfw_pairs(
     "Restricted" task.  As I am not sure as to implement the
     "Unrestricted" variant correctly, I left it as unsupported for now.
 
-      .. _`README.txt`: http://vis-www.cs.umass.edu/lfw/README.txt
+    .. _`README.txt`: http://vis-www.cs.umass.edu/lfw/README.txt
 
     The original images are 250 x 250 pixels, but the default slice and resize
     arguments reduce them to 62 x 47.
@@ -595,7 +595,7 @@ def fetch_lfw_pairs(
     >>> from sklearn.datasets import fetch_lfw_pairs
     >>> lfw_pairs_train = fetch_lfw_pairs(subset='train')
     >>> list(lfw_pairs_train.target_names)
-    ['Different persons', 'Same person']
+    [np.str_('Different persons'), np.str_('Same person')]
     >>> lfw_pairs_train.pairs.shape
     (2200, 2, 62, 47)
     >>> lfw_pairs_train.data.shape

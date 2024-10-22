@@ -1,7 +1,5 @@
-# Author: Henry Lin <hlin117@gmail.com>
-#         Tom Dupré la Tour
-
-# License: BSD
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 import warnings
@@ -19,6 +17,7 @@ from ..utils.validation import (
     _check_sample_weight,
     check_array,
     check_is_fitted,
+    validate_data,
 )
 from ._encoders import OneHotEncoder
 
@@ -223,7 +222,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(X, dtype="numeric")
+        X = validate_data(self, X, dtype="numeric")
 
         if self.dtype in (np.float64, np.float32):
             output_dtype = self.dtype
@@ -370,7 +369,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         # check input and attribute dtypes
         dtype = (np.float64, np.float32) if self.dtype is None else self.dtype
-        Xt = self._validate_data(X, copy=True, dtype=dtype, reset=False)
+        Xt = validate_data(self, X, copy=True, dtype=dtype, reset=False)
 
         bin_edges = self.bin_edges_
         for jj in range(Xt.shape[1]):
@@ -463,3 +462,13 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         # ordinal encoding
         return input_features
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
+        tags._xfail_checks = {
+            "check_sample_weight_equivalence": (
+                "sample_weight is not equivalent to removing/repeating samples."
+            ),
+        }
+        return tags

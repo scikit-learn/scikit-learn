@@ -28,10 +28,7 @@
 
   table.dataTable {
     th {
-      // Fix border color of the header
-      border-color: inherit;
-
-      // Disabled the bottom margin of <p> in table cells to avoid making it too tall
+      // Avoid table header being too tall
       p {
         margin-bottom: 0;
       }
@@ -53,9 +50,9 @@
       }
     }
 
-    // Fix border color of the last row
+    // Unset bottom border of the last row
     tr:last-child > * {
-      border-bottom-color: var(--bs-table-border-color) !important;
+      border-bottom: unset !important;
     }
   }
 

@@ -1,0 +1,3 @@
+- :func:`model_selection.permutation_test_score` now supports metadata routing
+  for the `fit` method of its estimator and for its underlying CV splitter and scorer.
+  By :user:`Adam Li <adam2392>`
