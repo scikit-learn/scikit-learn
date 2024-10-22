@@ -864,12 +864,15 @@ All least-squares linear regression estimators in scikit-learn solve a centered
 version of the problem without intercept and then compute the intercept a
 posteriori from that solution.
 
-This ensures that the ridge solution converges to the minimal norm OLS solution
-when `alpha` tends to zero in the underdeterimined case (more features than
-samples).
+For underdetermined problems (more features than samples or in the presence of
+collinear features), this ensures that the ridge solution converges to the
+minimal norm OLS solution when `alpha` tends to zero. Note that to ensure the
+continuity of the solution path with respect to `alpha`, we consider a
+formulation of the OLS problem that excludes the intercept from the computation
+of the norm in the objective function.
 
 The following explains why this approach is valid, both in the penalized and
-unpenalized underdetermined cases.
+the unpenalized underdetermined cases.
 
 Intercept of the penalized least-squares solution
 -------------------------------------------------
