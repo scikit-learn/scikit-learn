@@ -1918,6 +1918,7 @@ def test_transform_input_explicit_value_check():
 
     class Transformer(TransformerMixin, BaseEstimator):
         def fit(self, X, y):
+            self.fitted_ = True
             return self
 
         def transform(self, X):
@@ -1967,10 +1968,12 @@ def test_transform_tuple_input():
             assert_array_equal(y_val[0], np.array([0, 1]))
             assert_array_equal(X_val[1], np.array([[11, 12]]))
             assert_array_equal(y_val[1], np.array([1, 2]))
+            self.fitted_ = True
             return self
 
     class Transformer(TransformerMixin, BaseEstimator):
         def fit(self, X, y):
+            self.fitted_ = True
             return self
 
         def transform(self, X):
