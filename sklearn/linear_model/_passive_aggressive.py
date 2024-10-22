@@ -23,14 +23,14 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         The whole class `PassiveAggressiveClassifier` was deprecated in version 1.6
         and will be removed in 1.8. Instead use::
 
-            SGDClassifier(
+            clf = SGDClassifier(
                 penalty=None,
                 alpha=1.0,
-                C=1.0,
                 eta0=1.0,
-                learning_rate="pa1",
+                learning_rate="pa1",  # "pa1" and "pa2" are private
                 loss="hinge",
             )
+            clf.C = 1.0  # Note that this uses a private API.
 
         With `loss="squared_hinge"`, one would set learning_rate="pa2".
 
@@ -346,15 +346,15 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         The whole class `PassiveAggressiveRegressor` was deprecated in version 1.6
         and will be removed in 1.8. Instead use::
 
-            SGDRegressor(
+            reg = SGDRegressor(
                 penalty=None,
                 alpha=1.0,
-                C=1.0
                 eta0=1.0,
                 l1_ratio=0,
-                learning_rate="pa1",
+                learning_rate="pa1",  # "pa1" and "pa2" are private
                 loss="epsilon_insensitive",
             )
+            reg.C = 1.0  # Note that this uses a private API.
 
         With `loss="squared_epsilon_insensitive"`, one would set learning_rate="pa2".
         Use `SGDRegressor` instead.
