@@ -254,12 +254,15 @@ def _generate_meta_estimator_instances_with_pipeline():
         sig = set(signature(Estimator).parameters)
 
         if (
-            "estimator",
-            "base_estimator",
-            "regressor",
-            "transformer_list",
-            "estimators",
-        ) not in sig:
+            not (
+                "estimator",
+                "base_estimator",
+                "regressor",
+                "transformer_list",
+                "estimators",
+            )
+            & sig
+        ):
             continue
 
         for meta_estimator in _construct_instances(Estimator):
