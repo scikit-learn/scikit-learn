@@ -24,7 +24,7 @@ from .base import (
     clone,
 )
 from .isotonic import IsotonicRegression
-from .model_selection import check_cv, cross_val_predict
+from .model_selection import LeaveOneOut, check_cv, cross_val_predict
 from .preprocessing import LabelEncoder, label_binarize
 from .svm import LinearSVC
 from .utils import (
@@ -38,7 +38,7 @@ from .utils._param_validation import (
     StrOptions,
     validate_params,
 )
-from .utils._plotting import _BinaryClassifierCurveDisplayMixin
+from .utils._plotting import _BinaryClassifierCurveDisplayMixin, _validate_style_kwargs
 from .utils._response import _get_response_values, _process_predict_proba
 from .utils.metadata_routing import (
     MetadataRouter,
@@ -84,6 +84,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     `estimator` if it exists, else on :term:`predict_proba`.
 
     Read more in the :ref:`User Guide <calibration>`.
+    In order to learn more on the CalibratedClassifierCV class, see the
+    following calibration examples:
+    :ref:`sphx_glr_auto_examples_calibration_plot_calibration.py`,
+    :ref:`sphx_glr_auto_examples_calibration_plot_calibration_curve.py`, and
+    :ref:`sphx_glr_auto_examples_calibration_plot_calibration_multiclass.py`.
 
     Parameters
     ----------
@@ -390,6 +395,13 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     "cross-validation but provided less than "
                     f"{n_folds} examples for at least one class."
                 )
+            if isinstance(self.cv, LeaveOneOut):
+                raise ValueError(
+                    "LeaveOneOut cross-validation does not allow"
+                    "all classes to be present in test splits. "
+                    "Please use a cross-validation generator that allows "
+                    "all classes to appear in every test and train split."
+                )
             cv = check_cv(self.cv, y, classifier=True)
 
             if self.ensemble:
@@ -527,17 +539,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             )
         )
         return router
-
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "Due to the cross-validation and sample ordering, removing a sample"
-                    " is not strictly equal to putting is weight to zero. Specific unit"
-                    " tests are added for CalibratedClassifierCV specifically."
-                ),
-            }
-        }
 
 
 def _fit_classifier_calibrator_pair(
@@ -1040,6 +1041,9 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
     Read more about calibration in the :ref:`User Guide <calibration>` and
     more about the scikit-learn visualization API in :ref:`visualizations`.
 
+    For an example on how to use the visualization, see
+    :ref:`sphx_glr_auto_examples_calibration_plot_calibration_curve.py`.
+
     .. versionadded:: 1.0
 
     Parameters
@@ -1146,10 +1150,10 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             f"(Positive class: {self.pos_label})" if self.pos_label is not None else ""
         )
 
-        line_kwargs = {"marker": "s", "linestyle": "-"}
+        default_line_kwargs = {"marker": "s", "linestyle": "-"}
         if name is not None:
-            line_kwargs["label"] = name
-        line_kwargs.update(**kwargs)
+            default_line_kwargs["label"] = name
+        line_kwargs = _validate_style_kwargs(default_line_kwargs, kwargs)
 
         ref_line_label = "Perfectly calibrated"
         existing_ref_line = ref_line_label in self.ax_.get_legend_handles_labels()[1]

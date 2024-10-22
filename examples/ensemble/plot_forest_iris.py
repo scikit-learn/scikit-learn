@@ -42,6 +42,9 @@ samples are built sequentially and so do not use multiple cores.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.colors import ListedColormap
@@ -71,11 +74,7 @@ models = [
     DecisionTreeClassifier(max_depth=None),
     RandomForestClassifier(n_estimators=n_estimators),
     ExtraTreesClassifier(n_estimators=n_estimators),
-    AdaBoostClassifier(
-        DecisionTreeClassifier(max_depth=3),
-        n_estimators=n_estimators,
-        algorithm="SAMME",
-    ),
+    AdaBoostClassifier(DecisionTreeClassifier(max_depth=3), n_estimators=n_estimators),
 ]
 
 for pair in ([0, 1], [0, 2], [2, 3]):

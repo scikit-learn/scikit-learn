@@ -1,0 +1,3 @@
+- :func:`sklearn.metrics.mean_gamma_deviance` now supports Array API compatible
+  inputs.
+  By :user:`Emily Chen <EmilyXinyi>`

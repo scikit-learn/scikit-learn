@@ -11,7 +11,7 @@ from ..utils._mask import axis0_safe_slice
 from ..utils._param_validation import Interval
 from ..utils.extmath import safe_sparse_dot
 from ..utils.optimize import _check_optimize_result
-from ..utils.validation import _check_sample_weight
+from ..utils.validation import _check_sample_weight, validate_data
 from ._base import LinearModel
 
 
@@ -294,7 +294,8 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         self : object
             Fitted `HuberRegressor` estimator.
         """
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             copy=False,

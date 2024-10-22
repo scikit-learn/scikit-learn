@@ -4,6 +4,7 @@ Base IO code for all datasets
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
+
 import csv
 import gzip
 import hashlib
@@ -157,6 +158,8 @@ def load_files(
 
     Individual samples are assumed to be files stored a two levels folder
     structure such as the following:
+
+    .. code-block:: text
 
         container_folder/
             category_1_folder/
@@ -570,7 +573,7 @@ def load_wine(*, return_X_y=False, as_frame=False):
     >>> data.target[[10, 80, 140]]
     array([0, 1, 2])
     >>> list(data.target_names)
-    ['class_0', 'class_1', 'class_2']
+    [np.str_('class_0'), np.str_('class_1'), np.str_('class_2')]
     """
 
     data, target, target_names, fdescr = load_csv_data(
@@ -635,6 +638,11 @@ def load_iris(*, return_X_y=False, as_frame=False):
 
     Read more in the :ref:`User Guide <iris_dataset>`.
 
+    .. versionchanged:: 0.20
+        Fixed two wrong data points according to Fisher's paper.
+        The new version is the same as in R, but not as in the UCI
+        Machine Learning Repository.
+
     Parameters
     ----------
     return_X_y : bool, default=False
@@ -687,13 +695,6 @@ def load_iris(*, return_X_y=False, as_frame=False):
 
         .. versionadded:: 0.18
 
-    Notes
-    -----
-        .. versionchanged:: 0.20
-            Fixed two wrong data points according to Fisher's paper.
-            The new version is the same as in R, but not as in the UCI
-            Machine Learning Repository.
-
     Examples
     --------
     Let's say you are interested in the samples 10, 25, and 50, and want to
@@ -704,9 +705,9 @@ def load_iris(*, return_X_y=False, as_frame=False):
     >>> data.target[[10, 25, 50]]
     array([0, 0, 1])
     >>> list(data.target_names)
-    ['setosa', 'versicolor', 'virginica']
+    [np.str_('setosa'), np.str_('versicolor'), np.str_('virginica')]
 
-    See :ref:`sphx_glr_auto_examples_datasets_plot_iris_dataset.py` for a more
+    See :ref:`sphx_glr_auto_examples_decomposition_plot_pca_iris.py` for a more
     detailed example of how to work with the iris dataset.
     """
     data_file_name = "iris.csv"
@@ -832,7 +833,7 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
     >>> data.target[[10, 50, 85]]
     array([0, 1, 0])
     >>> list(data.target_names)
-    ['malignant', 'benign']
+    [np.str_('malignant'), np.str_('benign')]
     """
     data_file_name = "breast_cancer.csv"
     data, target, target_names, fdescr = load_csv_data(
