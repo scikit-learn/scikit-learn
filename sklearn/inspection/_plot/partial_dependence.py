@@ -397,10 +397,12 @@ class PartialDependenceDisplay:
         grid_resolution : int, default=100
             The number of equally spaced points on the axes of the plots, for each
             target feature.
+            This parameter is overridden by `custom_values` if that parameter is set.
 
         percentiles : tuple of float, default=(0.05, 0.95)
             The lower and upper percentile used to create the extreme values
             for the PDP axes. Must be in [0, 1].
+            This parameter is overridden by `custom_values` if that parameter is set.
 
         custom_values : dict
             A dictionary mapping the index of an element of `features` to an

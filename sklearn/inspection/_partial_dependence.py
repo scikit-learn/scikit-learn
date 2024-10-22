@@ -377,8 +377,8 @@ def partial_dependence(
     feature_names=None,
     response_method="auto",
     percentiles=(0.05, 0.95),
-    custom_values=None,
     grid_resolution=100,
+    custom_values=None,
     method="auto",
     kind="average",
 ):
@@ -466,6 +466,12 @@ def partial_dependence(
     percentiles : tuple of float, default=(0.05, 0.95)
         The lower and upper percentile used to create the extreme values
         for the grid. Must be in [0, 1].
+        This parameter is overridden by `custom_values` if that parameter is set.
+
+    grid_resolution : int, default=100
+        The number of equally spaced points on the grid, for each target
+        feature.
+        This parameter is overridden by `custom_values` if that parameter is set.
 
     custom_values : dict
         A dictionary mapping the index of an element of `features` to an array
@@ -474,10 +480,6 @@ def partial_dependence(
         `grid_resolution` and `percentiles`.
 
         .. versionadded:: 1.6
-
-    grid_resolution : int, default=100
-        The number of equally spaced points on the grid, for each target
-        feature.
 
     method : {'auto', 'recursion', 'brute'}, default='auto'
         The method used to calculate the averaged predictions:
