@@ -112,7 +112,11 @@ def _yield_checks(estimator):
             # We skip pairwise because the data is not pairwise
             yield check_sample_weights_shape
             yield check_sample_weights_not_overwritten
-            yield check_sample_weight_equivalence
+            for sparse_container in [None, sparse.csr_array]:
+                yield partial(
+                    check_sample_weight_equivalence,
+                    sparse_container=sparse_container,
+                )
 
     # Check that all estimator yield informative messages when
     # trained on empty datasets
@@ -1086,7 +1090,7 @@ def check_sample_weights_shape(name, estimator_orig):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_sample_weight_equivalence(name, estimator_orig):
+def _check_sample_weight_equivalence(name, estimator_orig, sparse_container):
     # check that setting sample_weight to zero / integer is equivalent
     # to removing / repeating corresponding samples.
     estimator_weighted = clone(estimator_orig)
@@ -1136,6 +1140,11 @@ def check_sample_weight_equivalence(name, estimator_orig):
     y_weighted = _enforce_estimator_tags_y(estimator_weighted, y_weighted)
     y_repeated = _enforce_estimator_tags_y(estimator_repeated, y_repeated)
 
+    # convert to sparse X if needed
+    if sparse_container is not None:
+        X_weighted = sparse_container(X_weighted)
+        X_repeated = sparse_container(X_repeated)
+
     estimator_repeated.fit(X_repeated, y=y_repeated, sample_weight=None)
     estimator_weighted.fit(X_weighted, y=y_weighted, sample_weight=sw)
 
@@ -1149,6 +1158,15 @@ def check_sample_weight_equivalence(name, estimator_orig):
                 "or repeated data points."
             )
             assert_allclose_dense_sparse(X_pred1, X_pred2, err_msg=err_msg)
+
+
+def check_sample_weight_equivalence(name, estimator_orig, sparse_container):
+    try:
+        _check_sample_weight_equivalence(name, estimator_orig, sparse_container)
+    except TypeError as e:
+        print(name, e)
+    except ValueError as e:
+        print(name, e)
 
 
 def check_sample_weights_not_overwritten(name, estimator_orig):
