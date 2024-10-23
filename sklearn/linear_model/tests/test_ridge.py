@@ -352,8 +352,6 @@ def test_ridge_regression_unpenalized(
         y = y - y.mean()
         intercept = 0
 
-    # Note that cholesky might give a warning: "Singular matrix in solving dual
-    # problem. Using least-squares solution instead."
     if solver == "cholesky":
         with ignore_warnings(category=linalg.LinAlgWarning):
             model.fit(X, y)
