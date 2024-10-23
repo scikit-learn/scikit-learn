@@ -107,19 +107,24 @@ def ols_ridge_dataset(global_random_seed, request):
 
     Notes
     -----
-    For "wide", we return the minimum norm solution:
+    For "wide", we return the minimum norm solution for the OLS problem:
 
         min ||w||_2 subject to X w + w_0 = y
 
-    In particular, this is not equivalent to including the intercept as the
-    fitted coefficient for an extra feature column with all ones as the
-    intercept should not be part of the norm we minimize. Indeed the intercept
-    parameter is not penalized and we want the minimum norm solution in the
-    unpenalized problem to be the limit of the penalized problem when alpha
-    tends to 0.
+    In particular, this is not equivalent to including the intercept w_0 as
+    part of the norm in the objective as would be the case if we used the
+    traditional OLS formulation where we append a column of ones to X to
+    implicitly introduce the intercept parameter.
 
-    The minimum norm solution of the problem with intercept is also the
-    minimum norm solution of the centered problem without intercept:
+    For the ridge problem, the intercept parameter is intentionally not
+    penalized and we want the minimum norm solution of the underdetermined
+    problem to be the limit of the penalized problem when alpha tends to 0.
+    Including w_0 in the norm of the OLS objective would introduce a
+    discontinuity of the solutions in the regularization path.
+
+    In this fixture, we leverage the fact that the minimum norm solution of the
+    problem with intercept is also the minimum norm solution of the centered
+    problem without intercept:
 
         w = X_c' (X_c X_c')^-1 y_c
 
