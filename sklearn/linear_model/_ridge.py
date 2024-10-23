@@ -253,6 +253,7 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
                 "Singular matrix in solving dual problem. Using "
                 "least-squares solution instead."
             )
+            # TODO: always pass an explicit value of cond to lstsq.
             dual_coef = linalg.lstsq(K, y)[0]
 
         # K is expensive to compute and store in memory so change it back in
@@ -270,6 +271,7 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
         for dual_coef, target, current_alpha in zip(dual_coefs, y.T, alpha):
             K.flat[:: n_samples + 1] += current_alpha
 
+            # TODO: handle np.linalg.LinAlgError as done for one_alpha case.
             dual_coef[:] = linalg.solve(
                 K, target, assume_a="pos", overwrite_a=False
             ).ravel()
