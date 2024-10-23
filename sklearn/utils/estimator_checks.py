@@ -77,7 +77,7 @@ from ._testing import (
     raises,
     set_random_state,
 )
-from .fixes import SPARSE_ARRAY_PRESENT
+from .fixes import CSR_CONTAINERS, SPARSE_ARRAY_PRESENT
 from .validation import _num_samples, check_is_fitted, has_fit_parameter
 
 REGRESSION_DATASET = None
@@ -112,7 +112,7 @@ def _yield_checks(estimator):
             # We skip pairwise because the data is not pairwise
             yield check_sample_weights_shape
             yield check_sample_weights_not_overwritten
-            for sparse_container in [None, sparse.csr_array]:
+            for sparse_container in [None] + CSR_CONTAINERS:
                 yield partial(
                     check_sample_weight_equivalence,
                     sparse_container=sparse_container,
