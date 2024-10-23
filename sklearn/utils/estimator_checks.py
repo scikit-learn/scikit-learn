@@ -1101,13 +1101,13 @@ def check_sample_weight_equivalence(name, estimator_orig):
     # Use random integers (including zero) as weights.
     sw = rng.randint(0, 5, size=n_samples)
 
-    X_weigthed = X
+    X_weighted = X
     y_weighted = y
     # repeat samples according to weights
-    X_repeated = X_weigthed.repeat(repeats=sw, axis=0)
+    X_repeated = X_weighted.repeat(repeats=sw, axis=0)
     y_repeated = y_weighted.repeat(repeats=sw)
 
-    X_weigthed, y_weighted, sw = shuffle(X_weigthed, y_weighted, sw, random_state=0)
+    X_weighted, y_weighted, sw = shuffle(X_weighted, y_weighted, sw, random_state=0)
 
     # when the estimator has an internal CV scheme
     # we only use weights / repetitions in a specific CV group (here group=0)
@@ -1116,10 +1116,10 @@ def check_sample_weight_equivalence(name, estimator_orig):
             [np.full_like(y_weighted, 0), np.full_like(y, 1), np.full_like(y, 2)]
         )
         sw = np.hstack([sw, np.ones_like(y), np.ones_like(y)])
-        X_weigthed = np.vstack([X_weigthed, X, X])
+        X_weighted = np.vstack([X_weighted, X, X])
         y_weighted = np.hstack([y_weighted, y, y])
         splits_weighted = list(
-            LeaveOneGroupOut().split(X_weigthed, groups=groups_weighted)
+            LeaveOneGroupOut().split(X_weighted, groups=groups_weighted)
         )
         estimator_weighted.set_params(cv=splits_weighted)
 
@@ -1137,7 +1137,7 @@ def check_sample_weight_equivalence(name, estimator_orig):
     y_repeated = _enforce_estimator_tags_y(estimator_repeated, y_repeated)
 
     estimator_repeated.fit(X_repeated, y=y_repeated, sample_weight=None)
-    estimator_weighted.fit(X_weigthed, y=y_weighted, sample_weight=sw)
+    estimator_weighted.fit(X_weighted, y=y_weighted, sample_weight=sw)
 
     for method in ["predict_proba", "decision_function", "predict", "transform"]:
         if hasattr(estimator_orig, method):
