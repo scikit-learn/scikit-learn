@@ -61,7 +61,6 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric", xp=None):
     To reduce redundancy when calling `_find_matching_floating_dtype`,
     please use `_check_reg_targets_and_floating_dtype` instead.
 
-
     Parameters
     ----------
     y_true : array-like
@@ -144,8 +143,10 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric", xp=None):
 def _check_reg_targets_and_floating_dtype(
     y_true, y_pred, sample_weight, multioutput, xp=None
 ):
-    """Ensure that y_true and y_pred correspond to the same regression task,
-    and select an appropriate floating-point data type when computing with arrays.
+    """Ensure that y_true and y_pred correspond to the same regression task.
+    
+    This helper automatically selects an appropriate floating-point data type when
+    computing with inputs that follow the array API specification.
 
     Parameters
     ----------
@@ -185,17 +186,17 @@ def _check_reg_targets_and_floating_dtype(
         just the corresponding argument if ``multioutput`` is a
         correct keyword.
 
-    dtype : str
+    dtype_name : str
         If there are no floating point input arrays (all integral inputs for
         instance), return the default floating point dtype for the namespace.
     """
-    dtype = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
+    dtype_name = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
 
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput, dtype=dtype, xp=xp
+        y_true, y_pred, multioutput, dtype=dtype_name, xp=xp
     )
 
-    return y_type, y_true, y_pred, sample_weight, multioutput, dtype
+    return y_type, y_true, y_pred, sample_weight, multioutput, dtype_name
 
 
 @validate_params(
@@ -264,7 +265,7 @@ def mean_absolute_error(
     """
     xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
 
-    _, y_true, y_pred, sample_weight, multioutput, dtype = (
+    _, y_true, y_pred, sample_weight, multioutput, _ = (
         _check_reg_targets_and_floating_dtype(
             y_true, y_pred, sample_weight, multioutput, xp=xp
         )
@@ -460,15 +461,15 @@ def mean_absolute_percentage_error(
     112589990684262.48
     """
     xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
-    _, y_true, y_pred, sample_weight, multioutput, dtype = (
+    _, y_true, y_pred, sample_weight, multioutput, dtype_name = (
         _check_reg_targets_and_floating_dtype(
             y_true, y_pred, sample_weight, multioutput, xp=xp
         )
     )
     check_consistent_length(y_true, y_pred, sample_weight)
-    epsilon = xp.asarray(xp.finfo(xp.float64).eps, dtype=dtype)
-    y_true_abs = xp.asarray(xp.abs(y_true), dtype=dtype)
-    mape = xp.asarray(xp.abs(y_pred - y_true), dtype=dtype) / xp.maximum(
+    epsilon = xp.asarray(xp.finfo(xp.float64).eps, dtype=dtype_name)
+    y_true_abs = xp.asarray(xp.abs(y_true), dtype=dtype_name)
+    mape = xp.asarray(xp.abs(y_pred - y_true), dtype=dtype_name) / xp.maximum(
         y_true_abs, epsilon
     )
     output_errors = _average(mape, weights=sample_weight, axis=0)
@@ -1246,7 +1247,7 @@ def r2_score(
         y_true, y_pred, sample_weight, multioutput
     )
 
-    _, y_true, y_pred, sample_weight, multioutput, dtype = (
+    _, y_true, y_pred, sample_weight, multioutput, _ = (
         _check_reg_targets_and_floating_dtype(
             y_true, y_pred, sample_weight, multioutput, xp=xp
         )
@@ -1260,7 +1261,7 @@ def r2_score(
         return float("nan")
 
     if sample_weight is not None:
-        sample_weight = column_or_1d(sample_weight, dtype=dtype)
+        sample_weight = column_or_1d(sample_weight, dtype=dtype_name)
         weight = sample_weight[:, None]
     else:
         weight = 1.0
