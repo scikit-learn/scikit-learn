@@ -608,7 +608,7 @@ def test_multiclass_colors_cmap(pyplot, plot_method, multiclass_colors):
     """Check correct cmap used for all `multiclass_colors` inputs."""
     import matplotlib as mpl
 
-    if parse_version(mpl.__version__) >= parse_version("3.5"):
+    if parse_version(mpl.__version__) < parse_version("3.5"):
         pytest.skip(
             "Matplotlib >= 3.5 is needed for `==` to check equivalence of colormaps"
         )

@@ -91,8 +91,8 @@ class DecisionBoundaryDisplay:
         single prediction value per point.
         Possible inputs are:
 
-        * list: list of Matplotlib `color
-          <https://matplotlib.org/stable/users/explain/colors/colors.html#colors-def>`_
+        * list: list of Matplotlib
+          `color <https://matplotlib.org/stable/users/explain/colors/colors.html#colors-def>`_
           strings, of length `n_classes`
         * str: name of :class:`matplotlib.colors.Colormap`
         * None: 'viridis' colormap is used to sample colors
@@ -334,7 +334,8 @@ class DecisionBoundaryDisplay:
 
             Possible inputs are:
 
-            * list: list of Matplotlib `color <https://matplotlib.org/stable/users/explain/colors/colors.html#colors-def>`_
+            * list: list of Matplotlib
+              `color <https://matplotlib.org/stable/users/explain/colors/colors.html#colors-def>`_
               strings, of length `n_classes`
             * str: name of :class:`matplotlib.colors.Colormap`
             * None: 'viridis' colormap is used to sample colors
