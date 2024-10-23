@@ -80,21 +80,12 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for SGD classification and regression."""
 
     _parameter_constraints: dict = {
-        "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
-        "alpha": [Interval(Real, 0, None, closed="left")],
-        "C": [Interval(Real, 0, None, closed="right")],
-        "l1_ratio": [Interval(Real, 0, 1, closed="both")],
         "fit_intercept": ["boolean"],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="left"), None],
         "shuffle": ["boolean"],
-        "random_state": ["random_state"],
         "verbose": ["verbose"],
-        "eta0": [Interval(Real, 0, None, closed="left")],
-        "power_t": [Interval(Real, None, None, closed="neither")],
-        "early_stopping": ["boolean"],
-        "validation_fraction": [Interval(Real, 0, 1, closed="neither")],
-        "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
         "warm_start": ["boolean"],
         "average": [Interval(Integral, 0, None, closed="left"), "boolean"],
     }
@@ -523,6 +514,9 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
     _parameter_constraints: dict = {
         **BaseSGD._parameter_constraints,
         "loss": [StrOptions(set(loss_functions))],
+        "early_stopping": ["boolean"],
+        "validation_fraction": [Interval(Real, 0, 1, closed="neither")],
+        "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
         "n_jobs": [Integral, None],
         "class_weight": [StrOptions({"balanced"}), dict, None],
     }
@@ -1214,11 +1208,16 @@ class SGDClassifier(BaseSGDClassifier):
 
     _parameter_constraints: dict = {
         **BaseSGDClassifier._parameter_constraints,
+        "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
+        "alpha": [Interval(Real, 0, None, closed="left")],
+        "l1_ratio": [Interval(Real, 0, 1, closed="both")],
+        "power_t": [Interval(Real, None, None, closed="neither")],
         "epsilon": [Interval(Real, 0, None, closed="left")],
         "learning_rate": [
             StrOptions({"constant", "optimal", "invscaling", "adaptive"}),
             Hidden(StrOptions({"pa1", "pa2"})),
         ],
+        "eta0": [Interval(Real, 0, None, closed="left")],
     }
 
     def __init__(
@@ -1405,6 +1404,9 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
     _parameter_constraints: dict = {
         **BaseSGD._parameter_constraints,
         "loss": [StrOptions(set(loss_functions))],
+        "early_stopping": ["boolean"],
+        "validation_fraction": [Interval(Real, 0, 1, closed="neither")],
+        "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
     }
 
     @abstractmethod
@@ -2014,11 +2016,16 @@ class SGDRegressor(BaseSGDRegressor):
 
     _parameter_constraints: dict = {
         **BaseSGDRegressor._parameter_constraints,
+        "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
+        "alpha": [Interval(Real, 0, None, closed="left")],
+        "l1_ratio": [Interval(Real, 0, 1, closed="both")],
+        "power_t": [Interval(Real, None, None, closed="neither")],
         "learning_rate": [
             StrOptions({"constant", "optimal", "invscaling", "adaptive"}),
             Hidden(StrOptions({"pa1", "pa2"})),
         ],
         "epsilon": [Interval(Real, 0, None, closed="left")],
+        "eta0": [Interval(Real, 0, None, closed="left")],
     }
 
     def __init__(
@@ -2228,6 +2235,8 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
             StrOptions({"constant", "optimal", "invscaling", "adaptive"}),
             Hidden(StrOptions({"pa1", "pa2"})),
         ],
+        "eta0": [Interval(Real, 0, None, closed="left")],
+        "power_t": [Interval(Real, None, None, closed="neither")],
     }
 
     def __init__(
