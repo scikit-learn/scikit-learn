@@ -8,6 +8,7 @@ import warnings
 import numpy as np
 
 from ..exceptions import ConvergenceWarning
+from .._config import get_config
 from ..utils import check_array
 from ..utils.extmath import row_norms
 from ..utils.validation import _check_sample_weight
@@ -344,7 +345,8 @@ def sag_solver(
         verbose,
     )
 
-    if n_iter_ == max_iter:
+    is_convergence_warnings_disabled = get_config()["disable_convergence_warnings"]
+    if (n_iter_ == max_iter) & (not is_convergence_warnings_disabled):
         warnings.warn(
             "The max_iter was reached which means the coef_ did not converge",
             ConvergenceWarning,
