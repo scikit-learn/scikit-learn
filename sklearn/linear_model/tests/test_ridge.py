@@ -169,7 +169,7 @@ def ols_ridge_dataset(global_random_seed, request):
         y_c = y - y.mean()
         X_c = X[:, :-1] - X[:, :-1].mean(axis=0)
 
-        minimum_norm_coef = X_c.T @ np.linalg.pinv(X_c @ X_c.T) @ y_c
+        minimum_norm_coef = X_c.T @ np.linalg.pinv(X_c @ X_c.T, rcond=1e-12) @ y_c
         intercept = y.mean() - X[:, :-1].mean(axis=0) @ minimum_norm_coef
         coef_ols = np.concatenate([minimum_norm_coef, [intercept]])
 
@@ -317,8 +317,7 @@ def test_ridge_regression_vstacked_X(
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
-# @pytest.mark.parametrize("fit_intercept", [True, False])
-@pytest.mark.parametrize("fit_intercept", [True])
+@pytest.mark.parametrize("fit_intercept", [True, False])
 def test_ridge_regression_unpenalized(
     solver, fit_intercept, ols_ridge_dataset, global_random_seed
 ):
@@ -339,17 +338,27 @@ def test_ridge_regression_unpenalized(
         tol=1e-15 if solver in ("sag", "saga") else 1e-10,
         random_state=global_random_seed,
     )
-
     model = Ridge(**params)
-    # Note that cholesky might give a warning: "Singular matrix in solving dual
-    # problem. Using least-squares solution instead."
+
     if fit_intercept:
         X = X[:, :-1]  # remove intercept
         intercept = coef[-1]
         coef = coef[:-1]
     else:
+        # Consider the centered problem without intercept instead.
+        X = X[:, :-1]
+        coef = coef[:-1]
+        X = X - X.mean(axis=0)
+        y = y - y.mean()
         intercept = 0
-    model.fit(X, y)
+
+    # Note that cholesky might give a warning: "Singular matrix in solving dual
+    # problem. Using least-squares solution instead."
+    if solver == "cholesky":
+        with ignore_warnings(category=linalg.LinAlgWarning):
+            model.fit(X, y)
+    else:
+        model.fit(X, y)
 
     if n_samples < n_features and fit_intercept:
         # As the model is well specified (fit_intercept=True) and as it is an
@@ -366,8 +375,7 @@ def test_ridge_regression_unpenalized(
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
-# @pytest.mark.parametrize("fit_intercept", [True, False])
-@pytest.mark.parametrize("fit_intercept", [True])
+@pytest.mark.parametrize("fit_intercept", [True, False])
 def test_ridge_regression_unpenalized_hstacked_X(
     solver, fit_intercept, ols_ridge_dataset, global_random_seed
 ):
@@ -395,26 +403,31 @@ def test_ridge_regression_unpenalized_hstacked_X(
         intercept = coef[-1]
         coef = coef[:-1]
     else:
+        # Consider the centered problem without intercept instead.
+        X = X[:, :-1]
+        coef = coef[:-1]
+        X = X - X.mean(axis=0)
+        y = y - y.mean()
         intercept = 0
     X = 0.5 * np.concatenate((X, X), axis=1)
     assert np.linalg.matrix_rank(X) <= min(n_samples, n_features)
-    model.fit(X, y)
+    if solver == "cholesky":
+        with ignore_warnings(category=UserWarning):
+            model.fit(X, y)
+    else:
+        model.fit(X, y)
 
     if n_samples < n_features and fit_intercept:
         # As it is an underdetermined problem, residuals = 0. This shows that we get
         # a solution to X w = y ....
         assert_allclose(model.predict(X), y)
 
-    if solver == "cholesky":
-        # Cholesky is a bad choice for singular X.
-        pytest.skip()
     assert_allclose(model.coef_, np.r_[coef, coef])
     assert model.intercept_ == pytest.approx(intercept)
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
-# XXX: @pytest.mark.parametrize("fit_intercept", [True, False])
-@pytest.mark.parametrize("fit_intercept", [True])
+@pytest.mark.parametrize("fit_intercept", [True, False])
 def test_ridge_regression_unpenalized_vstacked_X(
     solver, fit_intercept, ols_ridge_dataset, global_random_seed
 ):
@@ -444,11 +457,20 @@ def test_ridge_regression_unpenalized_vstacked_X(
         intercept = coef[-1]
         coef = coef[:-1]
     else:
+        # Consider the centered problem without intercept instead.
+        X = X[:, :-1]
+        coef = coef[:-1]
+        X = X - X.mean(axis=0)
+        y = y - y.mean()
         intercept = 0
     X = np.concatenate((X, X), axis=0)
     assert np.linalg.matrix_rank(X) <= min(n_samples, n_features)
     y = np.r_[y, y]
-    model.fit(X, y)
+    if solver == "cholesky":
+        with ignore_warnings(category=UserWarning):
+            model.fit(X, y)
+    else:
+        model.fit(X, y)
 
     if 2 * n_samples < n_features and fit_intercept:
         # As it is an underdetermined problem, residuals = 0. This shows that we get
