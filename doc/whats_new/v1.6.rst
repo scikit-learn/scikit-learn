@@ -13,15 +13,27 @@ Version 1.6
   For a short description of the main highlights of the release, please refer to
   :ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_6_0.py`.
 
-..
-  DELETE WHEN 1.6.0 IS RELEASED
-  Starting from v1.6.0, scikit-learn will be using `towncrier` to manage the
-  changelog. Each changelog entry should be it's own file and live in
-  `doc/whats_new/upcoming_changes/`, within the relevant module named folder.
-  The file should be named with the format `<PR_number>.<type>.rst`, and
-  contain a single bullet point changelog entry, with user name but without PR
-  number.
-  See `doc/whats_new/upcoming_changes/README.md` for full details.
+
+.. DELETE WHEN 1.6.0 IS RELEASED
+.. Changelog management has changed in v1.6.0.
+.. To add your changelog, create a file under the right folder under
+.. `doc/whats_new/upcoming_changes` with file format `<PULL REQUEST>.<TYPE>.rst`, where
+.. `<PULL REQUEST>` is a pull request number, and `<TYPE>` is one of:
+.. * `major-feature`
+.. * `feature`
+.. * `efficiency`
+.. * `enhancement`
+.. * `fix`
+.. * `api`
+.. Example of a changelog file:
+.. - :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor`
+..   now supports missing values in the data matrix `X`. Missing-values are
+..   handled by randomly moving all of the samples to the left, or right child
+..   node as the tree is traversed.
+..   By :user:`Adam Li <adam2392>`
+.. See `doc/whats_new/upcoming_changes/README.md` for full details.
+.. Note only pull requests that result in a change relevant to users require a
+.. changelog entry (e.g., changes to private functions do not require a changelog).
 
 .. include:: changelog_legend.inc
 
