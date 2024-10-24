@@ -1070,7 +1070,7 @@ def _modify_in_place_if_numpy(xp, func, *args, out=None, **kwargs):
     return out
 
 
-def _bincount(xp, array, weights=None, minlength=None):
+def _bincount(array, xp, weights=None, minlength=None):
     # TODO: update if bincount is ever adopted in a future version of the standard:
     # https://github.com/data-apis/array-api/issues/812
     if hasattr(xp, "bincount"):

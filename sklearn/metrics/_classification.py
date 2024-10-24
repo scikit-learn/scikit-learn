@@ -593,18 +593,18 @@ def multilabel_confusion_matrix(
 
         if tp_bins.shape[0]:
             tp_sum = _bincount(
-                xp, tp_bins, weights=tp_bins_weights, minlength=labels.shape[0]
+                tp_bins, xp, weights=tp_bins_weights, minlength=labels.shape[0]
             )
         else:
             # Pathological case
             true_sum = pred_sum = tp_sum = xp.zeros(labels.shape[0])
         if y_pred.shape[0]:
             pred_sum = _bincount(
-                xp, y_pred, weights=sample_weight, minlength=labels.shape[0]
+                y_pred, xp, weights=sample_weight, minlength=labels.shape[0]
             )
         if y_true.shape[0]:
             true_sum = _bincount(
-                xp, y_true, weights=sample_weight, minlength=labels.shape[0]
+                y_true, xp, weights=sample_weight, minlength=labels.shape[0]
             )
 
         # Retain only selected labels
