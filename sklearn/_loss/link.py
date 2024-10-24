@@ -1,7 +1,9 @@
 """
 Module contains classes for invertible (and differentiable) link functions.
 """
-# Author: Christian Lorentzen <lorentzen.ch@gmail.com>
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass

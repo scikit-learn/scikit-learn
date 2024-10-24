@@ -2,11 +2,8 @@
 DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 """
 
-# Author: Robert Layton <robertlayton@gmail.com>
-#         Joel Nothman <joel.nothman@gmail.com>
-#         Lars Buitinck
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Integral, Real
@@ -17,13 +14,18 @@ from scipy import sparse
 from ..base import BaseEstimator, ClusterMixin, _fit_context
 from ..metrics.pairwise import _VALID_METRICS
 from ..neighbors import NearestNeighbors
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.validation import _check_sample_weight
+from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils.validation import _check_sample_weight, validate_data
 from ._dbscan_inner import dbscan_inner
 
 
-# This function is not validated using validate_params because
-# it's just a factory for DBSCAN.
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "sample_weight": ["array-like", None],
+    },
+    prefer_skip_nested_validation=False,
+)
 def dbscan(
     X,
     eps=0.5,
@@ -118,8 +120,7 @@ def dbscan(
 
     Notes
     -----
-    For an example, see :ref:`examples/cluster/plot_dbscan.py
-    <sphx_glr_auto_examples_cluster_plot_dbscan.py>`.
+    For an example, see :ref:`sphx_glr_auto_examples_cluster_plot_dbscan.py`.
 
     This implementation bulk-computes all neighborhood queries, which increases
     the memory complexity to O(n.d) where d is the average number of neighbors,
@@ -151,6 +152,16 @@ def dbscan(
     :doi:`"DBSCAN revisited, revisited: why and how you should (still) use DBSCAN."
     <10.1145/3068335>`
     ACM Transactions on Database Systems (TODS), 42(3), 19.
+
+    Examples
+    --------
+    >>> from sklearn.cluster import dbscan
+    >>> X = [[1, 2], [2, 2], [2, 3], [8, 7], [8, 8], [25, 80]]
+    >>> core_samples, labels = dbscan(X, eps=3, min_samples=2)
+    >>> core_samples
+    array([0, 1, 2, 3, 4])
+    >>> labels
+    array([ 0,  0,  0,  1,  1, -1])
     """
 
     est = DBSCAN(
@@ -174,8 +185,10 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     Finds core samples of high density and expands clusters from them.
     Good for data which contains clusters of similar density.
 
-    The worst case memory complexity of DBSCAN is :math:`O({n}^2)`, which can
-    occur when the `eps` param is large and `min_samples` is low.
+    This implementation has a worst case memory complexity of :math:`O({n}^2)`,
+    which can occur when the `eps` param is large and `min_samples` is low,
+    while the original DBSCAN only uses linear memory.
+    For further details, see the Notes below.
 
     Read more in the :ref:`User Guide <dbscan>`.
 
@@ -264,8 +277,8 @@ class DBSCAN(ClusterMixin, BaseEstimator):
 
     Notes
     -----
-    For an example, see :ref:`examples/cluster/plot_dbscan.py
-    <sphx_glr_auto_examples_cluster_plot_dbscan.py>`.
+    For an example, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_dbscan.py`.
 
     This implementation bulk-computes all neighborhood queries, which increases
     the memory complexity to O(n.d) where d is the average number of neighbors,
@@ -375,7 +388,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         self : object
             Returns a fitted instance of self.
         """
-        X = self._validate_data(X, accept_sparse="csr")
+        X = validate_data(self, X, accept_sparse="csr")
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
@@ -386,9 +399,10 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         if self.metric == "precomputed" and sparse.issparse(X):
             # set the diagonal to explicit values, as a point is its own
             # neighbor
+            X = X.copy()  # copy to avoid in-place modification
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", sparse.SparseEfficiencyWarning)
-                X.setdiag(X.diagonal())  # XXX: modifies X's internals in-place
+                X.setdiag(X.diagonal())
 
         neighbors_model = NearestNeighbors(
             radius=self.eps,
@@ -456,5 +470,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         self.fit(X, sample_weight=sample_weight)
         return self.labels_
 
-    def _more_tags(self):
-        return {"pairwise": self.metric == "precomputed"}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.pairwise = self.metric == "precomputed"
+        return tags

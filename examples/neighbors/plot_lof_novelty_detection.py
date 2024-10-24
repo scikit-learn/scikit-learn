@@ -25,7 +25,11 @@ n_neighbors=20 appears to work well in general.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib
+import matplotlib.lines as mlines
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -71,7 +75,7 @@ plt.axis("tight")
 plt.xlim((-5, 5))
 plt.ylim((-5, 5))
 plt.legend(
-    [a.collections[0], b1, b2, c],
+    [mlines.Line2D([], [], color="darkred"), b1, b2, c],
     [
         "learned frontier",
         "training observations",

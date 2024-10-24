@@ -13,8 +13,8 @@ The plots represent the distribution of the prediction latency as a boxplot.
 
 """
 
-# Authors: Eustache Diemert <eustache@diemert.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import gc
 import time
@@ -232,7 +232,7 @@ def plot_n_features_influence(percentiles, percentile):
     fig, ax1 = plt.subplots(figsize=(10, 6))
     colors = ["r", "g", "b"]
     for i, cls_name in enumerate(percentiles.keys()):
-        x = np.array(sorted([n for n in percentiles[cls_name].keys()]))
+        x = np.array(sorted(percentiles[cls_name].keys()))
         y = np.array([percentiles[cls_name][n] for n in x])
         plt.plot(
             x,

@@ -9,7 +9,7 @@ Plot the class probabilities of the first sample in a toy dataset predicted by
 three different classifiers and averaged by the
 :class:`~ensemble.VotingClassifier`.
 
-First, three examplary classifiers are initialized
+First, three exemplary classifiers are initialized
 (:class:`~linear_model.LogisticRegression`, :class:`~naive_bayes.GaussianNB`,
 and :class:`~ensemble.RandomForestClassifier`) and used to initialize a
 soft-voting :class:`~ensemble.VotingClassifier` with weights `[1, 1, 5]`, which
@@ -22,6 +22,9 @@ set and plot the predicted class probabilities for the first sample in this
 example dataset.
 
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np

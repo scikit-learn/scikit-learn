@@ -16,13 +16,12 @@ stacking strategy. Stacking slightly improves the overall performance.
 
 """
 
-# Authors: Guillaume Lemaitre <g.lemaitre58@gmail.com>
-#          Maria Telenczuk    <https://github.com/maikia>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Download the dataset
-######################
+# ####################
 #
 # We will use the `Ames Housing`_ dataset which was first compiled by Dean De Cock
 # and became better known after it was used in Kaggle challenge. It is a set
@@ -45,7 +44,7 @@ from sklearn.utils import shuffle
 
 
 def load_ames_housing():
-    df = fetch_openml(name="house_prices", as_frame=True, parser="pandas")
+    df = fetch_openml(name="house_prices", as_frame=True)
     X = df.data
     y = df.target
 
@@ -84,7 +83,7 @@ X, y = load_ames_housing()
 
 # %%
 # Make pipeline to preprocess the data
-######################################
+# ####################################
 #
 # Before we can use Ames dataset we still need to do some preprocessing.
 # First, we will select the categorical and numerical columns of the dataset to
@@ -145,7 +144,7 @@ linear_preprocessor
 
 # %%
 # Stack of predictors on a single data set
-##########################################
+# ########################################
 #
 # It is sometimes tedious to find the model which will best perform on a given
 # dataset. Stacking provide an alternative by combining the outputs of several
@@ -197,7 +196,7 @@ stacking_regressor
 
 # %%
 # Measure and plot the results
-##############################
+# ############################
 #
 # Now we can use Ames Housing dataset to make the predictions. We check the
 # performance of each individual predictor as well as of the stack of the

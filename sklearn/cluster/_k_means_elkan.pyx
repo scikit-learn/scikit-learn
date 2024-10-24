@@ -2,10 +2,6 @@
 #
 # Licence: BSD 3 clause
 
-# TODO: We still need to use ndarrays instead of typed memoryviews when using
-# fused types and when the array may be read-only (for instance when it's
-# provided by the user). This is fixed in cython > 0.3.
-
 from cython cimport floating
 from cython.parallel import prange, parallel
 from libc.stdlib cimport calloc, free
@@ -263,6 +259,14 @@ def elkan_iter_chunked_dense(
         int n_features = X.shape[1]
         int n_clusters = centers_new.shape[0]
 
+    if n_samples == 0:
+        # An empty array was passed, do nothing and return early (before
+        # attempting to compute n_chunks). This can typically happen when
+        # calling the prediction function of a bisecting k-means model with a
+        # large fraction of outiers.
+        return
+
+    cdef:
         # hard-coded number of samples per chunk. Splitting in chunks is
         # necessary to get parallelism. Chunk size chosen to be same as lloyd's
         int n_samples_chunk = CHUNK_SIZE if n_samples > CHUNK_SIZE else n_samples
@@ -498,6 +502,14 @@ def elkan_iter_chunked_sparse(
         int n_features = X.shape[1]
         int n_clusters = centers_new.shape[0]
 
+    if n_samples == 0:
+        # An empty array was passed, do nothing and return early (before
+        # attempting to compute n_chunks). This can typically happen when
+        # calling the prediction function of a bisecting k-means model with a
+        # large fraction of outiers.
+        return
+
+    cdef:
         floating[::1] X_data = X.data
         int[::1] X_indices = X.indices
         int[::1] X_indptr = X.indptr

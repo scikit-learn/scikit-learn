@@ -1,7 +1,3 @@
-.. Places parent toc into the sidebar
-
-:parenttoc: True
-
 Parallelism, resource management, and configuration
 ===================================================
 
@@ -87,15 +83,15 @@ will use as many threads as possible, i.e. as many threads as logical cores.
 
 You can control the exact number of threads that are used either:
 
- - via the ``OMP_NUM_THREADS`` environment variable, for instance when:
-   running a python script:
+- via the ``OMP_NUM_THREADS`` environment variable, for instance when:
+  running a python script:
 
-   .. prompt:: bash $
+  .. prompt:: bash $
 
-        OMP_NUM_THREADS=4 python my_script.py
+      OMP_NUM_THREADS=4 python my_script.py
 
- - or via `threadpoolctl` as explained by `this piece of documentation
-   <https://github.com/joblib/threadpoolctl/#setting-the-maximum-size-of-thread-pools>`_.
+- or via `threadpoolctl` as explained by `this piece of documentation
+  <https://github.com/joblib/threadpoolctl/#setting-the-maximum-size-of-thread-pools>`_.
 
 Parallel NumPy and SciPy routines from numerical libraries
 ..........................................................
@@ -107,15 +103,15 @@ such as MKL, OpenBLAS or BLIS.
 You can control the exact number of threads used by BLAS for each library
 using environment variables, namely:
 
-  - ``MKL_NUM_THREADS`` sets the number of thread MKL uses,
-  - ``OPENBLAS_NUM_THREADS`` sets the number of threads OpenBLAS uses
-  - ``BLIS_NUM_THREADS`` sets the number of threads BLIS uses
+- ``MKL_NUM_THREADS`` sets the number of thread MKL uses,
+- ``OPENBLAS_NUM_THREADS`` sets the number of threads OpenBLAS uses
+- ``BLIS_NUM_THREADS`` sets the number of threads BLIS uses
 
 Note that BLAS & LAPACK implementations can also be impacted by
 `OMP_NUM_THREADS`. To check whether this is the case in your environment,
 you can inspect how the number of threads effectively used by those libraries
-is affected when running the the following command in a bash or zsh terminal
-for different values of `OMP_NUM_THREADS`::
+is affected when running the following command in a bash or zsh terminal
+for different values of `OMP_NUM_THREADS`:
 
 .. prompt:: bash $
 
@@ -236,14 +232,12 @@ the `global_random_seed`` fixture.
 All tests that use this fixture accept the contract that they should
 deterministically pass for any seed value from 0 to 99 included.
 
-If the `SKLEARN_TESTS_GLOBAL_RANDOM_SEED` environment variable is set to
-`"any"` (which should be the case on nightly builds on the CI), the fixture
-will choose an arbitrary seed in the above range (based on the BUILD_NUMBER or
-the current day) and all fixtured tests will run for that specific seed. The
-goal is to ensure that, over time, our CI will run all tests with different
-seeds while keeping the test duration of a single run of the full test suite
-limited. This will check that the assertions of tests written to use this
-fixture are not dependent on a specific seed value.
+In nightly CI builds, the `SKLEARN_TESTS_GLOBAL_RANDOM_SEED` environment
+variable is drawn randomly in the above range and all fixtured tests will run
+for that specific seed. The goal is to ensure that, over time, our CI will run
+all tests with different seeds while keeping the test duration of a single run
+of the full test suite limited. This will check that the assertions of tests
+written to use this fixture are not dependent on a specific seed value.
 
 The range of admissible seed values is limited to [0, 99] because it is often
 not possible to write a test that can work for any possible seed and we want to
@@ -254,8 +248,6 @@ Valid values for `SKLEARN_TESTS_GLOBAL_RANDOM_SEED`:
 - `SKLEARN_TESTS_GLOBAL_RANDOM_SEED="42"`: run tests with a fixed seed of 42
 - `SKLEARN_TESTS_GLOBAL_RANDOM_SEED="40-42"`: run the tests with all seeds
   between 40 and 42 included
-- `SKLEARN_TESTS_GLOBAL_RANDOM_SEED="any"`: run the tests with an arbitrary
-  seed selected between 0 and 99 included
 - `SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"`: run the tests with all seeds
   between 0 and 99 included. This can take a long time: only use for individual
   tests, not the full test suite!
@@ -316,3 +308,29 @@ most machines.
 Users looking for the best performance might want to tune this variable using
 powers of 2 so as to get the best parallelism behavior for their hardware,
 especially with respect to their caches' sizes.
+
+`SKLEARN_WARNINGS_AS_ERRORS`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This environment variable is used to turn warnings into errors in tests and
+documentation build.
+
+Some CI (Continuous Integration) builds set `SKLEARN_WARNINGS_AS_ERRORS=1`, for
+example to make sure that we catch deprecation warnings from our dependencies
+and that we adapt our code.
+
+To locally run with the same "warnings as errors" setting as in these CI builds
+you can set `SKLEARN_WARNINGS_AS_ERRORS=1`.
+
+By default, warnings are not turned into errors. This is the case if
+`SKLEARN_WARNINGS_AS_ERRORS` is unset, or `SKLEARN_WARNINGS_AS_ERRORS=0`.
+
+This environment variable use specific warning filters to ignore some warnings,
+since sometimes warnings originate from third-party libraries and there is not
+much we can do about it. You can see the warning filters in the
+`_get_warnings_filters_info_list` function in `sklearn/utils/_testing.py`.
+
+Note that for documentation build, `SKLEARN_WARNING_AS_ERRORS=1` is checking
+that the documentation build, in particular running examples, does not produce
+any warnings. This is different from the `-W` `sphinx-build` argument that
+catches syntax warnings in the rst files.

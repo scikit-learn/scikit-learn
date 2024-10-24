@@ -1,13 +1,13 @@
-# Author: Wei Xue <xuewei4d@gmail.com>
-#         Thierry Guillemot <thierry.guillemot.work@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import copy
 
 import numpy as np
 import pytest
 from scipy.special import gammaln
 
-from sklearn.exceptions import ConvergenceWarning, NotFittedError
+from sklearn.exceptions import NotFittedError
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.mixture import BayesianGaussianMixture
 from sklearn.mixture._bayesian_mixture import _log_dirichlet_norm, _log_wishart_norm
@@ -15,7 +15,6 @@ from sklearn.mixture.tests.test_gaussian_mixture import RandomData
 from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_equal,
-    ignore_warnings,
 )
 
 COVARIANCE_TYPE = ["full", "tied", "diag", "spherical"]
@@ -220,7 +219,7 @@ def test_bayesian_mixture_weights():
     assert_almost_equal(np.sum(dpgmm.weights_), 1.0)
 
 
-@ignore_warnings(category=ConvergenceWarning)
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_monotonic_likelihood():
     # We check that each step of the each step of variational inference without
     # regularization improve monotonically the training set of the bound
@@ -325,7 +324,7 @@ def test_compare_covar_type():
         assert_almost_equal(spherical_covariances, np.mean(diag_covariances, 1))
 
 
-@ignore_warnings(category=ConvergenceWarning)
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_check_covariance_precision():
     # We check that the dot product of the covariance and the precision
     # matrices is identity.
@@ -361,7 +360,6 @@ def test_check_covariance_precision():
             )
 
 
-@ignore_warnings(category=ConvergenceWarning)
 def test_invariant_translation():
     # We check here that adding a constant in the data change correctly the
     # parameters of the mixture

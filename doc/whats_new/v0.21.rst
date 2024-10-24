@@ -2,12 +2,16 @@
 
 .. currentmodule:: sklearn
 
+============
+Version 0.21
+============
+
+.. include:: changelog_legend.inc
+
 .. _changes_0_21_3:
 
 Version 0.21.3
 ==============
-
-.. include:: changelog_legend.inc
 
 **July 30, 2019**
 
@@ -81,7 +85,7 @@ Changelog
 :mod:`sklearn.inspection`
 .........................
 
-- |Fix| Fixed a bug in :func:`inspection.plot_partial_dependence` where
+- |Fix| Fixed a bug in `inspection.plot_partial_dependence` where
   ``target`` parameter was not being taken into account for multiclass problems.
   :pr:`14393` by :user:`Guillem G. Subies <guillemgsubies>`.
 
@@ -112,7 +116,7 @@ Changelog
 - |Fix| Fixed bug in :func:`tree.export_text` when the tree has one feature and
   a single feature name is passed in. :pr:`14053` by `Thomas Fan`.
 
-- |Fix| Fixed an issue with :func:`plot_tree` where it displayed
+- |Fix| Fixed an issue with :func:`tree.plot_tree` where it displayed
   entropy calculations even for `gini` criterion in DecisionTreeClassifiers.
   :pr:`13947` by :user:`Frank Hoang <fhoang7>`.
 
@@ -1067,8 +1071,7 @@ These changes mostly affect library developers.
 - Many checks can now be disabled or configured with :ref:`estimator_tags`.
   :pr:`8022` by :user:`Andreas Müller <amueller>`.
 
-Code and Documentation Contributors
------------------------------------
+.. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of the
 project since version 0.20, including:

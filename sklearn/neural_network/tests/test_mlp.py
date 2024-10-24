@@ -2,8 +2,8 @@
 Testing for Multi-layer Perceptron module (sklearn.neural_network)
 """
 
-# Author: Issam H. Laradji
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import re
 import sys
@@ -13,12 +13,6 @@ from io import StringIO
 import joblib
 import numpy as np
 import pytest
-from numpy.testing import (
-    assert_allclose,
-    assert_almost_equal,
-    assert_array_equal,
-)
-from scipy.sparse import csr_matrix
 
 from sklearn.datasets import (
     load_digits,
@@ -30,7 +24,13 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.metrics import roc_auc_score
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 from sklearn.preprocessing import LabelBinarizer, MinMaxScaler, scale
-from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
+)
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 ACTIVATION_TYPES = ["identity", "logistic", "tanh", "relu"]
 
@@ -626,11 +626,12 @@ def test_shuffle():
     assert not np.array_equal(mlp1.coefs_[0], mlp2.coefs_[0])
 
 
-def test_sparse_matrices():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_sparse_matrices(csr_container):
     # Test that sparse and dense input matrices output the same results.
     X = X_digits_binary[:50]
     y = y_digits_binary[:50]
-    X_sparse = csr_matrix(X)
+    X_sparse = csr_container(X)
     mlp = MLPClassifier(solver="lbfgs", hidden_layer_sizes=15, random_state=1)
     mlp.fit(X, y)
     pred1 = mlp.predict(X)
@@ -708,7 +709,6 @@ def test_adaptive_learning_rate():
     assert 1e-6 > clf._optimizer.learning_rate
 
 
-@ignore_warnings(category=RuntimeWarning)
 def test_warm_start():
     X = X_iris
     y = y_iris
@@ -731,8 +731,7 @@ def test_warm_start():
         message = (
             "warm_start can only be used where `y` has the same "
             "classes as in the previous call to fit."
-            " Previously got [0 1 2], `y` has %s"
-            % np.unique(y_i)
+            " Previously got [0 1 2], `y` has %s" % np.unique(y_i)
         )
         with pytest.raises(ValueError, match=re.escape(message)):
             clf.fit(X, y_i)
@@ -775,7 +774,7 @@ def test_n_iter_no_change():
         assert max_iter > clf.n_iter_
 
 
-@ignore_warnings(category=ConvergenceWarning)
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_n_iter_no_change_inf():
     # test n_iter_no_change using binary data set
     # the fitting process should go to max_iter iterations
@@ -966,3 +965,30 @@ def test_mlp_partial_fit_after_fit(MLPEstimator):
     msg = "partial_fit does not support early_stopping=True"
     with pytest.raises(ValueError, match=msg):
         mlp.partial_fit(X_iris, y_iris)
+
+
+def test_mlp_diverging_loss():
+    """Test that a diverging model does not raise errors when early stopping is enabled.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/29504
+    """
+    mlp = MLPRegressor(
+        hidden_layer_sizes=100,
+        activation="identity",
+        solver="sgd",
+        alpha=0.0001,
+        learning_rate="constant",
+        learning_rate_init=1,
+        shuffle=True,
+        max_iter=20,
+        early_stopping=True,
+        n_iter_no_change=10,
+        random_state=0,
+    )
+
+    mlp.fit(X_iris, y_iris)
+
+    # In python, float("nan") != float("nan")
+    assert str(mlp.validation_scores_[-1]) == str(np.nan)
+    assert isinstance(mlp.validation_scores_[-1], float)

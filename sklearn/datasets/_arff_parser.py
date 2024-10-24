@@ -1,4 +1,8 @@
 """Implementation of ARFF parsers: via LIAC-ARFF and pandas."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import itertools
 import re
 from collections import OrderedDict
@@ -10,11 +14,9 @@ import scipy as sp
 
 from ..externals import _arff
 from ..externals._arff import ArffSparseDataType
-from ..utils import (
-    _chunk_generator,
-    check_pandas_support,
-    get_chunk_n_rows,
-)
+from ..utils._chunking import chunk_generator, get_chunk_n_rows
+from ..utils._optional_dependencies import check_pandas_support
+from ..utils.fixes import pd_fillna
 
 
 def _split_sparse_columns(
@@ -194,7 +196,7 @@ def _liac_arff_parser(
         # read arff data with chunks
         columns_to_keep = [col for col in columns_names if col in columns_to_select]
         dfs = [first_df[columns_to_keep]]
-        for data in _chunk_generator(arff_container["data"], chunksize):
+        for data in chunk_generator(arff_container["data"], chunksize):
             dfs.append(
                 pd.DataFrame(data, columns=columns_names, copy=False)[columns_to_keep]
             )
@@ -206,7 +208,8 @@ def _liac_arff_parser(
         # liac-arff parser does not depend on NumPy and uses None to represent
         # missing values. To be consistent with the pandas parser, we replace
         # None with np.nan.
-        frame = pd.concat(dfs, ignore_index=True).fillna(value=np.nan)
+        frame = pd.concat(dfs, ignore_index=True)
+        frame = pd_fillna(pd, frame)
         del dfs, first_df
 
         # cast the columns frame

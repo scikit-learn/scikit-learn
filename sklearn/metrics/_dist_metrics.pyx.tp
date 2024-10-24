@@ -11,7 +11,7 @@ implementation_specific_values = [
 }}
 # By Jake Vanderplas (2013) <jakevdp@cs.washington.edu>
 # written for the scikit-learn project
-# License: BSD
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 cimport numpy as cnp
@@ -42,15 +42,24 @@ BOOL_METRICS = [
     "dice",
     "rogerstanimoto",
     "russellrao",
-    "sokalmichener",
     "sokalsneath",
 ]
+DEPRECATED_METRICS = []
+if sp_base_version < parse_version("1.17"):
+    # Deprecated in SciPy 1.15 and removed in SciPy 1.17
+    BOOL_METRICS += ["sokalmichener"]
+if sp_base_version >= parse_version("1.15"):
+    DEPRECATED_METRICS.append("sokalmichener")
 if sp_base_version < parse_version("1.11"):
     # Deprecated in SciPy 1.9 and removed in SciPy 1.11
     BOOL_METRICS += ["kulsinski"]
+if sp_base_version >= parse_version("1.9"):
+    DEPRECATED_METRICS.append("kulsinski")
 if sp_base_version < parse_version("1.9"):
     # Deprecated in SciPy 1.0 and removed in SciPy 1.9
     BOOL_METRICS += ["matching"]
+if sp_base_version >= parse_version("1.0"):
+    DEPRECATED_METRICS.append("matching")
 
 def get_valid_metric_ids(L):
     """Given an iterable of metric class names or class identifiers,
@@ -89,7 +98,7 @@ cdef class DistanceMetric:
            [5.65...,  8.48...]
            [1.41...,  4.24...]])
 
-    Available Metrics
+    .. rubric:: Available Metrics
 
     The following lists the string metric identifiers and the associated
     distance metric classes:
@@ -134,13 +143,13 @@ cdef class DistanceMetric:
     is evaluated to "True".  In the listings below, the following
     abbreviations are used:
 
-     - N  : number of dimensions
-     - NTT : number of dims in which both values are True
-     - NTF : number of dims in which the first value is True, second is False
-     - NFT : number of dims in which the first value is False, second is True
-     - NFF : number of dims in which both values are False
-     - NNEQ : number of non-equal dimensions, NNEQ = NTF + NFT
-     - NNZ : number of nonzero dimensions, NNZ = NTF + NFT + NTT
+    - N: number of dimensions
+    - NTT: number of dims in which both values are True
+    - NTF: number of dims in which the first value is True, second is False
+    - NFT: number of dims in which the first value is False, second is True
+    - NFF: number of dims in which both values are False
+    - NNEQ: number of non-equal dimensions, NNEQ = NTF + NFT
+    - NNZ: number of nonzero dimensions, NNZ = NTF + NFT + NTT
 
     =================  =======================  ===============================
     identifier         class name               distance function
@@ -327,13 +336,13 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
     is evaluated to "True".  In the listings below, the following
     abbreviations are used:
 
-     - N  : number of dimensions
-     - NTT : number of dims in which both values are True
-     - NTF : number of dims in which the first value is True, second is False
-     - NFT : number of dims in which the first value is False, second is True
-     - NFF : number of dims in which both values are False
-     - NNEQ : number of non-equal dimensions, NNEQ = NTF + NFT
-     - NNZ : number of nonzero dimensions, NNZ = NTF + NFT + NTT
+    - N: number of dimensions
+    - NTT: number of dims in which both values are True
+    - NTF: number of dims in which the first value is True, second is False
+    - NFT: number of dims in which the first value is False, second is True
+    - NFF: number of dims in which both values are False
+    - NNEQ: number of non-equal dimensions, NNEQ = NTF + NFT
+    - NNZ: number of nonzero dimensions, NNZ = NTF + NFT + NTT
 
     =================  =======================  ===============================
     identifier         class name               distance function
@@ -457,7 +466,7 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
         """
         return
 
-    cdef float64_t dist(
+    cdef {{INPUT_DTYPE_t}} dist(
         self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
@@ -469,7 +478,7 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
         """
         return -999
 
-    cdef float64_t rdist(
+    cdef {{INPUT_DTYPE_t}} rdist(
         self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
@@ -489,7 +498,7 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
     cdef int pdist(
         self,
         const {{INPUT_DTYPE_t}}[:, ::1] X,
-        float64_t[:, ::1] D,
+        {{INPUT_DTYPE_t}}[:, ::1] D,
     ) except -1:
         """Compute the pairwise distances between points in X"""
         cdef intp_t i1, i2
@@ -504,7 +513,7 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
         self,
         const {{INPUT_DTYPE_t}}[:, ::1] X,
         const {{INPUT_DTYPE_t}}[:, ::1] Y,
-        float64_t[:, ::1] D,
+        {{INPUT_DTYPE_t}}[:, ::1] D,
     ) except -1:
         """Compute the cross-pairwise distances between arrays X and Y"""
         cdef intp_t i1, i2
@@ -515,7 +524,7 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
                 D[i1, i2] = self.dist(&X[i1, 0], &Y[i2, 0], X.shape[1])
         return 0
 
-    cdef float64_t dist_csr(
+    cdef {{INPUT_DTYPE_t}} dist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
         const int32_t* x1_indices,
@@ -545,7 +554,7 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
 
         2. An alternative signature would be:
 
-            cdef float64_t dist_csr(
+            cdef {{INPUT_DTYPE_t}} dist_csr(
                 self,
                 const {{INPUT_DTYPE_t}}* x1_data,
                 const int32_t* x1_indices,
@@ -581,7 +590,7 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
         """
         return -999
 
-    cdef float64_t rdist_csr(
+    cdef {{INPUT_DTYPE_t}} rdist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
         const int32_t* x1_indices,
@@ -628,7 +637,7 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
         const int32_t[::1] x1_indices,
         const int32_t[::1] x1_indptr,
         const intp_t size,
-        float64_t[:, ::1] D,
+        {{INPUT_DTYPE_t}}[:, ::1] D,
     ) except -1 nogil:
         """Pairwise distances between rows in CSR matrix X.
 
@@ -668,7 +677,7 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
         const int32_t[::1] x2_indices,
         const int32_t[::1] x2_indptr,
         const intp_t size,
-        float64_t[:, ::1] D,
+        {{INPUT_DTYPE_t}}[:, ::1] D,
     ) except -1 nogil:
         """Compute the cross-pairwise distances between arrays X and Y
         represented in the CSR format."""
@@ -698,11 +707,11 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
                 )
         return 0
 
-    cdef float64_t _rdist_to_dist(self, {{INPUT_DTYPE_t}} rdist) except -1 nogil:
+    cdef {{INPUT_DTYPE_t}} _rdist_to_dist(self, {{INPUT_DTYPE_t}} rdist) except -1 nogil:
         """Convert the rank-preserving surrogate distance to the distance"""
         return rdist
 
-    cdef float64_t _dist_to_rdist(self, {{INPUT_DTYPE_t}} dist) except -1 nogil:
+    cdef {{INPUT_DTYPE_t}} _dist_to_rdist(self, {{INPUT_DTYPE_t}} dist) except -1 nogil:
         """Convert the distance to the rank-preserving surrogate distance"""
         return dist
 
@@ -749,17 +758,17 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
     def _pairwise_dense_dense(self, X, Y):
         cdef const {{INPUT_DTYPE_t}}[:, ::1] Xarr
         cdef const {{INPUT_DTYPE_t}}[:, ::1] Yarr
-        cdef float64_t[:, ::1] Darr
+        cdef {{INPUT_DTYPE_t}}[:, ::1] Darr
 
         Xarr = np.asarray(X, dtype={{INPUT_DTYPE}}, order='C')
         self._validate_data(Xarr)
         if X is Y:
-            Darr = np.empty((Xarr.shape[0], Xarr.shape[0]), dtype=np.float64, order='C')
+            Darr = np.empty((Xarr.shape[0], Xarr.shape[0]), dtype={{INPUT_DTYPE}}, order='C')
             self.pdist(Xarr, Darr)
         else:
             Yarr = np.asarray(Y, dtype={{INPUT_DTYPE}}, order='C')
             self._validate_data(Yarr)
-            Darr = np.empty((Xarr.shape[0], Yarr.shape[0]), dtype=np.float64, order='C')
+            Darr = np.empty((Xarr.shape[0], Yarr.shape[0]), dtype={{INPUT_DTYPE}}, order='C')
             self.cdist(Xarr, Yarr, Darr)
         return np.asarray(Darr)
 
@@ -775,7 +784,7 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
             const int32_t[::1] Y_indices
             const int32_t[::1] Y_indptr
 
-            float64_t[:, ::1] Darr
+            {{INPUT_DTYPE_t}}[:, ::1] Darr
 
         X_csr = X.tocsr()
         n_X, n_features = X_csr.shape
@@ -783,7 +792,7 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
         X_indices = np.asarray(X_csr.indices, dtype=np.int32)
         X_indptr = np.asarray(X_csr.indptr, dtype=np.int32)
         if X is Y:
-            Darr = np.empty((n_X, n_X), dtype=np.float64, order='C')
+            Darr = np.empty((n_X, n_X), dtype={{INPUT_DTYPE}}, order='C')
             self.pdist_csr(
                 x1_data=&X_data[0],
                 x1_indices=X_indices,
@@ -798,7 +807,7 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
             Y_indices = np.asarray(Y_csr.indices, dtype=np.int32)
             Y_indptr = np.asarray(Y_csr.indptr, dtype=np.int32)
 
-            Darr = np.empty((n_X, n_Y), dtype=np.float64, order='C')
+            Darr = np.empty((n_X, n_Y), dtype={{INPUT_DTYPE}}, order='C')
             self.cdist_csr(
                 x1_data=&X_data[0],
                 x1_indices=X_indices,
@@ -833,7 +842,7 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
                 np.arange(n_features, dtype=np.int32)
             )
 
-            float64_t[:, ::1] Darr = np.empty((n_X, n_Y), dtype=np.float64, order='C')
+            {{INPUT_DTYPE_t}}[:, ::1] Darr = np.empty((n_X, n_Y), dtype={{INPUT_DTYPE}}, order='C')
 
             intp_t i1, i2
             intp_t x1_start, x1_end
@@ -898,7 +907,7 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
                 Y.indptr, dtype=np.int32,
             )
 
-            float64_t[:, ::1] Darr = np.empty((n_X, n_Y), dtype=np.float64, order='C')
+            {{INPUT_DTYPE_t}}[:, ::1] Darr = np.empty((n_X, n_Y), dtype={{INPUT_DTYPE}}, order='C')
 
             intp_t i1, i2
             {{INPUT_DTYPE_t}} * x1_data
@@ -992,24 +1001,24 @@ cdef class EuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     def __init__(self):
         self.p = 2
 
-    cdef inline float64_t dist(self,
+    cdef inline {{INPUT_DTYPE_t}} dist(self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
         intp_t size,
     ) except -1 nogil:
         return euclidean_dist{{name_suffix}}(x1, x2, size)
 
-    cdef inline float64_t rdist(self,
+    cdef inline {{INPUT_DTYPE_t}} rdist(self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
         intp_t size,
     ) except -1 nogil:
         return euclidean_rdist{{name_suffix}}(x1, x2, size)
 
-    cdef inline float64_t _rdist_to_dist(self, {{INPUT_DTYPE_t}} rdist) except -1 nogil:
+    cdef inline {{INPUT_DTYPE_t}} _rdist_to_dist(self, {{INPUT_DTYPE_t}} rdist) except -1 nogil:
         return sqrt(rdist)
 
-    cdef inline float64_t _dist_to_rdist(self, {{INPUT_DTYPE_t}} dist) except -1 nogil:
+    cdef inline {{INPUT_DTYPE_t}} _dist_to_rdist(self, {{INPUT_DTYPE_t}} dist) except -1 nogil:
         return dist * dist
 
     def rdist_to_dist(self, rdist):
@@ -1018,7 +1027,7 @@ cdef class EuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     def dist_to_rdist(self, dist):
         return dist ** 2
 
-    cdef inline float64_t rdist_csr(
+    cdef inline {{INPUT_DTYPE_t}} rdist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
         const int32_t* x1_indices,
@@ -1070,7 +1079,7 @@ cdef class EuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
         return d
 
-    cdef inline float64_t dist_csr(
+    cdef inline {{INPUT_DTYPE_t}} dist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
         const int32_t* x1_indices,
@@ -1113,7 +1122,7 @@ cdef class SEuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         if X.shape[1] != self.size:
             raise ValueError('SEuclidean dist: size of V does not match')
 
-    cdef inline float64_t rdist(
+    cdef inline {{INPUT_DTYPE_t}} rdist(
         self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
@@ -1126,7 +1135,7 @@ cdef class SEuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             d += (tmp * tmp / self.vec[j])
         return d
 
-    cdef inline float64_t dist(
+    cdef inline {{INPUT_DTYPE_t}} dist(
         self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
@@ -1134,10 +1143,10 @@ cdef class SEuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     ) except -1 nogil:
         return sqrt(self.rdist(x1, x2, size))
 
-    cdef inline float64_t _rdist_to_dist(self, {{INPUT_DTYPE_t}} rdist) except -1 nogil:
+    cdef inline {{INPUT_DTYPE_t}} _rdist_to_dist(self, {{INPUT_DTYPE_t}} rdist) except -1 nogil:
         return sqrt(rdist)
 
-    cdef inline float64_t _dist_to_rdist(self, {{INPUT_DTYPE_t}} dist) except -1 nogil:
+    cdef inline {{INPUT_DTYPE_t}} _dist_to_rdist(self, {{INPUT_DTYPE_t}} dist) except -1 nogil:
         return dist * dist
 
     def rdist_to_dist(self, rdist):
@@ -1146,7 +1155,7 @@ cdef class SEuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     def dist_to_rdist(self, dist):
         return dist ** 2
 
-    cdef inline float64_t rdist_csr(
+    cdef inline {{INPUT_DTYPE_t}} rdist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
         const int32_t* x1_indices,
@@ -1199,7 +1208,7 @@ cdef class SEuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
                 i1 = i1 + 1
         return d
 
-    cdef inline float64_t dist_csr(
+    cdef inline {{INPUT_DTYPE_t}} dist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
         const int32_t* x1_indices,
@@ -1236,7 +1245,7 @@ cdef class ManhattanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     def __init__(self):
         self.p = 1
 
-    cdef inline float64_t dist(
+    cdef inline {{INPUT_DTYPE_t}} dist(
         self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
@@ -1248,7 +1257,7 @@ cdef class ManhattanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             d += fabs(x1[j] - x2[j])
         return d
 
-    cdef inline float64_t dist_csr(
+    cdef inline {{INPUT_DTYPE_t}} dist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
         const int32_t* x1_indices,
@@ -1266,7 +1275,7 @@ cdef class ManhattanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             intp_t i1 = x1_start
             intp_t i2 = x2_start
 
-            float64_t d = 0.0
+            {{INPUT_DTYPE_t}} d = 0.0
 
         while i1 < x1_end and i2 < x2_end:
             ix1 = x1_indices[i1]
@@ -1319,7 +1328,7 @@ cdef class ChebyshevDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     def __init__(self):
         self.p = INF{{name_suffix}}
 
-    cdef inline float64_t dist(
+    cdef inline {{INPUT_DTYPE_t}} dist(
         self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
@@ -1332,7 +1341,7 @@ cdef class ChebyshevDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         return d
 
 
-    cdef inline float64_t dist_csr(
+    cdef inline {{INPUT_DTYPE_t}} dist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
         const int32_t* x1_indices,
@@ -1440,7 +1449,7 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
                              f"the number of features ({X.shape[1]}). "
                              f"Currently len(w)={self.size}.")
 
-    cdef inline float64_t rdist(
+    cdef inline {{INPUT_DTYPE_t}} rdist(
         self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
@@ -1457,7 +1466,7 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
                 d += (pow(fabs(x1[j] - x2[j]), self.p))
         return d
 
-    cdef inline float64_t dist(
+    cdef inline {{INPUT_DTYPE_t}} dist(
         self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
@@ -1465,10 +1474,10 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     ) except -1 nogil:
         return pow(self.rdist(x1, x2, size), 1. / self.p)
 
-    cdef inline float64_t _rdist_to_dist(self, {{INPUT_DTYPE_t}} rdist) except -1 nogil:
+    cdef inline {{INPUT_DTYPE_t}} _rdist_to_dist(self, {{INPUT_DTYPE_t}} rdist) except -1 nogil:
         return pow(rdist, 1. / self.p)
 
-    cdef inline float64_t _dist_to_rdist(self, {{INPUT_DTYPE_t}} dist) except -1 nogil:
+    cdef inline {{INPUT_DTYPE_t}} _dist_to_rdist(self, {{INPUT_DTYPE_t}} dist) except -1 nogil:
         return pow(dist, self.p)
 
     def rdist_to_dist(self, rdist):
@@ -1477,7 +1486,7 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     def dist_to_rdist(self, dist):
         return dist ** self.p
 
-    cdef inline float64_t rdist_csr(
+    cdef inline {{INPUT_DTYPE_t}} rdist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
         const int32_t* x1_indices,
@@ -1557,7 +1566,7 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
             return d
 
-    cdef inline float64_t dist_csr(
+    cdef inline {{INPUT_DTYPE_t}} dist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
         const int32_t* x1_indices,
@@ -1629,7 +1638,7 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         if X.shape[1] != self.size:
             raise ValueError('Mahalanobis dist: size of V does not match')
 
-    cdef inline float64_t rdist(
+    cdef inline {{INPUT_DTYPE_t}} rdist(
         self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
@@ -1649,7 +1658,7 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             d += tmp * self.buffer[i]
         return d
 
-    cdef inline float64_t dist(
+    cdef inline {{INPUT_DTYPE_t}} dist(
         self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
@@ -1657,10 +1666,10 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     ) except -1 nogil:
         return sqrt(self.rdist(x1, x2, size))
 
-    cdef inline float64_t _rdist_to_dist(self, {{INPUT_DTYPE_t}} rdist) except -1 nogil:
+    cdef inline {{INPUT_DTYPE_t}} _rdist_to_dist(self, {{INPUT_DTYPE_t}} rdist) except -1 nogil:
         return sqrt(rdist)
 
-    cdef inline float64_t _dist_to_rdist(self, {{INPUT_DTYPE_t}} dist) except -1 nogil:
+    cdef inline {{INPUT_DTYPE_t}} _dist_to_rdist(self, {{INPUT_DTYPE_t}} dist) except -1 nogil:
         return dist * dist
 
     def rdist_to_dist(self, rdist):
@@ -1669,7 +1678,7 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     def dist_to_rdist(self, dist):
         return dist ** 2
 
-    cdef inline float64_t rdist_csr(
+    cdef inline {{INPUT_DTYPE_t}} rdist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
         const int32_t* x1_indices,
@@ -1723,7 +1732,7 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
         return d
 
-    cdef inline float64_t dist_csr(
+    cdef inline {{INPUT_DTYPE_t}} dist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
         const int32_t* x1_indices,
@@ -1760,7 +1769,7 @@ cdef class HammingDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     .. math::
        D(x, y) = \frac{1}{N} \sum_i \delta_{x_i, y_i}
     """
-    cdef inline float64_t dist(
+    cdef inline {{INPUT_DTYPE_t}} dist(
         self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
@@ -1774,7 +1783,7 @@ cdef class HammingDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         return float(n_unequal) / size
 
 
-    cdef inline float64_t dist_csr(
+    cdef inline {{INPUT_DTYPE_t}} dist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
         const int32_t* x1_indices,
@@ -1835,7 +1844,7 @@ cdef class CanberraDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     .. math::
        D(x, y) = \sum_i \frac{|x_i - y_i|}{|x_i| + |y_i|}
     """
-    cdef inline float64_t dist(
+    cdef inline {{INPUT_DTYPE_t}} dist(
         self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
@@ -1849,7 +1858,7 @@ cdef class CanberraDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
                 d += fabs(x1[j] - x2[j]) / denom
         return d
 
-    cdef inline float64_t dist_csr(
+    cdef inline {{INPUT_DTYPE_t}} dist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
         const int32_t* x1_indices,
@@ -1910,7 +1919,7 @@ cdef class BrayCurtisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     .. math::
        D(x, y) = \frac{\sum_i |x_i - y_i|}{\sum_i(|x_i| + |y_i|)}
     """
-    cdef inline float64_t dist(
+    cdef inline {{INPUT_DTYPE_t}} dist(
         self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
@@ -1926,7 +1935,7 @@ cdef class BrayCurtisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         else:
             return 0.0
 
-    cdef inline float64_t dist_csr(
+    cdef inline {{INPUT_DTYPE_t}} dist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
         const int32_t* x1_indices,
@@ -1990,7 +1999,7 @@ cdef class JaccardDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
         D(x, y) = (N_TF + N_FT) / (N_TT + N_TF + N_FT)
     """
-    cdef inline float64_t dist(
+    cdef inline {{INPUT_DTYPE_t}} dist(
         self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
@@ -2010,7 +2019,7 @@ cdef class JaccardDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             return 0
         return (nnz - n_eq) * 1.0 / nnz
 
-    cdef inline float64_t dist_csr(
+    cdef inline {{INPUT_DTYPE_t}} dist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
         const int32_t* x1_indices,
@@ -2079,7 +2088,7 @@ cdef class MatchingDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
         D(x, y) = (N_TF + N_FT) / N
     """
-    cdef inline float64_t dist(
+    cdef inline {{INPUT_DTYPE_t}} dist(
         self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
@@ -2093,7 +2102,7 @@ cdef class MatchingDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             n_neq += (tf1 != tf2)
         return n_neq * 1. / size
 
-    cdef inline float64_t dist_csr(
+    cdef inline {{INPUT_DTYPE_t}} dist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
         const int32_t* x1_indices,
@@ -2154,7 +2163,7 @@ cdef class DiceDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         D(x, y) = (N_TF + N_FT) / (2 * N_TT + N_TF + N_FT)
 
     """
-    cdef inline float64_t dist(
+    cdef inline {{INPUT_DTYPE_t}} dist(
         self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
@@ -2169,7 +2178,7 @@ cdef class DiceDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             n_neq += (tf1 != tf2)
         return n_neq / (2.0 * n_tt + n_neq)
 
-    cdef inline float64_t dist_csr(
+    cdef inline {{INPUT_DTYPE_t}} dist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
         const int32_t* x1_indices,
@@ -2235,7 +2244,7 @@ cdef class KulsinskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         D(x, y) = 1 - N_TT / (N + N_TF + N_FT)
 
     """
-    cdef inline float64_t dist(
+    cdef inline {{INPUT_DTYPE_t}} dist(
         self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
@@ -2250,7 +2259,7 @@ cdef class KulsinskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             n_tt += (tf1 and tf2)
         return (n_neq - n_tt + size) * 1.0 / (n_neq + size)
 
-    cdef inline float64_t dist_csr(
+    cdef inline {{INPUT_DTYPE_t}} dist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
         const int32_t* x1_indices,
@@ -2314,7 +2323,7 @@ cdef class RogersTanimotoDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
         D(x, y) = 2 (N_TF + N_FT) / (N + N_TF + N_FT)
     """
-    cdef inline float64_t dist(
+    cdef inline {{INPUT_DTYPE_t}} dist(
         self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
@@ -2328,7 +2337,7 @@ cdef class RogersTanimotoDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             n_neq += (tf1 != tf2)
         return (2.0 * n_neq) / (size + n_neq)
 
-    cdef inline float64_t dist_csr(
+    cdef inline {{INPUT_DTYPE_t}} dist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
         const int32_t* x1_indices,
@@ -2391,7 +2400,7 @@ cdef class RussellRaoDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
         D(x, y) = (N - N_TT) / N
     """
-    cdef inline float64_t dist(
+    cdef inline {{INPUT_DTYPE_t}} dist(
         self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
@@ -2405,7 +2414,7 @@ cdef class RussellRaoDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             n_tt += (tf1 and tf2)
         return (size - n_tt) * 1. / size
 
-    cdef inline float64_t dist_csr(
+    cdef inline {{INPUT_DTYPE_t}} dist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
         const int32_t* x1_indices,
@@ -2461,7 +2470,7 @@ cdef class SokalMichenerDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
         D(x, y) = 2 (N_TF + N_FT) / (N + N_TF + N_FT)
     """
-    cdef inline float64_t dist(
+    cdef inline {{INPUT_DTYPE_t}} dist(
         self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
@@ -2475,7 +2484,7 @@ cdef class SokalMichenerDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             n_neq += (tf1 != tf2)
         return (2.0 * n_neq) / (size + n_neq)
 
-    cdef inline float64_t dist_csr(
+    cdef inline {{INPUT_DTYPE_t}} dist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
         const int32_t* x1_indices,
@@ -2538,7 +2547,7 @@ cdef class SokalSneathDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
         D(x, y) = (N_TF + N_FT) / (N_TT / 2 + N_FT + N_TF)
     """
-    cdef inline float64_t dist(
+    cdef inline {{INPUT_DTYPE_t}} dist(
         self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
@@ -2553,7 +2562,7 @@ cdef class SokalSneathDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             n_tt += (tf1 and tf2)
         return n_neq / (0.5 * n_tt + n_neq)
 
-    cdef inline float64_t dist_csr(
+    cdef inline {{INPUT_DTYPE_t}} dist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
         const int32_t* x1_indices,
@@ -2627,7 +2636,7 @@ cdef class HaversineDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             raise ValueError("Haversine distance only valid "
                              "in 2 dimensions")
 
-    cdef inline float64_t rdist(self,
+    cdef inline {{INPUT_DTYPE_t}} rdist(self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
         intp_t size,
@@ -2636,17 +2645,17 @@ cdef class HaversineDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         cdef float64_t sin_1 = sin(0.5 * ((x1[1]) - (x2[1])))
         return (sin_0 * sin_0 + cos(x1[0]) * cos(x2[0]) * sin_1 * sin_1)
 
-    cdef inline float64_t dist(self,
+    cdef inline {{INPUT_DTYPE_t}} dist(self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
         intp_t size,
     ) except -1 nogil:
         return 2 * asin(sqrt(self.rdist(x1, x2, size)))
 
-    cdef inline float64_t _rdist_to_dist(self, {{INPUT_DTYPE_t}} rdist) except -1 nogil:
+    cdef inline {{INPUT_DTYPE_t}} _rdist_to_dist(self, {{INPUT_DTYPE_t}} rdist) except -1 nogil:
         return 2 * asin(sqrt(rdist))
 
-    cdef inline float64_t _dist_to_rdist(self, {{INPUT_DTYPE_t}} dist) except -1 nogil:
+    cdef inline {{INPUT_DTYPE_t}} _dist_to_rdist(self, {{INPUT_DTYPE_t}} dist) except -1 nogil:
         cdef float64_t tmp = sin(0.5 *  dist)
         return tmp * tmp
 
@@ -2657,7 +2666,7 @@ cdef class HaversineDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         tmp = np.sin(0.5 * dist)
         return tmp * tmp
 
-    cdef inline float64_t dist_csr(
+    cdef inline {{INPUT_DTYPE_t}} dist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
         const int32_t* x1_indices,
@@ -2681,7 +2690,7 @@ cdef class HaversineDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
             size,
         )))
 
-    cdef inline float64_t rdist_csr(
+    cdef inline {{INPUT_DTYPE_t}} rdist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
         const int32_t* x1_indices,
@@ -2773,7 +2782,7 @@ cdef class PyFuncDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     # allowed in cython >= 0.26 since it is a redundant GIL acquisition. The
     # only way to be back compatible is to inherit `dist` from the base class
     # without GIL and called an inline `_dist` which acquire GIL.
-    cdef inline float64_t dist(
+    cdef inline {{INPUT_DTYPE_t}} dist(
         self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
@@ -2781,7 +2790,7 @@ cdef class PyFuncDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     ) except -1 nogil:
         return self._dist(x1, x2, size)
 
-    cdef inline float64_t _dist(
+    cdef inline {{INPUT_DTYPE_t}} _dist(
         self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
