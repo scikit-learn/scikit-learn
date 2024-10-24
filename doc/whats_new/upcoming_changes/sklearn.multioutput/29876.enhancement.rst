@@ -1,0 +1,4 @@
+- :class:`multioutput.ClassifierChain` and
+  :class:`multioutput.RegressorChain` now accept `X` containing `nan`,
+  if `base_estimator` can handle `nan` values.
+  By :user:`Yaroslav Korobko <Tialo>`
