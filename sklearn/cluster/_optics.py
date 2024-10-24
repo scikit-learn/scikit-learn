@@ -57,6 +57,9 @@ class OPTICS(ClusterMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <optics>`.
 
+    For a comparison of OPTICS with other clustering algorithms, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
+
     Parameters
     ----------
     min_samples : int > 1 or float between 0 and 1, default=5

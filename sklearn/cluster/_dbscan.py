@@ -192,6 +192,9 @@ class DBSCAN(ClusterMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <dbscan>`.
 
+    For a comparison of DBSCAN with other clustering algorithms, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
+
     Parameters
     ----------
     eps : float, default=0.5

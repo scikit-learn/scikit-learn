@@ -401,6 +401,9 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     For an example usage,
     see :ref:`sphx_glr_auto_examples_cluster_plot_affinity_propagation.py`.
 
+    For a comparison of Affinity Propagation with other clustering algorithms, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
+
     The algorithmic complexity of affinity propagation is quadratic
     in the number of points.
 
