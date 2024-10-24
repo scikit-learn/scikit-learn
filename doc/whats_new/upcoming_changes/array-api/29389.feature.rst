@@ -1,1 +1,3 @@
-- :func:`sklearn.metrics.pairwise.paired_euclidean_distances` by :user:`Emily Chen <EmilyXinyi>`
+- :func:`sklearn.metrics.pairwise.paired_euclidean_distances` now supports
+  Array API compatible inputs.
+  By :user:`Emily Chen <EmilyXinyi>`
