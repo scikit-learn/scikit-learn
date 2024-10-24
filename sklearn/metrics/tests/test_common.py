@@ -2158,6 +2158,9 @@ def test_metrics_dataframe_series(metric_name, df_lib_name):
 
 
 def _get_metric_kwargs_for_array_api_testing(metric, params):
+    """Helper function to enable specifying a variety of additional params and
+    their corresponding values, so that they can be passed to a metric function
+    when testing for array api compliance."""
     metric_kwargs_combinations = [{}]
     for param, values in params.items():
         if param not in signature(metric).parameters:
