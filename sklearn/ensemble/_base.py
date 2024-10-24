@@ -298,5 +298,4 @@ class _BaseHeterogeneousEnsemble(
             # validation will raise an error during `fit`.
             allow_nan = False
         tags.input_tags.allow_nan = allow_nan
-        tags.transformer_tags.preserves_dtype = []
         return tags

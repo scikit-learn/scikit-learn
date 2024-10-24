@@ -946,7 +946,7 @@ def test_check_is_fitted():
 
 
 def test_check_is_fitted_attributes():
-    class MyEstimator:
+    class MyEstimator(BaseEstimator):
         def fit(self, X, y):
             return self
 

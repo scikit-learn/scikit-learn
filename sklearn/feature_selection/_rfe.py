@@ -4,6 +4,7 @@
 """Recursive feature elimination for feature ranking"""
 
 import warnings
+from copy import deepcopy
 from numbers import Integral
 
 import numpy as np
@@ -239,6 +240,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         self.importance_getter = importance_getter
         self.verbose = verbose
 
+    # TODO(1.8) remove this property
     @property
     def _estimator_type(self):
         return self.estimator._estimator_type
@@ -528,12 +530,16 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        sub_estimator_tags = get_tags(self.estimator)
+        tags.estimator_type = sub_estimator_tags.estimator_type
+        tags.classifier_tags = deepcopy(sub_estimator_tags.classifier_tags)
+        tags.regressor_tags = deepcopy(sub_estimator_tags.regressor_tags)
         if tags.classifier_tags is not None:
             tags.classifier_tags.poor_score = True
         if tags.regressor_tags is not None:
             tags.regressor_tags.poor_score = True
         tags.target_tags.required = True
-        tags.input_tags.allow_nan = get_tags(self.estimator).input_tags.allow_nan
+        tags.input_tags.allow_nan = sub_estimator_tags.input_tags.allow_nan
         return tags
 
     def get_metadata_routing(self):

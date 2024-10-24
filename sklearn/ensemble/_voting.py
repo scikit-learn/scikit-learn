@@ -547,6 +547,11 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         ]
         return np.asarray(names_out, dtype=object)
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = []
+        return tags
+
 
 class VotingRegressor(RegressorMixin, _BaseVoting):
     """Prediction voting regressor for unfitted estimators.

@@ -16,6 +16,8 @@ import numpy as np
 from scipy import linalg, optimize, sparse
 from scipy.sparse import linalg as sp_linalg
 
+from sklearn.base import BaseEstimator
+
 from ..base import MultiOutputMixin, RegressorMixin, _fit_context, is_classifier
 from ..exceptions import ConvergenceWarning
 from ..metrics import check_scoring, get_scorer_names
@@ -1682,7 +1684,7 @@ class _XT_CenterStackOp(sparse.linalg.LinearOperator):
         return res
 
 
-class _IdentityRegressor:
+class _IdentityRegressor(RegressorMixin, BaseEstimator):
     """Fake regressor which will directly output the prediction."""
 
     def decision_function(self, y_predict):
@@ -1692,7 +1694,7 @@ class _IdentityRegressor:
         return y_predict
 
 
-class _IdentityClassifier(LinearClassifierMixin):
+class _IdentityClassifier(LinearClassifierMixin, BaseEstimator):
     """Fake classifier which will directly output the prediction.
 
     We inherit from LinearClassifierMixin to get the proper shape for the
