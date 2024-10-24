@@ -14,26 +14,12 @@ Version 1.6
   :ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_6_0.py`.
 
 
-.. DELETE WHEN 1.6.0 IS RELEASED
-.. Changelog management has changed in v1.6.0.
-.. To add your changelog, create a file under the right folder under
-.. `doc/whats_new/upcoming_changes` with file format `<PULL REQUEST>.<TYPE>.rst`, where
-.. `<PULL REQUEST>` is a pull request number, and `<TYPE>` is one of:
-.. * `major-feature`
-.. * `feature`
-.. * `efficiency`
-.. * `enhancement`
-.. * `fix`
-.. * `api`
-.. Example of a changelog file:
-.. - :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor`
-..   now supports missing values in the data matrix `X`. Missing-values are
-..   handled by randomly moving all of the samples to the left, or right child
-..   node as the tree is traversed.
-..   By :user:`Adam Li <adam2392>`
-.. See `doc/whats_new/upcoming_changes/README.md` for full details.
-.. Note only pull requests that result in a change relevant to users require a
-.. changelog entry (e.g., changes to private functions do not require a changelog).
+..
+  DELETE WHEN 1.6.0 IS RELEASED
+  Since October 2024, DO NOT add your changelog entry in this file.
+  Instead, create a file named `<PR_NUMBER>.<TYPE>.rst` in the relevant sub-folder in
+  `doc/whats_new/upcoming_changes/`. For full details, see:
+  https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md
 
 .. include:: changelog_legend.inc
 
