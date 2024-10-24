@@ -488,6 +488,9 @@ redirects = {
     "auto_examples/datasets/plot_iris_dataset": (
         "auto_examples/decomposition/plot_pca_iris"
     ),
+    "auto_examples/linear_model/plot_iris_logistic": (
+        "auto_examples/linear_model/plot_logistic_multinomial"
+    ),
     "auto_examples/linear_model/plot_ols_3d": ("auto_examples/linear_model/plot_ols"),
 }
 html_context["redirects"] = redirects

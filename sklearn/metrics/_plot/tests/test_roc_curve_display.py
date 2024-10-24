@@ -3,6 +3,7 @@ import pytest
 from numpy.testing import assert_allclose
 from scipy.integrate import trapezoid
 
+from sklearn import clone
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import load_breast_cancer, load_iris
 from sklearn.exceptions import NotFittedError
@@ -16,7 +17,11 @@ from sklearn.utils import shuffle
 
 @pytest.fixture(scope="module")
 def data():
-    return load_iris(return_X_y=True)
+    X, y = load_iris(return_X_y=True)
+    # Avoid introducing test dependencies by mistake.
+    X.flags.writeable = False
+    y.flags.writeable = False
+    return X, y
 
 
 @pytest.fixture(scope="module")
@@ -217,6 +222,8 @@ def test_roc_curve_chance_level_line(
 def test_roc_curve_display_complex_pipeline(pyplot, data_binary, clf, constructor_name):
     """Check the behaviour with complex pipeline."""
     X, y = data_binary
+
+    clf = clone(clf)
 
     if constructor_name == "from_estimator":
         with pytest.raises(NotFittedError):
