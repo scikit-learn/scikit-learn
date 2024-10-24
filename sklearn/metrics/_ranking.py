@@ -375,12 +375,11 @@ def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
         warnings.warn(
             (
                 "Only one class is present in y_true. ROC AUC score "
-                "is not defined in that case. The score is set to "
-                "0.0."
+                "is not defined in that case."
             ),
             UndefinedMetricWarning,
         )
-        return 0.0
+        return np.nan
 
     fpr, tpr, _ = roc_curve(y_true, y_score, sample_weight=sample_weight)
     if max_fpr is None or max_fpr == 1:
