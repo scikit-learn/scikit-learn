@@ -672,7 +672,9 @@ class IterativeImputer(_BaseImputer):
         return Xt, X_filled, mask_missing_values, X_missing_mask
 
     @staticmethod
-    def _validate_limit(limit, limit_type, n_features):
+    def _validate_limit(
+        limit, limit_type, n_features, is_empty_feature, keep_empty_feature
+    ):
         """Validate the limits (min/max) of the feature values.
 
         Converts scalar min/max limits to vectors of shape `(n_features,)`.
@@ -685,23 +687,33 @@ class IterativeImputer(_BaseImputer):
             Type of limit to validate.
         n_features: int
             Number of features in the dataset.
+        is_empty_feature: ndarray, shape (n_features, )
+            Mask array indicating empty feature imputer has seen during fit.
+        keep_empty_feature: bool
+            If False, remove empty-feature indices from the limit.
 
         Returns
         -------
         limit: ndarray, shape(n_features,)
             Array of limits, one for each feature.
         """
+        n_features_in = len(is_empty_feature)
+        if limit is not None and not np.isscalar(limit) and len(limit) != n_features_in:
+            raise ValueError(
+                f"'{limit_type}_value' should be of shape ({n_features_in},) when an"
+                f" array-like is provided. Got {len(limit)}, instead."
+            )
+
         limit_bound = np.inf if limit_type == "max" else -np.inf
         limit = limit_bound if limit is None else limit
         if np.isscalar(limit):
             limit = np.full(n_features, limit)
         limit = check_array(limit, ensure_all_finite=False, copy=False, ensure_2d=False)
-        if not limit.shape[0] == n_features:
-            raise ValueError(
-                f"'{limit_type}_value' should be of "
-                f"shape ({n_features},) when an array-like "
-                f"is provided. Got {limit.shape}, instead."
-            )
+
+        # Make sure to remove the empty feature elements from the bounds
+        if not keep_empty_feature and len(limit) == len(is_empty_feature):
+            limit = limit[~is_empty_feature]
+
         return limit
 
     @_fit_context(
@@ -774,8 +786,20 @@ class IterativeImputer(_BaseImputer):
             self.n_iter_ = 0
             return super()._concatenate_indicator(Xt, X_indicator)
 
-        self._min_value = self._validate_limit(self.min_value, "min", X.shape[1])
-        self._max_value = self._validate_limit(self.max_value, "max", X.shape[1])
+        self._min_value = self._validate_limit(
+            self.min_value,
+            "min",
+            X.shape[1],
+            self._is_empty_feature,
+            self.keep_empty_features,
+        )
+        self._max_value = self._validate_limit(
+            self.max_value,
+            "max",
+            X.shape[1],
+            self._is_empty_feature,
+            self.keep_empty_features,
+        )
 
         if not np.all(np.greater(self._max_value, self._min_value)):
             raise ValueError("One (or more) features have min_value >= max_value.")
