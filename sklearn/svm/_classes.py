@@ -353,7 +353,10 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         tags = super().__sklearn_tags__()
         # TODO: replace by a statistical test when _dual=True, see meta-issue #16298
         tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
+            "check_sample_weight_equivalence_on_dense_data": (
+                "sample_weight is not equivalent to removing/repeating samples."
+            ),
+            "check_sample_weight_equivalence_on_sparse_data": (
                 "sample_weight is not equivalent to removing/repeating samples."
             ),
             "check_non_transformer_estimators_n_iter": (
@@ -617,7 +620,10 @@ class LinearSVR(RegressorMixin, LinearModel):
         tags = super().__sklearn_tags__()
         # TODO: replace by a statistical test, see meta-issue #16298
         tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
+            "check_sample_weight_equivalence_on_dense_data": (
+                "sample_weight is not equivalent to removing/repeating samples."
+            ),
+            "check_sample_weight_equivalence_on_sparse_data": (
                 "sample_weight is not equivalent to removing/repeating samples."
             ),
         }
@@ -906,7 +912,10 @@ class SVC(BaseSVC):
             # TODO: fix sample_weight handling of this estimator when probability=False
             # TODO: replace by a statistical test when probability=True
             # see meta-issue #16298
-            "check_sample_weight_equivalence": (
+            "check_sample_weight_equivalence_on_dense_data": (
+                "sample_weight is not equivalent to removing/repeating samples."
+            ),
+            "check_sample_weight_equivalence_on_sparse_data": (
                 "sample_weight is not equivalent to removing/repeating samples."
             ),
         }
@@ -1185,7 +1194,10 @@ class NuSVC(BaseSVC):
             # TODO: fix sample_weight handling of this estimator when probability=False
             # TODO: replace by a statistical test when probability=True
             # see meta-issue #16298
-            "check_sample_weight_equivalence": (
+            "check_sample_weight_equivalence_on_dense_data": (
+                "sample_weight is not equivalent to removing/repeating samples."
+            ),
+            "check_sample_weight_equivalence_on_sparse_data": (
                 "sample_weight is not equivalent to removing/repeating samples."
             ),
             "check_classifiers_one_label_sample_weights": (
@@ -1390,7 +1402,10 @@ class SVR(RegressorMixin, BaseLibSVM):
         tags = super().__sklearn_tags__()
         # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
         tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
+            "check_sample_weight_equivalence_on_dense_data": (
+                "sample_weight is not equivalent to removing/repeating samples."
+            ),
+            "check_sample_weight_equivalence_on_sparse_data": (
                 "sample_weight is not equivalent to removing/repeating samples."
             ),
         }
@@ -1585,7 +1600,10 @@ class NuSVR(RegressorMixin, BaseLibSVM):
         tags = super().__sklearn_tags__()
         # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
         tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
+            "check_sample_weight_equivalence_on_dense_data": (
+                "sample_weight is not equivalent to removing/repeating samples."
+            ),
+            "check_sample_weight_equivalence_on_sparse_data": (
                 "sample_weight is not equivalent to removing/repeating samples."
             ),
         }
@@ -1852,7 +1870,10 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         tags = super().__sklearn_tags__()
         # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
         tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
+            "check_sample_weight_equivalence_on_dense_data": (
+                "sample_weight is not equivalent to removing/repeating samples."
+            ),
+            "check_sample_weight_equivalence_on_sparse_data": (
                 "sample_weight is not equivalent to removing/repeating samples."
             ),
         }

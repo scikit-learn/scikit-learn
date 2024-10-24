@@ -361,6 +361,11 @@ class KernelDensity(BaseEstimator):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags._xfail_checks = {
-            "check_sample_weight_equivalence": "sample_weight must have positive values"
+            "check_sample_weight_equivalence_on_dense_data": (
+                "sample_weight must have positive values",
+            ),
+            "check_sample_weight_equivalence_on_sparse_data": (
+                "sample_weight must have positive values",
+            ),
         }
         return tags
