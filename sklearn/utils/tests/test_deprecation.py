@@ -3,6 +3,7 @@
 
 
 import pickle
+from inspect import signature
 
 import pytest
 
@@ -86,3 +87,12 @@ def test_is_deprecated():
 
 def test_pickle():
     pickle.loads(pickle.dumps(mock_function))
+
+
+def test_deprecated_class_signature():
+    @deprecated()
+    class MockClass:
+        def __init__(self, a, b=1, c=2):
+            pass
+
+    assert list(signature(MockClass).parameters.keys()) == ["a", "b", "c"]
