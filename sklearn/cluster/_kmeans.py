@@ -1179,9 +1179,10 @@ class _BaseKMeans(
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        # TODO: replace by a statistical test, see meta-issue #16298
         tags._xfail_checks = {
-            "check_sample_weights_invariance": (
-                "zero sample_weight is not equivalent to removing samples"
+            "check_sample_weight_equivalence": (
+                "sample_weight is not equivalent to removing/repeating samples."
             ),
         }
         return tags
@@ -1356,20 +1357,17 @@ class KMeans(_BaseKMeans):
     array([[10.,  2.],
            [ 1.,  2.]])
 
-    For a more detailed example of K-Means using the iris dataset see
-    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_iris.py`.
-
     For examples of common problems with K-Means and how to address them see
     :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_assumptions.py`.
-
-    For an example of how to use K-Means to perform color quantization see
-    :ref:`sphx_glr_auto_examples_cluster_plot_color_quantization.py`.
 
     For a demonstration of how K-Means can be used to cluster text documents see
     :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`.
 
     For a comparison between K-Means and MiniBatchKMeans refer to example
     :ref:`sphx_glr_auto_examples_cluster_plot_mini_batch_kmeans.py`.
+
+    For a comparison between K-Means and BisectingKMeans refer to example
+    :ref:`sphx_glr_auto_examples_cluster_plot_bisect_kmeans.py`.
     """
 
     _parameter_constraints: dict = {
@@ -1839,6 +1837,9 @@ class MiniBatchKMeans(_BaseKMeans):
     of requesting clusters and the number of returned clusters will not
     always match. One solution is to set `reassignment_ratio=0`, which
     prevents reassignments of clusters that are too small.
+
+    See :ref:`sphx_glr_auto_examples_cluster_plot_birch_vs_minibatchkmeans.py` for a
+    comparison with :class:`~sklearn.cluster.BIRCH`.
 
     Examples
     --------
