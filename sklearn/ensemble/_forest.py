@@ -608,7 +608,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         )
 
         all_pred = Parallel(
-            n_jobs=self.n_jobs, verbose=self.verbose, require="sharedmem"
+            n_jobs=self.n_jobs, verbose=self.verbose, require="sharedmem", return_as="generator_unordered"
         )(
             delayed(self._get_oob_pred_parallel)(e, n_samples, n_samples_bootstrap, X)
             for e in self.estimators_
