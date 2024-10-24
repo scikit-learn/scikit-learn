@@ -7,6 +7,8 @@ import warnings
 from functools import partial
 from inspect import isfunction
 
+import numpy as np
+
 from sklearn import clone, config_context
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.cluster import (
@@ -109,6 +111,8 @@ from sklearn.linear_model import (
     RANSACRegressor,
     Ridge,
     RidgeClassifier,
+    RidgeClassifierCV,
+    RidgeCV,
     SGDClassifier,
     SGDOneClassSVM,
     SGDRegressor,
@@ -598,6 +602,14 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             dict(solver="lsqr", tol=1e-12),
             dict(solver="lbfgs", positive=True),
         ]
+    },
+    RidgeCV: {
+        # XXX: the default grid (0.1, 1, 10.) is not wide and fine enough to
+        # detect discrepancies that impact the choice of the best alpha.
+        "check_sample_weight_equivalence": dict(alphas=np.logspace(-3, 3, 5)),
+    },
+    RidgeClassifierCV: {
+        "check_sample_weight_equivalence": dict(alphas=np.logspace(-3, 3, 5)),
     },
     SkewedChi2Sampler: {"check_dict_unchanged": dict(n_components=1)},
     SparsePCA: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
