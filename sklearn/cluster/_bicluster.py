@@ -133,6 +133,14 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
         """
         X = validate_data(self, X, accept_sparse="csr", dtype=np.float64)
         self._check_parameters(X.shape[0])
+
+        if self.n_clusters == 1:
+            self.row_labels_ = np.zeros(shape=(1, X.shape[0]))
+            self.column_labels_ = np.zeros(shape=(1, X.shape[1]))
+            self.rows_ = np.zeros(shape=X.shape[0])
+            self.columns_ = np.zeros(shape=X.shape[1])
+            return self
+
         self._fit(X)
         return self
 
@@ -201,9 +209,6 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
             "check_fit2d_1feature": "raises apply_along_axis error",
             "check_estimator_sparse_matrix": "does not fail gracefully",
             "check_estimator_sparse_array": "does not fail gracefully",
-            "check_methods_subset_invariance": "empty array passed inside",
-            "check_dont_overwrite_parameters": "empty array passed inside",
-            "check_fit2d_predict1d": "empty array passed inside",
         }
         return tags
 
@@ -361,17 +366,6 @@ class SpectralCoclustering(BaseSpectral):
         self.columns_ = np.vstack(
             [self.column_labels_ == c for c in range(self.n_clusters)]
         )
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags._xfail_checks.update(
-            {
-                # ValueError: Found array with 0 feature(s) (shape=(23, 0))
-                # while a minimum of 1 is required.
-                "check_dict_unchanged": "FIXME",
-            }
-        )
-        return tags
 
 
 class SpectralBiclustering(BaseSpectral):
