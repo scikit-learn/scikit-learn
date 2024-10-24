@@ -12,6 +12,8 @@ import numpy as np
 from joblib import effective_n_jobs
 from scipy import sparse
 
+from sklearn.utils import metadata_routing
+
 from ..base import MultiOutputMixin, RegressorMixin, _fit_context
 from ..model_selection import check_cv
 from ..utils import Bunch, check_array, check_scalar
@@ -874,6 +876,10 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     >>> print(regr.predict([[0, 0]]))
     [1.451...]
     """
+
+    # "check_input" is used for optimisation and isn't something to be passed
+    # around in a pipeline.
+    __metadata_request__fit = {"check_input": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         "alpha": [Interval(Real, 0, None, closed="left")],

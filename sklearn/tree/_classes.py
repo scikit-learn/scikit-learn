@@ -15,6 +15,8 @@ from numbers import Integral, Real
 import numpy as np
 from scipy.sparse import issparse
 
+from sklearn.utils import metadata_routing
+
 from ..base import (
     BaseEstimator,
     ClassifierMixin,
@@ -92,6 +94,10 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     Warning: This class should not be used directly.
     Use derived classes instead.
     """
+
+    # "check_input" is used for optimisation and isn't something to be passed
+    # around in a pipeline.
+    __metadata_request__predict = {"check_input": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         "splitter": [StrOptions({"best", "random"})],
@@ -935,6 +941,11 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             0.93...,  0.93...,  1.     ,  0.93...,  1.      ])
     """
 
+    # "check_input" is used for optimisation and isn't something to be passed
+    # around in a pipeline.
+    __metadata_request__predict_proba = {"check_input": metadata_routing.UNUSED}
+    __metadata_request__fit = {"check_input": metadata_routing.UNUSED}
+
     _parameter_constraints: dict = {
         **BaseDecisionTree._parameter_constraints,
         "criterion": [StrOptions({"gini", "entropy", "log_loss"}), Hidden(Criterion)],
@@ -1311,6 +1322,10 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     array([-0.39..., -0.46...,  0.02...,  0.06..., -0.50...,
            0.16...,  0.11..., -0.73..., -0.30..., -0.00...])
     """
+
+    # "check_input" is used for optimisation and isn't something to be passed
+    # around in a pipeline.
+    __metadata_request__fit = {"check_input": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         **BaseDecisionTree._parameter_constraints,
