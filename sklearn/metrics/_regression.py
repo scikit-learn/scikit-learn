@@ -1261,7 +1261,7 @@ def r2_score(
         return float("nan")
 
     if sample_weight is not None:
-        sample_weight = column_or_1d(sample_weight, dtype=dtype_name)
+        sample_weight = column_or_1d(sample_weight)
         weight = sample_weight[:, None]
     else:
         weight = 1.0
