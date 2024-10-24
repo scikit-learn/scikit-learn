@@ -16,6 +16,7 @@
 #
 # See https://scikit-learn.org for complete documentation.
 
+import importlib as _importlib
 import logging
 import os
 import random
@@ -72,7 +73,7 @@ from . import (  # noqa: F401 E402
 from .base import clone  # noqa: E402
 from .utils._show_versions import show_versions  # noqa: E402
 
-__all__ = [
+_submodules = [
     "calibration",
     "cluster",
     "covariance",
@@ -110,6 +111,9 @@ __all__ = [
     "discriminant_analysis",
     "impute",
     "compose",
+]
+
+__all__ = _submodules + [
     # Non-modules:
     "clone",
     "get_config",
@@ -117,6 +121,21 @@ __all__ = [
     "config_context",
     "show_versions",
 ]
+
+
+def __dir__():
+    return __all__
+
+
+def __getattr__(name):
+    if name in _submodules:
+        return _importlib.import_module(f"sklearn.{name}")
+    else:
+        try:
+            return globals()[name]
+        except KeyError:
+            raise AttributeError(f"Module 'sklearn' has no attribute '{name}'")
+
 
 _BUILT_WITH_MESON = False
 try:
