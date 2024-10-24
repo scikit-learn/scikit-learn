@@ -807,7 +807,7 @@ def _ridge_regression(
             raise TypeError("SVD solver does not support sparse inputs currently")
         coef = _solve_svd(X, y, alpha, xp)
 
-    if ravel:
+    if n_targets == 1:
         coef = _ravel(coef)
 
     coef = xp.asarray(coef)
@@ -2240,6 +2240,8 @@ class _RidgeGCV(LinearModel):
         self.best_score_ = best_score
         self.dual_coef_ = best_coef
         self.coef_ = safe_sparse_dot(self.dual_coef_.T, X)
+        if y.ndim == 1 or y.shape[1] == 1:
+            self.coef_ = self.coef_.ravel()
 
         if sparse.issparse(X):
             X_offset = X_mean * X_scale
