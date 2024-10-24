@@ -91,8 +91,8 @@ def lars_path(
     Parameters
     ----------
     X : None or ndarray of shape (n_samples, n_features)
-        Input data. Note that if X is `None` then the Gram matrix must be
-        specified, i.e., cannot be `None` or `False`.
+        Input data.  If X is `None`, Gram must also be `None` to avoid a `ValueError`. 
+        In such cases, use `lars_path_gram` instead.
 
     y : None or ndarray of shape (n_samples,)
         Input targets.
