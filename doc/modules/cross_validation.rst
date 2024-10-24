@@ -665,9 +665,11 @@ Here is a visualization of the cross-validation behavior.
    :scale: 75%
 
 Similar to :class:`KFold`, the test sets from :class:`GroupKFold` will form a
-complete partition of all the data. Unlike :class:`KFold`, :class:`GroupKFold`
-is not randomized at all, whereas :class:`KFold` is randomized when
-``shuffle=True``.
+complete partition of all the data.
+
+While :class:`GroupKFold` attempts to place the same number of samples in each
+fold when ``shuffle=False``, when ``shuffle=True`` it attempts to place equal
+number of distinct groups in each fold (but doesn not account for group sizes).
 
 .. _stratified_group_k_fold:
 
