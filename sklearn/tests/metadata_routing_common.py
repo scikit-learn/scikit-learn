@@ -347,6 +347,7 @@ class ConsumingTransformer(TransformerMixin, BaseEstimator):
         record_metadata_not_default(
             self, sample_weight=sample_weight, metadata=metadata
         )
+        self.fitted_ = True
         return self
 
     def transform(self, X, sample_weight="default", metadata="default"):
