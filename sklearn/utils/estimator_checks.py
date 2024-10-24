@@ -77,7 +77,7 @@ from ._testing import (
     raises,
     set_random_state,
 )
-from .fixes import CSR_CONTAINERS, SPARSE_ARRAY_PRESENT
+from .fixes import SPARSE_ARRAY_PRESENT
 from .validation import _num_samples, check_is_fitted, has_fit_parameter
 
 REGRESSION_DATASET = None
@@ -112,11 +112,9 @@ def _yield_checks(estimator):
             # We skip pairwise because the data is not pairwise
             yield check_sample_weights_shape
             yield check_sample_weights_not_overwritten
-            for sparse_container in [None] + CSR_CONTAINERS:
-                yield partial(
-                    check_sample_weight_equivalence,
-                    sparse_container=sparse_container,
-                )
+            yield check_sample_weight_equivalence_on_dense_data
+            if SPARSE_ARRAY_PRESENT:
+                yield check_sample_weight_equivalence_on_sparse_data
 
     # Check that all estimator yield informative messages when
     # trained on empty datasets
@@ -1160,13 +1158,19 @@ def _check_sample_weight_equivalence(name, estimator_orig, sparse_container):
             assert_allclose_dense_sparse(X_pred1, X_pred2, err_msg=err_msg)
 
 
-def check_sample_weight_equivalence(name, estimator_orig, sparse_container):
+def check_sample_weight_equivalence_on_dense_data(name, estimator_orig):
+    _check_sample_weight_equivalence(name, estimator_orig, sparse_container=None)
+
+
+def check_sample_weight_equivalence_on_sparse_data(name, estimator_orig):
     try:
-        _check_sample_weight_equivalence(name, estimator_orig, sparse_container)
+        _check_sample_weight_equivalence(
+            name, estimator_orig, sparse_container=sparse.csr_array
+        )
     except TypeError as e:
-        print(name, e)
-    except ValueError as e:
-        print(name, e)
+        err_msg = "Sparse data was passed for X, but dense data is required"
+        if err_msg not in str(e):
+            raise
 
 
 def check_sample_weights_not_overwritten(name, estimator_orig):
