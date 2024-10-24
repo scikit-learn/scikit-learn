@@ -351,3 +351,16 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         residual = np.abs(y - safe_sparse_dot(X, self.coef_) - self.intercept_)
         self.outliers_ = residual > self.scale_ * self.epsilon
         return self
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks.update(
+            {
+                # TODO: fix sample_weight handling of this estimator, see
+                # meta-issue #16298
+                "check_sample_weight_equivalence": (
+                    "sample_weight is not equivalent to removing/repeating samples."
+                ),
+            }
+        )
+        return tags

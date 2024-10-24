@@ -33,7 +33,12 @@ from ..datasets import (
     make_multilabel_classification,
     make_regression,
 )
-from ..exceptions import DataConversionWarning, NotFittedError, SkipTestWarning
+from ..exceptions import (
+    ConvergenceWarning,
+    DataConversionWarning,
+    NotFittedError,
+    SkipTestWarning,
+)
 from ..linear_model._base import LinearClassifierMixin
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 from ..metrics.pairwise import linear_kernel, pairwise_distances, rbf_kernel
@@ -602,21 +607,23 @@ def check_estimator(estimator=None, generate_only=False, *, legacy: bool = True)
 
     name = type(estimator).__name__
 
-    def checks_generator():
+    def checks_generator(reference_estimator):
         # we first need to check if the estimator is cloneable for the rest of the tests
         # to run
         yield estimator, partial(check_estimator_cloneable, name)
         for check in _yield_all_checks(estimator, legacy=legacy):
-            for check_instance in _yield_instances_for_check(check, estimator):
-                maybe_skipped_check = _maybe_skip(check_instance, check)
-                yield check_instance, partial(maybe_skipped_check, name)
+            for check_specific_estimator in _yield_instances_for_check(
+                check, reference_estimator
+            ):
+                maybe_skipped_check = _maybe_skip(check_specific_estimator, check)
+                yield check_specific_estimator, partial(maybe_skipped_check, name)
 
     if generate_only:
-        return checks_generator()
+        return checks_generator(estimator)
 
-    for estimator, check in checks_generator():
+    for check_specific_estimator, check in checks_generator(estimator):
         try:
-            check(estimator)
+            check(check_specific_estimator)
         except SkipTest as exception:
             # SkipTest is thrown when pandas can't be imported, or by checks
             # that are in the xfail_checks tag
@@ -1095,11 +1102,36 @@ def check_sample_weight_equivalence(name, estimator_orig):
     set_random_state(estimator_repeated, random_state=0)
 
     rng = np.random.RandomState(42)
-    n_samples = 15
-    X = rng.rand(n_samples, n_samples * 2)
-    y = rng.randint(0, 3, size=n_samples)
+
+    # Generate some random data with 3 classes that could either be used for
+    # classification or regression. We use a large number of features to give
+    # more freedom to the estimator when fitting and be more sensitive to
+    # train data weighting/resampling as a result.
+    n_samples_with_small_weights = 15
+    n_features = n_samples_with_small_weights * 2
+    X, y = make_classification(
+        n_samples=15,
+        n_classes=2,
+        n_features=n_features,
+        n_informative=3 * n_features // 4,
+        random_state=rng,
+    )
     # Use random integers (including zero) as weights.
-    sw = rng.randint(0, 5, size=n_samples)
+    sw = rng.randint(0, 3, size=n_samples_with_small_weights)
+
+    # Add a third class with a few data points but with heavier weights right
+    # in the middle of the rest of the data.
+    n_samples_with_large_weights = 3
+    X_with_large_weights = rng.normal(
+        size=(n_samples_with_large_weights, n_features)
+    ) + X.mean(axis=0)
+    X = np.vstack([X, X_with_large_weights])
+    y = np.hstack([y, [2] * n_samples_with_large_weights])
+    sw = np.hstack([sw, [100] * n_samples_with_large_weights])
+
+    tags = get_tags(estimator_orig)
+    if tags.input_tags.positive_only:
+        X -= X.min(axis=0)
 
     X_weigthed = X
     y_weighted = y
@@ -1136,13 +1168,20 @@ def check_sample_weight_equivalence(name, estimator_orig):
     y_weighted = _enforce_estimator_tags_y(estimator_weighted, y_weighted)
     y_repeated = _enforce_estimator_tags_y(estimator_repeated, y_repeated)
 
-    estimator_repeated.fit(X_repeated, y=y_repeated, sample_weight=None)
-    estimator_weighted.fit(X_weigthed, y=y_weighted, sample_weight=sw)
+    with warnings.catch_warnings(record=True):
+        # Ensure we converge, otherwise debugging sample_weight equivalence
+        # failures can be very misleading.
+        warnings.simplefilter("error", category=ConvergenceWarning)
+
+        estimator_repeated.fit(X_repeated, y=y_repeated, sample_weight=None)
+        estimator_weighted.fit(X_weigthed, y=y_weighted, sample_weight=sw)
+
+    X_test = rng.uniform(low=X.min(), high=X.max(), size=(300, n_features))
 
     for method in ["predict_proba", "decision_function", "predict", "transform"]:
         if hasattr(estimator_orig, method):
-            X_pred1 = getattr(estimator_repeated, method)(X)
-            X_pred2 = getattr(estimator_weighted, method)(X)
+            X_pred1 = getattr(estimator_repeated, method)(X_test)
+            X_pred2 = getattr(estimator_weighted, method)(X_test)
             err_msg = (
                 f"Comparing the output of {name}.{method} revealed that fitting "
                 "with `sample_weight` is not equivalent to fitting with removed "

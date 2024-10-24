@@ -1463,9 +1463,19 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             {
                 "check_non_transformer_estimators_n_iter": (
                     "n_iter_ cannot be easily accessed."
-                )
+                ),
             }
         )
+        if self.solver in ("lbfgs", "liblinear"):
+            tags._xfail_checks.update(
+                {
+                    # TODO: fix sample_weight handling of this estimator, see
+                    # meta-issue #16298
+                    "check_sample_weight_equivalence": (
+                        "sample_weight is not equivalent to removing/repeating samples."
+                    ),
+                }
+            )
         return tags
 
 

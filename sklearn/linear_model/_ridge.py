@@ -2548,6 +2548,15 @@ class _BaseRidgeCV(LinearModel):
     def cv_values_(self):
         return self.cv_results_
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags._xfail_checks = {
+            "check_sample_weight_equivalence": (
+                "GridSearchCV does not forward the weights to the scorer by default."
+            ),
+        }
+        return tags
+
 
 class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     """Ridge regression with built-in cross-validation.
@@ -2736,15 +2745,6 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         """
         super().fit(X, y, sample_weight=sample_weight, **params)
         return self
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
-                "GridSearchCV does not forward the weights to the scorer by default."
-            ),
-        }
-        return tags
 
 
 class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
