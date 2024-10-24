@@ -516,22 +516,27 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             max_iter=20, n_components=1, transform_algorithm="lasso_lars"
         )
     },
+    ElasticNetCV: {"check_sample_weight_equivalence": dict(max_iter=100, tol=1e-2)},
     FactorAnalysis: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     FastICA: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     FeatureAgglomeration: {"check_dict_unchanged": dict(n_clusters=1)},
     GammaRegressor: {
         "check_sample_weight_equivalence": [
-            dict(solver="newton-cholesky"),
-            dict(solver="lbfgs"),
+            dict(solver="newton-cholesky", max_iter=1_000, tol=1e-12),
+            dict(solver="lbfgs", max_iter=1_000, tol=1e-12),
         ]
     },
     GaussianMixture: {"check_dict_unchanged": dict(max_iter=5, n_init=2)},
     GaussianRandomProjection: {"check_dict_unchanged": dict(n_components=1)},
+    HuberRegressor: {
+        "check_sample_weight_equivalence": dict(tol=1e-12, max_iter=1_000)
+    },
     IncrementalPCA: {"check_dict_unchanged": dict(batch_size=10, n_components=1)},
     Isomap: {"check_dict_unchanged": dict(n_components=1)},
     KMeans: {"check_dict_unchanged": dict(max_iter=5, n_clusters=1, n_init=2)},
     KernelPCA: {"check_dict_unchanged": dict(n_components=1)},
     LassoLars: {"check_non_transformer_estimators_n_iter": dict(alpha=0.0)},
+    LassoCV: {"check_sample_weight_equivalence": dict(max_iter=100, tol=1e-2)},
     LatentDirichletAllocation: {
         "check_dict_unchanged": dict(batch_size=10, max_iter=5, n_components=1)
     },
@@ -539,10 +544,21 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     LocallyLinearEmbedding: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     LogisticRegression: {
         "check_sample_weight_equivalence": [
-            dict(solver="lbfgs"),
-            dict(solver="liblinear"),
-            dict(solver="newton-cg"),
-            dict(solver="newton-cholesky"),
+            dict(solver="lbfgs", max_iter=1_000, tol=1e-12),
+            # liblinear has more problems with higher regularization apparently...
+            dict(solver="liblinear", C=0.01, max_iter=1_000, tol=1e-12),
+            dict(solver="newton-cg", max_iter=1_000, tol=1e-12),
+            dict(solver="newton-cholesky", max_iter=1_000, tol=1e-12),
+        ]
+    },
+    LogisticRegressionCV: {
+        "check_sample_weight_equivalence": [
+            dict(
+                solver="newton-cholesky",
+                Cs=np.logspace(-3, 3, 5),
+                max_iter=1_000,
+                tol=1e-12,
+            ),
         ]
     },
     MDS: {"check_dict_unchanged": dict(max_iter=5, n_components=1, n_init=2)},
@@ -571,8 +587,8 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     PLSSVD: {"check_dict_unchanged": dict(n_components=1)},
     PoissonRegressor: {
         "check_sample_weight_equivalence": [
-            dict(solver="newton-cholesky"),
-            dict(solver="lbfgs"),
+            dict(solver="newton-cholesky", max_iter=100),
+            dict(solver="lbfgs", max_iter=100),
         ]
     },
     PolynomialCountSketch: {"check_dict_unchanged": dict(n_components=1)},
@@ -626,8 +642,8 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     TruncatedSVD: {"check_dict_unchanged": dict(n_components=1)},
     TweedieRegressor: {
         "check_sample_weight_equivalence": [
-            dict(solver="newton-cholesky"),
-            dict(solver="lbfgs"),
+            dict(solver="newton-cholesky", max_iter=1_000, tol=1e-12),
+            dict(solver="lbfgs", max_iter=1_000, tol=1e-12),
         ]
     },
 }

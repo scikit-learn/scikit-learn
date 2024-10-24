@@ -33,7 +33,12 @@ from ..datasets import (
     make_multilabel_classification,
     make_regression,
 )
-from ..exceptions import DataConversionWarning, NotFittedError, SkipTestWarning
+from ..exceptions import (
+    ConvergenceWarning,
+    DataConversionWarning,
+    NotFittedError,
+    SkipTestWarning,
+)
 from ..linear_model._base import LinearClassifierMixin
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 from ..metrics.pairwise import linear_kernel, pairwise_distances, rbf_kernel
@@ -1161,8 +1166,13 @@ def check_sample_weight_equivalence(name, estimator_orig):
     y_weighted = _enforce_estimator_tags_y(estimator_weighted, y_weighted)
     y_repeated = _enforce_estimator_tags_y(estimator_repeated, y_repeated)
 
-    estimator_repeated.fit(X_repeated, y=y_repeated, sample_weight=None)
-    estimator_weighted.fit(X_weigthed, y=y_weighted, sample_weight=sw)
+    with warnings.catch_warnings(record=True):
+        # Ensure we converge, otherwise debugging sample_weight equivalence
+        # failures can be very misleading.
+        warnings.simplefilter("error", category=ConvergenceWarning)
+
+        estimator_repeated.fit(X_repeated, y=y_repeated, sample_weight=None)
+        estimator_weighted.fit(X_weigthed, y=y_weighted, sample_weight=sw)
 
     X_test = rng.uniform(low=X.min(), high=X.max(), size=(300, n_features))
 
