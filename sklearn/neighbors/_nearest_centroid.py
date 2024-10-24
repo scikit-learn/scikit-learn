@@ -83,8 +83,8 @@ class NearestCentroid(
 
     deviations_ : ndarray of shape (n_classes, n_features)
         Deviations (or shrinkages) of the centroids of each class from the
-        overall centroid. Equal to eq. (18.4) if shrink_threshold = None,
-        else (18.5) p. 653 of the ESL. Can be used to identify features used
+        overall centroid. Equal to eq. (18.4) if `shrink_threshold=None`,
+        else (18.5) p. 653 of [2]. Can be used to identify features used
         for classification.
 
         .. versionadded:: 1.6
