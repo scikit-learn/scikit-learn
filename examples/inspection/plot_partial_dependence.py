@@ -570,3 +570,41 @@ clb.ax.set_title("Partial\ndependence")
 plt.show()
 
 # %%
+# Custom Inspection Points
+# ~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# All of the examples so far do not specify _which_ points are evaluated to create the
+# partial dependence plots. By default we use percentiles defined by the input dataset.
+# In some cases it can be helpful to specify the exact points where you would like the
+# model evaluated. For instance, if a user wants to test the model behavior on
+# out-of-distribution data or compare two models that were fit on slightly different
+# data. The `custom_values` parameter allows the user to pass in the values that they
+# want the model to be evaluated on. This overrides the `grid_resolution` and
+# `percentiles` parameters. Let's return to our gradient boosting example above
+# but with custom values
+
+print("Computing partial dependence plots with custom evaluation values...")
+tic = time()
+_, ax = plt.subplots(ncols=3, nrows=2, figsize=(9, 8), constrained_layout=True)
+display = PartialDependenceDisplay.from_estimator(
+    hgbdt_model,
+    X_train,
+    **features_info,
+    ax=ax,
+    **common_params,
+    # we set custom values for temp feature -
+    # all other features are evaluated based on the data
+    custom_values={"temp": np.linspace(0, 40, 10)},
+)
+print(f"done in {time() - tic:.3f}s")
+_ = display.figure_.suptitle(
+    (
+        "Partial dependence of the number of bike rentals\n"
+        "for the bike rental dataset with a gradient boosting"
+    ),
+    fontsize=16,
+)
+
+
+# %%
+
