@@ -1,0 +1,4 @@
+- `PassiveAggressiveClassifier` and `PassiveAggressiveRegressor` are deprecated
+  and will be removed in 1.8. Equivalent estimators are available with `SGDClassifier`
+  and `SGDRegressor`.
+  By :user:`Christian Lorentzen <lorentzenchr>`.
