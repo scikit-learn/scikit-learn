@@ -341,7 +341,7 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
     >>> thresholds
     array([0.35, 0.4 , 0.8 ])
     """
-    fps, tps, thresholds = _binary_clf_curve(
+    fps, tps, thresholds = binary_classification_curve(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
     )
 
@@ -775,7 +775,7 @@ def _multiclass_roc_auc_score(
         )
 
 
-def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
+def binary_classification_curve(y_true, y_score, pos_label=None, sample_weight=None):
     """Calculate true and false positives per binary classification threshold.
 
     Parameters
@@ -808,6 +808,20 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
 
     thresholds : ndarray of shape (n_thresholds,)
         Decreasing score values.
+
+    Examples
+    -------
+    >>> import numpy as np
+    >>> from sklearn.metrics import binary_classification_curve
+    >>> y_true = np.array([0,0,1,1])
+    >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> fps, fns, thresholds = binary_classifaction_curve(y_true, y_scores)
+    >>> fps
+    array([0, 1, 1, 2])
+    >>> fns
+    array([1, 1, 2, 2])
+    >>> thresholds
+    array([0.8, 0.4, 0.35, 0.1])
     """
     # Check to make sure y_true is valid
     y_type = type_of_target(y_true, input_name="y_true")
@@ -997,7 +1011,7 @@ def precision_recall_curve(
         )
         y_score = probas_pred
 
-    fps, tps, thresholds = _binary_clf_curve(
+    fps, tps, thresholds = binary_classification_curve(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
     )
 
@@ -1140,7 +1154,7 @@ def roc_curve(
     >>> thresholds
     array([ inf, 0.8 , 0.4 , 0.35, 0.1 ])
     """
-    fps, tps, thresholds = _binary_clf_curve(
+    fps, tps, thresholds = binary_classification_curve(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
     )
 
@@ -1150,7 +1164,7 @@ def roc_curve(
     # Here np.diff(_, 2) is used as a "second derivative" to tell if there
     # is a corner at the point. Both fps and tps must be tested to handle
     # thresholds with multiple data points (which are combined in
-    # _binary_clf_curve). This keeps all cases where the point should be kept,
+    # binary_classification_curve). This keeps all cases where the point should be kept,
     # but does not drop more complicated cases like fps = [1, 3, 7],
     # tps = [1, 2, 4]; there is no harm in keeping too many thresholds.
     if drop_intermediate and len(fps) > 2:
