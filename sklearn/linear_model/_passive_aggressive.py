@@ -17,8 +17,6 @@ from ._stochastic_gradient import DEFAULT_EPSILON, BaseSGDClassifier, BaseSGDReg
 class PassiveAggressiveClassifier(BaseSGDClassifier):
     """Passive Aggressive Classifier.
 
-    Read more in the :ref:`User Guide <passive_aggressive>`.
-
     .. deprecated:: 1.6
         The whole class `PassiveAggressiveClassifier` was deprecated in version 1.6
         and will be removed in 1.8. Instead use::
@@ -33,6 +31,8 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
             clf.C = 1.0  # Note that this uses a private API.
 
         With `loss="squared_hinge"`, one would set learning_rate="pa2".
+
+    Read more in the :ref:`User Guide <passive_aggressive>`.
 
     Parameters
     ----------
@@ -340,8 +340,6 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 class PassiveAggressiveRegressor(BaseSGDRegressor):
     """Passive Aggressive Regressor.
 
-    Read more in the :ref:`User Guide <passive_aggressive>`.
-
     .. deprecated:: 1.6
         The whole class `PassiveAggressiveRegressor` was deprecated in version 1.6
         and will be removed in 1.8. Instead use::
@@ -358,6 +356,8 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
 
         With `loss="squared_epsilon_insensitive"`, one would set learning_rate="pa2".
         Use `SGDRegressor` instead.
+
+    Read more in the :ref:`User Guide <passive_aggressive>`.
 
     Parameters
     ----------
