@@ -585,8 +585,8 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
         "check_sample_weight_equivalence": [
             dict(solver="svd"),
             dict(solver="cholesky"),
-            dict(solver="sparse_cg"),
-            dict(solver="lsqr"),
+            dict(solver="sparse_cg", tol=1e-12),
+            dict(solver="lsqr", tol=1e-12),
             dict(solver="lbfgs", positive=True),
         ]
     },
@@ -594,8 +594,8 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
         "check_sample_weight_equivalence": [
             dict(solver="svd"),
             dict(solver="cholesky"),
-            dict(solver="sparse_cg"),
-            dict(solver="lsqr"),
+            dict(solver="sparse_cg", tol=1e-12),
+            dict(solver="lsqr", tol=1e-12),
             dict(solver="lbfgs", positive=True),
         ]
     },
