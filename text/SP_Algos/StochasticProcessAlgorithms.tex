@@ -1,0 +1,89 @@
+\documentclass[]{article}
+\usepackage{tikz}
+\usepackage[toc,page]{appendix}
+\usepackage{amsmath}
+\usetikzlibrary{calc}
+\usepackage{relsize}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{xcolor}
+\usepackage{tabularx}
+\usepackage{comment}
+\usepackage{tikz} 
+\usepackage{outlines}
+\usepackage[a4paper, total={6in, 10in}]{geometry}
+\captionsetup{font=footnotesize}
+
+\graphicspath{ {./Figures/} }
+
+\title{Stochastic Process Algorithms}
+\author{Conrad Stevens}
+
+\usepackage[thinc]{esdiff}
+
+\begin{document}
+
+\maketitle
+
+%\begin{abstract}
+%	Explores the informative properties of Bayes filtering
+%\end{abstract}
+
+\section{Gaussian Processes}
+Let:
+\begin{equation}
+	\alpha = K^{-1}y
+\end{equation}
+Log likelihood and gradient of observed points:
+\begin{equation}
+	\begin{aligned}
+		\ln(p(y) | X, \theta) &= -\frac{1}{2}y^T_n K^{-1} y - \frac{1}{2}\ln(|K|) - \frac{n}{2}\ln(2\pi)\\
+		\diffp{}{{\theta_1}}\ln(p(y) | X, \theta) &= \frac{1}{2}y^TK^{-1} \diffp{K}{{\theta_1}} K^{-1} y - \frac{1}{2}\text{tr}(K^{-1} \diffp{K}{{\theta_1}}) \\
+		&= \frac{1}{2} \alpha^T \diffp{K}{{\theta_1}} \alpha - \frac{1}{2}\text{tr}(K^{-1} \diffp{K}{{\theta_1}}) \\
+		&= \frac{1}{2}(\text{tr}\Bigl(\alpha\alpha^T\diffp{K}{{\theta_1}} \Bigl) - \text{tr}\Bigl(K^{-1} \diffp{K}{{\theta_1}}\Bigl))\\
+		&= \frac{1}{2}\text{tr}\Bigl(\alpha\alpha^T\diffp{K}{{\theta_1}} - K^{-1} \diffp{K}{{\theta_1}}\Bigl) \\
+		&= \frac{1}{2} \text{tr} \Bigl( (\alpha \alpha^T - K^{-1}) \diffp{K}{{\theta_1}} \Bigl) \\
+	\end{aligned}
+\end{equation}
+
+\section{T Process}
+Log likelihood and gradient of observed points:
+\begin{equation}
+	\begin{aligned}
+		\ln(p(y) | X, \theta) &= \Gamma(\frac{v}{2}) - \Gamma(\frac{v_0}{2}) - \frac{n}{2}\ln(v_0\pi) - \frac{v}{2}\ln(1+\frac{1}{v_0}y^T K^{-1} y) - \frac{1}{2}\ln(|K|)\\
+		\diffp{}{{\theta_1}}\ln(p(y) | X, \theta) &= \diffp{}{{\theta_1}} \Bigl( - \frac{v}{2}\ln(1+\frac{1}{v_0}y^T K^{-1} y) \Bigl) + \diffp{}{{\theta_1}} \Bigl((-\frac{1}{2}\ln(|K|)\Bigl) \\
+		&= \frac{v}{2} \frac{y^TK^{-1} \diffp{K}{{\theta_1}} K^{-1} y}{v_0+y^T K^{-1} y} - \frac{1}{2}\text{tr}(K^{-1} \diffp{K}{{\theta_1}})\\
+		&= \frac{v}{v_0+y^T K^{-1} y} \times \frac{1}{2} y^TK^{-1} \diffp{K}{{\theta_1}} K^{-1} y - \frac{1}{2}\text{tr}(K^{-1} \diffp{K}{{\theta_1}})\\
+		&= \frac{v}{v_0 + y^T\alpha}\times\frac{1}{2} \text{tr}(\alpha\alpha^T \diffp{K}{{\theta_1}}) - \frac{1}{2}\text{tr}(K^{-1} \diffp{K}{{\theta_1}})\\
+		&= \frac{1}{2}\text{tr}\Bigl(\frac{v}{v_0 + y^T\alpha} \times \alpha\alpha^T \diffp{K}{{\theta_1}} -  K^{-1} \diffp{K}{{\theta_1}}\Bigl)\\
+		&= \frac{1}{2}\text{tr}\Bigl(\Bigl(\frac{v}{v_0 + y^T\alpha} \times \alpha\alpha^T - K^{-1} \Bigl) \diffp{K}{{\theta_1}} \Bigl)
+	\end{aligned}
+\end{equation}
+
+\section{Appendix}
+\begin{equation}
+	\begin{aligned}
+		\diffp{}{{\theta_1}} \Bigl( - \frac{v}{2}\ln(1+\frac{1}{v_0}y^T_n K^{-1} y) \Bigl) 
+		&= - \frac{v}{2} \diffp{}{{\theta_1}} \Bigl( \ln(1+\frac{1}{v_0}y^T_n K^{-1} y) \Bigl)\\
+		&= - \frac{v}{2} \Bigl(1+\frac{1}{v_0}y^T_n K^{-1} y\Bigl)^{-1}  \diffp{}{{\theta_1}} \Bigl( 1+\frac{1}{v_0}y^T_n K^{-1} y \Bigl)\\
+		&= - \frac{v}{2v_0} \Bigl(\frac{v_0 + y^T_n K^{-1} y}{v_0} \Bigl)^{-1} \diffp{}{{\theta_1}}\Bigl(y^T_n K^{-1} y \Bigl)\\
+		&= \frac{v}{2} \Bigl(v_0 + y^T_n K^{-1} y \Bigl)^{-1}  y^TK^{-1} \diffp{K}{{\theta_1}} K^{-1} y\\
+		&= \frac{v}{2} \frac{y^TK^{-1} \diffp{K}{{\theta_1}} K^{-1} y}{v_0+y^T_n K^{-1} y}\\		
+	\end{aligned}
+\end{equation}
+
+\end{document}
+
+
+
+
+
+
+
+
+
+
+
+
