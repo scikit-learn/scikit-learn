@@ -607,21 +607,23 @@ def check_estimator(estimator=None, generate_only=False, *, legacy: bool = True)
 
     name = type(estimator).__name__
 
-    def checks_generator():
+    def checks_generator(reference_estimator):
         # we first need to check if the estimator is cloneable for the rest of the tests
         # to run
         yield estimator, partial(check_estimator_cloneable, name)
         for check in _yield_all_checks(estimator, legacy=legacy):
-            for check_instance in _yield_instances_for_check(check, estimator):
-                maybe_skipped_check = _maybe_skip(check_instance, check)
-                yield check_instance, partial(maybe_skipped_check, name)
+            for check_specific_estimator in _yield_instances_for_check(
+                check, reference_estimator
+            ):
+                maybe_skipped_check = _maybe_skip(check_specific_estimator, check)
+                yield check_specific_estimator, partial(maybe_skipped_check, name)
 
     if generate_only:
-        return checks_generator()
+        return checks_generator(estimator)
 
-    for estimator, check in checks_generator():
+    for check_specific_estimator, check in checks_generator(estimator):
         try:
-            check(estimator)
+            check(check_specific_estimator)
         except SkipTest as exception:
             # SkipTest is thrown when pandas can't be imported, or by checks
             # that are in the xfail_checks tag
