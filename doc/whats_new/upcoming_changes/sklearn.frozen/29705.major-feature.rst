@@ -1,0 +1,4 @@
+- :class:`~sklearn.frozen.FrozenEstimator` is now introduced which allows
+  freezing an estimator. This means calling `.fit` on it has no effect, and doing a
+  `clone(frozenestimator)` returns the same estimator instead of an unfitted clone.
+  :pr:`29705` By `Adrin Jalali`_
