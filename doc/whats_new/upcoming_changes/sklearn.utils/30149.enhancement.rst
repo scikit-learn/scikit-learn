@@ -1,8 +1,32 @@
-- :func:`~utils.estimator_checks.check_estimator` now accepts the list of tests that are
-  expected to fail. Similarly, :func:`~utils.estimator_checks.parametrize_with_checks`
-  accepts a callable which returns a list of expected failed checks.
-  The :func:`~utils.estimator_checks.check_estimator` function also accepts an
-  ``on_fail`` parameter, which can be a callable invoked when a check fails.
-  :func:`~utils.estimator_checks.check_estimator` now returns a list of dictionaries
-  with information about the failed or skipped checks.
+- Changes to :func:`~utils.estimator_checks.check_estimator` and
+  :func:`~utils.estimator_checks.parametrize_with_checks`.
+
+  - :func:`~utils.estimator_checks.check_estimator` introduces a new ``fast_fail``
+    parameter. If ``True``, the function raises an exception as soon as a check
+    fails. Otherwise, it collects information about the failed checks and raises
+    an exception at the end. If ``False``, the function returns a list of
+    dictionaries with information about the failed or skipped checks, or includes
+    the information in the raised ``AssertionError`` exception, depending on whether
+    at least one test which is not expected to fail, fails or not.
+
+  - :func:`~utils.estimator_checks.parametrize_with_checks` introduces a new
+    ``on_fail`` parameter, which can be a callable invoked when a check fails.
+
+  - ``generate_only=True`` is deprecated in
+    :func:`~utils.estimator_checks.check_estimator`. Use
+    :func:`~utils.estimator_checks.checks_generator` instead.
+
+  - Replacing the ``_xfail_checks`` estimator tag,
+    :func:`~utils.estimator_checks.check_estimator` and
+    :func:`~utils.estimator_checks.parametrize_with_checks` now accept a parameter
+    ``expected_failed_checks``, which is respectively a dictionary, or a callable
+    returning a dictionary of the form::
+
+        {
+            "check_name": "my reason",
+        }
+
+  - :func:`~utils.estimator_checks.check_estimator` now accepts an ``on_fail``
+    parameter, which can be a callable invoked when a check fails.
+
   By `Adrin Jalali`_.
