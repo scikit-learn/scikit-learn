@@ -403,6 +403,8 @@ def _yield_all_checks(estimator, legacy: bool):
 
 
 def _check_name(check):
+    if hasattr(check, "__wrapped__"):
+        return _check_name(check.__wrapped__)
     return check.func.__name__ if isinstance(check, partial) else check.__name__
 
 
@@ -446,7 +448,7 @@ def _maybe_mark(
                 f"Skipping {_check_name(check)} for {estimator_name}: {reason}"
             )
 
-        return wrapped
+        return estimator, wrapped
 
 
 def _should_be_skipped_or_marked(
@@ -781,6 +783,7 @@ def check_estimator(
 
     name = type(estimator).__name__
 
+    # TODO(1.8): remove generate_only
     if generate_only:
         warnings.warn(
             "`generate_only` is deprecated in 1.6 and will be removed in 1.8. "

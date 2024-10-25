@@ -6,6 +6,7 @@ import importlib
 import sys
 import unittest
 import warnings
+from inspect import isgenerator
 from numbers import Integral, Real
 
 import joblib
@@ -34,7 +35,10 @@ from sklearn.svm import SVC, NuSVC
 from sklearn.utils import _array_api, all_estimators, deprecated
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils._tags import default_tags
-from sklearn.utils._test_common.instance_generator import _get_expected_failed_checks
+from sklearn.utils._test_common.instance_generator import (
+    _construct_instances,
+    _get_expected_failed_checks,
+)
 from sklearn.utils._testing import (
     MinimalClassifier,
     MinimalRegressor,
@@ -44,6 +48,7 @@ from sklearn.utils._testing import (
     raises,
 )
 from sklearn.utils.estimator_checks import (
+    _check_name,
     _NotAnArray,
     _yield_all_checks,
     check_array_api_input,
@@ -79,6 +84,7 @@ from sklearn.utils.estimator_checks import (
     check_requires_y_none,
     check_sample_weights_pandas_series,
     check_set_params,
+    checks_generator,
     set_random_state,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS, SPARRAY_PRESENT
@@ -760,6 +766,28 @@ def test_check_classifiers_one_label_sample_weights():
         )
 
 
+def test_check_estimator_not_fail_fast():
+    """Check that check_estimator does not fail fast when fail_fast=False."""
+    try:
+        check_estimator(BaseEstimator(), fail_fast=False)
+    except AssertionError as e:
+        assert isinstance(e.args[0], list)
+        assert len(e.args[0]) > 0
+        assert all(
+            isinstance(item, dict)
+            and set(item.keys())
+            == {
+                "estimator",
+                "check_name",
+                "exception",
+                "status",
+                "expected_to_fail",
+                "expected_to_fail_reason",
+            }
+            for item in e.args[0]
+        )
+
+
 def test_check_estimator():
     # tests that the estimator actually fails on "bad" estimators.
     # not a complete test of all checks, which are very extensive.
@@ -767,7 +795,7 @@ def test_check_estimator():
     # check that we have a fit method
     msg = "object has no attribute 'fit'"
     with raises(AttributeError, match=msg):
-        check_estimator(BaseEstimator())
+        check_estimator(BaseEstimator(), fail_fast=True)
 
     # does error on binary_only untagged estimator
     msg = "Only 2 classes are supported"
@@ -1222,13 +1250,34 @@ if __name__ == "__main__":
 
 
 def test_xfail_ignored_in_check_estimator():
-    # Make sure checks marked as xfail are just ignored and not run by
-    # check_estimator(), but still raise a warning.
+    # Make sure the failure of checks marked as xfail are just ignored and don't cause
+    # error in check_estimator(), but still raise a warning
+    est = NuSVC()
+    expected_to_fail = _get_expected_failed_checks(est)
+    # making sure we use a class that has expected failures
+    assert len(expected_to_fail) > 0
     with warnings.catch_warnings(record=True) as records:
-        check_estimator(
-            NuSVC(), expected_failed_checks=_get_expected_failed_checks(NuSVC())
-        )
+        check_estimator(est, expected_failed_checks=expected_to_fail)
     assert TestFailedWarning in [rec.category for rec in records]
+
+
+def test_checks_generator_skipping_tests():
+    # Make sure the checks generator skips tests that are expected to fail
+    est = next(_construct_instances(NuSVC))
+    expected_to_fail = _get_expected_failed_checks(est)
+    checks = checks_generator(
+        est, legacy=True, expected_failed_checks=expected_to_fail, mark="skip"
+    )
+    # making sure we use a class that has expected failures
+    assert len(expected_to_fail) > 0
+    skipped_checks = []
+    for estimator, check in checks:
+        try:
+            check(estimator)
+        except SkipTest:
+            skipped_checks.append(_check_name(check))
+    assert len(skipped_checks) == len(expected_to_fail)
+    assert set(expected_to_fail.keys()) == set(skipped_checks)
 
 
 def test_xfail_count_with_no_fast_fail():
@@ -1518,3 +1567,9 @@ def test_estimator_with_set_output():
 
         estimator = StandardScaler().set_output(transform=lib)
         check_estimator(estimator)
+
+
+def test_checks_generator():
+    """Check that checks_generator returns a generator."""
+    all_instance_gen_checks = checks_generator(LogisticRegression())
+    assert isgenerator(all_instance_gen_checks)

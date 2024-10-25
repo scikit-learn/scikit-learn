@@ -58,7 +58,6 @@ from sklearn.utils.estimator_checks import (
     check_set_output_transform_polars,
     check_transformer_get_feature_names_out,
     check_transformer_get_feature_names_out_pandas,
-    checks_generator,
     parametrize_with_checks,
 )
 from sklearn.utils.fixes import _IS_WASM
@@ -124,8 +123,14 @@ def test_estimators(estimator, check, request):
         check(estimator)
 
 
-def test_checks_generator():
-    all_instance_gen_checks = checks_generator(LogisticRegression())
+# TODO(1.8): remove test when generate_only is removed
+def test_check_estimator_generate_only_deprecation():
+    """Check that check_estimator with generate_only=True raises a deprecation
+    warning."""
+    with pytest.warns(FutureWarning, match="`generate_only` is deprecated in 1.6"):
+        all_instance_gen_checks = check_estimator(
+            LogisticRegression(), generate_only=True
+        )
     assert isgenerator(all_instance_gen_checks)
 
 

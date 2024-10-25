@@ -1532,7 +1532,9 @@ def has_fit_parameter(estimator, parameter):
     >>> has_fit_parameter(SVC(), "sample_weight")
     True
     """
-    return parameter in signature(estimator.fit).parameters
+    return (
+        hasattr(estimator, "fit") and parameter in signature(estimator.fit).parameters
+    )
 
 
 def check_symmetric(array, *, tol=1e-10, raise_warning=True, raise_exception=False):
