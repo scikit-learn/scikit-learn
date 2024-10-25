@@ -31,15 +31,6 @@ Changes impacting many modules
 Changelog
 ---------
 
-:mod:`sklearn.multioutput`
-...........................
-
-- |Enhancement| Renamed parameter `base_estimator` to `estimator` in 
-  :class:`multioutput.RegressorChain` and 
-  :class:`multioutput.ClassifierChain` to improve consistency and reduce the 
-  chances of bugs. `base_estimator` is deprecated and will be removed in 1.7.
-  :pr:`30152` by :user:`Success Moses <SuccessMoses>`
-
 :mod:`sklearn.calibration`
 ..........................
 
@@ -69,6 +60,15 @@ Changelog
   :func:`metrics.zero_one_loss` causing an error for Array API dispatch with multilabel
   inputs.
   :pr:`29336` by :user:`Edoardo Abati <EdAbati>`.
+
+:mod:`sklearn.multioutput`
+...........................
+
+- |Enhancement| Renamed parameter `base_estimator` to `estimator` in 
+  :class:`multioutput.RegressorChain` and 
+  :class:`multioutput.ClassifierChain` to improve consistency and reduce the 
+  chances of bugs. `base_estimator` is deprecated and will be removed in 1.7.
+  :pr:`30152` by :user:`Success Moses <SuccessMoses>`
 
 :mod:`sklearn.svm`
 ..................
