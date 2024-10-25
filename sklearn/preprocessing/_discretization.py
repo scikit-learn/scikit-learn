@@ -239,7 +239,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         if self.subsample is not None and n_samples > self.subsample:
             # Take a subsample of `X`
             # When resampling, it important to subsample **with replacement** to
-            # preserve the distribution, in particular in the presences of a few data
+            # preserve the distribution, in particular in the presence of a few data
             # points with large weights.
             X = resample(
                 X,
