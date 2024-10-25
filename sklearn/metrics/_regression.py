@@ -147,11 +147,8 @@ def _check_reg_targets_and_floating_dtype(
 
     This helper automatically selects a floating-point data type with
     `_find_matching_floating_dtype` when computing with inputs that
-    follow the array API specification.
-
-    To inspect the resulting floating-point data type, users can access the
-    `.dtype` attribute of the returned arrays, e.g., `y_true.dtype` or
-    `y_pred.dtype`.
+    follow the array API specification and ensure that all non-None inputs
+    are converted to that common dtype if needed before returning them.
 
     Parameters
     ----------
