@@ -31,6 +31,15 @@ Changes impacting many modules
 Changelog
 ---------
 
+:mod:`sklearn.multioutput`
+...........................
+
+- |Enhancement| Renamed parameter `base_estimator` to `estimator` in 
+  :class:`sklearn.multioutput.RegressorChain` and 
+  :class:`sklearn.multioutput.ClassifierChain` to improve consistency and reduce the 
+  chances of bugs. `base_estimator` is deprecated and will be removed in 1.7.
+  :pr:`30152` by :user:`Success Moses <SuccessMoses>`
+
 :mod:`sklearn.calibration`
 ..........................
 
