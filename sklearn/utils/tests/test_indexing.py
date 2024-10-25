@@ -4,6 +4,7 @@ from unittest import SkipTest
 
 import numpy as np
 import pytest
+from scipy.stats import kstest
 
 import sklearn
 from sklearn.externals._packaging.version import parse as parse_version
@@ -493,6 +494,29 @@ def test_resample():
 
     # Issue:6581, n_samples can be more when replace is True (default).
     assert len(resample([1, 2], n_samples=5)) == 5
+
+
+def test_resample_weighted():
+
+    data = np.array([-1, 0, 1, 100])
+    sample_weight = np.asarray([0, 100, 1, 20])
+
+    mean_repeated = []
+    mean_reweighted = []
+
+    for seed in range(100):
+        mean_repeated.append(
+            resample(data.repeat(sample_weight), replace=True, random_state=seed).mean()
+        )
+        mean_reweighted.append(
+            resample(
+                data, sample_weight=sample_weight, replace=True, random_state=seed
+            ).mean()
+        )
+
+    test_result = kstest(np.asarray(mean_repeated), np.asarray(mean_repeated))
+
+    assert test_result.pvalue > 0.025
 
 
 def test_resample_stratified():
