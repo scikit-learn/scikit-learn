@@ -351,7 +351,8 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # TODO: replace by a statistical test when _dual=True, see meta-issue #16298
+        # TODO: investigate both with dual=True and dual=False, see meta-issue #16298
+        # and replace by a statistical test when dual=False
         tags._xfail_checks = {
             "check_sample_weight_equivalence": (
                 "sample_weight is not equivalent to removing/repeating samples."

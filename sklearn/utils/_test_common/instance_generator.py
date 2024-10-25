@@ -541,8 +541,19 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
         "check_dict_unchanged": dict(batch_size=10, max_iter=5, n_components=1)
     },
     LinearDiscriminantAnalysis: {"check_dict_unchanged": dict(n_components=1)},
-    LinearSVC: {"check_sample_weight_equivalence": dict(max_iter=100, tol=1e-12)},
-    LinearSVR: {"check_sample_weight_equivalence": dict(max_iter=100, tol=1e-12)},
+    LinearSVC: {
+        "check_sample_weight_equivalence": [
+            # XXX: the dual solver has trouble converging on the test data with
+            # a lower tolerance...
+            dict(dual=True, max_iter=1_000, tol=1e-3),
+            dict(dual=False, max_iter=1_000, tol=1e-12),
+        ],
+    },
+    LinearSVR: {
+        "check_sample_weight_equivalence": [
+            dict(dual=True, max_iter=1_000, tol=1e-8),
+        ],
+    },
     LocallyLinearEmbedding: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     LogisticRegression: {
         "check_sample_weight_equivalence": [
