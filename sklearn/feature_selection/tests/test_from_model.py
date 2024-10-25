@@ -393,7 +393,9 @@ def test_2d_coef():
 
 
 def test_partial_fit():
-    est = SGDClassifier(random_state=0, shuffle=False, max_iter=5, tol=None)
+    est = SGDClassifier(
+        random_state=0, shuffle=False, max_iter=5, tol=None, learning_rate="pa1"
+    )
     transformer = SelectFromModel(estimator=est)
     transformer.partial_fit(data, y, classes=np.unique(y))
     old_model = transformer.estimator_
