@@ -1232,6 +1232,11 @@ def test_xfail_ignored_in_check_estimator():
 
 
 def test_xfail_count_with_no_fast_fail():
+    """Test that the right number of xfail warnings are raised when fail_fast is False.
+
+    It also checks the number of raised TestFailedWarnings, and checks the output
+    of check_estimator.
+    """
     est = NuSVC()
     expected_failed_checks = _get_expected_failed_checks(est)
     # This is to make sure we test a class that has some expected failures
@@ -1248,6 +1253,36 @@ def test_xfail_count_with_no_fast_fail():
 
     xfailed = [log for log in logs if log["status"] == "xfail"]
     assert len(xfailed) == len(expected_failed_checks)
+
+
+def test_check_estimator_on_fail_callback():
+    """Test that the on_fail callback is called with the right arguments."""
+    call_count = 0
+
+    def on_fail_callback(
+        estimator,
+        check_name,
+        exception,
+        status,
+        expected_to_fail,
+        expected_to_fail_reason,
+    ):
+        assert status == "xfail"
+        nonlocal call_count
+        call_count += 1
+
+    est = NuSVC()
+    expected_failed_checks = _get_expected_failed_checks(est)
+    # This is to make sure we test a class that has some expected failures
+    assert len(expected_failed_checks) > 0
+    with warnings.catch_warnings(record=True) as records:
+        logs = check_estimator(
+            est,
+            expected_failed_checks=expected_failed_checks,
+            fail_fast=False,
+            on_fail=on_fail_callback,
+        )
+    assert call_count == len(expected_failed_checks)
 
 
 # FIXME: this test should be uncommented when the checks will be granular

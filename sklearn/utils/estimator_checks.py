@@ -421,6 +421,9 @@ def _maybe_mark(
         Estimator instance for which to generate checks.
     check : partial or callable
         Check to be marked.
+    expected_failed_checks : dict[str, str], default=None
+        Dictionary of the form {check_name: reason} for checks that are expected to
+        fail.
     mark : "xfail" or "skip" or None
         Whether to mark the check as xfail or skip.
     pytest : pytest object, default=None
