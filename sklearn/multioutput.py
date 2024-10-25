@@ -14,6 +14,7 @@ from numbers import Integral
 
 import numpy as np
 import scipy.sparse as sp
+import warnings
 
 from .base import (
     BaseEstimator,
@@ -637,6 +638,7 @@ def _available_if_base_estimator_has(attr):
 class _BaseChain(BaseEstimator, metaclass=ABCMeta):
     _parameter_constraints: dict = {
         "base_estimator": [HasMethods(["fit", "predict"])],
+        "estimator" : [HasMethods(["fit", "predict"])],
         "order": ["array-like", StrOptions({"random"}), None],
         "cv": ["cv_object", StrOptions({"prefit"})],
         "random_state": ["random_state"],
@@ -644,8 +646,9 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
     }
 
     def __init__(
-        self, base_estimator, *, order=None, cv=None, random_state=None, verbose=False
+        self, estimator=None, base_estimator="deprecated", *, order=None, cv=None, random_state=None, verbose=False
     ):
+        self.estimator = estimator
         self.base_estimator = base_estimator
         self.order = order
         self.cv = cv
@@ -719,6 +722,12 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         self : object
             Returns a fitted instance.
         """
+        if self.base_estimator != 'deprecated':
+            warnings.warn("`base_estimator` was renamed to `estimator` in 1.5 and will be removed in 1.7", 
+                         FutureWarning)
+        elif self.estimator is not None:
+            self.base_estimator = self.estimator
+
         X, Y = validate_data(self, X, Y, multi_output=True, accept_sparse=True)
 
         random_state = check_random_state(self.random_state)
