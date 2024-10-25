@@ -1,0 +1,8 @@
+- :func:`~utils.estimator_checks.check_estimator` now accepts the list of tests that are
+  expected to fail. Similarly, :func:`~utils.estimator_checks.parametrize_with_checks`
+  accepts a callable which returns a list of expected failed checks.
+  The :func:`~utils.estimator_checks.check_estimator` function also accepts an
+  ``on_fail`` parameter, which can be a callable invoked when a check fails.
+  :func:`~utils.estimator_checks.check_estimator` now returns a list of dictionaries
+  with information about the failed or skipped checks.
+  By `Adrin Jalali`_.
