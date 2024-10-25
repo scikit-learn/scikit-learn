@@ -645,6 +645,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         "verbose": ["boolean"],
     }
 
+    # TODO(1.7): Remove base_estimator
     def __init__(
         self,
         estimator=None,
@@ -729,6 +730,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         self : object
             Returns a fitted instance.
         """
+        # TODO(1.7): Remove when base_estimator is removed
         if self.base_estimator != "deprecated":
 
             warning_text = (
@@ -1239,7 +1241,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
            [1., 1.],
            [2., 0.]])
     """
-
+    
     @_fit_context(
         # RegressorChain.base_estimator is not validated yet
         prefer_skip_nested_validation=False

@@ -62,7 +62,7 @@ Changelog
   :pr:`29336` by :user:`Edoardo Abati <EdAbati>`.
 
 :mod:`sklearn.multioutput`
-...........................
+..........................
 
 - |Enhancement| Renamed parameter `base_estimator` to `estimator` in 
   :class:`multioutput.RegressorChain` and 
