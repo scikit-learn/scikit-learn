@@ -240,6 +240,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         if self.subsample is not None and n_samples > self.subsample:
             # Take a subsample of `X`
+            # When resampling, it important to subsample **with replacement** to
+            # preserve the distribution, in particular in the presences of a few data
+            # points with large weights.
             X = resample(
                 X,
                 replace=True,
@@ -248,6 +251,11 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 sample_weight=sample_weight,
                 use_weights_in_resampling=use_weights_in_resampling,
             )
+            # Since we already used the weights when resampling when provided,
+            # we set them back to `None` to avoid accounting for the weights twice
+            # in subsequent operations to compute weight-aware bin edges with
+            # quantiles or k-means.
+            sample_weight = None
 
             # resample gives a list of resmpaled [X, sample_weight]
             # if sample_weight provided
@@ -258,7 +266,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         n_features = X.shape[1]
         n_bins = self._validate_n_bins(n_features)
 
-        if sample_weight is not None and not use_weights_in_resampling:
+        if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         bin_edges = np.zeros(n_features, dtype=object)
@@ -279,7 +287,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
             elif self.strategy == "quantile":
                 quantiles = np.linspace(0, 100, n_bins[jj] + 1)
-                if use_weights_in_resampling or sample_weight is None:
+                if sample_weight is None:
                     bin_edges[jj] = np.asarray(np.percentile(column, quantiles))
                 else:
                     bin_edges[jj] = np.asarray(
@@ -297,16 +305,10 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 init = (uniform_edges[1:] + uniform_edges[:-1])[:, None] * 0.5
 
                 # 1D k-means procedure
-                if use_weights_in_resampling:
-                    km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1)
-                    centers = km.fit(
-                        column[:, None],
-                    ).cluster_centers_[:, 0]
-                else:
-                    km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1)
-                    centers = km.fit(
-                        column[:, None], sample_weight=sample_weight
-                    ).cluster_centers_[:, 0]
+                km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1)
+                centers = km.fit(
+                    column[:, None], sample_weight=sample_weight
+                ).cluster_centers_[:, 0]
                 # Must sort, centers may be unsorted even with sorted init
                 centers.sort()
                 bin_edges[jj] = (centers[1:] + centers[:-1]) * 0.5
