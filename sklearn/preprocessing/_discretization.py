@@ -11,6 +11,7 @@ from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import resample
 from ..utils._param_validation import Interval, Options, StrOptions
 from ..utils.deprecation import _deprecate_Xt_in_inverse_transform
+from ..utils.stats import _weighted_percentile
 from ..utils.validation import (
     _check_feature_names_in,
     check_array,
@@ -275,7 +276,16 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
             elif self.strategy == "quantile":
                 quantiles = np.linspace(0, 100, n_bins[jj] + 1)
-                bin_edges[jj] = np.asarray(np.percentile(column, quantiles))
+                if sample_weight is None:
+                    bin_edges[jj] = np.asarray(np.percentile(column, quantiles))
+                else:
+                    bin_edges[jj] = np.asarray(
+                        [
+                            _weighted_percentile(column, sample_weight, q)
+                            for q in quantiles
+                        ],
+                        dtype=np.float64,
+                    )
 
             elif self.strategy == "kmeans":
                 from ..cluster import KMeans  # fixes import loops

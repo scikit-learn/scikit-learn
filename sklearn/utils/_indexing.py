@@ -414,6 +414,7 @@ def _get_column_indices_interchange(X_interchange, key, key_dtype):
         "n_samples": [Interval(numbers.Integral, 1, None, closed="left"), None],
         "random_state": ["random_state"],
         "stratify": ["array-like", "sparse matrix", None],
+        "sample_weights": ["array_like", None],
     },
     prefer_skip_nested_validation=True,
 )
