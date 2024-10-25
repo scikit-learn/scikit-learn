@@ -1543,6 +1543,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     ...                                                     random_state=1)
     >>> regr = MLPRegressor(random_state=1, max_iter=2000, tol=0.1)
     >>> regr.fit(X_train, y_train)
+    MLPRegressor(max_iter=2000, random_state=1, tol=0.1)
     >>> regr.predict(X_test[:2])
     array([  28..., -290...])
     >>> regr.score(X_test, y_test)
