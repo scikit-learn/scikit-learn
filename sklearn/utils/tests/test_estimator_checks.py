@@ -20,7 +20,7 @@ from sklearn.datasets import (
     make_multilabel_classification,
 )
 from sklearn.decomposition import PCA
-from sklearn.exceptions import ConvergenceWarning, SkipTestWarning
+from sklearn.exceptions import ConvergenceWarning, SkipTestWarning, TestFailedWarning
 from sklearn.linear_model import (
     LinearRegression,
     LogisticRegression,
@@ -34,6 +34,7 @@ from sklearn.svm import SVC, NuSVC
 from sklearn.utils import _array_api, all_estimators, deprecated
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils._tags import default_tags
+from sklearn.utils._test_common.instance_generator import _get_expected_failed_checks
 from sklearn.utils._testing import (
     MinimalClassifier,
     MinimalRegressor,
@@ -771,7 +772,7 @@ def test_check_estimator():
     # does error on binary_only untagged estimator
     msg = "Only 2 classes are supported"
     with raises(ValueError, match=msg):
-        check_estimator(UntaggedBinaryClassifier())
+        check_estimator(UntaggedBinaryClassifier(), fail_fast=True)
 
     for csr_container in CSR_CONTAINERS:
         # non-regression test for estimators transforming to sparse data
@@ -789,7 +790,7 @@ def test_check_estimator():
     # Check regressor with requires_positive_y estimator tag
     msg = "negative y values not supported!"
     with raises(ValueError, match=msg):
-        check_estimator(RequiresPositiveYRegressor())
+        check_estimator(RequiresPositiveYRegressor(), fail_fast=True)
 
     # Does not raise error on classifier with poor_score tag
     check_estimator(PoorScoreLogisticRegression())
@@ -808,7 +809,7 @@ def test_check_outlier_corruption():
 def test_check_estimator_transformer_no_mixin():
     # check that TransformerMixin is not required for transformer tests to run
     with raises(AttributeError, ".*fit_transform.*"):
-        check_estimator(BadTransformerWithoutMixin())
+        check_estimator(BadTransformerWithoutMixin(), fail_fast=True)
 
 
 def test_check_estimator_clones():
@@ -828,7 +829,9 @@ def test_check_estimator_clones():
             est = Estimator()
             set_random_state(est)
             old_hash = joblib.hash(est)
-            check_estimator(est)
+            check_estimator(
+                est, expected_failed_checks=_get_expected_failed_checks(est)
+            )
         assert old_hash == joblib.hash(est)
 
         # with fitting
@@ -837,7 +840,9 @@ def test_check_estimator_clones():
             set_random_state(est)
             est.fit(iris.data, iris.target)
             old_hash = joblib.hash(est)
-            check_estimator(est)
+            check_estimator(
+                est, expected_failed_checks=_get_expected_failed_checks(est)
+            )
         assert old_hash == joblib.hash(est)
 
 
@@ -909,7 +914,7 @@ def test_check_estimator_pairwise():
 
     # test precomputed metric
     est = KNeighborsRegressor(metric="precomputed")
-    check_estimator(est)
+    check_estimator(est, expected_failed_checks=_get_expected_failed_checks(est))
 
 
 def test_check_classifier_data_not_an_array():
@@ -1220,8 +1225,29 @@ def test_xfail_ignored_in_check_estimator():
     # Make sure checks marked as xfail are just ignored and not run by
     # check_estimator(), but still raise a warning.
     with warnings.catch_warnings(record=True) as records:
-        check_estimator(NuSVC())
-    assert SkipTestWarning in [rec.category for rec in records]
+        check_estimator(
+            NuSVC(), expected_failed_checks=_get_expected_failed_checks(NuSVC())
+        )
+    assert TestFailedWarning in [rec.category for rec in records]
+
+
+def test_xfail_count_with_no_fast_fail():
+    est = NuSVC()
+    expected_failed_checks = _get_expected_failed_checks(est)
+    # This is to make sure we test a class that has some expected failures
+    assert len(expected_failed_checks) > 0
+    with warnings.catch_warnings(record=True) as records:
+        logs = check_estimator(
+            est,
+            expected_failed_checks=expected_failed_checks,
+            fail_fast=False,
+            on_fail="warn",
+        )
+    xfail_warns = [w for w in records if w.category != SkipTestWarning]
+    assert len(xfail_warns) == len(expected_failed_checks)
+
+    xfailed = [log for log in logs if log["status"] == "xfail"]
+    assert len(xfailed) == len(expected_failed_checks)
 
 
 # FIXME: this test should be uncommented when the checks will be granular

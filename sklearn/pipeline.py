@@ -1047,16 +1047,6 @@ class Pipeline(_BaseComposition):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_dont_overwrite_parameters": (
-                "Pipeline changes the `steps` parameter, which it shouldn't."
-                "Therefore this test is x-fail until we fix this."
-            ),
-            "check_estimators_overwrite_params": (
-                "Pipeline changes the `steps` parameter, which it shouldn't."
-                "Therefore this test is x-fail until we fix this."
-            ),
-        }
 
         try:
             tags.input_tags.pairwise = get_tags(self.steps[0][1]).input_tags.pairwise
@@ -1928,15 +1918,6 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             )
 
         return router
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags._xfail_checks = {
-            "check_estimators_overwrite_params": "FIXME",
-            "check_estimators_nan_inf": "FIXME",
-            "check_dont_overwrite_parameters": "FIXME",
-        }
-        return tags
 
 
 def make_union(*transformers, n_jobs=None, verbose=False):

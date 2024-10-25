@@ -2,6 +2,7 @@
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
+from __future__ import annotations
 
 import pickle
 import re
@@ -12,6 +13,7 @@ from copy import deepcopy
 from functools import partial, wraps
 from inspect import signature
 from numbers import Integral, Real
+from typing import Callable, Literal
 
 import joblib
 import numpy as np
@@ -33,7 +35,12 @@ from ..datasets import (
     make_multilabel_classification,
     make_regression,
 )
-from ..exceptions import DataConversionWarning, NotFittedError, SkipTestWarning
+from ..exceptions import (
+    DataConversionWarning,
+    NotFittedError,
+    SkipTestWarning,
+    TestFailedWarning,
+)
 from ..linear_model._base import LinearClassifierMixin
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 from ..metrics.pairwise import linear_kernel, pairwise_distances, rbf_kernel
@@ -395,57 +402,138 @@ def _yield_all_checks(estimator, legacy: bool):
         yield check_fit_non_negative
 
 
-def _maybe_mark_xfail(estimator, check, pytest):
-    # Mark (estimator, check) pairs as XFAIL if needed (see conditions in
-    # _should_be_skipped_or_marked())
-    # This is similar to _maybe_skip(), but this one is used by
-    # @parametrize_with_checks() instead of check_estimator()
+def _check_name(check):
+    return check.func.__name__ if isinstance(check, partial) else check.__name__
 
-    should_be_marked, reason = _should_be_skipped_or_marked(estimator, check)
-    if not should_be_marked:
+
+def _maybe_mark(
+    estimator,
+    check,
+    expected_failed_checks: dict[str, str] | None = None,
+    mark: Literal["xfail", "skip", None] = None,
+    pytest=None,
+):
+    """Mark the test as xfail or skip if needed.
+
+    Parameters
+    ----------
+    estimator : estimator object
+        Estimator instance for which to generate checks.
+    check : partial or callable
+        Check to be marked.
+    mark : "xfail" or "skip" or None
+        Whether to mark the check as xfail or skip.
+    pytest : pytest object, default=None
+        Pytest module to use to mark the check.
+    """
+    should_be_marked, reason = _should_be_skipped_or_marked(
+        estimator, check, expected_failed_checks
+    )
+    if not should_be_marked or mark is None:
         return estimator, check
-    else:
+
+    estimator_name = estimator.__class__.__name__
+    if mark == "xfail":
         return pytest.param(estimator, check, marks=pytest.mark.xfail(reason=reason))
+    else:
+
+        @wraps(check)
+        def wrapped(*args, **kwargs):
+            raise SkipTest(
+                f"Skipping {_check_name(check)} for {estimator_name}: {reason}"
+            )
+
+        return wrapped
 
 
-def _maybe_skip(estimator, check):
-    # Wrap a check so that it's skipped if needed (see conditions in
-    # _should_be_skipped_or_marked())
-    # This is similar to _maybe_mark_xfail(), but this one is used by
-    # check_estimator() instead of @parametrize_with_checks which requires
-    # pytest
-    should_be_skipped, reason = _should_be_skipped_or_marked(estimator, check)
-    if not should_be_skipped:
-        return check
+def _should_be_skipped_or_marked(
+    estimator, check, expected_failed_checks: dict[str, str] | None = None
+) -> tuple[bool, str]:
+    """Check whether a check should be skipped or marked as xfail.
 
-    check_name = check.func.__name__ if isinstance(check, partial) else check.__name__
+    Parameters
+    ----------
+    estimator : estimator object
+        Estimator instance for which to generate checks.
+    check : partial or callable
+        Check to be marked.
+    expected_failed_checks : dict[str, str], default=None
+        Dictionary of the form {check_name: reason} for checks that are expected to
+        fail.
 
-    @wraps(check)
-    def wrapped(*args, **kwargs):
-        raise SkipTest(
-            f"Skipping {check_name} for {estimator.__class__.__name__}: {reason}"
-        )
+    Returns
+    -------
+    should_be_marked : bool
+        Whether the check should be marked as xfail or skipped.
+    reason : str
+        Reason for skipping the check.
+    """
 
-    return wrapped
+    expected_failed_checks = expected_failed_checks or {}
 
+    check_name = _check_name(check)
+    if check_name in expected_failed_checks:
+        return True, expected_failed_checks[check_name]
 
-def _should_be_skipped_or_marked(estimator, check):
-    # Return whether a check should be skipped (when using check_estimator())
-    # or marked as XFAIL (when using @parametrize_with_checks()), along with a
-    # reason.
-    # Currently, a check should be skipped or marked if
-    # the check is in the _xfail_checks tag of the estimator
-
-    check_name = check.func.__name__ if isinstance(check, partial) else check.__name__
-
-    xfail_checks = get_tags(estimator)._xfail_checks or {}
-    if check_name in xfail_checks:
-        return True, xfail_checks[check_name]
-
-    return False, "placeholder reason that will never be used"
+    return False, "Check is not expected to fail"
 
 
-def parametrize_with_checks(estimators, *, legacy: bool = True):
+def checks_generator(
+    estimator,
+    *,
+    legacy: bool = True,
+    expected_failed_checks: dict[str, str] | None = None,
+    mark: Literal["xfail", "skip", None] = None,
+):
+    """Generate checks for an estimator.
+
+    Parameters
+    ----------
+    estimator : estimator object
+        Estimator instance for which to generate checks.
+    legacy : bool, default=True
+        Whether to include legacy checks. Over time we remove checks from this category
+        and move them into their specific category.
+    expected_failed_checks : dict[str, str], default=None
+        Dictionary of the form {check_name: reason} for checks that are expected to
+        fail.
+    mark : "xfail" or "skip" or None, default=None
+        Whether to mark the checks that are expected to fail as
+        xfail(`pytest.mark.xfail`) or skip. Skip will raise a
+        :class:`~sklearn.exceptions.SkipTest` for the test.
+
+    Returns
+    -------
+    checks_generator : generator
+        Generator that yields (estimator, check) tuples.
+    """
+    if mark == "xfail":
+        import pytest
+    else:
+        pytest = None  # type: ignore
+
+    name = type(estimator).__name__
+    # First check that the estimator is cloneable which is needed for the rest
+    # of the checks to run
+    yield estimator, partial(check_estimator_cloneable, name)
+    for check in _yield_all_checks(estimator, legacy=legacy):
+        check_with_name = partial(check, name)
+        for check_instance in _yield_instances_for_check(check, estimator):
+            yield _maybe_mark(
+                check_instance,
+                check_with_name,
+                expected_failed_checks=expected_failed_checks,
+                mark=mark,
+                pytest=pytest,
+            )
+
+
+def parametrize_with_checks(
+    estimators,
+    *,
+    legacy: bool = True,
+    expected_failed_checks: Callable | None = None,
+):
     """Pytest specific decorator for parametrizing estimator checks.
 
     Checks are categorised into the following groups:
@@ -479,6 +567,17 @@ def parametrize_with_checks(estimators, *, legacy: bool = True):
 
         .. versionadded:: 1.6
 
+    expected_failed_checks : callable, default=None
+        A callable that takes an estimator as input and returns a dictionary of the
+        form::
+
+            {
+                "check_name": "my reason",
+            }
+
+        Where `"check_name"` is the name of the check, and `"my reason"` is why
+        the check fails. These tests will be marked as xfail if the check fails.
+
     Returns
     -------
     decorator : `pytest.mark.parametrize`
@@ -509,23 +608,29 @@ def parametrize_with_checks(estimators, *, legacy: bool = True):
         )
         raise TypeError(msg)
 
-    def checks_generator():
+    def _checks_generator(estimators, legacy, expected_failed_checks):
         for estimator in estimators:
-            # First check that the estimator is cloneable which is needed for the rest
-            # of the checks to run
-            name = type(estimator).__name__
-            yield estimator, partial(check_estimator_cloneable, name)
-            for check in _yield_all_checks(estimator, legacy=legacy):
-                check_with_name = partial(check, name)
-                for check_instance in _yield_instances_for_check(check, estimator):
-                    yield _maybe_mark_xfail(check_instance, check_with_name, pytest)
+            args = {"estimator": estimator, "legacy": legacy, "mark": "xfail"}
+            if callable(expected_failed_checks):
+                args["expected_failed_checks"] = expected_failed_checks(estimator)
+            yield from checks_generator(**args)
 
     return pytest.mark.parametrize(
-        "estimator, check", checks_generator(), ids=_get_check_estimator_ids
+        "estimator, check",
+        _checks_generator(estimators, legacy, expected_failed_checks),
+        ids=_get_check_estimator_ids,
     )
 
 
-def check_estimator(estimator=None, generate_only=False, *, legacy: bool = True):
+def check_estimator(
+    estimator=None,
+    generate_only=False,
+    *,
+    legacy: bool = True,
+    expected_failed_checks: dict[str, str] | None = None,
+    fail_fast: bool = False,
+    on_fail: Callable | Literal["warn"] | None = "warn",
+):
     """Check if estimator adheres to scikit-learn conventions.
 
     This function will run an extensive test-suite for input validation,
@@ -568,17 +673,88 @@ def check_estimator(estimator=None, generate_only=False, *, legacy: bool = True)
 
         .. versionadded:: 0.22
 
+        .. deprecated:: 1.6
+            `generate_only` will be removed in 1.8. Use
+            :func:`~sklearn.utils.estimator_checks.checks_generator` instead.
+
     legacy : bool, default=True
         Whether to include legacy checks. Over time we remove checks from this category
         and move them into their specific category.
 
         .. versionadded:: 1.6
 
+    expected_failed_checks : dict, default=None
+        A dictionary of the form::
+
+            {
+                "check_name": "my reason",
+            }
+
+        Where `"check_name"` is the name of the check, and `"my reason"` is why
+        the check fails.
+
+    fail_fast : bool, default=False
+        Whether to stop running checks after the first failure. If ``False``, an
+        exception will be raised after all checks are run and at least one check
+        failed. If ``True``, ``on_fail`` has no effect.
+
+    on_fail : callable, "warn", None, default="warn"
+        If a callable, it will be called with the estimator and the check name,
+        the exception, and the reason for the expected failure if the check is
+        expected to fail. The callable's signature needs to be::
+
+            def on_fail(
+                estimator,
+                check_name: str,
+                exception: Exception,
+                status: Literal["xfail", "failed", "skipped"],
+                expected_to_fail: bool,
+                expected_to_fail_reason: str,
+            )
+
+        If "warn", a :class:`~sklearn.exceptions.TestFailedWarning` will be logged,
+        and the check will still raise an exception after all the tests are run.
+
+        If ``fail_fast=True``, ``on_fail`` has no effect.
+
     Returns
     -------
+    test_results : list
+        List of dictionaries with the results of the failing tests, of the form::
+
+            {
+                "estimator": estimator,
+                "check_name": check_name,
+                "exception": exception,
+                "status": status,
+                "expected_to_fail": expected_to_fail,
+                "expected_to_fail_reason": expected_to_fail_reason,
+            }
+
+        This return value is only present when all tests pass, or the ones failing
+        are expected to fail.
+
     checks_generator : generator
         Generator that yields (estimator, check) tuples. Returned when
         `generate_only=True`.
+
+        ..
+            TODO(1.8): remove return value
+
+        .. deprecated:: 1.6
+            ``generate_only`` will be removed in 1.8. Use
+            :func:`~sklearn.utils.estimator_checks.checks_generator` instead.
+
+    Raises
+    ------
+    AssertionError
+        An `AssertionError` is raised if any of the checks fail that is not expected
+        to fail.
+
+        If ``fail_fast=True``, only the first error raised is raised and tests stop.
+
+        If ``fail_fast=False``, an `AssertionError` is raised with all the test results
+        included in it after running all the tests.
 
     See Also
     --------
@@ -589,8 +765,8 @@ def check_estimator(estimator=None, generate_only=False, *, legacy: bool = True)
     --------
     >>> from sklearn.utils.estimator_checks import check_estimator
     >>> from sklearn.linear_model import LogisticRegression
-    >>> check_estimator(LogisticRegression(), generate_only=True)
-    <generator object ...>
+    >>> check_estimator(LogisticRegression())
+    [...]
     """
     if isinstance(estimator, type):
         msg = (
@@ -602,25 +778,80 @@ def check_estimator(estimator=None, generate_only=False, *, legacy: bool = True)
 
     name = type(estimator).__name__
 
-    def checks_generator():
-        # we first need to check if the estimator is cloneable for the rest of the tests
-        # to run
-        yield estimator, partial(check_estimator_cloneable, name)
-        for check in _yield_all_checks(estimator, legacy=legacy):
-            for check_instance in _yield_instances_for_check(check, estimator):
-                maybe_skipped_check = _maybe_skip(check_instance, check)
-                yield check_instance, partial(maybe_skipped_check, name)
-
     if generate_only:
-        return checks_generator()
+        warnings.warn(
+            "`generate_only` is deprecated in 1.6 and will be removed in 1.8. "
+            "Use :func:`~sklearn.utils.estimator_checks.estimator_checks` instead.",
+            FutureWarning,
+        )
+        return checks_generator(
+            estimator, legacy=legacy, expected_failed_checks=None, mark="skip"
+        )
 
-    for estimator, check in checks_generator():
+    test_results = []
+    failed = False
+
+    for estimator, check in checks_generator(
+        estimator,
+        legacy=legacy,
+        expected_failed_checks=expected_failed_checks,
+        # Not marking tests to be skipped here, we run and simulate an xfail behavior
+        mark=None,
+    ):
+        test_can_fail, reason = _should_be_skipped_or_marked(
+            estimator, check, expected_failed_checks
+        )
         try:
             check(estimator)
-        except SkipTest as exception:
-            # SkipTest is thrown when pandas can't be imported, or by checks
-            # that are in the xfail_checks tag
-            warnings.warn(str(exception), SkipTestWarning)
+        except SkipTest as e:
+            # We get here if the test raises SkipTest, which is expected in cases where
+            # the check cannot run for instance if a required dependency is not
+            # installed.
+            check_result = {
+                "estimator": estimator,
+                "check_name": _check_name(check),
+                "exception": e,
+                "status": "skipped",
+                "expected_to_fail": test_can_fail,
+                "expected_to_fail_reason": reason,
+            }
+            test_results.append(check_result)
+            warnings.warn(
+                f"Skipping check {_check_name(check)} for {name} because it raised "
+                f"{type(e).__name__}: {e}",
+                SkipTestWarning,
+            )
+        except Exception as e:
+            if fail_fast:
+                raise
+
+            check_result = {
+                "estimator": estimator,
+                "check_name": _check_name(check),
+                "exception": e,
+                "expected_to_fail": test_can_fail,
+                "expected_to_fail_reason": reason,
+            }
+
+            if test_can_fail:
+                # This check failed, but could be expected to fail, therefore we mark it
+                # as xfail.
+                check_result["status"] = "xfail"
+            else:
+                failed = True
+                check_result["status"] = "failed"
+
+            if on_fail == "warn":
+                warning = TestFailedWarning(**check_result)
+                warnings.warn(warning)
+            elif callable(on_fail):
+                on_fail(**check_result)
+
+            test_results.append(check_result)
+
+    if failed:
+        raise AssertionError(test_results)
+    return test_results
 
 
 def _regression_dataset():
