@@ -857,7 +857,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
     Parameters
     ----------
-    base_estimator : estimator
+    estimator : estimator, default=None
         The base estimator from which the classifier chain is built.
 
     order : array-like of shape (n_outputs,) or 'random', default=None
@@ -914,6 +914,12 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
         .. versionadded:: 1.2
 
+    base_estimator : estimator, default="deprecated"
+        Use `estimator` instead.
+        .. deprecated:: 1.5
+            `base_estimator` is deprecated and will be removed in 1.7.
+            Use `estimator` instead.
+
     Attributes
     ----------
     classes_ : list
@@ -966,7 +972,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     ...    X, Y, random_state=0
     ... )
     >>> base_lr = LogisticRegression(solver='lbfgs', random_state=0)
-    >>> chain = ClassifierChain(base_lr, order='random', random_state=0)
+    >>> chain = ClassifierChain(estimator=base_lr, order='random', random_state=0)
     >>> chain.fit(X_train, Y_train).predict(X_test)
     array([[1., 1., 0.],
            [1., 0., 0.],
@@ -990,7 +996,8 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
     def __init__(
         self,
-        base_estimator,
+        estimator = None,
+        base_estimator="deprecated",
         *,
         order=None,
         cv=None,
@@ -1000,6 +1007,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     ):
         super().__init__(
             base_estimator,
+            estimator,
             order=order,
             cv=cv,
             random_state=random_state,
@@ -1131,7 +1139,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
 
     Parameters
     ----------
-    base_estimator : estimator
+    estimator : estimator
         The base estimator from which the regressor chain is built.
 
     order : array-like of shape (n_outputs,) or 'random', default=None
@@ -1175,6 +1183,12 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
 
         .. versionadded:: 1.2
 
+    base_estimator : estimator, default="deprected"
+        Use `estimator` instead.
+        .. deprected:: 1.5
+            `base_estimator` is deprected and will be removed in 1.7.
+            Use `estimator` instead.
+
     Attributes
     ----------
     estimators_ : list
@@ -1207,7 +1221,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
     >>> from sklearn.linear_model import LogisticRegression
     >>> logreg = LogisticRegression(solver='lbfgs')
     >>> X, Y = [[1, 0], [0, 1], [1, 1]], [[0, 2], [1, 1], [2, 0]]
-    >>> chain = RegressorChain(base_estimator=logreg, order=[0, 1]).fit(X, Y)
+    >>> chain = RegressorChain(estimator=logreg, order=[0, 1]).fit(X, Y)
     >>> chain.predict(X)
     array([[0., 2.],
            [1., 1.],
