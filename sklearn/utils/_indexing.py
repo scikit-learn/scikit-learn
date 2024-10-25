@@ -531,9 +531,9 @@ def resample(
         if replace:
             if sample_weight is not None:
 
-                sample_weight = sample_weight / sample_weight.sum()
+                p = sample_weight / sample_weight.sum()
                 indices = random_state.choice(
-                    np.arange(n_samples), size=(max_n_samples,), p=sample_weight
+                    np.arange(n_samples), size=(max_n_samples,), p=p
                 )
             else:
                 indices = random_state.choice(
