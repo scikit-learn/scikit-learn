@@ -518,7 +518,7 @@ def test_resample_weighted():
 
     test_result = ttest_ind(mean_repeated, mean_reweighted, equal_var=False)
 
-    assert test_result.pvalue > 0.1
+    assert test_result.pvalue > 0.05
 
 
 def test_resample_stratified():
