@@ -874,9 +874,11 @@ def test_base_estimator_deprecation(Estimator):
     X = np.array([[1, 2], [3, 4]])
     y = np.array([1, 0])
 
-    with pytest.warns(
-        FutureWarning,
-        match="`base_estimator` was renamed to `estimator` in 1.5 and will be removed in 1.7",
-    ):
+    match = (
+        "`base_estimator` was renamed to `estimator` in 1.5 "
+        "and will be removed in 1.7."
+    )
+
+    with pytest.warns(FutureWarning, match=match):
 
         Estimator().fit(X, y)

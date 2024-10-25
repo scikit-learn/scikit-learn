@@ -9,12 +9,12 @@ extends single output estimators to multioutput estimators.
 # SPDX-License-Identifier: BSD-3-Clause
 
 
+import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Integral
 
 import numpy as np
 import scipy.sparse as sp
-import warnings
 
 from .base import (
     BaseEstimator,
@@ -730,10 +730,13 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             Returns a fitted instance.
         """
         if self.base_estimator != "deprecated":
-            warnings.warn(
-                "`base_estimator` was renamed to `estimator` in 1.5 and will be removed in 1.7",
-                FutureWarning,
+
+            warning_text = (
+                "`base_estimator` was renamed to `estimator` in 1.5 "
+                "and will be removed in 1.7."
             )
+
+            warnings.warn(warning_text, FutureWarning)
         elif self.estimator is not None:
             self.base_estimator = self.estimator
 
