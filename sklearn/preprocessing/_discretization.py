@@ -11,10 +11,8 @@ from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import resample
 from ..utils._param_validation import Interval, Options, StrOptions
 from ..utils.deprecation import _deprecate_Xt_in_inverse_transform
-from ..utils.stats import _weighted_percentile
 from ..utils.validation import (
     _check_feature_names_in,
-    _check_sample_weight,
     check_array,
     check_is_fitted,
     validate_data,
@@ -198,7 +196,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         self.random_state = random_state
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y=None, sample_weight=None, use_weights_in_resampling=True):
+    def fit(self, X, y=None, sample_weight=None):
         """
         Fit the estimator.
 
@@ -249,7 +247,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 n_samples=self.subsample,
                 random_state=self.random_state,
                 sample_weight=sample_weight,
-                use_weights_in_resampling=use_weights_in_resampling,
             )
             # Since we already used the weights when resampling when provided,
             # we set them back to `None` to avoid accounting for the weights twice
@@ -257,17 +254,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             # quantiles or k-means.
             sample_weight = None
 
-            # resample gives a list of resmpaled [X, sample_weight]
-            # if sample_weight provided
-            if sample_weight is not None and not use_weights_in_resampling:
-                sample_weight = X[1]
-                X = X[0]
-
         n_features = X.shape[1]
         n_bins = self._validate_n_bins(n_features)
-
-        if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         bin_edges = np.zeros(n_features, dtype=object)
         for jj in range(n_features):
@@ -287,16 +275,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
             elif self.strategy == "quantile":
                 quantiles = np.linspace(0, 100, n_bins[jj] + 1)
-                if sample_weight is None:
-                    bin_edges[jj] = np.asarray(np.percentile(column, quantiles))
-                else:
-                    bin_edges[jj] = np.asarray(
-                        [
-                            _weighted_percentile(column, sample_weight, q)
-                            for q in quantiles
-                        ],
-                        dtype=np.float64,
-                    )
+                bin_edges[jj] = np.asarray(np.percentile(column, quantiles))
+
             elif self.strategy == "kmeans":
                 from ..cluster import KMeans  # fixes import loops
 
