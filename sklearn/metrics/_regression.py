@@ -59,7 +59,7 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric", xp=None):
     """Check that y_true and y_pred belong to the same regression task.
 
     To reduce redundancy when calling `_find_matching_floating_dtype`,
-    please use `_check_reg_targets_and_floating_dtype` instead.
+    please use `_check_reg_targets_with_floating_dtype` instead.
 
     Parameters
     ----------
@@ -140,7 +140,7 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric", xp=None):
     return y_type, y_true, y_pred, multioutput
 
 
-def _check_reg_targets_and_floating_dtype(
+def _check_reg_targets_with_floating_dtype(
     y_true, y_pred, sample_weight, multioutput, xp=None
 ):
     """Ensure that y_true and y_pred correspond to the same regression task.
@@ -264,7 +264,7 @@ def mean_absolute_error(
     xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
 
     _, y_true, y_pred, sample_weight, multioutput = (
-        _check_reg_targets_and_floating_dtype(
+        _check_reg_targets_with_floating_dtype(
             y_true, y_pred, sample_weight, multioutput, xp=xp
         )
     )
@@ -460,7 +460,7 @@ def mean_absolute_percentage_error(
     """
     xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
     _, y_true, y_pred, sample_weight, multioutput = (
-        _check_reg_targets_and_floating_dtype(
+        _check_reg_targets_with_floating_dtype(
             y_true, y_pred, sample_weight, multioutput, xp=xp
         )
     )
@@ -552,7 +552,7 @@ def mean_squared_error(
     """
     xp, _ = get_namespace(y_true, y_pred, sample_weight, multioutput)
     _, y_true, y_pred, sample_weight, multioutput = (
-        _check_reg_targets_and_floating_dtype(
+        _check_reg_targets_with_floating_dtype(
             y_true, y_pred, sample_weight, multioutput, xp=xp
         )
     )
@@ -728,7 +728,7 @@ def mean_squared_log_error(
     """
     xp, _ = get_namespace(y_true, y_pred)
 
-    _, y_true, y_pred, _, _ = _check_reg_targets_and_floating_dtype(
+    _, y_true, y_pred, _, _ = _check_reg_targets_with_floating_dtype(
         y_true, y_pred, sample_weight, multioutput, xp=xp
     )
 
@@ -804,7 +804,7 @@ def root_mean_squared_log_error(
     """
     xp, _ = get_namespace(y_true, y_pred)
 
-    _, y_true, y_pred, _, _ = _check_reg_targets_and_floating_dtype(
+    _, y_true, y_pred, _, _ = _check_reg_targets_with_floating_dtype(
         y_true, y_pred, sample_weight, multioutput, xp=xp
     )
 
@@ -1244,7 +1244,7 @@ def r2_score(
     )
 
     _, y_true, y_pred, sample_weight, multioutput = (
-        _check_reg_targets_and_floating_dtype(
+        _check_reg_targets_with_floating_dtype(
             y_true, y_pred, sample_weight, multioutput, xp=xp
         )
     )
@@ -1412,7 +1412,7 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
     1.4260...
     """
     xp, _ = get_namespace(y_true, y_pred)
-    y_type, y_true, y_pred, sample_weight, _ = _check_reg_targets_and_floating_dtype(
+    y_type, y_true, y_pred, sample_weight, _ = _check_reg_targets_with_floating_dtype(
         y_true, y_pred, sample_weight, multioutput=None, xp=xp
     )
     if y_type == "continuous-multioutput":
@@ -1626,7 +1626,7 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     """
     xp, _ = get_namespace(y_true, y_pred)
 
-    y_type, y_true, y_pred, sample_weight, _ = _check_reg_targets_and_floating_dtype(
+    y_type, y_true, y_pred, sample_weight, _ = _check_reg_targets_with_floating_dtype(
         y_true, y_pred, sample_weight, multioutput=None, xp=xp
     )
     if y_type == "continuous-multioutput":
