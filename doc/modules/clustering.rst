@@ -242,7 +242,7 @@ to the dataset :math:`X`.
   using :class:`KMeans` and :class:`MiniBatchKMeans` based on sparse data
 
 * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_plusplus.py`: Using K-means++
-to select seeds for other clustering algorithms.
+  to select seeds for other clustering algorithms.
 
 Low-level parallelism
 ---------------------
