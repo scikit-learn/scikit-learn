@@ -864,3 +864,19 @@ def test_multioutput_regressor_has_partial_fit():
     msg = "This 'MultiOutputRegressor' has no attribute 'partial_fit'"
     with pytest.raises(AttributeError, match=msg):
         getattr(est, "partial_fit")
+
+# FIXME: remove in 1.7
+@pytest.mark.parametrize("Estimator", [ClassifierChain, RegressorChain])
+def test_base_estimator_deprecation(Estimator):
+    # Check that deprecation warning is raised when 
+    # calling .fit()
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    
+    with pytest.warns(
+        
+        FutureWarning, 
+        match="`base_estimator` was renamed to `estimator` in 1.5 and will be removed in 1.7"
+        ):
+            
+        Estimator().fit(X, y)
