@@ -190,7 +190,6 @@ def _check_reg_targets_and_floating_dtype(
         Custom output weights if ``multioutput`` is array-like or
         just the corresponding argument if ``multioutput`` is a
         correct keyword.
-
     """
     dtype_name = _find_matching_floating_dtype(y_true, y_pred, sample_weight, xp=xp)
 
