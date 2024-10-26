@@ -4,7 +4,7 @@ from unittest import SkipTest
 
 import numpy as np
 import pytest
-from scipy.stats import ttest_ind
+from scipy.stats import kstest
 
 import sklearn
 from sklearn.externals._packaging.version import parse as parse_version
@@ -498,25 +498,34 @@ def test_resample():
 
 def test_resample_weighted():
 
-    data = np.array([-1, 0, 1, 100])
-    sample_weight = np.asarray([0, 100, 1, 20])
+    data = np.array([-1, 0, 1])
+    sample_weight = np.asarray([0, 100, 1])
 
     mean_repeated = []
     mean_reweighted = []
 
     for seed in range(100):
         mean_repeated.append(
-            resample(data.repeat(sample_weight), replace=True, random_state=seed).mean()
+            resample(
+                data.repeat(sample_weight),
+                replace=True,
+                random_state=seed,
+                n_samples=data.shape[0],
+            ).mean()
         )
         mean_reweighted.append(
             resample(
-                data, sample_weight=sample_weight, replace=True, random_state=seed
+                data,
+                sample_weight=sample_weight,
+                replace=True,
+                random_state=seed,
+                n_samples=data.shape[0],
             ).mean()
         )
     mean_repeated = np.asarray(mean_repeated)
     mean_reweighted = np.asarray(mean_reweighted)
 
-    test_result = ttest_ind(mean_repeated, mean_reweighted, equal_var=False)
+    test_result = kstest(mean_repeated, mean_reweighted)
 
     assert test_result.pvalue > 0.05
 
