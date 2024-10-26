@@ -30,6 +30,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
     ignore_warnings,
 )
+from sklearn.utils.estimator_checks import check_sample_weight_equivalence
 from sklearn.utils.fixes import CSR_CONTAINERS
 
 ACTIVATION_TYPES = ["identity", "logistic", "tanh", "relu"]
@@ -1019,3 +1020,15 @@ def test_mlp_diverging_loss():
     # In python, float("nan") != float("nan")
     assert str(mlp.validation_scores_[-1]) == str(np.nan)
     assert isinstance(mlp.validation_scores_[-1], float)
+
+
+@pytest.mark.parametrize(
+    "name, estimator",
+    [
+        ("MLPClassifier-lbfgs", MLPClassifier(solver="lbfgs")),
+        ("MLPRegressor-sgd", MLPRegressor(solver="sgd", tol=1e-2, random_state=42)),
+    ],
+)
+def test_sample_weight_equivalence(name, estimator):
+    """Test non-default params for sample_weight equivalence."""
+    check_sample_weight_equivalence(name, estimator)
