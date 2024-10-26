@@ -1276,8 +1276,9 @@ def test_checks_generator_skipping_tests():
             check(estimator)
         except SkipTest:
             skipped_checks.append(_check_name(check))
-    assert len(skipped_checks) == len(expected_to_fail)
-    assert set(expected_to_fail.keys()) == set(skipped_checks)
+    # all checks expected to fail are skipped
+    # some others might also be skipped, if their dependencies are not installed.
+    assert set(expected_to_fail.keys()) <= set(skipped_checks)
 
 
 def test_xfail_count_with_no_fast_fail():
