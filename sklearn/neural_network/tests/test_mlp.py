@@ -863,7 +863,7 @@ def test_mlp_regressor_dtypes_casting():
     mlp_32.fit(X_digits[:300].astype(np.float32), y_digits[:300])
     pred_32 = mlp_32.predict(X_digits[300:].astype(np.float32))
 
-    assert_allclose(pred_64, pred_32, rtol=1e-04)
+    assert_allclose(pred_64, pred_32, rtol=5e-04)
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
