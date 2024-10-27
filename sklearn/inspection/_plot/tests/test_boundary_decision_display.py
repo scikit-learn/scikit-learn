@@ -586,7 +586,7 @@ def test_multiclass_plot_max_class(pyplot, response_method):
     disp = DecisionBoundaryDisplay.from_estimator(
         clf,
         X,
-        plot_method='pcolormesh',
+        plot_method="pcolormesh",
         response_method=response_method,
     )
 
