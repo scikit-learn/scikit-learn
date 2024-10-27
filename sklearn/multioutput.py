@@ -1241,7 +1241,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
            [1., 1.],
            [2., 0.]])
     """
-    
+
     @_fit_context(
         # RegressorChain.base_estimator is not validated yet
         prefer_skip_nested_validation=False
