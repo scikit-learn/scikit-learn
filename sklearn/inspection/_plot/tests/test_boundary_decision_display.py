@@ -599,7 +599,9 @@ def test_multiclass_plot_max_class(pyplot, response_method):
     highest_class = np.argmax(response, axis=2)
     for idx, quadmesh in enumerate(disp.surface_):
         # Note quadmesh mask is True (i.e. masked) when `idx` is NOT the highest class
-        assert_array_equal(highest_class != idx, quadmesh.get_array().mask)
+        assert_array_equal(
+            highest_class != idx, quadmesh.get_array().mask.reshape(*response.shape)
+        )
 
 
 @pytest.mark.parametrize(

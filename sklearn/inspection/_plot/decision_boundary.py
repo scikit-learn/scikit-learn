@@ -222,7 +222,13 @@ class DecisionBoundaryDisplay:
                 cmap = plt.get_cmap(cmap, self.response.shape[-1])
                 colors = cmap.colors
             else:
-                colors = [mpl.colors.to_rgba(color) for color in self.multiclass_colors]
+                try:
+                    colors = [mpl.colors.to_rgba(color) for color in self.multiclass_colors]
+                except ValueError as exc:
+                    raise ValueError(
+                        "Invalid Matplotlib color name passed to `multiclass_colors`:"
+                        f" '{self.multiclass_colors}'"
+                    )
 
             multiclass_cmaps = [
                 mpl.colors.LinearSegmentedColormap.from_list(
