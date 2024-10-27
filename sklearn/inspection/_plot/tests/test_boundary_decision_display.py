@@ -586,14 +586,20 @@ def test_multiclass_plot_max_class(pyplot, response_method):
     disp = DecisionBoundaryDisplay.from_estimator(
         clf,
         X,
+        plot_method='pcolormesh',
         response_method=response_method,
     )
 
     grid = np.concatenate([disp.xx0.reshape(-1, 1), disp.xx1.reshape(-1, 1)], axis=1)
-    response = getattr(clf, response_method)(grid)
-    assert_allclose(response.reshape(*disp.response.shape), disp.response)
+    response = getattr(clf, response_method)(grid).reshape(*disp.response.shape)
+    assert_allclose(response, disp.response)
 
     assert len(disp.surface_) == len(clf.classes_)
+    # Get which class has highest response and check it is plotted
+    highest_class = np.argmax(response, axis=2)
+    for idx, quadmesh in enumerate(disp.surface_):
+        # Note quadmesh mask is True (i.e. masked) when `idx` is NOT the highest class
+        assert_array_equal(highest_class != idx, quadmesh.get_array().mask)
 
 
 @pytest.mark.parametrize(
