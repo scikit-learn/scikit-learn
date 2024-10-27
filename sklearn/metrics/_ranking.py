@@ -1745,7 +1745,7 @@ def _ndcg_sample_scores(
 
     zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
         Sets the value to return when there is a zero division,
-        e.g. when all targets scores are equal to zero for some samples.
+        e.g. when all true relevances are equal to zero for some samples.
         If set to "warn", returns 1.0 input, but a warning is also raised.
 
     Returns
@@ -1764,13 +1764,14 @@ def _ndcg_sample_scores(
     # change the value of the re-ordered y_true)
     normalizing_gain = _dcg_sample_scores(y_true, y_true, k, ignore_ties=True)
     all_irrelevant = normalizing_gain == 0
-    if any(all_irrelevant) and zero_division == "warn":
-        msg = "ndcg() is ill-defined and set to 1.0. Use the `zero_division` "
-        "param to control this behavior."
-        warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
+    if any(all_irrelevant):
+        if zero_division == "warn":
+            msg = "ndcg() is ill-defined and set to 1.0. Use the `zero_division` "
+            "param to control this behavior."
+            warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
+        return np.asarray([[1 - _check_zero_division(zero_division)]])
     gain[all_irrelevant] = 0
     gain[~all_irrelevant] /= normalizing_gain[~all_irrelevant]
-    print("GAIN = ", gain)
     return gain
 
 
@@ -1832,7 +1833,7 @@ def ndcg_score(
 
     zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
         Sets the value to return when there is a zero division,
-        e.g. when all target scores are equal to zero for some samples.
+        e.g. when all true relevances are equal to zero for some samples.
         If set to "warn", returns 1.0 input, but a warning is also raised.
 
         .. versionadded:: 1.6
@@ -1912,8 +1913,6 @@ def ndcg_score(
     gain = _ndcg_sample_scores(
         y_true, y_score, k=k, ignore_ties=ignore_ties, zero_division=zero_division
     )
-    if zero_division == "warn":
-        return 1 - _check_zero_division(zero_division)
     return np.average(gain, weights=sample_weight)
 
 
