@@ -226,9 +226,9 @@ class SimpleImputer(_BaseImputer):
         .. versionadded:: 1.2
 
         .. versionchanged:: 1.6
-        Currently, when `keep_empty_feature=False` and `strategy="constant"`,
-        empty features are not dropped. This behaviour will change in version
-        1.8. Set `keep_empty_feature=True` to preserve this behaviour.
+            Currently, when `keep_empty_feature=False` and `strategy="constant"`,
+            empty features are not dropped. This behaviour will change in version
+            1.8. Set `keep_empty_feature=True` to preserve this behaviour.
 
     Attributes
     ----------

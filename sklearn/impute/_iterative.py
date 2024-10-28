@@ -635,6 +635,13 @@ class IterativeImputer(_BaseImputer):
 
         X_missing_mask = _get_mask(X, self.missing_values)
         mask_missing_values = X_missing_mask.copy()
+
+        # TODO (1.8): remove this once the deprecation is removed. In the meantime,
+        # we need to catch the warning to avoid false positives.
+        catch_warning = (
+            self.initial_strategy == "constant" and not self.keep_empty_features
+        )
+
         if self.initial_imputer_ is None:
             self.initial_imputer_ = SimpleImputer(
                 missing_values=self.missing_values,
@@ -642,9 +649,24 @@ class IterativeImputer(_BaseImputer):
                 fill_value=self.fill_value,
                 keep_empty_features=self.keep_empty_features,
             ).set_output(transform="default")
-            X_filled = self.initial_imputer_.fit_transform(X)
+
+            # TODO (1.8): remove this once the deprecation is removed to keep only
+            # the code in the else case.
+            if catch_warning:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", FutureWarning)
+                    X_filled = self.initial_imputer_.fit_transform(X)
+            else:
+                X_filled = self.initial_imputer_.fit_transform(X)
         else:
-            X_filled = self.initial_imputer_.transform(X)
+            # TODO (1.8): remove this once the deprecation is removed to keep only
+            # the code in the else case.
+            if catch_warning:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", FutureWarning)
+                    X_filled = self.initial_imputer_.transform(X)
+            else:
+                X_filled = self.initial_imputer_.transform(X)
 
         if in_fit:
             self._is_empty_feature = np.all(mask_missing_values, axis=0)
@@ -658,7 +680,8 @@ class IterativeImputer(_BaseImputer):
                 # The constant strategy has a specific behavior and preserve empty
                 # features even with ``keep_empty_features=False``. We need to drop
                 # the column for consistency.
-                # TODO: remove this `if` branch once the following issue is addressed:
+                # TODO (1.8): remove this `if` branch once the following issue is
+                # addressed:
                 # https://github.com/scikit-learn/scikit-learn/issues/29827
                 X_filled = X_filled[:, ~self._is_empty_feature]
 
