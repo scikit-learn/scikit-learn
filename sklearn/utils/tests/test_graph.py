@@ -1,10 +1,10 @@
-import pytest
 import numpy as np
+import pytest
 from scipy.sparse.csgraph import connected_components
 
+from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.neighbors import kneighbors_graph
 from sklearn.utils.graph import _fix_connected_components
-from sklearn.metrics.pairwise import pairwise_distances
 
 
 def test_fix_connected_components():

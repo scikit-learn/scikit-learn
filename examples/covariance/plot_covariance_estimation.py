@@ -15,6 +15,8 @@ set the amount of regularization, i.e. how to choose the bias-variance
 trade-off.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Generate sample data
@@ -37,8 +39,9 @@ X_test = np.dot(base_X_test, coloring_matrix)
 # Compute the likelihood on test data
 # -----------------------------------
 
-from sklearn.covariance import ShrunkCovariance, empirical_covariance, log_likelihood
 from scipy import linalg
+
+from sklearn.covariance import ShrunkCovariance, empirical_covariance, log_likelihood
 
 # spanning a range of possible shrinkage coefficient values
 shrinkages = np.logspace(-2, 0, 30)
@@ -73,8 +76,8 @@ loglik_real = -log_likelihood(emp_cov, linalg.inv(real_cov))
 #   are Gaussian, in particular for small samples.
 
 
+from sklearn.covariance import OAS, LedoitWolf
 from sklearn.model_selection import GridSearchCV
-from sklearn.covariance import LedoitWolf, OAS
 
 # GridSearch for an optimal shrinkage coefficient
 tuned_parameters = [{"shrinkage": shrinkages}]

@@ -1,11 +1,15 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from itertools import product
 
 import numpy as np
 
-from .. import confusion_matrix
-from ...utils import check_matplotlib_support
-from ...utils.multiclass import unique_labels
 from ...base import is_classifier
+from ...utils._optional_dependencies import check_matplotlib_support
+from ...utils._plotting import _validate_style_kwargs
+from ...utils.multiclass import unique_labels
+from .. import confusion_matrix
 
 
 class ConfusionMatrixDisplay:
@@ -142,7 +146,7 @@ class ConfusionMatrixDisplay:
 
         default_im_kw = dict(interpolation="nearest", cmap=cmap)
         im_kw = im_kw or {}
-        im_kw = {**default_im_kw, **im_kw}
+        im_kw = _validate_style_kwargs(default_im_kw, im_kw)
         text_kw = text_kw or {}
 
         self.im_ = ax.imshow(cm, **im_kw)
@@ -168,7 +172,7 @@ class ConfusionMatrixDisplay:
                     text_cm = format(cm[i, j], values_format)
 
                 default_text_kwargs = dict(ha="center", va="center", color=color)
-                text_kwargs = {**default_text_kwargs, **text_kw}
+                text_kwargs = _validate_style_kwargs(default_text_kwargs, text_kw)
 
                 self.text_[i, j] = ax.text(j, i, text_cm, **text_kwargs)
 

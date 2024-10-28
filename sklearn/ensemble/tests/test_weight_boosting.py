@@ -1,33 +1,33 @@
 """Testing for the boost module (sklearn.ensemble.boost)."""
 
-import numpy as np
-import pytest
 import re
 
-from scipy.sparse import csc_matrix
-from scipy.sparse import csr_matrix
-from scipy.sparse import coo_matrix
-from scipy.sparse import dok_matrix
-from scipy.sparse import lil_matrix
+import numpy as np
+import pytest
 
-from sklearn.utils._testing import assert_array_equal, assert_array_less
-from sklearn.utils._testing import assert_array_almost_equal
-
-from sklearn.base import BaseEstimator
-from sklearn.base import clone
+from sklearn import datasets
+from sklearn.base import BaseEstimator, clone
 from sklearn.dummy import DummyClassifier, DummyRegressor
-from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import GridSearchCV
-from sklearn.ensemble import AdaBoostClassifier
-from sklearn.ensemble import AdaBoostRegressor
+from sklearn.ensemble import AdaBoostClassifier, AdaBoostRegressor
 from sklearn.ensemble._weight_boosting import _samme_proba
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.svm import SVC, SVR
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import shuffle
 from sklearn.utils._mocking import NoSampleWeightWrapper
-from sklearn import datasets
-
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
+from sklearn.utils.fixes import (
+    COO_CONTAINERS,
+    CSC_CONTAINERS,
+    CSR_CONTAINERS,
+    DOK_CONTAINERS,
+    LIL_CONTAINERS,
+)
 
 # Common random state
 rng = np.random.RandomState(0)
@@ -90,10 +90,9 @@ def test_oneclass_adaboost_proba():
     assert_array_almost_equal(clf.predict_proba(X), np.ones((len(X), 1)))
 
 
-@pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
-def test_classification_toy(algorithm):
+def test_classification_toy():
     # Check classification on a toy dataset.
-    clf = AdaBoostClassifier(algorithm=algorithm, random_state=0)
+    clf = AdaBoostClassifier(random_state=0)
     clf.fit(X, y_class)
     assert_array_equal(clf.predict(T), y_t_class)
     assert_array_equal(np.unique(np.asarray(y_t_class)), clf.classes_)
@@ -111,35 +110,23 @@ def test_regression_toy():
 def test_iris():
     # Check consistency on dataset iris.
     classes = np.unique(iris.target)
-    clf_samme = prob_samme = None
 
-    for alg in ["SAMME", "SAMME.R"]:
-        clf = AdaBoostClassifier(algorithm=alg)
-        clf.fit(iris.data, iris.target)
+    clf = AdaBoostClassifier()
+    clf.fit(iris.data, iris.target)
 
-        assert_array_equal(classes, clf.classes_)
-        proba = clf.predict_proba(iris.data)
-        if alg == "SAMME":
-            clf_samme = clf
-            prob_samme = proba
-        assert proba.shape[1] == len(classes)
-        assert clf.decision_function(iris.data).shape[1] == len(classes)
+    assert_array_equal(classes, clf.classes_)
+    proba = clf.predict_proba(iris.data)
 
-        score = clf.score(iris.data, iris.target)
-        assert score > 0.9, "Failed with algorithm %s and score = %f" % (alg, score)
+    assert proba.shape[1] == len(classes)
+    assert clf.decision_function(iris.data).shape[1] == len(classes)
 
-        # Check we used multiple estimators
-        assert len(clf.estimators_) > 1
-        # Check for distinct random states (see issue #7408)
-        assert len(set(est.random_state for est in clf.estimators_)) == len(
-            clf.estimators_
-        )
+    score = clf.score(iris.data, iris.target)
+    assert score > 0.9, f"Failed with {score = }"
 
-    # Somewhat hacky regression test: prior to
-    # ae7adc880d624615a34bafdb1d75ef67051b8200,
-    # predict_proba returned SAMME.R values for SAMME.
-    clf_samme.algorithm = "SAMME.R"
-    assert_array_less(0, np.abs(clf_samme.predict_proba(iris.data) - prob_samme))
+    # Check we used multiple estimators
+    assert len(clf.estimators_) > 1
+    # Check for distinct random states (see issue #7408)
+    assert len(set(est.random_state for est in clf.estimators_)) == len(clf.estimators_)
 
 
 @pytest.mark.parametrize("loss", ["linear", "square", "exponential"])
@@ -156,14 +143,13 @@ def test_diabetes(loss):
     assert len(set(est.random_state for est in reg.estimators_)) == len(reg.estimators_)
 
 
-@pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
-def test_staged_predict(algorithm):
+def test_staged_predict():
     # Check staged predictions.
     rng = np.random.RandomState(0)
     iris_weights = rng.randint(10, size=iris.target.shape)
     diabetes_weights = rng.randint(10, size=diabetes.target.shape)
 
-    clf = AdaBoostClassifier(algorithm=algorithm, n_estimators=10)
+    clf = AdaBoostClassifier(n_estimators=10)
     clf.fit(iris.data, iris.target, sample_weight=iris_weights)
 
     predictions = clf.predict(iris.data)
@@ -209,7 +195,6 @@ def test_gridsearch():
     parameters = {
         "n_estimators": (1, 2),
         "estimator__max_depth": (1, 2),
-        "algorithm": ("SAMME", "SAMME.R"),
     }
     clf = GridSearchCV(boost, parameters)
     clf.fit(iris.data, iris.target)
@@ -226,16 +211,15 @@ def test_pickle():
     import pickle
 
     # Adaboost classifier
-    for alg in ["SAMME", "SAMME.R"]:
-        obj = AdaBoostClassifier(algorithm=alg)
-        obj.fit(iris.data, iris.target)
-        score = obj.score(iris.data, iris.target)
-        s = pickle.dumps(obj)
+    obj = AdaBoostClassifier()
+    obj.fit(iris.data, iris.target)
+    score = obj.score(iris.data, iris.target)
+    s = pickle.dumps(obj)
 
-        obj2 = pickle.loads(s)
-        assert type(obj2) == obj.__class__
-        score2 = obj2.score(iris.data, iris.target)
-        assert score == score2
+    obj2 = pickle.loads(s)
+    assert type(obj2) == obj.__class__
+    score2 = obj2.score(iris.data, iris.target)
+    assert score == score2
 
     # Adaboost regressor
     obj = AdaBoostRegressor(random_state=0)
@@ -261,14 +245,13 @@ def test_importances():
         random_state=1,
     )
 
-    for alg in ["SAMME", "SAMME.R"]:
-        clf = AdaBoostClassifier(algorithm=alg)
+    clf = AdaBoostClassifier()
 
-        clf.fit(X, y)
-        importances = clf.feature_importances_
+    clf.fit(X, y)
+    importances = clf.feature_importances_
 
-        assert importances.shape[0] == 10
-        assert (importances[:3, np.newaxis] >= importances[3:]).all()
+    assert importances.shape[0] == 10
+    assert (importances[:3, np.newaxis] >= importances[3:]).all()
 
 
 def test_adaboost_classifier_sample_weight_error():
@@ -288,7 +271,7 @@ def test_estimator():
     clf = AdaBoostClassifier(RandomForestClassifier())
     clf.fit(X, y_regr)
 
-    clf = AdaBoostClassifier(SVC(), algorithm="SAMME")
+    clf = AdaBoostClassifier(SVC())
     clf.fit(X, y_class)
 
     from sklearn.ensemble import RandomForestRegressor
@@ -302,19 +285,32 @@ def test_estimator():
     # Check that an empty discrete ensemble fails in fit, not predict.
     X_fail = [[1, 1], [1, 1], [1, 1], [1, 1]]
     y_fail = ["foo", "bar", 1, 2]
-    clf = AdaBoostClassifier(SVC(), algorithm="SAMME")
+    clf = AdaBoostClassifier(SVC())
     with pytest.raises(ValueError, match="worse than random"):
         clf.fit(X_fail, y_fail)
 
 
 def test_sample_weights_infinite():
     msg = "Sample weights have reached infinite values"
-    clf = AdaBoostClassifier(n_estimators=30, learning_rate=23.0, algorithm="SAMME")
+    clf = AdaBoostClassifier(n_estimators=30, learning_rate=23.0)
     with pytest.warns(UserWarning, match=msg):
         clf.fit(iris.data, iris.target)
 
 
-def test_sparse_classification():
+@pytest.mark.parametrize(
+    "sparse_container, expected_internal_type",
+    zip(
+        [
+            *CSC_CONTAINERS,
+            *CSR_CONTAINERS,
+            *LIL_CONTAINERS,
+            *COO_CONTAINERS,
+            *DOK_CONTAINERS,
+        ],
+        CSC_CONTAINERS + 4 * CSR_CONTAINERS,
+    ),
+)
+def test_sparse_classification(sparse_container, expected_internal_type):
     # Check classification with sparse input.
 
     class CustomSVC(SVC):
@@ -334,80 +330,90 @@ def test_sparse_classification():
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-    for sparse_format in [csc_matrix, csr_matrix, lil_matrix, coo_matrix, dok_matrix]:
-        X_train_sparse = sparse_format(X_train)
-        X_test_sparse = sparse_format(X_test)
+    X_train_sparse = sparse_container(X_train)
+    X_test_sparse = sparse_container(X_test)
 
-        # Trained on sparse format
-        sparse_classifier = AdaBoostClassifier(
-            estimator=CustomSVC(probability=True),
-            random_state=1,
-            algorithm="SAMME",
-        ).fit(X_train_sparse, y_train)
+    # Trained on sparse format
+    sparse_classifier = AdaBoostClassifier(
+        estimator=CustomSVC(probability=True),
+        random_state=1,
+    ).fit(X_train_sparse, y_train)
 
-        # Trained on dense format
-        dense_classifier = AdaBoostClassifier(
-            estimator=CustomSVC(probability=True),
-            random_state=1,
-            algorithm="SAMME",
-        ).fit(X_train, y_train)
+    # Trained on dense format
+    dense_classifier = AdaBoostClassifier(
+        estimator=CustomSVC(probability=True),
+        random_state=1,
+    ).fit(X_train, y_train)
 
-        # predict
-        sparse_results = sparse_classifier.predict(X_test_sparse)
-        dense_results = dense_classifier.predict(X_test)
-        assert_array_equal(sparse_results, dense_results)
+    # predict
+    sparse_clf_results = sparse_classifier.predict(X_test_sparse)
+    dense_clf_results = dense_classifier.predict(X_test)
+    assert_array_equal(sparse_clf_results, dense_clf_results)
 
-        # decision_function
-        sparse_results = sparse_classifier.decision_function(X_test_sparse)
-        dense_results = dense_classifier.decision_function(X_test)
-        assert_array_almost_equal(sparse_results, dense_results)
+    # decision_function
+    sparse_clf_results = sparse_classifier.decision_function(X_test_sparse)
+    dense_clf_results = dense_classifier.decision_function(X_test)
+    assert_array_almost_equal(sparse_clf_results, dense_clf_results)
 
-        # predict_log_proba
-        sparse_results = sparse_classifier.predict_log_proba(X_test_sparse)
-        dense_results = dense_classifier.predict_log_proba(X_test)
-        assert_array_almost_equal(sparse_results, dense_results)
+    # predict_log_proba
+    sparse_clf_results = sparse_classifier.predict_log_proba(X_test_sparse)
+    dense_clf_results = dense_classifier.predict_log_proba(X_test)
+    assert_array_almost_equal(sparse_clf_results, dense_clf_results)
 
-        # predict_proba
-        sparse_results = sparse_classifier.predict_proba(X_test_sparse)
-        dense_results = dense_classifier.predict_proba(X_test)
-        assert_array_almost_equal(sparse_results, dense_results)
+    # predict_proba
+    sparse_clf_results = sparse_classifier.predict_proba(X_test_sparse)
+    dense_clf_results = dense_classifier.predict_proba(X_test)
+    assert_array_almost_equal(sparse_clf_results, dense_clf_results)
 
-        # score
-        sparse_results = sparse_classifier.score(X_test_sparse, y_test)
-        dense_results = dense_classifier.score(X_test, y_test)
-        assert_array_almost_equal(sparse_results, dense_results)
+    # score
+    sparse_clf_results = sparse_classifier.score(X_test_sparse, y_test)
+    dense_clf_results = dense_classifier.score(X_test, y_test)
+    assert_array_almost_equal(sparse_clf_results, dense_clf_results)
 
-        # staged_decision_function
-        sparse_results = sparse_classifier.staged_decision_function(X_test_sparse)
-        dense_results = dense_classifier.staged_decision_function(X_test)
-        for sprase_res, dense_res in zip(sparse_results, dense_results):
-            assert_array_almost_equal(sprase_res, dense_res)
+    # staged_decision_function
+    sparse_clf_results = sparse_classifier.staged_decision_function(X_test_sparse)
+    dense_clf_results = dense_classifier.staged_decision_function(X_test)
+    for sparse_clf_res, dense_clf_res in zip(sparse_clf_results, dense_clf_results):
+        assert_array_almost_equal(sparse_clf_res, dense_clf_res)
 
-        # staged_predict
-        sparse_results = sparse_classifier.staged_predict(X_test_sparse)
-        dense_results = dense_classifier.staged_predict(X_test)
-        for sprase_res, dense_res in zip(sparse_results, dense_results):
-            assert_array_equal(sprase_res, dense_res)
+    # staged_predict
+    sparse_clf_results = sparse_classifier.staged_predict(X_test_sparse)
+    dense_clf_results = dense_classifier.staged_predict(X_test)
+    for sparse_clf_res, dense_clf_res in zip(sparse_clf_results, dense_clf_results):
+        assert_array_equal(sparse_clf_res, dense_clf_res)
 
-        # staged_predict_proba
-        sparse_results = sparse_classifier.staged_predict_proba(X_test_sparse)
-        dense_results = dense_classifier.staged_predict_proba(X_test)
-        for sprase_res, dense_res in zip(sparse_results, dense_results):
-            assert_array_almost_equal(sprase_res, dense_res)
+    # staged_predict_proba
+    sparse_clf_results = sparse_classifier.staged_predict_proba(X_test_sparse)
+    dense_clf_results = dense_classifier.staged_predict_proba(X_test)
+    for sparse_clf_res, dense_clf_res in zip(sparse_clf_results, dense_clf_results):
+        assert_array_almost_equal(sparse_clf_res, dense_clf_res)
 
-        # staged_score
-        sparse_results = sparse_classifier.staged_score(X_test_sparse, y_test)
-        dense_results = dense_classifier.staged_score(X_test, y_test)
-        for sprase_res, dense_res in zip(sparse_results, dense_results):
-            assert_array_equal(sprase_res, dense_res)
+    # staged_score
+    sparse_clf_results = sparse_classifier.staged_score(X_test_sparse, y_test)
+    dense_clf_results = dense_classifier.staged_score(X_test, y_test)
+    for sparse_clf_res, dense_clf_res in zip(sparse_clf_results, dense_clf_results):
+        assert_array_equal(sparse_clf_res, dense_clf_res)
 
-        # Verify sparsity of data is maintained during training
-        types = [i.data_type_ for i in sparse_classifier.estimators_]
+    # Verify sparsity of data is maintained during training
+    types = [i.data_type_ for i in sparse_classifier.estimators_]
 
-        assert all([(t == csc_matrix or t == csr_matrix) for t in types])
+    assert all([t == expected_internal_type for t in types])
 
 
-def test_sparse_regression():
+@pytest.mark.parametrize(
+    "sparse_container, expected_internal_type",
+    zip(
+        [
+            *CSC_CONTAINERS,
+            *CSR_CONTAINERS,
+            *LIL_CONTAINERS,
+            *COO_CONTAINERS,
+            *DOK_CONTAINERS,
+        ],
+        CSC_CONTAINERS + 4 * CSR_CONTAINERS,
+    ),
+)
+def test_sparse_regression(sparse_container, expected_internal_type):
     # Check regression with sparse input.
 
     class CustomSVR(SVR):
@@ -425,34 +431,33 @@ def test_sparse_regression():
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-    for sparse_format in [csc_matrix, csr_matrix, lil_matrix, coo_matrix, dok_matrix]:
-        X_train_sparse = sparse_format(X_train)
-        X_test_sparse = sparse_format(X_test)
+    X_train_sparse = sparse_container(X_train)
+    X_test_sparse = sparse_container(X_test)
 
-        # Trained on sparse format
-        sparse_classifier = AdaBoostRegressor(
-            estimator=CustomSVR(), random_state=1
-        ).fit(X_train_sparse, y_train)
+    # Trained on sparse format
+    sparse_regressor = AdaBoostRegressor(estimator=CustomSVR(), random_state=1).fit(
+        X_train_sparse, y_train
+    )
 
-        # Trained on dense format
-        dense_classifier = dense_results = AdaBoostRegressor(
-            estimator=CustomSVR(), random_state=1
-        ).fit(X_train, y_train)
+    # Trained on dense format
+    dense_regressor = AdaBoostRegressor(estimator=CustomSVR(), random_state=1).fit(
+        X_train, y_train
+    )
 
-        # predict
-        sparse_results = sparse_classifier.predict(X_test_sparse)
-        dense_results = dense_classifier.predict(X_test)
-        assert_array_almost_equal(sparse_results, dense_results)
+    # predict
+    sparse_regr_results = sparse_regressor.predict(X_test_sparse)
+    dense_regr_results = dense_regressor.predict(X_test)
+    assert_array_almost_equal(sparse_regr_results, dense_regr_results)
 
-        # staged_predict
-        sparse_results = sparse_classifier.staged_predict(X_test_sparse)
-        dense_results = dense_classifier.staged_predict(X_test)
-        for sprase_res, dense_res in zip(sparse_results, dense_results):
-            assert_array_almost_equal(sprase_res, dense_res)
+    # staged_predict
+    sparse_regr_results = sparse_regressor.staged_predict(X_test_sparse)
+    dense_regr_results = dense_regressor.staged_predict(X_test)
+    for sparse_regr_res, dense_regr_res in zip(sparse_regr_results, dense_regr_results):
+        assert_array_almost_equal(sparse_regr_res, dense_regr_res)
 
-        types = [i.data_type_ for i in sparse_classifier.estimators_]
+    types = [i.data_type_ for i in sparse_regressor.estimators_]
 
-        assert all([(t == csc_matrix or t == csr_matrix) for t in types])
+    assert all([t == expected_internal_type for t in types])
 
 
 def test_sample_weight_adaboost_regressor():
@@ -481,9 +486,9 @@ def test_multidimensional_X():
     """
     rng = np.random.RandomState(0)
 
-    X = rng.randn(50, 3, 3)
-    yc = rng.choice([0, 1], 50)
-    yr = rng.randn(50)
+    X = rng.randn(51, 3, 3)
+    yc = rng.choice([0, 1], 51)
+    yr = rng.randn(51)
 
     boost = AdaBoostClassifier(DummyClassifier(strategy="most_frequent"))
     boost.fit(X, yc)
@@ -495,11 +500,10 @@ def test_multidimensional_X():
     boost.predict(X)
 
 
-@pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
-def test_adaboostclassifier_without_sample_weight(algorithm):
+def test_adaboostclassifier_without_sample_weight():
     X, y = iris.data, iris.target
     estimator = NoSampleWeightWrapper(DummyClassifier())
-    clf = AdaBoostClassifier(estimator=estimator, algorithm=algorithm)
+    clf = AdaBoostClassifier(estimator=estimator)
     err_msg = "{} doesn't support sample_weight".format(estimator.__class__.__name__)
     with pytest.raises(ValueError, match=err_msg):
         clf.fit(X, y)
@@ -543,15 +547,14 @@ def test_adaboostregressor_sample_weight():
     assert score_no_outlier == pytest.approx(score_with_weight)
 
 
-@pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
-def test_adaboost_consistent_predict(algorithm):
+def test_adaboost_consistent_predict():
     # check that predict_proba and predict give consistent results
     # regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/14084
     X_train, X_test, y_train, y_test = train_test_split(
         *datasets.load_digits(return_X_y=True), random_state=42
     )
-    model = AdaBoostClassifier(algorithm=algorithm, random_state=42)
+    model = AdaBoostClassifier(random_state=42)
     model.fit(X_train, y_train)
 
     assert_array_equal(
@@ -592,41 +595,45 @@ def test_adaboost_numerically_stable_feature_importance_with_small_weights():
     assert np.isnan(ada_model.feature_importances_).sum() == 0
 
 
-# TODO(1.4): remove in 1.4
-@pytest.mark.parametrize(
-    "AdaBoost, Estimator",
-    [
-        (AdaBoostClassifier, DecisionTreeClassifier),
-        (AdaBoostRegressor, DecisionTreeRegressor),
-    ],
-)
-def test_base_estimator_argument_deprecated(AdaBoost, Estimator):
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
-    model = AdaBoost(base_estimator=Estimator())
+def test_adaboost_decision_function(global_random_seed):
+    """Check that the decision function respects the symmetric constraint for weak
+    learners.
 
-    warn_msg = (
-        "`base_estimator` was renamed to `estimator` in version 1.2 and "
-        "will be removed in 1.4."
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/26520
+    """
+    n_classes = 3
+    X, y = datasets.make_classification(
+        n_classes=n_classes, n_clusters_per_class=1, random_state=global_random_seed
     )
-    with pytest.warns(FutureWarning, match=warn_msg):
-        model.fit(X, y)
+    clf = AdaBoostClassifier(n_estimators=1, random_state=global_random_seed).fit(X, y)
+
+    y_score = clf.decision_function(X)
+    assert_allclose(y_score.sum(axis=1), 0, atol=1e-8)
+
+    # With a single learner, we expect to have a decision function in
+    # {1, - 1 / (n_classes - 1)}.
+    assert set(np.unique(y_score)) == {1, -1 / (n_classes - 1)}
+
+    # We can assert the same for staged_decision_function since we have a single learner
+    for y_score in clf.staged_decision_function(X):
+        assert_allclose(y_score.sum(axis=1), 0, atol=1e-8)
+
+        # With a single learner, we expect to have a decision function in
+        # {1, - 1 / (n_classes - 1)}.
+        assert set(np.unique(y_score)) == {1, -1 / (n_classes - 1)}
+
+    clf.set_params(n_estimators=5).fit(X, y)
+
+    y_score = clf.decision_function(X)
+    assert_allclose(y_score.sum(axis=1), 0, atol=1e-8)
+
+    for y_score in clf.staged_decision_function(X):
+        assert_allclose(y_score.sum(axis=1), 0, atol=1e-8)
 
 
-# TODO(1.4): remove in 1.4
-@pytest.mark.parametrize(
-    "AdaBoost",
-    [AdaBoostClassifier, AdaBoostRegressor],
-)
-def test_base_estimator_property_deprecated(AdaBoost):
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
-    model = AdaBoost()
-    model.fit(X, y)
-
-    warn_msg = (
-        "Attribute `base_estimator_` was deprecated in version 1.2 and "
-        "will be removed in 1.4. Use `estimator_` instead."
-    )
-    with pytest.warns(FutureWarning, match=warn_msg):
-        model.base_estimator_
+# TODO(1.8): remove
+def test_deprecated_algorithm():
+    adaboost_clf = AdaBoostClassifier(n_estimators=1, algorithm="SAMME")
+    with pytest.warns(FutureWarning, match="The parameter 'algorithm' is deprecated"):
+        adaboost_clf.fit(X, y_class)

@@ -1,37 +1,40 @@
 """
 Todo: cross-check the F-value with stats model
 """
+
 import itertools
 import warnings
+
 import numpy as np
-from numpy.testing import assert_allclose
-from scipy import stats, sparse
-
 import pytest
+from numpy.testing import assert_allclose
+from scipy import sparse, stats
 
-from sklearn.utils._testing import assert_almost_equal, _convert_container
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils import safe_mask
-
-from sklearn.datasets import make_classification, make_regression
+from sklearn.datasets import load_iris, make_classification, make_regression
 from sklearn.feature_selection import (
+    GenericUnivariateSelect,
+    SelectFdr,
+    SelectFpr,
+    SelectFwe,
+    SelectKBest,
+    SelectPercentile,
     chi2,
     f_classif,
     f_oneway,
     f_regression,
-    GenericUnivariateSelect,
     mutual_info_classif,
     mutual_info_regression,
     r_regression,
-    SelectPercentile,
-    SelectKBest,
-    SelectFpr,
-    SelectFdr,
-    SelectFwe,
 )
-
+from sklearn.utils import safe_mask
+from sklearn.utils._testing import (
+    _convert_container,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
+)
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 ##############################################################################
 # Test the score functions
@@ -62,7 +65,8 @@ def test_f_oneway_ints():
     assert_array_almost_equal(p, pint, decimal=4)
 
 
-def test_f_classif():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_f_classif(csr_container):
     # Test whether the F test yields meaningful results
     # on a simple simulated classification problem
     X, y = make_classification(
@@ -80,7 +84,7 @@ def test_f_classif():
     )
 
     F, pv = f_classif(X, y)
-    F_sparse, pv_sparse = f_classif(sparse.csr_matrix(X), y)
+    F_sparse, pv_sparse = f_classif(csr_container(X), y)
     assert (F > 0).all()
     assert (pv > 0).all()
     assert (pv < 1).all()
@@ -112,7 +116,8 @@ def test_r_regression(center):
     assert_array_almost_equal(np_corr_coeffs, corr_coeffs, decimal=3)
 
 
-def test_f_regression():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_f_regression(csr_container):
     # Test whether the F test yields meaningful results
     # on a simple simulated regression problem
     X, y = make_regression(
@@ -128,13 +133,13 @@ def test_f_regression():
 
     # with centering, compare with sparse
     F, pv = f_regression(X, y, center=True)
-    F_sparse, pv_sparse = f_regression(sparse.csr_matrix(X), y, center=True)
+    F_sparse, pv_sparse = f_regression(csr_container(X), y, center=True)
     assert_allclose(F_sparse, F)
     assert_allclose(pv_sparse, pv)
 
     # again without centering, compare with sparse
     F, pv = f_regression(X, y, center=False)
-    F_sparse, pv_sparse = f_regression(sparse.csr_matrix(X), y, center=False)
+    F_sparse, pv_sparse = f_regression(csr_container(X), y, center=False)
     assert_allclose(F_sparse, F)
     assert_allclose(pv_sparse, pv)
 
@@ -355,7 +360,8 @@ def test_select_percentile_classif():
     assert_array_equal(support, gtruth)
 
 
-def test_select_percentile_classif_sparse():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_select_percentile_classif_sparse(csr_container):
     # Test whether the relative univariate feature selection
     # gets the correct items in a simple classification problem
     # with the percentile heuristic
@@ -372,7 +378,7 @@ def test_select_percentile_classif_sparse():
         shuffle=False,
         random_state=0,
     )
-    X = sparse.csr_matrix(X)
+    X = csr_container(X)
     univariate_filter = SelectPercentile(f_classif, percentile=25)
     X_r = univariate_filter.fit(X, y).transform(X)
     X_r2 = (
@@ -392,7 +398,7 @@ def test_select_percentile_classif_sparse():
     assert X_r2inv.shape == X.shape
     assert_array_equal(X_r2inv[:, support_mask].toarray(), X_r.toarray())
     # Check other columns are empty
-    assert X_r2inv.getnnz() == X_r.getnnz()
+    assert X_r2inv.nnz == X_r.nnz
 
 
 ##############################################################################
@@ -826,9 +832,10 @@ def test_invalid_k():
     X = [[0, 1, 0], [0, -1, -1], [0, 0.5, 0.5]]
     y = [1, 0, 1]
 
-    with pytest.raises(ValueError):
+    msg = "k=4 is greater than n_features=3. All the features will be returned."
+    with pytest.warns(UserWarning, match=msg):
         SelectKBest(k=4).fit(X, y)
-    with pytest.raises(ValueError):
+    with pytest.warns(UserWarning, match=msg):
         GenericUnivariateSelect(mode="k_best", param=4).fit(X, y)
 
 
@@ -944,3 +951,68 @@ def test_mutual_info_regression():
     gtruth = np.zeros(10)
     gtruth[:2] = 1
     assert_array_equal(support, gtruth)
+
+
+def test_dataframe_output_dtypes():
+    """Check that the output datafarme dtypes are the same as the input.
+
+    Non-regression test for gh-24860.
+    """
+    pd = pytest.importorskip("pandas")
+
+    X, y = load_iris(return_X_y=True, as_frame=True)
+    X = X.astype(
+        {
+            "petal length (cm)": np.float32,
+            "petal width (cm)": np.float64,
+        }
+    )
+    X["petal_width_binned"] = pd.cut(X["petal width (cm)"], bins=10)
+
+    column_order = X.columns
+
+    def selector(X, y):
+        ranking = {
+            "sepal length (cm)": 1,
+            "sepal width (cm)": 2,
+            "petal length (cm)": 3,
+            "petal width (cm)": 4,
+            "petal_width_binned": 5,
+        }
+        return np.asarray([ranking[name] for name in column_order])
+
+    univariate_filter = SelectKBest(selector, k=3).set_output(transform="pandas")
+    output = univariate_filter.fit_transform(X, y)
+
+    assert_array_equal(
+        output.columns, ["petal length (cm)", "petal width (cm)", "petal_width_binned"]
+    )
+    for name, dtype in output.dtypes.items():
+        assert dtype == X.dtypes[name]
+
+
+@pytest.mark.parametrize(
+    "selector",
+    [
+        SelectKBest(k=4),
+        SelectPercentile(percentile=80),
+        GenericUnivariateSelect(mode="k_best", param=4),
+        GenericUnivariateSelect(mode="percentile", param=80),
+    ],
+)
+def test_unsupervised_filter(selector):
+    """Check support for unsupervised feature selection for the filter that could
+    require only `X`.
+    """
+    rng = np.random.RandomState(0)
+    X = rng.randn(10, 5)
+
+    def score_func(X, y=None):
+        return np.array([1, 1, 1, 1, 0])
+
+    selector.set_params(score_func=score_func)
+    selector.fit(X)
+    X_trans = selector.transform(X)
+    assert_allclose(X_trans, X[:, :4])
+    X_trans = selector.fit_transform(X)
+    assert_allclose(X_trans, X[:, :4])

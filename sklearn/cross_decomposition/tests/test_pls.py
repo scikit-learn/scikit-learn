@@ -1,21 +1,22 @@
-import pytest
 import warnings
-import numpy as np
-from numpy.testing import assert_array_almost_equal, assert_array_equal, assert_allclose
 
-from sklearn.datasets import load_linnerud
+import numpy as np
+import pytest
+from numpy.testing import assert_allclose, assert_array_almost_equal, assert_array_equal
+
+from sklearn.cross_decomposition import CCA, PLSSVD, PLSCanonical, PLSRegression
 from sklearn.cross_decomposition._pls import (
     _center_scale_xy,
     _get_first_singular_vectors_power_method,
     _get_first_singular_vectors_svd,
     _svd_flip_1d,
 )
-from sklearn.cross_decomposition import CCA
-from sklearn.cross_decomposition import PLSSVD, PLSRegression, PLSCanonical
-from sklearn.datasets import make_regression
+from sklearn.datasets import load_linnerud, make_regression
+from sklearn.ensemble import VotingRegressor
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model import LinearRegression
 from sklearn.utils import check_random_state
 from sklearn.utils.extmath import svd_flip
-from sklearn.exceptions import ConvergenceWarning
 
 
 def assert_matrix_orthogonal(M):
@@ -366,10 +367,6 @@ def test_attibutes_shapes(Est):
     )
 
 
-# TODO(1.3): remove the warning filter
-@pytest.mark.filterwarnings(
-    "ignore:The attribute `coef_` will be transposed in version 1.3"
-)
 @pytest.mark.parametrize("Est", (PLSRegression, PLSCanonical, CCA))
 def test_univariate_equivalence(Est):
     # Ensure 2D Y with 1 column is equivalent to 1D Y
@@ -483,32 +480,47 @@ def test_n_components_upper_bounds(Estimator):
         est.fit(X, Y)
 
 
+def test_n_components_upper_PLSRegression():
+    """Check the validation of `n_components` upper bounds for PLSRegression."""
+    rng = np.random.RandomState(0)
+    X = rng.randn(20, 64)
+    Y = rng.randn(20, 3)
+    est = PLSRegression(n_components=30)
+    err_msg = "`n_components` upper bound is 20. Got 30 instead. Reduce `n_components`."
+    with pytest.raises(ValueError, match=err_msg):
+        est.fit(X, Y)
+
+
 @pytest.mark.parametrize("n_samples, n_features", [(100, 10), (100, 200)])
-@pytest.mark.parametrize("seed", range(10))
-def test_singular_value_helpers(n_samples, n_features, seed):
+def test_singular_value_helpers(n_samples, n_features, global_random_seed):
     # Make sure SVD and power method give approximately the same results
-    X, Y = make_regression(n_samples, n_features, n_targets=5, random_state=seed)
+    X, Y = make_regression(
+        n_samples, n_features, n_targets=5, random_state=global_random_seed
+    )
     u1, v1, _ = _get_first_singular_vectors_power_method(X, Y, norm_y_weights=True)
     u2, v2 = _get_first_singular_vectors_svd(X, Y)
 
     _svd_flip_1d(u1, v1)
     _svd_flip_1d(u2, v2)
 
-    rtol = 1e-1
-    assert_allclose(u1, u2, rtol=rtol)
-    assert_allclose(v1, v2, rtol=rtol)
+    rtol = 1e-3
+    # Setting atol because some coordinates are very close to zero
+    assert_allclose(u1, u2, atol=u2.max() * rtol)
+    assert_allclose(v1, v2, atol=v2.max() * rtol)
 
 
-def test_one_component_equivalence():
+def test_one_component_equivalence(global_random_seed):
     # PLSSVD, PLSRegression and PLSCanonical should all be equivalent when
     # n_components is 1
-    X, Y = make_regression(100, 10, n_targets=5, random_state=0)
+    X, Y = make_regression(100, 10, n_targets=5, random_state=global_random_seed)
     svd = PLSSVD(n_components=1).fit(X, Y).transform(X)
     reg = PLSRegression(n_components=1).fit(X, Y).transform(X)
     canonical = PLSCanonical(n_components=1).fit(X, Y).transform(X)
 
-    assert_allclose(svd, reg, rtol=1e-2)
-    assert_allclose(svd, canonical, rtol=1e-2)
+    rtol = 1e-3
+    # Setting atol because some entries are very close to zero
+    assert_allclose(svd, reg, atol=reg.max() * rtol)
+    assert_allclose(svd, canonical, atol=canonical.max() * rtol)
 
 
 def test_svd_flip_1d():
@@ -526,9 +538,11 @@ def test_svd_flip_1d():
     assert_allclose(v, [-1, -2, -3])
 
 
-def test_loadings_converges():
+def test_loadings_converges(global_random_seed):
     """Test that CCA converges. Non-regression test for #19549."""
-    X, y = make_regression(n_samples=200, n_features=20, n_targets=20, random_state=20)
+    X, y = make_regression(
+        n_samples=200, n_features=20, n_targets=20, random_state=global_random_seed
+    )
 
     cca = CCA(n_components=10, max_iter=500)
 
@@ -549,7 +563,7 @@ def test_pls_constant_y():
 
     pls = PLSRegression()
 
-    msg = "Y residual is constant at iteration"
+    msg = "y residual is constant at iteration"
     with pytest.warns(UserWarning, match=msg):
         pls.fit(x, y)
 
@@ -569,23 +583,10 @@ def test_pls_coef_shape(PLSEstimator):
 
     pls = PLSEstimator(copy=True).fit(X, Y)
 
-    # TODO(1.3): remove the warning check
-    warning_msg = "The attribute `coef_` will be transposed in version 1.3"
-    with pytest.warns(FutureWarning, match=warning_msg):
-        assert pls.coef_.shape == (X.shape[1], Y.shape[1])
-
-    # Next accesses do not warn
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", FutureWarning)
-        pls.coef_
-
-    # TODO(1.3): rename `_coef_` to `coef_`
-    assert pls._coef_.shape == (Y.shape[1], X.shape[1])
+    n_targets, n_features = Y.shape[1], X.shape[1]
+    assert pls.coef_.shape == (n_targets, n_features)
 
 
-# TODO (1.3): remove the filterwarnings and adapt the dot product between `X_trans` and
-# `pls.coef_`
-@pytest.mark.filterwarnings("ignore:The attribute `coef_` will be transposed")
 @pytest.mark.parametrize("scale", [True, False])
 @pytest.mark.parametrize("PLSEstimator", [PLSRegression, PLSCanonical, CCA])
 def test_pls_prediction(PLSEstimator, scale):
@@ -599,11 +600,9 @@ def test_pls_prediction(PLSEstimator, scale):
 
     y_mean = Y.mean(axis=0)
     X_trans = X - X.mean(axis=0)
-    if scale:
-        X_trans /= X.std(axis=0, ddof=1)
 
     assert_allclose(pls.intercept_, y_mean)
-    assert_allclose(Y_pred, X_trans @ pls.coef_ + pls.intercept_)
+    assert_allclose(Y_pred, X_trans @ pls.coef_.T + pls.intercept_)
 
 
 @pytest.mark.parametrize("Klass", [CCA, PLSSVD, PLSRegression, PLSCanonical])
@@ -633,3 +632,119 @@ def test_pls_set_output(Klass):
     assert isinstance(y_trans, np.ndarray)
     assert isinstance(X_trans, pd.DataFrame)
     assert_array_equal(X_trans.columns, est.get_feature_names_out())
+
+
+def test_pls_regression_fit_1d_y():
+    """Check that when fitting with 1d `y`, prediction should also be 1d.
+
+    Non-regression test for Issue #26549.
+    """
+    X = np.array([[1, 1], [2, 4], [3, 9], [4, 16], [5, 25], [6, 36]])
+    y = np.array([2, 6, 12, 20, 30, 42])
+    expected = y.copy()
+
+    plsr = PLSRegression().fit(X, y)
+    y_pred = plsr.predict(X)
+    assert y_pred.shape == expected.shape
+
+    # Check that it works in VotingRegressor
+    lr = LinearRegression().fit(X, y)
+    vr = VotingRegressor([("lr", lr), ("plsr", plsr)])
+    y_pred = vr.fit(X, y).predict(X)
+    assert y_pred.shape == expected.shape
+    assert_allclose(y_pred, expected)
+
+
+def test_pls_regression_scaling_coef():
+    """Check that when using `scale=True`, the coefficients are using the std. dev. from
+    both `X` and `Y`.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/27964
+    """
+    # handcrafted data where we can predict Y from X with an additional scaling factor
+    rng = np.random.RandomState(0)
+    coef = rng.uniform(size=(3, 5))
+    X = rng.normal(scale=10, size=(30, 5))  # add a std of 10
+    Y = X @ coef.T
+
+    # we need to make sure that the dimension of the latent space is large enough to
+    # perfectly predict `Y` from `X` (no information loss)
+    pls = PLSRegression(n_components=5, scale=True).fit(X, Y)
+    assert_allclose(pls.coef_, coef)
+
+    # we therefore should be able to predict `Y` from `X`
+    assert_allclose(pls.predict(X), Y)
+
+
+# TODO(1.7): Remove
+@pytest.mark.parametrize("Klass", [PLSRegression, CCA, PLSSVD, PLSCanonical])
+def test_pls_fit_warning_on_deprecated_Y_argument(Klass):
+    # Test warning message is shown when using Y instead of y
+
+    d = load_linnerud()
+    X = d.data
+    Y = d.target
+    y = d.target
+
+    msg = "`Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead."
+    with pytest.warns(FutureWarning, match=msg):
+        Klass().fit(X=X, Y=Y)
+
+    err_msg1 = "Cannot use both `y` and `Y`. Use only `y` as `Y` is deprecated."
+    with (
+        pytest.warns(FutureWarning, match=msg),
+        pytest.raises(ValueError, match=err_msg1),
+    ):
+        Klass().fit(X, y, Y)
+
+    err_msg2 = "y is required."
+    with pytest.raises(ValueError, match=err_msg2):
+        Klass().fit(X)
+
+
+# TODO(1.7): Remove
+@pytest.mark.parametrize("Klass", [PLSRegression, CCA, PLSSVD, PLSCanonical])
+def test_pls_transform_warning_on_deprecated_Y_argument(Klass):
+    # Test warning message is shown when using Y instead of y
+
+    d = load_linnerud()
+    X = d.data
+    Y = d.target
+    y = d.target
+
+    plsr = Klass().fit(X, y)
+    msg = "`Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead."
+    with pytest.warns(FutureWarning, match=msg):
+        plsr.transform(X=X, Y=Y)
+
+    err_msg1 = "Cannot use both `y` and `Y`. Use only `y` as `Y` is deprecated."
+    with (
+        pytest.warns(FutureWarning, match=msg),
+        pytest.raises(ValueError, match=err_msg1),
+    ):
+        plsr.transform(X, y, Y)
+
+
+# TODO(1.7): Remove
+@pytest.mark.parametrize("Klass", [PLSRegression, CCA, PLSCanonical])
+def test_pls_inverse_transform_warning_on_deprecated_Y_argument(Klass):
+    # Test warning message is shown when using Y instead of y
+
+    d = load_linnerud()
+    X = d.data
+    y = d.target
+
+    plsr = Klass().fit(X, y)
+    X_transformed, y_transformed = plsr.transform(X, y)
+
+    msg = "`Y` is deprecated in 1.5 and will be removed in 1.7. Use `y` instead."
+    with pytest.warns(FutureWarning, match=msg):
+        plsr.inverse_transform(X=X_transformed, Y=y_transformed)
+
+    err_msg1 = "Cannot use both `y` and `Y`. Use only `y` as `Y` is deprecated."
+    with (
+        pytest.warns(FutureWarning, match=msg),
+        pytest.raises(ValueError, match=err_msg1),
+    ):
+        plsr.inverse_transform(X=X_transformed, y=y_transformed, Y=y_transformed)

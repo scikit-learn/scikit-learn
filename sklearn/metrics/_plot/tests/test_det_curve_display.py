@@ -1,12 +1,10 @@
-import pytest
 import numpy as np
+import pytest
 from numpy.testing import assert_allclose
 
 from sklearn.datasets import load_iris
 from sklearn.linear_model import LogisticRegression
-
-from sklearn.metrics import det_curve
-from sklearn.metrics import DetCurveDisplay
+from sklearn.metrics import DetCurveDisplay, det_curve
 
 
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])

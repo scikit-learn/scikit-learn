@@ -2,27 +2,27 @@
 A Theil-Sen Estimator for Multiple Linear Regression Model
 """
 
-# Author: Florian Wilhelm <florian.wilhelm@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 import warnings
-from numbers import Integral, Real
 from itertools import combinations
+from numbers import Integral, Real
 
 import numpy as np
+from joblib import effective_n_jobs
 from scipy import linalg
-from scipy.special import binom
 from scipy.linalg.lapack import get_lapack_funcs
-from joblib import Parallel, effective_n_jobs
+from scipy.special import binom
 
-from ._base import LinearModel
-from ..base import RegressorMixin
-from ..utils import check_random_state
-from ..utils._param_validation import Interval
-from ..utils.fixes import delayed
+from ..base import RegressorMixin, _fit_context
 from ..exceptions import ConvergenceWarning
+from ..utils import check_random_state
+from ..utils._param_validation import Hidden, Interval, StrOptions
+from ..utils.parallel import Parallel, delayed
+from ..utils.validation import validate_data
+from ._base import LinearModel
 
 _EPSILON = np.finfo(np.double).eps
 
@@ -228,6 +228,10 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
+        .. deprecated:: 1.6
+            `copy_X` was deprecated in 1.6 and will be removed in 1.8.
+            It has no effect as a copy is always made.
+
     max_subpopulation : int, default=1e4
         Instead of computing with a set of cardinality 'n choose k', where n is
         the number of samples and k is the number of subsamples (at least
@@ -324,7 +328,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
 
     _parameter_constraints: dict = {
         "fit_intercept": ["boolean"],
-        "copy_X": ["boolean"],
+        "copy_X": ["boolean", Hidden(StrOptions({"deprecated"}))],
         # target_type should be Integral but can accept Real for backward compatibility
         "max_subpopulation": [Interval(Real, 1, None, closed="left")],
         "n_subsamples": [None, Integral],
@@ -339,7 +343,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         self,
         *,
         fit_intercept=True,
-        copy_X=True,
+        copy_X="deprecated",
         max_subpopulation=1e4,
         n_subsamples=None,
         max_iter=300,
@@ -395,6 +399,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
 
         return n_subsamples, n_subpopulation
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit linear model.
 
@@ -410,9 +415,16 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         self : returns an instance of self.
             Fitted `TheilSenRegressor` estimator.
         """
-        self._validate_params()
+        if self.copy_X != "deprecated":
+            warnings.warn(
+                "`copy_X` was deprecated in 1.6 and will be removed in 1.8 since it "
+                "has no effect internally. Simply leave this parameter to its default "
+                "value to avoid this warning.",
+                FutureWarning,
+            )
+
         random_state = check_random_state(self.random_state)
-        X, y = self._validate_data(X, y, y_numeric=True)
+        X, y = validate_data(self, X, y, y_numeric=True)
         n_samples, n_features = X.shape
         n_subsamples, self.n_subpopulation_ = self._check_subparams(
             n_samples, n_features

@@ -4,9 +4,9 @@ Benchmark scikit-learn's Ward implement compared to SciPy's
 
 import time
 
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.cluster import hierarchy
-import matplotlib.pyplot as plt
 
 from sklearn.cluster import AgglomerativeClustering
 

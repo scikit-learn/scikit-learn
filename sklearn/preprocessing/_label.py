@@ -1,29 +1,23 @@
-# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#          Olivier Grisel <olivier.grisel@ensta.org>
-#          Andreas Mueller <amueller@ais.uni-bonn.de>
-#          Joel Nothman <joel.nothman@gmail.com>
-#          Hamzeh Alsalhi <ha258@cornell.edu>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
+import array
+import itertools
+import warnings
 from collections import defaultdict
 from numbers import Integral
-import itertools
-import array
-import warnings
 
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin
-
-from ..utils.sparsefuncs import min_max_axis
+from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import column_or_1d
-from ..utils.validation import _num_samples, check_array, check_is_fitted
-from ..utils.multiclass import unique_labels
-from ..utils.multiclass import type_of_target
+from ..utils._array_api import _setdiff1d, device, get_namespace
 from ..utils._encode import _encode, _unique
-
+from ..utils._param_validation import Interval, validate_params
+from ..utils.multiclass import type_of_target, unique_labels
+from ..utils.sparsefuncs import min_max_axis
+from ..utils.validation import _num_samples, check_array, check_is_fitted
 
 __all__ = [
     "label_binarize",
@@ -33,7 +27,7 @@ __all__ = [
 ]
 
 
-class LabelEncoder(TransformerMixin, BaseEstimator):
+class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
     """Encode target labels with value between 0 and n_classes-1.
 
     This transformer should be used to encode target values, *i.e.* `y`, and
@@ -58,8 +52,8 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
     --------
     `LabelEncoder` can be used to normalize labels.
 
-    >>> from sklearn import preprocessing
-    >>> le = preprocessing.LabelEncoder()
+    >>> from sklearn.preprocessing import LabelEncoder
+    >>> le = LabelEncoder()
     >>> le.fit([1, 2, 2, 6])
     LabelEncoder()
     >>> le.classes_
@@ -72,15 +66,15 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
     It can also be used to transform non-numerical labels (as long as they are
     hashable and comparable) to numerical labels.
 
-    >>> le = preprocessing.LabelEncoder()
+    >>> le = LabelEncoder()
     >>> le.fit(["paris", "paris", "tokyo", "amsterdam"])
     LabelEncoder()
     >>> list(le.classes_)
-    ['amsterdam', 'paris', 'tokyo']
+    [np.str_('amsterdam'), np.str_('paris'), np.str_('tokyo')]
     >>> le.transform(["tokyo", "tokyo", "paris"])
     array([2, 2, 1]...)
     >>> list(le.inverse_transform([2, 2, 1]))
-    ['tokyo', 'tokyo', 'paris']
+    [np.str_('tokyo'), np.str_('tokyo'), np.str_('paris')]
     """
 
     def fit(self, y):
@@ -131,10 +125,11 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
             Labels as normalized encodings.
         """
         check_is_fitted(self)
+        xp, _ = get_namespace(y)
         y = column_or_1d(y, dtype=self.classes_.dtype, warn=True)
         # transform of empty array is empty array
         if _num_samples(y) == 0:
-            return np.array([])
+            return xp.asarray([])
 
         return _encode(y, uniques=self.classes_)
 
@@ -143,7 +138,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        y : ndarray of shape (n_samples,)
+        y : array-like of shape (n_samples,)
             Target values.
 
         Returns
@@ -152,22 +147,31 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
             Original encoding.
         """
         check_is_fitted(self)
+        xp, _ = get_namespace(y)
         y = column_or_1d(y, warn=True)
         # inverse transform of empty array is empty array
         if _num_samples(y) == 0:
-            return np.array([])
+            return xp.asarray([])
 
-        diff = np.setdiff1d(y, np.arange(len(self.classes_)))
-        if len(diff):
+        diff = _setdiff1d(
+            ar1=y,
+            ar2=xp.arange(self.classes_.shape[0], device=device(y)),
+            xp=xp,
+        )
+        if diff.shape[0]:
             raise ValueError("y contains previously unseen labels: %s" % str(diff))
-        y = np.asarray(y)
-        return self.classes_[y]
+        y = xp.asarray(y)
+        return xp.take(self.classes_, y, axis=0)
 
-    def _more_tags(self):
-        return {"X_types": ["1dlabels"]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.array_api_support = True
+        tags.input_tags.two_d_array = False
+        tags.target_tags.one_d_labels = True
+        return tags
 
 
-class LabelBinarizer(TransformerMixin, BaseEstimator):
+class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
     """Binarize labels in a one-vs-all fashion.
 
     Several regression and binary classification algorithms are
@@ -178,12 +182,12 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
     At learning time, this simply consists in learning one regressor
     or binary classifier per class. In doing so, one needs to convert
     multi-class labels to binary labels (belong or does not belong
-    to the class). LabelBinarizer makes this process easy with the
+    to the class). `LabelBinarizer` makes this process easy with the
     transform method.
 
     At prediction time, one assigns the class for which the corresponding
-    model gave the greatest confidence. LabelBinarizer makes this easy
-    with the inverse_transform method.
+    model gave the greatest confidence. `LabelBinarizer` makes this easy
+    with the :meth:`inverse_transform` method.
 
     Read more in the :ref:`User Guide <preprocessing_targets>`.
 
@@ -206,13 +210,13 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
 
     y_type_ : str
         Represents the type of the target data as evaluated by
-        utils.multiclass.type_of_target. Possible type are 'continuous',
-        'continuous-multioutput', 'binary', 'multiclass',
+        :func:`~sklearn.utils.multiclass.type_of_target`. Possible type are
+        'continuous', 'continuous-multioutput', 'binary', 'multiclass',
         'multiclass-multioutput', 'multilabel-indicator', and 'unknown'.
 
     sparse_input_ : bool
-        True if the input data to transform is given as a sparse matrix, False
-        otherwise.
+        `True` if the input data to transform is given as a sparse matrix,
+         `False` otherwise.
 
     See Also
     --------
@@ -223,8 +227,8 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
 
     Examples
     --------
-    >>> from sklearn import preprocessing
-    >>> lb = preprocessing.LabelBinarizer()
+    >>> from sklearn.preprocessing import LabelBinarizer
+    >>> lb = LabelBinarizer()
     >>> lb.fit([1, 2, 6, 4, 2])
     LabelBinarizer()
     >>> lb.classes_
@@ -235,7 +239,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
 
     Binary targets transform to a column vector
 
-    >>> lb = preprocessing.LabelBinarizer()
+    >>> lb = LabelBinarizer()
     >>> lb.fit_transform(['yes', 'no', 'no', 'yes'])
     array([[1],
            [0],
@@ -263,11 +267,11 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
     }
 
     def __init__(self, *, neg_label=0, pos_label=1, sparse_output=False):
-
         self.neg_label = neg_label
         self.pos_label = pos_label
         self.sparse_output = sparse_output
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, y):
         """Fit label binarizer.
 
@@ -282,9 +286,6 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-
-        self._validate_params()
-
         if self.neg_label >= self.pos_label:
             raise ValueError(
                 f"neg_label={self.neg_label} must be strictly less than "
@@ -379,9 +380,9 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
         threshold : float, default=None
             Threshold used in the binary and multi-label cases.
 
-            Use 0 when ``Y`` contains the output of decision_function
+            Use 0 when ``Y`` contains the output of :term:`decision_function`
             (classifier).
-            Use 0.5 when ``Y`` contains the output of predict_proba.
+            Use 0.5 when ``Y`` contains the output of :term:`predict_proba`.
 
             If None, the threshold is assumed to be half way between
             neg_label and pos_label.
@@ -394,10 +395,10 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
         Notes
         -----
         In the case when the binary labels are fractional
-        (probabilistic), inverse_transform chooses the class with the
+        (probabilistic), :meth:`inverse_transform` chooses the class with the
         greatest value. Typically, this allows to use the output of a
-        linear model's decision_function method directly as the input
-        of inverse_transform.
+        linear model's :term:`decision_function` method directly as the input
+        of :meth:`inverse_transform`.
         """
         check_is_fitted(self)
 
@@ -418,10 +419,23 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
 
         return y_inv
 
-    def _more_tags(self):
-        return {"X_types": ["1dlabels"]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.two_d_array = False
+        tags.target_tags.one_d_labels = True
+        return tags
 
 
+@validate_params(
+    {
+        "y": ["array-like", "sparse matrix"],
+        "classes": ["array-like"],
+        "neg_label": [Interval(Integral, None, None, closed="neither")],
+        "pos_label": [Interval(Integral, None, None, closed="neither")],
+        "sparse_output": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False):
     """Binarize labels in a one-vs-all fashion.
 
@@ -435,7 +449,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
 
     Parameters
     ----------
-    y : array-like
+    y : array-like or sparse matrix
         Sequence of integer labels or multilabel data to encode.
 
     classes : array-like of shape (n_classes,)
@@ -548,7 +562,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
         y = column_or_1d(y)
 
         # pick out the known labels from y
-        y_in_classes = np.in1d(y, classes)
+        y_in_classes = np.isin(y, classes)
         y_seen = y[y_in_classes]
         indices = np.searchsorted(sorted_class, y_seen)
         indptr = np.hstack((0, np.cumsum(y_in_classes)))
@@ -680,7 +694,7 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold):
         raise ValueError("{0} format is not supported".format(output_type))
 
 
-class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
+class MultiLabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
     """Transform between iterable of iterables and a multilabel format.
 
     Although a list of sets or tuples is a very intuitive format for multilabel
@@ -752,6 +766,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         self.classes = classes
         self.sparse_output = sparse_output
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, y):
         """Fit the label sets binarizer, storing :term:`classes_`.
 
@@ -767,7 +782,6 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
         self._cached_dict = None
 
         if self.classes is None:
@@ -785,6 +799,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         self.classes_[:] = classes
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, y):
         """Fit the label sets binarizer and transform the given label sets.
 
@@ -805,7 +820,6 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         if self.classes is not None:
             return self.fit(y).transform(y)
 
-        self._validate_params()
         self._cached_dict = None
 
         # Automatically increment on new class
@@ -822,7 +836,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         class_mapping[:] = tmp
         self.classes_, inverse = np.unique(class_mapping, return_inverse=True)
         # ensure yt.indices keeps its current dtype
-        yt.indices = np.array(inverse[yt.indices], dtype=yt.indices.dtype, copy=False)
+        yt.indices = np.asarray(inverse[yt.indices], dtype=yt.indices.dtype)
 
         if not self.sparse_output:
             yt = yt.toarray()
@@ -942,5 +956,8 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
                 )
             return [tuple(self.classes_.compress(indicators)) for indicators in yt]
 
-    def _more_tags(self):
-        return {"X_types": ["2dlabels"]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.two_d_array = False
+        tags.target_tags.two_d_labels = True
+        return tags

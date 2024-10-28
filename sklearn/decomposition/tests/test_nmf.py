@@ -1,26 +1,24 @@
 import re
 import sys
+import warnings
 from io import StringIO
 
 import numpy as np
-import scipy.sparse as sp
-
-from scipy import linalg
-from sklearn.decomposition import NMF, MiniBatchNMF
-from sklearn.decomposition import non_negative_factorization
-from sklearn.decomposition import _nmf as nmf  # For testing internals
-from scipy.sparse import csc_matrix
-
 import pytest
+from scipy import linalg
 
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils.extmath import squared_norm
 from sklearn.base import clone
+from sklearn.decomposition import NMF, MiniBatchNMF, non_negative_factorization
+from sklearn.decomposition import _nmf as nmf  # For testing internals
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
+from sklearn.utils.extmath import squared_norm
+from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 
 
 @pytest.mark.parametrize(
@@ -33,7 +31,7 @@ def test_convergence_warning(Estimator, solver):
     )
     A = np.ones((2, 2))
     with pytest.warns(ConvergenceWarning, match=convergence_warning):
-        Estimator(max_iter=1, **solver).fit(A)
+        Estimator(max_iter=1, n_components="auto", **solver).fit(A)
 
 
 def test_initialize_nn_output():
@@ -47,7 +45,7 @@ def test_initialize_nn_output():
 
 @pytest.mark.filterwarnings(
     r"ignore:The multiplicative update \('mu'\) solver cannot update zeros present in"
-    r" the initialization"
+    r" the initialization",
 )
 def test_parameter_checking():
     # Here we only check for invalid parameter values that are not already
@@ -107,7 +105,10 @@ def test_initialize_variants():
 
 
 # ignore UserWarning raised when both solver='mu' and init='nndsvd'
-@ignore_warnings(category=UserWarning)
+@pytest.mark.filterwarnings(
+    r"ignore:The multiplicative update \('mu'\) solver cannot update zeros present in"
+    r" the initialization"
+)
 @pytest.mark.parametrize(
     ["Estimator", "solver"],
     [[NMF, {"solver": "cd"}], [NMF, {"solver": "mu"}], [MiniBatchNMF, {}]],
@@ -295,16 +296,15 @@ def test_n_components_greater_n_features(Estimator):
     ["Estimator", "solver"],
     [[NMF, {"solver": "cd"}], [NMF, {"solver": "mu"}], [MiniBatchNMF, {}]],
 )
+@pytest.mark.parametrize("sparse_container", CSC_CONTAINERS + CSR_CONTAINERS)
 @pytest.mark.parametrize("alpha_W", (0.0, 1.0))
 @pytest.mark.parametrize("alpha_H", (0.0, 1.0, "same"))
-def test_nmf_sparse_input(Estimator, solver, alpha_W, alpha_H):
+def test_nmf_sparse_input(Estimator, solver, sparse_container, alpha_W, alpha_H):
     # Test that sparse matrices are accepted as input
-    from scipy.sparse import csc_matrix
-
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(10, 10))
     A[:, 2 * np.arange(5)] = 0
-    A_sparse = csc_matrix(A)
+    A_sparse = sparse_container(A)
 
     est1 = Estimator(
         n_components=5,
@@ -331,12 +331,13 @@ def test_nmf_sparse_input(Estimator, solver, alpha_W, alpha_H):
     ["Estimator", "solver"],
     [[NMF, {"solver": "cd"}], [NMF, {"solver": "mu"}], [MiniBatchNMF, {}]],
 )
-def test_nmf_sparse_transform(Estimator, solver):
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
+def test_nmf_sparse_transform(Estimator, solver, csc_container):
     # Test that transform works on sparse data.  Issue #2124
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(3, 2))
     A[1, 1] = 0
-    A = csc_matrix(A)
+    A = csc_container(A)
 
     model = Estimator(random_state=0, n_components=2, max_iter=400, **solver)
     A_fit_tr = model.fit_transform(A)
@@ -445,7 +446,8 @@ def _beta_divergence_dense(X, W, H, beta):
     return res
 
 
-def test_beta_divergence():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_beta_divergence(csr_container):
     # Compare _beta_divergence with the reference _beta_divergence_dense
     n_samples = 20
     n_features = 10
@@ -456,7 +458,7 @@ def test_beta_divergence():
     rng = np.random.mtrand.RandomState(42)
     X = rng.randn(n_samples, n_features)
     np.clip(X, 0, None, out=X)
-    X_csr = sp.csr_matrix(X)
+    X_csr = csr_container(X)
     W, H = nmf._initialize_nmf(X, n_components, init="random", random_state=42)
 
     for beta in beta_losses:
@@ -468,7 +470,8 @@ def test_beta_divergence():
         assert_almost_equal(ref, loss_csr, decimal=7)
 
 
-def test_special_sparse_dot():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_special_sparse_dot(csr_container):
     # Test the function that computes np.dot(W, H), only where X is non zero.
     n_samples = 10
     n_features = 5
@@ -476,7 +479,7 @@ def test_special_sparse_dot():
     rng = np.random.mtrand.RandomState(42)
     X = rng.randn(n_samples, n_features)
     np.clip(X, 0, None, out=X)
-    X_csr = sp.csr_matrix(X)
+    X_csr = csr_container(X)
 
     W = np.abs(rng.randn(n_samples, n_components))
     H = np.abs(rng.randn(n_components, n_features))
@@ -495,8 +498,9 @@ def test_special_sparse_dot():
     assert_array_equal(WH_safe.shape, X_csr.shape)
 
 
-@ignore_warnings(category=ConvergenceWarning)
-def test_nmf_multiplicative_update_sparse():
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_nmf_multiplicative_update_sparse(csr_container):
     # Compare sparse and dense input in multiplicative update NMF
     # Also test continuity of the results with respect to beta_loss parameter
     n_samples = 20
@@ -510,7 +514,7 @@ def test_nmf_multiplicative_update_sparse():
     rng = np.random.mtrand.RandomState(1337)
     X = rng.randn(n_samples, n_features)
     X = np.abs(X)
-    X_csr = sp.csr_matrix(X)
+    X_csr = csr_container(X)
     W0, H0 = nmf._initialize_nmf(X, n_components, init="random", random_state=42)
 
     for beta_loss in (-1.2, 0, 0.2, 1.0, 2.0, 2.5):
@@ -574,7 +578,8 @@ def test_nmf_multiplicative_update_sparse():
         assert_allclose(H1, H3, atol=1e-4)
 
 
-def test_nmf_negative_beta_loss():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_nmf_negative_beta_loss(csr_container):
     # Test that an error is raised if beta_loss < 0 and X contains zeros.
     # Test that the output has not NaN values when the input contains zeros.
     n_samples = 6
@@ -584,7 +589,7 @@ def test_nmf_negative_beta_loss():
     rng = np.random.mtrand.RandomState(42)
     X = rng.randn(n_samples, n_features)
     np.clip(X, 0, None, out=X)
-    X_csr = sp.csr_matrix(X)
+    X_csr = csr_container(X)
 
     def _assert_nmf_no_nan(X, beta_loss):
         W, H, _ = non_negative_factorization(
@@ -697,7 +702,7 @@ def test_nmf_regularization(Estimator, solver):
     ) ** 2.0 + (linalg.norm(H_regul)) ** 2.0
 
 
-@ignore_warnings(category=ConvergenceWarning)
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("solver", ("cd", "mu"))
 def test_nmf_decreasing(solver):
     # test that the objective function is decreasing at each iteration
@@ -784,7 +789,13 @@ def test_nmf_dtype_match(Estimator, solver, dtype_in, dtype_out):
     X = np.random.RandomState(0).randn(20, 15).astype(dtype_in, copy=False)
     np.abs(X, out=X)
 
-    nmf = Estimator(alpha_W=1.0, alpha_H=1.0, tol=1e-2, random_state=0, **solver)
+    nmf = Estimator(
+        alpha_W=1.0,
+        alpha_H=1.0,
+        tol=1e-2,
+        random_state=0,
+        **solver,
+    )
 
     assert nmf.fit(X).transform(X).dtype == dtype_out
     assert nmf.fit_transform(X).dtype == dtype_out
@@ -906,3 +917,122 @@ def test_minibatch_nmf_verbose():
         nmf.fit(A)
     finally:
         sys.stdout = old_stdout
+
+
+# TODO(1.7): remove this test
+@pytest.mark.parametrize("Estimator", [NMF, MiniBatchNMF])
+def test_NMF_inverse_transform_Xt_deprecation(Estimator):
+    rng = np.random.RandomState(42)
+    A = np.abs(rng.randn(6, 5))
+    est = Estimator(
+        n_components=3,
+        init="random",
+        random_state=0,
+        tol=1e-6,
+    )
+    X = est.fit_transform(A)
+
+    with pytest.raises(TypeError, match="Missing required positional argument"):
+        est.inverse_transform()
+
+    with pytest.raises(TypeError, match="Cannot use both X and Xt. Use X only"):
+        est.inverse_transform(X=X, Xt=X)
+
+    with warnings.catch_warnings(record=True):
+        warnings.simplefilter("error")
+        est.inverse_transform(X)
+
+    with pytest.warns(FutureWarning, match="Xt was renamed X in version 1.5"):
+        est.inverse_transform(Xt=X)
+
+
+@pytest.mark.parametrize("Estimator", [NMF, MiniBatchNMF])
+def test_nmf_n_components_auto(Estimator):
+    # Check that n_components is correctly inferred
+    # from the provided custom initialization.
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((6, 5))
+    W = rng.random_sample((6, 2))
+    H = rng.random_sample((2, 5))
+    est = Estimator(
+        n_components="auto",
+        init="custom",
+        random_state=0,
+        tol=1e-6,
+    )
+    est.fit_transform(X, W=W, H=H)
+    assert est._n_components == H.shape[0]
+
+
+def test_nmf_non_negative_factorization_n_components_auto():
+    # Check that n_components is correctly inferred from the provided
+    # custom initialization.
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((6, 5))
+    W_init = rng.random_sample((6, 2))
+    H_init = rng.random_sample((2, 5))
+    W, H, _ = non_negative_factorization(
+        X, W=W_init, H=H_init, init="custom", n_components="auto"
+    )
+    assert H.shape == H_init.shape
+    assert W.shape == W_init.shape
+
+
+def test_nmf_n_components_auto_no_h_update():
+    # Tests that non_negative_factorization does not fail when setting
+    # n_components="auto" also tests that the inferred n_component
+    # value is the right one.
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((6, 5))
+    H_true = rng.random_sample((2, 5))
+    W, H, _ = non_negative_factorization(
+        X, H=H_true, n_components="auto", update_H=False
+    )  # should not fail
+    assert_allclose(H, H_true)
+    assert W.shape == (X.shape[0], H_true.shape[0])
+
+
+def test_nmf_w_h_not_used_warning():
+    # Check that warnings are raised if user provided W and H are not used
+    # and initialization overrides value of W or H
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((6, 5))
+    W_init = rng.random_sample((6, 2))
+    H_init = rng.random_sample((2, 5))
+    with pytest.warns(
+        RuntimeWarning,
+        match="When init!='custom', provided W or H are ignored",
+    ):
+        non_negative_factorization(X, H=H_init, update_H=True, n_components="auto")
+
+    with pytest.warns(
+        RuntimeWarning,
+        match="When init!='custom', provided W or H are ignored",
+    ):
+        non_negative_factorization(
+            X, W=W_init, H=H_init, update_H=True, n_components="auto"
+        )
+
+    with pytest.warns(
+        RuntimeWarning, match="When update_H=False, the provided initial W is not used."
+    ):
+        # When update_H is False, W is ignored regardless of init
+        # TODO: use the provided W when init="custom".
+        non_negative_factorization(
+            X, W=W_init, H=H_init, update_H=False, n_components="auto"
+        )
+
+
+def test_nmf_custom_init_shape_error():
+    # Check that an informative error is raised when custom initialization does not
+    # have the right shape
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((6, 5))
+    H = rng.random_sample((2, 5))
+    nmf = NMF(n_components=2, init="custom", random_state=0)
+
+    with pytest.raises(ValueError, match="Array with wrong first dimension passed"):
+        nmf.fit(X, H=H, W=rng.random_sample((5, 2)))
+
+    with pytest.raises(ValueError, match="Array with wrong second dimension passed"):
+        nmf.fit(X, H=H, W=rng.random_sample((6, 3)))

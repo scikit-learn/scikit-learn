@@ -16,16 +16,12 @@ jobs:
     VIRTUALENV: 'testvenv'
     TEST_DIR: '$(Agent.WorkFolder)/tmp_folder'
     JUNITXML: 'test-data.xml'
-    OMP_NUM_THREADS: '2'
-    OPENBLAS_NUM_THREADS: '2'
-    CPU_COUNT: '2'
     SKLEARN_SKIP_NETWORK_TESTS: '1'
     PYTEST_XDIST_VERSION: 'latest'
     COVERAGE: 'false'
     # Set in azure-pipelines.yml
     DISTRIB: ''
     DOCKER_CONTAINER: ''
-    SHOW_SHORT_SUMMARY: 'false'
     CREATE_ISSUE_ON_TRACKER: 'true'
     CCACHE_DIR: $(Pipeline.Workspace)/ccache
     CCACHE_COMPRESS: '1'
@@ -59,23 +55,24 @@ jobs:
     - script: >
         docker container run --rm
         --volume $TEST_DIR:/temp_dir
+        --volume $BUILD_REPOSITORY_LOCALPATH:/repo_localpath
         --volume $PWD:/io
         --volume $CCACHE_DIR:/ccache
         -w /io
         --detach
         --name skcontainer
+        -e BUILD_SOURCESDIRECTORY=/io
         -e TEST_DIR=/temp_dir
         -e CCACHE_DIR=/ccache
+        -e BUILD_REPOSITORY_LOCALPATH=/repo_localpath
+        -e COVERAGE
         -e DISTRIB
         -e LOCK_FILE
         -e JUNITXML
         -e VIRTUALENV
         -e PYTEST_XDIST_VERSION
-        -e OMP_NUM_THREADS
-        -e OPENBLAS_NUM_THREADS
         -e SKLEARN_SKIP_NETWORK_TESTS
         -e SELECTED_TESTS
-        -e CPU_COUNT
         -e CCACHE_COMPRESS
         -e BUILD_SOURCEVERSIONMESSAGE
         -e BUILD_REASON
@@ -88,6 +85,11 @@ jobs:
     - script: >
         docker exec skcontainer ./build_tools/azure/test_script.sh
       displayName: 'Test Library'
+    - script: >
+        docker exec skcontainer ./build_tools/azure/combine_coverage_reports.sh
+      condition: and(succeeded(), eq(variables['COVERAGE'], 'true'),
+                     eq(variables['SELECTED_TESTS'], ''))
+      displayName: 'Combine coverage'
     - task: PublishTestResults@2
       inputs:
         testResultsFiles: '$(TEST_DIR)/$(JUNITXML)'
@@ -122,3 +124,10 @@ jobs:
         JUNIT_FILE: $(TEST_DIR)/$(JUNITXML)
       condition: and(succeededOrFailed(), eq(variables['CREATE_ISSUE_ON_TRACKER'], 'true'),
                      eq(variables['Build.Reason'], 'Schedule'))
+    - bash: bash build_tools/azure/upload_codecov.sh
+      condition: and(succeeded(), eq(variables['COVERAGE'], 'true'),
+                     eq(variables['SELECTED_TESTS'], ''))
+      displayName: 'Upload To Codecov'
+      retryCountOnTaskFailure: 5
+      env:
+        CODECOV_TOKEN: $(CODECOV_TOKEN)

@@ -52,25 +52,25 @@ Learning (2006), pp. 193-216
 Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
 """
 
-# Authors: Clay Woolam <clay@woolam.org>
-#          Utkarsh Upadhyay <mail@musicallyut.in>
-# License: BSD
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
 
-import warnings
 import numpy as np
 from scipy import sparse
-from scipy.sparse import csgraph
 
-from ..base import BaseEstimator, ClassifierMixin
+from ..base import BaseEstimator, ClassifierMixin, _fit_context
+from ..exceptions import ConvergenceWarning
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import NearestNeighbors
-from ..utils.extmath import safe_sparse_dot
-from ..utils.multiclass import check_classification_targets
-from ..utils.validation import check_is_fitted
 from ..utils._param_validation import Interval, StrOptions
-from ..exceptions import ConvergenceWarning
+from ..utils.extmath import safe_sparse_dot
+from ..utils.fixes import laplacian as csgraph_laplacian
+from ..utils.multiclass import check_classification_targets
+from ..utils.validation import check_is_fitted, validate_data
 
 
 class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
@@ -128,7 +128,6 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         tol=1e-3,
         n_jobs=None,
     ):
-
         self.max_iter = max_iter
         self.tol = tol
 
@@ -211,7 +210,8 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         """
         check_is_fitted(self)
 
-        X_2d = self._validate_data(
+        X_2d = validate_data(
+            self,
             X,
             accept_sparse=["csc", "csr", "coo", "dok", "bsr", "lil", "dia"],
             reset=False,
@@ -231,6 +231,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         probabilities /= normalizer
         return probabilities
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit a semi-supervised label propagation model to X.
 
@@ -241,7 +242,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
@@ -255,8 +256,13 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-        X, y = self._validate_data(X, y)
+        X, y = validate_data(
+            self,
+            X,
+            y,
+            accept_sparse=["csr", "csc"],
+            reset=True,
+        )
         self.X_ = X
         check_classification_targets(y)
 
@@ -290,7 +296,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         l_previous = np.zeros((self.X_.shape[0], n_classes))
 
         unlabeled = unlabeled[:, np.newaxis]
-        if sparse.isspmatrix(graph_matrix):
+        if sparse.issparse(graph_matrix):
             graph_matrix = graph_matrix.tocsr()
 
         for self.n_iter_ in range(self.max_iter):
@@ -365,7 +371,7 @@ class LabelPropagation(BaseLabelPropagation):
 
     Attributes
     ----------
-    X_ : ndarray of shape (n_samples, n_features)
+    X_ : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input array.
 
     classes_ : ndarray of shape (n_classes,)
@@ -393,7 +399,6 @@ class LabelPropagation(BaseLabelPropagation):
 
     See Also
     --------
-    BaseLabelPropagation : Base class for label propagation module.
     LabelSpreading : Alternate label propagation strategy more robust to noise.
 
     References
@@ -452,7 +457,7 @@ class LabelPropagation(BaseLabelPropagation):
             self.nn_fit = None
         affinity_matrix = self._get_kernel(self.X_)
         normalizer = affinity_matrix.sum(axis=0)
-        if sparse.isspmatrix(affinity_matrix):
+        if sparse.issparse(affinity_matrix):
             affinity_matrix.data /= np.diag(np.array(normalizer))
         else:
             affinity_matrix /= normalizer[:, np.newaxis]
@@ -463,7 +468,7 @@ class LabelPropagation(BaseLabelPropagation):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
@@ -592,7 +597,6 @@ class LabelSpreading(BaseLabelPropagation):
         tol=1e-3,
         n_jobs=None,
     ):
-
         # this one has different base parameters
         super().__init__(
             kernel=kernel,
@@ -611,9 +615,9 @@ class LabelSpreading(BaseLabelPropagation):
             self.nn_fit = None
         n_samples = self.X_.shape[0]
         affinity_matrix = self._get_kernel(self.X_)
-        laplacian = csgraph.laplacian(affinity_matrix, normed=True)
+        laplacian = csgraph_laplacian(affinity_matrix, normed=True)
         laplacian = -laplacian
-        if sparse.isspmatrix(laplacian):
+        if sparse.issparse(laplacian):
             diag_mask = laplacian.row == laplacian.col
             laplacian.data[diag_mask] = 0.0
         else:

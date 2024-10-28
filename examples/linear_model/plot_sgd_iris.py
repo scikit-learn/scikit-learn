@@ -9,11 +9,15 @@ are represented by the dashed lines.
 
 """
 
-import numpy as np
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn import datasets
-from sklearn.linear_model import SGDClassifier
 from sklearn.inspection import DecisionBoundaryDisplay
+from sklearn.linear_model import SGDClassifier
 
 # import some data to play with
 iris = datasets.load_iris()
@@ -57,7 +61,6 @@ for i, color in zip(clf.classes_, colors):
         X[idx, 1],
         c=color,
         label=iris.target_names[i],
-        cmap=plt.cm.Paired,
         edgecolor="black",
         s=20,
     )

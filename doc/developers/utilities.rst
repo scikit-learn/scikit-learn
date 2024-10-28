@@ -97,7 +97,7 @@ Efficient Linear Algebra & Array Operations
   fast on large matrices on which you wish to extract only a small
   number of components.
 
-- :func:`arrayfuncs.cholesky_delete`:
+- `arrayfuncs.cholesky_delete`:
   (used in :func:`~sklearn.linear_model.lars_path`)  Remove an
   item from a cholesky factorization.
 

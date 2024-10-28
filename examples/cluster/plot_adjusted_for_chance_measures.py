@@ -15,9 +15,8 @@ experiments:
   as the "ground truth labels".
 """
 
-# Author: Olivier Grisel <olivier.grisel@ensta.org>
-#         Arturo Amor <david-arturo.amor-quiroz@inria.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Defining the list of metrics to evaluate
@@ -102,7 +101,7 @@ def fixed_classes_uniform_labelings_scores(
 
 
 # %%
-# In this first example we set the number of clases (true number of clusters) to
+# In this first example we set the number of classes (true number of clusters) to
 # `n_classes=10`. The number of clusters varies over the values provided by
 # `n_clusters_range`.
 

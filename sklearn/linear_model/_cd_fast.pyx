@@ -1,30 +1,20 @@
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Fabian Pedregosa <fabian.pedregosa@inria.fr>
-#         Olivier Grisel <olivier.grisel@ensta.org>
-#         Alexis Mignon <alexis.mignon@gmail.com>
-#         Manoj Kumar <manojkumarsivaraj334@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from libc.math cimport fabs
-cimport numpy as cnp
 import numpy as np
 
 from cython cimport floating
 import warnings
 from ..exceptions import ConvergenceWarning
 
-from ..utils._cython_blas cimport (_axpy, _dot, _asum, _gemv, _nrm2,
-                                   _copy, _scal)
+from ..utils._cython_blas cimport (
+    _axpy, _dot, _asum, _gemv, _nrm2, _copy, _scal
+)
 from ..utils._cython_blas cimport ColMajor, Trans, NoTrans
-
-
+from ..utils._typedefs cimport uint32_t
 from ..utils._random cimport our_rand_r
 
-ctypedef cnp.float64_t DOUBLE
-ctypedef cnp.uint32_t UINT32_t
-
-cnp.import_array()
 
 # The following two functions are shamelessly copied from the tree code.
 
@@ -32,21 +22,23 @@ cdef enum:
     # Max value for our rand_r replacement (near the bottom).
     # We don't use RAND_MAX because it's different across platforms and
     # particularly tiny on Windows/MSVC.
-    RAND_R_MAX = 0x7FFFFFFF
+    # It corresponds to the maximum representable value for
+    # 32-bit signed integers (i.e. 2^31 - 1).
+    RAND_R_MAX = 2147483647
 
 
-cdef inline UINT32_t rand_int(UINT32_t end, UINT32_t* random_state) nogil:
+cdef inline uint32_t rand_int(uint32_t end, uint32_t* random_state) noexcept nogil:
     """Generate a random integer in [0; end)."""
     return our_rand_r(random_state) % end
 
 
-cdef inline floating fmax(floating x, floating y) nogil:
+cdef inline floating fmax(floating x, floating y) noexcept nogil:
     if x > y:
         return x
     return y
 
 
-cdef inline floating fsign(floating f) nogil:
+cdef inline floating fsign(floating f) noexcept nogil:
     if f == 0:
         return 0
     elif f > 0:
@@ -55,7 +47,7 @@ cdef inline floating fsign(floating f) nogil:
         return -1.0
 
 
-cdef floating abs_max(int n, floating* a) nogil:
+cdef floating abs_max(int n, const floating* a) noexcept nogil:
     """np.max(np.abs(a))"""
     cdef int i
     cdef floating m = fabs(a[0])
@@ -67,7 +59,7 @@ cdef floating abs_max(int n, floating* a) nogil:
     return m
 
 
-cdef floating max(int n, floating* a) nogil:
+cdef floating max(int n, floating* a) noexcept nogil:
     """np.max(a)"""
     cdef int i
     cdef floating m = a[0]
@@ -79,7 +71,7 @@ cdef floating max(int n, floating* a) nogil:
     return m
 
 
-cdef floating diff_abs_max(int n, floating* a, floating* b) nogil:
+cdef floating diff_abs_max(int n, const floating* a, floating* b) noexcept nogil:
     """np.max(np.abs(a - b))"""
     cdef int i
     cdef floating m = fabs(a[0] - b[0])
@@ -95,8 +87,8 @@ def enet_coordinate_descent(
     floating[::1] w,
     floating alpha,
     floating beta,
-    floating[::1, :] X,
-    floating[::1] y,
+    const floating[::1, :] X,
+    const floating[::1] y,
     unsigned int max_iter,
     floating tol,
     object rng,
@@ -152,11 +144,10 @@ def enet_coordinate_descent(
     cdef floating const
     cdef floating A_norm2
     cdef unsigned int ii
-    cdef unsigned int i
     cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
-    cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
-    cdef UINT32_t* rand_r_state = &rand_r_state_seed
+    cdef uint32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
+    cdef uint32_t* rand_r_state = &rand_r_state_seed
 
     if alpha == 0 and beta == 0:
         warnings.warn("Coordinate descent with no regularization may lead to "
@@ -208,9 +199,11 @@ def enet_coordinate_descent(
 
                 w_max = fmax(w_max, fabs(w[ii]))
 
-            if (w_max == 0.0 or
-                d_w_max / w_max < d_w_tol or
-                n_iter == max_iter - 1):
+            if (
+                w_max == 0.0
+                or d_w_max / w_max < d_w_tol
+                or n_iter == max_iter - 1
+            ):
                 # the biggest coordinate update of this iteration was smaller
                 # than the tolerance: check the duality gap as ultimate
                 # stopping criterion
@@ -274,15 +267,15 @@ def enet_coordinate_descent(
 
 
 def sparse_enet_coordinate_descent(
-    floating [::1] w,
+    floating[::1] w,
     floating alpha,
     floating beta,
-    floating[::1] X_data, # TODO: Make const after release of Cython 3 (#23147)
+    const floating[::1] X_data,
     const int[::1] X_indices,
     const int[::1] X_indptr,
-    floating[::1] y,
-    floating[::1] sample_weight,
-    floating[::1] X_mean,
+    const floating[::1] y,
+    const floating[::1] sample_weight,
+    const floating[::1] X_mean,
     unsigned int max_iter,
     floating tol,
     object rng,
@@ -339,7 +332,7 @@ def sparse_enet_coordinate_descent(
     # R = y - Zw, weighted version R = sample_weight * (y - Zw)
     cdef floating[::1] R
     cdef floating[::1] XtA
-    cdef floating[::1] yw
+    cdef const floating[::1] yw
 
     if floating is float:
         dtype = np.float32
@@ -367,8 +360,8 @@ def sparse_enet_coordinate_descent(
     cdef unsigned int jj
     cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
-    cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
-    cdef UINT32_t* rand_r_state = &rand_r_state_seed
+    cdef uint32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
+    cdef uint32_t* rand_r_state = &rand_r_state_seed
     cdef bint center = False
     cdef bint no_sample_weights = sample_weight is None
     cdef int kk
@@ -568,9 +561,9 @@ def enet_coordinate_descent_gram(
     floating[::1] w,
     floating alpha,
     floating beta,
-    cnp.ndarray[floating, ndim=2, mode='c'] Q,
-    cnp.ndarray[floating, ndim=1, mode='c'] q,
-    cnp.ndarray[floating, ndim=1] y,
+    const floating[:, ::1] Q,
+    const floating[::1] q,
+    const floating[:] y,
     unsigned int max_iter,
     floating tol,
     object rng,
@@ -606,7 +599,6 @@ def enet_coordinate_descent_gram(
         dtype = np.float64
 
     # get the data information into easy vars
-    cdef unsigned int n_samples = y.shape[0]
     cdef unsigned int n_features = Q.shape[0]
 
     # initial value "Q w" which will be kept of up to date in the iterations
@@ -626,21 +618,23 @@ def enet_coordinate_descent_gram(
     cdef unsigned int ii
     cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
-    cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
-    cdef UINT32_t* rand_r_state = &rand_r_state_seed
+    cdef uint32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
+    cdef uint32_t* rand_r_state = &rand_r_state_seed
 
     cdef floating y_norm2 = np.dot(y, y)
-    cdef floating* w_ptr = <floating*>&w[0]
-    cdef floating* Q_ptr = &Q[0, 0]
-    cdef floating* q_ptr = <floating*>q.data
+    cdef floating* w_ptr = &w[0]
+    cdef const floating* Q_ptr = &Q[0, 0]
+    cdef const floating* q_ptr = &q[0]
     cdef floating* H_ptr = &H[0]
     cdef floating* XtA_ptr = &XtA[0]
     tol = tol * y_norm2
 
     if alpha == 0:
-        warnings.warn("Coordinate descent without L1 regularization may "
+        warnings.warn(
+            "Coordinate descent without L1 regularization may "
             "lead to unexpected results and is discouraged. "
-            "Set l1_ratio > 0 to add L1 regularization.")
+            "Set l1_ratio > 0 to add L1 regularization."
+        )
 
     with nogil:
         for n_iter in range(max_iter):
@@ -716,9 +710,12 @@ def enet_coordinate_descent_gram(
                     gap = R_norm2
 
                 # The call to asum is equivalent to the L1 norm of w
-                gap += (alpha * _asum(n_features, &w[0], 1) -
-                        const * y_norm2 +  const * q_dot_w +
-                        0.5 * beta * (1 + const ** 2) * w_norm2)
+                gap += (
+                    alpha * _asum(n_features, &w[0], 1)
+                    - const * y_norm2
+                    + const * q_dot_w
+                    + 0.5 * beta * (1 + const ** 2) * w_norm2
+                )
 
                 if gap < tol:
                     # return if we reached desired tolerance
@@ -736,19 +733,18 @@ def enet_coordinate_descent_gram(
 
 
 def enet_coordinate_descent_multi_task(
-    floating[::1, :] W,
+    const floating[::1, :] W,
     floating l1_reg,
     floating l2_reg,
-    # TODO: use const qualified fused-typed memoryview when Cython 3.0 is used.
-    cnp.ndarray[floating, ndim=2, mode='fortran'] X,
-    cnp.ndarray[floating, ndim=2, mode='fortran'] Y,
+    const floating[::1, :] X,
+    const floating[::1, :] Y,
     unsigned int max_iter,
     floating tol,
     object rng,
     bint random=0
 ):
     """Cython version of the coordinate descent algorithm
-        for Elastic-Net mult-task regression
+        for Elastic-Net multi-task regression
 
         We minimize
 
@@ -802,15 +798,17 @@ def enet_coordinate_descent_multi_task(
     cdef unsigned int jj
     cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
-    cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
-    cdef UINT32_t* rand_r_state = &rand_r_state_seed
+    cdef uint32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
+    cdef uint32_t* rand_r_state = &rand_r_state_seed
 
-    cdef floating* X_ptr = &X[0, 0]
-    cdef floating* Y_ptr = &Y[0, 0]
+    cdef const floating* X_ptr = &X[0, 0]
+    cdef const floating* Y_ptr = &Y[0, 0]
 
     if l1_reg == 0:
-        warnings.warn("Coordinate descent with l1_reg=0 may lead to unexpected"
-            " results and is discouraged.")
+        warnings.warn(
+            "Coordinate descent with l1_reg=0 may lead to unexpected"
+            " results and is discouraged."
+        )
 
     with nogil:
         # norm_cols_X = (np.asarray(X) ** 2).sum(axis=0)
@@ -923,7 +921,7 @@ def enet_coordinate_descent_multi_task(
                 R_norm = _nrm2(n_samples * n_tasks, &R[0, 0], 1)
                 w_norm = _nrm2(n_features * n_tasks, &W[0, 0], 1)
                 if (dual_norm_XtA > l1_reg):
-                    const =  l1_reg / dual_norm_XtA
+                    const = l1_reg / dual_norm_XtA
                     A_norm = R_norm * const
                     gap = 0.5 * (R_norm ** 2 + A_norm ** 2)
                 else:
@@ -938,10 +936,13 @@ def enet_coordinate_descent_multi_task(
                 for ii in range(n_features):
                     l21_norm += _nrm2(n_tasks, &W[0, ii], 1)
 
-                gap += l1_reg * l21_norm - const * ry_sum + \
-                     0.5 * l2_reg * (1 + const ** 2) * (w_norm ** 2)
+                gap += (
+                    l1_reg * l21_norm
+                    - const * ry_sum
+                    + 0.5 * l2_reg * (1 + const ** 2) * (w_norm ** 2)
+                )
 
-                if gap < tol:
+                if gap <= tol:
                     # return if we reached desired tolerance
                     break
         else:

@@ -1,24 +1,22 @@
 """Testing for Spectral Clustering methods"""
+
+import pickle
 import re
 
 import numpy as np
-from scipy import sparse
+import pytest
 from scipy.linalg import LinAlgError
 
-import pytest
-
-import pickle
-
-from sklearn.utils import check_random_state
-from sklearn.utils._testing import assert_array_equal
-
 from sklearn.cluster import SpectralClustering, spectral_clustering
-from sklearn.cluster._spectral import discretize, cluster_qr
+from sklearn.cluster._spectral import cluster_qr, discretize
+from sklearn.datasets import make_blobs
 from sklearn.feature_extraction import img_to_graph
 from sklearn.metrics import adjusted_rand_score
 from sklearn.metrics.pairwise import kernel_metrics, rbf_kernel
 from sklearn.neighbors import NearestNeighbors
-from sklearn.datasets import make_blobs
+from sklearn.utils import check_random_state
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils.fixes import COO_CONTAINERS, CSR_CONTAINERS
 
 try:
     from pyamg import smoothed_aggregation_solver  # noqa
@@ -38,9 +36,10 @@ X, _ = make_blobs(
 )
 
 
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 @pytest.mark.parametrize("eigen_solver", ("arpack", "lobpcg"))
 @pytest.mark.parametrize("assign_labels", ("kmeans", "discretize", "cluster_qr"))
-def test_spectral_clustering(eigen_solver, assign_labels):
+def test_spectral_clustering(eigen_solver, assign_labels, csr_container):
     S = np.array(
         [
             [1.0, 1.0, 1.0, 0.2, 0.0, 0.0, 0.0],
@@ -53,7 +52,7 @@ def test_spectral_clustering(eigen_solver, assign_labels):
         ]
     )
 
-    for mat in (S, sparse.csr_matrix(S)):
+    for mat in (S, csr_container(S)):
         model = SpectralClustering(
             random_state=0,
             n_clusters=2,
@@ -73,15 +72,16 @@ def test_spectral_clustering(eigen_solver, assign_labels):
         assert_array_equal(model_copy.labels_, model.labels_)
 
 
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
 @pytest.mark.parametrize("assign_labels", ("kmeans", "discretize", "cluster_qr"))
-def test_spectral_clustering_sparse(assign_labels):
+def test_spectral_clustering_sparse(assign_labels, coo_container):
     X, y = make_blobs(
         n_samples=20, random_state=0, centers=[[1, 1], [-1, -1]], cluster_std=0.01
     )
 
     S = rbf_kernel(X, gamma=1)
     S = np.maximum(S - 1e-4, 0)
-    S = sparse.coo_matrix(S)
+    S = coo_container(S)
 
     labels = (
         SpectralClustering(
@@ -194,8 +194,9 @@ def test_cluster_qr_permutation_invariance():
     )
 
 
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
 @pytest.mark.parametrize("n_samples", [50, 100, 150, 500])
-def test_discretize(n_samples):
+def test_discretize(n_samples, coo_container):
     # Test the discretize using a noise assignment matrix
     random_state = np.random.RandomState(seed=8)
     for n_class in range(2, 10):
@@ -203,7 +204,7 @@ def test_discretize(n_samples):
         y_true = random_state.randint(0, n_class + 1, n_samples)
         y_true = np.array(y_true, float)
         # noise class assignment matrix
-        y_indicator = sparse.coo_matrix(
+        y_indicator = coo_container(
             (np.ones(n_samples), (np.arange(n_samples), y_true)),
             shape=(n_samples, n_class + 1),
         )
@@ -214,19 +215,6 @@ def test_discretize(n_samples):
         assert adjusted_rand_score(y_true, y_pred) > 0.8
 
 
-# TODO: Remove when pyamg does replaces sp.rand call with np.random.rand
-# https://github.com/scikit-learn/scikit-learn/issues/15913
-@pytest.mark.filterwarnings(
-    "ignore:scipy.rand is deprecated:DeprecationWarning:pyamg.*"
-)
-# TODO: Remove when pyamg removes the use of np.float
-@pytest.mark.filterwarnings(
-    "ignore:`np.float` is a deprecated alias:DeprecationWarning:pyamg.*"
-)
-# TODO: Remove when pyamg removes the use of pinv2
-@pytest.mark.filterwarnings(
-    "ignore:scipy.linalg.pinv2 is deprecated:DeprecationWarning:pyamg.*"
-)
 def test_spectral_clustering_with_arpack_amg_solvers():
     # Test that spectral_clustering is the same for arpack and amg solver
     # Based on toy example from plot_segmentation_toy.py
@@ -309,7 +297,7 @@ def test_spectral_clustering_np_matrix_raises():
     a np.matrix. See #10993"""
     X = np.matrix([[0.0, 2.0], [2.0, 0.0]])
 
-    msg = r"spectral_clustering does not support passing in affinity as an np\.matrix"
+    msg = r"np\.matrix is not supported. Please convert to a numpy array"
     with pytest.raises(TypeError, match=msg):
         spectral_clustering(X)
 

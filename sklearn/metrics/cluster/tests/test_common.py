@@ -1,24 +1,24 @@
 from functools import partial
 from itertools import chain
 
-import pytest
 import numpy as np
+import pytest
 
-from sklearn.metrics.cluster import adjusted_mutual_info_score
-from sklearn.metrics.cluster import adjusted_rand_score
-from sklearn.metrics.cluster import rand_score
-from sklearn.metrics.cluster import completeness_score
-from sklearn.metrics.cluster import fowlkes_mallows_score
-from sklearn.metrics.cluster import homogeneity_score
-from sklearn.metrics.cluster import mutual_info_score
-from sklearn.metrics.cluster import normalized_mutual_info_score
-from sklearn.metrics.cluster import v_measure_score
-from sklearn.metrics.cluster import silhouette_score
-from sklearn.metrics.cluster import calinski_harabasz_score
-from sklearn.metrics.cluster import davies_bouldin_score
-
+from sklearn.metrics.cluster import (
+    adjusted_mutual_info_score,
+    adjusted_rand_score,
+    calinski_harabasz_score,
+    completeness_score,
+    davies_bouldin_score,
+    fowlkes_mallows_score,
+    homogeneity_score,
+    mutual_info_score,
+    normalized_mutual_info_score,
+    rand_score,
+    silhouette_score,
+    v_measure_score,
+)
 from sklearn.utils._testing import assert_allclose
-
 
 # Dictionaries of metrics
 # ------------------------
@@ -96,8 +96,6 @@ def test_symmetric_non_symmetric_union():
     )
 
 
-# 0.22 AMI and NMI changes
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "metric_name, y1, y2", [(name, y1, y2) for name in SYMMETRIC_METRICS]
 )
@@ -114,8 +112,6 @@ def test_non_symmetry(metric_name, y1, y2):
     assert metric(y1, y2) != pytest.approx(metric(y2, y1))
 
 
-# 0.22 AMI and NMI changes
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("metric_name", NORMALIZED_METRICS)
 def test_normalized_output(metric_name):
     upper_bound_1 = [0, 0, 0, 1, 1, 1]
@@ -135,8 +131,6 @@ def test_normalized_output(metric_name):
     assert not (score < 0).any()
 
 
-# 0.22 AMI and NMI changes
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("metric_name", chain(SUPERVISED_METRICS, UNSUPERVISED_METRICS))
 def test_permute_labels(metric_name):
     # All clustering metrics do not change score due to permutations of labels
@@ -156,8 +150,6 @@ def test_permute_labels(metric_name):
         assert_allclose(score_1, metric(X, 1 - y_pred))
 
 
-# 0.22 AMI and NMI changes
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("metric_name", chain(SUPERVISED_METRICS, UNSUPERVISED_METRICS))
 # For all clustering metrics Input parameters can be both
 # in the form of arrays lists, positive, negative or string

@@ -1,16 +1,15 @@
+import joblib
 import numpy as np
-
 import pytest
 
-from sklearn.utils._testing import assert_allclose
-from sklearn.neighbors import KernelDensity, KDTree, NearestNeighbors
+from sklearn.datasets import make_blobs
+from sklearn.exceptions import NotFittedError
+from sklearn.model_selection import GridSearchCV
+from sklearn.neighbors import KDTree, KernelDensity, NearestNeighbors
 from sklearn.neighbors._ball_tree import kernel_norm
 from sklearn.pipeline import make_pipeline
-from sklearn.datasets import make_blobs
-from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import StandardScaler
-from sklearn.exceptions import NotFittedError
-import joblib
+from sklearn.utils._testing import assert_allclose
 
 
 # XXX Duplicated in test_neighbors_tree, test_kde

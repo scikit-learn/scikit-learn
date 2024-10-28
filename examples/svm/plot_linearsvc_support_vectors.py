@@ -9,11 +9,15 @@ vectors in LinearSVC.
 
 """
 
-import numpy as np
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn.datasets import make_blobs
-from sklearn.svm import LinearSVC
 from sklearn.inspection import DecisionBoundaryDisplay
+from sklearn.svm import LinearSVC
 
 X, y = make_blobs(n_samples=40, centers=2, random_state=0)
 

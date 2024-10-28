@@ -23,34 +23,24 @@ References
 `"Maximum entropy modeling of species geographic distributions"
 <http://rob.schapire.net/papers/ecolmod.pdf>`_ S. J. Phillips,
 R. P. Anderson, R. E. Schapire - Ecological Modelling, 190:231-259, 2006.
-
-Notes
------
-
-For an example of using this dataset, see
-:ref:`examples/applications/plot_species_distribution_modeling.py
-<sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py>`.
 """
 
-# Authors: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#          Jake Vanderplas <vanderplas@astro.washington.edu>
-#
-# License: BSD 3 clause
-
-from io import BytesIO
-from os import makedirs, remove
-from os.path import exists
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import logging
-import numpy as np
+from io import BytesIO
+from numbers import Integral, Real
+from os import PathLike, makedirs, remove
+from os.path import exists
 
 import joblib
+import numpy as np
 
-from . import get_data_home
-from ._base import _fetch_remote
-from ._base import RemoteFileMetadata
 from ..utils import Bunch
-from ._base import _pkl_filepath
+from ..utils._param_validation import Interval, validate_params
+from . import get_data_home
+from ._base import RemoteFileMetadata, _fetch_remote, _pkl_filepath
 
 # The original data can be found at:
 # https://biodiversityinformatics.amnh.org/open_source/maxent/samples.zip
@@ -105,7 +95,7 @@ def _load_csv(F):
     """
     names = F.readline().decode("ascii").strip().split(",")
 
-    rec = np.loadtxt(F, skiprows=0, delimiter=",", dtype="a22,f4,f4")
+    rec = np.loadtxt(F, skiprows=0, delimiter=",", dtype="S22,f4,f4")
     rec.dtype.names = names
     return rec
 
@@ -137,20 +127,45 @@ def construct_grids(batch):
     return (xgrid, ygrid)
 
 
-def fetch_species_distributions(*, data_home=None, download_if_missing=True):
+@validate_params(
+    {
+        "data_home": [str, PathLike, None],
+        "download_if_missing": ["boolean"],
+        "n_retries": [Interval(Integral, 1, None, closed="left")],
+        "delay": [Interval(Real, 0.0, None, closed="neither")],
+    },
+    prefer_skip_nested_validation=True,
+)
+def fetch_species_distributions(
+    *,
+    data_home=None,
+    download_if_missing=True,
+    n_retries=3,
+    delay=1.0,
+):
     """Loader for species distribution dataset from Phillips et. al. (2006).
 
-    Read more in the :ref:`User Guide <datasets>`.
+    Read more in the :ref:`User Guide <species_distribution_dataset>`.
 
     Parameters
     ----------
-    data_home : str, default=None
+    data_home : str or path-like, default=None
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     download_if_missing : bool, default=True
-        If False, raise a IOError if the data is not locally available
+        If False, raise an OSError if the data is not locally available
         instead of trying to download the data from the source site.
+
+    n_retries : int, default=3
+        Number of retries when HTTP errors are encountered.
+
+        .. versionadded:: 1.5
+
+    delay : float, default=1.0
+        Number of seconds between retries.
+
+        .. versionadded:: 1.5
 
     Returns
     -------
@@ -194,10 +209,6 @@ def fetch_species_distributions(*, data_home=None, download_if_missing=True):
       also known as the Forest Small Rice Rat, a rodent that lives in Peru,
       Colombia, Ecuador, Peru, and Venezuela.
 
-    - For an example of using this dataset with scikit-learn, see
-      :ref:`examples/applications/plot_species_distribution_modeling.py
-      <sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py>`.
-
     References
     ----------
 
@@ -205,6 +216,21 @@ def fetch_species_distributions(*, data_home=None, download_if_missing=True):
       <http://rob.schapire.net/papers/ecolmod.pdf>`_
       S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
       190:231-259, 2006.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import fetch_species_distributions
+    >>> species = fetch_species_distributions()
+    >>> species.train[:5]
+    array([(b'microryzomys_minutus', -64.7   , -17.85  ),
+           (b'microryzomys_minutus', -67.8333, -16.3333),
+           (b'microryzomys_minutus', -67.8833, -16.3   ),
+           (b'microryzomys_minutus', -67.8   , -16.2667),
+           (b'microryzomys_minutus', -67.9833, -15.9   )],
+          dtype=[('species', 'S22'), ('dd long', '<f4'), ('dd lat', '<f4')])
+
+    For a more extended example,
+    see :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`
     """
     data_home = get_data_home(data_home)
     if not exists(data_home):
@@ -226,9 +252,11 @@ def fetch_species_distributions(*, data_home=None, download_if_missing=True):
 
     if not exists(archive_path):
         if not download_if_missing:
-            raise IOError("Data not found and `download_if_missing` is False")
+            raise OSError("Data not found and `download_if_missing` is False")
         logger.info("Downloading species data from %s to %s" % (SAMPLES.url, data_home))
-        samples_path = _fetch_remote(SAMPLES, dirname=data_home)
+        samples_path = _fetch_remote(
+            SAMPLES, dirname=data_home, n_retries=n_retries, delay=delay
+        )
         with np.load(samples_path) as X:  # samples.zip is a valid npz
             for f in X.files:
                 fhandle = BytesIO(X[f])
@@ -241,7 +269,9 @@ def fetch_species_distributions(*, data_home=None, download_if_missing=True):
         logger.info(
             "Downloading coverage data from %s to %s" % (COVERAGES.url, data_home)
         )
-        coverages_path = _fetch_remote(COVERAGES, dirname=data_home)
+        coverages_path = _fetch_remote(
+            COVERAGES, dirname=data_home, n_retries=n_retries, delay=delay
+        )
         with np.load(coverages_path) as X:  # coverages.zip is a valid npz
             coverages = []
             for f in X.files:

@@ -25,8 +25,8 @@ full-path.
 
 """
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Load data
@@ -52,7 +52,7 @@ import numpy as np
 from sklearn import linear_model
 from sklearn.svm import l1_min_c
 
-cs = l1_min_c(X, y, loss="log") * np.logspace(0, 7, 16)
+cs = l1_min_c(X, y, loss="log") * np.logspace(0, 10, 16)
 
 clf = linear_model.LogisticRegression(
     penalty="l1",

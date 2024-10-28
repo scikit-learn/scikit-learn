@@ -2,8 +2,8 @@
 # Sorts what's new entries with per-module headings.
 # Pass what's new entries on stdin.
 
-import sys
 import re
+import sys
 from collections import defaultdict
 
 LABEL_ORDER = ["MajorFeature", "Feature", "Efficiency", "Enhancement", "Fix", "API"]

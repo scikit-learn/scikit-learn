@@ -4,6 +4,9 @@ set -e
 set -x
 
 PYTHON_VERSION=$1
+PROJECT_DIR=$2
+
+python $PROJECT_DIR/build_tools/wheels/check_license.py
 
 docker container run \
     --rm scikit-learn/minimal-windows \
@@ -11,7 +14,5 @@ docker container run \
 
 docker container run \
     -e SKLEARN_SKIP_NETWORK_TESTS=1 \
-    -e OMP_NUM_THREADS=2 \
-    -e OPENBLAS_NUM_THREADS=2 \
     --rm scikit-learn/minimal-windows \
     powershell -Command "pytest --pyargs sklearn"

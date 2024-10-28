@@ -1,22 +1,25 @@
 """Bayesian Gaussian Mixture Model."""
-# Author: Wei Xue <xuewei4d@gmail.com>
-#         Thierry Guillemot <thierry.guillemot.work@gmail.com>
-# License: BSD 3 clause
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import math
-import numpy as np
-from scipy.special import betaln, digamma, gammaln
 from numbers import Real
 
-from ._base import BaseMixture, _check_shape
-from ._gaussian_mixture import _check_precision_matrix
-from ._gaussian_mixture import _check_precision_positivity
-from ._gaussian_mixture import _compute_log_det_cholesky
-from ._gaussian_mixture import _compute_precision_cholesky
-from ._gaussian_mixture import _estimate_gaussian_parameters
-from ._gaussian_mixture import _estimate_log_gaussian_prob
+import numpy as np
+from scipy.special import betaln, digamma, gammaln
+
 from ..utils import check_array
 from ..utils._param_validation import Interval, StrOptions
+from ._base import BaseMixture, _check_shape
+from ._gaussian_mixture import (
+    _check_precision_matrix,
+    _check_precision_positivity,
+    _compute_log_det_cholesky,
+    _compute_precision_cholesky,
+    _estimate_gaussian_parameters,
+    _estimate_log_gaussian_prob,
+)
 
 
 def _log_dirichlet_norm(dirichlet_concentration):
@@ -97,12 +100,12 @@ class BayesianGaussianMixture(BaseMixture):
 
     covariance_type : {'full', 'tied', 'diag', 'spherical'}, default='full'
         String describing the type of covariance parameters to use.
-        Must be one of::
+        Must be one of:
 
-            'full' (each component has its own general covariance matrix),
-            'tied' (all components share the same general covariance matrix),
-            'diag' (each component has its own diagonal covariance matrix),
-            'spherical' (each component has its own single variance).
+        - 'full' (each component has its own general covariance matrix),
+        - 'tied' (all components share the same general covariance matrix),
+        - 'diag' (each component has its own diagonal covariance matrix),
+        - 'spherical' (each component has its own single variance).
 
     tol : float, default=1e-3
         The convergence threshold. EM iterations will stop when the
@@ -123,13 +126,12 @@ class BayesianGaussianMixture(BaseMixture):
     init_params : {'kmeans', 'k-means++', 'random', 'random_from_data'}, \
     default='kmeans'
         The method used to initialize the weights, the means and the
-        covariances.
-        String must be one of:
+        covariances. String must be one of:
 
-            'kmeans' : responsibilities are initialized using kmeans.
-            'k-means++' : use the k-means++ method to initialize.
-            'random' : responsibilities are initialized randomly.
-            'random_from_data' : initial means are randomly selected data points.
+        - 'kmeans': responsibilities are initialized using kmeans.
+        - 'k-means++': use the k-means++ method to initialize.
+        - 'random': responsibilities are initialized randomly.
+        - 'random_from_data': initial means are randomly selected data points.
 
         .. versionchanged:: v1.1
             `init_params` now accepts 'random_from_data' and 'k-means++' as
@@ -242,7 +244,7 @@ class BayesianGaussianMixture(BaseMixture):
             (n_components, n_features, n_features) if 'full'
 
     converged_ : bool
-        True when convergence was reached in fit(), False otherwise.
+        True when convergence of the best fit of inference was reached, False otherwise.
 
     n_iter_ : int
         Number of step used by the best fit of inference to reach the
@@ -541,7 +543,7 @@ class BayesianGaussianMixture(BaseMixture):
                 ),
             )
         else:
-            # case Variationnal Gaussian mixture with dirichlet distribution
+            # case Variational Gaussian mixture with dirichlet distribution
             self.weight_concentration_ = self.weight_concentration_prior_ + nk
 
     def _estimate_means(self, nk, xk):
@@ -749,7 +751,7 @@ class BayesianGaussianMixture(BaseMixture):
                 + np.hstack((0, np.cumsum(digamma_b - digamma_sum)[:-1]))
             )
         else:
-            # case Variationnal Gaussian mixture with dirichlet distribution
+            # case Variational Gaussian mixture with dirichlet distribution
             return digamma(self.weight_concentration_) - digamma(
                 np.sum(self.weight_concentration_)
             )

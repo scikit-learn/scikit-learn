@@ -1,28 +1,28 @@
-# Authors: Manoj Kumar <manojkumarsivaraj334@gmail.com>
-#          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
-#          Joel Nothman <joel.nothman@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
-import numpy as np
-from numbers import Integral, Real
-from scipy import sparse
 from math import sqrt
+from numbers import Integral, Real
 
-from ..metrics import pairwise_distances_argmin
-from ..metrics.pairwise import euclidean_distances
+import numpy as np
+from scipy import sparse
+
+from .._config import config_context
 from ..base import (
-    TransformerMixin,
-    ClusterMixin,
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
+    ClusterMixin,
+    TransformerMixin,
+    _fit_context,
 )
-from ..utils.extmath import row_norms
-from ..utils._param_validation import Interval
-from ..utils.validation import check_is_fitted
 from ..exceptions import ConvergenceWarning
+from ..metrics import pairwise_distances_argmin
+from ..metrics.pairwise import euclidean_distances
+from ..utils._param_validation import Hidden, Interval, StrOptions
+from ..utils.extmath import row_norms
+from ..utils.validation import check_is_fitted, validate_data
 from . import AgglomerativeClustering
-from .._config import config_context
 
 
 def _iterate_sparse_X(X):
@@ -407,6 +407,10 @@ class Birch(
         Whether or not to make a copy of the given data. If set to False,
         the initial data will be overwritten.
 
+        .. deprecated:: 1.6
+            `copy` was deprecated in 1.6 and will be removed in 1.8. It has no effect
+            as the estimator does not perform in-place operations on the input data.
+
     Attributes
     ----------
     root_ : _CFNode
@@ -457,6 +461,9 @@ class Birch(
     subcluster are updated. This is done recursively till the properties of
     the leaf node are updated.
 
+    See :ref:`sphx_glr_auto_examples_cluster_plot_birch_vs_minibatchkmeans.py` for a
+    comparison with :class:`~sklearn.cluster.MiniBatchKMeans`.
+
     References
     ----------
     * Tian Zhang, Raghu Ramakrishnan, Maron Livny
@@ -483,7 +490,7 @@ class Birch(
         "branching_factor": [Interval(Integral, 1, None, closed="neither")],
         "n_clusters": [None, ClusterMixin, Interval(Integral, 1, None, closed="left")],
         "compute_labels": ["boolean"],
-        "copy": ["boolean"],
+        "copy": ["boolean", Hidden(StrOptions({"deprecated"}))],
     }
 
     def __init__(
@@ -493,7 +500,7 @@ class Birch(
         branching_factor=50,
         n_clusters=3,
         compute_labels=True,
-        copy=True,
+        copy="deprecated",
     ):
         self.threshold = threshold
         self.branching_factor = branching_factor
@@ -501,6 +508,7 @@ class Birch(
         self.compute_labels = compute_labels
         self.copy = copy
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """
         Build a CF Tree for the input data.
@@ -518,19 +526,24 @@ class Birch(
         self
             Fitted estimator.
         """
-
-        self._validate_params()
-
         return self._fit(X, partial=False)
 
     def _fit(self, X, partial):
         has_root = getattr(self, "root_", None)
         first_call = not (partial and has_root)
 
-        X = self._validate_data(
+        if self.copy != "deprecated" and first_call:
+            warnings.warn(
+                "`copy` was deprecated in 1.6 and will be removed in 1.8 since it "
+                "has no effect internally. Simply leave this parameter to its default "
+                "value to avoid this warning.",
+                FutureWarning,
+            )
+
+        X = validate_data(
+            self,
             X,
             accept_sparse="csr",
-            copy=self.copy,
             reset=first_call,
             dtype=[np.float64, np.float32],
         )
@@ -610,6 +623,7 @@ class Birch(
             leaf_ptr = leaf_ptr.next_leaf_
         return leaves
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X=None, y=None):
         """
         Online learning. Prevents rebuilding of CFTree from scratch.
@@ -629,25 +643,12 @@ class Birch(
         self
             Fitted estimator.
         """
-        self._validate_params()
-
         if X is None:
             # Perform just the final global clustering step.
             self._global_clustering()
             return self
         else:
             return self._fit(X, partial=True)
-
-    def _check_fit(self, X):
-        check_is_fitted(self)
-
-        if (
-            hasattr(self, "subcluster_centers_")
-            and X.shape[1] != self.subcluster_centers_.shape[1]
-        ):
-            raise ValueError(
-                "Training data and predicted data do not have same number of features."
-            )
 
     def predict(self, X):
         """
@@ -666,7 +667,7 @@ class Birch(
             Labelled data.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
+        X = validate_data(self, X, accept_sparse="csr", reset=False)
         return self._predict(X)
 
     def _predict(self, X):
@@ -697,7 +698,7 @@ class Birch(
             Transformed data.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
+        X = validate_data(self, X, accept_sparse="csr", reset=False)
         with config_context(assume_finite=True):
             return euclidean_distances(X, self.subcluster_centers_)
 
@@ -738,5 +739,7 @@ class Birch(
         if compute_labels:
             self.labels_ = self._predict(X)
 
-    def _more_tags(self):
-        return {"preserves_dtype": [np.float64, np.float32]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags

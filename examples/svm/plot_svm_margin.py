@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 =========================================================
 SVM Margins Example
@@ -14,13 +13,12 @@ the margins to be calculated using all the data in the area.
 
 """
 
-# Code source: Gaël Varoquaux
-# Modified for documentation by Jaques Grobler
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import cm
+import numpy as np
+
 from sklearn import svm
 
 # we create 40 separable points
@@ -33,7 +31,6 @@ fignum = 1
 
 # fit the model
 for name, penalty in (("unreg", 1), ("reg", 0.05)):
-
     clf = svm.SVC(kernel="linear", C=penalty)
     clf.fit(X, Y)
 
@@ -65,10 +62,9 @@ for name, penalty in (("unreg", 1), ("reg", 0.05)):
         facecolors="none",
         zorder=10,
         edgecolors="k",
-        cmap=cm.get_cmap("RdBu"),
     )
     plt.scatter(
-        X[:, 0], X[:, 1], c=Y, zorder=10, cmap=cm.get_cmap("RdBu"), edgecolors="k"
+        X[:, 0], X[:, 1], c=Y, zorder=10, cmap=plt.get_cmap("RdBu"), edgecolors="k"
     )
 
     plt.axis("tight")
@@ -82,7 +78,7 @@ for name, penalty in (("unreg", 1), ("reg", 0.05)):
     Z = clf.decision_function(xy).reshape(XX.shape)
 
     # Put the result into a contour plot
-    plt.contourf(XX, YY, Z, cmap=cm.get_cmap("RdBu"), alpha=0.5, linestyles=["-"])
+    plt.contourf(XX, YY, Z, cmap=plt.get_cmap("RdBu"), alpha=0.5, linestyles=["-"])
 
     plt.xlim(x_min, x_max)
     plt.ylim(y_min, y_max)

@@ -8,14 +8,16 @@ It will plot the decision boundaries for each class.
 
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap
-from sklearn import datasets
-from sklearn.neighbors import NearestCentroid
-from sklearn.inspection import DecisionBoundaryDisplay
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-n_neighbors = 15
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.colors import ListedColormap
+
+from sklearn import datasets
+from sklearn.inspection import DecisionBoundaryDisplay
+from sklearn.neighbors import NearestCentroid
 
 # import some data to play with
 iris = datasets.load_iris()
@@ -29,7 +31,7 @@ cmap_light = ListedColormap(["orange", "cyan", "cornflowerblue"])
 cmap_bold = ListedColormap(["darkorange", "c", "darkblue"])
 
 for shrinkage in [None, 0.2]:
-    # we create an instance of Neighbours Classifier and fit the data.
+    # we create an instance of Nearest Centroid Classifier and fit the data.
     clf = NearestCentroid(shrink_threshold=shrinkage)
     clf.fit(X, y)
     y_pred = clf.predict(X)

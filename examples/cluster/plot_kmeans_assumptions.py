@@ -8,9 +8,8 @@ unintuitive and possibly undesirable clusters.
 
 """
 
-# Author: Phil Roth <mr.phil.roth@gmail.com>
-#         Arturo Amor <david-arturo.amor-quiroz@inria.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Data generation
@@ -21,6 +20,7 @@ unintuitive and possibly undesirable clusters.
 # one has to define a linear `transformation`.
 
 import numpy as np
+
 from sklearn.datasets import make_blobs
 
 n_samples = 1500

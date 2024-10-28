@@ -1,15 +1,16 @@
 """Determination of parameter bounds"""
-# Author: Paolo Losi
-# License: BSD 3 clause
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Real
 
 import numpy as np
 
 from ..preprocessing import LabelBinarizer
-from ..utils.validation import check_consistent_length, check_array
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import safe_sparse_dot
-from ..utils._param_validation import StrOptions, Interval, validate_params
+from ..utils.validation import check_array, check_consistent_length
 
 
 @validate_params(
@@ -19,7 +20,8 @@ from ..utils._param_validation import StrOptions, Interval, validate_params
         "loss": [StrOptions({"squared_hinge", "log"})],
         "fit_intercept": ["boolean"],
         "intercept_scaling": [Interval(Real, 0, None, closed="neither")],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def l1_min_c(X, y, *, loss="squared_hinge", fit_intercept=True, intercept_scaling=1.0):
     """Return the lowest bound for C.
@@ -60,6 +62,14 @@ def l1_min_c(X, y, *, loss="squared_hinge", fit_intercept=True, intercept_scalin
     -------
     l1_min_c : float
         Minimum value for C.
+
+    Examples
+    --------
+    >>> from sklearn.svm import l1_min_c
+    >>> from sklearn.datasets import make_classification
+    >>> X, y = make_classification(n_samples=100, n_features=20, random_state=42)
+    >>> print(f"{l1_min_c(X, y, loss='squared_hinge', fit_intercept=True):.4f}")
+    0.0044
     """
 
     X = check_array(X, accept_sparse="csc")

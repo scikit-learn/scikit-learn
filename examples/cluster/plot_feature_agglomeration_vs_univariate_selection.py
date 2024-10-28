@@ -14,25 +14,24 @@ a BayesianRidge as supervised estimator.
 
 """
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 import shutil
 import tempfile
 
-import numpy as np
 import matplotlib.pyplot as plt
-from scipy import linalg, ndimage
+import numpy as np
 from joblib import Memory
+from scipy import linalg, ndimage
 
-from sklearn.feature_extraction.image import grid_to_graph
 from sklearn import feature_selection
 from sklearn.cluster import FeatureAgglomeration
+from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.linear_model import BayesianRidge
+from sklearn.model_selection import GridSearchCV, KFold
 from sklearn.pipeline import Pipeline
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import KFold
 
 # %%
 # Set parameters

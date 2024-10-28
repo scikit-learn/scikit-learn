@@ -1,6 +1,8 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+from functools import update_wrapper, wraps
 from types import MethodType
-from functools import wraps
-from functools import update_wrapper
 
 
 class _AvailableIfDescriptor:
@@ -22,15 +24,23 @@ class _AvailableIfDescriptor:
         # update the docstring of the descriptor
         update_wrapper(self, fn)
 
-    def __get__(self, obj, owner=None):
-        attr_err = AttributeError(
+    def _check(self, obj, owner):
+        attr_err_msg = (
             f"This {repr(owner.__name__)} has no attribute {repr(self.attribute_name)}"
         )
+        try:
+            check_result = self.check(obj)
+        except Exception as e:
+            raise AttributeError(attr_err_msg) from e
+
+        if not check_result:
+            raise AttributeError(attr_err_msg)
+
+    def __get__(self, obj, owner=None):
         if obj is not None:
             # delegate only on instances, not the classes.
             # this is to allow access to the docstrings.
-            if not self.check(obj):
-                raise attr_err
+            self._check(obj, owner=owner)
             out = MethodType(self.fn, obj)
 
         else:
@@ -38,8 +48,7 @@ class _AvailableIfDescriptor:
             # for instance when monkeypatching.
             @wraps(self.fn)
             def out(*args, **kwargs):
-                if not self.check(args[0]):
-                    raise attr_err
+                self._check(args[0], owner=owner)
                 return self.fn(*args, **kwargs)
 
         return out

@@ -1,17 +1,17 @@
-"""Module :mod:`sklearn.kernel_ridge` implements kernel ridge regression."""
+"""Kernel ridge regression."""
 
-# Authors: Mathieu Blondel <mathieu@mblondel.org>
-#          Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-# License: BSD 3 clause
-from numbers import Integral, Real
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+from numbers import Real
 
 import numpy as np
 
-from .base import BaseEstimator, RegressorMixin, MultiOutputMixin
-from .utils._param_validation import Interval, StrOptions
-from .metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS, pairwise_kernels
+from .base import BaseEstimator, MultiOutputMixin, RegressorMixin, _fit_context
 from .linear_model._ridge import _solve_cholesky_kernel
-from .utils.validation import check_is_fitted, _check_sample_weight
+from .metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS, pairwise_kernels
+from .utils._param_validation import Interval, StrOptions
+from .utils.validation import _check_sample_weight, check_is_fitted, validate_data
 
 
 class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
@@ -51,7 +51,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     kernel : str or callable, default="linear"
         Kernel mapping used internally. This parameter is directly passed to
-        :class:`~sklearn.metrics.pairwise.pairwise_kernel`.
+        :class:`~sklearn.metrics.pairwise.pairwise_kernels`.
         If `kernel` is a string, it must be one of the metrics
         in `pairwise.PAIRWISE_KERNEL_FUNCTIONS` or "precomputed".
         If `kernel` is "precomputed", X is assumed to be a kernel matrix.
@@ -69,7 +69,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         the kernel; see the documentation for sklearn.metrics.pairwise.
         Ignored by other kernels.
 
-    degree : int, default=3
+    degree : float, default=3
         Degree of the polynomial kernel. Ignored by other kernels.
 
     coef0 : float, default=1
@@ -138,7 +138,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
             callable,
         ],
         "gamma": [Interval(Real, 0, None, closed="left"), None],
-        "degree": [Interval(Integral, 0, None, closed="left")],
+        "degree": [Interval(Real, 0, None, closed="left")],
         "coef0": [Interval(Real, None, None, closed="neither")],
         "kernel_params": [dict, None],
     }
@@ -167,9 +167,12 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
             params = {"gamma": self.gamma, "degree": self.degree, "coef0": self.coef0}
         return pairwise_kernels(X, Y, metric=self.kernel, filter_params=True, **params)
 
-    def _more_tags(self):
-        return {"pairwise": self.kernel == "precomputed"}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.pairwise = self.kernel == "precomputed"
+        return tags
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit Kernel Ridge regression model.
 
@@ -190,11 +193,9 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-
         # Convert data
-        X, y = self._validate_data(
-            X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
+        X, y = validate_data(
+            self, X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
         )
         if sample_weight is not None and not isinstance(sample_weight, float):
             sample_weight = _check_sample_weight(sample_weight, X)
@@ -233,6 +234,6 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
             Returns predicted values.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, accept_sparse=("csr", "csc"), reset=False)
+        X = validate_data(self, X, accept_sparse=("csr", "csc"), reset=False)
         K = self._get_kernel(X, self.X_fit_)
         return np.dot(K, self.dual_coef_)
