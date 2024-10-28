@@ -531,15 +531,12 @@ def resample(
     if stratify is None:
         if replace:
             if sample_weight is not None:
-
                 p = sample_weight / sample_weight.sum()
-                indices = random_state.choice(
-                    np.arange(n_samples), size=(max_n_samples,), p=p
-                )
             else:
-                indices = random_state.choice(
-                    np.arange(n_samples), size=(max_n_samples,)
-                )
+                p = None
+            indices = random_state.choice(
+                np.arange(n_samples), size=(max_n_samples,), p=p
+            )
         else:
             indices = np.arange(n_samples)
             random_state.shuffle(indices)
