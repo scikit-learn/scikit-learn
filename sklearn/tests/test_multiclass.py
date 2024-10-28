@@ -22,10 +22,10 @@ from sklearn.linear_model import (
 from sklearn.metrics import precision_score, recall_score
 from sklearn.model_selection import GridSearchCV, StratifiedKFold, cross_val_score
 from sklearn.multiclass import (
-    _ConstantPredictor,
     OneVsOneClassifier,
     OneVsRestClassifier,
     OutputCodeClassifier,
+    _ConstantPredictor,
 )
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
