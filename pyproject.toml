@@ -252,3 +252,226 @@ package = "sklearn"  # name of your package
 "Documentation" = [
   "spin.cmds.meson.docs"
 ]
+
+[tool.changelog-bot]
+    [tool.changelog-bot.towncrier_changelog]
+        enabled = true
+        verify_pr_number = true
+        changelog_noop_label = "No Changelog Needed"
+        whatsnew_pattern = 'doc/whatsnew/upcoming_changes/[^/]+/\d+\.[^.]+\.rst'
+
+[tool.towncrier]
+    package = "sklearn"
+    filename = "doc/whats_new/notes-towncrier.rst"
+    directory = "doc/whats_new/upcoming_changes"
+    issue_format = ":pr:`{issue}`"
+    template = "doc/whats_new/upcoming_changes/towncrier_template.rst.jinja2"
+    title_format = "Version {version} ({project_date})"
+    all_bullets = false
+
+    [[tool.towncrier.type]]
+        directory = "major-feature"
+        name = "|MajorFeature|"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "feature"
+        name = "|Feature|"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "efficiency"
+        name = "|Efficiency|"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "enhancement"
+        name = "|Enhancement|"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "fix"
+        name = "|Fix|"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "api"
+        name = "|API|"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "other"
+        name = ""
+        showcontent = true
+
+    [[tool.towncrier.section]]
+        name = "Security"
+        path = "security"
+
+    [[tool.towncrier.section]]
+        name = "Changed models"
+        path = "changed-models"
+
+    [[tool.towncrier.section]]
+        name = "Changes impacting many modules"
+        path = "many-modules"
+
+    [[tool.towncrier.section]]
+        name = "Support for Array API"
+        path = "array-api"
+
+    [[tool.towncrier.section]]
+        name = "Metadata routing"
+        path = "metadata-routing"
+
+    [[tool.towncrier.section]]
+        name = "custom-top-level"
+        path = "custom-top-level"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.base`"
+        path = "sklearn.base"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.calibration`"
+        path = "sklearn.calibration"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.cluster`"
+        path = "sklearn.cluster"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.compose`"
+        path = "sklearn.compose"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.covariance`"
+        path = "sklearn.covariance"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.cross_decomposition`"
+        path = "sklearn.cross_decomposition"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.datasets`"
+        path = "sklearn.datasets"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.decomposition`"
+        path = "sklearn.decomposition"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.discriminant_analysis`"
+        path = "sklearn.discriminant_analysis"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.dummy`"
+        path = "sklearn.dummy"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.ensemble`"
+        path = "sklearn.ensemble"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.exceptions`"
+        path = "sklearn.exceptions"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.feature_extraction`"
+        path = "sklearn.feature_extraction"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.feature_selection`"
+        path = "sklearn.feature_selection"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.gaussian_process`"
+        path = "sklearn.gaussian_process"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.impute`"
+        path = "sklearn.impute"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.inspection`"
+        path = "sklearn.inspection"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.isotonic`"
+        path = "sklearn.isotonic"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.kernel_approximation`"
+        path = "sklearn.kernel_approximation"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.kernel_ridge`"
+        path = "sklearn.kernel_ridge"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.linear_model`"
+        path = "sklearn.linear_model"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.manifold`"
+        path = "sklearn.manifold"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.metrics`"
+        path = "sklearn.metrics"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.mixture`"
+        path = "sklearn.mixture"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.model_selection`"
+        path = "sklearn.model_selection"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.multiclass`"
+        path = "sklearn.multiclass"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.multioutput`"
+        path = "sklearn.multioutput"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.naive_bayes`"
+        path = "sklearn.naive_bayes"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.neighbors`"
+        path = "sklearn.neighbors"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.neural_network`"
+        path = "sklearn.neural_network"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.pipeline`"
+        path = "sklearn.pipeline"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.preprocessing`"
+        path = "sklearn.preprocessing"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.random_projection`"
+        path = "sklearn.random_projection"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.semi_supervised`"
+        path = "sklearn.semi_supervised"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.svm`"
+        path = "sklearn.svm"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.tree`"
+        path = "sklearn.tree"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.utils`"
+        path = "sklearn.utils"
