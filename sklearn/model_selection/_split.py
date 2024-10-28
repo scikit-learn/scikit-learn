@@ -582,7 +582,7 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
     >>> group_kfold.get_n_splits(X, y, groups)
     2
     >>> print(group_kfold)
-    GroupKFold(n_splits=2)
+    GroupKFold(n_splits=2, random_state=None, shuffle=False)
     >>> for i, (train_index, test_index) in enumerate(group_kfold.split(X, y, groups)):
     ...     print(f"Fold {i}:")
     ...     print(f"  Train: index={train_index}, group={groups[train_index]}")
