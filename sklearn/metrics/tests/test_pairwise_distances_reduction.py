@@ -16,6 +16,7 @@ from sklearn.metrics._pairwise_distances_reduction import (
     RadiusNeighborsClassMode,
     sqeuclidean_row_norms,
 )
+#TODO: import precomputed
 from sklearn.utils._testing import (
     assert_allclose,
     assert_array_equal,
@@ -101,24 +102,28 @@ def assert_same_distances_for_common_neighbors(
                 f" rtol={rtol})"
             ) from e
             
-def assert_array_precomputed(precomputed: np.ndarray) -> None:
+def assert_array_precomputed('precomputed',
+    [(precomputed, 5, 10),  # Use the imported matrix
+    
+    ]                         
+                             ):
     """Ensure input is a numpy array."""
     assert isinstance(precomputed, np.ndarray), "Input must be a numpy array."
 
-def assert_dtype_precomputed(precomputed: np.ndarray) -> None:
+def assert_dtype_precomputed(precomputed_matrix: np.ndarray) -> None:
     """Ensure input is of type float32 or float64."""
-    assert precomputed.dtype in [np.float32, np.float64], "Array must be of type float32 or float64."
+    assert precomputed_matrix.dtype in [np.float32, np.float64], "Array must be of type float32 or float64."
 
-def assert_not_empty_precomputed(precomputed: np.ndarray) -> None:
+def assert_not_empty_precomputed(precomputed_matrix: np.ndarray) -> None:
     """Ensure array is not empty."""
-    assert precomputed.size > 0, "Precomputed matrix should not be empty."
+    assert precomputed_matrix.size > 0, "Precomputed matrix should not be empty."
 
-def assert_nan_precomputed(precomputed: np.ndarray) -> None:
+def assert_nan_precomputed(precomputed_matrix: np.ndarray) -> None:
     """Ensure array contains no NaN or Inf values."""
-    assert not np.isnan(precomputed).any(), "Precomputed matrix contains NaN values."
-    assert not np.isinf(precomputed).any(), "Precomputed matrix contains Inf values."
+    assert not np.isnan(precomputed_matrix).any(), "Precomputed matrix contains NaN values."
+    assert not np.isinf(precomputed_matrix).any(), "Precomputed matrix contains Inf values."
 
-def assert_size_for_precomputed(precomputed: np.ndarray, n_samples_X: int, n_samples_Y: int) -> None:
+def assert_size_for_precomputed(precomputed_matrix: np.ndarray, n_samples_X: int, n_samples_Y: int) -> None:
     """
     Check the shape of the precomputed distance matrix.
 
@@ -130,30 +135,30 @@ def assert_size_for_precomputed(precomputed: np.ndarray, n_samples_X: int, n_sam
     Raises:
     AssertionError: If the shape of the precomputed matrix is not correct.
     """
-    assert isinstance(precomputed, np.ndarray), "Input must be a numpy array."
-    assert precomputed.shape == (n_samples_X, n_samples_Y), (
+    assert isinstance(precomputed_matrix, np.ndarray), "Input must be a numpy array."
+    assert precomputed_matrix.shape == (n_samples_X, n_samples_Y), (
         f"Incorrect dimensions for precomputed matrix. "
         f"Expected: ({n_samples_X}, {n_samples_Y}), "
-        f"Got: {precomputed.shape}"
+        f"Got: {precomputed_matrix.shape}"
     )
 
-def assert_size_for_precomputed(precomputed: np.ndarray, n_samples_X: int, n_samples_Y: int) -> None:
+def assert_size_for_precomputed(precomputed_matrix: np.ndarray, n_samples_X: int, n_samples_Y: int) -> None:
     """
     Check the shape of the precomputed distance matrix.
 
     Parameters:
-    precomputed (np.ndarray): The precomputed distance matrix.
+    precomputed_matrix (np.ndarray): The precomputed distance matrix.
     n_samples_X (int): The expected number of samples for X.
     n_samples_Y (int): The expected number of samples for Y.
 
     Raises:
     AssertionError: If the shape of the precomputed matrix is not correct.
     """
-    assert isinstance(precomputed, np.ndarray), "Input must be a numpy array."
-    assert precomputed.shape == (n_samples_X, n_samples_Y), (
+    assert isinstance(precomputed_matrix, np.ndarray), "Input must be a numpy array."
+    assert precomputed_matrix.shape == (n_samples_X, n_samples_Y), (
         f"Incorrect dimensions for precomputed matrix. "
         f"Expected: ({n_samples_X}, {n_samples_Y}), "
-        f"Got: {precomputed.shape}"
+        f"Got: {precomputed_matrix.shape}"
     )
     
 def assert_no_missing_neighbors(
