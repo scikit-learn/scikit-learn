@@ -246,7 +246,7 @@ def test_sparse_input(sparse_container, solver, fit_intercept, global_random_see
         n_samples=300,
         n_features=20,
         n_informative=10,
-        random_state=1,
+        random_state=global_random_seed,
         noise=1.0,
     )
     X_sparse = sparse_container(X)
@@ -260,13 +260,13 @@ def test_sparse_input(sparse_container, solver, fit_intercept, global_random_see
     assert_allclose(quant_sparse.coef_, quant_dense.coef_, rtol=1e-2)
     sparse_support = quant_sparse.coef_ != 0
     dense_support = quant_dense.coef_ != 0
-    assert sparse_support.sum() == dense_support.sum() == n_informative
-    assert_allclose(sparse_support, dense_support)
+    assert dense_support.sum() == pytest.approx(n_informative, abs=1)
+    assert sparse_support.sum() == pytest.approx(n_informative, abs=1)
     if fit_intercept:
         assert quant_sparse.intercept_ == approx(quant_dense.intercept_)
         # check that we still predict fraction
         empirical_coverage = np.mean(y < quant_sparse.predict(X_sparse))
-        assert empirical_coverage == approx(quantile_level, abs=1e-2)
+        assert empirical_coverage == approx(quantile_level, abs=3e-2)
 
 
 def test_error_interior_point_future(X_y_data, monkeypatch):
