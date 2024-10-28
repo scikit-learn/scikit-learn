@@ -497,7 +497,9 @@ def test_resample():
 
 
 def test_resample_weighted():
-
+    # Check that sampling with replacement with weights yields the 
+    # samples from the same distribution as sampling uniformly with
+    # repeated data points.
     data = np.array([-1, 0, 1])
     sample_weight = np.asarray([0, 100, 1])
 
