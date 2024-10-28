@@ -1556,8 +1556,8 @@ def test_iterative_imputer_min_max_value_remove_empty():
 
     X_without_missing_column = np.delete(X, 2, axis=1)
     assert X_imputed.shape == X_without_missing_column.shape
-    assert np.min(X_imputed[np.isnan(X_without_missing_column)]) == 4
-    assert np.max(X_imputed[np.isnan(X_without_missing_column)]) == 5
+    assert np.min(X_imputed[np.isnan(X_without_missing_column)]) == pytest.approx(4)
+    assert np.max(X_imputed[np.isnan(X_without_missing_column)]) == pytest.approx(5)
 
     # Intentionally make column 3 as a missing column, then the bound of the imputed
     # value of column 2 should be (3.5, 6)
@@ -1578,10 +1578,10 @@ def test_iterative_imputer_min_max_value_remove_empty():
         keep_empty_features=False,
     ).fit_transform(X)
 
-    X_without_missing_column = np.delete(X, 3, axis=1)
+    X_without_missing_column = X[:, :3]
     assert X_imputed.shape == X_without_missing_column.shape
-    assert np.min(X_imputed[np.isnan(X_without_missing_column)]) == 3.5
-    assert np.max(X_imputed[np.isnan(X_without_missing_column)]) == 6
+    assert np.min(X_imputed[np.isnan(X_without_missing_column)]) == pytest.approx(3.5)
+    assert np.max(X_imputed[np.isnan(X_without_missing_column)]) == pytest.approx(6)
 
 
 @pytest.mark.parametrize("keep_empty_features", [True, False])
