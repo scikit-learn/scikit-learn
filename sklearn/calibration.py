@@ -35,6 +35,7 @@ from .utils import (
 )
 from .utils._param_validation import (
     HasMethods,
+    Hidden,
     Interval,
     StrOptions,
     validate_params,
@@ -259,7 +260,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             None,
         ],
         "method": [StrOptions({"isotonic", "sigmoid"})],
-        "cv": ["cv_object", StrOptions({"prefit"})],
+        "cv": ["cv_object", Hidden(StrOptions({"prefit"}))],
         "n_jobs": [Integral, None],
         "ensemble": ["boolean", StrOptions({"auto"})],
     }
