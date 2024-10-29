@@ -843,7 +843,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             )
         return True
 
-    def _score_with_function(self, X, y, score_function):
+    def _score_with_function(self, X, y, sample_weight, score_function):
         """Private score method without input validation."""
         # Input validation would remove feature names, so we disable it
         y_pred = self._predict(X, check_input=False)
@@ -851,7 +851,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         if np.isnan(y_pred).any() or np.isinf(y_pred).any():
             return np.nan
 
-        return score_function(y, y_pred)
+        return score_function(y, y_pred, sample_weight=sample_weight)
 
     def _validate_input(self, X, y, incremental, reset, sample_weight):
         raise NotImplementedError("Subclass must implement _validate_input().")
@@ -1202,6 +1202,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
     def _validate_input(self, X, y, incremental, reset):
         X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse=["csr", "csc"],
@@ -1283,8 +1284,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     def _score(self, X, y, sample_weight=None):
         """Private score method without input validation"""
         # Input validation would remove feature names, so we disable it
-        return accuracy_score(
-            y, self._predict(X, check_input=False), sample_weight=sample_weight
+        return super()._score_with_function(
+            X, y, sample_weight, score_function=accuracy_score
         )
 
     @available_if(lambda est: est._check_solver())
@@ -1737,11 +1738,13 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     def _score(self, X, y, sample_weight=None):
         """Private score method without input validation"""
         # Input validation would remove feature names, so we disable it
-        y_pred = self._predict(X, check_input=False)
-        return r2_score(y, y_pred, sample_weight=sample_weight)
+        return super()._score_with_function(
+            X, y, sample_weight, score_function=r2_score
+        )
 
     def _validate_input(self, X, y, incremental, reset):
         X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse=["csr", "csc"],
