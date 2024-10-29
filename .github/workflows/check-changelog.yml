@@ -4,65 +4,30 @@ name: Check Changelog
 # To bypass this check, label the PR with "No Changelog Needed".
 on:
   pull_request:
-    types: [opened, edited, labeled, unlabeled, synchronize]
+    types: [opened, synchronize, labeled, unlabeled]
 
 jobs:
   check:
     name: A reviewer will let you know if it is required or can be bypassed
     runs-on: ubuntu-latest
-    if: ${{ contains(github.event.pull_request.labels.*.name, 'No Changelog Needed') == 0 }}
     steps:
-      - name: Get PR number and milestone
-        run: |
-          echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
-          echo "TAGGED_MILESTONE=${{ github.event.pull_request.milestone.title }}" >> $GITHUB_ENV
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: '0'
-      - name: Check the changelog entry
+      - name: Check if tests have changed
+        id: tests_changed
         run: |
           set -xe
           changed_files=$(git diff --name-only origin/main)
           # Changelog should be updated only if tests have been modified
-          if [[ ! "$changed_files" =~ tests ]]
+          if [[ "$changed_files" =~ tests ]]
           then
-            exit 0
+            echo "check_changelog=true" >> $GITHUB_OUTPUT
           fi
-          all_changelogs=$(cat ./doc/whats_new/v*.rst)
-          if [[ "$all_changelogs" =~ :pr:\`$PR_NUMBER\` ]]
-          then
-            echo "Changelog has been updated."
-            # If the pull request is milestoned check the correspondent changelog
-            if exist -f ./doc/whats_new/v${TAGGED_MILESTONE:0:4}.rst
-            then
-              expected_changelog=$(cat ./doc/whats_new/v${TAGGED_MILESTONE:0:4}.rst)
-              if [[ "$expected_changelog" =~ :pr:\`$PR_NUMBER\` ]]
-              then
-                echo "Changelog and milestone correspond."
-              else
-                echo "Changelog and milestone do not correspond."
-                echo "If you see this error make sure that the tagged milestone for the PR"
-                echo "and the edited changelog filename properly match."
-                exit 1
-              fi
-            fi
-          else
-            echo "A Changelog entry is missing."
-            echo ""
-            echo "Please add an entry to the changelog at 'doc/whats_new/v*.rst'"
-            echo "to document your change assuming that the PR will be merged"
-            echo "in time for the next release of scikit-learn."
-            echo ""
-            echo "Look at other entries in that file for inspiration and please"
-            echo "reference this pull request using the ':pr:' directive and"
-            echo "credit yourself (and other contributors if applicable) with"
-            echo "the ':user:' directive."
-            echo ""
-            echo "If you see this error and there is already a changelog entry,"
-            echo "check that the PR number is correct."
-            echo ""
-            echo "If you believe that this PR does not warrant a changelog"
-            echo "entry, say so in a comment so that a maintainer will label"
-            echo "the PR with 'No Changelog Needed' to bypass this check."
-            exit 1
-          fi
+
+      - name: Check changelog entry
+        if: steps.tests_changed.outputs.check_changelog == 'true'
+        uses: scientific-python/action-towncrier-changelog@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BOT_USERNAME: changelog-bot

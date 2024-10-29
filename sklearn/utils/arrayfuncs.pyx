@@ -1,7 +1,4 @@
-"""
-The :mod:`sklearn.utils.arrayfuncs` module includes a small collection of auxiliary
-functions that operate on arrays.
-"""
+"""A small collection of auxiliary functions that operate on arrays."""
 
 from cython cimport floating
 from cython.parallel cimport prange
