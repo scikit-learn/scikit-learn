@@ -586,9 +586,7 @@ def test_multiclass_plot_max_class(pyplot, response_method):
     # which results in the last row and column of the color mapped values being
     # dropped. This results in a 99x99 grid.
     if parse_version(mpl.__version__) < parse_version("3.5"):
-        pytest.skip(
-            "`pcolormesh` in Matplotlib >= 3.5 gives smaller grid size."
-        )
+        pytest.skip("`pcolormesh` in Matplotlib >= 3.5 gives smaller grid size.")
 
     X, y = load_iris_2d_scaled()
     clf = LogisticRegression().fit(X, y)
