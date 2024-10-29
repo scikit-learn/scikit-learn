@@ -2532,6 +2532,7 @@ def balanced_accuracy_score(
 
         Notes:
         - If set to "warn", this acts like 0, but a warning is also raised.
+        - If set to `np.nan`, such values will be excluded from the average.
 
         .. versionadded:: 1.6
 
@@ -2589,7 +2590,7 @@ def balanced_accuracy_score(
                 category=UndefinedMetricWarning,
             )
 
-    score = np.mean(per_class)
+    score = np.nanmean(per_class)
     if adjusted:
         n_classes = len(per_class)
         chance = 1 / n_classes
