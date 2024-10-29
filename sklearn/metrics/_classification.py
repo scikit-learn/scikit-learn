@@ -920,10 +920,15 @@ def jaccard_score(
         "y_true": ["array-like"],
         "y_pred": ["array-like"],
         "sample_weight": ["array-like", None],
+        "zero_division": [
+            Options(Real, {0.0, 1.0}),
+            "nan",
+            StrOptions({"warn"}),
+        ],
     },
     prefer_skip_nested_validation=True,
 )
-def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
+def matthews_corrcoef(y_true, y_pred, *, sample_weight=None, zero_division="warn"):
     """Compute the Matthews correlation coefficient (MCC).
 
     The Matthews correlation coefficient is used in machine learning as a
@@ -954,30 +959,19 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
 
         .. versionadded:: 0.18
 
+    zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
+        Sets the value to return when there is a zero division, i.e. when all
+        predictions and labels are negative. If set to "warn", this acts like 0,
+        but a warning is also raised.
+
+        .. versionadded:: 1.6
+
     Returns
     -------
     mcc : float
         The Matthews correlation coefficient (+1 represents a perfect
         prediction, 0 an average random prediction and -1 and inverse
         prediction).
-
-    Notes
-    -----
-    :func:`matthews_corrcoef` is ill-defined (due to zero division)
-    when only one class is present in either the true or predicted
-    labels.
-
-    If only one of the true or predicted labels contains a single
-    class, the limit value is 0. This is sensible as it suggests
-    that the model either provided constant predictions on
-    non-constant data, or variable predictions on single-class data.
-    In such cases, the metric will return a value of 0.
-
-    However, if both the true and predicted labels contain only a
-    single class, the limit does not exist, rendering the metric
-    undefined. Consequently, in this scenario, the metric will
-    return a nan value. This behavior was chosen to avoid
-    returning 0 for perfect predictions on single-class data.
 
     References
     ----------
@@ -1023,12 +1017,14 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     cov_ypyp = n_samples**2 - np.dot(p_sum, p_sum)
     cov_ytyt = n_samples**2 - np.dot(t_sum, t_sum)
 
-    # Zero division, metric limit value is 0
-    if bool(cov_ypyp) ^ bool(cov_ytyt):
-        return 0.0
-    # Zero division, metric limit does not exist
-    elif cov_ypyp * cov_ytyt == 0:
-        return np.nan
+    if cov_ypyp * cov_ytyt == 0:
+        if zero_division == "warn":
+            msg = (
+                "Matthews correlation coefficient is ill-defined and being set to 0.0. "
+                "Use `zero_division` to control this behaviour."
+            )
+            warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
+        return _check_zero_division(zero_division)
     else:
         return cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
 
