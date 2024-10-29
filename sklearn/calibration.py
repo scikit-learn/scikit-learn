@@ -77,7 +77,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     `probabilities=True` for :class:`~sklearn.svm.SVC` and :class:`~sklearn.svm.NuSVC`
     estimators (see :ref:`User Guide <scores_probabilities>` for details).
 
-    Already fitted classifiers can be calibrated wrapping the modl in a
+    Already fitted classifiers can be calibrated by wrapping the model in a
     :class:`~sklearn.frozen.FrozenEstimator`. In this case all provided
     data is used for calibration. The user has to take care manually that data
     for model fitting and calibration are disjoint.
