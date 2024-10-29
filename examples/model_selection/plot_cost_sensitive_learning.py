@@ -664,10 +664,11 @@ print(
 #
 # Here, we will reuse the decision threshold found in the previous section to create a
 # new model and check that it gives the same results.
+from sklearn.frozen import FrozenEstimator
 from sklearn.model_selection import FixedThresholdClassifier
 
 model_fixed_threshold = FixedThresholdClassifier(
-    estimator=model, threshold=tuned_model.best_threshold_, prefit=True
+    estimator=FrozenEstimator(model), threshold=tuned_model.best_threshold_
 ).fit(data_train, target_train)
 
 # %%
