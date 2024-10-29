@@ -64,7 +64,8 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50):
         sorted_nan_mask = np.take_along_axis(np.isnan(array), sorted_idx, axis=0)
         sorted_weights[sorted_nan_mask] = 0
 
-    # Compute the weighted cumulative distribution function (CDF) based on:
+    # Compute the weighted cumulative distribution function (CDF) based on
+    # `sample_weight` and scale `percentile_rank` along it:
     weight_cdf = stable_cumsum(sorted_weights, axis=0)
     adjusted_percentile_rank = percentile_rank / 100 * weight_cdf[-1]
 
