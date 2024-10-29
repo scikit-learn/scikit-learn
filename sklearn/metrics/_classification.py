@@ -2527,10 +2527,11 @@ def balanced_accuracy_score(
         performance would score 0, while keeping perfect performance at a score
         of 1.
 
-    zero_division : {"warn", 0, 1, np.nan}, default="warn"
+    zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
         Sets the value to return when there is a zero division.
 
         Notes:
+
         - If set to "warn", this acts like 0, but a warning is also raised.
         - If set to `np.nan`, such values will be excluded from the average.
 
