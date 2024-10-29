@@ -46,38 +46,44 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50):
         return array[()]
     if array.ndim == 1:
         array = array.reshape((-1, 1))
-    # When sample_weight 1D, repeat for each array.shape[1]
+    # When sample_weight 1D, repeat for each array.shape[1]:
     if array.shape != sample_weight.shape and array.shape[0] == sample_weight.shape[0]:
         sample_weight = np.tile(sample_weight, (array.shape[1], 1)).T
 
-    # Sort `array` and `sample_weight` along axis=0; set `sample_weight` for nan input
-    # to 0:
+    # Sort `array` and `sample_weight` along axis=0:
     sorted_idx = np.argsort(array, axis=0)
     sorted_weights = np.take_along_axis(sample_weight, sorted_idx, axis=0)
-    sorted_nan_mask = np.take_along_axis(np.isnan(array), sorted_idx, axis=0)
-    sorted_weights[sorted_nan_mask] = 0
 
-    # Compute the weighted cumulative distribution function (CDF) based on
-    # `sample_weight` and scale `percentile` along it:
+    # Set `sample_weight` for NaN input to 0, if present. We do this under an if
+    # condition to avoid temporary allocations of size `(n_samples, n_features)` when
+    # there are no NaN values in the input data array. If NaN values are present, they
+    # would sort to the end (which we can depict from `sorted_idx`).
+    n_features = array.shape[1]
+    largest_value_per_column = array[sorted_idx[-1, ...], np.arange(n_features)]
+    if np.isnan(largest_value_per_column).any():
+        sorted_nan_mask = np.take_along_axis(np.isnan(array), sorted_idx, axis=0)
+        sorted_weights[sorted_nan_mask] = 0
+
+    # Compute the weighted cumulative distribution function (CDF) based on:
     weight_cdf = stable_cumsum(sorted_weights, axis=0)
-    adjusted_percentile = percentile_rank / 100 * weight_cdf[-1]
+    adjusted_percentile_rank = percentile_rank / 100 * weight_cdf[-1]
 
     # For percentile_rank=0, ignore leading observations with sample_weight=0; see PR
-    # #20528
-    mask = adjusted_percentile == 0
-    adjusted_percentile[mask] = np.nextafter(
-        adjusted_percentile[mask], adjusted_percentile[mask] + 1
+    # #20528:
+    mask = adjusted_percentile_rank == 0
+    adjusted_percentile_rank[mask] = np.nextafter(
+        adjusted_percentile_rank[mask], adjusted_percentile_rank[mask] + 1
     )
 
-    # Find index `adjusted_percentile` would have in `weight_cdf`:
+    # Find index `adjusted_percentile_rank` would have in `weight_cdf`:
     percentile_idx = np.array(
         [
-            np.searchsorted(weight_cdf[:, i], adjusted_percentile[i])
+            np.searchsorted(weight_cdf[:, i], adjusted_percentile_rank[i])
             for i in range(weight_cdf.shape[1])
         ]
     )
 
-    # In rare cases, percentile_idx equals to sorted_idx.shape[0]
+    # In rare cases, percentile_idx equals to sorted_idx.shape[0]:
     max_idx = sorted_idx.shape[0] - 1
     percentile_idx = np.apply_along_axis(
         lambda x: np.clip(x, 0, max_idx), axis=0, arr=percentile_idx
