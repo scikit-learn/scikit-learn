@@ -47,9 +47,9 @@ class Deterministic(RegressorMixin):
     ),
 )
 @pytest.mark.parametrize("features", [None, [0, 1, 2]])
-@pytest.mark.parametrize("n_max", [500, 50])
+@pytest.mark.parametrize("subsample", [500, 50])
 @pytest.mark.parametrize("sample_weight", [None, "ones"])
-def test_h_statistic_regression(est, is_additive, features, n_max, sample_weight):
+def test_h_statistic_regression(est, is_additive, features, subsample, sample_weight):
     """Checks on regression.
 
     Additive regression models should get statistics of 0, while non-additive
@@ -62,7 +62,12 @@ def test_h_statistic_regression(est, is_additive, features, n_max, sample_weight
 
     model = est.fit(X, y, sample_weight=w)
     result = h_statistic(
-        model, X, features=features, sample_weight=w, n_max=n_max, random_state=1
+        model,
+        X,
+        features=features,
+        sample_weight=w,
+        subsample=subsample,
+        random_state=1,
     )
 
     m = N_FEAT if features is None else len(features)
@@ -122,8 +127,8 @@ def test_h_statistic_binary_classification_shape():
 
 
 @pytest.mark.parametrize("sample_weight", [None, "ones"])
-@pytest.mark.parametrize("n_max", [500, 50])
-def test_h_statistic_equivalence_array_dataframe(n_max, sample_weight):
+@pytest.mark.parametrize("subsample", [500, 50])
+def test_h_statistic_equivalence_array_dataframe(subsample, sample_weight):
     """Checks that index operations give the same for numpy arrays or dataframes."""
     pd = pytest.importorskip("pandas")
 
@@ -135,13 +140,15 @@ def test_h_statistic_equivalence_array_dataframe(n_max, sample_weight):
     # Numpy
     model_np = RandomForestRegressor(random_state=0, max_depth=4, n_estimators=20)
     model_np.fit(X, y, sample_weight=w)
-    result_np = h_statistic(model_np, X, sample_weight=w, n_max=n_max, random_state=1)
+    result_np = h_statistic(
+        model_np, X, sample_weight=w, subsample=subsample, random_state=1
+    )
 
     # Pandas
     model_pd = clone(model_np)
     model_pd.fit(X_df, y, sample_weight=w)
     result_pd = h_statistic(
-        model_pd, X_df, sample_weight=w, n_max=n_max, random_state=1
+        model_pd, X_df, sample_weight=w, subsample=subsample, random_state=1
     )
 
     assert_allclose(result_np.h_squared_pairwise, result_pd.h_squared_pairwise)
@@ -209,8 +216,8 @@ def test_h_statistic_matches_analytic_result():
 
 
 @pytest.mark.parametrize("sample_weight", [None, "ones"])
-@pytest.mark.parametrize("n_max", [500, 50])
-def test_h_statistic_does_not_change_pandas_input(n_max, sample_weight):
+@pytest.mark.parametrize("subsample", [500, 50])
+def test_h_statistic_does_not_change_pandas_input(subsample, sample_weight):
     """Checks that pandas data is unchanged by the function call."""
     pd = pytest.importorskip("pandas")
 
@@ -223,7 +230,7 @@ def test_h_statistic_does_not_change_pandas_input(n_max, sample_weight):
     # Pandas
     model = RandomForestRegressor(random_state=0, max_depth=4, n_estimators=20)
     model.fit(X_df, y, sample_weight=w)
-    _ = h_statistic(model, X_df, sample_weight=w, n_max=n_max, random_state=1)
+    _ = h_statistic(model, X_df, sample_weight=w, subsample=subsample, random_state=1)
 
     pd.testing.assert_frame_equal(X_df, X_df_orig)
 
