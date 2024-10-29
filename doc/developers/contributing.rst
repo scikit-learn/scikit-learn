@@ -431,14 +431,9 @@ complies with the following rules before marking a PR as "ready for review". The
    non-regression tests should fail for the code base in the ``main`` branch
    and pass for the PR code.
 
-5. When a test is added, a new entry should be added to the changelog to acknowledge it.
-   It informs users about the changes and ensures transparency. We use `towncrier` to
-   manage the changelog: you need to create a file in the `upcoming_changes` directory,
-   under the right folder, with a name like `<PULL REQUEST>.<TYPE>.rst`, where `<PULL
-   REQUEST>` is the pull request number and `<TYPE>` is one of the following:
-   `major-feature`, `feature`, `efficiency`, `enhancement`, `fix`, `api`. You can
-   find more details in the `following README
-   <https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md>`_.
+5. If your PR is likely to affect users, you need to add a changelog entry describing
+   your PR changes, see the `following README <https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md>`
+   for more details.
 
 6. Follow the :ref:`coding-guidelines`.
 
