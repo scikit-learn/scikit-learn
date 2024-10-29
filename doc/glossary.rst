@@ -709,6 +709,9 @@ General Concepts
         Elsewhere a sample is called an instance, data point, or observation.
         ``n_samples`` indicates the number of samples in a dataset, being the
         number of rows in a data array :term:`X`.
+        Note that this definition is standard in machine learning and deviates from
+        statistics where it means *a set of individuals or objects collected or
+        selected*.
 
     sample property
     sample properties

@@ -799,6 +799,25 @@ def test_calibration_curve_pos_label(dtype_y_str):
     assert_allclose(prob_true, [0, 0, 0.5, 1])
 
 
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"c": "red", "lw": 2, "ls": "-."},
+        {"color": "red", "linewidth": 2, "linestyle": "-."},
+    ],
+)
+def test_calibration_display_kwargs(pyplot, iris_data_binary, kwargs):
+    """Check that matplotlib aliases are handled."""
+    X, y = iris_data_binary
+
+    lr = LogisticRegression().fit(X, y)
+    viz = CalibrationDisplay.from_estimator(lr, X, y, **kwargs)
+
+    assert viz.line_.get_color() == "red"
+    assert viz.line_.get_linewidth() == 2
+    assert viz.line_.get_linestyle() == "-."
+
+
 @pytest.mark.parametrize("pos_label, expected_pos_label", [(None, 1), (0, 0), (1, 1)])
 def test_calibration_display_pos_label(
     pyplot, iris_data_binary, pos_label, expected_pos_label

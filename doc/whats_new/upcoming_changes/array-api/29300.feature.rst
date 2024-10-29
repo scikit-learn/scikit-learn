@@ -1,2 +1,3 @@
-- :func:`sklearn.metrics.mean_absolute_percentage_error` by
-  :user:`Emily Chen <EmilyXinyi>`
+- :func:`sklearn.metrics.mean_absolute_percentage_error` now supports Array API
+  compatible inputs.
+  By :user:`Emily Chen <EmilyXinyi>`

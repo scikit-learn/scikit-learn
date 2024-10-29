@@ -253,6 +253,13 @@ package = "sklearn"  # name of your package
   "spin.cmds.meson.docs"
 ]
 
+[tool.changelog-bot]
+    [tool.changelog-bot.towncrier_changelog]
+        enabled = true
+        verify_pr_number = true
+        changelog_noop_label = "No Changelog Needed"
+        whatsnew_pattern = 'doc/whatsnew/upcoming_changes/[^/]+/\d+\.[^.]+\.rst'
+
 [tool.towncrier]
     package = "sklearn"
     filename = "doc/whats_new/notes-towncrier.rst"
@@ -376,6 +383,10 @@ package = "sklearn"  # name of your package
     [[tool.towncrier.section]]
         name = ":mod:`sklearn.feature_selection`"
         path = "sklearn.feature_selection"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.frozen`"
+        path = "sklearn.frozen"
 
     [[tool.towncrier.section]]
         name = ":mod:`sklearn.gaussian_process`"

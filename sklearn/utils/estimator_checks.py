@@ -196,6 +196,9 @@ def _yield_classifier_checks(classifier):
     ):
         yield check_class_weight_balanced_linear_classifier
 
+    if not tags.classifier_tags.multi_class:
+        yield check_classifier_not_supporting_multiclass
+
 
 @ignore_warnings(category=FutureWarning)
 def check_supervised_y_no_nan(name, estimator_orig):
@@ -1206,7 +1209,13 @@ def check_dtype_object(name, estimator_orig):
     if hasattr(estimator, "transform"):
         estimator.transform(X)
 
-    with raises(Exception, match="Unknown label type", may_pass=True):
+    err_msg = (
+        "y with unknown label type is passed, but an error with no proper message "
+        "is raised. You can use `type_of_target(..., raise_unknown=True)` to check "
+        "and raise the right error, or include 'Unknown label type' in the error "
+        "message."
+    )
+    with raises(Exception, match="Unknown label type", may_pass=True, err_msg=err_msg):
         estimator.fit(X, y.astype(object))
 
     if not tags.input_tags.string:
@@ -3634,9 +3643,15 @@ def check_classifiers_regression_target(name, estimator_orig):
 
     X = _enforce_estimator_tags_X(estimator_orig, X)
     e = clone(estimator_orig)
-    msg = "Unknown label type: "
+    err_msg = (
+        "When a classifier is passed a continuous target, it should raise a ValueError"
+        " with a message containing 'Unknown label type: ' or a message indicating that"
+        " a continuous target is passed and the message should include the word"
+        " 'continuous'"
+    )
+    msg = "Unknown label type: |continuous"
     if not get_tags(e).no_validation:
-        with raises(ValueError, match=msg):
+        with raises(ValueError, match=msg, err_msg=err_msg):
             e.fit(X, y)
 
 
@@ -4737,3 +4752,43 @@ def check_do_not_raise_errors_in_init_or_set_params(name, estimator_orig):
 
         # Also do does not raise
         est.set_params(**new_params)
+
+
+def check_classifier_not_supporting_multiclass(name, estimator_orig):
+    """Check that if the classifier has tags.classifier_tags.multi_class=False,
+    then it should raise a ValueError when calling fit with a multiclass dataset.
+
+    This test is not yielded if the tag is not False.
+    """
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+
+    X, y = make_classification(
+        n_samples=100,
+        n_classes=3,
+        n_informative=3,
+        n_clusters_per_class=1,
+        random_state=0,
+    )
+    err_msg = """\
+        The estimator tag `tags.classifier_tags.multi_class` is False for {name}
+        which means it does not support multiclass classification. However, it does
+        not raise the right `ValueError` when calling fit with a multiclass dataset,
+        including the error message 'Only binary classification is supported.' This
+        can be achieved by the following pattern:
+
+        y_type = type_of_target(y, input_name='y', raise_unknown=True)
+        if y_type != 'binary':
+            raise ValueError(
+                'Only binary classification is supported. The type of the target '
+                f'is {{y_type}}.'
+        )
+    """.format(
+        name=name
+    )
+    err_msg = textwrap.dedent(err_msg)
+
+    with raises(
+        ValueError, match="Only binary classification is supported.", err_msg=err_msg
+    ):
+        estimator.fit(X, y)
