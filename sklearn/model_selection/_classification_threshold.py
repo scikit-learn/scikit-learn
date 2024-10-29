@@ -264,13 +264,6 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
           If the method is not implemented by the classifier, it will raise an
           error.
 
-    prefit : bool, default=False
-        Whether a pre-fitted model is expected to be passed into the constructor
-        directly or not. If `True`, `estimator` must be a fitted estimator. If `False`,
-        `estimator` is fitted and updated by calling `fit`.
-
-        .. versionadded:: 1.6
-
     Attributes
     ----------
     estimator_ : estimator instance
@@ -322,7 +315,6 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
         **BaseThresholdClassifier._parameter_constraints,
         "threshold": [StrOptions({"auto"}), Real],
         "pos_label": [Real, str, "boolean", None],
-        "prefit": ["boolean"],
     }
 
     def __init__(
@@ -332,12 +324,10 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
         threshold="auto",
         pos_label=None,
         response_method="auto",
-        prefit=False,
     ):
         super().__init__(estimator=estimator, response_method=response_method)
         self.pos_label = pos_label
         self.threshold = threshold
-        self.prefit = prefit
 
     def _fit(self, X, y, **params):
         """Fit the classifier.
@@ -360,13 +350,7 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
             Returns an instance of self.
         """
         routed_params = process_routing(self, "fit", **params)
-        if self.prefit:
-            check_is_fitted(self.estimator)
-            self.estimator_ = self.estimator
-        else:
-            self.estimator_ = clone(self.estimator).fit(
-                X, y, **routed_params.estimator.fit
-            )
+        self.estimator_ = clone(self.estimator).fit(X, y, **routed_params.estimator.fit)
         return self
 
     def predict(self, X):
