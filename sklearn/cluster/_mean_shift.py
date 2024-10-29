@@ -432,6 +432,9 @@ class MeanShift(ClusterMixin, BaseEstimator):
     array([1, 0])
     >>> clustering
     MeanShift(bandwidth=2)
+
+    For a comparison of Mean Shift clustering with other clustering algorithms, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
     """
 
     _parameter_constraints: dict = {

@@ -434,13 +434,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     :class:`~sklearn.cluster.DBSCAN`), and be more robust to parameter selection.
     Read more in the :ref:`User Guide <hdbscan>`.
 
-    For an example of how to use HDBSCAN, as well as a comaprison to
-    :class:`~sklearn.cluster.DBSCAN`, please see the
-    :ref:`sphx_glr_auto_examples_cluster_plot_hdbscan.py`
-
-    For a comparison of HDBSCAN with other clustering algorithms, see
-    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
-
     .. versionadded:: 1.3
 
     Parameters
@@ -638,6 +631,13 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     HDBSCAN(min_cluster_size=20)
     >>> hdb.labels_
     array([ 2,  6, -1, ..., -1, -1, -1])
+
+    For an example of how to use HDBSCAN, as well as a comaprison to
+    :class:`~sklearn.cluster.DBSCAN`, please see the
+    :ref:`sphx_glr_auto_examples_cluster_plot_hdbscan.py`
+
+    For a comparison of HDBSCAN with other clustering algorithms, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
     """
 
     _parameter_constraints = {
