@@ -57,7 +57,7 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50):
     # Set `sample_weight` for NaN input to 0, if present. We do this under an if
     # condition to avoid temporary allocations of size `(n_samples, n_features)` when
     # there are no NaN values in the input data array. If NaN values are present, they
-    # would sort to the end (which we can depict from `sorted_idx`).
+    # would sort to the end (which we can observe from `sorted_idx`).
     n_features = array.shape[1]
     largest_value_per_column = array[sorted_idx[-1, ...], np.arange(n_features)]
     if np.isnan(largest_value_per_column).any():

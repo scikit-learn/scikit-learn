@@ -49,6 +49,24 @@ def test_weighted_percentile_zero_weight_zero_percentile():
     assert approx(value) == 4
 
 
+def test_weighted_median_equal_weights():
+    # Checks that `_weighted_percentile` and `np.median` (both at probability level=0.5
+    # and with `sample_weights` being all 1s) return the same percentiles if the number
+    # of the samples in the data is odd. In this special case, `_weighted_percentile`
+    # always falls on a precise value (not on the next lower value) and is thus equal to
+    # `np.median`.
+    # As discussed in #17370, a similar check with an even number of samples does not
+    # consistently hold, since then the lower of two percentiles might be selected,
+    # while the median might lie in between.
+    rng = np.random.RandomState(0)
+    x = rng.randint(10, size=11)
+    weights = np.ones(x.shape)
+
+    median = np.median(x)
+    w_median = _weighted_percentile(x, weights)
+    assert median == approx(w_median)
+
+
 def test_weighted_median_integer_weights():
     # Checks weighted percentile_rank=0.5 is same as median when manually weight
     # data
