@@ -13,6 +13,15 @@ Version 1.6
   For a short description of the main highlights of the release, please refer to
   :ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_6_0.py`.
 
+
+..
+  DELETE WHEN 1.6.0 IS RELEASED
+  Since October 2024, DO NOT add your changelog entry in this file.
+..
+  Instead, create a file named `<PR_NUMBER>.<TYPE>.rst` in the relevant sub-folder in
+  `doc/whats_new/upcoming_changes/`. For full details, see:
+  https://github.com/scikit-learn/scikit-learn/blob/main/doc/whats_new/upcoming_changes/README.md
+
 .. include:: changelog_legend.inc
 
 .. _changes_1_6:
