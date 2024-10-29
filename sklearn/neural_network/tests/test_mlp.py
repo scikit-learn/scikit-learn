@@ -25,13 +25,12 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier, MLPRegressor
-from sklearn.preprocessing import LabelBinarizer, MinMaxScaler, StandardScaler, scale
+from sklearn.preprocessing import LabelBinarizer, MinMaxScaler, scale
 from sklearn.utils._testing import (
     assert_allclose,
     assert_almost_equal,
     assert_array_equal,
     ignore_warnings,
-    set_random_state
 )
 from sklearn.utils.fixes import CSR_CONTAINERS
 
@@ -1022,6 +1021,8 @@ def test_mlp_diverging_loss():
     # In python, float("nan") != float("nan")
     assert str(mlp.validation_scores_[-1]) == str(np.nan)
     assert isinstance(mlp.validation_scores_[-1], float)
+
+
 @pytest.mark.parametrize("MLPEstimator", [MLPClassifier, MLPRegressor])
 def test_mlp_with_all_zero_sample_weight(MLPEstimator):
     """Check that using all zero sample weight will raise an error"""

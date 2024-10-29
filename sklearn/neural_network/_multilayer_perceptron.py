@@ -38,11 +38,7 @@ from ..utils.multiclass import (
     unique_labels,
 )
 from ..utils.optimize import _check_optimize_result
-<<<<<<< HEAD
-from ..utils.validation import check_is_fitted, validate_data
-=======
-from ..utils.validation import _check_sample_weight, check_is_fitted
->>>>>>> ecdf8a6a4 (fix: fix sample weight support for neural networks)
+from ..utils.validation import _check_sample_weight, check_is_fitted, validate_data
 from ._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
 from ._stochastic_optimizers import AdamOptimizer, SGDOptimizer
 
@@ -859,7 +855,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
     def _validate_input(self, X, y, incremental, reset, sample_weight):
         raise NotImplementedError("Subclass must implement _validate_input().")
-    
+
     def _more_tags(self):
         return {
             "_xfail_checks": {
@@ -1205,7 +1201,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         )
 
     def _validate_input(self, X, y, incremental, reset):
-        X, y = self._validate_data(
+        X, y = validate_data(
             X,
             y,
             accept_sparse=["csr", "csc"],
@@ -1745,7 +1741,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         return r2_score(y, y_pred, sample_weight=sample_weight)
 
     def _validate_input(self, X, y, incremental, reset):
-        X, y = self._validate_data(
+        X, y = validate_data(
             X,
             y,
             accept_sparse=["csr", "csc"],
