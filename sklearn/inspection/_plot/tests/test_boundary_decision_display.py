@@ -583,8 +583,8 @@ def test_multiclass_plot_max_class(pyplot, response_method):
     import matplotlib as mpl
 
     # In matplotlib < v3.5, default value of `pcolormesh(shading)` is 'flat', which
-    # results in the last row and column of the color mapped values being dropped.
-    # Thus older versions result in a 99x99 grid, while newer result in 100x100.
+    # results in the last row and column being dropped. Thus older versions produce
+    # a 99x99 grid, while newer versions produce a 100x100 grid.
     if parse_version(mpl.__version__) < parse_version("3.5"):
         pytest.skip("`pcolormesh` in Matplotlib >= 3.5 gives smaller grid size.")
 
