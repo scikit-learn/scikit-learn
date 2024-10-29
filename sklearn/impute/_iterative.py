@@ -26,6 +26,7 @@ from ..utils.metadata_routing import (
 from ..utils.validation import (
     FLOAT_DTYPES,
     _check_feature_names_in,
+    _num_samples,
     check_is_fitted,
     validate_data,
 )
@@ -697,8 +698,12 @@ class IterativeImputer(_BaseImputer):
         limit: ndarray, shape(n_features,)
             Array of limits, one for each feature.
         """
-        n_features_in = len(is_empty_feature)
-        if limit is not None and not np.isscalar(limit) and len(limit) != n_features_in:
+        n_features_in = _num_samples(is_empty_feature)
+        if (
+            limit is not None
+            and not np.isscalar(limit)
+            and _num_samples(limit) != n_features_in
+        ):
             raise ValueError(
                 f"'{limit_type}_value' should be of shape ({n_features_in},) when an"
                 f" array-like is provided. Got {len(limit)}, instead."
