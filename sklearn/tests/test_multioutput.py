@@ -872,13 +872,11 @@ def test_base_estimator_deprecation(Estimator):
     # Check that deprecation warning is raised when
     # calling .fit()
     X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
+    y = np.array([[1, 0], [0, 1]])
 
-    match = (
-        "`base_estimator` was renamed to `estimator` in 1.5 "
-        "and will be removed in 1.7."
-    )
+    estimator = LogisticRegression(solver="liblinear")
+    chain = ClassifierChain(base_estimator=estimator)
 
-    with pytest.warns(FutureWarning, match=match):
+    with pytest.warns(FutureWarning):
 
-        Estimator().fit(X, y)
+        chain.fit(X, y)

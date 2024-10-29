@@ -637,8 +637,16 @@ def _available_if_base_estimator_has(attr):
 
 class _BaseChain(BaseEstimator, metaclass=ABCMeta):
     _parameter_constraints: dict = {
-        "base_estimator": [HasMethods(["fit", "predict"])],
-        "estimator": [HasMethods(["fit", "predict"])],
+        "base_estimator": [
+            HasMethods(["fit", "predict"]),
+            StrOptions({"deprecated"}),
+            None,
+        ],
+        "estimator": [
+            HasMethods(["fit", "predict"]),
+            StrOptions({"deprecated"}),
+            None,
+        ],
         "order": ["array-like", StrOptions({"random"}), None],
         "cv": ["cv_object", StrOptions({"prefit"})],
         "random_state": ["random_state"],
@@ -1020,8 +1028,8 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         verbose=False,
     ):
         super().__init__(
-            base_estimator,
             estimator,
+            base_estimator,
             order=order,
             cv=cv,
             random_state=random_state,
