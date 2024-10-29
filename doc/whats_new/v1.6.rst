@@ -26,29 +26,6 @@ Version 1.6
 
 .. towncrier release notes start
 
-Version 1.6.0
-=============
-
-Changelog
----------
-
-..
-    Entries should be grouped by module (in alphabetic order) and prefixed with
-    one of the labels: |MajorFeature|, |Feature|, |Efficiency|, |Enhancement|,
-    |Fix| or |API| (see whats_new.rst for descriptions).
-    Entries should be ordered by those labels (e.g. |Fix| after |Efficiency|).
-    Changes not specific to a module should be listed under *Multiple Modules*
-    or *Miscellaneous*.
-    Entries should end with:
-    :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
-    where 123455 is the *pull request* number, not the issue number.
-
-:mod:`sklearn.neural_network`
-.............................
-
-- |Enhancement| Add support for `sample_weight` in
-  :class:`neural_network.MLPClassifier` and :class:`neural_network.MLPCRegressor`.
-  :pr:`25646` by :user:`Zach Shu <zshu115x>`.
 
 .. rubric:: Code and documentation contributors
 

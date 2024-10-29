@@ -1,0 +1,5 @@
+- :class:`neural_network.MLPRegressor` supports `sample_weight`
+   By :user:`Zach Shu <zshu115x>`
+
+- :class:`neural_network.MLPClassifier` supports `sample_weight`
+   By :user:`Zach Shu <zshu115x>`
