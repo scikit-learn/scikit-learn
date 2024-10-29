@@ -91,9 +91,8 @@ def lars_path(
     Parameters
     ----------
     X : None or ndarray of shape (n_samples, n_features)
-        Input data. Note that if X is None, you should use the lars_path_gram
-        function and provide the Gram matrix directly. Passing Gram when X is None
-        will raise a ValueError.
+        Input data.  If X is `None`, Gram must also be `None` to avoid a `ValueError`.
+        In such cases, use `lars_path_gram` instead.
 
     y : None or ndarray of shape (n_samples,)
         Input targets.
