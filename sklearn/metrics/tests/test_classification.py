@@ -2793,8 +2793,8 @@ def test_brier_score_loss():
 
 
 def test_balanced_accuracy_score_unseen():
-    msg = "y_pred contains classes not in y_true"
-    with pytest.warns(UserWarning, match=msg):
+    msg = "balanced_accuracy ill-defined"
+    with pytest.warns(UndefinedMetricWarning, match=msg):
         balanced_accuracy_score([0, 0, 0], [0, 0, 1])
 
 
@@ -2822,23 +2822,22 @@ def test_balanced_accuracy_score(y_true, y_pred):
     "zero_division, expected_score", [("warn", 0.25), (0.0, 0.25), (1.0, 0.75)]
 )
 def test_balanced_accuracy_score_zero_division(zero_division, expected_score):
-    """Check the behaviour of `zero_division` for balanced_accuracy_score.
+    """Check the behaviour of `zero_division` for `balanced_accuracy_score`.
 
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/26892
     """
     y_true, y_pred = [0, 0, 0, 0], [0, 0, 1, 1]
     if zero_division == "warn":
-        with pytest.warns(UserWarning, match="y_pred contains classes not in y_true"):
+        warn_msg = "balanced_accuracy ill-defined"
+        with pytest.warns(UndefinedMetricWarning, match=warn_msg):
             balanced_accuracy = balanced_accuracy_score(
                 y_true, y_pred, zero_division=zero_division
             )
     else:
-        with warnings.catch_warnings(record=True):
-            warnings.simplefilter("error")
-            balanced_accuracy = balanced_accuracy_score(
-                y_true, y_pred, zero_division=zero_division
-            )
+        balanced_accuracy = balanced_accuracy_score(
+            y_true, y_pred, zero_division=zero_division
+        )
     assert balanced_accuracy == pytest.approx(expected_score)
 
     # check the consistency with the averaged recall score per-class

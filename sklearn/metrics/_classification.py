@@ -2527,10 +2527,13 @@ def balanced_accuracy_score(
         performance would score 0, while keeping perfect performance at a score
         of 1.
 
-    zero_division : {"warn", 0, 1}, default="warn"
-        Sets the value to return when there is a zero division. If set to "warn",
-        a warning will be raised and 0 will be returned. If set to 0, the metric
-        will be 0, and if set to 1, the metric will be 1.
+    zero_division : {"warn", 0, 1, np.nan}, default="warn"
+        Sets the value to return when there is a zero division.
+
+        Notes:
+        - If set to "warn", this acts like 0, but a warning is also raised.
+
+        .. versionadded:: 1.6
 
     Returns
     -------
@@ -2576,11 +2579,15 @@ def balanced_accuracy_score(
     with np.errstate(divide="ignore", invalid="ignore"):
         per_class = np.diag(C) / C.sum(axis=1)
     if np.any(np.isnan(per_class)):
+        nan_replacement_value = zero_division if zero_division != "warn" else 0.0
+        per_class = np.nan_to_num(per_class, nan=nan_replacement_value)
         if zero_division == "warn":
-            warnings.warn("y_pred contains classes not in y_true")
-            per_class = np.nan_to_num(per_class, nan=0.0)
-        else:
-            per_class = np.nan_to_num(per_class, nan=zero_division)
+            warnings.warn(
+                "balanced_accuracy ill-defined and being set to 0.0. "
+                "Use `zero_division` parameter to control this behaviour.",
+                stacklevel=2,
+                category=UndefinedMetricWarning,
+            )
 
     score = np.mean(per_class)
     if adjusted:
