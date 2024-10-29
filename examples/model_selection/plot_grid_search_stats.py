@@ -8,6 +8,9 @@ trained and evaluated using :class:`~sklearn.model_selection.GridSearchCV`.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # We will start by simulating moon shaped data (where the ideal separation
 # between classes is non-linear), adding to it a moderate degree of noise.
@@ -540,27 +543,27 @@ pairwise_comp_df
 #   correction is needed when using the frequentist approach.
 
 # %%
-# .. topic:: References
+# .. rubric:: References
 #
-#    .. [1] Dietterich, T. G. (1998). `Approximate statistical tests for
-#           comparing supervised classification learning algorithms
-#           <http://web.cs.iastate.edu/~jtian/cs573/Papers/Dietterich-98.pdf>`_.
-#           Neural computation, 10(7).
-#    .. [2] Nadeau, C., & Bengio, Y. (2000). `Inference for the generalization
-#           error
-#           <https://papers.nips.cc/paper/1661-inference-for-the-generalization-error.pdf>`_.
-#           In Advances in neural information processing systems.
-#    .. [3] Bouckaert, R. R., & Frank, E. (2004). `Evaluating the replicability
-#           of significance tests for comparing learning algorithms
-#           <https://www.cms.waikato.ac.nz/~ml/publications/2004/bouckaert-frank.pdf>`_.
-#           In Pacific-Asia Conference on Knowledge Discovery and Data Mining.
-#    .. [4] Benavoli, A., Corani, G., Demšar, J., & Zaffalon, M. (2017). `Time
-#           for a change: a tutorial for comparing multiple classifiers through
-#           Bayesian analysis
-#           <http://www.jmlr.org/papers/volume18/16-305/16-305.pdf>`_.
-#           The Journal of Machine Learning Research, 18(1). See the Python
-#           library that accompanies this paper `here
-#           <https://github.com/janezd/baycomp>`_.
-#    .. [5] Diebold, F.X. & Mariano R.S. (1995). `Comparing predictive accuracy
-#           <http://www.est.uc3m.es/esp/nueva_docencia/comp_col_get/lade/tecnicas_prediccion/Practicas0708/Comparing%20Predictive%20Accuracy%20(Dielbold).pdf>`_
-#           Journal of Business & economic statistics, 20(1), 134-144.
+# .. [1] Dietterich, T. G. (1998). `Approximate statistical tests for
+#        comparing supervised classification learning algorithms
+#        <http://web.cs.iastate.edu/~jtian/cs573/Papers/Dietterich-98.pdf>`_.
+#        Neural computation, 10(7).
+# .. [2] Nadeau, C., & Bengio, Y. (2000). `Inference for the generalization
+#        error
+#        <https://papers.nips.cc/paper/1661-inference-for-the-generalization-error.pdf>`_.
+#        In Advances in neural information processing systems.
+# .. [3] Bouckaert, R. R., & Frank, E. (2004). `Evaluating the replicability
+#        of significance tests for comparing learning algorithms
+#        <https://www.cms.waikato.ac.nz/~ml/publications/2004/bouckaert-frank.pdf>`_.
+#        In Pacific-Asia Conference on Knowledge Discovery and Data Mining.
+# .. [4] Benavoli, A., Corani, G., Demšar, J., & Zaffalon, M. (2017). `Time
+#        for a change: a tutorial for comparing multiple classifiers through
+#        Bayesian analysis
+#        <http://www.jmlr.org/papers/volume18/16-305/16-305.pdf>`_.
+#        The Journal of Machine Learning Research, 18(1). See the Python
+#        library that accompanies this paper `here
+#        <https://github.com/janezd/baycomp>`_.
+# .. [5] Diebold, F.X. & Mariano R.S. (1995). `Comparing predictive accuracy
+#        <http://www.est.uc3m.es/esp/nueva_docencia/comp_col_get/lade/tecnicas_prediccion/Practicas0708/Comparing%20Predictive%20Accuracy%20(Dielbold).pdf>`_
+#        Journal of Business & economic statistics, 20(1), 134-144.

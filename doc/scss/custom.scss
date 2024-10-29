@@ -1,0 +1,246 @@
+/**
+ * This is a general styling sheet.
+ * It should be used for customizations that affect multiple pages.
+ *
+ * This file is compiled into styles/custom.css by sphinxcontrib.sass, see:
+ * https://sass-lang.com/guide/
+ */
+
+/* Global */
+
+code.literal {
+  border: 0;
+}
+
+/* Version switcher */
+
+.version-switcher__menu a.list-group-item.sk-avail-docs-link {
+  display: flex;
+  align-items: center;
+
+  &:after {
+    content: var(--pst-icon-external-link);
+    font: var(--fa-font-solid);
+    font-size: 0.75rem;
+    margin-left: 0.5rem;
+  }
+}
+
+/* Primary sidebar */
+
+.bd-sidebar-primary {
+  width: 22.5%;
+  min-width: 16rem;
+
+  // The version switcher button in the sidebar is ill-styled
+  button.version-switcher__button {
+    margin-bottom: unset;
+    margin-left: 0.3rem;
+    font-size: 1rem;
+  }
+
+  // The section navigation part is to close to the right boundary (originally an even
+  // larger negative right margin was used)
+  nav.bd-links {
+    margin-right: -0.5rem;
+  }
+}
+
+/* Article content */
+
+.bd-article {
+  h1 {
+    font-weight: 500;
+    margin-bottom: 2rem;
+  }
+
+  h2 {
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+  }
+
+  // Avoid changing the aspect ratio of images; add some padding so that at least
+  // there is some space between image and background in dark mode
+  img {
+    height: unset !important;
+    padding: 1%;
+  }
+
+  // Resize table of contents to make the top few levels of headings more visible
+  li.toctree-l1 {
+    padding-bottom: 0.5em;
+
+    > a {
+      font-size: 150%;
+      font-weight: bold;
+    }
+  }
+
+  li.toctree-l2,
+  li.toctree-l3,
+  li.toctree-l4 {
+    margin-left: 15px;
+  }
+}
+
+/* Dropdowns (sphinx-design) */
+
+details.sd-dropdown {
+  &:hover > summary.sd-summary-title {
+    > .sd-summary-text > a.headerlink {
+      visibility: visible;
+    }
+
+    > .sk-toggle-all {
+      opacity: 1;
+    }
+  }
+
+  > summary.sd-summary-title {
+    > .sd-summary-text > a.headerlink {
+      font-size: 1rem;
+    }
+
+    // See `js/scripts/dropdown.js`: this is styling the "expand/collapse all" button
+    > .sk-toggle-all {
+      color: var(--pst-sd-dropdown-color);
+      margin-right: 0.5rem;
+      pointer-events: auto !important;
+      opacity: 0;
+    }
+  }
+}
+
+/* Tabs (sphinx-design) */
+
+.sd-tab-set {
+  --tab-caption-width: 0%; // No tab caption by default
+  margin-top: 1.5rem;
+
+  &::before {
+    // Set `content` for tab caption
+    width: var(--tab-caption-width);
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+  }
+
+  .sd-tab-content {
+    padding: 0.5rem 0 0 0 !important;
+    background-color: transparent !important;
+    border: none !important;
+
+    > p:first-child {
+      margin-top: 1rem !important;
+    }
+  }
+
+  > label.sd-tab-label {
+    margin: 0 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px !important;
+
+    &.tab-6 {
+      width: calc((100% - var(--tab-caption-width)) / 2 - 6px) !important;
+    }
+
+    &.tab-4 {
+      width: calc((100% - var(--tab-caption-width)) / 3 - 6px) !important;
+    }
+  }
+
+  > input:checked + label.sd-tab-label {
+    transform: unset;
+    border: 2px solid var(--pst-color-primary);
+  }
+}
+
+/* Download/laucher links and top hint (sphinx-gallery) */
+
+// https://sphinx-gallery.github.io/stable/advanced.html#using-sphinx-gallery-sidebar-components
+.sphx-glr-download-link-note,
+.binder-badge,
+.lite-badge,
+.sphx-glr-download-jupyter,
+.sphx-glr-download-python,
+.sphx-glr-download-zip {
+  display: none;
+}
+
+/* scikit-learn buttons */
+
+a.btn {
+  &.sk-btn-orange {
+    background-color: var(--sk-orange-tint-1);
+    color: black !important;
+
+    &:hover {
+      background-color: var(--sk-orange-tint-3);
+    }
+  }
+
+  &.sk-btn-cyan {
+    background-color: var(--sk-cyan-shades-2);
+    color: white !important;
+
+    &:hover {
+      background-color: var(--sk-cyan-shades-1);
+    }
+  }
+}
+
+/* scikit-learn avatar grid, see build_tools/generate_authors_table.py */
+
+div.sk-authors-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+
+  > div {
+    width: 6rem;
+    margin: 0.5rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* scikit-learn text-image grid, used in testimonials and sponsors pages */
+
+@mixin sk-text-image-grid($img-max-height) {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  div.text-box,
+  div.image-box {
+    width: 50%;
+
+    @media screen and (max-width: 500px) {
+      width: 100%;
+    }
+  }
+
+  div.text-box .annotation {
+    font-size: 0.9rem;
+    font-style: italic;
+    color: var(--pst-color-text-muted);
+  }
+
+  div.image-box {
+    text-align: center;
+
+    img {
+      max-height: $img-max-height;
+      max-width: 50%;
+    }
+  }
+}
+
+div.sk-text-image-grid-small {
+  @include sk-text-image-grid(60px);
+}
+
+div.sk-text-image-grid-large {
+  @include sk-text-image-grid(100px);
+}

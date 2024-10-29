@@ -1,5 +1,5 @@
-# Author: Vlad Niculae
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import sys
 
@@ -270,18 +270,6 @@ def test_spca_feature_names_out(SPCA):
 
     estimator_name = SPCA.__name__.lower()
     assert_array_equal([f"{estimator_name}{i}" for i in range(4)], names)
-
-
-# TODO(1.6): remove in 1.6
-def test_spca_max_iter_None_deprecation():
-    """Check that we raise a warning for the deprecation of `max_iter=None`."""
-    rng = np.random.RandomState(0)
-    n_samples, n_features = 12, 10
-    X = rng.randn(n_samples, n_features)
-
-    warn_msg = "`max_iter=None` is deprecated in version 1.4 and will be removed"
-    with pytest.warns(FutureWarning, match=warn_msg):
-        MiniBatchSparsePCA(max_iter=None).fit(X)
 
 
 def test_spca_early_stopping(global_random_seed):

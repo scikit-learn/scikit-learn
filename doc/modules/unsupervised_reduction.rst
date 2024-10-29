@@ -24,9 +24,9 @@ PCA: principal component analysis
 :class:`decomposition.PCA` looks for a combination of features that
 capture well the variance of the original features. See :ref:`decompositions`.
 
-.. topic:: **Examples**
+.. rubric:: Examples
 
-   * :ref:`sphx_glr_auto_examples_applications_plot_face_recognition.py`
+* :ref:`sphx_glr_auto_examples_applications_plot_face_recognition.py`
 
 Random projections
 -------------------
@@ -35,9 +35,9 @@ The module: :mod:`~sklearn.random_projection` provides several tools for data
 reduction by random projections. See the relevant section of the
 documentation: :ref:`random_projection`.
 
-.. topic:: **Examples**
+.. rubric:: Examples
 
-   * :ref:`sphx_glr_auto_examples_miscellaneous_plot_johnson_lindenstrauss_bound.py`
+* :ref:`sphx_glr_auto_examples_miscellaneous_plot_johnson_lindenstrauss_bound.py`
 
 Feature agglomeration
 ------------------------
@@ -46,10 +46,10 @@ Feature agglomeration
 :ref:`hierarchical_clustering` to group together features that behave
 similarly.
 
-.. topic:: **Examples**
+.. rubric:: Examples
 
-   * :ref:`sphx_glr_auto_examples_cluster_plot_feature_agglomeration_vs_univariate_selection.py`
-   * :ref:`sphx_glr_auto_examples_cluster_plot_digits_agglomeration.py`
+* :ref:`sphx_glr_auto_examples_cluster_plot_feature_agglomeration_vs_univariate_selection.py`
+* :ref:`sphx_glr_auto_examples_cluster_plot_digits_agglomeration.py`
 
 .. topic:: **Feature scaling**
 

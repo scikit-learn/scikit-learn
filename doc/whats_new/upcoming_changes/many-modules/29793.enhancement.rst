@@ -1,0 +1,3 @@
+- Scikit-learn classes and functions can be used while only having a
+  `import sklearn` import line. For example, `import sklearn; sklearn.svm.SVC()` now works.
+  By :user:`Thomas Fan <thomasjpfan>`

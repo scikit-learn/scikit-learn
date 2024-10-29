@@ -1,0 +1,3 @@
+- :func:`sklearn.metrics.pairwise.paired_cosine_distances` now supports Array
+  API compatible inputs.
+  By :user:`Edoardo Abati <EdAbati>`
