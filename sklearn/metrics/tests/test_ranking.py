@@ -372,7 +372,7 @@ def test_roc_curve_toydata():
     )
     with pytest.warns(UndefinedMetricWarning, match=expected_message):
         auc = roc_auc_score(y_true, y_score)
-    assert_almost_equal(auc, np.nan)
+    assert math.isnan(auc, np.nan)
 
     # case with no negative samples
     y_true = [1, 1]
