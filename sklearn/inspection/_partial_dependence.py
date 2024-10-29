@@ -188,7 +188,7 @@ def _partial_dependence_recursion(est, grid, features):
 
 
 def _partial_dependence_brute(
-    est, grid, features, X, response_method, sample_weight=None, max_memory_mb=1_024
+    est, grid, features, X, response_method, sample_weight=None, max_memory_mb=1_000
 ):
     """Calculate partial dependence via the brute force method.
 
@@ -241,7 +241,7 @@ def _partial_dependence_brute(
         model output. If `None`, then samples are equally weighted. Note that
         `sample_weight` does not change the individual predictions.
 
-    max_memory_mb : float, default=1_024
+    max_memory_mb : float, default=1_000
         When `method="brute"`, it defines the maximum amount of memory in MB allowed
         when creating the matrix combining the grid of points and the original dataset.
         Larger values allow for bigger batches, reducing overheads, and thus allowing
@@ -272,7 +272,7 @@ def _partial_dependence_brute(
         )
 
     n_samples, n_points = X.shape[0], len(grid)
-    max_memory_bytes = max_memory_mb * 1_048_576
+    max_memory_bytes = max_memory_mb * 1_000_000
     if hasattr(X, "nbytes"):
         X_size_bytes = X.nbytes
     else:  # pandas DataFrame
@@ -376,7 +376,7 @@ def partial_dependence(
     grid_resolution=100,
     method="auto",
     kind="average",
-    max_memory_mb=1_024,
+    max_memory_mb=1_000,
 ):
     """Partial dependence of ``features``.
 
@@ -509,7 +509,7 @@ def partial_dependence(
 
         .. versionadded:: 0.24
 
-    max_memory_mb : float, default=1_024
+    max_memory_mb : float, default=1_000
         When `method="brute"`, it defines the maximum amount of memory in MB allowed
         when creating the matrix combining the grid of points and the original dataset.
         Larger values allow for bigger batches, reducing overheads, and thus allowing
