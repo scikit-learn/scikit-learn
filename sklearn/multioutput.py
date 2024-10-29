@@ -657,12 +657,12 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
     def __init__(
         self,
         estimator=None,
-        base_estimator="deprecated",
         *,
         order=None,
         cv=None,
         random_state=None,
         verbose=False,
+        base_estimator="deprecated",
     ):
         self.estimator = estimator
         self.base_estimator = base_estimator
@@ -1019,21 +1019,21 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     def __init__(
         self,
         estimator=None,
-        base_estimator="deprecated",
         *,
         order=None,
         cv=None,
         chain_method="predict",
         random_state=None,
         verbose=False,
+        base_estimator="deprecated",
     ):
         super().__init__(
             estimator,
-            base_estimator,
             order=order,
             cv=cv,
             random_state=random_state,
             verbose=verbose,
+            base_estimator=base_estimator,
         )
         self.chain_method = chain_method
 

@@ -183,7 +183,7 @@ INIT_PARAMS = {
     BisectingKMeans: dict(n_init=2, n_clusters=2, max_iter=5),
     CalibratedClassifierCV: dict(estimator=LogisticRegression(C=1), cv=3),
     CCA: dict(n_components=1, max_iter=5),
-    ClassifierChain: dict(base_estimator=LogisticRegression(C=1), cv=3),
+    ClassifierChain: dict(estimator=LogisticRegression(C=1), cv=3),
     ColumnTransformer: dict(transformers=[("trans1", StandardScaler(), [0, 1])]),
     DictionaryLearning: dict(max_iter=20, transform_algorithm="lasso_lars"),
     # the default strategy prior would output constant predictions and fail
