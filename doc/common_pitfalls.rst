@@ -1,9 +1,3 @@
-.. Places parent toc into the sidebar
-
-:parenttoc: True
-
-.. include:: includes/big_toc_css.rst
-
 .. _common_pitfalls:
 
 =========================================
@@ -414,43 +408,40 @@ it will allow the estimator RNG to vary for each fold.
     illustration purpose: what matters is what we pass to the
     :class:`~sklearn.ensemble.RandomForestClassifier` estimator.
 
-|details-start|
-**Cloning**
-|details-split|
+.. dropdown:: Cloning
 
-Another subtle side effect of passing `RandomState` instances is how
-:func:`~sklearn.base.clone` will work::
+    Another subtle side effect of passing `RandomState` instances is how
+    :func:`~sklearn.base.clone` will work::
 
-    >>> from sklearn import clone
-    >>> from sklearn.ensemble import RandomForestClassifier
-    >>> import numpy as np
+        >>> from sklearn import clone
+        >>> from sklearn.ensemble import RandomForestClassifier
+        >>> import numpy as np
 
-    >>> rng = np.random.RandomState(0)
-    >>> a = RandomForestClassifier(random_state=rng)
-    >>> b = clone(a)
+        >>> rng = np.random.RandomState(0)
+        >>> a = RandomForestClassifier(random_state=rng)
+        >>> b = clone(a)
 
-Since a `RandomState` instance was passed to `a`, `a` and `b` are not clones
-in the strict sense, but rather clones in the statistical sense: `a` and `b`
-will still be different models, even when calling `fit(X, y)` on the same
-data. Moreover, `a` and `b` will influence each-other since they share the
-same internal RNG: calling `a.fit` will consume `b`'s RNG, and calling
-`b.fit` will consume `a`'s RNG, since they are the same. This bit is true for
-any estimators that share a `random_state` parameter; it is not specific to
-clones.
+    Since a `RandomState` instance was passed to `a`, `a` and `b` are not clones
+    in the strict sense, but rather clones in the statistical sense: `a` and `b`
+    will still be different models, even when calling `fit(X, y)` on the same
+    data. Moreover, `a` and `b` will influence each-other since they share the
+    same internal RNG: calling `a.fit` will consume `b`'s RNG, and calling
+    `b.fit` will consume `a`'s RNG, since they are the same. This bit is true for
+    any estimators that share a `random_state` parameter; it is not specific to
+    clones.
 
-If an integer were passed, `a` and `b` would be exact clones and they would not
-influence each other.
+    If an integer were passed, `a` and `b` would be exact clones and they would not
+    influence each other.
 
-.. warning::
-    Even though :func:`~sklearn.base.clone` is rarely used in user code, it is
-    called pervasively throughout scikit-learn codebase: in particular, most
-    meta-estimators that accept non-fitted estimators call
-    :func:`~sklearn.base.clone` internally
-    (:class:`~sklearn.model_selection.GridSearchCV`,
-    :class:`~sklearn.ensemble.StackingClassifier`,
-    :class:`~sklearn.calibration.CalibratedClassifierCV`, etc.).
+    .. warning::
+        Even though :func:`~sklearn.base.clone` is rarely used in user code, it is
+        called pervasively throughout scikit-learn codebase: in particular, most
+        meta-estimators that accept non-fitted estimators call
+        :func:`~sklearn.base.clone` internally
+        (:class:`~sklearn.model_selection.GridSearchCV`,
+        :class:`~sklearn.ensemble.StackingClassifier`,
+        :class:`~sklearn.calibration.CalibratedClassifierCV`, etc.).
 
-|details-end|
 
 CV splitters
 ............
