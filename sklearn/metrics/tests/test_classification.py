@@ -2819,7 +2819,8 @@ def test_balanced_accuracy_score(y_true, y_pred):
 
 
 @pytest.mark.parametrize(
-    "zero_division, expected_score", [("warn", 0.25), (0.0, 0.25), (1.0, 0.75), (np.nan, 0.5)]
+    "zero_division, expected_score",
+    [("warn", 0.25), (0.0, 0.25), (1.0, 0.75), (np.nan, 0.5)],
 )
 def test_balanced_accuracy_score_zero_division(zero_division, expected_score):
     """Check the behaviour of `zero_division` for `balanced_accuracy_score`.
