@@ -1,12 +1,6 @@
-{% if render_title %}
-{% if versiondata.name %}
-{{ versiondata.name }} {{ versiondata.version }})
-{{ top_underline * ((versiondata.name + versiondata.version)|length + 3)}}
-{% else %}
-{{ versiondata.version }}
-{{ top_underline * ((versiondata.version)|length + 2)}}
-{% endif %}
-{% endif %}
+{% set title = "Version " + versiondata.version %}
+{{ title }}
+{{ top_underline * title|length }}
 
 {% set month_names = {
     '01': 'January', '02': 'February', '03': 'March', '04': 'April',

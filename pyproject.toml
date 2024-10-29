@@ -259,7 +259,6 @@ package = "sklearn"  # name of your package
     directory = "doc/whats_new/upcoming_changes"
     issue_format = ":pr:`{issue}`"
     template = "doc/whats_new/upcoming_changes/towncrier_template.rst.jinja2"
-    title_format = "Version {version}"
     all_bullets = false
 
     [[tool.towncrier.type]]
