@@ -1,0 +1,4 @@
+- When `min_value` and `max_value` are array-like and some features are dropped due to
+  `keep_empty_features=False`, :class:`impute.IterativeImputer` no longer raises an
+  error and now indexes correctly.
+  By :user:`Guntitat Sawadwuthikul <gunsodo>`

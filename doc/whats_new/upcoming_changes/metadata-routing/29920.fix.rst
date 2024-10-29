@@ -1,0 +1,3 @@
+- Many method arguments which shouldn't be included in the routing mechanism are
+  now excluded and the `set_{method}_request` methods are not generated for them.
+  By `Adrin Jalali`_
