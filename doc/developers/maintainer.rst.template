@@ -143,8 +143,8 @@ Reference Steps
       variable in `sklearn/__init__.py`. This means while we are in the release
       candidate period, the latest stable is two version behind the `main` branch,
       instead of one. In this PR targeting `main`, you should also include a new what's
-      new file under the `doc/whats_new/` directory so that we prepare the next
-      `towncrier` build for the next release.
+      new file under the `doc/whats_new/` directory so that we prepare the
+      changelog for the next release.
     {% endif %}
 
     - In the release branch, change the version number `__version__` in
