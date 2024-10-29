@@ -580,6 +580,16 @@ def test_class_of_interest_multiclass(pyplot, response_method):
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
 def test_multiclass_plot_max_class(pyplot, response_method):
     """Check plot correct when plotting max multiclass class."""
+    import matplotlib as mpl
+
+    # In matplotlib < v3.5, default value of `pcolormesh(shading)` is 'flat',
+    # which results in the last row and column of the color mapped values being
+    # dropped. This results in a 99x99 grid.
+    if parse_version(mpl.__version__) < parse_version("3.5"):
+        pytest.skip(
+            "`pcolormesh` in Matplotlib >= 3.5 gives smaller grid size."
+        )
+
     X, y = load_iris_2d_scaled()
     clf = LogisticRegression().fit(X, y)
 
@@ -599,9 +609,7 @@ def test_multiclass_plot_max_class(pyplot, response_method):
     highest_class = np.argmax(response, axis=2)
     for idx, quadmesh in enumerate(disp.surface_):
         # Note quadmesh mask is True (i.e. masked) when `idx` is NOT the highest class
-        assert_array_equal(
-            highest_class != idx, quadmesh.get_array().mask.reshape(*response.shape)
-        )
+        assert_array_equal(highest_class != idx, quadmesh.get_array().mask)
 
 
 @pytest.mark.parametrize(
