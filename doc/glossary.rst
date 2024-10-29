@@ -66,6 +66,7 @@ General Concepts
         It excludes:
 
         * a :term:`sparse matrix`
+        * a sparse array
         * an iterator
         * a generator
 
@@ -406,8 +407,7 @@ General Concepts
         likelihoods.
 
     estimator tags
-        A proposed feature (e.g. :issue:`8022`) by which the capabilities of an
-        estimator are described through a set of semantic tags.  This would
+        Estimator tags describe certain capabilities of an estimator.  This would
         enable some runtime behaviors based on estimator inspection, but it
         also allows each estimator to be tested for appropriate invariances
         while being excepted from other :term:`common tests`.
@@ -709,6 +709,9 @@ General Concepts
         Elsewhere a sample is called an instance, data point, or observation.
         ``n_samples`` indicates the number of samples in a dataset, being the
         number of rows in a data array :term:`X`.
+        Note that this definition is standard in machine learning and deviates from
+        statistics where it means *a set of individuals or objects collected or
+        selected*.
 
     sample property
     sample properties

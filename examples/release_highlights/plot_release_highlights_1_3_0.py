@@ -88,7 +88,9 @@ enc.encodings_
 # :class:`tree.DecisionTreeRegressor` now support missing values. For each potential
 # threshold on the non-missing data, the splitter will evaluate the split with all the
 # missing values going to the left node or the right node.
-# More details in the :ref:`User Guide <tree_missing_value_support>`.
+# See more details in the :ref:`User Guide <tree_missing_value_support>` or see
+# :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py` for a usecase
+# example of this feature in :class:`~ensemble.HistGradientBoostingRegressor`.
 import numpy as np
 from sklearn.tree import DecisionTreeClassifier
 
@@ -99,8 +101,8 @@ tree = DecisionTreeClassifier(random_state=0).fit(X, y)
 tree.predict(X)
 
 # %%
-# New display `model_selection.ValidationCurveDisplay`
-# ----------------------------------------------------
+# New display :class:`~model_selection.ValidationCurveDisplay`
+# ------------------------------------------------------------
 # :class:`model_selection.ValidationCurveDisplay` is now available to plot results
 # from :func:`model_selection.validation_curve`.
 from sklearn.datasets import make_classification
@@ -139,8 +141,8 @@ gbdt = HistGradientBoostingRegressor(loss="gamma")
 cross_val_score(gbdt, X, y).mean()
 
 # %%
-# Grouping infrequent categories in :class:`preprocessing.OrdinalEncoder`
-# -----------------------------------------------------------------------
+# Grouping infrequent categories in :class:`~preprocessing.OrdinalEncoder`
+# ------------------------------------------------------------------------
 # Similarly to :class:`preprocessing.OneHotEncoder`, the class
 # :class:`preprocessing.OrdinalEncoder` now supports aggregating infrequent categories
 # into a single output for each feature. The parameters to enable the gathering of

@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import functools
 import math
 import operator
@@ -578,7 +581,7 @@ class _Booleans(_Constraint):
     """Constraint representing boolean likes.
 
     Convenience class for
-    [bool, np.bool_, Integral (deprecated)]
+    [bool, np.bool_]
     """
 
     def __init__(self):

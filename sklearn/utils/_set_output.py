@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import importlib
 from functools import wraps
 from typing import Protocol, runtime_checkable
@@ -7,6 +10,7 @@ from scipy.sparse import issparse
 
 from .._config import get_config
 from ._available_if import available_if
+from .fixes import _create_pandas_dataframe_from_non_pandas_container
 
 
 def check_library_installed(library):
@@ -128,7 +132,9 @@ class PandasAdapter:
 
             # We don't pass columns here because it would intend columns selection
             # instead of renaming.
-            X_output = pd.DataFrame(X_output, index=index, copy=not inplace)
+            X_output = _create_pandas_dataframe_from_non_pandas_container(
+                X=X_output, index=index, copy=not inplace
+            )
 
         if columns is not None:
             return self.rename_columns(X_output, columns)
@@ -195,6 +201,24 @@ class ContainerAdaptersManager:
 ADAPTERS_MANAGER = ContainerAdaptersManager()
 ADAPTERS_MANAGER.register(PandasAdapter())
 ADAPTERS_MANAGER.register(PolarsAdapter())
+
+
+def _get_adapter_from_container(container):
+    """Get the adapter that knows how to handle such container.
+
+    See :class:`sklearn.utils._set_output.ContainerAdapterProtocol` for more
+    details.
+    """
+    module_name = container.__class__.__module__.split(".")[0]
+    try:
+        return ADAPTERS_MANAGER.adapters[module_name]
+    except KeyError as exc:
+        available_adapters = list(ADAPTERS_MANAGER.adapters.keys())
+        raise ValueError(
+            "The container does not have a registered adapter in scikit-learn. "
+            f"Available adapters are: {available_adapters} while the container "
+            f"provided is: {container!r}."
+        ) from exc
 
 
 def _get_container_adapter(method, estimator=None):
@@ -374,7 +398,7 @@ class _SetOutputMixin:
 
         Parameters
         ----------
-        transform : {"default", "pandas"}, default=None
+        transform : {"default", "pandas", "polars"}, default=None
             Configure output of `transform` and `fit_transform`.
 
             - `"default"`: Default output format of a transformer
@@ -410,7 +434,7 @@ def _safe_set_output(estimator, *, transform=None):
     estimator : estimator instance
         Estimator instance.
 
-    transform : {"default", "pandas"}, default=None
+    transform : {"default", "pandas", "polars"}, default=None
         Configure output of the following estimator's methods:
 
         - `"transform"`

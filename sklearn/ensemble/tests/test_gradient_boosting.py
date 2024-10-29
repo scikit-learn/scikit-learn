@@ -1,6 +1,7 @@
 """
 Testing for the gradient boosting module (sklearn.ensemble.gradient_boosting).
 """
+
 import re
 import warnings
 
@@ -22,7 +23,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import scale
 from sklearn.svm import NuSVR
-from sklearn.utils import check_random_state, tosequence
+from sklearn.utils import check_random_state
 from sklearn.utils._mocking import NoSampleWeightWrapper
 from sklearn.utils._param_validation import InvalidParameterError
 from sklearn.utils._testing import (
@@ -529,10 +530,10 @@ def test_symbol_labels():
     # Test with non-integer class labels.
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
 
-    symbol_y = tosequence(map(str, y))
+    symbol_y = list(map(str, y))
 
     clf.fit(X, symbol_y)
-    assert_array_equal(clf.predict(T), tosequence(map(str, true_result)))
+    assert_array_equal(clf.predict(T), list(map(str, true_result)))
     assert 100 == len(clf.estimators_)
 
 

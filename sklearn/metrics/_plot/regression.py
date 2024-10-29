@@ -1,8 +1,13 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import numbers
 
 import numpy as np
 
-from ...utils import _safe_indexing, check_matplotlib_support, check_random_state
+from ...utils import _safe_indexing, check_random_state
+from ...utils._optional_dependencies import check_matplotlib_support
+from ...utils._plotting import _validate_style_kwargs
 
 
 class PredictionErrorDisplay:
@@ -137,6 +142,9 @@ class PredictionErrorDisplay:
 
         default_scatter_kwargs = {"color": "tab:blue", "alpha": 0.8}
         default_line_kwargs = {"color": "black", "alpha": 0.7, "linestyle": "--"}
+
+        scatter_kwargs = _validate_style_kwargs(default_scatter_kwargs, scatter_kwargs)
+        line_kwargs = _validate_style_kwargs(default_line_kwargs, line_kwargs)
 
         scatter_kwargs = {**default_scatter_kwargs, **scatter_kwargs}
         line_kwargs = {**default_line_kwargs, **line_kwargs}

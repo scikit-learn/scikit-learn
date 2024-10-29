@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 """
 ======================================
 Poisson regression and non-normal loss
@@ -35,11 +38,6 @@ policyholders.
     <https://doi.org/10.2139/ssrn.3164764>`_
 
 """
-
-# Authors: Christian Lorentzen <lorentzen.ch@gmail.com>
-#          Roman Yurchak <rth.yurchak@gmail.com>
-#          Olivier Grisel <olivier.grisel@ensta.org>
-# License: BSD 3 clause
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -112,7 +110,7 @@ linear_model_preprocessor = ColumnTransformer(
         ("passthrough_numeric", "passthrough", ["BonusMalus"]),
         (
             "binned_numeric",
-            KBinsDiscretizer(n_bins=10, subsample=int(2e5), random_state=0),
+            KBinsDiscretizer(n_bins=10, random_state=0),
             ["VehAge", "DrivAge"],
         ),
         ("log_scaled_numeric", log_scale_transformer, ["Density"]),

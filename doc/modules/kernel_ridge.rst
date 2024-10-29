@@ -55,8 +55,11 @@ dense model.
    :target: ../auto_examples/miscellaneous/plot_kernel_ridge_regression.html
    :align: center
 
+.. rubric:: Examples
 
-.. topic:: References:
+* :ref:`sphx_glr_auto_examples_miscellaneous_plot_kernel_ridge_regression.py`
 
-    .. [M2012] "Machine Learning: A Probabilistic Perspective"
-      Murphy, K. P. - chapter 14.4.3, pp. 492-493, The MIT Press, 2012
+.. rubric:: References
+
+.. [M2012] "Machine Learning: A Probabilistic Perspective"
+   Murphy, K. P. - chapter 14.4.3, pp. 492-493, The MIT Press, 2012

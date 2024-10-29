@@ -122,7 +122,8 @@ print(completeness_score(kmeans.predict(X_test), y_test))
 # specific features. In the following example, we construct a target that is
 # generally positively correlated with the first feature, with some noise.
 # Applying monotoinc constraints allows the prediction to capture the global
-# effect of the first feature, instead of fitting the noise.
+# effect of the first feature, instead of fitting the noise. For a usecase
+# example, see :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py`.
 import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
