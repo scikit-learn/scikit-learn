@@ -660,7 +660,9 @@ print(
 #
 # The class :class:`~sklearn.model_selection.FixedThresholdClassifier` allows us to
 # manually set the decision threshold. At prediction time, it behave as the previous
-# tuned model but no search is performed during the fitting process.
+# tuned model but no search is performed during the fitting process. Note that here
+# we use :class:`~sklearn.frozen.FrozenEstimator` to wrap the predictive model to
+# avoid any refitting.
 #
 # Here, we will reuse the decision threshold found in the previous section to create a
 # new model and check that it gives the same results.
