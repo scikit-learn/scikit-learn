@@ -385,6 +385,10 @@ package = "sklearn"  # name of your package
         path = "sklearn.feature_selection"
 
     [[tool.towncrier.section]]
+        name = ":mod:`sklearn.frozen`"
+        path = "sklearn.frozen"
+
+    [[tool.towncrier.section]]
         name = ":mod:`sklearn.gaussian_process`"
         path = "sklearn.gaussian_process"
 
