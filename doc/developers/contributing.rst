@@ -345,7 +345,7 @@ The next steps now describe the process of modifying code and submitting a PR:
 12. Follow `these
     <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
     instructions to create a pull request from your fork. This will send an
-    email to the committers. You may want to consider sending an message to
+    notification to potential reviewers. You may want to consider sending an message to
     the `discord <https://discord.com/invite/h9qyrK8Jc8>`_ in the development
     channel for more visibility (instant replies are not guaranteed).
 
