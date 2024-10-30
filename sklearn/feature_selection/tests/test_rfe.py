@@ -6,7 +6,7 @@ from operator import attrgetter
 
 import numpy as np
 import pytest
-from joblib import parallel_config
+from joblib import parallel_backend
 from numpy.testing import assert_allclose, assert_array_almost_equal, assert_array_equal
 
 from sklearn.base import BaseEstimator, ClassifierMixin
@@ -718,7 +718,7 @@ def test_rfe_with_joblib_threading_backend(global_random_seed):
     rfe.fit(X, y)
     ranking_ref = rfe.ranking_
 
-    with parallel_config(backend="threading"):
+    with parallel_backend("threading"):
         rfe.fit(X, y)
 
     assert_array_equal(ranking_ref, rfe.ranking_)
