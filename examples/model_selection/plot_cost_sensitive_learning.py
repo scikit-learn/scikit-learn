@@ -671,7 +671,7 @@ from sklearn.model_selection import FixedThresholdClassifier
 
 model_fixed_threshold = FixedThresholdClassifier(
     estimator=FrozenEstimator(model), threshold=tuned_model.best_threshold_
-).fit(data_train, target_train)
+)
 
 # %%
 business_score = business_scorer(

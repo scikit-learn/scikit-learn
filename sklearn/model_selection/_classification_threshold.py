@@ -329,6 +329,18 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
         self.pos_label = pos_label
         self.threshold = threshold
 
+    @property
+    def classes_(self):
+        if estimator := getattr(self, "estimator_", None):
+            return estimator.classes_
+        try:
+            check_is_fitted(self.estimator)
+            return self.estimator.classes_
+        except NotFittedError:
+            raise AttributeError(
+                "The underlying estimator is not fitted yet."
+            ) from NotFittedError
+
     def _fit(self, X, y, **params):
         """Fit the classifier.
 
@@ -366,9 +378,15 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
         class_labels : ndarray of shape (n_samples,)
             The predicted class.
         """
-        check_is_fitted(self, "estimator_")
+        try:
+            check_is_fitted(self.estimator)
+        except NotFittedError:
+            check_is_fitted(self, "estimator_")
+
+        estimator = getattr(self, "estimator_", self.estimator)
+
         y_score, _, response_method_used = _get_response_values_binary(
-            self.estimator_,
+            estimator,
             X,
             self._get_response_method(),
             pos_label=self.pos_label,

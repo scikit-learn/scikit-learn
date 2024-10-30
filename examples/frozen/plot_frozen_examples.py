@@ -51,7 +51,7 @@ print(
 
 threshold_classifier = FixedThresholdClassifier(
     estimator=FrozenEstimator(classifier), threshold=0.9
-).fit(X_train, y_train)
+)
 
 # %%
 # Note that in the above piece of code, calling `fit` on

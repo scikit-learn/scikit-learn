@@ -591,3 +591,12 @@ def test_fixed_threshold_classifier_metadata_routing():
     classifier_default_threshold = FixedThresholdClassifier(estimator=clone(classifier))
     classifier_default_threshold.fit(X, y, sample_weight=sample_weight)
     assert_allclose(classifier_default_threshold.estimator_.coef_, classifier.coef_)
+
+
+def test_fixed_threshold_classifier_fitted_estimator():
+    """Check that if the underlying estimator is already fitted, no fit is required."""
+    X, y = make_classification(random_state=0)
+    classifier = LogisticRegression().fit(X, y)
+    fixed_threshold_classifier = FixedThresholdClassifier(estimator=classifier)
+    # This should not raise an error
+    fixed_threshold_classifier.predict(X)
