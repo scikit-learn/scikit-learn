@@ -745,11 +745,9 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
                 "`base_estimator` was renamed to `estimator` in 1.5 "
                 "and will be removed in 1.7."
             )
-
             warnings.warn(warning_text, FutureWarning)
-        elif self.estimator is not None:
-            self.base_estimator = self.estimator
-
+            self.estimator = self.base_estimator
+            self.base_estimator = 'deprecated'    
         X, Y = validate_data(self, X, Y, multi_output=True, accept_sparse=True)
 
         random_state = check_random_state(self.random_state)
@@ -765,7 +763,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         elif sorted(self.order_) != list(range(Y.shape[1])):
             raise ValueError("invalid order")
 
-        self.estimators_ = [clone(self.base_estimator) for _ in range(Y.shape[1])]
+        self.estimators_ = [clone(self.estimator) for _ in range(Y.shape[1])]
 
         if self.cv is None:
             Y_pred_chain = Y[:, self.order_]
@@ -804,7 +802,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
 
         if hasattr(self, "chain_method"):
             chain_method = _check_response_method(
-                self.base_estimator,
+                self.estimator,
                 self.chain_method,
             ).__name__
             self.chain_method_ = chain_method
@@ -829,7 +827,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             if self.cv is not None and chain_idx < len(self.estimators_) - 1:
                 col_idx = X.shape[1] + chain_idx
                 cv_result = cross_val_predict(
-                    self.base_estimator,
+                    self.estimator,
                     X_aug[:, :col_idx],
                     y=y,
                     cv=self.cv,
