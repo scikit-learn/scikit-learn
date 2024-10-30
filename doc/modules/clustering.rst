@@ -137,9 +137,13 @@ mixture models. KMeans can be seen as a special case of Gaussian mixture
 model with equal covariance per component.
 
 :term:`Transductive <transductive>` clustering methods (in contrast to
-:term:`inductive` clustering methods, refer to this example
-:ref:`sphx_glr_auto_examples_cluster_plot_inductive_clustering.py`) are not
+:term:`inductive` clustering methods) are not
 designed to be applied to new, unseen data.
+
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_cluster_plot_inductive_clustering.py`: A practical
+example of inductive clustering model.
 
 .. _k_means:
 
