@@ -415,7 +415,7 @@ INIT_PARAMS = {
     # For common tests, we can enforce using `LinearRegression` that
     # is the default estimator in `RANSACRegressor` instead of `Ridge`.
     RANSACRegressor: dict(estimator=LinearRegression(), max_trials=10),
-    RegressorChain: dict(base_estimator=Ridge(), cv=3),
+    RegressorChain: dict(estimator=Ridge(), cv=3),
     RFECV: dict(estimator=LogisticRegression(C=1), cv=3),
     RFE: dict(estimator=LogisticRegression(C=1)),
     # be tolerant of noisy datasets (not actually speed)
