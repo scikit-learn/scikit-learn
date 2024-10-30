@@ -927,8 +927,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         ),
     },
     NuSVC: {
-        # This doesn't seem to fail anymore?
-        # "check_methods_subset_invariance": ("fails for the decision_function method"),
         "check_class_weight_classifiers": "class_weight is ignored.",
         # TODO: fix sample_weight handling of this estimator when probability=False
         # TODO: replace by a statistical test when probability=True

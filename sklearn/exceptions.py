@@ -14,7 +14,7 @@ __all__ = [
     "UndefinedMetricWarning",
     "PositiveSpectrumWarning",
     "UnsetMetadataPassedError",
-    "TestFailedWarning",
+    "EstimatorCheckFailedWarning",
 ]
 
 
@@ -192,8 +192,8 @@ class InconsistentVersionWarning(UserWarning):
         )
 
 
-class TestFailedWarning(UserWarning):
-    """Warning raised when a test fails.
+class EstimatorCheckFailedWarning(UserWarning):
+    """Warning raised when an estimator check from the common tests fails.
 
     Parameters
     ----------
@@ -210,7 +210,7 @@ class TestFailedWarning(UserWarning):
         Status of the check.
 
     expected_to_fail : bool
-        Whether the test was expected to fail.
+        Whether the check was expected to fail.
 
     expected_to_fail_reason : str
         Reason for the expected failure.

@@ -21,7 +21,11 @@ from sklearn.datasets import (
     make_multilabel_classification,
 )
 from sklearn.decomposition import PCA
-from sklearn.exceptions import ConvergenceWarning, SkipTestWarning, TestFailedWarning
+from sklearn.exceptions import (
+    ConvergenceWarning,
+    EstimatorCheckFailedWarning,
+    SkipTestWarning,
+)
 from sklearn.linear_model import (
     LinearRegression,
     LogisticRegression,
@@ -84,7 +88,7 @@ from sklearn.utils.estimator_checks import (
     check_requires_y_none,
     check_sample_weights_pandas_series,
     check_set_params,
-    checks_generator,
+    estimator_checks_generator,
     set_random_state,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS, SPARRAY_PRESENT
@@ -1258,14 +1262,14 @@ def test_xfail_ignored_in_check_estimator():
     assert len(expected_to_fail) > 0
     with warnings.catch_warnings(record=True) as records:
         check_estimator(est, expected_failed_checks=expected_to_fail)
-    assert TestFailedWarning in [rec.category for rec in records]
+    assert EstimatorCheckFailedWarning in [rec.category for rec in records]
 
 
-def test_checks_generator_skipping_tests():
+def test_estimator_checks_generator_skipping_tests():
     # Make sure the checks generator skips tests that are expected to fail
     est = next(_construct_instances(NuSVC))
     expected_to_fail = _get_expected_failed_checks(est)
-    checks = checks_generator(
+    checks = estimator_checks_generator(
         est, legacy=True, expected_failed_checks=expected_to_fail, mark="skip"
     )
     # making sure we use a class that has expected failures
@@ -1284,8 +1288,8 @@ def test_checks_generator_skipping_tests():
 def test_xfail_count_with_no_fast_fail():
     """Test that the right number of xfail warnings are raised when fail_fast is False.
 
-    It also checks the number of raised TestFailedWarnings, and checks the output
-    of check_estimator.
+    It also checks the number of raised EstimatorCheckFailedWarning, and checks the
+    output of check_estimator.
     """
     est = NuSVC()
     expected_failed_checks = _get_expected_failed_checks(est)
@@ -1570,7 +1574,7 @@ def test_estimator_with_set_output():
         check_estimator(estimator)
 
 
-def test_checks_generator():
+def test_estimator_checks_generator():
     """Check that checks_generator returns a generator."""
-    all_instance_gen_checks = checks_generator(LogisticRegression())
+    all_instance_gen_checks = estimator_checks_generator(LogisticRegression())
     assert isgenerator(all_instance_gen_checks)

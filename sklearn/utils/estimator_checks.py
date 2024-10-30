@@ -37,9 +37,9 @@ from ..datasets import (
 )
 from ..exceptions import (
     DataConversionWarning,
+    EstimatorCheckFailedWarning,
     NotFittedError,
     SkipTestWarning,
-    TestFailedWarning,
 )
 from ..linear_model._base import LinearClassifierMixin
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
@@ -428,7 +428,7 @@ def _maybe_mark(
         fail.
     mark : "xfail" or "skip" or None
         Whether to mark the check as xfail or skip.
-    pytest : pytest object, default=None
+    pytest : pytest module, default=None
         Pytest module to use to mark the check. This is only needed if ``mark`` is
         `"xfail"`. Note that one can run `check_estimator` without having `pytest`
         installed. This is used in combination with `parametrize_with_checks` only.
@@ -485,14 +485,14 @@ def _should_be_skipped_or_marked(
     return False, "Check is not expected to fail"
 
 
-def checks_generator(
+def estimator_checks_generator(
     estimator,
     *,
     legacy: bool = True,
     expected_failed_checks: dict[str, str] | None = None,
     mark: Literal["xfail", "skip", None] = None,
 ):
-    """Generate checks for an estimator.
+    """Iteratively yield all check callables for an estimator.
 
     Parameters
     ----------
@@ -506,12 +506,13 @@ def checks_generator(
         fail.
     mark : "xfail" or "skip" or None, default=None
         Whether to mark the checks that are expected to fail as
-        xfail(`pytest.mark.xfail`) or skip. Skip will raise a
-        :class:`~sklearn.exceptions.SkipTest` for the test.
+        xfail(`pytest.mark.xfail`) or skip. Marking a test as "skip" is done via
+        wrapping the check in a function that raises a
+        :class:`~sklearn.exceptions.SkipTest` exception.
 
     Returns
     -------
-    checks_generator : generator
+    estimator_checks_generator : generator
         Generator that yields (estimator, check) tuples.
     """
     if mark == "xfail":
@@ -620,7 +621,7 @@ def parametrize_with_checks(
             args = {"estimator": estimator, "legacy": legacy, "mark": "xfail"}
             if callable(expected_failed_checks):
                 args["expected_failed_checks"] = expected_failed_checks(estimator)
-            yield from checks_generator(**args)
+            yield from estimator_checks_generator(**args)
 
     return pytest.mark.parametrize(
         "estimator, check",
@@ -682,7 +683,7 @@ def check_estimator(
 
         .. deprecated:: 1.6
             `generate_only` will be removed in 1.8. Use
-            :func:`~sklearn.utils.estimator_checks.checks_generator` instead.
+            :func:`~sklearn.utils.estimator_checks.estimator_checks_generator` instead.
 
     legacy : bool, default=True
         Whether to include legacy checks. Over time we remove checks from this category
@@ -719,8 +720,8 @@ def check_estimator(
                 expected_to_fail_reason: str,
             )
 
-        If "warn", a :class:`~sklearn.exceptions.TestFailedWarning` will be logged,
-        and the check will still raise an exception after all the tests are run.
+        If "warn", a :class:`~sklearn.exceptions.EstimatorCheckFailedWarning` will be
+        logged, and the check will still raise an exception after all the tests are run.
 
         If ``fail_fast=True``, ``on_fail`` has no effect.
 
@@ -741,7 +742,7 @@ def check_estimator(
         This return value is only present when all tests pass, or the ones failing
         are expected to fail.
 
-    checks_generator : generator
+    estimator_checks_generator : generator
         Generator that yields (estimator, check) tuples. Returned when
         `generate_only=True`.
 
@@ -750,7 +751,7 @@ def check_estimator(
 
         .. deprecated:: 1.6
             ``generate_only`` will be removed in 1.8. Use
-            :func:`~sklearn.utils.estimator_checks.checks_generator` instead.
+            :func:`~sklearn.utils.estimator_checks.estimator_checks_generator` instead.
 
     Raises
     ------
@@ -792,14 +793,14 @@ def check_estimator(
             "Use :func:`~sklearn.utils.estimator_checks.estimator_checks` instead.",
             FutureWarning,
         )
-        return checks_generator(
+        return estimator_checks_generator(
             estimator, legacy=legacy, expected_failed_checks=None, mark="skip"
         )
 
     test_results = []
     failed = False
 
-    for estimator, check in checks_generator(
+    for estimator, check in estimator_checks_generator(
         estimator,
         legacy=legacy,
         expected_failed_checks=expected_failed_checks,
@@ -850,7 +851,7 @@ def check_estimator(
                 check_result["status"] = "failed"
 
             if on_fail == "warn":
-                warning = TestFailedWarning(**check_result)
+                warning = EstimatorCheckFailedWarning(**check_result)
                 warnings.warn(warning)
             elif callable(on_fail):
                 on_fail(**check_result)
