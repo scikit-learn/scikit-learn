@@ -14,7 +14,7 @@
 
   - ``generate_only=True`` is deprecated in
     :func:`~utils.estimator_checks.check_estimator`. Use
-    :func:`~utils.estimator_checks.checks_generator` instead.
+    :func:`~utils.estimator_checks.estimator_checks_generator` instead.
 
   - The ``_xfail_checks`` estimator tag is now removed, and now in order to indicate
     which tests are expected to fail, you can pass a dictionary to the
