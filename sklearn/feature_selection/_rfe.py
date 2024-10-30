@@ -60,7 +60,7 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer, routed_params):
         **fit_params,
     )
 
-    return rfe.step_scores_, rfe.step_n_features_
+    return rfe.step_scores_, rfe.step_support_, rfe.step_ranking_, rfe.step_n_features_
 
 
 def _estimator_has(attr):
@@ -334,6 +334,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         if step_score:
             self.step_n_features_ = []
             self.step_scores_ = []
+            self.step_support_ = []
+            self.step_ranking_ = []
 
         # Elimination
         while np.sum(support_) > n_features_to_select:
@@ -346,6 +348,15 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
                 print("Fitting estimator with %d features." % np.sum(support_))
 
             estimator.fit(X[:, features], y, **fit_params)
+
+            # Compute step values on the previous selection iteration
+            # because 'estimator' must use features
+            # that have not been eliminated yet
+            if step_score:
+                self.step_n_features_.append(len(features))
+                self.step_scores_.append(step_score(estimator, features))
+                self.step_support_.append(support_)
+                self.step_ranking_.append(ranking_)
 
             # Get importance and rank them
             importances = _get_feature_importances(
@@ -361,12 +372,6 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             # Eliminate the worse features
             threshold = min(step, np.sum(support_) - n_features_to_select)
 
-            # Compute step score on the previous selection iteration
-            # because 'estimator' must use features
-            # that have not been eliminated yet
-            if step_score:
-                self.step_n_features_.append(len(features))
-                self.step_scores_.append(step_score(estimator, features))
             support_[features[ranks][:threshold]] = False
             ranking_[np.logical_not(support_)] += 1
 
@@ -375,10 +380,12 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         self.estimator_ = clone(self.estimator)
         self.estimator_.fit(X[:, features], y, **fit_params)
 
-        # Compute step score when only n_features_to_select features left
+        # Compute step values when only n_features_to_select features left
         if step_score:
             self.step_n_features_.append(len(features))
             self.step_scores_.append(step_score(self.estimator_, features))
+            self.step_support_.append(support_)
+            self.step_ranking_.append(ranking_)
         self.n_features_ = support_.sum()
         self.support_ = support_
         self.ranking_ = ranking_
@@ -679,6 +686,12 @@ class RFECV(RFE):
         n_features : ndarray of shape (n_subsets_of_features,)
             Number of features used at each step.
 
+        ranking(k) : ndarray of shape (n_subsets_of_features,)
+            The cross-validation ranking across (k)th fold.
+
+        support(k) : ndarray of shape (n_subsets_of_features,)
+            The cross-validation supports across (k)th fold.
+
             .. versionadded:: 1.5
 
     n_features_ : int
@@ -881,11 +894,11 @@ class RFECV(RFE):
             parallel = Parallel(n_jobs=self.n_jobs)
             func = delayed(_rfe_single_fit)
 
-        scores_features = parallel(
+        step_results = parallel(
             func(rfe, self.estimator, X, y, train, test, scorer, routed_params)
             for train, test in cv.split(X, y, **routed_params.splitter.split)
         )
-        scores, step_n_features = zip(*scores_features)
+        scores, supports, rankings, step_n_features = zip(*step_results)
 
         step_n_features_rev = np.array(step_n_features[0])[::-1]
         scores = np.array(scores)
@@ -914,10 +927,14 @@ class RFECV(RFE):
 
         # reverse to stay consistent with before
         scores_rev = scores[:, ::-1]
+        supports_rev = supports[:, ::-1]
+        rankings_rev = rankings[:, ::-1]
         self.cv_results_ = {
             "mean_test_score": np.mean(scores_rev, axis=0),
             "std_test_score": np.std(scores_rev, axis=0),
             **{f"split{i}_test_score": scores_rev[i] for i in range(scores.shape[0])},
+            **{f"ranking{i}": rankings_rev[i] for i in range(rankings.shape[0])},
+            **{f"support{i}": supports_rev[i] for i in range(supports.shape[0])},
             "n_features": step_n_features_rev,
         }
         return self
