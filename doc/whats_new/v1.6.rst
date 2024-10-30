@@ -26,7 +26,6 @@ Version 1.6
 
 .. towncrier release notes start
 
-
 .. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
