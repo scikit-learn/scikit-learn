@@ -531,10 +531,6 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             dict(solver="newton-cholesky"),
             dict(solver="lbfgs"),
         ],
-        "check_sample_weight_equivalence_on_sparse_data": [
-            dict(solver="newton-cholesky"),
-            dict(solver="lbfgs"),
-        ],
     },
     GaussianMixture: {"check_dict_unchanged": dict(max_iter=5, n_init=2)},
     GaussianRandomProjection: {"check_dict_unchanged": dict(n_components=1)},
@@ -556,10 +552,7 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             dict(solver="newton-cholesky"),
         ],
         "check_sample_weight_equivalence_on_sparse_data": [
-            dict(solver="lbfgs"),
             dict(solver="liblinear"),
-            dict(solver="newton-cg"),
-            dict(solver="newton-cholesky"),
         ],
     },
     MDS: {"check_dict_unchanged": dict(max_iter=5, n_components=1, n_init=2)},
@@ -591,20 +584,10 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             dict(solver="newton-cholesky"),
             dict(solver="lbfgs"),
         ],
-        "check_sample_weight_equivalence_on_sparse_data": [
-            dict(solver="newton-cholesky"),
-            dict(solver="lbfgs"),
-        ],
     },
     PolynomialCountSketch: {"check_dict_unchanged": dict(n_components=1)},
     QuantileRegressor: {
         "check_sample_weight_equivalence_on_dense_data": [
-            dict(quantile=0.5),
-            dict(quantile=0.75),
-            dict(solver="highs-ds"),
-            dict(solver="highs-ipm"),
-        ],
-        "check_sample_weight_equivalence_on_sparse_data": [
             dict(quantile=0.5),
             dict(quantile=0.75),
             dict(solver="highs-ds"),
@@ -623,7 +606,6 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
         "check_sample_weight_equivalence_on_sparse_data": [
             dict(solver="sparse_cg"),
             dict(solver="lsqr"),
-            dict(solver="lbfgs", positive=True),
         ],
     },
     RidgeClassifier: {
@@ -632,12 +614,10 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             dict(solver="cholesky"),
             dict(solver="sparse_cg"),
             dict(solver="lsqr"),
-            dict(solver="lbfgs", positive=True),
         ],
         "check_sample_weight_equivalence_on_sparse_data": [
             dict(solver="sparse_cg"),
             dict(solver="lsqr"),
-            dict(solver="lbfgs", positive=True),
         ],
     },
     SkewedChi2Sampler: {"check_dict_unchanged": dict(n_components=1)},
@@ -664,10 +644,6 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     TruncatedSVD: {"check_dict_unchanged": dict(n_components=1)},
     TweedieRegressor: {
         "check_sample_weight_equivalence_on_dense_data": [
-            dict(solver="newton-cholesky"),
-            dict(solver="lbfgs"),
-        ],
-        "check_sample_weight_equivalence_on_sparse_data": [
             dict(solver="newton-cholesky"),
             dict(solver="lbfgs"),
         ],
