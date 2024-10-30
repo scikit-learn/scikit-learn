@@ -3,6 +3,7 @@
 
 from ...utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
+    _despine,
     _validate_style_kwargs,
 )
 from .._ranking import auc, roc_curve
@@ -182,10 +183,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             self.chance_level_ = None
 
         if despine:
-            for s in ["top", "right"]:
-                self.ax_.spines[s].set_visible(False)
-            for s in ["bottom", "left"]:
-                self.ax_.spines[s].set_bounds(0, 1)
+            _despine(self.ax_)
 
         if "label" in line_kwargs or "label" in chance_level_kw:
             self.ax_.legend(loc="lower right")

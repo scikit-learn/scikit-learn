@@ -5,6 +5,7 @@ from collections import Counter
 
 from ...utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
+    _despine,
     _validate_style_kwargs,
 )
 from .._ranking import average_precision_score, precision_recall_curve
@@ -248,10 +249,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             self.chance_level_ = None
 
         if despine:
-            for s in ["top", "right"]:
-                self.ax_.spines[s].set_visible(False)
-            for s in ["bottom", "left"]:
-                self.ax_.spines[s].set_bounds(0, 1)
+            _despine(self.ax_)
 
         if "label" in line_kwargs or plot_chance_level:
             self.ax_.legend(loc="lower left")
