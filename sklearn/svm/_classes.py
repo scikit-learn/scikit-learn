@@ -351,7 +351,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # TODO: replace by a statistical test when _dual=True, see meta-issue #162298
+        # TODO: replace by a statistical test when _dual=True, see meta-issue #16298
         tags._xfail_checks = {
             "check_sample_weight_equivalence": (
                 "sample_weight is not equivalent to removing/repeating samples."
@@ -615,7 +615,7 @@ class LinearSVR(RegressorMixin, LinearModel):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # TODO: replace by a statistical test, see meta-issue #162298
+        # TODO: replace by a statistical test, see meta-issue #16298
         tags._xfail_checks = {
             "check_sample_weight_equivalence": (
                 "sample_weight is not equivalent to removing/repeating samples."
@@ -739,7 +739,9 @@ class SVC(BaseSVC):
         :term:`predict` will break ties according to the confidence values of
         :term:`decision_function`; otherwise the first class among the tied
         classes is returned. Please note that breaking ties comes at a
-        relatively high computational cost compared to a simple predict.
+        relatively high computational cost compared to a simple predict. See
+        :ref:`sphx_glr_auto_examples_svm_plot_svm_tie_breaking.py` for an
+        example of its usage with ``decision_function_shape='ovr'``.
 
         .. versionadded:: 0.22
 
@@ -853,6 +855,9 @@ class SVC(BaseSVC):
 
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
+
+    For a comaprison of the SVC with other classifiers see:
+    :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`.
     """
 
     _impl = "c_svc"
@@ -900,7 +905,7 @@ class SVC(BaseSVC):
         tags._xfail_checks = {
             # TODO: fix sample_weight handling of this estimator when probability=False
             # TODO: replace by a statistical test when probability=True
-            # see meta-issue #162298
+            # see meta-issue #16298
             "check_sample_weight_equivalence": (
                 "sample_weight is not equivalent to removing/repeating samples."
             ),
@@ -1006,6 +1011,8 @@ class NuSVC(BaseSVC):
         :term:`decision_function`; otherwise the first class among the tied
         classes is returned. Please note that breaking ties comes at a
         relatively high computational cost compared to a simple predict.
+        See :ref:`sphx_glr_auto_examples_svm_plot_svm_tie_breaking.py` for an
+        example of its usage with ``decision_function_shape='ovr'``.
 
         .. versionadded:: 0.22
 
@@ -1177,7 +1184,7 @@ class NuSVC(BaseSVC):
             "check_class_weight_classifiers": "class_weight is ignored.",
             # TODO: fix sample_weight handling of this estimator when probability=False
             # TODO: replace by a statistical test when probability=True
-            # see meta-issue #162298
+            # see meta-issue #16298
             "check_sample_weight_equivalence": (
                 "sample_weight is not equivalent to removing/repeating samples."
             ),
@@ -1381,7 +1388,7 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # TODO: fix sample_weight handling of this estimator, see meta-issue #162298
+        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
         tags._xfail_checks = {
             "check_sample_weight_equivalence": (
                 "sample_weight is not equivalent to removing/repeating samples."
@@ -1576,7 +1583,7 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # TODO: fix sample_weight handling of this estimator, see meta-issue #162298
+        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
         tags._xfail_checks = {
             "check_sample_weight_equivalence": (
                 "sample_weight is not equivalent to removing/repeating samples."
@@ -1716,6 +1723,9 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     array([-1,  1,  1,  1, -1])
     >>> clf.score_samples(X)
     array([1.7798..., 2.0547..., 2.0556..., 2.0561..., 1.7332...])
+
+    For a more extended example,
+    see :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`
     """
 
     _impl = "one_class"
@@ -1840,7 +1850,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        # TODO: fix sample_weight handling of this estimator, see meta-issue #162298
+        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
         tags._xfail_checks = {
             "check_sample_weight_equivalence": (
                 "sample_weight is not equivalent to removing/repeating samples."

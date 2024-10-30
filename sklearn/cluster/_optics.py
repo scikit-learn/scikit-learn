@@ -100,7 +100,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
         metrics.
 
         .. note::
-           `'kulsinski'` is deprecated from SciPy 1.9 and will removed in SciPy 1.11.
+           `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
 
     p : float, default=2
         Parameter for the Minkowski metric from

@@ -152,10 +152,16 @@ def _check_targets(y_true, y_pred):
         "y_pred": ["array-like", "sparse matrix"],
         "normalize": ["boolean"],
         "sample_weight": ["array-like", None],
+        "zero_division": [
+            Options(Real, {0.0, 1.0, np.nan}),
+            StrOptions({"warn"}),
+        ],
     },
     prefer_skip_nested_validation=True,
 )
-def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
+def accuracy_score(
+    y_true, y_pred, *, normalize=True, sample_weight=None, zero_division="warn"
+):
     """Accuracy classification score.
 
     In multilabel classification, this function computes subset accuracy:
@@ -178,6 +184,13 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
+
+    zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
+        Sets the value to return when there is a zero division,
+        e.g. when `y_true` and `y_pred` are empty.
+        If set to "warn", returns 0.0 input, but a warning is also raised.
+
+        versionadded:: 1.6
 
     Returns
     -------
@@ -220,6 +233,16 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
+
+    if _num_samples(y_true) == 0:
+        if zero_division == "warn":
+            msg = (
+                "accuracy() is ill-defined and set to 0.0. Use the `zero_division` "
+                "param to control this behavior."
+            )
+            warnings.warn(msg, UndefinedMetricWarning)
+        return _check_zero_division(zero_division)
+
     if y_type.startswith("multilabel"):
         if _is_numpy_namespace(xp):
             differing_labels = count_nonzero(y_true - y_pred, axis=1)
@@ -992,10 +1015,15 @@ def jaccard_score(
         "y_true": ["array-like"],
         "y_pred": ["array-like"],
         "sample_weight": ["array-like", None],
+        "zero_division": [
+            Options(Real, {0.0, 1.0}),
+            "nan",
+            StrOptions({"warn"}),
+        ],
     },
     prefer_skip_nested_validation=True,
 )
-def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
+def matthews_corrcoef(y_true, y_pred, *, sample_weight=None, zero_division="warn"):
     """Compute the Matthews correlation coefficient (MCC).
 
     The Matthews correlation coefficient is used in machine learning as a
@@ -1025,6 +1053,13 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
         Sample weights.
 
         .. versionadded:: 0.18
+
+    zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
+        Sets the value to return when there is a zero division, i.e. when all
+        predictions and labels are negative. If set to "warn", this acts like 0,
+        but a warning is also raised.
+
+        .. versionadded:: 1.6
 
     Returns
     -------
@@ -1079,7 +1114,13 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     cov_ytyt = n_samples**2 - np.dot(t_sum, t_sum)
 
     if cov_ypyp * cov_ytyt == 0:
-        return 0.0
+        if zero_division == "warn":
+            msg = (
+                "Matthews correlation coefficient is ill-defined and being set to 0.0. "
+                "Use `zero_division` to control this behaviour."
+            )
+            warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
+        return _check_zero_division(zero_division)
     else:
         return cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
 
@@ -1487,6 +1528,7 @@ def fbeta_score(
         predictions and labels are negative.
 
         Notes:
+
         - If set to "warn", this acts like 0, but a warning is also raised.
         - If set to `np.nan`, such values will be excluded from the average.
 
@@ -1776,11 +1818,13 @@ def precision_recall_fscore_support(
 
     zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
         Sets the value to return when there is a zero division:
-           - recall: when there are no positive labels
-           - precision: when there are no positive predictions
-           - f-score: both
+
+        - recall: when there are no positive labels
+        - precision: when there are no positive predictions
+        - f-score: both
 
         Notes:
+
         - If set to "warn", this acts like 0, but a warning is also raised.
         - If set to `np.nan`, such values will be excluded from the average.
 
@@ -2205,6 +2249,7 @@ def precision_score(
         Sets the value to return when there is a zero division.
 
         Notes:
+
         - If set to "warn", this acts like 0, but a warning is also raised.
         - If set to `np.nan`, such values will be excluded from the average.
 
@@ -2384,6 +2429,7 @@ def recall_score(
         Sets the value to return when there is a zero division.
 
         Notes:
+
         - If set to "warn", this acts like 0, but a warning is also raised.
         - If set to `np.nan`, such values will be excluded from the average.
 

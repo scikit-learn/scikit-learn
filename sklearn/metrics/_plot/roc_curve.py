@@ -1,7 +1,10 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
+from ...utils._plotting import (
+    _BinaryClassifierCurveDisplayMixin,
+    _validate_style_kwargs,
+)
 from .._ranking import auc, roc_curve
 
 
@@ -135,24 +138,28 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         """
         self.ax_, self.figure_, name = self._validate_plot_params(ax=ax, name=name)
 
-        line_kwargs = {}
+        default_line_kwargs = {}
         if self.roc_auc is not None and name is not None:
-            line_kwargs["label"] = f"{name} (AUC = {self.roc_auc:0.2f})"
+            default_line_kwargs["label"] = f"{name} (AUC = {self.roc_auc:0.2f})"
         elif self.roc_auc is not None:
-            line_kwargs["label"] = f"AUC = {self.roc_auc:0.2f}"
+            default_line_kwargs["label"] = f"AUC = {self.roc_auc:0.2f}"
         elif name is not None:
-            line_kwargs["label"] = name
+            default_line_kwargs["label"] = name
 
-        line_kwargs.update(**kwargs)
+        line_kwargs = _validate_style_kwargs(default_line_kwargs, kwargs)
 
-        chance_level_line_kw = {
+        default_chance_level_line_kw = {
             "label": "Chance level (AUC = 0.5)",
             "color": "k",
             "linestyle": "--",
         }
 
-        if chance_level_kw is not None:
-            chance_level_line_kw.update(**chance_level_kw)
+        if chance_level_kw is None:
+            chance_level_kw = {}
+
+        chance_level_kw = _validate_style_kwargs(
+            default_chance_level_line_kw, chance_level_kw
+        )
 
         (self.line_,) = self.ax_.plot(self.fpr, self.tpr, **line_kwargs)
         info_pos_label = (
@@ -170,9 +177,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         )
 
         if plot_chance_level:
-            (self.chance_level_,) = self.ax_.plot(
-                (0, 1), (0, 1), **chance_level_line_kw
-            )
+            (self.chance_level_,) = self.ax_.plot((0, 1), (0, 1), **chance_level_kw)
         else:
             self.chance_level_ = None
 
@@ -182,7 +187,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             for s in ["bottom", "left"]:
                 self.ax_.spines[s].set_bounds(0, 1)
 
-        if "label" in line_kwargs or plot_chance_level:
+        if "label" in line_kwargs or "label" in chance_level_kw:
             self.ax_.legend(loc="lower right")
 
         return self

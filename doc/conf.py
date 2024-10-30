@@ -179,6 +179,7 @@ exclude_patterns = [
     "templates",
     "includes",
     "**/sg_execution_times.rst",
+    "whats_new/upcoming_changes",
 ]
 
 # The reST default role (used for this markup: `text`) to use for all
@@ -291,10 +292,7 @@ html_theme_options = {
         ],
     },
     "show_version_warning_banner": True,
-    "announcement": (
-        '<a href="https://forms.gle/zUXvWjGUN1nWhJ2V6">Help us make '
-        "<code>scikit-learn</code> better! The 2024 user survey is now live.</a>"
-    ),
+    "announcement": None,
 }
 
 # Add any paths that contain custom themes here, relative to this directory.
@@ -478,6 +476,22 @@ redirects = {
     "auto_examples/linear_model/plot_lasso_coordinate_descent_path": (
         "auto_examples/linear_model/plot_lasso_lasso_lars_elasticnet_path"
     ),
+    "auto_examples/cluster/plot_color_quantization": (
+        "auto_examples/cluster/plot_face_compress"
+    ),
+    "auto_examples/cluster/plot_cluster_iris": (
+        "auto_examples/cluster/plot_kmeans_assumptions"
+    ),
+    "auto_examples/ensemble/plot_forest_importances_faces": (
+        "auto_examples/ensemble/plot_forest_importances"
+    ),
+    "auto_examples/datasets/plot_iris_dataset": (
+        "auto_examples/decomposition/plot_pca_iris"
+    ),
+    "auto_examples/linear_model/plot_iris_logistic": (
+        "auto_examples/linear_model/plot_logistic_multinomial"
+    ),
+    "auto_examples/linear_model/plot_ols_3d": ("auto_examples/linear_model/plot_ols"),
 }
 html_context["redirects"] = redirects
 for old_link in redirects:
