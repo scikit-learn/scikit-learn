@@ -74,6 +74,7 @@ from sklearn.feature_selection import (
     SelectKBest,
     SequentialFeatureSelector,
 )
+from sklearn.frozen import FrozenEstimator
 from sklearn.kernel_approximation import (
     Nystroem,
     PolynomialCountSketch,
@@ -641,7 +642,7 @@ def _tested_estimators(type_filter=None):
             continue
 
 
-SKIPPED_ESTIMATORS = [SparseCoder]
+SKIPPED_ESTIMATORS = [SparseCoder, FrozenEstimator]
 
 
 def _construct_instances(Estimator):
