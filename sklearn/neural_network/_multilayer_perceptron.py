@@ -1377,6 +1377,13 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.classifier_tags.multi_label = True
+        tags._xfail_checks = {
+            "check_sample_weight_equivalence": (
+                "Due to batch training of neural networks, sample_weight "
+                "is not equivalent to removing/repeating samples."
+                "Seperate unit tests are added for MLPClassifier and MLPRegressor"
+            ),
+        }
         return tags
 
 
