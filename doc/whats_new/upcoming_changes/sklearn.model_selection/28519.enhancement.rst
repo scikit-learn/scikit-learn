@@ -1,0 +1,3 @@
+- :class:`~model_selection.GroupKFold` now has the ability to shuffle groups into
+  different folds when `shuffle=True`.
+  By :user:`Zachary Vealey <zvealey>`
