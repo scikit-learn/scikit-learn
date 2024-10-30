@@ -347,7 +347,7 @@ The next steps now describe the process of modifying code and submitting a PR:
     instructions to create a pull request from your fork. This will send an
     email to the committers. You may want to consider sending an message to
     the `discord <https://discord.com/invite/h9qyrK8Jc8>`_ in the development
-    chanel for more visibility (instant replies are not guaranteed).
+    channel for more visibility (instant replies are not guaranteed).
 
 It is often helpful to keep your local feature branch synchronized with the
 latest changes of the main scikit-learn repository:
