@@ -152,16 +152,16 @@ class BisectingKMeans(_BaseKMeans):
             default="biggest_inertia"
         Defines how bisection should be performed:
 
-         - "biggest_inertia" means that BisectingKMeans will always check
-            all calculated cluster for cluster with biggest SSE
-            (Sum of squared errors) and bisect it. This approach concentrates on
-            precision, but may be costly in terms of execution time (especially for
-            larger amount of data points).
+        - "biggest_inertia" means that BisectingKMeans will always check
+          all calculated cluster for cluster with biggest SSE
+          (Sum of squared errors) and bisect it. This approach concentrates on
+          precision, but may be costly in terms of execution time (especially for
+          larger amount of data points).
 
-         - "largest_cluster" - BisectingKMeans will always split cluster with
-            largest amount of points assigned to it from all clusters
-            previously calculated. That should work faster than picking by SSE
-            ('biggest_inertia') and may produce similar results in most cases.
+        - "largest_cluster" - BisectingKMeans will always split cluster with
+          largest amount of points assigned to it from all clusters
+          previously calculated. That should work faster than picking by SSE
+          ('biggest_inertia') and may produce similar results in most cases.
 
     Attributes
     ----------
@@ -209,6 +209,9 @@ class BisectingKMeans(_BaseKMeans):
     array([[ 2., 1.],
            [10., 9.],
            [10., 1.]])
+
+    For a comparison between BisectingKMeans and K-Means refer to example
+    :ref:`sphx_glr_auto_examples_cluster_plot_bisect_kmeans.py`.
     """
 
     _parameter_constraints: dict = {

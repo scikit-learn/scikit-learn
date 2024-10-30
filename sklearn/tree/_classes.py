@@ -15,6 +15,8 @@ from numbers import Integral, Real
 import numpy as np
 from scipy.sparse import issparse
 
+from sklearn.utils import metadata_routing
+
 from ..base import (
     BaseEstimator,
     ClassifierMixin,
@@ -92,6 +94,10 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     Warning: This class should not be used directly.
     Use derived classes instead.
     """
+
+    # "check_input" is used for optimisation and isn't something to be passed
+    # around in a pipeline.
+    __metadata_request__predict = {"check_input": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         "splitter": [StrOptions({"best", "random"})],
@@ -746,17 +752,19 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     max_features : int, float or {"sqrt", "log2"}, default=None
         The number of features to consider when looking for the best split:
 
-            - If int, then consider `max_features` features at each split.
-            - If float, then `max_features` is a fraction and
-              `max(1, int(max_features * n_features_in_))` features are considered at
-              each split.
-            - If "sqrt", then `max_features=sqrt(n_features)`.
-            - If "log2", then `max_features=log2(n_features)`.
-            - If None, then `max_features=n_features`.
+        - If int, then consider `max_features` features at each split.
+        - If float, then `max_features` is a fraction and
+          `max(1, int(max_features * n_features_in_))` features are considered at
+          each split.
+        - If "sqrt", then `max_features=sqrt(n_features)`.
+        - If "log2", then `max_features=log2(n_features)`.
+        - If None, then `max_features=n_features`.
 
-        Note: the search for a split does not stop until at least one
-        valid partition of the node samples is found, even if it requires to
-        effectively inspect more than ``max_features`` features.
+        .. note::
+
+            The search for a split does not stop until at least one
+            valid partition of the node samples is found, even if it requires to
+            effectively inspect more than ``max_features`` features.
 
     random_state : int, RandomState instance or None, default=None
         Controls the randomness of the estimator. The features are always
@@ -818,7 +826,9 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
-        :ref:`minimal_cost_complexity_pruning` for details.
+        :ref:`minimal_cost_complexity_pruning` for details. See
+        :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
+        for an example of such pruning.
 
         .. versionadded:: 0.22
 
@@ -930,6 +940,11 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     array([ 1.     ,  0.93...,  0.86...,  0.93...,  0.93...,
             0.93...,  0.93...,  1.     ,  0.93...,  1.      ])
     """
+
+    # "check_input" is used for optimisation and isn't something to be passed
+    # around in a pipeline.
+    __metadata_request__predict_proba = {"check_input": metadata_routing.UNUSED}
+    __metadata_request__fit = {"check_input": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         **BaseDecisionTree._parameter_constraints,
@@ -1122,6 +1137,9 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
 
+        For an example of how ``max_depth`` influences the model, see
+        :ref:`sphx_glr_auto_examples_tree_plot_tree_regression.py`.
+
     min_samples_split : int or float, default=2
         The minimum number of samples required to split an internal node:
 
@@ -1207,7 +1225,9 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
-        :ref:`minimal_cost_complexity_pruning` for details.
+        :ref:`minimal_cost_complexity_pruning` for details. See
+        :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
+        for an example of such pruning.
 
         .. versionadded:: 0.22
 
@@ -1302,6 +1322,10 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     array([-0.39..., -0.46...,  0.02...,  0.06..., -0.50...,
            0.16...,  0.11..., -0.73..., -0.30..., -0.00...])
     """
+
+    # "check_input" is used for optimisation and isn't something to be passed
+    # around in a pipeline.
+    __metadata_request__fit = {"check_input": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         **BaseDecisionTree._parameter_constraints,
@@ -1553,7 +1577,9 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
-        :ref:`minimal_cost_complexity_pruning` for details.
+        :ref:`minimal_cost_complexity_pruning` for details. See
+        :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
+        for an example of such pruning.
 
         .. versionadded:: 0.22
 
@@ -1831,7 +1857,9 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
-        :ref:`minimal_cost_complexity_pruning` for details.
+        :ref:`minimal_cost_complexity_pruning` for details. See
+        :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
+        for an example of such pruning.
 
         .. versionadded:: 0.22
 

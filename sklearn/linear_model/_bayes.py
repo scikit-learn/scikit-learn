@@ -66,13 +66,13 @@ class BayesianRidge(RegressorMixin, LinearModel):
         Initial value for alpha (precision of the noise).
         If not set, alpha_init is 1/Var(y).
 
-            .. versionadded:: 0.22
+        .. versionadded:: 0.22
 
     lambda_init : float, default=None
         Initial value for lambda (precision of the weights).
         If not set, lambda_init is 1.
 
-            .. versionadded:: 0.22
+        .. versionadded:: 0.22
 
     compute_score : bool, default=False
         If True, compute the log marginal likelihood at each iteration of the
@@ -429,6 +429,16 @@ class BayesianRidge(RegressorMixin, LinearModel):
         )
 
         return score
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
+        tags._xfail_checks = {
+            "check_sample_weight_equivalence": (
+                "sample_weight is not equivalent to removing/repeating samples."
+            ),
+        }
+        return tags
 
 
 ###############################################################################

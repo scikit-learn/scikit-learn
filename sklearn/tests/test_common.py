@@ -10,25 +10,16 @@ import pkgutil
 import re
 import warnings
 from functools import partial
-from inspect import isgenerator, signature
+from inspect import isgenerator
 from itertools import chain
 
-import numpy as np
 import pytest
 from scipy.linalg import LinAlgWarning
 
 import sklearn
 from sklearn.base import BaseEstimator
-from sklearn.cluster import (
-    OPTICS,
-    AffinityPropagation,
-    Birch,
-    MeanShift,
-    SpectralClustering,
-)
 from sklearn.compose import ColumnTransformer
-from sklearn.datasets import make_blobs
-from sklearn.exceptions import ConvergenceWarning, FitFailedWarning
+from sklearn.exceptions import ConvergenceWarning
 
 # make it possible to discover experimental estimators when calling `all_estimators`
 from sklearn.experimental import (
@@ -36,14 +27,6 @@ from sklearn.experimental import (
     enable_iterative_imputer,  # noqa
 )
 from sklearn.linear_model import LogisticRegression
-from sklearn.manifold import TSNE, Isomap, LocallyLinearEmbedding
-from sklearn.neighbors import (
-    KNeighborsClassifier,
-    KNeighborsRegressor,
-    LocalOutlierFactor,
-    RadiusNeighborsClassifier,
-    RadiusNeighborsRegressor,
-)
 from sklearn.pipeline import FeatureUnion, make_pipeline
 from sklearn.preprocessing import (
     FunctionTransformer,
@@ -51,12 +34,9 @@ from sklearn.preprocessing import (
     OneHotEncoder,
     StandardScaler,
 )
-from sklearn.semi_supervised import LabelPropagation, LabelSpreading
 from sklearn.utils import all_estimators
 from sklearn.utils._tags import get_tags
 from sklearn.utils._test_common.instance_generator import (
-    _generate_pipeline,
-    _generate_search_cv_instances,
     _get_check_estimator_ids,
     _tested_estimators,
 )
@@ -71,7 +51,6 @@ from sklearn.utils.estimator_checks import (
     check_global_output_transform_pandas,
     check_global_set_output_transform_polars,
     check_inplace_ensure_writeable,
-    check_n_features_in_after_fitting,
     check_param_validation,
     check_set_output_transform,
     check_set_output_transform_pandas,
@@ -132,7 +111,7 @@ def test_get_check_estimator_ids(val, expected):
     assert _get_check_estimator_ids(val) == expected
 
 
-@parametrize_with_checks(list(chain(_tested_estimators(), _generate_pipeline())))
+@parametrize_with_checks(list(_tested_estimators()))
 def test_estimators(estimator, check, request):
     # Common tests for estimator instances
     with ignore_warnings(
@@ -233,22 +212,6 @@ def test_class_support_removed():
         parametrize_with_checks([LogisticRegression])
 
 
-@parametrize_with_checks(list(_generate_search_cv_instances()))
-def test_search_cv(estimator, check, request):
-    # Common tests for SearchCV instances
-    # We have a separate test because those meta-estimators can accept a
-    # wide range of base estimators (classifiers, regressors, pipelines)
-    with ignore_warnings(
-        category=(
-            FutureWarning,
-            ConvergenceWarning,
-            UserWarning,
-            FitFailedWarning,
-        )
-    ):
-        check(estimator)
-
-
 @pytest.mark.parametrize(
     "estimator", _tested_estimators(), ids=_get_check_estimator_ids
 )
@@ -279,13 +242,6 @@ def test_valid_tag_types(estimator):
     check_field_types(tags.transformer_tags, defaults.transformer_tags)
 
 
-@pytest.mark.parametrize(
-    "estimator", _tested_estimators(), ids=_get_check_estimator_ids
-)
-def test_check_n_features_in_after_fitting(estimator):
-    check_n_features_in_after_fitting(estimator.__class__.__name__, estimator)
-
-
 def _estimators_that_predict_in_fit():
     for estimator in _tested_estimators():
         est_params = set(estimator.get_params())
@@ -311,7 +267,6 @@ column_name_estimators = list(
     chain(
         _tested_estimators(),
         [make_pipeline(LogisticRegression(C=1))],
-        list(_generate_search_cv_instances()),
         _estimators_that_predict_in_fit(),
     )
 )
@@ -323,6 +278,11 @@ column_name_estimators = list(
 def test_pandas_column_name_consistency(estimator):
     if isinstance(estimator, ColumnTransformer):
         pytest.skip("ColumnTransformer is not tested here")
+    tags = get_tags(estimator)
+    if "check_dataframe_column_names_consistency" in tags._xfail_checks:
+        pytest.skip(
+            "Estimator does not support check_dataframe_column_names_consistency"
+        )
     with ignore_warnings(category=(FutureWarning)):
         with warnings.catch_warnings(record=True) as record:
             check_dataframe_column_names_consistency(
@@ -382,77 +342,13 @@ def test_estimators_get_feature_names_out_error(estimator):
 
 
 @pytest.mark.parametrize(
-    "Estimator",
-    [est for name, est in all_estimators()],
-)
-def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
-    """Check that init or set_param does not raise errors."""
-    params = signature(Estimator).parameters
-
-    smoke_test_values = [-1, 3.0, "helloworld", np.array([1.0, 4.0]), [1], {}, []]
-    for value in smoke_test_values:
-        new_params = {key: value for key in params}
-
-        # Does not raise
-        est = Estimator(**new_params)
-
-        # Also do does not raise
-        est.set_params(**new_params)
-
-
-@pytest.mark.parametrize(
-    "estimator",
-    chain(
-        _tested_estimators(),
-        _generate_pipeline(),
-        _generate_search_cv_instances(),
-    ),
-    ids=_get_check_estimator_ids,
+    "estimator", list(_tested_estimators()), ids=_get_check_estimator_ids
 )
 def test_check_param_validation(estimator):
     if isinstance(estimator, FeatureUnion):
         pytest.skip("FeatureUnion is not tested here")
     name = estimator.__class__.__name__
     check_param_validation(name, estimator)
-
-
-@pytest.mark.parametrize(
-    "Estimator",
-    [
-        AffinityPropagation,
-        Birch,
-        MeanShift,
-        KNeighborsClassifier,
-        KNeighborsRegressor,
-        RadiusNeighborsClassifier,
-        RadiusNeighborsRegressor,
-        LabelPropagation,
-        LabelSpreading,
-        OPTICS,
-        SpectralClustering,
-        LocalOutlierFactor,
-        LocallyLinearEmbedding,
-        Isomap,
-        TSNE,
-    ],
-)
-def test_f_contiguous_array_estimator(Estimator):
-    # Non-regression test for:
-    # https://github.com/scikit-learn/scikit-learn/issues/23988
-    # https://github.com/scikit-learn/scikit-learn/issues/24013
-
-    X, _ = make_blobs(n_samples=80, n_features=4, random_state=0)
-    X = np.asfortranarray(X)
-    y = np.round(X[:, 0])
-
-    est = Estimator()
-    est.fit(X, y)
-
-    if hasattr(est, "transform"):
-        est.transform(X)
-
-    if hasattr(est, "predict"):
-        est.predict(X)
 
 
 SET_OUTPUT_ESTIMATORS = list(

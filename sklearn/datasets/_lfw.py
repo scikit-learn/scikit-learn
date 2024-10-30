@@ -515,7 +515,7 @@ def fetch_lfw_pairs(
     "Restricted" task.  As I am not sure as to implement the
     "Unrestricted" variant correctly, I left it as unsupported for now.
 
-      .. _`README.txt`: http://vis-www.cs.umass.edu/lfw/README.txt
+    .. _`README.txt`: http://vis-www.cs.umass.edu/lfw/README.txt
 
     The original images are 250 x 250 pixels, but the default slice and resize
     arguments reduce them to 62 x 47.

@@ -19,11 +19,20 @@ and pipelines on 2D data.
    load_sample_images
    load_sample_image
 
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_color_quantization_001.png
-   :target: ../auto_examples/cluster/plot_color_quantization.html
+.. plot::
+   :context: close-figs
    :scale: 30
    :align: right
+   :include-source: False
 
+    import matplotlib.pyplot as plt
+    from sklearn.datasets import load_sample_image
+
+    china = load_sample_image("china.jpg")
+    plt.imshow(china)
+    plt.axis('off')
+    plt.tight_layout()
+    plt.show()
 
 .. warning::
 
@@ -32,10 +41,6 @@ and pipelines on 2D data.
   input is converted to a floating point representation first. Also,
   if you plan to use ``matplotlib.pyplpt.imshow``, don't forget to scale to the range
   0 - 1 as done in the following example.
-
-.. rubric:: Examples
-
-* :ref:`sphx_glr_auto_examples_cluster_plot_color_quantization.py`
 
 .. _libsvm_loader:
 

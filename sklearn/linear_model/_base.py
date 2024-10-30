@@ -350,7 +350,11 @@ class LinearClassifierMixin(ClassifierMixin):
 
         X = validate_data(self, X, accept_sparse="csr", reset=False)
         scores = safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
-        return xp.reshape(scores, (-1,)) if scores.shape[1] == 1 else scores
+        return (
+            xp.reshape(scores, (-1,))
+            if (scores.ndim > 1 and scores.shape[1] == 1)
+            else scores
+        )
 
     def predict(self, X):
         """
@@ -673,7 +677,9 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                 )
                 self.coef_ = np.vstack([out[0] for out in outs])
         else:
-            self.coef_, _, self.rank_, self.singular_ = linalg.lstsq(X, y)
+            # cut-off ratio for small singular values
+            cond = max(X.shape) * np.finfo(X.dtype).eps
+            self.coef_, _, self.rank_, self.singular_ = linalg.lstsq(X, y, cond=cond)
             self.coef_ = self.coef_.T
 
         if y.ndim == 1:
