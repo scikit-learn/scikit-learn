@@ -429,7 +429,9 @@ def _maybe_mark(
     mark : "xfail" or "skip" or None
         Whether to mark the check as xfail or skip.
     pytest : pytest object, default=None
-        Pytest module to use to mark the check.
+        Pytest module to use to mark the check. This is only needed if ``mark`` is
+        `"xfail"`. Note that one can run `check_estimator` without having `pytest`
+        installed. This is used in combination with `parametrize_with_checks` only.
     """
     should_be_marked, reason = _should_be_skipped_or_marked(
         estimator, check, expected_failed_checks

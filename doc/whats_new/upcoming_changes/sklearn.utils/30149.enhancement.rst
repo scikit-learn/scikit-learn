@@ -16,14 +16,15 @@
     :func:`~utils.estimator_checks.check_estimator`. Use
     :func:`~utils.estimator_checks.checks_generator` instead.
 
-  - Replacing the ``_xfail_checks`` estimator tag,
-    :func:`~utils.estimator_checks.check_estimator` and
-    :func:`~utils.estimator_checks.parametrize_with_checks` now accept a parameter
-    ``expected_failed_checks``, which is respectively a dictionary, or a callable
-    returning a dictionary of the form::
+  - The ``_xfail_checks`` estimator tag is now removed, and now in order to indicate
+    which tests are expected to fail, you can pass a dictionary to the
+    :func:`~utils.estimator_checks.check_estimator` as the ``expected_failed_checks``
+    parameter. Similarly, the ``expected_failed_checks`` parameter in
+    :func:`~utils.estimator_checks.parametrize_with_checks` can be used, which is a
+    callable returning a dictionary of the form::
 
         {
-            "check_name": "my reason",
+            "check_name": "reason to mark this check as xfail",
         }
 
   - :func:`~utils.estimator_checks.check_estimator` now accepts an ``on_fail``

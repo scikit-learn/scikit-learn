@@ -1094,7 +1094,7 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
 
 
 def _get_expected_failed_checks(estimator):
-    """Get the expected failed checks for an estimator."""
+    """Get the expected failed checks for all estimators in scikit-learn."""
     failed_checks = PER_ESTIMATOR_XFAIL_CHECKS.get(type(estimator), {})
 
     tags = get_tags(estimator)
