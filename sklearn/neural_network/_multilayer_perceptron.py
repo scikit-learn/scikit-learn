@@ -856,16 +856,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
     def _validate_input(self, X, y, incremental, reset, sample_weight):
         raise NotImplementedError("Subclass must implement _validate_input().")
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples \
-                        for neural networks"
-                ),
-            },
-        }
-
 
 class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     """Multi-layer Perceptron classifier.
@@ -1378,6 +1368,10 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         tags = super().__sklearn_tags__()
         tags.classifier_tags.multi_label = True
         tags._xfail_checks = {
+            "check_sample_weights_invariance": (
+                "zero sample_weight is not equivalent to removing samples \
+                    for neural networks"
+            ),
             "check_sample_weight_equivalence": (
                 "Due to batch training of neural networks, sample_weight "
                 "is not equivalent to removing/repeating samples."
