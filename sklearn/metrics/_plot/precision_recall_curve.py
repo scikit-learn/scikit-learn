@@ -5,6 +5,7 @@ from collections import Counter
 
 from ...utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
+    _despine,
     _validate_style_kwargs,
 )
 from .._ranking import average_precision_score, precision_recall_curve
@@ -131,6 +132,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         name=None,
         plot_chance_level=False,
         chance_level_kw=None,
+        despine=False,
         **kwargs,
     ):
         """Plot visualization.
@@ -159,6 +161,11 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             the chance level line.
 
             .. versionadded:: 1.3
+
+        despine : bool, default=False
+            Whether to remove the top and right spines from the plot.
+
+            .. versionadded:: 1.6
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
@@ -241,6 +248,9 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         else:
             self.chance_level_ = None
 
+        if despine:
+            _despine(self.ax_)
+
         if "label" in line_kwargs or plot_chance_level:
             self.ax_.legend(loc="lower left")
 
@@ -261,6 +271,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         ax=None,
         plot_chance_level=False,
         chance_level_kw=None,
+        despine=False,
         **kwargs,
     ):
         """Plot precision-recall curve given an estimator and some data.
@@ -317,6 +328,11 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             the chance level line.
 
             .. versionadded:: 1.3
+
+        despine : bool, default=False
+            Whether to remove the top and right spines from the plot.
+
+            .. versionadded:: 1.6
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
@@ -378,6 +394,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             ax=ax,
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kw,
+            despine=despine,
             **kwargs,
         )
 
@@ -394,6 +411,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         ax=None,
         plot_chance_level=False,
         chance_level_kw=None,
+        despine=False,
         **kwargs,
     ):
         """Plot precision-recall curve given binary class predictions.
@@ -439,6 +457,11 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             the chance level line.
 
             .. versionadded:: 1.3
+
+        despine : bool, default=False
+            Whether to remove the top and right spines from the plot.
+
+            .. versionadded:: 1.6
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
@@ -514,5 +537,6 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             name=name,
             plot_chance_level=plot_chance_level,
             chance_level_kw=chance_level_kw,
+            despine=despine,
             **kwargs,
         )
