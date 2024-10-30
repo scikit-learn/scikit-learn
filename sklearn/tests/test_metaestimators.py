@@ -253,15 +253,14 @@ def _generate_meta_estimator_instances_with_pipeline():
     for _, Estimator in sorted(all_estimators()):
         sig = set(signature(Estimator).parameters)
 
-        if (
-            not {
+        if not sig.intersection(
+            {
                 "estimator",
                 "base_estimator",
                 "regressor",
                 "transformer_list",
                 "estimators",
             }
-            & sig
         ):
             continue
 
