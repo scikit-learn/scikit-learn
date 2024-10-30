@@ -208,8 +208,9 @@ def _get_instance_with_pipeline(meta_estimator, init_params):
             estimator = make_pipeline(TfidfVectorizer(), LogisticRegression())
             param_grid = {"logisticregression__C": [0.1, 1.0]}
 
-        if {"param_grid", "param_distributions"} & init_params:
-            # SearchCV estimators
+        if init_params.intersection(
+            {"param_grid", "param_distributions"}
+        ):  # SearchCV estimators
             extra_params = {"n_iter": 2} if "n_iter" in init_params else {}
             return type(meta_estimator)(estimator, param_grid, **extra_params)
         else:
