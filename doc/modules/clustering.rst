@@ -142,8 +142,8 @@ unseen data.
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_cluster_plot_inductive_clustering.py`: A practical
-  example of inductive clustering model.
+* :ref:`sphx_glr_auto_examples_cluster_plot_inductive_clustering.py`: An example
+  of an inductive clustering model for handling new data.
 
 .. _k_means:
 
