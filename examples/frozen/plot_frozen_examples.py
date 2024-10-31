@@ -91,8 +91,8 @@ calibrated_classifier = CalibratedClassifierCV(
 
 prob_pos_clf = classifier.predict_proba(X_test)[:, 1]
 clf_score = brier_score_loss(y_test, prob_pos_clf)
-print("No calibration: %1.3f" % clf_score)
+print(f"No calibration: {clf_score:.3f}")
 
 prob_pos_calibrated = calibrated_classifier.predict_proba(X_test)[:, 1]
 calibrated_score = brier_score_loss(y_test, prob_pos_calibrated)
-print("With calibration: %1.3f" % calibrated_score)
+print(f"With calibration: {calibrated_score:.3f}")
