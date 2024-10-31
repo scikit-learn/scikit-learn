@@ -484,8 +484,8 @@ class Birch(
     >>> brc.predict(X)
     array([0, 0, 0, 1, 1, 1])
 
-    For a comparison of the BIRCH clustering algorithm with other clustering algorithms, see
-    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
+    For a comparison of the BIRCH clustering algorithm with other clustering algorithms,
+    see :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
     """
 
     _parameter_constraints: dict = {
