@@ -36,6 +36,28 @@ jobs:
     - bash: $(pyTools.pythonLocation)/bin/python build_tools/azure/get_selected_tests.py
       displayName: Check selected tests for all random seeds
       condition: eq(variables['Build.Reason'], 'PullRequest')
+    - bash: |
+        # Determine architecture
+        ARCH=$(uname -m)
+        if [[ "$ARCH" == "arm64" ]]; then
+          MINIFORGE_ARCH="arm64"
+        else
+          MINIFORGE_ARCH="x86_64"
+        fi
+
+        # Download and install miniforge
+        MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-MacOSX-${MINIFORGE_ARCH}.sh"
+        wget ${MINIFORGE_URL} -O miniforge.sh
+        chmod +x miniforge.sh
+        ./miniforge.sh -b -u -p $HOME/miniforge3
+
+        # Initialize conda
+        source $HOME/miniforge3/bin/activate
+
+        # Set CONDA environment variable
+        echo "##vso[task.setvariable variable=CONDA]$HOME/miniforge3"
+      displayName: Install and initialize conda on macOS
+      condition: eq(variables['Agent.OS'], 'Darwin')
     - bash: echo "##vso[task.prependpath]$CONDA/bin"
       displayName: Add conda to PATH
       condition: startsWith(variables['DISTRIB'], 'conda')
