@@ -1124,6 +1124,7 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None, zero_division="warn
     else:
         return cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
 
+
 @validate_params(
     {
         "y_true": ["array-like"],
@@ -1197,6 +1198,7 @@ def tjur_pseudo_r2_score(y_true, p_pred, *, sample_weight=None):
     neg_mean = np.average(p_pred[~mask], weights=sample_weight[~mask])
 
     return pos_mean - neg_mean
+
 
 @validate_params(
     {
