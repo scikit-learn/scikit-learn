@@ -644,7 +644,6 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         ],
         "estimator": [
             HasMethods(["fit", "predict"]),
-            StrOptions({"deprecated"}),
             None,
         ],
         "order": ["array-like", StrOptions({"random"}), None],
