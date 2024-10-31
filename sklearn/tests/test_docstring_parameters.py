@@ -203,6 +203,9 @@ def test_fit_docstring_attributes(name, Estimator):
         est = _construct_compose_pipeline_instance(Estimator)
     elif Estimator.__name__ == "SparseCoder":
         est = _construct_sparse_coder(Estimator)
+    elif Estimator.__name__ == "FrozenEstimator":
+        X, y = make_classification(n_samples=20, n_features=5, random_state=0)
+        est = Estimator(LogisticRegression().fit(X, y))
     else:
         # TODO(devtools): use _tested_estimators instead of all_estimators in the
         # decorator

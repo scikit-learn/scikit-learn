@@ -1,6 +1,7 @@
 """Common tests for metaestimators"""
 
 import functools
+from contextlib import suppress
 from inspect import signature
 
 import numpy as np
@@ -19,7 +20,7 @@ from sklearn.preprocessing import MaxAbsScaler, StandardScaler
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.utils import all_estimators
 from sklearn.utils._test_common.instance_generator import _construct_instances
-from sklearn.utils._testing import set_random_state
+from sklearn.utils._testing import SkipTest, set_random_state
 from sklearn.utils.estimator_checks import (
     _enforce_estimator_tags_X,
     _enforce_estimator_tags_y,
@@ -251,9 +252,11 @@ def _generate_meta_estimator_instances_with_pipeline():
     Are considered meta-estimators all estimators accepting one of "estimator",
     "base_estimator" or "estimators".
     """
+    print("estimators: ", len(all_estimators()))
     for _, Estimator in sorted(all_estimators()):
         sig = set(signature(Estimator).parameters)
 
+        print("\n", Estimator.__name__, sig)
         if not sig.intersection(
             {
                 "estimator",
@@ -265,8 +268,10 @@ def _generate_meta_estimator_instances_with_pipeline():
         ):
             continue
 
-        for meta_estimator in _construct_instances(Estimator):
-            yield _get_instance_with_pipeline(meta_estimator, sig)
+        with suppress(SkipTest):
+            for meta_estimator in _construct_instances(Estimator):
+                print(meta_estimator)
+                yield _get_instance_with_pipeline(meta_estimator, sig)
 
 
 # TODO: remove data validation for the following estimators
