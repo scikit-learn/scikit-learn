@@ -1134,12 +1134,12 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None, zero_division="warn
     prefer_skip_nested_validation=True,
 )
 def tjur_pseudo_r2_score(y_true, p_pred, *, sample_weight=None):
-    """Tjur's pseudo-R^2 for binary classification (originally designed
-    for logistic regression).
+    """Compute Tjur's pseudo-R^2 for binary classification.
 
-    The value is the difference between the mean of the predicted
-    probabilities for positive samples and the mean of the predicted
-    probabilities for negative samples.
+    Originally developed for logistic regression, its value is the
+    difference between the mean of the predicted probabilities for
+    positive samples and the mean of the predicted probabilities for
+    negative samples.
 
     The best value is 1 meaning perfect classification, a value of 0
     means no discriminatory power, and a value of -1 means a perfectly
@@ -1160,7 +1160,7 @@ def tjur_pseudo_r2_score(y_true, p_pred, *, sample_weight=None):
     Returns
     -------
     r2 : float
-        Tjur's pseudo-R-squared value
+        Tjur's pseudo-R-squared value.
 
     Examples
     --------
