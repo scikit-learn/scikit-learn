@@ -266,7 +266,6 @@ package = "sklearn"  # name of your package
     directory = "doc/whats_new/upcoming_changes"
     issue_format = ":pr:`{issue}`"
     template = "doc/whats_new/upcoming_changes/towncrier_template.rst.jinja2"
-    title_format = "Version {version} ({project_date})"
     all_bullets = false
 
     [[tool.towncrier.type]]
@@ -383,6 +382,10 @@ package = "sklearn"  # name of your package
     [[tool.towncrier.section]]
         name = ":mod:`sklearn.feature_selection`"
         path = "sklearn.feature_selection"
+
+    [[tool.towncrier.section]]
+        name = ":mod:`sklearn.frozen`"
+        path = "sklearn.frozen"
 
     [[tool.towncrier.section]]
         name = ":mod:`sklearn.gaussian_process`"
