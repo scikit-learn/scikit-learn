@@ -1132,7 +1132,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
             routing information.
         """
         router = MetadataRouter(owner=self.__class__.__name__).add(
-            estimator=self.base_estimator,
+            estimator=self.estimator,
             method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
         return router
@@ -1292,7 +1292,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
             routing information.
         """
         router = MetadataRouter(owner=self.__class__.__name__).add(
-            estimator=self.base_estimator,
+            estimator=self.estimator,
             method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
         return router
