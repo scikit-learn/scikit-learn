@@ -76,7 +76,7 @@ def _weighted_percentile(array, sample_weight, percentile_rank=50):
         adjusted_percentile_rank[mask], adjusted_percentile_rank[mask] + 1
     )
 
-    # Find index `adjusted_percentile_rank` would have in `weight_cdf`:
+    # Find the indices `adjusted_percentile_rank` would have in `weight_cdf`:
     percentile_idx = np.array(
         [
             np.searchsorted(weight_cdf[:, i], adjusted_percentile_rank[i])
