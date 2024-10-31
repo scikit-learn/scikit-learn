@@ -795,9 +795,22 @@ def test_cohen_kappa():
     )
 
 
-def test_matthews_corrcoef_nan():
-    assert matthews_corrcoef([0], [1]) == 0.0
-    assert matthews_corrcoef([0, 0], [0, 1]) == 0.0
+@pytest.mark.parametrize("zero_division", ["warn", 0, 1, np.nan])
+@pytest.mark.parametrize("y_true, y_pred", [([0], [1]), ([0, 0], [0, 1])])
+def test_matthews_corrcoef_zero_division(zero_division, y_true, y_pred):
+    """Check the behaviour of `zero_division` in `matthews_corrcoef`."""
+    expected_result = 0.0 if zero_division == "warn" else zero_division
+
+    if zero_division == "warn":
+        with pytest.warns(UndefinedMetricWarning):
+            result = matthews_corrcoef(y_true, y_pred, zero_division=zero_division)
+    else:
+        result = matthews_corrcoef(y_true, y_pred, zero_division=zero_division)
+
+    if np.isnan(expected_result):
+        assert np.isnan(result)
+    else:
+        assert result == expected_result
 
 
 @pytest.mark.parametrize("zero_division", [0, 1, np.nan])
@@ -809,6 +822,7 @@ def test_matthews_corrcoef_nan():
         partial(fbeta_score, beta=1),
         precision_score,
         recall_score,
+        accuracy_score,
         partial(cohen_kappa_score, labels=[0, 1]),
     ],
 )
@@ -816,6 +830,11 @@ def test_zero_division_nan_no_warning(metric, y_true, y_pred, zero_division):
     """Check the behaviour of `zero_division` when setting to 0, 1 or np.nan.
     No warnings should be raised.
     """
+    if metric is accuracy_score and len(y_true):
+        pytest.skip(
+            reason="zero_division is only used with empty y_true/y_pred for accuracy"
+        )
+
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         result = metric(y_true, y_pred, zero_division=zero_division)
@@ -834,6 +853,7 @@ def test_zero_division_nan_no_warning(metric, y_true, y_pred, zero_division):
         partial(fbeta_score, beta=1),
         precision_score,
         recall_score,
+        accuracy_score,
         cohen_kappa_score,
     ],
 )
@@ -841,6 +861,11 @@ def test_zero_division_nan_warning(metric, y_true, y_pred):
     """Check the behaviour of `zero_division` when setting to "warn".
     A `UndefinedMetricWarning` should be raised.
     """
+    if metric is accuracy_score and len(y_true):
+        pytest.skip(
+            reason="zero_division is only used with empty y_true/y_pred for accuracy"
+        )
+
     with pytest.warns(UndefinedMetricWarning):
         result = metric(y_true, y_pred, zero_division="warn")
     assert result == 0.0
@@ -912,15 +937,19 @@ def test_matthews_corrcoef():
 
     # For the zero vector case, the corrcoef cannot be calculated and should
     # output 0
-    assert_almost_equal(matthews_corrcoef([0, 0, 0, 0], [0, 0, 0, 0]), 0.0)
+    assert_almost_equal(
+        matthews_corrcoef([0, 0, 0, 0], [0, 0, 0, 0], zero_division=0), 0.0
+    )
 
     # And also for any other vector with 0 variance
-    assert_almost_equal(matthews_corrcoef(y_true, ["a"] * len(y_true)), 0.0)
+    assert_almost_equal(
+        matthews_corrcoef(y_true, ["a"] * len(y_true), zero_division=0), 0.0
+    )
 
     # These two vectors have 0 correlation and hence mcc should be 0
     y_1 = [1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1]
     y_2 = [1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1]
-    assert_almost_equal(matthews_corrcoef(y_1, y_2), 0.0)
+    assert_almost_equal(matthews_corrcoef(y_1, y_2, zero_division=0), 0.0)
 
     # Check that sample weight is able to selectively exclude
     mask = [1] * 10 + [0] * 10
@@ -953,17 +982,17 @@ def test_matthews_corrcoef_multiclass():
     # Zero variance will result in an mcc of zero
     y_true = [0, 1, 2]
     y_pred = [3, 3, 3]
-    assert_almost_equal(matthews_corrcoef(y_true, y_pred), 0.0)
+    assert_almost_equal(matthews_corrcoef(y_true, y_pred, zero_division=0), 0.0)
 
     # Also for ground truth with zero variance
     y_true = [3, 3, 3]
     y_pred = [0, 1, 2]
-    assert_almost_equal(matthews_corrcoef(y_true, y_pred), 0.0)
+    assert_almost_equal(matthews_corrcoef(y_true, y_pred, zero_division=0), 0.0)
 
     # These two vectors have 0 correlation and hence mcc should be 0
     y_1 = [0, 1, 2, 0, 1, 2, 0, 1, 2]
     y_2 = [1, 1, 1, 2, 2, 2, 0, 0, 0]
-    assert_almost_equal(matthews_corrcoef(y_1, y_2), 0.0)
+    assert_almost_equal(matthews_corrcoef(y_1, y_2, zero_division=0), 0.0)
 
     # We can test that binary assumptions hold using the multiclass computation
     # by masking the weight of samples not in the first two classes
@@ -982,7 +1011,10 @@ def test_matthews_corrcoef_multiclass():
     y_pred = [0, 0, 1, 2]
     sample_weight = [1, 1, 0, 0]
     assert_almost_equal(
-        matthews_corrcoef(y_true, y_pred, sample_weight=sample_weight), 0.0
+        matthews_corrcoef(
+            y_true, y_pred, sample_weight=sample_weight, zero_division=0.0
+        ),
+        0.0,
     )
 
 

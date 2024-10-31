@@ -3,6 +3,7 @@ import pytest
 from numpy.testing import assert_allclose
 from scipy.integrate import trapezoid
 
+from sklearn import clone
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import load_breast_cancer, load_iris
 from sklearn.exceptions import NotFittedError
@@ -16,7 +17,11 @@ from sklearn.utils import shuffle
 
 @pytest.fixture(scope="module")
 def data():
-    return load_iris(return_X_y=True)
+    X, y = load_iris(return_X_y=True)
+    # Avoid introducing test dependencies by mistake.
+    X.flags.writeable = False
+    y.flags.writeable = False
+    return X, y
 
 
 @pytest.fixture(scope="module")
@@ -218,6 +223,8 @@ def test_roc_curve_display_complex_pipeline(pyplot, data_binary, clf, constructo
     """Check the behaviour with complex pipeline."""
     X, y = data_binary
 
+    clf = clone(clf)
+
     if constructor_name == "from_estimator":
         with pytest.raises(NotFittedError):
             RocCurveDisplay.from_estimator(clf, X, y)
@@ -327,3 +334,30 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
 
     assert display.roc_auc == pytest.approx(roc_auc_limit)
     assert trapezoid(display.tpr, display.fpr) == pytest.approx(roc_auc_limit)
+
+
+@pytest.mark.parametrize("despine", [True, False])
+@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
+def test_plot_roc_curve_despine(pyplot, data_binary, despine, constructor_name):
+    # Check that the despine keyword is working correctly
+    X, y = data_binary
+
+    lr = LogisticRegression().fit(X, y)
+    lr.fit(X, y)
+
+    y_pred = lr.decision_function(X)
+
+    # safe guard for the binary if/else construction
+    assert constructor_name in ("from_estimator", "from_predictions")
+
+    if constructor_name == "from_estimator":
+        display = RocCurveDisplay.from_estimator(lr, X, y, despine=despine)
+    else:
+        display = RocCurveDisplay.from_predictions(y, y_pred, despine=despine)
+
+    for s in ["top", "right"]:
+        assert display.ax_.spines[s].get_visible() is not despine
+
+    if despine:
+        for s in ["bottom", "left"]:
+            assert display.ax_.spines[s].get_bounds() == (0, 1)
