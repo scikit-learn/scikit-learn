@@ -76,3 +76,23 @@ print(
 # Please refer to
 # :ref:`sphx_glr_auto_examples_model_selection_plot_cost_sensitive_learning.py`
 # to learn about cost-sensitive learning and decision threshold tuning.
+
+# %%
+# Calibration of a pre-fitted classifier
+# --------------------------------------
+# You can use :class:`~sklearn.frozen.FrozenEstimator` to calibrate a pre-fitted
+# classifier using :class:`~sklearn.calibration.CalibratedClassifierCV`.
+from sklearn.calibration import CalibratedClassifierCV
+from sklearn.metrics import brier_score_loss
+
+calibrated_classifier = CalibratedClassifierCV(
+    estimator=FrozenEstimator(classifier)
+).fit(X_train, y_train)
+
+prob_pos_clf = classifier.predict_proba(X_test)[:, 1]
+clf_score = brier_score_loss(y_test, prob_pos_clf)
+print("No calibration: %1.3f" % clf_score)
+
+prob_pos_calibrated = calibrated_classifier.predict_proba(X_test)[:, 1]
+calibrated_score = brier_score_loss(y_test, prob_pos_calibrated)
+print("With calibration: %1.3f" % calibrated_score)

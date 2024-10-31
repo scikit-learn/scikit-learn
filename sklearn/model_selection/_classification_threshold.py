@@ -43,6 +43,13 @@ from ..utils.validation import (
 from ._split import StratifiedShuffleSplit, check_cv
 
 
+def _check_is_fitted(estimator):
+    try:
+        check_is_fitted(estimator.estimator)
+    except NotFittedError:
+        check_is_fitted(estimator, "estimator_")
+
+
 def _estimator_has(attr):
     """Check if we can delegate a method to the underlying estimator.
 
@@ -170,8 +177,9 @@ class BaseThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator
         probabilities : ndarray of shape (n_samples, n_classes)
             The class probabilities of the input samples.
         """
-        check_is_fitted(self, "estimator_")
-        return self.estimator_.predict_proba(X)
+        _check_is_fitted(self)
+        estimator = getattr(self, "estimator_", self.estimator)
+        return estimator.predict_proba(X)
 
     @available_if(_estimator_has("predict_log_proba"))
     def predict_log_proba(self, X):
@@ -188,8 +196,9 @@ class BaseThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator
         log_probabilities : ndarray of shape (n_samples, n_classes)
             The logarithm class probabilities of the input samples.
         """
-        check_is_fitted(self, "estimator_")
-        return self.estimator_.predict_log_proba(X)
+        _check_is_fitted(self)
+        estimator = getattr(self, "estimator_", self.estimator)
+        return estimator.predict_log_proba(X)
 
     @available_if(_estimator_has("decision_function"))
     def decision_function(self, X):
@@ -206,8 +215,9 @@ class BaseThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator
         decisions : ndarray of shape (n_samples,)
             The decision function computed the fitted estimator.
         """
-        check_is_fitted(self, "estimator_")
-        return self.estimator_.decision_function(X)
+        _check_is_fitted(self)
+        estimator = getattr(self, "estimator_", self.estimator)
+        return estimator.decision_function(X)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -378,10 +388,7 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
         class_labels : ndarray of shape (n_samples,)
             The predicted class.
         """
-        try:
-            check_is_fitted(self.estimator)
-        except NotFittedError:
-            check_is_fitted(self, "estimator_")
+        _check_is_fitted(self)
 
         estimator = getattr(self, "estimator_", self.estimator)
 
@@ -858,7 +865,7 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         class_labels : ndarray of shape (n_samples,)
             The predicted class.
         """
-        check_is_fitted(self, "estimator_")
+        _check_is_fitted(self)
         pos_label = self._curve_scorer._get_pos_label()
         y_score, _ = _get_response_values_binary(
             self.estimator_,
