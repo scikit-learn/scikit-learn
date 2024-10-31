@@ -32,7 +32,7 @@ if [[ -z "${CONDA}" ]]; then
 fi
 
 # Add conda to PATH
-export PATH=$CONDA/bin:$PATH
+echo "##vso[task.prependpath]$CONDA/bin"
 
 # Take ownership of conda installation
 sudo chown -R $USER $CONDA
