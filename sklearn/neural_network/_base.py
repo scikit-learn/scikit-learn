@@ -206,7 +206,6 @@ def log_loss(y_true, y_prob, sample_weight=None):
         y_true = np.append(1 - y_true, y_true, axis=1)
 
     temp = xlogy(y_true, y_prob)
-
     return -np.average(temp, weights=sample_weight, axis=0).sum()
 
 
@@ -235,9 +234,7 @@ def binary_log_loss(y_true, y_prob, sample_weight=None):
     """
     eps = np.finfo(y_prob.dtype).eps
     y_prob = np.clip(y_prob, eps, 1 - eps)
-
     temp = xlogy(y_true, y_prob) + xlogy(1 - y_true, 1 - y_prob)
-
     return -np.average(temp, weights=sample_weight, axis=0).sum()
 
 
