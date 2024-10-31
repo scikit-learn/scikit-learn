@@ -1124,6 +1124,78 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None, zero_division="warn
     else:
         return cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+    },
+    prefer_skip_nested_validation=True,
+)
+def tjur_pseudo_r2_score(y_true, p_pred, *, sample_weight=None):
+    """Tjur's pseudo-R^2 for binary classification (originally designed
+    for logistic regression).
+
+    The value is the difference between the mean of the predicted
+    probabilities for positive samples and the mean of the predicted
+    probabilities for negative samples.
+
+    The best value is 1 meaning perfect classification, a value of 0
+    means no discriminatory power, and a value of -1 means a perfectly
+    incorrect (inverted, or always wrong) classification.
+
+    Parameters
+    ----------
+    y_true : 1d array-like, or label indicator array / sparse matrix
+        Ground truth (correct) labels.
+
+    p_pred : 1d array-like, or real array / sparse matrix
+        Predicted probabilities (for the positive class), as returned by a classifier.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    Returns
+    -------
+    r2 : float
+        Tjur's pseudo-R-squared value
+
+    Examples
+    --------
+    >>> from sklearn.metrics import tjur_pseudo_r2_score
+    >>> p_pred = [0.1, 0.8, 0.7, 0.2]
+    >>> y_true = [0, 1, 1, 0]
+    >>> tjur_pseudo_r2_score(y_true, p_pred)
+    0.6
+    >>> tjur_pseudo_r2_score(y_true, p_pred, sample_weight=[3, 1, 2, 1])
+    0.6083333333333334
+    """
+
+    y_true = column_or_1d(y_true)
+    p_pred = column_or_1d(p_pred)
+
+    if p_pred.min() < 0 or p_pred.max() > 1:
+        raise ValueError('probabilities must be between 0 and 1 inclusive')
+
+    if sample_weight is None:
+        sample_weight = np.ones_like(y_true, dtype=float)
+    else:
+        sample_weight = column_or_1d(sample_weight)
+
+    check_consistent_length(y_true, p_pred, sample_weight)
+    classes = np.unique(y_true)
+
+    if len(classes) < 2: # empty arrays or only a single class found
+        return np.nan
+
+    if len(classes) > 2:
+        raise ValueError('only binary classification is supported')
+
+    mask = (y_true == classes[-1])
+    pos_mean = np.average(p_pred[mask],  weights=sample_weight[mask])
+    neg_mean = np.average(p_pred[~mask], weights=sample_weight[~mask])
+
+    return pos_mean - neg_mean
 
 @validate_params(
     {
