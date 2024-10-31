@@ -1,6 +1,8 @@
 #!/bin/bash
 
 set -e
+# make sure to not use `set -x` together with `##vso` because it will append
+# single quotes to the output
 set +x
 
 if [[ -z "${CONDA}" ]]; then
@@ -27,6 +29,8 @@ if [[ -z "${CONDA}" ]]; then
     ./miniforge.sh -b -u -p $HOME/miniforge3
 
     # Set CONDA environment variable to point to miniforge installation
+    # We need to export because `##vso` does not create the variable in the
+    # current shell
     export CONDA="$HOME/miniforge3"
     echo "##vso[task.setvariable variable=CONDA]$CONDA"
 else
