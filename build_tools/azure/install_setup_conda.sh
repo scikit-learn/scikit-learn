@@ -16,6 +16,7 @@ else
     sudo chown -R $USER $CONDA
 fi
 
+# Add conda to the PATH so that it can be used in further Azure CI steps
 # Need set +x for ##vso Azure magic otherwise it may add a quote in the PATH.
 # For more details, see https://github.com/microsoft/azure-pipelines-tasks/issues/10331
 set +x

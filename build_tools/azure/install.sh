@@ -120,11 +120,10 @@ scikit_learn_install() {
         # brings in openmp so that you end up having the omp.h include inside
         # the conda environment.
         find $CONDA_PREFIX -name omp.h -delete -print
-        # meson 1.5 detects OpenMP installed with brew and OpenMP is installed
-        # with brew in CI runner
-        # for `macos-13` runner, it looks like `libomp` is not installed anymore and
-        # thus we used `--force` to avoid error in case that `libomp` is available
-        # in future `macos` runners.
+        # meson >= 1.5 detects OpenMP installed with brew and OpenMP may be installed
+        # with brew in CI runner. OpenMP was installed with brew in macOS-12 CI
+        # runners which doesn't seem to be the case in macOS-13 runners anymore,
+        # but we keep the next line just to be safe ...
         brew uninstall --ignore-dependencies --force libomp
     fi
 
