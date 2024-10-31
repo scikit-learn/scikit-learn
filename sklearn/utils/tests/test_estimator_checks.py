@@ -771,25 +771,30 @@ def test_check_classifiers_one_label_sample_weights():
 
 
 def test_check_estimator_not_fail_fast():
-    """Check that check_estimator does not fail fast when fail_fast=False."""
-    try:
-        check_estimator(BaseEstimator(), fail_fast=False)
-    except AssertionError as e:
-        assert isinstance(e.args[0], list)
-        assert len(e.args[0]) > 0
-        assert all(
-            isinstance(item, dict)
-            and set(item.keys())
-            == {
-                "estimator",
-                "check_name",
-                "exception",
-                "status",
-                "expected_to_fail",
-                "expected_to_fail_reason",
-            }
-            for item in e.args[0]
-        )
+    """Check the contents of the results returned with on_fail!="raise".
+
+    This results should contain details about the observed failures, expected
+    or not.
+    """
+    check_results = check_estimator(BaseEstimator(), on_fail=None)
+    assert isinstance(check_results, list)
+    assert len(check_results) > 0
+    assert all(
+        isinstance(item, dict)
+        and set(item.keys())
+        == {
+            "estimator",
+            "check_name",
+            "exception",
+            "status",
+            "expected_to_fail",
+            "expected_to_fail_reason",
+        }
+        for item in check_results
+    )
+    # Some tests are expected to fail, some are expected to pass.
+    assert any(item["status"] == "failed" for item in check_results)
+    assert any(item["status"] == "passed" for item in check_results)
 
 
 def test_check_estimator():
@@ -799,12 +804,12 @@ def test_check_estimator():
     # check that we have a fit method
     msg = "object has no attribute 'fit'"
     with raises(AttributeError, match=msg):
-        check_estimator(BaseEstimator(), fail_fast=True)
+        check_estimator(BaseEstimator())
 
     # does error on binary_only untagged estimator
     msg = "Only 2 classes are supported"
     with raises(ValueError, match=msg):
-        check_estimator(UntaggedBinaryClassifier(), fail_fast=True)
+        check_estimator(UntaggedBinaryClassifier())
 
     for csr_container in CSR_CONTAINERS:
         # non-regression test for estimators transforming to sparse data
@@ -822,7 +827,7 @@ def test_check_estimator():
     # Check regressor with requires_positive_y estimator tag
     msg = "negative y values not supported!"
     with raises(ValueError, match=msg):
-        check_estimator(RequiresPositiveYRegressor(), fail_fast=True)
+        check_estimator(RequiresPositiveYRegressor())
 
     # Does not raise error on classifier with poor_score tag
     check_estimator(PoorScoreLogisticRegression())
@@ -841,7 +846,7 @@ def test_check_outlier_corruption():
 def test_check_estimator_transformer_no_mixin():
     # check that TransformerMixin is not required for transformer tests to run
     with raises(AttributeError, ".*fit_transform.*"):
-        check_estimator(BadTransformerWithoutMixin(), fail_fast=True)
+        check_estimator(BadTransformerWithoutMixin())
 
 
 def test_check_estimator_clones():
@@ -1253,18 +1258,6 @@ if __name__ == "__main__":
     run_tests_without_pytest()
 
 
-def test_xfail_ignored_in_check_estimator():
-    # Make sure the failure of checks marked as xfail are just ignored and don't cause
-    # error in check_estimator(), but still raise a warning
-    est = NuSVC()
-    expected_to_fail = _get_expected_failed_checks(est)
-    # making sure we use a class that has expected failures
-    assert len(expected_to_fail) > 0
-    with warnings.catch_warnings(record=True) as records:
-        check_estimator(est, expected_failed_checks=expected_to_fail)
-    assert EstimatorCheckFailedWarning in [rec.category for rec in records]
-
-
 def test_estimator_checks_generator_skipping_tests():
     # Make sure the checks generator skips tests that are expected to fail
     est = next(_construct_instances(NuSVC))
@@ -1286,7 +1279,7 @@ def test_estimator_checks_generator_skipping_tests():
 
 
 def test_xfail_count_with_no_fast_fail():
-    """Test that the right number of xfail warnings are raised when fail_fast is False.
+    """Test that the right number of xfail warnings are raised when on_fail is "warn".
 
     It also checks the number of raised EstimatorCheckFailedWarning, and checks the
     output of check_estimator.
@@ -1299,21 +1292,22 @@ def test_xfail_count_with_no_fast_fail():
         logs = check_estimator(
             est,
             expected_failed_checks=expected_failed_checks,
-            fail_fast=False,
             on_fail="warn",
         )
     xfail_warns = [w for w in records if w.category != SkipTestWarning]
+    assert all([rec.category == EstimatorCheckFailedWarning for rec in records])
     assert len(xfail_warns) == len(expected_failed_checks)
 
     xfailed = [log for log in logs if log["status"] == "xfail"]
     assert len(xfailed) == len(expected_failed_checks)
 
 
-def test_check_estimator_on_fail_callback():
-    """Test that the on_fail callback is called with the right arguments."""
-    call_count = 0
+def test_check_estimator_callback():
+    """Test that the callback is called with the right arguments."""
+    call_count = {"xfail": 0, "skipped": 0, "passed": 0, "failed": 0}
 
-    def on_fail_callback(
+    def callback(
+        *,
         estimator,
         check_name,
         exception,
@@ -1321,9 +1315,9 @@ def test_check_estimator_on_fail_callback():
         expected_to_fail,
         expected_to_fail_reason,
     ):
-        assert status == "xfail"
+        assert status in ("xfail", "skipped", "passed", "failed")
         nonlocal call_count
-        call_count += 1
+        call_count[status] += 1
 
     est = NuSVC()
     expected_failed_checks = _get_expected_failed_checks(est)
@@ -1333,10 +1327,16 @@ def test_check_estimator_on_fail_callback():
         logs = check_estimator(
             est,
             expected_failed_checks=expected_failed_checks,
-            fail_fast=False,
-            on_fail=on_fail_callback,
+            on_fail=None,
+            callback=callback,
         )
-    assert call_count == len(expected_failed_checks)
+    all_checks_count = len(list(estimator_checks_generator(est, legacy=True)))
+    assert call_count["xfail"] == len(expected_failed_checks)
+    assert call_count["passed"] > 0
+    assert call_count["failed"] == 0
+    assert call_count["skipped"] == (
+        all_checks_count - call_count["xfail"] - call_count["passed"]
+    )
 
 
 # FIXME: this test should be uncommented when the checks will be granular

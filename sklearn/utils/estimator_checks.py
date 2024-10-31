@@ -63,7 +63,7 @@ from ..utils._param_validation import (
 )
 from . import shuffle
 from ._missing import is_scalar_nan
-from ._param_validation import Interval
+from ._param_validation import Interval, StrOptions, validate_params
 from ._tags import Tags, get_tags
 from ._test_common.instance_generator import (
     CROSS_DECOMPOSITION,
@@ -630,14 +630,26 @@ def parametrize_with_checks(
     )
 
 
+@validate_params(
+    {
+        "generate_only": ["boolean"],
+        "legacy": ["boolean"],
+        "expected_failed_checks": [dict, None],
+        "on_skip": [StrOptions({"warn"}), None],
+        "on_fail": [StrOptions({"raise", "warn"}), None],
+        "callback": [callable, None],
+    },
+    prefer_skip_nested_validation=False,
+)
 def check_estimator(
     estimator=None,
     generate_only=False,
     *,
     legacy: bool = True,
     expected_failed_checks: dict[str, str] | None = None,
-    fail_fast: bool = False,
-    on_fail: Callable | Literal["warn"] | None = "warn",
+    on_skip: Literal["warn"] | None = "warn",
+    on_fail: Literal["raise", "warn"] | None = "raise",
+    callback: Callable | None = None,
 ):
     """Check if estimator adheres to scikit-learn conventions.
 
@@ -648,12 +660,7 @@ def check_estimator(
     will be run if the Estimator class inherits from the corresponding mixin
     from sklearn.base.
 
-    Setting `generate_only=True` returns a generator that yields (estimator,
-    check) tuples where the check can be called independently from each
-    other, i.e. `check(estimator)`. This allows all checks to be run
-    independently and report the checks that are failing.
-
-    scikit-learn provides a pytest specific decorator,
+    scikit-learn also provides a pytest specific decorator,
     :func:`~sklearn.utils.estimator_checks.parametrize_with_checks`, making it
     easier to test multiple estimators.
 
@@ -668,10 +675,6 @@ def check_estimator(
     ----------
     estimator : estimator object
         Estimator instance to check.
-
-        .. versionadded:: 1.1
-           Passing a class was deprecated in version 0.23, and support for
-           classes was removed in 0.24.
 
     generate_only : bool, default=False
         When `False`, checks are evaluated when `check_estimator` is called.
@@ -695,35 +698,57 @@ def check_estimator(
         A dictionary of the form::
 
             {
-                "check_name": "my reason",
+                "check_name": "this check is expected to fail because ...",
             }
 
         Where `"check_name"` is the name of the check, and `"my reason"` is why
         the check fails.
 
-    fail_fast : bool, default=False
-        Whether to stop running checks after the first failure. If ``False``, an
-        exception will be raised after all checks are run and at least one check
-        failed. If ``True``, ``on_fail`` has no effect.
+        .. versionadded:: 1.6
 
-    on_fail : callable, "warn", None, default="warn"
-        If a callable, it will be called with the estimator and the check name,
-        the exception, and the reason for the expected failure if the check is
+    on_skip : "warn", None, default="warn"
+        This parameter controls what happens when a check is skipped.
+
+        - "warn": A :class:`~sklearn.exceptions.SkipTestWarning` is logged
+          and running tests continue.
+        - None: No warning is logged and running tests continue.
+
+        .. versionadded:: 1.6
+
+    on_fail : "raise", "warn", None, default="raise"
+        This parameter controls what happens when a check fails.
+
+        - "raise": The exception raised by the first failing check is raised and
+          running tests are aborted. This does not included tests that are expected
+          to fail.
+        - "warn": A :class:`~sklearn.exceptions.EstimatorCheckFailedWarning` is logged
+          and running tests continue.
+        - None: No exception is raised and no warning is logged.
+
+        Note that if ``on_fail != "raise"``, no exception is raised, even if the checks
+        fail. You'd need to inspect the return result of ``check_estimator`` to check
+        if any checks failed.
+
+        .. versionadded:: 1.6
+
+    callback : callable, or None, default=None
+        This callback will be called with the estimator and the check name,
+        the exception (if any), the status of the check (xfail, failed, skipped,
+        passed), and the reason for the expected failure if the check is
         expected to fail. The callable's signature needs to be::
 
-            def on_fail(
+            def callback(
                 estimator,
                 check_name: str,
                 exception: Exception,
-                status: Literal["xfail", "failed", "skipped"],
+                status: Literal["xfail", "failed", "skipped", "passed"],
                 expected_to_fail: bool,
                 expected_to_fail_reason: str,
             )
 
-        If "warn", a :class:`~sklearn.exceptions.EstimatorCheckFailedWarning` will be
-        logged, and the check will still raise an exception after all the tests are run.
+        ``callback`` cannot be provided together with ``on_fail="raise"``.
 
-        If ``fail_fast=True``, ``on_fail`` has no effect.
+        .. versionadded:: 1.6
 
     Returns
     -------
@@ -734,7 +759,7 @@ def check_estimator(
                 "estimator": estimator,
                 "check_name": check_name,
                 "exception": exception,
-                "status": status,
+                "status": status (one of "xfail", "failed", "skipped", "passed"),
                 "expected_to_fail": expected_to_fail,
                 "expected_to_fail_reason": expected_to_fail_reason,
             }
@@ -755,19 +780,19 @@ def check_estimator(
 
     Raises
     ------
-    AssertionError
-        An `AssertionError` is raised if any of the checks fail that is not expected
-        to fail.
+    Exception
+        If ``on_fail="raise"``, the exception raised by the first failing check is
+        raised and running tests are aborted.
 
-        If ``fail_fast=True``, only the first error raised is raised and tests stop.
-
-        If ``fail_fast=False``, an `AssertionError` is raised with all the test results
-        included in it after running all the tests.
+        Note that if ``on_fail != "raise"``, no exception is raised, even if the checks
+        fail. You'd need to inspect the return result of ``check_estimator`` to check
+        if any checks failed.
 
     See Also
     --------
     parametrize_with_checks : Pytest specific decorator for parametrizing estimator
         checks.
+    estimator_checks_generator : Generator that yields (estimator, check) tuples.
 
     Examples
     --------
@@ -784,6 +809,9 @@ def check_estimator(
         )
         raise TypeError(msg)
 
+    if on_fail == "raise" and callback is not None:
+        raise ValueError("callback cannot be provided together with on_fail='raise'")
+
     name = type(estimator).__name__
 
     # TODO(1.8): remove generate_only
@@ -798,7 +826,6 @@ def check_estimator(
         )
 
     test_results = []
-    failed = False
 
     for estimator, check in estimator_checks_generator(
         estimator,
@@ -824,14 +851,14 @@ def check_estimator(
                 "expected_to_fail": test_can_fail,
                 "expected_to_fail_reason": reason,
             }
-            test_results.append(check_result)
-            warnings.warn(
-                f"Skipping check {_check_name(check)} for {name} because it raised "
-                f"{type(e).__name__}: {e}",
-                SkipTestWarning,
-            )
+            if on_skip == "warn":
+                warnings.warn(
+                    f"Skipping check {_check_name(check)} for {name} because it raised "
+                    f"{type(e).__name__}: {e}",
+                    SkipTestWarning,
+                )
         except Exception as e:
-            if fail_fast:
+            if on_fail == "raise" and not test_can_fail:
                 raise
 
             check_result = {
@@ -853,13 +880,21 @@ def check_estimator(
             if on_fail == "warn":
                 warning = EstimatorCheckFailedWarning(**check_result)
                 warnings.warn(warning)
-            elif callable(on_fail):
-                on_fail(**check_result)
+        else:
+            check_result = {
+                "estimator": estimator,
+                "check_name": _check_name(check),
+                "exception": None,
+                "status": "passed",
+                "expected_to_fail": test_can_fail,
+                "expected_to_fail_reason": reason,
+            }
 
-            test_results.append(check_result)
+        test_results.append(check_result)
 
-    if failed:
-        raise AssertionError(test_results)
+        if callback:
+            callback(**check_result)
+
     return test_results
 
 

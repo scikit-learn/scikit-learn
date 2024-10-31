@@ -1,16 +1,9 @@
 - Changes to :func:`~utils.estimator_checks.check_estimator` and
   :func:`~utils.estimator_checks.parametrize_with_checks`.
 
-  - :func:`~utils.estimator_checks.check_estimator` introduces a new ``fast_fail``
-    parameter. If ``True``, the function raises an exception as soon as a check
-    fails. Otherwise, it collects information about the failed checks and raises
-    an exception at the end. If ``False``, the function returns a list of
-    dictionaries with information about the failed or skipped checks, or includes
-    the information in the raised ``AssertionError`` exception, depending on whether
-    at least one test which is not expected to fail, fails or not.
-
-  - :func:`~utils.estimator_checks.parametrize_with_checks` introduces a new
-    ``on_fail`` parameter, which can be a callable invoked when a check fails.
+  - :func:`~utils.estimator_checks.check_estimator` introduces new arguments:
+    ``on_skip``, ``on_fail``, and ``callback`` to control the behavior of the check
+    runner. Refer to the API documentation for more details.
 
   - ``generate_only=True`` is deprecated in
     :func:`~utils.estimator_checks.check_estimator`. Use
@@ -26,8 +19,5 @@
         {
             "check_name": "reason to mark this check as xfail",
         }
-
-  - :func:`~utils.estimator_checks.check_estimator` now accepts an ``on_fail``
-    parameter, which can be a callable invoked when a check fails.
 
   By `Adrin Jalali`_.
