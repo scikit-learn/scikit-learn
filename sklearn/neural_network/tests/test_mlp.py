@@ -1079,7 +1079,7 @@ def test_mlp_classifier_sample_weight_effects(
     zero_weight_score = clf_zero_weight.score(X_test, y_test)
 
     # Assert that performance changes when samples are effectively removed
-    assert zero_weight_score != unit_weighted_score
+    assert zero_weight_score != pytest.approx(unit_weighted_score)
 
     # test sample weight effect on the weighted class
     sample_weight[:10] = 1
@@ -1155,7 +1155,7 @@ def test_mlp_regressor_sample_weight_effects(solver, random_seed):
     zero_weight_score = reg_zero_weight.score(X_test, y_test)
 
     # Assert that performance changes when samples are effectively removed
-    assert zero_weight_score != weighted_score
+    assert zero_weight_score != pytest.approx(weighted_score)
 
     # Test early stopping
     if solver != "lbfgs":  # early stopping is only effective for 'sgd' and 'adam'
