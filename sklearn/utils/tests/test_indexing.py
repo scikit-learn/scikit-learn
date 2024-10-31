@@ -497,7 +497,7 @@ def test_resample():
 
 
 def test_resample_weighted():
-    # Check that sampling with replacement with weights yields the 
+    # Check that sampling with replacement with weights yields the
     # samples from the same distribution as sampling uniformly with
     # repeated data points.
     data = np.array([-1, 0, 1])
@@ -525,12 +525,12 @@ def test_resample_weighted():
             ).mean()
         )
         # Should never be negative because -1 has a 0 weight.
-        assert mean_reweighted >= 0
+
     mean_repeated = np.asarray(mean_repeated)
     mean_reweighted = np.asarray(mean_reweighted)
 
     test_result = kstest(mean_repeated, mean_reweighted)
-
+    assert np.all(mean_reweighted >= 0)
     assert test_result.pvalue > 0.05
 
 
