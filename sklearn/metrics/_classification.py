@@ -2053,19 +2053,20 @@ def class_likelihood_ratios(
 
     zero_division : "warn", "nan" or dict, default="warn"
         Sets the return values for LR+ and LR- when there is a division by zero. Can
-        take the values {"LR+": 1.0, "LR-": 0.0} (for returning the worst scores),
-        {"LR+": np.inf, "LR-": 1.0} (for returning the best scores),
-        {"LR+": np.nan, "LR-": np.nan} or "nan" as a shorthand (for returning undefined
-        scores), or "warn". Only the metric affected by a zero division is replaced by
-        the set value; the other value is calculated as usual. If set to "warn", returns
-        `np.nan` for the affected scoring metric, but a warning is also raised.
+        take the values {"LR+": 1.0, "LR-": 1.0} (for returning the worst scores,
+        indicating a useless model), {"LR+": np.inf, "LR-": 0.0} (for returning the best
+        scores, indicating a useful model), {"LR+": np.nan, "LR-": np.nan} or shothand
+        "nan" (for returning undefined scores), or "warn". Only the metric affected
+        by a zero division is replaced by the set value; the other value is calculated
+        as usual. If set to "warn", returns `np.nan` for the affected scoring metric,
+        but a warning is also raised.
 
         .. versionadded:: 1.6
 
     Returns
     -------
     (positive_likelihood_ratio, negative_likelihood_ratio) : tuple
-        A tuple of two float, the first containing the Positive likelihood ratio
+        A tuple of two floats, the first containing the Positive likelihood ratio
         and the second the Negative likelihood ratio.
 
     Warns
@@ -2112,8 +2113,8 @@ def class_likelihood_ratios(
     """
     # TODO(1.8): When `raise_warning` is removed, the following changes need to be made
     # to match the other functions that take a zero_division param: The default return
-    # value with zero_division="warn" should be updated to the lowest score for each
-    # metric respectively (1 for LR+ and 0 for LR-), return values and warning messages
+    # value with zero_division="warn" should be updated to the worst score for each
+    # metric respectively (1 for LR+ and 1 for LR-), return values and warning messages
     # need to be updated, the Warns section in the docstring needs be be re-written, the
     # "Mathematical divergences" section in model_evaluation.rst needs to be updated on
     # the new default behaviour of zero_division, the the hidden option for
