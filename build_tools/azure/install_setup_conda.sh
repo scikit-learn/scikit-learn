@@ -13,3 +13,6 @@ else
 fi
 
 echo "##vso[task.prependpath]$CONDA/bin"
+
+set +e
+set +x
