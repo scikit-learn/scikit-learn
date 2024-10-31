@@ -288,7 +288,8 @@ available:
 
 2. Assign biclusters from one set to another in a one-to-one fashion
    to maximize the sum of their similarities. This step is performed
-   using the Hungarian algorithm.
+   using :func:`scipy.optimize.linear_sum_assignment`, which uses a 
+   modified Jonker-Volgenant algorithm.
 
 3. The final sum of similarities is divided by the size of the larger
    set.

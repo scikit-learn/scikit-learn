@@ -240,6 +240,7 @@ API_REFERENCE = {
                     "fetch_20newsgroups_vectorized",
                     "fetch_california_housing",
                     "fetch_covtype",
+                    "fetch_file",
                     "fetch_kddcup99",
                     "fetch_lfw_pairs",
                     "fetch_lfw_people",
@@ -456,6 +457,16 @@ API_REFERENCE = {
                     "mutual_info_regression",
                     "r_regression",
                 ],
+            },
+        ],
+    },
+    "sklearn.frozen": {
+        "short_summary": "Frozen estimators.",
+        "description": None,
+        "sections": [
+            {
+                "title": None,
+                "autosummary": ["FrozenEstimator"],
             },
         ],
     },
@@ -1159,6 +1170,14 @@ API_REFERENCE = {
                     "safe_mask",
                     "safe_sqr",
                     "shuffle",
+                    "Tags",
+                    "InputTags",
+                    "TargetTags",
+                    "ClassifierTags",
+                    "RegressorTags",
+                    "TransformerTags",
+                    "default_tags",
+                    "get_tags",
                 ],
             },
             {
@@ -1175,6 +1194,7 @@ API_REFERENCE = {
                     "validation.check_symmetric",
                     "validation.column_or_1d",
                     "validation.has_fit_parameter",
+                    "validation.validate_data",
                 ],
             },
             {

@@ -15,7 +15,7 @@ from numbers import Real
 import numpy as np
 from scipy import sparse as sp
 
-from ...utils._array_api import get_namespace
+from ...utils._array_api import _max_precision_float_dtype, get_namespace_and_device
 from ...utils._param_validation import Interval, StrOptions, validate_params
 from ...utils.multiclass import type_of_target
 from ...utils.validation import check_array, check_consistent_length
@@ -275,6 +275,8 @@ def rand_score(labels_true, labels_pred):
 
     The raw RI score [3]_ is:
 
+    .. code-block:: text
+
         RI = (number of agreeing pairs) / (number of pairs)
 
     Read more in the :ref:`User Guide <rand_score>`.
@@ -321,7 +323,7 @@ def rand_score(labels_true, labels_pred):
     are complete but may not always be pure, hence penalized:
 
       >>> rand_score([0, 0, 1, 2], [0, 0, 1, 1])
-      0.83...
+      np.float64(0.83...)
     """
     contingency = pair_confusion_matrix(labels_true, labels_pred)
     numerator = contingency.diagonal().sum()
@@ -433,6 +435,9 @@ def adjusted_rand_score(labels_true, labels_pred):
 
       >>> adjusted_rand_score([0, 0, 1, 1], [0, 1, 0, 1])
       -0.5
+
+    See :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`
+    for a more detailed example.
     """
     (tn, fp), (fn, tp) = pair_confusion_matrix(labels_true, labels_pred)
     # convert to Python integer types, to avoid overflow or underflow
@@ -517,7 +522,7 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
     >>> from sklearn.metrics import homogeneity_completeness_v_measure
     >>> y_true, y_pred = [0, 0, 1, 1, 2, 2], [0, 0, 1, 2, 2, 2]
     >>> homogeneity_completeness_v_measure(y_true, y_pred)
-    (0.71..., 0.77..., 0.73...)
+    (np.float64(0.71...), np.float64(0.77...), np.float64(0.73...))
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
 
@@ -601,7 +606,7 @@ def homogeneity_score(labels_true, labels_pred):
 
       >>> from sklearn.metrics.cluster import homogeneity_score
       >>> homogeneity_score([0, 0, 1, 1], [1, 1, 0, 0])
-      1.0
+      np.float64(1.0)
 
     Non-perfect labelings that further split classes into more clusters can be
     perfectly homogeneous::
@@ -677,7 +682,7 @@ def completeness_score(labels_true, labels_pred):
 
       >>> from sklearn.metrics.cluster import completeness_score
       >>> completeness_score([0, 0, 1, 1], [1, 1, 0, 0])
-      1.0
+      np.float64(1.0)
 
     Non-perfect labelings that assign all classes members to the same clusters
     are still complete::
@@ -766,9 +771,9 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
 
       >>> from sklearn.metrics.cluster import v_measure_score
       >>> v_measure_score([0, 0, 1, 1], [0, 0, 1, 1])
-      1.0
+      np.float64(1.0)
       >>> v_measure_score([0, 0, 1, 1], [1, 1, 0, 0])
-      1.0
+      np.float64(1.0)
 
     Labelings that assign all classes members to the same clusters
     are complete but not homogeneous, hence penalized::
@@ -874,7 +879,7 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     >>> labels_true = [0, 1, 1, 0, 1, 0]
     >>> labels_pred = [0, 1, 0, 0, 1, 1]
     >>> mutual_info_score(labels_true, labels_pred)
-    0.056...
+    np.float64(0.056...)
     """
     if contingency is None:
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -1184,13 +1189,13 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
 
         FMI = TP / sqrt((TP + FP) * (TP + FN))
 
-    Where ``TP`` is the number of **True Positive** (i.e. the number of pair of
-    points that belongs in the same clusters in both ``labels_true`` and
+    Where ``TP`` is the number of **True Positive** (i.e. the number of pairs of
+    points that belong to the same cluster in both ``labels_true`` and
     ``labels_pred``), ``FP`` is the number of **False Positive** (i.e. the
-    number of pair of points that belongs in the same clusters in
-    ``labels_true`` and not in ``labels_pred``) and ``FN`` is the number of
-    **False Negative** (i.e. the number of pair of points that belongs in the
-    same clusters in ``labels_pred`` and not in ``labels_True``).
+    number of pairs of points that belong to the same cluster in
+    ``labels_pred`` but not in ``labels_true``) and ``FN`` is the number of
+    **False Negative** (i.e. the number of pairs of points that belong to the
+    same cluster in ``labels_true`` but not in ``labels_pred``).
 
     The score ranges from 0 to 1. A high value indicates a good similarity
     between two clusters.
@@ -1231,9 +1236,9 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
 
       >>> from sklearn.metrics.cluster import fowlkes_mallows_score
       >>> fowlkes_mallows_score([0, 0, 1, 1], [0, 0, 1, 1])
-      1.0
+      np.float64(1.0)
       >>> fowlkes_mallows_score([0, 0, 1, 1], [1, 1, 0, 0])
-      1.0
+      np.float64(1.0)
 
     If classes members are completely split across different clusters,
     the assignment is totally random, hence the FMI is null::
@@ -1275,12 +1280,12 @@ def entropy(labels):
     -----
     The logarithm used is the natural logarithm (base-e).
     """
-    xp, is_array_api_compliant = get_namespace(labels)
+    xp, is_array_api_compliant, device_ = get_namespace_and_device(labels)
     labels_len = labels.shape[0] if is_array_api_compliant else len(labels)
     if labels_len == 0:
         return 1.0
 
-    pi = xp.astype(xp.unique_counts(labels)[1], xp.float64)
+    pi = xp.astype(xp.unique_counts(labels)[1], _max_precision_float_dtype(xp, device_))
 
     # single cluster => zero entropy
     if pi.size == 1:

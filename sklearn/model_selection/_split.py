@@ -536,7 +536,7 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
     number of distinct groups has to be at least equal to the number of folds).
 
     The folds are approximately balanced in the sense that the number of
-    samples is approximately the same in each test fold.
+    samples is approximately the same in each test fold when `shuffle` is True.
 
     Read more in the :ref:`User Guide <group_k_fold>`.
 
@@ -551,6 +551,21 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
 
         .. versionchanged:: 0.22
             ``n_splits`` default value changed from 3 to 5.
+
+    shuffle : bool, default=False
+        Whether to shuffle the groups before splitting into batches.
+        Note that the samples within each split will not be shuffled.
+
+        .. versionadded:: 1.6
+
+    random_state : int, RandomState instance or None, default=None
+        When `shuffle` is True, `random_state` affects the ordering of the
+        indices, which controls the randomness of each fold. Otherwise, this
+        parameter has no effect.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
+
+        .. versionadded:: 1.6
 
     Notes
     -----
@@ -567,7 +582,7 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
     >>> group_kfold.get_n_splits(X, y, groups)
     2
     >>> print(group_kfold)
-    GroupKFold(n_splits=2)
+    GroupKFold(n_splits=2, random_state=None, shuffle=False)
     >>> for i, (train_index, test_index) in enumerate(group_kfold.split(X, y, groups)):
     ...     print(f"Fold {i}:")
     ...     print(f"  Train: index={train_index}, group={groups[train_index]}")
@@ -589,15 +604,15 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
         classification tasks).
     """
 
-    def __init__(self, n_splits=5):
-        super().__init__(n_splits, shuffle=False, random_state=None)
+    def __init__(self, n_splits=5, *, shuffle=False, random_state=None):
+        super().__init__(n_splits, shuffle=shuffle, random_state=random_state)
 
     def _iter_test_indices(self, X, y, groups):
         if groups is None:
             raise ValueError("The 'groups' parameter should not be None.")
         groups = check_array(groups, input_name="groups", ensure_2d=False, dtype=None)
 
-        unique_groups, groups = np.unique(groups, return_inverse=True)
+        unique_groups, group_idx = np.unique(groups, return_inverse=True)
         n_groups = len(unique_groups)
 
         if self.n_splits > n_groups:
@@ -606,29 +621,40 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
                 " than the number of groups: %d." % (self.n_splits, n_groups)
             )
 
-        # Weight groups by their number of occurrences
-        n_samples_per_group = np.bincount(groups)
+        if self.shuffle:
+            # Split and shuffle unique groups across n_splits
+            rng = check_random_state(self.random_state)
+            unique_groups = rng.permutation(unique_groups)
+            split_groups = np.array_split(unique_groups, self.n_splits)
 
-        # Distribute the most frequent groups first
-        indices = np.argsort(n_samples_per_group)[::-1]
-        n_samples_per_group = n_samples_per_group[indices]
+            for test_group_ids in split_groups:
+                test_mask = np.isin(groups, test_group_ids)
+                yield np.where(test_mask)[0]
 
-        # Total weight of each fold
-        n_samples_per_fold = np.zeros(self.n_splits)
+        else:
+            # Weight groups by their number of occurrences
+            n_samples_per_group = np.bincount(group_idx)
 
-        # Mapping from group index to fold index
-        group_to_fold = np.zeros(len(unique_groups))
+            # Distribute the most frequent groups first
+            indices = np.argsort(n_samples_per_group)[::-1]
+            n_samples_per_group = n_samples_per_group[indices]
 
-        # Distribute samples by adding the largest weight to the lightest fold
-        for group_index, weight in enumerate(n_samples_per_group):
-            lightest_fold = np.argmin(n_samples_per_fold)
-            n_samples_per_fold[lightest_fold] += weight
-            group_to_fold[indices[group_index]] = lightest_fold
+            # Total weight of each fold
+            n_samples_per_fold = np.zeros(self.n_splits)
 
-        indices = group_to_fold[groups]
+            # Mapping from group index to fold index
+            group_to_fold = np.zeros(len(unique_groups))
 
-        for f in range(self.n_splits):
-            yield np.where(indices == f)[0]
+            # Distribute samples by adding the largest weight to the lightest fold
+            for group_index, weight in enumerate(n_samples_per_group):
+                lightest_fold = np.argmin(n_samples_per_fold)
+                n_samples_per_fold[lightest_fold] += weight
+                group_to_fold[indices[group_index]] = lightest_fold
+
+            indices = group_to_fold[group_idx]
+
+            for f in range(self.n_splits):
+                yield np.where(indices == f)[0]
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
@@ -866,15 +892,15 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
     Each group will appear exactly once in the test set across all folds (the
     number of distinct groups has to be at least equal to the number of folds).
 
-    The difference between :class:`~sklearn.model_selection.GroupKFold`
-    and :class:`~sklearn.model_selection.StratifiedGroupKFold` is that
+    The difference between :class:`GroupKFold`
+    and `StratifiedGroupKFold` is that
     the former attempts to create balanced folds such that the number of
     distinct groups is approximately the same in each fold, whereas
-    StratifiedGroupKFold attempts to create folds which preserve the
+    `StratifiedGroupKFold` attempts to create folds which preserve the
     percentage of samples for each class as much as possible given the
     constraint of non-overlapping groups between splits.
 
-    Read more in the :ref:`User Guide <cross_validation>`.
+    Read more in the :ref:`User Guide <stratified_group_k_fold>`.
 
     For visualisation of cross-validation behaviour and
     comparison between common scikit-learn split methods
@@ -1279,7 +1305,7 @@ class LeaveOneGroupOut(GroupsConsumerMixin, BaseCrossValidator):
 
     Provides train/test indices to split data such that each training set is
     comprised of all samples except ones belonging to one specific group.
-    Arbitrary domain specific group information is provided an array integers
+    Arbitrary domain specific group information is provided as an array of integers
     that encodes the group of each sample.
 
     For instance the groups could be the year of collection of the samples
@@ -1769,6 +1795,43 @@ class RepeatedStratifiedKFold(_UnsupportedGroupCVMixin, _RepeatedSplits):
             n_splits=n_splits,
         )
 
+    def split(self, X, y, groups=None):
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+
+            Note that providing ``y`` is sufficient to generate the splits and
+            hence ``np.zeros(n_samples)`` may be used as a placeholder for
+            ``X`` instead of actual training data.
+
+        y : array-like of shape (n_samples,)
+            The target variable for supervised learning problems.
+            Stratification is done based on the y labels.
+
+        groups : object
+            Always ignored, exists for compatibility.
+
+        Yields
+        ------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+
+        Notes
+        -----
+        Randomized CV splitters may return different results for each call of
+        split. You can make the results identical by setting `random_state`
+        to an integer.
+        """
+        y = check_array(y, input_name="y", ensure_2d=False, dtype=None)
+        return super().split(X, y, groups=groups)
+
 
 class BaseShuffleSplit(_MetadataRequester, metaclass=ABCMeta):
     """Base class for *ShuffleSplit.
@@ -1895,8 +1958,9 @@ class ShuffleSplit(_UnsupportedGroupCVMixin, BaseShuffleSplit):
     Yields indices to split data into training and test sets.
 
     Note: contrary to other cross-validation strategies, random splits
-    do not guarantee that all folds will be different, although this is
-    still very likely for sizeable datasets.
+    do not guarantee that test sets across all folds will be mutually exclusive,
+    and might include overlapping samples. However, this is still very likely for
+    sizeable datasets.
 
     Read more in the :ref:`User Guide <ShuffleSplit>`.
 
@@ -2003,17 +2067,22 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
     For instance the groups could be the year of collection of the samples
     and thus allow for cross-validation against time-based splits.
 
-    The difference between LeavePGroupsOut and GroupShuffleSplit is that
+    The difference between :class:`LeavePGroupsOut` and ``GroupShuffleSplit`` is that
     the former generates splits using all subsets of size ``p`` unique groups,
-    whereas GroupShuffleSplit generates a user-determined number of random
+    whereas ``GroupShuffleSplit`` generates a user-determined number of random
     test splits, each with a user-determined fraction of unique groups.
 
     For example, a less computationally intensive alternative to
     ``LeavePGroupsOut(p=10)`` would be
     ``GroupShuffleSplit(test_size=10, n_splits=100)``.
 
+    Contrary to other cross-validation strategies, the random splits
+    do not guarantee that test sets across all folds will be mutually exclusive,
+    and might include overlapping samples. However, this is still very likely for
+    sizeable datasets.
+
     Note: The parameters ``test_size`` and ``train_size`` refer to groups, and
-    not to samples, as in ShuffleSplit.
+    not to samples as in :class:`ShuffleSplit`.
 
     Read more in the :ref:`User Guide <group_shuffle_split>`.
 
@@ -2026,14 +2095,12 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
     n_splits : int, default=5
         Number of re-shuffling & splitting iterations.
 
-    test_size : float, int, default=0.2
+    test_size : float, int, default=None
         If float, should be between 0.0 and 1.0 and represent the proportion
         of groups to include in the test split (rounded up). If int,
         represents the absolute number of test groups. If None, the value is
-        set to the complement of the train size.
-        The default will change in version 0.21. It will remain 0.2 only
-        if ``train_size`` is unspecified, otherwise it will complement
-        the specified ``train_size``.
+        set to the complement of the train size. If ``train_size`` is also None,
+        it will be set to 0.2.
 
     train_size : float or int, default=None
         If float, should be between 0.0 and 1.0 and represent the
@@ -2141,13 +2208,14 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
     Provides train/test indices to split data in train/test sets.
 
-    This cross-validation object is a merge of StratifiedKFold and
-    ShuffleSplit, which returns stratified randomized folds. The folds
+    This cross-validation object is a merge of :class:`StratifiedKFold` and
+    :class:`ShuffleSplit`, which returns stratified randomized folds. The folds
     are made by preserving the percentage of samples for each class.
 
-    Note: like the ShuffleSplit strategy, stratified random splits
-    do not guarantee that all folds will be different, although this is
-    still very likely for sizeable datasets.
+    Note: like the :class:`ShuffleSplit` strategy, stratified random splits
+    do not guarantee that test sets across all folds will be mutually exclusive,
+    and might include overlapping samples. However, this is still very likely for
+    sizeable datasets.
 
     Read more in the :ref:`User Guide <stratified_shuffle_split>`.
 
@@ -2340,7 +2408,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
 def _validate_shuffle_split(n_samples, test_size, train_size, default_test_size=None):
     """
-    Validation helper to check if the test/test sizes are meaningful w.r.t. the
+    Validation helper to check if the train/test sizes are meaningful w.r.t. the
     size of the data (n_samples).
     """
     if test_size is None and train_size is None:
@@ -2898,7 +2966,7 @@ def _build_repr(self):
                 value = getattr(self, key, None)
                 if value is None and hasattr(self, "cvargs"):
                     value = self.cvargs.get(key, None)
-            if len(w) and w[0].category == FutureWarning:
+            if len(w) and w[0].category is FutureWarning:
                 # if the parameter is deprecated, don't show it
                 continue
         finally:
