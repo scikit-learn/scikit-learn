@@ -278,7 +278,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             The ith element contains the amount of change used to update the
             intercept parameters of the ith layer in an iteration.
 
-        sample_weigth : ndarray of shape (n_samples,)
+        sample_weight : ndarray of shape (n_samples,)
             Sample weights.
 
         Returns
@@ -464,8 +464,10 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         X, y = self._validate_input(X, y, incremental, reset=first_pass)
         # Handle sample_weight
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-            if sum(sample_weight != 0) == 0:
+            sample_weight = _check_sample_weight(
+                sample_weight, X, dtype=X.dtype, ensure_non_negative=True
+            )
+            if sum(sample_weight) == 0:
                 raise ValueError("sample_weight must not be all zeros")
 
         _, n_features = X.shape
@@ -825,7 +827,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         self : object
             Returns a trained MLP model.
         """
-
         self._validate_params()
 
         return self._fit(
@@ -1243,7 +1244,6 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         # This downcast to bool is to prevent upcasting when working with
         # float32 data
         y = self._label_binarizer.transform(y).astype(bool)
-
         return X, y
 
     def predict(self, X):
@@ -1369,13 +1369,13 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         tags.classifier_tags.multi_label = True
         tags._xfail_checks = {
             "check_sample_weights_invariance": (
-                "zero sample_weight is not equivalent to removing samples \
-                    for neural networks"
+                "zero sample_weight is not equivalent to removing samples"
+                " for neural networks"
             ),
             "check_sample_weight_equivalence": (
-                "Due to batch training of neural networks, sample_weight "
-                "is not equivalent to removing/repeating samples."
-                "Seperate unit tests are added for MLPClassifier and MLPRegressor"
+                "Due to batch training of neural networks, sample_weight"
+                " is not equivalent to removing/repeating samples."
+                " Seperate unit tests are added for MLPClassifier and MLPRegressor"
             ),
         }
         return tags
@@ -1756,7 +1756,6 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         )
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
-
         return X, y
 
     @available_if(lambda est: est._check_solver)
@@ -1789,13 +1788,13 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         tags = super().__sklearn_tags__()
         tags._xfail_checks = {
             "check_sample_weights_invariance": (
-                "zero sample_weight is not equivalent to removing samples \
-                    for neural networks"
+                "zero sample_weight is not equivalent to removing samples"
+                " for neural networks"
             ),
             "check_sample_weight_equivalence": (
-                "Due to batch training of neural networks, sample_weight "
-                "is not equivalent to removing/repeating samples."
-                "Seperate unit tests are added for MLPClassifier and MLPRegressor"
+                "Due to batch training of neural networks, sample_weight"
+                " is not equivalent to removing/repeating samples."
+                " Seperate unit tests are added for MLPClassifier and MLPRegressor"
             ),
         }
         return tags
