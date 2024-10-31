@@ -122,6 +122,9 @@ scikit_learn_install() {
         find $CONDA_PREFIX -name omp.h -delete -print
         # meson 1.5 detects OpenMP installed with brew and OpenMP is installed
         # with brew in CI runner
+        # for `macos-13` runner, it looks like `libomp` is not installed anymore and
+        # thus we used `--force` to avoid error in case that `libomp` is available
+        # in future `macos` runners.
         brew uninstall --ignore-dependencies --force libomp
     fi
 
