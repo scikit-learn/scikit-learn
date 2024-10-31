@@ -1251,6 +1251,10 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.array_api_support = True
+        reject_sparse = (self.solver == "svd") or (
+            self.solver == "cholesky" and self.fit_intercept
+        )
+        tags.input_tags.sparse = not reject_sparse
         tags._xfail_checks.update(
             {
                 "check_non_transformer_estimators_n_iter": (
@@ -1577,6 +1581,10 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        reject_sparse = (self.solver == "svd") or (
+            self.solver == "cholesky" and self.fit_intercept
+        )
+        tags.input_tags.sparse = not reject_sparse
         tags._xfail_checks.update(
             {
                 "check_non_transformer_estimators_n_iter": (
@@ -2549,6 +2557,11 @@ class _BaseRidgeCV(LinearModel):
     @property
     def cv_values_(self):
         return self.cv_results_
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
 
 
 class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):

@@ -292,11 +292,17 @@ class _BaseHeterogeneousEnsemble(
                 get_tags(est[1]).input_tags.allow_nan if est[1] != "drop" else True
                 for est in self.estimators
             )
+            sparse = all(
+                get_tags(est[1]).input_tags.sparse if est[1] != "drop" else True
+                for est in self.estimators
+            )
         except Exception:
             # If `estimators` does not comply with our API (list of tuples) then it will
             # fail. In this case, we assume that `allow_nan` is False but the parameter
             # validation will raise an error during `fit`.
             allow_nan = False
+            sparse = False
         tags.input_tags.allow_nan = allow_nan
+        tags.input_tags.sparse = sparse
         tags.transformer_tags.preserves_dtype = []
         return tags

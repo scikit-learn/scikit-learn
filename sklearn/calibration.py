@@ -27,11 +27,7 @@ from .isotonic import IsotonicRegression
 from .model_selection import LeaveOneOut, check_cv, cross_val_predict
 from .preprocessing import LabelEncoder, label_binarize
 from .svm import LinearSVC
-from .utils import (
-    _safe_indexing,
-    column_or_1d,
-    indexable,
-)
+from .utils import _safe_indexing, column_or_1d, get_tags, indexable
 from .utils._param_validation import (
     HasMethods,
     Interval,
@@ -539,6 +535,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             )
         )
         return router
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = get_tags(self._get_estimator()).input_tags.sparse
+        return tags
 
 
 def _fit_classifier_calibrator_pair(

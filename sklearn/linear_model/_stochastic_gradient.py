@@ -941,6 +941,11 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             sample_weight=sample_weight,
         )
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
 
 class SGDClassifier(BaseSGDClassifier):
     """Linear classifiers (SVM, logistic regression, etc.) with SGD training.
@@ -1781,6 +1786,11 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
         else:
             self.intercept_ = np.atleast_1d(intercept)
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
 
 
 class SGDRegressor(BaseSGDRegressor):
@@ -2656,6 +2666,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         # TODO: replace by a statistical test, see meta-issue #16298
         tags._xfail_checks = {
             "check_sample_weight_equivalence": (

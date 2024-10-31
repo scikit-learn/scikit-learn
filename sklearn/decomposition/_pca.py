@@ -851,4 +851,5 @@ class PCA(_BasePCA):
         tags = super().__sklearn_tags__()
         tags.transformer_tags.preserves_dtype = ["float64", "float32"]
         tags.array_api_support = True
+        tags.input_tags.sparse = True
         return tags

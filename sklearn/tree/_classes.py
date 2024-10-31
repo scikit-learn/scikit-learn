@@ -1100,6 +1100,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         }
         tags.classifier_tags.multi_label = True
         tags.input_tags.allow_nan = allow_nan
+        tags.input_tags.sparse = True
         return tags
 
 
@@ -1442,6 +1443,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             "poisson",
         }
         tags.input_tags.allow_nan = allow_nan
+        tags.input_tags.sparse = True
         return tags
 
 

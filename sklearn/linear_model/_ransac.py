@@ -723,6 +723,7 @@ class RANSACRegressor(
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         # TODO: replace by a statistical test, see meta-issue #16298
         tags._xfail_checks = {
             "check_sample_weight_equivalence": (

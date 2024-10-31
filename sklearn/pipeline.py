@@ -1060,6 +1060,7 @@ class Pipeline(_BaseComposition):
 
         try:
             tags.input_tags.pairwise = get_tags(self.steps[0][1]).input_tags.pairwise
+            tags.input_tags.sparse = get_tags(self.steps[0][1]).input_tags.sparse
         except (ValueError, AttributeError, TypeError):
             # This happens when the `steps` is not a list of (name, estimator)
             # tuples and `fit` is not called yet to validate the steps.

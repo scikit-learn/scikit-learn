@@ -1149,6 +1149,11 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         else:
             return super()._decision_function(X)
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
+
 
 ###############################################################################
 # Lasso model
@@ -2078,6 +2083,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         tags.target_tags.multi_output = False
         return tags
 
@@ -2359,6 +2365,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         tags.target_tags.multi_output = False
         return tags
 
@@ -2654,6 +2661,7 @@ class MultiTaskElasticNet(Lasso):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = False
         tags.target_tags.multi_output = True
         tags.target_tags.single_output = False
         return tags

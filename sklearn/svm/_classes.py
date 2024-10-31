@@ -351,6 +351,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         # TODO: replace by a statistical test when _dual=True, see meta-issue #16298
         tags._xfail_checks = {
             "check_sample_weight_equivalence": (
@@ -615,6 +616,7 @@ class LinearSVR(RegressorMixin, LinearModel):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         # TODO: replace by a statistical test, see meta-issue #16298
         tags._xfail_checks = {
             "check_sample_weight_equivalence": (
@@ -902,6 +904,7 @@ class SVC(BaseSVC):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = self.kernel != "precomputed"
         tags._xfail_checks = {
             # TODO: fix sample_weight handling of this estimator when probability=False
             # TODO: replace by a statistical test when probability=True
@@ -1177,6 +1180,7 @@ class NuSVC(BaseSVC):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = self.kernel != "precomputed"
         tags._xfail_checks = {
             "check_methods_subset_invariance": (
                 "fails for the decision_function method"
@@ -1388,6 +1392,7 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = self.kernel != "precomputed"
         # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
         tags._xfail_checks = {
             "check_sample_weight_equivalence": (
@@ -1583,6 +1588,7 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = self.kernel != "precomputed"
         # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
         tags._xfail_checks = {
             "check_sample_weight_equivalence": (
@@ -1850,6 +1856,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
         # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
         tags._xfail_checks = {
             "check_sample_weight_equivalence": (

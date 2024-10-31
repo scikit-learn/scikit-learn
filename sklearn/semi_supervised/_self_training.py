@@ -5,7 +5,7 @@ from warnings import warn
 import numpy as np
 
 from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone
-from ..utils import Bunch, safe_mask
+from ..utils import Bunch, get_tags, safe_mask
 from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
 from ..utils.metadata_routing import (
     MetadataRouter,
@@ -635,6 +635,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
         tags._xfail_checks.update(
             {"check_non_transformer_estimators_n_iter": "n_iter_ can be 0."}
         )

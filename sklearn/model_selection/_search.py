@@ -483,6 +483,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         tags = super().__sklearn_tags__()
         # allows cross-validation to see 'precomputed' metrics
         tags.input_tags.pairwise = get_tags(self.estimator).input_tags.pairwise
+        tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
         tags._xfail_checks = {
             "check_supervised_y_2d": "DataConversionWarning not caught",
             "check_requires_y_none": "Doesn't fail gracefully",
