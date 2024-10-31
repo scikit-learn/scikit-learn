@@ -27,7 +27,8 @@ if [[ -z "${CONDA}" ]]; then
     ./miniforge.sh -b -u -p $HOME/miniforge3
 
     # Set CONDA environment variable to point to miniforge installation
-    echo "##vso[task.setvariable variable=CONDA]$HOME/miniforge3"
+    export CONDA="$HOME/miniforge3"
+    echo "##vso[task.setvariable variable=CONDA]$CONDA"
 else
     sudo chown -R $USER $CONDA
 fi
