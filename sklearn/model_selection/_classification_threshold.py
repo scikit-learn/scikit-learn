@@ -865,7 +865,7 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
         class_labels : ndarray of shape (n_samples,)
             The predicted class.
         """
-        _check_is_fitted(self)
+        check_is_fitted(self, "estimator_")
         pos_label = self._curve_scorer._get_pos_label()
         y_score, _ = _get_response_values_binary(
             self.estimator_,
