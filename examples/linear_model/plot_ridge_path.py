@@ -27,8 +27,8 @@ in such a way that a balance is maintained between both.
 
 """
 
-# Author: Fabian Pedregosa -- <fabian.pedregosa@inria.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np

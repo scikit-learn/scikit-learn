@@ -2,9 +2,6 @@
 External Resources, Videos and Talks
 ===========================================
 
-For written tutorials, see the :ref:`Tutorial section <tutorial_menu>` of
-the documentation.
-
 New to Scientific Python?
 ==========================
 For those that are still new to the scientific Python ecosystem, we highly
@@ -45,9 +42,7 @@ Videos
 
   An extensive tutorial, consisting of four sessions of one hour.
   The tutorial covers the basics of machine learning,
-  many algorithms and how to apply them using scikit-learn. The
-  material corresponding is now in the scikit-learn documentation
-  section :ref:`stat_learn_tut_index`.
+  many algorithms and how to apply them using scikit-learn.
 
 - `Statistical Learning for Text Classification with scikit-learn and NLTK
   <https://pyvideo.org/video/417/pycon-2011--statistical-machine-learning-for-text>`_

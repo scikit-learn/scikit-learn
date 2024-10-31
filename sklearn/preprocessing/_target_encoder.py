@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from numbers import Integral, Real
 
 import numpy as np
@@ -172,7 +175,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     >>> # encodings:
     >>> enc_high_smooth = TargetEncoder(smooth=5000.0).fit(X, y)
     >>> enc_high_smooth.target_mean_
-    44...
+    np.float64(44...)
     >>> enc_high_smooth.encodings_
     [array([44..., 44..., 44...])]
 
@@ -322,7 +325,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             Transformed input.
         """
         X_ordinal, X_known_mask = self._transform(
-            X, handle_unknown="ignore", force_all_finite="allow-nan"
+            X, handle_unknown="ignore", ensure_all_finite="allow-nan"
         )
 
         # If 'multiclass' multiply axis=1 by num of classes else keep shape the same
@@ -353,7 +356,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         )
 
         check_consistent_length(X, y)
-        self._fit(X, handle_unknown="ignore", force_all_finite="allow-nan")
+        self._fit(X, handle_unknown="ignore", ensure_all_finite="allow-nan")
 
         if self.target_type == "auto":
             accepted_target_types = ("binary", "multiclass", "continuous")
@@ -383,7 +386,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self.target_mean_ = np.mean(y, axis=0)
 
         X_ordinal, X_known_mask = self._transform(
-            X, handle_unknown="ignore", force_all_finite="allow-nan"
+            X, handle_unknown="ignore", ensure_all_finite="allow-nan"
         )
         n_categories = np.fromiter(
             (len(category_for_feature) for category_for_feature in self.categories_),
@@ -525,7 +528,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         else:
             return feature_names
 
-    def _more_tags(self):
-        return {
-            "requires_y": True,
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.target_tags.required = True
+        return tags

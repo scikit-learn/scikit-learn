@@ -5,6 +5,9 @@ refurbished versions of :class:`~sklearn.pipeline.Pipeline` and
 :class:`~sklearn.pipeline.FeatureUnion`.
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from ._column_transformer import (
     ColumnTransformer,
     make_column_selector,

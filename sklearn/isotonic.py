@@ -1,9 +1,7 @@
 """Isotonic regression for obtaining monotonic fit to data."""
 
-# Authors: Fabian Pedregosa <fabian@fseoane.net>
-#          Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Nelle Varoquaux <nelle.varoquaux@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import math
 import warnings
@@ -12,6 +10,8 @@ from numbers import Real
 import numpy as np
 from scipy import interpolate, optimize
 from scipy.stats import spearmanr
+
+from sklearn.utils import metadata_routing
 
 from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
 from .base import BaseEstimator, RegressorMixin, TransformerMixin, _fit_context
@@ -67,10 +67,10 @@ def check_increasing(x, y):
     >>> from sklearn.isotonic import check_increasing
     >>> x, y = [1, 2, 3, 4, 5], [2, 4, 6, 8, 10]
     >>> check_increasing(x, y)
-    True
+    np.True_
     >>> y = [10, 8, 6, 4, 2]
     >>> check_increasing(x, y)
-    False
+    np.False_
     """
 
     # Calculate Spearman rho estimate and set return accordingly.
@@ -273,6 +273,10 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
     >>> iso_reg.predict([.1, .2])
     array([1.8628..., 3.7256...])
     """
+
+    # T should have been called X
+    __metadata_request__predict = {"T": metadata_routing.UNUSED}
+    __metadata_request__transform = {"T": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         "y_min": [Interval(Real, None, None, closed="both"), None],
@@ -506,5 +510,8 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         if hasattr(self, "X_thresholds_") and hasattr(self, "y_thresholds_"):
             self._build_f(self.X_thresholds_, self.y_thresholds_)
 
-    def _more_tags(self):
-        return {"X_types": ["1darray"]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.one_d_array = True
+        tags.input_tags.two_d_array = False
+        return tags

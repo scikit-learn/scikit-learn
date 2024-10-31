@@ -121,6 +121,7 @@ API_REFERENCE = {
                     "TransformerMixin",
                     "clone",
                     "is_classifier",
+                    "is_clusterer",
                     "is_regressor",
                 ],
             }
@@ -239,6 +240,7 @@ API_REFERENCE = {
                     "fetch_20newsgroups_vectorized",
                     "fetch_california_housing",
                     "fetch_covtype",
+                    "fetch_file",
                     "fetch_kddcup99",
                     "fetch_lfw_pairs",
                     "fetch_lfw_people",
@@ -455,6 +457,16 @@ API_REFERENCE = {
                     "mutual_info_regression",
                     "r_regression",
                 ],
+            },
+        ],
+    },
+    "sklearn.frozen": {
+        "short_summary": "Frozen estimators.",
+        "description": None,
+        "sections": [
+            {
+                "title": None,
+                "autosummary": ["FrozenEstimator"],
             },
         ],
     },
@@ -1158,6 +1170,14 @@ API_REFERENCE = {
                     "safe_mask",
                     "safe_sqr",
                     "shuffle",
+                    "Tags",
+                    "InputTags",
+                    "TargetTags",
+                    "ClassifierTags",
+                    "RegressorTags",
+                    "TransformerTags",
+                    "default_tags",
+                    "get_tags",
                 ],
             },
             {
@@ -1174,6 +1194,7 @@ API_REFERENCE = {
                     "validation.check_symmetric",
                     "validation.column_or_1d",
                     "validation.has_fit_parameter",
+                    "validation.validate_data",
                 ],
             },
             {
@@ -1284,8 +1305,6 @@ API_REFERENCE = {
                 "autosummary": [
                     "parallel.Parallel",
                     "parallel.delayed",
-                    "parallel_backend",
-                    "register_parallel_backend",
                 ],
             },
         ],
@@ -1328,4 +1347,9 @@ DEPRECATED_API_REFERENCE = {
 }
 """
 
-DEPRECATED_API_REFERENCE = {}  # type: ignore
+DEPRECATED_API_REFERENCE = {
+    "1.7": [
+        "utils.parallel_backend",
+        "utils.register_parallel_backend",
+    ]
+}  # type: ignore

@@ -1,9 +1,7 @@
 """Partial dependence plots for regression and classification models."""
 
-# Authors: Peter Prettenhofer
-#          Trevor Stephens
-#          Nicolas Hug
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from collections.abc import Iterable
 
@@ -17,7 +15,6 @@ from ..ensemble._gb import BaseGradientBoosting
 from ..ensemble._hist_gradient_boosting.gradient_boosting import (
     BaseHistGradientBoosting,
 )
-from ..exceptions import NotFittedError
 from ..tree import DecisionTreeRegressor
 from ..utils import Bunch, _safe_indexing, check_array
 from ..utils._indexing import _determine_key_type, _get_column_indices, _safe_assign
@@ -29,6 +26,7 @@ from ..utils._param_validation import (
     StrOptions,
     validate_params,
 )
+from ..utils._response import _get_response_values
 from ..utils.extmath import cartesian
 from ..utils.validation import _check_sample_weight, check_is_fitted
 from ._pd_utils import _check_feature_names, _get_feature_index
@@ -263,51 +261,27 @@ def _partial_dependence_brute(
     predictions = []
     averaged_predictions = []
 
-    # define the prediction_method (predict, predict_proba, decision_function).
-    if is_regressor(est):
-        prediction_method = est.predict
-    else:
-        predict_proba = getattr(est, "predict_proba", None)
-        decision_function = getattr(est, "decision_function", None)
-        if response_method == "auto":
-            # try predict_proba, then decision_function if it doesn't exist
-            prediction_method = predict_proba or decision_function
-        else:
-            prediction_method = (
-                predict_proba
-                if response_method == "predict_proba"
-                else decision_function
-            )
-        if prediction_method is None:
-            if response_method == "auto":
-                raise ValueError(
-                    "The estimator has no predict_proba and no "
-                    "decision_function method."
-                )
-            elif response_method == "predict_proba":
-                raise ValueError("The estimator has no predict_proba method.")
-            else:
-                raise ValueError("The estimator has no decision_function method.")
+    if response_method == "auto":
+        response_method = (
+            "predict" if is_regressor(est) else ["predict_proba", "decision_function"]
+        )
 
     X_eval = X.copy()
     for new_values in grid:
         for i, variable in enumerate(features):
             _safe_assign(X_eval, new_values[i], column_indexer=variable)
 
-        try:
-            # Note: predictions is of shape
-            # (n_points,) for non-multioutput regressors
-            # (n_points, n_tasks) for multioutput regressors
-            # (n_points, 1) for the regressors in cross_decomposition (I think)
-            # (n_points, 2) for binary classification
-            # (n_points, n_classes) for multiclass classification
-            pred = prediction_method(X_eval)
+        # Note: predictions is of shape
+        # (n_points,) for non-multioutput regressors
+        # (n_points, n_tasks) for multioutput regressors
+        # (n_points, 1) for the regressors in cross_decomposition (I think)
+        # (n_points, 2) for binary classification
+        # (n_points, n_classes) for multiclass classification
+        pred, _ = _get_response_values(est, X_eval, response_method=response_method)
 
-            predictions.append(pred)
-            # average over samples
-            averaged_predictions.append(np.average(pred, axis=0, weights=sample_weight))
-        except NotFittedError as e:
-            raise ValueError("'estimator' parameter must be a fitted estimator") from e
+        predictions.append(pred)
+        # average over samples
+        averaged_predictions.append(np.average(pred, axis=0, weights=sample_weight))
 
     n_samples = X.shape[0]
 
@@ -568,7 +542,7 @@ def partial_dependence(
     # Use check_array only on lists and other non-array-likes / sparse. Do not
     # convert DataFrame into a NumPy array.
     if not (hasattr(X, "__array__") or sparse.issparse(X)):
-        X = check_array(X, force_all_finite="allow-nan", dtype=object)
+        X = check_array(X, ensure_all_finite="allow-nan", dtype=object)
 
     if is_regressor(estimator) and response_method != "auto":
         raise ValueError(
