@@ -3,12 +3,12 @@
 
 from ..utils._array_api import (
     _apply_along_axis,
+    _cumsum,
     _find_matching_floating_dtype,
     _nextafter,
     _take_along_axis,
     get_namespace_and_device,
 )
-from .extmath import stable_cumsum
 
 
 def _weighted_percentile(array, sample_weight, percentile=50):
@@ -55,7 +55,7 @@ def _weighted_percentile(array, sample_weight, percentile=50):
     sorted_weights = _take_along_axis(sample_weight, sorted_idx, xp)
 
     # Find index of median prediction for each sample
-    weight_cdf = stable_cumsum(sorted_weights, axis=0)
+    weight_cdf = _cumsum(sorted_weights, axis=0)
     adjusted_percentile = percentile / 100 * weight_cdf[-1]
     weight_cdf = xp.asarray(
         weight_cdf, dtype=_find_matching_floating_dtype(weight_cdf, xp=xp)

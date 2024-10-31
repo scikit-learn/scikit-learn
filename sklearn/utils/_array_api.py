@@ -1063,8 +1063,8 @@ def _take_along_axis(sample_weight, sorted_idx, xp=None):
     take_along_axis will be added to the array API spec
     https://github.com/data-apis/array-api/pull/816
     """
-    if _is_numpy_namespace(xp):
-        return numpy.take_along_axis(sample_weight, sorted_idx, axis=0)
+    if hasattr(xp, "take_along_axis"):
+        return xp.take_along_axis(sample_weight, sorted_idx, axis=0)
     else:
         sorted_weights = xp.empty_like(
             sorted_idx, dtype=_find_matching_floating_dtype(sample_weight, xp=xp)
@@ -1088,8 +1088,8 @@ def _nextafter(x1, x2, xp=None):
     nextafter will be added to the array API spec
     https://github.com/data-apis/array-api/issues/664
     """
-    if _is_numpy_namespace(xp):
-        return numpy.nextafter(x1, x2)
+    if hasattr(xp, "nextafter"):
+        return xp.nextafter(x1, x2)
     else:
         x1 = xp.asarray(x1)
         x2 = xp.asarray(x2)
@@ -1107,10 +1107,6 @@ def _nextafter(x1, x2, xp=None):
 
 
 def _apply_along_axis(func1d, axis, arr, xp=None, *args, **kwargs):
-    """
-    TO DO: add docstring
-    nextafter will be added to the array API spec
-    """
     if _is_numpy_namespace(xp):
         return numpy.apply_along_axis(func1d, axis, arr, *args, **kwargs)
     else:
@@ -1132,3 +1128,11 @@ def _apply_along_axis(func1d, axis, arr, xp=None, *args, **kwargs):
             raise ValueError("array must be 1D or 2D")
     result = xp.asarray(result, dtype=xp.int64)
     return result
+
+
+def _cumsum(X, axis=None, dtype=None, xp=None):
+    xp, _ = get_namespace(X, xp=xp)
+    if hasattr(xp, "cumsum"):
+        return xp.cumsum(X, axis=axis, dtype=dtype)
+
+    return xp.asarray(numpy.cumsum(_convert_to_numpy(X, xp=xp), axis=axis), dtype=dtype)
