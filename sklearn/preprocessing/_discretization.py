@@ -14,6 +14,7 @@ from ..utils.deprecation import _deprecate_Xt_in_inverse_transform
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import (
     _check_feature_names_in,
+    _check_sample_weight,
     check_array,
     check_is_fitted,
     validate_data,
@@ -254,6 +255,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             # in subsequent operations to compute weight-aware bin edges with
             # quantiles or k-means.
             sample_weight = None
+
+        elif sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         n_features = X.shape[1]
         n_bins = self._validate_n_bins(n_features)
