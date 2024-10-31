@@ -28,16 +28,6 @@ Version 1.6
 
 .. rubric:: Code and documentation contributors
 
-:mod:`sklearn.neighbors`
-........................
-
-- |Enhancement| :class:`neighbors.NearestNeighbors`, :class:`KNeighborsClassifier`,
-  :class:`KNeighborsRegressor`, :class:`RadiusNeighborsClassifier`,
-  :class:`RadiusNeighborsRegressor`, :class:`KNeighborsTransformer`,
-  :class:`RadiusNeighborsTransformer`, and :class:`LocalOutlierFactor`
-  now work with `metric="nan_euclidean"`, supporting `nan` inputs.
-  :pr:`25330` by :user:`Carlo Lemos <vitaliset>`.
-
 .. rubric:: Code and documentation contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of
