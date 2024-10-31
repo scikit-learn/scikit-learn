@@ -320,11 +320,11 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     >>> clustering
     DBSCAN(eps=3, min_samples=2)
 
-    For a comparison of DBSCAN with other clustering algorithms, see
-    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
-
     For an example, see
     :ref:`sphx_glr_auto_examples_cluster_plot_dbscan.py`.
+
+    For a comparison of DBSCAN with other clustering algorithms, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
     """
 
     _parameter_constraints: dict = {

@@ -143,7 +143,7 @@ unseen data.
 .. rubric:: Examples
 
 * :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`: Shows the 
-  characteristics of different clustering algorithms of 2D datasets.
+  characteristics of different clustering algorithms on 2D datasets.
 
 .. _k_means:
 
