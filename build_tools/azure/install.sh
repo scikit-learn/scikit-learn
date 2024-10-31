@@ -122,7 +122,7 @@ scikit_learn_install() {
         find $CONDA_PREFIX -name omp.h -delete -print
         # meson 1.5 detects OpenMP installed with brew and OpenMP is installed
         # with brew in CI runner
-        brew uninstall --ignore-dependencies libomp
+        brew uninstall --ignore-dependencies --force libomp
     fi
 
     if [[ "$UNAMESTR" == "Linux" ]]; then
