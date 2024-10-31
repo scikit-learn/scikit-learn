@@ -20,11 +20,11 @@ from ._classification import (
     jaccard_score,
     log_loss,
     matthews_corrcoef,
-    tjur_pseudo_r2_score,
     multilabel_confusion_matrix,
     precision_recall_fscore_support,
     precision_score,
     recall_score,
+    tjur_pseudo_r2_score,
     zero_one_loss,
 )
 from ._dist_metrics import DistanceMetric

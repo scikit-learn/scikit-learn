@@ -1150,7 +1150,8 @@ def tjur_pseudo_r2_score(y_true, p_pred, *, sample_weight=None):
         Ground truth (correct) labels.
 
     p_pred : 1d array-like, or real array / sparse matrix
-        Predicted probabilities (for the positive class), as returned by a classifier.
+        Predicted probabilities (for the positive class), as returned
+        by a classifier.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -1174,9 +1175,6 @@ def tjur_pseudo_r2_score(y_true, p_pred, *, sample_weight=None):
     y_true = column_or_1d(y_true)
     p_pred = column_or_1d(p_pred)
 
-    if p_pred.min() < 0 or p_pred.max() > 1:
-        raise ValueError('probabilities must be between 0 and 1 inclusive')
-
     if sample_weight is None:
         sample_weight = np.ones_like(y_true, dtype=float)
     else:
@@ -1185,14 +1183,17 @@ def tjur_pseudo_r2_score(y_true, p_pred, *, sample_weight=None):
     check_consistent_length(y_true, p_pred, sample_weight)
     classes = np.unique(y_true)
 
-    if len(classes) < 2: # empty arrays or only a single class found
+    if len(classes) < 2:  # empty arrays or only a single class found
         return np.nan
 
     if len(classes) > 2:
-        raise ValueError('only binary classification is supported')
+        raise ValueError("only binary classification is supported")
 
-    mask = (y_true == classes[-1])
-    pos_mean = np.average(p_pred[mask],  weights=sample_weight[mask])
+    if p_pred.min() < 0 or p_pred.max() > 1:
+        raise ValueError("probabilities must be between 0 and 1 inclusive")
+
+    mask = y_true == classes[-1]
+    pos_mean = np.average(p_pred[mask], weights=sample_weight[mask])
     neg_mean = np.average(p_pred[~mask], weights=sample_weight[~mask])
 
     return pos_mean - neg_mean
