@@ -1197,7 +1197,7 @@ def tjur_pseudo_r2_score(y_true, p_pred, *, sample_weight=None):
     pos_mean = np.average(p_pred[mask], weights=sample_weight[mask])
     neg_mean = np.average(p_pred[~mask], weights=sample_weight[~mask])
 
-    return pos_mean - neg_mean
+    return float(pos_mean - neg_mean)
 
 
 @validate_params(
