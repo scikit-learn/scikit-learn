@@ -9,12 +9,12 @@ if [[ -z "${CONDA}" ]]; then
 
     # Set CONDA environment variable to point to micromamba installation
     echo "##vso[task.setvariable variable=CONDA]$HOME/micromamba"
+else
+    # Take ownership of conda installation if CONDA is already set
+    sudo chown -R $USER $CONDA
 fi
 
 # Add conda to PATH
 echo "##vso[task.prependpath]$CONDA/bin"
-
-if [[ -n "${CONDA}" ]]; then
-    # Take ownership of conda installation
-    sudo chown -R $USER $CONDA
-fi
+echo $PATH
+echo $CONDA
