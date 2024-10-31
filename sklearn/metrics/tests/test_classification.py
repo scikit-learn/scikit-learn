@@ -3142,8 +3142,8 @@ def test_tjur_pseudo_r2_score():
     p_pred = [0.25, 0.5, 0.875, 0.125]
     sample_weight = [1, 2, 3, 4]
 
-    r2_unweighted = tjur_pseudo_r2_score(y_true, y_pred)
-    r2_weighted = tjur_pseudo_r2_score(y_true, y_pred, sample_weight=sample_weight)
+    r2_unweighted = tjur_pseudo_r2_score(y_true, p_pred)
+    r2_weighted = tjur_pseudo_r2_score(y_true, p_pred, sample_weight=sample_weight)
 
     assert_almost_equal(r2_unweighted, 0.6875 - 0.1875)
     assert_almost_equal(r2_weighted, 0.725 - 0.15)
