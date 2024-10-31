@@ -1,0 +1,3 @@
+- :func:`metrics.roc_auc_score` will now correctly return np.nan and
+  warn user if only one class is present in the labels.
+  By :user:`Gleb Levitski <glevv>` and :user:`Janez Demšar <janezd>`

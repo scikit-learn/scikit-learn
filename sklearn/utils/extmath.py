@@ -373,6 +373,12 @@ def randomized_svd(
     This method solves the fixed-rank approximation problem described in [1]_
     (problem (1.5), p5).
 
+    Refer to
+    :ref:`sphx_glr_auto_examples_applications_wikipedia_principal_eigenvector.py`
+    for a typical example where the power iteration algorithm is used to rank web pages.
+    This algorithm is also known to be used as a building block in Google's PageRank
+    algorithm.
+
     Parameters
     ----------
     M : {ndarray, sparse matrix}
@@ -531,7 +537,7 @@ def randomized_svd(
     if is_array_api_compliant:
         Uhat, s, Vt = xp.linalg.svd(B, full_matrices=False)
     else:
-        # When when array_api_dispatch is disabled, rely on scipy.linalg
+        # When array_api_dispatch is disabled, rely on scipy.linalg
         # instead of numpy.linalg to avoid introducing a behavior change w.r.t.
         # previous versions of scikit-learn.
         Uhat, s, Vt = linalg.svd(
