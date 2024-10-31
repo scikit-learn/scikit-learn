@@ -8,7 +8,8 @@ if [[ -z "${CONDA}" ]]; then
     "${SHELL}" <(curl -L micro.mamba.pm/install.sh)
 
     # Set CONDA environment variable to point to micromamba installation
-    echo "##vso[task.setvariable variable=CONDA]$HOME/micromamba"
+    export CONDA="$HOME/micromamba"
+    echo "##vso[task.setvariable variable=CONDA]$CONDA"
 else
     # Take ownership of conda installation if CONDA is already set
     sudo chown -R $USER $CONDA
