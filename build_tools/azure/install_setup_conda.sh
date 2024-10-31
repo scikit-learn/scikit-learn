@@ -6,9 +6,8 @@ set -x
 if [[ -z "${CONDA}" ]]; then
     "${SHELL}" <(curl -L micro.mamba.pm/install.sh)
 
-    export CONDA="$HOME/micromamba"
+    export CONDA=$MAMBA_ROOT_PREFIX
     echo "##vso[task.setvariable variable=CONDA]$CONDA"
-    micromamba shell init
 else
     sudo chown -R $USER $CONDA
 fi
