@@ -1,0 +1,2 @@
+- :func:`sklearn.metrics.max_error` now supports Array API compatible inputs.
+  By :user:`Edoardo Abati <EdAbati>`

@@ -92,7 +92,7 @@ Scoring                                Function                                 
 
 **Regression**
 'explained_variance'                   :func:`metrics.explained_variance_score`
-'max_error'                            :func:`metrics.max_error`
+'neg_max_error'                        :func:`metrics.max_error`
 'neg_mean_absolute_error'              :func:`metrics.mean_absolute_error`
 'neg_mean_squared_error'               :func:`metrics.mean_squared_error`
 'neg_root_mean_squared_error'          :func:`metrics.root_mean_squared_error`
@@ -283,13 +283,15 @@ There are three ways to specify multiple scoring metrics for the ``scoring``
 parameter:
 
 - As an iterable of string metrics::
-      >>> scoring = ['accuracy', 'precision']
+
+    >>> scoring = ['accuracy', 'precision']
 
 - As a ``dict`` mapping the scorer name to the scoring function::
-      >>> from sklearn.metrics import accuracy_score
-      >>> from sklearn.metrics import make_scorer
-      >>> scoring = {'accuracy': make_scorer(accuracy_score),
-      ...            'prec': 'precision'}
+
+    >>> from sklearn.metrics import accuracy_score
+    >>> from sklearn.metrics import make_scorer
+    >>> scoring = {'accuracy': make_scorer(accuracy_score),
+    ...            'prec': 'precision'}
 
   Note that the dict values can either be scorer functions or one of the
   predefined metric strings.
@@ -1278,12 +1280,12 @@ function:
     >>> matthews_corrcoef(y_true, y_pred)
     -0.33...
 
-.. topic:: References:
+.. rubric:: References
 
-  .. [WikipediaMCC2021] Wikipedia contributors. Phi coefficient.
-     Wikipedia, The Free Encyclopedia. April 21, 2021, 12:21 CEST.
-     Available at: https://en.wikipedia.org/wiki/Phi_coefficient
-     Accessed April 21, 2021.
+.. [WikipediaMCC2021] Wikipedia contributors. Phi coefficient.
+   Wikipedia, The Free Encyclopedia. April 21, 2021, 12:21 CEST.
+   Available at: https://en.wikipedia.org/wiki/Phi_coefficient
+   Accessed April 21, 2021.
 
 .. _multilabel_confusion_matrix:
 
@@ -2485,6 +2487,22 @@ the small magnitude values and only reflected the error in prediction of highest
 magnitude value. But that problem is resolved in case of MAPE because it calculates
 relative percentage error with respect to actual output.
 
+.. note::
+
+    The MAPE formula here does not represent the common "percentage" definition: the
+    percentage in the range [0, 100] is converted to a relative value in the range [0,
+    1] by dividing by 100. Thus, an error of 200% corresponds to a relative error of 2.
+    The motivation here is to have a range of values that is more consistent with other
+    error metrics in scikit-learn, such as `accuracy_score`.
+
+    To obtain the mean absolute percentage error as per the Wikipedia formula,
+    multiply the `mean_absolute_percentage_error` computed here by 100.
+
+.. dropdown:: References
+
+  * `Wikipedia entry for Mean Absolute Percentage Error
+    <https://en.wikipedia.org/wiki/Mean_absolute_percentage_error>`_
+
 .. _median_absolute_error:
 
 Median absolute error
@@ -2569,7 +2587,7 @@ The best possible score is 1.0, lower values are worse.
 .. topic:: Link to :ref:`r2_score`
 
     The difference between the explained variance score and the :ref:`r2_score`
-    is that when the explained variance score does not account for
+    is that the explained variance score does not account for
     systematic offset in the prediction. For this reason, the
     :ref:`r2_score` should be preferred in general.
 

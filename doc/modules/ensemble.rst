@@ -98,14 +98,21 @@ controls the number of iterations of the boosting process::
   >>> clf.score(X_test, y_test)
   0.8965
 
-Available losses for regression are 'squared_error',
-'absolute_error', which is less sensitive to outliers, and
-'poisson', which is well suited to model counts and frequencies. For
-classification, 'log_loss' is the only option. For binary classification it uses the
-binary log loss, also known as binomial deviance or binary cross-entropy. For
-`n_classes >= 3`, it uses the multi-class log loss function, with multinomial deviance
-and categorical cross-entropy as alternative names. The appropriate loss version is
-selected based on :term:`y` passed to :term:`fit`.
+Available losses for **regression** are:
+
+- 'squared_error', which is the default loss;
+- 'absolute_error', which is less sensitive to outliers than the squared error;
+- 'gamma', which is well suited to model strictly positive outcomes;
+- 'poisson', which is well suited to model counts and frequencies;
+- 'quantile', which allows for estimating a conditional quantile that can later
+  be used to obtain prediction intervals.
+
+For **classification**, 'log_loss' is the only option. For binary classification
+it uses the binary log loss, also known as binomial deviance or binary
+cross-entropy. For `n_classes >= 3`, it uses the multi-class log loss function,
+with multinomial deviance and categorical cross-entropy as alternative names.
+The appropriate loss version is selected based on :term:`y` passed to
+:term:`fit`.
 
 The size of the trees can be controlled through the ``max_leaf_nodes``,
 ``max_depth``, and ``min_samples_leaf`` parameters.
@@ -1100,7 +1107,6 @@ amount of time (e.g., on large datasets).
 .. rubric:: Examples
 
 * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_iris.py`
-* :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`
 * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`
 
 .. rubric:: References
@@ -1147,15 +1153,6 @@ evaluation with Random Forests.
   obtaining feature importance are explored in:
   :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`.
 
-The following example shows a color-coded representation of the relative
-importances of each individual pixel for a face recognition task using
-a :class:`ExtraTreesClassifier` model.
-
-.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_forest_importances_faces_001.png
-   :target: ../auto_examples/ensemble/plot_forest_importances_faces.html
-   :align: center
-   :scale: 75
-
 In practice those estimates are stored as an attribute named
 ``feature_importances_`` on the fitted model. This is an array with shape
 ``(n_features,)`` whose values are positive and sum to 1.0. The higher
@@ -1164,7 +1161,6 @@ to the prediction function.
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`
 * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances.py`
 
 .. rubric:: References
@@ -1702,7 +1698,7 @@ learners::
     >>> from sklearn.ensemble import AdaBoostClassifier
 
     >>> X, y = load_iris(return_X_y=True)
-    >>> clf = AdaBoostClassifier(n_estimators=100, algorithm="SAMME",)
+    >>> clf = AdaBoostClassifier(n_estimators=100)
     >>> scores = cross_val_score(clf, X, y, cv=5)
     >>> scores.mean()
     0.9...

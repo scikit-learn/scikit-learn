@@ -14,7 +14,7 @@ create a non-convex decision boundary in that area.
 
 """
 
-# Code source: Andreas Mueller, Adrin Jalali
+# Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt

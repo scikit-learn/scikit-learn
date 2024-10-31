@@ -1,5 +1,8 @@
 """Utilities to load popular datasets and artificial data generators."""
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import textwrap
 
 from ._base import (

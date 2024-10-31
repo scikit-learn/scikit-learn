@@ -39,6 +39,7 @@ from sklearn.tree._tree import (
     NODE_DTYPE,
     TREE_LEAF,
     TREE_UNDEFINED,
+    _build_pruned_tree_py,
     _check_n_classes,
     _check_node_ndarray,
     _check_value_ndarray,
@@ -53,7 +54,6 @@ from sklearn.utils._testing import (
     ignore_warnings,
     skip_if_32bit,
 )
-from sklearn.utils.estimator_checks import check_sample_weights_invariance
 from sklearn.utils.fixes import (
     _IS_32BIT,
     COO_CONTAINERS,
@@ -1543,7 +1543,6 @@ def test_explicit_sparse_zeros(tree_type, csc_container, csr_container):
             assert_array_almost_equal(s.predict_proba(X1), d.predict_proba(X2))
 
 
-@ignore_warnings
 def check_raise_error_on_1d_input(name):
     TreeEstimator = ALL_TREES[name]
 
@@ -2019,44 +2018,6 @@ def test_poisson_vs_mse():
         if val == "test":
             assert metric_poi < 0.5 * metric_mse
         assert metric_poi < 0.75 * metric_dummy
-
-
-@pytest.mark.parametrize("criterion", REG_CRITERIONS)
-def test_decision_tree_regressor_sample_weight_consistency(criterion):
-    """Test that the impact of sample_weight is consistent."""
-    tree_params = dict(criterion=criterion)
-    tree = DecisionTreeRegressor(**tree_params, random_state=42)
-    for kind in ["zeros", "ones"]:
-        check_sample_weights_invariance(
-            "DecisionTreeRegressor_" + criterion, tree, kind="zeros"
-        )
-
-    rng = np.random.RandomState(0)
-    n_samples, n_features = 10, 5
-
-    X = rng.rand(n_samples, n_features)
-    y = np.mean(X, axis=1) + rng.rand(n_samples)
-    # make it positive in order to work also for poisson criterion
-    y += np.min(y) + 0.1
-
-    # check that multiplying sample_weight by 2 is equivalent
-    # to repeating corresponding samples twice
-    X2 = np.concatenate([X, X[: n_samples // 2]], axis=0)
-    y2 = np.concatenate([y, y[: n_samples // 2]])
-    sample_weight_1 = np.ones(len(y))
-    sample_weight_1[: n_samples // 2] = 2
-
-    tree1 = DecisionTreeRegressor(**tree_params).fit(
-        X, y, sample_weight=sample_weight_1
-    )
-
-    tree2 = DecisionTreeRegressor(**tree_params).fit(X2, y2, sample_weight=None)
-
-    assert tree1.tree_.node_count == tree2.tree_.node_count
-    # Thresholds, tree.tree_.threshold, and values, tree.tree_.value, are not
-    # exactly the same, but on the training set, those differences do not
-    # matter and thus predictions are the same.
-    assert_allclose(tree1.predict(X), tree2.predict(X))
 
 
 @pytest.mark.parametrize("Tree", [DecisionTreeClassifier, ExtraTreeClassifier])
@@ -2725,7 +2686,8 @@ def test_regression_tree_missing_values_toy(Tree, X, criterion):
     tree = Tree(criterion=criterion, random_state=0).fit(X, y)
     tree_ref = clone(tree).fit(y.reshape(-1, 1), y)
 
-    assert all(tree.tree_.impurity >= 0)  # MSE should always be positive
+    impurity = tree.tree_.impurity
+    assert all(impurity >= 0), impurity.min()  # MSE should always be positive
 
     # Note: the impurity matches after the first split only on greedy trees
     if Tree is DecisionTreeRegressor:
@@ -2784,3 +2746,52 @@ def test_classification_tree_missing_values_toy():
         (tree.tree_.children_left == -1) & (tree.tree_.n_node_samples == 1)
     )
     assert_allclose(tree.tree_.impurity[leaves_idx], 0.0)
+
+
+def test_build_pruned_tree_py():
+    """Test pruning a tree with the Python caller of the Cythonized prune tree."""
+    tree = DecisionTreeClassifier(random_state=0, max_depth=1)
+    tree.fit(iris.data, iris.target)
+
+    n_classes = np.atleast_1d(tree.n_classes_)
+    pruned_tree = CythonTree(tree.n_features_in_, n_classes, tree.n_outputs_)
+
+    # only keep the root note
+    leave_in_subtree = np.zeros(tree.tree_.node_count, dtype=np.uint8)
+    leave_in_subtree[0] = 1
+    _build_pruned_tree_py(pruned_tree, tree.tree_, leave_in_subtree)
+
+    assert tree.tree_.node_count == 3
+    assert pruned_tree.node_count == 1
+    with pytest.raises(AssertionError):
+        assert_array_equal(tree.tree_.value, pruned_tree.value)
+    assert_array_equal(tree.tree_.value[0], pruned_tree.value[0])
+
+    # now keep all the leaves
+    pruned_tree = CythonTree(tree.n_features_in_, n_classes, tree.n_outputs_)
+    leave_in_subtree = np.zeros(tree.tree_.node_count, dtype=np.uint8)
+    leave_in_subtree[1:] = 1
+
+    # Prune the tree
+    _build_pruned_tree_py(pruned_tree, tree.tree_, leave_in_subtree)
+    assert tree.tree_.node_count == 3
+    assert pruned_tree.node_count == 3, pruned_tree.node_count
+    assert_array_equal(tree.tree_.value, pruned_tree.value)
+
+
+def test_build_pruned_tree_infinite_loop():
+    """Test pruning a tree does not result in an infinite loop."""
+
+    # Create a tree with root and two children
+    tree = DecisionTreeClassifier(random_state=0, max_depth=1)
+    tree.fit(iris.data, iris.target)
+    n_classes = np.atleast_1d(tree.n_classes_)
+    pruned_tree = CythonTree(tree.n_features_in_, n_classes, tree.n_outputs_)
+
+    # only keeping one child as a leaf results in an improper tree
+    leave_in_subtree = np.zeros(tree.tree_.node_count, dtype=np.uint8)
+    leave_in_subtree[1] = 1
+    with pytest.raises(
+        ValueError, match="Node has reached a leaf in the original tree"
+    ):
+        _build_pruned_tree_py(pruned_tree, tree.tree_, leave_in_subtree)

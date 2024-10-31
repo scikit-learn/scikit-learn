@@ -23,8 +23,9 @@ from .base import (
     _fit_context,
     clone,
 )
+from .frozen import FrozenEstimator
 from .isotonic import IsotonicRegression
-from .model_selection import check_cv, cross_val_predict
+from .model_selection import LeaveOneOut, check_cv, cross_val_predict
 from .preprocessing import LabelEncoder, label_binarize
 from .svm import LinearSVC
 from .utils import (
@@ -34,11 +35,12 @@ from .utils import (
 )
 from .utils._param_validation import (
     HasMethods,
+    Hidden,
     Interval,
     StrOptions,
     validate_params,
 )
-from .utils._plotting import _BinaryClassifierCurveDisplayMixin
+from .utils._plotting import _BinaryClassifierCurveDisplayMixin, _validate_style_kwargs
 from .utils._response import _get_response_values, _process_predict_proba
 from .utils.metadata_routing import (
     MetadataRouter,
@@ -75,8 +77,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     `probabilities=True` for :class:`~sklearn.svm.SVC` and :class:`~sklearn.svm.NuSVC`
     estimators (see :ref:`User Guide <scores_probabilities>` for details).
 
-    Already fitted classifiers can be calibrated via the parameter
-    `cv="prefit"`. In this case, no cross-validation is used and all provided
+    Already fitted classifiers can be calibrated by wrapping the model in a
+    :class:`~sklearn.frozen.FrozenEstimator`. In this case all provided
     data is used for calibration. The user has to take care manually that data
     for model fitting and calibration are disjoint.
 
@@ -84,6 +86,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     `estimator` if it exists, else on :term:`predict_proba`.
 
     Read more in the :ref:`User Guide <calibration>`.
+    In order to learn more on the CalibratedClassifierCV class, see the
+    following calibration examples:
+    :ref:`sphx_glr_auto_examples_calibration_plot_calibration.py`,
+    :ref:`sphx_glr_auto_examples_calibration_plot_calibration_curve.py`, and
+    :ref:`sphx_glr_auto_examples_calibration_plot_calibration_multiclass.py`.
 
     Parameters
     ----------
@@ -101,8 +108,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         use isotonic calibration with too few calibration samples
         ``(<<1000)`` since it tends to overfit.
 
-    cv : int, cross-validation generator, iterable or "prefit", \
-            default=None
+    cv : int, cross-validation generator, or iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
@@ -119,11 +125,12 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         Refer to the :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        If "prefit" is passed, it is assumed that `estimator` has been
-        fitted already and all data is used for calibration.
-
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
+
+        .. versionchanged:: 1.6
+            `"prefit"` is deprecated. Use :class:`~sklearn.frozen.FrozenEstimator`
+            instead.
 
     n_jobs : int, default=None
         Number of jobs to run in parallel.
@@ -137,9 +144,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
         .. versionadded:: 0.24
 
-    ensemble : bool, default=True
-        Determines how the calibrator is fitted when `cv` is not `'prefit'`.
-        Ignored if `cv='prefit'`.
+    ensemble : bool, or "auto", default="auto"
+        Determines how the calibrator is fitted.
+
+        "auto" will use `False` if the `estimator` is a
+        :class:`~sklearn.frozen.FrozenEstimator`, and `True` otherwise.
 
         If `True`, the `estimator` is fitted using training data, and
         calibrated using testing data, for each `cv` fold. The final estimator
@@ -155,6 +164,9 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         :mod:`sklearn.svm` estimators with the `probabilities=True` parameter.
 
         .. versionadded:: 0.24
+
+        .. versionchanged:: 1.6
+            `"auto"` option is added and is the default.
 
     Attributes
     ----------
@@ -173,17 +185,13 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
         .. versionadded:: 1.0
 
-    calibrated_classifiers_ : list (len() equal to cv or 1 if `cv="prefit"` \
-            or `ensemble=False`)
+    calibrated_classifiers_ : list (len() equal to cv or 1 if `ensemble=False`)
         The list of classifier and calibrator pairs.
 
-        - When `cv="prefit"`, the fitted `estimator` and fitted
+        - When `ensemble=True`, `n_cv` fitted `estimator` and calibrator pairs.
+          `n_cv` is the number of cross-validation folds.
+        - When `ensemble=False`, the `estimator`, fitted on all the data, and fitted
           calibrator.
-        - When `cv` is not "prefit" and `ensemble=True`, `n_cv` fitted
-          `estimator` and calibrator pairs. `n_cv` is the number of
-          cross-validation folds.
-        - When `cv` is not "prefit" and `ensemble=False`, the `estimator`,
-          fitted on all the data, and fitted calibrator.
 
         .. versionchanged:: 0.24
             Single calibrated classifier case when `ensemble=False`.
@@ -235,7 +243,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     >>> base_clf = GaussianNB()
     >>> base_clf.fit(X_train, y_train)
     GaussianNB()
-    >>> calibrated_clf = CalibratedClassifierCV(base_clf, cv="prefit")
+    >>> from sklearn.frozen import FrozenEstimator
+    >>> calibrated_clf = CalibratedClassifierCV(FrozenEstimator(base_clf))
     >>> calibrated_clf.fit(X_calib, y_calib)
     CalibratedClassifierCV(...)
     >>> len(calibrated_clf.calibrated_classifiers_)
@@ -251,9 +260,9 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             None,
         ],
         "method": [StrOptions({"isotonic", "sigmoid"})],
-        "cv": ["cv_object", StrOptions({"prefit"})],
+        "cv": ["cv_object", Hidden(StrOptions({"prefit"}))],
         "n_jobs": [Integral, None],
-        "ensemble": ["boolean"],
+        "ensemble": ["boolean", StrOptions({"auto"})],
     }
 
     def __init__(
@@ -263,7 +272,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         method="sigmoid",
         cv=None,
         n_jobs=None,
-        ensemble=True,
+        ensemble="auto",
     ):
         self.estimator = estimator
         self.method = method
@@ -318,8 +327,18 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
         estimator = self._get_estimator()
 
+        _ensemble = self.ensemble
+        if _ensemble == "auto":
+            _ensemble = not isinstance(estimator, FrozenEstimator)
+
         self.calibrated_classifiers_ = []
         if self.cv == "prefit":
+            # TODO(1.8): Remove this code branch and cv='prefit'
+            warnings.warn(
+                "The `cv='prefit'` option is deprecated in 1.6 and will be removed in"
+                " 1.8. You can use CalibratedClassifierCV(FrozenEstimator(estimator))"
+                " instead."
+            )
             # `classes_` should be consistent with that of estimator
             check_is_fitted(self.estimator, attributes=["classes_"])
             self.classes_ = self.estimator.classes_
@@ -390,9 +409,16 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     "cross-validation but provided less than "
                     f"{n_folds} examples for at least one class."
                 )
+            if isinstance(self.cv, LeaveOneOut):
+                raise ValueError(
+                    "LeaveOneOut cross-validation does not allow"
+                    "all classes to be present in test splits. "
+                    "Please use a cross-validation generator that allows "
+                    "all classes to appear in every test and train split."
+                )
             cv = check_cv(self.cv, y, classifier=True)
 
-            if self.ensemble:
+            if _ensemble:
                 parallel = Parallel(n_jobs=self.n_jobs)
                 self.calibrated_classifiers_ = parallel(
                     delayed(_fit_classifier_calibrator_pair)(
@@ -527,17 +553,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             )
         )
         return router
-
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "Due to the cross-validation and sample ordering, removing a sample"
-                    " is not strictly equal to putting is weight to zero. Specific unit"
-                    " tests are added for CalibratedClassifierCV specifically."
-                ),
-            }
-        }
 
 
 def _fit_classifier_calibrator_pair(
@@ -1040,6 +1055,9 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
     Read more about calibration in the :ref:`User Guide <calibration>` and
     more about the scikit-learn visualization API in :ref:`visualizations`.
 
+    For an example on how to use the visualization, see
+    :ref:`sphx_glr_auto_examples_calibration_plot_calibration_curve.py`.
+
     .. versionadded:: 1.0
 
     Parameters
@@ -1146,10 +1164,10 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             f"(Positive class: {self.pos_label})" if self.pos_label is not None else ""
         )
 
-        line_kwargs = {"marker": "s", "linestyle": "-"}
+        default_line_kwargs = {"marker": "s", "linestyle": "-"}
         if name is not None:
-            line_kwargs["label"] = name
-        line_kwargs.update(**kwargs)
+            default_line_kwargs["label"] = name
+        line_kwargs = _validate_style_kwargs(default_line_kwargs, kwargs)
 
         ref_line_label = "Perfectly calibrated"
         existing_ref_line = ref_line_label in self.ax_.get_legend_handles_labels()[1]

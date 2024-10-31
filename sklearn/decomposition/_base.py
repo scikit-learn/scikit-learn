@@ -10,7 +10,7 @@ from scipy import linalg
 
 from ..base import BaseEstimator, ClassNamePrefixFeaturesOutMixin, TransformerMixin
 from ..utils._array_api import _fill_or_add_to_diagonal, device, get_namespace
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, validate_data
 
 
 class _BasePCA(
@@ -44,7 +44,7 @@ class _BasePCA(
         exp_var_diff = xp.where(
             exp_var > self.noise_variance_,
             exp_var_diff,
-            xp.asarray(0.0, device=device(exp_var)),
+            xp.asarray(0.0, device=device(exp_var), dtype=exp_var.dtype),
         )
         cov = (components_.T * exp_var_diff) @ components_
         _fill_or_add_to_diagonal(cov, self.noise_variance_, xp)
@@ -135,8 +135,12 @@ class _BasePCA(
 
         check_is_fitted(self)
 
-        X = self._validate_data(
-            X, dtype=[xp.float64, xp.float32], accept_sparse=("csr", "csc"), reset=False
+        X = validate_data(
+            self,
+            X,
+            dtype=[xp.float64, xp.float32],
+            accept_sparse=("csr", "csc"),
+            reset=False,
         )
         return self._transform(X, xp=xp, x_is_centered=False)
 

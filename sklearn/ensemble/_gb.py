@@ -49,7 +49,7 @@ from ..utils import check_array, check_random_state, column_or_1d
 from ..utils._param_validation import HasMethods, Interval, StrOptions
 from ..utils.multiclass import check_classification_targets
 from ..utils.stats import _weighted_percentile
-from ..utils.validation import _check_sample_weight, check_is_fitted
+from ..utils.validation import _check_sample_weight, check_is_fitted, validate_data
 from ._base import BaseEnsemble
 from ._gradient_boosting import _random_sample_mask, predict_stage, predict_stages
 
@@ -655,8 +655,13 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         # Since check_array converts both X and y to the same dtype, but the
         # trees use different types for X and y, checking them separately.
 
-        X, y = self._validate_data(
-            X, y, accept_sparse=["csr", "csc", "coo"], dtype=DTYPE, multi_output=True
+        X, y = validate_data(
+            self,
+            X,
+            y,
+            accept_sparse=["csr", "csc", "coo"],
+            dtype=DTYPE,
+            multi_output=True,
         )
         sample_weight_is_none = sample_weight is None
         sample_weight = _check_sample_weight(sample_weight, X)
@@ -773,7 +778,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 dtype=DTYPE,
                 order="C",
                 accept_sparse="csr",
-                force_all_finite=False,
+                ensure_all_finite=False,
             )
             raw_predictions = self._raw_predict(X_train)
             self._resize_state()
@@ -986,8 +991,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             ``k == 1``, otherwise ``k==n_classes``.
         """
         if check_input:
-            X = self._validate_data(
-                X, dtype=DTYPE, order="C", accept_sparse="csr", reset=False
+            X = validate_data(
+                self, X, dtype=DTYPE, order="C", accept_sparse="csr", reset=False
             )
         raw_predictions = self._raw_predict_init(X)
         for i in range(self.estimators_.shape[0]):
@@ -1123,8 +1128,9 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     classification is a special case where only a single regression tree is
     induced.
 
-    :class:`sklearn.ensemble.HistGradientBoostingClassifier` is a much faster
-    variant of this algorithm for intermediate datasets (`n_samples >= 10_000`).
+    :class:`~sklearn.ensemble.HistGradientBoostingClassifier` is a much faster variant
+    of this algorithm for intermediate and large datasets (`n_samples >= 10_000`) and
+    supports monotonic constraints.
 
     Read more in the :ref:`User Guide <gradient_boosting>`.
 
@@ -1306,7 +1312,9 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed.
         Values must be in the range `[0.0, inf)`.
-        See :ref:`minimal_cost_complexity_pruning` for details.
+        See :ref:`minimal_cost_complexity_pruning` for details. See
+        :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
+        for an example of such pruning.
 
         .. versionadded:: 0.22
 
@@ -1560,8 +1568,8 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             :term:`classes_`. Regression and binary classification produce an
             array of shape (n_samples,).
         """
-        X = self._validate_data(
-            X, dtype=DTYPE, order="C", accept_sparse="csr", reset=False
+        X = validate_data(
+            self, X, dtype=DTYPE, order="C", accept_sparse="csr", reset=False
         )
         raw_predictions = self._raw_predict(X)
         if raw_predictions.shape[1] == 1:
@@ -1717,6 +1725,16 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
                 "loss=%r does not support predict_proba" % self.loss
             ) from e
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        # TODO: investigate failure see meta-issue #16298
+        tags._xfail_checks = {
+            "check_sample_weight_equivalence": (
+                "sample_weight is not equivalent to removing/repeating samples."
+            ),
+        }
+        return tags
+
 
 class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     """Gradient Boosting for regression.
@@ -1726,8 +1744,9 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     each stage a regression tree is fit on the negative gradient of the given
     loss function.
 
-    :class:`sklearn.ensemble.HistGradientBoostingRegressor` is a much faster
-    variant of this algorithm for intermediate datasets (`n_samples >= 10_000`).
+    :class:`~sklearn.ensemble.HistGradientBoostingRegressor` is a much faster variant
+    of this algorithm for intermediate and large datasets (`n_samples >= 10_000`) and
+    supports monotonic constraints.
 
     Read more in the :ref:`User Guide <gradient_boosting>`.
 
@@ -1917,7 +1936,9 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed.
         Values must be in the range `[0.0, inf)`.
-        See :ref:`minimal_cost_complexity_pruning` for details.
+        See :ref:`minimal_cost_complexity_pruning` for details. See
+        :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
+        for an example of such pruning.
 
         .. versionadded:: 0.22
 
@@ -2121,8 +2142,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         y : ndarray of shape (n_samples,)
             The predicted values.
         """
-        X = self._validate_data(
-            X, dtype=DTYPE, order="C", accept_sparse="csr", reset=False
+        X = validate_data(
+            self, X, dtype=DTYPE, order="C", accept_sparse="csr", reset=False
         )
         # In regression we can directly return the raw value from the trees.
         return self._raw_predict(X).ravel()
@@ -2170,3 +2191,13 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         leaves = super().apply(X)
         leaves = leaves.reshape(X.shape[0], self.estimators_.shape[0])
         return leaves
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        # TODO: investigate failure see meta-issue #16298
+        tags._xfail_checks = {
+            "check_sample_weight_equivalence": (
+                "sample_weight is not equivalent to removing/repeating samples."
+            ),
+        }
+        return tags
