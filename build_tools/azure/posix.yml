@@ -42,7 +42,7 @@ jobs:
     - bash: |
         echo $PATH
         echo $CONDA
-        echo ls -l $CONDA/bin
+        ls -l $CONDA/bin
       displayName: Print PATH and CONDA
     - task: Cache@2
       inputs:
