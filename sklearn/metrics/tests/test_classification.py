@@ -33,6 +33,7 @@ from sklearn.metrics import (
     precision_recall_fscore_support,
     precision_score,
     recall_score,
+    tjur_pseudo_r2_score,
     zero_one_loss,
 )
 from sklearn.metrics._classification import _check_targets, d2_log_loss_score
@@ -3134,3 +3135,38 @@ def test_d2_log_loss_score_raises():
     err = "The labels array needs to contain at least two"
     with pytest.raises(ValueError, match=err):
         d2_log_loss_score(y_true, y_pred, labels=labels)
+
+
+def test_tjur_pseudo_r2_score():
+    y_true = [0, 1, 1, 0]
+    p_pred = [0.25, 0.5, 0.875, 0.125]
+    sample_weight = [1, 2, 3, 4]
+
+    r2_unweighted = tjur_pseudo_r2_score(y_true, y_pred)
+    r2_weighted = tjur_pseudo_r2_score(y_true, y_pred, sample_weight=sample_weight)
+
+    assert_almost_equal(r2_unweighted, 0.6875 - 0.1875)
+    assert_almost_equal(r2_weighted, 0.725 - 0.15)
+
+
+def test_tjur_pseudo_r2_score_degenerate():
+    """Check that Tjur's pseudo-R^2 yields NaN for no samples,
+    or when samples represent only a single class."""
+    assert np.isnan(tjur_pseudo_r2_score([], []))
+    assert np.isnan(tjur_pseudo_r2_score([1, 1, 1], [0.75, 0.5, 0.9]))
+
+
+def test_tjur_pseudo_r2_score_multiclass_raises():
+    """Check that multiclass classification is not supported."""
+    err = "only binary classification is supported"
+    with pytest.raises(ValueError, match=err):
+        tjur_pseudo_r2_score([-1, 0, 1], [0.1, 0.7, 0.45])
+
+
+def test_tjur_pseudo_r2_score_bad_probability_raises():
+    """Check that multiclass classification is not supported."""
+    err = "probabilities must be between 0 and 1 inclusive"
+    with pytest.raises(ValueError, match=err):
+        tjur_pseudo_r2_score([0, 1], [0.75, 1.3])
+    with pytest.raises(ValueError, match=err):
+        tjur_pseudo_r2_score([0, 1], [-0.75, 0.6])
