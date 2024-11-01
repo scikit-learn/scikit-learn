@@ -267,10 +267,13 @@ def make_classification(
     # useless features have int flag 4
     feat_desc = np.zeros(n_features, dtype=int)
     feat_desc[:n_informative] = 1
-    feat_desc[n_informative : n_informative + n_redundant] = 2
+    if n_redundant > 0:
+        feat_desc[n_informative : n_informative + n_redundant] = 2
     n = n_informative + n_redundant
-    feat_desc[n : n + n_repeated] = 3
-    feat_desc[-n_useless:] = 4
+    if n_repeated > 0:
+        feat_desc[n : n + n_repeated] = 3
+    if n_useless > 0:
+        feat_desc[-n_useless:] = 4
 
     if shuffle:
         # Randomly permute samples
@@ -297,18 +300,15 @@ def make_classification(
         X_k += centroid  # shift the cluster to a vertex
 
     # Create redundant features
-    if n_redundant > 0:
-        B = 2 * generator.uniform(size=(n_informative, n_redundant)) - 1
-        X[:, feat_desc == 2] = np.dot(X[:, feat_desc == 1], B)
+    B = 2 * generator.uniform(size=(n_informative, n_redundant)) - 1
+    X[:, feat_desc == 2] = np.dot(X[:, feat_desc == 1], B)
 
     # Repeat some features
-    if n_repeated > 0:
-        indices = ((n - 1) * generator.uniform(size=n_repeated) + 0.5).astype(np.intp)
-        X[:, feat_desc == 3] = X[:, indices]
+    indices = ((n - 1) * generator.uniform(size=n_repeated) + 0.5).astype(np.intp)
+    X[:, feat_desc == 3] = X[:, indices]
 
     # Fill useless features
-    if n_useless > 0:
-        X[:, feat_desc == 4] = generator.standard_normal(size=(n_samples, n_useless))
+    X[:, feat_desc == 4] = generator.standard_normal(size=(n_samples, n_useless))
 
     # Randomly replace labels
     if flip_y >= 0.0:
