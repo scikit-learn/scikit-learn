@@ -472,7 +472,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 )
 
     def _fit(self, X, y=None):
-        force_all_finite = "allow-nan" if get_tags(self).input_tags.allow_nan else True
+        ensure_all_finite = "allow-nan" if get_tags(self).input_tags.allow_nan else True
         if self.__sklearn_tags__().target_tags.required:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
                 X, y = validate_data(
@@ -482,7 +482,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     accept_sparse="csr",
                     multi_output=True,
                     order="C",
-                    force_all_finite=force_all_finite,
+                    ensure_all_finite=ensure_all_finite,
                 )
 
             if is_classifier(self):
@@ -526,7 +526,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 X = validate_data(
                     self,
                     X,
-                    force_all_finite=force_all_finite,
+                    ensure_all_finite=ensure_all_finite,
                     accept_sparse="csr",
                     order="C",
                 )
@@ -709,6 +709,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         tags = super().__sklearn_tags__()
         # For cross-validation routines to split data correctly
         tags.input_tags.pairwise = self.metric == "precomputed"
+        tags.input_tags.allow_nan = self.metric == "nan_euclidean"
         return tags
 
 
@@ -820,7 +821,7 @@ class KNeighborsMixin:
                 % type(n_neighbors)
             )
 
-        force_all_finite = "allow-nan" if get_tags(self).input_tags.allow_nan else True
+        ensure_all_finite = "allow-nan" if get_tags(self).input_tags.allow_nan else True
         query_is_train = X is None
         if query_is_train:
             X = self._fit_X
@@ -834,7 +835,7 @@ class KNeighborsMixin:
                 X = validate_data(
                     self,
                     X,
-                    force_all_finite=force_all_finite,
+                    ensure_all_finite=ensure_all_finite,
                     accept_sparse="csr",
                     reset=False,
                     order="C",
@@ -1167,7 +1168,7 @@ class RadiusNeighborsMixin:
         if sort_results and not return_distance:
             raise ValueError("return_distance must be True if sort_results is True.")
 
-        force_all_finite = "allow-nan" if get_tags(self).input_tags.allow_nan else True
+        ensure_all_finite = "allow-nan" if get_tags(self).input_tags.allow_nan else True
         query_is_train = X is None
         if query_is_train:
             X = self._fit_X
@@ -1178,7 +1179,7 @@ class RadiusNeighborsMixin:
                 X = validate_data(
                     self,
                     X,
-                    force_all_finite=force_all_finite,
+                    ensure_all_finite=ensure_all_finite,
                     accept_sparse="csr",
                     reset=False,
                     order="C",

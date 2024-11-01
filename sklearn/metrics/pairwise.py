@@ -814,8 +814,8 @@ def pairwise_distances_argmin_min(
     >>> distances
     array([1., 1.])
     """
-    force_all_finite = "allow-nan" if metric == "nan_euclidean" else True
-    X, Y = check_pairwise_arrays(X, Y, force_all_finite=force_all_finite)
+    ensure_all_finite = "allow-nan" if metric == "nan_euclidean" else True
+    X, Y = check_pairwise_arrays(X, Y, ensure_all_finite=ensure_all_finite)
 
     if axis == 0:
         X, Y = Y, X
@@ -955,8 +955,8 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
     >>> pairwise_distances_argmin(X, Y)
     array([0, 1])
     """
-    force_all_finite = "allow-nan" if metric == "nan_euclidean" else True
-    X, Y = check_pairwise_arrays(X, Y, force_all_finite=force_all_finite)
+    ensure_all_finite = "allow-nan" if metric == "nan_euclidean" else True
+    X, Y = check_pairwise_arrays(X, Y, ensure_all_finite=ensure_all_finite)
 
     if axis == 0:
         X, Y = Y, X

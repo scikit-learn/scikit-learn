@@ -18,6 +18,7 @@ from ..metrics.pairwise import (
     pairwise_distances_argmin,
 )
 from ..preprocessing import LabelEncoder
+from ..utils import get_tags
 from ..utils._available_if import available_if
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.multiclass import check_classification_targets
@@ -172,12 +173,14 @@ class NearestCentroid(
         if self.metric == "manhattan":
             X, y = validate_data(self, X, y, accept_sparse=["csc"])
         else:
-            force_all_finite = "allow-nan" if self.metric == "nan_euclidean" else True
+            ensure_all_finite = (
+                "allow-nan" if get_tags(self).input_tags.allow_nan else True
+            )
             X, y = validate_data(
                 self,
                 X,
                 y,
-                force_all_finite=force_all_finite,
+                ensure_all_finite=ensure_all_finite,
                 accept_sparse=["csr", "csc"],
             )
         is_X_sparse = sp.issparse(X)
@@ -290,11 +293,13 @@ class NearestCentroid(
         check_is_fitted(self)
         if np.isclose(self.class_prior_, 1 / len(self.classes_)).all():
             # `validate_data` is called here since we are not calling `super()`
-            force_all_finite = "allow-nan" if self.metric == "nan_euclidean" else True
+            ensure_all_finite = (
+                "allow-nan" if get_tags(self).input_tags.allow_nan else True
+            )
             X = validate_data(
                 self,
                 X,
-                force_all_finite=force_all_finite,
+                ensure_all_finite=ensure_all_finite,
                 accept_sparse="csr",
                 reset=False,
             )
@@ -346,3 +351,8 @@ class NearestCentroid(
     predict_log_proba = available_if(_check_euclidean_metric)(
         DiscriminantAnalysisPredictionMixin.predict_log_proba
     )
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = self.metric == "nan_euclidean"
+        return tags
