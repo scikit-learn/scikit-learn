@@ -350,7 +350,11 @@ class LinearClassifierMixin(ClassifierMixin):
 
         X = validate_data(self, X, accept_sparse="csr", reset=False)
         scores = safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
-        return xp.reshape(scores, (-1,)) if scores.shape[1] == 1 else scores
+        return (
+            xp.reshape(scores, (-1,))
+            if (scores.ndim > 1 and scores.shape[1] == 1)
+            else scores
+        )
 
     def predict(self, X):
         """
@@ -673,29 +677,15 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                 )
                 self.coef_ = np.vstack([out[0] for out in outs])
         else:
-            self.coef_, _, self.rank_, self.singular_ = linalg.lstsq(X, y)
+            # cut-off ratio for small singular values
+            cond = max(X.shape) * np.finfo(X.dtype).eps
+            self.coef_, _, self.rank_, self.singular_ = linalg.lstsq(X, y, cond=cond)
             self.coef_ = self.coef_.T
 
         if y.ndim == 1:
             self.coef_ = np.ravel(self.coef_)
         self._set_intercept(X_offset, y_offset, X_scale)
         return self
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        # TODO: investigate failure see meta-issue #16298
-        #
-        # Note: this model should converge to the minimum norm solution of the
-        # least squares problem and as result be numerically stable enough when
-        # running the equivalence check even if n_features > n_samples. Maybe
-        # this is is not the case and a different choice of solver could fix
-        # this problem.
-        tags._xfail_checks = {
-            "check_sample_weight_equivalence": (
-                "sample_weight is not equivalent to removing/repeating samples."
-            ),
-        }
-        return tags
 
 
 def _check_precomputed_gram_matrix(

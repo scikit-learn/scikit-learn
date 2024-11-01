@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from .fixes import _dataclass_args
+
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 
-@dataclass
+@dataclass(**_dataclass_args())
 class InputTags:
     """Tags for the input data.
 
@@ -67,7 +69,7 @@ class InputTags:
     pairwise: bool = False
 
 
-@dataclass
+@dataclass(**_dataclass_args())
 class TargetTags:
     """Tags for the target data.
 
@@ -106,7 +108,7 @@ class TargetTags:
     single_output: bool = True
 
 
-@dataclass
+@dataclass(**_dataclass_args())
 class TransformerTags:
     """Tags for the transformer.
 
@@ -126,7 +128,7 @@ class TransformerTags:
     preserves_dtype: list[str] = field(default_factory=lambda: ["float64"])
 
 
-@dataclass
+@dataclass(**_dataclass_args())
 class ClassifierTags:
     """Tags for the classifier.
 
@@ -154,7 +156,7 @@ class ClassifierTags:
     multi_label: bool = False
 
 
-@dataclass
+@dataclass(**_dataclass_args())
 class RegressorTags:
     """Tags for the regressor.
 
@@ -176,7 +178,7 @@ class RegressorTags:
     multi_label: bool = False
 
 
-@dataclass
+@dataclass(**_dataclass_args())
 class Tags:
     """Tags for the estimator.
 
