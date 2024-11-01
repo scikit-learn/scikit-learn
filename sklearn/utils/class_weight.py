@@ -14,10 +14,11 @@ from ._param_validation import StrOptions, validate_params
         "class_weight": [dict, StrOptions({"balanced"}), None],
         "classes": [np.ndarray],
         "y": ["array-like"],
+        "sample_weight": ["array-like", None],
     },
     prefer_skip_nested_validation=True,
 )
-def compute_class_weight(class_weight, *, classes, y):
+def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
     """Estimate class weights for unbalanced datasets.
 
     Parameters
@@ -35,6 +36,8 @@ def compute_class_weight(class_weight, *, classes, y):
 
     y : array-like of shape (n_samples,)
         Array of original class labels per sample.
+
+    sample_weight : array-like of shape (n_samples,) or None
 
     Returns
     -------
@@ -69,7 +72,12 @@ def compute_class_weight(class_weight, *, classes, y):
         if not all(np.isin(classes, le.classes_)):
             raise ValueError("classes should have valid labels that are in y")
 
-        recip_freq = len(y) / (len(le.classes_) * np.bincount(y_ind).astype(np.float64))
+        n_effective_samples = np.bincount(y_ind, weights=sample_weight).sum()
+
+        recip_freq = n_effective_samples / (
+            len(le.classes_)
+            * np.bincount(y_ind, weights=sample_weight).astype(np.float64)
+        )
         weight = recip_freq[le.transform(classes)]
     else:
         # user-defined dictionary
