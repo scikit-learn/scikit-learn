@@ -1,5 +1,3 @@
-- Renamed parameter `base_estimator` to `estimator` in
-  :class:`multioutput.RegressorChain` and
-  :class:`multioutput.ClassifierChain` to improve consistency and reduce the
-  chances of bugs. `base_estimator` is deprecated and will be removed in 1.7.
-  By :user:`Success Moses <SuccessMoses>`
+- The parameter `base_estimator` has been deprecated in favour of `estimator` for
+  :class:`multioutput.RegressorChain` and :class:`multioutput.ClassifierChain`.
+  By :user:`Success Moses <SuccessMoses>` and :user:`dikraMasrour <dikra_masrour>`.
