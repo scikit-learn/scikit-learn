@@ -260,15 +260,40 @@ def make_classification(
         centroids *= generator.uniform(size=(n_clusters, 1))
         centroids *= generator.uniform(size=(1, n_informative))
 
+    # Create feat_desc array which descibes the features
+    # informative features have imt flag 1
+    # redundant features have int flag 2
+    # repeated features have int flag 3
+    # useless features have int flag 4
+    feat_desc = np.zeros(n_features, dtype=int)
+    feat_desc[:n_informative] = 1
+    feat_desc[n_informative : n_informative + n_redundant] = 2
+    n = n_informative + n_redundant
+    feat_desc[n : n + n_repeated] = 3
+    feat_desc[-n_useless:] = 4
+
+    if shuffle:
+        # Randomly permute samples
+        X, y = util_shuffle(X, y, random_state=generator)
+
+        # Randomly permute features
+        indices = np.arange(n_features)
+        generator.shuffle(feat_desc)
+        X[:, :] = X[:, feat_desc]
+
+
     # Initially draw informative features from the standard normal
-    X[:, :n_informative] = generator.standard_normal(size=(n_samples, n_informative))
+    X[:, feat_desc == 1] = generator.standard_normal(
+        
+        size=(n_samples, n_informative)
+    )
 
     # Create each cluster; a variant of make_blobs
     stop = 0
     for k, centroid in enumerate(centroids):
         start, stop = stop, stop + n_samples_per_cluster[k]
         y[start:stop] = k % n_classes  # assign labels
-        X_k = X[start:stop, :n_informative]  # slice a view of the cluster
+        X_k = X[start:stop, feat_desc == 1]  # slice a view of the cluster
 
         A = 2 * generator.uniform(size=(n_informative, n_informative)) - 1
         X_k[...] = np.dot(X_k, A)  # introduce random covariance
@@ -278,19 +303,18 @@ def make_classification(
     # Create redundant features
     if n_redundant > 0:
         B = 2 * generator.uniform(size=(n_informative, n_redundant)) - 1
-        X[:, n_informative : n_informative + n_redundant] = np.dot(
-            X[:, :n_informative], B
+        X[:, feat_desc == 2] = np.dot(
+            X[:, feat_desc == 1], B
         )
 
     # Repeat some features
     if n_repeated > 0:
-        n = n_informative + n_redundant
         indices = ((n - 1) * generator.uniform(size=n_repeated) + 0.5).astype(np.intp)
-        X[:, n : n + n_repeated] = X[:, indices]
+        X[:, feat_desc == 3] = X[:, indices]
 
     # Fill useless features
     if n_useless > 0:
-        X[:, -n_useless:] = generator.standard_normal(size=(n_samples, n_useless))
+        X[:, feat_desc == 4] = generator.standard_normal(size=(n_samples, n_useless))
 
     # Randomly replace labels
     if flip_y >= 0.0:
@@ -305,15 +329,6 @@ def make_classification(
     if scale is None:
         scale = 1 + 100 * generator.uniform(size=n_features)
     X *= scale
-
-    if shuffle:
-        # Randomly permute samples
-        X, y = util_shuffle(X, y, random_state=generator)
-
-        # Randomly permute features
-        indices = np.arange(n_features)
-        generator.shuffle(indices)
-        X[:, :] = X[:, indices]
 
     return X, y
 
