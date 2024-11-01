@@ -150,12 +150,7 @@ def contingency_matrix(
     if eps is not None and sparse:
         raise ValueError("Cannot set 'eps' when sparse=True")
 
-    xp, is_array_api_compliant, device = get_namespace_and_device(
-        labels_pred, labels_true
-    )
-
-    if sparse and is_array_api_compliant:
-        raise ValueError("Cannot use sparse=True while using array api dispatch")
+    xp, _, device = get_namespace_and_device(labels_pred, labels_true)
 
     classes, class_idx = xp.unique_inverse(labels_true)
     clusters, cluster_idx = xp.unique_inverse(labels_pred)
