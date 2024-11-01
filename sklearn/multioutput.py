@@ -746,7 +746,6 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             )
             warnings.warn(warning_text, FutureWarning)
             self.estimator = self.base_estimator
-            self.base_estimator = "deprecated"
         X, Y = validate_data(self, X, Y, multi_output=True, accept_sparse=True)
 
         random_state = check_random_state(self.random_state)
