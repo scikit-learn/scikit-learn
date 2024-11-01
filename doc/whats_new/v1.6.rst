@@ -177,7 +177,7 @@ Changelog
 
 :mod:`sklearn.utils`
 ....................
--|Fix| Added sample weight handling into :func: `resample` which allows
+- |Fix| Added sample weight handling into :func: `resample` which allows
   weighted resampling.
   :pr:`29907` by :user:`Shruti Nath <snath-xoc>`
 
