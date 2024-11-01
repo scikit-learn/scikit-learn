@@ -640,7 +640,6 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         "base_estimator": [
             HasMethods(["fit", "predict"]),
             StrOptions({"deprecated"}),
-            None,
         ],
         "estimator": [
             HasMethods(["fit", "predict"]),
