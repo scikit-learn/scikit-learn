@@ -281,12 +281,8 @@ def make_classification(
         generator.shuffle(feat_desc)
         X[:, :] = X[:, feat_desc]
 
-
     # Initially draw informative features from the standard normal
-    X[:, feat_desc == 1] = generator.standard_normal(
-        
-        size=(n_samples, n_informative)
-    )
+    X[:, feat_desc == 1] = generator.standard_normal(size=(n_samples, n_informative))
 
     # Create each cluster; a variant of make_blobs
     stop = 0
@@ -303,9 +299,7 @@ def make_classification(
     # Create redundant features
     if n_redundant > 0:
         B = 2 * generator.uniform(size=(n_informative, n_redundant)) - 1
-        X[:, feat_desc == 2] = np.dot(
-            X[:, feat_desc == 1], B
-        )
+        X[:, feat_desc == 2] = np.dot(X[:, feat_desc == 1], B)
 
     # Repeat some features
     if n_repeated > 0:
