@@ -651,7 +651,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         "verbose": ["boolean"],
     }
 
-    # TODO(1.7): Remove base_estimator
+    # TODO(1.8): Remove base_estimator
     def __init__(
         self,
         estimator=None,
