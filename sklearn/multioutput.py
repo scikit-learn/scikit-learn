@@ -1202,10 +1202,10 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
 
         .. versionadded:: 1.2
 
-    base_estimator : estimator, default="deprected"
+    base_estimator : estimator, default=None
         Use `estimator` instead.
-        .. deprected:: 1.5
-            `base_estimator` is deprected and will be removed in 1.7.
+        .. deprecated:: 1.6
+            `base_estimator` is deprecated and will be removed in 1.8.
             Use `estimator` instead.
 
     Attributes
