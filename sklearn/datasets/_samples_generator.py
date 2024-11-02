@@ -306,14 +306,32 @@ def make_classification(
         scale = 1 + 100 * generator.uniform(size=n_features)
     X *= scale
 
+    indices = np.arange(n_features)
     if shuffle:
         # Randomly permute samples
         X, y = util_shuffle(X, y, random_state=generator)
 
         # Randomly permute features
-        indices = np.arange(n_features)
         generator.shuffle(indices)
-        X[:, :] = X[:, indices]
+
+
+    X[:, :] = X[:, indices]
+
+    # feat_desc describes features in X
+    feat_desc = ['US'] * n_features
+    for i, index in enumerate(indices):
+        if index < n_informative:
+            feat_desc[i] = 'IN'
+        elif (
+        index >= n_informative and 
+        index < n_informative + n_redundant
+    ):
+            feat_desc[i] = 'RD'
+        elif (
+        index >= n and 
+        index < n + n_repeated
+    ):
+            feat_desc[i] = 'RP'
 
     return X, y
 
