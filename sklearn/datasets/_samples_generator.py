@@ -292,12 +292,13 @@ def make_classification(
     for k, centroid in enumerate(centroids):
         start, stop = stop, stop + n_samples_per_cluster[k]
         y[start:stop] = k % n_classes  # assign labels
-        X_k = X[start:stop, feat_desc == 1]  # slice a view of the cluster
 
         A = 2 * generator.uniform(size=(n_informative, n_informative)) - 1
-        X_k[...] = np.dot(X_k, A)  # introduce random covariance
 
-        X_k += centroid  # shift the cluster to a vertex
+        # introduce random covariance
+        X[start:stop, feat_desc == 1] = np.dot(X[start:stop, feat_desc == 1], A)
+
+        X[start:stop, feat_desc == 1] += centroid  # shift the cluster to a vertex
 
     # Create redundant features
     B = 2 * generator.uniform(size=(n_informative, n_redundant)) - 1
