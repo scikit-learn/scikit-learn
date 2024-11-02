@@ -15,6 +15,8 @@ import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
 
+from sklearn.utils import Bunch
+
 from ..preprocessing import MultiLabelBinarizer
 from ..utils import check_array, check_random_state
 from ..utils import shuffle as util_shuffle
@@ -75,6 +77,7 @@ def make_classification(
     scale=1.0,
     shuffle=True,
     random_state=None,
+    return_X_y=False,
 ):
     """Generate a random n-class classification problem.
 
@@ -314,24 +317,46 @@ def make_classification(
         # Randomly permute features
         generator.shuffle(indices)
 
-
     X[:, :] = X[:, indices]
 
     # feat_desc describes features in X
-    feat_desc = ['US'] * n_features
+    feat_desc = ["US"] * n_features
     for i, index in enumerate(indices):
         if index < n_informative:
-            feat_desc[i] = 'IN'
-        elif (
-        index >= n_informative and 
-        index < n_informative + n_redundant
-    ):
-            feat_desc[i] = 'RD'
-        elif (
-        index >= n and 
-        index < n + n_repeated
-    ):
-            feat_desc[i] = 'RP'
+            feat_desc[i] = "IN"
+        elif index >= n_informative and index < n_informative + n_redundant:
+            feat_desc[i] = "RD"
+        elif index >= n and index < n + n_repeated:
+            feat_desc[i] = "RP"
+
+    if return_X_y:
+        parameters = {
+            "n_samples": n_samples,
+            "n_features": n_features,
+            "n_informative": n_informative,
+            "n_redundant": n_redundant,
+            "n_repeated": n_repeated,
+            "n_classes": n_classes,
+            "n_clusters_per_class": n_clusters_per_class,
+            "weights": weights,
+            "flip_y": flip_y,
+            "class_sep": class_sep,
+            "hypercube": hypercube,
+            "shift": shift,
+            "scale": scale,
+            "shuffle": shuffle,
+            "random_state": random_state,
+        }
+
+        bunch = Bunch(
+            DESC=make_classification.__doc__,
+            parameters=parameters,
+            feature_info=feat_desc,
+            X=X,
+            y=y,
+        )
+
+        return bunch
 
     return X, y
 
