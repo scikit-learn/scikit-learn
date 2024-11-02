@@ -174,7 +174,7 @@ def make_classification(
         See :term:`Glossary <random_state>`.
 
     return_X_y : bool, default=True
-        If True ndarray objects, X and y, will be returned. 
+        If True ndarray objects, X and y, will be returned.
         If False a bunch will be returned that contains X and y
         amongst other things.
 
