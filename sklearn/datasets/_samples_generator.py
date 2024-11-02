@@ -283,8 +283,8 @@ def make_classification(
         )
 
     # Repeat some features
+    n = n_informative + n_redundant
     if n_repeated > 0:
-        n = n_informative + n_redundant
         indices = ((n - 1) * generator.uniform(size=n_repeated) + 0.5).astype(np.intp)
         X[:, n : n + n_repeated] = X[:, indices]
 
