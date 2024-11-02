@@ -57,6 +57,7 @@ def _generate_hypercube(samples, dimensions, rng):
         "scale": [Interval(Real, 0, None, closed="neither"), "array-like", None],
         "shuffle": ["boolean"],
         "random_state": ["random_state"],
+        "return_X_y": ["boolean"],
     },
     prefer_skip_nested_validation=True,
 )
@@ -77,7 +78,7 @@ def make_classification(
     scale=1.0,
     shuffle=True,
     random_state=None,
-    return_X_y=False,
+    return_X_y=True,
 ):
     """Generate a random n-class classification problem.
 
@@ -172,6 +173,11 @@ def make_classification(
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
+    return_X_y : bool, default=True
+        If True ndarray objects, X and y, will be returned. 
+        If False a bunch will be returned that contains X and y
+        amongst other things.
+
     Returns
     -------
     X : ndarray of shape (n_samples, n_features)
@@ -179,6 +185,11 @@ def make_classification(
 
     y : ndarray of shape (n_samples,)
         The integer labels for class membership of each sample.
+
+    bunch : Bunch object
+        If return_X_y = True, a bunch object is returned.
+        Contains DESC, parameters, feature_info, X and y. feauture_info describes
+        the type of each feature, informative, redundant, repeated or useless.
 
     See Also
     --------
@@ -329,7 +340,7 @@ def make_classification(
         elif index >= n and index < n + n_repeated:
             feat_desc[i] = "RP"
 
-    if return_X_y:
+    if not return_X_y:
         parameters = {
             "n_samples": n_samples,
             "n_features": n_features,
