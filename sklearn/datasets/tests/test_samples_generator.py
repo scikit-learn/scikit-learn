@@ -184,6 +184,30 @@ def test_make_classification_informative_features():
         make(n_features=2, n_informative=2, n_classes=3, n_clusters_per_class=2)
 
 
+def test_make_classification_return_x_y():
+    """
+    Test that make_classification returns a Bunch when return_X_y is False.
+
+    Also that bunch.X is the same as X 
+    """
+
+    bunch = make_classification(return_X_y=False, random_state=42)
+
+    assert (
+        hasattr(bunch, 'DESC'),
+        hasattr(bunch, 'parameters'),
+        hasattr(bunch, 'feature_info'),
+        hasattr(bunch, 'X'),
+        hasattr(bunch, 'y'),
+    )
+
+    X, y  = make_classification(random_state=42)
+
+    assert (
+        np.array_equal(X, bunch.X),
+        np.array_equal(y, bunch.y),
+    )
+
 @pytest.mark.parametrize(
     "weights, err_type, err_msg",
     [
