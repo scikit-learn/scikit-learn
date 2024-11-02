@@ -198,6 +198,10 @@ def _check_reg_targets_with_floating_dtype(
         y_true, y_pred, multioutput, dtype=dtype_name, xp=xp
     )
 
+    # _check_reg_targets does not accept sample_weight as input.
+    # Convert sample_weight's data type separately to match dtype_name.
+    sample_weight = sample_weight.astype(dtype_name)
+
     return y_type, y_true, y_pred, sample_weight, multioutput
 
 
