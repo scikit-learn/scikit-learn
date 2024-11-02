@@ -931,10 +931,10 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
         .. versionadded:: 1.2
 
-    base_estimator : estimator, default="deprecated"
+    base_estimator : estimator, default=None
         Use `estimator` instead.
-        .. deprecated:: 1.5
-            `base_estimator` is deprecated and will be removed in 1.7.
+        .. deprecated:: 1.6
+            `base_estimator` is deprecated and will be removed in 1.8.
             Use `estimator` instead.
 
     Attributes
@@ -1011,6 +1011,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         ],
     }
 
+    # TODO(1.8): Remove base_estimator from __init__
     def __init__(
         self,
         estimator=None,
