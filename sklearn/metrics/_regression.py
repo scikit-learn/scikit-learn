@@ -63,9 +63,11 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric", xp=None):
 
     Parameters
     ----------
-    y_true : array-like
+    y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Ground truth (correct) target values.
 
-    y_pred : array-like
+    y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Estimated target values.
 
     multioutput : array-like or string in ['raw_values', uniform_average',
         'variance_weighted'] or None
@@ -152,9 +154,11 @@ def _check_reg_targets_with_floating_dtype(
 
     Parameters
     ----------
-    y_true : array-like
+    y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Ground truth (correct) target values.
 
-    y_pred : array-like
+    y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        Estimated target values.
 
     sample_weight : array-like of shape (n_samples,)
 
