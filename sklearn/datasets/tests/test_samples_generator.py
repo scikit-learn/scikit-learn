@@ -194,7 +194,7 @@ def test_make_classification_return_x_y():
     bunch = make_classification(return_X_y=False, random_state=42)
 
     assert (
-        hasattr(bunch, "DESCR")
+        hasattr(bunch, "DESC")
         and hasattr(bunch, "parameters")
         and hasattr(bunch, "feature_info")
         and hasattr(bunch, "X")
