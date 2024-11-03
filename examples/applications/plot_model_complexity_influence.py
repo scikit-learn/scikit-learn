@@ -17,19 +17,20 @@ We will be using two datasets:
 We will model the complexity influence on three different estimators:
     - :class:`~sklearn.linear_model.SGDClassifier` (for classification data)
       which implements stochastic gradient descent learning.
-      See example for comparison with different penalties: :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_penalties.py`
-      
+      See example for comparison with different penalties: 
+      :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_penalties.py`
+
     - :class:`~sklearn.svm.NuSVR` (for regression data) which implements
-      Nu support vector regression.
-      See example of its application: :ref:`sphx_glr_auto_examples_svm_plot_svm_regression.py`
+      Nu support vector regression. See example of its application: 
+      :ref:`sphx_glr_auto_examples_svm_plot_svm_regression.py`
 
     - :class:`~sklearn.ensemble.GradientBoostingRegressor` builds an additive
       model in a forward stage-wise fashion. Notice that
       :class:`~sklearn.ensemble.HistGradientBoostingRegressor` is much faster
       than :class:`~sklearn.ensemble.GradientBoostingRegressor` starting with
       intermediate datasets (`n_samples >= 10_000`), which is not the case for
-      this example.
-      See detailed example: :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regression.py`
+      this example. See detailed example: 
+      :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regression.py`
 
 
 We make the model complexity vary through the choice of relevant model
