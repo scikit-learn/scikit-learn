@@ -346,6 +346,11 @@ class Pipeline(_BaseComposition):
 
     @property
     def _estimator_type(self):
+        """Return the estimator type of the last step in the pipeline."""
+
+        if not self.steps:
+            raise ValueError("The Pipeline is empty. Please add at least one step.")
+
         return self.steps[-1][1]._estimator_type
 
     @property
