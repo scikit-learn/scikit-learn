@@ -158,7 +158,7 @@ are made according to the following rules:
   consensus), happens on the issue of pull-request page.
 
 * **Changes to the API principles and changes to dependencies or supported
-  versions** happen via a :ref:`slep` and follows the decision-making process
+  versions** happen via an :ref:`slep` and follows the decision-making process
   outlined above.
 
 * **Changes to the governance model** follow the process outlined in `SLEP020
