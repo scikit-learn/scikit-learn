@@ -1,4 +1,7 @@
-- :func:`check_estimators.check_sample_weights_invariance` replaced by
-  :func:`check_estimators.check_sample_weight_equivalence` which uses
-  integer (including zero) weights.
+- :func:`utils.estimator_checks.check_sample_weights_invariance`
+  replaced by
+  :func:`check_sample_weight_equivalence_on_dense_data`
+  which uses integer (including zero) weights and
+  :func:`check_sample_weight_equivalence_on_sparse_data`
+  which does the same on sparse data.
   By :user:`Antoine Baker <antoinebaker>`
