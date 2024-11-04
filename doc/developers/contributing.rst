@@ -51,7 +51,7 @@ There are many ways to contribute to scikit-learn, with the most common ones
 being contribution of code or documentation to the project. Improving the
 documentation is no less important than improving the library itself.  If you
 find a typo in the documentation, or have made improvements, do not hesitate to
-send an email to the mailing list or preferably submit a GitHub pull request.
+create a GitHub issue or preferably submit a GitHub pull request.
 Full documentation can be found under the doc/ directory.
 
 But there are many other ways to help. In particular helping to
@@ -345,8 +345,10 @@ The next steps now describe the process of modifying code and submitting a PR:
 12. Follow `these
     <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
     instructions to create a pull request from your fork. This will send an
-    email to the committers. You may want to consider sending an email to the
-    mailing list for more visibility.
+    notification to potential reviewers. You may want to consider sending an message to
+    the `discord <https://discord.com/invite/h9qyrK8Jc8>`_ in the development
+    channel for more visibility if your pull request does not receive attention after
+    a couple of days (instant replies are not guaranteed though).
 
 It is often helpful to keep your local feature branch synchronized with the
 latest changes of the main scikit-learn repository:
