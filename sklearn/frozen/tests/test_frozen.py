@@ -20,7 +20,7 @@ from sklearn.cluster import KMeans
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import make_classification, make_regression
 from sklearn.exceptions import NotFittedError, UnsetMetadataPassedError
-from sklearn.frozen import FrozenEstimator
+from sklearn.frozen import Frozen
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.pipeline import make_pipeline
@@ -72,7 +72,7 @@ def test_frozen_methods(estimator, dataset, request, method):
     X, y = request.getfixturevalue(dataset)
     set_random_state(estimator)
     estimator.fit(X, y)
-    frozen = FrozenEstimator(estimator)
+    frozen = Frozen(estimator)
     # this should be no-op
     frozen.fit([[1]], [1])
 
@@ -113,7 +113,7 @@ def test_frozen_metadata_routing(regression_dataset):
     )
 
     pipeline.fit(X, y, metadata="test")
-    frozen = FrozenEstimator(pipeline)
+    frozen = Frozen(pipeline)
     pipeline.predict(X, metadata="test")
     frozen.predict(X, metadata="test")
 
@@ -153,7 +153,7 @@ def test_composite_fit(classification_dataset):
 
     X, y = classification_dataset
     est = Estimator().fit(X, y)
-    frozen = FrozenEstimator(est)
+    frozen = Frozen(est)
 
     with pytest.raises(AttributeError):
         frozen.fit_predict(X, y)
@@ -167,7 +167,7 @@ def test_clone_frozen(regression_dataset):
     """Test that cloning a frozen estimator keeps the frozen state."""
     X, y = regression_dataset
     estimator = LinearRegression().fit(X, y)
-    frozen = FrozenEstimator(estimator)
+    frozen = Frozen(estimator)
     cloned = clone(frozen)
     assert cloned.estimator is estimator
 
@@ -177,12 +177,12 @@ def test_check_is_fitted(regression_dataset):
     X, y = regression_dataset
 
     estimator = LinearRegression()
-    frozen = FrozenEstimator(estimator)
+    frozen = Frozen(estimator)
     with pytest.raises(NotFittedError):
         check_is_fitted(frozen)
 
     estimator = LinearRegression().fit(X, y)
-    frozen = FrozenEstimator(estimator)
+    frozen = Frozen(estimator)
     check_is_fitted(frozen)
 
 
@@ -197,7 +197,7 @@ def test_frozen_tags():
             return tags
 
     estimator = Estimator()
-    frozen = FrozenEstimator(estimator)
+    frozen = Frozen(estimator)
     frozen_tags = frozen.__sklearn_tags__()
     estimator_tags = estimator.__sklearn_tags__()
 
@@ -209,9 +209,9 @@ def test_frozen_tags():
 
 
 def test_frozen_params():
-    """Test that FrozenEstimator only exposes the estimator parameter."""
+    """Test that Frozen only exposes the estimator parameter."""
     est = LogisticRegression()
-    frozen = FrozenEstimator(est)
+    frozen = Frozen(est)
 
     with pytest.raises(ValueError, match="You cannot set parameters of the inner"):
         frozen.set_params(estimator__C=1)

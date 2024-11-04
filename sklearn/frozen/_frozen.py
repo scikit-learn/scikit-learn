@@ -24,7 +24,7 @@ def _estimator_has(attr):
     return check
 
 
-class FrozenEstimator(BaseEstimator):
+class Frozen(BaseEstimator):
     """Estimator that wraps a fitted estimator to prevent re-fitting.
 
     This meta-estimator takes an estimator and freezes it, in the sense that calling
@@ -48,13 +48,13 @@ class FrozenEstimator(BaseEstimator):
     Examples
     --------
     >>> from sklearn.datasets import make_classification
-    >>> from sklearn.frozen import FrozenEstimator
+    >>> from sklearn.frozen import Frozen
     >>> from sklearn.linear_model import LogisticRegression
     >>> X, y = make_classification(random_state=0)
     >>> clf = LogisticRegression(random_state=0).fit(X, y)
-    >>> frozen_clf = FrozenEstimator(clf)
+    >>> frozen_clf = Frozen(clf)
     >>> frozen_clf.fit(X, y)  # No-op
-    FrozenEstimator(estimator=LogisticRegression(random_state=0))
+    Frozen(estimator=LogisticRegression(random_state=0))
     >>> frozen_clf.predict(X)  # Predictions from `clf.predict`
     array(...)
     """
@@ -128,7 +128,7 @@ class FrozenEstimator(BaseEstimator):
 
         Returns
         -------
-        self : FrozenEstimator
+        self : Frozen
             This estimator.
         """
         estimator = kwargs.pop("estimator", None)
@@ -138,7 +138,7 @@ class FrozenEstimator(BaseEstimator):
             raise ValueError(
                 "You cannot set parameters of the inner estimator in a frozen "
                 "estimator since calling `fit` has no effect. You can use "
-                "`frozenestimator.estimator.set_params` to set parameters of the inner "
+                "`Frozen.estimator.set_params` to set parameters of the inner "
                 "estimator."
             )
 

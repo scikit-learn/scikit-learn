@@ -433,7 +433,7 @@ Estimators can customize the behavior of :func:`base.clone` by defining a
 `__sklearn_clone__` method. `__sklearn_clone__` must return an instance of the
 estimator. `__sklearn_clone__` is useful when an estimator needs to hold on to
 some state when :func:`base.clone` is called on the estimator. For example,
-:class:`~sklearn.frozen.FrozenEstimator` makes use of this.
+:class:`~sklearn.frozen.Frozen` makes use of this.
 
 Pipeline compatibility
 ----------------------

@@ -194,8 +194,8 @@ overall fit time by training only a single base classifier and calibrator
 pair, decreases the final model size and increases prediction speed.
 
 Alternatively an already fitted classifier can be calibrated by using a
-:class:`~sklearn.frozen.FrozenEstimator` as
-``CalibratedClassifierCV(estimator=FrozenEstimator(estimator))``.
+:class:`~sklearn.frozen.Frozen` as
+``CalibratedClassifierCV(estimator=Frozen(estimator))``.
 It is up to the user to make sure that the data used for fitting the classifier
 is disjoint from the data used for fitting the regressor.
 data used for fitting the regressor.
