@@ -740,8 +740,8 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         if self.base_estimator != "deprecated":
 
             warning_text = (
-                "`base_estimator` was renamed to `estimator` in 1.5 "
-                "and will be removed in 1.7."
+                "`base_estimator` was renamed to `estimator` in 1.6 "
+                "and will be removed in 1.8."
             )
             warnings.warn(warning_text, FutureWarning)
             self.estimator = self.base_estimator
