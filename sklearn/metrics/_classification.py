@@ -2066,22 +2066,22 @@ def class_likelihood_ratios(
     Returns
     -------
     (positive_likelihood_ratio, negative_likelihood_ratio) : tuple
-        A tuple of two floats, the first containing the Positive likelihood ratio
-        and the second the Negative likelihood ratio.
+        A tuple of two floats, the first containing the positive likelihood ratio (LR+)
+        and the second the negative likelihood ratio (LR-).
 
     Warns
     -----
-    `UndefinedMetricWarning` is raised if `zero_division="warn"` or if
-    `raise_warning=True` (deprecated) and a division by zero is triggered.
-    Conditions under which this warning is raised in relation to the confusion matrix
-    deriving from the `y_true` and `y_pred` arguments:
-    When the number of false positives is 0, the positive likelihood ratio is undefined.
-    When the number of true negatives is 0, the negative likelihood ratio is undefined.
-    `UndefinedMetricWarning` is also (and regardles of the `zero_division` and
-    `raise_warning` arguments) raised when no samples of the positive class are present
-    in `y_true` (when the sum of true positives and false negatives is 0). Then, both
-    the positive and the negative likelihood ratios are undefined.
-    An undefined metric can be defined by setting the `zero_division` param.
+    Raises `UndefinedMetricWarning` unter these conditions in `y_true` and `y_pred`:
+
+        - The number of false positives is 0 and either `zero_division="warn"` or
+          `raise_warning=True`: positive likelihood ratio is undefined.
+        - The number of true negatives is 0 and either `zero_division="warn"` or
+          `raise_warning=True`: negative likelihood ratio is undefined.
+        - The sum of true positives and false negatives is 0 (no samples of the positive
+          class are present in `y_true`): both likelihood ratios are undefined.
+
+        For the first two cases, an undefined metric can be defined by setting the
+        `zero_division` param.
 
     References
     ----------
