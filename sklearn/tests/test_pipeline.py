@@ -867,6 +867,56 @@ def test_make_pipeline():
     assert pipe.steps[2][0] == "fitparamt"
 
 
+def test_classifier_estimator_type():
+    pipeline = Pipeline([
+        ('scaler', StandardScaler()),
+        ('classifier', LogisticRegression())
+    ])
+    assert pipeline._estimator_type == 'classifier'
+
+
+def test_regressor_estimator_type():
+    pipeline = Pipeline([
+        ('scaler', StandardScaler()),
+        ('regressor', LinearRegression())
+    ])
+    assert pipeline._estimator_type == 'regressor'
+
+
+def test_non_estimator_last_step():
+    pipeline = Pipeline([
+        ('scaler', StandardScaler()),
+    ])
+
+    # last step of the pipeline is not an estimator
+    with pytest.raises(AttributeError):
+        _ = pipeline._estimator_type
+
+
+def test_empty_pipeline_estimator_type():
+    pipeline = Pipeline([])
+    assert pipeline._estimator_type is None
+
+
+def test_sklearn_tags_with_empty_pipeline():
+    empty_pipeline = Pipeline(steps=[])
+    be = BaseEstimator()
+
+    expected_tags = be.__sklearn_tags__()
+    expected_tags._xfail_checks = {
+        "check_dont_overwrite_parameters": (
+            "Pipeline changes the `steps` parameter, which it shouldn't."
+            "Therefore this test is x-fail until we fix this."
+        ),
+        "check_estimators_overwrite_params": (
+            "Pipeline changes the `steps` parameter, which it shouldn't."
+            "Therefore this test is x-fail until we fix this."
+        ),
+    }
+    assert empty_pipeline.__sklearn_tags__() == expected_tags
+
+
+
 def test_feature_union_weights():
     # test feature union with transformer weights
     X = iris.data

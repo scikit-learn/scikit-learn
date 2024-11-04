@@ -349,7 +349,7 @@ class Pipeline(_BaseComposition):
         """Return the estimator type of the last step in the pipeline."""
 
         if not self.steps:
-            raise ValueError("The Pipeline is empty. Please add at least one step.")
+            return None
 
         return self.steps[-1][1]._estimator_type
 
@@ -1062,6 +1062,9 @@ class Pipeline(_BaseComposition):
                 "Therefore this test is x-fail until we fix this."
             ),
         }
+
+        if not self.steps:
+            return tags
 
         try:
             tags.input_tags.pairwise = get_tags(self.steps[0][1]).input_tags.pairwise
