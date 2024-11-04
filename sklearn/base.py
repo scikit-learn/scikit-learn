@@ -16,7 +16,6 @@ import numpy as np
 from . import __version__
 from ._config import config_context, get_config
 from .exceptions import InconsistentVersionWarning
-from .frozen import FrozenEstimator
 from .utils._estimator_html_repr import _HTMLDocumentationLinkMixin, estimator_html_repr
 from .utils._metadata_requests import _MetadataRequester, _routing_enabled
 from .utils._param_validation import validate_parameter_constraints
@@ -203,6 +202,8 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         frozen : :class:`~sklearn.frozen.Frozen`
             A frozen version of this estimator.
         """
+        from sklearn.frozen import FrozenEstimator
+
         return FrozenEstimator(self)
 
     @classmethod

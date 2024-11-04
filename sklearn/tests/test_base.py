@@ -24,6 +24,7 @@ from sklearn.base import (
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.exceptions import InconsistentVersionWarning
+from sklearn.frozen import FrozenEstimator
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
@@ -975,3 +976,15 @@ def test_outlier_mixin_fit_predict_with_metadata_in_predict():
     with warnings.catch_warnings(record=True) as record:
         CustomOutlierDetector().set_predict_request(prop=True).fit_predict([[1]], [1])
         assert len(record) == 0
+
+
+def test_freeze_method():
+    """Test that the freeze method returns a FrozenEstimator"""
+
+    class MyEstimator(BaseEstimator):
+        pass
+
+    est = MyEstimator()
+    frozen = est.freeze()
+    assert isinstance(frozen, FrozenEstimator)
+    assert frozen.estimator is est
