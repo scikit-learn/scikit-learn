@@ -324,7 +324,7 @@ Which scoring function should I use?
 
 Before diving into the details of the many scores and metrics, we want
 to give some guidance, inspired by statistical decision theory, on the choice
-of scoring functions for supervised learning, see [Gneiting2009]_ and
+of **scoring functions** for **supervised learning**, see [Gneiting2009]_ and
 [Fissler2022]_:
 
   - *Which scoring function should I use?*
@@ -332,19 +332,42 @@ of scoring functions for supervised learning, see [Gneiting2009]_ and
 
 In a nutshell, if the scoring function is given, e.g. in a kaggle competition
 or in a business context, use that one.
-If you are free to choose, it starts by considering your ultimate goal of
-prediction. Usually, the response variable :math:`Y` is a random variable, in
-the sense that there is *no deterministic* function :math:`Y = g(X)`.
+If you are free to choose, it starts by considering the ultimate goal and application
+of the prediction. It is useful to distinguish two steps:
+
+* Predicting
+* Decision making
+
+**Prediction**
+Usually, the response variable :math:`Y` is a random variable, in the sense that there
+is *no deterministic* function :math:`Y = g(X)`.
 Instead, there is a probability distribution :math:`F` of :math:`Y`.
-One can aim to predict the whole distribution, known as *probabilistic
-prediction*, or---more the focus of
-scikit-learn---issue a *point prediction* (or point forecast) by choosing a
-property or functional of that distribution. Typical examples are the mean
-(expected value), the median or the mode of the response variable :math:`Y`
-(conditionally on :math:`X`).
+One can aim to predict the whole distribution, known as *probabilistic prediction*,
+or---more the focus of scikit-learn---issue a *point prediction* (or point forecast)
+by choosing a property or functional of that distribution :math:`F`.
+Typical examples are the mean (expected value), the median or a quantile of the
+response variable :math:`Y` (conditionally on :math:`X`).
 
 Once that is settled, use a **strictly consistent** scoring function for that
-target functional.
+target functional, see [Gneiting2009]_.
+For classification **stricly proper scoring rules**, see [Gneiting2007]_, conincide
+with strictly consistent scoring functions.
+One could say that consistent scoring functions act as *truth serum* in that
+they guarantee "that truth telling [. . .] is an optimal strategy in
+expectation" [Gneiting2014]_.
+
+Note that for regressors, the prediction ist done with :term:`predict` while for
+classifiers it is usually :term:`predict_proba`.
+
+**Decision Making**
+The most common decisions are done on binary classification tasks, where the result of
+:term:`predict_proba` is turned into a single outcome, e.g., from the predicted
+probability of rain a decision is made on how to act (whether to take mitigating
+measures like an umbrella or not).
+For classifiers, this is what :term:`predict` returns.
+See also :ref:`TunedThresholdClassifierCV`.
+There are many scoring functions which measure different aspects of such a
+decision, most of them are covered with or derived from the :func:`confusion_matrix`.
 
 Point forecasts and consistent scoring functions
 ------------------------------------------------
@@ -370,9 +393,9 @@ The optimal point prediction :math:`\hat{y}^\star` under :math:`S` is the
 
     \hat{y}^\star = \operatorname{argmax}_x \mathbb{E}[S(Y, x)].
 
-Note that in order to get an unbiased estimate of :math:`\mathbb{E}[S(Y, x)]`
-for model evaluation and model selection, one has to use a test set independent
-of the training set.
+Note that in order to get an unbiased estimate of :math:`\mathbb{E}[S(Y, x)]` for model
+evaluation and model selection, one has to use a test set independen of the training
+set.
 
 If you are free to choose a scoring function, you should first ask yourself,
 which functional of :math:`F(Y)` you want to predict as a point forecast:
@@ -392,21 +415,23 @@ Here, we list some of the well known functionals and corresponding scoring
 functions. For further criteria on how to select a specific one, see
 [Fissler2022]_.
 
-==================    ========================    ===================   ================   ==============================
-functional            scoring or loss function    property              response y         prediction
-==================    ========================    ===================   ================   ==============================
+==================  ========================  ================  ==============================
+functional          scoring or loss function  response y        prediction
+==================  ========================  ================  ==============================
 **Classification**
-mean                  Brier score                 strictly consistent   multi-class        ``predict_proba``
-mean                  log loss                    strictly consistent   multi-class        ``predict_proba``
-median                absolute error              strictly consistent   binary             ``predict_proba``
-mode                  zero-one loss               strictly consistent   multi-class        ``predict``
+mean                Brier score               multi-class       ``predict_proba``
+mean                log loss                  multi-class       ``predict_proba``
+mode                zero-one loss:sup:`1`     multi-class       ``predict``, categorical
 **Regression**
-mean                  squared error               strictly consistent   all reals          ``predict``, all reals
-mean                  Poisson deviance            strictly consistent   non-negative       ``predict``, stritcly positive
-mean                  Gamma deviance              strictly consistent   stricly positive   ``predict``, stritcly positive
-median                absolute error              strictly consistent   all reals          ``predict``, all reals
-quantile              pinball loss                strictly consistent   all reals          ``predict``, all reals
-==================    ========================    ===================   ================   ==============================
+mean                squared error             all reals         ``predict``, all reals
+mean                Poisson deviance          non-negative      ``predict``, strictly positive
+mean                Gamma deviance            stricly positive  ``predict``, strictly positive
+median              absolute error            all reals         ``predict``, all reals
+quantile            pinball loss              all reals         ``predict``, all reals
+mode                does not exist
+==================  ========================  ================  ==============================
+
+:sup:`1` The zero-one loss is only consistent but not strictly consistent for the mode.
 
 The zero-one loss is equivalent to one minus the accuracy score, meaning it
 gives different score values but the same ranking.
@@ -461,10 +486,6 @@ Let's have a look on different purposes of your prediction:
 
 .. topic:: References:
 
-  .. [Fissler2022] T. Fissler, C. Lorentzen and M. Mayer. :arxiv:`Model
-     Comparison and Calibration Assessment: User Guide for Consistent Scoring
-     Functions in Machine Learning and Actuarial Practice. <2202.12780>`
-
   .. [Gneiting2007] T. Gneiting and A. E. Raftery. :doi:`Strictly Proper
      Scoring Rules, Prediction, and Estimation <10.1198/016214506000001437>`
      In: Journal of the American Statistical Association 102 (2007),
@@ -477,6 +498,10 @@ Let's have a look on different purposes of your prediction:
 
   .. [Gneiting2014] T. Gneiting and M. Katzfuss. :doi:`Probabilistic Forecasting
      <10.1146/annurev-st atistics-062713-085831>`. In: Annual Review of Statistics and Its Application 1.1 (2014), pp. 125–151.
+
+  .. [Fissler2022] T. Fissler, C. Lorentzen and M. Mayer. :arxiv:`Model
+     Comparison and Calibration Assessment: User Guide for Consistent Scoring
+     Functions in Machine Learning and Actuarial Practice. <2202.12780>`
 
 .. _classification_metrics:
 
