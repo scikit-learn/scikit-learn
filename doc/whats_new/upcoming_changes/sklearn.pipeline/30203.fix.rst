@@ -1,0 +1,2 @@
+- :class:`pipeline.Pipeline` Fixed the behaviour of `Pipeline._estimator_type` to return None when the pipeline is empty. Also updated `Pipeline.__sklearn_tags__` to correctly handle empty pipelines. This allows the html representation of an empty pipeline to be rendered correctly
+:pr:`30203` by :user:`Gennaro Daniele Acciaro <gdacciaro>`.

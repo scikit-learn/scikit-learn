@@ -868,25 +868,25 @@ def test_make_pipeline():
 
 
 def test_classifier_estimator_type():
-    pipeline = Pipeline([
-        ('scaler', StandardScaler()),
-        ('classifier', LogisticRegression())
-    ])
-    assert pipeline._estimator_type == 'classifier'
+    pipeline = Pipeline(
+        [("scaler", StandardScaler()), ("classifier", LogisticRegression())]
+    )
+    assert pipeline._estimator_type == "classifier"
 
 
 def test_regressor_estimator_type():
-    pipeline = Pipeline([
-        ('scaler', StandardScaler()),
-        ('regressor', LinearRegression())
-    ])
-    assert pipeline._estimator_type == 'regressor'
+    pipeline = Pipeline(
+        [("scaler", StandardScaler()), ("regressor", LinearRegression())]
+    )
+    assert pipeline._estimator_type == "regressor"
 
 
 def test_non_estimator_last_step():
-    pipeline = Pipeline([
-        ('scaler', StandardScaler()),
-    ])
+    pipeline = Pipeline(
+        [
+            ("scaler", StandardScaler()),
+        ]
+    )
 
     # last step of the pipeline is not an estimator
     with pytest.raises(AttributeError):
@@ -914,7 +914,6 @@ def test_sklearn_tags_with_empty_pipeline():
         ),
     }
     assert empty_pipeline.__sklearn_tags__() == expected_tags
-
 
 
 def test_feature_union_weights():
