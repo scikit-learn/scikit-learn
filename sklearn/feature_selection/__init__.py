@@ -2,6 +2,9 @@
 
 These include univariate filter selection methods and the recursive feature elimination
 algorithm.
+
+For an example of univariate feature selection for improving the classification of a 
+noisy dataset see :ref:`sphx_glr_auto_examples_feature_selection_plot_feature_selection.py`
 """
 
 # Authors: The scikit-learn developers
