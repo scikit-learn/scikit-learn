@@ -895,7 +895,7 @@ class RFECV(RFE):
             func = delayed(_rfe_single_fit)
 
         step_results = parallel(
-            func(rfe, self.estimator, X, y, train, test, scorer, routed_params)
+            func(clone(rfe), self.estimator, X, y, train, test, scorer, routed_params)
             for train, test in cv.split(X, y, **routed_params.splitter.split)
         )
         scores, supports, rankings, step_n_features = zip(*step_results)
