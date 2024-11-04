@@ -32,7 +32,6 @@ from ..utils import check_array
 from ..utils._fast_dict import IntFloatDict
 from ..utils._param_validation import (
     HasMethods,
-    Hidden,
     Interval,
     StrOptions,
     validate_params,
@@ -1143,10 +1142,6 @@ class FeatureAgglomeration(
 
         .. versionadded:: 1.2
 
-        .. deprecated:: 1.4
-           `metric=None` is deprecated in 1.4 and will be removed in 1.6.
-           Let `metric` be the default value (i.e. `"euclidean"`) instead.
-
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
@@ -1273,7 +1268,6 @@ class FeatureAgglomeration(
         "metric": [
             StrOptions(set(_VALID_METRICS) | {"precomputed"}),
             callable,
-            Hidden(None),
         ],
         "memory": [str, HasMethods("cache"), None],
         "connectivity": ["array-like", "sparse matrix", callable, None],
