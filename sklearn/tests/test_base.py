@@ -430,7 +430,7 @@ def test_clone_pandas_dataframe():
 def test_clone_protocol():
     """Checks that clone works with `__sklearn_clone__` protocol."""
 
-    class FrozenEstimator(BaseEstimator):
+    class Freezer(BaseEstimator):
         def __init__(self, fitted_estimator):
             self.fitted_estimator = fitted_estimator
 
@@ -450,7 +450,7 @@ def test_clone_protocol():
     pca = PCA().fit(X)
     components = pca.components_
 
-    frozen_pca = FrozenEstimator(pca)
+    frozen_pca = Freezer(pca)
     assert_allclose(frozen_pca.components_, components)
 
     # Calling PCA methods such as `get_feature_names_out` still works

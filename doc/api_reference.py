@@ -466,7 +466,7 @@ API_REFERENCE = {
         "sections": [
             {
                 "title": None,
-                "autosummary": ["FrozenEstimator"],
+                "autosummary": ["Freezer"],
             },
         ],
     },

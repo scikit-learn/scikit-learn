@@ -23,7 +23,7 @@ from .base import (
     _fit_context,
     clone,
 )
-from .frozen import FrozenEstimator
+from .frozen import Freezer
 from .isotonic import IsotonicRegression
 from .model_selection import LeaveOneOut, check_cv, cross_val_predict
 from .preprocessing import LabelEncoder, label_binarize
@@ -78,7 +78,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     estimators (see :ref:`User Guide <scores_probabilities>` for details).
 
     Already fitted classifiers can be calibrated by wrapping the model in a
-    :class:`~sklearn.frozen.FrozenEstimator`. In this case all provided
+    :class:`~sklearn.frozen.Freezer`. In this case all provided
     data is used for calibration. The user has to take care manually that data
     for model fitting and calibration are disjoint.
 
@@ -129,7 +129,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
         .. versionchanged:: 1.6
-            `"prefit"` is deprecated. Use :class:`~sklearn.frozen.FrozenEstimator`
+            `"prefit"` is deprecated. Use :class:`~sklearn.frozen.Freezer`
             instead.
 
     n_jobs : int, default=None
@@ -148,7 +148,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         Determines how the calibrator is fitted.
 
         "auto" will use `False` if the `estimator` is a
-        :class:`~sklearn.frozen.FrozenEstimator`, and `True` otherwise.
+        :class:`~sklearn.frozen.Freezer`, and `True` otherwise.
 
         If `True`, the `estimator` is fitted using training data, and
         calibrated using testing data, for each `cv` fold. The final estimator
@@ -243,8 +243,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     >>> base_clf = GaussianNB()
     >>> base_clf.fit(X_train, y_train)
     GaussianNB()
-    >>> from sklearn.frozen import FrozenEstimator
-    >>> calibrated_clf = CalibratedClassifierCV(FrozenEstimator(base_clf))
+    >>> from sklearn.frozen import Freezer
+    >>> calibrated_clf = CalibratedClassifierCV(Freezer(base_clf))
     >>> calibrated_clf.fit(X_calib, y_calib)
     CalibratedClassifierCV(...)
     >>> len(calibrated_clf.calibrated_classifiers_)
@@ -329,14 +329,14 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
         _ensemble = self.ensemble
         if _ensemble == "auto":
-            _ensemble = not isinstance(estimator, FrozenEstimator)
+            _ensemble = not isinstance(estimator, Freezer)
 
         self.calibrated_classifiers_ = []
         if self.cv == "prefit":
             # TODO(1.8): Remove this code branch and cv='prefit'
             warnings.warn(
                 "The `cv='prefit'` option is deprecated in 1.6 and will be removed in"
-                " 1.8. You can use CalibratedClassifierCV(FrozenEstimator(estimator))"
+                " 1.8. You can use CalibratedClassifierCV(Freezer(estimator))"
                 " instead."
             )
             # `classes_` should be consistent with that of estimator

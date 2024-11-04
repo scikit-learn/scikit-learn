@@ -1,6 +1,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from ._frozen import FrozenEstimator
+from ._freezer import Freezer
 
-__all__ = ["FrozenEstimator"]
+__all__ = ["Freezer"]
