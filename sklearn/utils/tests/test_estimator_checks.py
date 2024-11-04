@@ -495,7 +495,8 @@ class TaggedBinaryClassifier(UntaggedBinaryClassifier):
 
 class RequiresPositiveXRegressor(LinearRegression):
     def fit(self, X, y):
-        X, y = validate_data(self, X, y, multi_output=True)
+        # reject sparse X to be able to call (X < 0).any()
+        X, y = validate_data(self, X, y, accept_sparse=False, multi_output=True)
         if (X < 0).any():
             raise ValueError("negative X values not supported!")
         return super().fit(X, y)
@@ -503,12 +504,14 @@ class RequiresPositiveXRegressor(LinearRegression):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.positive_only = True
+        # reject sparse X to be able to call (X < 0).any()
+        tags.input_tags.sparse = False
         return tags
 
 
 class RequiresPositiveYRegressor(LinearRegression):
     def fit(self, X, y):
-        X, y = validate_data(self, X, y, multi_output=True)
+        X, y = validate_data(self, X, y, accept_sparse=True, multi_output=True)
         if (y <= 0).any():
             raise ValueError("negative y values not supported!")
         return super().fit(X, y)

@@ -689,7 +689,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.input_tags.sparse = True
+        tags.input_tags.sparse = not self.positive
         return tags
 
 
