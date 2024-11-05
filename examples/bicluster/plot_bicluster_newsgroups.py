@@ -93,8 +93,8 @@ start_time = time()
 cocluster.fit(X)
 y_cocluster = cocluster.row_labels_
 print(
-    f"Done in {time() - start_time:.2f}s. V-measure: \
-{v_measure_score(y_cocluster, y_true):.4f}"
+    f"Done in {time() - start_time:.2f}s. V-measure:"
+    f" {v_measure_score(y_cocluster, y_true):.4f}"
 )
 
 
@@ -102,8 +102,8 @@ print("MiniBatchKMeans...")
 start_time = time()
 y_kmeans = kmeans.fit_predict(X)
 print(
-    f"Done in {time() - start_time:.2f}s. V-measure: \
-{v_measure_score(y_kmeans, y_true):.4f}"
+    f"Done in {time() - start_time:.2f}s. V-measure:"
+    f" {v_measure_score(y_kmeans, y_true):.4f}"
 )
 
 

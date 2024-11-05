@@ -437,7 +437,9 @@ def test_permutation_importance_sample_weight():
     # the second half of the samples approaches to infinity, the ratio of
     # the two features importance should equal to 2 on expectation (when using
     # mean absolutes error as the loss function).
-    w = np.hstack([np.repeat(10.0**10, n_half_samples), np.repeat(1.0, n_half_samples)])
+    w = np.hstack(
+        [np.repeat(10.0**10, n_half_samples), np.repeat(1.0, n_half_samples)]
+    )
     lr.fit(x, y, w)
     pi = permutation_importance(
         lr,

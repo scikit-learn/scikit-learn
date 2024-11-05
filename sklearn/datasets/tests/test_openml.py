@@ -1421,7 +1421,8 @@ def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
         raise ValueError(
             "This mechanism intends to test correct cache"
             "handling. As such, urlopen should never be "
-            "accessed. URL: %s" % request.get_full_url()
+            "accessed. URL: %s"
+            % request.get_full_url()
         )
 
     data_id = 61

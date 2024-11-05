@@ -166,13 +166,11 @@ def test_all_tests_are_importable():
     # Ensure that for each contentful subpackage, there is a test directory
     # within it that is also a subpackage (i.e. a directory with __init__.py)
 
-    HAS_TESTS_EXCEPTIONS = re.compile(
-        r"""(?x)
+    HAS_TESTS_EXCEPTIONS = re.compile(r"""(?x)
                                       \.externals(\.|$)|
                                       \.tests(\.|$)|
                                       \._
-                                      """
-    )
+                                      """)
     resource_modules = {
         "sklearn.datasets.data",
         "sklearn.datasets.descr",
@@ -318,7 +316,6 @@ GET_FEATURES_OUT_ESTIMATORS = [
     "transformer", GET_FEATURES_OUT_ESTIMATORS, ids=_get_check_estimator_ids
 )
 def test_transformers_get_feature_names_out(transformer):
-
     with ignore_warnings(category=(FutureWarning)):
         check_transformer_get_feature_names_out(
             transformer.__class__.__name__, transformer

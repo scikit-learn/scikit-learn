@@ -149,8 +149,10 @@ def _deprecate_force_all_finite(force_all_finite, ensure_all_finite):
     """Helper to deprecate force_all_finite in favor of ensure_all_finite."""
     if force_all_finite != "deprecated":
         warnings.warn(
-            "'force_all_finite' was renamed to 'ensure_all_finite' in 1.6 and will be "
-            "removed in 1.8.",
+            (
+                "'force_all_finite' was renamed to 'ensure_all_finite' in 1.6 and will"
+                " be removed in 1.8."
+            ),
             FutureWarning,
         )
 

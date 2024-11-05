@@ -491,7 +491,7 @@ redirects = {
     "auto_examples/linear_model/plot_iris_logistic": (
         "auto_examples/linear_model/plot_logistic_multinomial"
     ),
-    "auto_examples/linear_model/plot_ols_3d": ("auto_examples/linear_model/plot_ols"),
+    "auto_examples/linear_model/plot_ols_3d": "auto_examples/linear_model/plot_ols",
 }
 html_context["redirects"] = redirects
 for old_link in redirects:

@@ -32,8 +32,7 @@ def raise_build_error(e):
             dir_content.append(filename.ljust(26))
         else:
             dir_content.append(filename + "\n")
-    raise ImportError(
-        """%s
+    raise ImportError("""%s
 ___________________________________________________________________________
 Contents of %s:
 %s
@@ -43,9 +42,7 @@ It seems that scikit-learn has not been built correctly.
 If you have installed scikit-learn from source, please do not forget
 to build the package before using it. For detailed instructions, see:
 https://scikit-learn.org/dev/developers/advanced_installation.html#building-from-source
-%s"""
-        % (e, local_dir, "".join(dir_content).strip(), msg)
-    )
+%s""" % (e, local_dir, "".join(dir_content).strip(), msg))
 
 
 try:
