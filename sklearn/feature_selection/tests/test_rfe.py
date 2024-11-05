@@ -9,7 +9,7 @@ import pytest
 from joblib import parallel_backend
 from numpy.testing import assert_allclose, assert_array_almost_equal, assert_array_equal
 
-from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.base import BaseEstimator, ClassifierMixin, is_classifier
 from sklearn.compose import TransformedTargetRegressor
 from sklearn.cross_decomposition import CCA, PLSCanonical, PLSRegression
 from sklearn.datasets import load_iris, make_classification, make_friedman1
@@ -23,12 +23,11 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC, SVR, LinearSVR
 from sklearn.utils import check_random_state
-from sklearn.utils._tags import default_tags
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.fixes import CSR_CONTAINERS
 
 
-class MockClassifier(ClassifierMixin):
+class MockClassifier(ClassifierMixin, BaseEstimator):
     """
     Dummy classifier to test recursive feature elimination
     """
@@ -59,7 +58,7 @@ class MockClassifier(ClassifierMixin):
         return self
 
     def __sklearn_tags__(self):
-        tags = default_tags(self)
+        tags = super().__sklearn_tags__()
         tags.input_tags.allow_nan = True
         return tags
 
@@ -326,7 +325,7 @@ def test_rfecv_cv_results_size(global_random_seed):
 
 def test_rfe_estimator_tags():
     rfe = RFE(SVC(kernel="linear"))
-    assert rfe._estimator_type == "classifier"
+    assert is_classifier(rfe)
     # make sure that cross-validation is stratified
     iris = load_iris()
     score = cross_val_score(rfe, iris.data, iris.target)

@@ -4,6 +4,8 @@ from warnings import warn
 
 import numpy as np
 
+from sklearn.base import ClassifierMixin
+
 from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone
 from ..utils import Bunch, safe_mask
 from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
@@ -23,7 +25,7 @@ __all__ = ["SelfTrainingClassifier"]
 # SPDX-License-Identifier: BSD-3-Clause
 
 
-class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
+class SelfTrainingClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
     """Self-training classifier.
 
     This :term:`metaestimator` allows a given supervised classifier to function as a
@@ -151,8 +153,6 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
     >>> self_training_model.fit(iris.data, iris.target)
     SelfTrainingClassifier(...)
     """
-
-    _estimator_type = "classifier"
 
     _parameter_constraints: dict = {
         # We don't require `predic_proba` here to allow passing a meta-estimator
