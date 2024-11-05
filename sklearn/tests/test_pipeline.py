@@ -14,7 +14,13 @@ import numpy as np
 import pytest
 
 from sklearn import config_context
-from sklearn.base import BaseEstimator, TransformerMixin, clone, is_classifier
+from sklearn.base import (
+    BaseEstimator,
+    TransformerMixin,
+    clone,
+    is_classifier,
+    is_regressor,
+)
 from sklearn.cluster import KMeans
 from sklearn.datasets import load_iris
 from sklearn.decomposition import PCA, TruncatedSVD
@@ -871,14 +877,18 @@ def test_classifier_estimator_type():
     pipeline = Pipeline(
         [("scaler", StandardScaler()), ("classifier", LogisticRegression())]
     )
-    assert pipeline._estimator_type == "classifier"
+    # Smoke test the repr:
+    repr(pipeline)
+    assert is_classifier(pipeline)
 
 
 def test_regressor_estimator_type():
     pipeline = Pipeline(
         [("scaler", StandardScaler()), ("regressor", LinearRegression())]
     )
-    assert pipeline._estimator_type == "regressor"
+    # Smoke test the repr:
+    repr(pipeline)
+    assert is_regressor(pipeline)
 
 
 def test_non_estimator_last_step():
@@ -895,6 +905,8 @@ def test_non_estimator_last_step():
 
 def test_empty_pipeline_estimator_type():
     pipeline = Pipeline([])
+    # Smoke test the repr:
+    repr(pipeline)
     assert pipeline._estimator_type is None
 
 

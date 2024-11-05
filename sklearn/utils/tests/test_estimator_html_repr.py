@@ -140,6 +140,12 @@ def test_get_visual_block_column_transformer():
     assert est_html_info.name_details == (["num1", "num2"], [0, 3])
 
 
+def test_estimator_html_repr_an_empty_pipeline():
+    empty_pipeline = Pipeline([])
+    # Smoke test
+    estimator_html_repr(empty_pipeline)
+
+
 def test_estimator_html_repr_pipeline():
     num_trans = Pipeline(
         steps=[("pass", "passthrough"), ("imputer", SimpleImputer(strategy="median"))]
