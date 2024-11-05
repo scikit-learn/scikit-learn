@@ -38,6 +38,13 @@ from numpy.testing import (
 )
 
 import sklearn
+from sklearn.utils import (
+    ClassifierTags,
+    RegressorTags,
+    Tags,
+    TargetTags,
+    TransformerTags,
+)
 from sklearn.utils._array_api import _check_array_api_dispatch
 from sklearn.utils.fixes import (
     _IS_32BIT,
@@ -1089,8 +1096,6 @@ class MinimalClassifier:
     * within a `SearchCV` in `test_search.py`.
     """
 
-    _estimator_type = "classifier"
-
     def __init__(self, param=None):
         self.param = param
 
@@ -1127,6 +1132,15 @@ class MinimalClassifier:
 
         return accuracy_score(y, self.predict(X))
 
+    def __sklearn_tags__(self):
+        return Tags(
+            estimator_type="classifier",
+            classifier_tags=ClassifierTags(),
+            regressor_tags=None,
+            transformer_tags=None,
+            target_tags=TargetTags(required=True),
+        )
+
 
 class MinimalRegressor:
     """Minimal regressor implementation without inheriting from BaseEstimator.
@@ -1137,8 +1151,6 @@ class MinimalRegressor:
     * within a `Pipeline` in `test_pipeline.py`;
     * within a `SearchCV` in `test_search.py`.
     """
-
-    _estimator_type = "regressor"
 
     def __init__(self, param=None):
         self.param = param
@@ -1166,6 +1178,15 @@ class MinimalRegressor:
         from sklearn.metrics import r2_score
 
         return r2_score(y, self.predict(X))
+
+    def __sklearn_tags__(self):
+        return Tags(
+            estimator_type="regressor",
+            classifier_tags=None,
+            regressor_tags=RegressorTags(),
+            transformer_tags=None,
+            target_tags=TargetTags(required=True),
+        )
 
 
 class MinimalTransformer:
@@ -1202,6 +1223,15 @@ class MinimalTransformer:
 
     def fit_transform(self, X, y=None):
         return self.fit(X, y).transform(X, y)
+
+    def __sklearn_tags__(self):
+        return Tags(
+            estimator_type="transformer",
+            classifier_tags=None,
+            regressor_tags=None,
+            transformer_tags=TransformerTags(),
+            target_tags=TargetTags(required=False),
+        )
 
 
 def _array_api_for_tests(array_namespace, device):
