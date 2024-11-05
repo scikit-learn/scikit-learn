@@ -603,3 +603,16 @@ def test_fixed_threshold_classifier_fitted_estimator(method):
     fixed_threshold_classifier = FixedThresholdClassifier(estimator=classifier)
     # This should not raise an error
     getattr(fixed_threshold_classifier, method)(X)
+
+
+def test_fixed_threshold_classifier_classes_():
+    """Check that the classes_ attribute is properly set."""
+    X, y = make_classification(random_state=0)
+    with pytest.raises(
+        AttributeError, match="The underlying estimator is not fitted yet."
+    ):
+        FixedThresholdClassifier(estimator=LogisticRegression()).classes_
+
+    classifier = LogisticRegression().fit(X, y)
+    fixed_threshold_classifier = FixedThresholdClassifier(estimator=classifier)
+    assert_array_equal(fixed_threshold_classifier.classes_, classifier.classes_)
