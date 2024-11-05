@@ -2538,6 +2538,7 @@ def balanced_accuracy_score(
         - If set to "warn", this acts like 0, but a warning is also raised.
         - If set to `np.nan`, such values will be excluded from the average when
           computing the balanced accuracy as the average of the recalls.
+
         .. versionadded:: 1.6
 
     Returns
