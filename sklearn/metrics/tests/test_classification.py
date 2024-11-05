@@ -2843,7 +2843,7 @@ def test_balanced_accuracy_score_zero_division(zero_division, expected_score):
     assert balanced_accuracy == pytest.approx(expected_score)
 
     # check the consistency with the averaged recall score per-class
-    with warnings.catch_warnings(record=True):
+    with warnings.catch_warnings():
         # Silence the warning if it should be raised. This behaviour is specifically
         # tested in some `recall_score` tests.
         avg_recall = recall_score(

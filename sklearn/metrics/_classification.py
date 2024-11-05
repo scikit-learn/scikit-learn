@@ -2528,13 +2528,16 @@ def balanced_accuracy_score(
         of 1.
 
     zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
-        Sets the value to return when there is a zero division.
+        Sets the value to return when there is a zero division. Since the balanced
+        accuracy is the average of the recall of each class, a zero division can be
+        raised when computing the recall of a class that is not present in
+        `y_true`.
 
         Notes:
 
         - If set to "warn", this acts like 0, but a warning is also raised.
-        - If set to `np.nan`, such values will be excluded from the average.
-
+        - If set to `np.nan`, such values will be excluded from the average when
+          computing the balanced accuracy as the average of the recalls.
         .. versionadded:: 1.6
 
     Returns
@@ -2585,8 +2588,9 @@ def balanced_accuracy_score(
         per_class = np.nan_to_num(per_class, nan=nan_replacement_value)
         if zero_division == "warn":
             warnings.warn(
-                "balanced_accuracy ill-defined and being set to 0.0. "
-                "Use `zero_division` parameter to control this behaviour.",
+                "balanced_accuracy ill-defined because `y_pred` contains classes not "
+                "in `y_true`. The score is being set to 0.0. Use `zero_division` "
+                "parameter to control this behaviour.",
                 stacklevel=2,
                 category=UndefinedMetricWarning,
             )
