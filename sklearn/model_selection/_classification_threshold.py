@@ -36,6 +36,7 @@ from ..utils.multiclass import type_of_target
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
     _check_method_params,
+    _estimator_has,
     _num_samples,
     check_is_fitted,
     indexable,
@@ -48,23 +49,6 @@ def _check_is_fitted(estimator):
         check_is_fitted(estimator.estimator)
     except NotFittedError:
         check_is_fitted(estimator, "estimator_")
-
-
-def _estimator_has(attr):
-    """Check if we can delegate a method to the underlying estimator.
-
-    First, we check the fitted estimator if available, otherwise we
-    check the unfitted estimator.
-    """
-
-    def check(self):
-        if hasattr(self, "estimator_"):
-            getattr(self.estimator_, attr)
-        else:
-            getattr(self.estimator, attr)
-        return True
-
-    return check
 
 
 class BaseThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
