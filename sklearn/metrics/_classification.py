@@ -2054,17 +2054,17 @@ def class_likelihood_ratios(
     zero_division : "warn", "nan" or dict, default="warn"
         Sets the return values for LR+ and LR- when there is a division by zero. Can
         take the following values:
-        - "warn" for raising a warning and returning `np.nan` for the affected scoring
-          metric
-        - "nan" for returning `np.nan` for both LR+ and LR- without raising a warning
-        - a dict in the format `{"LR+": `value_1`, "LR-": `value_02`}` where the
+
+        - "warn" to return `np.nan` for the affected scoring metric and raise a warning
+        - "nan" to return `np.nan` for both LR+ and LR- without raising a warning
+        - a dict in the format `{"LR+": value_1, "LR-": value_2}` where the
           values can be non-negative floats, `np.inf` or `np.nan`. For example,
           `{"LR+": 1.0, "LR-": 1.0}` can be used for returning the worst scores,
-          indicating a useless model and `{"LR+": np.inf, "LR-": 0.0`} can be used for
+          indicating a useless model, and `{"LR+": np.inf, "LR-": 0.0}` can be used for
           returning the best scores, indicating a useful model.
 
-        If a division by zero occures, only the metric affected by it is replaced by the
-        set value; the other value is calculated as usual.
+        If a division by zero occurs, only the affected metric is replaced with the set
+        value; the other metric is calculated as usual.
 
         .. versionadded:: 1.6
 
