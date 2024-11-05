@@ -449,26 +449,19 @@ accepts an optional ``y``.
 
 Estimator types
 ---------------
-Some common functionality depends on the kind of estimator passed.
-For example, cross-validation in :class:`model_selection.GridSearchCV` and
-:func:`model_selection.cross_val_score` defaults to being stratified when used
-on a classifier, but not otherwise. Similarly, scorers for average precision
-that take a continuous prediction need to call ``decision_function`` for classifiers,
-but ``predict`` for regressors. This distinction between classifiers and regressors
-is implemented using the ``_estimator_type`` attribute, which takes a string value.
-This attribute should have the following values to work as expected:
+Some common functionality depends on the kind of estimator passed. For example,
+cross-validation in :class:`model_selection.GridSearchCV` and
+:func:`model_selection.cross_val_score` defaults to being stratified when used on a
+classifier, but not otherwise. Similarly, scorers for average precision that take a
+continuous prediction need to call ``decision_function`` for classifiers, but
+``predict`` for regressors. This distinction between classifiers and regressors is
+implemented by inheriting from :class:`~base.ClassifierMixin`,
+:class:`~base.RegressorMixin`, :class:`~base.ClusterMixin`, :class:`~base.OutlierMixin`
+or :class:`~base.DensityMixin`, which will set the corresponding :term:`estimator tags`
+correctly.
 
-- ``"classifier"`` for classifiers
-- ``"regressor"`` for regressors
-- ``"clusterer"`` for clustering methods
-- ``"outlier_detector"`` for outlier detectors
-- ``"DensityEstimator"`` for density estimators
-
-Inheriting from :class:`~base.ClassifierMixin`, :class:`~base.RegressorMixin`, :class:`~base.ClusterMixin`,
-:class:`~base.OutlierMixin` or :class:`~base.DensityMixin`,
-will set the attribute automatically.  When a meta-estimator needs to distinguish
-among estimator types, instead of checking ``_estimator_type`` directly, helpers
-like :func:`base.is_classifier` should be used.
+When a meta-estimator needs to distinguish among estimator types, instead of checking
+the value of the tags directly, helpers like :func:`base.is_classifier` should be used.
 
 Specific models
 ---------------
