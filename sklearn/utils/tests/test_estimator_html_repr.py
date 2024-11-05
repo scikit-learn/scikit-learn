@@ -350,7 +350,8 @@ def test_show_arrow_pipeline():
     html_output = estimator_html_repr(pipe)
     assert (
         'class="sk-toggleable__label  sk-toggleable__label-arrow">'
-        "<div><div>Pipeline</div></div>" in html_output
+        "<div><div>Pipeline</div></div>"
+        in html_output
     )
 
 

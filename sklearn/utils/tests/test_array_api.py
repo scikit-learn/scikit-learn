@@ -64,8 +64,10 @@ def test_get_namespace_ndarray_with_dispatch():
     array_api_compat = pytest.importorskip("array_api_compat")
     if parse_version(array_api_compat.__version__) < parse_version("1.9"):
         pytest.skip(
-            reason="array_api_compat was temporarily reporting NumPy as API compliant "
-            "and this test would fail"
+            reason=(
+                "array_api_compat was temporarily reporting NumPy as API compliant "
+                "and this test would fail"
+            )
         )
 
     X_np = numpy.asarray([[1, 2, 3]])

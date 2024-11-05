@@ -446,7 +446,8 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 raise ValueError(
                     "kd_tree does not support callable metric '%s'"
                     "Function call overhead will result"
-                    "in very poor performance." % self.metric
+                    "in very poor performance."
+                    % self.metric
                 )
         elif self.metric not in VALID_METRICS[alg_check] and not isinstance(
             self.metric, DistanceMetric
@@ -892,7 +893,8 @@ class KNeighborsMixin:
             if issparse(X):
                 raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
-                    "or set algorithm='brute'" % self._fit_method
+                    "or set algorithm='brute'"
+                    % self._fit_method
                 )
             chunked_results = Parallel(n_jobs, prefer="threads")(
                 delayed(self._tree.query)(X[s], n_neighbors, return_distance)
@@ -1235,7 +1237,8 @@ class RadiusNeighborsMixin:
             if issparse(X):
                 raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
-                    "or set algorithm='brute'" % self._fit_method
+                    "or set algorithm='brute'"
+                    % self._fit_method
                 )
 
             n_jobs = effective_n_jobs(self.n_jobs)

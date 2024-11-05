@@ -695,8 +695,10 @@ def make_scorer(
 
     if response_method is None:
         warnings.warn(
-            "response_method=None is deprecated in version 1.6 and will be removed "
-            "in version 1.8. Leave it to its default value to avoid this warning.",
+            (
+                "response_method=None is deprecated in version 1.6 and will be removed "
+                "in version 1.8. Leave it to its default value to avoid this warning."
+            ),
             FutureWarning,
         )
         response_method = "predict"

@@ -66,7 +66,7 @@ def test_transform_target_regressor_invertible():
     )
     with pytest.warns(
         UserWarning,
-        match=(r"The provided functions.* are not strictly inverse of each other"),
+        match=r"The provided functions.* are not strictly inverse of each other",
     ):
         regr.fit(X, y)
     regr = TransformedTargetRegressor(

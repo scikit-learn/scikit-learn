@@ -58,10 +58,12 @@ def _raise_or_warn_if_not_fitted(estimator):
         check_is_fitted(estimator)
     except NotFittedError:
         warnings.warn(
-            "This Pipeline instance is not fitted yet. Call 'fit' with "
-            "appropriate arguments before using other methods such as transform, "
-            "predict, etc. This will raise an error in 1.8 instead of the current "
-            "warning.",
+            (
+                "This Pipeline instance is not fitted yet. Call 'fit' with "
+                "appropriate arguments before using other methods such as transform, "
+                "predict, etc. This will raise an error in 1.8 instead of the current "
+                "warning."
+            ),
             FutureWarning,
         )
 

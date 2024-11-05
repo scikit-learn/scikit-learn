@@ -1178,9 +1178,7 @@ class NuSVC(BaseSVC):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags._xfail_checks = {
-            "check_methods_subset_invariance": (
-                "fails for the decision_function method"
-            ),
+            "check_methods_subset_invariance": "fails for the decision_function method",
             "check_class_weight_classifiers": "class_weight is ignored.",
             # TODO: fix sample_weight handling of this estimator when probability=False
             # TODO: replace by a statistical test when probability=True

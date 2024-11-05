@@ -512,8 +512,10 @@ class AdaBoostClassifier(
 
         if self.algorithm != "deprecated":
             warnings.warn(
-                "The parameter 'algorithm' is deprecated in 1.6 and has no effect. "
-                "It will be removed in version 1.8.",
+                (
+                    "The parameter 'algorithm' is deprecated in 1.6 and has no effect. "
+                    "It will be removed in version 1.8."
+                ),
                 FutureWarning,
             )
 

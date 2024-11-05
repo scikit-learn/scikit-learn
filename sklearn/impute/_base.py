@@ -469,10 +469,12 @@ class SimpleImputer(_BaseImputer):
                 [all(missing_mask[:, i].data) for i in range(missing_mask.shape[1])]
             ):
                 warnings.warn(
-                    "Currently, when `keep_empty_feature=False` and "
-                    '`strategy="constant"`, empty features are not dropped. '
-                    "This behaviour will change in version 1.8. Set "
-                    "`keep_empty_feature=True` to preserve this behaviour.",
+                    (
+                        "Currently, when `keep_empty_feature=False` and "
+                        '`strategy="constant"`, empty features are not dropped. '
+                        "This behaviour will change in version 1.8. Set "
+                        "`keep_empty_feature=True` to preserve this behaviour."
+                    ),
                     FutureWarning,
                 )
 
@@ -570,10 +572,12 @@ class SimpleImputer(_BaseImputer):
             # for empty features to drop them later.
             if not self.keep_empty_features and ma.getmask(masked_X).all(axis=0).any():
                 warnings.warn(
-                    "Currently, when `keep_empty_feature=False` and "
-                    '`strategy="constant"`, empty features are not dropped. '
-                    "This behaviour will change in version 1.8. Set "
-                    "`keep_empty_feature=True` to preserve this behaviour.",
+                    (
+                        "Currently, when `keep_empty_feature=False` and "
+                        '`strategy="constant"`, empty features are not dropped. '
+                        "This behaviour will change in version 1.8. Set "
+                        "`keep_empty_feature=True` to preserve this behaviour."
+                    ),
                     FutureWarning,
                 )
 
