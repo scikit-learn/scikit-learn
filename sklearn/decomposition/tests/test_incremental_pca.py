@@ -252,7 +252,7 @@ def test_incremental_pca_partial_fit_small_batch():
     pca = PCA(n_components=n_components)
     pca.fit(X)
 
-    assert_almost_equal(pca.components_, pipca.components_, decimal=3)
+    assert_allclose(pca.components_, pipca.components_, atol=1e-3)
 
 
 def test_incremental_pca_batch_values():
