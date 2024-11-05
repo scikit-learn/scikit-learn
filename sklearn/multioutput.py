@@ -737,6 +737,13 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             Returns a fitted instance.
         """
         # TODO(1.8): Remove when base_estimator is removed
+        if self.estimator is not None and (
+            self.base_estimator not in [None, "deprecated"]
+        ):
+            raise ValueError(
+                "Both `estimator` and `base_estimator` were set. Only set `estimator`."
+            )
+
         if self.base_estimator != "deprecated":
 
             warning_text = (
