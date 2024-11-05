@@ -71,7 +71,7 @@ JUNK_FOOD_DOCS = (
 )
 
 
-class NoFit:
+class NoFit(BaseEstimator):
     """Small class to test parameter dispatching."""
 
     def __init__(self, a=None, b=None):
@@ -80,7 +80,7 @@ class NoFit:
 
 
 class NoTrans(NoFit):
-    def fit(self, X, y):
+    def fit(self, X, y=None):
         return self
 
     def get_params(self, deep=False):
@@ -91,7 +91,7 @@ class NoTrans(NoFit):
         return self
 
 
-class NoInvTransf(NoTrans):
+class NoInvTransf(TransformerMixin, NoTrans):
     def transform(self, X):
         return X
 
@@ -105,19 +105,19 @@ class Transf(NoInvTransf):
 
 
 class TransfFitParams(Transf):
-    def fit(self, X, y, **fit_params):
+    def fit(self, X, y=None, **fit_params):
         self.fit_params = fit_params
         return self
 
 
-class Mult(BaseEstimator):
+class Mult(TransformerMixin, BaseEstimator):
     def __init__(self, mult=1):
         self.mult = mult
 
     def __sklearn_is_fitted__(self):
         return True
 
-    def fit(self, X, y):
+    def fit(self, X, y=None):
         return self
 
     def transform(self, X):
