@@ -1820,7 +1820,7 @@ def check_transformer_preserve_dtypes(name, transformer_orig):
             # check that the output dtype is preserved
             assert Xt.dtype == dtype, (
                 f"{name} (method={method}) does not preserve dtype. "
-                f"Original/Expected dtype={dtype.__name__}, got dtype={Xt.dtype}."
+                f"Original/Expected dtype={dtype}, got dtype={Xt.dtype}."
             )
 
 
