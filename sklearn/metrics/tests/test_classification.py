@@ -771,6 +771,22 @@ def test_likelihood_ratios_raise_warning_deprecation(raise_warning):
         class_likelihood_ratios(y_true, y_pred, raise_warning=raise_warning)
 
 
+@pytest.mark.parametrize(
+    "zero_division",
+    [{"LR+": 0.0}, {"LR-": 0.0}, {"LR+": -5.0, "LR-": 0.0}, {"LR+": 1.0, "LR-": "nan"}],
+)
+def test_likelihood_ratios_wrong_dict_zero_division(zero_division):
+    """Test that class_likelihood_ratios raises a ValueError if the input dict for
+    `zero_division` is in the wrong format."""
+    y_true = np.array([1, 0])
+    y_pred = np.array([1, 0])
+
+    msg = "The dictionary passed as `zero_division` needs come in the format"
+
+    with pytest.raises(ValueError, match=msg):
+        class_likelihood_ratios(y_true, y_pred, zero_division=zero_division)
+
+
 def test_likelihood_ratios_raises_when_raise_warning_and_zero_division():
     """Test that class_likelihood_ratios raises a ValueError if `raise_warning` and
     `zero_division` params are both set."""

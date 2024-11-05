@@ -2053,13 +2053,18 @@ def class_likelihood_ratios(
 
     zero_division : "warn", "nan" or dict, default="warn"
         Sets the return values for LR+ and LR- when there is a division by zero. Can
-        take the values {"LR+": 1.0, "LR-": 1.0} (for returning the worst scores,
-        indicating a useless model), {"LR+": np.inf, "LR-": 0.0} (for returning the best
-        scores, indicating a useful model), {"LR+": np.nan, "LR-": np.nan} or shothand
-        "nan" (for returning undefined scores), or "warn". Only the metric affected
-        by a zero division is replaced by the set value; the other value is calculated
-        as usual. If set to "warn", returns `np.nan` for the affected scoring metric,
-        but a warning is also raised.
+        take the following values:
+        - "warn" for raising a warning and returning `np.nan` for the affected scoring
+          metric
+        - "nan" for returning `np.nan` for both LR+ and LR- without raising a warning
+        - a dict in the format `{"LR+": `value_1`, "LR-": `value_02`}` where the
+          values can be non-negative floats, `np.inf` or `np.nan`. For example,
+          `{"LR+": 1.0, "LR-": 1.0}` can be used for returning the worst scores,
+          indicating a useless model and `{"LR+": np.inf, "LR-": 0.0`} can be used for
+          returning the best scores, indicating a useful model.
+
+        If a division by zero occures, only the metric affected by it is replaced by the
+        set value; the other value is calculated as usual.
 
         .. versionadded:: 1.6
 
@@ -2071,7 +2076,8 @@ def class_likelihood_ratios(
 
     Warns
     -----
-    Raises `UndefinedMetricWarning` unter these conditions in `y_true` and `y_pred`:
+    Raises UndefinedMetricWarning when `y_true` and `y_pred` lead to the following
+    conditions:
 
         - The number of false positives is 0 and either `zero_division="warn"` or
           `raise_warning=True`: positive likelihood ratio is undefined.
@@ -2115,11 +2121,11 @@ def class_likelihood_ratios(
     # to match the other functions that take a zero_division param: The default return
     # value with zero_division="warn" should be updated to the worst score for each
     # metric respectively (1 for LR+ and 1 for LR-), return values and warning messages
-    # need to be updated, the Warns section in the docstring needs be be re-written, the
-    # "Mathematical divergences" section in model_evaluation.rst needs to be updated on
-    # the new default behaviour of zero_division, the the hidden option for
-    # zero_division ("default") needs to be removed and the default set to "warn" in the
-    # function signature.
+    # need to be updated, the Warns section in the docstring should not mention
+    # raise_warning anymore, the "Mathematical divergences" section in
+    # model_evaluation.rst needs to be updated on the new default behaviour of
+    # zero_division, the the hidden option for zero_division ("default") needs to be
+    # removed and the default set to "warn" in the function signature.
     y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type != "binary":
@@ -2151,6 +2157,42 @@ def class_likelihood_ratios(
 
     if zero_division == "default":
         zero_division = "warn"
+
+    if isinstance(zero_division, dict):
+        msg = (
+            "The dictionary passed as `zero_division` needs come in the format "
+            "`{'LR+': `value_1`, 'LR-': `value_02`}` where the values can be "
+            f"non-negative floats, `np.inf` or `np.nan`, got `{zero_division}`."
+        )
+        if ("LR+" in zero_division) and ("LR-" in zero_division):
+            import numbers
+
+            from sklearn.utils.validation import check_scalar
+
+            positive_likelihood_ratio = zero_division.get("LR+", None)
+            try:
+                positive_likelihood_ratio = check_scalar(
+                    positive_likelihood_ratio,
+                    "positive_likelihood_ratio",
+                    target_type=(numbers.Real),
+                    min_val=0.0,
+                    include_boundaries="left",
+                )
+            except (TypeError, ValueError):
+                raise ValueError(msg)
+            negative_likelihood_ratio = zero_division.get("LR-", None)
+            try:
+                negative_likelihood_ratio = check_scalar(
+                    negative_likelihood_ratio,
+                    "negative_likelihood_ratio",
+                    target_type=(numbers.Real),
+                    min_val=0.0,
+                    include_boundaries="left",
+                )
+            except (TypeError, ValueError):
+                raise ValueError(msg)
+        else:
+            raise ValueError(msg)
 
     cm = confusion_matrix(
         y_true,
