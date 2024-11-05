@@ -184,8 +184,8 @@ def make_classification(
         DESCR : str
             A description of the function that generated the dataset.
         generator_parameter : dict
-            A dictionary that stores the value of the arguments passed to the generator 
-            function.
+            A dictionary that stores the value of the arguments passed to the
+            generator function.
         feature_info : list of len(n_features)
             A description for each generated feature. "US" for useless, "IN" for
             informative , "RD" for redundant and "RP" for repeat.
@@ -368,7 +368,7 @@ def make_classification(
         }
 
         bunch = Bunch(
-            DESC=make_classification.__doc__,
+            DESCR=make_classification.__doc__,
             parameters=parameters,
             feature_info=feat_desc,
             X=X,
