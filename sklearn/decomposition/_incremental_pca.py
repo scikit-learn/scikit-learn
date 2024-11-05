@@ -309,7 +309,7 @@ class IncrementalPCA(_BasePCA):
         elif self.n_components > n_samples and first_pass:
             raise ValueError(
                 "n_components=%r must be less or equal to the batch number "
-                "of samples %d for the first partial_fit " 
+                "of samples %d for the first partial_fit "
                 "call." % (self.n_components, n_samples)
             )
         else:
