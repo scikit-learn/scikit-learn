@@ -369,51 +369,11 @@ See also :ref:`TunedThresholdClassifierCV`.
 There are many scoring functions which measure different aspects of such a
 decision, most of them are covered with or derived from the :func:`confusion_matrix`.
 
-Point forecasts and consistent scoring functions
-------------------------------------------------
-
-Let's assume that the target variable :math:`Y` is a random variable, that
-we have observations/realizations :math:`y` and that we make predictions
-:math:`\hat{y}`.
-Scoring functions :math:`S(y, \hat{y})` then rank the prediction
-:math:`\hat{y}` of different models, given the observation :math:`y`.
-The higher the score the better the corresponding model (note that the
-literature uses sometimes the other orientation: smaller values are better).
-For a test or validation set :math:`y_i`, one usually uses
-
-.. math::
-
-    \bar{S} = \frac{1}{n_\text{samples}}
-              \sum_{i=0}^{n_\text{samples}-1} S(y_i, \hat{y}_i).
-
-The optimal point prediction :math:`\hat{y}^\star` under :math:`S` is the
-*Bayes Rule*
-
-.. math::
-
-    \hat{y}^\star = \operatorname{argmax}_x \mathbb{E}[S(Y, x)].
-
-Note that in order to get an unbiased estimate of :math:`\mathbb{E}[S(Y, x)]` for model
-evaluation and model selection, one has to use a test set independen of the training
-set.
-
-If you are free to choose a scoring function, you should first ask yourself,
-which functional of :math:`F(Y)` you want to predict as a point forecast:
-the mean, the mode, the median, a quantile, ...
-Then, **strictly consistent** scoring functions for this functional are to be
-preferred because only they provide that :math:`\hat{y}^\star` is unique and
-equals the desired target functional, see [Gneiting2009]_ for more details.
-Stated otherwise: if the scoring function is (strictly) consistent for the
-functional at interest, this functional is the (unique) optimal point forecast
-under this scoring function.
-
-One could say that consistent scoring functions act as *truth serum* in that
-they guarantee "that truth telling [. . .] is an optimal strategy in
-expectation" [Gneiting2014]_.
-
-Here, we list some of the well known functionals and corresponding scoring
-functions. For further criteria on how to select a specific one, see
-[Fissler2022]_.
+**List of strictly consistent scoring functions**
+Here, we list some of the most well known statistical functionals and corresponding
+stritcly consistent scoring functions. Note that the list is not complete and that
+there are more of them.
+For further criteria on how to select a specific one, see [Fissler2022]_.
 
 ==================  ========================  ================  ==============================
 functional          scoring or loss function  response y        prediction
