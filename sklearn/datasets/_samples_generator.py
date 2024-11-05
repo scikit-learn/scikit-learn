@@ -174,22 +174,30 @@ def make_classification(
         See :term:`Glossary <random_state>`.
 
     return_X_y : bool, default=True
-        If True ndarray objects, X and y, will be returned.
-        If False a bunch will be returned that contains X and y
-        amongst other things.
+        If True, the ``(data, target)`` instead of a Bunch object.
 
     Returns
     -------
-    X : ndarray of shape (n_samples, n_features)
-        The generated samples.
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
 
-    y : ndarray of shape (n_samples,)
-        The integer labels for class membership of each sample.
+        DESCR : str
+            A description of the function that generated the dataset.
+        generator_parameter : dict
+            A dictionary that stores the value of the arguments passed to the generator 
+            function.
+        feature_info : list of len(n_features)
+            A description for each generated feature. "US" for useless, "IN" for
+            informative , "RD" for redundant and "RP" for repeat.
+        X : ndarray of shape (n_samples, n_features)
+            The generated samples.
+        Y : ndarray of shape (n_samples,)
+            An integer label for class membership of each sample.
 
-    bunch : Bunch object
-        If return_X_y = True, a bunch object is returned.
-        Contains DESC, parameters, feature_info, X and y. feauture_info describes
-        the type of each feature, informative, redundant, repeated or useless.
+    .. versionadded:: 1.6
+
+    (data, target) : tuple if ``return_X_y`` is True
+        A tuple of generated samples and labels
 
     See Also
     --------
