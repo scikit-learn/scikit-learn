@@ -744,7 +744,9 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
                 "and will be removed in 1.8."
             )
             warnings.warn(warning_text, FutureWarning)
-            self.estimator = self.base_estimator
+            self._estimator = self.base_estimator
+        else:
+            self._estimator = self.estimator
         X, Y = validate_data(self, X, Y, multi_output=True, accept_sparse=True)
 
         random_state = check_random_state(self.random_state)
@@ -760,7 +762,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         elif sorted(self.order_) != list(range(Y.shape[1])):
             raise ValueError("invalid order")
 
-        self.estimators_ = [clone(self.estimator) for _ in range(Y.shape[1])]
+        self.estimators_ = [clone(self._estimator) for _ in range(Y.shape[1])]
 
         if self.cv is None:
             Y_pred_chain = Y[:, self.order_]
@@ -799,7 +801,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
 
         if hasattr(self, "chain_method"):
             chain_method = _check_response_method(
-                self.estimator,
+                self._estimator,
                 self.chain_method,
             ).__name__
             self.chain_method_ = chain_method
@@ -824,7 +826,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             if self.cv is not None and chain_idx < len(self.estimators_) - 1:
                 col_idx = X.shape[1] + chain_idx
                 cv_result = cross_val_predict(
-                    self.estimator,
+                    self._estimator,
                     X_aug[:, :col_idx],
                     y=y,
                     cv=self.cv,
@@ -989,7 +991,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     ...    X, Y, random_state=0
     ... )
     >>> base_lr = LogisticRegression(solver='lbfgs', random_state=0)
-    >>> chain = ClassifierChain(estimator=base_lr, order='random', random_state=0)
+    >>> chain = ClassifierChain(base_lr, order='random', random_state=0)
     >>> chain.fit(X_train, Y_train).predict(X_test)
     array([[1., 1., 0.],
            [1., 0., 0.],
@@ -1130,7 +1132,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
             routing information.
         """
         router = MetadataRouter(owner=self.__class__.__name__).add(
-            estimator=self.estimator,
+            estimator=self._estimator,
             method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
         return router
@@ -1290,7 +1292,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
             routing information.
         """
         router = MetadataRouter(owner=self.__class__.__name__).add(
-            estimator=self.estimator,
+            estimator=self._estimator,
             method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
         return router
