@@ -192,7 +192,7 @@ class RANSACRegressor(
     Attributes
     ----------
     estimator_ : object
-        Final model fitted on the inliers predicted by the "best" model found 
+        Final model fitted on the inliers predicted by the "best" model found
         during RANSAC sampling (copy of the `estimator` object).
 
     n_trials_ : int
