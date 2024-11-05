@@ -7,7 +7,6 @@ Generate samples of synthetic data sets.
 
 import array
 import numbers
-import warnings
 from collections.abc import Iterable
 from numbers import Integral, Real
 
@@ -18,7 +17,7 @@ from scipy import linalg
 from ..preprocessing import MultiLabelBinarizer
 from ..utils import check_array, check_random_state
 from ..utils import shuffle as util_shuffle
-from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.random import sample_without_replacement
 
 
@@ -1667,7 +1666,7 @@ def make_spd_matrix(n_dim, *, random_state=None):
 
 @validate_params(
     {
-        "n_dim": [Hidden(None), Interval(Integral, 1, None, closed="left")],
+        "n_dim": [Interval(Integral, 1, None, closed="left")],
         "alpha": [Interval(Real, 0, 1, closed="both")],
         "norm_diag": ["boolean"],
         "smallest_coef": [Interval(Real, 0, 1, closed="both")],
@@ -1677,15 +1676,11 @@ def make_spd_matrix(n_dim, *, random_state=None):
             None,
         ],
         "random_state": ["random_state"],
-        "dim": [
-            Interval(Integral, 1, None, closed="left"),
-            Hidden(StrOptions({"deprecated"})),
-        ],
     },
     prefer_skip_nested_validation=True,
 )
 def make_sparse_spd_matrix(
-    n_dim=None,
+    n_dim=1,
     *,
     alpha=0.95,
     norm_diag=False,
@@ -1693,7 +1688,6 @@ def make_sparse_spd_matrix(
     largest_coef=0.9,
     sparse_format=None,
     random_state=None,
-    dim="deprecated",
 ):
     """Generate a sparse symmetric definite positive matrix.
 
@@ -1732,12 +1726,6 @@ def make_sparse_spd_matrix(
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    dim : int, default=1
-        The size of the random matrix to generate.
-
-        .. deprecated:: 1.4
-            `dim` is deprecated and will be removed in 1.6.
-
     Returns
     -------
     prec : ndarray or sparse matrix of shape (dim, dim)
@@ -1765,32 +1753,10 @@ def make_sparse_spd_matrix(
     """
     random_state = check_random_state(random_state)
 
-    # TODO(1.6): remove in 1.6
-    # Also make sure to change `n_dim` default back to 1 and deprecate None
-    if n_dim is not None and dim != "deprecated":
-        raise ValueError(
-            "`dim` and `n_dim` cannot be both specified. Please use `n_dim` only "
-            "as `dim` is deprecated in v1.4 and will be removed in v1.6."
-        )
-
-    if dim != "deprecated":
-        warnings.warn(
-            (
-                "dim was deprecated in version 1.4 and will be removed in 1.6."
-                "Please use ``n_dim`` instead."
-            ),
-            FutureWarning,
-        )
-        _n_dim = dim
-    elif n_dim is None:
-        _n_dim = 1
-    else:
-        _n_dim = n_dim
-
-    chol = -sp.eye(_n_dim)
+    chol = -sp.eye(n_dim)
     aux = sp.random(
-        m=_n_dim,
-        n=_n_dim,
+        m=n_dim,
+        n=n_dim,
         density=1 - alpha,
         data_rvs=lambda x: random_state.uniform(
             low=smallest_coef, high=largest_coef, size=x
@@ -1802,7 +1768,7 @@ def make_sparse_spd_matrix(
 
     # Permute the lines: we don't want to have asymmetries in the final
     # SPD matrix
-    permutation = random_state.permutation(_n_dim)
+    permutation = random_state.permutation(n_dim)
     aux = aux[permutation].T[permutation]
     chol += aux
     prec = chol.T @ chol
