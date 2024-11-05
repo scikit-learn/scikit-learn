@@ -10,7 +10,6 @@ the lower the better.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
 import warnings
 from numbers import Integral, Real
 
@@ -24,6 +23,7 @@ from ..utils import (
     assert_all_finite,
     check_array,
     check_consistent_length,
+    check_scalar,
     column_or_1d,
 )
 from ..utils._array_api import (
@@ -2165,16 +2165,12 @@ def class_likelihood_ratios(
             f"non-negative floats, `np.inf` or `np.nan`, got `{zero_division}`."
         )
         if ("LR+" in zero_division) and ("LR-" in zero_division):
-            import numbers
-
-            from sklearn.utils.validation import check_scalar
-
             positive_likelihood_ratio = zero_division.get("LR+", None)
             try:
                 positive_likelihood_ratio = check_scalar(
                     positive_likelihood_ratio,
                     "positive_likelihood_ratio",
-                    target_type=(numbers.Real),
+                    target_type=(Real),
                     min_val=0.0,
                     include_boundaries="left",
                 )
@@ -2185,7 +2181,7 @@ def class_likelihood_ratios(
                 negative_likelihood_ratio = check_scalar(
                     negative_likelihood_ratio,
                     "negative_likelihood_ratio",
-                    target_type=(numbers.Real),
+                    target_type=(Real),
                     min_val=0.0,
                     include_boundaries="left",
                 )
