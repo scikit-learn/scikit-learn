@@ -184,20 +184,20 @@ def make_classification(
         DESCR : str
             A description of the function that generated the dataset.
         generator_parameter : dict
-            A dictionary that stores the value of the arguments passed to the
+            A dictionary that stores the values of the arguments passed to the
             generator function.
         feature_info : list of len(n_features)
             A description for each generated feature. "US" for useless, "IN" for
-            informative , "RD" for redundant and "RP" for repeat.
+            informative, "RP" for repeated and "RD" for redundant.
         X : ndarray of shape (n_samples, n_features)
             The generated samples.
-        Y : ndarray of shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             An integer label for class membership of each sample.
 
-    .. versionadded:: 1.6
+        .. versionadded:: 1.6
 
     (data, target) : tuple if ``return_X_y`` is True
-        A tuple of generated samples and labels
+        A tuple of generated samples and labels.
 
     See Also
     --------
