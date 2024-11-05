@@ -1,7 +1,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import warnings
 from numbers import Integral, Real
 
 import numpy as np
@@ -314,26 +313,6 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         )
         check_classification_targets(y)
         self.classes_ = np.unique(y)
-        if self.kernel == "linear":
-            if self.gamma != "scale":
-                warnings.warn(
-                    "Setting 'gamma' when using 'linear' kernel is irrelevant"
-                    " in 1.6 and will raise an error in 1.8.",
-                    FutureWarning,
-                )
-            if self.coef0 != 0:
-                warnings.warn(
-                    "Setting 'coef0' when using 'linear' kernel is irrelevant"
-                    " in 1.6 and will raise an error in 1.8.",
-                    FutureWarning,
-                )
-            if self.degree != 3:
-                warnings.warn(
-                    "Setting 'degree' when using 'linear' kernel is irrelevant"
-                    " in 1.6 and will raise an error in 1.8.",
-                    FutureWarning,
-                )
-
         _dual = _validate_dual_parameter(
             self.dual, self.loss, self.penalty, self.multi_class, X
         )
